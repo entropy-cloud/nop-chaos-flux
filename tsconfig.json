@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/amis-schema" },
+    { "path": "./packages/amis-formula" },
+    { "path": "./packages/amis-runtime" },
+    { "path": "./packages/amis-react" },
+    { "path": "./packages/amis-renderers-basic" },
+    { "path": "./packages/amis-renderers-form" },
+    { "path": "./packages/amis-renderers-data" },
+    { "path": "./packages/amis-testing" },
+    { "path": "./apps/playground" }
+  ]
+}
