@@ -1189,6 +1189,31 @@ export function createRendererRuntime(input: {
       store.setValues(nextValues);
     }
 
+    function findRuntimeRegistration(path: string) {
+      const direct = runtimeFieldRegistrations.get(path);
+
+      if (direct) {
+        return {
+          registration: direct,
+          childPath: undefined as string | undefined
+        };
+      }
+
+      for (const registration of runtimeFieldRegistrations.values()) {
+        if (registration.childPaths?.includes(path)) {
+          return {
+            registration,
+            childPath: path
+          };
+        }
+      }
+
+      return {
+        registration: undefined,
+        childPath: undefined as string | undefined
+      };
+    }
+
     function cancelValidationDebounce(path: string) {
       const pending = pendingValidationDebounces.get(path);
 
@@ -1255,10 +1280,29 @@ export function createRendererRuntime(input: {
       },
       async validateField(path) {
         const field = inputValue.validation?.fields[path];
-        const runtimeRegistration = runtimeFieldRegistrations.get(path);
+        const runtimeTarget = findRuntimeRegistration(path);
+        const runtimeRegistration = runtimeTarget.registration;
 
         if (!field && !runtimeRegistration) {
           return { ok: true, errors: [] } as ValidationResult;
+        }
+
+        if (!field && runtimeTarget.childPath && runtimeRegistration?.validateChild) {
+          const runtimeErrors = await runtimeRegistration.validateChild(runtimeTarget.childPath);
+          const nextErrors = { ...store.getState().errors };
+
+          if (runtimeErrors.length > 0) {
+            nextErrors[path] = runtimeErrors;
+          } else {
+            delete nextErrors[path];
+          }
+
+          store.setErrors(nextErrors);
+
+          return {
+            ok: runtimeErrors.length === 0,
+            errors: runtimeErrors
+          } as ValidationResult;
         }
 
         if (!field && runtimeRegistration?.validate) {
@@ -1495,6 +1539,18 @@ export function createRendererRuntime(input: {
         }
       },
       setValue(name, value) {
+        const runtimeTarget = findRuntimeRegistration(name);
+
+        if (runtimeTarget.childPath && runtimeTarget.registration) {
+          validationRuns.set(name, (validationRuns.get(name) ?? 0) + 1);
+          cancelValidationDebounce(name);
+          store.setValidating(name, false);
+          store.setDirty(name, true);
+          store.setValue(name, value);
+          this.clearErrors(name);
+          return;
+        }
+
         validationRuns.set(name, (validationRuns.get(name) ?? 0) + 1);
         cancelValidationDebounce(name);
         store.setValidating(name, false);

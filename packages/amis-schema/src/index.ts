@@ -297,6 +297,7 @@ export interface RuntimeFieldRegistration {
   childPaths?: string[];
   syncValue?(): unknown;
   onRemove?(): void;
+  validateChild?(path: string): Promise<ValidationError[]> | ValidationError[];
   validate?(): Promise<ValidationError[]> | ValidationError[];
 }
 

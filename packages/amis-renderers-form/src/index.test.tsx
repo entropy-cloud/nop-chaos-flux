@@ -466,6 +466,41 @@ describe('formRendererDefinitions', () => {
     expect(submitCalls[0].reviewers[0]).toMatchObject({ value: 'alice' });
   });
 
+  it('tracks runtime-registered array editor child interaction state', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            reviewers: [{ value: '' }]
+          },
+          body: [
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.focus(screen.getByPlaceholderText('Reviewer 1'));
+    fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: 'alice' } });
+    fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: '' } });
+
+    const field = screen.getByPlaceholderText('Reviewer 1').closest('.na-field');
+    expect(field?.className).toContain('na-field--touched');
+  });
+
   it('blocks submit when compiled validation rules fail', async () => {
     submitCalls.length = 0;
     cleanup();

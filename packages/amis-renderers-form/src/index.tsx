@@ -579,6 +579,13 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
   const name = String(props.props.name ?? props.schema.name ?? '');
   const presentation = useFieldPresentation(name, currentForm);
   const [items, setItems] = React.useState<ArrayEditorItem[]>(() => toArrayEditorItems(readFieldValue(scope, name)));
+  const childFieldState = useCurrentFormState((state) => ({
+    errors: state.errors,
+    touched: state.touched,
+    submitting: state.submitting,
+    visited: state.visited,
+    dirty: state.dirty
+  }));
 
   const syncItems = React.useCallback(
     (nextItems: ArrayEditorItem[]) => {
@@ -627,6 +634,28 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
         }
 
         return [];
+      },
+      validateChild(path) {
+        const relativePath = path.startsWith(`${name}.`) ? path.slice(name.length + 1) : path;
+        const match = relativePath.match(/^(\d+)\.value$/);
+
+        if (!match) {
+          return [];
+        }
+
+        const item = items[Number(match[1])];
+
+        if (!item || item.value.trim() !== '') {
+          return [];
+        }
+
+        return [
+          {
+            path,
+            rule: 'required',
+            message: `${props.props.itemLabel ?? 'Item'} ${Number(match[1]) + 1} is required`
+          }
+        ];
       }
     });
   }, [currentForm, items, name, props.meta.label]);
@@ -642,9 +671,16 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
               type="text"
               value={item.value}
               placeholder={props.props.itemLabel ? `${props.props.itemLabel} ${index + 1}` : `Item ${index + 1}`}
+              aria-invalid={
+                childFieldState.errors[`${name}.${index}.value`] &&
+                (childFieldState.touched[`${name}.${index}.value`] || childFieldState.submitting)
+                  ? true
+                  : undefined
+              }
               onFocus={() => {
                 if (currentForm && name) {
                   currentForm.visitField(name);
+                  currentForm.visitField(`${name}.${index}.value`);
                 }
               }}
               onChange={(event) => {
@@ -652,8 +688,17 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
                   candidateIndex === index ? { ...candidate, value: event.target.value } : candidate
                 );
                 syncItems(nextItems);
+
+                if (currentForm) {
+                  currentForm.touchField(`${name}.${index}.value`);
+                  void currentForm.validateField(`${name}.${index}.value`);
+                }
               }}
             />
+            {childFieldState.errors[`${name}.${index}.value`] &&
+            (childFieldState.touched[`${name}.${index}.value`] || childFieldState.submitting) ? (
+              <span className="na-field__error">{childFieldState.errors[`${name}.${index}.value`]?.[0]?.message}</span>
+            ) : null}
             <button
               type="button"
               className="na-kv-remove"
