@@ -518,6 +518,14 @@ function createRequestKey(actionType: string, api: ApiObject, scope: ScopeRef, f
   return `${owner}:${actionType}:${api.method ?? 'get'}:${api.url}`;
 }
 
+function buildActionMonitorPayload(action: ActionSchema, ctx: ActionContext) {
+  return {
+    actionType: action.action,
+    nodeId: ctx.node?.id,
+    path: ctx.node?.path
+  };
+}
+
 function applyRequestAdaptor(expressionCompiler: ExpressionCompiler, api: ApiObject, scope: ScopeRef, env: RendererEnv): ApiObject {
   if (!api.requestAdaptor) {
     return api;
@@ -590,6 +598,11 @@ export function createRendererRuntime(input: {
 
     const controller = new AbortController();
     activeRequests.set(requestKey, controller);
+    input.env.monitor?.onApiRequest?.({
+      api,
+      nodeId: undefined,
+      path: undefined
+    });
 
     try {
       return await input.env.fetcher<T>(api, {
@@ -685,6 +698,10 @@ export function createRendererRuntime(input: {
   }
 
   async function runSingleAction(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
+    const startedAt = Date.now();
+    const actionPayload = buildActionMonitorPayload(action, ctx);
+    input.env.monitor?.onActionStart?.(actionPayload);
+
     try {
       const processedAction = await (input.plugins ?? []).reduce<Promise<ActionSchema>>(
         async (currentPromise, plugin) => {
@@ -703,14 +720,23 @@ export function createRendererRuntime(input: {
           } else {
             ctx.scope.update(targetPath, evaluated);
           }
-          return { ok: true, data: evaluated };
+          const result = { ok: true, data: evaluated };
+          input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+          return result;
         }
         case 'ajax': {
           if (!processedAction.api) {
-            return { ok: false, error: new Error('Missing api in ajax action') };
+            const result = { ok: false, error: new Error('Missing api in ajax action') };
+            input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+            return result;
           }
 
           const api = applyRequestAdaptor(expressionCompiler, evaluate<ApiObject>(processedAction.api, ctx.scope), ctx.scope, input.env);
+          input.env.monitor?.onApiRequest?.({
+            api,
+            nodeId: ctx.node?.id,
+            path: ctx.node?.path
+          });
           const response = await executeApiRequest('ajax', api, ctx.scope, ctx.form);
           const adaptedData = applyResponseAdaptor(expressionCompiler, api, response.data, ctx.scope, input.env);
 
@@ -719,11 +745,15 @@ export function createRendererRuntime(input: {
             ctx.page.store.setData(nextData);
           }
 
-          return { ok: response.ok, data: adaptedData, error: response.ok ? undefined : adaptedData };
+          const result = { ok: response.ok, data: adaptedData, error: response.ok ? undefined : adaptedData };
+          input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+          return result;
         }
         case 'dialog': {
           if (!ctx.page || !processedAction.dialog) {
-            return { ok: false, error: new Error('Dialog action requires page runtime and dialog config') };
+            const result = { ok: false, error: new Error('Dialog action requires page runtime and dialog config') };
+            input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+            return result;
           }
           const dialogScope = createScopeRef({
             id: `${ctx.node?.id ?? ctx.scope.id}:dialog-scope`,
@@ -735,32 +765,56 @@ export function createRendererRuntime(input: {
           });
           const dialogId = ctx.page.openDialog(processedAction.dialog, dialogScope);
           dialogScope.update('dialogId', dialogId);
-          return { ok: true, data: { dialogId } };
+          const result = { ok: true, data: { dialogId } };
+          input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+          return result;
         }
         case 'closeDialog': {
           if (ctx.page && processedAction.dialogId) {
             ctx.page.closeDialog(String(evaluate(processedAction.dialogId, ctx.scope)));
           }
-          return { ok: true };
+          const result = { ok: true };
+          input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+          return result;
         }
         case 'refreshTable': {
           ctx.page?.refresh();
-          return { ok: true, data: ctx.page?.store.getState().refreshTick };
+          const result = { ok: true, data: ctx.page?.store.getState().refreshTick };
+          input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+          return result;
         }
         case 'submitForm': {
           if (!ctx.form) {
-            return { ok: false, error: new Error('submitForm requires form runtime') };
+            const result = { ok: false, error: new Error('submitForm requires form runtime') };
+            input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+            return result;
           }
 
           const api = processedAction.api ? evaluate<ApiObject>(processedAction.api, ctx.scope) : undefined;
-          return ctx.form.submit(api);
+          if (api) {
+            input.env.monitor?.onApiRequest?.({
+              api,
+              nodeId: ctx.node?.id,
+              path: ctx.node?.path
+            });
+          }
+
+          const result = await ctx.form.submit(api);
+          input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+          return result;
         }
         default:
-          return { ok: false, error: new Error(`Unsupported action: ${processedAction.action}`) };
+          {
+            const result = { ok: false, error: new Error(`Unsupported action: ${processedAction.action}`) };
+            input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+            return result;
+          }
       }
     } catch (error) {
       if (isAbortError(error)) {
-        return createCancelledResult(error);
+        const result = createCancelledResult(error);
+        input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+        return result;
       }
 
       input.onActionError?.(error, ctx);
@@ -772,10 +826,12 @@ export function createRendererRuntime(input: {
           path: ctx.node?.path
         });
       }
-      return {
+      const result = {
         ok: false,
         error
       };
+      input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+      return result;
     }
   }
 
@@ -789,7 +845,13 @@ export function createRendererRuntime(input: {
 
     if (previous) {
       clearTimeout(previous.timer);
-      previous.resolve(createCancelledResult());
+      const cancelledResult = createCancelledResult();
+      input.env.monitor?.onActionEnd?.({
+        ...buildActionMonitorPayload(action, ctx),
+        durationMs: 0,
+        result: cancelledResult
+      });
+      previous.resolve(cancelledResult);
       pendingDebounces.delete(key);
     }
 

@@ -412,6 +412,136 @@ describe('createRendererRuntime', () => {
     }
   });
 
+  it('emits action and api monitor callbacks during ajax execution', async () => {
+    const onActionStart = vi.fn();
+    const onActionEnd = vi.fn();
+    const onApiRequest = vi.fn();
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        monitor: {
+          onActionStart,
+          onActionEnd,
+          onApiRequest
+        },
+        fetcher: async <T>() => ({
+          ok: true,
+          status: 200,
+          data: { items: [1] } as T
+        })
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
+    const page = runtime.createPageRuntime({});
+
+    const result = await runtime.dispatch(
+      {
+        action: 'ajax',
+        api: {
+          url: '/api/monitored',
+          method: 'get'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        node
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(onActionStart).toHaveBeenCalledWith({
+      actionType: 'ajax',
+      nodeId: node.id,
+      path: node.path
+    });
+    expect(onApiRequest).toHaveBeenCalledWith({
+      api: expect.objectContaining({ url: '/api/monitored', method: 'get' }),
+      nodeId: node.id,
+      path: node.path
+    });
+    expect(onActionEnd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: 'ajax',
+        nodeId: node.id,
+        path: node.path,
+        result: expect.objectContaining({ ok: true })
+      })
+    );
+  });
+
+  it('emits action monitor callbacks for cancelled debounced actions', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const onActionStart = vi.fn();
+      const onActionEnd = vi.fn();
+      const runtime = createRendererRuntime({
+        registry: createRendererRegistry([textRenderer]),
+        env: {
+          ...env,
+          monitor: {
+            onActionStart,
+            onActionEnd
+          }
+        },
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      });
+      const page = runtime.createPageRuntime({ status: 'idle' });
+
+      const firstPromise = runtime.dispatch(
+        {
+          action: 'setValue',
+          componentPath: 'status',
+          value: 'first',
+          debounce: 25
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page
+        }
+      );
+
+      const secondPromise = runtime.dispatch(
+        {
+          action: 'setValue',
+          componentPath: 'status',
+          value: 'second',
+          debounce: 25
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page
+        }
+      );
+
+      await expect(firstPromise).resolves.toMatchObject({ cancelled: true });
+      await vi.advanceTimersByTimeAsync(25);
+      await secondPromise;
+
+      expect(onActionStart).toHaveBeenCalledTimes(1);
+      expect(onActionEnd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actionType: 'setValue',
+          result: expect.objectContaining({ cancelled: true })
+        })
+      );
+      expect(onActionEnd).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          actionType: 'setValue',
+          result: expect.objectContaining({ ok: true, data: 'second' })
+        })
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('stops chained actions on ajax failure by default', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
