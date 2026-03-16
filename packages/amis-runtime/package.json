@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@nop-chaos/amis-formula": "workspace:*",
-    "@nop-chaos/amis-schema": "workspace:*"
+    "@nop-chaos/amis-schema": "workspace:*",
+    "zustand": "^5.0.11"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

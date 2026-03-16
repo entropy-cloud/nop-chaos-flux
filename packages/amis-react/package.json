@@ -15,7 +15,11 @@
     "@nop-chaos/amis-runtime": "workspace:*",
     "@nop-chaos/amis-schema": "workspace:*",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "use-sync-external-store": "^1.6.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

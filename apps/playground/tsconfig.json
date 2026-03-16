@@ -1,9 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
     "noEmit": true,
-    "types": ["vite/client", "node"]
+    "types": ["node"]
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "vite.config.ts", "../../types/**/*.d.ts", "../../packages/amis-react/src/**/*.d.ts"]
 }
