@@ -107,7 +107,27 @@ function createScopeReader(parent: ScopeRef | undefined, store: ScopeStore<Recor
 }
 
 function hasOwnPathValue(input: Record<string, any>, path: string): boolean {
-  return getIn(input, path) !== undefined;
+  const segments = parsePath(path);
+
+  if (segments.length === 0) {
+    return false;
+  }
+
+  let current: unknown = input;
+
+  for (const segment of segments) {
+    if (current == null || typeof current !== 'object') {
+      return false;
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(current, segment)) {
+      return false;
+    }
+
+    current = (current as Record<string, unknown>)[segment];
+  }
+
+  return true;
 }
 
 function resolveScopePath(scope: ScopeRef | undefined, path: string): unknown {
@@ -154,7 +174,7 @@ function hasScopePath(scope: ScopeRef | undefined, path: string): boolean {
       return true;
     }
 
-    return hasOwnPathValue({ [head]: own[head] }, [head, ...rest].join('.'));
+    return hasOwnPathValue(own, path);
   }
 
   return hasScopePath(scope.parent, path);
@@ -565,6 +585,8 @@ function normalizeAdaptorSource(source: string): string {
 }
 
 function createAdaptorScopeView(scope: ScopeRef): object {
+  let cachedKeys: Array<string | symbol> | undefined;
+
   return new Proxy(
     {},
     {
@@ -583,7 +605,24 @@ function createAdaptorScopeView(scope: ScopeRef): object {
         return typeof property === 'string' ? scope.has(property) : false;
       },
       ownKeys() {
-        return Reflect.ownKeys(scope.read());
+        if (!cachedKeys) {
+          const keys = new Set<string | symbol>();
+          let current: ScopeRef | undefined = scope;
+
+          while (current) {
+            for (const key of Reflect.ownKeys(current.readOwn())) {
+              if (typeof key === 'string' || typeof key === 'symbol') {
+                keys.add(key);
+              }
+            }
+
+            current = current.parent;
+          }
+
+          cachedKeys = Array.from(keys);
+        }
+
+        return cachedKeys;
       },
       getOwnPropertyDescriptor(_target, property) {
         if (typeof property !== 'string') {

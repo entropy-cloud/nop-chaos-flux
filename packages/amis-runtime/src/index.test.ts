@@ -408,6 +408,21 @@ describe('createRendererRuntime', () => {
     });
   });
 
+  it('treats nested scope ownership by lexical level instead of materialized fallback', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ record: { from: 'page' } });
+    const rowScope = runtime.createChildScope(page.scope, { record: { name: 'Alice' } });
+
+    expect(rowScope.has('record')).toBe(true);
+    expect(rowScope.has('record.name')).toBe(true);
+    expect(rowScope.has('record.from')).toBe(false);
+    expect(rowScope.get('record.from')).toBe(undefined);
+  });
+
   it('cancels the previous ajax request when a new matching request starts', async () => {
     let callCount = 0;
     const runtime = createRendererRuntime({
