@@ -211,4 +211,43 @@ describe('createSchemaRenderer', () => {
     expect(screen.getByText('Wrapped hello')).toBeTruthy();
     expect(wrapped).toHaveBeenCalledWith('Wrapped hello');
   });
+
+  it('emits render monitor callbacks for rendered nodes', async () => {
+    const onRenderStart = vi.fn();
+    const onRenderEnd = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'text',
+          text: 'Monitored render'
+        }}
+        env={{
+          ...env,
+          monitor: {
+            onRenderStart,
+            onRenderEnd
+          }
+        }}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('Monitored render')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(onRenderStart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'text'
+        })
+      );
+      expect(onRenderEnd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'text',
+          durationMs: expect.any(Number)
+        })
+      );
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionContext,
@@ -212,6 +212,8 @@ function NodeRenderer(props: {
 }) {
   const runtime = useRendererRuntime();
   const stateRef = useRef<CompiledNodeRuntimeState>(props.node.createRuntimeState());
+  const renderStartedAtRef = useRef(0);
+  renderStartedAtRef.current = Date.now();
   const meta = runtime.resolveNodeMeta(props.node, props.scope, stateRef.current);
   const resolvedProps = runtime.resolveNodeProps(props.node, props.scope, stateRef.current);
   const activeForm = useMemo(() => {
@@ -257,10 +259,6 @@ function NodeRenderer(props: {
     );
   }, [props.node.regions]);
 
-  if (!meta.visible || meta.hidden) {
-    return null;
-  }
-
   const componentProps: RendererComponentProps = {
     id: props.node.id,
     path: props.node.path,
@@ -273,6 +271,28 @@ function NodeRenderer(props: {
   };
 
   const Comp = props.node.component.component;
+
+  useEffect(() => {
+    if (!meta.visible || meta.hidden) {
+      return;
+    }
+
+    const payload = {
+      nodeId: props.node.id,
+      path: props.node.path,
+      type: props.node.type
+    };
+
+    runtime.env.monitor?.onRenderStart?.(payload);
+    runtime.env.monitor?.onRenderEnd?.({
+      ...payload,
+      durationMs: Math.max(0, Date.now() - renderStartedAtRef.current)
+    });
+  });
+
+  if (!meta.visible || meta.hidden) {
+    return null;
+  }
 
   return (
     <NodeMetaContext.Provider value={{ id: props.node.id, path: props.node.path, type: props.node.type }}>
