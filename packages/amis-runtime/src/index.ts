@@ -490,6 +490,34 @@ function normalizeAdaptorSource(source: string): string {
   return trimmed.replace(/;\s*$/, '').trim();
 }
 
+function createCancelledResult(error?: unknown): ActionResult {
+  return {
+    ok: false,
+    cancelled: true,
+    error
+  };
+}
+
+function isAbortError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const candidate = error as { name?: string; code?: string };
+  return candidate.name === 'AbortError' || candidate.code === 'ABORT_ERR';
+}
+
+function createActionKey(action: ActionSchema, ctx: ActionContext): string {
+  const owner = ctx.node?.id ?? ctx.form?.id ?? ctx.scope.id;
+  const target = action.componentPath ?? action.componentId ?? action.formId ?? action.dialogId ?? action.api?.url ?? '';
+  return `${owner}:${action.action}:${target}`;
+}
+
+function createRequestKey(actionType: string, api: ApiObject, scope: ScopeRef, form?: FormRuntime): string {
+  const owner = form?.id ?? scope.id;
+  return `${owner}:${actionType}:${api.method ?? 'get'}:${api.url}`;
+}
+
 function applyRequestAdaptor(expressionCompiler: ExpressionCompiler, api: ApiObject, scope: ScopeRef, env: RendererEnv): ApiObject {
   if (!api.requestAdaptor) {
     return api;
@@ -549,6 +577,32 @@ export function createRendererRuntime(input: {
     expressionCompiler,
     plugins: input.plugins
   });
+  const pendingDebounces = new Map<string, { timer: ReturnType<typeof setTimeout>; resolve: (result: ActionResult) => void }>();
+  const activeRequests = new Map<string, AbortController>();
+
+  async function executeApiRequest<T>(actionType: string, api: ApiObject, scope: ScopeRef, form?: FormRuntime) {
+    const requestKey = createRequestKey(actionType, api, scope, form);
+    const previous = activeRequests.get(requestKey);
+
+    if (previous) {
+      previous.abort();
+    }
+
+    const controller = new AbortController();
+    activeRequests.set(requestKey, controller);
+
+    try {
+      return await input.env.fetcher<T>(api, {
+        scope,
+        env: input.env,
+        signal: controller.signal
+      });
+    } finally {
+      if (activeRequests.get(requestKey) === controller) {
+        activeRequests.delete(requestKey);
+      }
+    }
+  }
 
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
     const store = input.pageStore ?? createPageStore(data);
@@ -612,10 +666,7 @@ export function createRendererRuntime(input: {
         }
 
         const adaptedApi = applyRequestAdaptor(expressionCompiler, api, scope, input.env);
-        const response = await input.env.fetcher(adaptedApi, {
-          scope,
-          env: input.env
-        });
+        const response = await executeApiRequest('submitForm', adaptedApi, scope);
         const adaptedData = applyResponseAdaptor(expressionCompiler, adaptedApi, response.data, scope, input.env);
 
         return {
@@ -660,10 +711,7 @@ export function createRendererRuntime(input: {
           }
 
           const api = applyRequestAdaptor(expressionCompiler, evaluate<ApiObject>(processedAction.api, ctx.scope), ctx.scope, input.env);
-          const response = await input.env.fetcher(api, {
-            scope: ctx.scope,
-            env: input.env
-          });
+          const response = await executeApiRequest('ajax', api, ctx.scope, ctx.form);
           const adaptedData = applyResponseAdaptor(expressionCompiler, api, response.data, ctx.scope, input.env);
 
           if (processedAction.dataPath && response.ok && ctx.page) {
@@ -711,6 +759,10 @@ export function createRendererRuntime(input: {
           return { ok: false, error: new Error(`Unsupported action: ${processedAction.action}`) };
       }
     } catch (error) {
+      if (isAbortError(error)) {
+        return createCancelledResult(error);
+      }
+
       input.onActionError?.(error, ctx);
       for (const plugin of input.plugins ?? []) {
         plugin.onError?.(error, {
@@ -727,15 +779,40 @@ export function createRendererRuntime(input: {
     }
   }
 
+  function runActionWithDebounce(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
+    if (!action.debounce || action.debounce <= 0) {
+      return runSingleAction(action, ctx);
+    }
+
+    const key = createActionKey(action, ctx);
+    const previous = pendingDebounces.get(key);
+
+    if (previous) {
+      clearTimeout(previous.timer);
+      previous.resolve(createCancelledResult());
+      pendingDebounces.delete(key);
+    }
+
+    return new Promise<ActionResult>((resolve) => {
+      const timer = setTimeout(async () => {
+        pendingDebounces.delete(key);
+        resolve(await runSingleAction(action, ctx));
+      }, action.debounce);
+
+      pendingDebounces.set(key, { timer, resolve });
+    });
+  }
+
   async function dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult> {
     const actions = Array.isArray(action) ? action : [action];
     let previous: ActionResult = { ok: true };
 
     for (const current of actions) {
-      const result = await runSingleAction(current, {
+      const actionContext = {
         ...ctx,
         prevResult: previous
-      });
+      };
+      const result = await runActionWithDebounce(current, actionContext);
 
       previous = result;
 

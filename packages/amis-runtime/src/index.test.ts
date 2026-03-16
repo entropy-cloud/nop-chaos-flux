@@ -262,6 +262,70 @@ describe('createRendererRuntime', () => {
     });
   });
 
+  it('cancels the previous ajax request when a new matching request starts', async () => {
+    let callCount = 0;
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>(_api: ApiObject, ctx: ApiRequestContext) => {
+          callCount += 1;
+
+          if (callCount === 1) {
+            return await new Promise((resolve, reject) => {
+              ctx.signal?.addEventListener('abort', () => {
+                reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+              });
+            });
+          }
+
+          return {
+            ok: true,
+            status: 200,
+            data: { request: callCount } as T
+          };
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const firstPromise = runtime.dispatch(
+      {
+        action: 'ajax',
+        api: {
+          url: '/api/search',
+          method: 'get'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    const secondResult = await runtime.dispatch(
+      {
+        action: 'ajax',
+        api: {
+          url: '/api/search',
+          method: 'get'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    const firstResult = await firstPromise;
+
+    expect(firstResult).toMatchObject({ ok: false, cancelled: true });
+    expect(secondResult).toMatchObject({ ok: true, data: { request: 2 } });
+  });
+
   it('increments page refresh tick through refreshTable actions', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
@@ -295,6 +359,57 @@ describe('createRendererRuntime', () => {
     expect(first).toMatchObject({ ok: true, data: 1 });
     expect(second).toMatchObject({ ok: true, data: 2 });
     expect(page.store.getState().refreshTick).toBe(2);
+  });
+
+  it('debounces matching actions and cancels superseded executions', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const runtime = createRendererRuntime({
+        registry: createRendererRegistry([textRenderer]),
+        env,
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      });
+      const page = runtime.createPageRuntime({ status: 'idle' });
+
+      const firstPromise = runtime.dispatch(
+        {
+          action: 'setValue',
+          componentPath: 'status',
+          value: 'first',
+          debounce: 50
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page
+        }
+      );
+
+      const secondPromise = runtime.dispatch(
+        {
+          action: 'setValue',
+          componentPath: 'status',
+          value: 'second',
+          debounce: 50
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page
+        }
+      );
+
+      await expect(firstPromise).resolves.toMatchObject({ ok: false, cancelled: true });
+      expect(page.store.getState().data.status).toBe('idle');
+
+      await vi.advanceTimersByTimeAsync(50);
+
+      await expect(secondPromise).resolves.toMatchObject({ ok: true, data: 'second' });
+      expect(page.store.getState().data.status).toBe('second');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('stops chained actions on ajax failure by default', async () => {
