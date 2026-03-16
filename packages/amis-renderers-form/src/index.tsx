@@ -443,9 +443,15 @@ function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
   const name = String(props.props.name ?? props.schema.name ?? '');
   const presentation = useFieldPresentation(name, currentForm);
   const [pairs, setPairs] = React.useState<KeyValuePair[]>(() => toKeyValuePairs(readFieldValue(scope, name)));
+  const pairsRef = React.useRef(pairs);
+
+  React.useEffect(() => {
+    pairsRef.current = pairs;
+  }, [pairs]);
 
   const syncField = React.useCallback(
     (nextPairs: KeyValuePair[]) => {
+      pairsRef.current = nextPairs;
       setPairs(nextPairs);
 
       if (!currentForm || !name) {
@@ -471,10 +477,10 @@ function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
     return currentForm.registerField({
       path: name,
       getValue() {
-        return pairs;
+        return pairsRef.current;
       },
       validate() {
-        const nonEmptyPairs = pairs.filter((pair) => pair.key.trim() !== '' || pair.value.trim() !== '');
+        const nonEmptyPairs = pairsRef.current.filter((pair) => pair.key.trim() !== '' || pair.value.trim() !== '');
 
         if (nonEmptyPairs.length === 0) {
           return [
@@ -501,7 +507,7 @@ function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
         return [];
       }
     });
-  }, [currentForm, name, pairs, props.meta.label]);
+  }, [currentForm, name, props.meta.label]);
 
   return (
     <label className={presentation.className}>
@@ -579,6 +585,7 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
   const name = String(props.props.name ?? props.schema.name ?? '');
   const presentation = useFieldPresentation(name, currentForm);
   const [items, setItems] = React.useState<ArrayEditorItem[]>(() => toArrayEditorItems(readFieldValue(scope, name)));
+  const itemsRef = React.useRef(items);
   const childFieldState = useCurrentFormState((state) => ({
     errors: state.errors,
     touched: state.touched,
@@ -587,8 +594,13 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
     dirty: state.dirty
   }));
 
+  React.useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
   const syncItems = React.useCallback(
     (nextItems: ArrayEditorItem[]) => {
+      itemsRef.current = nextItems;
       setItems(nextItems);
 
       if (!currentForm || !name) {
@@ -613,15 +625,15 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
 
     return currentForm.registerField({
       path: name,
-      childPaths: items.map((_, index) => `${name}.${index}.value`),
+      childPaths: itemsRef.current.map((_, index) => `${name}.${index}.value`),
       getValue() {
-        return items;
+        return itemsRef.current;
       },
       syncValue() {
-        return items;
+        return itemsRef.current;
       },
       validate() {
-        const nonEmptyItems = items.filter((item) => item.value.trim() !== '');
+        const nonEmptyItems = itemsRef.current.filter((item) => item.value.trim() !== '');
 
         if (nonEmptyItems.length === 0) {
           return [
@@ -643,7 +655,7 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
           return [];
         }
 
-        const item = items[Number(match[1])];
+        const item = itemsRef.current[Number(match[1])];
 
         if (!item || item.value.trim() !== '') {
           return [];
@@ -658,7 +670,7 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
         ];
       }
     });
-  }, [currentForm, items, name, props.meta.label]);
+  }, [currentForm, name, props.meta.label, props.props.itemLabel]);
 
   return (
     <label className={presentation.className}>

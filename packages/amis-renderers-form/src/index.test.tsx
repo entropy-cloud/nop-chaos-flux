@@ -497,8 +497,7 @@ describe('formRendererDefinitions', () => {
     fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: 'alice' } });
     fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: '' } });
 
-    const field = screen.getByPlaceholderText('Reviewer 1').closest('.na-field');
-    expect(field?.className).toContain('na-field--touched');
+    expect(await screen.findByText('Reviewer 1 is required')).toBeTruthy();
   });
 
   it('blocks submit when compiled validation rules fail', async () => {
