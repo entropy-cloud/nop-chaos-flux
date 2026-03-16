@@ -8,6 +8,16 @@ import type {
 } from '@nop-chaos/amis-schema';
 import { useCurrentForm, useCurrentFormState, useRenderScope } from '@nop-chaos/amis-react';
 
+function shouldValidateOn(name: string, currentForm: ReturnType<typeof useCurrentForm>, trigger: 'change' | 'blur' | 'submit') {
+  if (!currentForm || !name) {
+    return false;
+  }
+
+  const field = currentForm.validation?.fields[name];
+  const triggers = field?.behavior.triggers ?? currentForm.validation?.behavior.triggers ?? ['blur'];
+  return triggers.includes(trigger);
+}
+
 function readFieldValue(scope: ReturnType<typeof useRenderScope>, name: string): unknown {
   return name ? scope.get(name) ?? '' : '';
 }
@@ -118,7 +128,7 @@ function createInputRenderer(inputType: string) {
             if (currentForm) {
               currentForm.setValue(name, event.target.value);
 
-              if (name && currentForm.isTouched(name)) {
+              if (shouldValidateOn(name, currentForm, 'change') && currentForm.isTouched(name)) {
                 void currentForm.validateField(name);
               }
             } else {
@@ -128,7 +138,10 @@ function createInputRenderer(inputType: string) {
           onBlur={() => {
             if (currentForm && name) {
               currentForm.touchField(name);
-              void currentForm.validateField(name);
+
+              if (shouldValidateOn(name, currentForm, 'blur')) {
+                void currentForm.validateField(name);
+              }
             }
           }}
         />
@@ -226,7 +239,7 @@ export const formRendererDefinitions: RendererDefinition[] = [
               if (currentForm) {
                 currentForm.setValue(name, event.target.value);
 
-                if (name && currentForm.isTouched(name)) {
+                if (shouldValidateOn(name, currentForm, 'change') && currentForm.isTouched(name)) {
                   void currentForm.validateField(name);
                 }
               } else {
@@ -236,7 +249,10 @@ export const formRendererDefinitions: RendererDefinition[] = [
             onBlur={() => {
               if (currentForm && name) {
                 currentForm.touchField(name);
-                void currentForm.validateField(name);
+
+                if (shouldValidateOn(name, currentForm, 'blur')) {
+                  void currentForm.validateField(name);
+                }
               }
             }}
           >

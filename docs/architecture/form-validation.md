@@ -197,6 +197,14 @@ Current runtime behavior:
 - `visited`, `touched`, and `dirty` are tracked in the form store for standard controls
 - standard form renderers show errors after touch, revalidate touched fields on change, and keep submit-time validation as the final gate
 
+Validation timing is now configurable:
+
+- `form.validateOn` sets the default trigger policy for descendant fields
+- `field.validateOn` overrides the form default for a specific field
+- supported triggers are `change`, `blur`, and `submit`
+- field override wins over form default; form default wins over runtime fallback
+- `submit` remains the final validation gate even when fields also validate earlier
+
 These should remain runtime concepts, not React-library-specific state shapes.
 
 ## Complex Controls and Runtime Registration

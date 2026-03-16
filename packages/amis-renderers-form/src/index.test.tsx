@@ -260,6 +260,97 @@ describe('formRendererDefinitions', () => {
     expect(field?.className).toContain('na-field--invalid');
   });
 
+  it('respects submit-only validation policy until form submission', async () => {
+    cleanup();
+    submitCalls.length = 0;
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          validateOn: 'submit',
+          data: {
+            email: ''
+          },
+          body: [
+            {
+              type: 'input-email',
+              name: 'email',
+              label: 'Email',
+              required: true
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit email',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/email',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const input = screen.getByLabelText('Email');
+    fireEvent.focus(input);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Email is required')).toBeNull();
+    });
+
+    fireEvent.click(screen.getByText('Submit email'));
+
+    expect(await screen.findByText('Email is required')).toBeTruthy();
+    expect(submitCalls).toHaveLength(0);
+  });
+
+  it('respects field-level change validation override', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          validateOn: 'submit',
+          data: {
+            email: ''
+          },
+          body: [
+            {
+              type: 'input-email',
+              name: 'email',
+              label: 'Email',
+              required: true,
+              validateOn: ['change', 'submit']
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const input = screen.getByLabelText('Email');
+    fireEvent.blur(input);
+    expect(screen.queryByText('Email is required')).toBeNull();
+
+    fireEvent.change(input, { target: { value: 'a@example.com' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Email is required')).toBeNull();
+    });
+  });
+
   it('waits for async validation debounce before calling the validator API', async () => {
     cleanup();
     const fetcherMock = vi.fn(async () => ({

@@ -20,6 +20,7 @@ export interface BaseSchema extends SchemaObject {
   visible?: boolean | string;
   hidden?: boolean | string;
   disabled?: boolean | string;
+  validateOn?: ValidationTrigger | ValidationTrigger[];
 }
 
 export type SchemaInput = BaseSchema | BaseSchema[];
@@ -289,16 +290,24 @@ export interface FormValidationResult extends ValidationResult {
   fieldErrors: Record<string, ValidationError[]>;
 }
 
+export type ValidationTrigger = 'change' | 'blur' | 'submit';
+
+export interface CompiledValidationBehavior {
+  triggers: ValidationTrigger[];
+}
+
 export interface CompiledFormValidationField {
   path: string;
   controlType: string;
   label?: string;
   rules: ValidationRule[];
+  behavior: CompiledValidationBehavior;
 }
 
 export interface CompiledFormValidationModel {
   fields: Record<string, CompiledFormValidationField>;
   order: string[];
+  behavior: CompiledValidationBehavior;
 }
 
 export interface ValidationCollectContext<S extends BaseSchema = BaseSchema> {

@@ -21,6 +21,30 @@ const pageRenderer: RendererDefinition = {
   regions: ['body']
 };
 
+const formRenderer: RendererDefinition = {
+  type: 'form',
+  component: () => null,
+  regions: ['body', 'actions'],
+  scopePolicy: 'form',
+  validation: {
+    kind: 'container'
+  }
+};
+
+const inputRenderer: RendererDefinition = {
+  type: 'input-text',
+  component: () => null,
+  validation: {
+    kind: 'field',
+    getFieldPath(schema) {
+      return typeof schema.name === 'string' ? schema.name : undefined;
+    },
+    collectRules() {
+      return [];
+    }
+  }
+};
+
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),
   notify: () => undefined
@@ -445,11 +469,17 @@ describe('createRendererRuntime', () => {
       },
       parentScope: page.scope,
       validation: {
+        behavior: {
+          triggers: ['blur']
+        },
         fields: {
           username: {
             path: 'username',
             controlType: 'input-text',
             label: 'Username',
+            behavior: {
+              triggers: ['blur']
+            },
             rules: [
               {
                 kind: 'async',
@@ -499,11 +529,17 @@ describe('createRendererRuntime', () => {
       },
       parentScope: page.scope,
       validation: {
+        behavior: {
+          triggers: ['blur']
+        },
         fields: {
           username: {
             path: 'username',
             controlType: 'input-text',
             label: 'Username',
+            behavior: {
+              triggers: ['blur']
+            },
             rules: [
               {
                 kind: 'async',
@@ -558,11 +594,17 @@ describe('createRendererRuntime', () => {
       },
       parentScope: page.scope,
       validation: {
+        behavior: {
+          triggers: ['blur']
+        },
         fields: {
           username: {
             path: 'username',
             controlType: 'input-text',
             label: 'Username',
+            behavior: {
+              triggers: ['blur']
+            },
             rules: [
               {
                 kind: 'async',
@@ -626,11 +668,17 @@ describe('createRendererRuntime', () => {
         },
         parentScope: page.scope,
         validation: {
+          behavior: {
+            triggers: ['blur']
+          },
           fields: {
             username: {
               path: 'username',
               controlType: 'input-text',
               label: 'Username',
+              behavior: {
+                triggers: ['blur']
+              },
               rules: [
                 {
                   kind: 'async',
@@ -678,11 +726,17 @@ describe('createRendererRuntime', () => {
       },
       parentScope: page.scope,
       validation: {
+        behavior: {
+          triggers: ['blur']
+        },
         fields: {
           username: {
             path: 'username',
             controlType: 'input-text',
             label: 'Username',
+            behavior: {
+              triggers: ['blur']
+            },
             rules: []
           }
         },
@@ -707,6 +761,37 @@ describe('createRendererRuntime', () => {
     expect(form.isVisited('username')).toBe(false);
     expect(form.isTouched('username')).toBe(false);
     expect(form.isDirty('username')).toBe(false);
+  });
+
+  it('compiles field validation triggers with field override and form fallback', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([formRenderer, inputRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const node = runtime.compile({
+      type: 'form',
+      validateOn: 'submit',
+      body: [
+        {
+          type: 'input-text',
+          name: 'username',
+          label: 'Username',
+          required: true,
+          validateOn: ['blur', 'change']
+        },
+        {
+          type: 'input-text',
+          name: 'nickname',
+          label: 'Nickname',
+          required: true
+        }
+      ]
+    }) as any;
+
+    expect(node.validation.behavior.triggers).toEqual(['submit']);
+    expect(node.validation.fields.username.behavior.triggers).toEqual(['blur', 'change']);
+    expect(node.validation.fields.nickname.behavior.triggers).toEqual(['submit']);
   });
 
   it('treats nested scope ownership by lexical level instead of materialized fallback', () => {

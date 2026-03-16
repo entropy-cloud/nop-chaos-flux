@@ -33,6 +33,7 @@ import type {
   SchemaInput,
   ScopeRef,
   ScopeStore,
+  ValidationTrigger,
   ValidationError,
   ValidationResult,
   ValidationRule,
@@ -380,13 +381,25 @@ function mergeValidationRules(...groups: Array<ValidationRule[] | undefined>): V
   return groups.flatMap((group) => group ?? []);
 }
 
+function normalizeValidationTriggers(input: unknown, fallback: ValidationTrigger[] = ['blur']): ValidationTrigger[] {
+  const candidates = Array.isArray(input) ? input : input != null ? [input] : [];
+  const normalized = candidates.filter(
+    (candidate): candidate is ValidationTrigger => candidate === 'change' || candidate === 'blur' || candidate === 'submit'
+  );
+
+  return normalized.length > 0 ? Array.from(new Set(normalized)) : fallback;
+}
+
 function collectValidationModel(
   node:
     | CompiledSchemaNode
     | CompiledSchemaNode[]
     | Array<CompiledSchemaNode | CompiledSchemaNode[]>
     | null
-    | undefined
+    | undefined,
+  options: {
+    defaultTriggers?: ValidationTrigger[];
+  } = {}
 ): CompiledFormValidationModel | undefined {
   if (!node) {
     return undefined;
@@ -412,10 +425,17 @@ function collectValidationModel(
 
   const fields: Record<string, CompiledFormValidationField> = {};
   const order: string[] = [];
+  const rootBehavior = {
+    triggers: options.defaultTriggers ?? (['blur'] as ValidationTrigger[])
+  };
 
   const visit = (entry: CompiledSchemaNode) => {
     if (!entry.component) {
       return;
+    }
+
+    if (entry.type === 'form') {
+      rootBehavior.triggers = normalizeValidationTriggers(entry.schema.validateOn, ['blur']);
     }
 
     const contributor = entry.component.validation;
@@ -433,7 +453,10 @@ function collectValidationModel(
           path: fieldPath,
           controlType: entry.type,
           label: typeof entry.schema.label === 'string' ? entry.schema.label : undefined,
-          rules: mergeValidationRules(collectSchemaValidationRules(entry.schema), contributor.collectRules?.(entry.schema, ctx))
+          rules: mergeValidationRules(collectSchemaValidationRules(entry.schema), contributor.collectRules?.(entry.schema, ctx)),
+          behavior: {
+            triggers: normalizeValidationTriggers(entry.schema.validateOn, rootBehavior.triggers)
+          }
         };
         order.push(fieldPath);
       }
@@ -451,7 +474,7 @@ function collectValidationModel(
 
   nodes.forEach(visit);
 
-  return order.length > 0 ? { fields, order } : undefined;
+  return order.length > 0 ? { fields, order, behavior: rootBehavior } : undefined;
 }
 
 function applyWrapComponentPlugins(renderer: RendererDefinition, plugins?: RendererPlugin[]): RendererDefinition {
@@ -527,7 +550,10 @@ export function createSchemaCompiler(input: {
           ? collectValidationModel(
               Object.values(regions)
                 .map((region) => region.node)
-                .filter((candidate): candidate is CompiledSchemaNode | CompiledSchemaNode[] => candidate != null)
+                .filter((candidate): candidate is CompiledSchemaNode | CompiledSchemaNode[] => candidate != null),
+              {
+                defaultTriggers: normalizeValidationTriggers(schema.validateOn, ['blur'])
+              }
             )
           : undefined,
       regions,
@@ -1111,6 +1137,7 @@ export function createRendererRuntime(input: {
     const validationRuns = new Map<string, number>();
     const pendingValidationDebounces = new Map<string, { timer: ReturnType<typeof setTimeout>; resolve: (run: boolean) => void }>();
     const initialFieldState = buildInitialFieldState(inputValue.initialValues ?? {}, inputValue.validation);
+    const defaultValidationTriggers = inputValue.validation?.behavior.triggers ?? ['blur'];
 
     function cancelValidationDebounce(path: string) {
       const pending = pendingValidationDebounces.get(path);
@@ -1292,6 +1319,14 @@ export function createRendererRuntime(input: {
       },
       async submit(api?: ApiObject) {
         store.setSubmitting(true);
+
+        for (const path of inputValue.validation?.order ?? []) {
+          const triggers = inputValue.validation?.fields[path]?.behavior?.triggers ?? defaultValidationTriggers;
+
+          if (triggers.includes('submit')) {
+            store.setTouched(path, true);
+          }
+        }
 
         const validation = await this.validateForm();
 

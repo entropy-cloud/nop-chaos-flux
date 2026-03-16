@@ -138,6 +138,7 @@ const schema = {
         {
           type: 'form',
           id: 'user-form',
+          validateOn: 'blur',
           data: {
             username: '',
             email: '',
@@ -152,6 +153,7 @@ const schema = {
               placeholder: 'Enter username',
               required: true,
               minLength: 3,
+              validateOn: ['blur', 'change', 'submit'],
               validate: {
                 debounce: 500,
                 api: {
