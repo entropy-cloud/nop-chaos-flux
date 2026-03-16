@@ -108,6 +108,30 @@ body {
   gap: 10px;
 }
 
+.activity-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.activity-control {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(244, 246, 249, 0.88);
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.activity-control--active {
+  background: rgba(255, 209, 138, 0.16);
+  border-color: rgba(255, 209, 138, 0.3);
+  color: #ffd18a;
+}
+
 .activity-filter {
   appearance: none;
   border: 1px solid rgba(255, 255, 255, 0.12);

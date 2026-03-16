@@ -251,8 +251,13 @@ const schema = {
 export function App() {
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
   const [activeKinds, setActiveKinds] = useState<ActivityKind[]>(['render', 'action', 'api', 'notify']);
+  const [activityPaused, setActivityPaused] = useState(false);
 
   const pushActivity = useCallback((kind: ActivityKind, message: string, detail?: string) => {
+    if (activityPaused) {
+      return;
+    }
+
     setActivity((current) => [
       {
         id: Date.now() + current.length,
@@ -262,7 +267,7 @@ export function App() {
       },
       ...current
     ].slice(0, 16));
-  }, []);
+  }, [activityPaused]);
 
   const env = useMemo<RendererEnv>(
     () => ({
@@ -403,6 +408,18 @@ export function App() {
               <p className="eyebrow">Live Monitor</p>
               <h2>Runtime Activity</h2>
               <p>Render, action, and API events stream here while you interact with the schema.</p>
+            </div>
+            <div className="activity-toolbar">
+              <button
+                type="button"
+                className={`activity-control ${activityPaused ? 'activity-control--active' : ''}`}
+                onClick={() => setActivityPaused((current) => !current)}
+              >
+                {activityPaused ? 'Resume Stream' : 'Pause Stream'}
+              </button>
+              <button type="button" className="activity-control" onClick={() => setActivity([])}>
+                Clear Log
+              </button>
             </div>
             <div className="activity-filters" aria-label="Activity filters">
               {(['render', 'action', 'api', 'notify'] as ActivityKind[]).map((kind) => {
