@@ -244,6 +244,12 @@ interface RuntimeFieldRegistration {
 
 This is a supplement, not the primary mechanism.
 
+Current first implementation status:
+
+- `FormRuntime.registerField(...)` now exists for controls that cannot be modeled fully by compile-time rules alone
+- runtime registration can contribute field-level validation for paths that are missing or incomplete in the compiled model
+- the current `tag-list` renderer is the first minimal example of this path
+
 ## Recommended First-Version Scope
 
 First implementation should aim for:

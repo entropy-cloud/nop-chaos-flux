@@ -28,6 +28,7 @@ import type {
   RendererRuntime,
   ResolvedNodeMeta,
   ResolvedNodeProps,
+  RuntimeFieldRegistration,
   SchemaCompiler,
   SchemaFieldRule,
   SchemaInput,
@@ -1155,6 +1156,7 @@ export function createRendererRuntime(input: {
     const formId = inputValue.id ?? `${inputValue.parentScope.id}-form`;
     const validationRuns = new Map<string, number>();
     const pendingValidationDebounces = new Map<string, { timer: ReturnType<typeof setTimeout>; resolve: (run: boolean) => void }>();
+    const runtimeFieldRegistrations = new Map<string, RuntimeFieldRegistration>();
     const initialFieldState = buildInitialFieldState(inputValue.initialValues ?? {}, inputValue.validation);
     const defaultValidationTriggers = inputValue.validation?.behavior.triggers ?? ['blur'];
 
@@ -1210,8 +1212,40 @@ export function createRendererRuntime(input: {
       store,
       scope,
       validation: inputValue.validation,
+      registerField(registration) {
+        runtimeFieldRegistrations.set(registration.path, registration);
+
+        return () => {
+          if (runtimeFieldRegistrations.get(registration.path) === registration) {
+            runtimeFieldRegistrations.delete(registration.path);
+          }
+        };
+      },
       async validateField(path) {
         const field = inputValue.validation?.fields[path];
+        const runtimeRegistration = runtimeFieldRegistrations.get(path);
+
+        if (!field && !runtimeRegistration) {
+          return { ok: true, errors: [] } as ValidationResult;
+        }
+
+        if (!field && runtimeRegistration?.validate) {
+          const runtimeErrors = await runtimeRegistration.validate();
+          const nextErrors = { ...store.getState().errors };
+
+          if (runtimeErrors.length > 0) {
+            nextErrors[path] = runtimeErrors;
+          } else {
+            delete nextErrors[path];
+          }
+
+          store.setErrors(nextErrors);
+
+          return {
+            ok: runtimeErrors.length === 0,
+            errors: runtimeErrors
+          } as ValidationResult;
+        }
 
         if (!field) {
           return { ok: true, errors: [] } as ValidationResult;
@@ -1252,6 +1286,14 @@ export function createRendererRuntime(input: {
             }
           }
 
+          if (runtimeRegistration?.validate) {
+            const runtimeErrors = await runtimeRegistration.validate();
+
+            if (runtimeErrors.length > 0) {
+              errors.push(...runtimeErrors);
+            }
+          }
+
           if (validationRuns.get(path) !== runId) {
             return { ok: true, errors: [] } as ValidationResult;
           }
@@ -1277,7 +1319,7 @@ export function createRendererRuntime(input: {
         }
       },
       async validateForm() {
-        if (!inputValue.validation) {
+        if (!inputValue.validation && runtimeFieldRegistrations.size === 0) {
           return {
             ok: true,
             errors: [],
@@ -1288,7 +1330,24 @@ export function createRendererRuntime(input: {
         const fieldErrors: Record<string, ValidationError[]> = {};
         const errors: ValidationError[] = [];
 
-        for (const path of inputValue.validation.order) {
+        for (const path of inputValue.validation?.order ?? []) {
+          const result = await this.validateField(path);
+
+          if (!result.ok) {
+            fieldErrors[path] = result.errors;
+            errors.push(...result.errors);
+          }
+        }
+
+        for (const [path, registration] of runtimeFieldRegistrations) {
+          if (inputValue.validation?.fields[path]) {
+            continue;
+          }
+
+          if (!registration.validate) {
+            continue;
+          }
+
           const result = await this.validateField(path);
 
           if (!result.ok) {
@@ -1345,6 +1404,10 @@ export function createRendererRuntime(input: {
           if (triggers.includes('submit')) {
             store.setTouched(path, true);
           }
+        }
+
+        for (const path of runtimeFieldRegistrations.keys()) {
+          store.setTouched(path, true);
         }
 
         const validation = await this.validateForm();

@@ -143,6 +143,10 @@ interface SwitchSchema extends InputSchema {
   };
 }
 
+interface TagListSchema extends InputSchema {
+  tags?: string[];
+}
+
 interface InputSchema extends BaseSchema {
   name?: string;
   placeholder?: string;
@@ -289,6 +293,88 @@ function createFieldValidation(nameResolver?: (schema: InputSchema) => string | 
       return rules;
     }
   };
+}
+
+function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
+  const scope = useRenderScope();
+  const currentForm = useCurrentForm();
+  const name = String(props.props.name ?? props.schema.name ?? '');
+  const value = readCheckboxGroupValue(scope, name);
+  const presentation = useFieldPresentation(name, currentForm);
+  const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];
+
+  React.useEffect(() => {
+    if (!currentForm || !name) {
+      return;
+    }
+
+    return currentForm.registerField({
+      path: name,
+      getValue() {
+        return currentForm.scope.get(name);
+      },
+      validate() {
+        const currentValue = currentForm.scope.get(name);
+        const tags = Array.isArray(currentValue) ? currentValue.map((item) => String(item)) : [];
+
+        if (tags.length === 0) {
+          return [
+            {
+              path: name,
+              rule: 'required',
+              message: `${props.meta.label ?? name} requires at least one tag`
+            }
+          ];
+        }
+
+        return [];
+      }
+    });
+  }, [currentForm, name, props.meta.label]);
+
+  return (
+    <label className={presentation.className}>
+      {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+      <div className="na-tag-list">
+        {tags.map((tag) => {
+          const active = value.includes(tag);
+
+          return (
+            <button
+              key={tag}
+              type="button"
+              className={active ? 'na-tag na-tag--active' : 'na-tag'}
+              onFocus={() => {
+                if (currentForm && name) {
+                  currentForm.visitField(name);
+                }
+              }}
+              onClick={() => {
+                const nextValue = active ? value.filter((item) => item !== tag) : [...value, tag];
+
+                if (currentForm) {
+                  if (!currentForm.isTouched(name)) {
+                    currentForm.touchField(name);
+                  }
+                  currentForm.setValue(name, nextValue);
+                  void currentForm.validateField(name);
+                } else {
+                  scope.update(name, nextValue);
+                }
+              }}
+            >
+              {tag}
+            </button>
+          );
+        })}
+      </div>
+      {renderFieldHint({
+        errorMessage: presentation.fieldState.error?.message,
+        validating: presentation.fieldState.validating,
+        showError: presentation.showError
+      })}
+    </label>
+  );
 }
 
 export const formRendererDefinitions: RendererDefinition[] = [
@@ -594,6 +680,10 @@ export const formRendererDefinitions: RendererDefinition[] = [
         </fieldset>
       );
     }
+  },
+  {
+    type: 'tag-list',
+    component: TagListRenderer
   }
 ];
 

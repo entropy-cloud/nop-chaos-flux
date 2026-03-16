@@ -291,6 +291,12 @@ export interface FormValidationResult extends ValidationResult {
   fieldErrors: Record<string, ValidationError[]>;
 }
 
+export interface RuntimeFieldRegistration {
+  path: string;
+  getValue(): unknown;
+  validate?(): Promise<ValidationError[]> | ValidationError[];
+}
+
 export type ValidationTrigger = 'change' | 'blur' | 'submit';
 export type ValidationVisibilityTrigger = 'touched' | 'dirty' | 'visited' | 'submit';
 
@@ -527,6 +533,7 @@ export interface FormRuntime {
   store: FormStoreApi;
   scope: ScopeRef;
   validation?: CompiledFormValidationModel;
+  registerField(registration: RuntimeFieldRegistration): () => void;
   validateField(path: string): Promise<ValidationResult>;
   validateForm(): Promise<FormValidationResult>;
   getError(path: string): ValidationError[] | undefined;

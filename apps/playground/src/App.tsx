@@ -149,7 +149,8 @@ const schema = {
             status: 'draft',
             notes: '',
             featured: false,
-            tags: ['stable']
+            tags: ['stable'],
+            labels: []
           },
           body: [
             {
@@ -239,6 +240,13 @@ const schema = {
                 { label: 'Beta', value: 'beta' },
                 { label: 'Internal', value: 'internal' }
               ]
+            },
+            {
+              type: 'tag-list',
+              name: 'labels',
+              label: 'Content Labels',
+              tags: ['Docs', 'API', 'Urgent'],
+              showErrorOn: ['touched', 'submit']
             }
           ],
           actions: [

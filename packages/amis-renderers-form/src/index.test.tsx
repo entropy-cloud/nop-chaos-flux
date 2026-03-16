@@ -282,6 +282,61 @@ describe('formRendererDefinitions', () => {
     });
   });
 
+  it('validates a runtime-registered complex field and blocks submit', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: 'submit',
+          data: {
+            tags: []
+          },
+          body: [
+            {
+              type: 'tag-list',
+              name: 'tags',
+              label: 'Tag List',
+              tags: ['alpha', 'beta']
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit tags',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/tags',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit tags'));
+
+    expect(await screen.findByText('Tag List requires at least one tag')).toBeTruthy();
+    expect(submitCalls).toHaveLength(0);
+
+    fireEvent.click(screen.getByText('alpha'));
+    fireEvent.click(screen.getByText('Submit tags'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(submitCalls[0]).toMatchObject({ tags: ['alpha'] });
+  });
+
   it('blocks submit when compiled validation rules fail', async () => {
     submitCalls.length = 0;
     cleanup();
