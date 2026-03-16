@@ -250,6 +250,7 @@ const schema = {
 
 export function App() {
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const [activeKinds, setActiveKinds] = useState<ActivityKind[]>(['render', 'action', 'api', 'notify']);
 
   const pushActivity = useCallback((kind: ActivityKind, message: string, detail?: string) => {
     setActivity((current) => [
@@ -358,6 +359,21 @@ export function App() {
     [pushActivity]
   );
 
+  const visibleActivity = useMemo(
+    () => activity.filter((entry) => activeKinds.includes(entry.kind)),
+    [activity, activeKinds]
+  );
+
+  const toggleKind = useCallback((kind: ActivityKind) => {
+    setActiveKinds((current) => {
+      if (current.includes(kind)) {
+        return current.length === 1 ? current : current.filter((entry) => entry !== kind);
+      }
+
+      return [...current, kind];
+    });
+  }, []);
+
   return (
     <main className="app-shell">
       <section className="hero-card hero-card--wide">
@@ -388,9 +404,25 @@ export function App() {
               <h2>Runtime Activity</h2>
               <p>Render, action, and API events stream here while you interact with the schema.</p>
             </div>
+            <div className="activity-filters" aria-label="Activity filters">
+              {(['render', 'action', 'api', 'notify'] as ActivityKind[]).map((kind) => {
+                const active = activeKinds.includes(kind);
+
+                return (
+                  <button
+                    key={kind}
+                    type="button"
+                    className={`activity-filter ${active ? 'activity-filter--active' : ''}`}
+                    onClick={() => toggleKind(kind)}
+                  >
+                    {kind}
+                  </button>
+                );
+              })}
+            </div>
             <div className="activity-list">
-              {activity.length === 0 ? <p className="activity-empty">Trigger a search, dialog, or submit action to inspect the event flow.</p> : null}
-              {activity.map((entry) => (
+              {visibleActivity.length === 0 ? <p className="activity-empty">No events match the current filter. Re-enable a kind or trigger a new interaction.</p> : null}
+              {visibleActivity.map((entry) => (
                 <article key={entry.id} className="activity-entry">
                   <span className={`activity-badge activity-badge--${entry.kind}`}>{entry.kind}</span>
                   <span className="activity-message">{entry.message}</span>

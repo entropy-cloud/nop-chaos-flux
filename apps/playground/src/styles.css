@@ -102,6 +102,31 @@ body {
   gap: 10px;
 }
 
+.activity-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.activity-filter {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(244, 246, 249, 0.82);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.activity-filter--active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
 .activity-entry {
   display: grid;
   gap: 8px;
