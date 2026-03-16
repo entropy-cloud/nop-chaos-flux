@@ -101,4 +101,49 @@ describe('formRendererDefinitions', () => {
       role: 'editor'
     });
   });
+
+  it('blocks submit when compiled validation rules fail', async () => {
+    submitCalls.length = 0;
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            email: ''
+          },
+          body: [
+            {
+              type: 'input-email',
+              name: 'email',
+              label: 'Email',
+              required: true
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit email',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/email',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit email'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(0);
+    });
+  });
 });

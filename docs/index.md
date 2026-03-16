@@ -16,6 +16,7 @@ Choose the smallest document that matches the task.
 | --- | --- | --- |
 | Understand the current official architecture direction | `docs/architecture/amis-core.md` | `docs/architecture/renderer-runtime.md` |
 | Change React integration, renderer contracts, or region rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
+| Design form validation and field rule extraction | `docs/architecture/form-validation.md` | `docs/architecture/renderer-runtime.md` |
 | Check workspace, package layout, naming, or quality gates | `docs/architecture/frontend-baseline.md` | `docs/plans/development-plan.md` |
 | Continue implementation planning | `docs/plans/development-plan.md` | `docs/architecture/amis-core.md` |
 | Inspect the example CRUD schema | `docs/examples/user-management-schema.md` | `docs/architecture/amis-core.md` |
@@ -32,6 +33,9 @@ Choose the smallest document that matches the task.
 - `docs/architecture/renderer-runtime.md`
   - Internal renderer and React integration design.
   - Use this when changing component contracts, hooks, regions, and performance behavior.
+- `docs/architecture/form-validation.md`
+  - Preferred form validation architecture.
+  - Use this when changing rule extraction, field registration, or form runtime validation behavior.
 - `docs/architecture/frontend-baseline.md`
   - Workspace and engineering baseline for this repo.
   - Use this when changing package layout, tooling, testing, and naming conventions.
@@ -58,6 +62,7 @@ Choose the smallest document that matches the task.
 ## Source-of-Truth Notes
 
 - Architecture intent lives primarily in `docs/architecture/amis-core.md` and `docs/architecture/renderer-runtime.md`.
+- Form validation intent lives primarily in `docs/architecture/form-validation.md`.
 - Runtime code and exported types live in `packages/amis-schema/src/index.ts`, `packages/amis-runtime/src/index.ts`, and `packages/amis-react/src/index.tsx`.
 - Example behavior should stay aligned with `apps/playground/src/App.tsx`.
 

@@ -228,7 +228,8 @@ function NodeRenderer(props: {
           ? (resolvedProps.value.data as Record<string, any>)
           : undefined,
       parentScope: props.scope,
-      page: props.page
+      page: props.page,
+      validation: props.node.validation
     });
   }, [props.form, props.node.component.scopePolicy, props.node.id, props.page, props.scope, resolvedProps.value, runtime]);
   const activeScope = activeForm?.scope ?? props.scope;

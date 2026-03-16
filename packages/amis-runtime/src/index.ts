@@ -5,6 +5,8 @@ import type {
   ActionSchema,
   ApiObject,
   BaseSchema,
+  CompiledFormValidationField,
+  CompiledFormValidationModel,
   CompiledNodeRuntimeState,
   CompiledRegion,
   CompiledRuntimeValue,
@@ -13,6 +15,7 @@ import type {
   CompileNodeOptions,
   CompileSchemaOptions,
   ExpressionCompiler,
+  FormValidationResult,
   FormRuntime,
   FormStoreApi,
   FormStoreState,
@@ -30,6 +33,9 @@ import type {
   SchemaInput,
   ScopeRef,
   ScopeStore,
+  ValidationError,
+  ValidationResult,
+  ValidationRule,
   RendererEnv
 } from '@nop-chaos/amis-schema';
 import {
@@ -337,6 +343,93 @@ function createCompiledRegion(
   };
 }
 
+function collectSchemaValidationRules(schema: BaseSchema): ValidationRule[] {
+  const ruleSource = schema as BaseSchema & {
+    required?: boolean;
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    patternMessage?: string;
+  };
+  const rules: ValidationRule[] = [];
+
+  if (ruleSource.required) {
+    rules.push({ kind: 'required' });
+  }
+
+  if (typeof ruleSource.minLength === 'number') {
+    rules.push({ kind: 'minLength', value: ruleSource.minLength });
+  }
+
+  if (typeof ruleSource.maxLength === 'number') {
+    rules.push({ kind: 'maxLength', value: ruleSource.maxLength });
+  }
+
+  if (typeof ruleSource.pattern === 'string' && ruleSource.pattern) {
+    rules.push({
+      kind: 'pattern',
+      value: ruleSource.pattern,
+      message: ruleSource.patternMessage
+    });
+  }
+
+  return rules;
+}
+
+function mergeValidationRules(...groups: Array<ValidationRule[] | undefined>): ValidationRule[] {
+  return groups.flatMap((group) => group ?? []);
+}
+
+function collectValidationModel(node: CompiledSchemaNode | CompiledSchemaNode[] | null | undefined): CompiledFormValidationModel | undefined {
+  if (!node) {
+    return undefined;
+  }
+
+  const nodes = Array.isArray(node) ? node : [node];
+  const fields: Record<string, CompiledFormValidationField> = {};
+  const order: string[] = [];
+
+  const visit = (entry: CompiledSchemaNode) => {
+    if (!entry.component) {
+      return;
+    }
+
+    const contributor = entry.component.validation;
+
+    if (contributor?.kind === 'field') {
+      const ctx = {
+        schema: entry.schema,
+        renderer: entry.component,
+        path: entry.path
+      };
+      const fieldPath = contributor.getFieldPath?.(entry.schema, ctx);
+
+      if (fieldPath) {
+        fields[fieldPath] = {
+          path: fieldPath,
+          controlType: entry.type,
+          label: typeof entry.schema.label === 'string' ? entry.schema.label : undefined,
+          rules: mergeValidationRules(collectSchemaValidationRules(entry.schema), contributor.collectRules?.(entry.schema, ctx))
+        };
+        order.push(fieldPath);
+      }
+    }
+
+    for (const region of Object.values(entry.regions)) {
+      if (!region.node) {
+        continue;
+      }
+
+      const childNodes = Array.isArray(region.node) ? region.node : [region.node];
+      childNodes.forEach(visit);
+    }
+  };
+
+  nodes.forEach(visit);
+
+  return order.length > 0 ? { fields, order } : undefined;
+}
+
 function applyWrapComponentPlugins(renderer: RendererDefinition, plugins?: RendererPlugin[]): RendererDefinition {
   return (plugins ?? []).reduce((current, plugin) => plugin.wrapComponent?.(current) ?? current, renderer);
 }
@@ -405,6 +498,7 @@ export function createSchemaCompiler(input: {
       component: renderer,
       meta,
       props,
+      validation: renderer.scopePolicy === 'form' ? collectValidationModel(Object.values(regions).map((region) => region.node).filter(Boolean) as CompiledSchemaNode[]) : undefined,
       regions,
       flags,
       createRuntimeState() {
@@ -464,7 +558,11 @@ export function createSchemaCompiler(input: {
 }
 
 function createFormStore(initialValues: Record<string, any>): FormStoreApi {
-  const store = createStore<FormStoreState>(() => ({ values: initialValues }));
+  const store = createStore<FormStoreState>(() => ({
+    values: initialValues,
+    errors: {},
+    submitting: false
+  }));
 
   return {
     getState() {
@@ -479,6 +577,12 @@ function createFormStore(initialValues: Record<string, any>): FormStoreApi {
     setValue(path, value) {
       const current = store.getState().values;
       store.setState({ values: setIn(current, path, value) });
+    },
+    setErrors(errors) {
+      store.setState({ errors });
+    },
+    setSubmitting(submitting) {
+      store.setState({ submitting });
     }
   };
 }
@@ -652,6 +756,54 @@ function createCancelledResult(error?: unknown): ActionResult {
   };
 }
 
+function buildValidationMessage(rule: ValidationRule, field: CompiledFormValidationField): string {
+  const label = field.label ?? field.path;
+
+  switch (rule.kind) {
+    case 'required':
+      return `${label} is required`;
+    case 'minLength':
+      return `${label} must be at least ${rule.value} characters`;
+    case 'maxLength':
+      return `${label} must be at most ${rule.value} characters`;
+    case 'pattern':
+      return rule.message ?? `${label} format is invalid`;
+    case 'email':
+      return rule.message ?? `${label} must be a valid email address`;
+  }
+}
+
+function isEmptyValue(value: unknown): boolean {
+  return value == null || value === '' || (Array.isArray(value) && value.length === 0);
+}
+
+function validateRule(rule: ValidationRule, value: unknown, field: CompiledFormValidationField): ValidationError | undefined {
+  switch (rule.kind) {
+    case 'required':
+      return isEmptyValue(value)
+        ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
+        : undefined;
+    case 'minLength':
+      return typeof value === 'string' && value.length < rule.value
+        ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
+        : undefined;
+    case 'maxLength':
+      return typeof value === 'string' && value.length > rule.value
+        ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
+        : undefined;
+    case 'pattern':
+      return typeof value === 'string' && value !== '' && !new RegExp(rule.value).test(value)
+        ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
+        : undefined;
+    case 'email': {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return typeof value === 'string' && value !== '' && !emailPattern.test(value)
+        ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
+        : undefined;
+    }
+  }
+}
+
 function isAbortError(error: unknown): boolean {
   if (!error || typeof error !== 'object') {
     return false;
@@ -808,6 +960,7 @@ export function createRendererRuntime(input: {
     initialValues?: Record<string, any>;
     parentScope: ScopeRef;
     page?: PageRuntime;
+    validation?: CompiledFormValidationModel;
   }): FormRuntime {
     const store = createFormStore(inputValue.initialValues ?? {});
     const formId = inputValue.id ?? `${inputValue.parentScope.id}-form`;
@@ -827,26 +980,115 @@ export function createRendererRuntime(input: {
       id: formId,
       store,
       scope,
+      validation: inputValue.validation,
+      async validateField(path) {
+        const field = inputValue.validation?.fields[path];
+
+        if (!field) {
+          return { ok: true, errors: [] } as ValidationResult;
+        }
+
+        const value = scope.get(path);
+        const errors = field.rules
+          .map((rule) => validateRule(rule, value, field))
+          .filter((entry): entry is ValidationError => !!entry);
+        const nextErrors = { ...store.getState().errors };
+
+        if (errors.length > 0) {
+          nextErrors[path] = errors;
+        } else {
+          delete nextErrors[path];
+        }
+
+        store.setErrors(nextErrors);
+
+        return {
+          ok: errors.length === 0,
+          errors
+        } as ValidationResult;
+      },
+      async validateForm() {
+        if (!inputValue.validation) {
+          return {
+            ok: true,
+            errors: [],
+            fieldErrors: {}
+          } as FormValidationResult;
+        }
+
+        const fieldErrors: Record<string, ValidationError[]> = {};
+        const errors: ValidationError[] = [];
+
+        for (const path of inputValue.validation.order) {
+          const result = await this.validateField(path);
+
+          if (!result.ok) {
+            fieldErrors[path] = result.errors;
+            errors.push(...result.errors);
+          }
+        }
+
+        store.setErrors(fieldErrors);
+
+        return {
+          ok: errors.length === 0,
+          errors,
+          fieldErrors
+        } as FormValidationResult;
+      },
+      getError(path) {
+        return store.getState().errors[path];
+      },
+      clearErrors(path) {
+        if (!path) {
+          store.setErrors({});
+          return;
+        }
+
+        const nextErrors = { ...store.getState().errors };
+        delete nextErrors[path];
+        store.setErrors(nextErrors);
+      },
       async submit(api?: ApiObject) {
+        store.setSubmitting(true);
+
+        const validation = await this.validateForm();
+
+        if (!validation.ok) {
+          store.setSubmitting(false);
+          return {
+            ok: false,
+            error: validation.errors,
+            data: validation.fieldErrors
+          };
+        }
+
         if (!api) {
+          store.setSubmitting(false);
           return { ok: true, data: store.getState().values };
         }
 
         const adaptedApi = applyRequestAdaptor(expressionCompiler, api, scope, input.env);
-        const response = await executeApiRequest('submitForm', adaptedApi, scope);
-        const adaptedData = applyResponseAdaptor(expressionCompiler, adaptedApi, response.data, scope, input.env);
+        try {
+          const response = await executeApiRequest('submitForm', adaptedApi, scope);
+          const adaptedData = applyResponseAdaptor(expressionCompiler, adaptedApi, response.data, scope, input.env);
 
-        return {
-          ok: response.ok,
-          data: adaptedData,
-          error: response.ok ? undefined : adaptedData
+          return {
+            ok: response.ok,
+            data: adaptedData,
+            error: response.ok ? undefined : adaptedData
+          };
+        } finally {
+          store.setSubmitting(false);
         };
       },
       reset(values) {
         store.setValues(toRecord(values));
+        store.setErrors({});
       },
       setValue(name, value) {
         store.setValue(name, value);
+        this.clearErrors(name);
       }
     };
   }

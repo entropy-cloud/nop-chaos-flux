@@ -266,6 +266,52 @@ export interface SchemaFieldRule {
   regionKey?: string;
 }
 
+export type ValidationRule =
+  | { kind: 'required'; message?: string }
+  | { kind: 'minLength'; value: number; message?: string }
+  | { kind: 'maxLength'; value: number; message?: string }
+  | { kind: 'pattern'; value: string; message?: string }
+  | { kind: 'email'; message?: string };
+
+export interface ValidationError {
+  path: string;
+  message: string;
+  rule: ValidationRule['kind'];
+}
+
+export interface ValidationResult {
+  ok: boolean;
+  errors: ValidationError[];
+}
+
+export interface FormValidationResult extends ValidationResult {
+  fieldErrors: Record<string, ValidationError[]>;
+}
+
+export interface CompiledFormValidationField {
+  path: string;
+  controlType: string;
+  label?: string;
+  rules: ValidationRule[];
+}
+
+export interface CompiledFormValidationModel {
+  fields: Record<string, CompiledFormValidationField>;
+  order: string[];
+}
+
+export interface ValidationCollectContext<S extends BaseSchema = BaseSchema> {
+  schema: S;
+  renderer: RendererDefinition<S>;
+  path: SchemaPath;
+}
+
+export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
+  kind: 'field' | 'container' | 'none';
+  getFieldPath?(schema: S, ctx: ValidationCollectContext<S>): string | undefined;
+  collectRules?(schema: S, ctx: ValidationCollectContext<S>): ValidationRule[];
+}
+
 export interface CompiledSchemaMeta {
   id?: CompiledRuntimeValue<string | undefined>;
   name?: CompiledRuntimeValue<string | undefined>;
@@ -327,6 +373,7 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   memo?: boolean;
   scopePolicy?: ScopePolicy;
   resolveProps?: (args: ResolvePropsArgs<S>) => Record<string, unknown>;
+  validation?: ValidationContributor<S>;
 }
 
 export interface RendererRegistry {
@@ -365,6 +412,7 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   component: RendererDefinition<S>;
   meta: CompiledSchemaMeta;
   props: CompiledRuntimeValue<Record<string, unknown>>;
+  validation?: CompiledFormValidationModel;
   regions: Readonly<Record<string, CompiledRegion>>;
   flags: CompiledNodeFlags;
   createRuntimeState(): CompiledNodeRuntimeState;
@@ -418,6 +466,8 @@ export interface ResolvedNodeMeta {
 
 export interface FormStoreState {
   values: Record<string, any>;
+  errors: Record<string, ValidationError[]>;
+  submitting: boolean;
 }
 
 export interface FormStoreApi {
@@ -425,6 +475,8 @@ export interface FormStoreApi {
   subscribe(listener: () => void): () => void;
   setValues(values: Record<string, any>): void;
   setValue(path: string, value: unknown): void;
+  setErrors(errors: Record<string, ValidationError[]>): void;
+  setSubmitting(submitting: boolean): void;
 }
 
 export interface DialogState {
@@ -453,6 +505,11 @@ export interface FormRuntime {
   id: string;
   store: FormStoreApi;
   scope: ScopeRef;
+  validation?: CompiledFormValidationModel;
+  validateField(path: string): Promise<ValidationResult>;
+  validateForm(): Promise<FormValidationResult>;
+  getError(path: string): ValidationError[] | undefined;
+  clearErrors(path?: string): void;
   submit(api?: ApiObject): Promise<ActionResult>;
   reset(values?: object): void;
   setValue(name: string, value: unknown): void;
@@ -518,7 +575,13 @@ export interface RendererRuntime {
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;
   dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult>;
   createPageRuntime(data?: Record<string, any>): PageRuntime;
-  createFormRuntime(input: { id?: string; initialValues?: Record<string, any>; parentScope: ScopeRef; page?: PageRuntime }): FormRuntime;
+  createFormRuntime(input: {
+    id?: string;
+    initialValues?: Record<string, any>;
+    parentScope: ScopeRef;
+    page?: PageRuntime;
+    validation?: CompiledFormValidationModel;
+  }): FormRuntime;
 }
 
 export interface RendererHookApi {

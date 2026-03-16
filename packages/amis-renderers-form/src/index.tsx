@@ -25,6 +25,10 @@ interface SelectSchema extends InputSchema {
 interface InputSchema extends BaseSchema {
   name?: string;
   placeholder?: string;
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
 }
 
 function FormRenderer(props: RendererComponentProps<FormSchema>) {
@@ -64,6 +68,18 @@ function createInputRenderer(inputType: string) {
   };
 }
 
+function createFieldValidation(nameResolver?: (schema: InputSchema) => string | undefined, email?: boolean) {
+  return {
+    kind: 'field' as const,
+    getFieldPath(schema: InputSchema) {
+      return nameResolver ? nameResolver(schema) : schema.name;
+    },
+    collectRules() {
+      return email ? [{ kind: 'email' as const }] : [];
+    }
+  };
+}
+
 export const formRendererDefinitions: RendererDefinition[] = [
   {
     type: 'form',
@@ -73,18 +89,22 @@ export const formRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'input-text',
-    component: createInputRenderer('text')
+    component: createInputRenderer('text'),
+    validation: createFieldValidation()
   },
   {
     type: 'input-email',
-    component: createInputRenderer('email')
+    component: createInputRenderer('email'),
+    validation: createFieldValidation(undefined, true)
   },
   {
     type: 'input-password',
-    component: createInputRenderer('password')
+    component: createInputRenderer('password'),
+    validation: createFieldValidation()
   },
   {
     type: 'select',
+    validation: createFieldValidation(),
     component: function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
       const scope = useRenderScope();
       const currentForm = useCurrentForm();

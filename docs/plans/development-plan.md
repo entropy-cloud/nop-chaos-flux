@@ -7,6 +7,7 @@ This document tracks the implementation plan for the NOP Chaos AMIS renderer fra
 It should be read together with:
 
 - `docs/architecture/amis-core.md`
+- `docs/architecture/form-validation.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/frontend-baseline.md`
 
@@ -57,6 +58,14 @@ Still strategically important next:
   - region rendering
   - context split
   - performance rules
+
+### Form validation architecture
+
+- `docs/architecture/form-validation.md`
+  - compile-time field extraction
+  - renderer validation registration
+  - runtime validation contract
+  - async validator direction
 
 ### Workspace and engineering baseline
 

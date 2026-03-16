@@ -1,0 +1,252 @@
+# Form Validation Design
+
+## Purpose
+
+This document defines the preferred form validation architecture for `nop-amis`.
+
+The goal is to support schema-driven validation without hard-wiring the core runtime to `React Hook Form`, `Yup`, or any other specific React-side library.
+
+## Design Goals
+
+- collect form field structure and validation rules at schema compile time
+- keep renderer internals pluggable through registry-based validation contributors
+- let runtime execute a unified validation model
+- allow complex controls to provide extra runtime registration only when truly necessary
+- avoid coupling `amis-runtime` to React-only form libraries
+
+## Main Rule
+
+Validation is primarily a compiled schema concern, not a renderer-instance side effect.
+
+That means:
+
+- the compiler should understand form structure, field paths, and nesting
+- renderer definitions should declare how a control participates in validation
+- runtime should consume a compiled validation model
+- React components should render errors and update values, not invent the validation graph at runtime
+
+## Why Not Hard-Wire RHF or Yup
+
+`React Hook Form` and `Yup` can be useful integration tools, but they should not define the core architecture.
+
+Reasons:
+
+- `amis-runtime` should stay React-independent
+- validation rules come from schema, not JSX registration
+- future adapters may prefer `Zod`, custom async rules, or designer-generated rule sets
+- low-code renderer compilation should work even outside a React form-library lifecycle
+
+Recommended stance:
+
+- core validation model is framework-neutral
+- React integration may later add an adapter layer if it helps for specific controls
+- no dependency on `React Hook Form` or `Yup` is required for the first version
+
+## Architecture Layers
+
+Validation should be split into four layers:
+
+1. schema validation declarations
+2. compile-time field and rule extraction
+3. runtime validation execution
+4. React rendering of validation state
+
+## Compile-Time Responsibility
+
+The compiler should walk the form subtree and collect:
+
+- field paths such as `username`, `profile.email`, and `addresses.0.city`
+- lexical nesting and container boundaries
+- field control type
+- explicit schema rules
+- visibility and disabled conditions when they affect validation participation
+
+The compiler should not hard-code the private details of every control implementation.
+
+## Renderer Validation Registration
+
+Each renderer definition may optionally describe how it participates in validation.
+
+Example direction:
+
+```ts
+interface ValidationContributor {
+  kind: 'field' | 'container' | 'none';
+  getFieldPath?(schema: BaseSchema): string | undefined;
+  collectRules?(schema: BaseSchema, ctx: ValidationCollectContext): ValidationRule[];
+  normalizeValue?(value: unknown, schema: BaseSchema): unknown;
+}
+
+interface RendererDefinition<S extends BaseSchema = BaseSchema> {
+  type: string;
+  component: React.ComponentType<any>;
+  validation?: ValidationContributor;
+}
+```
+
+This lets the compiler understand control semantics through the registry rather than through a growing list of hard-coded `if (type === ...)` branches.
+
+## Compiled Validation Model
+
+The compiler should produce a form-scoped validation model.
+
+Example direction:
+
+```ts
+interface CompiledFormValidationField {
+  path: string;
+  controlType: string;
+  label?: string;
+  rules: ValidationRule[];
+}
+
+interface CompiledFormValidationModel {
+  fields: Record<string, CompiledFormValidationField>;
+  order: string[];
+}
+```
+
+This model should live with the compiled form node or in form-specific compiled metadata.
+
+## Validation Rule Model
+
+Rules should use a runtime-neutral representation.
+
+Example direction:
+
+```ts
+type ValidationRule =
+  | { kind: 'required'; message?: string }
+  | { kind: 'minLength'; value: number; message?: string }
+  | { kind: 'maxLength'; value: number; message?: string }
+  | { kind: 'pattern'; value: string; message?: string }
+  | { kind: 'email'; message?: string }
+  | { kind: 'custom'; name: string; args?: unknown; message?: string }
+  | { kind: 'async'; api: ApiObject; debounce?: number; message?: string };
+```
+
+This rule model can later be mapped to adapters, but the compiler and runtime should treat it as the source of truth.
+
+## Rule Sources
+
+Rules should come from two places:
+
+### Explicit schema rules
+
+Examples:
+
+- `required`
+- `minLength`
+- `maxLength`
+- `pattern`
+- `validate`
+
+### Control semantic defaults
+
+Examples:
+
+- `input-email` contributes an `email` rule
+- `input-number` contributes numeric normalization and numeric checks
+- `date-range` contributes structured value validation
+
+The merged rule list should be computed during compilation.
+
+## Runtime Contract
+
+`FormRuntime` should eventually expose validation-oriented APIs in addition to value mutation.
+
+Example direction:
+
+```ts
+interface FormRuntime {
+  id: string;
+  validateField(path: string): Promise<ValidationResult>;
+  validateForm(): Promise<FormValidationResult>;
+  getError(path: string): ValidationError | undefined;
+  clearError(path: string): void;
+  clearErrors(): void;
+  submit(api?: ApiObject): Promise<ActionResult>;
+  setValue(name: string, value: unknown): void;
+  reset(values?: Record<string, any>): void;
+}
+```
+
+Submission flow should become:
+
+1. validate relevant fields
+2. stop on validation failure
+3. only run requestAdaptor, fetcher, and responseAdaptor after validation passes
+
+## Runtime State
+
+The form store will likely need more than just `values`.
+
+Expected additions:
+
+- `errors`
+- `submitting`
+- `validating`
+- field-level validation status for async rules
+
+These should remain runtime concepts, not React-library-specific state shapes.
+
+## Complex Controls and Runtime Registration
+
+Most fields should be fully described at compile time.
+
+Only complex controls should need optional runtime registration, for example:
+
+- dynamic array item editors
+- file uploaders
+- rich text editors
+- third-party composite widgets
+
+Possible direction:
+
+```ts
+interface RuntimeFieldRegistration {
+  path: string;
+  getValue(): unknown;
+  validate?(): Promise<ValidationError[]> | ValidationError[];
+}
+```
+
+This is a supplement, not the primary mechanism.
+
+## Recommended First-Version Scope
+
+First implementation should aim for:
+
+1. compile-time field extraction for standard form controls
+2. unified validation rule model
+3. `FormRuntime.validateField` and `FormRuntime.validateForm`
+4. sync validation for `required`, `minLength`, `maxLength`, `pattern`, and `email`
+5. async validation built on the existing request cancellation infrastructure
+
+Do not start with:
+
+- deep React Hook Form integration
+- Yup-only rule modeling
+- runtime-only field discovery as the main architecture
+
+## Relationship to Legacy Notes
+
+`docs/references/legacy-implementation-notes.md` contains some useful ideas, but it is not the architecture source of truth.
+
+Useful pieces to borrow:
+
+- compile-time rule extraction
+- submit handler separation
+- async validation request cancellation
+
+Ideas to treat carefully:
+
+- dialog extraction by `dialogId`, because the current runtime now prefers nearest-dialog close semantics
+- mutable `setByPath`, because current public updates favor clearer immutable semantics
+
+## Related Documents
+
+- `docs/architecture/amis-core.md`
+- `docs/architecture/renderer-runtime.md`
+- `docs/plans/development-plan.md`
+- `docs/references/legacy-implementation-notes.md`
