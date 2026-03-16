@@ -151,7 +151,8 @@ const schema = {
             featured: false,
             tags: ['stable'],
             labels: [],
-            metadata: []
+            metadata: [],
+            reviewers: []
           },
           body: [
             {
@@ -254,6 +255,13 @@ const schema = {
               name: 'metadata',
               label: 'Metadata',
               addLabel: 'Add metadata pair',
+              showErrorOn: 'submit'
+            },
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer',
               showErrorOn: 'submit'
             }
           ],

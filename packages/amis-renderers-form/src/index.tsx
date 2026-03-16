@@ -157,6 +157,15 @@ interface KeyValuePair {
   value: string;
 }
 
+interface ArrayEditorSchema extends InputSchema {
+  itemLabel?: string;
+}
+
+interface ArrayEditorItem {
+  id: string;
+  value: string;
+}
+
 interface InputSchema extends BaseSchema {
   name?: string;
   placeholder?: string;
@@ -244,6 +253,21 @@ function toKeyValuePairs(value: unknown): KeyValuePair[] {
       id: typeof candidate.id === 'string' ? candidate.id : `pair-${index}`,
       key: typeof candidate.key === 'string' ? candidate.key : '',
       value: typeof candidate.value === 'string' ? candidate.value : ''
+    };
+  });
+}
+
+function toArrayEditorItems(value: unknown): ArrayEditorItem[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((item, index) => {
+    const candidate = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+
+    return {
+      id: typeof candidate.id === 'string' ? candidate.id : `item-${index}`,
+      value: typeof candidate.value === 'string' ? candidate.value : typeof item === 'string' ? item : ''
     };
   });
 }
@@ -538,6 +562,117 @@ function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
           }}
         >
           {props.props.addLabel ? String(props.props.addLabel) : 'Add entry'}
+        </button>
+      </div>
+      {renderFieldHint({
+        errorMessage: presentation.fieldState.error?.message,
+        validating: presentation.fieldState.validating,
+        showError: presentation.showError
+      })}
+    </label>
+  );
+}
+
+function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
+  const scope = useRenderScope();
+  const currentForm = useCurrentForm();
+  const name = String(props.props.name ?? props.schema.name ?? '');
+  const presentation = useFieldPresentation(name, currentForm);
+  const [items, setItems] = React.useState<ArrayEditorItem[]>(() => toArrayEditorItems(readFieldValue(scope, name)));
+
+  const syncItems = React.useCallback(
+    (nextItems: ArrayEditorItem[]) => {
+      setItems(nextItems);
+
+      if (!currentForm || !name) {
+        scope.update(name, nextItems);
+        return;
+      }
+
+      if (!currentForm.isTouched(name)) {
+        currentForm.touchField(name);
+      }
+
+      currentForm.setValue(name, nextItems);
+      void currentForm.validateField(name);
+    },
+    [currentForm, name, scope]
+  );
+
+  React.useEffect(() => {
+    if (!currentForm || !name) {
+      return;
+    }
+
+    return currentForm.registerField({
+      path: name,
+      childPaths: items.map((_, index) => `${name}.${index}.value`),
+      getValue() {
+        return items;
+      },
+      syncValue() {
+        return items;
+      },
+      validate() {
+        const nonEmptyItems = items.filter((item) => item.value.trim() !== '');
+
+        if (nonEmptyItems.length === 0) {
+          return [
+            {
+              path: name,
+              rule: 'required',
+              message: `${props.meta.label ?? name} requires at least one item`
+            }
+          ];
+        }
+
+        return [];
+      }
+    });
+  }, [currentForm, items, name, props.meta.label]);
+
+  return (
+    <label className={presentation.className}>
+      {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+      <div className="na-array-editor">
+        {items.map((item, index) => (
+          <div key={item.id} className="na-array-editor__row">
+            <input
+              className="na-input"
+              type="text"
+              value={item.value}
+              placeholder={props.props.itemLabel ? `${props.props.itemLabel} ${index + 1}` : `Item ${index + 1}`}
+              onFocus={() => {
+                if (currentForm && name) {
+                  currentForm.visitField(name);
+                }
+              }}
+              onChange={(event) => {
+                const nextItems = items.map((candidate, candidateIndex) =>
+                  candidateIndex === index ? { ...candidate, value: event.target.value } : candidate
+                );
+                syncItems(nextItems);
+              }}
+            />
+            <button
+              type="button"
+              className="na-kv-remove"
+              onClick={() => {
+                syncItems(items.filter((candidate) => candidate.id !== item.id));
+              }}
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="na-kv-add"
+          onClick={() => {
+            syncItems([...items, { id: `item-${items.length + 1}`, value: '' }]);
+          }}
+        >
+          Add item
         </button>
       </div>
       {renderFieldHint({
@@ -860,6 +995,10 @@ export const formRendererDefinitions: RendererDefinition[] = [
   {
     type: 'key-value',
     component: KeyValueRenderer
+  },
+  {
+    type: 'array-editor',
+    component: ArrayEditorRenderer
   }
 ];
 

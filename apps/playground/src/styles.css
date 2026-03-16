@@ -412,6 +412,17 @@ body {
   justify-self: start;
 }
 
+.na-array-editor {
+  display: grid;
+  gap: 12px;
+}
+
+.na-array-editor__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
 .na-radio-group {
   display: grid;
   gap: 10px;

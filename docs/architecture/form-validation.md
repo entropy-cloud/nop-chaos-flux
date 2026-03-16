@@ -238,6 +238,9 @@ Possible direction:
 interface RuntimeFieldRegistration {
   path: string;
   getValue(): unknown;
+  childPaths?: string[];
+  syncValue?(): unknown;
+  onRemove?(): void;
   validate?(): Promise<ValidationError[]> | ValidationError[];
 }
 ```
@@ -250,6 +253,7 @@ Current first implementation status:
 - runtime registration can contribute field-level validation for paths that are missing or incomplete in the compiled model
 - the current `tag-list` renderer is the first minimal example of this path
 - `key-value` is the first composite editor example where runtime registration and local composite UI state stay synchronized through the form runtime
+- `array-editor` now uses `childPaths` and `syncValue()` to show how runtime registration can expose deeper composite structure while still presenting one top-level field contract
 
 ## Recommended First-Version Scope
 

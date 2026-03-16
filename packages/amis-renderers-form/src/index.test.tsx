@@ -409,6 +409,66 @@ describe('formRendererDefinitions', () => {
     });
   });
 
+  it('submits and validates a runtime-registered array editor', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: 'submit',
+          data: {
+            reviewers: []
+          },
+          body: [
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer'
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit reviewers',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/reviewers',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit reviewers'));
+
+    expect(await screen.findByText('Reviewers requires at least one item')).toBeTruthy();
+    expect(submitCalls).toHaveLength(0);
+
+    fireEvent.click(screen.getByText('Add item'));
+    fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: 'alice' } });
+    fireEvent.click(screen.getByText('Submit reviewers'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    const reviewers = Array.isArray(submitCalls[0].reviewers)
+      ? submitCalls[0].reviewers
+      : Object.values(submitCalls[0].reviewers ?? {});
+    expect(Array.isArray(reviewers)).toBe(true);
+    expect(reviewers[0]).toMatchObject({ value: 'alice' });
+  });
+
   it('blocks submit when compiled validation rules fail', async () => {
     submitCalls.length = 0;
     cleanup();

@@ -1167,11 +1167,26 @@ export function createRendererRuntime(input: {
         return undefined;
       }
 
-      const nextValue = registration.getValue();
+      const nextValue = registration.syncValue ? registration.syncValue() : registration.getValue();
       const baseline = initialFieldState.initialValues[path];
       store.setDirty(path, !Object.is(baseline, nextValue));
       store.setValue(path, nextValue);
       return nextValue;
+    }
+
+    function syncRegisteredChildPaths(registration: RuntimeFieldRegistration) {
+      const rootValue = registration.syncValue ? registration.syncValue() : registration.getValue();
+      let nextValues = store.getState().values;
+
+      for (const childPath of registration.childPaths ?? []) {
+        const relativePath = childPath.startsWith(`${registration.path}.`)
+          ? childPath.slice(registration.path.length + 1)
+          : childPath;
+        const value = getIn(rootValue, relativePath);
+        nextValues = setIn(nextValues, childPath, value);
+      }
+
+      store.setValues(nextValues);
     }
 
     function cancelValidationDebounce(path: string) {
@@ -1229,9 +1244,11 @@ export function createRendererRuntime(input: {
       registerField(registration) {
         runtimeFieldRegistrations.set(registration.path, registration);
         syncRegisteredFieldValue(registration.path);
+        syncRegisteredChildPaths(registration);
 
         return () => {
           if (runtimeFieldRegistrations.get(registration.path) === registration) {
+            registration.onRemove?.();
             runtimeFieldRegistrations.delete(registration.path);
           }
         };

@@ -294,6 +294,9 @@ export interface FormValidationResult extends ValidationResult {
 export interface RuntimeFieldRegistration {
   path: string;
   getValue(): unknown;
+  childPaths?: string[];
+  syncValue?(): unknown;
+  onRemove?(): void;
   validate?(): Promise<ValidationError[]> | ValidationError[];
 }
 
