@@ -386,6 +386,32 @@ body {
   color: #8a4d1d;
 }
 
+.na-kv-list {
+  display: grid;
+  gap: 12px;
+}
+
+.na-kv-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.na-kv-add,
+.na-kv-remove {
+  border: 1px solid rgba(33, 53, 71, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  color: #213547;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.na-kv-add {
+  justify-self: start;
+}
+
 .na-radio-group {
   display: grid;
   gap: 10px;

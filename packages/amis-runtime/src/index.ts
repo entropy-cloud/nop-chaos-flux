@@ -1160,6 +1160,20 @@ export function createRendererRuntime(input: {
     const initialFieldState = buildInitialFieldState(inputValue.initialValues ?? {}, inputValue.validation);
     const defaultValidationTriggers = inputValue.validation?.behavior.triggers ?? ['blur'];
 
+    function syncRegisteredFieldValue(path: string) {
+      const registration = runtimeFieldRegistrations.get(path);
+
+      if (!registration) {
+        return undefined;
+      }
+
+      const nextValue = registration.getValue();
+      const baseline = initialFieldState.initialValues[path];
+      store.setDirty(path, !Object.is(baseline, nextValue));
+      store.setValue(path, nextValue);
+      return nextValue;
+    }
+
     function cancelValidationDebounce(path: string) {
       const pending = pendingValidationDebounces.get(path);
 
@@ -1214,6 +1228,7 @@ export function createRendererRuntime(input: {
       validation: inputValue.validation,
       registerField(registration) {
         runtimeFieldRegistrations.set(registration.path, registration);
+        syncRegisteredFieldValue(registration.path);
 
         return () => {
           if (runtimeFieldRegistrations.get(registration.path) === registration) {
@@ -1251,9 +1266,10 @@ export function createRendererRuntime(input: {
           return { ok: true, errors: [] } as ValidationResult;
         }
 
+        const syncedRuntimeValue = syncRegisteredFieldValue(path);
         const runId = (validationRuns.get(path) ?? 0) + 1;
         validationRuns.set(path, runId);
-        const value = scope.get(path);
+        const value = syncedRuntimeValue ?? scope.get(path);
         const errors: ValidationError[] = [];
         const hasAsyncRules = field.rules.some((rule) => rule.kind === 'async');
 

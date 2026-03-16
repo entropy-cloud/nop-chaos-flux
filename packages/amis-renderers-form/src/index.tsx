@@ -147,6 +147,16 @@ interface TagListSchema extends InputSchema {
   tags?: string[];
 }
 
+interface KeyValueSchema extends InputSchema {
+  addLabel?: string;
+}
+
+interface KeyValuePair {
+  id: string;
+  key: string;
+  value: string;
+}
+
 interface InputSchema extends BaseSchema {
   name?: string;
   placeholder?: string;
@@ -220,6 +230,22 @@ function useFieldPresentation(name: string, currentForm: FormRuntime | undefined
 function readCheckboxGroupValue(scope: ReturnType<typeof useRenderScope>, name: string): string[] {
   const value = readFieldValue(scope, name);
   return Array.isArray(value) ? value.map((item) => String(item)) : [];
+}
+
+function toKeyValuePairs(value: unknown): KeyValuePair[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((item, index) => {
+    const candidate = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+
+    return {
+      id: typeof candidate.id === 'string' ? candidate.id : `pair-${index}`,
+      key: typeof candidate.key === 'string' ? candidate.key : '',
+      value: typeof candidate.value === 'string' ? candidate.value : ''
+    };
+  });
 }
 
 function FormRenderer(props: RendererComponentProps<FormSchema>) {
@@ -377,6 +403,142 @@ function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
             </button>
           );
         })}
+      </div>
+      {renderFieldHint({
+        errorMessage: presentation.fieldState.error?.message,
+        validating: presentation.fieldState.validating,
+        showError: presentation.showError
+      })}
+    </label>
+  );
+}
+
+function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
+  const scope = useRenderScope();
+  const currentForm = useCurrentForm();
+  const name = String(props.props.name ?? props.schema.name ?? '');
+  const presentation = useFieldPresentation(name, currentForm);
+  const [pairs, setPairs] = React.useState<KeyValuePair[]>(() => toKeyValuePairs(readFieldValue(scope, name)));
+
+  const syncField = React.useCallback(
+    (nextPairs: KeyValuePair[]) => {
+      setPairs(nextPairs);
+
+      if (!currentForm || !name) {
+        scope.update(name, nextPairs);
+        return;
+      }
+
+      if (!currentForm.isTouched(name)) {
+        currentForm.touchField(name);
+      }
+
+      currentForm.setValue(name, nextPairs);
+      void currentForm.validateField(name);
+    },
+    [currentForm, name, scope]
+  );
+
+  React.useEffect(() => {
+    if (!currentForm || !name) {
+      return;
+    }
+
+    return currentForm.registerField({
+      path: name,
+      getValue() {
+        return pairs;
+      },
+      validate() {
+        const nonEmptyPairs = pairs.filter((pair) => pair.key.trim() !== '' || pair.value.trim() !== '');
+
+        if (nonEmptyPairs.length === 0) {
+          return [
+            {
+              path: name,
+              rule: 'required',
+              message: `${props.meta.label ?? name} requires at least one entry`
+            }
+          ];
+        }
+
+        const incomplete = nonEmptyPairs.find((pair) => pair.key.trim() === '' || pair.value.trim() === '');
+
+        if (incomplete) {
+          return [
+            {
+              path: name,
+              rule: 'pattern',
+              message: `${props.meta.label ?? name} entries need both key and value`
+            }
+          ];
+        }
+
+        return [];
+      }
+    });
+  }, [currentForm, name, pairs, props.meta.label]);
+
+  return (
+    <label className={presentation.className}>
+      {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+      <div className="na-kv-list">
+        {pairs.map((pair, index) => (
+          <div key={pair.id} className="na-kv-row">
+            <input
+              className="na-input"
+              type="text"
+              value={pair.key}
+              placeholder="Key"
+              onFocus={() => {
+                if (currentForm && name) {
+                  currentForm.visitField(name);
+                }
+              }}
+              onChange={(event) => {
+                const nextPairs = pairs.map((candidate, candidateIndex) =>
+                  candidateIndex === index ? { ...candidate, key: event.target.value } : candidate
+                );
+                syncField(nextPairs);
+              }}
+            />
+            <input
+              className="na-input"
+              type="text"
+              value={pair.value}
+              placeholder="Value"
+              onFocus={() => {
+                if (currentForm && name) {
+                  currentForm.visitField(name);
+                }
+              }}
+              onChange={(event) => {
+                const nextPairs = pairs.map((candidate, candidateIndex) =>
+                  candidateIndex === index ? { ...candidate, value: event.target.value } : candidate
+                );
+                syncField(nextPairs);
+              }}
+            />
+            <button
+              type="button"
+              className="na-kv-remove"
+              onClick={() => {
+                syncField(pairs.filter((candidate) => candidate.id !== pair.id));
+              }}
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="na-kv-add"
+          onClick={() => {
+            syncField([...pairs, { id: `pair-${pairs.length + 1}`, key: '', value: '' }]);
+          }}
+        >
+          {props.props.addLabel ? String(props.props.addLabel) : 'Add entry'}
+        </button>
       </div>
       {renderFieldHint({
         errorMessage: presentation.fieldState.error?.message,
@@ -694,6 +856,10 @@ export const formRendererDefinitions: RendererDefinition[] = [
   {
     type: 'tag-list',
     component: TagListRenderer
+  },
+  {
+    type: 'key-value',
+    component: KeyValueRenderer
   }
 ];
 

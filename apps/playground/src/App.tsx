@@ -150,7 +150,8 @@ const schema = {
             notes: '',
             featured: false,
             tags: ['stable'],
-            labels: []
+            labels: [],
+            metadata: []
           },
           body: [
             {
@@ -247,6 +248,13 @@ const schema = {
               label: 'Content Labels',
               tags: ['Docs', 'API', 'Urgent'],
               showErrorOn: ['touched', 'submit']
+            },
+            {
+              type: 'key-value',
+              name: 'metadata',
+              label: 'Metadata',
+              addLabel: 'Add metadata pair',
+              showErrorOn: 'submit'
             }
           ],
           actions: [

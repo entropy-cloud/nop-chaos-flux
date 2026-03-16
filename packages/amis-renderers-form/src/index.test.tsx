@@ -345,6 +345,70 @@ describe('formRendererDefinitions', () => {
     expect(submitCalls[0]).toMatchObject({ tags: ['alpha'] });
   });
 
+  it('submits and validates a runtime-registered key-value editor', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: 'submit',
+          data: {
+            metadata: []
+          },
+          body: [
+            {
+              type: 'key-value',
+              name: 'metadata',
+              label: 'Metadata',
+              addLabel: 'Add metadata entry'
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit metadata',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/metadata',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit metadata'));
+
+    expect(await screen.findByText('Metadata requires at least one entry')).toBeTruthy();
+    expect(submitCalls).toHaveLength(0);
+
+    fireEvent.click(screen.getByText('Add metadata entry'));
+    fireEvent.change(screen.getByPlaceholderText('Key'), { target: { value: 'env' } });
+    fireEvent.click(screen.getByText('Submit metadata'));
+
+    expect(await screen.findByText('Metadata entries need both key and value')).toBeTruthy();
+    expect(submitCalls).toHaveLength(0);
+
+    fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: 'prod' } });
+    fireEvent.click(screen.getByText('Submit metadata'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(submitCalls[0]).toMatchObject({
+      metadata: [{ key: 'env', value: 'prod' }]
+    });
+  });
+
   it('blocks submit when compiled validation rules fail', async () => {
     submitCalls.length = 0;
     cleanup();
