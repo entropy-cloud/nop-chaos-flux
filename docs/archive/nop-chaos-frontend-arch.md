@@ -1,5 +1,8 @@
 # NOP Chaos Frontend Technical Architecture and Naming Conventions
 
+> Canonical engineering baseline for this repo now lives in `docs/architecture/frontend-baseline.md`.
+> Use `docs/index.md` as the primary documentation entry point.
+
 ## 1. Scope
 
 This document summarizes the current technical architecture and naming conventions of the `nop-frontend-template` project. It is intended to be used as a baseline when continuing development, extracting common capabilities into `nop-amis`, or adding new applications, pages, plugins, and shared packages.

@@ -1,5 +1,8 @@
 # NOP Chaos AMIS Renderer Development Plan
 
+> Canonical planning and architecture references now live under `docs/`.
+> Start with `docs/index.md`, then prefer `docs/plans/development-plan.md`, `docs/architecture/amis-core.md`, and `docs/architecture/renderer-runtime.md`.
+
 ## 1. Goal and Delivery Strategy
 
 本计划用于把当前设计文档逐步落地为一个可运行、可测试、可扩展的低代码渲染框架，技术基线固定为：
@@ -59,7 +62,7 @@
 
 以下文件是开发计划的直接参考依据，后续实现时必须持续对齐。
 
-### 3.1 `nop-chaos-amis.md`
+### 3.1 `docs/architecture/amis-core.md`
 
 参考内容：
 
@@ -75,7 +78,7 @@
 - 作为“产品级能力清单”和“阶段验收样例”的主参考
 - 后续 playground 第一批 demo 直接优先实现其中的 CRUD 示例子集
 
-### 3.2 `nop-chaos-frontend-arch.md`
+### 3.2 `docs/architecture/frontend-baseline.md`
 
 参考内容：
 
@@ -89,7 +92,7 @@
 - 作为 workspace 和包命名、工程脚本、测试布局的规范参考
 - 包结构优先遵守其中的 package extraction 和命名规则
 
-### 3.3 `nop-chaos-amis-renderer-design.md`
+### 3.3 `docs/architecture/renderer-runtime.md`
 
 参考内容：
 
@@ -104,7 +107,7 @@
 - 作为实现时的“核心设计说明书”
 - 开发过程中如果某项实现和本文档冲突，优先回到这份设计文档确认是否要改设计
 
-### 3.4 `nop-chaos-amis-renderer-interfaces.ts`
+### 3.4 `docs/references/renderer-interfaces.md`
 
 参考内容：
 
@@ -116,7 +119,7 @@
 - 作为第一阶段代码落地的接口蓝图
 - 实现时允许迭代，但要保持变更可追踪，并同步更新设计文档
 
-### 3.5 `expression-processor.js`
+### 3.5 `docs/references/expression-processor-notes.md`
 
 参考内容：
 
@@ -229,7 +232,7 @@ packages/
 
 ### References
 
-- `nop-chaos-frontend-arch.md`: monorepo、命名、测试脚本、React 19、Vite 7 基线
+- `docs/architecture/frontend-baseline.md`: monorepo、命名、测试脚本、React 19、Vite 7 基线
 
 ## 6.2 P1 - Expression Compiler Foundation
 
@@ -268,13 +271,13 @@ packages/
 - static subtree 始终返回原始引用
 - 动态 subtree 在值不变时复用旧引用
 - 不使用 `new Function(...)`
-- 对 `expression-processor.js` 中验证过的语义有等价测试
+- 对 `docs/references/expression-processor-notes.md` 中总结的语义有等价测试
 
 ### References
 
-- `nop-chaos-amis-renderer-design.md`: 表达式注入、static fast path、identity reuse
-- `nop-chaos-amis-renderer-interfaces.ts`: 类型契约
-- `expression-processor.js`: 仅参考缓存语义，不参考执行方式
+- `docs/architecture/renderer-runtime.md`: 表达式注入、static fast path、identity reuse
+- `docs/references/renderer-interfaces.md`: 类型契约
+- `docs/references/expression-processor-notes.md`: 仅参考缓存语义，不参考执行方式
 
 ## 6.3 P2 - Schema Compiler Core
 
@@ -319,9 +322,9 @@ packages/
 
 ### References
 
-- `nop-chaos-amis-renderer-design.md`: compiled node、region handle、scope policy
-- `nop-chaos-amis-renderer-interfaces.ts`: `CompiledSchemaNode`、`SchemaFieldRule`、`SchemaCompileContext`
-- `nop-chaos-amis.md`: 页面、表单、对话框、表格等 schema 特征字段
+- `docs/architecture/renderer-runtime.md`: compiled node、region handle、scope policy
+- `docs/references/renderer-interfaces.md`: `CompiledSchemaNode`、`SchemaFieldRule`、`SchemaCompileContext`
+- `docs/architecture/amis-core.md`: 页面、表单、对话框、表格等 schema 特征字段
 
 ## 6.4 P3 - Runtime and React Integration
 
@@ -368,8 +371,8 @@ packages/
 
 ### References
 
-- `nop-chaos-amis-renderer-design.md`: props/hook 边界、context 拆分、local fragment render
-- `nop-chaos-amis-renderer-interfaces.ts`: runtime、hooks、region、scope 接口
+- `docs/architecture/renderer-runtime.md`: props/hook 边界、context 拆分、local fragment render
+- `docs/references/renderer-interfaces.md`: runtime、hooks、region、scope 接口
 
 ## 6.5 P4 - Basic Renderer Set
 
@@ -410,8 +413,8 @@ packages/
 
 ### References
 
-- `nop-chaos-amis.md`: page/body/button 基础字段
-- `nop-chaos-amis-renderer-design.md`: 自定义组件如何消费 `regions`
+- `docs/architecture/amis-core.md`: page/body/button 基础字段
+- `docs/architecture/renderer-runtime.md`: 自定义组件如何消费 `regions`
 
 ## 6.6 P5 - Form and Action System
 
@@ -454,9 +457,9 @@ packages/
 
 ### References
 
-- `nop-chaos-amis.md`: FormStore、动作系统、API 对象、dialog 模型、表单验证思路
-- `nop-chaos-amis-renderer-design.md`: form runtime、dispatch、scope 传递策略
-- `nop-chaos-amis-renderer-interfaces.ts`: action/runtime/form 接口
+- `docs/architecture/amis-core.md`: FormStore、动作系统、API 对象、dialog 模型、表单验证思路
+- `docs/architecture/renderer-runtime.md`: form runtime、dispatch、scope 传递策略
+- `docs/references/renderer-interfaces.md`: action/runtime/form 接口
 
 ## 6.7 P6 - Data Renderers and CRUD Scenario
 
@@ -474,7 +477,7 @@ packages/
 6. 视情况接入虚拟滚动：
    - 第一版可先不做复杂虚拟化
    - 第二版接入 `react-window` 或等价方案
-7. 用 `nop-chaos-amis.md` 中用户管理示例裁剪出首个 CRUD demo
+7. 用 `docs/examples/user-management-schema.md` 中用户管理示例裁剪出首个 CRUD demo
 8. 补 table 和 row scope 性能测试
 
 ### Deliverables
@@ -490,8 +493,8 @@ packages/
 
 ### References
 
-- `nop-chaos-amis.md`: 完整 CRUD JSON 示例
-- `nop-chaos-amis-renderer-design.md`: row scope、local fragment render、性能约束
+- `docs/examples/user-management-schema.md`: 完整 CRUD JSON 示例
+- `docs/architecture/renderer-runtime.md`: row scope、local fragment render、性能约束
 
 ## 6.8 P7 - Plugin, Debugging, Performance, and Release Hardening
 
@@ -540,9 +543,9 @@ packages/
 
 ### References
 
-- `nop-chaos-amis.md`: 错误处理、监控、扩展性设计
-- `nop-chaos-frontend-arch.md`: 包职责、测试、发布和命名约束
-- `nop-chaos-amis-renderer-design.md`: runtime 稳定引用和性能设计
+- `docs/architecture/amis-core.md`: 错误处理、监控、扩展性设计
+- `docs/architecture/frontend-baseline.md`: 包职责、测试、发布和命名约束
+- `docs/architecture/renderer-runtime.md`: runtime 稳定引用和性能设计
 
 ## 7. Suggested Milestone Outputs
 
@@ -640,7 +643,7 @@ playground 中至少长期保留以下 demo：
 
 1. 初始化 workspace 和 `apps/playground`
 2. 创建 `packages/formula`，先实现 `FormulaCompiler` 空壳和测试基线
-3. 创建 `packages/runtime`，接入 `nop-chaos-amis-renderer-interfaces.ts`
+3. 创建 `packages/runtime`，接入 `docs/references/renderer-interfaces.md` 中整理后的接口边界
 4. 把现有接口草案拆分进对应 package
 5. 优先完成 P1，而不是先写一堆 renderer
 
@@ -656,4 +659,4 @@ playground 中至少长期保留以下 demo：
 - 再 renderer
 - 最后高级场景
 
-只要严格按阶段推进，并始终以 `nop-chaos-amis-renderer-design.md` 和 `nop-chaos-amis-renderer-interfaces.ts` 作为核心约束，框架会更稳，也更容易在后期扩展到 designer、plugin、schema market 等能力。
+只要严格按阶段推进，并始终以 `docs/architecture/renderer-runtime.md` 和 `docs/references/renderer-interfaces.md` 作为核心约束，框架会更稳，也更容易在后期扩展到 designer、plugin、schema market 等能力。

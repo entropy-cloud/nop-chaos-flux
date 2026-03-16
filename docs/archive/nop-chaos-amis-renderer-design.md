@@ -1,8 +1,11 @@
 # NOP Chaos AMIS Renderer Internal Design
 
+> Canonical runtime design now lives in `docs/architecture/renderer-runtime.md`.
+> Use `docs/index.md` as the documentation entry point.
+
 ## 1. Design Goal and Context
 
-Based on `nop-chaos-amis.md`, the overall direction is already clear: JSON-driven rendering, lexical data scope, PageStore/FormStore separation, expression compilation, unified actions, and high-performance large-page rendering. That direction is correct, but before implementation there are still four critical gaps that need to be nailed down:
+Based on `docs/architecture/amis-core.md`, the overall direction is already clear: JSON-driven rendering, lexical data scope, PageStore/FormStore separation, expression compilation, unified actions, and high-performance large-page rendering. That direction is correct, but before implementation there are still four critical gaps that need to be nailed down:
 
 1. what the internal renderer interfaces look like
 2. how runtime data and capabilities flow through the tree
@@ -15,7 +18,7 @@ To avoid confusing "JSON format" with "rendering responsibility", this document 
 
 ## 2. Reading of the Existing Requirements
 
-The existing design in `nop-chaos-amis.md` has several strong decisions:
+The existing design in `docs/architecture/amis-core.md` has several strong decisions:
 
 - use lexical scope instead of repeatedly merging data objects
 - split page-level state and form-level state
@@ -30,7 +33,7 @@ But if we directly start coding from that document, several implementation ambig
 - if custom components receive the whole runtime object as props, every parent render may create new references and trigger broad rerenders
 - if custom components directly receive raw child schema and manually call the root renderer, performance and consistency will drift over time
 
-Also, `expression-processor.js` provides one very important implementation insight even though its concrete mechanism should not be kept as-is:
+Also, `docs/references/expression-processor-notes.md` captures one very important implementation insight from the early prototype even though its concrete mechanism should not be kept as-is:
 
 - the current `new Function(...)` approach is not acceptable as the production expression engine
 - expression compilation must be delegated to injected `amis-formula`-based compiler services
@@ -639,7 +642,7 @@ This matters because many renderer props such as layout config, style config, bu
 
 ## 11.1.2 Dynamic fragment identity reuse
 
-For dynamic nodes, keep the core idea from `expression-processor.js`, but replace the unsafe implementation with an injected `amis-formula` evaluator.
+For dynamic nodes, keep the core idea described in `docs/references/expression-processor-notes.md`, but replace the unsafe implementation with an injected `amis-formula` evaluator.
 
 Required semantic behavior:
 
@@ -693,13 +696,13 @@ const helpers = getStableHelpers(nodeId, runtime, scopeRef);
 
 For list/table/tree scenarios, child scopes should be created only for visible or actually rendered items.
 
-This matches the earlier virtual-scroll requirement in `nop-chaos-amis.md`.
+This matches the earlier virtual-scroll requirement in `docs/architecture/amis-core.md`.
 
 ## 11.7 Resolved prop objects should preserve references when values do not change
 
 This is especially important for container components that pass complex `props` into memoized UI subtrees.
 
-The same idea already appears in `expression-processor.js`: if evaluated results are shallow-equal, reuse the previous object reference. That strategy should be kept in the real renderer runtime, but with three corrections:
+The same idea also appears in `docs/references/expression-processor-notes.md`: if evaluated results are shallow-equal, reuse the previous object reference. That strategy should be kept in the real renderer runtime, but with three corrections:
 
 - the expression engine must come from injected `amis-formula` services
 - completely static fragments should return the original object directly
