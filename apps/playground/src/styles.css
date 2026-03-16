@@ -298,6 +298,21 @@ body {
   font-size: 0.9rem;
 }
 
+.na-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.na-checkbox__input {
+  width: 18px;
+  height: 18px;
+}
+
+.na-checkbox__label {
+  font-weight: 500;
+}
+
 .na-input,
 .na-select {
   width: 100%;

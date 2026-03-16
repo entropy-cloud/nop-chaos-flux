@@ -144,7 +144,8 @@ const schema = {
             username: '',
             email: '',
             role: 'viewer',
-            adminCode: ''
+            adminCode: '',
+            approved: false
           },
           body: [
             {
@@ -189,6 +190,14 @@ const schema = {
               placeholder: 'Only required for admin submissions',
               visible: '${role === "admin"}',
               minLength: 4
+            },
+            {
+              type: 'checkbox',
+              name: 'approved',
+              label: 'Review Status',
+              option: {
+                label: 'Approved for submission'
+              }
             }
           ],
           actions: [

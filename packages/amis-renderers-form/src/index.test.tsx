@@ -102,6 +102,57 @@ describe('formRendererDefinitions', () => {
     });
   });
 
+  it('submits checkbox values through shared field handlers', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            approved: false
+          },
+          body: [
+            {
+              type: 'checkbox',
+              name: 'approved',
+              label: 'Approval',
+              option: {
+                label: 'Approved'
+              }
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit approval',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/approval',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByText('Submit approval'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(submitCalls[0]).toMatchObject({ approved: true });
+  });
+
   it('blocks submit when compiled validation rules fail', async () => {
     submitCalls.length = 0;
     cleanup();

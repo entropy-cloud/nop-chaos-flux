@@ -3,31 +3,28 @@ import type {
   ApiObject,
   BaseSchema,
   CompiledValidationBehavior,
+  FormRuntime,
   RendererComponentProps,
   RendererDefinition,
   RendererRegistry
 } from '@nop-chaos/amis-schema';
 import { useCurrentForm, useCurrentFormState, useRenderScope } from '@nop-chaos/amis-react';
 
-function getFieldValidationBehavior(name: string, currentForm: ReturnType<typeof useCurrentForm>): CompiledValidationBehavior {
+const defaultValidationBehavior: CompiledValidationBehavior = {
+  triggers: ['blur'],
+  showErrorOn: ['touched', 'submit']
+};
+
+function getFieldValidationBehavior(name: string, currentForm: FormRuntime | undefined): CompiledValidationBehavior {
   if (!currentForm || !name) {
-    return {
-      triggers: ['blur'],
-      showErrorOn: ['touched', 'submit']
-    };
+    return defaultValidationBehavior;
   }
 
   const field = currentForm.validation?.fields[name];
-  return (
-    field?.behavior ??
-    currentForm.validation?.behavior ?? {
-      triggers: ['blur'],
-      showErrorOn: ['touched', 'submit']
-    }
-  );
+  return field?.behavior ?? currentForm.validation?.behavior ?? defaultValidationBehavior;
 }
 
-function shouldValidateOn(name: string, currentForm: ReturnType<typeof useCurrentForm>, trigger: 'change' | 'blur' | 'submit') {
+function shouldValidateOn(name: string, currentForm: FormRuntime | undefined, trigger: 'change' | 'blur' | 'submit') {
   return getFieldValidationBehavior(name, currentForm).triggers.includes(trigger);
 }
 
@@ -53,6 +50,62 @@ function readFieldValue(scope: ReturnType<typeof useRenderScope>, name: string):
   return name ? scope.get(name) ?? '' : '';
 }
 
+function getFieldClassName(state: {
+  visited: boolean;
+  touched: boolean;
+  dirty: boolean;
+  showError: boolean;
+}) {
+  return [
+    'na-field',
+    state.visited ? 'na-field--visited' : '',
+    state.touched ? 'na-field--touched' : '',
+    state.dirty ? 'na-field--dirty' : '',
+    state.showError ? 'na-field--invalid' : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+function createFieldHandlers(args: {
+  name: string;
+  currentForm: FormRuntime | undefined;
+  scope: ReturnType<typeof useRenderScope>;
+  setValue: (value: string) => void;
+}) {
+  const { name, currentForm, scope, setValue } = args;
+
+  return {
+    onFocus() {
+      if (currentForm && name) {
+        currentForm.visitField(name);
+      }
+    },
+    onChange(nextValue: string) {
+      if (currentForm) {
+        setValue(nextValue);
+
+        if (shouldValidateOn(name, currentForm, 'change') && currentForm.isTouched(name)) {
+          void currentForm.validateField(name);
+        }
+
+        return;
+      }
+
+      scope.update(name, nextValue);
+    },
+    onBlur() {
+      if (currentForm && name) {
+        currentForm.touchField(name);
+
+        if (shouldValidateOn(name, currentForm, 'blur')) {
+          void currentForm.validateField(name);
+        }
+      }
+    }
+  };
+}
+
 interface FormSchema extends BaseSchema {
   type: 'form';
   body?: BaseSchema[];
@@ -62,6 +115,13 @@ interface FormSchema extends BaseSchema {
 
 interface SelectSchema extends InputSchema {
   options?: Array<{ label: string; value: string }>;
+}
+
+interface CheckboxSchema extends InputSchema {
+  option?: {
+    label: string;
+    value?: string | boolean;
+  };
 }
 
 interface InputSchema extends BaseSchema {
@@ -131,6 +191,14 @@ function createInputRenderer(inputType: string) {
     const value = readFieldValue(scope, name);
     const fieldState = useFormFieldState(name);
     const behavior = getFieldValidationBehavior(name, currentForm);
+    const handlers = createFieldHandlers({
+      name,
+      currentForm,
+      scope,
+      setValue(nextValue) {
+        currentForm?.setValue(name, nextValue);
+      }
+    });
     const showError = Boolean(
       fieldState.error &&
         shouldShowFieldError(behavior, {
@@ -142,15 +210,7 @@ function createInputRenderer(inputType: string) {
     );
 
     return (
-      <label
-        className={[
-          'na-field',
-          fieldState.visited ? 'na-field--visited' : '',
-          fieldState.touched ? 'na-field--touched' : '',
-          fieldState.dirty ? 'na-field--dirty' : '',
-          showError ? 'na-field--invalid' : ''
-        ].filter(Boolean).join(' ')}
-      >
+      <label className={getFieldClassName({ ...fieldState, showError })}>
         {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
         <input
           className="na-input"
@@ -158,31 +218,9 @@ function createInputRenderer(inputType: string) {
           value={String(value)}
           aria-invalid={showError ? true : undefined}
           placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
-          onFocus={() => {
-            if (currentForm && name) {
-              currentForm.visitField(name);
-            }
-          }}
-          onChange={(event) => {
-            if (currentForm) {
-              currentForm.setValue(name, event.target.value);
-
-              if (shouldValidateOn(name, currentForm, 'change') && currentForm.isTouched(name)) {
-                void currentForm.validateField(name);
-              }
-            } else {
-              scope.update(name, event.target.value);
-            }
-          }}
-          onBlur={() => {
-            if (currentForm && name) {
-              currentForm.touchField(name);
-
-              if (shouldValidateOn(name, currentForm, 'blur')) {
-                void currentForm.validateField(name);
-              }
-            }
-          }}
+          onFocus={handlers.onFocus}
+          onChange={(event) => handlers.onChange(event.target.value)}
+          onBlur={handlers.onBlur}
         />
         {renderFieldHint({
           errorMessage: fieldState.error?.message,
@@ -252,6 +290,14 @@ export const formRendererDefinitions: RendererDefinition[] = [
       const options = Array.isArray(props.props.options) ? (props.props.options as SelectSchema['options']) : [];
       const fieldState = useFormFieldState(name);
       const behavior = getFieldValidationBehavior(name, currentForm);
+      const handlers = createFieldHandlers({
+        name,
+        currentForm,
+        scope,
+        setValue(nextValue) {
+          currentForm?.setValue(name, nextValue);
+        }
+      });
       const showError = Boolean(
         fieldState.error &&
           shouldShowFieldError(behavior, {
@@ -263,45 +309,15 @@ export const formRendererDefinitions: RendererDefinition[] = [
       );
 
       return (
-        <label
-          className={[
-            'na-field',
-            fieldState.visited ? 'na-field--visited' : '',
-            fieldState.touched ? 'na-field--touched' : '',
-            fieldState.dirty ? 'na-field--dirty' : '',
-            showError ? 'na-field--invalid' : ''
-          ].filter(Boolean).join(' ')}
-        >
+        <label className={getFieldClassName({ ...fieldState, showError })}>
           {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
           <select
             className="na-select"
             value={String(value)}
             aria-invalid={showError ? true : undefined}
-            onFocus={() => {
-              if (currentForm && name) {
-                currentForm.visitField(name);
-              }
-            }}
-            onChange={(event) => {
-              if (currentForm) {
-                currentForm.setValue(name, event.target.value);
-
-                if (shouldValidateOn(name, currentForm, 'change') && currentForm.isTouched(name)) {
-                  void currentForm.validateField(name);
-                }
-              } else {
-                scope.update(name, event.target.value);
-              }
-            }}
-            onBlur={() => {
-              if (currentForm && name) {
-                currentForm.touchField(name);
-
-                if (shouldValidateOn(name, currentForm, 'blur')) {
-                  void currentForm.validateField(name);
-                }
-              }
-            }}
+            onFocus={handlers.onFocus}
+            onChange={(event) => handlers.onChange(event.target.value)}
+            onBlur={handlers.onBlur}
           >
             {options?.map((option) => (
               <option key={option.value} value={option.value}>
@@ -309,6 +325,60 @@ export const formRendererDefinitions: RendererDefinition[] = [
               </option>
             ))}
           </select>
+          {renderFieldHint({
+            errorMessage: fieldState.error?.message,
+            validating: fieldState.validating,
+            showError
+          })}
+        </label>
+      );
+    }
+  },
+  {
+    type: 'checkbox',
+    validation: createFieldValidation(),
+    component: function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
+      const scope = useRenderScope();
+      const currentForm = useCurrentForm();
+      const name = String(props.props.name ?? props.schema.name ?? '');
+      const value = Boolean(readFieldValue(scope, name));
+      const fieldState = useFormFieldState(name);
+      const behavior = getFieldValidationBehavior(name, currentForm);
+      const handlers = createFieldHandlers({
+        name,
+        currentForm,
+        scope,
+        setValue(nextValue) {
+          currentForm?.setValue(name, nextValue === 'true');
+        }
+      });
+      const showError = Boolean(
+        fieldState.error &&
+          shouldShowFieldError(behavior, {
+            touched: fieldState.touched,
+            dirty: fieldState.dirty,
+            visited: fieldState.visited,
+            submitting: fieldState.submitting
+          })
+      );
+      const option = props.props.option as CheckboxSchema['option'] | undefined;
+      const optionLabel = option?.label;
+
+      return (
+        <label className={getFieldClassName({ ...fieldState, showError })}>
+          {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+          <span className="na-checkbox">
+            <input
+              className="na-checkbox__input"
+              type="checkbox"
+              checked={value}
+              aria-invalid={showError ? true : undefined}
+              onFocus={handlers.onFocus}
+              onChange={(event) => handlers.onChange(String(event.target.checked))}
+              onBlur={handlers.onBlur}
+            />
+            {optionLabel ? <span className="na-checkbox__label">{optionLabel}</span> : null}
+          </span>
           {renderFieldHint({
             errorMessage: fieldState.error?.message,
             validating: fieldState.validating,

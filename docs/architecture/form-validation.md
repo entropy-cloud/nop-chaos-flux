@@ -213,6 +213,11 @@ Error visibility is configurable separately from validation timing:
 - this lets a field validate on one schedule while revealing errors on a different schedule
 - example: `validateOn: 'submit'` with `showErrorOn: 'visited'` delays validation until submit but only reveals the result after the user focuses the field
 
+Renderer integration should keep this behavior centralized:
+
+- standard controls should share one field-behavior helper path for focus/change/blur wiring
+- adding a new control such as `checkbox` should reuse the same validation and visibility policy helpers rather than reimplementing policy rules per component
+
 These should remain runtime concepts, not React-library-specific state shapes.
 
 ## Complex Controls and Runtime Registration
