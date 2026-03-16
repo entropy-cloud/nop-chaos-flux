@@ -303,6 +303,16 @@ function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const presentation = useFieldPresentation(name, currentForm);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];
 
+  const syncErrorVisibility = React.useCallback(() => {
+    if (!currentForm || !name) {
+      return;
+    }
+
+    if (currentForm.isTouched(name) || currentForm.store.getState().submitting) {
+      void currentForm.validateField(name);
+    }
+  }, [currentForm, name]);
+
   React.useEffect(() => {
     if (!currentForm || !name) {
       return;
@@ -357,7 +367,7 @@ function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
                     currentForm.touchField(name);
                   }
                   currentForm.setValue(name, nextValue);
-                  void currentForm.validateField(name);
+                  syncErrorVisibility();
                 } else {
                   scope.update(name, nextValue);
                 }

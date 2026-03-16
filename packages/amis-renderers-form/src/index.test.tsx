@@ -324,10 +324,18 @@ describe('formRendererDefinitions', () => {
 
     fireEvent.click(screen.getByText('Submit tags'));
 
-    expect(await screen.findByText('Tag List requires at least one tag')).toBeTruthy();
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(0);
+    });
+    expect(screen.getByText('Tag List requires at least one tag')).toBeTruthy();
     expect(submitCalls).toHaveLength(0);
 
     fireEvent.click(screen.getByText('alpha'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Tag List requires at least one tag')).toBeNull();
+    });
+
     fireEvent.click(screen.getByText('Submit tags'));
 
     await waitFor(() => {
