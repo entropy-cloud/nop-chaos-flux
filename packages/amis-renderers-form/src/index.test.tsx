@@ -153,6 +153,69 @@ describe('formRendererDefinitions', () => {
     expect(submitCalls[0]).toMatchObject({ approved: true });
   });
 
+  it('submits textarea and radio-group values through shared field helpers', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            notes: 'Initial note',
+            status: 'draft'
+          },
+          body: [
+            {
+              type: 'textarea',
+              name: 'notes',
+              label: 'Notes',
+              rows: 5
+            },
+            {
+              type: 'radio-group',
+              name: 'status',
+              label: 'Status',
+              options: [
+                { label: 'Draft', value: 'draft' },
+                { label: 'Published', value: 'published' }
+              ]
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit article',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/article',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Notes'), { target: { value: 'Updated note' } });
+    fireEvent.click(screen.getByDisplayValue('published'));
+    fireEvent.click(screen.getByText('Submit article'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(submitCalls[0]).toMatchObject({
+      notes: 'Updated note',
+      status: 'published'
+    });
+  });
+
   it('blocks submit when compiled validation rules fail', async () => {
     submitCalls.length = 0;
     cleanup();

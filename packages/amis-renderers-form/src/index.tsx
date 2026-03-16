@@ -117,6 +117,14 @@ interface SelectSchema extends InputSchema {
   options?: Array<{ label: string; value: string }>;
 }
 
+interface TextareaSchema extends InputSchema {
+  rows?: number;
+}
+
+interface RadioGroupSchema extends InputSchema {
+  options?: Array<{ label: string; value: string }>;
+}
+
 interface CheckboxSchema extends InputSchema {
   option?: {
     label: string;
@@ -174,6 +182,26 @@ function renderFieldHint(input: {
   return null;
 }
 
+function useFieldPresentation(name: string, currentForm: FormRuntime | undefined) {
+  const fieldState = useFormFieldState(name);
+  const behavior = getFieldValidationBehavior(name, currentForm);
+  const showError = Boolean(
+    fieldState.error &&
+      shouldShowFieldError(behavior, {
+        touched: fieldState.touched,
+        dirty: fieldState.dirty,
+        visited: fieldState.visited,
+        submitting: fieldState.submitting
+      })
+  );
+
+  return {
+    fieldState,
+    showError,
+    className: getFieldClassName({ ...fieldState, showError })
+  };
+}
+
 function FormRenderer(props: RendererComponentProps<FormSchema>) {
   return (
     <section className="na-form">
@@ -189,43 +217,33 @@ function createInputRenderer(inputType: string) {
     const currentForm = useCurrentForm();
     const name = String(props.props.name ?? props.schema.name ?? '');
     const value = readFieldValue(scope, name);
-    const fieldState = useFormFieldState(name);
-    const behavior = getFieldValidationBehavior(name, currentForm);
+    const presentation = useFieldPresentation(name, currentForm);
     const handlers = createFieldHandlers({
       name,
       currentForm,
       scope,
-      setValue(nextValue) {
-        currentForm?.setValue(name, nextValue);
-      }
+        setValue(nextValue) {
+          currentForm?.setValue(name, nextValue);
+        }
     });
-    const showError = Boolean(
-      fieldState.error &&
-        shouldShowFieldError(behavior, {
-          touched: fieldState.touched,
-          dirty: fieldState.dirty,
-          visited: fieldState.visited,
-          submitting: fieldState.submitting
-        })
-    );
 
     return (
-      <label className={getFieldClassName({ ...fieldState, showError })}>
+      <label className={presentation.className}>
         {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
         <input
           className="na-input"
           type={inputType}
           value={String(value)}
-          aria-invalid={showError ? true : undefined}
+          aria-invalid={presentation.showError ? true : undefined}
           placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
           onFocus={handlers.onFocus}
           onChange={(event) => handlers.onChange(event.target.value)}
           onBlur={handlers.onBlur}
         />
         {renderFieldHint({
-          errorMessage: fieldState.error?.message,
-          validating: fieldState.validating,
-          showError
+          errorMessage: presentation.fieldState.error?.message,
+          validating: presentation.fieldState.validating,
+          showError: presentation.showError
         })}
       </label>
     );
@@ -288,8 +306,7 @@ export const formRendererDefinitions: RendererDefinition[] = [
       const name = String(props.props.name ?? props.schema.name ?? '');
       const value = readFieldValue(scope, name);
       const options = Array.isArray(props.props.options) ? (props.props.options as SelectSchema['options']) : [];
-      const fieldState = useFormFieldState(name);
-      const behavior = getFieldValidationBehavior(name, currentForm);
+      const presentation = useFieldPresentation(name, currentForm);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -298,23 +315,14 @@ export const formRendererDefinitions: RendererDefinition[] = [
           currentForm?.setValue(name, nextValue);
         }
       });
-      const showError = Boolean(
-        fieldState.error &&
-          shouldShowFieldError(behavior, {
-            touched: fieldState.touched,
-            dirty: fieldState.dirty,
-            visited: fieldState.visited,
-            submitting: fieldState.submitting
-          })
-      );
 
       return (
-        <label className={getFieldClassName({ ...fieldState, showError })}>
+        <label className={presentation.className}>
           {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
           <select
             className="na-select"
             value={String(value)}
-            aria-invalid={showError ? true : undefined}
+            aria-invalid={presentation.showError ? true : undefined}
             onFocus={handlers.onFocus}
             onChange={(event) => handlers.onChange(event.target.value)}
             onBlur={handlers.onBlur}
@@ -326,13 +334,53 @@ export const formRendererDefinitions: RendererDefinition[] = [
             ))}
           </select>
           {renderFieldHint({
-            errorMessage: fieldState.error?.message,
-            validating: fieldState.validating,
-            showError
+            errorMessage: presentation.fieldState.error?.message,
+            validating: presentation.fieldState.validating,
+            showError: presentation.showError
           })}
         </label>
       );
     }
+  },
+  {
+    type: 'textarea',
+    component: function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
+      const scope = useRenderScope();
+      const currentForm = useCurrentForm();
+      const name = String(props.props.name ?? props.schema.name ?? '');
+      const value = readFieldValue(scope, name);
+      const presentation = useFieldPresentation(name, currentForm);
+      const handlers = createFieldHandlers({
+        name,
+        currentForm,
+        scope,
+        setValue(nextValue) {
+          currentForm?.setValue(name, nextValue);
+        }
+      });
+
+      return (
+        <label className={presentation.className}>
+          {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+          <textarea
+            className="na-textarea"
+            value={String(value)}
+            rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
+            aria-invalid={presentation.showError ? true : undefined}
+            placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
+            onFocus={handlers.onFocus}
+            onChange={(event) => handlers.onChange(event.target.value)}
+            onBlur={handlers.onBlur}
+          />
+          {renderFieldHint({
+            errorMessage: presentation.fieldState.error?.message,
+            validating: presentation.fieldState.validating,
+            showError: presentation.showError
+          })}
+        </label>
+      );
+    },
+    validation: createFieldValidation()
   },
   {
     type: 'checkbox',
@@ -342,8 +390,7 @@ export const formRendererDefinitions: RendererDefinition[] = [
       const currentForm = useCurrentForm();
       const name = String(props.props.name ?? props.schema.name ?? '');
       const value = Boolean(readFieldValue(scope, name));
-      const fieldState = useFormFieldState(name);
-      const behavior = getFieldValidationBehavior(name, currentForm);
+      const presentation = useFieldPresentation(name, currentForm);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -352,27 +399,18 @@ export const formRendererDefinitions: RendererDefinition[] = [
           currentForm?.setValue(name, nextValue === 'true');
         }
       });
-      const showError = Boolean(
-        fieldState.error &&
-          shouldShowFieldError(behavior, {
-            touched: fieldState.touched,
-            dirty: fieldState.dirty,
-            visited: fieldState.visited,
-            submitting: fieldState.submitting
-          })
-      );
       const option = props.props.option as CheckboxSchema['option'] | undefined;
       const optionLabel = option?.label;
 
       return (
-        <label className={getFieldClassName({ ...fieldState, showError })}>
+        <label className={presentation.className}>
           {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
           <span className="na-checkbox">
             <input
               className="na-checkbox__input"
               type="checkbox"
               checked={value}
-              aria-invalid={showError ? true : undefined}
+              aria-invalid={presentation.showError ? true : undefined}
               onFocus={handlers.onFocus}
               onChange={(event) => handlers.onChange(String(event.target.checked))}
               onBlur={handlers.onBlur}
@@ -380,11 +418,60 @@ export const formRendererDefinitions: RendererDefinition[] = [
             {optionLabel ? <span className="na-checkbox__label">{optionLabel}</span> : null}
           </span>
           {renderFieldHint({
-            errorMessage: fieldState.error?.message,
-            validating: fieldState.validating,
-            showError
+            errorMessage: presentation.fieldState.error?.message,
+            validating: presentation.fieldState.validating,
+            showError: presentation.showError
           })}
         </label>
+      );
+    }
+  },
+  {
+    type: 'radio-group',
+    validation: createFieldValidation(),
+    component: function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
+      const scope = useRenderScope();
+      const currentForm = useCurrentForm();
+      const name = String(props.props.name ?? props.schema.name ?? '');
+      const value = String(readFieldValue(scope, name));
+      const options = Array.isArray(props.props.options) ? (props.props.options as RadioGroupSchema['options']) : [];
+      const presentation = useFieldPresentation(name, currentForm);
+      const handlers = createFieldHandlers({
+        name,
+        currentForm,
+        scope,
+        setValue(nextValue) {
+          currentForm?.setValue(name, nextValue);
+        }
+      });
+
+      return (
+        <fieldset className={presentation.className}>
+          {props.meta.label ? <legend className="na-field__label">{props.meta.label}</legend> : null}
+          <div className="na-radio-group">
+            {options?.map((option) => (
+              <label key={option.value} className="na-radio">
+                <input
+                  className="na-radio__input"
+                  type="radio"
+                  name={name}
+                  value={option.value}
+                  checked={value === option.value}
+                  aria-invalid={presentation.showError ? true : undefined}
+                  onFocus={handlers.onFocus}
+                  onChange={(event) => handlers.onChange(event.target.value)}
+                  onBlur={handlers.onBlur}
+                />
+                <span className="na-radio__label">{option.label}</span>
+              </label>
+            ))}
+          </div>
+          {renderFieldHint({
+            errorMessage: presentation.fieldState.error?.message,
+            validating: presentation.fieldState.validating,
+            showError: presentation.showError
+          })}
+        </fieldset>
       );
     }
   }

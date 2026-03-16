@@ -145,7 +145,9 @@ const schema = {
             email: '',
             role: 'viewer',
             adminCode: '',
-            approved: false
+            approved: false,
+            status: 'draft',
+            notes: ''
           },
           body: [
             {
@@ -198,6 +200,24 @@ const schema = {
               option: {
                 label: 'Approved for submission'
               }
+            },
+            {
+              type: 'radio-group',
+              name: 'status',
+              label: 'Publication Status',
+              options: [
+                { label: 'Draft', value: 'draft' },
+                { label: 'Ready', value: 'ready' }
+              ]
+            },
+            {
+              type: 'textarea',
+              name: 'notes',
+              label: 'Reviewer Notes',
+              placeholder: 'Add internal notes for the submission review',
+              rows: 4,
+              minLength: 5,
+              showErrorOn: 'dirty'
             }
           ],
           actions: [

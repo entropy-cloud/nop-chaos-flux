@@ -217,6 +217,7 @@ Renderer integration should keep this behavior centralized:
 
 - standard controls should share one field-behavior helper path for focus/change/blur wiring
 - adding a new control such as `checkbox` should reuse the same validation and visibility policy helpers rather than reimplementing policy rules per component
+- the same shared path now covers text inputs, select, checkbox, textarea, and radio-group controls
 
 These should remain runtime concepts, not React-library-specific state shapes.
 

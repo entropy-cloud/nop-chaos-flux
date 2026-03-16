@@ -313,14 +313,40 @@ body {
   font-weight: 500;
 }
 
+.na-radio-group {
+  display: grid;
+  gap: 10px;
+}
+
+.na-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.na-radio__input {
+  width: 18px;
+  height: 18px;
+}
+
+.na-radio__label {
+  font-weight: 500;
+}
+
 .na-input,
-.na-select {
+.na-select,
+.na-textarea {
   width: 100%;
   padding: 12px 14px;
   border-radius: 14px;
   border: 1px solid rgba(33, 53, 71, 0.18);
   background: rgba(255, 255, 255, 0.96);
   transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.na-textarea {
+  resize: vertical;
+  min-height: 110px;
 }
 
 .na-table {
