@@ -226,6 +226,10 @@ function createCompiledRegion(
   };
 }
 
+function applyWrapComponentPlugins(renderer: RendererDefinition, plugins?: RendererPlugin[]): RendererDefinition {
+  return (plugins ?? []).reduce((current, plugin) => plugin.wrapComponent?.(current) ?? current, renderer);
+}
+
 export function createSchemaCompiler(input: {
   registry: RendererRegistry;
   expressionCompiler?: ExpressionCompiler;
@@ -309,19 +313,21 @@ export function createSchemaCompiler(input: {
 
     if (Array.isArray(prepared)) {
       const compiled = prepared.map((item, index) => {
-        const path = options.basePath ? `${options.basePath}[${index}]` : `$[${index}]`;
-        const renderer = input.registry.get(item.type);
+      const path = options.basePath ? `${options.basePath}[${index}]` : `$[${index}]`;
+      const renderer = input.registry.get(item.type);
 
-        if (!renderer) {
-          throw new Error(`Renderer not found for type: ${item.type}`);
-        }
+      if (!renderer) {
+        throw new Error(`Renderer not found for type: ${item.type}`);
+      }
 
-        return compileSingleNode(item, {
-          path,
-          parentPath: options.parentPath,
-          renderer
-        });
+      const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
+
+      return compileSingleNode(item, {
+        path,
+        parentPath: options.parentPath,
+        renderer: wrappedRenderer
       });
+    });
 
       return applyAfterCompilePlugins(compiled);
     }
@@ -333,11 +339,13 @@ export function createSchemaCompiler(input: {
       throw new Error(`Renderer not found for type: ${prepared.type}`);
     }
 
+    const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
+
     return applyAfterCompilePlugins(
       compileSingleNode(prepared, {
       path,
       parentPath: options.parentPath,
-      renderer
+      renderer: wrappedRenderer
       })
     );
   }

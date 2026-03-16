@@ -1,7 +1,7 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererDefinition, RendererEnv, ScopeRef } from '@nop-chaos/amis-schema';
+import type { RendererDefinition, RendererEnv, RendererPlugin, ScopeRef } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/amis-runtime';
 import { createSchemaRenderer, useScopeSelector } from './index';
@@ -168,5 +168,47 @@ describe('createSchemaRenderer', () => {
     await waitFor(() => {
       expect(screen.queryByText('Dialog hello')).toBeNull();
     });
+  });
+
+  it('supports wrapComponent plugins in the renderer pipeline', () => {
+    const wrapped = vi.fn();
+    const plugin: RendererPlugin = {
+      name: 'wrap-text',
+      wrapComponent(definition) {
+        if (definition.type !== 'text') {
+          return definition;
+        }
+
+        return {
+          ...definition,
+          component: (props) => {
+            wrapped(props.meta.label ?? props.props.text);
+            return (
+              <div>
+                <span data-testid="wrapped-prefix">Wrapped</span>
+                <definition.component {...props} />
+              </div>
+            );
+          }
+        };
+      }
+    };
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{ type: 'text', text: 'Wrapped hello' }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        plugins={[plugin]}
+      />
+    );
+
+    expect(screen.getByTestId('wrapped-prefix')).toBeTruthy();
+    expect(screen.getByText('Wrapped hello')).toBeTruthy();
+    expect(wrapped).toHaveBeenCalledWith('Wrapped hello');
   });
 });
