@@ -145,6 +145,18 @@ body {
   line-height: 1.5;
 }
 
+.activity-detail {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(7, 12, 18, 0.52);
+  color: rgba(196, 228, 249, 0.92);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
 .activity-empty {
   color: rgba(244, 246, 249, 0.72);
 }

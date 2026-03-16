@@ -12,6 +12,7 @@ interface ActivityEntry {
   id: number;
   kind: ActivityKind;
   message: string;
+  detail?: string;
 }
 
 const users = [
@@ -71,6 +72,10 @@ function formatActionResult(result: unknown) {
   }
 
   return 'error';
+}
+
+function formatCountLabel(value: number, noun: string) {
+  return `${value} ${noun}${value === 1 ? '' : 's'}`;
 }
 
 const schema = {
@@ -246,12 +251,13 @@ const schema = {
 export function App() {
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
 
-  const pushActivity = useCallback((kind: ActivityKind, message: string) => {
+  const pushActivity = useCallback((kind: ActivityKind, message: string, detail?: string) => {
     setActivity((current) => [
       {
         id: Date.now() + current.length,
         kind,
-        message
+        message,
+        detail
       },
       ...current
     ].slice(0, 16));
@@ -275,7 +281,11 @@ export function App() {
               )
             : users;
 
-          pushActivity('api', `response /api/search -> ${results.length} match(es)`);
+          pushActivity(
+            'api',
+            `response /api/search -> ${results.length} match(es)`,
+            `query=${query || '(all)'} | ${formatCountLabel(results.length, 'record')}`
+          );
 
           return {
             ok: true,
@@ -288,7 +298,7 @@ export function App() {
         }
 
         if (api.url === '/api/users') {
-          pushActivity('api', 'response /api/users -> current directory payload');
+          pushActivity('api', 'response /api/users -> current directory payload', `${formatCountLabel(users.length, 'record')}`);
 
           return {
             ok: true,
@@ -301,7 +311,7 @@ export function App() {
         }
 
         if (api.method?.toLowerCase() === 'post') {
-          pushActivity('api', `response ${api.url} -> saved payload snapshot`);
+          pushActivity('api', `response ${api.url} -> saved payload snapshot`, JSON.stringify(ctx.scope.read()));
 
           return {
             ok: true,
@@ -324,16 +334,24 @@ export function App() {
       },
       monitor: {
         onRenderEnd(payload) {
-          pushActivity('render', `${payload.type} rendered in ${payload.durationMs}ms`);
+          pushActivity('render', `${payload.type} rendered in ${payload.durationMs}ms`, `nodeId=${payload.nodeId} | path=${payload.path}`);
         },
         onActionStart(payload) {
-          pushActivity('action', `${payload.actionType} started`);
+          pushActivity('action', `${payload.actionType} started`, `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`);
         },
         onActionEnd(payload) {
-          pushActivity('action', `${payload.actionType} ${formatActionResult(payload.result)} in ${payload.durationMs}ms`);
+          pushActivity(
+            'action',
+            `${payload.actionType} ${formatActionResult(payload.result)} in ${payload.durationMs}ms`,
+            `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`
+          );
         },
         onApiRequest(payload) {
-          pushActivity('api', `${payload.api.method ?? 'get'} ${payload.api.url}`);
+          pushActivity(
+            'api',
+            `${payload.api.method ?? 'get'} ${payload.api.url}`,
+            `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`
+          );
         }
       }
     }),
@@ -376,6 +394,7 @@ export function App() {
                 <article key={entry.id} className="activity-entry">
                   <span className={`activity-badge activity-badge--${entry.kind}`}>{entry.kind}</span>
                   <span className="activity-message">{entry.message}</span>
+                  {entry.detail ? <code className="activity-detail">{entry.detail}</code> : null}
                 </article>
               ))}
             </div>
