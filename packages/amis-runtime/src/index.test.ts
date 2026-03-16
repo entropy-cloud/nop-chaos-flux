@@ -193,24 +193,6 @@ describe('createRendererRuntime', () => {
     expect(meta.disabled).toBe(true);
   });
 
-  it('keeps legacy visibleOn compatibility when unified fields are absent', () => {
-    const runtime = createRendererRuntime({
-      registry: createRendererRegistry([textRenderer]),
-      env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-    const node = runtime.compile({
-      type: 'text',
-      text: 'Legacy',
-      visibleOn: '${showLegacy}'
-    }) as any;
-    const page = runtime.createPageRuntime({ showLegacy: false });
-
-    const meta = runtime.resolveNodeMeta(node, page.scope, node.createRuntimeState());
-
-    expect(meta.visible).toBe(false);
-  });
-
   it('closes the nearest dialog by default', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({

@@ -261,19 +261,15 @@ function buildCompiledMeta(
   schema: BaseSchema,
   expressionCompiler: ExpressionCompiler
 ): CompiledSchemaMeta {
-  const visibleSource = schema.visible !== undefined ? schema.visible : schema.visibleOn;
-  const hiddenSource = schema.hidden !== undefined ? schema.hidden : schema.hiddenOn;
-  const disabledSource = schema.disabled !== undefined ? schema.disabled : schema.disabledOn;
-
   return {
     id: schema.id ? expressionCompiler.compileValue(schema.id) : undefined,
     name: schema.name ? expressionCompiler.compileValue(schema.name) : undefined,
     label: schema.label ? expressionCompiler.compileValue(schema.label) : undefined,
     title: schema.title ? expressionCompiler.compileValue(schema.title) : undefined,
     className: schema.className ? expressionCompiler.compileValue(schema.className) : undefined,
-    visible: visibleSource !== undefined ? expressionCompiler.compileValue(visibleSource) : undefined,
-    hidden: hiddenSource !== undefined ? expressionCompiler.compileValue(hiddenSource) : undefined,
-    disabled: disabledSource !== undefined ? expressionCompiler.compileValue(disabledSource) : undefined
+    visible: schema.visible !== undefined ? expressionCompiler.compileValue(schema.visible) : undefined,
+    hidden: schema.hidden !== undefined ? expressionCompiler.compileValue(schema.hidden) : undefined,
+    disabled: schema.disabled !== undefined ? expressionCompiler.compileValue(schema.disabled) : undefined
   };
 }
 

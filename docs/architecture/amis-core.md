@@ -14,7 +14,8 @@ All schema fields follow one rule:
 
 - plain values are plain values
 - expression syntax means expression semantics
-- do not keep adding parallel fields such as `visibleOn`, `disabledOn`, or `xxxExpr` as the primary design path
+- do not keep adding parallel fields such as `xxxOn`, `xxxExpr`, or similar suffix-based variants as the primary design path
+- this first version has no compatibility burden, so the implementation should recognize only the standard field shape
 
 Examples:
 
@@ -374,7 +375,7 @@ The following are no longer preferred as the main architecture path:
 
 - prototype-chain objects used directly as the expression execution context
 - always materializing and merging a full scope object before evaluation
-- a parallel field system centered on `visibleOn` and `disabledOn`
+- a parallel field system centered on suffix-based variants such as `xxxOn` and `xxxExpr`
 - a long-term external runtime model built around `staticProps` plus `dynamicProps`
 - `new Function` plus `with(scope)` execution
 - hard-wiring a specific form or validation library into the core

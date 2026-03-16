@@ -20,9 +20,6 @@ export interface BaseSchema extends SchemaObject {
   visible?: boolean | string;
   hidden?: boolean | string;
   disabled?: boolean | string;
-  visibleOn?: string;
-  hiddenOn?: string;
-  disabledOn?: string;
 }
 
 export type SchemaInput = BaseSchema | BaseSchema[];
@@ -564,10 +561,7 @@ export const META_FIELDS = new Set([
   'className',
   'visible',
   'hidden',
-  'disabled',
-  'visibleOn',
-  'hiddenOn',
-  'disabledOn'
+  'disabled'
 ]);
 
 export function isPlainObject(value: unknown): value is Record<string, any> {
