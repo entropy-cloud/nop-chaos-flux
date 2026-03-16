@@ -147,7 +147,9 @@ const schema = {
             adminCode: '',
             approved: false,
             status: 'draft',
-            notes: ''
+            notes: '',
+            featured: false,
+            tags: ['stable']
           },
           body: [
             {
@@ -218,6 +220,25 @@ const schema = {
               rows: 4,
               minLength: 5,
               showErrorOn: 'dirty'
+            },
+            {
+              type: 'switch',
+              name: 'featured',
+              label: 'Publishing Toggle',
+              option: {
+                onLabel: 'Featured',
+                offLabel: 'Standard'
+              }
+            },
+            {
+              type: 'checkbox-group',
+              name: 'tags',
+              label: 'Release Tags',
+              options: [
+                { label: 'Stable', value: 'stable' },
+                { label: 'Beta', value: 'beta' },
+                { label: 'Internal', value: 'internal' }
+              ]
             }
           ],
           actions: [

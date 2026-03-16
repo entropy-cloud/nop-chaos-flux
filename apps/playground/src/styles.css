@@ -313,6 +313,56 @@ body {
   font-weight: 500;
 }
 
+.na-checkbox-group {
+  display: grid;
+  gap: 10px;
+}
+
+.na-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.na-switch__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.na-switch__track {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(33, 53, 71, 0.2);
+  transition: background 160ms ease;
+}
+
+.na-switch__thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(18, 31, 43, 0.18);
+  transition: transform 160ms ease;
+}
+
+.na-switch__input:checked + .na-switch__track {
+  background: #bf6f2f;
+}
+
+.na-switch__input:checked + .na-switch__track .na-switch__thumb {
+  transform: translateX(22px);
+}
+
+.na-switch__label {
+  font-weight: 600;
+}
+
 .na-radio-group {
   display: grid;
   gap: 10px;

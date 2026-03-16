@@ -125,10 +125,21 @@ interface RadioGroupSchema extends InputSchema {
   options?: Array<{ label: string; value: string }>;
 }
 
+interface CheckboxGroupSchema extends InputSchema {
+  options?: Array<{ label: string; value: string }>;
+}
+
 interface CheckboxSchema extends InputSchema {
   option?: {
     label: string;
     value?: string | boolean;
+  };
+}
+
+interface SwitchSchema extends InputSchema {
+  option?: {
+    onLabel?: string;
+    offLabel?: string;
   };
 }
 
@@ -200,6 +211,11 @@ function useFieldPresentation(name: string, currentForm: FormRuntime | undefined
     showError,
     className: getFieldClassName({ ...fieldState, showError })
   };
+}
+
+function readCheckboxGroupValue(scope: ReturnType<typeof useRenderScope>, name: string): string[] {
+  const value = readFieldValue(scope, name);
+  return Array.isArray(value) ? value.map((item) => String(item)) : [];
 }
 
 function FormRenderer(props: RendererComponentProps<FormSchema>) {
@@ -427,6 +443,53 @@ export const formRendererDefinitions: RendererDefinition[] = [
     }
   },
   {
+    type: 'switch',
+    validation: createFieldValidation(),
+    component: function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
+      const scope = useRenderScope();
+      const currentForm = useCurrentForm();
+      const name = String(props.props.name ?? props.schema.name ?? '');
+      const value = Boolean(readFieldValue(scope, name));
+      const presentation = useFieldPresentation(name, currentForm);
+      const handlers = createFieldHandlers({
+        name,
+        currentForm,
+        scope,
+        setValue(nextValue) {
+          currentForm?.setValue(name, nextValue === 'true');
+        }
+      });
+      const option = props.props.option as SwitchSchema['option'] | undefined;
+
+      return (
+        <label className={presentation.className}>
+          {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+          <span className="na-switch">
+            <input
+              className="na-switch__input"
+              type="checkbox"
+              role="switch"
+              checked={value}
+              aria-invalid={presentation.showError ? true : undefined}
+              onFocus={handlers.onFocus}
+              onChange={(event) => handlers.onChange(String(event.target.checked))}
+              onBlur={handlers.onBlur}
+            />
+            <span className="na-switch__track">
+              <span className="na-switch__thumb" />
+            </span>
+            <span className="na-switch__label">{value ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
+          </span>
+          {renderFieldHint({
+            errorMessage: presentation.fieldState.error?.message,
+            validating: presentation.fieldState.validating,
+            showError: presentation.showError
+          })}
+        </label>
+      );
+    }
+  },
+  {
     type: 'radio-group',
     validation: createFieldValidation(),
     component: function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
@@ -465,6 +528,63 @@ export const formRendererDefinitions: RendererDefinition[] = [
                 <span className="na-radio__label">{option.label}</span>
               </label>
             ))}
+          </div>
+          {renderFieldHint({
+            errorMessage: presentation.fieldState.error?.message,
+            validating: presentation.fieldState.validating,
+            showError: presentation.showError
+          })}
+        </fieldset>
+      );
+    }
+  },
+  {
+    type: 'checkbox-group',
+    validation: createFieldValidation(),
+    component: function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema>) {
+      const scope = useRenderScope();
+      const currentForm = useCurrentForm();
+      const name = String(props.props.name ?? props.schema.name ?? '');
+      const value = readCheckboxGroupValue(scope, name);
+      const options = Array.isArray(props.props.options) ? (props.props.options as CheckboxGroupSchema['options']) : [];
+      const presentation = useFieldPresentation(name, currentForm);
+      const handlers = createFieldHandlers({
+        name,
+        currentForm,
+        scope,
+        setValue(nextValue) {
+          currentForm?.setValue(name, JSON.parse(nextValue) as string[]);
+        }
+      });
+
+      return (
+        <fieldset className={presentation.className}>
+          {props.meta.label ? <legend className="na-field__label">{props.meta.label}</legend> : null}
+          <div className="na-checkbox-group">
+            {options?.map((option) => {
+              const checked = value.includes(option.value);
+
+              return (
+                <label key={option.value} className="na-checkbox">
+                  <input
+                    className="na-checkbox__input"
+                    type="checkbox"
+                    value={option.value}
+                    checked={checked}
+                    aria-invalid={presentation.showError ? true : undefined}
+                    onFocus={handlers.onFocus}
+                    onChange={(event) => {
+                      const nextValue = event.target.checked
+                        ? [...value, option.value]
+                        : value.filter((candidate) => candidate !== option.value);
+                      handlers.onChange(JSON.stringify(nextValue));
+                    }}
+                    onBlur={handlers.onBlur}
+                  />
+                  <span className="na-checkbox__label">{option.label}</span>
+                </label>
+              );
+            })}
           </div>
           {renderFieldHint({
             errorMessage: presentation.fieldState.error?.message,

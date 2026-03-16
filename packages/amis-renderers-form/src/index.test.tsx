@@ -216,6 +216,72 @@ describe('formRendererDefinitions', () => {
     });
   });
 
+  it('submits switch and checkbox-group values through shared field helpers', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            featured: false,
+            tags: ['stable']
+          },
+          body: [
+            {
+              type: 'switch',
+              name: 'featured',
+              label: 'Featured',
+              option: {
+                onLabel: 'Live',
+                offLabel: 'Hidden'
+              }
+            },
+            {
+              type: 'checkbox-group',
+              name: 'tags',
+              label: 'Tags',
+              options: [
+                { label: 'Stable', value: 'stable' },
+                { label: 'Beta', value: 'beta' }
+              ]
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit release',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/release',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('switch'));
+    fireEvent.click(screen.getByDisplayValue('beta'));
+    fireEvent.click(screen.getByText('Submit release'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(submitCalls[0]).toMatchObject({
+      featured: true,
+      tags: ['stable', 'beta']
+    });
+  });
+
   it('blocks submit when compiled validation rules fail', async () => {
     submitCalls.length = 0;
     cleanup();
