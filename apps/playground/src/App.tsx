@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/amis-react';
 import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/amis-schema';
@@ -491,17 +491,37 @@ export function App() {
   const [directoryUsers, setDirectoryUsers] = useState(users);
   const [searchResults, setSearchResults] = useState(users);
   const [searchQuery, setSearchQuery] = useState('');
+  const nextActivityId = useRef(1);
+  const suppressRenderActivity = useRef(false);
+  const releaseRenderActivityTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const pushActivity = useCallback((kind: ActivityKind, message: string, detail?: string) => {
+    if (kind === 'render' && suppressRenderActivity.current) {
+      return;
+    }
+
     if (activityPaused) {
       return;
     }
 
     const now = new Date();
 
+    if (kind === 'render') {
+      suppressRenderActivity.current = true;
+
+      if (releaseRenderActivityTimer.current) {
+        clearTimeout(releaseRenderActivityTimer.current);
+      }
+
+      releaseRenderActivityTimer.current = setTimeout(() => {
+        suppressRenderActivity.current = false;
+        releaseRenderActivityTimer.current = undefined;
+      }, 0);
+    }
+
     setActivity((current) => [
       {
-        id: now.getTime() + current.length,
+        id: nextActivityId.current++,
         kind,
         message,
         detail,
@@ -510,6 +530,14 @@ export function App() {
       ...current
     ].slice(0, 16));
   }, [activityPaused]);
+
+  useEffect(() => {
+    return () => {
+      if (releaseRenderActivityTimer.current) {
+        clearTimeout(releaseRenderActivityTimer.current);
+      }
+    };
+  }, []);
 
   const env = useMemo<RendererEnv>(
     () => ({
