@@ -394,7 +394,7 @@ describe('formRendererDefinitions', () => {
     fireEvent.change(screen.getByPlaceholderText('Key'), { target: { value: 'env' } });
     fireEvent.click(screen.getByText('Submit metadata'));
 
-    expect(await screen.findByText('Metadata entries need both key and value')).toBeTruthy();
+    expect(await screen.findByText('Entry 1 value is required')).toBeTruthy();
     expect(submitCalls).toHaveLength(0);
 
     fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: 'prod' } });
@@ -407,6 +407,57 @@ describe('formRendererDefinitions', () => {
     expect(submitCalls[0]).toMatchObject({
       metadata: [{ key: 'env', value: 'prod' }]
     });
+  });
+
+  it('renders child validation state for runtime-registered key-value cells', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'dirty', 'submit'],
+          data: {
+            metadata: [{ key: '', value: '' }]
+          },
+          body: [
+            {
+              type: 'key-value',
+              name: 'metadata',
+              label: 'Metadata'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const keyInput = screen.getByPlaceholderText('Key');
+    const valueInput = screen.getByPlaceholderText('Value');
+    const keyField = keyInput.closest('.na-child-field');
+    const valueField = valueInput.closest('.na-child-field');
+
+    fireEvent.change(valueInput, { target: { value: 'prod' } });
+    fireEvent.focus(keyInput);
+    fireEvent.blur(keyInput);
+
+    expect(await screen.findByText('Entry 1 key is required')).toBeTruthy();
+    expect(keyField?.className).toContain('na-child-field--visited');
+    expect(keyField?.className).toContain('na-child-field--touched');
+    expect(keyField?.className).toContain('na-child-field--invalid');
+    expect(valueField?.className ?? '').not.toContain('na-child-field--invalid');
+
+    fireEvent.change(keyInput, { target: { value: 'env' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Entry 1 key is required')).toBeNull();
+    });
+
+    expect((keyInput as HTMLInputElement).value).toBe('env');
+    expect(valueField?.className).toContain('na-child-field--dirty');
   });
 
   it('submits and validates a runtime-registered array editor', async () => {
@@ -494,10 +545,16 @@ describe('formRendererDefinitions', () => {
     );
 
     fireEvent.focus(screen.getByPlaceholderText('Reviewer 1'));
+    fireEvent.blur(screen.getByPlaceholderText('Reviewer 1'));
     fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: 'alice' } });
     fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: '' } });
 
     expect(await screen.findByText('Reviewer 1 is required')).toBeTruthy();
+    const childField = screen.getByPlaceholderText('Reviewer 1').closest('.na-child-field');
+    expect(childField?.className).toContain('na-child-field--visited');
+    expect(childField?.className).toContain('na-child-field--touched');
+    expect(childField?.className).toContain('na-child-field--dirty');
+    expect(childField?.className).toContain('na-child-field--invalid');
   });
 
   it('blocks submit when compiled validation rules fail', async () => {

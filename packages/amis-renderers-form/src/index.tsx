@@ -4,6 +4,7 @@ import type {
   BaseSchema,
   CompiledValidationBehavior,
   FormRuntime,
+  RuntimeFieldRegistration,
   RendererComponentProps,
   RendererDefinition,
   RendererRegistry
@@ -216,6 +217,49 @@ function renderFieldHint(input: {
   return null;
 }
 
+function getChildFieldUiState(input: {
+  path: string;
+  behavior: CompiledValidationBehavior;
+  fieldState: {
+    errors: Record<string, any>;
+    touched: Record<string, boolean>;
+    dirty: Record<string, boolean>;
+    visited: Record<string, boolean>;
+    submitting: boolean;
+  };
+}) {
+  const error = input.fieldState.errors[input.path]?.[0];
+  const touched = input.fieldState.touched[input.path] === true;
+  const dirty = input.fieldState.dirty[input.path] === true;
+  const visited = input.fieldState.visited[input.path] === true;
+  const showError = Boolean(
+    error &&
+      shouldShowFieldError(input.behavior, {
+        touched,
+        dirty,
+        visited,
+        submitting: input.fieldState.submitting
+      })
+  );
+
+  return {
+    error,
+    touched,
+    dirty,
+    visited,
+    showError,
+    className: [
+      'na-child-field',
+      visited ? 'na-child-field--visited' : '',
+      touched ? 'na-child-field--touched' : '',
+      dirty ? 'na-child-field--dirty' : '',
+      showError ? 'na-child-field--invalid' : ''
+    ]
+      .filter(Boolean)
+      .join(' ')
+  };
+}
+
 function useFieldPresentation(name: string, currentForm: FormRuntime | undefined) {
   const fieldState = useFormFieldState(name);
   const behavior = getFieldValidationBehavior(name, currentForm);
@@ -234,6 +278,16 @@ function useFieldPresentation(name: string, currentForm: FormRuntime | undefined
     showError,
     className: getFieldClassName({ ...fieldState, showError })
   };
+}
+
+function useCompositeChildFieldState() {
+  return useCurrentFormState((state) => ({
+    errors: state.errors,
+    touched: state.touched,
+    dirty: state.dirty,
+    visited: state.visited,
+    submitting: state.submitting
+  }));
 }
 
 function readCheckboxGroupValue(scope: ReturnType<typeof useRenderScope>, name: string): string[] {
@@ -442,8 +496,19 @@ function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
   const currentForm = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
   const presentation = useFieldPresentation(name, currentForm);
+  const childFieldState = useCompositeChildFieldState();
+  const childBehavior = getFieldValidationBehavior(name, currentForm);
   const [pairs, setPairs] = React.useState<KeyValuePair[]>(() => toKeyValuePairs(readFieldValue(scope, name)));
   const pairsRef = React.useRef(pairs);
+  const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
+  const childPaths = React.useMemo(
+    () => pairs.flatMap((_, index) => [`${name}.${index}.key`, `${name}.${index}.value`]),
+    [name, pairs]
+  );
+
+  if (registrationRef.current) {
+    registrationRef.current.childPaths = childPaths;
+  }
 
   React.useEffect(() => {
     pairsRef.current = pairs;
@@ -474,15 +539,17 @@ function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
       return;
     }
 
-    return currentForm.registerField({
+    const registration: RuntimeFieldRegistration = {
       path: name,
+      childPaths,
       getValue() {
         return pairsRef.current;
       },
+      syncValue() {
+        return pairsRef.current;
+      },
       validate() {
-        const nonEmptyPairs = pairsRef.current.filter((pair) => pair.key.trim() !== '' || pair.value.trim() !== '');
-
-        if (nonEmptyPairs.length === 0) {
+        if (pairsRef.current.length === 0) {
           return [
             {
               path: name,
@@ -492,74 +559,176 @@ function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
           ];
         }
 
-        const incomplete = nonEmptyPairs.find((pair) => pair.key.trim() === '' || pair.value.trim() === '');
+        return [];
+      },
+      validateChild(path) {
+        const relativePath = path.startsWith(`${name}.`) ? path.slice(name.length + 1) : path;
+        const match = relativePath.match(/^(\d+)\.(key|value)$/);
 
-        if (incomplete) {
+        if (!match) {
+          return [];
+        }
+
+        const pair = pairsRef.current[Number(match[1])];
+
+        if (!pair) {
+          return [];
+        }
+
+        const keyEmpty = pair.key.trim() === '';
+        const valueEmpty = pair.value.trim() === '';
+        const bothEmpty = keyEmpty && valueEmpty;
+
+        if (bothEmpty) {
+          return [];
+        }
+
+        if (match[2] === 'key' && keyEmpty) {
           return [
             {
-              path: name,
-              rule: 'pattern',
-              message: `${props.meta.label ?? name} entries need both key and value`
+              path,
+              rule: 'required',
+              message: `Entry ${Number(match[1]) + 1} key is required`
+            }
+          ];
+        }
+
+        if (match[2] === 'value' && valueEmpty) {
+          return [
+            {
+              path,
+              rule: 'required',
+              message: `Entry ${Number(match[1]) + 1} value is required`
             }
           ];
         }
 
         return [];
       }
-    });
-  }, [currentForm, name, props.meta.label]);
+    };
+
+    registrationRef.current = registration;
+    return currentForm.registerField(registration);
+  }, [childPaths, currentForm, name, props.meta.label]);
 
   return (
     <label className={presentation.className}>
       {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
       <div className="na-kv-list">
-        {pairs.map((pair, index) => (
-          <div key={pair.id} className="na-kv-row">
-            <input
-              className="na-input"
-              type="text"
-              value={pair.key}
-              placeholder="Key"
-              onFocus={() => {
-                if (currentForm && name) {
-                  currentForm.visitField(name);
-                }
-              }}
-              onChange={(event) => {
-                const nextPairs = pairs.map((candidate, candidateIndex) =>
-                  candidateIndex === index ? { ...candidate, key: event.target.value } : candidate
-                );
-                syncField(nextPairs);
-              }}
-            />
-            <input
-              className="na-input"
-              type="text"
-              value={pair.value}
-              placeholder="Value"
-              onFocus={() => {
-                if (currentForm && name) {
-                  currentForm.visitField(name);
-                }
-              }}
-              onChange={(event) => {
-                const nextPairs = pairs.map((candidate, candidateIndex) =>
-                  candidateIndex === index ? { ...candidate, value: event.target.value } : candidate
-                );
-                syncField(nextPairs);
-              }}
-            />
-            <button
-              type="button"
-              className="na-kv-remove"
-              onClick={() => {
-                syncField(pairs.filter((candidate) => candidate.id !== pair.id));
-              }}
-            >
-              Remove
-            </button>
-          </div>
-        ))}
+        {pairs.map((pair, index) => {
+          const keyPath = `${name}.${index}.key`;
+          const valuePath = `${name}.${index}.value`;
+          const keyUi = getChildFieldUiState({
+            path: keyPath,
+            behavior: childBehavior,
+            fieldState: childFieldState
+          });
+          const valueUi = getChildFieldUiState({
+            path: valuePath,
+            behavior: childBehavior,
+            fieldState: childFieldState
+          });
+
+          return (
+            <div key={pair.id} className="na-kv-row">
+              <div className={keyUi.className}>
+                <input
+                  className="na-input"
+                  type="text"
+                  value={pair.key}
+                  placeholder="Key"
+                  aria-invalid={keyUi.showError ? true : undefined}
+                  onFocus={() => {
+                    if (currentForm && name) {
+                      currentForm.visitField(name);
+                      currentForm.visitField(keyPath);
+                    }
+                  }}
+                  onChange={(event) => {
+                    const nextPairs = pairs.map((candidate, candidateIndex) =>
+                      candidateIndex === index ? { ...candidate, key: event.target.value } : candidate
+                    );
+                    syncField(nextPairs);
+
+                    if (currentForm) {
+                      currentForm.touchField(keyPath);
+                      currentForm.setValue(keyPath, event.target.value);
+
+                      if (shouldValidateOn(name, currentForm, 'change')) {
+                        void currentForm.validateField(keyPath);
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    if (currentForm) {
+                      currentForm.touchField(keyPath);
+
+                      if (shouldValidateOn(name, currentForm, 'blur')) {
+                        void currentForm.validateField(keyPath);
+                      }
+                    }
+                  }}
+                />
+                {renderFieldHint({
+                  errorMessage: keyUi.error?.message,
+                  showError: keyUi.showError
+                })}
+              </div>
+              <div className={valueUi.className}>
+                <input
+                  className="na-input"
+                  type="text"
+                  value={pair.value}
+                  placeholder="Value"
+                  aria-invalid={valueUi.showError ? true : undefined}
+                  onFocus={() => {
+                    if (currentForm && name) {
+                      currentForm.visitField(name);
+                      currentForm.visitField(valuePath);
+                    }
+                  }}
+                  onChange={(event) => {
+                    const nextPairs = pairs.map((candidate, candidateIndex) =>
+                      candidateIndex === index ? { ...candidate, value: event.target.value } : candidate
+                    );
+                    syncField(nextPairs);
+
+                    if (currentForm) {
+                      currentForm.touchField(valuePath);
+                      currentForm.setValue(valuePath, event.target.value);
+
+                      if (shouldValidateOn(name, currentForm, 'change')) {
+                        void currentForm.validateField(valuePath);
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    if (currentForm) {
+                      currentForm.touchField(valuePath);
+
+                      if (shouldValidateOn(name, currentForm, 'blur')) {
+                        void currentForm.validateField(valuePath);
+                      }
+                    }
+                  }}
+                />
+                {renderFieldHint({
+                  errorMessage: valueUi.error?.message,
+                  showError: valueUi.showError
+                })}
+              </div>
+              <button
+                type="button"
+                className="na-kv-remove"
+                onClick={() => {
+                  syncField(pairs.filter((candidate) => candidate.id !== pair.id));
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          );
+        })}
         <button
           type="button"
           className="na-kv-add"
@@ -584,15 +753,16 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
   const currentForm = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
   const presentation = useFieldPresentation(name, currentForm);
+  const childBehavior = getFieldValidationBehavior(name, currentForm);
   const [items, setItems] = React.useState<ArrayEditorItem[]>(() => toArrayEditorItems(readFieldValue(scope, name)));
   const itemsRef = React.useRef(items);
-  const childFieldState = useCurrentFormState((state) => ({
-    errors: state.errors,
-    touched: state.touched,
-    submitting: state.submitting,
-    visited: state.visited,
-    dirty: state.dirty
-  }));
+  const childFieldState = useCompositeChildFieldState();
+  const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
+  const childPaths = React.useMemo(() => items.map((_, index) => `${name}.${index}.value`), [items, name]);
+
+  if (registrationRef.current) {
+    registrationRef.current.childPaths = childPaths;
+  }
 
   React.useEffect(() => {
     itemsRef.current = items;
@@ -623,9 +793,9 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
       return;
     }
 
-    return currentForm.registerField({
+    const registration: RuntimeFieldRegistration = {
       path: name,
-      childPaths: itemsRef.current.map((_, index) => `${name}.${index}.value`),
+      childPaths,
       getValue() {
         return itemsRef.current;
       },
@@ -633,9 +803,7 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
         return itemsRef.current;
       },
       validate() {
-        const nonEmptyItems = itemsRef.current.filter((item) => item.value.trim() !== '');
-
-        if (nonEmptyItems.length === 0) {
+        if (itemsRef.current.length === 0) {
           return [
             {
               path: name,
@@ -669,59 +837,81 @@ function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
           }
         ];
       }
-    });
-  }, [currentForm, name, props.meta.label, props.props.itemLabel]);
+    };
+
+    registrationRef.current = registration;
+    return currentForm.registerField(registration);
+  }, [childPaths, currentForm, name, props.meta.label, props.props.itemLabel]);
 
   return (
     <label className={presentation.className}>
       {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
       <div className="na-array-editor">
-        {items.map((item, index) => (
-          <div key={item.id} className="na-array-editor__row">
-            <input
-              className="na-input"
-              type="text"
-              value={item.value}
-              placeholder={props.props.itemLabel ? `${props.props.itemLabel} ${index + 1}` : `Item ${index + 1}`}
-              aria-invalid={
-                childFieldState.errors[`${name}.${index}.value`] &&
-                (childFieldState.touched[`${name}.${index}.value`] || childFieldState.submitting)
-                  ? true
-                  : undefined
-              }
-              onFocus={() => {
-                if (currentForm && name) {
-                  currentForm.visitField(name);
-                  currentForm.visitField(`${name}.${index}.value`);
-                }
-              }}
-              onChange={(event) => {
-                const nextItems = items.map((candidate, candidateIndex) =>
-                  candidateIndex === index ? { ...candidate, value: event.target.value } : candidate
-                );
-                syncItems(nextItems);
+        {items.map((item, index) => {
+          const itemPath = `${name}.${index}.value`;
+          const itemUi = getChildFieldUiState({
+            path: itemPath,
+            behavior: childBehavior,
+            fieldState: childFieldState
+          });
 
-                if (currentForm) {
-                  currentForm.touchField(`${name}.${index}.value`);
-                  void currentForm.validateField(`${name}.${index}.value`);
-                }
-              }}
-            />
-            {childFieldState.errors[`${name}.${index}.value`] &&
-            (childFieldState.touched[`${name}.${index}.value`] || childFieldState.submitting) ? (
-              <span className="na-field__error">{childFieldState.errors[`${name}.${index}.value`]?.[0]?.message}</span>
-            ) : null}
-            <button
-              type="button"
-              className="na-kv-remove"
-              onClick={() => {
-                syncItems(items.filter((candidate) => candidate.id !== item.id));
-              }}
-            >
-              Remove
-            </button>
-          </div>
-        ))}
+          return (
+            <div key={item.id} className="na-array-editor__row">
+              <div className={itemUi.className}>
+                <input
+                  className="na-input"
+                  type="text"
+                  value={item.value}
+                  placeholder={props.props.itemLabel ? `${props.props.itemLabel} ${index + 1}` : `Item ${index + 1}`}
+                  aria-invalid={itemUi.showError ? true : undefined}
+                  onFocus={() => {
+                    if (currentForm && name) {
+                      currentForm.visitField(name);
+                      currentForm.visitField(itemPath);
+                    }
+                  }}
+                  onChange={(event) => {
+                    const nextItems = items.map((candidate, candidateIndex) =>
+                      candidateIndex === index ? { ...candidate, value: event.target.value } : candidate
+                    );
+                    syncItems(nextItems);
+
+                    if (currentForm) {
+                      currentForm.touchField(itemPath);
+                      currentForm.setValue(itemPath, event.target.value);
+
+                      if (shouldValidateOn(name, currentForm, 'change')) {
+                        void currentForm.validateField(itemPath);
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    if (currentForm) {
+                      currentForm.touchField(itemPath);
+
+                      if (shouldValidateOn(name, currentForm, 'blur')) {
+                        void currentForm.validateField(itemPath);
+                      }
+                    }
+                  }}
+                />
+                {renderFieldHint({
+                  errorMessage: itemUi.error?.message,
+                  showError: itemUi.showError
+                })}
+              </div>
+              <button
+                type="button"
+                className="na-kv-remove"
+                onClick={() => {
+                  syncItems(items.filter((candidate) => candidate.id !== item.id));
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          );
+        })}
         <button
           type="button"
           className="na-kv-add"

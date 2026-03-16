@@ -1418,10 +1418,32 @@ export function createRendererRuntime(input: {
 
         for (const [path, registration] of runtimeFieldRegistrations) {
           if (inputValue.validation?.fields[path]) {
+            if (registration.validateChild && registration.childPaths?.length) {
+              for (const childPath of registration.childPaths) {
+                const result = await this.validateField(childPath);
+
+                if (!result.ok) {
+                  fieldErrors[childPath] = result.errors;
+                  errors.push(...result.errors);
+                }
+              }
+            }
+
             continue;
           }
 
           if (!registration.validate) {
+            if (registration.validateChild && registration.childPaths?.length) {
+              for (const childPath of registration.childPaths) {
+                const result = await this.validateField(childPath);
+
+                if (!result.ok) {
+                  fieldErrors[childPath] = result.errors;
+                  errors.push(...result.errors);
+                }
+              }
+            }
+
             continue;
           }
 
@@ -1430,6 +1452,17 @@ export function createRendererRuntime(input: {
           if (!result.ok) {
             fieldErrors[path] = result.errors;
             errors.push(...result.errors);
+          }
+
+          if (registration.validateChild && registration.childPaths?.length) {
+            for (const childPath of registration.childPaths) {
+              const childResult = await this.validateField(childPath);
+
+              if (!childResult.ok) {
+                fieldErrors[childPath] = childResult.errors;
+                errors.push(...childResult.errors);
+              }
+            }
           }
         }
 
@@ -1485,6 +1518,12 @@ export function createRendererRuntime(input: {
 
         for (const path of runtimeFieldRegistrations.keys()) {
           store.setTouched(path, true);
+        }
+
+        for (const registration of runtimeFieldRegistrations.values()) {
+          for (const childPath of registration.childPaths ?? []) {
+            store.setTouched(childPath, true);
+          }
         }
 
         const validation = await this.validateForm();

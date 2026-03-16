@@ -311,6 +311,135 @@ const schema = {
           ]
         },
         {
+          type: 'container',
+          className: 'na-composite-lab',
+          body: [
+            {
+              type: 'tpl',
+              className: 'na-section-kicker',
+              tpl: 'Composite Validation Lab'
+            },
+            {
+              type: 'tpl',
+              className: 'na-section-title',
+              tpl: 'Child-path visibility in isolation'
+            },
+            {
+              type: 'tpl',
+              className: 'na-section-copy',
+              tpl: 'These focused forms isolate how composite controls reveal validation for specific cells and items. The left card shows touched-based visibility; the right card waits until submit and then fans errors out to child paths.'
+            },
+            {
+              type: 'container',
+              className: 'na-demo-grid',
+              body: [
+                {
+                  type: 'container',
+                  className: 'na-demo-card',
+                  body: [
+                    {
+                      type: 'tpl',
+                      className: 'na-demo-card__eyebrow',
+                      tpl: 'Touched + submit'
+                    },
+                    {
+                      type: 'tpl',
+                      className: 'na-demo-card__title',
+                      tpl: 'Key-value child cells'
+                    },
+                    {
+                      type: 'tpl',
+                      className: 'na-demo-card__copy',
+                      tpl: 'Focus and blur the empty Key cell to surface a child-level error without submitting the form.'
+                    },
+                    {
+                      type: 'form',
+                      id: 'kv-visibility-form',
+                      showErrorOn: ['touched', 'submit'],
+                      data: {
+                        metadata: [{ key: '', value: 'prod' }]
+                      },
+                      body: [
+                        {
+                          type: 'key-value',
+                          name: 'metadata',
+                          label: 'Metadata cells',
+                          addLabel: 'Add metadata pair'
+                        }
+                      ],
+                      actions: [
+                        {
+                          type: 'button',
+                          label: 'Submit key-value demo',
+                          onClick: {
+                            action: 'submitForm',
+                            formId: 'kv-visibility-form',
+                            api: {
+                              method: 'post',
+                              url: '/api/composite-demo'
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  type: 'container',
+                  className: 'na-demo-card',
+                  body: [
+                    {
+                      type: 'tpl',
+                      className: 'na-demo-card__eyebrow',
+                      tpl: 'Submit only'
+                    },
+                    {
+                      type: 'tpl',
+                      className: 'na-demo-card__title',
+                      tpl: 'Array child items'
+                    },
+                    {
+                      type: 'tpl',
+                      className: 'na-demo-card__copy',
+                      tpl: 'This form stays quiet while you type, then marks child item paths touched on submit so the error lands on the exact reviewer row.'
+                    },
+                    {
+                      type: 'form',
+                      id: 'array-visibility-form',
+                      showErrorOn: 'submit',
+                      data: {
+                        reviewers: [{ value: '' }]
+                      },
+                      body: [
+                        {
+                          type: 'array-editor',
+                          name: 'reviewers',
+                          label: 'Reviewers',
+                          itemLabel: 'Reviewer'
+                        }
+                      ],
+                      actions: [
+                        {
+                          type: 'button',
+                          label: 'Submit array demo',
+                          onClick: {
+                            action: 'submitForm',
+                            formId: 'array-visibility-form',
+                            api: {
+                              method: 'post',
+                              url: '/api/composite-demo'
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
           type: 'table',
           source: '${searchResults}',
           columns: [
