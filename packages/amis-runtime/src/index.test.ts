@@ -8,6 +8,7 @@ import type {
   RendererPlugin
 } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
+import { setIn } from '@nop-chaos/amis-schema';
 import { createRendererRegistry, createRendererRuntime, createSchemaCompiler } from './index';
 
 const textRenderer: RendererDefinition = {
@@ -69,6 +70,13 @@ describe('createSchemaCompiler', () => {
 });
 
 describe('createRendererRuntime', () => {
+  it('preserves arrays when writing nested numeric paths', () => {
+    const result = setIn({ reviewers: [] }, 'reviewers.0.value', 'alice');
+
+    expect(Array.isArray(result.reviewers)).toBe(true);
+    expect(result.reviewers[0]).toMatchObject({ value: 'alice' });
+  });
+
   it('reuses resolved props references when values stay unchanged', () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({

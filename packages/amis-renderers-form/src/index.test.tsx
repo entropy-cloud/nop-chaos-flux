@@ -462,11 +462,8 @@ describe('formRendererDefinitions', () => {
       expect(submitCalls).toHaveLength(1);
     });
 
-    const reviewers = Array.isArray(submitCalls[0].reviewers)
-      ? submitCalls[0].reviewers
-      : Object.values(submitCalls[0].reviewers ?? {});
-    expect(Array.isArray(reviewers)).toBe(true);
-    expect(reviewers[0]).toMatchObject({ value: 'alice' });
+    expect(Array.isArray(submitCalls[0].reviewers)).toBe(true);
+    expect(submitCalls[0].reviewers[0]).toMatchObject({ value: 'alice' });
   });
 
   it('blocks submit when compiled validation rules fail', async () => {

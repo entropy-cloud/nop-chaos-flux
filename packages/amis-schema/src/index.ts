@@ -714,10 +714,12 @@ export function setIn(input: Record<string, any>, path: string, value: unknown):
 
   const segments = parsePath(path);
   const clone = Array.isArray(input) ? [...input] : { ...input };
-  let cursor: Record<string, any> = clone;
+  let cursor: any = clone;
 
   for (let index = 0; index < segments.length; index += 1) {
     const segment = segments[index];
+    const nextSegment = segments[index + 1];
+    const shouldCreateArray = nextSegment != null && /^\d+$/.test(nextSegment);
 
     if (index === segments.length - 1) {
       cursor[segment] = value;
@@ -725,7 +727,13 @@ export function setIn(input: Record<string, any>, path: string, value: unknown):
     }
 
     const next = cursor[segment];
-    const nextClone = isPlainObject(next) ? { ...next } : {};
+    const nextClone = Array.isArray(next)
+      ? [...next]
+      : isPlainObject(next)
+        ? { ...next }
+        : shouldCreateArray
+          ? []
+          : {};
     cursor[segment] = nextClone;
     cursor = nextClone;
   }
