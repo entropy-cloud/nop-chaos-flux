@@ -13,6 +13,7 @@ interface ActivityEntry {
   kind: ActivityKind;
   message: string;
   detail?: string;
+  timestamp: string;
 }
 
 const users = [
@@ -76,6 +77,14 @@ function formatActionResult(result: unknown) {
 
 function formatCountLabel(value: number, noun: string) {
   return `${value} ${noun}${value === 1 ? '' : 's'}`;
+}
+
+function formatTimestamp(date: Date) {
+  return date.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
 }
 
 const schema = {
@@ -258,12 +267,15 @@ export function App() {
       return;
     }
 
+    const now = new Date();
+
     setActivity((current) => [
       {
-        id: Date.now() + current.length,
+        id: now.getTime() + current.length,
         kind,
         message,
-        detail
+        detail,
+        timestamp: formatTimestamp(now)
       },
       ...current
     ].slice(0, 16));
@@ -439,9 +451,12 @@ export function App() {
             </div>
             <div className="activity-list">
               {visibleActivity.length === 0 ? <p className="activity-empty">No events match the current filter. Re-enable a kind or trigger a new interaction.</p> : null}
-              {visibleActivity.map((entry) => (
-                <article key={entry.id} className="activity-entry">
-                  <span className={`activity-badge activity-badge--${entry.kind}`}>{entry.kind}</span>
+              {visibleActivity.map((entry, index) => (
+                <article key={entry.id} className={`activity-entry ${index === 0 ? 'activity-entry--fresh' : ''}`}>
+                  <div className="activity-entry__topline">
+                    <span className={`activity-badge activity-badge--${entry.kind}`}>{entry.kind}</span>
+                    <time className="activity-time">{entry.timestamp}</time>
+                  </div>
                   <span className="activity-message">{entry.message}</span>
                   {entry.detail ? <code className="activity-detail">{entry.detail}</code> : null}
                 </article>
