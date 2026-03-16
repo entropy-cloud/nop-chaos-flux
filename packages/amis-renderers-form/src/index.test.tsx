@@ -1,6 +1,6 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ApiObject, ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/amis-schema';
 import { createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createSchemaRenderer } from '@nop-chaos/amis-react';
@@ -104,6 +104,7 @@ describe('formRendererDefinitions', () => {
 
   it('blocks submit when compiled validation rules fail', async () => {
     submitCalls.length = 0;
+    cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
     render(
@@ -142,8 +143,174 @@ describe('formRendererDefinitions', () => {
 
     fireEvent.click(screen.getByText('Submit email'));
 
+    expect(submitCalls).toHaveLength(0);
+    expect(await screen.findByText('Email is required')).toBeTruthy();
+  });
+
+  it('validates fields on blur and renders async validating feedback', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    let resolveValidation: ((value: { ok: boolean; status: number; data: { valid: boolean; message?: string } }) => void) | undefined;
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            username: 'alice'
+          },
+          body: [
+            {
+              type: 'input-text',
+              name: 'username',
+              label: 'Username',
+              validate: {
+                api: {
+                  url: '/api/validate-username',
+                  method: 'post'
+                },
+                message: 'Username already exists'
+              }
+            }
+          ]
+        }}
+        env={{
+          ...env,
+          fetcher: async function <T>(api: ApiObject, ctx: ApiRequestContext) {
+            if (api.url === '/api/validate-username') {
+              return await new Promise((resolve) => {
+                resolveValidation = resolve as typeof resolveValidation;
+              });
+            }
+
+            submitCalls.push(ctx.scope.readOwn());
+            return {
+              ok: true,
+              status: 200,
+              data: ctx.scope.readOwn() as T
+            };
+          }
+        }}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const usernameInput = screen.getByDisplayValue('alice');
+    fireEvent.blur(usernameInput);
+
+    expect(await screen.findByText('Validating...')).toBeTruthy();
+
+    resolveValidation?.({
+      ok: true,
+      status: 200,
+      data: {
+        valid: false,
+        message: 'Username already exists'
+      }
+    });
+
     await waitFor(() => {
-      expect(submitCalls).toHaveLength(0);
+      expect(screen.getByText('Username already exists')).toBeTruthy();
+    });
+  });
+
+  it('only shows field errors after touch and marks field state classes', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            email: ''
+          },
+          body: [
+            {
+              type: 'input-email',
+              name: 'email',
+              label: 'Email',
+              required: true
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const input = screen.getByLabelText('Email');
+    const field = input.closest('.na-field');
+
+    expect(screen.queryByText('Email is required')).toBeNull();
+
+    fireEvent.focus(input);
+    expect(field?.className).toContain('na-field--visited');
+
+    fireEvent.change(input, { target: { value: 'foo' } });
+    expect(field?.className).toContain('na-field--dirty');
+    expect(screen.queryByText('Email is required')).toBeNull();
+
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.blur(input);
+
+    expect(await screen.findByText('Email is required')).toBeTruthy();
+    expect(field?.className).toContain('na-field--touched');
+    expect(field?.className).toContain('na-field--invalid');
+  });
+
+  it('waits for async validation debounce before calling the validator API', async () => {
+    cleanup();
+    const fetcherMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      data: {
+        valid: true,
+        message: 'Username is available'
+      }
+    }));
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            username: 'alice'
+          },
+          body: [
+            {
+              type: 'input-text',
+              name: 'username',
+              label: 'Username',
+              validate: {
+                debounce: 80,
+                api: {
+                  url: '/api/validate-username',
+                  method: 'post'
+                },
+                message: 'Username is already taken'
+              }
+            }
+          ]
+        }}
+        env={{
+          ...env,
+          fetcher: fetcherMock as RendererEnv['fetcher']
+        }}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.blur(screen.getByDisplayValue('alice'));
+
+    expect(fetcherMock).not.toHaveBeenCalled();
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    expect(fetcherMock).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(fetcherMock).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -271,7 +271,8 @@ export type ValidationRule =
   | { kind: 'minLength'; value: number; message?: string }
   | { kind: 'maxLength'; value: number; message?: string }
   | { kind: 'pattern'; value: string; message?: string }
-  | { kind: 'email'; message?: string };
+  | { kind: 'email'; message?: string }
+  | { kind: 'async'; api: ApiObject; debounce?: number; message?: string };
 
 export interface ValidationError {
   path: string;
@@ -467,6 +468,10 @@ export interface ResolvedNodeMeta {
 export interface FormStoreState {
   values: Record<string, any>;
   errors: Record<string, ValidationError[]>;
+  validating: Record<string, boolean>;
+  touched: Record<string, boolean>;
+  dirty: Record<string, boolean>;
+  visited: Record<string, boolean>;
   submitting: boolean;
 }
 
@@ -476,6 +481,10 @@ export interface FormStoreApi {
   setValues(values: Record<string, any>): void;
   setValue(path: string, value: unknown): void;
   setErrors(errors: Record<string, ValidationError[]>): void;
+  setValidating(path: string, validating: boolean): void;
+  setTouched(path: string, touched: boolean): void;
+  setDirty(path: string, dirty: boolean): void;
+  setVisited(path: string, visited: boolean): void;
   setSubmitting(submitting: boolean): void;
 }
 
@@ -509,6 +518,12 @@ export interface FormRuntime {
   validateField(path: string): Promise<ValidationResult>;
   validateForm(): Promise<FormValidationResult>;
   getError(path: string): ValidationError[] | undefined;
+  isValidating(path: string): boolean;
+  isTouched(path: string): boolean;
+  isDirty(path: string): boolean;
+  isVisited(path: string): boolean;
+  touchField(path: string): void;
+  visitField(path: string): void;
   clearErrors(path?: string): void;
   submit(api?: ApiObject): Promise<ActionResult>;
   reset(values?: object): void;

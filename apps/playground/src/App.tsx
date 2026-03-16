@@ -141,20 +141,33 @@ const schema = {
           data: {
             username: '',
             email: '',
-            role: 'viewer'
+            role: 'viewer',
+            adminCode: ''
           },
           body: [
             {
               type: 'input-text',
               name: 'username',
               label: 'Username',
-              placeholder: 'Enter username'
+              placeholder: 'Enter username',
+              required: true,
+              minLength: 3,
+              validate: {
+                debounce: 500,
+                api: {
+                  method: 'post',
+                  url: '/api/validate-username',
+                  requestAdaptor: 'return {data: {username: scope.username}};'
+                },
+                message: 'Username is already taken'
+              }
             },
             {
               type: 'input-email',
               name: 'email',
               label: 'Email',
-              placeholder: 'Enter email'
+              placeholder: 'Enter email',
+              required: true
             },
             {
               type: 'select',
@@ -165,6 +178,14 @@ const schema = {
                 { label: 'Editor', value: 'editor' },
                 { label: 'Admin', value: 'admin' }
               ]
+            },
+            {
+              type: 'input-password',
+              name: 'adminCode',
+              label: 'Admin Code',
+              placeholder: 'Only required for admin submissions',
+              visible: '${role === "admin"}',
+              minLength: 4
             }
           ],
           actions: [
@@ -367,6 +388,28 @@ export function App() {
           };
         }
 
+        if (api.url === '/api/validate-username') {
+          await delay(450, ctx.signal);
+
+          const username = String((api.data as Record<string, unknown> | undefined)?.username ?? '').trim().toLowerCase();
+          const exists = directoryUsers.some((user) => user.username.toLowerCase() === username);
+
+          pushActivity(
+            'api',
+            `response /api/validate-username -> ${exists ? 'duplicate' : 'available'}`,
+            `username=${username || '(empty)'}`
+          );
+
+          return {
+            ok: true,
+            status: 200,
+            data: {
+              valid: !exists,
+              message: exists ? 'Username is already taken' : 'Username is available'
+            } as T
+          };
+        }
+
         if (api.method?.toLowerCase() === 'post') {
           pushActivity('api', `response ${api.url} -> saved payload snapshot`, JSON.stringify(ctx.scope.readOwn()));
 
@@ -443,6 +486,10 @@ export function App() {
         <p className="body-copy body-copy--compact">
           Submit the user form to append a record into the local directory and watch the table plus monitor
           panel update in real time.
+        </p>
+        <p className="body-copy body-copy--compact">
+          The username field now validates on blur, debounces async uniqueness checks for 500ms, and only
+          reveals errors after a field has been touched.
         </p>
         <div className="playground-layout">
           <div className="playground-stage">

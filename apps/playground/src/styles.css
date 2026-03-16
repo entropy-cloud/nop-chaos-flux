@@ -268,8 +268,34 @@ body {
   gap: 8px;
 }
 
+.na-field--visited .na-field__label {
+  color: #6a5234;
+}
+
+.na-field--dirty .na-input,
+.na-field--dirty .na-select {
+  border-color: rgba(191, 111, 47, 0.45);
+}
+
+.na-field--invalid .na-input,
+.na-field--invalid .na-select {
+  border-color: rgba(181, 59, 44, 0.72);
+  box-shadow: 0 0 0 3px rgba(181, 59, 44, 0.12);
+}
+
 .na-field__label {
   font-weight: 600;
+}
+
+.na-field__error {
+  color: #b53b2c;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.na-field__hint {
+  color: #8f5c2c;
+  font-size: 0.9rem;
 }
 
 .na-input,
@@ -279,6 +305,7 @@ body {
   border-radius: 14px;
   border: 1px solid rgba(33, 53, 71, 0.18);
   background: rgba(255, 255, 255, 0.96);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .na-table {

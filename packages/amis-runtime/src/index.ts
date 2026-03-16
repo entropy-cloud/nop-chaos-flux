@@ -380,12 +380,36 @@ function mergeValidationRules(...groups: Array<ValidationRule[] | undefined>): V
   return groups.flatMap((group) => group ?? []);
 }
 
-function collectValidationModel(node: CompiledSchemaNode | CompiledSchemaNode[] | null | undefined): CompiledFormValidationModel | undefined {
+function collectValidationModel(
+  node:
+    | CompiledSchemaNode
+    | CompiledSchemaNode[]
+    | Array<CompiledSchemaNode | CompiledSchemaNode[]>
+    | null
+    | undefined
+): CompiledFormValidationModel | undefined {
   if (!node) {
     return undefined;
   }
 
-  const nodes = Array.isArray(node) ? node : [node];
+  const nodes: CompiledSchemaNode[] = [];
+  const queue: Array<CompiledSchemaNode | CompiledSchemaNode[]> = Array.isArray(node) ? [...node] : [node];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+
+    if (!current) {
+      continue;
+    }
+
+    if (Array.isArray(current)) {
+      queue.unshift(...current);
+      continue;
+    }
+
+    nodes.push(current);
+  }
+
   const fields: Record<string, CompiledFormValidationField> = {};
   const order: string[] = [];
 
@@ -498,7 +522,14 @@ export function createSchemaCompiler(input: {
       component: renderer,
       meta,
       props,
-      validation: renderer.scopePolicy === 'form' ? collectValidationModel(Object.values(regions).map((region) => region.node).filter(Boolean) as CompiledSchemaNode[]) : undefined,
+      validation:
+        renderer.scopePolicy === 'form'
+          ? collectValidationModel(
+              Object.values(regions)
+                .map((region) => region.node)
+                .filter((candidate): candidate is CompiledSchemaNode | CompiledSchemaNode[] => candidate != null)
+            )
+          : undefined,
       regions,
       flags,
       createRuntimeState() {
@@ -561,8 +592,33 @@ function createFormStore(initialValues: Record<string, any>): FormStoreApi {
   const store = createStore<FormStoreState>(() => ({
     values: initialValues,
     errors: {},
+    validating: {},
+    touched: {},
+    dirty: {},
+    visited: {},
     submitting: false
   }));
+
+  function setBooleanState<K extends 'touched' | 'dirty' | 'visited'>(key: K, path: string, nextValue: boolean) {
+    const current = store.getState()[key];
+
+    if (nextValue) {
+      if (current[path]) {
+        return;
+      }
+
+      store.setState({ [key]: { ...current, [path]: true } } as Pick<FormStoreState, K>);
+      return;
+    }
+
+    if (!current[path]) {
+      return;
+    }
+
+    const next = { ...current };
+    delete next[path];
+    store.setState({ [key]: next } as Pick<FormStoreState, K>);
+  }
 
   return {
     getState() {
@@ -580,6 +636,31 @@ function createFormStore(initialValues: Record<string, any>): FormStoreApi {
     },
     setErrors(errors) {
       store.setState({ errors });
+    },
+    setValidating(path, validating) {
+      const current = store.getState().validating;
+
+      if (validating) {
+        store.setState({ validating: { ...current, [path]: true } });
+        return;
+      }
+
+      if (!current[path]) {
+        return;
+      }
+
+      const next = { ...current };
+      delete next[path];
+      store.setState({ validating: next });
+    },
+    setTouched(path, touched) {
+      setBooleanState('touched', path, touched);
+    },
+    setDirty(path, dirty) {
+      setBooleanState('dirty', path, dirty);
+    },
+    setVisited(path, visited) {
+      setBooleanState('visited', path, visited);
     },
     setSubmitting(submitting) {
       store.setState({ submitting });
@@ -770,6 +851,8 @@ function buildValidationMessage(rule: ValidationRule, field: CompiledFormValidat
       return rule.message ?? `${label} format is invalid`;
     case 'email':
       return rule.message ?? `${label} must be a valid email address`;
+    case 'async':
+      return rule.message ?? `${label} failed async validation`;
   }
 }
 
@@ -801,6 +884,8 @@ function validateRule(rule: ValidationRule, value: unknown, field: CompiledFormV
         ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
         : undefined;
     }
+    case 'async':
+      return undefined;
   }
 }
 
@@ -923,6 +1008,50 @@ export function createRendererRuntime(input: {
     }
   }
 
+  async function executeValidationRule(
+    rule: Extract<ValidationRule, { kind: 'async' }>,
+    field: CompiledFormValidationField,
+    scope: ScopeRef
+  ): Promise<ValidationError | undefined> {
+    try {
+      const api = applyRequestAdaptor(expressionCompiler, evaluate<ApiObject>(rule.api, scope), scope, input.env);
+      const response = await executeApiRequest(`validate:${field.path}`, api, scope);
+      const adaptedData = applyResponseAdaptor(expressionCompiler, api, response.data, scope, input.env);
+
+      if (response.ok && adaptedData && typeof adaptedData === 'object') {
+        const candidate = adaptedData as { valid?: boolean; message?: string };
+
+        if (candidate.valid === false) {
+          return {
+            path: field.path,
+            rule: 'async',
+            message: candidate.message ?? rule.message ?? `${field.label ?? field.path} failed async validation`
+          };
+        }
+
+        if (candidate.valid === true) {
+          return undefined;
+        }
+      }
+
+      if (!response.ok) {
+        return {
+          path: field.path,
+          rule: 'async',
+          message: rule.message ?? `${field.label ?? field.path} failed async validation`
+        };
+      }
+
+      return undefined;
+    } catch (error) {
+      if (isAbortError(error)) {
+        return undefined;
+      }
+
+      throw error;
+    }
+  }
+
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
     const store = input.pageStore ?? createPageStore(data);
     store.setData(data);
@@ -955,6 +1084,21 @@ export function createRendererRuntime(input: {
     };
   }
 
+  function buildInitialFieldState(values: Record<string, any>, validation?: CompiledFormValidationModel) {
+    const initialValues: Record<string, unknown> = {};
+    const dirty: Record<string, boolean> = {};
+
+    for (const path of validation?.order ?? []) {
+      initialValues[path] = getIn(values, path);
+      dirty[path] = false;
+    }
+
+    return {
+      initialValues,
+      dirty
+    };
+  }
+
   function createFormRuntime(inputValue: {
     id?: string;
     initialValues?: Record<string, any>;
@@ -964,6 +1108,45 @@ export function createRendererRuntime(input: {
   }): FormRuntime {
     const store = createFormStore(inputValue.initialValues ?? {});
     const formId = inputValue.id ?? `${inputValue.parentScope.id}-form`;
+    const validationRuns = new Map<string, number>();
+    const pendingValidationDebounces = new Map<string, { timer: ReturnType<typeof setTimeout>; resolve: (run: boolean) => void }>();
+    const initialFieldState = buildInitialFieldState(inputValue.initialValues ?? {}, inputValue.validation);
+
+    function cancelValidationDebounce(path: string) {
+      const pending = pendingValidationDebounces.get(path);
+
+      if (!pending) {
+        return;
+      }
+
+      clearTimeout(pending.timer);
+      pending.resolve(false);
+      pendingValidationDebounces.delete(path);
+    }
+
+    function cancelAllValidationDebounces() {
+      for (const path of Array.from(pendingValidationDebounces.keys())) {
+        cancelValidationDebounce(path);
+      }
+    }
+
+    function waitForValidationDebounce(path: string, debounce: number | undefined, runId: number): Promise<boolean> {
+      if (!debounce || debounce <= 0) {
+        return Promise.resolve(validationRuns.get(path) === runId);
+      }
+
+      cancelValidationDebounce(path);
+
+      return new Promise<boolean>((resolve) => {
+        const timer = setTimeout(() => {
+          pendingValidationDebounces.delete(path);
+          resolve(validationRuns.get(path) === runId);
+        }, debounce);
+
+        pendingValidationDebounces.set(path, { timer, resolve });
+      });
+    }
+
     const scope = createScopeRef({
       id: formId,
       path: `${inputValue.parentScope.path}.form`,
@@ -988,24 +1171,64 @@ export function createRendererRuntime(input: {
           return { ok: true, errors: [] } as ValidationResult;
         }
 
+        const runId = (validationRuns.get(path) ?? 0) + 1;
+        validationRuns.set(path, runId);
         const value = scope.get(path);
-        const errors = field.rules
-          .map((rule) => validateRule(rule, value, field))
-          .filter((entry): entry is ValidationError => !!entry);
-        const nextErrors = { ...store.getState().errors };
+        const errors: ValidationError[] = [];
+        const hasAsyncRules = field.rules.some((rule) => rule.kind === 'async');
 
-        if (errors.length > 0) {
-          nextErrors[path] = errors;
-        } else {
-          delete nextErrors[path];
+        if (hasAsyncRules) {
+          store.setValidating(path, true);
         }
 
-        store.setErrors(nextErrors);
+        try {
+          for (const rule of field.rules) {
+            if (rule.kind === 'async') {
+              const shouldRun = await waitForValidationDebounce(path, rule.debounce, runId);
 
-        return {
-          ok: errors.length === 0,
-          errors
-        } as ValidationResult;
+              if (!shouldRun) {
+                return { ok: true, errors: [] } as ValidationResult;
+              }
+
+              const asyncError = await executeValidationRule(rule, field, scope);
+
+              if (asyncError) {
+                errors.push(asyncError);
+              }
+
+              continue;
+            }
+
+            const syncError = validateRule(rule, value, field);
+
+            if (syncError) {
+              errors.push(syncError);
+            }
+          }
+
+          if (validationRuns.get(path) !== runId) {
+            return { ok: true, errors: [] } as ValidationResult;
+          }
+
+          const nextErrors = { ...store.getState().errors };
+
+          if (errors.length > 0) {
+            nextErrors[path] = errors;
+          } else {
+            delete nextErrors[path];
+          }
+
+          store.setErrors(nextErrors);
+
+          return {
+            ok: errors.length === 0,
+            errors
+          } as ValidationResult;
+        } finally {
+          if (hasAsyncRules && validationRuns.get(path) === runId) {
+            store.setValidating(path, false);
+          }
+        }
       },
       async validateForm() {
         if (!inputValue.validation) {
@@ -1038,6 +1261,24 @@ export function createRendererRuntime(input: {
       },
       getError(path) {
         return store.getState().errors[path];
+      },
+      isValidating(path) {
+        return store.getState().validating[path] === true;
+      },
+      isTouched(path) {
+        return store.getState().touched[path] === true;
+      },
+      isDirty(path) {
+        return store.getState().dirty[path] === true;
+      },
+      isVisited(path) {
+        return store.getState().visited[path] === true;
+      },
+      touchField(path) {
+        store.setTouched(path, true);
+      },
+      visitField(path) {
+        store.setVisited(path, true);
       },
       clearErrors(path) {
         if (!path) {
@@ -1083,10 +1324,32 @@ export function createRendererRuntime(input: {
         };
       },
       reset(values) {
-        store.setValues(toRecord(values));
+        const nextValues = toRecord(values);
+        const nextInitialFieldState = buildInitialFieldState(nextValues, inputValue.validation);
+
+        initialFieldState.initialValues = nextInitialFieldState.initialValues;
+        cancelAllValidationDebounces();
+        store.setValues(nextValues);
         store.setErrors({});
+        for (const path of Object.keys(store.getState().validating)) {
+          store.setValidating(path, false);
+        }
+        for (const path of Object.keys(store.getState().touched)) {
+          store.setTouched(path, false);
+        }
+        for (const path of Object.keys(store.getState().dirty)) {
+          store.setDirty(path, false);
+        }
+        for (const path of Object.keys(store.getState().visited)) {
+          store.setVisited(path, false);
+        }
       },
       setValue(name, value) {
+        validationRuns.set(name, (validationRuns.get(name) ?? 0) + 1);
+        cancelValidationDebounce(name);
+        store.setValidating(name, false);
+        const baseline = initialFieldState.initialValues[name];
+        store.setDirty(name, !Object.is(baseline, value));
         store.setValue(name, value);
         this.clearErrors(name);
       }

@@ -188,6 +188,15 @@ Expected additions:
 - `validating`
 - field-level validation status for async rules
 
+Current runtime behavior:
+
+- sync and async field errors are stored in `errors`
+- async field rules can expose field-level `validating` state while requests are in flight
+- async field rules may declare `debounce`, and the runtime will suppress superseded runs before the request starts
+- blur-triggered validation is now wired for the standard form renderers
+- `visited`, `touched`, and `dirty` are tracked in the form store for standard controls
+- standard form renderers show errors after touch, revalidate touched fields on change, and keep submit-time validation as the final gate
+
 These should remain runtime concepts, not React-library-specific state shapes.
 
 ## Complex Controls and Runtime Registration

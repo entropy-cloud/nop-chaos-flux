@@ -6,6 +6,7 @@ import type {
   CompiledSchemaNode,
   DialogState,
   FormRuntime,
+  FormStoreState,
   PageRuntime,
   RenderFragmentOptions,
   RenderNodeInput,
@@ -371,6 +372,26 @@ export function useScopeSelector<T>(selector: (scopeData: any) => T, equalityFn:
 
 export function useCurrentForm(): FormRuntime | undefined {
   return useContext(FormContext);
+}
+
+export function useCurrentFormState<T>(
+  selector: (state: FormStoreState) => T,
+  equalityFn: (a: T, b: T) => boolean = Object.is
+): T {
+  const form = useCurrentForm();
+  const subscribe = form?.store.subscribe ?? (() => () => undefined);
+  const getSnapshot = () =>
+    form?.store.getState() ?? {
+      values: {},
+      errors: {},
+      validating: {},
+      touched: {},
+      dirty: {},
+      visited: {},
+      submitting: false
+    };
+
+  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, equalityFn);
 }
 
 export function useCurrentPage(): PageRuntime | undefined {
