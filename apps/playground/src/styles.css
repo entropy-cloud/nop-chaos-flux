@@ -62,6 +62,11 @@ body {
   color: #4b6175;
 }
 
+.body-copy--compact {
+  margin-top: 10px;
+  font-size: 15px;
+}
+
 .playground-stage {
   padding: 24px;
   border-radius: 20px;

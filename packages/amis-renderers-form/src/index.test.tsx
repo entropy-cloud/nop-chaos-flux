@@ -10,11 +10,11 @@ const submitCalls: Array<Record<string, any>> = [];
 
 const env: RendererEnv = {
   fetcher: async function <T>(_api: ApiObject, ctx: ApiRequestContext) {
-    submitCalls.push(ctx.scope.read());
+    submitCalls.push(ctx.scope.readOwn());
     return {
       ok: true,
       status: 200,
-      data: ctx.scope.read() as T
+      data: ctx.scope.readOwn() as T
     };
   },
   notify: () => undefined

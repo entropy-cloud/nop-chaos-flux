@@ -195,7 +195,7 @@ function DialogHost() {
               Close
             </button>
             <ScopeContext.Provider value={dialog.scope}>
-              <RenderNodes input={dialog.dialog.body as RenderNodeInput} />
+              <RenderNodes input={dialog.dialog.body as RenderNodeInput} options={{ scope: dialog.scope }} />
             </ScopeContext.Provider>
           </div>
         </div>
@@ -357,7 +357,7 @@ export function useScopeSelector<T>(selector: (scopeData: any) => T, equalityFn:
   const scope = useRenderScope();
   const store = scope.store;
   const subscribe = store?.subscribe ?? (() => () => undefined);
-  const getSnapshot = () => scope.read();
+  const getSnapshot = () => scope.readOwn();
 
   return useSyncExternalStoreWithSelector(
     subscribe,

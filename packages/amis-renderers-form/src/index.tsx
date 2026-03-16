@@ -7,6 +7,10 @@ import type {
 } from '@nop-chaos/amis-schema';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
 
+function readFieldValue(scope: ReturnType<typeof useRenderScope>, name: string): unknown {
+  return name ? scope.get(name) ?? '' : '';
+}
+
 interface FormSchema extends BaseSchema {
   type: 'form';
   body?: BaseSchema[];
@@ -37,7 +41,7 @@ function createInputRenderer(inputType: string) {
     const scope = useRenderScope();
     const currentForm = useCurrentForm();
     const name = String(props.props.name ?? props.schema.name ?? '');
-    const value = name ? scope.read()[name] ?? '' : '';
+    const value = readFieldValue(scope, name);
 
     return (
       <label className="na-field">
@@ -85,7 +89,7 @@ export const formRendererDefinitions: RendererDefinition[] = [
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
       const name = String(props.props.name ?? props.schema.name ?? '');
-      const value = name ? scope.read()[name] ?? '' : '';
+      const value = readFieldValue(scope, name);
       const options = Array.isArray(props.props.options) ? (props.props.options as SelectSchema['options']) : [];
 
       return (

@@ -17,6 +17,9 @@ export interface BaseSchema extends SchemaObject {
   label?: string;
   title?: string;
   className?: string;
+  visible?: boolean | string;
+  hidden?: boolean | string;
+  disabled?: boolean | string;
   visibleOn?: string;
   hiddenOn?: string;
   disabledOn?: string;
@@ -101,12 +104,21 @@ export interface ScopeStore<T = Record<string, any>> {
   subscribe(listener: () => void): () => void;
 }
 
+export interface EvalContext {
+  resolve(path: string): unknown;
+  has(path: string): boolean;
+  materialize(): Record<string, any>;
+}
+
 export interface ScopeRef {
   id: string;
   path: string;
   parent?: ScopeRef;
   store?: ScopeStore;
   readonly value: Record<string, any>;
+  get(path: string): unknown;
+  has(path: string): boolean;
+  readOwn(): Record<string, any>;
   read(): Record<string, any>;
   update(path: string, value: unknown): void;
 }
@@ -121,13 +133,13 @@ export interface CreateScopeOptions {
 export interface CompiledExpression<T = unknown> {
   kind: 'expression';
   source: string;
-  exec(scope: object, env: RendererEnv): T;
+  exec(context: EvalContext | object, env: RendererEnv): T;
 }
 
 export interface CompiledTemplate<T = unknown> {
   kind: 'template';
   source: string;
-  exec(scope: object, env: RendererEnv): T;
+  exec(context: EvalContext | object, env: RendererEnv): T;
 }
 
 export interface FormulaCompiler {
@@ -224,7 +236,7 @@ export interface DynamicRuntimeValue<T = unknown> {
   isStatic: false;
   node: DynamicValueNode<T>;
   createState(): RuntimeValueState<T>;
-  exec(scope: object, env: RendererEnv, state?: RuntimeValueState<T>): ValueEvaluationResult<T>;
+  exec(context: EvalContext, env: RendererEnv, state?: RuntimeValueState<T>): ValueEvaluationResult<T>;
 }
 
 export type CompiledRuntimeValue<T = unknown> = StaticRuntimeValue<T> | DynamicRuntimeValue<T>;
@@ -263,9 +275,9 @@ export interface CompiledSchemaMeta {
   label?: CompiledRuntimeValue<string | undefined>;
   title?: CompiledRuntimeValue<string | undefined>;
   className?: CompiledRuntimeValue<string | undefined>;
-  visibleOn?: CompiledRuntimeValue<boolean | unknown>;
-  hiddenOn?: CompiledRuntimeValue<boolean | unknown>;
-  disabledOn?: CompiledRuntimeValue<boolean | unknown>;
+  visible?: CompiledRuntimeValue<boolean | unknown>;
+  hidden?: CompiledRuntimeValue<boolean | unknown>;
+  disabled?: CompiledRuntimeValue<boolean | unknown>;
 }
 
 export interface ResolvePropsArgs<S extends BaseSchema = BaseSchema> {
@@ -343,7 +355,7 @@ export interface CompiledNodeFlags {
 
 export interface CompiledNodeRuntimeState {
   meta: Record<string, RuntimeValueState<unknown>>;
-  dynamicProps: Record<string, RuntimeValueState<unknown>>;
+  props?: RuntimeValueState<Record<string, unknown>>;
   resolvedMeta?: ResolvedNodeMeta;
   resolvedProps?: Readonly<Record<string, unknown>>;
 }
@@ -355,8 +367,7 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   schema: S;
   component: RendererDefinition<S>;
   meta: CompiledSchemaMeta;
-  staticProps: Readonly<Record<string, unknown>>;
-  dynamicProps: Readonly<Record<string, DynamicRuntimeValue<unknown>>>;
+  props: CompiledRuntimeValue<Record<string, unknown>>;
   regions: Readonly<Record<string, CompiledRegion>>;
   flags: CompiledNodeFlags;
   createRuntimeState(): CompiledNodeRuntimeState;
@@ -437,7 +448,7 @@ export interface PageStoreApi {
   setData(data: Record<string, any>): void;
   updateData(path: string, value: unknown): void;
   openDialog(dialog: DialogState): void;
-  closeDialog(dialogId: string): void;
+  closeDialog(dialogId?: string): void;
   refresh(): void;
 }
 
@@ -454,7 +465,7 @@ export interface PageRuntime {
   store: PageStoreApi;
   scope: ScopeRef;
   openDialog(dialog: Record<string, any>, scope: ScopeRef): string;
-  closeDialog(dialogId: string): void;
+  closeDialog(dialogId?: string): void;
   refresh(): void;
 }
 
@@ -545,7 +556,19 @@ export interface SchemaRendererProps {
 
 export type SchemaRendererComponent = (props: SchemaRendererProps) => ReactElement | null;
 
-export const META_FIELDS = new Set(['id', 'name', 'label', 'title', 'className', 'visibleOn', 'hiddenOn', 'disabledOn']);
+export const META_FIELDS = new Set([
+  'id',
+  'name',
+  'label',
+  'title',
+  'className',
+  'visible',
+  'hidden',
+  'disabled',
+  'visibleOn',
+  'hiddenOn',
+  'disabledOn'
+]);
 
 export function isPlainObject(value: unknown): value is Record<string, any> {
   return Object.prototype.toString.call(value) === '[object Object]';
@@ -563,12 +586,25 @@ export function isSchemaInput(value: unknown): value is SchemaInput {
   return isSchema(value) || isSchemaArray(value);
 }
 
-export function getIn(input: Record<string, any>, path: string): unknown {
+export function parsePath(path: string): string[] {
+  if (!path) {
+    return [];
+  }
+
+  const normalized = path.replace(/\[(\d+)\]/g, '.$1');
+
+  return normalized
+    .split('.')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+}
+
+export function getIn(input: unknown, path: string): unknown {
   if (!path) {
     return input;
   }
 
-  return path.split('.').reduce<unknown>((current, segment) => {
+  return parsePath(path).reduce<unknown>((current, segment) => {
     if (current == null || typeof current !== 'object') {
       return undefined;
     }
@@ -582,7 +618,7 @@ export function setIn(input: Record<string, any>, path: string, value: unknown):
     return isPlainObject(value) ? value : input;
   }
 
-  const segments = path.split('.');
+  const segments = parsePath(path);
   const clone = Array.isArray(input) ? [...input] : { ...input };
   let cursor: Record<string, any> = clone;
 

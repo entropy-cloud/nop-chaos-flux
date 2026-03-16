@@ -12,7 +12,6 @@ import type {
   CompiledSchemaNode,
   CompileNodeOptions,
   CompileSchemaOptions,
-  DynamicRuntimeValue,
   ExpressionCompiler,
   FormRuntime,
   FormStoreApi,
@@ -36,8 +35,10 @@ import type {
 import {
   META_FIELDS,
   createNodeId,
+  getIn,
   isPlainObject,
   isSchemaInput,
+  parsePath,
   setIn,
   shallowEqual
 } from '@nop-chaos/amis-schema';
@@ -72,6 +73,93 @@ function createScopeValue(parent: ScopeRef | undefined, store: ScopeStore<Record
   };
 }
 
+function createScopeReader(parent: ScopeRef | undefined, store: ScopeStore<Record<string, any>>, isolate?: boolean) {
+  let lastOwnSnapshot: Record<string, any> | undefined;
+  let lastParentSnapshot: Record<string, any> | undefined;
+  let lastMaterialized: Record<string, any> | undefined;
+
+  return function read(): Record<string, any> {
+    const ownSnapshot = store.getSnapshot();
+
+    if (!parent || isolate) {
+      return ownSnapshot;
+    }
+
+    const parentSnapshot = parent.read();
+
+    if (
+      lastMaterialized &&
+      lastOwnSnapshot === ownSnapshot &&
+      lastParentSnapshot === parentSnapshot
+    ) {
+      return lastMaterialized;
+    }
+
+    lastOwnSnapshot = ownSnapshot;
+    lastParentSnapshot = parentSnapshot;
+    lastMaterialized = {
+      ...parentSnapshot,
+      ...ownSnapshot
+    };
+
+    return lastMaterialized;
+  };
+}
+
+function hasOwnPathValue(input: Record<string, any>, path: string): boolean {
+  return getIn(input, path) !== undefined;
+}
+
+function resolveScopePath(scope: ScopeRef | undefined, path: string): unknown {
+  if (!scope) {
+    return undefined;
+  }
+
+  const segments = parsePath(path);
+
+  if (segments.length === 0) {
+    return undefined;
+  }
+
+  const [head, ...rest] = segments;
+  const own = scope.readOwn();
+
+  if (Object.prototype.hasOwnProperty.call(own, head)) {
+    if (rest.length === 0) {
+      return own[head];
+    }
+
+    return getIn(own[head], rest.join('.'));
+  }
+
+  return resolveScopePath(scope.parent, path);
+}
+
+function hasScopePath(scope: ScopeRef | undefined, path: string): boolean {
+  if (!scope) {
+    return false;
+  }
+
+  const segments = parsePath(path);
+
+  if (segments.length === 0) {
+    return false;
+  }
+
+  const [head, ...rest] = segments;
+  const own = scope.readOwn();
+
+  if (Object.prototype.hasOwnProperty.call(own, head)) {
+    if (rest.length === 0) {
+      return true;
+    }
+
+    return hasOwnPathValue({ [head]: own[head] }, [head, ...rest].join('.'));
+  }
+
+  return hasScopePath(scope.parent, path);
+}
+
 function toRecord(value: unknown): Record<string, any> {
   return isPlainObject(value) ? value : {};
 }
@@ -86,6 +174,7 @@ export function createScopeRef(input: {
   update?: (path: string, value: unknown) => void;
 }): ScopeRef {
   const store = input.store ?? createScopeStore(input.initialData ?? {});
+  const read = createScopeReader(input.parent, store, input.isolate);
 
   return {
     id: input.id,
@@ -93,11 +182,18 @@ export function createScopeRef(input: {
     parent: input.parent,
     store,
     get value() {
-      return createScopeValue(input.parent, store, input.isolate);
+      return read();
     },
-    read() {
-      return createScopeValue(input.parent, store, input.isolate);
+    get(path) {
+      return resolveScopePath(this, path);
     },
+    has(path) {
+      return hasScopePath(this, path);
+    },
+    readOwn() {
+      return store.getSnapshot();
+    },
+    read,
     update(path, value) {
       if (input.update) {
         input.update(path, value);
@@ -165,15 +261,19 @@ function buildCompiledMeta(
   schema: BaseSchema,
   expressionCompiler: ExpressionCompiler
 ): CompiledSchemaMeta {
+  const visibleSource = schema.visible !== undefined ? schema.visible : schema.visibleOn;
+  const hiddenSource = schema.hidden !== undefined ? schema.hidden : schema.hiddenOn;
+  const disabledSource = schema.disabled !== undefined ? schema.disabled : schema.disabledOn;
+
   return {
     id: schema.id ? expressionCompiler.compileValue(schema.id) : undefined,
     name: schema.name ? expressionCompiler.compileValue(schema.name) : undefined,
     label: schema.label ? expressionCompiler.compileValue(schema.label) : undefined,
     title: schema.title ? expressionCompiler.compileValue(schema.title) : undefined,
     className: schema.className ? expressionCompiler.compileValue(schema.className) : undefined,
-    visibleOn: schema.visibleOn ? expressionCompiler.compileValue(schema.visibleOn) : undefined,
-    hiddenOn: schema.hiddenOn ? expressionCompiler.compileValue(schema.hiddenOn) : undefined,
-    disabledOn: schema.disabledOn ? expressionCompiler.compileValue(schema.disabledOn) : undefined
+    visible: visibleSource !== undefined ? expressionCompiler.compileValue(visibleSource) : undefined,
+    hidden: hiddenSource !== undefined ? expressionCompiler.compileValue(hiddenSource) : undefined,
+    disabled: disabledSource !== undefined ? expressionCompiler.compileValue(disabledSource) : undefined
   };
 }
 
@@ -181,7 +281,7 @@ function isCompiledStatic(compiled: CompiledRuntimeValue<unknown> | undefined): 
   return !compiled || compiled.kind === 'static';
 }
 
-  function createNodeRuntimeState(node: CompiledSchemaNode): CompiledNodeRuntimeState {
+function createNodeRuntimeState(node: CompiledSchemaNode): CompiledNodeRuntimeState {
   const metaEntries: Record<string, any> = {};
   for (const key of Object.keys(node.meta) as Array<Extract<keyof CompiledSchemaMeta, string>>) {
     const value = node.meta[key];
@@ -190,14 +290,9 @@ function isCompiledStatic(compiled: CompiledRuntimeValue<unknown> | undefined): 
     }
   }
 
-  const dynamicProps: Record<string, any> = {};
-  for (const key of Object.keys(node.dynamicProps)) {
-    dynamicProps[key] = node.dynamicProps[key].createState();
-  }
-
   return {
     meta: metaEntries,
-    dynamicProps
+    props: node.props.kind === 'dynamic' ? node.props.createState() : undefined
   };
 }
 
@@ -249,8 +344,7 @@ export function createSchemaCompiler(input: {
     const renderer = options.renderer;
     const path = options.path;
     const meta = buildCompiledMeta(schema, expressionCompiler);
-    const staticProps: Record<string, unknown> = {};
-    const dynamicProps: Record<string, DynamicRuntimeValue<unknown>> = {};
+    const propSource: Record<string, unknown> = {};
     const regions: Record<string, CompiledRegion> = {};
 
     for (const key of Object.keys(schema)) {
@@ -271,23 +365,19 @@ export function createSchemaCompiler(input: {
         continue;
       }
 
-      const compiled = expressionCompiler.compileValue(value);
-
-      if (compiled.kind === 'static') {
-        staticProps[key] = compiled.value;
-      } else {
-        dynamicProps[key] = compiled;
-      }
+      propSource[key] = value;
     }
 
+    const props = expressionCompiler.compileValue(propSource);
+
     const flags = {
-      hasVisibilityRule: !!meta.visibleOn,
-      hasHiddenRule: !!meta.hiddenOn,
-      hasDisabledRule: !!meta.disabledOn,
+      hasVisibilityRule: !!meta.visible,
+      hasHiddenRule: !!meta.hidden,
+      hasDisabledRule: !!meta.disabled,
       isContainer: Object.keys(regions).length > 0,
       isStatic:
         Object.values(meta).every((value) => isCompiledStatic(value)) &&
-        Object.keys(dynamicProps).length === 0 &&
+        props.kind === 'static' &&
         Object.values(regions).every((region) => region.node == null)
     };
 
@@ -298,8 +388,7 @@ export function createSchemaCompiler(input: {
       schema,
       component: renderer,
       meta,
-      staticProps,
-      dynamicProps,
+      props,
       regions,
       flags,
       createRuntimeState() {
@@ -405,6 +494,16 @@ function createPageStore(initialData: Record<string, any>): PageStoreApi {
     },
     closeDialog(dialogId) {
       const state = store.getState();
+
+      if (!dialogId) {
+        if (state.dialogs.length === 0) {
+          return;
+        }
+
+        store.setState({ dialogs: state.dialogs.slice(0, -1) });
+        return;
+      }
+
       store.setState({ dialogs: state.dialogs.filter((dialog) => dialog.id !== dialogId) });
     },
     refresh() {
@@ -426,27 +525,6 @@ function evaluateCompiledValue<T>(
   }
 
   return compiler.evaluateValue(value, scope, env, state);
-}
-
-function mergeProps(staticProps: Record<string, unknown>, dynamicEntries: Record<string, unknown>, previous?: Readonly<Record<string, unknown>>) {
-  const next = {
-    ...staticProps,
-    ...dynamicEntries
-  };
-
-  if (previous && shallowEqual(previous, next)) {
-    return {
-      value: previous,
-      changed: false,
-      reusedReference: true
-    };
-  }
-
-  return {
-    value: next,
-    changed: true,
-    reusedReference: false
-  };
 }
 
 function applyResponseDataPath(currentData: Record<string, any>, dataPath: string, responseData: unknown): Record<string, any> {
@@ -488,6 +566,47 @@ function normalizeAdaptorSource(source: string): string {
   }
 
   return trimmed.replace(/;\s*$/, '').trim();
+}
+
+function createAdaptorScopeView(scope: ScopeRef): object {
+  return new Proxy(
+    {},
+    {
+      get(_target, property) {
+        if (typeof property !== 'string') {
+          return undefined;
+        }
+
+        if (property === '__proto__') {
+          return undefined;
+        }
+
+        return scope.get(property);
+      },
+      has(_target, property) {
+        return typeof property === 'string' ? scope.has(property) : false;
+      },
+      ownKeys() {
+        return Reflect.ownKeys(scope.read());
+      },
+      getOwnPropertyDescriptor(_target, property) {
+        if (typeof property !== 'string') {
+          return undefined;
+        }
+
+        if (!scope.has(property)) {
+          return undefined;
+        }
+
+        return {
+          configurable: true,
+          enumerable: true,
+          value: scope.get(property),
+          writable: false
+        };
+      }
+    }
+  );
 }
 
 function createCancelledResult(error?: unknown): ActionResult {
@@ -535,7 +654,7 @@ function applyRequestAdaptor(expressionCompiler: ExpressionCompiler, api: ApiObj
   const adapted = compiled.exec(
     {
       api,
-      scope: scope.read(),
+      scope: createAdaptorScopeView(scope),
       data: api.data,
       headers: api.headers ?? {}
     },
@@ -557,7 +676,7 @@ function applyResponseAdaptor(expressionCompiler: ExpressionCompiler, api: ApiOb
       payload: responseData,
       response: responseData,
       api,
-      scope: scope.read()
+      scope: createAdaptorScopeView(scope)
     },
     env
   );
@@ -770,8 +889,12 @@ export function createRendererRuntime(input: {
           return result;
         }
         case 'closeDialog': {
-          if (ctx.page && processedAction.dialogId) {
-            ctx.page.closeDialog(String(evaluate(processedAction.dialogId, ctx.scope)));
+          if (ctx.page) {
+            if (processedAction.dialogId) {
+              ctx.page.closeDialog(String(evaluate(processedAction.dialogId, ctx.scope)));
+            } else {
+              ctx.page.closeDialog(ctx.dialogId);
+            }
           }
           const result = { ok: true };
           input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
@@ -905,9 +1028,9 @@ export function createRendererRuntime(input: {
       label: evaluateCompiledValue(expressionCompiler, node.meta.label, scope, input.env, state?.meta.label),
       title: evaluateCompiledValue(expressionCompiler, node.meta.title, scope, input.env, state?.meta.title),
       className: evaluateCompiledValue(expressionCompiler, node.meta.className, scope, input.env, state?.meta.className),
-      visible: Boolean(evaluateCompiledValue(expressionCompiler, node.meta.visibleOn, scope, input.env, state?.meta.visibleOn) ?? true),
-      hidden: Boolean(evaluateCompiledValue(expressionCompiler, node.meta.hiddenOn, scope, input.env, state?.meta.hiddenOn) ?? false),
-      disabled: Boolean(evaluateCompiledValue(expressionCompiler, node.meta.disabledOn, scope, input.env, state?.meta.disabledOn) ?? false),
+      visible: Boolean(evaluateCompiledValue(expressionCompiler, node.meta.visible, scope, input.env, state?.meta.visible) ?? true),
+      hidden: Boolean(evaluateCompiledValue(expressionCompiler, node.meta.hidden, scope, input.env, state?.meta.hidden) ?? false),
+      disabled: Boolean(evaluateCompiledValue(expressionCompiler, node.meta.disabled, scope, input.env, state?.meta.disabled) ?? false),
       changed: true
     };
 
@@ -926,24 +1049,21 @@ export function createRendererRuntime(input: {
   }
 
   function resolveNodeProps(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps {
-    const dynamicValues: Record<string, unknown> = {};
-
-    for (const key of Object.keys(node.dynamicProps)) {
-      dynamicValues[key] = expressionCompiler.evaluateValue(
-        node.dynamicProps[key],
-        scope,
-        input.env,
-        state?.dynamicProps[key]
-      );
+    if (node.props.kind === 'static') {
+      return {
+        value: node.props.value,
+        changed: false,
+        reusedReference: true
+      };
     }
 
-    const merged = mergeProps(node.staticProps, dynamicValues, state?.resolvedProps);
+    const execution = expressionCompiler.evaluateWithState(node.props, scope, input.env, state?.props ?? node.props.createState());
 
     if (state) {
-      state.resolvedProps = merged.value;
+      state.resolvedProps = execution.value;
     }
 
-    return merged;
+    return execution;
   }
 
   return {

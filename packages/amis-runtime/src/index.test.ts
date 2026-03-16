@@ -123,18 +123,18 @@ describe('createRendererRuntime', () => {
     expect(page.store.getState().dialogs).toHaveLength(1);
     const dialogState = page.store.getState().dialogs[0];
     expect(dialogState.dialog.title).toBe('Runtime dialog');
-    expect(dialogState.scope.read().dialogId).toBe(dialogState.id);
+    expect(dialogState.scope.get('dialogId')).toBe(dialogState.id);
 
     const closeResult = await runtime.dispatch(
       {
-        action: 'closeDialog',
-        dialogId: '${dialogId}'
+        action: 'closeDialog'
       },
       {
         runtime,
         scope: dialogState.scope,
         page,
-        node
+        node,
+        dialogId: dialogState.id
       }
     );
 
@@ -155,6 +155,123 @@ describe('createRendererRuntime', () => {
     });
 
     expect(runtime.evaluate('User: ${record.name}', rowScope)).toBe('User: Bob');
+  });
+
+  it('resolves lexical scope paths through scope.get', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ rootValue: 'page' });
+    const child = runtime.createChildScope(page.scope, { record: { name: 'Alice' } });
+
+    expect(child.get('record.name')).toBe('Alice');
+    expect(child.get('rootValue')).toBe('page');
+    expect(child.has('record.name')).toBe(true);
+    expect(child.has('missing')).toBe(false);
+  });
+
+  it('supports unified visible and disabled meta fields', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const node = runtime.compile({
+      type: 'text',
+      text: 'Status',
+      visible: '${canView}',
+      disabled: '${isLocked}'
+    }) as any;
+    const page = runtime.createPageRuntime({ canView: true, isLocked: true });
+
+    const meta = runtime.resolveNodeMeta(node, page.scope, node.createRuntimeState());
+
+    expect(meta.visible).toBe(true);
+    expect(meta.hidden).toBe(false);
+    expect(meta.disabled).toBe(true);
+  });
+
+  it('keeps legacy visibleOn compatibility when unified fields are absent', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const node = runtime.compile({
+      type: 'text',
+      text: 'Legacy',
+      visibleOn: '${showLegacy}'
+    }) as any;
+    const page = runtime.createPageRuntime({ showLegacy: false });
+
+    const meta = runtime.resolveNodeMeta(node, page.scope, node.createRuntimeState());
+
+    expect(meta.visible).toBe(false);
+  });
+
+  it('closes the nearest dialog by default', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
+    const page = runtime.createPageRuntime({});
+
+    await runtime.dispatch(
+      {
+        action: 'dialog',
+        dialog: {
+          title: 'First',
+          body: [{ type: 'text', text: 'First body' }]
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        node
+      }
+    );
+
+    await runtime.dispatch(
+      {
+        action: 'dialog',
+        dialog: {
+          title: 'Second',
+          body: [{ type: 'text', text: 'Second body' }]
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        node
+      }
+    );
+
+    const dialogs = page.store.getState().dialogs;
+    expect(dialogs).toHaveLength(2);
+
+    const closeResult = await runtime.dispatch(
+      {
+        action: 'closeDialog'
+      },
+      {
+        runtime,
+        scope: dialogs[1].scope,
+        page,
+        node,
+        dialogId: dialogs[1].id
+      }
+    );
+
+    expect(closeResult.ok).toBe(true);
+    expect(page.store.getState().dialogs).toHaveLength(1);
+    expect(page.store.getState().dialogs[0].id).toBe(dialogs[0].id);
   });
 
   it('writes ajax response data into page state via dataPath', async () => {
@@ -258,6 +375,53 @@ describe('createRendererRuntime', () => {
       data: {
         rows: [{ id: 1, name: 'Alice' }],
         count: 1
+      }
+    });
+  });
+
+  it('evaluates adaptor scope through lexical scope view without eager whole-scope reads', async () => {
+    const fetchCalls: ApiObject[] = [];
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>(api: ApiObject) => {
+          fetchCalls.push(api);
+          return {
+            ok: true,
+            status: 200,
+            data: { ok: true } as T
+          };
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ token: 'page-token' });
+    const childScope = runtime.createChildScope(page.scope, { username: 'Alice' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'ajax',
+        api: {
+          url: '/api/adaptor-check',
+          method: 'post',
+          requestAdaptor: 'return {headers: {Authorization: scope.token}, data: {username: scope.username}};'
+        }
+      },
+      {
+        runtime,
+        scope: childScope,
+        page
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(fetchCalls[0]).toMatchObject({
+      headers: {
+        Authorization: 'page-token'
+      },
+      data: {
+        username: 'Alice'
       }
     });
   });
@@ -741,11 +905,11 @@ describe('createRendererRuntime', () => {
       env: {
         ...env,
         fetcher: async <T>(api: ApiObject, ctx: ApiRequestContext) => {
-          fetchCalls.push({ api, scopeData: ctx.scope.read() });
+          fetchCalls.push({ api, scopeData: ctx.scope.readOwn() });
           return {
             ok: true,
             status: 200,
-            data: { submitted: ctx.scope.read() } as T
+            data: { submitted: ctx.scope.readOwn() } as T
           };
         }
       },
@@ -783,7 +947,6 @@ describe('createRendererRuntime', () => {
     expect(fetchCalls[0].scopeData).toMatchObject({ username: 'Alice', email: 'alice@example.com', role: 'admin' });
     expect(result.data).toEqual({
       submitted: {
-        pageValue: 'root',
         username: 'Alice',
         email: 'alice@example.com',
         role: 'admin'
@@ -877,10 +1040,10 @@ describe('createRendererRuntime', () => {
 
         return {
           ...node,
-          staticProps: {
-            ...node.staticProps,
-            text: `${String(node.staticProps.text ?? '')} + compiled`
-          }
+          props: createExpressionCompiler(createFormulaCompiler()).compileValue({
+            ...node.schema,
+            text: 'Prepared text + compiled'
+          })
         };
       }
     };

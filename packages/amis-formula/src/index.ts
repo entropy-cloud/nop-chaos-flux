@@ -6,6 +6,7 @@ import type {
   CompiledTemplate,
   CompiledValueNode,
   DynamicRuntimeValue,
+  EvalContext,
   ExpressionCompiler,
   ExpressionValueNode,
   FormulaCompiler,
@@ -19,7 +20,107 @@ import type {
   TemplateValueNode,
   ValueEvaluationResult
 } from '@nop-chaos/amis-schema';
-import { isPlainObject, shallowEqual } from '@nop-chaos/amis-schema';
+import { getIn, isPlainObject, shallowEqual } from '@nop-chaos/amis-schema';
+
+function isEvalContext(input: EvalContext | object): input is EvalContext {
+  return (
+    typeof input === 'object' &&
+    input !== null &&
+    'resolve' in input &&
+    typeof (input as EvalContext).resolve === 'function' &&
+    'has' in input &&
+    typeof (input as EvalContext).has === 'function' &&
+    'materialize' in input &&
+    typeof (input as EvalContext).materialize === 'function'
+  );
+}
+
+function createObjectEvalContext(data: object): EvalContext {
+  const record = data as Record<string, any>;
+
+  return {
+    resolve(path: string) {
+      return getIn(record, path);
+    },
+    has(path: string) {
+      return getIn(record, path) !== undefined;
+    },
+    materialize() {
+      return record;
+    }
+  };
+}
+
+function toEvalContext(input: EvalContext | object): EvalContext {
+  return isEvalContext(input) ? input : createObjectEvalContext(input);
+}
+
+function createEvalContext(scope: ScopeRef): EvalContext {
+  let materialized: Record<string, any> | undefined;
+
+  return {
+    resolve(path: string) {
+      return scope.get(path);
+    },
+    has(path: string) {
+      return scope.has(path);
+    },
+    materialize() {
+      if (!materialized) {
+        materialized = scope.read();
+      }
+
+      return materialized;
+    }
+  };
+}
+
+function createFormulaScope(context: EvalContext): Record<string, any> {
+  return new Proxy(
+    {},
+    {
+      get(_target, property) {
+        if (typeof property !== 'string') {
+          return undefined;
+        }
+
+        if (property === '__proto__') {
+          return undefined;
+        }
+
+        if (context.has(property)) {
+          return context.resolve(property);
+        }
+
+        return getIn(context.materialize(), property);
+      },
+      has(_target, property) {
+        return typeof property === 'string' ? context.has(property) : false;
+      },
+      ownKeys() {
+        return Reflect.ownKeys(context.materialize());
+      },
+      getOwnPropertyDescriptor(_target, property) {
+        if (typeof property !== 'string') {
+          return undefined;
+        }
+
+        const materialized = context.materialize();
+
+        if (Object.prototype.hasOwnProperty.call(materialized, property)) {
+          return {
+            configurable: true,
+            enumerable: true,
+            value: materialized[property],
+            writable: false
+          };
+        }
+
+        return undefined;
+      }
+    }
+  );
+}
 
 function normalizeExpressionSource(source: string): string {
   const trimmed = source.trim();
@@ -66,8 +167,10 @@ export function createFormulaCompiler(): FormulaCompiler {
       return {
         kind: 'expression',
         source,
-        exec(scope: object, env: RendererEnv): T {
-          return evaluate(ast, scope, {
+        exec(input: EvalContext, env: RendererEnv): T {
+          const context = toEvalContext(input);
+
+          return evaluate(ast, createFormulaScope(context), {
             functions: env.functions,
             filters: env.filters
           }) as T;
@@ -89,14 +192,15 @@ export function createFormulaCompiler(): FormulaCompiler {
       return {
         kind: 'template',
         source,
-        exec(scope: object, env: RendererEnv): T {
+        exec(input: EvalContext, env: RendererEnv): T {
+          const context = toEvalContext(input);
           const result = segments
             .map((segment) => {
               if (segment.type === 'text') {
                 return segment.value;
               }
 
-              const evaluated = evaluate(segment.value, scope, {
+              const evaluated = evaluate(segment.value, createFormulaScope(context), {
                 functions: env.functions,
                 filters: env.filters
               });
@@ -154,7 +258,7 @@ function createStateFromNode<T = unknown>(node: CompiledValueNode<T>): RuntimeVa
 
 function evaluateNode<T>(
   node: CompiledValueNode<T>,
-  scope: object,
+  context: EvalContext,
   env: RendererEnv,
   stateNode: RuntimeValueStateNode
 ): ValueEvaluationResult<T> {
@@ -166,19 +270,19 @@ function evaluateNode<T>(
         reusedReference: true
       };
     case 'expression-node':
-      return evaluateLeaf(node, scope, env, stateNode);
+      return evaluateLeaf(node, context, env, stateNode);
     case 'template-node':
-      return evaluateLeaf(node, scope, env, stateNode);
+      return evaluateLeaf(node, context, env, stateNode);
     case 'array-node':
-      return evaluateArray(node, scope, env, stateNode) as ValueEvaluationResult<T>;
+      return evaluateArray(node, context, env, stateNode) as ValueEvaluationResult<T>;
     case 'object-node':
-      return evaluateObject(node, scope, env, stateNode) as ValueEvaluationResult<T>;
+      return evaluateObject(node, context, env, stateNode) as ValueEvaluationResult<T>;
   }
 }
 
 function evaluateLeaf<T>(
   node: ExpressionValueNode<T> | TemplateValueNode<T>,
-  scope: object,
+  context: EvalContext,
   env: RendererEnv,
   stateNode: RuntimeValueStateNode
 ): ValueEvaluationResult<T> {
@@ -186,7 +290,7 @@ function evaluateLeaf<T>(
     throw new Error(`Invalid runtime state for ${node.kind}`);
   }
 
-  const value = node.compiled.exec(scope, env);
+  const value = node.compiled.exec(context, env);
 
   if (stateNode.initialized && Object.is(stateNode.lastValue, value)) {
     return {
@@ -208,7 +312,7 @@ function evaluateLeaf<T>(
 
 function evaluateArray(
   node: ArrayValueNode,
-  scope: object,
+  context: EvalContext,
   env: RendererEnv,
   stateNode: RuntimeValueStateNode
 ): ValueEvaluationResult<any[]> {
@@ -216,7 +320,7 @@ function evaluateArray(
     throw new Error('Invalid runtime state for array-node');
   }
 
-  const nextValue = node.items.map((item, index) => evaluateNode(item, scope, env, stateNode.items[index]).value);
+  const nextValue = node.items.map((item, index) => evaluateNode(item, context, env, stateNode.items[index]).value);
 
   if (stateNode.initialized && stateNode.lastValue && shallowEqual(stateNode.lastValue, nextValue)) {
     return {
@@ -238,7 +342,7 @@ function evaluateArray(
 
 function evaluateObject(
   node: ObjectValueNode,
-  scope: object,
+  context: EvalContext,
   env: RendererEnv,
   stateNode: RuntimeValueStateNode
 ): ValueEvaluationResult<Record<string, unknown>> {
@@ -249,7 +353,7 @@ function evaluateObject(
   const nextValue: Record<string, unknown> = {};
 
   for (const key of node.keys) {
-    nextValue[key] = evaluateNode(node.entries[key], scope, env, stateNode.entries[key]).value;
+    nextValue[key] = evaluateNode(node.entries[key], context, env, stateNode.entries[key]).value;
   }
 
   if (stateNode.initialized && stateNode.lastValue && shallowEqual(stateNode.lastValue, nextValue)) {
@@ -363,9 +467,9 @@ export function createExpressionCompiler(formulaCompiler: FormulaCompiler = crea
         createState() {
           return createStateFromNode(node);
         },
-        exec(scope: object, env: RendererEnv, state?: RuntimeValueState<T>) {
+        exec(context: EvalContext, env: RendererEnv, state?: RuntimeValueState<T>) {
           const resolvedState = state ?? createStateFromNode(node);
-          return evaluateNode(node, scope, env, resolvedState.root);
+          return evaluateNode(node, context, env, resolvedState.root);
         }
       } as DynamicRuntimeValue<T>;
     },
@@ -382,7 +486,7 @@ export function createExpressionCompiler(formulaCompiler: FormulaCompiler = crea
         return input.value;
       }
 
-      return input.exec(scope.read(), env, state).value;
+      return input.exec(createEvalContext(scope), env, state).value;
     },
     evaluateWithState<T = unknown>(
       input: DynamicRuntimeValue<T>,
@@ -390,7 +494,7 @@ export function createExpressionCompiler(formulaCompiler: FormulaCompiler = crea
       env: RendererEnv,
       state: RuntimeValueState<T>
     ): ValueEvaluationResult<T> {
-      return input.exec(scope.read(), env, state);
+      return input.exec(createEvalContext(scope), env, state);
     }
   };
 }

@@ -11,6 +11,19 @@ function createScope(data: Record<string, any>): ScopeRef {
   return {
     id: 'scope',
     path: 'scope',
+    get(path: string) {
+      return path.split('.').reduce<unknown>((current, segment) => {
+        if (current == null || typeof current !== 'object') {
+          return undefined;
+        }
+
+        return (current as Record<string, unknown>)[segment];
+      }, data);
+    },
+    has(path: string) {
+      return this.get(path) !== undefined;
+    },
+    readOwn: () => data,
     value: data,
     read: () => data,
     update: () => undefined
@@ -75,5 +88,20 @@ describe('createExpressionCompiler', () => {
     expect(first.value).toEqual(['A', 'fixed']);
     expect(second.value).toEqual(['B', 'fixed']);
     expect(second.value).not.toBe(first.value);
+  });
+
+  it('evaluates expressions through scope.get and lexical lookups', () => {
+    const compiler = createExpressionCompiler();
+    const compiled = compiler.compileValue('${record.name}');
+
+    if (compiled.kind !== 'dynamic') {
+      throw new Error('Expected dynamic compiled value');
+    }
+
+    const state = compiler.createState(compiled);
+    const scope = createScope({ record: { name: 'Bob' } });
+    const result = compiler.evaluateWithState(compiled, scope, env, state);
+
+    expect(result.value).toBe('Bob');
   });
 });

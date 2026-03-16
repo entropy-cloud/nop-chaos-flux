@@ -120,6 +120,7 @@ const schema = {
             {
               type: 'button',
               label: 'Search Directory',
+              disabled: '${!query}',
               onClick: {
                 action: 'ajax',
                 debounce: 350,
@@ -170,6 +171,7 @@ const schema = {
             {
               type: 'button',
               label: 'Open Preview Dialog',
+              visible: '${currentUser.name === "Architect"}',
               onClick: {
                 action: 'dialog',
                 dialog: {
@@ -185,8 +187,7 @@ const schema = {
                         type: 'button',
                         label: 'Close Dialog',
                         onClick: {
-                          action: 'closeDialog',
-                          dialogId: '${dialogId}'
+                          action: 'closeDialog'
                         }
                       }
                     ]
@@ -239,8 +240,7 @@ const schema = {
                             type: 'button',
                             label: 'Close',
                             onClick: {
-                              action: 'closeDialog',
-                              dialogId: '${dialogId}'
+                              action: 'closeDialog'
                             }
                           }
                         ]
@@ -261,6 +261,9 @@ export function App() {
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
   const [activeKinds, setActiveKinds] = useState<ActivityKind[]>(['render', 'action', 'api', 'notify']);
   const [activityPaused, setActivityPaused] = useState(false);
+  const [directoryUsers, setDirectoryUsers] = useState(users);
+  const [searchResults, setSearchResults] = useState(users);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const pushActivity = useCallback((kind: ActivityKind, message: string, detail?: string) => {
     if (activityPaused) {
@@ -291,13 +294,16 @@ export function App() {
             .trim()
             .toLowerCase();
           const results = query
-            ? users.filter(
+            ? directoryUsers.filter(
                 (user) =>
                   user.username.toLowerCase().includes(query) ||
                   user.email.toLowerCase().includes(query) ||
                   user.role.toLowerCase().includes(query)
               )
-            : users;
+            : directoryUsers;
+
+          setSearchQuery(query);
+          setSearchResults(results);
 
           pushActivity(
             'api',
@@ -316,27 +322,60 @@ export function App() {
         }
 
         if (api.url === '/api/users') {
-          pushActivity('api', 'response /api/users -> current directory payload', `${formatCountLabel(users.length, 'record')}`);
+          const scopeData = ctx.scope.readOwn();
+          let createdUser = {
+            id: Date.now(),
+            username: String(scopeData.username ?? ''),
+            email: String(scopeData.email ?? ''),
+            role: String(scopeData.role ?? 'viewer')
+          };
+
+          setDirectoryUsers((current) => {
+            createdUser = {
+              ...createdUser,
+              id: current.reduce((max, user) => Math.max(max, user.id), 0) + 1
+            };
+
+            const nextUsers = [...current, createdUser];
+            const nextResults = searchQuery
+              ? nextUsers.filter(
+                  (user) =>
+                    user.username.toLowerCase().includes(searchQuery) ||
+                    user.email.toLowerCase().includes(searchQuery) ||
+                    user.role.toLowerCase().includes(searchQuery)
+                )
+              : nextUsers;
+
+            setSearchResults(nextResults);
+            return nextUsers;
+          });
+
+          pushActivity(
+            'api',
+            `response /api/users -> created ${createdUser.username || 'user'}`,
+            `username=${createdUser.username} | email=${createdUser.email} | role=${createdUser.role}`
+          );
+          pushActivity('notify', `success: ${createdUser.username || 'User'} added to the local directory`);
 
           return {
             ok: true,
             status: 200,
             data: {
-              users,
-              total: users.length
+              user: createdUser,
+              total: directoryUsers.length + 1
             } as T
           };
         }
 
         if (api.method?.toLowerCase() === 'post') {
-          pushActivity('api', `response ${api.url} -> saved payload snapshot`, JSON.stringify(ctx.scope.read()));
+          pushActivity('api', `response ${api.url} -> saved payload snapshot`, JSON.stringify(ctx.scope.readOwn()));
 
           return {
             ok: true,
             status: 200,
             data: {
               success: true,
-              payload: ctx.scope.read()
+              payload: ctx.scope.readOwn()
             } as T
           };
         }
@@ -373,7 +412,7 @@ export function App() {
         }
       }
     }),
-    [pushActivity]
+    [directoryUsers, pushActivity, searchQuery]
   );
 
   const visibleActivity = useMemo(
@@ -401,14 +440,18 @@ export function App() {
           forms, dialogs, actions, table operations, adaptors, monitoring, and request cancellation all
           run inside the playground.
         </p>
+        <p className="body-copy body-copy--compact">
+          Submit the user form to append a record into the local directory and watch the table plus monitor
+          panel update in real time.
+        </p>
         <div className="playground-layout">
           <div className="playground-stage">
             <SchemaRenderer
               schema={schema}
               data={{
                 currentUser: { name: 'Architect' },
-                users,
-                searchResults: users
+                users: directoryUsers,
+                searchResults
               }}
               env={env}
               registry={registry}
