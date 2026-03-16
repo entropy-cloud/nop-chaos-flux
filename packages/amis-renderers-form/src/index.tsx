@@ -2,20 +2,51 @@ import React from 'react';
 import type {
   ApiObject,
   BaseSchema,
+  CompiledValidationBehavior,
   RendererComponentProps,
   RendererDefinition,
   RendererRegistry
 } from '@nop-chaos/amis-schema';
 import { useCurrentForm, useCurrentFormState, useRenderScope } from '@nop-chaos/amis-react';
 
-function shouldValidateOn(name: string, currentForm: ReturnType<typeof useCurrentForm>, trigger: 'change' | 'blur' | 'submit') {
+function getFieldValidationBehavior(name: string, currentForm: ReturnType<typeof useCurrentForm>): CompiledValidationBehavior {
   if (!currentForm || !name) {
-    return false;
+    return {
+      triggers: ['blur'],
+      showErrorOn: ['touched', 'submit']
+    };
   }
 
   const field = currentForm.validation?.fields[name];
-  const triggers = field?.behavior.triggers ?? currentForm.validation?.behavior.triggers ?? ['blur'];
-  return triggers.includes(trigger);
+  return (
+    field?.behavior ??
+    currentForm.validation?.behavior ?? {
+      triggers: ['blur'],
+      showErrorOn: ['touched', 'submit']
+    }
+  );
+}
+
+function shouldValidateOn(name: string, currentForm: ReturnType<typeof useCurrentForm>, trigger: 'change' | 'blur' | 'submit') {
+  return getFieldValidationBehavior(name, currentForm).triggers.includes(trigger);
+}
+
+function shouldShowFieldError(
+  behavior: CompiledValidationBehavior,
+  state: { touched: boolean; dirty: boolean; visited: boolean; submitting: boolean }
+) {
+  return behavior.showErrorOn.some((trigger) => {
+    switch (trigger) {
+      case 'touched':
+        return state.touched;
+      case 'dirty':
+        return state.dirty;
+      case 'visited':
+        return state.visited;
+      case 'submit':
+        return state.submitting;
+    }
+  });
 }
 
 function readFieldValue(scope: ReturnType<typeof useRenderScope>, name: string): unknown {
@@ -70,10 +101,9 @@ function useFormFieldState(name: string) {
 function renderFieldHint(input: {
   errorMessage?: string;
   validating?: boolean;
-  touched?: boolean;
-  submitting?: boolean;
+  showError?: boolean;
 }) {
-  if (input.errorMessage && (input.touched || input.submitting)) {
+  if (input.errorMessage && input.showError) {
     return <span className="na-field__error">{input.errorMessage}</span>;
   }
 
@@ -100,7 +130,16 @@ function createInputRenderer(inputType: string) {
     const name = String(props.props.name ?? props.schema.name ?? '');
     const value = readFieldValue(scope, name);
     const fieldState = useFormFieldState(name);
-    const showError = fieldState.error && (fieldState.touched || fieldState.submitting);
+    const behavior = getFieldValidationBehavior(name, currentForm);
+    const showError = Boolean(
+      fieldState.error &&
+        shouldShowFieldError(behavior, {
+          touched: fieldState.touched,
+          dirty: fieldState.dirty,
+          visited: fieldState.visited,
+          submitting: fieldState.submitting
+        })
+    );
 
     return (
       <label
@@ -148,8 +187,7 @@ function createInputRenderer(inputType: string) {
         {renderFieldHint({
           errorMessage: fieldState.error?.message,
           validating: fieldState.validating,
-          touched: fieldState.touched,
-          submitting: fieldState.submitting
+          showError
         })}
       </label>
     );
@@ -213,7 +251,16 @@ export const formRendererDefinitions: RendererDefinition[] = [
       const value = readFieldValue(scope, name);
       const options = Array.isArray(props.props.options) ? (props.props.options as SelectSchema['options']) : [];
       const fieldState = useFormFieldState(name);
-      const showError = fieldState.error && (fieldState.touched || fieldState.submitting);
+      const behavior = getFieldValidationBehavior(name, currentForm);
+      const showError = Boolean(
+        fieldState.error &&
+          shouldShowFieldError(behavior, {
+            touched: fieldState.touched,
+            dirty: fieldState.dirty,
+            visited: fieldState.visited,
+            submitting: fieldState.submitting
+          })
+      );
 
       return (
         <label
@@ -265,8 +312,7 @@ export const formRendererDefinitions: RendererDefinition[] = [
           {renderFieldHint({
             errorMessage: fieldState.error?.message,
             validating: fieldState.validating,
-            touched: fieldState.touched,
-            submitting: fieldState.submitting
+            showError
           })}
         </label>
       );

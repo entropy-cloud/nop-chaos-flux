@@ -205,6 +205,14 @@ Validation timing is now configurable:
 - field override wins over form default; form default wins over runtime fallback
 - `submit` remains the final validation gate even when fields also validate earlier
 
+Error visibility is configurable separately from validation timing:
+
+- `form.showErrorOn` sets the default visibility policy for descendant fields
+- `field.showErrorOn` overrides the form default for a specific field
+- supported visibility triggers are `touched`, `dirty`, `visited`, and `submit`
+- this lets a field validate on one schedule while revealing errors on a different schedule
+- example: `validateOn: 'submit'` with `showErrorOn: 'visited'` delays validation until submit but only reveals the result after the user focuses the field
+
 These should remain runtime concepts, not React-library-specific state shapes.
 
 ## Complex Controls and Runtime Registration

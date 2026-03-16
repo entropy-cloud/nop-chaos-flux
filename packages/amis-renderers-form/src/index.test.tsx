@@ -260,6 +260,94 @@ describe('formRendererDefinitions', () => {
     expect(field?.className).toContain('na-field--invalid');
   });
 
+  it('supports visited-only error visibility without changing validation timing', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          validateOn: 'submit',
+          showErrorOn: 'visited',
+          data: {
+            email: ''
+          },
+          body: [
+            {
+              type: 'input-email',
+              name: 'email',
+              label: 'Email',
+              required: true
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit email',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/email',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.queryByText('Email is required')).toBeNull();
+
+    fireEvent.click(screen.getByText('Submit email'));
+    expect(screen.queryByText('Email is required')).toBeNull();
+
+    fireEvent.focus(screen.getByLabelText('Email'));
+
+    expect(await screen.findByText('Email is required')).toBeTruthy();
+    expect(submitCalls).toHaveLength(0);
+  });
+
+  it('supports dirty-based field visibility override', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          validateOn: ['blur', 'change', 'submit'],
+          showErrorOn: 'submit',
+          data: {
+            email: ''
+          },
+          body: [
+            {
+              type: 'input-email',
+              name: 'email',
+              label: 'Email',
+              minLength: 5,
+              showErrorOn: 'dirty'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const input = screen.getByLabelText('Email');
+    fireEvent.blur(input);
+    expect(screen.queryByText('Email must be at least 5 characters')).toBeNull();
+
+    fireEvent.change(input, { target: { value: 'a' } });
+
+    expect(await screen.findByText('Email must be at least 5 characters')).toBeTruthy();
+  });
+
   it('respects submit-only validation policy until form submission', async () => {
     cleanup();
     submitCalls.length = 0;

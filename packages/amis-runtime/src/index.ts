@@ -34,6 +34,7 @@ import type {
   ScopeRef,
   ScopeStore,
   ValidationTrigger,
+  ValidationVisibilityTrigger,
   ValidationError,
   ValidationResult,
   ValidationRule,
@@ -390,6 +391,19 @@ function normalizeValidationTriggers(input: unknown, fallback: ValidationTrigger
   return normalized.length > 0 ? Array.from(new Set(normalized)) : fallback;
 }
 
+function normalizeValidationVisibilityTriggers(
+  input: unknown,
+  fallback: ValidationVisibilityTrigger[] = ['touched', 'submit']
+): ValidationVisibilityTrigger[] {
+  const candidates = Array.isArray(input) ? input : input != null ? [input] : [];
+  const normalized = candidates.filter(
+    (candidate): candidate is ValidationVisibilityTrigger =>
+      candidate === 'touched' || candidate === 'dirty' || candidate === 'visited' || candidate === 'submit'
+  );
+
+  return normalized.length > 0 ? Array.from(new Set(normalized)) : fallback;
+}
+
 function collectValidationModel(
   node:
     | CompiledSchemaNode
@@ -399,6 +413,7 @@ function collectValidationModel(
     | undefined,
   options: {
     defaultTriggers?: ValidationTrigger[];
+    defaultShowErrorOn?: ValidationVisibilityTrigger[];
   } = {}
 ): CompiledFormValidationModel | undefined {
   if (!node) {
@@ -426,7 +441,8 @@ function collectValidationModel(
   const fields: Record<string, CompiledFormValidationField> = {};
   const order: string[] = [];
   const rootBehavior = {
-    triggers: options.defaultTriggers ?? (['blur'] as ValidationTrigger[])
+    triggers: options.defaultTriggers ?? (['blur'] as ValidationTrigger[]),
+    showErrorOn: options.defaultShowErrorOn ?? (['touched', 'submit'] as ValidationVisibilityTrigger[])
   };
 
   const visit = (entry: CompiledSchemaNode) => {
@@ -436,6 +452,7 @@ function collectValidationModel(
 
     if (entry.type === 'form') {
       rootBehavior.triggers = normalizeValidationTriggers(entry.schema.validateOn, ['blur']);
+      rootBehavior.showErrorOn = normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, ['touched', 'submit']);
     }
 
     const contributor = entry.component.validation;
@@ -455,7 +472,8 @@ function collectValidationModel(
           label: typeof entry.schema.label === 'string' ? entry.schema.label : undefined,
           rules: mergeValidationRules(collectSchemaValidationRules(entry.schema), contributor.collectRules?.(entry.schema, ctx)),
           behavior: {
-            triggers: normalizeValidationTriggers(entry.schema.validateOn, rootBehavior.triggers)
+            triggers: normalizeValidationTriggers(entry.schema.validateOn, rootBehavior.triggers),
+            showErrorOn: normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, rootBehavior.showErrorOn)
           }
         };
         order.push(fieldPath);
@@ -549,10 +567,11 @@ export function createSchemaCompiler(input: {
         renderer.scopePolicy === 'form'
           ? collectValidationModel(
               Object.values(regions)
-                .map((region) => region.node)
+              .map((region) => region.node)
                 .filter((candidate): candidate is CompiledSchemaNode | CompiledSchemaNode[] => candidate != null),
               {
-                defaultTriggers: normalizeValidationTriggers(schema.validateOn, ['blur'])
+                defaultTriggers: normalizeValidationTriggers(schema.validateOn, ['blur']),
+                defaultShowErrorOn: normalizeValidationVisibilityTriggers(schema.showErrorOn, ['touched', 'submit'])
               }
             )
           : undefined,

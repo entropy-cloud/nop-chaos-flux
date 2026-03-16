@@ -139,6 +139,7 @@ const schema = {
           type: 'form',
           id: 'user-form',
           validateOn: 'blur',
+          showErrorOn: ['touched', 'submit'],
           data: {
             username: '',
             email: '',
@@ -491,7 +492,8 @@ export function App() {
         </p>
         <p className="body-copy body-copy--compact">
           The username field now validates on blur, debounces async uniqueness checks for 500ms, and only
-          reveals errors after a field has been touched.
+          reveals errors after a field has been touched. Validation timing and error visibility are now
+          configured independently at the form or field level.
         </p>
         <div className="playground-layout">
           <div className="playground-stage">

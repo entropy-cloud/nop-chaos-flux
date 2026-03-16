@@ -470,7 +470,8 @@ describe('createRendererRuntime', () => {
       parentScope: page.scope,
       validation: {
         behavior: {
-          triggers: ['blur']
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
         },
         fields: {
           username: {
@@ -478,7 +479,8 @@ describe('createRendererRuntime', () => {
             controlType: 'input-text',
             label: 'Username',
             behavior: {
-              triggers: ['blur']
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
             },
             rules: [
               {
@@ -530,7 +532,8 @@ describe('createRendererRuntime', () => {
       parentScope: page.scope,
       validation: {
         behavior: {
-          triggers: ['blur']
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
         },
         fields: {
           username: {
@@ -538,7 +541,8 @@ describe('createRendererRuntime', () => {
             controlType: 'input-text',
             label: 'Username',
             behavior: {
-              triggers: ['blur']
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
             },
             rules: [
               {
@@ -595,7 +599,8 @@ describe('createRendererRuntime', () => {
       parentScope: page.scope,
       validation: {
         behavior: {
-          triggers: ['blur']
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
         },
         fields: {
           username: {
@@ -603,7 +608,8 @@ describe('createRendererRuntime', () => {
             controlType: 'input-text',
             label: 'Username',
             behavior: {
-              triggers: ['blur']
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
             },
             rules: [
               {
@@ -669,7 +675,8 @@ describe('createRendererRuntime', () => {
         parentScope: page.scope,
         validation: {
           behavior: {
-            triggers: ['blur']
+            triggers: ['blur'],
+            showErrorOn: ['touched', 'submit']
           },
           fields: {
             username: {
@@ -677,7 +684,8 @@ describe('createRendererRuntime', () => {
               controlType: 'input-text',
               label: 'Username',
               behavior: {
-                triggers: ['blur']
+                triggers: ['blur'],
+                showErrorOn: ['touched', 'submit']
               },
               rules: [
                 {
@@ -727,7 +735,8 @@ describe('createRendererRuntime', () => {
       parentScope: page.scope,
       validation: {
         behavior: {
-          triggers: ['blur']
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
         },
         fields: {
           username: {
@@ -735,7 +744,8 @@ describe('createRendererRuntime', () => {
             controlType: 'input-text',
             label: 'Username',
             behavior: {
-              triggers: ['blur']
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
             },
             rules: []
           }
@@ -790,8 +800,43 @@ describe('createRendererRuntime', () => {
     }) as any;
 
     expect(node.validation.behavior.triggers).toEqual(['submit']);
+    expect(node.validation.behavior.showErrorOn).toEqual(['touched', 'submit']);
     expect(node.validation.fields.username.behavior.triggers).toEqual(['blur', 'change']);
+    expect(node.validation.fields.username.behavior.showErrorOn).toEqual(['touched', 'submit']);
     expect(node.validation.fields.nickname.behavior.triggers).toEqual(['submit']);
+    expect(node.validation.fields.nickname.behavior.showErrorOn).toEqual(['touched', 'submit']);
+  });
+
+  it('compiles error visibility policy with field override and form fallback', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([formRenderer, inputRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const node = runtime.compile({
+      type: 'form',
+      validateOn: 'submit',
+      showErrorOn: 'submit',
+      body: [
+        {
+          type: 'input-text',
+          name: 'username',
+          label: 'Username',
+          required: true,
+          showErrorOn: ['visited', 'dirty']
+        },
+        {
+          type: 'input-text',
+          name: 'nickname',
+          label: 'Nickname',
+          required: true
+        }
+      ]
+    }) as any;
+
+    expect(node.validation.behavior.showErrorOn).toEqual(['submit']);
+    expect(node.validation.fields.username.behavior.showErrorOn).toEqual(['visited', 'dirty']);
+    expect(node.validation.fields.nickname.behavior.showErrorOn).toEqual(['submit']);
   });
 
   it('treats nested scope ownership by lexical level instead of materialized fallback', () => {

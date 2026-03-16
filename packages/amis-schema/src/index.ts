@@ -21,6 +21,7 @@ export interface BaseSchema extends SchemaObject {
   hidden?: boolean | string;
   disabled?: boolean | string;
   validateOn?: ValidationTrigger | ValidationTrigger[];
+  showErrorOn?: ValidationVisibilityTrigger | ValidationVisibilityTrigger[];
 }
 
 export type SchemaInput = BaseSchema | BaseSchema[];
@@ -291,9 +292,11 @@ export interface FormValidationResult extends ValidationResult {
 }
 
 export type ValidationTrigger = 'change' | 'blur' | 'submit';
+export type ValidationVisibilityTrigger = 'touched' | 'dirty' | 'visited' | 'submit';
 
 export interface CompiledValidationBehavior {
   triggers: ValidationTrigger[];
+  showErrorOn: ValidationVisibilityTrigger[];
 }
 
 export interface CompiledFormValidationField {
