@@ -1,9 +1,10 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ApiObject, ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/amis-schema';
+import type { ApiObject, ApiRequestContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/amis-schema';
 import { createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createSchemaRenderer } from '@nop-chaos/amis-react';
+import { useAggregateError, useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
 import { formRendererDefinitions } from './index';
 
 const submitCalls: Array<Record<string, any>> = [];
@@ -35,6 +36,62 @@ const buttonRenderer: RendererDefinition = {
       {String(props.props.label ?? props.meta.label ?? 'Button')}
     </button>
   )
+};
+
+const contactGroupRenderer: RendererDefinition = {
+  type: 'contact-group',
+  validation: {
+    kind: 'field',
+    valueKind: 'object',
+    getFieldPath(schema) {
+      return typeof schema.name === 'string' ? schema.name : undefined;
+    },
+    collectRules() {
+      return [];
+    }
+  },
+  component: (props: RendererComponentProps) => {
+    const scope = useRenderScope();
+    const form = useCurrentForm();
+    const name = String(props.props.name ?? props.schema.name ?? '');
+    const value = (scope.get(name) as Record<string, string> | undefined) ?? {};
+    const error = useAggregateError(name)?.message;
+
+    return (
+      <label className="na-field">
+        <span className="na-field__label">{String(props.meta.label ?? 'Contact')}</span>
+        <input
+          aria-label="Contact Email"
+          className="na-input"
+          value={value.email ?? ''}
+          onFocus={() => {
+            form?.visitField(name);
+          }}
+          onChange={(event) => {
+            form?.setValue(name, { ...value, email: event.target.value });
+          }}
+          onBlur={() => {
+            form?.touchField(name);
+          }}
+        />
+        <input
+          aria-label="Contact Phone"
+          className="na-input"
+          value={value.phone ?? ''}
+          onFocus={() => {
+            form?.visitField(name);
+          }}
+          onChange={(event) => {
+            form?.setValue(name, { ...value, phone: event.target.value });
+          }}
+          onBlur={() => {
+            form?.touchField(name);
+          }}
+        />
+        {error ? <span className="na-field__error">{error}</span> : null}
+      </label>
+    );
+  }
 };
 
 describe('formRendererDefinitions', () => {
@@ -390,12 +447,14 @@ describe('formRendererDefinitions', () => {
     expect(await screen.findByText('Metadata requires at least one entry')).toBeTruthy();
     expect(submitCalls).toHaveLength(0);
 
+    const firstMetadataCall = submitCalls.length;
+
     fireEvent.click(screen.getByText('Add metadata entry'));
     fireEvent.change(screen.getByPlaceholderText('Key'), { target: { value: 'env' } });
     fireEvent.click(screen.getByText('Submit metadata'));
 
     expect(await screen.findByText('Entry 1 value is required')).toBeTruthy();
-    expect(submitCalls).toHaveLength(0);
+    expect(submitCalls).toHaveLength(firstMetadataCall);
 
     fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: 'prod' } });
     fireEvent.click(screen.getByText('Submit metadata'));
@@ -456,7 +515,9 @@ describe('formRendererDefinitions', () => {
       expect(screen.queryByText('Entry 1 key is required')).toBeNull();
     });
 
-    expect((keyInput as HTMLInputElement).value).toBe('env');
+    await waitFor(() => {
+      expect((keyInput as HTMLInputElement).value).toBe('env');
+    });
     expect(valueField?.className).toContain('na-child-field--dirty');
   });
 
@@ -505,12 +566,14 @@ describe('formRendererDefinitions', () => {
     expect(await screen.findByText('Reviewers requires at least one item')).toBeTruthy();
     expect(submitCalls).toHaveLength(0);
 
+    const firstReviewerCall = submitCalls.length;
+
     fireEvent.click(screen.getByText('Add item'));
     fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: 'alice' } });
     fireEvent.click(screen.getByText('Submit reviewers'));
 
     await waitFor(() => {
-      expect(submitCalls).toHaveLength(1);
+      expect(submitCalls).toHaveLength(firstReviewerCall + 1);
     });
 
     expect(Array.isArray(submitCalls[0].reviewers)).toBe(true);
@@ -891,6 +954,558 @@ describe('formRendererDefinitions', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('Email is required')).toBeNull();
+    });
+  });
+
+  it('supports relational field validation with dependent revalidation in the UI', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            password: 'alpha',
+            confirmPassword: 'alpha',
+            role: 'viewer',
+            adminCode: ''
+          },
+          body: [
+            {
+              type: 'input-password',
+              name: 'password',
+              label: 'Password'
+            },
+            {
+              type: 'input-password',
+              name: 'confirmPassword',
+              label: 'Confirm Password',
+              equalsField: 'password'
+            },
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              options: [
+                { label: 'Viewer', value: 'viewer' },
+                { label: 'Admin', value: 'admin' }
+              ]
+            },
+            {
+              type: 'input-text',
+              name: 'adminCode',
+              label: 'Admin Code',
+              requiredWhen: {
+                path: 'role',
+                equals: 'admin',
+                message: 'Admin code is required for admins'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const confirmInput = screen.getByLabelText('Confirm Password');
+    const passwordInput = screen.getAllByDisplayValue('alpha')[0];
+    const roleSelect = screen.getByLabelText('Role');
+    const adminCodeInput = screen.getByLabelText('Admin Code');
+
+    fireEvent.focus(confirmInput);
+    fireEvent.blur(confirmInput);
+    expect(screen.queryByText('Confirm Password must match password')).toBeNull();
+
+    fireEvent.change(passwordInput, { target: { value: 'beta' } });
+
+    expect(await screen.findByText('Confirm Password must match password')).toBeTruthy();
+
+    fireEvent.focus(adminCodeInput);
+    fireEvent.blur(adminCodeInput);
+    expect(screen.queryByText('Admin code is required for admins')).toBeNull();
+
+    fireEvent.change(roleSelect, { target: { value: 'admin' } });
+
+    expect(await screen.findByText('Admin code is required for admins')).toBeTruthy();
+
+    fireEvent.change(roleSelect, { target: { value: 'viewer' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Admin code is required for admins')).toBeNull();
+    });
+  });
+
+  it('supports not-equals and required-unless relational validation in the UI', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            username: 'alice',
+            backupUsername: 'bob',
+            status: 'draft',
+            publishReason: ''
+          },
+          body: [
+            {
+              type: 'input-text',
+              name: 'username',
+              label: 'Username'
+            },
+            {
+              type: 'input-text',
+              name: 'backupUsername',
+              label: 'Backup Username',
+              notEqualsField: 'username'
+            },
+            {
+              type: 'select',
+              name: 'status',
+              label: 'Status',
+              options: [
+                { label: 'Draft', value: 'draft' },
+                { label: 'Review', value: 'review' },
+                { label: 'Published', value: 'published' }
+              ]
+            },
+            {
+              type: 'input-text',
+              name: 'publishReason',
+              label: 'Publish Reason',
+              requiredUnless: {
+                path: 'status',
+                equals: 'published',
+                message: 'Publish reason is required before publishing'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const usernameInput = screen.getByLabelText('Username');
+    const backupInput = screen.getByLabelText('Backup Username');
+    const statusSelect = screen.getByLabelText('Status');
+    const publishReasonInput = screen.getByLabelText('Publish Reason');
+
+    fireEvent.focus(backupInput);
+    fireEvent.blur(backupInput);
+    fireEvent.change(usernameInput, { target: { value: 'bob' } });
+
+    expect(await screen.findByText('Backup Username must not match username')).toBeTruthy();
+
+    fireEvent.change(usernameInput, { target: { value: 'carol' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Backup Username must not match username')).toBeNull();
+    });
+
+    fireEvent.focus(publishReasonInput);
+    fireEvent.blur(publishReasonInput);
+    fireEvent.change(statusSelect, { target: { value: 'review' } });
+
+    expect(await screen.findByText('Publish reason is required before publishing')).toBeTruthy();
+
+    fireEvent.change(statusSelect, { target: { value: 'published' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Publish reason is required before publishing')).toBeNull();
+    });
+  });
+
+  it('supports array-level minItems validation in the UI', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            reviewers: []
+          },
+          body: [
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer',
+              minItems: 1
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit reviewers',
+              onClick: {
+                action: 'submitForm'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit reviewers'));
+    expect(await screen.findByText('Reviewers must contain at least 1 item')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Add item'));
+    fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: 'alice' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Reviewers must contain at least 1 item')).toBeNull();
+    });
+  });
+
+  it('supports array-level maxItems validation in the UI', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            reviewers: [{ value: 'alice' }, { value: 'bob' }]
+          },
+          body: [
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer',
+              maxItems: 1
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit limited reviewers',
+              onClick: {
+                action: 'submitForm'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit limited reviewers'));
+    expect(await screen.findByText('Reviewers must contain at most 1 item')).toBeTruthy();
+
+    fireEvent.click(screen.getAllByText('Remove')[1]);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Reviewers must contain at most 1 item')).toBeNull();
+    });
+  });
+
+  it('supports aggregate atLeastOneFilled validation in the UI', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            reviewers: [{ value: '' }, { value: '' }]
+          },
+          body: [
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer',
+              atLeastOneFilled: {
+                itemPath: 'value',
+                message: 'Add at least one reviewer value'
+              }
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit aggregate reviewers',
+              onClick: {
+                action: 'submitForm'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit aggregate reviewers'));
+    expect(await screen.findByText('Add at least one reviewer value')).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText('Reviewer 2'), { target: { value: 'bob' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Add at least one reviewer value')).toBeNull();
+    });
+  });
+
+  it('supports aggregate allOrNone validation in the UI', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            metadata: [{ key: 'env', value: '' }]
+          },
+          body: [
+            {
+              type: 'key-value',
+              name: 'metadata',
+              label: 'Metadata',
+              allOrNone: {
+                itemPaths: ['key', 'value'],
+                message: 'Metadata entries must fill both key and value or leave both empty'
+              }
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit aggregate metadata',
+              onClick: {
+                action: 'submitForm'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit aggregate metadata'));
+    expect(await screen.findByText('Metadata entries must fill both key and value or leave both empty')).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: 'prod' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Metadata entries must fill both key and value or leave both empty')).toBeNull();
+    });
+  });
+
+  it('clears stale child errors after removing a composite array row', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            reviewers: [{ value: 'alice' }, { value: '' }]
+          },
+          body: [
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.focus(screen.getByPlaceholderText('Reviewer 2'));
+    fireEvent.blur(screen.getByPlaceholderText('Reviewer 2'));
+
+    expect(await screen.findByText('Reviewer 2 is required')).toBeTruthy();
+
+    fireEvent.click(screen.getAllByText('Remove')[0]);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Reviewer 1')).toBeTruthy();
+      expect(screen.queryByPlaceholderText('Reviewer 2')).toBeNull();
+    });
+  });
+
+  it('supports aggregate uniqueBy validation in the UI', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            metadata: [
+              { key: 'env', value: 'prod' },
+              { key: 'env', value: 'stage' }
+            ]
+          },
+          body: [
+            {
+              type: 'key-value',
+              name: 'metadata',
+              label: 'Metadata',
+              uniqueBy: {
+                itemPath: 'key',
+                message: 'Metadata keys must be unique'
+              }
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit unique metadata',
+              onClick: {
+                action: 'submitForm'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit unique metadata'));
+    expect(await screen.findByText('Metadata keys must be unique')).toBeTruthy();
+
+    fireEvent.change(screen.getAllByPlaceholderText('Key')[1], { target: { value: 'tier' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Metadata keys must be unique')).toBeNull();
+    });
+  });
+
+  it('supports object-level atLeastOneOf validation in the UI', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, contactGroupRenderer, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            contact: {
+              email: '',
+              phone: ''
+            }
+          },
+          body: [
+            {
+              type: 'contact-group',
+              name: 'contact',
+              label: 'Contact',
+              atLeastOneOf: {
+                paths: ['email', 'phone'],
+                message: 'Provide at least an email or phone number'
+              }
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit contact',
+              onClick: {
+                action: 'submitForm'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit contact'));
+    await waitFor(() => {
+      expect(screen.getByText('Provide at least an email or phone number')).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByLabelText('Contact Email'), { target: { value: 'a@example.com' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Provide at least an email or phone number')).toBeNull();
+    });
+  });
+
+  it('supports object-level allOrNone validation in the UI', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, contactGroupRenderer, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            contact: {
+              email: 'alice@example.com',
+              phone: ''
+            }
+          },
+          body: [
+            {
+              type: 'contact-group',
+              name: 'contact',
+              label: 'Contact',
+              allOrNone: {
+                itemPaths: ['email', 'phone'],
+                message: 'Provide both contact methods or leave both empty'
+              }
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit contact pair',
+              onClick: {
+                action: 'submitForm'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit contact pair'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Provide both contact methods or leave both empty')).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByLabelText('Contact Phone'), { target: { value: '123456' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Provide both contact methods or leave both empty')).toBeNull();
     });
   });
 

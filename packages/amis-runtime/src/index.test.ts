@@ -11,6 +11,20 @@ import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis
 import { setIn } from '@nop-chaos/amis-schema';
 import { createRendererRegistry, createRendererRuntime, createSchemaCompiler } from './index';
 
+function compiledRule(rule: any, path: string, index = 0) {
+  return {
+    id: `${path}#${index}:${rule.kind}`,
+    rule,
+    dependencyPaths:
+      rule.kind === 'equalsField' ||
+      rule.kind === 'notEqualsField' ||
+      rule.kind === 'requiredWhen' ||
+      rule.kind === 'requiredUnless'
+        ? [rule.path]
+        : []
+  };
+}
+
 const textRenderer: RendererDefinition = {
   type: 'text',
   component: () => null
@@ -491,7 +505,7 @@ describe('createRendererRuntime', () => {
               showErrorOn: ['touched', 'submit']
             },
             rules: [
-              {
+              compiledRule({
                 kind: 'async',
                 api: {
                   method: 'post',
@@ -499,11 +513,12 @@ describe('createRendererRuntime', () => {
                   requestAdaptor: 'return {data: {username: scope.username}};'
                 },
                 message: 'Username already exists'
-              }
+              }, 'username')
             ]
           }
         },
-        order: ['username']
+        order: ['username'],
+        dependents: {}
       }
     });
 
@@ -553,17 +568,18 @@ describe('createRendererRuntime', () => {
               showErrorOn: ['touched', 'submit']
             },
             rules: [
-              {
+              compiledRule({
                 kind: 'async',
                 api: {
                   method: 'post',
                   url: '/api/validate-username'
                 }
-              }
+              }, 'username')
             ]
           }
         },
-        order: ['username']
+        order: ['username'],
+        dependents: {}
       }
     });
 
@@ -620,18 +636,19 @@ describe('createRendererRuntime', () => {
               showErrorOn: ['touched', 'submit']
             },
             rules: [
-              {
+              compiledRule({
                 kind: 'async',
                 api: {
                   method: 'post',
                   url: '/api/validate-username'
                 },
                 message: 'Username already exists'
-              }
+              }, 'username')
             ]
           }
         },
-        order: ['username']
+        order: ['username'],
+        dependents: {}
       }
     });
 
@@ -696,18 +713,19 @@ describe('createRendererRuntime', () => {
                 showErrorOn: ['touched', 'submit']
               },
               rules: [
-                {
+                compiledRule({
                   kind: 'async',
                   debounce: 50,
                   api: {
                     method: 'post',
                     url: '/api/validate-username'
                   }
-                }
+                }, 'username')
               ]
             }
           },
-          order: ['username']
+          order: ['username'],
+          dependents: {}
         }
       });
 
@@ -758,7 +776,8 @@ describe('createRendererRuntime', () => {
             rules: []
           }
         },
-        order: ['username']
+        order: ['username'],
+        dependents: {}
       }
     });
 
@@ -845,6 +864,1032 @@ describe('createRendererRuntime', () => {
     expect(node.validation.behavior.showErrorOn).toEqual(['submit']);
     expect(node.validation.fields.username.behavior.showErrorOn).toEqual(['visited', 'dirty']);
     expect(node.validation.fields.nickname.behavior.showErrorOn).toEqual(['submit']);
+  });
+
+  it('compiles relational validation rules and dependency metadata', () => {
+    const registry = createRendererRegistry([formRenderer, inputRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = runtime.compile({
+      type: 'form',
+      body: [
+        {
+          type: 'input-text',
+          name: 'password',
+          label: 'Password'
+        },
+        {
+          type: 'input-text',
+          name: 'confirmPassword',
+          label: 'Confirm Password',
+          equalsField: 'password'
+        },
+        {
+          type: 'input-text',
+          name: 'adminCode',
+          label: 'Admin Code',
+          requiredWhen: {
+            path: 'role',
+            equals: 'admin',
+            message: 'Admin code required for admins'
+          }
+        }
+      ]
+    }) as any;
+
+    expect(node.validation.fields.confirmPassword.rules[0].rule).toMatchObject({
+      kind: 'equalsField',
+      path: 'password'
+    });
+    expect(node.validation.fields.confirmPassword.rules[0].dependencyPaths).toEqual(['password']);
+    expect(node.validation.fields.adminCode.rules[0].rule).toMatchObject({
+      kind: 'requiredWhen',
+      path: 'role',
+      equals: 'admin'
+    });
+    expect(node.validation.dependents.password).toEqual(['confirmPassword']);
+    expect(node.validation.dependents.role).toEqual(['adminCode']);
+  });
+
+  it('revalidates dependent fields when an upstream value changes', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'dependency-form',
+      initialValues: {
+        password: 'alpha',
+        confirmPassword: 'alpha',
+        role: 'viewer',
+        adminCode: ''
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          password: {
+            path: 'password',
+            controlType: 'input-text',
+            label: 'Password',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: []
+          },
+          confirmPassword: {
+            path: 'confirmPassword',
+            controlType: 'input-text',
+            label: 'Confirm Password',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [
+              {
+                id: 'confirmPassword#0:equalsField',
+                rule: {
+                  kind: 'equalsField',
+                  path: 'password',
+                  message: 'Passwords must match'
+                },
+                dependencyPaths: ['password']
+              }
+            ]
+          },
+          role: {
+            path: 'role',
+            controlType: 'input-text',
+            label: 'Role',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: []
+          },
+          adminCode: {
+            path: 'adminCode',
+            controlType: 'input-text',
+            label: 'Admin Code',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [
+              {
+                id: 'adminCode#0:requiredWhen',
+                rule: {
+                  kind: 'requiredWhen',
+                  path: 'role',
+                  equals: 'admin',
+                  message: 'Admin code required for admins'
+                },
+                dependencyPaths: ['role']
+              }
+            ]
+          }
+        },
+        order: ['password', 'confirmPassword', 'role', 'adminCode'],
+        dependents: {
+          password: ['confirmPassword'],
+          role: ['adminCode']
+        }
+      }
+    });
+
+    form.touchField('confirmPassword');
+    await form.validateField('confirmPassword');
+    expect(form.getError('confirmPassword')).toBeUndefined();
+
+    form.setValue('password', 'beta');
+
+    await vi.waitFor(() => {
+      expect(form.getError('confirmPassword')?.[0]?.message).toBe('Passwords must match');
+    });
+
+    form.touchField('adminCode');
+    form.setValue('role', 'admin');
+
+    await vi.waitFor(() => {
+      expect(form.getError('adminCode')?.[0]?.message).toBe('Admin code required for admins');
+    });
+
+    form.setValue('role', 'viewer');
+
+    await vi.waitFor(() => {
+      expect(form.getError('adminCode')).toBeUndefined();
+    });
+  });
+
+  it('supports not-equals and required-unless relational validators', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'relational-form',
+      initialValues: {
+        username: 'alice',
+        backupUsername: 'bob',
+        status: 'draft',
+        publishReason: ''
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          username: {
+            path: 'username',
+            controlType: 'input-text',
+            label: 'Username',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: []
+          },
+          backupUsername: {
+            path: 'backupUsername',
+            controlType: 'input-text',
+            label: 'Backup Username',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [compiledRule({ kind: 'notEqualsField', path: 'username', message: 'Backup username must differ' }, 'backupUsername')]
+          },
+          status: {
+            path: 'status',
+            controlType: 'input-text',
+            label: 'Status',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: []
+          },
+          publishReason: {
+            path: 'publishReason',
+            controlType: 'input-text',
+            label: 'Publish Reason',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [
+              compiledRule(
+                {
+                  kind: 'requiredUnless',
+                  path: 'status',
+                  equals: 'published',
+                  message: 'Publish reason is required before publishing'
+                },
+                'publishReason'
+              )
+            ]
+          }
+        },
+        order: ['username', 'backupUsername', 'status', 'publishReason'],
+        dependents: {
+          username: ['backupUsername'],
+          status: ['publishReason']
+        }
+      }
+    });
+
+    form.touchField('backupUsername');
+    form.setValue('username', 'bob');
+
+    await vi.waitFor(() => {
+      expect(form.getError('backupUsername')?.[0]?.message).toBe('Backup username must differ');
+    });
+
+    form.setValue('username', 'carol');
+
+    await vi.waitFor(() => {
+      expect(form.getError('backupUsername')).toBeUndefined();
+    });
+
+    form.touchField('publishReason');
+    form.setValue('status', 'review');
+
+    await vi.waitFor(() => {
+      expect(form.getError('publishReason')?.[0]?.message).toBe('Publish reason is required before publishing');
+    });
+
+    form.setValue('status', 'published');
+
+    await vi.waitFor(() => {
+      expect(form.getError('publishReason')).toBeUndefined();
+    });
+  });
+
+  it('compiles validation nodes with array metadata', () => {
+    const registry = createRendererRegistry([formRenderer, inputRenderer]);
+    const arrayRenderer: RendererDefinition = {
+      type: 'array-editor',
+      component: () => null,
+      validation: {
+        kind: 'field',
+        valueKind: 'array',
+        getFieldPath(schema) {
+          return typeof schema.name === 'string' ? schema.name : undefined;
+        },
+        collectRules() {
+          return [];
+        }
+      }
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([formRenderer, inputRenderer, arrayRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = runtime.compile({
+      type: 'form',
+      body: [
+        {
+          type: 'array-editor',
+          name: 'reviewers',
+          label: 'Reviewers',
+          minItems: 1
+        }
+      ]
+    }) as any;
+
+    expect(node.validation.nodes.reviewers.kind).toBe('array');
+    expect(node.validation.nodes[''].children).toContain('reviewers');
+    expect(node.validation.fields.reviewers.rules[0].rule).toMatchObject({
+      kind: 'minItems',
+      value: 1
+    });
+  });
+
+  it('validates array-level rules through field and subtree validation', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'array-form',
+      initialValues: {
+        reviewers: []
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          reviewers: {
+            path: 'reviewers',
+            controlType: 'array-editor',
+            label: 'Reviewers',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [compiledRule({ kind: 'minItems', value: 1, message: 'Add at least one reviewer' }, 'reviewers')]
+          }
+        },
+        order: ['reviewers'],
+        dependents: {},
+        nodes: {
+          '': {
+            path: '',
+            kind: 'form',
+            rules: [],
+            children: ['reviewers']
+          },
+          reviewers: {
+            path: 'reviewers',
+            kind: 'array',
+            controlType: 'array-editor',
+            label: 'Reviewers',
+            rules: [compiledRule({ kind: 'minItems', value: 1, message: 'Add at least one reviewer' }, 'reviewers')],
+            children: [],
+            parent: ''
+          }
+        },
+        validationOrder: ['reviewers'],
+        rootPath: ''
+      }
+    });
+
+    const fieldResult = await form.validateField('reviewers');
+    expect(fieldResult.ok).toBe(false);
+    expect(fieldResult.errors[0].message).toBe('Add at least one reviewer');
+    expect(fieldResult.errors[0]).toMatchObject({
+      path: 'reviewers',
+      rule: 'minItems',
+      ruleId: 'reviewers#0:minItems',
+      ownerPath: 'reviewers',
+      sourceKind: 'array'
+    });
+
+    const subtreeResult = await form.validateSubtree('reviewers');
+    expect(subtreeResult.ok).toBe(false);
+    expect(subtreeResult.fieldErrors.reviewers?.[0]?.message).toBe('Add at least one reviewer');
+
+    form.setValue('reviewers', [{ value: 'alice' }]);
+
+    const nextResult = await form.validateSubtree('reviewers');
+    expect(nextResult.ok).toBe(true);
+  });
+
+  it('supports maxItems and includes runtime-registered child paths in subtree validation', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'array-subtree-form',
+      initialValues: {
+        reviewers: [{ value: 'alice' }, { value: '' }]
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          reviewers: {
+            path: 'reviewers',
+            controlType: 'array-editor',
+            label: 'Reviewers',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [compiledRule({ kind: 'maxItems', value: 1, message: 'Only one reviewer is allowed' }, 'reviewers')]
+          }
+        },
+        order: ['reviewers'],
+        dependents: {},
+        nodes: {
+          '': {
+            path: '',
+            kind: 'form',
+            rules: [],
+            children: ['reviewers']
+          },
+          reviewers: {
+            path: 'reviewers',
+            kind: 'array',
+            controlType: 'array-editor',
+            label: 'Reviewers',
+            rules: [compiledRule({ kind: 'maxItems', value: 1, message: 'Only one reviewer is allowed' }, 'reviewers')],
+            children: ['reviewers.0.value', 'reviewers.1.value'],
+            parent: ''
+          }
+        },
+        validationOrder: ['reviewers'],
+        rootPath: ''
+      }
+    });
+
+    form.registerField({
+      path: 'reviewers',
+      childPaths: ['reviewers.0.value', 'reviewers.1.value'],
+      getValue() {
+        return form.store.getState().values.reviewers;
+      },
+      validateChild(path) {
+        return path === 'reviewers.1.value'
+          ? [{ path, rule: 'required', message: 'Reviewer 2 is required' }]
+          : [];
+      }
+    });
+
+    const subtreeResult = await form.validateSubtree('reviewers');
+    expect(subtreeResult.ok).toBe(false);
+    expect(subtreeResult.fieldErrors.reviewers?.[0]?.message).toBe('Only one reviewer is allowed');
+    expect(subtreeResult.fieldErrors['reviewers.1.value']?.[0]?.message).toBe('Reviewer 2 is required');
+    expect(subtreeResult.fieldErrors['reviewers.1.value']?.[0]).toMatchObject({
+      path: 'reviewers.1.value',
+      rule: 'required',
+      ownerPath: 'reviewers',
+      sourceKind: 'runtime-registration'
+    });
+
+    form.setValue('reviewers', [{ value: 'alice' }]);
+
+    const nextSubtreeResult = await form.validateSubtree('reviewers');
+    expect(nextSubtreeResult.fieldErrors.reviewers).toBeUndefined();
+  });
+
+  it('supports aggregate atLeastOneFilled validation for array nodes', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'aggregate-array-form',
+      initialValues: {
+        reviewers: [{ value: '' }, { value: '' }]
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          reviewers: {
+            path: 'reviewers',
+            controlType: 'array-editor',
+            label: 'Reviewers',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [
+              compiledRule(
+                { kind: 'atLeastOneFilled', itemPath: 'value', message: 'Add at least one reviewer value' },
+                'reviewers'
+              )
+            ]
+          }
+        },
+        order: ['reviewers'],
+        dependents: {},
+        nodes: {
+          '': {
+            path: '',
+            kind: 'form',
+            rules: [],
+            children: ['reviewers']
+          },
+          reviewers: {
+            path: 'reviewers',
+            kind: 'array',
+            controlType: 'array-editor',
+            label: 'Reviewers',
+            rules: [
+              compiledRule(
+                { kind: 'atLeastOneFilled', itemPath: 'value', message: 'Add at least one reviewer value' },
+                'reviewers'
+              )
+            ],
+            children: ['reviewers.0.value', 'reviewers.1.value'],
+            parent: ''
+          }
+        },
+        validationOrder: ['reviewers'],
+        rootPath: ''
+      }
+    });
+
+    const firstResult = await form.validateSubtree('reviewers');
+    expect(firstResult.ok).toBe(false);
+    expect(firstResult.fieldErrors.reviewers?.[0]?.message).toBe('Add at least one reviewer value');
+
+    form.setValue('reviewers', [{ value: '' }, { value: 'bob' }]);
+
+    const nextResult = await form.validateSubtree('reviewers');
+    expect(nextResult.ok).toBe(true);
+  });
+
+  it('supports aggregate allOrNone validation for array nodes', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'all-or-none-array-form',
+      initialValues: {
+        metadata: [
+          { key: 'env', value: '' },
+          { key: '', value: '' }
+        ]
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          metadata: {
+            path: 'metadata',
+            controlType: 'key-value',
+            label: 'Metadata',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [
+              compiledRule(
+                {
+                  kind: 'allOrNone',
+                  itemPaths: ['key', 'value'],
+                  message: 'Metadata entries must fill both key and value or leave both empty'
+                },
+                'metadata'
+              )
+            ]
+          }
+        },
+        order: ['metadata'],
+        dependents: {},
+        nodes: {
+          '': {
+            path: '',
+            kind: 'form',
+            rules: [],
+            children: ['metadata']
+          },
+          metadata: {
+            path: 'metadata',
+            kind: 'array',
+            controlType: 'key-value',
+            label: 'Metadata',
+            rules: [
+              compiledRule(
+                {
+                  kind: 'allOrNone',
+                  itemPaths: ['key', 'value'],
+                  message: 'Metadata entries must fill both key and value or leave both empty'
+                },
+                'metadata'
+              )
+            ],
+            children: ['metadata.0.key', 'metadata.0.value'],
+            parent: ''
+          }
+        },
+        validationOrder: ['metadata'],
+        rootPath: ''
+      }
+    });
+
+    const firstResult = await form.validateSubtree('metadata');
+    expect(firstResult.ok).toBe(false);
+    expect(firstResult.fieldErrors.metadata?.[0]?.message).toBe(
+      'Metadata entries must fill both key and value or leave both empty'
+    );
+
+    form.setValue('metadata', [
+      { key: 'env', value: 'prod' },
+      { key: '', value: '' }
+    ]);
+
+    const nextResult = await form.validateSubtree('metadata');
+    expect(nextResult.ok).toBe(true);
+  });
+
+  it('supports aggregate uniqueBy validation for array nodes', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'unique-array-form',
+      initialValues: {
+        metadata: [
+          { key: 'env', value: 'prod' },
+          { key: 'env', value: 'stage' }
+        ]
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          metadata: {
+            path: 'metadata',
+            controlType: 'key-value',
+            label: 'Metadata',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [
+              compiledRule(
+                {
+                  kind: 'uniqueBy',
+                  itemPath: 'key',
+                  message: 'Metadata keys must be unique'
+                },
+                'metadata'
+              )
+            ]
+          }
+        },
+        order: ['metadata'],
+        dependents: {},
+        nodes: {
+          '': {
+            path: '',
+            kind: 'form',
+            rules: [],
+            children: ['metadata']
+          },
+          metadata: {
+            path: 'metadata',
+            kind: 'array',
+            controlType: 'key-value',
+            label: 'Metadata',
+            rules: [
+              compiledRule(
+                {
+                  kind: 'uniqueBy',
+                  itemPath: 'key',
+                  message: 'Metadata keys must be unique'
+                },
+                'metadata'
+              )
+            ],
+            children: ['metadata.0.key', 'metadata.1.key'],
+            parent: ''
+          }
+        },
+        validationOrder: ['metadata'],
+        rootPath: ''
+      }
+    });
+
+    const firstResult = await form.validateSubtree('metadata');
+    expect(firstResult.ok).toBe(false);
+    expect(firstResult.fieldErrors.metadata?.[0]?.message).toBe('Metadata keys must be unique');
+    expect(firstResult.fieldErrors.metadata?.[0]).toMatchObject({
+      path: 'metadata',
+      rule: 'uniqueBy',
+      ruleId: 'metadata#0:uniqueBy',
+      ownerPath: 'metadata',
+      sourceKind: 'array',
+      relatedPaths: ['key']
+    });
+
+    form.setValue('metadata', [
+      { key: 'env', value: 'prod' },
+      { key: 'tier', value: 'stage' }
+    ]);
+
+    const nextResult = await form.validateSubtree('metadata');
+    expect(nextResult.ok).toBe(true);
+  });
+
+  it('supports object-level atLeastOneOf validation', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'contact-form',
+      initialValues: {
+        contact: {
+          email: '',
+          phone: ''
+        }
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          contact: {
+            path: 'contact',
+            controlType: 'contact-group',
+            label: 'Contact',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [
+              compiledRule(
+                {
+                  kind: 'atLeastOneOf',
+                  paths: ['email', 'phone'],
+                  message: 'Provide at least an email or phone number'
+                },
+                'contact'
+              )
+            ]
+          }
+        },
+        order: ['contact'],
+        dependents: {},
+        nodes: {
+          '': {
+            path: '',
+            kind: 'form',
+            rules: [],
+            children: ['contact']
+          },
+          contact: {
+            path: 'contact',
+            kind: 'object',
+            controlType: 'contact-group',
+            label: 'Contact',
+            rules: [
+              compiledRule(
+                {
+                  kind: 'atLeastOneOf',
+                  paths: ['email', 'phone'],
+                  message: 'Provide at least an email or phone number'
+                },
+                'contact'
+              )
+            ],
+            children: ['contact.email', 'contact.phone'],
+            parent: ''
+          }
+        },
+        validationOrder: ['contact'],
+        rootPath: ''
+      }
+    });
+
+    const firstResult = await form.validateSubtree('contact');
+    expect(firstResult.ok).toBe(false);
+    expect(firstResult.fieldErrors.contact?.[0]?.message).toBe('Provide at least an email or phone number');
+    expect(firstResult.fieldErrors.contact?.[0]).toMatchObject({
+      path: 'contact',
+      rule: 'atLeastOneOf',
+      ruleId: 'contact#0:atLeastOneOf',
+      ownerPath: 'contact',
+      sourceKind: 'object',
+      relatedPaths: ['email', 'phone']
+    });
+
+    form.setValue('contact', { email: 'a@example.com', phone: '' });
+
+    const nextResult = await form.validateSubtree('contact');
+    expect(nextResult.ok).toBe(true);
+  });
+
+  it('supports object-level allOrNone validation', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'credentials-form',
+      initialValues: {
+        credentials: {
+          username: 'alice',
+          password: ''
+        }
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          credentials: {
+            path: 'credentials',
+            controlType: 'credentials-group',
+            label: 'Credentials',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [
+              compiledRule(
+                {
+                  kind: 'allOrNone',
+                  itemPaths: ['username', 'password'],
+                  message: 'Provide both username and password or leave both empty'
+                },
+                'credentials'
+              )
+            ]
+          }
+        },
+        order: ['credentials'],
+        dependents: {},
+        nodes: {
+          '': {
+            path: '',
+            kind: 'form',
+            rules: [],
+            children: ['credentials']
+          },
+          credentials: {
+            path: 'credentials',
+            kind: 'object',
+            controlType: 'credentials-group',
+            label: 'Credentials',
+            rules: [
+              compiledRule(
+                {
+                  kind: 'allOrNone',
+                  itemPaths: ['username', 'password'],
+                  message: 'Provide both username and password or leave both empty'
+                },
+                'credentials'
+              )
+            ],
+            children: ['credentials.username', 'credentials.password'],
+            parent: ''
+          }
+        },
+        validationOrder: ['credentials'],
+        rootPath: ''
+      }
+    });
+
+    const firstResult = await form.validateSubtree('credentials');
+    expect(firstResult.ok).toBe(false);
+    expect(firstResult.fieldErrors.credentials?.[0]?.message).toBe('Provide both username and password or leave both empty');
+
+    form.setValue('credentials', { username: 'alice', password: 'secret' });
+
+    const nextResult = await form.validateSubtree('credentials');
+    expect(nextResult.ok).toBe(true);
+  });
+
+  it('remaps child errors when removing array items through runtime helpers', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'array-remap-form',
+      initialValues: {
+        reviewers: [{ value: 'alice' }, { value: '' }]
+      },
+      parentScope: page.scope
+    });
+
+    form.registerField({
+      path: 'reviewers',
+      childPaths: ['reviewers.0.value', 'reviewers.1.value'],
+      getValue() {
+        return form.store.getState().values.reviewers;
+      },
+      validateChild(path) {
+        return path === 'reviewers.1.value'
+          ? [{ path, rule: 'required', message: 'Reviewer 2 is required' }]
+          : [];
+      }
+    });
+
+    await form.validateField('reviewers.1.value');
+    expect(form.getError('reviewers.1.value')?.[0]?.message).toBe('Reviewer 2 is required');
+
+    form.removeValue('reviewers', 0);
+
+    expect(form.getError('reviewers.1.value')).toBeUndefined();
+    expect(form.store.getState().values.reviewers).toEqual([{ value: '' }]);
+  });
+
+  it('remaps touched and errors when swapping array items through runtime helpers', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'array-swap-form',
+      initialValues: {
+        reviewers: [{ value: 'alice' }, { value: '' }]
+      },
+      parentScope: page.scope
+    });
+
+    form.registerField({
+      path: 'reviewers',
+      childPaths: ['reviewers.0.value', 'reviewers.1.value'],
+      getValue() {
+        return form.store.getState().values.reviewers;
+      },
+      validateChild(path) {
+        return path === 'reviewers.1.value'
+          ? [{ path, rule: 'required', message: 'Reviewer 2 is required' }]
+          : [];
+      }
+    });
+
+    form.touchField('reviewers.1.value');
+    await form.validateField('reviewers.1.value');
+
+    form.swapValue('reviewers', 0, 1);
+
+    expect(form.store.getState().values.reviewers).toEqual([{ value: '' }, { value: 'alice' }]);
+    expect(form.isTouched('reviewers.0.value')).toBe(true);
+    expect(form.isTouched('reviewers.1.value')).toBe(false);
+    expect(form.getError('reviewers.0.value')?.[0]?.message).toBe('Reviewer 2 is required');
+    expect(form.getError('reviewers.1.value')).toBeUndefined();
+  });
+
+  it('normalizes root runtime-registration validation error metadata', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'runtime-root-form',
+      initialValues: {
+        tags: []
+      },
+      parentScope: page.scope
+    });
+
+    form.registerField({
+      path: 'tags',
+      getValue() {
+        return form.store.getState().values.tags;
+      },
+      validate() {
+        return [{ path: 'tags', rule: 'required', message: 'Tag List requires at least one tag' }];
+      }
+    });
+
+    const result = await form.validateField('tags');
+
+    expect(result.ok).toBe(false);
+    expect(result.errors[0]).toMatchObject({
+      path: 'tags',
+      rule: 'required',
+      message: 'Tag List requires at least one tag',
+      ownerPath: 'tags',
+      sourceKind: 'runtime-registration'
+    });
   });
 
   it('treats nested scope ownership by lexical level instead of materialized fallback', () => {

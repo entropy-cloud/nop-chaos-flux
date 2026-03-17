@@ -5,6 +5,8 @@ import type {
   CompiledNodeRuntimeState,
   CompiledSchemaNode,
   DialogState,
+  FormFieldStateSnapshot,
+  FormErrorQuery,
   FormRuntime,
   FormStoreState,
   PageRuntime,
@@ -17,7 +19,8 @@ import type {
   RendererHookApi,
   RendererRuntime,
   SchemaRendererProps,
-  ScopeRef
+  ScopeRef,
+  ValidationError
 } from '@nop-chaos/amis-schema';
 import { isSchema, isSchemaArray } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
@@ -54,6 +57,60 @@ function isCompiledNode(input: unknown): input is CompiledSchemaNode {
     !!candidate.schema &&
     !!candidate.regions
   );
+}
+
+function matchesFormErrorQuery(error: ValidationError, query?: FormErrorQuery): boolean {
+  if (!query) {
+    return true;
+  }
+
+  if (query.path && error.path !== query.path) {
+    return false;
+  }
+
+  if (query.ownerPath && (error.ownerPath ?? error.path) !== query.ownerPath) {
+    return false;
+  }
+
+  if (query.rule && error.rule !== query.rule) {
+    return false;
+  }
+
+  if (query.sourceKinds?.length && (!error.sourceKind || !query.sourceKinds.includes(error.sourceKind))) {
+    return false;
+  }
+
+  return true;
+}
+
+function selectCurrentFormErrors(state: FormStoreState, query?: FormErrorQuery): ValidationError[] {
+  const matches: ValidationError[] = [];
+
+  if (query?.path) {
+    const errors = state.errors[query.path] ?? [];
+    return errors.filter((error) => matchesFormErrorQuery(error, query));
+  }
+
+  for (const errors of Object.values(state.errors)) {
+    for (const error of errors) {
+      if (matchesFormErrorQuery(error, query)) {
+        matches.push(error);
+      }
+    }
+  }
+
+  return matches;
+}
+
+function selectCurrentFormFieldState(state: FormStoreState, path: string, query?: FormErrorQuery): FormFieldStateSnapshot {
+  return {
+    error: selectCurrentFormErrors(state, query ?? { path })[0],
+    validating: state.validating[path] === true,
+    touched: state.touched[path] === true,
+    dirty: state.dirty[path] === true,
+    visited: state.visited[path] === true,
+    submitting: state.submitting
+  };
 }
 
 function normalizeNodeInput(runtime: RendererRuntime, input: RenderNodeInput): CompiledSchemaNode | CompiledSchemaNode[] | null {
@@ -394,6 +451,39 @@ export function useCurrentFormState<T>(
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, equalityFn);
 }
 
+export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] {
+  return useCurrentFormState((state) => selectCurrentFormErrors(state, query));
+}
+
+export function useCurrentFormError(query: FormErrorQuery): ValidationError | undefined {
+  return useCurrentFormState((state) => selectCurrentFormErrors(state, query)[0], Object.is);
+}
+
+export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot {
+  return useCurrentFormState(
+    (state) => selectCurrentFormFieldState(state, path, query),
+    (left, right) =>
+      left.error === right.error &&
+      left.validating === right.validating &&
+      left.touched === right.touched &&
+      left.dirty === right.dirty &&
+      left.visited === right.visited &&
+      left.submitting === right.submitting
+  );
+}
+
+export function useOwnedFieldState(path: string): FormFieldStateSnapshot {
+  return useCurrentFormFieldState(path, { path, ownerPath: path });
+}
+
+export function useChildFieldState(path: string): FormFieldStateSnapshot {
+  return useCurrentFormFieldState(path, { path });
+}
+
+export function useAggregateError(path: string): ValidationError | undefined {
+  return useCurrentFormError({ path, ownerPath: path, sourceKinds: ['array', 'object', 'form', 'runtime-registration'] });
+}
+
 export function useCurrentPage(): PageRuntime | undefined {
   return useContext(PageContext);
 }
@@ -422,6 +512,12 @@ export const rendererHooks: RendererHookApi = {
   useRendererEnv,
   useActionDispatcher,
   useCurrentForm,
+  useCurrentFormErrors,
+  useCurrentFormError,
+  useCurrentFormFieldState,
+  useOwnedFieldState,
+  useChildFieldState,
+  useAggregateError,
   useCurrentPage,
   useCurrentNodeMeta,
   useRenderFragment

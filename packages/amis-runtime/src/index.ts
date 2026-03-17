@@ -37,6 +37,7 @@ import type {
   ValidationTrigger,
   ValidationVisibilityTrigger,
   ValidationError,
+  CompiledValidationRule,
   ValidationResult,
   ValidationRule,
   RendererEnv
@@ -351,8 +352,26 @@ function collectSchemaValidationRules(schema: BaseSchema): ValidationRule[] {
     required?: boolean;
     minLength?: number;
     maxLength?: number;
+    minItems?: number;
+    maxItems?: number;
+    atLeastOneFilled?: boolean | { itemPath?: string; message?: string };
+    allOrNone?: { itemPaths: string[]; message?: string };
+    uniqueBy?: { itemPath: string; message?: string };
+    atLeastOneOf?: { paths: string[]; message?: string };
     pattern?: string;
     patternMessage?: string;
+    equalsField?: string;
+    notEqualsField?: string;
+    requiredWhen?: {
+      path: string;
+      equals: unknown;
+      message?: string;
+    };
+    requiredUnless?: {
+      path: string;
+      equals: unknown;
+      message?: string;
+    };
   };
   const rules: ValidationRule[] = [];
 
@@ -368,11 +387,83 @@ function collectSchemaValidationRules(schema: BaseSchema): ValidationRule[] {
     rules.push({ kind: 'maxLength', value: ruleSource.maxLength });
   }
 
+  if (typeof ruleSource.minItems === 'number') {
+    rules.push({ kind: 'minItems', value: ruleSource.minItems });
+  }
+
+  if (typeof ruleSource.maxItems === 'number') {
+    rules.push({ kind: 'maxItems', value: ruleSource.maxItems });
+  }
+
+  if (ruleSource.atLeastOneFilled) {
+    rules.push({
+      kind: 'atLeastOneFilled',
+      itemPath: typeof ruleSource.atLeastOneFilled === 'object' ? ruleSource.atLeastOneFilled.itemPath : undefined,
+      message: typeof ruleSource.atLeastOneFilled === 'object' ? ruleSource.atLeastOneFilled.message : undefined
+    });
+  }
+
+  if (ruleSource.allOrNone?.itemPaths?.length) {
+    rules.push({
+      kind: 'allOrNone',
+      itemPaths: ruleSource.allOrNone.itemPaths,
+      message: ruleSource.allOrNone.message
+    });
+  }
+
+  if (typeof ruleSource.uniqueBy?.itemPath === 'string' && ruleSource.uniqueBy.itemPath) {
+    rules.push({
+      kind: 'uniqueBy',
+      itemPath: ruleSource.uniqueBy.itemPath,
+      message: ruleSource.uniqueBy.message
+    });
+  }
+
+  if (ruleSource.atLeastOneOf?.paths?.length) {
+    rules.push({
+      kind: 'atLeastOneOf',
+      paths: ruleSource.atLeastOneOf.paths,
+      message: ruleSource.atLeastOneOf.message
+    });
+  }
+
   if (typeof ruleSource.pattern === 'string' && ruleSource.pattern) {
     rules.push({
       kind: 'pattern',
       value: ruleSource.pattern,
       message: ruleSource.patternMessage
+    });
+  }
+
+   if (typeof ruleSource.equalsField === 'string' && ruleSource.equalsField) {
+    rules.push({
+      kind: 'equalsField',
+      path: ruleSource.equalsField
+    });
+  }
+
+  if (typeof ruleSource.notEqualsField === 'string' && ruleSource.notEqualsField) {
+    rules.push({
+      kind: 'notEqualsField',
+      path: ruleSource.notEqualsField
+    });
+  }
+
+  if (ruleSource.requiredWhen && typeof ruleSource.requiredWhen.path === 'string' && ruleSource.requiredWhen.path) {
+    rules.push({
+      kind: 'requiredWhen',
+      path: ruleSource.requiredWhen.path,
+      equals: ruleSource.requiredWhen.equals,
+      message: ruleSource.requiredWhen.message
+    });
+  }
+
+  if (ruleSource.requiredUnless && typeof ruleSource.requiredUnless.path === 'string' && ruleSource.requiredUnless.path) {
+    rules.push({
+      kind: 'requiredUnless',
+      path: ruleSource.requiredUnless.path,
+      equals: ruleSource.requiredUnless.equals,
+      message: ruleSource.requiredUnless.message
     });
   }
 
@@ -441,6 +532,16 @@ function collectValidationModel(
 
   const fields: Record<string, CompiledFormValidationField> = {};
   const order: string[] = [];
+  const validationNodes: Record<string, any> = {
+    '': {
+      path: '',
+      kind: 'form',
+      rules: [],
+      children: [],
+      parent: undefined
+    }
+  };
+  const dependents = new Map<string, Set<string>>();
   const rootBehavior = {
     triggers: options.defaultTriggers ?? (['blur'] as ValidationTrigger[]),
     showErrorOn: options.defaultShowErrorOn ?? (['touched', 'submit'] as ValidationVisibilityTrigger[])
@@ -467,16 +568,46 @@ function collectValidationModel(
       const fieldPath = contributor.getFieldPath?.(entry.schema, ctx);
 
       if (fieldPath) {
+        const compiledRules = compileValidationRules(
+          fieldPath,
+          mergeValidationRules(collectSchemaValidationRules(entry.schema), contributor.collectRules?.(entry.schema, ctx))
+        );
+        const parentPath = fieldPath.includes('.') ? fieldPath.split('.').slice(0, -1).join('.') : '';
+        const nodeKind = contributor.valueKind === 'array' ? 'array' : contributor.valueKind === 'object' ? 'object' : 'field';
+
         fields[fieldPath] = {
           path: fieldPath,
           controlType: entry.type,
           label: typeof entry.schema.label === 'string' ? entry.schema.label : undefined,
-          rules: mergeValidationRules(collectSchemaValidationRules(entry.schema), contributor.collectRules?.(entry.schema, ctx)),
+          rules: compiledRules,
           behavior: {
             triggers: normalizeValidationTriggers(entry.schema.validateOn, rootBehavior.triggers),
             showErrorOn: normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, rootBehavior.showErrorOn)
           }
         };
+
+        validationNodes[fieldPath] = {
+          path: fieldPath,
+          kind: nodeKind,
+          controlType: entry.type,
+          label: typeof entry.schema.label === 'string' ? entry.schema.label : undefined,
+          rules: compiledRules,
+          children: [],
+          parent: parentPath
+        };
+
+        if (validationNodes[parentPath]) {
+          validationNodes[parentPath].children.push(fieldPath);
+        }
+
+        for (const compiledRule of compiledRules) {
+          for (const dependencyPath of compiledRule.dependencyPaths) {
+            const nextDependents = dependents.get(dependencyPath) ?? new Set<string>();
+            nextDependents.add(fieldPath);
+            dependents.set(dependencyPath, nextDependents);
+          }
+        }
+
         order.push(fieldPath);
       }
     }
@@ -493,7 +624,17 @@ function collectValidationModel(
 
   nodes.forEach(visit);
 
-  return order.length > 0 ? { fields, order, behavior: rootBehavior } : undefined;
+  return order.length > 0
+    ? {
+        fields,
+        order,
+        behavior: rootBehavior,
+        dependents: Object.fromEntries(Array.from(dependents.entries()).map(([path, targets]) => [path, Array.from(targets)])),
+        nodes: validationNodes,
+        validationOrder: Object.keys(validationNodes),
+        rootPath: ''
+      }
+    : undefined;
 }
 
 function applyWrapComponentPlugins(renderer: RendererDefinition, plugins?: RendererPlugin[]): RendererDefinition {
@@ -699,14 +840,26 @@ function createFormStore(initialValues: Record<string, any>): FormStoreApi {
       delete next[path];
       store.setState({ validating: next });
     },
+    setValidatingState(validating) {
+      store.setState({ validating });
+    },
     setTouched(path, touched) {
       setBooleanState('touched', path, touched);
+    },
+    setTouchedState(touched) {
+      store.setState({ touched });
     },
     setDirty(path, dirty) {
       setBooleanState('dirty', path, dirty);
     },
+    setDirtyState(dirty) {
+      store.setState({ dirty });
+    },
     setVisited(path, visited) {
       setBooleanState('visited', path, visited);
+    },
+    setVisitedState(visited) {
+      store.setState({ visited });
     },
     setSubmitting(submitting) {
       store.setState({ submitting });
@@ -893,10 +1046,30 @@ function buildValidationMessage(rule: ValidationRule, field: CompiledFormValidat
       return `${label} must be at least ${rule.value} characters`;
     case 'maxLength':
       return `${label} must be at most ${rule.value} characters`;
+    case 'minItems':
+      return rule.message ?? `${label} must contain at least ${rule.value} item${rule.value === 1 ? '' : 's'}`;
+    case 'maxItems':
+      return rule.message ?? `${label} must contain at most ${rule.value} item${rule.value === 1 ? '' : 's'}`;
+    case 'atLeastOneFilled':
+      return rule.message ?? `${label} must contain at least one filled item`;
+    case 'allOrNone':
+      return rule.message ?? `${label} entries must fill all related fields or leave them all empty`;
+    case 'uniqueBy':
+      return rule.message ?? `${label} items must have unique ${rule.itemPath}`;
+    case 'atLeastOneOf':
+      return rule.message ?? `${label} must fill at least one related field`;
     case 'pattern':
       return rule.message ?? `${label} format is invalid`;
     case 'email':
       return rule.message ?? `${label} must be a valid email address`;
+    case 'equalsField':
+      return rule.message ?? `${label} must match ${rule.path}`;
+    case 'notEqualsField':
+      return rule.message ?? `${label} must not match ${rule.path}`;
+    case 'requiredWhen':
+      return rule.message ?? `${label} is required`;
+    case 'requiredUnless':
+      return rule.message ?? `${label} is required`;
     case 'async':
       return rule.message ?? `${label} failed async validation`;
   }
@@ -906,28 +1079,431 @@ function isEmptyValue(value: unknown): boolean {
   return value == null || value === '' || (Array.isArray(value) && value.length === 0);
 }
 
-function validateRule(rule: ValidationRule, value: unknown, field: CompiledFormValidationField): ValidationError | undefined {
+function hasFilledArrayItem(value: unknown, itemPath?: string): boolean {
+  if (!Array.isArray(value)) {
+    return false;
+  }
+
+  return value.some((item) => {
+    const candidate = itemPath ? getIn(item, itemPath) : item;
+    return !isEmptyValue(candidate);
+  });
+}
+
+function violatesAllOrNone(value: unknown, itemPaths: string[]): boolean {
+  if (itemPaths.length === 0) {
+    return false;
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => {
+      const flags = itemPaths.map((itemPath) => !isEmptyValue(getIn(item, itemPath)));
+      return flags.some(Boolean) && flags.some((flag) => !flag);
+    });
+  }
+
+  if (value == null || typeof value !== 'object') {
+    return false;
+  }
+
+  const flags = itemPaths.map((itemPath) => !isEmptyValue(getIn(value, itemPath)));
+  return flags.some(Boolean) && flags.some((flag) => !flag);
+
+}
+
+function violatesUniqueBy(value: unknown, itemPath: string): boolean {
+  if (!Array.isArray(value) || !itemPath) {
+    return false;
+  }
+
+  const seen = new Set<unknown>();
+
+  for (const item of value) {
+    const candidate = getIn(item, itemPath);
+
+    if (isEmptyValue(candidate)) {
+      continue;
+    }
+
+    if (seen.has(candidate)) {
+      return true;
+    }
+
+    seen.add(candidate);
+  }
+
+  return false;
+}
+
+function lacksAtLeastOneOf(value: unknown, paths: string[]): boolean {
+  if (value == null || typeof value !== 'object' || paths.length === 0) {
+    return true;
+  }
+
+  return !paths.some((path) => !isEmptyValue(getIn(value, path)));
+}
+
+function resolveValidationErrorSourceKind(field: CompiledFormValidationField, rule: ValidationRule): ValidationError['sourceKind'] {
+  switch (rule.kind) {
+    case 'minItems':
+    case 'maxItems':
+    case 'atLeastOneFilled':
+    case 'uniqueBy':
+      return 'array';
+    case 'atLeastOneOf':
+      return 'object';
+    case 'allOrNone': {
+      const value = field.controlType?.toLowerCase() ?? '';
+      if (value.includes('array') || value.includes('list') || value.includes('key-value')) {
+        return 'array';
+      }
+
+      return 'object';
+    }
+    default:
+      return 'field';
+  }
+}
+
+function createValidationError(
+  field: CompiledFormValidationField,
+  compiledRule: CompiledValidationRule,
+  message: string,
+  overrides?: Partial<ValidationError>
+): ValidationError {
+  const rule = compiledRule.rule;
+
+  return {
+    path: field.path,
+    message,
+    rule: rule.kind,
+    ruleId: compiledRule.id,
+    ownerPath: field.path,
+    sourceKind: resolveValidationErrorSourceKind(field, rule),
+    ...overrides
+  };
+}
+
+function normalizeRuntimeValidationError(
+  error: ValidationError,
+  registration: RuntimeFieldRegistration,
+  path: string,
+  childPath?: string
+): ValidationError {
+  const ownerPath = error.ownerPath ?? registration.path;
+  const normalizedPath = childPath ?? error.path ?? path;
+
+  return {
+    ...error,
+    path: normalizedPath,
+    ownerPath,
+    sourceKind: error.sourceKind ?? 'runtime-registration'
+  };
+}
+
+function normalizeRuntimeValidationErrors(
+  errors: ValidationError[],
+  registration: RuntimeFieldRegistration,
+  path: string,
+  childPath?: string
+): ValidationError[] {
+  return errors.map((error) => normalizeRuntimeValidationError(error, registration, path, childPath));
+}
+
+function isNumericPathSegment(segment: string | undefined): boolean {
+  return typeof segment === 'string' && /^\d+$/.test(segment);
+}
+
+function transformArrayIndexedPath(
+  path: string,
+  arrayPath: string,
+  transformIndex: (index: number) => number | undefined
+): string | undefined {
+  if (path === arrayPath) {
+    return path;
+  }
+
+  const prefix = `${arrayPath}.`;
+
+  if (!path.startsWith(prefix)) {
+    return path;
+  }
+
+  const remainder = path.slice(prefix.length);
+  const [indexSegment, ...rest] = remainder.split('.');
+
+  if (!isNumericPathSegment(indexSegment)) {
+    return path;
+  }
+
+  const nextIndex = transformIndex(Number(indexSegment));
+
+  if (nextIndex === undefined) {
+    return undefined;
+  }
+
+  return [arrayPath, String(nextIndex), ...rest].filter(Boolean).join('.');
+}
+
+function remapBooleanState(
+  input: Record<string, boolean>,
+  arrayPath: string,
+  transformIndex: (index: number) => number | undefined
+): Record<string, boolean> {
+  const next: Record<string, boolean> = {};
+
+  for (const [path, value] of Object.entries(input)) {
+    const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
+
+    if (nextPath) {
+      next[nextPath] = value;
+    }
+  }
+
+  return next;
+}
+
+function remapErrorState(
+  input: Record<string, ValidationError[]>,
+  arrayPath: string,
+  transformIndex: (index: number) => number | undefined
+): Record<string, ValidationError[]> {
+  const next: Record<string, ValidationError[]> = {};
+
+  for (const [path, errors] of Object.entries(input)) {
+    const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
+
+    if (!nextPath) {
+      continue;
+    }
+
+    const nextErrors: ValidationError[] = [];
+
+    for (const error of errors) {
+        const mappedPath = transformArrayIndexedPath(error.path, arrayPath, transformIndex);
+
+        if (!mappedPath) {
+          continue;
+        }
+
+        const mappedOwnerPath = error.ownerPath
+          ? transformArrayIndexedPath(error.ownerPath, arrayPath, transformIndex) ?? error.ownerPath
+          : error.ownerPath;
+        const mappedRelatedPaths = error.relatedPaths?.map((relatedPath) => {
+          const fullRelatedPath = relatedPath.includes('.') || !path.startsWith(arrayPath) ? relatedPath : `${arrayPath}.${relatedPath}`;
+          const mappedRelatedPath = transformArrayIndexedPath(fullRelatedPath, arrayPath, transformIndex);
+
+          if (!mappedRelatedPath) {
+            return relatedPath;
+          }
+
+          return relatedPath.includes('.') || !mappedRelatedPath.startsWith(`${arrayPath}.`)
+            ? mappedRelatedPath
+            : mappedRelatedPath.slice(arrayPath.length + 1);
+        });
+
+        nextErrors.push({
+          ...error,
+          path: mappedPath,
+          ownerPath: mappedOwnerPath,
+          relatedPaths: mappedRelatedPaths
+        });
+      }
+
+    if (nextErrors.length > 0) {
+      next[nextPath] = nextErrors;
+    }
+  }
+
+  return next;
+}
+
+function clampInsertIndex(index: number, length: number): number {
+  if (index < 0) {
+    return 0;
+  }
+
+  if (index > length) {
+    return length;
+  }
+
+  return index;
+}
+
+function clampArrayIndex(index: number, length: number): number {
+  if (length === 0) {
+    return 0;
+  }
+
+  if (index < 0) {
+    return 0;
+  }
+
+  if (index >= length) {
+    return length - 1;
+  }
+
+  return index;
+}
+
+function insertArrayValue(input: unknown[], index: number, value: unknown): unknown[] {
+  const next = input.slice();
+  next.splice(clampInsertIndex(index, next.length), 0, value);
+  return next;
+}
+
+function removeArrayValue(input: unknown[], index: number): unknown[] {
+  if (input.length === 0) {
+    return input.slice();
+  }
+
+  const next = input.slice();
+  next.splice(clampArrayIndex(index, next.length), 1);
+  return next;
+}
+
+function moveArrayValue(input: unknown[], from: number, to: number): unknown[] {
+  if (input.length <= 1) {
+    return input.slice();
+  }
+
+  const next = input.slice();
+  const fromIndex = clampArrayIndex(from, next.length);
+  const toIndex = clampArrayIndex(to, next.length);
+
+  if (fromIndex === toIndex) {
+    return next;
+  }
+
+  const [item] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, item);
+  return next;
+}
+
+function swapArrayValue(input: unknown[], a: number, b: number): unknown[] {
+  if (input.length <= 1) {
+    return input.slice();
+  }
+
+  const next = input.slice();
+  const first = clampArrayIndex(a, next.length);
+  const second = clampArrayIndex(b, next.length);
+
+  if (first === second) {
+    return next;
+  }
+
+  [next[first], next[second]] = [next[second], next[first]];
+  return next;
+}
+
+function validateRule(
+  compiledRule: CompiledValidationRule,
+  value: unknown,
+  field: CompiledFormValidationField,
+  scope: ScopeRef
+): ValidationError | undefined {
+  const rule = compiledRule.rule;
+
   switch (rule.kind) {
     case 'required':
       return isEmptyValue(value)
-        ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field))
         : undefined;
     case 'minLength':
       return typeof value === 'string' && value.length < rule.value
-        ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field))
         : undefined;
     case 'maxLength':
       return typeof value === 'string' && value.length > rule.value
-        ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field))
+        : undefined;
+    case 'minItems':
+      return Array.isArray(value) && value.length < rule.value
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field))
+        : undefined;
+    case 'maxItems':
+      return Array.isArray(value) && value.length > rule.value
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field))
+        : undefined;
+    case 'atLeastOneFilled':
+      return !hasFilledArrayItem(value, rule.itemPath)
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field), {
+            relatedPaths: rule.itemPath ? [rule.itemPath] : undefined
+          })
+        : undefined;
+    case 'allOrNone':
+      return violatesAllOrNone(value, rule.itemPaths)
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field), {
+            relatedPaths: rule.itemPaths
+          })
+        : undefined;
+    case 'uniqueBy':
+      return violatesUniqueBy(value, rule.itemPath)
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field), {
+            relatedPaths: [rule.itemPath]
+          })
+        : undefined;
+    case 'atLeastOneOf':
+      return lacksAtLeastOneOf(value, rule.paths)
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field), {
+            relatedPaths: rule.paths
+          })
         : undefined;
     case 'pattern':
       return typeof value === 'string' && value !== '' && !new RegExp(rule.value).test(value)
-        ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field))
         : undefined;
     case 'email': {
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return typeof value === 'string' && value !== '' && !emailPattern.test(value)
-        ? { path: field.path, rule: rule.kind, message: buildValidationMessage(rule, field) }
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field))
+        : undefined;
+    }
+    case 'equalsField': {
+      const peerValue = scope.get(rule.path);
+
+      if (isEmptyValue(value) && isEmptyValue(peerValue)) {
+        return undefined;
+      }
+
+      return !Object.is(value, peerValue)
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field), {
+            relatedPaths: [rule.path]
+          })
+        : undefined;
+    }
+    case 'notEqualsField': {
+      const peerValue = scope.get(rule.path);
+
+      if (isEmptyValue(value) && isEmptyValue(peerValue)) {
+        return undefined;
+      }
+
+      return Object.is(value, peerValue)
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field), {
+            relatedPaths: [rule.path]
+          })
+        : undefined;
+    }
+    case 'requiredWhen': {
+      const dependencyValue = scope.get(rule.path);
+      const shouldRequire = Object.is(dependencyValue, rule.equals);
+
+      return shouldRequire && isEmptyValue(value)
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field), {
+            relatedPaths: [rule.path]
+          })
+        : undefined;
+    }
+    case 'requiredUnless': {
+      const dependencyValue = scope.get(rule.path);
+      const shouldRequire = !Object.is(dependencyValue, rule.equals);
+
+      return shouldRequire && isEmptyValue(value)
+        ? createValidationError(field, compiledRule, buildValidationMessage(rule, field), {
+            relatedPaths: [rule.path]
+          })
         : undefined;
     }
     case 'async':
@@ -1000,6 +1576,45 @@ function applyResponseAdaptor(expressionCompiler: ExpressionCompiler, api: ApiOb
   );
 }
 
+function collectValidationDependencyPaths(rule: ValidationRule): string[] {
+  switch (rule.kind) {
+    case 'equalsField':
+    case 'notEqualsField':
+    case 'requiredWhen':
+    case 'requiredUnless':
+      return [rule.path];
+    default:
+      return [];
+  }
+}
+
+function compileValidationRules(path: string, rules: ValidationRule[]): CompiledValidationRule[] {
+  return rules.map((rule, index) => ({
+    id: `${path}#${index}:${rule.kind}`,
+    rule,
+    dependencyPaths: collectValidationDependencyPaths(rule)
+  }));
+}
+
+function isCompiledValidationRule(rule: CompiledValidationRule | ValidationRule): rule is CompiledValidationRule {
+  return 'rule' in rule;
+}
+
+function normalizeCompiledValidationRules(
+  path: string,
+  rules: Array<CompiledValidationRule | ValidationRule>
+): CompiledValidationRule[] {
+  return rules.map((rule, index) =>
+    isCompiledValidationRule(rule)
+      ? rule
+      : {
+          id: `${path}#${index}:${rule.kind}`,
+          rule,
+          dependencyPaths: collectValidationDependencyPaths(rule)
+        }
+  );
+}
+
 let dialogCounter = 0;
 
 function createDialogId(nodeId: string) {
@@ -1055,6 +1670,7 @@ export function createRendererRuntime(input: {
   }
 
   async function executeValidationRule(
+    compiledRule: CompiledValidationRule,
     rule: Extract<ValidationRule, { kind: 'async' }>,
     field: CompiledFormValidationField,
     scope: ScopeRef
@@ -1068,11 +1684,11 @@ export function createRendererRuntime(input: {
         const candidate = adaptedData as { valid?: boolean; message?: string };
 
         if (candidate.valid === false) {
-          return {
-            path: field.path,
-            rule: 'async',
-            message: candidate.message ?? rule.message ?? `${field.label ?? field.path} failed async validation`
-          };
+          return createValidationError(
+            field,
+            compiledRule,
+            candidate.message ?? rule.message ?? `${field.label ?? field.path} failed async validation`
+          );
         }
 
         if (candidate.valid === true) {
@@ -1081,11 +1697,7 @@ export function createRendererRuntime(input: {
       }
 
       if (!response.ok) {
-        return {
-          path: field.path,
-          rule: 'async',
-          message: rule.message ?? `${field.label ?? field.path} failed async validation`
-        };
+        return createValidationError(field, compiledRule, rule.message ?? `${field.label ?? field.path} failed async validation`);
       }
 
       return undefined;
@@ -1160,6 +1772,34 @@ export function createRendererRuntime(input: {
     const initialFieldState = buildInitialFieldState(inputValue.initialValues ?? {}, inputValue.validation);
     const defaultValidationTriggers = inputValue.validation?.behavior.triggers ?? ['blur'];
 
+    async function revalidateDependents(path: string) {
+      const dependentPaths = inputValue.validation?.dependents?.[path] ?? [];
+
+      for (const dependentPath of dependentPaths) {
+        if (dependentPath === path) {
+          continue;
+        }
+
+        validationRuns.set(dependentPath, (validationRuns.get(dependentPath) ?? 0) + 1);
+        cancelValidationDebounce(dependentPath);
+        store.setValidating(dependentPath, false);
+
+        const currentDependentValue = scope.get(dependentPath);
+        const dependentBaseline = initialFieldState.initialValues[dependentPath];
+        store.setDirty(dependentPath, !Object.is(dependentBaseline, currentDependentValue));
+
+        if (
+          store.getState().touched[dependentPath] ||
+          store.getState().visited[dependentPath] ||
+          store.getState().submitting
+        ) {
+          await thisForm.validateField(dependentPath);
+        } else {
+          thisForm.clearErrors(dependentPath);
+        }
+      }
+    }
+
     function syncRegisteredFieldValue(path: string) {
       const registration = runtimeFieldRegistrations.get(path);
 
@@ -1168,6 +1808,12 @@ export function createRendererRuntime(input: {
       }
 
       const nextValue = registration.syncValue ? registration.syncValue() : registration.getValue();
+      const currentValue = scope.get(path);
+
+      if (Object.is(currentValue, nextValue)) {
+        return nextValue;
+      }
+
       const baseline = initialFieldState.initialValues[path];
       store.setDirty(path, !Object.is(baseline, nextValue));
       store.setValue(path, nextValue);
@@ -1177,16 +1823,25 @@ export function createRendererRuntime(input: {
     function syncRegisteredChildPaths(registration: RuntimeFieldRegistration) {
       const rootValue = registration.syncValue ? registration.syncValue() : registration.getValue();
       let nextValues = store.getState().values;
+      let changed = false;
 
       for (const childPath of registration.childPaths ?? []) {
         const relativePath = childPath.startsWith(`${registration.path}.`)
           ? childPath.slice(registration.path.length + 1)
           : childPath;
         const value = getIn(rootValue, relativePath);
+
+        if (Object.is(getIn(nextValues, childPath), value)) {
+          continue;
+        }
+
         nextValues = setIn(nextValues, childPath, value);
+        changed = true;
       }
 
-      store.setValues(nextValues);
+      if (changed) {
+        store.setValues(nextValues);
+      }
     }
 
     function findRuntimeRegistration(path: string) {
@@ -1232,6 +1887,107 @@ export function createRendererRuntime(input: {
       }
     }
 
+    function remapValidationRunState(arrayPath: string, transformIndex: (index: number) => number | undefined) {
+      for (const path of Array.from(validationRuns.keys())) {
+        const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
+
+        if (!nextPath) {
+          validationRuns.delete(path);
+          continue;
+        }
+
+        if (nextPath !== path) {
+          const value = validationRuns.get(path);
+          validationRuns.delete(path);
+
+          if (value !== undefined) {
+            validationRuns.set(nextPath, value);
+          }
+        }
+      }
+
+      for (const path of Array.from(pendingValidationDebounces.keys())) {
+        const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
+
+        if (!nextPath) {
+          cancelValidationDebounce(path);
+          continue;
+        }
+
+        if (nextPath !== path) {
+          const pending = pendingValidationDebounces.get(path);
+
+          if (!pending) {
+            continue;
+          }
+
+          pendingValidationDebounces.delete(path);
+          pendingValidationDebounces.set(nextPath, pending);
+        }
+      }
+    }
+
+    function remapInitialFieldState(arrayPath: string, transformIndex: (index: number) => number | undefined) {
+      const nextInitialValues: Record<string, unknown> = {};
+
+      for (const [path, value] of Object.entries(initialFieldState.initialValues)) {
+        const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
+
+        if (nextPath) {
+          nextInitialValues[nextPath] = value;
+        }
+      }
+
+      initialFieldState.initialValues = nextInitialValues;
+      initialFieldState.dirty = remapBooleanState(initialFieldState.dirty, arrayPath, transformIndex);
+    }
+
+    function remapArrayFieldState(arrayPath: string, transformIndex: (index: number) => number | undefined) {
+      const state = store.getState();
+      store.setErrors(remapErrorState(state.errors, arrayPath, transformIndex));
+      store.setTouchedState(remapBooleanState(state.touched, arrayPath, transformIndex));
+      store.setDirtyState(remapBooleanState(state.dirty, arrayPath, transformIndex));
+      store.setVisitedState(remapBooleanState(state.visited, arrayPath, transformIndex));
+      store.setValidatingState(remapBooleanState(state.validating, arrayPath, transformIndex));
+      remapValidationRunState(arrayPath, transformIndex);
+      remapInitialFieldState(arrayPath, transformIndex);
+    }
+
+    function replaceManagedArrayValue(arrayPath: string, nextValue: unknown[]) {
+      validationRuns.set(arrayPath, (validationRuns.get(arrayPath) ?? 0) + 1);
+      cancelValidationDebounce(arrayPath);
+      store.setValidating(arrayPath, false);
+      const baseline = initialFieldState.initialValues[arrayPath];
+      store.setDirty(arrayPath, !Object.is(baseline, nextValue));
+      store.setValue(arrayPath, nextValue);
+      thisForm.clearErrors(arrayPath);
+      void revalidateDependents(arrayPath);
+    }
+
+    function collectSubtreePaths(path: string) {
+      const paths = new Set<string>();
+
+      for (const candidate of inputValue.validation?.validationOrder ?? inputValue.validation?.order ?? []) {
+        if (candidate === path || candidate.startsWith(`${path}.`)) {
+          paths.add(candidate);
+        }
+      }
+
+      for (const [registrationPath, registration] of runtimeFieldRegistrations) {
+        if (registrationPath === path || registrationPath.startsWith(`${path}.`) || path.startsWith(`${registrationPath}.`)) {
+          paths.add(registrationPath);
+        }
+
+        for (const childPath of registration.childPaths ?? []) {
+          if (childPath === path || childPath.startsWith(`${path}.`) || path.startsWith(`${childPath}.`)) {
+            paths.add(childPath);
+          }
+        }
+      }
+
+      return Array.from(paths);
+    }
+
     function waitForValidationDebounce(path: string, debounce: number | undefined, runId: number): Promise<boolean> {
       if (!debounce || debounce <= 0) {
         return Promise.resolve(validationRuns.get(path) === runId);
@@ -1261,15 +2017,13 @@ export function createRendererRuntime(input: {
       update: (path, value) => store.setValue(path, value)
     });
 
-    return {
+    const thisForm: FormRuntime = {
       id: formId,
       store,
       scope,
       validation: inputValue.validation,
       registerField(registration) {
         runtimeFieldRegistrations.set(registration.path, registration);
-        syncRegisteredFieldValue(registration.path);
-        syncRegisteredChildPaths(registration);
 
         return () => {
           if (runtimeFieldRegistrations.get(registration.path) === registration) {
@@ -1279,7 +2033,12 @@ export function createRendererRuntime(input: {
         };
       },
       async validateField(path) {
-        const field = inputValue.validation?.fields[path];
+        const field = inputValue.validation?.fields[path]
+          ? {
+              ...inputValue.validation.fields[path],
+              rules: normalizeCompiledValidationRules(path, inputValue.validation.fields[path].rules)
+            }
+          : undefined;
         const runtimeTarget = findRuntimeRegistration(path);
         const runtimeRegistration = runtimeTarget.registration;
 
@@ -1288,7 +2047,12 @@ export function createRendererRuntime(input: {
         }
 
         if (!field && runtimeTarget.childPath && runtimeRegistration?.validateChild) {
-          const runtimeErrors = await runtimeRegistration.validateChild(runtimeTarget.childPath);
+          const runtimeErrors = normalizeRuntimeValidationErrors(
+            await runtimeRegistration.validateChild(runtimeTarget.childPath),
+            runtimeRegistration,
+            path,
+            runtimeTarget.childPath
+          );
           const nextErrors = { ...store.getState().errors };
 
           if (runtimeErrors.length > 0) {
@@ -1306,7 +2070,7 @@ export function createRendererRuntime(input: {
         }
 
         if (!field && runtimeRegistration?.validate) {
-          const runtimeErrors = await runtimeRegistration.validate();
+          const runtimeErrors = normalizeRuntimeValidationErrors(await runtimeRegistration.validate(), runtimeRegistration, path);
           const nextErrors = { ...store.getState().errors };
 
           if (runtimeErrors.length > 0) {
@@ -1332,14 +2096,16 @@ export function createRendererRuntime(input: {
         validationRuns.set(path, runId);
         const value = syncedRuntimeValue ?? scope.get(path);
         const errors: ValidationError[] = [];
-        const hasAsyncRules = field.rules.some((rule) => rule.kind === 'async');
+        const hasAsyncRules = field.rules.some((compiledRule) => compiledRule.rule.kind === 'async');
 
         if (hasAsyncRules) {
           store.setValidating(path, true);
         }
 
         try {
-          for (const rule of field.rules) {
+          for (const compiledRule of field.rules) {
+            const rule = compiledRule.rule;
+
             if (rule.kind === 'async') {
               const shouldRun = await waitForValidationDebounce(path, rule.debounce, runId);
 
@@ -1347,7 +2113,7 @@ export function createRendererRuntime(input: {
                 return { ok: true, errors: [] } as ValidationResult;
               }
 
-              const asyncError = await executeValidationRule(rule, field, scope);
+              const asyncError = await executeValidationRule(compiledRule, rule, field, scope);
 
               if (asyncError) {
                 errors.push(asyncError);
@@ -1356,7 +2122,7 @@ export function createRendererRuntime(input: {
               continue;
             }
 
-            const syncError = validateRule(rule, value, field);
+            const syncError = validateRule(compiledRule, value, field, scope);
 
             if (syncError) {
               errors.push(syncError);
@@ -1364,7 +2130,7 @@ export function createRendererRuntime(input: {
           }
 
           if (runtimeRegistration?.validate) {
-            const runtimeErrors = await runtimeRegistration.validate();
+            const runtimeErrors = normalizeRuntimeValidationErrors(await runtimeRegistration.validate(), runtimeRegistration, path);
 
             if (runtimeErrors.length > 0) {
               errors.push(...runtimeErrors);
@@ -1467,6 +2233,34 @@ export function createRendererRuntime(input: {
         }
 
         store.setErrors(fieldErrors);
+
+        return {
+          ok: errors.length === 0,
+          errors,
+          fieldErrors
+        } as FormValidationResult;
+      },
+      async validateSubtree(path) {
+        if (!inputValue.validation) {
+          return {
+            ok: true,
+            errors: [],
+            fieldErrors: {}
+          } as FormValidationResult;
+        }
+
+        const targetPaths = collectSubtreePaths(path);
+        const errors: ValidationError[] = [];
+        const fieldErrors: Record<string, ValidationError[]> = {};
+
+        for (const targetPath of targetPaths) {
+          const result = await this.validateField(targetPath);
+
+          if (!result.ok) {
+            fieldErrors[targetPath] = result.errors;
+            errors.push(...result.errors);
+          }
+        }
 
         return {
           ok: errors.length === 0,
@@ -1587,6 +2381,7 @@ export function createRendererRuntime(input: {
           store.setDirty(name, true);
           store.setValue(name, value);
           this.clearErrors(name);
+          void revalidateDependents(name);
           return;
         }
 
@@ -1597,8 +2392,114 @@ export function createRendererRuntime(input: {
         store.setDirty(name, !Object.is(baseline, value));
         store.setValue(name, value);
         this.clearErrors(name);
+        void revalidateDependents(name);
+      },
+      appendValue(path, value) {
+        const currentValue = scope.get(path);
+        const nextValue = insertArrayValue(Array.isArray(currentValue) ? currentValue : [], Number.MAX_SAFE_INTEGER, value);
+        remapArrayFieldState(path, (index) => index);
+        replaceManagedArrayValue(path, nextValue);
+      },
+      prependValue(path, value) {
+        const currentValue = scope.get(path);
+        const nextValue = insertArrayValue(Array.isArray(currentValue) ? currentValue : [], 0, value);
+        remapArrayFieldState(path, (index) => index + 1);
+        replaceManagedArrayValue(path, nextValue);
+      },
+      insertValue(path, index, value) {
+        const currentValue = scope.get(path);
+        const safeArray = Array.isArray(currentValue) ? currentValue : [];
+        const insertIndex = clampInsertIndex(index, safeArray.length);
+        const nextValue = insertArrayValue(safeArray, insertIndex, value);
+        remapArrayFieldState(path, (candidate) => (candidate >= insertIndex ? candidate + 1 : candidate));
+        replaceManagedArrayValue(path, nextValue);
+      },
+      removeValue(path, index) {
+        const currentValue = scope.get(path);
+
+        if (!Array.isArray(currentValue) || currentValue.length === 0) {
+          return;
+        }
+
+        const removeIndex = clampArrayIndex(index, currentValue.length);
+        const nextValue = removeArrayValue(currentValue, removeIndex);
+        remapArrayFieldState(path, (candidate) => {
+          if (candidate === removeIndex) {
+            return undefined;
+          }
+
+          return candidate > removeIndex ? candidate - 1 : candidate;
+        });
+        replaceManagedArrayValue(path, nextValue);
+      },
+      moveValue(path, from, to) {
+        const currentValue = scope.get(path);
+
+        if (!Array.isArray(currentValue) || currentValue.length <= 1) {
+          return;
+        }
+
+        const fromIndex = clampArrayIndex(from, currentValue.length);
+        const toIndex = clampArrayIndex(to, currentValue.length);
+
+        if (fromIndex === toIndex) {
+          return;
+        }
+
+        const nextValue = moveArrayValue(currentValue, fromIndex, toIndex);
+        remapArrayFieldState(path, (candidate) => {
+          if (candidate === fromIndex) {
+            return toIndex;
+          }
+
+          if (fromIndex < toIndex && candidate > fromIndex && candidate <= toIndex) {
+            return candidate - 1;
+          }
+
+          if (fromIndex > toIndex && candidate >= toIndex && candidate < fromIndex) {
+            return candidate + 1;
+          }
+
+          return candidate;
+        });
+        replaceManagedArrayValue(path, nextValue);
+      },
+      swapValue(path, a, b) {
+        const currentValue = scope.get(path);
+
+        if (!Array.isArray(currentValue) || currentValue.length <= 1) {
+          return;
+        }
+
+        const first = clampArrayIndex(a, currentValue.length);
+        const second = clampArrayIndex(b, currentValue.length);
+
+        if (first === second) {
+          return;
+        }
+
+        const nextValue = swapArrayValue(currentValue, first, second);
+        remapArrayFieldState(path, (candidate) => {
+          if (candidate === first) {
+            return second;
+          }
+
+          if (candidate === second) {
+            return first;
+          }
+
+          return candidate;
+        });
+        replaceManagedArrayValue(path, nextValue);
+      },
+      replaceValue(path, value) {
+        const nextValue = Array.isArray(value) ? value : [];
+        remapArrayFieldState(path, (candidate) => (candidate < nextValue.length ? candidate : undefined));
+        replaceManagedArrayValue(path, nextValue);
       }
     };
+
+    return thisForm;
   }
 
   async function runSingleAction(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {

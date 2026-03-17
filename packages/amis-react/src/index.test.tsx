@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { RendererDefinition, RendererEnv, RendererPlugin, ScopeRef } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/amis-runtime';
-import { createSchemaRenderer, useScopeSelector } from './index';
+import { createSchemaRenderer, useAggregateError, useChildFieldState, useCurrentForm, useCurrentFormError, useCurrentFormErrors, useOwnedFieldState, useScopeSelector } from './index';
 
 const env: RendererEnv = {
   fetcher: async function <T>() {
@@ -24,6 +24,16 @@ const pageRenderer: RendererDefinition = {
   regions: ['body']
 };
 
+const formRenderer: RendererDefinition = {
+  type: 'form',
+  component: (props) => <section>{props.regions.body?.render()}</section>,
+  regions: ['body'],
+  scopePolicy: 'form',
+  validation: {
+    kind: 'container'
+  }
+};
+
 function SelectorText() {
   const value = useScopeSelector((scope) => scope.message ?? '');
   return <span>{String(value)}</span>;
@@ -32,6 +42,69 @@ function SelectorText() {
 const selectorRenderer: RendererDefinition = {
   type: 'selector-text',
   component: SelectorText
+};
+
+function CompositeErrorProbe() {
+  const form = useCurrentForm();
+  const ownedRootState = useOwnedFieldState('metadata');
+  const childState = useChildFieldState('metadata.0.value');
+  const rootError = useCurrentFormError({
+    path: 'metadata',
+    ownerPath: 'metadata',
+    sourceKinds: ['runtime-registration']
+  });
+  const childError = useCurrentFormError({
+    path: 'metadata.0.value',
+    ownerPath: 'metadata',
+    sourceKinds: ['runtime-registration']
+  });
+  const ownedErrors = useCurrentFormErrors({
+    ownerPath: 'metadata',
+    sourceKinds: ['runtime-registration']
+  });
+  const aggregateError = useAggregateError('metadata');
+
+  React.useEffect(() => {
+    if (!form) {
+      return;
+    }
+
+    return form.registerField({
+      path: 'metadata',
+      childPaths: ['metadata.0.value'],
+      getValue() {
+        return [];
+      },
+      validate() {
+        return [{ path: 'metadata', rule: 'required', message: 'Metadata requires at least one entry' }];
+      },
+      validateChild(path) {
+        return [{ path, rule: 'required', message: 'Entry 1 value is required' }];
+      }
+    });
+  }, [form]);
+
+  return (
+    <div>
+      <button type="button" onClick={() => void form?.validateField('metadata')}>
+        Validate root
+      </button>
+      <button type="button" onClick={() => void form?.validateField('metadata.0.value')}>
+        Validate child
+      </button>
+      <span data-testid="root-error">{rootError?.message ?? ''}</span>
+      <span data-testid="child-error">{childError?.message ?? ''}</span>
+      <span data-testid="owned-count">{String(ownedErrors.length)}</span>
+      <span data-testid="owned-root-error">{ownedRootState.error?.message ?? ''}</span>
+      <span data-testid="child-state-error">{childState.error?.message ?? ''}</span>
+      <span data-testid="aggregate-error">{aggregateError?.message ?? ''}</span>
+    </div>
+  );
+}
+
+const compositeProbeRenderer: RendererDefinition = {
+  type: 'composite-probe',
+  component: CompositeErrorProbe
 };
 
 const buttonRenderer: RendererDefinition = {
@@ -261,6 +334,33 @@ describe('createSchemaRenderer', () => {
           durationMs: expect.any(Number)
         })
       );
+    });
+  });
+
+  it('projects form errors by owner path and source kind', async () => {
+    const SchemaRenderer = createSchemaRenderer([formRenderer, compositeProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          body: [{ type: 'composite-probe' }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Validate root'));
+    fireEvent.click(screen.getByText('Validate child'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-error').textContent).toBe('Metadata requires at least one entry');
+      expect(screen.getByTestId('child-error').textContent).toBe('Entry 1 value is required');
+      expect(screen.getByTestId('owned-count').textContent).toBe('2');
+      expect(screen.getByTestId('owned-root-error').textContent).toBe('Metadata requires at least one entry');
+      expect(screen.getByTestId('child-state-error').textContent).toBe('Entry 1 value is required');
+      expect(screen.getByTestId('aggregate-error').textContent).toBe('Metadata requires at least one entry');
     });
   });
 });

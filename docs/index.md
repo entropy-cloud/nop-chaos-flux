@@ -17,6 +17,10 @@ Choose the smallest document that matches the task.
 | Understand the current official architecture direction | `docs/architecture/amis-core.md` | `docs/architecture/renderer-runtime.md` |
 | Change React integration, renderer contracts, or region rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
 | Design form validation and field rule extraction | `docs/architecture/form-validation.md` | `docs/architecture/renderer-runtime.md` |
+| Plan how to close the remaining validation gaps toward RHF/Yup-level capability | `docs/architecture/form-validation-completion-plan.md` | `docs/architecture/form-validation.md` |
+| Follow the concrete step-by-step validation implementation order | `docs/plans/form-validation-improvement-execution-plan.md` | `docs/architecture/form-validation-completion-plan.md` |
+| Review what is worth borrowing from the local react-hook-form template | `docs/references/react-hook-form-template-notes.md` | `docs/architecture/form-validation-completion-plan.md` |
+| Review what is worth borrowing from the local yup template | `docs/references/yup-template-notes.md` | `docs/architecture/form-validation-completion-plan.md` |
 | Check workspace, package layout, naming, or quality gates | `docs/architecture/frontend-baseline.md` | `docs/plans/development-plan.md` |
 | Continue implementation planning | `docs/plans/development-plan.md` | `docs/architecture/amis-core.md` |
 | Inspect the example CRUD schema | `docs/examples/user-management-schema.md` | `docs/architecture/amis-core.md` |
@@ -36,6 +40,9 @@ Choose the smallest document that matches the task.
 - `docs/architecture/form-validation.md`
   - Preferred form validation architecture.
   - Use this when changing rule extraction, field registration, or form runtime validation behavior.
+- `docs/architecture/form-validation-completion-plan.md`
+  - Detailed design plan for closing the remaining validation gaps.
+  - Use this when planning cross-field rules, nested structure validation, dependency tracking, and array semantics.
 - `docs/architecture/frontend-baseline.md`
   - Workspace and engineering baseline for this repo.
   - Use this when changing package layout, tooling, testing, and naming conventions.
@@ -44,6 +51,9 @@ Choose the smallest document that matches the task.
 
 - `docs/plans/development-plan.md`
   - Delivery phases, current progress snapshot, and next major implementation steps.
+- `docs/plans/form-validation-improvement-execution-plan.md`
+  - Concrete ordered execution plan for the remaining validation work.
+  - Use this when implementing the next validation steps one by one.
 
 ### References
 
@@ -53,6 +63,12 @@ Choose the smallest document that matches the task.
 - `docs/references/expression-processor-notes.md`
   - Notes extracted from the early prototype in `docs/archive/expression-processor.js`.
   - Keep the semantics, not the unsafe execution mechanism.
+- `docs/references/react-hook-form-template-notes.md`
+  - Research notes on useful design ideas from the local `react-hook-form` template.
+  - Use this when deciding what to borrow around subscriptions, array semantics, and aggregate error handling.
+- `docs/references/yup-template-notes.md`
+  - Research notes on useful design ideas from the local `yup` template.
+  - Use this when deciding what to borrow around conditions, normalization, introspection, and error modeling.
 
 ### Example
 

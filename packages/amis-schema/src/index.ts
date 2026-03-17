@@ -272,14 +272,28 @@ export type ValidationRule =
   | { kind: 'required'; message?: string }
   | { kind: 'minLength'; value: number; message?: string }
   | { kind: 'maxLength'; value: number; message?: string }
+  | { kind: 'minItems'; value: number; message?: string }
+  | { kind: 'maxItems'; value: number; message?: string }
+  | { kind: 'atLeastOneFilled'; itemPath?: string; message?: string }
+  | { kind: 'allOrNone'; itemPaths: string[]; message?: string }
+  | { kind: 'uniqueBy'; itemPath: string; message?: string }
+  | { kind: 'atLeastOneOf'; paths: string[]; message?: string }
   | { kind: 'pattern'; value: string; message?: string }
   | { kind: 'email'; message?: string }
+  | { kind: 'equalsField'; path: string; message?: string }
+  | { kind: 'notEqualsField'; path: string; message?: string }
+  | { kind: 'requiredWhen'; path: string; equals: unknown; message?: string }
+  | { kind: 'requiredUnless'; path: string; equals: unknown; message?: string }
   | { kind: 'async'; api: ApiObject; debounce?: number; message?: string };
 
 export interface ValidationError {
   path: string;
   message: string;
   rule: ValidationRule['kind'];
+  ruleId?: string;
+  ownerPath?: string;
+  sourceKind?: 'field' | 'object' | 'array' | 'form' | 'runtime-registration';
+  relatedPaths?: string[];
 }
 
 export interface ValidationResult {
@@ -313,14 +327,36 @@ export interface CompiledFormValidationField {
   path: string;
   controlType: string;
   label?: string;
-  rules: ValidationRule[];
+  rules: CompiledValidationRule[];
   behavior: CompiledValidationBehavior;
+}
+
+export interface CompiledValidationRule {
+  id: string;
+  rule: ValidationRule;
+  dependencyPaths: string[];
+}
+
+export type CompiledValidationNodeKind = 'field' | 'object' | 'array' | 'form';
+
+export interface CompiledValidationNode {
+  path: string;
+  kind: CompiledValidationNodeKind;
+  controlType?: string;
+  label?: string;
+  rules: CompiledValidationRule[];
+  children: string[];
+  parent?: string;
 }
 
 export interface CompiledFormValidationModel {
   fields: Record<string, CompiledFormValidationField>;
   order: string[];
   behavior: CompiledValidationBehavior;
+  dependents: Record<string, string[]>;
+  nodes?: Record<string, CompiledValidationNode>;
+  validationOrder?: string[];
+  rootPath?: string;
 }
 
 export interface ValidationCollectContext<S extends BaseSchema = BaseSchema> {
@@ -331,6 +367,7 @@ export interface ValidationCollectContext<S extends BaseSchema = BaseSchema> {
 
 export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
   kind: 'field' | 'container' | 'none';
+  valueKind?: 'scalar' | 'array' | 'object';
   getFieldPath?(schema: S, ctx: ValidationCollectContext<S>): string | undefined;
   collectRules?(schema: S, ctx: ValidationCollectContext<S>): ValidationRule[];
 }
@@ -497,6 +534,22 @@ export interface FormStoreState {
   submitting: boolean;
 }
 
+export interface FormErrorQuery {
+  path?: string;
+  ownerPath?: string;
+  sourceKinds?: Array<NonNullable<ValidationError['sourceKind']>>;
+  rule?: ValidationRule['kind'];
+}
+
+export interface FormFieldStateSnapshot {
+  error?: ValidationError;
+  validating: boolean;
+  touched: boolean;
+  dirty: boolean;
+  visited: boolean;
+  submitting: boolean;
+}
+
 export interface FormStoreApi {
   getState(): FormStoreState;
   subscribe(listener: () => void): () => void;
@@ -504,9 +557,13 @@ export interface FormStoreApi {
   setValue(path: string, value: unknown): void;
   setErrors(errors: Record<string, ValidationError[]>): void;
   setValidating(path: string, validating: boolean): void;
+  setValidatingState(validating: Record<string, boolean>): void;
   setTouched(path: string, touched: boolean): void;
+  setTouchedState(touched: Record<string, boolean>): void;
   setDirty(path: string, dirty: boolean): void;
+  setDirtyState(dirty: Record<string, boolean>): void;
   setVisited(path: string, visited: boolean): void;
+  setVisitedState(visited: Record<string, boolean>): void;
   setSubmitting(submitting: boolean): void;
 }
 
@@ -539,6 +596,7 @@ export interface FormRuntime {
   validation?: CompiledFormValidationModel;
   registerField(registration: RuntimeFieldRegistration): () => void;
   validateField(path: string): Promise<ValidationResult>;
+  validateSubtree(path: string): Promise<FormValidationResult>;
   validateForm(): Promise<FormValidationResult>;
   getError(path: string): ValidationError[] | undefined;
   isValidating(path: string): boolean;
@@ -551,6 +609,13 @@ export interface FormRuntime {
   submit(api?: ApiObject): Promise<ActionResult>;
   reset(values?: object): void;
   setValue(name: string, value: unknown): void;
+  appendValue(path: string, value: unknown): void;
+  prependValue(path: string, value: unknown): void;
+  insertValue(path: string, index: number, value: unknown): void;
+  removeValue(path: string, index: number): void;
+  moveValue(path: string, from: number, to: number): void;
+  swapValue(path: string, a: number, b: number): void;
+  replaceValue(path: string, value: unknown): void;
 }
 
 export interface PageRuntime {
@@ -629,6 +694,12 @@ export interface RendererHookApi {
   useRendererEnv(): RendererEnv;
   useActionDispatcher(): RendererRuntime['dispatch'];
   useCurrentForm(): FormRuntime | undefined;
+  useCurrentFormErrors(query?: FormErrorQuery): ValidationError[];
+  useCurrentFormError(query: FormErrorQuery): ValidationError | undefined;
+  useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot;
+  useOwnedFieldState(path: string): FormFieldStateSnapshot;
+  useChildFieldState(path: string): FormFieldStateSnapshot;
+  useAggregateError(path: string): ValidationError | undefined;
   useCurrentPage(): PageRuntime | undefined;
   useCurrentNodeMeta(): { id: string; path: SchemaPath; type: string };
   useRenderFragment(): RendererHelpers['render'];
