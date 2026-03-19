@@ -1,7 +1,6 @@
-import { defineConfig } from 'vitest/config';
+import { createSharedVitestConfig } from '../../vitest.shared';
 
-export default defineConfig({
-  test: {
-    environment: 'jsdom'
-  }
+export default createSharedVitestConfig({
+  environment: 'jsdom',
+  includeWorkspaceAliases: false
 });

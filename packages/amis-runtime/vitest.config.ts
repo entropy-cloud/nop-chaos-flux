@@ -1,11 +1,5 @@
-import { defineConfig } from 'vitest/config';
-import { workspacePackageAliases } from '../../vite.workspace-alias';
+import { createSharedVitestConfig } from '../../vitest.shared';
 
-export default defineConfig({
-  resolve: {
-    alias: workspacePackageAliases
-  },
-  test: {
-    environment: 'node'
-  }
+export default createSharedVitestConfig({
+  environment: 'node'
 });
