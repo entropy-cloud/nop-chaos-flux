@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useContext, useEffect, useMemo, useRef } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionContext,
@@ -12,35 +12,21 @@ import type {
   PageRuntime,
   RenderFragmentOptions,
   RenderNodeInput,
-  RenderNodeMeta,
   RendererComponentProps,
   RendererDefinition,
   RendererHelpers,
   RendererHookApi,
   RendererRuntime,
-  SchemaRendererProps,
   ScopeRef,
   ValidationError
 } from '@nop-chaos/amis-schema';
 import { isSchema, isSchemaArray } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/amis-runtime';
+import { FormContext, NodeMetaContext, PageContext, RuntimeContext, ScopeContext, useRequiredContext } from './contexts';
+import { EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
 
-const RuntimeContext = createContext<RendererRuntime | null>(null);
-const ScopeContext = createContext<ScopeRef | null>(null);
-const FormContext = createContext<FormRuntime | undefined>(undefined);
-const PageContext = createContext<PageRuntime | undefined>(undefined);
-const NodeMetaContext = createContext<RenderNodeMeta | null>(null);
-
-function useRequiredContext<T>(context: React.Context<T | null>, label: string): T {
-  const value = useContext(context);
-
-  if (!value) {
-    throw new Error(`${label} is unavailable outside SchemaRenderer.`);
-  }
-
-  return value;
-}
+export { createDefaultEnv, createDefaultRegistry } from './defaults';
 
 function isCompiledNode(input: unknown): input is CompiledSchemaNode {
   if (!input || typeof input !== 'object') {
@@ -59,59 +45,6 @@ function isCompiledNode(input: unknown): input is CompiledSchemaNode {
   );
 }
 
-function matchesFormErrorQuery(error: ValidationError, query?: FormErrorQuery): boolean {
-  if (!query) {
-    return true;
-  }
-
-  if (query.path && error.path !== query.path) {
-    return false;
-  }
-
-  if (query.ownerPath && (error.ownerPath ?? error.path) !== query.ownerPath) {
-    return false;
-  }
-
-  if (query.rule && error.rule !== query.rule) {
-    return false;
-  }
-
-  if (query.sourceKinds?.length && (!error.sourceKind || !query.sourceKinds.includes(error.sourceKind))) {
-    return false;
-  }
-
-  return true;
-}
-
-function selectCurrentFormErrors(state: FormStoreState, query?: FormErrorQuery): ValidationError[] {
-  const matches: ValidationError[] = [];
-
-  if (query?.path) {
-    const errors = state.errors[query.path] ?? [];
-    return errors.filter((error) => matchesFormErrorQuery(error, query));
-  }
-
-  for (const errors of Object.values(state.errors)) {
-    for (const error of errors) {
-      if (matchesFormErrorQuery(error, query)) {
-        matches.push(error);
-      }
-    }
-  }
-
-  return matches;
-}
-
-function selectCurrentFormFieldState(state: FormStoreState, path: string, query?: FormErrorQuery): FormFieldStateSnapshot {
-  return {
-    error: selectCurrentFormErrors(state, query ?? { path })[0],
-    validating: state.validating[path] === true,
-    touched: state.touched[path] === true,
-    dirty: state.dirty[path] === true,
-    visited: state.visited[path] === true,
-    submitting: state.submitting
-  };
-}
 
 function normalizeNodeInput(runtime: RendererRuntime, input: RenderNodeInput): CompiledSchemaNode | CompiledSchemaNode[] | null {
   if (!input) {
@@ -437,16 +370,7 @@ export function useCurrentFormState<T>(
 ): T {
   const form = useCurrentForm();
   const subscribe = form?.store.subscribe ?? (() => () => undefined);
-  const getSnapshot = () =>
-    form?.store.getState() ?? {
-      values: {},
-      errors: {},
-      validating: {},
-      touched: {},
-      dirty: {},
-      visited: {},
-      submitting: false
-    };
+  const getSnapshot = () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE;
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, equalityFn);
 }
@@ -532,29 +456,3 @@ export const rendererHooks: RendererHookApi = {
   useCurrentNodeMeta,
   useRenderFragment
 };
-
-export function createDefaultRegistry(definitions: RendererDefinition[] = []) {
-  return createRendererRegistry(definitions);
-}
-
-export function createDefaultEnv(input?: Partial<SchemaRendererProps['env']>) {
-  return {
-    fetcher: async function <T>(api: any) {
-      if (typeof api.url === 'string' && api.url.startsWith('/api/')) {
-        return {
-          ok: true,
-          status: 200,
-          data: null as T
-        };
-      }
-
-      return {
-        ok: true,
-        status: 200,
-        data: null as T
-      };
-    },
-    notify: () => undefined,
-    ...input
-  };
-}
