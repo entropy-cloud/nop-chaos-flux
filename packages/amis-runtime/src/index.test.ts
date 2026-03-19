@@ -204,6 +204,67 @@ describe('createSchemaCompiler', () => {
     expect(node.props.value.columns[0].buttonsRegionKey).toBe('columns.0.buttons');
   });
 
+  it('extracts table column label fragments into compiled regions', () => {
+    const tableRenderer: RendererDefinition = {
+      type: 'table',
+      component: () => null
+    };
+    const textRenderer: RendererDefinition = {
+      type: 'text',
+      component: () => null
+    };
+    const registry = createRendererRegistry([tableRenderer, textRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = compiler.compile({
+      type: 'table',
+      columns: [
+        {
+          label: { type: 'text', text: 'Member header' },
+          name: 'name'
+        }
+      ]
+    }) as any;
+
+    expect(node.regions['columns.0.label']?.node).toBeTruthy();
+    expect(node.props.value.columns[0].label).toBeUndefined();
+    expect(node.props.value.columns[0].labelRegionKey).toBe('columns.0.label');
+  });
+
+  it('extracts table column cell fragments into compiled regions', () => {
+    const tableRenderer: RendererDefinition = {
+      type: 'table',
+      component: () => null
+    };
+    const textRenderer: RendererDefinition = {
+      type: 'text',
+      component: () => null
+    };
+    const registry = createRendererRegistry([tableRenderer, textRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = compiler.compile({
+      type: 'table',
+      columns: [
+        {
+          label: 'Member',
+          name: 'name',
+          cell: { type: 'text', text: 'User ${record.name}' }
+        }
+      ]
+    }) as any;
+
+    expect(node.regions['columns.0.cell']?.node).toBeTruthy();
+    expect(node.props.value.columns[0].cell).toBeUndefined();
+    expect(node.props.value.columns[0].cellRegionKey).toBe('columns.0.cell');
+  });
+
   it('treats table empty as a plain prop or compiled region based on field metadata', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',

@@ -25,6 +25,61 @@ import type {
 } from '@nop-chaos/amis-schema';
 import { META_FIELDS, createNodeId, isSchemaInput } from '@nop-chaos/amis-schema';
 
+const TABLE_COLUMN_REGION_FIELDS = [
+  { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+  { key: 'buttons', regionKeySuffix: 'buttons', compiledKey: 'buttonsRegionKey' },
+  { key: 'cell', regionKeySuffix: 'cell', compiledKey: 'cellRegionKey' }
+] as const;
+
+type NestedRegionFieldRule = {
+  key: string;
+  regionKeySuffix: string;
+  compiledKey: string;
+};
+
+type DeepFieldNormalizer = (input: {
+  value: unknown;
+  path: string;
+  regions: Record<string, CompiledRegion>;
+  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => CompiledSchemaNode | CompiledSchemaNode[];
+}) => unknown;
+
+function extractNestedSchemaRegions(input: {
+  candidate: Record<string, unknown>;
+  itemRegionPath: string;
+  itemRegionKeyPrefix: string;
+  rules: readonly NestedRegionFieldRule[];
+  regions: Record<string, CompiledRegion>;
+  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => CompiledSchemaNode | CompiledSchemaNode[];
+}) {
+  const nextValue: Record<string, unknown> = { ...input.candidate };
+  let changed = false;
+
+  for (const rule of input.rules) {
+    const fieldValue = input.candidate[rule.key];
+
+    if (!isSchemaInput(fieldValue)) {
+      continue;
+    }
+
+    const regionKey = `${input.itemRegionKeyPrefix}.${rule.regionKeySuffix}`;
+    input.regions[regionKey] = createCompiledRegion(
+      regionKey,
+      fieldValue,
+      `${input.itemRegionPath}.${rule.regionKeySuffix}`,
+      input.compileSchema
+    );
+    delete nextValue[rule.key];
+    nextValue[rule.compiledKey] = regionKey;
+    changed = true;
+  }
+
+  return {
+    value: changed ? nextValue : input.candidate,
+    changed
+  };
+}
+
 function normalizeTableColumns(
   value: unknown,
   path: string,
@@ -36,26 +91,28 @@ function normalizeTableColumns(
   }
 
   return value.map((column, index) => {
-    if (!column || typeof column !== 'object' || !('buttons' in (column as Record<string, unknown>))) {
+    if (!column || typeof column !== 'object') {
       return column;
     }
 
-    const buttonSchemas = (column as Record<string, unknown>).buttons;
-
-    if (!isSchemaInput(buttonSchemas)) {
-      return column;
-    }
-
-    const regionKey = `columns.${index}.buttons`;
-    regions[regionKey] = createCompiledRegion(regionKey, buttonSchemas, `${path}.columns[${index}].buttons`, compileSchema);
-
-    const { buttons: _buttons, ...rest } = column as Record<string, unknown>;
-    return {
-      ...rest,
-      buttonsRegionKey: regionKey
-    };
+    return extractNestedSchemaRegions({
+      candidate: column as Record<string, unknown>,
+      itemRegionPath: `${path}.columns[${index}]`,
+      itemRegionKeyPrefix: `columns.${index}`,
+      rules: TABLE_COLUMN_REGION_FIELDS,
+      regions,
+      compileSchema
+    }).value;
   });
 }
+
+const DEEP_FIELD_NORMALIZERS: Record<string, Record<string, DeepFieldNormalizer>> = {
+  table: {
+    columns(input) {
+      return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
+    }
+  }
+};
 
 const DEFAULT_FIELD_RULES: Record<string, SchemaFieldRule> = {
   body: { key: 'body', kind: 'region', regionKey: 'body' },
@@ -538,6 +595,7 @@ export function createSchemaCompiler(input: {
     const regions: Record<string, CompiledRegion> = {};
     const eventActions: Record<string, unknown> = {};
     const eventKeys: string[] = [];
+    const deepNormalizers = DEEP_FIELD_NORMALIZERS[renderer.type] ?? {};
 
     for (const key of Object.keys(schema)) {
       const rule = classifyField(renderer, key);
@@ -563,8 +621,13 @@ export function createSchemaCompiler(input: {
         continue;
       }
 
-      propSource[key] = renderer.type === 'table' && key === 'columns'
-        ? normalizeTableColumns(value, path, regions, compileSchema)
+      propSource[key] = deepNormalizers[key]
+        ? deepNormalizers[key]({
+            value,
+            path,
+            regions,
+            compileSchema
+          })
         : value;
     }
 

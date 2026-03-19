@@ -271,6 +271,59 @@ This preserves:
 - runtime scope consistency
 - renderer-level adaptation to third-party APIs
 
+## Deep Region Extraction Pattern
+
+Some fields are not top-level node fields but nested renderer-owned structures.
+
+Example: `table.columns[]`.
+
+In these cases, the compiler may still normalize selected nested fields into compiled regions as long as:
+
+- the extraction rule is renderer-owned and explicit
+- the compiler rewrites the nested config into a stable handle key such as `labelRegionKey`
+- the renderer consumes the rewritten config instead of guessing from raw nested schema
+
+Current concrete pattern:
+
+- `table.columns[].label` -> `columns.N.label` region
+- `table.columns[].buttons` -> `columns.N.buttons` region
+- `table.columns[].cell` -> `columns.N.cell` region
+
+Recommended compiled result shape:
+
+- extracted nested schema is removed from the plain nested config
+- the nested config receives a reference key such as:
+  - `labelRegionKey`
+  - `buttonsRegionKey`
+  - `cellRegionKey`
+- the actual compiled fragment lives in `node.regions`
+
+This preserves the same core rule used for top-level fields:
+
+- raw schema stays declarative
+- compiler owns interpretation and extraction
+- renderer consumes normalized structure
+
+This pattern is especially useful for table, list, tree, and card-grid style renderers where repeated nested definitions need row/item-local scope.
+
+Implementation guidance:
+
+- do not bake each nested field extraction into unrelated renderer code paths
+- prefer a small compiler helper that accepts:
+  - the nested object
+  - the nested path/key prefix
+  - the list of extractable nested fields
+- let that helper rewrite nested config into stable `...RegionKey` references
+
+When a renderer owns multiple nested structures, prefer a renderer-level deep-normalization registry keyed by field name.
+
+Example direction:
+
+- `table.columns` -> nested region extraction normalizer
+- future `list.items` -> nested render-fragment normalizer
+
+This keeps deep extraction scalable when more renderer-owned nested structures appear later.
+
 ## Recommended Renderer Patterns
 
 ### Pattern 1: plain prop only

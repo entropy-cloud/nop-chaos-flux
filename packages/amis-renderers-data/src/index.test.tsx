@@ -223,4 +223,73 @@ describe('dataRendererDefinitions', () => {
 
     expect(screen.getByText('Nothing here')).toBeTruthy();
   });
+
+  it('renders schema-based column labels through compiled column regions', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columns: [
+                {
+                  label: { type: 'text', text: 'Member ${team}' },
+                  name: 'name'
+                }
+              ],
+              source: [{ id: 1, name: 'Alice' }]
+            }
+          ]
+        }}
+        data={{ team: 'Roster' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(await screen.findByText('Member Roster')).toBeTruthy();
+    expect(screen.getByText('Alice')).toBeTruthy();
+  });
+
+  it('renders schema-based column cells through compiled cell regions with row scope', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columns: [
+                {
+                  label: 'Summary',
+                  name: 'name',
+                  cell: { type: 'text', text: 'Member ${record.name}' }
+                }
+              ],
+              source: [{ id: 1, name: 'Alice' }]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(await screen.findByText('Member Alice')).toBeTruthy();
+  });
 });

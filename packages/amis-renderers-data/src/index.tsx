@@ -10,7 +10,9 @@ import { registerRendererDefinitions } from '@nop-chaos/amis-runtime';
 
 interface TableColumnSchema extends BaseSchema {
   label?: string;
+  labelRegionKey?: string;
   name?: string;
+  cellRegionKey?: string;
   buttons?: BaseSchema[];
   buttonsRegionKey?: string;
 }
@@ -36,9 +38,12 @@ function TableRenderer(props: RendererComponentProps<TableSchema>) {
       <table className="na-table">
         <thead>
           <tr>
-            {columns.map((column, index) => (
-              <th key={`${column.name ?? column.label ?? 'column'}-${index}`}>{column.label ?? column.name}</th>
-            ))}
+            {columns.map((column, index) => {
+              const labelRegion = typeof column.labelRegionKey === 'string' ? props.regions[column.labelRegionKey] : undefined;
+              const labelContent = labelRegion?.render({ pathSuffix: `columns.${index}.label` }) ?? column.label ?? column.name;
+
+              return <th key={`${column.name ?? column.label ?? 'column'}-${index}`}>{labelContent}</th>;
+            })}
           </tr>
         </thead>
         <tbody>
@@ -62,6 +67,7 @@ function TableRenderer(props: RendererComponentProps<TableSchema>) {
                     onClick={props.events.onRowClick ? (event) => void props.events.onRowClick?.(event, { scope: rowScope }) : undefined}
                   >
                     {columns.map((column, columnIndex) => {
+                      const cellRegion = typeof column.cellRegionKey === 'string' ? props.regions[column.cellRegionKey] : undefined;
                       const buttonRegion = typeof column.buttonsRegionKey === 'string' ? props.regions[column.buttonsRegionKey] : undefined;
 
                       if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
@@ -82,6 +88,17 @@ function TableRenderer(props: RendererComponentProps<TableSchema>) {
                                     </div>
                                   ))}
                             </div>
+                          </td>
+                        );
+                      }
+
+                      if (cellRegion) {
+                        return (
+                          <td key={`${column.name ?? columnIndex}`}>
+                            {cellRegion.render({
+                              scope: rowScope,
+                              pathSuffix: `cells.${columnIndex}`
+                            })}
                           </td>
                         );
                       }
