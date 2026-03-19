@@ -12,6 +12,7 @@ import type {
   RendererRegistry
 } from '@nop-chaos/amis-schema';
 import { useAggregateError, useChildFieldState, useCurrentForm, useOwnedFieldState, useRenderScope } from '@nop-chaos/amis-react';
+import { registerRendererDefinitions } from '@nop-chaos/amis-runtime';
 
 const defaultValidationBehavior: CompiledValidationBehavior = {
   triggers: ['blur'],
@@ -1347,9 +1348,5 @@ export const formRendererDefinitions: RendererDefinition[] = [
 ];
 
 export function registerFormRenderers(registry: RendererRegistry) {
-  for (const definition of formRendererDefinitions) {
-    registry.register(definition);
-  }
-
-  return registry;
+  return registerRendererDefinitions(registry, formRendererDefinitions);
 }

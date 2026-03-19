@@ -5,6 +5,7 @@ import type {
   RendererDefinition,
   RendererRegistry
 } from '@nop-chaos/amis-schema';
+import { registerRendererDefinitions } from '@nop-chaos/amis-runtime';
 
 interface TableColumnSchema extends BaseSchema {
   label?: string;
@@ -78,9 +79,5 @@ export const dataRendererDefinitions: RendererDefinition[] = [
 ];
 
 export function registerDataRenderers(registry: RendererRegistry) {
-  for (const definition of dataRendererDefinitions) {
-    registry.register(definition);
-  }
-
-  return registry;
+  return registerRendererDefinitions(registry, dataRendererDefinitions);
 }

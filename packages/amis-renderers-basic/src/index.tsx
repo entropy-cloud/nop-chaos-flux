@@ -5,6 +5,7 @@ import type {
   RendererDefinition,
   RendererRegistry
 } from '@nop-chaos/amis-schema';
+import { registerRendererDefinitions } from '@nop-chaos/amis-runtime';
 
 interface PageSchema extends BaseSchema {
   type: 'page';
@@ -97,9 +98,5 @@ export const basicRendererDefinitions: RendererDefinition[] = [
 ];
 
 export function registerBasicRenderers(registry: RendererRegistry) {
-  for (const definition of basicRendererDefinitions) {
-    registry.register(definition);
-  }
-
-  return registry;
+  return registerRendererDefinitions(registry, basicRendererDefinitions);
 }
