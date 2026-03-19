@@ -8,6 +8,11 @@
 - kept runtime-specific array path remapping in `packages/amis-runtime/src/form-path-state.ts`
 - split `packages/amis-renderers-form/src/index.tsx` into focused renderer and helper modules
 - removed the empty `packages/amis-testing` package and cleared active workspace references
+- split runtime validation helpers into `packages/amis-runtime/src/validation/`
+- introduced a validator registry for built-in sync rules
+- moved schema rule extraction, message building, and validation error shaping behind dedicated validation modules
+- extracted shared field chrome primitives into `packages/amis-renderers-form/src/renderers/shared/`
+- added focused validation module tests and shared renderer primitive tests
 
 ## Final Form Renderer Structure
 
@@ -19,6 +24,20 @@
 - `packages/amis-renderers-form/src/renderers/tag-list.tsx`
 - `packages/amis-renderers-form/src/renderers/key-value.tsx`
 - `packages/amis-renderers-form/src/renderers/array-editor.tsx`
+- `packages/amis-renderers-form/src/renderers/shared/index.ts`
+- `packages/amis-renderers-form/src/renderers/shared/label.tsx`
+- `packages/amis-renderers-form/src/renderers/shared/field-hint.tsx`
+- `packages/amis-renderers-form/src/renderers/shared/error.tsx`
+- `packages/amis-renderers-form/src/renderers/shared/help-text.tsx`
+
+## Final Validation Structure
+
+- `packages/amis-runtime/src/validation/index.ts`
+- `packages/amis-runtime/src/validation/rules.ts`
+- `packages/amis-runtime/src/validation/message.ts`
+- `packages/amis-runtime/src/validation/errors.ts`
+- `packages/amis-runtime/src/validation/validators.ts`
+- `packages/amis-runtime/src/validation/registry.ts`
 
 ## Intentionally Preserved
 
@@ -26,6 +45,8 @@
 - `packages/amis-react` was left structurally unchanged
 - public form renderer entry exports remain assembled from `packages/amis-renderers-form/src/index.tsx`
 - runtime-specific path remapping logic stayed in runtime instead of moving into schema
+- async validation debounce and stale-run cancellation stayed in runtime flow code instead of moving into generic validators
+- `packages/amis-runtime/src/index.ts` stayed an orchestration layer
 
 ## Removed
 
@@ -44,6 +65,11 @@
 - `pnpm test`
 - `pnpm build`
 - `pnpm lint`
+
+Current pass completed and verified directly:
+
+- `pnpm --filter @nop-chaos/amis-renderers-form test`
+- `pnpm --filter @nop-chaos/amis-runtime test`
 
 ## Notes
 

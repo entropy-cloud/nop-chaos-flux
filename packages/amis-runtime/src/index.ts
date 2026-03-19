@@ -32,7 +32,8 @@ import {
 } from './request-runtime';
 import { createSchemaCompiler } from './schema-compiler';
 import { createScopeRef, createScopeStore, toRecord } from './scope';
-import { createValidationError, validateRule } from './validation-runtime';
+import { validateRule } from './validation-runtime';
+import { createBuiltInValidationRegistry, createValidationError } from './validation';
 
 export { createRendererRegistry, registerRendererDefinitions } from './registry';
 export { createSchemaCompiler } from './schema-compiler';
@@ -54,6 +55,7 @@ export function createRendererRuntime(input: {
     plugins: input.plugins
   });
   const executeApiRequest = createApiRequestExecutor(input.env);
+  const validationRegistry = createBuiltInValidationRegistry();
   const nodeRuntime = createNodeRuntime({
     expressionCompiler,
     env: input.env
@@ -121,7 +123,7 @@ export function createRendererRuntime(input: {
     return createManagedFormRuntime({
       ...inputValue,
       executeValidationRule,
-      validateRule,
+      validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry),
       submitApi: async (api, scope) => {
         const adaptedApi = applyRequestAdaptor(expressionCompiler, api, scope, input.env);
         const response = await executeApiRequest('submitForm', adaptedApi, scope);

@@ -1,4 +1,3 @@
-import React from 'react';
 import type {
   CompiledValidationBehavior,
   FormFieldStateSnapshot,
@@ -117,22 +116,6 @@ export function createFieldHandlers(args: {
 
 function useFormFieldState(name: string) {
   return useOwnedFieldState(name);
-}
-
-export function renderFieldHint(input: {
-  errorMessage?: string;
-  validating?: boolean;
-  showError?: boolean;
-}) {
-  if (input.errorMessage && input.showError) {
-    return <span className="na-field__error">{input.errorMessage}</span>;
-  }
-
-  if (input.validating) {
-    return <span className="na-field__hint">Validating...</span>;
-  }
-
-  return null;
 }
 
 export function resolveFieldLabelContent(props: Pick<RendererComponentProps, 'props' | 'meta' | 'regions'>) {

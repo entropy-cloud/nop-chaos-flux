@@ -10,6 +10,7 @@ export { ArrayEditorRenderer, arrayEditorRendererDefinition } from './renderers/
 export { FormRenderer, formRendererDefinition } from './renderers/form';
 export { createFieldValidation, createInputRenderer, inputRendererDefinitions } from './renderers/input';
 export { KeyValueRenderer, keyValueRendererDefinition } from './renderers/key-value';
+export * from './renderers/shared';
 export { TagListRenderer, tagListRendererDefinition } from './renderers/tag-list';
 export * from './field-utils';
 export * from './schemas';

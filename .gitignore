@@ -3,3 +3,5 @@ dist/
 coverage/
 .vite/
 *.tsbuildinfo
+.opencode/
+nop-task.md

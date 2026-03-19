@@ -6,7 +6,6 @@ import {
   getChildFieldUiState,
   getFieldValidationBehavior,
   readFieldValue,
-  renderFieldHint,
   resolveFieldLabelContent,
   resolveFieldLabelText,
   shouldValidateOn,
@@ -14,6 +13,7 @@ import {
   useFieldPresentation
 } from '../field-utils';
 import type { KeyValuePair, KeyValueSchema } from '../schemas';
+import { FieldHint, FieldLabel } from './shared';
 
 function KeyValueRow(props: {
   pair: KeyValuePair;
@@ -79,10 +79,10 @@ function KeyValueRow(props: {
             }
           }}
         />
-        {renderFieldHint({
-          errorMessage: keyUi.error?.message,
-          showError: keyUi.showError
-        })}
+        <FieldHint
+          errorMessage={keyUi.error?.message}
+          showError={keyUi.showError}
+        />
       </div>
       <div className={valueUi.className}>
         <input
@@ -122,10 +122,10 @@ function KeyValueRow(props: {
             }
           }}
         />
-        {renderFieldHint({
-          errorMessage: valueUi.error?.message,
-          showError: valueUi.showError
-        })}
+        <FieldHint
+          errorMessage={valueUi.error?.message}
+          showError={valueUi.showError}
+        />
       </div>
       <button
         type="button"
@@ -289,7 +289,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
   return (
     <label className={presentation.className}>
-      {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
+      <FieldLabel content={labelContent} />
       <div className="na-kv-list">
         {pairs.map((pair, index) => {
           return (
@@ -327,11 +327,11 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           {props.props.addLabel ? String(props.props.addLabel) : 'Add entry'}
         </button>
       </div>
-      {renderFieldHint({
-        errorMessage: presentation.fieldState.error?.message,
-        validating: presentation.fieldState.validating,
-        showError: presentation.showError
-      })}
+      <FieldHint
+        errorMessage={presentation.fieldState.error?.message}
+        validating={presentation.fieldState.validating}
+        showError={presentation.showError}
+      />
     </label>
   );
 }

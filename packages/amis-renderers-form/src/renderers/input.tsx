@@ -5,10 +5,10 @@ import {
   formLabelFieldRule,
   readCheckboxGroupValue,
   readFieldValue,
-  renderFieldHint,
   resolveFieldLabelContent,
   useFieldPresentation
 } from '../field-utils';
+import { FieldHint, FieldLabel } from './shared';
 import type {
   CheckboxGroupSchema,
   CheckboxSchema,
@@ -38,7 +38,7 @@ export function createInputRenderer(inputType: string) {
 
     return (
       <label className={presentation.className}>
-        {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
+        <FieldLabel content={labelContent} />
         <input
           className="na-input"
           type={inputType}
@@ -49,11 +49,11 @@ export function createInputRenderer(inputType: string) {
           onChange={(event) => handlers.onChange(event.target.value)}
           onBlur={handlers.onBlur}
         />
-        {renderFieldHint({
-          errorMessage: presentation.fieldState.error?.message,
-          validating: presentation.fieldState.validating,
-          showError: presentation.showError
-        })}
+        <FieldHint
+          errorMessage={presentation.fieldState.error?.message}
+          validating={presentation.fieldState.validating}
+          showError={presentation.showError}
+        />
       </label>
     );
   };
@@ -127,7 +127,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <label className={presentation.className}>
-          {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
+          <FieldLabel content={labelContent} />
           <select
             className="na-select"
             value={String(value)}
@@ -142,11 +142,11 @@ export const inputRendererDefinitions: RendererDefinition[] = [
               </option>
             ))}
           </select>
-          {renderFieldHint({
-            errorMessage: presentation.fieldState.error?.message,
-            validating: presentation.fieldState.validating,
-            showError: presentation.showError
-          })}
+          <FieldHint
+            errorMessage={presentation.fieldState.error?.message}
+            validating={presentation.fieldState.validating}
+            showError={presentation.showError}
+          />
         </label>
       );
     }
@@ -172,7 +172,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <label className={presentation.className}>
-          {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
+          <FieldLabel content={labelContent} />
           <textarea
             className="na-textarea"
             value={String(value)}
@@ -183,11 +183,11 @@ export const inputRendererDefinitions: RendererDefinition[] = [
             onChange={(event) => handlers.onChange(event.target.value)}
             onBlur={handlers.onBlur}
           />
-          {renderFieldHint({
-            errorMessage: presentation.fieldState.error?.message,
-            validating: presentation.fieldState.validating,
-            showError: presentation.showError
-          })}
+          <FieldHint
+            errorMessage={presentation.fieldState.error?.message}
+            validating={presentation.fieldState.validating}
+            showError={presentation.showError}
+          />
         </label>
       );
     },
@@ -217,7 +217,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <label className={presentation.className}>
-          {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
+          <FieldLabel content={labelContent} />
           <span className="na-checkbox">
             <input
               className="na-checkbox__input"
@@ -230,11 +230,11 @@ export const inputRendererDefinitions: RendererDefinition[] = [
             />
             {optionLabel ? <span className="na-checkbox__label">{optionLabel}</span> : null}
           </span>
-          {renderFieldHint({
-            errorMessage: presentation.fieldState.error?.message,
-            validating: presentation.fieldState.validating,
-            showError: presentation.showError
-          })}
+          <FieldHint
+            errorMessage={presentation.fieldState.error?.message}
+            validating={presentation.fieldState.validating}
+            showError={presentation.showError}
+          />
         </label>
       );
     }
@@ -262,7 +262,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <label className={presentation.className}>
-          {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
+          <FieldLabel content={labelContent} />
           <span className="na-switch">
             <input
               className="na-switch__input"
@@ -279,11 +279,11 @@ export const inputRendererDefinitions: RendererDefinition[] = [
             </span>
             <span className="na-switch__label">{value ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
           </span>
-          {renderFieldHint({
-            errorMessage: presentation.fieldState.error?.message,
-            validating: presentation.fieldState.validating,
-            showError: presentation.showError
-          })}
+          <FieldHint
+            errorMessage={presentation.fieldState.error?.message}
+            validating={presentation.fieldState.validating}
+            showError={presentation.showError}
+          />
         </label>
       );
     }
@@ -311,7 +311,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <fieldset className={presentation.className}>
-          {labelContent ? <legend className="na-field__label">{labelContent}</legend> : null}
+          <FieldLabel content={labelContent} as="legend" />
           <div className="na-radio-group">
             {options?.map((option) => (
               <label key={option.value} className="na-radio">
@@ -330,11 +330,11 @@ export const inputRendererDefinitions: RendererDefinition[] = [
               </label>
             ))}
           </div>
-          {renderFieldHint({
-            errorMessage: presentation.fieldState.error?.message,
-            validating: presentation.fieldState.validating,
-            showError: presentation.showError
-          })}
+          <FieldHint
+            errorMessage={presentation.fieldState.error?.message}
+            validating={presentation.fieldState.validating}
+            showError={presentation.showError}
+          />
         </fieldset>
       );
     }
@@ -362,7 +362,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <fieldset className={presentation.className}>
-          {labelContent ? <legend className="na-field__label">{labelContent}</legend> : null}
+          <FieldLabel content={labelContent} as="legend" />
           <div className="na-checkbox-group">
             {options?.map((option) => {
               const checked = value.includes(option.value);
@@ -389,11 +389,11 @@ export const inputRendererDefinitions: RendererDefinition[] = [
               );
             })}
           </div>
-          {renderFieldHint({
-            errorMessage: presentation.fieldState.error?.message,
-            validating: presentation.fieldState.validating,
-            showError: presentation.showError
-          })}
+          <FieldHint
+            errorMessage={presentation.fieldState.error?.message}
+            validating={presentation.fieldState.validating}
+            showError={presentation.showError}
+          />
         </fieldset>
       );
     }

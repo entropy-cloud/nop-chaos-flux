@@ -4,12 +4,12 @@ import { useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
 import {
   formLabelFieldRule,
   readCheckboxGroupValue,
-  renderFieldHint,
   resolveFieldLabelContent,
   resolveFieldLabelText,
   useFieldPresentation
 } from '../field-utils';
 import type { TagListSchema } from '../schemas';
+import { FieldHint, FieldLabel } from './shared';
 
 export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const scope = useRenderScope();
@@ -62,7 +62,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
 
   return (
     <label className={presentation.className}>
-      {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
+      <FieldLabel content={labelContent} />
       <div className="na-tag-list">
         {tags.map((tag) => {
           const active = value.includes(tag);
@@ -96,11 +96,11 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
           );
         })}
       </div>
-      {renderFieldHint({
-        errorMessage: presentation.fieldState.error?.message,
-        validating: presentation.fieldState.validating,
-        showError: presentation.showError
-      })}
+      <FieldHint
+        errorMessage={presentation.fieldState.error?.message}
+        validating={presentation.fieldState.validating}
+        showError={presentation.showError}
+      />
     </label>
   );
 }

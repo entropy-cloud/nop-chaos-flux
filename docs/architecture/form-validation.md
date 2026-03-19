@@ -51,6 +51,21 @@ Validation should be split into four layers:
 3. runtime validation execution
 4. React rendering of validation state
 
+Current implementation detail inside `amis-runtime`:
+
+- rule extraction and trigger normalization live in `packages/amis-runtime/src/validation/rules.ts`
+- default message building lives in `packages/amis-runtime/src/validation/message.ts`
+- reusable error helpers live in `packages/amis-runtime/src/validation/errors.ts`
+- built-in sync validators live in `packages/amis-runtime/src/validation/validators.ts`
+- validator lookup and registration live in `packages/amis-runtime/src/validation/registry.ts`
+- runtime sequencing stays in `packages/amis-runtime/src/validation-runtime.ts` and `packages/amis-runtime/src/form-runtime-validation.ts`
+
+This split is intentional.
+
+The validation directory owns reusable validation semantics.
+
+Runtime flow files own execution order, debounce, and form lifecycle behavior.
+
 ## Compile-Time Responsibility
 
 The compiler should walk the form subtree and collect:
@@ -218,6 +233,7 @@ Renderer integration should keep this behavior centralized:
 - standard controls should share one field-behavior helper path for focus/change/blur wiring
 - adding a new control such as `checkbox` should reuse the same validation and visibility policy helpers rather than reimplementing policy rules per component
 - the same shared path now covers text inputs, select, checkbox, textarea, radio-group, switch, and checkbox-group controls
+- shared field chrome should prefer `packages/amis-renderers-form/src/renderers/shared/` for repeated label and hint markup
 
 These should remain runtime concepts, not React-library-specific state shapes.
 

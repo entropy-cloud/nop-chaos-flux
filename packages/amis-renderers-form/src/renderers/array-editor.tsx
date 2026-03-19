@@ -6,7 +6,6 @@ import {
   getChildFieldUiState,
   getFieldValidationBehavior,
   readFieldValue,
-  renderFieldHint,
   resolveFieldLabelContent,
   resolveFieldLabelText,
   shouldValidateOn,
@@ -14,6 +13,7 @@ import {
   useFieldPresentation
 } from '../field-utils';
 import type { ArrayEditorItem, ArrayEditorSchema } from '../schemas';
+import { FieldHint, FieldLabel } from './shared';
 
 function ArrayEditorRow(props: {
   item: ArrayEditorItem;
@@ -74,10 +74,10 @@ function ArrayEditorRow(props: {
             }
           }}
         />
-        {renderFieldHint({
-          errorMessage: itemUi.error?.message,
-          showError: itemUi.showError
-        })}
+        <FieldHint
+          errorMessage={itemUi.error?.message}
+          showError={itemUi.showError}
+        />
       </div>
       <button
         type="button"
@@ -215,7 +215,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
   return (
     <label className={presentation.className}>
-      {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
+      <FieldLabel content={labelContent} />
       <div className="na-array-editor">
         {items.map((item, index) => {
           return (
@@ -254,11 +254,11 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           Add item
         </button>
       </div>
-      {renderFieldHint({
-        errorMessage: presentation.fieldState.error?.message,
-        validating: presentation.fieldState.validating,
-        showError: presentation.showError
-      })}
+      <FieldHint
+        errorMessage={presentation.fieldState.error?.message}
+        validating={presentation.fieldState.validating}
+        showError={presentation.showError}
+      />
     </label>
   );
 }
