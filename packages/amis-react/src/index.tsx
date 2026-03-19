@@ -472,6 +472,14 @@ export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): 
   );
 }
 
+export function useValidationNodeState(path: string): FormFieldStateSnapshot {
+  return useCurrentFormFieldState(path, { path });
+}
+
+export function useFieldError(path: string): ValidationError | undefined {
+  return useCurrentFormError({ path, sourceKinds: ['field', 'runtime-registration'] });
+}
+
 export function useOwnedFieldState(path: string): FormFieldStateSnapshot {
   return useCurrentFormFieldState(path, { path, ownerPath: path });
 }
@@ -515,6 +523,8 @@ export const rendererHooks: RendererHookApi = {
   useCurrentFormErrors,
   useCurrentFormError,
   useCurrentFormFieldState,
+  useValidationNodeState,
+  useFieldError,
   useOwnedFieldState,
   useChildFieldState,
   useAggregateError,

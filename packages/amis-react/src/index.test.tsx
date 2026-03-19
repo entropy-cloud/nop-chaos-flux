@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { RendererDefinition, RendererEnv, RendererPlugin, ScopeRef } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/amis-runtime';
-import { createSchemaRenderer, useAggregateError, useChildFieldState, useCurrentForm, useCurrentFormError, useCurrentFormErrors, useOwnedFieldState, useScopeSelector } from './index';
+import { createSchemaRenderer, useAggregateError, useChildFieldState, useCurrentForm, useCurrentFormError, useCurrentFormErrors, useFieldError, useOwnedFieldState, useScopeSelector, useValidationNodeState } from './index';
 
 const env: RendererEnv = {
   fetcher: async function <T>() {
@@ -48,6 +48,7 @@ function CompositeErrorProbe() {
   const form = useCurrentForm();
   const ownedRootState = useOwnedFieldState('metadata');
   const childState = useChildFieldState('metadata.0.value');
+  const nodeState = useValidationNodeState('metadata');
   const rootError = useCurrentFormError({
     path: 'metadata',
     ownerPath: 'metadata',
@@ -63,6 +64,7 @@ function CompositeErrorProbe() {
     sourceKinds: ['runtime-registration']
   });
   const aggregateError = useAggregateError('metadata');
+  const fieldError = useFieldError('metadata.0.value');
 
   React.useEffect(() => {
     if (!form) {
@@ -97,7 +99,9 @@ function CompositeErrorProbe() {
       <span data-testid="owned-count">{String(ownedErrors.length)}</span>
       <span data-testid="owned-root-error">{ownedRootState.error?.message ?? ''}</span>
       <span data-testid="child-state-error">{childState.error?.message ?? ''}</span>
+      <span data-testid="node-state-error">{nodeState.error?.message ?? ''}</span>
       <span data-testid="aggregate-error">{aggregateError?.message ?? ''}</span>
+      <span data-testid="field-error">{fieldError?.message ?? ''}</span>
     </div>
   );
 }
@@ -360,7 +364,9 @@ describe('createSchemaRenderer', () => {
       expect(screen.getByTestId('owned-count').textContent).toBe('2');
       expect(screen.getByTestId('owned-root-error').textContent).toBe('Metadata requires at least one entry');
       expect(screen.getByTestId('child-state-error').textContent).toBe('Entry 1 value is required');
+      expect(screen.getByTestId('node-state-error').textContent).toBe('Metadata requires at least one entry');
       expect(screen.getByTestId('aggregate-error').textContent).toBe('Metadata requires at least one entry');
+      expect(screen.getByTestId('field-error').textContent).toBe('Entry 1 value is required');
     });
   });
 });

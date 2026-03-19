@@ -697,6 +697,8 @@ export interface RendererHookApi {
   useCurrentFormErrors(query?: FormErrorQuery): ValidationError[];
   useCurrentFormError(query: FormErrorQuery): ValidationError | undefined;
   useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot;
+  useValidationNodeState(path: string): FormFieldStateSnapshot;
+  useFieldError(path: string): ValidationError | undefined;
   useOwnedFieldState(path: string): FormFieldStateSnapshot;
   useChildFieldState(path: string): FormFieldStateSnapshot;
   useAggregateError(path: string): ValidationError | undefined;

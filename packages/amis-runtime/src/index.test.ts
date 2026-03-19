@@ -1778,6 +1778,203 @@ describe('createRendererRuntime', () => {
     expect(nextResult.ok).toBe(true);
   });
 
+  it('builds node traversal order from validation node relationships', () => {
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([formRenderer, inputRenderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const compiled = compiler.compile({
+        type: 'form',
+        body: [
+          {
+            type: 'input-text',
+            name: 'reviewers',
+            label: 'Reviewers'
+          },
+          {
+            type: 'input-text',
+            name: 'metadata',
+            label: 'Metadata'
+          }
+        ]
+      }) as any;
+    const order = compiled.validation?.validationOrder;
+
+    expect(order).toEqual(['reviewers', 'metadata']);
+  });
+
+  it('validates subtree targets from node traversal for nested child paths', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'nested-subtree-form',
+      initialValues: {
+        metadata: [{ key: '', value: '' }]
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          metadata: {
+            path: 'metadata',
+            controlType: 'key-value',
+            label: 'Metadata',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: []
+          }
+        },
+        order: ['metadata'],
+        dependents: {},
+        nodes: {
+          '': {
+            path: '',
+            kind: 'form',
+            rules: [],
+            children: ['metadata']
+          },
+          metadata: {
+            path: 'metadata',
+            kind: 'array',
+            controlType: 'key-value',
+            label: 'Metadata',
+            rules: [],
+            children: ['metadata.0.key', 'metadata.0.value'],
+            parent: ''
+          },
+          'metadata.0.key': {
+            path: 'metadata.0.key',
+            kind: 'field',
+            rules: [],
+            children: [],
+            parent: 'metadata'
+          },
+          'metadata.0.value': {
+            path: 'metadata.0.value',
+            kind: 'field',
+            rules: [],
+            children: [],
+            parent: 'metadata'
+          }
+        },
+        validationOrder: ['metadata', 'metadata.0.key', 'metadata.0.value'],
+        rootPath: ''
+      }
+    });
+
+    form.registerField({
+      path: 'metadata',
+      childPaths: ['metadata.0.key', 'metadata.0.value'],
+      getValue() {
+        return form.store.getState().values.metadata;
+      },
+      validateChild(path) {
+        return [{ path, rule: 'required', message: `${path} is required` }];
+      }
+    });
+
+    const result = await form.validateSubtree('metadata');
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors['metadata.0.key']?.[0]?.message).toBe('metadata.0.key is required');
+    expect(result.fieldErrors['metadata.0.value']?.[0]?.message).toBe('metadata.0.value is required');
+  });
+
+  it('prefers node-driven subtree execution while preserving runtime-registration children', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'node-walker-form',
+      initialValues: {
+        reviewers: [{ value: '' }]
+      },
+      parentScope: page.scope,
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        },
+        fields: {
+          reviewers: {
+            path: 'reviewers',
+            controlType: 'array-editor',
+            label: 'Reviewers',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
+            rules: [compiledRule({ kind: 'minItems', value: 1, message: 'Need at least one reviewer' }, 'reviewers')]
+          }
+        },
+        order: ['reviewers'],
+        dependents: {},
+        nodes: {
+          '': {
+            path: '',
+            kind: 'form',
+            rules: [],
+            children: ['reviewers']
+          },
+          reviewers: {
+            path: 'reviewers',
+            kind: 'array',
+            controlType: 'array-editor',
+            label: 'Reviewers',
+            rules: [compiledRule({ kind: 'minItems', value: 1, message: 'Need at least one reviewer' }, 'reviewers')],
+            children: ['reviewers.0.value'],
+            parent: ''
+          },
+          'reviewers.0.value': {
+            path: 'reviewers.0.value',
+            kind: 'field',
+            rules: [],
+            children: [],
+            parent: 'reviewers'
+          }
+        },
+        validationOrder: ['reviewers', 'reviewers.0.value'],
+        rootPath: ''
+      }
+    });
+
+    const visited: string[] = [];
+
+    form.registerField({
+      path: 'reviewers',
+      childPaths: ['reviewers.0.value'],
+      getValue() {
+        return form.store.getState().values.reviewers;
+      },
+      validate() {
+        visited.push('reviewers');
+        return [];
+      },
+      validateChild(path) {
+        visited.push(path);
+        return [{ path, rule: 'required', message: 'Reviewer value is required' }];
+      }
+    });
+
+    const result = await form.validateSubtree('reviewers');
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors['reviewers.0.value']?.[0]?.message).toBe('Reviewer value is required');
+    expect(visited).toEqual(['reviewers', 'reviewers.0.value']);
+  });
+
   it('remaps child errors when removing array items through runtime helpers', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
