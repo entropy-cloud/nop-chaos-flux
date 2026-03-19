@@ -38,6 +38,49 @@ const buttonRenderer: RendererDefinition = {
   )
 };
 
+function ContactGroupRenderer(props: RendererComponentProps) {
+  const scope = useRenderScope();
+  const form = useCurrentForm();
+  const name = String(props.props.name ?? props.schema.name ?? '');
+  const value = (scope.get(name) as Record<string, string> | undefined) ?? {};
+  const error = useAggregateError(name)?.message;
+
+  return (
+    <label className="na-field">
+      <span className="na-field__label">{String(props.meta.label ?? 'Contact')}</span>
+      <input
+        aria-label="Contact Email"
+        className="na-input"
+        value={value.email ?? ''}
+        onFocus={() => {
+          form?.visitField(name);
+        }}
+        onChange={(event) => {
+          form?.setValue(name, { ...value, email: event.target.value });
+        }}
+        onBlur={() => {
+          form?.touchField(name);
+        }}
+      />
+      <input
+        aria-label="Contact Phone"
+        className="na-input"
+        value={value.phone ?? ''}
+        onFocus={() => {
+          form?.visitField(name);
+        }}
+        onChange={(event) => {
+          form?.setValue(name, { ...value, phone: event.target.value });
+        }}
+        onBlur={() => {
+          form?.touchField(name);
+        }}
+      />
+      {error ? <span className="na-field__error">{error}</span> : null}
+    </label>
+  );
+}
+
 const contactGroupRenderer: RendererDefinition = {
   type: 'contact-group',
   validation: {
@@ -50,48 +93,7 @@ const contactGroupRenderer: RendererDefinition = {
       return [];
     }
   },
-  component: (props: RendererComponentProps) => {
-    const scope = useRenderScope();
-    const form = useCurrentForm();
-    const name = String(props.props.name ?? props.schema.name ?? '');
-    const value = (scope.get(name) as Record<string, string> | undefined) ?? {};
-    const error = useAggregateError(name)?.message;
-
-    return (
-      <label className="na-field">
-        <span className="na-field__label">{String(props.meta.label ?? 'Contact')}</span>
-        <input
-          aria-label="Contact Email"
-          className="na-input"
-          value={value.email ?? ''}
-          onFocus={() => {
-            form?.visitField(name);
-          }}
-          onChange={(event) => {
-            form?.setValue(name, { ...value, email: event.target.value });
-          }}
-          onBlur={() => {
-            form?.touchField(name);
-          }}
-        />
-        <input
-          aria-label="Contact Phone"
-          className="na-input"
-          value={value.phone ?? ''}
-          onFocus={() => {
-            form?.visitField(name);
-          }}
-          onChange={(event) => {
-            form?.setValue(name, { ...value, phone: event.target.value });
-          }}
-          onBlur={() => {
-            form?.touchField(name);
-          }}
-        />
-        {error ? <span className="na-field__error">{error}</span> : null}
-      </label>
-    );
-  }
+  component: ContactGroupRenderer
 };
 
 describe('formRendererDefinitions', () => {

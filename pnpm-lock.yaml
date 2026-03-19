@@ -169,12 +169,6 @@ importers:
 
   packages/amis-schema: {}
 
-  packages/amis-testing:
-    dependencies:
-      '@nop-chaos/amis-schema':
-        specifier: workspace:*
-        version: link:../amis-schema
-
 packages:
 
   '@asamuzakjp/css-color@3.2.0':

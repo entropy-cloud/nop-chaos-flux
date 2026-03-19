@@ -18,12 +18,12 @@ function normalizeRuntimeValidationError(
 }
 
 export function normalizeRuntimeValidationErrors(
-  errors: ValidationError[],
+  errors: ValidationError[] | undefined,
   registration: RuntimeFieldRegistration,
   path: string,
   childPath?: string
 ): ValidationError[] {
-  return errors.map((error) => normalizeRuntimeValidationError(error, registration, path, childPath));
+  return (errors ?? []).map((error) => normalizeRuntimeValidationError(error, registration, path, childPath));
 }
 
 function isCompiledValidationRule(rule: CompiledValidationRule | ValidationRule): rule is CompiledValidationRule {

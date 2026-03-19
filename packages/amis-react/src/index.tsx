@@ -11,12 +11,14 @@ import type {
   FormStoreState,
   PageRuntime,
   RenderFragmentOptions,
+  RenderNodeMeta,
   RenderNodeInput,
   RendererComponentProps,
   RendererDefinition,
   RendererHelpers,
   RendererHookApi,
   RendererRuntime,
+  SchemaRendererProps,
   ScopeRef,
   ValidationError
 } from '@nop-chaos/amis-schema';
@@ -222,7 +224,7 @@ function NodeRenderer(props: {
       page: props.page,
       validation: props.node.validation
     });
-  }, [props.form, props.node.component.scopePolicy, props.node.id, props.page, props.scope, resolvedProps.value, runtime]);
+  }, [props.form, props.node.component.scopePolicy, props.node.id, props.node.validation, props.page, props.scope, resolvedProps.value, runtime]);
   const activeScope = activeForm?.scope ?? props.scope;
 
   const helpers = useMemo(

@@ -41,7 +41,6 @@ packages/
   amis-renderers-basic/
   amis-renderers-form/
   amis-renderers-data/
-  amis-testing/
 ```
 
 Design rules:

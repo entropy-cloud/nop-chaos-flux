@@ -24,8 +24,7 @@
       "@nop-chaos/amis-react": ["packages/amis-react/src/index.tsx"],
       "@nop-chaos/amis-renderers-basic": ["packages/amis-renderers-basic/src/index.tsx"],
       "@nop-chaos/amis-renderers-form": ["packages/amis-renderers-form/src/index.tsx"],
-      "@nop-chaos/amis-renderers-data": ["packages/amis-renderers-data/src/index.tsx"],
-      "@nop-chaos/amis-testing": ["packages/amis-testing/src/index.ts"]
+      "@nop-chaos/amis-renderers-data": ["packages/amis-renderers-data/src/index.tsx"]
     }
   }
 }

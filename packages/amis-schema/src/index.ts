@@ -1,5 +1,14 @@
 import type { ComponentType, ReactElement, ReactNode } from 'react';
 
+export {
+  clampArrayIndex,
+  clampInsertIndex,
+  insertArrayValue,
+  moveArrayValue,
+  removeArrayValue,
+  swapArrayValue
+} from './utils/array';
+
 export type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
 export type SchemaValue = Primitive | SchemaObject | ReadonlyArray<SchemaValue> | SchemaValue[];

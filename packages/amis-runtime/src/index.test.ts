@@ -1140,7 +1140,6 @@ describe('createRendererRuntime', () => {
   });
 
   it('compiles validation nodes with array metadata', () => {
-    const registry = createRendererRegistry([formRenderer, inputRenderer]);
     const arrayRenderer: RendererDefinition = {
       type: 'array-editor',
       component: () => null,

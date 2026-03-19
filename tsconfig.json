@@ -8,7 +8,6 @@
     { "path": "./packages/amis-renderers-basic" },
     { "path": "./packages/amis-renderers-form" },
     { "path": "./packages/amis-renderers-data" },
-    { "path": "./packages/amis-testing" },
     { "path": "./apps/playground" }
   ]
 }
