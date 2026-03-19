@@ -5,6 +5,7 @@ import type {
   RendererDefinition,
   RendererRegistry
 } from '@nop-chaos/amis-schema';
+import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/amis-react';
 import { registerRendererDefinitions } from '@nop-chaos/amis-runtime';
 
 interface PageSchema extends BaseSchema {
@@ -37,16 +38,31 @@ function classNames(...values: Array<string | undefined | false>) {
 }
 
 function PageRenderer(props: RendererComponentProps<PageSchema>) {
+  const titleContent = resolveRendererSlotContent(props, 'title');
+  const headerContent = resolveRendererSlotContent(props, 'header');
+  const footerContent = resolveRendererSlotContent(props, 'footer');
+
   return (
     <section className={classNames('na-page', props.meta.className)}>
-      {props.meta.title ? <header className="na-page__header"><h2>{props.meta.title}</h2></header> : null}
+      {hasRendererSlotContent(titleContent) ? <header className="na-page__header"><h2>{titleContent}</h2></header> : null}
+      {hasRendererSlotContent(headerContent) ? <div className="na-page__toolbar">{headerContent}</div> : null}
       <div className="na-page__body">{props.regions.body?.render()}</div>
+      {hasRendererSlotContent(footerContent) ? <footer className="na-page__footer">{footerContent}</footer> : null}
     </section>
   );
 }
 
 function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
-  return <div className={classNames('na-container', props.meta.className)}>{props.regions.body?.render()}</div>;
+  const headerContent = resolveRendererSlotContent(props, 'header');
+  const footerContent = resolveRendererSlotContent(props, 'footer');
+
+  return (
+    <div className={classNames('na-container', props.meta.className)}>
+      {hasRendererSlotContent(headerContent) ? <div className="na-container__header">{headerContent}</div> : null}
+      <div className="na-container__body">{props.regions.body?.render()}</div>
+      {hasRendererSlotContent(footerContent) ? <div className="na-container__footer">{footerContent}</div> : null}
+    </div>
+  );
 }
 
 function TplRenderer(props: RendererComponentProps<TplSchema>) {
@@ -58,15 +74,8 @@ function TextRenderer(props: RendererComponentProps<TextSchema>) {
 }
 
 function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
-  const handleClick = async () => {
-    const onClick = props.props.onClick;
-    if (onClick && typeof onClick === 'object' && 'action' in (onClick as Record<string, unknown>)) {
-      await props.helpers.dispatch(onClick as any);
-    }
-  };
-
   return (
-    <button className="na-button" type="button" onClick={handleClick} disabled={props.meta.disabled}>
+    <button className="na-button" type="button" onClick={() => void props.events.onClick?.()} disabled={props.meta.disabled}>
       {String(props.props.label ?? props.meta.label ?? 'Button')}
     </button>
   );
@@ -76,12 +85,13 @@ export const basicRendererDefinitions: RendererDefinition[] = [
   {
     type: 'page',
     component: PageRenderer,
-    regions: ['body']
+    regions: ['body', 'header', 'footer'],
+    fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }]
   },
   {
     type: 'container',
     component: ContainerRenderer,
-    regions: ['body']
+    regions: ['body', 'header', 'footer']
   },
   {
     type: 'tpl',
@@ -93,7 +103,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'button',
-    component: ButtonRenderer
+    component: ButtonRenderer,
+    fields: [{ key: 'onClick', kind: 'event' }]
   }
 ];
 

@@ -36,6 +36,18 @@ const pageRenderer: RendererDefinition = {
   regions: ['body']
 };
 
+const cardRenderer: RendererDefinition = {
+  type: 'card',
+  component: () => null,
+  fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }, { key: 'body', kind: 'region', regionKey: 'body' }]
+};
+
+const actionButtonRenderer: RendererDefinition = {
+  type: 'action-button',
+  component: () => null,
+  fields: [{ key: 'onClick', kind: 'event' }]
+};
+
 const formRenderer: RendererDefinition = {
   type: 'form',
   component: () => null,
@@ -80,6 +92,147 @@ describe('createSchemaCompiler', () => {
 
     expect(Array.isArray(node)).toBe(false);
     expect((node as any).regions.body.node).toBeTruthy();
+  });
+
+  it('treats value-or-region fields as plain props when given plain values', () => {
+    const registry = createRendererRegistry([cardRenderer, textRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = compiler.compile({
+      type: 'card',
+      title: 'Profile',
+      body: [{ type: 'text', text: 'body' }]
+    }) as any;
+
+    expect(node.regions.title).toBeUndefined();
+    expect(node.props.kind).toBe('static');
+    expect(node.props.value.title).toBe('Profile');
+  });
+
+  it('treats value-or-region fields as compiled regions when given schema input', () => {
+    const registry = createRendererRegistry([cardRenderer, textRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = compiler.compile(
+      {
+        type: 'card',
+        title: { type: 'text', text: 'Profile' },
+        body: [{ type: 'text', text: 'body' }]
+      } as any
+    ) as any;
+
+    expect(node.regions.title.node).toBeTruthy();
+    expect(node.props.kind).toBe('static');
+    expect(node.props.value.title).toBeUndefined();
+  });
+
+  it('lets field metadata override default meta handling for title', () => {
+    const registry = createRendererRegistry([cardRenderer, textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = runtime.compile({
+      type: 'card',
+      title: 'Profile'
+    }) as any;
+    const page = runtime.createPageRuntime({});
+    const meta = runtime.resolveNodeMeta(node, page.scope, node.createRuntimeState());
+
+    expect(meta.title).toBeUndefined();
+    expect(node.props.value.title).toBe('Profile');
+  });
+
+  it('tracks event fields separately from normal props and regions', () => {
+    const registry = createRendererRegistry([actionButtonRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = compiler.compile({
+      type: 'action-button',
+      onClick: {
+        action: 'setValue',
+        componentPath: 'message',
+        value: 'clicked'
+      }
+    }) as any;
+
+    expect(node.eventKeys).toEqual(['onClick']);
+    expect(node.regions.onClick).toBeUndefined();
+    expect(node.props.value.onClick).toBeUndefined();
+    expect(node.eventActions.onClick).toMatchObject({ action: 'setValue' });
+  });
+
+  it('extracts table operation buttons into compiled regions', () => {
+    const tableRenderer: RendererDefinition = {
+      type: 'table',
+      component: () => null
+    };
+    const buttonRenderer: RendererDefinition = {
+      type: 'button',
+      component: () => null
+    };
+    const registry = createRendererRegistry([tableRenderer, buttonRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = compiler.compile({
+      type: 'table',
+      columns: [
+        {
+          type: 'operation',
+          label: 'Actions',
+          buttons: [{ type: 'button', label: 'Inspect' }]
+        }
+      ]
+    }) as any;
+
+    expect(node.regions['columns.0.buttons']?.node).toBeTruthy();
+    expect(node.props.value.columns[0].buttons).toBeUndefined();
+    expect(node.props.value.columns[0].buttonsRegionKey).toBe('columns.0.buttons');
+  });
+
+  it('treats table empty as a plain prop or compiled region based on field metadata', () => {
+    const tableRenderer: RendererDefinition = {
+      type: 'table',
+      component: () => null,
+      fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }]
+    };
+    const textRenderer: RendererDefinition = {
+      type: 'text',
+      component: () => null
+    };
+    const registry = createRendererRegistry([tableRenderer, textRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const plainNode = compiler.compile({
+      type: 'table',
+      empty: 'Nothing here'
+    }) as any;
+    const regionNode = compiler.compile({
+      type: 'table',
+      empty: { type: 'text', text: 'No rows' }
+    }) as any;
+
+    expect(plainNode.props.value.empty).toBe('Nothing here');
+    expect(plainNode.regions.empty).toBeUndefined();
+    expect(regionNode.props.value.empty).toBeUndefined();
+    expect(regionNode.regions.empty?.node).toBeTruthy();
   });
 });
 
@@ -169,6 +322,7 @@ describe('createRendererRuntime', () => {
     expect(page.store.getState().dialogs).toHaveLength(1);
     const dialogState = page.store.getState().dialogs[0];
     expect(dialogState.dialog.title).toBe('Runtime dialog');
+    expect(dialogState.body).toBeTruthy();
     expect(dialogState.scope.get('dialogId')).toBe(dialogState.id);
 
     const closeResult = await runtime.dispatch(
@@ -186,6 +340,38 @@ describe('createRendererRuntime', () => {
 
     expect(closeResult.ok).toBe(true);
     expect(page.store.getState().dialogs).toHaveLength(0);
+  });
+
+  it('compiles schema-based dialog title and body when opening dialogs', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
+    const page = runtime.createPageRuntime({});
+
+    await runtime.dispatch(
+      {
+        action: 'dialog',
+        dialog: {
+          title: { type: 'text', text: 'Compiled title' },
+          body: [{ type: 'text', text: 'Compiled body' }]
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        node
+      }
+    );
+
+    const dialogState = page.store.getState().dialogs[0] as any;
+    expect(dialogState.title?.component).toBeTruthy();
+    expect(Array.isArray(dialogState.body)).toBe(true);
+    expect(dialogState.body[0]?.component).toBeTruthy();
   });
 
   it('evaluates expressions against child row scopes', () => {

@@ -1,4 +1,4 @@
-import type { PageRuntime, PageStoreApi } from '@nop-chaos/amis-schema';
+import type { PageRuntime, PageStoreApi, RendererRuntime } from '@nop-chaos/amis-schema';
 import { createPageStore } from './form-store';
 import { createScopeRef } from './scope';
 
@@ -31,9 +31,15 @@ export function createManagedPageRuntime(input: {
   return {
     store,
     scope,
-    openDialog(dialog, dialogScope) {
+    openDialog(dialog, dialogScope, runtime: RendererRuntime) {
       const id = createDialogId(dialogScope.id);
-      store.openDialog({ id, dialog, scope: dialogScope });
+      store.openDialog({
+        id,
+        dialog,
+        scope: dialogScope,
+        title: typeof dialog.title === 'string' ? dialog.title : dialog.title ? runtime.compile(dialog.title as any) : undefined,
+        body: dialog.body ? runtime.compile(dialog.body as any) : undefined
+      });
       return id;
     },
     closeDialog(dialogId) {

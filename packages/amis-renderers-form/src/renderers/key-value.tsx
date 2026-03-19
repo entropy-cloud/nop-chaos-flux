@@ -2,10 +2,13 @@ import React from 'react';
 import type { BaseSchema, CompiledValidationBehavior, RendererComponentProps, RendererDefinition, RuntimeFieldRegistration } from '@nop-chaos/amis-schema';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
 import {
+  formLabelFieldRule,
   getChildFieldUiState,
   getFieldValidationBehavior,
   readFieldValue,
   renderFieldHint,
+  resolveFieldLabelContent,
+  resolveFieldLabelText,
   shouldValidateOn,
   useCompositeChildFieldState,
   useFieldPresentation
@@ -168,6 +171,8 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   const currentForm = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
   const presentation = useFieldPresentation(name, currentForm);
+  const labelContent = resolveFieldLabelContent(props);
+  const labelText = resolveFieldLabelText(props, name);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const [pairs, setPairs] = React.useState<KeyValuePair[]>(() => toKeyValuePairs(readFieldValue(scope, name)));
   const pairsRef = React.useRef(pairs);
@@ -225,7 +230,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             {
               path: name,
               rule: 'required',
-              message: `${props.meta.label ?? name} requires at least one entry`
+              message: `${labelText} requires at least one entry`
             }
           ];
         }
@@ -280,11 +285,11 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
     registrationRef.current = registration;
     return currentForm.registerField(registration);
-  }, [childPaths, currentForm, name, props.meta.label]);
+  }, [childPaths, currentForm, labelText, name]);
 
   return (
     <label className={presentation.className}>
-      {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+      {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
       <div className="na-kv-list">
         {pairs.map((pair, index) => {
           return (
@@ -334,6 +339,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 export const keyValueRendererDefinition: RendererDefinition = {
   type: 'key-value',
   component: KeyValueRenderer,
+  fields: [formLabelFieldRule],
   validation: {
     kind: 'field',
     valueKind: 'array',

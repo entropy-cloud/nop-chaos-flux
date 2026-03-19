@@ -16,6 +16,7 @@ interface ActionDispatcherInput {
   executeAjaxAction: (api: ApiObject, action: ActionSchema, ctx: ActionContext) => Promise<ActionResult>;
   submitFormAction: (api: ApiObject | undefined, action: ActionSchema, ctx: ActionContext) => Promise<ActionResult>;
   createDialogScope: (ctx: ActionContext) => ScopeRef;
+  runtime: { compile(schema: any): any };
 }
 
 function createCancelledResult(error?: unknown): ActionResult {
@@ -107,7 +108,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
           }
 
           const dialogScope = input.createDialogScope(ctx);
-          const dialogId = ctx.page.openDialog(processedAction.dialog, dialogScope);
+          const dialogId = ctx.page.openDialog(processedAction.dialog, dialogScope, input.runtime as any);
           dialogScope.update('dialogId', dialogId);
           const result = { ok: true, data: { dialogId } };
           input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });

@@ -2,9 +2,11 @@ import type { ApiObject, RendererComponentProps, RendererDefinition } from '@nop
 import { useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
 import {
   createFieldHandlers,
+  formLabelFieldRule,
   readCheckboxGroupValue,
   readFieldValue,
   renderFieldHint,
+  resolveFieldLabelContent,
   useFieldPresentation
 } from '../field-utils';
 import type {
@@ -24,6 +26,7 @@ export function createInputRenderer(inputType: string) {
     const name = String(props.props.name ?? props.schema.name ?? '');
     const value = readFieldValue(scope, name);
     const presentation = useFieldPresentation(name, currentForm);
+    const labelContent = resolveFieldLabelContent(props);
     const handlers = createFieldHandlers({
       name,
       currentForm,
@@ -35,7 +38,7 @@ export function createInputRenderer(inputType: string) {
 
     return (
       <label className={presentation.className}>
-        {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+        {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
         <input
           className="na-input"
           type={inputType}
@@ -86,20 +89,24 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-text',
     component: createInputRenderer('text'),
+    fields: [formLabelFieldRule],
     validation: createFieldValidation()
   },
   {
     type: 'input-email',
     component: createInputRenderer('email'),
+    fields: [formLabelFieldRule],
     validation: createFieldValidation(undefined, true)
   },
   {
     type: 'input-password',
     component: createInputRenderer('password'),
+    fields: [formLabelFieldRule],
     validation: createFieldValidation()
   },
   {
     type: 'select',
+    fields: [formLabelFieldRule],
     validation: createFieldValidation(),
     component: function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
       const scope = useRenderScope();
@@ -108,6 +115,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const value = readFieldValue(scope, name);
       const options = Array.isArray(props.props.options) ? (props.props.options as SelectSchema['options']) : [];
       const presentation = useFieldPresentation(name, currentForm);
+      const labelContent = resolveFieldLabelContent(props);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -119,7 +127,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <label className={presentation.className}>
-          {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+          {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
           <select
             className="na-select"
             value={String(value)}
@@ -145,12 +153,14 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'textarea',
+    fields: [formLabelFieldRule],
     component: function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
       const name = String(props.props.name ?? props.schema.name ?? '');
       const value = readFieldValue(scope, name);
       const presentation = useFieldPresentation(name, currentForm);
+      const labelContent = resolveFieldLabelContent(props);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -162,7 +172,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <label className={presentation.className}>
-          {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+          {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
           <textarea
             className="na-textarea"
             value={String(value)}
@@ -185,6 +195,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'checkbox',
+    fields: [formLabelFieldRule],
     validation: createFieldValidation(),
     component: function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
       const scope = useRenderScope();
@@ -202,10 +213,11 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       });
       const option = props.props.option as CheckboxSchema['option'] | undefined;
       const optionLabel = option?.label;
+      const labelContent = resolveFieldLabelContent(props);
 
       return (
         <label className={presentation.className}>
-          {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+          {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
           <span className="na-checkbox">
             <input
               className="na-checkbox__input"
@@ -229,6 +241,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'switch',
+    fields: [formLabelFieldRule],
     validation: createFieldValidation(),
     component: function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
       const scope = useRenderScope();
@@ -245,10 +258,11 @@ export const inputRendererDefinitions: RendererDefinition[] = [
         }
       });
       const option = props.props.option as SwitchSchema['option'] | undefined;
+      const labelContent = resolveFieldLabelContent(props);
 
       return (
         <label className={presentation.className}>
-          {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+          {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
           <span className="na-switch">
             <input
               className="na-switch__input"
@@ -276,6 +290,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'radio-group',
+    fields: [formLabelFieldRule],
     validation: createFieldValidation(),
     component: function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
       const scope = useRenderScope();
@@ -284,6 +299,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const value = String(readFieldValue(scope, name));
       const options = Array.isArray(props.props.options) ? (props.props.options as RadioGroupSchema['options']) : [];
       const presentation = useFieldPresentation(name, currentForm);
+      const labelContent = resolveFieldLabelContent(props);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -295,7 +311,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <fieldset className={presentation.className}>
-          {props.meta.label ? <legend className="na-field__label">{props.meta.label}</legend> : null}
+          {labelContent ? <legend className="na-field__label">{labelContent}</legend> : null}
           <div className="na-radio-group">
             {options?.map((option) => (
               <label key={option.value} className="na-radio">
@@ -325,6 +341,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'checkbox-group',
+    fields: [formLabelFieldRule],
     validation: createFieldValidation(),
     component: function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema>) {
       const scope = useRenderScope();
@@ -333,6 +350,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const value = readCheckboxGroupValue(scope, name);
       const options = Array.isArray(props.props.options) ? (props.props.options as CheckboxGroupSchema['options']) : [];
       const presentation = useFieldPresentation(name, currentForm);
+      const labelContent = resolveFieldLabelContent(props);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -344,7 +362,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <fieldset className={presentation.className}>
-          {props.meta.label ? <legend className="na-field__label">{props.meta.label}</legend> : null}
+          {labelContent ? <legend className="na-field__label">{labelContent}</legend> : null}
           <div className="na-checkbox-group">
             {options?.map((option) => {
               const checked = value.includes(option.value);

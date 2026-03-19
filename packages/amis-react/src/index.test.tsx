@@ -4,7 +4,20 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { RendererDefinition, RendererEnv, RendererPlugin, ScopeRef } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/amis-runtime';
-import { createSchemaRenderer, useAggregateError, useChildFieldState, useCurrentForm, useCurrentFormError, useCurrentFormErrors, useFieldError, useOwnedFieldState, useScopeSelector, useValidationNodeState } from './index';
+import {
+  createSchemaRenderer,
+  hasRendererSlotContent,
+  resolveRendererSlotContent,
+  useAggregateError,
+  useChildFieldState,
+  useCurrentForm,
+  useCurrentFormError,
+  useCurrentFormErrors,
+  useFieldError,
+  useOwnedFieldState,
+  useScopeSelector,
+  useValidationNodeState
+} from './index';
 
 const env: RendererEnv = {
   fetcher: async function <T>() {
@@ -116,16 +129,12 @@ const buttonRenderer: RendererDefinition = {
   component: (props) => (
     <button
       type="button"
-      onClick={() => {
-        const onClick = props.props.onClick;
-        if (onClick && typeof onClick === 'object' && 'action' in (onClick as Record<string, unknown>)) {
-          void props.helpers.dispatch(onClick as any);
-        }
-      }}
+      onClick={() => void props.events.onClick?.()}
     >
       {String(props.props.label ?? props.meta.label ?? 'Button')}
     </button>
-  )
+  ),
+  fields: [{ key: 'onClick', kind: 'event' }]
 };
 
 function createScope(data: Record<string, any>): ScopeRef {
@@ -260,6 +269,38 @@ describe('createSchemaRenderer', () => {
     });
   });
 
+  it('renders schema-based dialog titles through the unified render path', async () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button',
+              label: 'Open compiled dialog',
+              onClick: {
+                action: 'dialog',
+                dialog: {
+                  title: { type: 'text', text: 'Compiled dialog title' },
+                  body: [{ type: 'text', text: 'Dialog body' }]
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Open compiled dialog'));
+
+    expect(await screen.findByText('Compiled dialog title')).toBeTruthy();
+    expect(await screen.findByText('Dialog body')).toBeTruthy();
+  });
+
   it('supports wrapComponent plugins in the renderer pipeline', () => {
     const wrapped = vi.fn();
     const plugin: RendererPlugin = {
@@ -368,5 +409,74 @@ describe('createSchemaRenderer', () => {
       expect(screen.getByTestId('aggregate-error').textContent).toBe('Metadata requires at least one entry');
       expect(screen.getByTestId('field-error').textContent).toBe('Entry 1 value is required');
     });
+  });
+});
+
+describe('renderer slot helpers', () => {
+  it('prefers region content over prop, meta, and fallback values', () => {
+    const regionContent = <span>Region title</span>;
+    const slotContent = resolveRendererSlotContent(
+      {
+        props: { title: 'Prop title' },
+        meta: { label: 'Meta title' } as any,
+        regions: {
+          title: {
+            key: 'title',
+            path: '$.title',
+            node: [] as any,
+            render: () => regionContent
+          }
+        }
+      },
+      'title',
+      { metaKey: 'label', fallback: 'Fallback title' }
+    );
+
+    expect(slotContent).toBe(regionContent);
+  });
+
+  it('falls back from prop to meta and then fallback when slot content is absent', () => {
+    const propContent = resolveRendererSlotContent(
+      {
+        props: { label: 'Prop label' },
+        meta: { label: 'Meta label' } as any,
+        regions: {}
+      },
+      'label',
+      { metaKey: 'label', fallback: 'Fallback label' }
+    );
+    const metaContent = resolveRendererSlotContent(
+      {
+        props: {},
+        meta: { label: 'Meta label' } as any,
+        regions: {}
+      },
+      'label',
+      { metaKey: 'label', fallback: 'Fallback label' }
+    );
+    const fallbackContent = resolveRendererSlotContent(
+      {
+        props: {},
+        meta: {} as any,
+        regions: {}
+      },
+      'label',
+      { metaKey: 'label', fallback: 'Fallback label' }
+    );
+
+    expect(propContent).toBe('Prop label');
+    expect(metaContent).toBe('Meta label');
+    expect(fallbackContent).toBe('Fallback label');
+  });
+
+  it('treats nullish and false slot content as absent but keeps renderable arrays and zero', () => {
+    expect(hasRendererSlotContent(undefined)).toBe(false);
+    expect(hasRendererSlotContent(null)).toBe(false);
+    expect(hasRendererSlotContent(false)).toBe(false);
+    expect(hasRendererSlotContent([])).toBe(false);
+    expect(hasRendererSlotContent([null, false, undefined])).toBe(false);
+    expect(hasRendererSlotContent([null, <span key="value">Value</span>])).toBe(true);
+    expect(hasRendererSlotContent(0)).toBe(true);
+    expect(hasRendererSlotContent('')).toBe(true);
   });
 });

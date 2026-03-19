@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/amis-schema';
 import { createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createSchemaRenderer } from '@nop-chaos/amis-react';
@@ -29,16 +29,12 @@ const buttonRenderer: RendererDefinition = {
   component: (props) => (
     <button
       type="button"
-      onClick={() => {
-        const onClick = props.props.onClick;
-        if (onClick && typeof onClick === 'object' && 'action' in (onClick as Record<string, unknown>)) {
-          void props.helpers.dispatch(onClick as any);
-        }
-      }}
+      onClick={() => void props.events.onClick?.()}
     >
       {String(props.props.label ?? props.meta.label ?? 'Button')}
     </button>
-  )
+  ),
+  fields: [{ key: 'onClick', kind: 'event' }]
 };
 
 describe('dataRendererDefinitions', () => {
@@ -98,6 +94,7 @@ describe('dataRendererDefinitions', () => {
     fireEvent.click(inspectButtons[1]);
 
     expect(await screen.findByText('Record details')).toBeTruthy();
+    expect(screen.getByText('User: Bob')).toBeTruthy();
     expect(screen.getByText('Close')).toBeTruthy();
 
     fireEvent.click(screen.getByText('Close'));
@@ -105,5 +102,125 @@ describe('dataRendererDefinitions', () => {
     await waitFor(() => {
       expect(screen.queryByText('Record details')).toBeNull();
     });
+  });
+
+  it('dispatches row click events against the row scope', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      buttonRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              source: [
+                { id: 1, name: 'Alice' },
+                { id: 2, name: 'Bob' }
+              ],
+              onRowClick: {
+                action: 'dialog',
+                dialog: {
+                  title: 'Row click',
+                  body: [{ type: 'text', text: 'Selected ${record.name}' }]
+                }
+              },
+              columns: [
+                {
+                  label: 'Name',
+                  name: 'name'
+                }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Bob'));
+
+    expect(await screen.findByText('Row click')).toBeTruthy();
+    expect(screen.getByText((content) => content.includes('Selected') && content.includes('Bob'))).toBeTruthy();
+  });
+
+  it('renders header, footer, and schema-based empty content through normalized regions', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              header: [{ type: 'text', text: 'Table header' }],
+              footer: [{ type: 'text', text: 'Table footer' }],
+              empty: { type: 'text', text: 'No rows for ${team}' },
+              columns: [
+                {
+                  label: 'Name',
+                  name: 'name'
+                }
+              ],
+              source: []
+            }
+          ]
+        }}
+        data={{ team: 'Ops' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(await screen.findByText('Table header')).toBeTruthy();
+    expect(screen.getByText('Table footer')).toBeTruthy();
+    expect(screen.getByText('No rows for Ops')).toBeTruthy();
+  });
+
+  it('renders plain-value empty content through value-or-region fallback', () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              empty: 'Nothing here',
+              columns: [
+                {
+                  label: 'Name',
+                  name: 'name'
+                }
+              ],
+              source: []
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('Nothing here')).toBeTruthy();
   });
 });

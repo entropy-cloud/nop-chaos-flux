@@ -2,10 +2,13 @@ import React from 'react';
 import type { BaseSchema, CompiledValidationBehavior, RendererComponentProps, RendererDefinition, RuntimeFieldRegistration } from '@nop-chaos/amis-schema';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
 import {
+  formLabelFieldRule,
   getChildFieldUiState,
   getFieldValidationBehavior,
   readFieldValue,
   renderFieldHint,
+  resolveFieldLabelContent,
+  resolveFieldLabelText,
   shouldValidateOn,
   useCompositeChildFieldState,
   useFieldPresentation
@@ -119,6 +122,8 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const currentForm = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
   const presentation = useFieldPresentation(name, currentForm);
+  const labelContent = resolveFieldLabelContent(props);
+  const labelText = resolveFieldLabelText(props, name);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const [items, setItems] = React.useState<ArrayEditorItem[]>(() => toArrayEditorItems(readFieldValue(scope, name)));
   const itemsRef = React.useRef(items);
@@ -173,7 +178,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             {
               path: name,
               rule: 'required',
-              message: `${props.meta.label ?? name} requires at least one item`
+              message: `${labelText} requires at least one item`
             }
           ];
         }
@@ -206,11 +211,11 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
     registrationRef.current = registration;
     return currentForm.registerField(registration);
-  }, [childPaths, currentForm, name, props.meta.label, props.props.itemLabel]);
+  }, [childPaths, currentForm, labelText, name, props.props.itemLabel]);
 
   return (
     <label className={presentation.className}>
-      {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+      {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
       <div className="na-array-editor">
         {items.map((item, index) => {
           return (
@@ -261,6 +266,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 export const arrayEditorRendererDefinition: RendererDefinition = {
   type: 'array-editor',
   component: ArrayEditorRenderer,
+  fields: [formLabelFieldRule],
   validation: {
     kind: 'field',
     valueKind: 'array',

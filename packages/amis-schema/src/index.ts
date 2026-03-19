@@ -269,7 +269,7 @@ export interface ExpressionCompiler {
 }
 
 export type ScopePolicy = 'inherit' | 'isolate' | 'page' | 'form' | 'dialog' | 'row';
-export type SchemaFieldKind = 'meta' | 'prop' | 'region' | 'ignored';
+export type SchemaFieldKind = 'meta' | 'prop' | 'region' | 'value-or-region' | 'event' | 'ignored';
 
 export interface SchemaFieldRule {
   key: string;
@@ -423,6 +423,8 @@ export interface RendererHelpers {
   dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
 }
 
+export type RendererEventHandler = (event?: unknown, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+
 export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   id: string;
   path: SchemaPath;
@@ -431,6 +433,7 @@ export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   props: Readonly<Record<string, unknown>>;
   meta: ResolvedNodeMeta;
   regions: Readonly<Record<string, RenderRegionHandle>>;
+  events: Readonly<Record<string, RendererEventHandler | undefined>>;
   helpers: RendererHelpers;
 }
 
@@ -483,6 +486,8 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   props: CompiledRuntimeValue<Record<string, unknown>>;
   validation?: CompiledFormValidationModel;
   regions: Readonly<Record<string, CompiledRegion>>;
+  eventActions: Readonly<Record<string, unknown>>;
+  eventKeys: readonly string[];
   flags: CompiledNodeFlags;
   createRuntimeState(): CompiledNodeRuntimeState;
 }
@@ -580,6 +585,8 @@ export interface DialogState {
   id: string;
   dialog: Record<string, any>;
   scope: ScopeRef;
+  title?: RenderNodeInput | string;
+  body?: RenderNodeInput;
 }
 
 export interface PageStoreState {
@@ -630,7 +637,7 @@ export interface FormRuntime {
 export interface PageRuntime {
   store: PageStoreApi;
   scope: ScopeRef;
-  openDialog(dialog: Record<string, any>, scope: ScopeRef): string;
+  openDialog(dialog: Record<string, any>, scope: ScopeRef, runtime: RendererRuntime): string;
   closeDialog(dialogId?: string): void;
   refresh(): void;
 }

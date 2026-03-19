@@ -2,8 +2,11 @@ import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/amis-schema';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
 import {
+  formLabelFieldRule,
   readCheckboxGroupValue,
   renderFieldHint,
+  resolveFieldLabelContent,
+  resolveFieldLabelText,
   useFieldPresentation
 } from '../field-utils';
 import type { TagListSchema } from '../schemas';
@@ -14,6 +17,8 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const name = String(props.props.name ?? props.schema.name ?? '');
   const value = readCheckboxGroupValue(scope, name);
   const presentation = useFieldPresentation(name, currentForm);
+  const labelContent = resolveFieldLabelContent(props);
+  const labelText = resolveFieldLabelText(props, name);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];
 
   const syncErrorVisibility = React.useCallback(() => {
@@ -45,7 +50,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
             {
               path: name,
               rule: 'required',
-              message: `${props.meta.label ?? name} requires at least one tag`
+              message: `${labelText} requires at least one tag`
             }
           ];
         }
@@ -53,11 +58,11 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
         return [];
       }
     });
-  }, [currentForm, name, props.meta.label]);
+  }, [currentForm, labelText, name]);
 
   return (
     <label className={presentation.className}>
-      {props.meta.label ? <span className="na-field__label">{props.meta.label}</span> : null}
+      {labelContent ? <span className="na-field__label">{labelContent}</span> : null}
       <div className="na-tag-list">
         {tags.map((tag) => {
           const active = value.includes(tag);
@@ -102,5 +107,6 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
 
 export const tagListRendererDefinition: RendererDefinition = {
   type: 'tag-list',
-  component: TagListRenderer
+  component: TagListRenderer,
+  fields: [formLabelFieldRule]
 };

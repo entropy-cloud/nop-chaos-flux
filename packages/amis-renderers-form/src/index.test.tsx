@@ -5,6 +5,7 @@ import type { ApiObject, ApiRequestContext, RendererComponentProps, RendererDefi
 import { createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createSchemaRenderer } from '@nop-chaos/amis-react';
 import { useAggregateError, useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
+import { basicRendererDefinitions } from '@nop-chaos/amis-renderers-basic';
 import { formRendererDefinitions } from './index';
 
 const submitCalls: Array<Record<string, any>> = [];
@@ -26,16 +27,12 @@ const buttonRenderer: RendererDefinition = {
   component: (props) => (
     <button
       type="button"
-      onClick={() => {
-        const onClick = props.props.onClick;
-        if (onClick && typeof onClick === 'object' && 'action' in (onClick as Record<string, unknown>)) {
-          void props.helpers.dispatch(onClick as any);
-        }
-      }}
+      onClick={() => void props.events.onClick?.()}
     >
       {String(props.props.label ?? props.meta.label ?? 'Button')}
     </button>
-  )
+  ),
+  fields: [{ key: 'onClick', kind: 'event' }]
 };
 
 function ContactGroupRenderer(props: RendererComponentProps) {
@@ -1563,5 +1560,92 @@ describe('formRendererDefinitions', () => {
     await waitFor(() => {
       expect(fetcherMock).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('renders input labels from schema fragments through field metadata', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            username: 'Alice'
+          },
+          body: [
+            {
+              type: 'input-text',
+              name: 'username',
+              label: { type: 'tpl', tpl: 'User ${user.name}' }
+            }
+          ]
+        }}
+        data={{ user: { name: 'Label' } }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(await screen.findByText('User Label')).toBeTruthy();
+    expect(screen.getByDisplayValue('Alice')).toBeTruthy();
+  });
+
+  it('renders composite field labels from schema fragments through field metadata', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            metadata: []
+          },
+          body: [
+            {
+              type: 'key-value',
+              name: 'metadata',
+              label: { type: 'tpl', tpl: 'Meta ${user.name}' }
+            }
+          ]
+        }}
+        data={{ user: { name: 'Fields' } }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(await screen.findByText('Meta Fields')).toBeTruthy();
+  });
+
+  it('renders form body and actions through shared slot helpers', () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'text',
+              text: 'Form body content'
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Form action button'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('Form body content')).toBeTruthy();
+    expect(screen.getByText('Form action button')).toBeTruthy();
   });
 });

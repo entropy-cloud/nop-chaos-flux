@@ -47,6 +47,10 @@ function isCompiledNode(input: unknown): input is CompiledSchemaNode {
   );
 }
 
+function isCompiledNodeArray(input: unknown): input is CompiledSchemaNode[] {
+  return Array.isArray(input) && input.every((item) => isCompiledNode(item));
+}
+
 
 function normalizeNodeInput(runtime: RendererRuntime, input: RenderNodeInput): CompiledSchemaNode | CompiledSchemaNode[] | null {
   if (!input) {
@@ -78,6 +82,49 @@ function normalizeNodeInput(runtime: RendererRuntime, input: RenderNodeInput): C
   }
 
   return input as CompiledSchemaNode;
+}
+
+export function resolveRendererSlotContent(
+  props: Pick<RendererComponentProps, 'props' | 'meta' | 'regions'>,
+  slotKey: string,
+  options?: {
+    metaKey?: string;
+    fallback?: React.ReactNode;
+  }
+) {
+  const regionContent = props.regions[slotKey]?.render();
+
+  if (regionContent !== undefined && regionContent !== null) {
+    return regionContent;
+  }
+
+  const propValue = (props.props as Record<string, unknown>)[slotKey] as React.ReactNode | undefined;
+
+  if (propValue !== undefined && propValue !== null) {
+    return propValue;
+  }
+
+  if (options?.metaKey) {
+    const metaValue = (props.meta as unknown as Record<string, unknown>)[options.metaKey] as React.ReactNode | undefined;
+
+    if (metaValue !== undefined && metaValue !== null) {
+      return metaValue;
+    }
+  }
+
+  return options?.fallback;
+}
+
+export function hasRendererSlotContent(content: React.ReactNode): boolean {
+  if (content === null || content === undefined || content === false) {
+    return false;
+  }
+
+  if (Array.isArray(content)) {
+    return content.some((item): boolean => hasRendererSlotContent(item));
+  }
+
+  return true;
 }
 
 function mergeActionContext(base: {
@@ -183,12 +230,24 @@ function DialogHost() {
       {dialogs.map((dialog: DialogState) => (
         <div key={dialog.id} className="na-dialog-backdrop">
           <div className="na-dialog-card">
-            {typeof dialog.dialog.title === 'string' ? <h3>{dialog.dialog.title}</h3> : null}
+            {dialog.title
+              ? (
+                  <ScopeContext.Provider value={dialog.scope}>
+                    <h3>
+                      {typeof dialog.title === 'string'
+                        ? dialog.title
+                        : isCompiledNode(dialog.title) || isCompiledNodeArray(dialog.title)
+                        ? <RenderNodes input={dialog.title} options={{ scope: dialog.scope }} />
+                        : String(dialog.title)}
+                    </h3>
+                  </ScopeContext.Provider>
+                )
+              : null}
             <button className="na-dialog-close" type="button" onClick={() => page.closeDialog(dialog.id)}>
               Close
             </button>
             <ScopeContext.Provider value={dialog.scope}>
-              <RenderNodes input={dialog.dialog.body as RenderNodeInput} options={{ scope: dialog.scope }} />
+              <RenderNodes input={(dialog.body ?? dialog.dialog.body) as RenderNodeInput} options={{ scope: dialog.scope }} />
             </ScopeContext.Provider>
           </div>
         </div>
@@ -239,6 +298,27 @@ function NodeRenderer(props: {
     [runtime, activeScope, activeForm, props.page, props.node]
   );
 
+  const events = useMemo(() => {
+    return Object.fromEntries(
+      props.node.eventKeys.map((key) => {
+        const action = props.node.eventActions[key];
+
+        if (!action) {
+          return [key, undefined];
+        }
+
+        return [
+          key,
+          (event?: unknown, eventContext?: Partial<ActionContext>) =>
+            helpers.dispatch(action as any, {
+              ...eventContext,
+              event
+            })
+        ];
+      })
+    );
+  }, [helpers, props.node.eventActions, props.node.eventKeys]);
+
   const regions = useMemo(() => {
     return Object.fromEntries(
       Object.entries(props.node.regions).map(([key, region]) => [
@@ -261,6 +341,7 @@ function NodeRenderer(props: {
     props: resolvedProps.value,
     meta,
     regions,
+    events,
     helpers
   };
 

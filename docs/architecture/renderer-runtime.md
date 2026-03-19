@@ -221,6 +221,26 @@ function EmptyStateWrapper(props: RendererComponentProps<EmptyWrapperSchema>) {
 
 This path should exist, but precompiled regions remain the preferred path.
 
+## Field Semantics for Slots
+
+When a renderer needs slot-like behavior such as `title`, `empty`, or `item`, field interpretation should come from renderer field metadata rather than renderer-local guesses.
+
+Rule:
+
+- schema authors declare intent with normal schema fields
+- renderer definitions declare how each field is interpreted
+- the compiler normalizes those fields into `props` or `regions`
+- renderer components adapt normalized values to third-party component APIs
+
+Recommended direction:
+
+- plain values remain normal compiled props
+- child fragments become compiled regions
+- render-prop functions are synthesized inside the renderer adapter layer
+- selected fields such as `title` may eventually support `value-or-region` semantics through richer field metadata
+
+See `docs/architecture/field-metadata-slot-modeling.md` for the detailed slot and field-metadata design.
+
 ## Render Context Split
 
 Do not put all runtime and render state into one giant React context.
@@ -368,5 +388,6 @@ This is the core pattern for row scope and local fragment rendering.
 ## Related Documents
 
 - Official architecture: `docs/architecture/amis-core.md`
+- Field metadata and slot modeling: `docs/architecture/field-metadata-slot-modeling.md`
 - Interface map: `docs/references/renderer-interfaces.md`
 - Example schema: `docs/examples/user-management-schema.md`

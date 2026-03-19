@@ -1,6 +1,18 @@
 import React from 'react';
-import type { CompiledValidationBehavior, FormFieldStateSnapshot, FormRuntime } from '@nop-chaos/amis-schema';
-import { useAggregateError, useChildFieldState, useOwnedFieldState, useRenderScope } from '@nop-chaos/amis-react';
+import type {
+  CompiledValidationBehavior,
+  FormFieldStateSnapshot,
+  FormRuntime,
+  RendererComponentProps,
+  SchemaFieldRule
+} from '@nop-chaos/amis-schema';
+import { resolveRendererSlotContent, useAggregateError, useChildFieldState, useOwnedFieldState, useRenderScope } from '@nop-chaos/amis-react';
+
+export const formLabelFieldRule: SchemaFieldRule = {
+  key: 'label',
+  kind: 'value-or-region',
+  regionKey: 'label'
+};
 
 export const defaultValidationBehavior: CompiledValidationBehavior = {
   triggers: ['blur'],
@@ -121,6 +133,22 @@ export function renderFieldHint(input: {
   }
 
   return null;
+}
+
+export function resolveFieldLabelContent(props: Pick<RendererComponentProps, 'props' | 'meta' | 'regions'>) {
+  return resolveRendererSlotContent(props, 'label', { metaKey: 'label' });
+}
+
+export function resolveFieldLabelText(props: Pick<RendererComponentProps, 'props' | 'meta'>, fallback?: string) {
+  if (typeof props.props.label === 'string' && props.props.label) {
+    return props.props.label;
+  }
+
+  if (typeof props.meta.label === 'string' && props.meta.label) {
+    return props.meta.label;
+  }
+
+  return fallback;
 }
 
 export function getChildFieldUiState(input: {

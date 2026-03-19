@@ -25,6 +25,38 @@ import type {
 } from '@nop-chaos/amis-schema';
 import { META_FIELDS, createNodeId, isSchemaInput } from '@nop-chaos/amis-schema';
 
+function normalizeTableColumns(
+  value: unknown,
+  path: string,
+  regions: Record<string, CompiledRegion>,
+  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => CompiledSchemaNode | CompiledSchemaNode[]
+) {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  return value.map((column, index) => {
+    if (!column || typeof column !== 'object' || !('buttons' in (column as Record<string, unknown>))) {
+      return column;
+    }
+
+    const buttonSchemas = (column as Record<string, unknown>).buttons;
+
+    if (!isSchemaInput(buttonSchemas)) {
+      return column;
+    }
+
+    const regionKey = `columns.${index}.buttons`;
+    regions[regionKey] = createCompiledRegion(regionKey, buttonSchemas, `${path}.columns[${index}].buttons`, compileSchema);
+
+    const { buttons: _buttons, ...rest } = column as Record<string, unknown>;
+    return {
+      ...rest,
+      buttonsRegionKey: regionKey
+    };
+  });
+}
+
 const DEFAULT_FIELD_RULES: Record<string, SchemaFieldRule> = {
   body: { key: 'body', kind: 'region', regionKey: 'body' },
   actions: { key: 'actions', kind: 'region', regionKey: 'actions' },
@@ -50,20 +82,46 @@ function classifyField(renderer: RendererDefinition, key: string): SchemaFieldRu
     return { key, kind: 'region', regionKey: key };
   }
 
+  if (/^on[A-Z]/.test(key)) {
+    return { key, kind: 'event' };
+  }
+
   return DEFAULT_FIELD_RULES[key] ?? { key, kind: 'prop' };
 }
 
-function buildCompiledMeta(schema: BaseSchema, expressionCompiler: ExpressionCompiler): CompiledSchemaMeta {
-  return {
-    id: schema.id ? expressionCompiler.compileValue(schema.id) : undefined,
-    name: schema.name ? expressionCompiler.compileValue(schema.name) : undefined,
-    label: schema.label ? expressionCompiler.compileValue(schema.label) : undefined,
-    title: schema.title ? expressionCompiler.compileValue(schema.title) : undefined,
-    className: schema.className ? expressionCompiler.compileValue(schema.className) : undefined,
-    visible: schema.visible !== undefined ? expressionCompiler.compileValue(schema.visible) : undefined,
-    hidden: schema.hidden !== undefined ? expressionCompiler.compileValue(schema.hidden) : undefined,
-    disabled: schema.disabled !== undefined ? expressionCompiler.compileValue(schema.disabled) : undefined
-  };
+function buildCompiledMeta(
+  schema: BaseSchema,
+  renderer: RendererDefinition,
+  expressionCompiler: ExpressionCompiler
+): CompiledSchemaMeta {
+  const meta: CompiledSchemaMeta = {};
+
+  for (const key of META_FIELDS) {
+    if (classifyField(renderer, key).kind !== 'meta') {
+      continue;
+    }
+
+    const value = schema[key as keyof BaseSchema];
+
+    if (value === undefined) {
+      continue;
+    }
+
+    switch (key) {
+      case 'id':
+      case 'name':
+      case 'label':
+      case 'title':
+      case 'className':
+      case 'visible':
+      case 'hidden':
+      case 'disabled':
+        meta[key] = expressionCompiler.compileValue(value as any);
+        break;
+    }
+  }
+
+  return meta;
 }
 
 function isCompiledStatic(compiled: CompiledRuntimeValue<unknown> | undefined): boolean {
@@ -475,9 +533,11 @@ export function createSchemaCompiler(input: {
   function compileSingleNode(schema: BaseSchema, options: CompileNodeOptions): CompiledSchemaNode {
     const renderer = options.renderer;
     const path = options.path;
-    const meta = buildCompiledMeta(schema, expressionCompiler);
+    const meta = buildCompiledMeta(schema, renderer, expressionCompiler);
     const propSource: Record<string, unknown> = {};
     const regions: Record<string, CompiledRegion> = {};
+    const eventActions: Record<string, unknown> = {};
+    const eventKeys: string[] = [];
 
     for (const key of Object.keys(schema)) {
       const rule = classifyField(renderer, key);
@@ -487,7 +547,13 @@ export function createSchemaCompiler(input: {
         continue;
       }
 
-      if (rule.kind === 'region') {
+      if (rule.kind === 'event') {
+        eventActions[key] = value;
+        eventKeys.push(key);
+        continue;
+      }
+
+      if (rule.kind === 'region' || (rule.kind === 'value-or-region' && isSchemaInput(value))) {
         regions[rule.regionKey ?? key] = createCompiledRegion(
           rule.regionKey ?? key,
           value,
@@ -497,7 +563,9 @@ export function createSchemaCompiler(input: {
         continue;
       }
 
-      propSource[key] = value;
+      propSource[key] = renderer.type === 'table' && key === 'columns'
+        ? normalizeTableColumns(value, path, regions, compileSchema)
+        : value;
     }
 
     const props = expressionCompiler.compileValue(propSource);
@@ -534,6 +602,8 @@ export function createSchemaCompiler(input: {
             )
           : undefined,
       regions,
+      eventActions,
+      eventKeys,
       flags,
       createRuntimeState() {
         return createNodeRuntimeState(this);

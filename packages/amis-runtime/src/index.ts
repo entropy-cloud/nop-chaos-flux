@@ -165,6 +165,11 @@ export function createRendererRuntime(input: {
     evaluate,
     executeAjaxAction,
     submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api),
+    runtime: {
+      compile(schema) {
+        return schemaCompiler.compile(schema);
+      }
+    },
     createDialogScope: (ctx) =>
       createScopeRef({
         id: `${ctx.node?.id ?? ctx.scope.id}:dialog-scope`,

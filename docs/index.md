@@ -16,6 +16,7 @@ Choose the smallest document that matches the task.
 | --- | --- | --- |
 | Understand the current official architecture direction | `docs/architecture/amis-core.md` | `docs/architecture/renderer-runtime.md` |
 | Change React integration, renderer contracts, or region rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
+| Design slot fields such as `title`, `empty`, or render-prop adapters | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
 | Design form validation and field rule extraction | `docs/architecture/form-validation.md` | `docs/architecture/renderer-runtime.md` |
 | Plan how to close the remaining validation gaps toward RHF/Yup-level capability | `docs/architecture/form-validation-completion-plan.md` | `docs/architecture/form-validation.md` |
 | Follow the concrete step-by-step validation implementation order | `docs/plans/form-validation-improvement-execution-plan.md` | `docs/architecture/form-validation-completion-plan.md` |
@@ -37,6 +38,9 @@ Choose the smallest document that matches the task.
 - `docs/architecture/renderer-runtime.md`
   - Internal renderer and React integration design.
   - Use this when changing component contracts, hooks, regions, and performance behavior.
+- `docs/architecture/field-metadata-slot-modeling.md`
+  - Field-level semantics for slots, regions, and render-prop adaptation.
+  - Use this when deciding whether fields such as `title` should behave as values, regions, or both.
 - `docs/architecture/form-validation.md`
   - Preferred form validation architecture.
   - Use this when changing rule extraction, field registration, or form runtime validation behavior.
