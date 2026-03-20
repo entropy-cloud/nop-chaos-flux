@@ -15,7 +15,7 @@ This plan is meant to be executed incrementally. Each step should land as a cohe
 This plan builds on:
 
 - `docs/architecture/form-validation.md`
-- `docs/architecture/form-validation-completion-plan.md`
+- `docs/plans/03-form-validation-completion-plan.md`
 - `docs/references/react-hook-form-template-notes.md`
 - `docs/references/yup-template-notes.md`
 
@@ -536,6 +536,6 @@ That is the best place to resume coding because:
 ## Related Documents
 
 - `docs/architecture/form-validation.md`
-- `docs/architecture/form-validation-completion-plan.md`
+- `docs/plans/03-form-validation-completion-plan.md`
 - `docs/references/react-hook-form-template-notes.md`
 - `docs/references/yup-template-notes.md`

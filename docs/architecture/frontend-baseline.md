@@ -116,4 +116,4 @@ Treat the following as stable defaults unless there is a strong reason to change
 
 - Core architecture: `docs/architecture/amis-core.md`
 - Runtime design: `docs/architecture/renderer-runtime.md`
-- Delivery planning: `docs/plans/development-plan.md`
+- Delivery planning: `docs/plans/02-development-plan.md`

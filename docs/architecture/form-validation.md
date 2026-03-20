@@ -306,5 +306,5 @@ Ideas to treat carefully:
 
 - `docs/architecture/amis-core.md`
 - `docs/architecture/renderer-runtime.md`
-- `docs/plans/development-plan.md`
+- `docs/plans/02-development-plan.md`
 - `docs/references/legacy-implementation-notes.md`

@@ -1,5 +1,12 @@
 import React from 'react';
-import type { BaseSchema, CompiledValidationBehavior, RendererComponentProps, RendererDefinition, RuntimeFieldRegistration } from '@nop-chaos/amis-schema';
+import type {
+  BaseSchema,
+  CompiledValidationBehavior,
+  RendererComponentProps,
+  RendererDefinition,
+  RuntimeFieldRegistration,
+  ValidationRule
+} from '@nop-chaos/amis-schema';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
 import {
   formLabelFieldRule,
@@ -172,7 +179,6 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   const name = String(props.props.name ?? props.schema.name ?? '');
   const presentation = useFieldPresentation(name, currentForm);
   const labelContent = resolveFieldLabelContent(props);
-  const labelText = resolveFieldLabelText(props, name);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const [pairs, setPairs] = React.useState<KeyValuePair[]>(() => toKeyValuePairs(readFieldValue(scope, name)));
   const pairsRef = React.useRef(pairs);
@@ -224,19 +230,6 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       syncValue() {
         return pairsRef.current;
       },
-      validate() {
-        if (pairsRef.current.length === 0) {
-          return [
-            {
-              path: name,
-              rule: 'required',
-              message: `${labelText} requires at least one entry`
-            }
-          ];
-        }
-
-        return [];
-      },
       validateChild(path) {
         const relativePath = path.startsWith(`${name}.`) ? path.slice(name.length + 1) : path;
         const match = relativePath.match(/^(\d+)\.(key|value)$/);
@@ -285,7 +278,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
     registrationRef.current = registration;
     return currentForm.registerField(registration);
-  }, [childPaths, currentForm, labelText, name]);
+    }, [childPaths, currentForm, name]);
 
   return (
     <label className={presentation.className}>
@@ -346,8 +339,24 @@ export const keyValueRendererDefinition: RendererDefinition = {
     getFieldPath(schema: BaseSchema) {
       return typeof schema.name === 'string' ? schema.name : undefined;
     },
-    collectRules() {
-      return [];
+    collectRules(schema: BaseSchema) {
+      const keyValueSchema = schema as KeyValueSchema;
+      const rules: ValidationRule[] = [
+        { kind: 'minItems', value: 1, message: `${schema.label ?? schema.name ?? 'Field'} requires at least one entry` }
+      ];
+
+      if (keyValueSchema.uniqueKeys) {
+        rules.push({
+          kind: 'uniqueBy',
+          itemPath: 'key',
+          message:
+            typeof keyValueSchema.uniqueKeys === 'object'
+              ? keyValueSchema.uniqueKeys.message ?? `${schema.label ?? schema.name ?? 'Field'} keys must be unique`
+              : `${schema.label ?? schema.name ?? 'Field'} keys must be unique`
+        });
+      }
+
+      return rules;
     }
   }
 };

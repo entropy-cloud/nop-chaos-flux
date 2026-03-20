@@ -1,10 +1,18 @@
+import {
+  getCompiledValidationNode,
+  getCompiledValidationNodeMap,
+  getCompiledValidationRootPath,
+  getCompiledValidationTraversalOrder,
+  hasCompiledValidationNodes
+} from '@nop-chaos/amis-schema';
 import { createValidationTraversalOrder } from './schema-compiler';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
 
 export function collectSubtreePaths(sharedState: ManagedFormRuntimeSharedState, path: string): string[] {
   const paths = new Set<string>();
+  const traversalTargets = getCompiledValidationTraversalOrder(sharedState.inputValue.validation);
 
-  for (const candidate of sharedState.inputValue.validation?.validationOrder ?? sharedState.inputValue.validation?.order ?? []) {
+  for (const candidate of traversalTargets) {
     if (candidate === path || candidate.startsWith(`${path}.`)) {
       paths.add(candidate);
     }
@@ -26,21 +34,22 @@ export function collectSubtreePaths(sharedState: ManagedFormRuntimeSharedState, 
 }
 
 export function collectSubtreeNodePaths(sharedState: ManagedFormRuntimeSharedState, path: string): string[] {
-  const nodes = sharedState.inputValue.validation?.nodes;
+  const validation = sharedState.inputValue.validation;
+  const nodes = getCompiledValidationNodeMap(validation);
 
-  if (nodes == null || Object.keys(nodes).length === 0) {
+  if (!hasCompiledValidationNodes(validation) || nodes == null) {
     return [];
   }
 
   const nodeMap = nodes;
-  const traversalOrder =
-    sharedState.inputValue.validation?.validationOrder ??
-    createValidationTraversalOrder(nodeMap, sharedState.inputValue.validation?.rootPath);
+  const traversalOrder = getCompiledValidationTraversalOrder(validation);
+  const fallbackTraversalOrder =
+    traversalOrder.length > 0 ? traversalOrder : createValidationTraversalOrder(nodeMap, getCompiledValidationRootPath(validation));
   const seen = new Set<string>();
   const ordered: string[] = [];
 
   function enqueue(candidatePath: string) {
-    const node = nodeMap[candidatePath];
+    const node = getCompiledValidationNode(sharedState.inputValue.validation, candidatePath);
 
     if (!node || node.kind === 'form' || seen.has(candidatePath)) {
       return;
@@ -54,10 +63,10 @@ export function collectSubtreeNodePaths(sharedState: ManagedFormRuntimeSharedSta
     }
   }
 
-  if (nodeMap[path]) {
+  if (getCompiledValidationNode(sharedState.inputValue.validation, path)) {
     enqueue(path);
   } else {
-    for (const candidatePath of traversalOrder) {
+    for (const candidatePath of fallbackTraversalOrder) {
       if (candidatePath === path || candidatePath.startsWith(`${path}.`)) {
         enqueue(candidatePath);
       }

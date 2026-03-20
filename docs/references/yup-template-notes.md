@@ -457,5 +457,5 @@ Those changes would borrow the strongest ideas from Yup while keeping the `nop-a
 ## Related Documents
 
 - `docs/architecture/form-validation.md`
-- `docs/architecture/form-validation-completion-plan.md`
+- `docs/plans/03-form-validation-completion-plan.md`
 - `docs/references/react-hook-form-template-notes.md`

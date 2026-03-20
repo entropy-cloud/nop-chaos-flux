@@ -1401,6 +1401,54 @@ describe('formRendererDefinitions', () => {
     });
   });
 
+  it('supports key-value uniqueKeys shorthand through compiled validation', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            metadata: [
+              { key: 'env', value: 'prod' },
+              { key: 'env', value: 'stage' }
+            ]
+          },
+          body: [
+            {
+              type: 'key-value',
+              name: 'metadata',
+              label: 'Metadata',
+              uniqueKeys: true
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit shorthand metadata',
+              onClick: {
+                action: 'submitForm'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit shorthand metadata'));
+    expect(await screen.findByText('Metadata keys must be unique')).toBeTruthy();
+
+    fireEvent.change(screen.getAllByPlaceholderText('Key')[1], { target: { value: 'tier' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Metadata keys must be unique')).toBeNull();
+    });
+  });
+
   it('supports object-level atLeastOneOf validation in the UI', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, contactGroupRenderer, buttonRenderer]);

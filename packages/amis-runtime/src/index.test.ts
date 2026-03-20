@@ -1,11 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
-import type {
-  ActionSchema,
-  ApiObject,
-  ApiRequestContext,
-  RendererDefinition,
-  RendererEnv,
-  RendererPlugin
+import {
+  getCompiledValidationDependents,
+  getCompiledValidationField,
+  getCompiledValidationNode,
+  getCompiledValidationNodeMap,
+  getCompiledValidationRootPath,
+  getCompiledValidationTraversalOrder,
+  hasCompiledValidationNodes,
+  buildCompiledValidationFieldMap,
+  buildCompiledValidationDependentMap,
+  buildCompiledValidationOrder,
+  buildCompiledFormValidationModel,
+  type ActionSchema,
+  type ApiObject,
+  type ApiRequestContext,
+  type CompiledFormValidationModel,
+  type RendererDefinition,
+  type RendererEnv,
+  type RendererPlugin
 } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { setIn } from '@nop-chaos/amis-schema';
@@ -1113,6 +1125,44 @@ describe('createRendererRuntime', () => {
     expect(node.validation.fields.nickname.behavior.showErrorOn).toEqual(['submit']);
   });
 
+  it('reuses pooled validation behavior objects for equivalent field policies', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([formRenderer, inputRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const node = runtime.compile({
+      type: 'form',
+      validateOn: 'submit',
+      showErrorOn: ['touched', 'submit'],
+      body: [
+        {
+          type: 'input-text',
+          name: 'username',
+          label: 'Username',
+          required: true
+        },
+        {
+          type: 'input-text',
+          name: 'nickname',
+          label: 'Nickname',
+          required: true
+        },
+        {
+          type: 'input-text',
+          name: 'email',
+          label: 'Email',
+          required: true,
+          validateOn: ['blur', 'change']
+        }
+      ]
+    }) as any;
+
+    expect(node.validation.fields.username.behavior).toBe(node.validation.fields.nickname.behavior);
+    expect(node.validation.fields.username.behavior).not.toBe(node.validation.fields.email.behavior);
+    expect(node.validation.fields.username.behavior).toBe(node.validation.nodes.username.behavior);
+  });
+
   it('compiles relational validation rules and dependency metadata', () => {
     const registry = createRendererRegistry([formRenderer, inputRenderer]);
     const runtime = createRendererRuntime({
@@ -1424,6 +1474,99 @@ describe('createRendererRuntime', () => {
     expect(node.validation.fields.reviewers.rules[0].rule).toMatchObject({
       kind: 'minItems',
       value: 1
+    });
+  });
+
+  it('exposes validation compatibility accessors from canonical model data', () => {
+    const validation: CompiledFormValidationModel = {
+      behavior: {
+        triggers: ['blur'],
+        showErrorOn: ['touched', 'submit']
+      },
+      fields: {},
+      order: ['reviewers'],
+      dependents: {
+        role: ['adminCode']
+      },
+      nodes: {
+        '': {
+          path: '',
+          kind: 'form',
+          rules: [],
+          children: ['reviewers']
+        },
+        reviewers: {
+          path: 'reviewers',
+          kind: 'array',
+          controlType: 'array-editor',
+          label: 'Reviewers',
+          behavior: {
+            triggers: ['change'],
+            showErrorOn: ['dirty']
+          },
+          rules: [compiledRule({ kind: 'minItems', value: 1, message: 'Need one reviewer' }, 'reviewers')],
+          children: [],
+          parent: ''
+        },
+        adminCode: {
+          path: 'adminCode',
+          kind: 'field',
+          controlType: 'input-text',
+          label: 'Admin Code',
+          behavior: {
+            triggers: ['blur'],
+            showErrorOn: ['touched', 'submit']
+          },
+          rules: [compiledRule({ kind: 'requiredWhen', path: 'role', value: 'admin' }, 'adminCode')],
+          children: [],
+          parent: ''
+        }
+      },
+      validationOrder: ['reviewers'],
+      rootPath: ''
+    };
+
+    expect(getCompiledValidationTraversalOrder(validation)).toEqual(['reviewers']);
+    expect(getCompiledValidationDependents(validation, 'role')).toEqual(['adminCode']);
+    expect(getCompiledValidationDependents(validation, 'missing')).toEqual([]);
+    expect(getCompiledValidationNodeMap(validation)).toBe(validation.nodes);
+    expect(getCompiledValidationNode(validation, 'reviewers')).toBe(validation.nodes?.reviewers);
+    expect(getCompiledValidationNode(validation, 'missing')).toBeUndefined();
+    expect(getCompiledValidationRootPath(validation)).toBe('');
+    expect(hasCompiledValidationNodes(validation)).toBe(true);
+    expect(hasCompiledValidationNodes(undefined)).toBe(false);
+    expect(buildCompiledValidationDependentMap(validation.nodes)).toEqual({
+      role: ['adminCode']
+    });
+    expect(buildCompiledValidationOrder(validation.nodes, '')).toEqual(['reviewers', 'adminCode']);
+    expect(
+      buildCompiledFormValidationModel({
+        behavior: validation.behavior,
+        nodes: validation.nodes,
+        rootPath: ''
+      })
+    ).toMatchObject({
+      order: ['reviewers', 'adminCode'],
+      validationOrder: ['reviewers', 'adminCode'],
+      dependents: {
+        role: ['adminCode']
+      }
+    });
+    expect(getCompiledValidationField(validation, 'reviewers')).toMatchObject({
+      path: 'reviewers',
+      controlType: 'array-editor',
+      label: 'Reviewers',
+      behavior: {
+        triggers: ['change'],
+        showErrorOn: ['dirty']
+      }
+    });
+    expect(buildCompiledValidationFieldMap(validation.nodes, validation.behavior)).toMatchObject({
+      reviewers: {
+        path: 'reviewers',
+        controlType: 'array-editor',
+        label: 'Reviewers'
+      }
     });
   });
 

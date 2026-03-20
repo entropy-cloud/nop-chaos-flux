@@ -384,5 +384,5 @@ The following are no longer preferred as the main architecture path:
 
 - Runtime and React contracts: `docs/architecture/renderer-runtime.md`
 - Workspace baseline: `docs/architecture/frontend-baseline.md`
-- Development phases: `docs/plans/development-plan.md`
+- Development phases: `docs/plans/02-development-plan.md`
 - Example schema: `docs/examples/user-management-schema.md`

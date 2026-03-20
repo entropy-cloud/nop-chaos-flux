@@ -142,7 +142,8 @@ export const builtInValidators: Record<SyncValidationRuleKind, SyncValidator<any
       : undefined;
   },
   pattern(input) {
-    return typeof input.value === 'string' && input.value !== '' && !new RegExp(input.rule.value).test(input.value)
+    const regex = input.compiledRule.precompiled?.regex ?? new RegExp(input.rule.value);
+    return typeof input.value === 'string' && input.value !== '' && !regex.test(input.value)
       ? createBuiltInError(input)
       : undefined;
   },

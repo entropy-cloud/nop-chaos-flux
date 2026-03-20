@@ -245,7 +245,7 @@ Record what was imported from `refactor-2`, what was intentionally not imported,
 
 ### Suggested file
 
-- `docs/plans/refactor-follow-up-completion-report.md`
+- `docs/plans/07-refactor-follow-up-completion-report.md`
 
 ## Recommended Execution Order
 
@@ -322,8 +322,8 @@ This follow-up plan is complete when:
 
 ## Related Documents
 
-- `docs/plans/development-plan.md`
-- `docs/plans/form-validation-improvement-execution-plan.md`
+- `docs/plans/02-development-plan.md`
+- `docs/plans/04-form-validation-improvement-execution-plan.md`
 - `docs/architecture/amis-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/form-validation.md`

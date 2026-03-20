@@ -123,7 +123,6 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const name = String(props.props.name ?? props.schema.name ?? '');
   const presentation = useFieldPresentation(name, currentForm);
   const labelContent = resolveFieldLabelContent(props);
-  const labelText = resolveFieldLabelText(props, name);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const [items, setItems] = React.useState<ArrayEditorItem[]>(() => toArrayEditorItems(readFieldValue(scope, name)));
   const itemsRef = React.useRef(items);
@@ -172,19 +171,6 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       syncValue() {
         return itemsRef.current;
       },
-      validate() {
-        if (itemsRef.current.length === 0) {
-          return [
-            {
-              path: name,
-              rule: 'required',
-              message: `${labelText} requires at least one item`
-            }
-          ];
-        }
-
-        return [];
-      },
       validateChild(path) {
         const relativePath = path.startsWith(`${name}.`) ? path.slice(name.length + 1) : path;
         const match = relativePath.match(/^(\d+)\.value$/);
@@ -211,7 +197,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
     registrationRef.current = registration;
     return currentForm.registerField(registration);
-  }, [childPaths, currentForm, labelText, name, props.props.itemLabel]);
+    }, [childPaths, currentForm, name, props.props.itemLabel]);
 
   return (
     <label className={presentation.className}>
@@ -273,8 +259,8 @@ export const arrayEditorRendererDefinition: RendererDefinition = {
     getFieldPath(schema: BaseSchema) {
       return typeof schema.name === 'string' ? schema.name : undefined;
     },
-    collectRules() {
-      return [];
+    collectRules(schema: BaseSchema) {
+      return [{ kind: 'minItems', value: 1, message: `${schema.label ?? schema.name ?? 'Field'} requires at least one item` }];
     }
   }
 };

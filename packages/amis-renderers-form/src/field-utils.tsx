@@ -1,9 +1,10 @@
-import type {
-  CompiledValidationBehavior,
-  FormFieldStateSnapshot,
-  FormRuntime,
-  RendererComponentProps,
-  SchemaFieldRule
+import {
+  getCompiledValidationField,
+  type CompiledValidationBehavior,
+  type FormFieldStateSnapshot,
+  type FormRuntime,
+  type RendererComponentProps,
+  type SchemaFieldRule
 } from '@nop-chaos/amis-schema';
 import { resolveRendererSlotContent, useAggregateError, useChildFieldState, useOwnedFieldState, useRenderScope } from '@nop-chaos/amis-react';
 
@@ -23,7 +24,7 @@ export function getFieldValidationBehavior(name: string, currentForm: FormRuntim
     return defaultValidationBehavior;
   }
 
-  const field = currentForm.validation?.fields[name];
+  const field = getCompiledValidationField(currentForm.validation, name);
   return field?.behavior ?? currentForm.validation?.behavior ?? defaultValidationBehavior;
 }
 

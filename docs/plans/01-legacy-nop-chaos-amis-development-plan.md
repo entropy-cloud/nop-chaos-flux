@@ -1,7 +1,7 @@
 # NOP Chaos AMIS Renderer Development Plan
 
 > Canonical planning and architecture references now live under `docs/`.
-> Start with `docs/index.md`, then prefer `docs/plans/development-plan.md`, `docs/architecture/amis-core.md`, and `docs/architecture/renderer-runtime.md`.
+> Start with `docs/index.md`, then prefer `docs/plans/02-development-plan.md`, `docs/architecture/amis-core.md`, and `docs/architecture/renderer-runtime.md`.
 
 ## 1. Goal and Delivery Strategy
 

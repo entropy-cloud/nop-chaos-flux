@@ -415,5 +415,5 @@ Those changes would capture the most valuable RHF design lessons while staying f
 ## Related Documents
 
 - `docs/architecture/form-validation.md`
-- `docs/architecture/form-validation-completion-plan.md`
+- `docs/plans/03-form-validation-completion-plan.md`
 - `docs/architecture/renderer-runtime.md`

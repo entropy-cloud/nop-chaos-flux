@@ -1,5 +1,5 @@
 import { createStore } from 'zustand/vanilla';
-import type { FormStoreApi, FormStoreState, PageStoreApi, PageStoreState } from '@nop-chaos/amis-schema';
+import type { FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, ValidationError } from '@nop-chaos/amis-schema';
 import { setIn } from '@nop-chaos/amis-schema';
 
 export function createFormStore(initialValues: Record<string, any>): FormStoreApi {
@@ -34,6 +34,28 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     store.setState({ [key]: next } as Pick<FormStoreState, K>);
   }
 
+  function setPathErrors(path: string, errors?: ValidationError[]) {
+    const current = store.getState().errors;
+    const existing = current[path];
+
+    if (!errors || errors.length === 0) {
+      if (!existing) {
+        return;
+      }
+
+      const next = { ...current };
+      delete next[path];
+      store.setState({ errors: next });
+      return;
+    }
+
+    if (existing === errors) {
+      return;
+    }
+
+    store.setState({ errors: { ...current, [path]: errors } });
+  }
+
   return {
     getState() {
       return store.getState();
@@ -50,6 +72,9 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     },
     setErrors(errors) {
       store.setState({ errors });
+    },
+    setPathErrors(path, errors) {
+      setPathErrors(path, errors);
     },
     setValidating(path, validating) {
       const current = store.getState().validating;

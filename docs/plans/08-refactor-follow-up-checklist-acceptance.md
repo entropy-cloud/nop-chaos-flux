@@ -2,7 +2,7 @@
 
 ## Verdict
 
-The work defined in `docs/plans/refactor-follow-up-implementation-checklist.md` is complete for this pass.
+The work defined in `docs/plans/06-refactor-follow-up-implementation-checklist.md` is complete for this pass.
 
 This acceptance is scoped to the checklist workstreams `W1` through `W6`. It does not treat the document's deferred items as release blockers for this pass.
 
@@ -52,7 +52,7 @@ Status: complete.
 Evidence:
 
 - `packages/amis-testing/` is no longer present in the workspace
-- the removed files listed in the checklist are documented in `docs/plans/refactor-follow-up-completion-report.md`
+- the removed files listed in the checklist are documented in `docs/plans/07-refactor-follow-up-completion-report.md`
 - no active source or config files import `@nop-chaos/amis-testing`
 
 Acceptance notes:
@@ -98,7 +98,7 @@ Status: complete.
 
 Evidence:
 
-- completion report exists at `docs/plans/refactor-follow-up-completion-report.md`
+- completion report exists at `docs/plans/07-refactor-follow-up-completion-report.md`
 - the report records completed imports from `refactor-2`, removed files, validation commands, and deferred items
 
 ## Validation Status

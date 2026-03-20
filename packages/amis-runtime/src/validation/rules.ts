@@ -173,6 +173,12 @@ export function compileValidationRules(path: string, rules: ValidationRule[]): C
   return rules.map((rule, index) => ({
     id: `${path}#${index}:${rule.kind}`,
     rule,
-    dependencyPaths: collectValidationDependencyPaths(rule)
+    dependencyPaths: collectValidationDependencyPaths(rule),
+    precompiled:
+      rule.kind === 'pattern'
+        ? {
+            regex: new RegExp(rule.value)
+          }
+        : undefined
   }));
 }

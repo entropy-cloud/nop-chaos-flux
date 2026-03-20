@@ -1,7 +1,7 @@
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import type {
   BaseSchema,
-  CompiledFormValidationField,
+  CompiledValidationBehavior,
   CompiledFormValidationModel,
   CompiledValidationNode,
   CompiledNodeRuntimeState,
@@ -21,7 +21,7 @@ import type {
   ValidationTrigger,
   ValidationVisibilityTrigger
 } from '@nop-chaos/amis-schema';
-import { META_FIELDS, createNodeId, isSchemaInput } from '@nop-chaos/amis-schema';
+import { META_FIELDS, buildCompiledFormValidationModel, buildCompiledValidationOrder, createNodeId, isSchemaInput } from '@nop-chaos/amis-schema';
 import {
   collectSchemaValidationRules,
   compileValidationRules,
@@ -230,37 +230,24 @@ function createCompiledRegion(
   };
 }
 
-function buildValidationNodeTraversalOrder(nodes: Record<string, CompiledValidationNode>, rootPath: string | undefined): string[] {
-  const seen = new Set<string>();
-  const ordered: string[] = [];
+function poolValidationBehavior(
+  pool: Map<string, CompiledValidationBehavior>,
+  triggers: ValidationTrigger[],
+  showErrorOn: ValidationVisibilityTrigger[]
+): CompiledValidationBehavior {
+  const key = `${triggers.join('|')}::${showErrorOn.join('|')}`;
+  const existing = pool.get(key);
 
-  function visit(path: string) {
-    const node = nodes[path];
-
-    if (!node || seen.has(path)) {
-      return;
-    }
-
-    seen.add(path);
-
-    if (node.kind !== 'form') {
-      ordered.push(path);
-    }
-
-    for (const childPath of node.children) {
-      visit(childPath);
-    }
+  if (existing) {
+    return existing;
   }
 
-  if (rootPath && nodes[rootPath]) {
-    visit(rootPath);
-  }
-
-  for (const path of Object.keys(nodes)) {
-    visit(path);
-  }
-
-  return ordered;
+  const behavior: CompiledValidationBehavior = {
+    triggers,
+    showErrorOn
+  };
+  pool.set(key, behavior);
+  return behavior;
 }
 
 function collectValidationModel(
@@ -297,8 +284,6 @@ function collectValidationModel(
     nodes.push(current);
   }
 
-  const fields: Record<string, CompiledFormValidationField> = {};
-  const order: string[] = [];
   const validationNodes: Record<string, CompiledValidationNode> = {
     '': {
       path: '',
@@ -308,11 +293,12 @@ function collectValidationModel(
       parent: undefined
     }
   };
-  const dependents = new Map<string, Set<string>>();
-  const rootBehavior = {
-    triggers: options.defaultTriggers ?? (['blur'] as ValidationTrigger[]),
-    showErrorOn: options.defaultShowErrorOn ?? (['touched', 'submit'] as ValidationVisibilityTrigger[])
-  };
+  const behaviorPool = new Map<string, CompiledValidationBehavior>();
+  let rootBehavior = poolValidationBehavior(
+    behaviorPool,
+    options.defaultTriggers ?? (['blur'] as ValidationTrigger[]),
+    options.defaultShowErrorOn ?? (['touched', 'submit'] as ValidationVisibilityTrigger[])
+  );
 
   const visit = (entry: CompiledSchemaNode) => {
     if (!entry.component) {
@@ -320,8 +306,11 @@ function collectValidationModel(
     }
 
     if (entry.type === 'form') {
-      rootBehavior.triggers = normalizeValidationTriggers(entry.schema.validateOn, ['blur']);
-      rootBehavior.showErrorOn = normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, ['touched', 'submit']);
+      rootBehavior = poolValidationBehavior(
+        behaviorPool,
+        normalizeValidationTriggers(entry.schema.validateOn, ['blur']),
+        normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, ['touched', 'submit'])
+      );
     }
 
     const contributor = entry.component.validation;
@@ -342,40 +331,28 @@ function collectValidationModel(
         const parentPath = fieldPath.includes('.') ? fieldPath.split('.').slice(0, -1).join('.') : '';
         const nodeKind = contributor.valueKind === 'array' ? 'array' : contributor.valueKind === 'object' ? 'object' : 'field';
 
-        fields[fieldPath] = {
-          path: fieldPath,
-          controlType: entry.type,
-          label: typeof entry.schema.label === 'string' ? entry.schema.label : undefined,
-          rules: compiledRules,
-          behavior: {
-            triggers: normalizeValidationTriggers(entry.schema.validateOn, rootBehavior.triggers),
-            showErrorOn: normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, rootBehavior.showErrorOn)
-          }
-        };
+        const behavior = poolValidationBehavior(
+          behaviorPool,
+          normalizeValidationTriggers(entry.schema.validateOn, rootBehavior.triggers),
+          normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, rootBehavior.showErrorOn)
+        );
+        const label = typeof entry.schema.label === 'string' ? entry.schema.label : undefined;
 
         validationNodes[fieldPath] = {
           path: fieldPath,
           kind: nodeKind,
           controlType: entry.type,
-          label: typeof entry.schema.label === 'string' ? entry.schema.label : undefined,
+          label,
           rules: compiledRules,
+          behavior,
           children: [],
           parent: parentPath
         };
 
         if (validationNodes[parentPath]) {
           validationNodes[parentPath].children.push(fieldPath);
-        }
+      }
 
-        for (const compiledRule of compiledRules) {
-          for (const dependencyPath of compiledRule.dependencyPaths) {
-            const nextDependents = dependents.get(dependencyPath) ?? new Set<string>();
-            nextDependents.add(fieldPath);
-            dependents.set(dependencyPath, nextDependents);
-          }
-        }
-
-        order.push(fieldPath);
       }
     }
 
@@ -391,17 +368,11 @@ function collectValidationModel(
 
   nodes.forEach(visit);
 
-  return order.length > 0
-    ? {
-        fields,
-        order,
-        behavior: rootBehavior,
-        dependents: Object.fromEntries(Array.from(dependents.entries()).map(([path, targets]) => [path, Array.from(targets)])),
-        nodes: validationNodes,
-        validationOrder: buildValidationNodeTraversalOrder(validationNodes, ''),
-        rootPath: ''
-      }
-    : undefined;
+  return buildCompiledFormValidationModel({
+    behavior: rootBehavior,
+    nodes: validationNodes,
+    rootPath: ''
+  });
 }
 
 function applyWrapComponentPlugins(renderer: RendererDefinition, plugins?: RendererPlugin[]): RendererDefinition {
@@ -564,5 +535,5 @@ export function createValidationTraversalOrder(
   nodes: Record<string, CompiledValidationNode>,
   rootPath: string | undefined
 ): string[] {
-  return buildValidationNodeTraversalOrder(nodes, rootPath);
+  return buildCompiledValidationOrder(nodes, rootPath);
 }

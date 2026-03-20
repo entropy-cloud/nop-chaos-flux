@@ -57,6 +57,7 @@ export interface TagListSchema extends InputSchema {
 
 export interface KeyValueSchema extends InputSchema {
   addLabel?: string;
+  uniqueKeys?: boolean | { message?: string };
 }
 
 export interface KeyValuePair {

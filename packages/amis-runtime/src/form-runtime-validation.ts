@@ -4,16 +4,21 @@ import type {
   ValidationError,
   ValidationResult
 } from '@nop-chaos/amis-schema';
-import { normalizeCompiledValidationRules, normalizeRuntimeValidationErrors } from './form-validation-errors';
+import { getCompiledValidationField, hasCompiledValidationNodes } from '@nop-chaos/amis-schema';
 import { findRuntimeRegistration, syncRegisteredFieldValue } from './form-runtime-registration';
 import { collectSubtreeNodePaths, collectSubtreePaths } from './form-runtime-subtree';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import { normalizeRuntimeValidationErrors } from './validation';
 
 function createValidationResult(errors: ValidationError[]): ValidationResult {
   return {
     ok: errors.length === 0,
     errors
   };
+}
+
+function setPathErrors(sharedState: ManagedFormRuntimeSharedState, path: string, errors: ValidationError[]) {
+  sharedState.store.setPathErrors(path, errors);
 }
 
 export function cancelValidationDebounce(sharedState: ManagedFormRuntimeSharedState, path: string) {
@@ -62,15 +67,7 @@ async function validateRuntimeRegistrationRoot(
   registration: NonNullable<ReturnType<typeof findRuntimeRegistration>['registration']>
 ): Promise<ValidationResult> {
   const runtimeErrors = normalizeRuntimeValidationErrors(await registration.validate?.(), registration, path) ?? [];
-  const nextErrors = { ...sharedState.store.getState().errors };
-
-  if (runtimeErrors.length > 0) {
-    nextErrors[path] = runtimeErrors;
-  } else {
-    delete nextErrors[path];
-  }
-
-  sharedState.store.setErrors(nextErrors);
+  setPathErrors(sharedState, path, runtimeErrors);
   return createValidationResult(runtimeErrors);
 }
 
@@ -86,15 +83,7 @@ async function validateRuntimeRegistrationChild(
     path,
     childPath
   ) ?? [];
-  const nextErrors = { ...sharedState.store.getState().errors };
-
-  if (runtimeErrors.length > 0) {
-    nextErrors[path] = runtimeErrors;
-  } else {
-    delete nextErrors[path];
-  }
-
-  sharedState.store.setErrors(nextErrors);
+  setPathErrors(sharedState, path, runtimeErrors);
   return createValidationResult(runtimeErrors);
 }
 
@@ -154,15 +143,7 @@ async function validateCompiledField(
       return createValidationResult([]);
     }
 
-    const nextErrors = { ...sharedState.store.getState().errors };
-
-    if (errors.length > 0) {
-      nextErrors[path] = errors;
-    } else {
-      delete nextErrors[path];
-    }
-
-    sharedState.store.setErrors(nextErrors);
+    setPathErrors(sharedState, path, errors);
     return createValidationResult(errors);
   } finally {
     if (hasAsyncRules && sharedState.validationRuns.get(path) === runId) {
@@ -172,12 +153,7 @@ async function validateCompiledField(
 }
 
 export async function validatePath(sharedState: ManagedFormRuntimeSharedState, path: string): Promise<ValidationResult> {
-  const field = sharedState.inputValue.validation?.fields[path]
-    ? {
-        ...sharedState.inputValue.validation.fields[path],
-        rules: normalizeCompiledValidationRules(path, sharedState.inputValue.validation.fields[path].rules)
-      }
-    : undefined;
+  const field = getCompiledValidationField(sharedState.inputValue.validation, path);
   const runtimeTarget = findRuntimeRegistration(sharedState.runtimeFieldRegistrations, path);
   const runtimeRegistration = runtimeTarget.registration;
 
@@ -204,7 +180,7 @@ export async function validateSubtreeByNode(
   sharedState: ManagedFormRuntimeSharedState,
   path: string
 ): Promise<FormValidationResult | undefined> {
-  if (!sharedState.inputValue.validation?.nodes) {
+  if (!hasCompiledValidationNodes(sharedState.inputValue.validation)) {
     return undefined;
   }
 

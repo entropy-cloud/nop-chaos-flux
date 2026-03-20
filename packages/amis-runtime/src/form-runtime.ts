@@ -2,6 +2,9 @@ import type { ApiObject, FormValidationResult, FormRuntime, RuntimeFieldRegistra
 import {
   clampArrayIndex,
   clampInsertIndex,
+  getCompiledValidationDependents,
+  getCompiledValidationField,
+  getCompiledValidationTraversalOrder,
   insertArrayValue,
   moveArrayValue,
   removeArrayValue,
@@ -53,7 +56,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   };
 
   async function revalidateDependents(path: string) {
-    const dependentPaths = inputValue.validation?.dependents?.[path] ?? [];
+    const dependentPaths = getCompiledValidationDependents(inputValue.validation, path);
 
     for (const dependentPath of dependentPaths) {
       if (dependentPath === path) {
@@ -110,7 +113,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       const fieldErrors: Record<string, ValidationError[]> = {};
       const errors: ValidationError[] = [];
 
-      for (const path of inputValue.validation?.order ?? []) {
+      const validationPaths = getCompiledValidationTraversalOrder(inputValue.validation);
+
+      for (const path of validationPaths) {
         const result = await thisForm.validateField(path);
 
         if (!result.ok) {
@@ -120,7 +125,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       }
 
       for (const [path, registration] of runtimeFieldRegistrations) {
-        if (inputValue.validation?.fields[path]) {
+        if (getCompiledValidationField(inputValue.validation, path)) {
           if (registration.validateChild && registration.childPaths?.length) {
             for (const childPath of registration.childPaths) {
               const result = await thisForm.validateField(childPath);
@@ -238,17 +243,19 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         return;
       }
 
-      const nextErrors = { ...store.getState().errors };
-      delete nextErrors[path];
-      store.setErrors(nextErrors);
+      store.setPathErrors(path);
     },
     async submit(api?: ApiObject) {
       store.setSubmitting(true);
 
-      for (const path of inputValue.validation?.order ?? []) {
-        const triggers = inputValue.validation?.fields[path]?.behavior?.triggers ?? defaultValidationTriggers;
+      const submitTargets = getCompiledValidationTraversalOrder(inputValue.validation);
 
-        if (triggers.includes('submit')) {
+      for (const path of submitTargets) {
+        const behavior = getCompiledValidationField(inputValue.validation, path)?.behavior;
+        const triggers = behavior?.triggers ?? defaultValidationTriggers;
+        const showErrorOn = behavior?.showErrorOn ?? inputValue.validation?.behavior.showErrorOn ?? ['touched', 'submit'];
+
+        if (triggers.includes('submit') || showErrorOn.includes('submit')) {
           store.setTouched(path, true);
         }
       }
