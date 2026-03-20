@@ -30,6 +30,8 @@ import { EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormField
 
 export { createDefaultEnv, createDefaultRegistry } from './defaults';
 
+const EMPTY_SCOPE_DATA: Record<string, any> = {};
+
 function isCompiledNode(input: unknown): input is CompiledSchemaNode {
   if (!input || typeof input !== 'object') {
     return false;
@@ -174,7 +176,7 @@ function RenderNodes(props: { input: RenderNodeInput; options?: RenderFragmentOp
   const currentScope = useRenderScope();
   const currentForm = useCurrentForm();
   const currentPage = useCurrentPage();
-  const compiled = normalizeNodeInput(runtime, props.input);
+  const compiled = useMemo(() => normalizeNodeInput(runtime, props.input), [runtime, props.input]);
 
   if (!compiled) {
     return null;
@@ -263,27 +265,64 @@ function NodeRenderer(props: {
   page?: PageRuntime;
 }) {
   const runtime = useRendererRuntime();
-  const stateRef = useRef<CompiledNodeRuntimeState>(props.node.createRuntimeState());
+  const stateRef = useRef<{ nodeId: string; state: CompiledNodeRuntimeState } | undefined>(undefined);
+
+  if (!stateRef.current || stateRef.current.nodeId !== props.node.id) {
+    stateRef.current = {
+      nodeId: props.node.id,
+      state: props.node.createRuntimeState()
+    };
+  }
+
+  const nodeState = stateRef.current.state;
   const renderStartedAtRef = useRef(0);
   renderStartedAtRef.current = Date.now();
-  const meta = runtime.resolveNodeMeta(props.node, props.scope, stateRef.current);
-  const resolvedProps = runtime.resolveNodeProps(props.node, props.scope, stateRef.current);
-  const activeForm = useMemo(() => {
-    if (props.node.component.scopePolicy !== 'form') {
-      return props.form;
+  const meta = runtime.resolveNodeMeta(props.node, props.scope, nodeState);
+  const resolvedProps = runtime.resolveNodeProps(props.node, props.scope, nodeState);
+  const formRef = useRef<{
+    nodeId: string;
+    formId: string;
+    parentScope: ScopeRef;
+    page?: PageRuntime;
+    validation: CompiledSchemaNode['validation'];
+    form: FormRuntime;
+  } | undefined>(undefined);
+  let activeForm = props.form;
+
+  if (props.node.component.scopePolicy === 'form') {
+    const formId = typeof resolvedProps.value.id === 'string' ? resolvedProps.value.id : props.node.id;
+    const initialValues =
+      resolvedProps.value.data && typeof resolvedProps.value.data === 'object'
+        ? (resolvedProps.value.data as Record<string, any>)
+        : undefined;
+
+    if (
+      !formRef.current ||
+      formRef.current.nodeId !== props.node.id ||
+      formRef.current.formId !== formId ||
+      formRef.current.parentScope !== props.scope ||
+      formRef.current.page !== props.page ||
+      formRef.current.validation !== props.node.validation
+    ) {
+      formRef.current = {
+        nodeId: props.node.id,
+        formId,
+        parentScope: props.scope,
+        page: props.page,
+        validation: props.node.validation,
+        form: runtime.createFormRuntime({
+          id: formId,
+          initialValues,
+          parentScope: props.scope,
+          page: props.page,
+          validation: props.node.validation
+        })
+      };
     }
 
-    return runtime.createFormRuntime({
-      id: typeof resolvedProps.value.id === 'string' ? resolvedProps.value.id : props.node.id,
-      initialValues:
-        resolvedProps.value.data && typeof resolvedProps.value.data === 'object'
-          ? (resolvedProps.value.data as Record<string, any>)
-          : undefined,
-      parentScope: props.scope,
-      page: props.page,
-      validation: props.node.validation
-    });
-  }, [props.form, props.node.component.scopePolicy, props.node.id, props.node.validation, props.page, props.scope, resolvedProps.value, runtime]);
+    activeForm = formRef.current.form;
+  }
+
   const activeScope = activeForm?.scope ?? props.scope;
 
   const helpers = useMemo(
@@ -400,7 +439,13 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       });
     }, [props.env, props.formulaCompiler, props.plugins, props.registry, props.pageStore, props.onActionError]);
 
-    const page = useMemo(() => runtime.createPageRuntime(props.data), [runtime, props.data]);
+    const pageData = props.data ?? EMPTY_SCOPE_DATA;
+    const page = useMemo(() => runtime.createPageRuntime(pageData), [runtime]);
+
+    if (page.store.getState().data !== pageData) {
+      page.store.setData(pageData);
+    }
+
     const rootScope = props.parentScope ?? page.scope;
 
     return (

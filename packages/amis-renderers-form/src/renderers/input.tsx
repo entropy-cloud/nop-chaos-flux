@@ -4,8 +4,8 @@ import {
   createFieldHandlers,
   formLabelFieldRule,
   readCheckboxGroupValue,
-  readFieldValue,
   resolveFieldLabelContent,
+  useBoundFieldValue,
   useFieldPresentation
 } from '../field-utils';
 import { FieldHint, FieldLabel } from './shared';
@@ -24,7 +24,7 @@ export function createInputRenderer(inputType: string) {
     const scope = useRenderScope();
     const currentForm = useCurrentForm();
     const name = String(props.props.name ?? props.schema.name ?? '');
-    const value = readFieldValue(scope, name);
+    const value = useBoundFieldValue(name, currentForm);
     const presentation = useFieldPresentation(name, currentForm);
     const labelContent = resolveFieldLabelContent(props);
     const handlers = createFieldHandlers({
@@ -112,7 +112,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
       const name = String(props.props.name ?? props.schema.name ?? '');
-      const value = readFieldValue(scope, name);
+      const value = useBoundFieldValue(name, currentForm);
       const options = Array.isArray(props.props.options) ? (props.props.options as SelectSchema['options']) : [];
       const presentation = useFieldPresentation(name, currentForm);
       const labelContent = resolveFieldLabelContent(props);
@@ -158,7 +158,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
       const name = String(props.props.name ?? props.schema.name ?? '');
-      const value = readFieldValue(scope, name);
+      const value = useBoundFieldValue(name, currentForm);
       const presentation = useFieldPresentation(name, currentForm);
       const labelContent = resolveFieldLabelContent(props);
       const handlers = createFieldHandlers({
@@ -201,7 +201,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
       const name = String(props.props.name ?? props.schema.name ?? '');
-      const value = Boolean(readFieldValue(scope, name));
+      const value = Boolean(useBoundFieldValue(name, currentForm));
       const presentation = useFieldPresentation(name, currentForm);
       const handlers = createFieldHandlers({
         name,
@@ -247,7 +247,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
       const name = String(props.props.name ?? props.schema.name ?? '');
-      const value = Boolean(readFieldValue(scope, name));
+      const value = Boolean(useBoundFieldValue(name, currentForm));
       const presentation = useFieldPresentation(name, currentForm);
       const handlers = createFieldHandlers({
         name,
@@ -296,7 +296,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
       const name = String(props.props.name ?? props.schema.name ?? '');
-      const value = String(readFieldValue(scope, name));
+      const value = String(useBoundFieldValue(name, currentForm));
       const options = Array.isArray(props.props.options) ? (props.props.options as RadioGroupSchema['options']) : [];
       const presentation = useFieldPresentation(name, currentForm);
       const labelContent = resolveFieldLabelContent(props);

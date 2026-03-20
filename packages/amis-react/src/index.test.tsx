@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { RendererDefinition, RendererEnv, RendererPlugin, ScopeRef } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/amis-runtime';
@@ -15,6 +15,7 @@ import {
   useCurrentFormErrors,
   useFieldError,
   useOwnedFieldState,
+  useRenderScope,
   useScopeSelector,
   useValidationNodeState
 } from './index';
@@ -25,6 +26,8 @@ const env: RendererEnv = {
   },
   notify: () => undefined
 };
+
+const sharedFormulaCompiler = createFormulaCompiler();
 
 const textRenderer: RendererDefinition = {
   type: 'text',
@@ -46,6 +49,61 @@ const formRenderer: RendererDefinition = {
     kind: 'container'
   }
 };
+
+function ProbeInput() {
+  const scope = useRenderScope();
+  const form = useCurrentForm();
+  useOwnedFieldState('email');
+  const value = String(scope.get('email') ?? '');
+
+  return (
+    <label>
+      <span>Email</span>
+      <input
+        aria-label="Email"
+        value={value}
+        onChange={(event) => form?.setValue('email', event.target.value)}
+      />
+    </label>
+  );
+}
+
+const probeInputRenderer: RendererDefinition = {
+  type: 'probe-input',
+  component: ProbeInput
+};
+
+function PageValueProbe() {
+  const scope = useRenderScope();
+  return <span data-testid="page-value">{String(scope.get('currentUser.name') ?? '')}</span>;
+}
+
+const pageValueProbeRenderer: RendererDefinition = {
+  type: 'page-value-probe',
+  component: PageValueProbe
+};
+
+const probeFormSchema = {
+  type: 'form',
+  data: {
+    email: ''
+  },
+  body: [
+    {
+      type: 'probe-input'
+    }
+  ]
+} as const;
+
+const pageWithProbeFormSchema = {
+  type: 'page',
+  body: [
+    {
+      type: 'page-value-probe'
+    },
+    probeFormSchema
+  ]
+} as const;
 
 function SelectorText() {
   const value = useScopeSelector((scope) => scope.message ?? '');
@@ -229,6 +287,79 @@ describe('createSchemaRenderer', () => {
     );
 
     expect(screen.getByText('Scoped update')).toBeTruthy();
+  });
+
+  it('preserves field state across unrelated host rerenders', () => {
+    const SchemaRenderer = createSchemaRenderer([formRenderer, probeInputRenderer]);
+
+    function Host() {
+      const [tick, setTick] = React.useState(0);
+
+      return (
+        <div>
+          <button type="button" onClick={() => setTick((current) => current + 1)}>
+            Rerender host {tick}
+          </button>
+          <SchemaRenderer
+            schema={probeFormSchema}
+            data={{
+              currentUser: { name: 'Architect' }
+            }}
+            env={env}
+            formulaCompiler={sharedFormulaCompiler}
+          />
+        </div>
+      );
+    }
+
+    cleanup();
+    const view = render(<Host />);
+    const canvas = within(view.container);
+
+    const input = canvas.getByLabelText('Email') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'a' } });
+    expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
+
+    fireEvent.click(canvas.getByText('Rerender host 0'));
+
+    expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
+  });
+
+  it('updates page scope data without recreating the form runtime', () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, formRenderer, probeInputRenderer, pageValueProbeRenderer]);
+
+    function Host() {
+      const [name, setName] = React.useState('Architect');
+
+      return (
+        <div>
+          <button type="button" onClick={() => setName('Operator')}>
+            Rename user
+          </button>
+          <SchemaRenderer
+            schema={pageWithProbeFormSchema}
+            data={{
+              currentUser: { name }
+            }}
+            env={env}
+            formulaCompiler={sharedFormulaCompiler}
+          />
+        </div>
+      );
+    }
+
+    cleanup();
+    const view = render(<Host />);
+    const canvas = within(view.container);
+
+    fireEvent.change(canvas.getByLabelText('Email'), { target: { value: 'a' } });
+    expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
+    expect(canvas.getByTestId('page-value').textContent).toBe('Architect');
+
+    fireEvent.click(canvas.getByText('Rename user'));
+
+    expect(canvas.getByTestId('page-value').textContent).toBe('Operator');
+    expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
   });
 
   it('renders dialog content after dispatching a dialog action', async () => {

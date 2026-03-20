@@ -1,4 +1,5 @@
 import {
+  getIn,
   getCompiledValidationField,
   type CompiledValidationBehavior,
   type FormFieldStateSnapshot,
@@ -6,7 +7,15 @@ import {
   type RendererComponentProps,
   type SchemaFieldRule
 } from '@nop-chaos/amis-schema';
-import { resolveRendererSlotContent, useAggregateError, useChildFieldState, useOwnedFieldState, useRenderScope } from '@nop-chaos/amis-react';
+import {
+  resolveRendererSlotContent,
+  useAggregateError,
+  useChildFieldState,
+  useCurrentFormState,
+  useOwnedFieldState,
+  useRenderScope,
+  useScopeSelector
+} from '@nop-chaos/amis-react';
 
 export const formLabelFieldRule: SchemaFieldRule = {
   key: 'label',
@@ -57,6 +66,13 @@ export function readFieldValue(scope: ReturnType<typeof useRenderScope>, name: s
 export function readCheckboxGroupValue(scope: ReturnType<typeof useRenderScope>, name: string): string[] {
   const value = readFieldValue(scope, name);
   return Array.isArray(value) ? value.map((item) => String(item)) : [];
+}
+
+export function useBoundFieldValue(name: string, currentForm: FormRuntime | undefined): unknown {
+  const formValue = useCurrentFormState((state) => (name ? getIn(state.values, name) : undefined), Object.is);
+  const scopeValue = useScopeSelector((scopeData) => (name ? getIn(scopeData, name) : undefined), Object.is);
+
+  return currentForm ? formValue : scopeValue;
 }
 
 function getFieldClassName(state: {

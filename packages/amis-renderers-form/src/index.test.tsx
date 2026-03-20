@@ -158,6 +158,42 @@ describe('formRendererDefinitions', () => {
     });
   });
 
+  it('allows appending multiple characters in input-email fields', () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            email: ''
+          },
+          body: [
+            {
+              type: 'input-email',
+              name: 'email',
+              label: 'Email'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const input = screen.getByLabelText('Email') as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: 'a' } });
+    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ab' } });
+    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('ab');
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'abc@example.com' } });
+    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('abc@example.com');
+  });
+
   it('submits checkbox values through shared field handlers', async () => {
     submitCalls.length = 0;
     cleanup();

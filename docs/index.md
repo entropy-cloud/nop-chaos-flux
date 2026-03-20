@@ -50,9 +50,11 @@ Example behavior is best cross-checked with:
 ## Directory Roles
 
 - `docs/architecture/` - current normative design and package ownership notes
-- `docs/references/` - implementation maps, research notes, and prototype lessons; useful, but secondary to architecture docs
+- `docs/references/` - stable lookup material such as terminology, interface maps, maintenance guidance, and source-specific reference notes; useful, but secondary to architecture docs
 - `docs/examples/` - small representative schemas and usage notes
-- `docs/analysis/` - comparative or investigatory reports; useful context, not the active contract
+- `docs/analysis/` - comparative, investigatory, or decision-oriented reports; primarily for conclusions and tradeoff records, not the active contract
+- `docs/bugs/` - numbered defect histories and fix notes for non-obvious regressions; useful for root-cause context and regression tracking, but secondary to architecture docs
+- start new bug notes from `docs/bugs/00-bug-fix-note-writing-guide.md`
 - `docs/plans/` - implementation plans, checklists, and completion records; historical unless a plan is being actively executed
 - `docs/archive/` - preserved original drafts and legacy source material
 
