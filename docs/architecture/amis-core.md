@@ -2,182 +2,175 @@
 
 ## Purpose
 
-This document defines the current official architecture direction for the NOP Chaos AMIS renderer core.
+This document records the current architecture baseline for the active `nop-amis` codebase.
 
-It replaces earlier draft-level conclusions where they conflict.
+Use it when you need the highest-level answer to:
 
-## Current Official Decisions
+- how schema values are compiled and evaluated
+- how runtime, scope, forms, pages, and actions fit together
+- which design directions are current behavior versus future refinement
+
+Code-level source of truth lives primarily in `packages/amis-schema/src/index.ts`, `packages/amis-runtime/src/index.ts`, and `packages/amis-react/src/index.tsx`.
+
+## Current Code Anchors
+
+When this document needs to be checked against code, start with:
+
+- `packages/amis-schema/src/index.ts` for core contracts
+- `packages/amis-runtime/src/schema-compiler.ts` for compiled node assembly
+- `packages/amis-runtime/src/action-runtime.ts` for action semantics
+- `packages/amis-runtime/src/page-runtime.ts` and `packages/amis-runtime/src/form-runtime.ts` for page/form runtime behavior
+- `packages/amis-react/src/index.tsx` for React integration boundaries
+
+## Current Architecture Baseline
 
 ### Unified value semantics
 
-All schema fields follow one rule:
+All schema fields follow one primary rule:
 
-- plain values are plain values
+- plain values stay plain values
 - expression syntax means expression semantics
-- do not keep adding parallel fields such as `xxxOn`, `xxxExpr`, or similar suffix-based variants as the primary design path
-- this first version has no compatibility burden, so the implementation should recognize only the standard field shape
+- do not introduce parallel suffix-based field families such as `xxxExpr` or `xxxOn` as the default design path
 
-Examples:
+Which fields allow literals, templates, pure expressions, events, or renderable fragments is determined by schema typing plus renderer field metadata, not by proliferating alternate field names.
 
-```json
-{
-  "visible": true,
-  "disabled": false,
-  "label": "Create user"
-}
+### Whole value-tree compilation
+
+Schema values compile as one value tree.
+
+In current code that means two related layers:
+
+- `CompiledValueNode` is the internal node tree used by the expression compiler
+- `CompiledRuntimeValue` is the runtime-facing wrapper used for fast static return or dynamic execution
+
+Current `CompiledValueNode` kinds are:
+
+```ts
+type CompiledValueNode<T = unknown> =
+  | { kind: 'static-node'; value: T }
+  | { kind: 'expression-node'; source: string; compiled: CompiledExpression<T> }
+  | { kind: 'template-node'; source: string; compiled: CompiledTemplate<T> }
+  | { kind: 'array-node'; items: ReadonlyArray<CompiledValueNode<unknown>> }
+  | { kind: 'object-node'; keys: readonly string[]; entries: Readonly<Record<string, CompiledValueNode<unknown>>> };
 ```
 
-```json
-{
-  "visible": "${currentUser.role === 'admin'}",
-  "disabled": "${saving}",
-  "label": "Hello ${currentUser.name}"
-}
+Current runtime wrapper shape is directionally:
+
+```ts
+type CompiledRuntimeValue<T = unknown> =
+  | { kind: 'static'; isStatic: true; value: T }
+  | { kind: 'dynamic'; isStatic: false; exec(...): ValueEvaluationResult<T> };
 ```
 
-Which fields allow pure expressions, templates, or only literals is constrained by schema typing, not by parallel field names.
+The long-term architectural intent still matches the original goal:
 
-### Whole value tree compilation
-
-Props and schema values are compiled as one value tree.
-
-- fully static subtrees compile to `kind: 'static'`
-- dynamic subtrees compile to expression, template, array, or object nodes
-- runtime should not expose a long-term public model based on `staticProps` plus `dynamicProps`
-
-Compiler internals still need static-versus-dynamic analysis, but the public runtime model should move toward a unified compiled value tree.
+- static subtrees should stay zero-cost at runtime
+- dynamic subtrees should preserve identity reuse when results do not change
+- runtime should not expose a long-term external model centered on `staticProps` plus `dynamicProps`
 
 ### Scope chain reads over merged objects
 
-The preferred scope access path is:
+The preferred hot path is:
 
 - `scope.get(path)`
 - `scope.has(path)`
 - `scope.readOwn()`
-- `scope.read()` only for whole-object materialization with caching
+- `scope.read()` only when whole-object materialization is truly needed
 
-The main path must not be "merge the whole scope object before every evaluation".
+Current implementation keeps `read()` as a cached merged-object fallback, but the main design path is lexical path lookup rather than rebuilding a full scope object for every evaluation.
 
-### `amis-formula` is modifiable
+### `amis-formula` is the expression base
 
-Expression execution should use a controlled evaluator based on a modifiable `amis-formula`.
+Expression execution is built on `amis-formula` through `FormulaCompiler` and `ExpressionCompiler`.
 
-- compile expressions into AST or compiled evaluators
+The production direction is:
+
+- compile expressions and templates once
 - execute against `EvalContext`
 - resolve variables through `resolve(path)` and `has(path)`
-- only call `materialize()` in the small number of scenarios that truly need a complete object
-
-`new Function(...)` and `with(scope)` are prototype-only ideas and do not belong in the production design.
+- avoid prototype `new Function(...)` and `with(scope)` execution
 
 ### `closeDialog` default behavior
 
-`closeDialog` should close the nearest active dialog by default.
+`closeDialog` closes the nearest active dialog by default.
 
 - normal schema authors should not need to pass `dialogId`
-- explicit dialog targeting should only be a rare extension path
+- explicit dialog targeting exists as a narrow extension path
 
-## Architecture Layers
+Current runtime behavior matches this through the page dialog stack.
 
-The system is organized into five layers:
+## Main Layers
+
+The active system is organized into five layers:
 
 1. `SchemaCompiler`
 2. `ExpressionCompiler`
 3. `RendererRuntime`
 4. `Store` and `Scope`
-5. `React Renderer`
+5. React renderer and hooks
 
 ```text
 raw schema
   -> SchemaCompiler
-compiled schema tree
+compiled schema node tree
   -> RendererRuntime
-resolved node meta + compiled value tree + action dispatch
+resolved node meta + resolved props + action dispatch + page/form runtimes
   -> React renderer
 concrete component render
 ```
 
+## Layer Responsibilities
+
 ### `SchemaCompiler`
 
-Responsibilities:
+Owns:
 
-- normalize raw schema
-- extract regions such as `body`, `actions`, and table operation fragments
-- compile normal field values into `CompiledValueNode`
-- bind nodes to renderer definitions
+- raw schema normalization
+- region extraction such as `body`, `actions`, and renderer-owned nested regions
+- field classification through renderer field metadata
+- compiled props, meta, event, and validation assembly
 
 ### `ExpressionCompiler`
 
-Responsibilities:
+Owns:
 
-- recognize literals, templates, pure expressions, arrays, and objects
-- compile the entire value tree into an executable structure
-- detect fully static subtrees
-- prepare dependency metadata for caching and execution skipping
+- literal, expression, template, array, and object recognition
+- value-tree compilation
+- static versus dynamic classification
+- runtime state creation for dynamic execution and identity reuse
 
 ### `RendererRuntime`
 
-Responsibilities:
+Owns:
 
-- create page, form, and dialog runtime containers
-- resolve node meta and runtime props
-- dispatch actions
-- manage debounce, cancellation, action chains, plugins, and monitor hooks
+- node meta and prop resolution
+- action dispatch
+- page runtime creation
+- form runtime creation
+- child-scope creation
 
 ### `Store` and `Scope`
 
-Responsibilities:
+Own:
 
-- `PageStore` manages page data, dialogs, refresh ticks, and page-level helper state
-- `FormStore` manages local form values and submission flow
-- `ScopeRef` provides lexical lookup and current-scope writes
+- `PageStoreApi` for page data, dialogs, and refresh ticks
+- `FormStoreApi` for values, errors, validating state, touched state, dirty state, visited state, and submitting state
+- `ScopeRef` for lexical lookup, shadowing, and current-scope updates
 
-### `React Renderer`
+### React renderer
 
-Responsibilities:
+Owns:
 
-- bind compiled nodes to React components
-- provide contexts and hooks
-- handle fragment rendering, dialog hosting, and render monitoring
+- runtime and scope context wiring
+- fragment rendering
+- dialog hosting
+- selector-based subscriptions and renderer hooks
 
-## Value Model
+## Current Value And Node Model
 
-All schema field values compile into a single node model.
+### `EvalContext`
 
-```ts
-type CompiledValueNode<T = unknown> =
-  | { kind: 'static'; value: T }
-  | { kind: 'expression'; source: string; compiled: CompiledExpression<T> }
-  | { kind: 'template'; source: string; compiled: CompiledTemplate<T> }
-  | { kind: 'array'; items: CompiledValueNode[] }
-  | { kind: 'object'; keys: string[]; entries: Record<string, CompiledValueNode> };
-```
-
-Execution rules:
-
-- `static` returns the original reference directly
-- `expression` evaluates through `EvalContext`
-- `template` interpolates through `EvalContext`
-- `array` and `object` evaluate recursively and reuse references when unchanged
-
-### Static fast path
-
-If a subtree contains no expression:
-
-- compilation must produce `kind: 'static'`
-- runtime must return the original reference directly
-- runtime must not recurse through a dynamic evaluator for that subtree
-
-### Dynamic identity reuse
-
-If a subtree contains expressions:
-
-- retain previous results per dynamic node
-- if the next result is equal, reuse the previous reference
-- object and array nodes should preserve unchanged child references whenever possible
-
-## EvalContext and Expression Execution
-
-Official execution context:
+Current execution context:
 
 ```ts
 interface EvalContext {
@@ -189,19 +182,20 @@ interface EvalContext {
 
 Rules:
 
-- variable and property access should go through the resolver
-- do not rely on direct access over a prebuilt scope object
-- `materialize()` is lazy, cached, and only used when full object enumeration is required
+- variable access should go through `resolve(path)`
+- `materialize()` exists for the minority case that needs a complete object view
 
-## Scope Design
+### `ScopeRef`
 
-Target direction:
+Current exported contract:
 
 ```ts
 interface ScopeRef {
   id: string;
   path: string;
   parent?: ScopeRef;
+  store?: ScopeStore;
+  value: Record<string, any>;
   get(path: string): unknown;
   has(path: string): boolean;
   readOwn(): Record<string, any>;
@@ -210,47 +204,42 @@ interface ScopeRef {
 }
 ```
 
-Lookup rules for `scope.get('record.name')`:
+Lookup preserves lexical shadowing:
 
-1. check whether the current scope owns top-level key `record`
-2. if yes, continue inside that object
-3. if not, climb to the parent scope
-4. once a scope level owns the top-level key, stop climbing
+1. check whether the current scope owns the top-level key
+2. if yes, continue lookup inside that owned object
+3. otherwise climb to the parent scope
 
-This preserves lexical shadowing behavior.
+### `CompiledSchemaNode`
 
-Write rules:
-
-- `update()` writes to the current scope by default
-- form field writes go to `FormStore`
-- page-level writes go to `PageStore`
-- do not silently write back to parent scopes
-
-## Compiled Schema Nodes
-
-Directionally, render nodes should carry a single compiled props value tree.
+Current exported node contract is directionally:
 
 ```ts
-interface CompiledSchemaNode {
+interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   id: string;
-  type: string;
+  type: S['type'];
   path: string;
-  schema: BaseSchema;
-  props: CompiledValueNode<Record<string, unknown>>;
-  regions: Record<string, CompiledRegion>;
-  component: RendererDefinition;
-  flags: {
-    isStatic: boolean;
-    isContainer: boolean;
-  };
+  schema: S;
+  component: RendererDefinition<S>;
+  meta: CompiledSchemaMeta;
+  props: CompiledRuntimeValue<Record<string, unknown>>;
+  validation?: CompiledFormValidationModel;
+  regions: Readonly<Record<string, CompiledRegion>>;
+  eventActions: Readonly<Record<string, unknown>>;
+  eventKeys: readonly string[];
+  flags: CompiledNodeFlags;
+  createRuntimeState(): CompiledNodeRuntimeState;
 }
 ```
 
-`flags.isStatic` means the node has no dynamic props execution cost.
+Important note:
 
-## Action and Runtime Direction
+- current compiled nodes carry resolved event metadata and validation metadata in addition to props and regions
+- `props` is a compiled runtime value, not a raw plain object
 
-Minimum action set:
+## Action Baseline
+
+Current action system supports at least:
 
 - `setValue`
 - `ajax`
@@ -259,41 +248,24 @@ Minimum action set:
 - `closeDialog`
 - `refreshTable`
 
-Required action behavior:
+Current behavior includes:
 
 - `then`
 - `continueOnError`
 - debounce
 - request cancellation
 - plugin interception
+- `prevResult` propagation across chained actions
 
-API objects should support:
+## React Rendering Baseline
 
-- `url`
-- `method`
-- `data`
-- `headers`
-- `requestAdaptor`
-- `responseAdaptor`
-- `dataPath`
+The React side follows one stable rule:
 
-## React Rendering Direction
+- boundary inputs stay explicit
+- shared runtime services come from hooks and contexts
+- local fragment rendering uses `RenderRegionHandle` or `helpers.render(...)`
 
-The React layer follows one stable rule:
-
-- explicit props at root boundaries
-- hooks and split context inside the tree
-- explicit `render(...)` or `regions.render()` for local schema fragments
-
-Root inputs typically include:
-
-- `schema`
-- `data`
-- `env`
-- `registry`
-- `plugins`
-
-Internal hooks include:
+Important current hooks include:
 
 - `useRendererRuntime()`
 - `useRenderScope()`
@@ -301,88 +273,50 @@ Internal hooks include:
 - `useCurrentForm()`
 - `useCurrentPage()`
 - `useActionDispatcher()`
-
-## Store Model
-
-### `PageStore`
-
-Owns:
-
-- page data
-- dialog instances
-- refresh tokens
-- page-level action and monitor helper state
-
-### `FormStore`
-
-Owns:
-
-- form values
-- `submit(api)`
-- `setValue(name, value)`
-- `reset(values)`
-
-The core architecture does not hard-code a specific external form library.
-
-## Observability
-
-The formal monitor hook direction includes:
-
-- `onRenderStart`
-- `onRenderEnd`
-- `onActionStart`
-- `onActionEnd`
-- `onApiRequest`
-- `onError`
-
-Coverage should include render lifecycle, action lifecycle, debounce replacement, request cancellation, and adaptor execution.
+- `useCurrentNodeMeta()`
+- `useRenderFragment()`
 
 ## Performance Principles
 
 Priority order:
 
-1. avoid merged-object construction in hot paths
-2. make `read()` a cached materialization fallback instead of the main path
-3. preserve static fast path and identity reuse for compiled value trees
-4. apply debounce and cancellation to action and request chains
+1. preserve static fast path
+2. preserve dynamic identity reuse
+3. avoid merged-object construction in hot paths
+4. keep selector subscriptions narrow
+5. apply debounce and cancellation to high-frequency actions and async validation
 
-Key optimization targets:
+## What Is Current Versus Future
 
-| Target | Direction |
-| --- | --- |
-| static schema execution | identify `static` nodes at compile time and return original references |
-| dynamic object reuse | use child unchanged information and shallow equality to reuse references |
-| scope access | prefer `scope.get(path)` |
-| expression evaluation | resolver-driven `EvalContext.resolve(path)` |
-| high-frequency requests | debounce plus `AbortController` |
-| rerender control | selector subscriptions plus stable runtime helpers |
+### Current implementation
 
-## Extensions
+- `value-or-region` and `event` field kinds already exist in active code
+- dialog state is represented by `DialogState`
+- form runtime already supports validation state and first-class array operations
+- subtree validation already has graph-aware entry points
 
-Stable extension points include:
+### Future or still-evolving areas
 
-- `beforeCompile`
-- `afterCompile`
-- `beforeAction`
-- `onError`
-- `wrapComponent`
+- richer validation normalization phases
+- more compiler-described composite validation in place of runtime registration
+- further reduction of duplicated validation projections where it can be done safely
 
-These are used to rewrite schema, modify compiled nodes, intercept actions, wrap components, and emit observability data.
+Those topics should be described as design direction, not as already-finalized public behavior.
 
 ## Designs No Longer Preferred
 
-The following are no longer preferred as the main architecture path:
-
 - prototype-chain objects used directly as the expression execution context
 - always materializing and merging a full scope object before evaluation
-- a parallel field system centered on suffix-based variants such as `xxxOn` and `xxxExpr`
+- suffix-based parallel field systems such as `xxxExpr`
 - a long-term external runtime model built around `staticProps` plus `dynamicProps`
-- `new Function` plus `with(scope)` execution
+- `new Function` plus `with(scope)` expression execution
 - hard-wiring a specific form or validation library into the core
 
 ## Related Documents
 
-- Runtime and React contracts: `docs/architecture/renderer-runtime.md`
-- Workspace baseline: `docs/architecture/frontend-baseline.md`
-- Development phases: `docs/plans/02-development-plan.md`
-- Example schema: `docs/examples/user-management-schema.md`
+- `docs/references/terminology.md`
+- `docs/architecture/renderer-runtime.md`
+- `docs/architecture/field-metadata-slot-modeling.md`
+- `docs/architecture/form-validation.md`
+- `docs/architecture/amis-runtime-module-boundaries.md`
+- `docs/references/renderer-interfaces.md`

@@ -6,6 +6,14 @@ This document records the engineering baseline and naming rules for the current 
 
 Use it when changing workspace structure, package boundaries, tooling, scripts, or naming conventions.
 
+## Current Code Anchors
+
+When this document needs to be checked against code, start with:
+
+- `package.json` for root scripts and shared dev dependencies
+- `pnpm-workspace.yaml` for workspace package globs
+- `apps/playground/package.json` for playground package identity and app-level scripts
+
 ## Current Repository Baseline
 
 The repo is a `pnpm` workspace with the following fixed baseline:

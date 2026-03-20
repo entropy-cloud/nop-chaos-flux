@@ -6,6 +6,15 @@ This document defines how schema fields should be interpreted when a renderer ne
 
 Use this document when designing renderer definitions, schema DSL fields such as `title` or `empty`, or low-code support for component slots and render props.
 
+## Current Code Anchors
+
+When this document needs to be checked against code, start with:
+
+- `packages/amis-schema/src/index.ts` for `SchemaFieldRule` and renderer contracts
+- `packages/amis-runtime/src/schema-compiler.ts` for field classification and region extraction
+- `packages/amis-react/src/index.tsx` for slot-resolution helpers
+- renderer package definitions such as `packages/amis-renderers-basic/src/index.tsx` and `packages/amis-renderers-data/src/index.tsx`
+
 ## Main Decision
 
 Field behavior should be defined by renderer field metadata, not by ad hoc renderer guesses and not by hard-coded global field-name rules.
@@ -81,14 +90,18 @@ The current architecture already has the base pieces for this direction:
 - `CompiledRegion` in `packages/amis-schema/src/index.ts`
 - `RenderRegionHandle` in `packages/amis-schema/src/index.ts`
 
-Today the field rule model supports only broad categories:
+Today the active field rule model already supports:
 
 - `meta`
 - `prop`
 - `region`
+- `value-or-region`
+- `event`
 - `ignored`
 
-This is enough for basic splitting, but not enough for fields that may behave as either a value or a region.
+That means the repository has already moved beyond the older `meta / prop / region / ignored` split.
+
+What is still evolving is not the existence of `value-or-region` itself, but how broadly and formally renderer metadata should describe more advanced field semantics.
 
 ## Recommended Field Semantics Model
 
@@ -456,7 +469,7 @@ Use `value-or-region` sparingly and only for fields where the authoring payoff i
 
 ## Recommended Next Step
 
-The next architectural improvement is to extend field metadata so the compiler can formally support `value-or-region` fields rather than relying only on today's `meta / prop / region / ignored` categories.
+The next architectural improvement is to keep extending renderer field metadata so richer slot and adapter semantics can be described consistently without pushing renderer-local guessing back into component code.
 
 That change should be implemented in:
 
@@ -465,5 +478,6 @@ That change should be implemented in:
 
 ## Related Documents
 
+- `docs/references/terminology.md`
 - `docs/architecture/amis-core.md`
 - `docs/architecture/renderer-runtime.md`

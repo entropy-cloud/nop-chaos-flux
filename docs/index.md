@@ -2,93 +2,59 @@
 
 ## Purpose
 
-This `docs/` tree is the curated documentation entry for the current repository state.
+This `docs/` tree is the curated entry point for the current repository state.
 
-- Read here first before editing docs or changing architecture.
-- Prefer the curated files under `docs/` for ongoing work.
-- Full legacy source material is archived under `docs/archive/` so no design information is lost.
+- start here before changing architecture docs
+- prefer active files under `docs/architecture/`, `docs/references/`, and `docs/examples/`
+- treat `docs/archive/` as preserved draft history
+- treat `docs/plans/` as working or historical planning material, not the default source of truth for current behavior
 
-## Reading Guide
+## Read This First
 
 Choose the smallest document that matches the task.
 
 | If you need to... | Read this first | Then read |
 | --- | --- | --- |
-| Understand the current official architecture direction | `docs/architecture/amis-core.md` | `docs/architecture/renderer-runtime.md` |
-| Change React integration, renderer contracts, or region rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
-| Decide where runtime code should live | `docs/architecture/amis-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
-| Design slot fields such as `title`, `empty`, or render-prop adapters | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
-| Design form validation and field rule extraction | `docs/architecture/form-validation.md` | `docs/architecture/renderer-runtime.md` |
-| Plan how to close the remaining validation gaps toward RHF/Yup-level capability | `docs/plans/03-form-validation-completion-plan.md` | `docs/architecture/form-validation.md` |
-| Follow the concrete step-by-step validation implementation order | `docs/plans/04-form-validation-improvement-execution-plan.md` | `docs/plans/03-form-validation-completion-plan.md` |
-| Review what is worth borrowing from the local react-hook-form template | `docs/references/react-hook-form-template-notes.md` | `docs/plans/03-form-validation-completion-plan.md` |
-| Review what is worth borrowing from the local yup template | `docs/references/yup-template-notes.md` | `docs/plans/03-form-validation-completion-plan.md` |
-| Check workspace, package layout, naming, or quality gates | `docs/architecture/frontend-baseline.md` | `docs/plans/02-development-plan.md` |
-| Continue implementation planning | `docs/plans/02-development-plan.md` | `docs/architecture/amis-core.md` |
-| Inspect the example CRUD schema | `docs/examples/user-management-schema.md` | `docs/architecture/amis-core.md` |
-| Review interface boundaries and terminology | `docs/references/renderer-interfaces.md` | `docs/architecture/renderer-runtime.md` |
-| Understand the old expression prototype and what should be preserved | `docs/references/expression-processor-notes.md` | `docs/architecture/amis-core.md` |
+| Understand the current architecture baseline | `docs/architecture/amis-core.md` | `docs/architecture/renderer-runtime.md` |
+| Change React integration, renderer props, hooks, or fragment rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
+| Change slot-like fields such as `title`, `empty`, or `onClick` | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
+| Change validation behavior or form field participation | `docs/architecture/form-validation.md` | `docs/architecture/amis-runtime-module-boundaries.md` |
+| Decide where runtime or validation code should live | `docs/architecture/amis-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
+| Check workspace structure, package roles, or tooling baseline | `docs/architecture/frontend-baseline.md` | `package.json` |
+| Check shared terminology such as `CompiledValueNode`, `RenderRegionHandle`, `value-or-region`, or `FormRuntime` | `docs/references/terminology.md` | `docs/references/renderer-interfaces.md` |
+| Check which docs must be updated after a code change | `docs/references/maintenance-checklist.md` | the most relevant file in `docs/architecture/` |
+| Review current renderer and runtime contracts by name | `docs/references/renderer-interfaces.md` | `packages/amis-schema/src/index.ts` |
+| Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
+| Review prototype lessons or external research notes | `docs/references/` | the related architecture file for the active baseline |
 
-## Document Roles
+## Active Source Of Truth
 
-### Official baselines
+Architecture intent lives primarily in:
 
 - `docs/architecture/amis-core.md`
-  - Current official architecture direction.
-  - Use this when schema semantics, scope behavior, expression execution, and runtime model are in question.
 - `docs/architecture/renderer-runtime.md`
-  - Internal renderer and React integration design.
-  - Use this when changing component contracts, hooks, regions, and performance behavior.
-- `docs/architecture/amis-runtime-module-boundaries.md`
-  - Runtime file ownership and placement rules.
-  - Use this when deciding whether code belongs in runtime assembly, compiler, validation modules, or renderer shared primitives.
-- `docs/architecture/field-metadata-slot-modeling.md`
-  - Field-level semantics for slots, regions, and render-prop adaptation.
-  - Use this when deciding whether fields such as `title` should behave as values, regions, or both.
 - `docs/architecture/form-validation.md`
-  - Preferred form validation architecture.
-  - Use this when changing rule extraction, field registration, or form runtime validation behavior.
-- `docs/plans/03-form-validation-completion-plan.md`
-  - Detailed design plan for closing the remaining validation gaps.
-  - Use this when planning cross-field rules, nested structure validation, dependency tracking, and array semantics.
-- `docs/architecture/frontend-baseline.md`
-  - Workspace and engineering baseline for this repo.
-  - Use this when changing package layout, tooling, testing, and naming conventions.
+- `docs/architecture/field-metadata-slot-modeling.md`
+- `docs/architecture/amis-runtime-module-boundaries.md`
 
-### Working plan
+Code-level contracts live primarily in:
 
-- `docs/plans/02-development-plan.md`
-  - Delivery phases, current progress snapshot, and next major implementation steps.
-- `docs/plans/04-form-validation-improvement-execution-plan.md`
-  - Concrete ordered execution plan for the remaining validation work.
-  - Use this when implementing the next validation steps one by one.
+- `packages/amis-schema/src/index.ts`
+- `packages/amis-runtime/src/index.ts`
+- `packages/amis-react/src/index.tsx`
 
-### References
+Example behavior is best cross-checked with:
 
-- `docs/references/renderer-interfaces.md`
-  - Human-readable interface map for the renderer system.
-  - This is a reference, not the runtime source of truth.
-- `docs/references/expression-processor-notes.md`
-  - Notes extracted from the early prototype in `docs/archive/expression-processor.js`.
-  - Keep the semantics, not the unsafe execution mechanism.
-- `docs/references/react-hook-form-template-notes.md`
-  - Research notes on useful design ideas from the local `react-hook-form` template.
-  - Use this when deciding what to borrow around subscriptions, array semantics, and aggregate error handling.
-- `docs/references/yup-template-notes.md`
-  - Research notes on useful design ideas from the local `yup` template.
-  - Use this when deciding what to borrow around conditions, normalization, introspection, and error modeling.
+- `apps/playground/src/App.tsx`
 
-### Example
+## Directory Roles
 
-- `docs/examples/user-management-schema.md`
-  - Single example schema that demonstrates the core behavior once each.
-
-## Source-of-Truth Notes
-
-- Architecture intent lives primarily in `docs/architecture/amis-core.md` and `docs/architecture/renderer-runtime.md`.
-- Form validation intent lives primarily in `docs/architecture/form-validation.md`.
-- Runtime code and exported types live in `packages/amis-schema/src/index.ts`, `packages/amis-runtime/src/index.ts`, and `packages/amis-react/src/index.tsx`.
-- Example behavior should stay aligned with `apps/playground/src/App.tsx`.
+- `docs/architecture/` - current normative design and package ownership notes
+- `docs/references/` - implementation maps, research notes, and prototype lessons; useful, but secondary to architecture docs
+- `docs/examples/` - small representative schemas and usage notes
+- `docs/analysis/` - comparative or investigatory reports; useful context, not the active contract
+- `docs/plans/` - implementation plans, checklists, and completion records; historical unless a plan is being actively executed
+- `docs/archive/` - preserved original drafts and legacy source material
 
 ## Archive Sources
 
@@ -97,8 +63,7 @@ The original root-level source materials are preserved under `docs/archive/` for
 - `docs/archive/nop-chaos-amis.md`
 - `docs/archive/nop-chaos-amis-renderer-design.md`
 - `docs/archive/nop-chaos-frontend-arch.md`
-- `docs/plans/01-legacy-nop-chaos-amis-development-plan.md`
 - `docs/archive/nop-chaos-amis-renderer-interfaces.ts`
 - `docs/archive/expression-processor.js`
 
-When updating documentation, edit the curated file under `docs/` first and consult the archive only when you need original draft context.
+When updating documentation, edit the active curated file first and consult the archive only when you need original draft context.

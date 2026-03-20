@@ -4,6 +4,8 @@
 
 This note records what is worth learning from `C:/can/nop/templates/yup` and what should not be adopted directly into `nop-amis`.
 
+This is a research note, not the implementation source of truth for the current repository.
+
 The goal is not to replace the current validation model with Yup.
 
 The goal is to identify schema-validation design ideas that can strengthen our compiler-first, runtime-driven validation system.
@@ -37,6 +39,15 @@ The most valuable parts are:
 - standard external issue format export
 
 These ideas fit our current direction better than RHF's JSX-centric field model.
+
+## Quick Takeaway
+
+If you only need the practical conclusion, it is this:
+
+1. keep validation compiler-first and runtime-driven
+2. treat references and conditions as first-class validation concepts
+3. separate normalization ideas from validation execution
+4. do not replace low-code schema authoring with a fluent builder model
 
 ## What Yup Gets Right
 

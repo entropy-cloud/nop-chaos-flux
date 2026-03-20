@@ -4,6 +4,8 @@
 
 This note records what is worth learning from `C:/can/nop/templates/react-hook-form` and what should not be copied directly into `nop-amis`.
 
+This is a research note, not the implementation source of truth for the current repository.
+
 The goal is not to adopt `react-hook-form`.
 
 The goal is to extract design ideas that can strengthen the current compiler-first form runtime and validation model.
@@ -39,6 +41,15 @@ The main value is the internal architecture around:
 Those ideas map well to the direction we are already taking.
 
 What does not map well is the JSX registration model and the assumption that React component lifecycle is the primary source of truth for field registration.
+
+## Quick Takeaway
+
+If you only need the practical conclusion, it is this:
+
+1. keep `FormRuntime` as the central orchestration boundary
+2. keep expanding fine-grained state subscriptions in `amis-react`
+3. treat array operations and aggregate errors as first-class runtime semantics
+4. do not adopt JSX registration as the main field model
 
 ## What RHF Gets Right
 

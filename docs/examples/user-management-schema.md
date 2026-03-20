@@ -7,6 +7,7 @@ This example is intentionally small but complete.
 - each important capability appears once
 - similar dialogs and actions are not repeated
 - `closeDialog` uses the default nearest-dialog behavior
+- page data updates rely on current `ajax` plus `dataPath` semantics instead of outdated `setValue` assumptions
 
 Covered capabilities:
 
@@ -29,19 +30,6 @@ Covered capabilities:
 {
   "type": "page",
   "title": "用户管理",
-  "data": {
-    "keyword": "",
-    "page": 1,
-    "perPage": 20,
-    "total": 0,
-    "users": [],
-    "currentUser": {
-      "name": "Architect",
-      "role": "admin"
-    },
-    "searching": false,
-    "saving": false
-  },
   "body": [
     {
       "type": "container",
@@ -78,12 +66,7 @@ Covered capabilities:
                   "requestAdaptor": "return {data: {keyword: scope.keyword, page: scope.page, perPage: scope.perPage}};",
                   "responseAdaptor": "return {items: payload.items, total: payload.total};"
                 },
-                "dataPath": "users",
-                "then": {
-                  "action": "setValue",
-                  "componentPath": "total",
-                  "value": "${prevResult.data.total}"
-                }
+                "dataPath": "searchResult"
               }
             },
             {
@@ -173,7 +156,7 @@ Covered capabilities:
         },
         {
           "type": "table",
-          "source": "${users}",
+          "source": "${searchResult.items}",
           "columns": [
             {
               "label": "ID",
@@ -235,7 +218,7 @@ Covered capabilities:
         },
         {
           "type": "tpl",
-          "tpl": "共 ${total} 条记录，当前第 ${page} 页，每页 ${perPage} 条。"
+          "tpl": "共 ${searchResult.total || 0} 条记录，当前第 ${page} 页，每页 ${perPage} 条。"
         }
       ]
     }
@@ -245,5 +228,7 @@ Covered capabilities:
 
 ## Notes
 
-- The example demonstrates the current preferred authoring direction, not every historical AMIS-compatible variation.
+- This example demonstrates the current preferred authoring direction, not every historical AMIS-compatible variation.
+- Page-level values such as `currentUser`, `keyword`, `page`, `perPage`, and `searching` are assumed to come from the host application's root render data rather than from a page-local schema `data` field.
+- The search flow uses one `ajax` action with `dataPath` to update page data. That matches the current runtime more closely than chaining `setValue` to mutate page state from inside a form-local action context.
 - If schema semantics change, update `docs/architecture/amis-core.md` first, then update this example.

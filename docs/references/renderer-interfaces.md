@@ -2,11 +2,13 @@
 
 ## Purpose
 
-This document is a human-readable interface map for the renderer system.
+This document is a human-readable interface map for the active renderer system.
 
-Use it to understand the roles of the major contracts without reading the full legacy draft file.
+Use it to understand the roles of the major contracts without reading every source file in full.
 
-Code-level source of truth lives in the current package exports, especially `packages/amis-schema/src/index.ts`.
+This is a reference document, not the architecture source of truth.
+
+Code-level source of truth lives primarily in `packages/amis-schema/src/index.ts`.
 
 ## Core Schema Types
 
@@ -20,8 +22,8 @@ Key shapes:
 
 Role summary:
 
-- `BaseSchema` is the common renderer schema base
-- `SchemaInput` allows a single schema node or an array of nodes
+- `BaseSchema` is the common schema base for renderers
+- `SchemaInput` allows one schema node or an array of nodes
 - `ApiObject` describes request configuration and adaptors
 
 ## Runtime Environment
@@ -32,14 +34,14 @@ Key contracts:
 - `RendererMonitor`
 - `ApiFetcher`
 
-Expected responsibilities:
+Role summary:
 
-- transport requests through `fetcher`
-- expose user feedback through `notify`
-- optionally provide navigation and confirmation
-- optionally emit render, action, API, and error monitoring events
+- `fetcher` handles request transport
+- `notify` handles user-facing messages
+- optional navigation, confirmation, functions, and filters extend the runtime environment
+- monitor hooks expose render, action, API, and error observability
 
-## Scope and Store Contracts
+## Scope And Store Contracts
 
 Key contracts:
 
@@ -48,11 +50,12 @@ Key contracts:
 - `PageStoreApi`
 - `FormStoreApi`
 
-Directionally important notes:
+Role summary:
 
-- current implementation already exposes a scope abstraction
-- long-term convergence should emphasize `get`, `has`, and `readOwn`
-- page and form stores should stay separated
+- `ScopeRef` owns lexical lookup and current-scope updates
+- `ScopeStore` is the snapshot store abstraction behind scopes
+- `PageStoreApi` owns page data, dialogs, and refresh ticks
+- `FormStoreApi` owns form-local values and validation state
 
 ## Expression Contracts
 
@@ -89,6 +92,10 @@ Role summary:
 - `CompiledRegion` describes child renderable fragments
 - `SchemaCompiler` transforms raw schema into stable executable nodes
 
+Important current note:
+
+- compiled nodes also carry event metadata and optional compiled validation metadata
+
 ## Renderer Definition Contracts
 
 Key contracts:
@@ -102,7 +109,7 @@ Role summary:
 
 - `RendererDefinition` binds a schema type to a concrete renderer component and policy metadata
 - `RendererRegistry` is the lookup table for renderer definitions
-- field rules tell the compiler whether a field is metadata, prop, region, or ignored
+- field rules tell the compiler whether a field is `meta`, `prop`, `region`, `value-or-region`, `event`, or `ignored`
 
 ## Render-Time React Contracts
 
@@ -110,6 +117,7 @@ Key contracts:
 
 - `RendererComponentProps`
 - `RendererHelpers`
+- `RendererEventHandler`
 - `RenderRegionHandle`
 - `RenderFragmentOptions`
 - `RenderNodeInput`
@@ -118,21 +126,43 @@ Role summary:
 
 - `RendererComponentProps` is the concrete renderer boundary
 - `RendererHelpers` exposes stable runtime helpers such as `render`, `evaluate`, `createScope`, and `dispatch`
+- `RendererEventHandler` is the runtime callback shape used for declarative event fields
 - `RenderRegionHandle` gives components an easy way to render declared child regions
 
-## Form, Page, and Dialog Contracts
+## Form, Page, And Dialog Contracts
 
 Key contracts:
 
 - `FormRuntime`
 - `PageRuntime`
-- `DialogInstance`
+- `DialogState`
 
 Role summary:
 
-- `FormRuntime` owns form-local submission and field updates
+- `FormRuntime` owns form-local validation, submission, and value updates
 - `PageRuntime` owns page-level behavior such as dialog orchestration
-- `DialogInstance` records the schema and scope for an open dialog
+- `DialogState` records the dialog config, scope, and compiled title/body fragments for an open dialog
+
+## Validation Contracts
+
+Key contracts:
+
+- `ValidationRule`
+- `ValidationError`
+- `ValidationResult`
+- `FormValidationResult`
+- `CompiledFormValidationModel`
+- `CompiledValidationNode`
+- `ValidationContributor`
+- `RuntimeFieldRegistration`
+
+Role summary:
+
+- `ValidationRule` is the schema-neutral rule union used by compiler and runtime
+- `ValidationError` is the structured error format used by the runtime
+- `CompiledFormValidationModel` holds field, node, order, behavior, and dependency information
+- `ValidationContributor` lets renderer definitions describe validation participation
+- `RuntimeFieldRegistration` supports complex controls that still need runtime participation
 
 ## Action Contracts
 
@@ -142,12 +172,23 @@ Key contracts:
 - `ActionContext`
 - `ActionResult`
 
-Supported action system direction:
+Role summary:
 
-- common actions such as `setValue`, `ajax`, `submitForm`, `dialog`, `closeDialog`, and `refreshTable`
+- `ActionSchema` is the declarative low-code action format
+- `ActionContext` carries runtime, scope, form, page, node, dialog, and `prevResult` context
+- `ActionResult` is the normalized runtime result of an action
+
+Current action system supports directionally:
+
+- `setValue`
+- `ajax`
+- `submitForm`
+- `dialog`
+- `closeDialog`
+- `refreshTable`
 - chaining through `then`
 - debounce and request cancellation
-- plugin interception through runtime hooks
+- plugin interception
 
 ## Plugin Contracts
 
@@ -181,7 +222,10 @@ Boundary inputs remain explicit:
 
 For deeper design intent, continue with:
 
+- `docs/references/maintenance-checklist.md`
+- `docs/references/terminology.md`
 - `docs/architecture/amis-core.md`
 - `docs/architecture/renderer-runtime.md`
+- `docs/architecture/form-validation.md`
 
-For the original interface draft source, see `docs/archive/nop-chaos-amis-renderer-interfaces.ts`.
+For historical draft material, see `docs/archive/nop-chaos-amis-renderer-interfaces.ts`.

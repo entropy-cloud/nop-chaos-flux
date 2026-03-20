@@ -2,6 +2,8 @@
 
 本文档记录原型项目 `nop-chaos-amis` 中值得参考的设计模式和实现思路，供 nop-amis 开发参考。
 
+这是历史实现参考，不是当前仓库实现细节的最终准绳。当前行为以 `docs/architecture/` 和活动源码为准。
+
 ## 1. FormStore 的 submit Handler 模式
 
 ### 原型实现

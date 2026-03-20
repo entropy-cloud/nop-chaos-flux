@@ -2,9 +2,23 @@
 
 ## Purpose
 
-This note records the intended file ownership inside `packages/amis-runtime` after the validation refactor work.
+This note records current file ownership inside `packages/amis-runtime`.
 
 Use it when deciding where new runtime behavior belongs.
+
+This document is about code placement and ownership.
+
+For validation behavior and form semantics, use `docs/architecture/form-validation.md` as the primary document.
+
+## Current Code Anchors
+
+When this document needs to be checked against code, start with:
+
+- `packages/amis-runtime/src/index.ts` for assembly boundaries
+- `packages/amis-runtime/src/schema-compiler.ts` for compiler ownership
+- `packages/amis-runtime/src/validation/` for reusable validation helpers
+- `packages/amis-runtime/src/form-runtime.ts` and related `form-runtime-*` files for form flow ownership
+- `packages/amis-runtime/src/action-runtime.ts`, `packages/amis-runtime/src/request-runtime.ts`, and `packages/amis-runtime/src/scope.ts` for runtime subsystem placement
 
 ## Main Rule
 
@@ -32,8 +46,9 @@ If new logic is not trivial assembly code, it should move to a focused runtime m
 - `packages/amis-runtime/src/schema-compiler.ts`
   - schema-shape normalization
   - region extraction
+  - renderer field classification
   - deep table column normalization
-  - form-scoped validation model assembly
+  - compiled form-validation model assembly
 
 Keep compiler-specific shape handling here.
 
@@ -45,10 +60,10 @@ Do not move generic validation helpers back into this file when they can live in
   - sync validator execution entry point
 - `packages/amis-runtime/src/form-runtime-validation.ts`
   - field validation orchestration
-  - subtree validation
+  - subtree validation entry points
   - async debounce and stale-run cancellation
-- `packages/amis-runtime/src/form-validation-errors.ts`
-  - runtime-facing normalization for compiled and runtime-registered errors
+- `packages/amis-runtime/src/form-runtime.ts`
+  - form-level validation entrypoints such as `validateField`, `validateSubtree`, and `validateForm`
 
 These files own runtime sequencing and form lifecycle behavior.
 
@@ -73,6 +88,45 @@ They should not become generic helper dumps.
 
 This directory is the default home for reusable validation helpers.
 
+### Action and request flow
+
+- `packages/amis-runtime/src/action-runtime.ts`
+  - action dispatch
+  - debounce handling for actions
+  - chained action execution and `prevResult` flow
+- `packages/amis-runtime/src/request-runtime.ts`
+  - request execution
+  - adaptor application
+  - request cancellation plumbing
+
+### Scope and state plumbing
+
+- `packages/amis-runtime/src/scope.ts`
+  - scope store creation
+  - lexical lookup behavior
+  - scope materialization and update behavior
+- `packages/amis-runtime/src/form-store.ts`
+  - form store state updates
+  - page store state updates
+- `packages/amis-runtime/src/form-runtime-state.ts`
+  - initial form field-state derivation
+- `packages/amis-runtime/src/form-runtime-array.ts`
+  - runtime-specific array field-state remapping
+- `packages/amis-runtime/src/form-runtime-registration.ts`
+  - runtime field registration lookup and synchronization
+- `packages/amis-runtime/src/form-runtime-subtree.ts`
+  - subtree target collection helpers
+
+### Page and node runtime helpers
+
+- `packages/amis-runtime/src/page-runtime.ts`
+  - page runtime creation
+  - dialog stack management
+- `packages/amis-runtime/src/node-runtime.ts`
+  - resolved node meta and prop evaluation helpers
+- `packages/amis-runtime/src/registry.ts`
+  - renderer registry creation and registration helpers
+
 ## Where To Add A New Validation Rule
 
 For a new built-in sync rule:
@@ -80,7 +134,7 @@ For a new built-in sync rule:
 1. Add schema extraction in `packages/amis-runtime/src/validation/rules.ts` if the rule has schema syntax.
 2. Add the validator implementation in `packages/amis-runtime/src/validation/validators.ts`.
 3. Add default messaging in `packages/amis-runtime/src/validation/message.ts` if needed.
-4. Add focused validator or registry coverage in `packages/amis-runtime/src/validation/validators.test.ts` or `packages/amis-runtime/src/validation/registry.test.ts`.
+4. Add focused coverage in `packages/amis-runtime/src/validation/validators.test.ts` or `packages/amis-runtime/src/validation/registry.test.ts`.
 5. Add or update integration coverage in `packages/amis-runtime/src/index.test.ts` when runtime behavior changes.
 
 For async rules:
@@ -97,11 +151,12 @@ Keep code in `packages/amis-runtime/src/schema-compiler.ts` when it is primarily
 - node tree traversal
 - deep nested structure normalization
 - ownership of compiled node paths
+- renderer-driven field splitting into meta, props, regions, and events
 
 Keep code in `packages/amis-runtime/src/validation/` when it is primarily about validation semantics:
 
 - collecting rules from schema fields
-- normalizing validation triggers
+- normalizing validation triggers and visibility triggers
 - building messages
 - shaping validation errors
 - implementing reusable rule checks
@@ -111,12 +166,13 @@ If a helper can be reused without knowledge of compiled regions or deep schema t
 
 ## Renderer Shared Primitives
 
-Shared field chrome now lives in `packages/amis-renderers-form/src/renderers/shared/`.
+Shared field chrome lives in `packages/amis-renderers-form/src/renderers/shared/`.
 
-Use that area for small presentation primitives such as:
+Use that area for small repeated presentation primitives such as:
 
 - field labels
 - field hints
+- help text
 - validation message chrome
 
 Do not add a shared primitive just because two controls look similar once.
@@ -132,3 +188,10 @@ Add one when:
 No runtime entry file should become the default home for new behavior.
 
 When in doubt, prefer one more focused module over growing a general-purpose file.
+
+## Related Documents
+
+- `docs/references/terminology.md`
+- `docs/architecture/form-validation.md`
+- `docs/architecture/renderer-runtime.md`
+- `docs/architecture/amis-core.md`

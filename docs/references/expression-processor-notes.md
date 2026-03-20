@@ -4,6 +4,8 @@
 
 This note explains what should be retained from the early prototype in `docs/archive/expression-processor.js` and what must not be carried into the production architecture.
 
+This is a prototype-lesson note, not the implementation source of truth for current contracts.
+
 ## What the Prototype Got Right
 
 The prototype captured three important semantic targets:

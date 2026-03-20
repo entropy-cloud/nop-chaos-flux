@@ -2,9 +2,26 @@
 
 ## Purpose
 
-This document defines the internal renderer, runtime, and React integration shape used to implement the architecture in `docs/architecture/amis-core.md`.
+This document defines the current runtime, renderer, and React integration shape used by the active codebase.
 
-Use this document when changing component contracts, hooks, regions, scope flow, or rendering performance behavior.
+Use it when changing:
+
+- renderer component contracts
+- hooks and context usage
+- fragment rendering and region handling
+- scope flow through React render trees
+- render-time performance behavior
+
+For detailed slot and field-semantics rules, use `docs/architecture/field-metadata-slot-modeling.md` as the primary document.
+
+## Current Code Anchors
+
+When this document needs to be checked against code, start with:
+
+- `packages/amis-schema/src/index.ts` for renderer contracts
+- `packages/amis-react/src/index.tsx` for hooks, rendering helpers, and React boundaries
+- `packages/amis-runtime/src/node-runtime.ts` for resolved prop/meta behavior
+- `packages/amis-runtime/src/page-runtime.ts` and `packages/amis-runtime/src/form-runtime.ts` for runtime container creation
 
 ## Main Design Rule
 
@@ -12,63 +29,57 @@ The core rule is:
 
 `boundary inputs stay explicit; ambient runtime capabilities come from hooks; local fragment rendering uses explicit render handles.`
 
-This choice exists to keep the renderer ergonomic, testable, and performant under deeply nested schema trees.
-
 ## Design Principles
 
 ### Explicit at boundaries, implicit in the middle
 
 - root boundaries use explicit props
-- internal nodes avoid long prop-drilling chains
-- shared runtime services are exposed through split contexts and hooks
+- internal nodes avoid prop-drilling chains for shared runtime capabilities
+- shared runtime services come from contexts and hooks
 
 ### Selective data access
 
-Components that only need one value should not rerender for unrelated page changes.
+Components that need one piece of state should not rerender for unrelated changes.
 
-Prefer selector-style reads over broad scope reads.
-
-### Sub-schema rendering must stay easy
-
-If rendering a nested fragment is harder than bypassing the renderer, low-code authoring will drift back to handwritten JSX.
-
-### Runtime services must be reference-stable
-
-Helpers such as `evaluate`, `dispatch`, `render`, and `createScope` should remain stable references.
+Prefer selector-style reads over broad `scope.read()` access.
 
 ### Compile once, execute many times
 
-Schema compilation should happen once per schema identity or version, while rendering mostly executes compiled plans.
+Schema compilation should happen once per schema identity, while renders mostly resolve compiled nodes.
 
 ### Static fast path and identity reuse are mandatory
 
-- no expression means zero execution cost and original reference return
+- no expression means original-reference return
 - unchanged dynamic results should reuse previous references whenever possible
 
-## Recommended Internal Shape
+### Runtime helpers should stay reference-stable
 
-The renderer is split into five internal layers:
+Helpers such as `evaluate`, `dispatch`, `render`, and `createScope` should be stable across renders unless ownership truly changes.
+
+## Active Internal Shape
+
+The current renderer stack is effectively split into:
 
 1. `SchemaCompiler`
 2. `RendererRegistry`
 3. `RendererRuntime`
-4. split render contexts
-5. `SchemaRenderer`
+4. split React contexts and hooks
+5. `SchemaRenderer` and `NodeRenderer`
 
 ```text
 raw schema
   -> SchemaCompiler
 compiled node tree
-  -> SchemaRendererRoot
-runtime + root scope + root contexts
-  -> NodeRenderer(compiledNode)
-resolved props + regions + helpers
+  -> SchemaRenderer
+runtime + root scope + page context
+  -> NodeRenderer(node)
+resolved meta + resolved props + regions + events + helpers
   -> concrete renderer component
 ```
 
-## Component Contract
+## Renderer Component Contract
 
-Concrete renderer components should see a small, explicit contract.
+Current renderer components receive a contract shaped like:
 
 ```ts
 interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
@@ -76,50 +87,41 @@ interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   path: string;
   schema: S;
   node: CompiledSchemaNode<S>;
-  props: Record<string, unknown>;
-  regions: Record<string, RenderRegionHandle>;
+  props: Readonly<Record<string, unknown>>;
+  meta: ResolvedNodeMeta;
+  regions: Readonly<Record<string, RenderRegionHandle>>;
+  events: Readonly<Record<string, RendererEventHandler | undefined>>;
   helpers: RendererHelpers;
 }
 ```
 
 Meaning:
 
-- `schema`: declared shape
-- `node`: compiled metadata
-- `props`: resolved runtime props for the current render
-- `regions`: precompiled renderable child fragments
-- `helpers`: stable imperative APIs
+- `schema` is the declared source shape
+- `node` is the compiled node metadata
+- `props` is the resolved runtime prop object for the current render
+- `meta` is the resolved node meta such as visibility or disabled state
+- `regions` is the map of precompiled child render handles
+- `events` is the map of runtime event handlers derived from declarative event fields
+- `helpers` exposes stable imperative runtime helpers
 
 ## Props Versus Hooks
 
-### Rejected: everything through props
+### Pass by props
 
-Problems:
-
-- too much prop drilling
-- runtime identity churn spreads rerenders
-- every new capability changes many signatures
-
-### Rejected: everything through hooks
-
-Problems:
-
-- ownership becomes unclear
-- local fragment rendering becomes awkward
-- explicit child-region knowledge disappears
-
-### Chosen: hybrid contract
-
-Pass by props:
+Use props for data that is renderer-local and explicit:
 
 - `schema`
 - `node`
 - resolved `props`
+- resolved `meta`
 - `regions`
+- `events`
 - stable `helpers`
-- per-render local fragment inputs
 
-Pass by hooks:
+### Pass by hooks
+
+Use hooks for ambient runtime state and services:
 
 - `useRendererRuntime()`
 - `useRenderScope()`
@@ -129,12 +131,13 @@ Pass by hooks:
 - `useCurrentForm()`
 - `useCurrentPage()`
 - `useCurrentNodeMeta()`
+- `useRenderFragment()`
 
-This matches the actual change frequency of data and services.
+This split matches actual ownership and change frequency better than either “everything by props” or “everything by hooks”.
 
-## Recommended Hooks
+## Current Hooks
 
-Key hooks:
+Key hooks in the active React package are:
 
 ```ts
 function useRendererRuntime(): RendererRuntime;
@@ -142,30 +145,35 @@ function useRenderScope(): ScopeRef;
 function useScopeSelector<T>(selector: (scopeData: any) => T, equalityFn?: (a: T, b: T) => boolean): T;
 function useRendererEnv(): RendererEnv;
 function useActionDispatcher(): RendererRuntime['dispatch'];
+function useCurrentForm(): FormRuntime | undefined;
+function useCurrentPage(): PageRuntime | undefined;
 function useCurrentNodeMeta(): { id: string; path: string; type: string };
 function useRenderFragment(): RendererHelpers['render'];
 ```
 
-`useScopeSelector()` is especially important and should be preferred over broad `scope.read()` style access.
+Form-specific hooks such as `useCurrentFormErrors`, `useCurrentFormFieldState`, `useFieldError`, and `useAggregateError` also exist and are part of the active form integration surface.
 
-## Regions and Fragment Rendering
+## Regions And Fragment Rendering
 
-Local schema rendering should use region handles rather than raw child schema whenever possible.
+Local schema rendering should prefer region handles over raw child schema whenever possible.
+
+Current exported shape:
 
 ```ts
 interface RenderRegionHandle {
   key: string;
+  path: string;
   node: CompiledSchemaNode | CompiledSchemaNode[] | null;
   render(options?: RenderFragmentOptions): React.ReactNode;
 }
 ```
 
-Why regions are better than raw child schema:
+Why this is preferred:
 
 - child schema is compiled once
-- the handle is already bound to the correct runtime
+- the handle is already bound to the current runtime model
 - scope creation and path tracking stay consistent
-- profiling, debug metadata, and monitor hooks remain centralized
+- monitor and debug behavior remain centralized
 
 ### Pattern 1: render declared regions directly
 
@@ -181,7 +189,7 @@ function PanelRenderer(props: RendererComponentProps<PanelSchema>) {
 }
 ```
 
-### Pattern 2: render a fragment with local override data
+### Pattern 2: render with local data override
 
 ```tsx
 function ListRenderer(props: RendererComponentProps<ListSchema>) {
@@ -202,7 +210,7 @@ function ListRenderer(props: RendererComponentProps<ListSchema>) {
 }
 ```
 
-### Pattern 3: render an ad hoc schema fragment
+### Pattern 3: render an ad hoc fragment through helpers
 
 ```tsx
 function EmptyStateWrapper(props: RendererComponentProps<EmptyWrapperSchema>) {
@@ -219,49 +227,44 @@ function EmptyStateWrapper(props: RendererComponentProps<EmptyWrapperSchema>) {
 }
 ```
 
-This path should exist, but precompiled regions remain the preferred path.
+Precompiled regions remain the preferred path; ad hoc rendering exists as a supplement.
 
-## Field Semantics for Slots
+## Slot And Field Semantics
 
-When a renderer needs slot-like behavior such as `title`, `empty`, or `item`, field interpretation should come from renderer field metadata rather than renderer-local guesses.
+When a renderer needs slot-like behavior such as `title`, `empty`, or `onClick`, field interpretation should come from renderer field metadata and compiler normalization, not renderer-local guessing.
 
-Rule:
+Current implications for renderer authors:
 
-- schema authors declare intent with normal schema fields
-- renderer definitions declare how each field is interpreted
-- the compiler normalizes those fields into `props` or `regions`
-- renderer components adapt normalized values to third-party component APIs
+- read renderable child fragments from `regions`
+- read value-like content from `props`
+- read event handlers from `events`
+- use helper utilities such as `resolveRendererSlotContent(...)` when a slot can come from either a region or a value prop
 
-Recommended direction:
-
-- plain values remain normal compiled props
-- child fragments become compiled regions
-- render-prop functions are synthesized inside the renderer adapter layer
-- selected fields such as `title` may eventually support `value-or-region` semantics through richer field metadata
-
-See `docs/architecture/field-metadata-slot-modeling.md` for the detailed slot and field-metadata design.
+The detailed semantics for `value-or-region`, event fields, and nested region extraction live in `docs/architecture/field-metadata-slot-modeling.md`.
 
 ## Render Context Split
 
-Do not put all runtime and render state into one giant React context.
+The React layer should not collapse all runtime and render state into one giant context.
 
-Recommended split:
+Current split context areas are:
 
-- `RendererRuntimeContext`
-- `RenderNodeContext`
-- `RenderScopeContext`
-- `FormRuntimeContext`
-- `PageRuntimeContext`
+- runtime context
+- scope context
+- node meta context
+- form context
+- page context
 
-Reason:
+Why:
 
-- `runtime` is mostly stable
-- scope data changes frequently
-- splitting contexts avoids unrelated rerenders
+- runtime is mostly stable
+- scope and form state change more frequently
+- split context boundaries reduce unrelated rerenders
 
-## Scope and Local Render Options
+## Local Render Options
 
-Fragment rendering should accept explicit local overrides.
+Fragment rendering accepts explicit local overrides.
+
+Current contract:
 
 ```ts
 interface RenderFragmentOptions {
@@ -273,66 +276,24 @@ interface RenderFragmentOptions {
 }
 ```
 
-Recommended behavior:
+Expected behavior:
 
 - if `scope` is provided, use it directly
 - otherwise, if `data` is provided, create a child scope
-- if `isolate` is true, do not chain to the current scope
+- if `isolate` is true, do not chain to the current parent scope
 - `scopeKey` helps keep repeated scopes stable
-- `pathSuffix` improves debugging and cache keys
-
-## Performance Rules
-
-### Compiled nodes should not be reinterpreted every render
-
-At compile time:
-
-- detect regions
-- precompile expressions and templates
-- classify static versus dynamic work
-- attach the renderer definition once
-
-At runtime:
-
-- reuse compiled nodes
-- evaluate only dynamic fields
-- preserve references when results do not change
-
-### Preserve static fast path
-
-Rule:
-
-- no expression means return the original input reference
-- only dynamic fragments may allocate new objects, and only when results actually change
-
-### Preserve dynamic identity reuse
-
-Keep the good semantic target from the old prototype:
-
-- unchanged leaf expression results should preserve parent references where possible
-- object and array nodes should compare shallowly and reuse old references when equal
-- template outputs compare by primitive equality
-
-### Keep helpers stable
-
-`helpers` should be stable objects, not recreated with inline lambdas every render.
-
-### Reuse region handles
-
-`props.regions.body.render()` should use a stable handle object rather than reconstructing region descriptors repeatedly.
-
-### Create child scopes lazily
-
-List, table, and tree renderers should create child scopes only for visible or actually rendered items.
+- `pathSuffix` helps with path clarity and debugability
 
 ## Root Entry Contract
 
 Root renderer boundaries stay explicit.
 
+Current exported root props are:
+
 ```ts
 interface SchemaRendererProps {
-  schema: BaseSchema | BaseSchema[];
-  data?: object;
+  schema: SchemaInput;
+  data?: Record<string, any>;
   env: RendererEnv;
   formulaCompiler: FormulaCompiler;
   registry?: RendererRegistry;
@@ -343,51 +304,66 @@ interface SchemaRendererProps {
 }
 ```
 
-Why root uses props:
+Root uses explicit props because:
 
-- root inputs define ownership
-- boundary behavior is easy to test
-- embedding, plugin, and SSR scenarios stay simpler
-- the expression compiler remains explicitly injectable
+- ownership stays obvious
+- tests stay straightforward
+- embedding and plugin scenarios stay easier to reason about
 
-## Form and Table Expectations
+## Form And Table Expectations
 
 ### Form renderer
 
-A form renderer should:
+A form renderer is expected to:
 
-1. create an isolated `FormRuntime`
-2. create a form scope
-3. expose `FormRuntimeContext`
+1. create a `FormRuntime`
+2. use the form scope as the active child scope
+3. expose form context to descendants
 4. render `body` and `actions` through regions
 
-Child controls should use `useCurrentForm()` rather than receiving repeated form props.
+Child controls should use `useCurrentForm()` and the form-specific hooks instead of receiving repeated form props by hand.
 
 ### Table renderer
 
-A table renderer should:
+A table renderer is expected to:
 
-- create a child scope from `{ record, index }` for each row
-- let cells read only what they need
-- render operation columns with row-local override data
+- create a row scope from `{ record, index }`
+- pass row-local scope into cell or button fragments
+- keep row rendering aligned with the same fragment and action infrastructure used elsewhere
 
-This is the core pattern for row scope and local fragment rendering.
+## Performance Rules
 
-## Suggested Implementation Order
+### Do not reinterpret compiled nodes every render
 
-1. define schema, compiled node, renderer definition, and component prop contracts
-2. implement `FormulaCompiler` on top of `amis-formula`
-3. implement recursive `ExpressionCompiler`
-4. implement `RendererRegistry` and `SchemaCompiler`
-5. implement `RendererRuntime` with stable helpers
-6. test static fast path and identity reuse before wiring React
-7. implement split contexts and selector hooks
-8. implement `RenderRegionHandle`
-9. implement core renderers such as `page`, `form`, `dialog`, `table`, and `button`
+At compile time:
+
+- detect regions
+- precompile expressions and templates
+- classify static versus dynamic work
+- attach renderer definition and validation metadata once
+
+At runtime:
+
+- reuse compiled nodes
+- resolve only what is dynamic
+- preserve references where results are unchanged
+
+### Keep helpers stable
+
+`helpers` should be stable objects, not recreated with unnecessary inline identity churn.
+
+### Reuse region handles
+
+Region handle objects should be reusable and renderer-friendly.
+
+### Create child scopes only when needed
+
+List, table, and tree renderers should avoid eager child-scope creation for work that is not actually rendered.
 
 ## Related Documents
 
-- Official architecture: `docs/architecture/amis-core.md`
-- Field metadata and slot modeling: `docs/architecture/field-metadata-slot-modeling.md`
-- Interface map: `docs/references/renderer-interfaces.md`
-- Example schema: `docs/examples/user-management-schema.md`
+- `docs/references/terminology.md`
+- `docs/architecture/amis-core.md`
+- `docs/architecture/field-metadata-slot-modeling.md`
+- `docs/architecture/form-validation.md`
+- `docs/references/renderer-interfaces.md`
