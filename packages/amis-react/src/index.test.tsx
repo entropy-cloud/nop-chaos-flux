@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import type { RendererDefinition, RendererEnv, RendererPlugin, ScopeRef } from '@nop-chaos/amis-schema';
+import type { RendererComponentProps, RendererDefinition, RendererEnv, RendererPlugin, ScopeRef } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/amis-runtime';
 import {
@@ -105,6 +105,18 @@ const pageWithProbeFormSchema = {
   ]
 } as const;
 
+const fragmentScopedProbeFormSchema = {
+  type: 'form',
+  data: {
+    email: ''
+  },
+  body: [
+    {
+      type: 'probe-input'
+    }
+  ]
+} as const;
+
 function SelectorText() {
   const value = useScopeSelector((scope) => scope.message ?? '');
   return <span>{String(value)}</span>;
@@ -193,6 +205,31 @@ const buttonRenderer: RendererDefinition = {
     </button>
   ),
   fields: [{ key: 'onClick', kind: 'event' }]
+};
+
+function FragmentRenderHost(props: RendererComponentProps) {
+  const [tick, setTick] = React.useState(0);
+
+  return (
+    <div>
+      <button type="button" onClick={() => setTick((current) => current + 1)}>
+        Refresh fragment {tick}
+      </button>
+      {props.helpers.render(fragmentScopedProbeFormSchema, {
+        data: {
+          currentUser: {
+            role: 'architect'
+          }
+        },
+        pathSuffix: 'fragment'
+      })}
+    </div>
+  );
+}
+
+const fragmentRenderHostRenderer: RendererDefinition = {
+  type: 'fragment-render-host',
+  component: FragmentRenderHost
 };
 
 function createScope(data: Record<string, any>): ScopeRef {
@@ -362,6 +399,71 @@ describe('createSchemaRenderer', () => {
     expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
   });
 
+  it('preserves form state when fragment render data is recreated on host rerender', () => {
+    const SchemaRenderer = createSchemaRenderer([fragmentRenderHostRenderer, formRenderer, probeInputRenderer]);
+
+    cleanup();
+    const view = render(
+      <SchemaRenderer
+        schema={{ type: 'fragment-render-host' }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+    const canvas = within(view.container);
+
+    fireEvent.change(canvas.getByLabelText('Email'), { target: { value: 'a' } });
+    expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
+
+    fireEvent.click(canvas.getByText('Refresh fragment 0'));
+
+    expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
+  });
+
+  it('recreates the form runtime when env identity changes', () => {
+    const SchemaRenderer = createSchemaRenderer([formRenderer, probeInputRenderer]);
+
+    function Host() {
+      const [tick, setTick] = React.useState(0);
+      const unstableEnv = React.useMemo<RendererEnv>(
+        () => ({
+          ...env,
+          functions: {
+            tick: () => tick
+          }
+        }),
+        [tick]
+      );
+
+      return (
+        <div>
+          <button type="button" onClick={() => setTick((current) => current + 1)}>
+            Refresh env {tick}
+          </button>
+          <SchemaRenderer
+            schema={probeFormSchema}
+            data={{
+              currentUser: { name: 'Architect' }
+            }}
+            env={unstableEnv}
+            formulaCompiler={sharedFormulaCompiler}
+          />
+        </div>
+      );
+    }
+
+    cleanup();
+    const view = render(<Host />);
+    const canvas = within(view.container);
+
+    fireEvent.change(canvas.getByLabelText('Email'), { target: { value: 'a' } });
+    expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
+
+    fireEvent.click(canvas.getByText('Refresh env 0'));
+
+    expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('');
+  });
+
   it('renders dialog content after dispatching a dialog action', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
 
@@ -430,6 +532,182 @@ describe('createSchemaRenderer', () => {
 
     expect(await screen.findByText('Compiled dialog title')).toBeTruthy();
     expect(await screen.findByText('Dialog body')).toBeTruthy();
+  });
+
+  it('preserves dialog form state across host rerenders and page data updates', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      buttonRenderer,
+      formRenderer,
+      probeInputRenderer
+    ]);
+
+    function Host() {
+      const [tick, setTick] = React.useState(0);
+      const [name, setName] = React.useState('Architect');
+
+      return (
+        <div>
+          <button type="button" onClick={() => setTick((current) => current + 1)}>
+            Rerender host {tick}
+          </button>
+          <button type="button" onClick={() => setName('Operator')}>
+            Rename user
+          </button>
+          <SchemaRenderer
+            schema={{
+              type: 'page',
+              body: [
+                {
+                  type: 'button',
+                  label: 'Open dialog',
+                  onClick: {
+                    action: 'dialog',
+                    dialog: {
+                      title: { type: 'text', text: 'Dialog ${currentUser.name}' },
+                      body: [
+                        { type: 'text', text: 'Dialog user ${currentUser.name}' },
+                        probeFormSchema
+                      ]
+                    }
+                  }
+                }
+              ]
+            }}
+            data={{
+              currentUser: { name }
+            }}
+            env={env}
+            formulaCompiler={sharedFormulaCompiler}
+          />
+        </div>
+      );
+    }
+
+    cleanup();
+    const view = render(<Host />);
+    const canvas = within(view.container);
+
+    fireEvent.click(canvas.getByText('Open dialog'));
+    expect(await screen.findByText('Dialog Architect')).toBeTruthy();
+    expect(await screen.findByText('Dialog user Architect')).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'alice@example.com' } });
+    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('alice@example.com');
+
+    fireEvent.click(canvas.getByText('Rerender host 0'));
+
+    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('alice@example.com');
+    expect(screen.getByText('Dialog Architect')).toBeTruthy();
+
+    fireEvent.click(canvas.getByText('Rename user'));
+
+    expect(await screen.findByText('Dialog Operator')).toBeTruthy();
+    expect(await screen.findByText('Dialog user Operator')).toBeTruthy();
+    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('alice@example.com');
+  });
+
+  it('updates dialog title and body when dialog scope changes', async () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
+
+    cleanup();
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button',
+              label: 'Open scoped dialog',
+              onClick: {
+                action: 'dialog',
+                dialog: {
+                  title: { type: 'text', text: 'Dialog ${message}' },
+                  body: [
+                    { type: 'text', text: 'Body ${message}' },
+                    {
+                      type: 'button',
+                      label: 'Update dialog message',
+                      onClick: {
+                        action: 'setValue',
+                        componentPath: 'message',
+                        value: 'updated'
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }}
+        data={{ message: 'initial' }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Open scoped dialog'));
+
+    expect(await screen.findByText('Dialog initial')).toBeTruthy();
+    expect(await screen.findByText('Body initial')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Update dialog message'));
+
+    expect(await screen.findByText('Dialog updated')).toBeTruthy();
+    expect(await screen.findByText('Body updated')).toBeTruthy();
+  });
+
+  it('creates a fresh dialog scope when reopening a dialog', async () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
+
+    cleanup();
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button',
+              label: 'Open fresh dialog',
+              onClick: {
+                action: 'dialog',
+                dialog: {
+                  title: 'Fresh dialog',
+                  body: [
+                    { type: 'text', text: '${draft}' },
+                    {
+                      type: 'button',
+                      label: 'Set draft',
+                      onClick: {
+                        action: 'setValue',
+                        componentPath: 'draft',
+                        value: 'changed'
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Open fresh dialog'));
+    fireEvent.click(await screen.findByText('Set draft'));
+    expect(await screen.findByText('changed')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Close'));
+    await waitFor(() => {
+      expect(screen.queryByText('changed')).toBeNull();
+    });
+
+    fireEvent.click(screen.getByText('Open fresh dialog'));
+    expect(await screen.findByText('Fresh dialog')).toBeTruthy();
+    expect(screen.queryByText('changed')).toBeNull();
   });
 
   it('supports wrapComponent plugins in the renderer pipeline', () => {

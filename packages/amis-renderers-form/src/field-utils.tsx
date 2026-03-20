@@ -96,7 +96,7 @@ export function createFieldHandlers(args: {
   name: string;
   currentForm: FormRuntime | undefined;
   scope: ReturnType<typeof useRenderScope>;
-  setValue: (value: string) => void;
+  setValue: (value: unknown) => void;
 }) {
   const { name, currentForm, scope, setValue } = args;
 
@@ -106,7 +106,7 @@ export function createFieldHandlers(args: {
         currentForm.visitField(name);
       }
     },
-    onChange(nextValue: string) {
+    onChange(nextValue: unknown) {
       if (currentForm) {
         setValue(nextValue);
 

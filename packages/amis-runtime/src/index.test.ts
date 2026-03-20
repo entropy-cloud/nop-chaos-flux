@@ -2401,6 +2401,46 @@ describe('createRendererRuntime', () => {
     expect(form.store.getState().values.reviewers).toEqual([{ value: '' }]);
   });
 
+  it('remaps child errors when removing middle array items through runtime helpers', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'array-middle-remap-form',
+      initialValues: {
+        reviewers: [{ value: 'alice' }, { value: 'bob' }, { value: '' }]
+      },
+      parentScope: page.scope
+    });
+
+    form.registerField({
+      path: 'reviewers',
+      childPaths: ['reviewers.0.value', 'reviewers.1.value', 'reviewers.2.value'],
+      getValue() {
+        return form.store.getState().values.reviewers;
+      },
+      validateChild(path) {
+        return path === 'reviewers.2.value'
+          ? [{ path, rule: 'required', message: 'Reviewer 3 is required' }]
+          : [];
+      }
+    });
+
+    form.touchField('reviewers.2.value');
+    await form.validateField('reviewers.2.value');
+    expect(form.getError('reviewers.2.value')?.[0]?.message).toBe('Reviewer 3 is required');
+
+    form.removeValue('reviewers', 1);
+
+    expect(form.store.getState().values.reviewers).toEqual([{ value: 'alice' }, { value: '' }]);
+    expect(form.isTouched('reviewers.1.value')).toBe(true);
+    expect(form.getError('reviewers.2.value')).toBeUndefined();
+    expect(form.getError('reviewers.1.value')?.[0]?.message).toBe('Reviewer 3 is required');
+  });
+
   it('remaps touched and errors when swapping array items through runtime helpers', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),

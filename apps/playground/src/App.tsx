@@ -1,20 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/amis-formula';
+import { AmisDebuggerPanel, createAmisDebugger } from '@nop-chaos/amis-debugger';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/amis-react';
 import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/amis-schema';
 import { registerBasicRenderers } from '@nop-chaos/amis-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/amis-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/amis-renderers-data';
-
-type ActivityKind = 'render' | 'action' | 'api' | 'notify';
-
-interface ActivityEntry {
-  id: number;
-  kind: ActivityKind;
-  message: string;
-  detail?: string;
-  timestamp: string;
-}
 
 const users = [
   { id: 1, username: 'alice', email: 'alice@example.com', role: 'admin' },
@@ -30,6 +21,20 @@ registerDataRenderers(registry);
 const SchemaRenderer = createSchemaRenderer();
 
 const formulaCompiler = createFormulaCompiler();
+
+if (typeof window !== 'undefined' && typeof window.__NOP_AMIS_DEBUGGER__ === 'undefined') {
+  window.__NOP_AMIS_DEBUGGER__ = {
+    enabled: true,
+    defaultOpen: true,
+    defaultTab: 'timeline',
+    position: { x: 24, y: 24 },
+    dock: 'floating'
+  };
+}
+
+const debuggerController = createAmisDebugger({
+  id: 'playground-main'
+});
 
 function createAbortError() {
   return Object.assign(new Error('Request aborted'), { name: 'AbortError' });
@@ -57,34 +62,26 @@ function delay(ms: number, signal?: AbortSignal) {
   });
 }
 
-function formatActionResult(result: unknown) {
-  if (!result || typeof result !== 'object') {
-    return 'unknown';
-  }
-
-  const candidate = result as { ok?: boolean; cancelled?: boolean };
-
-  if (candidate.cancelled) {
-    return 'cancelled';
-  }
-
-  if (candidate.ok) {
-    return 'ok';
-  }
-
-  return 'error';
-}
-
 function formatCountLabel(value: number, noun: string) {
   return `${value} ${noun}${value === 1 ? '' : 's'}`;
 }
 
-function formatTimestamp(date: Date) {
-  return date.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
+function filterUsersByQuery(
+  sourceUsers: typeof users,
+  query: string
+) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return sourceUsers;
+  }
+
+  return sourceUsers.filter(
+    (user) =>
+      user.username.toLowerCase().includes(normalizedQuery) ||
+      user.email.toLowerCase().includes(normalizedQuery) ||
+      user.role.toLowerCase().includes(normalizedQuery)
+  );
 }
 
 const schema = {
@@ -485,105 +482,55 @@ const schema = {
 };
 
 export function App() {
-  const [activity, setActivity] = useState<ActivityEntry[]>([]);
-  const [activeKinds, setActiveKinds] = useState<ActivityKind[]>(['render', 'action', 'api', 'notify']);
-  const [activityPaused, setActivityPaused] = useState(false);
   const [directoryUsers, setDirectoryUsers] = useState(users);
   const [searchResults, setSearchResults] = useState(users);
   const [searchQuery, setSearchQuery] = useState('');
-  const nextActivityId = useRef(1);
-  const suppressRenderActivity = useRef(false);
-  const releaseRenderActivityTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  const pushActivity = useCallback((kind: ActivityKind, message: string, detail?: string) => {
-    if (kind === 'render' && suppressRenderActivity.current) {
-      return;
-    }
-
-    if (activityPaused) {
-      return;
-    }
-
-    const now = new Date();
-
-    if (kind === 'render') {
-      suppressRenderActivity.current = true;
-
-      if (releaseRenderActivityTimer.current) {
-        clearTimeout(releaseRenderActivityTimer.current);
-      }
-
-      releaseRenderActivityTimer.current = setTimeout(() => {
-        suppressRenderActivity.current = false;
-        releaseRenderActivityTimer.current = undefined;
-      }, 0);
-    }
-
-    setActivity((current) => [
-      {
-        id: nextActivityId.current++,
-        kind,
-        message,
-        detail,
-        timestamp: formatTimestamp(now)
-      },
-      ...current
-    ].slice(0, 16));
-  }, [activityPaused]);
+  const directoryUsersRef = useRef(directoryUsers);
+  const searchQueryRef = useRef(searchQuery);
 
   useEffect(() => {
-    return () => {
-      if (releaseRenderActivityTimer.current) {
-        clearTimeout(releaseRenderActivityTimer.current);
-      }
-    };
-  }, []);
+    directoryUsersRef.current = directoryUsers;
+  }, [directoryUsers]);
 
-  const env = useMemo<RendererEnv>(
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
+
+  const baseEnv = useMemo<RendererEnv>(
     () => ({
       async fetcher<T>(api: ApiObject, ctx: ApiRequestContext) {
         if (api.url === '/api/search') {
           await delay(700, ctx.signal);
 
-          const query = String((api.data as Record<string, unknown> | undefined)?.query ?? '')
-            .trim()
-            .toLowerCase();
-          const results = query
-            ? directoryUsers.filter(
-                (user) =>
-                  user.username.toLowerCase().includes(query) ||
-                  user.email.toLowerCase().includes(query) ||
-                  user.role.toLowerCase().includes(query)
-              )
-            : directoryUsers;
+          const query = String((api.data as Record<string, unknown> | undefined)?.query ?? '');
+          const normalizedQuery = query.trim().toLowerCase();
+          const results = filterUsersByQuery(directoryUsersRef.current, normalizedQuery);
 
-          setSearchQuery(query);
+          searchQueryRef.current = normalizedQuery;
+          setSearchQuery(normalizedQuery);
           setSearchResults(results);
-
-          pushActivity(
-            'api',
-            `response /api/search -> ${results.length} match(es)`,
-            `query=${query || '(all)'} | ${formatCountLabel(results.length, 'record')}`
-          );
 
           return {
             ok: true,
             status: 200,
             data: {
               results,
-              total: results.length
+              total: results.length,
+              summary: `query=${normalizedQuery || '(all)'} | ${formatCountLabel(results.length, 'record')}`
             } as T
           };
         }
 
         if (api.url === '/api/users') {
           const scopeData = ctx.scope.readOwn();
+          const activeSearchQuery = searchQueryRef.current;
           let createdUser = {
             id: Date.now(),
             username: String(scopeData.username ?? ''),
             email: String(scopeData.email ?? ''),
             role: String(scopeData.role ?? 'viewer')
           };
+          let totalUsers = directoryUsersRef.current.length;
 
           setDirectoryUsers((current) => {
             createdUser = {
@@ -592,32 +539,21 @@ export function App() {
             };
 
             const nextUsers = [...current, createdUser];
-            const nextResults = searchQuery
-              ? nextUsers.filter(
-                  (user) =>
-                    user.username.toLowerCase().includes(searchQuery) ||
-                    user.email.toLowerCase().includes(searchQuery) ||
-                    user.role.toLowerCase().includes(searchQuery)
-                )
-              : nextUsers;
+            const nextResults = filterUsersByQuery(nextUsers, activeSearchQuery);
 
+            totalUsers = nextUsers.length;
+            directoryUsersRef.current = nextUsers;
             setSearchResults(nextResults);
             return nextUsers;
           });
-
-          pushActivity(
-            'api',
-            `response /api/users -> created ${createdUser.username || 'user'}`,
-            `username=${createdUser.username} | email=${createdUser.email} | role=${createdUser.role}`
-          );
-          pushActivity('notify', `success: ${createdUser.username || 'User'} added to the local directory`);
 
           return {
             ok: true,
             status: 200,
             data: {
               user: createdUser,
-              total: directoryUsers.length + 1
+              total: totalUsers,
+              summary: `username=${createdUser.username} | email=${createdUser.email} | role=${createdUser.role}`
             } as T
           };
         }
@@ -626,27 +562,20 @@ export function App() {
           await delay(450, ctx.signal);
 
           const username = String((api.data as Record<string, unknown> | undefined)?.username ?? '').trim().toLowerCase();
-          const exists = directoryUsers.some((user) => user.username.toLowerCase() === username);
-
-          pushActivity(
-            'api',
-            `response /api/validate-username -> ${exists ? 'duplicate' : 'available'}`,
-            `username=${username || '(empty)'}`
-          );
+          const exists = directoryUsersRef.current.some((user) => user.username.toLowerCase() === username);
 
           return {
             ok: true,
             status: 200,
             data: {
               valid: !exists,
-              message: exists ? 'Username is already taken' : 'Username is available'
+              message: exists ? 'Username is already taken' : 'Username is available',
+              summary: `username=${username || '(empty)'}`
             } as T
           };
         }
 
         if (api.method?.toLowerCase() === 'post') {
-          pushActivity('api', `response ${api.url} -> saved payload snapshot`, JSON.stringify(ctx.scope.readOwn()));
-
           return {
             ok: true,
             status: 200,
@@ -664,48 +593,17 @@ export function App() {
         };
       },
       notify(level, message) {
-        pushActivity('notify', `${level}: ${message}`);
-      },
-      monitor: {
-        onRenderEnd(payload) {
-          pushActivity('render', `${payload.type} rendered in ${payload.durationMs}ms`, `nodeId=${payload.nodeId} | path=${payload.path}`);
-        },
-        onActionStart(payload) {
-          pushActivity('action', `${payload.actionType} started`, `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`);
-        },
-        onActionEnd(payload) {
-          pushActivity(
-            'action',
-            `${payload.actionType} ${formatActionResult(payload.result)} in ${payload.durationMs}ms`,
-            `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`
-          );
-        },
-        onApiRequest(payload) {
-          pushActivity(
-            'api',
-            `${payload.api.method ?? 'get'} ${payload.api.url}`,
-            `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`
-          );
+        if (level === 'success') {
+          return;
         }
+
+        console.info(`[playground notify] ${level}: ${message}`);
       }
     }),
-    [directoryUsers, pushActivity, searchQuery]
+    []
   );
 
-  const visibleActivity = useMemo(
-    () => activity.filter((entry) => activeKinds.includes(entry.kind)),
-    [activity, activeKinds]
-  );
-
-  const toggleKind = useCallback((kind: ActivityKind) => {
-    setActiveKinds((current) => {
-      if (current.includes(kind)) {
-        return current.length === 1 ? current : current.filter((entry) => entry !== kind);
-      }
-
-      return [...current, kind];
-    });
-  }, []);
+  const env = useMemo(() => debuggerController.decorateEnv(baseEnv), [baseEnv]);
 
   return (
     <main className="app-shell">
@@ -726,6 +624,10 @@ export function App() {
           reveals errors after a field has been touched. Validation timing and error visibility are now
           configured independently at the form or field level.
         </p>
+        <p className="body-copy body-copy--compact">
+          A first package-based debugger is now mounted as a floating panel. Drag it, hide it, and reopen it
+          from the left-bottom launcher while interacting with the schema.
+        </p>
         <div className="playground-layout">
           <div className="playground-stage">
             <SchemaRenderer
@@ -738,58 +640,13 @@ export function App() {
               env={env}
               registry={registry}
               formulaCompiler={formulaCompiler}
+              plugins={[debuggerController.plugin]}
+              onActionError={debuggerController.onActionError}
             />
           </div>
-          <aside className="activity-panel">
-            <div className="activity-panel__header">
-              <p className="eyebrow">Live Monitor</p>
-              <h2>Runtime Activity</h2>
-              <p>Render, action, and API events stream here while you interact with the schema.</p>
-            </div>
-            <div className="activity-toolbar">
-              <button
-                type="button"
-                className={`activity-control ${activityPaused ? 'activity-control--active' : ''}`}
-                onClick={() => setActivityPaused((current) => !current)}
-              >
-                {activityPaused ? 'Resume Stream' : 'Pause Stream'}
-              </button>
-              <button type="button" className="activity-control" onClick={() => setActivity([])}>
-                Clear Log
-              </button>
-            </div>
-            <div className="activity-filters" aria-label="Activity filters">
-              {(['render', 'action', 'api', 'notify'] as ActivityKind[]).map((kind) => {
-                const active = activeKinds.includes(kind);
-
-                return (
-                  <button
-                    key={kind}
-                    type="button"
-                    className={`activity-filter ${active ? 'activity-filter--active' : ''}`}
-                    onClick={() => toggleKind(kind)}
-                  >
-                    {kind}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="activity-list">
-              {visibleActivity.length === 0 ? <p className="activity-empty">No events match the current filter. Re-enable a kind or trigger a new interaction.</p> : null}
-              {visibleActivity.map((entry, index) => (
-                <article key={entry.id} className={`activity-entry ${index === 0 ? 'activity-entry--fresh' : ''}`}>
-                  <div className="activity-entry__topline">
-                    <span className={`activity-badge activity-badge--${entry.kind}`}>{entry.kind}</span>
-                    <time className="activity-time">{entry.timestamp}</time>
-                  </div>
-                  <span className="activity-message">{entry.message}</span>
-                  {entry.detail ? <code className="activity-detail">{entry.detail}</code> : null}
-                </article>
-              ))}
-            </div>
-          </aside>
         </div>
       </section>
+      <AmisDebuggerPanel controller={debuggerController} />
     </main>
   );
 }

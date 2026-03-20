@@ -22,7 +22,7 @@ import type {
   ScopeRef,
   ValidationError
 } from '@nop-chaos/amis-schema';
-import { isSchema, isSchemaArray } from '@nop-chaos/amis-schema';
+import { isSchema, isSchemaArray, shallowEqual } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/amis-runtime';
 import { FormContext, NodeMetaContext, PageContext, RuntimeContext, ScopeContext, useRequiredContext } from './contexts';
@@ -177,21 +177,57 @@ function RenderNodes(props: { input: RenderNodeInput; options?: RenderFragmentOp
   const currentForm = useCurrentForm();
   const currentPage = useCurrentPage();
   const compiled = useMemo(() => normalizeNodeInput(runtime, props.input), [runtime, props.input]);
+  const fragmentScopeRef = useRef<{
+    parentScope: ScopeRef;
+    isolate?: boolean;
+    pathSuffix?: string;
+    scopeKey?: string;
+    data: Record<string, any>;
+    scope: ScopeRef;
+  } | undefined>(undefined);
 
   if (!compiled) {
     return null;
   }
 
-  const scope = props.options?.scope
-    ? props.options.scope
-    : props.options?.data
-      ? runtime.createChildScope(currentScope, props.options.data, {
-          isolate: props.options.isolate,
-          pathSuffix: props.options.pathSuffix,
-          scopeKey: props.options.scopeKey,
-          source: 'fragment'
-        })
-      : currentScope;
+  let scope = currentScope;
+
+  if (props.options?.scope) {
+    scope = props.options.scope;
+  } else if (props.options?.data) {
+    const nextData = props.options.data as Record<string, any>;
+    const cached = fragmentScopeRef.current;
+
+    if (
+      !cached ||
+      cached.parentScope !== currentScope ||
+      cached.isolate !== props.options.isolate ||
+      cached.pathSuffix !== props.options.pathSuffix ||
+      cached.scopeKey !== props.options.scopeKey
+    ) {
+      scope = runtime.createChildScope(currentScope, nextData, {
+        isolate: props.options.isolate,
+        pathSuffix: props.options.pathSuffix,
+        scopeKey: props.options.scopeKey,
+        source: 'fragment'
+      });
+      fragmentScopeRef.current = {
+        parentScope: currentScope,
+        isolate: props.options.isolate,
+        pathSuffix: props.options.pathSuffix,
+        scopeKey: props.options.scopeKey,
+        data: nextData,
+        scope
+      };
+    } else {
+      scope = cached.scope;
+
+      if (!shallowEqual(cached.data, nextData)) {
+        scope.store?.setSnapshot(nextData);
+        cached.data = nextData;
+      }
+    }
+  }
 
   if (Array.isArray(compiled)) {
     return (
@@ -230,30 +266,49 @@ function DialogHost() {
   return (
     <div className="na-dialog-host">
       {dialogs.map((dialog: DialogState) => (
-        <div key={dialog.id} className="na-dialog-backdrop">
-          <div className="na-dialog-card">
-            {dialog.title
-              ? (
-                  <ScopeContext.Provider value={dialog.scope}>
-                    <h3>
-                      {typeof dialog.title === 'string'
-                        ? dialog.title
-                        : isCompiledNode(dialog.title) || isCompiledNodeArray(dialog.title)
-                        ? <RenderNodes input={dialog.title} options={{ scope: dialog.scope }} />
-                        : String(dialog.title)}
-                    </h3>
-                  </ScopeContext.Provider>
-                )
-              : null}
-            <button className="na-dialog-close" type="button" onClick={() => page.closeDialog(dialog.id)}>
-              Close
-            </button>
-            <ScopeContext.Provider value={dialog.scope}>
-              <RenderNodes input={(dialog.body ?? dialog.dialog.body) as RenderNodeInput} options={{ scope: dialog.scope }} />
-            </ScopeContext.Provider>
-          </div>
-        </div>
+        <DialogView key={dialog.id} dialog={dialog} page={page} />
       ))}
+    </div>
+  );
+}
+
+function DialogView(props: {
+  dialog: DialogState;
+  page: PageRuntime;
+}) {
+  useSyncExternalStoreWithSelector(
+    props.dialog.scope.store?.subscribe ?? (() => () => undefined),
+    () => props.dialog.scope.readOwn(),
+    () => props.dialog.scope.readOwn(),
+    (state) => state,
+    Object.is
+  );
+
+  const { dialog, page } = props;
+
+  return (
+    <div className="na-dialog-backdrop">
+      <div className="na-dialog-card">
+        {dialog.title
+          ? (
+              <ScopeContext.Provider value={dialog.scope}>
+                <h3>
+                  {typeof dialog.title === 'string'
+                    ? dialog.title
+                    : isCompiledNode(dialog.title) || isCompiledNodeArray(dialog.title)
+                    ? <RenderNodes input={dialog.title} options={{ scope: dialog.scope }} />
+                    : String(dialog.title)}
+                </h3>
+              </ScopeContext.Provider>
+            )
+          : null}
+        <button className="na-dialog-close" type="button" onClick={() => page.closeDialog(dialog.id)}>
+          Close
+        </button>
+        <ScopeContext.Provider value={dialog.scope}>
+          <RenderNodes input={(dialog.body ?? dialog.dialog.body) as RenderNodeInput} options={{ scope: dialog.scope }} />
+        </ScopeContext.Provider>
+      </div>
     </div>
   );
 }

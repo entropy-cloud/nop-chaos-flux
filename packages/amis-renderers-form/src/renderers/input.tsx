@@ -3,7 +3,6 @@ import { useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
 import {
   createFieldHandlers,
   formLabelFieldRule,
-  readCheckboxGroupValue,
   resolveFieldLabelContent,
   useBoundFieldValue,
   useFieldPresentation
@@ -347,7 +346,8 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
       const name = String(props.props.name ?? props.schema.name ?? '');
-      const value = readCheckboxGroupValue(scope, name);
+      const rawValue = useBoundFieldValue(name, currentForm);
+      const value = Array.isArray(rawValue) ? rawValue : [];
       const options = Array.isArray(props.props.options) ? (props.props.options as CheckboxGroupSchema['options']) : [];
       const presentation = useFieldPresentation(name, currentForm);
       const labelContent = resolveFieldLabelContent(props);
@@ -356,7 +356,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
         currentForm,
         scope,
         setValue(nextValue) {
-          currentForm?.setValue(name, JSON.parse(nextValue) as string[]);
+          currentForm?.setValue(name, nextValue);
         }
       });
 
@@ -365,7 +365,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
           <FieldLabel content={labelContent} as="legend" />
           <div className="na-checkbox-group">
             {options?.map((option) => {
-              const checked = value.includes(option.value);
+              const checked = value.some((candidate) => Object.is(candidate, option.value));
 
               return (
                 <label key={option.value} className="na-checkbox">
@@ -374,16 +374,16 @@ export const inputRendererDefinitions: RendererDefinition[] = [
                     type="checkbox"
                     value={option.value}
                     checked={checked}
-                    aria-invalid={presentation.showError ? true : undefined}
-                    onFocus={handlers.onFocus}
-                    onChange={(event) => {
-                      const nextValue = event.target.checked
-                        ? [...value, option.value]
-                        : value.filter((candidate) => candidate !== option.value);
-                      handlers.onChange(JSON.stringify(nextValue));
-                    }}
-                    onBlur={handlers.onBlur}
-                  />
+                     aria-invalid={presentation.showError ? true : undefined}
+                     onFocus={handlers.onFocus}
+                     onChange={(event) => {
+                        const nextValue = event.target.checked
+                          ? [...value, option.value]
+                          : value.filter((candidate) => !Object.is(candidate, option.value));
+                        handlers.onChange(nextValue);
+                     }}
+                     onBlur={handlers.onBlur}
+                   />
                   <span className="na-checkbox__label">{option.label}</span>
                 </label>
               );

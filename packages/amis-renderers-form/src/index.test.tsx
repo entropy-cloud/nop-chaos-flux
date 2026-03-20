@@ -2,9 +2,10 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ApiObject, ApiRequestContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/amis-schema';
+import { getIn } from '@nop-chaos/amis-schema';
 import { createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createSchemaRenderer } from '@nop-chaos/amis-react';
-import { useAggregateError, useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
+import { useAggregateError, useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/amis-react';
 import { basicRendererDefinitions } from '@nop-chaos/amis-renderers-basic';
 import { formRendererDefinitions } from './index';
 
@@ -91,6 +92,30 @@ const contactGroupRenderer: RendererDefinition = {
     }
   },
   component: ContactGroupRenderer
+};
+
+function FormStateProbeRenderer(props: RendererComponentProps) {
+  const path = String(props.props.name ?? props.schema.name ?? '');
+  const value = useCurrentFormState((state) => (path ? getIn(state.values, path) : state.values));
+
+  return <pre data-testid={`form-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
+}
+
+const formStateProbeRenderer: RendererDefinition = {
+  type: 'form-state-probe',
+  component: FormStateProbeRenderer
+};
+
+function ScopeStateProbeRenderer(props: RendererComponentProps) {
+  const path = String(props.props.name ?? props.schema.name ?? '');
+  const value = useScopeSelector((scopeData) => (path ? getIn(scopeData, path) : scopeData));
+
+  return <pre data-testid={`scope-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
+}
+
+const scopeStateProbeRenderer: RendererDefinition = {
+  type: 'scope-state-probe',
+  component: ScopeStateProbeRenderer
 };
 
 describe('formRendererDefinitions', () => {
@@ -372,6 +397,115 @@ describe('formRendererDefinitions', () => {
       featured: true,
       tags: ['stable', 'beta']
     });
+  });
+
+  it('preserves non-string checkbox-group values in form state and submit payloads', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            flags: [0]
+          },
+          body: [
+            {
+              type: 'checkbox-group',
+              name: 'flags',
+              label: 'Flags',
+              options: [
+                { label: 'Zero', value: 0 },
+                { label: 'False', value: false }
+              ] as any
+            },
+            {
+              type: 'form-state-probe',
+              name: 'flags'
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit flags',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/flags',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        } as any}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const zeroCheckbox = screen.getByLabelText('Zero') as HTMLInputElement;
+    const falseCheckbox = screen.getByLabelText('False') as HTMLInputElement;
+
+    expect(zeroCheckbox.checked).toBe(true);
+    expect(falseCheckbox.checked).toBe(false);
+
+    fireEvent.click(falseCheckbox);
+    expect(JSON.parse(screen.getByTestId('form-state:flags').textContent ?? 'null')).toEqual([0, false]);
+
+    fireEvent.click(screen.getByText('Submit flags'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(submitCalls[0]?.flags).toEqual([0, false]);
+
+    fireEvent.click(zeroCheckbox);
+    expect(JSON.parse(screen.getByTestId('form-state:flags').textContent ?? 'null')).toEqual([false]);
+  });
+
+  it('preserves checkbox-group values when updating plain scope data', () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, scopeStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={[
+          {
+            type: 'checkbox-group',
+            name: 'flags',
+            label: 'Flags',
+            options: [
+              { label: 'Zero', value: 0 },
+              { label: 'False', value: false }
+            ]
+          },
+          {
+            type: 'scope-state-probe',
+            name: 'flags'
+          }
+        ] as any}
+        data={{
+          flags: [0]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const zeroCheckbox = screen.getByLabelText('Zero') as HTMLInputElement;
+    const falseCheckbox = screen.getByLabelText('False') as HTMLInputElement;
+
+    expect(zeroCheckbox.checked).toBe(true);
+    expect(falseCheckbox.checked).toBe(false);
+
+    fireEvent.click(falseCheckbox);
+    expect(JSON.parse(screen.getByTestId('scope-state:flags').textContent ?? 'null')).toEqual([0, false]);
+
+    fireEvent.click(zeroCheckbox);
+    expect(JSON.parse(screen.getByTestId('scope-state:flags').textContent ?? 'null')).toEqual([false]);
   });
 
   it('validates a runtime-registered complex field and blocks submit', async () => {
@@ -1250,6 +1384,72 @@ describe('formRendererDefinitions', () => {
     });
   });
 
+  it('preserves remaining array-editor values after removing a middle item', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            reviewers: [{ value: 'alice' }, { value: 'bob' }, { value: 'carol' }]
+          },
+          body: [
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer'
+            },
+            {
+              type: 'form-state-probe',
+              name: 'reviewers'
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit reordered reviewers',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/reviewers/reordered',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getAllByText('Remove')[1]);
+
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('form-state:reviewers').textContent ?? 'null')).toMatchObject([
+        { value: 'alice' },
+        { value: 'carol' }
+      ]);
+    });
+
+    fireEvent.click(screen.getByText('Submit reordered reviewers'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(screen.queryByText('Reviewers requires at least one item')).toBeNull();
+    expect(submitCalls[0].reviewers).toHaveLength(2);
+    expect(submitCalls[0]).toMatchObject({
+      reviewers: [{ value: 'alice' }, { value: 'carol' }]
+    });
+  });
+
   it('supports aggregate atLeastOneFilled validation in the UI', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
@@ -1434,6 +1634,79 @@ describe('formRendererDefinitions', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('Metadata keys must be unique')).toBeNull();
+    });
+  });
+
+  it('preserves remaining key-value entries after removing a middle row', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            metadata: [
+              { key: 'env', value: 'prod' },
+              { key: 'tier', value: 'gold' },
+              { key: 'region', value: 'us-east' }
+            ]
+          },
+          body: [
+            {
+              type: 'key-value',
+              name: 'metadata',
+              label: 'Metadata',
+              addLabel: 'Add metadata entry'
+            },
+            {
+              type: 'form-state-probe',
+              name: 'metadata'
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit reordered metadata',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/metadata/reordered',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getAllByText('Remove')[1]);
+
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('form-state:metadata').textContent ?? 'null')).toMatchObject([
+        { key: 'env', value: 'prod' },
+        { key: 'region', value: 'us-east' }
+      ]);
+    });
+
+    fireEvent.click(screen.getByText('Submit reordered metadata'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(screen.queryByText('Metadata requires at least one entry')).toBeNull();
+    expect(submitCalls[0].metadata).toHaveLength(2);
+    expect(submitCalls[0]).toMatchObject({
+      metadata: [
+        { key: 'env', value: 'prod' },
+        { key: 'region', value: 'us-east' }
+      ]
     });
   });
 

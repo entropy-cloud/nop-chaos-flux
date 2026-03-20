@@ -13,3 +13,7 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 
 - `docs/bugs/00-bug-fix-note-writing-guide.md`
 - `docs/bugs/01-playground-email-input-state-reset-fix.md`
+- `docs/bugs/02-playground-env-identity-runtime-reset-fix.md`
+- `docs/bugs/03-fragment-scope-identity-form-reset-fix.md`
+- `docs/bugs/04-dialog-scope-stale-render-fix.md`
+- `docs/bugs/05-checkbox-group-value-type-drift-fix.md`
