@@ -14,7 +14,6 @@ import {
   getFieldValidationBehavior,
   readFieldValue,
   resolveFieldLabelContent,
-  resolveFieldLabelText,
   shouldValidateOn,
   useCompositeChildFieldState,
   useFieldPresentation
