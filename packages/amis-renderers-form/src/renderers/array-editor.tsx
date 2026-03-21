@@ -1,6 +1,7 @@
 import React from 'react';
 import type { BaseSchema, CompiledValidationBehavior, RendererComponentProps, RendererDefinition, RuntimeFieldRegistration } from '@nop-chaos/amis-schema';
-import { useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
+import { getIn } from '@nop-chaos/amis-schema';
+import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/amis-react';
 import {
   formLabelFieldRule,
   getChildFieldUiState,
@@ -116,6 +117,12 @@ function toArrayEditorItems(value: unknown): ArrayEditorItem[] {
   });
 }
 
+function arrayItemsEqual(a: ArrayEditorItem[], b: ArrayEditorItem[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
+}
+
 export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
@@ -135,6 +142,31 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   React.useEffect(() => {
     itemsRef.current = items;
   }, [items]);
+
+  const formExternalValue = useCurrentFormState(
+    (state) => (currentForm && name ? toArrayEditorItems(getIn(state.values, name)) : undefined),
+    (a, b) => {
+      if (a === b) return true;
+      if (!a || !b || a.length !== b.length) return false;
+      return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
+    }
+  );
+  const scopeExternalValue = useScopeSelector(
+    (scopeData) => (currentForm || !name ? undefined : toArrayEditorItems(getIn(scopeData, name))),
+    (a, b) => {
+      if (a === b) return true;
+      if (!a || !b || a.length !== b.length) return false;
+      return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
+    }
+  );
+  const externalValue = currentForm ? formExternalValue : scopeExternalValue;
+
+  React.useEffect(() => {
+    if (externalValue !== undefined && !arrayItemsEqual(externalValue, itemsRef.current)) {
+      itemsRef.current = externalValue;
+      setItems(externalValue);
+    }
+  }, [externalValue]);
 
   const syncItems = React.useCallback(
     (nextItems: ArrayEditorItem[]) => {

@@ -3061,6 +3061,152 @@ describe('createRendererRuntime', () => {
     });
   });
 
+  it('cancels concurrent submitForm actions instead of reporting a duplicate failure', async () => {
+    let apiCallCount = 0;
+    let resolveApi: (() => void) | undefined;
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>() => {
+          apiCallCount++;
+          await new Promise<void>((resolve) => {
+            resolveApi = resolve;
+          });
+          return {
+            ok: true,
+            status: 200,
+            data: { saved: true } as T
+          };
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'concurrent-submit-form',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+
+    const firstPromise = runtime.dispatch(
+      {
+        action: 'submitForm',
+        api: {
+          url: '/api/profile',
+          method: 'post'
+        }
+      },
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form
+      }
+    );
+
+    const secondResult = await runtime.dispatch(
+      {
+        action: 'submitForm',
+        api: {
+          url: '/api/profile',
+          method: 'post'
+        }
+      },
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form
+      }
+    );
+
+    expect(apiCallCount).toBe(1);
+    expect(secondResult).toMatchObject({ ok: false, cancelled: true, error: expect.any(Error) });
+    expect(form.store.getState().submitting).toBe(true);
+
+    resolveApi?.();
+
+    await expect(firstPromise).resolves.toMatchObject({ ok: true, data: { saved: true } });
+    expect(form.store.getState().submitting).toBe(false);
+  });
+
+  it('emits cancelled monitor results for guarded duplicate submitForm actions', async () => {
+    const onActionEnd = vi.fn();
+    let resolveApi: (() => void) | undefined;
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        monitor: {
+          onActionEnd
+        },
+        fetcher: async <T>() => {
+          await new Promise<void>((resolve) => {
+            resolveApi = resolve;
+          });
+          return {
+            ok: true,
+            status: 200,
+            data: { saved: true } as T
+          };
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'monitored-concurrent-submit-form',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+
+    const firstPromise = runtime.dispatch(
+      {
+        action: 'submitForm',
+        api: {
+          url: '/api/profile',
+          method: 'post'
+        }
+      },
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form
+      }
+    );
+
+    const secondResult = await runtime.dispatch(
+      {
+        action: 'submitForm',
+        api: {
+          url: '/api/profile',
+          method: 'post'
+        }
+      },
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form
+      }
+    );
+
+    expect(secondResult).toMatchObject({ cancelled: true });
+    expect(onActionEnd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: 'submitForm',
+        result: expect.objectContaining({ cancelled: true })
+      })
+    );
+
+    resolveApi?.();
+    await firstPromise;
+  });
+
   it('applies adaptors during submitForm api execution', async () => {
     const fetchCalls: ApiObject[] = [];
     const runtime = createRendererRuntime({

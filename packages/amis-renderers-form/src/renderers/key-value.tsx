@@ -7,7 +7,8 @@ import type {
   RuntimeFieldRegistration,
   ValidationRule
 } from '@nop-chaos/amis-schema';
-import { useCurrentForm, useRenderScope } from '@nop-chaos/amis-react';
+import { getIn } from '@nop-chaos/amis-schema';
+import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/amis-react';
 import {
   formLabelFieldRule,
   getChildFieldUiState,
@@ -172,6 +173,14 @@ function toKeyValuePairs(value: unknown): KeyValuePair[] {
   });
 }
 
+function keyValuePairsEqual(a: KeyValuePair[], b: KeyValuePair[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  return a.every((pair, index) =>
+    pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value
+  );
+}
+
 export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
@@ -194,6 +203,35 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   React.useEffect(() => {
     pairsRef.current = pairs;
   }, [pairs]);
+
+  const formExternalValue = useCurrentFormState(
+    (state) => (currentForm && name ? toKeyValuePairs(getIn(state.values, name)) : undefined),
+    (a, b) => {
+      if (a === b) return true;
+      if (!a || !b || a.length !== b.length) return false;
+      return a.every((pair, index) =>
+        pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value
+      );
+    }
+  );
+  const scopeExternalValue = useScopeSelector(
+    (scopeData) => (currentForm || !name ? undefined : toKeyValuePairs(getIn(scopeData, name))),
+    (a, b) => {
+      if (a === b) return true;
+      if (!a || !b || a.length !== b.length) return false;
+      return a.every((pair, index) =>
+        pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value
+      );
+    }
+  );
+  const externalValue = currentForm ? formExternalValue : scopeExternalValue;
+
+  React.useEffect(() => {
+    if (externalValue !== undefined && !keyValuePairsEqual(externalValue, pairsRef.current)) {
+      pairsRef.current = externalValue;
+      setPairs(externalValue);
+    }
+  }, [externalValue]);
 
   const syncField = React.useCallback(
     (nextPairs: KeyValuePair[]) => {

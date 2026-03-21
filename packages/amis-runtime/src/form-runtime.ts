@@ -24,6 +24,25 @@ import {
 import type { CreateManagedFormRuntimeInput, ManagedFormRuntimeSharedState } from './form-runtime-types';
 import { createScopeRef, toRecord } from './scope';
 
+function validationErrorsEqual(
+  left: ValidationError[] | undefined,
+  right: ValidationError[] | undefined
+) {
+  if (left === right) {
+    return true;
+  }
+
+  if (!left || !right || left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((error, index) => {
+    const candidate = right[index];
+
+    return candidate?.path === error.path && candidate?.rule === error.rule && candidate?.message === error.message;
+  });
+}
+
 export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInput): FormRuntime {
   const store = createFormStore(inputValue.initialValues ?? {});
   const formId = inputValue.id ?? `${inputValue.parentScope.id}-form`;
@@ -112,6 +131,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       const fieldErrors: Record<string, ValidationError[]> = {};
       const errors: ValidationError[] = [];
+      const initialErrors = store.getState().errors;
 
       const validationPaths = getCompiledValidationTraversalOrder(inputValue.validation);
 
@@ -174,7 +194,25 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         }
       }
 
-      store.setErrors(fieldErrors);
+      const mergedErrors = {
+        ...store.getState().errors,
+        ...fieldErrors
+      };
+
+      store.setErrors(mergedErrors);
+
+      for (const [path, pathErrors] of Object.entries(mergedErrors)) {
+        if (fieldErrors[path]) {
+          continue;
+        }
+
+        if (validationErrorsEqual(initialErrors[path], pathErrors)) {
+          continue;
+        }
+
+        fieldErrors[path] = pathErrors;
+        errors.push(...pathErrors);
+      }
 
       return {
         ok: errors.length === 0,
@@ -246,6 +284,14 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       store.setPathErrors(path);
     },
     async submit(api?: ApiObject) {
+      if (store.getState().submitting) {
+        return {
+          ok: false,
+          cancelled: true,
+          error: new Error('Submit already in progress')
+        };
+      }
+
       store.setSubmitting(true);
 
       const submitTargets = getCompiledValidationTraversalOrder(inputValue.validation);
