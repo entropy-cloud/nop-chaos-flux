@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import type { AmisDebugEvent, AmisDebuggerController, AmisDebuggerFilterKind, AmisDebuggerTab } from './types';
+import type { AmisDebugEvent, AmisDebuggerController, AmisDebuggerFilterKind, AmisDebuggerTab, AmisInteractionTrace } from './types';
 import { buildOverview, DEFAULT_FILTERS } from './diagnostics';
 
 const DEBUGGER_STYLE_ID = 'na-debugger-styles';
@@ -203,6 +203,27 @@ function getEventBadgeClass(event: AmisDebugEvent) {
   return `na-debugger__badge na-debugger__badge--${event.group}`;
 }
 
+function formatTraceSummary(trace: AmisInteractionTrace | undefined) {
+  if (!trace || trace.totalEvents === 0) {
+    return {
+      headline: 'No correlated trace yet',
+      detail: 'Run an action or request to infer the latest chain.'
+    };
+  }
+
+  const anchor = trace.anchorEvent?.summary ?? trace.latestError?.summary ?? trace.latestApi?.summary ?? trace.latestAction?.summary ?? 'Recent interaction';
+  const relatedBits = [
+    trace.resolvedQuery.nodeId ? `node ${trace.resolvedQuery.nodeId}` : undefined,
+    trace.resolvedQuery.actionType ? `action ${trace.resolvedQuery.actionType}` : undefined,
+    trace.resolvedQuery.requestKey ? 'request linked' : undefined
+  ].filter(Boolean);
+
+  return {
+    headline: anchor,
+    detail: `${trace.totalEvents} correlated event${trace.totalEvents === 1 ? '' : 's'}${relatedBits.length ? ` | ${relatedBits.join(' | ')}` : ''}`
+  };
+}
+
 function useDebuggerSnapshot(controller: AmisDebuggerController) {
   const [snapshot, setSnapshot] = useState(controller.getSnapshot());
 
@@ -297,6 +318,11 @@ export function AmisDebuggerPanel(props: { controller: AmisDebuggerController })
   );
 
   const overview = useMemo(() => buildOverview(snapshot.events), [snapshot.events]);
+  const latestTrace = props.controller.createDiagnosticReport({
+    eventLimit: 20,
+    includeLatestInteractionTrace: true
+  }).latestInteractionTrace;
+  const latestTraceSummary = useMemo(() => formatTraceSummary(latestTrace), [latestTrace]);
 
   if (!snapshot.enabled) {
     return null;
@@ -371,6 +397,12 @@ export function AmisDebuggerPanel(props: { controller: AmisDebuggerController })
             <span className="na-debugger__metric-label">Errors</span>
             <strong>{overview.errorCount}</strong>
             <span>{overview.errorCount > 0 ? 'Needs attention' : 'No errors recorded'}</span>
+          </article>
+          <article className="na-debugger__metric-card">
+            <span className="na-debugger__metric-label">Latest trace</span>
+            <strong>{latestTrace ? latestTrace.totalEvents : 0}</strong>
+            <span>{latestTraceSummary.headline}</span>
+            <span className="na-debugger__metric-label">{latestTraceSummary.detail}</span>
           </article>
         </div>
       ) : null}

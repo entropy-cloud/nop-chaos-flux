@@ -638,9 +638,17 @@ export function App() {
 const latestError = api?.getLatestError();
 const usersRequest = await api?.waitForEvent({ kind: 'api:end', text: '/api/users' });
 const nodeReport = api?.getNodeDiagnostics({ nodeId: 'user-form' });
-const trace = api?.getInteractionTrace({ path: 'body.1' });
+const inferredTrace = api?.getInteractionTrace({ inferFromLatest: true });
+const exactTrace = api?.getInteractionTrace({
+  eventId: usersRequest?.id,
+  mode: 'exact'
+});
 const exported = api?.exportSession({ eventLimit: 30 }); // redacted snapshot
-const diagnostic = api?.createDiagnosticReport({ eventLimit: 20 });`}</pre>
+const diagnostic = api?.createDiagnosticReport({
+  eventLimit: 20,
+  includeLatestInteractionTrace: true
+});
+const latestTrace = diagnostic?.latestInteractionTrace;`}</pre>
         </div>
         <div className="playground-layout">
           <div className="playground-stage">

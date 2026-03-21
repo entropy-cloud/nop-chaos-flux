@@ -73,6 +73,18 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `designer:*` action 注册
 - 与 `@xyflow/react` 的适配
 
+### 3.3 `@xyflow/react` 适配边界
+
+`@xyflow/react` 只作为 canvas 交互与可视化适配层，不作为 graph 数据的第二 source of truth。
+
+建议约束：
+
+- graph runtime 持有：`document`、`viewport`、`selection`、`activeTarget`、history、dirty、clipboard、连接校验相关状态
+- `@xyflow/react` 可持有：pointer capture、dragging 中间态、连线预览、节点尺寸测量、框选手势中的纯 UI 临时态
+- `onNodesChange`、`onEdgesChange`、`onConnect`、selection change 等回调先归一化为 designer bridge command，再进入 `designer:*` action 或 core action executor
+- canvas adapter 不直接写 graph store 的结构化 document 状态，避免双写和回调环
+- runtime 快照回推到 canvas 时必须允许 no-op 合并，避免受控更新造成事件回环
+
 ## 4. 为什么不做独立引擎
 
 参考 `packages/amis-react/src/index.tsx:479`，当前体系已经具备：
@@ -145,6 +157,22 @@ interface DesignerPageSchema {
 - schema runtime state：form/page/dialog/action 相关状态
 
 二者必须分层，避免把 form runtime 再复制进 Zustand。
+
+### 6.3 graph runtime 与 schema runtime 的桥接
+
+桥接层负责把 graph runtime 暴露给 `designer-page` 下的 schema 片段，但必须保持单向职责清晰：
+
+- schema 片段通过固定宿主 scope 读取 graph runtime 的只读快照
+- schema 片段通过 `designer:*` actions 或 bridge dispatch API 提交写操作
+- schema 层不得直接拿到底层 graph store 并原地修改 document
+- bridge 对外暴露的是稳定快照与有限命令面，而不是整套 store 私有实现
+
+推荐 bridge 最小能力：
+
+- `getSnapshot()` - 读取当前 `doc`、`selection`、`activeNode`、`activeEdge`、runtime summary
+- `dispatch(command)` - 提交归一化后的 designer 命令
+- `subscribe(listener)` - 供 renderer shell 做局部订阅
+- `emit(event)` - 向宿主和插件发布 designer 事件
 
 ## 7. 节点类型模型
 
@@ -225,12 +253,30 @@ interface DesignerPageSchema {
 - `designer:undo`
 - `designer:redo`
 - `designer:exportDocument`
+- `designer:setSelection`
+- `designer:moveNodes`
+- `designer:updateMultipleNodes`
+- `designer:addEdge`
+- `designer:beginTransaction`
+- `designer:commitTransaction`
+- `designer:rollbackTransaction`
 
 好处：
 
 - toolbar 按钮可直接触发
 - inspector 表单可直接提交到 designer action
 - 快捷键和浮动工具栏可复用同一动作分发链
+
+### 10.1 事务与历史边界
+
+Flow Designer 需要统一的事务边界，即使历史底层实现最终同时支持 patch 和 snapshot 两种存储方式。
+
+必须满足：
+
+- 拖拽一个或多个节点只产生一条逻辑历史记录
+- 自动布局、批量删除、批量更新等复合操作可包裹在同一 transaction 中
+- action handler 不得各自写出独立历史格式；必须进入统一 operation/history pipeline
+- patch 与 snapshot 的取舍可以按 operation 类别决定，但 undo/redo 语义必须稳定
 
 ## 11. 固定宿主 Scope
 
@@ -276,12 +322,25 @@ interface DesignerPageSchema {
 - port matcher 预编译为快速判定结构
 - action handler 注册表常驻缓存
 - schema fragment 使用编译结果复用
+- edges 建议维护按 `source` / `target` / `port` 的邻接索引，避免高频连接校验退化为全表扫描
 
 ### 12.4 增量更新
 
 - 更新单节点数据只替换该节点引用
 - 历史记录按操作快照或 patch 管理
 - 避免每次 `JSON.stringify` 全文档比较脏状态
+- store selector 应优先依赖结构共享和浅比较，避免 inspector、palette、canvas 互相放大重渲染
+
+### 12.5 大图场景
+
+需要把 1000+ 节点和复杂连线视为明确压力场景，而不是实现后的补充优化。
+
+建议约束：
+
+- inspector 只订阅 active target，不订阅整份 document
+- palette、minimap、selection overlay 各自使用独立 selector
+- 自动布局、批量校验、导出可采用分批或延迟执行
+- 对大图不默认承诺所有 UI 面板都随每次节点移动实时全量更新
 
 ## 13. 扩展机制
 
@@ -301,13 +360,51 @@ interface DesignerPageSchema {
 - 自定义 document validator
 - 自定义预设
 
-## 14. 与旧示例的关系
+### 13.1 事件与生命周期
+
+除命令式 action 之外，还需要明确的事件与生命周期扩展点。
+
+建议至少覆盖：
+
+- `selectionChanged`
+- `nodeAdded`
+- `nodeMoved`
+- `edgeConnected`
+- `documentChanged`
+- `validationFailed`
+- `historyCommitted`
+
+生命周期 hook 推荐区分两类：
+
+- before hooks：允许拒绝或改写 create/connect/delete 等输入
+- after hooks：只做观察、审计、同步、副作用派发
+
+不要把这两类能力混在普通 store subscribe 里。
+
+## 14. 错误处理与测试分层
+
+需要把错误与测试边界写成实现约束，而不只是实现细节。
+
+错误至少分为：
+
+- config normalize / validate 错误
+- migration 错误
+- permission / rule expression 错误
+- graph action 执行错误
+- canvas adapter / renderer 集成错误
+
+测试建议分层：
+
+- `core`：纯文档变换、连接校验、history、migration、permission evaluation、transaction 合并
+- `renderers`：宿主 scope 注入、`designer:*` action 接线、schema inspector/createDialog 集成、canvas adapter 互操作
+
+## 15. 与旧示例的关系
 
 - 旧示例继续保留，作为单页演示和交互参考
 - 新模块不直接侵入旧示例结构
 - 后续可以单独增加一个基于 `designer-page` 的新示例页
 
-## 15. 推荐落地顺序
+## 16. 推荐落地顺序
 
 1. 定义 `core` 文档模型与配置模型
 2. 实现 role/port matcher 和 graph action 基础能力

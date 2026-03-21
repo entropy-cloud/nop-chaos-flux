@@ -57,6 +57,9 @@ describe('debugger automation helpers', () => {
     };
     const trace: AmisInteractionTrace = {
       query: {},
+      resolvedQuery: {
+        mode: 'exact'
+      },
       totalEvents: 0,
       matchedEvents: [],
       relatedErrors: [],
@@ -188,6 +191,9 @@ describe('debugger automation helpers', () => {
     };
     const trace: AmisInteractionTrace = {
       query: {},
+      resolvedQuery: {
+        mode: 'exact'
+      },
       totalEvents: 0,
       matchedEvents: [],
       relatedErrors: [],

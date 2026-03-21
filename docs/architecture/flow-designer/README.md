@@ -24,6 +24,7 @@
 - `docs/architecture/flow-designer/design.md` - 总体架构、运行时边界、性能策略
 - `docs/architecture/flow-designer/config-schema.md` - `designer-page`、`nodeTypes`、`ports`、`edgeTypes`、文档模型
 - `docs/architecture/flow-designer/api.md` - 包 API、宿主 scope、designer actions、扩展点
+- `docs/analysis/flow-designer-documentation-review.md` - 对早期改进意见的复核结论与已采纳约束
 
 ## 设计原则
 

@@ -20,6 +20,15 @@ This file is intentionally lightweight.
 
 ### 2026-03-21
 
+- Added `docs/plans/11-flow-designer-playground-example-development-plan.md` to define a phased plan for a playground Flow Designer example that reimplements the practical behavior of the legacy `FlowEditor` from `C:\can\nop\nop-chaos-next-wt\nop-chaos-next-master` using the new `nop-amis` Flow Designer architecture.
+- Key decision: scope parity around the real legacy editor feature set first, then use the new architecture to re-express toolbar and inspector behavior as schema/config instead of copying the old hardcoded page structure.
+- Next step: turn the plan into an implementation backlog starting with core graph commands, history/dirty tracking, the xyflow bridge, and a schema-driven playground example.
+
+- Reworked the temporary Flow Designer review note into `docs/analysis/flow-designer-documentation-review.md` and moved the accepted conclusions into the active flow-designer docs.
+- Updated `docs/architecture/flow-designer/design.md`, `docs/architecture/flow-designer/config-schema.md`, `docs/architecture/flow-designer/api.md`, and `docs/architecture/flow-designer/README.md` to clarify the xyflow adapter boundary, graph/schema bridge contract, migration rules, expression scope, transaction/history expectations, event hooks, and large-graph guidance.
+- Key decision: only record claims that still hold after re-reading the active design set; keep composite-node structure and patch-vs-snapshot storage as intentionally open extension areas instead of pretending they are finalized.
+- Next step: if implementation starts, turn the new bridge, lifecycle hook, migration registry, and transaction notes into concrete TypeScript contracts under the future flow-designer packages.
+
 - Finished the `@nop-chaos/amis-debugger` entry-point refactor so `packages/amis-debugger/src/controller.ts` is now the single controller implementation and `packages/amis-debugger/src/index.tsx` is a thin re-export layer.
 - Added the missing controller-level exports for `installAmisDebuggerWindowFlag()` and `createAmisDiagnosticReport()` so package consumers keep the same public API after the split.
 - Key decision: keep diagnostics, redaction, panel UI, types, and controller assembly in separate modules, but preserve the existing top-level package surface from `packages/amis-debugger/src/index.tsx`.
@@ -33,7 +42,11 @@ This file is intentionally lightweight.
 - Key decision: test `diagnostics.ts` at the pure-function level so AI-facing query/report/export semantics stay stable even if controller wiring changes again.
 - Extended the AI-facing trace model so `packages/amis-debugger/src/diagnostics.ts` can infer a latest interaction anchor, resolve a richer trace query, and include `latestInteractionTrace` inside diagnostic reports without forcing callers to handcraft trace filters every time.
 - Key decision: automatic interaction correlation stays in the pure diagnostics layer, using explicit `mode`, `eventId`, and `inferFromLatest` inputs so controller wiring remains thin while AI clients get higher-level defaults.
-- Next step: expose the new inferred trace workflow in the playground example snippet so browser-side AI scripts can rely on the new defaults.
+- Refreshed the playground AI example in `apps/playground/src/App.tsx` to demonstrate inferred traces, exact event-anchored traces, and `latestInteractionTrace` coming back from `createDiagnosticReport()`.
+- Key decision: keep the playground snippet aligned with the public automation surface so the in-browser example doubles as living documentation for AI agents.
+- Surfaced the inferred trace summary directly in the debugger overview via `packages/amis-debugger/src/panel.tsx` and added `packages/amis-debugger/src/panel.test.tsx` to pin the new UI summary behavior.
+- Key decision: render the latest inferred trace in the overview tab using the existing diagnostic-report API instead of duplicating correlation logic inside the panel.
+- Next step: if the overview gets crowded, split trace-specific UI into a dedicated summary block or future trace tab instead of overloading the metric-card grid.
 
 ### 2026-03-20 (Bug Fixes)
 

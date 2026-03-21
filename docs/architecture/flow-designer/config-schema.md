@@ -88,6 +88,27 @@ interface DesignerConfig {
 - `extends` 允许继承预设
 - `nodeTypes` 是核心配置
 
+### 3.1 版本迁移约束
+
+`GraphDocument.version` 与 `DesignerConfig.version` 不是装饰字段，持久化加载时必须参与迁移协议。
+
+建议约束：
+
+- 迁移按显式 `from -> to` 链顺序执行，不允许隐式跳步
+- migration registry 负责注册每一步迁移器
+- 迁移失败时返回结构化错误；调用方可选择中断加载或降级为只读模式
+- 配置与文档迁移应分别建模，避免把两类演进逻辑揉成一个黑盒函数
+
+### 3.2 复合建模的保留扩展位
+
+当前 `GraphDocument` 仍按扁平 nodes / edges 建模，v1 不预设 subprocess 或 nested document 的最终格式。
+
+但需要明确：
+
+- 当前模型不应阻断未来 group node、visual container、sub-process、document reference 等扩展
+- 新增字段时优先扩展 `GraphNode.data` 或受控元数据，而不是提前把嵌套文档写死进基础模型
+- 在没有单独规范前，不把复合节点能力写成已定稿行为
+
 ## 4. NodeTypeConfig
 
 ```ts
@@ -195,6 +216,14 @@ interface NodePermissionConfig {
 - 固定布尔值
 - 表达式字符串，由现有 formula/expression compiler 求值
 
+表达式约束建议：
+
+- permission 与 rule expressions 在 designer config normalize 阶段完成编译，运行时只做求值
+- 允许访问的 scope 应保持白名单，例如 `doc`、`selection`、`runtime`、`node`、`edge`、`nodeType`、`edgeType`
+- 连接校验场景可额外暴露 `sourceNode`、`targetNode`、`sourcePort`、`targetPort`
+- 不向表达式层暴露可直接改写 graph store 的对象
+- 表达式异常应返回结构化诊断，而不是悄悄吞掉并继续写图
+
 ## 9. EdgeTypeConfig
 
 ```ts
@@ -252,6 +281,8 @@ interface DesignerRules {
 说明：
 
 - `validateConnection` 是附加校验，不替代 port/node role 匹配
+
+建议它与 `NodePermissionConfig` 共享同一表达式编译缓存与错误报告模型。
 
 ## 12. DesignerFeatures
 

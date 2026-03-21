@@ -1,0 +1,122 @@
+// @vitest-environment jsdom
+
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { AmisDebuggerPanel } from './panel';
+import type { AmisDebuggerController, AmisDebuggerOverview, AmisDebuggerSnapshot, AmisDiagnosticReport, AmisInteractionTrace } from './types';
+
+function createSnapshot(): AmisDebuggerSnapshot {
+  return {
+    enabled: true,
+    panelOpen: true,
+    paused: false,
+    activeTab: 'overview',
+    position: { x: 24, y: 24 },
+    events: [],
+    filters: ['render', 'action', 'api', 'compile', 'notify', 'error']
+  };
+}
+
+function createController(snapshot: AmisDebuggerSnapshot): AmisDebuggerController {
+  const emptyOverview: AmisDebuggerOverview = {
+    errorCount: 0,
+    totalEvents: 0,
+    countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0 }
+  };
+  const latestTrace: AmisInteractionTrace = {
+    query: { inferFromLatest: true },
+    resolvedQuery: { nodeId: 'user-form', actionType: 'submitForm', mode: 'related' },
+    anchorEvent: {
+      id: 10,
+      sessionId: 'session-test',
+      timestamp: 100,
+      kind: 'error',
+      group: 'error',
+      level: 'error',
+      source: 'root.onActionError',
+      summary: 'submit failed'
+    },
+    totalEvents: 4,
+    matchedEvents: [],
+    relatedErrors: [],
+    requestKeys: ['POST /api/users | user-form | body.1'],
+    actionTypes: ['submitForm'],
+    nodeIds: ['user-form'],
+    paths: ['body.1']
+  };
+  const metricReport: AmisDiagnosticReport = {
+    controllerId: 'panel-test',
+    sessionId: 'session-test',
+    generatedAt: 1,
+    snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters },
+    overview: { errorCount: 1, totalEvents: 4, countsByGroup: { render: 1, action: 1, api: 1, compile: 0, notify: 0, error: 1 } },
+    latestInteractionTrace: latestTrace,
+    recentEvents: []
+  };
+
+  return {
+    id: 'panel-test',
+    enabled: true,
+    plugin: { name: 'test-plugin' },
+    sessionId: 'session-test',
+    automation: {
+      controllerId: 'panel-test',
+      sessionId: 'session-test',
+      version: '1',
+      getSnapshot: () => snapshot,
+      getOverview: () => emptyOverview,
+      queryEvents: () => [],
+      getLatestEvent: () => undefined,
+      getLatestError: () => undefined,
+      getNodeDiagnostics: () => ({ rendererTypes: [], totalEvents: 0, countsByGroup: {}, countsByKind: {}, recentEvents: [] }),
+      getInteractionTrace: () => latestTrace,
+      createDiagnosticReport: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters }, overview: emptyOverview, recentEvents: [] }),
+      exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [] }),
+      waitForEvent: async () => snapshot.events[0]!,
+      clear() {},
+      pause() {},
+      resume() {},
+      show() {},
+      hide() {},
+      toggle() {},
+      setActiveTab() {},
+      setPanelPosition() {}
+    },
+    decorateEnv: (env) => env,
+    onActionError() {},
+    show() {},
+    hide() {},
+    toggle() {},
+    clear() {},
+    pause() {},
+    resume() {},
+    setActiveTab() {},
+    setPanelPosition() {},
+    toggleFilter() {},
+    queryEvents: () => [],
+    getLatestEvent: () => undefined,
+    getLatestError: () => undefined,
+    getNodeDiagnostics: () => ({ rendererTypes: [], totalEvents: 0, countsByGroup: {}, countsByKind: {}, recentEvents: [] }),
+    getInteractionTrace: () => latestTrace,
+    getOverview: () => emptyOverview,
+    createDiagnosticReport: vi.fn(() => metricReport),
+    exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [] }),
+    waitForEvent: async () => snapshot.events[0]!,
+    subscribe: () => () => {},
+    getSnapshot: () => snapshot
+  };
+}
+
+describe('AmisDebuggerPanel', () => {
+  it('shows the latest inferred interaction trace summary in overview mode', () => {
+    const snapshot = createSnapshot();
+    const controller = createController(snapshot);
+
+    render(<AmisDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('Latest trace')).toBeTruthy();
+    expect(screen.getByText('submit failed')).toBeTruthy();
+    expect(screen.getByText(/4 correlated events/i)).toBeTruthy();
+    expect(screen.getByText(/node user-form/i)).toBeTruthy();
+  });
+});
