@@ -168,6 +168,22 @@ Review:
 - the most relevant file in `docs/architecture/`
 - `docs/index.md` if the example is no longer the best reference entry point
 
+## 10. Spreadsheet editor or report designer changes
+
+Examples:
+
+- changes in future `packages/spreadsheet-*` packages
+- changes in future `packages/report-designer-*` packages
+- changed workbook editor boundaries, report field drag-drop behavior, or inspector customization contracts
+- changed expression editor adapter boundary for report-designer properties
+
+Review:
+
+- `docs/architecture/report-designer/design.md`
+- `docs/architecture/report-designer/config-schema.md`
+- `docs/architecture/report-designer/api.md`
+- `docs/index.md` if the recommended entry point changes
+
 ## What Usually Does Not Need Immediate Doc Changes
 
 - refactors that preserve contracts, behavior, and ownership
