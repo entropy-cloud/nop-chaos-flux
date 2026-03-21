@@ -12,6 +12,7 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
+    "@nop-chaos/amis-debugger": "workspace:*",
     "@nop-chaos/amis-react": "workspace:*",
     "@nop-chaos/amis-runtime": "workspace:*",
     "@nop-chaos/amis-schema": "workspace:*",

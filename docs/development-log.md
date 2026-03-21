@@ -31,7 +31,9 @@ This file is intentionally lightweight.
 - Key decision: keep pure functions under direct unit tests so future refactors can change controller composition without weakening behavior checks for config parsing and data masking.
 - Added direct diagnostics coverage in `packages/amis-debugger/src/diagnostics.test.ts` for event query matching, overview aggregation, node diagnostics, interaction traces, redacted session export, and empty-report fallback behavior.
 - Key decision: test `diagnostics.ts` at the pure-function level so AI-facing query/report/export semantics stay stable even if controller wiring changes again.
-- Next step: if we extend AI diagnostics further, add tests for any new correlation heuristics at this same pure diagnostics layer before wiring them into the controller.
+- Extended the AI-facing trace model so `packages/amis-debugger/src/diagnostics.ts` can infer a latest interaction anchor, resolve a richer trace query, and include `latestInteractionTrace` inside diagnostic reports without forcing callers to handcraft trace filters every time.
+- Key decision: automatic interaction correlation stays in the pure diagnostics layer, using explicit `mode`, `eventId`, and `inferFromLatest` inputs so controller wiring remains thin while AI clients get higher-level defaults.
+- Next step: expose the new inferred trace workflow in the playground example snippet so browser-side AI scripts can rely on the new defaults.
 
 ### 2026-03-20 (Bug Fixes)
 

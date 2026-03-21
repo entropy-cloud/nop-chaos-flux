@@ -628,6 +628,20 @@ export function App() {
           A first package-based debugger is now mounted as a floating panel. Drag it, hide it, and reopen it
           from the left-bottom launcher while interacting with the schema.
         </p>
+        <p className="body-copy body-copy--compact">
+          AI automation can read the structured debugger API from `window.__NOP_AMIS_DEBUGGER_API__` or the
+          multi-instance registry at `window.__NOP_AMIS_DEBUGGER_HUB__`.
+        </p>
+        <div className="na-ai-debug-card">
+          <p className="na-ai-debug-card__eyebrow">AI Debug Script</p>
+          <pre className="na-ai-debug-card__code">{`const api = window.__NOP_AMIS_DEBUGGER_API__;
+const latestError = api?.getLatestError();
+const usersRequest = await api?.waitForEvent({ kind: 'api:end', text: '/api/users' });
+const nodeReport = api?.getNodeDiagnostics({ nodeId: 'user-form' });
+const trace = api?.getInteractionTrace({ path: 'body.1' });
+const exported = api?.exportSession({ eventLimit: 30 }); // redacted snapshot
+const diagnostic = api?.createDiagnosticReport({ eventLimit: 20 });`}</pre>
+        </div>
         <div className="playground-layout">
           <div className="playground-stage">
             <SchemaRenderer

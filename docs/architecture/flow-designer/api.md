@@ -1,0 +1,262 @@
+# Flow Designer API
+
+## 1. 包边界
+
+### `@nop-chaos/flow-designer-core`
+
+负责纯图编辑运行时。
+
+建议导出：
+
+- `GraphDocument`
+- `GraphNode`
+- `GraphEdge`
+- `DesignerConfig`
+- `NodeTypeConfig`
+- `PortConfig`
+- `EdgeTypeConfig`
+- `createDesignerCore()`
+- `validateDesignerConfig()`
+- `migrateDesignerDocument()`
+
+### `@nop-chaos/flow-designer-renderers`
+
+负责和 `SchemaRenderer` 集成。
+
+建议导出：
+
+- `designerRendererDefinitions`
+- `registerFlowDesignerRenderers(registry)`
+- `createFlowDesignerRegistry()`
+- `registerFlowDesignerActions(runtime)`
+- `designerActionHandlers`
+
+## 2. `designer-page` Schema
+
+```ts
+interface DesignerPageSchema {
+  type: 'designer-page'
+  id?: string
+  title?: string
+  document: GraphDocumentInput
+  config: DesignerConfig
+  toolbar?: SchemaInput
+  inspector?: SchemaInput
+  dialogs?: SchemaInput
+}
+```
+
+`designer-page` 是宿主入口，不是普通容器的简单别名。它负责：
+
+- 初始化 graph runtime
+- 将 graph runtime 注入固定宿主 scope
+- 渲染 palette、canvas、inspector 区域
+- 注册 `designer:*` actions
+
+## 3. 固定宿主 Scope
+
+`designer-page` 运行时对 schema 片段暴露以下标准上下文：
+
+### `doc`
+
+当前 graph 文档。
+
+```ts
+doc.id
+doc.name
+doc.meta
+doc.nodes
+doc.edges
+```
+
+### `selection`
+
+当前选中摘要。
+
+```ts
+selection.kind // 'none' | 'node' | 'edge' | 'mixed'
+selection.nodeIds
+selection.edgeIds
+selection.count
+```
+
+### `activeNode`
+
+当前激活节点；无选中节点时可为空。
+
+```ts
+activeNode.id
+activeNode.type
+activeNode.data
+activeNode.position
+```
+
+### `activeEdge`
+
+当前激活边；无选中边时可为空。
+
+### `runtime`
+
+只读运行时摘要。
+
+```ts
+runtime.canUndo
+runtime.canRedo
+runtime.readonly
+runtime.dirty
+runtime.viewport
+```
+
+### `actions`
+
+为 schema 层提供的辅助能力引用位。
+
+用于约定语义，不建议直接把复杂对象暴露给公式层。
+
+## 4. Designer Actions
+
+Flow Designer 扩展现有 action schema，新增一组 graph action。
+
+### `designer:addNode`
+
+```ts
+{
+  action: 'designer:addNode',
+  nodeType: 'task',
+  position?: { x: number, y: number },
+  data?: Record<string, unknown>,
+  openInspector?: boolean
+}
+```
+
+### `designer:updateNodeData`
+
+```ts
+{
+  action: 'designer:updateNodeData',
+  nodeId: string,
+  patch: Record<string, unknown>
+}
+```
+
+### `designer:updateEdgeData`
+
+```ts
+{
+  action: 'designer:updateEdgeData',
+  edgeId: string,
+  patch: Record<string, unknown>
+}
+```
+
+### `designer:deleteSelection`
+
+```ts
+{
+  action: 'designer:deleteSelection'
+}
+```
+
+### `designer:openInspector`
+
+```ts
+{
+  action: 'designer:openInspector',
+  target?: {
+    type: 'node' | 'edge',
+    id: string
+  }
+}
+```
+
+### `designer:autoLayout`
+
+```ts
+{
+  action: 'designer:autoLayout',
+  algorithm?: 'dagre' | 'elk' | 'preset'
+}
+```
+
+### 其他建议内建动作
+
+- `designer:duplicateSelection`
+- `designer:undo`
+- `designer:redo`
+- `designer:fitView`
+- `designer:disconnect`
+- `designer:exportDocument`
+
+## 5. Renderers
+
+建议的 renderer 类型：
+
+- `designer-page`
+- `designer-canvas`
+- `designer-palette`
+- `designer-inspector-shell`
+
+其中：
+
+- `designer-canvas` 负责 `@xyflow/react` 集成
+- `designer-palette` 负责拖拽与快速创建
+- inspector 内部表单仍优先使用已有 form renderer
+
+## 6. 扩展点
+
+### 自定义节点渲染
+
+通过 registry 注册 node renderer 或指定 renderer variant。
+
+### 自定义 designer action
+
+可以扩展新的 `designer:*` action。
+
+### 自定义布局引擎
+
+通过 core 暴露的 layout 接口注入。
+
+### 自定义文档校验
+
+在保存前执行 graph validator。
+
+## 7. 性能约束
+
+实现时建议保证：
+
+- 配置初始化后形成 Map 索引
+- 端口与边匹配不做 O(n^2) 字符串扫描
+- inspector 只订阅 active target
+- schema 片段使用编译缓存
+- graph 修改尽量增量更新
+
+## 8. 典型使用方式
+
+```ts
+import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/amis-react'
+import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers'
+
+const registry = createDefaultRegistry()
+registerFlowDesignerRenderers(registry)
+
+const SchemaRenderer = createSchemaRenderer()
+
+export function WorkflowDesignerPage() {
+  return (
+    <SchemaRenderer
+      schema={designerSchema}
+      registry={registry}
+      env={env}
+      formulaCompiler={formulaCompiler}
+      data={{}}
+    />
+  )
+}
+```
+
+## 9. 后续实现建议
+
+- 先稳定 `core` 文档与规则接口，再接 renderer
+- 先跑通 `designer-page + canvas + addNode + inspector`
+- 再补 `ports + connection validation + createDialog`
+- 最后补 auto layout、导出、preset、复杂校验

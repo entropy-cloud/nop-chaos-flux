@@ -53,6 +53,9 @@ importers:
 
   apps/playground:
     dependencies:
+      '@nop-chaos/amis-debugger':
+        specifier: workspace:*
+        version: link:../../packages/amis-debugger
       '@nop-chaos/amis-react':
         specifier: workspace:*
         version: link:../../packages/amis-react
@@ -75,6 +78,18 @@ importers:
       vite:
         specifier: ^7.0.0
         version: 7.3.1(@types/node@25.5.0)(lightningcss@1.32.0)
+
+  packages/amis-debugger:
+    dependencies:
+      '@nop-chaos/amis-schema':
+        specifier: workspace:*
+        version: link:../amis-schema
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
 
   packages/amis-formula:
     dependencies:

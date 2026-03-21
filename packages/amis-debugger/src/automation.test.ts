@@ -1,0 +1,260 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createAutomationApi, getAmisDebuggerAutomationApi, installAmisDebuggerWindowFlag, registerAutomationApi } from './automation';
+import type {
+  AmisDebugEvent,
+  AmisDebuggerFilterKind,
+  AmisDebuggerOverview,
+  AmisDebuggerSnapshot,
+  AmisDiagnosticReport,
+  AmisDebuggerSessionExport,
+  AmisInteractionTrace,
+  AmisNodeDiagnostics
+} from './types';
+
+const windowStub = {} as Window & typeof globalThis;
+
+Object.defineProperty(globalThis, 'window', {
+  value: windowStub,
+  configurable: true
+});
+
+describe('debugger automation helpers', () => {
+  beforeEach(() => {
+    delete window.__NOP_AMIS_DEBUGGER__;
+    delete window.__NOP_AMIS_DEBUGGER_API__;
+    delete window.__NOP_AMIS_DEBUGGER_HUB__;
+  });
+
+  it('creates an automation api that delegates controller actions', async () => {
+    const filters: AmisDebuggerFilterKind[] = ['render'];
+    const snapshot: AmisDebuggerSnapshot = {
+      enabled: true,
+      panelOpen: true,
+      paused: false,
+      activeTab: 'timeline',
+      position: { x: 1, y: 2 },
+      events: [],
+      filters
+    };
+    const overview: AmisDebuggerOverview = {
+      errorCount: 0,
+      totalEvents: 0,
+      countsByGroup: {
+        render: 0,
+        action: 0,
+        api: 0,
+        compile: 0,
+        notify: 0,
+        error: 0
+      }
+    };
+    const diagnostics: AmisNodeDiagnostics = {
+      rendererTypes: [],
+      totalEvents: 0,
+      countsByGroup: {},
+      countsByKind: {},
+      recentEvents: []
+    };
+    const trace: AmisInteractionTrace = {
+      query: {},
+      totalEvents: 0,
+      matchedEvents: [],
+      relatedErrors: [],
+      requestKeys: [],
+      actionTypes: [],
+      nodeIds: [],
+      paths: []
+    };
+    const report: AmisDiagnosticReport = {
+      controllerId: 'controller-a',
+      sessionId: 'session-a',
+      generatedAt: 1,
+      snapshot: {
+        enabled: true,
+        panelOpen: true,
+        paused: false,
+        activeTab: 'timeline',
+        filters
+      },
+      overview,
+      recentEvents: []
+    };
+    const exportPayload: AmisDebuggerSessionExport = {
+      controllerId: 'controller-a',
+      sessionId: 'session-a',
+      generatedAt: 1,
+      snapshot,
+      overview,
+      events: []
+    };
+    const waitedEvent: AmisDebugEvent = {
+      id: 1,
+      sessionId: 'session-a',
+      timestamp: 1,
+      kind: 'notify',
+      group: 'notify',
+      level: 'info',
+      source: 'test',
+      summary: 'done'
+    };
+
+    const getSnapshot = vi.fn(() => snapshot);
+    const getOverview = vi.fn(() => overview);
+    const queryEvents = vi.fn(() => []);
+    const getLatestEvent = vi.fn(() => undefined);
+    const getLatestError = vi.fn(() => undefined);
+    const getNodeDiagnostics = vi.fn(() => diagnostics);
+    const getInteractionTrace = vi.fn(() => trace);
+    const createDiagnosticReport = vi.fn(() => report);
+    const exportSession = vi.fn(() => exportPayload);
+    const waitForEvent = vi.fn(async () => waitedEvent);
+    const clear = vi.fn();
+    const pause = vi.fn();
+    const resume = vi.fn();
+    const show = vi.fn();
+    const hide = vi.fn();
+    const toggle = vi.fn();
+    const setActiveTab = vi.fn();
+    const setPanelPosition = vi.fn();
+
+    const automation = createAutomationApi({
+      controllerId: 'controller-a',
+      sessionId: 'session-a',
+      getSnapshot,
+      getOverview,
+      queryEvents,
+      getLatestEvent,
+      getLatestError,
+      getNodeDiagnostics,
+      getInteractionTrace,
+      createDiagnosticReport,
+      exportSession,
+      waitForEvent,
+      clear,
+      pause,
+      resume,
+      show,
+      hide,
+      toggle,
+      setActiveTab,
+      setPanelPosition
+    });
+
+    expect(automation.controllerId).toBe('controller-a');
+    expect(automation.version).toBe('1');
+    expect(automation.getSnapshot()).toMatchObject({ enabled: true });
+    automation.clear();
+    automation.pause();
+    automation.resume();
+    automation.show();
+    automation.hide();
+    automation.toggle();
+    automation.setActiveTab('network');
+    automation.setPanelPosition({ x: 9, y: 8 });
+    await expect(automation.waitForEvent()).resolves.toMatchObject({ kind: 'notify' });
+
+    expect(clear).toHaveBeenCalled();
+    expect(pause).toHaveBeenCalled();
+    expect(resume).toHaveBeenCalled();
+    expect(show).toHaveBeenCalled();
+    expect(hide).toHaveBeenCalled();
+    expect(toggle).toHaveBeenCalled();
+    expect(setActiveTab).toHaveBeenCalledWith('network');
+    expect(setPanelPosition).toHaveBeenCalledWith({ x: 9, y: 8 });
+  });
+
+  it('registers automation apis in the global hub and installs window flags', () => {
+    const filters: AmisDebuggerFilterKind[] = ['render'];
+    const snapshot: AmisDebuggerSnapshot = {
+      enabled: true,
+      panelOpen: false,
+      paused: false,
+      activeTab: 'timeline',
+      position: { x: 0, y: 0 },
+      events: [],
+      filters
+    };
+    const overview: AmisDebuggerOverview = {
+      errorCount: 0,
+      totalEvents: 0,
+      countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0 }
+    };
+    const diagnostics: AmisNodeDiagnostics = {
+      rendererTypes: [],
+      totalEvents: 0,
+      countsByGroup: {},
+      countsByKind: {},
+      recentEvents: []
+    };
+    const trace: AmisInteractionTrace = {
+      query: {},
+      totalEvents: 0,
+      matchedEvents: [],
+      relatedErrors: [],
+      requestKeys: [],
+      actionTypes: [],
+      nodeIds: [],
+      paths: []
+    };
+    const report: AmisDiagnosticReport = {
+      controllerId: 'a',
+      sessionId: 's-a',
+      generatedAt: 1,
+      snapshot: { enabled: true, panelOpen: false, paused: false, activeTab: 'timeline', filters },
+      overview,
+      recentEvents: []
+    };
+    const exportPayload: AmisDebuggerSessionExport = {
+      controllerId: 'a',
+      sessionId: 's-a',
+      generatedAt: 1,
+      snapshot,
+      overview,
+      events: []
+    };
+    const waitedEvent: AmisDebugEvent = {
+      id: 1,
+      sessionId: 's-a',
+      timestamp: 1,
+      kind: 'notify',
+      group: 'notify',
+      level: 'info',
+      source: 'test',
+      summary: 'x'
+    };
+
+    const automationA = createAutomationApi({
+      controllerId: 'a',
+      sessionId: 's-a',
+      getSnapshot: () => snapshot,
+      getOverview: () => overview,
+      queryEvents: () => [],
+      getLatestEvent: () => undefined,
+      getLatestError: () => undefined,
+      getNodeDiagnostics: () => diagnostics,
+      getInteractionTrace: () => trace,
+      createDiagnosticReport: () => report,
+      exportSession: () => exportPayload,
+      waitForEvent: async () => waitedEvent,
+      clear() {},
+      pause() {},
+      resume() {},
+      show() {},
+      hide() {},
+      toggle() {},
+      setActiveTab() {},
+      setPanelPosition() {}
+    });
+    const automationB = { ...automationA, controllerId: 'b', sessionId: 's-b' };
+
+    registerAutomationApi('a', automationA);
+    registerAutomationApi('b', automationB);
+    installAmisDebuggerWindowFlag({ config: { enabled: true, defaultOpen: true, defaultTab: 'network' } });
+
+    expect(window.__NOP_AMIS_DEBUGGER__).toMatchObject({ enabled: true, defaultOpen: true, defaultTab: 'network' });
+    expect(getAmisDebuggerAutomationApi()).toBe(automationB);
+    expect(getAmisDebuggerAutomationApi('a')).toBe(automationA);
+    expect(window.__NOP_AMIS_DEBUGGER_HUB__?.listControllers()).toEqual(expect.arrayContaining(['a', 'b']));
+    expect(window.__NOP_AMIS_DEBUGGER_HUB__?.activeControllerId).toBe('b');
+  });
+});

@@ -20,6 +20,7 @@
     "paths": {
       "@nop-chaos/amis-schema": ["packages/amis-schema/src/index.ts"],
       "@nop-chaos/amis-formula": ["packages/amis-formula/src/index.ts"],
+      "@nop-chaos/amis-debugger": ["packages/amis-debugger/src/index.tsx"],
       "@nop-chaos/amis-runtime": ["packages/amis-runtime/src/index.ts"],
       "@nop-chaos/amis-react": ["packages/amis-react/src/index.tsx"],
       "@nop-chaos/amis-renderers-basic": ["packages/amis-renderers-basic/src/index.tsx"],
