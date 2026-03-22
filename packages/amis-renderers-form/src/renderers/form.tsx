@@ -18,5 +18,6 @@ export const formRendererDefinition: RendererDefinition = {
   type: 'form',
   component: FormRenderer,
   regions: ['body', 'actions'],
-  scopePolicy: 'form'
+  scopePolicy: 'form',
+  componentRegistryPolicy: 'new'
 };

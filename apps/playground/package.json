@@ -16,6 +16,8 @@
     "@nop-chaos/amis-react": "workspace:*",
     "@nop-chaos/amis-runtime": "workspace:*",
     "@nop-chaos/amis-schema": "workspace:*",
+    "@nop-chaos/flow-designer-core": "workspace:*",
+    "@nop-chaos/flow-designer-renderers": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

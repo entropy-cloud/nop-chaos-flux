@@ -21,7 +21,7 @@ vi.mock('@nop-chaos/amis-renderers-data', () => ({
 }));
 
 vi.mock('@nop-chaos/amis-react', () => ({
-  createDefaultRegistry: () => ({}),
+  createDefaultRegistry: () => ({ register: () => undefined }),
   createSchemaRenderer: () =>
     function MockSchemaRenderer(props: { env: any; data?: Record<string, unknown> }) {
       rendererSnapshots.push({ env: props.env, data: props.data });
@@ -40,6 +40,7 @@ vi.mock('@nop-chaos/amis-react', () => ({
                   data: { query: 'bob' }
                 },
                 {
+                  env: props.env,
                   scope: {
                     readOwn: () => ({})
                   }
@@ -58,6 +59,7 @@ vi.mock('@nop-chaos/amis-react', () => ({
                   url: '/api/users'
                 },
                 {
+                  env: props.env,
                   scope: {
                     readOwn: () => ({
                       username: 'zoe',

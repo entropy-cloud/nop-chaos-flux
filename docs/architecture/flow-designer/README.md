@@ -19,6 +19,13 @@
 - 动作统一走 action schema，并扩展 `designer:*` action
 - 文档只持久化 graph 数据，不持久化 hover、selection drawer 等 UI 临时状态
 
+## 当前 MVP 状态
+
+- `packages/flow-designer-core/` 已提供最小可运行的 graph runtime：`GraphDocument`、`GraphNode`、`GraphEdge`、`DesignerConfig`、single-selection、undo/redo、dirty tracking、save/restore、导出 JSON。
+- `packages/flow-designer-renderers/` 已提供 `designer-page`、`designer-field`、基础占位 renderer 注册，以及 `designerActionHandlers` 用于接入 `designer:*` 动作。
+- `apps/playground/src/flow-designer/example.ts` 已提供一个可运行的 parity playground example，包含六种 legacy 节点、schema-driven toolbar、schema-driven inspector、localStorage mock repository、导出面板。
+- 当前 canvas 还是卡片式 MVP 视图，用来先验证 graph runtime、scope bridge、actionHandlers、schema inspector 的整体架构；当前已经补上 minimap、viewport controls、quick actions 和轻量 connection mode shell，但真正的 `@xyflow/react` 适配仍是下一阶段工作。
+
 ## 文档
 
 - `docs/architecture/flow-designer/design.md` - 总体架构、运行时边界、性能策略

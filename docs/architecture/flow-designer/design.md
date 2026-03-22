@@ -41,6 +41,15 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 +-----------------------------------------------------+
 ```
 
+### 2.1 当前已落地的 MVP
+
+目前仓库里已经有第一版可运行实现，但仍是刻意收敛后的 MVP：
+
+- `@nop-chaos/flow-designer-core` 已落地纯内存 graph runtime，覆盖节点/边增删改查、单选、undo/redo、dirty tracking、save/restore、导出。
+- `@nop-chaos/flow-designer-renderers` 已落地 `designer-page` 宿主与 schema/runtime bridge，并通过本地 `ActionScope` 注册 `designer:*` 动作。
+- playground 已有实际示例，证明 schema-driven toolbar、schema-driven inspector、固定 host scope、保存/导出回调可以协同工作。
+- `@xyflow/react` 适配边界仍然保留，但当前实现先用卡片式 canvas/list 视图证明整体架构，而不是在第一步就绑定完整画布交互。
+
 ## 3. 模块拆分
 
 ### 3.1 `@nop-chaos/flow-designer-core`
@@ -60,6 +69,17 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - 文档序列化、反序列化、迁移
 - designer action 的底层执行器
 
+当前 MVP 已实现的重点能力：
+
+- `GraphDocument` / `GraphNode` / `GraphEdge` / `DesignerConfig`
+- `createDesignerCore()`
+- `addNode` / `updateNode` / `moveNode` / `duplicateNode` / `deleteNode`
+- `copySelection` / `pasteClipboard`
+- `addEdge` / `updateEdge` / `deleteEdge`
+- `selectNode` / `selectEdge` / `clearSelection`
+- `undo` / `redo` / `toggleGrid` / `save` / `restore` / `exportDocument()`
+- 单一 `start` 节点约束
+
 ### 3.2 `@nop-chaos/flow-designer-renderers`
 
 职责：与现有 `SchemaRenderer` 集成。
@@ -72,6 +92,15 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - 宿主 scope 注入
 - `designer:*` action 注册
 - 与 `@xyflow/react` 的适配
+
+当前 MVP 已实现的重点能力：
+
+- `designer-page` renderer
+- `designer-field` inspector 控件
+- `designer-canvas` / `designer-palette` / `designer-node-card` / `designer-edge-row` 占位 renderer 定义
+- `registerFlowDesignerRenderers(registry)` / `createFlowDesignerRegistry()`
+- `designer-page` 在自身 action-scope 边界内注册 `designer` namespace provider，并让 toolbar/inspector 片段沿该边界执行
+- `designer-page.shortcuts`，用于在宿主层把键盘事件映射到已有 `designer:*` / shared action 链
 
 ### 3.3 `@xyflow/react` 适配边界
 
@@ -261,11 +290,51 @@ interface DesignerPageSchema {
 - `designer:commitTransaction`
 - `designer:rollbackTransaction`
 
+当前 MVP 实际已接线的动作子集是：
+
+- `designer:addNode`
+- `designer:updateNodeData`
+- `designer:updateEdgeData`
+- `designer:copySelection`
+- `designer:pasteClipboard`
+- `designer:duplicateSelection`
+- `designer:deleteSelection`
+- `designer:undo`
+- `designer:redo`
+- `designer:toggleGrid`
+- `designer:save`
+- `designer:restore`
+- `designer:export`
+
 好处：
 
 - toolbar 按钮可直接触发
 - inspector 表单可直接提交到 designer action
 - 快捷键和浮动工具栏可复用同一动作分发链
+
+当前 playground 里的删除确认已经用共享 `dialog` / `closeDialog` action 和 schema 组合实现，说明 destructive UX 不需要额外硬编码进 core 或 renderer runtime。
+
+当前 playground 里的键盘快捷键也保持在宿主 schema 层定义，通过 `designer-page.shortcuts` 把 `Ctrl/Cmd+Z`、`Ctrl/Cmd+Y`、`Ctrl/Cmd+C`、`Ctrl/Cmd+V` 和 `Delete` 映射到现有 action；renderer 只负责监听并分发，core 不直接感知具体按键策略。
+
+当前卡片式 canvas 还额外实现了 hover-driven quick-action shell：节点和边的 Edit / Duplicate / Delete 只是在 renderer 层按 hover 或 active 状态显隐，真正的删除、复制、选中仍然走既有 command/action 边界。
+
+当前 `designer-page` 还内建了窄屏 inspector fallback：当视口收窄到移动布局时，右侧 inspector 不再强依赖三栏布局，而是折叠为位于 canvas 下方的可展开面板；选择节点或边时会自动展开，但 inspector schema、nodeTypes/edgeTypes 的 `inspector.body` 契约保持不变。
+
+当前 playground 还补上了轻量 viewport controls parity：renderer shell 暴露 Zoom in / Zoom out / Fit view 控件与快捷键，底层仍然通过 core command 修改 `GraphDocument.viewport`，用来证明缩放和视口摘要也可以沿用同一条 command/history/action 边界，而不是做成独立页面局部状态。
+
+当前 card/list canvas 也加入了 minimap-style overview shell：它仍然不是最终 `@xyflow/react` minimap 适配器，而是 renderer 层基于节点坐标生成的轻量概览图，用于验证 overview UI、节点空间分布摘要以及“从概览选择节点”这类交互同样可以复用既有 selection/inspector 边界。
+
+当前 edge list 与 export shell 也开始更接近 legacy parity：edge row 不再只显示 label 和 source/target，而是额外暴露 condition 摘要与 line-style badge；playground 的 latest export 面板则会从导出的 JSON 中解析节点数、边数、line styles 和 viewport zoom，帮助验证 inspector 改动是否如预期反映到导出结构。
+
+当前 card/list canvas 还补上了一个轻量 connection mode shell：用户可以先从节点 quick action 或 footer 进入“Start connection”，再点击第二个节点完成 `addEdge`，从而在真正接入 `@xyflow/react` handles 前，先验证“连接 affordance 只是 renderer 事件桥接，真正的连线 mutation 仍走 core command/history 边界”。
+
+当前 playground toolbar 也继续朝 document-level flow actions 补齐：像 `Clear Selection` 这类动作仍然保持 schema-driven，由 host toolbar 直接 dispatch `designer:*` action，而不是把这类页面命令硬编码进共享 runtime UI。
+
+当前 card/list canvas 也开始显式模拟 pane-click 语义：点击空白 canvas surface 会退出 connection mode 并清空 selection，用来先验证未来 `@xyflow/react` pane click 到 `clearSelection` 的桥接契约。
+
+当前 renderer 内部也开始把 card/list MVP 视图提炼成单独 canvas adapter 组件，先把现有 shell 交互从 page shell 中拆出去，为后续替换成真正的 `@xyflow/react` adapter 做边界收敛。
+
+当前 `designer-page` 也开始显式接受 `canvasAdapter` 选择，renderer 内部已经可以在同一套 host scope / core command 契约上切换 card adapter 与 xyflow-preview adapter，用来先固定 callback/selection/connect 语义，再落真正的 `@xyflow/react` 依赖。
 
 ### 10.1 事务与历史边界
 
@@ -402,7 +471,7 @@ Flow Designer 需要统一的事务边界，即使历史底层实现最终同时
 
 - 旧示例继续保留，作为单页演示和交互参考
 - 新模块不直接侵入旧示例结构
-- 后续可以单独增加一个基于 `designer-page` 的新示例页
+- 现在已经有一个基于 `designer-page` 的 playground parity example，但它仍然是第一阶段 MVP，不代表已经完成全部 legacy parity
 
 ## 16. 推荐落地顺序
 

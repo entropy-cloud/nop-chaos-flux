@@ -21,7 +21,14 @@ import {
 } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { setIn } from '@nop-chaos/amis-schema';
-import { createRendererRegistry, createRendererRuntime, createSchemaCompiler } from './index';
+import {
+  createActionScope,
+  createComponentHandleRegistry,
+  createFormComponentHandle,
+  createRendererRegistry,
+  createRendererRuntime,
+  createSchemaCompiler
+} from './index';
 
 function compiledRule(rule: any, path: string, index = 0) {
   return {
@@ -58,6 +65,11 @@ const actionButtonRenderer: RendererDefinition = {
   type: 'action-button',
   component: () => null,
   fields: [{ key: 'onClick', kind: 'event' }]
+};
+
+const importHostRenderer: RendererDefinition = {
+  type: 'import-host',
+  component: () => null
 };
 
 const formRenderer: RendererDefinition = {
@@ -183,6 +195,26 @@ describe('createSchemaCompiler', () => {
     expect(node.regions.onClick).toBeUndefined();
     expect(node.props.value.onClick).toBeUndefined();
     expect(node.eventActions.onClick).toMatchObject({ action: 'setValue' });
+  });
+
+  it('preserves xui:imports on compiled schema for runtime registration', () => {
+    const registry = createRendererRegistry([importHostRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = compiler.compile({
+      type: 'import-host',
+      'xui:imports': [
+        {
+          from: 'demo-lib',
+          as: 'demo'
+        }
+      ]
+    }) as any;
+
+    expect(node.schema['xui:imports']).toEqual([{ from: 'demo-lib', as: 'demo' }]);
   });
 
   it('extracts table operation buttons into compiled regions', () => {
@@ -363,6 +395,308 @@ describe('createRendererRuntime', () => {
     );
 
     expect(page.store.getState().data.message).toBe('World');
+  });
+
+  it('dispatches component:invoke to explicit form handles by id and name', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const form = runtime.createFormRuntime({
+      id: 'user-form',
+      name: 'userForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+
+    const unregister = componentRegistry.register(createFormComponentHandle(form));
+
+    try {
+      const setValueResult = await runtime.dispatch(
+        {
+          action: 'component:invoke',
+          componentId: 'user-form',
+          args: {
+            method: 'setValue',
+            name: 'username',
+            value: 'Bob'
+          }
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry
+        }
+      );
+
+      expect(setValueResult).toMatchObject({ ok: true, data: 'Bob' });
+      expect(form.scope.get('username')).toBe('Bob');
+
+      const validateResult = await runtime.dispatch(
+        {
+          action: 'component:invoke',
+          componentName: 'userForm',
+          args: {
+            method: 'validate'
+          }
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry
+        }
+      );
+
+      expect(validateResult.ok).toBe(true);
+      expect((validateResult.data as { ok: boolean }).ok).toBe(true);
+    } finally {
+      unregister();
+    }
+  });
+
+  it('resolves namespaced actions through parent action scopes', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const parentActionScope = createActionScope({ id: 'parent-scope' });
+    const childActionScope = createActionScope({ id: 'child-scope', parent: parentActionScope });
+    const invoke = vi.fn().mockResolvedValue({ ok: true, data: { exported: true } });
+    parentActionScope.registerNamespace('designer', {
+      kind: 'host',
+      invoke
+    });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'designer:export',
+        args: {
+          source: 'toolbar'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        actionScope: childActionScope
+      }
+    );
+
+    expect(result).toMatchObject({ ok: true, data: { exported: true } });
+    expect(invoke).toHaveBeenCalledWith('export', { source: 'toolbar' }, expect.objectContaining({ actionScope: childActionScope }));
+  });
+
+  it('dedupes imported namespace registration per scope and disposes on final release', async () => {
+    const dispose = vi.fn();
+    const importLoader = {
+      load: vi.fn(async (spec: { from: string; as: string }) => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          dispose,
+          invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
+            ok: true,
+            data: `${spec.from}:${method}:${String(payload?.value ?? '')}`
+          })
+        })
+      }))
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        importLoader
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const actionScope = runtime.createActionScope({ id: 'import-scope' });
+    const imports = [{ from: 'demo-lib', as: 'demo' }] as const;
+
+    await runtime.ensureImportedNamespaces({
+      imports,
+      actionScope,
+      scope: page.scope
+    });
+    await runtime.ensureImportedNamespaces({
+      imports,
+      actionScope,
+      scope: page.scope
+    });
+
+    expect(importLoader.load).toHaveBeenCalledTimes(1);
+
+    const firstResult = await runtime.dispatch(
+      {
+        action: 'demo:ping',
+        args: { value: 'live' }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        actionScope
+      }
+    );
+
+    expect(firstResult).toMatchObject({ ok: true, data: 'demo-lib:ping:live' });
+
+    runtime.releaseImportedNamespaces({ imports, actionScope });
+    await Promise.resolve();
+
+    expect(dispose).not.toHaveBeenCalled();
+
+    const secondResult = await runtime.dispatch(
+      {
+        action: 'demo:ping',
+        args: { value: 'still-live' }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        actionScope
+      }
+    );
+
+    expect(secondResult).toMatchObject({ ok: true, data: 'demo-lib:ping:still-live' });
+
+    runtime.releaseImportedNamespaces({ imports, actionScope });
+    await Promise.resolve();
+
+    expect(dispose).toHaveBeenCalledTimes(1);
+
+    const releasedResult = await runtime.dispatch(
+      {
+        action: 'demo:ping',
+        args: { value: 'released' }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        actionScope
+      }
+    );
+
+    expect(releasedResult.ok).toBe(false);
+    expect(String(releasedResult.error)).toContain('Unsupported action: demo:ping');
+  });
+
+  it('allows child import scopes to shadow parent imports and restores parent after release', async () => {
+    const importLoader = {
+      load: vi.fn(async (spec: { from: string; as: string }) => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
+            ok: true,
+            data: `${spec.from}:${method}:${String(payload?.value ?? '')}`
+          })
+        })
+      }))
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        importLoader
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const parentActionScope = runtime.createActionScope({ id: 'parent-import-scope' });
+    const childActionScope = runtime.createActionScope({ id: 'child-import-scope', parent: parentActionScope });
+
+    await runtime.ensureImportedNamespaces({
+      imports: [{ from: 'parent-lib', as: 'demo' }],
+      actionScope: parentActionScope,
+      scope: page.scope
+    });
+    await runtime.ensureImportedNamespaces({
+      imports: [{ from: 'child-lib', as: 'demo' }],
+      actionScope: childActionScope,
+      scope: page.scope
+    });
+
+    const shadowedResult = await runtime.dispatch(
+      {
+        action: 'demo:ping',
+        args: { value: 'child' }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        actionScope: childActionScope
+      }
+    );
+
+    expect(shadowedResult).toMatchObject({ ok: true, data: 'child-lib:ping:child' });
+
+    runtime.releaseImportedNamespaces({
+      imports: [{ from: 'child-lib', as: 'demo' }],
+      actionScope: childActionScope
+    });
+    await Promise.resolve();
+
+    const restoredResult = await runtime.dispatch(
+      {
+        action: 'demo:ping',
+        args: { value: 'parent' }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        actionScope: childActionScope
+      }
+    );
+
+    expect(restoredResult).toMatchObject({ ok: true, data: 'parent-lib:ping:parent' });
+  });
+
+  it('rejects colliding import aliases within the same action scope', async () => {
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => ({ ok: true })
+        })
+      }))
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        importLoader
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const actionScope = runtime.createActionScope({ id: 'collision-scope' });
+
+    await runtime.ensureImportedNamespaces({
+      imports: [{ from: 'first-lib', as: 'demo' }],
+      actionScope,
+      scope: page.scope
+    });
+
+    await expect(
+      runtime.ensureImportedNamespaces({
+        imports: [{ from: 'second-lib', as: 'demo' }],
+        actionScope,
+        scope: page.scope
+      })
+    ).rejects.toThrow('Namespace collision for import alias: demo');
   });
 
   it('opens and closes dialogs through dialog actions', async () => {
@@ -2737,9 +3071,90 @@ describe('createRendererRuntime', () => {
     expect(onActionEnd).toHaveBeenCalledWith(
       expect.objectContaining({
         actionType: 'ajax',
+        dispatchMode: 'built-in',
         nodeId: node.id,
         path: node.path,
         result: expect.objectContaining({ ok: true })
+      })
+    );
+  });
+
+  it('emits delegated action monitor metadata for component and namespace dispatch', async () => {
+    const onActionEnd = vi.fn();
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        monitor: {
+          onActionEnd
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const actionScope = createActionScope({ id: 'monitor-scope' });
+    const componentRegistry = createComponentHandleRegistry({ id: 'monitor-components' });
+    const form = runtime.createFormRuntime({
+      id: 'monitored-form',
+      name: 'monitoredForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+
+    componentRegistry.register(createFormComponentHandle(form));
+    actionScope.registerNamespace('designer', {
+      kind: 'host',
+      invoke: async () => ({ ok: true })
+    });
+
+    await runtime.dispatch(
+      {
+        action: 'component:invoke',
+        componentId: 'monitored-form',
+        args: {
+          method: 'validate'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        componentRegistry,
+        actionScope
+      }
+    );
+
+    await runtime.dispatch(
+      {
+        action: 'designer:export'
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        componentRegistry,
+        actionScope
+      }
+    );
+
+    expect(onActionEnd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: 'component:invoke',
+        dispatchMode: 'component',
+        componentId: 'monitored-form',
+        componentType: 'form',
+        method: 'validate'
+      })
+    );
+    expect(onActionEnd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: 'designer:export',
+        dispatchMode: 'namespace',
+        namespace: 'designer',
+        method: 'export',
+        sourceScopeId: 'monitor-scope',
+        providerKind: 'host'
       })
     );
   });

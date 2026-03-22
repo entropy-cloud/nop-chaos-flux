@@ -18,6 +18,66 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-23
+
+- Implemented first-pass `xui:imports` loading/error UX semantics across `packages/amis-runtime/src/imports.ts` and `packages/amis-react/src/index.tsx`, including placeholder providers, explicit loading failures, persisted load-error results, and render-time notify/monitor reporting.
+- Updated `docs/architecture/action-scope-and-imports.md` to record the now-active runtime behavior for loading, failure, collision reporting, and refcounted release.
+- Added regression coverage for loading-state dispatch errors and failed-loader diagnostics in `packages/amis-react/src/index.test.tsx`.
+- Added runtime-level import-manager coverage in `packages/amis-runtime/src/index.test.ts` for same-scope refcounted release, child-scope shadowing/restoration, and deterministic alias-collision failures.
+- Key decision: import lifecycle semantics are now pinned at both the React boundary layer and the runtime API layer so future refactors cannot keep dedupe/disposal behavior only as an incidental React effect detail.
+- Added `xui:imports` lifecycle regression coverage in `packages/amis-react/src/index.test.tsx` for same-scope dedupe, descendant visibility, child-scope isolation, and unmount disposal/fallback behavior.
+- Key decision: imported namespaces now follow the same owned mount/unmount lifecycle as host namespace providers, so scope-local import registrations are reference-counted and released when the declaring React boundary disappears.
+- Added dialog lifecycle regression coverage in `packages/amis-react/src/index.test.tsx` to verify dialog-scoped namespace/handle providers are recreated on reopen and that captured dialog dispatchers fall back to outer providers after dialog close.
+- Key decision: dialog reopen semantics should produce a fresh child boundary rather than reusing a prior dialog-owned dispatch path or registrations, matching the existing fresh dialog data-scope behavior.
+- Added nested React regression coverage in `packages/amis-react/src/index.test.tsx` for action-scope/component-registry boundary precedence and teardown fallback behavior.
+- Key decision: teardown verification should assert that a child-scoped dispatch path falls back to still-live parent providers after the child subtree unmounts, instead of keeping stale namespace/handle registrations alive.
+- Next step: extend the same boundary-focused coverage to dialog reopen/unmount cases and imported namespace lifecycle once `xui:imports` gets richer loading/error semantics.
+- Implemented the first action-scope, component-handle, and import-declaration runtime pass across `packages/amis-schema/src/index.ts`, `packages/amis-runtime/src/action-runtime.ts`, `packages/amis-react/src/index.tsx`, and `packages/flow-designer-renderers/src/index.tsx`.
+- Added explicit runtime primitives for `ActionScope`, `ComponentHandleRegistry`, `ComponentHandle`, `XuiImportSpec`, import loading, and extended monitor payloads so built-in, component-targeted, and namespaced dispatch paths are diagnosable.
+- Key decision: keep dispatch order fixed as built-in -> `component:invoke` -> namespaced action, and keep form/public component invocation limited to explicit handle methods instead of exposing arbitrary store methods.
+- Proved the component-target path with form handle registration and `component:invoke`, including `submit`, `validate`, `reset`, and `setValue` support through `packages/amis-runtime/src/form-component-handle.ts` and React lifecycle registration in `packages/amis-react/src/index.tsx`.
+- Proved the namespaced host path with Flow Designer by adding a local `designer` action provider registered from `packages/flow-designer-renderers/src/index.tsx` rather than relying on root-level handler injection.
+- Added initial `xui:imports` plumbing with trusted loader hooks and scope-local namespace registration; current pass focuses on declaration handling and deduped registration, not full example adoption yet.
+- Added regression coverage in `packages/amis-runtime/src/index.test.ts`, `packages/amis-react/src/index.test.tsx`, and `packages/flow-designer-renderers/src/index.test.tsx`.
+- Next step: tighten import collision/loading state UX, add richer Flow Designer schema-driven command coverage, and document concrete `xui:imports` authoring examples once a first imported library example lands.
+
+### 2026-03-22 (Action Scope And Import Design)
+
+- Replaced the earlier lexical-method-dispatch note with a single active design doc at `docs/architecture/action-scope-and-imports.md`.
+- Key decision: keep `ScopeRef` as a data scope only, and introduce a separate action-scope layer for namespaced host actions and imported library capabilities.
+- Defined `xui:import` as declaration-style import semantics rather than execution-order semantics: imports are order-independent, repeatable, deduplicated by normalized import key, and visible by container-owned action scope.
+- Clarified that complex hosts such as Flow Designer and future Report/Spreadsheet Designer should expose namespaced action providers on top of bridge contracts instead of pushing more domain behavior into the built-in action dispatcher or into `ScopeRef` itself.
+- Expanded the same doc with component-targeted invocation rules: runtime may resolve `componentId` or `componentName` through a separate component-handle registry, and externally callable methods must be explicitly exposed through capabilities instead of implicitly falling through to store methods.
+- Added the execution plan `docs/plans/12-action-scope-imports-and-component-invocation-plan.md` to stage the work across contract lock, dispatcher refactor, React host integration, form targeting, Flow Designer namespace adoption, and later `xui:import` loading.
+- Updated navigation and maintenance guidance in `docs/index.md` and `docs/references/maintenance-checklist.md` so future action-scope and import changes have one canonical documentation target.
+- Next step: if implementation starts, add minimal runtime contracts for action-scope resolution plus component-handle lookup, prove the model first with one host namespace such as `designer:*` and one targeted capability such as form submit before adding `xui:import` loading.
+
+### 2026-03-22 (Superseded Design Note)
+
+- The earlier lexical-method-dispatch draft was later superseded by `docs/architecture/action-scope-and-imports.md`.
+- Key decision after review: do not turn `ScopeRef` into a general method registry; keep data scope and action scope separate.
+- Historical context only: the superseded draft helped identify the need for non-built-in host action extension, but its main mechanism was intentionally replaced.
+
+### 2026-03-22
+
+- Created `@nop-chaos/flow-designer-core` package with pure graph runtime including:
+  - `GraphDocument`, `GraphNode`, `GraphEdge`, `DesignerConfig` types
+  - `createDesignerCore()` factory with node/edge CRUD, selection, undo/redo, copy/paste, save/restore/export
+  - Start-node uniqueness constraint, grid toggle, dirty tracking
+- Created `@nop-chaos/flow-designer-renderers` package with:
+  - `designer-page`, `designer-field`, `designer-canvas`, `designer-palette` renderer definitions
+  - `registerFlowDesignerRenderers()` for registry integration
+- Added Flow Designer example to playground (`apps/playground/src/FlowDesignerExample.tsx`) demonstrating:
+  - Six legacy node types (start, end, task, condition, parallel, loop)
+  - Palette with search and expandable groups
+  - Canvas with node/edge rendering, selection, quick actions
+  - Inspector panel for node/edge property editing
+  - Toolbar with undo/redo/save/restore/export actions
+  - JSON view for document inspection
+- Updated `vite.workspace-alias.ts` to include flow-designer package aliases
+- Key decision: implemented a direct React component approach in the playground example rather than using SchemaRenderer, to avoid type complexity with designer-specific document/config props
+- Next step: integrate `@xyflow/react` canvas adapter for richer graph interaction, add schema-driven inspector forms, implement connection validation rules
+
 ### 2026-03-21
 
 - Added `docs/plans/11-flow-designer-playground-example-development-plan.md` to define a phased plan for a playground Flow Designer example that reimplements the practical behavior of the legacy `FlowEditor` from `C:\can\nop\nop-chaos-next-wt\nop-chaos-next-master` using the new `nop-amis` Flow Designer architecture.

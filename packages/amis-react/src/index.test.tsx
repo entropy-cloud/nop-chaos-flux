@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import type { RendererComponentProps, RendererDefinition, RendererEnv, RendererPlugin, ScopeRef } from '@nop-chaos/amis-schema';
+import type { RendererComponentProps, RendererDefinition, RendererEnv, RendererHelpers, RendererPlugin, ScopeRef } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/amis-runtime';
 import {
@@ -9,6 +9,8 @@ import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useAggregateError,
+  useCurrentActionScope,
+  useCurrentComponentRegistry,
   useChildFieldState,
   useCurrentForm,
   useCurrentFormError,
@@ -45,6 +47,7 @@ const formRenderer: RendererDefinition = {
   component: (props) => <section>{props.regions.body?.render()}</section>,
   regions: ['body'],
   scopePolicy: 'form',
+  componentRegistryPolicy: 'new',
   validation: {
     kind: 'container'
   }
@@ -122,9 +125,26 @@ function SelectorText() {
   return <span>{String(value)}</span>;
 }
 
+function ActionScopeProbe() {
+  const actionScope = useCurrentActionScope();
+  const componentRegistry = useCurrentComponentRegistry();
+
+  return (
+    <div>
+      <span data-testid="action-scope-id">{actionScope?.id ?? ''}</span>
+      <span data-testid="component-registry-id">{componentRegistry?.id ?? ''}</span>
+    </div>
+  );
+}
+
 const selectorRenderer: RendererDefinition = {
   type: 'selector-text',
   component: SelectorText
+};
+
+const actionScopeProbeRenderer: RendererDefinition = {
+  type: 'action-scope-probe',
+  component: ActionScopeProbe
 };
 
 function CompositeErrorProbe() {
@@ -232,6 +252,136 @@ const fragmentRenderHostRenderer: RendererDefinition = {
   component: FragmentRenderHost
 };
 
+const scopedHostRenderer: RendererDefinition = {
+  type: 'scoped-host',
+  component: (props) => <section>{props.regions.body?.render()}</section>,
+  regions: ['body'],
+  actionScopePolicy: 'new',
+  componentRegistryPolicy: 'new'
+};
+
+function NamespaceProvider(props: RendererComponentProps) {
+  const actionScope = useCurrentActionScope();
+  const namespace = String(props.props.namespace ?? 'demo');
+  const label = String(props.props.label ?? props.meta.label ?? 'provider');
+
+  React.useEffect(() => {
+    if (!actionScope) {
+      return;
+    }
+
+    return actionScope.registerNamespace(namespace, {
+      kind: 'host',
+      invoke(method, payload) {
+        return {
+          ok: true,
+          data: `${label}:${method}:${String(payload?.value ?? '')}`
+        };
+      }
+    });
+  }, [actionScope, namespace, label]);
+
+  return <span data-testid={`namespace-scope-${label}`}>{actionScope?.id ?? ''}</span>;
+}
+
+const namespaceProviderRenderer: RendererDefinition = {
+  type: 'namespace-provider',
+  component: NamespaceProvider
+};
+
+function ComponentHandleProvider(props: RendererComponentProps) {
+  const componentRegistry = useCurrentComponentRegistry();
+  const componentName = String(props.props.componentName ?? 'shared');
+  const label = String(props.props.label ?? props.meta.label ?? 'handle');
+
+  React.useEffect(() => {
+    if (!componentRegistry) {
+      return;
+    }
+
+    return componentRegistry.register({
+      name: componentName,
+      type: 'probe',
+      capabilities: {
+        hasMethod(method) {
+          return method === 'ping';
+        },
+        invoke(method, payload) {
+          return {
+            ok: true,
+            data: `${label}:${method}:${String(payload?.value ?? '')}`
+          };
+        }
+      }
+    });
+  }, [componentRegistry, componentName, label]);
+
+  return <span data-testid={`component-registry-scope-${label}`}>{componentRegistry?.id ?? ''}</span>;
+}
+
+const componentHandleProviderRenderer: RendererDefinition = {
+  type: 'component-handle-provider',
+  component: ComponentHandleProvider
+};
+
+function DispatchProbe(props: RendererComponentProps) {
+  const [resultText, setResultText] = React.useState('');
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={async () => {
+          const result = await props.helpers.dispatch(props.props.runAction as any);
+          setResultText(result.ok ? String(result.data ?? '') : String(result.error ?? ''));
+        }}
+      >
+        {String(props.props.label ?? props.meta.label ?? 'Run dispatch')}
+      </button>
+      <span data-testid={String(props.props.resultKey ?? 'dispatch-result')}>{resultText}</span>
+    </div>
+  );
+}
+
+const dispatchProbeRenderer: RendererDefinition = {
+  type: 'dispatch-probe',
+  component: DispatchProbe
+};
+
+function ToggleHost(props: RendererComponentProps) {
+  const [visible, setVisible] = React.useState(true);
+
+  return (
+    <div>
+      <button type="button" onClick={() => setVisible((current) => !current)}>
+        {visible ? 'Hide child boundary' : 'Show child boundary'}
+      </button>
+      {visible ? props.regions.body?.render() : null}
+    </div>
+  );
+}
+
+const toggleHostRenderer: RendererDefinition = {
+  type: 'toggle-host',
+  component: ToggleHost,
+  regions: ['body']
+};
+
+function createDispatchCaptureRenderer(onCapture: (dispatch: RendererHelpers['dispatch']) => void): RendererDefinition {
+  function DispatchCapture(props: RendererComponentProps) {
+    React.useEffect(() => {
+      onCapture(props.helpers.dispatch);
+    }, [props.helpers.dispatch]);
+
+    return null;
+  }
+
+  return {
+    type: 'dispatch-capture',
+    component: DispatchCapture
+  };
+}
+
 function createScope(data: Record<string, any>): ScopeRef {
   return {
     id: 'root',
@@ -301,6 +451,333 @@ describe('createSchemaRenderer', () => {
     expect(screen.getByText('Compiled hello')).toBeTruthy();
   });
 
+  it('loads xui imports and dispatches imported namespace actions', async () => {
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
+            ok: true,
+            data: `${method}:${String(payload?.id ?? '')}`
+          })
+        })
+      }))
+    };
+    const SchemaRenderer = createSchemaRenderer([buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'button',
+          label: 'Run import action',
+          'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+          onClick: {
+            action: 'demo:open',
+            args: {
+              id: 'record-1'
+            }
+          }
+        }}
+        env={{
+          ...env,
+          importLoader
+        }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Run import action'));
+
+    await waitFor(() => {
+      expect(importLoader.load).toHaveBeenCalledWith({ from: 'demo-lib', as: 'demo' });
+    });
+  });
+
+  it('dedupes repeated imports within one action scope and shares them with descendants', async () => {
+    const importLoader = {
+      load: vi.fn(async (spec: { from: string; as: string }) => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
+            ok: true,
+            data: `${spec.from}:${method}:${String(payload?.value ?? '')}`
+          })
+        })
+      }))
+    };
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, scopedHostRenderer, dispatchProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+          body: [
+            {
+              type: 'dispatch-probe',
+              label: 'Run parent import',
+              resultKey: 'parent-import-result',
+              runAction: {
+                action: 'demo:ping',
+                args: { value: 'parent' }
+              }
+            },
+            {
+              type: 'scoped-host',
+              body: [
+                {
+                  type: 'dispatch-probe',
+                  label: 'Run child import',
+                  resultKey: 'child-import-result',
+                  runAction: {
+                    action: 'demo:ping',
+                    args: { value: 'child' }
+                  }
+                }
+              ]
+            },
+            {
+              type: 'dispatch-probe',
+              label: 'Run sibling import',
+              resultKey: 'sibling-import-result',
+              runAction: {
+                action: 'demo:ping',
+                args: { value: 'sibling' }
+              }
+            }
+          ]
+        }}
+        env={{
+          ...env,
+          importLoader
+        }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(importLoader.load).toHaveBeenCalledTimes(1);
+    });
+
+    fireEvent.click(screen.getByText('Run parent import'));
+    fireEvent.click(screen.getByText('Run child import'));
+    fireEvent.click(screen.getByText('Run sibling import'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('parent-import-result').textContent).toBe('demo-lib:ping:parent');
+      expect(screen.getByTestId('child-import-result').textContent).toBe('demo-lib:ping:child');
+      expect(screen.getByTestId('sibling-import-result').textContent).toBe('demo-lib:ping:sibling');
+    });
+  });
+
+  it('keeps child imports scoped locally and disposes them on unmount', async () => {
+    const dispose = vi.fn();
+    const importLoader = {
+      load: vi.fn(async (spec: { from: string; as: string }) => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          dispose,
+          invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
+            ok: true,
+            data: `${spec.as}:${method}:${String(payload?.value ?? '')}`
+          })
+        })
+      }))
+    };
+    let retainedDispatch: RendererHelpers['dispatch'] | undefined;
+    const dispatchCaptureRenderer = createDispatchCaptureRenderer((dispatch) => {
+      retainedDispatch = dispatch;
+    });
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      toggleHostRenderer,
+      scopedHostRenderer,
+      dispatchCaptureRenderer,
+      dispatchProbeRenderer
+    ]);
+
+    cleanup();
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'toggle-host',
+              body: [
+                {
+                  type: 'scoped-host',
+                  'xui:imports': [{ from: 'child-lib', as: 'child' }],
+                  body: [
+                    { type: 'dispatch-capture' },
+                    {
+                      type: 'dispatch-probe',
+                      label: 'Run child scoped import',
+                      resultKey: 'child-scoped-import-result',
+                      runAction: {
+                        action: 'child:ping',
+                        args: { value: 'mounted' }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              type: 'dispatch-probe',
+              label: 'Run root child import',
+              resultKey: 'root-child-import-result',
+              runAction: {
+                action: 'child:ping',
+                args: { value: 'root' }
+              }
+            }
+          ]
+        }}
+        env={{
+          ...env,
+          importLoader
+        }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(retainedDispatch).toBeTypeOf('function');
+    });
+
+    expect(importLoader.load).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByText('Run child scoped import'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('child-scoped-import-result').textContent).toBe('child:ping:mounted');
+    });
+
+    const beforeUnmountResult = await retainedDispatch!({
+      action: 'child:ping',
+      args: { value: 'captured' }
+    } as any);
+    expect(beforeUnmountResult).toMatchObject({ ok: true, data: 'child:ping:captured' });
+
+    fireEvent.click(screen.getByText('Run root child import'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-child-import-result').textContent).toContain('Unsupported action: child:ping');
+    });
+
+    fireEvent.click(screen.getByText('Hide child boundary'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Show child boundary')).toBeTruthy();
+    });
+
+    await waitFor(() => {
+      expect(dispose).toHaveBeenCalledTimes(1);
+    });
+
+    const afterUnmountResult = await retainedDispatch!({
+      action: 'child:ping',
+      args: { value: 'after-unmount' }
+    } as any);
+    expect(afterUnmountResult).toMatchObject({
+      ok: false,
+      error: expect.any(Error)
+    });
+    expect(String(afterUnmountResult.error)).toContain('Unsupported action: child:ping');
+
+    cleanup();
+  });
+
+  it('surfaces import loading and load failures through dispatch results and env notifications', async () => {
+    let resolveModule: ((module: { createNamespace: () => { kind: 'import'; invoke: () => Promise<{ ok: true }> } }) => void) | undefined;
+    const importLoader = {
+      load: vi.fn((spec: { from: string; as: string }) => {
+        if (spec.as === 'slow') {
+          return new Promise<{ createNamespace: () => { kind: 'import'; invoke: () => Promise<{ ok: true }> } }>((resolve) => {
+            resolveModule = resolve;
+          });
+        }
+
+        return Promise.reject(new Error('loader exploded'));
+      })
+    };
+    const notify = vi.fn();
+    const onError = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, dispatchProbeRenderer]);
+
+    cleanup();
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dispatch-probe',
+              label: 'Run loading import',
+              resultKey: 'loading-import-result',
+              'xui:imports': [{ from: 'slow-lib', as: 'slow' }],
+              runAction: {
+                action: 'slow:ping'
+              }
+            },
+            {
+              type: 'dispatch-probe',
+              label: 'Run failed import',
+              resultKey: 'failed-import-result',
+              'xui:imports': [{ from: 'broken-lib', as: 'broken' }],
+              runAction: {
+                action: 'broken:ping'
+              }
+            }
+          ]
+        }}
+        env={{
+          ...env,
+          notify,
+          monitor: {
+            onError
+          },
+          importLoader
+        }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Run loading import'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('loading-import-result').textContent).toContain('Imported namespace slow is still loading');
+    });
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('error', 'Imported namespace broken failed to load: loader exploded');
+    });
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: 'render',
+        error: expect.objectContaining({ message: 'Imported namespace broken failed to load: loader exploded' })
+      })
+    );
+
+    fireEvent.click(screen.getByText('Run failed import'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('failed-import-result').textContent).toContain('Imported namespace broken failed to load: loader exploded');
+    });
+
+    resolveModule?.({
+      createNamespace: () => ({
+        kind: 'import' as const,
+        invoke: async () => ({ ok: true })
+      })
+    });
+
+    cleanup();
+  });
+
   it('supports useScopeSelector with parent scopes that do not expose a store', () => {
     const SchemaRenderer = createSchemaRenderer([selectorRenderer]);
     const { rerender } = render(
@@ -324,6 +801,303 @@ describe('createSchemaRenderer', () => {
     );
 
     expect(screen.getByText('Scoped update')).toBeTruthy();
+  });
+
+  it('provides nested action scope and component registry boundaries through the render tree', () => {
+    const SchemaRenderer = createSchemaRenderer([scopedHostRenderer, actionScopeProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'scoped-host',
+          body: [{ type: 'action-scope-probe' }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    expect(screen.getByTestId('action-scope-id').textContent).toContain('action-scope');
+    expect(screen.getByTestId('component-registry-id').textContent).toContain('component-registry');
+  });
+
+  it('prefers nested action scopes and component registries over parent providers', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      scopedHostRenderer,
+      namespaceProviderRenderer,
+      componentHandleProviderRenderer,
+      dispatchProbeRenderer
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' },
+            { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' },
+            {
+              type: 'dispatch-probe',
+              label: 'Run outer namespace',
+              resultKey: 'outer-namespace-result',
+              runAction: {
+                action: 'demo:ping',
+                args: { value: 'root' }
+              }
+            },
+            {
+              type: 'dispatch-probe',
+              label: 'Run outer handle',
+              resultKey: 'outer-handle-result',
+              runAction: {
+                action: 'component:invoke',
+                componentName: 'shared',
+                args: { method: 'ping', value: 'root' }
+              }
+            },
+            {
+              type: 'scoped-host',
+              body: [
+                { type: 'namespace-provider', namespace: 'demo', label: 'inner-ns' },
+                { type: 'component-handle-provider', componentName: 'shared', label: 'inner-handle' },
+                {
+                  type: 'dispatch-probe',
+                  label: 'Run inner namespace',
+                  resultKey: 'inner-namespace-result',
+                  runAction: {
+                    action: 'demo:ping',
+                    args: { value: 'child' }
+                  }
+                },
+                {
+                  type: 'dispatch-probe',
+                  label: 'Run inner handle',
+                  resultKey: 'inner-handle-result',
+                  runAction: {
+                    action: 'component:invoke',
+                    componentName: 'shared',
+                    args: { method: 'ping', value: 'child' }
+                  }
+                }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Run outer namespace'));
+    fireEvent.click(screen.getByText('Run outer handle'));
+    fireEvent.click(screen.getByText('Run inner namespace'));
+    fireEvent.click(screen.getByText('Run inner handle'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('outer-namespace-result').textContent).toBe('outer-ns:ping:root');
+      expect(screen.getByTestId('outer-handle-result').textContent).toBe('outer-handle:ping:root');
+      expect(screen.getByTestId('inner-namespace-result').textContent).toBe('inner-ns:ping:child');
+      expect(screen.getByTestId('inner-handle-result').textContent).toBe('inner-handle:ping:child');
+    });
+  });
+
+  it('falls back to parent providers after a nested boundary tears down', async () => {
+    let retainedDispatch: RendererComponentProps['helpers']['dispatch'] | undefined;
+    const dispatchCaptureRenderer = createDispatchCaptureRenderer((dispatch) => {
+      retainedDispatch = dispatch;
+    });
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      toggleHostRenderer,
+      scopedHostRenderer,
+      namespaceProviderRenderer,
+      componentHandleProviderRenderer,
+      dispatchCaptureRenderer
+    ]);
+
+    cleanup();
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' },
+            { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' },
+            {
+              type: 'toggle-host',
+              body: [
+                {
+                  type: 'scoped-host',
+                  body: [
+                    { type: 'namespace-provider', namespace: 'demo', label: 'inner-ns' },
+                    { type: 'component-handle-provider', componentName: 'shared', label: 'inner-handle' },
+                    { type: 'dispatch-capture' }
+                  ]
+                }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(retainedDispatch).toBeTypeOf('function');
+    });
+
+    const innerNamespaceResult = await retainedDispatch!({
+      action: 'demo:ping',
+      args: { value: 'live' }
+    } as any);
+    const innerHandleResult = await retainedDispatch!({
+      action: 'component:invoke',
+      componentName: 'shared',
+      args: { method: 'ping', value: 'live' }
+    } as any);
+
+    expect(innerNamespaceResult).toMatchObject({ ok: true, data: 'inner-ns:ping:live' });
+    expect(innerHandleResult).toMatchObject({ ok: true, data: 'inner-handle:ping:live' });
+
+    fireEvent.click(screen.getByText('Hide child boundary'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Show child boundary')).toBeTruthy();
+    });
+
+    const fallbackNamespaceResult = await retainedDispatch!({
+      action: 'demo:ping',
+      args: { value: 'after-unmount' }
+    } as any);
+    const fallbackHandleResult = await retainedDispatch!({
+      action: 'component:invoke',
+      componentName: 'shared',
+      args: { method: 'ping', value: 'after-unmount' }
+    } as any);
+
+    expect(fallbackNamespaceResult).toMatchObject({ ok: true, data: 'outer-ns:ping:after-unmount' });
+    expect(fallbackHandleResult).toMatchObject({ ok: true, data: 'outer-handle:ping:after-unmount' });
+
+    cleanup();
+  });
+
+  it('reopens dialog with fresh child providers and falls back after close', async () => {
+    const capturedDispatches: RendererHelpers['dispatch'][] = [];
+    const dispatchCaptureRenderer = createDispatchCaptureRenderer((dispatch) => {
+      capturedDispatches.push(dispatch);
+    });
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      buttonRenderer,
+      scopedHostRenderer,
+      namespaceProviderRenderer,
+      componentHandleProviderRenderer,
+      dispatchCaptureRenderer
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' },
+            { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' },
+            {
+              type: 'button',
+              label: 'Open provider dialog',
+              onClick: {
+                action: 'dialog',
+                dialog: {
+                  title: 'Provider dialog',
+                  body: [
+                    {
+                      type: 'scoped-host',
+                      body: [
+                        { type: 'namespace-provider', namespace: 'demo', label: 'dialog-ns' },
+                        { type: 'component-handle-provider', componentName: 'shared', label: 'dialog-handle' },
+                        { type: 'dispatch-capture' },
+                        { type: 'text', text: 'Dialog provider content' }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Open provider dialog'));
+
+    expect(await screen.findByText('Dialog provider content')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(capturedDispatches.length).toBe(1);
+    });
+
+    const firstDialogDispatch = capturedDispatches[0]!;
+    const firstDialogNamespaceResult = await firstDialogDispatch({
+      action: 'demo:ping',
+      args: { value: 'first-open' }
+    } as any);
+    const firstDialogHandleResult = await firstDialogDispatch({
+      action: 'component:invoke',
+      componentName: 'shared',
+      args: { method: 'ping', value: 'first-open' }
+    } as any);
+
+    expect(firstDialogNamespaceResult).toMatchObject({ ok: true, data: 'dialog-ns:ping:first-open' });
+    expect(firstDialogHandleResult).toMatchObject({ ok: true, data: 'dialog-handle:ping:first-open' });
+
+    fireEvent.click(screen.getByText('Close'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Dialog provider content')).toBeNull();
+    });
+
+    const fallbackNamespaceResult = await firstDialogDispatch({
+      action: 'demo:ping',
+      args: { value: 'after-close' }
+    } as any);
+    const fallbackHandleResult = await firstDialogDispatch({
+      action: 'component:invoke',
+      componentName: 'shared',
+      args: { method: 'ping', value: 'after-close' }
+    } as any);
+
+    expect(fallbackNamespaceResult).toMatchObject({ ok: true, data: 'outer-ns:ping:after-close' });
+    expect(fallbackHandleResult).toMatchObject({ ok: true, data: 'outer-handle:ping:after-close' });
+
+    fireEvent.click(screen.getByText('Open provider dialog'));
+
+    expect(await screen.findByText('Dialog provider content')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(capturedDispatches.length).toBe(2);
+    });
+
+    const secondDialogDispatch = capturedDispatches[1]!;
+    expect(secondDialogDispatch).not.toBe(firstDialogDispatch);
+
+    const secondDialogNamespaceResult = await secondDialogDispatch({
+      action: 'demo:ping',
+      args: { value: 'second-open' }
+    } as any);
+    const secondDialogHandleResult = await secondDialogDispatch({
+      action: 'component:invoke',
+      componentName: 'shared',
+      args: { method: 'ping', value: 'second-open' }
+    } as any);
+
+    expect(secondDialogNamespaceResult).toMatchObject({ ok: true, data: 'dialog-ns:ping:second-open' });
+    expect(secondDialogHandleResult).toMatchObject({ ok: true, data: 'dialog-handle:ping:second-open' });
   });
 
   it('preserves field state across unrelated host rerenders', () => {

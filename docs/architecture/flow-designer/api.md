@@ -6,16 +6,22 @@
 
 负责纯图编辑运行时。
 
-建议导出：
+当前 MVP 已导出：
 
 - `GraphDocument`
 - `GraphNode`
 - `GraphEdge`
 - `DesignerConfig`
 - `NodeTypeConfig`
-- `PortConfig`
 - `EdgeTypeConfig`
+- `PaletteGroupConfig`
+- `DesignerSnapshot`
+- `DesignerCommand`
 - `createDesignerCore()`
+
+仍属于后续扩展的内容：
+
+- `PortConfig`
 - `validateDesignerConfig()`
 - `migrateDesignerDocument()`
 - `createDesignerMigrationRegistry()`
@@ -25,13 +31,29 @@
 
 负责和 `SchemaRenderer` 集成。
 
-建议导出：
+当前 MVP 已导出：
 
 - `designerRendererDefinitions`
 - `registerFlowDesignerRenderers(registry)`
 - `createFlowDesignerRegistry()`
-- `registerFlowDesignerActions(runtime)`
 - `designerActionHandlers`
+
+当前实现说明：
+
+- `designer:*` 动作不是通过修改共享 DSL 注册器实现，而是通过 `SchemaRendererProps.actionHandlers` 注入到共享 action runtime。
+- `designer-page` 负责创建 `DesignerCore`，并把 host snapshot 注入 schema scope。
+- 保存和导出通过 `env.functions.saveFlowDocument` 与 `env.functions.publishFlowExport` 回传给 playground 宿主。
+- 当前 clipboard 也是 core 自身能力，先支持单节点 copy/paste，并通过 `designer:copySelection` / `designer:pasteClipboard` 对外暴露。
+- 当前删除确认不通过专用 designer action 实现，而是由 `designer-page` 外围 schema 使用共享 `dialog` action 包装 `designer:deleteSelection`。
+- 当前键盘快捷键也不通过 core 内建按键表实现，而是由 `designer-page.shortcuts` 在宿主层声明，再复用同一条 action dispatch 链。
+- 当前窄屏响应式行为也留在 `designer-page` shell：renderer 负责根据 media query 把 inspector 切换成 canvas 下方的可展开面板，但 inspector schema 和 nodeTypes/edgeTypes 的字段片段不需要改写成移动端专用协议。
+- 当前 minimap 也是 renderer shell 层的临时 parity 实现：它基于当前 `doc.nodes` 坐标生成 overview 按钮并复用 `selectNode`，尚未引入最终 canvas adapter 的真实视口同步协议。
+- 当前 playground export 面板会直接消费 `designer:export` 通过 `env.functions.publishFlowExport` 回传的 JSON 字符串，并在宿主层派生 export summary；这说明导出后的结构检查仍然应由 host/example 负责，而不是把展示逻辑塞回 core 或 renderer action 本身。
+- 当前 card/list canvas 也提供了一个 renderer-local 的轻量 connection mode：进入连接模式后，第二次点击节点会转成 `addEdge` command；这仍然只是最终 `@xyflow/react` handle/connect 交互之前的 parity shell，不改变 core 作为唯一 graph mutation source of truth 的边界。
+- 当前 host toolbar 还可以继续声明 document-level flow actions，例如 `designer:clearSelection`；这类动作依旧通过 `designerActionHandlers` 注入共享 action runtime，而不是要求 renderer 自带一套页面命令按钮协议。
+- 当前 card/list canvas 已开始显式暴露 pane-click parity：空白 surface click 会归一化为退出 connection mode + `clearSelection`，为未来 `designer-canvas` 对 `@xyflow/react` pane 事件的桥接预留了清晰契约。
+- 当前 renderer 内部已经把 card/list canvas MVP 抽到单独 adapter 组件文件，这样 `designer-page` 和 host scope 不需要感知底层 canvas 实现，后续可在相同 props 契约下逐步替换成真实 xyflow adapter。
+- 当前 `designer-page` 还支持 `canvasAdapter` prop，用于在 renderer 内部切换 `card` 与 `xyflow-preview` adapter；后者不是最终集成，而是用来提前锁定 `onPaneClick`、selection bridge、connect bridge 等行为契约。
 
 ## 2. `designer-page` Schema
 
@@ -42,9 +64,21 @@ interface DesignerPageSchema {
   title?: string
   document: GraphDocumentInput
   config: DesignerConfig
+  shortcuts?: DesignerShortcutBinding[]
   toolbar?: SchemaInput
   inspector?: SchemaInput
   dialogs?: SchemaInput
+}
+```
+
+```ts
+interface DesignerShortcutBinding {
+  key: string
+  modKey?: boolean
+  shiftKey?: boolean
+  altKey?: boolean
+  action: ActionSchema | ActionSchema[]
+  preventDefault?: boolean
 }
 ```
 
@@ -53,7 +87,7 @@ interface DesignerPageSchema {
 - 初始化 graph runtime
 - 将 graph runtime 注入固定宿主 scope
 - 渲染 palette、canvas、inspector 区域
-- 注册 `designer:*` actions
+- 通过 root `actionHandlers` 接入 `designer:*` actions
 
 ### `designer-page` bridge contract
 
@@ -65,7 +99,7 @@ interface DesignerPageSchema {
 interface DesignerBridge {
   getSnapshot(): DesignerHostSnapshot
   subscribe(listener: () => void): () => void
-  dispatch(command: DesignerCommand): Promise<DesignerCommandResult>
+  dispatch(command: DesignerCommand): DesignerCommandResult
   emit(event: DesignerEvent): void
 }
 ```
@@ -75,6 +109,8 @@ interface DesignerBridge {
 - schema 片段只读 bridge snapshot，不直接改 graph store
 - graph 写操作必须通过 `dispatch(command)` 或映射后的 `designer:*` action
 - `@xyflow/react` 回调先转换为 `DesignerCommand`，再进入 core 执行链
+
+当前 MVP 中，bridge 的主要消费者是 `designer-page` 自身、`designer-field` inspector 控件，以及 playground 的 toolbar/inspector schema。
 
 ## 3. 固定宿主 Scope
 
@@ -97,7 +133,7 @@ doc.edges
 当前选中摘要。
 
 ```ts
-selection.kind // 'none' | 'node' | 'edge' | 'mixed'
+selection.kind // 'none' | 'node' | 'edge'
 selection.nodeIds
 selection.edgeIds
 selection.count
@@ -125,10 +161,18 @@ activeNode.position
 ```ts
 runtime.canUndo
 runtime.canRedo
-runtime.readonly
 runtime.dirty
-runtime.viewport
+runtime.gridEnabled
+runtime.zoom
 ```
+
+### `palette` / `nodeTypes` / `edgeTypes`
+
+供 toolbar、palette、inspector schema 直接读取当前 designer 配置。
+
+### `designerCore`
+
+当前 host scope 也会暴露 `designerCore` 本身，供 `designer-field` 这类领域控件直接派发 graph command。
 
 ### `actions`
 
@@ -289,6 +333,37 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 - `designer:disconnect`
 - `designer:exportDocument`
 
+当前 MVP 已经实际落地并验证的动作包括：
+
+- `designer:addNode`
+- `designer:updateNodeData`
+- `designer:updateEdgeData`
+- `designer:copySelection`
+- `designer:pasteClipboard`
+- `designer:duplicateSelection`
+- `designer:deleteSelection`
+- `designer:undo`
+- `designer:redo`
+- `designer:zoomIn`
+- `designer:zoomOut`
+- `designer:fitView`
+- `designer:toggleGrid`
+- `designer:save`
+- `designer:restore`
+- `designer:export`
+
+仍在设计里但尚未落地为当前 playground 行为的动作包括：
+
+- `designer:updateMultipleNodes`
+- `designer:moveNodes`
+- `designer:setSelection`
+- `designer:openInspector`
+- `designer:autoLayout`
+- `designer:beginTransaction`
+- `designer:commitTransaction`
+- 多节点或带边的 clipboard 复制
+- `designer:rollbackTransaction`
+
 说明：
 
 - 程序化 selection、批量更新、节点移动、连接创建都应走统一 action/history pipeline
@@ -388,7 +463,7 @@ interface DesignerLifecycleHooks {
 
 ```ts
 import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/amis-react'
-import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers'
+import { designerActionHandlers, registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers'
 
 const registry = createDefaultRegistry()
 registerFlowDesignerRenderers(registry)
@@ -400,6 +475,7 @@ export function WorkflowDesignerPage() {
     <SchemaRenderer
       schema={designerSchema}
       registry={registry}
+      actionHandlers={designerActionHandlers}
       env={env}
       formulaCompiler={formulaCompiler}
       data={{}}

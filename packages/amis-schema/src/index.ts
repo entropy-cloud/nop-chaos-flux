@@ -31,6 +31,7 @@ export interface BaseSchema extends SchemaObject {
   disabled?: boolean | string;
   validateOn?: ValidationTrigger | ValidationTrigger[];
   showErrorOn?: ValidationVisibilityTrigger | ValidationVisibilityTrigger[];
+  'xui:imports'?: XuiImportSpec[];
 }
 
 export type SchemaInput = BaseSchema | BaseSchema[];
@@ -81,6 +82,14 @@ export interface ActionMonitorPayload {
   actionType: string;
   nodeId?: string;
   path?: SchemaPath;
+  dispatchMode?: 'built-in' | 'component' | 'namespace';
+  namespace?: string;
+  method?: string;
+  sourceScopeId?: string;
+  providerKind?: 'host' | 'import';
+  componentId?: string;
+  componentName?: string;
+  componentType?: string;
 }
 
 export interface ErrorMonitorPayload {
@@ -103,6 +112,7 @@ export interface RendererEnv {
   confirm?: (message: string, options?: unknown) => Promise<boolean>;
   functions?: Record<string, (...args: any[]) => any>;
   filters?: Record<string, (input: any, ...args: any[]) => any>;
+  importLoader?: ImportedLibraryLoader;
   monitor?: RendererMonitor;
 }
 
@@ -136,6 +146,80 @@ export interface CreateScopeOptions {
   isolate?: boolean;
   scopeKey?: string;
   source?: 'root' | 'row' | 'dialog' | 'form' | 'fragment' | 'custom';
+}
+
+export interface XuiImportSpec extends SchemaObject {
+  from: string;
+  as: string;
+  options?: Record<string, SchemaValue>;
+}
+
+export interface ImportedLibraryModule {
+  createNamespace(context: ImportedNamespaceContext): Promise<ActionNamespaceProvider> | ActionNamespaceProvider;
+}
+
+export interface ImportedLibraryLoader {
+  load(spec: XuiImportSpec): Promise<ImportedLibraryModule>;
+}
+
+export interface ImportedNamespaceContext {
+  runtime: RendererRuntime;
+  env: RendererEnv;
+  actionScope: ActionScope;
+  componentRegistry?: ComponentHandleRegistry;
+  scope: ScopeRef;
+  spec: XuiImportSpec;
+  node?: CompiledSchemaNode;
+}
+
+export interface ActionNamespaceProvider {
+  kind?: 'host' | 'import';
+  invoke(method: string, payload: Record<string, unknown> | undefined, ctx: ActionContext): Promise<ActionResult> | ActionResult;
+  dispose?(): void;
+  listMethods?(): readonly string[];
+}
+
+export interface ResolvedActionHandler {
+  namespace: string;
+  method: string;
+  provider: ActionNamespaceProvider;
+  sourceScopeId: string;
+}
+
+export interface ActionScope {
+  id: string;
+  parent?: ActionScope;
+  resolve(actionName: string): ResolvedActionHandler | undefined;
+  registerNamespace(namespace: string, provider: ActionNamespaceProvider): () => void;
+  unregisterNamespace(namespace: string): void;
+  listNamespaces(): readonly string[];
+}
+
+export interface ComponentTarget {
+  componentId?: string;
+  componentName?: string;
+}
+
+export interface ComponentCapabilities {
+  store?: unknown;
+  invoke(method: string, payload: Record<string, unknown> | undefined, ctx: ActionContext): Promise<ActionResult> | ActionResult;
+  hasMethod?(method: string): boolean;
+  listMethods?(): readonly string[];
+}
+
+export interface ComponentHandle {
+  id?: string;
+  name?: string;
+  type: string;
+  capabilities: ComponentCapabilities;
+}
+
+export interface ComponentHandleRegistry {
+  id: string;
+  parent?: ComponentHandleRegistry;
+  register(handle: ComponentHandle): () => void;
+  unregister(handle: ComponentHandle): void;
+  resolve(target: ComponentTarget): ComponentHandle | undefined;
 }
 
 export interface CompiledExpression<T = unknown> {
@@ -601,6 +685,8 @@ export interface RenderFragmentOptions {
   scopeKey?: string;
   isolate?: boolean;
   pathSuffix?: string;
+  actionScope?: ActionScope;
+  componentRegistry?: ComponentHandleRegistry;
 }
 
 export interface RenderRegionHandle {
@@ -640,6 +726,8 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   fields?: readonly SchemaFieldRule[];
   memo?: boolean;
   scopePolicy?: ScopePolicy;
+  actionScopePolicy?: 'inherit' | 'new';
+  componentRegistryPolicy?: 'inherit' | 'new';
   resolveProps?: (args: ResolvePropsArgs<S>) => Record<string, unknown>;
   validation?: ValidationContributor<S>;
 }
@@ -782,6 +870,8 @@ export interface DialogState {
   id: string;
   dialog: Record<string, any>;
   scope: ScopeRef;
+  actionScope?: ActionScope;
+  componentRegistry?: ComponentHandleRegistry;
   title?: RenderNodeInput | string;
   body?: RenderNodeInput;
 }
@@ -804,6 +894,7 @@ export interface PageStoreApi {
 
 export interface FormRuntime {
   id: string;
+  name?: string;
   store: FormStoreApi;
   scope: ScopeRef;
   validation?: CompiledFormValidationModel;
@@ -834,7 +925,15 @@ export interface FormRuntime {
 export interface PageRuntime {
   store: PageStoreApi;
   scope: ScopeRef;
-  openDialog(dialog: Record<string, any>, scope: ScopeRef, runtime: RendererRuntime): string;
+  openDialog(
+    dialog: Record<string, any>,
+    scope: ScopeRef,
+    runtime: RendererRuntime,
+    options?: {
+      actionScope?: ActionScope;
+      componentRegistry?: ComponentHandleRegistry;
+    }
+  ): string;
   closeDialog(dialogId?: string): void;
   refresh(): void;
 }
@@ -847,6 +946,7 @@ export interface DialogRendererProps {
 export interface ActionSchema extends SchemaObject {
   action: string;
   componentId?: string;
+  componentName?: string;
   componentPath?: string;
   formId?: string;
   dialogId?: string;
@@ -863,6 +963,8 @@ export interface ActionSchema extends SchemaObject {
 export interface ActionContext {
   runtime: RendererRuntime;
   scope: ScopeRef;
+  actionScope?: ActionScope;
+  componentRegistry?: ComponentHandleRegistry;
   event?: unknown;
   node?: CompiledSchemaNode;
   form?: FormRuntime;
@@ -889,10 +991,24 @@ export interface RendererRuntime {
   resolveNodeMeta(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta;
   resolveNodeProps(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps;
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;
+  createActionScope(input?: { id?: string; parent?: ActionScope }): ActionScope;
+  createComponentHandleRegistry(input?: { id?: string; parent?: ComponentHandleRegistry }): ComponentHandleRegistry;
+  ensureImportedNamespaces(input: {
+    imports?: readonly XuiImportSpec[];
+    actionScope?: ActionScope;
+    componentRegistry?: ComponentHandleRegistry;
+    scope: ScopeRef;
+    node?: CompiledSchemaNode;
+  }): Promise<void>;
+  releaseImportedNamespaces(input: {
+    imports?: readonly XuiImportSpec[];
+    actionScope?: ActionScope;
+  }): void;
   dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult>;
   createPageRuntime(data?: Record<string, any>): PageRuntime;
   createFormRuntime(input: {
     id?: string;
+    name?: string;
     initialValues?: Record<string, any>;
     parentScope: ScopeRef;
     page?: PageRuntime;
@@ -903,6 +1019,8 @@ export interface RendererRuntime {
 export interface RendererHookApi {
   useRendererRuntime(): RendererRuntime;
   useRenderScope(): ScopeRef;
+  useCurrentActionScope(): ActionScope | undefined;
+  useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
   useScopeSelector<T>(selector: (scopeData: any) => T, equalityFn?: (a: T, b: T) => boolean): T;
   useRendererEnv(): RendererEnv;
   useActionDispatcher(): RendererRuntime['dispatch'];
@@ -935,6 +1053,8 @@ export interface SchemaRendererProps {
   plugins?: RendererPlugin[];
   pageStore?: PageStoreApi;
   parentScope?: ScopeRef;
+  actionScope?: ActionScope;
+  componentRegistry?: ComponentHandleRegistry;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }
 

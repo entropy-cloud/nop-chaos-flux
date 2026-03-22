@@ -14,6 +14,7 @@ import type {
 
 export interface CreateManagedFormRuntimeInput {
   id?: string;
+  name?: string;
   initialValues?: Record<string, any>;
   parentScope: ScopeRef;
   page?: PageRuntime;

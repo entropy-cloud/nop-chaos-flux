@@ -25,7 +25,9 @@
       "@nop-chaos/amis-react": ["packages/amis-react/src/index.tsx"],
       "@nop-chaos/amis-renderers-basic": ["packages/amis-renderers-basic/src/index.tsx"],
       "@nop-chaos/amis-renderers-form": ["packages/amis-renderers-form/src/index.tsx"],
-      "@nop-chaos/amis-renderers-data": ["packages/amis-renderers-data/src/index.tsx"]
+      "@nop-chaos/amis-renderers-data": ["packages/amis-renderers-data/src/index.tsx"],
+      "@nop-chaos/flow-designer-core": ["packages/flow-designer-core/src/index.ts"],
+      "@nop-chaos/flow-designer-renderers": ["packages/flow-designer-renderers/src/index.tsx"]
     }
   }
 }

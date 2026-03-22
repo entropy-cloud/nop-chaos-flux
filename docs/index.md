@@ -23,6 +23,7 @@ Choose the smallest document that matches the task.
 | 了解 report designer 与 nop-report 的导入导出/round-trip 设计 | `docs/architecture/report-designer/codec-design.md` | `docs/architecture/report-designer/nop-report-profile.md` |
 | 设计 report designer 的右侧属性面板与 expression/reference 字段编辑边界 | `docs/architecture/report-designer/inspector-design.md` | `docs/architecture/report-designer/contracts.md` |
 | Change React integration, renderer props, hooks, or fragment rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
+| Design namespaced action extension, host action scopes, or `xui:import` semantics | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` |
 | Change slot-like fields such as `title`, `empty`, or `onClick` | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
 | Change validation behavior or form field participation | `docs/architecture/form-validation.md` | `docs/architecture/amis-runtime-module-boundaries.md` |
 | Decide where runtime or validation code should live | `docs/architecture/amis-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
@@ -43,6 +44,7 @@ Architecture intent lives primarily in:
 - `docs/architecture/form-validation.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/amis-runtime-module-boundaries.md`
+- `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/flow-designer/design.md`
 - `docs/architecture/report-designer/design.md`
 

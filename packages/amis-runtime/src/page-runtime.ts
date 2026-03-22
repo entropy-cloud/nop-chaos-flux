@@ -31,12 +31,14 @@ export function createManagedPageRuntime(input: {
   return {
     store,
     scope,
-    openDialog(dialog, dialogScope, runtime: RendererRuntime) {
+    openDialog(dialog, dialogScope, runtime: RendererRuntime, options) {
       const id = createDialogId(dialogScope.id);
       store.openDialog({
         id,
         dialog,
         scope: dialogScope,
+        actionScope: options?.actionScope,
+        componentRegistry: options?.componentRegistry,
         title: typeof dialog.title === 'string' ? dialog.title : dialog.title ? runtime.compile(dialog.title as any) : undefined,
         body: dialog.body ? runtime.compile(dialog.body as any) : undefined
       });

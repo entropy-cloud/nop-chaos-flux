@@ -125,6 +125,8 @@ Use hooks for ambient runtime state and services:
 
 - `useRendererRuntime()`
 - `useRenderScope()`
+- `useCurrentActionScope()`
+- `useCurrentComponentRegistry()`
 - `useScopeSelector()`
 - `useRendererEnv()`
 - `useActionDispatcher()`
@@ -142,6 +144,8 @@ Key hooks in the active React package are:
 ```ts
 function useRendererRuntime(): RendererRuntime;
 function useRenderScope(): ScopeRef;
+function useCurrentActionScope(): ActionScope | undefined;
+function useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
 function useScopeSelector<T>(selector: (scopeData: any) => T, equalityFn?: (a: T, b: T) => boolean): T;
 function useRendererEnv(): RendererEnv;
 function useActionDispatcher(): RendererRuntime['dispatch'];
@@ -250,6 +254,8 @@ Current split context areas are:
 
 - runtime context
 - scope context
+- action-scope context
+- component-registry context
 - node meta context
 - form context
 - page context
@@ -270,11 +276,28 @@ Current contract:
 interface RenderFragmentOptions {
   data?: object;
   scope?: ScopeRef;
+  actionScope?: ActionScope;
+  componentRegistry?: ComponentHandleRegistry;
   scopeKey?: string;
   isolate?: boolean;
   pathSuffix?: string;
 }
 ```
+
+The active React layer now carries three separate execution lookups through explicit boundaries:
+
+- `ScopeRef` for data lookup and updates
+- `ActionScope` for namespaced action resolution such as `designer:export`
+- `ComponentHandleRegistry` for instance-targeted capability invocation such as `component:invoke`
+
+`NodeRenderer` may explicitly create a fresh action-scope boundary or component-registry boundary when a renderer definition opts into `actionScopePolicy: 'new'` or `componentRegistryPolicy: 'new'`.
+
+Current concrete uses:
+
+- `designer-page` creates a local action-scope boundary and registers the `designer` namespace provider during owned lifecycle
+- `form` creates a local component-registry boundary and registers an explicit form handle exposing `submit`, `validate`, `reset`, and `setValue`
+
+Fragment rendering keeps the same explicitness rule as data scope: callers must pass `actionScope` and `componentRegistry` through `render(options)` when a subtree should inherit or replace those execution boundaries deliberately.
 
 Expected behavior:
 

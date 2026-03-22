@@ -6,6 +6,9 @@ import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/amis-
 import { registerBasicRenderers } from '@nop-chaos/amis-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/amis-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/amis-renderers-data';
+import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
+import type { GraphDocument, DesignerConfig } from '@nop-chaos/flow-designer-core';
+import { FlowDesignerExample } from './FlowDesignerExample';
 
 const users = [
   { id: 1, username: 'alice', email: 'alice@example.com', role: 'admin' },
@@ -17,6 +20,7 @@ const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
 registerDataRenderers(registry);
+registerFlowDesignerRenderers(registry);
 
 const SchemaRenderer = createSchemaRenderer();
 
@@ -481,10 +485,144 @@ const schema = {
   ]
 };
 
+const workflowDesignerConfig: DesignerConfig = {
+  version: '1.0',
+  kind: 'workflow',
+  nodeTypes: [
+    {
+      id: 'start',
+      label: 'Start',
+      description: 'Workflow entry point',
+      icon: '▶',
+      defaults: { label: 'Start', trigger: 'manual' },
+      constraints: { maxInstances: 1, allowIncoming: false },
+      ports: [
+        { id: 'out', direction: 'output', position: 'right', roles: { provides: ['trigger'] }, maxConnections: 1 }
+      ],
+      permissions: { canDelete: false, canDuplicate: false }
+    },
+    {
+      id: 'end',
+      label: 'End',
+      description: 'Workflow end point',
+      icon: '■',
+      defaults: { label: 'End', result: 'done' },
+      constraints: { allowOutgoing: false },
+      ports: [
+        { id: 'in', direction: 'input', position: 'left', roles: { accepts: ['trigger', 'output', 'error'] } }
+      ]
+    },
+    {
+      id: 'task',
+      label: 'Task',
+      description: 'Execute a task',
+      icon: '⚙',
+      defaults: { label: 'Task', executor: 'service', timeout: '30s' },
+      ports: [
+        { id: 'in', direction: 'input', position: 'left', roles: { accepts: ['trigger', 'output'] } },
+        { id: 'out', direction: 'output', position: 'right', roles: { provides: ['output', 'error'] } }
+      ]
+    },
+    {
+      id: 'condition',
+      label: 'Condition',
+      description: 'Branch based on condition',
+      icon: '◇',
+      defaults: { label: 'Condition', expression: 'payload.ok === true' },
+      ports: [
+        { id: 'in', direction: 'input', position: 'left', roles: { accepts: ['trigger', 'output'] } },
+        { id: 'outTrue', direction: 'output', position: 'right', roles: { provides: ['output'] } },
+        { id: 'outFalse', direction: 'output', position: 'bottom', roles: { provides: ['output'] } }
+      ]
+    },
+    {
+      id: 'parallel',
+      label: 'Parallel',
+      description: 'Execute in parallel',
+      icon: '⫼',
+      defaults: { label: 'Parallel', branches: '2' },
+      ports: [
+        { id: 'in', direction: 'input', position: 'left', roles: { accepts: ['trigger', 'output'] } },
+        { id: 'out', direction: 'output', position: 'right', roles: { provides: ['output'] } }
+      ]
+    },
+    {
+      id: 'loop',
+      label: 'Loop',
+      description: 'Loop execution',
+      icon: '↻',
+      defaults: { label: 'Loop', limit: '3', interval: '1m' },
+      ports: [
+        { id: 'in', direction: 'input', position: 'left', roles: { accepts: ['trigger', 'output'] } },
+        { id: 'out', direction: 'output', position: 'right', roles: { provides: ['output'] } }
+      ]
+    }
+  ],
+  edgeTypes: [
+    {
+      id: 'default',
+      label: 'Default',
+      appearance: { stroke: '#94a3b8', strokeWidth: 2, strokeStyle: 'solid', markerEnd: 'arrowClosed' }
+    },
+    {
+      id: 'error',
+      label: 'Error',
+      appearance: { stroke: '#ef4444', strokeWidth: 2, strokeStyle: 'dashed', markerEnd: 'arrowClosed' }
+    },
+    {
+      id: 'success',
+      label: 'Success',
+      appearance: { stroke: '#10b981', strokeWidth: 2, strokeStyle: 'solid', markerEnd: 'arrowClosed' }
+    }
+  ],
+  palette: {
+    searchable: true,
+    groups: [
+      { id: 'basic', label: 'Basic', nodeTypes: ['start', 'end'], expanded: true },
+      { id: 'logic', label: 'Logic', nodeTypes: ['condition', 'parallel', 'loop'], expanded: true },
+      { id: 'execution', label: 'Execution', nodeTypes: ['task'], expanded: true }
+    ]
+  },
+  features: {
+    undo: true, redo: true, grid: true, minimap: true, export: true, clipboard: true, shortcuts: true
+  },
+  rules: {
+    allowSelfLoop: false, allowMultiEdge: true, defaultEdgeType: 'default'
+  },
+  canvas: {
+    background: 'dots', gridSize: 24, snapToGrid: true
+  }
+};
+
+const sampleWorkflowDocument: GraphDocument = {
+  id: 'sample-workflow-1',
+  kind: 'workflow',
+  name: 'Sample Workflow',
+  version: '1.0',
+  nodes: [
+    { id: 'node-1', type: 'start', position: { x: 100, y: 200 }, data: { label: 'Start', trigger: 'manual' } },
+    { id: 'node-2', type: 'task', position: { x: 350, y: 200 }, data: { label: 'Validate Input', executor: 'service', timeout: '30s' } },
+    { id: 'node-3', type: 'condition', position: { x: 600, y: 200 }, data: { label: 'Check Status', expression: 'input.valid === true' } },
+    { id: 'node-4', type: 'task', position: { x: 850, y: 120 }, data: { label: 'Process Data', executor: 'script', timeout: '60s' } },
+    { id: 'node-5', type: 'task', position: { x: 850, y: 280 }, data: { label: 'Handle Error', executor: 'http', timeout: '30s' } },
+    { id: 'node-6', type: 'end', position: { x: 1100, y: 200 }, data: { label: 'End', result: 'done' } }
+  ],
+  edges: [
+    { id: 'edge-1', type: 'default', source: 'node-1', target: 'node-2', data: { label: 'Start' } },
+    { id: 'edge-2', type: 'default', source: 'node-2', target: 'node-3', data: { label: 'Validate' } },
+    { id: 'edge-3', type: 'success', source: 'node-3', target: 'node-4', data: { label: 'Valid' } },
+    { id: 'edge-4', type: 'error', source: 'node-3', target: 'node-5', data: { label: 'Invalid' } },
+    { id: 'edge-5', type: 'default', source: 'node-4', target: 'node-6', data: { label: 'Complete' } },
+    { id: 'edge-6', type: 'default', source: 'node-5', target: 'node-6', data: { label: 'Retry Complete' } }
+  ],
+  viewport: { x: 0, y: 0, zoom: 1 }
+};
+
 export function App() {
   const [directoryUsers, setDirectoryUsers] = useState(users);
   const [searchResults, setSearchResults] = useState(users);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'renderers' | 'flow-designer'>('renderers');
   const directoryUsersRef = useRef(directoryUsers);
   const searchQueryRef = useRef(searchQuery);
 
@@ -608,33 +746,73 @@ export function App() {
   return (
     <main className="app-shell">
       <section className="hero-card hero-card--wide">
-        <p className="eyebrow">NOP Chaos AMIS</p>
-        <h1>Renderer Playground</h1>
-        <p className="body-copy">
-          The first execution slice is live: schema compilation, runtime evaluation, React rendering,
-          forms, dialogs, actions, table operations, adaptors, monitoring, and request cancellation all
-          run inside the playground.
-        </p>
-        <p className="body-copy body-copy--compact">
-          Submit the user form to append a record into the local directory and watch the table plus monitor
-          panel update in real time.
-        </p>
-        <p className="body-copy body-copy--compact">
-          The username field now validates on blur, debounces async uniqueness checks for 500ms, and only
-          reveals errors after a field has been touched. Validation timing and error visibility are now
-          configured independently at the form or field level.
-        </p>
-        <p className="body-copy body-copy--compact">
-          A first package-based debugger is now mounted as a floating panel. Drag it, hide it, and reopen it
-          from the left-bottom launcher while interacting with the schema.
-        </p>
-        <p className="body-copy body-copy--compact">
-          AI automation can read the structured debugger API from `window.__NOP_AMIS_DEBUGGER_API__` or the
-          multi-instance registry at `window.__NOP_AMIS_DEBUGGER_HUB__`.
-        </p>
-        <div className="na-ai-debug-card">
-          <p className="na-ai-debug-card__eyebrow">AI Debug Script</p>
-          <pre className="na-ai-debug-card__code">{`const api = window.__NOP_AMIS_DEBUGGER_API__;
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div>
+            <p className="eyebrow">NOP Chaos AMIS</p>
+            <h1 style={{ margin: 0 }}>Renderer Playground</h1>
+          </div>
+          <div style={{ display: 'flex', gap: 0 }}>
+            <button
+              onClick={() => setActiveTab('renderers')}
+              style={{
+                padding: '8px 20px',
+                border: '1px solid #e2e8f0',
+                background: activeTab === 'renderers' ? '#3b82f6' : '#fff',
+                color: activeTab === 'renderers' ? '#fff' : '#1e293b',
+                cursor: 'pointer',
+                fontSize: 14,
+                borderRadius: '8px 0 0 8px',
+                borderRight: 'none',
+                fontWeight: activeTab === 'renderers' ? 600 : 400
+              }}
+            >
+              Renderers
+            </button>
+            <button
+              onClick={() => setActiveTab('flow-designer')}
+              style={{
+                padding: '8px 20px',
+                border: '1px solid #e2e8f0',
+                background: activeTab === 'flow-designer' ? '#3b82f6' : '#fff',
+                color: activeTab === 'flow-designer' ? '#fff' : '#1e293b',
+                cursor: 'pointer',
+                fontSize: 14,
+                borderRadius: '0 8px 8px 0',
+                fontWeight: activeTab === 'flow-designer' ? 600 : 400
+              }}
+            >
+              Flow Designer
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'renderers' ? (
+          <>
+            <p className="body-copy">
+              The first execution slice is live: schema compilation, runtime evaluation, React rendering,
+              forms, dialogs, actions, table operations, adaptors, monitoring, and request cancellation all
+              run inside the playground.
+            </p>
+            <p className="body-copy body-copy--compact">
+              Submit the user form to append a record into the local directory and watch the table plus monitor
+              panel update in real time.
+            </p>
+            <p className="body-copy body-copy--compact">
+              The username field now validates on blur, debounces async uniqueness checks for 500ms, and only
+              reveals errors after a field has been touched. Validation timing and error visibility are now
+              configured independently at the form or field level.
+            </p>
+            <p className="body-copy body-copy--compact">
+              A first package-based debugger is now mounted as a floating panel. Drag it, hide it, and reopen it
+              from the left-bottom launcher while interacting with the schema.
+            </p>
+            <p className="body-copy body-copy--compact">
+              AI automation can read the structured debugger API from `window.__NOP_AMIS_DEBUGGER_API__` or the
+              multi-instance registry at `window.__NOP_AMIS_DEBUGGER_HUB__`.
+            </p>
+            <div className="na-ai-debug-card">
+              <p className="na-ai-debug-card__eyebrow">AI Debug Script</p>
+              <pre className="na-ai-debug-card__code">{`const api = window.__NOP_AMIS_DEBUGGER_API__;
 const latestError = api?.getLatestError();
 const usersRequest = await api?.waitForEvent({ kind: 'api:end', text: '/api/users' });
 const nodeReport = api?.getNodeDiagnostics({ nodeId: 'user-form' });
@@ -649,24 +827,31 @@ const diagnostic = api?.createDiagnosticReport({
   includeLatestInteractionTrace: true
 });
 const latestTrace = diagnostic?.latestInteractionTrace;`}</pre>
-        </div>
-        <div className="playground-layout">
-          <div className="playground-stage">
-            <SchemaRenderer
-              schema={schema}
-              data={{
-                currentUser: { name: 'Architect' },
-                users: directoryUsers,
-                searchResults
-              }}
-              env={env}
-              registry={registry}
-              formulaCompiler={formulaCompiler}
-              plugins={[debuggerController.plugin]}
-              onActionError={debuggerController.onActionError}
-            />
-          </div>
-        </div>
+            </div>
+            <div className="playground-layout">
+              <div className="playground-stage">
+                <SchemaRenderer
+                  schema={schema}
+                  data={{
+                    currentUser: { name: 'Architect' },
+                    users: directoryUsers,
+                    searchResults
+                  }}
+                  env={env}
+                  registry={registry}
+                  formulaCompiler={formulaCompiler}
+                  plugins={[debuggerController.plugin]}
+                  onActionError={debuggerController.onActionError}
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          <FlowDesignerExample
+            document={sampleWorkflowDocument}
+            config={workflowDesignerConfig}
+          />
+        )}
       </section>
       <AmisDebuggerPanel controller={debuggerController} />
     </main>

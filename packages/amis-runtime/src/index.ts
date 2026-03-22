@@ -1,10 +1,12 @@
 import type {
   ActionContext,
+  ActionScope,
   ActionResult,
   ActionSchema,
   ApiObject,
   CompiledFormValidationField,
   CompiledFormValidationModel,
+  ComponentHandleRegistry,
   CompiledValidationRule,
   ExpressionCompiler,
   FormRuntime,
@@ -20,8 +22,11 @@ import type {
   ValidationRule
 } from '@nop-chaos/amis-schema';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/amis-formula';
+import { createActionScope } from './action-scope';
 import { createActionDispatcher } from './action-runtime';
+import { createComponentHandleRegistry } from './component-handle-registry';
 import { createManagedFormRuntime } from './form-runtime';
+import { createImportManager } from './imports';
 import { createNodeRuntime } from './node-runtime';
 import { createManagedPageRuntime } from './page-runtime';
 import {
@@ -38,6 +43,9 @@ import { createBuiltInValidationRegistry, createValidationError } from './valida
 export { createRendererRegistry, registerRendererDefinitions } from './registry';
 export { createSchemaCompiler } from './schema-compiler';
 export { createScopeRef } from './scope';
+export { createActionScope } from './action-scope';
+export { createComponentHandleRegistry } from './component-handle-registry';
+export { createFormComponentHandle } from './form-component-handle';
 
 export function createRendererRuntime(input: {
   registry: RendererRegistry;
@@ -56,8 +64,39 @@ export function createRendererRuntime(input: {
   });
   const executeApiRequest = createApiRequestExecutor(input.env);
   const validationRegistry = createBuiltInValidationRegistry();
+  let actionScopeCounter = 0;
+  let componentRegistryCounter = 0;
+  const runtimeRef: { current?: RendererRuntime } = {};
   const nodeRuntime = createNodeRuntime({
     expressionCompiler,
+    env: input.env
+  });
+
+  function createOwnedActionScope(scopeInput: { id?: string; parent?: ActionScope } = {}) {
+    actionScopeCounter += 1;
+    return createActionScope({
+      id: scopeInput.id ?? `action-scope-${actionScopeCounter}`,
+      parent: scopeInput.parent
+    });
+  }
+
+  function createOwnedComponentRegistry(registryInput: { id?: string; parent?: ComponentHandleRegistry } = {}) {
+    componentRegistryCounter += 1;
+    return createComponentHandleRegistry({
+      id: registryInput.id ?? `component-registry-${componentRegistryCounter}`,
+      parent: registryInput.parent
+    });
+  }
+
+  const importManager = createImportManager({
+    loader: input.env.importLoader,
+    getRuntime: () => {
+      if (!runtimeRef.current) {
+        throw new Error('Renderer runtime is not initialized yet');
+      }
+
+      return runtimeRef.current;
+    },
     env: input.env
   });
 
@@ -115,6 +154,7 @@ export function createRendererRuntime(input: {
 
   function createFormRuntime(inputValue: {
     id?: string;
+    name?: string;
     initialValues?: Record<string, any>;
     parentScope: ScopeRef;
     page?: PageRuntime;
@@ -183,7 +223,7 @@ export function createRendererRuntime(input: {
       })
   });
 
-  return {
+  const runtime: RendererRuntime = {
     registry: input.registry,
     env: input.env,
     expressionCompiler,
@@ -207,8 +247,20 @@ export function createRendererRuntime(input: {
         isolate: options?.isolate
       });
     },
+    createActionScope: createOwnedActionScope,
+    createComponentHandleRegistry: createOwnedComponentRegistry,
+    ensureImportedNamespaces(args) {
+      return importManager.ensureImportedNamespaces(args);
+    },
+    releaseImportedNamespaces(args) {
+      importManager.releaseImportedNamespaces(args);
+    },
     dispatch,
     createPageRuntime,
     createFormRuntime
   };
+
+  runtimeRef.current = runtime;
+
+  return runtime;
 }

@@ -65,6 +65,12 @@ importers:
       '@nop-chaos/amis-schema':
         specifier: workspace:*
         version: link:../../packages/amis-schema
+      '@nop-chaos/flow-designer-core':
+        specifier: workspace:*
+        version: link:../../packages/flow-designer-core
+      '@nop-chaos/flow-designer-renderers':
+        specifier: workspace:*
+        version: link:../../packages/flow-designer-renderers
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -180,6 +186,49 @@ importers:
         version: 5.0.11(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
 
   packages/amis-schema: {}
+
+  packages/flow-designer-core:
+    dependencies:
+      '@nop-chaos/amis-formula':
+        specifier: workspace:*
+        version: link:../amis-formula
+      '@nop-chaos/amis-schema':
+        specifier: workspace:*
+        version: link:../amis-schema
+      zustand:
+        specifier: ^5.0.0
+        version: 5.0.11(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
+
+  packages/flow-designer-renderers:
+    dependencies:
+      '@nop-chaos/amis-formula':
+        specifier: workspace:*
+        version: link:../amis-formula
+      '@nop-chaos/amis-react':
+        specifier: workspace:*
+        version: link:../amis-react
+      '@nop-chaos/amis-runtime':
+        specifier: workspace:*
+        version: link:../amis-runtime
+      '@nop-chaos/amis-schema':
+        specifier: workspace:*
+        version: link:../amis-schema
+      '@nop-chaos/flow-designer-core':
+        specifier: workspace:*
+        version: link:../flow-designer-core
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.14)
 
 packages:
 

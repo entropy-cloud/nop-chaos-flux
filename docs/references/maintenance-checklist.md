@@ -89,9 +89,16 @@ Examples:
 Review:
 
 - `docs/architecture/amis-core.md`
+- `docs/architecture/action-scope-and-imports.md`
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
 - `docs/examples/user-management-schema.md`
+
+Examples also include:
+
+- adding namespaced host actions such as `designer:*`, `spreadsheet:*`, or `report-designer:*`
+- introducing or changing `xui:import` semantics
+- changing action-scope resolution or imported namespace visibility
 
 ## 5. Page or dialog runtime changes
 
@@ -168,6 +175,22 @@ Review:
 - the most relevant file in `docs/architecture/`
 - `docs/index.md` if the example is no longer the best reference entry point
 
+## 9a. Action-scope or import-extension changes
+
+Examples:
+
+- changes in future action-scope runtime infrastructure
+- changes in namespaced action resolution order
+- changes in `xui:import` loading, dedupe, namespace visibility, or policy checks
+- changes in host bridge registration for complex components
+
+Review:
+
+- `docs/architecture/action-scope-and-imports.md`
+- `docs/architecture/renderer-runtime.md`
+- `docs/architecture/flow-designer/api.md` when designer integration changes
+- `docs/architecture/report-designer/design.md` when report/spreadsheet integration changes
+
 ## 10. Spreadsheet editor or report designer changes
 
 Examples:
@@ -221,3 +244,4 @@ Before finishing a code change, ask:
 - `docs/architecture/amis-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/form-validation.md`
+- `docs/architecture/action-scope-and-imports.md`

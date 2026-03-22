@@ -46,6 +46,7 @@ function validationErrorsEqual(
 export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInput): FormRuntime {
   const store = createFormStore(inputValue.initialValues ?? {});
   const formId = inputValue.id ?? `${inputValue.parentScope.id}-form`;
+  const formName = inputValue.name;
   const validationRuns = new Map<string, number>();
   const pendingValidationDebounces = new Map<string, { timer: ReturnType<typeof setTimeout>; resolve: (run: boolean) => void }>();
   const runtimeFieldRegistrations = new Map<string, RuntimeFieldRegistration>();
@@ -104,6 +105,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
   const thisForm: FormRuntime = {
     id: formId,
+    name: formName,
     store,
     scope,
     validation: inputValue.validation,
