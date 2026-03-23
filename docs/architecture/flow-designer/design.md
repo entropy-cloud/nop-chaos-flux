@@ -48,7 +48,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `@nop-chaos/flow-designer-core` 已落地纯内存 graph runtime，覆盖节点/边增删改查、单选、undo/redo、dirty tracking、save/restore、导出。
 - `@nop-chaos/flow-designer-renderers` 已落地 `designer-page` 宿主与 schema/runtime bridge，并通过本地 `ActionScope` 注册 `designer:*` 动作。
 - playground 已有实际示例，证明 schema-driven toolbar、schema-driven inspector、固定 host scope、保存/导出回调可以协同工作。
-- `@xyflow/react` 适配边界仍然保留，但当前实现先用卡片式 canvas/list 视图证明整体架构，而不是在第一步就绑定完整画布交互。
+- `@xyflow/react` 现在已经作为 live canvas adapter 接入，且成为默认画布；与此同时，card adapter 与 `xyflow-preview` adapter 仍保留，用于 fallback、契约验证和更聚焦的回归测试。
 
 ## 3. 模块拆分
 
@@ -101,6 +101,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `registerFlowDesignerRenderers(registry)` / `createFlowDesignerRegistry()`
 - `designer-page` 在自身 action-scope 边界内注册 `designer` namespace provider，并让 toolbar/inspector 片段沿该边界执行
 - `designer-page.shortcuts`，用于在宿主层把键盘事件映射到已有 `designer:*` / shared action 链
+- `card` / `xyflow-preview` / `xyflow` 三种 canvas adapter，统一经由 `DesignerCanvasContent` host 映射到 command adapter dispatch
 
 ### 3.3 `@xyflow/react` 适配边界
 

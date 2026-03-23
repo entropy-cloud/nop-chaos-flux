@@ -90,6 +90,7 @@ Review:
 
 - `docs/architecture/amis-core.md`
 - `docs/architecture/action-scope-and-imports.md`
+- `docs/architecture/flow-designer/canvas-adapters.md`
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
 - `docs/examples/user-management-schema.md`

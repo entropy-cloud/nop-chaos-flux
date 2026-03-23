@@ -47,17 +47,17 @@
 - 当前删除确认不通过专用 designer action 实现，而是由 `designer-page` 外围 schema 使用共享 `dialog` action 包装 `designer:deleteSelection`。
 - 当前键盘快捷键也不通过 core 内建按键表实现，而是由 `designer-page.shortcuts` 在宿主层声明，再复用同一条 action dispatch 链。
 - 当前窄屏响应式行为也留在 `designer-page` shell：renderer 负责根据 media query 把 inspector 切换成 canvas 下方的可展开面板，但 inspector schema 和 nodeTypes/edgeTypes 的字段片段不需要改写成移动端专用协议。
-- 当前 minimap 也是 renderer shell 层的临时 parity 实现：它基于当前 `doc.nodes` 坐标生成 overview 按钮并复用 `selectNode`，尚未引入最终 canvas adapter 的真实视口同步协议。
+- 当前 minimap 仍是 renderer shell 层的轻量 overview 实现：它基于当前 `doc.nodes` 坐标生成 overview 按钮并复用 `selectNode`，尚未切到 live `xyflow` 自带 minimap，但这不影响主画布已经默认走真实 `xyflow` adapter。
 - 当前 playground export 面板会直接消费 `designer:export` 通过 `env.functions.publishFlowExport` 回传的 JSON 字符串，并在宿主层派生 export summary；这说明导出后的结构检查仍然应由 host/example 负责，而不是把展示逻辑塞回 core 或 renderer action 本身。
-- 当前 card/list canvas 也提供了一个 renderer-local 的轻量 connection mode：进入连接模式后，第二次点击节点会转成 `addEdge` command；当前同一层 parity shell 也覆盖 edge reconnect，bridge host 会先记录待 reconnect 的 edge，再把目标节点点击归一化成 `reconnectEdge` command；这仍然只是最终 `@xyflow/react` handle/connect/reconnect 交互之前的 parity shell，不改变 core 作为唯一 graph mutation source of truth 的边界。
+- 当前 `card` 与 `xyflow-preview` adapter 也提供了 renderer-local 的 connect/reconnect shell：进入连接模式后，第二次点击节点会转成 `addEdge` command；reconnect 也是先记录待 reconnect 的 edge，再把目标节点点击归一化成 `reconnectEdge` command。live `xyflow` 则通过真实 `@xyflow/react` 回调翻译到同一条命令链，三者都不改变 core 作为唯一 graph mutation source of truth 的边界。
 - 当前 host toolbar 还可以继续声明 document-level flow actions，例如 `designer:clearSelection`；这类动作依旧通过 `designerActionHandlers` 注入共享 action runtime，而不是要求 renderer 自带一套页面命令按钮协议。
-- 当前 card/list canvas 已开始显式暴露 pane-click parity：空白 surface click 会归一化为退出 connection mode + `clearSelection`，为未来 `designer-canvas` 对 `@xyflow/react` pane 事件的桥接预留了清晰契约。
-- 当前 renderer 内部已经把 card/list canvas MVP 抽到单独 adapter 组件文件，这样 `designer-page` 和 host scope 不需要感知底层 canvas 实现，后续可在相同 props 契约下逐步替换成真实 xyflow adapter。
+- 当前 pane-click 语义已经在全部 canvas adapter 上统一：空白 surface click 会归一化为退出 connect/reconnect intent 并清理 selection；`card` / `xyflow-preview` 用显式 shell 复现该语义，live `xyflow` 则直接映射真实 pane 事件。
+- 当前 renderer 内部已经把 canvas 抽到单独 adapter 组件文件，`designer-page` 和 host scope 不需要感知底层实现；现在不是“后续再替换成真实 xyflow”，而是已经在同一 props 契约下同时承载 `card`、`xyflow-preview` 和 live `xyflow`。
 - 当前 `designer-page` 还支持 `canvasAdapter` prop，用于在 renderer 内部切换 `card`、`xyflow-preview` 与 `xyflow` adapter；preview 用来提前锁定 `onPaneClick`、selection bridge、connect bridge 等行为契约，而 live `xyflow` 则复用同一套 callback surface 接入真实 `@xyflow/react`。
 - 当前默认画布已经切到 live `xyflow`：如果 `designer-page` 未显式传 `canvasAdapter`，renderer 会默认走 `xyflow`，而 `card` 仅作为显式 fallback / parity harness 保留。
-- 当前 target 侧进一步把 card canvas 交互抽成 `DesignerCardCanvasBridge`，由 `designer-page` 提供 snapshot 和 bridge callbacks，再由 bridge 组件负责具体卡片视图渲染；这让未来 xyflow bridge 可以复用相同 callback/command 边界，而不需要耦合到当前 card DOM 结构。
-- 当前 target 侧也补上了 `DesignerXyflowPreviewBridge`：它不是接入真实库，而是通过 `canvasAdapter: 'xyflow-preview'` 复用同一套 snapshot + callbacks 边界，先锁定 pane/select/connect/reconnect/move/viewport 这些桥接语义，再进入真正的 `@xyflow/react` 适配。
-- 当前 bridge callback surface 已开始扩展到移动节点、viewport 调整、connection 和 reconnect：card canvas 通过显式 `onMoveNode`、`onViewportChange`、`onStartConnection`、`onCancelConnection`、`onCompleteConnection`、`onStartReconnect`、`onCancelReconnect`、`onCompleteReconnect` 回调把交互归一化成 command dispatch，而不是在 bridge 内自行维护第二份 graph mutation 状态。
+- 当前 target 侧把 card canvas 交互抽成 `DesignerCardCanvasBridge`，并与 `DesignerXyflowPreviewBridge`、`DesignerXyflowCanvasBridge` 一起复用同一套 snapshot + bridge callbacks；这样不同画布实现只负责 UI 手势翻译，不需要各自重建 command 边界。
+- 当前 target 侧同时保留 `DesignerXyflowPreviewBridge` 和 live `DesignerXyflowCanvasBridge`：preview 仍用于契约 rehearsal 和更聚焦的回归测试，live `xyflow` 则作为默认画布承担真实交互。
+- 当前 bridge callback surface 已固定覆盖移动节点、viewport 调整、connection 和 reconnect：不同 canvas adapter 都通过显式 `onMoveNode`、`onViewportChange`、`onStartConnection`、`onCancelConnection`、`onCompleteConnection`、`onStartReconnect`、`onCancelReconnect`、`onCompleteReconnect` 回调把交互归一化成 command dispatch，而不是在 bridge 内自行维护第二份 graph mutation 状态。
 - 当前 bridge host 对 connect/reconnect completion 失败也已固定语义：如果 `addEdge` / `reconnectEdge` 被 duplicate-edge、self-loop 或 missing-node 等共享约束拒绝，host 仍保持 pending connection source 或 reconnecting edge 的本地 intent 状态，让用户可以直接改选目标或取消，而不是失败后立即丢失当前操作上下文。
 
 ## 2. `designer-page` Schema
@@ -116,7 +116,7 @@ interface DesignerBridge {
 - `@xyflow/react` 回调先转换为 `DesignerCommand`，再进入 core 执行链
 - canvas bridge 组件只消费 `snapshot` 和显式 bridge callbacks，例如 `onPaneClick`、`onNodeSelect`、`onEdgeSelect`、`onDuplicateNode`、`onDeleteNode`、`onDeleteEdge`、`onMoveNode`、`onViewportChange`、`onStartConnection`、`onCancelConnection`、`onCompleteConnection`、`onStartReconnect`、`onCancelReconnect`、`onCompleteReconnect`；bridge host 可以持有临时 UI intent（如 pending connection source 或 reconnecting edge id），但不得把 graph mutation 本身分叉到 command adapter 之外
 
-当前 MVP 中，bridge 的主要消费者是 `designer-page` 自身、`designer-field` inspector 控件，以及 playground 的 toolbar/inspector schema。
+当前 bridge 的主要消费者是 `designer-page` 自身、`designer-field` inspector 控件，以及 playground 的 toolbar/inspector schema。
 
 ## 3. 固定宿主 Scope
 
