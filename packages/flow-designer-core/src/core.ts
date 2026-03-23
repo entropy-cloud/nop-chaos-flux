@@ -58,6 +58,26 @@ const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playgroun
 const EDGE_MISSING_NODE_ERROR = 'Edges must connect existing nodes.';
 const EDGE_DUPLICATE_ERROR = 'Duplicate edges are not supported in the playground example.';
 
+function normalizeViewport(viewport: GraphDocument['viewport']) {
+  return viewport ? { ...viewport } : { x: 0, y: 0, zoom: 1 };
+}
+
+function clampZoom(zoom: number) {
+  return Math.max(0.1, Math.min(4, Number(zoom.toFixed(1))));
+}
+
+function normalizeViewportInput(viewport: { x: number; y: number; zoom: number }) {
+  return {
+    x: Math.round(viewport.x),
+    y: Math.round(viewport.y),
+    zoom: clampZoom(viewport.zoom)
+  };
+}
+
+function viewportsEqual(left: { x: number; y: number; zoom: number }, right: { x: number; y: number; zoom: number }) {
+  return left.x === right.x && left.y === right.y && left.zoom === right.zoom;
+}
+
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -185,7 +205,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   let activeNodeId: string | null = null;
   let activeEdgeId: string | null = null;
   let gridEnabled = true;
-  let viewport = doc.viewport ?? { x: 0, y: 0, zoom: 1 };
+  let viewport = normalizeViewport(doc.viewport);
 
   const maxHistorySize = 50;
 
@@ -481,8 +501,10 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     historyIndex--;
     doc = cloneDocument(history[historyIndex].doc);
+    viewport = normalizeViewport(doc.viewport);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
+    emit({ type: 'viewportChanged', viewport });
   }
 
   function redo(): void {
@@ -492,8 +514,10 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     historyIndex++;
     doc = cloneDocument(history[historyIndex].doc);
+    viewport = normalizeViewport(doc.viewport);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
+    emit({ type: 'viewportChanged', viewport });
   }
 
   function copySelection(): void {
@@ -530,9 +554,16 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function setViewport(newViewport: { x: number; y: number; zoom: number }): void {
-    viewport = newViewport;
+    const normalizedViewport = normalizeViewportInput(newViewport);
+    if (viewportsEqual(viewport, normalizedViewport)) {
+      return;
+    }
+
+    viewport = normalizedViewport;
     doc = { ...doc, viewport };
+    pushHistory();
     emit({ type: 'viewportChanged', viewport });
+    emit({ type: 'documentChanged', doc });
   }
 
   function save(): void {
@@ -546,9 +577,11 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     }
 
     doc = cloneDocument(savedDoc);
+    viewport = normalizeViewport(doc.viewport);
     pushHistory();
     emit({ type: 'documentChanged', doc });
     emit({ type: 'dirtyChanged', isDirty: false });
+    emit({ type: 'viewportChanged', viewport });
   }
 
   function exportDocument(): string {

@@ -246,4 +246,47 @@ describe('createDesignerCore', () => {
       target: 'task-1'
     });
   });
+
+  it('normalizes viewport updates and restores them through undo/redo', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    core.save();
+    core.setViewport({ x: 12.6, y: 24.4, zoom: 1.26 });
+    expect(core.getSnapshot().viewport).toEqual({ x: 13, y: 24, zoom: 1.3 });
+    expect(core.getSnapshot().isDirty).toBe(true);
+    expect(core.getSnapshot().canUndo).toBe(true);
+
+    core.undo();
+    expect(core.getSnapshot().viewport).toEqual({ x: 0, y: 0, zoom: 1 });
+
+    core.redo();
+    expect(core.getSnapshot().viewport).toEqual({ x: 13, y: 24, zoom: 1.3 });
+  });
+
+  it('treats unchanged normalized viewport updates as a history no-op', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    const before = core.getSnapshot();
+    core.setViewport({ x: 0.2, y: 0.4, zoom: 1.04 });
+
+    expect(core.getSnapshot().viewport).toEqual({ x: 0, y: 0, zoom: 1 });
+    expect(core.getSnapshot().canUndo).toBe(before.canUndo);
+    expect(core.getSnapshot().canRedo).toBe(before.canRedo);
+  });
+
+  it('keeps viewport inside save and restore semantics', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    core.setViewport({ x: 15, y: 30, zoom: 1.2 });
+    core.save();
+    expect(core.getSnapshot().isDirty).toBe(false);
+
+    core.setViewport({ x: 60, y: 90, zoom: 1.6 });
+    expect(core.getSnapshot().viewport).toEqual({ x: 60, y: 90, zoom: 1.6 });
+    expect(core.getSnapshot().isDirty).toBe(true);
+
+    core.restore();
+    expect(core.getSnapshot().viewport).toEqual({ x: 15, y: 30, zoom: 1.2 });
+    expect(core.getSnapshot().isDirty).toBe(false);
+  });
 });
