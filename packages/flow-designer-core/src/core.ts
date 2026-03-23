@@ -23,6 +23,7 @@ export interface DesignerCore {
   deleteNode(nodeId: string): void;
 
   addEdge(source: string, target: string, data?: Record<string, unknown>): GraphEdge | null;
+  reconnectEdge(edgeId: string, source: string, target: string): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string };
   updateEdge(edgeId: string, data: Record<string, unknown>): void;
   deleteEdge(edgeId: string): void;
 
@@ -53,6 +54,10 @@ interface HistoryEntry {
   doc: GraphDocument;
 }
 
+const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playground example.';
+const EDGE_MISSING_NODE_ERROR = 'Edges must connect existing nodes.';
+const EDGE_DUPLICATE_ERROR = 'Duplicate edges are not supported in the playground example.';
+
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -79,6 +84,39 @@ function cloneDocument(doc: GraphDocument): GraphDocument {
     nodes: doc.nodes.map(cloneNode),
     edges: doc.edges.map(cloneEdge),
   };
+}
+
+function hasEdgeConnection(doc: GraphDocument, source: string, target: string, ignoreEdgeId?: string): boolean {
+  return doc.edges.some((edge) => edge.id !== ignoreEdgeId && edge.source === source && edge.target === target);
+}
+
+function validateEdgeConnection(
+  doc: GraphDocument,
+  normalizedConfig: NormalizedDesignerConfig,
+  source: string,
+  target: string,
+  ignoreEdgeId?: string
+): string | undefined {
+  const sourceNode = doc.nodes.find((node) => node.id === source);
+  const targetNode = doc.nodes.find((node) => node.id === target);
+
+  if (!sourceNode || !targetNode) {
+    return EDGE_MISSING_NODE_ERROR;
+  }
+
+  if (!normalizedConfig.rules.allowSelfLoop && source === target) {
+    return EDGE_SELF_LOOP_ERROR;
+  }
+
+  if (!normalizedConfig.rules.allowMultiEdge && hasEdgeConnection(doc, source, target, ignoreEdgeId)) {
+    return EDGE_DUPLICATE_ERROR;
+  }
+
+  if (normalizedConfig.rules.allowMultiEdge && hasEdgeConnection(doc, source, target, ignoreEdgeId)) {
+    return EDGE_DUPLICATE_ERROR;
+  }
+
+  return undefined;
 }
 
 function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfig {
@@ -305,13 +343,8 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function addEdge(source: string, target: string, data?: Record<string, unknown>): GraphEdge | null {
-    const sourceNode = doc.nodes.find((n) => n.id === source);
-    const targetNode = doc.nodes.find((n) => n.id === target);
-    if (!sourceNode || !targetNode) {
-      return null;
-    }
-
-    if (!normalizedConfig.rules.allowSelfLoop && source === target) {
+    const validationError = validateEdgeConnection(doc, normalizedConfig, source, target);
+    if (validationError) {
       return null;
     }
 
@@ -329,6 +362,52 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     emit({ type: 'documentChanged', doc });
 
     return newEdge;
+  }
+
+  function reconnectEdge(edgeId: string, source: string, target: string): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string } {
+    const edgeIndex = doc.edges.findIndex((edge) => edge.id === edgeId);
+    if (edgeIndex === -1) {
+      return { ok: false, error: `Unknown edge: ${edgeId}`, reason: 'unknown-edge' };
+    }
+
+    const currentEdge = doc.edges[edgeIndex];
+    const validationError = validateEdgeConnection(doc, normalizedConfig, source, target, edgeId);
+    if (validationError) {
+      return {
+        ok: false,
+        error: validationError,
+        reason:
+          validationError === EDGE_MISSING_NODE_ERROR
+            ? 'missing-node'
+            : validationError === EDGE_SELF_LOOP_ERROR
+            ? 'self-loop'
+            : 'duplicate-edge'
+      };
+    }
+
+    activeEdgeId = edgeId;
+    activeNodeId = null;
+
+    if (currentEdge.source === source && currentEdge.target === target) {
+      emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+      return { ok: true, edge: currentEdge, reason: 'unchanged' };
+    }
+
+    const updatedEdge = {
+      ...currentEdge,
+      source,
+      target
+    };
+    const newEdges = [...doc.edges];
+    newEdges[edgeIndex] = updatedEdge;
+    doc = { ...doc, edges: newEdges };
+
+    pushHistory();
+    emit({ type: 'edgeUpdated', edge: updatedEdge });
+    emit({ type: 'documentChanged', doc });
+    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+
+    return { ok: true, edge: updatedEdge };
   }
 
   function updateEdge(edgeId: string, data: Record<string, unknown>): void {
@@ -494,6 +573,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     duplicateNode,
     deleteNode,
     addEdge,
+    reconnectEdge,
     updateEdge,
     deleteEdge,
     selectNode,

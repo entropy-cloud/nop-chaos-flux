@@ -20,6 +20,10 @@ This file is intentionally lightweight.
 
 ### 2026-03-23
 
+- Extended `packages/flow-designer-core/src/core.ts` with shared edge validation and a first-class `reconnectEdge(...)` API, then pinned the behavior in `packages/flow-designer-core/src/core.test.ts` for duplicate-edge rejection, self-loop rejection, missing-node rejection, reconnect success, reconnect no-op, and reconnect failure cases.
+- Key decision: target core now owns reconnect and duplicate-edge semantics directly instead of leaving them as later renderer-only concerns, so the command-adapter and real xyflow migration can build on a tested shared graph contract.
+- Next step: implement viewport-history parity in target core and then start the command-adapter layer on top of the now-tested reconnect/validation surface.
+
 - Added the first pure Flow Designer core safety-net in `packages/flow-designer-core/src/core.test.ts`, covering baseline node mutation, edge history, and save/restore/export behavior before reconnect and validation migration begins.
 - Key decision: start `flow-designer2` implementation with a target-owned core test harness instead of continuing to rely on the thin provider smoke test in `packages/flow-designer-renderers/src/index.test.tsx`.
 - Next step: expand the new core suite with reconnect, shared edge validation, and viewport-history parity tests as the corresponding target core upgrades land.

@@ -68,6 +68,37 @@ function createBasicDocument(): GraphDocument {
   };
 }
 
+function createDocumentWithEdgeChain(): GraphDocument {
+  return {
+    ...createBasicDocument(),
+    nodes: [
+      ...createBasicDocument().nodes,
+      {
+        id: 'end-1',
+        type: 'end',
+        position: { x: 240, y: 120 },
+        data: { label: 'End', description: 'Exit', config: '{}' }
+      }
+    ],
+    edges: [
+      {
+        id: 'edge-1',
+        type: 'default',
+        source: 'start-1',
+        target: 'task-1',
+        data: { label: 'Flow A', condition: '', lineStyle: 'solid' }
+      },
+      {
+        id: 'edge-2',
+        type: 'default',
+        source: 'task-1',
+        target: 'end-1',
+        data: { label: 'Flow B', condition: '', lineStyle: 'solid' }
+      }
+    ]
+  };
+}
+
 describe('createDesignerCore', () => {
   it('adds, updates, and deletes nodes through shared core state', () => {
     const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
@@ -126,5 +157,93 @@ describe('createDesignerCore', () => {
     const exported = core.exportDocument();
     expect(exported).toContain('"name": "Example"');
     expect(exported).toContain('"nodes"');
+  });
+
+  it('rejects duplicate edges and disallowed self-loops through shared core rules', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+
+    const duplicateEdge = core.addEdge('start-1', 'task-1');
+    expect(duplicateEdge).toBeNull();
+    expect(core.getSnapshot().doc.edges).toHaveLength(2);
+
+    const selfLoop = core.addEdge('task-1', 'task-1');
+    expect(selfLoop).toBeNull();
+    expect(core.getSnapshot().doc.edges).toHaveLength(2);
+  });
+
+  it('rejects edges that reference missing nodes', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    const missingTarget = core.addEdge('task-1', 'missing-1');
+    expect(missingTarget).toBeNull();
+    expect(core.getSnapshot().doc.edges).toHaveLength(0);
+  });
+
+  it('supports reconnecting an edge through shared history and selection semantics', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig()) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
+
+    core.selectEdge('edge-1');
+    expect(typeof (core as any).reconnectEdge).toBe('function');
+
+    const reconnected = (core as any).reconnectEdge('edge-1', 'start-1', 'end-1');
+    expect(reconnected).toMatchObject({ ok: true });
+    expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
+      source: 'start-1',
+      target: 'end-1'
+    });
+    expect(core.getSnapshot().selection.activeEdgeId).toBe('edge-1');
+
+    core.undo();
+    expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
+      source: 'start-1',
+      target: 'task-1'
+    });
+
+    core.redo();
+    expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
+      source: 'start-1',
+      target: 'end-1'
+    });
+  });
+
+  it('treats unchanged reconnect as a no-op that preserves the selected edge', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig()) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
+
+    core.selectEdge('edge-1');
+    const before = core.getSnapshot();
+    const reconnected = (core as any).reconnectEdge('edge-1', 'start-1', 'task-1');
+
+    expect(reconnected).toMatchObject({ ok: true });
+    expect(core.getSnapshot().selection.activeEdgeId).toBe('edge-1');
+    expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
+      source: 'start-1',
+      target: 'task-1'
+    });
+    expect(core.getSnapshot().canUndo).toBe(before.canUndo);
+  });
+
+  it('rejects invalid reconnect attempts without mutating edges', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig()) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
+
+    const unknown = (core as any).reconnectEdge('missing-edge', 'task-1', 'end-1');
+    expect(unknown).toMatchObject({ ok: false });
+
+    const duplicate = (core as any).reconnectEdge('edge-2', 'start-1', 'task-1');
+    expect(duplicate).toMatchObject({ ok: false });
+
+    const missingNode = (core as any).reconnectEdge('edge-1', 'start-1', 'missing-1');
+    expect(missingNode).toMatchObject({ ok: false });
+
+    const selfLoop = (core as any).reconnectEdge('edge-1', 'start-1', 'start-1');
+    expect(selfLoop).toMatchObject({ ok: false });
+
+    expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-2')).toMatchObject({
+      source: 'task-1',
+      target: 'end-1'
+    });
+    expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
+      source: 'start-1',
+      target: 'task-1'
+    });
   });
 });
