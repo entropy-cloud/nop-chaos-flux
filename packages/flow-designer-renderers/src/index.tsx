@@ -2,28 +2,36 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   ActionNamespaceProvider,
   BaseSchema,
+  RendererEnv,
   RendererComponentProps,
   RendererDefinition,
   RendererRegistry,
   SchemaValue
 } from '@nop-chaos/amis-schema';
-import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope } from '@nop-chaos/amis-react';
+import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useRendererEnv } from '@nop-chaos/amis-react';
 import { registerRendererDefinitions } from '@nop-chaos/amis-runtime';
 import type {
   DesignerCore,
   DesignerSnapshot,
   GraphDocument,
   DesignerConfig,
-  NodeTypeConfig,
+  NodeTypeConfig
 } from '@nop-chaos/flow-designer-core';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
-
-function classNames(...values: Array<string | undefined | false>) {
-  return values.filter(Boolean).join(' ');
-}
+import {
+  createDesignerCommandAdapter,
+  type DesignerCommand,
+  type DesignerCommandAdapter,
+  type DesignerCommandResult
+} from './designer-command-adapter';
+import {
+  renderDesignerCanvasBridge,
+  type DesignerCanvasAdapterKind
+} from './canvas-bridge';
 
 export interface DesignerPageSchema extends BaseSchema {
   type: 'designer-page';
+  canvasAdapter?: DesignerCanvasAdapterKind;
 }
 
 export interface DesignerFieldSchema extends BaseSchema {
@@ -52,6 +60,8 @@ export interface DesignerEdgeRowSchema extends BaseSchema {
 
 interface DesignerContextValue {
   core: DesignerCore;
+  commandAdapter: DesignerCommandAdapter;
+  dispatch: (command: DesignerCommand) => DesignerCommandResult;
   snapshot: DesignerSnapshot;
   config: DesignerConfig;
 }
@@ -80,72 +90,171 @@ function useDesignerSnapshot(core: DesignerCore): DesignerSnapshot {
   return snapshot;
 }
 
+function notifyCommandFailure(
+  notify: RendererEnv['notify'] | undefined,
+  error: string | undefined,
+  reason?: string
+) {
+  if (!error || reason === 'unchanged') {
+    return;
+  }
+
+  notify?.('warning', error);
+}
+
+function toActionResult(result: DesignerCommandResult) {
+  return {
+    ok: result.ok,
+    data: result.exported ?? result.data,
+    error: result.error ? new Error(result.error) : undefined
+  };
+}
+
 function createDesignerActionProvider(core: DesignerCore): ActionNamespaceProvider {
+  const adapter = createDesignerCommandAdapter(core);
+
   return {
     kind: 'host',
     listMethods() {
       return [
         'addNode',
+        'addEdge',
         'clearSelection',
         'selectNode',
         'selectEdge',
         'deleteNode',
         'deleteEdge',
         'duplicateNode',
+        'moveNode',
+        'reconnectEdge',
         'updateNodeData',
         'updateEdgeData',
         'export',
         'undo',
         'redo',
         'toggleGrid',
+        'setViewport',
         'save',
         'restore'
       ];
     },
-    invoke(method, payload) {
+    invoke(method, payload, ctx) {
       switch (method) {
-        case 'addNode':
-          return { ok: true, data: core.addNode(String(payload?.nodeType ?? ''), (payload?.position as { x: number; y: number }) ?? { x: 200, y: 120 }, payload?.data as Record<string, unknown> | undefined) };
-        case 'clearSelection':
-          core.clearSelection();
-          return { ok: true };
-        case 'selectNode':
-          core.selectNode(typeof payload?.nodeId === 'string' ? payload.nodeId : null);
-          return { ok: true };
-        case 'selectEdge':
-          core.selectEdge(typeof payload?.edgeId === 'string' ? payload.edgeId : null);
-          return { ok: true };
-        case 'deleteNode':
-          core.deleteNode(String(payload?.nodeId ?? ''));
-          return { ok: true };
-        case 'deleteEdge':
-          core.deleteEdge(String(payload?.edgeId ?? ''));
-          return { ok: true };
-        case 'duplicateNode':
-          return { ok: true, data: core.duplicateNode(String(payload?.nodeId ?? '')) };
-        case 'updateNodeData':
-          core.updateNode(String(payload?.nodeId ?? ''), (payload?.data as Record<string, unknown>) ?? {});
-          return { ok: true };
-        case 'updateEdgeData':
-          core.updateEdge(String(payload?.edgeId ?? ''), (payload?.data as Record<string, unknown>) ?? {});
-          return { ok: true };
-        case 'export':
-          return { ok: true, data: core.exportDocument() };
-        case 'undo':
-          core.undo();
-          return { ok: true };
-        case 'redo':
-          core.redo();
-          return { ok: true };
-        case 'toggleGrid':
-          core.toggleGrid();
-          return { ok: true };
-        case 'save':
-          core.save();
-          return { ok: true };
-        case 'restore':
-          core.restore();
-          return { ok: true };
+        case 'addNode': {
+          const result = adapter.execute({
+            type: 'addNode',
+            nodeType: String(payload?.nodeType ?? ''),
+            position: (payload?.position as { x: number; y: number } | undefined) ?? { x: 200, y: 120 },
+            data: payload?.data as Record<string, unknown> | undefined
+          });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'addEdge': {
+          const result = adapter.execute({
+            type: 'addEdge',
+            source: String(payload?.source ?? ''),
+            target: String(payload?.target ?? ''),
+            data: payload?.data as Record<string, unknown> | undefined
+          });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'clearSelection': {
+          const result = adapter.execute({ type: 'clearSelection' });
+          return toActionResult(result);
+        }
+        case 'selectNode': {
+          const result = adapter.execute({ type: 'selectNode', nodeId: typeof payload?.nodeId === 'string' ? payload.nodeId : null });
+          return toActionResult(result);
+        }
+        case 'selectEdge': {
+          const result = adapter.execute({ type: 'selectEdge', edgeId: typeof payload?.edgeId === 'string' ? payload.edgeId : null });
+          return toActionResult(result);
+        }
+        case 'deleteNode': {
+          const result = adapter.execute({ type: 'deleteNode', nodeId: String(payload?.nodeId ?? '') });
+          return toActionResult(result);
+        }
+        case 'deleteEdge': {
+          const result = adapter.execute({ type: 'deleteEdge', edgeId: String(payload?.edgeId ?? '') });
+          return toActionResult(result);
+        }
+        case 'duplicateNode': {
+          const result = adapter.execute({ type: 'duplicateNode', nodeId: String(payload?.nodeId ?? '') });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'moveNode': {
+          const result = adapter.execute({
+            type: 'moveNode',
+            nodeId: String(payload?.nodeId ?? ''),
+            position: (payload?.position as { x: number; y: number } | undefined) ?? { x: 0, y: 0 }
+          });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'reconnectEdge': {
+          const result = adapter.execute({
+            type: 'reconnectEdge',
+            edgeId: String(payload?.edgeId ?? ''),
+            source: String(payload?.source ?? ''),
+            target: String(payload?.target ?? '')
+          });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'updateNodeData': {
+          const result = adapter.execute({
+            type: 'updateNodeData',
+            nodeId: String(payload?.nodeId ?? ''),
+            data: (payload?.data as Record<string, unknown>) ?? {}
+          });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'updateEdgeData': {
+          const result = adapter.execute({
+            type: 'updateEdgeData',
+            edgeId: String(payload?.edgeId ?? ''),
+            data: (payload?.data as Record<string, unknown>) ?? {}
+          });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'export': {
+          const result = adapter.execute({ type: 'export' });
+          return toActionResult(result);
+        }
+        case 'undo': {
+          const result = adapter.execute({ type: 'undo' });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'redo': {
+          const result = adapter.execute({ type: 'redo' });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'toggleGrid': {
+          const result = adapter.execute({ type: 'toggleGrid' });
+          return toActionResult(result);
+        }
+        case 'setViewport': {
+          const result = adapter.execute({
+            type: 'setViewport',
+            viewport: (payload?.viewport as { x: number; y: number; zoom: number } | undefined) ?? { x: 0, y: 0, zoom: 1 }
+          });
+          return toActionResult(result);
+        }
+        case 'save': {
+          const result = adapter.execute({ type: 'save' });
+          return toActionResult(result);
+        }
+        case 'restore': {
+          const result = adapter.execute({ type: 'restore' });
+          return toActionResult(result);
+        }
         default:
           return { ok: false, error: new Error(`Unknown designer method: ${method}`) };
       }
@@ -154,11 +263,20 @@ function createDesignerActionProvider(core: DesignerCore): ActionNamespaceProvid
 }
 
 export { createDesignerActionProvider };
+export {
+  DesignerCardCanvasBridge,
+  DesignerXyflowPreviewBridge,
+  DesignerXyflowCanvasBridge,
+  renderDesignerCanvasBridge,
+  type DesignerCanvasAdapterKind,
+  type DesignerCanvasBridgeProps
+} from './canvas-bridge';
 
 function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {
   const schemaProps = props.props as Record<string, SchemaValue>;
   const document = schemaProps.document as unknown as GraphDocument;
   const config = schemaProps.config as unknown as DesignerConfig;
+  const canvasAdapter = (schemaProps.canvasAdapter as DesignerCanvasAdapterKind | undefined) ?? 'xyflow';
 
   const core = useMemo(() => {
     if (!document || !config) return null;
@@ -166,10 +284,20 @@ function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>)
   }, [document, config]);
 
   const snapshot = useDesignerSnapshot(core!);
+  const env = useRendererEnv();
+  const commandAdapter = useMemo(() => (core ? createDesignerCommandAdapter(core) : null), [core]);
+  const dispatch = useCallback(
+    (command: DesignerCommand) => {
+      const result = commandAdapter!.execute(command);
+      notifyCommandFailure(env.notify, result.error, result.reason);
+      return result;
+    },
+    [commandAdapter, env]
+  );
 
   const ctxValue = useMemo<DesignerContextValue>(
-    () => ({ core: core!, snapshot, config }),
-    [core, snapshot, config]
+    () => ({ core: core!, commandAdapter: commandAdapter!, dispatch, snapshot, config }),
+    [commandAdapter, core, dispatch, snapshot, config]
   );
   const actionScope = useCurrentActionScope();
   const designerProvider = useMemo(() => (core ? createDesignerActionProvider(core) : undefined), [core]);
@@ -200,7 +328,7 @@ function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>)
             <DesignerPaletteContent />
           </div>
           <div className="fd-page__canvas">
-            <DesignerCanvasContent />
+            <DesignerCanvasContent canvasAdapter={canvasAdapter} />
           </div>
           <div className="fd-page__inspector">
             {hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector />}
@@ -212,7 +340,7 @@ function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>)
 }
 
 function DesignerPaletteContent() {
-  const { config, core } = useDesignerContext();
+  const { config, dispatch } = useDesignerContext();
   const [search, setSearch] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['basic']));
 
@@ -234,9 +362,9 @@ function DesignerPaletteContent() {
   const handleAddNode = useCallback(
     (nodeType: NodeTypeConfig) => {
       const position = { x: 180 + Math.random() * 200, y: 120 + Math.random() * 200 };
-      core.addNode(nodeType.id, position);
+      dispatch({ type: 'addNode', nodeType: nodeType.id, position });
     },
-    [core]
+    [dispatch]
   );
 
   const filteredGroups = paletteGroups.map((group) => ({
@@ -299,303 +427,139 @@ function DesignerPaletteContent() {
   );
 }
 
-function DesignerCanvasContent() {
-  const { core, snapshot } = useDesignerContext();
-  const { doc, selection } = snapshot;
+function DesignerCanvasContent(props: { canvasAdapter: DesignerCanvasAdapterKind }) {
+  const { dispatch, snapshot } = useDesignerContext();
+  const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
+  const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
 
   const handlePaneClick = useCallback(() => {
-    core.clearSelection();
-  }, [core]);
+    setPendingConnectionSourceId(null);
+    setReconnectingEdgeId(null);
+    dispatch({ type: 'clearSelection' });
+  }, [dispatch]);
 
   const handleNodeClick = useCallback(
     (nodeId: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      core.selectNode(nodeId);
+      dispatch({ type: 'selectNode', nodeId });
     },
-    [core]
+    [dispatch]
   );
 
   const handleEdgeClick = useCallback(
     (edgeId: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      core.selectEdge(edgeId);
+      dispatch({ type: 'selectEdge', edgeId });
     },
-    [core]
+    [dispatch]
   );
 
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
-      core.deleteNode(nodeId);
+      dispatch({ type: 'deleteNode', nodeId });
     },
-    [core]
+    [dispatch]
   );
 
   const handleDuplicateNode = useCallback(
     (nodeId: string) => {
-      core.duplicateNode(nodeId);
+      dispatch({ type: 'duplicateNode', nodeId });
     },
-    [core]
+    [dispatch]
   );
 
   const handleDeleteEdge = useCallback(
     (edgeId: string) => {
-      core.deleteEdge(edgeId);
+      dispatch({ type: 'deleteEdge', edgeId });
     },
-    [core]
+    [dispatch]
   );
 
-  return (
-    <div className="fd-canvas" onClick={handlePaneClick}>
-      <div className="fd-canvas__nodes">
-        {doc.nodes.map((node) => (
-          <div
-            key={node.id}
-            className={classNames(
-              'fd-node',
-              selection.activeNodeId === node.id && 'fd-node--selected',
-              node.type && `fd-node--${node.type}`
-            )}
-            style={{
-              position: 'absolute',
-              left: node.position.x,
-              top: node.position.y,
-              minWidth: 160,
-              padding: '12px 16px',
-              background: '#fff',
-              borderRadius: 8,
-              border: selection.activeNodeId === node.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              cursor: 'pointer',
-              userSelect: 'none'
-            }}
-            onClick={(e) => handleNodeClick(node.id, e)}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>
-                {getNodeIcon(node.type)}
-              </span>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>
-                  {String(node.data.label ?? node.type)}
-                </div>
-                <div style={{ fontSize: 12, color: '#64748b' }}>
-                  {node.type}
-                </div>
-              </div>
-            </div>
-            {selection.activeNodeId === node.id && (
-              <div
-                className="fd-node__actions"
-                style={{
-                  position: 'absolute',
-                  top: -12,
-                  right: -12,
-                  display: 'flex',
-                  gap: 4
-                }}
-              >
-                <button
-                  className="fd-node__action"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDuplicateNode(node.id);
-                  }}
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    background: '#3b82f6',
-                    color: '#fff',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12
-                  }}
-                  title="Duplicate"
-                >
-                  ⧉
-                </button>
-                <button
-                  className="fd-node__action fd-node__action--delete"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteNode(node.id);
-                  }}
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    background: '#ef4444',
-                    color: '#fff',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12
-                  }}
-                  title="Delete"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-            {getNodePorts(node.type).map((port) => (
-              <div
-                key={port.id}
-                className={`fd-port fd-port--${port.direction}`}
-                style={{
-                  position: 'absolute',
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  background: port.direction === 'input' ? '#3b82f6' : '#10b981',
-                  border: '2px solid #fff',
-                  ...(port.position === 'left' ? { left: -5, top: '50%', transform: 'translateY(-50%)' } : {}),
-                  ...(port.position === 'right' ? { right: -5, top: '50%', transform: 'translateY(-50%)' } : {}),
-                  ...(port.position === 'top' ? { top: -5, left: '50%', transform: 'translateX(-50%)' } : {}),
-                  ...(port.position === 'bottom' ? { bottom: -5, left: '50%', transform: 'translateX(-50%)' } : {})
-                }}
-                title={port.label ?? port.id}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-      <svg
-        className="fd-canvas__edges"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none'
-        }}
-      >
-        {doc.edges.map((edge) => {
-          const sourceNode = doc.nodes.find((n) => n.id === edge.source);
-          const targetNode = doc.nodes.find((n) => n.id === edge.target);
-          if (!sourceNode || !targetNode) return null;
+  return renderDesignerCanvasBridge(props.canvasAdapter, {
+    snapshot,
+    onPaneClick: handlePaneClick,
+    pendingConnectionSourceId,
+    reconnectingEdgeId,
+    onNodeSelect: handleNodeClick,
+    onEdgeSelect: handleEdgeClick,
+    onStartConnection: (nodeId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      setReconnectingEdgeId(null);
+      setPendingConnectionSourceId(nodeId);
+    },
+    onCancelConnection: (nodeId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      if (pendingConnectionSourceId === nodeId) {
+        setPendingConnectionSourceId(null);
+      }
+    },
+    onCompleteConnection: (nodeId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      if (!pendingConnectionSourceId || pendingConnectionSourceId === nodeId) {
+        return;
+      }
 
-          const sourceX = sourceNode.position.x + 160;
-          const sourceY = sourceNode.position.y + 30;
-          const targetX = targetNode.position.x;
-          const targetY = targetNode.position.y + 30;
+      const result = dispatch({ type: 'addEdge', source: pendingConnectionSourceId, target: nodeId });
+      if (result.ok) {
+        setPendingConnectionSourceId(null);
+      }
+    },
+    onStartReconnect: (edgeId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      setPendingConnectionSourceId(null);
+      setReconnectingEdgeId(edgeId);
+    },
+    onCancelReconnect: (edgeId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      if (reconnectingEdgeId === edgeId) {
+        setReconnectingEdgeId(null);
+      }
+    },
+    onCompleteReconnect: (edgeId: string, nodeId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      const edge = snapshot.doc.edges.find((item) => item.id === edgeId);
+      if (!edge || edge.target === nodeId) {
+        return;
+      }
 
-          const midX = (sourceX + targetX) / 2;
-          const edgeLabel = edge.data.label != null ? String(edge.data.label) : null;
-
-          return (
-            <g
-              key={edge.id}
-              onClick={(e) => handleEdgeClick(edge.id, e as unknown as React.MouseEvent)}
-              style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
-            >
-              <path
-                d={`M ${sourceX} ${sourceY} C ${midX} ${sourceY}, ${midX} ${targetY}, ${targetX} ${targetY}`}
-                fill="none"
-                stroke={selection.activeEdgeId === edge.id ? '#3b82f6' : '#94a3b8'}
-                strokeWidth={selection.activeEdgeId === edge.id ? 3 : 2}
-                markerEnd="url(#arrowhead)"
-              />
-              {edgeLabel && (
-                <text
-                  x={midX}
-                  y={(sourceY + targetY) / 2 - 10}
-                  textAnchor="middle"
-                  fill="#64748b"
-                  fontSize={12}
-                  style={{ pointerEvents: 'auto', cursor: 'pointer' }}
-                >
-                  {edgeLabel}
-                </text>
-              )}
-              {selection.activeEdgeId === edge.id && (
-                <g
-                  transform={`translate(${midX + 20}, ${(sourceY + targetY) / 2 + 5})`}
-                  style={{ pointerEvents: 'auto', cursor: 'pointer' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteEdge(edge.id);
-                  }}
-                >
-                  <circle r={10} fill="#ef4444" />
-                  <text textAnchor="middle" dy={4} fill="#fff" fontSize={14}>
-                    ×
-                  </text>
-                </g>
-              )}
-            </g>
-          );
-        })}
-        <defs>
-          <marker
-            id="arrowhead"
-            markerWidth={10}
-            markerHeight={7}
-            refX={9}
-            refY={3.5}
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
-          </marker>
-        </defs>
-      </svg>
-      <div className="fd-canvas__info" style={{
-        position: 'absolute',
-        bottom: 16,
-        left: 16,
-        background: 'rgba(255,255,255,0.9)',
-        padding: '8px 12px',
-        borderRadius: 6,
-        fontSize: 12,
-        color: '#64748b'
-      }}>
-        Nodes: {doc.nodes.length} | Edges: {doc.edges.length}
-      </div>
-    </div>
-  );
-}
-
-function getNodeIcon(type: string): string {
-  const icons: Record<string, string> = {
-    start: '▶',
-    end: '■',
-    task: '⚙',
-    condition: '◇',
-    parallel: '⫼',
-    loop: '↻'
-  };
-  return icons[type] ?? '○';
-}
-
-function getNodePorts(type: string): Array<{ id: string; direction: 'input' | 'output'; position: string; label?: string }> {
-  switch (type) {
-    case 'start':
-      return [{ id: 'out', direction: 'output', position: 'right' }];
-    case 'end':
-      return [{ id: 'in', direction: 'input', position: 'left' }];
-    case 'task':
-    case 'condition':
-    case 'parallel':
-    case 'loop':
-      return [
-        { id: 'in', direction: 'input', position: 'left' },
-        { id: 'out', direction: 'output', position: 'right' }
-      ];
-    default:
-      return [
-        { id: 'in', direction: 'input', position: 'left' },
-        { id: 'out', direction: 'output', position: 'right' }
-      ];
-  }
+      const result = dispatch({ type: 'reconnectEdge', edgeId, source: edge.source, target: nodeId });
+      if (result.ok) {
+        setReconnectingEdgeId(null);
+      }
+    },
+    onDuplicateNode: (nodeId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      handleDuplicateNode(nodeId);
+    },
+    onDeleteNode: (nodeId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      handleDeleteNode(nodeId);
+    },
+    onDeleteEdge: (edgeId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      handleDeleteEdge(edgeId);
+    },
+    onMoveNode: (nodeId: string, event: React.MouseEvent, position?: { x: number; y: number }) => {
+      event.stopPropagation();
+      const node = snapshot.doc.nodes.find((item) => item.id === nodeId);
+      if (!node) {
+        return;
+      }
+      dispatch({
+        type: 'moveNode',
+        nodeId,
+        position: position ?? { x: node.position.x + 24, y: node.position.y + 24 }
+      });
+    },
+    onViewportChange: (viewport: { x: number; y: number; zoom: number }, event: React.MouseEvent) => {
+      event.stopPropagation();
+      dispatch({ type: 'setViewport', viewport });
+    }
+  });
 }
 
 function DefaultInspector() {
-  const { core, snapshot } = useDesignerContext();
+  const { dispatch, snapshot } = useDesignerContext();
   const { activeNode, activeEdge } = snapshot;
 
   if (activeNode) {
@@ -612,7 +576,7 @@ function DefaultInspector() {
             type="text"
             className="fd-inspector__input"
             value={String(activeNode.data.label ?? '')}
-            onChange={(e) => core.updateNode(activeNode.id, { label: e.target.value })}
+            onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { label: e.target.value } })}
           />
         </div>
         {Object.entries(activeNode.data).map(([key, value]) => {
@@ -624,7 +588,7 @@ function DefaultInspector() {
                 type="text"
                 className="fd-inspector__input"
                 value={String(value ?? '')}
-                onChange={(e) => core.updateNode(activeNode.id, { [key]: e.target.value })}
+                onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { [key]: e.target.value } })}
               />
             </div>
           );
@@ -632,7 +596,7 @@ function DefaultInspector() {
         <div className="fd-inspector__actions">
           <button
             className="fd-inspector__button fd-inspector__button--danger"
-            onClick={() => core.deleteNode(activeNode.id)}
+            onClick={() => dispatch({ type: 'deleteNode', nodeId: activeNode.id })}
           >
             Delete Node
           </button>
@@ -651,7 +615,7 @@ function DefaultInspector() {
             type="text"
             className="fd-inspector__input"
             value={String(activeEdge.data.label ?? '')}
-            onChange={(e) => core.updateEdge(activeEdge.id, { label: e.target.value })}
+            onChange={(e) => dispatch({ type: 'updateEdgeData', edgeId: activeEdge.id, data: { label: e.target.value } })}
           />
         </div>
         {Object.entries(activeEdge.data).map(([key, value]) => {
@@ -663,7 +627,7 @@ function DefaultInspector() {
                 type="text"
                 className="fd-inspector__input"
                 value={String(value ?? '')}
-                onChange={(e) => core.updateEdge(activeEdge.id, { [key]: e.target.value })}
+                onChange={(e) => dispatch({ type: 'updateEdgeData', edgeId: activeEdge.id, data: { [key]: e.target.value } })}
               />
             </div>
           );
@@ -671,7 +635,7 @@ function DefaultInspector() {
         <div className="fd-inspector__actions">
           <button
             className="fd-inspector__button fd-inspector__button--danger"
-            onClick={() => core.deleteEdge(activeEdge.id)}
+            onClick={() => dispatch({ type: 'deleteEdge', edgeId: activeEdge.id })}
           >
             Delete Edge
           </button>
@@ -694,7 +658,7 @@ function DesignerFieldRenderer(props: RendererComponentProps<DesignerFieldSchema
   const fieldType = schemaProps.fieldType as string | undefined;
   const options = schemaProps.options as Array<{ label: string; value: string }> | undefined;
   const ctx = useDesignerContext();
-  const { core, snapshot } = ctx;
+  const { dispatch, snapshot } = ctx;
   const { activeNode, activeEdge } = snapshot;
 
   const value = activeNode?.data[name] ?? activeEdge?.data[name] ?? '';
@@ -702,12 +666,12 @@ function DesignerFieldRenderer(props: RendererComponentProps<DesignerFieldSchema
   const handleChange = useCallback(
     (newValue: string) => {
       if (activeNode) {
-        core.updateNode(activeNode.id, { [name]: newValue });
+        dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { [name]: newValue } });
       } else if (activeEdge) {
-        core.updateEdge(activeEdge.id, { [name]: newValue });
+        dispatch({ type: 'updateEdgeData', edgeId: activeEdge.id, data: { [name]: newValue } });
       }
     },
-    [core, activeNode, activeEdge, name]
+    [dispatch, activeNode, activeEdge, name]
   );
 
   return (
@@ -751,7 +715,7 @@ function DesignerFieldRenderer(props: RendererComponentProps<DesignerFieldSchema
 }
 
 function DesignerCanvasRenderer() {
-  return <DesignerCanvasContent />;
+  return <DesignerCanvasContent canvasAdapter="xyflow" />;
 }
 
 function DesignerPaletteRenderer() {
