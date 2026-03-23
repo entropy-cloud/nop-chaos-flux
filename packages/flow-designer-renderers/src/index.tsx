@@ -515,14 +515,14 @@ function DesignerCanvasContent(props: { canvasAdapter: DesignerCanvasAdapterKind
         setReconnectingEdgeId(null);
       }
     },
-    onCompleteReconnect: (edgeId: string, nodeId: string, event: React.MouseEvent) => {
+    onCompleteReconnect: (edgeId: string, sourceId: string, nodeId: string, event: React.MouseEvent) => {
       event.stopPropagation();
       const edge = snapshot.doc.edges.find((item) => item.id === edgeId);
       if (!edge || edge.target === nodeId) {
         return;
       }
 
-      const result = dispatch({ type: 'reconnectEdge', edgeId, source: edge.source, target: nodeId });
+      const result = dispatch({ type: 'reconnectEdge', edgeId, source: sourceId, target: nodeId });
       if (result.ok) {
         setReconnectingEdgeId(null);
       }

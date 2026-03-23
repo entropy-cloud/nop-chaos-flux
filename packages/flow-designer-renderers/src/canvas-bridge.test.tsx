@@ -367,7 +367,7 @@ describe('DesignerXyflowCanvasBridge', () => {
 
     latestReactFlowProps.onReconnect({ id: 'edge-1' }, { source: 'node-1', target: 'node-2' });
     expect(onStartReconnect).toHaveBeenCalledWith('edge-1', expect.any(Object));
-    expect(onCompleteReconnect).toHaveBeenCalledWith('edge-1', 'node-2', expect.any(Object));
+    expect(onCompleteReconnect).toHaveBeenCalledWith('edge-1', 'node-1', 'node-2', expect.any(Object));
 
     latestReactFlowProps.onSelectionChange({ nodes: [{ id: 'node-2' }], edges: [] });
     expect(onNodeSelect).toHaveBeenCalledWith('node-2', expect.any(Object));

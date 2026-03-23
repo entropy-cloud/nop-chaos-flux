@@ -64,7 +64,7 @@ export interface DesignerCanvasBridgeProps {
   onCompleteConnection(nodeId: string, event: React.MouseEvent): void;
   onStartReconnect(edgeId: string, event: React.MouseEvent): void;
   onCancelReconnect(edgeId: string, event: React.MouseEvent): void;
-  onCompleteReconnect(edgeId: string, nodeId: string, event: React.MouseEvent): void;
+  onCompleteReconnect(edgeId: string, sourceId: string, targetId: string, event: React.MouseEvent): void;
   onDuplicateNode(nodeId: string, event: React.MouseEvent): void;
   onDeleteNode(nodeId: string, event: React.MouseEvent): void;
   onDeleteEdge(edgeId: string, event: React.MouseEvent): void;
@@ -381,9 +381,12 @@ export function DesignerCardCanvasBridge(props: DesignerCanvasBridgeProps) {
                     Cancel reconnect
                   </button>
                 ) : (
-                  <button type="button" onClick={(event) => props.onCompleteReconnect(reconnectingEdge.id, node.id, event)}>
-                    Reconnect here
-                  </button>
+                    <button
+                      type="button"
+                      onClick={(event) => props.onCompleteReconnect(reconnectingEdge.id, reconnectingEdge.source, node.id, event)}
+                    >
+                      Reconnect here
+                    </button>
                 )
               ) : null}
             </div>
@@ -569,7 +572,7 @@ export function DesignerXyflowPreviewBridge(props: DesignerCanvasBridgeProps) {
                   <button
                     key={node.id}
                     type="button"
-                    onClick={(event) => props.onCompleteReconnect(reconnectingEdge.id, node.id, event)}
+                    onClick={(event) => props.onCompleteReconnect(reconnectingEdge.id, reconnectingEdge.source, node.id, event)}
                   >
                     Reconnect to {String(node.data.label ?? node.id)}
                   </button>
@@ -694,7 +697,7 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
       }
 
       props.onStartReconnect(oldEdge.id, {} as React.MouseEvent);
-      props.onCompleteReconnect(oldEdge.id, newConnection.target, {} as React.MouseEvent);
+      props.onCompleteReconnect(oldEdge.id, newConnection.source, newConnection.target, {} as React.MouseEvent);
     },
     [props]
   );
