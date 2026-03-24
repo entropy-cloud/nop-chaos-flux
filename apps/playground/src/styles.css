@@ -851,6 +851,14 @@ body {
 
 .flow-designer-example__canvas {
   flex: 1;
+  position: relative;
+  min-height: 400px;
+}
+
+.flow-designer-example__canvas .fd-xyflow-live,
+.flow-designer-example__canvas .fd-xyflow-live__surface {
+  width: 100%;
+  height: 100%;
 }
 
 .flow-designer-example__canvas-surface {

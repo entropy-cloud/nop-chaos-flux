@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
 import { FlowDesignerToolbar } from './FlowDesignerToolbar';
 import { FlowDesignerPalette } from './FlowDesignerPalette';
 import { FlowDesignerInspector } from './FlowDesignerInspector';
@@ -22,6 +22,10 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
     configurable: true
   });
 }
+
+afterEach(() => {
+  cleanup();
+});
 
 function createTestConfig(): DesignerConfig {
   return {
@@ -68,106 +72,199 @@ function createEmptySnapshot(): DesignerSnapshot {
 }
 
 describe('Flow Designer Parity Components', () => {
-  it('renders toolbar with all action buttons', () => {
-    render(
-      <FlowDesignerToolbar
-        docName="Test Flow"
-        canUndo={false}
-        canRedo={false}
-        activeTab="designer"
-        onUndo={() => {}}
-        onRedo={() => {}}
-        onClearSelection={() => {}}
-        onSave={() => {}}
-        onRestore={() => {}}
-        onExport={() => {}}
-        onTabChange={() => {}}
-      />
-    );
+  describe('Toolbar', () => {
+    it('renders toolbar with all action buttons', () => {
+      render(
+        <FlowDesignerToolbar
+          docName="Test Flow"
+          canUndo={false}
+          canRedo={false}
+          activeTab="designer"
+          onUndo={() => {}}
+          onRedo={() => {}}
+          onClearSelection={() => {}}
+          onSave={() => {}}
+          onRestore={() => {}}
+          onExport={() => {}}
+          onTabChange={() => {}}
+        />
+      );
 
-    expect(screen.getByText('Test Flow')).toBeTruthy();
-    expect(screen.getByText('↶ Undo')).toBeTruthy();
-    expect(screen.getByText('↷ Redo')).toBeTruthy();
-    expect(screen.getByText('Save')).toBeTruthy();
-    expect(screen.getByText('Restore')).toBeTruthy();
-    expect(screen.getByText('Export JSON')).toBeTruthy();
-    expect(screen.getByText('Designer')).toBeTruthy();
-    expect(screen.getByText('JSON')).toBeTruthy();
+      expect(screen.getByText('Test Flow')).toBeTruthy();
+      expect(screen.getByText('↶ Undo')).toBeTruthy();
+      expect(screen.getByText('↷ Redo')).toBeTruthy();
+      expect(screen.getByText('Save')).toBeTruthy();
+      expect(screen.getByText('Restore')).toBeTruthy();
+      expect(screen.getByText('Export JSON')).toBeTruthy();
+      expect(screen.getByText('Designer')).toBeTruthy();
+      expect(screen.getByText('JSON')).toBeTruthy();
+    });
   });
 
-  it('renders palette with draggable node items', () => {
-    render(
-      <FlowDesignerPalette
-        config={createTestConfig()}
-        search=""
-        expandedGroups={new Set(['basic'])}
-        onSearchChange={() => {}}
-        onToggleGroup={() => {}}
-        onAddNode={() => {}}
-      />
-    );
+  describe('Palette', () => {
+    it('renders palette with draggable node items', () => {
+      render(
+        <FlowDesignerPalette
+          config={createTestConfig()}
+          search=""
+          expandedGroups={new Set(['basic'])}
+          onSearchChange={() => {}}
+          onToggleGroup={() => {}}
+          onAddNode={() => {}}
+        />
+      );
 
-    expect(screen.getByText('Node Palette')).toBeTruthy();
-    expect(screen.getByText('Basic')).toBeTruthy();
-    expect(screen.getByText('Start')).toBeTruthy();
-    expect(screen.getByText('End')).toBeTruthy();
-    expect(screen.getByText('Task')).toBeTruthy();
+      expect(screen.getByText('Node Palette')).toBeTruthy();
+      expect(screen.getByText('Basic')).toBeTruthy();
+      expect(screen.getAllByText('Start').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('End').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Task').length).toBeGreaterThan(0);
+    });
   });
 
-  it('renders inspector with empty state when no selection', () => {
-    render(
-      <FlowDesignerInspector
-        snapshot={createEmptySnapshot()}
-        onUpdateNode={() => {}}
-        onDeleteNode={() => {}}
-        onUpdateEdge={() => {}}
-        onDeleteEdge={() => {}}
-      />
-    );
+  describe('Inspector', () => {
+    it('renders inspector with empty state when no selection', () => {
+      render(
+        <FlowDesignerInspector
+          snapshot={createEmptySnapshot()}
+          onUpdateNode={() => {}}
+          onDeleteNode={() => {}}
+          onUpdateEdge={() => {}}
+          onDeleteEdge={() => {}}
+        />
+      );
 
-    expect(screen.getByText('Select a node or edge to edit its properties')).toBeTruthy();
-  });
+      expect(screen.getByText('Select a node or edge to edit its properties')).toBeTruthy();
+    });
 
-  it('renders inspector with node editor when node is selected', () => {
-    const snapshot: DesignerSnapshot = {
-      doc: {
-        id: 'test-doc',
-        kind: 'flow',
-        name: 'Test Flow',
-        version: '1.0.0',
-        nodes: [
-          { id: 'node-1', type: 'task', position: { x: 100, y: 100 }, data: { label: 'My Task', description: 'A task node' } }
-        ],
-        edges: [],
-        viewport: { x: 0, y: 0, zoom: 1 }
-      },
-      selection: {
-        selectedNodeIds: ['node-1'],
-        selectedEdgeIds: [],
-        activeNodeId: 'node-1',
-        activeEdgeId: null
-      },
-      viewport: { x: 0, y: 0, zoom: 1 },
-      activeNode: { id: 'node-1', type: 'task', position: { x: 100, y: 100 }, data: { label: 'My Task', description: 'A task node' } },
-      activeEdge: null,
-      canUndo: true,
-      canRedo: false,
-      isDirty: false,
-      gridEnabled: true
-    };
+    it('renders inspector with node editor when node is selected', () => {
+      const snapshot: DesignerSnapshot = {
+        doc: {
+          id: 'test-doc',
+          kind: 'flow',
+          name: 'Test Flow',
+          version: '1.0.0',
+          nodes: [
+            { id: 'node-1', type: 'task', position: { x: 100, y: 100 }, data: { label: 'My Task', description: 'A task node' } }
+          ],
+          edges: [],
+          viewport: { x: 0, y: 0, zoom: 1 }
+        },
+        selection: {
+          selectedNodeIds: ['node-1'],
+          selectedEdgeIds: [],
+          activeNodeId: 'node-1',
+          activeEdgeId: null
+        },
+        viewport: { x: 0, y: 0, zoom: 1 },
+        activeNode: { id: 'node-1', type: 'task', position: { x: 100, y: 100 }, data: { label: 'My Task', description: 'A task node' } },
+        activeEdge: null,
+        canUndo: true,
+        canRedo: false,
+        isDirty: false,
+        gridEnabled: true
+      };
 
-    render(
-      <FlowDesignerInspector
-        snapshot={snapshot}
-        onUpdateNode={() => {}}
-        onDeleteNode={() => {}}
-        onUpdateEdge={() => {}}
-        onDeleteEdge={() => {}}
-      />
-    );
+      render(
+        <FlowDesignerInspector
+          snapshot={snapshot}
+          onUpdateNode={() => {}}
+          onDeleteNode={() => {}}
+          onUpdateEdge={() => {}}
+          onDeleteEdge={() => {}}
+        />
+      );
 
-    expect(screen.getByText('Node Properties')).toBeTruthy();
-    expect(screen.getByDisplayValue('My Task')).toBeTruthy();
-    expect(screen.getByText('Delete Node')).toBeTruthy();
+      expect(screen.getByText('Node Properties')).toBeTruthy();
+      expect(screen.getByDisplayValue('My Task')).toBeTruthy();
+      expect(screen.getByText('Delete Node')).toBeTruthy();
+    });
+
+    it('renders type-specific fields for condition nodes', () => {
+      const snapshot: DesignerSnapshot = {
+        doc: {
+          id: 'test-doc',
+          kind: 'flow',
+          name: 'Test Flow',
+          version: '1.0.0',
+          nodes: [
+            { id: 'node-1', type: 'condition', position: { x: 100, y: 100 }, data: { label: 'Check Status', condition: 'status === active' } }
+          ],
+          edges: [],
+          viewport: { x: 0, y: 0, zoom: 1 }
+        },
+        selection: {
+          selectedNodeIds: ['node-1'],
+          selectedEdgeIds: [],
+          activeNodeId: 'node-1',
+          activeEdgeId: null
+        },
+        viewport: { x: 0, y: 0, zoom: 1 },
+        activeNode: { id: 'node-1', type: 'condition', position: { x: 100, y: 100 }, data: { label: 'Check Status', condition: 'status === active' } },
+        activeEdge: null,
+        canUndo: true,
+        canRedo: false,
+        isDirty: false,
+        gridEnabled: true
+      };
+
+      render(
+        <FlowDesignerInspector
+          snapshot={snapshot}
+          onUpdateNode={() => {}}
+          onDeleteNode={() => {}}
+          onUpdateEdge={() => {}}
+          onDeleteEdge={() => {}}
+        />
+      );
+
+      expect(screen.getByText('Condition Expression')).toBeTruthy();
+      expect(screen.getAllByDisplayValue('status === active').length).toBeGreaterThan(0);
+    });
+
+    it('renders edge editor with condition and line style fields', () => {
+      const snapshot: DesignerSnapshot = {
+        doc: {
+          id: 'test-doc',
+          kind: 'flow',
+          name: 'Test Flow',
+          version: '1.0.0',
+          nodes: [],
+          edges: [
+            { id: 'edge-1', type: 'default', source: 'node-1', target: 'node-2', data: { label: 'My Edge', condition: 'status === active' } }
+          ],
+          viewport: { x: 0, y: 0, zoom: 1 }
+        },
+        selection: {
+          selectedNodeIds: [],
+          selectedEdgeIds: ['edge-1'],
+          activeNodeId: null,
+          activeEdgeId: 'edge-1'
+        },
+        viewport: { x: 0, y: 0, zoom: 1 },
+        activeNode: null,
+        activeEdge: { id: 'edge-1', type: 'default', source: 'node-1', target: 'node-2', data: { label: 'My Edge', condition: 'status === active' } },
+        canUndo: false,
+        canRedo: false,
+        isDirty: false,
+        gridEnabled: true
+      };
+
+      render(
+        <FlowDesignerInspector
+          snapshot={snapshot}
+          onUpdateNode={() => {}}
+          onDeleteNode={() => {}}
+          onUpdateEdge={() => {}}
+          onDeleteEdge={() => {}}
+        />
+      );
+
+      expect(screen.getByText('Edge Properties')).toBeTruthy();
+      expect(screen.getByDisplayValue('My Edge')).toBeTruthy();
+      expect(screen.getByText('Condition')).toBeTruthy();
+      expect(screen.getByText('Line Style')).toBeTruthy();
+      expect(screen.getByText('Delete Edge')).toBeTruthy();
+    });
   });
 });
