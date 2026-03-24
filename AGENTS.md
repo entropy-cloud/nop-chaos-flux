@@ -147,6 +147,65 @@ packages/<name>/
 
 ---
 
+## File Refactoring Methodology
+
+When refactoring large files into smaller modules, follow this safe approach:
+
+### Step 1: Analyze First
+- Read the entire file to understand its structure and responsibilities
+- Identify logical boundaries (UI components, utilities, state management)
+- Plan the split before writing any code
+
+### Step 2: Create New Files First
+- Create new files in a subdirectory (e.g., `src/flow-designer/`)
+- Each new file should have a single, clear responsibility
+- Export all public APIs through an `index.ts` barrel file
+
+### Step 3: Do NOT Modify the Original File
+- Keep the original file intact during the split
+- This allows easy rollback if something goes wrong
+
+### Step 4: Verify New Files
+- Run `typecheck` and `test` on new files
+- Ensure no import errors or missing dependencies
+
+### Step 5: Replace Original File
+- Rename original to `.bak` (e.g., `Component.tsx` → `Component.tsx.bak`)
+- Create new orchestrator file that imports and uses the split components
+- Keep the orchestrator thin - only state management and composition
+
+### Step 6: Final Verification
+- Run full verification: `pnpm typecheck && pnpm build && pnpm lint && pnpm test`
+- Compare behavior with `.bak` file if needed
+- Delete `.bak` file after confidence is established
+
+### Example Structure
+```
+# Before
+src/
+└── FlowDesignerExample.tsx (572 lines)
+
+# After
+src/
+├── FlowDesignerExample.tsx (220 lines - orchestrator)
+├── FlowDesignerExample.tsx.bak (backup)
+└── flow-designer/
+    ├── index.ts
+    ├── FlowDesignerToolbar.tsx
+    ├── FlowDesignerPalette.tsx
+    ├── FlowDesignerCanvas.tsx
+    ├── FlowDesignerInspector.tsx
+    └── FlowDesignerToast.tsx
+```
+
+### Why This Approach Works
+- **Safety**: Original file always available for rollback
+- **Incremental**: Can verify each piece independently
+- **Reference**: `.bak` file serves as documentation during rewrite
+- **Testability**: New components can be tested in isolation
+
+---
+
 ## Adding New Packages
 
 1. Create `packages/<name>/` with `package.json`:
