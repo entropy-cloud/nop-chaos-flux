@@ -167,6 +167,105 @@ export function FlowDesignerExample({ document: initialDoc, config }: FlowDesign
     setHoveredNodeId(null);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if in input/textarea
+      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') {
+        return;
+      }
+
+      const isMod = e.metaKey || e.ctrlKey;
+
+      // Ctrl+Z: Undo
+      if (isMod && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (core.canUndo()) core.undo();
+        return;
+      }
+
+      // Ctrl+Y or Ctrl+Shift+Z: Redo
+      if ((isMod && e.key === 'y') || (isMod && e.key === 'z' && e.shiftKey)) {
+        e.preventDefault();
+        if (core.canRedo()) core.redo();
+        return;
+      }
+
+      // Ctrl+S: Save
+      if (isMod && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+        return;
+      }
+
+      // Ctrl+C: Copy
+      if (isMod && e.key === 'c') {
+        e.preventDefault();
+        const selectedNodeId = snapshot.selection.activeNodeId;
+        if (selectedNodeId) {
+          core.copySelection();
+          showToast('Node copied');
+        }
+        return;
+      }
+
+      // Ctrl+V: Paste
+      if (isMod && e.key === 'v') {
+        e.preventDefault();
+        core.pasteClipboard();
+        showToast('Pasted');
+        return;
+      }
+
+      // Ctrl+D: Duplicate selected node
+      if (isMod && e.key === 'd') {
+        e.preventDefault();
+        const selectedNodeId = snapshot.selection.activeNodeId;
+        if (selectedNodeId) {
+          core.duplicateNode(selectedNodeId);
+          showToast('Node duplicated');
+        }
+        return;
+      }
+
+      // Delete or Backspace: Delete selected element
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        const selectedNodeId = snapshot.selection.activeNodeId;
+        const selectedEdgeId = snapshot.selection.activeEdgeId;
+        if (selectedNodeId) {
+          core.deleteNode(selectedNodeId);
+        } else if (selectedEdgeId) {
+          core.deleteEdge(selectedEdgeId);
+        }
+        return;
+      }
+
+      // Escape: Clear selection
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        core.clearSelection();
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [core, snapshot, handleSave, showToast]);
+
+  // Leave guard for dirty state
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (core.isDirty()) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [core]);
+
   const toggleGroup = useCallback((groupId: string) => {
     setExpandedGroups((prev) => {
       const next = new Set(prev);

@@ -29,6 +29,25 @@ This file is intentionally lightweight.
  and renderers package
 - Next step: implement hover toolbars (Phase 3) and complete palette drag-drop (Phase 2.3)
 
+### 2026-03-24 (Phase 5 Complete)
+
+- Implemented keyboard shortcuts (Phase 5.1):
+  - Ctrl+Z: Undo
+  - Ctrl+Y or Ctrl+Shift+Z: Redo
+  - Ctrl+S: Save
+  - Ctrl+C: Copy selected node
+  - Ctrl+V: Paste clipboard
+  - Ctrl+D: Duplicate selected node
+  - Delete/Backspace: Delete selected node or edge
+  - Escape: Clear selection
+- Added leave guard for dirty state (Phase 5.2):
+  - beforeunload event listener shows confirmation when there are unsaved changes
+  - Uses core.isDirty() to check if document has been modified
+- Copy/paste UX already covered by keyboard shortcuts (Phase 5.3)
+- Files: `apps/playground/src/FlowDesignerExample.tsx`
+- Key decision: use window-level keyboard event listener instead of component-level to catch all shortcuts
+- Next step: consider additional keyboard shortcuts or mobile touch gestures if needed
+
 ### 2026-03-24 (Phase 2.3, 3.1, 3.2 Complete)
 
 - Implemented palette drag-drop for node creation:
