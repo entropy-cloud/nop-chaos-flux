@@ -10,7 +10,9 @@ let latestReactFlowProps: any = null;
 
 vi.mock('@xyflow/react', () => ({
   Background: () => null,
+  Controls: () => null,
   Handle: () => null,
+  MiniMap: () => null,
   Position: { Top: 'top', Bottom: 'bottom' },
   ReactFlowProvider: ({ children }: { children: React.ReactNode }) => children,
   ReactFlow: (props: any) => {

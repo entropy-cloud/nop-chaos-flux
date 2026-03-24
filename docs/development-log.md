@@ -18,6 +18,49 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-24 (Flow Editor Parity Phase 1)
+
+- Switched playground FlowDesignerExample to use xyflow adapter as the primary canvas renderer
+- Added MiniMap and Controls to xyflow adapter (`canvas-bridge.tsx`)
+- Added palette drag-drop support node creation (infrastructure exists, not wired)
+ in the playground)
+- Updated parity plan `docs/plans/13-flow-editor-parity-gap-analysis-and-migration-plan.md` with implementation status sections:
+- Key decision: use xyflow adapter as the primary parity target instead of custom card canvas, keeping core package-focused
+ and renderers package
+- Next step: implement hover toolbars (Phase 3) and complete palette drag-drop (Phase 2.3)
+
+### 2026-03-24 (Phase 2.3, 3.1, 3.2 Complete)
+
+- Implemented palette drag-drop for node creation:
+  - Added `draggable` and `onDragStart` to palette items
+  - Added `onDrop` and `onDragOver` to canvas
+  - Nodes can now be dragged from palette to canvas
+- Added hover toolbar for nodes and edges:
+  - Created `FlowDesignerHoverToolbar.tsx` component
+  - Added `onNodeHover` and `onEdgeHover` callbacks to canvas
+  - Toolbar appears on hover with edit/duplicate/delete actions
+- Connected double-click handlers:
+  - xyflow adapter already had `onNodeDoubleClick` and `onEdgeDoubleClick` wired
+  - Playground now uses these to open property editing via inspector
+- Files: `apps/playground/src/flow-designer/FlowDesignerPalette.tsx`, `FlowDesignerCanvas.tsx`, `FlowDesignerHoverToolbar.tsx`, `FlowDesignerExample.tsx`
+- Key decision: use HTML5 drag-drop API for palette, and custom hover state for toolbar
+- Next step: implement keyboard shortcuts and leave guard (Phase 5)
+
+### 2026-03-24 (FlowDesignerExample Refactoring)
+
+- Refactored `apps/playground/src/FlowDesignerExample.tsx` (572 lines) into smaller focused components:
+  - `apps/playground/src/flow-designer/FlowDesignerToolbar.tsx` - toolbar with undo/redo/save/restore/export
+  - `apps/playground/src/flow-designer/FlowDesignerPalette.tsx` - node palette with grouping and search
+  - `apps/playground/src/flow-designer/FlowDesignerCanvas.tsx` - custom SVG canvas with nodes/edges
+  - `apps/playground/src/flow-designer/FlowDesignerInspector.tsx` - property editor for nodes/edges
+  - `apps/playground/src/flow-designer/FlowDesignerToast.tsx` - toast notification component
+  - `apps/playground/src/flow-designer/index.ts` - barrel export
+- Kept original file as `.bak` backup, rewrote as ~220 line orchestrator
+- Cleaned up unused imports in `packages/flow-designer-renderers/src/canvas-bridge.tsx`
+- Updated test mock to include `MiniMap` and `Controls` components
+- Key decision: each UI concern is now a separate component with clear props interface
+- Next step: implement palette drag-drop and hover toolbars with the refactored structure
+
 ### 2026-03-24 (Flow Editor Parity Planning)
 
 - Added `docs/plans/13-flow-editor-parity-gap-analysis-and-migration-plan.md` to lock the real target for the playground Flow Designer against `C:\can\nop\nop-chaos-next-wt\nop-chaos-next-master\docs\03-flow-editor.md`, the legacy `flow-editor` page components, and `tests/e2e/flow-editor.spec.ts`.

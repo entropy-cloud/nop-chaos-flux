@@ -2,18 +2,11 @@ import React from 'react';
 import {
   Background,
   Controls,
-  EdgeLabelRenderer,
-  BaseEdge,
   Handle,
-  MarkerType,
   MiniMap,
-  NodeToolbar,
-  Panel,
   Position,
   ReactFlow,
-  ReactFlowProvider,
-  getSmoothStepPath,
-  useReactFlow
+  ReactFlowProvider
 } from '@xyflow/react';
 import type {
   Connection,
@@ -73,6 +66,8 @@ export interface DesignerCanvasBridgeProps {
   snapshot: DesignerSnapshot;
   pendingConnectionSourceId: string | null;
   reconnectingEdgeId: string | null;
+  showMinimap?: boolean;
+  showControls?: boolean;
   onPaneClick(): void;
   onNodeSelect(nodeId: string, event: React.MouseEvent): void;
   onEdgeSelect(edgeId: string, event: React.MouseEvent): void;
@@ -87,6 +82,10 @@ export interface DesignerCanvasBridgeProps {
   onDeleteEdge(edgeId: string, event: React.MouseEvent): void;
   onMoveNode(nodeId: string, event: React.MouseEvent, position?: { x: number; y: number }): void;
   onViewportChange(viewport: { x: number; y: number; zoom: number }, event: React.MouseEvent): void;
+  onNodeDoubleClick?(nodeId: string, event: React.MouseEvent): void;
+  onEdgeDoubleClick?(edgeId: string, event: React.MouseEvent): void;
+  onNodeHover?(nodeId: string | null, event: React.MouseEvent): void;
+  onEdgeHover?(edgeId: string | null, event: React.MouseEvent): void;
 }
 
 function getReconnectEdge(snapshot: DesignerSnapshot, reconnectingEdgeId: string | null) {
@@ -131,20 +130,6 @@ interface DesignerFlowNodeData extends Record<string, unknown> {
   typeLabel: string;
   typeId: string;
 }
-
-interface DesignerFlowEdgeData extends Record<string, unknown> {
-  label: string;
-}
-
-interface FloatingToolbarContextValue {
-  hoveredNodeId: string | null;
-  hoveredEdgeId: string | null;
-  setHoveredNodeId(nodeId: string | null): void;
-  setHoveredEdgeId(edgeId: string | null): void;
-  bridge: DesignerCanvasBridgeProps;
-}
-
-const FloatingToolbarContext = React.createContext<FloatingToolbarContextValue | null>(null);
 
 const VIEWPORT_EPSILON = 0.01;
 
@@ -564,6 +549,10 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
   const [controlledViewport, setControlledViewport] = React.useState<DesignerXyflowControlledViewport>(viewport);
   const documentNodePositionsRef = React.useRef<Map<string, string>>(new Map());
   const pendingNodePositionCommitsRef = React.useRef<Map<string, string>>(new Map());
+  const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showMinimap = props.showMinimap !== false;
+  const showControls = props.showControls !== false;
 
   React.useEffect(() => {
     setControlledViewport((current) => (viewportsEqual(current, viewport) ? current : viewport));
@@ -714,8 +703,38 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
               })
             }
             proOptions={{ hideAttribution: true }}
+            onNodeMouseEnter={(_e, node) => {
+              if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+              }
+              props.onNodeHover?.(node.id, {} as React.MouseEvent);
+            }}
+            onNodeMouseLeave={() => {
+              hoverTimeoutRef.current = setTimeout(() => {
+                props.onNodeHover?.(null, {} as React.MouseEvent);
+              }, 160);
+            }}
+            onEdgeMouseEnter={(_e, edge) => {
+              if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+              }
+              props.onEdgeHover?.(edge.id, {} as React.MouseEvent);
+            }}
+            onEdgeMouseLeave={() => {
+              hoverTimeoutRef.current = setTimeout(() => {
+                props.onEdgeHover?.(null, {} as React.MouseEvent);
+              }, 160);
+            }}
+            onNodeDoubleClick={(_event, node) => {
+              props.onNodeDoubleClick?.(node.id, {} as React.MouseEvent);
+            }}
+            onEdgeDoubleClick={(_event, edge) => {
+              props.onEdgeDoubleClick?.(edge.id, {} as React.MouseEvent);
+            }}
           >
             <Background gap={24} size={1} />
+            {showMinimap && <MiniMap pannable zoomable style={{ background: 'rgba(255,255,255,0.9)' }} />}
+            {showControls && <Controls showInteractive={false} />}
           </ReactFlow>
         </ReactFlowProvider>
       </div>

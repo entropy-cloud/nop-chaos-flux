@@ -63,6 +63,65 @@ The active target implementation lives mainly in:
 
 This means visual parity alone is not enough, and raw feature parity alone is not enough.
 
+## Current Implementation Status (2026-03-24 Survey)
+
+### Already Implemented in Core (`flow-designer-core`)
+
+| Feature | Status | Location |
+|---------|--------|----------|
+| Undo/redo with 50-entry history | ✅ Complete | `core.ts:undo()`, `redo()`, `canUndo()`, `canRedo()` |
+| Dirty state tracking | ✅ Complete | `core.ts:isDirty()`, `save()`, `restore()` |
+| Export JSON | ✅ Complete | `core.ts:exportDocument()` |
+| Copy/paste methods | ✅ Complete | `core.ts:copySelection()`, `pasteClipboard()` |
+| Node/edge CRUD | ✅ Complete | `core.ts:addNode()`, `deleteNode()`, `updateNode()`, etc. |
+| Viewport management | ✅ Complete | `core.ts` viewport state and events |
+| Reconnection validation | ✅ Complete | `core.ts` reconnect logic |
+
+### Already Implemented in Renderers (`flow-designer-renderers`)
+
+| Feature | Status | Location |
+|---------|--------|----------|
+| xyflow adapter infrastructure | ✅ Complete | `canvas-bridge.tsx:DesignerXyflowCanvasBridge` |
+| Background grid | ✅ Complete | `<Background />` rendered in ReactFlow |
+| Connection handling | ✅ Complete | `onConnect`, `onReconnect` wired |
+| Viewport sync | ✅ Complete | Controlled viewport with normalization |
+| Card canvas fallback | ✅ Complete | `DesignerCardCanvasBridge` |
+
+### Already Implemented in Playground
+
+| Feature | Status | Location |
+|---------|--------|----------|
+| Palette grouping | ✅ Complete | `FlowDesignerExample.tsx` - basic/logic/execution groups |
+| Basic inspector | ✅ Complete | `FlowDesignerExample.tsx` - label and data fields |
+| Toolbar actions | ✅ Complete | Undo/redo, save/restore/export, clear selection |
+| Toast notifications | ✅ Complete | `FlowDesignerExample.tsx` |
+
+### Partially Implemented (Infrastructure Exists, Not Wired)
+
+| Feature | Status | What's Missing |
+|---------|--------|----------------|
+| MiniMap | ⚠️ Partial | Imported, `showMinimap` prop exists, but **not rendered** |
+| Controls | ⚠️ Partial | Imported, `showControls` prop exists, but **not rendered** |
+| NodeToolbar | ⚠️ Partial | Imported, hover state exists, but **not rendered** |
+| Double-click editing | ⚠️ Partial | Props `onNodeDoubleClick`/`onEdgeDoubleClick` exist, but **not connected** to ReactFlow |
+| Keyboard shortcuts | ⚠️ Partial | Config has `features.shortcuts`, core has methods, but **no key event wiring** |
+
+### Not Implemented (Gap Items)
+
+| Feature | Gap Level | Notes |
+|---------|-----------|-------|
+| Playground uses xyflow | High | Currently uses custom card canvas, not xyflow adapter |
+| Palette drag-drop | High | Click-to-add only, no `draggable`/`onDragStart`/drop |
+| MiniMap rendering | Medium | Just needs `<MiniMap />` in ReactFlow |
+| Controls rendering | Medium | Just needs `<Controls />` in ReactFlow |
+| Hover toolbars UI | High | Need to render NodeToolbar with actions |
+| Double-click edit wiring | Medium | Need to wire `onNodeDoubleClick` to ReactFlow |
+| Leave guard | Medium | No `beforeunload` or navigation guard |
+| Keyboard shortcut wiring | Medium | Need keydown handler calling core methods |
+| Copy/paste UX | Low | Core has methods, need toolbar buttons/hotkeys |
+| Type-specific inspector | High | Only generic inputs, no type-specific editors |
+| Flow list shell | High | No list page at all |
+
 ## Target Capability Matrix
 
 ### A. Flow list shell
@@ -300,8 +359,11 @@ It should not be the place where core editor behavior is reimplemented ad hoc.
 
 ## Staged Migration Plan
 
-### Phase 1 - Lock parity target and freeze adapter choice
+### Phase 1 - Lock parity target and freeze adapter choice [IN PROGRESS]
 
+Status: xyflow adapter exists in `canvas-bridge.tsx` but playground still uses custom card canvas.
+
+Tasks:
 - make `xyflow` the explicit primary parity target for the playground showcase
 - treat `card` and `xyflow-preview` as fallback/test adapters only
 - record the legacy parity checklist in tests and docs
@@ -310,8 +372,11 @@ Exit criteria:
 
 - everyone agrees the visible playground showcase is no longer the card shell
 
-### Phase 2 - Match the canvas interaction baseline
+### Phase 2 - Match the canvas interaction baseline [NOT STARTED]
 
+Status: MiniMap, Controls imported but not rendered. Palette is click-only, no drag-drop.
+
+Tasks:
 - align the playground showcase with real `xyflow` canvas, minimap, controls, and grid behavior
 - add or refine package-level canvas shell support for hint badge, minimap visibility, and viewport defaults
 - ensure palette drag-drop is the primary node creation path in the showcase
@@ -320,8 +385,11 @@ Exit criteria:
 
 - the main playground editor demonstrates grouped palette drag-drop plus minimap, matching the legacy e2e path conceptually
 
-### Phase 3 - Implement hover toolbars and double-click editing as reusable behavior
+### Phase 3 - Implement hover toolbars and double-click editing as reusable behavior [NOT STARTED]
 
+Status: Hover state infrastructure exists (`hoveredNodeId`, `hoveredEdgeId`), double-click props exist, but neither wired to UI.
+
+Tasks:
 - add package-level hover state handling for nodes and edges
 - implement delayed hide and toolbar-hover persistence behavior
 - make node and edge double-click editing part of the shared renderer contract
@@ -330,8 +398,11 @@ Exit criteria:
 
 - node and edge interactions match legacy hover/edit ergonomics, not just selected-state actions
 
-### Phase 4 - Rebuild inspector parity through schema-driven fragments
+### Phase 4 - Rebuild inspector parity through schema-driven fragments [NOT STARTED]
 
+Status: Only basic generic inputs, no type-specific editors.
+
+Tasks:
 - re-express legacy node and edge property editors through schema fragments and designer-aware field renderers
 - add responsive inspector/mobile-sheet shells
 - support label/description/type config and edge condition/style editing
@@ -340,8 +411,11 @@ Exit criteria:
 
 - the old hardcoded inspector workflow is reproducible through configuration-driven rendering
 
-### Phase 5 - Close productivity parity
+### Phase 5 - Close productivity parity [PARTIAL]
 
+Status: Core has copy/paste/undo/redo/dirty/export. Missing: keyboard wiring, leave guard, UX surfacing.
+
+Tasks:
 - verify and finish keyboard shortcuts
 - align copy/paste and delete UX
 - verify history snapshot semantics against legacy expectations
@@ -351,8 +425,11 @@ Exit criteria:
 
 - save/restore/export/history/clipboard/leave-guard behavior all match the parity checklist
 
-### Phase 6 - Add list-shell parity if the playground is expected to demonstrate the full module
+### Phase 6 - Add list-shell parity if the playground is expected to demonstrate the full module [NOT STARTED]
 
+Status: No list page exists.
+
+Tasks:
 - build a sample flow list page with search, filter, pagination, duplicate, delete, enable/disable, and edit-entry behavior
 - keep this shell configuration-driven as much as practical
 
@@ -364,16 +441,20 @@ Exit criteria:
 
 Add parity-oriented tests in this repository that mirror the legacy e2e checklist conceptually.
 
-Priority tests:
+Existing tests:
+- `packages/flow-designer-core/src/core.test.ts` - 13 tests covering node/edge CRUD, undo/redo, dirty, viewport, reconnection
+- `packages/flow-designer-renderers/src/canvas-bridge.test.tsx` - Bridge callback verification for Card/XyflowPreview/Xyflow adapters
 
-- grouped palette sections visible
-- drag palette item to canvas creates node at drop position
-- minimap visible in main showcase
-- double-click node opens property editing path
-- double-click edge opens edge editing path
-- hover toolbars appear for node and edge and keep visible while hovered
-- save/restore/export and dirty-state badge behavior
-- leave guard path
+Priority tests to add:
+
+- [ ] grouped palette sections visible
+- [ ] drag palette item to canvas creates node at drop position
+- [ ] minimap visible in main showcase
+- [ ] double-click node opens property editing path
+- [ ] double-click edge opens edge editing path
+- [ ] hover toolbars appear for node and edge and keep visible while hovered
+- [ ] save/restore/export and dirty-state badge behavior
+- [ ] leave guard path
 
 ## Immediate Next Implementation Slice
 
