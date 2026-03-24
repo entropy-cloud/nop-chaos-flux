@@ -6,11 +6,12 @@ import type {
   DesignerSnapshot
 } from '@nop-chaos/flow-designer-core';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
+import { renderDesignerCanvasBridge } from '@nop-chaos/flow-designer-renderers';
+import type { DesignerCanvasBridgeProps } from '@nop-chaos/flow-designer-renderers';
 
 import {
   FlowDesignerToolbar,
   FlowDesignerPalette,
-  FlowDesignerCanvas,
   FlowDesignerInspector,
   FlowDesignerToast,
   FlowDesignerHoverToolbar
@@ -101,26 +102,6 @@ export function FlowDesignerExample({ document: initialDoc, config }: FlowDesign
     core.clearSelection();
   }, [core]);
 
-  const handlePaneClick = useCallback(() => {
-    core.clearSelection();
-  }, [core]);
-
-  const handleNodeClick = useCallback(
-    (nodeId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      core.selectNode(nodeId);
-    },
-    [core]
-  );
-
-  const handleEdgeClick = useCallback(
-    (edgeId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      core.selectEdge(edgeId);
-    },
-    [core]
-  );
-
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
       core.deleteNode(nodeId);
@@ -146,13 +127,6 @@ export function FlowDesignerExample({ document: initialDoc, config }: FlowDesign
     (nodeType: NodeTypeConfig) => {
       const position = { x: 180 + Math.random() * 400, y: 120 + Math.random() * 300 };
       core.addNode(nodeType.id, position);
-    },
-    [core]
-  );
-
-  const handleDrop = useCallback(
-    (nodeTypeId: string, position: { x: number; y: number }) => {
-      core.addNode(nodeTypeId, position);
     },
     [core]
   );
@@ -278,6 +252,90 @@ export function FlowDesignerExample({ document: initialDoc, config }: FlowDesign
     });
   }, []);
 
+  // Connection state for xyflow adapter
+  const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
+  const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
+
+  const bridgeProps: DesignerCanvasBridgeProps = useMemo(
+    () => ({
+      snapshot,
+      pendingConnectionSourceId,
+      reconnectingEdgeId,
+      showMinimap: true,
+      showControls: true,
+      onPaneClick: () => {
+        core.clearSelection();
+      },
+      onNodeSelect: (nodeId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+        core.selectNode(nodeId);
+      },
+      onEdgeSelect: (edgeId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+        core.selectEdge(edgeId);
+      },
+      onStartConnection: (nodeId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+        setPendingConnectionSourceId(nodeId);
+      },
+      onCancelConnection: () => {
+        setPendingConnectionSourceId(null);
+      },
+      onCompleteConnection: (targetNodeId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+        if (pendingConnectionSourceId && pendingConnectionSourceId !== targetNodeId) {
+          core.addEdge(pendingConnectionSourceId, targetNodeId, { label: '' });
+        }
+        setPendingConnectionSourceId(null);
+      },
+      onStartReconnect: (edgeId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+        setReconnectingEdgeId(edgeId);
+      },
+      onCancelReconnect: () => {
+        setReconnectingEdgeId(null);
+      },
+      onCompleteReconnect: (edgeId: string, sourceId: string, targetId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+        core.reconnectEdge(edgeId, sourceId, targetId);
+        setReconnectingEdgeId(null);
+      },
+      onDuplicateNode: (nodeId: string) => {
+        core.duplicateNode(nodeId);
+      },
+      onDeleteNode: (nodeId: string) => {
+        core.deleteNode(nodeId);
+      },
+      onDeleteEdge: (edgeId: string) => {
+        core.deleteEdge(edgeId);
+      },
+      onMoveNode: (nodeId: string, _event: React.MouseEvent, position?: { x: number; y: number }) => {
+        if (position) {
+          core.moveNode(nodeId, position);
+        }
+      },
+      onViewportChange: (viewport: { x: number; y: number; zoom: number }) => {
+        core.setViewport(viewport);
+      },
+      onNodeDoubleClick: (nodeId: string) => {
+        core.selectNode(nodeId);
+      },
+      onEdgeDoubleClick: (edgeId: string) => {
+        core.selectEdge(edgeId);
+      },
+      onNodeHover: (nodeId: string | null) => {
+        handleNodeHover(nodeId);
+      },
+      onEdgeHover: (edgeId: string | null) => {
+        handleEdgeHover(edgeId);
+      },
+      onDrop: (nodeTypeId: string, position: { x: number; y: number }) => {
+        core.addNode(nodeTypeId, position);
+      }
+    }),
+    [snapshot, pendingConnectionSourceId, reconnectingEdgeId, core, handleNodeHover, handleEdgeHover]
+  );
+
   return (
     <div className="flow-designer-example na-theme-root fd-theme-root">
       <FlowDesignerToolbar
@@ -306,18 +364,9 @@ export function FlowDesignerExample({ document: initialDoc, config }: FlowDesign
               onAddNode={handleAddNode}
             />
 
-            <FlowDesignerCanvas
-              doc={doc}
-              snapshot={snapshot}
-              onPaneClick={handlePaneClick}
-              onNodeClick={handleNodeClick}
-              onEdgeClick={handleEdgeClick}
-              onDuplicateNode={handleDuplicateNode}
-              onDeleteNode={handleDeleteNode}
-              onDrop={handleDrop}
-              onNodeHover={handleNodeHover}
-              onEdgeHover={handleEdgeHover}
-            />
+            <div className="flow-designer-example__canvas">
+              {renderDesignerCanvasBridge('xyflow', bridgeProps)}
+            </div>
 
             <FlowDesignerHoverToolbar
               nodeId={hoveredNodeId}

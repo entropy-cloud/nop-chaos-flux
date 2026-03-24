@@ -86,6 +86,7 @@ export interface DesignerCanvasBridgeProps {
   onEdgeDoubleClick?(edgeId: string, event: React.MouseEvent): void;
   onNodeHover?(nodeId: string | null, event: React.MouseEvent): void;
   onEdgeHover?(edgeId: string | null, event: React.MouseEvent): void;
+  onDrop?(nodeTypeId: string, position: { x: number; y: number }): void;
 }
 
 function getReconnectEdge(snapshot: DesignerSnapshot, reconnectingEdgeId: string | null) {
@@ -730,6 +731,26 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
             }}
             onEdgeDoubleClick={(_event, edge) => {
               props.onEdgeDoubleClick?.(edge.id, {} as React.MouseEvent);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              const nodeTypeId = event.dataTransfer.getData(DESIGNER_PALETTE_NODE_MIME);
+              if (!nodeTypeId || !props.onDrop) return;
+              
+              // Get the position relative to the canvas
+              const reactFlowBounds = (event.target as HTMLElement).closest('.react-flow')?.getBoundingClientRect();
+              if (!reactFlowBounds) return;
+              
+              const position = {
+                x: event.clientX - reactFlowBounds.left,
+                y: event.clientY - reactFlowBounds.top
+              };
+              
+              props.onDrop(nodeTypeId, position);
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
             }}
           >
             <Background gap={24} size={1} />
