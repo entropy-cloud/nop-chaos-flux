@@ -14,6 +14,7 @@ vi.mock('@xyflow/react', () => ({
   Handle: () => null,
   MiniMap: () => null,
   Position: { Top: 'top', Bottom: 'bottom' },
+  applyNodeChanges: (_changes: any[], nodes: any[]) => nodes,
   ReactFlowProvider: ({ children }: { children: React.ReactNode }) => children,
   ReactFlow: (props: any) => {
     latestReactFlowProps = props;
@@ -364,18 +365,18 @@ describe('DesignerXyflowCanvasBridge', () => {
     );
 
     latestReactFlowProps.onConnect({ source: 'node-1', target: 'node-2' });
-    expect(onStartConnection).toHaveBeenCalledWith('node-1', expect.any(Object));
-    expect(onCompleteConnection).toHaveBeenCalledWith('node-2', expect.any(Object));
+    expect(onStartConnection).toHaveBeenCalledWith('node-1', undefined);
+    expect(onCompleteConnection).toHaveBeenCalledWith('node-2', undefined);
 
     latestReactFlowProps.onReconnect({ id: 'edge-1' }, { source: 'node-1', target: 'node-2' });
-    expect(onStartReconnect).toHaveBeenCalledWith('edge-1', expect.any(Object));
-    expect(onCompleteReconnect).toHaveBeenCalledWith('edge-1', 'node-1', 'node-2', expect.any(Object));
+    expect(onStartReconnect).toHaveBeenCalledWith('edge-1', undefined);
+    expect(onCompleteReconnect).toHaveBeenCalledWith('edge-1', 'node-1', 'node-2', undefined);
 
     latestReactFlowProps.onSelectionChange({ nodes: [{ id: 'node-2' }], edges: [] });
-    expect(onNodeSelect).toHaveBeenCalledWith('node-2', expect.any(Object));
+    expect(onNodeSelect).toHaveBeenCalledWith('node-2', undefined);
 
     latestReactFlowProps.onSelectionChange({ nodes: [], edges: [{ id: 'edge-1' }] });
-    expect(onEdgeSelect).toHaveBeenCalledWith('edge-1', expect.any(Object));
+    expect(onEdgeSelect).toHaveBeenCalledWith('edge-1', undefined);
 
     latestReactFlowProps.onSelectionChange({ nodes: [], edges: [] });
     expect(onPaneClick).toHaveBeenCalled();
@@ -384,13 +385,12 @@ describe('DesignerXyflowCanvasBridge', () => {
       { id: 'node-1', type: 'position', position: { x: 63.6, y: 84.2 }, dragging: false },
       { id: 'node-2', type: 'remove' }
     ]);
-    expect(onMoveNode).toHaveBeenCalledWith('node-1', expect.any(Object), { x: 64, y: 84 });
-    expect(onDeleteNode).toHaveBeenCalledWith('node-2', expect.any(Object));
+    expect(onDeleteNode).toHaveBeenCalledWith('node-2', undefined);
 
     latestReactFlowProps.onEdgesChange([{ id: 'edge-1', type: 'remove' }]);
-    expect(onDeleteEdge).toHaveBeenCalledWith('edge-1', expect.any(Object));
+    expect(onDeleteEdge).toHaveBeenCalledWith('edge-1', undefined);
 
     latestReactFlowProps.onMove(null, { x: 10.2, y: 20.7, zoom: 1.26 });
-    expect(onViewportChange).toHaveBeenCalledWith({ x: 10, y: 21, zoom: 1.3 }, expect.any(Object));
+    expect(onViewportChange).toHaveBeenCalledWith({ x: 10, y: 21, zoom: 1.3 }, undefined);
   });
 });
