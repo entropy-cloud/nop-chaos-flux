@@ -8,6 +8,10 @@
     { "path": "./packages/amis-renderers-basic" },
     { "path": "./packages/amis-renderers-form" },
     { "path": "./packages/amis-renderers-data" },
+    { "path": "./packages/spreadsheet-core" },
+    { "path": "./packages/spreadsheet-renderers" },
+    { "path": "./packages/report-designer-core" },
+    { "path": "./packages/report-designer-renderers" },
     { "path": "./apps/playground" }
   ]
 }

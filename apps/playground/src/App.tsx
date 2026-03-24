@@ -5,7 +5,7 @@ import { registerBasicRenderers } from '@nop-chaos/amis-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/amis-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/amis-renderers-data';
 import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
-import { HomePage, AmisBasicPage, FlowDesignerPage, DebuggerLabPage } from './pages';
+import { HomePage, AmisBasicPage, FlowDesignerPage, ReportDesignerPage, DebuggerLabPage } from './pages';
 import type { PageId } from './pages';
 
 const registry = createDefaultRegistry();
@@ -44,6 +44,7 @@ export function App() {
       {activePage === 'home' && <HomePage onNavigate={handleNavigate} />}
       {activePage === 'amis-basic' && <AmisBasicPage debuggerController={debuggerController} onBack={handleBackHome} />}
       {activePage === 'flow-designer' && <FlowDesignerPage onBack={handleBackHome} />}
+      {activePage === 'report-designer' && <ReportDesignerPage onBack={handleBackHome} />}
       {activePage === 'debugger-lab' && <DebuggerLabPage debuggerController={debuggerController} onBack={handleBackHome} />}
       <AmisDebuggerPanel controller={debuggerController} />
     </div>

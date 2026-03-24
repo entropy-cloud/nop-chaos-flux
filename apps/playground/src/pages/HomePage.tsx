@@ -21,6 +21,12 @@ const NAV_CARDS: NavCard[] = [
     description: 'Designer page, toolbar, inspector, canvas, node palette, edge connections, and designer actions.'
   },
   {
+    id: 'report-designer',
+    title: 'Report Designer',
+    eyebrow: 'Spreadsheet + Metadata',
+    description: 'Report template page, field panel, inspector shell, namespaced actions, and report metadata bindings.'
+  },
+  {
     id: 'debugger-lab',
     title: 'Debugger Lab',
     eyebrow: 'DevTools',
