@@ -1,5 +1,20 @@
 import React from 'react';
-import { Background, Handle, Position, ReactFlow, ReactFlowProvider } from '@xyflow/react';
+import {
+  Background,
+  Controls,
+  EdgeLabelRenderer,
+  BaseEdge,
+  Handle,
+  MarkerType,
+  MiniMap,
+  NodeToolbar,
+  Panel,
+  Position,
+  ReactFlow,
+  ReactFlowProvider,
+  getSmoothStepPath,
+  useReactFlow
+} from '@xyflow/react';
 import type {
   Connection,
   Edge,
@@ -13,6 +28,8 @@ import type {
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 
 export type DesignerCanvasAdapterKind = 'card' | 'xyflow-preview' | 'xyflow';
+
+export const DESIGNER_PALETTE_NODE_MIME = 'application/x-flow-designer-node-type';
 
 function classNames(...values: Array<string | undefined | false>) {
   return values.filter(Boolean).join(' ');
@@ -112,7 +129,22 @@ interface DesignerXyflowRemoveChange {
 interface DesignerFlowNodeData extends Record<string, unknown> {
   label: string;
   typeLabel: string;
+  typeId: string;
 }
+
+interface DesignerFlowEdgeData extends Record<string, unknown> {
+  label: string;
+}
+
+interface FloatingToolbarContextValue {
+  hoveredNodeId: string | null;
+  hoveredEdgeId: string | null;
+  setHoveredNodeId(nodeId: string | null): void;
+  setHoveredEdgeId(edgeId: string | null): void;
+  bridge: DesignerCanvasBridgeProps;
+}
+
+const FloatingToolbarContext = React.createContext<FloatingToolbarContextValue | null>(null);
 
 const VIEWPORT_EPSILON = 0.01;
 

@@ -18,6 +18,13 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-24 (Flow Editor Parity Planning)
+
+- Added `docs/plans/13-flow-editor-parity-gap-analysis-and-migration-plan.md` to lock the real target for the playground Flow Designer against `C:\can\nop\nop-chaos-next-wt\nop-chaos-next-master\docs\03-flow-editor.md`, the legacy `flow-editor` page components, and `tests/e2e/flow-editor.spec.ts`.
+- The new plan separates parity work into concrete capability buckets: list shell, xyflow canvas baseline, grouped drag-drop palette, node/edge hover toolbars, schema-driven inspector parity, productivity features, and leave-guard behavior.
+- Key decision: treat `apps/playground/src/FlowDesignerExample.tsx` as a temporary integration harness rather than the final place where core editor behavior lives; parity-critical behavior should migrate into `@nop-chaos/flow-designer-core` and `@nop-chaos/flow-designer-renderers` so the final showcase is configuration-driven instead of another hardcoded page.
+- Next step: implement the first parity slice by making the main showcase explicitly `xyflow`-first, with grouped palette drag-drop, visible minimap/controls, and reusable hover-toolbar behavior.
+
 ### 2026-03-24 (Theme Compatibility Slice)
 
 - Added `docs/architecture/theme-compatibility.md` to define the active styling contract for host theming: `.na-theme-root` is the shared subtree theme scope, `.fd-theme-root` is the Flow Designer specialization layer, and theme compatibility stays a CSS-variable contract instead of a runtime/provider concern.
