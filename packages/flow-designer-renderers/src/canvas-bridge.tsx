@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  applyNodeChanges,
   Background,
   Controls,
   Handle,
@@ -8,6 +9,7 @@ import {
   ReactFlow,
   ReactFlowProvider
 } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import type {
   Connection,
   Edge,
@@ -69,23 +71,23 @@ export interface DesignerCanvasBridgeProps {
   showMinimap?: boolean;
   showControls?: boolean;
   onPaneClick(): void;
-  onNodeSelect(nodeId: string, event: React.MouseEvent): void;
-  onEdgeSelect(edgeId: string, event: React.MouseEvent): void;
-  onStartConnection(nodeId: string, event: React.MouseEvent): void;
-  onCancelConnection(nodeId: string, event: React.MouseEvent): void;
-  onCompleteConnection(nodeId: string, event: React.MouseEvent): void;
-  onStartReconnect(edgeId: string, event: React.MouseEvent): void;
-  onCancelReconnect(edgeId: string, event: React.MouseEvent): void;
-  onCompleteReconnect(edgeId: string, sourceId: string, targetId: string, event: React.MouseEvent): void;
-  onDuplicateNode(nodeId: string, event: React.MouseEvent): void;
-  onDeleteNode(nodeId: string, event: React.MouseEvent): void;
-  onDeleteEdge(edgeId: string, event: React.MouseEvent): void;
-  onMoveNode(nodeId: string, event: React.MouseEvent, position?: { x: number; y: number }): void;
-  onViewportChange(viewport: { x: number; y: number; zoom: number }, event: React.MouseEvent): void;
-  onNodeDoubleClick?(nodeId: string, event: React.MouseEvent): void;
-  onEdgeDoubleClick?(edgeId: string, event: React.MouseEvent): void;
-  onNodeHover?(nodeId: string | null, event: React.MouseEvent): void;
-  onEdgeHover?(edgeId: string | null, event: React.MouseEvent): void;
+  onNodeSelect(nodeId: string, event?: React.MouseEvent): void;
+  onEdgeSelect(edgeId: string, event?: React.MouseEvent): void;
+  onStartConnection(nodeId: string, event?: React.MouseEvent): void;
+  onCancelConnection(nodeId: string, event?: React.MouseEvent): void;
+  onCompleteConnection(nodeId: string, event?: React.MouseEvent): void;
+  onStartReconnect(edgeId: string, event?: React.MouseEvent): void;
+  onCancelReconnect(edgeId: string, event?: React.MouseEvent): void;
+  onCompleteReconnect(edgeId: string, sourceId: string, targetId: string, event?: React.MouseEvent): void;
+  onDuplicateNode(nodeId: string, event?: React.MouseEvent): void;
+  onDeleteNode(nodeId: string, event?: React.MouseEvent): void;
+  onDeleteEdge(edgeId: string, event?: React.MouseEvent): void;
+  onMoveNode(nodeId: string, event?: React.MouseEvent, position?: { x: number; y: number }): void;
+  onViewportChange(viewport: { x: number; y: number; zoom: number }, event?: React.MouseEvent): void;
+  onNodeDoubleClick?(nodeId: string, event?: React.MouseEvent): void;
+  onEdgeDoubleClick?(edgeId: string, event?: React.MouseEvent): void;
+  onNodeHover?(nodeId: string | null, event?: React.MouseEvent): void;
+  onEdgeHover?(edgeId: string | null, event?: React.MouseEvent): void;
   onDrop?(nodeTypeId: string, position: { x: number; y: number }): void;
 }
 
@@ -103,27 +105,10 @@ interface XyflowViewportChange {
   zoom?: number;
 }
 
-type DesignerXyflowReactFlowProps = React.ComponentProps<typeof ReactFlow>;
-
 interface DesignerXyflowControlledViewport {
   x: number;
   y: number;
   zoom: number;
-}
-
-interface DesignerXyflowPositionChange {
-  id: string;
-  type: 'position';
-  position?: {
-    x: number;
-    y: number;
-  };
-  dragging?: boolean;
-}
-
-interface DesignerXyflowRemoveChange {
-  id: string;
-  type: 'remove';
 }
 
 interface DesignerFlowNodeData extends Record<string, unknown> {
@@ -183,22 +168,6 @@ function normalizeViewportChange(value: XyflowViewportChange | null | undefined)
 
 function normalizePositionSignature(position: { x: number; y: number }) {
   return `${Math.round(position.x)}:${Math.round(position.y)}`;
-}
-
-function asPositionChange(change: NodeChange): DesignerXyflowPositionChange | null {
-  if (change.type !== 'position') {
-    return null;
-  }
-
-  return change as DesignerXyflowPositionChange;
-}
-
-function asRemoveChange<T extends NodeChange | EdgeChange>(change: T): DesignerXyflowRemoveChange | null {
-  if (change.type !== 'remove') {
-    return null;
-  }
-
-  return change as DesignerXyflowRemoveChange;
 }
 
 function DesignerXyflowNode(props: NodeProps) {
@@ -541,15 +510,15 @@ export function DesignerXyflowPreviewBridge(props: DesignerCanvasBridgeProps) {
 }
 
 export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
-  const nodes = React.useMemo(() => createXyflowNodes(props.snapshot), [props.snapshot]);
-  const edges = React.useMemo(() => createXyflowEdges(props.snapshot), [props.snapshot]);
+  const snapshotNodes = React.useMemo(() => createXyflowNodes(props.snapshot), [props.snapshot]);
+  const snapshotEdges = React.useMemo(() => createXyflowEdges(props.snapshot), [props.snapshot]);
   const viewport = React.useMemo(
     () => normalizeControlledViewport(props.snapshot.doc.viewport ?? props.snapshot.viewport),
     [props.snapshot.doc.viewport, props.snapshot.viewport]
   );
   const [controlledViewport, setControlledViewport] = React.useState<DesignerXyflowControlledViewport>(viewport);
-  const documentNodePositionsRef = React.useRef<Map<string, string>>(new Map());
-  const pendingNodePositionCommitsRef = React.useRef<Map<string, string>>(new Map());
+  const [localNodes, setLocalNodes] = React.useState<Node[]>(() => snapshotNodes);
+  const lastCommittedPositionsRef = React.useRef<Map<string, string>>(new Map());
   const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showMinimap = props.showMinimap !== false;
@@ -560,35 +529,56 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
   }, [viewport]);
 
   React.useEffect(() => {
-    const nextDocumentPositions = new Map(
-      props.snapshot.doc.nodes.map((node) => [node.id, normalizePositionSignature(node.position)])
+    const snapshotPositionMap = new Map(
+      snapshotNodes.map((node) => [node.id, normalizePositionSignature(node.position)])
     );
-    documentNodePositionsRef.current = nextDocumentPositions;
+    
+    setLocalNodes((currentNodes) => {
+      if (currentNodes.length === 0) {
+        return snapshotNodes;
+      }
+      
+      const lastCommitted = lastCommittedPositionsRef.current;
+      const mergedNodes = snapshotNodes.map((snapshotNode) => {
+        const localNode = currentNodes.find((n) => n.id === snapshotNode.id);
+        if (!localNode) {
+          return snapshotNode;
+        }
+        
+        const snapshotSignature = snapshotPositionMap.get(snapshotNode.id);
+        const committedSignature = lastCommitted.get(snapshotNode.id);
+        
+        if (committedSignature && snapshotSignature === committedSignature) {
+          return localNode;
+        }
+        
+        return snapshotNode;
+      });
+      
+      return mergedNodes;
+    });
+  }, [snapshotNodes]);
 
-    for (const [nodeId, signature] of pendingNodePositionCommitsRef.current) {
-      if (!nextDocumentPositions.has(nodeId) || nextDocumentPositions.get(nodeId) === signature) {
-        pendingNodePositionCommitsRef.current.delete(nodeId);
+  function handleNodesChange(changes: NodeChange[]) {
+    setLocalNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
+
+    for (const change of changes) {
+      if (change.type === 'remove') {
+        props.onDeleteNode(change.id, undefined);
+        lastCommittedPositionsRef.current.delete(change.id);
+        continue;
+      }
+
+      if (change.type === 'position' && change.dragging === false && change.position) {
+        const position = {
+          x: Math.round(change.position.x),
+          y: Math.round(change.position.y)
+        };
+        const signature = normalizePositionSignature(position);
+        lastCommittedPositionsRef.current.set(change.id, signature);
+        props.onMoveNode(change.id, undefined, position);
       }
     }
-  }, [props.snapshot.doc.nodes]);
-
-  function getLatestCommittedNodePositionSignature(nodeId: string) {
-    return pendingNodePositionCommitsRef.current.get(nodeId) ?? documentNodePositionsRef.current.get(nodeId);
-  }
-
-  function commitNodePosition(nodeId: string, position: { x: number; y: number }) {
-    const roundedPosition = {
-      x: Math.round(position.x),
-      y: Math.round(position.y)
-    };
-    const signature = normalizePositionSignature(roundedPosition);
-
-    if (getLatestCommittedNodePositionSignature(nodeId) === signature) {
-      return;
-    }
-
-    pendingNodePositionCommitsRef.current.set(nodeId, signature);
-    props.onMoveNode(nodeId, {} as React.MouseEvent, roundedPosition);
   }
 
   function handleViewportChange(nextViewport: XyflowViewportChange) {
@@ -600,7 +590,7 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
     setControlledViewport((current) => (viewportsEqual(current, normalized) ? current : normalized));
 
     if (!viewportsEqual(viewport, normalized)) {
-      props.onViewportChange(normalized, {} as React.MouseEvent);
+      props.onViewportChange(normalized, undefined);
     }
   }
 
@@ -609,8 +599,8 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
       return;
     }
 
-    props.onStartConnection(connection.source, {} as React.MouseEvent);
-    props.onCompleteConnection(connection.target, {} as React.MouseEvent);
+    props.onStartConnection(connection.source, undefined);
+    props.onCompleteConnection(connection.target, undefined);
   }
 
   const handleReconnect = React.useCallback<NonNullable<OnReconnect>>(
@@ -619,20 +609,20 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
         return;
       }
 
-      props.onStartReconnect(oldEdge.id, {} as React.MouseEvent);
-      props.onCompleteReconnect(oldEdge.id, newConnection.source, newConnection.target, {} as React.MouseEvent);
+      props.onStartReconnect(oldEdge.id, undefined);
+      props.onCompleteReconnect(oldEdge.id, newConnection.source, newConnection.target, undefined);
     },
     [props]
   );
 
   function handleSelectionChange(selection: OnSelectionChangeParams) {
     if (selection.nodes.length > 0) {
-      props.onNodeSelect(selection.nodes[0].id, {} as React.MouseEvent);
+      props.onNodeSelect(selection.nodes[0].id, undefined);
       return;
     }
 
     if (selection.edges.length > 0) {
-      props.onEdgeSelect(selection.edges[0].id, {} as React.MouseEvent);
+      props.onEdgeSelect(selection.edges[0].id, undefined);
       return;
     }
 
@@ -641,29 +631,10 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
     }
   }
 
-  function handleNodesChange(changes: NodeChange[]) {
-    for (const change of changes) {
-      const removeChange = asRemoveChange(change);
-      if (removeChange) {
-        pendingNodePositionCommitsRef.current.delete(removeChange.id);
-        props.onDeleteNode(removeChange.id, {} as React.MouseEvent);
-        continue;
-      }
-
-      const positionChange = asPositionChange(change);
-      if (!positionChange?.position || positionChange.dragging === true) {
-        continue;
-      }
-
-      commitNodePosition(positionChange.id, positionChange.position);
-    }
-  }
-
   function handleEdgesChange(changes: EdgeChange[]) {
     for (const change of changes) {
-      const removeChange = asRemoveChange(change);
-      if (removeChange) {
-        props.onDeleteEdge(removeChange.id, {} as React.MouseEvent);
+      if (change.type === 'remove') {
+        props.onDeleteEdge(change.id, undefined);
       }
     }
   }
@@ -677,11 +648,11 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
       <div className="fd-xyflow-live__surface">
         <ReactFlowProvider>
           <ReactFlow
-            nodes={nodes}
-            edges={edges}
+            nodes={localNodes}
+            edges={snapshotEdges}
             nodeTypes={xyflowNodeTypes}
-            viewport={controlledViewport as DesignerXyflowReactFlowProps['viewport']}
-            fitView={false}
+            defaultViewport={controlledViewport}
+            fitView
             nodesConnectable
             elementsSelectable
             nodesDraggable
@@ -695,42 +666,36 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}
             onSelectionChange={handleSelectionChange}
-            onNodeClick={(_event, node) => props.onNodeSelect(node.id, {} as React.MouseEvent)}
-            onEdgeClick={(_event, edge) => props.onEdgeSelect(edge.id, {} as React.MouseEvent)}
-            onNodeDragStop={(_event, node) =>
-              commitNodePosition(node.id, {
-                x: node.position.x,
-                y: node.position.y
-              })
-            }
+            onNodeClick={(_event, node) => props.onNodeSelect(node.id, undefined)}
+            onEdgeClick={(_event, edge) => props.onEdgeSelect(edge.id, undefined)}
             proOptions={{ hideAttribution: true }}
             onNodeMouseEnter={(_e, node) => {
               if (hoverTimeoutRef.current) {
                 clearTimeout(hoverTimeoutRef.current);
               }
-              props.onNodeHover?.(node.id, {} as React.MouseEvent);
+              props.onNodeHover?.(node.id, undefined);
             }}
             onNodeMouseLeave={() => {
               hoverTimeoutRef.current = setTimeout(() => {
-                props.onNodeHover?.(null, {} as React.MouseEvent);
+                props.onNodeHover?.(null, undefined);
               }, 160);
             }}
             onEdgeMouseEnter={(_e, edge) => {
               if (hoverTimeoutRef.current) {
                 clearTimeout(hoverTimeoutRef.current);
               }
-              props.onEdgeHover?.(edge.id, {} as React.MouseEvent);
+              props.onEdgeHover?.(edge.id, undefined);
             }}
             onEdgeMouseLeave={() => {
               hoverTimeoutRef.current = setTimeout(() => {
-                props.onEdgeHover?.(null, {} as React.MouseEvent);
+                props.onEdgeHover?.(null, undefined);
               }, 160);
             }}
             onNodeDoubleClick={(_event, node) => {
-              props.onNodeDoubleClick?.(node.id, {} as React.MouseEvent);
+              props.onNodeDoubleClick?.(node.id, undefined);
             }}
             onEdgeDoubleClick={(_event, edge) => {
-              props.onEdgeDoubleClick?.(edge.id, {} as React.MouseEvent);
+              props.onEdgeDoubleClick?.(edge.id, undefined);
             }}
             onDrop={(event) => {
               event.preventDefault();

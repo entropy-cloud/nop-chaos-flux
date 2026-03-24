@@ -1215,11 +1215,290 @@ body {
   }
 }
 
-/* Flow List Page */
-.flow-list-page {
-  min-height: 100vh;
-  padding: 24px;
+.flow-canvas {
+  width: 100%;
+  height: 100%;
+  background: #fafafa;
+}
+
+.flow-canvas .react-flow {
+  width: 100%;
+  height: 100%;
+}
+
+.flow-canvas .react-flow__node {
+  cursor: pointer;
+}
+
+.flow-canvas .react-flow__edge {
+  cursor: pointer;
+}
+
+.flow-canvas .react-flow__edge-path {
+  stroke: #94a3b8;
+  stroke-width: 2;
+}
+
+.flow-canvas .react-flow__edge.selected .react-flow__edge-path {
+  stroke: #3b82f6;
+  stroke-width: 3;
+}
+
+.flow-canvas .react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: #3b82f6;
+  border: 2px solid #ffffff;
+}
+
+.flow-canvas .react-flow__background {
+  background-color: #fafafa;
+}
+
+/* Flow Node Styles */
+.flow-node {
+  min-width: 12rem;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.flow-node--selected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.flow-node__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.flow-node__handle {
+  width: 10px;
+  height: 10px;
+  background: #3b82f6;
+  border: 2px solid #ffffff;
+}
+
+/* Flow Edge Styles */
+.flow-edge__path {
+  stroke: #94a3b8;
+  stroke-width: 2;
+  fill: none;
+}
+
+.flow-edge--selected .flow-edge__path {
+  stroke: #3b82f6;
+  stroke-width: 3;
+}
+
+/* Flow Toolbar Styles */
+.flow-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
+}
+
+.flow-toolbar__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.flow-toolbar__dirty {
+  color: #f59e0b;
+  font-weight: bold;
+}
+
+.flow-toolbar__spacer {
+  flex: 1;
+}
+
+.flow-toolbar__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.flow-toolbar__button {
+  padding: 6px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1e293b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.flow-toolbar__button:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.flow-toolbar__button:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+/* Flow Palette Styles */
+.flow-palette {
+  padding: 16px;
+}
+
+.flow-palette__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.flow-palette__items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flow-palette__item {
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1e293b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.flow-palette__item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+/* Flow Inspector Styles */
+.flow-inspector {
+  padding: 16px;
+}
+
+.flow-inspector__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.flow-inspector__content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flow-inspector__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.flow-inspector__field label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.flow-inspector__field span {
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.flow-inspector__button {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1e293b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.flow-inspector__button--danger {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.flow-inspector__button--danger:hover {
+  background: #fee2e2;
+}
+
+.flow-inspector__empty {
+  color: #94a3b8;
+  font-size: 14px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+/* Flow Designer Layout */
+.flow-designer-example {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-designer-example__toolbar {
+  flex-shrink: 0;
+}
+
+.flow-designer-example__body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.flow-designer-example__palette {
+  width: 200px;
+  border-right: 1px solid #e2e8f0;
+  background: #ffffff;
+  overflow-y: auto;
+}
+
+.flow-designer-example__canvas {
+  flex: 1;
+  position: relative;
+  min-height: 400px;
+}
+
+.flow-designer-example__inspector {
+  width: 280px;
+  border-left: 1px solid #e2e8f0;
+  background: #ffffff;
+  overflow-y: auto;
+}
+
+.flow-designer-example__json {
+  flex: 1;
+  padding: 16px;
+  overflow: auto;
+  background: #1e293b;
+}
+
+.flow-designer-example__json-pre {
+  margin: 0;
+  font-size: 13px;
+  color: #e2e8f0;
 }
 
 .flow-list-header {
@@ -1380,4 +1659,85 @@ body {
 .flow-list-action--danger:hover {
   background: #fef2f2;
   color: #dc2626;
+}
+
+/* React Flow Node Styles */
+.fd-xyflow-node {
+  min-width: 12rem;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fd-xyflow-node--active {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.fd-xyflow-node strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.fd-xyflow-node small {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+/* React Flow Canvas Container */
+.fd-xyflow-live {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.fd-xyflow-live__copy {
+  display: none;
+}
+
+.fd-xyflow-live__surface {
+  flex: 1;
+  min-height: 0;
+}
+
+.fd-xyflow-live__surface .react-flow {
+  width: 100%;
+  height: 100%;
+}
+
+.fd-xyflow-live__surface .react-flow__node {
+  cursor: pointer;
+}
+
+.fd-xyflow-live__surface .react-flow__edge {
+  cursor: pointer;
+}
+
+.fd-xyflow-live__surface .react-flow__edge-path {
+  stroke: #94a3b8;
+  stroke-width: 2;
+}
+
+.fd-xyflow-live__surface .react-flow__edge.selected .react-flow__edge-path {
+  stroke: #3b82f6;
+  stroke-width: 3;
+}
+
+.fd-xyflow-live__surface .react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: #3b82f6;
+  border: 2px solid #ffffff;
+}
+
+.fd-xyflow-live__surface .react-flow__background {
+  background-color: #fafafa;
 }

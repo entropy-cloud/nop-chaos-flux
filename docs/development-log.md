@@ -18,6 +18,53 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-25 (Flow Canvas Architecture Simplification)
+
+- Refactored flow-designer playground to follow nop-chaos-next prototype pattern
+- Created new simplified architecture with clear separation:
+  - `useFlowCanvasStore.ts` - Pure logic hook, manages internal state with React Flow's native `applyNodeChanges`/`applyEdgeChanges`
+  - `FlowCanvas.tsx` - Pure render component, receives store, no business logic
+  - `flowNodeTypes.tsx` - Node/edge type definitions, separated from render code
+  - `FlowDesignerExample.tsx` - Composition layer, uses store, handles shortcuts
+- Key design decisions:
+  - Internal state management only - external receives updates only on save/export
+  - Direct React Flow state binding, no intermediate bridge layer
+  - JS logic separated from render code in dedicated files
+  - Built-in undo/redo history with dirty tracking
+- Added `@xyflow/react` dependency directly to playground package
+- Files: `apps/playground/src/flow-designer/useFlowCanvasStore.ts`, `FlowCanvas.tsx`, `flowNodeTypes.tsx`, `FlowDesignerExample.tsx`
+- Ref: `c:/can/nop/nop-chaos-next-wt/nop-chaos-next-master/apps/main/src/pages/flow-editor/[id]/`
+
+### 2026-03-25 (Report Designer Migration Complete)
+
+- Added migration execution plan and acceptance record: `docs/plans/14-report-designer-to-flow-designer2-migration-plan.md`
+- Migrated four packages from `report-designer` into `flow-designer2`:
+  - `@nop-chaos/spreadsheet-core`
+  - `@nop-chaos/spreadsheet-renderers`
+  - `@nop-chaos/report-designer-core`
+  - `@nop-chaos/report-designer-renderers`
+- Integrated workspace configuration for new packages:
+  - root project references (`tsconfig.json`)
+  - path aliases (`tsconfig.base.json`)
+  - Vite workspace aliases (`vite.workspace-alias.ts`)
+- Fixed migration/runtime/test issues found during validation:
+  - removed copied package-local `node_modules` to resolve React multi-instance `invalid hook call`
+  - aligned `canvas-bridge` tests/mocks to current bridge callback behavior
+  - added namespace providers in report/spreadsheet page renderers so namespaced actions dispatch correctly under action-scope runtime
+- Acceptance result: package-by-package automated test sweep completed with final marker `ALL_TESTS_PASSED`
+- Key decision: enforce runtime compatibility at the `ActionScope` namespace-provider layer instead of restoring legacy dispatch assumptions
+
+### 2026-03-25 (React Flow v12 Canvas Fix)
+
+- Fixed flow-designer playground not displaying nodes and edges
+- Root cause 1: `DesignerXyflowCanvasBridge` used `viewport` prop on ReactFlow which doesn't exist in `@xyflow/react` v12. Changed to `defaultViewport` + `fitView`.
+- Root cause 2: `.fd-xyflow-live` CSS used `display: grid` with padding, breaking the height chain for React Flow container. Changed to `display: flex; flex-direction: column` so `.fd-xyflow-live__surface` can properly fill available space via `flex: 1; min-height: 0`.
+- Root cause 3: Missing `@xyflow/react/dist/style.css` import causing React Flow to not render properly. Added import to `canvas-bridge.tsx`.
+- Root cause 4: Missing CSS styles for `.fd-xyflow-node` custom node component. Added styles to `apps/playground/src/styles.css`.
+- Files changed: `packages/flow-designer-renderers/src/canvas-bridge.tsx`, `apps/playground/src/styles.css`
+- Key decision: use `defaultViewport` (one-time initial viewport) instead of controlled `viewport` prop, letting React Flow manage its own viewport internally while syncing via `onMove` callback.
+- Ref: `docs/architecture/flow-designer/canvas-adapters.md`
+
 ### 2026-03-24 (Flow Editor Parity Phase 1)
 
 - Switched playground FlowDesignerExample to use xyflow adapter as the primary canvas renderer

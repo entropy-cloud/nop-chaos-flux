@@ -1,235 +1,88 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import type {
-  GraphDocument,
-  DesignerConfig,
-  NodeTypeConfig,
-  DesignerSnapshot
-} from '@nop-chaos/flow-designer-core';
-import { createDesignerCore } from '@nop-chaos/flow-designer-core';
-import { renderDesignerCanvasBridge } from '@nop-chaos/flow-designer-renderers';
-import type { DesignerCanvasBridgeProps } from '@nop-chaos/flow-designer-renderers';
-
-import {
-  FlowDesignerToolbar,
-  FlowDesignerPalette,
-  FlowDesignerInspector,
-  FlowDesignerToast,
-  FlowDesignerHoverToolbar
-} from './flow-designer';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FlowCanvas } from './flow-designer/FlowCanvas';
+import { useFlowCanvasStore } from './flow-designer/useFlowCanvasStore';
+import { FlowDesignerToast } from './flow-designer';
+import type { FlowCanvasDocument } from './flow-designer/useFlowCanvasStore';
 
 interface FlowDesignerProps {
-  document: GraphDocument;
-  config: DesignerConfig;
+  document?: FlowCanvasDocument;
+  onSave?: (document: FlowCanvasDocument) => void;
 }
 
-export function FlowDesignerExample({ document: initialDoc, config }: FlowDesignerProps) {
-  const [doc, setDoc] = useState(initialDoc);
-  const [activeTab, setActiveTab] = useState<'designer' | 'json'>('designer');
+export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesignerProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['basic', 'logic', 'execution']));
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
+  const store = useFlowCanvasStore(initialDoc);
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2000);
   }, []);
 
-  const core = useMemo(() => createDesignerCore(doc, config), [config, doc]);
-  const [snapshot, setSnapshot] = useState<DesignerSnapshot>(() => core.getSnapshot());
-
-  useEffect(() => {
-    const unsub = core.subscribe((event) => {
-      setSnapshot(core.getSnapshot());
-      if (event.type === 'documentChanged') {
-        setDoc(event.doc);
-      }
-      if (event.type === 'nodeAdded') {
-        showToast(`Node added: ${event.node.type}`);
-      }
-      if (event.type === 'edgeAdded') {
-        showToast('Edge connected');
-      }
-      if (event.type === 'nodeDeleted') {
-        showToast('Node deleted');
-      }
-      if (event.type === 'edgeDeleted') {
-        showToast('Edge deleted');
-      }
-    });
-    return unsub;
-  }, [core, showToast]);
+  const handleSave = useCallback(() => {
+    const doc = store.save();
+    onSave?.(doc);
+    showToast('Document saved');
+  }, [store, onSave, showToast]);
 
   const handleExport = useCallback(() => {
-    const json = core.exportDocument();
+    const json = store.export();
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${doc.name ?? 'workflow'}.json`;
+    a.download = 'workflow.json';
     a.click();
     URL.revokeObjectURL(url);
     showToast('Document exported');
-  }, [core, doc.name, showToast]);
-
-  const handleSave = useCallback(() => {
-    core.save();
-    localStorage.setItem('workflow-doc', JSON.stringify(core.getDocument()));
-    showToast('Document saved');
-  }, [core, showToast]);
-
-  const handleRestore = useCallback(() => {
-    const saved = localStorage.getItem('workflow-doc');
-    if (saved) {
-      const restoredDoc = JSON.parse(saved) as GraphDocument;
-      const newCore = createDesignerCore(restoredDoc, config);
-      setDoc(restoredDoc);
-      setSnapshot(newCore.getSnapshot());
-      showToast('Document restored');
-    }
-  }, [showToast, config]);
-
-  const handleUndo = useCallback(() => {
-    core.undo();
-  }, [core]);
-
-  const handleRedo = useCallback(() => {
-    core.redo();
-  }, [core]);
-
-  const handleClearSelection = useCallback(() => {
-    core.clearSelection();
-  }, [core]);
-
-  const handleDeleteNode = useCallback(
-    (nodeId: string) => {
-      core.deleteNode(nodeId);
-    },
-    [core]
-  );
-
-  const handleDuplicateNode = useCallback(
-    (nodeId: string) => {
-      core.duplicateNode(nodeId);
-    },
-    [core]
-  );
-
-  const handleDeleteEdge = useCallback(
-    (edgeId: string) => {
-      core.deleteEdge(edgeId);
-    },
-    [core]
-  );
-
-  const handleAddNode = useCallback(
-    (nodeType: NodeTypeConfig) => {
-      const position = { x: 180 + Math.random() * 400, y: 120 + Math.random() * 300 };
-      core.addNode(nodeType.id, position);
-    },
-    [core]
-  );
-
-  const handleNodeHover = useCallback((nodeId: string | null) => {
-    setHoveredNodeId(nodeId);
-    setHoveredEdgeId(null);
-  }, []);
-
-  const handleEdgeHover = useCallback((edgeId: string | null) => {
-    setHoveredEdgeId(edgeId);
-    setHoveredNodeId(null);
-  }, []);
+  }, [store, showToast]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if in input/textarea
       if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') {
         return;
       }
 
       const isMod = e.metaKey || e.ctrlKey;
 
-      // Ctrl+Z: Undo
       if (isMod && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        if (core.canUndo()) core.undo();
+        if (store.canUndo) store.undo();
         return;
       }
 
-      // Ctrl+Y or Ctrl+Shift+Z: Redo
       if ((isMod && e.key === 'y') || (isMod && e.key === 'z' && e.shiftKey)) {
         e.preventDefault();
-        if (core.canRedo()) core.redo();
+        if (store.canRedo) store.redo();
         return;
       }
 
-      // Ctrl+S: Save
       if (isMod && e.key === 's') {
         e.preventDefault();
         handleSave();
         return;
       }
 
-      // Ctrl+C: Copy
-      if (isMod && e.key === 'c') {
-        e.preventDefault();
-        const selectedNodeId = snapshot.selection.activeNodeId;
-        if (selectedNodeId) {
-          core.copySelection();
-          showToast('Node copied');
-        }
-        return;
-      }
-
-      // Ctrl+V: Paste
-      if (isMod && e.key === 'v') {
-        e.preventDefault();
-        core.pasteClipboard();
-        showToast('Pasted');
-        return;
-      }
-
-      // Ctrl+D: Duplicate selected node
-      if (isMod && e.key === 'd') {
-        e.preventDefault();
-        const selectedNodeId = snapshot.selection.activeNodeId;
-        if (selectedNodeId) {
-          core.duplicateNode(selectedNodeId);
-          showToast('Node duplicated');
-        }
-        return;
-      }
-
-      // Delete or Backspace: Delete selected element
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
-        const selectedNodeId = snapshot.selection.activeNodeId;
-        const selectedEdgeId = snapshot.selection.activeEdgeId;
-        if (selectedNodeId) {
-          core.deleteNode(selectedNodeId);
-        } else if (selectedEdgeId) {
-          core.deleteEdge(selectedEdgeId);
-        }
+        store.deleteSelected();
         return;
       }
 
-      // Escape: Clear selection
       if (e.key === 'Escape') {
         e.preventDefault();
-        core.clearSelection();
+        store.selectNode(null);
+        store.selectEdge(null);
         return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [core, snapshot, handleSave, showToast]);
+  }, [store, handleSave]);
 
-  // Leave guard for dirty state
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (core.isDirty()) {
+      if (store.dirty) {
         e.preventDefault();
         e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
         return e.returnValue;
@@ -238,165 +91,119 @@ export function FlowDesignerExample({ document: initialDoc, config }: FlowDesign
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [core]);
-
-  const toggleGroup = useCallback((groupId: string) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(groupId)) {
-        next.delete(groupId);
-      } else {
-        next.add(groupId);
-      }
-      return next;
-    });
-  }, []);
-
-  // Connection state for xyflow adapter
-  const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
-  const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
-
-  const bridgeProps: DesignerCanvasBridgeProps = useMemo(
-    () => ({
-      snapshot,
-      pendingConnectionSourceId,
-      reconnectingEdgeId,
-      showMinimap: true,
-      showControls: true,
-      onPaneClick: () => {
-        core.clearSelection();
-      },
-      onNodeSelect: (nodeId: string, event: React.MouseEvent) => {
-        event.stopPropagation();
-        core.selectNode(nodeId);
-      },
-      onEdgeSelect: (edgeId: string, event: React.MouseEvent) => {
-        event.stopPropagation();
-        core.selectEdge(edgeId);
-      },
-      onStartConnection: (nodeId: string, event: React.MouseEvent) => {
-        event.stopPropagation();
-        setPendingConnectionSourceId(nodeId);
-      },
-      onCancelConnection: () => {
-        setPendingConnectionSourceId(null);
-      },
-      onCompleteConnection: (targetNodeId: string, event: React.MouseEvent) => {
-        event.stopPropagation();
-        if (pendingConnectionSourceId && pendingConnectionSourceId !== targetNodeId) {
-          core.addEdge(pendingConnectionSourceId, targetNodeId, { label: '' });
-        }
-        setPendingConnectionSourceId(null);
-      },
-      onStartReconnect: (edgeId: string, event: React.MouseEvent) => {
-        event.stopPropagation();
-        setReconnectingEdgeId(edgeId);
-      },
-      onCancelReconnect: () => {
-        setReconnectingEdgeId(null);
-      },
-      onCompleteReconnect: (edgeId: string, sourceId: string, targetId: string, event: React.MouseEvent) => {
-        event.stopPropagation();
-        core.reconnectEdge(edgeId, sourceId, targetId);
-        setReconnectingEdgeId(null);
-      },
-      onDuplicateNode: (nodeId: string) => {
-        core.duplicateNode(nodeId);
-      },
-      onDeleteNode: (nodeId: string) => {
-        core.deleteNode(nodeId);
-      },
-      onDeleteEdge: (edgeId: string) => {
-        core.deleteEdge(edgeId);
-      },
-      onMoveNode: (nodeId: string, _event: React.MouseEvent, position?: { x: number; y: number }) => {
-        if (position) {
-          core.moveNode(nodeId, position);
-        }
-      },
-      onViewportChange: (viewport: { x: number; y: number; zoom: number }) => {
-        core.setViewport(viewport);
-      },
-      onNodeDoubleClick: (nodeId: string) => {
-        core.selectNode(nodeId);
-      },
-      onEdgeDoubleClick: (edgeId: string) => {
-        core.selectEdge(edgeId);
-      },
-      onNodeHover: (nodeId: string | null) => {
-        handleNodeHover(nodeId);
-      },
-      onEdgeHover: (edgeId: string | null) => {
-        handleEdgeHover(edgeId);
-      },
-      onDrop: (nodeTypeId: string, position: { x: number; y: number }) => {
-        core.addNode(nodeTypeId, position);
-      }
-    }),
-    [snapshot, pendingConnectionSourceId, reconnectingEdgeId, core, handleNodeHover, handleEdgeHover]
-  );
+  }, [store.dirty]);
 
   return (
     <div className="flow-designer-example na-theme-root fd-theme-root">
-      <FlowDesignerToolbar
-        docName={doc.name}
-        canUndo={core.canUndo()}
-        canRedo={core.canRedo()}
-        activeTab={activeTab}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onClearSelection={handleClearSelection}
-        onSave={handleSave}
-        onRestore={handleRestore}
-        onExport={handleExport}
-        onTabChange={setActiveTab}
-      />
+      <div className="flow-designer-example__toolbar">
+        <div className="flow-toolbar">
+          <h3 className="flow-toolbar__title">Flow Designer</h3>
+          {store.dirty && <span className="flow-toolbar__dirty">*</span>}
+          <div className="flow-toolbar__spacer" />
+          <div className="flow-toolbar__actions">
+            <button
+              className="flow-toolbar__button"
+              onClick={store.undo}
+              disabled={!store.canUndo}
+              type="button"
+            >
+              Undo
+            </button>
+            <button
+              className="flow-toolbar__button"
+              onClick={store.redo}
+              disabled={!store.canRedo}
+              type="button"
+            >
+              Redo
+            </button>
+            <button className="flow-toolbar__button" onClick={handleSave} type="button">
+              Save
+            </button>
+            <button className="flow-toolbar__button" onClick={handleExport} type="button">
+              Export
+            </button>
+            <button className="flow-toolbar__button" onClick={store.reset} type="button">
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="flow-designer-example__body">
-        {activeTab === 'designer' ? (
-          <>
-            <FlowDesignerPalette
-              config={config}
-              search={search}
-              expandedGroups={expandedGroups}
-              onSearchChange={setSearch}
-              onToggleGroup={toggleGroup}
-              onAddNode={handleAddNode}
-            />
-
-            <div className="flow-designer-example__canvas">
-              {renderDesignerCanvasBridge('xyflow', bridgeProps)}
+        <div className="flow-designer-example__palette">
+          <div className="flow-palette">
+            <div className="flow-palette__section">
+              <div className="flow-palette__title">Nodes</div>
+              <div className="flow-palette__items">
+                {['start', 'end', 'task', 'condition', 'parallel', 'loop'].map((type) => (
+                  <button
+                    key={type}
+                    className="flow-palette__item"
+                    onClick={() => {
+                      const position = { x: 180 + Math.random() * 400, y: 120 + Math.random() * 300 };
+                      store.addNode(type, position, { label: type });
+                      showToast(`Node added: ${type}`);
+                    }}
+                    type="button"
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
             </div>
-
-            <FlowDesignerHoverToolbar
-              nodeId={hoveredNodeId}
-              edgeId={hoveredEdgeId}
-              onEditNode={(nodeId) => {
-                core.selectNode(nodeId);
-              }}
-              onDuplicateNode={handleDuplicateNode}
-              onDeleteNode={handleDeleteNode}
-              onEditEdge={(edgeId) => {
-                core.selectEdge(edgeId);
-              }}
-              onDeleteEdge={handleDeleteEdge}
-            />
-
-            <FlowDesignerInspector
-              snapshot={snapshot}
-              onUpdateNode={core.updateNode.bind(core)}
-              onDeleteNode={handleDeleteNode}
-              onUpdateEdge={core.updateEdge.bind(core)}
-              onDeleteEdge={handleDeleteEdge}
-            />
-          </>
-        ) : (
-          <div className="flow-designer-example__json">
-            <pre className="flow-designer-example__json-pre">
-              {JSON.stringify(doc, null, 2)}
-            </pre>
           </div>
-        )}
+        </div>
+
+        <div className="flow-designer-example__canvas">
+          <FlowCanvas store={store} showMinimap showControls showGrid />
+        </div>
+
+        <div className="flow-designer-example__inspector">
+          <div className="flow-inspector">
+            {store.selectedNodeId && (
+              <div className="flow-inspector__section">
+                <div className="flow-inspector__title">Selected Node</div>
+                <div className="flow-inspector__content">
+                  <div className="flow-inspector__field">
+                    <label>ID:</label>
+                    <span>{store.selectedNodeId}</span>
+                  </div>
+                  <button
+                    className="flow-inspector__button flow-inspector__button--danger"
+                    onClick={store.deleteSelected}
+                    type="button"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            )}
+            {store.selectedEdgeId && (
+              <div className="flow-inspector__section">
+                <div className="flow-inspector__title">Selected Edge</div>
+                <div className="flow-inspector__content">
+                  <div className="flow-inspector__field">
+                    <label>ID:</label>
+                    <span>{store.selectedEdgeId}</span>
+                  </div>
+                  <button
+                    className="flow-inspector__button flow-inspector__button--danger"
+                    onClick={store.deleteSelected}
+                    type="button"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            )}
+            {!store.selectedNodeId && !store.selectedEdgeId && (
+              <div className="flow-inspector__empty">
+                Select a node or edge to inspect
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {toastMessage && <FlowDesignerToast message={toastMessage} />}

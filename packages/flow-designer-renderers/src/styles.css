@@ -485,11 +485,18 @@
   color: var(--fd-text-muted);
 }
 
-.fd-xyflow-preview,
-.fd-xyflow-live {
+.fd-xyflow-preview {
   display: grid;
   gap: 16px;
   padding: 16px;
+  color: var(--fd-text);
+}
+
+.fd-xyflow-live {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
   color: var(--fd-text);
 }
 
@@ -500,6 +507,10 @@
   gap: 8px;
 }
 
+.fd-xyflow-live__copy {
+  padding: 12px 16px 0;
+}
+
 .fd-xyflow-preview__actions {
   display: flex;
   flex-wrap: wrap;
@@ -507,7 +518,8 @@
 }
 
 .fd-xyflow-live__surface {
-  min-height: 480px;
+  flex: 1;
+  min-height: 0;
   border: 1px solid var(--fd-border);
   border-radius: 12px;
   background: var(--fd-canvas-bg);

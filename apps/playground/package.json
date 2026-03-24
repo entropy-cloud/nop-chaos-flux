@@ -18,6 +18,7 @@
     "@nop-chaos/amis-schema": "workspace:*",
     "@nop-chaos/flow-designer-core": "workspace:*",
     "@nop-chaos/flow-designer-renderers": "workspace:*",
+    "@xyflow/react": "^12.10.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

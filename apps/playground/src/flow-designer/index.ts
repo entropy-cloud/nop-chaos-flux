@@ -18,3 +18,9 @@ export type { FlowDesignerHoverToolbarProps } from './FlowDesignerHoverToolbar';
 
 export { FlowListPage } from './FlowListPage';
 export type { FlowListPageProps, FlowItem } from './FlowListPage';
+
+export { FlowCanvas } from './FlowCanvas';
+export type { FlowCanvasProps } from './FlowCanvas';
+
+export { useFlowCanvasStore } from './useFlowCanvasStore';
+export type { FlowCanvasStore, FlowCanvasDocument, FlowCanvasNode, FlowCanvasEdge } from './useFlowCanvasStore';

@@ -146,7 +146,6 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
       </button>
       <FlowDesignerExample
         document={sampleWorkflowDocument}
-        config={workflowDesignerConfig}
       />
     </div>
   );

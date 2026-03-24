@@ -71,6 +71,9 @@ importers:
       '@nop-chaos/flow-designer-renderers':
         specifier: workspace:*
         version: link:../../packages/flow-designer-renderers
+      '@xyflow/react':
+        specifier: ^12.10.1
+        version: 12.10.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -232,6 +235,73 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.0
         version: 19.2.3(@types/react@19.2.14)
+
+  packages/report-designer-core:
+    dependencies:
+      '@nop-chaos/spreadsheet-core':
+        specifier: workspace:*
+        version: link:../spreadsheet-core
+      zustand:
+        specifier: ^5.0.11
+        version: 5.0.11(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
+
+  packages/report-designer-renderers:
+    dependencies:
+      '@nop-chaos/amis-react':
+        specifier: workspace:*
+        version: link:../amis-react
+      '@nop-chaos/amis-runtime':
+        specifier: workspace:*
+        version: link:../amis-runtime
+      '@nop-chaos/amis-schema':
+        specifier: workspace:*
+        version: link:../amis-schema
+      '@nop-chaos/report-designer-core':
+        specifier: workspace:*
+        version: link:../report-designer-core
+      '@nop-chaos/spreadsheet-core':
+        specifier: workspace:*
+        version: link:../spreadsheet-core
+      '@nop-chaos/spreadsheet-renderers':
+        specifier: workspace:*
+        version: link:../spreadsheet-renderers
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+
+  packages/spreadsheet-core:
+    dependencies:
+      zustand:
+        specifier: ^5.0.11
+        version: 5.0.11(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
+
+  packages/spreadsheet-renderers:
+    dependencies:
+      '@nop-chaos/amis-react':
+        specifier: workspace:*
+        version: link:../amis-react
+      '@nop-chaos/amis-runtime':
+        specifier: workspace:*
+        version: link:../amis-runtime
+      '@nop-chaos/amis-schema':
+        specifier: workspace:*
+        version: link:../amis-schema
+      '@nop-chaos/spreadsheet-core':
+        specifier: workspace:*
+        version: link:../spreadsheet-core
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
 
 packages:
 
