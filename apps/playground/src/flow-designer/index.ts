@@ -15,3 +15,6 @@ export type { FlowDesignerToastProps } from './FlowDesignerToast';
 
 export { FlowDesignerHoverToolbar } from './FlowDesignerHoverToolbar';
 export type { FlowDesignerHoverToolbarProps } from './FlowDesignerHoverToolbar';
+
+export { FlowListPage } from './FlowListPage';
+export type { FlowListPageProps, FlowItem } from './FlowListPage';

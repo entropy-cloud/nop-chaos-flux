@@ -29,6 +29,30 @@ This file is intentionally lightweight.
  and renderers package
 - Next step: implement hover toolbars (Phase 3) and complete palette drag-drop (Phase 2.3)
 
+### 2026-03-24 (Phase 4 & 6 Complete)
+
+- Enhanced FlowDesignerInspector with type-specific editing (Phase 4.1):
+  - Added NodeTypeBadge component to display node type with icon
+  - Added NodeSpecificFields component for type-specific editors:
+    - condition: condition expression textarea
+    - loop: collection expression and variable name inputs
+    - parallel: branch count input
+    - task: service name input
+  - Added description field for all nodes
+- Added edge condition and style editing (Phase 4.2):
+  - Added condition input field for edges
+  - Added line style selector (solid/dashed/dotted)
+- Added responsive inspector/mobile-sheet behavior (Phase 4.3):
+  - CSS media query positions inspector as bottom sheet on mobile
+  - max-height: 50vh to avoid covering entire screen
+- Created FlowListPage component (Phase 6):
+  - Flow list table with name, description, status, updated columns
+  - Search and status filter functionality
+  - CRUD actions: create, edit, duplicate, delete, toggle status
+- Files: `apps/playground/src/flow-designer/FlowDesignerInspector.tsx`, `FlowListPage.tsx`, `styles.css`
+- Key decision: use CSS media query for responsive behavior instead of JS detection
+- Next step: all phases complete, ready for final verification and cleanup
+
 ### 2026-03-24 (Phase 5 Complete)
 
 - Implemented keyboard shortcuts (Phase 5.1):

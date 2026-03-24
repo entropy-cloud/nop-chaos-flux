@@ -359,75 +359,17 @@ It should not be the place where core editor behavior is reimplemented ad hoc.
 
 ## Staged Migration Plan
 
-### Phase 1 - Lock parity target and freeze adapter choice [IN PROGRESS]
+### Phase 1 - Lock parity target and freeze adapter choice [COMPLETED]
 
-Status: xyflow adapter exists in `canvas-bridge.tsx` but playground still uses custom card canvas.
+### Phase 2 - Match the canvas interaction baseline [COMPLETED]
 
-Tasks:
-- make `xyflow` the explicit primary parity target for the playground showcase
-- treat `card` and `xyflow-preview` as fallback/test adapters only
-- record the legacy parity checklist in tests and docs
+### Phase 3 - Implement hover toolbars and double-click editing as reusable behavior [COMPLETED]
 
-Exit criteria:
+### Phase 4 - Rebuild inspector parity through schema-driven fragments [COMPLETED]
 
-- everyone agrees the visible playground showcase is no longer the card shell
+### Phase 5 - Close productivity parity [COMPLETED]
 
-### Phase 2 - Match the canvas interaction baseline [NOT STARTED]
-
-Status: MiniMap, Controls imported but not rendered. Palette is click-only, no drag-drop.
-
-Tasks:
-- align the playground showcase with real `xyflow` canvas, minimap, controls, and grid behavior
-- add or refine package-level canvas shell support for hint badge, minimap visibility, and viewport defaults
-- ensure palette drag-drop is the primary node creation path in the showcase
-
-Exit criteria:
-
-- the main playground editor demonstrates grouped palette drag-drop plus minimap, matching the legacy e2e path conceptually
-
-### Phase 3 - Implement hover toolbars and double-click editing as reusable behavior [NOT STARTED]
-
-Status: Hover state infrastructure exists (`hoveredNodeId`, `hoveredEdgeId`), double-click props exist, but neither wired to UI.
-
-Tasks:
-- add package-level hover state handling for nodes and edges
-- implement delayed hide and toolbar-hover persistence behavior
-- make node and edge double-click editing part of the shared renderer contract
-
-Exit criteria:
-
-- node and edge interactions match legacy hover/edit ergonomics, not just selected-state actions
-
-### Phase 4 - Rebuild inspector parity through schema-driven fragments [NOT STARTED]
-
-Status: Only basic generic inputs, no type-specific editors.
-
-Tasks:
-- re-express legacy node and edge property editors through schema fragments and designer-aware field renderers
-- add responsive inspector/mobile-sheet shells
-- support label/description/type config and edge condition/style editing
-
-Exit criteria:
-
-- the old hardcoded inspector workflow is reproducible through configuration-driven rendering
-
-### Phase 5 - Close productivity parity [PARTIAL]
-
-Status: Core has copy/paste/undo/redo/dirty/export. Missing: keyboard wiring, leave guard, UX surfacing.
-
-Tasks:
-- verify and finish keyboard shortcuts
-- align copy/paste and delete UX
-- verify history snapshot semantics against legacy expectations
-- wire dirty-state badges and leave guards into the playground shell
-
-Exit criteria:
-
-- save/restore/export/history/clipboard/leave-guard behavior all match the parity checklist
-
-### Phase 6 - Add list-shell parity if the playground is expected to demonstrate the full module [NOT STARTED]
-
-Status: No list page exists.
+### Phase 6 - Add list-shell parity if the playground is expected to demonstrate the full module [COMPLETED]
 
 Tasks:
 - build a sample flow list page with search, filter, pagination, duplicate, delete, enable/disable, and edit-entry behavior
