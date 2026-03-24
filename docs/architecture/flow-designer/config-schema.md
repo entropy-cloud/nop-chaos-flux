@@ -6,7 +6,7 @@
 
 Flow Designer 由两部分输入组成：
 
-- `designer-page` schema：页面宿主、toolbar、inspector、dialog 区域
+- `designer-page` schema：页面宿主、toolbar、inspector、dialogs 等宿主片段入口
 - `DesignerConfig`：图领域配置，定义 nodeTypes、ports、edgeTypes、权限、功能
 
 ```ts
@@ -21,6 +21,14 @@ interface DesignerPageSchema {
   dialogs?: SchemaInput
 }
 ```
+
+当前实现说明：
+
+- `toolbar` 与 `inspector` 会作为 `designer-page` 的实际 region mount 渲染
+- `dialogs` 现在也会作为 `designer-page` 的实际 region mount 渲染，并与 `toolbar` / `inspector` 一样拿到 designer host `scope` 与 `actionScope`
+- 当前真正生效的 dialog 路径，是 toolbar / inspector / 其他 schema 片段通过共享 `dialog` action 打开 `SchemaRenderer` 自带的 dialog runtime
+- 仍然需要区分两件事：一是 `dialogs` region 片段本身现在已经会挂载；二是通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径
+- `packages/flow-designer-renderers/src/index.test.tsx` 现在也有正向回归测试锁定该现状：直接传入 `dialogs` schema 会出现在页面上，避免文档与 live behavior 再次漂移
 
 ## 2. GraphDocument
 

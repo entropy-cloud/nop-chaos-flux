@@ -157,18 +157,32 @@ const DEBUGGER_STYLES = `
 
 .na-debugger-launcher {
   position: fixed;
-  left: 16px;
-  bottom: 16px;
   z-index: 9998;
-  display: grid;
-  gap: 4px;
-  padding: 12px 14px;
-  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 20px;
   background: rgba(16, 24, 34, 0.94);
-  box-shadow: 0 16px 48px rgba(7, 12, 18, 0.28);
+  box-shadow: 0 8px 24px rgba(7, 12, 18, 0.32);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
 }
 
-.na-debugger-launcher__label { font-size: 13px; font-weight: 700; }
+.na-debugger-launcher:active {
+  cursor: grabbing;
+}
+
+.na-debugger-launcher__icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.na-debugger-launcher__label { font-size: 12px; font-weight: 600; }
 
 @media (max-width: 760px) {
   .na-debugger {
@@ -285,6 +299,77 @@ function useDraggablePosition(controller: AmisDebuggerController, initial: { x: 
   return { position, bind };
 }
 
+function useLauncherDrag(
+  controller: AmisDebuggerController,
+  initial: { x: number; y: number }
+) {
+  const [position, setPosition] = useState(initial);
+  const dragState = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startPosX: number;
+    startPosY: number;
+    hasMoved: boolean;
+  } | null>(null);
+  const wasDraggedRef = useRef(false);
+
+  useEffect(() => {
+    setPosition(initial);
+  }, [initial]);
+
+  const bind = {
+    onPointerDown(event: ReactPointerEvent<HTMLElement>) {
+      const target = event.currentTarget;
+      wasDraggedRef.current = false;
+      dragState.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startPosX: position.x,
+        startPosY: position.y,
+        hasMoved: false
+      };
+      target.setPointerCapture(event.pointerId);
+    },
+    onPointerMove(event: ReactPointerEvent<HTMLElement>) {
+      if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
+        return;
+      }
+
+      const deltaX = event.clientX - dragState.current.startX;
+      const deltaY = event.clientY - dragState.current.startY;
+
+      if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+        dragState.current.hasMoved = true;
+      }
+
+      if (!dragState.current.hasMoved) {
+        return;
+      }
+
+      const newX = Math.max(8, Math.min(window.innerWidth - 80, dragState.current.startPosX + deltaX));
+      const newY = Math.max(8, Math.min(window.innerHeight - 50, dragState.current.startPosY + deltaY));
+
+      setPosition({ x: newX, y: newY });
+    },
+    onPointerUp(event: ReactPointerEvent<HTMLElement>) {
+      if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
+        return;
+      }
+
+      if (dragState.current.hasMoved) {
+        controller.setPanelPosition(position);
+        wasDraggedRef.current = true;
+      }
+
+      dragState.current = null;
+    }
+  };
+
+  return { position, bind, wasDraggedRef };
+}
+
 function useInjectDebuggerStyles(enabled: boolean) {
   useEffect(() => {
     if (!enabled || typeof document === 'undefined') {
@@ -305,6 +390,7 @@ function useInjectDebuggerStyles(enabled: boolean) {
 export function AmisDebuggerPanel(props: { controller: AmisDebuggerController }) {
   const snapshot = useDebuggerSnapshot(props.controller);
   const { position, bind } = useDraggablePosition(props.controller, snapshot.position);
+  const { position: launcherPosition, bind: launcherBind, wasDraggedRef } = useLauncherDrag(props.controller, snapshot.position);
   useInjectDebuggerStyles(snapshot.enabled);
 
   const filteredEvents = useMemo(
@@ -331,9 +417,29 @@ export function AmisDebuggerPanel(props: { controller: AmisDebuggerController })
   if (!snapshot.panelOpen) {
     const errorCount = overview.errorCount;
     return (
-      <button type="button" className="na-debugger-launcher" onClick={() => props.controller.show()}>
-        <span className="na-debugger-launcher__label">Debugger</span>
-        <span className="na-debugger-launcher__meta">{errorCount > 0 ? `${errorCount} error${errorCount === 1 ? '' : 's'}` : `${snapshot.events.length} events`}</span>
+      <button
+        type="button"
+        className="na-debugger-launcher"
+        style={{ left: `${launcherPosition.x}px`, top: `${launcherPosition.y}px` }}
+        onPointerDown={launcherBind.onPointerDown}
+        onPointerMove={launcherBind.onPointerMove}
+        onPointerUp={(e) => {
+          launcherBind.onPointerUp(e);
+          if (!wasDraggedRef.current) {
+            props.controller.show();
+          }
+        }}
+      >
+        <span className="na-debugger-launcher__icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </span>
+        <span className="na-debugger-launcher__label">
+          {errorCount > 0 ? `${errorCount} err` : `${snapshot.events.length}`}
+        </span>
       </button>
     );
   }
@@ -352,8 +458,13 @@ export function AmisDebuggerPanel(props: { controller: AmisDebuggerController })
           <button type="button" className="na-debugger__icon-button" onClick={() => props.controller.clear()}>
             Clear
           </button>
-          <button type="button" className="na-debugger__icon-button" onClick={() => props.controller.hide()}>
-            Hide
+          <button type="button" className="na-debugger__icon-button" onClick={() => props.controller.hide()} title="Minimize">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <polyline points="4 14 10 14 10 20" />
+              <polyline points="20 10 14 10 14 4" />
+              <line x1="14" y1="10" x2="21" y2="3" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
           </button>
         </div>
       </div>

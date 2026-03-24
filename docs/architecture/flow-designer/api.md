@@ -33,15 +33,16 @@
 
 当前 MVP 已导出：
 
-- `designerRendererDefinitions`
+- `flowDesignerRendererDefinitions`
 - `registerFlowDesignerRenderers(registry)`
 - `createFlowDesignerRegistry()`
-- `designerActionHandlers`
+- `createDesignerActionProvider(core)`
 
 当前实现说明：
 
-- `designer:*` 动作不是通过修改共享 DSL 注册器实现，而是通过 `SchemaRendererProps.actionHandlers` 注入到共享 action runtime。
-- `designer-page` 负责创建 `DesignerCore`，并把 host snapshot 注入 schema scope。
+- `designer:*` 动作不是通过 root `actionHandlers` 注入，也不是通过修改 built-in action switch 实现，而是由 `designer-page` 在自身 `ActionScope` 边界内注册 `designer` namespace provider。
+- `designer-page` 负责创建 `DesignerCore`，并向内部 React renderer 子树暴露 `DesignerContext`；关于当前 snapshot 契约与 host scope 落地状态，见 `docs/architecture/flow-designer/runtime-snapshot.md`。
+- `designer-page` 当前还会把 designer host `scope` 与当前 `actionScope` 显式传给 `toolbar` / `inspector` / `dialogs` region render，因此这些 schema 片段不是仅靠“位于同一 React 子树”才可用，而是明确绑定到同一份 designer snapshot 视图与 namespace 边界。
 - 保存和导出通过 `env.functions.saveFlowDocument` 与 `env.functions.publishFlowExport` 回传给 playground 宿主。
 - 当前 clipboard 也是 core 自身能力，先支持单节点 copy/paste，并通过 `designer:copySelection` / `designer:pasteClipboard` 对外暴露。
 - 当前删除确认不通过专用 designer action 实现，而是由 `designer-page` 外围 schema 使用共享 `dialog` action 包装 `designer:deleteSelection`。
@@ -50,7 +51,7 @@
 - 当前 minimap 仍是 renderer shell 层的轻量 overview 实现：它基于当前 `doc.nodes` 坐标生成 overview 按钮并复用 `selectNode`，尚未切到 live `xyflow` 自带 minimap，但这不影响主画布已经默认走真实 `xyflow` adapter。
 - 当前 playground export 面板会直接消费 `designer:export` 通过 `env.functions.publishFlowExport` 回传的 JSON 字符串，并在宿主层派生 export summary；这说明导出后的结构检查仍然应由 host/example 负责，而不是把展示逻辑塞回 core 或 renderer action 本身。
 - 当前 `card` 与 `xyflow-preview` adapter 也提供了 renderer-local 的 connect/reconnect shell：进入连接模式后，第二次点击节点会转成 `addEdge` command；reconnect 也是先记录待 reconnect 的 edge，再把目标节点点击归一化成 `reconnectEdge` command。live `xyflow` 则通过真实 `@xyflow/react` 回调翻译到同一条命令链，三者都不改变 core 作为唯一 graph mutation source of truth 的边界。
-- 当前 host toolbar 还可以继续声明 document-level flow actions，例如 `designer:clearSelection`；这类动作依旧通过 `designerActionHandlers` 注入共享 action runtime，而不是要求 renderer 自带一套页面命令按钮协议。
+- 当前 host toolbar 还可以继续声明 document-level flow actions，例如 `designer:clearSelection`；这类动作依旧通过 `designer-page` 所在的本地 `ActionScope` 解析，而不是要求 renderer 自带一套页面命令按钮协议。
 - 当前 pane-click 语义已经在全部 canvas adapter 上统一：空白 surface click 会归一化为退出 connect/reconnect intent 并清理 selection；`card` / `xyflow-preview` 用显式 shell 复现该语义，live `xyflow` 则直接映射真实 pane 事件。
 - 当前 renderer 内部已经把 canvas 抽到单独 adapter 组件文件，`designer-page` 和 host scope 不需要感知底层实现；现在不是“后续再替换成真实 xyflow”，而是已经在同一 props 契约下同时承载 `card`、`xyflow-preview` 和 live `xyflow`。
 - 当前 `designer-page` 还支持 `canvasAdapter` prop，用于在 renderer 内部切换 `card`、`xyflow-preview` 与 `xyflow` adapter；preview 用来提前锁定 `onPaneClick`、selection bridge、connect bridge 等行为契约，而 live `xyflow` 则复用同一套 callback surface 接入真实 `@xyflow/react`。
@@ -92,7 +93,12 @@ interface DesignerShortcutBinding {
 - 初始化 graph runtime
 - 将 graph runtime 注入固定宿主 scope
 - 渲染 palette、canvas、inspector 区域
-- 通过 root `actionHandlers` 接入 `designer:*` actions
+- 在本地 `ActionScope` 内注册 `designer:*` actions
+
+当前 region wiring 约束：
+
+- `toolbar`、`inspector`、`dialogs` 都是普通 schema 片段，renderer 会显式给它们透传 host `scope` 与 `actionScope`
+- 通过共享 `dialog` action 打开的弹窗仍走共享 dialog runtime；它们与常驻 `dialogs` region 不是同一条渲染路径，但会继承触发它的 action scope，因此 dialog 内也可以继续 dispatch `designer:*`
 
 ### `designer-page` bridge contract
 
@@ -120,73 +126,21 @@ interface DesignerBridge {
 
 ## 3. 固定宿主 Scope
 
-`designer-page` 运行时对 schema 片段暴露以下标准上下文：
+固定宿主 scope 仍然是 Flow Designer 的目标架构，但当前代码里“真实已落地的 snapshot 契约”和“尚未完整接线到 schema 表达式 scope 的字段”需要分开看。
 
-### `doc`
+当前建议直接查阅:
 
-当前 graph 文档。
+- `docs/architecture/flow-designer/runtime-snapshot.md` - 当前 `DesignerSnapshot`、`DesignerContextValue`、已接线字段、未接线字段
+- `docs/architecture/flow-designer/collaboration.md` - `designer-page`、ActionScope、command adapter、canvas host、inspector 的协作链路
 
-```ts
-doc.id
-doc.name
-doc.meta
-doc.nodes
-doc.edges
-```
+本节只保留 API 级结论:
 
-### `selection`
-
-当前选中摘要。
-
-```ts
-selection.kind // 'none' | 'node' | 'edge'
-selection.nodeIds
-selection.edgeIds
-selection.count
-```
-
-### `activeNode`
-
-当前激活节点；无选中节点时可为空。
-
-```ts
-activeNode.id
-activeNode.type
-activeNode.data
-activeNode.position
-```
-
-### `activeEdge`
-
-当前激活边；无选中边时可为空。
-
-### `runtime`
-
-只读运行时摘要。
-
-```ts
-runtime.canUndo
-runtime.canRedo
-runtime.dirty
-runtime.gridEnabled
-runtime.zoom
-```
-
-### `palette` / `nodeTypes` / `edgeTypes`
-
-供 toolbar、palette、inspector schema 直接读取当前 designer 配置。
-
-### `designerCore`
-
-当前 host scope 也会暴露 `designerCore` 本身，供 `designer-field` 这类领域控件直接派发 graph command。
-
-### `actions`
-
-为 schema 层提供的辅助能力引用位。
-
-用于约定语义，不建议直接把复杂对象暴露给公式层。
-
-`actions` 可以引用桥接后的辅助能力，但不应成为底层 graph store 的逃生口。
+- Flow Designer 已经存在稳定的 `DesignerSnapshot` 契约
+- 当前 snapshot 主要通过 `DesignerContext` 暴露给 Flow Designer 自己的 React 子组件
+- schema 层当前最稳定的能力是 `designer:*` namespaced actions
+- toolbar / inspector / dialog 中触发的 schema action 当前都沿用同一条 `designer-page` -> local `ActionScope` -> `designer` namespace provider 路径
+- `dialogs` region 片段本身现在也已经是 live mount，而不是仅存在于 schema shape 中的保留字段
+- `${doc.*}`、`${selection.*}`、`${activeNode.*}`、`${activeEdge.*}`、`${runtime.*}` 这类 designer host scope 变量不应在现状说明中写成“已全部落地”
 
 ## 4. Designer Actions
 
@@ -469,7 +423,7 @@ interface DesignerLifecycleHooks {
 
 ```ts
 import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/amis-react'
-import { designerActionHandlers, registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers'
+import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers'
 
 const registry = createDefaultRegistry()
 registerFlowDesignerRenderers(registry)
@@ -481,7 +435,6 @@ export function WorkflowDesignerPage() {
     <SchemaRenderer
       schema={designerSchema}
       registry={registry}
-      actionHandlers={designerActionHandlers}
       env={env}
       formulaCompiler={formulaCompiler}
       data={{}}

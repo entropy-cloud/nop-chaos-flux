@@ -332,6 +332,38 @@ Examples:
 
 `args` should continue to be object-shaped, not positional arrays. That keeps expression evaluation, future extensibility, and debugging aligned with the current schema runtime.
 
+Runtime compatibility note:
+
+- the dispatcher now evaluates `args` when present
+- if `args` is omitted, namespaced actions also treat non-reserved top-level action fields as payload
+- that compatibility path keeps existing schemas such as `{ action: 'designer:addNode', nodeType: 'task' }` working while newer shared docs can still prefer `args`
+
+In practice this means both of the following are valid today:
+
+```json
+{
+  "action": "designer:addNode",
+  "nodeType": "task",
+  "position": {
+    "x": 160,
+    "y": 120
+  }
+}
+```
+
+```json
+{
+  "action": "designer:addNode",
+  "args": {
+    "nodeType": "task",
+    "position": {
+      "x": 160,
+      "y": 120
+    }
+  }
+}
+```
+
 For component-targeted invocation, recommended authoring shape is still object-based:
 
 ```json

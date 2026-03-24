@@ -18,7 +18,114 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-24 (Debugger Launcher Fixes)
+
+- Fixed debugger launcher drag/click interaction issues:
+  - Changed from return-value-based detection to ref-based `wasDraggedRef` tracking
+  - Launcher now correctly distinguishes click (opens panel) from drag (repositions)
+- Reduced launcher size to a compact pill shape:
+  - Smaller padding (`8px 12px`), rounded (`border-radius: 20px`)
+  - Added warning icon + event count display instead of verbose text
+  - Added `touch-action: none` and `user-select: none` for reliable dragging
+- Changed Minimize button to use a shrink icon instead of text label
+- Files: `packages/amis-debugger/src/panel.tsx`
+- Key decision: use ref to track drag state instead of relying on event handler return values, which don't propagate through React's synthetic event system
+- Next step: test the new launcher in playground to verify drag feels smooth
+
+### 2026-03-24
+
+- Implemented the playground refactor and debugger UX improvements described in `docs/architecture/playground-experience.md`:
+  - Split `apps/playground/src/App.tsx` into a navigation home page and separate test pages (`AmisBasicPage`, `FlowDesignerPage`, `DebuggerLabPage`)
+  - Changed default debugger config to launcher mode (`defaultOpen: false`)
+  - Changed debugger button from "Hide" to "Minimize" for clearer semantics
+  - Made debugger launcher draggable with shared position state between launcher and panel
+- Added navigation styles to `apps/playground/src/styles.css` for the home page cards
+- Updated `apps/playground/src/App.test.tsx` to test `AmisBasicPage` directly instead of the old monolithic `App`
+- Key decision: use simple state-based routing instead of URL routing for now, since the playground is a dev tool and URL stability is not critical
+- Next step: if playground grows more test pages, consider adding URL-based routing for shareable deep links
+
 ### 2026-03-23
+
+- Added `docs/architecture/playground-experience.md` to capture the proposed playground refactor and debugger UX direction: the playground should become a navigation hub with large entry buttons for focused test pages, and `@nop-chaos/amis-debugger` should default to a draggable left-bottom launcher that expands into a full panel and can minimize back without occupying the main workspace.
+- Updated `docs/index.md`, `docs/references/maintenance-checklist.md`, and `docs/architecture/frontend-baseline.md` so future playground or debugger UX work points to the new active design doc instead of burying those decisions only in chat or old analysis notes.
+- Key decision: treat playground information architecture and debugger interaction model as active architecture guidance, not just one-off implementation preferences, because both directly shape how future examples and diagnostics are introduced across the repo.
+- Next step: implement the playground home-page split and debugger launcher/panel three-state behavior against this new doc, then record any deviations discovered during implementation.
+
+- Added a compact “Region capability matrix” to `docs/architecture/flow-designer/runtime-snapshot.md` and linked it from `docs/architecture/flow-designer/collaboration.md`, so the current tested contract for mounted regions and shared dialog popups is visible in one place instead of being scattered across paragraphs.
+- Key decision: put the matrix in `runtime-snapshot.md` rather than `design.md`, because it describes current verified behavior rather than long-term target architecture.
+- Next step: if playground starts demonstrating `dialogs` region UX patterns, extend the matrix with a short “intended UI role” column without mixing that into the runtime contract itself.
+
+- Added an explicit inspector read-path regression in `packages/flow-designer-renderers/src/index.test.tsx` proving inspector fragments can read injected designer host scope values such as `${activeNode.data.label}`, completing the read-path matrix for toolbar, inspector, and dialogs regions.
+- Updated `docs/architecture/flow-designer/collaboration.md` and `docs/architecture/flow-designer/runtime-snapshot.md` so they now describe the full tested region matrix more accurately: all three mounted regions can read injected designer snapshot fields, while write-path coverage remains explicit for the regions/actions already exercised by tests.
+- Key decision: make the region guarantees explicit as a matrix instead of scattering one-off examples, because once all three region mounts exist the useful contract is symmetry, not individual anecdotes.
+- Next step: if we want a stricter guarantee, add a small table to the Flow Designer docs that lists each region and whether read/write/dialog-popup inheritance is covered by regression tests.
+
+- Added a dialogs read-path regression in `packages/flow-designer-renderers/src/index.test.tsx` proving mounted `dialogs` fragments can read injected designer host scope values such as `${activeNode.data.label}`, so the read/write symmetry now covers toolbar, inspector, and dialogs regions.
+- Updated `docs/architecture/flow-designer/collaboration.md` and `docs/architecture/flow-designer/runtime-snapshot.md` to reflect that dialogs fragments now have explicit regression coverage for both action dispatch and expression reads.
+- Key decision: lock dialogs read-path behavior immediately after locking its write-path, because the host-scope contract is only really trustworthy when both sides are tested together.
+- Next step: if we introduce a designer-specific overlay model for dialogs, keep these scope guarantees and add layout-specific tests on top rather than replacing them.
+
+- Added one more symmetric renderer regression in `packages/flow-designer-renderers/src/index.test.tsx` proving the mounted `dialogs` region is not just visible but also writable through the same namespaced action path: a button inside `dialogs` can dispatch `designer:addNode` and mutate the canvas just like toolbar and inspector fragments.
+- Updated `docs/architecture/flow-designer/collaboration.md` to state that toolbar, inspector, mounted dialogs fragments, and shared dialog-action popups are all now covered by explicit renderer regressions for the designer action-scope path.
+- Key decision: lock the `dialogs` region write path immediately after introducing the region mount, so the three region entry points stay behaviorally symmetric and future refactors cannot accidentally regress only one of them.
+- Next step: if `dialogs` grows a more opinionated overlay role, add separate tests for visibility/positioning semantics without weakening this shared action-path guarantee.
+
+- Implemented a real `dialogs` region mount in `packages/flow-designer-renderers/src/index.tsx`, so `designer-page` now renders `dialogs` fragments through the same injected host `scope` and `actionScope` path as `toolbar` and `inspector`.
+- Replaced the earlier negative regression in `packages/flow-designer-renderers/src/index.test.tsx` with a positive one that proves `designer-page.dialogs` content now renders, and updated `docs/architecture/flow-designer/api.md`, `docs/architecture/flow-designer/config-schema.md`, `docs/architecture/flow-designer/design.md`, `docs/architecture/flow-designer/collaboration.md`, and `docs/architecture/flow-designer/runtime-snapshot.md` to reflect that `dialogs` is now a live region mount while shared `dialog` actions still remain a separate popup path.
+- Key decision: keep both concepts explicitly documented — mounted `dialogs` region vs shared `dialog` action runtime — because they now coexist and solve different authoring needs.
+- Next step: decide whether `dialogs` should stay as a lightweight always-mounted fragment area or evolve into a more opinionated designer-specific overlay shell.
+
+- Added a renderer regression in `packages/flow-designer-renderers/src/index.test.tsx` locking the current reserved-`dialogs` behavior: passing `designer-page.dialogs` schema does not mount visible content by default, which now matches the updated docs that describe `dialogs` as a declared-but-not-mounted region path.
+- Updated `docs/architecture/flow-designer/config-schema.md` and `docs/architecture/flow-designer/collaboration.md` to reference that locked behavior explicitly, so future work can intentionally flip both tests and docs together if a true dialogs mount path is added.
+- Key decision: prefer an explicit regression for the current non-mounted `dialogs` behavior rather than only documenting it, because this is exactly the kind of schema-shape-vs-runtime-behavior mismatch that can silently drift again during refactors.
+- Next step: if `DesignerPageRenderer` later gains a real dialogs mount, replace this regression with a positive rendering test and update the corresponding docs in the same change.
+
+- Clarified `dialogs` semantics across `docs/architecture/flow-designer/config-schema.md`, `docs/architecture/flow-designer/design.md`, `docs/architecture/flow-designer/collaboration.md`, and `docs/architecture/flow-designer/runtime-snapshot.md`: the schema field and renderer region key exist today, but `DesignerPageRenderer` still only mounts toolbar/inspector directly, while real dialog behavior comes from shared `dialog` actions inheriting the same designer action scope.
+- Key decision: stop describing `dialogs` as if it were already a first-class always-mounted Flow Designer region, because that blurs the line between declared schema shape and the current live renderer shell.
+- Next step: either add a true `dialogs` mount path inside `DesignerPageRenderer` or keep the field explicitly documented as reserved until a designer-specific dialog-host use case appears.
+
+- Added another Flow Designer regression in `packages/flow-designer-renderers/src/index.test.tsx` proving dialogs opened from schema toolbar content still inherit the same designer action path, so a button inside the shared dialog runtime can dispatch `designer:addNode` successfully.
+- Updated `docs/architecture/flow-designer/api.md` and `docs/architecture/flow-designer/design.md` so they now describe the live host wiring more precisely: toolbar/inspector regions explicitly receive host `scope` + `actionScope`, while dialogs inherit the same action boundary through the shared dialog runtime.
+- Key decision: document dialogs as part of the same effective `designer:*` dispatch chain even though they are not mounted through a permanent `dialogs` region render today, because what matters for authoring is the inherited action-scope behavior, not the shell implementation detail.
+- Next step: decide whether `designer-page` should start rendering a dedicated `dialogs` region itself or whether that schema key should remain declarative-only until there is a concrete designer-specific dialog host use case.
+
+- Tightened `packages/flow-designer-renderers/src/index.tsx` so `designer-page` now passes both the injected designer host `scope` and the current `actionScope` explicitly into toolbar / inspector region renders, then added `packages/flow-designer-renderers/src/index.test.tsx` coverage proving schema-driven inspector fragments can dispatch `designer:*` actions through the same boundary as toolbar fragments.
+- Updated `docs/architecture/flow-designer/collaboration.md` to call out that this region wiring is now both context-inherited and explicitly forwarded, reducing the chance of future render-path refactors accidentally dropping the designer namespace boundary.
+- Key decision: keep the explicit `actionScope` handoff even though current context inheritance already works, because Flow Designer region rendering is a host integration seam where being explicit is safer than depending on incidental placement inside the same React tree.
+- Next step: align `api.md` / `design.md` wording so toolbar and inspector docs describe the now-explicit host scope plus action-scope forwarding path consistently.
+
+- Fixed namespaced action payload compatibility in `packages/amis-runtime/src/action-runtime.ts` so runtime dispatch now falls back to evaluating non-reserved top-level action fields when `args` is omitted, which makes existing Flow Designer schema actions like `{ action: 'designer:addNode', nodeType: 'task', position: ... }` actually reach namespace providers with the intended payload.
+- Added regression coverage in `packages/amis-runtime/src/index.test.ts` and re-ran `pnpm --filter @nop-chaos/amis-runtime test` plus `pnpm --filter @nop-chaos/flow-designer-renderers test` to prove both the generic runtime path and the Flow Designer toolbar-region path now pass.
+- Updated `docs/architecture/action-scope-and-imports.md` to document the compatibility rule: `args` remains the preferred structured shape, but top-level non-reserved fields are still accepted as payload for namespaced actions.
+- Key decision: preserve top-level payload compatibility in the dispatcher instead of forcing every existing namespaced action schema to migrate to `args` immediately, because current docs and tests already show both authoring styles in the repo.
+- Next step: align the remaining Flow Designer API examples toward one preferred authoring shape while keeping runtime support for both forms.
+
+- Added renderer-level tests in `packages/flow-designer-renderers/src/index.test.tsx` that lock two current Flow Designer behaviors: schema toolbar props can render via generic basic renderers but still do not make `designer:*` mutations effective in that path, and schema expressions still do not receive injected designer snapshot variables such as `activeNode` by default.
+- Key decision: test the current limitation explicitly so future work on real host-scope injection or region wiring can intentionally flip these assertions instead of silently changing behavior.
+- Next step: when `designer-page` starts creating a real child scope or rendering toolbar/inspector through compiled regions, update these tests to assert the new effective action path and snapshot-variable visibility.
+
+- Refined `docs/architecture/flow-designer/design.md` so the bridge, inspector, and fixed-host-scope sections now explicitly label host scope as target architecture and point current-state readers to `docs/architecture/flow-designer/runtime-snapshot.md` for the live snapshot truth.
+- Key decision: keep `design.md` aspirational where appropriate, but always add an explicit pointer when the live implementation has not yet caught up to the target host-scope model.
+- Next step: if host scope injection is implemented in code, remove the current-state caveats from `design.md` only after `runtime-snapshot.md` confirms the new scope fields are actually wired.
+
+- Refined `docs/architecture/flow-designer/api.md` so its host-scope section now points to `docs/architecture/flow-designer/runtime-snapshot.md` and `docs/architecture/flow-designer/collaboration.md` instead of restating a mixed current-state/target-state scope contract.
+- Key decision: keep `api.md` focused on integration-facing surfaces and move snapshot-truth caveats into the dedicated runtime-snapshot doc, so the same contract is not duplicated with drifting wording.
+- Next step: if Flow Designer eventually lands real schema-readable host scope injection, update `docs/architecture/flow-designer/runtime-snapshot.md` first, then decide whether `api.md` should inline a shorter stabilized subset again.
+
+- Added `docs/architecture/flow-designer/runtime-snapshot.md` to separate the live `DesignerSnapshot` / `DesignerContextValue` contracts from the broader “fixed host scope” design goal, explicitly marking which snapshot fields are real today and which schema-scope projections are still aspirational.
+- Updated `docs/index.md` and `docs/architecture/flow-designer/README.md` so future readers can jump straight to the new runtime-snapshot note when they need current-state answers instead of the broader design narrative.
+- Key decision: document current snapshot truth separately because the code already has a stable React-facing snapshot contract, but it has not yet fully materialized the same data as schema-readable host scope variables.
+- Next step: if `designer-page` later starts creating a real child scope for `doc` / `selection` / `activeNode` / `activeEdge` / `runtime`, update `docs/architecture/flow-designer/runtime-snapshot.md` first and then simplify overlapping caveats in `docs/architecture/flow-designer/api.md`.
+
+- Extended `docs/architecture/flow-designer/collaboration.md` with a file-level call-chain diagram that links `apps/playground/src/App.tsx`, `packages/amis-react/src/index.tsx`, `packages/flow-designer-renderers/src/index.tsx`, `packages/flow-designer-renderers/src/canvas-bridge.tsx`, `packages/flow-designer-renderers/src/designer-command-adapter.ts`, and `packages/flow-designer-core/src/core.ts` into one source-reading path.
+- Refreshed `docs/architecture/flow-designer/api.md` and `docs/architecture/flow-designer/README.md` to remove stale `designerActionHandlers` / root `actionHandlers` wording and replace it with the current `designer-page` + local `ActionScope` provider model; also corrected the exported renderer-definition name and the active playground entry path.
+- Key decision: keep the API doc aligned to the live provider-based integration model so future readers do not mistake old `actionHandlers` examples for supported Flow Designer wiring.
+- Next step: if `designer-page` later exposes a richer host snapshot contract or additional exported helpers, update `docs/architecture/flow-designer/api.md` and `docs/architecture/flow-designer/collaboration.md` together.
+
+- Added `docs/architecture/flow-designer/collaboration.md` to explain the live collaboration boundary between `SchemaRenderer`, `designer-page`, `ActionScope`, `DesignerCommandAdapter`, `DesignerCore`, and the canvas adapters, including call-chain diagrams for mount, toolbar actions, canvas connect/reconnect, inspector updates, and dialog-confirmed mutations.
+- Updated `docs/index.md`, `docs/architecture/flow-designer/README.md`, and `docs/references/maintenance-checklist.md` so future Flow Designer work now has an explicit doc entry for runtime collaboration details instead of spreading those explanations only across design, API, and adapter notes.
+- Key decision: treat collaboration flow as its own maintained architecture topic because the most failure-prone behavior in Flow Designer is no longer individual APIs, but the handoff between generic runtime boundaries and graph-specific command ownership.
+- Next step: if the host scope snapshot shape or `designer:*` command surface changes, refresh `docs/architecture/flow-designer/collaboration.md` first and then sync the narrower API or adapter docs.
 
 - Added `docs/architecture/flow-designer/canvas-adapters.md` as the dedicated architecture note for `card`, `xyflow-preview`, and live `xyflow` canvas variants, including default-adapter rules, failure-intent retention, and callback translation boundaries.
 - Updated `docs/index.md` and `docs/references/maintenance-checklist.md` so future canvas-adapter work has an explicit documentation entry point instead of relying only on `docs/architecture/flow-designer/api.md` and the development log.

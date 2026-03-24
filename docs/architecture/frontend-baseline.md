@@ -117,6 +117,7 @@ Treat the following as stable defaults unless there is a strong reason to change
 - use monorepo package extraction for shared behavior
 - keep runtime logic out of React-only packages when possible
 - keep examples and demo verification in `apps/playground`
+- keep `apps/playground` organized as a scenario hub with focused entry pages, not one ever-growing catch-all page
 - require tests for static fast path and identity reuse behavior
 - keep document updates aligned with architecture changes
 

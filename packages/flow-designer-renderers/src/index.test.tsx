@@ -2,6 +2,7 @@
 
 import { createFormulaCompiler } from '../../amis-formula/src/index';
 import { createSchemaRenderer } from '../../amis-react/src/index';
+import { basicRendererDefinitions } from '../../amis-renderers-basic/src/index';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
@@ -73,6 +74,20 @@ function renderDesignerPageWithDefaultAdapter(document: GraphDocument, notify = 
   const view = render(
     <SchemaRenderer
       schema={{ type: 'designer-page', document, config: createTestConfig() } as any}
+      env={createRendererEnv(notify)}
+      formulaCompiler={createFormulaCompiler()}
+    />
+  );
+
+  return { notify, ...view };
+}
+
+function renderDesignerPageWithSchemaRegions(schema: Record<string, unknown>, notify = vi.fn()) {
+  const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...flowDesignerRendererDefinitions]);
+
+  const view = render(
+    <SchemaRenderer
+      schema={schema as any}
       env={createRendererEnv(notify)}
       formulaCompiler={createFormulaCompiler()}
     />
@@ -328,6 +343,275 @@ describe('createDesignerActionProvider', () => {
     });
 
     expect(within(targetNode as HTMLElement).getByText('Reconnect here')).toBeTruthy();
+  });
+
+  it('lets schema toolbar regions dispatch designer actions through injected designer scope', async () => {
+    const view = renderDesignerPageWithSchemaRegions({
+      type: 'designer-page',
+      canvasAdapter: 'card',
+      document: {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 }
+      },
+      config: createTestConfig(),
+      toolbar: {
+        type: 'button',
+        label: 'Add task from schema',
+        onClick: {
+          action: 'designer:addNode',
+          nodeType: 'task',
+          position: { x: 160, y: 120 }
+        }
+      }
+    });
+
+    const button = within(view.container).getByRole('button', { name: 'Add task from schema' });
+    expect(view.container.querySelectorAll('.fd-node')).toHaveLength(0);
+
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(view.container.querySelectorAll('.fd-node')).toHaveLength(1);
+    });
+  });
+
+  it('injects designer snapshot fields into schema expression scope for toolbar fragments', async () => {
+    const view = renderDesignerPageWithSchemaRegions({
+      type: 'designer-page',
+      canvasAdapter: 'card',
+      document: {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [
+          { id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1' } }
+        ],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 }
+      },
+      config: createTestConfig(),
+      toolbar: {
+        type: 'tpl',
+        tpl: 'Selected node: ${activeNode.data.label}'
+      }
+    });
+
+    const canvas = within(view.container);
+    fireEvent.click(canvas.getByText('Task 1'));
+
+    await waitFor(() => {
+      expect(view.container.textContent ?? '').toContain('Selected node: Task 1');
+    });
+  });
+
+  it('lets schema inspector regions dispatch designer actions through the same action scope boundary', async () => {
+    const view = renderDesignerPageWithSchemaRegions({
+      type: 'designer-page',
+      canvasAdapter: 'card',
+      document: {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [
+          { id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1' } }
+        ],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 }
+      },
+      config: createTestConfig(),
+      inspector: {
+        type: 'button',
+        label: 'Remove selected node',
+        onClick: {
+          action: 'designer:deleteNode',
+          nodeId: '${activeNode.id}'
+        }
+      }
+    });
+
+    const canvas = within(view.container);
+    fireEvent.click(canvas.getByText('Task 1'));
+
+    const button = canvas.getByRole('button', { name: 'Remove selected node' });
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(view.container.querySelectorAll('.fd-node')).toHaveLength(0);
+    });
+  });
+
+  it('injects designer snapshot fields into inspector region expression scope', async () => {
+    const view = renderDesignerPageWithSchemaRegions({
+      type: 'designer-page',
+      canvasAdapter: 'card',
+      document: {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [
+          { id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1' } }
+        ],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 }
+      },
+      config: createTestConfig(),
+      inspector: {
+        type: 'tpl',
+        tpl: 'Inspector active node: ${activeNode.data.label}'
+      }
+    });
+
+    const canvas = within(view.container);
+    fireEvent.click(canvas.getByText('Task 1'));
+
+    await waitFor(() => {
+      expect(view.container.textContent ?? '').toContain('Inspector active node: Task 1');
+    });
+  });
+
+  it('keeps designer namespace actions available inside dialogs opened from schema regions', async () => {
+    const view = renderDesignerPageWithSchemaRegions({
+      type: 'designer-page',
+      canvasAdapter: 'card',
+      document: {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 }
+      },
+      config: createTestConfig(),
+      toolbar: {
+        type: 'button',
+        label: 'Open add dialog',
+        onClick: {
+          action: 'dialog',
+          dialog: {
+            title: 'Add node dialog',
+            body: [
+              {
+                type: 'button',
+                label: 'Add task from dialog',
+                onClick: {
+                  action: 'designer:addNode',
+                  nodeType: 'task',
+                  position: { x: 240, y: 140 }
+                }
+              }
+            ]
+          }
+        }
+      }
+    });
+
+    const canvas = within(view.container);
+    fireEvent.click(canvas.getByRole('button', { name: 'Open add dialog' }));
+
+    expect(await canvas.findByText('Add node dialog')).toBeTruthy();
+
+    fireEvent.click(canvas.getByRole('button', { name: 'Add task from dialog' }));
+
+    await waitFor(() => {
+      expect(view.container.querySelectorAll('.fd-node')).toHaveLength(1);
+    });
+  });
+
+  it('renders dialogs region content when designer-page declares a dialogs fragment', () => {
+    const view = renderDesignerPageWithSchemaRegions({
+      type: 'designer-page',
+      canvasAdapter: 'card',
+      document: {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 }
+      },
+      config: createTestConfig(),
+      dialogs: {
+        type: 'tpl',
+        tpl: 'Mounted dialogs region content'
+      }
+    });
+
+    expect(view.container.textContent ?? '').toContain('Mounted dialogs region content');
+  });
+
+  it('lets dialogs region fragments dispatch designer actions through the injected action scope', async () => {
+    const view = renderDesignerPageWithSchemaRegions({
+      type: 'designer-page',
+      canvasAdapter: 'card',
+      document: {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 }
+      },
+      config: createTestConfig(),
+      dialogs: {
+        type: 'button',
+        label: 'Add task from dialogs region',
+        onClick: {
+          action: 'designer:addNode',
+          nodeType: 'task',
+          position: { x: 320, y: 160 }
+        }
+      }
+    });
+
+    const button = within(view.container).getByRole('button', { name: 'Add task from dialogs region' });
+    expect(view.container.querySelectorAll('.fd-node')).toHaveLength(0);
+
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(view.container.querySelectorAll('.fd-node')).toHaveLength(1);
+    });
+  });
+
+  it('injects designer snapshot fields into dialogs region expression scope', async () => {
+    const view = renderDesignerPageWithSchemaRegions({
+      type: 'designer-page',
+      canvasAdapter: 'card',
+      document: {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [
+          { id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1' } }
+        ],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 }
+      },
+      config: createTestConfig(),
+      dialogs: {
+        type: 'tpl',
+        tpl: 'Dialogs active node: ${activeNode.data.label}'
+      }
+    });
+
+    const canvas = within(view.container);
+    fireEvent.click(canvas.getByText('Task 1'));
+
+    await waitFor(() => {
+      expect(view.container.textContent ?? '').toContain('Dialogs active node: Task 1');
+    });
   });
 
   it('renders the xyflow preview bridge when designer-page selects that adapter', () => {

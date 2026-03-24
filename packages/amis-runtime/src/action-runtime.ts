@@ -55,8 +55,36 @@ function buildActionMonitorPayload(action: ActionSchema, ctx: ActionContext) {
   };
 }
 
+const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
+  'action',
+  'componentId',
+  'componentName',
+  'componentPath',
+  'formId',
+  'dialogId',
+  'api',
+  'dialog',
+  'dataPath',
+  'value',
+  'debounce',
+  'continueOnError',
+  'then',
+  'args'
+]);
+
+function extractTopLevelActionPayload(action: ActionSchema): Record<string, unknown> | undefined {
+  const payloadEntries = Object.entries(action).filter(([key]) => !ACTION_PAYLOAD_RESERVED_KEYS.has(key));
+
+  if (payloadEntries.length === 0) {
+    return undefined;
+  }
+
+  return Object.fromEntries(payloadEntries);
+}
+
 function evaluateActionArgs(action: ActionSchema, ctx: ActionContext, evaluate: <T = unknown>(target: unknown, scope: ScopeRef) => T) {
-  return action.args ? evaluate<Record<string, unknown>>(action.args, ctx.scope) : undefined;
+  const payload = action.args ?? extractTopLevelActionPayload(action);
+  return payload ? evaluate<Record<string, unknown>>(payload, ctx.scope) : undefined;
 }
 
 function normalizeActionResult(result: ActionResult | unknown): ActionResult {

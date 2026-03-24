@@ -91,6 +91,7 @@ Review:
 - `docs/architecture/amis-core.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/flow-designer/canvas-adapters.md`
+- `docs/architecture/flow-designer/collaboration.md`
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
 - `docs/examples/user-management-schema.md`
@@ -173,6 +174,7 @@ Examples:
 Review:
 
 - `docs/examples/user-management-schema.md`
+- `docs/architecture/playground-experience.md`
 - the most relevant file in `docs/architecture/`
 - `docs/index.md` if the example is no longer the best reference entry point
 
@@ -189,6 +191,7 @@ Review:
 
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/renderer-runtime.md`
+- `docs/architecture/flow-designer/collaboration.md`
 - `docs/architecture/flow-designer/api.md` when designer integration changes
 - `docs/architecture/report-designer/design.md` when report/spreadsheet integration changes
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import type {
   ActionNamespaceProvider,
   BaseSchema,
@@ -6,9 +6,10 @@ import type {
   RendererComponentProps,
   RendererDefinition,
   RendererRegistry,
-  SchemaValue
+  SchemaValue,
+  ScopeRef
 } from '@nop-chaos/amis-schema';
-import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useRendererEnv } from '@nop-chaos/amis-react';
+import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, useRendererRuntime, useRenderScope } from '@nop-chaos/amis-react';
 import { registerRendererDefinitions } from '@nop-chaos/amis-runtime';
 import type {
   DesignerCore,
@@ -108,6 +109,73 @@ function toActionResult(result: DesignerCommandResult) {
     data: result.exported ?? result.data,
     error: result.error ? new Error(result.error) : undefined
   };
+}
+
+function buildDesignerScopeData(input: {
+  snapshot: DesignerSnapshot;
+  config: DesignerConfig;
+  core: DesignerCore;
+}) {
+  const { snapshot, config, core } = input;
+  const selectionKind = snapshot.activeNode ? 'node' : snapshot.activeEdge ? 'edge' : 'none';
+  const nodeIds = snapshot.selection.selectedNodeIds;
+  const edgeIds = snapshot.selection.selectedEdgeIds;
+
+  return {
+    doc: snapshot.doc,
+    selection: {
+      kind: selectionKind,
+      count: nodeIds.length + edgeIds.length,
+      nodeIds,
+      edgeIds,
+      selectedNodeIds: nodeIds,
+      selectedEdgeIds: edgeIds,
+      activeNodeId: snapshot.selection.activeNodeId,
+      activeEdgeId: snapshot.selection.activeEdgeId
+    },
+    activeNode: snapshot.activeNode,
+    activeEdge: snapshot.activeEdge,
+    runtime: {
+      canUndo: snapshot.canUndo,
+      canRedo: snapshot.canRedo,
+      dirty: snapshot.isDirty,
+      isDirty: snapshot.isDirty,
+      gridEnabled: snapshot.gridEnabled,
+      zoom: snapshot.viewport.zoom,
+      viewport: snapshot.viewport
+    },
+    palette: config.palette,
+    nodeTypes: config.nodeTypes,
+    edgeTypes: config.edgeTypes,
+    designerCore: core
+  };
+}
+
+function useDesignerHostScope(input: {
+  snapshot: DesignerSnapshot;
+  config: DesignerConfig;
+  core: DesignerCore;
+  path: string;
+}): ScopeRef {
+  const runtime = useRendererRuntime();
+  const parentScope = useRenderScope();
+  const scopeData = useMemo(() => buildDesignerScopeData(input), [input]);
+  const scopeRef = React.useRef<{ parentScope: ScopeRef; scope: ScopeRef; path: string } | undefined>(undefined);
+
+  if (!scopeRef.current || scopeRef.current.parentScope !== parentScope || scopeRef.current.path !== input.path) {
+    scopeRef.current = {
+      parentScope,
+      path: input.path,
+      scope: runtime.createChildScope(parentScope, scopeData, {
+        scopeKey: `${input.path}:designer-host`,
+        pathSuffix: 'designer'
+      })
+    };
+  } else {
+    scopeRef.current.scope.store?.setSnapshot(scopeData);
+  }
+
+  return scopeRef.current.scope;
 }
 
 function createDesignerActionProvider(core: DesignerCore): ActionNamespaceProvider {
@@ -301,8 +369,9 @@ function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>)
   );
   const actionScope = useCurrentActionScope();
   const designerProvider = useMemo(() => (core ? createDesignerActionProvider(core) : undefined), [core]);
+  const designerScope = useDesignerHostScope({ snapshot, config, core: core!, path: props.path });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!actionScope || !designerProvider) {
       return;
     }
@@ -310,8 +379,9 @@ function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>)
     return actionScope.registerNamespace('designer', designerProvider);
   }, [actionScope, designerProvider]);
 
-  const toolbarSlot = resolveRendererSlotContent(props, 'toolbar');
-  const inspectorSlot = resolveRendererSlotContent(props, 'inspector');
+  const toolbarSlot = props.regions.toolbar?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).toolbar as React.ReactNode);
+  const inspectorSlot = props.regions.inspector?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).inspector as React.ReactNode);
+  const dialogsSlot = props.regions.dialogs?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).dialogs as React.ReactNode);
 
   if (!core) {
     return <div>Designer requires document and config props</div>;
@@ -334,6 +404,7 @@ function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>)
             {hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector />}
           </div>
         </div>
+        {hasRendererSlotContent(dialogsSlot) ? <div className="fd-page__dialogs">{dialogsSlot}</div> : null}
       </div>
     </DesignerContext.Provider>
   );

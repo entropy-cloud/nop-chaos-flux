@@ -22,8 +22,8 @@ vi.mock('@nop-chaos/amis-renderers-data', () => ({
 
 vi.mock('@nop-chaos/amis-react', () => ({
   createDefaultRegistry: () => ({ register: () => undefined }),
-  createSchemaRenderer: () =>
-    function MockSchemaRenderer(props: { env: any; data?: Record<string, unknown> }) {
+  createSchemaRenderer: () => {
+    return function MockSchemaRenderer(props: { env: any; data?: Record<string, unknown> }) {
       rendererSnapshots.push({ env: props.env, data: props.data });
 
       return (
@@ -75,12 +75,29 @@ vi.mock('@nop-chaos/amis-react', () => ({
           </button>
         </div>
       );
-    }
+    };
+  }
 }));
 
-import { App } from './App';
+vi.mock('@nop-chaos/amis-debugger', () => ({
+  AmisDebuggerPanel: () => null,
+  createAmisDebugger: () => ({
+    id: 'test',
+    getSnapshot: () => ({ enabled: true, panelOpen: false, paused: false, events: [], filters: [], activeTab: 'timeline', position: { x: 24, y: 24 } }),
+    subscribe: () => () => undefined,
+    decorateEnv: (env: unknown) => env,
+    plugin: {},
+    onActionError: () => undefined
+  })
+}));
 
-describe('App', () => {
+vi.mock('@nop-chaos/flow-designer-renderers', () => ({
+  registerFlowDesignerRenderers: () => undefined
+}));
+
+import { AmisBasicPage } from './pages/AmisBasicPage';
+
+describe('AmisBasicPage', () => {
   beforeEach(() => {
     rendererSnapshots.length = 0;
   });
@@ -90,7 +107,16 @@ describe('App', () => {
   });
 
   it('keeps env stable across search and directory updates', async () => {
-    render(<App />);
+    const mockDebuggerController = {
+      id: 'test',
+      getSnapshot: () => ({ enabled: true, panelOpen: false, paused: false, events: [], filters: [], activeTab: 'timeline' as const, position: { x: 24, y: 24 } }),
+      subscribe: () => () => undefined,
+      decorateEnv: (env: unknown) => env,
+      plugin: {},
+      onActionError: () => undefined
+    };
+
+    render(<AmisBasicPage debuggerController={mockDebuggerController as any} />);
 
     const initialSnapshot = rendererSnapshots.at(-1);
     expect(initialSnapshot).toBeTruthy();

@@ -100,6 +100,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `designer-canvas` / `designer-palette` / `designer-node-card` / `designer-edge-row` 占位 renderer 定义
 - `registerFlowDesignerRenderers(registry)` / `createFlowDesignerRegistry()`
 - `designer-page` 在自身 action-scope 边界内注册 `designer` namespace provider，并让 toolbar/inspector 片段沿该边界执行
+- 当前 `designer-page` 不只是在 React 树上把 toolbar/inspector 放在同一 action-scope 边界里，还会在 region render 调用时显式透传 host `scope` 与 `actionScope`，降低后续 render-path 调整时丢失 designer namespace 绑定的风险
 - `designer-page.shortcuts`，用于在宿主层把键盘事件映射到已有 `designer:*` / shared action 链
 - `card` / `xyflow-preview` / `xyflow` 三种 canvas adapter，统一经由 `DesignerCanvasContent` host 映射到 command adapter dispatch
 
@@ -158,7 +159,8 @@ interface DesignerPageSchema {
 
 - `document` 是当前图文档初始值
 - `config` 是 designer 专用配置，定义 nodeTypes、ports、edgeTypes 等领域规则
-- `toolbar`、`inspector`、`dialogs` 是普通 schema 片段，由 `SchemaRenderer` 渲染
+- `toolbar`、`inspector`、`dialogs` 是当前已实际挂载的 schema 片段，由 `SchemaRenderer` 渲染
+- `dialogs` region 本身现在已经会被 `DesignerPageRenderer` 挂载；但通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径，两者不应混为一谈
 
 ## 6. 数据模型分层
 
@@ -190,10 +192,20 @@ interface DesignerPageSchema {
 
 ### 6.3 graph runtime 与 schema runtime 的桥接
 
-桥接层负责把 graph runtime 暴露给 `designer-page` 下的 schema 片段，但必须保持单向职责清晰：
+桥接层负责把 graph runtime 暴露给 `designer-page` 下的 renderer shell 与 schema 片段，但必须保持单向职责清晰。
+
+这里要区分两层含义：
+
+- 目标架构：schema 片段可以通过固定宿主 scope 读取 designer 只读快照
+- 当前实现：稳定快照已经存在，但主要通过 `DesignerContext` 暴露给 Flow Designer 自己的 React 子组件；schema 表达式 scope 还没有完整拿到同一组字段
+
+当前代码真相请优先看 `docs/architecture/flow-designer/runtime-snapshot.md`。
+
+目标态桥接约束如下：
 
 - schema 片段通过固定宿主 scope 读取 graph runtime 的只读快照
 - schema 片段通过 `designer:*` actions 或 bridge dispatch API 提交写操作
+- toolbar / inspector 片段当前已经显式收到该宿主 scope 与 action-scope；dialog 则通过共享 dialog runtime 继承打开它时的 action-scope，因此不会形成第二条 graph action 路径
 - schema 层不得直接拿到底层 graph store 并原地修改 document
 - bridge 对外暴露的是稳定快照与有限命令面，而不是整套 store 私有实现
 
@@ -248,11 +260,17 @@ interface DesignerPageSchema {
 
 属性面板直接使用 schema 片段驱动，而不是单独维护字段引擎。
 
-推荐方式：
+目标态推荐方式：
 
 - inspector schema 使用固定宿主 scope 读取 `activeNode` / `activeEdge`
 - 保存按钮触发 `designer:updateNodeData` / `designer:updateEdgeData`
 - 校验复用现有 form runtime
+
+现状补充：
+
+- 默认 inspector 与 `designer-field` 当前直接消费 `DesignerContext.snapshot`
+- schema inspector 的写路径已经可以稳定复用 `designer:*` action
+- schema inspector 的读路径还不应在现状文档里写成“`${activeNode.*}` 已默认可用”；当前落地状态见 `docs/architecture/flow-designer/runtime-snapshot.md`
 
 ### 9.2 两阶段创建
 
@@ -350,7 +368,11 @@ Flow Designer 需要统一的事务边界，即使历史底层实现最终同时
 
 ## 11. 固定宿主 Scope
 
-为了让 schema 片段稳定工作，`designer-page` 必须注入固定宿主 scope。
+本节描述的是目标架构，不等同于当前代码已经完整落地的 host scope 注入状态。
+
+当前真实 snapshot 契约、`DesignerContext` 暴露面，以及哪些字段尚未进入 schema 表达式 scope，请先看 `docs/architecture/flow-designer/runtime-snapshot.md`。
+
+目标上，为了让 schema 片段稳定工作，`designer-page` 应注入固定宿主 scope。
 
 推荐暴露：
 
@@ -361,7 +383,7 @@ Flow Designer 需要统一的事务边界，即使历史底层实现最终同时
 - `runtime`：只读运行时能力摘要
 - `actions`：供 schema 层引用的辅助能力
 
-这样 inspector 和 toolbar schema 可以稳定写成：
+如果后续这套 host scope 真正落地，inspector 和 toolbar schema 可以稳定写成：
 
 ```json
 {
