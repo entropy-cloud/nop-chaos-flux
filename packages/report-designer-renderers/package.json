@@ -1,0 +1,33 @@
+{
+  "name": "@nop-chaos/report-designer-renderers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@nop-chaos/spreadsheet-core": "workspace:*",
+    "@nop-chaos/spreadsheet-renderers": "workspace:*",
+    "@nop-chaos/report-designer-core": "workspace:*",
+    "@nop-chaos/amis-react": "workspace:*",
+    "@nop-chaos/amis-runtime": "workspace:*",
+    "@nop-chaos/amis-schema": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts,.tsx"
+  }
+}
