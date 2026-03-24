@@ -9,6 +9,7 @@ import { registerDataRenderers } from '@nop-chaos/amis-renderers-data';
 
 interface AmisBasicPageProps {
   debuggerController: AmisDebuggerController;
+  onBack: () => void;
 }
 
 const users = [
@@ -471,7 +472,7 @@ const schema = {
   ]
 };
 
-export function AmisBasicPage({ debuggerController }: AmisBasicPageProps) {
+export function AmisBasicPage({ debuggerController, onBack }: AmisBasicPageProps) {
   const [directoryUsers, setDirectoryUsers] = useState(users);
   const [searchResults, setSearchResults] = useState(users);
   const [searchQuery, setSearchQuery] = useState('');
@@ -598,6 +599,9 @@ export function AmisBasicPage({ debuggerController }: AmisBasicPageProps) {
   return (
     <main className="app-shell">
       <section className="hero-card hero-card--wide">
+        <button type="button" className="page-back" onClick={onBack}>
+          Back to Home
+        </button>
         <p className="eyebrow">AMIS Basic</p>
         <h1>Renderer Playground</h1>
         <p className="body-copy">

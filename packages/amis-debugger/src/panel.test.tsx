@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AmisDebuggerPanel } from './panel';
 import type { AmisDebuggerController, AmisDebuggerOverview, AmisDebuggerSnapshot, AmisDiagnosticReport, AmisInteractionTrace } from './types';
 
@@ -53,6 +53,14 @@ function createController(snapshot: AmisDebuggerSnapshot): AmisDebuggerControlle
     latestInteractionTrace: latestTrace,
     recentEvents: []
   };
+  const show = vi.fn();
+  const hide = vi.fn();
+  const clear = vi.fn();
+  const pause = vi.fn();
+  const resume = vi.fn();
+  const setActiveTab = vi.fn();
+  const setPanelPosition = vi.fn();
+  const toggleFilter = vi.fn();
 
   return {
     id: 'panel-test',
@@ -73,26 +81,26 @@ function createController(snapshot: AmisDebuggerSnapshot): AmisDebuggerControlle
       createDiagnosticReport: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters }, overview: emptyOverview, recentEvents: [] }),
       exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [] }),
       waitForEvent: async () => snapshot.events[0]!,
-      clear() {},
-      pause() {},
-      resume() {},
-      show() {},
-      hide() {},
+      clear,
+      pause,
+      resume,
+      show,
+      hide,
       toggle() {},
-      setActiveTab() {},
-      setPanelPosition() {}
+      setActiveTab,
+      setPanelPosition
     },
     decorateEnv: (env) => env,
     onActionError() {},
-    show() {},
-    hide() {},
+    show,
+    hide,
     toggle() {},
-    clear() {},
-    pause() {},
-    resume() {},
-    setActiveTab() {},
-    setPanelPosition() {},
-    toggleFilter() {},
+    clear,
+    pause,
+    resume,
+    setActiveTab,
+    setPanelPosition,
+    toggleFilter,
     queryEvents: () => [],
     getLatestEvent: () => undefined,
     getLatestError: () => undefined,
@@ -107,6 +115,10 @@ function createController(snapshot: AmisDebuggerSnapshot): AmisDebuggerControlle
   };
 }
 
+afterEach(() => {
+  cleanup();
+});
+
 describe('AmisDebuggerPanel', () => {
   it('shows the latest inferred interaction trace summary in overview mode', () => {
     const snapshot = createSnapshot();
@@ -119,4 +131,31 @@ describe('AmisDebuggerPanel', () => {
     expect(screen.getByText(/4 correlated events/i)).toBeTruthy();
     expect(screen.getByText(/node user-form/i)).toBeTruthy();
   });
+
+  it('calls hide when minimize button is clicked', () => {
+    const snapshot = createSnapshot();
+    const controller = createController(snapshot);
+
+    render(<AmisDebuggerPanel controller={controller} />);
+
+    fireEvent.click(screen.getByTitle('Minimize'));
+
+    expect(controller.hide).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens launcher on click without drag', () => {
+    const snapshot = { ...createSnapshot(), panelOpen: false };
+    const controller = createController(snapshot);
+
+    render(<AmisDebuggerPanel controller={controller} />);
+
+    const launcher = document.querySelector('.na-debugger-launcher');
+    expect(launcher).toBeTruthy();
+
+    fireEvent.pointerDown(launcher!, { button: 0, pointerId: 1, clientX: 40, clientY: 40 });
+    fireEvent.click(launcher!);
+
+    expect(controller.show).toHaveBeenCalledTimes(1);
+  });
+
 });

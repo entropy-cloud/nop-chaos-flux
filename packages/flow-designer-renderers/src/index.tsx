@@ -29,6 +29,7 @@ import {
   renderDesignerCanvasBridge,
   type DesignerCanvasAdapterKind
 } from './canvas-bridge';
+import './styles.css';
 
 export interface DesignerPageSchema extends BaseSchema {
   type: 'designer-page';
@@ -389,7 +390,7 @@ function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>)
 
   return (
     <DesignerContext.Provider value={ctxValue}>
-      <div className="fd-page">
+      <div className="fd-page na-theme-root fd-theme-root">
         <div className="fd-page__header">
           {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : null}
         </div>

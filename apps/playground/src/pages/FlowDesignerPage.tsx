@@ -134,11 +134,20 @@ const sampleWorkflowDocument: GraphDocument = {
   viewport: { x: 0, y: 0, zoom: 1 }
 };
 
-export function FlowDesignerPage() {
+interface FlowDesignerPageProps {
+  onBack: () => void;
+}
+
+export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
   return (
-    <FlowDesignerExample
-      document={sampleWorkflowDocument}
-      config={workflowDesignerConfig}
-    />
+    <div className="playground-flow-page">
+      <button type="button" className="page-back page-back--floating" onClick={onBack}>
+        Back to Home
+      </button>
+      <FlowDesignerExample
+        document={sampleWorkflowDocument}
+        config={workflowDesignerConfig}
+      />
+    </div>
   );
 }

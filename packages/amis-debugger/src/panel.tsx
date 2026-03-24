@@ -4,6 +4,40 @@ import { buildOverview, DEFAULT_FILTERS } from './diagnostics';
 
 const DEBUGGER_STYLE_ID = 'na-debugger-styles';
 const DEBUGGER_STYLES = `
+.na-theme-root {
+  --na-debugger-bg:
+    linear-gradient(180deg, rgba(16, 24, 34, 0.96), rgba(10, 18, 27, 0.98)),
+    radial-gradient(circle at top right, rgba(240, 183, 79, 0.16), transparent 42%);
+  --na-debugger-border: rgba(255, 255, 255, 0.08);
+  --na-debugger-shadow: 0 24px 72px rgba(7, 12, 18, 0.32);
+  --na-debugger-text: #eef4fb;
+  --na-debugger-eyebrow: #ffcf8b;
+  --na-debugger-chip-bg: rgba(255, 255, 255, 0.05);
+  --na-debugger-chip-border: rgba(255, 255, 255, 0.12);
+  --na-debugger-chip-active-bg: rgba(255, 207, 139, 0.18);
+  --na-debugger-chip-active-border: rgba(255, 207, 139, 0.34);
+  --na-debugger-chip-active-text: #ffcf8b;
+  --na-debugger-card-bg: rgba(255, 255, 255, 0.05);
+  --na-debugger-card-border: rgba(255, 255, 255, 0.08);
+  --na-debugger-muted-text: rgba(238, 244, 251, 0.7);
+  --na-debugger-detail-bg: rgba(0, 0, 0, 0.26);
+  --na-debugger-detail-text: #bce6ff;
+  --na-debugger-launcher-bg: rgba(16, 24, 34, 0.94);
+  --na-debugger-launcher-shadow: 0 8px 24px rgba(7, 12, 18, 0.32);
+  --na-debugger-badge-render-bg: rgba(120, 198, 255, 0.16);
+  --na-debugger-badge-render-text: #9bd9ff;
+  --na-debugger-badge-action-bg: rgba(255, 205, 128, 0.16);
+  --na-debugger-badge-action-text: #ffd18a;
+  --na-debugger-badge-api-bg: rgba(125, 235, 182, 0.16);
+  --na-debugger-badge-api-text: #9df3ca;
+  --na-debugger-badge-compile-bg: rgba(210, 183, 255, 0.16);
+  --na-debugger-badge-compile-text: #dcc0ff;
+  --na-debugger-badge-notify-bg: rgba(255, 158, 177, 0.16);
+  --na-debugger-badge-notify-text: #ffbac8;
+  --na-debugger-badge-error-bg: rgba(255, 128, 128, 0.18);
+  --na-debugger-badge-error-text: #ffadad;
+}
+
 .na-debugger {
   position: fixed;
   z-index: 9999;
@@ -13,12 +47,10 @@ const DEBUGGER_STYLES = `
   gap: 12px;
   padding: 14px;
   border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(16, 24, 34, 0.96), rgba(10, 18, 27, 0.98)),
-    radial-gradient(circle at top right, rgba(240, 183, 79, 0.16), transparent 42%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 72px rgba(7, 12, 18, 0.32);
-  color: #eef4fb;
+  background: var(--na-debugger-bg);
+  border: 1px solid var(--na-debugger-border);
+  box-shadow: var(--na-debugger-shadow);
+  color: var(--na-debugger-text);
   backdrop-filter: blur(16px);
 }
 
@@ -27,7 +59,17 @@ const DEBUGGER_STYLES = `
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.na-debugger__drag-handle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   cursor: move;
+  user-select: none;
+  touch-action: none;
 }
 
 .na-debugger__header h2 {
@@ -40,7 +82,7 @@ const DEBUGGER_STYLES = `
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: #ffcf8b;
+  color: var(--na-debugger-eyebrow);
 }
 
 .na-debugger__header-actions,
@@ -56,15 +98,15 @@ const DEBUGGER_STYLES = `
 .na-debugger__filter,
 .na-debugger-launcher {
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #eef4fb;
+  border: 1px solid var(--na-debugger-chip-border);
+  color: var(--na-debugger-text);
   cursor: pointer;
 }
 
 .na-debugger__icon-button,
 .na-debugger__tab,
 .na-debugger__filter {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--na-debugger-chip-bg);
   border-radius: 999px;
   padding: 8px 12px;
   font-size: 12px;
@@ -73,9 +115,9 @@ const DEBUGGER_STYLES = `
 
 .na-debugger__tab--active,
 .na-debugger__filter--active {
-  background: rgba(255, 207, 139, 0.18);
-  border-color: rgba(255, 207, 139, 0.34);
-  color: #ffcf8b;
+  background: var(--na-debugger-chip-active-bg);
+  border-color: var(--na-debugger-chip-active-border);
+  color: var(--na-debugger-chip-active-text);
 }
 
 .na-debugger__overview,
@@ -95,8 +137,8 @@ const DEBUGGER_STYLES = `
   gap: 8px;
   padding: 12px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--na-debugger-card-bg);
+  border: 1px solid var(--na-debugger-card-border);
 }
 
 .na-debugger__metric-card strong {
@@ -104,7 +146,7 @@ const DEBUGGER_STYLES = `
 }
 
 .na-debugger__metric-card--error strong {
-  color: #ff9d9d;
+  color: var(--na-debugger-badge-error-text);
 }
 
 .na-debugger__metric-label,
@@ -112,7 +154,7 @@ const DEBUGGER_STYLES = `
 .na-debugger__entry time,
 .na-debugger-launcher__meta {
   font-size: 12px;
-  color: rgba(238, 244, 251, 0.7);
+  color: var(--na-debugger-muted-text);
 }
 
 .na-debugger__entry-topline {
@@ -132,8 +174,8 @@ const DEBUGGER_STYLES = `
   overflow-x: auto;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.26);
-  color: #bce6ff;
+  background: var(--na-debugger-detail-bg);
+  color: var(--na-debugger-detail-text);
   white-space: nowrap;
 }
 
@@ -146,14 +188,14 @@ const DEBUGGER_STYLES = `
   letter-spacing: 0.12em;
 }
 
-.na-debugger__badge--render { background: rgba(120, 198, 255, 0.16); color: #9bd9ff; }
-.na-debugger__badge--action { background: rgba(255, 205, 128, 0.16); color: #ffd18a; }
-.na-debugger__badge--api { background: rgba(125, 235, 182, 0.16); color: #9df3ca; }
-.na-debugger__badge--compile { background: rgba(210, 183, 255, 0.16); color: #dcc0ff; }
-.na-debugger__badge--notify { background: rgba(255, 158, 177, 0.16); color: #ffbac8; }
-.na-debugger__badge--error { background: rgba(255, 128, 128, 0.18); color: #ffadad; }
+.na-debugger__badge--render { background: var(--na-debugger-badge-render-bg); color: var(--na-debugger-badge-render-text); }
+.na-debugger__badge--action { background: var(--na-debugger-badge-action-bg); color: var(--na-debugger-badge-action-text); }
+.na-debugger__badge--api { background: var(--na-debugger-badge-api-bg); color: var(--na-debugger-badge-api-text); }
+.na-debugger__badge--compile { background: var(--na-debugger-badge-compile-bg); color: var(--na-debugger-badge-compile-text); }
+.na-debugger__badge--notify { background: var(--na-debugger-badge-notify-bg); color: var(--na-debugger-badge-notify-text); }
+.na-debugger__badge--error { background: var(--na-debugger-badge-error-bg); color: var(--na-debugger-badge-error-text); }
 
-.na-debugger__empty { margin: 0; color: rgba(238, 244, 251, 0.74); }
+.na-debugger__empty { margin: 0; color: var(--na-debugger-muted-text); }
 
 .na-debugger-launcher {
   position: fixed;
@@ -163,8 +205,8 @@ const DEBUGGER_STYLES = `
   gap: 6px;
   padding: 8px 12px;
   border-radius: 20px;
-  background: rgba(16, 24, 34, 0.94);
-  box-shadow: 0 8px 24px rgba(7, 12, 18, 0.32);
+  background: var(--na-debugger-launcher-bg);
+  box-shadow: var(--na-debugger-launcher-shadow);
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -253,29 +295,46 @@ function useDebuggerSnapshot(controller: AmisDebuggerController) {
 
 function useDraggablePosition(controller: AmisDebuggerController, initial: { x: number; y: number }) {
   const [position, setPosition] = useState(initial);
-  const dragState = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null);
+  const positionRef = useRef(initial);
+  const dragState = useRef<{
+    pointerId: number;
+    offsetX: number;
+    offsetY: number;
+    target: HTMLElement;
+  } | null>(null);
+
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   useEffect(() => {
     setPosition(initial);
+    positionRef.current = initial;
   }, [initial]);
 
-  const bind = {
-    onPointerDown(event: ReactPointerEvent<HTMLElement>) {
-      const target = event.currentTarget.parentElement;
-      if (!target) {
+  useEffect(() => {
+    const clearDrag = (event: PointerEvent) => {
+      if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
         return;
       }
 
-      dragState.current = {
-        pointerId: event.pointerId,
-        offsetX: event.clientX - position.x,
-        offsetY: event.clientY - position.y
-      };
+      try {
+        dragState.current.target.releasePointerCapture(event.pointerId);
+      } catch (error) {
+        void error;
+      }
 
-      target.setPointerCapture(event.pointerId);
-    },
-    onPointerMove(event: ReactPointerEvent<HTMLElement>) {
+      controller.setPanelPosition(positionRef.current);
+      dragState.current = null;
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
       if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
+        return;
+      }
+
+      if (event.buttons === 0) {
+        clearDrag(event);
         return;
       }
 
@@ -284,15 +343,41 @@ function useDraggablePosition(controller: AmisDebuggerController, initial: { x: 
         y: Math.max(12, event.clientY - dragState.current.offsetY)
       };
 
+      positionRef.current = next;
       setPosition(next);
-    },
-    onPointerUp(event: ReactPointerEvent<HTMLElement>) {
-      if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', clearDrag);
+    window.addEventListener('pointercancel', clearDrag);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', clearDrag);
+      window.removeEventListener('pointercancel', clearDrag);
+    };
+  }, [controller]);
+
+  const bind = {
+    onPointerDown(event: ReactPointerEvent<HTMLElement>) {
+      if (event.button !== 0) {
         return;
       }
 
-      controller.setPanelPosition(position);
-      dragState.current = null;
+      const target = event.currentTarget.parentElement;
+      if (!target) {
+        return;
+      }
+
+      dragState.current = {
+        pointerId: event.pointerId,
+        offsetX: event.clientX - position.x,
+        offsetY: event.clientY - position.y,
+        target
+      };
+
+      target.setPointerCapture(event.pointerId);
+      event.preventDefault();
     }
   };
 
@@ -304,6 +389,7 @@ function useLauncherDrag(
   initial: { x: number; y: number }
 ) {
   const [position, setPosition] = useState(initial);
+  const positionRef = useRef(initial);
   const dragState = useRef<{
     pointerId: number;
     startX: number;
@@ -311,29 +397,48 @@ function useLauncherDrag(
     startPosX: number;
     startPosY: number;
     hasMoved: boolean;
+    target: HTMLElement;
   } | null>(null);
   const wasDraggedRef = useRef(false);
+  const suppressNextClickRef = useRef(false);
+
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   useEffect(() => {
     setPosition(initial);
+    positionRef.current = initial;
   }, [initial]);
 
-  const bind = {
-    onPointerDown(event: ReactPointerEvent<HTMLElement>) {
-      const target = event.currentTarget;
-      wasDraggedRef.current = false;
-      dragState.current = {
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        startPosX: position.x,
-        startPosY: position.y,
-        hasMoved: false
-      };
-      target.setPointerCapture(event.pointerId);
-    },
-    onPointerMove(event: ReactPointerEvent<HTMLElement>) {
+  useEffect(() => {
+    const clearDrag = (event: PointerEvent) => {
       if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
+        return;
+      }
+
+      try {
+        dragState.current.target.releasePointerCapture(event.pointerId);
+      } catch (error) {
+        void error;
+      }
+
+      if (dragState.current.hasMoved) {
+        controller.setPanelPosition(positionRef.current);
+        wasDraggedRef.current = true;
+        suppressNextClickRef.current = true;
+      }
+
+      dragState.current = null;
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
+        return;
+      }
+
+      if (event.buttons === 0) {
+        clearDrag(event);
         return;
       }
 
@@ -350,24 +455,56 @@ function useLauncherDrag(
 
       const newX = Math.max(8, Math.min(window.innerWidth - 80, dragState.current.startPosX + deltaX));
       const newY = Math.max(8, Math.min(window.innerHeight - 50, dragState.current.startPosY + deltaY));
+      const next = { x: newX, y: newY };
 
-      setPosition({ x: newX, y: newY });
-    },
-    onPointerUp(event: ReactPointerEvent<HTMLElement>) {
-      if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
+      positionRef.current = next;
+      setPosition(next);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', clearDrag);
+    window.addEventListener('pointercancel', clearDrag);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', clearDrag);
+      window.removeEventListener('pointercancel', clearDrag);
+    };
+  }, [controller]);
+
+  const bind = {
+    onPointerDown(event: ReactPointerEvent<HTMLElement>) {
+      if (event.button !== 0) {
         return;
       }
 
-      if (dragState.current.hasMoved) {
-        controller.setPanelPosition(position);
-        wasDraggedRef.current = true;
-      }
-
-      dragState.current = null;
+      const target = event.currentTarget;
+      wasDraggedRef.current = false;
+      dragState.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startPosX: position.x,
+        startPosY: position.y,
+        hasMoved: false,
+        target
+      };
+      target.setPointerCapture(event.pointerId);
+      event.preventDefault();
     }
   };
 
-  return { position, bind, wasDraggedRef };
+  const consumeSuppressedClick = () => {
+    if (!suppressNextClickRef.current) {
+      return false;
+    }
+
+    suppressNextClickRef.current = false;
+    wasDraggedRef.current = false;
+    return true;
+  };
+
+  return { position, bind, wasDraggedRef, consumeSuppressedClick };
 }
 
 function useInjectDebuggerStyles(enabled: boolean) {
@@ -390,7 +527,7 @@ function useInjectDebuggerStyles(enabled: boolean) {
 export function AmisDebuggerPanel(props: { controller: AmisDebuggerController }) {
   const snapshot = useDebuggerSnapshot(props.controller);
   const { position, bind } = useDraggablePosition(props.controller, snapshot.position);
-  const { position: launcherPosition, bind: launcherBind, wasDraggedRef } = useLauncherDrag(props.controller, snapshot.position);
+  const { position: launcherPosition, bind: launcherBind, wasDraggedRef, consumeSuppressedClick } = useLauncherDrag(props.controller, snapshot.position);
   useInjectDebuggerStyles(snapshot.enabled);
 
   const filteredEvents = useMemo(
@@ -419,12 +556,15 @@ export function AmisDebuggerPanel(props: { controller: AmisDebuggerController })
     return (
       <button
         type="button"
-        className="na-debugger-launcher"
+        className="na-debugger-launcher na-theme-root"
         style={{ left: `${launcherPosition.x}px`, top: `${launcherPosition.y}px` }}
         onPointerDown={launcherBind.onPointerDown}
-        onPointerMove={launcherBind.onPointerMove}
-        onPointerUp={(e) => {
-          launcherBind.onPointerUp(e);
+        onClick={(event) => {
+          if (consumeSuppressedClick()) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
           if (!wasDraggedRef.current) {
             props.controller.show();
           }
@@ -445,9 +585,9 @@ export function AmisDebuggerPanel(props: { controller: AmisDebuggerController })
   }
 
   return (
-    <div className="na-debugger" style={{ left: `${position.x}px`, top: `${position.y}px` }}>
-      <div className="na-debugger__header" {...bind}>
-        <div>
+    <div className="na-debugger na-theme-root" style={{ left: `${position.x}px`, top: `${position.y}px` }}>
+      <div className="na-debugger__header">
+        <div className="na-debugger__drag-handle" {...bind}>
           <p className="na-debugger__eyebrow">Framework Debugger</p>
           <h2>Runtime Console</h2>
         </div>

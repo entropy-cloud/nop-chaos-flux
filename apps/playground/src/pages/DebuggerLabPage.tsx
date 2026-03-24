@@ -2,15 +2,19 @@ import type { AmisDebuggerController } from '@nop-chaos/amis-debugger';
 
 interface DebuggerLabPageProps {
   debuggerController: AmisDebuggerController;
+  onBack: () => void;
 }
 
-export function DebuggerLabPage({ debuggerController }: DebuggerLabPageProps) {
+export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageProps) {
   const api = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__NOP_AMIS_DEBUGGER_API__ : null;
   const hub = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__NOP_AMIS_DEBUGGER_HUB__ : null;
 
   return (
     <main className="app-shell">
       <section className="hero-card hero-card--wide">
+        <button type="button" className="page-back" onClick={onBack}>
+          Back to Home
+        </button>
         <p className="eyebrow">DevTools</p>
         <h1>Debugger Lab</h1>
         <p className="body-copy">

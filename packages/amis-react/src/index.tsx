@@ -318,7 +318,7 @@ function DialogHost() {
   }
 
   return (
-    <div className="na-dialog-host">
+    <div className="na-dialog-host na-theme-root">
       {dialogs.map((dialog: DialogState) => (
         <DialogView key={dialog.id} dialog={dialog} page={page} />
       ))}
@@ -341,8 +341,8 @@ function DialogView(props: {
   const { dialog, page } = props;
 
   return (
-    <div className="na-dialog-backdrop">
-      <div className="na-dialog-card">
+      <div className="na-dialog-backdrop na-theme-root">
+        <div className="na-dialog-card">
         {dialog.title
           ? (
               <ActionScopeContext.Provider value={dialog.actionScope}>

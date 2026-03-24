@@ -155,6 +155,8 @@ launcher 与完整面板都应支持拖拽。
 - `apps/playground/src/App.tsx` 应拆为首页与主题页入口，而不是继续扩张为巨型单页
 - 具体主题场景应拆到独立文件，例如 `AmisBasicPage.tsx`、`FlowDesignerPage.tsx`、`DebuggerLabPage.tsx`
 - playground 首页应保持轻量，不应再直接包含完整业务示例 schema
+- playground 主题页面应挂在 `.na-theme-root` 下，让 dialog、debugger、Flow Designer renderer 与页面自有样式共享同一组 CSS 变量契约
+- playground 自己特有的示例布局样式应放在 `apps/playground/src/styles.css`，但 Flow Designer 的节点、连线、inspector、palette 等可复用视觉应尽量复用包级 class 契约，而不是继续散落在 `FlowDesignerExample.tsx` 的 inline style 里
 
 ### 4.2 Debugger 侧
 

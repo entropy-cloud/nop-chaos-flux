@@ -116,7 +116,7 @@ describe('AmisBasicPage', () => {
       onActionError: () => undefined
     };
 
-    render(<AmisBasicPage debuggerController={mockDebuggerController as any} />);
+    render(<AmisBasicPage debuggerController={mockDebuggerController as any} onBack={() => undefined} />);
 
     const initialSnapshot = rendererSnapshots.at(-1);
     expect(initialSnapshot).toBeTruthy();

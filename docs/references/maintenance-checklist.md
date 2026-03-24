@@ -74,6 +74,7 @@ Examples:
 Review:
 
 - `docs/architecture/renderer-runtime.md`
+- `docs/architecture/theme-compatibility.md` when renderer-owned class boundaries, theme roots, or CSS variable expectations change
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
 - `docs/index.md` if the recommended reading path should change
@@ -175,8 +176,25 @@ Review:
 
 - `docs/examples/user-management-schema.md`
 - `docs/architecture/playground-experience.md`
+- `docs/architecture/theme-compatibility.md` when shared playground styling or theme-root behavior changes
 - the most relevant file in `docs/architecture/`
 - `docs/index.md` if the example is no longer the best reference entry point
+
+## 9b. Theme-compatibility or styling-contract changes
+
+Examples:
+
+- changes in shared `.na-theme-root` / `.fd-theme-root` expectations
+- changes in package-owned CSS variables or host override guidance
+- changes that move visuals from inline styles to class-based CSS contracts
+- changes in debugger, dialog, renderer, or designer styling boundaries that affect host theming
+
+Review:
+
+- `docs/architecture/theme-compatibility.md`
+- `docs/architecture/renderer-runtime.md`
+- `docs/architecture/flow-designer/design.md` when Flow Designer host-shell expectations change
+- `docs/architecture/playground-experience.md` when playground-specific styling ownership changes
 
 ## 9a. Action-scope or import-extension changes
 

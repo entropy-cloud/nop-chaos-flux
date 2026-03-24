@@ -35,13 +35,17 @@ export function App() {
     setActivePage(page);
   };
 
+  const handleBackHome = () => {
+    setActivePage('home');
+  };
+
   return (
-    <>
+    <div className="na-theme-root">
       {activePage === 'home' && <HomePage onNavigate={handleNavigate} />}
-      {activePage === 'amis-basic' && <AmisBasicPage debuggerController={debuggerController} />}
-      {activePage === 'flow-designer' && <FlowDesignerPage />}
-      {activePage === 'debugger-lab' && <DebuggerLabPage debuggerController={debuggerController} />}
+      {activePage === 'amis-basic' && <AmisBasicPage debuggerController={debuggerController} onBack={handleBackHome} />}
+      {activePage === 'flow-designer' && <FlowDesignerPage onBack={handleBackHome} />}
+      {activePage === 'debugger-lab' && <DebuggerLabPage debuggerController={debuggerController} onBack={handleBackHome} />}
       <AmisDebuggerPanel controller={debuggerController} />
-    </>
+    </div>
   );
 }

@@ -226,94 +226,38 @@ export function DesignerCardCanvasBridge(props: DesignerCanvasBridgeProps) {
             style={{
               position: 'absolute',
               left: node.position.x,
-              top: node.position.y,
-              minWidth: 160,
-              padding: '12px 16px',
-              background: '#fff',
-              borderRadius: 8,
-              border: selection.activeNodeId === node.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              cursor: 'pointer',
-              userSelect: 'none'
+              top: node.position.y
             }}
             onClick={(event) => props.onNodeSelect(node.id, event)}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>{getNodeIcon(node.type)}</span>
+            <div className="fd-node__header">
+              <span className="fd-node__icon">{getNodeIcon(node.type)}</span>
               <div>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{String(node.data.label ?? node.type)}</div>
-                <div style={{ fontSize: 12, color: '#64748b' }}>{node.type}</div>
+                <div className="fd-node__title">{String(node.data.label ?? node.type)}</div>
+                <div className="fd-node__type">{node.type}</div>
               </div>
             </div>
             {selection.activeNodeId === node.id && (
-              <div
-                className="fd-node__actions"
-                style={{
-                  position: 'absolute',
-                  top: -12,
-                  right: -12,
-                  display: 'flex',
-                  gap: 4
-                }}
-              >
+              <div className="fd-node__actions">
                 <button
-                  className="fd-node__action"
+                  className="fd-node__action fd-node__action--duplicate"
                   onClick={(event) => props.onDuplicateNode(node.id, event)}
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    background: '#3b82f6',
-                    color: '#fff',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12
-                  }}
                   title="Duplicate"
                   type="button"
                 >
                   D
                 </button>
                 <button
-                  className="fd-node__action"
+                  className="fd-node__action fd-node__action--connect"
                   onClick={(event) => props.onStartConnection(node.id, event)}
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    background: '#f59e0b',
-                    color: '#fff',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12
-                  }}
                   title="Connect"
                   type="button"
                 >
                   C
                 </button>
                 <button
-                  className="fd-node__action"
+                  className="fd-node__action fd-node__action--move"
                   onClick={(event) => props.onMoveNode(node.id, event)}
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    background: '#10b981',
-                    color: '#fff',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12
-                  }}
                   title="Move"
                   type="button"
                 >
@@ -322,19 +266,6 @@ export function DesignerCardCanvasBridge(props: DesignerCanvasBridgeProps) {
                 <button
                   className="fd-node__action fd-node__action--delete"
                   onClick={(event) => props.onDeleteNode(node.id, event)}
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    background: '#ef4444',
-                    color: '#fff',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12
-                  }}
                   title="Delete"
                   type="button"
                 >
@@ -345,23 +276,15 @@ export function DesignerCardCanvasBridge(props: DesignerCanvasBridgeProps) {
             {getNodePorts(node.type).map((port) => (
               <div
                 key={port.id}
-                className={`fd-port fd-port--${port.direction}`}
-                style={{
-                  position: 'absolute',
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  background: port.direction === 'input' ? '#3b82f6' : '#10b981',
-                  border: '2px solid #fff',
-                  ...(port.position === 'left' ? { left: -5, top: '50%', transform: 'translateY(-50%)' } : {}),
-                  ...(port.position === 'right' ? { right: -5, top: '50%', transform: 'translateY(-50%)' } : {}),
-                  ...(port.position === 'top' ? { top: -5, left: '50%', transform: 'translateX(-50%)' } : {}),
-                  ...(port.position === 'bottom' ? { bottom: -5, left: '50%', transform: 'translateX(-50%)' } : {})
-                }}
+                className={classNames(
+                  'fd-port',
+                  `fd-port--${port.direction}`,
+                  port.position ? `fd-port--${port.position}` : undefined
+                )}
                 title={port.label ?? port.id}
               />
             ))}
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <div className="fd-node__bridge-actions">
               {isConnectionSource ? (
                 <button type="button" onClick={(event) => props.onCancelConnection(node.id, event)}>
                   Cancel connection
@@ -397,14 +320,6 @@ export function DesignerCardCanvasBridge(props: DesignerCanvasBridgeProps) {
       </div>
       <svg
         className="fd-canvas__edges"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none'
-        }}
       >
         {doc.edges.map((edge) => {
           const sourceNode = doc.nodes.find((node) => node.id === edge.source);
@@ -423,48 +338,44 @@ export function DesignerCardCanvasBridge(props: DesignerCanvasBridgeProps) {
           return (
             <g
               key={edge.id}
+              className={classNames('fd-edge', selection.activeEdgeId === edge.id && 'fd-edge--selected')}
               onClick={(event) => props.onEdgeSelect(edge.id, event as unknown as React.MouseEvent)}
-              style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
             >
               <path
+                className="fd-edge__path"
                 d={`M ${sourceX} ${sourceY} C ${midX} ${sourceY}, ${midX} ${targetY}, ${targetX} ${targetY}`}
-                fill="none"
-                stroke={selection.activeEdgeId === edge.id ? '#3b82f6' : '#94a3b8'}
-                strokeWidth={selection.activeEdgeId === edge.id ? 3 : 2}
                 markerEnd="url(#arrowhead)"
               />
               {edgeLabel ? (
                 <text
+                  className="fd-edge__label"
                   x={midX}
                   y={(sourceY + targetY) / 2 - 10}
                   textAnchor="middle"
-                  fill="#64748b"
-                  fontSize={12}
-                  style={{ pointerEvents: 'auto', cursor: 'pointer' }}
                 >
                   {edgeLabel}
                 </text>
               ) : null}
               {selection.activeEdgeId === edge.id ? (
                 <g
+                  className="fd-edge__action"
                   transform={`translate(${midX + 20}, ${(sourceY + targetY) / 2 + 5})`}
-                  style={{ pointerEvents: 'auto', cursor: 'pointer' }}
                   onClick={(event) => props.onDeleteEdge(edge.id, event as unknown as React.MouseEvent)}
                 >
-                  <circle r={10} fill="#ef4444" />
-                  <text textAnchor="middle" dy={4} fill="#fff" fontSize={14}>
+                  <circle className="fd-edge__action-circle--delete" r={10} />
+                  <text className="fd-edge__action-text" textAnchor="middle" dy={4} fontSize={14}>
                     X
                   </text>
                 </g>
               ) : null}
               {selection.activeEdgeId === edge.id ? (
                 <g
+                  className="fd-edge__action"
                   transform={`translate(${midX - 10}, ${(sourceY + targetY) / 2 + 5})`}
-                  style={{ pointerEvents: 'auto', cursor: 'pointer' }}
                   onClick={(event) => props.onStartReconnect(edge.id, event as unknown as React.MouseEvent)}
                 >
-                  <circle r={10} fill="#f59e0b" />
-                  <text textAnchor="middle" dy={4} fill="#fff" fontSize={12}>
+                  <circle className="fd-edge__action-circle--reconnect" r={10} />
+                  <text className="fd-edge__action-text" textAnchor="middle" dy={4} fontSize={12}>
                     R
                   </text>
                 </g>
@@ -474,29 +385,19 @@ export function DesignerCardCanvasBridge(props: DesignerCanvasBridgeProps) {
         })}
         <defs>
           <marker id="arrowhead" markerWidth={10} markerHeight={7} refX={9} refY={3.5} orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
+            <polygon className="fd-edge__arrow" points="0 0, 10 3.5, 0 7" />
           </marker>
         </defs>
       </svg>
       <div
         className="fd-canvas__info"
-        style={{
-          position: 'absolute',
-          bottom: 16,
-          left: 16,
-          background: 'rgba(255,255,255,0.9)',
-          padding: '8px 12px',
-          borderRadius: 6,
-          fontSize: 12,
-          color: '#64748b'
-        }}
       >
         Nodes: {doc.nodes.length} | Edges: {doc.edges.length}
         <button
+          className="fd-canvas__mini-button"
           type="button"
           title="Zoom in"
           onClick={(event) => props.onViewportChange({ x: props.snapshot.viewport.x, y: props.snapshot.viewport.y, zoom: props.snapshot.viewport.zoom + 0.1 }, event)}
-          style={{ marginLeft: 8 }}
         >
           +
         </button>

@@ -18,19 +18,33 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-24 (Theme Compatibility Slice)
+
+- Added `docs/architecture/theme-compatibility.md` to define the active styling contract for host theming: `.na-theme-root` is the shared subtree theme scope, `.fd-theme-root` is the Flow Designer specialization layer, and theme compatibility stays a CSS-variable contract instead of a runtime/provider concern.
+- Updated `docs/index.md` and `docs/references/maintenance-checklist.md` so future renderer, debugger, dialog, and playground styling work now points to the new theme-compatibility doc explicitly.
+- Applied the first `.na-theme-root` migration slice across `apps/playground/src/App.tsx`, `packages/amis-react/src/index.tsx`, `packages/amis-debugger/src/panel.tsx`, `packages/flow-designer-renderers/src/index.tsx`, `packages/flow-designer-renderers/src/canvas-bridge.tsx`, and `packages/flow-designer-renderers/src/styles.css`, keeping current colors as token defaults while moving package-owned Flow Designer chrome toward class-based CSS.
+- Added consistent return navigation from each playground detail page back to the home chooser: inline back buttons for `apps/playground/src/pages/AmisBasicPage.tsx` and `apps/playground/src/pages/DebuggerLabPage.tsx`, plus a floating back button wrapper for `apps/playground/src/pages/FlowDesignerPage.tsx` so the designer canvas stays intact.
+- Continued the same migration in `apps/playground/src/FlowDesignerExample.tsx` and `apps/playground/src/styles.css`, replacing most remaining demo-only visual inline styles with class-based toolbar, palette, canvas, inspector, JSON, and toast styling while keeping position geometry inline.
+- Key decision: do not add theme state to `RendererEnv`, `ActionScope`, `ScopeRef`, page/form runtime, or `DesignerCore`; host theming remains a DOM/CSS responsibility carried by stable classes and variables.
+- Next step: manually spot-check the standalone Flow Designer and debugger pages to confirm the class-based migration still matches the previous appearance across desktop and narrow-width layouts.
+
 ### 2026-03-24 (Debugger Launcher Fixes)
 
 - Fixed debugger launcher drag/click interaction issues:
   - Changed from return-value-based detection to ref-based `wasDraggedRef` tracking
   - Launcher now correctly distinguishes click (opens panel) from drag (repositions)
+  - Moved active drag lifecycle onto window-level `pointermove` / `pointerup` / `pointercancel` listeners so releasing the mouse always ends drag even if the element loses the local event sequence
+  - Added a `buttons === 0` fallback in move handlers so stuck drag state clears immediately if the browser misses `pointerup`
 - Reduced launcher size to a compact pill shape:
   - Smaller padding (`8px 12px`), rounded (`border-radius: 20px`)
   - Added warning icon + event count display instead of verbose text
   - Added `touch-action: none` and `user-select: none` for reliable dragging
 - Changed Minimize button to use a shrink icon instead of text label
+- Limited panel dragging to the title handle instead of the full header so `Pause`, `Clear`, and `Minimize` clicks are no longer intercepted by drag start
 - Files: `packages/amis-debugger/src/panel.tsx`
-- Key decision: use ref to track drag state instead of relying on event handler return values, which don't propagate through React's synthetic event system
-- Next step: test the new launcher in playground to verify drag feels smooth
+- Added focused panel interaction coverage in `packages/amis-debugger/src/panel.test.tsx` for overview rendering, launcher click-open, and minimize click behavior
+- Key decision: use window-level pointer cleanup plus a dedicated title drag handle instead of relying on pointer capture alone, because the original element-scoped flow was too fragile across real browser interaction sequences
+- Next step: verify manually in the playground that launcher drag feels smooth on Windows pointer devices and touchpads
 
 ### 2026-03-24
 
