@@ -1,0 +1,454 @@
+/* Flow Designer specific styles */
+/* These styles are TailwindCSS-based and follow the same token system as nop-chaos-next */
+
+/* Page layout */
+@layer components {
+  .fd-page {
+    @apply grid grid-rows-[auto_minmax(0,1fr)] min-h-0;
+    background: var(--fd-page-bg, var(--card-surface));
+    color: var(--fd-text, var(--foreground));
+  }
+
+  .fd-page__header {
+    @apply flex items-center gap-3 px-4 py-3 border-b;
+    border-color: var(--fd-border-strong, var(--border));
+    background: var(--fd-panel-muted-bg, var(--muted));
+  }
+
+  .fd-page__content {
+    @apply grid min-h-0;
+    grid-template-columns: 240px minmax(0, 1fr) 280px;
+  }
+
+  @media (max-width: 980px) {
+    .fd-page__content {
+      @apply grid-cols-1;
+      grid-template-rows: auto minmax(360px, 1fr) auto;
+    }
+
+    .fd-page__palette,
+    .fd-page__inspector {
+      @apply w-full;
+    }
+
+    .fd-page__palette {
+      @apply border-r-0 border-b;
+      border-color: var(--fd-border-strong, var(--border));
+    }
+
+    .fd-page__inspector {
+      @apply border-l-0 border-t;
+      border-color: var(--fd-border-strong, var(--border));
+    }
+  }
+
+  .fd-page__palette {
+    @apply w-60 overflow-y-auto border-r;
+    border-color: var(--fd-border-strong, var(--border));
+    background: var(--fd-panel-bg, var(--card));
+  }
+
+  .fd-page__canvas {
+    @apply relative overflow-auto;
+    background: var(--fd-canvas-bg, var(--muted));
+  }
+
+  .fd-page__inspector {
+    @apply w-72 overflow-y-auto border-l;
+    border-color: var(--fd-border-strong, var(--border));
+    background: var(--fd-panel-bg, var(--card));
+  }
+
+  /* Palette */
+  .fd-palette {
+    @apply p-3;
+    color: var(--fd-text, var(--foreground));
+  }
+
+  .fd-palette__header h3 {
+    @apply text-sm font-semibold mb-3;
+    color: var(--fd-text-strong, var(--foreground));
+  }
+
+  .fd-palette__search,
+  .fd-inspector__input,
+  .fd-field__input,
+  .fd-field__select,
+  .fd-field__textarea {
+    @apply w-full px-3 py-2 border rounded-md text-sm;
+    border-color: var(--fd-border, var(--border));
+    color: var(--fd-text-strong, var(--foreground));
+    background: var(--fd-panel-bg, var(--card));
+  }
+
+  .fd-palette__search {
+    @apply mb-3;
+  }
+
+  .fd-palette__group {
+    @apply mb-3;
+  }
+
+  .fd-palette__group-header {
+    @apply flex items-center gap-1.5 px-2 py-1.5 cursor-pointer rounded text-sm font-medium;
+    color: var(--fd-text-muted, var(--muted-foreground));
+  }
+
+  .fd-palette__group-toggle {
+    @apply text-xs;
+    color: var(--fd-text-muted, var(--muted-foreground));
+  }
+
+  .fd-palette__group-items {
+    @apply py-1 pl-4;
+  }
+
+  .fd-palette__item {
+    @apply flex items-center gap-2 w-full mb-1 px-3 py-2 border rounded-md bg-card text-sm cursor-pointer text-left;
+    border-color: var(--fd-border, var(--border));
+    color: var(--fd-text-strong, var(--foreground));
+  }
+
+  /* Node styles */
+  .fd-node {
+    @apply absolute min-w-[160px] px-4 py-3 border rounded-lg shadow-sm cursor-pointer select-none;
+    border-color: var(--fd-node-border, var(--border));
+    background: var(--fd-node-bg, var(--card));
+    box-shadow: var(--fd-shadow-sm, var(--shadow-sm));
+    color: var(--fd-text-strong, var(--foreground));
+  }
+
+  .fd-node--selected {
+    @apply border-2;
+    border-color: var(--fd-node-border-active, var(--primary));
+  }
+
+  .fd-node__header {
+    @apply flex items-center gap-2;
+  }
+
+  .fd-node__icon {
+    @apply text-lg;
+  }
+
+  .fd-node__title {
+    @apply text-sm font-semibold;
+  }
+
+  .fd-node__type {
+    @apply text-xs;
+    color: var(--fd-text-muted, var(--muted-foreground));
+  }
+
+  .fd-node__actions {
+    @apply absolute -top-3 -right-3 flex gap-1;
+  }
+
+  .fd-node__action,
+  .fd-canvas__mini-button,
+  .fd-toolbar__button,
+  .fd-inspector__button {
+    @apply font-inherit;
+  }
+
+  .fd-node__action {
+    @apply inline-flex items-center justify-center w-6 h-6 rounded-full text-xs cursor-pointer;
+    color: var(--fd-primary-foreground, var(--primary-foreground));
+  }
+
+  .fd-node__action--duplicate {
+    background: var(--fd-primary, var(--primary));
+  }
+
+  .fd-node__action--connect {
+    background: var(--fd-warning, var(--warning));
+    color: var(--fd-warning-foreground, var(--primary-foreground));
+  }
+
+  .fd-node__action--move {
+    background: var(--fd-success, var(--success));
+    color: var(--fd-success-foreground, var(--primary-foreground));
+  }
+
+  .fd-node__action--delete {
+    background: var(--fd-danger, var(--danger));
+    color: var(--fd-danger-foreground, var(--primary-foreground));
+  }
+
+  /* Port styles */
+  .fd-port {
+    @apply absolute w-2.5 h-2.5 border-2 rounded-full;
+    border-color: var(--fd-port-border, var(--card));
+  }
+
+  .fd-port--input {
+    background: var(--fd-port-input, var(--primary));
+  }
+
+  .fd-port--output {
+    background: var(--fd-port-output, var(--success));
+  }
+
+  .fd-port--left {
+    @apply left-[-5px] top-1/2 -translate-y-1/2;
+  }
+
+  .fd-port--right {
+    @apply right-[-5px] top-1/2 -translate-y-1/2;
+  }
+
+  .fd-port--top {
+    @apply top-[-5px] left-1/2 -translate-x-1/2;
+  }
+
+  .fd-port--bottom {
+    @apply bottom-[-5px] left-1/2 -translate-x-1/2;
+  }
+
+  /* Toolbar */
+  .fd-toolbar {
+    @apply flex items-center gap-2 px-4 py-3 border-b;
+    border-color: var(--fd-border-strong, var(--border));
+    background: var(--fd-panel-muted-bg, var(--muted));
+  }
+
+  .fd-toolbar__title {
+    @apply text-lg font-semibold;
+    color: var(--fd-text-strong, var(--foreground));
+  }
+
+  .fd-toolbar__spacer {
+    @apply flex-1;
+  }
+
+  .fd-toolbar__group,
+  .fd-toolbar__tabs {
+    @apply flex items-center gap-2;
+  }
+
+  .fd-toolbar__tabs {
+    @apply ml-4 gap-0;
+  }
+
+  .fd-toolbar__divider {
+    @apply w-px h-6;
+    background: var(--fd-border, var(--border));
+  }
+
+  .fd-toolbar__button {
+    @apply px-3 py-1.5 border rounded-md text-sm cursor-pointer;
+    border-color: var(--fd-border, var(--border));
+    background: var(--fd-panel-bg, var(--card));
+    color: var(--fd-text-strong, var(--foreground));
+  }
+
+  .fd-toolbar__button:disabled {
+    @apply cursor-not-allowed;
+    background: var(--fd-panel-muted-bg, var(--muted));
+    color: var(--fd-text-muted, var(--muted-foreground));
+  }
+
+  .fd-toolbar__button--primary {
+    border-color: var(--fd-primary, var(--primary));
+    background: var(--fd-primary, var(--primary));
+    color: var(--fd-primary-foreground, var(--primary-foreground));
+  }
+
+  .fd-toolbar__button--success {
+    border-color: var(--fd-success, var(--success));
+    background: var(--fd-success, var(--success));
+    color: var(--fd-success-foreground, var(--primary-foreground));
+  }
+
+  @media (max-width: 980px) {
+    .fd-toolbar {
+      @apply flex-wrap;
+    }
+
+    .fd-toolbar__spacer {
+      @apply hidden;
+    }
+
+    .fd-toolbar__group,
+    .fd-toolbar__tabs {
+      @apply w-full flex-wrap;
+    }
+
+    .fd-toolbar__tabs {
+      @apply ml-0;
+    }
+  }
+
+  /* Inspector */
+  .fd-inspector {
+    @apply p-4 flex flex-col gap-4;
+    color: var(--fd-text, var(--foreground));
+  }
+
+  .fd-inspector__title {
+    @apply text-base font-semibold;
+    color: var(--fd-text-strong, var(--foreground));
+  }
+
+  .fd-inspector__section {
+    @apply flex flex-col gap-1.5;
+  }
+
+  .fd-inspector__label {
+    @apply text-xs font-semibold uppercase tracking-wider;
+    color: var(--fd-text-muted, var(--muted-foreground));
+  }
+
+  .fd-inspector__value {
+    @apply text-sm;
+    color: var(--fd-text-strong, var(--foreground));
+  }
+
+  .fd-inspector__input,
+  .fd-inspector__textarea,
+  .fd-inspector__select {
+    @apply px-2.5 py-2 border rounded-md text-sm transition-colors;
+    border-color: var(--fd-border, var(--border));
+    color: var(--fd-text-strong, var(--foreground));
+    background: var(--fd-panel-bg, var(--card));
+  }
+
+  .fd-inspector__input:focus,
+  .fd-inspector__textarea:focus,
+  .fd-inspector__select:focus {
+    @apply outline-none ring-2;
+    border-color: var(--fd-primary, var(--primary));
+    --tw-ring-color: hsl(var(--fd-primary, var(--primary)) / 0.15);
+  }
+
+  .fd-inspector__textarea {
+    @apply resize-y min-h-[60px];
+  }
+
+  .fd-inspector__select {
+    @apply cursor-pointer;
+  }
+
+  .fd-inspector__actions {
+    @apply mt-2 pt-4 border-t;
+    border-color: var(--fd-border-strong, var(--border));
+  }
+
+  .fd-inspector__button {
+    @apply px-4 py-2 border rounded-md text-sm cursor-pointer transition-colors;
+    border-color: var(--fd-border, var(--border));
+  }
+
+  .fd-inspector__button--danger {
+    @apply border-red-500 bg-red-50 text-red-600;
+  }
+
+  .fd-inspector__button--danger:hover {
+    @apply bg-red-100 border-red-600;
+  }
+
+  .fd-inspector--empty {
+    @apply items-center justify-center min-h-[200px];
+  }
+
+  .fd-inspector__empty-text {
+    @apply text-sm text-center;
+    color: var(--fd-text-muted, var(--muted-foreground));
+  }
+
+  /* Edge styles */
+  .fd-edge {
+    @apply cursor-pointer;
+    pointer-events: stroke;
+  }
+
+  .fd-edge__path {
+    @apply fill-none;
+    stroke: var(--fd-edge-stroke, var(--border));
+    stroke-width: 2;
+  }
+
+  .fd-edge--selected .fd-edge__path {
+    stroke: var(--fd-edge-stroke-active, var(--primary));
+    stroke-width: 3;
+  }
+
+  .fd-edge__label {
+    fill: var(--fd-edge-label, var(--muted-foreground));
+    font-size: 12px;
+  }
+
+  /* Canvas */
+  .fd-canvas {
+    @apply relative;
+  }
+
+  .fd-canvas__edges {
+    @apply absolute inset-0 w-full h-full pointer-events-none;
+  }
+
+  .fd-canvas__info {
+    @apply absolute bottom-4 left-4 px-3 py-2 rounded-md text-xs;
+    background: var(--fd-selection-badge-bg, var(--card));
+    color: var(--fd-selection-badge-text, var(--muted-foreground));
+  }
+
+  /* Hover toolbar */
+  .fd-hover-toolbar {
+    @apply fixed z-50 flex gap-1 p-1 rounded-lg shadow-lg;
+    background: var(--fd-panel-bg, var(--card));
+    animation: fd-hover-fade-in 0.15s ease;
+  }
+
+  @keyframes fd-hover-fade-in {
+    from {
+      @apply opacity-0 translate-y-1;
+    }
+    to {
+      @apply opacity-100 translate-y-0;
+    }
+  }
+
+  .fd-hover-toolbar__button {
+    @apply px-2.5 py-1.5 rounded-md text-sm cursor-pointer transition-colors;
+  }
+
+  .fd-hover-toolbar__button:hover {
+    background: var(--fd-panel-muted-bg, var(--muted));
+  }
+
+  .fd-hover-toolbar__button--danger:hover {
+    @apply bg-red-50;
+  }
+}
+
+/* Type badge */
+.fd-type-badge {
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold capitalize;
+  background: var(--fd-panel-muted-bg, var(--muted));
+  color: var(--fd-text-muted, var(--muted-foreground));
+}
+
+.fd-type-badge--start {
+  @apply bg-emerald-100 text-emerald-700;
+}
+
+.fd-type-badge--end {
+  @apply bg-red-100 text-red-700;
+}
+
+.fd-type-badge--task {
+  @apply bg-sky-100 text-sky-700;
+}
+
+.fd-type-badge--condition {
+  @apply bg-amber-100 text-amber-700;
+}
+
+.fd-type-badge--parallel {
+  @apply bg-violet-100 text-violet-700;
+}
+
+.fd-type-badge--loop {
+  @apply bg-pink-100 text-pink-700;
+}
