@@ -1,8 +1,8 @@
-import type {
+﻿import type {
   ActionContext,
   RendererEnv,
   RendererPlugin
-} from '@nop-chaos/amis-schema';
+} from '@nop-chaos/flux-core';
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
 import {
   createAutomationApi,
@@ -208,3 +208,4 @@ export function createAmisDiagnosticReport(
 ): AmisDiagnosticReport {
   return controller.createDiagnosticReport(options);
 }
+

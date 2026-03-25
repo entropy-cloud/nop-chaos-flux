@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ApiObject, RendererEnv } from '@nop-chaos/amis-schema';
+﻿import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ApiObject, RendererEnv } from '@nop-chaos/flux-core';
 import { createAmisDebugger, getAmisDebuggerAutomationApi, installAmisDebuggerWindowFlag } from './index';
 
 const windowStub = {} as Window & typeof globalThis;
@@ -323,3 +323,4 @@ describe('amis-debugger automation api', () => {
     expect(window.__NOP_AMIS_DEBUGGER_HUB__?.activeControllerId).toBe('second-controller');
   });
 });
+

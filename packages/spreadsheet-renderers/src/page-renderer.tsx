@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } from '@nop-chaos/amis-schema';
-import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope } from '@nop-chaos/amis-react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
+import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } from '@nop-chaos/flux-core';
+import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope } from '@nop-chaos/flux-react';
 import { createSpreadsheetCore, type SpreadsheetConfig, type SpreadsheetDocument, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import { deriveHostSnapshot } from './bridge.js';
 import { buildSpreadsheetStatusLabel, getRuntimeActiveSheetCellCount, getRuntimeActiveSheetName } from './page-model.js';

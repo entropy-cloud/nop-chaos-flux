@@ -1,8 +1,8 @@
-import type {
+﻿import type {
   RendererDefinition,
   RendererRegistry,
-} from '@nop-chaos/amis-schema';
-import { registerRendererDefinitions } from '@nop-chaos/amis-runtime';
+} from '@nop-chaos/flux-core';
+import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { ReportFieldPanelRenderer } from './field-panel-renderer.js';
 import { ReportInspectorShellRenderer } from './inspector-shell-renderer.js';
 import { ReportDesignerPageRenderer } from './page-renderer.js';
@@ -39,3 +39,4 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
 export function registerReportDesignerRenderers(registry: RendererRegistry) {
   return registerRendererDefinitions(registry, reportDesignerRendererDefinitions);
 }
+

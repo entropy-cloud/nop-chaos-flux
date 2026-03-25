@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createDebuggerStore } from './store';
 
 describe('createDebuggerStore', () => {
-  it('appends bounded events and notifies subscribers', () => {
+  it('appends bounded events and notifies subscribers', async () => {
     const store = createDebuggerStore({
       enabled: true,
       sessionId: 'session-1',
@@ -46,11 +46,15 @@ describe('createDebuggerStore', () => {
       id: 3,
       sessionId: 'session-1'
     });
-    expect(listener).toHaveBeenCalledTimes(3);
+    expect(listener).toHaveBeenCalledTimes(0);
+
+    await Promise.resolve();
+    expect(listener).toHaveBeenCalledTimes(1);
 
     unsubscribe();
     store.clear();
-    expect(listener).toHaveBeenCalledTimes(3);
+    await Promise.resolve();
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 
   it('tracks panel state, filters, and paused append behavior', () => {

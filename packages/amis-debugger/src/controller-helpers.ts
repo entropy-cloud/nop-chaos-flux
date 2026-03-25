@@ -1,4 +1,4 @@
-import type { ActionResult, ApiObject, ApiResponse, CompiledSchemaNode } from '@nop-chaos/amis-schema';
+﻿import type { ActionResult, ApiObject, ApiResponse, CompiledSchemaNode } from '@nop-chaos/flux-core';
 import type { AmisDebugEventNetworkSummary, AmisDebuggerWindowConfig } from './types';
 
 const DEFAULT_POSITION = { x: 24, y: 24 };
@@ -136,3 +136,4 @@ export function normalizeCompiledRoot(node: CompiledSchemaNode | CompiledSchemaN
     firstPath: first?.path
   };
 }
+

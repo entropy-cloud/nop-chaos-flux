@@ -1,5 +1,5 @@
-import type { RendererDefinition, RendererRegistry } from '@nop-chaos/amis-schema';
-import { registerRendererDefinitions } from '@nop-chaos/amis-runtime';
+﻿import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
+import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { SpreadsheetPageRenderer } from './page-renderer.js';
 
 export const spreadsheetRendererDefinitions: RendererDefinition[] = [

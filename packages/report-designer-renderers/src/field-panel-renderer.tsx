@@ -1,6 +1,6 @@
-import React from 'react';
-import type { RendererComponentProps } from '@nop-chaos/amis-schema';
-import { hasRendererSlotContent, resolveRendererSlotContent, useRenderScope } from '@nop-chaos/amis-react';
+﻿import React from 'react';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { hasRendererSlotContent, resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { getFieldCount, joinClassNames } from './helpers.js';
 import { renderFieldSourceSections } from './fallbacks.js';
@@ -34,3 +34,4 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
     </section>
   );
 }
+

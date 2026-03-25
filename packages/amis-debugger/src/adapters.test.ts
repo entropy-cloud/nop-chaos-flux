@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import type { ApiObject, RendererEnv } from '@nop-chaos/amis-schema';
+﻿import { describe, expect, it, vi } from 'vitest';
+import type { ApiObject, RendererEnv } from '@nop-chaos/flux-core';
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
 import { normalizeRedactionOptions } from './redaction';
 import { createDebuggerStore } from './store';
@@ -152,3 +152,4 @@ describe('debugger adapters', () => {
     });
   });
 });
+

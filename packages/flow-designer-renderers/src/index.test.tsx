@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { createFormulaCompiler } from '../../amis-formula/src/index';
-import { createSchemaRenderer } from '../../amis-react/src/index';
-import { basicRendererDefinitions } from '../../amis-renderers-basic/src/index';
+import { createFormulaCompiler } from '../../flux-formula/src/index';
+import { createSchemaRenderer } from '../../flux-react/src/index';
+import { basicRendererDefinitions } from '../../flux-renderers-basic/src/index';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
@@ -397,8 +397,8 @@ describe('createDesignerActionProvider', () => {
       },
       config: createTestConfig(),
       toolbar: {
-        type: 'tpl',
-        tpl: 'Selected node: ${activeNode.data.label}'
+        type: 'text',
+        text: 'Selected node: ${activeNode.data.label}'
       }
     });
 
@@ -464,8 +464,8 @@ describe('createDesignerActionProvider', () => {
       },
       config: createTestConfig(),
       inspector: {
-        type: 'tpl',
-        tpl: 'Inspector active node: ${activeNode.data.label}'
+        type: 'text',
+        text: 'Inspector active node: ${activeNode.data.label}'
       }
     });
 
@@ -541,8 +541,8 @@ describe('createDesignerActionProvider', () => {
       },
       config: createTestConfig(),
       dialogs: {
-        type: 'tpl',
-        tpl: 'Mounted dialogs region content'
+        type: 'text',
+        text: 'Mounted dialogs region content'
       }
     });
 
@@ -601,8 +601,8 @@ describe('createDesignerActionProvider', () => {
       },
       config: createTestConfig(),
       dialogs: {
-        type: 'tpl',
-        tpl: 'Dialogs active node: ${activeNode.data.label}'
+        type: 'text',
+        text: 'Dialogs active node: ${activeNode.data.label}'
       }
     });
 

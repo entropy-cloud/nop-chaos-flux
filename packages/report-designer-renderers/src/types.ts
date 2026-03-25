@@ -1,4 +1,4 @@
-import type { BaseSchema } from '@nop-chaos/amis-schema';
+﻿import type { BaseSchema } from '@nop-chaos/flux-core';
 import type {
   ReportDesignerAdapterRegistry,
   ReportDesignerConfig,
@@ -45,3 +45,4 @@ export interface ReportInspectorShellSchema extends BaseSchema {
   saveLabel?: string;
   errorLabel?: string;
 }
+

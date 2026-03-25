@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { createFormulaCompiler } from '../../amis-formula/src/index';
-import { createSchemaRenderer } from '../../amis-react/src/index';
+import { createFormulaCompiler } from '../../flux-formula/src/index';
+import { createSchemaRenderer } from '../../flux-react/src/index';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';

@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createRendererRegistry } from '@nop-chaos/amis-runtime';
+﻿import { describe, it, expect, beforeEach } from 'vitest';
+import { createRendererRegistry } from '@nop-chaos/flux-runtime';
 import {
   createSpreadsheetCore,
   createEmptyDocument,
@@ -229,3 +229,4 @@ describe('registerSpreadsheetRenderers', () => {
     expect(definition?.regions).toEqual(['toolbar', 'body', 'dialogs']);
   });
 });
+

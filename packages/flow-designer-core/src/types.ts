@@ -1,4 +1,4 @@
-import type { SchemaInput } from '@nop-chaos/amis-schema';
+﻿import type { SchemaInput } from '@nop-chaos/flux-core';
 
 export interface GraphDocument {
   id: string;
@@ -265,3 +265,4 @@ export type DesignerEvent =
   | { type: 'gridToggled'; enabled: boolean };
 
 export type DesignerEventType = DesignerEvent['type'];
+

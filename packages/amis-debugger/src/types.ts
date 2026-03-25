@@ -1,4 +1,4 @@
-import type { ActionContext, RendererEnv, RendererPlugin } from '@nop-chaos/amis-schema';
+﻿import type { ActionContext, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
 
 export type AmisDebuggerTab = 'overview' | 'timeline' | 'network';
 
@@ -283,3 +283,4 @@ declare global {
     __NOP_AMIS_DEBUGGER_HUB__?: AmisDebuggerHub;
   }
 }
+

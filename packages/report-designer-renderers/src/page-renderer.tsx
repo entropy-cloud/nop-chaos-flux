@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } from '@nop-chaos/amis-schema';
-import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope } from '@nop-chaos/amis-react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
+import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } from '@nop-chaos/flux-core';
+import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope } from '@nop-chaos/flux-react';
 import type {
   ReportDesignerAdapterRegistry,
   ReportDesignerConfig,
@@ -133,3 +133,4 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
     </section>
   );
 }
+

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import type {
   ActionNamespaceProvider,
   BaseSchema,
@@ -8,9 +8,9 @@ import type {
   RendererRegistry,
   SchemaValue,
   ScopeRef
-} from '@nop-chaos/amis-schema';
-import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, useRendererRuntime, useRenderScope } from '@nop-chaos/amis-react';
-import { registerRendererDefinitions } from '@nop-chaos/amis-runtime';
+} from '@nop-chaos/flux-core';
+import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
+import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import type {
   DesignerCore,
   DesignerSnapshot,
@@ -470,7 +470,7 @@ function DesignerPaletteContent() {
               className="fd-palette__group-header"
               onClick={() => toggleGroup(group.id)}
             >
-              <span className="fd-palette__group-toggle">{expandedGroups.has(group.id) ? '▼' : '▶'}</span>
+              <span className="fd-palette__group-toggle">{expandedGroups.has(group.id) ? 'â–¼' : 'â–¶'}</span>
               <span className="fd-palette__group-label">{group.label}</span>
             </div>
             {expandedGroups.has(group.id) && (
@@ -485,7 +485,7 @@ function DesignerPaletteContent() {
                       onClick={() => handleAddNode(nt)}
                       title={nt.description ?? nt.label}
                     >
-                      <span className="fd-palette__item-icon">{nt.icon ?? '○'}</span>
+                      <span className="fd-palette__item-icon">{nt.icon ?? 'â—‹'}</span>
                       <span className="fd-palette__item-label">{nt.label}</span>
                     </button>
                   );
@@ -822,3 +822,4 @@ export function registerFlowDesignerRenderers(registry: RendererRegistry) {
 export function createFlowDesignerRegistry(baseRegistry: RendererRegistry): RendererRegistry {
   return registerFlowDesignerRenderers(baseRegistry);
 }
+

@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ActionContext,
   ApiObject,
   ApiRequestContext,
@@ -8,7 +8,7 @@ import type {
   RendererPlugin,
   SchemaInput,
   CompiledSchemaNode
-} from '@nop-chaos/amis-schema';
+} from '@nop-chaos/flux-core';
 import { buildNetworkSummary, createRequestKey, formatActionResult, formatErrorDetail, normalizeCompiledRoot, summarizeApi, summarizeValueShape } from './controller-helpers';
 import { redactData, type NormalizedRedactionOptions } from './redaction';
 import type { AmisDebuggerStore } from './store';
@@ -268,3 +268,4 @@ export function appendActionErrorEvent(store: AmisDebuggerStore, error: unknown,
     rendererType: ctx.node?.type
   });
 }
+

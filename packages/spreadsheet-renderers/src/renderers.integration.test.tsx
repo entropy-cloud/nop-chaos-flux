@@ -1,10 +1,10 @@
-// @vitest-environment jsdom
+﻿// @vitest-environment jsdom
 import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createFormulaCompiler } from '@nop-chaos/amis-formula';
-import { createSchemaRenderer, createDefaultRegistry, useRenderScope } from '@nop-chaos/amis-react';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/amis-schema';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer, createDefaultRegistry, useRenderScope } from '@nop-chaos/flux-react';
+import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import { defineSpreadsheetPageSchema, registerSpreadsheetRenderers } from './index.js';
 
@@ -101,3 +101,4 @@ describe('spreadsheet-page namespaced actions integration', () => {
     });
   });
 });
+

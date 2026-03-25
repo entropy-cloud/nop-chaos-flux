@@ -25,6 +25,7 @@ export function createDebuggerStore(input: {
   position: { x: number; y: number };
 }): AmisDebuggerStore {
   const listeners = new Set<() => void>();
+  let notifyScheduled = false;
 
   let snapshot: AmisDebuggerSnapshot = {
     enabled: input.enabled,
@@ -39,12 +40,24 @@ export function createDebuggerStore(input: {
   let nextId = 1;
 
   const notify = () => {
+    notifyScheduled = false;
     listeners.forEach((listener) => listener());
+  };
+
+  const scheduleNotify = () => {
+    if (notifyScheduled) {
+      return;
+    }
+
+    notifyScheduled = true;
+    queueMicrotask(() => {
+      notify();
+    });
   };
 
   const setSnapshot = (updater: (current: AmisDebuggerSnapshot) => AmisDebuggerSnapshot) => {
     snapshot = updater(snapshot);
-    notify();
+    scheduleNotify();
   };
 
   return {
