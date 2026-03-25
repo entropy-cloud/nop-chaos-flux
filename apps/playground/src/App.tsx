@@ -1,9 +1,9 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { AmisDebuggerPanel, createAmisDebugger } from '@nop-chaos/amis-debugger';
-import { createDefaultRegistry } from '@nop-chaos/amis-react';
-import { registerBasicRenderers } from '@nop-chaos/amis-renderers-basic';
-import { registerFormRenderers } from '@nop-chaos/amis-renderers-form';
-import { registerDataRenderers } from '@nop-chaos/amis-renderers-data';
+import { createDefaultRegistry } from '@nop-chaos/flux-react';
+import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
+import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
 import { HomePage, AmisBasicPage, FlowDesignerPage, ReportDesignerPage, DebuggerLabPage } from './pages';
 import type { PageId } from './pages';
@@ -50,3 +50,4 @@ export function App() {
     </div>
   );
 }
+

@@ -1,26 +1,26 @@
-import React from 'react';
+﻿import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const rendererSnapshots: Array<{ env: unknown; data: Record<string, unknown> | undefined }> = [];
 
-vi.mock('@nop-chaos/amis-formula', () => ({
+vi.mock('@nop-chaos/flux-formula', () => ({
   createFormulaCompiler: () => ({})
 }));
 
-vi.mock('@nop-chaos/amis-renderers-basic', () => ({
+vi.mock('@nop-chaos/flux-renderers-basic', () => ({
   registerBasicRenderers: () => undefined
 }));
 
-vi.mock('@nop-chaos/amis-renderers-form', () => ({
+vi.mock('@nop-chaos/flux-renderers-form', () => ({
   registerFormRenderers: () => undefined
 }));
 
-vi.mock('@nop-chaos/amis-renderers-data', () => ({
+vi.mock('@nop-chaos/flux-renderers-data', () => ({
   registerDataRenderers: () => undefined
 }));
 
-vi.mock('@nop-chaos/amis-react', () => ({
+vi.mock('@nop-chaos/flux-react', () => ({
   createDefaultRegistry: () => ({ register: () => undefined }),
   createSchemaRenderer: () => {
     return function MockSchemaRenderer(props: { env: any; data?: Record<string, unknown> }) {
@@ -138,3 +138,4 @@ describe('AmisBasicPage', () => {
     expect(rendererSnapshots.at(-1)?.env).toBe(initialSnapshot?.env);
   }, 10000);
 });
+

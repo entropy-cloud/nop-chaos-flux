@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { createFormulaCompiler } from '@nop-chaos/amis-formula';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { AmisDebuggerController } from '@nop-chaos/amis-debugger';
-import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/amis-react';
-import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/amis-schema';
-import { registerBasicRenderers } from '@nop-chaos/amis-renderers-basic';
-import { registerFormRenderers } from '@nop-chaos/amis-renderers-form';
-import { registerDataRenderers } from '@nop-chaos/amis-renderers-data';
+import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
+import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
+import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
+import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 
 interface AmisBasicPageProps {
   debuggerController: AmisDebuggerController;
@@ -300,6 +300,7 @@ const schema = {
         },
         {
           type: 'container',
+          direction: 'column',
           className: 'na-composite-lab',
           body: [
             {
@@ -319,10 +320,13 @@ const schema = {
             },
             {
               type: 'container',
+              wrap: true,
+              gap: 18,
               className: 'na-demo-grid',
               body: [
                 {
                   type: 'container',
+                  direction: 'column',
                   className: 'na-demo-card',
                   body: [
                     {
@@ -374,6 +378,7 @@ const schema = {
                 },
                 {
                   type: 'container',
+                  direction: 'column',
                   className: 'na-demo-card',
                   body: [
                     {
@@ -665,3 +670,4 @@ const latestTrace = diagnostic?.latestInteractionTrace;`}</pre>
     </main>
   );
 }
+
