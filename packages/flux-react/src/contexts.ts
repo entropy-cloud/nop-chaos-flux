@@ -1,4 +1,4 @@
-﻿import { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
 import type { Context } from 'react';
 import type {
   ActionScope,
@@ -17,6 +17,7 @@ export const ComponentRegistryContext = createContext<ComponentHandleRegistry | 
 export const FormContext = createContext<FormRuntime | undefined>(undefined);
 export const PageContext = createContext<PageRuntime | undefined>(undefined);
 export const NodeMetaContext = createContext<RenderNodeMeta | null>(null);
+export const ClassAliasesContext = createContext<Record<string, string> | undefined>(undefined);
 
 export function useRequiredContext<T>(context: Context<T | null>, label: string): T {
   const value = useContext(context);

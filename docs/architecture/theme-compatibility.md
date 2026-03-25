@@ -260,6 +260,10 @@ After this migration:
 - Flow Designer package surfaces are no longer blocked by hardcoded reusable colors
 - debugger and dialogs follow the same theme root model as the rest of the renderer tree
 
+## Related Docs
+
+- `docs/architecture/styling-system.md` - Semantic props vs Tailwind, style presets
+
 ## Follow-up Work
 
 - continue reducing package-level inline visual styles in `apps/playground/src/FlowDesignerExample.tsx`

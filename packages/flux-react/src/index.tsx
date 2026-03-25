@@ -24,11 +24,12 @@ import type {
   ScopeRef,
   ValidationError
 } from '@nop-chaos/flux-core';
-import { isSchema, isSchemaArray, shallowEqual } from '@nop-chaos/flux-core';
+import { isSchema, isSchemaArray, mergeClassAliases, resolveClassAliases, shallowEqual } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createFormComponentHandle, createRendererRegistry, createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
   ActionScopeContext,
+  ClassAliasesContext,
   ComponentRegistryContext,
   FormContext,
   NodeMetaContext,
@@ -387,6 +388,7 @@ function NodeRenderer(props: {
   page?: PageRuntime;
 }) {
   const runtime = useRendererRuntime();
+  const parentClassAliases = useContext(ClassAliasesContext);
   const stateRef = useRef<{ nodeId: string; state: CompiledNodeRuntimeState } | undefined>(undefined);
 
   if (!stateRef.current || stateRef.current.nodeId !== props.node.id) {
@@ -401,6 +403,14 @@ function NodeRenderer(props: {
   renderStartedAtRef.current = Date.now();
   const meta = runtime.resolveNodeMeta(props.node, props.scope, nodeState);
   const resolvedProps = runtime.resolveNodeProps(props.node, props.scope, nodeState);
+
+  const nodeClassAliases = (props.node.schema as { classAliases?: Record<string, string> }).classAliases;
+  const mergedClassAliases = mergeClassAliases(parentClassAliases, nodeClassAliases);
+  const resolvedClassName = resolveClassAliases(meta.className, mergedClassAliases);
+  const resolvedMeta = resolvedClassName !== meta.className
+    ? { ...meta, className: resolvedClassName }
+    : meta;
+
   const formRef = useRef<{
     nodeId: string;
     formId: string;
@@ -562,7 +572,7 @@ function NodeRenderer(props: {
     schema: props.node.schema,
     node: props.node,
     props: resolvedProps.value,
-    meta,
+    meta: resolvedMeta,
     regions,
     events,
     helpers
@@ -571,7 +581,7 @@ function NodeRenderer(props: {
   const Comp = props.node.component.component;
 
   useEffect(() => {
-    if (!meta.visible || meta.hidden) {
+    if (!resolvedMeta.visible || resolvedMeta.hidden) {
       return;
     }
 
@@ -588,7 +598,7 @@ function NodeRenderer(props: {
     });
   });
 
-  if (!meta.visible || meta.hidden) {
+  if (!resolvedMeta.visible || resolvedMeta.hidden) {
     return null;
   }
 
@@ -599,7 +609,9 @@ function NodeRenderer(props: {
           <ScopeContext.Provider value={activeScope}>
             <FormContext.Provider value={activeForm}>
               <PageContext.Provider value={props.page}>
-                <Comp {...componentProps} />
+                <ClassAliasesContext.Provider value={mergedClassAliases}>
+                  <Comp {...componentProps} />
+                </ClassAliasesContext.Provider>
               </PageContext.Provider>
             </FormContext.Provider>
           </ScopeContext.Provider>

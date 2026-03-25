@@ -9,6 +9,8 @@ export {
   swapArrayValue
 } from './utils/array';
 
+export { resolveClassAliases, mergeClassAliases } from './class-aliases';
+
 export type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
 export type SchemaValue = Primitive | SchemaObject | ReadonlyArray<SchemaValue> | SchemaValue[];
@@ -26,6 +28,7 @@ export interface BaseSchema extends SchemaObject {
   label?: string;
   title?: string;
   className?: string;
+  classAliases?: Record<string, string>;
   visible?: boolean | string;
   hidden?: boolean | string;
   disabled?: boolean | string;

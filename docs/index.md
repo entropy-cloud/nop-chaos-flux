@@ -23,6 +23,7 @@ Choose the smallest document that matches the task.
 | Understand Flow Designer canvas adapter defaults, bridge variants, or `xyflow` integration | `docs/architecture/flow-designer/canvas-adapters.md` | `docs/architecture/flow-designer/api.md` |
 | Plan parity work against `nop-chaos-next` `flow-editor` and identify which behaviors must become configuration-driven | `docs/plans/13-flow-editor-parity-gap-analysis-and-migration-plan.md` | `docs/architecture/flow-designer/design.md` |
 | Design theme-compatible styling, host CSS variable integration, or `.na-theme-root` migration strategy | `docs/architecture/theme-compatibility.md` | `docs/architecture/renderer-runtime.md` |
+| Design semantic props vs Tailwind className, or custom style presets | `docs/architecture/styling-system.md` | `docs/architecture/theme-compatibility.md` |
 | äº†è§£åŸºäºŽ SchemaRenderer çš„æŠ¥è¡¨è®¾è®¡å™¨ä¸Ž spreadsheet editor è§„åˆ’æž¶æž„ | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` |
 | äº†è§£é€šç”¨ report designer å¦‚ä½•é€‚é… nop-report | `docs/architecture/report-designer/nop-report-profile.md` | `docs/analysis/excel-report-designer-research.md` |
 | äº†è§£ report designer ä¸Ž nop-report çš„å¯¼å…¥å¯¼å‡º/round-trip è®¾è®¡ | `docs/architecture/report-designer/codec-design.md` | `docs/architecture/report-designer/nop-report-profile.md` |
@@ -37,6 +38,7 @@ Choose the smallest document that matches the task.
 | Check shared terminology such as `CompiledValueNode`, `RenderRegionHandle`, `value-or-region`, or `FormRuntime` | `docs/references/terminology.md` | `docs/references/renderer-interfaces.md` |
 | Check which docs must be updated after a code change | `docs/references/maintenance-checklist.md` | the most relevant file in `docs/architecture/` |
 | Check AMIS JSON conventions (expression, action, variant/level, icon) | `docs/references/amis-json-conventions.md` | `docs/architecture/flow-designer/config-schema.md` |
+| Look up AMIS component JSON Schema definition by name | `docs/amis-ref/index.md` | specific component `.json` file |
 | Check complex component design process (Flow Designer, Report Designer) | `docs/references/complex-component-design-process.md` | `docs/architecture/flow-designer/design.md` |
 | Review current renderer and runtime contracts by name | `docs/references/renderer-interfaces.md` | `packages/flux-core/src/index.ts` |
 | Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
@@ -73,6 +75,7 @@ Example behavior is best cross-checked with:
 
 - `docs/architecture/` - current normative design and package ownership notes
 - `docs/references/` - stable lookup material such as terminology, interface maps, maintenance guidance, and source-specific reference notes; useful, but secondary to architecture docs
+- `docs/amis-ref/` - individual AMIS component JSON Schema definitions extracted from amis@6.13.0, each file includes all dependencies for standalone validation
 - `docs/examples/` - small representative schemas and usage notes
 - `docs/analysis/` - comparative, investigatory, or decision-oriented reports; primarily for conclusions and tradeoff records, not the active contract
 - `docs/development-log.md` - quick dated development notes for recent doc additions, decisions, and immediate next work

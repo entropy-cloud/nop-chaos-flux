@@ -192,9 +192,25 @@ Examples:
 Review:
 
 - `docs/architecture/theme-compatibility.md`
+- `docs/architecture/styling-system.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/flow-designer/design.md` when Flow Designer host-shell expectations change
 - `docs/architecture/playground-experience.md` when playground-specific styling ownership changes
+
+## 9c. Semantic props or style preset changes
+
+Examples:
+
+- changes to `ContainerSchema` semantic props (`direction`, `gap`, `align`, etc.)
+- changes to semantic prop → Tailwind class mapping
+- adding or modifying `stylePresets` mechanism
+- changes to className resolution or merging behavior
+
+Review:
+
+- `docs/architecture/styling-system.md`
+- `docs/architecture/theme-compatibility.md`
+- `packages/flux-renderers-basic/src/index.tsx` implementation reference
 
 ## 9a. Action-scope or import-extension changes
 

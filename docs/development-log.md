@@ -18,6 +18,52 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-25 (AMIS Schema Reference v3)
+
+- **AMIS JSON Schema Reference**: Split `docs/amis-ref/` with grouped definitions
+- **Source**: Extracted from `amis@6.13.0` unified schema.json (301 definitions)
+- **Structure**: 15 grouped definition files + 152 component files
+  - Grouped files: `base.json`, `actions.json`, `api.json`, `expressions.json`, `events.json`, `form-base.json`, etc.
+  - Component files: thin files that `$ref` to grouped definitions
+- **Improvement**: Component files now ~100 lines instead of 30,000+ lines
+- **Script**: `scripts/split_amis_schema_v3.py` - groups definitions by category
+- **Index**: `docs/amis-ref/index.md` - explains file structure and reference relationships
+- **Key files**:
+  - `form.json` (114 lines) → refs `FormSchemaBase`, `ActionSchema`, `SchemaCollection`
+  - `button.json` (small) → refs `ActionSchema` in `actions.json`
+
+### 2026-03-25 (Styling System Design)
+
+- Added `docs/architecture/styling-system.md` documenting the TailwindCSS-first styling approach:
+  - Semantic props (`direction`, `gap`, `align`) as sugar for Tailwind classes
+  - Two authoring modes: semantic props (visual editor users) vs raw className (developers)
+  - Recommended `stylePresets` mechanism for reusable style definitions at page level
+- **Current implementation analysis** (`packages/flux-renderers-basic/src/index.tsx`):
+  - `ContainerSchema` has `direction`, `wrap`, `align`, `gap` semantic props
+  - Props correctly convert to Tailwind classes (`flex-row`, `flex-col`, `flex-wrap`, `items-*`)
+  - **Issue found**: `gap` uses inline `style.gap` instead of Tailwind `gap-*` classes
+- **Key decision**: Keep both semantic props and raw className as valid authoring modes; semantic props convert to Tailwind internally
+- **Next step**: Convert `gap` from inline style to Tailwind gap tokens, consider adding `stylePresets` support
+
+### 2026-03-25 (classAliases Implementation)
+
+- **Implemented `classAliases` mechanism** for reusable Tailwind class definitions:
+  - Added `classAliases?: Record<string, string>` to `BaseSchema` in `flux-core`
+  - Created `resolveClassAliases()` and `mergeClassAliases()` functions in `flux-core/src/class-aliases.ts`
+  - Added `ClassAliasesContext` in `flux-react` for inheritance
+  - Integrated alias resolution in `NodeRenderer` with parent-to-child inheritance
+- **Naming decision**: Chose `classAliases` over `styles` or `stylePresets` because:
+  - Accurately expresses "short name → long name" mapping
+  - Avoids confusion with inline styles (`{color: red}`)
+  - AI-friendly: `alias` is a common programming concept
+  - Pairs naturally with `className`
+- **Features**:
+  - Nested alias expansion: `btn-primary` can reference `btn`
+  - Scope inheritance: child components inherit parent aliases
+  - Child override: local aliases override parent with same name
+- **Files**: `packages/flux-core/src/class-aliases.ts`, `packages/flux-react/src/contexts.ts`, `packages/flux-react/src/index.tsx`
+- **Tests**: Added coverage for single/multiple/nested aliases, inheritance, and override
+
 ### 2026-03-25 (TailwindCSS é›†æˆ)
 
 - **æ–°å¢žåŒ…**ï¼š`packages/tailwind-preset/`
