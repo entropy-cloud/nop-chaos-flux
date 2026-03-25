@@ -1,0 +1,70 @@
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    font-family: Inter, 'Noto Sans SC', 'PingFang SC', sans-serif;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .theme-card {
+    background: var(--card-surface);
+    border: 1px solid var(--border-surface);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: var(--glass-blur, none);
+    transition: transform var(--transition-base, 0.2s ease), box-shadow var(--transition-base, 0.2s ease), border-color var(--transition-base, 0.2s ease);
+    will-change: transform;
+  }
+
+  @media (hover: hover) {
+    .theme-card:not(.shadow-none):hover {
+      border-color: color-mix(in hsl, hsl(var(--primary)) 18%, var(--border-surface));
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  @layer utilities {
+    .theme-card {
+      background: color-mix(in srgb, var(--card-surface) 92%, white 8%);
+    }
+  }
+}
+
+:root {
+  --radius: 0.75rem;
+  --sidebar: hsl(var(--card));
+  --sidebar-foreground: hsl(var(--foreground));
+  --sidebar-primary: hsl(var(--primary));
+  --sidebar-primary-foreground: hsl(var(--primary-foreground));
+  --sidebar-accent: hsl(var(--accent));
+  --sidebar-accent-foreground: hsl(var(--accent-foreground));
+  --sidebar-border: hsl(var(--border));
+  --sidebar-ring: hsl(var(--ring));
+}
+
+.dark {
+  --sidebar: hsl(var(--card));
+  --sidebar-foreground: hsl(var(--foreground));
+  --sidebar-primary: hsl(var(--primary));
+  --sidebar-primary-foreground: hsl(var(--primary-foreground));
+  --sidebar-accent: hsl(var(--accent));
+  --sidebar-accent-foreground: hsl(var(--accent-foreground));
+  --sidebar-border: hsl(var(--border));
+  --sidebar-ring: hsl(var(--ring));
+}
