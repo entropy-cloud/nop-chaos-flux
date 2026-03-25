@@ -18,6 +18,32 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-25 (AMIS TypeScript Type Definitions)
+
+- **Created `docs/amis-types/`**: 精简的 TypeScript 类型定义，从 JSON Schema 转换而来
+- **文件结构**:
+  - `common.d.ts` - 基础类型 (BaseSchema, FormBaseControl, Option, SchemaApi 等)
+  - `page.d.ts` - PageSchema 页面组件
+  - `form.d.ts` - FormSchema 表单组件
+  - `form-controls.d.ts` - 表单控件 (Text, Number, Select, Checkbox, Date 等)
+  - `form-advanced.d.ts` - 高级表单控件 (Combo, Transfer, Tree, File, Image, Editor 等)
+  - `button.d.ts` - 按钮组件 (Button, ButtonGroup, DropdownButton)
+  - `table.d.ts` - 表格组件 (Table, CRUD)
+  - `display.d.ts` - 展示组件 (Image, Video, Chart, Progress, Status 等)
+  - `data.d.ts` - 数据组件 (List, Cards, Nav, Service 等)
+  - `feedback.d.ts` - 反馈组件 (Dialog, Drawer, Alert, Spinner 等)
+  - `tabs.d.ts` - 标签/折叠/步骤组件 (Tabs, Collapse, Steps, Wizard)
+  - `layout.d.ts` - 布局组件 (Tpl, Container, Panel, Flex 等)
+  - `index.ts` - 统一导出，包含 `AmisSchema` 联合类型和 `AmisSchemaByType` 类型映射
+- **类型映射规则**:
+  - JSON Schema `type: "string"` → `string`
+  - JSON Schema `type: "number"` → `number`
+  - JSON Schema `type: "boolean"` → `boolean`
+  - JSON Schema `enum: [...]` → 联合类型
+  - JSON Schema `allOf` → 交叉类型 `&`
+  - JSON Schema `anyOf` → 联合类型 `|`
+- **用途**: 为 flow-designer2 组件提供类型安全
+
 ### 2026-03-25 (AMIS Schema Reference v3)
 
 - **AMIS JSON Schema Reference**: Split `docs/amis-ref/` with grouped definitions

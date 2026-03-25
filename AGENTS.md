@@ -14,15 +14,15 @@
 - `@nop-chaos/flux-renderers-basic` - Basic renderers (page, text, container, etc.).
 - `@nop-chaos/flux-renderers-form` - Form renderers.
 - `@nop-chaos/flux-renderers-data` - Data renderers.
-- `@nop-chaos/amis-debugger` - Devtools/debugger panel.
+- `@nop-chaos/nop-debugger` - Devtools/debugger panel.
 - `@nop-chaos/amis-testing` - Shared test utilities.
 - `apps/playground` - Dev playground.
 
 **Dependency Flow**:
 ```
 amis-schema -> amis-formula -> amis-runtime -> amis-react -> amis-renderers-*
+                                                            -> nop-debugger
                                                             -> apps/playground
-                                                            -> amis-debugger
 ```
 
 ---
