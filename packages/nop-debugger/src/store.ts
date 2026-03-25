@@ -1,19 +1,19 @@
 import { DEFAULT_FILTERS } from './diagnostics';
-import type { AmisDebugEvent, AmisDebuggerSnapshot, AmisDebuggerTab } from './types';
+import type { NopDebugEvent, NopDebuggerSnapshot, NopDebuggerTab } from './types';
 
-export interface AmisDebuggerStore {
-  getSnapshot(): AmisDebuggerSnapshot;
+export interface NopDebuggerStore {
+  getSnapshot(): NopDebuggerSnapshot;
   subscribe(listener: () => void): () => void;
-  append(event: Omit<AmisDebugEvent, 'id' | 'sessionId' | 'timestamp'> & { timestamp?: number }): void;
+  append(event: Omit<NopDebugEvent, 'id' | 'sessionId' | 'timestamp'> & { timestamp?: number }): void;
   clear(): void;
   show(): void;
   hide(): void;
   toggle(): void;
   pause(): void;
   resume(): void;
-  setActiveTab(tab: AmisDebuggerTab): void;
+  setActiveTab(tab: NopDebuggerTab): void;
   setPosition(position: { x: number; y: number }): void;
-  toggleFilter(filter: AmisDebuggerSnapshot['filters'][number]): void;
+  toggleFilter(filter: NopDebuggerSnapshot['filters'][number]): void;
 }
 
 export function createDebuggerStore(input: {
@@ -21,13 +21,13 @@ export function createDebuggerStore(input: {
   sessionId: string;
   maxEvents: number;
   defaultOpen: boolean;
-  defaultTab: AmisDebuggerTab;
+  defaultTab: NopDebuggerTab;
   position: { x: number; y: number };
-}): AmisDebuggerStore {
+}): NopDebuggerStore {
   const listeners = new Set<() => void>();
   let notifyScheduled = false;
 
-  let snapshot: AmisDebuggerSnapshot = {
+  let snapshot: NopDebuggerSnapshot = {
     enabled: input.enabled,
     panelOpen: input.defaultOpen,
     paused: false,
@@ -55,7 +55,7 @@ export function createDebuggerStore(input: {
     });
   };
 
-  const setSnapshot = (updater: (current: AmisDebuggerSnapshot) => AmisDebuggerSnapshot) => {
+  const setSnapshot = (updater: (current: NopDebuggerSnapshot) => NopDebuggerSnapshot) => {
     snapshot = updater(snapshot);
     scheduleNotify();
   };
@@ -106,13 +106,13 @@ export function createDebuggerStore(input: {
     resume() {
       setSnapshot((current) => ({ ...current, paused: false }));
     },
-    setActiveTab(tab: AmisDebuggerTab) {
+    setActiveTab(tab: NopDebuggerTab) {
       setSnapshot((current) => ({ ...current, activeTab: tab }));
     },
     setPosition(position: { x: number; y: number }) {
       setSnapshot((current) => ({ ...current, position }));
     },
-    toggleFilter(filter: AmisDebuggerSnapshot['filters'][number]) {
+    toggleFilter(filter: NopDebuggerSnapshot['filters'][number]) {
       setSnapshot((current) => {
         const exists = current.filters.includes(filter);
         if (exists) {

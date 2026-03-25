@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   ActionContext,
   RendererEnv,
   RendererPlugin
@@ -6,8 +6,8 @@
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
 import {
   createAutomationApi,
-  getAmisDebuggerAutomationApi as getAutomationApi,
-  installAmisDebuggerWindowFlag,
+  getNopDebuggerAutomationApi as getAutomationApi,
+  installNopDebuggerWindowFlag,
   registerAutomationApi
 } from './automation';
 import { createSessionId, readWindowConfig } from './controller-helpers';
@@ -15,21 +15,21 @@ import { applyEventQuery, buildInteractionTrace, buildNodeDiagnostics, buildOver
 import { normalizeRedactionOptions } from './redaction';
 import { createDebuggerStore } from './store';
 import type {
-  AmisDebugEvent,
-  AmisDebugEventQuery,
-  AmisDebuggerAutomationApi,
-  AmisDebuggerController,
-  AmisDebuggerOptions,
-  AmisDebuggerSessionExportOptions,
-  AmisDebuggerTab,
-  AmisDiagnosticReport,
-  AmisDiagnosticReportOptions,
-  AmisInteractionTraceQuery,
-  AmisNodeDiagnosticsOptions,
-  AmisWaitForEventOptions
+  NopDebugEvent,
+  NopDebugEventQuery,
+  NopDebuggerAutomationApi,
+  NopDebuggerController,
+  NopDebuggerOptions,
+  NopDebuggerSessionExportOptions,
+  NopDebuggerTab,
+  NopDiagnosticReport,
+  NopDiagnosticReportOptions,
+  NopInteractionTraceQuery,
+  NopNodeDiagnosticsOptions,
+  NopWaitForEventOptions
 } from './types';
 
-export function createAmisDebugger(options: AmisDebuggerOptions = {}): AmisDebuggerController {
+export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebuggerController {
   const windowConfig = readWindowConfig();
   const enabled = options.enabled ?? windowConfig.enabled;
   const debuggerId = options.id ?? 'default';
@@ -51,14 +51,14 @@ export function createAmisDebugger(options: AmisDebuggerOptions = {}): AmisDebug
 
   const getSnapshot = () => store.getSnapshot();
   const getOverview = () => buildOverview(getSnapshot().events);
-  const queryEvents = (query?: AmisDebugEventQuery) => applyEventQuery(getSnapshot().events, query);
-  const getLatestEvent = (query?: AmisDebugEventQuery) => queryEvents({ ...query, limit: 1 })[0];
+  const queryEvents = (query?: NopDebugEventQuery) => applyEventQuery(getSnapshot().events, query);
+  const getLatestEvent = (query?: NopDebugEventQuery) => queryEvents({ ...query, limit: 1 })[0];
   const getLatestError = () => getLatestEvent({ group: 'error' });
-  const getNodeDiagnostics = (nodeOptions: AmisNodeDiagnosticsOptions) => buildNodeDiagnostics(getSnapshot().events, nodeOptions);
-  const getInteractionTrace = (traceQuery: AmisInteractionTraceQuery) => buildInteractionTrace(getSnapshot().events, traceQuery);
-  const createReport = (reportOptions?: AmisDiagnosticReportOptions) => createDiagnosticReport(debuggerId, getSnapshot(), reportOptions);
-  const exportSession = (sessionOptions?: AmisDebuggerSessionExportOptions) => buildSessionExport(debuggerId, sessionId, getSnapshot(), redaction, sessionOptions);
-  const waitForEvent = (waitOptions?: AmisWaitForEventOptions) => {
+  const getNodeDiagnostics = (nodeOptions: NopNodeDiagnosticsOptions) => buildNodeDiagnostics(getSnapshot().events, nodeOptions);
+  const getInteractionTrace = (traceQuery: NopInteractionTraceQuery) => buildInteractionTrace(getSnapshot().events, traceQuery);
+  const createReport = (reportOptions?: NopDiagnosticReportOptions) => createDiagnosticReport(debuggerId, getSnapshot(), reportOptions);
+  const exportSession = (sessionOptions?: NopDebuggerSessionExportOptions) => buildSessionExport(debuggerId, sessionId, getSnapshot(), redaction, sessionOptions);
+  const waitForEvent = (waitOptions?: NopWaitForEventOptions) => {
     const timeoutMs = waitOptions?.timeoutMs ?? 5000;
     const immediate = getLatestEvent(waitOptions);
 
@@ -66,7 +66,7 @@ export function createAmisDebugger(options: AmisDebuggerOptions = {}): AmisDebug
       return Promise.resolve(immediate);
     }
 
-    return new Promise<AmisDebugEvent>((resolve, reject) => {
+    return new Promise<NopDebugEvent>((resolve, reject) => {
       const startedAt = Date.now();
       const unsubscribe = store.subscribe(() => {
         const next = getLatestEvent({
@@ -88,7 +88,7 @@ export function createAmisDebugger(options: AmisDebuggerOptions = {}): AmisDebug
     });
   };
 
-  const automation: AmisDebuggerAutomationApi = createAutomationApi({
+  const automation: NopDebuggerAutomationApi = createAutomationApi({
     controllerId: debuggerId,
     sessionId,
     getSnapshot,
@@ -119,7 +119,7 @@ export function createAmisDebugger(options: AmisDebuggerOptions = {}): AmisDebug
     toggle() {
       store.toggle();
     },
-    setActiveTab(tab: AmisDebuggerTab) {
+    setActiveTab(tab: NopDebuggerTab) {
       store.setActiveTab(tab);
     },
     setPanelPosition(position: { x: number; y: number }) {
@@ -165,7 +165,7 @@ export function createAmisDebugger(options: AmisDebuggerOptions = {}): AmisDebug
     resume() {
       store.resume();
     },
-    setActiveTab(tab: AmisDebuggerTab) {
+    setActiveTab(tab: NopDebuggerTab) {
       store.setActiveTab(tab);
     },
     setPanelPosition(position: { x: number; y: number }) {
@@ -187,7 +187,7 @@ export function createAmisDebugger(options: AmisDebuggerOptions = {}): AmisDebug
       return store.subscribe(listener);
     },
     getSnapshot
-  } satisfies AmisDebuggerController;
+  } satisfies NopDebuggerController;
 
   if (exposeAutomationApi) {
     registerAutomationApi(debuggerId, automation);
@@ -196,16 +196,16 @@ export function createAmisDebugger(options: AmisDebuggerOptions = {}): AmisDebug
   return controller;
 }
 
-export function getAmisDebuggerAutomationApi(controllerId?: string): AmisDebuggerAutomationApi | undefined {
+export function getNopDebuggerAutomationApi(controllerId?: string): NopDebuggerAutomationApi | undefined {
   return getAutomationApi(controllerId);
 }
 
-export { installAmisDebuggerWindowFlag };
+export { installNopDebuggerWindowFlag };
 
-export function createAmisDiagnosticReport(
-  controller: AmisDebuggerController,
-  options?: AmisDiagnosticReportOptions
-): AmisDiagnosticReport {
+export function createNopDiagnosticReport(
+  controller: NopDebuggerController,
+  options?: NopDiagnosticReportOptions
+): NopDiagnosticReport {
   return controller.createDiagnosticReport(options);
 }
 

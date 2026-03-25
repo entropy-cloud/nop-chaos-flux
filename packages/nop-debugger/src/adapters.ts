@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   ActionContext,
   ApiObject,
   ApiRequestContext,
@@ -11,11 +11,11 @@
 } from '@nop-chaos/flux-core';
 import { buildNetworkSummary, createRequestKey, formatActionResult, formatErrorDetail, normalizeCompiledRoot, summarizeApi, summarizeValueShape } from './controller-helpers';
 import { redactData, type NormalizedRedactionOptions } from './redaction';
-import type { AmisDebuggerStore } from './store';
+import type { NopDebuggerStore } from './store';
 
-export function createDebuggerPlugin(store: AmisDebuggerStore): RendererPlugin {
+export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
   return {
-    name: 'amis-debugger',
+    name: 'nop-debugger',
     beforeCompile(schema: SchemaInput) {
       const rootType = Array.isArray(schema) ? schema[0]?.type : schema.type;
       store.append({
@@ -74,7 +74,7 @@ export function createDebuggerPlugin(store: AmisDebuggerStore): RendererPlugin {
 export function decorateDebuggerEnv(input: {
   enabled: boolean;
   env: RendererEnv;
-  store: AmisDebuggerStore;
+  store: NopDebuggerStore;
   redaction: NormalizedRedactionOptions;
   requestState: Map<string, { startedAt: number }>;
 }): RendererEnv {
@@ -255,7 +255,7 @@ export function decorateDebuggerEnv(input: {
   };
 }
 
-export function appendActionErrorEvent(store: AmisDebuggerStore, error: unknown, ctx: ActionContext) {
+export function appendActionErrorEvent(store: NopDebuggerStore, error: unknown, ctx: ActionContext) {
   store.append({
     kind: 'error',
     group: 'error',

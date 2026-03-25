@@ -1,6 +1,6 @@
 ﻿import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiObject, RendererEnv } from '@nop-chaos/flux-core';
-import { createAmisDebugger, getAmisDebuggerAutomationApi, installAmisDebuggerWindowFlag } from './index';
+import { createNopDebugger, getNopDebuggerAutomationApi, installNopDebuggerWindowFlag } from './index';
 
 const windowStub = {} as Window & typeof globalThis;
 
@@ -25,15 +25,15 @@ const baseEnv: RendererEnv = {
   }
 };
 
-describe('amis-debugger automation api', () => {
+describe('nop-debugger automation api', () => {
   beforeEach(() => {
-    installAmisDebuggerWindowFlag(false);
-    delete window.__NOP_AMIS_DEBUGGER_API__;
-    delete window.__NOP_AMIS_DEBUGGER_HUB__;
+    installNopDebuggerWindowFlag(false);
+    delete window.__NOP_DEBUGGER_API__;
+    delete window.__NOP_DEBUGGER_HUB__;
   });
 
   it('queries events and builds diagnostic reports', async () => {
-    const debuggerController = createAmisDebugger({
+    const debuggerController = createNopDebugger({
       id: 'automation-query',
       enabled: true
     });
@@ -87,7 +87,7 @@ describe('amis-debugger automation api', () => {
   });
 
   it('captures structured network summaries and node diagnostics', async () => {
-    const debuggerController = createAmisDebugger({
+    const debuggerController = createNopDebugger({
       id: 'network-node',
       enabled: true
     });
@@ -149,7 +149,7 @@ describe('amis-debugger automation api', () => {
   });
 
   it('exports sessions and interaction traces for AI analysis', async () => {
-    const debuggerController = createAmisDebugger({
+    const debuggerController = createNopDebugger({
       id: 'trace-export',
       enabled: true
     });
@@ -201,7 +201,7 @@ describe('amis-debugger automation api', () => {
   });
 
   it('redacts sensitive values in exported session payloads', async () => {
-    const debuggerController = createAmisDebugger({
+    const debuggerController = createNopDebugger({
       id: 'redaction-export',
       enabled: true,
       redaction: {
@@ -268,7 +268,7 @@ describe('amis-debugger automation api', () => {
     vi.useFakeTimers();
 
     try {
-      const debuggerController = createAmisDebugger({
+      const debuggerController = createNopDebugger({
         id: 'automation-wait',
         enabled: true
       });
@@ -306,21 +306,21 @@ describe('amis-debugger automation api', () => {
   });
 
   it('registers global automation api and hub handles', () => {
-    const first = createAmisDebugger({
+    const first = createNopDebugger({
       id: 'first-controller',
       enabled: true
     });
-    const second = createAmisDebugger({
+    const second = createNopDebugger({
       id: 'second-controller',
       enabled: true
     });
 
-    expect(getAmisDebuggerAutomationApi()).toBe(second.automation);
-    expect(getAmisDebuggerAutomationApi('first-controller')).toBe(first.automation);
-    expect(window.__NOP_AMIS_DEBUGGER_HUB__?.listControllers()).toEqual(
+    expect(getNopDebuggerAutomationApi()).toBe(second.automation);
+    expect(getNopDebuggerAutomationApi('first-controller')).toBe(first.automation);
+    expect(window.__NOP_DEBUGGER_HUB__?.listControllers()).toEqual(
       expect.arrayContaining(['first-controller', 'second-controller'])
     );
-    expect(window.__NOP_AMIS_DEBUGGER_HUB__?.activeControllerId).toBe('second-controller');
+    expect(window.__NOP_DEBUGGER_HUB__?.activeControllerId).toBe('second-controller');
   });
 });
 

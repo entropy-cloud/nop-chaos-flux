@@ -1,23 +1,23 @@
 import type {
-  AmisDebugEvent,
-  AmisDebugEventKind,
-  AmisDebugEventQuery,
-  AmisDebuggerFilterKind,
-  AmisDebuggerOverview,
-  AmisDebuggerSessionExport,
-  AmisDebuggerSessionExportOptions,
-  AmisDebuggerSnapshot,
-  AmisDiagnosticReport,
-  AmisDiagnosticReportOptions,
-  AmisInteractionTrace,
-  AmisInteractionTraceQuery,
-  AmisNodeDiagnostics,
-  AmisNodeDiagnosticsOptions
+  NopDebugEvent,
+  NopDebugEventKind,
+  NopDebugEventQuery,
+  NopDebuggerFilterKind,
+  NopDebuggerOverview,
+  NopDebuggerSessionExport,
+  NopDebuggerSessionExportOptions,
+  NopDebuggerSnapshot,
+  NopDiagnosticReport,
+  NopDiagnosticReportOptions,
+  NopInteractionTrace,
+  NopInteractionTraceQuery,
+  NopNodeDiagnostics,
+  NopNodeDiagnosticsOptions
 } from './types';
 import type { NormalizedRedactionOptions } from './redaction';
 import { redactData } from './redaction';
 
-export const DEFAULT_FILTERS: AmisDebuggerFilterKind[] = ['render', 'action', 'api', 'compile', 'notify', 'error'];
+export const DEFAULT_FILTERS: NopDebuggerFilterKind[] = ['render', 'action', 'api', 'compile', 'notify', 'error'];
 
 function toArray<T>(value: T | T[] | undefined): T[] | undefined {
   if (value == null) {
@@ -31,11 +31,11 @@ function includesText(target: string | undefined, query: string) {
   return (target ?? '').toLowerCase().includes(query.toLowerCase());
 }
 
-function hasInteractionSelectors(query: AmisInteractionTraceQuery | undefined) {
+function hasInteractionSelectors(query: NopInteractionTraceQuery | undefined) {
   return query?.eventId != null || !!query?.requestKey || !!query?.actionType || !!query?.nodeId || !!query?.path;
 }
 
-function toEventQuery(query: AmisInteractionTraceQuery): AmisDebugEventQuery {
+function toEventQuery(query: NopInteractionTraceQuery): NopDebugEventQuery {
   return {
     requestKey: query.requestKey,
     actionType: query.actionType,
@@ -47,7 +47,7 @@ function toEventQuery(query: AmisInteractionTraceQuery): AmisDebugEventQuery {
   };
 }
 
-function findTraceAnchorEvent(events: AmisDebugEvent[], query: AmisInteractionTraceQuery) {
+function findTraceAnchorEvent(events: NopDebugEvent[], query: NopInteractionTraceQuery) {
   if (query.eventId != null) {
     return events.find((event) => event.id === query.eventId);
   }
@@ -55,10 +55,10 @@ function findTraceAnchorEvent(events: AmisDebugEvent[], query: AmisInteractionTr
   return events.find((event) => event.group === 'error') ?? events.find((event) => event.group === 'api') ?? events.find((event) => event.group === 'action') ?? events[0];
 }
 
-function resolveInteractionTraceQuery(events: AmisDebugEvent[], query: AmisInteractionTraceQuery) {
+function resolveInteractionTraceQuery(events: NopDebugEvent[], query: NopInteractionTraceQuery) {
   const shouldInfer = query.inferFromLatest ?? !hasInteractionSelectors(query);
   const anchorEvent = shouldInfer || query.eventId != null ? findTraceAnchorEvent(events, query) : undefined;
-  const resolvedQuery: AmisInteractionTraceQuery = {
+  const resolvedQuery: NopInteractionTraceQuery = {
     ...query,
     requestKey: query.requestKey ?? anchorEvent?.requestKey,
     actionType: query.actionType ?? anchorEvent?.actionType,
@@ -73,7 +73,7 @@ function resolveInteractionTraceQuery(events: AmisDebugEvent[], query: AmisInter
   };
 }
 
-export function matchesEventQuery(event: AmisDebugEvent, query: AmisDebugEventQuery | undefined) {
+export function matchesEventQuery(event: NopDebugEvent, query: NopDebugEventQuery | undefined) {
   if (!query) {
     return true;
   }
@@ -143,7 +143,7 @@ export function matchesEventQuery(event: AmisDebugEvent, query: AmisDebugEventQu
   return true;
 }
 
-export function applyEventQuery(events: AmisDebugEvent[], query?: AmisDebugEventQuery) {
+export function applyEventQuery(events: NopDebugEvent[], query?: NopDebugEventQuery) {
   const filtered = events.filter((event) => matchesEventQuery(event, query));
 
   if (query?.limit != null) {
@@ -153,9 +153,9 @@ export function applyEventQuery(events: AmisDebugEvent[], query?: AmisDebugEvent
   return filtered;
 }
 
-export function buildOverview(events: AmisDebugEvent[]): AmisDebuggerOverview {
-  const latestByKind = (kind: AmisDebugEventKind) => events.find((event) => event.kind === kind);
-  const countsByGroup = DEFAULT_FILTERS.reduce<Record<AmisDebuggerFilterKind, number>>((acc, filter) => {
+export function buildOverview(events: NopDebugEvent[]): NopDebuggerOverview {
+  const latestByKind = (kind: NopDebugEventKind) => events.find((event) => event.kind === kind);
+  const countsByGroup = DEFAULT_FILTERS.reduce<Record<NopDebuggerFilterKind, number>>((acc, filter) => {
     acc[filter] = events.filter((event) => event.group === filter).length;
     return acc;
   }, {
@@ -180,9 +180,9 @@ export function buildOverview(events: AmisDebugEvent[]): AmisDebuggerOverview {
 
 export function createDiagnosticReport(
   controllerId: string,
-  snapshot: AmisDebuggerSnapshot,
-  options?: AmisDiagnosticReportOptions
-): AmisDiagnosticReport {
+  snapshot: NopDebuggerSnapshot,
+  options?: NopDiagnosticReportOptions
+): NopDiagnosticReport {
   const recentEvents = applyEventQuery(snapshot.events, {
     ...options?.query,
     limit: options?.eventLimit ?? options?.query?.limit ?? 20
@@ -216,7 +216,7 @@ export function createDiagnosticReport(
   };
 }
 
-export function buildNodeDiagnostics(events: AmisDebugEvent[], options: AmisNodeDiagnosticsOptions): AmisNodeDiagnostics {
+export function buildNodeDiagnostics(events: NopDebugEvent[], options: NopNodeDiagnosticsOptions): NopNodeDiagnostics {
   const recentEvents = applyEventQuery(events, {
     nodeId: options.nodeId,
     path: options.path,
@@ -234,11 +234,11 @@ export function buildNodeDiagnostics(events: AmisDebugEvent[], options: AmisNode
     return true;
   });
 
-  const countsByGroup = allMatchingEvents.reduce<Partial<Record<AmisDebuggerFilterKind, number>>>((acc, event) => {
+  const countsByGroup = allMatchingEvents.reduce<Partial<Record<NopDebuggerFilterKind, number>>>((acc, event) => {
     acc[event.group] = (acc[event.group] ?? 0) + 1;
     return acc;
   }, {});
-  const countsByKind = allMatchingEvents.reduce<Partial<Record<AmisDebugEventKind, number>>>((acc, event) => {
+  const countsByKind = allMatchingEvents.reduce<Partial<Record<NopDebugEventKind, number>>>((acc, event) => {
     acc[event.kind] = (acc[event.kind] ?? 0) + 1;
     return acc;
   }, {});
@@ -259,7 +259,7 @@ export function buildNodeDiagnostics(events: AmisDebugEvent[], options: AmisNode
   };
 }
 
-export function buildInteractionTrace(events: AmisDebugEvent[], query: AmisInteractionTraceQuery): AmisInteractionTrace {
+export function buildInteractionTrace(events: NopDebugEvent[], query: NopInteractionTraceQuery): NopInteractionTrace {
   const { anchorEvent, resolvedQuery } = resolveInteractionTraceQuery(events, query);
   const mode = resolvedQuery.mode ?? 'exact';
   const baseLimit = resolvedQuery.limit ?? 40;
@@ -311,10 +311,10 @@ export function buildInteractionTrace(events: AmisDebugEvent[], query: AmisInter
 export function buildSessionExport(
   controllerId: string,
   sessionId: string,
-  snapshot: AmisDebuggerSnapshot,
+  snapshot: NopDebuggerSnapshot,
   redaction: NormalizedRedactionOptions,
-  options?: AmisDebuggerSessionExportOptions
-): AmisDebuggerSessionExport {
+  options?: NopDebuggerSessionExportOptions
+): NopDebuggerSessionExport {
   const events = applyEventQuery(snapshot.events, {
     ...options?.query,
     limit: options?.eventLimit ?? options?.query?.limit

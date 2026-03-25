@@ -9,9 +9,9 @@ import {
   matchesEventQuery
 } from './diagnostics';
 import { normalizeRedactionOptions } from './redaction';
-import type { AmisDebugEvent, AmisDebuggerSnapshot } from './types';
+import type { NopDebugEvent, NopDebuggerSnapshot } from './types';
 
-function createEvent(overrides: Partial<AmisDebugEvent>): AmisDebugEvent {
+function createEvent(overrides: Partial<NopDebugEvent>): NopDebugEvent {
   return {
     id: 1,
     sessionId: 'session-1',
@@ -25,7 +25,7 @@ function createEvent(overrides: Partial<AmisDebugEvent>): AmisDebugEvent {
   };
 }
 
-function createSnapshot(events: AmisDebugEvent[]): AmisDebuggerSnapshot {
+function createSnapshot(events: NopDebugEvent[]): NopDebuggerSnapshot {
   return {
     enabled: true,
     panelOpen: true,

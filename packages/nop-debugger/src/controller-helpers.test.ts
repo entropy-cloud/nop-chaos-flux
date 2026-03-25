@@ -20,7 +20,7 @@ Object.defineProperty(globalThis, 'window', {
 
 describe('controller helpers', () => {
   beforeEach(() => {
-    delete window.__NOP_AMIS_DEBUGGER__;
+    delete window.__NOP_DEBUGGER__;
   });
 
   it('reads debugger window config from defaults, boolean flags, and explicit config', () => {
@@ -32,14 +32,14 @@ describe('controller helpers', () => {
       dock: 'floating'
     });
 
-    window.__NOP_AMIS_DEBUGGER__ = true;
+    window.__NOP_DEBUGGER__ = true;
     expect(readWindowConfig()).toMatchObject({
       enabled: true,
       defaultOpen: true,
       defaultTab: 'timeline'
     });
 
-    window.__NOP_AMIS_DEBUGGER__ = {
+    window.__NOP_DEBUGGER__ = {
       enabled: true,
       defaultOpen: false,
       defaultTab: 'network',

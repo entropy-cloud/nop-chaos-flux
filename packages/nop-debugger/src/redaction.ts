@@ -1,14 +1,14 @@
 import type {
-  AmisDebuggerRedactionMatchContext,
-  AmisDebuggerRedactionOptions
+  NopDebuggerRedactionMatchContext,
+  NopDebuggerRedactionOptions
 } from './types';
 
 const DEFAULT_REDACT_KEYS = ['token', 'authorization', 'cookie', 'password', 'secret', 'accessKey', 'refreshToken'];
 
-export type NormalizedRedactionOptions = Required<Pick<AmisDebuggerRedactionOptions, 'enabled' | 'redactKeys' | 'mask' | 'maxDepth'>> &
-  Pick<AmisDebuggerRedactionOptions, 'redactValue' | 'allowValue'>;
+export type NormalizedRedactionOptions = Required<Pick<NopDebuggerRedactionOptions, 'enabled' | 'redactKeys' | 'mask' | 'maxDepth'>> &
+  Pick<NopDebuggerRedactionOptions, 'redactValue' | 'allowValue'>;
 
-export function normalizeRedactionOptions(options: AmisDebuggerRedactionOptions | undefined): NormalizedRedactionOptions {
+export function normalizeRedactionOptions(options: NopDebuggerRedactionOptions | undefined): NormalizedRedactionOptions {
   return {
     enabled: options?.enabled ?? true,
     redactKeys: options?.redactKeys ?? DEFAULT_REDACT_KEYS,
@@ -43,7 +43,7 @@ export function redactData(value: unknown, redaction: NormalizedRedactionOptions
 
   return Object.fromEntries(
     Object.entries(value as Record<string, unknown>).map(([key, currentValue]) => {
-      const context: AmisDebuggerRedactionMatchContext = {
+      const context: NopDebuggerRedactionMatchContext = {
         key,
         path: [...path, key],
         value: currentValue

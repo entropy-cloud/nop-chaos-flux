@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createAutomationApi, getAmisDebuggerAutomationApi, installAmisDebuggerWindowFlag, registerAutomationApi } from './automation';
+import { createAutomationApi, getNopDebuggerAutomationApi, installNopDebuggerWindowFlag, registerAutomationApi } from './automation';
 import type {
-  AmisDebugEvent,
-  AmisDebuggerFilterKind,
-  AmisDebuggerOverview,
-  AmisDebuggerSnapshot,
-  AmisDiagnosticReport,
-  AmisDebuggerSessionExport,
-  AmisInteractionTrace,
-  AmisNodeDiagnostics
+  NopDebugEvent,
+  NopDebuggerFilterKind,
+  NopDebuggerOverview,
+  NopDebuggerSnapshot,
+  NopDiagnosticReport,
+  NopDebuggerSessionExport,
+  NopInteractionTrace,
+  NopNodeDiagnostics
 } from './types';
 
 const windowStub = {} as Window & typeof globalThis;
@@ -20,14 +20,14 @@ Object.defineProperty(globalThis, 'window', {
 
 describe('debugger automation helpers', () => {
   beforeEach(() => {
-    delete window.__NOP_AMIS_DEBUGGER__;
-    delete window.__NOP_AMIS_DEBUGGER_API__;
-    delete window.__NOP_AMIS_DEBUGGER_HUB__;
+    delete window.__NOP_DEBUGGER__;
+    delete window.__NOP_DEBUGGER_API__;
+    delete window.__NOP_DEBUGGER_HUB__;
   });
 
   it('creates an automation api that delegates controller actions', async () => {
-    const filters: AmisDebuggerFilterKind[] = ['render'];
-    const snapshot: AmisDebuggerSnapshot = {
+    const filters: NopDebuggerFilterKind[] = ['render'];
+    const snapshot: NopDebuggerSnapshot = {
       enabled: true,
       panelOpen: true,
       paused: false,
@@ -36,7 +36,7 @@ describe('debugger automation helpers', () => {
       events: [],
       filters
     };
-    const overview: AmisDebuggerOverview = {
+    const overview: NopDebuggerOverview = {
       errorCount: 0,
       totalEvents: 0,
       countsByGroup: {
@@ -48,14 +48,14 @@ describe('debugger automation helpers', () => {
         error: 0
       }
     };
-    const diagnostics: AmisNodeDiagnostics = {
+    const diagnostics: NopNodeDiagnostics = {
       rendererTypes: [],
       totalEvents: 0,
       countsByGroup: {},
       countsByKind: {},
       recentEvents: []
     };
-    const trace: AmisInteractionTrace = {
+    const trace: NopInteractionTrace = {
       query: {},
       resolvedQuery: {
         mode: 'exact'
@@ -68,7 +68,7 @@ describe('debugger automation helpers', () => {
       nodeIds: [],
       paths: []
     };
-    const report: AmisDiagnosticReport = {
+    const report: NopDiagnosticReport = {
       controllerId: 'controller-a',
       sessionId: 'session-a',
       generatedAt: 1,
@@ -82,7 +82,7 @@ describe('debugger automation helpers', () => {
       overview,
       recentEvents: []
     };
-    const exportPayload: AmisDebuggerSessionExport = {
+    const exportPayload: NopDebuggerSessionExport = {
       controllerId: 'controller-a',
       sessionId: 'session-a',
       generatedAt: 1,
@@ -90,7 +90,7 @@ describe('debugger automation helpers', () => {
       overview,
       events: []
     };
-    const waitedEvent: AmisDebugEvent = {
+    const waitedEvent: NopDebugEvent = {
       id: 1,
       sessionId: 'session-a',
       timestamp: 1,
@@ -167,8 +167,8 @@ describe('debugger automation helpers', () => {
   });
 
   it('registers automation apis in the global hub and installs window flags', () => {
-    const filters: AmisDebuggerFilterKind[] = ['render'];
-    const snapshot: AmisDebuggerSnapshot = {
+    const filters: NopDebuggerFilterKind[] = ['render'];
+    const snapshot: NopDebuggerSnapshot = {
       enabled: true,
       panelOpen: false,
       paused: false,
@@ -177,19 +177,19 @@ describe('debugger automation helpers', () => {
       events: [],
       filters
     };
-    const overview: AmisDebuggerOverview = {
+    const overview: NopDebuggerOverview = {
       errorCount: 0,
       totalEvents: 0,
       countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0 }
     };
-    const diagnostics: AmisNodeDiagnostics = {
+    const diagnostics: NopNodeDiagnostics = {
       rendererTypes: [],
       totalEvents: 0,
       countsByGroup: {},
       countsByKind: {},
       recentEvents: []
     };
-    const trace: AmisInteractionTrace = {
+    const trace: NopInteractionTrace = {
       query: {},
       resolvedQuery: {
         mode: 'exact'
@@ -202,7 +202,7 @@ describe('debugger automation helpers', () => {
       nodeIds: [],
       paths: []
     };
-    const report: AmisDiagnosticReport = {
+    const report: NopDiagnosticReport = {
       controllerId: 'a',
       sessionId: 's-a',
       generatedAt: 1,
@@ -210,7 +210,7 @@ describe('debugger automation helpers', () => {
       overview,
       recentEvents: []
     };
-    const exportPayload: AmisDebuggerSessionExport = {
+    const exportPayload: NopDebuggerSessionExport = {
       controllerId: 'a',
       sessionId: 's-a',
       generatedAt: 1,
@@ -218,7 +218,7 @@ describe('debugger automation helpers', () => {
       overview,
       events: []
     };
-    const waitedEvent: AmisDebugEvent = {
+    const waitedEvent: NopDebugEvent = {
       id: 1,
       sessionId: 's-a',
       timestamp: 1,
@@ -255,12 +255,12 @@ describe('debugger automation helpers', () => {
 
     registerAutomationApi('a', automationA);
     registerAutomationApi('b', automationB);
-    installAmisDebuggerWindowFlag({ config: { enabled: true, defaultOpen: true, defaultTab: 'network' } });
+    installNopDebuggerWindowFlag({ config: { enabled: true, defaultOpen: true, defaultTab: 'network' } });
 
-    expect(window.__NOP_AMIS_DEBUGGER__).toMatchObject({ enabled: true, defaultOpen: true, defaultTab: 'network' });
-    expect(getAmisDebuggerAutomationApi()).toBe(automationB);
-    expect(getAmisDebuggerAutomationApi('a')).toBe(automationA);
-    expect(window.__NOP_AMIS_DEBUGGER_HUB__?.listControllers()).toEqual(expect.arrayContaining(['a', 'b']));
-    expect(window.__NOP_AMIS_DEBUGGER_HUB__?.activeControllerId).toBe('b');
+    expect(window.__NOP_DEBUGGER__).toMatchObject({ enabled: true, defaultOpen: true, defaultTab: 'network' });
+    expect(getNopDebuggerAutomationApi()).toBe(automationB);
+    expect(getNopDebuggerAutomationApi('a')).toBe(automationA);
+    expect(window.__NOP_DEBUGGER_HUB__?.listControllers()).toEqual(expect.arrayContaining(['a', 'b']));
+    expect(window.__NOP_DEBUGGER_HUB__?.activeControllerId).toBe('b');
   });
 });

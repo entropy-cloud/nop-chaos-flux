@@ -2,10 +2,10 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AmisDebuggerPanel } from './panel';
-import type { AmisDebuggerController, AmisDebuggerOverview, AmisDebuggerSnapshot, AmisDiagnosticReport, AmisInteractionTrace } from './types';
+import { NopDebuggerPanel } from './panel';
+import type { NopDebuggerController, NopDebuggerOverview, NopDebuggerSnapshot, NopDiagnosticReport, NopInteractionTrace } from './types';
 
-function createSnapshot(): AmisDebuggerSnapshot {
+function createSnapshot(): NopDebuggerSnapshot {
   return {
     enabled: true,
     panelOpen: true,
@@ -17,13 +17,13 @@ function createSnapshot(): AmisDebuggerSnapshot {
   };
 }
 
-function createController(snapshot: AmisDebuggerSnapshot): AmisDebuggerController {
-  const emptyOverview: AmisDebuggerOverview = {
+function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController {
+  const emptyOverview: NopDebuggerOverview = {
     errorCount: 0,
     totalEvents: 0,
     countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0 }
   };
-  const latestTrace: AmisInteractionTrace = {
+  const latestTrace: NopInteractionTrace = {
     query: { inferFromLatest: true },
     resolvedQuery: { nodeId: 'user-form', actionType: 'submitForm', mode: 'related' },
     anchorEvent: {
@@ -44,7 +44,7 @@ function createController(snapshot: AmisDebuggerSnapshot): AmisDebuggerControlle
     nodeIds: ['user-form'],
     paths: ['body.1']
   };
-  const metricReport: AmisDiagnosticReport = {
+  const metricReport: NopDiagnosticReport = {
     controllerId: 'panel-test',
     sessionId: 'session-test',
     generatedAt: 1,
@@ -119,12 +119,12 @@ afterEach(() => {
   cleanup();
 });
 
-describe('AmisDebuggerPanel', () => {
+describe('NopDebuggerPanel', () => {
   it('shows the latest inferred interaction trace summary in overview mode', () => {
     const snapshot = createSnapshot();
     const controller = createController(snapshot);
 
-    render(<AmisDebuggerPanel controller={controller} />);
+    render(<NopDebuggerPanel controller={controller} />);
 
     expect(screen.getByText('Latest trace')).toBeTruthy();
     expect(screen.getByText('submit failed')).toBeTruthy();
@@ -136,7 +136,7 @@ describe('AmisDebuggerPanel', () => {
     const snapshot = createSnapshot();
     const controller = createController(snapshot);
 
-    render(<AmisDebuggerPanel controller={controller} />);
+    render(<NopDebuggerPanel controller={controller} />);
 
     fireEvent.click(screen.getByTitle('Minimize'));
 
@@ -147,7 +147,7 @@ describe('AmisDebuggerPanel', () => {
     const snapshot = { ...createSnapshot(), panelOpen: false };
     const controller = createController(snapshot);
 
-    render(<AmisDebuggerPanel controller={controller} />);
+    render(<NopDebuggerPanel controller={controller} />);
 
     const launcher = document.querySelector('.na-debugger-launcher');
     expect(launcher).toBeTruthy();

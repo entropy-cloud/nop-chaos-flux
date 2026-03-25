@@ -20,7 +20,7 @@
     "paths": {
       "@nop-chaos/flux-core": ["packages/flux-core/src/index.ts"],
       "@nop-chaos/flux-formula": ["packages/flux-formula/src/index.ts"],
-      "@nop-chaos/amis-debugger": ["packages/amis-debugger/src/index.tsx"],
+      "@nop-chaos/nop-debugger": ["packages/nop-debugger/src/index.tsx"],
       "@nop-chaos/flux-runtime": ["packages/flux-runtime/src/index.ts"],
       "@nop-chaos/flux-react": ["packages/flux-react/src/index.tsx"],
       "@nop-chaos/flux-renderers-basic": ["packages/flux-renderers-basic/src/index.tsx"],

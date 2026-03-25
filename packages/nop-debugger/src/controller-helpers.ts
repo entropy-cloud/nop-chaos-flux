@@ -1,9 +1,9 @@
-﻿import type { ActionResult, ApiObject, ApiResponse, CompiledSchemaNode } from '@nop-chaos/flux-core';
-import type { AmisDebugEventNetworkSummary, AmisDebuggerWindowConfig } from './types';
+import type { ActionResult, ApiObject, ApiResponse, CompiledSchemaNode } from '@nop-chaos/flux-core';
+import type { NopDebugEventNetworkSummary, NopDebuggerWindowConfig } from './types';
 
 const DEFAULT_POSITION = { x: 24, y: 24 };
 
-export function readWindowConfig(): Required<AmisDebuggerWindowConfig> & { enabled: boolean } {
+export function readWindowConfig(): Required<NopDebuggerWindowConfig> & { enabled: boolean } {
   if (typeof window === 'undefined') {
     return {
       enabled: false,
@@ -14,7 +14,7 @@ export function readWindowConfig(): Required<AmisDebuggerWindowConfig> & { enabl
     };
   }
 
-  const raw = window.__NOP_AMIS_DEBUGGER__;
+  const raw = window.__NOP_DEBUGGER__;
 
   if (raw === true) {
     return {
@@ -110,7 +110,7 @@ export function buildNetworkSummary(input: {
   api: ApiObject;
   response?: ApiResponse<unknown>;
   aborted?: boolean;
-}): AmisDebugEventNetworkSummary {
+}): NopDebugEventNetworkSummary {
   const requestShape = summarizeValueShape(input.api.data);
   const responseShape = summarizeValueShape(input.response?.data);
 

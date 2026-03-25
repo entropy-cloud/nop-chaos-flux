@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import type { AmisDebugEvent, AmisDebuggerController, AmisDebuggerFilterKind, AmisDebuggerTab, AmisInteractionTrace } from './types';
+import type { NopDebugEvent, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
 import { buildOverview, DEFAULT_FILTERS } from './diagnostics';
 
 const DEBUGGER_STYLE_ID = 'na-debugger-styles';
@@ -238,7 +238,7 @@ const DEBUGGER_STYLES = `
 }
 `;
 
-const FILTER_LABELS: Record<AmisDebuggerFilterKind, string> = {
+const FILTER_LABELS: Record<NopDebuggerFilterKind, string> = {
   render: 'Render',
   action: 'Action',
   api: 'API',
@@ -255,11 +255,11 @@ function formatClock(timestamp: number) {
   });
 }
 
-function getEventBadgeClass(event: AmisDebugEvent) {
+function getEventBadgeClass(event: NopDebugEvent) {
   return `na-debugger__badge na-debugger__badge--${event.group}`;
 }
 
-function formatTraceSummary(trace: AmisInteractionTrace | undefined) {
+function formatTraceSummary(trace: NopInteractionTrace | undefined) {
   if (!trace || trace.totalEvents === 0) {
     return {
       headline: 'No correlated trace yet',
@@ -280,7 +280,7 @@ function formatTraceSummary(trace: AmisInteractionTrace | undefined) {
   };
 }
 
-function useDebuggerSnapshot(controller: AmisDebuggerController) {
+function useDebuggerSnapshot(controller: NopDebuggerController) {
   const [snapshot, setSnapshot] = useState(controller.getSnapshot());
 
   useEffect(() => {
@@ -293,7 +293,7 @@ function useDebuggerSnapshot(controller: AmisDebuggerController) {
   return snapshot;
 }
 
-function useDraggablePosition(controller: AmisDebuggerController, initial: { x: number; y: number }) {
+function useDraggablePosition(controller: NopDebuggerController, initial: { x: number; y: number }) {
   const [position, setPosition] = useState(initial);
   const positionRef = useRef(initial);
   const dragState = useRef<{
@@ -385,7 +385,7 @@ function useDraggablePosition(controller: AmisDebuggerController, initial: { x: 
 }
 
 function useLauncherDrag(
-  controller: AmisDebuggerController,
+  controller: NopDebuggerController,
   initial: { x: number; y: number }
 ) {
   const [position, setPosition] = useState(initial);
@@ -524,7 +524,7 @@ function useInjectDebuggerStyles(enabled: boolean) {
   }, [enabled]);
 }
 
-export function AmisDebuggerPanel(props: { controller: AmisDebuggerController }) {
+export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const snapshot = useDebuggerSnapshot(props.controller);
   const { position, bind } = useDraggablePosition(props.controller, snapshot.position);
   const { position: launcherPosition, bind: launcherBind, wasDraggedRef, consumeSuppressedClick } = useLauncherDrag(props.controller, snapshot.position);
@@ -610,7 +610,7 @@ export function AmisDebuggerPanel(props: { controller: AmisDebuggerController })
       </div>
 
       <div className="na-debugger__tabs" role="tablist" aria-label="Debugger tabs">
-        {(['overview', 'timeline', 'network'] as AmisDebuggerTab[]).map((tab) => (
+        {(['overview', 'timeline', 'network'] as NopDebuggerTab[]).map((tab) => (
           <button
             key={tab}
             type="button"

@@ -1,5 +1,5 @@
 {
-  "name": "@nop-chaos/amis-debugger",
+  "name": "@nop-chaos/nop-debugger",
   "version": "0.1.0",
   "private": true,
   "type": "module",
