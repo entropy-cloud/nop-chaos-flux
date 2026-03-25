@@ -131,8 +131,7 @@ function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
     align === 'center' && 'items-center justify-center',
     align === 'start' && 'items-start justify-start',
     align === 'end' && 'items-end justify-end',
-    align === 'stretch' && 'items-stretch',
-    props.meta.className
+    align === 'stretch' && 'items-stretch'
   );
 
   const style: React.CSSProperties = {};
