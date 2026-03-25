@@ -79,9 +79,9 @@ vi.mock('@nop-chaos/flux-react', () => ({
   }
 }));
 
-vi.mock('@nop-chaos/amis-debugger', () => ({
-  AmisDebuggerPanel: () => null,
-  createAmisDebugger: () => ({
+vi.mock('@nop-chaos/nop-debugger', () => ({
+  NopDebuggerPanel: () => null,
+  createNopDebugger: () => ({
     id: 'test',
     getSnapshot: () => ({ enabled: true, panelOpen: false, paused: false, events: [], filters: [], activeTab: 'timeline', position: { x: 24, y: 24 } }),
     subscribe: () => () => undefined,

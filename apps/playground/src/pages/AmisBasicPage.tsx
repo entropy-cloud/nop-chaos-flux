@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import type { AmisDebuggerController } from '@nop-chaos/amis-debugger';
+import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -8,7 +8,7 @@ import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 
 interface AmisBasicPageProps {
-  debuggerController: AmisDebuggerController;
+  debuggerController: NopDebuggerController;
   onBack: () => void;
 }
 

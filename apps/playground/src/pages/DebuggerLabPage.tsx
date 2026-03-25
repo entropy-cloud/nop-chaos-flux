@@ -1,13 +1,13 @@
-import type { AmisDebuggerController } from '@nop-chaos/amis-debugger';
+import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 
 interface DebuggerLabPageProps {
-  debuggerController: AmisDebuggerController;
+  debuggerController: NopDebuggerController;
   onBack: () => void;
 }
 
 export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageProps) {
-  const api = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__NOP_AMIS_DEBUGGER_API__ : null;
-  const hub = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__NOP_AMIS_DEBUGGER_HUB__ : null;
+  const api = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__NOP_DEBUGGER_API__ : null;
+  const hub = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__NOP_DEBUGGER_HUB__ : null;
 
   return (
     <main className="app-shell">

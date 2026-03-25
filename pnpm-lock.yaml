@@ -59,9 +59,6 @@ importers:
 
   apps/playground:
     dependencies:
-      '@nop-chaos/amis-debugger':
-        specifier: workspace:*
-        version: link:../../packages/amis-debugger
       '@nop-chaos/flow-designer-core':
         specifier: workspace:*
         version: link:../../packages/flow-designer-core
@@ -77,6 +74,9 @@ importers:
       '@nop-chaos/flux-runtime':
         specifier: workspace:*
         version: link:../../packages/flux-runtime
+      '@nop-chaos/nop-debugger':
+        specifier: workspace:*
+        version: link:../../packages/nop-debugger
       '@nop-chaos/report-designer-core':
         specifier: workspace:*
         version: link:../../packages/report-designer-core
@@ -105,18 +105,6 @@ importers:
       vite:
         specifier: ^7.0.0
         version: 7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)
-
-  packages/amis-debugger:
-    dependencies:
-      '@nop-chaos/flux-core':
-        specifier: workspace:*
-        version: link:../flux-core
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
-      react-dom:
-        specifier: ^19.0.0
-        version: 19.2.4(react@19.2.4)
 
   packages/flow-designer-core:
     dependencies:
@@ -256,6 +244,18 @@ importers:
       zustand:
         specifier: ^5.0.11
         version: 5.0.11(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
+
+  packages/nop-debugger:
+    dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
 
   packages/report-designer-core:
     dependencies:

@@ -1,5 +1,5 @@
-﻿import { useState } from 'react';
-import { AmisDebuggerPanel, createAmisDebugger } from '@nop-chaos/amis-debugger';
+import { useState } from 'react';
+import { NopDebuggerPanel, createNopDebugger } from '@nop-chaos/nop-debugger';
 import { createDefaultRegistry } from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
@@ -14,8 +14,8 @@ registerFormRenderers(registry);
 registerDataRenderers(registry);
 registerFlowDesignerRenderers(registry);
 
-if (typeof window !== 'undefined' && typeof window.__NOP_AMIS_DEBUGGER__ === 'undefined') {
-  window.__NOP_AMIS_DEBUGGER__ = {
+if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefined') {
+  window.__NOP_DEBUGGER__ = {
     enabled: true,
     defaultOpen: false,
     defaultTab: 'timeline',
@@ -24,7 +24,7 @@ if (typeof window !== 'undefined' && typeof window.__NOP_AMIS_DEBUGGER__ === 'un
   };
 }
 
-const debuggerController = createAmisDebugger({
+const debuggerController = createNopDebugger({
   id: 'playground-main'
 });
 
@@ -46,7 +46,7 @@ export function App() {
       {activePage === 'flow-designer' && <FlowDesignerPage onBack={handleBackHome} />}
       {activePage === 'report-designer' && <ReportDesignerPage onBack={handleBackHome} />}
       {activePage === 'debugger-lab' && <DebuggerLabPage debuggerController={debuggerController} onBack={handleBackHome} />}
-      <AmisDebuggerPanel controller={debuggerController} />
+      <NopDebuggerPanel controller={debuggerController} />
     </div>
   );
 }
