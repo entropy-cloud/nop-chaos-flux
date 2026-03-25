@@ -1,0 +1,383 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/ImageControlSchema",
+  "definitions": {
+    "ImageControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "showErrorModal": {
+              "type": "boolean",
+              "description": "格式校验失败是否显示弹窗"
+            },
+            "invalidTypeMessage": {
+              "type": "string",
+              "description": "校验格式失败时显示的文字信息"
+            },
+            "invalidSizeMessage": {
+              "type": "string",
+              "description": "校验文件大小失败时显示的文字信息"
+            },
+            "type": {
+              "type": "string",
+              "const": "input-image",
+              "description": "指定为图片上传控件"
+            },
+            "src": {
+              "$ref": "#/definitions/SchemaUrlPath",
+              "description": "默认展示图片的链接"
+            },
+            "imageClassName": {
+              "type": "string",
+              "description": "默认展示图片的类名"
+            },
+            "accept": {
+              "type": "string",
+              "description": "配置接收的图片类型\n\n建议直接填写文件后缀 如：.txt,.csv\n\n多个类型用逗号隔开。"
+            },
+            "allowInput": {
+              "type": "boolean",
+              "description": "默认都是通过用户选择图片后上传返回图片地址，如果开启此选项，则可以允许用户图片地址。"
+            },
+            "autoUpload": {
+              "type": "boolean",
+              "description": "是否自动开始上传"
+            },
+            "uploadBtnText": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/TplSchema"
+                }
+              ],
+              "description": "上传按钮文案"
+            },
+            "btnClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "选择图片按钮的 CSS 类名"
+            },
+            "btnUploadClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "上传按钮的 CSS 类名"
+            },
+            "compress": {
+              "type": "boolean",
+              "deprecated": true
+            },
+            "compressOptions": {
+              "type": "object",
+              "properties": {
+                "maxHeight": {
+                  "type": "number"
+                },
+                "maxWidth": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "deprecated": true
+            },
+            "crop": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "aspectRatio": {
+                      "type": "number",
+                      "description": "默认 `1` 即 `1:1`\n\n留空将不限制"
+                    },
+                    "guides": {
+                      "type": "boolean"
+                    },
+                    "dragMode": {
+                      "type": "string"
+                    },
+                    "viewMode": {
+                      "type": "number"
+                    },
+                    "rotatable": {
+                      "type": "boolean"
+                    },
+                    "scalable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "cropFormat": {
+              "type": "string",
+              "description": "裁剪后的图片类型"
+            },
+            "cropQuality": {
+              "type": "number",
+              "description": "裁剪后的质量"
+            },
+            "reCropable": {
+              "type": "boolean",
+              "description": "是否允许二次裁剪。"
+            },
+            "hideUploadButton": {
+              "type": "boolean",
+              "description": "是否隐藏上传按钮"
+            },
+            "limit": {
+              "type": "object",
+              "properties": {
+                "aspectRatioLabel": {
+                  "type": "string",
+                  "description": "比率不对时的提示文字"
+                },
+                "aspectRatio": {
+                  "type": "number",
+                  "description": "限制比率"
+                },
+                "height": {
+                  "type": "number",
+                  "description": "限制图片高度"
+                },
+                "width": {
+                  "type": "number",
+                  "description": "限制图片宽度"
+                },
+                "maxHeight": {
+                  "type": "number",
+                  "description": "限制图片最大高度"
+                },
+                "maxWidth": {
+                  "type": "number",
+                  "description": "限制图片最大宽度"
+                },
+                "minHeight": {
+                  "type": "number",
+                  "description": "限制图片最小高度"
+                },
+                "minWidth": {
+                  "type": "number",
+                  "description": "限制图片最小宽度"
+                }
+              },
+              "additionalProperties": false,
+              "description": "限制图片大小，超出不让上传。"
+            },
+            "maxLength": {
+              "type": "number",
+              "description": "最多的个数"
+            },
+            "maxSize": {
+              "type": "number",
+              "description": "默认没有限制，当设置后，文件大小大于此值将不允许上传。"
+            },
+            "receiver": {
+              "$ref": "#/definitions/SchemaApi",
+              "description": "默认 `/api/upload` 如果想自己存储，请设置此选项。"
+            },
+            "showCompressOptions": {
+              "type": "boolean",
+              "description": "默认为 false, 开启后，允许用户输入压缩选项。",
+              "deprecated": true
+            },
+            "multiple": {
+              "type": "boolean",
+              "description": "是否为多选"
+            },
+            "capture": {
+              "type": "string",
+              "description": "可配置移动端的拍照功能，比如配置 `camera` 移动端只能拍照，等"
+            },
+            "joinValues": {
+              "type": "boolean",
+              "description": "单选模式：当用户选中某个选项时，选项中的 value 将被作为该表单项的值提交，否则，整个选项对象都会作为该表单项的值提交。 多选模式：选中的多个选项的 `value` 会通过 `delimiter` 连接起来，否则直接将以数组的形式提交值。"
+            },
+            "delimiter": {
+              "type": "string",
+              "description": "分割符"
+            },
+            "extractValue": {
+              "type": "boolean",
+              "description": "开启后将选中的选项 value 的值封装为数组，作为当前表单项的值。"
+            },
+            "resetValue": {
+              "description": "清除时设置的值"
+            },
+            "thumbMode": {
+              "type": "string",
+              "enum": [
+                "w-full",
+                "h-full",
+                "contain",
+                "cover"
+              ],
+              "description": "缩路图展示模式"
+            },
+            "thumbRatio": {
+              "type": "string",
+              "enum": [
+                "1:1",
+                "4:3",
+                "16:9"
+              ],
+              "description": "缩路图展示比率。"
+            },
+            "autoFill": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/SchemaTokenizeableString"
+              },
+              "description": "上传后把其他字段同步到表单内部。"
+            },
+            "initAutoFill": {
+              "type": "boolean",
+              "description": "初始化时是否把其他字段同步到表单内部。"
+            },
+            "initCrop": {
+              "type": "boolean",
+              "description": "初始化时是否打开裁剪模式"
+            },
+            "dropCrop": {
+              "type": "boolean",
+              "description": "图片上传完毕是否进入裁剪模式"
+            },
+            "frameImage": {
+              "$ref": "#/definitions/SchemaUrlPath",
+              "description": "默认占位图图片地址"
+            },
+            "fixedSize": {
+              "type": "boolean",
+              "description": "是否开启固定尺寸"
+            },
+            "fixedSizeClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "固定尺寸的 CSS类名"
+            },
+            "draggable": {
+              "type": "boolean",
+              "description": "是否可拖拽排序"
+            },
+            "draggableTip": {
+              "type": "string",
+              "description": "可拖拽排序的提示信息。",
+              "default": "可拖拽排序"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/FormBaseControlSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "size": true,
+        "type": {
+          "type": "string",
+          "const": "input-image"
+        },
+        "showErrorModal": true,
+        "invalidTypeMessage": true,
+        "invalidSizeMessage": true,
+        "src": true,
+        "imageClassName": true,
+        "accept": true,
+        "allowInput": true,
+        "autoUpload": true,
+        "uploadBtnText": true,
+        "btnClassName": true,
+        "btnUploadClassName": true,
+        "compress": true,
+        "compressOptions": true,
+        "crop": true,
+        "cropFormat": true,
+        "cropQuality": true,
+        "reCropable": true,
+        "hideUploadButton": true,
+        "limit": true,
+        "maxLength": true,
+        "maxSize": true,
+        "receiver": true,
+        "showCompressOptions": true,
+        "multiple": true,
+        "capture": true,
+        "joinValues": true,
+        "delimiter": true,
+        "extractValue": true,
+        "resetValue": true,
+        "thumbMode": true,
+        "thumbRatio": true,
+        "initCrop": true,
+        "dropCrop": true,
+        "frameImage": true,
+        "fixedSize": true,
+        "fixedSizeClassName": true,
+        "draggable": true,
+        "draggableTip": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "Image 图片上传控件 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/image"
+    }
+  }
+}

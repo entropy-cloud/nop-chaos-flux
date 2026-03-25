@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/CardsSchema",
+  "definitions": {
+    "CardsSchema": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseCardsSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "loadingConfig": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "cards"
+        },
+        "testid": true,
+        "card": true,
+        "headerClassName": true,
+        "footerClassName": true,
+        "itemClassName": true,
+        "placeholder": true,
+        "showFooter": true,
+        "showHeader": true,
+        "source": true,
+        "title": true,
+        "hideCheckToggler": true,
+        "affixHeader": true,
+        "affixFooter": true,
+        "header": true,
+        "footer": true,
+        "itemCheckableOn": true,
+        "itemDraggableOn": true,
+        "checkOnItemClick": true,
+        "masonryLayout": true,
+        "valueField": true
+      },
+      "required": [
+        "type"
+      ]
+    }
+  }
+}

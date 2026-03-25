@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/NavItemSchema",
+  "definitions": {
+    "NavItemSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "label": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/SchemaCollection"
+                }
+              ],
+              "description": "文字说明"
+            },
+            "icon": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SchemaIcon"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/IconItemSchema"
+                  }
+                }
+              ],
+              "description": "图标类名，参考 fontawesome 4。"
+            },
+            "to": {
+              "$ref": "#/definitions/SchemaUrlPath"
+            },
+            "target": {
+              "type": "string"
+            },
+            "unfolded": {
+              "type": "boolean"
+            },
+            "active": {
+              "type": "boolean"
+            },
+            "defer": {
+              "type": "boolean"
+            },
+            "deferApi": {
+              "$ref": "#/definitions/SchemaApi"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NavItemSchema"
+              }
+            },
+            "key": {
+              "type": "string"
+            },
+            "disabled": {
+              "type": "boolean",
+              "description": "是否禁用"
+            },
+            "disabledTip": {
+              "type": "string"
+            },
+            "className": {
+              "type": "string",
+              "description": "容器 css 类名"
+            },
+            "mode": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "$ref": "#/definitions/BaseSchemaWithoutType",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "label": true,
+        "icon": true,
+        "to": true,
+        "target": true,
+        "unfolded": true,
+        "active": true,
+        "defer": true,
+        "deferApi": true,
+        "children": true,
+        "key": true,
+        "disabledTip": true,
+        "mode": true
+      }
+    }
+  }
+}

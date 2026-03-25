@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/TooltipWrapperSchema",
+  "definitions": {
+    "TooltipWrapperSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "tooltip-wrapper",
+              "description": "文字提示容器"
+            },
+            "title": {
+              "type": "string",
+              "description": "文字提示标题"
+            },
+            "content": {
+              "type": "string",
+              "description": "文字提示内容，兼容 tooltip，但建议通过 content 来实现提示内容"
+            },
+            "tooltip": {
+              "type": "string",
+              "deprecated": "文字提示内容"
+            },
+            "placement": {
+              "type": "string",
+              "enum": [
+                "top",
+                "right",
+                "bottom",
+                "left"
+              ],
+              "description": "文字提示浮层出现位置，默认为top"
+            },
+            "offset": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "浮层位置相对偏移量"
+            },
+            "showArrow": {
+              "type": "boolean",
+              "description": "是否展示浮层指向箭头"
+            },
+            "disabled": {
+              "type": "boolean",
+              "description": "是否禁用提示"
+            },
+            "trigger": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Trigger"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Trigger"
+                  }
+                }
+              ],
+              "description": "浮层触发方式，默认为hover"
+            },
+            "mouseEnterDelay": {
+              "type": "number",
+              "description": "浮层延迟显示时间, 单位 ms"
+            },
+            "mouseLeaveDelay": {
+              "type": "number",
+              "description": "浮层延迟隐藏时间, 单位 ms"
+            },
+            "rootClose": {
+              "type": "boolean",
+              "description": "是否点击非内容区域关闭提示，默认为true"
+            },
+            "body": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "内容区域"
+            },
+            "wrapperComponent": {
+              "type": "string",
+              "description": "内容区包裹标签"
+            },
+            "inline": {
+              "type": "boolean",
+              "description": "内容区是否内联显示，默认为false"
+            },
+            "tooltipTheme": {
+              "type": "string",
+              "enum": [
+                "light",
+                "dark"
+              ],
+              "description": "主题样式， 默认为light"
+            },
+            "style": {
+              "type": "object",
+              "description": "内容区自定义样式"
+            },
+            "enterable": {
+              "type": "boolean",
+              "description": "是否可以移入浮层中, 默认true"
+            },
+            "tooltipStyle": {
+              "type": "object",
+              "description": "自定义提示浮层样式"
+            },
+            "className": {
+              "type": "string",
+              "description": "内容区CSS类名"
+            },
+            "tooltipArrowClassName": {
+              "type": "string",
+              "description": "箭头CSS类名"
+            },
+            "tooltipClassName": {
+              "type": "string",
+              "description": "文字提示浮层CSS类名"
+            }
+          },
+          "required": [
+            "type",
+            "wrapperComponent"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "tooltip-wrapper"
+        },
+        "testid": true,
+        "title": true,
+        "content": true,
+        "tooltip": true,
+        "placement": true,
+        "offset": true,
+        "showArrow": true,
+        "trigger": true,
+        "mouseEnterDelay": true,
+        "mouseLeaveDelay": true,
+        "rootClose": true,
+        "body": true,
+        "wrapperComponent": true,
+        "inline": true,
+        "tooltipTheme": true,
+        "enterable": true,
+        "tooltipStyle": true,
+        "tooltipArrowClassName": true,
+        "tooltipClassName": true
+      },
+      "required": [
+        "type",
+        "wrapperComponent"
+      ]
+    }
+  }
+}

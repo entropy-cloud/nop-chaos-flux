@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/ColumnSchema",
+  "definitions": {
+    "ColumnSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "指定列唯一标识"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/SchemaObject"
+            }
+          ],
+          "description": "指定列标题"
+        },
+        "type": {
+          "type": "string",
+          "description": "指定列内容渲染器"
+        },
+        "rowSpanExpr": {
+          "type": "string",
+          "description": "指定行合并表达式"
+        },
+        "colSpanExpr": {
+          "type": "string",
+          "description": "指定列合并表达式"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ColumnSchema"
+          },
+          "description": "表头分组"
+        },
+        "copyable": {
+          "type": "boolean",
+          "description": "可复制"
+        },
+        "remark": {
+          "type": "string",
+          "description": "列表头提示"
+        },
+        "searchable": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/SchemaObject"
+            }
+          ],
+          "description": "快速搜索"
+        },
+        "sorter": {
+          "type": "boolean",
+          "description": "快速排序"
+        },
+        "sortable": {
+          "type": "boolean",
+          "description": "兼容table快速排序"
+        },
+        "filterable": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string"
+            },
+            "options": {
+              "type": "array",
+              "items": {}
+            }
+          },
+          "additionalProperties": false,
+          "description": "兼容table列筛选"
+        },
+        "align": {
+          "type": "string",
+          "description": "内容居左、居中、居右"
+        },
+        "headerAlign": {
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ],
+          "description": "标题内容居左、居中、居右"
+        },
+        "vAlign": {
+          "type": "string",
+          "enum": [
+            "top",
+            "middle",
+            "bottom"
+          ],
+          "description": "列垂直对齐方式"
+        },
+        "fixed": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "是否固定在左侧/右侧"
+        },
+        "toggled": {
+          "type": "boolean",
+          "description": "当前列是否展示"
+        },
+        "className": {
+          "type": "string",
+          "description": "列样式"
+        },
+        "titleClassName": {
+          "type": "string",
+          "description": "表头单元格样式"
+        },
+        "classNameExpr": {
+          "type": "string",
+          "description": "单元格样式"
+        },
+        "quickEdit": {
+          "$ref": "#/definitions/SchemaQuickEdit",
+          "description": "配置快速编辑功能"
+        },
+        "width": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "canAccessSuperData": {
+          "type": "boolean",
+          "description": "表格列单元格是否可以获取父级数据域值，默认为true，该配置对当前列内单元格生效"
+        }
+      },
+      "required": [
+        "name",
+        "title"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

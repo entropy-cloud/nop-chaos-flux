@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/FlexSchema",
+  "definitions": {
+    "FlexSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "flex",
+              "description": "指定为 flex 展示类型"
+            },
+            "justify": {
+              "type": "string",
+              "enum": [
+                "start",
+                "flex-start",
+                "center",
+                "end",
+                "flex-end",
+                "space-around",
+                "space-between",
+                "space-evenly"
+              ],
+              "description": "水平分布"
+            },
+            "alignItems": {
+              "type": "string",
+              "enum": [
+                "stretch",
+                "start",
+                "flex-start",
+                "flex-end",
+                "end",
+                "center",
+                "baseline"
+              ],
+              "description": "垂直布局"
+            },
+            "alignContent": {
+              "type": "string",
+              "enum": [
+                "normal",
+                "flex-start",
+                "flex-end",
+                "center",
+                "space-between",
+                "space-around",
+                "space-evenly",
+                "stretch"
+              ],
+              "description": "多行情况下的垂直分布"
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "row",
+                "column",
+                "row-reverse",
+                "column-reverse"
+              ],
+              "description": "方向"
+            },
+            "items": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "每个 flex 的设置"
+            },
+            "style": {
+              "type": "object",
+              "description": "自定义样式"
+            }
+          },
+          "required": [
+            "type",
+            "items"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "flex"
+        },
+        "testid": true,
+        "justify": true,
+        "alignItems": true,
+        "alignContent": true,
+        "direction": true,
+        "items": true
+      },
+      "required": [
+        "type",
+        "items"
+      ],
+      "description": "Flex 布局 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/flex"
+    }
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/RatingControlSchema",
+  "definitions": {
+    "RatingControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "input-rating"
+            },
+            "count": {
+              "type": "number",
+              "description": "分数"
+            },
+            "half": {
+              "type": "boolean",
+              "description": "允许半颗星"
+            },
+            "allowClear": {
+              "type": "boolean",
+              "description": "是否允许再次点击后清除"
+            },
+            "readonly": {
+              "type": "boolean",
+              "description": "是否只读"
+            },
+            "colors": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "星星被选中的颜色"
+            },
+            "inactiveColor": {
+              "type": "string",
+              "description": "未被选中的星星的颜色"
+            },
+            "texts": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "星星被选中时的提示文字"
+            },
+            "textPosition": {
+              "$ref": "#/definitions/textPositionType",
+              "description": "文字的位置"
+            },
+            "char": {
+              "type": "string",
+              "description": "自定义字符"
+            },
+            "charClassName": {
+              "type": "string",
+              "description": "自定义字符类名"
+            },
+            "textClassName": {
+              "type": "string",
+              "description": "自定义文字类名"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/FormBaseControlSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "size": true,
+        "type": {
+          "type": "string",
+          "const": "input-rating"
+        },
+        "count": true,
+        "half": true,
+        "allowClear": true,
+        "readonly": true,
+        "colors": true,
+        "inactiveColor": true,
+        "texts": true,
+        "textPosition": true,
+        "char": true,
+        "charClassName": true,
+        "textClassName": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "Rating 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/rating"
+    }
+  }
+}

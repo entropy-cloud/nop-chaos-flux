@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/EachSchema",
+  "definitions": {
+    "EachSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "each",
+              "description": "指定为each展示类型"
+            },
+            "name": {
+              "type": "string",
+              "description": "关联字段名"
+            },
+            "source": {
+              "type": "string",
+              "description": "关联字段名 支持数据映射"
+            },
+            "itemKeyName": {
+              "type": "string",
+              "description": "用来控制通过什么字段读取成员数据，考虑到可能多层嵌套 如果名字一样会读取不到上层变量，所以这里可以指定一下",
+              "default": "item"
+            },
+            "indexKeyName": {
+              "type": "string",
+              "description": "用来控制通过什么字段读取序号，考虑到可能多层嵌套 如果名字一样会读取不到上层变量，所以这里可以指定一下",
+              "default": "index"
+            },
+            "items": {
+              "$ref": "#/definitions/SchemaCollection"
+            },
+            "placeholder": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "each"
+        },
+        "testid": true,
+        "name": true,
+        "source": true,
+        "itemKeyName": true,
+        "indexKeyName": true,
+        "items": true,
+        "placeholder": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "Each 循环功能渲染器。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/each"
+    }
+  }
+}

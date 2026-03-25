@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/IconSchema",
+  "definitions": {
+    "IconSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "icon"
+            },
+            "icon": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SchemaTpl"
+                },
+                {
+                  "$ref": "#/definitions/IconCheckedSchema"
+                }
+              ],
+              "description": "按钮类型"
+            },
+            "vendor": {
+              "type": "string",
+              "enum": [
+                "iconfont",
+                "fa",
+                ""
+              ]
+            },
+            "badge": {
+              "$ref": "#/definitions/BadgeObject",
+              "description": "角标"
+            }
+          },
+          "required": [
+            "type",
+            "icon"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "icon"
+        },
+        "testid": true,
+        "icon": true,
+        "vendor": true,
+        "badge": true
+      },
+      "required": [
+        "type",
+        "icon"
+      ],
+      "description": "Icon 图标渲染器 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/icon"
+    }
+  }
+}

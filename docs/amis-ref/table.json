@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/TableSchema",
+  "definitions": {
+    "TableSchema": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseTableSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "enum": [
+            "table",
+            "static-table"
+          ]
+        },
+        "testid": true,
+        "affixHeader": true,
+        "affixFooter": true,
+        "columns": true,
+        "columnsTogglable": true,
+        "footable": true,
+        "footerClassName": true,
+        "headerClassName": true,
+        "placeholder": true,
+        "showIndex": true,
+        "showFooter": true,
+        "showHeader": true,
+        "source": true,
+        "tableClassName": true,
+        "title": true,
+        "toolbarClassName": true,
+        "combineNum": true,
+        "combineFromIndex": true,
+        "prefixRow": true,
+        "affixRow": true,
+        "resizable": true,
+        "rowClassNameExpr": true,
+        "itemBadge": true,
+        "autoGenerateFilter": true,
+        "canAccessSuperData": true,
+        "autoFillHeight": true,
+        "tableLayout": true,
+        "deferApi": true,
+        "persistKey": true
+      },
+      "required": [
+        "type"
+      ]
+    }
+  }
+}

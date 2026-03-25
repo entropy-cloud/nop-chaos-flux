@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/MultilineTextSchema",
+  "definitions": {
+    "MultilineTextSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "multiline-text"
+            },
+            "text": {
+              "type": "string",
+              "description": "文本"
+            },
+            "maxRows": {
+              "type": "number",
+              "description": "最大行数"
+            },
+            "expendButtonText": {
+              "type": "string",
+              "description": "展开按钮文本"
+            },
+            "collapseButtonText": {
+              "type": "string",
+              "description": "收起按钮文本"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "multiline-text"
+        },
+        "testid": true,
+        "text": true,
+        "maxRows": true,
+        "expendButtonText": true,
+        "collapseButtonText": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "MultilineText"
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/IFrameSchema",
+  "definitions": {
+    "IFrameSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "iframe"
+            },
+            "src": {
+              "$ref": "#/definitions/SchemaUrlPath",
+              "description": "页面地址"
+            },
+            "width": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "height": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "allow": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "referrerpolicy": {
+              "type": "string",
+              "enum": [
+                "no-referrer",
+                "no-referrer-when-downgrade",
+                "origin",
+                "origin-when-cross-origin",
+                "same-origin",
+                "strict-origin",
+                "strict-origin-when-cross-origin",
+                "unsafe-url"
+              ]
+            },
+            "sandbox": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "src"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "iframe"
+        },
+        "testid": true,
+        "src": true,
+        "width": true,
+        "height": true,
+        "allow": true,
+        "name": true,
+        "referrerpolicy": true,
+        "sandbox": true
+      },
+      "required": [
+        "type",
+        "src"
+      ],
+      "description": "IFrame 渲染器 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/iframe"
+    }
+  }
+}

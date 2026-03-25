@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/ProgressSchema",
+  "definitions": {
+    "ProgressSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "progress"
+            },
+            "name": {
+              "type": "string",
+              "description": "关联字段名"
+            },
+            "value": {
+              "type": "number",
+              "description": "进度值"
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "line",
+                "circle",
+                "dashboard"
+              ],
+              "description": "进度条类型"
+            },
+            "progressClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "进度条 CSS 类名"
+            },
+            "map": {
+              "$ref": "#/definitions/ColorMapType",
+              "description": "配置不同的值段，用不同的样式提示用户"
+            },
+            "showLabel": {
+              "type": "boolean",
+              "description": "是否显示值"
+            },
+            "placeholder": {
+              "type": "string",
+              "description": "占位符"
+            },
+            "stripe": {
+              "type": "boolean",
+              "description": "是否显示背景间隔"
+            },
+            "animate": {
+              "type": "boolean",
+              "description": "是否显示动画（只有在开启的时候才能看出来）"
+            },
+            "strokeWidth": {
+              "type": "number",
+              "description": "进度条线的宽度"
+            },
+            "gapDegree": {
+              "type": "number",
+              "description": "仪表盘进度条缺口角度，可取值 0 ~ 295"
+            },
+            "gapPosition": {
+              "type": "string",
+              "enum": [
+                "top",
+                "bottom",
+                "left",
+                "right"
+              ],
+              "description": "仪表盘进度条缺口位置"
+            },
+            "valueTpl": {
+              "type": "string",
+              "description": "内容的模板函数"
+            },
+            "threshold": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "$ref": "#/definitions/SchemaTpl"
+                    },
+                    "color": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/definitions/SchemaTpl"
+                      },
+                      "color": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              ],
+              "description": "阈值"
+            },
+            "showThresholdText": {
+              "type": "boolean",
+              "description": "是否显示阈值数值"
+            }
+          },
+          "required": [
+            "type",
+            "value",
+            "mode"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "progress"
+        },
+        "testid": true,
+        "name": true,
+        "value": true,
+        "mode": true,
+        "progressClassName": true,
+        "map": true,
+        "showLabel": true,
+        "placeholder": true,
+        "stripe": true,
+        "animate": true,
+        "strokeWidth": true,
+        "gapDegree": true,
+        "gapPosition": true,
+        "valueTpl": true,
+        "threshold": true,
+        "showThresholdText": true
+      },
+      "required": [
+        "type",
+        "value",
+        "mode"
+      ],
+      "description": "进度展示控件。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/progress"
+    }
+  }
+}

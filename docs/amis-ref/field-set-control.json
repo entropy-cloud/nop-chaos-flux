@@ -1,0 +1,176 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/FieldSetControlSchema",
+  "definitions": {
+    "FieldSetControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "fieldset",
+                "fieldSet"
+              ],
+              "description": "指定为表单项集合"
+            },
+            "titlePosition": {
+              "type": "string",
+              "enum": [
+                "top",
+                "bottom"
+              ],
+              "description": "标题展示位置"
+            },
+            "collapsable": {
+              "type": "boolean",
+              "description": "是否可折叠"
+            },
+            "collapsed": {
+              "type": "boolean",
+              "description": "默认是否折叠"
+            },
+            "body": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "内容区域"
+            },
+            "title": {
+              "$ref": "#/definitions/SchemaTpl",
+              "description": "标题"
+            },
+            "collapseTitle": {
+              "$ref": "#/definitions/SchemaTpl",
+              "description": "收起的标题"
+            },
+            "mountOnEnter": {
+              "type": "boolean",
+              "description": "点开时才加载内容"
+            },
+            "unmountOnExit": {
+              "type": "boolean",
+              "description": "卡片隐藏就销毁内容。"
+            },
+            "subFormMode": {
+              "type": "string",
+              "enum": [
+                "normal",
+                "inline",
+                "horizontal"
+              ],
+              "description": "配置子表单项默认的展示方式。"
+            },
+            "subFormHorizontal": {
+              "$ref": "#/definitions/FormHorizontal",
+              "description": "如果是水平排版，这个属性可以细化水平排版的左右宽度占比。"
+            }
+          },
+          "required": [
+            "type",
+            "titlePosition"
+          ]
+        },
+        {
+          "$ref": "#/definitions/FormBaseControlWithoutSize",
+          "additionalProperties": true
+        },
+        {
+          "$ref": "#/definitions/BaseSchemaWithoutType",
+          "additionalProperties": true
+        },
+        {
+          "$ref": "#/definitions/BaseCollapseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "enum": [
+            "fieldset",
+            "fieldSet"
+          ]
+        },
+        "testid": true,
+        "key": true,
+        "headerPosition": true,
+        "header": true,
+        "bodyClassName": true,
+        "collapsable": true,
+        "collapsed": true,
+        "showArrow": true,
+        "expandIcon": true,
+        "headingClassName": true,
+        "collapseHeader": true,
+        "size": true,
+        "mountOnEnter": true,
+        "unmountOnExit": true,
+        "divideLine": true,
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "titlePosition": true,
+        "body": true,
+        "title": true,
+        "collapseTitle": true,
+        "subFormMode": true,
+        "subFormHorizontal": true
+      },
+      "required": [
+        "type",
+        "titlePosition"
+      ],
+      "description": "FieldSet 表单项集合 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/fieldset"
+    }
+  }
+}

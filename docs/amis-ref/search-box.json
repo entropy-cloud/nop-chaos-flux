@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/SearchBoxSchema",
+  "definitions": {
+    "SearchBoxSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "search-box",
+              "description": "指定为搜索框。\n\n文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/search-box"
+            },
+            "className": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "外层 css 类名"
+            },
+            "name": {
+              "type": "string",
+              "description": "关键字名字。",
+              "default": "keywords"
+            },
+            "placeholder": {
+              "type": "string",
+              "description": "占位符"
+            },
+            "mini": {
+              "type": "boolean",
+              "description": "是否为 Mini 样式。"
+            },
+            "enhance": {
+              "type": "boolean",
+              "description": "是否为加强样式"
+            },
+            "clearable": {
+              "type": "boolean",
+              "description": "是否可清除"
+            },
+            "searchImediately": {
+              "type": "boolean",
+              "description": "是否立马搜索。"
+            },
+            "clearAndSubmit": {
+              "type": "boolean",
+              "description": "是否开启清空内容后立即重新搜索"
+            },
+            "loading": {
+              "type": "boolean",
+              "description": "是否处于加载状态"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "search-box"
+        },
+        "testid": true,
+        "name": true,
+        "placeholder": true,
+        "mini": true,
+        "enhance": true,
+        "clearable": true,
+        "searchImediately": true,
+        "clearAndSubmit": true,
+        "loading": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "搜索框渲染器"
+    }
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/FormSchema",
+  "definitions": {
+    "FormSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "actions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ActionSchema"
+              },
+              "description": "按钮集合，会固定在底部显示。"
+            },
+            "body": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "表单项集合"
+            }
+          }
+        },
+        {
+          "$ref": "#/definitions/FormSchemaBase",
+          "additionalProperties": true
+        },
+        {
+          "$ref": "#/definitions/BaseSchemaWithoutType",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "title": true,
+        "actions": true,
+        "body": true,
+        "tabs": true,
+        "fieldSet": true,
+        "data": true,
+        "debug": true,
+        "debugConfig": true,
+        "initApi": true,
+        "initAsyncApi": true,
+        "initFinishedField": true,
+        "initCheckInterval": true,
+        "initFetch": true,
+        "initFetchOn": true,
+        "interval": true,
+        "silentPolling": true,
+        "stopAutoRefreshWhen": true,
+        "persistData": true,
+        "persistDataKeys": true,
+        "clearPersistDataAfterSubmit": true,
+        "api": true,
+        "feedback": true,
+        "asyncApi": true,
+        "checkInterval": true,
+        "finishedField": true,
+        "resetAfterSubmit": true,
+        "clearAfterSubmit": true,
+        "mode": true,
+        "columnCount": true,
+        "horizontal": true,
+        "autoFocus": true,
+        "messages": true,
+        "name": true,
+        "panelClassName": true,
+        "primaryField": true,
+        "redirect": true,
+        "reload": true,
+        "submitOnChange": true,
+        "submitOnInit": true,
+        "submitText": true,
+        "target": true,
+        "wrapWithPanel": true,
+        "affixFooter": true,
+        "promptPageLeave": true,
+        "promptPageLeaveMessage": true,
+        "rules": true,
+        "preventEnterSubmit": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "type": {
+          "type": "string",
+          "const": "form"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    }
+  }
+}

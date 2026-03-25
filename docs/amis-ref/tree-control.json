@@ -1,0 +1,280 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/TreeControlSchema",
+  "definitions": {
+    "TreeControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "input-tree",
+              "description": "指定为 InputTree 渲染器。 https://aisuda.bce.baidu.com/amis/zh-CN/components/form/input-tree"
+            },
+            "hideRoot": {
+              "type": "boolean",
+              "description": "是否隐藏顶级"
+            },
+            "rootLabel": {
+              "type": "string",
+              "description": "顶级选项的名称"
+            },
+            "rootValue": {
+              "description": "顶级选项的值"
+            },
+            "showIcon": {
+              "type": "boolean",
+              "description": "显示图标"
+            },
+            "autoCheckChildren": {
+              "type": "boolean",
+              "description": "ui级联关系，true代表级联选中，false代表不级联，默认为true"
+            },
+            "cascade": {
+              "type": "boolean",
+              "description": "该属性代表数据级联关系，autoCheckChildren为true时生效，默认为false，具体数据级联关系如下： 1.casacde为false，ui行为为级联选中子节点，子节点禁用；值只包含父节点的值 2.cascade为false，withChildren为true，ui行为为级联选中子节点，子节点禁用；值包含父子节点的值 3.cascade为true，ui行为级联选中子节点，子节点可反选，值包含父子节点的值，此时withChildren属性失效 4.cascade不论为true还是false，onlyChildren为true，ui行为级联选中子节点，子节点可反选，值只包含子节点的值"
+            },
+            "nodeBehavior": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "unfold",
+                  "check"
+                ]
+              },
+              "description": "节点行为配置，默认为选中"
+            },
+            "autoCancelParent": {
+              "type": "boolean",
+              "description": "子节点取消时自动取消父节点的值，默认为false"
+            },
+            "withChildren": {
+              "type": "boolean",
+              "description": "选父级的时候是否把子节点的值也包含在内。"
+            },
+            "onlyChildren": {
+              "type": "boolean",
+              "description": "选父级的时候，是否只把子节点的值包含在内"
+            },
+            "onlyLeaf": {
+              "type": "boolean",
+              "description": "单选时，只运行选择叶子节点"
+            },
+            "rootCreatable": {
+              "type": "boolean",
+              "description": "顶级节点是否可以创建子节点"
+            },
+            "enableNodePath": {
+              "type": "boolean",
+              "description": "是否开启节点路径模式"
+            },
+            "pathSeparator": {
+              "type": "string",
+              "description": "开启节点路径模式后，节点路径的分隔符"
+            },
+            "showOutline": {
+              "type": "boolean",
+              "description": "是否显示展开线"
+            },
+            "deferApi": {
+              "$ref": "#/definitions/SchemaApi",
+              "description": "懒加载接口"
+            },
+            "highlightTxt": {
+              "type": "string",
+              "description": "需要高亮的字符串"
+            },
+            "enableDefaultIcon": {
+              "type": "boolean",
+              "description": "是否为选项添加默认的Icon，默认值为true"
+            },
+            "searchable": {
+              "type": "boolean",
+              "description": "是否开启搜索"
+            },
+            "searchApi": {
+              "$ref": "#/definitions/SchemaApi",
+              "description": "搜索 API"
+            },
+            "itemActions": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "自定义节点操作栏区域"
+            },
+            "searchConfig": {
+              "type": "object",
+              "properties": {
+                "className": {
+                  "type": "string",
+                  "description": "搜索框外层CSS样式类"
+                },
+                "placeholder": {
+                  "type": "string",
+                  "description": "占位符"
+                },
+                "mini": {
+                  "type": "boolean",
+                  "description": "是否为 Mini 样式。"
+                },
+                "enhance": {
+                  "type": "boolean",
+                  "description": "是否为加强样式"
+                },
+                "clearable": {
+                  "type": "boolean",
+                  "description": "是否可清除"
+                },
+                "searchImediately": {
+                  "type": "boolean",
+                  "description": "是否立马搜索。"
+                },
+                "sticky": {
+                  "type": "boolean",
+                  "description": "搜索框是否吸顶"
+                }
+              },
+              "additionalProperties": false,
+              "description": "搜索框的配置"
+            },
+            "treeClassName": {
+              "type": "string",
+              "description": "tree 组件层类名"
+            },
+            "heightAuto": {
+              "type": "boolean",
+              "description": "高度自动增长？"
+            },
+            "iconField": {
+              "type": "string",
+              "description": "设置 icon 字段名"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/FormOptionsSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "options": true,
+        "source": true,
+        "selectFirst": true,
+        "initFetchOn": true,
+        "initFetch": true,
+        "multiple": true,
+        "checkAll": true,
+        "joinValues": true,
+        "delimiter": true,
+        "valuesNoWrap": true,
+        "extractValue": true,
+        "clearable": true,
+        "resetValue": true,
+        "deferField": true,
+        "deferApi": true,
+        "addApi": true,
+        "addControls": true,
+        "addDialog": true,
+        "creatable": true,
+        "createBtnLabel": true,
+        "editable": true,
+        "editApi": true,
+        "editControls": true,
+        "editDialog": true,
+        "removable": true,
+        "deleteApi": true,
+        "deleteConfirmText": true,
+        "clearValueOnSourceChange": true,
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "size": true,
+        "type": {
+          "type": "string",
+          "const": "input-tree"
+        },
+        "hideRoot": true,
+        "rootLabel": true,
+        "rootValue": true,
+        "showIcon": true,
+        "autoCheckChildren": true,
+        "cascade": true,
+        "nodeBehavior": true,
+        "autoCancelParent": true,
+        "withChildren": true,
+        "onlyChildren": true,
+        "onlyLeaf": true,
+        "rootCreatable": true,
+        "enableNodePath": true,
+        "pathSeparator": true,
+        "showOutline": true,
+        "highlightTxt": true,
+        "enableDefaultIcon": true,
+        "searchable": true,
+        "searchApi": true,
+        "itemActions": true,
+        "searchConfig": true,
+        "treeClassName": true,
+        "heightAuto": true,
+        "iconField": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "Tree 下拉选择框。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/tree"
+    }
+  }
+}

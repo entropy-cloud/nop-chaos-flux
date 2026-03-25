@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/DateControlSchema",
+  "definitions": {
+    "DateControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "input-date",
+              "description": "指定为日期选择控件"
+            },
+            "format": {
+              "type": "string",
+              "description": "日期存储格式",
+              "default": "X"
+            },
+            "inputFormat": {
+              "type": "string",
+              "description": "日期展示格式",
+              "default": "YYYY-MM-DD"
+            },
+            "valueFormat": {
+              "type": "string",
+              "description": "替代format"
+            },
+            "displayFormat": {
+              "type": "string",
+              "description": "日期展示格式(新：替代inputFormat)"
+            },
+            "closeOnSelect": {
+              "type": "boolean",
+              "description": "点选日期后是否关闭弹窗"
+            },
+            "minDate": {
+              "type": "string",
+              "description": "限制最小日期"
+            },
+            "maxDate": {
+              "type": "string",
+              "description": "限制最大日期"
+            },
+            "popOverContainerSelector": {
+              "type": "string",
+              "description": "弹窗容器选择器"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/InputDateBaseControlSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "size": true,
+        "type": {
+          "type": "string",
+          "const": "input-date"
+        },
+        "clearable": true,
+        "format": true,
+        "valueFormat": true,
+        "inputFormat": true,
+        "displayFormat": true,
+        "utc": true,
+        "emebed": true,
+        "borderMode": true,
+        "shortcuts": true,
+        "disabledDate": true,
+        "inputForbid": true,
+        "closeOnSelect": true,
+        "minDate": true,
+        "maxDate": true,
+        "popOverContainerSelector": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "Date日期选择控件 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/date"
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/InputCityControlSchema",
+  "definitions": {
+    "InputCityControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "input-city",
+              "description": "指定为城市选择框。"
+            },
+            "extractValue": {
+              "type": "boolean",
+              "description": "开启后只会存城市的 code 信息"
+            },
+            "joinValues": {
+              "type": "boolean",
+              "description": "是否将各个信息拼接成字符串。"
+            },
+            "delimiter": {
+              "type": "string",
+              "description": "拼接的符号是啥？"
+            },
+            "allowCity": {
+              "type": "boolean",
+              "description": "允许选择城市？"
+            },
+            "allowDistrict": {
+              "type": "boolean",
+              "description": "允许选择地区？"
+            },
+            "allowStreet": {
+              "type": "boolean",
+              "description": "允许选择街道？"
+            },
+            "searchable": {
+              "type": "boolean",
+              "description": "是否显示搜索框"
+            },
+            "itemClassName": {
+              "type": "string",
+              "description": "下拉框className"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/FormBaseControlSchema",
+          "additionalProperties": true
+        },
+        {
+          "$ref": "#/definitions/SpinnerExtraProps",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "loadingConfig": true,
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "size": true,
+        "type": {
+          "type": "string",
+          "const": "input-city"
+        },
+        "extractValue": true,
+        "joinValues": true,
+        "delimiter": true,
+        "allowCity": true,
+        "allowDistrict": true,
+        "allowStreet": true,
+        "searchable": true,
+        "itemClassName": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "City 城市选择框。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/city"
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/AnchorNavSectionSchema",
+  "definitions": {
+    "AnchorNavSectionSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "导航文字说明"
+            },
+            "href": {
+              "type": "string",
+              "description": "锚点链接"
+            },
+            "body": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "内容"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AnchorNavSectionSchema"
+              },
+              "description": "子节点"
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchemaWithoutType",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "title": true,
+        "href": true,
+        "body": true,
+        "children": true
+      },
+      "required": [
+        "title"
+      ],
+      "description": "AnchorNavSection 锚点区域渲染器 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/anchor-nav"
+    }
+  }
+}

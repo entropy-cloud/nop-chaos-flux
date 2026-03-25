@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/DateRangeSchema",
+  "definitions": {
+    "DateRangeSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "date-range",
+              "description": "指定为日期展示类型"
+            },
+            "valueFormat": {
+              "type": "string",
+              "description": "值的时间格式，参考 moment 中的格式说明。"
+            },
+            "format": {
+              "type": "string",
+              "description": "展示的时间格式，参考 moment 中的格式说明。"
+            },
+            "displayFormat": {
+              "type": "string",
+              "description": "展示的时间格式，参考 moment 中的格式说明。（新：同format）"
+            },
+            "delimiter": {
+              "type": "string",
+              "description": "分割符"
+            },
+            "connector": {
+              "type": "string",
+              "description": "连接符"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "date-range"
+        },
+        "testid": true,
+        "valueFormat": true,
+        "format": true,
+        "displayFormat": true,
+        "delimiter": true,
+        "connector": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "DateRange 展示渲染器。"
+    }
+  }
+}

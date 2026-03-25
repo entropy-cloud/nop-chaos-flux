@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/StepSchema",
+  "definitions": {
+    "StepSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "title": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/SchemaCollection"
+                }
+              ],
+              "description": "标题"
+            },
+            "subTitle": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/SchemaCollection"
+                }
+              ],
+              "description": "子标题"
+            },
+            "icon": {
+              "type": "string",
+              "description": "图标"
+            },
+            "value": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/SchemaCollection"
+                }
+              ],
+              "description": "描述"
+            }
+          }
+        },
+        {
+          "$ref": "#/definitions/BaseSchemaWithoutType",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "title": true,
+        "subTitle": true,
+        "icon": true,
+        "value": true,
+        "description": true
+      }
+    }
+  }
+}

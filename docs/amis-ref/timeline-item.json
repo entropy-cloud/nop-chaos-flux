@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/TimelineItemSchema",
+  "definitions": {
+    "TimelineItemSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "string",
+              "description": "时间点"
+            },
+            "title": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "时间节点标题"
+            },
+            "detail": {
+              "type": "string",
+              "description": "详细内容"
+            },
+            "detailCollapsedText": {
+              "type": "string",
+              "description": "detail折叠时文案"
+            },
+            "detailExpandedText": {
+              "type": "string",
+              "description": "detail展开时文案"
+            },
+            "color": {
+              "type": "string",
+              "description": "时间点圆圈颜色"
+            },
+            "icon": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/IconCheckedSchema"
+                }
+              ],
+              "description": "图标"
+            },
+            "iconClassName": {
+              "type": "string",
+              "description": "图标的CSS类名"
+            },
+            "timeClassName": {
+              "type": "string",
+              "description": "节点时间的CSS类名（优先级高于统一配置的timeClassName）"
+            },
+            "titleClassName": {
+              "type": "string",
+              "description": "节点标题的CSS类名（优先级高于统一配置的titleClassName）"
+            },
+            "detailClassName": {
+              "type": "string",
+              "description": "节点详情的CSS类名（优先级高于统一配置的detailClassName）"
+            },
+            "dotSize": {
+              "type": "string",
+              "enum": [
+                "sm",
+                "md",
+                "lg",
+                "xl"
+              ]
+            },
+            "lineColor": {
+              "type": "string"
+            },
+            "hideDot": {
+              "type": "boolean"
+            },
+            "cardSchema": {
+              "$ref": "#/definitions/CardSchema",
+              "description": "卡片展示配置，如果传入则以卡片形式展示，传入对象转为卡片展示，传入的time、title、detail及相关属性将被忽略，只有连线配置和节点圆圈配置生效"
+            }
+          },
+          "required": [
+            "time"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchemaWithoutType",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "time": true,
+        "title": true,
+        "detail": true,
+        "detailCollapsedText": true,
+        "detailExpandedText": true,
+        "color": true,
+        "icon": true,
+        "iconClassName": true,
+        "timeClassName": true,
+        "titleClassName": true,
+        "detailClassName": true,
+        "dotSize": true,
+        "lineColor": true,
+        "hideDot": true,
+        "cardSchema": true
+      },
+      "required": [
+        "time"
+      ]
+    }
+  }
+}

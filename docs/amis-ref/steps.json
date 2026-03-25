@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/StepsSchema",
+  "definitions": {
+    "StepsSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "steps",
+              "description": "指定为 Steps 步骤条渲染器"
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StepSchema"
+              },
+              "description": "步骤"
+            },
+            "source": {
+              "type": "string",
+              "description": "API 或 数据映射"
+            },
+            "value": {
+              "type": [
+                "number",
+                "string"
+              ],
+              "description": "指定当前步骤"
+            },
+            "name": {
+              "type": "string",
+              "description": "变量映射"
+            },
+            "status": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/StepStatus"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/StepStatus"
+                  }
+                },
+                {
+                  "$ref": "#/definitions/SchemaExpression"
+                }
+              ]
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "horizontal",
+                "vertical"
+              ],
+              "description": "展示模式"
+            },
+            "labelPlacement": {
+              "type": "string",
+              "enum": [
+                "horizontal",
+                "vertical"
+              ],
+              "description": "标签放置位置"
+            },
+            "progressDot": {
+              "type": "boolean",
+              "description": "点状步骤条"
+            },
+            "iconPosition": {
+              "type": "boolean",
+              "const": false,
+              "description": "切换图标位置"
+            }
+          },
+          "required": [
+            "type",
+            "iconPosition"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "steps"
+        },
+        "testid": true,
+        "steps": true,
+        "source": true,
+        "value": true,
+        "name": true,
+        "status": true,
+        "mode": true,
+        "labelPlacement": true,
+        "progressDot": true,
+        "iconPosition": true
+      },
+      "required": [
+        "type",
+        "iconPosition"
+      ]
+    }
+  }
+}

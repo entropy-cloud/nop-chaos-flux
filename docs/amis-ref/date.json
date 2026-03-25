@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/DateSchema",
+  "definitions": {
+    "DateSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "date",
+                "datetime",
+                "time",
+                "static-date",
+                "static-datetime",
+                "static-time"
+              ],
+              "description": "指定为日期展示类型"
+            },
+            "format": {
+              "type": "string",
+              "description": "展示的时间格式，参考 moment 中的格式说明。"
+            },
+            "displayFormat": {
+              "type": "string",
+              "description": "展示的时间格式，参考 moment 中的格式说明。（新：同format）"
+            },
+            "placeholder": {
+              "type": "string",
+              "description": "占位符"
+            },
+            "valueFormat": {
+              "type": "string",
+              "description": "值的时间格式，参考 moment 中的格式说明。"
+            },
+            "fromNow": {
+              "type": "boolean",
+              "description": "显示成相对时间，比如1分钟前"
+            },
+            "updateFrequency": {
+              "type": "number",
+              "description": "更新频率， 默认为1分钟"
+            },
+            "displayTimeZone": {
+              "type": "string",
+              "description": "时区"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "enum": [
+            "date",
+            "datetime",
+            "time",
+            "static-date",
+            "static-datetime",
+            "static-time"
+          ]
+        },
+        "testid": true,
+        "format": true,
+        "displayFormat": true,
+        "placeholder": true,
+        "valueFormat": true,
+        "fromNow": true,
+        "updateFrequency": true,
+        "displayTimeZone": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "Date 展示渲染器。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/date"
+    }
+  }
+}

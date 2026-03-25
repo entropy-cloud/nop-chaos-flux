@@ -1,0 +1,192 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/NumberControlSchema",
+  "definitions": {
+    "NumberControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "input-number"
+            },
+            "max": {
+              "type": "number",
+              "description": "最大值"
+            },
+            "min": {
+              "type": "number",
+              "description": "最小值"
+            },
+            "step": {
+              "type": "number",
+              "description": "步长"
+            },
+            "precision": {
+              "type": "number",
+              "description": "精度"
+            },
+            "showSteps": {
+              "type": "boolean",
+              "description": "是否显示上下点击按钮"
+            },
+            "borderMode": {
+              "type": "string",
+              "enum": [
+                "full",
+                "half",
+                "none"
+              ],
+              "description": "边框模式，全边框，还是半边框，或者没边框。"
+            },
+            "prefix": {
+              "type": "string",
+              "description": "前缀"
+            },
+            "suffix": {
+              "type": "string",
+              "description": "后缀"
+            },
+            "unitOptions": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Option"
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "$ref": "#/definitions/PlainObject"
+                }
+              ],
+              "description": "单位列表"
+            },
+            "big": {
+              "type": "boolean",
+              "description": "是否是大数，如果是的话输入输出都将是字符串"
+            },
+            "kilobitSeparator": {
+              "type": "boolean",
+              "description": "是否千分分隔"
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "只读"
+            },
+            "keyboard": {
+              "type": "boolean",
+              "description": "是否启用键盘行为"
+            },
+            "displayMode": {
+              "type": "string",
+              "enum": [
+                "base",
+                "enhance"
+              ],
+              "description": "输入框为基础输入框还是加强输入框"
+            },
+            "showAsPercent": {
+              "type": "boolean",
+              "description": "用来开启百分号的展示形式"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/FormBaseControlSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "size": true,
+        "type": {
+          "type": "string",
+          "const": "input-number"
+        },
+        "max": true,
+        "min": true,
+        "step": true,
+        "precision": true,
+        "showSteps": true,
+        "borderMode": true,
+        "prefix": true,
+        "suffix": true,
+        "unitOptions": true,
+        "big": true,
+        "kilobitSeparator": true,
+        "keyboard": true,
+        "displayMode": true,
+        "showAsPercent": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "数字输入框 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/input-number"
+    }
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/InputDateBaseControlSchema",
+  "definitions": {
+    "InputDateBaseControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "input-date",
+                "input-datetime",
+                "input-time",
+                "input-month",
+                "input-quarter",
+                "input-year"
+              ],
+              "description": "指定为日期选择控件"
+            },
+            "clearable": {
+              "type": "boolean",
+              "description": "是否显示清除按钮"
+            },
+            "format": {
+              "type": "string",
+              "description": "日期存储格式"
+            },
+            "valueFormat": {
+              "type": "string",
+              "description": "替代format"
+            },
+            "inputFormat": {
+              "type": "string",
+              "description": "日期展示格式"
+            },
+            "displayFormat": {
+              "type": "string",
+              "description": "日期展示格式(新：替代inputFormat)"
+            },
+            "utc": {
+              "type": "boolean",
+              "description": "设定是否存储 utc 时间。"
+            },
+            "emebed": {
+              "type": "boolean",
+              "description": "是否为内联模式？"
+            },
+            "borderMode": {
+              "type": "string",
+              "enum": [
+                "full",
+                "half",
+                "none"
+              ],
+              "description": "边框模式，全边框，还是半边框，或者没边框。"
+            },
+            "shortcuts": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/ShortCuts"
+                  }
+                }
+              ],
+              "description": "日期快捷键"
+            },
+            "disabledDate": {
+              "type": "string",
+              "description": "字符串函数，用来决定是否禁用某个日期。\n\n(currentDate: moment.Moment, props: any) => boolean;"
+            },
+            "inputForbid": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/FormBaseControlSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "size": true,
+        "type": {
+          "type": "string",
+          "enum": [
+            "input-date",
+            "input-datetime",
+            "input-time",
+            "input-month",
+            "input-quarter",
+            "input-year"
+          ]
+        },
+        "clearable": true,
+        "format": true,
+        "valueFormat": true,
+        "inputFormat": true,
+        "displayFormat": true,
+        "utc": true,
+        "emebed": true,
+        "borderMode": true,
+        "shortcuts": true,
+        "disabledDate": true,
+        "inputForbid": true
+      },
+      "required": [
+        "type"
+      ]
+    }
+  }
+}

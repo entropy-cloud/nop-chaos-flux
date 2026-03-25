@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/SubFormControlSchema",
+  "definitions": {
+    "SubFormControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "input-sub-form",
+              "description": "指定为 SubForm 子表单"
+            },
+            "placeholder": {
+              "type": "string",
+              "description": "占位符"
+            },
+            "multiple": {
+              "type": "boolean",
+              "description": "是否多选"
+            },
+            "draggable": {
+              "type": "boolean",
+              "description": "是否可拖拽排序"
+            },
+            "draggableTip": {
+              "type": "string",
+              "description": "拖拽提示信息"
+            },
+            "addable": {
+              "type": "boolean",
+              "description": "是否可新增"
+            },
+            "removable": {
+              "type": "boolean",
+              "description": "是否可删除"
+            },
+            "minLength": {
+              "type": "number",
+              "description": "最少个数"
+            },
+            "maxLength": {
+              "type": "number",
+              "description": "最多个数"
+            },
+            "labelField": {
+              "type": "string",
+              "description": "当值中存在这个字段，则按钮名称将使用此字段的值来展示。"
+            },
+            "btnLabel": {
+              "type": "string",
+              "description": "按钮默认名称",
+              "default": "设置"
+            },
+            "addButtonText": {
+              "type": "string",
+              "description": "新增按钮文字"
+            },
+            "addButtonClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "新增按钮 CSS 类名"
+            },
+            "itemClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "值元素的类名"
+            },
+            "itemsClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "值列表元素的类名"
+            },
+            "showErrorMsg": {
+              "type": "boolean",
+              "description": "是否在左下角显示报错信息"
+            },
+            "form": {
+              "$ref": "#/definitions/BaseFormSchema",
+              "description": "子表单详情"
+            },
+            "scaffold": {}
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/FormBaseControlSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "size": true,
+        "type": {
+          "type": "string",
+          "const": "input-sub-form"
+        },
+        "multiple": true,
+        "draggable": true,
+        "draggableTip": true,
+        "addable": true,
+        "removable": true,
+        "minLength": true,
+        "maxLength": true,
+        "labelField": true,
+        "btnLabel": true,
+        "addButtonText": true,
+        "addButtonClassName": true,
+        "itemClassName": true,
+        "itemsClassName": true,
+        "showErrorMsg": true,
+        "form": true,
+        "scaffold": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "SubForm 子表单 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/subform"
+    }
+  }
+}

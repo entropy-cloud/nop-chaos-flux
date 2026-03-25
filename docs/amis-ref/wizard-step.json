@@ -1,0 +1,148 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/WizardStepSchema",
+  "definitions": {
+    "WizardStepSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api": {
+              "$ref": "#/definitions/SchemaApi",
+              "description": "当前步骤用来保存数据的 api。"
+            },
+            "asyncApi": {
+              "$ref": "#/definitions/SchemaApi",
+              "description": "设置此属性后，表单提交发送保存接口后，还会继续轮询请求该接口，直到返回 finished 属性为 true 才 结束。"
+            },
+            "initApi": {
+              "$ref": "#/definitions/SchemaApi",
+              "description": "当前步骤用来获取初始数据的 api"
+            },
+            "jumpable": {
+              "type": "boolean",
+              "description": "是否可直接跳转到该步骤，一般编辑模式需要可直接跳转查看。"
+            },
+            "jumpableOn": {
+              "$ref": "#/definitions/SchemaExpression",
+              "description": "通过 JS 表达式来配置当前步骤可否被直接跳转到。"
+            },
+            "title": {
+              "type": "string",
+              "description": "Step 标题"
+            },
+            "label": {
+              "type": "string"
+            },
+            "actions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ActionSchema"
+              },
+              "description": "每一步可以单独配置按钮。如果不配置wizard会自动生成。"
+            },
+            "redirect": {
+              "type": "string",
+              "description": "保存完后，可以指定跳转地址，支持相对路径和组内绝对路径，同时可以通过 $xxx 使用变量"
+            },
+            "reload": {
+              "$ref": "#/definitions/SchemaReload"
+            },
+            "target": {
+              "type": "string",
+              "description": "默认表单提交自己会通过发送 api 保存数据，但是也可以设定另外一个 form 的 name 值，或者另外一个 `CRUD` 模型的 name 值。 如果 target 目标是一个 `Form` ，则目标 `Form` 会重新触发 `initApi` 和 `schemaApi`，api 可以拿到当前 form 数据。如果目标是一个 `CRUD` 模型，则目标模型会重新触发搜索，参数为当前 Form 数据。"
+            }
+          }
+        },
+        {
+          "$ref": "#/definitions/BaseFormSchema",
+          "additionalProperties": true
+        },
+        {
+          "$ref": "#/definitions/StepSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "title": true,
+        "subTitle": true,
+        "icon": true,
+        "value": true,
+        "description": true,
+        "actions": true,
+        "body": true,
+        "tabs": true,
+        "fieldSet": true,
+        "data": true,
+        "debug": true,
+        "debugConfig": true,
+        "initApi": true,
+        "initAsyncApi": true,
+        "initFinishedField": true,
+        "initCheckInterval": true,
+        "initFetch": true,
+        "initFetchOn": true,
+        "interval": true,
+        "silentPolling": true,
+        "stopAutoRefreshWhen": true,
+        "persistData": true,
+        "persistDataKeys": true,
+        "clearPersistDataAfterSubmit": true,
+        "api": true,
+        "feedback": true,
+        "asyncApi": true,
+        "checkInterval": true,
+        "finishedField": true,
+        "resetAfterSubmit": true,
+        "clearAfterSubmit": true,
+        "mode": true,
+        "columnCount": true,
+        "horizontal": true,
+        "autoFocus": true,
+        "messages": true,
+        "name": true,
+        "panelClassName": true,
+        "primaryField": true,
+        "redirect": true,
+        "reload": true,
+        "submitOnChange": true,
+        "submitOnInit": true,
+        "submitText": true,
+        "target": true,
+        "wrapWithPanel": true,
+        "affixFooter": true,
+        "promptPageLeave": true,
+        "promptPageLeaveMessage": true,
+        "rules": true,
+        "preventEnterSubmit": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "jumpable": true,
+        "jumpableOn": true,
+        "label": true
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/CollapseGroupSchema",
+  "definitions": {
+    "CollapseGroupSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "collapse-group",
+              "description": "指定为折叠器类型"
+            },
+            "activeKey": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  }
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "description": "激活面板"
+            },
+            "accordion": {
+              "type": "boolean",
+              "description": "手风琴模式"
+            },
+            "expandIcon": {
+              "$ref": "#/definitions/SchemaObject",
+              "description": "自定义切换图标"
+            },
+            "expandIconPosition": {
+              "type": "string",
+              "enum": [
+                "left",
+                "right"
+              ],
+              "description": "设置图标位置"
+            },
+            "body": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "内容区域"
+            },
+            "enableFieldSetStyle": {
+              "type": "boolean",
+              "description": "当Collapse作为Form组件的子元素时，开启该属性后组件样式设置为FieldSet组件的样式，默认开启"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "collapse-group"
+        },
+        "testid": true,
+        "activeKey": true,
+        "accordion": true,
+        "expandIcon": true,
+        "expandIconPosition": true,
+        "body": true,
+        "enableFieldSetStyle": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "CollapseGroup 折叠渲染器，格式说明。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/collapse"
+    }
+  }
+}

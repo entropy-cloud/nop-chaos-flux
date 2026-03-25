@@ -1,0 +1,222 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/TextControlSchema",
+  "definitions": {
+    "TextControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "input-text",
+                "input-email",
+                "input-url",
+                "input-password",
+                "native-date",
+                "native-time",
+                "native-number"
+              ],
+              "description": "指定为 InputText 渲染器。\n\nhttps://aisuda.bce.baidu.com/amis/zh-CN/components/form/input-text"
+            },
+            "addOn": {
+              "$ref": "#/definitions/InputTextAddOn",
+              "description": "附带的操作按钮"
+            },
+            "trimContents": {
+              "type": "boolean",
+              "description": "是否去除首尾空白文本。"
+            },
+            "autoComplete": {
+              "$ref": "#/definitions/SchemaApi",
+              "description": "自动完成 API，当输入部分文字的时候，会将这些文字通过 ${term} 可以取到，发送给接口。 接口可以返回匹配到的选项，帮助用户输入。"
+            },
+            "nativeAutoComplete": {
+              "type": "string",
+              "description": "配置原生 input 的 autoComplete 属性",
+              "default": "off"
+            },
+            "borderMode": {
+              "type": "string",
+              "enum": [
+                "full",
+                "half",
+                "none"
+              ],
+              "description": "边框模式，全边框，还是半边框，或者没边框。"
+            },
+            "minLength": {
+              "type": "number",
+              "description": "限制文字最小输入个数"
+            },
+            "maxLength": {
+              "type": "number",
+              "description": "限制文字最大输入个数"
+            },
+            "showCounter": {
+              "type": "boolean",
+              "description": "是否显示计数"
+            },
+            "prefix": {
+              "type": "string",
+              "description": "前缀"
+            },
+            "suffix": {
+              "type": "string",
+              "description": "后缀"
+            },
+            "transform": {
+              "type": "object",
+              "properties": {
+                "lowerCase": {
+                  "type": "boolean",
+                  "description": "用户输入的字符自动转小写"
+                },
+                "upperCase": {
+                  "type": "boolean",
+                  "description": "用户输入的字符自动转大写"
+                }
+              },
+              "additionalProperties": false,
+              "description": "自动转换值"
+            },
+            "inputControlClassName": {
+              "type": "string",
+              "description": "control节点的CSS类名"
+            },
+            "nativeInputClassName": {
+              "type": "string",
+              "description": "原生input标签的CSS类名"
+            },
+            "clearValueOnEmpty": {
+              "type": "boolean",
+              "description": "在内容为空的时候清除值"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/FormOptionsSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "options": true,
+        "source": true,
+        "selectFirst": true,
+        "initFetchOn": true,
+        "initFetch": true,
+        "multiple": true,
+        "checkAll": true,
+        "joinValues": true,
+        "delimiter": true,
+        "valuesNoWrap": true,
+        "extractValue": true,
+        "clearable": true,
+        "resetValue": true,
+        "deferField": true,
+        "deferApi": true,
+        "addApi": true,
+        "addControls": true,
+        "addDialog": true,
+        "creatable": true,
+        "createBtnLabel": true,
+        "editable": true,
+        "editApi": true,
+        "editControls": true,
+        "editDialog": true,
+        "removable": true,
+        "deleteApi": true,
+        "deleteConfirmText": true,
+        "clearValueOnSourceChange": true,
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "size": true,
+        "type": {
+          "type": "string",
+          "enum": [
+            "input-text",
+            "input-email",
+            "input-url",
+            "input-password",
+            "native-date",
+            "native-time",
+            "native-number"
+          ]
+        },
+        "addOn": true,
+        "trimContents": true,
+        "autoComplete": true,
+        "nativeAutoComplete": true,
+        "borderMode": true,
+        "minLength": true,
+        "maxLength": true,
+        "showCounter": true,
+        "prefix": true,
+        "suffix": true,
+        "transform": true,
+        "inputControlClassName": true,
+        "nativeInputClassName": true,
+        "clearValueOnEmpty": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "Text 文本输入框。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/input-text"
+    }
+  }
+}

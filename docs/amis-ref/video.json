@@ -1,0 +1,161 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/VideoSchema",
+  "definitions": {
+    "VideoSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "video",
+              "description": "指定为视频类型"
+            },
+            "autoPlay": {
+              "type": "boolean",
+              "description": "是否自动播放"
+            },
+            "columnsCount": {
+              "type": "number",
+              "description": "如果显示切帧，通过此配置项可以控制每行显示多少帧"
+            },
+            "frames": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "设置后，可以显示切帧.点击帧的时候会将视频跳到对应时间。\n\nframes: {  '01:22': 'http://domain/xxx.jpg' }"
+            },
+            "framesClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "配置帧列表容器className"
+            },
+            "style": {
+              "type": "object",
+              "description": "组件样式"
+            },
+            "isLive": {
+              "type": "boolean",
+              "description": "如果是实时的，请标记一下"
+            },
+            "jumpFrame": {
+              "type": "boolean",
+              "description": "点击帧画面时是否跳转视频对应的点",
+              "default": true
+            },
+            "muted": {
+              "type": "boolean",
+              "description": "是否初始静音"
+            },
+            "loop": {
+              "type": "boolean",
+              "description": "是否循环播放"
+            },
+            "playerClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "配置播放器 className"
+            },
+            "poster": {
+              "$ref": "#/definitions/SchemaUrlPath",
+              "description": "视频封面地址"
+            },
+            "splitPoster": {
+              "type": "boolean",
+              "description": "是否将视频和封面分开显示"
+            },
+            "src": {
+              "$ref": "#/definitions/SchemaUrlPath",
+              "description": "视频播放地址"
+            },
+            "videoType": {
+              "type": "string",
+              "description": "视频类型如： video/x-flv"
+            },
+            "aspectRatio": {
+              "type": "string",
+              "enum": [
+                "auto",
+                "4:3",
+                "16:9"
+              ],
+              "description": "视频比率"
+            },
+            "rates": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "视频速率"
+            },
+            "jumpBufferDuration": {
+              "type": "number",
+              "description": "跳转到帧时，往前多少秒。"
+            },
+            "stopOnNextFrame": {
+              "type": "boolean",
+              "description": "默认播放的时候到了下一帧会继续播放，同时高亮下一帧。 如果配置这个则会停止播放，等待用户选择新的区间再播放。"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "video"
+        },
+        "testid": true,
+        "autoPlay": true,
+        "columnsCount": true,
+        "frames": true,
+        "framesClassName": true,
+        "isLive": true,
+        "jumpFrame": true,
+        "muted": true,
+        "loop": true,
+        "playerClassName": true,
+        "poster": true,
+        "splitPoster": true,
+        "src": true,
+        "videoType": true,
+        "aspectRatio": true,
+        "rates": true,
+        "jumpBufferDuration": true,
+        "stopOnNextFrame": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "视频播放器 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/video"
+    }
+  }
+}

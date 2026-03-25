@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/StatusSchema",
+  "definitions": {
+    "StatusSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "status",
+              "description": "指定为状态展示控件"
+            },
+            "placeholder": {
+              "type": "string",
+              "description": "占位符",
+              "default": "-"
+            },
+            "map": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "状态图标映射关系",
+              "deprecated": "已废弃，2.8.0 废弃，兼容中",
+              "default": "{\n0: 'svg-fail',\n1: 'svg-success',\nsuccess: 'svg-success',\npending: 'rolling',\nfail: 'svg-fail',\nqueue: 'svg-warning',\nschedule: 'svg-schedule'\n}"
+            },
+            "labelMap": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "文字映射关系",
+              "deprecated": "已废弃，2.8.0 废弃，兼容中",
+              "default": {
+                "success": "成功",
+                "pending": "运行中",
+                "fail": "失败",
+                "queue": "排队中",
+                "schedule": "调度中"
+              }
+            },
+            "source": {
+              "$ref": "#/definitions/StatusSource",
+              "description": "新版配置映射源的字段 可以兼容新版icon并且配置颜色 2.8.0 新增"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "status"
+        },
+        "testid": true,
+        "placeholder": true,
+        "map": true,
+        "labelMap": true,
+        "source": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "状态展示控件。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/status"
+    }
+  }
+}

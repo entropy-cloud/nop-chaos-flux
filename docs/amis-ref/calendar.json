@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/CalendarSchema",
+  "definitions": {
+    "CalendarSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "calendar",
+              "description": "指定为日历选择控件"
+            },
+            "schedules": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "startTime": {
+                        "type": "string"
+                      },
+                      "endTime": {
+                        "type": "string"
+                      },
+                      "content": {},
+                      "className": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "startTime",
+                      "endTime",
+                      "content"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "日程"
+            },
+            "scheduleClassNames": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "日程显示颜色自定义"
+            },
+            "scheduleAction": {
+              "$ref": "#/definitions/SchemaObject",
+              "description": "日程点击展示"
+            },
+            "largeMode": {
+              "type": "boolean",
+              "description": "是否开启放大模式"
+            },
+            "todayActiveStyle": {
+              "type": "object",
+              "description": "今日激活时的自定义样式"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "calendar"
+        },
+        "testid": true,
+        "schedules": true,
+        "scheduleClassNames": true,
+        "scheduleAction": true,
+        "largeMode": true,
+        "todayActiveStyle": true
+      },
+      "required": [
+        "type"
+      ]
+    }
+  }
+}

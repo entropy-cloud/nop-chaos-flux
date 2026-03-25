@@ -1,0 +1,439 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "DrawerSchemaBase": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "inputParams": {
+              "description": "弹窗参数说明，值格式为 JSONSchema。"
+            },
+            "actions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ActionSchema"
+              },
+              "description": "默认不用填写，自动会创建确认和取消按钮。"
+            },
+            "body": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "内容区域"
+            },
+            "className": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "配置 外层 className"
+            },
+            "bodyClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "配置 Body 容器 className"
+            },
+            "headerClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "配置 头部 容器 className"
+            },
+            "footerClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "配置 头部 容器 className"
+            },
+            "closeOnEsc": {
+              "type": "boolean",
+              "description": "是否支持按 ESC 关闭 Dialog"
+            },
+            "name": {
+              "$ref": "#/definitions/SchemaName"
+            },
+            "size": {
+              "type": "string",
+              "enum": [
+                "xs",
+                "sm",
+                "md",
+                "lg",
+                "full"
+              ],
+              "description": "Dialog 大小"
+            },
+            "title": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "请通过配置 title 设置标题"
+            },
+            "position": {
+              "type": "string",
+              "enum": [
+                "left",
+                "right",
+                "top",
+                "bottom"
+              ],
+              "description": "从什么位置弹出"
+            },
+            "showCloseButton": {
+              "type": "boolean",
+              "description": "是否展示关闭按钮 当值为false时，默认开启closeOnOutside"
+            },
+            "width": {
+              "type": [
+                "number",
+                "string"
+              ],
+              "description": "抽屉的宽度 （当position为left | right时生效）"
+            },
+            "height": {
+              "type": [
+                "number",
+                "string"
+              ],
+              "description": "抽屉的高度 （当position为top | bottom时生效）"
+            },
+            "header": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "头部"
+            },
+            "footer": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "底部"
+            },
+            "confirm": {
+              "type": "boolean",
+              "description": "影响自动生成的按钮，如果自己配置了按钮这个配置无效。"
+            },
+            "resizable": {
+              "type": "boolean",
+              "description": "是否可以拖动弹窗大小"
+            },
+            "overlay": {
+              "type": "boolean",
+              "description": "是否显示蒙层"
+            },
+            "closeOnOutside": {
+              "type": "boolean",
+              "description": "点击外部的时候是否关闭弹框。"
+            },
+            "showErrorMsg": {
+              "type": "boolean",
+              "description": "是否显示错误信息"
+            },
+            "data": {
+              "type": "object",
+              "description": "数据映射"
+            }
+          }
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": true,
+        "testid": true,
+        "inputParams": true,
+        "actions": true,
+        "body": true,
+        "bodyClassName": true,
+        "headerClassName": true,
+        "footerClassName": true,
+        "closeOnEsc": true,
+        "name": true,
+        "size": true,
+        "title": true,
+        "position": true,
+        "showCloseButton": true,
+        "width": true,
+        "height": true,
+        "header": true,
+        "footer": true,
+        "confirm": true,
+        "resizable": true,
+        "overlay": true,
+        "closeOnOutside": true,
+        "showErrorMsg": true,
+        "data": true
+      },
+      "description": "Drawer 抽出式弹框。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/drawer"
+    },
+    "DialogSchemaBase": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "dialog"
+            },
+            "inputParams": {
+              "description": "弹窗参数说明，值格式为 JSONSchema。"
+            },
+            "actions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ActionSchema"
+              },
+              "description": "默认不用填写，自动会创建确认和取消按钮。"
+            },
+            "body": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "内容区域"
+            },
+            "bodyClassName": {
+              "$ref": "#/definitions/SchemaClassName",
+              "description": "配置 Body 容器 className"
+            },
+            "closeOnEsc": {
+              "type": "boolean",
+              "description": "是否支持按 ESC 关闭 Dialog"
+            },
+            "closeOnOutside": {
+              "type": "boolean",
+              "description": "是否支持点其它区域关闭 Dialog"
+            },
+            "name": {
+              "$ref": "#/definitions/SchemaName"
+            },
+            "size": {
+              "type": "string",
+              "enum": [
+                "xs",
+                "sm",
+                "md",
+                "lg",
+                "xl",
+                "full"
+              ],
+              "description": "Dialog 大小"
+            },
+            "height": {
+              "type": "string",
+              "description": "Dialog 高度"
+            },
+            "width": {
+              "type": "string",
+              "description": "Dialog 宽度"
+            },
+            "title": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "请通过配置 title 设置标题"
+            },
+            "header": {
+              "$ref": "#/definitions/SchemaCollection"
+            },
+            "headerClassName": {
+              "$ref": "#/definitions/SchemaClassName"
+            },
+            "footer": {
+              "$ref": "#/definitions/SchemaCollection"
+            },
+            "confirm": {
+              "type": "boolean",
+              "description": "影响自动生成的按钮，如果自己配置了按钮这个配置无效。"
+            },
+            "showCloseButton": {
+              "type": "boolean",
+              "description": "是否显示关闭按钮"
+            },
+            "showErrorMsg": {
+              "type": "boolean",
+              "description": "是否显示错误信息"
+            },
+            "showLoading": {
+              "type": "boolean",
+              "description": "是否显示 spinner"
+            },
+            "overlay": {
+              "type": "boolean",
+              "description": "是否显示蒙层"
+            },
+            "dialogType": {
+              "type": "string",
+              "const": "confirm",
+              "description": "弹框类型 confirm 确认弹框"
+            },
+            "draggable": {
+              "type": "boolean",
+              "description": "可拖拽"
+            },
+            "allowFullscreen": {
+              "type": "boolean",
+              "description": "可全屏"
+            },
+            "data": {
+              "type": "object",
+              "description": "数据映射"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "dialog"
+        },
+        "testid": true,
+        "inputParams": true,
+        "actions": true,
+        "body": true,
+        "bodyClassName": true,
+        "closeOnEsc": true,
+        "closeOnOutside": true,
+        "name": true,
+        "size": true,
+        "height": true,
+        "width": true,
+        "title": true,
+        "header": true,
+        "headerClassName": true,
+        "footer": true,
+        "confirm": true,
+        "showCloseButton": true,
+        "showErrorMsg": true,
+        "showLoading": true,
+        "overlay": true,
+        "dialogType": {
+          "type": "string",
+          "const": "confirm"
+        },
+        "draggable": true,
+        "allowFullscreen": true,
+        "data": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "Dialog 弹框渲染器。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/dialog"
+    },
+    "FeedbackDialog": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "visibleOn": {
+              "type": "string",
+              "description": "可以用来配置 feedback 的出现条件"
+            },
+            "skipRestOnCancel": {
+              "type": "boolean",
+              "description": "feedback 弹框取消是否中断后续操作"
+            },
+            "skipRestOnConfirm": {
+              "type": "boolean",
+              "description": "feedback 弹框确认是否中断后续操作"
+            }
+          }
+        },
+        {
+          "$ref": "#/definitions/DialogSchemaBase",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "dialog"
+        },
+        "testid": true,
+        "inputParams": true,
+        "actions": true,
+        "body": true,
+        "bodyClassName": true,
+        "closeOnEsc": true,
+        "closeOnOutside": true,
+        "name": true,
+        "size": true,
+        "height": true,
+        "width": true,
+        "title": true,
+        "header": true,
+        "headerClassName": true,
+        "footer": true,
+        "confirm": true,
+        "showCloseButton": true,
+        "showErrorMsg": true,
+        "showLoading": true,
+        "overlay": true,
+        "dialogType": {
+          "type": "string",
+          "const": "confirm"
+        },
+        "draggable": true,
+        "allowFullscreen": true,
+        "data": true,
+        "skipRestOnCancel": true,
+        "skipRestOnConfirm": true
+      }
+    }
+  }
+}

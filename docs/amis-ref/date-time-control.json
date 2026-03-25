@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/DateTimeControlSchema",
+  "definitions": {
+    "DateTimeControlSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "input-datetime",
+              "description": "指定为日期时间选择控件"
+            },
+            "format": {
+              "type": "string",
+              "description": "日期存储格式",
+              "default": "X"
+            },
+            "inputFormat": {
+              "type": "string",
+              "description": "日期展示格式",
+              "default": "YYYY-MM-DD HH:mm"
+            },
+            "valueFormat": {
+              "type": "string",
+              "description": "替代format"
+            },
+            "displayFormat": {
+              "type": "string",
+              "description": "日期展示格式(新：替代inputFormat)"
+            },
+            "timeFormat": {
+              "type": "string",
+              "description": "时间的格式。",
+              "default": "HH:mm"
+            },
+            "minDate": {
+              "type": "string",
+              "description": "限制最小日期"
+            },
+            "maxDate": {
+              "type": "string",
+              "description": "限制最大日期"
+            },
+            "timeConstraints": {
+              "description": "时间输入范围限制"
+            },
+            "isEndDate": {
+              "type": "boolean",
+              "description": "是否为结束时间，如果是，那么会自动加上 23:59:59"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/InputDateBaseControlSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": true,
+        "labelAlign": true,
+        "labelWidth": true,
+        "labelOverflow": true,
+        "labelClassName": true,
+        "name": true,
+        "extraName": true,
+        "remark": true,
+        "labelRemark": true,
+        "hint": true,
+        "submitOnChange": true,
+        "readOnly": true,
+        "readOnlyOn": true,
+        "validateOnChange": true,
+        "description": true,
+        "desc": true,
+        "descriptionClassName": true,
+        "mode": true,
+        "horizontal": true,
+        "inline": true,
+        "inputClassName": true,
+        "placeholder": true,
+        "required": true,
+        "validationErrors": true,
+        "validations": true,
+        "value": true,
+        "clearValueOnHidden": true,
+        "validateApi": true,
+        "autoFill": true,
+        "initAutoFill": true,
+        "row": true,
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "size": true,
+        "type": {
+          "type": "string",
+          "const": "input-datetime"
+        },
+        "clearable": true,
+        "format": true,
+        "valueFormat": true,
+        "inputFormat": true,
+        "displayFormat": true,
+        "utc": true,
+        "emebed": true,
+        "borderMode": true,
+        "shortcuts": true,
+        "disabledDate": true,
+        "inputForbid": true,
+        "timeFormat": true,
+        "minDate": true,
+        "maxDate": true,
+        "timeConstraints": true,
+        "isEndDate": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "Datetime日期时间选择控件 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/datetime"
+    }
+  }
+}

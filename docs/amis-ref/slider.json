@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/SliderSchema",
+  "definitions": {
+    "SliderSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "slider"
+            },
+            "body": {
+              "$ref": "#/definitions/BaseSchema"
+            },
+            "left": {
+              "$ref": "#/definitions/BaseSchema"
+            },
+            "right": {
+              "$ref": "#/definitions/BaseSchema"
+            },
+            "bodyWidth": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "body"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "slider"
+        },
+        "testid": true,
+        "body": true,
+        "left": true,
+        "right": true,
+        "bodyWidth": true
+      },
+      "required": [
+        "type",
+        "body"
+      ]
+    }
+  }
+}

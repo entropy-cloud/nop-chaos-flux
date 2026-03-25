@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/CRUDTableSchema",
+  "definitions": {
+    "CRUDTableSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "const": "table",
+              "description": "指定内容区的展示模式。"
+            },
+            "type": {
+              "type": "string",
+              "const": "crud"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/CRUDCommonSchemaWithoutType",
+          "additionalProperties": true
+        },
+        {
+          "$ref": "#/definitions/BaseTableSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "crud"
+        },
+        "testid": true,
+        "affixHeader": true,
+        "affixFooter": true,
+        "columns": true,
+        "columnsTogglable": true,
+        "footable": true,
+        "footerClassName": true,
+        "headerClassName": true,
+        "placeholder": true,
+        "showIndex": true,
+        "showFooter": true,
+        "showHeader": true,
+        "source": true,
+        "tableClassName": true,
+        "title": true,
+        "toolbarClassName": true,
+        "combineNum": true,
+        "combineFromIndex": true,
+        "prefixRow": true,
+        "affixRow": true,
+        "resizable": true,
+        "rowClassNameExpr": true,
+        "itemBadge": true,
+        "autoGenerateFilter": true,
+        "canAccessSuperData": true,
+        "autoFillHeight": true,
+        "tableLayout": true,
+        "deferApi": true,
+        "persistKey": true,
+        "mode": {
+          "type": "string",
+          "const": "table"
+        },
+        "api": true,
+        "bulkActions": true,
+        "itemActions": true,
+        "perPage": true,
+        "orderBy": true,
+        "orderDir": true,
+        "defaultParams": true,
+        "draggable": true,
+        "draggableOn": true,
+        "name": true,
+        "filter": true,
+        "initFetch": true,
+        "initFetchOn": true,
+        "innerClassName": true,
+        "interval": true,
+        "orderField": true,
+        "pageField": true,
+        "perPageField": true,
+        "pageDirectionField": true,
+        "totalField": true,
+        "quickSaveApi": true,
+        "quickSaveItemApi": true,
+        "saveOrderApi": true,
+        "syncLocation": true,
+        "toolbar": true,
+        "toolbarInline": true,
+        "headerToolbar": true,
+        "footerToolbar": true,
+        "perPageAvailable": true,
+        "messages": true,
+        "hideQuickSaveBtn": true,
+        "autoJumpToTopOnPagerChange": true,
+        "silentPolling": true,
+        "stopAutoRefreshWhen": true,
+        "stopAutoRefreshWhenModalIsOpen": true,
+        "filterTogglable": true,
+        "filterDefaultVisible": true,
+        "syncResponse2Query": true,
+        "keepItemSelectionOnPageChange": true,
+        "maxKeepItemSelectionLength": true,
+        "labelTpl": true,
+        "loadDataOnce": true,
+        "loadDataOnceFetchOnFilter": true,
+        "matchFunc": true,
+        "expandConfig": true,
+        "alwaysShowPagination": true,
+        "parsePrimitiveQuery": true,
+        "selectable": true,
+        "multiple": true,
+        "loadMoreProps": true
+      },
+      "required": [
+        "type"
+      ]
+    }
+  }
+}

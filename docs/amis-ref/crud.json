@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/CRUDSchema",
+  "definitions": {
+    "CRUDSchema": {
+      "if": {
+        "required": [
+          "mode"
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "const": "cards"
+                }
+              },
+              "required": [
+                "mode"
+              ]
+            },
+            "then": {
+              "$ref": "#/definitions/CRUDCardsSchema"
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "const": "list"
+                }
+              },
+              "required": [
+                "mode"
+              ]
+            },
+            "then": {
+              "$ref": "#/definitions/CRUDListSchema"
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "const": "table"
+                }
+              },
+              "required": [
+                "mode"
+              ]
+            },
+            "then": {
+              "$ref": "#/definitions/CRUDTableSchema"
+            }
+          }
+        ]
+      },
+      "else": {
+        "$ref": "#/definitions/CRUDTableSchema"
+      }
+    }
+  }
+}

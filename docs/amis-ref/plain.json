@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/PlainSchema",
+  "definitions": {
+    "PlainSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "plain",
+                "text"
+              ],
+              "description": "指定为模板渲染器。\n\n文档：https://aisuda.bce.baidu.com/amis/zh-CN/docs/concepts/template"
+            },
+            "tpl": {
+              "$ref": "#/definitions/SchemaTpl"
+            },
+            "text": {
+              "$ref": "#/definitions/SchemaTpl"
+            },
+            "inline": {
+              "type": "boolean",
+              "description": "是否内联显示？"
+            },
+            "placeholder": {
+              "type": "string",
+              "description": "占位符",
+              "deprecated": "-"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "enum": [
+            "plain",
+            "text"
+          ]
+        },
+        "testid": true,
+        "tpl": true,
+        "text": true,
+        "inline": true,
+        "placeholder": true
+      },
+      "required": [
+        "type"
+      ],
+      "description": "Plain 纯文本渲染器 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/plain"
+    }
+  }
+}

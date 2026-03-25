@@ -1,0 +1,245 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/NavSchema",
+  "definitions": {
+    "NavSchema": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "nav",
+              "description": "指定为 Nav 导航渲染器"
+            },
+            "links": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NavItemSchema"
+              },
+              "description": "链接地址集合"
+            },
+            "indentSize": {
+              "type": "number",
+              "default": 16
+            },
+            "source": {
+              "$ref": "#/definitions/SchemaApi",
+              "description": "可以通过 API 拉取。"
+            },
+            "deferApi": {
+              "$ref": "#/definitions/SchemaApi",
+              "description": "懒加载 api，如果不配置复用 source 接口。"
+            },
+            "stacked": {
+              "type": "boolean",
+              "enum": [
+                true,
+                false
+              ],
+              "description": "true 为垂直排列，false 为水平排列类似如 tabs。"
+            },
+            "itemActions": {
+              "$ref": "#/definitions/SchemaCollection",
+              "description": "更多操作菜单列表"
+            },
+            "draggable": {
+              "type": "boolean",
+              "description": "可拖拽"
+            },
+            "saveOrderApi": {
+              "$ref": "#/definitions/SchemaApi",
+              "description": "保存排序的 api"
+            },
+            "itemBadge": {
+              "$ref": "#/definitions/BadgeObject",
+              "description": "角标"
+            },
+            "badge": {
+              "$ref": "#/definitions/BadgeObject",
+              "description": "角标"
+            },
+            "dragOnSameLevel": {
+              "type": "boolean",
+              "description": "仅允许同层级拖拽"
+            },
+            "overflow": {
+              "$ref": "#/definitions/NavOverflow",
+              "description": "横向导航时自动收纳配置"
+            },
+            "level": {
+              "type": "number",
+              "description": "最多展示多少层级"
+            },
+            "defaultOpenLevel": {
+              "type": "number",
+              "description": "默认展开层级 小于等于该层数的节点默认全部打开"
+            },
+            "showKey": {
+              "type": "string",
+              "description": "控制仅展示指定key菜单下的子菜单项"
+            },
+            "collapsed": {
+              "type": "boolean",
+              "description": "控制菜单缩起"
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "panel",
+                "float",
+                "inline"
+              ],
+              "description": "垂直模式 非折叠状态下 控制菜单打开方式"
+            },
+            "expandIcon": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/SchemaObject"
+                }
+              ],
+              "description": "自定义展开图标"
+            },
+            "expandPosition": {
+              "type": "string",
+              "description": "自定义展开图标位置 默认在前面 before after"
+            },
+            "themeColor": {
+              "type": "string",
+              "enum": [
+                "light",
+                "dark"
+              ],
+              "description": "主题配色 默认light"
+            },
+            "accordion": {
+              "type": "boolean",
+              "description": "手风琴展开 仅垂直inline模式支持"
+            },
+            "popupClassName": {
+              "type": "string",
+              "description": "子菜单项展开浮层样式"
+            },
+            "searchable": {
+              "type": "boolean",
+              "description": "是否开启搜索"
+            },
+            "searchConfig": {
+              "type": "object",
+              "properties": {
+                "className": {
+                  "type": "string",
+                  "description": "搜索框外层CSS样式类"
+                },
+                "matchFunc": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {}
+                  ],
+                  "description": "搜索匹配函数"
+                },
+                "placeholder": {
+                  "type": "string",
+                  "description": "占位符"
+                },
+                "mini": {
+                  "type": "boolean",
+                  "description": "是否为 Mini 样式。"
+                },
+                "enhance": {
+                  "type": "boolean",
+                  "description": "是否为加强样式"
+                },
+                "clearable": {
+                  "type": "boolean",
+                  "description": "是否可清除"
+                },
+                "searchImediately": {
+                  "type": "boolean",
+                  "description": "是否立马搜索。"
+                },
+                "valueField": {
+                  "type": "string",
+                  "description": "指定唯一标识字段"
+                }
+              },
+              "additionalProperties": false,
+              "description": "搜索框相关配置"
+            }
+          },
+          "required": [
+            "type",
+            "indentSize"
+          ]
+        },
+        {
+          "$ref": "#/definitions/BaseSchema",
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$$id": true,
+        "className": true,
+        "$ref": true,
+        "disabled": true,
+        "disabledOn": true,
+        "hidden": true,
+        "hiddenOn": true,
+        "visible": true,
+        "visibleOn": true,
+        "id": true,
+        "onEvent": true,
+        "static": true,
+        "staticOn": true,
+        "staticPlaceholder": true,
+        "staticClassName": true,
+        "staticLabelClassName": true,
+        "staticInputClassName": true,
+        "staticSchema": true,
+        "style": true,
+        "editorSetting": true,
+        "useMobileUI": true,
+        "type": {
+          "type": "string",
+          "const": "nav"
+        },
+        "testid": true,
+        "links": true,
+        "indentSize": true,
+        "source": true,
+        "deferApi": true,
+        "stacked": true,
+        "itemActions": true,
+        "draggable": true,
+        "saveOrderApi": true,
+        "itemBadge": true,
+        "badge": true,
+        "dragOnSameLevel": true,
+        "overflow": true,
+        "level": true,
+        "defaultOpenLevel": true,
+        "showKey": true,
+        "collapsed": true,
+        "mode": true,
+        "expandIcon": true,
+        "expandPosition": true,
+        "themeColor": true,
+        "accordion": true,
+        "popupClassName": true,
+        "searchable": true,
+        "searchConfig": true
+      },
+      "required": [
+        "type",
+        "indentSize"
+      ],
+      "description": "Nav 导航渲染器 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/nav"
+    }
+  }
+}
