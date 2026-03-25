@@ -218,20 +218,25 @@ interface DesignerPageSchema {
 
 ## 7. 节点类型模型
 
-节点类型继续采用 designer 专用 config，而不是完全 schema 化。
+节点类型采用 designer 专用 config，不直接退化成普通 renderer schema。但节点类型内部允许嵌入 schema 片段：
+- `inspector.body` - 属性面板
+- `createDialog.body` - 创建节点弹窗
+- `quickActions` - 快速操作按钮
+- `emptyState` - 空节点空状态提示
 
-原因：
-
-- 节点类型属于 graph domain 元数据
-- 它要表达 ports、role、约束、连接规则、可移动性等图语义
-- 这些不是普通页面 schema 擅长表达的内容
-
-但节点类型内部允许嵌入 schema 片段：
-
-- `inspector.body`
-- `createDialog.body`
-- `quickActions`
-- `emptyState`
+但 节点组件通过 `body: SchemaInput` 渲染，使用 AMIS Schema 组合现有 renderer
+            - 内置节点图标通过 `icon` 字段（kebab-case 格式）
+            - `label`、 `description` 秊外观样式
+            - 边标签和说明节点类型
+- **节点组件支持自定义 renderer**
+  通过在 `nodeTypes[].body` 中使用自定义组件类型（如 `my-custom-node`），注册后通过 AMIS 渲染器引用。
+            - 或在 `nodeTypes` 中配置一个使用内置组件
+            - 通过 `nodeTypes[].appearance` 配置基础样式（颜色、边框等）
+- 节点内部允许嵌入 schema 片段：
+  - `inspector.body` - 属性面板
+  - `createDialog.body` - 创建节点弹窗
+  - `quickActions` - 快速操作按钮
+- `emptyState` - 空节点空状态提示
 
 ## 8. 端口优先的连接模型
 

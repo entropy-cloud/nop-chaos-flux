@@ -70,23 +70,15 @@ interface DesignerPageSchema {
   title?: string
   document: GraphDocumentInput
   config: DesignerConfig
-  shortcuts?: DesignerShortcutBinding[]
   toolbar?: SchemaInput
   inspector?: SchemaInput
   dialogs?: SchemaInput
 }
 ```
 
-```ts
-interface DesignerShortcutBinding {
-  key: string
-  modKey?: boolean
-  shiftKey?: boolean
-  altKey?: boolean
-  action: ActionSchema | ActionSchema[]
-  preventDefault?: boolean
-}
-```
+说明：
+- `config` 包含 `toolbar?: ToolbarConfig` 和 `shortcuts?: ShortcutsConfig`，详见 `config-schema.md`
+- `toolbar` / `inspector` / `dialogs` 是可选的 schema 片段覆盖，如果 `config.toolbar` 已定义，这里通常不需要再配置
 
 `designer-page` 是宿主入口，不是普通容器的简单别名。它负责：
 
