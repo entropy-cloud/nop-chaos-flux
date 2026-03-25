@@ -123,28 +123,31 @@ function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
   const gap = typeof props.props.gap === 'number' || typeof props.props.gap === 'string' ? props.props.gap : undefined;
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
+  const bodyContent = props.regions.body?.render();
 
-  const flexClasses = classNames(
-    'flex',
-    resolveDirection(direction),
-    wrap && 'flex-wrap',
-    align === 'center' && 'items-center justify-center',
-    align === 'start' && 'items-start justify-start',
-    align === 'end' && 'items-end justify-end',
-    align === 'stretch' && 'items-stretch'
-  );
-
-  const style: React.CSSProperties = {};
-  if (gap !== undefined) {
-    style.gap = typeof gap === 'number' ? `${gap}px` : gap;
-  }
+  const useFlexChild = wrap || align !== undefined || gap !== undefined || direction !== 'row';
 
   return (
     <div className={classNames('na-container', props.meta.className)}>
       {hasRendererSlotContent(headerContent) ? <div className="na-container__header">{headerContent}</div> : null}
-      <div className={flexClasses} style={style}>
-        {props.regions.body?.render()}
-      </div>
+      {useFlexChild ? (
+        <div
+          className={classNames(
+            'flex',
+            resolveDirection(direction),
+            wrap && 'flex-wrap',
+            align === 'center' && 'items-center justify-center',
+            align === 'start' && 'items-start justify-start',
+            align === 'end' && 'items-end justify-end',
+            align === 'stretch' && 'items-stretch'
+          )}
+          style={gap !== undefined ? { gap: typeof gap === 'number' ? `${gap}px` : gap } : undefined}
+        >
+          {bodyContent}
+        </div>
+      ) : (
+        bodyContent
+      )}
       {hasRendererSlotContent(footerContent) ? <div className="na-container__footer">{footerContent}</div> : null}
     </div>
   );
