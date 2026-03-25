@@ -1,13 +1,13 @@
-{
+﻿{
   "files": [],
   "references": [
-    { "path": "./packages/amis-schema" },
-    { "path": "./packages/amis-formula" },
-    { "path": "./packages/amis-runtime" },
-    { "path": "./packages/amis-react" },
-    { "path": "./packages/amis-renderers-basic" },
-    { "path": "./packages/amis-renderers-form" },
-    { "path": "./packages/amis-renderers-data" },
+    { "path": "./packages/flux-core" },
+    { "path": "./packages/flux-formula" },
+    { "path": "./packages/flux-runtime" },
+    { "path": "./packages/flux-react" },
+    { "path": "./packages/flux-renderers-basic" },
+    { "path": "./packages/flux-renderers-form" },
+    { "path": "./packages/flux-renderers-data" },
     { "path": "./packages/spreadsheet-core" },
     { "path": "./packages/spreadsheet-renderers" },
     { "path": "./packages/report-designer-core" },
@@ -15,3 +15,4 @@
     { "path": "./apps/playground" }
   ]
 }
+

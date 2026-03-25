@@ -1,4 +1,4 @@
-# AGENTS.md
+﻿# AGENTS.md
 
 ## Project Overview
 
@@ -7,13 +7,13 @@
 **Tech Stack**: React 19, Zustand, TypeScript 5.9, Vite 8, Vitest, pnpm workspace.
 
 **Workspace Packages**:
-- `@nop-chaos/amis-schema` - Pure types/interfaces (no runtime code).
-- `@nop-chaos/amis-formula` - Expression compiler/evaluator.
-- `@nop-chaos/amis-runtime` - Core runtime (Zustand stores, validation, actions).
-- `@nop-chaos/amis-react` - React rendering layer.
-- `@nop-chaos/amis-renderers-basic` - Basic renderers (page, text, container, etc.).
-- `@nop-chaos/amis-renderers-form` - Form renderers.
-- `@nop-chaos/amis-renderers-data` - Data renderers.
+- `@nop-chaos/flux-core` - Pure types/interfaces (no runtime code).
+- `@nop-chaos/flux-formula` - Expression compiler/evaluator.
+- `@nop-chaos/flux-runtime` - Core runtime (Zustand stores, validation, actions).
+- `@nop-chaos/flux-react` - React rendering layer.
+- `@nop-chaos/flux-renderers-basic` - Basic renderers (page, text, container, etc.).
+- `@nop-chaos/flux-renderers-form` - Form renderers.
+- `@nop-chaos/flux-renderers-data` - Data renderers.
 - `@nop-chaos/amis-debugger` - Devtools/debugger panel.
 - `@nop-chaos/amis-testing` - Shared test utilities.
 - `apps/playground` - Dev playground.
@@ -43,10 +43,10 @@ pnpm test                   # all packages
 pnpm lint                   # all packages
 
 # per package
-pnpm --filter @nop-chaos/amis-runtime typecheck
-pnpm --filter @nop-chaos/amis-runtime build
-pnpm --filter @nop-chaos/amis-runtime test
-pnpm --filter @nop-chaos/amis-runtime lint
+pnpm --filter @nop-chaos/flux-runtime typecheck
+pnpm --filter @nop-chaos/flux-runtime build
+pnpm --filter @nop-chaos/flux-runtime test
+pnpm --filter @nop-chaos/flux-runtime lint
 ```
 
 Always run `typecheck`, `build`, and `lint` after making changes. Run tests when relevant.
@@ -68,11 +68,11 @@ After completing any significant work, you MUST:
    - Brief context useful for future work
 
 2. **Update relevant architecture docs** when changing:
-   - Package boundaries or ownership → `docs/architecture/amis-runtime-module-boundaries.md`
-   - Form/validation logic → `docs/architecture/form-validation.md`
-   - Renderer props/hooks/React integration → `docs/architecture/renderer-runtime.md`
-   - Slot/field metadata patterns → `docs/architecture/field-metadata-slot-modeling.md`
-   - General architecture → `docs/architecture/amis-core.md`
+   - Package boundaries or ownership â†’ `docs/architecture/amis-runtime-module-boundaries.md`
+   - Form/validation logic â†’ `docs/architecture/form-validation.md`
+   - Renderer props/hooks/React integration â†’ `docs/architecture/renderer-runtime.md`
+   - Slot/field metadata patterns â†’ `docs/architecture/field-metadata-slot-modeling.md`
+   - General architecture â†’ `docs/architecture/amis-core.md`
 
 3. **Update `docs/references/maintenance-checklist.md`** if new doc links are needed.
 
@@ -130,7 +130,7 @@ packages/<name>/
 
 ### Imports
 
-- Use workspace protocol: `"@nop-chaos/amis-schema": "workspace:*"`
+- Use workspace protocol: `"@nop-chaos/flux-core": "workspace:*"`
 - Internal imports use relative paths within the same package.
 
 ### State Management
@@ -170,7 +170,7 @@ When refactoring large files into smaller modules, follow this safe approach:
 - Ensure no import errors or missing dependencies
 
 ### Step 5: Replace Original File
-- Rename original to `.bak` (e.g., `Component.tsx` → `Component.tsx.bak`)
+- Rename original to `.bak` (e.g., `Component.tsx` â†’ `Component.tsx.bak`)
 - Create new orchestrator file that imports and uses the split components
 - Keep the orchestrator thin - only state management and composition
 
@@ -183,19 +183,19 @@ When refactoring large files into smaller modules, follow this safe approach:
 ```
 # Before
 src/
-└── FlowDesignerExample.tsx (572 lines)
+â””â”€â”€ FlowDesignerExample.tsx (572 lines)
 
 # After
 src/
-├── FlowDesignerExample.tsx (220 lines - orchestrator)
-├── FlowDesignerExample.tsx.bak (backup)
-└── flow-designer/
-    ├── index.ts
-    ├── FlowDesignerToolbar.tsx
-    ├── FlowDesignerPalette.tsx
-    ├── FlowDesignerCanvas.tsx
-    ├── FlowDesignerInspector.tsx
-    └── FlowDesignerToast.tsx
+â”œâ”€â”€ FlowDesignerExample.tsx (220 lines - orchestrator)
+â”œâ”€â”€ FlowDesignerExample.tsx.bak (backup)
+â””â”€â”€ flow-designer/
+    â”œâ”€â”€ index.ts
+    â”œâ”€â”€ FlowDesignerToolbar.tsx
+    â”œâ”€â”€ FlowDesignerPalette.tsx
+    â”œâ”€â”€ FlowDesignerCanvas.tsx
+    â”œâ”€â”€ FlowDesignerInspector.tsx
+    â””â”€â”€ FlowDesignerToast.tsx
 ```
 
 ### Why This Approach Works
@@ -258,3 +258,4 @@ Before finishing any task:
 - [ ] `pnpm test` passes (if applicable)
 - [ ] `docs/development-log.md` updated (for significant changes)
 - [ ] Relevant architecture docs updated (if design changed)
+

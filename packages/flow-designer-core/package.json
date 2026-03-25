@@ -18,8 +18,9 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@nop-chaos/amis-schema": "workspace:*",
-    "@nop-chaos/amis-formula": "workspace:*",
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
     "zustand": "^5.0.0"
   }
 }
+

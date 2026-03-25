@@ -13,9 +13,9 @@
   },
   "dependencies": {
     "@nop-chaos/spreadsheet-core": "workspace:*",
-    "@nop-chaos/amis-runtime": "workspace:*",
-    "@nop-chaos/amis-react": "workspace:*",
-    "@nop-chaos/amis-schema": "workspace:*",
+    "@nop-chaos/flux-runtime": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-core": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -26,3 +26,4 @@
     "lint": "eslint src --ext .ts,.tsx"
   }
 }
+

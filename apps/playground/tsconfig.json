@@ -1,8 +1,9 @@
-{
+﻿{
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src", "vite.config.ts", "../../types/**/*.d.ts", "../../packages/amis-react/src/**/*.d.ts"]
+  "include": ["src", "vite.config.ts", "../../types/**/*.d.ts", "../../packages/flux-react/src/**/*.d.ts"]
 }
+

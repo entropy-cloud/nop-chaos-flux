@@ -18,10 +18,10 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@nop-chaos/amis-formula": "workspace:*",
-    "@nop-chaos/amis-react": "workspace:*",
-    "@nop-chaos/amis-runtime": "workspace:*",
-    "@nop-chaos/amis-schema": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-runtime": "workspace:*",
+    "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flow-designer-core": "workspace:*",
     "@xyflow/react": "^12.10.1",
     "react": "^19.0.0",
@@ -32,3 +32,4 @@
     "@types/react-dom": "^19.0.0"
   }
 }
+

@@ -1,4 +1,4 @@
-{
+﻿{
   "compilerOptions": {
     "target": "ES2022",
     "useDefineForClassFields": true,
@@ -18,14 +18,14 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@nop-chaos/amis-schema": ["packages/amis-schema/src/index.ts"],
-      "@nop-chaos/amis-formula": ["packages/amis-formula/src/index.ts"],
+      "@nop-chaos/flux-core": ["packages/flux-core/src/index.ts"],
+      "@nop-chaos/flux-formula": ["packages/flux-formula/src/index.ts"],
       "@nop-chaos/amis-debugger": ["packages/amis-debugger/src/index.tsx"],
-      "@nop-chaos/amis-runtime": ["packages/amis-runtime/src/index.ts"],
-      "@nop-chaos/amis-react": ["packages/amis-react/src/index.tsx"],
-      "@nop-chaos/amis-renderers-basic": ["packages/amis-renderers-basic/src/index.tsx"],
-      "@nop-chaos/amis-renderers-form": ["packages/amis-renderers-form/src/index.tsx"],
-      "@nop-chaos/amis-renderers-data": ["packages/amis-renderers-data/src/index.tsx"],
+      "@nop-chaos/flux-runtime": ["packages/flux-runtime/src/index.ts"],
+      "@nop-chaos/flux-react": ["packages/flux-react/src/index.tsx"],
+      "@nop-chaos/flux-renderers-basic": ["packages/flux-renderers-basic/src/index.tsx"],
+      "@nop-chaos/flux-renderers-form": ["packages/flux-renderers-form/src/index.tsx"],
+      "@nop-chaos/flux-renderers-data": ["packages/flux-renderers-data/src/index.tsx"],
       "@nop-chaos/spreadsheet-core": ["packages/spreadsheet-core/src/index.ts"],
       "@nop-chaos/spreadsheet-renderers": ["packages/spreadsheet-renderers/src/index.ts"],
       "@nop-chaos/report-designer-core": ["packages/report-designer-core/src/index.ts"],
@@ -35,3 +35,4 @@
     }
   }
 }
+
