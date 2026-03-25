@@ -320,8 +320,6 @@ const schema = {
             },
             {
               type: 'container',
-              wrap: true,
-              gap: 18,
               className: 'na-demo-grid',
               body: [
                 {
