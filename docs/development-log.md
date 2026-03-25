@@ -18,6 +18,28 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-25 (Rename AMIS to Flux)
+
+- **Renamed package references in documentation**:
+  - `amis-schema` → `flux-core`
+  - `amis-formula` → `flux-formula`
+  - `amis-runtime` → `flux-runtime`
+  - `amis-react` → `flux-react`
+  - `amis-renderers-*` → `flux-renderers-*`
+  - `amis-debugger` → `nop-debugger`
+  - `amis-testing` → `flux-testing`
+- **Renamed architecture docs**:
+  - `docs/architecture/amis-core.md` → `docs/architecture/flux-core.md`
+  - `docs/architecture/amis-runtime-module-boundaries.md` → `docs/architecture/flux-runtime-module-boundaries.md`
+- **Renamed window globals**:
+  - `__NOP_AMIS_DEBUGGER__` → `__NOP_FLUX_DEBUGGER__`
+  - `__NOP_AMIS_DEBUGGER_API__` → `__NOP_FLUX_DEBUGGER_API__`
+  - `__NOP_AMIS_DEBUGGER_HUB__` → `__NOP_FLUX_DEBUGGER_HUB__`
+- **Updated tsconfig.json references**:
+  - `packages/flux-renderers-form/tsconfig.json`: `../amis-react/` → `../flux-react/`
+  - `packages/flux-renderers-data/tsconfig.json`: `../amis-react/` → `../flux-react/`
+- **Note**: `docs/amis-types/`, `docs/amis-ref/`, `docs/analysis/amis-vs-refactor1-architecture-comparison.md`, and historical plan docs retain AMIS naming because they reference the upstream AMIS project, not our internal packages.
+
 ### 2026-03-25 (AMIS TypeScript Type Definitions)
 
 - **Created `docs/amis-types/`**: 精简的 TypeScript 类型定义，从 JSON Schema 转换而来
@@ -660,7 +682,7 @@ This file is intentionally lightweight.
 - Added automation-facing concepts to the design: `queryEvents`, `getLatestError`, `waitForEvent`, `createDiagnosticReport`, and `window`-level debugger hub access.
 - Updated the package API plan so the debugger can serve both human operators and AI agents during automatic diagnosis and guided debugging.
 - Added `packages/amis-debugger/src/index.test.ts` to cover event querying, diagnostic report generation, async event waiting, and global automation hub registration.
-- Added a playground-facing reminder that AI tooling can read `window.__NOP_AMIS_DEBUGGER_API__` and `window.__NOP_AMIS_DEBUGGER_HUB__` directly.
+- Added a playground-facing reminder that AI tooling can read `window.__NOP_FLUX_DEBUGGER_API__` and `window.__NOP_FLUX_DEBUGGER_HUB__` directly.
 - Added structured network summaries to debugger events so AI can read request/response shape without parsing free-form strings.
 - Added node-level diagnostics aggregation to the debugger API so AI can inspect one node's recent render/action/api/error history in one call.
 - Added a visible AI debug script example card in the playground to demonstrate how agents can call the debugger API from the browser context.

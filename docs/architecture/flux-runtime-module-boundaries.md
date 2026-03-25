@@ -1,4 +1,4 @@
-﻿# AMIS Runtime Module Boundaries
+﻿# Flux Runtime Module Boundaries
 
 ## Purpose
 
@@ -194,5 +194,5 @@ When in doubt, prefer one more focused module over growing a general-purpose fil
 - `docs/references/terminology.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/renderer-runtime.md`
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 

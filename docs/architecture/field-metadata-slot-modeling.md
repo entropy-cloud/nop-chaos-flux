@@ -479,6 +479,6 @@ That change should be implemented in:
 ## Related Documents
 
 - `docs/references/terminology.md`
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 

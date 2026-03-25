@@ -854,7 +854,7 @@ The active decisions from this document are:
 
 ## Related Documents
 
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/flow-designer/design.md`
 - `docs/architecture/flow-designer/api.md`

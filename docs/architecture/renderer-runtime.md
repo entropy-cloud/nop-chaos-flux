@@ -387,7 +387,7 @@ List, table, and tree renderers should avoid eager child-scope creation for work
 ## Related Documents
 
 - `docs/references/terminology.md`
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
 - `docs/references/renderer-interfaces.md`

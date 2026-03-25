@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`nop-chaos-amis` is a modern rewrite of the AMIS low-code renderer.
+`nop-chaos-flux` (formerly nop-chaos-amis) is a modern rewrite of the AMIS low-code renderer.
 
 **Tech Stack**: React 19, Zustand, TypeScript 5.9, Vite 8, Vitest, pnpm workspace.
 
@@ -15,14 +15,14 @@
 - `@nop-chaos/flux-renderers-form` - Form renderers.
 - `@nop-chaos/flux-renderers-data` - Data renderers.
 - `@nop-chaos/nop-debugger` - Devtools/debugger panel.
-- `@nop-chaos/amis-testing` - Shared test utilities.
+- `@nop-chaos/flux-testing` - Shared test utilities.
 - `apps/playground` - Dev playground.
 
 **Dependency Flow**:
 ```
-amis-schema -> amis-formula -> amis-runtime -> amis-react -> amis-renderers-*
-                                                            -> nop-debugger
-                                                            -> apps/playground
+flux-core -> flux-formula -> flux-runtime -> flux-react -> flux-renderers-*
+                                                          -> nop-debugger
+                                                          -> apps/playground
 ```
 
 ---
@@ -68,11 +68,11 @@ After completing any significant work, you MUST:
    - Brief context useful for future work
 
 2. **Update relevant architecture docs** when changing:
-   - Package boundaries or ownership â†’ `docs/architecture/amis-runtime-module-boundaries.md`
+   - Package boundaries or ownership â†’ `docs/architecture/flux-runtime-module-boundaries.md`
    - Form/validation logic â†’ `docs/architecture/form-validation.md`
    - Renderer props/hooks/React integration â†’ `docs/architecture/renderer-runtime.md`
    - Slot/field metadata patterns â†’ `docs/architecture/field-metadata-slot-modeling.md`
-   - General architecture â†’ `docs/architecture/amis-core.md`
+   - General architecture â†’ `docs/architecture/flux-core.md`
 
 3. **Update `docs/references/maintenance-checklist.md`** if new doc links are needed.
 

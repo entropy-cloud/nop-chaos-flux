@@ -1,8 +1,8 @@
-﻿# NOP Chaos AMIS Core Architecture
+# NOP Chaos Flux Core Architecture
 
 ## Purpose
 
-This document records the current architecture baseline for the active `nop-amis` codebase.
+This document records the current architecture baseline for the active `nop-chaos-flux` codebase.
 
 Use it when you need the highest-level answer to:
 
@@ -79,9 +79,9 @@ The preferred hot path is:
 
 Current implementation keeps `read()` as a cached merged-object fallback, but the main design path is lexical path lookup rather than rebuilding a full scope object for every evaluation.
 
-### `amis-formula` is the expression base
+### `flux-formula` is the expression base
 
-Expression execution is built on `amis-formula` through `FormulaCompiler` and `ExpressionCompiler`.
+Expression execution is built on `flux-formula` through `FormulaCompiler` and `ExpressionCompiler`.
 
 The production direction is:
 
@@ -333,6 +333,6 @@ Those topics should be described as design direction, not as already-finalized p
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
-- `docs/architecture/amis-runtime-module-boundaries.md`
+- `docs/architecture/flux-runtime-module-boundaries.md`
 - `docs/references/renderer-interfaces.md`
 

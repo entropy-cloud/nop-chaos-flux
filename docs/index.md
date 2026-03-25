@@ -1,4 +1,4 @@
-﻿# NOP Chaos AMIS Documentation Index
+﻿# NOP Chaos Flux Documentation Index
 
 ## Purpose
 
@@ -16,7 +16,7 @@ Choose the smallest document that matches the task.
 
 | If you need to... | Read this first | Then read |
 | --- | --- | --- |
-| Understand the current architecture baseline | `docs/architecture/amis-core.md` | `docs/architecture/renderer-runtime.md` |
+| Understand the current architecture baseline | `docs/architecture/flux-core.md` | `docs/architecture/renderer-runtime.md` |
 | äº†è§£åŸºäºŽ SchemaRenderer çš„å›¾è®¾è®¡å™¨è§„åˆ’æž¶æž„ | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md` |
 | çœ‹æ¸… Flow Designer å„å±‚åä½œç»†èŠ‚ã€å‘½åç©ºé—´åŠ¨ä½œæµè½¬ã€ç”»å¸ƒ/Inspector è°ƒç”¨é“¾ | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
 | æ ¸å¯¹ Flow Designer å½“å‰çœŸå®žçš„ snapshot å¥‘çº¦ã€host scope è½åœ°çŠ¶æ€ã€å“ªäº›å­—æ®µå·²æŽ¥çº¿ | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |
@@ -31,8 +31,8 @@ Choose the smallest document that matches the task.
 | Change React integration, renderer props, hooks, or fragment rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
 | Design namespaced action extension, host action scopes, or `xui:import` semantics | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` |
 | Change slot-like fields such as `title`, `empty`, or `onClick` | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
-| Change validation behavior or form field participation | `docs/architecture/form-validation.md` | `docs/architecture/amis-runtime-module-boundaries.md` |
-| Decide where runtime or validation code should live | `docs/architecture/amis-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
+| Change validation behavior or form field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` |
+| Decide where runtime or validation code should live | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
 | Check workspace structure, package roles, or tooling baseline | `docs/architecture/frontend-baseline.md` | `package.json` |
 | Plan playground information architecture or debugger UX | `docs/architecture/playground-experience.md` | `docs/analysis/framework-debugger-design.md` |
 | Check shared terminology such as `CompiledValueNode`, `RenderRegionHandle`, `value-or-region`, or `FormRuntime` | `docs/references/terminology.md` | `docs/references/renderer-interfaces.md` |
@@ -49,11 +49,11 @@ Choose the smallest document that matches the task.
 
 Architecture intent lives primarily in:
 
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
-- `docs/architecture/amis-runtime-module-boundaries.md`
+- `docs/architecture/flux-runtime-module-boundaries.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/playground-experience.md`
 - `docs/architecture/theme-compatibility.md`

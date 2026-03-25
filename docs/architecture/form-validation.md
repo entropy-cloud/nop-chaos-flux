@@ -12,7 +12,7 @@ Use it when changing:
 - validation timing and error visibility behavior
 - runtime registration for complex controls
 
-For validation file placement and module ownership, use `docs/architecture/amis-runtime-module-boundaries.md`.
+For validation file placement and module ownership, use `docs/architecture/flux-runtime-module-boundaries.md`.
 
 ## Current Code Anchors
 
@@ -41,7 +41,7 @@ That means:
 
 Reasons:
 
-- `amis-runtime` stays React-independent
+- `flux-runtime` stays React-independent
 - validation rules come from low-code schema, not JSX registration
 - future adapters may prefer other validation engines or custom rules
 - compilation and runtime validation should work even outside a React form-library lifecycle
@@ -55,7 +55,7 @@ Validation is split into four layers:
 3. runtime validation execution
 4. React rendering of validation state
 
-Current implementation split inside `amis-runtime`:
+Current implementation split inside `flux-runtime`:
 
 - rule extraction and trigger normalization live in `packages/flux-runtime/src/validation/rules.ts`
 - default message building lives in `packages/flux-runtime/src/validation/message.ts`
@@ -378,9 +378,9 @@ But do not let them override the active low-code-first architecture described he
 ## Related Documents
 
 - `docs/references/terminology.md`
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
-- `docs/architecture/amis-runtime-module-boundaries.md`
+- `docs/architecture/flux-runtime-module-boundaries.md`
 - `docs/references/react-hook-form-template-notes.md`
 - `docs/references/yup-template-notes.md`
 

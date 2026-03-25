@@ -98,7 +98,7 @@ Flow Designer å¤ç”¨è¿™å±‚ï¼Œè€Œä¸æ˜¯é‡æ–°
 
 | å±‚ | æŒæœ‰çŠ¶æ€ | å¯å†™ graph | å…³å¿ƒ schema | å…¸åž‹å…¥å£ |
 | --- | --- | --- | --- | --- |
-| `amis-runtime` / `amis-react` | page, form, scope, dialog, action scope | å¦ | æ˜¯ | `createRendererRuntime()`, `RenderNodes` |
+| `flux-runtime` / `flux-react` | page, form, scope, dialog, action scope | å¦ | æ˜¯ | `createRendererRuntime()`, `RenderNodes` |
 | `flow-designer-core` | document, selection, history, viewport, grid | æ˜¯ | å¦ | `createDesignerCore()` |
 | `flow-designer-renderers` | bridge host local intent | é—´æŽ¥ | æ˜¯ | `DesignerPageRenderer` |
 | canvas adapters | UI library local transient state | å¦ | å¦ | `renderDesignerCanvasBridge()` |
@@ -467,6 +467,6 @@ playground registry setup
 - `docs/architecture/flow-designer/api.md`
 - `docs/architecture/flow-designer/config-schema.md`
 - `docs/architecture/flow-designer/canvas-adapters.md`
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 

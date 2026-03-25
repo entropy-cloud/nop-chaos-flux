@@ -218,14 +218,14 @@ const onActionError = debuggerController.onActionError;
 å»ºè®®ä¸»å¼€å…³ï¼š
 
 ```ts
-window.__NOP_AMIS_DEBUGGER__
+window.__NOP_FLUX_DEBUGGER__
 ```
 
 å…è®¸ä¸¤ç§å½¢å¼ï¼š
 
 ```ts
-window.__NOP_AMIS_DEBUGGER__ = true;
-window.__NOP_AMIS_DEBUGGER__ = {
+window.__NOP_FLUX_DEBUGGER__ = true;
+window.__NOP_FLUX_DEBUGGER__ = {
   enabled: true,
   defaultOpen: true,
   defaultTab: 'timeline',
@@ -246,7 +246,7 @@ window.__NOP_AMIS_DEBUGGER__ = {
 
 å»ºè®®åŒºåˆ†ï¼š
 
-- â€œå…¨å±€ç¦ç”¨â€: ç”± `window.__NOP_AMIS_DEBUGGER__` å†³å®š
+- â€œå…¨å±€ç¦ç”¨â€: ç”± `window.__NOP_FLUX_DEBUGGER__` å†³å®š
 - â€œé¢æ¿éšè—â€: è°ƒè¯•å™¨ä»å¯ç”¨ï¼Œä½† UI æŠ˜å ä¸ºå·¦ä¸‹è§’ launcher
 
 è¿™æ ·å¯ä»¥æ»¡è¶³ï¼š
@@ -658,19 +658,19 @@ export interface AmisDebuggerAutomationApi {
 ä¸ºäº†æ–¹ä¾¿ browser automationã€Playwrightã€DevTools Consoleã€AI agent ç›´æŽ¥è¯»å–ï¼Œå»ºè®®åœ¨ `window` ä¸Šæš´éœ²ï¼š
 
 ```ts
-window.__NOP_AMIS_DEBUGGER_API__
-window.__NOP_AMIS_DEBUGGER_HUB__
+window.__NOP_FLUX_DEBUGGER_API__
+window.__NOP_FLUX_DEBUGGER_HUB__
 ```
 
 è¯­ä¹‰å»ºè®®ï¼š
 
-- `__NOP_AMIS_DEBUGGER_API__` æŒ‡å‘å½“å‰æ´»åŠ¨ controller çš„ automation API
-- `__NOP_AMIS_DEBUGGER_HUB__` ç”¨äºŽå¤šå®žä¾‹åœºæ™¯ï¼ŒæŒ‰ `controllerId` ç®¡ç†å¤šä¸ªè°ƒè¯•å™¨å®žä¾‹
+- `__NOP_FLUX_DEBUGGER_API__` æŒ‡å‘å½“å‰æ´»åŠ¨ controller çš„ automation API
+- `__NOP_FLUX_DEBUGGER_HUB__` ç”¨äºŽå¤šå®žä¾‹åœºæ™¯ï¼ŒæŒ‰ `controllerId` ç®¡ç†å¤šä¸ªè°ƒè¯•å™¨å®žä¾‹
 
 ç¤ºä¾‹ï¼š
 
 ```ts
-const api = window.__NOP_AMIS_DEBUGGER_API__;
+const api = window.__NOP_FLUX_DEBUGGER_API__;
 const latestError = api?.getLatestError();
 const report = api?.createDiagnosticReport({ eventLimit: 25 });
 ```
@@ -678,7 +678,7 @@ const report = api?.createDiagnosticReport({ eventLimit: 25 });
 å¤šå®žä¾‹ç¤ºä¾‹ï¼š
 
 ```ts
-const hub = window.__NOP_AMIS_DEBUGGER_HUB__;
+const hub = window.__NOP_FLUX_DEBUGGER_HUB__;
 const controller = hub?.getController('playground-main');
 const renderEvents = controller?.queryEvents({ group: 'render', limit: 20 });
 ```
@@ -686,7 +686,7 @@ const renderEvents = controller?.queryEvents({ group: 'render', limit: 20 });
 ç­‰å¾…äº‹ä»¶ç¤ºä¾‹ï¼š
 
 ```ts
-const api = window.__NOP_AMIS_DEBUGGER_API__;
+const api = window.__NOP_FLUX_DEBUGGER_API__;
 
 await api?.waitForEvent({
   kind: 'api:end',
@@ -698,7 +698,7 @@ await api?.waitForEvent({
 è¯Šæ–­æŠ¥å‘Šç¤ºä¾‹ï¼š
 
 ```ts
-const api = window.__NOP_AMIS_DEBUGGER_API__;
+const api = window.__NOP_FLUX_DEBUGGER_API__;
 
 const report = api?.createDiagnosticReport({
   eventLimit: 25,
@@ -790,7 +790,7 @@ export interface AmisNodeDiagnostics {
 è¿™æ · AI å¯ä»¥ç›´æŽ¥æ‰§è¡Œï¼š
 
 ```ts
-const api = window.__NOP_AMIS_DEBUGGER_API__;
+const api = window.__NOP_FLUX_DEBUGGER_API__;
 const nodeDiagnostics = api?.getNodeDiagnostics({ nodeId: 'user-form' });
 ```
 
@@ -851,7 +851,7 @@ export interface AmisDebuggerSessionExport {
 ç¤ºä¾‹ï¼š
 
 ```ts
-const api = window.__NOP_AMIS_DEBUGGER_API__;
+const api = window.__NOP_FLUX_DEBUGGER_API__;
 
 const trace = api?.getInteractionTrace({
   path: 'body.1'
@@ -962,7 +962,7 @@ AI çš„ä¸»æŽ¥å£åº”è¯¥å§‹ç»ˆæ˜¯ï¼š
 
 1. æ–°å¢žç‹¬ç«‹ package `@nop-chaos/amis-debugger`ã€‚
 2. ä»¥ `SchemaRenderer` å®¿ä¸»æ ¹è¾¹ç•Œä½œä¸ºå”¯ä¸€ä¸»æŽ¥å…¥ç‚¹ã€‚
-3. é€šè¿‡ `window.__NOP_AMIS_DEBUGGER__` ä½œä¸ºå…¨å±€å¯ç”¨å¼€å…³ã€‚
+3. é€šè¿‡ `window.__NOP_FLUX_DEBUGGER__` ä½œä¸ºå…¨å±€å¯ç”¨å¼€å…³ã€‚
 4. è°ƒè¯•å™¨ UI é‡‡ç”¨æ¼‚æµ®ã€å¯æ‹–æ‹½ã€å¯éšè—çš„é¢æ¿ï¼Œè€Œä¸æ˜¯å›ºå®šå³ä¾§æ ã€‚
 5. éšè—åŽä¿ç•™å·¦ä¸‹è§’ launcherï¼Œä¿è¯ä¸å½±å“é¡µé¢æ­£å¸¸ä½¿ç”¨ã€‚
 6. ç¬¬ä¸€ç‰ˆèšç„¦ `compile + render + action + api + notify + error` å…­ç±»å…³é”®ä¿¡æ¯ã€‚

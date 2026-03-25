@@ -42,13 +42,13 @@ apps/
   playground/
 
 packages/
-  amis-schema/
-  amis-formula/
-  amis-runtime/
-  amis-react/
-  amis-renderers-basic/
-  amis-renderers-form/
-  amis-renderers-data/
+  flux-core/
+  flux-formula/
+  flux-runtime/
+  flux-react/
+  flux-renderers-basic/
+  flux-renderers-form/
+  flux-renderers-data/
 ```
 
 Design rules:
@@ -123,7 +123,7 @@ Treat the following as stable defaults unless there is a strong reason to change
 
 ## Related Documents
 
-- Core architecture: `docs/architecture/amis-core.md`
+- Core architecture: `docs/architecture/flux-core.md`
 - Runtime design: `docs/architecture/renderer-runtime.md`
 - Delivery planning: `docs/plans/02-development-plan.md`
 
