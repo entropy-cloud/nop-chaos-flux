@@ -18,6 +18,20 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-25 (flux-core Code Refactoring)
+
+- **Refactored `packages/flux-core/src/index.ts`** (1183 lines → 20 lines + modular files):
+  - Extracted all type definitions to `types.ts` (687 lines)
+  - Extracted validation model functions to `validation-model.ts` (174 lines)
+  - Extracted object utilities to `utils/object.ts` (isPlainObject, shallowEqual)
+  - Extracted path utilities to `utils/path.ts` (parsePath, getIn, setIn)
+  - Extracted schema utilities to `utils/schema.ts` (isSchema, isSchemaArray, isSchemaInput, createNodeId)
+  - Extracted constants to `constants.ts` (META_FIELDS)
+  - Main `index.ts` now only re-exports from modules
+- **Key decision**: Keep all types in a single `types.ts` file instead of splitting into multiple type files to avoid circular dependency issues
+- **Files**: `packages/flux-core/src/index.ts`, `types.ts`, `validation-model.ts`, `constants.ts`, `utils/object.ts`, `utils/path.ts`, `utils/schema.ts`
+- **Verification**: All typecheck, build, and test pass
+
 ### 2026-03-25 (Rename AMIS to Flux)
 
 - **Renamed package references in documentation**:
