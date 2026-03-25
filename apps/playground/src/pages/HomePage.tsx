@@ -10,7 +10,7 @@ interface NavCard {
 const NAV_CARDS: NavCard[] = [
   {
     id: 'amis-basic',
-    title: 'AMIS Basic',
+    title: 'Flux Basic',
     eyebrow: 'Core Renderers',
     description: 'Forms, actions, dialogs, tables, data binding, validation, API requests, and renderer fundamentals.'
   },
@@ -42,7 +42,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
   return (
     <main className="app-shell app-shell--home">
       <section className="hero-card hero-card--home">
-        <p className="eyebrow">NOP Chaos AMIS</p>
+        <p className="eyebrow">NOP Chaos Flux</p>
         <h1>Playground</h1>
         <p className="body-copy">
           Select a testing scenario below. Each page isolates a specific area of the framework for focused development and debugging.

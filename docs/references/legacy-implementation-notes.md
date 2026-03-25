@@ -186,7 +186,7 @@ function setByPath(target: any, path: string, value: any): void {
 
 ### ä¸Ž nop-amis setIn çš„å¯¹æ¯”
 
-| ç‰¹æ€§ | setByPath (åŽŸåž‹) | setIn (nop-amis) |
+| ç‰¹æ€§ | setByPath (åŽŸåž‹) | setIn (flux) |
 |------|-----------------|------------------|
 | è¿”å›žå€¼ | æ— ï¼ˆåŽŸåœ°ä¿®æ”¹ï¼‰ | è¿”å›žæ–°å¯¹è±¡ |
 | ä¸å¯å˜æ€§ | å¯å˜ | ä¸å¯å˜ |

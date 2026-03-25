@@ -12,7 +12,7 @@ The goal is not to introduce a React `ThemeProvider` requirement. The goal is to
 - `apps/playground/src/styles.css`
 - `apps/playground/src/FlowDesignerExample.tsx`
 - `packages/flux-react/src/index.tsx`
-- `packages/amis-debugger/src/panel.tsx`
+- `packages/nop-debugger/src/panel.tsx`
 - `packages/flow-designer-renderers/src/index.tsx`
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 - `packages/flow-designer-renderers/src/styles.css`

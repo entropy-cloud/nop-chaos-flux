@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document records the active form-validation architecture for `nop-amis`.
+This document records the active form-validation architecture for `flux`.
 
 Use it when changing:
 

@@ -44,7 +44,7 @@
 - `packages/flux-core/` å®šä¹‰å¥‘çº¦å±‚
 - `packages/flux-runtime/` è´Ÿè´£ç¼–è¯‘ã€åŠ¨ä½œã€è¯·æ±‚ã€é¡µé¢ã€è¡¨å•è¿è¡Œæ—¶
 - `packages/flux-react/` è´Ÿè´£ React é›†æˆå’Œæ¸²æŸ“è¾¹ç•Œ
-- `packages/amis-renderers-*` æ˜¯å…·ä½“ renderer å®žçŽ°
+- `packages/flux-renderers-*` æ˜¯å…·ä½“ renderer å®žçŽ°
 
 ä»Žä¾èµ–è¾¹ç•Œçœ‹ï¼Œè°ƒè¯•å™¨æœ€é€‚åˆç«™åœ¨ `SchemaRenderer` æ ¹è¾¹ç•Œä¹‹å¤–æŽ¥å…¥ï¼Œè€Œä¸æ˜¯ä¾µå…¥æŸä¸ª renderer åŒ…å†…éƒ¨ã€‚
 
@@ -101,7 +101,7 @@
 
 æŽ¨èæ–°å¢žç‹¬ç«‹ packageï¼š
 
-- `@nop-chaos/amis-debugger`
+- `@nop-chaos/nop-debugger`
 
 æŽ¨èå®šä½ï¼š
 
@@ -135,7 +135,7 @@
 å»ºè®® package ç»“æž„ç±»ä¼¼ï¼š
 
 ```text
-packages/amis-debugger/
+packages/nop-debugger/
   package.json
   src/
     index.ts
@@ -594,7 +594,7 @@ export function AmisDebuggerPanel(props: { controller: AmisDebuggerController })
 
 ### 15.2 æŽ¨èè‡ªåŠ¨åŒ– API å½¢æ€
 
-å»ºè®® `@nop-chaos/amis-debugger` æš´éœ²ä¸€å¥—æ˜Žç¡®çš„ automation APIï¼š
+å»ºè®® `@nop-chaos/nop-debugger` æš´éœ²ä¸€å¥—æ˜Žç¡®çš„ automation APIï¼š
 
 ```ts
 export interface AmisDebuggerAutomationApi {
@@ -923,7 +923,7 @@ AI çš„ä¸»æŽ¥å£åº”è¯¥å§‹ç»ˆæ˜¯ï¼š
 
 ### Phase 1: æ ¸å¿ƒé‡‡é›†å’Œ Timeline
 
-- æ–°å»º `packages/amis-debugger`
+- æ–°å»º `packages/nop-debugger`
 - å®Œæˆ `window` å¼€å…³åˆ¤æ–­
 - å®Œæˆ controller/store/timeline
 - å®Œæˆ `env` è£…é¥°å’Œ `plugin` æ³¨å…¥
@@ -947,7 +947,7 @@ AI çš„ä¸»æŽ¥å£åº”è¯¥å§‹ç»ˆæ˜¯ï¼š
 å½“å‰ `apps/playground/src/App.tsx` ä¸­çš„å³ä¾§æ—¥å¿—é¢æ¿å¯ä»¥è§†ä¸ºåŽŸåž‹éªŒè¯ã€‚æ­£å¼è°ƒè¯•å™¨è½åœ°åŽï¼Œå»ºè®®å…³ç³»å¦‚ä¸‹ï¼š
 
 - playground ä¸å†è‡ªå·±ç»´æŠ¤ä¸€å¥—ç‹¬ç«‹æ´»åŠ¨æ—¥å¿—æ¨¡åž‹
-- playground æ”¹ä¸ºæŽ¥å…¥ `@nop-chaos/amis-debugger`
+- playground æ”¹ä¸ºæŽ¥å…¥ `@nop-chaos/nop-debugger`
 - playground å¯ä»¥ä¿ç•™å°‘é‡ demo é…ç½®ä»£ç ï¼Œä½†ä¸å†æŒæœ‰å®Œæ•´è°ƒè¯• UI é€»è¾‘
 
 è¿™æ ·å¯ä»¥ä¿è¯ï¼š
@@ -960,7 +960,7 @@ AI çš„ä¸»æŽ¥å£åº”è¯¥å§‹ç»ˆæ˜¯ï¼š
 
 ç»¼åˆå½“å‰ä»“åº“æž¶æž„ã€çŽ°æœ‰ monitor èƒ½åŠ›å’Œå‚è€ƒå®žçŽ°ç»éªŒï¼ŒæŽ¨èç»“è®ºå¦‚ä¸‹ï¼š
 
-1. æ–°å¢žç‹¬ç«‹ package `@nop-chaos/amis-debugger`ã€‚
+1. æ–°å¢žç‹¬ç«‹ package `@nop-chaos/nop-debugger`ã€‚
 2. ä»¥ `SchemaRenderer` å®¿ä¸»æ ¹è¾¹ç•Œä½œä¸ºå”¯ä¸€ä¸»æŽ¥å…¥ç‚¹ã€‚
 3. é€šè¿‡ `window.__NOP_FLUX_DEBUGGER__` ä½œä¸ºå…¨å±€å¯ç”¨å¼€å…³ã€‚
 4. è°ƒè¯•å™¨ UI é‡‡ç”¨æ¼‚æµ®ã€å¯æ‹–æ‹½ã€å¯éšè—çš„é¢æ¿ï¼Œè€Œä¸æ˜¯å›ºå®šå³ä¾§æ ã€‚
@@ -981,7 +981,7 @@ AI çš„ä¸»æŽ¥å£åº”è¯¥å§‹ç»ˆæ˜¯ï¼š
 - `packages/flux-runtime/src/request-runtime.ts`
 - `docs/architecture/frontend-baseline.md`
 - `docs/architecture/renderer-runtime.md`
-- `docs/architecture/amis-runtime-module-boundaries.md`
+- `docs/architecture/flux-runtime-module-boundaries.md`
 
 å‚è€ƒå®žçŽ°ï¼š
 

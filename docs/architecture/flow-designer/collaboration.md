@@ -44,7 +44,7 @@ schema-driven host shell
 
 ### 1. é€šç”¨ schema/runtime å±‚
 
-è¿™å±‚æ¥è‡ª `amis-schema`ã€`amis-runtime`ã€`amis-react`ã€‚
+è¿™å±‚æ¥è‡ª `flux-core`ã€`flux-runtime`ã€`flux-react`ã€‚
 
 å®ƒè´Ÿè´£:
 

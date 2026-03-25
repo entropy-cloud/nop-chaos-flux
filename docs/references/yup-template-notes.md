@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This note records what is worth learning from `C:/can/nop/templates/yup` and what should not be adopted directly into `nop-amis`.
+This note records what is worth learning from `C:/can/nop/templates/yup` and what should not be adopted directly into `flux`.
 
 This is a research note, not the implementation source of truth for the current repository.
 
@@ -463,7 +463,7 @@ The most useful immediate follow-up from this review is:
 3. plan the transition from path-scanned subtree validation to node-driven traversal
 4. add a compiled validation description/debug export
 
-Those changes would borrow the strongest ideas from Yup while keeping the `nop-amis` architecture intact.
+Those changes would borrow the strongest ideas from Yup while keeping the `flux` architecture intact.
 
 ## Related Documents
 

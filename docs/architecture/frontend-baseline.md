@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document records the engineering baseline and naming rules for the current `nop-amis` repository.
+This document records the engineering baseline and naming rules for the current `flux` repository.
 
 Use it when changing workspace structure, package boundaries, tooling, scripts, or naming conventions.
 

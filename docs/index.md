@@ -37,8 +37,8 @@ Choose the smallest document that matches the task.
 | Plan playground information architecture or debugger UX | `docs/architecture/playground-experience.md` | `docs/analysis/framework-debugger-design.md` |
 | Check shared terminology such as `CompiledValueNode`, `RenderRegionHandle`, `value-or-region`, or `FormRuntime` | `docs/references/terminology.md` | `docs/references/renderer-interfaces.md` |
 | Check which docs must be updated after a code change | `docs/references/maintenance-checklist.md` | the most relevant file in `docs/architecture/` |
-| Check AMIS JSON conventions (expression, action, variant/level, icon) | `docs/references/amis-json-conventions.md` | `docs/architecture/flow-designer/config-schema.md` |
-| Look up AMIS component JSON Schema definition by name | `docs/amis-ref/index.md` | specific component `.json` file |
+| Check AMIS JSON conventions (expression, action, variant/level, icon) | `docs/references/flux-json-conventions.md` | `docs/architecture/flow-designer/config-schema.md` |
+| Look up AMIS component TypeScript type definitions | `docs/amis-types/` | specific component `.d.ts` file |
 | Check complex component design process (Flow Designer, Report Designer) | `docs/references/complex-component-design-process.md` | `docs/architecture/flow-designer/design.md` |
 | Review current renderer and runtime contracts by name | `docs/references/renderer-interfaces.md` | `packages/flux-core/src/index.ts` |
 | Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
@@ -75,7 +75,7 @@ Example behavior is best cross-checked with:
 
 - `docs/architecture/` - current normative design and package ownership notes
 - `docs/references/` - stable lookup material such as terminology, interface maps, maintenance guidance, and source-specific reference notes; useful, but secondary to architecture docs
-- `docs/amis-ref/` - individual AMIS component JSON Schema definitions extracted from amis@6.13.0, each file includes all dependencies for standalone validation
+- `docs/amis-types/` - AMIS component TypeScript type definitions extracted from amis@6.13.0, useful for understanding upstream AMIS schema structure
 - `docs/examples/` - small representative schemas and usage notes
 - `docs/analysis/` - comparative, investigatory, or decision-oriented reports; primarily for conclusions and tradeoff records, not the active contract
 - `docs/development-log.md` - quick dated development notes for recent doc additions, decisions, and immediate next work

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the most important terms used across the active `nop-amis` architecture documents.
+This document defines the most important terms used across the active `flux` architecture documents.
 
 Use it when a concept appears in more than one architecture file and you want the shortest shared definition.
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This note records what is worth learning from `C:/can/nop/templates/react-hook-form` and what should not be copied directly into `nop-amis`.
+This note records what is worth learning from `C:/can/nop/templates/react-hook-form` and what should not be copied directly into `flux`.
 
 This is a research note, not the implementation source of truth for the current repository.
 
@@ -47,7 +47,7 @@ What does not map well is the JSX registration model and the assumption that Rea
 If you only need the practical conclusion, it is this:
 
 1. keep `FormRuntime` as the central orchestration boundary
-2. keep expanding fine-grained state subscriptions in `amis-react`
+2. keep expanding fine-grained state subscriptions in `flux-react`
 3. treat array operations and aggregate errors as first-class runtime semantics
 4. do not adopt JSX registration as the main field model
 
@@ -71,7 +71,7 @@ This matches our direction:
 
 ### What to borrow
 
-- keep pushing real form behavior into `amis-runtime`
+- keep pushing real form behavior into `flux-runtime`
 - avoid putting validation orchestration into renderers or React hooks
 - treat React hooks as an ergonomic shell around runtime state
 
@@ -110,7 +110,7 @@ But RHF shows that subscription granularity should be treated as a first-class d
 
 ### What to borrow
 
-- continue expanding selector-based subscriptions in `amis-react`
+- continue expanding selector-based subscriptions in `flux-react`
 - keep field UI reading only the state it truly needs
 - add more path-scoped selectors for aggregate/object/array nodes
 - consider a renderless subscribe helper for diagnostics or advanced components
@@ -148,7 +148,7 @@ It also maintains a separate identity list with generated ids.
 
 This strongly validates our current Phase 2 direction.
 
-We already identified that array semantics need to become first-class in `nop-amis`, not just be modeled as generic nested paths.
+We already identified that array semantics need to become first-class in `flux`, not just be modeled as generic nested paths.
 
 ### What to borrow
 
@@ -265,7 +265,7 @@ This is good evidence that complex form behavior wants one central orchestrator.
 
 ### Why this matters for us
 
-It supports our decision to keep validation execution inside `amis-runtime`, rather than scattering it across renderers.
+It supports our decision to keep validation execution inside `flux-runtime`, rather than scattering it across renderers.
 
 ### What to borrow
 
@@ -347,7 +347,7 @@ If we rank the RHF template ideas by usefulness for our current architecture, th
 
 We already have strong alignment in these areas:
 
-- centralized runtime validation in `amis-runtime`
+- centralized runtime validation in `flux-runtime`
 - field state tracking (`touched`, `dirty`, `visited`, `validating`, `submitting`)
 - child-path validation for complex controls
 - aggregate root validation for array nodes
@@ -421,7 +421,7 @@ The most useful immediate follow-up from this research is:
 2. formalize aggregate error ownership and projection
 3. extend path-scoped state subscriptions for object/array nodes
 
-Those changes would capture the most valuable RHF design lessons while staying fully consistent with the current `nop-amis` architecture.
+Those changes would capture the most valuable RHF design lessons while staying fully consistent with the current `flux` architecture.
 
 ## Related Documents
 

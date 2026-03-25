@@ -605,7 +605,7 @@ export function AmisBasicPage({ debuggerController, onBack }: AmisBasicPageProps
         <button type="button" className="page-back" onClick={onBack}>
           Back to Home
         </button>
-        <p className="eyebrow">AMIS Basic</p>
+        <p className="eyebrow">Flux Basic</p>
         <h1>Renderer Playground</h1>
         <p className="body-copy">
           The first execution slice is live: schema compilation, runtime evaluation, React rendering,

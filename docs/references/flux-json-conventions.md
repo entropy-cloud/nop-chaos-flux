@@ -1,6 +1,6 @@
 # AMIS JSON 约定
 
-本文档定义 nop-amis 项目中 JSON Schema 的通用约定。
+本文档定义 flux 项目中 JSON Schema 的通用约定。
 
 ## 1. 表达式语法
 

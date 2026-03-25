@@ -2,7 +2,7 @@
 
 ## Purpose
 
-本文记录 `apps/playground` 与 `@nop-chaos/amis-debugger` 的目标交互设计，重点解决两个问题：
+本文记录 `apps/playground` 与 `@nop-chaos/nop-debugger` 的目标交互设计，重点解决两个问题：
 
 - playground 不再作为一个把所有示例堆在同一页里的巨型演示页
 - debugger 不再默认占用主工作区，而是变成可拖拽、可展开、可收起的悬浮工具
@@ -12,10 +12,10 @@
 ## Current Code Anchors
 
 - `apps/playground/src/App.tsx`
-- `packages/amis-debugger/src/panel.tsx`
-- `packages/amis-debugger/src/controller.ts`
-- `packages/amis-debugger/src/store.ts`
-- `packages/amis-debugger/src/types.ts`
+- `packages/nop-debugger/src/panel.tsx`
+- `packages/nop-debugger/src/controller.ts`
+- `packages/nop-debugger/src/store.ts`
+- `packages/nop-debugger/src/types.ts`
 
 ## 1. 当前问题
 
@@ -160,7 +160,7 @@ launcher 与完整面板都应支持拖拽。
 
 ### 4.2 Debugger 侧
 
-- `@nop-chaos/amis-debugger` 应把“launcher”视为正式 UI 形态，而不是 panel 关闭后的附属物
+- `@nop-chaos/nop-debugger` 应把“launcher”视为正式 UI 形态，而不是 panel 关闭后的附属物
 - 面板上的“Hide”应重命名或重构为语义更明确的“Minimize”
 - launcher 也应支持拖拽
 - 默认 window flag / playground 配置应改为 launcher 默认可见、panel 默认关闭
