@@ -717,12 +717,14 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .na-demo-grid {
-    grid-template-columns: 1fr;
-  }
-
   .hero-card {
     padding: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .na-demo-grid {
+    grid-template-columns: 1fr;
   }
 }
 
