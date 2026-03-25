@@ -653,20 +653,22 @@ interface DesignerConfig {
       {
         "type": "button",
         "label": "撤销",
-        "disabledOn": "${!canUndo}",
+        "disabled": "${!canUndo}",
         "onClick": { "action": "designer:undo" }
       },
       {
         "type": "button",
         "label": "保存",
-        "level": "primary",
-        "disabledOn": "${!isDirty}",
+        "variant": "primary",
+        "disabled": "${!isDirty}",
         "onClick": { "action": "designer:save" }
       }
     ]
   }
 }
 ```
+
+> **注意**：统一使用 `${xxx}` 表达式，不需要 `xxxOn` 后缀。详见 `docs/references/amis-json-conventions.md`。
 
 ### 默认工具栏
 
@@ -705,13 +707,13 @@ interface ToolbarScope {
 
 ```ts
 interface ShortcutsConfig {
-  undo?: string[]
-  redo?: string[]
-  copy?: string[]
-  paste?: string[]
-  delete?: string[]
-  selectAll?: string[]
-  save?: string[]
+  undo?: string[];
+  redo?: string[];
+  copy?: string[];
+  paste?: string[];
+  delete?: string[];
+  selectAll?: string[];
+  save?: string[];
 }
 ```
 
@@ -721,11 +723,10 @@ interface ShortcutsConfig {
 {
   "shortcuts": {
     "undo": ["Ctrl+Z", "Cmd+Z"],
-    "redo": ["Ctrl+Y", "Cmd+Y", "Ctrl+Shift+Z", "Cmd+Shift+Z"],
+    "redo": ["Ctrl+Y", "Cmd+Shift+Z"],
     "copy": ["Ctrl+C", "Cmd+C"],
     "paste": ["Ctrl+V", "Cmd+V"],
     "delete": ["Delete", "Backspace"],
-    "selectAll": ["Ctrl+A", "Cmd+A"],
     "save": ["Ctrl+S", "Cmd+S"]
   }
 }
@@ -736,7 +737,7 @@ interface ShortcutsConfig {
 ```ts
 const defaultShortcuts: ShortcutsConfig = {
   undo: ['Ctrl+Z', 'Cmd+Z'],
-  redo: ['Ctrl+Y', 'Cmd+Y', 'Ctrl+Shift+Z', 'Cmd+Shift+Z'],
+  redo: ['Ctrl+Y', 'Cmd+Shift+Z'],
   copy: ['Ctrl+C', 'Cmd+C'],
   paste: ['Ctrl+V', 'Cmd+V'],
   delete: ['Delete', 'Backspace']
@@ -835,37 +836,17 @@ const schema = {
 - `docs/examples/workflow-designer/config.json`
 - `docs/examples/workflow-designer/document.json`
 
-## 16. Icon 命名规范
+## 16. 通用约定
 
-使用 Lucide Icons，配置中采用 kebab-case 格式：
+以下约定参见 `docs/references/amis-json-conventions.md`：
 
-```json
-{
-  "icon": "rotate-ccw",     // ✅ 推荐
-  "icon": "git-branch",     // ✅ 推荐
-  "icon": "RotateCcw"       // ❌ 避免
-}
-```
-
-运行时转换规则：`'rotate-ccw'` → `'RotateCcw'`
-
-常用图标对照：
-
-| kebab-case | PascalCase | 用途 |
-|------------|------------|------|
-| `play` | `Play` | 开始节点 |
-| `flag` | `Flag` | 结束节点 |
-| `workflow` | `Workflow` | 任务节点 |
-| `git-branch` | `GitBranch` | 条件节点 |
-| `git-merge` | `GitMerge` | 并行节点 |
-| `repeat` | `Repeat` | 循环节点 |
-| `rotate-ccw` | `RotateCcw` | 撤销 |
-| `rotate-cw` | `RotateCw` | 重做 |
-| `save` | `Save` | 保存 |
-| `download` | `Download` | 恢复 |
-| `file-json` | `FileJson` | 导出 |
-| `grid-3x3` | `Grid3x3` | 网格 |
-| `chevron-left` | `ChevronLeft` | 返回 |
+- **表达式语法**：统一使用 `${xxx}`，不需要 `xxxOn` 后缀
+- **Action 语法**：简单 action 直接写 `{ "action": "designer:save" }`
+- **样式属性**：Button 用 `variant`，Badge 用 `level`
+- **Icon 命名**：配置用 kebab-case，运行时转 PascalCase
+- **JSON Key**：统一 camelCase
+- **Config 与 Data 分离**：`config` 定义类型，`document` 存实例
+- **Region 配置**：支持预定义类型或完整 AMIS Schema
 
 ## 17. 推荐约束
 

@@ -36,6 +36,8 @@ Choose the smallest document that matches the task.
 | Plan playground information architecture or debugger UX | `docs/architecture/playground-experience.md` | `docs/analysis/framework-debugger-design.md` |
 | Check shared terminology such as `CompiledValueNode`, `RenderRegionHandle`, `value-or-region`, or `FormRuntime` | `docs/references/terminology.md` | `docs/references/renderer-interfaces.md` |
 | Check which docs must be updated after a code change | `docs/references/maintenance-checklist.md` | the most relevant file in `docs/architecture/` |
+| Check AMIS JSON conventions (expression, action, variant/level, icon) | `docs/references/amis-json-conventions.md` | `docs/architecture/flow-designer/config-schema.md` |
+| Check complex component design process (Flow Designer, Report Designer) | `docs/references/complex-component-design-process.md` | `docs/architecture/flow-designer/design.md` |
 | Review current renderer and runtime contracts by name | `docs/references/renderer-interfaces.md` | `packages/amis-schema/src/index.ts` |
 | Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
 | Review prototype lessons or external research notes | `docs/references/` | the related architecture file for the active baseline |

@@ -18,6 +18,24 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-25 (AMIS JSON 约定文档整理)
+
+- **问题澄清**：
+  - `DesignerFeatures.grid?: boolean` 是**功能开关**，不是快捷键
+  - `ShortcutsConfig.undo: string[]` 是**快捷键配置**，已经是 `string[]` 格式
+  - 两者职责不同，没有不一致
+- **文档冗余清理**：
+  - `config-schema.md` 删除 Icon 命名规范详细内容，改为引用 `amis-json-conventions.md`
+  - 修正 "方式二" 示例：`disabledOn` → `disabled`，`level` → `variant`
+- **index.md 更新**：
+  - 添加 `amis-json-conventions.md` 索引条目
+  - 添加 `complex-component-design-process.md` 索引条目
+- **约定确认**（已在 `amis-json-conventions.md`）：
+  - 表达式：`${xxx}` 无 `xxxOn` 后缀
+  - 简单 action：`{ "action": "designer:save" }`
+  - Button 用 `variant`，Badge 用 `level`
+  - Icon 配置用 kebab-case
+
 ### 2026-03-25 (External Example Files & Icon Naming)
 
 - Moved long JSON examples from `config-schema.md` to external files:
