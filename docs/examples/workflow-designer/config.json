@@ -8,25 +8,25 @@
       "icon": "play",
       "body": {
         "type": "flex",
-        "className": "fd-node fd-node--start",
+        "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border-2 border-green-500 shadow-sm",
         "items": [
           {
             "type": "icon",
             "icon": "play",
-            "className": "fd-node__icon"
+            "className": "w-5 h-5 text-green-600"
           },
           {
             "type": "container",
             "body": [
               {
-                "type": "tpl",
-                "tpl": "${data.label}",
-                "className": "fd-node__title"
+                "type": "text",
+                "body": "${data.label}",
+                "className": "text-sm font-medium text-gray-900"
               },
               {
-                "type": "tpl",
-                "tpl": "${data.config.trigger}",
-                "className": "fd-node__meta"
+                "type": "text",
+                "body": "${data.config.trigger}",
+                "className": "text-xs text-gray-500"
               }
             ]
           }
@@ -74,25 +74,25 @@
       "icon": "flag",
       "body": {
         "type": "flex",
-        "className": "fd-node fd-node--end",
+        "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border-2 border-red-500 shadow-sm",
         "items": [
           {
             "type": "icon",
             "icon": "flag",
-            "className": "fd-node__icon"
+            "className": "w-5 h-5 text-red-600"
           },
           {
             "type": "container",
             "body": [
               {
-                "type": "tpl",
-                "tpl": "${data.label}",
-                "className": "fd-node__title"
+                "type": "text",
+                "body": "${data.label}",
+                "className": "text-sm font-medium text-gray-900"
               },
               {
-                "type": "tpl",
-                "tpl": "${data.config.result}",
-                "className": "fd-node__meta"
+                "type": "text",
+                "body": "${data.config.result}",
+                "className": "text-xs text-gray-500"
               }
             ]
           }
@@ -134,25 +134,25 @@
       "icon": "workflow",
       "body": {
         "type": "flex",
-        "className": "fd-node fd-node--task",
+        "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
         "items": [
           {
             "type": "icon",
             "icon": "workflow",
-            "className": "fd-node__icon"
+            "className": "w-5 h-5 text-blue-600"
           },
           {
             "type": "container",
             "body": [
               {
-                "type": "tpl",
-                "tpl": "${data.label}",
-                "className": "fd-node__title"
+                "type": "text",
+                "body": "${data.label}",
+                "className": "text-sm font-medium text-gray-900"
               },
               {
-                "type": "tpl",
-                "tpl": "${data.config.executor} · ${data.config.timeout}",
-                "className": "fd-node__meta"
+                "type": "text",
+                "body": "${data.config.executor} · ${data.config.timeout}",
+                "className": "text-xs text-gray-500"
               }
             ]
           }
@@ -194,25 +194,25 @@
       "icon": "git-branch",
       "body": {
         "type": "flex",
-        "className": "fd-node fd-node--condition",
+        "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-yellow-400 shadow-sm",
         "items": [
           {
             "type": "icon",
             "icon": "git-branch",
-            "className": "fd-node__icon"
+            "className": "w-5 h-5 text-yellow-600"
           },
           {
             "type": "container",
             "body": [
               {
-                "type": "tpl",
-                "tpl": "${data.label}",
-                "className": "fd-node__title"
+                "type": "text",
+                "body": "${data.label}",
+                "className": "text-sm font-medium text-gray-900"
               },
               {
-                "type": "tpl",
-                "tpl": "${data.config.expression}",
-                "className": "fd-node__meta"
+                "type": "text",
+                "body": "${data.config.expression}",
+                "className": "text-xs text-gray-500"
               }
             ]
           }
@@ -243,25 +243,25 @@
       "icon": "git-merge",
       "body": {
         "type": "flex",
-        "className": "fd-node fd-node--parallel",
+        "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
         "items": [
           {
             "type": "icon",
             "icon": "git-merge",
-            "className": "fd-node__icon"
+            "className": "w-5 h-5 text-purple-600"
           },
           {
             "type": "container",
             "body": [
               {
-                "type": "tpl",
-                "tpl": "${data.label}",
-                "className": "fd-node__title"
+                "type": "text",
+                "body": "${data.label}",
+                "className": "text-sm font-medium text-gray-900"
               },
               {
-                "type": "tpl",
-                "tpl": "${data.config.branches} 分支",
-                "className": "fd-node__meta"
+                "type": "text",
+                "body": "${data.config.branches} 分支",
+                "className": "text-xs text-gray-500"
               }
             ]
           }
@@ -291,25 +291,25 @@
       "icon": "repeat",
       "body": {
         "type": "flex",
-        "className": "fd-node fd-node--loop",
+        "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
         "items": [
           {
             "type": "icon",
             "icon": "repeat",
-            "className": "fd-node__icon"
+            "className": "w-5 h-5 text-indigo-600"
           },
           {
             "type": "container",
             "body": [
               {
-                "type": "tpl",
-                "tpl": "${data.label}",
-                "className": "fd-node__title"
+                "type": "text",
+                "body": "${data.label}",
+                "className": "text-sm font-medium text-gray-900"
               },
               {
-                "type": "tpl",
-                "tpl": "×${data.config.limit} / ${data.config.interval}",
-                "className": "fd-node__meta"
+                "type": "text",
+                "body": "×${data.config.limit} / ${data.config.interval}",
+                "className": "text-xs text-gray-500"
               }
             ]
           }
@@ -340,9 +340,9 @@
       "id": "default",
       "label": "默认边",
       "body": {
-        "type": "tpl",
-        "tpl": "${data.condition}",
-        "className": "fd-edge-label"
+        "type": "text",
+        "body": "${data.condition}",
+        "className": "text-xs text-gray-600 bg-white px-1.5 py-0.5 rounded"
       },
       "appearance": {
         "stroke": "#94a3b8",
@@ -399,10 +399,10 @@
   "toolbar": {
     "items": [
       { "type": "back" },
-      { "type": "title", "tpl": "${doc.name}" },
+      { "type": "title", "body": "${doc.name}" },
       { "type": "badge", "level": "${isDirty ? 'warning' : 'success'}", "text": "${isDirty ? '未保存' : '已保存'}" },
       { "type": "divider" },
-      { "type": "text", "tpl": "${doc.nodes.length} 节点 · ${doc.edges.length} 边" },
+      { "type": "text", "body": "${doc.nodes.length} 节点 · ${doc.edges.length} 边" },
       { "type": "divider" },
       { "type": "button", "action": "designer:toggle-grid", "icon": "grid-3x3", "label": "网格", "active": "${gridEnabled}" },
       { "type": "button", "action": "designer:undo", "icon": "rotate-ccw", "label": "撤销", "disabled": "${!canUndo}" },

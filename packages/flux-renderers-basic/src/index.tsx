@@ -33,18 +33,8 @@ interface ContainerSchema extends BaseSchema {
 
 interface TextSchema extends BaseSchema {
   type: 'text';
-  /** 文本内容，支持表达式 */
-  text?: string;
-  /** HTML 标签，默认 span */
-  tag?: 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'label' | 'div';
-}
-
-interface TplSchema extends BaseSchema {
-  type: 'tpl';
-  /** 模板文本，支持表达式 */
-  tpl?: string;
-  /** 兼容 text 字段 */
-  text?: string;
+  /** 文本内容，支持 ${expression} 表达式 */
+  body?: string;
   /** HTML 标签，默认 span */
   tag?: 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'label' | 'div';
 }
@@ -154,7 +144,7 @@ function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
 }
 
 function TextRenderer(props: RendererComponentProps<TextSchema>) {
-  const text = props.props.text;
+  const body = props.props.body;
   const tag =
     props.props.tag === 'span' ||
     props.props.tag === 'p' ||
@@ -170,27 +160,7 @@ function TextRenderer(props: RendererComponentProps<TextSchema>) {
       : 'span';
   const Tag: keyof React.JSX.IntrinsicElements = tag;
 
-  return <Tag className={classNames('na-text', props.meta.className)}>{String(text ?? '')}</Tag>;
-}
-
-function TplRenderer(props: RendererComponentProps<TplSchema>) {
-  const content = typeof props.props.tpl === 'string' ? props.props.tpl : props.props.text;
-  const tag =
-    props.props.tag === 'span' ||
-    props.props.tag === 'p' ||
-    props.props.tag === 'h1' ||
-    props.props.tag === 'h2' ||
-    props.props.tag === 'h3' ||
-    props.props.tag === 'h4' ||
-    props.props.tag === 'h5' ||
-    props.props.tag === 'h6' ||
-    props.props.tag === 'label' ||
-    props.props.tag === 'div'
-      ? props.props.tag
-      : 'span';
-  const Tag: keyof React.JSX.IntrinsicElements = tag;
-
-  return <Tag className={classNames('na-tpl', props.meta.className)}>{String(content ?? '')}</Tag>;
+  return <Tag className={classNames('na-text', props.meta.className)}>{String(body ?? '')}</Tag>;
 }
 
 function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
@@ -269,10 +239,6 @@ export const basicRendererDefinitions: RendererDefinition[] = [
   {
     type: 'text',
     component: TextRenderer
-  },
-  {
-    type: 'tpl',
-    component: TplRenderer
   },
   {
     type: 'button',

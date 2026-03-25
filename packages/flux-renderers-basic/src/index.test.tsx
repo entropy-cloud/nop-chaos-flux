@@ -22,7 +22,7 @@ describe('basicRendererDefinitions', () => {
         schema={{
           type: 'page',
           title: 'User Profile',
-          body: [{ type: 'text', text: 'Page body' }]
+          body: [{ type: 'text', body: 'Page body' }]
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
@@ -41,8 +41,8 @@ describe('basicRendererDefinitions', () => {
       <SchemaRenderer
         schema={{
           type: 'page',
-          title: { type: 'text', text: 'Profile for ${user.name}' } as any,
-          body: [{ type: 'text', text: 'Page body' }]
+          title: { type: 'text', body: 'Profile for ${user.name}' } as any,
+          body: [{ type: 'text', body: 'Page body' }]
         }}
         data={{ user: { name: 'Alice' } }}
         env={env}
@@ -89,13 +89,13 @@ describe('basicRendererDefinitions', () => {
                 action: 'dialog',
                 dialog: {
                   title: 'Runtime event dialog',
-                  body: [{ type: 'text', text: 'Opened from event' }]
+                  body: [{ type: 'text', body: 'Opened from event' }]
                 }
               }
             },
             {
               type: 'text',
-              text: '${message}'
+              body: '${message}'
             }
           ]
         }}
@@ -120,9 +120,9 @@ describe('basicRendererDefinitions', () => {
         schema={{
           type: 'page',
           title: 'Workspace',
-          header: [{ type: 'text', text: 'Header tools' }],
-          body: [{ type: 'text', text: 'Page body' }],
-          footer: [{ type: 'text', text: 'Footer actions' }]
+          header: [{ type: 'text', body: 'Header tools' }],
+          body: [{ type: 'text', body: 'Page body' }],
+          footer: [{ type: 'text', body: 'Footer actions' }]
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
@@ -143,9 +143,9 @@ describe('basicRendererDefinitions', () => {
       <SchemaRenderer
         schema={{
           type: 'container',
-          header: [{ type: 'text', text: 'Container header' }],
-          body: [{ type: 'text', text: 'Container body' }],
-          footer: [{ type: 'text', text: 'Container footer' }]
+          header: [{ type: 'text', body: 'Container header' }],
+          body: [{ type: 'text', body: 'Container body' }],
+          footer: [{ type: 'text', body: 'Container footer' }]
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
@@ -172,7 +172,7 @@ describe('basicRendererDefinitions', () => {
             {
               type: 'container',
               className: 'card custom-class',
-              body: [{ type: 'text', text: 'Card content' }]
+              body: [{ type: 'text', body: 'Card content' }]
             }
           ]
         }}
@@ -242,7 +242,7 @@ describe('basicRendererDefinitions', () => {
               body: [
                 {
                   type: 'text',
-                  text: 'Nested card',
+                  body: 'Nested card',
                   className: 'card'
                 }
               ]
