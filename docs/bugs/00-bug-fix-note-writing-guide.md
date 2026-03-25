@@ -1,4 +1,4 @@
-# 00 Bug Fix Note Writing Guide
+﻿# 00 Bug Fix Note Writing Guide
 
 ## Purpose
 
@@ -106,8 +106,8 @@ Include:
 
 Good example:
 
-- `packages/amis-renderers-form/src/index.test.tsx` verifies `input-email` can progress from `a` to `ab` to a full address
-- `packages/amis-react/src/index.test.tsx` verifies host rerenders do not wipe form-local values
+- `packages/flux-renderers-form/src/index.test.tsx` verifies `input-email` can progress from `a` to `ab` to a full address
+- `packages/flux-react/src/index.test.tsx` verifies host rerenders do not wipe form-local values
 
 ### 6. Affected Files
 
@@ -173,3 +173,4 @@ Use this template for new entries:
 - use `docs/architecture/` for current design truth
 - use `docs/references/` for stable lookup material
 - use `docs/bugs/` to remember important failures and why the fix exists
+

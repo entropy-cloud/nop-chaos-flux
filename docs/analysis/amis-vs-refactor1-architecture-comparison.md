@@ -1,53 +1,53 @@
-# AMIS 架构对比分析报告
+﻿# AMIS æž¶æž„å¯¹æ¯”åˆ†æžæŠ¥å‘Š
 
-## 一、概述
+## ä¸€ã€æ¦‚è¿°
 
-本文档对比分析当前重构项目 (`refactor-1`) 与原始 amis 模板项目的核心架构设计。
+æœ¬æ–‡æ¡£å¯¹æ¯”åˆ†æžå½“å‰é‡æž„é¡¹ç›® (`refactor-1`) ä¸ŽåŽŸå§‹ amis æ¨¡æ¿é¡¹ç›®çš„æ ¸å¿ƒæž¶æž„è®¾è®¡ã€‚
 
-### 1.1 项目信息
+### 1.1 é¡¹ç›®ä¿¡æ¯
 
-| 项目 | 路径 | 技术栈 |
+| é¡¹ç›® | è·¯å¾„ | æŠ€æœ¯æ ˆ |
 |------|------|--------|
-| 当前项目 | `C:\can\nop\nop-amis-wt\refactor-1` | React 19, Zustand, Vite 8, Vitest |
-| amis 模板 | `c:/can/nop/templates/amis` | React 18, MobX MST, fis3/rollup, Jest |
+| å½“å‰é¡¹ç›® | `C:\can\nop\nop-amis-wt\refactor-1` | React 19, Zustand, Vite 8, Vitest |
+| amis æ¨¡æ¿ | `c:/can/nop/templates/amis` | React 18, MobX MST, fis3/rollup, Jest |
 
 ---
 
-## 二、核心架构差异
+## äºŒã€æ ¸å¿ƒæž¶æž„å·®å¼‚
 
-### 2.1 整体架构模式
+### 2.1 æ•´ä½“æž¶æž„æ¨¡å¼
 
-| 维度 | 当前项目 | amis 模板 |
+| ç»´åº¦ | å½“å‰é¡¹ç›® | amis æ¨¡æ¿ |
 |------|----------|-----------|
-| **架构风格** | 编译时 + 运行时分离 | 运行时优先 |
-| **Schema 处理** | 预编译为 `CompiledSchemaNode` | 运行时动态解析 |
-| **状态管理** | Zustand (Vanilla Store) | MobX State Tree |
-| **数据流** | 单向数据流 + 外部订阅 | 响应式双向绑定 |
-| **类型系统** | 严格类型定义 (`@nop-chaos/amis-schema`) | 渐进式类型 |
+| **æž¶æž„é£Žæ ¼** | ç¼–è¯‘æ—¶ + è¿è¡Œæ—¶åˆ†ç¦» | è¿è¡Œæ—¶ä¼˜å…ˆ |
+| **Schema å¤„ç†** | é¢„ç¼–è¯‘ä¸º `CompiledSchemaNode` | è¿è¡Œæ—¶åŠ¨æ€è§£æž |
+| **çŠ¶æ€ç®¡ç†** | Zustand (Vanilla Store) | MobX State Tree |
+| **æ•°æ®æµ** | å•å‘æ•°æ®æµ + å¤–éƒ¨è®¢é˜… | å“åº”å¼åŒå‘ç»‘å®š |
+| **ç±»åž‹ç³»ç»Ÿ** | ä¸¥æ ¼ç±»åž‹å®šä¹‰ (`@nop-chaos/flux-core`) | æ¸è¿›å¼ç±»åž‹ |
 
-### 2.2 包结构对比
+### 2.2 åŒ…ç»“æž„å¯¹æ¯”
 
 ```
-当前项目 (refactor-1)           amis 模板
-─────────────────────────────────────────────────────────────────────
-amis-schema (纯类型)             ← 无对应
+å½“å‰é¡¹ç›® (refactor-1)           amis æ¨¡æ¿
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+amis-schema (çº¯ç±»åž‹)             â† æ— å¯¹åº”
 amis-formula                    amis-formula
 amis-runtime (Zustand)          amis-core (MobX MST)
-amis-react (渲染层)              ← 集成在 amis-core
+amis-react (æ¸²æŸ“å±‚)              â† é›†æˆåœ¨ amis-core
 amis-renderers-basic            amis-ui + amis
 amis-renderers-form             amis
 amis-renderers-data             amis
-← 无对应                        amis-editor-core/editor
-← 无对应                        office-viewer
+â† æ— å¯¹åº”                        amis-editor-core/editor
+â† æ— å¯¹åº”                        office-viewer
 ```
 
 ---
 
-## 三、状态管理深度对比
+## ä¸‰ã€çŠ¶æ€ç®¡ç†æ·±åº¦å¯¹æ¯”
 
-### 3.1 当前项目: Zustand Vanilla Store
+### 3.1 å½“å‰é¡¹ç›®: Zustand Vanilla Store
 
-**实现位置**: `packages/amis-runtime/src/form-store.ts`
+**å®žçŽ°ä½ç½®**: `packages/flux-runtime/src/form-store.ts`
 
 ```typescript
 export function createFormStore(initialValues: Record<string, any>): FormStoreApi {
@@ -71,7 +71,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
 }
 ```
 
-**作用域管理**: `packages/amis-runtime/src/scope.ts`
+**ä½œç”¨åŸŸç®¡ç†**: `packages/flux-runtime/src/scope.ts`
 
 ```typescript
 export function createScopeRef(input: {
@@ -99,14 +99,14 @@ export function createScopeRef(input: {
 }
 ```
 
-**设计特点**:
-- 纯数据结构，无 React 依赖
-- 惰性计算 + 缓存优化 (通过 `lastMaterialized` 缓存)
-- 明确的作用域链 (`parent` 引用)
+**è®¾è®¡ç‰¹ç‚¹**:
+- çº¯æ•°æ®ç»“æž„ï¼Œæ—  React ä¾èµ–
+- æƒ°æ€§è®¡ç®— + ç¼“å­˜ä¼˜åŒ– (é€šè¿‡ `lastMaterialized` ç¼“å­˜)
+- æ˜Žç¡®çš„ä½œç”¨åŸŸé“¾ (`parent` å¼•ç”¨)
 
-### 3.2 amis 模板: MobX State Tree
+### 3.2 amis æ¨¡æ¿: MobX State Tree
 
-**实现位置**: `packages/amis-core/src/store/form.ts`
+**å®žçŽ°ä½ç½®**: `packages/amis-core/src/store/form.ts`
 
 ```typescript
 export const FormStore = ServiceStore.named('FormStore')
@@ -143,7 +143,7 @@ export const FormStore = ServiceStore.named('FormStore')
   }));
 ```
 
-**作用域管理**: `packages/amis-core/src/Scoped.tsx`
+**ä½œç”¨åŸŸç®¡ç†**: `packages/amis-core/src/Scoped.tsx`
 
 ```typescript
 export interface IScopedContext {
@@ -159,44 +159,44 @@ export interface IScopedContext {
 export const ScopedContext = React.createContext(rootScopedContext);
 ```
 
-### 3.3 状态管理对比总结
+### 3.3 çŠ¶æ€ç®¡ç†å¯¹æ¯”æ€»ç»“
 
-| 特性 | 当前项目 (Zustand) | amis (MobX MST) |
+| ç‰¹æ€§ | å½“å‰é¡¹ç›® (Zustand) | amis (MobX MST) |
 |------|-------------------|-----------------|
-| 包体积 | ~3KB gzipped | ~50KB gzipped |
-| 框架依赖 | 无 | 与 React 强绑定 |
-| 依赖追踪 | 手动实现 | 自动追踪 |
-| 时间旅行 | 需额外实现 | 内置支持 |
-| 异步 action | 需包装 | 内置 `flow` 支持 |
-| 调试工具 | 需自建 | mobx-devtools |
-| 代码风格 | 函数式 | 装饰器语法 |
+| åŒ…ä½“ç§¯ | ~3KB gzipped | ~50KB gzipped |
+| æ¡†æž¶ä¾èµ– | æ—  | ä¸Ž React å¼ºç»‘å®š |
+| ä¾èµ–è¿½è¸ª | æ‰‹åŠ¨å®žçŽ° | è‡ªåŠ¨è¿½è¸ª |
+| æ—¶é—´æ—…è¡Œ | éœ€é¢å¤–å®žçŽ° | å†…ç½®æ”¯æŒ |
+| å¼‚æ­¥ action | éœ€åŒ…è£… | å†…ç½® `flow` æ”¯æŒ |
+| è°ƒè¯•å·¥å…· | éœ€è‡ªå»º | mobx-devtools |
+| ä»£ç é£Žæ ¼ | å‡½æ•°å¼ | è£…é¥°å™¨è¯­æ³• |
 
 ---
 
-## 四、Schema 编译与渲染流程
+## å››ã€Schema ç¼–è¯‘ä¸Žæ¸²æŸ“æµç¨‹
 
-### 4.1 当前项目: AOT 编译
+### 4.1 å½“å‰é¡¹ç›®: AOT ç¼–è¯‘
 
-**编译时**:
+**ç¼–è¯‘æ—¶**:
 ```
 Schema (JSON)
-     ↓
+     â†“
 SchemaCompiler.compile()
-     ↓
-┌─────────────────────────────────────────────────────────────┐
-│ CompiledSchemaNode {                                        │
-│   id, type, path, schema,                                  │
-│   component: RendererDefinition,                             │
-│   props: CompiledRuntimeValue<T>,      // 编译后的属性        │
-│   validation: CompiledFormValidationModel,  // 预编译验证     │
-│   regions: Record<string, CompiledRegion>,                   │
-│   eventActions: Record<string, ActionSchema>,               │
-│   createRuntimeState(): CompiledNodeRuntimeState            │
-│ }                                                          │
-└─────────────────────────────────────────────────────────────┘
+     â†“
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ CompiledSchemaNode {                                        â”‚
+â”‚   id, type, path, schema,                                  â”‚
+â”‚   component: RendererDefinition,                             â”‚
+â”‚   props: CompiledRuntimeValue<T>,      // ç¼–è¯‘åŽçš„å±žæ€§        â”‚
+â”‚   validation: CompiledFormValidationModel,  // é¢„ç¼–è¯‘éªŒè¯     â”‚
+â”‚   regions: Record<string, CompiledRegion>,                   â”‚
+â”‚   eventActions: Record<string, ActionSchema>,               â”‚
+â”‚   createRuntimeState(): CompiledNodeRuntimeState            â”‚
+â”‚ }                                                          â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-**运行时** (位置: `packages/amis-react/src/index.tsx`):
+**è¿è¡Œæ—¶** (ä½ç½®: `packages/flux-react/src/index.tsx`):
 
 ```typescript
 function NodeRenderer(props: {
@@ -207,34 +207,34 @@ function NodeRenderer(props: {
 }) {
   const runtime = useRendererRuntime();
   
-  // 1. 创建节点运行时状态
+  // 1. åˆ›å»ºèŠ‚ç‚¹è¿è¡Œæ—¶çŠ¶æ€
   const nodeState = props.node.createRuntimeState();
   
-  // 2. 解析元数据和属性
+  // 2. è§£æžå…ƒæ•°æ®å’Œå±žæ€§
   const meta = runtime.resolveNodeMeta(props.node, props.scope, nodeState);
   const resolvedProps = runtime.resolveNodeProps(props.node, props.scope, nodeState);
   
-  // 3. 渲染组件
+  // 3. æ¸²æŸ“ç»„ä»¶
   const Comp = props.node.component.component;
   return <Comp {...componentProps} />;
 }
 ```
 
-### 4.2 amis 模板: JIT 解析
+### 4.2 amis æ¨¡æ¿: JIT è§£æž
 
-**运行时** (位置: `packages/amis-core/src/SchemaRenderer.tsx`):
+**è¿è¡Œæ—¶** (ä½ç½®: `packages/amis-core/src/SchemaRenderer.tsx`):
 
 ```typescript
 export class SchemaRenderer extends React.Component<SchemaRendererProps> {
   resolveRenderer(props: SchemaRendererProps) {
     let schema = props.schema;
     
-    // 1. 处理 $ref 引用
+    // 1. å¤„ç† $ref å¼•ç”¨
     if (schema && schema.$ref) {
       schema = { ...props.resolveDefinitions(schema.$ref), ...schema };
     }
     
-    // 2. 查找渲染器
+    // 2. æŸ¥æ‰¾æ¸²æŸ“å™¨
     this.renderer = resolveRenderer(path, schema, props);
     
     return { path, schema };
@@ -243,34 +243,34 @@ export class SchemaRenderer extends React.Component<SchemaRendererProps> {
   render() {
     let { schema } = this.resolveRenderer(this.props);
     
-    // 3. 处理 children/component
+    // 3. å¤„ç† children/component
     if (schema.children) {
       return schema.children({ ...rest, render: this.renderChild });
     }
     
-    // 4. 渲染组件
+    // 4. æ¸²æŸ“ç»„ä»¶
     const Component = this.renderer.component!;
     return <Component {...props} ref={this.childRef} />;
   }
 }
 ```
 
-### 4.3 渲染流程对比
+### 4.3 æ¸²æŸ“æµç¨‹å¯¹æ¯”
 
-| 阶段 | 当前项目 | amis |
+| é˜¶æ®µ | å½“å‰é¡¹ç›® | amis |
 |------|---------|------|
-| Schema 解析 | 编译时完成 | 运行时解析 |
-| 表达式处理 | 预编译为执行函数 | 运行时 evaluate |
-| 验证规则 | 预构建依赖图 | 运行时动态构建 |
-| 渲染器查找 | 注册表直接映射 | 注册表 + 正则匹配 |
+| Schema è§£æž | ç¼–è¯‘æ—¶å®Œæˆ | è¿è¡Œæ—¶è§£æž |
+| è¡¨è¾¾å¼å¤„ç† | é¢„ç¼–è¯‘ä¸ºæ‰§è¡Œå‡½æ•° | è¿è¡Œæ—¶ evaluate |
+| éªŒè¯è§„åˆ™ | é¢„æž„å»ºä¾èµ–å›¾ | è¿è¡Œæ—¶åŠ¨æ€æž„å»º |
+| æ¸²æŸ“å™¨æŸ¥æ‰¾ | æ³¨å†Œè¡¨ç›´æŽ¥æ˜ å°„ | æ³¨å†Œè¡¨ + æ­£åˆ™åŒ¹é… |
 
 ---
 
-## 五、表单系统对比
+## äº”ã€è¡¨å•ç³»ç»Ÿå¯¹æ¯”
 
-### 5.1 当前项目 FormRuntime
+### 5.1 å½“å‰é¡¹ç›® FormRuntime
 
-**实现位置**: `packages/amis-runtime/src/form-runtime.ts`
+**å®žçŽ°ä½ç½®**: `packages/flux-runtime/src/form-runtime.ts`
 
 ```typescript
 export interface FormRuntime {
@@ -293,7 +293,7 @@ export interface FormRuntime {
   reset(values?: object): void;
   setValue(name: string, value: unknown): void;
   
-  // 数组操作
+  // æ•°ç»„æ“ä½œ
   appendValue(path: string, value: unknown): void;
   removeValue(path: string, index: number): void;
   moveValue(path: string, from: number, to: number): void;
@@ -303,7 +303,7 @@ export interface FormRuntime {
 
 ### 5.2 amis FormStore
 
-**实现位置**: `packages/amis-core/src/store/form.ts`
+**å®žçŽ°ä½ç½®**: `packages/amis-core/src/store/form.ts`
 
 ```typescript
 export const FormStore = ServiceStore.named('FormStore')
@@ -324,32 +324,32 @@ export const FormStore = ServiceStore.named('FormStore')
   }));
 ```
 
-### 5.3 验证系统对比
+### 5.3 éªŒè¯ç³»ç»Ÿå¯¹æ¯”
 
-| 特性 | 当前项目 | amis |
+| ç‰¹æ€§ | å½“å‰é¡¹ç›® | amis |
 |------|---------|------|
-| 验证时机 | 编译时确定 traversal order | 运行时动态触发 |
-| 依赖追踪 | 显式声明 `dependsOn` | MobX 自动追踪 |
-| 异步验证 | 内置防抖 + 取消机制 | lodash debounce |
-| 验证注册 | ValidationRegistry | 各 FormItem 自管理 |
-| 错误收集 | 按路径聚合 | 按组件实例聚合 |
-| 数组验证 | 自动重映射状态 | FormItemStore 管理 |
+| éªŒè¯æ—¶æœº | ç¼–è¯‘æ—¶ç¡®å®š traversal order | è¿è¡Œæ—¶åŠ¨æ€è§¦å‘ |
+| ä¾èµ–è¿½è¸ª | æ˜¾å¼å£°æ˜Ž `dependsOn` | MobX è‡ªåŠ¨è¿½è¸ª |
+| å¼‚æ­¥éªŒè¯ | å†…ç½®é˜²æŠ– + å–æ¶ˆæœºåˆ¶ | lodash debounce |
+| éªŒè¯æ³¨å†Œ | ValidationRegistry | å„ FormItem è‡ªç®¡ç† |
+| é”™è¯¯æ”¶é›† | æŒ‰è·¯å¾„èšåˆ | æŒ‰ç»„ä»¶å®žä¾‹èšåˆ |
+| æ•°ç»„éªŒè¯ | è‡ªåŠ¨é‡æ˜ å°„çŠ¶æ€ | FormItemStore ç®¡ç† |
 
 ---
 
-## 六、事件与动作系统
+## å…­ã€äº‹ä»¶ä¸ŽåŠ¨ä½œç³»ç»Ÿ
 
-### 6.1 当前项目
+### 6.1 å½“å‰é¡¹ç›®
 
-**动作定义**: `packages/amis-schema/src/types/actions.ts`
+**åŠ¨ä½œå®šä¹‰**: `packages/flux-core/src/types/actions.ts`
 
 ```typescript
 export interface ActionSchema extends SchemaObject {
-  action: string;            // 动作类型
-  componentId?: string;    // 目标组件 ID
-  api?: ApiObject;          // API 配置
+  action: string;            // åŠ¨ä½œç±»åž‹
+  componentId?: string;    // ç›®æ ‡ç»„ä»¶ ID
+  api?: ApiObject;          // API é…ç½®
   dialog?: Record<string, any>;
-  then?: ActionSchema | ActionSchema[];  // 后续动作
+  then?: ActionSchema | ActionSchema[];  // åŽç»­åŠ¨ä½œ
 }
 
 export interface ActionContext {
@@ -362,7 +362,7 @@ export interface ActionContext {
 }
 ```
 
-**动作执行**: `packages/amis-runtime/src/action-runtime.ts`
+**åŠ¨ä½œæ‰§è¡Œ**: `packages/flux-runtime/src/action-runtime.ts`
 
 ```typescript
 switch (processedAction.action) {
@@ -375,9 +375,9 @@ switch (processedAction.action) {
 }
 ```
 
-### 6.2 amis 模板
+### 6.2 amis æ¨¡æ¿
 
-**动作注册**: `packages/amis-core/src/actions/index.ts`
+**åŠ¨ä½œæ³¨å†Œ**: `packages/amis-core/src/actions/index.ts`
 
 ```typescript
 const ActionTypeMap: { [key: string]: RendererAction } = {};
@@ -399,22 +399,22 @@ export const runActions = async (
 };
 ```
 
-### 6.3 事件系统对比
+### 6.3 äº‹ä»¶ç³»ç»Ÿå¯¹æ¯”
 
-| 维度 | 当前项目 | amis |
+| ç»´åº¦ | å½“å‰é¡¹ç›® | amis |
 |------|---------|------|
-| 事件绑定 | 编译时收集 | 运行时 bindEvent |
-| 事件分发 | 通过作用域传播 | ScopedContext |
-| 全局广播 | 通过 pageStore | BroadcastChannel |
-| 动作注册 | 内置 + 可扩展 | 全局注册表 |
+| äº‹ä»¶ç»‘å®š | ç¼–è¯‘æ—¶æ”¶é›† | è¿è¡Œæ—¶ bindEvent |
+| äº‹ä»¶åˆ†å‘ | é€šè¿‡ä½œç”¨åŸŸä¼ æ’­ | ScopedContext |
+| å…¨å±€å¹¿æ’­ | é€šè¿‡ pageStore | BroadcastChannel |
+| åŠ¨ä½œæ³¨å†Œ | å†…ç½® + å¯æ‰©å±• | å…¨å±€æ³¨å†Œè¡¨ |
 
 ---
 
-## 七、渲染器注册机制
+## ä¸ƒã€æ¸²æŸ“å™¨æ³¨å†Œæœºåˆ¶
 
-### 7.1 当前项目
+### 7.1 å½“å‰é¡¹ç›®
 
-**定义**: `packages/amis-schema/src/types/renderer.ts`
+**å®šä¹‰**: `packages/flux-core/src/types/renderer.ts`
 
 ```typescript
 export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
@@ -430,7 +430,7 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
 export type ScopePolicy = 'inherit' | 'isolate' | 'page' | 'form' | 'dialog' | 'row';
 ```
 
-**注册**: `packages/amis-runtime/src/registry.ts`
+**æ³¨å†Œ**: `packages/flux-runtime/src/registry.ts`
 
 ```typescript
 export function createRendererRegistry(
@@ -445,9 +445,9 @@ export function createRendererRegistry(
 }
 ```
 
-### 7.2 amis 模板
+### 7.2 amis æ¨¡æ¿
 
-**配置**: `packages/amis-core/src/factory.tsx`
+**é…ç½®**: `packages/amis-core/src/factory.tsx`
 
 ```typescript
 export interface RendererConfig extends RendererBasicConfig {
@@ -460,7 +460,7 @@ export interface RendererConfig extends RendererBasicConfig {
   weight?: number;
 }
 
-// 装饰器用法
+// è£…é¥°å™¨ç”¨æ³•
 @Renderer({
   type: 'page',
   storeType: ServiceStore.name,
@@ -469,23 +469,23 @@ export interface RendererConfig extends RendererBasicConfig {
 export class PageRenderer extends PageRendererBase {}
 ```
 
-### 7.3 渲染器注册对比
+### 7.3 æ¸²æŸ“å™¨æ³¨å†Œå¯¹æ¯”
 
-| 维度 | 当前项目 | amis |
+| ç»´åº¦ | å½“å‰é¡¹ç›® | amis |
 |------|---------|------|
-| 注册方式 | 函数式 API | 装饰器 |
-| 类型安全 | 强类型定义 | 渐进式类型 |
-| Store 关联 | `scopePolicy` 策略 | `storeType` + HOC |
-| 作用域控制 | 显式策略枚举 | `isolateScope` 布尔值 |
-| 优先级 | 无 | `weight` 属性 |
+| æ³¨å†Œæ–¹å¼ | å‡½æ•°å¼ API | è£…é¥°å™¨ |
+| ç±»åž‹å®‰å…¨ | å¼ºç±»åž‹å®šä¹‰ | æ¸è¿›å¼ç±»åž‹ |
+| Store å…³è” | `scopePolicy` ç­–ç•¥ | `storeType` + HOC |
+| ä½œç”¨åŸŸæŽ§åˆ¶ | æ˜¾å¼ç­–ç•¥æžšä¸¾ | `isolateScope` å¸ƒå°”å€¼ |
+| ä¼˜å…ˆçº§ | æ—  | `weight` å±žæ€§ |
 
 ---
 
-## 八、React 渲染层
+## å…«ã€React æ¸²æŸ“å±‚
 
-### 8.1 当前项目
+### 8.1 å½“å‰é¡¹ç›®
 
-**实现位置**: `packages/amis-react/src/index.tsx`
+**å®žçŽ°ä½ç½®**: `packages/flux-react/src/index.tsx`
 
 ```typescript
 export function createSchemaRenderer(registryDefinitions: RendererDefinition[] = []) {
@@ -516,16 +516,16 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
 }
 ```
 
-**Context 体系**:
-- `RuntimeContext`: 渲染器运行时
-- `ScopeContext`: 作用域引用
-- `FormContext`: 表单运行时
-- `PageContext`: 页面运行时
-- `NodeMetaContext`: 节点元数据
+**Context ä½“ç³»**:
+- `RuntimeContext`: æ¸²æŸ“å™¨è¿è¡Œæ—¶
+- `ScopeContext`: ä½œç”¨åŸŸå¼•ç”¨
+- `FormContext`: è¡¨å•è¿è¡Œæ—¶
+- `PageContext`: é¡µé¢è¿è¡Œæ—¶
+- `NodeMetaContext`: èŠ‚ç‚¹å…ƒæ•°æ®
 
-### 8.2 amis 模板
+### 8.2 amis æ¨¡æ¿
 
-**实现位置**: `packages/amis-core/src/index.tsx`
+**å®žçŽ°ä½ç½®**: `packages/amis-core/src/index.tsx`
 
 ```typescript
 export function render(schema: Schema, props: RootRenderProps, options: RenderOptions) {
@@ -562,119 +562,120 @@ function AMISSchema({ schema, options, ...props }) {
 
 ---
 
-## 九、性能优化策略
+## ä¹ã€æ€§èƒ½ä¼˜åŒ–ç­–ç•¥
 
-### 9.1 当前项目
+### 9.1 å½“å‰é¡¹ç›®
 
-1. **编译时优化**
-   - Schema 预编译，运行时零解析
-   - 验证规则预构建依赖图
-   - 表达式预编译为执行函数
+1. **ç¼–è¯‘æ—¶ä¼˜åŒ–**
+   - Schema é¢„ç¼–è¯‘ï¼Œè¿è¡Œæ—¶é›¶è§£æž
+   - éªŒè¯è§„åˆ™é¢„æž„å»ºä¾èµ–å›¾
+   - è¡¨è¾¾å¼é¢„ç¼–è¯‘ä¸ºæ‰§è¡Œå‡½æ•°
 
-2. **运行时优化**
-   - Zustand 精确订阅 (`useSyncExternalStoreWithSelector`)
-   - 作用域惰性计算 + 缓存
-   - `shallowEqual` 浅比较
+2. **è¿è¡Œæ—¶ä¼˜åŒ–**
+   - Zustand ç²¾ç¡®è®¢é˜… (`useSyncExternalStoreWithSelector`)
+   - ä½œç”¨åŸŸæƒ°æ€§è®¡ç®— + ç¼“å­˜
+   - `shallowEqual` æµ…æ¯”è¾ƒ
 
-3. **React 优化**
-   - 节点状态按需创建 (`useRef`)
-   - `useMemo` 缓存 helpers/regions/events
+3. **React ä¼˜åŒ–**
+   - èŠ‚ç‚¹çŠ¶æ€æŒ‰éœ€åˆ›å»º (`useRef`)
+   - `useMemo` ç¼“å­˜ helpers/regions/events
 
-### 9.2 amis 模板
+### 9.2 amis æ¨¡æ¿
 
-1. **MobX 优化**
-   - 自动依赖追踪
-   - 细粒度响应式更新
-   - `observer` 自动优化渲染
+1. **MobX ä¼˜åŒ–**
+   - è‡ªåŠ¨ä¾èµ–è¿½è¸ª
+   - ç»†ç²’åº¦å“åº”å¼æ›´æ–°
+   - `observer` è‡ªåŠ¨ä¼˜åŒ–æ¸²æŸ“
 
-2. **缓存策略**
-   - `SimpleMap` 组件缓存
-   - 表达式解析缓存 (`memoParse`)
+2. **ç¼“å­˜ç­–ç•¥**
+   - `SimpleMap` ç»„ä»¶ç¼“å­˜
+   - è¡¨è¾¾å¼è§£æžç¼“å­˜ (`memoParse`)
 
-3. **异步加载**
-   - `LazyComponent` 按需加载渲染器
-
----
-
-## 十、优劣势总结
-
-### 10.1 当前项目 (refactor-1)
-
-**优势**:
-- 更现代的技术栈 (React 19, Zustand, Vite 8)
-- 编译时优化，运行时性能更优
-- 强类型系统，更好的 IDE 支持
-- 框架无关的状态管理
-- 更清晰的架构分层
-- ESM-first，更好的 tree-shaking
-
-**劣势**:
-- 功能不完整（缺少 editor, office-viewer）
-- 生态较小，社区支持少
-- 学习曲线（新的架构模式）
-- 无内置时间旅行/快照
-
-### 10.2 amis 模板
-
-**优势**:
-- 功能完整，生态成熟
-- MobX MST 提供丰富的状态管理能力
-- 大量内置组件和渲染器
-- 活跃的社区和文档
-- 可视化编辑器支持
-
-**劣势**:
-- 包体积较大
-- 装饰器语法，现代化不足
-- 运行时解析，性能有优化空间
-- 与 React 强绑定
+3. **å¼‚æ­¥åŠ è½½**
+   - `LazyComponent` æŒ‰éœ€åŠ è½½æ¸²æŸ“å™¨
 
 ---
 
-## 十一、改进建议
+## åã€ä¼˜åŠ£åŠ¿æ€»ç»“
 
-### 11.1 当前项目改进方向
+### 10.1 å½“å‰é¡¹ç›® (refactor-1)
 
-1. **补充缺失模块**
-   - 实现 `amis-editor-core` 对应的编辑器支持
-   - 考虑是否需要 `office-viewer`
+**ä¼˜åŠ¿**:
+- æ›´çŽ°ä»£çš„æŠ€æœ¯æ ˆ (React 19, Zustand, Vite 8)
+- ç¼–è¯‘æ—¶ä¼˜åŒ–ï¼Œè¿è¡Œæ—¶æ€§èƒ½æ›´ä¼˜
+- å¼ºç±»åž‹ç³»ç»Ÿï¼Œæ›´å¥½çš„ IDE æ”¯æŒ
+- æ¡†æž¶æ— å…³çš„çŠ¶æ€ç®¡ç†
+- æ›´æ¸…æ™°çš„æž¶æž„åˆ†å±‚
+- ESM-firstï¼Œæ›´å¥½çš„ tree-shaking
 
-2. **增强状态管理**
-   - 添加快照/时间旅行支持
-   - 实现状态持久化
+**åŠ£åŠ¿**:
+- åŠŸèƒ½ä¸å®Œæ•´ï¼ˆç¼ºå°‘ editor, office-viewerï¼‰
+- ç”Ÿæ€è¾ƒå°ï¼Œç¤¾åŒºæ”¯æŒå°‘
+- å­¦ä¹ æ›²çº¿ï¼ˆæ–°çš„æž¶æž„æ¨¡å¼ï¼‰
+- æ— å†…ç½®æ—¶é—´æ—…è¡Œ/å¿«ç…§
 
-3. **完善测试覆盖**
-   - 补充单元测试
-   - 添加 E2E 测试
+### 10.2 amis æ¨¡æ¿
 
-### 11.2 迁移策略
+**ä¼˜åŠ¿**:
+- åŠŸèƒ½å®Œæ•´ï¼Œç”Ÿæ€æˆç†Ÿ
+- MobX MST æä¾›ä¸°å¯Œçš„çŠ¶æ€ç®¡ç†èƒ½åŠ›
+- å¤§é‡å†…ç½®ç»„ä»¶å’Œæ¸²æŸ“å™¨
+- æ´»è·ƒçš„ç¤¾åŒºå’Œæ–‡æ¡£
+- å¯è§†åŒ–ç¼–è¾‘å™¨æ”¯æŒ
 
-如果需要从 amis 迁移到当前项目：
-
-1. **Schema 兼容层**: 实现 Schema 转换器
-2. **渲染器映射**: 建立组件对应关系
-3. **渐进式迁移**: 按模块逐步迁移
+**åŠ£åŠ¿**:
+- åŒ…ä½“ç§¯è¾ƒå¤§
+- è£…é¥°å™¨è¯­æ³•ï¼ŒçŽ°ä»£åŒ–ä¸è¶³
+- è¿è¡Œæ—¶è§£æžï¼Œæ€§èƒ½æœ‰ä¼˜åŒ–ç©ºé—´
+- ä¸Ž React å¼ºç»‘å®š
 
 ---
 
-## 附录: 文件位置索引
+## åä¸€ã€æ”¹è¿›å»ºè®®
 
-### 当前项目核心文件
+### 11.1 å½“å‰é¡¹ç›®æ”¹è¿›æ–¹å‘
 
-| 文件 | 位置 | 描述 |
+1. **è¡¥å……ç¼ºå¤±æ¨¡å—**
+   - å®žçŽ° `amis-editor-core` å¯¹åº”çš„ç¼–è¾‘å™¨æ”¯æŒ
+   - è€ƒè™‘æ˜¯å¦éœ€è¦ `office-viewer`
+
+2. **å¢žå¼ºçŠ¶æ€ç®¡ç†**
+   - æ·»åŠ å¿«ç…§/æ—¶é—´æ—…è¡Œæ”¯æŒ
+   - å®žçŽ°çŠ¶æ€æŒä¹…åŒ–
+
+3. **å®Œå–„æµ‹è¯•è¦†ç›–**
+   - è¡¥å……å•å…ƒæµ‹è¯•
+   - æ·»åŠ  E2E æµ‹è¯•
+
+### 11.2 è¿ç§»ç­–ç•¥
+
+å¦‚æžœéœ€è¦ä»Ž amis è¿ç§»åˆ°å½“å‰é¡¹ç›®ï¼š
+
+1. **Schema å…¼å®¹å±‚**: å®žçŽ° Schema è½¬æ¢å™¨
+2. **æ¸²æŸ“å™¨æ˜ å°„**: å»ºç«‹ç»„ä»¶å¯¹åº”å…³ç³»
+3. **æ¸è¿›å¼è¿ç§»**: æŒ‰æ¨¡å—é€æ­¥è¿ç§»
+
+---
+
+## é™„å½•: æ–‡ä»¶ä½ç½®ç´¢å¼•
+
+### å½“å‰é¡¹ç›®æ ¸å¿ƒæ–‡ä»¶
+
+| æ–‡ä»¶ | ä½ç½® | æè¿° |
 |------|------|------|
-| FormStore | `packages/amis-runtime/src/form-store.ts` | 表单状态存储 |
-| FormRuntime | `packages/amis-runtime/src/form-runtime.ts` | 表单运行时 |
-| ScopeRef | `packages/amis-runtime/src/scope.ts` | 作用域引用 |
-| React 层 | `packages/amis-react/src/index.tsx` | React 渲染层 |
-| Registry | `packages/amis-runtime/src/registry.ts` | 渲染器注册表 |
+| FormStore | `packages/flux-runtime/src/form-store.ts` | è¡¨å•çŠ¶æ€å­˜å‚¨ |
+| FormRuntime | `packages/flux-runtime/src/form-runtime.ts` | è¡¨å•è¿è¡Œæ—¶ |
+| ScopeRef | `packages/flux-runtime/src/scope.ts` | ä½œç”¨åŸŸå¼•ç”¨ |
+| React å±‚ | `packages/flux-react/src/index.tsx` | React æ¸²æŸ“å±‚ |
+| Registry | `packages/flux-runtime/src/registry.ts` | æ¸²æŸ“å™¨æ³¨å†Œè¡¨ |
 
-### amis 模板核心文件
+### amis æ¨¡æ¿æ ¸å¿ƒæ–‡ä»¶
 
-| 文件 | 位置 | 描述 |
+| æ–‡ä»¶ | ä½ç½® | æè¿° |
 |------|------|------|
-| FormStore | `packages/amis-core/src/store/form.ts` | 表单 Store |
-| SchemaRenderer | `packages/amis-core/src/SchemaRenderer.tsx` | Schema 渲染器 |
-| Scoped | `packages/amis-core/src/Scoped.tsx` | 作用域系统 |
-| Actions | `packages/amis-core/src/actions/` | 动作系统 |
-| Factory | `packages/amis-core/src/factory.tsx` | 渲染器工厂 |
+| FormStore | `packages/amis-core/src/store/form.ts` | è¡¨å• Store |
+| SchemaRenderer | `packages/amis-core/src/SchemaRenderer.tsx` | Schema æ¸²æŸ“å™¨ |
+| Scoped | `packages/amis-core/src/Scoped.tsx` | ä½œç”¨åŸŸç³»ç»Ÿ |
+| Actions | `packages/amis-core/src/actions/` | åŠ¨ä½œç³»ç»Ÿ |
+| Factory | `packages/amis-core/src/factory.tsx` | æ¸²æŸ“å™¨å·¥åŽ‚ |
+

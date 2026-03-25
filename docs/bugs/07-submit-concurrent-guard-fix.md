@@ -1,4 +1,4 @@
-# 07 Submit Concurrent Guard Fix
+﻿# 07 Submit Concurrent Guard Fix
 
 ## Problem
 
@@ -8,8 +8,8 @@
 
 ## Root Cause
 
-- `packages/amis-runtime/src/form-runtime.ts:248` — `submit()` started with `store.setSubmitting(true)` but never checked the current `submitting` state
-- `submitting` was a UI flag, not a method gate — any number of concurrent calls could proceed
+- `packages/flux-runtime/src/form-runtime.ts:248` â€” `submit()` started with `store.setSubmitting(true)` but never checked the current `submitting` state
+- `submitting` was a UI flag, not a method gate â€” any number of concurrent calls could proceed
 - `finally` at line 291 unconditionally reset `submitting=false`, even when other calls were pending
 
 ## Fix
@@ -25,16 +25,17 @@
 
 ## Tests
 
-- `packages/amis-runtime/src/__tests__/bug-submit-race.test.ts` - verifies only one API call executes, the second call resolves as `cancelled`, and `submitting` stays true until the first request finishes
-- `packages/amis-runtime/src/index.test.ts` - verifies concurrent `submitForm` actions return `cancelled` and monitor callbacks observe a cancelled result instead of a failure
+- `packages/flux-runtime/src/__tests__/bug-submit-race.test.ts` - verifies only one API call executes, the second call resolves as `cancelled`, and `submitting` stays true until the first request finishes
+- `packages/flux-runtime/src/index.test.ts` - verifies concurrent `submitForm` actions return `cancelled` and monitor callbacks observe a cancelled result instead of a failure
 
 ## Affected Files
 
-- `packages/amis-runtime/src/form-runtime.ts`
+- `packages/flux-runtime/src/form-runtime.ts`
 
 ## Notes For Future Refactors
 
 - all mutating async methods (`submit`, `validateForm`) that have side effects should have a concurrency guard
 - if a queuing or retry behavior is needed later, replace the early-return with a queue/debounce pattern rather than removing the guard
 - duplicate submit prevention should use the same `cancelled` semantics as other intentionally skipped actions; do not report it as a normal business failure unless product behavior explicitly requires that contract
-- the `submitting` flag must remain consistent with actual request state — never set it without a corresponding API call
+- the `submitting` flag must remain consistent with actual request state â€” never set it without a corresponding API call
+

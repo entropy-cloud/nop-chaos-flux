@@ -1,4 +1,4 @@
-# 08 ValidateForm Destructive Error Merge Fix
+﻿# 08 ValidateForm Destructive Error Merge Fix
 
 ## Problem
 
@@ -8,7 +8,7 @@
 
 ## Root Cause
 
-- `packages/amis-runtime/src/form-runtime.ts:177` — `store.setErrors(fieldErrors)` called `store.setState({ errors: fieldErrors })`, which replaced the entire `errors` object
+- `packages/flux-runtime/src/form-runtime.ts:177` â€” `store.setErrors(fieldErrors)` called `store.setState({ errors: fieldErrors })`, which replaced the entire `errors` object
 - `fieldErrors` only contained errors for paths that were validated in the current `validateForm()` call
 - any errors set by concurrent `setPathErrors` calls for paths outside the traversal were discarded
 
@@ -24,21 +24,22 @@
 
 ## Tests
 
-- `packages/amis-runtime/src/__tests__/bug-validate-overwrite.test.ts` - 5 tests:
+- `packages/flux-runtime/src/__tests__/bug-validate-overwrite.test.ts` - 5 tests:
   - errors for paths outside traversal are preserved
   - errors within the sequential loop are correctly collected
   - registered field errors are collected
   - side-effect errors during registered field validate are preserved
   - sequential await prevents races within the loop
-- `packages/amis-runtime/src/__tests__/bug-validate-overwrite.test.ts` - also verifies side-effect errors appear in `validateForm()` results and block `submit()`
+- `packages/flux-runtime/src/__tests__/bug-validate-overwrite.test.ts` - also verifies side-effect errors appear in `validateForm()` results and block `submit()`
 
 ## Affected Files
 
-- `packages/amis-runtime/src/form-runtime.ts`
+- `packages/flux-runtime/src/form-runtime.ts`
 
 ## Notes For Future Refactors
 
-- `store.setErrors` always means "replace all" — use merge pattern when the caller only knows about a subset of paths
+- `store.setErrors` always means "replace all" â€” use merge pattern when the caller only knows about a subset of paths
 - merge alone is not sufficient; callers must also reconcile returned `errors`/`fieldErrors` with any side-effect writes that become part of the final store state during validation
 - if `validateForm` is refactored to run validations in parallel, re-check store/result consistency explicitly instead of assuming the same end-of-pass merge is enough
 - any future bulk store update that replaces a map (errors, touched, dirty) should consider whether partial knowledge requires merge semantics
+

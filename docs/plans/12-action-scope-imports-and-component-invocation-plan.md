@@ -1,4 +1,4 @@
-# Action Scope, Imports, And Component Invocation Implementation Plan
+﻿# Action Scope, Imports, And Component Invocation Implementation Plan
 
 ## Purpose
 
@@ -16,9 +16,9 @@ This is a major runtime and authoring change. The implementation must therefore 
 
 The current repository already has a working baseline for:
 
-- data scope reads and writes through `ScopeRef` in `packages/amis-runtime/src/scope.ts`
-- built-in action dispatch through `packages/amis-runtime/src/action-runtime.ts`
-- explicit host-bound fragment rendering through `packages/amis-react/src/index.tsx`
+- data scope reads and writes through `ScopeRef` in `packages/flux-runtime/src/scope.ts`
+- built-in action dispatch through `packages/flux-runtime/src/action-runtime.ts`
+- explicit host-bound fragment rendering through `packages/flux-react/src/index.tsx`
 - domain-host bridge direction in Flow Designer and Report Designer docs
 
 The current system does not yet have first-class support for:
@@ -84,7 +84,7 @@ These paths must remain conceptually separate even if some runtime plumbing is s
 
 ## Package Impact
 
-### `packages/amis-schema`
+### `packages/flux-core`
 
 Likely changes:
 
@@ -93,7 +93,7 @@ Likely changes:
 - extend runtime-facing contracts where needed to carry action-scope and component-registry information
 - document any new action shape for component-targeted invocation
 
-### `packages/amis-runtime`
+### `packages/flux-runtime`
 
 Likely changes:
 
@@ -102,7 +102,7 @@ Likely changes:
 - evolve `action-runtime.ts` so built-in dispatch can delegate to component-targeted or action-scope resolution
 - add import loader and import registration support in a later phase
 
-### `packages/amis-react`
+### `packages/flux-react`
 
 Likely changes:
 
@@ -172,7 +172,7 @@ It must not be implemented as arbitrary untrusted script URL execution.
 
 - finalize canonical namespaced action syntax
 - finalize whether `ActionContext` is extended directly or wrapped internally for runtime-only fields
-- define the minimum type additions in `packages/amis-schema/src/index.ts`
+- define the minimum type additions in `packages/flux-core/src/index.ts`
 - define one concrete component-targeted action shape for v1, recommended as `component:invoke`
 - define one concrete pilot namespace for v1, recommended as `designer:*`
 
@@ -193,10 +193,10 @@ It must not be implemented as arbitrary untrusted script URL execution.
 
 ### Tasks
 
-- add `ActionScope`-related interfaces to `packages/amis-schema/src/index.ts`
-- add `ComponentHandleRegistry`-related interfaces to `packages/amis-schema/src/index.ts`
-- add internal implementation for action-scope creation and parent-chain resolution in `packages/amis-runtime`
-- add internal implementation for component-handle registration and resolution in `packages/amis-runtime`
+- add `ActionScope`-related interfaces to `packages/flux-core/src/index.ts`
+- add `ComponentHandleRegistry`-related interfaces to `packages/flux-core/src/index.ts`
+- add internal implementation for action-scope creation and parent-chain resolution in `packages/flux-runtime`
+- add internal implementation for component-handle registration and resolution in `packages/flux-runtime`
 - add tests for registration, replacement, shadowing, unregister, and not-found behavior
 
 ### Deliverables
@@ -215,7 +215,7 @@ It must not be implemented as arbitrary untrusted script URL execution.
 
 ### Tasks
 
-- refactor `packages/amis-runtime/src/action-runtime.ts` so built-in actions remain first-class but unsupported actions can be delegated
+- refactor `packages/flux-runtime/src/action-runtime.ts` so built-in actions remain first-class but unsupported actions can be delegated
 - add resolution order:
   1. built-in platform actions
   2. component-targeted invocation such as `component:invoke`
@@ -243,7 +243,7 @@ It must not be implemented as arbitrary untrusted script URL execution.
 
 ### Tasks
 
-- define how the active action-scope and component registry are carried through `packages/amis-react/src/index.tsx`
+- define how the active action-scope and component registry are carried through `packages/flux-react/src/index.tsx`
 - decide whether to use explicit React contexts, runtime-owned host wrappers, or another equivalent explicit mechanism
 - ensure host renderers can render fragments with inherited or replaced action-scope boundaries explicitly, similar to current data-scope rendering
 - ensure component handles register and unregister during owned lifecycle boundaries, not render phase
@@ -353,7 +353,7 @@ It must not be implemented as arbitrary untrusted script URL execution.
 
 Files likely touched:
 
-- `packages/amis-schema/src/index.ts`
+- `packages/flux-core/src/index.ts`
 
 Expected work:
 
@@ -373,8 +373,8 @@ Mitigation:
 
 Files likely touched:
 
-- `packages/amis-runtime/src/action-runtime.ts`
-- `packages/amis-runtime/src/index.ts`
+- `packages/flux-runtime/src/action-runtime.ts`
+- `packages/flux-runtime/src/index.ts`
 - new helper files for action-scope and component-registry implementation
 
 Expected work:
@@ -395,7 +395,7 @@ Mitigation:
 
 Files likely touched:
 
-- `packages/amis-react/src/index.tsx`
+- `packages/flux-react/src/index.tsx`
 
 Expected work:
 
@@ -415,8 +415,8 @@ Mitigation:
 
 Files likely touched:
 
-- `packages/amis-runtime/src/form-runtime.ts`
-- `packages/amis-react/src/index.tsx`
+- `packages/flux-runtime/src/form-runtime.ts`
+- `packages/flux-react/src/index.tsx`
 - form-related renderer files if needed
 
 Expected work:
@@ -621,3 +621,4 @@ Only after that should `xui:import` be implemented.
 - `docs/architecture/flow-designer/api.md`
 - `docs/architecture/report-designer/design.md`
 - `docs/architecture/report-designer/contracts.md`
+

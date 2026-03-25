@@ -1,23 +1,23 @@
-# Flow Designer 架构设计
+﻿# Flow Designer æž¶æž„è®¾è®¡
 
-## 1. 目标与边界
+## 1. ç›®æ ‡ä¸Žè¾¹ç•Œ
 
-### 1.1 核心目标
+### 1.1 æ ¸å¿ƒç›®æ ‡
 
-- 将现有 flow editor 提炼为通用可配置设计器能力
-- 外部通过 JSON 配置定义 palette、节点、端口、连线、工具栏、属性编辑方式
-- 复用现有 `SchemaRenderer` 体系，而不是平行再造一套页面渲染运行时
-- 在运行时保持高性能，避免每次渲染都重新解释整份配置
+- å°†çŽ°æœ‰ flow editor æç‚¼ä¸ºé€šç”¨å¯é…ç½®è®¾è®¡å™¨èƒ½åŠ›
+- å¤–éƒ¨é€šè¿‡ JSON é…ç½®å®šä¹‰ paletteã€èŠ‚ç‚¹ã€ç«¯å£ã€è¿žçº¿ã€å·¥å…·æ ã€å±žæ€§ç¼–è¾‘æ–¹å¼
+- å¤ç”¨çŽ°æœ‰ `SchemaRenderer` ä½“ç³»ï¼Œè€Œä¸æ˜¯å¹³è¡Œå†é€ ä¸€å¥—é¡µé¢æ¸²æŸ“è¿è¡Œæ—¶
+- åœ¨è¿è¡Œæ—¶ä¿æŒé«˜æ€§èƒ½ï¼Œé¿å…æ¯æ¬¡æ¸²æŸ“éƒ½é‡æ–°è§£é‡Šæ•´ä»½é…ç½®
 
-### 1.2 非目标
+### 1.2 éžç›®æ ‡
 
-- 不生成外部源码
-- 不替换现有 `apps/main/src/pages/flow-editor` 示例
-- 不把所有 UI 都做成 graph core 的内建逻辑
+- ä¸ç”Ÿæˆå¤–éƒ¨æºç 
+- ä¸æ›¿æ¢çŽ°æœ‰ `apps/main/src/pages/flow-editor` ç¤ºä¾‹
+- ä¸æŠŠæ‰€æœ‰ UI éƒ½åšæˆ graph core çš„å†…å»ºé€»è¾‘
 
-## 2. 总体架构
+## 2. æ€»ä½“æž¶æž„
 
-Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
+Flow Designer åº”å®žçŽ°ä¸º `SchemaRenderer` ä¸Šçš„ä¸€å±‚é¢†åŸŸæ‰©å±•ã€‚
 
 ```text
 +---------------- SchemaRenderer Host ----------------+
@@ -41,35 +41,35 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 +-----------------------------------------------------+
 ```
 
-### 2.1 当前已落地的 MVP
+### 2.1 å½“å‰å·²è½åœ°çš„ MVP
 
-目前仓库里已经有第一版可运行实现，但仍是刻意收敛后的 MVP：
+ç›®å‰ä»“åº“é‡Œå·²ç»æœ‰ç¬¬ä¸€ç‰ˆå¯è¿è¡Œå®žçŽ°ï¼Œä½†ä»æ˜¯åˆ»æ„æ”¶æ•›åŽçš„ MVPï¼š
 
-- `@nop-chaos/flow-designer-core` 已落地纯内存 graph runtime，覆盖节点/边增删改查、单选、undo/redo、dirty tracking、save/restore、导出。
-- `@nop-chaos/flow-designer-renderers` 已落地 `designer-page` 宿主与 schema/runtime bridge，并通过本地 `ActionScope` 注册 `designer:*` 动作。
-- playground 已有实际示例，证明 schema-driven toolbar、schema-driven inspector、固定 host scope、保存/导出回调可以协同工作。
-- `@xyflow/react` 现在已经作为 live canvas adapter 接入，且成为默认画布；与此同时，card adapter 与 `xyflow-preview` adapter 仍保留，用于 fallback、契约验证和更聚焦的回归测试。
+- `@nop-chaos/flow-designer-core` å·²è½åœ°çº¯å†…å­˜ graph runtimeï¼Œè¦†ç›–èŠ‚ç‚¹/è¾¹å¢žåˆ æ”¹æŸ¥ã€å•é€‰ã€undo/redoã€dirty trackingã€save/restoreã€å¯¼å‡ºã€‚
+- `@nop-chaos/flow-designer-renderers` å·²è½åœ° `designer-page` å®¿ä¸»ä¸Ž schema/runtime bridgeï¼Œå¹¶é€šè¿‡æœ¬åœ° `ActionScope` æ³¨å†Œ `designer:*` åŠ¨ä½œã€‚
+- playground å·²æœ‰å®žé™…ç¤ºä¾‹ï¼Œè¯æ˜Ž schema-driven toolbarã€schema-driven inspectorã€å›ºå®š host scopeã€ä¿å­˜/å¯¼å‡ºå›žè°ƒå¯ä»¥ååŒå·¥ä½œã€‚
+- `@xyflow/react` çŽ°åœ¨å·²ç»ä½œä¸º live canvas adapter æŽ¥å…¥ï¼Œä¸”æˆä¸ºé»˜è®¤ç”»å¸ƒï¼›ä¸Žæ­¤åŒæ—¶ï¼Œcard adapter ä¸Ž `xyflow-preview` adapter ä»ä¿ç•™ï¼Œç”¨äºŽ fallbackã€å¥‘çº¦éªŒè¯å’Œæ›´èšç„¦çš„å›žå½’æµ‹è¯•ã€‚
 
-## 3. 模块拆分
+## 3. æ¨¡å—æ‹†åˆ†
 
 ### 3.1 `@nop-chaos/flow-designer-core`
 
-职责：纯图运行时，不依赖 React，不依赖 `SchemaRenderer`。
+èŒè´£ï¼šçº¯å›¾è¿è¡Œæ—¶ï¼Œä¸ä¾èµ– Reactï¼Œä¸ä¾èµ– `SchemaRenderer`ã€‚
 
-建议包含：
+å»ºè®®åŒ…å«ï¼š
 
-- graph document 类型定义
-- node type / edge type / port type 配置模型
-- role 匹配和连接校验
-- 节点/边增删改查
-- undo/redo 历史
-- 选择态和批量操作模型
-- 布局接口
-- 权限判断
-- 文档序列化、反序列化、迁移
-- designer action 的底层执行器
+- graph document ç±»åž‹å®šä¹‰
+- node type / edge type / port type é…ç½®æ¨¡åž‹
+- role åŒ¹é…å’Œè¿žæŽ¥æ ¡éªŒ
+- èŠ‚ç‚¹/è¾¹å¢žåˆ æ”¹æŸ¥
+- undo/redo åŽ†å²
+- é€‰æ‹©æ€å’Œæ‰¹é‡æ“ä½œæ¨¡åž‹
+- å¸ƒå±€æŽ¥å£
+- æƒé™åˆ¤æ–­
+- æ–‡æ¡£åºåˆ—åŒ–ã€ååºåˆ—åŒ–ã€è¿ç§»
+- designer action çš„åº•å±‚æ‰§è¡Œå™¨
 
-当前 MVP 已实现的重点能力：
+å½“å‰ MVP å·²å®žçŽ°çš„é‡ç‚¹èƒ½åŠ›ï¼š
 
 - `GraphDocument` / `GraphNode` / `GraphEdge` / `DesignerConfig`
 - `createDesignerCore()`
@@ -78,69 +78,69 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `addEdge` / `updateEdge` / `deleteEdge`
 - `selectNode` / `selectEdge` / `clearSelection`
 - `undo` / `redo` / `toggleGrid` / `save` / `restore` / `exportDocument()`
-- 单一 `start` 节点约束
+- å•ä¸€ `start` èŠ‚ç‚¹çº¦æŸ
 
 ### 3.2 `@nop-chaos/flow-designer-renderers`
 
-职责：与现有 `SchemaRenderer` 集成。
+èŒè´£ï¼šä¸ŽçŽ°æœ‰ `SchemaRenderer` é›†æˆã€‚
 
-建议包含：
+å»ºè®®åŒ…å«ï¼š
 
-- `designer-page`、`designer-canvas`、`designer-palette` 等 `RendererDefinition`
-- `createFlowDesignerRegistry()` 或 `registerFlowDesignerRenderers()`
-- graph runtime 到 schema runtime 的桥接层
-- 宿主 scope 注入
-- `designer:*` action 注册
-- 与 `@xyflow/react` 的适配
+- `designer-page`ã€`designer-canvas`ã€`designer-palette` ç­‰ `RendererDefinition`
+- `createFlowDesignerRegistry()` æˆ– `registerFlowDesignerRenderers()`
+- graph runtime åˆ° schema runtime çš„æ¡¥æŽ¥å±‚
+- å®¿ä¸» scope æ³¨å…¥
+- `designer:*` action æ³¨å†Œ
+- ä¸Ž `@xyflow/react` çš„é€‚é…
 
-当前 MVP 已实现的重点能力：
+å½“å‰ MVP å·²å®žçŽ°çš„é‡ç‚¹èƒ½åŠ›ï¼š
 
 - `designer-page` renderer
-- `designer-field` inspector 控件
-- `designer-canvas` / `designer-palette` / `designer-node-card` / `designer-edge-row` 占位 renderer 定义
+- `designer-field` inspector æŽ§ä»¶
+- `designer-canvas` / `designer-palette` / `designer-node-card` / `designer-edge-row` å ä½ renderer å®šä¹‰
 - `registerFlowDesignerRenderers(registry)` / `createFlowDesignerRegistry()`
-- `designer-page` 在自身 action-scope 边界内注册 `designer` namespace provider，并让 toolbar/inspector 片段沿该边界执行
-- 当前 `designer-page` 不只是在 React 树上把 toolbar/inspector 放在同一 action-scope 边界里，还会在 region render 调用时显式透传 host `scope` 与 `actionScope`，降低后续 render-path 调整时丢失 designer namespace 绑定的风险
-- `designer-page.shortcuts`，用于在宿主层把键盘事件映射到已有 `designer:*` / shared action 链
-- `card` / `xyflow-preview` / `xyflow` 三种 canvas adapter，统一经由 `DesignerCanvasContent` host 映射到 command adapter dispatch
+- `designer-page` åœ¨è‡ªèº« action-scope è¾¹ç•Œå†…æ³¨å†Œ `designer` namespace providerï¼Œå¹¶è®© toolbar/inspector ç‰‡æ®µæ²¿è¯¥è¾¹ç•Œæ‰§è¡Œ
+- å½“å‰ `designer-page` ä¸åªæ˜¯åœ¨ React æ ‘ä¸ŠæŠŠ toolbar/inspector æ”¾åœ¨åŒä¸€ action-scope è¾¹ç•Œé‡Œï¼Œè¿˜ä¼šåœ¨ region render è°ƒç”¨æ—¶æ˜¾å¼é€ä¼  host `scope` ä¸Ž `actionScope`ï¼Œé™ä½ŽåŽç»­ render-path è°ƒæ•´æ—¶ä¸¢å¤± designer namespace ç»‘å®šçš„é£Žé™©
+- `designer-page.shortcuts`ï¼Œç”¨äºŽåœ¨å®¿ä¸»å±‚æŠŠé”®ç›˜äº‹ä»¶æ˜ å°„åˆ°å·²æœ‰ `designer:*` / shared action é“¾
+- `card` / `xyflow-preview` / `xyflow` ä¸‰ç§ canvas adapterï¼Œç»Ÿä¸€ç»ç”± `DesignerCanvasContent` host æ˜ å°„åˆ° command adapter dispatch
 
-### 3.3 `@xyflow/react` 适配边界
+### 3.3 `@xyflow/react` é€‚é…è¾¹ç•Œ
 
-`@xyflow/react` 只作为 canvas 交互与可视化适配层，不作为 graph 数据的第二 source of truth。
+`@xyflow/react` åªä½œä¸º canvas äº¤äº’ä¸Žå¯è§†åŒ–é€‚é…å±‚ï¼Œä¸ä½œä¸º graph æ•°æ®çš„ç¬¬äºŒ source of truthã€‚
 
-建议约束：
+å»ºè®®çº¦æŸï¼š
 
-- graph runtime 持有：`document`、`viewport`、`selection`、`activeTarget`、history、dirty、clipboard、连接校验相关状态
-- `@xyflow/react` 可持有：pointer capture、dragging 中间态、连线预览、节点尺寸测量、框选手势中的纯 UI 临时态
-- `onNodesChange`、`onEdgesChange`、`onConnect`、selection change 等回调先归一化为 designer bridge command，再进入 `designer:*` action 或 core action executor
-- canvas adapter 不直接写 graph store 的结构化 document 状态，避免双写和回调环
-- runtime 快照回推到 canvas 时必须允许 no-op 合并，避免受控更新造成事件回环
+- graph runtime æŒæœ‰ï¼š`document`ã€`viewport`ã€`selection`ã€`activeTarget`ã€historyã€dirtyã€clipboardã€è¿žæŽ¥æ ¡éªŒç›¸å…³çŠ¶æ€
+- `@xyflow/react` å¯æŒæœ‰ï¼špointer captureã€dragging ä¸­é—´æ€ã€è¿žçº¿é¢„è§ˆã€èŠ‚ç‚¹å°ºå¯¸æµ‹é‡ã€æ¡†é€‰æ‰‹åŠ¿ä¸­çš„çº¯ UI ä¸´æ—¶æ€
+- `onNodesChange`ã€`onEdgesChange`ã€`onConnect`ã€selection change ç­‰å›žè°ƒå…ˆå½’ä¸€åŒ–ä¸º designer bridge commandï¼Œå†è¿›å…¥ `designer:*` action æˆ– core action executor
+- canvas adapter ä¸ç›´æŽ¥å†™ graph store çš„ç»“æž„åŒ– document çŠ¶æ€ï¼Œé¿å…åŒå†™å’Œå›žè°ƒçŽ¯
+- runtime å¿«ç…§å›žæŽ¨åˆ° canvas æ—¶å¿…é¡»å…è®¸ no-op åˆå¹¶ï¼Œé¿å…å—æŽ§æ›´æ–°é€ æˆäº‹ä»¶å›žçŽ¯
 
-## 4. 为什么不做独立引擎
+## 4. ä¸ºä»€ä¹ˆä¸åšç‹¬ç«‹å¼•æ“Ž
 
-参考 `packages/amis-react/src/index.tsx:479`，当前体系已经具备：
+å‚è€ƒ `packages/flux-react/src/index.tsx:479`ï¼Œå½“å‰ä½“ç³»å·²ç»å…·å¤‡ï¼š
 
-- registry 驱动 renderer 发现
-- schema compile 和动态值编译缓存
+- registry é©±åŠ¨ renderer å‘çŽ°
+- schema compile å’ŒåŠ¨æ€å€¼ç¼–è¯‘ç¼“å­˜
 - page/form runtime
-- scope 上下文
+- scope ä¸Šä¸‹æ–‡
 - dialog host
 - action dispatch
-- plugin 生命周期
+- plugin ç”Ÿå‘½å‘¨æœŸ
 
-因此 Flow Designer 不应再重复发明：
+å› æ­¤ Flow Designer ä¸åº”å†é‡å¤å‘æ˜Žï¼š
 
-- 独立表达式协议
-- 独立属性面板表单协议
-- 独立弹窗体系
-- 独立按钮动作系统
-- 独立页面级运行时
+- ç‹¬ç«‹è¡¨è¾¾å¼åè®®
+- ç‹¬ç«‹å±žæ€§é¢æ¿è¡¨å•åè®®
+- ç‹¬ç«‹å¼¹çª—ä½“ç³»
+- ç‹¬ç«‹æŒ‰é’®åŠ¨ä½œç³»ç»Ÿ
+- ç‹¬ç«‹é¡µé¢çº§è¿è¡Œæ—¶
 
-## 5. `designer-page` 组织模型
+## 5. `designer-page` ç»„ç»‡æ¨¡åž‹
 
-Flow Designer 的宿主 schema 采用一个根节点类型：`designer-page`。
+Flow Designer çš„å®¿ä¸» schema é‡‡ç”¨ä¸€ä¸ªæ ¹èŠ‚ç‚¹ç±»åž‹ï¼š`designer-page`ã€‚
 
-推荐结构：
+æŽ¨èç»“æž„ï¼š
 
 ```ts
 interface DesignerPageSchema {
@@ -155,142 +155,142 @@ interface DesignerPageSchema {
 }
 ```
 
-说明：
+è¯´æ˜Žï¼š
 
-- `document` 是当前图文档初始值
-- `config` 是 designer 专用配置，定义 nodeTypes、ports、edgeTypes 等领域规则
-- `toolbar`、`inspector`、`dialogs` 是当前已实际挂载的 schema 片段，由 `SchemaRenderer` 渲染
-- `dialogs` region 本身现在已经会被 `DesignerPageRenderer` 挂载；但通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径，两者不应混为一谈
+- `document` æ˜¯å½“å‰å›¾æ–‡æ¡£åˆå§‹å€¼
+- `config` æ˜¯ designer ä¸“ç”¨é…ç½®ï¼Œå®šä¹‰ nodeTypesã€portsã€edgeTypes ç­‰é¢†åŸŸè§„åˆ™
+- `toolbar`ã€`inspector`ã€`dialogs` æ˜¯å½“å‰å·²å®žé™…æŒ‚è½½çš„ schema ç‰‡æ®µï¼Œç”± `SchemaRenderer` æ¸²æŸ“
+- `dialogs` region æœ¬èº«çŽ°åœ¨å·²ç»ä¼šè¢« `DesignerPageRenderer` æŒ‚è½½ï¼›ä½†é€šè¿‡å…±äº« `dialog` action æ‰“å¼€çš„å¼¹çª—ä»ç„¶æ˜¯å¦ä¸€æ¡ dialog runtime è·¯å¾„ï¼Œä¸¤è€…ä¸åº”æ··ä¸ºä¸€è°ˆ
 
-## 6. 数据模型分层
+## 6. æ•°æ®æ¨¡åž‹åˆ†å±‚
 
-### 6.1 持久化文档
+### 6.1 æŒä¹…åŒ–æ–‡æ¡£
 
-只保存稳定的 graph 文档：
+åªä¿å­˜ç¨³å®šçš„ graph æ–‡æ¡£ï¼š
 
-- 文档元信息
+- æ–‡æ¡£å…ƒä¿¡æ¯
 - nodes
 - edges
-- 节点/边业务数据
-- 可选 viewport
+- èŠ‚ç‚¹/è¾¹ä¸šåŠ¡æ•°æ®
+- å¯é€‰ viewport
 
-不保存：
+ä¸ä¿å­˜ï¼š
 
 - hover
 - selection drawer open
-- 临时校验错误展示状态
-- 浮动工具栏显示状态
+- ä¸´æ—¶æ ¡éªŒé”™è¯¯å±•ç¤ºçŠ¶æ€
+- æµ®åŠ¨å·¥å…·æ æ˜¾ç¤ºçŠ¶æ€
 
-### 6.2 运行时状态
+### 6.2 è¿è¡Œæ—¶çŠ¶æ€
 
-运行时状态由两层组成：
+è¿è¡Œæ—¶çŠ¶æ€ç”±ä¸¤å±‚ç»„æˆï¼š
 
-- graph runtime state：selection、history、clipboard、hover、active target
-- schema runtime state：form/page/dialog/action 相关状态
+- graph runtime stateï¼šselectionã€historyã€clipboardã€hoverã€active target
+- schema runtime stateï¼šform/page/dialog/action ç›¸å…³çŠ¶æ€
 
-二者必须分层，避免把 form runtime 再复制进 Zustand。
+äºŒè€…å¿…é¡»åˆ†å±‚ï¼Œé¿å…æŠŠ form runtime å†å¤åˆ¶è¿› Zustandã€‚
 
-### 6.3 graph runtime 与 schema runtime 的桥接
+### 6.3 graph runtime ä¸Ž schema runtime çš„æ¡¥æŽ¥
 
-桥接层负责把 graph runtime 暴露给 `designer-page` 下的 renderer shell 与 schema 片段，但必须保持单向职责清晰。
+æ¡¥æŽ¥å±‚è´Ÿè´£æŠŠ graph runtime æš´éœ²ç»™ `designer-page` ä¸‹çš„ renderer shell ä¸Ž schema ç‰‡æ®µï¼Œä½†å¿…é¡»ä¿æŒå•å‘èŒè´£æ¸…æ™°ã€‚
 
-这里要区分两层含义：
+è¿™é‡Œè¦åŒºåˆ†ä¸¤å±‚å«ä¹‰ï¼š
 
-- 目标架构：schema 片段可以通过固定宿主 scope 读取 designer 只读快照
-- 当前实现：稳定快照已经存在，但主要通过 `DesignerContext` 暴露给 Flow Designer 自己的 React 子组件；schema 表达式 scope 还没有完整拿到同一组字段
+- ç›®æ ‡æž¶æž„ï¼šschema ç‰‡æ®µå¯ä»¥é€šè¿‡å›ºå®šå®¿ä¸» scope è¯»å– designer åªè¯»å¿«ç…§
+- å½“å‰å®žçŽ°ï¼šç¨³å®šå¿«ç…§å·²ç»å­˜åœ¨ï¼Œä½†ä¸»è¦é€šè¿‡ `DesignerContext` æš´éœ²ç»™ Flow Designer è‡ªå·±çš„ React å­ç»„ä»¶ï¼›schema è¡¨è¾¾å¼ scope è¿˜æ²¡æœ‰å®Œæ•´æ‹¿åˆ°åŒä¸€ç»„å­—æ®µ
 
-当前代码真相请优先看 `docs/architecture/flow-designer/runtime-snapshot.md`。
+å½“å‰ä»£ç çœŸç›¸è¯·ä¼˜å…ˆçœ‹ `docs/architecture/flow-designer/runtime-snapshot.md`ã€‚
 
-目标态桥接约束如下：
+ç›®æ ‡æ€æ¡¥æŽ¥çº¦æŸå¦‚ä¸‹ï¼š
 
-- schema 片段通过固定宿主 scope 读取 graph runtime 的只读快照
-- schema 片段通过 `designer:*` actions 或 bridge dispatch API 提交写操作
-- toolbar / inspector 片段当前已经显式收到该宿主 scope 与 action-scope；dialog 则通过共享 dialog runtime 继承打开它时的 action-scope，因此不会形成第二条 graph action 路径
-- schema 层不得直接拿到底层 graph store 并原地修改 document
-- bridge 对外暴露的是稳定快照与有限命令面，而不是整套 store 私有实现
+- schema ç‰‡æ®µé€šè¿‡å›ºå®šå®¿ä¸» scope è¯»å– graph runtime çš„åªè¯»å¿«ç…§
+- schema ç‰‡æ®µé€šè¿‡ `designer:*` actions æˆ– bridge dispatch API æäº¤å†™æ“ä½œ
+- toolbar / inspector ç‰‡æ®µå½“å‰å·²ç»æ˜¾å¼æ”¶åˆ°è¯¥å®¿ä¸» scope ä¸Ž action-scopeï¼›dialog åˆ™é€šè¿‡å…±äº« dialog runtime ç»§æ‰¿æ‰“å¼€å®ƒæ—¶çš„ action-scopeï¼Œå› æ­¤ä¸ä¼šå½¢æˆç¬¬äºŒæ¡ graph action è·¯å¾„
+- schema å±‚ä¸å¾—ç›´æŽ¥æ‹¿åˆ°åº•å±‚ graph store å¹¶åŽŸåœ°ä¿®æ”¹ document
+- bridge å¯¹å¤–æš´éœ²çš„æ˜¯ç¨³å®šå¿«ç…§ä¸Žæœ‰é™å‘½ä»¤é¢ï¼Œè€Œä¸æ˜¯æ•´å¥— store ç§æœ‰å®žçŽ°
 
-推荐 bridge 最小能力：
+æŽ¨è bridge æœ€å°èƒ½åŠ›ï¼š
 
-- `getSnapshot()` - 读取当前 `doc`、`selection`、`activeNode`、`activeEdge`、runtime summary
-- `dispatch(command)` - 提交归一化后的 designer 命令
-- `subscribe(listener)` - 供 renderer shell 做局部订阅
-- `emit(event)` - 向宿主和插件发布 designer 事件
+- `getSnapshot()` - è¯»å–å½“å‰ `doc`ã€`selection`ã€`activeNode`ã€`activeEdge`ã€runtime summary
+- `dispatch(command)` - æäº¤å½’ä¸€åŒ–åŽçš„ designer å‘½ä»¤
+- `subscribe(listener)` - ä¾› renderer shell åšå±€éƒ¨è®¢é˜…
+- `emit(event)` - å‘å®¿ä¸»å’Œæ’ä»¶å‘å¸ƒ designer äº‹ä»¶
 
-## 7. 节点类型模型
+## 7. èŠ‚ç‚¹ç±»åž‹æ¨¡åž‹
 
-节点类型采用 designer 专用 config，不直接退化成普通 renderer schema。但节点类型内部允许嵌入 schema 片段：
-- `inspector.body` - 属性面板
-- `createDialog.body` - 创建节点弹窗
-- `quickActions` - 快速操作按钮
-- `emptyState` - 空节点空状态提示
+èŠ‚ç‚¹ç±»åž‹é‡‡ç”¨ designer ä¸“ç”¨ configï¼Œä¸ç›´æŽ¥é€€åŒ–æˆæ™®é€š renderer schemaã€‚ä½†èŠ‚ç‚¹ç±»åž‹å†…éƒ¨å…è®¸åµŒå…¥ schema ç‰‡æ®µï¼š
+- `inspector.body` - å±žæ€§é¢æ¿
+- `createDialog.body` - åˆ›å»ºèŠ‚ç‚¹å¼¹çª—
+- `quickActions` - å¿«é€Ÿæ“ä½œæŒ‰é’®
+- `emptyState` - ç©ºèŠ‚ç‚¹ç©ºçŠ¶æ€æç¤º
 
-但 节点组件通过 `body: SchemaInput` 渲染，使用 AMIS Schema 组合现有 renderer
-            - 内置节点图标通过 `icon` 字段（kebab-case 格式）
-            - `label`、 `description` 秊外观样式
-            - 边标签和说明节点类型
-- **节点组件支持自定义 renderer**
-  通过在 `nodeTypes[].body` 中使用自定义组件类型（如 `my-custom-node`），注册后通过 AMIS 渲染器引用。
-            - 或在 `nodeTypes` 中配置一个使用内置组件
-            - 通过 `nodeTypes[].appearance` 配置基础样式（颜色、边框等）
-- 节点内部允许嵌入 schema 片段：
-  - `inspector.body` - 属性面板
-  - `createDialog.body` - 创建节点弹窗
-  - `quickActions` - 快速操作按钮
-- `emptyState` - 空节点空状态提示
+ä½† èŠ‚ç‚¹ç»„ä»¶é€šè¿‡ `body: SchemaInput` æ¸²æŸ“ï¼Œä½¿ç”¨ AMIS Schema ç»„åˆçŽ°æœ‰ renderer
+            - å†…ç½®èŠ‚ç‚¹å›¾æ ‡é€šè¿‡ `icon` å­—æ®µï¼ˆkebab-case æ ¼å¼ï¼‰
+            - `label`ã€ `description` ç§Šå¤–è§‚æ ·å¼
+            - è¾¹æ ‡ç­¾å’Œè¯´æ˜ŽèŠ‚ç‚¹ç±»åž‹
+- **èŠ‚ç‚¹ç»„ä»¶æ”¯æŒè‡ªå®šä¹‰ renderer**
+  é€šè¿‡åœ¨ `nodeTypes[].body` ä¸­ä½¿ç”¨è‡ªå®šä¹‰ç»„ä»¶ç±»åž‹ï¼ˆå¦‚ `my-custom-node`ï¼‰ï¼Œæ³¨å†ŒåŽé€šè¿‡ AMIS æ¸²æŸ“å™¨å¼•ç”¨ã€‚
+            - æˆ–åœ¨ `nodeTypes` ä¸­é…ç½®ä¸€ä¸ªä½¿ç”¨å†…ç½®ç»„ä»¶
+            - é€šè¿‡ `nodeTypes[].appearance` é…ç½®åŸºç¡€æ ·å¼ï¼ˆé¢œè‰²ã€è¾¹æ¡†ç­‰ï¼‰
+- èŠ‚ç‚¹å†…éƒ¨å…è®¸åµŒå…¥ schema ç‰‡æ®µï¼š
+  - `inspector.body` - å±žæ€§é¢æ¿
+  - `createDialog.body` - åˆ›å»ºèŠ‚ç‚¹å¼¹çª—
+  - `quickActions` - å¿«é€Ÿæ“ä½œæŒ‰é’®
+- `emptyState` - ç©ºèŠ‚ç‚¹ç©ºçŠ¶æ€æç¤º
 
-## 8. 端口优先的连接模型
+## 8. ç«¯å£ä¼˜å…ˆçš„è¿žæŽ¥æ¨¡åž‹
 
-只做 node 级 role 不足以支撑复杂设计器，因此一开始就支持 port 级建模。
+åªåš node çº§ role ä¸è¶³ä»¥æ”¯æ’‘å¤æ‚è®¾è®¡å™¨ï¼Œå› æ­¤ä¸€å¼€å§‹å°±æ”¯æŒ port çº§å»ºæ¨¡ã€‚
 
-连接校验顺序：
+è¿žæŽ¥æ ¡éªŒé¡ºåºï¼š
 
-1. 校验 source port / target port 是否存在
-2. 校验端口方向是否正确
-3. 校验 port roles 是否匹配
-4. 若 port 未定义 role，则回退到 node role
-5. 校验 maxConnections、self loop、multi edge、黑名单规则
-6. 校验 edgeType 约束
+1. æ ¡éªŒ source port / target port æ˜¯å¦å­˜åœ¨
+2. æ ¡éªŒç«¯å£æ–¹å‘æ˜¯å¦æ­£ç¡®
+3. æ ¡éªŒ port roles æ˜¯å¦åŒ¹é…
+4. è‹¥ port æœªå®šä¹‰ roleï¼Œåˆ™å›žé€€åˆ° node role
+5. æ ¡éªŒ maxConnectionsã€self loopã€multi edgeã€é»‘åå•è§„åˆ™
+6. æ ¡éªŒ edgeType çº¦æŸ
 
-这样可以支持：
+è¿™æ ·å¯ä»¥æ”¯æŒï¼š
 
-- 一节点多入多出
-- 条件分支
-- 并行节点
-- 端口级最大连接数
-- 明确的 handle 定义
+- ä¸€èŠ‚ç‚¹å¤šå…¥å¤šå‡º
+- æ¡ä»¶åˆ†æ”¯
+- å¹¶è¡ŒèŠ‚ç‚¹
+- ç«¯å£çº§æœ€å¤§è¿žæŽ¥æ•°
+- æ˜Žç¡®çš„ handle å®šä¹‰
 
-## 9. 属性编辑与创建流程
+## 9. å±žæ€§ç¼–è¾‘ä¸Žåˆ›å»ºæµç¨‹
 
-### 9.1 属性编辑
+### 9.1 å±žæ€§ç¼–è¾‘
 
-属性面板直接使用 schema 片段驱动，而不是单独维护字段引擎。
+å±žæ€§é¢æ¿ç›´æŽ¥ä½¿ç”¨ schema ç‰‡æ®µé©±åŠ¨ï¼Œè€Œä¸æ˜¯å•ç‹¬ç»´æŠ¤å­—æ®µå¼•æ“Žã€‚
 
-目标态推荐方式：
+ç›®æ ‡æ€æŽ¨èæ–¹å¼ï¼š
 
-- inspector schema 使用固定宿主 scope 读取 `activeNode` / `activeEdge`
-- 保存按钮触发 `designer:updateNodeData` / `designer:updateEdgeData`
-- 校验复用现有 form runtime
+- inspector schema ä½¿ç”¨å›ºå®šå®¿ä¸» scope è¯»å– `activeNode` / `activeEdge`
+- ä¿å­˜æŒ‰é’®è§¦å‘ `designer:updateNodeData` / `designer:updateEdgeData`
+- æ ¡éªŒå¤ç”¨çŽ°æœ‰ form runtime
 
-现状补充：
+çŽ°çŠ¶è¡¥å……ï¼š
 
-- 默认 inspector 与 `designer-field` 当前直接消费 `DesignerContext.snapshot`
-- schema inspector 的写路径已经可以稳定复用 `designer:*` action
-- schema inspector 的读路径还不应在现状文档里写成“`${activeNode.*}` 已默认可用”；当前落地状态见 `docs/architecture/flow-designer/runtime-snapshot.md`
+- é»˜è®¤ inspector ä¸Ž `designer-field` å½“å‰ç›´æŽ¥æ¶ˆè´¹ `DesignerContext.snapshot`
+- schema inspector çš„å†™è·¯å¾„å·²ç»å¯ä»¥ç¨³å®šå¤ç”¨ `designer:*` action
+- schema inspector çš„è¯»è·¯å¾„è¿˜ä¸åº”åœ¨çŽ°çŠ¶æ–‡æ¡£é‡Œå†™æˆâ€œ`${activeNode.*}` å·²é»˜è®¤å¯ç”¨â€ï¼›å½“å‰è½åœ°çŠ¶æ€è§ `docs/architecture/flow-designer/runtime-snapshot.md`
 
-### 9.2 两阶段创建
+### 9.2 ä¸¤é˜¶æ®µåˆ›å»º
 
-节点创建支持两种路径：
+èŠ‚ç‚¹åˆ›å»ºæ”¯æŒä¸¤ç§è·¯å¾„ï¼š
 
-- 直接拖拽落图，使用默认值创建
-- 若节点类型配置了 `createDialog.body`，则在创建前或创建后立即弹出创建表单
+- ç›´æŽ¥æ‹–æ‹½è½å›¾ï¼Œä½¿ç”¨é»˜è®¤å€¼åˆ›å»º
+- è‹¥èŠ‚ç‚¹ç±»åž‹é…ç½®äº† `createDialog.body`ï¼Œåˆ™åœ¨åˆ›å»ºå‰æˆ–åˆ›å»ºåŽç«‹å³å¼¹å‡ºåˆ›å»ºè¡¨å•
 
-这样既保证简单节点的效率，也覆盖复杂节点初始化场景。
+è¿™æ ·æ—¢ä¿è¯ç®€å•èŠ‚ç‚¹çš„æ•ˆçŽ‡ï¼Œä¹Ÿè¦†ç›–å¤æ‚èŠ‚ç‚¹åˆå§‹åŒ–åœºæ™¯ã€‚
 
-## 10. 动作体系
+## 10. åŠ¨ä½œä½“ç³»
 
-所有外围交互统一接入现有 action schema，并扩展 designer action。
+æ‰€æœ‰å¤–å›´äº¤äº’ç»Ÿä¸€æŽ¥å…¥çŽ°æœ‰ action schemaï¼Œå¹¶æ‰©å±• designer actionã€‚
 
-建议的内建 action：
+å»ºè®®çš„å†…å»º actionï¼š
 
 - `designer:addNode`
 - `designer:deleteSelection`
@@ -314,7 +314,7 @@ interface DesignerPageSchema {
 - `designer:commitTransaction`
 - `designer:rollbackTransaction`
 
-当前 MVP 实际已接线的动作子集是：
+å½“å‰ MVP å®žé™…å·²æŽ¥çº¿çš„åŠ¨ä½œå­é›†æ˜¯ï¼š
 
 - `designer:addNode`
 - `designer:updateNodeData`
@@ -330,138 +330,138 @@ interface DesignerPageSchema {
 - `designer:restore`
 - `designer:export`
 
-好处：
+å¥½å¤„ï¼š
 
-- toolbar 按钮可直接触发
-- inspector 表单可直接提交到 designer action
-- 快捷键和浮动工具栏可复用同一动作分发链
+- toolbar æŒ‰é’®å¯ç›´æŽ¥è§¦å‘
+- inspector è¡¨å•å¯ç›´æŽ¥æäº¤åˆ° designer action
+- å¿«æ·é”®å’Œæµ®åŠ¨å·¥å…·æ å¯å¤ç”¨åŒä¸€åŠ¨ä½œåˆ†å‘é“¾
 
-当前 playground 里的删除确认已经用共享 `dialog` / `closeDialog` action 和 schema 组合实现，说明 destructive UX 不需要额外硬编码进 core 或 renderer runtime。
+å½“å‰ playground é‡Œçš„åˆ é™¤ç¡®è®¤å·²ç»ç”¨å…±äº« `dialog` / `closeDialog` action å’Œ schema ç»„åˆå®žçŽ°ï¼Œè¯´æ˜Ž destructive UX ä¸éœ€è¦é¢å¤–ç¡¬ç¼–ç è¿› core æˆ– renderer runtimeã€‚
 
-当前 playground 里的键盘快捷键也保持在宿主 schema 层定义，通过 `designer-page.shortcuts` 把 `Ctrl/Cmd+Z`、`Ctrl/Cmd+Y`、`Ctrl/Cmd+C`、`Ctrl/Cmd+V` 和 `Delete` 映射到现有 action；renderer 只负责监听并分发，core 不直接感知具体按键策略。
+å½“å‰ playground é‡Œçš„é”®ç›˜å¿«æ·é”®ä¹Ÿä¿æŒåœ¨å®¿ä¸» schema å±‚å®šä¹‰ï¼Œé€šè¿‡ `designer-page.shortcuts` æŠŠ `Ctrl/Cmd+Z`ã€`Ctrl/Cmd+Y`ã€`Ctrl/Cmd+C`ã€`Ctrl/Cmd+V` å’Œ `Delete` æ˜ å°„åˆ°çŽ°æœ‰ actionï¼›renderer åªè´Ÿè´£ç›‘å¬å¹¶åˆ†å‘ï¼Œcore ä¸ç›´æŽ¥æ„ŸçŸ¥å…·ä½“æŒ‰é”®ç­–ç•¥ã€‚
 
-当前卡片式 canvas 还额外实现了 hover-driven quick-action shell：节点和边的 Edit / Duplicate / Delete 只是在 renderer 层按 hover 或 active 状态显隐，真正的删除、复制、选中仍然走既有 command/action 边界。
+å½“å‰å¡ç‰‡å¼ canvas è¿˜é¢å¤–å®žçŽ°äº† hover-driven quick-action shellï¼šèŠ‚ç‚¹å’Œè¾¹çš„ Edit / Duplicate / Delete åªæ˜¯åœ¨ renderer å±‚æŒ‰ hover æˆ– active çŠ¶æ€æ˜¾éšï¼ŒçœŸæ­£çš„åˆ é™¤ã€å¤åˆ¶ã€é€‰ä¸­ä»ç„¶èµ°æ—¢æœ‰ command/action è¾¹ç•Œã€‚
 
-当前 `designer-page` 还内建了窄屏 inspector fallback：当视口收窄到移动布局时，右侧 inspector 不再强依赖三栏布局，而是折叠为位于 canvas 下方的可展开面板；选择节点或边时会自动展开，但 inspector schema、nodeTypes/edgeTypes 的 `inspector.body` 契约保持不变。
+å½“å‰ `designer-page` è¿˜å†…å»ºäº†çª„å± inspector fallbackï¼šå½“è§†å£æ”¶çª„åˆ°ç§»åŠ¨å¸ƒå±€æ—¶ï¼Œå³ä¾§ inspector ä¸å†å¼ºä¾èµ–ä¸‰æ å¸ƒå±€ï¼Œè€Œæ˜¯æŠ˜å ä¸ºä½äºŽ canvas ä¸‹æ–¹çš„å¯å±•å¼€é¢æ¿ï¼›é€‰æ‹©èŠ‚ç‚¹æˆ–è¾¹æ—¶ä¼šè‡ªåŠ¨å±•å¼€ï¼Œä½† inspector schemaã€nodeTypes/edgeTypes çš„ `inspector.body` å¥‘çº¦ä¿æŒä¸å˜ã€‚
 
-当前 playground 还补上了轻量 viewport controls parity：renderer shell 暴露 Zoom in / Zoom out / Fit view 控件与快捷键，底层仍然通过 core command 修改 `GraphDocument.viewport`，用来证明缩放和视口摘要也可以沿用同一条 command/history/action 边界，而不是做成独立页面局部状态。
+å½“å‰ playground è¿˜è¡¥ä¸Šäº†è½»é‡ viewport controls parityï¼šrenderer shell æš´éœ² Zoom in / Zoom out / Fit view æŽ§ä»¶ä¸Žå¿«æ·é”®ï¼Œåº•å±‚ä»ç„¶é€šè¿‡ core command ä¿®æ”¹ `GraphDocument.viewport`ï¼Œç”¨æ¥è¯æ˜Žç¼©æ”¾å’Œè§†å£æ‘˜è¦ä¹Ÿå¯ä»¥æ²¿ç”¨åŒä¸€æ¡ command/history/action è¾¹ç•Œï¼Œè€Œä¸æ˜¯åšæˆç‹¬ç«‹é¡µé¢å±€éƒ¨çŠ¶æ€ã€‚
 
-当前 card/list canvas 也加入了 minimap-style overview shell：它仍然不是最终 `@xyflow/react` minimap 适配器，而是 renderer 层基于节点坐标生成的轻量概览图，用于验证 overview UI、节点空间分布摘要以及“从概览选择节点”这类交互同样可以复用既有 selection/inspector 边界。
+å½“å‰ card/list canvas ä¹ŸåŠ å…¥äº† minimap-style overview shellï¼šå®ƒä»ç„¶ä¸æ˜¯æœ€ç»ˆ `@xyflow/react` minimap é€‚é…å™¨ï¼Œè€Œæ˜¯ renderer å±‚åŸºäºŽèŠ‚ç‚¹åæ ‡ç”Ÿæˆçš„è½»é‡æ¦‚è§ˆå›¾ï¼Œç”¨äºŽéªŒè¯ overview UIã€èŠ‚ç‚¹ç©ºé—´åˆ†å¸ƒæ‘˜è¦ä»¥åŠâ€œä»Žæ¦‚è§ˆé€‰æ‹©èŠ‚ç‚¹â€è¿™ç±»äº¤äº’åŒæ ·å¯ä»¥å¤ç”¨æ—¢æœ‰ selection/inspector è¾¹ç•Œã€‚
 
-当前 edge list 与 export shell 也开始更接近 legacy parity：edge row 不再只显示 label 和 source/target，而是额外暴露 condition 摘要与 line-style badge；playground 的 latest export 面板则会从导出的 JSON 中解析节点数、边数、line styles 和 viewport zoom，帮助验证 inspector 改动是否如预期反映到导出结构。
+å½“å‰ edge list ä¸Ž export shell ä¹Ÿå¼€å§‹æ›´æŽ¥è¿‘ legacy parityï¼šedge row ä¸å†åªæ˜¾ç¤º label å’Œ source/targetï¼Œè€Œæ˜¯é¢å¤–æš´éœ² condition æ‘˜è¦ä¸Ž line-style badgeï¼›playground çš„ latest export é¢æ¿åˆ™ä¼šä»Žå¯¼å‡ºçš„ JSON ä¸­è§£æžèŠ‚ç‚¹æ•°ã€è¾¹æ•°ã€line styles å’Œ viewport zoomï¼Œå¸®åŠ©éªŒè¯ inspector æ”¹åŠ¨æ˜¯å¦å¦‚é¢„æœŸåæ˜ åˆ°å¯¼å‡ºç»“æž„ã€‚
 
-当前 card/list canvas 还补上了一个轻量 connection mode shell：用户可以先从节点 quick action 或 footer 进入“Start connection”，再点击第二个节点完成 `addEdge`，从而在真正接入 `@xyflow/react` handles 前，先验证“连接 affordance 只是 renderer 事件桥接，真正的连线 mutation 仍走 core command/history 边界”。
+å½“å‰ card/list canvas è¿˜è¡¥ä¸Šäº†ä¸€ä¸ªè½»é‡ connection mode shellï¼šç”¨æˆ·å¯ä»¥å…ˆä»ŽèŠ‚ç‚¹ quick action æˆ– footer è¿›å…¥â€œStart connectionâ€ï¼Œå†ç‚¹å‡»ç¬¬äºŒä¸ªèŠ‚ç‚¹å®Œæˆ `addEdge`ï¼Œä»Žè€Œåœ¨çœŸæ­£æŽ¥å…¥ `@xyflow/react` handles å‰ï¼Œå…ˆéªŒè¯â€œè¿žæŽ¥ affordance åªæ˜¯ renderer äº‹ä»¶æ¡¥æŽ¥ï¼ŒçœŸæ­£çš„è¿žçº¿ mutation ä»èµ° core command/history è¾¹ç•Œâ€ã€‚
 
-当前 playground toolbar 也继续朝 document-level flow actions 补齐：像 `Clear Selection` 这类动作仍然保持 schema-driven，由 host toolbar 直接 dispatch `designer:*` action，而不是把这类页面命令硬编码进共享 runtime UI。
+å½“å‰ playground toolbar ä¹Ÿç»§ç»­æœ document-level flow actions è¡¥é½ï¼šåƒ `Clear Selection` è¿™ç±»åŠ¨ä½œä»ç„¶ä¿æŒ schema-drivenï¼Œç”± host toolbar ç›´æŽ¥ dispatch `designer:*` actionï¼Œè€Œä¸æ˜¯æŠŠè¿™ç±»é¡µé¢å‘½ä»¤ç¡¬ç¼–ç è¿›å…±äº« runtime UIã€‚
 
-当前 card/list canvas 也开始显式模拟 pane-click 语义：点击空白 canvas surface 会退出 connection mode 并清空 selection，用来先验证未来 `@xyflow/react` pane click 到 `clearSelection` 的桥接契约。
+å½“å‰ card/list canvas ä¹Ÿå¼€å§‹æ˜¾å¼æ¨¡æ‹Ÿ pane-click è¯­ä¹‰ï¼šç‚¹å‡»ç©ºç™½ canvas surface ä¼šé€€å‡º connection mode å¹¶æ¸…ç©º selectionï¼Œç”¨æ¥å…ˆéªŒè¯æœªæ¥ `@xyflow/react` pane click åˆ° `clearSelection` çš„æ¡¥æŽ¥å¥‘çº¦ã€‚
 
-当前 renderer 内部也开始把 card/list MVP 视图提炼成单独 canvas adapter 组件，先把现有 shell 交互从 page shell 中拆出去，为后续替换成真正的 `@xyflow/react` adapter 做边界收敛。
+å½“å‰ renderer å†…éƒ¨ä¹Ÿå¼€å§‹æŠŠ card/list MVP è§†å›¾æç‚¼æˆå•ç‹¬ canvas adapter ç»„ä»¶ï¼Œå…ˆæŠŠçŽ°æœ‰ shell äº¤äº’ä»Ž page shell ä¸­æ‹†å‡ºåŽ»ï¼Œä¸ºåŽç»­æ›¿æ¢æˆçœŸæ­£çš„ `@xyflow/react` adapter åšè¾¹ç•Œæ”¶æ•›ã€‚
 
-当前 `designer-page` 也开始显式接受 `canvasAdapter` 选择，renderer 内部已经可以在同一套 host scope / core command 契约上切换 card adapter 与 xyflow-preview adapter，用来先固定 callback/selection/connect 语义，再落真正的 `@xyflow/react` 依赖。
+å½“å‰ `designer-page` ä¹Ÿå¼€å§‹æ˜¾å¼æŽ¥å— `canvasAdapter` é€‰æ‹©ï¼Œrenderer å†…éƒ¨å·²ç»å¯ä»¥åœ¨åŒä¸€å¥— host scope / core command å¥‘çº¦ä¸Šåˆ‡æ¢ card adapter ä¸Ž xyflow-preview adapterï¼Œç”¨æ¥å…ˆå›ºå®š callback/selection/connect è¯­ä¹‰ï¼Œå†è½çœŸæ­£çš„ `@xyflow/react` ä¾èµ–ã€‚
 
-### 10.1 事务与历史边界
+### 10.1 äº‹åŠ¡ä¸ŽåŽ†å²è¾¹ç•Œ
 
-Flow Designer 需要统一的事务边界，即使历史底层实现最终同时支持 patch 和 snapshot 两种存储方式。
+Flow Designer éœ€è¦ç»Ÿä¸€çš„äº‹åŠ¡è¾¹ç•Œï¼Œå³ä½¿åŽ†å²åº•å±‚å®žçŽ°æœ€ç»ˆåŒæ—¶æ”¯æŒ patch å’Œ snapshot ä¸¤ç§å­˜å‚¨æ–¹å¼ã€‚
 
-必须满足：
+å¿…é¡»æ»¡è¶³ï¼š
 
-- 拖拽一个或多个节点只产生一条逻辑历史记录
-- 自动布局、批量删除、批量更新等复合操作可包裹在同一 transaction 中
-- action handler 不得各自写出独立历史格式；必须进入统一 operation/history pipeline
-- patch 与 snapshot 的取舍可以按 operation 类别决定，但 undo/redo 语义必须稳定
+- æ‹–æ‹½ä¸€ä¸ªæˆ–å¤šä¸ªèŠ‚ç‚¹åªäº§ç”Ÿä¸€æ¡é€»è¾‘åŽ†å²è®°å½•
+- è‡ªåŠ¨å¸ƒå±€ã€æ‰¹é‡åˆ é™¤ã€æ‰¹é‡æ›´æ–°ç­‰å¤åˆæ“ä½œå¯åŒ…è£¹åœ¨åŒä¸€ transaction ä¸­
+- action handler ä¸å¾—å„è‡ªå†™å‡ºç‹¬ç«‹åŽ†å²æ ¼å¼ï¼›å¿…é¡»è¿›å…¥ç»Ÿä¸€ operation/history pipeline
+- patch ä¸Ž snapshot çš„å–èˆå¯ä»¥æŒ‰ operation ç±»åˆ«å†³å®šï¼Œä½† undo/redo è¯­ä¹‰å¿…é¡»ç¨³å®š
 
-## 11. 固定宿主 Scope
+## 11. å›ºå®šå®¿ä¸» Scope
 
-本节描述的是目标架构，不等同于当前代码已经完整落地的 host scope 注入状态。
+æœ¬èŠ‚æè¿°çš„æ˜¯ç›®æ ‡æž¶æž„ï¼Œä¸ç­‰åŒäºŽå½“å‰ä»£ç å·²ç»å®Œæ•´è½åœ°çš„ host scope æ³¨å…¥çŠ¶æ€ã€‚
 
-当前真实 snapshot 契约、`DesignerContext` 暴露面，以及哪些字段尚未进入 schema 表达式 scope，请先看 `docs/architecture/flow-designer/runtime-snapshot.md`。
+å½“å‰çœŸå®ž snapshot å¥‘çº¦ã€`DesignerContext` æš´éœ²é¢ï¼Œä»¥åŠå“ªäº›å­—æ®µå°šæœªè¿›å…¥ schema è¡¨è¾¾å¼ scopeï¼Œè¯·å…ˆçœ‹ `docs/architecture/flow-designer/runtime-snapshot.md`ã€‚
 
-目标上，为了让 schema 片段稳定工作，`designer-page` 应注入固定宿主 scope。
+ç›®æ ‡ä¸Šï¼Œä¸ºäº†è®© schema ç‰‡æ®µç¨³å®šå·¥ä½œï¼Œ`designer-page` åº”æ³¨å…¥å›ºå®šå®¿ä¸» scopeã€‚
 
-推荐暴露：
+æŽ¨èæš´éœ²ï¼š
 
-- `doc`：当前 graph 文档
-- `selection`：当前选中摘要
-- `activeNode`：当前激活节点
-- `activeEdge`：当前激活边
-- `runtime`：只读运行时能力摘要
-- `actions`：供 schema 层引用的辅助能力
+- `doc`ï¼šå½“å‰ graph æ–‡æ¡£
+- `selection`ï¼šå½“å‰é€‰ä¸­æ‘˜è¦
+- `activeNode`ï¼šå½“å‰æ¿€æ´»èŠ‚ç‚¹
+- `activeEdge`ï¼šå½“å‰æ¿€æ´»è¾¹
+- `runtime`ï¼šåªè¯»è¿è¡Œæ—¶èƒ½åŠ›æ‘˜è¦
+- `actions`ï¼šä¾› schema å±‚å¼•ç”¨çš„è¾…åŠ©èƒ½åŠ›
 
-如果后续这套 host scope 真正落地，inspector 和 toolbar schema 可以稳定写成：
+å¦‚æžœåŽç»­è¿™å¥— host scope çœŸæ­£è½åœ°ï¼Œinspector å’Œ toolbar schema å¯ä»¥ç¨³å®šå†™æˆï¼š
 
 ```json
 {
   "type": "tpl",
-  "tpl": "当前节点：${activeNode.data.label}"
+  "tpl": "å½“å‰èŠ‚ç‚¹ï¼š${activeNode.data.label}"
 }
 ```
 
-## 12. 性能策略
+## 12. æ€§èƒ½ç­–ç•¥
 
-### 12.1 编译优先
+### 12.1 ç¼–è¯‘ä¼˜å…ˆ
 
-- designer 配置初始化时解析为 normalized config
-- nodeTypes、ports、edgeTypes 预编译为索引结构
-- schema 片段交由现有 schema compiler 编译
-- graph action handler 预注册
+- designer é…ç½®åˆå§‹åŒ–æ—¶è§£æžä¸º normalized config
+- nodeTypesã€portsã€edgeTypes é¢„ç¼–è¯‘ä¸ºç´¢å¼•ç»“æž„
+- schema ç‰‡æ®µäº¤ç”±çŽ°æœ‰ schema compiler ç¼–è¯‘
+- graph action handler é¢„æ³¨å†Œ
 
-### 12.2 局部订阅
+### 12.2 å±€éƒ¨è®¢é˜…
 
-- canvas 只订阅图状态
-- inspector 主要订阅 `activeNode` / `activeEdge`
-- palette 主要订阅 nodeTypes 和可创建性摘要
-- 不让整个 designer 因单节点属性变动全局重渲染
+- canvas åªè®¢é˜…å›¾çŠ¶æ€
+- inspector ä¸»è¦è®¢é˜… `activeNode` / `activeEdge`
+- palette ä¸»è¦è®¢é˜… nodeTypes å’Œå¯åˆ›å»ºæ€§æ‘˜è¦
+- ä¸è®©æ•´ä¸ª designer å› å•èŠ‚ç‚¹å±žæ€§å˜åŠ¨å…¨å±€é‡æ¸²æŸ“
 
-### 12.3 缓存策略
+### 12.3 ç¼“å­˜ç­–ç•¥
 
-- node type lookup 使用 Map
-- port matcher 预编译为快速判定结构
-- action handler 注册表常驻缓存
-- schema fragment 使用编译结果复用
-- edges 建议维护按 `source` / `target` / `port` 的邻接索引，避免高频连接校验退化为全表扫描
+- node type lookup ä½¿ç”¨ Map
+- port matcher é¢„ç¼–è¯‘ä¸ºå¿«é€Ÿåˆ¤å®šç»“æž„
+- action handler æ³¨å†Œè¡¨å¸¸é©»ç¼“å­˜
+- schema fragment ä½¿ç”¨ç¼–è¯‘ç»“æžœå¤ç”¨
+- edges å»ºè®®ç»´æŠ¤æŒ‰ `source` / `target` / `port` çš„é‚»æŽ¥ç´¢å¼•ï¼Œé¿å…é«˜é¢‘è¿žæŽ¥æ ¡éªŒé€€åŒ–ä¸ºå…¨è¡¨æ‰«æ
 
-### 12.4 增量更新
+### 12.4 å¢žé‡æ›´æ–°
 
-- 更新单节点数据只替换该节点引用
-- 历史记录按操作快照或 patch 管理
-- 避免每次 `JSON.stringify` 全文档比较脏状态
-- store selector 应优先依赖结构共享和浅比较，避免 inspector、palette、canvas 互相放大重渲染
+- æ›´æ–°å•èŠ‚ç‚¹æ•°æ®åªæ›¿æ¢è¯¥èŠ‚ç‚¹å¼•ç”¨
+- åŽ†å²è®°å½•æŒ‰æ“ä½œå¿«ç…§æˆ– patch ç®¡ç†
+- é¿å…æ¯æ¬¡ `JSON.stringify` å…¨æ–‡æ¡£æ¯”è¾ƒè„çŠ¶æ€
+- store selector åº”ä¼˜å…ˆä¾èµ–ç»“æž„å…±äº«å’Œæµ…æ¯”è¾ƒï¼Œé¿å… inspectorã€paletteã€canvas äº’ç›¸æ”¾å¤§é‡æ¸²æŸ“
 
-### 12.5 大图场景
+### 12.5 å¤§å›¾åœºæ™¯
 
-需要把 1000+ 节点和复杂连线视为明确压力场景，而不是实现后的补充优化。
+éœ€è¦æŠŠ 1000+ èŠ‚ç‚¹å’Œå¤æ‚è¿žçº¿è§†ä¸ºæ˜Žç¡®åŽ‹åŠ›åœºæ™¯ï¼Œè€Œä¸æ˜¯å®žçŽ°åŽçš„è¡¥å……ä¼˜åŒ–ã€‚
 
-建议约束：
+å»ºè®®çº¦æŸï¼š
 
-- inspector 只订阅 active target，不订阅整份 document
-- palette、minimap、selection overlay 各自使用独立 selector
-- 自动布局、批量校验、导出可采用分批或延迟执行
-- 对大图不默认承诺所有 UI 面板都随每次节点移动实时全量更新
+- inspector åªè®¢é˜… active targetï¼Œä¸è®¢é˜…æ•´ä»½ document
+- paletteã€minimapã€selection overlay å„è‡ªä½¿ç”¨ç‹¬ç«‹ selector
+- è‡ªåŠ¨å¸ƒå±€ã€æ‰¹é‡æ ¡éªŒã€å¯¼å‡ºå¯é‡‡ç”¨åˆ†æ‰¹æˆ–å»¶è¿Ÿæ‰§è¡Œ
+- å¯¹å¤§å›¾ä¸é»˜è®¤æ‰¿è¯ºæ‰€æœ‰ UI é¢æ¿éƒ½éšæ¯æ¬¡èŠ‚ç‚¹ç§»åŠ¨å®žæ—¶å…¨é‡æ›´æ–°
 
-## 13. 扩展机制
+## 13. æ‰©å±•æœºåˆ¶
 
-扩展优先级：
+æ‰©å±•ä¼˜å…ˆçº§ï¼š
 
 1. designer config
 2. schema fragments
 3. renderer registry
 4. plugins
 
-支持的扩展点：
+æ”¯æŒçš„æ‰©å±•ç‚¹ï¼š
 
-- 自定义 node renderer
-- 自定义 edge renderer
-- 自定义 designer action
-- 自定义 layout engine
-- 自定义 document validator
-- 自定义预设
+- è‡ªå®šä¹‰ node renderer
+- è‡ªå®šä¹‰ edge renderer
+- è‡ªå®šä¹‰ designer action
+- è‡ªå®šä¹‰ layout engine
+- è‡ªå®šä¹‰ document validator
+- è‡ªå®šä¹‰é¢„è®¾
 
-### 13.1 事件与生命周期
+### 13.1 äº‹ä»¶ä¸Žç”Ÿå‘½å‘¨æœŸ
 
-除命令式 action 之外，还需要明确的事件与生命周期扩展点。
+é™¤å‘½ä»¤å¼ action ä¹‹å¤–ï¼Œè¿˜éœ€è¦æ˜Žç¡®çš„äº‹ä»¶ä¸Žç”Ÿå‘½å‘¨æœŸæ‰©å±•ç‚¹ã€‚
 
-建议至少覆盖：
+å»ºè®®è‡³å°‘è¦†ç›–ï¼š
 
 - `selectionChanged`
 - `nodeAdded`
@@ -471,41 +471,42 @@ Flow Designer 需要统一的事务边界，即使历史底层实现最终同时
 - `validationFailed`
 - `historyCommitted`
 
-生命周期 hook 推荐区分两类：
+ç”Ÿå‘½å‘¨æœŸ hook æŽ¨èåŒºåˆ†ä¸¤ç±»ï¼š
 
-- before hooks：允许拒绝或改写 create/connect/delete 等输入
-- after hooks：只做观察、审计、同步、副作用派发
+- before hooksï¼šå…è®¸æ‹’ç»æˆ–æ”¹å†™ create/connect/delete ç­‰è¾“å…¥
+- after hooksï¼šåªåšè§‚å¯Ÿã€å®¡è®¡ã€åŒæ­¥ã€å‰¯ä½œç”¨æ´¾å‘
 
-不要把这两类能力混在普通 store subscribe 里。
+ä¸è¦æŠŠè¿™ä¸¤ç±»èƒ½åŠ›æ··åœ¨æ™®é€š store subscribe é‡Œã€‚
 
-## 14. 错误处理与测试分层
+## 14. é”™è¯¯å¤„ç†ä¸Žæµ‹è¯•åˆ†å±‚
 
-需要把错误与测试边界写成实现约束，而不只是实现细节。
+éœ€è¦æŠŠé”™è¯¯ä¸Žæµ‹è¯•è¾¹ç•Œå†™æˆå®žçŽ°çº¦æŸï¼Œè€Œä¸åªæ˜¯å®žçŽ°ç»†èŠ‚ã€‚
 
-错误至少分为：
+é”™è¯¯è‡³å°‘åˆ†ä¸ºï¼š
 
-- config normalize / validate 错误
-- migration 错误
-- permission / rule expression 错误
-- graph action 执行错误
-- canvas adapter / renderer 集成错误
+- config normalize / validate é”™è¯¯
+- migration é”™è¯¯
+- permission / rule expression é”™è¯¯
+- graph action æ‰§è¡Œé”™è¯¯
+- canvas adapter / renderer é›†æˆé”™è¯¯
 
-测试建议分层：
+æµ‹è¯•å»ºè®®åˆ†å±‚ï¼š
 
-- `core`：纯文档变换、连接校验、history、migration、permission evaluation、transaction 合并
-- `renderers`：宿主 scope 注入、`designer:*` action 接线、schema inspector/createDialog 集成、canvas adapter 互操作
+- `core`ï¼šçº¯æ–‡æ¡£å˜æ¢ã€è¿žæŽ¥æ ¡éªŒã€historyã€migrationã€permission evaluationã€transaction åˆå¹¶
+- `renderers`ï¼šå®¿ä¸» scope æ³¨å…¥ã€`designer:*` action æŽ¥çº¿ã€schema inspector/createDialog é›†æˆã€canvas adapter äº’æ“ä½œ
 
-## 15. 与旧示例的关系
+## 15. ä¸Žæ—§ç¤ºä¾‹çš„å…³ç³»
 
-- 旧示例继续保留，作为单页演示和交互参考
-- 新模块不直接侵入旧示例结构
-- 现在已经有一个基于 `designer-page` 的 playground parity example，但它仍然是第一阶段 MVP，不代表已经完成全部 legacy parity
+- æ—§ç¤ºä¾‹ç»§ç»­ä¿ç•™ï¼Œä½œä¸ºå•é¡µæ¼”ç¤ºå’Œäº¤äº’å‚è€ƒ
+- æ–°æ¨¡å—ä¸ç›´æŽ¥ä¾µå…¥æ—§ç¤ºä¾‹ç»“æž„
+- çŽ°åœ¨å·²ç»æœ‰ä¸€ä¸ªåŸºäºŽ `designer-page` çš„ playground parity exampleï¼Œä½†å®ƒä»ç„¶æ˜¯ç¬¬ä¸€é˜¶æ®µ MVPï¼Œä¸ä»£è¡¨å·²ç»å®Œæˆå…¨éƒ¨ legacy parity
 
-## 16. 推荐落地顺序
+## 16. æŽ¨èè½åœ°é¡ºåº
 
-1. 定义 `core` 文档模型与配置模型
-2. 实现 role/port matcher 和 graph action 基础能力
-3. 实现 `designer-page`、`designer-canvas`、`designer-palette`
-4. 接入 fixed scope 和 `designer:*` action
-5. 用 schema 片段跑通 inspector / create dialog
-6. 最后补齐 preset、layout、导出、验证
+1. å®šä¹‰ `core` æ–‡æ¡£æ¨¡åž‹ä¸Žé…ç½®æ¨¡åž‹
+2. å®žçŽ° role/port matcher å’Œ graph action åŸºç¡€èƒ½åŠ›
+3. å®žçŽ° `designer-page`ã€`designer-canvas`ã€`designer-palette`
+4. æŽ¥å…¥ fixed scope å’Œ `designer:*` action
+5. ç”¨ schema ç‰‡æ®µè·‘é€š inspector / create dialog
+6. æœ€åŽè¡¥é½ presetã€layoutã€å¯¼å‡ºã€éªŒè¯
+

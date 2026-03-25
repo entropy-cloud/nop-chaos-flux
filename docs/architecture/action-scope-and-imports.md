@@ -1,4 +1,4 @@
-# Action Scope And Imports
+﻿# Action Scope And Imports
 
 ## Purpose
 
@@ -19,10 +19,10 @@ It also defines a separate component-targeted invocation model for actions that 
 
 The active runtime today has these properties:
 
-- `ScopeRef` is a data scope, not a behavior registry; see `packages/amis-runtime/src/scope.ts`
-- actions are dispatched by a centralized built-in dispatcher keyed by `action.action`; see `packages/amis-runtime/src/action-runtime.ts:70`
-- `ActionSchema` uses `action: string` and optional structured fields such as `args?: Record<string, SchemaValue>`; see `packages/amis-schema/src/index.ts:847`
-- React renderers can only change descendant scope explicitly through fragment render options such as `render({ scope })` or `render({ data })`; see `packages/amis-react/src/index.tsx:195` and `packages/amis-react/src/index.tsx:202`
+- `ScopeRef` is a data scope, not a behavior registry; see `packages/flux-runtime/src/scope.ts`
+- actions are dispatched by a centralized built-in dispatcher keyed by `action.action`; see `packages/flux-runtime/src/action-runtime.ts:70`
+- `ActionSchema` uses `action: string` and optional structured fields such as `args?: Record<string, SchemaValue>`; see `packages/flux-core/src/index.ts:847`
+- React renderers can only change descendant scope explicitly through fragment render options such as `render({ scope })` or `render({ data })`; see `packages/flux-react/src/index.tsx:195` and `packages/flux-react/src/index.tsx:202`
 - flow-designer and report-designer architecture already assume `schema reads fixed host scope snapshot` and `writes go through namespaced actions or a bridge dispatch API`; see `docs/architecture/flow-designer/design.md:192` and `docs/architecture/report-designer/design.md:292`
 
 Those constraints mean the extension model must preserve:
@@ -231,7 +231,7 @@ The earlier lexical-method idea identified a real pain point, but it is not the 
 
 Reasons:
 
-- current `ScopeRef` in `packages/amis-runtime/src/scope.ts:128` is a data contract, not a behavior contract
+- current `ScopeRef` in `packages/flux-runtime/src/scope.ts:128` is a data contract, not a behavior contract
 - React fragment scope replacement is explicit, so hidden method shadowing would be hard to reason about
 - flow/report designer docs already standardize on namespaced actions and bridge dispatch, not implicit bare method lookup
 - package boundaries would be damaged if domain cores had to register methods on `ScopeRef`
@@ -609,10 +609,10 @@ That produces stable behavior:
 
 ```text
 PageActionScope
-  └── ContainerActionScope(namespaces: demo)
-        ├── ButtonA -> demo.open
-        ├── ButtonB -> demo.close
-        └── ChildPanel -> demo.validate
+  â””â”€â”€ ContainerActionScope(namespaces: demo)
+        â”œâ”€â”€ ButtonA -> demo.open
+        â”œâ”€â”€ ButtonB -> demo.close
+        â””â”€â”€ ChildPanel -> demo.validate
 ```
 
 Imported namespaces and component-targeted handles are complementary:
@@ -626,7 +626,7 @@ Do not try to model imported library capabilities by pretending they are compone
 
 ### Renderer Runtime Surface
 
-The runtime will eventually need an action-scope-aware dispatch path, but the contract should remain consistent with the current `RendererRuntime.dispatch()` shape in `packages/amis-schema/src/index.ts:881`.
+The runtime will eventually need an action-scope-aware dispatch path, but the contract should remain consistent with the current `RendererRuntime.dispatch()` shape in `packages/flux-core/src/index.ts:881`.
 
 One reasonable evolution path is:
 
@@ -860,3 +860,4 @@ The active decisions from this document are:
 - `docs/architecture/flow-designer/api.md`
 - `docs/architecture/report-designer/design.md`
 - `docs/architecture/report-designer/contracts.md`
+

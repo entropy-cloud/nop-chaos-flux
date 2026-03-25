@@ -1,4 +1,4 @@
-# Development Log
+﻿# Development Log
 
 ## Purpose
 
@@ -18,23 +18,47 @@ This file is intentionally lightweight.
 
 ## Entries
 
-### 2026-03-25 (AMIS JSON 约定文档整理)
+### 2026-03-25 (TailwindCSS é›†æˆ)
 
-- **问题澄清**：
-  - `DesignerFeatures.grid?: boolean` 是**功能开关**，不是快捷键
-  - `ShortcutsConfig.undo: string[]` 是**快捷键配置**，已经是 `string[]` 格式
-  - 两者职责不同，没有不一致
-- **文档冗余清理**：
-  - `config-schema.md` 删除 Icon 命名规范详细内容，改为引用 `amis-json-conventions.md`
-  - 修正 "方式二" 示例：`disabledOn` → `disabled`，`level` → `variant`
-- **index.md 更新**：
-  - 添加 `amis-json-conventions.md` 索引条目
-  - 添加 `complex-component-design-process.md` 索引条目
-- **约定确认**（已在 `amis-json-conventions.md`）：
-  - 表达式：`${xxx}` 无 `xxxOn` 后缀
-  - 简单 action：`{ "action": "designer:save" }`
-  - Button 用 `variant`，Badge 用 `level`
-  - Icon 配置用 kebab-case
+- **æ–°å¢žåŒ…**ï¼š`packages/tailwind-preset/`
+  - ä¸Ž `nop-chaos-next` å®Œå…¨ä¸€è‡´çš„ TailwindCSS preset
+  - ç›¸åŒçš„ CSS å˜é‡å®šä¹‰ï¼ˆstyles.cssï¼‰
+  - ç›¸åŒçš„ base.css å’Œ tailwind.css å…¥å£
+- **é…ç½®æ–‡ä»¶**ï¼š
+  - `tailwind.config.ts` - æ ¹ TailwindCSS é…ç½®
+  - `postcss.config.cjs` - PostCSS é…ç½®
+- **Flow Designer æ ·å¼**ï¼š
+  - `packages/flow-designer-renderers/src/styles/` ç›®å½•
+  - `flow-designer.css` - TailwindCSS ç‰ˆ Flow Designer æ ·å¼
+- **æ–‡æ¡£æ›´æ–°**ï¼š
+  - `config-schema.md` æ–°å¢žç¬¬ 18 ç«  TailwindCSS é›†æˆ
+  - `workflow-designer/config.json` ç¤ºä¾‹ä½¿ç”¨ TailwindCSS ç±»
+- **Token ä¸€è‡´æ€§**ï¼š
+  - CSS å˜é‡ä¸Ž `nop-chaos-next` å®Œå…¨ä¸€è‡´
+  - æ”¯æŒ classic/glass ä¸»é¢˜ã€light/dark æ¨¡å¼
+  - å“åº”å¼æ–­ç‚¹ï¼šsm(640)ã€md(768)ã€lg(1024)ã€xl(1280)ã€2xl(1536)
+- **ä¸‹ä¸€æ­¥**ï¼š
+  - å®‰è£…ä¾èµ–ï¼š`pnpm install`
+  - è¿ç§»çŽ°æœ‰ç»„ä»¶åˆ° TailwindCSS ç±»
+  - éªŒè¯å“åº”å¼å¸ƒå±€
+
+### 2026-03-25 (AMIS JSON çº¦å®šæ–‡æ¡£æ•´ç†)
+
+- **é—®é¢˜æ¾„æ¸…**ï¼š
+  - `DesignerFeatures.grid?: boolean` æ˜¯**åŠŸèƒ½å¼€å…³**ï¼Œä¸æ˜¯å¿«æ·é”®
+  - `ShortcutsConfig.undo: string[]` æ˜¯**å¿«æ·é”®é…ç½®**ï¼Œå·²ç»æ˜¯ `string[]` æ ¼å¼
+  - ä¸¤è€…èŒè´£ä¸åŒï¼Œæ²¡æœ‰ä¸ä¸€è‡´
+- **æ–‡æ¡£å†—ä½™æ¸…ç†**ï¼š
+  - `config-schema.md` åˆ é™¤ Icon å‘½åè§„èŒƒè¯¦ç»†å†…å®¹ï¼Œæ”¹ä¸ºå¼•ç”¨ `amis-json-conventions.md`
+  - ä¿®æ­£ "æ–¹å¼äºŒ" ç¤ºä¾‹ï¼š`disabledOn` â†’ `disabled`ï¼Œ`level` â†’ `variant`
+- **index.md æ›´æ–°**ï¼š
+  - æ·»åŠ  `amis-json-conventions.md` ç´¢å¼•æ¡ç›®
+  - æ·»åŠ  `complex-component-design-process.md` ç´¢å¼•æ¡ç›®
+- **çº¦å®šç¡®è®¤**ï¼ˆå·²åœ¨ `amis-json-conventions.md`ï¼‰ï¼š
+  - è¡¨è¾¾å¼ï¼š`${xxx}` æ—  `xxxOn` åŽç¼€
+  - ç®€å• actionï¼š`{ "action": "designer:save" }`
+  - Button ç”¨ `variant`ï¼ŒBadge ç”¨ `level`
+  - Icon é…ç½®ç”¨ kebab-case
 
 ### 2026-03-25 (External Example Files & Icon Naming)
 
@@ -46,8 +70,8 @@ This file is intentionally lightweight.
   - JSON keys: **camelCase** (consistent with TypeScript types and AMIS style)
     - `allowSelfLoop`, `gridSize`, `snapToGrid`, `fitView`
   - Icon names: **kebab-case** (string values, converts to PascalCase at runtime)
-    - `rotate-ccw` → `RotateCcw`
-    - `git-branch` → `GitBranch`
+    - `rotate-ccw` â†’ `RotateCcw`
+    - `git-branch` â†’ `GitBranch`
 - Rationale: camelCase for keys matches TS interfaces, kebab-case for icons matches Lucide docs
 - Added icon mapping table to config-schema.md
 
@@ -70,7 +94,7 @@ This file is intentionally lightweight.
 ### 2026-03-25 (Complex Component Design Process & Flow Designer Schema Refinement)
 
 - Created design process document: `docs/references/complex-component-design-process.md`
-  - Defines standard workflow: Domain Analysis → JSON Schema → Compiled Config → Runtime → CSS
+  - Defines standard workflow: Domain Analysis â†’ JSON Schema â†’ Compiled Config â†’ Runtime â†’ CSS
   - AMIS JSON is the core DSL, should be designed first before implementation
   - Emphasizes reuse of AMIS runtime capabilities
   - Applicable to all complex components (Flow Designer, Report Designer, etc.)
@@ -231,7 +255,7 @@ This file is intentionally lightweight.
 
 - Added `docs/architecture/theme-compatibility.md` to define the active styling contract for host theming: `.na-theme-root` is the shared subtree theme scope, `.fd-theme-root` is the Flow Designer specialization layer, and theme compatibility stays a CSS-variable contract instead of a runtime/provider concern.
 - Updated `docs/index.md` and `docs/references/maintenance-checklist.md` so future renderer, debugger, dialog, and playground styling work now points to the new theme-compatibility doc explicitly.
-- Applied the first `.na-theme-root` migration slice across `apps/playground/src/App.tsx`, `packages/amis-react/src/index.tsx`, `packages/amis-debugger/src/panel.tsx`, `packages/flow-designer-renderers/src/index.tsx`, `packages/flow-designer-renderers/src/canvas-bridge.tsx`, and `packages/flow-designer-renderers/src/styles.css`, keeping current colors as token defaults while moving package-owned Flow Designer chrome toward class-based CSS.
+- Applied the first `.na-theme-root` migration slice across `apps/playground/src/App.tsx`, `packages/flux-react/src/index.tsx`, `packages/amis-debugger/src/panel.tsx`, `packages/flow-designer-renderers/src/index.tsx`, `packages/flow-designer-renderers/src/canvas-bridge.tsx`, and `packages/flow-designer-renderers/src/styles.css`, keeping current colors as token defaults while moving package-owned Flow Designer chrome toward class-based CSS.
 - Added consistent return navigation from each playground detail page back to the home chooser: inline back buttons for `apps/playground/src/pages/AmisBasicPage.tsx` and `apps/playground/src/pages/DebuggerLabPage.tsx`, plus a floating back button wrapper for `apps/playground/src/pages/FlowDesignerPage.tsx` so the designer canvas stays intact.
 - Continued the same migration in `apps/playground/src/FlowDesignerExample.tsx` and `apps/playground/src/styles.css`, replacing most remaining demo-only visual inline styles with class-based toolbar, palette, canvas, inspector, JSON, and toast styling while keeping position geometry inline.
 - Key decision: do not add theme state to `RendererEnv`, `ActionScope`, `ScopeRef`, page/form runtime, or `DesignerCore`; host theming remains a DOM/CSS responsibility carried by stable classes and variables.
@@ -274,9 +298,9 @@ This file is intentionally lightweight.
 - Key decision: treat playground information architecture and debugger interaction model as active architecture guidance, not just one-off implementation preferences, because both directly shape how future examples and diagnostics are introduced across the repo.
 - Next step: implement the playground home-page split and debugger launcher/panel three-state behavior against this new doc, then record any deviations discovered during implementation.
 
-- Added a compact “Region capability matrix” to `docs/architecture/flow-designer/runtime-snapshot.md` and linked it from `docs/architecture/flow-designer/collaboration.md`, so the current tested contract for mounted regions and shared dialog popups is visible in one place instead of being scattered across paragraphs.
+- Added a compact â€œRegion capability matrixâ€ to `docs/architecture/flow-designer/runtime-snapshot.md` and linked it from `docs/architecture/flow-designer/collaboration.md`, so the current tested contract for mounted regions and shared dialog popups is visible in one place instead of being scattered across paragraphs.
 - Key decision: put the matrix in `runtime-snapshot.md` rather than `design.md`, because it describes current verified behavior rather than long-term target architecture.
-- Next step: if playground starts demonstrating `dialogs` region UX patterns, extend the matrix with a short “intended UI role” column without mixing that into the runtime contract itself.
+- Next step: if playground starts demonstrating `dialogs` region UX patterns, extend the matrix with a short â€œintended UI roleâ€ column without mixing that into the runtime contract itself.
 
 - Added an explicit inspector read-path regression in `packages/flow-designer-renderers/src/index.test.tsx` proving inspector fragments can read injected designer host scope values such as `${activeNode.data.label}`, completing the read-path matrix for toolbar, inspector, and dialogs regions.
 - Updated `docs/architecture/flow-designer/collaboration.md` and `docs/architecture/flow-designer/runtime-snapshot.md` so they now describe the full tested region matrix more accurately: all three mounted regions can read injected designer snapshot fields, while write-path coverage remains explicit for the regions/actions already exercised by tests.
@@ -295,7 +319,7 @@ This file is intentionally lightweight.
 
 - Implemented a real `dialogs` region mount in `packages/flow-designer-renderers/src/index.tsx`, so `designer-page` now renders `dialogs` fragments through the same injected host `scope` and `actionScope` path as `toolbar` and `inspector`.
 - Replaced the earlier negative regression in `packages/flow-designer-renderers/src/index.test.tsx` with a positive one that proves `designer-page.dialogs` content now renders, and updated `docs/architecture/flow-designer/api.md`, `docs/architecture/flow-designer/config-schema.md`, `docs/architecture/flow-designer/design.md`, `docs/architecture/flow-designer/collaboration.md`, and `docs/architecture/flow-designer/runtime-snapshot.md` to reflect that `dialogs` is now a live region mount while shared `dialog` actions still remain a separate popup path.
-- Key decision: keep both concepts explicitly documented — mounted `dialogs` region vs shared `dialog` action runtime — because they now coexist and solve different authoring needs.
+- Key decision: keep both concepts explicitly documented â€” mounted `dialogs` region vs shared `dialog` action runtime â€” because they now coexist and solve different authoring needs.
 - Next step: decide whether `dialogs` should stay as a lightweight always-mounted fragment area or evolve into a more opinionated designer-specific overlay shell.
 
 - Added a renderer regression in `packages/flow-designer-renderers/src/index.test.tsx` locking the current reserved-`dialogs` behavior: passing `designer-page.dialogs` schema does not mount visible content by default, which now matches the updated docs that describe `dialogs` as a declared-but-not-mounted region path.
@@ -317,8 +341,8 @@ This file is intentionally lightweight.
 - Key decision: keep the explicit `actionScope` handoff even though current context inheritance already works, because Flow Designer region rendering is a host integration seam where being explicit is safer than depending on incidental placement inside the same React tree.
 - Next step: align `api.md` / `design.md` wording so toolbar and inspector docs describe the now-explicit host scope plus action-scope forwarding path consistently.
 
-- Fixed namespaced action payload compatibility in `packages/amis-runtime/src/action-runtime.ts` so runtime dispatch now falls back to evaluating non-reserved top-level action fields when `args` is omitted, which makes existing Flow Designer schema actions like `{ action: 'designer:addNode', nodeType: 'task', position: ... }` actually reach namespace providers with the intended payload.
-- Added regression coverage in `packages/amis-runtime/src/index.test.ts` and re-ran `pnpm --filter @nop-chaos/amis-runtime test` plus `pnpm --filter @nop-chaos/flow-designer-renderers test` to prove both the generic runtime path and the Flow Designer toolbar-region path now pass.
+- Fixed namespaced action payload compatibility in `packages/flux-runtime/src/action-runtime.ts` so runtime dispatch now falls back to evaluating non-reserved top-level action fields when `args` is omitted, which makes existing Flow Designer schema actions like `{ action: 'designer:addNode', nodeType: 'task', position: ... }` actually reach namespace providers with the intended payload.
+- Added regression coverage in `packages/flux-runtime/src/index.test.ts` and re-ran `pnpm --filter @nop-chaos/flux-runtime test` plus `pnpm --filter @nop-chaos/flow-designer-renderers test` to prove both the generic runtime path and the Flow Designer toolbar-region path now pass.
 - Updated `docs/architecture/action-scope-and-imports.md` to document the compatibility rule: `args` remains the preferred structured shape, but top-level non-reserved fields are still accepted as payload for namespaced actions.
 - Key decision: preserve top-level payload compatibility in the dispatcher instead of forcing every existing namespaced action schema to migrate to `args` immediately, because current docs and tests already show both authoring styles in the repo.
 - Next step: align the remaining Flow Designer API examples toward one preferred authoring shape while keeping runtime support for both forms.
@@ -335,12 +359,12 @@ This file is intentionally lightweight.
 - Key decision: keep `api.md` focused on integration-facing surfaces and move snapshot-truth caveats into the dedicated runtime-snapshot doc, so the same contract is not duplicated with drifting wording.
 - Next step: if Flow Designer eventually lands real schema-readable host scope injection, update `docs/architecture/flow-designer/runtime-snapshot.md` first, then decide whether `api.md` should inline a shorter stabilized subset again.
 
-- Added `docs/architecture/flow-designer/runtime-snapshot.md` to separate the live `DesignerSnapshot` / `DesignerContextValue` contracts from the broader “fixed host scope” design goal, explicitly marking which snapshot fields are real today and which schema-scope projections are still aspirational.
+- Added `docs/architecture/flow-designer/runtime-snapshot.md` to separate the live `DesignerSnapshot` / `DesignerContextValue` contracts from the broader â€œfixed host scopeâ€ design goal, explicitly marking which snapshot fields are real today and which schema-scope projections are still aspirational.
 - Updated `docs/index.md` and `docs/architecture/flow-designer/README.md` so future readers can jump straight to the new runtime-snapshot note when they need current-state answers instead of the broader design narrative.
 - Key decision: document current snapshot truth separately because the code already has a stable React-facing snapshot contract, but it has not yet fully materialized the same data as schema-readable host scope variables.
 - Next step: if `designer-page` later starts creating a real child scope for `doc` / `selection` / `activeNode` / `activeEdge` / `runtime`, update `docs/architecture/flow-designer/runtime-snapshot.md` first and then simplify overlapping caveats in `docs/architecture/flow-designer/api.md`.
 
-- Extended `docs/architecture/flow-designer/collaboration.md` with a file-level call-chain diagram that links `apps/playground/src/App.tsx`, `packages/amis-react/src/index.tsx`, `packages/flow-designer-renderers/src/index.tsx`, `packages/flow-designer-renderers/src/canvas-bridge.tsx`, `packages/flow-designer-renderers/src/designer-command-adapter.ts`, and `packages/flow-designer-core/src/core.ts` into one source-reading path.
+- Extended `docs/architecture/flow-designer/collaboration.md` with a file-level call-chain diagram that links `apps/playground/src/App.tsx`, `packages/flux-react/src/index.tsx`, `packages/flow-designer-renderers/src/index.tsx`, `packages/flow-designer-renderers/src/canvas-bridge.tsx`, `packages/flow-designer-renderers/src/designer-command-adapter.ts`, and `packages/flow-designer-core/src/core.ts` into one source-reading path.
 - Refreshed `docs/architecture/flow-designer/api.md` and `docs/architecture/flow-designer/README.md` to remove stale `designerActionHandlers` / root `actionHandlers` wording and replace it with the current `designer-page` + local `ActionScope` provider model; also corrected the exported renderer-definition name and the active playground entry path.
 - Key decision: keep the API doc aligned to the live provider-based integration model so future readers do not mistake old `actionHandlers` examples for supported Flow Designer wiring.
 - Next step: if `designer-page` later exposes a richer host snapshot contract or additional exported helpers, update `docs/architecture/flow-designer/api.md` and `docs/architecture/flow-designer/collaboration.md` together.
@@ -352,7 +376,7 @@ This file is intentionally lightweight.
 
 - Added `docs/architecture/flow-designer/canvas-adapters.md` as the dedicated architecture note for `card`, `xyflow-preview`, and live `xyflow` canvas variants, including default-adapter rules, failure-intent retention, and callback translation boundaries.
 - Updated `docs/index.md` and `docs/references/maintenance-checklist.md` so future canvas-adapter work has an explicit documentation entry point instead of relying only on `docs/architecture/flow-designer/api.md` and the development log.
-- Refreshed `docs/architecture/flow-designer/README.md` and `docs/architecture/flow-designer/design.md` so they no longer describe real `@xyflow/react` integration as “next stage” work; both docs now reflect the live `xyflow` default plus the retained `card` / `xyflow-preview` adapter roles.
+- Refreshed `docs/architecture/flow-designer/README.md` and `docs/architecture/flow-designer/design.md` so they no longer describe real `@xyflow/react` integration as â€œnext stageâ€ work; both docs now reflect the live `xyflow` default plus the retained `card` / `xyflow-preview` adapter roles.
 - Refreshed `docs/architecture/flow-designer/api.md` to remove remaining card-first / pre-xyflow wording, so the API doc now matches the current state: live `xyflow` is the default canvas, while `card` and `xyflow-preview` remain explicit adapter variants under the same bridge contract.
 - Expanded `packages/flow-designer-renderers/src/canvas-bridge.tsx` so the extracted `DesignerCardCanvasBridge` contract now covers start/cancel/complete connection and reconnect flows in addition to selection, delete, move, and viewport callbacks.
 - Updated `packages/flow-designer-renderers/src/index.tsx` to keep renderer-local pending connection and reconnect shell state, then map those bridge callbacks back onto adapter-backed `addEdge` and `reconnectEdge` commands.
@@ -388,7 +412,7 @@ This file is intentionally lightweight.
 - Kept renderer-side warning behavior aligned with provider behavior by routing adapter failures through the same notify helper, so shared semantic rejections stay host-visible regardless of whether they originate from ActionScope dispatch or direct renderer UI events.
 - Expanded `packages/flow-designer-renderers/src/index.test.tsx` with provider coverage for normalized viewport return values after `setViewport`, and re-verified the package after the renderer adapter rewiring.
 - Verified the renderer package again with `pnpm --filter @nop-chaos/flow-designer-renderers test`, `pnpm --filter @nop-chaos/flow-designer-renderers typecheck`, `pnpm --filter @nop-chaos/flow-designer-renderers build`, and `pnpm --filter @nop-chaos/flow-designer-renderers lint`.
-- Key decision: renderer UI events should reuse the same target-owned command normalization layer as namespace providers, instead of creating a second “local UI shortcut” mutation path that could drift from provider and future xyflow bridge semantics.
+- Key decision: renderer UI events should reuse the same target-owned command normalization layer as namespace providers, instead of creating a second â€œlocal UI shortcutâ€ mutation path that could drift from provider and future xyflow bridge semantics.
 - Next step: start extracting a dedicated canvas bridge surface so future xyflow integration can dispatch adapter commands without depending on the card/list renderer implementation details.
 
 - Added `packages/flow-designer-renderers/src/designer-command-adapter.ts` as the target-side command normalization layer, giving provider and future canvas bridges a shared result shape with `ok`, `snapshot`, `data`, `error`, `reason`, and `exported` fields.
@@ -412,25 +436,25 @@ This file is intentionally lightweight.
 - Key decision: start `flow-designer2` implementation with a target-owned core test harness instead of continuing to rely on the thin provider smoke test in `packages/flow-designer-renderers/src/index.test.tsx`.
 - Next step: expand the new core suite with reconnect, shared edge validation, and viewport-history parity tests as the corresponding target core upgrades land.
 
-- Implemented first-pass `xui:imports` loading/error UX semantics across `packages/amis-runtime/src/imports.ts` and `packages/amis-react/src/index.tsx`, including placeholder providers, explicit loading failures, persisted load-error results, and render-time notify/monitor reporting.
+- Implemented first-pass `xui:imports` loading/error UX semantics across `packages/flux-runtime/src/imports.ts` and `packages/flux-react/src/index.tsx`, including placeholder providers, explicit loading failures, persisted load-error results, and render-time notify/monitor reporting.
 - Updated `docs/architecture/action-scope-and-imports.md` to record the now-active runtime behavior for loading, failure, collision reporting, and refcounted release.
-- Added regression coverage for loading-state dispatch errors and failed-loader diagnostics in `packages/amis-react/src/index.test.tsx`.
-- Added runtime-level import-manager coverage in `packages/amis-runtime/src/index.test.ts` for same-scope refcounted release, child-scope shadowing/restoration, and deterministic alias-collision failures.
+- Added regression coverage for loading-state dispatch errors and failed-loader diagnostics in `packages/flux-react/src/index.test.tsx`.
+- Added runtime-level import-manager coverage in `packages/flux-runtime/src/index.test.ts` for same-scope refcounted release, child-scope shadowing/restoration, and deterministic alias-collision failures.
 - Key decision: import lifecycle semantics are now pinned at both the React boundary layer and the runtime API layer so future refactors cannot keep dedupe/disposal behavior only as an incidental React effect detail.
-- Added `xui:imports` lifecycle regression coverage in `packages/amis-react/src/index.test.tsx` for same-scope dedupe, descendant visibility, child-scope isolation, and unmount disposal/fallback behavior.
+- Added `xui:imports` lifecycle regression coverage in `packages/flux-react/src/index.test.tsx` for same-scope dedupe, descendant visibility, child-scope isolation, and unmount disposal/fallback behavior.
 - Key decision: imported namespaces now follow the same owned mount/unmount lifecycle as host namespace providers, so scope-local import registrations are reference-counted and released when the declaring React boundary disappears.
-- Added dialog lifecycle regression coverage in `packages/amis-react/src/index.test.tsx` to verify dialog-scoped namespace/handle providers are recreated on reopen and that captured dialog dispatchers fall back to outer providers after dialog close.
+- Added dialog lifecycle regression coverage in `packages/flux-react/src/index.test.tsx` to verify dialog-scoped namespace/handle providers are recreated on reopen and that captured dialog dispatchers fall back to outer providers after dialog close.
 - Key decision: dialog reopen semantics should produce a fresh child boundary rather than reusing a prior dialog-owned dispatch path or registrations, matching the existing fresh dialog data-scope behavior.
-- Added nested React regression coverage in `packages/amis-react/src/index.test.tsx` for action-scope/component-registry boundary precedence and teardown fallback behavior.
+- Added nested React regression coverage in `packages/flux-react/src/index.test.tsx` for action-scope/component-registry boundary precedence and teardown fallback behavior.
 - Key decision: teardown verification should assert that a child-scoped dispatch path falls back to still-live parent providers after the child subtree unmounts, instead of keeping stale namespace/handle registrations alive.
 - Next step: extend the same boundary-focused coverage to dialog reopen/unmount cases and imported namespace lifecycle once `xui:imports` gets richer loading/error semantics.
-- Implemented the first action-scope, component-handle, and import-declaration runtime pass across `packages/amis-schema/src/index.ts`, `packages/amis-runtime/src/action-runtime.ts`, `packages/amis-react/src/index.tsx`, and `packages/flow-designer-renderers/src/index.tsx`.
+- Implemented the first action-scope, component-handle, and import-declaration runtime pass across `packages/flux-core/src/index.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-react/src/index.tsx`, and `packages/flow-designer-renderers/src/index.tsx`.
 - Added explicit runtime primitives for `ActionScope`, `ComponentHandleRegistry`, `ComponentHandle`, `XuiImportSpec`, import loading, and extended monitor payloads so built-in, component-targeted, and namespaced dispatch paths are diagnosable.
 - Key decision: keep dispatch order fixed as built-in -> `component:invoke` -> namespaced action, and keep form/public component invocation limited to explicit handle methods instead of exposing arbitrary store methods.
-- Proved the component-target path with form handle registration and `component:invoke`, including `submit`, `validate`, `reset`, and `setValue` support through `packages/amis-runtime/src/form-component-handle.ts` and React lifecycle registration in `packages/amis-react/src/index.tsx`.
+- Proved the component-target path with form handle registration and `component:invoke`, including `submit`, `validate`, `reset`, and `setValue` support through `packages/flux-runtime/src/form-component-handle.ts` and React lifecycle registration in `packages/flux-react/src/index.tsx`.
 - Proved the namespaced host path with Flow Designer by adding a local `designer` action provider registered from `packages/flow-designer-renderers/src/index.tsx` rather than relying on root-level handler injection.
 - Added initial `xui:imports` plumbing with trusted loader hooks and scope-local namespace registration; current pass focuses on declaration handling and deduped registration, not full example adoption yet.
-- Added regression coverage in `packages/amis-runtime/src/index.test.ts`, `packages/amis-react/src/index.test.tsx`, and `packages/flow-designer-renderers/src/index.test.tsx`.
+- Added regression coverage in `packages/flux-runtime/src/index.test.ts`, `packages/flux-react/src/index.test.tsx`, and `packages/flow-designer-renderers/src/index.test.tsx`.
 - Next step: tighten import collision/loading state UX, add richer Flow Designer schema-driven command coverage, and document concrete `xui:imports` authoring examples once a first imported library example lands.
 
 ### 2026-03-22 (Action Scope And Import Design)
@@ -503,35 +527,35 @@ This file is intentionally lightweight.
 ### 2026-03-20 (Bug Fixes)
 
 - Extended Bug #1 coverage and fix scope: `array-editor` and `key-value` now resync local state from plain scope updates as well as managed form updates.
-  - Files: `packages/amis-renderers-form/src/renderers/array-editor.tsx`, `packages/amis-renderers-form/src/renderers/key-value.tsx`, `packages/amis-renderers-form/src/__tests__/bug-dual-state.test.tsx`
+  - Files: `packages/flux-renderers-form/src/renderers/array-editor.tsx`, `packages/flux-renderers-form/src/renderers/key-value.tsx`, `packages/flux-renderers-form/src/__tests__/bug-dual-state.test.tsx`
   - Docs: `docs/bugs/06-array-editor-key-value-dual-state-fix.md`
   - Key decision: dual-state renderers must subscribe to whichever source of truth is active (`form.store` or scope), not just the form path.
 - Tightened Bug #3 semantics: `validateForm()` now includes side-effect validation errors in its returned `errors`/`fieldErrors`, so `submit()` cannot pass while the store still contains validation failures.
-  - Files: `packages/amis-runtime/src/form-runtime.ts`, `packages/amis-runtime/src/__tests__/bug-validate-overwrite.test.ts`
+  - Files: `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/__tests__/bug-validate-overwrite.test.ts`
   - Docs: `docs/bugs/08-validate-form-destructive-error-merge-fix.md`
   - Key decision: end-of-pass error merges must keep store state and returned validation results consistent, not just preserve external paths in the store.
 - Corrected Bug #2 semantics: duplicate `submit()` calls now return `cancelled` instead of a normal error so guarded re-clicks do not masquerade as business failures in action chains or monitor output.
-  - Files: `packages/amis-runtime/src/form-runtime.ts`, `packages/amis-runtime/src/index.test.ts`, `packages/amis-runtime/src/__tests__/bug-submit-race.test.ts`
+  - Files: `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/index.test.ts`, `packages/flux-runtime/src/__tests__/bug-submit-race.test.ts`
   - Docs: `docs/bugs/07-submit-concurrent-guard-fix.md`
   - Key decision: guarded duplicate submits share the project's existing cancelled-action semantics instead of introducing a new failure mode.
 - **Bug #1 Fixed**: ArrayEditor/KeyValue now subscribe to form store via `useCurrentFormState` with deep equality. External `reset()`/`setValue()` properly syncs to local state.
-  - Files: `packages/amis-renderers-form/src/renderers/array-editor.tsx`, `packages/amis-renderers-form/src/renderers/key-value.tsx`
-  - Tests: 4 passing in `packages/amis-renderers-form/src/__tests__/bug-dual-state.test.tsx`
+  - Files: `packages/flux-renderers-form/src/renderers/array-editor.tsx`, `packages/flux-renderers-form/src/renderers/key-value.tsx`
+  - Tests: 4 passing in `packages/flux-renderers-form/src/__tests__/bug-dual-state.test.tsx`
 - **Bug #2 Fixed**: `submit()` now checks `store.getState().submitting` and rejects concurrent calls.
-  - File: `packages/amis-runtime/src/form-runtime.ts:248`
-  - Test: 1 passing in `packages/amis-runtime/src/__tests__/bug-submit-race.test.ts`
+  - File: `packages/flux-runtime/src/form-runtime.ts:248`
+  - Test: 1 passing in `packages/flux-runtime/src/__tests__/bug-submit-race.test.ts`
 - **Bug #3 Fixed**: `validateForm()` uses merge (`{...existing, ...fieldErrors}`) instead of replacement for error map.
-  - File: `packages/amis-runtime/src/form-runtime.ts:177`
-  - Tests: 5 passing in `packages/amis-runtime/src/__tests__/bug-validate-overwrite.test.ts`
+  - File: `packages/flux-runtime/src/form-runtime.ts:177`
+  - Tests: 5 passing in `packages/flux-runtime/src/__tests__/bug-validate-overwrite.test.ts`
 - All 117 tests pass (75 runtime + 42 form). Typecheck/lint pass for changed packages.
 - Note: `amis-debugger` has pre-existing typecheck failures unrelated to these changes.
 
 ### 2026-03-20 (Bug Analysis)
 
 - Completed frontend bug analysis across all packages. Found 5 confirmed runtime bugs.
-- **Bug #1 (HIGH)**: ArrayEditor/KeyValue dual-state desync — `useState` initialized once, external `reset()`/`setValue()` doesn't update local state. Failing tests: `packages/amis-renderers-form/src/__tests__/bug-dual-state.test.tsx`
-- **Bug #2 (HIGH)**: `submit()` no concurrent guard — rapid double-click fires two API calls. Failing test: `packages/amis-runtime/src/__tests__/bug-submit-race.test.ts`
-- **Bug #3 (MEDIUM-HIGH)**: `validateForm()` calls `store.setErrors(fieldErrors)` which destructively replaces entire errors map, wiping errors for paths not in traversal. Tests: `packages/amis-runtime/src/__tests__/bug-validate-overwrite.test.ts`
+- **Bug #1 (HIGH)**: ArrayEditor/KeyValue dual-state desync â€” `useState` initialized once, external `reset()`/`setValue()` doesn't update local state. Failing tests: `packages/flux-renderers-form/src/__tests__/bug-dual-state.test.tsx`
+- **Bug #2 (HIGH)**: `submit()` no concurrent guard â€” rapid double-click fires two API calls. Failing test: `packages/flux-runtime/src/__tests__/bug-submit-race.test.ts`
+- **Bug #3 (MEDIUM-HIGH)**: `validateForm()` calls `store.setErrors(fieldErrors)` which destructively replaces entire errors map, wiping errors for paths not in traversal. Tests: `packages/flux-runtime/src/__tests__/bug-validate-overwrite.test.ts`
 - **Bug #4 (MEDIUM)**: `remapArrayFieldState` makes 5+ independent store updates causing intermediate state visible to `useSyncExternalStore` subscribers.
 - **Bug #5 (MEDIUM)**: Table `key={index}` fallback causes row state misalignment on sort/delete.
 - Key decision: complex fields must NOT maintain parallel local state; read from store only.
@@ -539,13 +563,13 @@ This file is intentionally lightweight.
 
 ### 2026-03-20
 
-- Fixed `checkbox-group` value handling so arrays no longer round-trip through JSON strings in `packages/amis-renderers-form/src/renderers/input.tsx` and `packages/amis-renderers-form/src/field-utils.tsx`.
-- Added regression coverage for non-string checkbox-group values and plain-scope updates in `packages/amis-renderers-form/src/index.test.tsx` and recorded the defect note in `docs/bugs/05-checkbox-group-value-type-drift-fix.md`.
+- Fixed `checkbox-group` value handling so arrays no longer round-trip through JSON strings in `packages/flux-renderers-form/src/renderers/input.tsx` and `packages/flux-renderers-form/src/field-utils.tsx`.
+- Added regression coverage for non-string checkbox-group values and plain-scope updates in `packages/flux-renderers-form/src/index.test.tsx` and recorded the defect note in `docs/bugs/05-checkbox-group-value-type-drift-fix.md`.
 - Key decision: shared field handlers must preserve typed values because array-valued controls cannot safely share a string-only update pipeline.
 - Next step: audit other multi-value renderers for hidden coercion paths before reusing generic field helpers.
 
-- Fixed `checkbox-group` shared field handling so array values are passed through without JSON stringification in `packages/amis-renderers-form/src/renderers/input.tsx`.
-- Added regression coverage for form and plain-scope checkbox-group updates, including non-string option values, in `packages/amis-renderers-form/src/index.test.tsx`.
+- Fixed `checkbox-group` shared field handling so array values are passed through without JSON stringification in `packages/flux-renderers-form/src/renderers/input.tsx`.
+- Added regression coverage for form and plain-scope checkbox-group updates, including non-string option values, in `packages/flux-renderers-form/src/index.test.tsx`.
 - Key decision: shared field handlers now accept typed values so array-valued controls do not drift into string payloads on either the form or scope update path.
 - Next step: if more multi-value controls are added, reuse the typed handler path instead of introducing serializer-specific glue.
 
@@ -559,7 +583,7 @@ This file is intentionally lightweight.
 - Implemented a first debugger controller with `env` decoration, plugin hooks, timeline event storage, and root action error capture.
 - Added a floating debugger panel with tabs for `overview`, `timeline`, and `network`, plus pause, clear, hide, and left-bottom launcher behavior.
 - Wired the playground to the new debugger package and removed the old local right-side activity panel from `apps/playground/src/App.tsx`.
-- Verified the first version with `pnpm --filter @nop-chaos/amis-debugger typecheck`, `pnpm --filter @nop-chaos/amis-playground typecheck`, `pnpm --filter @nop-chaos/amis-debugger build`, and `pnpm --filter @nop-chaos/amis-playground build`.
+- Verified the first version with `pnpm --filter @nop-chaos/amis-debugger typecheck`, `pnpm --filter @nop-chaos/flux-playground typecheck`, `pnpm --filter @nop-chaos/amis-debugger build`, and `pnpm --filter @nop-chaos/flux-playground build`.
 - Extended the debugger design and implementation direction to support AI-first diagnostics through structured automation APIs instead of UI scraping.
 - Added automation-facing concepts to the design: `queryEvents`, `getLatestError`, `waitForEvent`, `createDiagnosticReport`, and `window`-level debugger hub access.
 - Updated the package API plan so the debugger can serve both human operators and AI agents during automatic diagnosis and guided debugging.
@@ -574,3 +598,4 @@ This file is intentionally lightweight.
 - Kept exported session data useful by preserving request/response shape metadata while masking sensitive values in `exportedData`.
 - Started splitting `packages/amis-debugger/src/index.tsx` into dedicated modules for shared types, diagnostics helpers, redaction logic, and the floating panel UI to reduce the monolithic package entry.
 - Next likely step: add focused tests for debugger event collection and refine API response summaries so the network tab shows more useful payload metadata.
+

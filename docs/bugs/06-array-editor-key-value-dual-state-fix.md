@@ -1,16 +1,16 @@
-# 06 ArrayEditor/KeyValue Dual State Desync Fix
+﻿# 06 ArrayEditor/KeyValue Dual State Desync Fix
 
 ## Problem
 
 - `array-editor` and `key-value` renderers showed stale values after `form.reset()` or external `form.setValue()` calls
-- user edits an array item, then triggers a reset action — the input still shows the edited value instead of the reset value
-- stable reproduction: edit → reset → UI unchanged
+- user edits an array item, then triggers a reset action â€” the input still shows the edited value instead of the reset value
+- stable reproduction: edit â†’ reset â†’ UI unchanged
 
 ## Root Cause
 
-- both renderers use `useState` initialized once on mount from scope data (`packages/amis-renderers-form/src/renderers/array-editor.tsx:126`, `key-value.tsx:182`)
+- both renderers use `useState` initialized once on mount from scope data (`packages/flux-renderers-form/src/renderers/array-editor.tsx:126`, `key-value.tsx:182`)
 - no subscription or effect synced external store changes back to local React state
-- `syncItems`/`syncField` only wrote local → store direction; the reverse path did not exist
+- `syncItems`/`syncField` only wrote local â†’ store direction; the reverse path did not exist
 - `form.reset()` updated the Zustand store but the local `useState` was never re-read
 
 ## Fix
@@ -24,15 +24,16 @@
 
 ## Tests
 
-- `packages/amis-renderers-form/src/__tests__/bug-dual-state.test.tsx` - 6 tests covering form `reset()` / `setValue()` plus plain-scope host data updates for both renderers
+- `packages/flux-renderers-form/src/__tests__/bug-dual-state.test.tsx` - 6 tests covering form `reset()` / `setValue()` plus plain-scope host data updates for both renderers
 
 ## Affected Files
 
-- `packages/amis-renderers-form/src/renderers/array-editor.tsx`
-- `packages/amis-renderers-form/src/renderers/key-value.tsx`
+- `packages/flux-renderers-form/src/renderers/array-editor.tsx`
+- `packages/flux-renderers-form/src/renderers/key-value.tsx`
 
 ## Notes For Future Refactors
 
 - complex field renderers must not maintain local state that mirrors store state without a sync mechanism
 - when adding store or scope subscriptions, use deep equality only across the fields the renderer actually consumes; if row objects grow new UI-relevant fields, update the comparator too
 - if a new renderer follows the same `useState` + `syncItems` pattern, it will have the same bug
+

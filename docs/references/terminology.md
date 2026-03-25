@@ -1,4 +1,4 @@
-# Renderer And Runtime Terminology
+﻿# Renderer And Runtime Terminology
 
 ## Purpose
 
@@ -14,7 +14,7 @@ Current behavior still belongs to the architecture docs and active source code.
 
 - use this file for shared vocabulary
 - use `docs/architecture/*.md` for behavior, rules, and ownership decisions
-- use `packages/amis-schema/src/index.ts` as the final type-level contract source
+- use `packages/flux-core/src/index.ts` as the final type-level contract source
 
 ## Core Terms
 
@@ -289,3 +289,4 @@ It allows later actions to consume outputs from earlier ones without inventing a
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
 - `docs/references/renderer-interfaces.md`
+

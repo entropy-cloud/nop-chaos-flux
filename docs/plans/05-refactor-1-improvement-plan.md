@@ -1,4 +1,4 @@
-# Refactor-1 Improvement Plan
+﻿# Refactor-1 Improvement Plan
 
 ## Purpose
 
@@ -19,7 +19,7 @@ This is an implementation plan, not a retrospective. Each workstream should land
 
 `refactor-1` should remain the base because it already has the stronger shape in these areas:
 
-- thin runtime assembly in `packages/amis-runtime/src/index.ts`
+- thin runtime assembly in `packages/flux-runtime/src/index.ts`
 - explicit runtime modules such as `action-runtime.ts`, `request-runtime.ts`, `form-runtime.ts`, and `validation-runtime.ts`
 - targeted handling of deep schema structures in `schema-compiler.ts`
 - cleaner package entry points in `amis-renderers-form`
@@ -52,7 +52,7 @@ The ideas worth adopting are:
 
 After this work:
 
-- `packages/amis-runtime/src/index.ts` remains an assembly layer
+- `packages/flux-runtime/src/index.ts` remains an assembly layer
 - validation logic is split into a dedicated directory with stable module boundaries
 - renderer shared UI pieces live in focused shared files
 - schema compiler keeps deep-region handling while delegating validation concerns cleanly
@@ -79,34 +79,34 @@ Adopt the best part of `refactor-2`: a more extensible validation subsystem, but
 
 Add or evolve toward:
 
-- `packages/amis-runtime/src/validation/index.ts`
-- `packages/amis-runtime/src/validation/rules.ts`
-- `packages/amis-runtime/src/validation/message.ts`
-- `packages/amis-runtime/src/validation/errors.ts`
-- `packages/amis-runtime/src/validation/validators.ts`
-- `packages/amis-runtime/src/validation/registry.ts`
+- `packages/flux-runtime/src/validation/index.ts`
+- `packages/flux-runtime/src/validation/rules.ts`
+- `packages/flux-runtime/src/validation/message.ts`
+- `packages/flux-runtime/src/validation/errors.ts`
+- `packages/flux-runtime/src/validation/validators.ts`
+- `packages/flux-runtime/src/validation/registry.ts`
 
 Keep runtime execution flow in runtime-specific files such as:
 
-- `packages/amis-runtime/src/validation-runtime.ts`
-- `packages/amis-runtime/src/form-runtime-validation.ts`
+- `packages/flux-runtime/src/validation-runtime.ts`
+- `packages/flux-runtime/src/form-runtime-validation.ts`
 
 ### Checklist
 
-- extract schema-to-rule collection helpers from `packages/amis-runtime/src/schema-compiler.ts`
-- move message formatting helpers into `packages/amis-runtime/src/validation/message.ts`
-- move error normalization helpers into `packages/amis-runtime/src/validation/errors.ts`
-- move built-in sync validators into `packages/amis-runtime/src/validation/validators.ts`
-- add `packages/amis-runtime/src/validation/registry.ts` for validator lookup and future extension
+- extract schema-to-rule collection helpers from `packages/flux-runtime/src/schema-compiler.ts`
+- move message formatting helpers into `packages/flux-runtime/src/validation/message.ts`
+- move error normalization helpers into `packages/flux-runtime/src/validation/errors.ts`
+- move built-in sync validators into `packages/flux-runtime/src/validation/validators.ts`
+- add `packages/flux-runtime/src/validation/registry.ts` for validator lookup and future extension
 - keep async rule execution in runtime flow code rather than pushing it into generic validators
-- make `packages/amis-runtime/src/validation/index.ts` the public barrel for validation internals
+- make `packages/flux-runtime/src/validation/index.ts` the public barrel for validation internals
 - update imports so `schema-compiler.ts` and `validation-runtime.ts` depend on validation modules, not the other way around
 
 ### Acceptance criteria
 
 - adding a new built-in validation rule requires touching one focused area instead of several unrelated files
 - runtime execution order and async debounce behavior remain unchanged
-- `packages/amis-runtime/src/index.ts` does not grow because of this change
+- `packages/flux-runtime/src/index.ts` does not grow because of this change
 
 ## W2 - Keep `amis-runtime` modular and prevent backsliding
 
@@ -116,13 +116,13 @@ Protect the strongest part of `refactor-1`: the runtime decomposition.
 
 ### Why
 
-The main weakness in `refactor-2` is that too much logic moved back into `packages/amis-runtime/src/index.ts`. That should not happen here.
+The main weakness in `refactor-2` is that too much logic moved back into `packages/flux-runtime/src/index.ts`. That should not happen here.
 
 ### Checklist
 
-- keep `packages/amis-runtime/src/index.ts` limited to wiring, factory composition, and exports
+- keep `packages/flux-runtime/src/index.ts` limited to wiring, factory composition, and exports
 - if a new helper exceeds trivial assembly logic, move it into a named runtime module
-- review `packages/amis-runtime/src/form-runtime.ts` for additional internal split opportunities only when responsibilities are clearly separable
+- review `packages/flux-runtime/src/form-runtime.ts` for additional internal split opportunities only when responsibilities are clearly separable
 - preserve dedicated modules for request handling, action dispatch, subtree traversal, registration lookup, and form state helpers
 - add a simple maintenance rule in docs: no runtime entry file should become the default home for new behavior
 
@@ -146,11 +146,11 @@ Borrow the better UI-layer reuse from `refactor-2` without weakening the existin
 
 Add a shared renderer area such as:
 
-- `packages/amis-renderers-form/src/renderers/shared/index.ts`
-- `packages/amis-renderers-form/src/renderers/shared/label.tsx`
-- `packages/amis-renderers-form/src/renderers/shared/error.tsx`
-- `packages/amis-renderers-form/src/renderers/shared/help-text.tsx`
-- `packages/amis-renderers-form/src/renderers/shared/field-hint.tsx`
+- `packages/flux-renderers-form/src/renderers/shared/index.ts`
+- `packages/flux-renderers-form/src/renderers/shared/label.tsx`
+- `packages/flux-renderers-form/src/renderers/shared/error.tsx`
+- `packages/flux-renderers-form/src/renderers/shared/help-text.tsx`
+- `packages/flux-renderers-form/src/renderers/shared/field-hint.tsx`
 
 ### Checklist
 
@@ -158,7 +158,7 @@ Add a shared renderer area such as:
 - extract only the repeated presentation pieces, not field-specific behavior
 - keep accessibility-related props and semantics consistent during extraction
 - update `input.tsx`, `key-value.tsx`, `array-editor.tsx`, and any composite controls to consume the shared pieces
-- keep `packages/amis-renderers-form/src/index.tsx` as a package entry and export surface only
+- keep `packages/flux-renderers-form/src/index.tsx` as a package entry and export surface only
 
 ### Acceptance criteria
 
@@ -178,7 +178,7 @@ Keep the compiler strengths unique to `refactor-1`, especially deep-region norma
 
 ### Checklist
 
-- keep table column region extraction logic in `packages/amis-runtime/src/schema-compiler.ts`
+- keep table column region extraction logic in `packages/flux-runtime/src/schema-compiler.ts`
 - document the current deep-region normalization rules with examples
 - move validation rule collection and trigger normalization helpers out of the compiler where practical
 - verify compiler output snapshots for nested table column cases before and after extraction
@@ -207,7 +207,7 @@ The improvements in this plan mostly move code across boundaries. That is exactl
 - add tests confirming compiled validation dependency paths remain correct
 - add tests around async validation debounce and stale-run cancellation behavior
 - add tests covering shared field chrome rendering if shared renderer primitives are introduced
-- keep or expand integration tests in `packages/amis-runtime/src/index.test.ts`
+- keep or expand integration tests in `packages/flux-runtime/src/index.test.ts`
 
 ### Acceptance criteria
 
@@ -268,3 +268,4 @@ This plan succeeds if:
 - renderer code becomes easier to read without losing behavior clarity
 - deep schema compilation behavior stays intact
 - the branch gains the best ideas from `refactor-2` without inheriting its structural regressions
+

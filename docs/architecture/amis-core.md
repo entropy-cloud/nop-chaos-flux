@@ -1,4 +1,4 @@
-# NOP Chaos AMIS Core Architecture
+﻿# NOP Chaos AMIS Core Architecture
 
 ## Purpose
 
@@ -10,17 +10,17 @@ Use it when you need the highest-level answer to:
 - how runtime, scope, forms, pages, and actions fit together
 - which design directions are current behavior versus future refinement
 
-Code-level source of truth lives primarily in `packages/amis-schema/src/index.ts`, `packages/amis-runtime/src/index.ts`, and `packages/amis-react/src/index.tsx`.
+Code-level source of truth lives primarily in `packages/flux-core/src/index.ts`, `packages/flux-runtime/src/index.ts`, and `packages/flux-react/src/index.tsx`.
 
 ## Current Code Anchors
 
 When this document needs to be checked against code, start with:
 
-- `packages/amis-schema/src/index.ts` for core contracts
-- `packages/amis-runtime/src/schema-compiler.ts` for compiled node assembly
-- `packages/amis-runtime/src/action-runtime.ts` for action semantics
-- `packages/amis-runtime/src/page-runtime.ts` and `packages/amis-runtime/src/form-runtime.ts` for page/form runtime behavior
-- `packages/amis-react/src/index.tsx` for React integration boundaries
+- `packages/flux-core/src/index.ts` for core contracts
+- `packages/flux-runtime/src/schema-compiler.ts` for compiled node assembly
+- `packages/flux-runtime/src/action-runtime.ts` for action semantics
+- `packages/flux-runtime/src/page-runtime.ts` and `packages/flux-runtime/src/form-runtime.ts` for page/form runtime behavior
+- `packages/flux-react/src/index.tsx` for React integration boundaries
 
 ## Current Architecture Baseline
 
@@ -335,3 +335,4 @@ Those topics should be described as design direction, not as already-finalized p
 - `docs/architecture/form-validation.md`
 - `docs/architecture/amis-runtime-module-boundaries.md`
 - `docs/references/renderer-interfaces.md`
+

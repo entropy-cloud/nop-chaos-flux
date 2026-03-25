@@ -1,4 +1,4 @@
-# Frontend Baseline
+﻿# Frontend Baseline
 
 ## Purpose
 
@@ -64,11 +64,11 @@ Current workspace package names use the `@nop-chaos/*` scope.
 
 Examples:
 
-- `@nop-chaos/amis-schema`
-- `@nop-chaos/amis-formula`
-- `@nop-chaos/amis-runtime`
-- `@nop-chaos/amis-react`
-- `@nop-chaos/amis-playground`
+- `@nop-chaos/flux-core`
+- `@nop-chaos/flux-formula`
+- `@nop-chaos/flux-runtime`
+- `@nop-chaos/flux-react`
+- `@nop-chaos/flux-playground`
 
 ## Tooling and Quality Gates
 
@@ -126,3 +126,4 @@ Treat the following as stable defaults unless there is a strong reason to change
 - Core architecture: `docs/architecture/amis-core.md`
 - Runtime design: `docs/architecture/renderer-runtime.md`
 - Delivery planning: `docs/plans/02-development-plan.md`
+

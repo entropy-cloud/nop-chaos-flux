@@ -1,4 +1,4 @@
-# Form Validation Improvement Execution Plan
+﻿# Form Validation Improvement Execution Plan
 
 ## Purpose
 
@@ -90,7 +90,7 @@ This is the cleanest next foundation step.
 
 ### Type changes
 
-Update `packages/amis-schema/src/index.ts`:
+Update `packages/flux-core/src/index.ts`:
 
 - extend `ValidationError` with ownership metadata
 - add explicit source-kind typing
@@ -114,7 +114,7 @@ interface ValidationError {
 
 ### Runtime changes
 
-Update `packages/amis-runtime/src/index.ts`:
+Update `packages/flux-runtime/src/index.ts`:
 
 - make aggregate validators emit explicit `ownerPath` and `sourceKind`
 - distinguish display path from owner path where needed
@@ -157,7 +157,7 @@ Without first-class operations, remove/reorder/insert semantics stay fragile.
 
 ### Runtime API changes
 
-Extend `FormRuntime` in `packages/amis-schema/src/index.ts` and implementation in `packages/amis-runtime/src/index.ts` with:
+Extend `FormRuntime` in `packages/flux-core/src/index.ts` and implementation in `packages/flux-runtime/src/index.ts` with:
 
 ```ts
 appendValue(path, value)
@@ -225,7 +225,7 @@ This is where the RHF review is most relevant.
 
 ### React helper additions
 
-Add hooks or helpers in `packages/amis-react/src/index.tsx` such as:
+Add hooks or helpers in `packages/flux-react/src/index.tsx` such as:
 
 ```ts
 useValidationNodeState(path)
@@ -539,3 +539,4 @@ That is the best place to resume coding because:
 - `docs/plans/03-form-validation-completion-plan.md`
 - `docs/references/react-hook-form-template-notes.md`
 - `docs/references/yup-template-notes.md`
+

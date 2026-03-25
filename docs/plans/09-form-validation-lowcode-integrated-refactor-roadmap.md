@@ -1,4 +1,4 @@
-# Form Validation Low-Code Integrated Refactor Roadmap
+﻿# Form Validation Low-Code Integrated Refactor Roadmap
 
 ## Purpose
 
@@ -18,9 +18,9 @@ The goal is to make validation a first-class part of the existing low-code compi
 
 This roadmap focuses on:
 
-- `packages/amis-schema`
-- `packages/amis-runtime`
-- `packages/amis-renderers-form`
+- `packages/flux-core`
+- `packages/flux-runtime`
+- `packages/flux-renderers-form`
 - renderer-facing integration points that participate in compiled validation
 
 It does not propose introducing a parallel validation framework.
@@ -96,7 +96,7 @@ The current implementation already has the right high-level direction, but sever
 
 ### 1. Multiple materialized projections of the same validation graph
 
-In `packages/amis-runtime/src/schema-compiler.ts`, the compiled validation output currently maintains:
+In `packages/flux-runtime/src/schema-compiler.ts`, the compiled validation output currently maintains:
 
 - `fields`
 - `order`
@@ -131,7 +131,7 @@ This makes the system easier to bootstrap, but it increases memory usage and cre
 
 ### 3. Compiled rules are not fully treated as final execution artifacts
 
-In `packages/amis-runtime/src/form-runtime-validation.ts`, `validatePath()` still normalizes compiled rules at execution time through `normalizeCompiledValidationRules(...)`.
+In `packages/flux-runtime/src/form-runtime-validation.ts`, `validatePath()` still normalizes compiled rules at execution time through `normalizeCompiledValidationRules(...)`.
 
 That indicates the current boundary between compile-time work and runtime work is still too soft.
 
@@ -149,7 +149,7 @@ This limits structural reuse and keeps aggregate validation less uniform than it
 
 ### 5. Composite validation still lives too much inside renderers
 
-`packages/amis-renderers-form/src/renderers/array-editor.tsx` and `packages/amis-renderers-form/src/renderers/key-value.tsx` still rely heavily on runtime registration callbacks for validation semantics that the compiler should understand structurally.
+`packages/flux-renderers-form/src/renderers/array-editor.tsx` and `packages/flux-renderers-form/src/renderers/key-value.tsx` still rely heavily on runtime registration callbacks for validation semantics that the compiler should understand structurally.
 
 ### 6. Runtime state updates still clone more than necessary
 
@@ -317,9 +317,9 @@ Add representative benchmark scenarios:
 
 ### Files likely involved
 
-- `packages/amis-runtime/src/schema-compiler.ts`
-- `packages/amis-runtime/src/form-runtime.ts`
-- `packages/amis-runtime/src/form-runtime-validation.ts`
+- `packages/flux-runtime/src/schema-compiler.ts`
+- `packages/flux-runtime/src/form-runtime.ts`
+- `packages/flux-runtime/src/form-runtime-validation.ts`
 - test and benchmark locations as appropriate
 
 ### Exit criteria
@@ -372,8 +372,8 @@ At least one deterministic traversal index and at least one dependent lookup ind
 
 ### Files likely involved
 
-- `packages/amis-schema/src/index.ts`
-- `packages/amis-runtime/src/schema-compiler.ts`
+- `packages/flux-core/src/index.ts`
+- `packages/flux-runtime/src/schema-compiler.ts`
 
 ### Risks
 
@@ -433,10 +433,10 @@ into the main compilation pass wherever possible.
 
 ### Files likely involved
 
-- `packages/amis-runtime/src/schema-compiler.ts`
-- `packages/amis-runtime/src/validation/rules.ts`
-- `packages/amis-schema/src/index.ts`
-- relevant renderer definition files in `packages/amis-renderers-form/src/renderers`
+- `packages/flux-runtime/src/schema-compiler.ts`
+- `packages/flux-runtime/src/validation/rules.ts`
+- `packages/flux-core/src/index.ts`
+- relevant renderer definition files in `packages/flux-renderers-form/src/renderers`
 
 ### Exit criteria
 
@@ -477,9 +477,9 @@ The engine should support four standard operations through one internal model:
 
 ### Files likely involved
 
-- `packages/amis-runtime/src/form-runtime-validation.ts`
-- `packages/amis-runtime/src/form-runtime.ts`
-- `packages/amis-runtime/src/form-runtime-subtree.ts`
+- `packages/flux-runtime/src/form-runtime-validation.ts`
+- `packages/flux-runtime/src/form-runtime.ts`
+- `packages/flux-runtime/src/form-runtime-subtree.ts`
 
 ### Exit criteria
 
@@ -528,8 +528,8 @@ Normalization should support common built-ins such as:
 
 ### Files likely involved
 
-- `packages/amis-runtime/src/schema-compiler.ts`
-- `packages/amis-runtime/src/form-runtime-validation.ts`
+- `packages/flux-runtime/src/schema-compiler.ts`
+- `packages/flux-runtime/src/form-runtime-validation.ts`
 - relevant renderer or schema contribution points
 
 ### Exit criteria
@@ -577,10 +577,10 @@ Keep runtime registration for:
 
 ### Files likely involved
 
-- `packages/amis-renderers-form/src/renderers/array-editor.tsx`
-- `packages/amis-renderers-form/src/renderers/key-value.tsx`
-- `packages/amis-runtime/src/schema-compiler.ts`
-- `packages/amis-schema/src/index.ts`
+- `packages/flux-renderers-form/src/renderers/array-editor.tsx`
+- `packages/flux-renderers-form/src/renderers/key-value.tsx`
+- `packages/flux-runtime/src/schema-compiler.ts`
+- `packages/flux-core/src/index.ts`
 
 ### Exit criteria
 
@@ -617,10 +617,10 @@ Candidate internal improvements include:
 
 ### Files likely involved
 
-- `packages/amis-runtime/src/form-store.ts`
-- `packages/amis-runtime/src/form-runtime.ts`
-- `packages/amis-runtime/src/form-runtime-validation.ts`
-- `packages/amis-runtime/src/form-runtime-array.ts`
+- `packages/flux-runtime/src/form-store.ts`
+- `packages/flux-runtime/src/form-runtime.ts`
+- `packages/flux-runtime/src/form-runtime-validation.ts`
+- `packages/flux-runtime/src/form-runtime-array.ts`
 
 ### Exit criteria
 
@@ -660,10 +660,10 @@ Precompute more rule artifacts at compile time, especially:
 
 ### Files likely involved
 
-- `packages/amis-runtime/src/validation/validators.ts`
-- `packages/amis-runtime/src/validation/errors.ts`
-- `packages/amis-runtime/src/validation/message.ts`
-- `packages/amis-schema/src/index.ts`
+- `packages/flux-runtime/src/validation/validators.ts`
+- `packages/flux-runtime/src/validation/errors.ts`
+- `packages/flux-runtime/src/validation/message.ts`
+- `packages/flux-core/src/index.ts`
 
 ### Exit criteria
 
@@ -696,8 +696,8 @@ Maintain path-based compatibility adapters for public callers while the internal
 
 ### Files likely involved
 
-- validation model exports in `packages/amis-schema/src/index.ts`
-- runtime debug helpers in `packages/amis-runtime`
+- validation model exports in `packages/flux-core/src/index.ts`
+- runtime debug helpers in `packages/flux-runtime`
 - test and development tooling as needed
 
 ### Exit criteria
@@ -842,3 +842,4 @@ The recommended next implementation step is to start with Stage 0 and Stage 1 to
 5. migrate internal callers to the canonical graph before removing redundant structures
 
 This is the highest-leverage place to begin because it creates the foundation for every later optimization in memory use, execution model, and composite-control integration.
+

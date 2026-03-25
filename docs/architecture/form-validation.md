@@ -1,4 +1,4 @@
-# Form Validation Design
+﻿# Form Validation Design
 
 ## Purpose
 
@@ -18,11 +18,11 @@ For validation file placement and module ownership, use `docs/architecture/amis-
 
 When this document needs to be checked against code, start with:
 
-- `packages/amis-schema/src/index.ts` for validation contracts
-- `packages/amis-runtime/src/validation/rules.ts` for rule extraction and trigger normalization
-- `packages/amis-runtime/src/form-runtime-validation.ts` for field and subtree validation flow
-- `packages/amis-runtime/src/form-runtime.ts` for form-level validation APIs and submit behavior
-- `packages/amis-renderers-form/src/field-utils.tsx` for shared renderer-side validation behavior wiring
+- `packages/flux-core/src/index.ts` for validation contracts
+- `packages/flux-runtime/src/validation/rules.ts` for rule extraction and trigger normalization
+- `packages/flux-runtime/src/form-runtime-validation.ts` for field and subtree validation flow
+- `packages/flux-runtime/src/form-runtime.ts` for form-level validation APIs and submit behavior
+- `packages/flux-renderers-form/src/field-utils.tsx` for shared renderer-side validation behavior wiring
 
 ## Main Rule
 
@@ -57,12 +57,12 @@ Validation is split into four layers:
 
 Current implementation split inside `amis-runtime`:
 
-- rule extraction and trigger normalization live in `packages/amis-runtime/src/validation/rules.ts`
-- default message building lives in `packages/amis-runtime/src/validation/message.ts`
-- reusable error helpers live in `packages/amis-runtime/src/validation/errors.ts`
-- built-in sync validators live in `packages/amis-runtime/src/validation/validators.ts`
-- validator lookup and registration live in `packages/amis-runtime/src/validation/registry.ts`
-- runtime sequencing lives in `packages/amis-runtime/src/validation-runtime.ts`, `packages/amis-runtime/src/form-runtime-validation.ts`, and `packages/amis-runtime/src/form-runtime.ts`
+- rule extraction and trigger normalization live in `packages/flux-runtime/src/validation/rules.ts`
+- default message building lives in `packages/flux-runtime/src/validation/message.ts`
+- reusable error helpers live in `packages/flux-runtime/src/validation/errors.ts`
+- built-in sync validators live in `packages/flux-runtime/src/validation/validators.ts`
+- validator lookup and registration live in `packages/flux-runtime/src/validation/registry.ts`
+- runtime sequencing lives in `packages/flux-runtime/src/validation-runtime.ts`, `packages/flux-runtime/src/form-runtime-validation.ts`, and `packages/flux-runtime/src/form-runtime.ts`
 
 ## Current Compile-Time Responsibility
 
@@ -308,7 +308,7 @@ In current code:
 
 - standard controls reuse shared validation/visibility helpers
 - form hooks expose both field-level and aggregate state selectors
-- shared field chrome lives under `packages/amis-renderers-form/src/renderers/shared/`
+- shared field chrome lives under `packages/flux-renderers-form/src/renderers/shared/`
 
 Important current renderer-facing utilities include:
 
@@ -316,7 +316,7 @@ Important current renderer-facing utilities include:
 - `useCurrentFormFieldState(...)`
 - `useFieldError(...)`
 - `useAggregateError(...)`
-- helper functions in `packages/amis-renderers-form/src/field-utils.tsx`
+- helper functions in `packages/flux-renderers-form/src/field-utils.tsx`
 
 ## Complex Controls And Runtime Registration
 
@@ -383,3 +383,4 @@ But do not let them override the active low-code-first architecture described he
 - `docs/architecture/amis-runtime-module-boundaries.md`
 - `docs/references/react-hook-form-template-notes.md`
 - `docs/references/yup-template-notes.md`
+

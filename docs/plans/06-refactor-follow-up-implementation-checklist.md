@@ -1,4 +1,4 @@
-# Refactor Follow-up Implementation Checklist
+﻿# Refactor Follow-up Implementation Checklist
 
 ## Purpose
 
@@ -18,20 +18,20 @@ This plan is intentionally implementation-first. Each item should land as a cohe
 
 Use the current `refactor-1` structure as the primary architecture because it already decomposes the runtime into explicit modules:
 
-- `packages/amis-runtime/src/index.ts`
-- `packages/amis-runtime/src/schema-compiler.ts`
-- `packages/amis-runtime/src/form-runtime.ts`
-- `packages/amis-runtime/src/action-runtime.ts`
-- `packages/amis-runtime/src/request-runtime.ts`
-- `packages/amis-runtime/src/validation-runtime.ts`
-- `packages/amis-runtime/src/scope.ts`
+- `packages/flux-runtime/src/index.ts`
+- `packages/flux-runtime/src/schema-compiler.ts`
+- `packages/flux-runtime/src/form-runtime.ts`
+- `packages/flux-runtime/src/action-runtime.ts`
+- `packages/flux-runtime/src/request-runtime.ts`
+- `packages/flux-runtime/src/validation-runtime.ts`
+- `packages/flux-runtime/src/scope.ts`
 
 ### Absorb from `refactor-2`
 
 The most valuable ideas to import are:
 
-- split `packages/amis-renderers-form/src/index.tsx` into focused modules
-- move shared array helpers into `packages/amis-schema/src/utils/array.ts`
+- split `packages/flux-renderers-form/src/index.tsx` into focused modules
+- move shared array helpers into `packages/flux-core/src/utils/array.ts`
 - remove the empty `packages/amis-testing` package
 - add a branch-level implementation report or status document after the merge work is done
 
@@ -50,9 +50,9 @@ After this follow-up work, the repository should look like this at a high level:
 
 ### In scope
 
-- `packages/amis-renderers-form`
-- `packages/amis-schema`
-- `packages/amis-runtime` only where imports need to be updated
+- `packages/flux-renderers-form`
+- `packages/flux-core`
+- `packages/flux-runtime` only where imports need to be updated
 - workspace cleanup for `packages/amis-testing`
 - follow-up documentation
 
@@ -73,7 +73,7 @@ Bring the physical file structure of `amis-renderers-form` in line with the alre
 
 ### Current problem
 
-`packages/amis-renderers-form/src/index.tsx` currently mixes:
+`packages/flux-renderers-form/src/index.tsx` currently mixes:
 
 - schema types
 - field presentation helpers
@@ -88,25 +88,25 @@ That makes the package harder to navigate than the rest of the branch.
 
 Create and migrate toward:
 
-- `packages/amis-renderers-form/src/index.tsx`
-- `packages/amis-renderers-form/src/schemas.ts`
-- `packages/amis-renderers-form/src/field-utils.tsx`
-- `packages/amis-renderers-form/src/renderers/form.tsx`
-- `packages/amis-renderers-form/src/renderers/input.tsx`
-- `packages/amis-renderers-form/src/renderers/tag-list.tsx`
-- `packages/amis-renderers-form/src/renderers/key-value.tsx`
-- `packages/amis-renderers-form/src/renderers/array-editor.tsx`
+- `packages/flux-renderers-form/src/index.tsx`
+- `packages/flux-renderers-form/src/schemas.ts`
+- `packages/flux-renderers-form/src/field-utils.tsx`
+- `packages/flux-renderers-form/src/renderers/form.tsx`
+- `packages/flux-renderers-form/src/renderers/input.tsx`
+- `packages/flux-renderers-form/src/renderers/tag-list.tsx`
+- `packages/flux-renderers-form/src/renderers/key-value.tsx`
+- `packages/flux-renderers-form/src/renderers/array-editor.tsx`
 
 ### Checklist
 
-- extract form-specific schema and value interfaces into `packages/amis-renderers-form/src/schemas.ts`
-- extract shared field validation behavior helpers into `packages/amis-renderers-form/src/field-utils.tsx`
-- move `FormRenderer` into `packages/amis-renderers-form/src/renderers/form.tsx`
-- move simple scalar and option-based controls into `packages/amis-renderers-form/src/renderers/input.tsx`
-- move `TagListRenderer` into `packages/amis-renderers-form/src/renderers/tag-list.tsx`
-- move `KeyValueRenderer` into `packages/amis-renderers-form/src/renderers/key-value.tsx`
-- move `ArrayEditorRenderer` into `packages/amis-renderers-form/src/renderers/array-editor.tsx`
-- reduce `packages/amis-renderers-form/src/index.tsx` to registration, exports, and minimal assembly only
+- extract form-specific schema and value interfaces into `packages/flux-renderers-form/src/schemas.ts`
+- extract shared field validation behavior helpers into `packages/flux-renderers-form/src/field-utils.tsx`
+- move `FormRenderer` into `packages/flux-renderers-form/src/renderers/form.tsx`
+- move simple scalar and option-based controls into `packages/flux-renderers-form/src/renderers/input.tsx`
+- move `TagListRenderer` into `packages/flux-renderers-form/src/renderers/tag-list.tsx`
+- move `KeyValueRenderer` into `packages/flux-renderers-form/src/renderers/key-value.tsx`
+- move `ArrayEditorRenderer` into `packages/flux-renderers-form/src/renderers/array-editor.tsx`
+- reduce `packages/flux-renderers-form/src/index.tsx` to registration, exports, and minimal assembly only
 - keep existing exports compatible unless there is a clear reason to tighten them
 - avoid introducing a new abstraction layer unless duplicated logic is real and stable
 
@@ -125,7 +125,7 @@ Move reusable array helper logic out of runtime-specific implementation files wh
 
 ### Why
 
-`refactor-2` makes a good move by extracting array helpers to `packages/amis-schema/src/utils/array.ts`.
+`refactor-2` makes a good move by extracting array helpers to `packages/flux-core/src/utils/array.ts`.
 
 These helpers are pure and reusable:
 
@@ -138,10 +138,10 @@ These helpers are pure and reusable:
 
 ### Checklist
 
-- add `packages/amis-schema/src/utils/array.ts`
+- add `packages/flux-core/src/utils/array.ts`
 - move generic array helper implementations into that file
-- export the helpers from `packages/amis-schema/src/index.ts`
-- update `packages/amis-runtime/src/form-path-state.ts` and any other consumers to import from `@nop-chaos/amis-schema`
+- export the helpers from `packages/flux-core/src/index.ts`
+- update `packages/flux-runtime/src/form-path-state.ts` and any other consumers to import from `@nop-chaos/flux-core`
 - keep path-remapping logic inside runtime; only move generic array operations
 - add focused tests if the moved helpers are not already covered directly
 
@@ -187,18 +187,18 @@ Do not regress `amis-react` back into a single-file adapter.
 
 Compared with `refactor-2`, the current branch already has a better physical split in:
 
-- `packages/amis-react/src/contexts.ts`
-- `packages/amis-react/src/form-state.ts`
-- `packages/amis-react/src/defaults.ts`
-- `packages/amis-react/src/index.tsx`
+- `packages/flux-react/src/contexts.ts`
+- `packages/flux-react/src/form-state.ts`
+- `packages/flux-react/src/defaults.ts`
+- `packages/flux-react/src/index.tsx`
 
 This is a strength and should be preserved.
 
 ### Checklist
 
-- keep context definitions inside `packages/amis-react/src/contexts.ts`
-- keep form selector helpers inside `packages/amis-react/src/form-state.ts`
-- keep default environment and registry helpers inside `packages/amis-react/src/defaults.ts`
+- keep context definitions inside `packages/flux-react/src/contexts.ts`
+- keep form selector helpers inside `packages/flux-react/src/form-state.ts`
+- keep default environment and registry helpers inside `packages/flux-react/src/defaults.ts`
 - only move code into `index.tsx` when it is truly entry-point composition logic
 - if form renderer splitting exposes new common React-side helpers, place them deliberately rather than appending to `index.tsx`
 
@@ -219,10 +219,10 @@ The biggest reason `refactor-1` is stronger overall is the decomposition of `ami
 
 ### Checklist
 
-- do not merge `schema-compiler`, `form-runtime`, `action-runtime`, `request-runtime`, or `validation-runtime` back into `packages/amis-runtime/src/index.ts`
-- keep `packages/amis-runtime/src/index.ts` as orchestration and export assembly only
+- do not merge `schema-compiler`, `form-runtime`, `action-runtime`, `request-runtime`, or `validation-runtime` back into `packages/flux-runtime/src/index.ts`
+- keep `packages/flux-runtime/src/index.ts` as orchestration and export assembly only
 - if form renderer refactoring needs new helpers, place them in the narrowest runtime module that matches their responsibility
-- rename `packages/amis-runtime/src/form-store.ts` only if the team wants naming alignment in this pass; otherwise document the mismatch and defer
+- rename `packages/flux-runtime/src/form-store.ts` only if the team wants naming alignment in this pass; otherwise document the mismatch and defer
 - keep runtime behavior unchanged while moving imports for extracted shared utilities
 
 ### Acceptance criteria
@@ -303,8 +303,8 @@ Before merging, confirm all of the following:
 
 These are valid future follow-ups, but not required for this pass:
 
-- further split `packages/amis-runtime/src/form-runtime.ts`
-- reconsider whether `packages/amis-runtime/src/form-store.ts` should be renamed to reflect both form and page store responsibilities
+- further split `packages/flux-runtime/src/form-runtime.ts`
+- reconsider whether `packages/flux-runtime/src/form-store.ts` should be renamed to reflect both form and page store responsibilities
 - add direct unit tests for the extracted array helper module
 - extract more shared renderer primitives only after real duplication is confirmed
 
@@ -327,3 +327,4 @@ This follow-up plan is complete when:
 - `docs/architecture/amis-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/form-validation.md`
+

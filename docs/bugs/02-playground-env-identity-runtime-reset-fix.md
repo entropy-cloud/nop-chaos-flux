@@ -1,4 +1,4 @@
-# 02 Playground Env Identity Runtime Reset Fix
+﻿# 02 Playground Env Identity Runtime Reset Fix
 
 ## Problem
 
@@ -9,7 +9,7 @@
 ## Root Cause
 
 - `apps/playground/src/App.tsx` built `env` with `useMemo(...)` but still depended on frequently changing state like `directoryUsers` and `searchQuery`
-- `packages/amis-react/src/index.tsx` treats `props.env` as part of renderer runtime identity, so a new `env` object rebuilds the runtime and page runtime
+- `packages/flux-react/src/index.tsx` treats `props.env` as part of renderer runtime identity, so a new `env` object rebuilds the runtime and page runtime
 - once page identity changed, form runtime identity changed too, which reset form-local state even though the user had not switched forms
 
 ## Fix
@@ -20,7 +20,7 @@
 
 ## Tests
 
-- `packages/amis-react/src/index.test.tsx` - verifies that changing `env` identity recreates form runtime and clears an in-progress field value
+- `packages/flux-react/src/index.test.tsx` - verifies that changing `env` identity recreates form runtime and clears an in-progress field value
 - `apps/playground/src/App.test.tsx` - verifies the playground keeps the same `env` identity across search and user creation updates
 
 ## Affected Files
@@ -28,10 +28,11 @@
 - `apps/playground/src/App.tsx`
 - `apps/playground/src/App.test.tsx`
 - `apps/playground/vitest.config.ts`
-- `packages/amis-react/src/index.test.tsx`
+- `packages/flux-react/src/index.test.tsx`
 
 ## Notes For Future Refactors
 
 - treat `env` as runtime configuration, not as a container for frequently changing business state
 - if a host app needs fresh state inside `env` callbacks, prefer refs or another stable indirection instead of rebuilding `env`
 - when a form appears to reset during unrelated interactions, inspect runtime identity inputs before changing form logic
+

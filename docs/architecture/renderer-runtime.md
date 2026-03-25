@@ -1,4 +1,4 @@
-# Renderer Runtime Design
+﻿# Renderer Runtime Design
 
 ## Purpose
 
@@ -18,10 +18,10 @@ For detailed slot and field-semantics rules, use `docs/architecture/field-metada
 
 When this document needs to be checked against code, start with:
 
-- `packages/amis-schema/src/index.ts` for renderer contracts
-- `packages/amis-react/src/index.tsx` for hooks, rendering helpers, and React boundaries
-- `packages/amis-runtime/src/node-runtime.ts` for resolved prop/meta behavior
-- `packages/amis-runtime/src/page-runtime.ts` and `packages/amis-runtime/src/form-runtime.ts` for runtime container creation
+- `packages/flux-core/src/index.ts` for renderer contracts
+- `packages/flux-react/src/index.tsx` for hooks, rendering helpers, and React boundaries
+- `packages/flux-runtime/src/node-runtime.ts` for resolved prop/meta behavior
+- `packages/flux-runtime/src/page-runtime.ts` and `packages/flux-runtime/src/form-runtime.ts` for runtime container creation
 
 ## Main Design Rule
 
@@ -135,7 +135,7 @@ Use hooks for ambient runtime state and services:
 - `useCurrentNodeMeta()`
 - `useRenderFragment()`
 
-This split matches actual ownership and change frequency better than either “everything by props” or “everything by hooks”.
+This split matches actual ownership and change frequency better than either â€œeverything by propsâ€ or â€œeverything by hooksâ€.
 
 ## Current Hooks
 
@@ -391,3 +391,4 @@ List, table, and tree renderers should avoid eager child-scope creation for work
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
 - `docs/references/renderer-interfaces.md`
+

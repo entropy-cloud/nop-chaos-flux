@@ -1,4 +1,4 @@
-# 01 Playground Email Input State Reset Fix
+﻿# 01 Playground Email Input State Reset Fix
 
 ## Problem
 
@@ -14,27 +14,28 @@
 
 ## Fix
 
-- added `useBoundFieldValue(...)` in `packages/amis-renderers-form/src/field-utils.tsx`
+- added `useBoundFieldValue(...)` in `packages/flux-renderers-form/src/field-utils.tsx`
 - when a field is inside a form, renderers now read from `useCurrentFormState(...)`; outside a form they still fall back to scope-based reads
-- updated `packages/amis-renderers-form/src/renderers/input.tsx` so text-like inputs and related controls bind to the correct live value source
-- updated `packages/amis-react/src/index.tsx` so form runtime is preserved across unrelated rerenders and recreated only when real identity inputs change
+- updated `packages/flux-renderers-form/src/renderers/input.tsx` so text-like inputs and related controls bind to the correct live value source
+- updated `packages/flux-react/src/index.tsx` so form runtime is preserved across unrelated rerenders and recreated only when real identity inputs change
 - tightened node runtime state handling so compiled node runtime state is recreated when node identity changes
 
 ## Tests
 
-- `packages/amis-renderers-form/src/index.test.tsx` - verifies `input-email` can progress from `a` to `ab` to `abc@example.com`
-- `packages/amis-react/src/index.test.tsx` - verifies host rerenders do not wipe form-local values and page updates do not reset the form
+- `packages/flux-renderers-form/src/index.test.tsx` - verifies `input-email` can progress from `a` to `ab` to `abc@example.com`
+- `packages/flux-react/src/index.test.tsx` - verifies host rerenders do not wipe form-local values and page updates do not reset the form
 
 ## Affected Files
 
-- `packages/amis-react/src/index.tsx`
-- `packages/amis-renderers-form/src/field-utils.tsx`
-- `packages/amis-renderers-form/src/renderers/input.tsx`
-- `packages/amis-renderers-form/src/index.test.tsx`
-- `packages/amis-react/src/index.test.tsx`
+- `packages/flux-react/src/index.tsx`
+- `packages/flux-renderers-form/src/field-utils.tsx`
+- `packages/flux-renderers-form/src/renderers/input.tsx`
+- `packages/flux-renderers-form/src/index.test.tsx`
+- `packages/flux-react/src/index.test.tsx`
 
 ## Notes For Future Refactors
 
 - controlled form fields must subscribe to the actual live value source, not just a convenient scope snapshot
 - changes to form runtime lifecycle should be reviewed for accidental state recreation on parent rerender
 - if an input bug looks like validation, check value subscription and controlled-state flow before changing validation rules
+

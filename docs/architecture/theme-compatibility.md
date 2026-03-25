@@ -1,4 +1,4 @@
-# Theme Compatibility Design
+﻿# Theme Compatibility Design
 
 ## Purpose
 
@@ -11,7 +11,7 @@ The goal is not to introduce a React `ThemeProvider` requirement. The goal is to
 - `apps/playground/src/App.tsx`
 - `apps/playground/src/styles.css`
 - `apps/playground/src/FlowDesignerExample.tsx`
-- `packages/amis-react/src/index.tsx`
+- `packages/flux-react/src/index.tsx`
 - `packages/amis-debugger/src/panel.tsx`
 - `packages/flow-designer-renderers/src/index.tsx`
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
@@ -265,3 +265,4 @@ After this migration:
 - continue reducing package-level inline visual styles in `apps/playground/src/FlowDesignerExample.tsx`
 - extend package-owned CSS for more generic `na-*` renderers if they need stronger host-level consistency
 - add a host integration example showing token mapping from an external shell into `.na-theme-root`
+

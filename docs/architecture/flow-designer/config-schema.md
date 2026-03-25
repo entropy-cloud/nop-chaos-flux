@@ -852,5 +852,82 @@ const schema = {
 
 - inspector 和 create dialog 优先使用 schema 片段，而不是新增字段 DSL
 - port 应优先于 node role 建模
-- `defaults` 必须足够支持“直接拖拽即落图”
+- `defaults` 必须足够支持"直接拖拽即落图"
 - `createDialog` 只用于复杂初始化，不应强迫所有节点走表单
+
+## 18. TailwindCSS 集成
+
+Flow Designer 使用 TailwindCSS 作为样式方案，与 `nop-chaos-next` 保持完全一致的 token 和 CSS 变量。
+
+### 18.1 包结构
+
+```
+packages/tailwind-preset/
+├── src/
+│   ├── index.ts           # TailwindCSS preset（与 nop-chaos-next 相同）
+│   ├── styles.css         # CSS 变量定义（与 nop-chaos-next 相同）
+│   └── styles/
+│       ├── tailwind.css   # TailwindCSS 入口
+│       └── base.css       # 基础样式
+```
+
+### 18.2 CSS 变量一致性
+
+以下文件与 `nop-chaos-next` 完全一致，可直接替换：
+
+| 文件 | 说明 |
+|------|------|
+| `packages/tailwind-preset/src/index.ts` | TailwindCSS preset 配置 |
+| `packages/tailwind-preset/src/styles.css` | 主题 CSS 变量（classic/glass，light/dark） |
+
+### 18.3 响应式断点
+
+使用 TailwindCSS 内置断点：
+
+| 断点 | 最小宽度 | 对应设备 |
+|------|---------|---------|
+| `sm` | 640px | 手机横屏 |
+| `md` | 768px | 平板 |
+| `lg` | 1024px | 笔记本 |
+| `xl` | 1280px | 桌面 |
+| `2xl` | 1536px | 大屏 |
+
+### 18.4 主题切换
+
+支持两种主题模式：
+
+```html
+<!-- Classic 主题 -->
+<html data-theme="classic" data-mode="light">
+<html data-theme="classic" data-mode="dark">
+
+<!-- Glass 主题 -->
+<html data-theme="glass" data-mode="light">
+<html data-theme="glass" data-mode="dark">
+```
+
+### 18.5 常用 TailwindCSS 类
+
+Flow Designer 特定组件可使用以下类：
+
+```tsx
+// 节点卡片
+<div className="fd-node fd-node--selected">
+
+// 使用 TailwindCSS（推荐）
+<div className="min-w-[160px] px-4 py-3 border rounded-lg shadow-sm 
+                bg-card border-border hover:border-primary transition-colors">
+
+// 响应式三栏布局
+<div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)_280px]">
+```
+
+### 18.6 主题卡片
+
+使用 `.theme-card` 类实现毛玻璃效果：
+
+```tsx
+<div className="theme-card rounded-xl p-4">
+  {/* 内容 */}
+</div>
+```

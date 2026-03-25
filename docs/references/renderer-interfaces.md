@@ -1,4 +1,4 @@
-# Renderer Interface Reference
+﻿# Renderer Interface Reference
 
 ## Purpose
 
@@ -8,7 +8,7 @@ Use it to understand the roles of the major contracts without reading every sour
 
 This is a reference document, not the architecture source of truth.
 
-Code-level source of truth lives primarily in `packages/amis-schema/src/index.ts`.
+Code-level source of truth lives primarily in `packages/flux-core/src/index.ts`.
 
 ## Core Schema Types
 
@@ -229,3 +229,4 @@ For deeper design intent, continue with:
 - `docs/architecture/form-validation.md`
 
 For historical draft material, see `docs/archive/nop-chaos-amis-renderer-interfaces.ts`.
+

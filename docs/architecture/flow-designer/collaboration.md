@@ -1,36 +1,36 @@
-# Flow Designer 协作细节
+﻿# Flow Designer åä½œç»†èŠ‚
 
 ## Purpose
 
-本文聚焦当前 `flow-designer2` 里各层如何协作，而不是重复定义配置模型或画布 API。
+æœ¬æ–‡èšç„¦å½“å‰ `flow-designer2` é‡Œå„å±‚å¦‚ä½•åä½œï¼Œè€Œä¸æ˜¯é‡å¤å®šä¹‰é…ç½®æ¨¡åž‹æˆ–ç”»å¸ƒ APIã€‚
 
-适用场景:
+é€‚ç”¨åœºæ™¯:
 
-- 想快速看懂 `designer-page` 从挂载到可交互的完整链路
-- 想定位 toolbar / inspector / canvas 为什么都能复用同一套 runtime
-- 想确认 graph mutation、SchemaRenderer runtime、canvas adapter 之间的职责边界
+- æƒ³å¿«é€Ÿçœ‹æ‡‚ `designer-page` ä»ŽæŒ‚è½½åˆ°å¯äº¤äº’çš„å®Œæ•´é“¾è·¯
+- æƒ³å®šä½ toolbar / inspector / canvas ä¸ºä»€ä¹ˆéƒ½èƒ½å¤ç”¨åŒä¸€å¥— runtime
+- æƒ³ç¡®è®¤ graph mutationã€SchemaRenderer runtimeã€canvas adapter ä¹‹é—´çš„èŒè´£è¾¹ç•Œ
 
 ## Current Code Anchors
 
-先从这些文件对照阅读:
+å…ˆä»Žè¿™äº›æ–‡ä»¶å¯¹ç…§é˜…è¯»:
 
-- `packages/amis-react/src/index.tsx`
-- `packages/amis-runtime/src/index.ts`
-- `packages/amis-runtime/src/action-runtime.ts`
+- `packages/flux-react/src/index.tsx`
+- `packages/flux-runtime/src/index.ts`
+- `packages/flux-runtime/src/action-runtime.ts`
 - `packages/flow-designer-renderers/src/index.tsx`
 - `packages/flow-designer-renderers/src/designer-command-adapter.ts`
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 - `packages/flow-designer-core/src/core.ts`
 - `apps/playground/src/App.tsx`
 
-## 一句话模型
+## ä¸€å¥è¯æ¨¡åž‹
 
-Flow Designer 不是独立页面引擎，而是把图编辑能力拆成两层后挂到现有 `SchemaRenderer` 体系上:
+Flow Designer ä¸æ˜¯ç‹¬ç«‹é¡µé¢å¼•æ“Žï¼Œè€Œæ˜¯æŠŠå›¾ç¼–è¾‘èƒ½åŠ›æ‹†æˆä¸¤å±‚åŽæŒ‚åˆ°çŽ°æœ‰ `SchemaRenderer` ä½“ç³»ä¸Š:
 
-1. `@nop-chaos/flow-designer-core` 持有 graph document 和 graph command
-2. `@nop-chaos/flow-designer-renderers` 把 graph 能力接到 SchemaRenderer 的 region、scope、action、dialog、form、canvas adapter 上
+1. `@nop-chaos/flow-designer-core` æŒæœ‰ graph document å’Œ graph command
+2. `@nop-chaos/flow-designer-renderers` æŠŠ graph èƒ½åŠ›æŽ¥åˆ° SchemaRenderer çš„ regionã€scopeã€actionã€dialogã€formã€canvas adapter ä¸Š
 
-可以把当前实现理解成:
+å¯ä»¥æŠŠå½“å‰å®žçŽ°ç†è§£æˆ:
 
 ```text
 schema-driven host shell
@@ -40,80 +40,80 @@ schema-driven host shell
   -> graph mutations routed back through designer:* or command dispatch
 ```
 
-## 协作分层
+## åä½œåˆ†å±‚
 
-### 1. 通用 schema/runtime 层
+### 1. é€šç”¨ schema/runtime å±‚
 
-这层来自 `amis-schema`、`amis-runtime`、`amis-react`。
+è¿™å±‚æ¥è‡ª `amis-schema`ã€`amis-runtime`ã€`amis-react`ã€‚
 
-它负责:
+å®ƒè´Ÿè´£:
 
-- schema 编译
-- scope 链和局部 scope 创建
+- schema ç¼–è¯‘
+- scope é“¾å’Œå±€éƒ¨ scope åˆ›å»º
 - page/form runtime
-- built-in action + namespaced action 分发
-- React context 和 region 渲染
+- built-in action + namespaced action åˆ†å‘
+- React context å’Œ region æ¸²æŸ“
 
-Flow Designer 复用这层，而不是重新做一套页面状态机。
+Flow Designer å¤ç”¨è¿™å±‚ï¼Œè€Œä¸æ˜¯é‡æ–°åšä¸€å¥—é¡µé¢çŠ¶æ€æœºã€‚
 
 ### 2. Flow Designer domain core
 
-这层来自 `@nop-chaos/flow-designer-core`。
+è¿™å±‚æ¥è‡ª `@nop-chaos/flow-designer-core`ã€‚
 
-它负责:
+å®ƒè´Ÿè´£:
 
 - `GraphDocument` / `GraphNode` / `GraphEdge`
 - selection
 - undo / redo
 - save / restore / export
 - viewport / grid
-- node / edge CRUD 和 reconnect
+- node / edge CRUD å’Œ reconnect
 
-这里才是 graph state 的唯一 source of truth。
+è¿™é‡Œæ‰æ˜¯ graph state çš„å”¯ä¸€ source of truthã€‚
 
 ### 3. Flow Designer renderer bridge
 
-这层来自 `@nop-chaos/flow-designer-renderers`。
+è¿™å±‚æ¥è‡ª `@nop-chaos/flow-designer-renderers`ã€‚
 
-它负责:
+å®ƒè´Ÿè´£:
 
-- 定义 `designer-page` 这类 renderer
-- 创建 `DesignerCore`
-- 把 snapshot 暴露给 toolbar / inspector / canvas
-- 注册 `designer` namespace provider
-- 把 UI 手势翻译成 command
+- å®šä¹‰ `designer-page` è¿™ç±» renderer
+- åˆ›å»º `DesignerCore`
+- æŠŠ snapshot æš´éœ²ç»™ toolbar / inspector / canvas
+- æ³¨å†Œ `designer` namespace provider
+- æŠŠ UI æ‰‹åŠ¿ç¿»è¯‘æˆ command
 
-### 4. Canvas adapter 层
+### 4. Canvas adapter å±‚
 
-这层由 `card` / `xyflow-preview` / `xyflow` 三种 adapter 组成。
+è¿™å±‚ç”± `card` / `xyflow-preview` / `xyflow` ä¸‰ç§ adapter ç»„æˆã€‚
 
-它只负责:
+å®ƒåªè´Ÿè´£:
 
-- 展示当前 snapshot
-- 把 click / drag / connect / reconnect 等 UI 手势翻译成显式 callback
+- å±•ç¤ºå½“å‰ snapshot
+- æŠŠ click / drag / connect / reconnect ç­‰ UI æ‰‹åŠ¿ç¿»è¯‘æˆæ˜¾å¼ callback
 
-它不直接修改 graph document。
+å®ƒä¸ç›´æŽ¥ä¿®æ”¹ graph documentã€‚
 
-## 职责边界
+## èŒè´£è¾¹ç•Œ
 
-| 层 | 持有状态 | 可写 graph | 关心 schema | 典型入口 |
+| å±‚ | æŒæœ‰çŠ¶æ€ | å¯å†™ graph | å…³å¿ƒ schema | å…¸åž‹å…¥å£ |
 | --- | --- | --- | --- | --- |
-| `amis-runtime` / `amis-react` | page, form, scope, dialog, action scope | 否 | 是 | `createRendererRuntime()`, `RenderNodes` |
-| `flow-designer-core` | document, selection, history, viewport, grid | 是 | 否 | `createDesignerCore()` |
-| `flow-designer-renderers` | bridge host local intent | 间接 | 是 | `DesignerPageRenderer` |
-| canvas adapters | UI library local transient state | 否 | 否 | `renderDesignerCanvasBridge()` |
+| `amis-runtime` / `amis-react` | page, form, scope, dialog, action scope | å¦ | æ˜¯ | `createRendererRuntime()`, `RenderNodes` |
+| `flow-designer-core` | document, selection, history, viewport, grid | æ˜¯ | å¦ | `createDesignerCore()` |
+| `flow-designer-renderers` | bridge host local intent | é—´æŽ¥ | æ˜¯ | `DesignerPageRenderer` |
+| canvas adapters | UI library local transient state | å¦ | å¦ | `renderDesignerCanvasBridge()` |
 
-当前有一个很重要的规则:
+å½“å‰æœ‰ä¸€ä¸ªå¾ˆé‡è¦çš„è§„åˆ™:
 
-- graph mutation 只能落到 `DesignerCore`
-- schema fragment 只能读 snapshot 和发命令
-- canvas adapter 只能翻译 UI 手势
+- graph mutation åªèƒ½è½åˆ° `DesignerCore`
+- schema fragment åªèƒ½è¯» snapshot å’Œå‘å‘½ä»¤
+- canvas adapter åªèƒ½ç¿»è¯‘ UI æ‰‹åŠ¿
 
-## 挂载协作链路
+## æŒ‚è½½åä½œé“¾è·¯
 
-`designer-page` 真正依赖的是通用 `NodeRenderer` 先给它搭好 runtime 边界，再在它自己的组件里创建 graph runtime。
+`designer-page` çœŸæ­£ä¾èµ–çš„æ˜¯é€šç”¨ `NodeRenderer` å…ˆç»™å®ƒæ­å¥½ runtime è¾¹ç•Œï¼Œå†åœ¨å®ƒè‡ªå·±çš„ç»„ä»¶é‡Œåˆ›å»º graph runtimeã€‚
 
-### 调用链图: `designer-page` 首次挂载
+### è°ƒç”¨é“¾å›¾: `designer-page` é¦–æ¬¡æŒ‚è½½
 
 ```text
 host schema
@@ -142,27 +142,27 @@ flowchart TD
   E --> J[render toolbar / canvas / inspector]
 ```
 
-这里有两个关键点:
+è¿™é‡Œæœ‰ä¸¤ä¸ªå…³é”®ç‚¹:
 
-- `designer-page` 的 renderer definition 把 `actionScopePolicy` 设成了 `'new'`，所以它会拿到自己的 action namespace 边界
-- toolbar 和 inspector 是 `designer-page` 的 regions，因此它们天然运行在这个新的 `designer` action scope 里面
-- 当前 `DesignerPageRenderer` 在 region render 调用里也显式透传了 `actionScope` 和 designer host `scope`，这样即使后续 region 调用位置调整，toolbar / inspector 片段仍然会明确绑定到同一个 designer namespace 边界与 snapshot 视图
-- `dialogs` 现在也会通过同样的 region render 调用被挂到 `designer-page` shell 上，并显式收到同一份 designer host `scope` 与 `actionScope`
-- 但通过共享 `dialog` action runtime 打开的弹窗仍然是另一条路径；它们不是这个常驻 `dialogs` region 的替身，而是共享 dialog host 上的弹窗实例
-- 这些行为现在都由 renderer 回归测试锁定：`toolbar` / `inspector` / `dialogs` 三个常驻 region 都可以读取注入后的 designer host scope；其中 `toolbar`、`dialogs` 与 `inspector` 也都已覆盖直接 dispatch `designer:*` 的写路径，而 dialog action 打开的内容同样会继承同一个 designer action scope
+- `designer-page` çš„ renderer definition æŠŠ `actionScopePolicy` è®¾æˆäº† `'new'`ï¼Œæ‰€ä»¥å®ƒä¼šæ‹¿åˆ°è‡ªå·±çš„ action namespace è¾¹ç•Œ
+- toolbar å’Œ inspector æ˜¯ `designer-page` çš„ regionsï¼Œå› æ­¤å®ƒä»¬å¤©ç„¶è¿è¡Œåœ¨è¿™ä¸ªæ–°çš„ `designer` action scope é‡Œé¢
+- å½“å‰ `DesignerPageRenderer` åœ¨ region render è°ƒç”¨é‡Œä¹Ÿæ˜¾å¼é€ä¼ äº† `actionScope` å’Œ designer host `scope`ï¼Œè¿™æ ·å³ä½¿åŽç»­ region è°ƒç”¨ä½ç½®è°ƒæ•´ï¼Œtoolbar / inspector ç‰‡æ®µä»ç„¶ä¼šæ˜Žç¡®ç»‘å®šåˆ°åŒä¸€ä¸ª designer namespace è¾¹ç•Œä¸Ž snapshot è§†å›¾
+- `dialogs` çŽ°åœ¨ä¹Ÿä¼šé€šè¿‡åŒæ ·çš„ region render è°ƒç”¨è¢«æŒ‚åˆ° `designer-page` shell ä¸Šï¼Œå¹¶æ˜¾å¼æ”¶åˆ°åŒä¸€ä»½ designer host `scope` ä¸Ž `actionScope`
+- ä½†é€šè¿‡å…±äº« `dialog` action runtime æ‰“å¼€çš„å¼¹çª—ä»ç„¶æ˜¯å¦ä¸€æ¡è·¯å¾„ï¼›å®ƒä»¬ä¸æ˜¯è¿™ä¸ªå¸¸é©» `dialogs` region çš„æ›¿èº«ï¼Œè€Œæ˜¯å…±äº« dialog host ä¸Šçš„å¼¹çª—å®žä¾‹
+- è¿™äº›è¡Œä¸ºçŽ°åœ¨éƒ½ç”± renderer å›žå½’æµ‹è¯•é”å®šï¼š`toolbar` / `inspector` / `dialogs` ä¸‰ä¸ªå¸¸é©» region éƒ½å¯ä»¥è¯»å–æ³¨å…¥åŽçš„ designer host scopeï¼›å…¶ä¸­ `toolbar`ã€`dialogs` ä¸Ž `inspector` ä¹Ÿéƒ½å·²è¦†ç›–ç›´æŽ¥ dispatch `designer:*` çš„å†™è·¯å¾„ï¼Œè€Œ dialog action æ‰“å¼€çš„å†…å®¹åŒæ ·ä¼šç»§æ‰¿åŒä¸€ä¸ª designer action scope
 
-## 文件级协作图
+## æ–‡ä»¶çº§åä½œå›¾
 
-如果要从源码文件角度追调用链，可以按下面这条主路径看。
+å¦‚æžœè¦ä»Žæºç æ–‡ä»¶è§’åº¦è¿½è°ƒç”¨é“¾ï¼Œå¯ä»¥æŒ‰ä¸‹é¢è¿™æ¡ä¸»è·¯å¾„çœ‹ã€‚
 
-### 文件级调用链图: 从宿主挂载到 graph mutation
+### æ–‡ä»¶çº§è°ƒç”¨é“¾å›¾: ä»Žå®¿ä¸»æŒ‚è½½åˆ° graph mutation
 
 ```text
 apps/playground/src/App.tsx
   -> registerFlowDesignerRenderers(registry)
   -> SchemaRenderer(schema)
 
-packages/amis-react/src/index.tsx
+packages/flux-react/src/index.tsx
   -> createRendererRuntime(...)
   -> RenderNodes
   -> NodeRenderer(designer-page)
@@ -190,7 +190,7 @@ packages/flow-designer-renderers/src/index.tsx
 
 ```mermaid
 flowchart TD
-  A[apps/playground/src/App.tsx] --> B[packages/amis-react/src/index.tsx]
+  A[apps/playground/src/App.tsx] --> B[packages/flux-react/src/index.tsx]
   B --> C[packages/flow-designer-renderers/src/index.tsx]
   C --> D[packages/flow-designer-renderers/src/canvas-bridge.tsx]
   C --> E[packages/flow-designer-renderers/src/designer-command-adapter.ts]
@@ -198,31 +198,31 @@ flowchart TD
   F --> C
 ```
 
-阅读顺序建议:
+é˜…è¯»é¡ºåºå»ºè®®:
 
-1. 先看 `apps/playground/src/App.tsx` 怎么注册 renderers
-2. 再看 `packages/amis-react/src/index.tsx` 怎么给 `designer-page` 建立 runtime / action scope 边界
-3. 再看 `packages/flow-designer-renderers/src/index.tsx` 怎么创建 core、注册 `designer` namespace、渲染 canvas host
-4. 最后看 `packages/flow-designer-renderers/src/designer-command-adapter.ts` 和 `packages/flow-designer-core/src/core.ts` 的命令落地
+1. å…ˆçœ‹ `apps/playground/src/App.tsx` æ€Žä¹ˆæ³¨å†Œ renderers
+2. å†çœ‹ `packages/flux-react/src/index.tsx` æ€Žä¹ˆç»™ `designer-page` å»ºç«‹ runtime / action scope è¾¹ç•Œ
+3. å†çœ‹ `packages/flow-designer-renderers/src/index.tsx` æ€Žä¹ˆåˆ›å»º coreã€æ³¨å†Œ `designer` namespaceã€æ¸²æŸ“ canvas host
+4. æœ€åŽçœ‹ `packages/flow-designer-renderers/src/designer-command-adapter.ts` å’Œ `packages/flow-designer-core/src/core.ts` çš„å‘½ä»¤è½åœ°
 
-## 为什么 toolbar / inspector 可以直接用 `designer:*`
+## ä¸ºä»€ä¹ˆ toolbar / inspector å¯ä»¥ç›´æŽ¥ç”¨ `designer:*`
 
-根本原因不是它们“知道 core 在哪”，而是它们运行在 `designer-page` 创建的新 action scope 里。
+æ ¹æœ¬åŽŸå› ä¸æ˜¯å®ƒä»¬â€œçŸ¥é“ core åœ¨å“ªâ€ï¼Œè€Œæ˜¯å®ƒä»¬è¿è¡Œåœ¨ `designer-page` åˆ›å»ºçš„æ–° action scope é‡Œã€‚
 
-协作过程如下:
+åä½œè¿‡ç¨‹å¦‚ä¸‹:
 
-1. `NodeRenderer` 为 `designer-page` 建立新的 `ActionScope`
-2. `DesignerPageRenderer` 在这个 scope 上注册 `designer` namespace provider
-3. `toolbar` 和 `inspector` region 通过 `RenderNodes` 在同一个 scope 下渲染；当前 renderer 还显式把 `actionScope` 传给 region render，避免这条依赖链只靠 React context 的隐式继承
-4. 这些 schema 里的 `onClick: { action: 'designer:undo' }` 最终都能被 namespaced action dispatcher 解析到
+1. `NodeRenderer` ä¸º `designer-page` å»ºç«‹æ–°çš„ `ActionScope`
+2. `DesignerPageRenderer` åœ¨è¿™ä¸ª scope ä¸Šæ³¨å†Œ `designer` namespace provider
+3. `toolbar` å’Œ `inspector` region é€šè¿‡ `RenderNodes` åœ¨åŒä¸€ä¸ª scope ä¸‹æ¸²æŸ“ï¼›å½“å‰ renderer è¿˜æ˜¾å¼æŠŠ `actionScope` ä¼ ç»™ region renderï¼Œé¿å…è¿™æ¡ä¾èµ–é“¾åªé  React context çš„éšå¼ç»§æ‰¿
+4. è¿™äº› schema é‡Œçš„ `onClick: { action: 'designer:undo' }` æœ€ç»ˆéƒ½èƒ½è¢« namespaced action dispatcher è§£æžåˆ°
 
-这也是为什么 Flow Designer 不需要把一堆 domain action 硬编码进 built-in action switch。
+è¿™ä¹Ÿæ˜¯ä¸ºä»€ä¹ˆ Flow Designer ä¸éœ€è¦æŠŠä¸€å † domain action ç¡¬ç¼–ç è¿› built-in action switchã€‚
 
-当前 region 能力矩阵可直接参考 `docs/architecture/flow-designer/runtime-snapshot.md` 的 “Region capability matrix”，那里把 `toolbar` / `inspector` / `dialogs` / shared dialog popup 的 mount、读 scope、写 action、回归覆盖状态汇总在一起了。
+å½“å‰ region èƒ½åŠ›çŸ©é˜µå¯ç›´æŽ¥å‚è€ƒ `docs/architecture/flow-designer/runtime-snapshot.md` çš„ â€œRegion capability matrixâ€ï¼Œé‚£é‡ŒæŠŠ `toolbar` / `inspector` / `dialogs` / shared dialog popup çš„ mountã€è¯» scopeã€å†™ actionã€å›žå½’è¦†ç›–çŠ¶æ€æ±‡æ€»åœ¨ä¸€èµ·äº†ã€‚
 
-## Action 协作链路
+## Action åä½œé“¾è·¯
 
-### 调用链图: schema toolbar 按钮触发 `designer:undo`
+### è°ƒç”¨é“¾å›¾: schema toolbar æŒ‰é’®è§¦å‘ `designer:undo`
 
 ```text
 toolbar button schema
@@ -260,30 +260,30 @@ sequenceDiagram
   V-->>S: rerender with new snapshot
 ```
 
-协作重点:
+åä½œé‡ç‚¹:
 
-- schema 层发的是 action，不是直接调 `core.undo()`
-- provider 层负责把 `designer:*` 规范化为 command
-- command adapter 负责返回统一结果结构，如 `ok`、`error`、`reason`、`snapshot`
+- schema å±‚å‘çš„æ˜¯ actionï¼Œä¸æ˜¯ç›´æŽ¥è°ƒ `core.undo()`
+- provider å±‚è´Ÿè´£æŠŠ `designer:*` è§„èŒƒåŒ–ä¸º command
+- command adapter è´Ÿè´£è¿”å›žç»Ÿä¸€ç»“æžœç»“æž„ï¼Œå¦‚ `ok`ã€`error`ã€`reason`ã€`snapshot`
 
-## Canvas 协作链路
+## Canvas åä½œé“¾è·¯
 
-Canvas 是当前协作里最容易误解的一层。
+Canvas æ˜¯å½“å‰åä½œé‡Œæœ€å®¹æ˜“è¯¯è§£çš„ä¸€å±‚ã€‚
 
-当前实现不是:
+å½“å‰å®žçŽ°ä¸æ˜¯:
 
 ```text
 xyflow state == graph state
 ```
 
-而是:
+è€Œæ˜¯:
 
 ```text
 graph state lives in core
 xyflow only reflects snapshot and emits gestures
 ```
 
-### 调用链图: 画布连线
+### è°ƒç”¨é“¾å›¾: ç”»å¸ƒè¿žçº¿
 
 ```text
 canvas adapter gesture
@@ -306,7 +306,7 @@ flowchart LR
   F --> G[Canvas Adapter Rerender]
 ```
 
-### 调用链图: live `xyflow` 的 `onConnect`
+### è°ƒç”¨é“¾å›¾: live `xyflow` çš„ `onConnect`
 
 ```text
 ReactFlow onConnect(connection)
@@ -321,32 +321,32 @@ ReactFlow onConnect(connection)
   -> createXyflowEdges(snapshot) rerender
 ```
 
-这里最重要的协作约束是:
+è¿™é‡Œæœ€é‡è¦çš„åä½œçº¦æŸæ˜¯:
 
-- host 可以保留临时 UI intent，例如 `pendingConnectionSourceId`、`reconnectingEdgeId`
-- 但 host 不拥有第二份 document
-- adapter 自己也不允许绕过 command adapter 去写 graph state
+- host å¯ä»¥ä¿ç•™ä¸´æ—¶ UI intentï¼Œä¾‹å¦‚ `pendingConnectionSourceId`ã€`reconnectingEdgeId`
+- ä½† host ä¸æ‹¥æœ‰ç¬¬äºŒä»½ document
+- adapter è‡ªå·±ä¹Ÿä¸å…è®¸ç»•è¿‡ command adapter åŽ»å†™ graph state
 
-### 失败后的协作语义
+### å¤±è´¥åŽçš„åä½œè¯­ä¹‰
 
-当 `addEdge` 或 `reconnectEdge` 因为 `duplicate-edge`、`self-loop`、`missing-node` 等失败时:
+å½“ `addEdge` æˆ– `reconnectEdge` å› ä¸º `duplicate-edge`ã€`self-loop`ã€`missing-node` ç­‰å¤±è´¥æ—¶:
 
-- command adapter 返回带 `reason` 的失败结果
-- `DesignerCanvasContent` 不立即清空 pending intent
-- `env.notify('warning', ...)` 负责向宿主报告语义失败
-- 用户可以直接换一个 target 重试或手动取消
+- command adapter è¿”å›žå¸¦ `reason` çš„å¤±è´¥ç»“æžœ
+- `DesignerCanvasContent` ä¸ç«‹å³æ¸…ç©º pending intent
+- `env.notify('warning', ...)` è´Ÿè´£å‘å®¿ä¸»æŠ¥å‘Šè¯­ä¹‰å¤±è´¥
+- ç”¨æˆ·å¯ä»¥ç›´æŽ¥æ¢ä¸€ä¸ª target é‡è¯•æˆ–æ‰‹åŠ¨å–æ¶ˆ
 
-这条规则保证画布交互不会在失败后丢失上下文。
+è¿™æ¡è§„åˆ™ä¿è¯ç”»å¸ƒäº¤äº’ä¸ä¼šåœ¨å¤±è´¥åŽä¸¢å¤±ä¸Šä¸‹æ–‡ã€‚
 
-## Inspector 协作链路
+## Inspector åä½œé“¾è·¯
 
-当前 inspector 有两种模式，协作边界略有不同。
+å½“å‰ inspector æœ‰ä¸¤ç§æ¨¡å¼ï¼Œåä½œè¾¹ç•Œç•¥æœ‰ä¸åŒã€‚
 
-### 模式 A: 默认 inspector UI
+### æ¨¡å¼ A: é»˜è®¤ inspector UI
 
-默认 inspector 是 `flow-designer-renderers` 里写死的 React 组件，但它仍然不直接操作 document，而是走 command dispatch。
+é»˜è®¤ inspector æ˜¯ `flow-designer-renderers` é‡Œå†™æ­»çš„ React ç»„ä»¶ï¼Œä½†å®ƒä»ç„¶ä¸ç›´æŽ¥æ“ä½œ documentï¼Œè€Œæ˜¯èµ° command dispatchã€‚
 
-调用链:
+è°ƒç”¨é“¾:
 
 ```text
 input onChange
@@ -357,11 +357,11 @@ input onChange
   -> snapshot rerender
 ```
 
-### 模式 B: schema-driven inspector
+### æ¨¡å¼ B: schema-driven inspector
 
-schema-driven inspector 更能体现“复用核心逻辑”的意义。
+schema-driven inspector æ›´èƒ½ä½“çŽ°â€œå¤ç”¨æ ¸å¿ƒé€»è¾‘â€çš„æ„ä¹‰ã€‚
 
-调用链:
+è°ƒç”¨é“¾:
 
 ```text
 designer-page inspector region
@@ -372,13 +372,13 @@ designer-page inspector region
   -> provider -> command adapter -> core
 ```
 
-也就是说，Flow Designer 没有再造一个“属性面板字段引擎”，而是复用了现有 schema renderers。
+ä¹Ÿå°±æ˜¯è¯´ï¼ŒFlow Designer æ²¡æœ‰å†é€ ä¸€ä¸ªâ€œå±žæ€§é¢æ¿å­—æ®µå¼•æ“Žâ€ï¼Œè€Œæ˜¯å¤ç”¨äº†çŽ°æœ‰ schema renderersã€‚
 
-## Host Scope 协作
+## Host Scope åä½œ
 
-Flow Designer 的 schema fragment 之所以能工作，是因为 `designer-page` 把 graph snapshot 映射成了稳定宿主上下文。
+Flow Designer çš„ schema fragment ä¹‹æ‰€ä»¥èƒ½å·¥ä½œï¼Œæ˜¯å› ä¸º `designer-page` æŠŠ graph snapshot æ˜ å°„æˆäº†ç¨³å®šå®¿ä¸»ä¸Šä¸‹æ–‡ã€‚
 
-实际使用上可以把它理解成一组只读视图:
+å®žé™…ä½¿ç”¨ä¸Šå¯ä»¥æŠŠå®ƒç†è§£æˆä¸€ç»„åªè¯»è§†å›¾:
 
 - `doc`
 - `selection`
@@ -386,20 +386,20 @@ Flow Designer 的 schema fragment 之所以能工作，是因为 `designer-page`
 - `activeEdge`
 - `runtime`
 
-这些值驱动:
+è¿™äº›å€¼é©±åŠ¨:
 
-- toolbar 的 enable/disable
-- inspector 的当前对象
-- tpl 片段里的提示文案
-- dialog 里的删除确认内容
+- toolbar çš„ enable/disable
+- inspector çš„å½“å‰å¯¹è±¡
+- tpl ç‰‡æ®µé‡Œçš„æç¤ºæ–‡æ¡ˆ
+- dialog é‡Œçš„åˆ é™¤ç¡®è®¤å†…å®¹
 
-但写操作仍然必须走 action / command 边界。
+ä½†å†™æ“ä½œä»ç„¶å¿…é¡»èµ° action / command è¾¹ç•Œã€‚
 
-## Dialog 协作链路
+## Dialog åä½œé“¾è·¯
 
-Flow Designer 删除确认等 destructive UX 不在 core 里硬编码，而是复用 page/dialog runtime。
+Flow Designer åˆ é™¤ç¡®è®¤ç­‰ destructive UX ä¸åœ¨ core é‡Œç¡¬ç¼–ç ï¼Œè€Œæ˜¯å¤ç”¨ page/dialog runtimeã€‚
 
-### 调用链图: 删除确认对话框
+### è°ƒç”¨é“¾å›¾: åˆ é™¤ç¡®è®¤å¯¹è¯æ¡†
 
 ```text
 toolbar or quick action
@@ -411,17 +411,17 @@ toolbar or quick action
   -> built-in closeDialog closes dialog
 ```
 
-这说明:
+è¿™è¯´æ˜Ž:
 
-- core 只负责 graph command
-- destructive UX 流程留给通用 dialog/action runtime
-- renderer 不需要再实现一套 designer-only modal manager
+- core åªè´Ÿè´£ graph command
+- destructive UX æµç¨‹ç•™ç»™é€šç”¨ dialog/action runtime
+- renderer ä¸éœ€è¦å†å®žçŽ°ä¸€å¥— designer-only modal manager
 
-## 从 playground 到运行时的接线关系
+## ä»Ž playground åˆ°è¿è¡Œæ—¶çš„æŽ¥çº¿å…³ç³»
 
-playground 的职责是组装，而不是改写 Flow Designer 内部协议。
+playground çš„èŒè´£æ˜¯ç»„è£…ï¼Œè€Œä¸æ˜¯æ”¹å†™ Flow Designer å†…éƒ¨åè®®ã€‚
 
-调用关系是:
+è°ƒç”¨å…³ç³»æ˜¯:
 
 ```text
 playground registry setup
@@ -432,34 +432,34 @@ playground registry setup
   -> SchemaRenderer(schema: designer-page + normal schema fragments)
 ```
 
-这里说明 Flow Designer 只是 registry 里的另一组 renderer definitions，不是特权页面。
+è¿™é‡Œè¯´æ˜Ž Flow Designer åªæ˜¯ registry é‡Œçš„å¦ä¸€ç»„ renderer definitionsï¼Œä¸æ˜¯ç‰¹æƒé¡µé¢ã€‚
 
-## 常见误区
+## å¸¸è§è¯¯åŒº
 
-### 误区 1: canvas adapter 是 graph store
+### è¯¯åŒº 1: canvas adapter æ˜¯ graph store
 
-不是。adapter 只能反射 snapshot 和上报手势。
+ä¸æ˜¯ã€‚adapter åªèƒ½åå°„ snapshot å’Œä¸ŠæŠ¥æ‰‹åŠ¿ã€‚
 
-### 误区 2: `designer:*` 是 built-in action
+### è¯¯åŒº 2: `designer:*` æ˜¯ built-in action
 
-不是。它依赖 `ActionScope` 上注册的 namespace provider。
+ä¸æ˜¯ã€‚å®ƒä¾èµ– `ActionScope` ä¸Šæ³¨å†Œçš„ namespace providerã€‚
 
-### 误区 3: inspector 需要单独的字段协议
+### è¯¯åŒº 3: inspector éœ€è¦å•ç‹¬çš„å­—æ®µåè®®
 
-不是。优先复用现有 schema form renderers 和 action runtime。
+ä¸æ˜¯ã€‚ä¼˜å…ˆå¤ç”¨çŽ°æœ‰ schema form renderers å’Œ action runtimeã€‚
 
-### 误区 4: `DesignerCore` 知道 SchemaRenderer
+### è¯¯åŒº 4: `DesignerCore` çŸ¥é“ SchemaRenderer
 
-不是。`DesignerCore` 只关心 graph document 和 command 语义。
+ä¸æ˜¯ã€‚`DesignerCore` åªå…³å¿ƒ graph document å’Œ command è¯­ä¹‰ã€‚
 
-## 维护时优先检查什么
+## ç»´æŠ¤æ—¶ä¼˜å…ˆæ£€æŸ¥ä»€ä¹ˆ
 
-如果后续改动涉及以下任一部分，优先从对应链路回看:
+å¦‚æžœåŽç»­æ”¹åŠ¨æ¶‰åŠä»¥ä¸‹ä»»ä¸€éƒ¨åˆ†ï¼Œä¼˜å…ˆä»Žå¯¹åº”é“¾è·¯å›žçœ‹:
 
-- 改 `designer-page` region、scope、action 注册 -> 看挂载链路和 action 链路
-- 改 canvas adapter 回调 -> 看 canvas 链路和失败语义
-- 改 command adapter 返回值 -> 看 schema action、canvas host、notify 协作点
-- 改 core selection/history/viewport -> 看 snapshot 订阅和 inspector / canvas 重渲染路径
+- æ”¹ `designer-page` regionã€scopeã€action æ³¨å†Œ -> çœ‹æŒ‚è½½é“¾è·¯å’Œ action é“¾è·¯
+- æ”¹ canvas adapter å›žè°ƒ -> çœ‹ canvas é“¾è·¯å’Œå¤±è´¥è¯­ä¹‰
+- æ”¹ command adapter è¿”å›žå€¼ -> çœ‹ schema actionã€canvas hostã€notify åä½œç‚¹
+- æ”¹ core selection/history/viewport -> çœ‹ snapshot è®¢é˜…å’Œ inspector / canvas é‡æ¸²æŸ“è·¯å¾„
 
 ## Related Documents
 
@@ -469,3 +469,4 @@ playground registry setup
 - `docs/architecture/flow-designer/canvas-adapters.md`
 - `docs/architecture/amis-core.md`
 - `docs/architecture/renderer-runtime.md`
+

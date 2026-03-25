@@ -1,4 +1,4 @@
-# Refactor Follow-up Checklist Acceptance
+﻿# Refactor Follow-up Checklist Acceptance
 
 ## Verdict
 
@@ -14,15 +14,15 @@ Status: complete.
 
 Evidence:
 
-- `packages/amis-renderers-form/src/index.tsx` is now a thin entry file for exports, registration, and assembly
-- schema types were moved to `packages/amis-renderers-form/src/schemas.ts`
-- shared field helpers were moved to `packages/amis-renderers-form/src/field-utils.tsx`
+- `packages/flux-renderers-form/src/index.tsx` is now a thin entry file for exports, registration, and assembly
+- schema types were moved to `packages/flux-renderers-form/src/schemas.ts`
+- shared field helpers were moved to `packages/flux-renderers-form/src/field-utils.tsx`
 - renderer implementations were split into:
-  - `packages/amis-renderers-form/src/renderers/form.tsx`
-  - `packages/amis-renderers-form/src/renderers/input.tsx`
-  - `packages/amis-renderers-form/src/renderers/tag-list.tsx`
-  - `packages/amis-renderers-form/src/renderers/key-value.tsx`
-  - `packages/amis-renderers-form/src/renderers/array-editor.tsx`
+  - `packages/flux-renderers-form/src/renderers/form.tsx`
+  - `packages/flux-renderers-form/src/renderers/input.tsx`
+  - `packages/flux-renderers-form/src/renderers/tag-list.tsx`
+  - `packages/flux-renderers-form/src/renderers/key-value.tsx`
+  - `packages/flux-renderers-form/src/renderers/array-editor.tsx`
 
 Acceptance notes:
 
@@ -35,10 +35,10 @@ Status: complete.
 
 Evidence:
 
-- generic array helpers now live in `packages/amis-schema/src/utils/array.ts`
-- they are re-exported from `packages/amis-schema/src/index.ts`
-- `packages/amis-runtime/src/form-runtime.ts` imports the generic helpers from `@nop-chaos/amis-schema`
-- runtime-specific path remapping remains in `packages/amis-runtime/src/form-path-state.ts`
+- generic array helpers now live in `packages/flux-core/src/utils/array.ts`
+- they are re-exported from `packages/flux-core/src/index.ts`
+- `packages/flux-runtime/src/form-runtime.ts` imports the generic helpers from `@nop-chaos/flux-core`
+- runtime-specific path remapping remains in `packages/flux-runtime/src/form-path-state.ts`
 
 Acceptance notes:
 
@@ -65,10 +65,10 @@ Status: complete.
 
 Evidence:
 
-- `packages/amis-react/src/contexts.ts` still owns context definitions
-- `packages/amis-react/src/form-state.ts` still owns form selector helpers
-- `packages/amis-react/src/defaults.ts` still owns default environment and registry helpers
-- `packages/amis-react/src/index.tsx` remains the adapter entrypoint rather than absorbing those support files
+- `packages/flux-react/src/contexts.ts` still owns context definitions
+- `packages/flux-react/src/form-state.ts` still owns form selector helpers
+- `packages/flux-react/src/defaults.ts` still owns default environment and registry helpers
+- `packages/flux-react/src/index.tsx` remains the adapter entrypoint rather than absorbing those support files
 
 Acceptance notes:
 
@@ -80,17 +80,17 @@ Status: complete.
 
 Evidence:
 
-- `packages/amis-runtime/src/index.ts` remains an orchestration and export assembly module
+- `packages/flux-runtime/src/index.ts` remains an orchestration and export assembly module
 - runtime implementation remains split across focused files including:
-  - `packages/amis-runtime/src/schema-compiler.ts`
-  - `packages/amis-runtime/src/form-runtime.ts`
-  - `packages/amis-runtime/src/action-runtime.ts`
-  - `packages/amis-runtime/src/request-runtime.ts`
-  - `packages/amis-runtime/src/validation-runtime.ts`
+  - `packages/flux-runtime/src/schema-compiler.ts`
+  - `packages/flux-runtime/src/form-runtime.ts`
+  - `packages/flux-runtime/src/action-runtime.ts`
+  - `packages/flux-runtime/src/request-runtime.ts`
+  - `packages/flux-runtime/src/validation-runtime.ts`
 
 Acceptance notes:
 
-- `packages/amis-runtime/src/form-store.ts` was not renamed, which is explicitly allowed by the checklist as a deferrable naming alignment decision
+- `packages/flux-runtime/src/form-store.ts` was not renamed, which is explicitly allowed by the checklist as a deferrable naming alignment decision
 
 ### W6 - Add a completion report after landing the work
 
@@ -114,11 +114,12 @@ The workspace currently passes the checklist validation commands:
 
 These items remain open by design and do not block checklist completion:
 
-- further split `packages/amis-runtime/src/form-runtime.ts`
-- reconsider whether `packages/amis-runtime/src/form-store.ts` should be renamed
+- further split `packages/flux-runtime/src/form-runtime.ts`
+- reconsider whether `packages/flux-runtime/src/form-store.ts` should be renamed
 - add direct unit tests for the extracted array helper module
 - extract more shared renderer primitives only after stronger duplication evidence appears
 
 ## Final Acceptance Statement
 
 The follow-up implementation checklist is accepted as complete for the intended scope of this pass.
+

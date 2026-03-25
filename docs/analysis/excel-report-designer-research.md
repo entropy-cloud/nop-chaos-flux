@@ -1,4 +1,4 @@
-# Excel Report Designer Research
+﻿# Excel Report Designer Research
 
 > Role: this document is a research and decision-support note for a future Excel-based report designer. It is not yet the active architecture contract.
 
@@ -109,13 +109,13 @@ Key paths:
 
 Key paths:
 
-- `packages/amis-schema/src/index.ts`
-- `packages/amis-runtime/src/registry.ts`
-- `packages/amis-runtime/src/index.ts`
-- `packages/amis-react/src/index.tsx`
-- `packages/amis-renderers-basic/src/index.tsx`
-- `packages/amis-renderers-form/src/renderers/input.tsx`
-- `packages/amis-renderers-form/src/renderers/array-editor.tsx`
+- `packages/flux-core/src/index.ts`
+- `packages/flux-runtime/src/registry.ts`
+- `packages/flux-runtime/src/index.ts`
+- `packages/flux-react/src/index.tsx`
+- `packages/flux-renderers-basic/src/index.tsx`
+- `packages/flux-renderers-form/src/renderers/input.tsx`
+- `packages/flux-renderers-form/src/renderers/array-editor.tsx`
 - `docs/architecture/renderer-runtime.md`
 
 ## SpringReport Findings
@@ -347,10 +347,10 @@ This split is necessary to keep report semantics stable while still allowing eff
 
 Current AMIS integration points already support this direction:
 
-- renderer definition contract in `packages/amis-schema/src/index.ts`
-- registry creation in `packages/amis-runtime/src/registry.ts`
-- runtime creation in `packages/amis-runtime/src/index.ts`
-- React host creation in `packages/amis-react/src/index.tsx`
+- renderer definition contract in `packages/flux-core/src/index.ts`
+- registry creation in `packages/flux-runtime/src/registry.ts`
+- runtime creation in `packages/flux-runtime/src/index.ts`
+- React host creation in `packages/flux-react/src/index.tsx`
 
 The current renderer model is already based on explicit `RendererDefinition` registration and a root `createSchemaRenderer(...)` host.
 
@@ -369,8 +369,8 @@ This follows the repo rule in `docs/architecture/renderer-runtime.md`: explicit 
 
 Existing form renderers show two relevant patterns:
 
-- simple bound field controls in `packages/amis-renderers-form/src/renderers/input.tsx`
-- richer composite controls with runtime field registration in `packages/amis-renderers-form/src/renderers/array-editor.tsx`
+- simple bound field controls in `packages/flux-renderers-form/src/renderers/input.tsx`
+- richer composite controls with runtime field registration in `packages/flux-renderers-form/src/renderers/array-editor.tsx`
 
 That means the future report designer can be introduced incrementally:
 
@@ -518,3 +518,4 @@ The next artifacts that would make implementation concrete are:
 - `docs/architecture/amis-core.md`
 - `docs/references/maintenance-checklist.md`
 - `docs/development-log.md`
+

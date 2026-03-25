@@ -1,8 +1,8 @@
-# AMIS Runtime Module Boundaries
+﻿# AMIS Runtime Module Boundaries
 
 ## Purpose
 
-This note records current file ownership inside `packages/amis-runtime`.
+This note records current file ownership inside `packages/flux-runtime`.
 
 Use it when deciding where new runtime behavior belongs.
 
@@ -14,15 +14,15 @@ For validation behavior and form semantics, use `docs/architecture/form-validati
 
 When this document needs to be checked against code, start with:
 
-- `packages/amis-runtime/src/index.ts` for assembly boundaries
-- `packages/amis-runtime/src/schema-compiler.ts` for compiler ownership
-- `packages/amis-runtime/src/validation/` for reusable validation helpers
-- `packages/amis-runtime/src/form-runtime.ts` and related `form-runtime-*` files for form flow ownership
-- `packages/amis-runtime/src/action-runtime.ts`, `packages/amis-runtime/src/request-runtime.ts`, and `packages/amis-runtime/src/scope.ts` for runtime subsystem placement
+- `packages/flux-runtime/src/index.ts` for assembly boundaries
+- `packages/flux-runtime/src/schema-compiler.ts` for compiler ownership
+- `packages/flux-runtime/src/validation/` for reusable validation helpers
+- `packages/flux-runtime/src/form-runtime.ts` and related `form-runtime-*` files for form flow ownership
+- `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/request-runtime.ts`, and `packages/flux-runtime/src/scope.ts` for runtime subsystem placement
 
 ## Main Rule
 
-`packages/amis-runtime/src/index.ts` is an assembly layer.
+`packages/flux-runtime/src/index.ts` is an assembly layer.
 
 It should stay limited to:
 
@@ -36,14 +36,14 @@ If new logic is not trivial assembly code, it should move to a focused runtime m
 
 ### Entry and assembly
 
-- `packages/amis-runtime/src/index.ts`
+- `packages/flux-runtime/src/index.ts`
   - runtime assembly
   - top-level factory composition
   - package export surface
 
 ### Schema compilation
 
-- `packages/amis-runtime/src/schema-compiler.ts`
+- `packages/flux-runtime/src/schema-compiler.ts`
   - schema-shape normalization
   - region extraction
   - renderer field classification
@@ -52,17 +52,17 @@ If new logic is not trivial assembly code, it should move to a focused runtime m
 
 Keep compiler-specific shape handling here.
 
-Do not move generic validation helpers back into this file when they can live in `packages/amis-runtime/src/validation/`.
+Do not move generic validation helpers back into this file when they can live in `packages/flux-runtime/src/validation/`.
 
 ### Validation runtime flow
 
-- `packages/amis-runtime/src/validation-runtime.ts`
+- `packages/flux-runtime/src/validation-runtime.ts`
   - sync validator execution entry point
-- `packages/amis-runtime/src/form-runtime-validation.ts`
+- `packages/flux-runtime/src/form-runtime-validation.ts`
   - field validation orchestration
   - subtree validation entry points
   - async debounce and stale-run cancellation
-- `packages/amis-runtime/src/form-runtime.ts`
+- `packages/flux-runtime/src/form-runtime.ts`
   - form-level validation entrypoints such as `validateField`, `validateSubtree`, and `validateForm`
 
 These files own runtime sequencing and form lifecycle behavior.
@@ -71,81 +71,81 @@ They should not become generic helper dumps.
 
 ### Validation modules
 
-- `packages/amis-runtime/src/validation/rules.ts`
+- `packages/flux-runtime/src/validation/rules.ts`
   - schema rule extraction
   - trigger normalization
   - compiled dependency path helpers
-- `packages/amis-runtime/src/validation/message.ts`
+- `packages/flux-runtime/src/validation/message.ts`
   - default validation message construction
-- `packages/amis-runtime/src/validation/errors.ts`
+- `packages/flux-runtime/src/validation/errors.ts`
   - validation error shaping and normalization helpers
-- `packages/amis-runtime/src/validation/validators.ts`
+- `packages/flux-runtime/src/validation/validators.ts`
   - built-in sync validator implementations
-- `packages/amis-runtime/src/validation/registry.ts`
+- `packages/flux-runtime/src/validation/registry.ts`
   - validator registration and lookup
-- `packages/amis-runtime/src/validation/index.ts`
+- `packages/flux-runtime/src/validation/index.ts`
   - barrel for validation internals
 
 This directory is the default home for reusable validation helpers.
 
 ### Action and request flow
 
-- `packages/amis-runtime/src/action-runtime.ts`
+- `packages/flux-runtime/src/action-runtime.ts`
   - action dispatch
   - debounce handling for actions
   - chained action execution and `prevResult` flow
-- `packages/amis-runtime/src/request-runtime.ts`
+- `packages/flux-runtime/src/request-runtime.ts`
   - request execution
   - adaptor application
   - request cancellation plumbing
 
 ### Scope and state plumbing
 
-- `packages/amis-runtime/src/scope.ts`
+- `packages/flux-runtime/src/scope.ts`
   - scope store creation
   - lexical lookup behavior
   - scope materialization and update behavior
-- `packages/amis-runtime/src/form-store.ts`
+- `packages/flux-runtime/src/form-store.ts`
   - form store state updates
   - page store state updates
-- `packages/amis-runtime/src/form-runtime-state.ts`
+- `packages/flux-runtime/src/form-runtime-state.ts`
   - initial form field-state derivation
-- `packages/amis-runtime/src/form-runtime-array.ts`
+- `packages/flux-runtime/src/form-runtime-array.ts`
   - runtime-specific array field-state remapping
-- `packages/amis-runtime/src/form-runtime-registration.ts`
+- `packages/flux-runtime/src/form-runtime-registration.ts`
   - runtime field registration lookup and synchronization
-- `packages/amis-runtime/src/form-runtime-subtree.ts`
+- `packages/flux-runtime/src/form-runtime-subtree.ts`
   - subtree target collection helpers
 
 ### Page and node runtime helpers
 
-- `packages/amis-runtime/src/page-runtime.ts`
+- `packages/flux-runtime/src/page-runtime.ts`
   - page runtime creation
   - dialog stack management
-- `packages/amis-runtime/src/node-runtime.ts`
+- `packages/flux-runtime/src/node-runtime.ts`
   - resolved node meta and prop evaluation helpers
-- `packages/amis-runtime/src/registry.ts`
+- `packages/flux-runtime/src/registry.ts`
   - renderer registry creation and registration helpers
 
 ## Where To Add A New Validation Rule
 
 For a new built-in sync rule:
 
-1. Add schema extraction in `packages/amis-runtime/src/validation/rules.ts` if the rule has schema syntax.
-2. Add the validator implementation in `packages/amis-runtime/src/validation/validators.ts`.
-3. Add default messaging in `packages/amis-runtime/src/validation/message.ts` if needed.
-4. Add focused coverage in `packages/amis-runtime/src/validation/validators.test.ts` or `packages/amis-runtime/src/validation/registry.test.ts`.
-5. Add or update integration coverage in `packages/amis-runtime/src/index.test.ts` when runtime behavior changes.
+1. Add schema extraction in `packages/flux-runtime/src/validation/rules.ts` if the rule has schema syntax.
+2. Add the validator implementation in `packages/flux-runtime/src/validation/validators.ts`.
+3. Add default messaging in `packages/flux-runtime/src/validation/message.ts` if needed.
+4. Add focused coverage in `packages/flux-runtime/src/validation/validators.test.ts` or `packages/flux-runtime/src/validation/registry.test.ts`.
+5. Add or update integration coverage in `packages/flux-runtime/src/index.test.ts` when runtime behavior changes.
 
 For async rules:
 
 - keep the generic rule shape in compiled validation metadata
-- keep debounce and stale-run behavior in `packages/amis-runtime/src/form-runtime-validation.ts`
+- keep debounce and stale-run behavior in `packages/flux-runtime/src/form-runtime-validation.ts`
 - do not force async request flow into the sync validator registry
 
 ## `schema-compiler.ts` Versus `validation/`
 
-Keep code in `packages/amis-runtime/src/schema-compiler.ts` when it is primarily about schema shape:
+Keep code in `packages/flux-runtime/src/schema-compiler.ts` when it is primarily about schema shape:
 
 - region extraction
 - node tree traversal
@@ -153,7 +153,7 @@ Keep code in `packages/amis-runtime/src/schema-compiler.ts` when it is primarily
 - ownership of compiled node paths
 - renderer-driven field splitting into meta, props, regions, and events
 
-Keep code in `packages/amis-runtime/src/validation/` when it is primarily about validation semantics:
+Keep code in `packages/flux-runtime/src/validation/` when it is primarily about validation semantics:
 
 - collecting rules from schema fields
 - normalizing validation triggers and visibility triggers
@@ -162,11 +162,11 @@ Keep code in `packages/amis-runtime/src/validation/` when it is primarily about 
 - implementing reusable rule checks
 - managing validator lookup
 
-If a helper can be reused without knowledge of compiled regions or deep schema transformation, it usually belongs in `packages/amis-runtime/src/validation/`.
+If a helper can be reused without knowledge of compiled regions or deep schema transformation, it usually belongs in `packages/flux-runtime/src/validation/`.
 
 ## Renderer Shared Primitives
 
-Shared field chrome lives in `packages/amis-renderers-form/src/renderers/shared/`.
+Shared field chrome lives in `packages/flux-renderers-form/src/renderers/shared/`.
 
 Use that area for small repeated presentation primitives such as:
 
@@ -195,3 +195,4 @@ When in doubt, prefer one more focused module over growing a general-purpose fil
 - `docs/architecture/form-validation.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/amis-core.md`
+

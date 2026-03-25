@@ -1,4 +1,4 @@
-# Documentation Maintenance Checklist
+﻿# Documentation Maintenance Checklist
 
 ## Purpose
 
@@ -34,7 +34,7 @@ If you do not know where to start, check these first:
 
 Examples:
 
-- changes in `packages/amis-schema/src/index.ts`
+- changes in `packages/flux-core/src/index.ts`
 - renamed exported types
 - added or removed fields on core runtime contracts
 
@@ -49,7 +49,7 @@ Review:
 
 Examples:
 
-- changes in `packages/amis-runtime/src/schema-compiler.ts`
+- changes in `packages/flux-runtime/src/schema-compiler.ts`
 - new field kinds
 - different region extraction behavior
 - changed event-field handling
@@ -66,7 +66,7 @@ Review:
 
 Examples:
 
-- changes in `packages/amis-react/src/index.tsx`
+- changes in `packages/flux-react/src/index.tsx`
 - new hooks
 - changed renderer component props
 - changed fragment rendering behavior
@@ -83,7 +83,7 @@ Review:
 
 Examples:
 
-- changes in `packages/amis-runtime/src/action-runtime.ts`
+- changes in `packages/flux-runtime/src/action-runtime.ts`
 - changed `setValue`, `ajax`, `dialog`, `closeDialog`, or `refreshTable` behavior
 - changed chained action context or `prevResult` flow
 
@@ -107,7 +107,7 @@ Examples also include:
 
 Examples:
 
-- changes in `packages/amis-runtime/src/page-runtime.ts`
+- changes in `packages/flux-runtime/src/page-runtime.ts`
 - changed dialog stack behavior
 - changed nearest-dialog close semantics
 
@@ -123,8 +123,8 @@ Review:
 
 Examples:
 
-- changes in `packages/amis-runtime/src/form-runtime.ts`
-- changes in `packages/amis-runtime/src/form-runtime-validation.ts`
+- changes in `packages/flux-runtime/src/form-runtime.ts`
+- changes in `packages/flux-runtime/src/form-runtime-validation.ts`
 - changed touched/dirty/visited behavior
 - changed async debounce or validation visibility semantics
 
@@ -140,8 +140,8 @@ Review:
 
 Examples:
 
-- changes in `packages/amis-schema/src/index.ts` for `ValidationRule`
-- changes in `packages/amis-runtime/src/validation/rules.ts`
+- changes in `packages/flux-core/src/index.ts` for `ValidationRule`
+- changes in `packages/flux-runtime/src/validation/rules.ts`
 - new relational or aggregate rules
 
 Review:
@@ -267,3 +267,4 @@ Before finishing a code change, ask:
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/action-scope-and-imports.md`
+
