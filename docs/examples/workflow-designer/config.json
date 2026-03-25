@@ -1,0 +1,447 @@
+{
+  "version": "1.0",
+  "kind": "workflow",
+  "nodeTypes": [
+    {
+      "id": "start",
+      "label": "开始节点",
+      "icon": "play",
+      "body": {
+        "type": "flex",
+        "className": "fd-node fd-node--start",
+        "items": [
+          {
+            "type": "icon",
+            "icon": "play",
+            "className": "fd-node__icon"
+          },
+          {
+            "type": "container",
+            "body": [
+              {
+                "type": "tpl",
+                "tpl": "${data.label}",
+                "className": "fd-node__title"
+              },
+              {
+                "type": "tpl",
+                "tpl": "${data.config.trigger}",
+                "className": "fd-node__meta"
+              }
+            ]
+          }
+        ]
+      },
+      "defaults": {
+        "label": "开始",
+        "description": "流程入口",
+        "config": { "trigger": "manual" }
+      },
+      "ports": [
+        { "id": "out", "direction": "output", "position": "right" }
+      ],
+      "constraints": {
+        "maxInstances": 1,
+        "allowIncoming": false
+      },
+      "permissions": {
+        "canDelete": false,
+        "canDuplicate": false
+      },
+      "inspector": {
+        "body": {
+          "type": "form",
+          "body": [
+            { "type": "input-text", "name": "label", "label": "名称" },
+            { "type": "textarea", "name": "description", "label": "描述" },
+            {
+              "type": "select",
+              "name": "config.trigger",
+              "label": "触发方式",
+              "options": [
+                { "label": "手动触发", "value": "manual" },
+                { "label": "注册成功", "value": "register" },
+                { "label": "定时触发", "value": "schedule" }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "end",
+      "label": "结束节点",
+      "icon": "flag",
+      "body": {
+        "type": "flex",
+        "className": "fd-node fd-node--end",
+        "items": [
+          {
+            "type": "icon",
+            "icon": "flag",
+            "className": "fd-node__icon"
+          },
+          {
+            "type": "container",
+            "body": [
+              {
+                "type": "tpl",
+                "tpl": "${data.label}",
+                "className": "fd-node__title"
+              },
+              {
+                "type": "tpl",
+                "tpl": "${data.config.result}",
+                "className": "fd-node__meta"
+              }
+            ]
+          }
+        ]
+      },
+      "defaults": {
+        "label": "结束",
+        "description": "流程出口",
+        "config": { "result": "done" }
+      },
+      "ports": [
+        { "id": "in", "direction": "input", "position": "left" }
+      ],
+      "constraints": {
+        "allowOutgoing": false
+      },
+      "inspector": {
+        "body": {
+          "type": "form",
+          "body": [
+            { "type": "input-text", "name": "label", "label": "名称" },
+            {
+              "type": "select",
+              "name": "config.result",
+              "label": "结果状态",
+              "options": [
+                { "label": "完成", "value": "done" },
+                { "label": "取消", "value": "cancelled" },
+                { "label": "失败", "value": "failed" }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "task",
+      "label": "任务节点",
+      "icon": "workflow",
+      "body": {
+        "type": "flex",
+        "className": "fd-node fd-node--task",
+        "items": [
+          {
+            "type": "icon",
+            "icon": "workflow",
+            "className": "fd-node__icon"
+          },
+          {
+            "type": "container",
+            "body": [
+              {
+                "type": "tpl",
+                "tpl": "${data.label}",
+                "className": "fd-node__title"
+              },
+              {
+                "type": "tpl",
+                "tpl": "${data.config.executor} · ${data.config.timeout}",
+                "className": "fd-node__meta"
+              }
+            ]
+          }
+        ]
+      },
+      "defaults": {
+        "label": "任务节点",
+        "description": "",
+        "config": { "executor": "service", "timeout": "30s" }
+      },
+      "ports": [
+        { "id": "in", "direction": "input", "position": "left" },
+        { "id": "out", "direction": "output", "position": "right" }
+      ],
+      "inspector": {
+        "body": {
+          "type": "form",
+          "body": [
+            { "type": "input-text", "name": "label", "label": "名称" },
+            { "type": "textarea", "name": "description", "label": "描述" },
+            {
+              "type": "select",
+              "name": "config.executor",
+              "label": "执行器",
+              "options": [
+                { "label": "服务调用", "value": "service" },
+                { "label": "脚本执行", "value": "script" },
+                { "label": "人工审批", "value": "approval" }
+              ]
+            },
+            { "type": "input-text", "name": "config.timeout", "label": "超时时间" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "condition",
+      "label": "条件节点",
+      "icon": "git-branch",
+      "body": {
+        "type": "flex",
+        "className": "fd-node fd-node--condition",
+        "items": [
+          {
+            "type": "icon",
+            "icon": "git-branch",
+            "className": "fd-node__icon"
+          },
+          {
+            "type": "container",
+            "body": [
+              {
+                "type": "tpl",
+                "tpl": "${data.label}",
+                "className": "fd-node__title"
+              },
+              {
+                "type": "tpl",
+                "tpl": "${data.config.expression}",
+                "className": "fd-node__meta"
+              }
+            ]
+          }
+        ]
+      },
+      "defaults": {
+        "label": "条件节点",
+        "config": { "expression": "payload.ok === true" }
+      },
+      "ports": [
+        { "id": "in", "direction": "input", "position": "left" },
+        { "id": "out-true", "direction": "output", "position": "top", "label": "是" },
+        { "id": "out-false", "direction": "output", "position": "bottom", "label": "否" }
+      ],
+      "inspector": {
+        "body": {
+          "type": "form",
+          "body": [
+            { "type": "input-text", "name": "label", "label": "名称" },
+            { "type": "textarea", "name": "config.expression", "label": "条件表达式" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parallel",
+      "label": "并行节点",
+      "icon": "git-merge",
+      "body": {
+        "type": "flex",
+        "className": "fd-node fd-node--parallel",
+        "items": [
+          {
+            "type": "icon",
+            "icon": "git-merge",
+            "className": "fd-node__icon"
+          },
+          {
+            "type": "container",
+            "body": [
+              {
+                "type": "tpl",
+                "tpl": "${data.label}",
+                "className": "fd-node__title"
+              },
+              {
+                "type": "tpl",
+                "tpl": "${data.config.branches} 分支",
+                "className": "fd-node__meta"
+              }
+            ]
+          }
+        ]
+      },
+      "defaults": {
+        "label": "并行节点",
+        "config": { "branches": "2" }
+      },
+      "ports": [
+        { "id": "in", "direction": "input", "position": "left" },
+        { "id": "out", "direction": "output", "position": "right" }
+      ],
+      "inspector": {
+        "body": {
+          "type": "form",
+          "body": [
+            { "type": "input-text", "name": "label", "label": "名称" },
+            { "type": "input-number", "name": "config.branches", "label": "分支数" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "loop",
+      "label": "循环节点",
+      "icon": "repeat",
+      "body": {
+        "type": "flex",
+        "className": "fd-node fd-node--loop",
+        "items": [
+          {
+            "type": "icon",
+            "icon": "repeat",
+            "className": "fd-node__icon"
+          },
+          {
+            "type": "container",
+            "body": [
+              {
+                "type": "tpl",
+                "tpl": "${data.label}",
+                "className": "fd-node__title"
+              },
+              {
+                "type": "tpl",
+                "tpl": "×${data.config.limit} / ${data.config.interval}",
+                "className": "fd-node__meta"
+              }
+            ]
+          }
+        ]
+      },
+      "defaults": {
+        "label": "循环节点",
+        "config": { "limit": "3", "interval": "1m" }
+      },
+      "ports": [
+        { "id": "in", "direction": "input", "position": "left" },
+        { "id": "out", "direction": "output", "position": "right" }
+      ],
+      "inspector": {
+        "body": {
+          "type": "form",
+          "body": [
+            { "type": "input-text", "name": "label", "label": "名称" },
+            { "type": "input-number", "name": "config.limit", "label": "最大次数" },
+            { "type": "input-text", "name": "config.interval", "label": "间隔时间" }
+          ]
+        }
+      }
+    }
+  ],
+  "edgeTypes": [
+    {
+      "id": "default",
+      "label": "默认边",
+      "body": {
+        "type": "tpl",
+        "tpl": "${data.condition}",
+        "className": "fd-edge-label"
+      },
+      "appearance": {
+        "stroke": "#94a3b8",
+        "strokeWidth": 2,
+        "markerEnd": "arrow-closed"
+      },
+      "defaults": {
+        "condition": "",
+        "lineStyle": "solid"
+      },
+      "inspector": {
+        "body": {
+          "type": "form",
+          "body": [
+            { "type": "input-text", "name": "condition", "label": "条件标签" },
+            {
+              "type": "select",
+              "name": "lineStyle",
+              "label": "线型",
+              "options": [
+                { "label": "实线", "value": "solid" },
+                { "label": "虚线", "value": "dashed" },
+                { "label": "点线", "value": "dotted" }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "palette": {
+    "searchable": false,
+    "groups": [
+      {
+        "id": "basic",
+        "label": "基础节点",
+        "description": "流程开始和结束",
+        "nodeTypes": ["start", "end"]
+      },
+      {
+        "id": "logic",
+        "label": "逻辑控制",
+        "description": "条件分支和循环",
+        "nodeTypes": ["condition", "parallel", "loop"]
+      },
+      {
+        "id": "execution",
+        "label": "执行任务",
+        "description": "任务执行节点",
+        "nodeTypes": ["task"]
+      }
+    ]
+  },
+  "toolbar": {
+    "items": [
+      { "type": "back" },
+      { "type": "title", "tpl": "${doc.name}" },
+      { "type": "badge", "level": "${isDirty ? 'warning' : 'success'}", "text": "${isDirty ? '未保存' : '已保存'}" },
+      { "type": "divider" },
+      { "type": "text", "tpl": "${doc.nodes.length} 节点 · ${doc.edges.length} 边" },
+      { "type": "divider" },
+      { "type": "button", "action": "designer:toggle-grid", "icon": "grid-3x3", "label": "网格", "active": "${gridEnabled}" },
+      { "type": "button", "action": "designer:undo", "icon": "rotate-ccw", "label": "撤销", "disabled": "${!canUndo}" },
+      { "type": "button", "action": "designer:redo", "icon": "rotate-cw", "label": "重做", "disabled": "${!canRedo}" },
+      { "type": "button", "action": "designer:restore", "icon": "download", "label": "恢复", "disabled": "${!isDirty}" },
+      { "type": "button", "action": "designer:export", "icon": "file-json", "label": "导出" },
+      { "type": "spacer" },
+      { "type": "button", "action": "designer:save", "icon": "save", "label": "保存", "variant": "primary", "disabled": "${!isDirty}" }
+    ]
+  },
+  "shortcuts": {
+    "undo": ["Ctrl+Z", "Cmd+Z"],
+    "redo": ["Ctrl+Y", "Cmd+Y", "Ctrl+Shift+Z", "Cmd+Shift+Z"],
+    "copy": ["Ctrl+C", "Cmd+C"],
+    "paste": ["Ctrl+V", "Cmd+V"],
+    "delete": ["Delete", "Backspace"],
+    "save": ["Ctrl+S", "Cmd+S"]
+  },
+  "features": {
+    "undo": true,
+    "redo": true,
+    "history": true,
+    "grid": true,
+    "minimap": true,
+    "fitView": true,
+    "export": true,
+    "shortcuts": true,
+    "clipboard": true
+  },
+  "rules": {
+    "allowSelfLoop": false,
+    "allowMultiEdge": true,
+    "defaultEdgeType": "default"
+  },
+  "canvas": {
+    "background": "dots",
+    "gridSize": 16,
+    "snapToGrid": true,
+    "minZoom": 0.2,
+    "maxZoom": 4
+  }
+}

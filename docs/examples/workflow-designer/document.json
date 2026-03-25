@@ -1,0 +1,111 @@
+{
+  "id": "flow-101",
+  "kind": "workflow",
+  "name": "Customer onboarding",
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "start-1",
+      "type": "start",
+      "position": { "x": 80, "y": 180 },
+      "data": {
+        "label": "开始",
+        "description": "流程入口",
+        "config": { "trigger": "register" }
+      }
+    },
+    {
+      "id": "task-1",
+      "type": "task",
+      "position": { "x": 300, "y": 180 },
+      "data": {
+        "label": "发送欢迎邮件",
+        "description": "邮件通知",
+        "config": { "executor": "service", "timeout": "30s" }
+      }
+    },
+    {
+      "id": "condition-1",
+      "type": "condition",
+      "position": { "x": 540, "y": 180 },
+      "data": {
+        "label": "是否企业客户",
+        "config": { "expression": "customerType === 'enterprise'" }
+      }
+    },
+    {
+      "id": "parallel-1",
+      "type": "parallel",
+      "position": { "x": 790, "y": 80 },
+      "data": {
+        "label": "并行任务",
+        "config": { "branches": "2" }
+      }
+    },
+    {
+      "id": "loop-1",
+      "type": "loop",
+      "position": { "x": 790, "y": 280 },
+      "data": {
+        "label": "补全资料轮询",
+        "config": { "limit": "5", "interval": "1d" }
+      }
+    },
+    {
+      "id": "end-1",
+      "type": "end",
+      "position": { "x": 1030, "y": 180 },
+      "data": {
+        "label": "结束",
+        "config": { "result": "done" }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-1",
+      "type": "default",
+      "source": "start-1",
+      "target": "task-1",
+      "data": { "condition": "触发", "lineStyle": "solid" }
+    },
+    {
+      "id": "e-2",
+      "type": "default",
+      "source": "task-1",
+      "target": "condition-1",
+      "data": { "condition": "成功", "lineStyle": "solid" }
+    },
+    {
+      "id": "e-3",
+      "type": "default",
+      "source": "condition-1",
+      "sourcePort": "out-true",
+      "target": "parallel-1",
+      "data": { "condition": "是", "lineStyle": "dashed" }
+    },
+    {
+      "id": "e-4",
+      "type": "default",
+      "source": "condition-1",
+      "sourcePort": "out-false",
+      "target": "loop-1",
+      "data": { "condition": "否", "lineStyle": "dotted" }
+    },
+    {
+      "id": "e-5",
+      "type": "default",
+      "source": "parallel-1",
+      "target": "end-1",
+      "data": { "condition": "完成", "lineStyle": "solid" }
+    },
+    {
+      "id": "e-6",
+      "type": "default",
+      "source": "loop-1",
+      "target": "end-1",
+      "data": { "condition": "完成", "lineStyle": "solid" }
+    }
+  ],
+  "viewport": { "x": 0, "y": 0, "zoom": 1 }
+}

@@ -149,6 +149,15 @@ function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfig {
     nodeTypes,
     edgeTypes,
     palette: config.palette,
+    toolbar: config.toolbar,
+    shortcuts: {
+      undo: ['Ctrl+Z', 'Cmd+Z'],
+      redo: ['Ctrl+Y', 'Cmd+Y', 'Ctrl+Shift+Z', 'Cmd+Shift+Z'],
+      copy: ['Ctrl+C', 'Cmd+C'],
+      paste: ['Ctrl+V', 'Cmd+V'],
+      delete: ['Delete', 'Backspace'],
+      ...config.shortcuts,
+    },
     features: {
       undo: true,
       redo: true,

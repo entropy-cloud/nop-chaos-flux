@@ -43,6 +43,8 @@ export interface DesignerConfig {
   nodeTypes: NodeTypeConfig[];
   edgeTypes?: EdgeTypeConfig[];
   palette?: PaletteConfig;
+  toolbar?: ToolbarConfig;
+  shortcuts?: ShortcutsConfig;
   features?: DesignerFeatures;
   rules?: DesignerRules;
   permissions?: DesignerPermissions;
@@ -54,16 +56,12 @@ export interface NodeTypeConfig {
   label: string;
   description?: string;
   icon?: string;
-  appearance?: NodeAppearanceConfig;
-  roles?: NodeRoleConfig;
+  body: SchemaInput;
   ports?: PortConfig[];
+  roles?: NodeRoleConfig;
   constraints?: NodeConstraintConfig;
   permissions?: NodePermissionConfig;
   defaults?: Record<string, unknown>;
-  renderer?: {
-    type?: string;
-    variant?: string;
-  };
   inspector?: {
     mode?: 'panel' | 'drawer' | 'dialog';
     body: SchemaInput;
@@ -74,13 +72,6 @@ export interface NodeTypeConfig {
     submitAction?: Record<string, unknown>;
   };
   quickActions?: SchemaInput;
-}
-
-export interface NodeAppearanceConfig {
-  className?: string;
-  icon?: string;
-  color?: string;
-  accent?: string;
 }
 
 export interface NodeRoleConfig {
@@ -128,6 +119,7 @@ export interface NodePermissionConfig {
 export interface EdgeTypeConfig {
   id: string;
   label?: string;
+  body?: SchemaInput;
   appearance?: {
     stroke?: string;
     strokeWidth?: number;
@@ -201,12 +193,37 @@ export interface CanvasConfig {
   snapToGrid?: boolean;
 }
 
+export type ToolbarItem =
+  | { type: 'back'; label?: string }
+  | { type: 'title'; tpl: string }
+  | { type: 'badge'; text: string; level: string }
+  | { type: 'text'; tpl: string }
+  | { type: 'divider' }
+  | { type: 'spacer' }
+  | { type: 'button'; action: string; icon?: string; label?: string; disabled?: string; active?: string; variant?: 'default' | 'primary' | 'danger' };
+
+export interface ToolbarConfig {
+  items: ToolbarItem[];
+}
+
+export interface ShortcutsConfig {
+  undo?: string[];
+  redo?: string[];
+  copy?: string[];
+  paste?: string[];
+  delete?: string[];
+  selectAll?: string[];
+  save?: string[];
+}
+
 export interface NormalizedDesignerConfig {
   version: string;
   kind: string;
   nodeTypes: Map<string, NodeTypeConfig>;
   edgeTypes: Map<string, EdgeTypeConfig>;
   palette?: PaletteConfig;
+  toolbar?: ToolbarConfig;
+  shortcuts: ShortcutsConfig;
   features: DesignerFeatures;
   rules: DesignerRules;
   permissions: DesignerPermissions;

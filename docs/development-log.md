@@ -18,6 +18,57 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-25 (External Example Files & Icon Naming)
+
+- Moved long JSON examples from `config-schema.md` to external files:
+  - `docs/examples/workflow-designer/config.json` - DesignerConfig
+  - `docs/examples/workflow-designer/document.json` - GraphDocument
+- Document now references external files instead of inline JSON
+- **Naming convention decisions**:
+  - JSON keys: **camelCase** (consistent with TypeScript types and AMIS style)
+    - `allowSelfLoop`, `gridSize`, `snapToGrid`, `fitView`
+  - Icon names: **kebab-case** (string values, converts to PascalCase at runtime)
+    - `rotate-ccw` → `RotateCcw`
+    - `git-branch` → `GitBranch`
+- Rationale: camelCase for keys matches TS interfaces, kebab-case for icons matches Lucide docs
+- Added icon mapping table to config-schema.md
+
+### 2026-03-25 (Toolbar & Shortcuts Configuration)
+
+- Added `ToolbarConfig` and `ShortcutsConfig` types to `types.ts`
+- Toolbar supports two modes:
+  - Predefined items: `{ type: 'button', action: 'designer:undo', ... }`
+  - Full AMIS schema: arbitrary renderer composition
+- Shortcuts configurable per action with multiple key bindings
+- Default toolbar and shortcuts provided when not configured
+- Updated `config-schema.md` with complete workflow designer example based on nop-chaos-next flow editor
+- Verified JSON schema can fully describe existing implementation:
+  - 6 node types: start, end, task, condition, parallel, loop
+  - Node body rendered via AMIS schema (flex + icon + tpl)
+  - Edge with condition label and line style
+  - Palette groups: basic, logic, execution
+  - Full toolbar with back/title/badge/buttons/spacer
+
+### 2026-03-25 (Complex Component Design Process & Flow Designer Schema Refinement)
+
+- Created design process document: `docs/references/complex-component-design-process.md`
+  - Defines standard workflow: Domain Analysis → JSON Schema → Compiled Config → Runtime → CSS
+  - AMIS JSON is the core DSL, should be designed first before implementation
+  - Emphasizes reuse of AMIS runtime capabilities
+  - Applicable to all complex components (Flow Designer, Report Designer, etc.)
+- Updated Flow Designer JSON Schema: `docs/architecture/flow-designer/config-schema.md`
+  - Added `body: SchemaInput` to `NodeTypeConfig` - node component rendered via AMIS schema
+  - Added `body?: SchemaInput` to `EdgeTypeConfig` - edge label rendered via AMIS schema
+  - Removed deprecated `renderer.type/variant` and `NodeAppearanceConfig`
+  - Added detailed examples for simple/complex/custom node components
+  - Added node scope documentation (`id`, `type`, `data`, `position`, `selected`)
+  - Added edge examples with labels and condition branches
+- Updated `packages/flow-designer-core/src/types.ts` to match new schema
+- Key design insight: Node components are AMIS schema fragments, not special renderer types
+  - Can use `flex`, `container`, `tpl`, `icon`, `each`, etc. to compose nodes
+  - Custom nodes just register normal AMIS renderer and reference by type
+  - CSS is independent with `--fd-*` variables mapping to `--na-*` theme tokens
+
 ### 2026-03-25 (Flow Canvas Architecture Simplification)
 
 - Refactored flow-designer playground to follow nop-chaos-next prototype pattern
