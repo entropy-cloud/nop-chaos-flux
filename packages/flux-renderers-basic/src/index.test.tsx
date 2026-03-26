@@ -1,6 +1,6 @@
 ﻿import React from 'react';
-import { describe, expect, it } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -260,6 +260,96 @@ describe('basicRendererDefinitions', () => {
     expect(text.className).not.toContain('bg-white');
     expect(text.className).not.toContain('rounded-lg');
     cleanup();
+  });
+
+  describe('dynamic-renderer', () => {
+    it('renders body content while loading', () => {
+      const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'dynamic-renderer',
+                schemaApi: { url: '/api/schema' },
+                body: { type: 'text', text: 'Loading...' }
+              }
+            ]
+          }}
+          env={env}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      expect(screen.getByText('Loading...')).toBeTruthy();
+      cleanup();
+    });
+
+    it('replaces body with loaded schema on success', async () => {
+      const fetcher = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        data: { type: 'text', text: 'Dynamic content loaded' }
+      })) as RendererEnv['fetcher'];
+
+      const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'dynamic-renderer',
+                schemaApi: { url: '/api/schema' },
+                body: { type: 'text', text: 'Loading...' }
+              }
+            ]
+          }}
+          env={{ ...env, fetcher }}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Dynamic content loaded')).toBeTruthy();
+      });
+
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      cleanup();
+    });
+
+    it('shows error message on fetch failure', async () => {
+      const fetcher = vi.fn(async () => {
+        throw new Error('Failed to load schema');
+      }) as RendererEnv['fetcher'];
+
+      const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'dynamic-renderer',
+                schemaApi: { url: '/api/schema' },
+                body: { type: 'text', text: 'Loading...' }
+              }
+            ]
+          }}
+          env={{ ...env, fetcher }}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Error: Failed to load schema')).toBeTruthy();
+      });
+      cleanup();
+    });
   });
 });
 

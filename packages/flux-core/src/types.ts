@@ -63,6 +63,12 @@ export interface DataSourceSchema extends BaseSchema {
   body?: SchemaInput;
 }
 
+export interface DynamicRendererSchema extends BaseSchema {
+  type: 'dynamic-renderer';
+  schemaApi: ApiObject;
+  body?: SchemaInput;
+}
+
 export interface ApiRequestContext {
   scope: ScopeRef;
   env: RendererEnv;

@@ -18,6 +18,25 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-26 (Dynamic Renderer Implementation)
+
+- **Implemented `dynamic-renderer` renderer** in `packages/flux-renderers-basic/src/index.tsx`:
+  - Loads JSON schema dynamically via `schemaApi` property
+  - Renders `body` content while loading
+  - Replaces body with loaded schema on success
+  - Shows error message on fetch failure
+
+- **Added `DynamicRendererSchema` type** in `packages/flux-core/src/types.ts`:
+  - `schemaApi: ApiObject` - API to fetch schema
+  - `body?: SchemaInput` - Fallback content during loading
+
+- **Added tests** for dynamic-renderer:
+  - Body content rendering while loading
+  - Schema replacement on successful load
+  - Error message display on fetch failure
+
+- Files: `packages/flux-renderers-basic/src/index.tsx`, `packages/flux-renderers-basic/src/index.test.tsx`, `packages/flux-core/src/types.ts`
+
 ### 2026-03-26 (DataSource Renderer Implementation)
 
 - **Implemented `data-source` renderer** in `packages/flux-renderers-data/src/index.tsx`:
