@@ -182,10 +182,6 @@ function DesignerXyflowNode(props: NodeProps) {
   );
 }
 
-const xyflowNodeTypes = {
-  designerNode: DesignerXyflowNode
-};
-
 export function DesignerCardCanvasBridge(props: DesignerCanvasBridgeProps) {
   const { doc, selection } = props.snapshot;
 
@@ -510,6 +506,9 @@ export function DesignerXyflowPreviewBridge(props: DesignerCanvasBridgeProps) {
 }
 
 export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
+  const xyflowNodeTypes = React.useMemo(() => ({
+    designerNode: DesignerXyflowNode
+  }), []);
   const snapshotNodes = React.useMemo(() => createXyflowNodes(props.snapshot), [props.snapshot]);
   const snapshotEdges = React.useMemo(() => createXyflowEdges(props.snapshot), [props.snapshot]);
   const viewport = React.useMemo(

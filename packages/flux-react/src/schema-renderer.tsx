@@ -1,0 +1,68 @@
+import React, { useMemo } from 'react';
+import type {
+  RendererDefinition,
+  SchemaRendererProps
+} from '@nop-chaos/flux-core';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/flux-runtime';
+import {
+  ActionScopeContext,
+  ComponentRegistryContext,
+  PageContext,
+  RuntimeContext,
+  ScopeContext
+} from './contexts';
+import { RenderNodes, EMPTY_SCOPE_DATA } from './helpers';
+import { DialogHost } from './dialog-host';
+
+export function createSchemaRenderer(registryDefinitions: RendererDefinition[] = []) {
+  const registry = createRendererRegistry(registryDefinitions);
+
+  return function SchemaRenderer(props: SchemaRendererProps) {
+    const runtime = useMemo(() => {
+      const resolvedRegistry = props.registry ?? registry;
+      const expressionCompiler = createExpressionCompiler(props.formulaCompiler ?? createFormulaCompiler());
+
+      return createRendererRuntime({
+        registry: resolvedRegistry,
+        env: props.env,
+        expressionCompiler,
+        plugins: props.plugins,
+        pageStore: props.pageStore,
+        onActionError: props.onActionError
+      });
+    }, [props.env, props.formulaCompiler, props.plugins, props.registry, props.pageStore, props.onActionError]);
+
+    const pageData = props.data ?? EMPTY_SCOPE_DATA;
+    const page = useMemo(() => runtime.createPageRuntime(), [runtime]);
+
+    if (page.store.getState().data !== pageData) {
+      page.store.setData(pageData);
+    }
+
+    const rootScope = props.parentScope ?? page.scope;
+    const rootActionScope = useMemo(
+      () => props.actionScope ?? runtime.createActionScope({ id: 'root-action-scope' }),
+      [props.actionScope, runtime]
+    );
+    const rootComponentRegistry = useMemo(
+      () => props.componentRegistry ?? runtime.createComponentHandleRegistry({ id: 'root-component-registry' }),
+      [props.componentRegistry, runtime]
+    );
+
+    return (
+      <RuntimeContext.Provider value={runtime}>
+        <ActionScopeContext.Provider value={rootActionScope}>
+          <ComponentRegistryContext.Provider value={rootComponentRegistry}>
+            <ScopeContext.Provider value={rootScope}>
+              <PageContext.Provider value={page}>
+                <RenderNodes input={props.schema} options={{ actionScope: rootActionScope, componentRegistry: rootComponentRegistry }} />
+                <DialogHost />
+              </PageContext.Provider>
+            </ScopeContext.Provider>
+          </ComponentRegistryContext.Provider>
+        </ActionScopeContext.Provider>
+      </RuntimeContext.Provider>
+    );
+  };
+}
