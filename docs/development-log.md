@@ -18,6 +18,73 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-27 (FieldFrame Component and wrap Property)
+
+- **Added `FieldFrame` component** in `packages/flux-react/src/field-frame.tsx`:
+  - Unified wrapper for form controls that handles label, error, hint, description display
+  - Automatically fetches field state from FormContext using `useOwnedFieldState` and `useAggregateError`
+  - Supports layout modes: 'default', 'checkbox', 'radio'
+  - Uses `<label>` for default layout, `<fieldset>` for checkbox/radio layouts
+
+- **Added `wrap` property to `RendererDefinition`** in `packages/flux-core/src/types.ts`:
+  - When `wrap: true`, NodeRenderer automatically wraps the component with FieldFrame
+  - Controls no longer need to handle label/error display themselves
+
+- **Simplified form controls** in `packages/flux-renderers-form/src/renderers/input.tsx`:
+  - Controls now only render the input element (input, select, textarea, etc.)
+  - Removed FieldLabel and FieldHint from individual controls
+  - Added `wrap: true` to all input renderer definitions
+
+- **Modified `NodeRenderer`** in `packages/flux-react/src/node-renderer.tsx`:
+  - Detects `wrap` property on renderer definition
+  - Automatically wraps component with FieldFrame when `wrap: true`
+  - Passes name, label, required, className to FieldFrame
+
+- **Design document** at `docs/architecture/field-frame.md`
+
+- Key decision: FieldFrame lives in flux-react (base layer), not flux-renderers-form
+- Code paths:
+  - `packages/flux-core/src/types.ts:540-551` - RendererDefinition with wrap property
+  - `packages/flux-react/src/field-frame.tsx` - FieldFrame component
+  - `packages/flux-react/src/node-renderer.tsx:271-295` - Auto-wrapping logic
+  - `packages/flux-renderers-form/src/renderers/input.tsx` - Simplified controls
+
+### 2026-03-27 (Formula Expression Parser Fix)
+
+- **Fixed template expression parsing** in `packages/flux-formula/src/index.ts`:
+  - `parseTemplateSegments` now correctly handles nested `{}` in expressions
+  - Supports ternary expressions like `${isDirty ? "warning" : "success"}`
+  - Tracks string literals and brace depth to find matching closing brace
+
+- **Fixed `toEvalContext` to handle `ScopeRef`**:
+  - Added `isScopeRef` type guard
+  - `toEvalContext` now correctly converts `ScopeRef` to `EvalContext`
+  - Previously treated `ScopeRef` as plain object, causing variable resolution failures
+
+- **Fixed `isPureExpression` detection** in `compileNode`:
+  - Previous regex `/^\$\{[\s\S]+\}$/` incorrectly matched templates like `${a} and ${b}`
+  - Added `isPureExpression()` function with proper brace depth tracking
+  - Correctly distinguishes pure expressions from templates with multiple `${}` or text
+
+- **Added tests** for ternary expressions and pure expression detection
+- Files: `packages/flux-formula/src/index.ts`, `packages/flux-formula/src/index.test.ts`
+
+### 2026-03-26 (Flow Designer JSON Rendering)
+
+- **Converted FlowDesignerPage to JSON-based rendering**:
+  - Created `apps/playground/src/schemas/workflow-designer-schema.json`
+  - Modified `FlowDesignerPage.tsx` to use `SchemaRenderer` instead of `FlowDesignerExample`
+  - Schema references `docs/examples/workflow-designer/config.json` and `document.json`
+  - Uses `designer-page` renderer from `@nop-chaos/flow-designer-renderers`
+
+- **Key changes**:
+  - FlowDesignerPage now uses `createSchemaRenderer` from `@nop-chaos/flux-react`
+  - Config and document are loaded from JSON schema instead of hardcoded TypeScript
+  - Registry is created locally with all required renderers registered
+
+- Files: `apps/playground/src/pages/FlowDesignerPage.tsx`, `apps/playground/src/schemas/workflow-designer-schema.json`
+- Reference: `docs/analysis/flow-designer-json-rendering-research.md`
+
 ### 2026-03-26 (Dynamic Renderer Implementation)
 
 - **Implemented `dynamic-renderer` renderer** in `packages/flux-renderers-basic/src/index.tsx`:

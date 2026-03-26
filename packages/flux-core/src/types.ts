@@ -548,6 +548,7 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   componentRegistryPolicy?: 'inherit' | 'new';
   resolveProps?: (args: ResolvePropsArgs<S>) => Record<string, unknown>;
   validation?: ValidationContributor<S>;
+  wrap?: boolean;
 }
 
 export interface RendererRegistry {

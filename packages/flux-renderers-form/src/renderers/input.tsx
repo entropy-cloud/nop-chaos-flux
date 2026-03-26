@@ -3,11 +3,9 @@ import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
 import {
   createFieldHandlers,
   formLabelFieldRule,
-  resolveFieldLabelContent,
   useBoundFieldValue,
   useFieldPresentation
 } from '../field-utils';
-import { FieldHint, FieldLabel } from './shared';
 import type {
   CheckboxGroupSchema,
   CheckboxSchema,
@@ -25,7 +23,6 @@ export function createInputRenderer(inputType: string) {
     const name = String(props.props.name ?? props.schema.name ?? '');
     const value = useBoundFieldValue(name, currentForm);
     const presentation = useFieldPresentation(name, currentForm);
-    const labelContent = resolveFieldLabelContent(props);
     const handlers = createFieldHandlers({
       name,
       currentForm,
@@ -36,24 +33,16 @@ export function createInputRenderer(inputType: string) {
     });
 
     return (
-      <label className={presentation.className}>
-        <FieldLabel content={labelContent} />
-        <input
-          className="nop-input"
-          type={inputType}
-          value={String(value)}
-          aria-invalid={presentation.showError ? true : undefined}
-          placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
-          onFocus={handlers.onFocus}
-          onChange={(event) => handlers.onChange(event.target.value)}
-          onBlur={handlers.onBlur}
-        />
-        <FieldHint
-          errorMessage={presentation.fieldState.error?.message}
-          validating={presentation.fieldState.validating}
-          showError={presentation.showError}
-        />
-      </label>
+      <input
+        className="nop-input"
+        type={inputType}
+        value={String(value)}
+        aria-invalid={presentation.showError ? true : undefined}
+        placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
+        onFocus={handlers.onFocus}
+        onChange={(event) => handlers.onChange(event.target.value)}
+        onBlur={handlers.onBlur}
+      />
     );
   };
 }
@@ -89,24 +78,28 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     type: 'input-text',
     component: createInputRenderer('text'),
     fields: [formLabelFieldRule],
-    validation: createFieldValidation()
+    validation: createFieldValidation(),
+    wrap: true
   },
   {
     type: 'input-email',
     component: createInputRenderer('email'),
     fields: [formLabelFieldRule],
-    validation: createFieldValidation(undefined, true)
+    validation: createFieldValidation(undefined, true),
+    wrap: true
   },
   {
     type: 'input-password',
     component: createInputRenderer('password'),
     fields: [formLabelFieldRule],
-    validation: createFieldValidation()
+    validation: createFieldValidation(),
+    wrap: true
   },
   {
     type: 'select',
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
+    wrap: true,
     component: function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
@@ -114,7 +107,6 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const value = useBoundFieldValue(name, currentForm);
       const options = Array.isArray(props.props.options) ? (props.props.options as SelectSchema['options']) : [];
       const presentation = useFieldPresentation(name, currentForm);
-      const labelContent = resolveFieldLabelContent(props);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -125,28 +117,20 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       });
 
       return (
-        <label className={presentation.className}>
-          <FieldLabel content={labelContent} />
-          <select
-            className="nop-select"
-            value={String(value)}
-            aria-invalid={presentation.showError ? true : undefined}
-            onFocus={handlers.onFocus}
-            onChange={(event) => handlers.onChange(event.target.value)}
-            onBlur={handlers.onBlur}
-          >
-            {options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <FieldHint
-            errorMessage={presentation.fieldState.error?.message}
-            validating={presentation.fieldState.validating}
-            showError={presentation.showError}
-          />
-        </label>
+        <select
+          className="nop-select"
+          value={String(value)}
+          aria-invalid={presentation.showError ? true : undefined}
+          onFocus={handlers.onFocus}
+          onChange={(event) => handlers.onChange(event.target.value)}
+          onBlur={handlers.onBlur}
+        >
+          {options?.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       );
     }
   },
@@ -159,7 +143,6 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const name = String(props.props.name ?? props.schema.name ?? '');
       const value = useBoundFieldValue(name, currentForm);
       const presentation = useFieldPresentation(name, currentForm);
-      const labelContent = resolveFieldLabelContent(props);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -170,32 +153,26 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       });
 
       return (
-        <label className={presentation.className}>
-          <FieldLabel content={labelContent} />
-          <textarea
-            className="nop-textarea"
-            value={String(value)}
-            rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
-            aria-invalid={presentation.showError ? true : undefined}
-            placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
-            onFocus={handlers.onFocus}
-            onChange={(event) => handlers.onChange(event.target.value)}
-            onBlur={handlers.onBlur}
-          />
-          <FieldHint
-            errorMessage={presentation.fieldState.error?.message}
-            validating={presentation.fieldState.validating}
-            showError={presentation.showError}
-          />
-        </label>
+        <textarea
+          className="nop-textarea"
+          value={String(value)}
+          rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
+          aria-invalid={presentation.showError ? true : undefined}
+          placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
+          onFocus={handlers.onFocus}
+          onChange={(event) => handlers.onChange(event.target.value)}
+          onBlur={handlers.onBlur}
+        />
       );
     },
-    validation: createFieldValidation()
+    validation: createFieldValidation(),
+    wrap: true
   },
   {
     type: 'checkbox',
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
+    wrap: true,
     component: function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
@@ -212,29 +189,20 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       });
       const option = props.props.option as CheckboxSchema['option'] | undefined;
       const optionLabel = option?.label;
-      const labelContent = resolveFieldLabelContent(props);
 
       return (
-        <label className={presentation.className}>
-          <FieldLabel content={labelContent} />
-          <span className="nop-checkbox">
-            <input
-              className="nop-checkbox__input"
-              type="checkbox"
-              checked={value}
-              aria-invalid={presentation.showError ? true : undefined}
-              onFocus={handlers.onFocus}
-              onChange={(event) => handlers.onChange(String(event.target.checked))}
-              onBlur={handlers.onBlur}
-            />
-            {optionLabel ? <span className="nop-checkbox__label">{optionLabel}</span> : null}
-          </span>
-          <FieldHint
-            errorMessage={presentation.fieldState.error?.message}
-            validating={presentation.fieldState.validating}
-            showError={presentation.showError}
+        <span className="nop-checkbox">
+          <input
+            className="nop-checkbox__input"
+            type="checkbox"
+            checked={value}
+            aria-invalid={presentation.showError ? true : undefined}
+            onFocus={handlers.onFocus}
+            onChange={(event) => handlers.onChange(String(event.target.checked))}
+            onBlur={handlers.onBlur}
           />
-        </label>
+          {optionLabel ? <span className="nop-checkbox__label">{optionLabel}</span> : null}
+        </span>
       );
     }
   },
@@ -242,6 +210,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     type: 'switch',
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
+    wrap: true,
     component: function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
@@ -257,33 +226,24 @@ export const inputRendererDefinitions: RendererDefinition[] = [
         }
       });
       const option = props.props.option as SwitchSchema['option'] | undefined;
-      const labelContent = resolveFieldLabelContent(props);
 
       return (
-        <label className={presentation.className}>
-          <FieldLabel content={labelContent} />
-          <span className="nop-switch">
-            <input
-              className="nop-switch__input"
-              type="checkbox"
-              role="switch"
-              checked={value}
-              aria-invalid={presentation.showError ? true : undefined}
-              onFocus={handlers.onFocus}
-              onChange={(event) => handlers.onChange(String(event.target.checked))}
-              onBlur={handlers.onBlur}
-            />
-            <span className="nop-switch__track">
-              <span className="nop-switch__thumb" />
-            </span>
-            <span className="nop-switch__label">{value ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
-          </span>
-          <FieldHint
-            errorMessage={presentation.fieldState.error?.message}
-            validating={presentation.fieldState.validating}
-            showError={presentation.showError}
+        <span className="nop-switch">
+          <input
+            className="nop-switch__input"
+            type="checkbox"
+            role="switch"
+            checked={value}
+            aria-invalid={presentation.showError ? true : undefined}
+            onFocus={handlers.onFocus}
+            onChange={(event) => handlers.onChange(String(event.target.checked))}
+            onBlur={handlers.onBlur}
           />
-        </label>
+          <span className="nop-switch__track">
+            <span className="nop-switch__thumb" />
+          </span>
+          <span className="nop-switch__label">{value ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
+        </span>
       );
     }
   },
@@ -291,6 +251,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     type: 'radio-group',
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
+    wrap: true,
     component: function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
@@ -298,7 +259,6 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const value = String(useBoundFieldValue(name, currentForm));
       const options = Array.isArray(props.props.options) ? (props.props.options as RadioGroupSchema['options']) : [];
       const presentation = useFieldPresentation(name, currentForm);
-      const labelContent = resolveFieldLabelContent(props);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -309,32 +269,24 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       });
 
       return (
-        <fieldset className={presentation.className}>
-          <FieldLabel content={labelContent} as="legend" />
-          <div className="nop-radio-group">
-            {options?.map((option) => (
-              <label key={option.value} className="nop-radio">
-                <input
-                  className="nop-radio__input"
-                  type="radio"
-                  name={name}
-                  value={option.value}
-                  checked={value === option.value}
-                  aria-invalid={presentation.showError ? true : undefined}
-                  onFocus={handlers.onFocus}
-                  onChange={(event) => handlers.onChange(event.target.value)}
-                  onBlur={handlers.onBlur}
-                />
-                <span className="nop-radio__label">{option.label}</span>
-              </label>
-            ))}
-          </div>
-          <FieldHint
-            errorMessage={presentation.fieldState.error?.message}
-            validating={presentation.fieldState.validating}
-            showError={presentation.showError}
-          />
-        </fieldset>
+        <div className="nop-radio-group">
+          {options?.map((option) => (
+            <label key={option.value} className="nop-radio">
+              <input
+                className="nop-radio__input"
+                type="radio"
+                name={name}
+                value={option.value}
+                checked={value === option.value}
+                aria-invalid={presentation.showError ? true : undefined}
+                onFocus={handlers.onFocus}
+                onChange={(event) => handlers.onChange(event.target.value)}
+                onBlur={handlers.onBlur}
+              />
+              <span className="nop-radio__label">{option.label}</span>
+            </label>
+          ))}
+        </div>
       );
     }
   },
@@ -342,6 +294,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     type: 'checkbox-group',
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
+    wrap: true,
     component: function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema>) {
       const scope = useRenderScope();
       const currentForm = useCurrentForm();
@@ -350,7 +303,6 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const value = Array.isArray(rawValue) ? rawValue : [];
       const options = Array.isArray(props.props.options) ? (props.props.options as CheckboxGroupSchema['options']) : [];
       const presentation = useFieldPresentation(name, currentForm);
-      const labelContent = resolveFieldLabelContent(props);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -361,40 +313,32 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       });
 
       return (
-        <fieldset className={presentation.className}>
-          <FieldLabel content={labelContent} as="legend" />
-          <div className="nop-checkbox-group">
-            {options?.map((option) => {
-              const checked = value.some((candidate) => Object.is(candidate, option.value));
+        <div className="nop-checkbox-group">
+          {options?.map((option) => {
+            const checked = value.some((candidate) => Object.is(candidate, option.value));
 
-              return (
-                <label key={option.value} className="nop-checkbox">
-                  <input
-                    className="nop-checkbox__input"
-                    type="checkbox"
-                    value={option.value}
-                    checked={checked}
-                     aria-invalid={presentation.showError ? true : undefined}
-                     onFocus={handlers.onFocus}
-                     onChange={(event) => {
-                        const nextValue = event.target.checked
-                          ? [...value, option.value]
-                          : value.filter((candidate) => !Object.is(candidate, option.value));
-                        handlers.onChange(nextValue);
-                     }}
-                     onBlur={handlers.onBlur}
-                   />
-                  <span className="nop-checkbox__label">{option.label}</span>
-                </label>
-              );
-            })}
-          </div>
-          <FieldHint
-            errorMessage={presentation.fieldState.error?.message}
-            validating={presentation.fieldState.validating}
-            showError={presentation.showError}
-          />
-        </fieldset>
+            return (
+              <label key={option.value} className="nop-checkbox">
+                <input
+                  className="nop-checkbox__input"
+                  type="checkbox"
+                  value={option.value}
+                  checked={checked}
+                  aria-invalid={presentation.showError ? true : undefined}
+                  onFocus={handlers.onFocus}
+                  onChange={(event) => {
+                    const nextValue = event.target.checked
+                      ? [...value, option.value]
+                      : value.filter((candidate) => !Object.is(candidate, option.value));
+                    handlers.onChange(nextValue);
+                  }}
+                  onBlur={handlers.onBlur}
+                />
+                <span className="nop-checkbox__label">{option.label}</span>
+              </label>
+            );
+          })}
+        </div>
       );
     }
   }

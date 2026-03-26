@@ -24,6 +24,7 @@ import {
 import { useRendererRuntime } from './hooks';
 import { createHelpers } from './helpers';
 import { RenderNodes } from './render-nodes';
+import { FieldFrame } from './field-frame';
 
 function createNodeOwnedActionScope(runtime: import('@nop-chaos/flux-core').RendererRuntime, parent: ActionScope | undefined, node: CompiledSchemaNode) {
   return runtime.createActionScope({
@@ -268,6 +269,32 @@ export function NodeRenderer(props: {
     return null;
   }
 
+  const renderComponent = () => {
+    const element = <Comp {...componentProps} />;
+
+    if (props.node.component.wrap) {
+      const fieldName = typeof resolvedProps.value.name === 'string'
+        ? resolvedProps.value.name
+        : typeof props.node.schema.name === 'string'
+          ? props.node.schema.name
+          : undefined;
+      const labelValue = resolvedMeta.label ?? props.node.schema.label;
+
+      return (
+        <FieldFrame
+          name={fieldName}
+          label={labelValue}
+          required={props.node.schema.required === true}
+          className={resolvedMeta.className}
+        >
+          {element}
+        </FieldFrame>
+      );
+    }
+
+    return element;
+  };
+
   return (
     <NodeMetaContext.Provider value={{ id: props.node.id, path: props.node.path, type: props.node.type }}>
       <ActionScopeContext.Provider value={activeActionScope}>
@@ -276,7 +303,7 @@ export function NodeRenderer(props: {
             <FormContext.Provider value={activeForm}>
               <PageContext.Provider value={props.page}>
                 <ClassAliasesContext.Provider value={mergedClassAliases}>
-                  <Comp {...componentProps} />
+                  {renderComponent()}
                 </ClassAliasesContext.Provider>
               </PageContext.Provider>
             </FormContext.Provider>

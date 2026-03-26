@@ -8,6 +8,8 @@ export {
   RenderNodes
 } from './helpers';
 export { DialogHost } from './dialog-host';
+export { FieldFrame } from './field-frame';
+export type { FieldFrameProps } from './field-frame';
 export { NodeRenderer } from './node-renderer';
 export {
   useRendererRuntime,
