@@ -9,8 +9,8 @@ export function FieldLabel(props: {
   }
 
   if (props.as === 'legend') {
-    return <legend className="na-field__label">{props.content}</legend>;
+    return <legend className="nop-field__label">{props.content}</legend>;
   }
 
-  return <span className="na-field__label">{props.content}</span>;
+  return <span className="nop-field__label">{props.content}</span>;
 }

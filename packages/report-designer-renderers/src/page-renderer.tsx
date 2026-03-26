@@ -99,37 +99,37 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
   const bodyContent = props.regions.body?.render({ data: hostData });
 
   return (
-    <section className={joinClassNames('na-report-designer', props.meta.className)}>
-      <header className="na-report-designer__header">
+    <section className={joinClassNames('nop-report-designer', props.meta.className)}>
+      <header className="nop-report-designer__header">
         <div>
-          <p className="na-report-designer__eyebrow">Report Designer</p>
+          <p className="nop-report-designer__eyebrow">Report Designer</p>
           {hasRendererSlotContent(titleContent) ? <h2>{titleContent}</h2> : <h2>{snapshot.document.name}</h2>}
         </div>
-        <div className="na-report-designer__status">
+        <div className="nop-report-designer__status">
           <span>Target: {snapshot.selectionTarget?.kind ?? 'none'}</span>
           <span>Fields: {getFieldCount(snapshot.fieldSources)}</span>
         </div>
       </header>
 
       {hasRendererSlotContent(toolbarContent) ? (
-        <div className="na-report-designer__toolbar">{toolbarContent}</div>
+        <div className="nop-report-designer__toolbar">{toolbarContent}</div>
       ) : null}
 
-      <div className="na-report-designer__layout">
-        <aside className="na-report-designer__field-panel">
+      <div className="nop-report-designer__layout">
+        <aside className="nop-report-designer__field-panel">
           {hasRendererSlotContent(fieldPanelContent) ? fieldPanelContent : renderFallbackFieldPanel(snapshot.fieldSources)}
         </aside>
 
-        <main className="na-report-designer__canvas">
+        <main className="nop-report-designer__canvas">
           {hasRendererSlotContent(bodyContent) ? bodyContent : renderFallbackCanvas(snapshot)}
         </main>
 
-        <aside className="na-report-designer__inspector">
+        <aside className="nop-report-designer__inspector">
           {hasRendererSlotContent(inspectorContent) ? inspectorContent : renderFallbackInspector(snapshot.activeMeta)}
         </aside>
       </div>
 
-      {hasRendererSlotContent(dialogsContent) ? <div className="na-report-designer__dialogs">{dialogsContent}</div> : null}
+      {hasRendererSlotContent(dialogsContent) ? <div className="nop-report-designer__dialogs">{dialogsContent}</div> : null}
     </section>
   );
 }

@@ -25,9 +25,9 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
           Click the launcher to expand the full panel, or click "Minimize" to collapse it back to the launcher.
           The launcher itself is draggable.
         </p>
-        <div className="na-ai-debug-card">
-          <p className="na-ai-debug-card__eyebrow">Global API Status</p>
-          <pre className="na-ai-debug-card__code">
+        <div className="nop-ai-debug-card">
+          <p className="nop-ai-debug-card__eyebrow">Global API Status</p>
+          <pre className="nop-ai-debug-card__code">
             {JSON.stringify({
               hasApi: !!api,
               hasHub: !!hub,
@@ -35,9 +35,9 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
             }, null, 2)}
           </pre>
         </div>
-        <div className="na-ai-debug-card" style={{ marginTop: 18 }}>
-          <p className="na-ai-debug-card__eyebrow">Controller Methods</p>
-          <pre className="na-ai-debug-card__code">{`debuggerController.id = "${debuggerController.id}"
+        <div className="nop-ai-debug-card" style={{ marginTop: 18 }}>
+          <p className="nop-ai-debug-card__eyebrow">Controller Methods</p>
+          <pre className="nop-ai-debug-card__code">{`debuggerController.id = "${debuggerController.id}"
 debuggerController.getSnapshot()
 debuggerController.show()
 debuggerController.hide()
@@ -58,21 +58,21 @@ debuggerController.getInteractionTrace(options)
 debuggerController.exportSession(options)
 debuggerController.createDiagnosticReport(options)`}</pre>
         </div>
-        <div className="na-ai-debug-card" style={{ marginTop: 18 }}>
-          <p className="na-ai-debug-card__eyebrow">Snapshot Structure</p>
-          <pre className="na-ai-debug-card__code">{`interface AmisDebuggerSnapshot {
+        <div className="nop-ai-debug-card" style={{ marginTop: 18 }}>
+          <p className="nop-ai-debug-card__eyebrow">Snapshot Structure</p>
+          <pre className="nop-ai-debug-card__code">{`interface FluxDebuggerSnapshot {
   enabled: boolean;
   panelOpen: boolean;
   paused: boolean;
   activeTab: 'overview' | 'timeline' | 'network';
   position: { x: number; y: number };
-  events: AmisDebugEvent[];
-  filters: AmisDebuggerFilterKind[];
+  events: FluxDebugEvent[];
+  filters: FluxDebuggerFilterKind[];
 }`}</pre>
         </div>
-        <div className="na-ai-debug-card" style={{ marginTop: 18 }}>
-          <p className="na-ai-debug-card__eyebrow">Event Groups (Filters)</p>
-          <pre className="na-ai-debug-card__code">{`type AmisDebuggerFilterKind =
+        <div className="nop-ai-debug-card" style={{ marginTop: 18 }}>
+          <p className="nop-ai-debug-card__eyebrow">Event Groups (Filters)</p>
+          <pre className="nop-ai-debug-card__code">{`type FluxDebuggerFilterKind =
   | 'render'
   | 'action'
   | 'api'
@@ -80,14 +80,14 @@ debuggerController.createDiagnosticReport(options)`}</pre>
   | 'notify'
   | 'error';`}</pre>
         </div>
-        <div className="na-ai-debug-card" style={{ marginTop: 18 }}>
-          <p className="na-ai-debug-card__eyebrow">Interaction Trace</p>
-          <pre className="na-ai-debug-card__code">{`interface AmisInteractionTrace {
+        <div className="nop-ai-debug-card" style={{ marginTop: 18 }}>
+          <p className="nop-ai-debug-card__eyebrow">Interaction Trace</p>
+          <pre className="nop-ai-debug-card__code">{`interface FluxInteractionTrace {
   totalEvents: number;
-  anchorEvent?: AmisDebugEvent;
-  latestError?: AmisDebugEvent;
-  latestApi?: AmisDebugEvent;
-  latestAction?: AmisDebugEvent;
+  anchorEvent?: FluxDebugEvent;
+  latestError?: FluxDebugEvent;
+  latestApi?: FluxDebugEvent;
+  latestAction?: FluxDebugEvent;
   resolvedQuery: {
     nodeId?: string;
     actionType?: string;

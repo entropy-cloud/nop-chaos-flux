@@ -47,10 +47,10 @@ function KeyValueRow(props: {
   });
 
   return (
-    <div className="na-kv-row">
+    <div className="nop-kv-row">
       <div className={keyUi.className}>
         <input
-          className="na-input"
+          className="nop-input"
           type="text"
           value={pair.key}
           placeholder="Key"
@@ -93,7 +93,7 @@ function KeyValueRow(props: {
       </div>
       <div className={valueUi.className}>
         <input
-          className="na-input"
+          className="nop-input"
           type="text"
           value={pair.value}
           placeholder="Value"
@@ -136,7 +136,7 @@ function KeyValueRow(props: {
       </div>
       <button
         type="button"
-        className="na-kv-remove"
+        className="nop-kv-remove"
         onClick={() => {
           const nextPairs = pairs.filter((candidate) => candidate.id !== pair.id);
           pairsRef.current = nextPairs;
@@ -320,7 +320,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   return (
     <label className={presentation.className}>
       <FieldLabel content={labelContent} />
-      <div className="na-kv-list">
+      <div className="nop-kv-list">
         {pairs.map((pair, index) => {
           return (
             <KeyValueRow
@@ -338,7 +338,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
         })}
         <button
           type="button"
-          className="na-kv-add"
+          className="nop-kv-add"
           onClick={() => {
             const nextEntry = { id: `pair-${pairs.length + 1}`, key: '', value: '' };
             const nextPairs = [...pairs, nextEntry];

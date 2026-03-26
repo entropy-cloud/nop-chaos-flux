@@ -19,10 +19,10 @@ describe('shared form renderer primitives', () => {
   it('renders validation errors before validating hints', () => {
     const { rerender } = render(<FieldHint errorMessage="Username is required" showError />);
 
-    expect(screen.getByText('Username is required').className).toContain('na-field__error');
+    expect(screen.getByText('Username is required').className).toContain('nop-field__error');
 
     rerender(<FieldHint validating />);
 
-    expect(screen.getByText('Validating...').className).toContain('na-field__hint');
+    expect(screen.getByText('Validating...').className).toContain('nop-field__hint');
   });
 });

@@ -52,7 +52,7 @@ function renderFallbackBody(snapshot: SpreadsheetRuntimeSnapshot) {
   const cellCount = getRuntimeActiveSheetCellCount(snapshot);
 
   return (
-    <div className="na-spreadsheet-page__fallback">
+    <div className="nop-spreadsheet-page__fallback">
       <p>Spreadsheet canvas region is not configured.</p>
       <p>Active sheet: {activeSheetName}.</p>
       <p>Cell entries: {cellCount}.</p>
@@ -113,19 +113,19 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   const dialogsContent = props.regions.dialogs?.render({ data: hostData });
 
   return (
-    <section className="na-spreadsheet-page">
-      <header className="na-spreadsheet-page__header">
+    <section className="nop-spreadsheet-page">
+      <header className="nop-spreadsheet-page__header">
         <h2>{hasRendererSlotContent(titleContent) ? titleContent : 'Spreadsheet Designer'}</h2>
         <p>{buildSpreadsheetStatusLabel(spreadsheet)}</p>
       </header>
 
-      {hasRendererSlotContent(toolbarContent) ? <div className="na-spreadsheet-page__toolbar">{toolbarContent}</div> : null}
+      {hasRendererSlotContent(toolbarContent) ? <div className="nop-spreadsheet-page__toolbar">{toolbarContent}</div> : null}
 
-      <main className="na-spreadsheet-page__body">
+      <main className="nop-spreadsheet-page__body">
         {hasRendererSlotContent(bodyContent) ? bodyContent : renderFallbackBody(snapshot)}
       </main>
 
-      {hasRendererSlotContent(dialogsContent) ? <div className="na-spreadsheet-page__dialogs">{dialogsContent}</div> : null}
+      {hasRendererSlotContent(dialogsContent) ? <div className="nop-spreadsheet-page__dialogs">{dialogsContent}</div> : null}
     </section>
   );
 }

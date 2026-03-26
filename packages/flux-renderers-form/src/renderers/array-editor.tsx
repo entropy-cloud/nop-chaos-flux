@@ -35,10 +35,10 @@ function ArrayEditorRow(props: {
   });
 
   return (
-    <div className="na-array-editor__row">
+    <div className="nop-array-editor__row">
       <div className={itemUi.className}>
         <input
-          className="na-input"
+          className="nop-input"
           type="text"
           value={item.value}
           placeholder={itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}
@@ -81,7 +81,7 @@ function ArrayEditorRow(props: {
       </div>
       <button
         type="button"
-        className="na-kv-remove"
+        className="nop-kv-remove"
         onClick={() => {
           const nextItems = items.filter((candidate) => candidate.id !== item.id);
           itemsRef.current = nextItems;
@@ -233,7 +233,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   return (
     <label className={presentation.className}>
       <FieldLabel content={labelContent} />
-      <div className="na-array-editor">
+      <div className="nop-array-editor">
         {items.map((item, index) => {
           return (
             <ArrayEditorRow
@@ -252,7 +252,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
         })}
         <button
           type="button"
-          className="na-kv-add"
+          className="nop-kv-add"
           onClick={() => {
             const nextItem = { id: `item-${items.length + 1}`, value: '' };
             const nextItems = [...items, nextItem];

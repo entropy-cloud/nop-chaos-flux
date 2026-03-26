@@ -14,20 +14,20 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
   const designer = scopeData.designer as { documentName?: string; fieldCount?: number } | undefined;
 
   return (
-    <section className={joinClassNames('na-report-designer__field-panel-shell', props.meta.className)}>
+    <section className={joinClassNames('nop-report-designer__field-panel-shell', props.meta.className)}>
       {hasRendererSlotContent(titleContent) ? (
-        <header className="na-report-designer__section-header">
+        <header className="nop-report-designer__section-header">
           <h3>{titleContent}</h3>
           <span>{designer?.fieldCount ?? getFieldCount(fieldSources)} fields</span>
         </header>
       ) : designer?.documentName ? (
-        <header className="na-report-designer__section-header">
+        <header className="nop-report-designer__section-header">
           <h3>{designer.documentName}</h3>
           <span>{designer?.fieldCount ?? getFieldCount(fieldSources)} fields</span>
         </header>
       ) : null}
       {fieldSources.length === 0 ? (
-        <p className="na-report-designer__empty">{String(props.props.emptyLabel ?? 'No field sources registered.')}</p>
+        <p className="nop-report-designer__empty">{String(props.props.emptyLabel ?? 'No field sources registered.')}</p>
       ) : (
         renderFieldSourceSections(fieldSources)
       )}

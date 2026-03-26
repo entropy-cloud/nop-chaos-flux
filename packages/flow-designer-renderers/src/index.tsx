@@ -390,7 +390,7 @@ function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>)
 
   return (
     <DesignerContext.Provider value={ctxValue}>
-      <div className="fd-page na-theme-root fd-theme-root">
+      <div className="fd-page nop-theme-root fd-theme-root">
         <div className="fd-page__header">
           {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : null}
         </div>

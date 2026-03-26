@@ -82,11 +82,11 @@ function getFieldClassName(state: {
   showError: boolean;
 }) {
   return [
-    'na-field',
-    state.visited ? 'na-field--visited' : '',
-    state.touched ? 'na-field--touched' : '',
-    state.dirty ? 'na-field--dirty' : '',
-    state.showError ? 'na-field--invalid' : ''
+'nop-field',
+    state.visited ? 'nop-field--visited' : '',
+    state.touched ? 'nop-field--touched' : '',
+    state.dirty ? 'nop-field--dirty' : '',
+    state.showError ? 'nop-field--invalid' : ''
   ]
     .filter(Boolean)
     .join(' ');
@@ -175,12 +175,12 @@ export function getChildFieldUiState(input: {
     dirty,
     visited,
     showError,
-    className: [
-      'na-child-field',
-      visited ? 'na-child-field--visited' : '',
-      touched ? 'na-child-field--touched' : '',
-      dirty ? 'na-child-field--dirty' : '',
-      showError ? 'na-child-field--invalid' : ''
+className: [
+      'nop-child-field',
+      visited ? 'nop-child-field--visited' : '',
+      touched ? 'nop-child-field--touched' : '',
+      dirty ? 'nop-child-field--dirty' : '',
+      showError ? 'nop-child-field--invalid' : ''
     ]
       .filter(Boolean)
       .join(' ')

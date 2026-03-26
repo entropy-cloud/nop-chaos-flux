@@ -63,7 +63,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   return (
     <label className={presentation.className}>
       <FieldLabel content={labelContent} />
-      <div className="na-tag-list">
+      <div className="nop-tag-list">
         {tags.map((tag) => {
           const active = value.includes(tag);
 
@@ -71,7 +71,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
             <button
               key={tag}
               type="button"
-              className={active ? 'na-tag na-tag--active' : 'na-tag'}
+              className={active ? 'nop-tag nop-tag--active' : 'nop-tag'}
               onFocus={() => {
                 if (currentForm && name) {
                   currentForm.visitField(name);

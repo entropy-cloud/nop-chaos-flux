@@ -44,11 +44,11 @@ function ContactGroupRenderer(props: RendererComponentProps) {
   const error = useAggregateError(name)?.message;
 
   return (
-    <label className="na-field">
-      <span className="na-field__label">{String(props.meta.label ?? 'Contact')}</span>
+    <label className="nop-field">
+      <span className="nop-field__label">{String(props.meta.label ?? 'Contact')}</span>
       <input
         aria-label="Contact Email"
-        className="na-input"
+        className="nop-input"
         value={value.email ?? ''}
         onFocus={() => {
           form?.visitField(name);
@@ -62,7 +62,7 @@ function ContactGroupRenderer(props: RendererComponentProps) {
       />
       <input
         aria-label="Contact Phone"
-        className="na-input"
+        className="nop-input"
         value={value.phone ?? ''}
         onFocus={() => {
           form?.visitField(name);
@@ -74,7 +74,7 @@ function ContactGroupRenderer(props: RendererComponentProps) {
           form?.touchField(name);
         }}
       />
-      {error ? <span className="na-field__error">{error}</span> : null}
+      {error ? <span className="nop-field__error">{error}</span> : null}
     </label>
   );
 }
@@ -665,18 +665,18 @@ describe('formRendererDefinitions', () => {
 
     const keyInput = screen.getByPlaceholderText('Key');
     const valueInput = screen.getByPlaceholderText('Value');
-    const keyField = keyInput.closest('.na-child-field');
-    const valueField = valueInput.closest('.na-child-field');
+    const keyField = keyInput.closest('.nop-child-field');
+    const valueField = valueInput.closest('.nop-child-field');
 
     fireEvent.change(valueInput, { target: { value: 'prod' } });
     fireEvent.focus(keyInput);
     fireEvent.blur(keyInput);
 
     expect(await screen.findByText('Entry 1 key is required')).toBeTruthy();
-    expect(keyField?.className).toContain('na-child-field--visited');
-    expect(keyField?.className).toContain('na-child-field--touched');
-    expect(keyField?.className).toContain('na-child-field--invalid');
-    expect(valueField?.className ?? '').not.toContain('na-child-field--invalid');
+    expect(keyField?.className).toContain('nop-child-field--visited');
+    expect(keyField?.className).toContain('nop-child-field--touched');
+    expect(keyField?.className).toContain('nop-child-field--invalid');
+    expect(valueField?.className ?? '').not.toContain('nop-child-field--invalid');
 
     fireEvent.change(keyInput, { target: { value: 'env' } });
 
@@ -687,7 +687,7 @@ describe('formRendererDefinitions', () => {
     await waitFor(() => {
       expect((keyInput as HTMLInputElement).value).toBe('env');
     });
-    expect(valueField?.className).toContain('na-child-field--dirty');
+    expect(valueField?.className).toContain('nop-child-field--dirty');
   });
 
   it('submits and validates a runtime-registered array editor', async () => {
@@ -782,11 +782,11 @@ describe('formRendererDefinitions', () => {
     fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: '' } });
 
     expect(await screen.findByText('Reviewer 1 is required')).toBeTruthy();
-    const childField = screen.getByPlaceholderText('Reviewer 1').closest('.na-child-field');
-    expect(childField?.className).toContain('na-child-field--visited');
-    expect(childField?.className).toContain('na-child-field--touched');
-    expect(childField?.className).toContain('na-child-field--dirty');
-    expect(childField?.className).toContain('na-child-field--invalid');
+    const childField = screen.getByPlaceholderText('Reviewer 1').closest('.nop-child-field');
+    expect(childField?.className).toContain('nop-child-field--visited');
+    expect(childField?.className).toContain('nop-child-field--touched');
+    expect(childField?.className).toContain('nop-child-field--dirty');
+    expect(childField?.className).toContain('nop-child-field--invalid');
   });
 
   it('blocks submit when compiled validation rules fail', async () => {
@@ -928,23 +928,23 @@ describe('formRendererDefinitions', () => {
     );
 
     const input = screen.getByLabelText('Email');
-    const field = input.closest('.na-field');
+    const field = input.closest('.nop-field');
 
     expect(screen.queryByText('Email is required')).toBeNull();
 
     fireEvent.focus(input);
-    expect(field?.className).toContain('na-field--visited');
+    expect(field?.className).toContain('nop-field--visited');
 
     fireEvent.change(input, { target: { value: 'foo' } });
-    expect(field?.className).toContain('na-field--dirty');
+    expect(field?.className).toContain('nop-field--dirty');
     expect(screen.queryByText('Email is required')).toBeNull();
 
     fireEvent.change(input, { target: { value: '' } });
     fireEvent.blur(input);
 
     expect(await screen.findByText('Email is required')).toBeTruthy();
-    expect(field?.className).toContain('na-field--touched');
-    expect(field?.className).toContain('na-field--invalid');
+    expect(field?.className).toContain('nop-field--touched');
+    expect(field?.className).toContain('nop-field--invalid');
   });
 
   it('supports visited-only error visibility without changing validation timing', async () => {

@@ -90,9 +90,9 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
   function renderPanelChrome(panel: InspectorPanelDescriptor, options?: { showHeader?: boolean }) {
     const showHeader = options?.showHeader ?? true;
     return (
-      <div key={panel.id} className="na-report-designer__stack">
+      <div key={panel.id} className="nop-report-designer__stack">
         {showHeader ? (
-          <div className="na-report-designer__section-header">
+          <div className="nop-report-designer__section-header">
             <h4>{panel.title}</h4>
             <span>
               {panel.badge ? `${panel.badge}${panel.readonly ? ' | Read only' : ''}` : panel.readonly ? 'Read only' : ''}
@@ -104,7 +104,7 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
           pathSuffix: `inspector-panels.${panel.id}`,
         })}
         {panel.submitAction && !panel.readonly ? (
-          <div className="na-report-designer__toolbar">
+          <div className="nop-report-designer__toolbar">
             <button type="button" onClick={() => void handleSubmit(panel)} disabled={submittingPanelId === panel.id}>
               {submittingPanelId === panel.id ? 'Saving...' : String(props.props.saveLabel ?? 'Save Panel')}
             </button>
@@ -113,41 +113,41 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
             ) : null}
           </div>
         ) : panel.readonly ? (
-          <p className="na-report-designer__empty">This panel is read only.</p>
+          <p className="nop-report-designer__empty">This panel is read only.</p>
         ) : null}
       </div>
     );
   }
 
   return (
-    <section className={joinClassNames('na-report-designer__inspector-shell', props.meta.className)}>
+    <section className={joinClassNames('nop-report-designer__inspector-shell', props.meta.className)}>
       {hasRendererSlotContent(titleContent) ? (
-        <header className="na-report-designer__section-header">
+        <header className="nop-report-designer__section-header">
           <h3>{titleContent}</h3>
           <span>{formatSelectionLabel(target)}</span>
         </header>
       ) : null}
 
       {!target ? (
-        <p className="na-report-designer__empty">{String(props.props.noSelectionLabel ?? 'Select a target to inspect.')}</p>
+        <p className="nop-report-designer__empty">{String(props.props.noSelectionLabel ?? 'Select a target to inspect.')}</p>
       ) : inspector?.loading ? (
-        <p className="na-report-designer__empty">Loading inspector panels...</p>
+        <p className="nop-report-designer__empty">Loading inspector panels...</p>
       ) : inspector?.error ? (
-        <div className="na-report-designer__stack">
-          <p className="na-report-designer__empty">{String(props.props.errorLabel ?? 'Failed to load inspector panels.')}</p>
-          <p className="na-report-designer__empty">{inspectorErrorLabel}</p>
+        <div className="nop-report-designer__stack">
+          <p className="nop-report-designer__empty">{String(props.props.errorLabel ?? 'Failed to load inspector panels.')}</p>
+          <p className="nop-report-designer__empty">{inspectorErrorLabel}</p>
         </div>
       ) : panels.length === 0 ? (
-        <div className="na-report-designer__stack">
-          <p className="na-report-designer__empty">{String(props.props.emptyLabel ?? 'No inspector panels available.')}</p>
+        <div className="nop-report-designer__stack">
+          <p className="nop-report-designer__empty">{String(props.props.emptyLabel ?? 'No inspector panels available.')}</p>
           {scopeData.meta ? renderFallbackInspector(scopeData.meta as MetadataBag) : null}
         </div>
       ) : (
-        <div className="na-report-designer__stack">
+        <div className="nop-report-designer__stack">
           {tabPanels.length > 1 ? (
-            <div className="na-report-designer__toolbar">
+            <div className="nop-report-designer__toolbar">
               {tabPanels.map((panel) => (
-                <button key={panel.id} type="button" className="na-report-designer__tab" onClick={() => setActivePanelId(panel.id)}>
+                <button key={panel.id} type="button" className="nop-report-designer__tab" onClick={() => setActivePanelId(panel.id)}>
                   <span>{panel.title}</span>
                   {panel.badge ? <span>{panel.badge}</span> : null}
                   {panel.readonly ? <span>Read only</span> : null}
@@ -157,18 +157,18 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
           ) : null}
           {activePanel ? renderPanelChrome(activePanel, { showHeader: tabPanels.length <= 1 }) : null}
           {groupedSectionPanels.map((group) => (
-            <section key={`section-group-${group.group}`} className="na-report-designer__stack">
-              <div className="na-report-designer__section-header">
+            <section key={`section-group-${group.group}`} className="nop-report-designer__stack">
+              <div className="nop-report-designer__section-header">
                 <h4>{group.group}</h4>
               </div>
               {group.panels.map((panel) => renderPanelChrome(panel))}
             </section>
           ))}
           {groupedInlinePanels.length > 0 ? (
-            <div className="na-report-designer__stack">
+            <div className="nop-report-designer__stack">
               {groupedInlinePanels.map((group) => (
-                <section key={`inline-group-${group.group}`} className="na-report-designer__stack">
-                  <div className="na-report-designer__section-header">
+                <section key={`inline-group-${group.group}`} className="nop-report-designer__stack">
+                  <div className="nop-report-designer__section-header">
                     <h4>{group.group}</h4>
                   </div>
                   {group.panels.map((panel) => renderPanelChrome(panel, { showHeader: false }))}

@@ -149,7 +149,7 @@ describe('NopDebuggerPanel', () => {
 
     render(<NopDebuggerPanel controller={controller} />);
 
-    const launcher = document.querySelector('.na-debugger-launcher');
+    const launcher = document.querySelector('.nop-debugger-launcher');
     expect(launcher).toBeTruthy();
 
     fireEvent.pointerDown(launcher!, { button: 0, pointerId: 1, clientX: 40, clientY: 40 });

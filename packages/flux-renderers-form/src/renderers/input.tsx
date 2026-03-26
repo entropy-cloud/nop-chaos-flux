@@ -39,7 +39,7 @@ export function createInputRenderer(inputType: string) {
       <label className={presentation.className}>
         <FieldLabel content={labelContent} />
         <input
-          className="na-input"
+          className="nop-input"
           type={inputType}
           value={String(value)}
           aria-invalid={presentation.showError ? true : undefined}
@@ -128,7 +128,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
         <label className={presentation.className}>
           <FieldLabel content={labelContent} />
           <select
-            className="na-select"
+            className="nop-select"
             value={String(value)}
             aria-invalid={presentation.showError ? true : undefined}
             onFocus={handlers.onFocus}
@@ -173,7 +173,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
         <label className={presentation.className}>
           <FieldLabel content={labelContent} />
           <textarea
-            className="na-textarea"
+            className="nop-textarea"
             value={String(value)}
             rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
             aria-invalid={presentation.showError ? true : undefined}
@@ -217,9 +217,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       return (
         <label className={presentation.className}>
           <FieldLabel content={labelContent} />
-          <span className="na-checkbox">
+          <span className="nop-checkbox">
             <input
-              className="na-checkbox__input"
+              className="nop-checkbox__input"
               type="checkbox"
               checked={value}
               aria-invalid={presentation.showError ? true : undefined}
@@ -227,7 +227,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
               onChange={(event) => handlers.onChange(String(event.target.checked))}
               onBlur={handlers.onBlur}
             />
-            {optionLabel ? <span className="na-checkbox__label">{optionLabel}</span> : null}
+            {optionLabel ? <span className="nop-checkbox__label">{optionLabel}</span> : null}
           </span>
           <FieldHint
             errorMessage={presentation.fieldState.error?.message}
@@ -262,9 +262,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       return (
         <label className={presentation.className}>
           <FieldLabel content={labelContent} />
-          <span className="na-switch">
+          <span className="nop-switch">
             <input
-              className="na-switch__input"
+              className="nop-switch__input"
               type="checkbox"
               role="switch"
               checked={value}
@@ -273,10 +273,10 @@ export const inputRendererDefinitions: RendererDefinition[] = [
               onChange={(event) => handlers.onChange(String(event.target.checked))}
               onBlur={handlers.onBlur}
             />
-            <span className="na-switch__track">
-              <span className="na-switch__thumb" />
+            <span className="nop-switch__track">
+              <span className="nop-switch__thumb" />
             </span>
-            <span className="na-switch__label">{value ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
+            <span className="nop-switch__label">{value ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
           </span>
           <FieldHint
             errorMessage={presentation.fieldState.error?.message}
@@ -311,11 +311,11 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       return (
         <fieldset className={presentation.className}>
           <FieldLabel content={labelContent} as="legend" />
-          <div className="na-radio-group">
+          <div className="nop-radio-group">
             {options?.map((option) => (
-              <label key={option.value} className="na-radio">
+              <label key={option.value} className="nop-radio">
                 <input
-                  className="na-radio__input"
+                  className="nop-radio__input"
                   type="radio"
                   name={name}
                   value={option.value}
@@ -325,7 +325,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
                   onChange={(event) => handlers.onChange(event.target.value)}
                   onBlur={handlers.onBlur}
                 />
-                <span className="na-radio__label">{option.label}</span>
+                <span className="nop-radio__label">{option.label}</span>
               </label>
             ))}
           </div>
@@ -363,14 +363,14 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       return (
         <fieldset className={presentation.className}>
           <FieldLabel content={labelContent} as="legend" />
-          <div className="na-checkbox-group">
+          <div className="nop-checkbox-group">
             {options?.map((option) => {
               const checked = value.some((candidate) => Object.is(candidate, option.value));
 
               return (
-                <label key={option.value} className="na-checkbox">
+                <label key={option.value} className="nop-checkbox">
                   <input
-                    className="na-checkbox__input"
+                    className="nop-checkbox__input"
                     type="checkbox"
                     value={option.value}
                     checked={checked}
@@ -384,7 +384,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
                      }}
                      onBlur={handlers.onBlur}
                    />
-                  <span className="na-checkbox__label">{option.label}</span>
+                  <span className="nop-checkbox__label">{option.label}</span>
                 </label>
               );
             })}

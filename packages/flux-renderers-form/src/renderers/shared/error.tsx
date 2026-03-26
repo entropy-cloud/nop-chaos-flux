@@ -5,5 +5,5 @@ export function FieldError(props: { children?: ReactNode }) {
     return null;
   }
 
-  return <span className="na-field__error">{props.children}</span>;
+  return <span className="nop-field__error">{props.children}</span>;
 }

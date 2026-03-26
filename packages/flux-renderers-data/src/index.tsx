@@ -33,9 +33,9 @@ function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const columnCount = Math.max(columns.length, 1);
 
   return (
-    <div className="na-table-wrap">
-      {hasRendererSlotContent(headerContent) ? <div className="na-table__header">{headerContent}</div> : null}
-      <table className="na-table">
+    <div className="nop-table-wrap">
+      {hasRendererSlotContent(headerContent) ? <div className="nop-table__header">{headerContent}</div> : null}
+      <table className="nop-table">
         <thead>
           <tr>
             {columns.map((column, index) => {
@@ -49,8 +49,8 @@ function TableRenderer(props: RendererComponentProps<TableSchema>) {
         <tbody>
           {source.length === 0
             ? (
-                <tr className="na-table__empty-row">
-                  <td colSpan={columnCount} className="na-table__empty-cell">{emptyContent}</td>
+                <tr className="nop-table__empty-row">
+                  <td colSpan={columnCount} className="nop-table__empty-cell">{emptyContent}</td>
                 </tr>
               )
             : source.map((record, index) => {
@@ -63,7 +63,7 @@ function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 return (
                   <tr
                     key={String(record.id ?? index)}
-                    className={props.events.onRowClick ? 'na-table__row na-table__row--interactive' : 'na-table__row'}
+                    className={props.events.onRowClick ? 'nop-table__row nop-table__row--interactive' : 'nop-table__row'}
                     onClick={props.events.onRowClick ? (event) => void props.events.onRowClick?.(event, { scope: rowScope }) : undefined}
                   >
                     {columns.map((column, columnIndex) => {
@@ -73,7 +73,7 @@ function TableRenderer(props: RendererComponentProps<TableSchema>) {
                       if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
                         return (
                           <td key={`op-${columnIndex}`}>
-                            <div className="na-table__actions" onClick={(event) => event.stopPropagation()}>
+                            <div className="nop-table__actions" onClick={(event) => event.stopPropagation()}>
                               {buttonRegion
                                 ? buttonRegion.render({
                                     scope: rowScope,
@@ -110,7 +110,7 @@ function TableRenderer(props: RendererComponentProps<TableSchema>) {
               })}
         </tbody>
       </table>
-      {hasRendererSlotContent(footerContent) ? <div className="na-table__footer">{footerContent}</div> : null}
+      {hasRendererSlotContent(footerContent) ? <div className="nop-table__footer">{footerContent}</div> : null}
     </div>
   );
 }

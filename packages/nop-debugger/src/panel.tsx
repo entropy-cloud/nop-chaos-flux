@@ -2,43 +2,43 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import type { NopDebugEvent, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
 import { buildOverview, DEFAULT_FILTERS } from './diagnostics';
 
-const DEBUGGER_STYLE_ID = 'na-debugger-styles';
+const DEBUGGER_STYLE_ID = 'nop-debugger-styles';
 const DEBUGGER_STYLES = `
-.na-theme-root {
-  --na-debugger-bg:
+.nop-theme-root {
+  --nop-debugger-bg:
     linear-gradient(180deg, rgba(16, 24, 34, 0.96), rgba(10, 18, 27, 0.98)),
     radial-gradient(circle at top right, rgba(240, 183, 79, 0.16), transparent 42%);
-  --na-debugger-border: rgba(255, 255, 255, 0.08);
-  --na-debugger-shadow: 0 24px 72px rgba(7, 12, 18, 0.32);
-  --na-debugger-text: #eef4fb;
-  --na-debugger-eyebrow: #ffcf8b;
-  --na-debugger-chip-bg: rgba(255, 255, 255, 0.05);
-  --na-debugger-chip-border: rgba(255, 255, 255, 0.12);
-  --na-debugger-chip-active-bg: rgba(255, 207, 139, 0.18);
-  --na-debugger-chip-active-border: rgba(255, 207, 139, 0.34);
-  --na-debugger-chip-active-text: #ffcf8b;
-  --na-debugger-card-bg: rgba(255, 255, 255, 0.05);
-  --na-debugger-card-border: rgba(255, 255, 255, 0.08);
-  --na-debugger-muted-text: rgba(238, 244, 251, 0.7);
-  --na-debugger-detail-bg: rgba(0, 0, 0, 0.26);
-  --na-debugger-detail-text: #bce6ff;
-  --na-debugger-launcher-bg: rgba(16, 24, 34, 0.94);
-  --na-debugger-launcher-shadow: 0 8px 24px rgba(7, 12, 18, 0.32);
-  --na-debugger-badge-render-bg: rgba(120, 198, 255, 0.16);
-  --na-debugger-badge-render-text: #9bd9ff;
-  --na-debugger-badge-action-bg: rgba(255, 205, 128, 0.16);
-  --na-debugger-badge-action-text: #ffd18a;
-  --na-debugger-badge-api-bg: rgba(125, 235, 182, 0.16);
-  --na-debugger-badge-api-text: #9df3ca;
-  --na-debugger-badge-compile-bg: rgba(210, 183, 255, 0.16);
-  --na-debugger-badge-compile-text: #dcc0ff;
-  --na-debugger-badge-notify-bg: rgba(255, 158, 177, 0.16);
-  --na-debugger-badge-notify-text: #ffbac8;
-  --na-debugger-badge-error-bg: rgba(255, 128, 128, 0.18);
-  --na-debugger-badge-error-text: #ffadad;
+  --nop-debugger-border: rgba(255, 255, 255, 0.08);
+  --nop-debugger-shadow: 0 24px 72px rgba(7, 12, 18, 0.32);
+  --nop-debugger-text: #eef4fb;
+  --nop-debugger-eyebrow: #ffcf8b;
+  --nop-debugger-chip-bg: rgba(255, 255, 255, 0.05);
+  --nop-debugger-chip-border: rgba(255, 255, 255, 0.12);
+  --nop-debugger-chip-active-bg: rgba(255, 207, 139, 0.18);
+  --nop-debugger-chip-active-border: rgba(255, 207, 139, 0.34);
+  --nop-debugger-chip-active-text: #ffcf8b;
+  --nop-debugger-card-bg: rgba(255, 255, 255, 0.05);
+  --nop-debugger-card-border: rgba(255, 255, 255, 0.08);
+  --nop-debugger-muted-text: rgba(238, 244, 251, 0.7);
+  --nop-debugger-detail-bg: rgba(0, 0, 0, 0.26);
+  --nop-debugger-detail-text: #bce6ff;
+  --nop-debugger-launcher-bg: rgba(16, 24, 34, 0.94);
+  --nop-debugger-launcher-shadow: 0 8px 24px rgba(7, 12, 18, 0.32);
+  --nop-debugger-badge-render-bg: rgba(120, 198, 255, 0.16);
+  --nop-debugger-badge-render-text: #9bd9ff;
+  --nop-debugger-badge-action-bg: rgba(255, 205, 128, 0.16);
+  --nop-debugger-badge-action-text: #ffd18a;
+  --nop-debugger-badge-api-bg: rgba(125, 235, 182, 0.16);
+  --nop-debugger-badge-api-text: #9df3ca;
+  --nop-debugger-badge-compile-bg: rgba(210, 183, 255, 0.16);
+  --nop-debugger-badge-compile-text: #dcc0ff;
+  --nop-debugger-badge-notify-bg: rgba(255, 158, 177, 0.16);
+  --nop-debugger-badge-notify-text: #ffbac8;
+  --nop-debugger-badge-error-bg: rgba(255, 128, 128, 0.18);
+  --nop-debugger-badge-error-text: #ffadad;
 }
 
-.na-debugger {
+.nop-debugger {
   position: fixed;
   z-index: 9999;
   width: min(420px, calc(100vw - 32px));
@@ -47,21 +47,21 @@ const DEBUGGER_STYLES = `
   gap: 12px;
   padding: 14px;
   border-radius: 22px;
-  background: var(--na-debugger-bg);
-  border: 1px solid var(--na-debugger-border);
-  box-shadow: var(--na-debugger-shadow);
-  color: var(--na-debugger-text);
+  background: var(--nop-debugger-bg);
+  border: 1px solid var(--nop-debugger-border);
+  box-shadow: var(--nop-debugger-shadow);
+  color: var(--nop-debugger-text);
   backdrop-filter: blur(16px);
 }
 
-.na-debugger__header {
+.nop-debugger__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
 
-.na-debugger__drag-handle {
+.nop-debugger__drag-handle {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -72,114 +72,114 @@ const DEBUGGER_STYLES = `
   touch-action: none;
 }
 
-.na-debugger__header h2 {
+.nop-debugger__header h2 {
   margin: 4px 0 0;
   font-size: 20px;
 }
 
-.na-debugger__eyebrow {
+.nop-debugger__eyebrow {
   margin: 0;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--na-debugger-eyebrow);
+  color: var(--nop-debugger-eyebrow);
 }
 
-.na-debugger__header-actions,
-.na-debugger__tabs,
-.na-debugger__filters {
+.nop-debugger__header-actions,
+.nop-debugger__tabs,
+.nop-debugger__filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.na-debugger__icon-button,
-.na-debugger__tab,
-.na-debugger__filter,
-.na-debugger-launcher {
+.nop-debugger__icon-button,
+.nop-debugger__tab,
+.nop-debugger__filter,
+.nop-debugger-launcher {
   appearance: none;
-  border: 1px solid var(--na-debugger-chip-border);
-  color: var(--na-debugger-text);
+  border: 1px solid var(--nop-debugger-chip-border);
+  color: var(--nop-debugger-text);
   cursor: pointer;
 }
 
-.na-debugger__icon-button,
-.na-debugger__tab,
-.na-debugger__filter {
-  background: var(--na-debugger-chip-bg);
+.nop-debugger__icon-button,
+.nop-debugger__tab,
+.nop-debugger__filter {
+  background: var(--nop-debugger-chip-bg);
   border-radius: 999px;
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 600;
 }
 
-.na-debugger__tab--active,
-.na-debugger__filter--active {
-  background: var(--na-debugger-chip-active-bg);
-  border-color: var(--na-debugger-chip-active-border);
-  color: var(--na-debugger-chip-active-text);
+.nop-debugger__tab--active,
+.nop-debugger__filter--active {
+  background: var(--nop-debugger-chip-active-bg);
+  border-color: var(--nop-debugger-chip-active-border);
+  color: var(--nop-debugger-chip-active-text);
 }
 
-.na-debugger__overview,
-.na-debugger__list {
+.nop-debugger__overview,
+.nop-debugger__list {
   display: grid;
   gap: 10px;
   overflow: auto;
 }
 
-.na-debugger__overview {
+.nop-debugger__overview {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.na-debugger__metric-card,
-.na-debugger__entry {
+.nop-debugger__metric-card,
+.nop-debugger__entry {
   display: grid;
   gap: 8px;
   padding: 12px;
   border-radius: 16px;
-  background: var(--na-debugger-card-bg);
-  border: 1px solid var(--na-debugger-card-border);
+  background: var(--nop-debugger-card-bg);
+  border: 1px solid var(--nop-debugger-card-border);
 }
 
-.na-debugger__metric-card strong {
+.nop-debugger__metric-card strong {
   font-size: 20px;
 }
 
-.na-debugger__metric-card--error strong {
-  color: var(--na-debugger-badge-error-text);
+.nop-debugger__metric-card--error strong {
+  color: var(--nop-debugger-badge-error-text);
 }
 
-.na-debugger__metric-label,
-.na-debugger__entry-meta,
-.na-debugger__entry time,
-.na-debugger-launcher__meta {
+.nop-debugger__metric-label,
+.nop-debugger__entry-meta,
+.nop-debugger__entry time,
+.nop-debugger-launcher__meta {
   font-size: 12px;
-  color: var(--na-debugger-muted-text);
+  color: var(--nop-debugger-muted-text);
 }
 
-.na-debugger__entry-topline {
+.nop-debugger__entry-topline {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 
-.na-debugger__entry-summary {
+.nop-debugger__entry-summary {
   font-size: 14px;
   line-height: 1.45;
 }
 
-.na-debugger__entry-detail {
+.nop-debugger__entry-detail {
   display: block;
   overflow-x: auto;
   padding: 10px 12px;
   border-radius: 12px;
-  background: var(--na-debugger-detail-bg);
-  color: var(--na-debugger-detail-text);
+  background: var(--nop-debugger-detail-bg);
+  color: var(--nop-debugger-detail-text);
   white-space: nowrap;
 }
 
-.na-debugger__badge {
+.nop-debugger__badge {
   width: fit-content;
   border-radius: 999px;
   padding: 4px 10px;
@@ -188,16 +188,16 @@ const DEBUGGER_STYLES = `
   letter-spacing: 0.12em;
 }
 
-.na-debugger__badge--render { background: var(--na-debugger-badge-render-bg); color: var(--na-debugger-badge-render-text); }
-.na-debugger__badge--action { background: var(--na-debugger-badge-action-bg); color: var(--na-debugger-badge-action-text); }
-.na-debugger__badge--api { background: var(--na-debugger-badge-api-bg); color: var(--na-debugger-badge-api-text); }
-.na-debugger__badge--compile { background: var(--na-debugger-badge-compile-bg); color: var(--na-debugger-badge-compile-text); }
-.na-debugger__badge--notify { background: var(--na-debugger-badge-notify-bg); color: var(--na-debugger-badge-notify-text); }
-.na-debugger__badge--error { background: var(--na-debugger-badge-error-bg); color: var(--na-debugger-badge-error-text); }
+.nop-debugger__badge--render { background: var(--nop-debugger-badge-render-bg); color: var(--nop-debugger-badge-render-text); }
+.nop-debugger__badge--action { background: var(--nop-debugger-badge-action-bg); color: var(--nop-debugger-badge-action-text); }
+.nop-debugger__badge--api { background: var(--nop-debugger-badge-api-bg); color: var(--nop-debugger-badge-api-text); }
+.nop-debugger__badge--compile { background: var(--nop-debugger-badge-compile-bg); color: var(--nop-debugger-badge-compile-text); }
+.nop-debugger__badge--notify { background: var(--nop-debugger-badge-notify-bg); color: var(--nop-debugger-badge-notify-text); }
+.nop-debugger__badge--error { background: var(--nop-debugger-badge-error-bg); color: var(--nop-debugger-badge-error-text); }
 
-.na-debugger__empty { margin: 0; color: var(--na-debugger-muted-text); }
+.nop-debugger__empty { margin: 0; color: var(--nop-debugger-muted-text); }
 
-.na-debugger-launcher {
+.nop-debugger-launcher {
   position: fixed;
   z-index: 9998;
   display: flex;
@@ -205,18 +205,18 @@ const DEBUGGER_STYLES = `
   gap: 6px;
   padding: 8px 12px;
   border-radius: 20px;
-  background: var(--na-debugger-launcher-bg);
-  box-shadow: var(--na-debugger-launcher-shadow);
+  background: var(--nop-debugger-launcher-bg);
+  box-shadow: var(--nop-debugger-launcher-shadow);
   cursor: grab;
   user-select: none;
   touch-action: none;
 }
 
-.na-debugger-launcher:active {
+.nop-debugger-launcher:active {
   cursor: grabbing;
 }
 
-.na-debugger-launcher__icon {
+.nop-debugger-launcher__icon {
   width: 16px;
   height: 16px;
   display: flex;
@@ -224,15 +224,15 @@ const DEBUGGER_STYLES = `
   justify-content: center;
 }
 
-.na-debugger-launcher__label { font-size: 12px; font-weight: 600; }
+.nop-debugger-launcher__label { font-size: 12px; font-weight: 600; }
 
 @media (max-width: 760px) {
-  .na-debugger {
+  .nop-debugger {
     width: calc(100vw - 24px);
     max-height: 72vh;
   }
 
-  .na-debugger__overview {
+  .nop-debugger__overview {
     grid-template-columns: 1fr;
   }
 }
@@ -256,7 +256,7 @@ function formatClock(timestamp: number) {
 }
 
 function getEventBadgeClass(event: NopDebugEvent) {
-  return `na-debugger__badge na-debugger__badge--${event.group}`;
+  return `nop-debugger__badge nop-debugger__badge--${event.group}`;
 }
 
 function formatTraceSummary(trace: NopInteractionTrace | undefined) {
@@ -556,7 +556,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     return (
       <button
         type="button"
-        className="na-debugger-launcher na-theme-root"
+        className="nop-debugger-launcher nop-theme-root"
         style={{ left: `${launcherPosition.x}px`, top: `${launcherPosition.y}px` }}
         onPointerDown={launcherBind.onPointerDown}
         onClick={(event) => {
@@ -570,14 +570,14 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           }
         }}
       >
-        <span className="na-debugger-launcher__icon">
+        <span className="nop-debugger-launcher__icon">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         </span>
-        <span className="na-debugger-launcher__label">
+        <span className="nop-debugger-launcher__label">
           {errorCount > 0 ? `${errorCount} err` : `${snapshot.events.length}`}
         </span>
       </button>
@@ -585,20 +585,20 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   }
 
   return (
-    <div className="na-debugger na-theme-root" style={{ left: `${position.x}px`, top: `${position.y}px` }}>
-      <div className="na-debugger__header">
-        <div className="na-debugger__drag-handle" {...bind}>
-          <p className="na-debugger__eyebrow">Framework Debugger</p>
+    <div className="nop-debugger nop-theme-root" style={{ left: `${position.x}px`, top: `${position.y}px` }}>
+      <div className="nop-debugger__header">
+        <div className="nop-debugger__drag-handle" {...bind}>
+          <p className="nop-debugger__eyebrow">Framework Debugger</p>
           <h2>Runtime Console</h2>
         </div>
-        <div className="na-debugger__header-actions">
-          <button type="button" className="na-debugger__icon-button" onClick={() => (snapshot.paused ? props.controller.resume() : props.controller.pause())}>
+        <div className="nop-debugger__header-actions">
+          <button type="button" className="nop-debugger__icon-button" onClick={() => (snapshot.paused ? props.controller.resume() : props.controller.pause())}>
             {snapshot.paused ? 'Resume' : 'Pause'}
           </button>
-          <button type="button" className="na-debugger__icon-button" onClick={() => props.controller.clear()}>
+          <button type="button" className="nop-debugger__icon-button" onClick={() => props.controller.clear()}>
             Clear
           </button>
-          <button type="button" className="na-debugger__icon-button" onClick={() => props.controller.hide()} title="Minimize">
+          <button type="button" className="nop-debugger__icon-button" onClick={() => props.controller.hide()} title="Minimize">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <polyline points="4 14 10 14 10 20" />
               <polyline points="20 10 14 10 14 4" />
@@ -609,12 +609,12 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         </div>
       </div>
 
-      <div className="na-debugger__tabs" role="tablist" aria-label="Debugger tabs">
+      <div className="nop-debugger__tabs" role="tablist" aria-label="Debugger tabs">
         {(['overview', 'timeline', 'network'] as NopDebuggerTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
-            className={`na-debugger__tab ${snapshot.activeTab === tab ? 'na-debugger__tab--active' : ''}`}
+            className={`nop-debugger__tab ${snapshot.activeTab === tab ? 'nop-debugger__tab--active' : ''}`}
             onClick={() => props.controller.setActiveTab(tab)}
           >
             {tab}
@@ -623,51 +623,51 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
       </div>
 
       {snapshot.activeTab === 'overview' ? (
-        <div className="na-debugger__overview">
-          <article className="na-debugger__metric-card">
-            <span className="na-debugger__metric-label">Events</span>
+        <div className="nop-debugger__overview">
+          <article className="nop-debugger__metric-card">
+            <span className="nop-debugger__metric-label">Events</span>
             <strong>{overview.totalEvents}</strong>
             <span>{snapshot.paused ? 'stream paused' : 'stream live'}</span>
           </article>
-          <article className="na-debugger__metric-card">
-            <span className="na-debugger__metric-label">Latest compile</span>
+          <article className="nop-debugger__metric-card">
+            <span className="nop-debugger__metric-label">Latest compile</span>
             <strong>{overview.latestCompile ? formatClock(overview.latestCompile.timestamp) : 'n/a'}</strong>
             <span>{overview.latestCompile?.summary ?? 'No compile event yet'}</span>
           </article>
-          <article className="na-debugger__metric-card">
-            <span className="na-debugger__metric-label">Latest action</span>
+          <article className="nop-debugger__metric-card">
+            <span className="nop-debugger__metric-label">Latest action</span>
             <strong>{overview.latestAction ? formatClock(overview.latestAction.timestamp) : 'n/a'}</strong>
             <span>{overview.latestAction?.summary ?? 'No action event yet'}</span>
           </article>
-          <article className="na-debugger__metric-card">
-            <span className="na-debugger__metric-label">Latest API</span>
+          <article className="nop-debugger__metric-card">
+            <span className="nop-debugger__metric-label">Latest API</span>
             <strong>{overview.latestApi ? formatClock(overview.latestApi.timestamp) : 'n/a'}</strong>
             <span>{overview.latestApi?.summary ?? 'No API event yet'}</span>
           </article>
-          <article className="na-debugger__metric-card na-debugger__metric-card--error">
-            <span className="na-debugger__metric-label">Errors</span>
+          <article className="nop-debugger__metric-card nop-debugger__metric-card--error">
+            <span className="nop-debugger__metric-label">Errors</span>
             <strong>{overview.errorCount}</strong>
             <span>{overview.errorCount > 0 ? 'Needs attention' : 'No errors recorded'}</span>
           </article>
-          <article className="na-debugger__metric-card">
-            <span className="na-debugger__metric-label">Latest trace</span>
+          <article className="nop-debugger__metric-card">
+            <span className="nop-debugger__metric-label">Latest trace</span>
             <strong>{latestTrace ? latestTrace.totalEvents : 0}</strong>
             <span>{latestTraceSummary.headline}</span>
-            <span className="na-debugger__metric-label">{latestTraceSummary.detail}</span>
+            <span className="nop-debugger__metric-label">{latestTraceSummary.detail}</span>
           </article>
         </div>
       ) : null}
 
       {snapshot.activeTab === 'timeline' ? (
         <>
-          <div className="na-debugger__filters">
+          <div className="nop-debugger__filters">
             {DEFAULT_FILTERS.map((filter) => {
               const active = snapshot.filters.includes(filter);
               return (
                 <button
                   key={filter}
                   type="button"
-                  className={`na-debugger__filter ${active ? 'na-debugger__filter--active' : ''}`}
+                  className={`nop-debugger__filter ${active ? 'nop-debugger__filter--active' : ''}`}
                   onClick={() => props.controller.toggleFilter(filter)}
                 >
                   {FILTER_LABELS[filter]}
@@ -675,17 +675,17 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
               );
             })}
           </div>
-          <div className="na-debugger__list">
-            {filteredEvents.length === 0 ? <p className="na-debugger__empty">No events match the active filters.</p> : null}
+          <div className="nop-debugger__list">
+            {filteredEvents.length === 0 ? <p className="nop-debugger__empty">No events match the active filters.</p> : null}
             {filteredEvents.map((event) => (
-              <article key={event.id} className="na-debugger__entry">
-                <div className="na-debugger__entry-topline">
+              <article key={event.id} className="nop-debugger__entry">
+                <div className="nop-debugger__entry-topline">
                   <span className={getEventBadgeClass(event)}>{event.group}</span>
                   <time>{formatClock(event.timestamp)}</time>
                 </div>
-                <strong className="na-debugger__entry-summary">{event.summary}</strong>
-                <span className="na-debugger__entry-meta">{event.source}</span>
-                {event.detail ? <code className="na-debugger__entry-detail">{event.detail}</code> : null}
+                <strong className="nop-debugger__entry-summary">{event.summary}</strong>
+                <span className="nop-debugger__entry-meta">{event.source}</span>
+                {event.detail ? <code className="nop-debugger__entry-detail">{event.detail}</code> : null}
               </article>
             ))}
           </div>
@@ -693,20 +693,20 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
       ) : null}
 
       {snapshot.activeTab === 'network' ? (
-        <div className="na-debugger__list">
-          {networkEvents.length === 0 ? <p className="na-debugger__empty">No network events recorded yet.</p> : null}
+        <div className="nop-debugger__list">
+          {networkEvents.length === 0 ? <p className="nop-debugger__empty">No network events recorded yet.</p> : null}
           {networkEvents.map((event) => (
-            <article key={event.id} className="na-debugger__entry">
-              <div className="na-debugger__entry-topline">
+            <article key={event.id} className="nop-debugger__entry">
+              <div className="nop-debugger__entry-topline">
                 <span className={getEventBadgeClass(event)}>{event.kind}</span>
                 <time>{formatClock(event.timestamp)}</time>
               </div>
-              <strong className="na-debugger__entry-summary">{event.summary}</strong>
-              <span className="na-debugger__entry-meta">
+              <strong className="nop-debugger__entry-summary">{event.summary}</strong>
+              <span className="nop-debugger__entry-meta">
                 {event.durationMs != null ? `${event.durationMs}ms` : 'pending'}
                 {event.requestKey ? ` | ${event.requestKey}` : ''}
               </span>
-              {event.detail ? <code className="na-debugger__entry-detail">{event.detail}</code> : null}
+              {event.detail ? <code className="nop-debugger__entry-detail">{event.detail}</code> : null}
             </article>
           ))}
         </div>

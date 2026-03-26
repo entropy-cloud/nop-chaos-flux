@@ -7,9 +7,9 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const actionsContent = resolveRendererSlotContent(props, 'actions');
 
   return (
-    <section className="na-form">
-      {hasRendererSlotContent(bodyContent) ? <div className="na-form__body">{bodyContent}</div> : null}
-      {hasRendererSlotContent(actionsContent) ? <div className="na-form__actions">{actionsContent}</div> : null}
+    <section className="nop-form">
+      {hasRendererSlotContent(bodyContent) ? <div className="nop-form__body">{bodyContent}</div> : null}
+      {hasRendererSlotContent(actionsContent) ? <div className="nop-form__actions">{actionsContent}</div> : null}
     </section>
   );
 }

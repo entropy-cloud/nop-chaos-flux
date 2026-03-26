@@ -5,5 +5,5 @@ export function FieldHelpText(props: { children?: ReactNode }) {
     return null;
   }
 
-  return <span className="na-field__hint">{props.children}</span>;
+  return <span className="nop-field__hint">{props.children}</span>;
 }

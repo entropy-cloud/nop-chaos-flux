@@ -83,18 +83,18 @@ function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const footerContent = resolveRendererSlotContent(props, 'footer');
 
   return (
-    <section className={classNames('na-page', props.meta.className)}>
+    <section className={classNames('nop-page', props.meta.className)}>
       {hasRendererSlotContent(titleContent) ? (
-        <header className="na-page__header">
+        <header className="nop-page__header">
           <h2>{titleContent}</h2>
         </header>
       ) : null}
       {hasRendererSlotContent(headerContent) ? (
-        <div className="na-page__toolbar">{headerContent}</div>
+        <div className="nop-page__toolbar">{headerContent}</div>
       ) : null}
-      <div className="na-page__body">{props.regions.body?.render()}</div>
+      <div className="nop-page__body">{props.regions.body?.render()}</div>
       {hasRendererSlotContent(footerContent) ? (
-        <footer className="na-page__footer">{footerContent}</footer>
+        <footer className="nop-page__footer">{footerContent}</footer>
       ) : null}
     </section>
   );
@@ -118,8 +118,8 @@ function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
   const useFlexChild = wrap || align !== undefined || gap !== undefined || direction !== 'row';
 
   return (
-    <div className={classNames('na-container', props.meta.className)}>
-      {hasRendererSlotContent(headerContent) ? <div className="na-container__header">{headerContent}</div> : null}
+    <div className={classNames('nop-container', props.meta.className)}>
+      {hasRendererSlotContent(headerContent) ? <div className="nop-container__header">{headerContent}</div> : null}
       {useFlexChild ? (
         <div
           className={classNames(
@@ -138,7 +138,7 @@ function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
       ) : (
         bodyContent
       )}
-      {hasRendererSlotContent(footerContent) ? <div className="na-container__footer">{footerContent}</div> : null}
+      {hasRendererSlotContent(footerContent) ? <div className="nop-container__footer">{footerContent}</div> : null}
     </div>
   );
 }
@@ -160,7 +160,7 @@ function TextRenderer(props: RendererComponentProps<TextSchema>) {
       : 'span';
   const Tag: keyof React.JSX.IntrinsicElements = tag;
 
-  return <Tag className={classNames('na-text', props.meta.className)}>{String(text ?? '')}</Tag>;
+  return <Tag className={classNames('nop-text', props.meta.className)}>{String(text ?? '')}</Tag>;
 }
 
 function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
@@ -173,16 +173,16 @@ function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
     props.props.size === 'sm' || props.props.size === 'lg' ? props.props.size : 'md';
 
   const variantClasses = {
-    default: 'na-button',
-    primary: 'na-button na-button--primary',
-    danger: 'na-button na-button--danger',
-    ghost: 'na-button na-button--ghost'
+    default: 'nop-button',
+    primary: 'nop-button nop-button--primary',
+    danger: 'nop-button nop-button--danger',
+    ghost: 'nop-button nop-button--ghost'
   };
 
   const sizeClasses = {
-    sm: 'na-button--sm',
-    md: 'na-button--md',
-    lg: 'na-button--lg'
+    sm: 'nop-button--sm',
+    md: 'nop-button--md',
+    lg: 'nop-button--lg'
   };
 
   return (
@@ -200,7 +200,7 @@ function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 function IconRenderer(props: RendererComponentProps<IconSchema>) {
   const icon = typeof props.props.icon === 'string' ? props.props.icon : undefined;
   // 实际实现会根据 icon 名称渲染对应的 SVG 或字体图标
-  return <i className={classNames('na-icon', `na-icon--${icon}`, props.meta.className)} data-icon={icon} />;
+  return <i className={classNames('nop-icon', `nop-icon--${icon}`, props.meta.className)} data-icon={icon} />;
 }
 
 function BadgeRenderer(props: RendererComponentProps<BadgeSchema>) {
@@ -211,10 +211,10 @@ function BadgeRenderer(props: RendererComponentProps<BadgeSchema>) {
       : 'info';
 
   const levelClasses = {
-    info: 'na-badge na-badge--info',
-    success: 'na-badge na-badge--success',
-    warning: 'na-badge na-badge--warning',
-    danger: 'na-badge na-badge--danger'
+    info: 'nop-badge nop-badge--info',
+    success: 'nop-badge nop-badge--success',
+    warning: 'nop-badge nop-badge--warning',
+    danger: 'nop-badge nop-badge--danger'
   };
 
   return <span className={classNames(levelClasses[level], props.meta.className)}>{String(text ?? '')}</span>;
