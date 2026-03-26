@@ -43,11 +43,24 @@ export interface ApiObject extends SchemaObject {
   url: string;
   method?: string;
   data?: SchemaValue;
+  params?: SchemaValue;
   headers?: Record<string, string>;
+  includeScope?: '*' | string[];
   responseAdaptor?: string;
   requestAdaptor?: string;
-  cache?: boolean;
+  cacheTTL?: number;
+  cacheKey?: string;
+}
+
+export interface DataSourceSchema extends BaseSchema {
+  type: 'data-source';
+  api: ApiObject;
   dataPath?: string;
+  interval?: number;
+  stopWhen?: string;
+  silent?: boolean;
+  initialData?: SchemaValue;
+  body?: SchemaInput;
 }
 
 export interface ApiRequestContext {

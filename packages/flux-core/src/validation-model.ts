@@ -3,8 +3,7 @@ import type {
   CompiledFormValidationModel,
   CompiledValidationBehavior,
   CompiledValidationNode,
-  CompiledValidationNodeKind,
-  CompiledValidationRule
+  CompiledValidationNodeKind
 } from './types';
 
 export function isCompiledValidationFieldNode(

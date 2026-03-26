@@ -1,4 +1,4 @@
-﻿import type { ExpressionCompiler, ApiObject, FormRuntime, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
+import type { ExpressionCompiler, ApiObject, FormRuntime, RendererEnv, ScopeRef, SchemaValue } from '@nop-chaos/flux-core';
 import { isPlainObject, setIn } from '@nop-chaos/flux-core';
 
 function getPathValue(input: unknown, path: string): unknown {
@@ -88,6 +88,69 @@ function createAdaptorScopeView(scope: ScopeRef): object {
 function createRequestKey(actionType: string, api: ApiObject, scope: ScopeRef, form?: FormRuntime): string {
   const owner = form?.id ?? scope.id;
   return `${owner}:${actionType}:${api.method ?? 'get'}:${api.url}`;
+}
+
+export function extractScopeData(scope: ScopeRef, includeScope: '*' | string[] | undefined): Record<string, unknown> {
+  if (!includeScope) {
+    return {};
+  }
+
+  if (includeScope === '*') {
+    return scope.read();
+  }
+
+  const result: Record<string, unknown> = {};
+  for (const key of includeScope) {
+    if (scope.has(key)) {
+      result[key] = scope.get(key);
+    }
+  }
+  return result;
+}
+
+export function buildUrlWithParams(url: string, params: Record<string, unknown> | undefined): string {
+  if (!params || Object.keys(params).length === 0) {
+    return url;
+  }
+
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      searchParams.append(key, String(value));
+    }
+  }
+
+  const queryString = searchParams.toString();
+  if (!queryString) {
+    return url;
+  }
+
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}${queryString}`;
+}
+
+export function prepareApiData(
+  api: ApiObject,
+  scope: ScopeRef
+): { data: SchemaValue | undefined; params: Record<string, unknown> | undefined } {
+  const extractedData = extractScopeData(scope, api.includeScope);
+  
+  const explicitData = api.data;
+  
+  let mergedData: SchemaValue | undefined;
+  if (isPlainObject(explicitData)) {
+    mergedData = { ...extractedData, ...(explicitData as Record<string, unknown>) } as SchemaValue;
+  } else if (explicitData !== undefined) {
+    mergedData = explicitData;
+  } else if (Object.keys(extractedData).length > 0) {
+    mergedData = extractedData as SchemaValue;
+  }
+
+  const params = api.params && isPlainObject(api.params)
+    ? api.params as Record<string, unknown>
+    : undefined;
+
+  return { data: mergedData, params };
 }
 
 export function applyResponseDataPath(
