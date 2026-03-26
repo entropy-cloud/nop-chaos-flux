@@ -32,9 +32,9 @@ function createTestConfig(): DesignerConfig {
     version: '1.0.0',
     kind: 'flow-designer',
     nodeTypes: [
-      { id: 'start', label: 'Start', icon: '▶', description: 'Start node', body: { type: 'text', body: 'Start node body' } },
-      { id: 'end', label: 'End', icon: '■', description: 'End node', body: { type: 'text', body: 'End node body' } },
-      { id: 'task', label: 'Task', icon: '⚙', description: 'Task node', body: { type: 'text', body: 'Task node body' } }
+      { id: 'start', label: 'Start', icon: '▶', description: 'Start node', body: { type: 'text', text: 'Start node body' } },
+      { id: 'end', label: 'End', icon: '■', description: 'End node', body: { type: 'text', text: 'End node body' } },
+      { id: 'task', label: 'Task', icon: '⚙', description: 'Task node', body: { type: 'text', text: 'Task node body' } }
     ],
     palette: {
       groups: [

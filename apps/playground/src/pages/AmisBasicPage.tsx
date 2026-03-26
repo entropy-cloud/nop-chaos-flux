@@ -84,11 +84,11 @@ export const amisBasicPageSchema = {
       body: [
         {
           type: 'text',
-          body: 'Welcome, ${currentUser.name}. The renderer stack is live inside this playground.'
+          text: 'Welcome, ${currentUser.name}. The renderer stack is live inside this playground.'
         },
         {
           type: 'text',
-          body: 'Try the live search below. Click Search repeatedly to trigger debounce, request cancellation, and monitor events.'
+          text: 'Try the live search below. Click Search repeatedly to trigger debounce, request cancellation, and monitor events.'
         },
         {
           type: 'form',
@@ -267,7 +267,7 @@ export const amisBasicPageSchema = {
                     body: [
                       {
                         type: 'text',
-                        body: 'Dialog scope username: ${username}'
+                        text: 'Dialog scope username: ${username}'
                       },
                       {
                         type: 'button',
@@ -306,17 +306,17 @@ export const amisBasicPageSchema = {
             {
               type: 'text',
               className: 'na-section-kicker',
-              body: 'Composite Validation Lab'
+              text: 'Composite Validation Lab'
             },
             {
               type: 'text',
               className: 'na-section-title',
-              body: 'Child-path visibility in isolation'
+              text: 'Child-path visibility in isolation'
             },
             {
               type: 'text',
               className: 'na-section-copy',
-              body: 'These focused forms isolate how composite controls reveal validation for specific cells and items. The left card shows touched-based visibility; the right card waits until submit and then fans errors out to child paths.'
+              text: 'These focused forms isolate how composite controls reveal validation for specific cells and items. The left card shows touched-based visibility; the right card waits until submit and then fans errors out to child paths.'
             },
             {
               type: 'container',
@@ -328,19 +328,19 @@ export const amisBasicPageSchema = {
                   className: 'na-demo-card',
                   body: [
                     {
-                      type: 'text',
-                      className: 'na-demo-card__eyebrow',
-                      body: 'Touched + submit'
+                       type: 'text',
+                       className: 'na-demo-card__eyebrow',
+                       text: 'Touched + submit'
                     },
                     {
-                      type: 'text',
-                      className: 'na-demo-card__title',
-                      body: 'Key-value child cells'
+                       type: 'text',
+                       className: 'na-demo-card__title',
+                       text: 'Key-value child cells'
                     },
                     {
-                      type: 'text',
-                      className: 'na-demo-card__copy',
-                      body: 'Focus and blur the empty Key cell to surface a child-level error without submitting the form.'
+                       type: 'text',
+                       className: 'na-demo-card__copy',
+                       text: 'Focus and blur the empty Key cell to surface a child-level error without submitting the form.'
                     },
                     {
                       type: 'form',
@@ -382,17 +382,17 @@ export const amisBasicPageSchema = {
                     {
                       type: 'text',
                       className: 'na-demo-card__eyebrow',
-                      body: 'Submit only'
+                      text: 'Submit only'
                     },
                     {
                       type: 'text',
                       className: 'na-demo-card__title',
-                      body: 'Array child items'
+                      text: 'Array child items'
                     },
                     {
                       type: 'text',
                       className: 'na-demo-card__copy',
-                      body: 'This form stays quiet while you type, then marks child item paths touched on submit so the error lands on the exact reviewer row.'
+                      text: 'This form stays quiet while you type, then marks child item paths touched on submit so the error lands on the exact reviewer row.'
                     },
                     {
                       type: 'form',
@@ -452,8 +452,8 @@ export const amisBasicPageSchema = {
                       body: {
                         type: 'container',
                         body: [
-                          { type: 'text', body: 'User: ${record.username}' },
-                          { type: 'text', body: 'Email: ${record.email}' },
+                           { type: 'text', text: 'User: ${record.username}' },
+                           { type: 'text', text: 'Email: ${record.email}' },
                           {
                             type: 'button',
                             label: 'Close',

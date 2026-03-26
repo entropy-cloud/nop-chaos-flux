@@ -197,7 +197,7 @@ export type ToolbarItem =
   | { type: 'back'; label?: string }
   | { type: 'title'; body: string }
   | { type: 'badge'; text: string; level: string }
-  | { type: 'text'; body: string }
+  | { type: 'text'; text: string }
   | { type: 'divider' }
   | { type: 'spacer' }
   | { type: 'button'; action: string; icon?: string; label?: string; disabled?: string; active?: string; variant?: 'default' | 'primary' | 'danger' };

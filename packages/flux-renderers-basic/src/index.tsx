@@ -34,7 +34,7 @@ interface ContainerSchema extends BaseSchema {
 interface TextSchema extends BaseSchema {
   type: 'text';
   /** 文本内容，支持 ${expression} 表达式 */
-  body?: string;
+  text?: string;
   /** HTML 标签，默认 span */
   tag?: 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'label' | 'div';
 }
@@ -144,7 +144,7 @@ function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
 }
 
 function TextRenderer(props: RendererComponentProps<TextSchema>) {
-  const body = props.props.body;
+  const text = props.props.text;
   const tag =
     props.props.tag === 'span' ||
     props.props.tag === 'p' ||
@@ -160,7 +160,7 @@ function TextRenderer(props: RendererComponentProps<TextSchema>) {
       : 'span';
   const Tag: keyof React.JSX.IntrinsicElements = tag;
 
-  return <Tag className={classNames('na-text', props.meta.className)}>{String(body ?? '')}</Tag>;
+  return <Tag className={classNames('na-text', props.meta.className)}>{String(text ?? '')}</Tag>;
 }
 
 function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
@@ -239,7 +239,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
   {
     type: 'text',
     component: TextRenderer,
-    fields: [{ key: 'body', kind: 'prop' }]
+    fields: [{ key: 'text', kind: 'prop' }]
   },
   {
     type: 'button',

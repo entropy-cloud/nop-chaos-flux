@@ -775,8 +775,8 @@ const schema = {
     type: 'container',
     body: [
       {
-        type: 'tpl',
-        tpl: '当前节点: ${activeNode.data.label}'
+        type: 'text',
+        text: '当前节点: ${activeNode.data.label}'
       }
     ]
   }

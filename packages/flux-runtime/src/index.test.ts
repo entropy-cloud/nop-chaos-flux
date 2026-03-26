@@ -111,7 +111,7 @@ describe('createSchemaCompiler', () => {
 
     const node = compiler.compile({
       type: 'page',
-      body: [{ type: 'text', body: '${message}' }]
+      body: [{ type: 'text', text: '${message}' }]
     });
 
     expect(Array.isArray(node)).toBe(false);
@@ -128,7 +128,7 @@ describe('createSchemaCompiler', () => {
     const node = compiler.compile({
       type: 'card',
       title: 'Profile',
-      body: [{ type: 'text', body: 'body' }]
+      body: [{ type: 'text', text: 'body' }]
     }) as any;
 
     expect(node.regions.title).toBeUndefined();
@@ -146,8 +146,8 @@ describe('createSchemaCompiler', () => {
     const node = compiler.compile(
       {
         type: 'card',
-        title: { type: 'text', body: 'Profile' },
-        body: [{ type: 'text', body: 'body' }]
+        title: { type: 'text', text: 'Profile' },
+        body: [{ type: 'text', text: 'body' }]
       } as any
     ) as any;
 
@@ -267,7 +267,7 @@ describe('createSchemaCompiler', () => {
       type: 'table',
       columns: [
         {
-          label: { type: 'text', body: 'Member header' },
+          label: { type: 'text', text: 'Member header' },
           name: 'name'
         }
       ]
@@ -299,7 +299,7 @@ describe('createSchemaCompiler', () => {
         {
           label: 'Member',
           name: 'name',
-          cell: { type: 'text', body: 'User ${record.name}' }
+          cell: { type: 'text', text: 'User ${record.name}' }
         }
       ]
     }) as any;
@@ -331,7 +331,7 @@ describe('createSchemaCompiler', () => {
     }) as any;
     const regionNode = compiler.compile({
       type: 'table',
-      empty: { type: 'text', body: 'No rows' }
+      empty: { type: 'text', text: 'No rows' }
     }) as any;
 
     expect(plainNode.props.value.empty).toBe('Nothing here');
@@ -752,7 +752,7 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({ type: 'text', body: 'trigger' }) as any;
+    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
     const page = runtime.createPageRuntime({ message: 'Hello' });
 
     const openResult = await runtime.dispatch(
@@ -760,7 +760,7 @@ describe('createRendererRuntime', () => {
         action: 'dialog',
         dialog: {
           title: 'Runtime dialog',
-          body: [{ type: 'text', body: '${message}' }]
+      body: [{ type: 'text', text: '${message}' }]
         }
       },
       {
@@ -802,15 +802,15 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({ type: 'text', body: 'trigger' }) as any;
+    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
     const page = runtime.createPageRuntime({});
 
     await runtime.dispatch(
       {
         action: 'dialog',
         dialog: {
-          title: { type: 'text', body: 'Compiled title' },
-          body: [{ type: 'text', body: 'Compiled body' }]
+          title: { type: 'text', text: 'Compiled title' },
+          body: [{ type: 'text', text: 'Compiled body' }]
         }
       },
       {
@@ -885,7 +885,7 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({ type: 'text', body: 'trigger' }) as any;
+    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
     const page = runtime.createPageRuntime({});
 
     await runtime.dispatch(
@@ -893,7 +893,7 @@ describe('createRendererRuntime', () => {
         action: 'dialog',
         dialog: {
           title: 'First',
-          body: [{ type: 'text', body: 'First body' }]
+          body: [{ type: 'text', text: 'First body' }]
         }
       },
       {
@@ -909,7 +909,7 @@ describe('createRendererRuntime', () => {
         action: 'dialog',
         dialog: {
           title: 'Second',
-          body: [{ type: 'text', body: 'Second body' }]
+          body: [{ type: 'text', text: 'Second body' }]
         }
       },
       {
@@ -3084,7 +3084,7 @@ describe('createRendererRuntime', () => {
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({ type: 'text', body: 'trigger' }) as any;
+    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
     const page = runtime.createPageRuntime({});
 
     const result = await runtime.dispatch(
@@ -3770,12 +3770,12 @@ describe('createRendererRuntime', () => {
 
     const node = runtime.compile({
       type: 'text',
-      body: 'Original text'
+      text: 'Original text'
     }) as any;
     const page = runtime.createPageRuntime({});
     const resolved = runtime.resolveNodeProps(node, page.scope, node.createRuntimeState());
 
-    expect(resolved.value.body).toBe('Prepared text + compiled');
+    expect(resolved.value.text).toBe('Prepared text + compiled');
   });
 });
 
