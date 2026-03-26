@@ -10,7 +10,7 @@ const workflowDesignerConfig: DesignerConfig = {
       label: 'Start',
       description: 'Workflow entry point',
       icon: '▶',
-      body: { type: 'tpl', tpl: 'Workflow start node' },
+      body: { type: 'text', body: 'Workflow start node' },
       defaults: { label: 'Start', trigger: 'manual' },
       constraints: { maxInstances: 1, allowIncoming: false },
       ports: [
@@ -23,7 +23,7 @@ const workflowDesignerConfig: DesignerConfig = {
       label: 'End',
       description: 'Workflow end point',
       icon: '■',
-      body: { type: 'tpl', tpl: 'Workflow end node' },
+      body: { type: 'text', body: 'Workflow end node' },
       defaults: { label: 'End', result: 'done' },
       constraints: { allowOutgoing: false },
       ports: [
@@ -35,7 +35,7 @@ const workflowDesignerConfig: DesignerConfig = {
       label: 'Task',
       description: 'Execute a task',
       icon: '⚙',
-      body: { type: 'tpl', tpl: 'Task node' },
+      body: { type: 'text', body: 'Task node' },
       defaults: { label: 'Task', executor: 'service', timeout: '30s' },
       ports: [
         { id: 'in', direction: 'input', position: 'left', roles: { accepts: ['trigger', 'output'] } },
@@ -47,7 +47,7 @@ const workflowDesignerConfig: DesignerConfig = {
       label: 'Condition',
       description: 'Branch based on condition',
       icon: '◇',
-      body: { type: 'tpl', tpl: 'Condition node' },
+      body: { type: 'text', body: 'Condition node' },
       defaults: { label: 'Condition', expression: 'payload.ok === true' },
       ports: [
         { id: 'in', direction: 'input', position: 'left', roles: { accepts: ['trigger', 'output'] } },
@@ -60,7 +60,7 @@ const workflowDesignerConfig: DesignerConfig = {
       label: 'Parallel',
       description: 'Execute in parallel',
       icon: '⫼',
-      body: { type: 'tpl', tpl: 'Parallel node' },
+      body: { type: 'text', body: 'Parallel node' },
       defaults: { label: 'Parallel', branches: '2' },
       ports: [
         { id: 'in', direction: 'input', position: 'left', roles: { accepts: ['trigger', 'output'] } },
@@ -72,7 +72,7 @@ const workflowDesignerConfig: DesignerConfig = {
       label: 'Loop',
       description: 'Loop execution',
       icon: '↻',
-      body: { type: 'tpl', tpl: 'Loop node' },
+      body: { type: 'text', body: 'Loop node' },
       defaults: { label: 'Loop', limit: '3', interval: '1m' },
       ports: [
         { id: 'in', direction: 'input', position: 'left', roles: { accepts: ['trigger', 'output'] } },

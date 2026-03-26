@@ -83,12 +83,12 @@ const schema = {
       type: 'container',
       body: [
         {
-          type: 'tpl',
-          tpl: 'Welcome, ${currentUser.name}. The renderer stack is live inside this playground.'
+          type: 'text',
+          body: 'Welcome, ${currentUser.name}. The renderer stack is live inside this playground.'
         },
         {
-          type: 'tpl',
-          tpl: 'Try the live search below. Click Search repeatedly to trigger debounce, request cancellation, and monitor events.'
+          type: 'text',
+          body: 'Try the live search below. Click Search repeatedly to trigger debounce, request cancellation, and monitor events.'
         },
         {
           type: 'form',
@@ -266,8 +266,8 @@ const schema = {
                     type: 'container',
                     body: [
                       {
-                        type: 'tpl',
-                        tpl: 'Dialog scope username: ${username}'
+                        type: 'text',
+                        body: 'Dialog scope username: ${username}'
                       },
                       {
                         type: 'button',
@@ -304,19 +304,19 @@ const schema = {
           className: 'na-composite-lab',
           body: [
             {
-              type: 'tpl',
+              type: 'text',
               className: 'na-section-kicker',
-              tpl: 'Composite Validation Lab'
+              body: 'Composite Validation Lab'
             },
             {
-              type: 'tpl',
+              type: 'text',
               className: 'na-section-title',
-              tpl: 'Child-path visibility in isolation'
+              body: 'Child-path visibility in isolation'
             },
             {
-              type: 'tpl',
+              type: 'text',
               className: 'na-section-copy',
-              tpl: 'These focused forms isolate how composite controls reveal validation for specific cells and items. The left card shows touched-based visibility; the right card waits until submit and then fans errors out to child paths.'
+              body: 'These focused forms isolate how composite controls reveal validation for specific cells and items. The left card shows touched-based visibility; the right card waits until submit and then fans errors out to child paths.'
             },
             {
               type: 'container',
@@ -328,19 +328,19 @@ const schema = {
                   className: 'na-demo-card',
                   body: [
                     {
-                      type: 'tpl',
+                      type: 'text',
                       className: 'na-demo-card__eyebrow',
-                      tpl: 'Touched + submit'
+                      body: 'Touched + submit'
                     },
                     {
-                      type: 'tpl',
+                      type: 'text',
                       className: 'na-demo-card__title',
-                      tpl: 'Key-value child cells'
+                      body: 'Key-value child cells'
                     },
                     {
-                      type: 'tpl',
+                      type: 'text',
                       className: 'na-demo-card__copy',
-                      tpl: 'Focus and blur the empty Key cell to surface a child-level error without submitting the form.'
+                      body: 'Focus and blur the empty Key cell to surface a child-level error without submitting the form.'
                     },
                     {
                       type: 'form',
@@ -380,19 +380,19 @@ const schema = {
                   className: 'na-demo-card',
                   body: [
                     {
-                      type: 'tpl',
+                      type: 'text',
                       className: 'na-demo-card__eyebrow',
-                      tpl: 'Submit only'
+                      body: 'Submit only'
                     },
                     {
-                      type: 'tpl',
+                      type: 'text',
                       className: 'na-demo-card__title',
-                      tpl: 'Array child items'
+                      body: 'Array child items'
                     },
                     {
-                      type: 'tpl',
+                      type: 'text',
                       className: 'na-demo-card__copy',
-                      tpl: 'This form stays quiet while you type, then marks child item paths touched on submit so the error lands on the exact reviewer row.'
+                      body: 'This form stays quiet while you type, then marks child item paths touched on submit so the error lands on the exact reviewer row.'
                     },
                     {
                       type: 'form',
@@ -452,8 +452,8 @@ const schema = {
                       body: {
                         type: 'container',
                         body: [
-                          { type: 'tpl', tpl: 'User: ${record.username}' },
-                          { type: 'tpl', tpl: 'Email: ${record.email}' },
+                          { type: 'text', body: 'User: ${record.username}' },
+                          { type: 'text', body: 'Email: ${record.email}' },
                           {
                             type: 'button',
                             label: 'Close',
