@@ -75,7 +75,7 @@ function filterUsersByQuery(
   );
 }
 
-const schema = {
+export const amisBasicPageSchema = {
   type: 'page',
   title: 'Renderer Playground',
   body: [
@@ -650,7 +650,7 @@ const latestTrace = diagnostic?.latestInteractionTrace;`}</pre>
         <div className="playground-layout">
           <div className="playground-stage">
             <SchemaRenderer
-              schema={schema}
+              schema={amisBasicPageSchema}
               data={{
                 currentUser: { name: 'Architect' },
                 users: directoryUsers,

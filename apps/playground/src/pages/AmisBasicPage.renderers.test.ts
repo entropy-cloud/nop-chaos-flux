@@ -5,12 +5,12 @@ import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 
 describe('Amis basic renderer registration', () => {
-  it('registers tpl renderer required by playground schemas', () => {
+  it('registers text renderer required by playground schemas', () => {
     const registry = createDefaultRegistry();
     registerBasicRenderers(registry);
     registerFormRenderers(registry);
     registerDataRenderers(registry);
 
-    expect(registry.has('tpl')).toBe(true);
+    expect(registry.has('text')).toBe(true);
   });
 });

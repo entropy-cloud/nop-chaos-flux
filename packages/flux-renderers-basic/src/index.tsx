@@ -238,7 +238,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'text',
-    component: TextRenderer
+    component: TextRenderer,
+    fields: [{ key: 'body', kind: 'prop' }]
   },
   {
     type: 'button',
