@@ -145,6 +145,43 @@ packages/<name>/
 - Test files: `*.test.ts` or `*.test.tsx`
 - Prefer colocated tests or `__tests__/` directories.
 
+### Code Organization
+
+**Separate independent modules into their own files.**
+
+When code has clear boundaries and can be reused independently, extract it into a dedicated file:
+
+```
+# Good: API cache is a standalone concern
+src/
+├── api-cache.ts          # Cache store and utilities
+├── request-runtime.ts    # Request execution logic
+└── index.ts              # Public exports
+
+# Bad: Everything in one file
+src/
+├── runtime.ts            # 2000+ lines mixing cache, request, adaptors...
+└── index.ts
+```
+
+**Grouping and abstraction principles:**
+
+1. **Single responsibility**: Each file should have one primary purpose
+2. **Clear boundaries**: Modules should communicate through well-defined interfaces
+3. **Testability**: Independent modules can be tested in isolation
+4. **Reusability**: Extract utilities that could be used elsewhere
+
+**Example structure:**
+```
+src/
+├── api-cache.ts           # Cache store (ApiCacheStore interface + impl)
+├── api-adaptors.ts        # Request/response adaptor utilities
+├── request-runtime.ts     # Request execution and scope extraction
+├── form-runtime.ts        # Form-specific runtime logic
+├── page-runtime.ts        # Page-specific runtime logic
+└── index.ts               # Orchestrator + public exports
+```
+
 ---
 
 ## File Refactoring Methodology

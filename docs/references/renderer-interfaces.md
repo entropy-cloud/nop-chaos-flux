@@ -19,12 +19,14 @@ Key shapes:
 - `BaseSchema`
 - `SchemaInput`
 - `ApiObject`
+- `DataSourceSchema`
 
 Role summary:
 
 - `BaseSchema` is the common schema base for renderers
 - `SchemaInput` allows one schema node or an array of nodes
-- `ApiObject` describes request configuration and adaptors
+- `ApiObject` describes request configuration, adaptors, scope injection, and query params
+- `DataSourceSchema` describes declarative data fetching with optional polling
 
 ## Runtime Environment
 

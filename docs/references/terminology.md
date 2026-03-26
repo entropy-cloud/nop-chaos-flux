@@ -269,6 +269,35 @@ Examples include:
 - `closeDialog`
 - `setValue`
 
+## `DataSourceSchema`
+
+A renderer type that fetches data from an API and injects it into scope.
+
+It supports:
+
+- one-time or polling data fetching
+- `dataPath` for writing response data to scope
+- `stopWhen` expression for conditional polling termination
+- `includeScope` on its `ApiObject` for automatic scope variable injection
+
+## `includeScope`
+
+An `ApiObject` field that controls automatic scope variable injection into request data.
+
+Values:
+
+- `'*'` - include all scope variables
+- `string[]` - include only specified keys
+- `undefined` - no automatic injection
+
+Merge rule: `finalData = { ...extractScope(includeScope), ...data }`
+
+## `params`
+
+An `ApiObject` field for URL query parameters.
+
+Unlike `data` (request body), `params` are automatically appended to the URL as a query string.
+
 ## `ActionContext`
 
 The runtime context object passed through action execution.

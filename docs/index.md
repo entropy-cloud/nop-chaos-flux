@@ -17,6 +17,7 @@ Choose the smallest document that matches the task.
 | If you need to... | Read this first | Then read |
 | --- | --- | --- |
 | Understand the current architecture baseline | `docs/architecture/flux-core.md` | `docs/architecture/renderer-runtime.md` |
+| Design API requests, scope injection (includeScope), params, or DataSource polling | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` |
 | äº†è§£åŸºäºŽ SchemaRenderer çš„å›¾è®¾è®¡å™¨è§„åˆ’æž¶æž„ | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md` |
 | çœ‹æ¸… Flow Designer å„å±‚åä½œç»†èŠ‚ã€å‘½åç©ºé—´åŠ¨ä½œæµè½¬ã€ç”»å¸ƒ/Inspector è°ƒç”¨é“¾ | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
 | æ ¸å¯¹ Flow Designer å½“å‰çœŸå®žçš„ snapshot å¥‘çº¦ã€host scope è½åœ°çŠ¶æ€ã€å“ªäº›å­—æ®µå·²æŽ¥çº¿ | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |

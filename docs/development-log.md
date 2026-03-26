@@ -18,6 +18,47 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-26 (ApiObject and DataSource Design)
+
+- **Revised `ApiObject` interface** in `packages/flux-core/src/types.ts`:
+  - Removed `dataPath` (moved to ActionSchema/DataSourceSchema)
+  - Added `params` for URL query parameters
+  - Added `includeScope` for automatic scope variable injection (`'*' | string[]`)
+  - Added `cacheTTL` for cache time-to-live (milliseconds)
+  - Added `cacheKey` for custom cache key sharing
+  
+- **Added `DataSourceSchema` interface** in `packages/flux-core/src/types.ts`:
+  - `type: 'data-source'` renderer for declarative data fetching
+  - `api`, `dataPath`, `interval`, `stopWhen`, `silent`, `initialData`, `body`
+  
+- **Added `packages/flux-runtime/src/api-cache.ts`**:
+  - `ApiCacheStore` interface and `createApiCacheStore()` factory
+  - `generateCacheKey()` for auto-generating cache keys from ApiObject
+  - `resolveCacheKey()` for determining effective cache key
+
+- **Updated `packages/flux-runtime/src/request-runtime.ts`**:
+  - Added `extractScopeData()` for includeScope processing
+  - Added `buildUrlWithParams()` for URL query string construction
+  - Added `prepareApiData()` for data/params preparation with scope merge
+
+- **Added `docs/architecture/api-data-source.md`**:
+  - Documents ApiObject design with includeScope, params, cacheTTL, cacheKey
+  - Documents DataSourceSchema design with polling and stopWhen
+  - Includes usage examples
+
+- **Updated `AGENTS.md`**:
+  - Added "Code Organization" section about separating independent modules
+
+- **Updated related docs**:
+  - `docs/references/renderer-interfaces.md` - added DataSourceSchema
+  - `docs/references/terminology.md` - added DataSource, includeScope, params terms
+  - `docs/index.md` - added api-data-source.md entry
+
+- Key decision: `data` overrides `includeScope` for same keys in merge
+- Key decision: `params` works for all HTTP methods, not just GET
+- Key decision: `cacheTTL` (not `cache: boolean`) for explicit cache duration
+- Next step: Implement `data-source` renderer in `flux-renderers-data`
+
 ### 2026-03-25 (flux-core Code Refactoring)
 
 - **Refactored `packages/flux-core/src/index.ts`** (1183 lines → 20 lines + modular files):
