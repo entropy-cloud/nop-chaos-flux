@@ -224,45 +224,45 @@
         {
           "type": "container",
           "direction": "column",
-          "className": "nop-composite-lab",
+          "className": "mt-3 p-[22px] rounded-[22px] bg-gradient-to-b from-amber-50/95 to-white border border-amber-200/40",
           "body": [
             {
               "type": "text",
-              "className": "nop-section-kicker",
+              "className": "uppercase tracking-[0.14em] text-[11px] font-bold text-amber-600",
               "text": "Composite Validation Lab"
             },
             {
               "type": "text",
-              "className": "nop-section-title",
+              "className": "text-2xl leading-tight font-bold text-gray-900",
               "text": "Child-path visibility in isolation"
             },
             {
               "type": "text",
-              "className": "nop-section-copy",
+              "className": "text-gray-600 leading-relaxed",
               "text": "These focused forms isolate how composite controls reveal validation for specific cells and items. The left card shows touched-based visibility; the right card waits until submit and then fans errors out to child paths."
             },
             {
               "type": "container",
-              "className": "nop-demo-grid",
+              "className": "grid grid-cols-2 gap-[18px]",
               "body": [
                 {
                   "type": "container",
                   "direction": "column",
-                  "className": "nop-demo-card",
+                  "className": "p-5 rounded-[18px] bg-white border border-gray-200 shadow-sm",
                   "body": [
                     {
                       "type": "text",
-                      "className": "nop-demo-card__eyebrow",
+                      "className": "uppercase tracking-[0.14em] text-[11px] font-bold text-amber-600",
                       "text": "Touched + submit"
                     },
                     {
                       "type": "text",
-                      "className": "nop-demo-card__title",
+                      "className": "text-2xl leading-tight font-bold text-gray-900",
                       "text": "Key-value child cells"
                     },
                     {
                       "type": "text",
-                      "className": "nop-demo-card__copy",
+                      "className": "text-gray-600 leading-relaxed",
                       "text": "Focus and blur the empty Key cell to surface a child-level error without submitting the form."
                     },
                     {
@@ -300,21 +300,21 @@
                 {
                   "type": "container",
                   "direction": "column",
-                  "className": "nop-demo-card",
+                  "className": "p-5 rounded-[18px] bg-white border border-gray-200 shadow-sm",
                   "body": [
                     {
                       "type": "text",
-                      "className": "nop-demo-card__eyebrow",
+                      "className": "uppercase tracking-[0.14em] text-[11px] font-bold text-amber-600",
                       "text": "Submit only"
                     },
                     {
                       "type": "text",
-                      "className": "nop-demo-card__title",
+                      "className": "text-2xl leading-tight font-bold text-gray-900",
                       "text": "Array child items"
                     },
                     {
                       "type": "text",
-                      "className": "nop-demo-card__copy",
+                      "className": "text-gray-600 leading-relaxed",
                       "text": "This form stays quiet while you type, then marks child item paths touched on submit so the error lands on the exact reviewer row."
                     },
                     {
