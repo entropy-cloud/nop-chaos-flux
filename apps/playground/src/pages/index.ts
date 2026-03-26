@@ -1,5 +1,5 @@
 export { HomePage } from './HomePage';
-export { AmisBasicPage } from './AmisBasicPage';
+export { FluxBasicPage } from './FluxBasicPage';
 export { FlowDesignerPage } from './FlowDesignerPage';
 export { ReportDesignerPage } from './ReportDesignerPage';
 export { DebuggerLabPage } from './DebuggerLabPage';

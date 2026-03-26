@@ -94,7 +94,7 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
   }, [store.dirty]);
 
   return (
-    <div className="flow-designer-example na-theme-root fd-theme-root">
+    <div className="flow-designer-example nop-theme-root fd-theme-root">
       <div className="flow-designer-example__toolbar">
         <div className="flow-toolbar">
           <h3 className="flow-toolbar__title">Flow Designer</h3>

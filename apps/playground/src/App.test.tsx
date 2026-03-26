@@ -95,9 +95,9 @@ vi.mock('@nop-chaos/flow-designer-renderers', () => ({
   registerFlowDesignerRenderers: () => undefined
 }));
 
-import { AmisBasicPage } from './pages/AmisBasicPage';
+import { FluxBasicPage } from './pages/FluxBasicPage';
 
-describe('AmisBasicPage', () => {
+describe('FluxBasicPage', () => {
   beforeEach(() => {
     rendererSnapshots.length = 0;
   });
@@ -116,7 +116,7 @@ describe('AmisBasicPage', () => {
       onActionError: () => undefined
     };
 
-    render(<AmisBasicPage debuggerController={mockDebuggerController as any} onBack={() => undefined} />);
+    render(<FluxBasicPage debuggerController={mockDebuggerController as any} onBack={() => undefined} />);
 
     const initialSnapshot = rendererSnapshots.at(-1);
     expect(initialSnapshot).toBeTruthy();

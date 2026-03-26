@@ -4,7 +4,7 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 
-describe('Amis basic renderer registration', () => {
+describe('Flux basic renderer registration', () => {
   it('registers text renderer required by playground schemas', () => {
     const registry = createDefaultRegistry();
     registerBasicRenderers(registry);

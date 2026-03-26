@@ -9,7 +9,7 @@ interface NavCard {
 
 const NAV_CARDS: NavCard[] = [
   {
-    id: 'amis-basic',
+    id: 'flux-basic',
     title: 'Flux Basic',
     eyebrow: 'Core Renderers',
     description: 'Forms, actions, dialogs, tables, data binding, validation, API requests, and renderer fundamentals.'

@@ -5,7 +5,7 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
-import { HomePage, AmisBasicPage, FlowDesignerPage, ReportDesignerPage, DebuggerLabPage } from './pages';
+import { HomePage, FluxBasicPage, FlowDesignerPage, ReportDesignerPage, DebuggerLabPage } from './pages';
 import type { PageId } from './pages';
 
 const registry = createDefaultRegistry();
@@ -40,9 +40,9 @@ export function App() {
   };
 
   return (
-    <div className="na-theme-root">
+    <div className="nop-theme-root">
       {activePage === 'home' && <HomePage onNavigate={handleNavigate} />}
-      {activePage === 'amis-basic' && <AmisBasicPage debuggerController={debuggerController} onBack={handleBackHome} />}
+      {activePage === 'flux-basic' && <FluxBasicPage debuggerController={debuggerController} onBack={handleBackHome} />}
       {activePage === 'flow-designer' && <FlowDesignerPage onBack={handleBackHome} />}
       {activePage === 'report-designer' && <ReportDesignerPage onBack={handleBackHome} />}
       {activePage === 'debugger-lab' && <DebuggerLabPage debuggerController={debuggerController} onBack={handleBackHome} />}
