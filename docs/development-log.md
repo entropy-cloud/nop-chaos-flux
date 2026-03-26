@@ -18,6 +18,30 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-26 (DataSource Renderer Implementation)
+
+- **Implemented `data-source` renderer** in `packages/flux-renderers-data/src/index.tsx`:
+  - Fetches data from API and injects into scope via `dataPath`
+  - Supports `initialData` for immediate rendering before fetch
+  - Supports `interval` for polling with `stopWhen` condition
+  - Supports `silent` mode to suppress error notifications
+  - Supports API caching via `cacheTTL` and `cacheKey`
+  - Body region renders with fetched data in scope
+
+- **Exported utilities from `flux-runtime`**:
+  - `createApiCacheStore`, `resolveCacheKey` from `api-cache.ts`
+  - `applyRequestAdaptor`, `applyResponseAdaptor`, `prepareApiData`, `buildUrlWithParams` from `request-runtime.ts`
+
+- **Added tests** for data-source renderer:
+  - Basic data fetching and body rendering
+  - initialData handling
+  - Error handling with/without silent mode
+  - Cache behavior with cacheTTL
+
+- Files: `packages/flux-renderers-data/src/index.tsx`, `packages/flux-renderers-data/src/index.test.tsx`, `packages/flux-runtime/src/index.ts`
+- Key decision: data-source creates a child scope with fetched data for body region
+- Key decision: use global cache store shared across all data-source instances
+
 ### 2026-03-26 (ApiObject and DataSource Design)
 
 - **Revised `ApiObject` interface** in `packages/flux-core/src/types.ts`:
@@ -57,7 +81,6 @@ This file is intentionally lightweight.
 - Key decision: `data` overrides `includeScope` for same keys in merge
 - Key decision: `params` works for all HTTP methods, not just GET
 - Key decision: `cacheTTL` (not `cache: boolean`) for explicit cache duration
-- Next step: Implement `data-source` renderer in `flux-renderers-data`
 
 ### 2026-03-25 (flux-core Code Refactoring)
 

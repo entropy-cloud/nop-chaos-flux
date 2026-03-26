@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -291,6 +291,222 @@ describe('dataRendererDefinitions', () => {
     );
 
     expect(await screen.findByText('Member Alice')).toBeTruthy();
+  });
+
+  describe('data-source', () => {
+    it('fetches data and renders body', async () => {
+      cleanup();
+      const fetcher = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        data: { name: 'Alice' }
+      })) as RendererEnv['fetcher'];
+
+      const SchemaRenderer = createSchemaRenderer([
+        pageRenderer,
+        textRenderer,
+        ...dataRendererDefinitions
+      ]);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'data-source',
+                api: { url: '/api/user/1' },
+                dataPath: 'user',
+                body: { type: 'text', text: 'Hello, ${user.name}' }
+              }
+            ]
+          }}
+          env={{ ...env, fetcher }}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      expect(screen.getByText('Loading...')).toBeTruthy();
+
+      await waitFor(() => {
+        expect(screen.getByText('Hello, Alice')).toBeTruthy();
+      });
+
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    it('uses initialData before fetch completes', async () => {
+      cleanup();
+      const fetcher = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        data: { name: 'Bob' }
+      })) as RendererEnv['fetcher'];
+
+      const SchemaRenderer = createSchemaRenderer([
+        pageRenderer,
+        textRenderer,
+        ...dataRendererDefinitions
+      ]);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'data-source',
+                api: { url: '/api/user/1' },
+                dataPath: 'user',
+                initialData: { name: 'Initial' },
+                body: { type: 'text', text: 'Hello, ${user.name}' }
+              }
+            ]
+          }}
+          env={{ ...env, fetcher }}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Hello, Bob')).toBeTruthy();
+      });
+    });
+
+    it('shows error message on fetch failure', async () => {
+      cleanup();
+      const fetcher = vi.fn(async () => {
+        throw new Error('Network error');
+      }) as RendererEnv['fetcher'];
+
+      const notify = vi.fn();
+
+      const SchemaRenderer = createSchemaRenderer([
+        pageRenderer,
+        textRenderer,
+        ...dataRendererDefinitions
+      ]);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'data-source',
+                api: { url: '/api/error' },
+                dataPath: 'data'
+              }
+            ]
+          }}
+          env={{ ...env, fetcher, notify }}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(notify).toHaveBeenCalledWith('error', expect.any(String));
+      });
+    });
+
+    it('suppresses error notification when silent is true', async () => {
+      cleanup();
+      const fetcher = vi.fn(async () => ({
+        ok: false,
+        status: 500,
+        data: { message: 'Server error' }
+      })) as RendererEnv['fetcher'];
+
+      const notify = vi.fn();
+
+      const SchemaRenderer = createSchemaRenderer([
+        pageRenderer,
+        textRenderer,
+        ...dataRendererDefinitions
+      ]);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'data-source',
+                api: { url: '/api/error' },
+                dataPath: 'data',
+                silent: true
+              }
+            ]
+          }}
+          env={{ ...env, fetcher, notify }}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(fetcher).toHaveBeenCalled();
+      });
+
+      expect(notify).not.toHaveBeenCalled();
+    });
+
+    it('uses cache when cacheTTL is set', async () => {
+      cleanup();
+      const fetcher = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        data: { value: 'cached' }
+      })) as RendererEnv['fetcher'];
+
+      const SchemaRenderer = createSchemaRenderer([
+        pageRenderer,
+        textRenderer,
+        ...dataRendererDefinitions
+      ]);
+
+      const schema = {
+        type: 'page',
+        body: [
+          {
+            type: 'data-source',
+            api: { url: '/api/data', cacheTTL: 60000, cacheKey: 'test-cache' },
+            dataPath: 'data',
+            body: { type: 'text', text: 'Value: ${data.value}' }
+          }
+        ]
+      } as const;
+
+      const { unmount } = render(
+        <SchemaRenderer
+          schema={schema}
+          env={{ ...env, fetcher }}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Value: cached')).toBeTruthy();
+      });
+
+      expect(fetcher).toHaveBeenCalledTimes(1);
+
+      unmount();
+      cleanup();
+
+      render(
+        <SchemaRenderer
+          schema={schema}
+          env={{ ...env, fetcher }}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Value: cached')).toBeTruthy();
+      });
+
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
   });
 });
 

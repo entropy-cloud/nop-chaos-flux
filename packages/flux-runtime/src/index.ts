@@ -46,6 +46,13 @@ export { createScopeRef } from './scope';
 export { createActionScope } from './action-scope';
 export { createComponentHandleRegistry } from './component-handle-registry';
 export { createFormComponentHandle } from './form-component-handle';
+export { createApiCacheStore, resolveCacheKey } from './api-cache';
+export {
+  applyRequestAdaptor,
+  applyResponseAdaptor,
+  prepareApiData,
+  buildUrlWithParams
+} from './request-runtime';
 
 export function createRendererRuntime(input: {
   registry: RendererRegistry;
