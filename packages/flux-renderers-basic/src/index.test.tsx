@@ -55,14 +55,14 @@ describe('basicRendererDefinitions', () => {
     cleanup();
   });
 
-  it('renders tpl nodes with interpolated values', () => {
+  it('renders text nodes with interpolated values', () => {
     const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
 
     render(
       <SchemaRenderer
         schema={{
           type: 'page',
-          body: [{ type: 'tpl', tpl: 'Welcome, ${user.name}' }]
+          body: [{ type: 'text', body: 'Welcome, ${user.name}' }]
         }}
         data={{ user: { name: 'Alice' } }}
         env={env}
