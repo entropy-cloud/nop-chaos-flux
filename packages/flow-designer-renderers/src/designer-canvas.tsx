@@ -1,9 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import type { DesignerCanvasAdapterKind } from './canvas-bridge';
 import { renderDesignerCanvasBridge } from './canvas-bridge';
 import { useDesignerContext } from './designer-context';
 
-export function DesignerCanvasContent(props: { canvasAdapter: DesignerCanvasAdapterKind }) {
+export function DesignerCanvasContent() {
   const { dispatch, snapshot } = useDesignerContext();
   const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
   const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
@@ -51,11 +50,11 @@ export function DesignerCanvasContent(props: { canvasAdapter: DesignerCanvasAdap
     [dispatch]
   );
 
-  return renderDesignerCanvasBridge(props.canvasAdapter, {
+  return renderDesignerCanvasBridge('xyflow', {
     snapshot,
-    onPaneClick: handlePaneClick,
     pendingConnectionSourceId,
     reconnectingEdgeId,
+    onPaneClick: handlePaneClick,
     onNodeSelect: handleNodeClick,
     onEdgeSelect: handleEdgeClick,
     onStartConnection: (nodeId: string, event?: React.MouseEvent) => {

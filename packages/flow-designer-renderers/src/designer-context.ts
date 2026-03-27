@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
-import type { DesignerCore, DesignerSnapshot, DesignerConfig } from '@nop-chaos/flow-designer-core';
+import type { DesignerCore, DesignerSnapshot, DesignerConfig, NodeTypeConfig, EdgeTypeConfig, NormalizedDesignerConfig } from '@nop-chaos/flow-designer-core';
 import type { DesignerCommandAdapter } from './designer-command-adapter';
 
 export interface DesignerContextValue {
@@ -121,4 +121,19 @@ export function useDesignerHostScope(input: {
   }
 
   return scopeRef.current.scope;
+}
+
+export function useNormalizedConfig(): NormalizedDesignerConfig {
+  const { core } = useDesignerContext();
+  return core.getConfig();
+}
+
+export function useNodeTypeConfig(typeId: string): NodeTypeConfig | undefined {
+  const normalizedConfig = useNormalizedConfig();
+  return normalizedConfig.nodeTypes.get(typeId);
+}
+
+export function useEdgeTypeConfig(typeId: string): EdgeTypeConfig | undefined {
+  const normalizedConfig = useNormalizedConfig();
+  return normalizedConfig.edgeTypes.get(typeId);
 }

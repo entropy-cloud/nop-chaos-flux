@@ -21,7 +21,6 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   const schemaProps = props.props as Record<string, SchemaValue>;
   const document = schemaProps.document as unknown as GraphDocument;
   const config = schemaProps.config as unknown as DesignerConfig;
-  const canvasAdapter = (schemaProps.canvasAdapter as import('./canvas-bridge').DesignerCanvasAdapterKind | undefined) ?? 'xyflow';
 
   const core = useMemo(() => {
     if (!document || !config) return null;
@@ -74,9 +73,9 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
           <div className="fd-page__palette">
             <DesignerPaletteContent />
           </div>
-          <div className="fd-page__canvas">
-            <DesignerCanvasContent canvasAdapter={canvasAdapter} />
-          </div>
+      <div className="fd-page__canvas">
+        <DesignerCanvasContent />
+      </div>
           <div className="fd-page__inspector">
             {hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector />}
           </div>
@@ -88,7 +87,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
 }
 
 export function DesignerCanvasRenderer() {
-  return <DesignerCanvasContent canvasAdapter="xyflow" />;
+  return <DesignerCanvasContent />;
 }
 
 export function DesignerPaletteRenderer() {
