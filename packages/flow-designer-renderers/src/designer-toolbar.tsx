@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
+import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 
 type ToolbarItemLike = {
   type?: string;
@@ -92,6 +93,21 @@ function toCommand(action: string | undefined): import('./designer-command-adapt
 
 export function DesignerToolbarContent() {
   const { config, snapshot, dispatch } = useDesignerContext();
+  const actionScope = useCurrentActionScope();
+  const runtime = useRendererRuntime();
+  const scope = useRenderScope();
+
+  const invokeAction = useCallback(async (action: string) => {
+    const resolved = actionScope?.resolve(action);
+    if (!resolved) {
+      return;
+    }
+    await resolved.provider.invoke(resolved.method, undefined, {
+      runtime,
+      scope,
+      actionScope
+    });
+  }, [actionScope, runtime, scope]);
 
   const items = useMemo(() => {
     return ((config.toolbar?.items ?? []) as unknown as ToolbarItemLike[]).map((item, index) => ({
@@ -134,8 +150,17 @@ export function DesignerToolbarContent() {
 
         if (item.type === 'back') {
           return (
-            <button key={key} type="button" className="fd-toolbar__button" aria-label="Back">
+            <button
+              key={key}
+              type="button"
+              className="fd-toolbar__button"
+              aria-label={item.label ?? 'Back'}
+              onClick={() => {
+                void invokeAction(item.action ?? 'designer:navigate-back');
+              }}
+            >
               <DesignerIcon icon="arrow-left" className="nop-icon nop-icon--arrow-left" />
+              {item.label ? <span>{item.label}</span> : null}
             </button>
           );
         }

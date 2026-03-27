@@ -62,6 +62,7 @@ export function DesignerCanvasContent() {
 
   return renderDesignerCanvasBridge('xyflow', {
     snapshot,
+    canvasConfig: config.canvas,
     nodeTypeSizeMap,
     pendingConnectionSourceId,
     reconnectingEdgeId,
@@ -140,6 +141,9 @@ export function DesignerCanvasContent() {
     onViewportChange: (viewport: { x: number; y: number; zoom: number }, event?: React.MouseEvent) => {
       event?.stopPropagation();
       dispatch({ type: 'setViewport', viewport });
+    },
+    onDrop: (nodeTypeId: string, position: { x: number; y: number }) => {
+      dispatch({ type: 'addNode', nodeType: nodeTypeId, position });
     }
   });
 }

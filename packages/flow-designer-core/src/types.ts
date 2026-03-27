@@ -49,6 +49,8 @@ export interface DesignerConfig {
   rules?: DesignerRules;
   permissions?: DesignerPermissions;
   canvas?: CanvasConfig;
+  classAliases?: Record<string, string>;
+  themeStyles?: string;
 }
 
 export interface NodeTypeConfig {
@@ -207,7 +209,7 @@ export interface CanvasConfig {
 }
 
 export type ToolbarItem =
-  | { type: 'back'; label?: string }
+  | { type: 'back'; label?: string; action?: string }
   | { type: 'title'; body: string }
   | { type: 'badge'; text: string; level: string }
   | { type: 'text'; text: string }
@@ -241,6 +243,8 @@ export interface NormalizedDesignerConfig {
   rules: DesignerRules;
   permissions: DesignerPermissions;
   canvas: CanvasConfig;
+  classAliases?: Record<string, string>;
+  themeStyles?: string;
 }
 
 export interface SelectionSummary {
@@ -278,4 +282,3 @@ export type DesignerEvent =
   | { type: 'gridToggled'; enabled: boolean };
 
 export type DesignerEventType = DesignerEvent['type'];
-

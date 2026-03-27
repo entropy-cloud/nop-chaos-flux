@@ -18,6 +18,69 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-27 (Flow Designer Production-Parity Refactor Execution)
+
+- Executed the production-parity refactor items on the `designer-page` main path:
+  - wired palette drag source (`draggable` + `DESIGNER_PALETTE_NODE_MIME`) and canvas drop bridge to create nodes at drop point
+  - switched XYFlow drop coordinates to `screenToFlowPosition` and made canvas background render follow `gridEnabled` + `config.canvas` (`background`, `gridSize`)
+  - unified back navigation into toolbar action flow (`designer:navigate-back`) and removed floating page-level Back button
+  - added runtime shortcut handling in `designer-page` for undo/redo/copy/paste/delete/save based on schema `shortcuts` and `features`
+  - aligned toolbar JSON entry label and schema back item action
+- Updated code paths:
+  - `packages/flow-designer-core/src/types.ts`
+  - `packages/flow-designer-renderers/src/designer-palette.tsx`
+  - `packages/flow-designer-renderers/src/designer-canvas.tsx`
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
+  - `packages/flow-designer-renderers/src/designer-toolbar.tsx`
+  - `packages/flow-designer-renderers/src/designer-command-adapter.ts`
+  - `packages/flow-designer-renderers/src/designer-page.tsx`
+  - `packages/flow-designer-renderers/src/styles.css`
+  - `apps/playground/src/pages/FlowDesignerPage.tsx`
+  - `apps/playground/src/pages/FlowDesignerPage.test.tsx`
+  - `apps/playground/src/schemas/workflow-designer-schema.json`
+- Key decision: keep navigation and shortcut behavior renderer-scoped and schema-driven via existing `designer` action namespace, avoiding page-local ad hoc handlers.
+- Validation: `pnpm typecheck && pnpm build && pnpm lint && pnpm test && pnpm test:e2e --reporter=line` passed.
+
+### 2026-03-27 (Flow Designer Style JSON-Driven Migration Complete)
+
+- Completed the style migration plan to make flow designer fully JSON-configurable:
+  - Added `classAliases` and `themeStyles` fields to `DesignerConfig` and `NormalizedDesignerConfig`
+  - Modified `designer-palette.tsx` to use `data-type` attribute instead of type-specific CSS classes
+  - Added `themeStyles` injection in `designer-page.tsx` via `<style>` element
+  - Updated `workflow-designer-schema.json` with palette icon gradients as theme styles
+- Fixed test mock issue in `canvas-bridge.test.tsx` by adding `BackgroundVariant` to `@xyflow/react` mock
+- Fixed lint errors in `DesignerXyflowEdge.tsx` by removing unused imports
+- Files:
+  - `packages/flow-designer-core/src/types.ts`
+  - `packages/flow-designer-core/src/core.ts`
+  - `packages/flow-designer-renderers/src/designer-palette.tsx`
+  - `packages/flow-designer-renderers/src/designer-page.tsx`
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`
+  - `packages/flow-designer-renderers/src/canvas-bridge.test.tsx`
+  - `apps/playground/src/schemas/workflow-designer-schema.json`
+  - `tailwind.config.ts`
+  - `tailwind-safelist.txt`
+- Key decision: palette icon gradients now live in `themeStyles` (schema-defined) instead of hardcoded CSS, making the designer fully theme-customizable per-schema
+- Validation: `pnpm typecheck && pnpm build && pnpm lint && pnpm --filter @nop-chaos/flow-designer-renderers test` all pass
+
+### 2026-03-27 (Flow Designer Production-Parity Refactor Plan)
+
+- Added a new focused refactor plan for turning Flow Designer from demo-level capability into production-usable parity with legacy Flow Editor.
+- Plan covers concrete gap closure for:
+  - grid toggle vs canvas background consistency
+  - explicit JSON toolbar entry
+  - drag-from-palette and create-at-drop-position behavior
+  - full-height three-panel layout with collapsible left/right side panels
+  - moving "return to home" into unified toolbar actions
+- New plan document:
+  - `docs/plans/17-flow-designer-production-parity-refactor-plan.md`
+- Key decision:
+  - prioritize `flow-designer-renderers` + schema-driven integration path as the only primary implementation path, and avoid reintroducing page-local hardcoded behavior.
+- Follow-up clarification:
+  - confirmed current `designer-page` main path does not yet execute schema-defined shortcuts at runtime (shortcuts currently wired only in legacy `FlowDesignerExample` path)
+  - updated plan to explicitly include shortcut runtime wiring and mandatory new automation coverage
+  - updated pass criteria: all relevant automation (`typecheck/build/lint/test/test:e2e`) must succeed before marking completion
+
 ### 2026-03-27 (Flow Designer Visual Parity Closure: Node Semantics, Canvas, Minimap)
 
 - Consolidated the final visual parity fixes against `flow-editor-static.html` and closed the remaining accepted gaps in one pass.
@@ -890,4 +953,3 @@ This file is intentionally lightweight.
 - Kept exported session data useful by preserving request/response shape metadata while masking sensitive values in `exportedData`.
 - Started splitting `packages/amis-debugger/src/index.tsx` into dedicated modules for shared types, diagnostics helpers, redaction logic, and the floating panel UI to reduce the monolithic package entry.
 - Next likely step: add focused tests for debugger event collection and refine API response summaries so the network tab shows more useful payload metadata.
-

@@ -115,6 +115,16 @@
   "config": {
     "version": "1.0",
     "kind": "workflow",
+    "classAliases": {
+      "node-card": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg shadow-sm",
+      "node-header": "flex items-start gap-2",
+      "node-icon": "w-5 h-5",
+      "node-title": "text-sm font-medium text-gray-900",
+      "node-subtitle": "text-xs text-gray-500",
+      "node-footer": "flex items-center justify-between w-full text-xs text-gray-500",
+      "node-badge": "text-xs px-1.5 py-0.5 rounded-full"
+    },
+    "themeStyles": ".fd-palette__item-icon[data-type='start'] { background: linear-gradient(135deg, #34d399, #10b981); } .fd-palette__item-icon[data-type='end'] { background: linear-gradient(135deg, #fb7185, #f43f5e); } .fd-palette__item-icon[data-type='task'] { background: linear-gradient(135deg, #38bdf8, #0ea5e9); } .fd-palette__item-icon[data-type='condition'] { background: linear-gradient(135deg, #fcd34d, #f59e0b); } .fd-palette__item-icon[data-type='parallel'] { background: linear-gradient(135deg, #a78bfa, #8b5cf6); } .fd-palette__item-icon[data-type='loop'] { background: linear-gradient(135deg, #818cf8, #6366f1); }",
     "nodeTypes": [
       {
         "id": "start",
@@ -668,7 +678,7 @@
     },
     "toolbar": {
       "items": [
-        { "type": "back" },
+        { "type": "back", "label": "返回", "action": "designer:navigate-back" },
         { "type": "title", "body": "${doc.name}" },
         { "type": "badge", "level": "${isDirty ? 'warning' : 'success'}", "text": "${isDirty ? '未保存' : '已保存'}" },
         { "type": "divider" },
@@ -678,7 +688,7 @@
         { "type": "button", "action": "designer:undo", "icon": "rotate-ccw", "label": "撤销", "disabled": "${!canUndo}" },
         { "type": "button", "action": "designer:redo", "icon": "rotate-cw", "label": "重做", "disabled": "${!canRedo}" },
         { "type": "button", "action": "designer:restore", "icon": "download", "label": "恢复", "disabled": "${!isDirty}" },
-        { "type": "button", "action": "designer:export", "icon": "file-json", "label": "导出" },
+        { "type": "button", "action": "designer:export", "icon": "file-json", "label": "JSON" },
         { "type": "spacer" },
         { "type": "button", "action": "designer:save", "icon": "save", "label": "保存", "variant": "primary", "disabled": "${!isDirty}" }
       ]
@@ -708,7 +718,7 @@
       "defaultEdgeType": "default"
     },
     "canvas": {
-      "background": "dots",
+      "background": "lines",
       "gridSize": 16,
       "snapToGrid": true,
       "minZoom": 0.2,

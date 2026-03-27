@@ -9,6 +9,7 @@ let latestReactFlowProps: any = null;
 
 vi.mock('@xyflow/react', () => ({
   Background: () => null,
+  BackgroundVariant: { Dots: 'dots', Lines: 'lines', Cross: 'cross' },
   Controls: () => null,
   Handle: ({ id, className, style }: any) => {
     return <div data-testid={`handle-${id}`} className={className} style={style}></div>;

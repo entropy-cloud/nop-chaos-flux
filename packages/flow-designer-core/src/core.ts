@@ -198,6 +198,8 @@ function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfig {
       snapToGrid: true,
       ...config.canvas,
     },
+    classAliases: config.classAliases,
+    themeStyles: config.themeStyles,
   };
 }
 

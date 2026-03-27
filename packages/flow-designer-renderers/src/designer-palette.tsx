@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import type { NodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
+import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge';
 
 export function DesignerPaletteContent() {
   const { config, dispatch, snapshot } = useDesignerContext();
@@ -75,9 +76,14 @@ export function DesignerPaletteContent() {
                       key={nt.id}
                       className={`fd-palette__item${snapshot.activeNode?.type === nt.id ? ' fd-palette__item--selected' : ''}`}
                       onClick={() => handleAddNode(nt)}
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData(DESIGNER_PALETTE_NODE_MIME, nt.id);
+                        event.dataTransfer.effectAllowed = 'move';
+                      }}
                       title={nt.description ?? nt.label}
                     >
-                      <span className={`fd-palette__item-icon fd-palette__item-icon--${nt.id}`} aria-hidden="true">
+                      <span className="fd-palette__item-icon" data-type={nt.id} aria-hidden="true">
                         {nt.icon ? <DesignerIcon icon={nt.icon} className={`nop-icon nop-icon--${nt.icon}`} /> : '◇'}
                       </span>
                       <span className="fd-palette__item-label">{nt.label}</span>

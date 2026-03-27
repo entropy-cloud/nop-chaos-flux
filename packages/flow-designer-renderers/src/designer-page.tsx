@@ -1,5 +1,5 @@
-import React, { useCallback, useLayoutEffect, useMemo } from 'react';
-import type { RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
+import type { ActionNamespaceProvider, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv } from '@nop-chaos/flux-react';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
@@ -17,6 +17,35 @@ import { DesignerPaletteContent } from './designer-palette';
 import { DesignerCanvasContent } from './designer-canvas';
 import { DefaultInspector } from './designer-inspector';
 import { DesignerToolbarContent } from './designer-toolbar';
+
+function normalizeShortcut(input: string): string[] {
+  return input.toLowerCase().split('+').map((part) => part.trim()).filter(Boolean);
+}
+
+function matchesShortcut(event: KeyboardEvent, shortcuts: string[] | undefined): boolean {
+  if (!shortcuts || shortcuts.length === 0) {
+    return false;
+  }
+
+  const eventKey = event.key.toLowerCase();
+  return shortcuts.some((shortcut) => {
+    const keys = normalizeShortcut(shortcut);
+    const wantsCtrl = keys.includes('ctrl');
+    const wantsMeta = keys.includes('cmd') || keys.includes('meta');
+    const wantsShift = keys.includes('shift');
+    const wantsAlt = keys.includes('alt') || keys.includes('option');
+    const key = keys.find((part) => !['ctrl', 'cmd', 'meta', 'shift', 'alt', 'option'].includes(part));
+    if (!key) {
+      return false;
+    }
+
+    if (wantsCtrl !== event.ctrlKey) return false;
+    if (wantsMeta !== event.metaKey) return false;
+    if (wantsShift !== event.shiftKey) return false;
+    if (wantsAlt !== event.altKey) return false;
+    return key === eventKey.toLowerCase();
+  });
+}
 
 export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {
   const rawSchemaProps = props.schema as Record<string, SchemaValue>;
@@ -46,15 +75,103 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   );
   const actionScope = useCurrentActionScope();
   const designerProvider = useMemo(() => (core ? createDesignerActionProvider(core) : undefined), [core]);
+  const upstreamBackHandler = useMemo(() => actionScope?.resolve('designer:navigate-back'), [actionScope]);
+  const mergedDesignerProvider = useMemo<ActionNamespaceProvider | undefined>(() => {
+    if (!designerProvider) {
+      return undefined;
+    }
+    if (!upstreamBackHandler) {
+      return designerProvider;
+    }
+
+    return {
+      kind: designerProvider.kind ?? 'host',
+      listMethods() {
+        const methods = designerProvider.listMethods?.() ?? [];
+        if (methods.includes('navigate-back')) {
+          return methods;
+        }
+        return [...methods, 'navigate-back'];
+      },
+      invoke(method, payload, ctx) {
+        if (method === 'navigate-back') {
+          return upstreamBackHandler.provider.invoke(upstreamBackHandler.method, payload, ctx);
+        }
+        return designerProvider.invoke(method, payload, ctx);
+      },
+      dispose() {
+        designerProvider.dispose?.();
+      }
+    };
+  }, [designerProvider, upstreamBackHandler]);
   const designerScope = useDesignerHostScope({ snapshot, config, core: core!, path: props.path });
 
   useLayoutEffect(() => {
-    if (!actionScope || !designerProvider) {
+    if (!actionScope || !mergedDesignerProvider) {
       return;
     }
 
-    return actionScope.registerNamespace('designer', designerProvider);
-  }, [actionScope, designerProvider]);
+    return actionScope.registerNamespace('designer', mergedDesignerProvider);
+  }, [actionScope, mergedDesignerProvider]);
+
+  useEffect(() => {
+    if (!core) {
+      return;
+    }
+    if (!core.getConfig().features.shortcuts) {
+      return;
+    }
+
+    const shortcuts = core.getConfig().shortcuts;
+    const features = core.getConfig().features;
+    const canUseClipboard = features.clipboard !== false;
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) {
+        return false;
+      }
+      const tag = target.tagName.toLowerCase();
+      return target.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select';
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) {
+        return;
+      }
+
+      if (matchesShortcut(event, shortcuts.undo) && features.undo !== false) {
+        event.preventDefault();
+        dispatch({ type: 'undo' });
+        return;
+      }
+      if (matchesShortcut(event, shortcuts.redo) && features.redo !== false) {
+        event.preventDefault();
+        dispatch({ type: 'redo' });
+        return;
+      }
+      if (canUseClipboard && matchesShortcut(event, shortcuts.copy)) {
+        event.preventDefault();
+        dispatch({ type: 'copySelection' });
+        return;
+      }
+      if (canUseClipboard && matchesShortcut(event, shortcuts.paste)) {
+        event.preventDefault();
+        dispatch({ type: 'pasteClipboard' });
+        return;
+      }
+      if (matchesShortcut(event, shortcuts.delete)) {
+        event.preventDefault();
+        dispatch({ type: 'deleteSelection' });
+        return;
+      }
+      if (matchesShortcut(event, shortcuts.save)) {
+        event.preventDefault();
+        dispatch({ type: 'save' });
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [core, dispatch]);
 
   const toolbarSlot = props.regions.toolbar?.render({ scope: designerScope, actionScope });
   const inspectorSlot = props.regions.inspector?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).inspector as React.ReactNode);
@@ -66,6 +183,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
 
   return (
     <DesignerContext.Provider value={ctxValue}>
+      {config.themeStyles && <style>{config.themeStyles}</style>}
       <div className="fd-page nop-theme-root fd-theme-root">
         <div className="fd-page__header">
           {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent />}
@@ -74,9 +192,9 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
           <div className="fd-page__palette">
             <DesignerPaletteContent />
           </div>
-      <div className="fd-page__canvas">
-        <DesignerCanvasContent />
-      </div>
+          <div className="fd-page__canvas">
+            <DesignerCanvasContent />
+          </div>
           <div className="fd-page__inspector">
             {hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector />}
           </div>

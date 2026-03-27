@@ -3,6 +3,7 @@ import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { DesignerPageRenderer, DesignerCanvasRenderer, DesignerPaletteRenderer } from './designer-page';
 import { DesignerFieldRenderer } from './designer-field';
 import './styles.css';
+import './tailwind-polyfill.css';
 
 export * from './schemas';
 export * from './designer-context';

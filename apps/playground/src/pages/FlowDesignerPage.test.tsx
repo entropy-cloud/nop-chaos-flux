@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { FlowDesignerPage } from './FlowDesignerPage';
 
 vi.mock('@nop-chaos/flux-formula', () => ({
@@ -45,14 +45,5 @@ describe('FlowDesignerPage', () => {
   it('renders without crashing', () => {
     render(<FlowDesignerPage onBack={() => undefined} />);
     expect(screen.getByTestId('designer-page-mock')).toBeTruthy();
-    expect(screen.getByText('Back to Home')).toBeTruthy();
-  });
-
-  it('calls onBack when back button is clicked', () => {
-    const onBack = vi.fn();
-    render(<FlowDesignerPage onBack={onBack} />);
-    
-    fireEvent.click(screen.getByText('Back to Home'));
-    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

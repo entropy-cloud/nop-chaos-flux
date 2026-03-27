@@ -45,6 +45,15 @@ export type DesignerCommand =
       nodeId: string;
     }
   | {
+      type: 'copySelection';
+    }
+  | {
+      type: 'pasteClipboard';
+    }
+  | {
+      type: 'deleteSelection';
+    }
+  | {
       type: 'export';
     }
   | {
@@ -239,6 +248,24 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         }
 
         return createSuccess(core, { data: node });
+      }
+      case 'copySelection':
+        core.copySelection();
+        return createSuccess(core);
+      case 'pasteClipboard':
+        core.pasteClipboard();
+        return createSuccess(core);
+      case 'deleteSelection': {
+        const snapshot = core.getSnapshot();
+        if (snapshot.activeNode?.id) {
+          core.deleteNode(snapshot.activeNode.id);
+          return createSuccess(core);
+        }
+        if (snapshot.activeEdge?.id) {
+          core.deleteEdge(snapshot.activeEdge.id);
+          return createSuccess(core);
+        }
+        return createSuccess(core, { reason: 'unchanged' });
       }
       case 'export': {
         const exported = core.exportDocument();

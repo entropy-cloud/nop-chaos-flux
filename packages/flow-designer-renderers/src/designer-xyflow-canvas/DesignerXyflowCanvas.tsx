@@ -14,6 +14,7 @@ import type {
   Edge,
   EdgeChange,
   NodeChange,
+  ReactFlowInstance,
   OnReconnect,
   OnSelectionChangeParams
 } from '@xyflow/react';
@@ -22,12 +23,13 @@ import { DesignerXyflowNode } from './DesignerXyflowNode';
 import { DesignerXyflowEdge } from './DesignerXyflowEdge';
 import { createXyflowNodes, createXyflowEdges, normalizeControlledViewport, viewportsEqual, normalizeViewportChange, normalizePositionSignature } from './xyflow-utils';
 import type { DesignerXyflowControlledViewport, XyflowViewportChange } from './types';
-import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
+import type { CanvasConfig, DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 
 export const DESIGNER_PALETTE_NODE_MIME = 'application/x-flow-designer-node-type';
 
 export interface DesignerXyflowCanvasProps {
   snapshot: DesignerSnapshot;
+  canvasConfig?: CanvasConfig;
   nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>;
   pendingConnectionSourceId: string | null;
   reconnectingEdgeId: string | null;
@@ -74,6 +76,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
 
   const [controlledViewport, setControlledViewport] = useState<DesignerXyflowControlledViewport>(viewport);
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const lastCommittedPositionsRef = useRef<Map<string, string>>(new Map());
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -83,6 +86,14 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   const showMinimap = props.showMinimap !== false;
   const showControls = props.showControls !== false;
   const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const gridSize = props.canvasConfig?.gridSize ?? 24;
+  const backgroundType = props.canvasConfig?.background ?? 'lines';
+  const backgroundVariant = backgroundType === 'dots'
+    ? BackgroundVariant.Dots
+    : backgroundType === 'cross'
+      ? BackgroundVariant.Cross
+      : BackgroundVariant.Lines;
+  const showBackground = props.snapshot.gridEnabled && backgroundType !== 'none';
 
   useEffect(() => {
     if (!showMinimap) return;
@@ -247,6 +258,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
             edges={renderedEdges}
             nodeTypes={xyflowNodeTypes}
             edgeTypes={xyflowEdgeTypes}
+            onInit={(instance) => setReactFlowInstance(instance)}
             defaultViewport={controlledViewport}
             fitView
             nodesConnectable
@@ -299,14 +311,9 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
               event.preventDefault();
               const nodeTypeId = event.dataTransfer.getData(DESIGNER_PALETTE_NODE_MIME);
               if (!nodeTypeId || !props.onDrop) return;
-
-              const reactFlowBounds = (event.target as HTMLElement).closest('.react-flow')?.getBoundingClientRect();
-              if (!reactFlowBounds) return;
-
-              const position = {
-                x: event.clientX - reactFlowBounds.left,
-                y: event.clientY - reactFlowBounds.top
-              };
+              const position = reactFlowInstance
+                ? reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
+                : { x: event.clientX, y: event.clientY };
 
               props.onDrop(nodeTypeId, position);
             }}
@@ -315,7 +322,9 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
               event.dataTransfer.dropEffect = 'move';
             }}
           >
-            <Background gap={24} size={1} variant={BackgroundVariant.Lines} color="rgba(148, 163, 184, 0.26)" />
+            {showBackground && (
+              <Background gap={gridSize} size={1} variant={backgroundVariant} color="rgba(148, 163, 184, 0.26)" />
+            )}
             {showMinimap && (
               <MiniMap
                 className="fd-xyflow-minimap"

@@ -3,7 +3,7 @@ import type { NodeProps } from '@xyflow/react';
 import { NodeToolbar, Position } from '@xyflow/react';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import { isSchema } from '@nop-chaos/flux-core';
-import { RenderNodes } from '@nop-chaos/flux-react';
+import { RenderNodes, ClassAliasesContext } from '@nop-chaos/flux-react';
 import { useNodeTypeConfig, useDesignerContext } from '../designer-context';
 import { renderPorts } from './render-ports';
 import type { DesignerFlowNodeData } from './types';
@@ -20,7 +20,7 @@ function isSchemaInput(value: unknown): value is SchemaInput {
 export function DesignerXyflowNode(props: NodeProps) {
   const data = props.data as DesignerFlowNodeData;
   const nodeType = useNodeTypeConfig(data.typeId);
-  const { dispatch } = useDesignerContext();
+  const { dispatch, config } = useDesignerContext();
   const [showToolbar, setShowToolbar] = useState(false);
   const hideToolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -107,27 +107,31 @@ export function DesignerXyflowNode(props: NodeProps) {
         onMouseLeave={scheduleHideToolbar}
       >
         {renderPorts(nodeType.ports)}
-        <RenderNodes
-          input={nodeType.body}
-          options={{ data: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
-        />
+        <ClassAliasesContext.Provider value={config.classAliases}>
+          <RenderNodes
+            input={nodeType.body}
+            options={{ data: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
+          />
+        </ClassAliasesContext.Provider>
       </div>
 
       {(hasQuickActions || showToolbar) && (
         <NodeToolbar isVisible={showToolbar} position={Position.Top}>
           <div className="fd-xyflow-node-toolbar" onMouseEnter={showToolbarNow} onMouseLeave={scheduleHideToolbar}>
             {hasQuickActions ? (
-              <RenderNodes
-                input={nodeType.quickActions!}
-                options={{
-                  data: {
-                    ...nodeRenderData,
-                    ...actionScope
-                  },
-                  scopeKey: `node:${props.id}:quick-actions`,
-                  pathSuffix: 'node.quickActions'
-                }}
-              />
+              <ClassAliasesContext.Provider value={config.classAliases}>
+                <RenderNodes
+                  input={nodeType.quickActions!}
+                  options={{
+                    data: {
+                      ...nodeRenderData,
+                      ...actionScope
+                    },
+                    scopeKey: `node:${props.id}:quick-actions`,
+                    pathSuffix: 'node.quickActions'
+                  }}
+                />
+              </ClassAliasesContext.Provider>
             ) : (
               <div className="nop-flex flex gap-1">
                 <button
