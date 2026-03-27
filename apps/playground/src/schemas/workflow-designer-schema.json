@@ -122,29 +122,55 @@
         "icon": "play",
         "body": {
           "type": "flex",
-          "className": "flex items-start gap-2 px-3 py-2 bg-white rounded-lg border-2 border-green-500 shadow-sm",
+          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border-2 border-green-500 shadow-sm",
           "items": [
             {
-              "type": "icon",
-              "icon": "play",
-              "className": "w-5 h-5 text-green-600"
+              "type": "flex",
+              "className": "flex items-start gap-2",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "play",
+                  "className": "w-5 h-5 text-green-600"
+                },
+                {
+                  "type": "container",
+                  "body": [
+                    {
+                      "type": "text",
+                      "body": "${data.label}",
+                      "className": "text-sm font-medium text-gray-900"
+                    },
+                    {
+                      "type": "text",
+                      "body": "${data.config.trigger}",
+                      "className": "text-xs text-gray-500"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "type": "container",
-              "body": [
+              "type": "flex",
+              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "items": [
                 {
                   "type": "text",
-                  "body": "${data.label}",
-                  "className": "text-sm font-medium text-gray-900"
+                  "body": "开始节点",
+                  "className": "text-xs text-emerald-700 px-1.5 py-0.5 rounded-full bg-emerald-100"
                 },
                 {
                   "type": "text",
-                  "body": "${data.config.trigger}",
+                  "body": "1项配置",
                   "className": "text-xs text-gray-500"
                 }
               ]
             }
           ]
+        },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
         },
         "defaults": {
           "label": "开始",
@@ -188,29 +214,55 @@
         "icon": "flag",
         "body": {
           "type": "flex",
-          "className": "flex items-start gap-2 px-3 py-2 bg-white rounded-lg border-2 border-red-500 shadow-sm",
+          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border-2 border-red-500 shadow-sm",
           "items": [
             {
-              "type": "icon",
-              "icon": "flag",
-              "className": "w-5 h-5 text-red-600"
+              "type": "flex",
+              "className": "flex items-start gap-2",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "flag",
+                  "className": "w-5 h-5 text-red-600"
+                },
+                {
+                  "type": "container",
+                  "body": [
+                    {
+                      "type": "text",
+                      "body": "${data.label}",
+                      "className": "text-sm font-medium text-gray-900"
+                    },
+                    {
+                      "type": "text",
+                      "body": "${data.config.result}",
+                      "className": "text-xs text-gray-500"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "type": "container",
-              "body": [
+              "type": "flex",
+              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "items": [
                 {
                   "type": "text",
-                  "body": "${data.label}",
-                  "className": "text-sm font-medium text-gray-900"
+                  "body": "结束节点",
+                  "className": "text-xs text-rose-700 px-1.5 py-0.5 rounded-full bg-rose-100"
                 },
                 {
                   "type": "text",
-                  "body": "${data.config.result}",
+                  "body": "1项配置",
                   "className": "text-xs text-gray-500"
                 }
               ]
             }
           ]
+        },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
         },
         "defaults": {
           "label": "结束",
@@ -299,6 +351,10 @@
           "description": "",
           "config": { "executor": "service", "timeout": "30s" }
         },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
+        },
         "ports": [
           { "id": "in", "direction": "input", "position": "left" },
           { "id": "out", "direction": "output", "position": "right" }
@@ -330,29 +386,55 @@
         "icon": "git-branch",
         "body": {
           "type": "flex",
-          "className": "flex items-start gap-2 px-3 py-2 bg-white rounded-lg border border-yellow-400 shadow-sm",
+          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border border-yellow-400 shadow-sm",
           "items": [
             {
-              "type": "icon",
-              "icon": "git-branch",
-              "className": "w-5 h-5 text-yellow-600"
+              "type": "flex",
+              "className": "flex items-start gap-2",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "git-branch",
+                  "className": "w-5 h-5 text-yellow-600"
+                },
+                {
+                  "type": "container",
+                  "body": [
+                    {
+                      "type": "text",
+                      "body": "${data.label}",
+                      "className": "text-sm font-medium text-gray-900"
+                    },
+                    {
+                      "type": "text",
+                      "body": "${data.config.expression}",
+                      "className": "text-xs text-gray-500"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "type": "container",
-              "body": [
+              "type": "flex",
+              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "items": [
                 {
                   "type": "text",
-                  "body": "${data.label}",
-                  "className": "text-sm font-medium text-gray-900"
+                  "body": "条件分支",
+                  "className": "text-xs text-amber-700 px-1.5 py-0.5 rounded-full bg-amber-100"
                 },
                 {
                   "type": "text",
-                  "body": "${data.config.expression}",
+                  "body": "1项配置",
                   "className": "text-xs text-gray-500"
                 }
               ]
             }
           ]
+        },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
         },
         "defaults": {
           "label": "条件节点",
@@ -379,29 +461,55 @@
         "icon": "git-merge",
         "body": {
           "type": "flex",
-          "className": "flex items-start gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
+          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
           "items": [
             {
-              "type": "icon",
-              "icon": "git-merge",
-              "className": "w-5 h-5 text-purple-600"
+              "type": "flex",
+              "className": "flex items-start gap-2",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "git-merge",
+                  "className": "w-5 h-5 text-purple-600"
+                },
+                {
+                  "type": "container",
+                  "body": [
+                    {
+                      "type": "text",
+                      "body": "${data.label}",
+                      "className": "text-sm font-medium text-gray-900"
+                    },
+                    {
+                      "type": "text",
+                      "body": "${data.config.branches} 分支",
+                      "className": "text-xs text-gray-500"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "type": "container",
-              "body": [
+              "type": "flex",
+              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "items": [
                 {
                   "type": "text",
-                  "body": "${data.label}",
-                  "className": "text-sm font-medium text-gray-900"
+                  "body": "并行网关",
+                  "className": "text-xs text-violet-700 px-1.5 py-0.5 rounded-full bg-violet-100"
                 },
                 {
                   "type": "text",
-                  "body": "${data.config.branches} 分支",
+                  "body": "1项配置",
                   "className": "text-xs text-gray-500"
                 }
               ]
             }
           ]
+        },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
         },
         "defaults": {
           "label": "并行节点",
@@ -427,29 +535,55 @@
         "icon": "repeat",
         "body": {
           "type": "flex",
-          "className": "flex items-start gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
+          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
           "items": [
             {
-              "type": "icon",
-              "icon": "repeat",
-              "className": "w-5 h-5 text-indigo-600"
+              "type": "flex",
+              "className": "flex items-start gap-2",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "repeat",
+                  "className": "w-5 h-5 text-indigo-600"
+                },
+                {
+                  "type": "container",
+                  "body": [
+                    {
+                      "type": "text",
+                      "body": "${data.label}",
+                      "className": "text-sm font-medium text-gray-900"
+                    },
+                    {
+                      "type": "text",
+                      "body": "×${data.config.limit} / ${data.config.interval}",
+                      "className": "text-xs text-gray-500"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "type": "container",
-              "body": [
+              "type": "flex",
+              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "items": [
                 {
                   "type": "text",
-                  "body": "${data.label}",
-                  "className": "text-sm font-medium text-gray-900"
+                  "body": "循环节点",
+                  "className": "text-xs text-fuchsia-700 px-1.5 py-0.5 rounded-full bg-fuchsia-100"
                 },
                 {
                   "type": "text",
-                  "body": "×${data.config.limit} / ${data.config.interval}",
+                  "body": "2项配置",
                   "className": "text-xs text-gray-500"
                 }
               ]
             }
           ]
+        },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
         },
         "defaults": {
           "label": "循环节点",
