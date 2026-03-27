@@ -35,12 +35,15 @@ export const basicRendererDefinitions: RendererDefinition[] = [
   {
     type: 'flex',
     component: FlexRenderer,
-    regions: ['body']
+    regions: ['body', 'items']
   },
   {
     type: 'text',
     component: TextRenderer,
-    fields: [{ key: 'text', kind: 'prop' }]
+    fields: [
+      { key: 'text', kind: 'prop' },
+      { key: 'body', kind: 'prop' }
+    ]
   },
   {
     type: 'button',

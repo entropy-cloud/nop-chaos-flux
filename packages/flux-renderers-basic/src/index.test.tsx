@@ -74,6 +74,44 @@ describe('basicRendererDefinitions', () => {
     cleanup();
   });
 
+  it('prefers flex body region over deprecated items region', () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'flex',
+          body: [{ type: 'text', text: 'Body content' }],
+          items: [{ type: 'text', text: 'Deprecated items content' }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('Body content')).toBeTruthy();
+    expect(screen.queryByText('Deprecated items content')).toBeNull();
+    cleanup();
+  });
+
+  it('falls back to flex items region when body is absent', () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'flex',
+          items: [{ type: 'text', text: 'Deprecated items fallback' }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('Deprecated items fallback')).toBeTruthy();
+    cleanup();
+  });
+
   it('dispatches event fields through renderer-generated handlers', async () => {
     const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
 

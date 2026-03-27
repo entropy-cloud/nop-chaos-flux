@@ -23,6 +23,7 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
       : undefined;
   const gap = typeof props.props.gap === 'number' || typeof props.props.gap === 'string' ? props.props.gap : undefined;
   const bodyContent = props.regions.body?.render();
+  const itemsContent = props.regions.items?.render();
 
   return (
     <div
@@ -44,7 +45,7 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
       )}
       style={gap !== undefined ? { gap: typeof gap === 'number' ? `${gap}px` : gap } : undefined}
     >
-      {bodyContent}
+      {bodyContent ?? itemsContent}
     </div>
   );
 }

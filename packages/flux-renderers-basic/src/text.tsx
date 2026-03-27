@@ -4,7 +4,7 @@ import type { TextSchema } from './schemas';
 import { classNames } from './utils';
 
 export function TextRenderer(props: RendererComponentProps<TextSchema>) {
-  const text = props.props.text;
+  const text = props.props.body ?? props.props.text;
   const tag =
     props.props.tag === 'span' ||
     props.props.tag === 'p' ||

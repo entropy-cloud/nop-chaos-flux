@@ -21,9 +21,8 @@ export interface ContainerSchema extends BaseSchema {
 
 export interface TextSchema extends BaseSchema {
   type: 'text';
-  /** 文本内容，支持 ${expression} 表达式 */
   text?: string;
-  /** HTML 标签，默认 span */
+  body?: string;
   tag?: 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'label' | 'div';
 }
 
