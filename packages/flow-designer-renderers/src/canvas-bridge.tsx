@@ -128,7 +128,9 @@ function createXyflowNodes(snapshot: DesignerSnapshot): Node[] {
     data: {
       label: String(node.data.label ?? node.id),
       typeLabel: node.type
-    }
+    },
+    width: 180,
+    height: 60
   }));
 }
 
