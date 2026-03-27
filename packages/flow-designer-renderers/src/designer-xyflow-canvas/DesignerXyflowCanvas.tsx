@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Background,
+  BackgroundVariant,
   Controls,
   MiniMap,
   ReactFlow,
@@ -10,6 +11,7 @@ import {
 } from '@xyflow/react';
 import type {
   Connection,
+  Edge,
   EdgeChange,
   NodeChange,
   OnReconnect,
@@ -26,6 +28,7 @@ export const DESIGNER_PALETTE_NODE_MIME = 'application/x-flow-designer-node-type
 
 export interface DesignerXyflowCanvasProps {
   snapshot: DesignerSnapshot;
+  nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>;
   pendingConnectionSourceId: string | null;
   reconnectingEdgeId: string | null;
   showMinimap?: boolean;
@@ -59,7 +62,10 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     designerEdge: DesignerXyflowEdge
   }), []);
 
-  const snapshotNodes = useMemo(() => createXyflowNodes(props.snapshot), [props.snapshot]);
+  const snapshotNodes = useMemo(
+    () => createXyflowNodes(props.snapshot, props.nodeTypeSizeMap),
+    [props.snapshot, props.nodeTypeSizeMap]
+  );
   const snapshotEdges = useMemo(() => createXyflowEdges(props.snapshot), [props.snapshot]);
   const viewport = useMemo(
     () => normalizeControlledViewport(props.snapshot.doc.viewport ?? props.snapshot.viewport),
@@ -67,6 +73,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   );
 
   const [controlledViewport, setControlledViewport] = useState<DesignerXyflowControlledViewport>(viewport);
+  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
   const lastCommittedPositionsRef = useRef<Map<string, string>>(new Map());
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -114,6 +121,16 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   useEffect(() => {
     setLocalEdges(snapshotEdges);
   }, [snapshotEdges, setLocalEdges]);
+
+  const renderedEdges = useMemo<Edge[]>(() => (
+    localEdges.map((edge) => ({
+      ...edge,
+      data: {
+        ...((edge.data as Record<string, unknown> | undefined) ?? {}),
+        __fdHovered: edge.id === hoveredEdgeId
+      }
+    }))
+  ), [localEdges, hoveredEdgeId]);
 
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     onNodesChangeInternal(changes);
@@ -217,7 +234,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
         <ReactFlowProvider>
           <ReactFlow
             nodes={localNodes}
-            edges={localEdges}
+            edges={renderedEdges}
             nodeTypes={xyflowNodeTypes}
             edgeTypes={xyflowEdgeTypes}
             defaultViewport={controlledViewport}
@@ -253,10 +270,12 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
               if (hoverTimeoutRef.current) {
                 clearTimeout(hoverTimeoutRef.current);
               }
+              setHoveredEdgeId(edge.id);
               props.onEdgeHover?.(edge.id, undefined);
             }}
             onEdgeMouseLeave={() => {
               hoverTimeoutRef.current = setTimeout(() => {
+                setHoveredEdgeId(null);
                 props.onEdgeHover?.(null, undefined);
               }, 160);
             }}
@@ -286,9 +305,19 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
               event.dataTransfer.dropEffect = 'move';
             }}
           >
-            <Background gap={24} size={1} />
-            {showMinimap && <MiniMap pannable zoomable style={{ background: 'rgba(255,255,255,0.9)' }} />}
-            {showControls && <Controls showInteractive={false} />}
+            <Background gap={24} size={1} variant={BackgroundVariant.Lines} color="rgba(148, 163, 184, 0.26)" />
+            {showMinimap && (
+              <MiniMap
+                className="fd-xyflow-minimap"
+                pannable
+                zoomable
+                nodeColor={() => 'rgba(59, 130, 246, 0.18)'}
+                nodeStrokeColor={() => '#3b82f6'}
+                nodeBorderRadius={4}
+                maskColor="rgba(59, 130, 246, 0.1)"
+              />
+            )}
+            {showControls && <Controls className="fd-xyflow-controls" showInteractive={false} />}
           </ReactFlow>
         </ReactFlowProvider>
       </div>
