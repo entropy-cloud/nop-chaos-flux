@@ -6,6 +6,7 @@ import { RenderNodes } from '@nop-chaos/flux-react';
 import { useEdgeTypeConfig, useDesignerContext } from '../designer-context';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import type { DesignerFlowEdgeData } from './types';
+import { DesignerIcon } from '../designer-icon';
 
 function classNames(...values: Array<string | undefined | false | null>) {
   return values.filter(Boolean).join(' ');
@@ -44,18 +45,25 @@ export function DesignerXyflowEdge(props: EdgeProps) {
     dispatch({ type: 'selectEdge', edgeId: props.id });
   };
 
+  const handleDeleteEdge = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    dispatch({ type: 'deleteEdge', edgeId: props.id });
+  };
+
   const appearance = edgeType?.appearance;
   const hasBody = edgeType?.body && isSchemaInput(edgeType.body);
+  const lineStyle = typeof edgeData?.lineStyle === 'string' ? edgeData.lineStyle : appearance?.strokeStyle;
+  const showQuickActions = props.selected || edgeData?.__fdHovered === true;
 
   const edgeStyle: React.CSSProperties = {
     stroke: appearance?.stroke,
     strokeWidth: appearance?.strokeWidth
   };
 
-  if (appearance?.strokeStyle === 'dashed') {
-    edgeStyle.strokeDasharray = '5,5';
-  } else if (appearance?.strokeStyle === 'dotted') {
-    edgeStyle.strokeDasharray = '2,2';
+  if (lineStyle === 'dashed') {
+    edgeStyle.strokeDasharray = '6,4';
+  } else if (lineStyle === 'dotted') {
+    edgeStyle.strokeDasharray = '2,4';
   }
 
   return (
@@ -82,6 +90,37 @@ export function DesignerXyflowEdge(props: EdgeProps) {
               input={edgeType!.body!}
               options={{ data: edgeRenderData, scopeKey: `edge:${props.id}`, pathSuffix: 'edge' }}
             />
+          </div>
+        </EdgeLabelRenderer>
+      )}
+
+      {showQuickActions && (
+        <EdgeLabelRenderer>
+          <div
+            className="fd-edge__quick-actions"
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY - 30}px)`,
+              pointerEvents: 'all'
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="fd-edge__quick-action-btn"
+              aria-label="Select edge"
+              onClick={handleLabelClick}
+            >
+              <DesignerIcon icon="pencil" className="nop-icon nop-icon--pencil" />
+            </button>
+            <button
+              type="button"
+              className="fd-edge__quick-action-btn fd-edge__quick-action-btn--danger"
+              aria-label="Delete edge"
+              onClick={handleDeleteEdge}
+            >
+              <DesignerIcon icon="trash-2" className="nop-icon nop-icon--trash-2" />
+            </button>
           </div>
         </EdgeLabelRenderer>
       )}

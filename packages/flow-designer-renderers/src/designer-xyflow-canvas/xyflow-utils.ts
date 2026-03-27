@@ -9,8 +9,51 @@ import type {
 
 const VIEWPORT_EPSILON = 0.01;
 
-export function createXyflowNodes(snapshot: DesignerSnapshot): Node[] {
+function toFiniteNumber(value: unknown): number | undefined {
+  if (typeof value !== 'number') {
+    return undefined;
+  }
+
+  return Number.isFinite(value) ? value : undefined;
+}
+
+function resolveNodeSize(
+  node: DesignerSnapshot['doc']['nodes'][number],
+  nodeTypeSize: { minWidth?: number; minHeight?: number } | undefined
+) {
+  const data = (node.data ?? {}) as Record<string, unknown>;
+  const size = (data.size ?? {}) as Record<string, unknown>;
+
+  const width =
+    toFiniteNumber(data.width) ??
+    toFiniteNumber(data.nodeWidth) ??
+    toFiniteNumber(size.width) ??
+    toFiniteNumber(nodeTypeSize?.minWidth) ??
+    192;
+
+  const height =
+    toFiniteNumber(data.height) ??
+    toFiniteNumber(data.nodeHeight) ??
+    toFiniteNumber(size.height) ??
+    toFiniteNumber(nodeTypeSize?.minHeight) ??
+    110;
+
+  return { width, height };
+}
+
+export function createXyflowNodes(
+  snapshot: DesignerSnapshot,
+  nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>
+): Node[] {
   return snapshot.doc.nodes.map((node) => ({
+    ...(() => {
+      const resolved = resolveNodeSize(node, nodeTypeSizeMap?.get(node.type));
+      return {
+        width: resolved.width,
+        height: resolved.height,
+        measured: { width: resolved.width, height: resolved.height }
+      };
+    })(),
     id: node.id,
     type: 'designerNode',
     position: { ...node.position },
@@ -20,10 +63,7 @@ export function createXyflowNodes(snapshot: DesignerSnapshot): Node[] {
       label: String(node.data.label ?? node.id),
       typeLabel: node.type,
       typeId: node.type
-    } satisfies DesignerFlowNodeData,
-    width: 180,
-    height: 60,
-    measured: { width: 180, height: 60 }
+    } satisfies DesignerFlowNodeData
   }));
 }
 

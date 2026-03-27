@@ -9,6 +9,8 @@ export interface DesignerFlowNodeData extends Record<string, unknown> {
 export interface DesignerFlowEdgeData extends Record<string, unknown> {
   label: string;
   typeId: string;
+  lineStyle?: 'solid' | 'dashed' | 'dotted' | string;
+  __fdHovered?: boolean;
 }
 
 export interface DesignerXyflowControlledViewport {
