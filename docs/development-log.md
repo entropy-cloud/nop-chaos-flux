@@ -18,6 +18,28 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-27 (Component Resolution Design)
+
+- **Created design document** `docs/architecture/component-resolution.md` for component targeting mechanism:
+  - Three-layer identification: `id` (user), `name` (user), `_cid` (internal), `_templateId` (dynamic)
+  - Scope boundary: component lookup never exceeds Page scope
+  - Compile-time optimization: static components get O(1) lookup via `_cid`
+  - Dynamic components (table rows, iterators): use `_templateId` + `instanceKey` with context
+  - Debug-only duplicate name checking
+
+- **Key design decisions**:
+  - Compile-time: assign `_cid` for static components, resolve references to direct `_cid` lookups
+  - Runtime: static = O(1) Map lookup, dynamic = templateId + context instanceKey
+  - Fallback: preserve `componentId`/`componentName` for runtime resolution when compile-time can't resolve
+  - Edge cases: cross-scope calls, nested dynamic components, conditional rendering, dynamically loaded schemas
+
+- **Edge case handling**:
+  - Nested dynamic components use composite instanceKey: `row:2.nested:3`
+  - Conditional components track `_mounted` state
+  - Dynamically loaded schemas use negative cid range
+  - Table sorting/filtering uses data ID instead of row index when available
+  - Lifecycle management with LRU cleanup for large dynamic component counts
+
 ### 2026-03-27 (Component Action Syntax Change)
 
 - **Changed component-targeted action syntax** from `component:invoke` with `args.method` to `component:<method>` pattern:
