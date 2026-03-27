@@ -58,6 +58,7 @@ export interface NodeTypeConfig {
   icon?: string;
   body: SchemaInput;
   ports?: PortConfig[];
+  appearance?: NodeTypeAppearance;
   roles?: NodeRoleConfig;
   constraints?: NodeConstraintConfig;
   permissions?: NodePermissionConfig;
@@ -80,6 +81,17 @@ export interface NodeRoleConfig {
   rejects?: string[];
 }
 
+export interface NodeTypeAppearance {
+  className?: string;
+  borderRadius?: number;
+  shadow?: 'none' | 'sm' | 'md' | 'lg';
+  borderWidth?: number;
+  borderColor?: string;
+  borderColorSelected?: string;
+  minWidth?: number;
+  minHeight?: number;
+}
+
 export interface PortConfig {
   id: string;
   label?: string;
@@ -93,6 +105,7 @@ export interface PortConfig {
   maxConnections?: number | 'unlimited';
   appearance?: {
     className?: string;
+    size?: number;
   };
 }
 

@@ -171,6 +171,9 @@ export interface CreateScopeOptions {
 }
 
 export interface ComponentTarget {
+  _targetCid?: number;
+  _targetTemplateId?: string;
+  componentInstanceKey?: string;
   componentId?: string;
   componentName?: string;
 }
@@ -183,6 +186,10 @@ export interface ComponentCapabilities {
 }
 
 export interface ComponentHandle {
+  _cid?: number;
+  _templateId?: string;
+  _instanceKey?: string;
+  _mounted?: boolean;
   id?: string;
   name?: string;
   type: string;
@@ -192,8 +199,17 @@ export interface ComponentHandle {
 export interface ComponentHandleRegistry {
   id: string;
   parent?: ComponentHandleRegistry;
-  register(handle: ComponentHandle): () => void;
+  register(
+    handle: ComponentHandle,
+    options?: {
+      cid?: number;
+      templateId?: string;
+      instanceKey?: string;
+      dynamicLoaded?: boolean;
+    }
+  ): () => void;
   unregister(handle: ComponentHandle): void;
+  cleanupDynamic(templateId: string): void;
   resolve(target: ComponentTarget): ComponentHandle | undefined;
 }
 
@@ -764,6 +780,8 @@ export interface DialogRendererProps {
 
 export interface ActionSchema extends SchemaObject {
   action: string;
+  _targetCid?: number;
+  _targetTemplateId?: string;
   componentId?: string;
   componentName?: string;
   componentPath?: string;
@@ -782,6 +800,7 @@ export interface ActionSchema extends SchemaObject {
 export interface ActionContext {
   runtime: RendererRuntime;
   scope: ScopeRef;
+  getInstanceKey?: () => string | undefined;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   event?: unknown;
