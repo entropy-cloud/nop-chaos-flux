@@ -379,6 +379,104 @@ function applyWrapComponentPlugins(renderer: RendererDefinition, plugins?: Rende
   return (plugins ?? []).reduce((current, plugin) => plugin.wrapComponent?.(current) ?? current, renderer);
 }
 
+function collectCompiledNodes(entry: CompiledSchemaNode | CompiledSchemaNode[], out: CompiledSchemaNode[]) {
+  if (Array.isArray(entry)) {
+    entry.forEach((item) => collectCompiledNodes(item, out));
+    return;
+  }
+
+  out.push(entry);
+
+  for (const region of Object.values(entry.regions)) {
+    if (!region.node) {
+      continue;
+    }
+    collectCompiledNodes(region.node, out);
+  }
+}
+
+function rewriteActionTargets(
+  value: unknown,
+  byId: Map<string, number>,
+  byName: Map<string, number>
+): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => rewriteActionTargets(item, byId, byName));
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  const source = value as Record<string, unknown>;
+  const output: Record<string, unknown> = {};
+
+  for (const [key, candidate] of Object.entries(source)) {
+    output[key] = rewriteActionTargets(candidate, byId, byName);
+  }
+
+  if (typeof source.action === 'string' && source.action.startsWith('component:')) {
+    const hasTargetCid = typeof source._targetCid === 'number';
+    const hasTargetTemplateId = typeof source._targetTemplateId === 'string' && source._targetTemplateId.length > 0;
+
+    if (!hasTargetCid && !hasTargetTemplateId) {
+      if (typeof source.componentId === 'string') {
+        const resolvedCid = byId.get(source.componentId);
+        if (resolvedCid !== undefined) {
+          output._targetCid = resolvedCid;
+        }
+      } else if (typeof source.componentName === 'string') {
+        const resolvedCid = byName.get(source.componentName);
+        if (resolvedCid !== undefined) {
+          output._targetCid = resolvedCid;
+        }
+      }
+    }
+  }
+
+  return output;
+}
+
+function enrichCompiledComponentTargets(compiled: CompiledSchemaNode | CompiledSchemaNode[]): CompiledSchemaNode | CompiledSchemaNode[] {
+  const nodes: CompiledSchemaNode[] = [];
+  collectCompiledNodes(compiled, nodes);
+
+  const byId = new Map<string, number>();
+  const byName = new Map<string, number>();
+  let cid = 0;
+
+  for (const node of nodes) {
+    const schemaRecord = node.schema as Record<string, unknown>;
+    const id = typeof schemaRecord.id === 'string' ? schemaRecord.id : undefined;
+    const name = typeof schemaRecord.name === 'string' ? schemaRecord.name : undefined;
+
+    if (!id && !name) {
+      continue;
+    }
+
+    cid += 1;
+    schemaRecord._cid = cid;
+
+    if (id) {
+      byId.set(id, cid);
+    }
+
+    if (name) {
+      byName.set(name, cid);
+    }
+  }
+
+  for (const node of nodes) {
+    const nextActions: Record<string, unknown> = {};
+    for (const key of node.eventKeys) {
+      nextActions[key] = rewriteActionTargets(node.eventActions[key], byId, byName);
+    }
+    node.eventActions = nextActions;
+  }
+
+  return compiled;
+}
+
 export function createSchemaCompiler(input: {
   registry: RendererRegistry;
   expressionCompiler?: ExpressionCompiler;
@@ -501,8 +599,7 @@ export function createSchemaCompiler(input: {
           renderer: wrappedRenderer
         });
       });
-
-      return applyAfterCompilePlugins(compiled);
+      return enrichCompiledComponentTargets(applyAfterCompilePlugins(compiled) as CompiledSchemaNode | CompiledSchemaNode[]);
     }
 
     const path = options.basePath ?? '$';
@@ -514,12 +611,14 @@ export function createSchemaCompiler(input: {
 
     const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
 
-    return applyAfterCompilePlugins(
-      compileSingleNode(prepared, {
-        path,
-        parentPath: options.parentPath,
-        renderer: wrappedRenderer
-      })
+    return enrichCompiledComponentTargets(
+      applyAfterCompilePlugins(
+        compileSingleNode(prepared, {
+          path,
+          parentPath: options.parentPath,
+          renderer: wrappedRenderer
+        })
+      ) as CompiledSchemaNode | CompiledSchemaNode[]
     );
   }
 

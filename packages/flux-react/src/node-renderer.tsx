@@ -163,7 +163,13 @@ export function NodeRenderer(props: {
       return;
     }
 
-    const unregister = activeComponentRegistry.register(createFormComponentHandle(activeForm));
+    const schemaWithCid = props.node.schema as unknown as { _cid?: unknown };
+    const compiledCid = typeof schemaWithCid._cid === 'number'
+      ? schemaWithCid._cid
+      : undefined;
+    const unregister = activeComponentRegistry.register(createFormComponentHandle(activeForm), {
+      cid: compiledCid
+    });
     return unregister;
   }, [activeComponentRegistry, activeForm]);
 

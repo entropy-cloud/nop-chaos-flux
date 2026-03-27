@@ -257,14 +257,17 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     }
 
     const target = {
+      _targetCid: typeof action._targetCid === 'number' ? action._targetCid : undefined,
+      _targetTemplateId: typeof action._targetTemplateId === 'string' ? action._targetTemplateId : undefined,
+      componentInstanceKey: ctx.getInstanceKey?.(),
       componentId: action.componentId,
       componentName: action.componentName
     };
 
-    if (!target.componentId && !target.componentName) {
+    if (!target.componentId && !target.componentName && target._targetCid === undefined && !target._targetTemplateId) {
       return finishAction(input, { ...actionPayload, dispatchMode: 'component', method }, startedAt, {
         ok: false,
-        error: new Error('component:<method> requires componentId or componentName')
+        error: new Error('component:<method> requires _targetCid, _targetTemplateId, componentId or componentName')
       });
     }
 

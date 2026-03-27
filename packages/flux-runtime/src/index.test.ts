@@ -197,6 +197,34 @@ describe('createSchemaCompiler', () => {
     expect(node.eventActions.onClick).toMatchObject({ action: 'setValue' });
   });
 
+  it('pre-resolves component targets to _targetCid during compile', () => {
+    const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = compiler.compile({
+      type: 'page',
+      body: [
+        { type: 'form', id: 'user-form', name: 'userForm' },
+        {
+          type: 'action-button',
+          onClick: {
+            action: 'component:validate',
+            componentName: 'userForm'
+          }
+        }
+      ]
+    }) as any;
+
+    const bodyNodes = Array.isArray(node.regions.body.node) ? node.regions.body.node : [node.regions.body.node];
+    const formNode = bodyNodes[0];
+    const buttonNode = bodyNodes[1];
+    expect(typeof formNode.schema._cid).toBe('number');
+    expect(buttonNode.eventActions.onClick._targetCid).toBe(formNode.schema._cid);
+  });
+
   it('preserves xui:imports on compiled schema for runtime registration', () => {
     const registry = createRendererRegistry([importHostRenderer]);
     const compiler = createSchemaCompiler({
@@ -452,6 +480,236 @@ describe('createRendererRuntime', () => {
 
       expect(validateResult.ok).toBe(true);
       expect((validateResult.data as { ok: boolean }).ok).toBe(true);
+    } finally {
+      unregister();
+    }
+  });
+
+  it('fails component action when componentId and componentName target different handles', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const firstForm = runtime.createFormRuntime({
+      id: 'first-form',
+      name: 'firstForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+    const secondForm = runtime.createFormRuntime({
+      id: 'second-form',
+      name: 'secondForm',
+      initialValues: { username: 'Bob' },
+      parentScope: page.scope,
+      page
+    });
+
+    const unregisterFirst = componentRegistry.register(createFormComponentHandle(firstForm));
+    const unregisterSecond = componentRegistry.register(createFormComponentHandle(secondForm));
+
+    try {
+      const result = await runtime.dispatch(
+        {
+          action: 'component:validate',
+          componentId: 'first-form',
+          componentName: 'secondForm'
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry
+        }
+      );
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeInstanceOf(Error);
+      expect((result.error as Error).message).toBe('Component handle not found');
+    } finally {
+      unregisterSecond();
+      unregisterFirst();
+    }
+  });
+
+  it('dispatches component action by compiled _targetCid without componentId/componentName', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const form = runtime.createFormRuntime({
+      id: 'compiled-cid-form',
+      name: 'compiledCidForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+    const handle = createFormComponentHandle(form);
+    const unregister = componentRegistry.register(handle, { cid: 42 });
+
+    try {
+      const result = await runtime.dispatch(
+        {
+          action: 'component:setValue',
+          _targetCid: 42,
+          args: {
+            name: 'username',
+            value: 'Carol'
+          }
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry
+        }
+      );
+
+      expect(result).toMatchObject({ ok: true, data: 'Carol' });
+      expect(form.scope.get('username')).toBe('Carol');
+    } finally {
+      unregister();
+    }
+  });
+
+  it('dispatches component action by dynamic _targetTemplateId and instance key', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const form = runtime.createFormRuntime({
+      id: 'dynamic-form',
+      name: 'dynamicForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+    const handle = createFormComponentHandle(form);
+    const unregister = componentRegistry.register(handle, {
+      templateId: 'table.row.rowForm',
+      instanceKey: 'row:1'
+    });
+
+    try {
+      const result = await runtime.dispatch(
+        {
+          action: 'component:setValue',
+          _targetTemplateId: 'table.row.rowForm',
+          args: {
+            name: 'username',
+            value: 'Dave'
+          }
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry,
+          getInstanceKey: () => 'row:1'
+        }
+      );
+
+      expect(result).toMatchObject({ ok: true, data: 'Dave' });
+      expect(form.scope.get('username')).toBe('Dave');
+    } finally {
+      unregister();
+    }
+  });
+
+  it('rejects component action without any resolvable target', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const result = await runtime.dispatch(
+      {
+        action: 'component:validate'
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe(
+      'component:<method> requires _targetCid, _targetTemplateId, componentId or componentName'
+    );
+  });
+
+  it('supports cleanupDynamic and mounted-state aware resolve behavior', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const form = runtime.createFormRuntime({
+      id: 'dynamic-cleanup-form',
+      name: 'dynamicCleanupForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+    const handle = createFormComponentHandle(form);
+    const unregister = componentRegistry.register(handle, {
+      templateId: 'table.row.cleanup',
+      instanceKey: 'row:2'
+    });
+
+    try {
+      const beforeCleanup = await runtime.dispatch(
+        {
+          action: 'component:validate',
+          _targetTemplateId: 'table.row.cleanup'
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry,
+          getInstanceKey: () => 'row:2'
+        }
+      );
+      expect(beforeCleanup.ok).toBe(true);
+
+      componentRegistry.cleanupDynamic('table.row.cleanup');
+
+      const afterCleanup = await runtime.dispatch(
+        {
+          action: 'component:validate',
+          _targetTemplateId: 'table.row.cleanup'
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry,
+          getInstanceKey: () => 'row:2'
+        }
+      );
+      expect(afterCleanup.ok).toBe(false);
+      expect((afterCleanup.error as Error).message).toBe('Component handle not found');
+      expect(handle._mounted).toBe(false);
     } finally {
       unregister();
     }
@@ -3771,4 +4029,3 @@ describe('createRendererRuntime', () => {
     expect(resolved.value.text).toBe('Prepared text + compiled');
   });
 });
-
