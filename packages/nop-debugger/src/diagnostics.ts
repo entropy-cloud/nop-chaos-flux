@@ -4,6 +4,7 @@ import type {
   NopDebugEventQuery,
   NopDebuggerFilterKind,
   NopDebuggerOverview,
+  NopDebuggerPinnedErrors,
   NopDebuggerSessionExport,
   NopDebuggerSessionExportOptions,
   NopDebuggerSnapshot,
@@ -16,6 +17,8 @@ import type {
 } from './types';
 import type { NormalizedRedactionOptions } from './redaction';
 import { redactData } from './redaction';
+
+const EMPTY_PINNED_ERRORS: NopDebuggerPinnedErrors = { earliest: [], latest: [] };
 
 export const DEFAULT_FILTERS: NopDebuggerFilterKind[] = ['render', 'action', 'api', 'compile', 'notify', 'error'];
 

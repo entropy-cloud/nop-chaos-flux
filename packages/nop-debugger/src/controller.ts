@@ -44,7 +44,9 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     maxEvents,
     defaultOpen: windowConfig.defaultOpen,
     defaultTab: windowConfig.defaultTab,
-    position: windowConfig.position
+    position: windowConfig.position,
+    errorBufferKeepEarliest: options.errorBuffer?.keepEarliest ?? 3,
+    errorBufferKeepLatest: options.errorBuffer?.keepLatest ?? 5
   });
 
   const requestState = new Map<string, { startedAt: number }>();
@@ -54,6 +56,9 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const queryEvents = (query?: NopDebugEventQuery) => applyEventQuery(getSnapshot().events, query);
   const getLatestEvent = (query?: NopDebugEventQuery) => queryEvents({ ...query, limit: 1 })[0];
   const getLatestError = () => getLatestEvent({ group: 'error' });
+  const getEarliestErrors = () => getSnapshot().pinnedErrors.earliest;
+  const getLatestErrors = () => getSnapshot().pinnedErrors.latest;
+  const getPinnedErrors = () => getSnapshot().pinnedErrors;
   const getNodeDiagnostics = (nodeOptions: NopNodeDiagnosticsOptions) => buildNodeDiagnostics(getSnapshot().events, nodeOptions);
   const getInteractionTrace = (traceQuery: NopInteractionTraceQuery) => buildInteractionTrace(getSnapshot().events, traceQuery);
   const createReport = (reportOptions?: NopDiagnosticReportOptions) => createDiagnosticReport(debuggerId, getSnapshot(), reportOptions);
@@ -96,6 +101,9 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     queryEvents,
     getLatestEvent,
     getLatestError,
+    getEarliestErrors,
+    getLatestErrors,
+    getPinnedErrors,
     getNodeDiagnostics,
     getInteractionTrace,
     createDiagnosticReport: createReport,
@@ -177,6 +185,9 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     queryEvents,
     getLatestEvent,
     getLatestError,
+    getEarliestErrors,
+    getLatestErrors,
+    getPinnedErrors,
     getNodeDiagnostics,
     getInteractionTrace,
     getOverview,
