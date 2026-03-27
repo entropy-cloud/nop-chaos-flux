@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import type { NodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext } from './designer-context';
+import { DesignerIcon } from './designer-icon';
 
 export function DesignerPaletteContent() {
   const { config, dispatch } = useDesignerContext();
@@ -77,7 +78,7 @@ export function DesignerPaletteContent() {
                       title={nt.description ?? nt.label}
                     >
                       <span className="fd-palette__item-icon" aria-hidden="true">
-                        {nt.icon ? <i className={`nop-icon nop-icon--${nt.icon}`} data-icon={nt.icon} /> : '◇'}
+                        {nt.icon ? <DesignerIcon icon={nt.icon} className={`nop-icon nop-icon--${nt.icon}`} /> : '◇'}
                       </span>
                       <span className="fd-palette__item-label">{nt.label}</span>
                     </button>

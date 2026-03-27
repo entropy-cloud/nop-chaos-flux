@@ -7,6 +7,7 @@ import { RenderNodes } from '@nop-chaos/flux-react';
 import { useNodeTypeConfig, useDesignerContext } from '../designer-context';
 import { renderPorts } from './render-ports';
 import type { DesignerFlowNodeData } from './types';
+import { DesignerIcon } from '../designer-icon';
 
 function classNames(...values: Array<string | undefined | false | null>) {
   return values.filter(Boolean).join(' ');
@@ -135,7 +136,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                   aria-label="Edit node"
                   onClick={actionScope.onEdit}
                 >
-                  <i className="nop-icon nop-icon--pencil" data-icon="pencil" aria-hidden="true" />
+                  <DesignerIcon icon="pencil" className="nop-icon nop-icon--pencil" />
                 </button>
                 <button
                   type="button"
@@ -143,7 +144,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                   aria-label="Duplicate node"
                   onClick={actionScope.onDuplicate}
                 >
-                  <i className="nop-icon nop-icon--copy" data-icon="copy" aria-hidden="true" />
+                  <DesignerIcon icon="copy" className="nop-icon nop-icon--copy" />
                 </button>
                 <button
                   type="button"
@@ -151,7 +152,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                   aria-label="Delete node"
                   onClick={actionScope.onDelete}
                 >
-                  <i className="nop-icon nop-icon--trash-2" data-icon="trash-2" aria-hidden="true" />
+                  <DesignerIcon icon="trash-2" className="nop-icon nop-icon--trash-2" />
                 </button>
               </div>
             )}

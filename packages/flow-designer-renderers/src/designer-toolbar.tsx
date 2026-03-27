@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useDesignerContext } from './designer-context';
+import { DesignerIcon } from './designer-icon';
 
 type ToolbarItemLike = {
   type?: string;
@@ -39,9 +40,9 @@ function evalBooleanExpr(value: boolean | string | undefined, snapshot: ReturnTy
   const trimmed = value.trim();
   const expr = trimmed.startsWith('${') && trimmed.endsWith('}') ? trimmed.slice(2, -1).trim() : trimmed;
   if (expr.startsWith('!')) {
-    return !Boolean(readState(expr.slice(1).trim(), snapshot));
+    return !readState(expr.slice(1).trim(), snapshot);
   }
-  return Boolean(readState(expr, snapshot));
+  return readState(expr, snapshot) === true;
 }
 
 function evalTextTemplate(template: string | undefined, snapshot: ReturnType<typeof useDesignerContext>['snapshot']) {
@@ -53,7 +54,7 @@ function evalTextTemplate(template: string | undefined, snapshot: ReturnType<typ
     const ternaryMatch = expr.match(/^([A-Za-z0-9_.]+)\s*\?\s*'([^']*)'\s*:\s*'([^']*)'$/);
     if (ternaryMatch) {
       const [, cond, left, right] = ternaryMatch;
-      return Boolean(readState(cond, snapshot)) ? left : right;
+      return readState(cond, snapshot) === true ? left : right;
     }
   }
 
@@ -134,7 +135,7 @@ export function DesignerToolbarContent() {
         if (item.type === 'back') {
           return (
             <button key={key} type="button" className="fd-toolbar__button" aria-label="Back">
-              <i className="nop-icon nop-icon--arrow-left" data-icon="arrow-left" aria-hidden="true" />
+              <DesignerIcon icon="arrow-left" className="nop-icon nop-icon--arrow-left" />
             </button>
           );
         }
@@ -160,7 +161,7 @@ export function DesignerToolbarContent() {
                 }
               }}
             >
-              {item.icon ? <i className={`nop-icon nop-icon--${item.icon}`} data-icon={item.icon} aria-hidden="true" /> : null}
+              {item.icon ? <DesignerIcon icon={item.icon} className={`nop-icon nop-icon--${item.icon}`} /> : null}
               {item.label ? <span>{item.label}</span> : null}
             </button>
           );
