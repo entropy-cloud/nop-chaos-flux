@@ -7,6 +7,7 @@ Use `docs/bugs/` to record important bug fixes in a way that still makes sense a
 The goal is not to repeat the full implementation diff. The goal is to preserve:
 
 - what went wrong
+- how it was diagnosed (especially when diagnosis was hard)
 - why it went wrong
 - how it was fixed
 - how the fix is protected by tests
@@ -65,7 +66,22 @@ Good example:
 
 - in the playground form, the `email` field accepted the first character but often failed to append later characters
 
-### 3. Root Cause
+### 3. Diagnostic Method
+
+This section is mandatory.
+
+Describe how the issue was located, not only the final root cause.
+
+Include:
+
+- what made diagnosis difficult
+- what was inspected first, and why
+- what hypotheses were tested and rejected
+- what direct evidence confirmed the true cause (DOM snapshot, logs, debugger state, test output)
+
+If diagnosis was easy, still include 2 to 4 bullets with the minimal path used.
+
+### 4. Root Cause
 
 Explain the real cause, not just the surface symptom.
 
@@ -80,7 +96,7 @@ Good example:
 - renderer value reading subscribed to scope instead of the authoritative form store
 - form runtime could be recreated during unrelated rerenders, which amplified the reset behavior
 
-### 4. Fix
+### 5. Fix
 
 Explain the solution in terms of design intent, not line-by-line code changes.
 
@@ -95,7 +111,7 @@ Good example:
 - field renderers now bind to form store values when a field is rendered inside a form
 - form runtime is preserved across unrelated rerenders and recreated only when identity inputs change
 
-### 5. Tests
+### 6. Tests
 
 List the regression coverage added or updated.
 
@@ -109,11 +125,11 @@ Good example:
 - `packages/flux-renderers-form/src/index.test.tsx` verifies `input-email` can progress from `a` to `ab` to a full address
 - `packages/flux-react/src/index.test.tsx` verifies host rerenders do not wipe form-local values
 
-### 6. Affected Files
+### 7. Affected Files
 
 List only the important code and test files. Do not paste large diffs.
 
-### 7. Notes For Future Refactors
+### 8. Notes For Future Refactors
 
 Add 1 to 3 bullets describing what future changes should be careful not to break.
 
@@ -141,6 +157,13 @@ Use this template for new entries:
 - what broke
 - where it broke
 - minimal visible symptom
+
+## Diagnostic Method
+
+- diagnosis difficulty (why this was hard)
+- investigation path (what was checked first)
+- rejected hypotheses
+- decisive evidence that confirmed the issue
 
 ## Root Cause
 

@@ -18,6 +18,208 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-27 (Flow Designer Visual Parity Round 9: Node Layout Semantics + Edge Hover Quick Actions)
+
+- Performed another source-level comparison against `flow-editor-static.html` for the remaining structural mismatches reported in review (not just color tokens).
+- Fixed task-node layout semantics to match prototype composition:
+  - top row is strictly `icon + title/desc`
+  - footer row (`任务节点` + `2项配置`) moved below the top row as a separate full-width line
+- Added missing utility shims to support schema semantics (`flex-col`, `justify-between`, `w-full`) so JSON classnames map correctly at runtime.
+- Aligned selected-node visual effect with prototype ring behavior by restoring a visible focus ring + depth shadow on selected state.
+- Updated minimap appearance to match prototype card model:
+  - `208x128`, bottom-right anchoring, rounded card shell
+  - gradient background layer + blur/backdrop treatment
+  - minimap node tokens via MiniMap props (`nodeColor`, `nodeStrokeColor`, `nodeBorderRadius`, `maskColor`)
+- Implemented edge hover quick actions in XYFlow renderer (previously missing in this adapter):
+  - quick actions now appear when edge is hovered or selected
+  - action buttons use white default background and light-blue hover background to match prototype interaction tone
+  - actions currently provide edge select/edit focus and edge delete
+- Normalized quick-action button styles for node toolbar as well:
+  - default white icon button background
+  - light-blue hover feedback instead of theme-accent fill
+- Expanded e2e coverage for this parity batch:
+  - task footer vertical placement below header row
+  - node/edge quick-action button default-vs-hover background states
+  - edge-hover quick-actions visibility and icon presence
+  - minimap gradient background assertion
+- Code paths:
+  - `apps/playground/src/schemas/workflow-designer-schema.json`
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/types.ts`
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`
+  - `packages/flow-designer-renderers/src/styles.css`
+  - `tests/e2e/flow-designer-ui.spec.ts`
+
+### 2026-03-27 (Flow Designer Visual Parity Round 8: Structure-Level Fidelity Sweep)
+
+- Addressed previously uncovered parity dimensions using selector-level diff against the static prototype: node geometry, icon anchor, minimap/control panel positioning, edge dash semantics, and edge label typography/container style.
+- Root cause for prior omissions: previous passes focused on color/surface parity and selected-card styling, but did not enforce a checklist for non-color geometry and control overlays (node min width, minimap/control anchoring, line-style rhythm).
+- Applied fixes:
+  - node shell baseline geometry updated to prototype-like width footprint (`192px`) in xyflow mapping and final CSS overrides
+  - node header alignment switched to top-aligned icon/content stack (`items-start`) across workflow node schemas
+  - icon visual token aligned to prototype dimensions (`20px` glyph box + `10px` padding + `12px` radius)
+  - minimap and zoom controls moved to prototype coordinates and dimensions (`controls` top-left, `minimap` bottom-right with `208x128` card)
+  - edge stroke style now reads business `lineStyle` from edge data and maps to prototype dash rhythm (`dashed 6,4`, `dotted 2,4`)
+  - edge label body simplified to text-only token while wrapper owns pill background, border, and typography
+- Added e2e assertions so this class of omissions cannot silently regress:
+  - node min width/icon geometry
+  - minimap width/height/offset/background
+  - controls offset/radius/button size
+  - edge label radius/font/background and dashed/dotted dasharray presence
+- Code paths:
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/xyflow-utils.ts`
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
+  - `packages/flow-designer-renderers/src/styles.css`
+  - `apps/playground/src/schemas/workflow-designer-schema.json`
+  - `tests/e2e/flow-designer-ui.spec.ts`
+- Validation:
+  - `pnpm.cmd typecheck`
+  - `pnpm.cmd build`
+  - `pnpm.cmd lint` (workspace has two pre-existing hook dependency warnings outside this change)
+  - `pnpm.cmd test:e2e --reporter=line` (`2 passed`)
+
+### 2026-03-27 (Flow Designer Visual Parity Round 7: Static Prototype CSS Diff)
+
+- Compared current implementation with verified static prototype page (`flow-editor-static.html`) and extracted concrete style deltas from source CSS selectors (`.flow-node`, `.canvas-wrapper`, `.canvas-bg`, `.canvas-grid`, `.flow-node-chip.task`).
+- Root-cause findings from direct CSS diff:
+  - node card shadow was weaker than prototype (`shadow-sm`) while prototype uses strong card depth (`shadow-lg`-level)
+  - canvas background model differed: prototype is white card container + radial accent layer + 24px grid rhythm; current implementation had a broad linear gradient override
+  - task footer semantics differed: prototype has one pill chip (`任务节点`) and plain meta text (`2项配置`), while current page rendered two pills
+- Applied alignment fixes:
+  - task footer changed to one sky chip + plain meta text in schema
+  - added utility shims for `bg-sky-100`, `text-sky-700`, `rounded-full`
+  - canvas shell and surface reset to prototype-like white container + radial accent layer
+  - grid stroke/gap tuned to prototype values (`gap=24`, softer stroke alpha)
+  - node card shadow strengthened for schema card inside xyflow node shell
+- Updated e2e assertions to lock new baseline (chip color/radius, white canvas container state).
+- Code paths:
+  - `apps/playground/src/schemas/workflow-designer-schema.json`
+  - `packages/flow-designer-renderers/src/styles.css`
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
+  - `tests/e2e/flow-designer-ui.spec.ts`
+- Key decision: visual parity work now uses source-level CSS diff against static prototype selectors, not heuristic screenshot-only matching.
+
+### 2026-03-27 (Flow Designer Visual Parity Round 6: Prototype CSS Re-Alignment)
+
+- Re-checked prototype-aligned style baseline from `docs/examples/workflow-designer/config.json` and renderer style references, then corrected three mismatches called out in review:
+  - task node card returned to white background with subtle shadow (`bg-white + shadow-sm`) instead of blue-tinted card
+  - task metadata texts (`任务节点`, `2项配置`) converted to rounded chip style with dedicated background (`bg-slate-100`, `rounded`, spacing)
+  - canvas final override switched back to gradient surface and React Flow inner layers set transparent so gradient remains visible
+- Updated e2e expectations accordingly:
+  - task inner card background now asserts white
+  - task chip background/radius now asserted explicitly
+  - canvas uses gradient assertion via `background-image` instead of solid color
+- Hardened e2e entry flow to pass through sign-in screen when auth gate is active before opening Flow Designer.
+- Code paths:
+  - `apps/playground/src/schemas/workflow-designer-schema.json`
+  - `packages/flow-designer-renderers/src/styles.css`
+  - `tests/e2e/flow-designer-ui.spec.ts`
+- Key decision: preserve schema-defined node semantics from workflow example as baseline and only use scoped CSS shims/overrides to fill utility gaps.
+
+### 2026-03-27 (Bug Note Standard Update: Diagnostic Method Is Mandatory)
+
+- Updated bug note writing standard to require a dedicated `Diagnostic Method` section in every bug record:
+  - captures why diagnosis was hard
+  - records investigation path and rejected hypotheses
+  - requires decisive runtime evidence used to confirm root cause
+- Backfilled the requirement on current visual parity bug note with concrete diagnosis steps and evidence chain:
+  - `docs/bugs/12-flow-designer-visual-parity-canvas-node-style-fix.md`
+- Docs updated:
+  - `docs/bugs/00-bug-fix-note-writing-guide.md`
+  - `docs/bugs/12-flow-designer-visual-parity-canvas-node-style-fix.md`
+- Key decision: bug notes must preserve not only conclusion and fix, but also reproducible diagnosis path for hard issues.
+
+### 2026-03-27 (Flow Designer Visual Parity Round 5: Task Background + Icon Alignment + Grid Tune)
+
+- Added bug history note for ongoing style mismatch diagnosis and remediation plan in `docs/bugs/12-flow-designer-visual-parity-canvas-node-style-fix.md`.
+- Applied parity-focused adjustments for remaining mismatches called out during visual comparison:
+  - task node body schema now uses tinted background and semantic border (`bg-blue-50 border-blue-200`) instead of plain white
+  - node body layout switched to top-aligned icon/text stack for multi-line content (`items-start`) to match prototype relative positioning
+  - designer utility shim extended with missing classes (`items-start`, `bg-blue-50`, `border-blue-200`) and container column stacking refinement
+  - canvas background/grid configuration tuned in XYFlow (`BackgroundVariant.Lines`, tighter gap, explicit line color) to reduce prototype drift
+- Updated e2e assertions to explicitly verify task node tinted background and icon/title relative top alignment.
+- Code paths:
+  - `apps/playground/src/schemas/workflow-designer-schema.json`
+  - `packages/flow-designer-renderers/src/styles.css`
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
+  - `tests/e2e/flow-designer-ui.spec.ts`
+- Key decision: keep fidelity fixes schema-driven first, then provide only minimal scoped CSS shims required for JSON utility classes to render consistently.
+
+### 2026-03-27 (Flow Designer Visual Parity Round 4: Final Override Pass + Screenshot Artifacts)
+
+- Added a final high-specificity override block to lock visual behavior for node shell/canvas/grid where duplicate legacy selectors previously caused unstable rendering:
+  - outer `.fd-xyflow-node` remains structural only (no border/background/shadow)
+  - selected/focus highlight applies only on inner schema card and removes extra outer ring impression
+  - canvas/surface/grid background now uses stable light value (`#f8fafc`) for closer prototype parity
+  - designer page font stack normalized with Chinese fallback chain for mixed CJK text consistency
+- Expanded Playwright visual verification artifacts:
+  - outputs full-page screenshot `flow-designer-page.png` in addition to existing canvas/node/toolbar captures
+  - added selected-node assertion to ensure no extra `0 0 0 2px` ring shadow (double-border artifact)
+  - updated canvas background assertion to concrete `rgb(248, 250, 252)` and added page font-family assertion includes `Inter`
+- Adjusted playground task node body schema for prototype copy/layout parity:
+  - second line now renders `${data.description}` (for example `邮件通知`)
+  - appended compact metadata row (`任务节点`, `2项配置`) under title/description
+- Resolved lint blocker in toolbar expression evaluator by replacing redundant boolean-cast expressions with strict `=== true` checks.
+- Code paths:
+  - `packages/flow-designer-renderers/src/styles.css`
+  - `tests/e2e/flow-designer-ui.spec.ts`
+- Key decision: keep low-risk parity stabilization in a terminal override block rather than broad stylesheet rewrite, so behavior is deterministic without regressing unrelated screens.
+
+### 2026-03-27 (Flow Designer Visual Parity Round 3: Canvas/Grid + Single-Border Node Shell)
+
+- Normalized XYFlow surface styles to remove conflicting duplicate behavior and malformed overrides in the lower style block:
+  - outer `.fd-xyflow-node` is now a layout shell (no border/background/shadow)
+  - selected state highlight is applied to the rendered inner node card (`.fd-xyflow-node > :first-child`) to avoid inner+outer double border artifacts
+  - `.fd-xyflow-live__surface .react-flow` restored to full-size canvas (`width/height: 100%`)
+  - edge/background rules stabilized (`react-flow__edge-path` stroke, background grid pattern stroke)
+- Added Playwright visual diagnostics for direct side-by-side review:
+  - writes `canvas.png`, `task-node.png`, and `task-node-toolbar.png` under test output screenshots folder
+  - added assertions for "发送欢迎邮件" node semantic text/layout (`邮件通知`/`任务节点`/`2项配置`), icon-title relative position, single-border contract on node shell
+  - added canvas/grid assertions (canvas border present, grid stroke present)
+- Code paths:
+  - `packages/flow-designer-renderers/src/styles.css`
+  - `tests/e2e/flow-designer-ui.spec.ts`
+- Key decision: keep schema-driven inner card visuals as source of truth, and make XYFlow wrapper purely structural so schema classnames control node body appearance consistently.
+
+### 2026-03-27 (Flow Designer Node Visual Parity Round 2: Real SVG Icons + Utility Shims)
+
+- Replaced placeholder icon output with real Lucide SVG rendering in both schema icon renderer and designer-only icon usage paths:
+  - `packages/flux-renderers-basic/src/icon.tsx`
+  - `packages/flow-designer-renderers/src/designer-icon.tsx`
+  - adopted in `designer-toolbar.tsx`, `designer-palette.tsx`, `designer-xyflow-canvas/DesignerXyflowNode.tsx`
+- Added scoped utility-class shim rules under `.fd-page` so schema-defined classes used by node body now render correctly without relying on full Tailwind extraction from JSON:
+  - spacing/layout utilities (`flex`, `items-center`, `gap-2`, `px-3`, `py-2`)
+  - visual utilities (`bg-white`, `rounded-lg`, `border`, semantic border colors, `shadow-sm`)
+  - icon/text sizing + colors (`w-5`, `h-5`, `text-*-600`, `text-sm`, `text-xs`, `text-gray-*`)
+  - edge label spacing helpers (`px-1.5`, `py-0.5`, `rounded`)
+- Set Flow Designer area font family to prototype-aligned stack (`Inter`, `Noto Sans SC`, `PingFang SC`, fallbacks) for more consistent typography.
+- Validation:
+  - `pnpm.cmd --filter @nop-chaos/flux-renderers-basic typecheck`
+  - `pnpm.cmd --filter @nop-chaos/flow-designer-renderers typecheck`
+  - `pnpm.cmd --filter @nop-chaos/flow-designer-renderers test`
+  - `pnpm.cmd test:e2e --reporter=line` (2 passed, HTML shows SVG icons + expected node content classes)
+
+### 2026-03-27 (Flow Designer Prototype Visual Alignment Round 1)
+
+- Performed CSS-first alignment against flow editor prototype baseline for major surfaces and component hierarchy:
+  - page shell spacing/cardization (header/content gaps, column sizing, card-like panel surfaces)
+  - palette groups/items (larger radii, icon chips, layered backgrounds, hover elevation)
+  - top toolbar (compact glass container, icon button sizing, title/meta scale, active state treatment)
+  - xyflow node card (rounded-xl style, softer border, deeper shadow, selected ring)
+  - edge label wrapper style (pill container, shadow, selected tint)
+  - node quick-action toolbar shape and icon button sizing (rounded-full chips)
+- Updated edge dash rhythm to match prototype: dashed `8,6`, dotted `2,6`.
+- Added Playwright style assertions to validate key prototype-aligned computed styles (`20px` radii and non-none shadows for node/palette/toolbar).
+- Code paths:
+  - `packages/flow-designer-renderers/src/styles.css`
+  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`
+  - `tests/e2e/flow-designer-ui.spec.ts`
+- Validation:
+  - `pnpm.cmd --filter @nop-chaos/flow-designer-renderers test`
+  - `pnpm.cmd --filter @nop-chaos/flow-designer-renderers typecheck`
+  - `pnpm.cmd test:e2e --reporter=line`
+
 ### 2026-03-27 (Flow Designer Parity Follow-up: Node Content, Icon Actions, Playwright E2E)
 
 - Fixed schema expression loss in designer runtime by reading `document/config` from raw `props.schema` in `DesignerPageRenderer`, preserving nested template strings (for example `${data.label}`, `${doc.name}`).
