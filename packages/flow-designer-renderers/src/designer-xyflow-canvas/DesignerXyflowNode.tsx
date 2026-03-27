@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { NodeProps } from '@xyflow/react';
 import { NodeToolbar, Position } from '@xyflow/react';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import { isSchema } from '@nop-chaos/flux-core';
-import { RenderNodes, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
+import { RenderNodes } from '@nop-chaos/flux-react';
 import { useNodeTypeConfig, useDesignerContext } from '../designer-context';
 import { renderPorts } from './render-ports';
 import type { DesignerFlowNodeData } from './types';
@@ -20,32 +20,52 @@ export function DesignerXyflowNode(props: NodeProps) {
   const data = props.data as DesignerFlowNodeData;
   const nodeType = useNodeTypeConfig(data.typeId);
   const { dispatch } = useDesignerContext();
-  const runtime = useRendererRuntime();
-  const parentScope = useRenderScope();
   const [showToolbar, setShowToolbar] = useState(false);
+  const hideToolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const nodeScope = useMemo(() => {
-    return runtime.createChildScope(parentScope, {
-      node: {
-        id: props.id,
-        type: data.typeId,
-        label: data.label,
-        data: props.data
-      },
+  const nodeRenderData = useMemo(() => ({
+    node: {
+      id: props.id,
+      type: data.typeId,
+      label: data.label,
       data: props.data
-    }, {
-      scopeKey: `node:${props.id}`,
-      pathSuffix: 'node'
-    });
-  }, [runtime, parentScope, props.id, props.data, data.typeId, data.label]);
+    },
+    data: props.data
+  }), [props.id, props.data, data.typeId, data.label]);
 
   const hasQuickActions = nodeType?.quickActions && isSchemaInput(nodeType.quickActions);
 
   const actionScope = useMemo(() => ({
-    onEdit: () => dispatch({ type: 'openNodeEditor' as never, nodeId: props.id } as never),
+    onEdit: () => dispatch({ type: 'selectNode', nodeId: props.id }),
     onDuplicate: () => dispatch({ type: 'duplicateNode', nodeId: props.id }),
     onDelete: () => dispatch({ type: 'deleteNode', nodeId: props.id })
   }), [dispatch, props.id]);
+
+  function showToolbarNow() {
+    if (hideToolbarTimeoutRef.current) {
+      clearTimeout(hideToolbarTimeoutRef.current);
+      hideToolbarTimeoutRef.current = null;
+    }
+    setShowToolbar(true);
+  }
+
+  function scheduleHideToolbar() {
+    if (hideToolbarTimeoutRef.current) {
+      clearTimeout(hideToolbarTimeoutRef.current);
+    }
+    hideToolbarTimeoutRef.current = setTimeout(() => {
+      setShowToolbar(false);
+      hideToolbarTimeoutRef.current = null;
+    }, 180);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (hideToolbarTimeoutRef.current) {
+        clearTimeout(hideToolbarTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const appearanceStyle = useMemo(() => {
     if (!nodeType?.appearance) return undefined;
@@ -63,8 +83,8 @@ export function DesignerXyflowNode(props: NodeProps) {
     return (
       <div
         className={classNames('fd-xyflow-node', 'fd-xyflow-node--fallback', props.selected && 'fd-xyflow-node--active')}
-        onMouseEnter={() => setShowToolbar(true)}
-        onMouseLeave={() => setShowToolbar(false)}
+        onMouseEnter={showToolbarNow}
+        onMouseLeave={scheduleHideToolbar}
       >
         {renderPorts(nodeType?.ports)}
         <strong>{data.label}</strong>
@@ -82,17 +102,59 @@ export function DesignerXyflowNode(props: NodeProps) {
           props.selected && 'fd-xyflow-node--active'
         )}
         style={appearanceStyle}
-        onMouseEnter={() => setShowToolbar(true)}
-        onMouseLeave={() => setShowToolbar(false)}
+        onMouseEnter={showToolbarNow}
+        onMouseLeave={scheduleHideToolbar}
       >
         {renderPorts(nodeType.ports)}
-        <RenderNodes input={nodeType.body} options={{ scope: nodeScope }} />
+        <RenderNodes
+          input={nodeType.body}
+          options={{ data: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
+        />
       </div>
 
-      {hasQuickActions && (
+      {(hasQuickActions || showToolbar) && (
         <NodeToolbar isVisible={showToolbar} position={Position.Top}>
-          <div className="fd-xyflow-node-toolbar">
-            <RenderNodes input={nodeType.quickActions!} options={{ scope: runtime.createChildScope(nodeScope, actionScope) }} />
+          <div className="fd-xyflow-node-toolbar" onMouseEnter={showToolbarNow} onMouseLeave={scheduleHideToolbar}>
+            {hasQuickActions ? (
+              <RenderNodes
+                input={nodeType.quickActions!}
+                options={{
+                  data: {
+                    ...nodeRenderData,
+                    ...actionScope
+                  },
+                  scopeKey: `node:${props.id}:quick-actions`,
+                  pathSuffix: 'node.quickActions'
+                }}
+              />
+            ) : (
+              <div className="nop-flex flex gap-1">
+                <button
+                  type="button"
+                  className="nop-button nop-button--sm fd-xyflow-node-toolbar__icon-button"
+                  aria-label="Edit node"
+                  onClick={actionScope.onEdit}
+                >
+                  <i className="nop-icon nop-icon--pencil" data-icon="pencil" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="nop-button nop-button--sm fd-xyflow-node-toolbar__icon-button"
+                  aria-label="Duplicate node"
+                  onClick={actionScope.onDuplicate}
+                >
+                  <i className="nop-icon nop-icon--copy" data-icon="copy" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="nop-button nop-button--danger nop-button--sm fd-xyflow-node-toolbar__icon-button"
+                  aria-label="Delete node"
+                  onClick={actionScope.onDelete}
+                >
+                  <i className="nop-icon nop-icon--trash-2" data-icon="trash-2" aria-hidden="true" />
+                </button>
+              </div>
+            )}
           </div>
         </NodeToolbar>
       )}

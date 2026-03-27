@@ -76,7 +76,9 @@ export function DesignerPaletteContent() {
                       onClick={() => handleAddNode(nt)}
                       title={nt.description ?? nt.label}
                     >
-                      <span className="fd-palette__item-icon">{nt.icon ?? '◇'}</span>
+                      <span className="fd-palette__item-icon" aria-hidden="true">
+                        {nt.icon ? <i className={`nop-icon nop-icon--${nt.icon}`} data-icon={nt.icon} /> : '◇'}
+                      </span>
                       <span className="fd-palette__item-label">{nt.label}</span>
                     </button>
                   );

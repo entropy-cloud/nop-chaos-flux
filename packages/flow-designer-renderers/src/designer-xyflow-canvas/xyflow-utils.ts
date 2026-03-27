@@ -1,6 +1,11 @@
 import type { Edge, Node } from '@xyflow/react';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
-import type { DesignerFlowNodeData, DesignerXyflowControlledViewport, XyflowViewportChange } from './types';
+import type {
+  DesignerFlowEdgeData,
+  DesignerFlowNodeData,
+  DesignerXyflowControlledViewport,
+  XyflowViewportChange
+} from './types';
 
 const VIEWPORT_EPSILON = 0.01;
 
@@ -11,6 +16,7 @@ export function createXyflowNodes(snapshot: DesignerSnapshot): Node[] {
     position: { ...node.position },
     selected: snapshot.selection.activeNodeId === node.id,
     data: {
+      ...(node.data ?? {}),
       label: String(node.data.label ?? node.id),
       typeLabel: node.type,
       typeId: node.type
@@ -28,6 +34,11 @@ export function createXyflowEdges(snapshot: DesignerSnapshot): Edge[] {
     source: edge.source,
     target: edge.target,
     label: String(edge.data.label ?? edge.id),
+    data: {
+      ...(edge.data ?? {}),
+      label: String(edge.data.label ?? edge.id),
+      typeId: edge.type
+    } satisfies DesignerFlowEdgeData,
     selected: snapshot.selection.activeEdgeId === edge.id
   }));
 }

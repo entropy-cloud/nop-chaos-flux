@@ -2,9 +2,10 @@ import React from 'react';
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 import { isSchema } from '@nop-chaos/flux-core';
-import { RenderNodes, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
+import { RenderNodes } from '@nop-chaos/flux-react';
 import { useEdgeTypeConfig, useDesignerContext } from '../designer-context';
 import type { SchemaInput } from '@nop-chaos/flux-core';
+import type { DesignerFlowEdgeData } from './types';
 
 function classNames(...values: Array<string | undefined | false | null>) {
   return values.filter(Boolean).join(' ');
@@ -15,10 +16,9 @@ function isSchemaInput(value: unknown): value is SchemaInput {
 }
 
 export function DesignerXyflowEdge(props: EdgeProps) {
-  const edgeType = useEdgeTypeConfig(props.type ?? 'default');
+  const edgeData = (props.data as DesignerFlowEdgeData | undefined) ?? undefined;
+  const edgeType = useEdgeTypeConfig(edgeData?.typeId ?? props.type ?? 'default');
   const { dispatch } = useDesignerContext();
-  const runtime = useRendererRuntime();
-  const parentScope = useRenderScope();
 
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX: props.sourceX,
@@ -29,20 +29,15 @@ export function DesignerXyflowEdge(props: EdgeProps) {
     targetPosition: props.targetPosition
   });
 
-  const edgeScope = React.useMemo(() => {
-    return runtime.createChildScope(parentScope, {
-      edge: {
-        id: props.id,
-        source: props.source,
-        target: props.target,
-        data: props.data
-      },
+  const edgeRenderData = React.useMemo(() => ({
+    edge: {
+      id: props.id,
+      source: props.source,
+      target: props.target,
       data: props.data
-    }, {
-      scopeKey: `edge:${props.id}`,
-      pathSuffix: 'edge'
-    });
-  }, [runtime, parentScope, props.id, props.source, props.target, props.data]);
+    },
+    data: props.data
+  }), [props.id, props.source, props.target, props.data]);
 
   const handleLabelClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -83,7 +78,10 @@ export function DesignerXyflowEdge(props: EdgeProps) {
             }}
             onClick={handleLabelClick}
           >
-            <RenderNodes input={edgeType!.body!} options={{ scope: edgeScope }} />
+            <RenderNodes
+              input={edgeType!.body!}
+              options={{ data: edgeRenderData, scopeKey: `edge:${props.id}`, pathSuffix: 'edge' }}
+            />
           </div>
         </EdgeLabelRenderer>
       )}

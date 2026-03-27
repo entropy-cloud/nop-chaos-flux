@@ -6,6 +6,11 @@ export interface DesignerFlowNodeData extends Record<string, unknown> {
   typeId: string;
 }
 
+export interface DesignerFlowEdgeData extends Record<string, unknown> {
+  label: string;
+  typeId: string;
+}
+
 export interface DesignerXyflowControlledViewport {
   x: number;
   y: number;

@@ -16,11 +16,12 @@ import { createDesignerActionProvider } from './designer-action-provider';
 import { DesignerPaletteContent } from './designer-palette';
 import { DesignerCanvasContent } from './designer-canvas';
 import { DefaultInspector } from './designer-inspector';
+import { DesignerToolbarContent } from './designer-toolbar';
 
 export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {
-  const schemaProps = props.props as Record<string, SchemaValue>;
-  const document = schemaProps.document as unknown as GraphDocument;
-  const config = schemaProps.config as unknown as DesignerConfig;
+  const rawSchemaProps = props.schema as Record<string, SchemaValue>;
+  const document = rawSchemaProps.document as unknown as GraphDocument;
+  const config = rawSchemaProps.config as unknown as DesignerConfig;
 
   const core = useMemo(() => {
     if (!document || !config) return null;
@@ -55,7 +56,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
     return actionScope.registerNamespace('designer', designerProvider);
   }, [actionScope, designerProvider]);
 
-  const toolbarSlot = props.regions.toolbar?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).toolbar as React.ReactNode);
+  const toolbarSlot = props.regions.toolbar?.render({ scope: designerScope, actionScope });
   const inspectorSlot = props.regions.inspector?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).inspector as React.ReactNode);
   const dialogsSlot = props.regions.dialogs?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).dialogs as React.ReactNode);
 
@@ -67,7 +68,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
     <DesignerContext.Provider value={ctxValue}>
       <div className="fd-page nop-theme-root fd-theme-root">
         <div className="fd-page__header">
-          {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : null}
+          {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent />}
         </div>
         <div className="fd-page__content">
           <div className="fd-page__palette">
