@@ -4,6 +4,7 @@ import type {
   NopDebuggerAutomationApi,
   NopDebuggerController,
   NopDebuggerHub,
+  NopDebuggerPinnedErrors,
   NopDebuggerSessionExport,
   NopDebuggerSessionExportOptions,
   NopDebuggerSnapshot,
@@ -27,6 +28,9 @@ export function createAutomationApi(input: {
   queryEvents(query?: NopDebugEventQuery): NopDebugEvent[];
   getLatestEvent(query?: NopDebugEventQuery): NopDebugEvent | undefined;
   getLatestError(): NopDebugEvent | undefined;
+  getEarliestErrors(): NopDebugEvent[];
+  getLatestErrors(): NopDebugEvent[];
+  getPinnedErrors(): NopDebuggerPinnedErrors;
   getNodeDiagnostics(options: NopNodeDiagnosticsOptions): NopNodeDiagnostics;
   getInteractionTrace(query: NopInteractionTraceQuery): NopInteractionTrace;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
@@ -50,6 +54,9 @@ export function createAutomationApi(input: {
     queryEvents: input.queryEvents,
     getLatestEvent: input.getLatestEvent,
     getLatestError: input.getLatestError,
+    getEarliestErrors: input.getEarliestErrors,
+    getLatestErrors: input.getLatestErrors,
+    getPinnedErrors: input.getPinnedErrors,
     getNodeDiagnostics: input.getNodeDiagnostics,
     getInteractionTrace: input.getInteractionTrace,
     createDiagnosticReport: input.createDiagnosticReport,

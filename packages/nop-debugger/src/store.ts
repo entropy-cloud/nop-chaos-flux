@@ -23,6 +23,8 @@ export function createDebuggerStore(input: {
   defaultOpen: boolean;
   defaultTab: NopDebuggerTab;
   position: { x: number; y: number };
+  errorBufferKeepEarliest: number;
+  errorBufferKeepLatest: number;
 }): NopDebuggerStore {
   const listeners = new Set<() => void>();
   let notifyScheduled = false;
@@ -34,7 +36,8 @@ export function createDebuggerStore(input: {
     activeTab: input.defaultTab,
     position: input.position,
     events: [],
-    filters: [...DEFAULT_FILTERS]
+    filters: [...DEFAULT_FILTERS],
+    pinnedErrors: { earliest: [], latest: [] }
   };
 
   let nextId = 1;
@@ -60,6 +63,36 @@ export function createDebuggerStore(input: {
     scheduleNotify();
   };
 
+  const isErrorLevel = (level: string) => level === 'error' || level === 'warning';
+
+  const updatePinnedErrors = (
+    pinned: { earliest: NopDebugEvent[]; latest: NopDebugEvent[] },
+    event: NopDebugEvent
+  ) => {
+    const keepEarliest = input.errorBufferKeepEarliest;
+    const keepLatest = input.errorBufferKeepLatest;
+
+    if (keepEarliest === 0 && keepLatest === 0) {
+      return pinned;
+    }
+
+    let earliest = [...pinned.earliest];
+    let latest = [...pinned.latest];
+
+    if (keepEarliest > 0 && earliest.length < keepEarliest) {
+      earliest = [...earliest, event];
+    }
+
+    if (keepLatest > 0) {
+      latest = [...latest, event];
+      if (latest.length > keepLatest) {
+        latest = latest.slice(-keepLatest);
+      }
+    }
+
+    return { earliest, latest };
+  };
+
   return {
     getSnapshot() {
       return snapshot;
@@ -74,22 +107,28 @@ export function createDebuggerStore(input: {
       }
 
       const timestamp = event.timestamp ?? Date.now();
+      const fullEvent: NopDebugEvent = {
+        ...event,
+        id: nextId++,
+        sessionId: input.sessionId,
+        timestamp
+      };
 
-      setSnapshot((current) => ({
-        ...current,
-        events: [
-          {
-            ...event,
-            id: nextId++,
-            sessionId: input.sessionId,
-            timestamp
-          },
-          ...current.events
-        ].slice(0, input.maxEvents)
-      }));
+      setSnapshot((current) => {
+        const newEvents = [fullEvent, ...current.events].slice(0, input.maxEvents);
+        const newPinnedErrors = isErrorLevel(fullEvent.level)
+          ? updatePinnedErrors(current.pinnedErrors, fullEvent)
+          : current.pinnedErrors;
+
+        return {
+          ...current,
+          events: newEvents,
+          pinnedErrors: newPinnedErrors
+        };
+      });
     },
     clear() {
-      setSnapshot((current) => ({ ...current, events: [] }));
+      setSnapshot((current) => ({ ...current, events: [], pinnedErrors: { earliest: [], latest: [] } }));
     },
     show() {
       setSnapshot((current) => ({ ...current, panelOpen: true }));

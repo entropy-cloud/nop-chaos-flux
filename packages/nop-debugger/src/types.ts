@@ -76,6 +76,11 @@ export interface NopDebugEvent {
   exportedData?: unknown;
 }
 
+export interface NopDebuggerPinnedErrors {
+  earliest: NopDebugEvent[];
+  latest: NopDebugEvent[];
+}
+
 export interface NopDebuggerSnapshot {
   enabled: boolean;
   panelOpen: boolean;
@@ -84,6 +89,7 @@ export interface NopDebuggerSnapshot {
   position: { x: number; y: number };
   events: NopDebugEvent[];
   filters: NopDebuggerFilterKind[];
+  pinnedErrors: NopDebuggerPinnedErrors;
 }
 
 export interface NopDebuggerOverview {
@@ -177,6 +183,7 @@ export interface NopDebuggerSessionExport {
   latestAction?: NopDebugEvent;
   latestApi?: NopDebugEvent;
   events: NopDebugEvent[];
+  pinnedErrors: NopDebuggerPinnedErrors;
 }
 
 export interface NopDiagnosticReport {
@@ -190,6 +197,7 @@ export interface NopDiagnosticReport {
   latestApi?: NopDebugEvent;
   latestInteractionTrace?: NopInteractionTrace;
   recentEvents: NopDebugEvent[];
+  pinnedErrors: NopDebuggerPinnedErrors;
 }
 
 export interface NopDiagnosticReportOptions {
@@ -212,6 +220,9 @@ export interface NopDebuggerAutomationApi {
   queryEvents(query?: NopDebugEventQuery): NopDebugEvent[];
   getLatestEvent(query?: NopDebugEventQuery): NopDebugEvent | undefined;
   getLatestError(): NopDebugEvent | undefined;
+  getEarliestErrors(): NopDebugEvent[];
+  getLatestErrors(): NopDebugEvent[];
+  getPinnedErrors(): NopDebuggerPinnedErrors;
   getNodeDiagnostics(options: NopNodeDiagnosticsOptions): NopNodeDiagnostics;
   getInteractionTrace(query: NopInteractionTraceQuery): NopInteractionTrace;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
@@ -238,12 +249,18 @@ export interface InstallNopDebuggerWindowFlagOptions {
   config: boolean | NopDebuggerWindowConfig;
 }
 
+export interface NopErrorBufferOptions {
+  keepEarliest?: number;
+  keepLatest?: number;
+}
+
 export interface NopDebuggerOptions {
   id?: string;
   enabled?: boolean;
   maxEvents?: number;
   exposeAutomationApi?: boolean;
   redaction?: NopDebuggerRedactionOptions;
+  errorBuffer?: NopErrorBufferOptions;
 }
 
 export interface NopDebuggerController {
@@ -266,6 +283,9 @@ export interface NopDebuggerController {
   queryEvents(query?: NopDebugEventQuery): NopDebugEvent[];
   getLatestEvent(query?: NopDebugEventQuery): NopDebugEvent | undefined;
   getLatestError(): NopDebugEvent | undefined;
+  getEarliestErrors(): NopDebugEvent[];
+  getLatestErrors(): NopDebugEvent[];
+  getPinnedErrors(): NopDebuggerPinnedErrors;
   getNodeDiagnostics(options: NopNodeDiagnosticsOptions): NopNodeDiagnostics;
   getInteractionTrace(query: NopInteractionTraceQuery): NopInteractionTrace;
   getOverview(): NopDebuggerOverview;

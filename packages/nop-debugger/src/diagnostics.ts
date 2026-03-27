@@ -215,7 +215,8 @@ export function createDiagnosticReport(
     latestAction: overview.latestAction,
     latestApi: overview.latestApi,
     latestInteractionTrace,
-    recentEvents
+    recentEvents,
+    pinnedErrors: snapshot.pinnedErrors ?? EMPTY_PINNED_ERRORS
   };
 }
 
@@ -342,6 +343,7 @@ export function buildSessionExport(
     events: events.map((event) => ({
       ...event,
       exportedData: redactData(event.exportedData, redaction)
-    }))
+    })),
+    pinnedErrors: snapshot.pinnedErrors ?? EMPTY_PINNED_ERRORS
   };
 }
