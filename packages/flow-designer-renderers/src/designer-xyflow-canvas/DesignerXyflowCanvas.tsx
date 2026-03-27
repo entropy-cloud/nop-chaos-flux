@@ -82,6 +82,16 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
 
   const showMinimap = props.showMinimap !== false;
   const showControls = props.showControls !== false;
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!showMinimap) return;
+
+    const minimapSvg = surfaceRef.current?.querySelector('.react-flow__minimap svg');
+    if (minimapSvg && minimapSvg.getAttribute('preserveAspectRatio') !== 'none') {
+      minimapSvg.setAttribute('preserveAspectRatio', 'none');
+    }
+  }, [showMinimap, localNodes, localEdges]);
 
   useEffect(() => {
     setControlledViewport((current) => (viewportsEqual(current, viewport) ? current : viewport));
@@ -230,7 +240,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
 
   return (
     <div className="fd-xyflow-live">
-      <div className="fd-xyflow-live__surface">
+      <div className="fd-xyflow-live__surface" ref={surfaceRef}>
         <ReactFlowProvider>
           <ReactFlow
             nodes={localNodes}
@@ -311,10 +321,12 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
                 className="fd-xyflow-minimap"
                 pannable
                 zoomable
-                nodeColor={() => 'rgba(59, 130, 246, 0.18)'}
-                nodeStrokeColor={() => '#3b82f6'}
-                nodeBorderRadius={4}
-                maskColor="rgba(59, 130, 246, 0.1)"
+                bgColor="#e2e8f0"
+                offsetScale={0}
+                nodeColor={() => 'rgba(15, 23, 42, 0.92)'}
+                nodeStrokeColor={() => '#0f172a'}
+                nodeBorderRadius={2}
+                maskColor="rgba(255, 255, 255, 0.55)"
               />
             )}
             {showControls && <Controls className="fd-xyflow-controls" showInteractive={false} />}
