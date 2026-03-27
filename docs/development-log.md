@@ -18,6 +18,15 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-28 (shadcn/ui Migration Planning)
+
+- Added `docs/architecture/styling-system.md` section explaining why we framework uses shadcn/ui components.
+- Created `docs/plans/18-shadcn-ui-migration-plan.md` with detailed migration plan from nop-chaos-next-master.
+- Key decision: use shadcn/ui for UI interaction layer (hover/focus/accessibility) while keeping business logic in flux-runtime layer.
+- Core dependencies: radix-ui, class-variance-authority, clsx, tailwind-merge, lucide-react.
+- Excluded: react-hook-form, zod, recharts, cmdk, date-fns (not needed for basic rendering).
+- Next step: execute Phase 1 (create packages/ui structure and copy core infrastructure).
+
 ### 2026-03-27 (Flow Designer Production-Parity Refactor Execution)
 
 - Executed the production-parity refactor items on the `designer-page` main path:

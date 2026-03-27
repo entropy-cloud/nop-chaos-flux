@@ -6,6 +6,127 @@ This document defines how the low-code framework handles styling in a TailwindCS
 - Relationship between semantic props and Tailwind classes
 - When to use semantic props vs raw className
 - `classAliases` mechanism for reusable class definitions
+- shadcn/ui component library integration
+
+## UI Component Library: shadcn/ui
+
+### Why shadcn/ui
+
+The framework uses shadcn/ui components (from `@nop-chaos/ui`) as the UI component layer for these reasons:
+
+1. **Separation of Concerns**
+   - **UI Interaction Layer** (shadcn/ui): hover, focus, keyboard navigation, accessibility, animations
+   - **Business Logic Layer** (flux-runtime): action dispatch, form state, validation, data binding
+   - **Schema Layer** (flux-core): JSON-driven configuration, semantic props
+
+2. **No Lock-in**: shadcn/ui is "copy-paste" components, not a black-box library. We own the code and can modify it.
+
+3. **TailwindCSS Native**: Built on Tailwind classes, matches our styling system perfectly.
+
+4. **Accessibility Built-in**: radix-ui primitives provide ARIA support, keyboard navigation, focus management out of the box.
+
+5. **Variant System**: `class-variance-authority` (cva) provides clean variant/size APIs that map naturally to schema props.
+
+### Architecture Integration
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     JSON Schema                              │
+│  { type: "button", variant: "primary", label: "Submit" }    │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  flux-runtime (stateless)                    │
+│  - Compile schema → props                                    │
+│  - Resolve expressions                                       │
+│  - Map schema props to component props                       │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   flux-react (renderers)                     │
+│  - ButtonRenderer receives: { variant, size, disabled, ... }│
+│  - Pass props to @nop-chaos/ui Button                        │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   @nop-chaos/ui (shadcn)                     │
+│  - Button handles: hover, focus, disabled styles             │
+│  - radix-ui provides: keyboard nav, ARIA                     │
+│  - cva generates: Tailwind classes for variants              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### What shadcn/ui Handles
+
+| Concern | Owner | Example |
+|---------|-------|---------|
+| Hover/focus styles | shadcn/ui | `hover:bg-primary/90`, `focus-visible:ring-2` |
+| Keyboard navigation | radix-ui | Tab, Enter, Escape handling |
+| Accessibility | radix-ui | ARIA attributes, roles |
+| Animation | Tailwind | `transition-colors`, `animate-in` |
+| Variant styles | cva | `variant="destructive"` → red background |
+| Size styles | cva | `size="sm"` → smaller padding |
+
+### What flux-runtime Handles
+
+| Concern | Owner | Example |
+|---------|-------|---------|
+| Disabled state | schema/runtime | `disabled: "${form.submitting}"` |
+| Visibility | schema/runtime | `visibleOn: "${hasPermission}"` |
+| Click action | schema/runtime | `onClick: { action: "submitForm" }` |
+| Label text | schema/runtime | `label: "${i18n.submit}"` |
+| Form binding | schema/runtime | `name: "email"` with validation |
+
+### Component Props Mapping
+
+Renderer maps schema props to shadcn/ui component props:
+
+```typescript
+// flux-renderers-basic/src/button.tsx
+function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
+  return (
+    <Button
+      variant={props.props.variant}      // schema → component
+      size={props.props.size}            // schema → component
+      disabled={props.meta.disabled}     // runtime → component
+      onClick={props.events.onClick}     // action → handler
+    >
+      {props.props.label}
+    </Button>
+  );
+}
+```
+
+### Dependency Profile
+
+Core dependencies (shared across most components):
+- `radix-ui` - UI primitives (Dialog, Select, Tabs, etc.)
+- `class-variance-authority` - Variant/size class generation
+- `clsx` + `tailwind-merge` - Tailwind class merging via `cn()`
+- `lucide-react` - Icon library
+
+Excluded dependencies (not needed for basic rendering):
+- `react-hook-form` - Form validation (flux has its own)
+- `zod` - Schema validation (flux has its own)
+- `recharts` - Charts (separate concern)
+- `cmdk` - Command palette (separate concern)
+- `date-fns` - Date utilities (separate concern)
+
+### Included Components
+
+See `docs/plans/18-shadcn-ui-migration-plan.md` for the full migration list.
+
+Core components:
+- Button, Checkbox, Switch, RadioGroup
+- Dialog, Sheet, Drawer
+- Select, Input, Textarea, Label
+- Tabs, DropdownMenu, Popover, Tooltip
+- Table, Card, Badge, Avatar
+- ScrollArea, Separator, Progress
+- Alert, Skeleton, Spinner
 
 ## Design Principles
 
@@ -314,8 +435,8 @@ interface BadSchema {
 - NOT runtime theme switching - aliases are resolved at compile/render time
 
 ## Related Docs
-
 - `docs/architecture/theme-compatibility.md` - CSS variables and host theming
 - `docs/architecture/renderer-runtime.md` - Renderer props resolution
 - `packages/flux-core/src/index.ts` - `BaseSchema.classAliases` type
 - `packages/flux-runtime/src/class-aliases.ts` - Resolution implementation
+- `docs/plans/18-shadcn-ui-migration-plan.md` - shadcn/ui migration plan
