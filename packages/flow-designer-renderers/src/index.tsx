@@ -13,13 +13,22 @@ export { DesignerCanvasContent } from './designer-canvas';
 export { DefaultInspector } from './designer-inspector';
 export { DesignerFieldRenderer } from './designer-field';
 export {
-  DesignerCardCanvasBridge,
-  DesignerXyflowPreviewBridge,
   DesignerXyflowCanvasBridge,
   renderDesignerCanvasBridge,
   type DesignerCanvasAdapterKind,
   type DesignerCanvasBridgeProps
 } from './canvas-bridge';
+export {
+  DesignerXyflowCanvas,
+  DesignerXyflowNode,
+  DesignerXyflowEdge,
+  renderPorts,
+  useNodeTypeConfig,
+  useEdgeTypeConfig,
+  useNormalizedConfig,
+  type DesignerXyflowCanvasProps,
+  DESIGNER_PALETTE_NODE_MIME
+} from './designer-xyflow-canvas';
 
 export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   {
