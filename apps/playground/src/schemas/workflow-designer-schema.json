@@ -122,7 +122,7 @@
         "icon": "play",
         "body": {
           "type": "flex",
-          "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border-2 border-green-500 shadow-sm",
+          "className": "flex items-start gap-2 px-3 py-2 bg-white rounded-lg border-2 border-green-500 shadow-sm",
           "items": [
             {
               "type": "icon",
@@ -188,7 +188,7 @@
         "icon": "flag",
         "body": {
           "type": "flex",
-          "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border-2 border-red-500 shadow-sm",
+          "className": "flex items-start gap-2 px-3 py-2 bg-white rounded-lg border-2 border-red-500 shadow-sm",
           "items": [
             {
               "type": "icon",
@@ -248,24 +248,46 @@
         "icon": "workflow",
         "body": {
           "type": "flex",
-          "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
+          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
           "items": [
             {
-              "type": "icon",
-              "icon": "workflow",
-              "className": "w-5 h-5 text-blue-600"
+              "type": "flex",
+              "className": "flex items-start gap-2",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "workflow",
+                  "className": "w-5 h-5 text-blue-600"
+                },
+                {
+                  "type": "container",
+                  "body": [
+                    {
+                      "type": "text",
+                      "body": "${data.label}",
+                      "className": "text-sm font-medium text-gray-900"
+                    },
+                    {
+                      "type": "text",
+                      "body": "${data.description}",
+                      "className": "text-xs text-gray-500"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "type": "container",
-              "body": [
+              "type": "flex",
+              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "items": [
                 {
                   "type": "text",
-                  "body": "${data.label}",
-                  "className": "text-sm font-medium text-gray-900"
+                  "body": "任务节点",
+                  "className": "text-xs text-sky-700 px-1.5 py-0.5 rounded-full bg-sky-100"
                 },
                 {
                   "type": "text",
-                  "body": "${data.config.executor} · ${data.config.timeout}",
+                  "body": "2项配置",
                   "className": "text-xs text-gray-500"
                 }
               ]
@@ -308,7 +330,7 @@
         "icon": "git-branch",
         "body": {
           "type": "flex",
-          "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-yellow-400 shadow-sm",
+          "className": "flex items-start gap-2 px-3 py-2 bg-white rounded-lg border border-yellow-400 shadow-sm",
           "items": [
             {
               "type": "icon",
@@ -357,7 +379,7 @@
         "icon": "git-merge",
         "body": {
           "type": "flex",
-          "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
+          "className": "flex items-start gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
           "items": [
             {
               "type": "icon",
@@ -405,7 +427,7 @@
         "icon": "repeat",
         "body": {
           "type": "flex",
-          "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
+          "className": "flex items-start gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
           "items": [
             {
               "type": "icon",
@@ -456,7 +478,7 @@
         "body": {
           "type": "text",
           "body": "${data.condition}",
-          "className": "text-xs text-gray-600 bg-white px-1.5 py-0.5 rounded"
+          "className": "text-sm font-medium text-gray-600"
         },
         "appearance": {
           "stroke": "#94a3b8",
