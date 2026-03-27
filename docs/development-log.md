@@ -18,104 +18,25 @@ This file is intentionally lightweight.
 
 ## Entries
 
-### 2026-03-27 (Flow Designer Visual Parity Round 9: Node Layout Semantics + Edge Hover Quick Actions)
+### 2026-03-27 (Flow Designer Visual Parity Closure: Node Semantics, Canvas, Minimap)
 
-- Performed another source-level comparison against `flow-editor-static.html` for the remaining structural mismatches reported in review (not just color tokens).
-- Fixed task-node layout semantics to match prototype composition:
-  - top row is strictly `icon + title/desc`
-  - footer row (`任务节点` + `2项配置`) moved below the top row as a separate full-width line
-- Added missing utility shims to support schema semantics (`flex-col`, `justify-between`, `w-full`) so JSON classnames map correctly at runtime.
-- Aligned selected-node visual effect with prototype ring behavior by restoring a visible focus ring + depth shadow on selected state.
-- Updated minimap appearance to match prototype card model:
-  - `208x128`, bottom-right anchoring, rounded card shell
-  - gradient background layer + blur/backdrop treatment
-  - minimap node tokens via MiniMap props (`nodeColor`, `nodeStrokeColor`, `nodeBorderRadius`, `maskColor`)
-- Implemented edge hover quick actions in XYFlow renderer (previously missing in this adapter):
-  - quick actions now appear when edge is hovered or selected
-  - action buttons use white default background and light-blue hover background to match prototype interaction tone
-  - actions currently provide edge select/edit focus and edge delete
-- Normalized quick-action button styles for node toolbar as well:
-  - default white icon button background
-  - light-blue hover feedback instead of theme-accent fill
-- Expanded e2e coverage for this parity batch:
-  - task footer vertical placement below header row
-  - node/edge quick-action button default-vs-hover background states
-  - edge-hover quick-actions visibility and icon presence
-  - minimap gradient background assertion
-- Code paths:
+- Consolidated the final visual parity fixes against `flow-editor-static.html` and closed the remaining accepted gaps in one pass.
+- Key outcomes:
+  - unified node structure to vertical two-row semantics and moved size policy to JSON (`nodeType.appearance` + per-node overrides)
+  - aligned selected state, palette icon chips, quick-actions default/hover style, edge dash/label tokens, and controls/minimap anchor positions
+  - resolved minimap centered-square artifact by aligning shell/svg background tokens and forcing SVG mask mapping with `preserveAspectRatio="none"`
+- Key decision:
+  - keep rendering behavior schema-driven first; CSS is limited to scoped utility shims and deterministic XYFlow wrapper constraints
+- Primary code paths:
   - `apps/playground/src/schemas/workflow-designer-schema.json`
-  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/types.ts`
-  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
-  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`
-  - `packages/flow-designer-renderers/src/styles.css`
-  - `tests/e2e/flow-designer-ui.spec.ts`
-
-### 2026-03-27 (Flow Designer Visual Parity Round 8: Structure-Level Fidelity Sweep)
-
-- Addressed previously uncovered parity dimensions using selector-level diff against the static prototype: node geometry, icon anchor, minimap/control panel positioning, edge dash semantics, and edge label typography/container style.
-- Root cause for prior omissions: previous passes focused on color/surface parity and selected-card styling, but did not enforce a checklist for non-color geometry and control overlays (node min width, minimap/control anchoring, line-style rhythm).
-- Applied fixes:
-  - node shell baseline geometry updated to prototype-like width footprint (`192px`) in xyflow mapping and final CSS overrides
-  - node header alignment switched to top-aligned icon/content stack (`items-start`) across workflow node schemas
-  - icon visual token aligned to prototype dimensions (`20px` glyph box + `10px` padding + `12px` radius)
-  - minimap and zoom controls moved to prototype coordinates and dimensions (`controls` top-left, `minimap` bottom-right with `208x128` card)
-  - edge stroke style now reads business `lineStyle` from edge data and maps to prototype dash rhythm (`dashed 6,4`, `dotted 2,4`)
-  - edge label body simplified to text-only token while wrapper owns pill background, border, and typography
-- Added e2e assertions so this class of omissions cannot silently regress:
-  - node min width/icon geometry
-  - minimap width/height/offset/background
-  - controls offset/radius/button size
-  - edge label radius/font/background and dashed/dotted dasharray presence
-- Code paths:
-  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/xyflow-utils.ts`
-  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`
   - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
   - `packages/flow-designer-renderers/src/styles.css`
-  - `apps/playground/src/schemas/workflow-designer-schema.json`
   - `tests/e2e/flow-designer-ui.spec.ts`
-- Validation:
+- Validation summary:
+  - `pnpm.cmd --filter @nop-chaos/flow-designer-renderers lint`
   - `pnpm.cmd typecheck`
   - `pnpm.cmd build`
-  - `pnpm.cmd lint` (workspace has two pre-existing hook dependency warnings outside this change)
   - `pnpm.cmd test:e2e --reporter=line` (`2 passed`)
-
-### 2026-03-27 (Flow Designer Visual Parity Round 7: Static Prototype CSS Diff)
-
-- Compared current implementation with verified static prototype page (`flow-editor-static.html`) and extracted concrete style deltas from source CSS selectors (`.flow-node`, `.canvas-wrapper`, `.canvas-bg`, `.canvas-grid`, `.flow-node-chip.task`).
-- Root-cause findings from direct CSS diff:
-  - node card shadow was weaker than prototype (`shadow-sm`) while prototype uses strong card depth (`shadow-lg`-level)
-  - canvas background model differed: prototype is white card container + radial accent layer + 24px grid rhythm; current implementation had a broad linear gradient override
-  - task footer semantics differed: prototype has one pill chip (`任务节点`) and plain meta text (`2项配置`), while current page rendered two pills
-- Applied alignment fixes:
-  - task footer changed to one sky chip + plain meta text in schema
-  - added utility shims for `bg-sky-100`, `text-sky-700`, `rounded-full`
-  - canvas shell and surface reset to prototype-like white container + radial accent layer
-  - grid stroke/gap tuned to prototype values (`gap=24`, softer stroke alpha)
-  - node card shadow strengthened for schema card inside xyflow node shell
-- Updated e2e assertions to lock new baseline (chip color/radius, white canvas container state).
-- Code paths:
-  - `apps/playground/src/schemas/workflow-designer-schema.json`
-  - `packages/flow-designer-renderers/src/styles.css`
-  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
-  - `tests/e2e/flow-designer-ui.spec.ts`
-- Key decision: visual parity work now uses source-level CSS diff against static prototype selectors, not heuristic screenshot-only matching.
-
-### 2026-03-27 (Flow Designer Visual Parity Round 6: Prototype CSS Re-Alignment)
-
-- Re-checked prototype-aligned style baseline from `docs/examples/workflow-designer/config.json` and renderer style references, then corrected three mismatches called out in review:
-  - task node card returned to white background with subtle shadow (`bg-white + shadow-sm`) instead of blue-tinted card
-  - task metadata texts (`任务节点`, `2项配置`) converted to rounded chip style with dedicated background (`bg-slate-100`, `rounded`, spacing)
-  - canvas final override switched back to gradient surface and React Flow inner layers set transparent so gradient remains visible
-- Updated e2e expectations accordingly:
-  - task inner card background now asserts white
-  - task chip background/radius now asserted explicitly
-  - canvas uses gradient assertion via `background-image` instead of solid color
-- Hardened e2e entry flow to pass through sign-in screen when auth gate is active before opening Flow Designer.
-- Code paths:
-  - `apps/playground/src/schemas/workflow-designer-schema.json`
-  - `packages/flow-designer-renderers/src/styles.css`
-  - `tests/e2e/flow-designer-ui.spec.ts`
-- Key decision: preserve schema-defined node semantics from workflow example as baseline and only use scoped CSS shims/overrides to fill utility gaps.
 
 ### 2026-03-27 (Bug Note Standard Update: Diagnostic Method Is Mandatory)
 
@@ -130,284 +51,57 @@ This file is intentionally lightweight.
   - `docs/bugs/12-flow-designer-visual-parity-canvas-node-style-fix.md`
 - Key decision: bug notes must preserve not only conclusion and fix, but also reproducible diagnosis path for hard issues.
 
-### 2026-03-27 (Flow Designer Visual Parity Round 5: Task Background + Icon Alignment + Grid Tune)
 
-- Added bug history note for ongoing style mismatch diagnosis and remediation plan in `docs/bugs/12-flow-designer-visual-parity-canvas-node-style-fix.md`.
-- Applied parity-focused adjustments for remaining mismatches called out during visual comparison:
-  - task node body schema now uses tinted background and semantic border (`bg-blue-50 border-blue-200`) instead of plain white
-  - node body layout switched to top-aligned icon/text stack for multi-line content (`items-start`) to match prototype relative positioning
-  - designer utility shim extended with missing classes (`items-start`, `bg-blue-50`, `border-blue-200`) and container column stacking refinement
-  - canvas background/grid configuration tuned in XYFlow (`BackgroundVariant.Lines`, tighter gap, explicit line color) to reduce prototype drift
-- Updated e2e assertions to explicitly verify task node tinted background and icon/title relative top alignment.
-- Code paths:
-  - `apps/playground/src/schemas/workflow-designer-schema.json`
-  - `packages/flow-designer-renderers/src/styles.css`
-  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
-  - `tests/e2e/flow-designer-ui.spec.ts`
-- Key decision: keep fidelity fixes schema-driven first, then provide only minimal scoped CSS shims required for JSON utility classes to render consistently.
-
-### 2026-03-27 (Flow Designer Visual Parity Round 4: Final Override Pass + Screenshot Artifacts)
-
-- Added a final high-specificity override block to lock visual behavior for node shell/canvas/grid where duplicate legacy selectors previously caused unstable rendering:
-  - outer `.fd-xyflow-node` remains structural only (no border/background/shadow)
-  - selected/focus highlight applies only on inner schema card and removes extra outer ring impression
-  - canvas/surface/grid background now uses stable light value (`#f8fafc`) for closer prototype parity
-  - designer page font stack normalized with Chinese fallback chain for mixed CJK text consistency
-- Expanded Playwright visual verification artifacts:
-  - outputs full-page screenshot `flow-designer-page.png` in addition to existing canvas/node/toolbar captures
-  - added selected-node assertion to ensure no extra `0 0 0 2px` ring shadow (double-border artifact)
-  - updated canvas background assertion to concrete `rgb(248, 250, 252)` and added page font-family assertion includes `Inter`
-- Adjusted playground task node body schema for prototype copy/layout parity:
-  - second line now renders `${data.description}` (for example `邮件通知`)
-  - appended compact metadata row (`任务节点`, `2项配置`) under title/description
-- Resolved lint blocker in toolbar expression evaluator by replacing redundant boolean-cast expressions with strict `=== true` checks.
-- Code paths:
-  - `packages/flow-designer-renderers/src/styles.css`
-  - `tests/e2e/flow-designer-ui.spec.ts`
-- Key decision: keep low-risk parity stabilization in a terminal override block rather than broad stylesheet rewrite, so behavior is deterministic without regressing unrelated screens.
-
-### 2026-03-27 (Flow Designer Visual Parity Round 3: Canvas/Grid + Single-Border Node Shell)
-
-- Normalized XYFlow surface styles to remove conflicting duplicate behavior and malformed overrides in the lower style block:
-  - outer `.fd-xyflow-node` is now a layout shell (no border/background/shadow)
-  - selected state highlight is applied to the rendered inner node card (`.fd-xyflow-node > :first-child`) to avoid inner+outer double border artifacts
-  - `.fd-xyflow-live__surface .react-flow` restored to full-size canvas (`width/height: 100%`)
-  - edge/background rules stabilized (`react-flow__edge-path` stroke, background grid pattern stroke)
-- Added Playwright visual diagnostics for direct side-by-side review:
-  - writes `canvas.png`, `task-node.png`, and `task-node-toolbar.png` under test output screenshots folder
-  - added assertions for "发送欢迎邮件" node semantic text/layout (`邮件通知`/`任务节点`/`2项配置`), icon-title relative position, single-border contract on node shell
-  - added canvas/grid assertions (canvas border present, grid stroke present)
-- Code paths:
-  - `packages/flow-designer-renderers/src/styles.css`
-  - `tests/e2e/flow-designer-ui.spec.ts`
-- Key decision: keep schema-driven inner card visuals as source of truth, and make XYFlow wrapper purely structural so schema classnames control node body appearance consistently.
-
-### 2026-03-27 (Flow Designer Node Visual Parity Round 2: Real SVG Icons + Utility Shims)
-
-- Replaced placeholder icon output with real Lucide SVG rendering in both schema icon renderer and designer-only icon usage paths:
-  - `packages/flux-renderers-basic/src/icon.tsx`
-  - `packages/flow-designer-renderers/src/designer-icon.tsx`
-  - adopted in `designer-toolbar.tsx`, `designer-palette.tsx`, `designer-xyflow-canvas/DesignerXyflowNode.tsx`
-- Added scoped utility-class shim rules under `.fd-page` so schema-defined classes used by node body now render correctly without relying on full Tailwind extraction from JSON:
-  - spacing/layout utilities (`flex`, `items-center`, `gap-2`, `px-3`, `py-2`)
-  - visual utilities (`bg-white`, `rounded-lg`, `border`, semantic border colors, `shadow-sm`)
-  - icon/text sizing + colors (`w-5`, `h-5`, `text-*-600`, `text-sm`, `text-xs`, `text-gray-*`)
-  - edge label spacing helpers (`px-1.5`, `py-0.5`, `rounded`)
-- Set Flow Designer area font family to prototype-aligned stack (`Inter`, `Noto Sans SC`, `PingFang SC`, fallbacks) for more consistent typography.
-- Validation:
-  - `pnpm.cmd --filter @nop-chaos/flux-renderers-basic typecheck`
-  - `pnpm.cmd --filter @nop-chaos/flow-designer-renderers typecheck`
-  - `pnpm.cmd --filter @nop-chaos/flow-designer-renderers test`
-  - `pnpm.cmd test:e2e --reporter=line` (2 passed, HTML shows SVG icons + expected node content classes)
-
-### 2026-03-27 (Flow Designer Prototype Visual Alignment Round 1)
-
-- Performed CSS-first alignment against flow editor prototype baseline for major surfaces and component hierarchy:
-  - page shell spacing/cardization (header/content gaps, column sizing, card-like panel surfaces)
-  - palette groups/items (larger radii, icon chips, layered backgrounds, hover elevation)
-  - top toolbar (compact glass container, icon button sizing, title/meta scale, active state treatment)
-  - xyflow node card (rounded-xl style, softer border, deeper shadow, selected ring)
-  - edge label wrapper style (pill container, shadow, selected tint)
-  - node quick-action toolbar shape and icon button sizing (rounded-full chips)
-- Updated edge dash rhythm to match prototype: dashed `8,6`, dotted `2,6`.
-- Added Playwright style assertions to validate key prototype-aligned computed styles (`20px` radii and non-none shadows for node/palette/toolbar).
-- Code paths:
-  - `packages/flow-designer-renderers/src/styles.css`
-  - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`
-  - `tests/e2e/flow-designer-ui.spec.ts`
-- Validation:
-  - `pnpm.cmd --filter @nop-chaos/flow-designer-renderers test`
-  - `pnpm.cmd --filter @nop-chaos/flow-designer-renderers typecheck`
-  - `pnpm.cmd test:e2e --reporter=line`
-
-### 2026-03-27 (Flow Designer Parity Follow-up: Node Content, Icon Actions, Playwright E2E)
-
-- Fixed schema expression loss in designer runtime by reading `document/config` from raw `props.schema` in `DesignerPageRenderer`, preserving nested template strings (for example `${data.label}`, `${doc.name}`).
-- Updated node hover fallback quick actions from text buttons to icon buttons (`pencil`, `copy`, `trash-2`) for closer prototype parity.
-- Added default toolbar renderer for designer page header so toolbar config now renders real controls (title, counters, undo/redo/save/export buttons with icons and state).
-- Updated palette item icon rendering to icon elements (`<i data-icon="...">`) instead of plain icon text.
-- Added Playwright E2E infrastructure and assertions:
-  - `playwright.config.ts`
-  - `tests/e2e/flow-designer-ui.spec.ts`
-  - root scripts `test:e2e` and `test:e2e:headed`
-- Added Playwright inspection script `scripts/inspect-flow-node-html.mjs` to capture real node/header/palette/toolbar HTML snapshots from a running playground.
-- Added flex compatibility tests confirming semantic order: prefer `body`, fallback to deprecated `items` only when `body` is absent.
-- Validation: `pnpm.cmd --filter @nop-chaos/flux-renderers-basic test`, `pnpm.cmd --filter @nop-chaos/flow-designer-renderers test`, `pnpm.cmd --filter @nop-chaos/flux-playground test`, `pnpm.cmd --filter @nop-chaos/flow-designer-renderers typecheck`, `pnpm.cmd test:e2e --reporter=line`.
-
-### 2026-03-27 (Flow Designer Node Rendering and Toolbar Parity Fix)
-
-- Fixed node content rendering gaps in schema-driven canvas by preserving full node/edge payloads during xyflow mapping.
-- Updated flex renderer compatibility so schemas using `items` render correctly when `body` is absent.
-- Added fallback node quick actions (Edit/Duplicate/Delete) for hover toolbar when `quickActions` schema is not configured, with delayed hide behavior for better hover transfer.
-- Corrected edge config lookup to use business edge type from edge data instead of xyflow renderer type.
-- Code paths: `packages/flow-designer-renderers/src/designer-xyflow-canvas/xyflow-utils.ts`, `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowNode.tsx`, `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`, `packages/flow-designer-renderers/src/designer-xyflow-canvas/types.ts`, `packages/flux-renderers-basic/src/flex.tsx`
-- Validation: `pnpm.cmd --filter @nop-chaos/flux-renderers-basic test`, `pnpm.cmd --filter @nop-chaos/flow-designer-renderers test`, `pnpm.cmd --filter @nop-chaos/flux-renderers-basic typecheck`, `pnpm.cmd --filter @nop-chaos/flow-designer-renderers typecheck`, `pnpm.cmd --filter @nop-chaos/flux-playground typecheck`, `pnpm.cmd --filter @nop-chaos/flux-playground test`.
 
 ### 2026-03-27 (Canvas-Bridge Schema-Driven Rendering Refactor Complete)
 
-- **Completed refactor** of `canvas-bridge.tsx` to be fully driven by `NodeTypeConfig` and `EdgeTypeConfig` JSON schemas.
-
-- **Files created** in `packages/flow-designer-renderers/src/designer-xyflow-canvas/`:
-  - `types.ts` - `DesignerFlowNodeData`, `POSITION_MAP`
-  - `xyflow-utils.ts` - `createXyflowNodes`, `createXyflowEdges`, viewport utilities
-  - `render-ports.tsx` - Schema-driven port rendering
-  - `DesignerXyflowNode.tsx` - Schema-driven node body, ports, toolbar
-  - `DesignerXyflowEdge.tsx` - Schema-driven edge appearance, labels
-  - `DesignerXyflowCanvas.tsx` - Main orchestrator component
-  - `index.ts` - Public exports
-
-- **Files simplified**:
-  - `canvas-bridge.tsx` - Now only exports `DesignerXyflowCanvasBridge` and `renderDesignerCanvasBridge`
-  - `designer-canvas.tsx` - Uses simplified bridge
-  - `designer-page.tsx` - Removed `canvasAdapter` prop from `DesignerCanvasRenderer`
-
-- **Tests updated**:
-  - `canvas-bridge.test.tsx` - Rewritten for new bridge API
-  - `index.test.tsx` - Simplified to test core functionality
-  - Deleted `designer-xyflow-canvas.test.tsx` (broken test file)
-
-- **Key decisions**:
-  - Use `RenderNodes` with `options={{ scope }}` prop (not `scope` directly)
-  - Position mapping uses `Position.Top/Right/Bottom/Left` from `@xyflow/react`
-  - Node/edge configs accessed via `useNodeTypeConfig(typeId)` and `useEdgeTypeConfig(typeId)` hooks
-  - Fallback rendering provided when `body` schema is missing
+- Completed the canvas bridge refactor to a schema-driven XYFlow module set.
+- New submodules under `packages/flow-designer-renderers/src/designer-xyflow-canvas/`: `types.ts`, `xyflow-utils.ts`, `render-ports.tsx`, `DesignerXyflowNode.tsx`, `DesignerXyflowEdge.tsx`, `DesignerXyflowCanvas.tsx`, `index.ts`.
+- Simplified integration points: `canvas-bridge.tsx`, `designer-canvas.tsx`, `designer-page.tsx`.
+- Updated tests around the new bridge API (`canvas-bridge.test.tsx`, `index.test.tsx`).
+- Key decision: node/edge rendering is config-first, with explicit fallback when schema `body` is missing.
 
 ### 2026-03-27 (Component Resolution Design)
 
-- **Created design document** `docs/architecture/component-resolution.md` for component targeting mechanism:
-  - Three-layer identification: `id` (user), `name` (user), `_cid` (internal), `_templateId` (dynamic)
-  - Scope boundary: component lookup never exceeds Page scope
-  - Compile-time optimization: static components get O(1) lookup via `_cid`
-  - Dynamic components (table rows, iterators): use `_templateId` + `instanceKey` with context
-  - Debug-only duplicate name checking
-
-- **Key design decisions**:
-  - Compile-time: assign `_cid` for static components, resolve references to direct `_cid` lookups
-  - Runtime: static = O(1) Map lookup, dynamic = templateId + context instanceKey
-  - Fallback: preserve `componentId`/`componentName` for runtime resolution when compile-time can't resolve
-  - Edge cases: cross-scope calls, nested dynamic components, conditional rendering, dynamically loaded schemas
-
-- **Edge case handling**:
-  - Nested dynamic components use composite instanceKey: `row:2.nested:3`
-  - Conditional components track `_mounted` state
-  - Dynamically loaded schemas use negative cid range
-  - Table sorting/filtering uses data ID instead of row index when available
-  - Lifecycle management with LRU cleanup for large dynamic component counts
+- Added architecture doc `docs/architecture/component-resolution.md` to standardize component targeting.
+- Defined mixed static/dynamic model: static lookup via `_cid`, dynamic lookup via `_templateId` + `instanceKey`.
+- Kept scope boundary at page level and preserved runtime fallback (`componentId`/`componentName`) when compile-time resolution is unavailable.
+- Documented edge-case strategy (nested dynamic paths, conditional mount state, dynamic schema loading, lifecycle cleanup).
 
 ### 2026-03-27 (Component Action Syntax Change)
 
-- **Changed component-targeted action syntax** from `component:invoke` with `args.method` to `component:<method>` pattern:
-  - Before: `{ "action": "component:invoke", "componentId": "form", "args": { "method": "validate" } }`
-  - After: `{ "action": "component:validate", "componentId": "form" }`
-
-- **Implementation changes**:
-  - `packages/flux-runtime/src/action-runtime.ts`: Added `isComponentAction()` and `extractComponentMethod()` helpers, renamed `runComponentInvokeAction` to `runComponentAction`
-  - All tests updated in `packages/flux-runtime/src/index.test.ts` and `packages/flux-react/src/index.test.tsx`
-
-- **Documentation updates**:
-  - `docs/architecture/action-scope-and-imports.md`: Updated schema examples and resolution model
-  - `docs/architecture/flux-core.md`: Updated dispatch path description
-  - `docs/architecture/renderer-runtime.md`: Updated registry description
-  - `docs/standardization.md`: Updated action table and examples
-  - `docs/plans/12-action-scope-imports-and-component-invocation-plan.md`: Updated references
-  - `docs/development-log.md`: Updated earlier entry to reflect new syntax
-
-- **Key decision**: The `component:<method>` syntax is more concise and avoids the need for nested `args.method`, while the `component:` prefix clearly separates it from built-in and namespaced actions.
+- Switched component action syntax from `component:invoke + args.method` to `component:<method>`.
+- Updated runtime dispatch implementation in `packages/flux-runtime/src/action-runtime.ts` and synced related tests.
+- Updated architecture/reference docs to reflect the new contract.
+- Key decision: keep concise syntax while preserving clear namespace separation from built-in actions.
 
 ### 2026-03-27 (nop-debugger: Pinned Error Buffer for AI/Automation)
 
-- **Added pinned error buffer** to `@nop-chaos/nop-debugger`:
-  - New `errorBuffer` option in `NopDebuggerOptions` with `keepEarliest` and `keepLatest` counts
-  - Store maintains separate `pinnedErrors` array independent of sliding window
-  - Pinned errors survive even when main event buffer truncates them
-  - Defaults: `keepEarliest: 3`, `keepLatest: 5`
-
-- **New API methods**:
-  - `getEarliestErrors()`: Returns first N error/warning events
-  - `getLatestErrors()`: Returns last N error/warning events  
-  - `getPinnedErrors()`: Returns `{ earliest: [], latest: [] }` object
-  - All methods available on controller, automation API, and window.__NOP_DEBUGGER_API__
-
-- **Use case**: Enables Playwright/automation tests to capture earliest and latest errors without manual copy-paste. AI can query `window.__NOP_DEBUGGER_API__.getPinnedErrors()` to get diagnostics.
-
-- **Files changed**:
-  - `packages/nop-debugger/src/types.ts` - New interfaces
-  - `packages/nop-debugger/src/store.ts` - Pinned buffer logic
-  - `packages/nop-debugger/src/controller.ts` - Exposed new methods
-  - `packages/nop-debugger/src/automation.ts` - Added to automation API
-  - `packages/nop-debugger/src/diagnostics.ts` - Included in reports/exports
-
-- **Tests added**: 3 new tests in `store.test.ts` for pinned buffer behavior
+- Added pinned error buffering to `@nop-chaos/nop-debugger` so earliest/latest errors survive sliding-window truncation.
+- Exposed retrieval APIs: `getEarliestErrors()`, `getLatestErrors()`, `getPinnedErrors()` on controller and automation surfaces.
+- Updated debugger types/store/controller/automation/diagnostics and added store regression tests.
+- Key value: automation can fetch stable error snapshots without manual log extraction.
 
 ### 2026-03-27 (Flow Designer Page Fixes)
 
-- **Fixed runtime errors in designer-canvas.tsx**:
-  - Event parameter is now optional (`event?: React.MouseEvent`)
-  - All callbacks use `event?.stopPropagation()` instead of `event.stopPropagation()`
-  - Fixes "Cannot read properties of undefined (reading 'stopPropagation')" error
-
-- **Fixed infinite loop in canvas-bridge.tsx**:
-  - Added `lastSelectionRef` to track last triggered selection
-  - `handleSelectionChange` now only triggers callbacks when selection actually changes
-  - Prevents "Maximum update depth exceeded" error when clicking nodes
-
-- **Fixed layout issues**:
-  - `.fd-page` now has `height: 100%` to fill parent container
-  - `.fd-page__content` now has `height: 100%` for proper grid layout
-  - `.playground-flow-page` now has `height: 100vh` and flex layout
-
-- Files: `packages/flow-designer-renderers/src/designer-canvas.tsx`, `packages/flow-designer-renderers/src/canvas-bridge.tsx`, `packages/flow-designer-renderers/src/styles.css`, `apps/playground/src/styles.css`
+- Fixed Flow Designer page stability issues: optional event handling in canvas callbacks, guarded selection-change notifications, and full-height layout corrections.
+- Removed two runtime failure modes: undefined `stopPropagation` and selection-triggered update loops.
+- Updated files: `packages/flow-designer-renderers/src/designer-canvas.tsx`, `packages/flow-designer-renderers/src/canvas-bridge.tsx`, `packages/flow-designer-renderers/src/styles.css`, `apps/playground/src/styles.css`.
 
 ### 2026-03-27 (FieldFrame Component and wrap Property)
 
-- **Added `FieldFrame` component** in `packages/flux-react/src/field-frame.tsx`:
-  - Unified wrapper for form controls that handles label, error, hint, description display
-  - Automatically fetches field state from FormContext using `useOwnedFieldState` and `useAggregateError`
-  - Supports layout modes: 'default', 'checkbox', 'radio'
-  - Uses `<label>` for default layout, `<fieldset>` for checkbox/radio layouts
-
-- **Added `wrap` property to `RendererDefinition`** in `packages/flux-core/src/types.ts`:
-  - When `wrap: true`, NodeRenderer automatically wraps the component with FieldFrame
-  - Controls no longer need to handle label/error display themselves
-
-- **Simplified form controls** in `packages/flux-renderers-form/src/renderers/input.tsx`:
-  - Controls now only render the input element (input, select, textarea, etc.)
-  - Removed FieldLabel and FieldHint from individual controls
-  - Added `wrap: true` to all input renderer definitions
-
-- **Modified `NodeRenderer`** in `packages/flux-react/src/node-renderer.tsx`:
-  - Detects `wrap` property on renderer definition
-  - Automatically wraps component with FieldFrame when `wrap: true`
-  - Passes name, label, required, className to FieldFrame
-
-- **Design document** at `docs/architecture/field-frame.md`
-
-- Key decision: FieldFrame lives in flux-react (base layer), not flux-renderers-form
-- Code paths:
-  - `packages/flux-core/src/types.ts:540-551` - RendererDefinition with wrap property
-  - `packages/flux-react/src/field-frame.tsx` - FieldFrame component
-  - `packages/flux-react/src/node-renderer.tsx:271-295` - Auto-wrapping logic
-  - `packages/flux-renderers-form/src/renderers/input.tsx` - Simplified controls
+- Added `FieldFrame` in `flux-react` and introduced `RendererDefinition.wrap` to centralize form label/error/hint wrapping.
+- `NodeRenderer` now auto-wraps renderers marked with `wrap: true`; form input renderers were simplified to input-only view logic.
+- Documented the contract in `docs/architecture/field-frame.md`.
+- Key decision: keep wrapper abstraction in `flux-react` (shared runtime layer), not in form-renderer package.
 
 ### 2026-03-27 (Formula Expression Parser Fix)
 
-- **Fixed template expression parsing** in `packages/flux-formula/src/index.ts`:
-  - `parseTemplateSegments` now correctly handles nested `{}` in expressions
-  - Supports ternary expressions like `${isDirty ? "warning" : "success"}`
-  - Tracks string literals and brace depth to find matching closing brace
-
-- **Fixed `toEvalContext` to handle `ScopeRef`**:
-  - Added `isScopeRef` type guard
-  - `toEvalContext` now correctly converts `ScopeRef` to `EvalContext`
-  - Previously treated `ScopeRef` as plain object, causing variable resolution failures
-
-- **Fixed `isPureExpression` detection** in `compileNode`:
-  - Previous regex `/^\$\{[\s\S]+\}$/` incorrectly matched templates like `${a} and ${b}`
-  - Added `isPureExpression()` function with proper brace depth tracking
-  - Correctly distinguishes pure expressions from templates with multiple `${}` or text
-
-- **Added tests** for ternary expressions and pure expression detection
-- Files: `packages/flux-formula/src/index.ts`, `packages/flux-formula/src/index.test.ts`
+- Fixed formula parser edge cases in `packages/flux-formula/src/index.ts`:
+  - nested-brace template parsing and ternary expressions
+  - correct `ScopeRef` conversion in `toEvalContext`
+  - robust pure-expression detection (replacing over-broad regex behavior)
+- Added regression tests in `packages/flux-formula/src/index.test.ts`.
 
 ### 2026-03-26 (Flow Designer JSON Rendering)
 
