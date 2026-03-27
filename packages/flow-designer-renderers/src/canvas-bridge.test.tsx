@@ -19,6 +19,12 @@ vi.mock('@xyflow/react', () => ({
   ReactFlow: (props: any) => {
     latestReactFlowProps = props;
     return null;
+  },
+  useNodesState: (initialNodes: any[]) => {
+    return [initialNodes, () => {}, () => {}];
+  },
+  useEdgesState: (initialEdges: any[]) => {
+    return [initialEdges, () => {}, () => {}];
   }
 }));
 

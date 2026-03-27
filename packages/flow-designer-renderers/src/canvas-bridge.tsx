@@ -5,9 +5,13 @@ import {
   Controls,
   Handle,
   MiniMap,
+  OnNodesChange,
+  OnEdgesChange,
   Position,
   ReactFlow,
-  ReactFlowProvider
+  ReactFlowProvider,
+  useNodesState,
+  useEdgesState
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import type {
@@ -130,7 +134,7 @@ function createXyflowNodes(snapshot: DesignerSnapshot): Node[] {
       typeLabel: node.type
     },
     width: 180,
-    height: 60
+    height: 60,
   }));
 }
 
@@ -518,9 +522,11 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
     [props.snapshot.doc.viewport, props.snapshot.viewport]
   );
   const [controlledViewport, setControlledViewport] = React.useState<DesignerXyflowControlledViewport>(viewport);
-  const [localNodes, setLocalNodes] = React.useState<Node[]>(() => snapshotNodes);
   const lastCommittedPositionsRef = React.useRef<Map<string, string>>(new Map());
   const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [localNodes, setLocalNodes, onNodesChangeInternal] = useNodesState(snapshotNodes);
+  const [localEdges, setLocalEdges, onEdgesChangeInternal] = useEdgesState(snapshotEdges);
 
   const showMinimap = props.showMinimap !== false;
   const showControls = props.showControls !== false;
@@ -558,10 +564,14 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
       
       return mergedNodes;
     });
-  }, [snapshotNodes]);
+  }, [snapshotNodes, setLocalNodes]);
 
-  function handleNodesChange(changes: NodeChange[]) {
-    setLocalNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
+  React.useEffect(() => {
+    setLocalEdges(snapshotEdges);
+  }, [snapshotEdges, setLocalEdges]);
+
+  const handleNodesChange = React.useCallback((changes: NodeChange[]) => {
+    onNodesChangeInternal(changes);
 
     for (const change of changes) {
       if (change.type === 'remove') {
@@ -580,7 +590,17 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
         props.onMoveNode(change.id, undefined, position);
       }
     }
-  }
+  }, [onNodesChangeInternal, props]);
+
+  const handleEdgesChange = React.useCallback((changes: EdgeChange[]) => {
+    onEdgesChangeInternal(changes);
+
+    for (const change of changes) {
+      if (change.type === 'remove') {
+        props.onDeleteEdge(change.id, undefined);
+      }
+    }
+  }, [onEdgesChangeInternal, props]);
 
   function handleViewportChange(nextViewport: XyflowViewportChange) {
     const normalized = normalizeViewportChange(nextViewport);
@@ -646,14 +666,6 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
     }
   }
 
-  function handleEdgesChange(changes: EdgeChange[]) {
-    for (const change of changes) {
-      if (change.type === 'remove') {
-        props.onDeleteEdge(change.id, undefined);
-      }
-    }
-  }
-
   return (
     <div className="fd-xyflow-live">
       <div className="fd-xyflow-live__copy">
@@ -664,7 +676,7 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
         <ReactFlowProvider>
           <ReactFlow
             nodes={localNodes}
-            edges={snapshotEdges}
+            edges={localEdges}
             nodeTypes={xyflowNodeTypes}
             defaultViewport={controlledViewport}
             fitView
