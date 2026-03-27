@@ -18,6 +18,31 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-27 (nop-debugger: Pinned Error Buffer for AI/Automation)
+
+- **Added pinned error buffer** to `@nop-chaos/nop-debugger`:
+  - New `errorBuffer` option in `NopDebuggerOptions` with `keepEarliest` and `keepLatest` counts
+  - Store maintains separate `pinnedErrors` array independent of sliding window
+  - Pinned errors survive even when main event buffer truncates them
+  - Defaults: `keepEarliest: 3`, `keepLatest: 5`
+
+- **New API methods**:
+  - `getEarliestErrors()`: Returns first N error/warning events
+  - `getLatestErrors()`: Returns last N error/warning events  
+  - `getPinnedErrors()`: Returns `{ earliest: [], latest: [] }` object
+  - All methods available on controller, automation API, and window.__NOP_DEBUGGER_API__
+
+- **Use case**: Enables Playwright/automation tests to capture earliest and latest errors without manual copy-paste. AI can query `window.__NOP_DEBUGGER_API__.getPinnedErrors()` to get diagnostics.
+
+- **Files changed**:
+  - `packages/nop-debugger/src/types.ts` - New interfaces
+  - `packages/nop-debugger/src/store.ts` - Pinned buffer logic
+  - `packages/nop-debugger/src/controller.ts` - Exposed new methods
+  - `packages/nop-debugger/src/automation.ts` - Added to automation API
+  - `packages/nop-debugger/src/diagnostics.ts` - Included in reports/exports
+
+- **Tests added**: 3 new tests in `store.test.ts` for pinned buffer behavior
+
 ### 2026-03-27 (Flow Designer Page Fixes)
 
 - **Fixed runtime errors in designer-canvas.tsx**:
