@@ -207,16 +207,16 @@ describe('formRendererDefinitions', () => {
       />
     );
 
-    const input = screen.getByLabelText('Email') as HTMLInputElement;
+    const input = screen.getByLabelText(/Email/) as HTMLInputElement;
 
     fireEvent.change(input, { target: { value: 'a' } });
-    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
+    expect((screen.getByLabelText(/Email/) as HTMLInputElement).value).toBe('a');
 
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ab' } });
-    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('ab');
+    fireEvent.change(screen.getByLabelText(/Email/), { target: { value: 'ab' } });
+    expect((screen.getByLabelText(/Email/) as HTMLInputElement).value).toBe('ab');
 
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'abc@example.com' } });
-    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('abc@example.com');
+    fireEvent.change(screen.getByLabelText(/Email/), { target: { value: 'abc@example.com' } });
+    expect((screen.getByLabelText(/Email/) as HTMLInputElement).value).toBe('abc@example.com');
   });
 
   it('submits checkbox values through shared field handlers', async () => {
@@ -927,7 +927,7 @@ describe('formRendererDefinitions', () => {
       />
     );
 
-    const input = screen.getByLabelText('Email');
+    const input = screen.getByLabelText(/Email/);
     const field = input.closest('.nop-field');
 
     expect(screen.queryByText('Email is required')).toBeNull();
@@ -992,7 +992,7 @@ describe('formRendererDefinitions', () => {
     fireEvent.click(screen.getByText('Submit email'));
     expect(screen.queryByText('Email is required')).toBeNull();
 
-    fireEvent.focus(screen.getByLabelText('Email'));
+    fireEvent.focus(screen.getByLabelText(/Email/));
 
     expect(await screen.findByText('Email is required')).toBeTruthy();
     expect(submitCalls).toHaveLength(0);
@@ -1026,7 +1026,7 @@ describe('formRendererDefinitions', () => {
       />
     );
 
-    const input = screen.getByLabelText('Email');
+    const input = screen.getByLabelText(/Email/);
     fireEvent.blur(input);
     expect(screen.queryByText('Email must be at least 5 characters')).toBeNull();
 
@@ -1075,7 +1075,7 @@ describe('formRendererDefinitions', () => {
       />
     );
 
-    const input = screen.getByLabelText('Email');
+    const input = screen.getByLabelText(/Email/);
     fireEvent.focus(input);
 
     await waitFor(() => {
@@ -1115,7 +1115,7 @@ describe('formRendererDefinitions', () => {
       />
     );
 
-    const input = screen.getByLabelText('Email');
+    const input = screen.getByLabelText(/Email/);
     fireEvent.blur(input);
     expect(screen.queryByText('Email is required')).toBeNull();
 

@@ -31,7 +31,6 @@ export function createInputRenderer(inputType: string) {
         currentForm?.setValue(name, nextValue);
       }
     });
-
     return (
       <input
         className="nop-input"

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useCurrentForm, useOwnedFieldState, useAggregateError } from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
+import { getCompiledValidationField } from '@nop-chaos/flux-core';
 
 export interface FieldFrameProps {
   name?: string;
@@ -53,7 +54,8 @@ export function FieldFrame(props: FieldFrameProps) {
   const currentForm = useCurrentForm();
   const fieldState = useOwnedFieldState(name ?? '');
   const aggregateError = useAggregateError(name ?? '');
-  const behavior = validationBehavior ?? currentForm?.validation?.behavior ?? defaultBehavior;
+  const fieldBehavior = name ? getCompiledValidationField(currentForm?.validation, name)?.behavior : undefined;
+  const behavior = validationBehavior ?? fieldBehavior ?? currentForm?.validation?.behavior ?? defaultBehavior;
 
   const error = aggregateError ?? fieldState.error;
   const showError = Boolean(

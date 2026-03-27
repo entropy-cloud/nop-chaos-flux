@@ -278,7 +278,8 @@ export function NodeRenderer(props: {
         : typeof props.node.schema.name === 'string'
           ? props.node.schema.name
           : undefined;
-      const labelValue = resolvedMeta.label ?? props.node.schema.label;
+      const labelValue = resolvedMeta.label
+        ?? (regions.label ? regions.label.render() : props.node.schema.label);
 
       return (
         <FieldFrame
