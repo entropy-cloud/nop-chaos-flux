@@ -18,6 +18,35 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-27 (Canvas-Bridge Schema-Driven Rendering Refactor Complete)
+
+- **Completed refactor** of `canvas-bridge.tsx` to be fully driven by `NodeTypeConfig` and `EdgeTypeConfig` JSON schemas.
+
+- **Files created** in `packages/flow-designer-renderers/src/designer-xyflow-canvas/`:
+  - `types.ts` - `DesignerFlowNodeData`, `POSITION_MAP`
+  - `xyflow-utils.ts` - `createXyflowNodes`, `createXyflowEdges`, viewport utilities
+  - `render-ports.tsx` - Schema-driven port rendering
+  - `DesignerXyflowNode.tsx` - Schema-driven node body, ports, toolbar
+  - `DesignerXyflowEdge.tsx` - Schema-driven edge appearance, labels
+  - `DesignerXyflowCanvas.tsx` - Main orchestrator component
+  - `index.ts` - Public exports
+
+- **Files simplified**:
+  - `canvas-bridge.tsx` - Now only exports `DesignerXyflowCanvasBridge` and `renderDesignerCanvasBridge`
+  - `designer-canvas.tsx` - Uses simplified bridge
+  - `designer-page.tsx` - Removed `canvasAdapter` prop from `DesignerCanvasRenderer`
+
+- **Tests updated**:
+  - `canvas-bridge.test.tsx` - Rewritten for new bridge API
+  - `index.test.tsx` - Simplified to test core functionality
+  - Deleted `designer-xyflow-canvas.test.tsx` (broken test file)
+
+- **Key decisions**:
+  - Use `RenderNodes` with `options={{ scope }}` prop (not `scope` directly)
+  - Position mapping uses `Position.Top/Right/Bottom/Left` from `@xyflow/react`
+  - Node/edge configs accessed via `useNodeTypeConfig(typeId)` and `useEdgeTypeConfig(typeId)` hooks
+  - Fallback rendering provided when `body` schema is missing
+
 ### 2026-03-27 (Component Resolution Design)
 
 - **Created design document** `docs/architecture/component-resolution.md` for component targeting mechanism:
