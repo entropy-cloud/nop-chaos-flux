@@ -563,7 +563,7 @@ type ValidationRule =
 | `url:redirect` | 重定向 | `url` |
 | `value:set` | 设置值 | `name`, `value` |
 | `value:get` | 获取值 | `name` |
-| `component:invoke` | 调用组件方法 | `componentId`, `method`, `args` |
+| `component:<method>` | 调用组件方法 | `componentId`, `args` |
 | `custom` | 自定义动作 | `handler` |
 
 ### 7.3 组件 ID 引用
@@ -750,9 +750,8 @@ type ValidationRule =
               "method": "DELETE"
             },
             "then": {
-              "action": "component:invoke",
-              "componentId": "users-table",
-              "method": "refresh"
+              "action": "component:refresh",
+              "componentId": "users-table"
             }
           }
         }

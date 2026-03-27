@@ -173,7 +173,7 @@ It must not be implemented as arbitrary untrusted script URL execution.
 - finalize canonical namespaced action syntax
 - finalize whether `ActionContext` is extended directly or wrapped internally for runtime-only fields
 - define the minimum type additions in `packages/flux-core/src/index.ts`
-- define one concrete component-targeted action shape for v1, recommended as `component:invoke`
+- define one concrete component-targeted action shape for v1, recommended as `component:<method>`
 - define one concrete pilot namespace for v1, recommended as `designer:*`
 
 ### Deliverables
@@ -218,7 +218,7 @@ It must not be implemented as arbitrary untrusted script URL execution.
 - refactor `packages/flux-runtime/src/action-runtime.ts` so built-in actions remain first-class but unsupported actions can be delegated
 - add resolution order:
   1. built-in platform actions
-  2. component-targeted invocation such as `component:invoke`
+  2. component-targeted invocation matching `component:<method>` pattern
   3. namespaced action through action scope
   4. structured not-found error
 - evaluate `args` into structured payload objects before provider or component-handle invocation
@@ -267,7 +267,7 @@ It must not be implemented as arbitrary untrusted script URL execution.
 
 - create a form component handle adapter exposing explicit methods such as `submit`, `validate`, `reset`, and `setValue`
 - register form handles when form runtime/renderer ownership becomes active
-- implement `component:invoke` for `componentId` and `componentName` targeting
+- implement `component:<method>` pattern for `componentId` and `componentName` targeting
 - add tests for form submit, validation, reset, and not-found or unsupported method cases
 - explicitly verify that no arbitrary store method fallback exists
 
@@ -423,7 +423,7 @@ Expected work:
 
 - register form handles
 - expose explicit form capabilities
-- test `component:invoke`
+- test `component:<method>` pattern
 
 Risk:
 
@@ -519,7 +519,7 @@ Mitigation:
 
 - built-in actions still pass their regression suite
 - delegated namespaced actions resolve correctly through local and parent action scopes
-- `component:invoke` resolves a target instance and invokes only explicit methods
+- `component:<method>` resolves a target instance and invokes only explicit methods
 
 ### Import acceptance
 
@@ -591,7 +591,7 @@ Mitigation:
 2. add schema/runtime types for action scope and component handles
 3. refactor the dispatcher into built-in plus delegated phases
 4. add React ownership plumbing for action-scope and component-registry boundaries
-5. prove `component:invoke` with form
+5. prove `component:<method>` with form
 6. prove namespaced host actions with Flow Designer
 7. add `xui:import` loading, dedupe, and namespace registration
 8. add examples, diagnostics, and adoption guidance

@@ -152,7 +152,7 @@ Owns:
 Current action dispatch now resolves through three explicit paths in order:
 
 1. built-in platform actions such as `setValue`, `ajax`, `dialog`, `closeDialog`, `refreshTable`, and `submitForm`
-2. `component:invoke` through `ComponentHandleRegistry`
+2. component-targeted actions matching `component:<method>` pattern through `ComponentHandleRegistry`
 3. namespaced actions such as `designer:export` through `ActionScope`
 
 This keeps data scope, namespaced behavior lookup, and instance-targeted capability invocation separate even though all three are available from the same runtime host tree.

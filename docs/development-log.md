@@ -18,6 +18,26 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-27 (Component Action Syntax Change)
+
+- **Changed component-targeted action syntax** from `component:invoke` with `args.method` to `component:<method>` pattern:
+  - Before: `{ "action": "component:invoke", "componentId": "form", "args": { "method": "validate" } }`
+  - After: `{ "action": "component:validate", "componentId": "form" }`
+
+- **Implementation changes**:
+  - `packages/flux-runtime/src/action-runtime.ts`: Added `isComponentAction()` and `extractComponentMethod()` helpers, renamed `runComponentInvokeAction` to `runComponentAction`
+  - All tests updated in `packages/flux-runtime/src/index.test.ts` and `packages/flux-react/src/index.test.tsx`
+
+- **Documentation updates**:
+  - `docs/architecture/action-scope-and-imports.md`: Updated schema examples and resolution model
+  - `docs/architecture/flux-core.md`: Updated dispatch path description
+  - `docs/architecture/renderer-runtime.md`: Updated registry description
+  - `docs/standardization.md`: Updated action table and examples
+  - `docs/plans/12-action-scope-imports-and-component-invocation-plan.md`: Updated references
+  - `docs/development-log.md`: Updated earlier entry to reflect new syntax
+
+- **Key decision**: The `component:<method>` syntax is more concise and avoids the need for nested `args.method`, while the `component:` prefix clearly separates it from built-in and namespaced actions.
+
 ### 2026-03-27 (nop-debugger: Pinned Error Buffer for AI/Automation)
 
 - **Added pinned error buffer** to `@nop-chaos/nop-debugger`:
@@ -752,8 +772,8 @@ This file is intentionally lightweight.
 - Next step: extend the same boundary-focused coverage to dialog reopen/unmount cases and imported namespace lifecycle once `xui:imports` gets richer loading/error semantics.
 - Implemented the first action-scope, component-handle, and import-declaration runtime pass across `packages/flux-core/src/index.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-react/src/index.tsx`, and `packages/flow-designer-renderers/src/index.tsx`.
 - Added explicit runtime primitives for `ActionScope`, `ComponentHandleRegistry`, `ComponentHandle`, `XuiImportSpec`, import loading, and extended monitor payloads so built-in, component-targeted, and namespaced dispatch paths are diagnosable.
-- Key decision: keep dispatch order fixed as built-in -> `component:invoke` -> namespaced action, and keep form/public component invocation limited to explicit handle methods instead of exposing arbitrary store methods.
-- Proved the component-target path with form handle registration and `component:invoke`, including `submit`, `validate`, `reset`, and `setValue` support through `packages/flux-runtime/src/form-component-handle.ts` and React lifecycle registration in `packages/flux-react/src/index.tsx`.
+- Key decision: keep dispatch order fixed as built-in -> `component:<method>` -> namespaced action, and keep form/public component invocation limited to explicit handle methods instead of exposing arbitrary store methods.
+- Proved the component-target path with form handle registration and `component:<method>` syntax, including `submit`, `validate`, `reset`, and `setValue` support through `packages/flux-runtime/src/form-component-handle.ts` and React lifecycle registration in `packages/flux-react/src/index.tsx`.
 - Proved the namespaced host path with Flow Designer by adding a local `designer` action provider registered from `packages/flow-designer-renderers/src/index.tsx` rather than relying on root-level handler injection.
 - Added initial `xui:imports` plumbing with trusted loader hooks and scope-local namespace registration; current pass focuses on declaration handling and deduped registration, not full example adoption yet.
 - Added regression coverage in `packages/flux-runtime/src/index.test.ts`, `packages/flux-react/src/index.test.tsx`, and `packages/flow-designer-renderers/src/index.test.tsx`.

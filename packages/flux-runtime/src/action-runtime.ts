@@ -227,14 +227,33 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     }
   }
 
-  async function runComponentInvokeAction(
+  const COMPONENT_ACTION_PREFIX = 'component:';
+
+  function isComponentAction(actionName: string): boolean {
+    return actionName.startsWith(COMPONENT_ACTION_PREFIX);
+  }
+
+  function extractComponentMethod(actionName: string): string {
+    return actionName.slice(COMPONENT_ACTION_PREFIX.length);
+  }
+
+  async function runComponentAction(
     action: ActionSchema,
     ctx: ActionContext,
     startedAt: number,
     actionPayload: ActionMonitorPayload
   ): Promise<ActionResult | undefined> {
-    if (action.action !== 'component:invoke') {
+    if (!isComponentAction(action.action)) {
       return undefined;
+    }
+
+    const method = extractComponentMethod(action.action);
+
+    if (!method) {
+      return finishAction(input, { ...actionPayload, dispatchMode: 'component' }, startedAt, {
+        ok: false,
+        error: new Error('component:<method> requires a method name after the colon')
+      });
     }
 
     const target = {
@@ -243,9 +262,9 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     };
 
     if (!target.componentId && !target.componentName) {
-      return finishAction(input, { ...actionPayload, dispatchMode: 'component' }, startedAt, {
+      return finishAction(input, { ...actionPayload, dispatchMode: 'component', method }, startedAt, {
         ok: false,
-        error: new Error('component:invoke requires componentId or componentName')
+        error: new Error('component:<method> requires componentId or componentName')
       });
     }
 
@@ -257,29 +276,12 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         {
           ...actionPayload,
           dispatchMode: 'component',
+          method,
           componentId: target.componentId,
           componentName: target.componentName
         },
         startedAt,
         { ok: false, error: new Error('Component handle not found') }
-      );
-    }
-
-    const payload = evaluateActionArgs(action, ctx, input.evaluate) ?? {};
-    const method = String(payload.method ?? '');
-
-    if (!method) {
-      return finishAction(
-        input,
-        {
-          ...actionPayload,
-          dispatchMode: 'component',
-          componentId: handle.id,
-          componentName: handle.name,
-          componentType: handle.type
-        },
-        startedAt,
-        { ok: false, error: new Error('component:invoke requires args.method') }
       );
     }
 
@@ -299,10 +301,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       );
     }
 
-    const componentPayload = { ...payload };
-    delete componentPayload.method;
-
-    const result = normalizeActionResult(await handle.capabilities.invoke(method, componentPayload, ctx));
+    const payload = evaluateActionArgs(action, ctx, input.evaluate);
+    const result = normalizeActionResult(await handle.capabilities.invoke(method, payload, ctx));
     return finishAction(
       input,
       {
@@ -374,7 +374,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         return builtInResult;
       }
 
-      const componentResult = await runComponentInvokeAction(processedAction, ctx, startedAt, actionPayload);
+      const componentResult = await runComponentAction(processedAction, ctx, startedAt, actionPayload);
 
       if (componentResult) {
         return componentResult;

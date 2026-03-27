@@ -851,9 +851,9 @@ describe('createSchemaRenderer', () => {
               label: 'Run outer handle',
               resultKey: 'outer-handle-result',
               runAction: {
-                action: 'component:invoke',
+                action: 'component:ping',
                 componentName: 'shared',
-                args: { method: 'ping', value: 'root' }
+                args: { value: 'root' }
               }
             },
             {
@@ -875,9 +875,9 @@ describe('createSchemaRenderer', () => {
                   label: 'Run inner handle',
                   resultKey: 'inner-handle-result',
                   runAction: {
-                    action: 'component:invoke',
+                    action: 'component:ping',
                     componentName: 'shared',
-                    args: { method: 'ping', value: 'child' }
+                    args: { value: 'child' }
                   }
                 }
               ]
@@ -954,9 +954,9 @@ describe('createSchemaRenderer', () => {
       args: { value: 'live' }
     } as any);
     const innerHandleResult = await retainedDispatch!({
-      action: 'component:invoke',
+      action: 'component:ping',
       componentName: 'shared',
-      args: { method: 'ping', value: 'live' }
+      args: { value: 'live' }
     } as any);
 
     expect(innerNamespaceResult).toMatchObject({ ok: true, data: 'inner-ns:ping:live' });
@@ -973,9 +973,9 @@ describe('createSchemaRenderer', () => {
       args: { value: 'after-unmount' }
     } as any);
     const fallbackHandleResult = await retainedDispatch!({
-      action: 'component:invoke',
+      action: 'component:ping',
       componentName: 'shared',
-      args: { method: 'ping', value: 'after-unmount' }
+      args: { value: 'after-unmount' }
     } as any);
 
     expect(fallbackNamespaceResult).toMatchObject({ ok: true, data: 'outer-ns:ping:after-unmount' });
@@ -1048,9 +1048,9 @@ describe('createSchemaRenderer', () => {
       args: { value: 'first-open' }
     } as any);
     const firstDialogHandleResult = await firstDialogDispatch({
-      action: 'component:invoke',
+      action: 'component:ping',
       componentName: 'shared',
-      args: { method: 'ping', value: 'first-open' }
+      args: { value: 'first-open' }
     } as any);
 
     expect(firstDialogNamespaceResult).toMatchObject({ ok: true, data: 'dialog-ns:ping:first-open' });
@@ -1067,9 +1067,9 @@ describe('createSchemaRenderer', () => {
       args: { value: 'after-close' }
     } as any);
     const fallbackHandleResult = await firstDialogDispatch({
-      action: 'component:invoke',
+      action: 'component:ping',
       componentName: 'shared',
-      args: { method: 'ping', value: 'after-close' }
+      args: { value: 'after-close' }
     } as any);
 
     expect(fallbackNamespaceResult).toMatchObject({ ok: true, data: 'outer-ns:ping:after-close' });
@@ -1091,9 +1091,9 @@ describe('createSchemaRenderer', () => {
       args: { value: 'second-open' }
     } as any);
     const secondDialogHandleResult = await secondDialogDispatch({
-      action: 'component:invoke',
+      action: 'component:ping',
       componentName: 'shared',
-      args: { method: 'ping', value: 'second-open' }
+      args: { value: 'second-open' }
     } as any);
 
     expect(secondDialogNamespaceResult).toMatchObject({ ok: true, data: 'dialog-ns:ping:second-open' });

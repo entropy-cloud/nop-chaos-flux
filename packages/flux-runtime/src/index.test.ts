@@ -397,7 +397,7 @@ describe('createRendererRuntime', () => {
     expect(page.store.getState().data.message).toBe('World');
   });
 
-  it('dispatches component:invoke to explicit form handles by id and name', async () => {
+  it('dispatches component:<method> to explicit form handles by id and name', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
       registry,
@@ -419,10 +419,9 @@ describe('createRendererRuntime', () => {
     try {
       const setValueResult = await runtime.dispatch(
         {
-          action: 'component:invoke',
+          action: 'component:setValue',
           componentId: 'user-form',
           args: {
-            method: 'setValue',
             name: 'username',
             value: 'Bob'
           }
@@ -440,11 +439,8 @@ describe('createRendererRuntime', () => {
 
       const validateResult = await runtime.dispatch(
         {
-          action: 'component:invoke',
-          componentName: 'userForm',
-          args: {
-            method: 'validate'
-          }
+          action: 'component:validate',
+          componentName: 'userForm'
         },
         {
           runtime,
@@ -3156,11 +3152,8 @@ describe('createRendererRuntime', () => {
 
     await runtime.dispatch(
       {
-        action: 'component:invoke',
-        componentId: 'monitored-form',
-        args: {
-          method: 'validate'
-        }
+        action: 'component:validate',
+        componentId: 'monitored-form'
       },
       {
         runtime,
@@ -3186,7 +3179,7 @@ describe('createRendererRuntime', () => {
 
     expect(onActionEnd).toHaveBeenCalledWith(
       expect.objectContaining({
-        actionType: 'component:invoke',
+        actionType: 'component:validate',
         dispatchMode: 'component',
         componentId: 'monitored-form',
         componentType: 'form',

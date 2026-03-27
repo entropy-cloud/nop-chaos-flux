@@ -288,7 +288,7 @@ The active React layer now carries three separate execution lookups through expl
 
 - `ScopeRef` for data lookup and updates
 - `ActionScope` for namespaced action resolution such as `designer:export`
-- `ComponentHandleRegistry` for instance-targeted capability invocation such as `component:invoke`
+- `ComponentHandleRegistry` for instance-targeted capability invocation such as `component:submit`
 
 `NodeRenderer` may explicitly create a fresh action-scope boundary or component-registry boundary when a renderer definition opts into `actionScopePolicy: 'new'` or `componentRegistryPolicy: 'new'`.
 

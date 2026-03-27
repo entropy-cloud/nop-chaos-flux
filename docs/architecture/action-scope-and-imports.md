@@ -364,30 +364,33 @@ In practice this means both of the following are valid today:
 }
 ```
 
-For component-targeted invocation, recommended authoring shape is still object-based:
+For component-targeted invocation, use `component:<method>` syntax:
 
 ```json
 {
-  "action": "component:invoke",
-  "componentId": "userForm",
-  "args": {
-    "method": "submit"
-  }
+  "action": "component:submit",
+  "componentId": "userForm"
 }
 ```
 
 ```json
 {
-  "action": "component:invoke",
+  "action": "component:validate",
+  "componentId": "userForm"
+}
+```
+
+```json
+{
+  "action": "component:refresh",
   "componentName": "ordersTable",
   "args": {
-    "method": "refresh",
     "reason": "external-filter-changed"
   }
 }
 ```
 
-The runtime may later define a more specialized schema shape, but the core rule stays the same: targeting metadata identifies the component instance, and `args` carries a structured payload.
+The method name is extracted from the action string after the `component:` prefix. Additional arguments are passed through `args` if needed.
 
 ## Action Scope Ownership
 
@@ -680,23 +683,25 @@ The same rule applies to component-target registration:
 
 ### Component-Targeted Action Resolution
 
-Component-targeted actions should be resolved separately from namespaced action lookup.
+Component-targeted actions use `component:<method>` syntax and are resolved separately from namespaced action lookup.
 
 Recommended order:
 
 1. built-in platform action
-2. explicit component-targeted action such as `component:invoke`
+2. component-targeted action matching `component:<method>` pattern
 3. namespaced action through `ActionScope`
 4. not-found error
 
-Recommended execution model for `component:invoke`:
+Execution model for `component:<method>`:
 
-1. locate the target component by `componentId` or `componentName`
-2. validate that the component handle exposes the requested method
-3. call `capabilities.invoke(method, payload, ctx)`
-4. return a normal `ActionResult`
+1. match action name against `component:<method>` pattern
+2. extract method name from action string
+3. locate the target component by `componentId` or `componentName`
+4. validate that the component handle exposes the requested method
+5. call `capabilities.invoke(method, payload, ctx)`
+6. return a normal `ActionResult`
 
-This keeps instance targeting and namespace targeting conceptually separate.
+This keeps instance targeting and namespace targeting conceptually separate while providing a concise syntax.
 
 ## Flow-Designer Use
 
