@@ -1,7 +1,4 @@
 import React from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import type { IconSchema } from './schemas';
-import { classNames } from './utils';
 import { Circle, icons } from 'lucide-react';
 
 type LucideIconComponent = React.ComponentType<Record<string, unknown>>;
@@ -41,7 +38,7 @@ function toLucideKey(iconName: string): string {
     .join('');
 }
 
-function resolveLucideIcon(iconName: string | undefined): LucideIconComponent {
+function resolveIcon(iconName: string | undefined): LucideIconComponent {
   const normalizedIconName = normalizeIconName(iconName);
   if (!normalizedIconName) {
     return Circle;
@@ -51,17 +48,21 @@ function resolveLucideIcon(iconName: string | undefined): LucideIconComponent {
   return (icons as Record<string, LucideIconComponent>)[key] ?? (Circle as unknown as LucideIconComponent);
 }
 
-export function IconRenderer(props: RendererComponentProps<IconSchema>) {
-  const icon = typeof props.props.icon === 'string' ? props.props.icon : undefined;
-  const Icon = resolveLucideIcon(icon);
+export interface DesignerIconProps {
+  icon?: string;
+  className?: string;
+  size?: number;
+}
 
+export function DesignerIcon(props: DesignerIconProps) {
+  const Icon = resolveIcon(props.icon);
   const IconComp = Icon as React.ComponentType<Record<string, unknown>>;
 
   return (
     <IconComp
-      className={classNames('nop-icon', `nop-icon--${icon}`, props.meta.className)}
-      data-icon={icon}
-      size={16}
+      className={props.className}
+      data-icon={props.icon}
+      size={props.size ?? 16}
       strokeWidth={1.8}
       aria-hidden="true"
       focusable="false"
