@@ -2,6 +2,7 @@ import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core'
 import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { PageRenderer } from './page';
 import { ContainerRenderer } from './container';
+import { FlexRenderer } from './flex';
 import { TextRenderer } from './text';
 import { ButtonRenderer } from './button';
 import { IconRenderer } from './icon';
@@ -12,6 +13,7 @@ export * from './schemas';
 export * from './utils';
 export { PageRenderer } from './page';
 export { ContainerRenderer } from './container';
+export { FlexRenderer } from './flex';
 export { TextRenderer } from './text';
 export { ButtonRenderer } from './button';
 export { IconRenderer } from './icon';
@@ -29,6 +31,11 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     type: 'container',
     component: ContainerRenderer,
     regions: ['body', 'header', 'footer']
+  },
+  {
+    type: 'flex',
+    component: FlexRenderer,
+    regions: ['body']
   },
   {
     type: 'text',

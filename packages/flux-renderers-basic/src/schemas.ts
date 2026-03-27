@@ -49,4 +49,13 @@ export interface BadgeSchema extends BaseSchema {
   level?: 'info' | 'success' | 'warning' | 'danger';
 }
 
+export interface FlexSchema extends BaseSchema {
+  type: 'flex';
+  direction?: 'row' | 'column';
+  wrap?: boolean;
+  align?: 'start' | 'center' | 'end' | 'stretch';
+  justify?: 'start' | 'center' | 'end' | 'between' | 'around';
+  gap?: number | string;
+  className?: string;
+}
 export type { DynamicRendererSchema };
