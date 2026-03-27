@@ -198,6 +198,16 @@
   border-color: rgba(59, 130, 246, 0.35);
 }
 
+.fd-palette__item--selected {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(219, 234, 254, 0.7);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.14);
+}
+
+.fd-palette__item--selected .fd-palette__item-icon {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(14, 165, 233, 0.24));
+}
+
 .fd-palette__item-icon {
   width: 32px;
   height: 32px;
@@ -205,7 +215,25 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(14, 165, 233, 0.12));
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.22), rgba(100, 116, 139, 0.18));
+}
+.fd-palette__item-icon--start {
+  background: linear-gradient(135deg, #34d399, #10b981);
+}
+.fd-palette__item-icon--end {
+  background: linear-gradient(135deg, #fb7185, #f43f5e);
+}
+.fd-palette__item-icon--task {
+  background: linear-gradient(135deg, #38bdf8, #06b6d4);
+}
+.fd-palette__item-icon--condition {
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+}
+.fd-palette__item-icon--parallel {
+  background: linear-gradient(135deg, #a78bfa, #6366f1);
+}
+.fd-palette__item-icon--loop {
+  background: linear-gradient(135deg, #e879f9, #ec4899);
 }
 
 .fd-canvas {
@@ -808,7 +836,7 @@
 .fd-inspector__title {
   margin: 0;
   font-size: 16px;
-  font-weight: 600;
+  color: #ffffff;
   color: var(--nop-text-strong);
 }
 
@@ -1554,8 +1582,8 @@
   stroke: rgba(148, 163, 184, 0.26);
 }
 
-.fd-xyflow-live__surface .react-flow__node.selected .fd-xyflow-node > :first-child,
-.fd-xyflow-live__surface .react-flow__node:focus-within .fd-xyflow-node > :first-child {
+.fd-xyflow-live__surface .react-flow__node.selected .fd-xyflow-node > .nop-flex.bg-white,
+.fd-xyflow-live__surface .react-flow__node:focus-within .fd-xyflow-node > .nop-flex.bg-white {
   border-color: rgba(59, 130, 246, 0.55);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 16px 48px rgba(15, 23, 42, 0.12);
 }
@@ -1829,8 +1857,8 @@
   padding: 0;
 }
 
-.fd-xyflow-live__surface .react-flow__node.selected .fd-xyflow-node > :first-child,
-.fd-xyflow-live__surface .react-flow__node:focus-within .fd-xyflow-node > :first-child {
+.fd-xyflow-live__surface .react-flow__node.selected .fd-xyflow-node > .nop-flex.bg-white,
+.fd-xyflow-live__surface .react-flow__node:focus-within .fd-xyflow-node > .nop-flex.bg-white {
   border-color: rgba(59, 130, 246, 0.52);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 14px 34px rgba(15, 23, 42, 0.14);
 }
@@ -1841,10 +1869,6 @@
 
 .fd-xyflow-live__surface .react-flow__node .fd-xyflow-node .nop-flex.shadow-sm {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-}
-
-.fd-xyflow-live__surface .react-flow__node .fd-xyflow-node {
-  min-width: 192px;
 }
 
 .fd-page .react-flow__node .nop-flex.items-start.gap-2.px-3.py-2 {
@@ -1920,28 +1944,41 @@
   height: 128px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.35);
-  background: linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(249, 206, 248, 0.3) 100%);
+  background: #e2e8f0;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-  backdrop-filter: blur(20px);
   overflow: hidden;
+  box-sizing: border-box;
+  padding: 0;
 }
 
 .fd-xyflow-live__surface .react-flow__minimap svg {
-  background: transparent;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0;
+  border-radius: inherit;
+  background: #e2e8f0 !important;
+  preserveAspectRatio: none;
+}
+
+.fd-xyflow-live__surface .react-flow__minimap .react-flow__minimap-background {
+  fill: #e2e8f0 !important;
+  stroke: none !important;
 }
 
 .fd-xyflow-live__surface .react-flow__minimap-mask {
-  fill: rgba(59, 130, 246, 0.1);
+  fill: rgba(255, 255, 255, 0.55) !important;
+  stroke: none !important;
 }
 
 .fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button {
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 0;
   background: #ffffff !important;
   color: #334155;
 }
 
 .fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button.nop-button--danger {
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 0;
   background: #ffffff !important;
   color: #334155;
 }
@@ -1966,7 +2003,7 @@
 .fd-edge__quick-action-btn {
   width: 28px;
   height: 28px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 0;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
@@ -1983,4 +2020,44 @@
 
 .fd-edge__quick-action-btn--danger {
   color: #334155;
+}
+
+.fd-page .bg-emerald-100 {
+  background: rgb(209, 250, 229);
+}
+
+.fd-page .text-emerald-700 {
+  color: rgb(4, 120, 87);
+}
+
+.fd-page .bg-rose-100 {
+  background: rgb(255, 228, 230);
+}
+
+.fd-page .text-rose-700 {
+  color: rgb(159, 18, 57);
+}
+
+.fd-page .bg-amber-100 {
+  background: rgb(254, 243, 199);
+}
+
+.fd-page .text-amber-700 {
+  color: rgb(146, 64, 14);
+}
+
+.fd-page .bg-violet-100 {
+  background: rgb(237, 233, 254);
+}
+
+.fd-page .text-violet-700 {
+  color: rgb(91, 33, 182);
+}
+
+.fd-page .bg-fuchsia-100 {
+  background: rgb(250, 232, 255);
+}
+
+.fd-page .text-fuchsia-700 {
+  color: rgb(131, 24, 67);
 }

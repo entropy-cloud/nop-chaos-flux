@@ -4,7 +4,7 @@ import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 
 export function DesignerPaletteContent() {
-  const { config, dispatch } = useDesignerContext();
+  const { config, dispatch, snapshot } = useDesignerContext();
   const [search, setSearch] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['basic']));
 
@@ -73,11 +73,11 @@ export function DesignerPaletteContent() {
                   return (
                     <button
                       key={nt.id}
-                      className="fd-palette__item"
+                      className={`fd-palette__item${snapshot.activeNode?.type === nt.id ? ' fd-palette__item--selected' : ''}`}
                       onClick={() => handleAddNode(nt)}
                       title={nt.description ?? nt.label}
                     >
-                      <span className="fd-palette__item-icon" aria-hidden="true">
+                      <span className={`fd-palette__item-icon fd-palette__item-icon--${nt.id}`} aria-hidden="true">
                         {nt.icon ? <DesignerIcon icon={nt.icon} className={`nop-icon nop-icon--${nt.icon}`} /> : '◇'}
                       </span>
                       <span className="fd-palette__item-label">{nt.label}</span>
