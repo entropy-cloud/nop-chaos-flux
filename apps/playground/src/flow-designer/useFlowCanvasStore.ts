@@ -3,7 +3,6 @@ import {
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
-  type Connection,
   type EdgeChange,
   type NodeChange,
   type OnConnect,
@@ -74,11 +73,6 @@ export function useFlowCanvasStore(initialDocument?: FlowCanvasDocument): FlowCa
   const initialSnapshotRef = useRef<string>('');
   const historyRef = useRef<HistorySnapshot[]>([]);
   const historyIndexRef = useRef<number>(-1);
-
-  const currentSnapshot = useMemo<HistorySnapshot>(
-    () => ({ nodes: cloneNodes(nodes), edges: cloneEdges(edges) }),
-    [nodes, edges]
-  );
 
   const dirty = useMemo(() => {
     if (!initialSnapshotRef.current) return false;

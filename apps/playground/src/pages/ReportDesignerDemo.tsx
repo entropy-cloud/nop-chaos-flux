@@ -3,17 +3,14 @@ import {
   createSpreadsheetCore,
   createEmptyDocument,
   cellAddress,
-  type SpreadsheetCore,
   type SpreadsheetRange,
 } from '@nop-chaos/spreadsheet-core';
 import {
   createSpreadsheetBridge,
-  type SpreadsheetBridge,
 } from '@nop-chaos/spreadsheet-renderers';
 import {
   createReportDesignerCore,
   createReportTemplateDocument,
-  type ReportDesignerCore,
   type ReportDesignerConfig,
   type FieldSourceSnapshot,
   type InspectorProvider,
@@ -22,7 +19,6 @@ import {
 } from '@nop-chaos/report-designer-core';
 import {
   createReportDesignerBridge,
-  type ReportDesignerBridge,
 } from '@nop-chaos/report-designer-renderers';
 
 const fieldSources: FieldSourceSnapshot[] = [
@@ -119,7 +115,7 @@ export function ReportDesignerDemo() {
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [cellValue, setCellValue] = useState('');
   const [log, setLog] = useState<string[]>([]);
-  const [clipboardInfo, setClipboardInfo] = useState<string>('');
+  const [, setClipboardInfo] = useState<string>('');
   const [renamingSheetId, setRenamingSheetId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [commentText, setCommentText] = useState('');
@@ -135,7 +131,7 @@ export function ReportDesignerDemo() {
   } | null>(null);
 
   // Drag selection state
-  const [dragState, setDragState] = useState<DragState>({
+  const [, setDragState] = useState<DragState>({
     isDragging: false,
     startRow: -1,
     startCol: -1,
@@ -263,8 +259,8 @@ export function ReportDesignerDemo() {
     const { startRow, startCol, endRow, endCol, currentRow, currentCol } = fillHandleState;
     
     // Determine fill range
-    let previewStartRow = startRow;
-    let previewStartCol = startCol;
+    const previewStartRow = startRow;
+    const previewStartCol = startCol;
     let previewEndRow = endRow;
     let previewEndCol = endCol;
 
@@ -688,13 +684,6 @@ export function ReportDesignerDemo() {
     if (!range) return;
     await spreadsheetBridge.dispatch({ type: 'spreadsheet:fillDown', range });
     addLog('Filled down');
-  }, [getSelectedRange, spreadsheetBridge, addLog]);
-
-  const handleFillRight = useCallback(async () => {
-    const range = getSelectedRange();
-    if (!range) return;
-    await spreadsheetBridge.dispatch({ type: 'spreadsheet:fillRight', range });
-    addLog('Filled right');
   }, [getSelectedRange, spreadsheetBridge, addLog]);
 
   const handleFillSeries = useCallback(async (direction: 'down' | 'right') => {

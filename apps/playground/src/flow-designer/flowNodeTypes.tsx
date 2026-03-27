@@ -22,9 +22,8 @@ export function createFlowNodeTypes(onSelect: (nodeId: string | null) => void) {
 
 export function createFlowEdgeTypes() {
   return {
-    default: function FlowEdge({ id, sourceX, sourceY, targetX, targetY, selected }: EdgeProps) {
+    default: function FlowEdge({ sourceX, sourceY, targetX, targetY, selected }: EdgeProps) {
       const midX = (sourceX + targetX) / 2;
-      const midY = (sourceY + targetY) / 2;
       
       return (
         <g className={`flow-edge ${selected ? 'flow-edge--selected' : ''}`}>
