@@ -173,6 +173,7 @@ export function useFlowCanvasStore(initialDocument?: FlowCanvasDocument): FlowCa
       id,
       type,
       position,
+      measured: { width: 0, height: 0 },
       data: {
         label: type,
         ...data

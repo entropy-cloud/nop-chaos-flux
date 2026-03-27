@@ -1,12 +1,9 @@
 import React from 'react';
 import {
-  applyNodeChanges,
   Background,
   Controls,
   Handle,
   MiniMap,
-  OnNodesChange,
-  OnEdgesChange,
   Position,
   ReactFlow,
   ReactFlowProvider,
@@ -135,6 +132,7 @@ function createXyflowNodes(snapshot: DesignerSnapshot): Node[] {
     },
     width: 180,
     height: 60,
+    measured: { width: 180, height: 60 },
   }));
 }
 
