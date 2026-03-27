@@ -614,18 +614,32 @@ export function DesignerXyflowCanvasBridge(props: DesignerCanvasBridgeProps) {
     [props]
   );
 
+  const lastSelectionRef = React.useRef<{ nodeId: string | null; edgeId: string | null }>({
+    nodeId: null,
+    edgeId: null
+  });
+
   function handleSelectionChange(selection: OnSelectionChangeParams) {
     if (selection.nodes.length > 0) {
-      props.onNodeSelect(selection.nodes[0].id, undefined);
+      const nodeId = selection.nodes[0].id;
+      if (lastSelectionRef.current.nodeId !== nodeId) {
+        lastSelectionRef.current = { nodeId, edgeId: null };
+        props.onNodeSelect(nodeId, undefined);
+      }
       return;
     }
 
     if (selection.edges.length > 0) {
-      props.onEdgeSelect(selection.edges[0].id, undefined);
+      const edgeId = selection.edges[0].id;
+      if (lastSelectionRef.current.edgeId !== edgeId) {
+        lastSelectionRef.current = { nodeId: null, edgeId };
+        props.onEdgeSelect(edgeId, undefined);
+      }
       return;
     }
 
-    if (props.snapshot.selection.activeNodeId || props.snapshot.selection.activeEdgeId) {
+    if (lastSelectionRef.current.nodeId || lastSelectionRef.current.edgeId) {
+      lastSelectionRef.current = { nodeId: null, edgeId: null };
       props.onPaneClick();
     }
   }

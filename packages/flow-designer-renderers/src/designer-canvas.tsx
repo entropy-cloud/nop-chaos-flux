@@ -15,16 +15,16 @@ export function DesignerCanvasContent(props: { canvasAdapter: DesignerCanvasAdap
   }, [dispatch]);
 
   const handleNodeClick = useCallback(
-    (nodeId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
+    (nodeId: string, e?: React.MouseEvent) => {
+      e?.stopPropagation();
       dispatch({ type: 'selectNode', nodeId });
     },
     [dispatch]
   );
 
   const handleEdgeClick = useCallback(
-    (edgeId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
+    (edgeId: string, e?: React.MouseEvent) => {
+      e?.stopPropagation();
       dispatch({ type: 'selectEdge', edgeId });
     },
     [dispatch]
@@ -58,19 +58,19 @@ export function DesignerCanvasContent(props: { canvasAdapter: DesignerCanvasAdap
     reconnectingEdgeId,
     onNodeSelect: handleNodeClick,
     onEdgeSelect: handleEdgeClick,
-    onStartConnection: (nodeId: string, event: React.MouseEvent) => {
-      event.stopPropagation();
+    onStartConnection: (nodeId: string, event?: React.MouseEvent) => {
+      event?.stopPropagation();
       setReconnectingEdgeId(null);
       setPendingConnectionSourceId(nodeId);
     },
-    onCancelConnection: (nodeId: string, event: React.MouseEvent) => {
-      event.stopPropagation();
+    onCancelConnection: (nodeId: string, event?: React.MouseEvent) => {
+      event?.stopPropagation();
       if (pendingConnectionSourceId === nodeId) {
         setPendingConnectionSourceId(null);
       }
     },
-    onCompleteConnection: (nodeId: string, event: React.MouseEvent) => {
-      event.stopPropagation();
+    onCompleteConnection: (nodeId: string, event?: React.MouseEvent) => {
+      event?.stopPropagation();
       if (!pendingConnectionSourceId || pendingConnectionSourceId === nodeId) {
         return;
       }
@@ -80,19 +80,19 @@ export function DesignerCanvasContent(props: { canvasAdapter: DesignerCanvasAdap
         setPendingConnectionSourceId(null);
       }
     },
-    onStartReconnect: (edgeId: string, event: React.MouseEvent) => {
-      event.stopPropagation();
+    onStartReconnect: (edgeId: string, event?: React.MouseEvent) => {
+      event?.stopPropagation();
       setPendingConnectionSourceId(null);
       setReconnectingEdgeId(edgeId);
     },
-    onCancelReconnect: (edgeId: string, event: React.MouseEvent) => {
-      event.stopPropagation();
+    onCancelReconnect: (edgeId: string, event?: React.MouseEvent) => {
+      event?.stopPropagation();
       if (reconnectingEdgeId === edgeId) {
         setReconnectingEdgeId(null);
       }
     },
-    onCompleteReconnect: (edgeId: string, sourceId: string, nodeId: string, event: React.MouseEvent) => {
-      event.stopPropagation();
+    onCompleteReconnect: (edgeId: string, sourceId: string, nodeId: string, event?: React.MouseEvent) => {
+      event?.stopPropagation();
       const edge = snapshot.doc.edges.find((item) => item.id === edgeId);
       if (!edge || edge.target === nodeId) {
         return;
@@ -103,20 +103,20 @@ export function DesignerCanvasContent(props: { canvasAdapter: DesignerCanvasAdap
         setReconnectingEdgeId(null);
       }
     },
-    onDuplicateNode: (nodeId: string, event: React.MouseEvent) => {
-      event.stopPropagation();
+    onDuplicateNode: (nodeId: string, event?: React.MouseEvent) => {
+      event?.stopPropagation();
       handleDuplicateNode(nodeId);
     },
-    onDeleteNode: (nodeId: string, event: React.MouseEvent) => {
-      event.stopPropagation();
+    onDeleteNode: (nodeId: string, event?: React.MouseEvent) => {
+      event?.stopPropagation();
       handleDeleteNode(nodeId);
     },
-    onDeleteEdge: (edgeId: string, event: React.MouseEvent) => {
-      event.stopPropagation();
+    onDeleteEdge: (edgeId: string, event?: React.MouseEvent) => {
+      event?.stopPropagation();
       handleDeleteEdge(edgeId);
     },
-    onMoveNode: (nodeId: string, event: React.MouseEvent, position?: { x: number; y: number }) => {
-      event.stopPropagation();
+    onMoveNode: (nodeId: string, event?: React.MouseEvent, position?: { x: number; y: number }) => {
+      event?.stopPropagation();
       const node = snapshot.doc.nodes.find((item) => item.id === nodeId);
       if (!node) {
         return;
@@ -127,8 +127,8 @@ export function DesignerCanvasContent(props: { canvasAdapter: DesignerCanvasAdap
         position: position ?? { x: node.position.x + 24, y: node.position.y + 24 }
       });
     },
-    onViewportChange: (viewport: { x: number; y: number; zoom: number }, event: React.MouseEvent) => {
-      event.stopPropagation();
+    onViewportChange: (viewport: { x: number; y: number; zoom: number }, event?: React.MouseEvent) => {
+      event?.stopPropagation();
       dispatch({ type: 'setViewport', viewport });
     }
   });

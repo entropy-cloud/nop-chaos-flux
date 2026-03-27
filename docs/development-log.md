@@ -18,6 +18,25 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-27 (Flow Designer Page Fixes)
+
+- **Fixed runtime errors in designer-canvas.tsx**:
+  - Event parameter is now optional (`event?: React.MouseEvent`)
+  - All callbacks use `event?.stopPropagation()` instead of `event.stopPropagation()`
+  - Fixes "Cannot read properties of undefined (reading 'stopPropagation')" error
+
+- **Fixed infinite loop in canvas-bridge.tsx**:
+  - Added `lastSelectionRef` to track last triggered selection
+  - `handleSelectionChange` now only triggers callbacks when selection actually changes
+  - Prevents "Maximum update depth exceeded" error when clicking nodes
+
+- **Fixed layout issues**:
+  - `.fd-page` now has `height: 100%` to fill parent container
+  - `.fd-page__content` now has `height: 100%` for proper grid layout
+  - `.playground-flow-page` now has `height: 100vh` and flex layout
+
+- Files: `packages/flow-designer-renderers/src/designer-canvas.tsx`, `packages/flow-designer-renderers/src/canvas-bridge.tsx`, `packages/flow-designer-renderers/src/styles.css`, `apps/playground/src/styles.css`
+
 ### 2026-03-27 (FieldFrame Component and wrap Property)
 
 - **Added `FieldFrame` component** in `packages/flux-react/src/field-frame.tsx`:

@@ -51,8 +51,27 @@ function createObjectEvalContext(data: object): EvalContext {
   };
 }
 
-function toEvalContext(input: EvalContext | object): EvalContext {
-  return isEvalContext(input) ? input : createObjectEvalContext(input);
+function isScopeRef(input: unknown): input is ScopeRef {
+  return (
+    typeof input === 'object' &&
+    input !== null &&
+    'get' in input &&
+    typeof (input as ScopeRef).get === 'function' &&
+    'has' in input &&
+    typeof (input as ScopeRef).has === 'function' &&
+    'read' in input &&
+    typeof (input as ScopeRef).read === 'function'
+  );
+}
+
+function toEvalContext(input: EvalContext | ScopeRef | object): EvalContext {
+  if (isEvalContext(input)) {
+    return input;
+  }
+  if (isScopeRef(input)) {
+    return createEvalContext(input);
+  }
+  return createObjectEvalContext(input);
 }
 
 function createEvalContext(scope: ScopeRef): EvalContext {
@@ -133,23 +152,87 @@ function normalizeExpressionSource(source: string): string {
   return trimmed;
 }
 
-function parseTemplateSegments(source: string): Array<{ type: 'text' | 'expr'; value: string }> {
-  const segments: Array<{ type: 'text' | 'expr'; value: string }> = [];
-  const regex = /\$\{([^}]+)\}/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(source)) !== null) {
-    if (match.index > lastIndex) {
-      segments.push({ type: 'text', value: source.slice(lastIndex, match.index) });
-    }
-
-    segments.push({ type: 'expr', value: match[1].trim() });
-    lastIndex = match.index + match[0].length;
+function isPureExpression(source: string): boolean {
+  if (!source.startsWith('${')) {
+    return false;
   }
 
-  if (lastIndex < source.length) {
-    segments.push({ type: 'text', value: source.slice(lastIndex) });
+  let depth = 1;
+  let j = 2;
+  let inString: string | null = null;
+
+  while (j < source.length && depth > 0) {
+    const ch = source[j];
+    if (inString) {
+      if (ch === '\\' && j + 1 < source.length) {
+        j += 2;
+        continue;
+      }
+      if (ch === inString) {
+        inString = null;
+      }
+    } else if (ch === '"' || ch === "'" || ch === '`') {
+      inString = ch;
+    } else if (ch === '{') {
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+    }
+    j++;
+  }
+
+  return depth === 0 && j === source.length;
+}
+
+function parseTemplateSegments(source: string): Array<{ type: 'text' | 'expr'; value: string }> {
+  const segments: Array<{ type: 'text' | 'expr'; value: string }> = [];
+  let i = 0;
+
+  while (i < source.length) {
+    const exprStart = source.indexOf('${', i);
+    if (exprStart === -1) {
+      if (i < source.length) {
+        segments.push({ type: 'text', value: source.slice(i) });
+      }
+      break;
+    }
+
+    if (exprStart > i) {
+      segments.push({ type: 'text', value: source.slice(i, exprStart) });
+    }
+
+    let depth = 1;
+    let j = exprStart + 2;
+    let inString: string | null = null;
+
+    while (j < source.length && depth > 0) {
+      const ch = source[j];
+      if (inString) {
+        if (ch === '\\' && j + 1 < source.length) {
+          j += 2;
+          continue;
+        }
+        if (ch === inString) {
+          inString = null;
+        }
+      } else if (ch === '"' || ch === "'" || ch === '`') {
+        inString = ch;
+      } else if (ch === '{') {
+        depth++;
+      } else if (ch === '}') {
+        depth--;
+      }
+      j++;
+    }
+
+    if (depth === 0) {
+      const exprContent = source.slice(exprStart + 2, j - 1).trim();
+      segments.push({ type: 'expr', value: exprContent });
+      i = j;
+    } else {
+      segments.push({ type: 'text', value: source.slice(exprStart) });
+      break;
+    }
   }
 
   return segments;
@@ -383,7 +466,8 @@ function compileNode<T>(input: T, formulaCompiler: FormulaCompiler): CompiledVal
       } as StaticValueNode<T>;
     }
 
-    if (/^\$\{[\s\S]+\}$/.test(input.trim())) {
+    const trimmed = input.trim();
+    if (isPureExpression(trimmed)) {
       return {
         kind: 'expression-node',
         source: input,

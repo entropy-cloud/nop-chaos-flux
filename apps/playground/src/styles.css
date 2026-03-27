@@ -173,6 +173,14 @@ body {
 
 .playground-flow-page {
   position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.playground-flow-page > .fd-page {
+  flex: 1;
+  min-height: 0;
 }
 
 .nop-ai-debug-card {

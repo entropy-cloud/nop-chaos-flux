@@ -36,6 +36,30 @@ describe('createFormulaCompiler', () => {
     expect(compiler.hasExpression('hello ${name}')).toBe(true);
     expect(compiler.hasExpression('hello world')).toBe(false);
   });
+
+  it('parses ternary expressions in templates', () => {
+    const compiler = createFormulaCompiler();
+    const template = compiler.compileTemplate('${isDirty ? "warning" : "success"}');
+    const scope = createScope({ isDirty: true });
+    const result = template.exec(scope, env);
+    expect(result).toBe('warning');
+  });
+
+  it('parses nested braces in ternary expressions', () => {
+    const compiler = createFormulaCompiler();
+    const template = compiler.compileTemplate('Status: ${isDirty ? "dirty" : "clean"}');
+    const scope = createScope({ isDirty: false });
+    const result = template.exec(scope, env);
+    expect(result).toBe('Status: clean');
+  });
+
+  it('handles multiple ternary expressions', () => {
+    const compiler = createFormulaCompiler();
+    const template = compiler.compileTemplate('${a ? 1 : 0} and ${b ? 2 : 3}');
+    const scope = createScope({ a: true, b: false });
+    const result = template.exec(scope, env);
+    expect(result).toBe('1 and 3');
+  });
 });
 
 describe('createExpressionCompiler', () => {

@@ -58,6 +58,7 @@
 .fd-page {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
   min-height: 0;
   background: var(--fd-page-bg);
   color: var(--fd-text);
@@ -76,6 +77,7 @@
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr) 280px;
   min-height: 0;
+  height: 100%;
 }
 
 .fd-page__palette {
