@@ -89,7 +89,7 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   expect(nodeMetrics.innerBorder).toBe('1px');
   expect(nodeMetrics.innerBg).toBe('rgb(255, 255, 255)');
   expect(nodeMetrics.innerRadius).toBe('12px');
-  expect(nodeMetrics.innerShadow).not.toContain('0px 0px 0px 2px');
+  expect(nodeMetrics.innerShadow).toContain('0px 0px 0px 2px');
   expect(nodeMetrics.tagBg).toBe('rgb(224, 242, 254)');
   expect(nodeMetrics.tagRadius).toBe('9999px');
   expect(nodeMetrics.iconLeft).toBeLessThan(nodeMetrics.titleLeft);
@@ -124,6 +124,9 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   expect(nodeQuickActionBgBefore).toBe('rgb(255, 255, 255)');
   expect(nodeQuickActionBgAfter).not.toBe('rgb(255, 255, 255)');
 
+  const nodeHtml = await nodeCard.evaluate((el) => el.outerHTML);
+  const toolbarHtml = await toolbar.evaluate((el) => el.outerHTML);
+
   const edge = page.locator('.react-flow__edge').nth(1);
   await edge.hover({ force: true });
   const edgeQuickActions = page.locator('.fd-edge__quick-actions').first();
@@ -137,9 +140,6 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   const edgeQuickActionBgAfter = await edgeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
   expect(edgeQuickActionBgBefore).toBe('rgb(255, 255, 255)');
   expect(edgeQuickActionBgAfter).not.toBe('rgb(255, 255, 255)');
-
-  const nodeHtml = await nodeCard.evaluate((el) => el.outerHTML);
-  const toolbarHtml = await toolbar.evaluate((el) => el.outerHTML);
 
   const outDir = join(testInfo.outputDir, 'html');
   await mkdir(outDir, { recursive: true });
@@ -264,7 +264,8 @@ test('verifies palette and top toolbar visual structure', async ({ page }) => {
   expect(styleMetrics!.minimapHeight).toBe('128px');
   expect(styleMetrics!.minimapRight).toBe('12px');
   expect(styleMetrics!.minimapBottom).toBe('12px');
-  expect(styleMetrics!.minimapBgImage).toContain('linear-gradient');
+  expect(styleMetrics!.minimapBgImage).toContain('none');
+  expect(styleMetrics!.minimapBg).toContain('226, 232, 240');
   expect(styleMetrics!.controlsTop).toBe('12px');
   expect(styleMetrics!.controlsLeft).toBe('12px');
   expect(styleMetrics!.controlsRadius).toBe('8px');
