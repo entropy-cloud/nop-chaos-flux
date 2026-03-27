@@ -1,9 +1,19 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { renderDesignerCanvasBridge } from './canvas-bridge';
 import { useDesignerContext } from './designer-context';
 
 export function DesignerCanvasContent() {
-  const { dispatch, snapshot } = useDesignerContext();
+  const { dispatch, snapshot, config } = useDesignerContext();
+  const nodeTypeSizeMap = useMemo(() => {
+    const map = new Map<string, { minWidth?: number; minHeight?: number }>();
+    for (const nodeType of config.nodeTypes) {
+      map.set(nodeType.id, {
+        minWidth: nodeType.appearance?.minWidth,
+        minHeight: nodeType.appearance?.minHeight
+      });
+    }
+    return map;
+  }, [config.nodeTypes]);
   const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
   const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
 
@@ -52,6 +62,7 @@ export function DesignerCanvasContent() {
 
   return renderDesignerCanvasBridge('xyflow', {
     snapshot,
+    nodeTypeSizeMap,
     pendingConnectionSourceId,
     reconnectingEdgeId,
     onPaneClick: handlePaneClick,
