@@ -690,7 +690,7 @@ function DesignerXyflowEdge(props: EdgeProps) {
   "body": {
     "type": "flex",
     "className": "flex items-center gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
-    "items": [
+    "body": [
       {
         "type": "icon",
         "icon": "workflow",
@@ -701,12 +701,12 @@ function DesignerXyflowEdge(props: EdgeProps) {
         "body": [
           {
             "type": "text",
-            "body": "${data.label}",
+            "text": "${data.label}",
             "className": "text-sm font-medium text-gray-900"
           },
           {
             "type": "text",
-            "body": "${data.config.executor} · ${data.config.timeout}",
+            "text": "${data.config.executor} · ${data.config.timeout}",
             "className": "text-xs text-gray-500"
           }
         ]

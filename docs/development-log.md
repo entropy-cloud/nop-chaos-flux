@@ -18,6 +18,29 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-27 (Flow Designer Parity Follow-up: Node Content, Icon Actions, Playwright E2E)
+
+- Fixed schema expression loss in designer runtime by reading `document/config` from raw `props.schema` in `DesignerPageRenderer`, preserving nested template strings (for example `${data.label}`, `${doc.name}`).
+- Updated node hover fallback quick actions from text buttons to icon buttons (`pencil`, `copy`, `trash-2`) for closer prototype parity.
+- Added default toolbar renderer for designer page header so toolbar config now renders real controls (title, counters, undo/redo/save/export buttons with icons and state).
+- Updated palette item icon rendering to icon elements (`<i data-icon="...">`) instead of plain icon text.
+- Added Playwright E2E infrastructure and assertions:
+  - `playwright.config.ts`
+  - `tests/e2e/flow-designer-ui.spec.ts`
+  - root scripts `test:e2e` and `test:e2e:headed`
+- Added Playwright inspection script `scripts/inspect-flow-node-html.mjs` to capture real node/header/palette/toolbar HTML snapshots from a running playground.
+- Added flex compatibility tests confirming semantic order: prefer `body`, fallback to deprecated `items` only when `body` is absent.
+- Validation: `pnpm.cmd --filter @nop-chaos/flux-renderers-basic test`, `pnpm.cmd --filter @nop-chaos/flow-designer-renderers test`, `pnpm.cmd --filter @nop-chaos/flux-playground test`, `pnpm.cmd --filter @nop-chaos/flow-designer-renderers typecheck`, `pnpm.cmd test:e2e --reporter=line`.
+
+### 2026-03-27 (Flow Designer Node Rendering and Toolbar Parity Fix)
+
+- Fixed node content rendering gaps in schema-driven canvas by preserving full node/edge payloads during xyflow mapping.
+- Updated flex renderer compatibility so schemas using `items` render correctly when `body` is absent.
+- Added fallback node quick actions (Edit/Duplicate/Delete) for hover toolbar when `quickActions` schema is not configured, with delayed hide behavior for better hover transfer.
+- Corrected edge config lookup to use business edge type from edge data instead of xyflow renderer type.
+- Code paths: `packages/flow-designer-renderers/src/designer-xyflow-canvas/xyflow-utils.ts`, `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowNode.tsx`, `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`, `packages/flow-designer-renderers/src/designer-xyflow-canvas/types.ts`, `packages/flux-renderers-basic/src/flex.tsx`
+- Validation: `pnpm.cmd --filter @nop-chaos/flux-renderers-basic test`, `pnpm.cmd --filter @nop-chaos/flow-designer-renderers test`, `pnpm.cmd --filter @nop-chaos/flux-renderers-basic typecheck`, `pnpm.cmd --filter @nop-chaos/flow-designer-renderers typecheck`, `pnpm.cmd --filter @nop-chaos/flux-playground typecheck`, `pnpm.cmd --filter @nop-chaos/flux-playground test`.
+
 ### 2026-03-27 (Canvas-Bridge Schema-Driven Rendering Refactor Complete)
 
 - **Completed refactor** of `canvas-bridge.tsx` to be fully driven by `NodeTypeConfig` and `EdgeTypeConfig` JSON schemas.
