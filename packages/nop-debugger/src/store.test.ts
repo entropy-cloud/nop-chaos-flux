@@ -9,7 +9,9 @@ describe('createDebuggerStore', () => {
       maxEvents: 2,
       defaultOpen: false,
       defaultTab: 'timeline',
-      position: { x: 10, y: 20 }
+      position: { x: 10, y: 20 },
+      errorBufferKeepEarliest: 3,
+      errorBufferKeepLatest: 5
     });
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
@@ -64,7 +66,9 @@ describe('createDebuggerStore', () => {
       maxEvents: 5,
       defaultOpen: true,
       defaultTab: 'overview',
-      position: { x: 1, y: 2 }
+      position: { x: 1, y: 2 },
+      errorBufferKeepEarliest: 3,
+      errorBufferKeepLatest: 5
     });
 
     store.hide();
@@ -106,7 +110,9 @@ describe('createDebuggerStore', () => {
       maxEvents: 5,
       defaultOpen: false,
       defaultTab: 'timeline',
-      position: { x: 0, y: 0 }
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 3,
+      errorBufferKeepLatest: 5
     });
 
     store.append({
@@ -118,5 +124,77 @@ describe('createDebuggerStore', () => {
     });
 
     expect(store.getSnapshot().events).toHaveLength(0);
+  });
+
+  it('maintains pinned error buffer with earliest and latest errors', () => {
+    const store = createDebuggerStore({
+      enabled: true,
+      sessionId: 'session-pinned',
+      maxEvents: 3,
+      defaultOpen: false,
+      defaultTab: 'timeline',
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 2,
+      errorBufferKeepLatest: 2
+    });
+
+    store.append({ kind: 'error', group: 'error', level: 'error', source: 'test', summary: 'error-1', timestamp: 100 });
+    store.append({ kind: 'notify', group: 'notify', level: 'info', source: 'test', summary: 'info-1', timestamp: 150 });
+    store.append({ kind: 'error', group: 'error', level: 'error', source: 'test', summary: 'error-2', timestamp: 200 });
+    store.append({ kind: 'notify', group: 'notify', level: 'warning', source: 'test', summary: 'warn-1', timestamp: 250 });
+    store.append({ kind: 'error', group: 'error', level: 'error', source: 'test', summary: 'error-3', timestamp: 300 });
+    store.append({ kind: 'error', group: 'error', level: 'error', source: 'test', summary: 'error-4', timestamp: 350 });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.events).toHaveLength(3);
+    expect(snapshot.events[0].summary).toBe('error-4');
+
+    expect(snapshot.pinnedErrors.earliest).toHaveLength(2);
+    expect(snapshot.pinnedErrors.earliest[0].summary).toBe('error-1');
+    expect(snapshot.pinnedErrors.earliest[1].summary).toBe('error-2');
+
+    expect(snapshot.pinnedErrors.latest).toHaveLength(2);
+    expect(snapshot.pinnedErrors.latest[0].summary).toBe('error-3');
+    expect(snapshot.pinnedErrors.latest[1].summary).toBe('error-4');
+  });
+
+  it('clears pinned error buffer when events are cleared', () => {
+    const store = createDebuggerStore({
+      enabled: true,
+      sessionId: 'session-clear',
+      maxEvents: 10,
+      defaultOpen: false,
+      defaultTab: 'timeline',
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 3,
+      errorBufferKeepLatest: 3
+    });
+
+    store.append({ kind: 'error', group: 'error', level: 'error', source: 'test', summary: 'err', timestamp: 100 });
+    store.clear();
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.pinnedErrors.earliest).toHaveLength(0);
+    expect(snapshot.pinnedErrors.latest).toHaveLength(0);
+  });
+
+  it('does not pin info-level events', () => {
+    const store = createDebuggerStore({
+      enabled: true,
+      sessionId: 'session-info',
+      maxEvents: 10,
+      defaultOpen: false,
+      defaultTab: 'timeline',
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 3,
+      errorBufferKeepLatest: 3
+    });
+
+    store.append({ kind: 'notify', group: 'notify', level: 'info', source: 'test', summary: 'info-1', timestamp: 100 });
+    store.append({ kind: 'action:end', group: 'action', level: 'success', source: 'test', summary: 'success-1', timestamp: 200 });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.pinnedErrors.earliest).toHaveLength(0);
+    expect(snapshot.pinnedErrors.latest).toHaveLength(0);
   });
 });

@@ -13,7 +13,8 @@ function createSnapshot(): NopDebuggerSnapshot {
     activeTab: 'overview',
     position: { x: 24, y: 24 },
     events: [],
-    filters: ['render', 'action', 'api', 'compile', 'notify', 'error']
+    filters: ['render', 'action', 'api', 'compile', 'notify', 'error'],
+    pinnedErrors: { earliest: [], latest: [] }
   };
 }
 
@@ -51,7 +52,8 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters },
     overview: { errorCount: 1, totalEvents: 4, countsByGroup: { render: 1, action: 1, api: 1, compile: 0, notify: 0, error: 1 } },
     latestInteractionTrace: latestTrace,
-    recentEvents: []
+    recentEvents: [],
+    pinnedErrors: { earliest: [], latest: [] }
   };
   const show = vi.fn();
   const hide = vi.fn();
@@ -76,10 +78,13 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
       queryEvents: () => [],
       getLatestEvent: () => undefined,
       getLatestError: () => undefined,
+      getEarliestErrors: () => [],
+      getLatestErrors: () => [],
+      getPinnedErrors: () => ({ earliest: [], latest: [] }),
       getNodeDiagnostics: () => ({ rendererTypes: [], totalEvents: 0, countsByGroup: {}, countsByKind: {}, recentEvents: [] }),
       getInteractionTrace: () => latestTrace,
-      createDiagnosticReport: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters }, overview: emptyOverview, recentEvents: [] }),
-      exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [] }),
+      createDiagnosticReport: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters }, overview: emptyOverview, recentEvents: [], pinnedErrors: { earliest: [], latest: [] } }),
+      exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [], pinnedErrors: { earliest: [], latest: [] } }),
       waitForEvent: async () => snapshot.events[0]!,
       clear,
       pause,
@@ -104,11 +109,14 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     queryEvents: () => [],
     getLatestEvent: () => undefined,
     getLatestError: () => undefined,
+    getEarliestErrors: () => [],
+    getLatestErrors: () => [],
+    getPinnedErrors: () => ({ earliest: [], latest: [] }),
     getNodeDiagnostics: () => ({ rendererTypes: [], totalEvents: 0, countsByGroup: {}, countsByKind: {}, recentEvents: [] }),
     getInteractionTrace: () => latestTrace,
     getOverview: () => emptyOverview,
     createDiagnosticReport: vi.fn(() => metricReport),
-    exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [] }),
+    exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [], pinnedErrors: { earliest: [], latest: [] } }),
     waitForEvent: async () => snapshot.events[0]!,
     subscribe: () => () => {},
     getSnapshot: () => snapshot

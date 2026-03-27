@@ -34,7 +34,8 @@ describe('debugger automation helpers', () => {
       activeTab: 'timeline',
       position: { x: 1, y: 2 },
       events: [],
-      filters
+      filters,
+      pinnedErrors: { earliest: [], latest: [] }
     };
     const overview: NopDebuggerOverview = {
       errorCount: 0,
@@ -80,7 +81,8 @@ describe('debugger automation helpers', () => {
         filters
       },
       overview,
-      recentEvents: []
+      recentEvents: [],
+      pinnedErrors: { earliest: [], latest: [] }
     };
     const exportPayload: NopDebuggerSessionExport = {
       controllerId: 'controller-a',
@@ -88,7 +90,8 @@ describe('debugger automation helpers', () => {
       generatedAt: 1,
       snapshot,
       overview,
-      events: []
+      events: [],
+      pinnedErrors: { earliest: [], latest: [] }
     };
     const waitedEvent: NopDebugEvent = {
       id: 1,
@@ -106,6 +109,9 @@ describe('debugger automation helpers', () => {
     const queryEvents = vi.fn(() => []);
     const getLatestEvent = vi.fn(() => undefined);
     const getLatestError = vi.fn(() => undefined);
+    const getEarliestErrors = vi.fn(() => []);
+    const getLatestErrors = vi.fn(() => []);
+    const getPinnedErrors = vi.fn(() => ({ earliest: [], latest: [] }));
     const getNodeDiagnostics = vi.fn(() => diagnostics);
     const getInteractionTrace = vi.fn(() => trace);
     const createDiagnosticReport = vi.fn(() => report);
@@ -128,6 +134,9 @@ describe('debugger automation helpers', () => {
       queryEvents,
       getLatestEvent,
       getLatestError,
+      getEarliestErrors,
+      getLatestErrors,
+      getPinnedErrors,
       getNodeDiagnostics,
       getInteractionTrace,
       createDiagnosticReport,
@@ -175,7 +184,8 @@ describe('debugger automation helpers', () => {
       activeTab: 'timeline',
       position: { x: 0, y: 0 },
       events: [],
-      filters
+      filters,
+      pinnedErrors: { earliest: [], latest: [] }
     };
     const overview: NopDebuggerOverview = {
       errorCount: 0,
@@ -208,7 +218,8 @@ describe('debugger automation helpers', () => {
       generatedAt: 1,
       snapshot: { enabled: true, panelOpen: false, paused: false, activeTab: 'timeline', filters },
       overview,
-      recentEvents: []
+      recentEvents: [],
+      pinnedErrors: { earliest: [], latest: [] }
     };
     const exportPayload: NopDebuggerSessionExport = {
       controllerId: 'a',
@@ -216,7 +227,8 @@ describe('debugger automation helpers', () => {
       generatedAt: 1,
       snapshot,
       overview,
-      events: []
+      events: [],
+      pinnedErrors: { earliest: [], latest: [] }
     };
     const waitedEvent: NopDebugEvent = {
       id: 1,
@@ -237,6 +249,9 @@ describe('debugger automation helpers', () => {
       queryEvents: () => [],
       getLatestEvent: () => undefined,
       getLatestError: () => undefined,
+      getEarliestErrors: () => [],
+      getLatestErrors: () => [],
+      getPinnedErrors: () => ({ earliest: [], latest: [] }),
       getNodeDiagnostics: () => diagnostics,
       getInteractionTrace: () => trace,
       createDiagnosticReport: () => report,

@@ -11,7 +11,9 @@ function createStore() {
     maxEvents: 50,
     defaultOpen: false,
     defaultTab: 'timeline',
-    position: { x: 0, y: 0 }
+    position: { x: 0, y: 0 },
+    errorBufferKeepEarliest: 3,
+    errorBufferKeepLatest: 5
   });
 }
 
