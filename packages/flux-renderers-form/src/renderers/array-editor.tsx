@@ -36,10 +36,15 @@ function ArrayEditorRow(props: {
   });
 
   return (
-    <div className="nop-array-editor__row">
-      <div className={itemUi.className}>
+    <div className="grid grid-cols-[1fr_auto] gap-2.5 items-start">
+      <div
+        className={itemUi.className}
+        data-child-field-visited={itemUi['data-child-field-visited']}
+        data-child-field-touched={itemUi['data-child-field-touched']}
+        data-child-field-dirty={itemUi['data-child-field-dirty']}
+        data-child-field-invalid={itemUi['data-child-field-invalid']}
+      >
         <Input
-          className="nop-input"
           type="text"
           value={item.value}
           placeholder={itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}
@@ -84,7 +89,6 @@ function ArrayEditorRow(props: {
         type="button"
         variant="outline"
         size="sm"
-        className="nop-kv-remove"
         onClick={() => {
           const nextItems = items.filter((candidate) => candidate.id !== item.id);
           itemsRef.current = nextItems;
@@ -234,9 +238,15 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     }, [childPaths, currentForm, name, props.props.itemLabel]);
 
   return (
-    <label className={presentation.className}>
+    <label
+      className={presentation.className}
+      data-field-visited={presentation['data-field-visited']}
+      data-field-touched={presentation['data-field-touched']}
+      data-field-dirty={presentation['data-field-dirty']}
+      data-field-invalid={presentation['data-field-invalid']}
+    >
       <FieldLabel content={labelContent} />
-      <div className="nop-array-editor">
+      <div className="grid gap-3">
         {items.map((item, index) => {
           return (
             <ArrayEditorRow
@@ -257,7 +267,6 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           type="button"
           variant="outline"
           size="sm"
-          className="nop-kv-add"
           onClick={() => {
             const nextItem = { id: `item-${items.length + 1}`, value: '' };
             const nextItems = [...items, nextItem];

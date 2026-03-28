@@ -62,9 +62,15 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   }, [currentForm, labelText, name]);
 
   return (
-    <label className={presentation.className}>
+    <label
+      className={presentation.className}
+      data-field-visited={presentation['data-field-visited']}
+      data-field-touched={presentation['data-field-touched']}
+      data-field-dirty={presentation['data-field-dirty']}
+      data-field-invalid={presentation['data-field-invalid']}
+    >
       <FieldLabel content={labelContent} />
-      <div className="nop-tag-list">
+      <div className="flex flex-wrap gap-2.5">
         {tags.map((tag) => {
           const active = value.includes(tag);
 
@@ -74,7 +80,6 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
               type="button"
               variant={active ? 'default' : 'outline'}
               size="sm"
-              className={active ? 'nop-tag nop-tag--active' : 'nop-tag'}
               onFocus={() => {
                 if (currentForm && name) {
                   currentForm.visitField(name);

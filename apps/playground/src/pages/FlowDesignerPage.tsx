@@ -42,7 +42,7 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
   }, [onBack]);
 
   return (
-    <div className="playground-flow-page">
+    <div className="relative h-screen flex flex-col">
       <SchemaRenderer
         schema={workflowDesignerSchema as any}
         registry={registry}

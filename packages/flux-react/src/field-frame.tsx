@@ -71,18 +71,14 @@ export function FieldFrame(props: FieldFrameProps) {
   const Tag = isGroup ? 'fieldset' : 'label';
   const LabelTag: 'span' | 'legend' = isGroup ? 'legend' : 'span';
 
-  const stateClasses = [
-    'nop-field',
-    fieldState.visited ? 'nop-field--visited' : '',
-    fieldState.touched ? 'nop-field--touched' : '',
-    fieldState.dirty ? 'nop-field--dirty' : '',
-    showError ? 'nop-field--invalid' : ''
-  ].filter(Boolean).join(' ');
-
-  const mergedClassName = [stateClasses, className].filter(Boolean).join(' ') || undefined;
-
   return (
-    <Tag className={mergedClassName}>
+    <Tag
+      className={['nop-field grid gap-2', className].filter(Boolean).join(' ') || undefined}
+      data-field-visited={fieldState.visited || undefined}
+      data-field-touched={fieldState.touched || undefined}
+      data-field-dirty={fieldState.dirty || undefined}
+      data-field-invalid={showError || undefined}
+    >
       {label ? (
         <LabelTag className="nop-field__label">
           {label}

@@ -8,8 +8,8 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
 
   return (
     <section className="nop-form">
-      {hasRendererSlotContent(bodyContent) ? <div className="nop-form__body">{bodyContent}</div> : null}
-      {hasRendererSlotContent(actionsContent) ? <div className="nop-form__actions">{actionsContent}</div> : null}
+      {hasRendererSlotContent(bodyContent) ? <div className="grid gap-4">{bodyContent}</div> : null}
+      {hasRendererSlotContent(actionsContent) ? <div className="flex flex-wrap gap-3">{actionsContent}</div> : null}
     </section>
   );
 }

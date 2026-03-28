@@ -50,11 +50,13 @@ export function DialogHost() {
   }
 
   return (
-    <div className="nop-dialog-host nop-theme-root">
-      {dialogs.map((dialog: DialogState) => (
-        <DialogView key={dialog.id} dialog={dialog} page={page} />
-      ))}
-    </div>
+    <Dialog open>
+      <DialogContent className="nop-dialog-host nop-theme-root">
+        {dialogs.map((dialog: DialogState) => (
+          <DialogView key={dialog.id} dialog={dialog} page={page} />
+        ))}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -73,8 +75,9 @@ function DialogView(props: {
   const { dialog, page } = props;
 
   return (
-      <div className="nop-dialog-backdrop nop-theme-root">
-        <div className="nop-dialog-card">
+      <Dialog open>
+        <DialogOverlay className="nop-dialog-backdrop nop-theme-root" />
+        <DialogContent className="nop-dialog-card">
         {dialog.title
           ? (
               <ActionScopeContext.Provider value={dialog.actionScope}>
@@ -92,9 +95,9 @@ function DialogView(props: {
               </ActionScopeContext.Provider>
             )
           : null}
-        <button className="nop-dialog-close" type="button" onClick={() => page.closeDialog(dialog.id)}>
+        <DialogClose className="nop-dialog-close" onClick={() => page.closeDialog(dialog.id)}>
           Close
-        </button>
+        </DialogClose>
         <ActionScopeContext.Provider value={dialog.actionScope}>
           <ComponentRegistryContext.Provider value={dialog.componentRegistry}>
             <ScopeContext.Provider value={dialog.scope}>
@@ -105,9 +108,10 @@ function DialogView(props: {
             </ScopeContext.Provider>
           </ComponentRegistryContext.Provider>
         </ActionScopeContext.Provider>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
+import { Dialog, DialogContent, DialogOverlay, DialogClose } from '@nop-chaos/ui';

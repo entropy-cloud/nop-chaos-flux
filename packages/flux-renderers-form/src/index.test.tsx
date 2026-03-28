@@ -670,18 +670,18 @@ describe('formRendererDefinitions', () => {
 
     const keyInput = screen.getByPlaceholderText('Key');
     const valueInput = screen.getByPlaceholderText('Value');
-    const keyField = keyInput.closest('.nop-child-field');
-    const valueField = valueInput.closest('.nop-child-field');
+    const keyField = keyInput.closest('div');
+    const valueField = valueInput.closest('div');
 
     fireEvent.change(valueInput, { target: { value: 'prod' } });
     fireEvent.focus(keyInput);
     fireEvent.blur(keyInput);
 
     expect(await screen.findByText('Entry 1 key is required')).toBeTruthy();
-    expect(keyField?.className).toContain('nop-child-field--visited');
-    expect(keyField?.className).toContain('nop-child-field--touched');
-    expect(keyField?.className).toContain('nop-child-field--invalid');
-    expect(valueField?.className ?? '').not.toContain('nop-child-field--invalid');
+    expect(keyField?.hasAttribute('data-child-field-visited')).toBe(true);
+    expect(keyField?.hasAttribute('data-child-field-touched')).toBe(true);
+    expect(keyField?.hasAttribute('data-child-field-invalid')).toBe(true);
+    expect(valueField?.hasAttribute('data-child-field-invalid')).toBe(false);
 
     fireEvent.change(keyInput, { target: { value: 'env' } });
 
@@ -692,7 +692,7 @@ describe('formRendererDefinitions', () => {
     await waitFor(() => {
       expect((keyInput as HTMLInputElement).value).toBe('env');
     });
-    expect(valueField?.className).toContain('nop-child-field--dirty');
+    expect(valueField?.hasAttribute('data-child-field-dirty')).toBe(true);
   });
 
   it('submits and validates a runtime-registered array editor', async () => {
@@ -787,11 +787,11 @@ describe('formRendererDefinitions', () => {
     fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: '' } });
 
     expect(await screen.findByText('Reviewer 1 is required')).toBeTruthy();
-    const childField = screen.getByPlaceholderText('Reviewer 1').closest('.nop-child-field');
-    expect(childField?.className).toContain('nop-child-field--visited');
-    expect(childField?.className).toContain('nop-child-field--touched');
-    expect(childField?.className).toContain('nop-child-field--dirty');
-    expect(childField?.className).toContain('nop-child-field--invalid');
+    const childField = screen.getByPlaceholderText('Reviewer 1').closest('div');
+    expect(childField?.hasAttribute('data-child-field-visited')).toBe(true);
+    expect(childField?.hasAttribute('data-child-field-touched')).toBe(true);
+    expect(childField?.hasAttribute('data-child-field-dirty')).toBe(true);
+    expect(childField?.hasAttribute('data-child-field-invalid')).toBe(true);
   });
 
   it('blocks submit when compiled validation rules fail', async () => {
@@ -938,18 +938,18 @@ describe('formRendererDefinitions', () => {
     expect(screen.queryByText('Email is required')).toBeNull();
 
     fireEvent.focus(input);
-    expect(field?.className).toContain('nop-field--visited');
+    expect(field?.hasAttribute('data-field-visited')).toBe(true);
 
     fireEvent.change(input, { target: { value: 'foo' } });
-    expect(field?.className).toContain('nop-field--dirty');
+    expect(field?.hasAttribute('data-field-dirty')).toBe(true);
     expect(screen.queryByText('Email is required')).toBeNull();
 
     fireEvent.change(input, { target: { value: '' } });
     fireEvent.blur(input);
 
     expect(await screen.findByText('Email is required')).toBeTruthy();
-    expect(field?.className).toContain('nop-field--touched');
-    expect(field?.className).toContain('nop-field--invalid');
+    expect(field?.hasAttribute('data-field-touched')).toBe(true);
+    expect(field?.hasAttribute('data-field-invalid')).toBe(true);
   });
 
   it('supports visited-only error visibility without changing validation timing', async () => {

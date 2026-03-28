@@ -10,7 +10,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const footerContent = resolveRendererSlotContent(props, 'footer');
 
   return (
-    <section className={classNames('nop-page', props.meta.className)}>
+    <section className={classNames('nop-page grid gap-4', props.meta.className)}>
       {hasRendererSlotContent(titleContent) ? (
         <header className="nop-page__header">
           <h2>{titleContent}</h2>

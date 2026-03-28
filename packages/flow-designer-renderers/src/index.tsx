@@ -2,7 +2,6 @@ import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core'
 import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { DesignerPageRenderer, DesignerCanvasRenderer, DesignerPaletteRenderer } from './designer-page';
 import { DesignerFieldRenderer } from './designer-field';
-import './styles.css';
 
 export * from './schemas';
 export * from './designer-context';

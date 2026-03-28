@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@nop-chaos/ui';
 import type { TableColumnSchema, TableSchema } from './schemas';
 
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
@@ -12,25 +13,25 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const columnCount = Math.max(columns.length, 1);
 
   return (
-    <div className="nop-table-wrap">
+    <div className="nop-table-wrap grid gap-4">
       {hasRendererSlotContent(headerContent) ? <div className="nop-table__header">{headerContent}</div> : null}
-      <table className="nop-table">
-        <thead>
-          <tr>
+      <Table className="nop-table">
+        <TableHeader className="nop-table__header">
+          <TableRow>
             {columns.map((column, index) => {
               const labelRegion = typeof column.labelRegionKey === 'string' ? props.regions[column.labelRegionKey] : undefined;
               const labelContent = labelRegion?.render({ pathSuffix: `columns.${index}.label` }) ?? column.label ?? column.name;
 
-              return <th key={`${column.name ?? column.label ?? 'column'}-${index}`}>{labelContent}</th>;
+              return <TableHead key={`${column.name ?? column.label ?? 'column'}-${index}`}>{labelContent}</TableHead>;
             })}
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {source.length === 0
             ? (
-                <tr className="nop-table__empty-row">
-                  <td colSpan={columnCount} className="nop-table__empty-cell">{emptyContent}</td>
-                </tr>
+                <TableRow className="nop-table__empty-row">
+                  <TableCell colSpan={columnCount} className="nop-table__empty-cell">{emptyContent}</TableCell>
+                </TableRow>
               )
             : source.map((record, index) => {
                 const rowScope = props.helpers.createScope({ record, index }, {
@@ -40,7 +41,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 });
 
                 return (
-                  <tr
+                  <TableRow
                     key={String(record.id ?? index)}
                     className={props.events.onRowClick ? 'nop-table__row nop-table__row--interactive' : 'nop-table__row'}
                     onClick={props.events.onRowClick ? (event) => void props.events.onRowClick?.(event, { scope: rowScope }) : undefined}
@@ -51,8 +52,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
                       if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
                         return (
-                          <td key={`op-${columnIndex}`}>
-                            <div className="nop-table__actions" onClick={(event) => event.stopPropagation()}>
+                          <TableCell key={`op-${columnIndex}`}>
+                            <div className="nop-table__actions flex flex-wrap gap-3" onClick={(event) => event.stopPropagation()}>
                               {buttonRegion
                                 ? buttonRegion.render({
                                     scope: rowScope,
@@ -67,28 +68,28 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                                     </div>
                                   ))}
                             </div>
-                          </td>
+                          </TableCell>
                         );
                       }
 
                       if (cellRegion) {
                         return (
-                          <td key={`${column.name ?? columnIndex}`}>
+                          <TableCell key={`${column.name ?? columnIndex}`}>
                             {cellRegion.render({
                               scope: rowScope,
                               pathSuffix: `cells.${columnIndex}`
                             })}
-                          </td>
+                          </TableCell>
                         );
                       }
 
-                      return <td key={`${column.name ?? columnIndex}`}>{column.name ? String(record[column.name] ?? '') : ''}</td>;
+                      return <TableCell key={`${column.name ?? columnIndex}`}>{column.name ? String(record[column.name] ?? '') : ''}</TableCell>;
                     })}
-                  </tr>
+                  </TableRow>
                 );
               })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
       {hasRendererSlotContent(footerContent) ? <div className="nop-table__footer">{footerContent}</div> : null}
     </div>
   );

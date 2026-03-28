@@ -75,23 +75,6 @@ export function useBoundFieldValue(name: string, currentForm: FormRuntime | unde
   return currentForm ? formValue : scopeValue;
 }
 
-function getFieldClassName(state: {
-  visited: boolean;
-  touched: boolean;
-  dirty: boolean;
-  showError: boolean;
-}) {
-  return [
-'nop-field',
-    state.visited ? 'nop-field--visited' : '',
-    state.touched ? 'nop-field--touched' : '',
-    state.dirty ? 'nop-field--dirty' : '',
-    state.showError ? 'nop-field--invalid' : ''
-  ]
-    .filter(Boolean)
-    .join(' ');
-}
-
 export function createFieldHandlers(args: {
   name: string;
   currentForm: FormRuntime | undefined;
@@ -175,15 +158,11 @@ export function getChildFieldUiState(input: {
     dirty,
     visited,
     showError,
-className: [
-      'nop-child-field',
-      visited ? 'nop-child-field--visited' : '',
-      touched ? 'nop-child-field--touched' : '',
-      dirty ? 'nop-child-field--dirty' : '',
-      showError ? 'nop-child-field--invalid' : ''
-    ]
-      .filter(Boolean)
-      .join(' ')
+    className: 'grid gap-1.5',
+    'data-child-field-visited': visited || undefined,
+    'data-child-field-touched': touched || undefined,
+    'data-child-field-dirty': dirty || undefined,
+    'data-child-field-invalid': showError || undefined,
   };
 }
 
@@ -208,7 +187,11 @@ export function useFieldPresentation(name: string, currentForm: FormRuntime | un
       error: visibleError
     },
     showError,
-    className: getFieldClassName({ ...fieldState, showError })
+    className: 'nop-field',
+    'data-field-visited': fieldState.visited || undefined,
+    'data-field-touched': fieldState.touched || undefined,
+    'data-field-dirty': fieldState.dirty || undefined,
+    'data-field-invalid': showError || undefined,
   };
 }
 

@@ -194,9 +194,8 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const optionLabel = option?.label;
 
       return (
-        <span className="nop-checkbox">
+        <span className="inline-flex items-center gap-2.5">
           <Checkbox
-            className="nop-checkbox__input"
             checked={value}
             aria-invalid={presentation.showError ? true : undefined}
             aria-label={optionLabel}
@@ -204,7 +203,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
             onCheckedChange={(checked) => handlers.onChange(String(Boolean(checked)))}
             onBlur={handlers.onBlur}
           />
-          {optionLabel ? <span className="nop-checkbox__label">{optionLabel}</span> : null}
+          {optionLabel ? <span className="font-medium">{optionLabel}</span> : null}
         </span>
       );
     }
@@ -231,9 +230,8 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const option = props.props.option as SwitchSchema['option'] | undefined;
 
       return (
-        <span className="nop-switch">
+        <span className="inline-flex items-center gap-3">
           <Switch
-            className="nop-switch__input"
             checked={value}
             aria-invalid={presentation.showError ? true : undefined}
             aria-label={String(props.meta.label ?? props.props.label ?? name)}
@@ -241,7 +239,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
             onCheckedChange={(checked) => handlers.onChange(String(Boolean(checked)))}
             onBlur={handlers.onBlur}
           />
-          <span className="nop-switch__label">{value ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
+          <span className="font-semibold">{value ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
         </span>
       );
     }
@@ -269,7 +267,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <RadioGroup
-          className="nop-radio-group"
+          className="grid gap-2.5"
           value={value}
           aria-invalid={presentation.showError ? true : undefined}
           onFocus={handlers.onFocus}
@@ -277,9 +275,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
           onBlur={handlers.onBlur}
         >
           {options?.map((option) => (
-            <label key={option.value} className="nop-radio">
-              <RadioGroupItem className="nop-radio__input" value={option.value} aria-label={option.label} />
-              <span className="nop-radio__label">{option.label}</span>
+            <label key={option.value} className="inline-flex items-center gap-2.5">
+              <RadioGroupItem value={option.value} aria-label={option.label} />
+              <span className="font-medium">{option.label}</span>
             </label>
           ))}
         </RadioGroup>
@@ -309,14 +307,13 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       });
 
       return (
-        <div className="nop-checkbox-group">
+        <div className="grid gap-2.5">
           {options?.map((option) => {
             const checked = value.some((candidate) => Object.is(candidate, option.value));
 
             return (
-              <label key={option.value} className="nop-checkbox">
+              <label key={option.value} className="inline-flex items-center gap-2.5">
                 <Checkbox
-                  className="nop-checkbox__input"
                   checked={checked}
                   aria-invalid={presentation.showError ? true : undefined}
                   aria-label={option.label}
@@ -330,7 +327,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
                   }}
                   onBlur={handlers.onBlur}
                 />
-                <span className="nop-checkbox__label">{option.label}</span>
+                <span className="font-medium">{option.label}</span>
               </label>
             );
           })}

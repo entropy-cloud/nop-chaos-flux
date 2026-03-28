@@ -48,10 +48,15 @@ function KeyValueRow(props: {
   });
 
   return (
-    <div className="nop-kv-row">
-      <div className={keyUi.className}>
+    <div className="grid grid-cols-[1fr_1fr_auto] gap-2.5 items-start">
+      <div
+        className={keyUi.className}
+        data-child-field-visited={keyUi['data-child-field-visited']}
+        data-child-field-touched={keyUi['data-child-field-touched']}
+        data-child-field-dirty={keyUi['data-child-field-dirty']}
+        data-child-field-invalid={keyUi['data-child-field-invalid']}
+      >
         <Input
-          className="nop-input"
           type="text"
           value={pair.key}
           placeholder="Key"
@@ -92,9 +97,14 @@ function KeyValueRow(props: {
           showError={keyUi.showError}
         />
       </div>
-      <div className={valueUi.className}>
+      <div
+        className={valueUi.className}
+        data-child-field-visited={valueUi['data-child-field-visited']}
+        data-child-field-touched={valueUi['data-child-field-touched']}
+        data-child-field-dirty={valueUi['data-child-field-dirty']}
+        data-child-field-invalid={valueUi['data-child-field-invalid']}
+      >
         <Input
-          className="nop-input"
           type="text"
           value={pair.value}
           placeholder="Value"
@@ -139,7 +149,6 @@ function KeyValueRow(props: {
         type="button"
         variant="outline"
         size="sm"
-        className="nop-kv-remove"
         onClick={() => {
           const nextPairs = pairs.filter((candidate) => candidate.id !== pair.id);
           pairsRef.current = nextPairs;
@@ -321,9 +330,15 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     }, [childPaths, currentForm, name]);
 
   return (
-    <label className={presentation.className}>
+    <label
+      className={presentation.className}
+      data-field-visited={presentation['data-field-visited']}
+      data-field-touched={presentation['data-field-touched']}
+      data-field-dirty={presentation['data-field-dirty']}
+      data-field-invalid={presentation['data-field-invalid']}
+    >
       <FieldLabel content={labelContent} />
-      <div className="nop-kv-list">
+      <div className="grid gap-3">
         {pairs.map((pair, index) => {
           return (
             <KeyValueRow
@@ -343,7 +358,6 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           type="button"
           variant="outline"
           size="sm"
-          className="nop-kv-add"
           onClick={() => {
             const nextEntry = { id: `pair-${pairs.length + 1}`, key: '', value: '' };
             const nextPairs = [...pairs, nextEntry];
