@@ -1,3 +1,24 @@
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 84% 5%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 84% 5%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 19% 35%;
+  --accent: 217 89% 96%;
+  --accent-foreground: 217 89% 35%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 217 89% 53%;
+  --primary: 217 89% 53%;
+  --primary-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --secondary-surface: 217 89% 96%;
+  --secondary-surface-hover: 217 89% 93%;
+  --secondary-foreground: 217 89% 35%;
+}
+
 @layer base {
   * {
     border-color: hsl(var(--border));

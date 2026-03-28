@@ -116,15 +116,29 @@
     "version": "1.0",
     "kind": "workflow",
     "classAliases": {
-      "node-card": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg shadow-sm",
+      "node-card": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
+      "node-card--start": "border-2 border-green-500",
+      "node-card--end": "border-2 border-red-500",
+      "node-card--condition": "border-yellow-400",
       "node-header": "flex items-start gap-2",
       "node-icon": "w-5 h-5",
+      "node-icon--start": "text-green-600",
+      "node-icon--end": "text-red-600",
+      "node-icon--task": "text-blue-600",
+      "node-icon--condition": "text-yellow-600",
+      "node-icon--parallel": "text-purple-600",
+      "node-icon--loop": "text-indigo-600",
       "node-title": "text-sm font-medium text-gray-900",
       "node-subtitle": "text-xs text-gray-500",
       "node-footer": "flex items-center justify-between w-full text-xs text-gray-500",
-      "node-badge": "text-xs px-1.5 py-0.5 rounded-full"
+      "node-badge": "text-xs px-1.5 py-0.5 rounded-full",
+      "node-badge--start": "text-emerald-700 bg-emerald-100",
+      "node-badge--end": "text-rose-700 bg-rose-100",
+      "node-badge--task": "text-sky-700 bg-sky-100",
+      "node-badge--condition": "text-amber-700 bg-amber-100",
+      "node-badge--parallel": "text-violet-700 bg-violet-100",
+      "node-badge--loop": "text-fuchsia-700 bg-fuchsia-100"
     },
-    "themeStyles": ".fd-palette__item-icon[data-type='start'] { background: linear-gradient(135deg, #34d399, #10b981); } .fd-palette__item-icon[data-type='end'] { background: linear-gradient(135deg, #fb7185, #f43f5e); } .fd-palette__item-icon[data-type='task'] { background: linear-gradient(135deg, #38bdf8, #0ea5e9); } .fd-palette__item-icon[data-type='condition'] { background: linear-gradient(135deg, #fcd34d, #f59e0b); } .fd-palette__item-icon[data-type='parallel'] { background: linear-gradient(135deg, #a78bfa, #8b5cf6); } .fd-palette__item-icon[data-type='loop'] { background: linear-gradient(135deg, #818cf8, #6366f1); }",
     "nodeTypes": [
       {
         "id": "start",
@@ -132,16 +146,16 @@
         "icon": "play",
         "body": {
           "type": "flex",
-          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border-2 border-green-500 shadow-sm",
+          "className": "node-card node-card--start",
           "items": [
             {
               "type": "flex",
-              "className": "flex items-start gap-2",
+              "className": "node-header",
               "items": [
                 {
                   "type": "icon",
                   "icon": "play",
-                  "className": "w-5 h-5 text-green-600"
+                  "className": "node-icon node-icon--start"
                 },
                 {
                   "type": "container",
@@ -149,12 +163,12 @@
                     {
                       "type": "text",
                       "body": "${data.label}",
-                      "className": "text-sm font-medium text-gray-900"
+                      "className": "node-title"
                     },
                     {
                       "type": "text",
                       "body": "${data.config.trigger}",
-                      "className": "text-xs text-gray-500"
+                      "className": "node-subtitle"
                     }
                   ]
                 }
@@ -162,17 +176,17 @@
             },
             {
               "type": "flex",
-              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "className": "node-footer",
               "items": [
                 {
                   "type": "text",
                   "body": "开始节点",
-                  "className": "text-xs text-emerald-700 px-1.5 py-0.5 rounded-full bg-emerald-100"
+                  "className": "node-badge node-badge--start"
                 },
                 {
                   "type": "text",
                   "body": "1项配置",
-                  "className": "text-xs text-gray-500"
+                  "className": "node-subtitle"
                 }
               ]
             }
@@ -224,16 +238,16 @@
         "icon": "flag",
         "body": {
           "type": "flex",
-          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border-2 border-red-500 shadow-sm",
+          "className": "node-card node-card--end",
           "items": [
             {
               "type": "flex",
-              "className": "flex items-start gap-2",
+              "className": "node-header",
               "items": [
                 {
                   "type": "icon",
                   "icon": "flag",
-                  "className": "w-5 h-5 text-red-600"
+                  "className": "node-icon node-icon--end"
                 },
                 {
                   "type": "container",
@@ -241,12 +255,12 @@
                     {
                       "type": "text",
                       "body": "${data.label}",
-                      "className": "text-sm font-medium text-gray-900"
+                      "className": "node-title"
                     },
                     {
                       "type": "text",
                       "body": "${data.config.result}",
-                      "className": "text-xs text-gray-500"
+                      "className": "node-subtitle"
                     }
                   ]
                 }
@@ -254,17 +268,17 @@
             },
             {
               "type": "flex",
-              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "className": "node-footer",
               "items": [
                 {
                   "type": "text",
                   "body": "结束节点",
-                  "className": "text-xs text-rose-700 px-1.5 py-0.5 rounded-full bg-rose-100"
+                  "className": "node-badge node-badge--end"
                 },
                 {
                   "type": "text",
                   "body": "1项配置",
-                  "className": "text-xs text-gray-500"
+                  "className": "node-subtitle"
                 }
               ]
             }
@@ -310,16 +324,16 @@
         "icon": "workflow",
         "body": {
           "type": "flex",
-          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
+          "className": "node-card",
           "items": [
             {
               "type": "flex",
-              "className": "flex items-start gap-2",
+              "className": "node-header",
               "items": [
                 {
                   "type": "icon",
                   "icon": "workflow",
-                  "className": "w-5 h-5 text-blue-600"
+                  "className": "node-icon node-icon--task"
                 },
                 {
                   "type": "container",
@@ -327,12 +341,12 @@
                     {
                       "type": "text",
                       "body": "${data.label}",
-                      "className": "text-sm font-medium text-gray-900"
+                      "className": "node-title"
                     },
                     {
                       "type": "text",
                       "body": "${data.description}",
-                      "className": "text-xs text-gray-500"
+                      "className": "node-subtitle"
                     }
                   ]
                 }
@@ -340,17 +354,17 @@
             },
             {
               "type": "flex",
-              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "className": "node-footer",
               "items": [
                 {
                   "type": "text",
                   "body": "任务节点",
-                  "className": "text-xs text-sky-700 px-1.5 py-0.5 rounded-full bg-sky-100"
+                  "className": "node-badge node-badge--task"
                 },
                 {
                   "type": "text",
                   "body": "2项配置",
-                  "className": "text-xs text-gray-500"
+                  "className": "node-subtitle"
                 }
               ]
             }
@@ -396,16 +410,16 @@
         "icon": "git-branch",
         "body": {
           "type": "flex",
-          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border border-yellow-400 shadow-sm",
+          "className": "node-card node-card--condition",
           "items": [
             {
               "type": "flex",
-              "className": "flex items-start gap-2",
+              "className": "node-header",
               "items": [
                 {
                   "type": "icon",
                   "icon": "git-branch",
-                  "className": "w-5 h-5 text-yellow-600"
+                  "className": "node-icon node-icon--condition"
                 },
                 {
                   "type": "container",
@@ -413,12 +427,12 @@
                     {
                       "type": "text",
                       "body": "${data.label}",
-                      "className": "text-sm font-medium text-gray-900"
+                      "className": "node-title"
                     },
                     {
                       "type": "text",
                       "body": "${data.config.expression}",
-                      "className": "text-xs text-gray-500"
+                      "className": "node-subtitle"
                     }
                   ]
                 }
@@ -426,17 +440,17 @@
             },
             {
               "type": "flex",
-              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "className": "node-footer",
               "items": [
                 {
                   "type": "text",
                   "body": "条件分支",
-                  "className": "text-xs text-amber-700 px-1.5 py-0.5 rounded-full bg-amber-100"
+                  "className": "node-badge node-badge--condition"
                 },
                 {
                   "type": "text",
                   "body": "1项配置",
-                  "className": "text-xs text-gray-500"
+                  "className": "node-subtitle"
                 }
               ]
             }
@@ -471,16 +485,16 @@
         "icon": "git-merge",
         "body": {
           "type": "flex",
-          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
+          "className": "node-card",
           "items": [
             {
               "type": "flex",
-              "className": "flex items-start gap-2",
+              "className": "node-header",
               "items": [
                 {
                   "type": "icon",
                   "icon": "git-merge",
-                  "className": "w-5 h-5 text-purple-600"
+                  "className": "node-icon node-icon--parallel"
                 },
                 {
                   "type": "container",
@@ -488,12 +502,12 @@
                     {
                       "type": "text",
                       "body": "${data.label}",
-                      "className": "text-sm font-medium text-gray-900"
+                      "className": "node-title"
                     },
                     {
                       "type": "text",
                       "body": "${data.config.branches} 分支",
-                      "className": "text-xs text-gray-500"
+                      "className": "node-subtitle"
                     }
                   ]
                 }
@@ -501,17 +515,17 @@
             },
             {
               "type": "flex",
-              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "className": "node-footer",
               "items": [
                 {
                   "type": "text",
                   "body": "并行网关",
-                  "className": "text-xs text-violet-700 px-1.5 py-0.5 rounded-full bg-violet-100"
+                  "className": "node-badge node-badge--parallel"
                 },
                 {
                   "type": "text",
                   "body": "1项配置",
-                  "className": "text-xs text-gray-500"
+                  "className": "node-subtitle"
                 }
               ]
             }
@@ -545,16 +559,16 @@
         "icon": "repeat",
         "body": {
           "type": "flex",
-          "className": "flex flex-col gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm",
+          "className": "node-card",
           "items": [
             {
               "type": "flex",
-              "className": "flex items-start gap-2",
+              "className": "node-header",
               "items": [
                 {
                   "type": "icon",
                   "icon": "repeat",
-                  "className": "w-5 h-5 text-indigo-600"
+                  "className": "node-icon node-icon--loop"
                 },
                 {
                   "type": "container",
@@ -562,12 +576,12 @@
                     {
                       "type": "text",
                       "body": "${data.label}",
-                      "className": "text-sm font-medium text-gray-900"
+                      "className": "node-title"
                     },
                     {
                       "type": "text",
                       "body": "×${data.config.limit} / ${data.config.interval}",
-                      "className": "text-xs text-gray-500"
+                      "className": "node-subtitle"
                     }
                   ]
                 }
@@ -575,17 +589,17 @@
             },
             {
               "type": "flex",
-              "className": "flex items-center justify-between w-full text-xs text-gray-500",
+              "className": "node-footer",
               "items": [
                 {
                   "type": "text",
                   "body": "循环节点",
-                  "className": "text-xs text-fuchsia-700 px-1.5 py-0.5 rounded-full bg-fuchsia-100"
+                  "className": "node-badge node-badge--loop"
                 },
                 {
                   "type": "text",
                   "body": "2项配置",
-                  "className": "text-xs text-gray-500"
+                  "className": "node-subtitle"
                 }
               ]
             }
@@ -726,3 +740,4 @@
     }
   }
 }
+

@@ -49,6 +49,19 @@ This file is intentionally lightweight.
 - Updated flow-designer CSS selector compatibility for shadcn button variants in `packages/flow-designer-renderers/src/styles.css`.
 - Key decision: preserve form runtime validation/state semantics while swapping UI primitives, then remove only confirmed-unused duplicate style blocks.
 
+### 2026-03-28 (shadcn/ui Migration Follow-up - Flow Designer Hover + Schema Simplification)
+
+- Fixed flow-designer button hover behavior regression by removing legacy visual overrides that flattened shadcn button interaction states in `packages/flow-designer-renderers/src/styles.css`.
+- Kept only minimal layout/size constraints for toolbar/quick-action buttons and restored hover feedback (`hover:bg-*`) for node/edge quick actions.
+- Simplified workflow schema styling config:
+  - removed `themeStyles` from `apps/playground/src/schemas/workflow-designer-schema.json`
+  - moved palette icon gradients into renderer stylesheet
+  - replaced repeated node body utility class strings with `classAliases` tokens (`node-card`, `node-header`, `node-icon--*`, `node-badge--*`, etc.)
+- Added/expanded automation for button behavior coverage:
+  - `packages/flow-designer-renderers/src/designer-controls.test.tsx`
+  - `tests/e2e/flow-designer-ui.spec.ts` button behavior scenario
+- Validation: flow-designer unit suites and dedicated e2e spec pass after changes.
+
 ### 2026-03-28 (shadcn/ui Migration Execution - Phase 1 + Button/Input Integration)
 
 - Executed migration plan Phase 1 by creating `packages/ui` and copying core files: `src/lib/utils.ts`, `src/styles/base.css`, `src/styles/index.css`.

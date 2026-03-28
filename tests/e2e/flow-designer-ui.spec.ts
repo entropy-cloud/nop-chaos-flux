@@ -121,8 +121,8 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   const nodeQuickActionBgBefore = await nodeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
   await nodeQuickActionButton.hover();
   const nodeQuickActionBgAfter = await nodeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
-  expect(nodeQuickActionBgBefore).toBe('rgb(255, 255, 255)');
-  expect(nodeQuickActionBgAfter).not.toBe('rgb(255, 255, 255)');
+  expect(nodeQuickActionBgBefore).not.toBe('rgba(0, 0, 0, 0)');
+  expect(nodeQuickActionBgAfter).not.toBe(nodeQuickActionBgBefore);
 
   const nodeHtml = await nodeCard.evaluate((el) => el.outerHTML);
   const toolbarHtml = await toolbar.evaluate((el) => el.outerHTML);
@@ -138,8 +138,8 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   const edgeQuickActionBgBefore = await edgeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
   await edgeQuickActionButton.hover();
   const edgeQuickActionBgAfter = await edgeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
-  expect(edgeQuickActionBgBefore).toBe('rgb(255, 255, 255)');
-  expect(edgeQuickActionBgAfter).not.toBe('rgb(255, 255, 255)');
+  expect(edgeQuickActionBgBefore).not.toBe('rgba(0, 0, 0, 0)');
+  expect(edgeQuickActionBgAfter).not.toBe(edgeQuickActionBgBefore);
 
   const outDir = join(testInfo.outputDir, 'html');
   await mkdir(outDir, { recursive: true });
@@ -280,4 +280,37 @@ test('verifies palette and top toolbar visual structure', async ({ page }) => {
   expect(styleMetrics!.dottedDasharray).toContain('4');
   const fontFamily = styleMetrics!.pageFontFamily.toLowerCase();
   expect(fontFamily.includes('inter') || fontFamily.includes('segoe ui')).toBe(true);
+});
+
+test('verifies flow-designer button behaviors for toolbar and quick actions', async ({ page }) => {
+  await openFlowDesigner(page);
+
+  await expect(page.locator('.react-flow__node')).toHaveCount(6);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(6);
+
+  await page.locator('.fd-palette__group-header').filter({ hasText: '执行任务' }).first().click();
+  const paletteTaskButton = page.getByRole('button', { name: '任务节点' }).first();
+  await paletteTaskButton.click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(7);
+
+  const topToolbar = page.locator('.fd-page__header [data-testid="designer-toolbar"]').first();
+  await topToolbar.getByRole('button', { name: /撤销/ }).click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(6);
+
+  await topToolbar.getByRole('button', { name: /重做/ }).click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(7);
+
+  const createdNode = page.locator('.react-flow__node').last();
+  await createdNode.click();
+  const inspectorDeleteNodeButton = page.getByRole('button', { name: 'Delete Node' }).first();
+  await expect(inspectorDeleteNodeButton).toBeVisible();
+  await inspectorDeleteNodeButton.click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(6);
+
+  const edge = page.locator('.react-flow__edge').nth(1);
+  await edge.hover({ force: true });
+  const edgeDeleteButton = page.locator('.fd-edge__quick-actions button[aria-label="Delete edge"]').first();
+  await expect(edgeDeleteButton).toBeVisible();
+  await edgeDeleteButton.click();
+  await expect(page.locator('.react-flow__edge')).toHaveCount(5);
 });

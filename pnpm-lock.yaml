@@ -141,6 +141,9 @@ importers:
       '@nop-chaos/flux-runtime':
         specifier: workspace:*
         version: link:../flux-runtime
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@xyflow/react':
         specifier: ^12.10.1
         version: 12.10.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -371,6 +374,10 @@ importers:
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.14
 
 packages:
 

@@ -130,14 +130,9 @@
 .fd-toolbar__button {
   min-height: 32px;
   padding: 0 10px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #334155;
-  cursor: pointer;
 }
 
 .fd-toolbar__button--primary {
@@ -565,22 +560,7 @@
 
 .fd-inspector__button {
   width: 100%;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.fd-inspector__button--primary {
-  background: var(--fd-primary);
-  color: var(--fd-primary-foreground);
-}
-
-.fd-inspector__button--danger {
-  background: var(--fd-danger);
-  color: var(--fd-danger-foreground);
+  min-height: 32px;
 }
 
 .fd-inspector__empty-text {
@@ -828,21 +808,17 @@
   stroke: none !important;
 }
 .fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button {
-  border: 0;
-  background: #ffffff !important;
-  color: #334155;
+  border: 0 !important;
 }
 
 .fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button[data-variant='destructive'] {
-  border: 0;
-  background: #ffffff !important;
-  color: #334155;
+  border: 0 !important;
 }
 
 .fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button:hover,
 .fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button[data-variant='destructive']:hover {
   border-color: rgba(59, 130, 246, 0.35);
-  background: rgba(219, 234, 254, 0.55) !important;
+  background: rgba(219, 234, 254, 0.72) !important;
 }
 .fd-edge__quick-actions {
   display: inline-flex;
@@ -858,21 +834,23 @@
 .fd-edge__quick-action-btn {
   width: 28px;
   height: 28px;
-  border: 0;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #334155;
-  background: #ffffff;
-  cursor: pointer;
-}
-
-.fd-edge__quick-action-btn:hover {
-  border-color: rgba(59, 130, 246, 0.35);
-  background: rgba(219, 234, 254, 0.55);
 }
 
 .fd-edge__quick-action-btn--danger {
-  color: #334155;
+  border: 0 !important;
 }
+
+.fd-edge__quick-action-btn:hover {
+  background: rgba(219, 234, 254, 0.72) !important;
+}
+
+.fd-palette__item-icon[data-type='start'] { background: linear-gradient(135deg, #34d399, #10b981); }
+.fd-palette__item-icon[data-type='end'] { background: linear-gradient(135deg, #fb7185, #f43f5e); }
+.fd-palette__item-icon[data-type='task'] { background: linear-gradient(135deg, #38bdf8, #0ea5e9); }
+.fd-palette__item-icon[data-type='condition'] { background: linear-gradient(135deg, #fcd34d, #f59e0b); }
+.fd-palette__item-icon[data-type='parallel'] { background: linear-gradient(135deg, #a78bfa, #8b5cf6); }
+.fd-palette__item-icon[data-type='loop'] { background: linear-gradient(135deg, #818cf8, #6366f1); }
