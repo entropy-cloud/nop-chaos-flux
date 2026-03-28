@@ -37,6 +37,18 @@ This file is intentionally lightweight.
 - Key decision: keep form `select/checkbox/switch/radio-group` renderer behavior unchanged for now to preserve existing validation/test interaction semantics; continue incremental replacement in a dedicated follow-up.
 - Next step: remove duplicated legacy `.nop-*` playground form/button style blocks after completing remaining renderer-side semantic alignment.
 
+### 2026-03-28 (shadcn/ui Migration Follow-up - Form Controls + Duplicate Style Cleanup)
+
+- Completed renderer-side migration for additional form surfaces while keeping behavior parity:
+  - `packages/flux-renderers-form/src/renderers/input.tsx` now uses shadcn/ui components for `select`, `checkbox`, `switch`, `radio-group`, `checkbox-group` interactions.
+  - `packages/flux-renderers-form/src/renderers/array-editor.tsx`, `key-value.tsx`, `tag-list.tsx` now use `@nop-chaos/ui` `Input`/`Button` for control rendering.
+- Updated form tests to align with radix/shadcn interaction semantics (option selection via popup items / radio roles) in `packages/flux-renderers-form/src/index.test.tsx`.
+- Cleaned duplicated legacy playground styles in `apps/playground/src/styles.css`:
+  - removed obsolete `.nop-button`, `.nop-select`, and old custom switch track/thumb blocks
+  - narrowed dirty/invalid selectors to active classes still used by current renderers
+- Updated flow-designer CSS selector compatibility for shadcn button variants in `packages/flow-designer-renderers/src/styles.css`.
+- Key decision: preserve form runtime validation/state semantics while swapping UI primitives, then remove only confirmed-unused duplicate style blocks.
+
 ### 2026-03-28 (shadcn/ui Migration Execution - Phase 1 + Button/Input Integration)
 
 - Executed migration plan Phase 1 by creating `packages/ui` and copying core files: `src/lib/utils.ts`, `src/styles/base.css`, `src/styles/index.css`.

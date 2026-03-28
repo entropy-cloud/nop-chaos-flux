@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ApiObject, ApiRequestContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
@@ -8,6 +8,10 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { useAggregateError, useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from './index';
+
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => undefined;
+}
 
 const submitCalls: Array<Record<string, any>> = [];
 
@@ -170,7 +174,8 @@ describe('formRendererDefinitions', () => {
     const roleSelect = screen.getByRole('combobox');
 
     fireEvent.change(usernameInput, { target: { value: 'Bob' } });
-    fireEvent.change(roleSelect, { target: { value: 'editor' } });
+    fireEvent.click(roleSelect);
+    fireEvent.click(screen.getByRole('option', { name: 'Editor' }));
     fireEvent.click(screen.getByText('Submit profile'));
 
     await waitFor(() => {
@@ -320,7 +325,7 @@ describe('formRendererDefinitions', () => {
     );
 
     fireEvent.change(screen.getByLabelText('Notes'), { target: { value: 'Updated note' } });
-    fireEvent.click(screen.getByDisplayValue('published'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Published' }));
     fireEvent.click(screen.getByText('Submit article'));
 
     await waitFor(() => {
@@ -386,7 +391,7 @@ describe('formRendererDefinitions', () => {
     );
 
     fireEvent.click(screen.getByRole('switch'));
-    fireEvent.click(screen.getByDisplayValue('beta'));
+    fireEvent.click(screen.getByLabelText('Beta'));
     fireEvent.click(screen.getByText('Submit release'));
 
     await waitFor(() => {
@@ -448,8 +453,8 @@ describe('formRendererDefinitions', () => {
     const zeroCheckbox = screen.getByLabelText('Zero') as HTMLInputElement;
     const falseCheckbox = screen.getByLabelText('False') as HTMLInputElement;
 
-    expect(zeroCheckbox.checked).toBe(true);
-    expect(falseCheckbox.checked).toBe(false);
+    expect(zeroCheckbox.getAttribute('data-state')).toBe('checked');
+    expect(falseCheckbox.getAttribute('data-state')).toBe('unchecked');
 
     fireEvent.click(falseCheckbox);
     expect(JSON.parse(screen.getByTestId('form-state:flags').textContent ?? 'null')).toEqual([0, false]);
@@ -498,8 +503,8 @@ describe('formRendererDefinitions', () => {
     const zeroCheckbox = screen.getByLabelText('Zero') as HTMLInputElement;
     const falseCheckbox = screen.getByLabelText('False') as HTMLInputElement;
 
-    expect(zeroCheckbox.checked).toBe(true);
-    expect(falseCheckbox.checked).toBe(false);
+    expect(zeroCheckbox.getAttribute('data-state')).toBe('checked');
+    expect(falseCheckbox.getAttribute('data-state')).toBe('unchecked');
 
     fireEvent.click(falseCheckbox);
     expect(JSON.parse(screen.getByTestId('scope-state:flags').textContent ?? 'null')).toEqual([0, false]);
@@ -1196,11 +1201,13 @@ describe('formRendererDefinitions', () => {
     fireEvent.blur(adminCodeInput);
     expect(screen.queryByText('Admin code is required for admins')).toBeNull();
 
-    fireEvent.change(roleSelect, { target: { value: 'admin' } });
+    fireEvent.click(roleSelect);
+    fireEvent.click(screen.getByRole('option', { name: 'Admin' }));
 
     expect(await screen.findByText('Admin code is required for admins')).toBeTruthy();
 
-    fireEvent.change(roleSelect, { target: { value: 'viewer' } });
+    fireEvent.click(roleSelect);
+    fireEvent.click(screen.getByRole('option', { name: 'Viewer' }));
 
     await waitFor(() => {
       expect(screen.queryByText('Admin code is required for admins')).toBeNull();
@@ -1280,11 +1287,13 @@ describe('formRendererDefinitions', () => {
 
     fireEvent.focus(publishReasonInput);
     fireEvent.blur(publishReasonInput);
-    fireEvent.change(statusSelect, { target: { value: 'review' } });
+    fireEvent.click(statusSelect);
+    fireEvent.click(screen.getByRole('option', { name: 'Review' }));
 
     expect(await screen.findByText('Publish reason is required before publishing')).toBeTruthy();
 
-    fireEvent.change(statusSelect, { target: { value: 'published' } });
+    fireEvent.click(statusSelect);
+    fireEvent.click(screen.getByRole('option', { name: 'Published' }));
 
     await waitFor(() => {
       expect(screen.queryByText('Publish reason is required before publishing')).toBeNull();

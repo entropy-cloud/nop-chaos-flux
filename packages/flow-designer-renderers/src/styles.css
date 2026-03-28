@@ -833,14 +833,14 @@
   color: #334155;
 }
 
-.fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button.nop-button--danger {
+.fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button[data-variant='destructive'] {
   border: 0;
   background: #ffffff !important;
   color: #334155;
 }
 
 .fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button:hover,
-.fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button.nop-button--danger:hover {
+.fd-xyflow-node-toolbar .fd-xyflow-node-toolbar__icon-button[data-variant='destructive']:hover {
   border-color: rgba(59, 130, 246, 0.35);
   background: rgba(219, 234, 254, 0.55) !important;
 }

@@ -1,6 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
+import { Button } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   readCheckboxGroupValue,
@@ -68,9 +69,11 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
           const active = value.includes(tag);
 
           return (
-            <button
+            <Button
               key={tag}
               type="button"
+              variant={active ? 'default' : 'outline'}
+              size="sm"
               className={active ? 'nop-tag nop-tag--active' : 'nop-tag'}
               onFocus={() => {
                 if (currentForm && name) {
@@ -92,7 +95,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
               }}
             >
               {tag}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -110,4 +113,3 @@ export const tagListRendererDefinition: RendererDefinition = {
   component: TagListRenderer,
   fields: [formLabelFieldRule]
 };
-

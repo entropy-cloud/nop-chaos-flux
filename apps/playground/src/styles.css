@@ -63,9 +63,6 @@
   --nop-invalid-ring: rgba(181, 59, 44, 0.12);
   --nop-dirty-border: rgba(191, 111, 47, 0.45);
   --nop-field-error: #b53b2c;
-  --nop-switch-bg: rgba(33, 53, 71, 0.2);
-  --nop-switch-thumb: #fff;
-  --nop-switch-shadow: 0 2px 6px rgba(18, 31, 43, 0.18);
   --nop-dialog-backdrop: rgba(18, 31, 43, 0.36);
   --nop-dialog-surface: white;
   --nop-dialog-shadow: 0 28px 90px rgba(18, 31, 43, 0.25);
@@ -438,17 +435,6 @@ body {
   margin: 0;
 }
 
-.nop-button {
-  appearance: none;
-  border: none;
-  background: linear-gradient(135deg, var(--nop-accent), var(--nop-accent-strong));
-  color: white;
-  border-radius: 999px;
-  padding: 12px 18px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
 .nop-form__actions,
 .nop-table__actions {
   display: flex;
@@ -465,13 +451,11 @@ body {
   color: #6a5234;
 }
 
-.nop-field--dirty .nop-input,
-.nop-field--dirty .nop-select {
+.nop-field--dirty .nop-input {
   border-color: var(--nop-dirty-border);
 }
 
-.nop-field--invalid .nop-input,
-.nop-field--invalid .nop-select {
+.nop-field--invalid .nop-input {
   border-color: var(--nop-invalid-border);
   box-shadow: 0 0 0 3px var(--nop-invalid-ring);
 }
@@ -523,35 +507,6 @@ body {
   pointer-events: none;
 }
 
-.nop-switch__track {
-  position: relative;
-  width: 50px;
-  height: 28px;
-  border-radius: 999px;
-  background: var(--nop-switch-bg);
-  transition: background 160ms ease;
-}
-
-.nop-switch__thumb {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--nop-switch-thumb);
-  box-shadow: var(--nop-switch-shadow);
-  transition: transform 160ms ease;
-}
-
-.nop-switch__input:checked + .nop-switch__track {
-  background: var(--nop-accent);
-}
-
-.nop-switch__input:checked + .nop-switch__track .nop-switch__thumb {
-  transform: translateX(22px);
-}
-
 .nop-switch__label {
   font-weight: 600;
 }
@@ -597,13 +552,11 @@ body {
 }
 
 .nop-child-field--dirty .nop-input,
-.nop-child-field--dirty .nop-select,
 .nop-child-field--dirty .nop-textarea {
   border-color: var(--nop-dirty-border);
 }
 
 .nop-child-field--invalid .nop-input,
-.nop-child-field--invalid .nop-select,
 .nop-child-field--invalid .nop-textarea {
   border-color: var(--nop-invalid-border);
   box-shadow: 0 0 0 3px var(--nop-invalid-ring);
@@ -657,7 +610,6 @@ body {
 }
 
 .nop-input,
-.nop-select,
 .nop-textarea {
   width: 100%;
   padding: 12px 14px;

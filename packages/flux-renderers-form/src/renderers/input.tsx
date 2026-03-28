@@ -1,6 +1,6 @@
-﻿import type { ApiObject, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { ApiObject, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
-import { Input, Textarea } from '@nop-chaos/ui';
+import { Checkbox, Input, RadioGroup, RadioGroupItem, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch, Textarea } from '@nop-chaos/ui';
 import {
   createFieldHandlers,
   formLabelFieldRule,
@@ -106,6 +106,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       const value = useBoundFieldValue(name, currentForm);
       const options = Array.isArray(props.props.options) ? (props.props.options as SelectSchema['options']) : [];
       const presentation = useFieldPresentation(name, currentForm);
+      const ariaLabel = String(props.meta.label ?? props.props.label ?? name);
       const handlers = createFieldHandlers({
         name,
         currentForm,
@@ -116,20 +117,24 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       });
 
       return (
-        <select
-          className="nop-select"
-          value={String(value)}
-          aria-invalid={presentation.showError ? true : undefined}
-          onFocus={handlers.onFocus}
-          onChange={(event) => handlers.onChange(event.target.value)}
-          onBlur={handlers.onBlur}
-        >
-          {options?.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <Select value={String(value)} onValueChange={(nextValue) => handlers.onChange(nextValue)}>
+          <SelectTrigger
+            className="w-full"
+            aria-label={ariaLabel}
+            aria-invalid={presentation.showError ? true : undefined}
+            onFocus={handlers.onFocus}
+            onBlur={handlers.onBlur}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {options?.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       );
     }
   },
@@ -190,13 +195,13 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <span className="nop-checkbox">
-          <input
+          <Checkbox
             className="nop-checkbox__input"
-            type="checkbox"
             checked={value}
             aria-invalid={presentation.showError ? true : undefined}
+            aria-label={optionLabel}
             onFocus={handlers.onFocus}
-            onChange={(event) => handlers.onChange(String(event.target.checked))}
+            onCheckedChange={(checked) => handlers.onChange(String(Boolean(checked)))}
             onBlur={handlers.onBlur}
           />
           {optionLabel ? <span className="nop-checkbox__label">{optionLabel}</span> : null}
@@ -227,19 +232,15 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
       return (
         <span className="nop-switch">
-          <input
+          <Switch
             className="nop-switch__input"
-            type="checkbox"
-            role="switch"
             checked={value}
             aria-invalid={presentation.showError ? true : undefined}
+            aria-label={String(props.meta.label ?? props.props.label ?? name)}
             onFocus={handlers.onFocus}
-            onChange={(event) => handlers.onChange(String(event.target.checked))}
+            onCheckedChange={(checked) => handlers.onChange(String(Boolean(checked)))}
             onBlur={handlers.onBlur}
           />
-          <span className="nop-switch__track">
-            <span className="nop-switch__thumb" />
-          </span>
           <span className="nop-switch__label">{value ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
         </span>
       );
@@ -267,24 +268,21 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       });
 
       return (
-        <div className="nop-radio-group">
+        <RadioGroup
+          className="nop-radio-group"
+          value={value}
+          aria-invalid={presentation.showError ? true : undefined}
+          onFocus={handlers.onFocus}
+          onValueChange={(nextValue) => handlers.onChange(nextValue)}
+          onBlur={handlers.onBlur}
+        >
           {options?.map((option) => (
             <label key={option.value} className="nop-radio">
-              <input
-                className="nop-radio__input"
-                type="radio"
-                name={name}
-                value={option.value}
-                checked={value === option.value}
-                aria-invalid={presentation.showError ? true : undefined}
-                onFocus={handlers.onFocus}
-                onChange={(event) => handlers.onChange(event.target.value)}
-                onBlur={handlers.onBlur}
-              />
+              <RadioGroupItem className="nop-radio__input" value={option.value} aria-label={option.label} />
               <span className="nop-radio__label">{option.label}</span>
             </label>
           ))}
-        </div>
+        </RadioGroup>
       );
     }
   },
@@ -317,15 +315,15 @@ export const inputRendererDefinitions: RendererDefinition[] = [
 
             return (
               <label key={option.value} className="nop-checkbox">
-                <input
+                <Checkbox
                   className="nop-checkbox__input"
-                  type="checkbox"
-                  value={option.value}
                   checked={checked}
                   aria-invalid={presentation.showError ? true : undefined}
+                  aria-label={option.label}
                   onFocus={handlers.onFocus}
-                  onChange={(event) => {
-                    const nextValue = event.target.checked
+                  onCheckedChange={(nextChecked) => {
+                    const checkedValue = Boolean(nextChecked);
+                    const nextValue = checkedValue
                       ? [...value, option.value]
                       : value.filter((candidate) => !Object.is(candidate, option.value));
                     handlers.onChange(nextValue);

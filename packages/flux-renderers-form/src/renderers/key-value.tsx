@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import type {
   BaseSchema,
   CompiledValidationBehavior,
@@ -9,6 +9,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { Button, Input } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   getChildFieldUiState,
@@ -49,7 +50,7 @@ function KeyValueRow(props: {
   return (
     <div className="nop-kv-row">
       <div className={keyUi.className}>
-        <input
+        <Input
           className="nop-input"
           type="text"
           value={pair.key}
@@ -92,7 +93,7 @@ function KeyValueRow(props: {
         />
       </div>
       <div className={valueUi.className}>
-        <input
+        <Input
           className="nop-input"
           type="text"
           value={pair.value}
@@ -134,8 +135,10 @@ function KeyValueRow(props: {
           showError={valueUi.showError}
         />
       </div>
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
         className="nop-kv-remove"
         onClick={() => {
           const nextPairs = pairs.filter((candidate) => candidate.id !== pair.id);
@@ -152,7 +155,7 @@ function KeyValueRow(props: {
         }}
       >
         Remove
-      </button>
+      </Button>
     </div>
   );
 }
@@ -336,8 +339,10 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             />
           );
         })}
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           className="nop-kv-add"
           onClick={() => {
             const nextEntry = { id: `pair-${pairs.length + 1}`, key: '', value: '' };
@@ -355,7 +360,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           }}
         >
           {props.props.addLabel ? String(props.props.addLabel) : 'Add entry'}
-        </button>
+        </Button>
       </div>
       <FieldHint
         errorMessage={presentation.fieldState.error?.message}
@@ -397,4 +402,3 @@ export const keyValueRendererDefinition: RendererDefinition = {
     }
   }
 };
-

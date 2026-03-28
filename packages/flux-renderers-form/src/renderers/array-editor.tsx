@@ -1,7 +1,8 @@
-﻿import React from 'react';
+import React from 'react';
 import type { BaseSchema, CompiledValidationBehavior, RendererComponentProps, RendererDefinition, RuntimeFieldRegistration } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { Button, Input } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   getChildFieldUiState,
@@ -37,7 +38,7 @@ function ArrayEditorRow(props: {
   return (
     <div className="nop-array-editor__row">
       <div className={itemUi.className}>
-        <input
+        <Input
           className="nop-input"
           type="text"
           value={item.value}
@@ -79,8 +80,10 @@ function ArrayEditorRow(props: {
           showError={itemUi.showError}
         />
       </div>
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
         className="nop-kv-remove"
         onClick={() => {
           const nextItems = items.filter((candidate) => candidate.id !== item.id);
@@ -97,7 +100,7 @@ function ArrayEditorRow(props: {
         }}
       >
         Remove
-      </button>
+      </Button>
     </div>
   );
 }
@@ -250,8 +253,10 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             />
           );
         })}
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           className="nop-kv-add"
           onClick={() => {
             const nextItem = { id: `item-${items.length + 1}`, value: '' };
@@ -269,7 +274,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           }}
         >
           Add item
-        </button>
+        </Button>
       </div>
       <FieldHint
         errorMessage={presentation.fieldState.error?.message}
@@ -295,4 +300,3 @@ export const arrayEditorRendererDefinition: RendererDefinition = {
     }
   }
 };
-

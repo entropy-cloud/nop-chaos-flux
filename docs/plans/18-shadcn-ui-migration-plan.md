@@ -77,7 +77,7 @@ Migrate shadcn/ui components from `nop-chaos-next-master` to `nop-chaos-flux` to
 - [x] Update flux-renderers-basic to use shadcn/ui components
 - [x] Update flux-renderers-form to use shadcn/ui form components
 - [x] Update flow-designer-renderers to use shadcn/ui components
-- [ ] Remove duplicate CSS from playground/styles.css
+- [x] Remove duplicate CSS from playground/styles.css
 
 - [x] Update playground to import UI styles
 
