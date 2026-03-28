@@ -92,7 +92,10 @@ function toCommand(action: string | undefined): import('./designer-command-adapt
   }
 }
 
-export function DesignerToolbarContent() {
+export function DesignerToolbarContent(props: {
+  onExportToggle?: () => void;
+  exportActive?: boolean;
+}) {
   const { config, snapshot, dispatch } = useDesignerContext();
   const actionScope = useCurrentActionScope();
   const runtime = useRendererRuntime();
@@ -156,7 +159,6 @@ export function DesignerToolbarContent() {
               type="button"
               variant="ghost"
               size="sm"
-              className="fd-toolbar__button"
               aria-label={item.label ?? 'Back'}
               onClick={() => {
                 void invokeAction(item.action ?? 'designer:navigate-back');
@@ -171,22 +173,21 @@ export function DesignerToolbarContent() {
         if (item.type === 'button') {
           const command = toCommand(item.action);
           const disabled = evalBooleanExpr(item.disabled, snapshot);
-          const active = evalBooleanExpr(item.active, snapshot);
+          const active = evalBooleanExpr(item.active, snapshot) || (item.action === 'designer:export' && props.exportActive === true);
+          const variant = active ? 'default' : item.variant === 'danger' ? 'destructive' : item.variant === 'primary' ? 'default' : 'outline';
           return (
             <Button
               key={key}
               type="button"
-              variant={item.variant === 'danger' ? 'destructive' : item.variant === 'primary' ? 'default' : 'secondary'}
+              variant={variant}
               size="sm"
-              className={classNames(
-                'fd-toolbar__button',
-                item.variant === 'primary' && 'fd-toolbar__button--primary',
-                item.variant === 'danger' && 'fd-toolbar__button--danger',
-                active && 'fd-toolbar__button--active'
-              )}
               disabled={disabled}
               onClick={() => {
                 if (command) {
+                  if (command.type === 'export' && props.onExportToggle) {
+                    props.onExportToggle();
+                    return;
+                  }
                   dispatch(command);
                 }
               }}

@@ -6,6 +6,7 @@ const config: Config = {
   content: [
     './apps/playground/index.html',
     './apps/playground/src/**/*.{ts,tsx,json}',
+    './packages/ui/src/**/*.{ts,tsx}',
     './packages/flux-react/src/**/*.{ts,tsx}',
     './packages/flux-renderers-basic/src/**/*.{ts,tsx}',
     './packages/flux-renderers-form/src/**/*.{ts,tsx}',
@@ -18,4 +19,3 @@ const config: Config = {
 }
 
 export default config
-

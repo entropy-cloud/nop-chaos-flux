@@ -30,6 +30,18 @@ function getNodeIcon(type: string): string {
   return icons[type] ?? '○';
 }
 
+function getChipLabel(type: string): string {
+  const labels: Record<string, string> = {
+    start: '开始节点',
+    end: '结束节点',
+    task: '任务节点',
+    condition: '条件分支',
+    parallel: '并行网关',
+    loop: '循环节点'
+  };
+  return labels[type] ?? '';
+}
+
 function getNodePorts(type: string): Array<{ id: string; direction: 'input' | 'output'; position: string; label?: string }> {
   switch (type) {
     case 'start':
@@ -111,10 +123,15 @@ export function FlowDesignerCanvas({
             >
               <div className="fd-node__header">
                 <span className="fd-node__icon">{getNodeIcon(node.type)}</span>
-                <div>
+                <div className="fd-node__info">
                   <div className="fd-node__title">{String(node.data.label ?? node.type)}</div>
-                  <div className="fd-node__type">{node.type}</div>
+                  <div className="fd-node__desc">{String(node.data.description ?? '')}</div>
                 </div>
+              </div>
+              <div className="fd-node__footer">
+                <span className={`fd-node__chip fd-node__chip--${node.type}`}>
+                  {getChipLabel(node.type)}
+                </span>
               </div>
               {snapshot.selection.activeNodeId === node.id && (
                 <div className="fd-node__actions">

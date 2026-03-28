@@ -1,3 +1,52 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-secondary-surface: hsl(var(--secondary-surface));
+  --color-secondary-surface-hover: hsl(var(--secondary-surface-hover));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 84% 5%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 84% 5%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 19% 35%;
+  --accent: 217 89% 96%;
+  --accent-foreground: 217 89% 35%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 217 89% 53%;
+  --primary: 217 89% 53%;
+  --primary-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --secondary-surface: 217 89% 96%;
+  --secondary-surface-hover: 217 89% 93%;
+  --secondary-foreground: 217 89% 35%;
+  --radius: 0.75rem;
+}
+
 .nop-theme-root {
   --nop-app-font: "Segoe UI", "Helvetica Neue", sans-serif;
   --nop-app-bg:
@@ -71,24 +120,6 @@
   --nop-nav-shadow: 0 12px 32px rgba(33, 53, 71, 0.12);
   --nop-nav-shadow-active: 0 4px 12px rgba(33, 53, 71, 0.1);
   --nop-nav-hover-border: rgba(191, 111, 47, 0.32);
-  --background: 0 0% 100%;
-  --foreground: 222 84% 5%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 84% 5%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 19% 35%;
-  --accent: 217 89% 96%;
-  --accent-foreground: 217 89% 35%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 217 89% 53%;
-  --primary: 217 89% 53%;
-  --primary-foreground: 0 0% 100%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-  --secondary-surface: 217 89% 96%;
-  --secondary-surface-hover: 217 89% 93%;
-  --secondary-foreground: 217 89% 35%;
   color-scheme: light;
   font-family: var(--nop-app-font);
   background: var(--nop-app-bg);

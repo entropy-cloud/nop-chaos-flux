@@ -36,6 +36,48 @@
       box-shadow: var(--shadow-md);
     }
   }
+
+  .nop-gradient-start {
+    background: linear-gradient(to bottom right, #34d399, #10b981);
+  }
+
+  .nop-gradient-end {
+    background: linear-gradient(to bottom right, #fb7185, #f43f5e);
+  }
+
+  .nop-gradient-task {
+    background: linear-gradient(to bottom right, #38bdf8, #06b6d4);
+  }
+
+  .nop-gradient-condition {
+    background: linear-gradient(to bottom right, #fbbf24, #f97316);
+  }
+
+  .nop-gradient-parallel {
+    background: linear-gradient(to bottom right, #a78bfa, #6366f1);
+  }
+
+  .nop-gradient-loop {
+    background: linear-gradient(to bottom right, #e879f9, #ec4899);
+  }
+
+  .nop-glass-card {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(20px);
+  }
+
+  .nop-glass-card-glow {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 2px color-mix(in hsl, hsl(var(--primary)) 24%, transparent),
+                0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .nop-glass-card {
+    background: rgba(30, 41, 59, 0.78);
+    border-color: rgba(148, 163, 184, 0.16);
+  }
 }
 
 @supports not (backdrop-filter: blur(1px)) {

@@ -314,3 +314,18 @@ test('verifies flow-designer button behaviors for toolbar and quick actions', as
   await edgeDeleteButton.click();
   await expect(page.locator('.react-flow__edge')).toHaveCount(5);
 });
+
+test('toggles JSON preview panel from toolbar JSON button', async ({ page }) => {
+  await openFlowDesigner(page);
+
+  const topToolbar = page.locator('.fd-page__header [data-testid="designer-toolbar"]').first();
+  await topToolbar.getByRole('button', { name: /^JSON$/ }).click();
+
+  const jsonPanel = page.locator('.fd-json-panel');
+  await expect(jsonPanel).toBeVisible();
+  await expect(jsonPanel.locator('.fd-json-panel__content')).toContainText('"nodes"');
+  await expect(jsonPanel.locator('.fd-json-panel__content')).toContainText('"edges"');
+
+  await topToolbar.getByRole('button', { name: /^JSON$/ }).click();
+  await expect(jsonPanel).toHaveCount(0);
+});

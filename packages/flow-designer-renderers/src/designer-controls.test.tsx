@@ -78,9 +78,25 @@ describe('flow designer controls', () => {
     expect(mockContext.dispatch).toHaveBeenCalledTimes(1);
 
     const gridButton = screen.getByRole('button', { name: 'Grid' });
-    expect(gridButton.className).toContain('fd-toolbar__button--active');
+    expect((gridButton as HTMLElement).getAttribute('data-variant')).toBe('default');
     fireEvent.click(gridButton);
     expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'toggleGrid' });
+  });
+
+  it('uses export toggle callback for JSON toolbar button', () => {
+    const onExportToggle = vi.fn();
+    mockContext.config = {
+      ...mockContext.config,
+      toolbar: {
+        items: [{ type: 'button', label: 'JSON', action: 'designer:export' }]
+      }
+    };
+
+    render(<DesignerToolbarContent onExportToggle={onExportToggle} />);
+    fireEvent.click(screen.getByRole('button', { name: 'JSON' }));
+
+    expect(onExportToggle).toHaveBeenCalledTimes(1);
+    expect(mockContext.dispatch).not.toHaveBeenCalled();
   });
 
   it('invokes upstream action for back button', async () => {

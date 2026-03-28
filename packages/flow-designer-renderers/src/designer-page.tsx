@@ -105,6 +105,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
     };
   }, [designerProvider, upstreamBackHandler]);
   const designerScope = useDesignerHostScope({ snapshot, config, core: core!, path: props.path });
+  const [jsonOpen, setJsonOpen] = React.useState(false);
 
   useLayoutEffect(() => {
     if (!actionScope || !mergedDesignerProvider) {
@@ -186,7 +187,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
       {config.themeStyles && <style>{config.themeStyles}</style>}
       <div className="fd-page nop-theme-root fd-theme-root">
         <div className="fd-page__header">
-          {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent />}
+          {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} />}
         </div>
         <div className="fd-page__content">
           <div className="fd-page__palette">
@@ -200,6 +201,19 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
           </div>
         </div>
         {hasRendererSlotContent(dialogsSlot) ? <div className="fd-page__dialogs">{dialogsSlot}</div> : null}
+        {jsonOpen ? (
+          <div className="fd-page__dialogs" role="dialog" aria-label="Flow JSON preview">
+            <div className="fd-json-panel">
+              <div className="fd-json-panel__header">
+                <h3 className="fd-json-panel__title">Flow JSON</h3>
+                <button type="button" className="fd-json-panel__close" aria-label="Close JSON preview" onClick={() => setJsonOpen(false)}>
+                  ✕
+                </button>
+              </div>
+              <pre className="fd-json-panel__content">{core.exportDocument()}</pre>
+            </div>
+          </div>
+        ) : null}
       </div>
     </DesignerContext.Provider>
   );

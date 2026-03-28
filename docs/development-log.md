@@ -18,6 +18,27 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-28 (Flow Designer Node Visual Matching Prototype)
+
+- Aligned FlowDesigner node CSS with prototype at `flow-editor-static.html`.
+- Added system-level gradient/glass/glow utility classes to `packages/tailwind-preset/src/styles/base.css`:
+  - `.nop-gradient-start/end/task/condition/parallel/loop` — node icon gradients
+  - `.nop-glass-card` / `.nop-glass-card-glow` — glassmorphism card + selected glow ring
+- Updated JSON schema `classAliases` in `apps/playground/src/schemas/workflow-designer-schema.json` to use new utility tokens.
+- Rewrote `packages/flow-designer-renderers/src/styles.css` — glass card node style, gradient icon boxes, colored type chips, glow selection ring.
+- Updated `apps/playground/src/flow-designer/FlowDesignerCanvas.tsx` — node structure now has header (icon+info), footer (chip+meta), actions (duplicate/delete).
+- Removed obsolete split CSS files under `packages/flow-designer-renderers/src/styles/` and `tailwind-polyfill.css`.
+- Key decision: three-layer CSS approach — Tailwind utilities in JSON `classAliases`, system-level CSS in tailwind-preset, hardcoded CSS in renderer stylesheet.
+- Next step: visual verification via `pnpm dev`; potential dark mode chip refinement.
+
+### 2026-03-28 (Flow Designer Button Theme Token Fix)
+
+- Fixed flow designer button visuals/hover mismatch with shadcn/ui by restoring missing Tailwind utility generation for UI primitives.
+- Updated `tailwind.config.ts` `content` to include `packages/ui/src/**/*.{ts,tsx}` so `Button` variant classes (`hover:bg-*`, `bg-*`, `text-*`) are emitted for playground/runtime usage.
+- Impacted path: `tailwind.config.ts`.
+- Key decision: keep flow-designer local CSS unchanged for button states and rely on shared shadcn/ui token-driven variants as the source of truth.
+- Validation: ran `pnpm typecheck`, `pnpm build`, `pnpm lint`; `typecheck/build` still show pre-existing `apps/playground/vite.config.ts` TS2769 mismatch, lint passes with existing warnings only.
+
 ### 2026-03-28 (shadcn/ui Migration Execution - Phase 2/3 Expansion)
 
 - Expanded `packages/ui` with migration-plan core components and exports:
