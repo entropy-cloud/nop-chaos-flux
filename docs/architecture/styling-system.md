@@ -75,7 +75,7 @@ The framework uses shadcn/ui components (from `@nop-chaos/ui`) as the UI compone
 | Concern | Owner | Example |
 |---------|-------|---------|
 | Disabled state | schema/runtime | `disabled: "${form.submitting}"` |
-| Visibility | schema/runtime | `visibleOn: "${hasPermission}"` |
+| Visibility | schema/runtime | `visible: "${hasPermission}"` |
 | Click action | schema/runtime | `onClick: { action: "submitForm" }` |
 | Label text | schema/runtime | `label: "${i18n.submit}"` |
 | Form binding | schema/runtime | `name: "email"` with validation |

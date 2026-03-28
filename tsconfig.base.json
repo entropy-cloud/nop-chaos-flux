@@ -26,6 +26,7 @@
       "@nop-chaos/flux-renderers-basic": ["packages/flux-renderers-basic/src/index.tsx"],
       "@nop-chaos/flux-renderers-form": ["packages/flux-renderers-form/src/index.tsx"],
       "@nop-chaos/flux-renderers-data": ["packages/flux-renderers-data/src/index.tsx"],
+      "@nop-chaos/ui": ["packages/ui/src/index.ts"],
       "@nop-chaos/spreadsheet-core": ["packages/spreadsheet-core/src/index.ts"],
       "@nop-chaos/spreadsheet-renderers": ["packages/spreadsheet-renderers/src/index.ts"],
       "@nop-chaos/report-designer-core": ["packages/report-designer-core/src/index.ts"],
@@ -35,4 +36,3 @@
     }
   }
 }
-

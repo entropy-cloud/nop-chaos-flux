@@ -7,6 +7,7 @@ import { useEdgeTypeConfig, useDesignerContext } from '../designer-context';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import type { DesignerFlowEdgeData } from './types';
 import { DesignerIcon } from '../designer-icon';
+import { Button } from '@nop-chaos/ui';
 
 function classNames(...values: Array<string | undefined | false | null>) {
   return values.filter(Boolean).join(' ');
@@ -105,22 +106,26 @@ export function DesignerXyflowEdge(props: EdgeProps) {
             }}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="icon-sm"
               className="fd-edge__quick-action-btn"
               aria-label="Select edge"
               onClick={handleLabelClick}
             >
               <DesignerIcon icon="pencil" className="nop-icon nop-icon--pencil" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="destructive"
+              size="icon-sm"
               className="fd-edge__quick-action-btn fd-edge__quick-action-btn--danger"
               aria-label="Delete edge"
               onClick={handleDeleteEdge}
             >
               <DesignerIcon icon="trash-2" className="nop-icon nop-icon--trash-2" />
-            </button>
+            </Button>
           </div>
         </EdgeLabelRenderer>
       )}

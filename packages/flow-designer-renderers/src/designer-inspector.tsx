@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button, Input } from '@nop-chaos/ui';
 import { useDesignerContext } from './designer-context';
 
 export function DefaultInspector() {
@@ -15,7 +16,7 @@ export function DefaultInspector() {
         </div>
         <div className="fd-inspector__section">
           <label className="fd-inspector__label">Label</label>
-          <input
+          <Input
             type="text"
             className="fd-inspector__input"
             value={String(activeNode.data.label ?? '')}
@@ -27,7 +28,7 @@ export function DefaultInspector() {
           return (
             <div key={key} className="fd-inspector__section">
               <label className="fd-inspector__label">{key}</label>
-              <input
+              <Input
                 type="text"
                 className="fd-inspector__input"
                 value={String(value ?? '')}
@@ -37,12 +38,14 @@ export function DefaultInspector() {
           );
         })}
         <div className="fd-inspector__actions">
-          <button
+          <Button
             className="fd-inspector__button fd-inspector__button--danger"
+            variant="destructive"
+            size="sm"
             onClick={() => dispatch({ type: 'deleteNode', nodeId: activeNode.id })}
           >
             Delete Node
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -54,7 +57,7 @@ export function DefaultInspector() {
         <h3 className="fd-inspector__title">Edge Properties</h3>
         <div className="fd-inspector__section">
           <label className="fd-inspector__label">Label</label>
-          <input
+          <Input
             type="text"
             className="fd-inspector__input"
             value={String(activeEdge.data.label ?? '')}
@@ -66,7 +69,7 @@ export function DefaultInspector() {
           return (
             <div key={key} className="fd-inspector__section">
               <label className="fd-inspector__label">{key}</label>
-              <input
+              <Input
                 type="text"
                 className="fd-inspector__input"
                 value={String(value ?? '')}
@@ -76,12 +79,14 @@ export function DefaultInspector() {
           );
         })}
         <div className="fd-inspector__actions">
-          <button
+          <Button
             className="fd-inspector__button fd-inspector__button--danger"
+            variant="destructive"
+            size="sm"
             onClick={() => dispatch({ type: 'deleteEdge', edgeId: activeEdge.id })}
           >
             Delete Edge
-          </button>
+          </Button>
         </div>
       </div>
     );

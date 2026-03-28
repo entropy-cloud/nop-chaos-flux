@@ -23,6 +23,7 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
+    "@nop-chaos/ui": "workspace:*",
     "@xyflow/react": "^12.10.1",
     "lucide-react": "0.542.0",
     "react": "^19.0.0",

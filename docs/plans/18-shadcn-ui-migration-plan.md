@@ -34,52 +34,52 @@ Migrate shadcn/ui components from `nop-chaos-next-master` to `nop-chaos-flux` to
 
 ## Migration Scope
 ### Phase 1: Core Infrastructure
-- [ ] Create `packages/ui` package structure
-- [ ] Copy `lib/utils.ts` (cn function)
-- [ ] Copy `styles/` directory (CSS variables, base styles)
-- [ ] Update package.json with minimal dependencies
+- [x] Create `packages/ui` package structure
+- [x] Copy `lib/utils.ts` (cn function)
+- [x] Copy `styles/` directory (CSS variables, base styles)
+- [x] Update package.json with minimal dependencies
 
 ### Phase 2: Core Components (Priority Order)
 **Batch 1 - Basic Inputs**
-- [ ] Button
-- [ ] Input
-- [ ] Textarea
-- [ ] Label
-- [ ] Checkbox
-- [ ] Switch
-- [ ] RadioGroup
+- [x] Button
+- [x] Input
+- [x] Textarea
+- [x] Label
+- [x] Checkbox
+- [x] Switch
+- [x] RadioGroup
 
 **Batch 2 - Overlay Components**
-- [ ] Dialog
-- [ ] Sheet
-- [ ] Popover
-- [ ] Tooltip
-- [ ] DropdownMenu
+- [x] Dialog
+- [x] Sheet
+- [x] Popover
+- [x] Tooltip
+- [x] DropdownMenu
 
-- [ ] Select
+- [x] Select
 
 **Batch 3 - Layout Components**
-- [ ] Tabs
-- [ ] Card
-- [ ] Badge
-- [ ] Avatar
-- [ ] Separator
-- [ ] ScrollArea
-- [ ] Table
+- [x] Tabs
+- [x] Card
+- [x] Badge
+- [x] Avatar
+- [x] Separator
+- [x] ScrollArea
+- [x] Table
 
 **Batch 4 - Feedback Components**
-- [ ] Alert
-- [ ] Progress
-- [ ] Skeleton
-- [ ] Spinner
+- [x] Alert
+- [x] Progress
+- [x] Skeleton
+- [x] Spinner
 
 ### Phase 3: Integration
-- [ ] Update flux-renderers-basic to use shadcn/ui components
-- [ ] Update flux-renderers-form to use shadcn/ui form components
-- [ ] Update flow-designer-renderers to use shadcn/ui components
+- [x] Update flux-renderers-basic to use shadcn/ui components
+- [x] Update flux-renderers-form to use shadcn/ui form components
+- [x] Update flow-designer-renderers to use shadcn/ui components
 - [ ] Remove duplicate CSS from playground/styles.css
 
-- [ ] Update playground to import UI styles
+- [x] Update playground to import UI styles
 
 ### Phase 4: Testing
 - [ ] Visual regression testing

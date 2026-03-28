@@ -1,5 +1,6 @@
 ﻿import type { ApiObject, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
+import { Input, Textarea } from '@nop-chaos/ui';
 import {
   createFieldHandlers,
   formLabelFieldRule,
@@ -32,8 +33,7 @@ export function createInputRenderer(inputType: string) {
       }
     });
     return (
-      <input
-        className="nop-input"
+      <Input
         type={inputType}
         value={String(value)}
         aria-invalid={presentation.showError ? true : undefined}
@@ -152,8 +152,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       });
 
       return (
-        <textarea
-          className="nop-textarea"
+        <Textarea
           value={String(value)}
           rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
           aria-invalid={presentation.showError ? true : undefined}
@@ -342,4 +341,3 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     }
   }
 ];
-

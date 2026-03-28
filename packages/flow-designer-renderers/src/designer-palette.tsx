@@ -3,6 +3,7 @@ import type { NodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge';
+import { Button, Input } from '@nop-chaos/ui';
 
 export function DesignerPaletteContent() {
   const { config, dispatch, snapshot } = useDesignerContext();
@@ -47,7 +48,7 @@ export function DesignerPaletteContent() {
       <div className="fd-palette__header">
         <h3>Node Palette</h3>
         {config.palette?.searchable !== false && (
-          <input
+          <Input
             type="text"
             className="fd-palette__search"
             placeholder="Search nodes..."
@@ -72,8 +73,11 @@ export function DesignerPaletteContent() {
                   const nt = nodeTypes.find((n) => n.id === ntId);
                   if (!nt) return null;
                   return (
-                    <button
+                    <Button
                       key={nt.id}
+                      type="button"
+                      variant="ghost"
+                      size="sm"
                       className={`fd-palette__item${snapshot.activeNode?.type === nt.id ? ' fd-palette__item--selected' : ''}`}
                       onClick={() => handleAddNode(nt)}
                       draggable
@@ -87,7 +91,7 @@ export function DesignerPaletteContent() {
                         {nt.icon ? <DesignerIcon icon={nt.icon} className={`nop-icon nop-icon--${nt.icon}`} /> : '◇'}
                       </span>
                       <span className="fd-palette__item-label">{nt.label}</span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>

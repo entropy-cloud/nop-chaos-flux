@@ -8,6 +8,7 @@
     { "path": "./packages/flux-renderers-basic" },
     { "path": "./packages/flux-renderers-form" },
     { "path": "./packages/flux-renderers-data" },
+    { "path": "./packages/ui" },
     { "path": "./packages/spreadsheet-core" },
     { "path": "./packages/spreadsheet-renderers" },
     { "path": "./packages/report-designer-core" },
@@ -15,4 +16,3 @@
     { "path": "./apps/playground" }
   ]
 }
-

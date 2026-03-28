@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
+import { Button } from '@nop-chaos/ui';
 
 type ToolbarItemLike = {
   type?: string;
@@ -150,9 +151,11 @@ export function DesignerToolbarContent() {
 
         if (item.type === 'back') {
           return (
-            <button
+            <Button
               key={key}
               type="button"
+              variant="ghost"
+              size="sm"
               className="fd-toolbar__button"
               aria-label={item.label ?? 'Back'}
               onClick={() => {
@@ -161,7 +164,7 @@ export function DesignerToolbarContent() {
             >
               <DesignerIcon icon="arrow-left" className="nop-icon nop-icon--arrow-left" />
               {item.label ? <span>{item.label}</span> : null}
-            </button>
+            </Button>
           );
         }
 
@@ -170,9 +173,11 @@ export function DesignerToolbarContent() {
           const disabled = evalBooleanExpr(item.disabled, snapshot);
           const active = evalBooleanExpr(item.active, snapshot);
           return (
-            <button
+            <Button
               key={key}
               type="button"
+              variant={item.variant === 'danger' ? 'destructive' : item.variant === 'primary' ? 'default' : 'secondary'}
+              size="sm"
               className={classNames(
                 'fd-toolbar__button',
                 item.variant === 'primary' && 'fd-toolbar__button--primary',
@@ -188,7 +193,7 @@ export function DesignerToolbarContent() {
             >
               {item.icon ? <DesignerIcon icon={item.icon} className={`nop-icon nop-icon--${item.icon}`} /> : null}
               {item.label ? <span>{item.label}</span> : null}
-            </button>
+            </Button>
           );
         }
 

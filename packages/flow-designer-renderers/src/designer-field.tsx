@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import type { RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import type { DesignerFieldSchema } from './schemas';
 import { useDesignerContext } from './designer-context';
+import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@nop-chaos/ui';
 
 export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFieldSchema>) {
   const schemaProps = props.props as Record<string, SchemaValue>;
@@ -30,32 +31,33 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
     <div className="fd-field">
       {label && <label className="fd-field__label">{label}</label>}
       {fieldType === 'textarea' ? (
-        <textarea
+        <Textarea
           className="fd-field__textarea"
           value={String(value)}
           onChange={(e) => handleChange(e.target.value)}
         />
       ) : fieldType === 'select' && options ? (
-        <select
-          className="fd-field__select"
-          value={String(value)}
-          onChange={(e) => handleChange(e.target.value)}
-        >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <Select value={String(value)} onValueChange={(nextValue) => handleChange(nextValue)}>
+          <SelectTrigger className="fd-field__select">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       ) : fieldType === 'number' ? (
-        <input
+        <Input
           type="number"
           className="fd-field__input"
           value={String(value)}
           onChange={(e) => handleChange(e.target.value)}
         />
       ) : (
-        <input
+        <Input
           type="text"
           className="fd-field__input"
           value={String(value)}

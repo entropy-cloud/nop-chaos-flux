@@ -15,6 +15,7 @@
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/ui": "workspace:*",
     "react": "^19.0.0"
   },
   "scripts": {
@@ -24,4 +25,3 @@
     "lint": "eslint src --ext .ts,.tsx"
   }
 }
-

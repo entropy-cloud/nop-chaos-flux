@@ -8,6 +8,7 @@ import { useNodeTypeConfig, useDesignerContext } from '../designer-context';
 import { renderPorts } from './render-ports';
 import type { DesignerFlowNodeData } from './types';
 import { DesignerIcon } from '../designer-icon';
+import { Button } from '@nop-chaos/ui';
 
 function classNames(...values: Array<string | undefined | false | null>) {
   return values.filter(Boolean).join(' ');
@@ -134,30 +135,36 @@ export function DesignerXyflowNode(props: NodeProps) {
               </ClassAliasesContext.Provider>
             ) : (
               <div className="nop-flex flex gap-1">
-                <button
+                <Button
                   type="button"
-                  className="nop-button nop-button--sm fd-xyflow-node-toolbar__icon-button"
+                  variant="secondary"
+                  size="icon-sm"
+                  className="fd-xyflow-node-toolbar__icon-button"
                   aria-label="Edit node"
                   onClick={actionScope.onEdit}
                 >
                   <DesignerIcon icon="pencil" className="nop-icon nop-icon--pencil" />
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="nop-button nop-button--sm fd-xyflow-node-toolbar__icon-button"
+                  variant="secondary"
+                  size="icon-sm"
+                  className="fd-xyflow-node-toolbar__icon-button"
                   aria-label="Duplicate node"
                   onClick={actionScope.onDuplicate}
                 >
                   <DesignerIcon icon="copy" className="nop-icon nop-icon--copy" />
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="nop-button nop-button--danger nop-button--sm fd-xyflow-node-toolbar__icon-button"
+                  variant="destructive"
+                  size="icon-sm"
+                  className="fd-xyflow-node-toolbar__icon-button"
                   aria-label="Delete node"
                   onClick={actionScope.onDelete}
                 >
                   <DesignerIcon icon="trash-2" className="nop-icon nop-icon--trash-2" />
-                </button>
+                </Button>
               </div>
             )}
           </div>

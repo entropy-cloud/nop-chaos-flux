@@ -18,6 +18,40 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-28 (shadcn/ui Migration Execution - Phase 2/3 Expansion)
+
+- Expanded `packages/ui` with migration-plan core components and exports:
+  - Inputs/fields: `textarea`, `label`, `checkbox`, `switch`, `radio-group`, `select`
+  - Overlay: `dialog`, `sheet`, `popover`, `tooltip`, `dropdown-menu`
+  - Layout/feedback: `tabs`, `card`, `badge`, `avatar`, `separator`, `scroll-area`, `table`, `alert`, `progress`, `skeleton`, `spinner`
+- Integrated additional renderer surfaces:
+  - `packages/flux-renderers-basic/src/badge.tsx` now uses `@nop-chaos/ui` `Badge`.
+  - flow-designer renderer controls updated to shadcn/ui primitives in:
+    - `packages/flow-designer-renderers/src/designer-inspector.tsx`
+    - `packages/flow-designer-renderers/src/designer-palette.tsx`
+    - `packages/flow-designer-renderers/src/designer-toolbar.tsx`
+    - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowNode.tsx`
+    - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`
+  - Added `@nop-chaos/ui` dependency to `packages/flow-designer-renderers/package.json`.
+- Validation run succeeded for workspace-level `typecheck/build/lint/test/test:e2e` (lint remains with pre-existing warnings only).
+- Key decision: keep form `select/checkbox/switch/radio-group` renderer behavior unchanged for now to preserve existing validation/test interaction semantics; continue incremental replacement in a dedicated follow-up.
+- Next step: remove duplicated legacy `.nop-*` playground form/button style blocks after completing remaining renderer-side semantic alignment.
+
+### 2026-03-28 (shadcn/ui Migration Execution - Phase 1 + Button/Input Integration)
+
+- Executed migration plan Phase 1 by creating `packages/ui` and copying core files: `src/lib/utils.ts`, `src/styles/base.css`, `src/styles/index.css`.
+- Migrated first Batch 1 components into workspace UI package: `packages/ui/src/components/ui/button.tsx` and `packages/ui/src/components/ui/input.tsx`, with exports in `packages/ui/src/index.ts`.
+- Integrated renderers:
+  - `packages/flux-renderers-basic/src/button.tsx` now uses `Button` from `@nop-chaos/ui` with variant/size mapping.
+  - `packages/flux-renderers-form/src/renderers/input.tsx` now uses `Input` from `@nop-chaos/ui`.
+- Wired workspace integration:
+  - path/alias updates in `tsconfig.base.json`, `tsconfig.json`, `vite.workspace-alias.ts`
+  - dependency wiring in `packages/flux-renderers-basic/package.json` and `packages/flux-renderers-form/package.json`
+  - playground style import in `apps/playground/src/main.tsx` via `@nop-chaos/ui/styles.css`
+- Updated progress checklist in `docs/plans/18-shadcn-ui-migration-plan.md`.
+- Key decision: keep migration minimal and behavior-safe by only replacing component primitives for Button/Input while preserving flux-runtime state/action handling.
+- Next step: migrate remaining Batch 1 form primitives (Textarea/Label/Checkbox/Switch/RadioGroup) and start overlay batch.
+
 ### 2026-03-28 (shadcn/ui Migration Planning)
 
 - Added `docs/architecture/styling-system.md` section explaining why we framework uses shadcn/ui components.
