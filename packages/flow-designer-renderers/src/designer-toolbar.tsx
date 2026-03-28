@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
-import { Button } from '@nop-chaos/ui';
+import { Badge, Button } from '@nop-chaos/ui';
 
 type ToolbarItemLike = {
   type?: string;
@@ -16,10 +16,6 @@ type ToolbarItemLike = {
   active?: boolean | string;
   variant?: 'default' | 'primary' | 'danger';
 };
-
-function classNames(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(' ');
-}
 
 function readState(name: string, snapshot: ReturnType<typeof useDesignerContext>['snapshot']) {
   switch (name) {
@@ -125,31 +121,31 @@ export function DesignerToolbarContent(props: {
   }
 
   return (
-    <div className="fd-toolbar" data-testid="designer-toolbar">
+    <div className="min-h-[52px] px-3.5 py-2 flex items-center gap-2 border border-border rounded-[20px] bg-white/72 shadow-[0_2px_8px_rgba(15,23,42,0.05)] backdrop-blur-[8px] max-[980px]:flex-wrap" data-testid="designer-toolbar">
       {items.map(({ key, item }) => {
         if (item.type === 'divider') {
-          return <span key={key} className="fd-toolbar__divider" aria-hidden="true" />;
+          return <span key={key} className="w-px h-[18px] bg-border" aria-hidden="true" />;
         }
 
         if (item.type === 'spacer') {
-          return <span key={key} className="fd-toolbar__spacer" aria-hidden="true" />;
+          return <span key={key} className="flex-1 max-[980px]:hidden" aria-hidden="true" />;
         }
 
         if (item.type === 'title') {
-          return <h2 key={key} className="fd-toolbar__title">{evalTextTemplate(item.body ?? item.text, snapshot)}</h2>;
+          return <h2 key={key} className="m-0 text-base font-bold text-foreground">{evalTextTemplate(item.body ?? item.text, snapshot)}</h2>;
         }
 
         if (item.type === 'badge') {
           const level = evalTextTemplate(item.level, snapshot);
           return (
-            <span key={key} className={classNames('fd-type-badge', level && `fd-type-badge--${level}`)}>
+            <Badge key={key} variant={level === 'success' ? 'success' : level === 'warning' ? 'warning' : 'secondary'}>
               {evalTextTemplate(item.text ?? item.body, snapshot)}
-            </span>
+            </Badge>
           );
         }
 
         if (item.type === 'text') {
-          return <span key={key} className="fd-toolbar__meta">{evalTextTemplate(item.body ?? item.text, snapshot)}</span>;
+          return <span key={key} className="text-[13px] text-muted-foreground">{evalTextTemplate(item.body ?? item.text, snapshot)}</span>;
         }
 
         if (item.type === 'back') {

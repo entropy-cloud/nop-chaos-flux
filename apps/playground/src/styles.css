@@ -224,7 +224,7 @@ body {
   flex-direction: column;
 }
 
-.playground-flow-page > .fd-page {
+.playground-flow-page > .nop-theme-root {
   flex: 1;
   min-height: 0;
 }

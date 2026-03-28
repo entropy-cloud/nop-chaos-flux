@@ -28,17 +28,17 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
   );
 
   return (
-    <div className="fd-field">
-      {label && <label className="fd-field__label">{label}</label>}
+    <div className="grid gap-1.5">
+      {label && <label className="block mb-1 text-xs font-medium text-muted-foreground">{label}</label>}
       {fieldType === 'textarea' ? (
         <Textarea
-          className="fd-field__textarea"
+          className="min-h-[110px] resize-y"
           value={String(value)}
           onChange={(e) => handleChange(e.target.value)}
         />
       ) : fieldType === 'select' && options ? (
         <Select value={String(value)} onValueChange={(nextValue) => handleChange(nextValue)}>
-          <SelectTrigger className="fd-field__select">
+          <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -52,14 +52,12 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
       ) : fieldType === 'number' ? (
         <Input
           type="number"
-          className="fd-field__input"
           value={String(value)}
           onChange={(e) => handleChange(e.target.value)}
         />
       ) : (
         <Input
           type="text"
-          className="fd-field__input"
           value={String(value)}
           onChange={(e) => handleChange(e.target.value)}
         />

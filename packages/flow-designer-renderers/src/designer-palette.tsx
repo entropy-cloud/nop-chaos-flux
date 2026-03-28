@@ -44,41 +44,42 @@ export function DesignerPaletteContent() {
   })).filter((g) => g.nodeTypes.length > 0);
 
   return (
-    <div className="fd-palette">
-      <div className="fd-palette__header">
-        <h3>Node Palette</h3>
+    <div className="p-3.5 text-foreground">
+      <div>
+        <h3 className="m-0 mb-3.5 text-sm font-bold text-foreground">Node Palette</h3>
         {config.palette?.searchable !== false && (
           <Input
             type="text"
-            className="fd-palette__search"
+            className="w-full px-3 py-2 border border-border rounded-md text-[13px] text-foreground bg-card mb-3"
             placeholder="Search nodes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         )}
       </div>
-      <div className="fd-palette__groups">
+      <div>
         {filteredGroups.map((group) => (
-          <div key={group.id} className="fd-palette__group">
+          <div key={group.id} className="mb-2.5 border border-border rounded-2xl bg-muted p-2">
             <div
-              className="fd-palette__group-header"
+              className="flex items-center gap-1.5 px-2.5 py-2 cursor-pointer rounded-xl text-[13px] font-semibold text-foreground"
               onClick={() => toggleGroup(group.id)}
             >
-              <span className="fd-palette__group-toggle">{expandedGroups.has(group.id) ? '▼' : '▶'}</span>
-              <span className="fd-palette__group-label">{group.label}</span>
+              <span className="text-[11px] text-muted-foreground">{expandedGroups.has(group.id) ? '▼' : '▶'}</span>
+              <span>{group.label}</span>
             </div>
             {expandedGroups.has(group.id) && (
-              <div className="fd-palette__group-items">
+              <div className="px-0 pt-1.5 pb-0.5">
                 {group.nodeTypes.map((ntId) => {
                   const nt = nodeTypes.find((n) => n.id === ntId);
                   if (!nt) return null;
+                  const isSelected = snapshot.activeNode?.type === nt.id;
                   return (
                     <Button
                       key={nt.id}
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className={`fd-palette__item${snapshot.activeNode?.type === nt.id ? ' fd-palette__item--selected' : ''}`}
+                      className={`w-full flex items-center gap-2 mb-1.5 px-3 py-2 border border-border rounded-[20px] bg-card shadow-[0_2px_8px_rgba(15,23,42,0.05)] text-foreground cursor-pointer text-sm transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-px hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] hover:border-primary ${isSelected ? '!border-primary bg-accent shadow-[0_8px_24px_rgba(15,23,42,0.14)]' : ''}`}
                       onClick={() => handleAddNode(nt)}
                       draggable
                       onDragStart={(event) => {
@@ -87,10 +88,10 @@ export function DesignerPaletteContent() {
                       }}
                       title={nt.description ?? nt.label}
                     >
-                      <span className="fd-palette__item-icon" data-type={nt.id} aria-hidden="true">
+                      <span className={`w-8 h-8 rounded-2xl inline-flex items-center justify-center ${isSelected ? 'nop-gradient-start' : ''}`} data-type={nt.id} aria-hidden="true">
                         {nt.icon ? <DesignerIcon icon={nt.icon} className={`nop-icon nop-icon--${nt.icon}`} /> : '◇'}
                       </span>
-                      <span className="fd-palette__item-label">{nt.label}</span>
+                      <span>{nt.label}</span>
                     </Button>
                   );
                 })}

@@ -185,32 +185,32 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   return (
     <DesignerContext.Provider value={ctxValue}>
       {config.themeStyles && <style>{config.themeStyles}</style>}
-      <div className="fd-page nop-theme-root fd-theme-root">
-        <div className="fd-page__header">
+      <div className="grid grid-rows-[auto_minmax(0,1fr)] h-full min-h-0 gap-3 p-3 bg-background text-foreground">
+        <div className="min-h-0">
           {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} />}
         </div>
-        <div className="fd-page__content">
-          <div className="fd-page__palette">
+        <div className="grid grid-cols-[240px_minmax(0,1fr)_352px] gap-3 min-h-0 h-full max-[980px]:grid-cols-1 max-[980px]:grid-rows-[auto_minmax(360px,1fr)_auto]">
+          <div className="w-full overflow-y-auto rounded-[20px] bg-white/72 border border-border shadow-[0_2px_8px_rgba(15,23,42,0.05)] backdrop-blur-[8px]">
             <DesignerPaletteContent />
           </div>
-          <div className="fd-page__canvas">
+          <div className="relative overflow-auto rounded-xl bg-card border border-border shadow-sm">
             <DesignerCanvasContent />
           </div>
-          <div className="fd-page__inspector">
+          <div className="w-full overflow-y-auto rounded-[20px] bg-white/72 border border-border shadow-[0_2px_8px_rgba(15,23,42,0.05)] backdrop-blur-[8px] max-[768px]:fixed max-[768px]:bottom-0 max-[768px]:left-0 max-[768px]:right-0 max-[768px]:w-full max-[768px]:max-h-[50vh] max-[768px]:z-50 max-[768px]:border-t max-[768px]:border-l-0 max-[768px]:rounded-none">
             {hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector />}
           </div>
         </div>
-        {hasRendererSlotContent(dialogsSlot) ? <div className="fd-page__dialogs">{dialogsSlot}</div> : null}
+        {hasRendererSlotContent(dialogsSlot) ? <div className="relative">{dialogsSlot}</div> : null}
         {jsonOpen ? (
-          <div className="fd-page__dialogs" role="dialog" aria-label="Flow JSON preview">
-            <div className="fd-json-panel">
-              <div className="fd-json-panel__header">
-                <h3 className="fd-json-panel__title">Flow JSON</h3>
-                <button type="button" className="fd-json-panel__close" aria-label="Close JSON preview" onClick={() => setJsonOpen(false)}>
+          <div className="relative" role="dialog" aria-label="Flow JSON preview">
+            <div className="fixed right-4 top-[72px] w-[min(560px,calc(100vw-32px))] max-h-[calc(100vh-96px)] border border-border rounded-[14px] bg-card shadow-[0_16px_40px_rgba(15,23,42,0.18)] overflow-hidden z-60">
+              <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-b border-border">
+                <h3 className="m-0 text-[13px] font-bold text-foreground">Flow JSON</h3>
+                <button type="button" className="border border-border rounded-lg bg-secondary text-secondary-foreground w-7 h-7 cursor-pointer hover:bg-secondary/80" aria-label="Close JSON preview" onClick={() => setJsonOpen(false)}>
                   ✕
                 </button>
               </div>
-              <pre className="fd-json-panel__content">{core.exportDocument()}</pre>
+              <pre className="m-0 p-3 overflow-auto max-h-[calc(100vh-156px)] font-mono text-xs leading-relaxed bg-[#0b1220] text-[#dbe9ff]">{core.exportDocument()}</pre>
             </div>
           </div>
         ) : null}
