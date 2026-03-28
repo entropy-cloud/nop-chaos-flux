@@ -250,8 +250,8 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   }
 
   return (
-    <div className="fd-xyflow-live">
-      <div className="fd-xyflow-live__surface" ref={surfaceRef}>
+    <div className="flex flex-col w-full h-full text-foreground">
+      <div className="fd-xyflow-surface flex-1 min-h-0 border border-border rounded-xl bg-muted overflow-hidden" ref={surfaceRef}>
         <ReactFlowProvider>
           <ReactFlow
             nodes={localNodes}

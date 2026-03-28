@@ -16,7 +16,7 @@ export function renderPorts(ports: PortConfig[] | undefined) {
   return ports.map((port) => {
     const position = POSITION_MAP[port.position ?? 'top'];
     const type = port.direction === 'input' ? 'target' : 'source';
-    const className = port.appearance?.className;
+    const sizeClass = port.appearance?.size ? `!w-[${port.appearance.size}px] !h-[${port.appearance.size}px]` : '';
 
     return (
       <Handle
@@ -24,8 +24,7 @@ export function renderPorts(ports: PortConfig[] | undefined) {
         type={type}
         position={position}
         id={port.id}
-        className={className}
-        style={port.appearance?.size ? { width: port.appearance.size, height: port.appearance.size } : undefined}
+        className={`${port.appearance?.className ?? ''} ${sizeClass}`}
       />
     );
   });

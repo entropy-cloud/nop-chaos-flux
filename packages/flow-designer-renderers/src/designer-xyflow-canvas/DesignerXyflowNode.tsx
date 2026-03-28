@@ -72,19 +72,24 @@ export function DesignerXyflowNode(props: NodeProps) {
   const appearanceStyle = useMemo(() => {
     if (!nodeType?.appearance) return undefined;
     const { appearance } = nodeType;
-    return {
-      borderRadius: appearance.borderRadius,
-      borderWidth: appearance.borderWidth,
-      borderColor: props.selected ? appearance.borderColorSelected : appearance.borderColor,
-      minWidth: appearance.minWidth,
-      minHeight: appearance.minHeight
-    };
+    const s: React.CSSProperties = {};
+    if (appearance.minWidth !== undefined) s.minWidth = appearance.minWidth;
+    if (appearance.minHeight !== undefined) s.minHeight = appearance.minHeight;
+    if (appearance.borderRadius !== undefined) s.borderRadius = appearance.borderRadius;
+    if (appearance.borderWidth !== undefined) s.borderWidth = appearance.borderWidth;
+    if (props.selected && appearance.borderColorSelected) {
+      s.borderColor = appearance.borderColorSelected;
+    } else if (appearance.borderColor) {
+      s.borderColor = appearance.borderColor;
+    }
+    return Object.keys(s).length > 0 ? s : undefined;
   }, [nodeType, props.selected]);
 
   if (!nodeType?.body || !isSchemaInput(nodeType.body)) {
     return (
       <div
-        className={classNames('fd-xyflow-node', 'fd-xyflow-node--fallback', props.selected && 'fd-xyflow-node--active')}
+        className={classNames(nodeType?.appearance?.className)}
+        style={appearanceStyle}
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
       >
@@ -98,11 +103,7 @@ export function DesignerXyflowNode(props: NodeProps) {
   return (
     <>
       <div
-        className={classNames(
-          'fd-xyflow-node',
-          nodeType.appearance?.className,
-          props.selected && 'fd-xyflow-node--active'
-        )}
+        className={classNames(nodeType.appearance?.className)}
         style={appearanceStyle}
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
@@ -118,7 +119,11 @@ export function DesignerXyflowNode(props: NodeProps) {
 
       {(hasQuickActions || showToolbar) && (
         <NodeToolbar isVisible={showToolbar} position={Position.Top}>
-          <div className="fd-xyflow-node-toolbar" onMouseEnter={showToolbarNow} onMouseLeave={scheduleHideToolbar}>
+          <div
+            className="flex items-center gap-1.5 p-1 rounded-xl bg-white/96 border border-border shadow-lg"
+            onMouseEnter={showToolbarNow}
+            onMouseLeave={scheduleHideToolbar}
+          >
             {hasQuickActions ? (
               <ClassAliasesContext.Provider value={config.classAliases}>
                 <RenderNodes
@@ -134,12 +139,11 @@ export function DesignerXyflowNode(props: NodeProps) {
                 />
               </ClassAliasesContext.Provider>
             ) : (
-              <div className="nop-flex flex gap-1">
+              <div className="flex gap-1">
                 <Button
                   type="button"
                   variant="secondary"
                   size="icon-sm"
-                  className="fd-xyflow-node-toolbar__icon-button"
                   aria-label="Edit node"
                   onClick={actionScope.onEdit}
                 >
@@ -149,7 +153,6 @@ export function DesignerXyflowNode(props: NodeProps) {
                   type="button"
                   variant="secondary"
                   size="icon-sm"
-                  className="fd-xyflow-node-toolbar__icon-button"
                   aria-label="Duplicate node"
                   onClick={actionScope.onDuplicate}
                 >
@@ -159,7 +162,6 @@ export function DesignerXyflowNode(props: NodeProps) {
                   type="button"
                   variant="destructive"
                   size="icon-sm"
-                  className="fd-xyflow-node-toolbar__icon-button"
                   aria-label="Delete node"
                   onClick={actionScope.onDelete}
                 >

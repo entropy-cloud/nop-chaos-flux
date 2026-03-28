@@ -73,13 +73,16 @@ export function DesignerXyflowEdge(props: EdgeProps) {
         path={edgePath}
         style={edgeStyle}
         markerEnd={appearance?.markerEnd && appearance.markerEnd !== 'none' ? `url(#${appearance.markerEnd})` : undefined}
-        className={classNames(appearance?.animated && 'fd-edge--animated')}
+        className={classNames(appearance?.animated && 'react-flow__edge-animated')}
       />
 
       {hasBody && (
         <EdgeLabelRenderer>
           <div
-            className={classNames('fd-edge__label-wrapper', props.selected && 'fd-edge__label-wrapper--selected')}
+            className={classNames(
+              'px-3 py-1.5 rounded-full border border-border bg-white/88 shadow-[0_2px_8px_rgba(15,23,42,0.06)] backdrop-blur-[20px] text-sm font-medium text-muted-foreground',
+              props.selected && 'border-primary'
+            )}
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
@@ -98,7 +101,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
       {showQuickActions && (
         <EdgeLabelRenderer>
           <div
-            className="fd-edge__quick-actions"
+            className="inline-flex items-center gap-1.5 p-1 rounded-[10px] border border-border bg-white/94 shadow-[0_2px_8px_rgba(15,23,42,0.08)]"
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY - 30}px)`,
@@ -110,7 +113,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
               type="button"
               variant="secondary"
               size="icon-sm"
-              className="fd-edge__quick-action-btn"
+              className="w-7 h-7 rounded-lg inline-flex items-center justify-center hover:bg-accent"
               aria-label="Select edge"
               onClick={handleLabelClick}
             >
@@ -120,7 +123,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
               type="button"
               variant="destructive"
               size="icon-sm"
-              className="fd-edge__quick-action-btn fd-edge__quick-action-btn--danger"
+              className="w-7 h-7 rounded-lg inline-flex items-center justify-center border-0 hover:bg-accent"
               aria-label="Delete edge"
               onClick={handleDeleteEdge}
             >
