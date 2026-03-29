@@ -724,7 +724,7 @@
         { "type": "divider" },
         { "type": "text", "body": "${doc.nodes.length} 节点 · ${doc.edges.length} 边" },
         { "type": "divider" },
-        { "type": "button", "action": "designer:toggle-grid", "icon": "grid-3x3", "label": "网格", "active": "${gridEnabled}" },
+        { "type": "switch", "action": "designer:toggle-grid", "icon": "grid-3x3", "label": "网格", "active": "${gridEnabled}" },
         { "type": "button", "action": "designer:undo", "icon": "rotate-ccw", "label": "撤销", "disabled": "${!canUndo}" },
         { "type": "button", "action": "designer:redo", "icon": "rotate-cw", "label": "重做", "disabled": "${!canRedo}" },
         { "type": "button", "action": "designer:restore", "icon": "download", "label": "恢复", "disabled": "${!isDirty}" },
