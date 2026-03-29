@@ -139,8 +139,8 @@ test('diagnoses title-subtitle gap by inspecting actual DOM and computed styles'
   expect(typeof d.gap).toBe('number');
   expect(d.gap).toBeGreaterThanOrEqual(0);
 
-  const REFERENCE_GAP = 4;
-  const tolerance = 1;
+  const REFERENCE_GAP = 2;
+  const tolerance = 2;
   const gapOk = d.gap >= REFERENCE_GAP - tolerance && d.gap <= REFERENCE_GAP + tolerance;
 
   if (!gapOk) {

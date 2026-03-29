@@ -1,0 +1,74 @@
+# Page snapshot
+
+```yaml
+- button "返回"
+- text: Customer onboarding 已保存 6 节点 · 6 边
+- button "网格"
+- button "撤销"
+- button "重做" [disabled]
+- button "恢复" [disabled]
+- button "JSON"
+- button "保存" [disabled]
+- text: 节点库 拖拽或点击添加 6 ▼ 基础节点
+- button "开始节点"
+- button "Add 开始节点":
+  - img
+- button "结束节点"
+- button "Add 结束节点":
+  - img
+- text: ▼ 逻辑控制
+- button "条件节点"
+- button "Add 条件节点":
+  - img
+- button "并行节点"
+- button "Add 并行节点":
+  - img
+- button "循环节点"
+- button "Add 循环节点":
+  - img
+- text: ▼ 执行任务
+- button "任务节点"
+- button "Add 任务节点":
+  - img
+- application:
+  - img:
+    - group "Edge from start-1 to task-1"
+  - img:
+    - group "Edge from task-1 to condition-1"
+  - img:
+    - group "Edge from condition-1 to parallel-1"
+  - img:
+    - group "Edge from condition-1 to loop-1"
+  - img:
+    - group "Edge from parallel-1 to end-1"
+  - img:
+    - group "Edge from loop-1 to end-1"
+  - text: 触发 成功 是 否 完成 完成
+  - group: 开始 register 开始节点 1项配置
+  - group: 发送欢迎邮件 邮件通知 任务节点 2项配置
+  - group: 是否企业客户 customerType === 'enterprise' 条件分支 1项配置
+  - group: 并行任务 2 分支 并行网关 1项配置
+  - group: 补全资料轮询 ×5 / 1d 循环节点 2项配置
+  - group: 结束 done 结束节点 1项配置
+  - button "Edit node"
+  - button "Duplicate node"
+  - button "Delete node"
+  - img
+  - img "Mini Map"
+  - button "Zoom In":
+    - img
+  - button "Zoom Out" [disabled]:
+    - img
+  - button "Fit View":
+    - img
+- text: 属性面板 编辑节点或连线属性 流程信息 Customer onboarding 已启用 6 个节点 6 条连线 当前选中 发送欢迎邮件 任务节点
+- paragraph: 邮件通知
+- text: 名称
+- textbox: 发送欢迎邮件
+- text: 描述
+- textbox: 邮件通知
+- button "删除节点"
+- button "0":
+  - img
+  - text: "0"
+```
