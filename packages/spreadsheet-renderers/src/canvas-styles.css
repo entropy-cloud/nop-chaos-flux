@@ -212,3 +212,127 @@
   background-color: #999999;
   z-index: 6;
 }
+
+/* Sheet Tab Bar - Excel-style bottom sheet tabs */
+
+.ss-sheet-bar {
+  display: flex;
+  align-items: stretch;
+  height: 28px;
+  background-color: #E7E7E7;
+  border-top: 1px solid #C6C6C6;
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  color: #444444;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ss-sheet-bar-tabs {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  flex: 1;
+  min-width: 0;
+}
+
+.ss-sheet-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-bottom: 1px solid #B4B4B4;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #444444;
+  font-size: 11px;
+  height: 100%;
+  box-sizing: border-box;
+  vertical-align: top;
+}
+
+.ss-sheet-tab:hover {
+  background-color: #F5F5F5;
+  border-color: #B4B4B4;
+}
+
+.ss-sheet-tab[data-active] {
+  background-color: #FFFFFF;
+  border-color: #B4B4B4;
+  border-bottom-color: transparent;
+  font-weight: 500;
+}
+
+.ss-sheet-tab-color {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  pointer-events: none;
+}
+
+.ss-sheet-tab-icon {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.ss-sheet-tab-rename {
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid #1a73e8;
+  outline: none;
+  background-color: #FFFFFF;
+  color: #444444;
+  min-width: 60px;
+  height: 18px;
+  box-sizing: border-box;
+}
+
+.ss-sheet-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  font-size: 12px;
+  color: #666666;
+  cursor: pointer;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.ss-sheet-tab:hover .ss-sheet-tab-close {
+  opacity: 1;
+}
+
+.ss-sheet-tab-close:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: #333333;
+}
+
+.ss-sheet-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  background-color: transparent;
+  border: none;
+  border-left: 1px solid #C6C6C6;
+  cursor: pointer;
+  color: #444444;
+  font-size: 14px;
+  font-weight: bold;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.ss-sheet-add:hover {
+  background-color: #F5F5F5;
+}

@@ -22,3 +22,6 @@ export {
 
 export type { CellStyleResult } from './cell-style-map.js';
 export { mapCellStyle } from './cell-style-map.js';
+
+export type { SheetTabBarProps } from './sheet-tab-bar.js';
+export { SheetTabBar } from './sheet-tab-bar.js';
