@@ -1,0 +1,214 @@
+/*
+ * Spreadsheet Canvas Styles
+ *
+ * Predefined CSS classes for high-performance spreadsheet grid rendering.
+ * Uses a hybrid strategy: finite-value properties → CSS classes, continuous-value properties → inline styles.
+ * Interaction states use data-* attributes (compatible with shadcn/ui pattern).
+ *
+ * See docs/architecture/report-designer/spreadsheet-canvas-css.md for full design rationale.
+ */
+
+.ss-grid {
+  display: grid;
+  position: relative;
+  overflow: auto;
+  border-collapse: collapse;
+  font-family: Calibri, Arial, sans-serif;
+  font-size: 11pt;
+  color: #1a1a1a;
+  background-color: #ffffff;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ss-row {
+  display: flex;
+}
+
+.ss-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  min-width: 36px;
+  padding: 0 4px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #c6c6c6;
+  border-right: 1px solid #c6c6c6;
+  font-size: 10pt;
+  font-weight: 600;
+  color: #595959;
+  flex-shrink: 0;
+}
+
+.ss-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 22px;
+  padding: 0 4px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #c6c6c6;
+  border-right: 1px solid #c6c6c6;
+  font-size: 10pt;
+  font-weight: 600;
+  color: #595959;
+  flex-shrink: 0;
+}
+
+.ss-header-corner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 22px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #c6c6c6;
+  border-right: 1px solid #c6c6c6;
+  flex-shrink: 0;
+}
+
+.ss-cell {
+  position: relative;
+  height: 22px;
+  min-height: 22px;
+  padding: 1px 4px;
+  border-right: 1px solid #d4d4d4;
+  border-bottom: 1px solid #d4d4d4;
+  font-family: Calibri, Arial, sans-serif;
+  font-size: 11pt;
+  font-weight: normal;
+  font-style: normal;
+  text-decoration: none;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: cell;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  line-height: normal;
+}
+
+.ss-bold { font-weight: bold; }
+.ss-italic { font-style: italic; }
+.ss-underline { text-decoration: underline; }
+.ss-strike { text-decoration: line-through; }
+
+.ss-align-left { text-align: left; }
+.ss-align-center { text-align: center; }
+.ss-align-right { text-align: right; }
+
+.ss-valign-top { vertical-align: top; }
+.ss-valign-middle { vertical-align: middle; }
+.ss-valign-bottom { vertical-align: bottom; }
+
+.ss-wrap {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-overflow: clip;
+}
+
+.ss-border-solid { border-style: solid; }
+.ss-border-dashed { border-style: dashed; }
+.ss-border-dotted { border-style: dotted; }
+.ss-border-double { border-style: double; }
+
+.ss-cell[data-cell-active] {
+  outline: 2px solid #1a73e8;
+  outline-offset: -1px;
+  z-index: 1;
+}
+
+.ss-cell[data-cell-selected] {
+  background-color: #e8f0fe;
+}
+
+.ss-cell[data-cell-editing] {
+  outline: 2px solid #1a73e8;
+  outline-offset: -1px;
+  z-index: 2;
+  overflow: visible;
+  white-space: pre;
+}
+
+.ss-cell[data-range-highlight] {
+  background-color: rgba(26, 115, 232, 0.08);
+}
+
+.ss-cell[data-col-header-active] {
+  background-color: #d3e3fd;
+  border-bottom-color: #1a73e8;
+}
+
+.ss-cell[data-row-header-active] {
+  background-color: #d3e3fd;
+  border-right-color: #1a73e8;
+}
+
+.ss-col-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 3;
+}
+
+.ss-col-resize-handle:hover {
+  background-color: rgba(26, 115, 232, 0.4);
+}
+
+.ss-row-resize-handle {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 5px;
+  cursor: row-resize;
+  z-index: 3;
+}
+
+.ss-row-resize-handle:hover {
+  background-color: rgba(26, 115, 232, 0.4);
+}
+
+.ss-selection-border {
+  position: absolute;
+  border: 2px solid #1a73e8;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.ss-selection-fill-handle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background-color: #1a73e8;
+  cursor: crosshair;
+  z-index: 5;
+}
+
+.ss-frozen-separator-col {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: #999999;
+  z-index: 6;
+}
+
+.ss-frozen-separator-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #999999;
+  z-index: 6;
+}
