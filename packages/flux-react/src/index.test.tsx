@@ -76,6 +76,41 @@ const probeInputRenderer: RendererDefinition = {
   component: ProbeInput
 };
 
+function ProbeButton() {
+  const scope = useRenderScope();
+  const form = useCurrentForm();
+  const value = String(scope.get('query') ?? '');
+
+  return (
+    <div>
+      <input
+        aria-label="Query"
+        value={value}
+        onChange={(event) => {
+          if (form) {
+            form.touchField('query');
+            form.setValue('query', event.target.value);
+          }
+        }}
+      />
+    </div>
+  );
+}
+
+const probeButtonRenderer: RendererDefinition = {
+  type: 'probe-button',
+  component: (props) => (
+    <button disabled={props.meta.disabled} aria-label="Search">
+      Search
+    </button>
+  )
+};
+
+const probeQueryInputRenderer: RendererDefinition = {
+  type: 'probe-query-input',
+  component: ProbeButton
+};
+
 function PageValueProbe() {
   const scope = useRenderScope();
   return <span data-testid="page-value">{String(scope.get('currentUser.name') ?? '')}</span>;
@@ -1661,6 +1696,96 @@ describe('renderer slot helpers', () => {
     expect(hasRendererSlotContent([null, <span key="value">Value</span>])).toBe(true);
     expect(hasRendererSlotContent(0)).toBe(true);
     expect(hasRendererSlotContent('')).toBe(true);
+  });
+});
+
+describe('reactive meta', () => {
+  it('re-evaluates disabled expression when form scope changes', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, formRenderer, probeQueryInputRenderer, probeButtonRenderer]);
+
+    const schema = {
+      type: 'page',
+      body: [
+        {
+          type: 'form',
+          id: 'search-form',
+          data: { query: '' },
+          body: [
+            {
+              type: 'probe-button',
+              disabled: '${!query}'
+            },
+            {
+              type: 'probe-query-input'
+            }
+          ]
+        }
+      ]
+    } as const;
+
+    render(
+      <SchemaRenderer
+        schema={schema}
+        data={{}}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    const searchButton = screen.getByRole('button', { name: 'Search' });
+    expect((searchButton as HTMLButtonElement).disabled).toBe(true);
+
+    const queryInput = screen.getByRole('textbox', { name: 'Query' });
+    fireEvent.change(queryInput, { target: { value: 'alice' } });
+
+    await waitFor(() => {
+      expect((searchButton as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    cleanup();
+  });
+
+  it('re-evaluates disabled expression when page scope changes', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, probeButtonRenderer]);
+
+    const schema = {
+      type: 'page',
+      body: [
+        {
+          type: 'probe-button',
+          disabled: '${!ready}'
+        }
+      ]
+    } as const;
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schema={schema}
+        data={{ ready: false }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    const searchButton = screen.getByRole('button', { name: 'Search' });
+    expect((searchButton as HTMLButtonElement).disabled).toBe(true);
+
+    rerender(
+      <SchemaRenderer
+        schema={schema}
+        data={{ ready: true }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect((searchButton as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    cleanup();
   });
 });
 

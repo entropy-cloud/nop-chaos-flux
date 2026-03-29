@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
@@ -68,6 +68,12 @@ export function NodeRenderer(props: {
   const nodeState = stateRef.current.state;
   const renderStartedAtRef = useRef(0);
   renderStartedAtRef.current = Date.now();
+
+  useSyncExternalStore(
+    props.scope.store?.subscribe ?? (() => () => undefined),
+    props.scope.store?.getSnapshot ?? (() => null)
+  );
+
   const meta = runtime.resolveNodeMeta(props.node, props.scope, nodeState);
   const resolvedProps = runtime.resolveNodeProps(props.node, props.scope, nodeState);
 
