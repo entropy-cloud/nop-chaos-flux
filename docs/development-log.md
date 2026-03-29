@@ -27,6 +27,15 @@ This file is intentionally lightweight.
 - Comprehensive font/style audit completed — all card, icon, title, subtitle, footer, badge properties now match `flow-editor-static.html` reference.
 - Commit: `69652ae`
 
+### 2026-03-29 (Renderer Styling Contract Documentation)
+
+- Documented renderer styling principles in `docs/architecture/styling-system.md`:
+  - "Renderer Styling Contract" section: renderers own identity only, no implicit layout
+  - "Spacing Conventions" section: context-based spacing guide, `stack-*`/`hstack-*` alias patterns
+  - Updated "Current Implementation" section to reflect ContainerRenderer no longer has default `grid gap-4`
+- Key principle: renderer marker classes (`nop-container`, `nop-flex`) must NOT carry visual styles. All spacing/direction/padding is declared explicitly in schema via classAliases or semantic props.
+- Chose Route A (atomic) over Route B (semantic composites) — each text/layout element is a separate renderer, spacing controlled via `stack-*` aliases.
+
 
 ### 2026-03-28 (Flow Designer Node Visual Matching Prototype)
 

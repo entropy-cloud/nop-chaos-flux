@@ -326,22 +326,142 @@ Child aliases override parent aliases with the same name.
 | `flux-runtime` | Alias resolution in schema compiler |
 | `flux-react` | Apply resolved className to rendered components |
 
+## Renderer Styling Contract
+
+### Core Principle: Identity Only, No Implicit Layout
+
+Every renderer (container, flex, text, icon, etc.) must follow a strict separation:
+
+| Layer | Owns | Does NOT own |
+|-------|------|-------------|
+| **Renderer (code)** | Structural marker class (`nop-container`, `nop-flex`), ARIA attributes, DOM structure | gap, direction, padding, margin, width, height |
+| **Schema (classAliases + className)** | All visual and layout decisions | — |
+| **Global CSS (base.css)** | Interaction pseudo-states (`[data-selected]`, `:hover`), design tokens (`--foreground`, `--primary`) | Context-specific spacing values |
+
+**Why**: A container used inside a card needs `gap-1` (4px), the same container in a form needs `gap-4` (16px), and in a list item it needs `gap-0`. The renderer cannot predict the correct value. When a renderer hardcodes `gap-4`, schema authors cannot see this hidden style and cannot override it without knowing it exists.
+
+### Rule: No Default Layout Styles in Renderers
+
+```
+// Good: renderer is a transparent wrapper
+<div className={classNames('nop-container', props.meta.className)}>
+  {children}
+</div>
+
+// Bad: renderer injects invisible layout
+<div className={classNames('nop-container grid gap-4', props.meta.className)}>
+  {children}
+</div>
+```
+
+### Marker Class Naming
+
+Renderer marker classes use the `nop-` prefix and follow BEM-inspired naming:
+
+| Renderer | Marker class | Purpose |
+|----------|-------------|---------|
+| Container | `nop-container` | Enables CSS targeting for state rules |
+| Flex | `nop-flex` | Flex wrapper marker |
+| Text | (none) | Inline element, no wrapper needed |
+| Button | (handled by shadcn/ui) | `data-slot="button"` via shadcn |
+
+Marker classes must NOT carry any visual styles. They exist solely for CSS selectors and debugging.
+
+### Exception: Semantic Props Are Explicit
+
+When a schema author writes `"direction": "column", "gap": "md"`, these are **explicit** declarations visible in the schema. The renderer may convert these to Tailwind classes because the author chose them. The rule only forbids **implicit** styles the author did not request.
+
+## Spacing Conventions
+
+### Context-Based Spacing Guide
+
+Following shadcn/ui's approach: spacing is context-specific, always explicit at the usage site, but guided by these conventions:
+
+| Context | Typical gap | Tailwind | Notes |
+|---------|-----------|----------|-------|
+| Card internal sections | 16px | `gap-4` | Header / body / footer separation |
+| Icon + adjacent text | 12px | `gap-3` | Horizontal header layouts |
+| Title + subtitle | 4px | `mt-1` or `gap-1` | Tight text pairing |
+| Form fields (between) | 16px | `gap-4` | Vertical form spacing |
+| Label + input (within field) | 8px | `gap-2` | Input group internal |
+| Badge / chip spacing | 8px | `gap-2` | Horizontal tag groups |
+| Footer items (between) | 8px | `gap-2` | Left/right footer split |
+
+These values are **conventions, not enforced defaults**. Every usage site declares its spacing explicitly via classAliases or semantic props.
+
+### Recommended classAlias Patterns
+
+For schema authors, these alias patterns provide consistent, self-documenting spacing:
+
+```json
+{
+  "classAliases": {
+    "stack": "flex flex-col",
+    "stack-xs": "flex flex-col gap-1",
+    "stack-sm": "flex flex-col gap-2",
+    "stack-md": "flex flex-col gap-4",
+    "stack-lg": "flex flex-col gap-6",
+
+    "hstack": "flex flex-row items-center",
+    "hstack-xs": "flex flex-row items-center gap-1",
+    "hstack-sm": "flex flex-row items-center gap-2",
+    "hstack-md": "flex flex-row items-center gap-3",
+    "hstack-lg": "flex flex-row items-center gap-4"
+  }
+}
+```
+
+Usage in schema:
+
+```json
+{
+  "type": "container",
+  "className": "stack-xs",
+  "body": [
+    { "type": "text", "body": "Title", "className": "font-semibold" },
+    { "type": "text", "body": "Description", "className": "text-muted-foreground" }
+  ]
+}
+```
+
+### Why Not a Global Default Gap?
+
+A global default gap would reduce boilerplate but creates the exact problem we are solving: invisible styles that surprise schema authors. Consider:
+
+- Title+subtitle in a card: needs 4px gap
+- Same title+subtitle in a sidebar: needs 2px gap
+- Same title+subtitle in a table cell: needs 0px gap
+
+No single default is correct for all contexts. The `stack-*` alias convention reduces boilerplate while keeping the intent visible.
+
 ## Current Implementation
 
 ### Container Schema
 
-`packages/flux-renderers-basic/src/index.tsx`:
+`packages/flux-renderers-basic/src/container.tsx`:
+
+The ContainerRenderer renders a `<div>` with only a marker class. All layout styles come from schema (`className` or semantic props):
 
 ```typescript
-interface ContainerSchema extends BaseSchema {
-  type: 'container';
-  direction?: 'row' | 'column';
-  wrap?: boolean;
-  align?: 'start' | 'center' | 'end' | 'stretch';
-  gap?: number | string;
-  body?: BaseSchema[];
-}
+// Container renderer (simplified)
+<div className={classNames('nop-container', props.meta.className)}>
+  {children}
+</div>
 ```
+
+When semantic props (`direction`, `gap`, `align`) are present, the renderer wraps children in a flex inner div:
+
+```typescript
+{useFlexChild ? (
+  <div className={classNames(flexClasses, gapClass)}>
+    {children}
+  </div>
+) : (
+  children
+)}
+```
+
+The outer wrapper (`nop-container`) never injects layout styles.
 
 ### Semantic Prop Mapping
 
@@ -371,8 +491,8 @@ When both semantic props and `className` are provided, merge them:
 
 ```typescript
 const finalClassName = classNames(
-  'na-container',
-  flexClasses,        // from semantic props
+  'nop-container',
+  flexClasses,        // from semantic props (only when props are present)
   props.meta.className // user-provided className (after alias resolution)
 );
 ```
