@@ -87,7 +87,7 @@ function ArrayEditorRow(props: {
       </div>
       <Button
         type="button"
-        variant="outline"
+        variant="destructive"
         size="sm"
         onClick={() => {
           const nextItems = items.filter((candidate) => candidate.id !== item.id);

@@ -78,7 +78,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
             <Button
               key={tag}
               type="button"
-              variant={active ? 'default' : 'outline'}
+              variant={active ? 'secondary' : 'outline'}
               size="sm"
               onFocus={() => {
                 if (currentForm && name) {

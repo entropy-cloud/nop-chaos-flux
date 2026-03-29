@@ -147,7 +147,7 @@ function KeyValueRow(props: {
       </div>
       <Button
         type="button"
-        variant="outline"
+        variant="destructive"
         size="sm"
         onClick={() => {
           const nextPairs = pairs.filter((candidate) => candidate.id !== pair.id);
