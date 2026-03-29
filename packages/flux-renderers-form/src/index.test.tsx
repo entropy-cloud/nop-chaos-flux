@@ -2016,3 +2016,67 @@ describe('formRendererDefinitions', () => {
   });
 });
 
+describe('form render performance optimization', () => {
+  it('emits render monitor callbacks for form fields', async () => {
+    const onRenderStart = vi.fn();
+    const onRenderEnd = vi.fn();
+
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            username: 'initial',
+            email: '',
+            role: 'user'
+          },
+          body: [
+            {
+              type: 'input-text',
+              name: 'username',
+              label: 'Username',
+              placeholder: 'Enter username'
+            },
+            {
+              type: 'input-email',
+              name: 'email',
+              label: 'Email',
+              placeholder: 'Enter email'
+            },
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              options: [
+                { label: 'User', value: 'user' },
+                { label: 'Admin', value: 'admin' }
+              ]
+            }
+          ]
+        }}
+        env={{
+          ...env,
+          monitor: { onRenderStart, onRenderEnd }
+        }}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(onRenderStart).toHaveBeenCalled();
+      expect(onRenderEnd).toHaveBeenCalled();
+    });
+
+    const renderStartCalls = onRenderStart.mock.calls.map((call) => call[0]);
+    const renderEndCalls = onRenderEnd.mock.calls.map((call) => call[0]);
+
+    const formRenderStart = renderStartCalls.find((payload) => payload.type === 'form');
+    expect(formRenderStart).toBeTruthy();
+
+    expect(renderEndCalls.some((payload) => payload.type === 'form')).toBeTruthy();
+    expect(renderEndCalls.some((payload) => typeof payload.durationMs === 'number')).toBeTruthy();
+  });
+});
+
