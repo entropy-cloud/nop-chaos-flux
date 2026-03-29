@@ -20,7 +20,7 @@ The repo is a `pnpm` workspace with the following fixed baseline:
 
 - `pnpm`
 - `React 19`
-- `Vite 7`
+- `Vite 8`
 - `TypeScript`
 - `Vitest`
 - `ESLint`
@@ -49,6 +49,15 @@ packages/
   flux-renderers-basic/
   flux-renderers-form/
   flux-renderers-data/
+  nop-debugger/
+  flow-designer-core/
+  flow-designer-renderers/
+  spreadsheet-core/
+  spreadsheet-renderers/
+  report-designer-core/
+  report-designer-renderers/
+  tailwind-preset/
+  ui/
 ```
 
 Design rules:
