@@ -51,7 +51,7 @@ export function DialogHost() {
 
   return (
     <Dialog open>
-      <DialogContent className="nop-dialog-host nop-theme-root">
+      <DialogContent className="nop-dialog-host">
         {dialogs.map((dialog: DialogState) => (
           <DialogView key={dialog.id} dialog={dialog} page={page} />
         ))}
@@ -76,7 +76,7 @@ function DialogView(props: {
 
   return (
       <Dialog open>
-        <DialogOverlay className="nop-dialog-backdrop nop-theme-root" />
+        <DialogOverlay className="nop-dialog-backdrop" />
         <DialogContent className="nop-dialog-card">
         {dialog.title
           ? (
