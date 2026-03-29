@@ -18,6 +18,19 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-29 (testid Support)
+
+- Added `testid` field to `BaseSchema` in `packages/flux-core/src/types.ts` — schema authors can now declare `testid` on any node for test anchoring.
+- Added `testid` to `META_FIELDS` set in `packages/flux-core/src/constants.ts` — fully integrated into compile→resolve pipeline.
+- Added `testid` to `CompiledSchemaMeta` and `ResolvedNodeMeta` interfaces.
+- Updated schema compiler (`packages/flux-runtime/src/schema-compiler.ts`) and node runtime (`packages/flux-runtime/src/node-runtime.ts`) to compile and resolve `testid`.
+- Updated `FieldFrame` (`packages/flux-react/src/field-frame.tsx`) to accept and apply `testid` as `data-testid`.
+- Updated `NodeRenderer` (`packages/flux-react/src/node-renderer.tsx`) to pass `meta.testid` to `FieldFrame`.
+- Updated all production renderers to apply `data-testid={props.meta.testid || undefined}` on root elements: `flux-renderers-basic` (page, container, button, text, flex, badge, icon, dynamic-renderer), `flux-renderers-form` (form), `flux-renderers-data` (table, data-source).
+- Updated architecture docs: `bem-removal.md` (section 4.4 testid convention, priority table), `component-resolution.md` (identity table), `renderer-runtime.md` (meta contract).
+- Key decision: `testid` is a pure test concern — it flows through the meta pipeline (compile→resolve) like other meta fields but has no runtime logic impact. It only produces a `data-testid` DOM attribute.
+- Ref: `docs/architecture/bem-removal.md`, `docs/architecture/component-resolution.md`
+
 ### 2026-03-29 (Architecture Conformance Deep Audit + Architecture Rationality Review)
 
 - Added a multi-document conformance audit set to avoid oversized single reports:

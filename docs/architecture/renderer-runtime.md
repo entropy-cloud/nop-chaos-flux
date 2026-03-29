@@ -101,6 +101,7 @@ Meaning:
 - `node` is the compiled node metadata
 - `props` is the resolved runtime prop object for the current render
 - `meta` is the resolved node meta such as visibility or disabled state
+- `meta.testid` is the resolved testid for `data-testid` attribute output on the root element
 - `regions` is the map of precompiled child render handles
 - `events` is the map of runtime event handlers derived from declarative event fields
 - `helpers` exposes stable imperative runtime helpers

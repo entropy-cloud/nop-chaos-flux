@@ -25,7 +25,8 @@
 | 标识 | 用途 | 唯一性范围 | 示例 |
 |------|------|-----------|------|
 | `id` | 用户定义的组件ID | scope内唯一 | `userForm` |
-| `name` | 用户定义的逻辑名 | scope内唯一 | `submitBtn` |
+| `name` | 用户定义的逻辑名（也是数据绑定路径） | scope内唯一 | `submitBtn` |
+| `testid` | 测试定位锚点（输出为 `data-testid`） | 无强制唯一要求 | `login-form` |
 | `_cid` | 编译期分配的内部索引 | 全局唯一 | `42` |
 | `_templateId` | 动态组件的模板标识 | 全局唯一 | `table.row.form` |
 
