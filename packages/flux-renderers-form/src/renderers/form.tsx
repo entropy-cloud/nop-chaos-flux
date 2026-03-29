@@ -7,7 +7,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const actionsContent = resolveRendererSlotContent(props, 'actions');
 
   return (
-    <section className="nop-form" data-testid={props.meta.testid || undefined}>
+    <section className="nop-form flex flex-col gap-4" data-testid={props.meta.testid || undefined}>
       {hasRendererSlotContent(bodyContent) ? <div className="nop-form__body grid gap-4">{bodyContent}</div> : null}
       {hasRendererSlotContent(actionsContent) ? <div className="nop-form__actions flex flex-wrap gap-3">{actionsContent}</div> : null}
     </section>
