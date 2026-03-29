@@ -92,6 +92,11 @@
     border-color: rgba(148, 163, 184, 0.16);
   }
 
+  .react-flow__controls {
+    bottom: auto !important;
+    top: 12px !important;
+  }
+
   .stack { display: flex; flex-direction: column; }
   .stack-xs { display: flex; flex-direction: column; gap: 0.25rem; }
   .stack-sm { display: flex; flex-direction: column; gap: 0.5rem; }
