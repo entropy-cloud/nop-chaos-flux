@@ -3,12 +3,10 @@ import type { NodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge';
-import { Button, Input } from '@nop-chaos/ui';
 
 export function DesignerPaletteContent() {
   const { config, dispatch, snapshot } = useDesignerContext();
-  const [search, setSearch] = useState('');
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['basic']));
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['basic', 'logic', 'execution']));
 
   const nodeTypes = config.nodeTypes;
   const paletteGroups = config.palette?.groups ?? [];
@@ -33,66 +31,67 @@ export function DesignerPaletteContent() {
     [dispatch]
   );
 
-  const filteredGroups = paletteGroups.map((group) => ({
-    ...group,
-    nodeTypes: group.nodeTypes.filter((ntId) => {
-      const nt = nodeTypes.find((n) => n.id === ntId);
-      if (!nt) return false;
-      if (!search) return true;
-      return nt.label.toLowerCase().includes(search.toLowerCase()) || nt.id.toLowerCase().includes(search.toLowerCase());
-    })
-  })).filter((g) => g.nodeTypes.length > 0);
+  const filteredGroups = paletteGroups.filter((g) => g.nodeTypes.length > 0);
 
   return (
-    <div className="p-3.5 text-foreground">
-      <div>
-        <h3 className="m-0 mb-3.5 text-sm font-bold text-foreground">Node Palette</h3>
-        {config.palette?.searchable !== false && (
-          <Input
-            type="text"
-            className="w-full px-3 py-2 border border-border rounded-md text-[13px] text-foreground bg-card mb-3"
-            placeholder="Search nodes..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        )}
+    <div className="nop-palette flex flex-col h-full text-foreground">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div>
+          <div className="text-sm font-semibold text-foreground">节点库</div>
+          <div className="text-sm text-muted-foreground">拖拽或点击添加</div>
+        </div>
+        <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border bg-transparent">{nodeTypes.length}</span>
       </div>
-      <div>
+      <div className="flex-1 min-h-0 overflow-y-auto p-3">
         {filteredGroups.map((group) => (
-          <div key={group.id} className="mb-2.5 border border-border rounded-2xl bg-muted p-2">
+          <div key={group.id} className="rounded-lg border border-border p-2.5 mb-3 last:mb-0" style={{ background: 'rgba(255, 255, 255, 0.45)' }}>
             <div
-              className="flex items-center gap-1.5 px-2.5 py-2 cursor-pointer rounded-xl text-[13px] font-semibold text-foreground"
+              className="nop-palette__group-header flex items-center gap-1.5 cursor-pointer text-xs font-semibold uppercase tracking-[0.18em] mb-2 px-1"
+              style={{ color: 'hsl(221.2, 83.2%, 40%)' }}
               onClick={() => toggleGroup(group.id)}
             >
-              <span className="text-[11px] text-muted-foreground">{expandedGroups.has(group.id) ? '▼' : '▶'}</span>
+              <span className="text-[10px] text-muted-foreground">{expandedGroups.has(group.id) ? '▼' : '▶'}</span>
               <span>{group.label}</span>
             </div>
             {expandedGroups.has(group.id) && (
-              <div className="px-0 pt-1.5 pb-0.5">
+              <div>
                 {group.nodeTypes.map((ntId) => {
                   const nt = nodeTypes.find((n) => n.id === ntId);
                   if (!nt) return null;
                   const isSelected = snapshot.activeNode?.type === nt.id;
                   return (
-                    <Button
+                    <div
                       key={nt.id}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className={`w-full flex items-center gap-2 mb-1.5 px-3 py-2 border border-border rounded-[20px] bg-card shadow-[0_2px_8px_rgba(15,23,42,0.05)] text-foreground cursor-pointer text-sm transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-px hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] hover:border-primary ${isSelected ? '!border-primary bg-accent shadow-[0_8px_24px_rgba(15,23,42,0.14)]' : ''}`}
-                      onClick={() => handleAddNode(nt)}
-                      draggable
-                      onDragStart={(event) => {
-                        event.dataTransfer.setData(DESIGNER_PALETTE_NODE_MIME, nt.id);
-                        event.dataTransfer.effectAllowed = 'move';
-                      }}
-                      title={nt.description ?? nt.label}
+                      className={`nop-palette__item flex items-center gap-2 rounded-xl border border-border p-2 mb-2 last:mb-0 shadow-[0_1px_2px_rgba(0,0,0,0.05)] ${isSelected ? 'border-primary' : ''}`}
+                      style={{ background: 'rgba(255, 255, 255, 0.7)' }}
                     >
-                      <span className={`w-8 h-8 rounded-2xl inline-flex items-center justify-center ${isSelected ? 'nop-gradient-start' : ''}`} data-type={nt.id} aria-hidden="true">
-                        {nt.icon ? <DesignerIcon icon={nt.icon} className={`nop-icon nop-icon--${nt.icon}`} /> : '◇'}
-                      </span>
-                      <span>{nt.label}</span>
-                    </Button>
+                      <button
+                        type="button"
+                        className="flex flex-1 min-w-0 items-center gap-3 text-left bg-transparent border-none cursor-pointer p-0"
+                        onClick={() => handleAddNode(nt)}
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData(DESIGNER_PALETTE_NODE_MIME, nt.id);
+                          event.dataTransfer.effectAllowed = 'move';
+                        }}
+                        title={nt.description ?? nt.label}
+                      >
+                        <span className={`w-8 h-8 rounded-lg inline-flex items-center justify-center text-white shrink-0 nop-gradient-${nt.id}`} data-type={nt.id} aria-hidden="true">
+                          {nt.icon ? <DesignerIcon icon={nt.icon} className="nop-icon nop-icon--white" /> : '◇'}
+                        </span>
+                        <span className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{nt.label}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="w-8 h-8 rounded-lg border-none bg-transparent cursor-pointer inline-flex items-center justify-center text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+                        onClick={() => handleAddNode(nt)}
+                        aria-label={`Add ${nt.label}`}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 12h14" /><path d="M12 5v14" />
+                        </svg>
+                      </button>
+                    </div>
                   );
                 })}
               </div>

@@ -185,18 +185,18 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   return (
     <DesignerContext.Provider value={ctxValue}>
       {config.themeStyles && <style>{config.themeStyles}</style>}
-      <div className="grid grid-rows-[auto_minmax(0,1fr)] h-full min-h-0 gap-3 p-3 bg-background text-foreground">
-        <div className="min-h-0">
+      <div className="nop-designer grid grid-rows-[auto_minmax(0,1fr)] h-full min-h-0 gap-3 p-6 text-foreground" style={{ background: 'linear-gradient(135deg, rgba(167, 243, 208, 0.15) 0%, rgba(196, 181, 253, 0.12) 50%, rgba(153, 246, 228, 0.1) 100%)' }}>
+        <div className="nop-designer__header min-h-0">
           {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} />}
         </div>
-        <div className="grid grid-cols-[240px_minmax(0,1fr)_352px] gap-3 min-h-0 h-full max-[980px]:grid-cols-1 max-[980px]:grid-rows-[auto_minmax(360px,1fr)_auto]">
-          <div className="w-full overflow-y-auto rounded-[20px] bg-white/72 border border-border shadow-[0_2px_8px_rgba(15,23,42,0.05)] backdrop-blur-[8px]">
+        <div className="grid grid-cols-[15rem_minmax(0,1fr)_22rem] grid-rows-1 gap-3 min-h-0 h-full max-[1023px]:grid-cols-[15rem_minmax(0,1fr)] max-[1023px]:[&>*:nth-child(3)]:hidden max-[767px]:grid-cols-1 max-[767px]:[&>*:first-child]:hidden">
+          <div className="nop-designer__palette min-h-0 overflow-hidden rounded-xl border border-border shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }}>
             <DesignerPaletteContent />
           </div>
-          <div className="relative overflow-auto rounded-xl bg-card border border-border shadow-sm">
+          <div className="nop-designer__canvas relative min-h-0 overflow-hidden rounded-xl border border-border shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }}>
             <DesignerCanvasContent />
           </div>
-          <div className="w-full overflow-y-auto rounded-[20px] bg-white/72 border border-border shadow-[0_2px_8px_rgba(15,23,42,0.05)] backdrop-blur-[8px] max-[768px]:fixed max-[768px]:bottom-0 max-[768px]:left-0 max-[768px]:right-0 max-[768px]:w-full max-[768px]:max-h-[50vh] max-[768px]:z-50 max-[768px]:border-t max-[768px]:border-l-0 max-[768px]:rounded-none">
+          <div className="nop-designer__inspector min-h-0 overflow-hidden rounded-xl border border-border shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }}>
             {hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector />}
           </div>
         </div>

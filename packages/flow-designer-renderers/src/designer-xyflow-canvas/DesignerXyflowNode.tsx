@@ -88,7 +88,7 @@ export function DesignerXyflowNode(props: NodeProps) {
   if (!nodeType?.body || !isSchemaInput(nodeType.body)) {
     return (
       <div
-        className={classNames(nodeType?.appearance?.className)}
+        className={classNames('nop-designer-node', nodeType?.appearance?.className)}
         style={appearanceStyle}
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
@@ -103,7 +103,7 @@ export function DesignerXyflowNode(props: NodeProps) {
   return (
     <>
       <div
-        className={classNames(nodeType.appearance?.className)}
+        className={classNames('nop-designer-node', nodeType.appearance?.className)}
         style={appearanceStyle}
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
@@ -120,7 +120,7 @@ export function DesignerXyflowNode(props: NodeProps) {
       {(hasQuickActions || showToolbar) && (
         <NodeToolbar isVisible={showToolbar} position={Position.Top}>
           <div
-            className="flex items-center gap-1.5 p-1 rounded-xl bg-white/96 border border-border shadow-lg"
+            className="nop-designer-node-toolbar flex items-center gap-1.5 p-1 rounded-xl bg-white/96 border border-border shadow-lg"
             onMouseEnter={showToolbarNow}
             onMouseLeave={scheduleHideToolbar}
           >

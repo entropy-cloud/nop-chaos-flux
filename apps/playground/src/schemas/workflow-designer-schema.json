@@ -33,6 +33,7 @@
         "position": { "x": 540, "y": 180 },
         "data": {
           "label": "是否企业客户",
+          "description": "分配专属路径",
           "config": { "expression": "customerType === 'enterprise'" }
         }
       },
@@ -129,7 +130,7 @@
       "node-icon--parallel": "nop-gradient-parallel",
       "node-icon--loop": "nop-gradient-loop",
       "node-title": "text-sm font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis",
-      "node-subtitle": "text-xs text-gray-500 line-clamp-2 mt-0.5",
+      "node-subtitle": "text-sm text-muted-foreground line-clamp-2 mt-1",
       "node-footer": "flex items-center justify-between w-full text-xs text-gray-500 mt-1",
       "node-badge": "text-xs px-2 py-1 rounded-full font-medium",
       "node-badge--start": "text-emerald-700 bg-emerald-100",

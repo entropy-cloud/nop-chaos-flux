@@ -34,13 +34,13 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   const shotsDir = join(testInfo.outputDir, 'screenshots');
   await mkdir(shotsDir, { recursive: true });
   await page.screenshot({ path: join(shotsDir, 'flow-designer-page.png'), fullPage: true });
-  await page.locator('.fd-page__canvas').first().screenshot({ path: join(shotsDir, 'canvas.png') });
+  await page.locator('.nop-designer__canvas').first().screenshot({ path: join(shotsDir, 'canvas.png') });
 
   const node = page.locator('[data-testid="rf__node-task-1"]').first();
   await expect(node).toBeVisible();
   await node.click();
 
-  const nodeCard = node.locator('.fd-xyflow-node').first();
+  const nodeCard = node.locator('.nop-designer-node').first();
   await nodeCard.screenshot({ path: join(shotsDir, 'task-node.png') });
   await expect(nodeCard.locator('[data-icon="workflow"]')).toHaveCount(1);
   await expect(nodeCard).toContainText('发送欢迎邮件');
@@ -110,14 +110,14 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   expect(iconStyle.boxShadow).not.toBe('none');
 
   await node.hover();
-  const toolbar = page.locator('.fd-xyflow-node-toolbar').first();
+  const toolbar = page.locator('.nop-designer-node-toolbar').first();
   await expect(toolbar).toBeVisible();
   await toolbar.screenshot({ path: join(shotsDir, 'task-node-toolbar.png') });
   await expect(toolbar.locator('[data-icon="pencil"]')).toHaveCount(1);
   await expect(toolbar.locator('[data-icon="copy"]')).toHaveCount(1);
   await expect(toolbar.locator('[data-icon="trash-2"]')).toHaveCount(1);
 
-  const nodeQuickActionButton = toolbar.locator('.fd-xyflow-node-toolbar__icon-button').first();
+  const nodeQuickActionButton = toolbar.locator('button').first();
   const nodeQuickActionBgBefore = await nodeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
   await nodeQuickActionButton.hover();
   const nodeQuickActionBgAfter = await nodeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
@@ -129,12 +129,12 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
 
   const edge = page.locator('.react-flow__edge').nth(1);
   await edge.hover({ force: true });
-  const edgeQuickActions = page.locator('.fd-edge__quick-actions').first();
+  const edgeQuickActions = page.locator('.nop-designer-edge__actions').first();
   await expect(edgeQuickActions).toBeVisible();
   await expect(edgeQuickActions.locator('[data-icon="pencil"]')).toHaveCount(1);
   await expect(edgeQuickActions.locator('[data-icon="trash-2"]')).toHaveCount(1);
 
-  const edgeQuickActionButton = edgeQuickActions.locator('.fd-edge__quick-action-btn').first();
+  const edgeQuickActionButton = edgeQuickActions.locator('button').first();
   const edgeQuickActionBgBefore = await edgeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
   await edgeQuickActionButton.hover();
   const edgeQuickActionBgAfter = await edgeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
@@ -157,12 +157,12 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
 test('verifies palette and top toolbar visual structure', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const palette = page.locator('.fd-page__palette .fd-palette').first();
+  const palette = page.locator('.nop-designer__palette .nop-palette').first();
   await expect(palette).toBeVisible();
-  await expect(palette).toContainText('Node Palette');
-  await expect(palette.locator('button.fd-palette__item:has-text("开始节点") [data-icon="play"]')).toHaveCount(1);
+  await expect(palette).toContainText('节点库');
+  await expect(palette.locator('.nop-palette__item button:has-text("开始节点") [data-icon="play"]')).toHaveCount(1);
 
-  const topToolbar = page.locator('.fd-page__header [data-testid="designer-toolbar"]').first();
+  const topToolbar = page.locator('.nop-designer__header [data-testid="designer-toolbar"]').first();
   await expect(topToolbar).toBeVisible();
 
   const undoBtn = topToolbar.getByRole('button', { name: /撤销/ });
@@ -173,15 +173,15 @@ test('verifies palette and top toolbar visual structure', async ({ page }) => {
   await expect(redoBtn.locator('[data-icon="rotate-cw"]')).toHaveCount(1);
 
   const styleMetrics = await page.evaluate(() => {
-    const nodeShell = document.querySelector('[data-testid="rf__node-task-1"] .fd-xyflow-node') as HTMLElement | null;
-    const paletteItem = document.querySelector('.fd-palette__item') as HTMLElement | null;
+    const nodeShell = document.querySelector('[data-testid="rf__node-task-1"] .nop-designer-node') as HTMLElement | null;
+    const paletteItem = document.querySelector('.nop-palette__item') as HTMLElement | null;
     const toolbar = document.querySelector('[data-testid="designer-toolbar"]') as HTMLElement | null;
-    const canvas = document.querySelector('.fd-page__canvas') as HTMLElement | null;
+    const canvas = document.querySelector('.nop-designer__canvas') as HTMLElement | null;
     const gridPattern = document.querySelector('.react-flow__background-pattern') as SVGElement | null;
     const innerNode = nodeShell?.querySelector('.nop-flex.border, .nop-flex.border-2') as HTMLElement | null;
     const minimap = document.querySelector('.react-flow__minimap') as HTMLElement | null;
     const controls = document.querySelector('.react-flow__controls') as HTMLElement | null;
-    const edgeLabel = document.querySelector('.fd-edge__label-wrapper') as HTMLElement | null;
+    const edgeLabel = document.querySelector('.nop-designer-edge__label') as HTMLElement | null;
     const firstControlButton = controls?.querySelector('button') as HTMLElement | null;
     const dashedPath = Array.from(document.querySelectorAll('.react-flow__edge-path')).find((path) => {
       const dash = window.getComputedStyle(path as SVGElement).strokeDasharray;
@@ -202,7 +202,7 @@ test('verifies palette and top toolbar visual structure', async ({ page }) => {
     const toolbarStyle = window.getComputedStyle(toolbar);
     const canvasStyle = window.getComputedStyle(canvas);
     const gridStyle = window.getComputedStyle(gridPattern);
-    const pageStyle = window.getComputedStyle(document.querySelector('.fd-page') as HTMLElement);
+    const pageStyle = window.getComputedStyle(document.querySelector('.nop-designer') as HTMLElement);
     const minimapStyle = window.getComputedStyle(minimap);
     const controlsStyle = window.getComputedStyle(controls);
     const edgeLabelStyle = window.getComputedStyle(edgeLabel);
@@ -288,12 +288,12 @@ test('verifies flow-designer button behaviors for toolbar and quick actions', as
   await expect(page.locator('.react-flow__node')).toHaveCount(6);
   await expect(page.locator('.react-flow__edge')).toHaveCount(6);
 
-  await page.locator('.fd-palette__group-header').filter({ hasText: '执行任务' }).first().click();
+  await page.locator('.nop-palette__group-header').filter({ hasText: '执行任务' }).first().click();
   const paletteTaskButton = page.getByRole('button', { name: '任务节点' }).first();
   await paletteTaskButton.click();
   await expect(page.locator('.react-flow__node')).toHaveCount(7);
 
-  const topToolbar = page.locator('.fd-page__header [data-testid="designer-toolbar"]').first();
+  const topToolbar = page.locator('.nop-designer__header [data-testid="designer-toolbar"]').first();
   await topToolbar.getByRole('button', { name: /撤销/ }).click();
   await expect(page.locator('.react-flow__node')).toHaveCount(6);
 
@@ -302,14 +302,14 @@ test('verifies flow-designer button behaviors for toolbar and quick actions', as
 
   const createdNode = page.locator('.react-flow__node').last();
   await createdNode.click();
-  const inspectorDeleteNodeButton = page.getByRole('button', { name: 'Delete Node' }).first();
+  const inspectorDeleteNodeButton = page.getByRole('button', { name: '删除节点' }).first();
   await expect(inspectorDeleteNodeButton).toBeVisible();
   await inspectorDeleteNodeButton.click();
   await expect(page.locator('.react-flow__node')).toHaveCount(6);
 
   const edge = page.locator('.react-flow__edge').nth(1);
   await edge.hover({ force: true });
-  const edgeDeleteButton = page.locator('.fd-edge__quick-actions button[aria-label="Delete edge"]').first();
+  const edgeDeleteButton = page.locator('.nop-designer-edge__actions button[aria-label="Delete edge"]').first();
   await expect(edgeDeleteButton).toBeVisible();
   await edgeDeleteButton.click();
   await expect(page.locator('.react-flow__edge')).toHaveCount(5);
@@ -318,13 +318,13 @@ test('verifies flow-designer button behaviors for toolbar and quick actions', as
 test('toggles JSON preview panel from toolbar JSON button', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const topToolbar = page.locator('.fd-page__header [data-testid="designer-toolbar"]').first();
+  const topToolbar = page.locator('.nop-designer__header [data-testid="designer-toolbar"]').first();
   await topToolbar.getByRole('button', { name: /^JSON$/ }).click();
 
-  const jsonPanel = page.locator('.fd-json-panel');
+  const jsonPanel = page.locator('[aria-label="Flow JSON preview"]');
   await expect(jsonPanel).toBeVisible();
-  await expect(jsonPanel.locator('.fd-json-panel__content')).toContainText('"nodes"');
-  await expect(jsonPanel.locator('.fd-json-panel__content')).toContainText('"edges"');
+  await expect(jsonPanel).toContainText('"nodes"');
+  await expect(jsonPanel).toContainText('"edges"');
 
   await topToolbar.getByRole('button', { name: /^JSON$/ }).click();
   await expect(jsonPanel).toHaveCount(0);

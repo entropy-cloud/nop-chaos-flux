@@ -121,7 +121,7 @@ export function DesignerToolbarContent(props: {
   }
 
   return (
-    <div className="min-h-[52px] px-3.5 py-2 flex items-center gap-2 border border-border rounded-[20px] bg-white/72 shadow-[0_2px_8px_rgba(15,23,42,0.05)] backdrop-blur-[8px] max-[980px]:flex-wrap" data-testid="designer-toolbar">
+    <div className="nop-designer-toolbar min-h-[52px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-xl shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }} data-testid="designer-toolbar">
       {items.map(({ key, item }) => {
         if (item.type === 'divider') {
           return <span key={key} className="w-px h-[18px] bg-border" aria-hidden="true" />;
@@ -132,7 +132,13 @@ export function DesignerToolbarContent(props: {
         }
 
         if (item.type === 'title') {
-          return <h2 key={key} className="m-0 text-base font-bold text-foreground">{evalTextTemplate(item.body ?? item.text, snapshot)}</h2>;
+          return (
+            <div key={key} className="mr-auto flex items-center gap-2 min-w-0">
+              <div>
+                <div className="text-sm font-semibold text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{evalTextTemplate(item.body ?? item.text, snapshot)}</div>
+              </div>
+            </div>
+          );
         }
 
         if (item.type === 'badge') {
@@ -145,7 +151,9 @@ export function DesignerToolbarContent(props: {
         }
 
         if (item.type === 'text') {
-          return <span key={key} className="text-[13px] text-muted-foreground">{evalTextTemplate(item.body ?? item.text, snapshot)}</span>;
+          return (
+            <span key={key} className="text-sm text-muted-foreground whitespace-nowrap">{evalTextTemplate(item.body ?? item.text, snapshot)}</span>
+          );
         }
 
         if (item.type === 'back') {
@@ -154,14 +162,14 @@ export function DesignerToolbarContent(props: {
               key={key}
               type="button"
               variant="ghost"
-              size="sm"
+              size="icon-sm"
               aria-label={item.label ?? 'Back'}
+              className="shrink-0"
               onClick={() => {
                 void invokeAction(item.action ?? 'designer:navigate-back');
               }}
             >
               <DesignerIcon icon="arrow-left" className="nop-icon nop-icon--arrow-left" />
-              {item.label ? <span>{item.label}</span> : null}
             </Button>
           );
         }
@@ -170,7 +178,8 @@ export function DesignerToolbarContent(props: {
           const command = toCommand(item.action);
           const disabled = evalBooleanExpr(item.disabled, snapshot);
           const active = evalBooleanExpr(item.active, snapshot) || (item.action === 'designer:export' && props.exportActive === true);
-          const variant = active ? 'default' : item.variant === 'danger' ? 'destructive' : item.variant === 'primary' ? 'default' : 'outline';
+          const isPrimary = item.variant === 'primary';
+          const variant = active || isPrimary ? 'default' : 'outline';
           return (
             <Button
               key={key}

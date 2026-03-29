@@ -1,5 +1,5 @@
 import React from 'react';
-import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 import { isSchema } from '@nop-chaos/flux-core';
 import { RenderNodes } from '@nop-chaos/flux-react';
@@ -22,7 +22,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
   const edgeType = useEdgeTypeConfig(edgeData?.typeId ?? props.type ?? 'default');
   const { dispatch } = useDesignerContext();
 
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
+  const [edgePath, labelX, labelY] = getBezierPath({
     sourceX: props.sourceX,
     sourceY: props.sourceY,
     targetX: props.targetX,
@@ -57,8 +57,8 @@ export function DesignerXyflowEdge(props: EdgeProps) {
   const showQuickActions = props.selected || edgeData?.__fdHovered === true;
 
   const edgeStyle: React.CSSProperties = {
-    stroke: appearance?.stroke,
-    strokeWidth: appearance?.strokeWidth
+    stroke: appearance?.stroke ?? 'hsl(221.2, 83.2%, 53.3%)',
+    strokeWidth: appearance?.strokeWidth ?? 2
   };
 
   if (lineStyle === 'dashed') {
@@ -80,13 +80,15 @@ export function DesignerXyflowEdge(props: EdgeProps) {
         <EdgeLabelRenderer>
           <div
             className={classNames(
-              'px-3 py-1.5 rounded-full border border-border bg-white/88 shadow-[0_2px_8px_rgba(15,23,42,0.06)] backdrop-blur-[20px] text-sm font-medium text-muted-foreground',
-              props.selected && 'border-primary'
+              'nop-designer-edge__label px-3 py-1.5 rounded-full border border-border text-sm font-medium text-muted-foreground shadow-sm',
+              props.selected && 'border-primary text-foreground'
             )}
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-              pointerEvents: 'all'
+              pointerEvents: 'all',
+              background: 'rgba(255, 255, 255, 0.78)',
+              backdropFilter: 'blur(20px)'
             }}
             onClick={handleLabelClick}
           >
@@ -101,7 +103,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
       {showQuickActions && (
         <EdgeLabelRenderer>
           <div
-            className="inline-flex items-center gap-1.5 p-1 rounded-[10px] border border-border bg-white/94 shadow-[0_2px_8px_rgba(15,23,42,0.08)]"
+            className="nop-designer-edge__actions inline-flex items-center gap-1.5 p-1 rounded-[10px] border border-border bg-white/94 shadow-[0_2px_8px_rgba(15,23,42,0.08)]"
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY - 30}px)`,

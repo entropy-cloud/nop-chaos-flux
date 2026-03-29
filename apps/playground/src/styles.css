@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@source "../../../packages";
+@import "../../../packages/tailwind-preset/src/styles/base.css";
+
 
 @theme inline {
   --color-background: hsl(var(--background));

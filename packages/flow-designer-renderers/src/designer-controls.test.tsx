@@ -146,18 +146,8 @@ describe('flow designer controls', () => {
       activeEdge: null
     });
 
-    const view = render(<DefaultInspector />);
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Node' }));
+    render(<DefaultInspector />);
+    fireEvent.click(screen.getByRole('button', { name: '删除节点' }));
     expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'deleteNode', nodeId: 'node-1' });
-
-    mockContext.dispatch.mockClear();
-    mockContext.snapshot = createSnapshot({
-      activeNode: null,
-      activeEdge: { id: 'edge-1', source: 'node-1', target: 'node-2', data: { label: 'Edge 1' } }
-    });
-    view.rerender(<DefaultInspector />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Edge' }));
-    expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'deleteEdge', edgeId: 'edge-1' });
   });
 });

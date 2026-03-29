@@ -250,10 +250,15 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   }
 
   return (
-    <div className="flex flex-col w-full h-full text-foreground">
-      <div className="fd-xyflow-surface flex-1 min-h-0 border border-border rounded-xl bg-muted overflow-hidden" ref={surfaceRef}>
-        <ReactFlowProvider>
-          <ReactFlow
+    <ReactFlowProvider>
+      <div
+        className="absolute inset-0 fd-xyflow-surface rounded-xl overflow-hidden"
+        style={{
+          background: 'radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%), radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.1), transparent 30%), rgba(255,255,255,0.78)'
+        }}
+        ref={surfaceRef}
+      >
+        <ReactFlow
             nodes={localNodes}
             edges={renderedEdges}
             nodeTypes={xyflowNodeTypes}
@@ -327,21 +332,20 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
             )}
             {showMinimap && (
               <MiniMap
-                className="fd-xyflow-minimap"
+                className="fd-xyflow-minimap !rounded-2xl !border !border-border"
                 pannable
                 zoomable
-                bgColor="#e2e8f0"
+                bgColor="rgba(219, 234, 254, 0.5)"
                 offsetScale={0}
                 nodeColor={() => 'rgba(15, 23, 42, 0.92)'}
-                nodeStrokeColor={() => '#0f172a'}
-                nodeBorderRadius={2}
+                nodeStrokeColor={() => 'hsl(221.2, 83.2%, 53.3%)'}
+                nodeBorderRadius={4}
                 maskColor="rgba(255, 255, 255, 0.55)"
               />
             )}
             {showControls && <Controls className="fd-xyflow-controls" showInteractive={false} />}
-          </ReactFlow>
-        </ReactFlowProvider>
+        </ReactFlow>
       </div>
-    </div>
+    </ReactFlowProvider>
   );
 }
