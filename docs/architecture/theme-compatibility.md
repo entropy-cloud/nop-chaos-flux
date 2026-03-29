@@ -16,6 +16,7 @@ The goal is not to introduce a React `ThemeProvider` requirement. The goal is to
 - `packages/flow-designer-renderers/src/index.tsx`
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 - `packages/flow-designer-renderers/src/styles.css`
+- `packages/tailwind-preset/src/styles/base.css`
 
 ## Main Rule
 
@@ -46,9 +47,9 @@ That means:
 
 ## Theme Root Contract
 
-### `.na-theme-root`
+### `.nop-theme-root`
 
-`.na-theme-root` is the canonical shared theme scope for the project.
+`.nop-theme-root` is the canonical shared theme scope for the project.
 
 Responsibilities:
 
@@ -56,7 +57,7 @@ Responsibilities:
 - scope host overrides to a mounted subtree
 - provide one predictable root for dialogs, debugger UI, AMIS renderers, and Flow Designer renderers
 
-Any host may place `.na-theme-root` on:
+Any host may place `.nop-theme-root` on:
 
 - an application shell root
 - a page root
@@ -70,30 +71,29 @@ The renderer tree must work in all three cases.
 
 Responsibilities:
 
-- derive Flow Designer specific tokens from shared `--na-*` tokens
+- derive Flow Designer specific tokens from shared `--nop-*` tokens
 - allow Flow Designer-only overrides without redefining the whole AMIS visual system
 
 Flow Designer surfaces should usually mount both classes:
 
-- `.na-theme-root` for shared token availability
+- `.nop-theme-root` for shared token availability
 - `.fd-theme-root` for local Flow Designer aliases
 
 ## Token Layers
 
 ### Shared project tokens
 
-Shared project visuals use `--na-*` tokens.
+Shared project visuals use `--nop-*` tokens.
 
 Examples:
 
-- `--na-app-bg`
-- `--na-app-text`
-- `--na-surface`
-- `--na-border`
-- `--na-accent`
-- `--na-invalid-border`
-- `--na-dialog-backdrop`
-- `--na-debugger-bg`
+- `--nop-app-bg`
+- `--nop-app-text`
+- `--nop-surface`
+- `--nop-border`
+- `--nop-accent`
+- `--nop-invalid-border`
+- `--nop-dialog-backdrop`
 
 These tokens cover:
 
@@ -117,16 +117,16 @@ Examples:
 - `--fd-port-input`
 - `--fd-danger`
 
-These should usually default to shared `--na-*` values instead of defining unrelated colors.
+These should usually default to shared `--nop-*` values instead of defining unrelated colors.
 
 Example pattern:
 
 ```css
 .fd-theme-root {
-  --fd-panel-bg: var(--na-surface-strong);
-  --fd-border: var(--na-border);
-  --fd-text: var(--na-text);
-  --fd-primary: var(--na-primary);
+  --fd-panel-bg: var(--nop-surface);
+  --fd-border: var(--nop-border);
+  --fd-text: var(--nop-app-text);
+  --fd-primary: var(--nop-primary);
 }
 ```
 
@@ -140,9 +140,9 @@ Typical host strategies:
 
 ```css
 :root[data-theme='classic'][data-mode='dark'] {
-  --na-app-text: hsl(var(--foreground));
-  --na-surface: hsl(var(--card));
-  --na-border: hsl(var(--border));
+  --nop-app-text: hsl(var(--foreground));
+  --nop-surface: hsl(var(--card));
+  --nop-border: hsl(var(--border));
 }
 ```
 
@@ -150,7 +150,7 @@ Typical host strategies:
 
 ```css
 .host-flow-shell {
-  --na-app-text: hsl(var(--foreground));
+  --nop-app-text: hsl(var(--foreground));
   --fd-canvas-bg: hsl(var(--muted));
 }
 ```
@@ -159,9 +159,9 @@ Typical host strategies:
 
 ```css
 .host-flow-shell {
-  --na-surface: hsl(var(--card));
-  --na-text: hsl(var(--foreground));
-  --na-primary: hsl(var(--primary));
+  --nop-surface: hsl(var(--card));
+  --nop-app-text: hsl(var(--foreground));
+  --nop-primary: hsl(var(--primary));
 }
 ```
 
@@ -232,7 +232,7 @@ Once a token or class becomes a documented host hook, avoid renaming it casually
 
 Dialogs and debugger UI are not special cases.
 
-They should use the same `--na-*` token family so host theming stays coherent across:
+They should use the same `--nop-*` token family so host theming stays coherent across:
 
 - main renderer tree
 - shared dialogs
@@ -240,12 +240,12 @@ They should use the same `--na-*` token family so host theming stays coherent ac
 
 ## First Migration Slice
 
-The first migration slice uses `.na-theme-root` as the root and keeps visuals unchanged.
+The first migration slice uses `.nop-theme-root` as the root and keeps visuals unchanged.
 
 Scope:
 
-- add `.na-theme-root` at the playground app root
-- add `.na-theme-root` to dialog host and debugger surfaces
+- add `.nop-theme-root` at the playground app root (already done)
+- Dialog host and debugger already inherit `.nop-theme-root` from app root
 - add `.fd-theme-root` to Flow Designer package roots
 - introduce token defaults that reproduce current colors exactly
 - move Flow Designer package-owned reusable visuals into package CSS
@@ -268,5 +268,5 @@ After this migration:
 
 - continue reducing package-level inline visual styles in `apps/playground/src/FlowDesignerExample.tsx`
 - extend package-owned CSS for more generic `na-*` renderers if they need stronger host-level consistency
-- add a host integration example showing token mapping from an external shell into `.na-theme-root`
+- add a host integration example showing token mapping from an external shell into `.nop-theme-root`
 

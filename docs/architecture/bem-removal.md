@@ -172,7 +172,7 @@ nop-{renderer-type}__{region}    -- renderer 内部区域
 - `{region}` 用 `__` 双下划线分隔：`__label`、`__header`、`__body`、`__actions`
 - **不加视觉信息**：不用 `__red-label`、`__large-button`
 - **不加状态修饰符**：状态用 `data-*` 属性（见 4.3）
-- **例外约束**：允许保留极少数语义例外（如 `nop-table__row--interactive`、`nop-dynamic-renderer--error`），仅表达结构能力，不承载视觉样式；不再新增其他 `--` 修饰符。
+- **例外约束**：允许保留极少数语义例外（如 `nop-table__row--interactive`），仅表达结构能力，不承载视觉样式；不再新增其他 `--` 修饰符。
 
 ### 4.3 状态用 `data-*` 属性，不用 class
 
@@ -296,7 +296,7 @@ screen.getByLabelText('Username');
 | `nop-flex` | `FlexRenderer` | 弹性布局渲染器 |
 | `nop-icon` | `IconRenderer` | 图标渲染器 |
 | `nop-dynamic-renderer` | `DynamicRenderer` | 动态渲染器 |
-| `nop-dynamic-renderer--error` | `DynamicRenderer` | 动态渲染器错误态 |
+| *(none — uses `data-error` attribute)* | `DynamicRenderer` | 动态渲染器错误态 |
 | `nop-report-designer` | ReportDesignerRenderers | 报表设计器根 |
 | `nop-report-designer__*` | ReportDesignerRenderers | 报表设计器子区域 |
 | `nop-designer` | `DesignerPageRenderer` | 流程设计器根 |

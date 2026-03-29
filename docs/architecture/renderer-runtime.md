@@ -297,7 +297,7 @@ Current concrete uses:
 
 - `designer-page` creates a local action-scope boundary and registers the `designer` namespace provider during owned lifecycle
 - `form` creates a local component-registry boundary and registers an explicit form handle exposing `submit`, `validate`, `reset`, and `setValue`
-- `DialogHost` keeps dialog rendering on the same React/runtime boundary but now carries `.na-theme-root` so floating dialog surfaces inherit the same CSS-variable theme contract as the main renderer subtree
+- `DialogHost` keeps dialog rendering on the same React/runtime boundary; floating dialog surfaces inherit `.nop-theme-root` CSS-variable theme contract from the app root
 
 Fragment rendering keeps the same explicitness rule as data scope: callers must pass `actionScope` and `componentRegistry` through `render(options)` when a subtree should inherit or replace those execution boundaries deliberately.
 

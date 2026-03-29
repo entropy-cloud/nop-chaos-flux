@@ -322,9 +322,8 @@ Child aliases override parent aliases with the same name.
 
 | Package | Responsibility |
 |---------|----------------|
-| `flux-core` | `BaseSchema.classAliases` type definition |
-| `flux-runtime` | Alias resolution in schema compiler |
-| `flux-react` | Apply resolved className to rendered components |
+| `flux-core` | `resolveClassAliases` and `mergeClassAliases` utility functions |
+| `flux-react` | Alias resolution at render time via `ClassAliasesContext` in node-renderer.tsx |
 
 ## Renderer Styling Contract
 
@@ -411,6 +410,8 @@ For schema authors, these alias patterns provide consistent, self-documenting sp
 }
 ```
 
+These utility classes are pre-defined in `packages/tailwind-preset/src/styles/base.css` and available globally. Schema authors can use them directly in `className` without defining their own `classAliases`.
+
 Usage in schema:
 
 ```json
@@ -470,19 +471,22 @@ The outer wrapper (`nop-container`) never injects layout styles.
 | `direction` | `'row'` \| `'column'` | `flex-row` \| `flex-col` |
 | `wrap` | `boolean` | `flex-wrap` |
 | `align` | `'start'` \| `'center'` \| `'end'` \| `'stretch'` | `items-* justify-*` |
-| `gap` | `number` \| `'none'` \| `'xs'` \| `'sm'` \| `'md'` \| `'lg'` \| `'xl'` | `gap-*` |
+| `gap` | Named tokens: `'none'` \| `'xs'` \| `'sm'` \| `'md'` \| `'lg'` \| `'xl'` → Tailwind gap classes<br>Number values → inline style with px unit<br>Arbitrary CSS string values → inline style passthrough | `gap-*` or `style={{gap: '...'}}` |
 
 ### Gap Token Mapping
 
 ```typescript
-const GAP_TOKENS: Record<string, string> = {
-  'none': 'gap-0',
-  'xs': 'gap-1',
-  'sm': 'gap-2',
-  'md': 'gap-4',
-  'lg': 'gap-6',
-  'xl': 'gap-8'
-};
+// packages/flux-renderers-basic/src/utils.ts
+export function resolveGap(gap: number | string | undefined): {
+  className?: string;
+  style?: React.CSSProperties;
+} {
+  if (gap === undefined) return {};
+  if (typeof gap === 'number') return { style: { gap: `${gap}px` } };
+  const tokenClass = GAP_TOKENS[gap];
+  if (tokenClass) return { className: tokenClass };
+  return { style: { gap } };
+}
 ```
 
 ## className Merging Rule
