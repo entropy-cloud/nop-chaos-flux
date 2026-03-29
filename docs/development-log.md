@@ -27,7 +27,12 @@ This file is intentionally lightweight.
 - Comprehensive font/style audit completed — all card, icon, title, subtitle, footer, badge properties now match `flow-editor-static.html` reference.
 - Commit: `69652ae`
 
-### 2026-03-29 (Renderer Styling Contract Documentation)
+### 2026-03-29 (AGENTS.md Documentation Routing Table)
+
+- Added "Documentation Routing" section to `AGENTS.md` with three tables:
+  - **By Task**: 18 task types mapped to primary and secondary docs (e.g., modifying renderer styling → `styling-system.md` then `theme-compatibility.md`)
+  - **By Code Location**: 11 code paths mapped to required reading (e.g., `packages/flux-renderers-*/src/` → `styling-system.md` + `renderer-runtime.md`)
+  - **Quick Reference: Key Principles**: 5 cross-cutting principles (Renderer Styling Contract, Spacing Conventions, No BEM, Theme Independence, Tailwind v4 monorepo)
 
 - Documented renderer styling principles in `docs/architecture/styling-system.md`:
   - "Renderer Styling Contract" section: renderers own identity only, no implicit layout

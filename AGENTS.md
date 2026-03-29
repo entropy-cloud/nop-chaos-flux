@@ -106,6 +106,61 @@ Always consult `docs/index.md` first when working with documentation. It contain
 
 ---
 
+## Documentation Routing
+
+Before starting work, read the relevant docs. This table maps tasks to the docs you must read first.
+
+### By Task
+
+| Task | Read first | Then read | Why |
+|------|-----------|-----------|-----|
+| Modify any renderer component (JSX, props, hooks) | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` | Renderer contracts, hooks, fragment rendering |
+| Add or change a renderer's styling, className, or layout | `docs/architecture/styling-system.md` | `docs/architecture/theme-compatibility.md` | Renderer styling contract, classAliases, spacing conventions, marker class rules |
+| Change CSS, Tailwind utilities, or design tokens | `docs/architecture/styling-system.md` → "Renderer Styling Contract" section | `docs/architecture/bem-removal.md` | No implicit layout in renderers; use marker classes + schema-driven styles |
+| Add a new Tailwind utility or global CSS rule | `docs/architecture/styling-system.md` | `packages/tailwind-preset/src/styles/base.css` | Spacing conventions, stack/hstack alias patterns |
+| Work on Flow Designer canvas, nodes, edges, or interactions | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md` | Layered architecture, host-bridge adapter contract |
+| Change Flow Designer visual style (node cards, icons, badges) | `docs/architecture/styling-system.md` → "Spacing Conventions" section | `docs/analysis/flow-designer-style-parity-research.md` | Context-based spacing guide, parity audit |
+| Change Flow Designer config schema (nodeTypes, ports, permissions) | `docs/architecture/flow-designer/config-schema.md` | `docs/architecture/flow-designer/api.md` | NodeTypeConfig, port definitions, inspector schema |
+| Work on Report Designer or Spreadsheet Editor | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` | Layered architecture, package boundaries, interface contracts |
+| Change form validation, error display, or field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` | Validation rules, timing, renderer participation |
+| Change form field wrappers, labels, hints, or error slots | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/field-frame.md` | Slot classification, unified field chrome |
+| Add new actions, event handlers, or `xui:import` usage | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` | Namespaced actions, import semantics, scope boundaries |
+| Change API requests, data sources, polling, or adaptors | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` | ApiObject, DataSourceSchema, scope injection |
+| Add or modify a shadcn/ui component in `@nop-chaos/ui` | `docs/plans/18-shadcn-ui-migration-plan.md` | `docs/architecture/styling-system.md` | Migration status, component list, variant mapping |
+| Change package boundaries, create a new package, or move code | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/frontend-baseline.md` | Module ownership, file placement rules |
+| Change core architecture (compilation, scope, expressions) | `docs/architecture/flux-core.md` | `docs/references/terminology.md` | Unified value semantics, scope model, key terms |
+| Change playground pages, navigation, or debugger UX | `docs/architecture/playground-experience.md` | `docs/analysis/framework-debugger-design.md` | Scenario-based navigation, floating debugger panel |
+| Write or update JSON schema conventions | `docs/references/flux-json-conventions.md` | `docs/examples/user-management-schema.md` | Expression syntax, naming rules, example patterns |
+| Debug a CSS class not being generated in a monorepo package | `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md` | `apps/playground/src/styles.css` (check `@source` directive) | Tailwind v4 content scanning fix, monorepo setup |
+
+### By Code Location
+
+| When touching this code | Read this |
+|------------------------|-----------|
+| `packages/flux-core/src/` | `docs/architecture/flux-core.md`, `docs/references/terminology.md` |
+| `packages/flux-runtime/src/` | `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/form-validation.md` |
+| `packages/flux-react/src/` | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md` |
+| `packages/flux-renderers-*/src/` | `docs/architecture/styling-system.md`, `docs/architecture/renderer-runtime.md` |
+| `packages/tailwind-preset/src/` | `docs/architecture/styling-system.md` → "Renderer Styling Contract" and "Spacing Conventions" |
+| `packages/ui/src/` | `docs/plans/18-shadcn-ui-migration-plan.md`, `docs/architecture/bem-removal.md` |
+| `packages/flow-designer-*/src/` | `docs/architecture/flow-designer/` (start with `design.md`) |
+| `packages/spreadsheet-*/src/` or `packages/report-designer-*/src/` | `docs/architecture/report-designer/` (start with `design.md`) |
+| `apps/playground/src/` | `docs/architecture/playground-experience.md` |
+| `apps/playground/src/styles.css` | `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`, `docs/architecture/styling-system.md` |
+| `apps/playground/src/schemas/*.json` | `docs/references/flux-json-conventions.md`, `docs/architecture/styling-system.md` (classAliases) |
+
+### Quick Reference: Key Principles
+
+| Principle | Summary | Doc |
+|-----------|---------|-----|
+| Renderer Styling Contract | Renderers only emit marker classes (`nop-*`). No implicit gap/direction/padding. | `docs/architecture/styling-system.md` |
+| Spacing Conventions | Context-based spacing via `stack-*`/`hstack-*` aliases, always explicit at usage site. | `docs/architecture/styling-system.md` |
+| No BEM | Use shadcn `data-slot`, flux semantic markers, and Tailwind visual classes. | `docs/architecture/bem-removal.md` |
+| Theme Independence | No React ThemeProvider; CSS variables and stable class names for host integration. | `docs/architecture/theme-compatibility.md` |
+| Tailwind v4 monorepo | `@source "../../../packages"` in `styles.css` to scan workspace packages. | `docs/bugs/14-*.md` |
+
+---
+
 ## Code Conventions
 
 ### General
