@@ -10,24 +10,24 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
   const hub = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__NOP_DEBUGGER_HUB__ : null;
 
   return (
-    <main className="app-shell">
-      <section className="hero-card hero-card--wide">
-        <button type="button" className="page-back" onClick={onBack}>
+    <main className="min-h-screen grid place-items-center p-6">
+      <section className="max-w-[1100px] p-10 rounded-3xl bg-[var(--nop-hero-bg)] border border-[var(--nop-hero-border)] shadow-[var(--nop-hero-shadow)]">
+        <button type="button" className="mb-[18px] px-3.5 py-2.5 rounded-full border border-[var(--nop-nav-border)] bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] font-sans text-[13px] font-bold cursor-pointer transition-[transform,box-shadow,border-color] duration-160 hover:-translate-y-px hover:shadow-[var(--nop-nav-shadow-active)] hover:border-[var(--nop-nav-hover-border)]" onClick={onBack}>
           Back to Home
         </button>
-        <p className="eyebrow">DevTools</p>
-        <h1>Debugger Lab</h1>
-        <p className="body-copy">
+        <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">DevTools</p>
+        <h1 className="m-0 mb-4">Debugger Lab</h1>
+        <p className="text-lg leading-relaxed text-[var(--nop-body-copy)]">
           This page demonstrates the debugger API and automation hooks. The debugger runs as a floating panel
           that can be minimized to a launcher button in the bottom-left corner.
         </p>
-        <p className="body-copy body-copy--compact">
+        <p className="mt-2.5 text-[15px] leading-relaxed text-[var(--nop-body-copy)]">
           Click the launcher to expand the full panel, or click "Minimize" to collapse it back to the launcher.
           The launcher itself is draggable.
         </p>
-        <div className="nop-ai-debug-card">
-          <p className="nop-ai-debug-card__eyebrow">Global API Status</p>
-          <pre className="nop-ai-debug-card__code">
+        <div className="mt-[18px] p-[18px] rounded-[18px] bg-[var(--nop-debug-card-bg)] border border-[var(--nop-debug-card-border)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <p className="mb-2.5 uppercase tracking-[0.14em] text-[11px] font-bold text-[var(--nop-debug-card-eyebrow)]">Global API Status</p>
+          <pre className="p-3.5 rounded-[14px] bg-[var(--nop-debug-card-code-bg)] text-[var(--nop-debug-card-code-text)] text-[13px] leading-relaxed overflow-x-auto">
             {JSON.stringify({
               hasApi: !!api,
               hasHub: !!hub,
@@ -35,9 +35,9 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
             }, null, 2)}
           </pre>
         </div>
-        <div className="nop-ai-debug-card" style={{ marginTop: 18 }}>
-          <p className="nop-ai-debug-card__eyebrow">Controller Methods</p>
-          <pre className="nop-ai-debug-card__code">{`debuggerController.id = "${debuggerController.id}"
+        <div className="mt-[18px] p-[18px] rounded-[18px] bg-[var(--nop-debug-card-bg)] border border-[var(--nop-debug-card-border)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <p className="mb-2.5 uppercase tracking-[0.14em] text-[11px] font-bold text-[var(--nop-debug-card-eyebrow)]">Controller Methods</p>
+          <pre className="p-3.5 rounded-[14px] bg-[var(--nop-debug-card-code-bg)] text-[var(--nop-debug-card-code-text)] text-[13px] leading-relaxed overflow-x-auto">{`debuggerController.id = "${debuggerController.id}"
 debuggerController.getSnapshot()
 debuggerController.show()
 debuggerController.hide()
@@ -58,9 +58,9 @@ debuggerController.getInteractionTrace(options)
 debuggerController.exportSession(options)
 debuggerController.createDiagnosticReport(options)`}</pre>
         </div>
-        <div className="nop-ai-debug-card" style={{ marginTop: 18 }}>
-          <p className="nop-ai-debug-card__eyebrow">Snapshot Structure</p>
-          <pre className="nop-ai-debug-card__code">{`interface FluxDebuggerSnapshot {
+        <div className="mt-[18px] p-[18px] rounded-[18px] bg-[var(--nop-debug-card-bg)] border border-[var(--nop-debug-card-border)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <p className="mb-2.5 uppercase tracking-[0.14em] text-[11px] font-bold text-[var(--nop-debug-card-eyebrow)]">Snapshot Structure</p>
+          <pre className="p-3.5 rounded-[14px] bg-[var(--nop-debug-card-code-bg)] text-[var(--nop-debug-card-code-text)] text-[13px] leading-relaxed overflow-x-auto">{`interface FluxDebuggerSnapshot {
   enabled: boolean;
   panelOpen: boolean;
   paused: boolean;
@@ -70,9 +70,9 @@ debuggerController.createDiagnosticReport(options)`}</pre>
   filters: FluxDebuggerFilterKind[];
 }`}</pre>
         </div>
-        <div className="nop-ai-debug-card" style={{ marginTop: 18 }}>
-          <p className="nop-ai-debug-card__eyebrow">Event Groups (Filters)</p>
-          <pre className="nop-ai-debug-card__code">{`type FluxDebuggerFilterKind =
+        <div className="mt-[18px] p-[18px] rounded-[18px] bg-[var(--nop-debug-card-bg)] border border-[var(--nop-debug-card-border)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <p className="mb-2.5 uppercase tracking-[0.14em] text-[11px] font-bold text-[var(--nop-debug-card-eyebrow)]">Event Groups (Filters)</p>
+          <pre className="p-3.5 rounded-[14px] bg-[var(--nop-debug-card-code-bg)] text-[var(--nop-debug-card-code-text)] text-[13px] leading-relaxed overflow-x-auto">{`type FluxDebuggerFilterKind =
   | 'render'
   | 'action'
   | 'api'
@@ -80,9 +80,9 @@ debuggerController.createDiagnosticReport(options)`}</pre>
   | 'notify'
   | 'error';`}</pre>
         </div>
-        <div className="nop-ai-debug-card" style={{ marginTop: 18 }}>
-          <p className="nop-ai-debug-card__eyebrow">Interaction Trace</p>
-          <pre className="nop-ai-debug-card__code">{`interface FluxInteractionTrace {
+        <div className="mt-[18px] p-[18px] rounded-[18px] bg-[var(--nop-debug-card-bg)] border border-[var(--nop-debug-card-border)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <p className="mb-2.5 uppercase tracking-[0.14em] text-[11px] font-bold text-[var(--nop-debug-card-eyebrow)]">Interaction Trace</p>
+          <pre className="p-3.5 rounded-[14px] bg-[var(--nop-debug-card-code-bg)] text-[var(--nop-debug-card-code-text)] text-[13px] leading-relaxed overflow-x-auto">{`interface FluxInteractionTrace {
   totalEvents: number;
   anchorEvent?: FluxDebugEvent;
   latestError?: FluxDebugEvent;
