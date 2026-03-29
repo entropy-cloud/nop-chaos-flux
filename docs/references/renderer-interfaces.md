@@ -226,7 +226,7 @@ For deeper design intent, continue with:
 
 - `docs/references/maintenance-checklist.md`
 - `docs/references/terminology.md`
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/form-validation.md`
 

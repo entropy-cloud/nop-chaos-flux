@@ -515,7 +515,7 @@ The next artifacts that would make implementation concrete are:
 ## Related Documents
 
 - `docs/architecture/renderer-runtime.md`
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/references/maintenance-checklist.md`
 - `docs/development-log.md`
 

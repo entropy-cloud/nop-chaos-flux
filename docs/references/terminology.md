@@ -313,7 +313,7 @@ It allows later actions to consume outputs from earlier ones without inventing a
 ## Related Documents
 
 - `docs/references/maintenance-checklist.md`
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`

@@ -42,7 +42,7 @@ Examples:
 
 Review:
 
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
 - `docs/index.md` if the recommended reading path changes
@@ -58,7 +58,7 @@ Examples:
 
 Review:
 
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/references/terminology.md`
@@ -91,7 +91,7 @@ Examples:
 
 Review:
 
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/flow-designer/canvas-adapters.md`
 - `docs/architecture/flow-designer/collaboration.md`
@@ -115,7 +115,7 @@ Examples:
 
 Review:
 
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
@@ -133,7 +133,7 @@ Examples:
 Review:
 
 - `docs/architecture/form-validation.md`
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
 - `docs/examples/user-management-schema.md` if authoring guidance changed
@@ -205,7 +205,7 @@ Examples:
 
 - changes to `ContainerSchema` semantic props (`direction`, `gap`, `align`, etc.)
 - changes to semantic prop → Tailwind class mapping
-- adding or modifying `stylePresets` mechanism
+- adding or modifying `classAliases` mechanism
 - changes to className resolution or merging behavior
 
 Review:
@@ -281,7 +281,7 @@ Before finishing a code change, ask:
 - `docs/index.md`
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/action-scope-and-imports.md`

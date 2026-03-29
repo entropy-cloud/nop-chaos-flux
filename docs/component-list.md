@@ -752,5 +752,5 @@
 
 - [AMIS 官方文档](https://aisuda.bce.baidu.com/amis/)
 - [AMIS GitHub](https://github.com/baidu/amis)
-- [Flux 架构文档](./architecture/amis-core.md)
+- [Flux 架构文档](./architecture/flux-core.md)
 - [Flux 组件开发指南](./development/component-development.md)

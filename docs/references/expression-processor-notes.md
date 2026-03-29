@@ -73,7 +73,7 @@ Read this file when:
 
 Then continue with:
 
-- `docs/architecture/amis-core.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 
 ## Related Source

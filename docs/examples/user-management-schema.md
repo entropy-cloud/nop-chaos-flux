@@ -231,4 +231,4 @@ Covered capabilities:
 - This example demonstrates the current preferred authoring direction, not every historical AMIS-compatible variation.
 - Page-level values such as `currentUser`, `keyword`, `page`, `perPage`, and `searching` are assumed to come from the host application's root render data rather than from a page-local schema `data` field.
 - The search flow uses one `ajax` action with `dataPath` to update page data. That matches the current runtime more closely than chaining `setValue` to mutate page state from inside a form-local action context.
-- If schema semantics change, update `docs/architecture/amis-core.md` first, then update this example.
+- If schema semantics change, update `docs/architecture/flux-core.md` first, then update this example.

@@ -837,5 +837,5 @@ function migrateAmisToFlux(schema: any): any {
 - [shadcn/ui 组件库](https://ui.shadcn.com/)
 - [Tailwind CSS 文档](https://tailwindcss.com/)
 - [AMIS 官方文档](https://aisuda.bce.baidu.com/amis/)
-- [Flux 架构文档](./architecture/amis-core.md)
+- [Flux 架构文档](./architecture/flux-core.md)
 - [Flux 组件列表](./component-list.md)
