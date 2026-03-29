@@ -22,7 +22,7 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
   const useFlexChild = wrap || align !== undefined || gap !== undefined || direction !== 'row';
 
   return (
-    <div className={classNames('nop-container', props.meta.className)}>
+    <div className={classNames('nop-container', props.meta.className)} data-testid={props.meta.testid || undefined}>
       {hasRendererSlotContent(headerContent) ? <div className="nop-container__header">{headerContent}</div> : null}
       {useFlexChild ? (
         <div

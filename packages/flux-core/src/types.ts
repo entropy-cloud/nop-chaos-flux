@@ -26,6 +26,7 @@ export interface BaseSchema extends SchemaObject {
   visible?: boolean | string;
   hidden?: boolean | string;
   disabled?: boolean | string;
+  testid?: string;
   validateOn?: ValidationTrigger | ValidationTrigger[];
   showErrorOn?: ValidationVisibilityTrigger | ValidationVisibilityTrigger[];
   'xui:imports'?: XuiImportSpec[];
@@ -504,6 +505,7 @@ export interface CompiledSchemaMeta {
   visible?: CompiledRuntimeValue<boolean | unknown>;
   hidden?: CompiledRuntimeValue<boolean | unknown>;
   disabled?: CompiledRuntimeValue<boolean | unknown>;
+  testid?: CompiledRuntimeValue<string | undefined>;
 }
 
 export interface ResolvePropsArgs<S extends BaseSchema = BaseSchema> {
@@ -654,6 +656,7 @@ export interface ResolvedNodeMeta {
   visible: boolean;
   hidden: boolean;
   disabled: boolean;
+  testid?: string;
   changed: boolean;
 }
 

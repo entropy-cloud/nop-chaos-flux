@@ -38,6 +38,7 @@ export function createNodeRuntime(input: {
       visible: Boolean(evaluateCompiledValue(input.expressionCompiler, node.meta.visible, scope, input.env, state?.meta.visible) ?? true),
       hidden: Boolean(evaluateCompiledValue(input.expressionCompiler, node.meta.hidden, scope, input.env, state?.meta.hidden) ?? false),
       disabled: Boolean(evaluateCompiledValue(input.expressionCompiler, node.meta.disabled, scope, input.env, state?.meta.disabled) ?? false),
+      testid: evaluateCompiledValue(input.expressionCompiler, node.meta.testid, scope, input.env, state?.meta.testid),
       changed: true
     };
 

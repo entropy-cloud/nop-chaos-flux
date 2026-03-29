@@ -13,7 +13,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const columnCount = Math.max(columns.length, 1);
 
   return (
-    <div className="nop-table-wrap grid gap-4">
+    <div className="nop-table-wrap grid gap-4" data-testid={props.meta.testid || undefined}>
       {hasRendererSlotContent(headerContent) ? <div className="nop-table__header">{headerContent}</div> : null}
       <Table className="nop-table">
         <TableHeader className="nop-table__header">

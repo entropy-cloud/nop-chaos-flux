@@ -44,6 +44,7 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
         props.meta.className
       )}
       style={gap !== undefined ? { gap: typeof gap === 'number' ? `${gap}px` : gap } : undefined}
+      data-testid={props.meta.testid || undefined}
     >
       {bodyContent ?? itemsContent}
     </div>

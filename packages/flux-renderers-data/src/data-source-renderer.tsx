@@ -161,7 +161,7 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
 
   if (state.loading && state.data === undefined) {
     return (
-      <div className={props.meta.className}>
+      <div className={props.meta.className} data-testid={props.meta.testid || undefined}>
         <div className="nop-data-source-loading">Loading...</div>
       </div>
     );
@@ -169,7 +169,7 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
 
   if (state.error && state.data === undefined) {
     return (
-      <div className={props.meta.className}>
+      <div className={props.meta.className} data-testid={props.meta.testid || undefined}>
         <div className="nop-data-source-error">
           Error: {state.error instanceof Error ? state.error.message : String(state.error)}
         </div>
@@ -178,7 +178,7 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
   }
 
   return (
-    <div className={props.meta.className}>
+    <div className={props.meta.className} data-testid={props.meta.testid || undefined}>
       {bodyContent}
     </div>
   );

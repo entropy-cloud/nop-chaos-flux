@@ -178,6 +178,7 @@ function buildCompiledMeta(
       case 'visible':
       case 'hidden':
       case 'disabled':
+      case 'testid':
         meta[key] = expressionCompiler.compileValue(value as any);
         break;
     }

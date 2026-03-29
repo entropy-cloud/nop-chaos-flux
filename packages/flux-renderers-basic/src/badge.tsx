@@ -12,5 +12,5 @@ export function BadgeRenderer(props: RendererComponentProps<BadgeSchema>) {
       : props.props.level === 'danger'
         ? 'destructive'
         : 'secondary';
-  return <Badge variant={variant} className={props.meta.className}>{String(text ?? '')}</Badge>;
+  return <Badge variant={variant} className={props.meta.className} data-testid={props.meta.testid || undefined}>{String(text ?? '')}</Badge>;
 }

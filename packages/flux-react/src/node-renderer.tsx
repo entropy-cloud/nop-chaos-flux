@@ -293,6 +293,7 @@ export function NodeRenderer(props: {
           label={labelValue}
           required={props.node.schema.required === true}
           className={resolvedMeta.className}
+          testid={resolvedMeta.testid}
         >
           {element}
         </FieldFrame>

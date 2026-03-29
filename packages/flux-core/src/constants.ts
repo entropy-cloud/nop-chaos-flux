@@ -6,5 +6,6 @@ export const META_FIELDS = new Set([
   'className',
   'visible',
   'hidden',
-  'disabled'
+  'disabled',
+  'testid'
 ]);

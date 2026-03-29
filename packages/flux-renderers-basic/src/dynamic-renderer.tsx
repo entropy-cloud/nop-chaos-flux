@@ -51,7 +51,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
   if (state.error) {
     return (
-      <div className={classNames('nop-dynamic-renderer', props.meta.className)} data-error="">
+      <div className={classNames('nop-dynamic-renderer', props.meta.className)} data-error="" data-testid={props.meta.testid || undefined}>
         Error: {state.error instanceof Error ? state.error.message : String(state.error)}
       </div>
     );
@@ -59,14 +59,14 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
   if (state.schema) {
     return (
-      <div className={classNames('nop-dynamic-renderer', props.meta.className)}>
+      <div className={classNames('nop-dynamic-renderer', props.meta.className)} data-testid={props.meta.testid || undefined}>
         {props.helpers.render(state.schema)}
       </div>
     );
   }
 
   return (
-    <div className={classNames('nop-dynamic-renderer', props.meta.className)}>
+    <div className={classNames('nop-dynamic-renderer', props.meta.className)} data-testid={props.meta.testid || undefined}>
       {props.regions.body?.render()}
     </div>
   );

@@ -16,6 +16,7 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
       size={size}
       className={props.meta.className}
       type="button"
+      data-testid={props.meta.testid || undefined}
       onClick={() => void props.events.onClick?.()}
       disabled={props.meta.disabled}
     >
