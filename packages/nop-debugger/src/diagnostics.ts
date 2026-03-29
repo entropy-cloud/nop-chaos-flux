@@ -20,7 +20,7 @@ import { redactData } from './redaction';
 
 const EMPTY_PINNED_ERRORS: NopDebuggerPinnedErrors = { earliest: [], latest: [] };
 
-export const DEFAULT_FILTERS: NopDebuggerFilterKind[] = ['render', 'action', 'api', 'compile', 'notify', 'error'];
+export const DEFAULT_FILTERS: NopDebuggerFilterKind[] = ['render', 'action', 'api', 'compile', 'notify', 'error', 'node'];
 
 function toArray<T>(value: T | T[] | undefined): T[] | undefined {
   if (value == null) {
@@ -167,7 +167,8 @@ export function buildOverview(events: NopDebugEvent[]): NopDebuggerOverview {
     api: 0,
     compile: 0,
     notify: 0,
-    error: 0
+    error: 0,
+    node: 0
   });
 
   return {
