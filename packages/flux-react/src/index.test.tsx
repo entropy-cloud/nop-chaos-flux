@@ -1091,7 +1091,7 @@ describe('createSchemaRenderer', () => {
     expect(firstDialogNamespaceResult).toMatchObject({ ok: true, data: 'dialog-ns:ping:first-open' });
     expect(firstDialogHandleResult).toMatchObject({ ok: true, data: 'dialog-handle:ping:first-open' });
 
-    fireEvent.click(document.querySelector('.nop-dialog-close')!);
+    fireEvent.click(document.querySelector('[data-slot="dialog-close"]')!);
 
     await waitFor(() => {
       expect(screen.queryByText('Dialog provider content')).toBeNull();
@@ -1304,7 +1304,7 @@ describe('createSchemaRenderer', () => {
     expect(await screen.findByText('Inspect record')).toBeTruthy();
     expect(await screen.findByText('Dialog hello')).toBeTruthy();
 
-    fireEvent.click(document.querySelector('.nop-dialog-close')!);
+    fireEvent.click(document.querySelector('[data-slot="dialog-close"]')!);
 
     await waitFor(() => {
       expect(screen.queryByText('Dialog hello')).toBeNull();
@@ -1509,7 +1509,7 @@ describe('createSchemaRenderer', () => {
     fireEvent.click(await screen.findByText('Set draft'));
     expect(await screen.findByText('changed')).toBeTruthy();
 
-    fireEvent.click(document.querySelector('.nop-dialog-close')!);
+    fireEvent.click(document.querySelector('[data-slot="dialog-close"]')!);
     await waitFor(() => {
       expect(screen.queryByText('changed')).toBeNull();
     });

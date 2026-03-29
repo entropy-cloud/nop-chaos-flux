@@ -50,13 +50,11 @@ export function DialogHost() {
   }
 
   return (
-    <Dialog open>
-      <DialogContent className="nop-dialog-host">
-        {dialogs.map((dialog: DialogState) => (
-          <DialogView key={dialog.id} dialog={dialog} page={page} />
-        ))}
-      </DialogContent>
-    </Dialog>
+    <>
+      {dialogs.map((dialog: DialogState) => (
+        <DialogView key={dialog.id} dialog={dialog} page={page} />
+      ))}
+    </>
   );
 }
 
@@ -74,33 +72,29 @@ function DialogView(props: {
 
   const { dialog, page } = props;
 
-  return (
-      <Dialog open>
-        <DialogOverlay className="nop-dialog-backdrop" />
-        <DialogContent className="nop-dialog-card">
-        {dialog.title
-          ? (
-              <ActionScopeContext.Provider value={dialog.actionScope}>
-                <ComponentRegistryContext.Provider value={dialog.componentRegistry}>
-                  <ScopeContext.Provider value={dialog.scope}>
-                    <h3>
-                      {typeof dialog.title === 'string'
-                        ? dialog.title
-                        : isCompiledNode(dialog.title) || isCompiledNodeArray(dialog.title)
-                        ? <RenderNodes input={dialog.title as RenderNodeInput} options={{ scope: dialog.scope, actionScope: dialog.actionScope, componentRegistry: dialog.componentRegistry }} />
-                        : String(dialog.title)}
-                    </h3>
-                  </ScopeContext.Provider>
-                </ComponentRegistryContext.Provider>
-              </ActionScopeContext.Provider>
-            )
-          : null}
-        <DialogClose className="nop-dialog-close" onClick={() => page.closeDialog(dialog.id)}>
-          Close
-        </DialogClose>
+  const titleNode = dialog.title
+    ? (
         <ActionScopeContext.Provider value={dialog.actionScope}>
           <ComponentRegistryContext.Provider value={dialog.componentRegistry}>
             <ScopeContext.Provider value={dialog.scope}>
+              {typeof dialog.title === 'string'
+                ? dialog.title
+                : isCompiledNode(dialog.title) || isCompiledNodeArray(dialog.title)
+                  ? <RenderNodes input={dialog.title as RenderNodeInput} options={{ scope: dialog.scope, actionScope: dialog.actionScope, componentRegistry: dialog.componentRegistry }} />
+                  : String(dialog.title)}
+            </ScopeContext.Provider>
+          </ComponentRegistryContext.Provider>
+        </ActionScopeContext.Provider>
+      )
+    : null;
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) page.closeDialog(dialog.id); }}>
+      <DialogContent className="nop-dialog-card">
+        <ActionScopeContext.Provider value={dialog.actionScope}>
+          <ComponentRegistryContext.Provider value={dialog.componentRegistry}>
+            <ScopeContext.Provider value={dialog.scope}>
+              {titleNode && <DialogTitle>{titleNode}</DialogTitle>}
               <RenderNodes
                 input={(dialog.body ?? dialog.dialog.body) as RenderNodeInput}
                 options={{ scope: dialog.scope, actionScope: dialog.actionScope, componentRegistry: dialog.componentRegistry }}
@@ -114,4 +108,4 @@ function DialogView(props: {
 }
 
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { Dialog, DialogContent, DialogOverlay, DialogClose } from '@nop-chaos/ui';
+import { Dialog, DialogContent, DialogTitle } from '@nop-chaos/ui';
