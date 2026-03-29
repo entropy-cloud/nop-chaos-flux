@@ -95,9 +95,9 @@ describe('dataRendererDefinitions', () => {
 
     expect(await screen.findByText('Record details')).toBeTruthy();
     expect(screen.getByText('User: Bob')).toBeTruthy();
-    expect(screen.getByText('Close')).toBeTruthy();
+    expect(document.querySelector('.nop-dialog-close')).toBeTruthy();
 
-    fireEvent.click(screen.getByText('Close'));
+    fireEvent.click(document.querySelector('.nop-dialog-close')!);
 
     await waitFor(() => {
       expect(screen.queryByText('Record details')).toBeNull();
