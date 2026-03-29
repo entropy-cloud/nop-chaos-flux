@@ -1,5 +1,6 @@
 import type {
   ActionContext,
+  ComponentHandleRegistry,
   RendererEnv,
   RendererPlugin
 } from '@nop-chaos/flux-core';
@@ -10,11 +11,12 @@ import {
   installNopDebuggerWindowFlag,
   registerAutomationApi
 } from './automation';
-import { createSessionId, readWindowConfig } from './controller-helpers';
+import { createSessionId, loadPersistedPanelOpen, loadPersistedPosition, persistPanelOpen, persistPosition, readWindowConfig } from './controller-helpers';
 import { applyEventQuery, buildInteractionTrace, buildNodeDiagnostics, buildOverview, buildSessionExport, createDiagnosticReport } from './diagnostics';
 import { normalizeRedactionOptions } from './redaction';
 import { createDebuggerStore } from './store';
 import type {
+  NopComponentInspectResult,
   NopDebugEvent,
   NopDebugEventQuery,
   NopDebuggerAutomationApi,
@@ -29,6 +31,46 @@ import type {
   NopWaitForEventOptions
 } from './types';
 
+type InternalComponentHandle = {
+  _cid?: number;
+  id?: string;
+  name?: string;
+  type: string;
+  _mounted?: boolean;
+};
+
+function findHandleByCid(registry: ComponentHandleRegistry, cid: number): InternalComponentHandle | undefined {
+  const typed = registry as unknown as {
+    handles?: Map<number, InternalComponentHandle>;
+  };
+  if (typed.handles) {
+    for (const handle of typed.handles.values()) {
+      if (handle._cid === cid) return handle;
+    }
+  }
+  if (registry.parent) {
+    return findHandleByCid(registry.parent, cid);
+  }
+  return undefined;
+}
+
+function buildInspectResult(
+  cid: number,
+  handle: InternalComponentHandle | undefined,
+  mounted: boolean
+): NopComponentInspectResult {
+  const result: NopComponentInspectResult = {
+    cid,
+    mounted
+  };
+  if (handle) {
+    result.handleId = handle.id;
+    result.handleName = handle.name;
+    result.handleType = handle.type;
+  }
+  return result;
+}
+
 export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebuggerController {
   const windowConfig = readWindowConfig();
   const enabled = options.enabled ?? windowConfig.enabled;
@@ -37,19 +79,41 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const maxEvents = options.maxEvents ?? 400;
   const exposeAutomationApi = options.exposeAutomationApi ?? true;
   const redaction = normalizeRedactionOptions(options.redaction);
+  const persistedPosition = loadPersistedPosition(debuggerId);
+  const persistedPanelOpen = loadPersistedPanelOpen(debuggerId);
+  const initialPosition = persistedPosition ?? windowConfig.position;
+  const initialPanelOpen = persistedPanelOpen ?? windowConfig.defaultOpen;
 
   const store = createDebuggerStore({
     enabled,
     sessionId,
     maxEvents,
-    defaultOpen: windowConfig.defaultOpen,
+    defaultOpen: initialPanelOpen,
     defaultTab: windowConfig.defaultTab,
-    position: windowConfig.position,
+    position: initialPosition,
     errorBufferKeepEarliest: options.errorBuffer?.keepEarliest ?? 3,
     errorBufferKeepLatest: options.errorBuffer?.keepLatest ?? 5
   });
 
   const requestState = new Map<string, { startedAt: number }>();
+  let componentRegistry: ComponentHandleRegistry | undefined;
+
+  const inspectByCid = (cid: number): NopComponentInspectResult | undefined => {
+    if (!componentRegistry) return undefined;
+    const element = document.querySelector(`[data-cid="${cid}"]`);
+    const handle = element ? findHandleByCid(componentRegistry, cid) : undefined;
+    if (!handle && !element) return undefined;
+    return buildInspectResult(cid, handle, !!element);
+  };
+
+  const inspectByElement = (element: HTMLElement): NopComponentInspectResult | undefined => {
+    const cidAttr = element.getAttribute('data-cid');
+    if (!cidAttr) return undefined;
+    const cid = Number(cidAttr);
+    if (!Number.isFinite(cid)) return undefined;
+    const handle = componentRegistry ? findHandleByCid(componentRegistry, cid) : undefined;
+    return buildInspectResult(cid, handle, true);
+  };
 
   const getSnapshot = () => store.getSnapshot();
   const getOverview = () => buildOverview(getSnapshot().events);
@@ -120,19 +184,26 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     },
     show() {
       store.show();
+      persistPanelOpen(debuggerId, true);
     },
     hide() {
       store.hide();
+      persistPanelOpen(debuggerId, false);
     },
     toggle() {
       store.toggle();
+      const snap = store.getSnapshot();
+      persistPanelOpen(debuggerId, snap.panelOpen);
     },
     setActiveTab(tab: NopDebuggerTab) {
       store.setActiveTab(tab);
     },
     setPanelPosition(position: { x: number; y: number }) {
       store.setPosition(position);
-    }
+      persistPosition(debuggerId, position);
+    },
+    inspectByCid,
+    inspectByElement
   });
 
   const plugin: RendererPlugin = createDebuggerPlugin(store);
@@ -157,12 +228,16 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     },
     show() {
       store.show();
+      persistPanelOpen(debuggerId, true);
     },
     hide() {
       store.hide();
+      persistPanelOpen(debuggerId, false);
     },
     toggle() {
       store.toggle();
+      const snap = store.getSnapshot();
+      persistPanelOpen(debuggerId, snap.panelOpen);
     },
     clear() {
       store.clear();
@@ -178,6 +253,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     },
     setPanelPosition(position: { x: number; y: number }) {
       store.setPosition(position);
+      persistPosition(debuggerId, position);
     },
     toggleFilter(filter) {
       store.toggleFilter(filter);
@@ -197,7 +273,12 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     subscribe(listener: () => void) {
       return store.subscribe(listener);
     },
-    getSnapshot
+    getSnapshot,
+    setComponentRegistry(registry: ComponentHandleRegistry) {
+      componentRegistry = registry;
+    },
+    inspectByCid,
+    inspectByElement
   } satisfies NopDebuggerController;
 
   if (exposeAutomationApi) {
