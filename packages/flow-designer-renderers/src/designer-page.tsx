@@ -201,20 +201,20 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
           </div>
         </div>
         {hasRendererSlotContent(dialogsSlot) ? <div className="relative">{dialogsSlot}</div> : null}
-        {jsonOpen ? (
-          <div className="relative" role="dialog" aria-label="Flow JSON preview">
-            <div className="fixed right-4 top-[72px] w-[min(560px,calc(100vw-32px))] max-h-[calc(100vh-96px)] border border-border rounded-[14px] bg-card shadow-[0_16px_40px_rgba(15,23,42,0.18)] overflow-hidden z-60">
-              <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-b border-border">
-                <h3 className="m-0 text-[13px] font-bold text-foreground">Flow JSON</h3>
-                <button type="button" className="border border-border rounded-lg bg-secondary text-secondary-foreground w-7 h-7 cursor-pointer hover:bg-secondary/80" aria-label="Close JSON preview" onClick={() => setJsonOpen(false)}>
-                  ✕
-                </button>
-              </div>
-              <pre className="m-0 p-3 overflow-auto max-h-[calc(100vh-156px)] font-mono text-xs leading-relaxed bg-[#0b1220] text-[#dbe9ff]">{core.exportDocument()}</pre>
-            </div>
-          </div>
-        ) : null}
       </div>
+      {jsonOpen ? (
+        <div role="dialog" aria-label="Flow JSON preview">
+          <div className="fixed right-4 top-[72px] w-[min(560px,calc(100vw-32px))] max-h-[calc(100vh-96px)] border border-border rounded-[14px] bg-card shadow-[0_16px_40px_rgba(15,23,42,0.18)] overflow-hidden z-60">
+            <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-b border-border">
+              <h3 className="m-0 text-[13px] font-bold text-foreground">Flow JSON</h3>
+              <button type="button" className="border border-border rounded-lg bg-secondary text-secondary-foreground w-7 h-7 cursor-pointer hover:bg-secondary/80" aria-label="Close JSON preview" onClick={() => setJsonOpen(false)}>
+                ✕
+              </button>
+            </div>
+            <pre className="m-0 p-3 overflow-auto max-h-[calc(100vh-156px)] font-mono text-xs leading-relaxed bg-[#0b1220] text-[#dbe9ff]">{core.exportDocument()}</pre>
+          </div>
+        </div>
+      ) : null}
     </DesignerContext.Provider>
   );
 }
