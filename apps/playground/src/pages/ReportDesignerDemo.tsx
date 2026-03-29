@@ -1090,27 +1090,6 @@ export function ReportDesignerDemo() {
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleFieldDrop}
         >
-          {/* Sheet Tabs */}
-          <SheetTabBar
-            sheets={snapshot.workbook.sheets}
-            activeSheetId={snapshot.activeSheet?.id ?? ''}
-            onSwitchSheet={(sheetId) => spreadsheetBridge.dispatch({
-              type: 'spreadsheet:setActiveSheet',
-              sheetId,
-            })}
-            onAddSheet={handleAddSheet}
-            onRemoveSheet={handleRemoveSheet}
-            onRenameSheet={async (sheetId, name) => {
-              await spreadsheetBridge.dispatch({
-                type: 'spreadsheet:renameSheet',
-                sheetId,
-                name,
-              });
-              addLog(`Renamed sheet to "${name}"`);
-            }}
-            canRemoveSheet={snapshot.workbook.sheets.length > 1}
-          />
-
           {/* Grid */}
           <div className="spreadsheet-grid">
             <table>
@@ -1267,6 +1246,27 @@ export function ReportDesignerDemo() {
               )}
             </div>
           )}
+
+          {/* Sheet Tabs (Excel-style bottom tab bar) */}
+          <SheetTabBar
+            sheets={snapshot.workbook.sheets}
+            activeSheetId={snapshot.activeSheet?.id ?? ''}
+            onSwitchSheet={(sheetId) => spreadsheetBridge.dispatch({
+              type: 'spreadsheet:setActiveSheet',
+              sheetId,
+            })}
+            onAddSheet={handleAddSheet}
+            onRemoveSheet={handleRemoveSheet}
+            onRenameSheet={async (sheetId, name) => {
+              await spreadsheetBridge.dispatch({
+                type: 'spreadsheet:renameSheet',
+                sheetId,
+                name,
+              });
+              addLog(`Renamed sheet to "${name}"`);
+            }}
+            canRemoveSheet={snapshot.workbook.sheets.length > 1}
+          />
         </div>
 
         {/* Inspector */}
