@@ -27,6 +27,8 @@ If you do not know where to start, check these first:
 3. `docs/references/terminology.md` if vocabulary changed
 4. `docs/references/renderer-interfaces.md` if public or semi-public contracts changed
 5. `docs/examples/user-management-schema.md` if authoring semantics or action behavior changed
+6. latest architecture conformance audit index under `docs/analysis/` when planning broad refactors:
+	- `docs/analysis/architecture-conformance-audit-2026-03-29-index.md`
 
 ## Change Triggers
 
