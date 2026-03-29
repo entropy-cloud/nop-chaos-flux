@@ -14,7 +14,7 @@ export interface ContainerSchema extends BaseSchema {
   wrap?: boolean;
   /** 对齐方式 */
   align?: 'start' | 'center' | 'end' | 'stretch';
-  /** 间距 */
+  /** 间距：命名 token ('none'|'xs'|'sm'|'md'|'lg'|'xl')、数字(px) 或 CSS 值 (如 '1rem') */
   gap?: number | string;
   body?: BaseSchema[];
 }
@@ -54,6 +54,7 @@ export interface FlexSchema extends BaseSchema {
   wrap?: boolean;
   align?: 'start' | 'center' | 'end' | 'stretch';
   justify?: 'start' | 'center' | 'end' | 'between' | 'around';
+  /** 间距：命名 token ('none'|'xs'|'sm'|'md'|'lg'|'xl')、数字(px) 或 CSS 值 (如 '1rem') */
   gap?: number | string;
   className?: string;
 }

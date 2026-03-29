@@ -2,7 +2,7 @@ import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import type { ContainerSchema } from './schemas';
-import { classNames, resolveDirection } from './utils';
+import { classNames, resolveDirection, resolveGap } from './utils';
 
 export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
   const direction = props.props.direction === 'column' ? 'column' : 'row';
@@ -14,12 +14,12 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
     props.props.align === 'stretch'
       ? props.props.align
       : undefined;
-  const gap = typeof props.props.gap === 'number' || typeof props.props.gap === 'string' ? props.props.gap : undefined;
+  const gap = resolveGap(props.props.gap as number | string | undefined);
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
   const bodyContent = props.regions.body?.render();
 
-  const useFlexChild = wrap || align !== undefined || gap !== undefined || direction !== 'row';
+  const useFlexChild = wrap || align !== undefined || (gap.className || gap.style) || direction !== 'row';
 
   return (
     <div className={classNames('nop-container', props.meta.className)} data-testid={props.meta.testid || undefined}>
@@ -33,9 +33,10 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
             align === 'center' && 'items-center justify-center',
             align === 'start' && 'items-start justify-start',
             align === 'end' && 'items-end justify-end',
-            align === 'stretch' && 'items-stretch'
+            align === 'stretch' && 'items-stretch',
+            gap.className
           )}
-          style={gap !== undefined ? { gap: typeof gap === 'number' ? `${gap}px` : gap } : undefined}
+          style={gap.style}
         >
           {bodyContent}
         </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { classNames, resolveDirection } from './utils';
+import { classNames, resolveDirection, resolveGap } from './utils';
 import type { FlexSchema } from './schemas';
 
 export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
@@ -21,7 +21,7 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
     props.props.justify === 'around'
       ? props.props.justify
       : undefined;
-  const gap = typeof props.props.gap === 'number' || typeof props.props.gap === 'string' ? props.props.gap : undefined;
+  const gap = resolveGap(props.props.gap as number | string | undefined);
   const bodyContent = props.regions.body?.render();
   const itemsContent = props.regions.items?.render();
 
@@ -41,9 +41,10 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
         justify === 'end' && 'justify-end',
         justify === 'between' && 'justify-between',
         justify === 'around' && 'justify-around',
-        props.meta.className
+        props.meta.className,
+        gap.className
       )}
-      style={gap !== undefined ? { gap: typeof gap === 'number' ? `${gap}px` : gap } : undefined}
+      style={gap.style}
       data-testid={props.meta.testid || undefined}
     >
       {bodyContent ?? itemsContent}
