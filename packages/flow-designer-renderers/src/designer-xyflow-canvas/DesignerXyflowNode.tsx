@@ -90,6 +90,7 @@ export function DesignerXyflowNode(props: NodeProps) {
       <div
         className={classNames('nop-designer-node', nodeType?.appearance?.className)}
         style={appearanceStyle}
+        data-selected={props.selected ? '' : undefined}
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
       >
@@ -105,6 +106,7 @@ export function DesignerXyflowNode(props: NodeProps) {
       <div
         className={classNames('nop-designer-node', nodeType.appearance?.className)}
         style={appearanceStyle}
+        data-selected={props.selected ? '' : undefined}
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
       >

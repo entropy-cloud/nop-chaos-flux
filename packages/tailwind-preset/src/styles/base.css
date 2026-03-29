@@ -74,6 +74,19 @@
                 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   }
 
+  .nop-designer-node[data-selected] > :where(.nop-glass-card) {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 2px color-mix(in hsl, hsl(var(--primary)) 24%, transparent),
+                0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  }
+
+  .nop-designer-node:not([data-selected]):hover > :where(.nop-glass-card) {
+    border-color: color-mix(in srgb, hsl(var(--primary)) 30%, rgba(255, 255, 255, 0.4));
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  }
+
   .dark .nop-glass-card {
     background: rgba(30, 41, 59, 0.78);
     border-color: rgba(148, 163, 184, 0.16);
