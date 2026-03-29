@@ -1,4 +1,5 @@
 import type {
+  NopComponentInspectResult,
   NopDebugEvent,
   NopDebugEventQuery,
   NopDebuggerAutomationApi,
@@ -44,6 +45,8 @@ export function createAutomationApi(input: {
   toggle(): void;
   setActiveTab(tab: NopDebuggerTab): void;
   setPanelPosition(position: { x: number; y: number }): void;
+  inspectByCid(cid: number): NopComponentInspectResult | undefined;
+  inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
 }): NopDebuggerAutomationApi {
   return {
     controllerId: input.controllerId,
@@ -69,7 +72,9 @@ export function createAutomationApi(input: {
     hide: input.hide,
     toggle: input.toggle,
     setActiveTab: input.setActiveTab,
-    setPanelPosition: input.setPanelPosition
+    setPanelPosition: input.setPanelPosition,
+    inspectByCid: input.inspectByCid,
+    inspectByElement: input.inspectByElement
   };
 }
 

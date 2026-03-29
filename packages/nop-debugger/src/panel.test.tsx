@@ -22,7 +22,7 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
   const emptyOverview: NopDebuggerOverview = {
     errorCount: 0,
     totalEvents: 0,
-    countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0 }
+    countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 }
   };
   const latestTrace: NopInteractionTrace = {
     query: { inferFromLatest: true },
@@ -50,7 +50,7 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     sessionId: 'session-test',
     generatedAt: 1,
     snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters },
-    overview: { errorCount: 1, totalEvents: 4, countsByGroup: { render: 1, action: 1, api: 1, compile: 0, notify: 0, error: 1 } },
+    overview: { errorCount: 1, totalEvents: 4, countsByGroup: { render: 1, action: 1, api: 1, compile: 0, notify: 0, error: 1, node: 0 } },
     latestInteractionTrace: latestTrace,
     recentEvents: [],
     pinnedErrors: { earliest: [], latest: [] }
@@ -93,7 +93,9 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
       hide,
       toggle() {},
       setActiveTab,
-      setPanelPosition
+      setPanelPosition,
+      inspectByCid: vi.fn(() => undefined),
+      inspectByElement: vi.fn(() => undefined)
     },
     decorateEnv: (env) => env,
     onActionError() {},
@@ -118,6 +120,9 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     createDiagnosticReport: vi.fn(() => metricReport),
     exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [], pinnedErrors: { earliest: [], latest: [] } }),
     waitForEvent: async () => snapshot.events[0]!,
+    setComponentRegistry: vi.fn(),
+    inspectByCid: vi.fn(() => undefined),
+    inspectByElement: vi.fn(() => undefined),
     subscribe: () => () => {},
     getSnapshot: () => snapshot
   };
