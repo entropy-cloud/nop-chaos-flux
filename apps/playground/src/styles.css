@@ -22,6 +22,8 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -47,6 +49,8 @@
   --secondary-surface: 32 30% 96%;
   --secondary-surface-hover: 28 25% 93%;
   --secondary-foreground: 25 20% 35%;
+  --popover: 30 20% 98%;
+  --popover-foreground: 25 15% 35%;
   --radius: 0.75rem;
 }
 
@@ -116,8 +120,6 @@
   --nop-dirty-border: rgba(191, 111, 47, 0.45);
   --nop-field-error: #b53b2c;
   --nop-dialog-backdrop: rgba(18, 31, 43, 0.36);
-  --nop-dialog-surface: white;
-  --nop-dialog-shadow: 0 28px 90px rgba(18, 31, 43, 0.25);
   --nop-nav-surface: rgba(255, 255, 255, 0.94);
   --nop-nav-border: rgba(33, 53, 71, 0.12);
   --nop-nav-shadow: 0 12px 32px rgba(33, 53, 71, 0.12);
@@ -143,4 +145,9 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+[data-slot="dialog-overlay"] {
+  background-color: var(--nop-dialog-backdrop);
+  backdrop-filter: blur(2px);
 }
