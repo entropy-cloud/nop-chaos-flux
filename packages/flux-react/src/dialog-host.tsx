@@ -94,7 +94,11 @@ function DialogView(props: {
         <ActionScopeContext.Provider value={dialog.actionScope}>
           <ComponentRegistryContext.Provider value={dialog.componentRegistry}>
             <ScopeContext.Provider value={dialog.scope}>
-              {titleNode && <DialogTitle>{titleNode}</DialogTitle>}
+              {titleNode && (
+                <DialogHeader>
+                  <DialogTitle>{titleNode}</DialogTitle>
+                </DialogHeader>
+              )}
               <RenderNodes
                 input={(dialog.body ?? dialog.dialog.body) as RenderNodeInput}
                 options={{ scope: dialog.scope, actionScope: dialog.actionScope, componentRegistry: dialog.componentRegistry }}
@@ -108,4 +112,4 @@ function DialogView(props: {
 }
 
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { Dialog, DialogContent, DialogTitle } from '@nop-chaos/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';

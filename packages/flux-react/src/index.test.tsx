@@ -1787,5 +1787,115 @@ describe('reactive meta', () => {
 
     cleanup();
   });
+
+  it('renders dialog with drag handle (DialogHeader) around the title', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button',
+              label: 'Open drag-handle dialog',
+              onClick: {
+                action: 'dialog',
+                dialog: {
+                  title: 'Draggable title',
+                  body: [{ type: 'text', text: 'Dialog content' }]
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Open drag-handle dialog'));
+
+    const titleEl = await screen.findByText('Draggable title');
+    const header = titleEl.closest('[data-slot="dialog-header"]');
+    expect(header).toBeTruthy();
+    expect(header!.className).toContain('cursor-grab');
+  });
+
+  it('applies inline transform for draggable dialogs instead of Tailwind centering', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button',
+              label: 'Open transform dialog',
+              onClick: {
+                action: 'dialog',
+                dialog: {
+                  title: 'Drag test',
+                  body: [{ type: 'text', text: 'Body' }]
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Open transform dialog'));
+
+    const content = await screen.findByRole('dialog');
+    expect(content.style.transform).toBe('translate(-50%, -50%)');
+    expect(content.className).not.toContain('translate-x-[-50%]');
+  });
+
+  it('registers drag listeners on pointerdown and updates transform', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button',
+              label: 'Open pointer dialog',
+              onClick: {
+                action: 'dialog',
+                dialog: {
+                  title: 'Drag me',
+                  body: [{ type: 'text', text: 'Content' }]
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Open pointer dialog'));
+
+    const content = await screen.findByRole('dialog');
+    const header = content.querySelector('[data-slot="dialog-header"]')!;
+
+    expect(content.style.transform).toBe('translate(-50%, -50%)');
+    expect(header.className).toContain('cursor-grab');
+
+    fireEvent.pointerDown(header, { clientX: 500, clientY: 300, button: 0 });
+
+    expect(content.style.transition).toBe('none');
+    expect(content.style.transform).toBe('translate(-50%, -50%)');
+  });
 });
 
