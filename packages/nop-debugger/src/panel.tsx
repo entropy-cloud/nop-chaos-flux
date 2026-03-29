@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
+import type { NopDebugEvent, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
 import { buildOverview, DEFAULT_FILTERS } from './diagnostics';
 
 const DEBUGGER_STYLE_ID = 'nop-debugger-styles';
@@ -194,8 +194,59 @@ const DEBUGGER_STYLES = `
 .nop-debugger__badge[data-group="compile"] { background: var(--nop-debugger-badge-compile-bg); color: var(--nop-debugger-badge-compile-text); }
 .nop-debugger__badge[data-group="notify"] { background: var(--nop-debugger-badge-notify-bg); color: var(--nop-debugger-badge-notify-text); }
 .nop-debugger__badge[data-group="error"] { background: var(--nop-debugger-badge-error-bg); color: var(--nop-debugger-badge-error-text); }
+.nop-debugger__badge[data-group="node"] { background: var(--nop-debugger-badge-compile-bg); color: var(--nop-debugger-badge-compile-text); }
 
 .nop-debugger__empty { margin: 0; color: var(--nop-debugger-muted-text); }
+
+.nop-debugger-launcher__icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nop-debugger-launcher__label { font-size: 12px; font-weight: 600; }
+
+.nop-debugger__search {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--nop-debugger-chip-border);
+  background: var(--nop-debugger-chip-bg);
+  color: var(--nop-debugger-text);
+  font-size: 12px;
+  outline: none;
+}
+.nop-debugger__search:focus {
+  border-color: var(--nop-debugger-chip-active-border);
+}
+.nop-debugger__search::placeholder {
+  color: var(--nop-debugger-muted-text);
+}
+
+.nop-debugger__entry { cursor: pointer; }
+.nop-debugger__entry-expanded {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--nop-debugger-detail-bg);
+  max-height: 320px;
+  overflow: auto;
+}
+.nop-debugger__json-key { color: #9bd9ff; }
+.nop-debugger__json-string { color: #9df3ca; }
+.nop-debugger__json-number { color: #ffd18a; }
+.nop-debugger__json-boolean { color: #dcc0ff; }
+.nop-debugger__json-null { color: var(--nop-debugger-muted-text); font-style: italic; }
+.nop-debugger__json-toggle {
+  cursor: pointer;
+  user-select: none;
+  color: var(--nop-debugger-muted-text);
+  font-size: 11px;
+}
+.nop-debugger__json-toggle:hover { color: var(--nop-debugger-text); }
 
 .nop-debugger-launcher {
   position: fixed;
@@ -212,19 +263,54 @@ const DEBUGGER_STYLES = `
   touch-action: none;
 }
 
-.nop-debugger-launcher:active {
-  cursor: grabbing;
-}
-
-.nop-debugger-launcher__icon {
-  width: 16px;
+.nop-debugger-launcher__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
   height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ff6b6b;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: nop-debugger-pulse 2s ease-in-out infinite;
+}
+@keyframes nop-debugger-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 
-.nop-debugger-launcher__label { font-size: 12px; font-weight: 600; }
+.nop-debugger__status-pending { color: #ffd18a; }
+.nop-debugger__status-completed { color: #9df3ca; }
+.nop-debugger__status-failed { color: #ffadad; }
+.nop-debugger__status-aborted { color: var(--nop-debugger-muted-text); }
+
+.nop-debugger__node-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--nop-debugger-chip-border);
+  background: var(--nop-debugger-chip-bg);
+  color: var(--nop-debugger-text);
+  font-size: 12px;
+  outline: none;
+}
+.nop-debugger__node-input:focus {
+  border-color: var(--nop-debugger-chip-active-border);
+}
+.nop-debugger__node-input::placeholder {
+  color: var(--nop-debugger-muted-text);
+}
+
+.nop-debugger__errors-only-toggle {
+  background: var(--nop-debugger-badge-error-bg);
+  color: var(--nop-debugger-badge-error-text);
+}
 
 @media (max-width: 760px) {
   .nop-debugger {
@@ -244,7 +330,8 @@ const FILTER_LABELS: Record<NopDebuggerFilterKind, string> = {
   api: 'API',
   compile: 'Compile',
   notify: 'Notify',
-  error: 'Error'
+  error: 'Error',
+  node: 'Node'
 };
 
 function formatClock(timestamp: number) {
@@ -275,6 +362,195 @@ function formatTraceSummary(trace: NopInteractionTrace | undefined) {
     headline: anchor,
     detail: `${trace.totalEvents} correlated event${trace.totalEvents === 1 ? '' : 's'}${relatedBits.length ? ` | ${relatedBits.join(' | ')}` : ''}`
   };
+}
+
+function JsonViewer(props: { data: unknown; maxDepth?: number; defaultExpanded?: number }) {
+  const maxDepth = props.maxDepth ?? 3;
+  const defaultExpanded = props.defaultExpanded ?? 1;
+  return (
+    <div className="nop-debugger__entry-expanded">
+      <JsonNode data={props.data} path="$" depth={0} maxDepth={maxDepth} defaultExpanded={defaultExpanded} />
+    </div>
+  );
+}
+
+function JsonNode(props: { data: unknown; path: string; depth: number; maxDepth: number; defaultExpanded: number }) {
+  const { data, depth, maxDepth, defaultExpanded } = props;
+  const [collapsed, setCollapsed] = useState(depth >= defaultExpanded);
+
+  if (data === null || data === undefined) {
+    return <span className="nop-debugger__json-null">{String(data)}</span>;
+  }
+
+  if (typeof data === 'string') {
+    return <span className="nop-debugger__json-string">&quot;{data.length > 500 ? data.slice(0, 500) + '…' : data}&quot;</span>;
+  }
+
+  if (typeof data === 'number') {
+    return <span className="nop-debugger__json-number">{String(data)}</span>;
+  }
+
+  if (typeof data === 'boolean') {
+    return <span className="nop-debugger__json-boolean">{String(data)}</span>;
+  }
+
+  if (depth >= maxDepth) {
+    return <span className="nop-debugger__json-null">...</span>;
+  }
+
+  if (Array.isArray(data)) {
+    if (data.length === 0) {
+      return <span>[]</span>;
+    }
+    const displayItems = data.length > 50 ? data.slice(0, 10) : data;
+    const hasMore = data.length > 50;
+    return (
+      <div>
+        <span className="nop-debugger__json-toggle" onClick={() => setCollapsed((c) => !c)}>
+          {collapsed ? `▶ Array(${data.length})` : `▼ Array(${data.length})`}
+        </span>
+        {!collapsed && (
+          <div style={{ paddingLeft: 12 }}>
+            {displayItems.map((item, i) => (
+              <div key={i}>
+                <span className="nop-debugger__json-key">{i}: </span>
+                <JsonNode data={item} path={`${props.path}[${i}]`} depth={depth + 1} maxDepth={maxDepth} defaultExpanded={defaultExpanded} />
+              </div>
+            ))}
+            {hasMore && <span className="nop-debugger__json-null">... and {data.length - 10} more items</span>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (typeof data === 'object') {
+    const entries = Object.entries(data as Record<string, unknown>);
+    if (entries.length === 0) {
+      return <span>{'{}'}</span>;
+    }
+    return (
+      <div>
+        <span className="nop-debugger__json-toggle" onClick={() => setCollapsed((c) => !c)}>
+          {collapsed ? `▶ Object{${entries.length}}` : `▼ Object{${entries.length}}`}
+        </span>
+        {!collapsed && (
+          <div style={{ paddingLeft: 12 }}>
+            {entries.map(([key, value]) => (
+              <div key={key}>
+                <span className="nop-debugger__json-key">{key}: </span>
+                <JsonNode data={value} path={`${props.path}.${key}`} depth={depth + 1} maxDepth={maxDepth} defaultExpanded={defaultExpanded} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return <span>{String(data)}</span>;
+}
+
+function includesText(target: string | undefined, query: string) {
+  return (target ?? '').toLowerCase().includes(query.toLowerCase());
+}
+
+type MergedRequest = {
+  requestKey: string;
+  startEvent?: NopDebugEvent;
+  endEvent?: NopDebugEvent;
+  abortEvent?: NopDebugEvent;
+  status: 'pending' | 'completed' | 'failed' | 'aborted';
+  durationMs?: number;
+  summary: string;
+};
+
+function mergeNetworkRequests(events: NopDebugEvent[]): MergedRequest[] {
+  const map = new Map<string, MergedRequest>();
+
+  for (const event of events) {
+    const key = event.requestKey ?? event.summary;
+    const existing = map.get(key);
+
+    if (event.kind === 'api:start') {
+      if (!existing) {
+        map.set(key, {
+          requestKey: key,
+          startEvent: event,
+          status: 'pending',
+          summary: event.summary
+        });
+      } else if (!existing.startEvent) {
+        map.set(key, { ...existing, startEvent: event, summary: event.summary });
+      }
+    } else if (event.kind === 'api:end') {
+      const base = existing ?? { requestKey: key, status: 'pending' as const, summary: event.summary };
+      const ok = event.level === 'success' || event.level === 'info';
+      map.set(key, {
+        ...base,
+        endEvent: event,
+        status: ok ? 'completed' : 'failed',
+        durationMs: event.durationMs,
+        summary: base.summary ?? event.summary
+      });
+    } else if (event.kind === 'api:abort') {
+      const base = existing ?? { requestKey: key, status: 'pending' as const, summary: event.summary };
+      map.set(key, {
+        ...base,
+        abortEvent: event,
+        status: 'aborted',
+        summary: base.summary ?? event.summary
+      });
+    }
+  }
+
+  const results = Array.from(map.values());
+  results.sort((a, b) => {
+    if (a.status === 'pending' && b.status !== 'pending') return -1;
+    if (b.status === 'pending' && a.status !== 'pending') return 1;
+    const aTime = a.endEvent?.timestamp ?? a.startEvent?.timestamp ?? 0;
+    const bTime = b.endEvent?.timestamp ?? b.startEvent?.timestamp ?? 0;
+    return bTime - aTime;
+  });
+
+  return results;
+}
+
+type ErrorGroup = {
+  source: string;
+  count: number;
+  latestTimestamp: number;
+  events: NopDebugEvent[];
+};
+
+function groupErrors(events: NopDebugEvent[]): ErrorGroup[] {
+  const groups = new Map<string, ErrorGroup>();
+
+  for (const event of events) {
+    if (event.group !== 'error' && event.level !== 'error' && event.level !== 'warning') {
+      continue;
+    }
+
+    const key = event.source ?? 'unknown';
+    const existing = groups.get(key);
+
+    if (existing) {
+      existing.count++;
+      existing.events.push(event);
+      if (event.timestamp > existing.latestTimestamp) {
+        existing.latestTimestamp = event.timestamp;
+      }
+    } else {
+      groups.set(key, {
+        source: key,
+        count: 1,
+        latestTimestamp: event.timestamp,
+        events: [event]
+      });
+    }
+  }
+
+  return Array.from(groups.values()).sort((a, b) => b.latestTimestamp - a.latestTimestamp);
 }
 
 function useDebuggerSnapshot(controller: NopDebuggerController) {
@@ -527,15 +803,38 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const { position: launcherPosition, bind: launcherBind, wasDraggedRef, consumeSuppressedClick } = useLauncherDrag(props.controller, snapshot.position);
   useInjectDebuggerStyles(snapshot.enabled);
 
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [searchText, setSearchText] = useState('');
+  const [errorsOnly, setErrorsOnly] = useState(false);
+  const [nodeIdInput, setNodeIdInput] = useState('');
+  const [networkExpandedKey, setNetworkExpandedKey] = useState<string | null>(null);
+  const [errorGroupExpanded, setErrorGroupExpanded] = useState<string | null>(null);
+
   const filteredEvents = useMemo(
     () => snapshot.events.filter((event) => snapshot.filters.includes(event.group)),
     [snapshot.events, snapshot.filters]
   );
 
+  const searchedEvents = useMemo(() => {
+    if (!searchText.trim()) return filteredEvents;
+    return filteredEvents.filter((event) =>
+      includesText(event.summary, searchText) ||
+      includesText(event.detail, searchText) ||
+      includesText(event.source, searchText) ||
+      includesText(event.nodeId, searchText) ||
+      includesText(event.path, searchText) ||
+      includesText(event.requestKey, searchText)
+    );
+  }, [filteredEvents, searchText]);
+
   const networkEvents = useMemo(
     () => filteredEvents.filter((event) => event.group === 'api'),
     [filteredEvents]
   );
+
+  const mergedRequests = useMemo(() => mergeNetworkRequests(networkEvents), [networkEvents]);
+
+  const errorGroups = useMemo(() => groupErrors(snapshot.events), [snapshot.events]);
 
   const overview = useMemo(() => buildOverview(snapshot.events), [snapshot.events]);
   const latestTrace = props.controller.createDiagnosticReport({
@@ -544,12 +843,28 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   }).latestInteractionTrace;
   const latestTraceSummary = useMemo(() => formatTraceSummary(latestTrace), [latestTrace]);
 
+  const nodeDiagnostics = useMemo(() => {
+    if (!nodeIdInput.trim()) return null;
+    return props.controller.getNodeDiagnostics({ nodeId: nodeIdInput.trim() });
+  }, [props.controller, nodeIdInput]);
+
+  const toggleErrorsOnly = () => {
+    if (errorsOnly) {
+      props.controller.setActiveTab('timeline');
+      setErrorsOnly(false);
+    } else {
+      setErrorsOnly(true);
+    }
+  };
+
+  const errorCount = overview.errorCount;
+  const badgeDisplay = errorCount > 99 ? '99+' : String(errorCount);
+
   if (!snapshot.enabled) {
     return null;
   }
 
   if (!snapshot.panelOpen) {
-    const errorCount = overview.errorCount;
     return (
       <button
         type="button"
@@ -577,9 +892,14 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         <span className="nop-debugger-launcher__label">
           {errorCount > 0 ? `${errorCount} err` : `${snapshot.events.length}`}
         </span>
+        {errorCount > 0 ? <span className="nop-debugger-launcher__badge">{badgeDisplay}</span> : null}
       </button>
     );
   }
+
+  const activeTimelineEvents = errorsOnly
+    ? searchedEvents.filter((e) => e.group === 'error' || e.level === 'error' || e.level === 'warning')
+    : searchedEvents;
 
   return (
     <div className="nop-debugger nop-theme-root" style={{ left: `${position.x}px`, top: `${position.y}px` }}>
@@ -607,7 +927,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
       </div>
 
       <div className="nop-debugger__tabs" role="tablist" aria-label="Debugger tabs">
-        {(['overview', 'timeline', 'network'] as NopDebuggerTab[]).map((tab) => (
+        {(['overview', 'timeline', 'network', 'node'] as NopDebuggerTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -658,8 +978,23 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
       {snapshot.activeTab === 'timeline' ? (
         <>
+          <input
+            type="search"
+            className="nop-debugger__search"
+            placeholder="Search events..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
           <div className="nop-debugger__filters">
-            {DEFAULT_FILTERS.map((filter) => {
+            <button
+              type="button"
+              className={`nop-debugger__filter ${errorsOnly ? 'nop-debugger__errors-only-toggle' : ''}`}
+              data-active={errorsOnly ? '' : undefined}
+              onClick={toggleErrorsOnly}
+            >
+              Errors Only
+            </button>
+            {!errorsOnly && DEFAULT_FILTERS.map((filter) => {
               const active = snapshot.filters.includes(filter);
               return (
                 <button
@@ -674,41 +1009,184 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
               );
             })}
           </div>
-          <div className="nop-debugger__list">
-            {filteredEvents.length === 0 ? <p className="nop-debugger__empty">No events match the active filters.</p> : null}
-            {filteredEvents.map((event) => (
-              <article key={event.id} className="nop-debugger__entry">
-                <div className="nop-debugger__entry-topline">
-                  <span className="nop-debugger__badge" data-group={event.group}>{event.group}</span>
-                  <time>{formatClock(event.timestamp)}</time>
-                </div>
-                <strong className="nop-debugger__entry-summary">{event.summary}</strong>
-                <span className="nop-debugger__entry-meta">{event.source}</span>
-                {event.detail ? <code className="nop-debugger__entry-detail">{event.detail}</code> : null}
-              </article>
-            ))}
-          </div>
+
+          {errorsOnly ? (
+            <div className="nop-debugger__list">
+              {errorGroups.length === 0 ? <p className="nop-debugger__empty">No errors recorded.</p> : null}
+              {errorGroups.map((group) => (
+                <article key={group.source} className="nop-debugger__entry">
+                  <div className="nop-debugger__entry-topline">
+                    <span className="nop-debugger__badge" data-group="error">Error</span>
+                    <time>{formatClock(group.latestTimestamp)}</time>
+                  </div>
+                  <strong className="nop-debugger__entry-summary" onClick={() => setErrorGroupExpanded(errorGroupExpanded === group.source ? null : group.source)}>
+                    {group.source} ({group.count})
+                  </strong>
+                  {errorGroupExpanded === group.source ? (
+                    <div className="nop-debugger__entry-expanded">
+                      {group.events.map((event) => (
+                        <div key={event.id}>
+                          <span className="nop-debugger__entry-meta">{formatClock(event.timestamp)}</span>
+                          <strong>{event.summary}</strong>
+                          {event.detail ? <code className="nop-debugger__entry-detail">{event.detail}</code> : null}
+                          {event.exportedData != null ? <JsonViewer data={event.exportedData} defaultExpanded={2} /> : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="nop-debugger__list">
+              {activeTimelineEvents.length === 0 ? <p className="nop-debugger__empty">No events match the active filters.</p> : null}
+              {activeTimelineEvents.map((event) => (
+                <article key={event.id} className="nop-debugger__entry" onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}>
+                  <div className="nop-debugger__entry-topline">
+                    <span className="nop-debugger__badge" data-group={event.group}>{event.group}</span>
+                    <time>{formatClock(event.timestamp)}</time>
+                  </div>
+                  <strong className="nop-debugger__entry-summary">{event.summary}</strong>
+                  <span className="nop-debugger__entry-meta">{event.source}</span>
+                  {expandedId === event.id ? (
+                    <div className="nop-debugger__entry-expanded" onClick={(e) => e.stopPropagation()}>
+                      {event.detail ? <code className="nop-debugger__entry-detail">{event.detail}</code> : null}
+                      {event.network ? (
+                        <div>
+                          <span className="nop-debugger__json-key">Network: </span>
+                          <JsonViewer data={event.network} defaultExpanded={2} />
+                        </div>
+                      ) : null}
+                      {event.exportedData != null ? (
+                        <div>
+                          <span className="nop-debugger__json-key">Data: </span>
+                          <JsonViewer data={event.exportedData} defaultExpanded={2} />
+                        </div>
+                      ) : null}
+                      {!event.detail && !event.network && event.exportedData == null && (
+                        <span className="nop-debugger__empty">No detailed data available.</span>
+                      )}
+                    </div>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          )}
         </>
       ) : null}
 
       {snapshot.activeTab === 'network' ? (
         <div className="nop-debugger__list">
-          {networkEvents.length === 0 ? <p className="nop-debugger__empty">No network events recorded yet.</p> : null}
-          {networkEvents.map((event) => (
-            <article key={event.id} className="nop-debugger__entry">
+          {mergedRequests.length === 0 ? <p className="nop-debugger__empty">No network events recorded yet.</p> : null}
+          {mergedRequests.map((req) => (
+            <article key={req.requestKey} className="nop-debugger__entry" onClick={() => setNetworkExpandedKey(networkExpandedKey === req.requestKey ? null : req.requestKey)}>
               <div className="nop-debugger__entry-topline">
-                <span className="nop-debugger__badge" data-group={event.group}>{event.kind}</span>
-                <time>{formatClock(event.timestamp)}</time>
+                <span className={`nop-debugger__badge nop-debugger__status-${req.status}`} data-group="api">{req.status}</span>
+                <time>{formatClock(req.startEvent?.timestamp ?? 0)}</time>
               </div>
-              <strong className="nop-debugger__entry-summary">{event.summary}</strong>
+              <strong className="nop-debugger__entry-summary">{req.summary}</strong>
               <span className="nop-debugger__entry-meta">
-                {event.durationMs != null ? `${event.durationMs}ms` : 'pending'}
-                {event.requestKey ? ` | ${event.requestKey}` : ''}
+                {req.durationMs != null ? `${req.durationMs}ms` : req.status === 'pending' ? 'pending...' : ''}
               </span>
-              {event.detail ? <code className="nop-debugger__entry-detail">{event.detail}</code> : null}
+              {networkExpandedKey === req.requestKey ? (
+                <div className="nop-debugger__entry-expanded" onClick={(e) => e.stopPropagation()}>
+                  {req.startEvent?.network ? (
+                    <div>
+                      <span className="nop-debugger__json-key">Request: </span>
+                      <JsonViewer data={req.startEvent.network} defaultExpanded={2} />
+                    </div>
+                  ) : null}
+                  {req.endEvent?.network ? (
+                    <div>
+                      <span className="nop-debugger__json-key">Response: </span>
+                      <JsonViewer data={req.endEvent.network} defaultExpanded={2} />
+                    </div>
+                  ) : null}
+                  {req.endEvent?.exportedData != null ? (
+                    <div>
+                      <span className="nop-debugger__json-key">Response Data: </span>
+                      <JsonViewer data={req.endEvent.exportedData} defaultExpanded={2} />
+                    </div>
+                  ) : null}
+                  {req.startEvent?.detail ? <code className="nop-debugger__entry-detail">{req.startEvent.detail}</code> : null}
+                  {req.endEvent?.detail ? <code className="nop-debugger__entry-detail">{req.endEvent.detail}</code> : null}
+                </div>
+              ) : null}
             </article>
           ))}
         </div>
+      ) : null}
+
+      {snapshot.activeTab === 'node' ? (
+        <>
+          <input
+            type="text"
+            className="nop-debugger__node-input"
+            placeholder="Enter nodeId to inspect..."
+            value={nodeIdInput}
+            onChange={(e) => setNodeIdInput(e.target.value)}
+          />
+          {nodeDiagnostics && nodeIdInput.trim() ? (
+            <div className="nop-debugger__list">
+              <article className="nop-debugger__entry">
+                <div className="nop-debugger__entry-topline">
+                  <span className="nop-debugger__badge" data-group="node">Node</span>
+                  <span className="nop-debugger__entry-meta">{nodeDiagnostics.nodeId ?? 'n/a'}</span>
+                </div>
+                <strong className="nop-debugger__entry-summary">
+                  {nodeDiagnostics.rendererTypes.length > 0 ? nodeDiagnostics.rendererTypes.join(', ') : 'Unknown type'}
+                </strong>
+                <span className="nop-debugger__entry-meta">
+                  {nodeDiagnostics.path ?? 'no path'} | {nodeDiagnostics.totalEvents} events
+                </span>
+              </article>
+              {nodeDiagnostics.totalEvents === 0 ? (
+                <p className="nop-debugger__empty">No events found for this node.</p>
+              ) : (
+                <>
+                  <div className="nop-debugger__overview">
+                    <article className="nop-debugger__metric-card">
+                      <span className="nop-debugger__metric-label">Render events</span>
+                      <strong>{nodeDiagnostics.countsByGroup.render ?? 0}</strong>
+                    </article>
+                    <article className="nop-debugger__metric-card">
+                      <span className="nop-debugger__metric-label">Action events</span>
+                      <strong>{nodeDiagnostics.countsByGroup.action ?? 0}</strong>
+                    </article>
+                    <article className="nop-debugger__metric-card">
+                      <span className="nop-debugger__metric-label">API events</span>
+                      <strong>{nodeDiagnostics.countsByGroup.api ?? 0}</strong>
+                    </article>
+                    <article className="nop-debugger__metric-card" data-error="">
+                      <span className="nop-debugger__metric-label">Errors</span>
+                      <strong>{nodeDiagnostics.countsByGroup.error ?? 0}</strong>
+                    </article>
+                  </div>
+                  {nodeDiagnostics.recentEvents.map((event) => (
+                    <article key={event.id} className="nop-debugger__entry" onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}>
+                      <div className="nop-debugger__entry-topline">
+                        <span className="nop-debugger__badge" data-group={event.group}>{event.kind}</span>
+                        <time>{formatClock(event.timestamp)}</time>
+                      </div>
+                      <strong className="nop-debugger__entry-summary">{event.summary}</strong>
+                      {event.durationMs != null ? (
+                        <span className="nop-debugger__entry-meta">{event.durationMs}ms</span>
+                      ) : null}
+                      {expandedId === event.id ? (
+                        <div className="nop-debugger__entry-expanded" onClick={(e) => e.stopPropagation()}>
+                          {event.detail ? <code className="nop-debugger__entry-detail">{event.detail}</code> : null}
+                          {event.exportedData != null ? <JsonViewer data={event.exportedData} defaultExpanded={2} /> : null}
+                        </div>
+                      ) : null}
+                    </article>
+                  ))}
+                </>
+              )}
+            </div>
+          ) : (
+            <p className="nop-debugger__empty">Enter a nodeId above to view node diagnostics.</p>
+          )}
+        </>
       ) : null}
     </div>
   );
