@@ -18,8 +18,14 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-29 (Flow Designer Node Style Fixes)
 
-
+- Fixed ContainerRenderer always adding `grid gap-4` — removed default gap to let schema control spacing (`packages/flux-renderers-basic/src/container.tsx:25`).
+- Added `node-info` class alias (`flex-1 min-w-0`) and applied it to all 6 node type text containers for proper text-overflow ellipsis support.
+- Removed permanent glow from start node (`node-card--start` was unconditionally applying `nop-glass-card-glow`; selection now handled solely by `[data-selected]` CSS rule).
+- Fixed badge text colors to match reference: end→rose-800, condition→amber-800, parallel→violet-800, loop→pink-900.
+- Comprehensive font/style audit completed — all card, icon, title, subtitle, footer, badge properties now match `flow-editor-static.html` reference.
+- Commit: `69652ae`
 
 
 ### 2026-03-28 (Flow Designer Node Visual Matching Prototype)
