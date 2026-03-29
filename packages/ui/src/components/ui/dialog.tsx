@@ -4,11 +4,19 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { cn } from '../../lib/utils'
 import { Button } from './button'
+import { useDialogDrag } from './use-dialog-drag'
+
+const DialogContext = React.createContext({ draggable: false })
 
 function Dialog({
+  draggable = true,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+}: React.ComponentProps<typeof DialogPrimitive.Root> & { draggable?: boolean }) {
+  return (
+    <DialogContext.Provider value={{ draggable }}>
+      <DialogPrimitive.Root data-slot="dialog" {...props} />
+    </DialogContext.Provider>
+  )
 }
 
 const DialogTrigger = React.forwardRef<
@@ -60,17 +68,23 @@ const DialogContent = React.forwardRef<
     showCloseButton?: boolean
   }
 >(function DialogContent({ className, children, showCloseButton = true, ...props }, ref) {
+  const { draggable } = React.useContext(DialogContext)
+  const { contentRef, handlePointerDown } = useDialogDrag({ enabled: draggable }, ref)
+
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
       <DialogPrimitive.Content
-        ref={ref}
+        ref={contentRef}
         data-slot="dialog-content"
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:duration-200 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg",
+          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-xl border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:duration-200 data-[state=open]:fade-in-0 sm:max-w-lg",
+          !draggable && "translate-x-[-50%] translate-y-[-50%] data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
           className
         )}
         {...props}
+        style={draggable ? { transform: 'translate(-50%, -50%)', ...props.style } : props.style}
+        onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
       >
         {children}
         {showCloseButton && (
@@ -90,10 +104,16 @@ const DialogContent = React.forwardRef<
 DialogContent.displayName = 'DialogContent'
 
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+  const { draggable } = React.useContext(DialogContext)
+
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      className={cn(
+        "flex flex-col gap-2 text-center sm:text-left",
+        draggable && "cursor-grab select-none",
+        className
+      )}
       {...props}
     />
   )
