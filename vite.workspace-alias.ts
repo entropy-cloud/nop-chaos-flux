@@ -1,4 +1,4 @@
-﻿import { fileURLToPath, URL } from 'node:url';
+import { fileURLToPath, URL } from 'node:url';
 
 export const workspacePackageAliases = {
   '@nop-chaos/flux-core': fileURLToPath(new URL('./packages/flux-core/src/index.ts', import.meta.url)),

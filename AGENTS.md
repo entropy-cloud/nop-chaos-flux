@@ -1,4 +1,4 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 ## Project Overview
 
@@ -165,6 +165,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 
 ### General
 
+- All files use UTF-8 encoding without BOM.
 - ESM-first (`"type": "module"`).
 - No comments unless requested.
 - Follow existing code style in each file.

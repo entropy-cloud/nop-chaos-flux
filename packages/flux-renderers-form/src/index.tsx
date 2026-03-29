@@ -1,4 +1,4 @@
-﻿import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
+import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
 import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { arrayEditorRendererDefinition } from './renderers/array-editor';
 import { formRendererDefinition } from './renderers/form';

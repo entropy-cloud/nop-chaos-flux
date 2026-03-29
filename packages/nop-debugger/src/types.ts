@@ -1,4 +1,4 @@
-﻿import type { ActionContext, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
+import type { ActionContext, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
 
 export type NopDebuggerTab = 'overview' | 'timeline' | 'network';
 

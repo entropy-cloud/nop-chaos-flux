@@ -1,25 +1,25 @@
-﻿# Report Designer æž¶æž„è®¾è®¡
+# Report Designer 架构设计
 
-## 1. ç›®æ ‡ä¸Žè¾¹ç•Œ
+## 1. 目标与边界
 
-### 1.1 æ ¸å¿ƒç›®æ ‡
+### 1.1 核心目标
 
-- å°† Excel å¼å¤š sheet ç¼–è¾‘èƒ½åŠ›æç‚¼ä¸ºå¯å•ç‹¬å¤ç”¨çš„ `Spreadsheet Editor`
-- åœ¨ `Spreadsheet Editor` ä¹‹ä¸Šå åŠ å¯é…ç½®çš„ `Report Designer`
-- å¤–éƒ¨é€šè¿‡ JSON é…ç½®å®šä¹‰å­—æ®µé¢æ¿ã€å·¥å…·æ ã€å±žæ€§é¢æ¿ã€æŠ¥è¡¨å…ƒæ•°æ®ç¼–è¾‘æ–¹å¼å’Œé¢„è§ˆé›†æˆ
-- å¤ç”¨çŽ°æœ‰ `SchemaRenderer` ä½“ç³»ï¼Œè€Œä¸æ˜¯å¹³è¡Œå†é€ ä¸€å¥—é¡µé¢æ¸²æŸ“è¿è¡Œæ—¶
-- ä¿æŒ `Report Designer` é€šç”¨ï¼Œå…è®¸é€šè¿‡é€‚é…å™¨æ”¯æŒ `nop-report` ç­‰å…·ä½“åŽç«¯æ¨¡åž‹
+- 将 Excel 式多 sheet 编辑能力提炼为可单独复用的 `Spreadsheet Editor`
+- 在 `Spreadsheet Editor` 之上叠加可配置的 `Report Designer`
+- 外部通过 JSON 配置定义字段面板、工具栏、属性面板、报表元数据编辑方式和预览集成
+- 复用现有 `SchemaRenderer` 体系，而不是平行再造一套页面渲染运行时
+- 保持 `Report Designer` 通用，允许通过适配器支持 `nop-report` 等具体后端模型
 
-### 1.2 éžç›®æ ‡
+### 1.2 非目标
 
-- ä¸è¿½æ±‚å®Œæ•´ Excel å…¼å®¹
-- ä¸å†…å»ºå…¬å¼æ‰§è¡Œå¼•æ“Ž
-- ä¸æŠŠè¡¨è¾¾å¼ç¼–è¾‘è¯­è¨€åœ¨å½“å‰é˜¶æ®µå†™æ­»
-- ä¸å°†å­—æ®µé¢æ¿ã€å±žæ€§é¢æ¿ã€é¢„è§ˆåè®®å†™æ­»ä¸º `nop-report`
+- 不追求完整 Excel 兼容
+- 不内建公式执行引擎
+- 不把表达式编辑语言在当前阶段写死
+- 不将字段面板、属性面板、预览协议写死为 `nop-report`
 
-## 2. æ€»ä½“æž¶æž„
+## 2. 总体架构
 
-`Report Designer` åº”å®žçŽ°ä¸º `SchemaRenderer` ä¸Šçš„ä¸€å±‚é¢†åŸŸæ‰©å±•ï¼Œå¹¶ä¸”å…¶åº•å±‚ `Spreadsheet Editor` å¯ä»¥å•ç‹¬ä½œä¸ºä¸€ä¸ªé€šç”¨æŽ§ä»¶ä½¿ç”¨ã€‚
+`Report Designer` 应实现为 `SchemaRenderer` 上的一层领域扩展，并且其底层 `Spreadsheet Editor` 可以单独作为一个通用控件使用。
 
 ```text
 +---------------- SchemaRenderer Host ----------------+
@@ -49,97 +49,97 @@
 +-----------------------------------------------------+
 ```
 
-## 3. æ¨¡å—æ‹†åˆ†
+## 3. 模块拆分
 
 ### 3.1 `@nop-chaos/spreadsheet-core`
 
-èŒè´£: çº¯è¡¨æ ¼è¿è¡Œæ—¶ï¼Œä¸ä¾èµ– Reactï¼Œä¸ä¾èµ– `SchemaRenderer`ï¼Œå¯ä»¥å•ç‹¬å¤ç”¨ã€‚
+职责: 纯表格运行时，不依赖 React，不依赖 `SchemaRenderer`，可以单独复用。
 
-å»ºè®®åŒ…å«:
+建议包含:
 
-- workbook / sheet / row / column / cell æ–‡æ¡£æ¨¡åž‹
-- ç¨€ç–å•å…ƒæ ¼å­˜å‚¨
-- æ ·å¼å¼•ç”¨æ± 
-- merge æ¨¡åž‹
-- row/column resize ä¸Ž hidden çŠ¶æ€
-- active sheetã€selectionã€editing çŠ¶æ€
-- layout skeleton ä¸Ž visible range è®¡ç®—
-- undo/redo åŽ†å²
-- spreadsheet commands æ‰§è¡Œå™¨
-- æ–‡æ¡£åºåˆ—åŒ–ã€ååºåˆ—åŒ–ã€è¿ç§»
+- workbook / sheet / row / column / cell 文档模型
+- 稀疏单元格存储
+- 样式引用池
+- merge 模型
+- row/column resize 与 hidden 状态
+- active sheet、selection、editing 状态
+- layout skeleton 与 visible range 计算
+- undo/redo 历史
+- spreadsheet commands 执行器
+- 文档序列化、反序列化、迁移
 
 ### 3.2 `@nop-chaos/spreadsheet-renderers`
 
-èŒè´£: ä¸ŽçŽ°æœ‰ `SchemaRenderer` é›†æˆã€‚
+职责: 与现有 `SchemaRenderer` 集成。
 
-å»ºè®®åŒ…å«:
+建议包含:
 
-- `spreadsheet-page`ã€`spreadsheet-canvas`ã€`spreadsheet-toolbar-shell` ç­‰ `RendererDefinition`
-- `createSpreadsheetRegistry()` æˆ– `registerSpreadsheetRenderers()`
-- spreadsheet runtime åˆ° schema runtime çš„æ¡¥æŽ¥å±‚
-- å®¿ä¸» scope æ³¨å…¥
-- `spreadsheet:*` action æ³¨å†Œ
-- DOM overlay editor å’Œ canvas renderer é€‚é…
+- `spreadsheet-page`、`spreadsheet-canvas`、`spreadsheet-toolbar-shell` 等 `RendererDefinition`
+- `createSpreadsheetRegistry()` 或 `registerSpreadsheetRenderers()`
+- spreadsheet runtime 到 schema runtime 的桥接层
+- 宿主 scope 注入
+- `spreadsheet:*` action 注册
+- DOM overlay editor 和 canvas renderer 适配
 
 ### 3.3 `@nop-chaos/report-designer-core`
 
-èŒè´£: åœ¨ spreadsheet ä¹‹ä¸Šå¢žåŠ æŠ¥è¡¨è®¾è®¡è¯­ä¹‰ï¼Œä½†ä¸ç»‘å®šå…·ä½“ä¸šåŠ¡æ¨¡åž‹ã€‚
+职责: 在 spreadsheet 之上增加报表设计语义，但不绑定具体业务模型。
 
-å»ºè®®åŒ…å«:
+建议包含:
 
-- report template document ç±»åž‹å®šä¹‰
-- å­—æ®µæºä¸Žå­—æ®µæ‹–æ‹½æ¨¡åž‹
-- workbook/sheet/cell/range metadata å±‚
-- inspector åŒ¹é…ä¸Ž panel provider é€‰æ‹©é€»è¾‘
-- preview æŽ¥å£æŠ½è±¡
-- å¤–éƒ¨é€‚é…å™¨æ³¨å†Œ
-- `report-designer:*` action çš„åº•å±‚æ‰§è¡Œå™¨
+- report template document 类型定义
+- 字段源与字段拖拽模型
+- workbook/sheet/cell/range metadata 层
+- inspector 匹配与 panel provider 选择逻辑
+- preview 接口抽象
+- 外部适配器注册
+- `report-designer:*` action 的底层执行器
 
 ### 3.4 `@nop-chaos/report-designer-renderers`
 
-èŒè´£: ä¸Ž `SchemaRenderer` é›†æˆé€šç”¨æŠ¥è¡¨è®¾è®¡å™¨å¤–å£³ã€‚
+职责: 与 `SchemaRenderer` 集成通用报表设计器外壳。
 
-å»ºè®®åŒ…å«:
+建议包含:
 
-- `report-designer-page`ã€`report-field-panel`ã€`report-inspector-shell` ç­‰ renderer
-- `createReportDesignerRegistry()` æˆ– `registerReportDesignerRenderers()`
-- å·¦ä¾§å­—æ®µé¢æ¿æ‹–æ‹½åˆ° spreadsheet çš„æ¡¥æŽ¥å±‚
-- inspector schema è¿è¡Œæ—¶å®¿ä¸»æ³¨å…¥
-- `report-designer:*` actions æ³¨å†Œ
+- `report-designer-page`、`report-field-panel`、`report-inspector-shell` 等 renderer
+- `createReportDesignerRegistry()` 或 `registerReportDesignerRenderers()`
+- 左侧字段面板拖拽到 spreadsheet 的桥接层
+- inspector schema 运行时宿主注入
+- `report-designer:*` actions 注册
 
-### 3.5 è¡¨è¾¾å¼ç¼–è¾‘å™¨é€‚é…è¾¹ç•Œ
+### 3.5 表达式编辑器适配边界
 
-è¡¨è¾¾å¼ç¼–è¾‘å™¨ä¸æ˜¯æœ¬æœŸå®žçŽ°å†…å®¹ï¼Œä½† `Report Designer` å¿…é¡»ä»Žä¸€å¼€å§‹å°±é¢„ç•™æŽ¥å…¥ä½ã€‚
+表达式编辑器不是本期实现内容，但 `Report Designer` 必须从一开始就预留接入位。
 
-å»ºè®®çº¦æŸ:
+建议约束:
 
-- designer ä¸å†…å»ºè¡¨è¾¾å¼è¾“å…¥æ¡†å®žçŽ°
-- å±žæ€§é¢æ¿é€šè¿‡ adapter æ¸²æŸ“è¡¨è¾¾å¼å­—æ®µ
-- adapter åªæš´éœ²ç¼–è¾‘å’Œå€¼å›žä¼ èƒ½åŠ›ï¼Œä¸è¦æ±‚å½“å‰æ–‡æ¡£å®šä¹‰å…·ä½“è¯­è¨€åè®®
+- designer 不内建表达式输入框实现
+- 属性面板通过 adapter 渲染表达式字段
+- adapter 只暴露编辑和值回传能力，不要求当前文档定义具体语言协议
 
-## 4. ä¸ºä»€ä¹ˆè¦åˆ†æˆ Spreadsheet å’Œ Report Designer ä¸¤å±‚
+## 4. 为什么要分成 Spreadsheet 和 Report Designer 两层
 
-å‚è€ƒ `packages/flux-react/src/index.tsx:479`ï¼Œå½“å‰ä½“ç³»å·²ç»å…·å¤‡:
+参考 `packages/flux-react/src/index.tsx:479`，当前体系已经具备:
 
-- registry é©±åŠ¨ renderer å‘çŽ°
-- schema compile å’ŒåŠ¨æ€å€¼ç¼–è¯‘ç¼“å­˜
+- registry 驱动 renderer 发现
+- schema compile 和动态值编译缓存
 - page/form runtime
-- scope ä¸Šä¸‹æ–‡
+- scope 上下文
 - dialog host
 - action dispatch
-- plugin ç”Ÿå‘½å‘¨æœŸ
+- plugin 生命周期
 
-å› æ­¤è¿™é‡ŒçœŸæ­£éœ€è¦æ–°å¢žçš„æ˜¯é¢†åŸŸè¿è¡Œæ—¶ï¼Œè€Œä¸æ˜¯æ–°çš„é€šç”¨é¡µé¢å¼•æ“Žã€‚
+因此这里真正需要新增的是领域运行时，而不是新的通用页面引擎。
 
-åŒæ—¶ï¼Œç”¨æˆ·æ˜Žç¡®è¦æ±‚ Excel å±•çŽ°å’Œç¼–è¾‘èƒ½åŠ›å¯ä»¥å•ç‹¬ä½¿ç”¨ï¼Œæ‰€ä»¥ä¸èƒ½æŠŠ spreadsheet core æ·±åŸ‹åˆ° report designer å†…éƒ¨ã€‚
+同时，用户明确要求 Excel 展现和编辑能力可以单独使用，所以不能把 spreadsheet core 深埋到 report designer 内部。
 
-## 5. ä¸¤ç§æ ¹èŠ‚ç‚¹ç»„ç»‡æ¨¡åž‹
+## 5. 两种根节点组织模型
 
 ### 5.1 `spreadsheet-page`
 
-ç”¨äºŽå•ç‹¬ä½¿ç”¨çš„ workbook ç¼–è¾‘å™¨ã€‚
+用于单独使用的 workbook 编辑器。
 
-æŽ¨èç»“æž„:
+推荐结构:
 
 ```ts
 interface SpreadsheetPageSchema {
@@ -155,9 +155,9 @@ interface SpreadsheetPageSchema {
 
 ### 5.2 `report-designer-page`
 
-ç”¨äºŽæŠ¥è¡¨è®¾è®¡å™¨ã€‚
+用于报表设计器。
 
-æŽ¨èç»“æž„:
+推荐结构:
 
 ```ts
 interface ReportDesignerPageSchema {
@@ -174,35 +174,35 @@ interface ReportDesignerPageSchema {
 }
 ```
 
-è¯´æ˜Ž:
+说明:
 
-- `spreadsheet-page` åªå…³å¿ƒ workbook ç¼–è¾‘
-- `report-designer-page` åœ¨ workbook ä¹‹ä¸Šå åŠ å­—æ®µæ‹–æ‹½ã€metadataã€previewã€inspector é€‚é…
+- `spreadsheet-page` 只关心 workbook 编辑
+- `report-designer-page` 在 workbook 之上叠加字段拖拽、metadata、preview、inspector 适配
 
-## 6. æ•°æ®æ¨¡åž‹åˆ†å±‚
+## 6. 数据模型分层
 
-### 6.1 æŒä¹…åŒ–æ–‡æ¡£
+### 6.1 持久化文档
 
-`SpreadsheetDocument` åªä¿å­˜ç¨³å®šçš„è¡¨æ ¼æ–‡æ¡£:
+`SpreadsheetDocument` 只保存稳定的表格文档:
 
-- workbook å…ƒä¿¡æ¯
+- workbook 元信息
 - sheets
 - rows/columns/cells
 - styles
 - merges
-- å¯é€‰ viewport
+- 可选 viewport
 
-ä¸ä¿å­˜:
+不保存:
 
 - hover
-- å½“å‰ç¼–è¾‘æ€ DOM ä¿¡æ¯
+- 当前编辑态 DOM 信息
 - drag preview
-- æ‰“å¼€çš„å±žæ€§é¡µç­¾
-- ä¸´æ—¶é”™è¯¯é«˜äº®
+- 打开的属性页签
+- 临时错误高亮
 
-### 6.2 Report Designer è¯­ä¹‰å±‚
+### 6.2 Report Designer 语义层
 
-`Report Designer` ä¸åº”ç›´æŽ¥æŠŠä¸šåŠ¡è¯­ä¹‰å¡žè¿› spreadsheet core çš„ cell ç»“æž„ã€‚å»ºè®®å•ç‹¬ç»´æŠ¤ metadata å¹³é¢:
+`Report Designer` 不应直接把业务语义塞进 spreadsheet core 的 cell 结构。建议单独维护 metadata 平面:
 
 - workbook metadata
 - sheet metadata
@@ -210,50 +210,50 @@ interface ReportDesignerPageSchema {
 - range metadata
 - field binding metadata
 
-metadata é»˜è®¤é‡‡ç”¨é€šç”¨ namespaced object ç»“æž„ï¼Œå…·ä½“è¯­ä¹‰ç”±å¤–éƒ¨é€‚é…å™¨è§£é‡Šã€‚
+metadata 默认采用通用 namespaced object 结构，具体语义由外部适配器解释。
 
-### 6.3 è¿è¡Œæ—¶çŠ¶æ€
+### 6.3 运行时状态
 
-è¿è¡Œæ—¶çŠ¶æ€ç”±ä¸‰å±‚ç»„æˆ:
+运行时状态由三层组成:
 
-- spreadsheet runtime state: activeSheetã€selectionã€editingã€historyã€layout
-- report designer runtime state: field dragã€active metadata targetã€preview sessionã€adapter state
-- schema runtime state: form/page/dialog/action ç›¸å…³çŠ¶æ€
+- spreadsheet runtime state: activeSheet、selection、editing、history、layout
+- report designer runtime state: field drag、active metadata target、preview session、adapter state
+- schema runtime state: form/page/dialog/action 相关状态
 
-ä¸‰è€…å¿…é¡»åˆ†å±‚ï¼Œé¿å…æŠŠ form runtime å†å¤åˆ¶è¿› designer storeã€‚
+三者必须分层，避免把 form runtime 再复制进 designer store。
 
-## 7. å·¦ä¾§å­—æ®µé¢æ¿æ¨¡åž‹
+## 7. 左侧字段面板模型
 
-å­—æ®µé¢æ¿æ˜¯ `Report Designer` çš„å¯é€‰èƒ½åŠ›ï¼Œä¸å±žäºŽ standalone spreadsheet çš„å†…å»ºéƒ¨åˆ†ã€‚
+字段面板是 `Report Designer` 的可选能力，不属于 standalone spreadsheet 的内建部分。
 
-å»ºè®®çº¦æŸ:
+建议约束:
 
-- å­—æ®µæ¥æºç”±å¤–éƒ¨é…ç½®æˆ– provider æä¾›
-- å­—æ®µå¯æ‹–æ‹½åˆ°å•å…ƒæ ¼æˆ–åŒºåŸŸ
-- drop æ—¶åªäº§ç”Ÿæ ‡å‡†åŒ– designer commandï¼Œä¸ç›´æŽ¥ä¿®æ”¹ document
-- å­—æ®µé¢æ¿å¯æŒ‰ç»„ã€åˆ†ç±»ã€æœç´¢ã€åªè¯»æç¤ºç­‰æ–¹å¼é…ç½®
+- 字段来源由外部配置或 provider 提供
+- 字段可拖拽到单元格或区域
+- drop 时只产生标准化 designer command，不直接修改 document
+- 字段面板可按组、分类、搜索、只读提示等方式配置
 
-æœ€å°äº¤äº’è·¯å¾„:
+最小交互路径:
 
-1. ç”¨æˆ·ä»Žå­—æ®µé¢æ¿æ‹–æ‹½å­—æ®µ
-2. canvas å‘½ä¸­å•å…ƒæ ¼æˆ–åŒºåŸŸ
-3. bridge å°† drop å½’ä¸€åŒ–ä¸º `report-designer:dropFieldToTarget`
-4. core è°ƒç”¨å½“å‰é€‚é…å™¨ç”Ÿæˆ metadata patch
-5. inspector ä¸Ž canvas åŒæ­¥åˆ·æ–°
+1. 用户从字段面板拖拽字段
+2. canvas 命中单元格或区域
+3. bridge 将 drop 归一化为 `report-designer:dropFieldToTarget`
+4. core 调用当前适配器生成 metadata patch
+5. inspector 与 canvas 同步刷新
 
-## 8. å±žæ€§ç¼–è¾‘ä¸Ž inspector æ¨¡åž‹
+## 8. 属性编辑与 inspector 模型
 
-### 8.1 å±žæ€§ç¼–è¾‘å¿…é¡»å¤–éƒ¨å¯å®šåˆ¶
+### 8.1 属性编辑必须外部可定制
 
-ç‚¹å‡»å•å…ƒæ ¼åŽï¼Œå³ä¾§å±žæ€§æ¡†çš„å¯ç¼–è¾‘å†…å®¹å¿…é¡»ç”±å¤–éƒ¨å†³å®šï¼Œè€Œä¸æ˜¯æ¡†æž¶å†…å»ºä¸€å¥—å›ºå®šå­—æ®µã€‚
+点击单元格后，右侧属性框的可编辑内容必须由外部决定，而不是框架内建一套固定字段。
 
-å› æ­¤å»ºè®®:
+因此建议:
 
-- inspector æœ¬èº«åªæ˜¯å£³å±‚
-- å®žé™… panel body ç”±å¤–éƒ¨ schema æˆ– provider å†³å®š
-- selection target æ”¹å˜æ—¶ï¼Œé€šè¿‡åŒ¹é…å™¨é€‰æ‹©åˆé€‚çš„ panel é›†åˆ
+- inspector 本身只是壳层
+- 实际 panel body 由外部 schema 或 provider 决定
+- selection target 改变时，通过匹配器选择合适的 panel 集合
 
-å¯åŒ¹é…ç›®æ ‡è‡³å°‘åŒ…æ‹¬:
+可匹配目标至少包括:
 
 - workbook
 - sheet
@@ -262,47 +262,47 @@ metadata é»˜è®¤é‡‡ç”¨é€šç”¨ namespaced object ç»“æž
 - cell
 - range
 
-### 8.2 inspector ä»ç„¶å¤ç”¨çŽ°æœ‰ schema/form runtime
+### 8.2 inspector 仍然复用现有 schema/form runtime
 
-å±žæ€§é¢æ¿ç›´æŽ¥ä½¿ç”¨ schema ç‰‡æ®µé©±åŠ¨ï¼Œè€Œä¸æ˜¯å•ç‹¬ç»´æŠ¤å­—æ®µå¼•æ“Žã€‚
+属性面板直接使用 schema 片段驱动，而不是单独维护字段引擎。
 
-æŽ¨èæ–¹å¼:
+推荐方式:
 
-- inspector schema ä½¿ç”¨å›ºå®šå®¿ä¸» scope è¯»å– `activeCell`ã€`activeRange`ã€`sheet`ã€`meta`
-- ä¿å­˜æŒ‰é’®è§¦å‘ `report-designer:updateMeta` æˆ– `spreadsheet:*` actions
-- æ ¡éªŒå¤ç”¨çŽ°æœ‰ form runtime
+- inspector schema 使用固定宿主 scope 读取 `activeCell`、`activeRange`、`sheet`、`meta`
+- 保存按钮触发 `report-designer:updateMeta` 或 `spreadsheet:*` actions
+- 校验复用现有 form runtime
 
-### 8.3 è¡¨è¾¾å¼å­—æ®µé€šè¿‡é€‚é…å™¨æ³¨å…¥
+### 8.3 表达式字段通过适配器注入
 
-è‹¥æŸå±žæ€§é¡¹æ˜¯è¡¨è¾¾å¼ç±»åž‹ï¼Œåˆ™ inspector ä¸ç›´æŽ¥æ¸²æŸ“æ™®é€šè¾“å…¥æ¡†ï¼Œè€Œæ˜¯é€šè¿‡ `ExpressionEditorAdapter` æ¸²æŸ“ã€‚
+若某属性项是表达式类型，则 inspector 不直接渲染普通输入框，而是通过 `ExpressionEditorAdapter` 渲染。
 
-å½“å‰é˜¶æ®µåªå®šä¹‰:
+当前阶段只定义:
 
-- å¦‚ä½•å£°æ˜Žä¸€ä¸ªå­—æ®µéœ€è¦è¡¨è¾¾å¼ç¼–è¾‘å™¨
-- å¦‚ä½•æŠŠå€¼ã€åªè¯»æ€ã€ä¸Šä¸‹æ–‡å’Œå˜æ›´å›žè°ƒäº¤ç»™é€‚é…å™¨
+- 如何声明一个字段需要表达式编辑器
+- 如何把值、只读态、上下文和变更回调交给适配器
 
-ä¸å®šä¹‰:
+不定义:
 
-- å…·ä½“è¡¨è¾¾å¼è¯­æ³•
-- è‡ªåŠ¨è¡¥å…¨åè®®
-- æ ¡éªŒè¯Šæ–­ç»“æž„çš„æœ€ç»ˆæ ¼å¼
+- 具体表达式语法
+- 自动补全协议
+- 校验诊断结构的最终格式
 
-## 9. spreadsheet runtime ä¸Ž schema runtime çš„æ¡¥æŽ¥
+## 9. spreadsheet runtime 与 schema runtime 的桥接
 
-æ¡¥æŽ¥å±‚è´Ÿè´£æŠŠ spreadsheet/report designer runtime æš´éœ²ç»™ `spreadsheet-page` æˆ– `report-designer-page` ä¸‹çš„ schema ç‰‡æ®µã€‚
+桥接层负责把 spreadsheet/report designer runtime 暴露给 `spreadsheet-page` 或 `report-designer-page` 下的 schema 片段。
 
-å»ºè®®æ¡¥æŽ¥åŽŸåˆ™:
+建议桥接原则:
 
-- schema ç‰‡æ®µé€šè¿‡å›ºå®šå®¿ä¸» scope è¯»å–åªè¯»å¿«ç…§
-- å†™æ“ä½œå¿…é¡»é€šè¿‡ `spreadsheet:*` æˆ– `report-designer:*` actions æäº¤
-- schema å±‚ä¸å¾—ç›´æŽ¥æ‹¿åˆ°åº•å±‚ store å¹¶åŽŸåœ°ä¿®æ”¹ document
-- bridge å¯¹å¤–æš´éœ²ç¨³å®šå¿«ç…§å’Œæœ‰é™å‘½ä»¤é¢ï¼Œè€Œä¸æ˜¯æ•´ä¸ª store ç§æœ‰å®žçŽ°
+- schema 片段通过固定宿主 scope 读取只读快照
+- 写操作必须通过 `spreadsheet:*` 或 `report-designer:*` actions 提交
+- schema 层不得直接拿到底层 store 并原地修改 document
+- bridge 对外暴露稳定快照和有限命令面，而不是整个 store 私有实现
 
-## 10. åŠ¨ä½œä½“ç³»
+## 10. 动作体系
 
-æ‰€æœ‰å¤–å›´äº¤äº’ç»Ÿä¸€æŽ¥å…¥çŽ°æœ‰ action schemaï¼Œå¹¶æ‰©å±• spreadsheet/report designer actionsã€‚
+所有外围交互统一接入现有 action schema，并扩展 spreadsheet/report designer actions。
 
-å»ºè®®çš„ spreadsheet å†…å»º actions:
+建议的 spreadsheet 内建 actions:
 
 - `spreadsheet:setActiveSheet`
 - `spreadsheet:setSelection`
@@ -319,7 +319,7 @@ metadata é»˜è®¤é‡‡ç”¨é€šç”¨ namespaced object ç»“æž
 - `spreadsheet:undo`
 - `spreadsheet:redo`
 
-å»ºè®®çš„ report designer å†…å»º actions:
+建议的 report designer 内建 actions:
 
 - `report-designer:dropFieldToTarget`
 - `report-designer:updateMeta`
@@ -329,17 +329,17 @@ metadata é»˜è®¤é‡‡ç”¨é€šç”¨ namespaced object ç»“æž
 - `report-designer:importTemplate`
 - `report-designer:exportTemplate`
 
-å¥½å¤„:
+好处:
 
-- toolbar æŒ‰é’®å¯ç›´æŽ¥è§¦å‘
-- inspector è¡¨å•å¯ç›´æŽ¥æäº¤åˆ° designer action
-- å­—æ®µæ‹–æ‹½ä¸Žå¿«æ·é”®å¯å¤ç”¨åŒä¸€åŠ¨ä½œåˆ†å‘é“¾
+- toolbar 按钮可直接触发
+- inspector 表单可直接提交到 designer action
+- 字段拖拽与快捷键可复用同一动作分发链
 
-## 11. å›ºå®šå®¿ä¸» Scope
+## 11. 固定宿主 Scope
 
-ä¸ºäº†è®© schema ç‰‡æ®µç¨³å®šå·¥ä½œï¼Œ`spreadsheet-page` å’Œ `report-designer-page` å¿…é¡»æ³¨å…¥å›ºå®šå®¿ä¸» scopeã€‚
+为了让 schema 片段稳定工作，`spreadsheet-page` 和 `report-designer-page` 必须注入固定宿主 scope。
 
-### `spreadsheet-page` å»ºè®®æš´éœ²
+### `spreadsheet-page` 建议暴露
 
 - `workbook`
 - `activeSheet`
@@ -348,7 +348,7 @@ metadata é»˜è®¤é‡‡ç”¨é€šç”¨ namespaced object ç»“æž
 - `activeRange`
 - `runtime`
 
-### `report-designer-page` é¢å¤–æš´éœ²
+### `report-designer-page` 额外暴露
 
 - `designer`
 - `fieldDrag`
@@ -356,47 +356,47 @@ metadata é»˜è®¤é‡‡ç”¨é€šç”¨ namespaced object ç»“æž
 - `meta`
 - `preview`
 
-è¿™æ · inspector å’Œ toolbar schema å¯ä»¥ç¨³å®šå†™æˆ:
+这样 inspector 和 toolbar schema 可以稳定写成:
 
 ```json
 {
   "type": "tpl",
-  "tpl": "å½“å‰å•å…ƒæ ¼: ${activeCell.address}"
+  "tpl": "当前单元格: ${activeCell.address}"
 }
 ```
 
-## 12. æ€§èƒ½ç­–ç•¥
+## 12. 性能策略
 
-### 12.1 æ–‡æ¡£å½’ä¸€åŒ–
+### 12.1 文档归一化
 
-- workbookã€sheetã€rowsã€columnsã€cells é¢„å¤„ç†ä¸ºç´¢å¼•ç»“æž„
-- mergesã€style referencesã€visible ranges é¢„ç¼–è¯‘ä¸ºå¿«é€ŸæŸ¥è¯¢ç»“æž„
-- inspector åŒ¹é…è§„åˆ™åœ¨åˆå§‹åŒ–é˜¶æ®µç¼–è¯‘
+- workbook、sheet、rows、columns、cells 预处理为索引结构
+- merges、style references、visible ranges 预编译为快速查询结构
+- inspector 匹配规则在初始化阶段编译
 
-### 12.2 å±€éƒ¨è®¢é˜…
+### 12.2 局部订阅
 
-- canvas åªè®¢é˜… sheet/grid/layout çŠ¶æ€
-- inspector ä¸»è¦è®¢é˜… selection ä¸Ž active metadata
-- field panel ä¸»è¦è®¢é˜… field source ä¸Žæ‹–æ‹½æ€
-- ä¸è®©æ•´ä¸ª designer å› å•ä¸ª cell æ”¹åŠ¨å…¨å±€é‡æ¸²æŸ“
+- canvas 只订阅 sheet/grid/layout 状态
+- inspector 主要订阅 selection 与 active metadata
+- field panel 主要订阅 field source 与拖拽态
+- 不让整个 designer 因单个 cell 改动全局重渲染
 
-### 12.3 å¸ƒå±€ç¼“å­˜
+### 12.3 布局缓存
 
-- row/column offsets ç‹¬ç«‹ç¼“å­˜
-- merge å‡ ä½•ç¼“å­˜ç‹¬ç«‹ç»´æŠ¤
-- visible range ä¸Ž hit-test ç´¢å¼•ç‹¬ç«‹ç»´æŠ¤
-- DOM overlay editor åªåœ¨ active edit cell ä¸Šå­˜åœ¨
+- row/column offsets 独立缓存
+- merge 几何缓存独立维护
+- visible range 与 hit-test 索引独立维护
+- DOM overlay editor 只在 active edit cell 上存在
 
-## 13. ä¸Ž nop-report çš„å…³ç³»
+## 13. 与 nop-report 的关系
 
-`nop-report` é€‚é…åº”ä½œä¸ºä¸€ä¸ªå¤–éƒ¨ profileï¼Œè€Œä¸æ˜¯å†…å»ºè®¾è®¡å™¨å¥‘çº¦ã€‚
+`nop-report` 适配应作为一个外部 profile，而不是内建设计器契约。
 
-å…¸åž‹é€‚é…å†…å®¹åŒ…æ‹¬:
+典型适配内容包括:
 
-- å·¦ä¾§å­—æ®µæºå¦‚ä½•æ˜ å°„åˆ°æ•°æ®é›†/å­—æ®µæ ‘
-- å•å…ƒæ ¼ metadata å¦‚ä½•æ˜ å°„åˆ° `field`ã€`ds`ã€`expandType` ä¸€ç±»è¯­ä¹‰
-- inspector å¦‚ä½•ç»„ç»‡ workbook/sheet/cell çº§å±žæ€§é¡µ
-- å¯¼å…¥å¯¼å‡ºå¦‚ä½•æ˜ å°„åˆ° `workbook.xdef`ã€`excel-table.xdef` æˆ– `ExcelWorkbook + Xpt*Model`
+- 左侧字段源如何映射到数据集/字段树
+- 单元格 metadata 如何映射到 `field`、`ds`、`expandType` 一类语义
+- inspector 如何组织 workbook/sheet/cell 级属性页
+- 导入导出如何映射到 `workbook.xdef`、`excel-table.xdef` 或 `ExcelWorkbook + Xpt*Model`
 
-è¿™ä¿è¯ `Report Designer` ä»ç„¶å¯ä»¥æœåŠ¡äºŽå…¶ä»–æŠ¥è¡¨æ¨¡æ¿æ¨¡åž‹ã€‚
+这保证 `Report Designer` 仍然可以服务于其他报表模板模型。
 

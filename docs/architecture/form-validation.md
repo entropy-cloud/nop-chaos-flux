@@ -1,4 +1,4 @@
-﻿# Form Validation Design
+# Form Validation Design
 
 ## Purpose
 

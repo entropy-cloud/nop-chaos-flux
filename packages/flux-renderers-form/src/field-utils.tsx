@@ -1,4 +1,4 @@
-﻿import {
+import {
   getIn,
   getCompiledValidationField,
   type CompiledValidationBehavior,

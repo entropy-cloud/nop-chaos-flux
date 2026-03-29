@@ -1,4 +1,4 @@
-﻿# Action Scope And Imports
+# Action Scope And Imports
 
 ## Purpose
 

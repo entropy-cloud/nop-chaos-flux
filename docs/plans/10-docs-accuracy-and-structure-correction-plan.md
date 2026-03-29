@@ -1,4 +1,4 @@
-﻿# Documentation Accuracy and Structure Correction Plan
+# Documentation Accuracy and Structure Correction Plan
 
 ## Purpose
 
@@ -21,7 +21,7 @@ The current `docs/` tree has a strong base, but it now has three problems:
 
 1. some documents still describe older interface shapes or file names
 2. several documents repeat the same design guidance in slightly different words
-3. the documentation tree mixes source-of-truth material with research notes and historical analysis in a way that makes â€œwhat should I trust first?â€ less obvious than it should be
+3. the documentation tree mixes source-of-truth material with research notes and historical analysis in a way that makes “what should I trust first?” less obvious than it should be
 
 The goal of this correction pass is not to rewrite the architecture.
 
@@ -93,10 +93,10 @@ If the code does not implement something yet, the docs should not imply it is al
 
 Use distinctions such as:
 
-- â€œcurrent implementationâ€
-- â€œcurrent exported typeâ€
-- â€œrecommended directionâ€
-- â€œpossible future refinementâ€
+- “current implementation”
+- “current exported type”
+- “recommended direction”
+- “possible future refinement”
 
 ### 5. Keep indexes short and documents deep
 
@@ -168,7 +168,7 @@ Make it obvious which files are authoritative, which are reference notes, and wh
 
 - shorten `docs/index.md`
 - remove duplicated role descriptions where the reading guide already covers the same decision
-- add a tighter â€œread this firstâ€ structure
+- add a tighter “read this first” structure
 - explicitly note that `docs/plans/` is historical working material unless a plan is being actively used
 - make archive and analysis roles more explicit
 
@@ -256,7 +256,7 @@ Keep validation behavior and validation file ownership from repeating each other
 - keep runtime validation behavior, rule model, triggers, visibility, and renderer integration in `docs/architecture/form-validation.md`
 - keep file ownership and placement rules in `docs/architecture/amis-runtime-module-boundaries.md`
 - replace repeated implementation breakdowns with short links where possible
-- ensure â€œcurrent behaviorâ€ sections accurately reflect touched, visited, dirty, async debounce, subtree validation, and array operations
+- ensure “current behavior” sections accurately reflect touched, visited, dirty, async debounce, subtree validation, and array operations
 
 ### Acceptance criteria
 
@@ -323,7 +323,7 @@ Make the whole `docs/` tree read like one curated set instead of several partial
 ### Planned changes
 
 - unify terminology for compiled nodes, runtime values, regions, dialog state, and validation nodes
-- normalize â€œsource of truthâ€ notes across active docs
+- normalize “source of truth” notes across active docs
 - fix broken or stale cross-references
 - ensure each major doc links to the smallest useful set of related files
 
@@ -362,7 +362,7 @@ Make the whole `docs/` tree read like one curated set instead of several partial
 ## `docs/architecture/field-metadata-slot-modeling.md`
 
 - keep as the detailed home for `value-or-region` and event-field semantics
-- verify â€œcurrent foundation in the codebaseâ€ against current field-rule and compiler types
+- verify “current foundation in the codebase” against current field-rule and compiler types
 - update any phrasing that still talks as if `value-or-region` is only future work where it is already implemented
 
 ## `docs/architecture/form-validation.md`

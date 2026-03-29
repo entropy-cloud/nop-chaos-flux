@@ -1,4 +1,4 @@
-﻿import type { BaseSchema } from '@nop-chaos/flux-core';
+import type { BaseSchema } from '@nop-chaos/flux-core';
 import type {
   ReportDesignerAdapterRegistry,
   ReportDesignerConfig,

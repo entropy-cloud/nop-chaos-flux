@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { createRendererRegistry } from '@nop-chaos/flux-runtime';
 import {
   createSpreadsheetCore,

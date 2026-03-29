@@ -1,4 +1,4 @@
-﻿# Refactor Follow-up Implementation Checklist
+# Refactor Follow-up Implementation Checklist
 
 ## Purpose
 

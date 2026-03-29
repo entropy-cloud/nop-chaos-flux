@@ -1,4 +1,4 @@
-﻿import type { BaseSchema } from '@nop-chaos/flux-core';
+import type { BaseSchema } from '@nop-chaos/flux-core';
 import type { SpreadsheetConfig, SpreadsheetDocument } from '@nop-chaos/spreadsheet-core';
 
 export interface SpreadsheetPageSchemaInput {

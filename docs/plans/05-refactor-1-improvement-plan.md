@@ -1,4 +1,4 @@
-﻿# Refactor-1 Improvement Plan
+# Refactor-1 Improvement Plan
 
 ## Purpose
 

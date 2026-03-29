@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { RendererComponentProps, RendererDefinition, RendererEnv, RendererHelpers, RendererPlugin, ScopeRef } from '@nop-chaos/flux-core';

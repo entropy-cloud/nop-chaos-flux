@@ -1,4 +1,4 @@
-﻿import type { CompiledFormValidationField, CompiledValidationRule, RuntimeFieldRegistration, ValidationError, ValidationRule } from '@nop-chaos/flux-core';
+import type { CompiledFormValidationField, CompiledValidationRule, RuntimeFieldRegistration, ValidationError, ValidationRule } from '@nop-chaos/flux-core';
 
 function resolveValidationErrorSourceKind(
   field: CompiledFormValidationField,

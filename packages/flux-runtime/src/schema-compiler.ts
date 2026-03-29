@@ -1,4 +1,4 @@
-﻿import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type {
   BaseSchema,
   CompiledValidationBehavior,

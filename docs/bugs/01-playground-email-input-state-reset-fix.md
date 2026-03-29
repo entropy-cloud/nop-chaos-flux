@@ -1,4 +1,4 @@
-﻿# 01 Playground Email Input State Reset Fix
+# 01 Playground Email Input State Reset Fix
 
 ## Problem
 

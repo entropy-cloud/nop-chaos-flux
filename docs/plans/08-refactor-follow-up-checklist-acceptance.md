@@ -1,4 +1,4 @@
-﻿# Refactor Follow-up Checklist Acceptance
+# Refactor Follow-up Checklist Acceptance
 
 ## Verdict
 

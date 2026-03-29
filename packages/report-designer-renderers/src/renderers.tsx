@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   RendererDefinition,
   RendererRegistry,
 } from '@nop-chaos/flux-core';

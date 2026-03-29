@@ -1,4 +1,4 @@
-﻿# Refactor Follow-up Completion Report
+# Refactor Follow-up Completion Report
 
 ## Completed Work
 

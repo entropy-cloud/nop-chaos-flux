@@ -1,4 +1,4 @@
-﻿import { getCompiledValidationTraversalOrder, getIn } from '@nop-chaos/flux-core';
+import { getCompiledValidationTraversalOrder, getIn } from '@nop-chaos/flux-core';
 import type { CompiledFormValidationModel } from '@nop-chaos/flux-core';
 import type { InitialFieldState } from './form-runtime-types';
 

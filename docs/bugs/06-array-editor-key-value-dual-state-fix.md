@@ -1,4 +1,4 @@
-﻿# 06 ArrayEditor/KeyValue Dual State Desync Fix
+# 06 ArrayEditor/KeyValue Dual State Desync Fix
 
 ## Problem
 

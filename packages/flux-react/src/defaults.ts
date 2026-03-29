@@ -1,4 +1,4 @@
-﻿import type { RendererDefinition, SchemaRendererProps } from '@nop-chaos/flux-core';
+import type { RendererDefinition, SchemaRendererProps } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-runtime';
 
 export function createDefaultRegistry(definitions: RendererDefinition[] = []) {

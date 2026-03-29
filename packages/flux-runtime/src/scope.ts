@@ -1,4 +1,4 @@
-﻿import { createStore } from 'zustand/vanilla';
+import { createStore } from 'zustand/vanilla';
 import type { ScopeRef, ScopeStore } from '@nop-chaos/flux-core';
 import { getIn, isPlainObject, parsePath, setIn } from '@nop-chaos/flux-core';
 

@@ -1,4 +1,4 @@
-﻿# Renderer Runtime Design
+# Renderer Runtime Design
 
 ## Purpose
 

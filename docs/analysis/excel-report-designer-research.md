@@ -1,4 +1,4 @@
-﻿# Excel Report Designer Research
+# Excel Report Designer Research
 
 > Role: this document is a research and decision-support note for a future Excel-based report designer. It is not yet the active architecture contract.
 

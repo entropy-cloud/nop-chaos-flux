@@ -1,4 +1,4 @@
-﻿# Theme Compatibility Design
+# Theme Compatibility Design
 
 ## Purpose
 

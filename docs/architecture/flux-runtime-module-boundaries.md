@@ -1,4 +1,4 @@
-﻿# Flux Runtime Module Boundaries
+# Flux Runtime Module Boundaries
 
 ## Purpose
 

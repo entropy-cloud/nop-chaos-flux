@@ -1,4 +1,4 @@
-﻿import type { ActionNamespaceProvider, ActionScope, ResolvedActionHandler } from '@nop-chaos/flux-core';
+import type { ActionNamespaceProvider, ActionScope, ResolvedActionHandler } from '@nop-chaos/flux-core';
 
 function parseActionName(actionName: string): { namespace: string; method: string } | undefined {
   const separatorIndex = actionName.indexOf(':');

@@ -1,4 +1,4 @@
-﻿# Form Validation Low-Code Integrated Refactor Roadmap
+# Form Validation Low-Code Integrated Refactor Roadmap
 
 ## Purpose
 

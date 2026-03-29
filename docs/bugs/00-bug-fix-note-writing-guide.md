@@ -1,4 +1,4 @@
-﻿# 00 Bug Fix Note Writing Guide
+# 00 Bug Fix Note Writing Guide
 
 ## Purpose
 

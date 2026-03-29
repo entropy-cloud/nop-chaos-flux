@@ -1,4 +1,4 @@
-﻿# Form Validation Improvement Execution Plan
+# Form Validation Improvement Execution Plan
 
 ## Purpose
 

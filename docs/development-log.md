@@ -1,4 +1,4 @@
-﻿# Development Log
+# Development Log
 
 ## Purpose
 
@@ -20,15 +20,15 @@ This file is intentionally lightweight.
 
 ### 2026-03-29 (testid Support)
 
-- Added `testid` field to `BaseSchema` in `packages/flux-core/src/types.ts` — schema authors can now declare `testid` on any node for test anchoring.
-- Added `testid` to `META_FIELDS` set in `packages/flux-core/src/constants.ts` — fully integrated into compile→resolve pipeline.
+- Added `testid` field to `BaseSchema` in `packages/flux-core/src/types.ts` � schema authors can now declare `testid` on any node for test anchoring.
+- Added `testid` to `META_FIELDS` set in `packages/flux-core/src/constants.ts` � fully integrated into compile→resolve pipeline.
 - Added `testid` to `CompiledSchemaMeta` and `ResolvedNodeMeta` interfaces.
 - Updated schema compiler (`packages/flux-runtime/src/schema-compiler.ts`) and node runtime (`packages/flux-runtime/src/node-runtime.ts`) to compile and resolve `testid`.
 - Updated `FieldFrame` (`packages/flux-react/src/field-frame.tsx`) to accept and apply `testid` as `data-testid`.
 - Updated `NodeRenderer` (`packages/flux-react/src/node-renderer.tsx`) to pass `meta.testid` to `FieldFrame`.
 - Updated all production renderers to apply `data-testid={props.meta.testid || undefined}` on root elements: `flux-renderers-basic` (page, container, button, text, flex, badge, icon, dynamic-renderer), `flux-renderers-form` (form), `flux-renderers-data` (table, data-source).
 - Updated architecture docs: `bem-removal.md` (section 4.4 testid convention, priority table), `component-resolution.md` (identity table), `renderer-runtime.md` (meta contract).
-- Key decision: `testid` is a pure test concern — it flows through the meta pipeline (compile→resolve) like other meta fields but has no runtime logic impact. It only produces a `data-testid` DOM attribute.
+- Key decision: `testid` is a pure test concern � it flows through the meta pipeline (compile→resolve) like other meta fields but has no runtime logic impact. It only produces a `data-testid` DOM attribute.
 - Ref: `docs/architecture/bem-removal.md`, `docs/architecture/component-resolution.md`
 
 ### 2026-03-29 (Architecture Conformance Deep Audit + Architecture Rationality Review)
@@ -53,11 +53,11 @@ This file is intentionally lightweight.
 
 ### 2026-03-29 (Flow Designer Node Style Fixes)
 
-- Fixed ContainerRenderer always adding `grid gap-4` — removed default gap to let schema control spacing (`packages/flux-renderers-basic/src/container.tsx:25`).
+- Fixed ContainerRenderer always adding `grid gap-4` � removed default gap to let schema control spacing (`packages/flux-renderers-basic/src/container.tsx:25`).
 - Added `node-info` class alias (`flex-1 min-w-0`) and applied it to all 6 node type text containers for proper text-overflow ellipsis support.
 - Removed permanent glow from start node (`node-card--start` was unconditionally applying `nop-glass-card-glow`; selection now handled solely by `[data-selected]` CSS rule).
 - Fixed badge text colors to match reference: end→rose-800, condition→amber-800, parallel→violet-800, loop→pink-900.
-- Comprehensive font/style audit completed — all card, icon, title, subtitle, footer, badge properties now match `flow-editor-static.html` reference.
+- Comprehensive font/style audit completed � all card, icon, title, subtitle, footer, badge properties now match `flow-editor-static.html` reference.
 - Commit: `69652ae`
 
 ### 2026-03-29 (AGENTS.md Documentation Routing Table)
@@ -72,20 +72,20 @@ This file is intentionally lightweight.
   - "Spacing Conventions" section: context-based spacing guide, `stack-*`/`hstack-*` alias patterns
   - Updated "Current Implementation" section to reflect ContainerRenderer no longer has default `grid gap-4`
 - Key principle: renderer marker classes (`nop-container`, `nop-flex`) must NOT carry visual styles. All spacing/direction/padding is declared explicitly in schema via classAliases or semantic props.
-- Chose Route A (atomic) over Route B (semantic composites) — each text/layout element is a separate renderer, spacing controlled via `stack-*` aliases.
+- Chose Route A (atomic) over Route B (semantic composites) � each text/layout element is a separate renderer, spacing controlled via `stack-*` aliases.
 
 
 ### 2026-03-28 (Flow Designer Node Visual Matching Prototype)
 
 - Aligned FlowDesigner node CSS with prototype at `flow-editor-static.html`.
 - Added system-level gradient/glass/glow utility classes to `packages/tailwind-preset/src/styles/base.css`:
-  - `.nop-gradient-start/end/task/condition/parallel/loop` — node icon gradients
-  - `.nop-glass-card` / `.nop-glass-card-glow` — glassmorphism card + selected glow ring
+  - `.nop-gradient-start/end/task/condition/parallel/loop` � node icon gradients
+  - `.nop-glass-card` / `.nop-glass-card-glow` � glassmorphism card + selected glow ring
 - Updated JSON schema `classAliases` in `apps/playground/src/schemas/workflow-designer-schema.json` to use new utility tokens.
-- Rewrote `packages/flow-designer-renderers/src/styles.css` — glass card node style, gradient icon boxes, colored type chips, glow selection ring.
-- Updated `apps/playground/src/flow-designer/FlowDesignerCanvas.tsx` — node structure now has header (icon+info), footer (chip+meta), actions (duplicate/delete).
+- Rewrote `packages/flow-designer-renderers/src/styles.css` � glass card node style, gradient icon boxes, colored type chips, glow selection ring.
+- Updated `apps/playground/src/flow-designer/FlowDesignerCanvas.tsx` � node structure now has header (icon+info), footer (chip+meta), actions (duplicate/delete).
 - Removed obsolete split CSS files under `packages/flow-designer-renderers/src/styles/` and `tailwind-polyfill.css`.
-- Key decision: three-layer CSS approach — Tailwind utilities in JSON `classAliases`, system-level CSS in tailwind-preset, hardcoded CSS in renderer stylesheet.
+- Key decision: three-layer CSS approach � Tailwind utilities in JSON `classAliases`, system-level CSS in tailwind-preset, hardcoded CSS in renderer stylesheet.
 - Next step: visual verification via `pnpm dev`; potential dark mode chip refinement.
 
 ### 2026-03-28 (Flow Designer Button Theme Token Fix)
@@ -519,47 +519,47 @@ This file is intentionally lightweight.
 - **Files**: `packages/flux-core/src/class-aliases.ts`, `packages/flux-react/src/contexts.ts`, `packages/flux-react/src/index.tsx`
 - **Tests**: Added coverage for single/multiple/nested aliases, inheritance, and override
 
-### 2026-03-25 (TailwindCSS é›†æˆ)
+### 2026-03-25 (TailwindCSS 集成)
 
-- **æ–°å¢žåŒ…**ï¼š`packages/tailwind-preset/`
-  - ä¸Ž `nop-chaos-next` å®Œå…¨ä¸€è‡´çš„ TailwindCSS preset
-  - ç›¸åŒçš„ CSS å˜é‡å®šä¹‰ï¼ˆstyles.cssï¼‰
-  - ç›¸åŒçš„ base.css å’Œ tailwind.css å…¥å£
-- **é…ç½®æ–‡ä»¶**ï¼š
-  - `tailwind.config.ts` - æ ¹ TailwindCSS é…ç½®
-  - `postcss.config.cjs` - PostCSS é…ç½®
-- **Flow Designer æ ·å¼**ï¼š
-  - `packages/flow-designer-renderers/src/styles/` ç›®å½•
-  - `flow-designer.css` - TailwindCSS ç‰ˆ Flow Designer æ ·å¼
-- **æ–‡æ¡£æ›´æ–°**ï¼š
-  - `config-schema.md` æ–°å¢žç¬¬ 18 ç«  TailwindCSS é›†æˆ
-  - `workflow-designer/config.json` ç¤ºä¾‹ä½¿ç”¨ TailwindCSS ç±»
-- **Token ä¸€è‡´æ€§**ï¼š
-  - CSS å˜é‡ä¸Ž `nop-chaos-next` å®Œå…¨ä¸€è‡´
-  - æ”¯æŒ classic/glass ä¸»é¢˜ã€light/dark æ¨¡å¼
-  - å“åº”å¼æ–­ç‚¹ï¼šsm(640)ã€md(768)ã€lg(1024)ã€xl(1280)ã€2xl(1536)
-- **ä¸‹ä¸€æ­¥**ï¼š
-  - å®‰è£…ä¾èµ–ï¼š`pnpm install`
-  - è¿ç§»çŽ°æœ‰ç»„ä»¶åˆ° TailwindCSS ç±»
-  - éªŒè¯å“åº”å¼å¸ƒå±€
+- **新增包**：`packages/tailwind-preset/`
+  - 与 `nop-chaos-next` 完全一致的 TailwindCSS preset
+  - 相同的 CSS 变量定义（styles.css）
+  - 相同的 base.css 和 tailwind.css 入口
+- **配置文件**：
+  - `tailwind.config.ts` - 根 TailwindCSS 配置
+  - `postcss.config.cjs` - PostCSS 配置
+- **Flow Designer 样式**：
+  - `packages/flow-designer-renderers/src/styles/` 目录
+  - `flow-designer.css` - TailwindCSS 版 Flow Designer 样式
+- **文档更新**：
+  - `config-schema.md` 新增第 18 章 TailwindCSS 集成
+  - `workflow-designer/config.json` 示例使用 TailwindCSS 类
+- **Token 一致性**：
+  - CSS 变量与 `nop-chaos-next` 完全一致
+  - 支持 classic/glass 主题、light/dark 模式
+  - 响应式断点：sm(640)、md(768)、lg(1024)、xl(1280)、2xl(1536)
+- **下一步**：
+  - 安装依赖：`pnpm install`
+  - 迁移现有组件到 TailwindCSS 类
+  - 验证响应式布局
 
-### 2026-03-25 (AMIS JSON çº¦å®šæ–‡æ¡£æ•´ç†)
+### 2026-03-25 (AMIS JSON 约定文档整理)
 
-- **é—®é¢˜æ¾„æ¸…**ï¼š
-  - `DesignerFeatures.grid?: boolean` æ˜¯**åŠŸèƒ½å¼€å…³**ï¼Œä¸æ˜¯å¿«æ·é”®
-  - `ShortcutsConfig.undo: string[]` æ˜¯**å¿«æ·é”®é…ç½®**ï¼Œå·²ç»æ˜¯ `string[]` æ ¼å¼
-  - ä¸¤è€…èŒè´£ä¸åŒï¼Œæ²¡æœ‰ä¸ä¸€è‡´
-- **æ–‡æ¡£å†—ä½™æ¸…ç†**ï¼š
-  - `config-schema.md` åˆ é™¤ Icon å‘½åè§„èŒƒè¯¦ç»†å†…å®¹ï¼Œæ”¹ä¸ºå¼•ç”¨ `amis-json-conventions.md`
-  - ä¿®æ­£ "æ–¹å¼äºŒ" ç¤ºä¾‹ï¼š`disabledOn` â†’ `disabled`ï¼Œ`level` â†’ `variant`
-- **index.md æ›´æ–°**ï¼š
-  - æ·»åŠ  `amis-json-conventions.md` ç´¢å¼•æ¡ç›®
-  - æ·»åŠ  `complex-component-design-process.md` ç´¢å¼•æ¡ç›®
-- **çº¦å®šç¡®è®¤**ï¼ˆå·²åœ¨ `amis-json-conventions.md`ï¼‰ï¼š
-  - è¡¨è¾¾å¼ï¼š`${xxx}` æ—  `xxxOn` åŽç¼€
-  - ç®€å• actionï¼š`{ "action": "designer:save" }`
-  - Button ç”¨ `variant`ï¼ŒBadge ç”¨ `level`
-  - Icon é…ç½®ç”¨ kebab-case
+- **问题澄清**：
+  - `DesignerFeatures.grid?: boolean` 是**功能开关**，不是快捷键
+  - `ShortcutsConfig.undo: string[]` 是**快捷键配置**，已经是 `string[]` 格式
+  - 两者职责不同，没有不一致
+- **文档冗余清理**：
+  - `config-schema.md` 删除 Icon 命名规范详细内容，改为引用 `amis-json-conventions.md`
+  - 修正 "方式二" 示例：`disabledOn` → `disabled`，`level` → `variant`
+- **index.md 更新**：
+  - 添加 `amis-json-conventions.md` 索引条目
+  - 添加 `complex-component-design-process.md` 索引条目
+- **约定确认**（已在 `amis-json-conventions.md`）：
+  - 表达式：`${xxx}` 无 `xxxOn` 后缀
+  - 简单 action：`{ "action": "designer:save" }`
+  - Button 用 `variant`，Badge 用 `level`
+  - Icon 配置用 kebab-case
 
 ### 2026-03-25 (External Example Files & Icon Naming)
 
@@ -571,8 +571,8 @@ This file is intentionally lightweight.
   - JSON keys: **camelCase** (consistent with TypeScript types and AMIS style)
     - `allowSelfLoop`, `gridSize`, `snapToGrid`, `fitView`
   - Icon names: **kebab-case** (string values, converts to PascalCase at runtime)
-    - `rotate-ccw` â†’ `RotateCcw`
-    - `git-branch` â†’ `GitBranch`
+    - `rotate-ccw` → `RotateCcw`
+    - `git-branch` → `GitBranch`
 - Rationale: camelCase for keys matches TS interfaces, kebab-case for icons matches Lucide docs
 - Added icon mapping table to config-schema.md
 
@@ -595,7 +595,7 @@ This file is intentionally lightweight.
 ### 2026-03-25 (Complex Component Design Process & Flow Designer Schema Refinement)
 
 - Created design process document: `docs/references/complex-component-design-process.md`
-  - Defines standard workflow: Domain Analysis â†’ JSON Schema â†’ Compiled Config â†’ Runtime â†’ CSS
+  - Defines standard workflow: Domain Analysis → JSON Schema → Compiled Config → Runtime → CSS
   - AMIS JSON is the core DSL, should be designed first before implementation
   - Emphasizes reuse of AMIS runtime capabilities
   - Applicable to all complex components (Flow Designer, Report Designer, etc.)
@@ -799,9 +799,9 @@ This file is intentionally lightweight.
 - Key decision: treat playground information architecture and debugger interaction model as active architecture guidance, not just one-off implementation preferences, because both directly shape how future examples and diagnostics are introduced across the repo.
 - Next step: implement the playground home-page split and debugger launcher/panel three-state behavior against this new doc, then record any deviations discovered during implementation.
 
-- Added a compact â€œRegion capability matrixâ€ to `docs/architecture/flow-designer/runtime-snapshot.md` and linked it from `docs/architecture/flow-designer/collaboration.md`, so the current tested contract for mounted regions and shared dialog popups is visible in one place instead of being scattered across paragraphs.
+- Added a compact “Region capability matrix” to `docs/architecture/flow-designer/runtime-snapshot.md` and linked it from `docs/architecture/flow-designer/collaboration.md`, so the current tested contract for mounted regions and shared dialog popups is visible in one place instead of being scattered across paragraphs.
 - Key decision: put the matrix in `runtime-snapshot.md` rather than `design.md`, because it describes current verified behavior rather than long-term target architecture.
-- Next step: if playground starts demonstrating `dialogs` region UX patterns, extend the matrix with a short â€œintended UI roleâ€ column without mixing that into the runtime contract itself.
+- Next step: if playground starts demonstrating `dialogs` region UX patterns, extend the matrix with a short “intended UI role” column without mixing that into the runtime contract itself.
 
 - Added an explicit inspector read-path regression in `packages/flow-designer-renderers/src/index.test.tsx` proving inspector fragments can read injected designer host scope values such as `${activeNode.data.label}`, completing the read-path matrix for toolbar, inspector, and dialogs regions.
 - Updated `docs/architecture/flow-designer/collaboration.md` and `docs/architecture/flow-designer/runtime-snapshot.md` so they now describe the full tested region matrix more accurately: all three mounted regions can read injected designer snapshot fields, while write-path coverage remains explicit for the regions/actions already exercised by tests.
@@ -820,7 +820,7 @@ This file is intentionally lightweight.
 
 - Implemented a real `dialogs` region mount in `packages/flow-designer-renderers/src/index.tsx`, so `designer-page` now renders `dialogs` fragments through the same injected host `scope` and `actionScope` path as `toolbar` and `inspector`.
 - Replaced the earlier negative regression in `packages/flow-designer-renderers/src/index.test.tsx` with a positive one that proves `designer-page.dialogs` content now renders, and updated `docs/architecture/flow-designer/api.md`, `docs/architecture/flow-designer/config-schema.md`, `docs/architecture/flow-designer/design.md`, `docs/architecture/flow-designer/collaboration.md`, and `docs/architecture/flow-designer/runtime-snapshot.md` to reflect that `dialogs` is now a live region mount while shared `dialog` actions still remain a separate popup path.
-- Key decision: keep both concepts explicitly documented â€” mounted `dialogs` region vs shared `dialog` action runtime â€” because they now coexist and solve different authoring needs.
+- Key decision: keep both concepts explicitly documented — mounted `dialogs` region vs shared `dialog` action runtime — because they now coexist and solve different authoring needs.
 - Next step: decide whether `dialogs` should stay as a lightweight always-mounted fragment area or evolve into a more opinionated designer-specific overlay shell.
 
 - Added a renderer regression in `packages/flow-designer-renderers/src/index.test.tsx` locking the current reserved-`dialogs` behavior: passing `designer-page.dialogs` schema does not mount visible content by default, which now matches the updated docs that describe `dialogs` as a declared-but-not-mounted region path.
@@ -860,7 +860,7 @@ This file is intentionally lightweight.
 - Key decision: keep `api.md` focused on integration-facing surfaces and move snapshot-truth caveats into the dedicated runtime-snapshot doc, so the same contract is not duplicated with drifting wording.
 - Next step: if Flow Designer eventually lands real schema-readable host scope injection, update `docs/architecture/flow-designer/runtime-snapshot.md` first, then decide whether `api.md` should inline a shorter stabilized subset again.
 
-- Added `docs/architecture/flow-designer/runtime-snapshot.md` to separate the live `DesignerSnapshot` / `DesignerContextValue` contracts from the broader â€œfixed host scopeâ€ design goal, explicitly marking which snapshot fields are real today and which schema-scope projections are still aspirational.
+- Added `docs/architecture/flow-designer/runtime-snapshot.md` to separate the live `DesignerSnapshot` / `DesignerContextValue` contracts from the broader “fixed host scope” design goal, explicitly marking which snapshot fields are real today and which schema-scope projections are still aspirational.
 - Updated `docs/index.md` and `docs/architecture/flow-designer/README.md` so future readers can jump straight to the new runtime-snapshot note when they need current-state answers instead of the broader design narrative.
 - Key decision: document current snapshot truth separately because the code already has a stable React-facing snapshot contract, but it has not yet fully materialized the same data as schema-readable host scope variables.
 - Next step: if `designer-page` later starts creating a real child scope for `doc` / `selection` / `activeNode` / `activeEdge` / `runtime`, update `docs/architecture/flow-designer/runtime-snapshot.md` first and then simplify overlapping caveats in `docs/architecture/flow-designer/api.md`.
@@ -877,7 +877,7 @@ This file is intentionally lightweight.
 
 - Added `docs/architecture/flow-designer/canvas-adapters.md` as the dedicated architecture note for `card`, `xyflow-preview`, and live `xyflow` canvas variants, including default-adapter rules, failure-intent retention, and callback translation boundaries.
 - Updated `docs/index.md` and `docs/references/maintenance-checklist.md` so future canvas-adapter work has an explicit documentation entry point instead of relying only on `docs/architecture/flow-designer/api.md` and the development log.
-- Refreshed `docs/architecture/flow-designer/README.md` and `docs/architecture/flow-designer/design.md` so they no longer describe real `@xyflow/react` integration as â€œnext stageâ€ work; both docs now reflect the live `xyflow` default plus the retained `card` / `xyflow-preview` adapter roles.
+- Refreshed `docs/architecture/flow-designer/README.md` and `docs/architecture/flow-designer/design.md` so they no longer describe real `@xyflow/react` integration as “next stage” work; both docs now reflect the live `xyflow` default plus the retained `card` / `xyflow-preview` adapter roles.
 - Refreshed `docs/architecture/flow-designer/api.md` to remove remaining card-first / pre-xyflow wording, so the API doc now matches the current state: live `xyflow` is the default canvas, while `card` and `xyflow-preview` remain explicit adapter variants under the same bridge contract.
 - Expanded `packages/flow-designer-renderers/src/canvas-bridge.tsx` so the extracted `DesignerCardCanvasBridge` contract now covers start/cancel/complete connection and reconnect flows in addition to selection, delete, move, and viewport callbacks.
 - Updated `packages/flow-designer-renderers/src/index.tsx` to keep renderer-local pending connection and reconnect shell state, then map those bridge callbacks back onto adapter-backed `addEdge` and `reconnectEdge` commands.
@@ -913,7 +913,7 @@ This file is intentionally lightweight.
 - Kept renderer-side warning behavior aligned with provider behavior by routing adapter failures through the same notify helper, so shared semantic rejections stay host-visible regardless of whether they originate from ActionScope dispatch or direct renderer UI events.
 - Expanded `packages/flow-designer-renderers/src/index.test.tsx` with provider coverage for normalized viewport return values after `setViewport`, and re-verified the package after the renderer adapter rewiring.
 - Verified the renderer package again with `pnpm --filter @nop-chaos/flow-designer-renderers test`, `pnpm --filter @nop-chaos/flow-designer-renderers typecheck`, `pnpm --filter @nop-chaos/flow-designer-renderers build`, and `pnpm --filter @nop-chaos/flow-designer-renderers lint`.
-- Key decision: renderer UI events should reuse the same target-owned command normalization layer as namespace providers, instead of creating a second â€œlocal UI shortcutâ€ mutation path that could drift from provider and future xyflow bridge semantics.
+- Key decision: renderer UI events should reuse the same target-owned command normalization layer as namespace providers, instead of creating a second “local UI shortcut” mutation path that could drift from provider and future xyflow bridge semantics.
 - Next step: start extracting a dedicated canvas bridge surface so future xyflow integration can dispatch adapter commands without depending on the card/list renderer implementation details.
 
 - Added `packages/flow-designer-renderers/src/designer-command-adapter.ts` as the target-side command normalization layer, giving provider and future canvas bridges a shared result shape with `ok`, `snapshot`, `data`, `error`, `reason`, and `exported` fields.
@@ -1054,8 +1054,8 @@ This file is intentionally lightweight.
 ### 2026-03-20 (Bug Analysis)
 
 - Completed frontend bug analysis across all packages. Found 5 confirmed runtime bugs.
-- **Bug #1 (HIGH)**: ArrayEditor/KeyValue dual-state desync â€” `useState` initialized once, external `reset()`/`setValue()` doesn't update local state. Failing tests: `packages/flux-renderers-form/src/__tests__/bug-dual-state.test.tsx`
-- **Bug #2 (HIGH)**: `submit()` no concurrent guard â€” rapid double-click fires two API calls. Failing test: `packages/flux-runtime/src/__tests__/bug-submit-race.test.ts`
+- **Bug #1 (HIGH)**: ArrayEditor/KeyValue dual-state desync — `useState` initialized once, external `reset()`/`setValue()` doesn't update local state. Failing tests: `packages/flux-renderers-form/src/__tests__/bug-dual-state.test.tsx`
+- **Bug #2 (HIGH)**: `submit()` no concurrent guard — rapid double-click fires two API calls. Failing test: `packages/flux-runtime/src/__tests__/bug-submit-race.test.ts`
 - **Bug #3 (MEDIUM-HIGH)**: `validateForm()` calls `store.setErrors(fieldErrors)` which destructively replaces entire errors map, wiping errors for paths not in traversal. Tests: `packages/flux-runtime/src/__tests__/bug-validate-overwrite.test.ts`
 - **Bug #4 (MEDIUM)**: `remapArrayFieldState` makes 5+ independent store updates causing intermediate state visible to `useSyncExternalStore` subscribers.
 - **Bug #5 (MEDIUM)**: Table `key={index}` fallback causes row state misalignment on sort/delete.

@@ -1,4 +1,4 @@
-﻿# 07 Submit Concurrent Guard Fix
+# 07 Submit Concurrent Guard Fix
 
 ## Problem
 

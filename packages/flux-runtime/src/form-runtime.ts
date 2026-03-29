@@ -1,4 +1,4 @@
-﻿import type { ApiObject, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ValidationError } from '@nop-chaos/flux-core';
+import type { ApiObject, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ValidationError } from '@nop-chaos/flux-core';
 import {
   clampArrayIndex,
   clampInsertIndex,

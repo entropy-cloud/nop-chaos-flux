@@ -1,4 +1,4 @@
-﻿// @vitest-environment jsdom
+// @vitest-environment jsdom
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { afterEach } from 'vitest';

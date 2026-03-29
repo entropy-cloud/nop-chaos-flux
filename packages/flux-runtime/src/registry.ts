@@ -1,4 +1,4 @@
-﻿import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
+import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
 
 export function createRendererRegistry(initialDefinitions: RendererDefinition[] = []): RendererRegistry {
   const map = new Map<string, RendererDefinition>();

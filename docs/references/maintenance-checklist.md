@@ -1,4 +1,4 @@
-﻿# Documentation Maintenance Checklist
+# Documentation Maintenance Checklist
 
 ## Purpose
 

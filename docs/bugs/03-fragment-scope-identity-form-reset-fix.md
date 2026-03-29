@@ -1,4 +1,4 @@
-﻿# 03 Fragment Scope Identity Form Reset Fix
+# 03 Fragment Scope Identity Form Reset Fix
 
 ## Problem
 

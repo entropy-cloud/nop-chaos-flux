@@ -1,4 +1,4 @@
-﻿# FieldFrame Design
+# FieldFrame Design
 
 ## Purpose
 

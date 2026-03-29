@@ -1,4 +1,4 @@
-﻿# 08 ValidateForm Destructive Error Merge Fix
+# 08 ValidateForm Destructive Error Merge Fix
 
 ## Problem
 

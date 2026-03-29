@@ -1,4 +1,4 @@
-﻿# Frontend Baseline
+# Frontend Baseline
 
 ## Purpose
 

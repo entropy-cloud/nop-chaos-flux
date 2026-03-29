@@ -1,4 +1,4 @@
-﻿import type { SchemaInput } from '@nop-chaos/flux-core';
+import type { SchemaInput } from '@nop-chaos/flux-core';
 
 export interface GraphDocument {
   id: string;

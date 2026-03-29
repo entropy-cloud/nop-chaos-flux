@@ -1,19 +1,19 @@
-﻿# nop-chaos-amis å®žçŽ°ç¬”è®°
+# nop-chaos-amis 实现笔记
 
-æœ¬æ–‡æ¡£è®°å½•åŽŸåž‹é¡¹ç›® `nop-chaos-amis` ä¸­å€¼å¾—å‚è€ƒçš„è®¾è®¡æ¨¡å¼å’Œå®žçŽ°æ€è·¯ï¼Œä¾› nop-amis å¼€å‘å‚è€ƒã€‚
+本文档记录原型项目 `nop-chaos-amis` 中值得参考的设计模式和实现思路，供 nop-amis 开发参考。
 
-è¿™æ˜¯åŽ†å²å®žçŽ°å‚è€ƒï¼Œä¸æ˜¯å½“å‰ä»“åº“å®žçŽ°ç»†èŠ‚çš„æœ€ç»ˆå‡†ç»³ã€‚å½“å‰è¡Œä¸ºä»¥ `docs/architecture/` å’Œæ´»åŠ¨æºç ä¸ºå‡†ã€‚
+这是历史实现参考，不是当前仓库实现细节的最终准绳。当前行为以 `docs/architecture/` 和活动源码为准。
 
-## 1. FormStore çš„ submit Handler æ¨¡å¼
+## 1. FormStore 的 submit Handler 模式
 
-### åŽŸåž‹å®žçŽ°
+### 原型实现
 
 ```ts
 // src/stores/formStore.ts
 async submit(handler: (values: TValues) => Promise<unknown> | unknown) {
   const currentValues = get().values;
 
-  // è‹¥æä¾›äº†åŒæ­¥æ ¡éªŒå‡½æ•°ï¼Œå…ˆæ‰§è¡Œæ ¡éªŒ
+  // 若提供了同步校验函数，先执行校验
   if (validate) {
     const errors = validate(currentValues);
     if (Object.keys(errors).length > 0) {
@@ -34,30 +34,30 @@ async submit(handler: (values: TValues) => Promise<unknown> | unknown) {
 }
 ```
 
-### è®¾è®¡ä¼˜ç‚¹
+### 设计优点
 
-- `submit` æŽ¥æ”¶ä¸€ä¸ª `handler` å‡½æ•°ï¼Œç”±è°ƒç”¨æ–¹å†³å®šå…·ä½“çš„æäº¤é€»è¾‘
-- è¡¨å•çŠ¶æ€ç®¡ç†ï¼ˆ`submitting`ã€`errors`ï¼‰ä¸Žä¸šåŠ¡é€»è¾‘è§£è€¦
-- æ ¡éªŒå¤±è´¥æ—¶ç›´æŽ¥ `reject`ï¼Œè°ƒç”¨æ–¹å¯é€šè¿‡ try/catch æ•èŽ·
+- `submit` 接收一个 `handler` 函数，由调用方决定具体的提交逻辑
+- 表单状态管理（`submitting`、`errors`）与业务逻辑解耦
+- 校验失败时直接 `reject`，调用方可通过 try/catch 捕获
 
-### åº”ç”¨å»ºè®®
+### 应用建议
 
-nop-amis çš„ `FormRuntime.submit(api)` å¯ä»¥è€ƒè™‘æ”¯æŒç±»ä¼¼çš„ handler æ¨¡å¼ï¼Œè®©è°ƒç”¨æ–¹å¯ä»¥è‡ªå®šä¹‰æäº¤è¡Œä¸ºï¼š
+nop-amis 的 `FormRuntime.submit(api)` 可以考虑支持类似的 handler 模式，让调用方可以自定义提交行为：
 
 ```ts
-// å½“å‰è®¾è®¡
+// 当前设计
 form.submit(api);
 
-// å¯æ‰©å±•ä¸º
-form.submit(api); // æˆ–
+// 可扩展为
+form.submit(api); // 或
 form.submit(async (values) => customHandler(values));
 ```
 
 ---
 
-## 2. ç¼–è¯‘æ—¶æå–éªŒè¯è§„åˆ™
+## 2. 编译时提取验证规则
 
-### åŽŸåž‹å®žçŽ°
+### 原型实现
 
 ```ts
 // src/runtime/runtime.ts
@@ -93,15 +93,15 @@ function extractRules(formNode: NormalizedNode): Map<string, FieldRuleConfig> {
 }
 ```
 
-### è®¾è®¡ä¼˜ç‚¹
+### 设计优点
 
-- åœ¨ schema ç¼–è¯‘é˜¶æ®µéåŽ† form èŠ‚ç‚¹ï¼Œæ”¶é›†æ‰€æœ‰å­—æ®µçš„éªŒè¯è§„åˆ™
-- è¿è¡Œæ—¶ç›´æŽ¥ä½¿ç”¨ `Map` æŸ¥æ‰¾ï¼Œæ— éœ€é‡å¤è§£æž schema
-- æ”¯æŒåŒæ­¥è§„åˆ™ï¼ˆrequiredã€pattern ç­‰ï¼‰å’Œå¼‚æ­¥è§„åˆ™ï¼ˆasync APIï¼‰
+- 在 schema 编译阶段遍历 form 节点，收集所有字段的验证规则
+- 运行时直接使用 `Map` 查找，无需重复解析 schema
+- 支持同步规则（required、pattern 等）和异步规则（async API）
 
-### åº”ç”¨å»ºè®®
+### 应用建议
 
-nop-amis å¯ä»¥åœ¨ `CompiledSchemaNode` ä¸­å¢žåŠ éªŒè¯è§„åˆ™å…ƒæ•°æ®ï¼š
+nop-amis 可以在 `CompiledSchemaNode` 中增加验证规则元数据：
 
 ```ts
 interface CompiledFormNode extends CompiledSchemaNode {
@@ -109,13 +109,13 @@ interface CompiledFormNode extends CompiledSchemaNode {
 }
 ```
 
-åœ¨ `SchemaCompiler` é˜¶æ®µæå–è§„åˆ™ï¼Œ`FormRuntime` ç›´æŽ¥ä½¿ç”¨ã€‚
+在 `SchemaCompiler` 阶段提取规则，`FormRuntime` 直接使用。
 
 ---
 
-## 3. å†…è” Dialog æå–æœºåˆ¶
+## 3. 内联 Dialog 提取机制
 
-### åŽŸåž‹å®žçŽ°
+### 原型实现
 
 ```ts
 // src/runtime/compileSchema.ts
@@ -138,19 +138,19 @@ function normalizeActionObject(rawAction, params, event, fieldPath) {
     }
   }
 
-  // ... å…¶ä»–å¤„ç†
+  // ... 其他处理
 }
 ```
 
-### è®¾è®¡ä¼˜ç‚¹
+### 设计优点
 
-- å°† action ä¸­å†…è”å®šä¹‰çš„ dialog æå–åˆ°ç»Ÿä¸€çš„ `dialogs` é›†åˆ
-- ç”¨ `dialogId` æ›¿ä»£å†…è”å®šä¹‰ï¼Œä¾¿äºŽç»Ÿä¸€ç®¡ç†å’Œå¤ç”¨
-- æ”¯æŒå»¶è¿ŸåŠ è½½å’ŒæŒ‰éœ€æ¸²æŸ“
+- 将 action 中内联定义的 dialog 提取到统一的 `dialogs` 集合
+- 用 `dialogId` 替代内联定义，便于统一管理和复用
+- 支持延迟加载和按需渲染
 
-### åº”ç”¨å»ºè®®
+### 应用建议
 
-nop-amis çš„ `CompiledSchemaNode` å¯ä»¥å¢žåŠ  `dialogs` å­—æ®µï¼š
+nop-amis 的 `CompiledSchemaNode` 可以增加 `dialogs` 字段：
 
 ```ts
 interface CompiledPageNode extends CompiledSchemaNode {
@@ -158,13 +158,13 @@ interface CompiledPageNode extends CompiledSchemaNode {
 }
 ```
 
-`RendererRuntime` é€šè¿‡ `dialogId` æŸ¥æ‰¾å¹¶æ¸²æŸ“å¯¹è¯æ¡†ã€‚
+`RendererRuntime` 通过 `dialogId` 查找并渲染对话框。
 
 ---
 
-## 4. ç®€æ´çš„è·¯å¾„ä¿®æ”¹å·¥å…·
+## 4. 简洁的路径修改工具
 
-### åŽŸåž‹å®žçŽ°
+### 原型实现
 
 ```ts
 // src/stores/pageStore.ts
@@ -184,25 +184,25 @@ function setByPath(target: any, path: string, value: any): void {
 }
 ```
 
-### ä¸Ž nop-amis setIn çš„å¯¹æ¯”
+### 与 nop-amis setIn 的对比
 
-| ç‰¹æ€§ | setByPath (åŽŸåž‹) | setIn (flux) |
+| 特性 | setByPath (原型) | setIn (flux) |
 |------|-----------------|------------------|
-| è¿”å›žå€¼ | æ— ï¼ˆåŽŸåœ°ä¿®æ”¹ï¼‰ | è¿”å›žæ–°å¯¹è±¡ |
-| ä¸å¯å˜æ€§ | å¯å˜ | ä¸å¯å˜ |
-| æ€§èƒ½ | æ›´é«˜ï¼ˆæ— æ‹·è´ï¼‰ | è¾ƒä½Žï¼ˆéœ€è¦æ‹·è´ï¼‰ |
-| é€‚ç”¨åœºæ™¯ | Store å†…éƒ¨ä½¿ç”¨ | éœ€è¦ä¸å¯å˜æ›´æ–°çš„åœºæ™¯ |
+| 返回值 | 无（原地修改） | 返回新对象 |
+| 不可变性 | 可变 | 不可变 |
+| 性能 | 更高（无拷贝） | 较低（需要拷贝） |
+| 适用场景 | Store 内部使用 | 需要不可变更新的场景 |
 
-### åº”ç”¨å»ºè®®
+### 应用建议
 
-- å¯¹äºŽ Zustand store å†…éƒ¨çš„ `updateData` æ“ä½œï¼Œå¯ä»¥è€ƒè™‘ä½¿ç”¨åŽŸåœ°ä¿®æ”¹ç‰ˆæœ¬
-- å¯¹å¤–æš´éœ²çš„ API ä¿æŒä¸å¯å˜è¯­ä¹‰
+- 对于 Zustand store 内部的 `updateData` 操作，可以考虑使用原地修改版本
+- 对外暴露的 API 保持不可变语义
 
 ---
 
-## 5. Action é“¾çš„ prevResult æ³¨å…¥
+## 5. Action 链的 prevResult 注入
 
-### åŽŸåž‹å®žçŽ°
+### 原型实现
 
 ```ts
 // src/runtime/runtime.ts
@@ -221,7 +221,7 @@ async function runThen(
   for (const item of list) {
     if (!isPlainObject(item)) continue;
 
-    // å°†ä¸Šä¸€ä¸ª action çš„ç»“æžœæ³¨å…¥åˆ°å­ä½œç”¨åŸŸ
+    // 将上一个 action 的结果注入到子作用域
     const childScope = createChildScope(context, {
       prevResult: nextPrev,
     });
@@ -230,15 +230,15 @@ async function runThen(
 }
 ```
 
-### è®¾è®¡ä¼˜ç‚¹
+### 设计优点
 
-- `prevResult` è‡ªåŠ¨æ³¨å…¥åˆ°å­ action çš„ä½œç”¨åŸŸä¸­
-- é“¾å¼è°ƒç”¨çš„ç»“æžœå¯ä»¥è¢«åŽç»­ action è®¿é—®
-- æ”¯æŒå•ä¸ª action æˆ–æ•°ç»„å½¢å¼çš„ then é“¾
+- `prevResult` 自动注入到子 action 的作用域中
+- 链式调用的结果可以被后续 action 访问
+- 支持单个 action 或数组形式的 then 链
 
-### åº”ç”¨å»ºè®®
+### 应用建议
 
-nop-amis çš„ `dispatch` å·²ç»æ”¯æŒ `prevResult`ï¼Œå¯ä»¥åœ¨ `ActionContext` ä¸­ä¿æŒï¼š
+nop-amis 的 `dispatch` 已经支持 `prevResult`，可以在 `ActionContext` 中保持：
 
 ```ts
 interface ActionContext {
@@ -247,13 +247,13 @@ interface ActionContext {
 }
 ```
 
-åœ¨è¡¨è¾¾å¼æ±‚å€¼æ—¶ï¼Œ`prevResult` ä½œä¸ºä½œç”¨åŸŸå˜é‡å¯ç”¨ã€‚
+在表达式求值时，`prevResult` 作为作用域变量可用。
 
 ---
 
-## 6. å¼‚æ­¥æ ¡éªŒçš„è¯·æ±‚å–æ¶ˆ
+## 6. 异步校验的请求取消
 
-### åŽŸåž‹å®žçŽ°
+### 原型实现
 
 ```ts
 // src/runtime/runtime.ts
@@ -263,7 +263,7 @@ async function runAsyncValidator(
   runtime: RuntimeContext,
   cacheKey: string
 ): Promise<string | null> {
-  // å–æ¶ˆä¹‹å‰çš„ç›¸åŒè¯·æ±‚
+  // 取消之前的相同请求
   const previous = runtime.abortControllers.get(cacheKey);
   if (previous) {
     previous.abort();
@@ -280,7 +280,7 @@ async function runAsyncValidator(
     });
     // ...
   } finally {
-    // åªæ¸…é™¤è‡ªå·±åˆ›å»ºçš„ controller
+    // 只清除自己创建的 controller
     if (runtime.abortControllers.get(cacheKey) === controller) {
       runtime.abortControllers.delete(cacheKey);
     }
@@ -288,15 +288,15 @@ async function runAsyncValidator(
 }
 ```
 
-### è®¾è®¡ä¼˜ç‚¹
+### 设计优点
 
-- åŸºäºŽ `cacheKey` çš„è¯·æ±‚å–æ¶ˆæœºåˆ¶
-- é€‚åˆå­—æ®µçº§å¼‚æ­¥æ ¡éªŒçš„é˜²æŠ–åœºæ™¯
-- åªæ¸…é™¤è‡ªå·±åˆ›å»ºçš„ controllerï¼Œé¿å…è¯¯åˆ 
+- 基于 `cacheKey` 的请求取消机制
+- 适合字段级异步校验的防抖场景
+- 只清除自己创建的 controller，避免误删
 
-### åº”ç”¨å»ºè®®
+### 应用建议
 
-nop-amis çš„ `activeRequests` Map å·²ç»å®žçŽ°äº†ç±»ä¼¼æœºåˆ¶ï¼š
+nop-amis 的 `activeRequests` Map 已经实现了类似机制：
 
 ```ts
 // packages/flux-runtime/src/index.ts
@@ -310,25 +310,25 @@ async function executeApiRequest(actionType, api, scope, form) {
 }
 ```
 
-å¯ä»¥å¢žåŠ å­—æ®µçº§æ ¡éªŒçš„ä¸“ç”¨ `cacheKey` ç”Ÿæˆé€»è¾‘ã€‚
+可以增加字段级校验的专用 `cacheKey` 生成逻辑。
 
 ---
 
-## æ€»ç»“ï¼šå¯ç›´æŽ¥é‡‡ç”¨ vs éœ€è¦é€‚é…
+## 总结：可直接采用 vs 需要适配
 
-| æ¨¡å¼ | å¯ç›´æŽ¥é‡‡ç”¨ | éœ€è¦é€‚é… |
+| 模式 | 可直接采用 | 需要适配 |
 |------|-----------|---------|
-| FormStore submit handler | âœ“ | - |
-| ç¼–è¯‘æ—¶æå–éªŒè¯è§„åˆ™ | âœ“ | éœ€è¦é€‚é… CompiledSchemaNode ç»“æž„ |
-| å†…è” Dialog æå– | âœ“ | å·²æœ‰ç±»ä¼¼å®žçŽ° |
-| setByPath åŽŸåœ°ä¿®æ”¹ | - | ä»…é€‚ç”¨äºŽ store å†…éƒ¨ |
-| prevResult æ³¨å…¥ | âœ“ | å·²æœ‰å®žçŽ° |
-| å¼‚æ­¥æ ¡éªŒè¯·æ±‚å–æ¶ˆ | âœ“ | å·²æœ‰ç±»ä¼¼å®žçŽ° |
+| FormStore submit handler | ✓ | - |
+| 编译时提取验证规则 | ✓ | 需要适配 CompiledSchemaNode 结构 |
+| 内联 Dialog 提取 | ✓ | 已有类似实现 |
+| setByPath 原地修改 | - | 仅适用于 store 内部 |
+| prevResult 注入 | ✓ | 已有实现 |
+| 异步校验请求取消 | ✓ | 已有类似实现 |
 
-## æ¥æº
+## 来源
 
-- åŽŸåž‹é¡¹ç›®è·¯å¾„ï¼š`c:/can/nop/nop-chaos-amis/`
-- ä¸»è¦å‚è€ƒæ–‡ä»¶ï¼š
+- 原型项目路径：`c:/can/nop/nop-chaos-amis/`
+- 主要参考文件：
   - `src/stores/formStore.ts`
   - `src/stores/pageStore.ts`
   - `src/runtime/runtime.ts`

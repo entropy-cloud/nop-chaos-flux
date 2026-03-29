@@ -1,4 +1,4 @@
-﻿# Renderer And Runtime Terminology
+# Renderer And Runtime Terminology
 
 ## Purpose
 

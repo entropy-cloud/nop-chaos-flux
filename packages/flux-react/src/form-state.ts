@@ -1,4 +1,4 @@
-﻿import type { FormErrorQuery, FormFieldStateSnapshot, FormStoreState, ValidationError } from '@nop-chaos/flux-core';
+import type { FormErrorQuery, FormFieldStateSnapshot, FormStoreState, ValidationError } from '@nop-chaos/flux-core';
 
 export const EMPTY_FORM_STORE_STATE: FormStoreState = {
   values: {},

@@ -1,4 +1,4 @@
-﻿import type { PageRuntime, PageStoreApi, RendererRuntime } from '@nop-chaos/flux-core';
+import type { PageRuntime, PageStoreApi, RendererRuntime } from '@nop-chaos/flux-core';
 import { createPageStore } from './form-store';
 import { createScopeRef } from './scope';
 

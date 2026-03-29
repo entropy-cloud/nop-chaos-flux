@@ -1,4 +1,4 @@
-﻿# Renderer Interface Reference
+# Renderer Interface Reference
 
 ## Purpose
 

@@ -1,4 +1,4 @@
-﻿# 02 Playground Env Identity Runtime Reset Fix
+# 02 Playground Env Identity Runtime Reset Fix
 
 ## Problem
 

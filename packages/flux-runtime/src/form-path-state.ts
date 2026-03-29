@@ -1,4 +1,4 @@
-﻿import type { ValidationError } from '@nop-chaos/flux-core';
+import type { ValidationError } from '@nop-chaos/flux-core';
 
 function isNumericPathSegment(segment: string | undefined): boolean {
   return typeof segment === 'string' && /^\d+$/.test(segment);

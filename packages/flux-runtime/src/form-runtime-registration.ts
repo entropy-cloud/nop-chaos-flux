@@ -1,4 +1,4 @@
-﻿import type { RuntimeFieldRegistration } from '@nop-chaos/flux-core';
+import type { RuntimeFieldRegistration } from '@nop-chaos/flux-core';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
 
 export function findRuntimeRegistration(

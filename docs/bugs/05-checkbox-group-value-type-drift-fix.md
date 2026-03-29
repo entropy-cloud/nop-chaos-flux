@@ -1,4 +1,4 @@
-﻿# 05 Checkbox Group Value Type Drift Fix
+# 05 Checkbox Group Value Type Drift Fix
 
 ## Problem
 

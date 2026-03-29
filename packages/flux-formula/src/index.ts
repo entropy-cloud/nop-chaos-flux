@@ -1,4 +1,4 @@
-﻿import { evaluate, parse } from 'amis-formula';
+import { evaluate, parse } from 'amis-formula';
 import type {
   ArrayValueNode,
   CompiledExpression,

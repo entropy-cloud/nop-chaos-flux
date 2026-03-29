@@ -1,4 +1,4 @@
-﻿# 04 Dialog Scope Stale Render Fix
+# 04 Dialog Scope Stale Render Fix
 
 ## Problem
 

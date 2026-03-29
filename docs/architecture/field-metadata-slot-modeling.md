@@ -1,4 +1,4 @@
-﻿# Field Metadata and Slot Modeling
+# Field Metadata and Slot Modeling
 
 ## Purpose
 

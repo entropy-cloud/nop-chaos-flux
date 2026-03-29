@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { CompiledFormValidationField, CompiledValidationRule, ScopeRef } from '@nop-chaos/flux-core';
 import { createScopeRef, createScopeStore } from '../scope';
 import { createBuiltInValidationRegistry } from './registry';

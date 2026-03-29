@@ -1,4 +1,4 @@
-﻿# Action Scope, Imports, And Component Invocation Implementation Plan
+# Action Scope, Imports, And Component Invocation Implementation Plan
 
 ## Purpose
 
