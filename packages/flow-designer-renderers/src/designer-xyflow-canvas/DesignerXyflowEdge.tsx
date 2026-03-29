@@ -113,9 +113,9 @@ export function DesignerXyflowEdge(props: EdgeProps) {
           >
             <Button
               type="button"
-              variant="secondary"
+              variant="ghost"
               size="icon-sm"
-              className="w-7 h-7 rounded-lg inline-flex items-center justify-center hover:bg-accent"
+              className="w-7 h-7 rounded-lg inline-flex items-center justify-center border-0 hover:bg-black/8 dark:hover:bg-white/10"
               aria-label="Select edge"
               onClick={handleLabelClick}
             >
@@ -123,9 +123,9 @@ export function DesignerXyflowEdge(props: EdgeProps) {
             </Button>
             <Button
               type="button"
-              variant="destructive"
+              variant="ghost"
               size="icon-sm"
-              className="w-7 h-7 rounded-lg inline-flex items-center justify-center border-0 hover:bg-accent"
+              className="w-7 h-7 rounded-lg inline-flex items-center justify-center border-0 hover:bg-destructive/15 hover:text-destructive"
               aria-label="Delete edge"
               onClick={handleDeleteEdge}
             >

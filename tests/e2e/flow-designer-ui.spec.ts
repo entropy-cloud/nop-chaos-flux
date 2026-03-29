@@ -121,8 +121,8 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   const nodeQuickActionBgBefore = await nodeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
   await nodeQuickActionButton.hover();
   const nodeQuickActionBgAfter = await nodeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
-  expect(nodeQuickActionBgBefore).not.toBe('rgba(0, 0, 0, 0)');
-  expect(nodeQuickActionBgAfter).not.toBe(nodeQuickActionBgBefore);
+  expect(nodeQuickActionBgBefore).toBe('rgba(0, 0, 0, 0)');
+  expect(nodeQuickActionBgAfter).not.toBe('rgba(0, 0, 0, 0)');
 
   const nodeHtml = await nodeCard.evaluate((el) => el.outerHTML);
   const toolbarHtml = await toolbar.evaluate((el) => el.outerHTML);
@@ -138,8 +138,8 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   const edgeQuickActionBgBefore = await edgeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
   await edgeQuickActionButton.hover();
   const edgeQuickActionBgAfter = await edgeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
-  expect(edgeQuickActionBgBefore).not.toBe('rgba(0, 0, 0, 0)');
-  expect(edgeQuickActionBgAfter).not.toBe(edgeQuickActionBgBefore);
+  expect(edgeQuickActionBgBefore).toBe('rgba(0, 0, 0, 0)');
+  expect(edgeQuickActionBgAfter).not.toBe('rgba(0, 0, 0, 0)');
 
   const outDir = join(testInfo.outputDir, 'html');
   await mkdir(outDir, { recursive: true });

@@ -144,27 +144,30 @@ export function DesignerXyflowNode(props: NodeProps) {
               <div className="flex gap-1">
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="ghost"
                   size="icon-sm"
                   aria-label="Edit node"
+                  className="border-0 hover:bg-black/8 dark:hover:bg-white/10"
                   onClick={actionScope.onEdit}
                 >
                   <DesignerIcon icon="pencil" className="nop-icon nop-icon--pencil" />
                 </Button>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="ghost"
                   size="icon-sm"
                   aria-label="Duplicate node"
+                  className="border-0 hover:bg-black/8 dark:hover:bg-white/10"
                   onClick={actionScope.onDuplicate}
                 >
                   <DesignerIcon icon="copy" className="nop-icon nop-icon--copy" />
                 </Button>
                 <Button
                   type="button"
-                  variant="destructive"
+                  variant="ghost"
                   size="icon-sm"
                   aria-label="Delete node"
+                  className="border-0 hover:bg-destructive/15 hover:text-destructive"
                   onClick={actionScope.onDelete}
                 >
                   <DesignerIcon icon="trash-2" className="nop-icon nop-icon--trash-2" />
