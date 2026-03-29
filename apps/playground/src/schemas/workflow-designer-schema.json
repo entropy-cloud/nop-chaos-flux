@@ -147,6 +147,7 @@
         "icon": "play",
         "body": {
           "type": "flex",
+          "direction": "column",
           "className": "node-card node-card--start",
           "items": [
             {
@@ -154,9 +155,11 @@
               "className": "node-header",
               "items": [
                 {
-                  "type": "icon",
-                  "icon": "play",
-                  "className": "node-icon node-icon--start"
+                  "type": "container",
+                  "className": "node-icon node-icon--start",
+                  "body": [
+                    { "type": "icon", "icon": "play" }
+                  ]
                 },
                 {
                   "type": "container",
@@ -239,6 +242,7 @@
         "icon": "flag",
         "body": {
           "type": "flex",
+          "direction": "column",
           "className": "node-card node-card--end",
           "items": [
             {
@@ -246,9 +250,11 @@
               "className": "node-header",
               "items": [
                 {
-                  "type": "icon",
-                  "icon": "flag",
-                  "className": "node-icon node-icon--end"
+                  "type": "container",
+                  "className": "node-icon node-icon--end",
+                  "body": [
+                    { "type": "icon", "icon": "flag" }
+                  ]
                 },
                 {
                   "type": "container",
@@ -325,6 +331,7 @@
         "icon": "workflow",
         "body": {
           "type": "flex",
+          "direction": "column",
           "className": "node-card",
           "items": [
             {
@@ -332,9 +339,11 @@
               "className": "node-header",
               "items": [
                 {
-                  "type": "icon",
-                  "icon": "workflow",
-                  "className": "node-icon node-icon--task"
+                  "type": "container",
+                  "className": "node-icon node-icon--task",
+                  "body": [
+                    { "type": "icon", "icon": "workflow" }
+                  ]
                 },
                 {
                   "type": "container",
@@ -411,6 +420,7 @@
         "icon": "git-branch",
         "body": {
           "type": "flex",
+          "direction": "column",
           "className": "node-card node-card--condition",
           "items": [
             {
@@ -418,9 +428,11 @@
               "className": "node-header",
               "items": [
                 {
-                  "type": "icon",
-                  "icon": "git-branch",
-                  "className": "node-icon node-icon--condition"
+                  "type": "container",
+                  "className": "node-icon node-icon--condition",
+                  "body": [
+                    { "type": "icon", "icon": "git-branch" }
+                  ]
                 },
                 {
                   "type": "container",
@@ -486,6 +498,7 @@
         "icon": "git-merge",
         "body": {
           "type": "flex",
+          "direction": "column",
           "className": "node-card",
           "items": [
             {
@@ -493,9 +506,11 @@
               "className": "node-header",
               "items": [
                 {
-                  "type": "icon",
-                  "icon": "git-merge",
-                  "className": "node-icon node-icon--parallel"
+                  "type": "container",
+                  "className": "node-icon node-icon--parallel",
+                  "body": [
+                    { "type": "icon", "icon": "git-merge" }
+                  ]
                 },
                 {
                   "type": "container",
@@ -560,6 +575,7 @@
         "icon": "repeat",
         "body": {
           "type": "flex",
+          "direction": "column",
           "className": "node-card",
           "items": [
             {
@@ -567,9 +583,11 @@
               "className": "node-header",
               "items": [
                 {
-                  "type": "icon",
-                  "icon": "repeat",
-                  "className": "node-icon node-icon--loop"
+                  "type": "container",
+                  "className": "node-icon node-icon--loop",
+                  "body": [
+                    { "type": "icon", "icon": "repeat" }
+                  ]
                 },
                 {
                   "type": "container",
