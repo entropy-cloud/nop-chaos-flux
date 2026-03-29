@@ -326,7 +326,7 @@ describe('dataRendererDefinitions', () => {
         />
       );
 
-      expect(screen.getByText('Loading...')).toBeTruthy();
+      expect(document.querySelector('[data-slot="skeleton"]')).toBeTruthy();
 
       await waitFor(() => {
         expect(screen.getByText('Hello, Alice')).toBeTruthy();

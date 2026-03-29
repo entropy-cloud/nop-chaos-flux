@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ApiObject, DataSourceSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRendererEnv, useRendererRuntime } from '@nop-chaos/flux-react';
 import { createApiCacheStore, resolveCacheKey } from '@nop-chaos/flux-runtime';
+import { Alert, AlertDescription } from '@nop-chaos/ui';
+import { Skeleton } from '@nop-chaos/ui';
 
 const globalApiCache = createApiCacheStore();
 
@@ -162,7 +164,7 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
   if (state.loading && state.data === undefined) {
     return (
       <div className={props.meta.className} data-testid={props.meta.testid || undefined}>
-        <div className="nop-data-source-loading">Loading...</div>
+        <Skeleton className="h-6 w-40" />
       </div>
     );
   }
@@ -170,9 +172,11 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
   if (state.error && state.data === undefined) {
     return (
       <div className={props.meta.className} data-testid={props.meta.testid || undefined}>
-        <div className="nop-data-source-error">
-          Error: {state.error instanceof Error ? state.error.message : String(state.error)}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>
+            Error: {state.error instanceof Error ? state.error.message : String(state.error)}
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
