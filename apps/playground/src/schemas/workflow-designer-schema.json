@@ -118,7 +118,8 @@
     "kind": "workflow",
     "classAliases": {
       "node-card": "nop-glass-card flex flex-col px-3 py-3 rounded-xl shadow-lg min-w-[192px] transition-all duration-150",
-      "node-card--start": "nop-glass-card-glow",
+      "node-card--start": "",
+      "node-info": "flex-1 min-w-0",
       "node-card--end": "",
       "node-card--condition": "",
       "node-header": "flex items-start gap-3",
@@ -134,11 +135,11 @@
       "node-footer": "flex items-center justify-between gap-2 mt-3 text-sm text-muted-foreground",
       "node-badge": "text-sm px-2 py-1 rounded-full font-medium",
       "node-badge--start": "text-emerald-700 bg-emerald-100",
-      "node-badge--end": "text-rose-700 bg-rose-100",
+      "node-badge--end": "text-rose-800 bg-rose-100",
       "node-badge--task": "text-sky-700 bg-sky-100",
-      "node-badge--condition": "text-amber-700 bg-amber-100",
-      "node-badge--parallel": "text-violet-700 bg-violet-100",
-      "node-badge--loop": "text-fuchsia-700 bg-fuchsia-100"
+      "node-badge--condition": "text-amber-800 bg-amber-100",
+      "node-badge--parallel": "text-violet-800 bg-violet-100",
+      "node-badge--loop": "text-pink-900 bg-fuchsia-100"
     },
     "nodeTypes": [
       {
@@ -163,6 +164,7 @@
                 },
                 {
                   "type": "container",
+                  "className": "node-info",
                   "body": [
                     {
                       "type": "text",
@@ -258,6 +260,7 @@
                 },
                 {
                   "type": "container",
+                  "className": "node-info",
                   "body": [
                     {
                       "type": "text",
@@ -347,6 +350,7 @@
                 },
                 {
                   "type": "container",
+                  "className": "node-info",
                   "body": [
                     {
                       "type": "text",
@@ -436,6 +440,7 @@
                 },
                 {
                   "type": "container",
+                  "className": "node-info",
                   "body": [
                     {
                       "type": "text",
@@ -514,6 +519,7 @@
                 },
                 {
                   "type": "container",
+                  "className": "node-info",
                   "body": [
                     {
                       "type": "text",
@@ -591,6 +597,7 @@
                 },
                 {
                   "type": "container",
+                  "className": "node-info",
                   "body": [
                     {
                       "type": "text",
