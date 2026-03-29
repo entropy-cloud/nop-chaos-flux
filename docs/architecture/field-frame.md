@@ -15,11 +15,7 @@ Use it when changing:
 
 When this document needs to be checked against code, start with:
 
-- `packages/flux-renderers-form/src/renderers/shared/field-frame.tsx` for FieldFrame component
-- `packages/flux-renderers-form/src/renderers/shared/label.tsx` for FieldLabel component
-- `packages/flux-renderers-form/src/renderers/shared/field-hint.tsx` for FieldHint component
-- `packages/flux-renderers-form/src/renderers/input.tsx` for control implementations using FieldFrame
-- `packages/flux-renderers-form/src/field-utils.tsx` for shared field utilities
+- `packages/flux-react/src/field-frame.tsx` for FieldFrame component
 
 ## Why This Is Needed
 
@@ -57,72 +53,103 @@ FieldFrame supports different layout modes via CSS classes, not component varian
 
 ```tsx
 interface FieldFrameProps {
-  // Label
+  name?: string;
   label?: ReactNode;
-  labelTag?: 'span' | 'legend';  // default: 'span'
   required?: boolean;
-
-  // Error
-  error?: string;
-  showError?: boolean;
-
-  // Hints
   hint?: ReactNode;
-  showHint?: boolean;
   description?: ReactNode;
-  validating?: boolean;
-
-  // Layout
+  layout?: 'default' | 'checkbox' | 'radio';
+  validationBehavior?: CompiledValidationBehavior;
   className?: string;
-  layout?: 'default' | 'checkbox' | 'radio';  // default: 'default'
-
-  // Children (the actual control)
+  testid?: string;
   children: ReactNode;
 }
 ```
 
+Key props:
+
+| Prop | Type | Purpose |
+|------|------|---------|
+| `name` | `string?` | Field name in the form. When provided, FieldFrame internally calls `useOwnedFieldState(name)` and `useAggregateError(name)` to get validation state. |
+| `label` | `ReactNode?` | Field label text. |
+| `required` | `boolean?` | Shows a required asterisk next to the label. |
+| `hint` | `ReactNode?` | Hint text shown when no error is present. |
+| `description` | `ReactNode?` | Description text shown when no error or hint is present. |
+| `layout` | `'default' \| 'checkbox' \| 'radio'?` | Layout mode. `checkbox`/`radio` render a `<fieldset>` + `<legend>` wrapper; `default` renders `<label>` + `<span>`. |
+| `validationBehavior` | `CompiledValidationBehavior?` | Override the per-field validation behavior (controls when errors become visible). Falls back to form-level behavior. |
+| `className` | `string?` | Additional CSS classes on the root element. |
+| `testid` | `string?` | Test anchoring attribute, rendered as `data-testid`. |
+| `children` | `ReactNode` | The actual form control. |
+
+## Internal Behavior
+
+When `name` is provided, FieldFrame manages validation state internally:
+
+1. **Form lookup**: `useCurrentForm()` to get the current form context
+2. **Field state**: `useOwnedFieldState(name)` to get `touched`, `dirty`, `visited`, `submitting`, `validating`, and `error`
+3. **Aggregate errors**: `useAggregateError(name)` to collect validation errors from all rules
+4. **Per-field behavior**: `getCompiledValidationField(form.validation, name)` to get field-specific `CompiledValidationBehavior`
+5. **Behavior fallback**: `validationBehavior` prop → field behavior → form behavior → default (`{ triggers: ['blur'], showErrorOn: ['touched', 'submit'] }`)
+6. **Error visibility**: `shouldShowFieldError(behavior, state)` checks whether any trigger in `showErrorOn` matches the current field state
+
+This means controls do **not** need to call `useFieldState` or pass `error`/`showError` props — they simply pass `name` and FieldFrame handles everything.
+
 ## Render Structure
 
 ```tsx
-function FieldFrame(props: FieldFrameProps) {
-  const { label, labelTag, required, error, showError, hint, showHint, 
-          description, validating, className, layout, children } = props;
+export function FieldFrame(props: FieldFrameProps) {
+  const { name, label, required, hint, description, layout,
+          validationBehavior, className, testid, children } = props;
 
-  const Tag = layout === 'checkbox' || layout === 'radio' ? 'fieldset' : 'label';
-  const LabelTag = Tag === 'fieldset' ? 'legend' : (labelTag ?? 'span');
+  const currentForm = useCurrentForm();
+  const fieldState = useOwnedFieldState(name ?? '');
+  const aggregateError = useAggregateError(name ?? '');
+  const behavior = validationBehavior
+    ?? getCompiledValidationField(currentForm?.validation, name)?.behavior
+    ?? currentForm?.validation?.behavior
+    ?? defaultBehavior;
+
+  const error = aggregateError ?? fieldState.error;
+  const showError = Boolean(
+    error && shouldShowFieldError(behavior, {
+      touched: fieldState.touched,
+      dirty: fieldState.dirty,
+      visited: fieldState.visited,
+      submitting: fieldState.submitting
+    })
+  );
+
+  const isGroup = layout === 'checkbox' || layout === 'radio';
+  const Tag = isGroup ? 'fieldset' : 'label';
+  const LabelTag = isGroup ? 'legend' : 'span';
 
   return (
-    <Tag className={className}>
-      {label && (
+    <Tag className={['nop-field grid gap-2', className].filter(Boolean).join(' ') || undefined}
+         data-testid={testid || undefined}
+         data-field-visited={fieldState.visited || undefined}
+         data-field-touched={fieldState.touched || undefined}
+         data-field-dirty={fieldState.dirty || undefined}
+         data-field-invalid={showError || undefined}>
+      {label ? (
         <LabelTag className="nop-field__label">
           {label}
-          {required && <span className="nop-field__required">*</span>}
+          {required ? <span className="nop-field__required">*</span> : null}
         </LabelTag>
-      )}
-      
+      ) : null}
+
       <div className="nop-field__control">
         {children}
       </div>
 
-      {/* Error - highest priority */}
-      {error && showError && (
-        <span className="nop-field__error">{error}</span>
-      )}
-
-      {/* Hint - shown on focus */}
-      {!error && hint && showHint && (
-        <span className="nop-field__hint">{hint}</span>
-      )}
-
-      {/* Validating indicator */}
-      {validating && (
+      {error && showError ? (
+        <span className="nop-field__error">{error.message}</span>
+      ) : fieldState.validating ? (
         <span className="nop-field__hint">Validating...</span>
-      )}
-
-      {/* Description - lowest priority, always visible when no error/hint */}
-      {!error && !hint && description && (
+      ) : !error && hint ? (
+        <span className="nop-field__hint">{hint}</span>
+      ) : !error && !hint && description ? (
         <span className="nop-field__description">{description}</span>
-      )}
+      ) : null}
     </Tag>
   );
 }
@@ -130,42 +157,29 @@ function FieldFrame(props: FieldFrameProps) {
 
 ## Usage Examples
 
-### Basic input with label and error
+### Basic input with label (no manual state management)
 
 ```tsx
 function InputRenderer(props) {
   const { name, label, placeholder } = props.schema;
-  const { value, error, showError } = useFieldState(name);
-
+  // No useFieldState needed — FieldFrame handles validation via name prop
   return (
-    <FieldFrame label={label} error={error} showError={showError}>
-      <input
-        type="text"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => setValue(name, e.target.value)}
-      />
+    <FieldFrame name={name} label={label}>
+      <input type="text" placeholder={placeholder} />
     </FieldFrame>
   );
 }
 ```
 
-### Checkbox with custom layout
+### Checkbox group with custom layout
 
 ```tsx
 function CheckboxRenderer(props) {
   const { label, option } = props.schema;
-  const { value, error, showError } = useFieldState(name);
-
   return (
-    <FieldFrame
-      label={label}
-      error={error}
-      showError={showError}
-      layout="checkbox"
-    >
+    <FieldFrame name={props.schema.name} label={label} layout="checkbox">
       <span className="nop-checkbox">
-        <input type="checkbox" checked={value} />
+        <input type="checkbox" />
         <span className="nop-checkbox__label">{option?.label}</span>
       </span>
     </FieldFrame>
@@ -178,9 +192,8 @@ function CheckboxRenderer(props) {
 ```tsx
 function RadioGroupRenderer(props) {
   const { label, options } = props.schema;
-
   return (
-    <FieldFrame label={label} layout="radio">
+    <FieldFrame name={props.schema.name} label={label} layout="radio">
       <div className="nop-radio-group">
         {options.map(opt => (
           <label key={opt.value} className="nop-radio">
@@ -196,32 +209,44 @@ function RadioGroupRenderer(props) {
 
 ## CSS Class Mapping
 
+### Structural Classes
+
 | Class | Purpose |
 |-------|---------|
-| `nop-field` | Root wrapper |
+| `nop-field` | Root wrapper (with `grid gap-2`) |
 | `nop-field__label` | Label text |
 | `nop-field__required` | Required asterisk |
 | `nop-field__control` | Control wrapper |
 | `nop-field__error` | Error message |
-| `nop-field__hint` | Hint/focus message |
+| `nop-field__hint` | Hint/focus message or "Validating..." indicator |
 | `nop-field__description` | Description text |
-| `nop-field--invalid` | State: has validation error |
-| `nop-field--touched` | State: has been focused+blurred |
-| `nop-field--dirty` | State: value changed |
+
+### Data Attributes (State)
+
+| Attribute | Purpose |
+|-----------|---------|
+| `data-field-visited` | Set when field has been visited |
+| `data-field-touched` | Set when field has been focused and blurred |
+| `data-field-dirty` | Set when field value has changed |
+| `data-field-invalid` | Set when field has a visible validation error |
+
+These data attributes follow the convention documented in `docs/architecture/bem-removal.md` — state is communicated via data attributes rather than BEM modifier classes.
 
 ## Comparison with AMIS FormItem
 
 | Feature | AMIS FormItem | FieldFrame |
 |---------|---------------|------------|
-| Label | ✓ | ✓ |
-| Required indicator | ✓ | ✓ |
-| Error message | ✓ | ✓ |
-| Hint (focus) | ✓ | ✓ |
-| Description | ✓ | ✓ |
-| Remark (icon tooltip) | ✓ | Not yet |
-| Caption | ✓ | Not yet |
+| Label | Yes | Yes |
+| Required indicator | Yes | Yes |
+| Error message | Yes | Yes |
+| Hint (focus) | Yes | Yes |
+| Description | Yes | Yes |
+| Remark (icon tooltip) | Yes | Not yet |
+| Caption | Yes | Not yet |
 | Layout modes | 5 modes | CSS-based |
-| wrap: false | ✓ | Opt-out by not using FieldFrame |
+| wrap: false | Yes | Opt-out by not using FieldFrame |
+| Internal validation state | External | Yes (via `name` prop) |
+| Per-field validation behavior | No | Yes (`validationBehavior` prop) |
 
 ## Future Extensions
 
@@ -236,3 +261,4 @@ function RadioGroupRenderer(props) {
 - `docs/architecture/field-metadata-slot-modeling.md` - field semantics model
 - `docs/architecture/form-validation.md` - validation behavior
 - `docs/architecture/renderer-runtime.md` - renderer component contracts
+- `docs/architecture/bem-removal.md` - data attribute convention
