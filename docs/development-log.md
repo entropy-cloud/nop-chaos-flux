@@ -18,6 +18,26 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-29 (Architecture Conformance Deep Audit + Architecture Rationality Review)
+
+- Added a multi-document conformance audit set to avoid oversized single reports:
+  - `docs/analysis/architecture-conformance-audit-2026-03-29-index.md`
+  - `docs/analysis/architecture-conformance-audit-2026-03-29-01-renderer-and-styling.md`
+  - `docs/analysis/architecture-conformance-audit-2026-03-29-02-validation-action-theme.md`
+  - `docs/analysis/architecture-conformance-audit-2026-03-29-03-runtime-boundary-and-remediation-plan.md`
+- Added architecture-doc self-review and optimization roadmap:
+  - `docs/analysis/architecture-design-review-2026-03-29.md`
+- Key findings recorded with code/document evidence:
+  - renderer implicit layout injection and marker drift
+  - validation `change` trigger semantics drift
+  - theme root/token naming drift between docs and implementation
+  - runtime `index.ts` boundary drift (non-trivial logic in assembly layer)
+  - architecture-doc internal consistency issues (action syntax, theme root naming, terminology drift)
+- Key decision: use a two-phase follow-up strategy.
+  - Phase 1: fix document contradictions first (canonical syntax/naming and ownership rules).
+  - Phase 2: execute code conformance remediation with targeted regression tests.
+- Next step: open a focused remediation task list by severity (P0/P1/P2) based on the new audit documents.
+
 ### 2026-03-29 (Flow Designer Node Style Fixes)
 
 - Fixed ContainerRenderer always adding `grid gap-4` — removed default gap to let schema control spacing (`packages/flux-renderers-basic/src/container.tsx:25`).

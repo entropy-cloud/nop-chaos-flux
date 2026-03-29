@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import type { NopDebugEvent, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
+import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
 import { buildOverview, DEFAULT_FILTERS } from './diagnostics';
 
 const DEBUGGER_STYLE_ID = 'nop-debugger-styles';
@@ -113,8 +113,8 @@ const DEBUGGER_STYLES = `
   font-weight: 600;
 }
 
-.nop-debugger__tab--active,
-.nop-debugger__filter--active {
+.nop-debugger__tab[data-active],
+.nop-debugger__filter[data-active] {
   background: var(--nop-debugger-chip-active-bg);
   border-color: var(--nop-debugger-chip-active-border);
   color: var(--nop-debugger-chip-active-text);
@@ -145,7 +145,7 @@ const DEBUGGER_STYLES = `
   font-size: 20px;
 }
 
-.nop-debugger__metric-card--error strong {
+.nop-debugger__metric-card[data-error] strong {
   color: var(--nop-debugger-badge-error-text);
 }
 
@@ -188,12 +188,12 @@ const DEBUGGER_STYLES = `
   letter-spacing: 0.12em;
 }
 
-.nop-debugger__badge--render { background: var(--nop-debugger-badge-render-bg); color: var(--nop-debugger-badge-render-text); }
-.nop-debugger__badge--action { background: var(--nop-debugger-badge-action-bg); color: var(--nop-debugger-badge-action-text); }
-.nop-debugger__badge--api { background: var(--nop-debugger-badge-api-bg); color: var(--nop-debugger-badge-api-text); }
-.nop-debugger__badge--compile { background: var(--nop-debugger-badge-compile-bg); color: var(--nop-debugger-badge-compile-text); }
-.nop-debugger__badge--notify { background: var(--nop-debugger-badge-notify-bg); color: var(--nop-debugger-badge-notify-text); }
-.nop-debugger__badge--error { background: var(--nop-debugger-badge-error-bg); color: var(--nop-debugger-badge-error-text); }
+.nop-debugger__badge[data-group="render"] { background: var(--nop-debugger-badge-render-bg); color: var(--nop-debugger-badge-render-text); }
+.nop-debugger__badge[data-group="action"] { background: var(--nop-debugger-badge-action-bg); color: var(--nop-debugger-badge-action-text); }
+.nop-debugger__badge[data-group="api"] { background: var(--nop-debugger-badge-api-bg); color: var(--nop-debugger-badge-api-text); }
+.nop-debugger__badge[data-group="compile"] { background: var(--nop-debugger-badge-compile-bg); color: var(--nop-debugger-badge-compile-text); }
+.nop-debugger__badge[data-group="notify"] { background: var(--nop-debugger-badge-notify-bg); color: var(--nop-debugger-badge-notify-text); }
+.nop-debugger__badge[data-group="error"] { background: var(--nop-debugger-badge-error-bg); color: var(--nop-debugger-badge-error-text); }
 
 .nop-debugger__empty { margin: 0; color: var(--nop-debugger-muted-text); }
 
@@ -255,9 +255,6 @@ function formatClock(timestamp: number) {
   });
 }
 
-function getEventBadgeClass(event: NopDebugEvent) {
-  return `nop-debugger__badge nop-debugger__badge--${event.group}`;
-}
 
 function formatTraceSummary(trace: NopInteractionTrace | undefined) {
   if (!trace || trace.totalEvents === 0) {
@@ -614,7 +611,8 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           <button
             key={tab}
             type="button"
-            className={`nop-debugger__tab ${snapshot.activeTab === tab ? 'nop-debugger__tab--active' : ''}`}
+            className="nop-debugger__tab"
+            data-active={snapshot.activeTab === tab ? '' : undefined}
             onClick={() => props.controller.setActiveTab(tab)}
           >
             {tab}
@@ -644,7 +642,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             <strong>{overview.latestApi ? formatClock(overview.latestApi.timestamp) : 'n/a'}</strong>
             <span>{overview.latestApi?.summary ?? 'No API event yet'}</span>
           </article>
-          <article className="nop-debugger__metric-card nop-debugger__metric-card--error">
+          <article className="nop-debugger__metric-card" data-error="">
             <span className="nop-debugger__metric-label">Errors</span>
             <strong>{overview.errorCount}</strong>
             <span>{overview.errorCount > 0 ? 'Needs attention' : 'No errors recorded'}</span>
@@ -667,7 +665,8 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
                 <button
                   key={filter}
                   type="button"
-                  className={`nop-debugger__filter ${active ? 'nop-debugger__filter--active' : ''}`}
+                  className="nop-debugger__filter"
+                  data-active={active ? '' : undefined}
                   onClick={() => props.controller.toggleFilter(filter)}
                 >
                   {FILTER_LABELS[filter]}
@@ -680,7 +679,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             {filteredEvents.map((event) => (
               <article key={event.id} className="nop-debugger__entry">
                 <div className="nop-debugger__entry-topline">
-                  <span className={getEventBadgeClass(event)}>{event.group}</span>
+                  <span className="nop-debugger__badge" data-group={event.group}>{event.group}</span>
                   <time>{formatClock(event.timestamp)}</time>
                 </div>
                 <strong className="nop-debugger__entry-summary">{event.summary}</strong>
@@ -698,7 +697,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           {networkEvents.map((event) => (
             <article key={event.id} className="nop-debugger__entry">
               <div className="nop-debugger__entry-topline">
-                <span className={getEventBadgeClass(event)}>{event.kind}</span>
+                <span className="nop-debugger__badge" data-group={event.group}>{event.kind}</span>
                 <time>{formatClock(event.timestamp)}</time>
               </div>
               <strong className="nop-debugger__entry-summary">{event.summary}</strong>

@@ -5,3 +5,4 @@ coverage/
 *.tsbuildinfo
 .opencode/
 nop-task.md
+nul

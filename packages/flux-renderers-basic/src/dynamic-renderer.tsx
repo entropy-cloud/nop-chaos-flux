@@ -51,7 +51,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
   if (state.error) {
     return (
-      <div className={classNames('nop-dynamic-renderer', 'nop-dynamic-renderer--error', props.meta.className)}>
+      <div className={classNames('nop-dynamic-renderer', props.meta.className)} data-error="">
         Error: {state.error instanceof Error ? state.error.message : String(state.error)}
       </div>
     );
