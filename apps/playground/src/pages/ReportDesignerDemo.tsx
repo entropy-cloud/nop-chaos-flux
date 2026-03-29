@@ -7,6 +7,7 @@ import {
 } from '@nop-chaos/spreadsheet-core';
 import {
   createSpreadsheetBridge,
+  SheetTabBar,
 } from '@nop-chaos/spreadsheet-renderers';
 import {
   createReportDesignerCore,
@@ -116,8 +117,6 @@ export function ReportDesignerDemo() {
   const [cellValue, setCellValue] = useState('');
   const [log, setLog] = useState<string[]>([]);
   const [, setClipboardInfo] = useState<string>('');
-  const [renamingSheetId, setRenamingSheetId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
   const [commentText, setCommentText] = useState('');
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [showFindReplace, setShowFindReplace] = useState(false);
@@ -716,22 +715,6 @@ export function ReportDesignerDemo() {
     addLog('Removed sheet');
   }, [spreadsheetBridge, snapshot, addLog]);
 
-  const handleStartRename = useCallback((id: string, name: string) => {
-    setRenamingSheetId(id);
-    setRenameValue(name);
-  }, []);
-
-  const handleRename = useCallback(async () => {
-    if (!renamingSheetId || !renameValue.trim()) return;
-    await spreadsheetBridge.dispatch({
-      type: 'spreadsheet:renameSheet',
-      sheetId: renamingSheetId,
-      name: renameValue.trim(),
-    });
-    setRenamingSheetId(null);
-    addLog(`Renamed sheet to "${renameValue.trim()}"`);
-  }, [renamingSheetId, renameValue, spreadsheetBridge, addLog]);
-
   // Merge/Unmerge
   const handleMerge = useCallback(async () => {
     const range = getSelectedRange();
@@ -1108,49 +1091,25 @@ export function ReportDesignerDemo() {
           onDrop={handleFieldDrop}
         >
           {/* Sheet Tabs */}
-          <div className="sheet-tabs">
-            {snapshot.workbook.sheets.filter(s => !s.hidden).map((sheet) => (
-              <div key={sheet.id} className="sheet-tab-wrapper">
-                {renamingSheetId === sheet.id ? (
-                  <input
-                    className="sheet-rename-input"
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    onBlur={handleRename}
-                    onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                    autoFocus
-                  />
-                ) : (
-                  <button
-                    className={`sheet-tab ${snapshot.activeSheet?.id === sheet.id ? 'active' : ''}`}
-                    onClick={() => spreadsheetBridge.dispatch({
-                      type: 'spreadsheet:setActiveSheet',
-                      sheetId: sheet.id,
-                    })}
-                    onDoubleClick={() => handleStartRename(sheet.id, sheet.name)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      handleStartRename(sheet.id, sheet.name);
-                    }}
-                    style={sheet.tabColor ? { borderColor: sheet.tabColor } : undefined}
-                  >
-                    {sheet.name}
-                    {sheet.protected && <span className="protected-icon">🔒</span>}
-                    {snapshot.workbook.sheets.length > 1 && (
-                      <span
-                        className="sheet-close"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveSheet(sheet.id);
-                        }}
-                      >×</span>
-                    )}
-                  </button>
-                )}
-              </div>
-            ))}
-            <button className="sheet-add" onClick={handleAddSheet}>+</button>
-          </div>
+          <SheetTabBar
+            sheets={snapshot.workbook.sheets}
+            activeSheetId={snapshot.activeSheet?.id ?? ''}
+            onSwitchSheet={(sheetId) => spreadsheetBridge.dispatch({
+              type: 'spreadsheet:setActiveSheet',
+              sheetId,
+            })}
+            onAddSheet={handleAddSheet}
+            onRemoveSheet={handleRemoveSheet}
+            onRenameSheet={async (sheetId, name) => {
+              await spreadsheetBridge.dispatch({
+                type: 'spreadsheet:renameSheet',
+                sheetId,
+                name,
+              });
+              addLog(`Renamed sheet to "${name}"`);
+            }}
+            canRemoveSheet={snapshot.workbook.sheets.length > 1}
+          />
 
           {/* Grid */}
           <div className="spreadsheet-grid">
