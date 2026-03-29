@@ -1,6 +1,6 @@
 import type { ActionContext, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
 
-export type NopDebuggerTab = 'overview' | 'timeline' | 'network';
+export type NopDebuggerTab = 'overview' | 'timeline' | 'network' | 'node';
 
 export type NopDebugEventKind =
   | 'compile:start'
@@ -17,7 +17,7 @@ export type NopDebugEventKind =
 
 export type NopDebugEventLevel = 'info' | 'success' | 'warning' | 'error';
 
-export type NopDebuggerFilterKind = 'render' | 'action' | 'api' | 'compile' | 'notify' | 'error';
+export type NopDebuggerFilterKind = 'render' | 'action' | 'api' | 'compile' | 'notify' | 'error' | 'node';
 
 export type DebuggerWindowDock = 'floating';
 
@@ -211,6 +211,23 @@ export interface NopWaitForEventOptions extends NopDebugEventQuery {
   timeoutMs?: number;
 }
 
+export interface NopComponentInspectResult {
+  cid: number;
+  handleId?: string;
+  handleName?: string;
+  handleType?: string;
+  mounted: boolean;
+  formState?: {
+    values: Record<string, unknown>;
+    errors: Record<string, unknown>;
+    touched: Record<string, boolean>;
+    dirty: Record<string, boolean>;
+    visited: Record<string, boolean>;
+    submitting: boolean;
+  };
+  scopeData?: Record<string, unknown>;
+}
+
 export interface NopDebuggerAutomationApi {
   readonly controllerId: string;
   readonly sessionId: string;
@@ -228,6 +245,8 @@ export interface NopDebuggerAutomationApi {
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
+  inspectByCid(cid: number): NopComponentInspectResult | undefined;
+  inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
   clear(): void;
   pause(): void;
   resume(): void;
@@ -292,6 +311,9 @@ export interface NopDebuggerController {
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
+  setComponentRegistry(registry: import('@nop-chaos/flux-core').ComponentHandleRegistry): void;
+  inspectByCid(cid: number): NopComponentInspectResult | undefined;
+  inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
   subscribe(listener: () => void): () => void;
   getSnapshot(): NopDebuggerSnapshot;
 }
