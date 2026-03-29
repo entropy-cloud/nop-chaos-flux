@@ -34,6 +34,7 @@
 - `docs/architecture/report-designer/inspector-design.md` - 右侧属性面板的 shell/provider/panel descriptor 设计
 - `docs/architecture/report-designer/nop-report-profile.md` - 通用设计器如何通过 profile + adapter 支持 `nop-report`
 - `docs/architecture/report-designer/codec-design.md` - `SpreadsheetDocument` / `ReportSemanticDocument` 与外部模板模型的 round-trip codec 设计
+- `docs/architecture/report-designer/spreadsheet-canvas-css.md` - Spreadsheet canvas 的混合 CSS 策略设计（预定义 class + inline style + data-* 属性）
 - `docs/analysis/excel-report-designer-research.md` - 外部项目与目标模型调研结论
 
 ## 设计原则
