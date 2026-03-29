@@ -74,3 +74,10 @@ export interface ArrayEditorItem {
   id: string;
   value: string;
 }
+
+export interface ExpressionEditorSchema extends InputSchema {
+  variables?: string[];
+  operators?: string[];
+  showValidationText?: boolean;
+  constraintVariables?: boolean;
+}

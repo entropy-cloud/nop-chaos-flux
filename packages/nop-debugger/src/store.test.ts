@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createDebuggerStore } from './store';
+import type { NopDebugEvent, NopDebuggerFilterKind } from './types';
 
 describe('createDebuggerStore', () => {
   it('appends bounded events and notifies subscribers', async () => {
@@ -43,7 +44,7 @@ describe('createDebuggerStore', () => {
 
     const snapshot = store.getSnapshot();
     expect(snapshot.events).toHaveLength(2);
-    expect(snapshot.events.map((event) => event.summary)).toEqual(['third', 'second']);
+    expect(snapshot.events.map((event: NopDebugEvent) => event.summary)).toEqual(['third', 'second']);
     expect(snapshot.events[0]).toMatchObject({
       id: 3,
       sessionId: 'session-1'
@@ -88,7 +89,7 @@ describe('createDebuggerStore', () => {
     store.toggleFilter('render');
     expect(store.getSnapshot().filters.includes('render')).toBe(false);
 
-    store.getSnapshot().filters.slice(0, -1).forEach((filter) => {
+    store.getSnapshot().filters.slice(0, -1).forEach((filter: NopDebuggerFilterKind) => {
       store.toggleFilter(filter);
     });
     const lastFilter = store.getSnapshot().filters[0];

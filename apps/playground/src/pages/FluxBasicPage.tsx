@@ -220,6 +220,11 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
           panel update in real time.
         </p>
         <p className="mt-2.5 text-[15px] leading-relaxed text-[var(--nop-body-copy)]">
+          The form now includes an expression editor field at the bottom. It provides syntax highlighting,
+          auto-complete for variables, and real-time validation. Try typing variable names like `username`
+          or `role` and combine them with operators.
+        </p>
+        <p className="mt-2.5 text-[15px] leading-relaxed text-[var(--nop-body-copy)]">
           The username field now validates on blur, debounces async uniqueness checks for 500ms, and only
           reveals errors after a field has been touched. Validation timing and error visibility are now
           configured independently at the form or field level.

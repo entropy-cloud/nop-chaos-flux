@@ -3,6 +3,7 @@ import type { ApiObject, RendererEnv } from '@nop-chaos/flux-core';
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
 import { normalizeRedactionOptions } from './redaction';
 import { createDebuggerStore } from './store';
+import type { NopDebugEvent } from './types';
 
 function createStore() {
   return createDebuggerStore({
@@ -35,7 +36,7 @@ describe('debugger adapters', () => {
     });
 
     const events = store.getSnapshot().events;
-    expect(events.map((event) => event.kind)).toEqual(['error', 'action:start', 'compile:end', 'compile:start']);
+    expect(events.map((event: NopDebugEvent) => event.kind)).toEqual(['error', 'action:start', 'compile:end', 'compile:start']);
     expect(events[1]).toMatchObject({
       actionType: 'submitForm',
       rendererType: 'form'
@@ -109,9 +110,9 @@ describe('debugger adapters', () => {
     });
 
     const snapshot = store.getSnapshot();
-    const apiStartEvents = snapshot.events.filter((event) => event.kind === 'api:start');
-    const apiEndEvent = snapshot.events.find((event) => event.kind === 'api:end');
-    const notifyEvent = snapshot.events.find((event) => event.kind === 'notify');
+    const apiStartEvents = snapshot.events.filter((event: NopDebugEvent) => event.kind === 'api:start');
+    const apiEndEvent = snapshot.events.find((event: NopDebugEvent) => event.kind === 'api:end');
+    const notifyEvent = snapshot.events.find((event: NopDebugEvent) => event.kind === 'notify');
 
     expect(baseMonitor.onRenderStart).toHaveBeenCalled();
     expect(baseMonitor.onApiRequest).toHaveBeenCalledTimes(2);

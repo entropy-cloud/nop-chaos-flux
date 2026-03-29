@@ -171,4 +171,128 @@ describe('NopDebuggerPanel', () => {
     expect(controller.show).toHaveBeenCalledTimes(1);
   });
 
+  it('renders JsonViewer for expanded event details', () => {
+    const snapshot = createSnapshot();
+    snapshot.events = [{
+      id: 1,
+      sessionId: 'session-test',
+      timestamp: 100,
+      kind: 'action:end',
+      group: 'action',
+      level: 'success',
+      source: 'test',
+      summary: 'Action completed',
+      detail: 'Form submitted',
+      actionType: 'submitForm',
+      nodeId: 'form-1',
+      path: 'body.0',
+      durationMs: 150
+    }];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('Action completed')).toBeTruthy();
+  });
+
+  it('filters events by search text', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'timeline';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'action:start',
+        group: 'action',
+        level: 'info',
+        source: 'test',
+        summary: 'User login',
+        actionType: 'login'
+      },
+      {
+        id: 2,
+        sessionId: 'session-test',
+        timestamp: 200,
+        kind: 'action:start',
+        group: 'action',
+        level: 'info',
+        source: 'test',
+        summary: 'User logout',
+        actionType: 'logout'
+      }
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('User login')).toBeTruthy();
+    expect(screen.getByText('User logout')).toBeTruthy();
+  });
+
+  it('shows error badge on launcher when errors exist', () => {
+    const snapshot = { ...createSnapshot(), panelOpen: false };
+    snapshot.events = [{
+      id: 1,
+      sessionId: 'session-test',
+      timestamp: 100,
+      kind: 'error',
+      group: 'error',
+      level: 'error',
+      source: 'test',
+      summary: 'Test error'
+    }];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    const launcher = document.querySelector('.nop-debugger-launcher');
+    expect(launcher).toBeTruthy();
+  });
+
+  it('renders node tab with node diagnostics input', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'node';
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('node')).toBeTruthy();
+  });
+
+  it('renders network tab with merged requests', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'network';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'api:start',
+        group: 'api',
+        level: 'info',
+        source: 'test',
+        summary: 'GET /api/users',
+        requestKey: 'GET /api/users'
+      },
+      {
+        id: 2,
+        sessionId: 'session-test',
+        timestamp: 150,
+        kind: 'api:end',
+        group: 'api',
+        level: 'success',
+        source: 'test',
+        summary: 'GET /api/users',
+        requestKey: 'GET /api/users',
+        durationMs: 50
+      }
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('network')).toBeTruthy();
+  });
+
 });

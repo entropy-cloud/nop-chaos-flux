@@ -1,12 +1,14 @@
 import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
 import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { arrayEditorRendererDefinition } from './renderers/array-editor';
+import { expressionEditorRendererDefinition } from './renderers/expression-editor';
 import { formRendererDefinition } from './renderers/form';
 import { inputRendererDefinitions } from './renderers/input';
 import { keyValueRendererDefinition } from './renderers/key-value';
 import { tagListRendererDefinition } from './renderers/tag-list';
 
 export { ArrayEditorRenderer, arrayEditorRendererDefinition } from './renderers/array-editor';
+export { ExpressionEditorRenderer, expressionEditorRendererDefinition } from './renderers/expression-editor';
 export { FormRenderer, formRendererDefinition } from './renderers/form';
 export { createFieldValidation, createInputRenderer, inputRendererDefinitions } from './renderers/input';
 export { KeyValueRenderer, keyValueRendererDefinition } from './renderers/key-value';
@@ -20,7 +22,8 @@ export const formRendererDefinitions: RendererDefinition[] = [
   ...inputRendererDefinitions,
   tagListRendererDefinition,
   keyValueRendererDefinition,
-  arrayEditorRendererDefinition
+  arrayEditorRendererDefinition,
+  expressionEditorRendererDefinition
 ];
 
 export function registerFormRenderers(registry: RendererRegistry) {

@@ -18,6 +18,27 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-29 (Expression Editor Demo in FluxBasicPage)
+
+- Added expression editor field to user-form in FluxBasicPage demo
+- Field configured with variables: username, email, role, approved, status
+- Operators: AND, OR, GT, LT, EQ, NEQ
+- Enabled validation text and variable constraint
+- Updated page description to highlight expression editor features
+- Files: `apps/playground/src/pages/fluxBasicPageSchema.json`, `apps/playground/src/pages/FluxBasicPage.tsx`
+
+### 2026-03-29 (Expression Editor Renderer)
+
+- Added expression editor renderer using `@abidibo/react-expression-editor` library
+- Created `ExpressionEditorSchema` interface in `packages/flux-renderers-form/src/schemas.ts` with properties: `variables`, `operators`, `showValidationText`, `constraintVariables`
+- Implemented `ExpressionEditorRenderer` component in `packages/flux-renderers-form/src/renderers/expression-editor.tsx`
+- Registered renderer as type `'expression-editor'` in `packages/flux-renderers-form/src/index.tsx`
+- Schema supports configurable variables list and operators (AND, OR, GT, LT, EQ, NEQ, GTE, LTE, PLUS, MINUS, MUL, DIV)
+- Renderer integrates with existing form field handlers and validation system
+- Key decision: wrap=true to use FieldFrame for label/error/hint presentation
+- Key decision: operators map from string identifiers to Operator enum values for schema convenience
+- Ref: `packages/flux-renderers-form/src/renderers/expression-editor.tsx`, `packages/flux-renderers-form/src/schemas.ts`
+
 ### 2026-03-29 (nop-debugger Phase 1-3 Implementation)
 
 - Implemented all P0/P1/P2 features from `docs/plans/20-nop-debugger-implementation-plan.md` (9 commits on `feat-improve-debugger`).

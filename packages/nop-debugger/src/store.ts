@@ -22,9 +22,10 @@ export function createDebuggerStore(input: {
   maxEvents: number;
   defaultOpen: boolean;
   defaultTab: NopDebuggerTab;
-  position: { x: number; y: number };
+  position: { x: number; y: number }
   errorBufferKeepEarliest: number;
   errorBufferKeepLatest: number;
+  persistPosition?: (position: { x: number; y: number }) => void;
 }): NopDebuggerStore {
   const listeners = new Set<() => void>();
   let notifyScheduled = false;
@@ -51,7 +52,6 @@ export function createDebuggerStore(input: {
     if (notifyScheduled) {
       return;
     }
-
     notifyScheduled = true;
     queueMicrotask(() => {
       notify();
@@ -95,6 +95,19 @@ export function createDebuggerStore(input: {
 
   const lastRenderStartTimestamp = new Map<string, number>();
   const RENDER_THROTTLE_MS = 100;
+
+  let positionPersistTimerId: ReturnType<typeof setTimeout> | undefined;
+
+  const positionPersistCallback = input.persistPosition
+    ? (position: { x: number; y: number }) => {
+        if (positionPersistTimerId) {
+          clearTimeout(positionPersistTimerId);
+        }
+        positionPersistTimerId = setTimeout(() => {
+          input.persistPosition?.(position);
+        }, RENDER_THROTTLE_MS);
+      }
+    : undefined;
 
   return {
     getSnapshot() {
@@ -164,6 +177,7 @@ export function createDebuggerStore(input: {
       setSnapshot((current) => ({ ...current, activeTab: tab }));
     },
     setPosition(position: { x: number; y: number }) {
+      positionPersistCallback?.(position);
       setSnapshot((current) => ({ ...current, position }));
     },
     toggleFilter(filter: NopDebuggerSnapshot['filters'][number]) {
