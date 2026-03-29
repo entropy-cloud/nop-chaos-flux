@@ -19,3 +19,6 @@ export {
   spreadsheetRendererDefinitions,
   registerSpreadsheetRenderers,
 } from './renderers.js';
+
+export type { CellStyleResult } from './cell-style-map.js';
+export { mapCellStyle } from './cell-style-map.js';
