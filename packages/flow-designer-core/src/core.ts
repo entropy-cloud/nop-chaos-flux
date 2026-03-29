@@ -210,7 +210,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
   let history: HistoryEntry[] = [];
   let historyIndex = -1;
-  let savedDoc: GraphDocument | null = null;
+  let savedDoc: GraphDocument | null = cloneDocument(doc);
   let clipboard: GraphNode | null = null;
 
   let activeNodeId: string | null = null;
