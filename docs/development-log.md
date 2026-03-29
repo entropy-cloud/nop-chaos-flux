@@ -51,12 +51,21 @@ This file is intentionally lightweight.
   - Phase 2: execute code conformance remediation with targeted regression tests.
 - Next step: open a focused remediation task list by severity (P0/P1/P2) based on the new audit documents.
 
-### 2026-03-29 (Flow Designer Node Style Fixes)
+### 2026-03-29
 
-- Fixed ContainerRenderer always adding `grid gap-4` � removed default gap to let schema control spacing (`packages/flux-renderers-basic/src/container.tsx:25`).
-- Added `node-info` class alias (`flex-1 min-w-0`) and applied it to all 6 node type text containers for proper text-overflow ellipsis support.
-- Removed permanent glow from start node (`node-card--start` was unconditionally applying `nop-glass-card-glow`; selection now handled solely by `[data-selected]` CSS rule).
-- Fixed badge text colors to match reference: end→rose-800, condition→amber-800, parallel→violet-800, loop→pink-900.
+Spreadsheet Canvas CSS)
+
+- Added spreadsheet canvas hybrid CSS design: `docs/architecture/report-designer/spreadsheet-canvas-css.md`
+- Key design: three-layer hybrid — predefined CSS class (`ss-*`) for finite-value CellStyle properties, continuous values → inline style, `data-*` attributes for interaction states.
+ Compatible with shadcn/ui `data-state` pattern.
+- Created `packages/spreadsheet-renderers/src/canvas-styles.css` — predefined CSS classes for Excel-like cell styling, `ss-cell` provides complete Excel default baseline (Calibri 11pt, border-box, default grid lines, etc.).
+- Created `packages/spreadsheet-renderers/src/cell-style-map.ts` — mapsCellStyle() maps `CellStyle` → `CellStyleResult` (CSS class + inline style).
+ Includes test: `cell-style-map.test.ts`.
+- Wired CSS via `apps/playground/src/styles.css` via `@import`.
+- Updated `docs/architecture/report-designer/README.md` with new doc link.
+- Next step: implement canvas renderer component that consumes `mapCellStyle`.
+
+
 - Comprehensive font/style audit completed � all card, icon, title, subtitle, footer, badge properties now match `flow-editor-static.html` reference.
 - Commit: `69652ae`
 

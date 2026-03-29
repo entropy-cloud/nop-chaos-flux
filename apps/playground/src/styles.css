@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @source "../../../packages";
 @import "../../../packages/tailwind-preset/src/styles/base.css";
+@import "../../../packages/spreadsheet-renderers/src/canvas-styles.css";
+@import "../../../packages/spreadsheet-renderers/src/canvas-styles.css";
 
 
 @theme inline {
