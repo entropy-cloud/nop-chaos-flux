@@ -29,24 +29,24 @@
 }
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 84% 5%;
+  --background: 40 30% 98%;
+  --foreground: 215 30% 15%;
   --card: 0 0% 100%;
-  --card-foreground: 222 84% 5%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 19% 35%;
-  --accent: 217 89% 96%;
-  --accent-foreground: 217 89% 35%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 217 89% 53%;
-  --primary: 217 89% 53%;
+  --card-foreground: 215 30% 15%;
+  --muted: 30 20% 95%;
+  --muted-foreground: 25 15% 45%;
+  --accent: 35 70% 95%;
+  --accent-foreground: 28 60% 30%;
+  --border: 28 20% 88%;
+  --input: 28 20% 88%;
+  --ring: 28 62% 46%;
+  --primary: 28 62% 46%;
   --primary-foreground: 0 0% 100%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --secondary-surface: 217 89% 96%;
-  --secondary-surface-hover: 217 89% 93%;
-  --secondary-foreground: 217 89% 35%;
+  --secondary-surface: 32 30% 96%;
+  --secondary-surface-hover: 28 25% 93%;
+  --secondary-foreground: 25 20% 35%;
   --radius: 0.75rem;
 }
 
