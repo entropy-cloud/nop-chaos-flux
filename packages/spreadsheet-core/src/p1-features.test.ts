@@ -166,6 +166,89 @@ describe('fill series', () => {
     expect(cells?.['A4']?.value).toBe(4);
     expect(cells?.['A5']?.value).toBe(5);
   });
+
+  it('should fill series with trailing-digit string down (abc12 → abc13, abc14...)', async () => {
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'abc12' });
+    await core.dispatch({
+      type: 'spreadsheet:fillSeries',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 3, endCol: 0 },
+      direction: 'down',
+    });
+    const cells = core.getSnapshot().document.workbook.sheets[0].cells;
+    expect(cells?.['A1']?.value).toBe('abc12');
+    expect(cells?.['A2']?.value).toBe('abc13');
+    expect(cells?.['A3']?.value).toBe('abc14');
+    expect(cells?.['A4']?.value).toBe('abc15');
+  });
+
+  it('should fill series with trailing-digit string right (item01 → item02, item03...)', async () => {
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'item01' });
+    await core.dispatch({
+      type: 'spreadsheet:fillSeries',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 3 },
+      direction: 'right',
+    });
+    const cells = core.getSnapshot().document.workbook.sheets[0].cells;
+    expect(cells?.['A1']?.value).toBe('item01');
+    expect(cells?.['B1']?.value).toBe('item02');
+    expect(cells?.['C1']?.value).toBe('item03');
+    expect(cells?.['D1']?.value).toBe('item04');
+  });
+
+  it('should preserve zero-padding in trailing-digit series (code001 → code002...)', async () => {
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'code001' });
+    await core.dispatch({
+      type: 'spreadsheet:fillSeries',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 4, endCol: 0 },
+      direction: 'down',
+    });
+    const cells = core.getSnapshot().document.workbook.sheets[0].cells;
+    expect(cells?.['A1']?.value).toBe('code001');
+    expect(cells?.['A2']?.value).toBe('code002');
+    expect(cells?.['A3']?.value).toBe('code003');
+    expect(cells?.['A4']?.value).toBe('code004');
+    expect(cells?.['A5']?.value).toBe('code005');
+  });
+
+  it('should fill series with pure number string down ("33" → 34, 35...)', async () => {
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: '33' });
+    await core.dispatch({
+      type: 'spreadsheet:fillSeries',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 3, endCol: 0 },
+      direction: 'down',
+    });
+    const cells = core.getSnapshot().document.workbook.sheets[0].cells;
+    expect(cells?.['A1']?.value).toBe('33');
+    expect(cells?.['A2']?.value).toBe(34);
+    expect(cells?.['A3']?.value).toBe(35);
+    expect(cells?.['A4']?.value).toBe(36);
+  });
+
+  it('should fill series with trailing-digit no-alpha prefix ("12abc99" → 12abc100...)', async () => {
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: '12abc99' });
+    await core.dispatch({
+      type: 'spreadsheet:fillSeries',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 2, endCol: 0 },
+      direction: 'down',
+    });
+    const cells = core.getSnapshot().document.workbook.sheets[0].cells;
+    expect(cells?.['A1']?.value).toBe('12abc99');
+    expect(cells?.['A2']?.value).toBe('12abc100');
+    expect(cells?.['A3']?.value).toBe('12abc101');
+  });
+
+  it('should copy non-incrementable strings as-is', async () => {
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'noDigitsHere' });
+    await core.dispatch({
+      type: 'spreadsheet:fillSeries',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 2, endCol: 0 },
+      direction: 'down',
+    });
+    const cells = core.getSnapshot().document.workbook.sheets[0].cells;
+    expect(cells?.['A1']?.value).toBe('noDigitsHere');
+    expect(cells?.['A2']?.value).toBe('noDigitsHere');
+    expect(cells?.['A3']?.value).toBe('noDigitsHere');
+  });
 });
 
 describe('find/replace', () => {

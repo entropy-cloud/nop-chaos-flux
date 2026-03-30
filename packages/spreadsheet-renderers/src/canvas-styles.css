@@ -1,0 +1,421 @@
+/*
+ * Spreadsheet Canvas Styles
+ *
+ * Predefined CSS classes for high-performance spreadsheet grid rendering.
+ * Uses a hybrid strategy: finite-value properties → CSS classes, continuous-value properties → inline styles.
+ * Interaction states use data-* attributes (compatible with shadcn/ui pattern).
+ *
+ * See docs/architecture/report-designer/spreadsheet-canvas-css.md for full design rationale.
+ */
+
+.ss-grid {
+  display: grid;
+  position: relative;
+  overflow: auto;
+  border-collapse: collapse;
+  font-family: Calibri, Arial, sans-serif;
+  font-size: 11pt;
+  color: #1a1a1a;
+  background-color: #ffffff;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ss-row {
+  display: flex;
+}
+
+.ss-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  min-width: 36px;
+  padding: 0 4px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #c6c6c6;
+  border-right: 1px solid #c6c6c6;
+  font-size: 10pt;
+  font-weight: 600;
+  color: #595959;
+  flex-shrink: 0;
+}
+
+.ss-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 22px;
+  padding: 0 4px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #c6c6c6;
+  border-right: 1px solid #c6c6c6;
+  font-size: 10pt;
+  font-weight: 600;
+  color: #595959;
+  flex-shrink: 0;
+}
+
+.ss-header-corner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 22px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #c6c6c6;
+  border-right: 1px solid #c6c6c6;
+  flex-shrink: 0;
+}
+
+.ss-cell {
+  position: relative;
+  height: 22px;
+  min-height: 22px;
+  padding: 1px 4px;
+  border-right: 1px solid #d4d4d4;
+  border-bottom: 1px solid #d4d4d4;
+  font-family: Calibri, Arial, sans-serif;
+  font-size: 11pt;
+  font-weight: normal;
+  font-style: normal;
+  text-decoration: none;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: cell;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  line-height: normal;
+}
+
+.ss-bold { font-weight: bold; }
+.ss-italic { font-style: italic; }
+.ss-underline { text-decoration: underline; }
+.ss-strike { text-decoration: line-through; }
+
+.ss-align-left { text-align: left; }
+.ss-align-center { text-align: center; }
+.ss-align-right { text-align: right; }
+
+.ss-valign-top { vertical-align: top; }
+.ss-valign-middle { vertical-align: middle; }
+.ss-valign-bottom { vertical-align: bottom; }
+
+.ss-wrap {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-overflow: clip;
+}
+
+.ss-border-solid { border-style: solid; }
+.ss-border-dashed { border-style: dashed; }
+.ss-border-dotted { border-style: dotted; }
+.ss-border-double { border-style: double; }
+
+.ss-cell[data-cell-active] {
+  outline: 2px solid #1a73e8;
+  outline-offset: -1px;
+  z-index: 1;
+}
+
+.ss-cell[data-cell-selected] {
+  background-color: #e8f0fe;
+}
+
+.ss-cell[data-cell-editing] {
+  outline: 2px solid #1a73e8;
+  outline-offset: -1px;
+  z-index: 2;
+  overflow: visible;
+  white-space: pre;
+}
+
+.ss-cell[data-range-highlight] {
+  background-color: rgba(26, 115, 232, 0.08);
+}
+
+.ss-cell[data-cell-bound] {
+  background-color: #f0f8ff;
+}
+
+.ss-cell[data-cell-comment] {
+  position: relative;
+}
+
+.ss-cell[data-cell-comment]::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #f97316;
+  pointer-events: none;
+}
+
+.ss-cell[data-cell-frozen] {
+  background-color: #e8f4fd;
+  border-bottom: 2px solid #2196f3;
+}
+
+.ss-cell[data-cell-merged] {
+  background-color: #fff8e1;
+  border: 2px solid #ffc107;
+}
+
+.ss-cell[data-cell-drop-target] {
+  background-color: #e3f2fd !important;
+  outline: 2px dashed #1a73e8;
+  outline-offset: -2px;
+}
+
+.ss-cell[data-cell-fill-preview] {
+  background-color: rgba(25, 118, 210, 0.15) !important;
+}
+
+.ss-cell[data-col-header-active] {
+  background-color: #d3e3fd;
+  border-bottom-color: #1a73e8;
+}
+
+.ss-cell[data-row-header-active] {
+  background-color: #d3e3fd;
+  border-right-color: #1a73e8;
+}
+
+.ss-col-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 3;
+}
+
+.ss-col-resize-handle:hover {
+  background-color: rgba(26, 115, 232, 0.4);
+}
+
+.ss-row-resize-handle {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 5px;
+  cursor: row-resize;
+  z-index: 3;
+}
+
+.ss-row-resize-handle:hover {
+  background-color: rgba(26, 115, 232, 0.4);
+}
+
+.ss-selection-border {
+  position: absolute;
+  border: 2px solid #1a73e8;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.ss-selection-fill-handle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background-color: #1a73e8;
+  cursor: crosshair;
+  z-index: 5;
+}
+
+.ss-frozen-separator-col {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: #999999;
+  z-index: 6;
+}
+
+.ss-frozen-separator-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #999999;
+  z-index: 6;
+}
+
+/* Sheet Tab Bar - Excel-style bottom sheet tabs */
+
+.ss-sheet-bar {
+  display: flex;
+  align-items: stretch;
+  height: 32px;
+  background: linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 100%);
+  border-top: 1px solid #b0b0b0;
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #333333;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ss-sheet-bar-tabs {
+  display: flex;
+  align-items: flex-end;
+  overflow-x: auto;
+  flex: 1;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+.ss-sheet-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: linear-gradient(to bottom, #fafafa 0%, #f0f0f0 100%);
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #555555;
+  font-size: 12px;
+  height: calc(100% - 2px);
+  margin: 2px 1px 0 1px;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.ss-sheet-tab:hover {
+  background: linear-gradient(to bottom, #ffffff 0%, #f5f5f5 100%);
+  border-color: #c0c0c0;
+  border-bottom: 1px solid #e8e8e8;
+  color: #000000;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.ss-sheet-tab[data-active] {
+  background: #ffffff;
+  border-color: #b0b0b0;
+  border-bottom: 2px solid #ffffff;
+  color: #000000;
+  font-weight: 600;
+  z-index: 10;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.ss-sheet-tab-color {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  pointer-events: none;
+  border-radius: 0 0 3px 3px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ss-sheet-tab-icon {
+  font-size: 11px;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.ss-sheet-tab:hover .ss-sheet-tab-icon {
+  opacity: 1;
+}
+
+.ss-sheet-tab-rename {
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  padding: 3px 6px;
+  border: 2px solid #1a73e8;
+  border-radius: 2px;
+  outline: none;
+  background-color: #ffffff;
+  color: #333333;
+  min-width: 80px;
+  height: 20px;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+}
+
+.ss-sheet-tab-rename:focus {
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+}
+
+.ss-sheet-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
+  font-size: 14px;
+  line-height: 1;
+  color: #888888;
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0;
+  transition: all 0.15s ease;
+  font-weight: 300;
+}
+
+.ss-sheet-tab:hover .ss-sheet-tab-close {
+  opacity: 1;
+}
+
+.ss-sheet-tab-close:hover {
+  background-color: #ffebee;
+  color: #d32f2f;
+  transform: scale(1.1);
+}
+
+.ss-sheet-tab-close:active {
+  background-color: #ffcdd2;
+  transform: scale(0.95);
+}
+
+.ss-sheet-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  background: linear-gradient(to bottom, #fafafa 0%, #f0f0f0 100%);
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #555555;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1;
+  margin: 2px 4px 2px 2px;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.ss-sheet-add:hover {
+  background: linear-gradient(to bottom, #ffffff 0%, #f5f5f5 100%);
+  color: #1a73e8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.ss-sheet-add:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}

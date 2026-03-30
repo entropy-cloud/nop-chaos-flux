@@ -77,6 +77,29 @@ This file is intentionally lightweight.
 - Key decision: Only throttle `render:start` events; preserve all `render:end` events (carry durationMs). `inspectByCid` requires `setComponentRegistry` call (early return guard). localStorage functions check `typeof localStorage === 'undefined'` for SSR safety.
 - Ref: `docs/plans/20-nop-debugger-implementation-plan.md`, `packages/nop-debugger/src/`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/field-frame.tsx`
 
+### 2026-03-30
+
+- Sticky row/column headers for Report Designer spreadsheet.
+- Changed `.col-header` and `.row-header` from `position: relative` to `position: sticky` with z-index/top/left values in `apps/playground/src/styles.css`.
+- Added `.header-corner` class (`position: sticky; left: 0; top: 0; z-index: 11`) and applied it to the corner `<th>` in `apps/playground/src/pages/ReportDesignerDemo.tsx`.
+- Row numbers now stay fixed during horizontal scroll; column headers stay fixed during vertical scroll.
+- Key decision: `position: sticky` on `<table>` with `border-collapse: separate` provides the correct visual behavior with simpler CSS and lays groundwork for future freeze panes.
+- Ref: `docs/architecture/report-designer/spreadsheet-canvas-css.md`
+- Next step: Implement freeze panes reusing the same sticky architecture.
+
+### 2026-03-30 (ReportDesignerDemo Refactoring)
+
+- Refactored `apps/playground/src/pages/ReportDesignerDemo.tsx` (1426 lines) into reusable packages per AGENTS.md methodology.
+- Extracted 4 modules:
+  - `packages/spreadsheet-renderers/src/use-spreadsheet-interactions.ts` — generic hook managing all cell selection, drag, fill handle, resize, editing, clipboard, style, merge, freeze, undo/redo, find/replace, comments, keyboard shortcuts
+  - `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx` — pure table/cell rendering component
+  - `packages/spreadsheet-renderers/src/spreadsheet-toolbar.tsx` — toolbar buttons + find/replace + formula bar
+  - `packages/report-designer-renderers/src/report-field-panel.tsx` — draggable field sources panel
+- Demo file reduced to ~430 lines (from 1426) — only demo-specific wiring, layout, inspector panel, log panel
+- Generic code moved to packages; playground only has demo-specific configuration and layout
+- Updated `index.ts` exports in both packages
+- All typechecks pass; pre-existing test failure (jsdom env) unrelated to changes
+
 ### 2026-03-29 (testid Support)
 
 - Added `testid` field to `BaseSchema` in `packages/flux-core/src/types.ts` � schema authors can now declare `testid` on any node for test anchoring.
@@ -110,12 +133,21 @@ This file is intentionally lightweight.
   - Phase 2: execute code conformance remediation with targeted regression tests.
 - Next step: open a focused remediation task list by severity (P0/P1/P2) based on the new audit documents.
 
-### 2026-03-29 (Flow Designer Node Style Fixes)
+### 2026-03-29
 
-- Fixed ContainerRenderer always adding `grid gap-4` � removed default gap to let schema control spacing (`packages/flux-renderers-basic/src/container.tsx:25`).
-- Added `node-info` class alias (`flex-1 min-w-0`) and applied it to all 6 node type text containers for proper text-overflow ellipsis support.
-- Removed permanent glow from start node (`node-card--start` was unconditionally applying `nop-glass-card-glow`; selection now handled solely by `[data-selected]` CSS rule).
-- Fixed badge text colors to match reference: end→rose-800, condition→amber-800, parallel→violet-800, loop→pink-900.
+Spreadsheet Canvas CSS)
+
+- Added spreadsheet canvas hybrid CSS design: `docs/architecture/report-designer/spreadsheet-canvas-css.md`
+- Key design: three-layer hybrid — predefined CSS class (`ss-*`) for finite-value CellStyle properties, continuous values → inline style, `data-*` attributes for interaction states.
+ Compatible with shadcn/ui `data-state` pattern.
+- Created `packages/spreadsheet-renderers/src/canvas-styles.css` — predefined CSS classes for Excel-like cell styling, `ss-cell` provides complete Excel default baseline (Calibri 11pt, border-box, default grid lines, etc.).
+- Created `packages/spreadsheet-renderers/src/cell-style-map.ts` — mapsCellStyle() maps `CellStyle` → `CellStyleResult` (CSS class + inline style).
+ Includes test: `cell-style-map.test.ts`.
+- Wired CSS via `apps/playground/src/styles.css` via `@import`.
+- Updated `docs/architecture/report-designer/README.md` with new doc link.
+- Next step: implement canvas renderer component that consumes `mapCellStyle`.
+
+
 - Comprehensive font/style audit completed � all card, icon, title, subtitle, footer, badge properties now match `flow-editor-static.html` reference.
 - Commit: `69652ae`
 

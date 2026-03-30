@@ -450,6 +450,28 @@ function applyMergeCellsCenter(doc: SpreadsheetDocument, range: SpreadsheetRange
   return result;
 }
 
+function incrementSeriesValue(value: unknown, step: number): unknown {
+  if (typeof value === 'number') {
+    return value + step;
+  }
+  const str = String(value ?? '');
+  if (str === '') return value;
+  const num = Number(str);
+  if (!isNaN(num) && str.trim() !== '') {
+    return num + step;
+  }
+  const match = str.match(/^(.*?)(\d+)$/);
+  if (match) {
+    const prefix = match[1];
+    const digits = match[2];
+    const numPart = parseInt(digits, 10);
+    const incremented = numPart + step;
+    const padded = incremented.toString().padStart(digits.length, '0');
+    return prefix + padded;
+  }
+  return value;
+}
+
 function applyFillSeries(
   doc: SpreadsheetDocument,
   range: SpreadsheetRange,
@@ -463,10 +485,9 @@ function applyFillSeries(
     for (let c = normalized.startCol; c <= normalized.endCol; c++) {
       const srcCell = newSheet.cells?.[cellAddress(normalized.startRow, c)];
       if (srcCell) {
-        const srcValue = Number(srcCell.value);
-        const isNumber = !isNaN(srcValue) && srcCell.value !== '';
         for (let r = normalized.startRow + 1; r <= normalized.endRow; r++) {
-          const newValue = isNumber ? srcValue + (r - normalized.startRow) : srcCell.value;
+          const step = r - normalized.startRow;
+          const newValue = incrementSeriesValue(srcCell.value, step);
           const key = cellAddress(r, c);
           const existing = newSheet.cells?.[key];
           newSheet = setCell(newSheet, r, c, {
@@ -484,10 +505,9 @@ function applyFillSeries(
     for (let r = normalized.startRow; r <= normalized.endRow; r++) {
       const srcCell = newSheet.cells?.[cellAddress(r, normalized.startCol)];
       if (srcCell) {
-        const srcValue = Number(srcCell.value);
-        const isNumber = !isNaN(srcValue) && srcCell.value !== '';
         for (let c = normalized.startCol + 1; c <= normalized.endCol; c++) {
-          const newValue = isNumber ? srcValue + (c - normalized.startCol) : srcCell.value;
+          const step = c - normalized.startCol;
+          const newValue = incrementSeriesValue(srcCell.value, step);
           const key = cellAddress(r, c);
           const existing = newSheet.cells?.[key];
           newSheet = setCell(newSheet, r, c, {

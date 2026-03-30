@@ -30,3 +30,6 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/16-dialog-drag-pointer-capture-boundary-clamp-fix.md`
 - `docs/bugs/17-json-viewer-class-override-breaks-highlighting-fix.md`
 - `docs/bugs/18-tailwind-source-wrong-relative-path-flux-lib-unscanned.md`
+- `docs/bugs/19-report-designer-fill-series-trailing-digit-fix.md`
+- `docs/bugs/20-report-designer-fill-handle-drag-single-cell-fix.md`
+- `docs/bugs/21-report-designer-field-drop-edit-exit-cursor-stuck-fix.md`
