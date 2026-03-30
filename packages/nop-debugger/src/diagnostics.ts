@@ -20,7 +20,7 @@ import { redactData } from './redaction';
 
 const EMPTY_PINNED_ERRORS: NopDebuggerPinnedErrors = { earliest: [], latest: [] };
 
-export const DEFAULT_FILTERS: NopDebuggerFilterKind[] = ['render', 'action', 'api', 'compile', 'notify', 'error'];
+export const DEFAULT_FILTERS: NopDebuggerFilterKind[] = ['render', 'action', 'api', 'compile', 'notify', 'error', 'node'];
 
 function toArray<T>(value: T | T[] | undefined): T[] | undefined {
   if (value == null) {
@@ -167,8 +167,14 @@ export function buildOverview(events: NopDebugEvent[]): NopDebuggerOverview {
     api: 0,
     compile: 0,
     notify: 0,
-    error: 0
+    error: 0,
+    node: 0
   });
+
+  const renderEndEvents = events.filter((event) => event.kind === 'render:end');
+  const slowestRenderMs = renderEndEvents.length > 0
+    ? Math.max(...renderEndEvents.map((event) => event.durationMs ?? 0))
+    : undefined;
 
   return {
     latestCompile: latestByKind('compile:end'),
@@ -177,7 +183,8 @@ export function buildOverview(events: NopDebugEvent[]): NopDebuggerOverview {
     latestError: latestByKind('error'),
     errorCount: countsByGroup.error,
     totalEvents: events.length,
-    countsByGroup
+    countsByGroup,
+    slowestRenderMs
   };
 }
 

@@ -13,6 +13,7 @@ export interface FieldFrameProps {
   validationBehavior?: CompiledValidationBehavior;
   className?: string;
   testid?: string;
+  cid?: number;
   children: ReactNode;
 }
 
@@ -50,6 +51,7 @@ export function FieldFrame(props: FieldFrameProps) {
     validationBehavior,
     className,
     testid,
+    cid,
     children
   } = props;
 
@@ -71,12 +73,13 @@ export function FieldFrame(props: FieldFrameProps) {
 
   const isGroup = layout === 'checkbox' || layout === 'radio';
   const Tag = isGroup ? 'fieldset' : 'label';
-  const LabelTag: 'span' | 'legend' = isGroup ? 'legend' : 'span';
+  const LabelTag = isGroup ? 'legend' : 'span';
 
   return (
     <Tag
       className={['nop-field grid gap-2', className].filter(Boolean).join(' ') || undefined}
       data-testid={testid || undefined}
+      data-cid={cid != null ? cid : undefined}
       data-field-visited={fieldState.visited || undefined}
       data-field-touched={fieldState.touched || undefined}
       data-field-dirty={fieldState.dirty || undefined}

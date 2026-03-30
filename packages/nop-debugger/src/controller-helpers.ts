@@ -137,3 +137,59 @@ export function normalizeCompiledRoot(node: CompiledSchemaNode | CompiledSchemaN
   };
 }
 
+export function loadPersistedPosition(id: string): { x: number; y: number } | undefined {
+  if (typeof localStorage === 'undefined') {
+    return undefined;
+  }
+
+  try {
+    const raw = localStorage.getItem(`nop-debugger:${id}:position`);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number') {
+      return { x: parsed.x, y: parsed.y };
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function persistPosition(id: string, position: { x: number; y: number }) {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+
+  try {
+    localStorage.setItem(`nop-debugger:${id}:position`, JSON.stringify(position));
+  } catch {
+    void undefined;
+  }
+}
+
+export function loadPersistedPanelOpen(id: string): boolean | undefined {
+  if (typeof localStorage === 'undefined') {
+    return undefined;
+  }
+
+  try {
+    const raw = localStorage.getItem(`nop-debugger:${id}:panelOpen`);
+    if (raw === null) return undefined;
+    return raw === 'true';
+  } catch {
+    return undefined;
+  }
+}
+
+export function persistPanelOpen(id: string, panelOpen: boolean) {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+
+  try {
+    localStorage.setItem(`nop-debugger:${id}:panelOpen`, String(panelOpen));
+  } catch {
+    void undefined;
+  }
+}
+

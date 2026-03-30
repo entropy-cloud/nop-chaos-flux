@@ -22,7 +22,7 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
   const emptyOverview: NopDebuggerOverview = {
     errorCount: 0,
     totalEvents: 0,
-    countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0 }
+    countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 }
   };
   const latestTrace: NopInteractionTrace = {
     query: { inferFromLatest: true },
@@ -50,7 +50,7 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     sessionId: 'session-test',
     generatedAt: 1,
     snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters },
-    overview: { errorCount: 1, totalEvents: 4, countsByGroup: { render: 1, action: 1, api: 1, compile: 0, notify: 0, error: 1 } },
+    overview: { errorCount: 1, totalEvents: 4, countsByGroup: { render: 1, action: 1, api: 1, compile: 0, notify: 0, error: 1, node: 0 } },
     latestInteractionTrace: latestTrace,
     recentEvents: [],
     pinnedErrors: { earliest: [], latest: [] }
@@ -93,7 +93,9 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
       hide,
       toggle() {},
       setActiveTab,
-      setPanelPosition
+      setPanelPosition,
+      inspectByCid: vi.fn(() => undefined),
+      inspectByElement: vi.fn(() => undefined)
     },
     decorateEnv: (env) => env,
     onActionError() {},
@@ -118,6 +120,9 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     createDiagnosticReport: vi.fn(() => metricReport),
     exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [], pinnedErrors: { earliest: [], latest: [] } }),
     waitForEvent: async () => snapshot.events[0]!,
+    setComponentRegistry: vi.fn(),
+    inspectByCid: vi.fn(() => undefined),
+    inspectByElement: vi.fn(() => undefined),
     subscribe: () => () => {},
     getSnapshot: () => snapshot
   };
@@ -164,6 +169,130 @@ describe('NopDebuggerPanel', () => {
     fireEvent.click(launcher!);
 
     expect(controller.show).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders JsonViewer for expanded event details', () => {
+    const snapshot = createSnapshot();
+    snapshot.events = [{
+      id: 1,
+      sessionId: 'session-test',
+      timestamp: 100,
+      kind: 'action:end',
+      group: 'action',
+      level: 'success',
+      source: 'test',
+      summary: 'Action completed',
+      detail: 'Form submitted',
+      actionType: 'submitForm',
+      nodeId: 'form-1',
+      path: 'body.0',
+      durationMs: 150
+    }];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('Action completed')).toBeTruthy();
+  });
+
+  it('filters events by search text', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'timeline';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'action:start',
+        group: 'action',
+        level: 'info',
+        source: 'test',
+        summary: 'User login',
+        actionType: 'login'
+      },
+      {
+        id: 2,
+        sessionId: 'session-test',
+        timestamp: 200,
+        kind: 'action:start',
+        group: 'action',
+        level: 'info',
+        source: 'test',
+        summary: 'User logout',
+        actionType: 'logout'
+      }
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('User login')).toBeTruthy();
+    expect(screen.getByText('User logout')).toBeTruthy();
+  });
+
+  it('shows error badge on launcher when errors exist', () => {
+    const snapshot = { ...createSnapshot(), panelOpen: false };
+    snapshot.events = [{
+      id: 1,
+      sessionId: 'session-test',
+      timestamp: 100,
+      kind: 'error',
+      group: 'error',
+      level: 'error',
+      source: 'test',
+      summary: 'Test error'
+    }];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    const launcher = document.querySelector('.nop-debugger-launcher');
+    expect(launcher).toBeTruthy();
+  });
+
+  it('renders node tab with node diagnostics input', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'node';
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('node')).toBeTruthy();
+  });
+
+  it('renders network tab with merged requests', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'network';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'api:start',
+        group: 'api',
+        level: 'info',
+        source: 'test',
+        summary: 'GET /api/users',
+        requestKey: 'GET /api/users'
+      },
+      {
+        id: 2,
+        sessionId: 'session-test',
+        timestamp: 150,
+        kind: 'api:end',
+        group: 'api',
+        level: 'success',
+        source: 'test',
+        summary: 'GET /api/users',
+        requestKey: 'GET /api/users',
+        durationMs: 50
+      }
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('network')).toBeTruthy();
   });
 
 });

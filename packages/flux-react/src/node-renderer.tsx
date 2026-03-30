@@ -114,21 +114,21 @@ export function NodeRenderer(props: {
       formRef.current.page !== props.page ||
       formRef.current.validation !== props.node.validation
     ) {
-        formRef.current = {
-          nodeId: props.node.id,
-          formId,
-          formName,
+      formRef.current = {
+        nodeId: props.node.id,
+        formId,
+        formName,
+        parentScope: props.scope,
+        page: props.page,
+        validation: props.node.validation,
+        form: runtime.createFormRuntime({
+          id: formId,
+          name: formName,
+          initialValues,
           parentScope: props.scope,
           page: props.page,
-          validation: props.node.validation,
-          form: runtime.createFormRuntime({
-            id: formId,
-            name: formName,
-            initialValues,
-            parentScope: props.scope,
-            page: props.page,
-            validation: props.node.validation
-          })
+          validation: props.node.validation
+        })
       };
     }
 
@@ -258,6 +258,8 @@ export function NodeRenderer(props: {
   };
 
   const Comp = props.node.component.component;
+  const cidFromSchema = (props.node.schema as unknown as { _cid?: unknown })._cid;
+  const resolvedCid = typeof cidFromSchema === 'number' ? cidFromSchema : undefined;
 
   useEffect(() => {
     if (!resolvedMeta.visible || resolvedMeta.hidden) {
@@ -300,9 +302,18 @@ export function NodeRenderer(props: {
           required={props.node.schema.required === true}
           className={resolvedMeta.className}
           testid={resolvedMeta.testid}
+          cid={resolvedCid}
         >
           {element}
         </FieldFrame>
+      );
+    }
+
+    if (resolvedCid != null) {
+      return (
+        <div data-cid={resolvedCid}>
+          {element}
+        </div>
       );
     }
 

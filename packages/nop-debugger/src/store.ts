@@ -22,9 +22,10 @@ export function createDebuggerStore(input: {
   maxEvents: number;
   defaultOpen: boolean;
   defaultTab: NopDebuggerTab;
-  position: { x: number; y: number };
+  position: { x: number; y: number }
   errorBufferKeepEarliest: number;
   errorBufferKeepLatest: number;
+  persistPosition?: (position: { x: number; y: number }) => void;
 }): NopDebuggerStore {
   const listeners = new Set<() => void>();
   let notifyScheduled = false;
@@ -51,7 +52,6 @@ export function createDebuggerStore(input: {
     if (notifyScheduled) {
       return;
     }
-
     notifyScheduled = true;
     queueMicrotask(() => {
       notify();
@@ -93,6 +93,22 @@ export function createDebuggerStore(input: {
     return { earliest, latest };
   };
 
+  const lastRenderStartTimestamp = new Map<string, number>();
+  const RENDER_THROTTLE_MS = 100;
+
+  let positionPersistTimerId: ReturnType<typeof setTimeout> | undefined;
+
+  const positionPersistCallback = input.persistPosition
+    ? (position: { x: number; y: number }) => {
+        if (positionPersistTimerId) {
+          clearTimeout(positionPersistTimerId);
+        }
+        positionPersistTimerId = setTimeout(() => {
+          input.persistPosition?.(position);
+        }, RENDER_THROTTLE_MS);
+      }
+    : undefined;
+
   return {
     getSnapshot() {
       return snapshot;
@@ -113,6 +129,14 @@ export function createDebuggerStore(input: {
         sessionId: input.sessionId,
         timestamp
       };
+
+      if (event.kind === 'render:start' && event.nodeId) {
+        const lastTimestamp = lastRenderStartTimestamp.get(event.nodeId);
+        if (lastTimestamp !== undefined && timestamp - lastTimestamp < RENDER_THROTTLE_MS) {
+          return;
+        }
+        lastRenderStartTimestamp.set(event.nodeId, timestamp);
+      }
 
       setSnapshot((current) => {
         const newEvents = [fullEvent, ...current.events].slice(0, input.maxEvents);
@@ -149,6 +173,7 @@ export function createDebuggerStore(input: {
       setSnapshot((current) => ({ ...current, activeTab: tab }));
     },
     setPosition(position: { x: number; y: number }) {
+      positionPersistCallback?.(position);
       setSnapshot((current) => ({ ...current, position }));
     },
     toggleFilter(filter: NopDebuggerSnapshot['filters'][number]) {

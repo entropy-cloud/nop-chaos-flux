@@ -46,7 +46,7 @@ describe('debugger automation helpers', () => {
         api: 0,
         compile: 0,
         notify: 0,
-        error: 0
+        error: 0, node: 0
       }
     };
     const diagnostics: NopNodeDiagnostics = {
@@ -125,6 +125,8 @@ describe('debugger automation helpers', () => {
     const toggle = vi.fn();
     const setActiveTab = vi.fn();
     const setPanelPosition = vi.fn();
+    const inspectByCid = vi.fn(() => undefined);
+    const inspectByElement = vi.fn(() => undefined);
 
     const automation = createAutomationApi({
       controllerId: 'controller-a',
@@ -149,7 +151,9 @@ describe('debugger automation helpers', () => {
       hide,
       toggle,
       setActiveTab,
-      setPanelPosition
+      setPanelPosition,
+      inspectByCid,
+      inspectByElement
     });
 
     expect(automation.controllerId).toBe('controller-a');
@@ -190,7 +194,7 @@ describe('debugger automation helpers', () => {
     const overview: NopDebuggerOverview = {
       errorCount: 0,
       totalEvents: 0,
-      countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0 }
+      countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 }
     };
     const diagnostics: NopNodeDiagnostics = {
       rendererTypes: [],
@@ -264,7 +268,9 @@ describe('debugger automation helpers', () => {
       hide() {},
       toggle() {},
       setActiveTab() {},
-      setPanelPosition() {}
+      setPanelPosition() {},
+      inspectByCid: vi.fn(() => undefined),
+      inspectByElement: vi.fn(() => undefined)
     });
     const automationB = { ...automationA, controllerId: 'b', sessionId: 's-b' };
 

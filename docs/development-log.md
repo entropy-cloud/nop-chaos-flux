@@ -44,6 +44,39 @@ This file is intentionally lightweight.
   - 4-phase implementation plan: core → interaction → advanced → polish
 - Next step: implement Phase 1 (core structure, types, group/item components, basic value inputs)
 
+### 2026-03-29 (Expression Editor Demo in FluxBasicPage)
+
+- Added expression editor field to user-form in FluxBasicPage demo
+- Field configured with variables: username, email, role, approved, status
+- Operators: AND, OR, GT, LT, EQ, NEQ
+- Enabled validation text and variable constraint
+- Updated page description to highlight expression editor features
+- Files: `apps/playground/src/pages/fluxBasicPageSchema.json`, `apps/playground/src/pages/FluxBasicPage.tsx`
+
+### 2026-03-29 (Expression Editor Renderer)
+
+- Added expression editor renderer using `@abidibo/react-expression-editor` library
+- Created `ExpressionEditorSchema` interface in `packages/flux-renderers-form/src/schemas.ts` with properties: `variables`, `operators`, `showValidationText`, `constraintVariables`
+- Implemented `ExpressionEditorRenderer` component in `packages/flux-renderers-form/src/renderers/expression-editor.tsx`
+- Registered renderer as type `'expression-editor'` in `packages/flux-renderers-form/src/index.tsx`
+- Schema supports configurable variables list and operators (AND, OR, GT, LT, EQ, NEQ, GTE, LTE, PLUS, MINUS, MUL, DIV)
+- Renderer integrates with existing form field handlers and validation system
+- Key decision: wrap=true to use FieldFrame for label/error/hint presentation
+- Key decision: operators map from string identifiers to Operator enum values for schema convenience
+- Ref: `packages/flux-renderers-form/src/renderers/expression-editor.tsx`, `packages/flux-renderers-form/src/schemas.ts`
+
+### 2026-03-29 (nop-debugger Phase 1-3 Implementation)
+
+- Implemented all P0/P1/P2 features from `docs/plans/20-nop-debugger-implementation-plan.md` (9 commits on `feat-improve-debugger`).
+- Phase 1 (P0): JSON Viewer with collapsible tree (`JsonViewer`/`JsonNode` components in `panel.tsx`), render:start event throttle (100ms via `RENDER_THROTTLE_MS` in `store.ts`), Timeline text search with `includesText()` helper.
+- Phase 2 (P1): Panel position + panelOpen persistence via localStorage (`controller-helpers.ts`), error badge on launcher with pulse animation, error aggregation view with `groupErrors()` + "Errors Only" toggle, API chain merge UI with `mergeNetworkRequests()` + `MergedRequest` type in Network Tab, data-cid DOM injection in `field-frame.tsx`/`node-renderer.tsx` + `inspectByCid`/`inspectByElement`/`setComponentRegistry` in controller.
+- Phase 3 (P2): Node Tab with nodeId input + diagnostics display (`getNodeDiagnostics`), Network Tab enhancement with expandable request/response details via JsonViewer.
+- Added `NopComponentInspectResult` interface, `'node'` tab/filter kind, `node: 0` in diagnostics countsByGroup.
+- Added interactive `DebuggerLabPage` in playground (`apps/playground/src/pages/DebuggerLabPage.tsx`) with panel controls, event injection, snapshot/diagnostics output, automation API status, and CID inspector.
+- Tests: 47/47 pass in nop-debugger (14 new tests: 5 render throttle, 5 localStorage persistence, 7 inspector API).
+- Key decision: Only throttle `render:start` events; preserve all `render:end` events (carry durationMs). `inspectByCid` requires `setComponentRegistry` call (early return guard). localStorage functions check `typeof localStorage === 'undefined'` for SSR safety.
+- Ref: `docs/plans/20-nop-debugger-implementation-plan.md`, `packages/nop-debugger/src/`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/field-frame.tsx`
+
 ### 2026-03-29 (testid Support)
 
 - Added `testid` field to `BaseSchema` in `packages/flux-core/src/types.ts` � schema authors can now declare `testid` on any node for test anchoring.

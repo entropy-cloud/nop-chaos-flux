@@ -61,10 +61,11 @@
             "notes": "",
             "featured": false,
             "tags": ["stable"],
-            "labels": [],
-            "metadata": [],
-            "reviewers": []
-          },
+          "labels": [],
+          "metadata": [],
+          "reviewers": [],
+          "filterExpression": ""
+        },
           "body": [
             {
               "type": "input-text",
@@ -174,6 +175,15 @@
               "label": "Reviewers",
               "itemLabel": "Reviewer",
               "showErrorOn": "submit"
+            },
+            {
+              "type": "expression-editor",
+              "name": "filterExpression",
+              "label": "Filter Expression",
+              "variables": ["username", "email", "role", "approved", "status"],
+              "operators": ["AND", "OR", "GT", "LT", "EQ", "NEQ"],
+              "showValidationText": true,
+              "constraintVariables": true
             }
           ],
           "actions": [

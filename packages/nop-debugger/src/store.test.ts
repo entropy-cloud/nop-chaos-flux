@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createDebuggerStore } from './store';
+import type { NopDebugEvent, NopDebuggerFilterKind } from './types';
 
 describe('createDebuggerStore', () => {
   it('appends bounded events and notifies subscribers', async () => {
@@ -43,7 +44,7 @@ describe('createDebuggerStore', () => {
 
     const snapshot = store.getSnapshot();
     expect(snapshot.events).toHaveLength(2);
-    expect(snapshot.events.map((event) => event.summary)).toEqual(['third', 'second']);
+    expect(snapshot.events.map((event: NopDebugEvent) => event.summary)).toEqual(['third', 'second']);
     expect(snapshot.events[0]).toMatchObject({
       id: 3,
       sessionId: 'session-1'
@@ -88,7 +89,7 @@ describe('createDebuggerStore', () => {
     store.toggleFilter('render');
     expect(store.getSnapshot().filters.includes('render')).toBe(false);
 
-    store.getSnapshot().filters.slice(0, -1).forEach((filter) => {
+    store.getSnapshot().filters.slice(0, -1).forEach((filter: NopDebuggerFilterKind) => {
       store.toggleFilter(filter);
     });
     const lastFilter = store.getSnapshot().filters[0];
@@ -196,5 +197,246 @@ describe('createDebuggerStore', () => {
     const snapshot = store.getSnapshot();
     expect(snapshot.pinnedErrors.earliest).toHaveLength(0);
     expect(snapshot.pinnedErrors.latest).toHaveLength(0);
+  });
+
+  it('throttles render:start events within 100ms for same nodeId', () => {
+    const store = createDebuggerStore({
+      enabled: true,
+      sessionId: 'session-throttle',
+      maxEvents: 10,
+      defaultOpen: false,
+      defaultTab: 'timeline',
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 3,
+      errorBufferKeepLatest: 3
+    });
+
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-1',
+      nodeId: 'node-1',
+      timestamp: 100
+    });
+
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-2',
+      nodeId: 'node-1',
+      timestamp: 150
+    });
+
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-3',
+      nodeId: 'node-1',
+      timestamp: 180
+    });
+
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-4',
+      nodeId: 'node-1',
+      timestamp: 250
+    });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.events).toHaveLength(2);
+
+    expect(snapshot.events[0].summary).toBe('render-4');
+    expect(snapshot.events[0].detail).toBeUndefined();
+
+    expect(snapshot.events[1].summary).toBe('render-1');
+    expect(snapshot.events[1].detail).toBeUndefined();
+  });
+
+  it('does not throttle render:start events for different nodeIds', () => {
+    const store = createDebuggerStore({
+      enabled: true,
+      sessionId: 'session-diff-nodes',
+      maxEvents: 10,
+      defaultOpen: false,
+      defaultTab: 'timeline',
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 3,
+      errorBufferKeepLatest: 3
+    });
+
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-node-1',
+      nodeId: 'node-1',
+      timestamp: 100
+    });
+
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-node-2',
+      nodeId: 'node-2',
+      timestamp: 120
+    });
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-node-1-again',
+      nodeId: 'node-1',
+      timestamp: 140
+    });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.events).toHaveLength(2);
+
+    expect(snapshot.events[0].summary).toBe('render-node-2');
+    expect(snapshot.events[0].detail).toBeUndefined();
+
+    expect(snapshot.events[1].summary).toBe('render-node-1');
+    expect(snapshot.events[1].detail).toBeUndefined();
+  });
+
+  it('does not throttle render:start events after 100ms', () => {
+    const store = createDebuggerStore({
+      enabled: true,
+      sessionId: 'session-after-throttle',
+      maxEvents: 10,
+      defaultOpen: false,
+      defaultTab: 'timeline',
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 3,
+      errorBufferKeepLatest: 3
+    });
+
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-1',
+      nodeId: 'node-1',
+      timestamp: 100
+    });
+
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-2',
+      nodeId: 'node-1',
+      timestamp: 250
+    });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.events).toHaveLength(2);
+
+    expect(snapshot.events[0].summary).toBe('render-2');
+    expect(snapshot.events[0].detail).toBeUndefined();
+
+    expect(snapshot.events[1].summary).toBe('render-1');
+    expect(snapshot.events[1].detail).toBeUndefined();
+  });
+
+  it('does not throttle render:end events', () => {
+    const store = createDebuggerStore({
+      enabled: true,
+      sessionId: 'session-render-end',
+      maxEvents: 10,
+      defaultOpen: false,
+      defaultTab: 'timeline',
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 3,
+      errorBufferKeepLatest: 3
+    });
+
+    store.append({
+      kind: 'render:end',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render:end-1',
+      nodeId: 'node-1',
+      timestamp: 100,
+      durationMs: 10
+    });
+
+    store.append({
+      kind: 'render:end',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render:end-2',
+      nodeId: 'node-1',
+      timestamp: 120,
+      durationMs: 20
+    });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.events).toHaveLength(2);
+
+    expect(snapshot.events[0].summary).toBe('render:end-2');
+    expect(snapshot.events[0].detail).toBeUndefined();
+    expect(snapshot.events[0].durationMs).toBe(20);
+
+    expect(snapshot.events[1].summary).toBe('render:end-1');
+    expect(snapshot.events[1].detail).toBeUndefined();
+    expect(snapshot.events[1].durationMs).toBe(10);
+  });
+
+  it('does not throttle render:start events without nodeId', () => {
+    const store = createDebuggerStore({
+      enabled: true,
+      sessionId: 'session-no-nodeId',
+      maxEvents: 10,
+      defaultOpen: false,
+      defaultTab: 'timeline',
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 3,
+      errorBufferKeepLatest: 3
+    });
+
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-1',
+      timestamp: 100
+    });
+
+    store.append({
+      kind: 'render:start',
+      group: 'render',
+      level: 'info',
+      source: 'test',
+      summary: 'render-2',
+      timestamp: 120
+    });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.events).toHaveLength(2);
+
+    expect(snapshot.events[0].summary).toBe('render-2');
+    expect(snapshot.events[0].detail).toBeUndefined();
+
+    expect(snapshot.events[1].summary).toBe('render-1');
+    expect(snapshot.events[1].detail).toBeUndefined();
   });
 });

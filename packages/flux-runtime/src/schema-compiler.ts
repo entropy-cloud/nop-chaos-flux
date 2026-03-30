@@ -416,11 +416,7 @@ function rewriteActionTargets(
     output[key] = rewriteActionTargets(candidate, byId, byName);
   }
 
-  if (typeof source.action === 'string' && source.action.startsWith('component:')) {
-    const hasTargetCid = typeof source._targetCid === 'number';
-    const hasTargetTemplateId = typeof source._targetTemplateId === 'string' && source._targetTemplateId.length > 0;
-
-    if (!hasTargetCid && !hasTargetTemplateId) {
+    if (typeof source.action === 'string' && source.action.startsWith('component:')) {
       if (typeof source.componentId === 'string') {
         const resolvedCid = byId.get(source.componentId);
         if (resolvedCid !== undefined) {
@@ -433,7 +429,6 @@ function rewriteActionTargets(
         }
       }
     }
-  }
 
   return output;
 }
@@ -451,12 +446,12 @@ function enrichCompiledComponentTargets(compiled: CompiledSchemaNode | CompiledS
     const id = typeof schemaRecord.id === 'string' ? schemaRecord.id : undefined;
     const name = typeof schemaRecord.name === 'string' ? schemaRecord.name : undefined;
 
+    cid += 1;
+    schemaRecord._cid = cid;
+
     if (!id && !name) {
       continue;
     }
-
-    cid += 1;
-    schemaRecord._cid = cid;
 
     if (id) {
       byId.set(id, cid);

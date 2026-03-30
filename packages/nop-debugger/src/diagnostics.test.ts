@@ -194,7 +194,8 @@ describe('diagnostics helpers', () => {
       api: 1,
       compile: 1,
       notify: 1,
-      error: 1
+      error: 1,
+      node: 0
     });
 
     const report = createDiagnosticReport('controller-a', snapshot, {

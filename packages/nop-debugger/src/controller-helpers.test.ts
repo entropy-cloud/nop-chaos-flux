@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildNetworkSummary,
@@ -5,7 +6,11 @@ import {
   createSessionId,
   formatActionResult,
   formatErrorDetail,
+  loadPersistedPanelOpen,
+  loadPersistedPosition,
   normalizeCompiledRoot,
+  persistPanelOpen,
+  persistPosition,
   readWindowConfig,
   summarizeApi,
   summarizeValueShape
@@ -122,6 +127,69 @@ describe('controller helpers', () => {
       rootCount: 2,
       firstType: 'page',
       firstPath: 'root'
+    });
+  });
+
+  describe('position persistence', () => {
+    let store: Map<string, string>;
+
+    beforeEach(() => {
+      store = new Map();
+      vi.stubGlobal('localStorage', {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => { store.set(key, value); },
+        removeItem: (key: string) => { store.delete(key); },
+        clear: () => { store.clear(); },
+        get length() { return store.size; }
+      });
+    });
+
+    it('round-trips position through localStorage', () => {
+      persistPosition('test-ctrl', { x: 100, y: 200 });
+      expect(loadPersistedPosition('test-ctrl')).toEqual({ x: 100, y: 200 });
+    });
+
+    it('returns undefined when no position is stored', () => {
+      expect(loadPersistedPosition('nonexistent')).toBeUndefined();
+    });
+
+    it('returns undefined for malformed stored data', () => {
+      store.set('nop-debugger:bad:position', 'not-json');
+      expect(loadPersistedPosition('bad')).toBeUndefined();
+    });
+
+    it('returns undefined for stored data missing x or y', () => {
+      store.set('nop-debugger:partial:position', '{"x":1}');
+      expect(loadPersistedPosition('partial')).toBeUndefined();
+    });
+  });
+
+  describe('panelOpen persistence', () => {
+    let store: Map<string, string>;
+
+    beforeEach(() => {
+      store = new Map();
+      vi.stubGlobal('localStorage', {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => { store.set(key, value); },
+        removeItem: (key: string) => { store.delete(key); },
+        clear: () => { store.clear(); },
+        get length() { return store.size; }
+      });
+    });
+
+    it('round-trips true through localStorage', () => {
+      persistPanelOpen('test-ctrl', true);
+      expect(loadPersistedPanelOpen('test-ctrl')).toBe(true);
+    });
+
+    it('round-trips false through localStorage', () => {
+      persistPanelOpen('test-ctrl', false);
+      expect(loadPersistedPanelOpen('test-ctrl')).toBe(false);
+    });
+
+    it('returns undefined when no panelOpen is stored', () => {
+      expect(loadPersistedPanelOpen('nonexistent')).toBeUndefined();
     });
   });
 });

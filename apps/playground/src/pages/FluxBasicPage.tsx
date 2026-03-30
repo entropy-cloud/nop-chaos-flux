@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
-import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
+import { createSchemaRenderer, createDefaultRegistry, getSchemaRendererRegistry } from '@nop-chaos/flux-react';
 import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
@@ -202,6 +202,16 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
 
   const env = useMemo(() => debuggerController.decorateEnv(baseEnv), [baseEnv, debuggerController]);
 
+  useEffect(() => {
+    const registry = getSchemaRendererRegistry();
+    if (registry) {
+      debuggerController.setComponentRegistry(registry);
+    }
+    return () => {
+      debuggerController.setComponentRegistry(null);
+    };
+  }, [debuggerController]);
+
   return (
     <main className="min-h-screen grid place-items-center p-6">
       <section className="max-w-[1100px] p-10 rounded-3xl bg-[var(--nop-hero-bg)] border border-[var(--nop-hero-border)] shadow-[var(--nop-hero-shadow)]">
@@ -218,6 +228,11 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
         <p className="mt-2.5 text-[15px] leading-relaxed text-[var(--nop-body-copy)]">
           Submit the user form to append a record into the local directory and watch the table plus monitor
           panel update in real time.
+        </p>
+        <p className="mt-2.5 text-[15px] leading-relaxed text-[var(--nop-body-copy)]">
+          The form now includes an expression editor field at the bottom. It provides syntax highlighting,
+          auto-complete for variables, and real-time validation. Try typing variable names like `username`
+          or `role` and combine them with operators.
         </p>
         <p className="mt-2.5 text-[15px] leading-relaxed text-[var(--nop-body-copy)]">
           The username field now validates on blur, debounces async uniqueness checks for 500ms, and only
