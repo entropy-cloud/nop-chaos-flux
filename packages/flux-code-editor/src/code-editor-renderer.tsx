@@ -160,7 +160,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
 
   return (
     <div
-      className={`nop-code-editor${isFullscreen ? ' nop-code-editor--fullscreen' : ''}`}
+      className={`nop-code-editor${isFullscreen ? ' nop-code-editor--fullscreen' : ''}${allowFullscreen && !isFullscreen ? ' nop-code-editor--has-toolbar' : ''}`}
       data-testid={props.meta.testid}
       data-theme={editorTheme}
       style={!isFullscreen ? containerStyle : undefined}
@@ -179,14 +179,17 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
         </div>
       )}
       {allowFullscreen && !isFullscreen && (
-        <button
-          type="button"
-          className="nop-code-editor__fullscreen-btn"
-          onClick={toggleFullscreen}
-          aria-label="Enter fullscreen"
-        >
-          ⛶
-        </button>
+        <div className="nop-code-editor__toolbar">
+          <button
+            type="button"
+            className="nop-code-editor__toolbar-fullscreen"
+            onClick={toggleFullscreen}
+            aria-label="Enter fullscreen"
+            title="Fullscreen"
+          >
+            ⛶
+          </button>
+        </div>
       )}
       <div ref={editorRef} style={isFullscreen ? { flex: 1, overflow: 'auto' } : undefined} />
     </div>

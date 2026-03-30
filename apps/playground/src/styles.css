@@ -744,6 +744,54 @@ body {
   background-color: #1e1e1e;
 }
 
+.nop-code-editor--has-toolbar {
+  display: flex;
+  flex-direction: column;
+}
+
+.nop-code-editor__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.nop-code-editor--has-toolbar[data-theme="dark"] .nop-code-editor__toolbar {
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.nop-code-editor__toolbar-fullscreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 3px;
+  color: #999;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.nop-code-editor__toolbar-fullscreen:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #555;
+}
+
+.nop-code-editor--has-toolbar[data-theme="dark"] .nop-code-editor__toolbar-fullscreen {
+  color: #777;
+}
+
+.nop-code-editor--has-toolbar[data-theme="dark"] .nop-code-editor__toolbar-fullscreen:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ccc;
+}
+
 .nop-code-editor__header {
   display: flex;
   align-items: center;
@@ -796,28 +844,4 @@ body {
 .nop-code-editor--fullscreen[data-theme="dark"] .nop-code-editor__header-close:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
-}
-
-.nop-code-editor__fullscreen-btn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: none;
-  background: rgba(255, 255, 255, 0.8);
-  cursor: pointer;
-  border-radius: 3px;
-  color: #666;
-  font-size: 12px;
-  line-height: 1;
-}
-
-.nop-code-editor__fullscreen-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #333;
 }
