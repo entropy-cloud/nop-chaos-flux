@@ -1,9 +1,9 @@
 # Plan 22: Node Tab 增强 — 元素检查与 Store/Scope 数据展示
 
-> **Implementation Status: ❌ NOT STARTED**
-> Current `inspectByCid()` returns basic node/component data. The planned enhancements — scopeChain traversal, formState filling with validation errors, expression evaluator integration, and rich Node Tab inspection UI — have not been implemented. The Node Tab currently shows flat scope/form data without the planned deep inspection capabilities.
+> **Implementation Status: ✅ COMPLETED**
+> All 5 phases implemented: `buildInspectResult()` now fills `formState`/`scopeData` from `handle.capabilities.store` and `tagName`/`className` from the DOM element. Node Tab shows a full Component Inspector panel with handle info, Form State tabs (Values/Errors/Meta), Scope Data viewer, and Expression Evaluator. Inspect mode shows hint text and supports Esc to cancel. New CSS styles for `ndbg-inspect-*` classes. 3 new tests in `controller-inspect.test.ts` verify formState filling and DOM info extraction.
 >
-> This status was verified against the codebase on 2026-03-30.
+> This status was verified against the codebase on 2026-03-31.
 
 > 制定日期: 2026-03-30
 > 基于: `docs/analysis/framework-debugger-design.md` §10.4 Node / §12.5 DOM cid 反查机制
