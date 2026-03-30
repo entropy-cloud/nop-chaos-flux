@@ -22,6 +22,8 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -40,6 +42,8 @@
   --border: 214 32% 91%;
   --input: 214 32% 91%;
   --ring: 217 89% 53%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 84% 5%;
   --primary: 217 89% 53%;
   --primary-foreground: 0 0% 100%;
   --destructive: 0 84% 60%;

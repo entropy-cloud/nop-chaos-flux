@@ -1,6 +1,6 @@
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 
-export type PageId = 'home' | 'flux-basic' | 'flow-designer' | 'report-designer' | 'debugger-lab';
+export type PageId = 'home' | 'flux-basic' | 'flow-designer' | 'report-designer' | 'debugger-lab' | 'condition-builder';
 
 export interface PageRouterProps {
   activePage: PageId;

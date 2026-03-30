@@ -1,0 +1,119 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "text",
+      "text": "### Condition Builder 测试\n\n以下展示不同配置的条件构建器。所有条件构建器共享相同的字段定义，但启用不同的功能选项。"
+    },
+    {
+      "type": "form",
+      "id": "condition-test-form",
+      "body": [
+        {
+          "type": "condition-builder",
+          "name": "conditions1",
+          "label": "基础模式（嵌入）",
+          "embed": true,
+          "builderMode": "full",
+          "showANDOR": true,
+          "showNot": true,
+          "searchable": true,
+          "draggable": true,
+          "fields": [
+            {
+              "type": "group",
+              "label": "用户信息",
+              "children": [
+                { "name": "username", "label": "用户名", "type": "text", "placeholder": "输入用户名" },
+                { "name": "age", "label": "年龄", "type": "number" },
+                { "name": "role", "label": "角色", "type": "select", "options": [
+                  { "label": "管理员", "value": "admin" },
+                  { "label": "编辑者", "value": "editor" },
+                  { "label": "查看者", "value": "viewer" }
+                ]}
+              ]
+            },
+            {
+              "type": "group",
+              "label": "时间范围",
+              "children": [
+                { "name": "created_at", "label": "创建时间", "type": "text" },
+                { "name": "updated_at", "label": "更新时间", "type": "text" }
+              ]
+            },
+            { "name": "active", "label": "是否激活", "type": "boolean", "trueLabel": "是", "falseLabel": "否" }
+          ]
+        },
+        {
+          "type": "condition-builder",
+          "name": "conditions2",
+          "label": "简单模式",
+          "embed": true,
+          "builderMode": "simple",
+          "showANDOR": true,
+          "searchable": true,
+          "uniqueFields": true,
+          "placeholder": "点击添加条件...",
+          "addConditionLabel": "添加筛选",
+          "fields": [
+            { "name": "name", "label": "名称", "type": "text" },
+            { "name": "status", "label": "状态", "type": "select", "options": [
+              { "label": "进行中", "value": "running" },
+              { "label": "已完成", "value": "done" },
+              { "label": "已取消", "value": "cancelled" }
+            ]},
+            { "name": "priority", "label": "优先级", "type": "number" },
+            { "name": "enabled", "label": "启用", "type": "boolean" }
+          ]
+        },
+        {
+          "type": "condition-builder",
+          "name": "conditions3",
+          "label": "弹出模式（Picker）",
+          "embed": false,
+          "builderMode": "full",
+          "showANDOR": true,
+          "showNot": true,
+          "searchable": true,
+          "draggable": true,
+          "maxDepth": 3,
+          "maxItemsPerGroup": 5,
+          "placeholder": "点击配置筛选条件...",
+          "addGroupLabel": "添加条件组",
+          "fields": [
+            { "name": "title", "label": "标题", "type": "text" },
+            { "name": "score", "label": "分数", "type": "number" },
+            { "name": "category", "label": "分类", "type": "select", "options": [
+              { "label": "技术", "value": "tech" },
+              { "label": "设计", "value": "design" },
+              { "label": "产品", "value": "product" },
+              { "label": "运营", "value": "operations" }
+            ]},
+            { "name": "visible", "label": "可见", "type": "boolean" }
+          ]
+        },
+        {
+          "type": "condition-builder",
+          "name": "conditions4",
+          "label": "自定义操作符",
+          "embed": true,
+          "builderMode": "full",
+          "showANDOR": true,
+          "showNot": true,
+          "operators": {
+            "labels": {
+              "equal": "等于",
+              "not_equal": "不等于",
+              "like": "模糊匹配",
+              "not_like": "排除"
+            }
+          },
+          "fields": [
+            { "name": "keyword", "label": "关键词", "type": "text" },
+            { "name": "amount", "label": "金额", "type": "number" }
+          ]
+        }
+      ]
+    }
+  ]
+}
