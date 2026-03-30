@@ -6,14 +6,22 @@ import { cn } from '../../lib/utils'
 import { Button } from './button'
 import { useDialogDrag } from './use-dialog-drag'
 
-const DialogContext = React.createContext({ draggable: false })
+interface DialogContextValue {
+  draggable: boolean
+  noOverlay: boolean
+  noCenter: boolean
+}
+
+const DialogContext = React.createContext<DialogContextValue>({ draggable: false, noOverlay: false, noCenter: false })
 
 function Dialog({
   draggable = true,
+  noOverlay = false,
+  noCenter = false,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root> & { draggable?: boolean }) {
+}: React.ComponentProps<typeof DialogPrimitive.Root> & { draggable?: boolean; noOverlay?: boolean; noCenter?: boolean }) {
   return (
-    <DialogContext.Provider value={{ draggable }}>
+    <DialogContext.Provider value={{ draggable, noOverlay, noCenter }}>
       <DialogPrimitive.Root data-slot="dialog" {...props} />
     </DialogContext.Provider>
   )
@@ -66,24 +74,31 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     showCloseButton?: boolean
+    offsetRef?: React.MutableRefObject<{ x: number; y: number }>
+    baseTransform?: string
   }
->(function DialogContent({ className, children, showCloseButton = true, ...props }, ref) {
-  const { draggable } = React.useContext(DialogContext)
-  const { contentRef, handlePointerDown } = useDialogDrag({ enabled: draggable }, ref)
+>(function DialogContent({ className, children, showCloseButton = true, offsetRef, baseTransform, ...props }, ref) {
+  const { draggable, noOverlay, noCenter } = React.useContext(DialogContext)
+  const { contentRef, handlePointerDown } = useDialogDrag({ enabled: draggable, offsetRef, baseTransform: noCenter ? '' : baseTransform }, ref)
 
   return (
     <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+      {!noOverlay && <DialogOverlay />}
       <DialogPrimitive.Content
         ref={contentRef}
         data-slot="dialog-content"
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-xl border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:duration-200 data-[state=open]:fade-in-0 sm:max-w-lg",
-          !draggable && "translate-x-[-50%] translate-y-[-50%] data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
+          "fixed z-50 w-full max-w-[calc(100%-2rem)] rounded-xl border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:duration-200 data-[state=open]:fade-in-0 sm:max-w-lg",
+          noCenter ? "flex flex-col" : "grid gap-4 top-[50%] left-[50%]",
+          !draggable && !noCenter && "translate-x-[-50%] translate-y-[-50%] data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
           className
         )}
         {...props}
-        style={draggable ? { transform: 'translate(-50%, -50%)', ...props.style } : props.style}
+        style={
+          draggable
+            ? { transform: noCenter ? undefined : (baseTransform ?? 'translate(-50%, -50%)'), ...props.style }
+            : props.style
+        }
         onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
       >
         {children}

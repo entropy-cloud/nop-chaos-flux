@@ -13,16 +13,27 @@ interface DragState {
 
 interface UseDialogDragOptions {
   enabled?: boolean
+  offsetRef?: React.MutableRefObject<Offset>
+  baseTransform?: string
 }
 
 export function useDialogDrag(
   options: UseDialogDragOptions = {},
   forwardedRef?: React.ForwardedRef<HTMLDivElement>
 ) {
-  const { enabled = false } = options
-  const offsetRef = React.useRef<Offset>({ x: 0, y: 0 })
+  const { enabled = false, offsetRef: externalOffsetRef, baseTransform = 'translate(-50%, -50%)' } = options
+  const internalOffsetRef = React.useRef<Offset>({ x: 0, y: 0 })
+  const offsetRef = externalOffsetRef ?? internalOffsetRef
   const internalRef = React.useRef<HTMLDivElement | null>(null)
   const dragStateRef = React.useRef<DragState | null>(null)
+
+  const applyTransform = React.useCallback((el: HTMLElement, offset: Offset) => {
+    if (offset.x === 0 && offset.y === 0) {
+      el.style.transform = baseTransform
+    } else {
+      el.style.transform = `${baseTransform} translate(${offset.x}px, ${offset.y}px)`
+    }
+  }, [baseTransform])
 
   const handlePointerMove = React.useCallback((e: PointerEvent) => {
     const dragState = dragStateRef.current
@@ -51,8 +62,8 @@ export function useDialogDrag(
     )
 
     offsetRef.current = newOffset
-    el.style.transform = `translate(-50%, -50%) translate(${newOffset.x}px, ${newOffset.y}px)`
-  }, [])
+    applyTransform(el, newOffset)
+  }, [offsetRef, applyTransform])
 
   const stopDrag = React.useCallback(() => {
     const el = internalRef.current
@@ -70,13 +81,16 @@ export function useDialogDrag(
   const contentRef = React.useCallback(
     (node: HTMLDivElement | null) => {
       internalRef.current = node
+      if (node && (offsetRef.current.x !== 0 || offsetRef.current.y !== 0)) {
+        applyTransform(node, offsetRef.current)
+      }
       if (typeof forwardedRef === 'function') {
         forwardedRef(node)
       } else if (forwardedRef) {
         (forwardedRef as React.MutableRefObject<HTMLDivElement | null>).current = node
       }
     },
-    [forwardedRef]
+    [forwardedRef, offsetRef, applyTransform]
   )
 
   const handlePointerDown = React.useCallback(
@@ -106,15 +120,15 @@ export function useDialogDrag(
       el.addEventListener('pointerup', stopDrag)
       el.addEventListener('pointercancel', stopDrag)
     },
-    [handlePointerMove, stopDrag]
+    [handlePointerMove, stopDrag, offsetRef]
   )
 
   const resetPosition = React.useCallback(() => {
     offsetRef.current = { x: 0, y: 0 }
     if (internalRef.current) {
-      internalRef.current.style.transform = 'translate(-50%, -50%)'
+      applyTransform(internalRef.current, { x: 0, y: 0 })
     }
-  }, [])
+  }, [offsetRef, applyTransform])
 
   React.useEffect(() => {
     return () => {
