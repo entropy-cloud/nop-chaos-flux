@@ -729,3 +729,95 @@ body {
   background: rgb(248, 250, 252);
   border-color: rgb(203, 213, 225);
 }
+
+/* ── Code Editor Fullscreen ── */
+.nop-code-editor--fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+.nop-code-editor--fullscreen[data-theme="dark"] {
+  background-color: #1e1e1e;
+}
+
+.nop-code-editor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.03);
+  flex-shrink: 0;
+}
+
+.nop-code-editor--fullscreen[data-theme="dark"] .nop-code-editor__header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nop-code-editor__header-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.nop-code-editor--fullscreen[data-theme="dark"] .nop-code-editor__header-title {
+  color: #ccc;
+}
+
+.nop-code-editor__header-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #666;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.nop-code-editor__header-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #333;
+}
+
+.nop-code-editor--fullscreen[data-theme="dark"] .nop-code-editor__header-close {
+  color: #999;
+}
+
+.nop-code-editor--fullscreen[data-theme="dark"] .nop-code-editor__header-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nop-code-editor__fullscreen-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  border-radius: 3px;
+  color: #666;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.nop-code-editor__fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #333;
+}

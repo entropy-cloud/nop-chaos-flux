@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import type { RendererComponentProps, RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
 import { useCodeMirror } from './use-code-mirror';
@@ -131,26 +131,22 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
   const width = props.props.width as number | string | undefined ?? '100%';
 
   const containerStyle = useMemo<React.CSSProperties>(
-    () => {
-      const base: React.CSSProperties = {
-        height: typeof height === 'number' ? `${height}px` : height,
-        width: typeof width === 'number' ? `${width}px` : width,
-        overflow: autoHeight ? undefined : 'auto',
-      };
-      if (isFullscreen) {
-        return {
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9999,
-          backgroundColor: editorTheme === 'dark' ? '#1e1e1e' : '#ffffff',
-          display: 'flex',
-          flexDirection: 'column',
-        };
-      }
-      return base;
-    },
-    [height, width, autoHeight, isFullscreen, editorTheme],
+    () => ({
+      height: typeof height === 'number' ? `${height}px` : height,
+      width: typeof width === 'number' ? `${width}px` : width,
+      overflow: autoHeight ? undefined : 'auto',
+    }),
+    [height, width, autoHeight],
   );
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
 
   const { editorRef } = useCodeMirror({
     initialValue: value,
@@ -164,31 +160,32 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
 
   return (
     <div
-      className="nop-code-editor"
+      className={`nop-code-editor${isFullscreen ? ' nop-code-editor--fullscreen' : ''}`}
       data-testid={props.meta.testid}
-      style={containerStyle}
+      data-theme={editorTheme}
+      style={!isFullscreen ? containerStyle : undefined}
     >
-      {allowFullscreen && (
+      {isFullscreen && allowFullscreen && (
+        <div className="nop-code-editor__header">
+          <span className="nop-code-editor__header-title">{props.meta.label || props.schema.label}</span>
+          <button
+            type="button"
+            className="nop-code-editor__header-close"
+            onClick={() => setIsFullscreen(false)}
+            aria-label="Exit fullscreen"
+          >
+            ×
+          </button>
+        </div>
+      )}
+      {allowFullscreen && !isFullscreen && (
         <button
           type="button"
+          className="nop-code-editor__fullscreen-btn"
           onClick={toggleFullscreen}
-          style={{
-            position: 'absolute',
-            top: 4,
-            right: 4,
-            zIndex: 10000,
-            border: 'none',
-            background: isFullscreen ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)',
-            color: isFullscreen ? '#fff' : '#333',
-            cursor: 'pointer',
-            fontSize: 16,
-            lineHeight: 1,
-            padding: '4px 6px',
-            borderRadius: 3,
-          }}
-          aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          aria-label="Enter fullscreen"
         >
-          {isFullscreen ? '✕' : '⛶'}
+          ⛶
         </button>
       )}
       <div ref={editorRef} style={isFullscreen ? { flex: 1, overflow: 'auto' } : undefined} />

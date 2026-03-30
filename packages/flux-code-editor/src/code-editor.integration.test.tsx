@@ -244,4 +244,32 @@ describe('code-editor integration', () => {
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
+
+  it('renders fullscreen editor with header bar when allowFullscreen is set', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    renderCodeEditorSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'form',
+          name: 'testForm',
+          body: [
+            {
+              type: 'code-editor',
+              name: 'jsonEditor',
+              label: 'JSON Editor',
+              language: 'json',
+              height: 200,
+              allowFullscreen: true,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(screen.getByText('JSON Editor')).toBeTruthy();
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
 });
