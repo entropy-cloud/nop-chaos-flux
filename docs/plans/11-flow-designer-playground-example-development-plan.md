@@ -1,5 +1,10 @@
 # Flow Designer Playground Example Development Plan
 
+> **Implementation Status: ✅ COMPLETED**
+> All 8 phases implemented: `flow-designer-core` (graph document, undo/redo, dirty tracking), `flow-designer-renderers` (xyflow canvas, custom nodes/edges), `designer-page` (toolbar, palette, inspector, canvas orchestration), schema-driven toolbar/inspector, and designer:* namespace actions. The playground has a fully functional Flow Designer example.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 ## Purpose
 
 This plan defines how to build a Flow Designer playground example in this repository that reproduces the practical behavior of the legacy `FlowEditor` from `C:\can\nop\nop-chaos-next-wt\nop-chaos-next-master`, but does so through the new `nop-amis` Flow Designer architecture.

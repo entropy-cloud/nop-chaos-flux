@@ -1,5 +1,10 @@
 # Refactor Follow-up Checklist Acceptance
 
+> **Implementation Status: ✅ COMPLETED (historical)**
+> This document IS the acceptance record for Plans 05–07. All work accepted as complete.
+>
+> This status was confirmed on 2026-03-30.
+
 ## Verdict
 
 The work defined in `docs/plans/06-refactor-follow-up-implementation-checklist.md` is complete for this pass.

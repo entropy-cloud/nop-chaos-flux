@@ -1,5 +1,11 @@
 # NOP Debugger 完整实现计划
 
+> **Implementation Status: ✅ COMPLETED (Phases 1–3) / Phase 4 Not Started**
+> **Done (Phases 1–3):** JsonViewer with collapsible tree, render throttling, search/filter, localStorage persistence, error badge with count, error aggregation (pinned/latest/earliest buffers), API chain merging, `data-cid` injection on all rendered nodes, `inspectByCid()` global API, Node Tab with scope/form data display, and global `__NOP_DEBUGGER_API__` for automation.
+> **Not started (Phase 4):** Virtualized tree for large schemas, `state:snapshot` serialization, enhanced search with regex/path support, and final performance hardening.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 > 制定日期: 2026-03-29
 > 基于: `docs/analysis/framework-debugger-design.md` 设计草案
 > 状态: 待实施

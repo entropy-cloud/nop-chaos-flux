@@ -1,5 +1,10 @@
 # Form Validation Completion Plan
 
+> **Implementation Status: ✅ COMPLETED**
+> All four levels of validation capability (field-level, form-level, cross-field, async) have been implemented in `packages/flux-runtime/src/validation/` (8 files: errors.ts, message.ts, registry.ts, rules.ts, validators.ts, index.ts + tests). Form-runtime array operations (appendValue, insertValue, removeValue, moveValue, swapValue) and custom validators (equalsField, requiredWhen, requiredUnless, atLeastOneFilled, allOrNone, uniqueBy) are all present.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 ## Purpose
 
 This document describes how to close the remaining form-validation gaps in `nop-amis` so the system can approach the practical capability level people expect from a `React Hook Form + Yup` stack without adopting either library as the core runtime.

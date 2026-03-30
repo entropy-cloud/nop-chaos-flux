@@ -1,5 +1,12 @@
 # Form Validation Low-Code Integrated Refactor Roadmap
 
+> **Implementation Status: ⚠️ PARTIALLY COMPLETED**
+> **Done (Stages 0–3):** Canonical validation graph, compilation tightening, graph-driven execution.
+> **Not started (Stages 4–8):** Normalization pipeline, composite compiler migration, state compression, extensibility API, diagnostics/introspection tooling.
+> The core validation infrastructure is solid and production-capable; the advanced roadmap items for full low-code integration remain future work.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 ## Purpose
 
 This document defines a detailed refactor roadmap for the form-validation system under the following hard constraints:

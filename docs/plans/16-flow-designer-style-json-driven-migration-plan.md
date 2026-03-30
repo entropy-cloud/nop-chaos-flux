@@ -1,5 +1,11 @@
 # 16 - Flow Designer 样式 JSON 驱动迁移计划
 
+> **Implementation Status: ⚠️ PARTIALLY COMPLETED**
+> **Done:** Steps 1–10 largely completed — `styles.css` deleted from both `flow-designer-renderers` and `report-designer-renderers`; Tailwind + `classAliases` mechanism in use for flow/report designer styling; no business-specific styles in framework CSS files.
+> **Remaining:** `themeStyles` injection for dynamic theming may need verification; full audit of all edge/node styles in JSON config may have gaps.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 ## 目标
 
 将 flow designer 示例中所有**特定于业务场景的样式**从框架 CSS (`styles.css`) 迁移到 JSON 配置中，通过 TailwindCSS + `classAliases` 机制表达样式，使框架包不再包含任何业务特定样式。

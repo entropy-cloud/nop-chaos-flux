@@ -1,5 +1,10 @@
 # NOP Chaos AMIS Renderer Development Plan
 
+> **Implementation Status: SUPERSEDED — Replaced by `docs/plans/02-development-plan.md`.**
+> All phases P0–P6 described in this plan have been completed. See Plan 02 for the current status of P7 (convergence/hardening).
+>
+> This document is preserved as historical context. Active planning continues in Plan 02 and later plans.
+
 > Canonical planning and architecture references now live under `docs/`.
 > Start with `docs/index.md`, then prefer `docs/plans/02-development-plan.md`, `docs/architecture/amis-core.md`, and `docs/architecture/renderer-runtime.md`.
 

@@ -1,5 +1,13 @@
 # 19-BEM-to-Tailwind Migration Plan
 
+> **Design doc:** `docs/architecture/bem-removal.md`
+>
+> **Implementation Status: ⚠️ PARTIALLY COMPLETED (Phases 1–7)**
+> **Done:** BEM CSS rules removed from `styles.css` (no `.app-shell`, `.hero-card`, `.nav-card` found); `field-frame.tsx` uses `data-field-*` attributes instead of BEM; `dialog-host.tsx` uses shadcn Dialog components; marker class system (`nop-*`) established; Tailwind + `classAliases` in production use.
+> **Remaining:** `table-renderer.tsx` does NOT yet use shadcn Table components; playground page BEM class cleanup may be incomplete; test assertion migration (Phase 11) and final CSS audit (Phase 12) not verified.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 > Design doc: `docs/architecture/bem-removal.md`
 
 ## Exit Criteria

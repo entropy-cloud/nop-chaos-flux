@@ -1,5 +1,10 @@
 # Refactor Follow-up Completion Report
 
+> **Implementation Status: ✅ COMPLETED (historical)**
+> This document IS the completion report for Plans 05 and 06. All work verified and accepted per Plan 08.
+>
+> This status was confirmed on 2026-03-30.
+
 ## Completed Work
 
 - extracted generic array helpers into `packages/flux-core/src/utils/array.ts`

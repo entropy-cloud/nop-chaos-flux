@@ -1,5 +1,11 @@
 # 17 - Flow Designer 生产可用性与 Flow Editor 对齐重构计划
 
+> **Implementation Status: ⚠️ PARTIALLY COMPLETED**
+> **Done:** Drag-drop with `draggable` attribute on palette items, `screenToFlowPosition` for canvas coordinate mapping, grid toggle, keyboard shortcuts (undo/redo/copy/paste/delete via `matchesShortcut` in `designer-page.tsx`), toolbar improvements.
+> **Remaining:** Collapsible panels in inspector, some edge interaction polish, and full production hardening may still need work.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 ## 1. 问题定义与目标
 
 当前 `flow-designer2` 的 Flow Designer 已具备基础能力，但整体仍偏 demo 化：交互链路不完整、布局可用性不足、与 `C:\can\nop\nop-chaos-next-wt\nop-chaos-next-master` 中 Flow Editor 的关键体验存在差距，无法支撑“完整业务编辑器”定位。

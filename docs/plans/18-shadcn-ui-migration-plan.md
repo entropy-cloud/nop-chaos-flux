@@ -1,5 +1,11 @@
 # shadcn/ui Migration Plan
 
+> **Implementation Status: ✅ COMPLETED (Phases 1–3) / Phase 4 Pending**
+> **Done (Phases 1–3):** `packages/ui/` contains 56 shadcn component files. 23 renderer files import from `@nop-chaos/ui`. Dialog, Button, Input, Select, Tabs, Tooltip, Popover, and many other components are in production use across renderers and designer packages.
+> **Not verified (Phase 4):** Comprehensive testing of all migrated components; some less-used components may not yet be wired into renderers.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 ## Goal
 
 Migrate shadcn/ui components from `nop-chaos-next-master` to `nop-chaos-flux` to establish a shared UI component layer that:

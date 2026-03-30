@@ -1,5 +1,10 @@
 # Action Scope, Imports, And Component Invocation Implementation Plan
 
+> **Implementation Status: ✅ COMPLETED**
+> All core items implemented: `ActionScope` class (`action-scope.ts`, 79 lines), `ComponentHandleRegistry` (`component-handle-registry.ts`, 223 lines), `xui:import` processing (`imports.ts`, 260 lines), `component:<method>` dispatch, and `designer:*` namespace provider in designer-page. Full action extension architecture is operational.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 ## Purpose
 
 This plan defines how to implement the action extension architecture described in `docs/architecture/action-scope-and-imports.md`.

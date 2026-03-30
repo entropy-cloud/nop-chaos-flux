@@ -1,5 +1,16 @@
 # Plan 21: NodeRenderer Selective Scope Subscription
 
+> **Implementation Status: ✅ COMPLETED**
+> Replaced broad `useSyncExternalStore` with `useSyncExternalStoreWithSelector` in `node-renderer.tsx`. The selector runs `resolveNodeMeta` + `resolveNodeProps` inside the selector callback and uses reference equality to prevent unnecessary re-renders. Static nodes (`flags.isStatic`) bypass the subscription entirely. Both `resolveNodeMeta` and `resolveNodeProps` now return reference-stable cached results when values haven't changed (using `state.resolvedMeta` and `state._staticPropsResult`/`state._lastPropsResult`). The skipped test in `flux-renderers-form/src/index.test.tsx` has been unskipped and passes.
+>
+> Key changes:
+> - `packages/flux-core/src/types.ts`: Added `_staticPropsResult` and `_lastPropsResult` to `CompiledNodeRuntimeState`
+> - `packages/flux-runtime/src/node-runtime.ts`: Reference-stable caching for both `resolveNodeMeta` and `resolveNodeProps`
+> - `packages/flux-react/src/node-renderer.tsx`: `useSyncExternalStoreWithSelector` + static fast-path
+> - `packages/flux-renderers-form/src/index.test.tsx`: Test unskipped
+>
+> This status was verified on 2026-03-31 (all 131 tests pass, typecheck + build clean).
+
 ## Problem
 
 Changing one form field triggers re-renders of ALL sibling NodeRenderers. In a form with 3 fields (input-text, input-email, select), changing the `username` field causes all 3 NodeRenderers to re-render.
@@ -76,6 +87,6 @@ This is the cleanest but requires auditing all renderer components to ensure the
 
 ## Status
 
-- [ ] Plan approved
-- [ ] Implementation
-- [ ] Test un-skipped
+- [x] Plan approved
+- [x] Implementation
+- [x] Test un-skipped

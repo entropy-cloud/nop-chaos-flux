@@ -1,5 +1,10 @@
 # Development Plan
 
+> **Implementation Status: COMPLETED (P0–P6) · PARTIALLY ACTIVE (P7).**
+> P0–P6 are fully implemented: workspace, expression compiler, schema compiler, runtime/React integration, basic renderers, form/action system, and data renderers/CRUD are all in place.
+> P7 (convergence/hardening) is partially done — see "Current priority tasks" below for remaining items.
+> Plans 03–22 track specific follow-up work streams.
+
 ## Purpose
 
 This document tracks the implementation plan for the NOP Chaos AMIS renderer framework and records which parts are already in place.

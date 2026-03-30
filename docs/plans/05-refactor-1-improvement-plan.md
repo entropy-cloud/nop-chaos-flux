@@ -1,5 +1,10 @@
 # Refactor-1 Improvement Plan
 
+> **Implementation Status: ✅ COMPLETED**
+> All workstreams (W1–W6) completed as confirmed by Plan 07 (completion report) and Plan 08 (acceptance). Generic array helpers extracted to `packages/flux-core/src/utils/array.ts`. This plan is superseded by subsequent refactoring work.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 ## Purpose
 
 This plan defines how to improve `refactor-1` after comparing it with `refactor-2`.

@@ -1,5 +1,10 @@
 # Flow Designer Canvas-Bridge Schema-Driven Rendering Refactor Plan
 
+> **Implementation Status: ✅ COMPLETED**
+> All items implemented: `canvas-bridge.tsx` split into 7 focused files under `designer-xyflow-canvas/`; `DesignerCardCanvasBridge` and `PreviewBridge` removed; schema-driven node body rendering via `RenderNodes`; schema-driven port rendering from `NodeTypeConfig`; edge rendering from `EdgeTypeConfig`. No hardcoded rendering logic remains.
+>
+> This status was verified against the codebase on 2026-03-30.
+
 ## Purpose
 
 Refactor `canvas-bridge.tsx` and related rendering code to be fully driven by `NodeTypeConfig` and `EdgeTypeConfig` JSON schemas, rather than hardcoded rendering logic.
