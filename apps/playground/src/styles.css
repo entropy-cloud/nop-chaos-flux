@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @source "../../../packages";
 @import "../../../packages/tailwind-preset/src/styles/base.css";
+@import "../../../packages/ui/src/styles/base.css";
 
 
 @theme inline {
