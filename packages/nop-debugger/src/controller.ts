@@ -11,7 +11,7 @@ import {
   installNopDebuggerWindowFlag,
   registerAutomationApi
 } from './automation';
-import { createSessionId, loadPersistedPanelOpen, loadPersistedPosition, persistPanelOpen, persistPosition, readWindowConfig } from './controller-helpers';
+import { createSessionId, loadPersistedMinimized, loadPersistedPanelOpen, loadPersistedPosition, persistMinimized, persistPanelOpen, persistPosition, readWindowConfig } from './controller-helpers';
 import { applyEventQuery, buildInteractionTrace, buildNodeDiagnostics, buildOverview, buildSessionExport, createDiagnosticReport } from './diagnostics';
 import { normalizeRedactionOptions } from './redaction';
 import { createDebuggerStore } from './store';
@@ -81,6 +81,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const redaction = normalizeRedactionOptions(options.redaction);
   const persistedPosition = loadPersistedPosition(debuggerId);
   const persistedPanelOpen = loadPersistedPanelOpen(debuggerId);
+  const persistedMinimized = loadPersistedMinimized(debuggerId);
   const initialPosition = persistedPosition ?? windowConfig.position;
   const initialPanelOpen = persistedPanelOpen ?? windowConfig.defaultOpen;
 
@@ -94,6 +95,10 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     errorBufferKeepEarliest: options.errorBuffer?.keepEarliest ?? 3,
     errorBufferKeepLatest: options.errorBuffer?.keepLatest ?? 5
   });
+
+  if (persistedMinimized) {
+    store.minimize();
+  }
 
   const requestState = new Map<string, { startedAt: number }>();
   let componentRegistry: ComponentHandleRegistry | undefined;
@@ -190,6 +195,14 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       store.hide();
       persistPanelOpen(debuggerId, false);
     },
+    minimize() {
+      store.minimize();
+      persistMinimized(debuggerId, true);
+    },
+    unminimize() {
+      store.unminimize();
+      persistMinimized(debuggerId, false);
+    },
     toggle() {
       store.toggle();
       const snap = store.getSnapshot();
@@ -233,6 +246,14 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     hide() {
       store.hide();
       persistPanelOpen(debuggerId, false);
+    },
+    minimize() {
+      store.minimize();
+      persistMinimized(debuggerId, true);
+    },
+    unminimize() {
+      store.unminimize();
+      persistMinimized(debuggerId, false);
     },
     toggle() {
       store.toggle();

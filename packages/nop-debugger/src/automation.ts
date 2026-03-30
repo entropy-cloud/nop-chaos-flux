@@ -43,6 +43,8 @@ export function createAutomationApi(input: {
   show(): void;
   hide(): void;
   toggle(): void;
+  minimize(): void;
+  unminimize(): void;
   setActiveTab(tab: NopDebuggerTab): void;
   setPanelPosition(position: { x: number; y: number }): void;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
@@ -71,6 +73,8 @@ export function createAutomationApi(input: {
     show: input.show,
     hide: input.hide,
     toggle: input.toggle,
+    minimize: input.minimize,
+    unminimize: input.unminimize,
     setActiveTab: input.setActiveTab,
     setPanelPosition: input.setPanelPosition,
     inspectByCid: input.inspectByCid,
