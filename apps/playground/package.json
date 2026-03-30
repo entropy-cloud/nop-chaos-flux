@@ -14,6 +14,7 @@
   "dependencies": {
     "@nop-chaos/flow-designer-core": "workspace:*",
     "@nop-chaos/flow-designer-renderers": "workspace:*",
+    "@nop-chaos/flux-code-editor": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",

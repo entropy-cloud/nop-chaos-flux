@@ -129,7 +129,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
   );
 }
 
-export const codeEditorRendererDefinition: RendererDefinition<CodeEditorSchema> = {
+export const codeEditorRendererDefinition: RendererDefinition = {
   type: 'code-editor',
   component: CodeEditorRenderer,
   fields: codeEditorFieldRules,

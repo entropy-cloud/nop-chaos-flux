@@ -32,7 +32,8 @@
       "@nop-chaos/report-designer-core": ["packages/report-designer-core/src/index.ts"],
       "@nop-chaos/report-designer-renderers": ["packages/report-designer-renderers/src/index.ts"],
       "@nop-chaos/flow-designer-core": ["packages/flow-designer-core/src/index.ts"],
-      "@nop-chaos/flow-designer-renderers": ["packages/flow-designer-renderers/src/index.tsx"]
+      "@nop-chaos/flow-designer-renderers": ["packages/flow-designer-renderers/src/index.tsx"],
+      "@nop-chaos/flux-code-editor": ["packages/flux-code-editor/src/index.ts"]
     }
   }
 }

@@ -37,6 +37,12 @@ const NAV_CARDS: NavCard[] = [
     title: 'Condition Builder',
     eyebrow: 'Form Control',
     description: 'Condition builder renderer: embedded/picker modes, AND/OR/NOT toggles, field search, nested groups, unique fields, custom operators.'
+  },
+  {
+    id: 'code-editor',
+    title: 'Code Editor',
+    eyebrow: 'CodeMirror 6',
+    description: 'Code editors for expression, SQL, JSON, JavaScript, CSS, HTML. Syntax highlighting, auto-completion, themes, line numbers, folding, and read-only mode.'
   }
 ];
 

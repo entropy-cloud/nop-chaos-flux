@@ -74,6 +74,9 @@ importers:
       '@nop-chaos/flow-designer-renderers':
         specifier: workspace:*
         version: link:../../packages/flow-designer-renderers
+      '@nop-chaos/flux-code-editor':
+        specifier: workspace:*
+        version: link:../../packages/flux-code-editor
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../../packages/flux-core
