@@ -12,10 +12,14 @@
     }
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
-    "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
+    "lucide-react": "^0.577.0",
     "react": "^19.0.0"
   },
   "scripts": {
