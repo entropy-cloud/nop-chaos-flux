@@ -27,10 +27,11 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/13-flow-designer-minimap-centered-square-mask-fix.md`
 - `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`
 - `docs/bugs/15-render-nodes-setstate-during-render-fix.md`
+- `docs/bugs/15-report-designer-fill-series-trailing-digit-fix.md`
 - `docs/bugs/16-dialog-drag-pointer-capture-boundary-clamp-fix.md`
+- `docs/bugs/16-report-designer-fill-handle-drag-single-cell-fix.md`
 - `docs/bugs/17-json-viewer-class-override-breaks-highlighting-fix.md`
+- `docs/bugs/17-report-designer-field-drop-edit-exit-cursor-stuck-fix.md`
 - `docs/bugs/18-tailwind-source-wrong-relative-path-flux-lib-unscanned.md`
-- `docs/bugs/19-report-designer-fill-series-trailing-digit-fix.md`
-- `docs/bugs/20-report-designer-fill-handle-drag-single-cell-fix.md`
-- `docs/bugs/21-report-designer-field-drop-edit-exit-cursor-stuck-fix.md`
+- `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md`
 - `docs/bugs/22-spreadsheet-integration-test-scope-reactive-read-fix.md`
