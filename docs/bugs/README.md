@@ -25,3 +25,7 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/11-xyflow-node-drag-not-initialized-fix.md`
 - `docs/bugs/12-flow-designer-visual-parity-canvas-node-style-fix.md`
 - `docs/bugs/13-flow-designer-minimap-centered-square-mask-fix.md`
+- `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`
+- `docs/bugs/15-report-designer-fill-series-trailing-digit-fix.md`
+- `docs/bugs/16-report-designer-fill-handle-drag-single-cell-fix.md`
+- `docs/bugs/17-report-designer-field-drop-edit-exit-cursor-stuck-fix.md`
