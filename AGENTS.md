@@ -171,6 +171,15 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 - Follow existing code style in each file.
 - TypeScript strict mode.
 
+### Build Artifacts
+
+- **NEVER** emit `.js`, `.d.ts`, or `.js.map` files into `packages/*/src/` directories.
+- Each package's `tsconfig.json` must use `noEmit: true` (for typecheck) or specify `outDir` explicitly (for build).
+- Build output goes to `packages/<name>/dist/` only.
+- Temporary files (coverage, cache, etc.) belong in the package root or `node_modules/.cache/`, never in `src/`.
+- `.gitignore` already excludes `packages/*/src/**/*.js`, `packages/*/src/**/*.d.ts`, `packages/*/src/**/*.js.map` (except `packages/ui/src/` which intentionally contains `.js` source files).
+- If stray build artifacts appear in `src/`, delete them and investigate the `tsconfig` that caused the leak.
+
 ### Package Structure
 
 Each package follows:

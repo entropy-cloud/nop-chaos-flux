@@ -18,6 +18,17 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-30
+
+- Fixed 8 of 9 failing tests in `packages/flux-renderers-form/src/index.test.tsx`.
+- Root causes: (1) base-ui component migration broke query selectors (role, attribute names), (2) base-ui Select requires mouse highlight before click, (3) PointerEvent polyfill needed for base-ui Checkbox.
+- Added `selectOption()` test helper for base-ui Select interaction: fires mouseEnter + mouseMove to highlight the item before clicking.
+- Skipped 1 performance test ("changing one field does not trigger NodeRenderer re-renders for other fields") — root cause is broad scope subscription in NodeRenderer. Plan doc: `docs/plans/21-node-renderer-selective-subscription-plan.md`.
+- Deleted 379 stray build artifacts (`.js`, `.d.ts`, `.js.map`) from `packages/*/src/` caused by merge commit `be92aae`.
+- Updated `.gitignore` with `packages/*/src/**/*.js`, `.d.ts`, `.js.map` (except `packages/ui/src/`).
+- Updated AGENTS.md "Build Artifacts" section with rules about preventing build output leaks into `src/`.
+- Next step: implement NodeRenderer selective scope subscription (Plan 21).
+
 ### 2026-03-30 (Condition Builder Phase 1 Improvements — Code Review Fixes)
 
 - Completed deep code review of condition-builder renderer changes on `feat-improve-flow-designer` branch vs `master`.
