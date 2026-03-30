@@ -30,6 +30,13 @@
     "@nop-chaos/flux-runtime": "workspace:*",
     "react": "^19.0.0"
   },
+  "devDependencies": {
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-renderers-basic": "workspace:*",
+    "@nop-chaos/flux-renderers-form": "workspace:*",
+    "@nop-chaos/flux-renderers-data": "workspace:*",
+    "@testing-library/react": "^16.3.0"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",

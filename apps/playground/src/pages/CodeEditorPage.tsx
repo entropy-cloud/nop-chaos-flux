@@ -62,7 +62,7 @@ const schema = {
           label: 'Template Mode',
           language: 'expression',
           mode: 'template',
-          placeholder: 'Text with ${...} expressions',
+          placeholder: 'Text with {expression} placeholders',
           autoHeight: true,
           expressionConfig: {
             variables: [
