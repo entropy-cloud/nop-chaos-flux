@@ -123,7 +123,7 @@ export function createDebuggerStore(input: {
       }
 
       const timestamp = event.timestamp ?? Date.now();
-      let fullEvent: NopDebugEvent = {
+      const fullEvent: NopDebugEvent = {
         ...event,
         id: nextId++,
         sessionId: input.sessionId,
@@ -133,13 +133,9 @@ export function createDebuggerStore(input: {
       if (event.kind === 'render:start' && event.nodeId) {
         const lastTimestamp = lastRenderStartTimestamp.get(event.nodeId);
         if (lastTimestamp !== undefined && timestamp - lastTimestamp < RENDER_THROTTLE_MS) {
-          fullEvent = {
-            ...fullEvent,
-            detail: 'skipped render throttle (only throttle render:start, skipped)'
-          };
-        } else {
-          lastRenderStartTimestamp.set(event.nodeId, timestamp);
+          return;
         }
+        lastRenderStartTimestamp.set(event.nodeId, timestamp);
       }
 
       setSnapshot((current) => {

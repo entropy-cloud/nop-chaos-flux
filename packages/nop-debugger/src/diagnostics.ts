@@ -171,6 +171,11 @@ export function buildOverview(events: NopDebugEvent[]): NopDebuggerOverview {
     node: 0
   });
 
+  const renderEndEvents = events.filter((event) => event.kind === 'render:end');
+  const slowestRenderMs = renderEndEvents.length > 0
+    ? Math.max(...renderEndEvents.map((event) => event.durationMs ?? 0))
+    : undefined;
+
   return {
     latestCompile: latestByKind('compile:end'),
     latestAction: latestByKind('action:end'),
@@ -178,7 +183,8 @@ export function buildOverview(events: NopDebugEvent[]): NopDebuggerOverview {
     latestError: latestByKind('error'),
     errorCount: countsByGroup.error,
     totalEvents: events.length,
-    countsByGroup
+    countsByGroup,
+    slowestRenderMs
   };
 }
 

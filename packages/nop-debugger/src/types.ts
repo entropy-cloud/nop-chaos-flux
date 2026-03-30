@@ -100,6 +100,7 @@ export interface NopDebuggerOverview {
   errorCount: number;
   totalEvents: number;
   countsByGroup: Record<NopDebuggerFilterKind, number>;
+  slowestRenderMs?: number;
 }
 
 export interface NopNodeDiagnosticsOptions {

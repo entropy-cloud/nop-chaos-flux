@@ -252,19 +252,13 @@ describe('createDebuggerStore', () => {
     });
 
     const snapshot = store.getSnapshot();
-    expect(snapshot.events).toHaveLength(4);
+    expect(snapshot.events).toHaveLength(2);
 
     expect(snapshot.events[0].summary).toBe('render-4');
     expect(snapshot.events[0].detail).toBeUndefined();
 
-    expect(snapshot.events[1].summary).toBe('render-3');
-    expect(snapshot.events[1].detail).toBe('skipped render throttle (only throttle render:start, skipped)');
-
-    expect(snapshot.events[2].summary).toBe('render-2');
-    expect(snapshot.events[2].detail).toBe('skipped render throttle (only throttle render:start, skipped)');
-
-    expect(snapshot.events[3].summary).toBe('render-1');
-    expect(snapshot.events[3].detail).toBeUndefined();
+    expect(snapshot.events[1].summary).toBe('render-1');
+    expect(snapshot.events[1].detail).toBeUndefined();
   });
 
   it('does not throttle render:start events for different nodeIds', () => {
@@ -298,7 +292,6 @@ describe('createDebuggerStore', () => {
       nodeId: 'node-2',
       timestamp: 120
     });
-
     store.append({
       kind: 'render:start',
       group: 'render',
@@ -310,16 +303,13 @@ describe('createDebuggerStore', () => {
     });
 
     const snapshot = store.getSnapshot();
-    expect(snapshot.events).toHaveLength(3);
+    expect(snapshot.events).toHaveLength(2);
 
-    expect(snapshot.events[0].summary).toBe('render-node-1-again');
-    expect(snapshot.events[0].detail).toBe('skipped render throttle (only throttle render:start, skipped)');
+    expect(snapshot.events[0].summary).toBe('render-node-2');
+    expect(snapshot.events[0].detail).toBeUndefined();
 
-    expect(snapshot.events[1].summary).toBe('render-node-2');
+    expect(snapshot.events[1].summary).toBe('render-node-1');
     expect(snapshot.events[1].detail).toBeUndefined();
-
-    expect(snapshot.events[2].summary).toBe('render-node-1');
-    expect(snapshot.events[2].detail).toBeUndefined();
   });
 
   it('does not throttle render:start events after 100ms', () => {

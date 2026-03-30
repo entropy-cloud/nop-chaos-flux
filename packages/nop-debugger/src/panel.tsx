@@ -196,6 +196,8 @@ const DEBUGGER_STYLES = `
 .nop-debugger__badge[data-group="error"] { background: var(--nop-debugger-badge-error-bg); color: var(--nop-debugger-badge-error-text); }
 .nop-debugger__badge[data-group="node"] { background: var(--nop-debugger-badge-compile-bg); color: var(--nop-debugger-badge-compile-text); }
 
+.nop-debugger__badge[data-slow="true"] { background: rgba(255, 183, 77, 0.2); color: #ffcf8b; }
+
 .nop-debugger__empty { margin: 0; color: var(--nop-debugger-muted-text); }
 
 .nop-debugger-launcher__icon {
@@ -973,6 +975,15 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             <span>{latestTraceSummary.headline}</span>
             <span className="nop-debugger__metric-label">{latestTraceSummary.detail}</span>
           </article>
+          <article className="nop-debugger__metric-card" data-slow={overview.slowestRenderMs != null && overview.slowestRenderMs > 16 ? '' : undefined}>
+            <span className="nop-debugger__metric-label">Renders</span>
+            <strong>{overview.countsByGroup.render ?? 0}</strong>
+            <span>
+              {overview.slowestRenderMs != null
+                ? `Slowest: ${overview.slowestRenderMs}ms${overview.slowestRenderMs > 16 ? ' (slow)' : ''}`
+                : 'No render:end events'}
+            </span>
+          </article>
         </div>
       ) : null}
 
@@ -1040,36 +1051,42 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           ) : (
             <div className="nop-debugger__list">
               {activeTimelineEvents.length === 0 ? <p className="nop-debugger__empty">No events match the active filters.</p> : null}
-              {activeTimelineEvents.map((event) => (
-                <article key={event.id} className="nop-debugger__entry" onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}>
-                  <div className="nop-debugger__entry-topline">
-                    <span className="nop-debugger__badge" data-group={event.group}>{event.group}</span>
-                    <time>{formatClock(event.timestamp)}</time>
-                  </div>
-                  <strong className="nop-debugger__entry-summary">{event.summary}</strong>
-                  <span className="nop-debugger__entry-meta">{event.source}</span>
-                  {expandedId === event.id ? (
-                    <div className="nop-debugger__entry-expanded" onClick={(e) => e.stopPropagation()}>
-                      {event.detail ? <code className="nop-debugger__entry-detail">{event.detail}</code> : null}
-                      {event.network ? (
-                        <div>
-                          <span className="nop-debugger__json-key">Network: </span>
-                          <JsonViewer data={event.network} defaultExpanded={2} />
-                        </div>
-                      ) : null}
-                      {event.exportedData != null ? (
-                        <div>
-                          <span className="nop-debugger__json-key">Data: </span>
-                          <JsonViewer data={event.exportedData} defaultExpanded={2} />
-                        </div>
-                      ) : null}
-                      {!event.detail && !event.network && event.exportedData == null && (
-                        <span className="nop-debugger__empty">No detailed data available.</span>
-                      )}
+              {activeTimelineEvents.map((event) => {
+                const isSlowRender = event.kind === 'render:end' && event.durationMs != null && event.durationMs > 16;
+                return (
+                  <article key={event.id} className="nop-debugger__entry" onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}>
+                    <div className="nop-debugger__entry-topline">
+                      <span className="nop-debugger__badge" data-group={event.group} data-slow={isSlowRender ? '' : undefined}>{event.group}</span>
+                      <time>{formatClock(event.timestamp)}</time>
                     </div>
-                  ) : null}
-                </article>
-              ))}
+                    <strong className="nop-debugger__entry-summary">
+                      {event.summary}
+                      {isSlowRender ? ' \u26A0\uFE0F ' : ''}
+                    </strong>
+                    <span className="nop-debugger__entry-meta">{event.source}</span>
+                    {expandedId === event.id ? (
+                      <div className="nop-debugger__entry-expanded" onClick={(e) => e.stopPropagation()}>
+                        {event.detail ? <code className="nop-debugger__entry-detail">{event.detail}</code> : null}
+                        {event.network ? (
+                          <div>
+                            <span className="nop-debugger__json-key">Network: </span>
+                            <JsonViewer data={event.network} defaultExpanded={2} />
+                          </div>
+                        ) : null}
+                        {event.exportedData != null ? (
+                          <div>
+                            <span className="nop-debugger__json-key">Data: </span>
+                            <JsonViewer data={event.exportedData} defaultExpanded={2} />
+                          </div>
+                        ) : null}
+                        {!event.detail && !event.network && event.exportedData == null && (
+                          <span className="nop-debugger__empty">No detailed data available.</span>
+                        )}
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
             </div>
           )}
         </>
@@ -1161,6 +1178,19 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
                       <span className="nop-debugger__metric-label">Errors</span>
                       <strong>{nodeDiagnostics.countsByGroup.error ?? 0}</strong>
                     </article>
+                    {(() => {
+                      const renderEndEvents = nodeDiagnostics.recentEvents.filter((e) => e.kind === 'render:end' && e.durationMs != null);
+                      if (renderEndEvents.length === 0) return null;
+                      const slowest = Math.max(...renderEndEvents.map((e) => e.durationMs!));
+                      const avg = renderEndEvents.reduce((sum, e) => sum + e.durationMs!, 0) / renderEndEvents.length;
+                      return (
+                        <article className="nop-debugger__metric-card" data-slow="">
+                          <span className="nop-debugger__metric-label">Render performance</span>
+                          <strong>Slowest: {slowest}ms</strong>
+                          <span>Avg: {avg.toFixed(1)}ms ({renderEndEvents.length} renders)</span>
+                        </article>
+                      );
+                    })()}
                   </div>
                   {nodeDiagnostics.recentEvents.map((event) => (
                     <article key={event.id} className="nop-debugger__entry" onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}>
