@@ -76,10 +76,3 @@ export interface ArrayEditorItem {
 }
 
 export type { ConditionBuilderSchema, ConditionField, ConditionGroupValue, ConditionItemValue } from './renderers/condition-builder/types';
-
-export interface ExpressionEditorSchema extends InputSchema {
-  variables?: string[];
-  operators?: string[];
-  showValidationText?: boolean;
-  constraintVariables?: boolean;
-}

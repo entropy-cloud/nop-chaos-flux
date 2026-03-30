@@ -21,7 +21,6 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "@abidibo/react-expression-editor": "^1.0.0",
     "lucide-react": "^0.577.0",
     "react": "^19.0.0"
   },
