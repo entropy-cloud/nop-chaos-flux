@@ -10,18 +10,20 @@ interface DialogContextValue {
   draggable: boolean
   noOverlay: boolean
   noCenter: boolean
+  closeOnOutsideClick: boolean
 }
 
-const DialogContext = React.createContext<DialogContextValue>({ draggable: false, noOverlay: false, noCenter: false })
+const DialogContext = React.createContext<DialogContextValue>({ draggable: false, noOverlay: false, noCenter: false, closeOnOutsideClick: true })
 
 function Dialog({
   draggable = true,
   noOverlay = false,
   noCenter = false,
+  closeOnOutsideClick = true,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root> & { draggable?: boolean; noOverlay?: boolean; noCenter?: boolean }) {
+}: React.ComponentProps<typeof DialogPrimitive.Root> & { draggable?: boolean; noOverlay?: boolean; noCenter?: boolean; closeOnOutsideClick?: boolean }) {
   return (
-    <DialogContext.Provider value={{ draggable, noOverlay, noCenter }}>
+    <DialogContext.Provider value={{ draggable, noOverlay, noCenter, closeOnOutsideClick }}>
       <DialogPrimitive.Root data-slot="dialog" {...props} />
     </DialogContext.Provider>
   )
@@ -78,7 +80,7 @@ const DialogContent = React.forwardRef<
     baseTransform?: string
   }
 >(function DialogContent({ className, children, showCloseButton = true, offsetRef, baseTransform, ...props }, ref) {
-  const { draggable, noOverlay, noCenter } = React.useContext(DialogContext)
+  const { draggable, noOverlay, noCenter, closeOnOutsideClick } = React.useContext(DialogContext)
   const { contentRef, handlePointerDown } = useDialogDrag({ enabled: draggable, offsetRef, baseTransform: noCenter ? '' : baseTransform }, ref)
 
   return (
@@ -100,6 +102,8 @@ const DialogContent = React.forwardRef<
             : props.style
         }
         onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
+        onPointerDownOutside={!closeOnOutsideClick ? (e) => e.preventDefault() : props.onPointerDownOutside}
+        onInteractOutside={!closeOnOutsideClick ? (e) => e.preventDefault() : props.onInteractOutside}
       >
         {children}
         {showCloseButton && (
