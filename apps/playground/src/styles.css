@@ -590,23 +590,54 @@ body {
   background: rgb(248, 250, 252);
 }
 
-.toolbar {
+.rd-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background: #f6f7fa;
+  border-bottom: 1px solid rgb(226, 232, 240);
+  min-height: 45px;
+  flex-wrap: wrap;
+}
+
+.rd-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.rd-toolbar-separator {
+  display: inline-block;
+  width: 0;
+  height: 18px;
+  border-right: 1px solid #cecece;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.rd-toolbar-status {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
-  border-bottom: 1px solid rgb(226, 232, 240);
-  background: rgb(255, 255, 255);
-}
-
-.toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.toolbar-group.status {
   margin-left: auto;
+  padding-left: 8px;
+}
+
+.rd-toolbar-cell-addr {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(71, 85, 105);
+  min-width: 40px;
+  text-align: right;
+}
+
+.rd-toolbar-frozen-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgb(219, 234, 254);
+  color: rgb(29, 78, 216);
 }
 
 .field-source {
@@ -675,11 +706,17 @@ body {
   background: rgb(255, 255, 255);
 }
 
+.spreadsheet-grid table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+  width: max-content;
+}
+
 .col-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   text-align: center;
+  vertical-align: middle;
   font-size: 12px;
   font-weight: 600;
   color: rgb(71, 85, 105);
@@ -690,10 +727,9 @@ body {
 }
 
 .row-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   text-align: center;
+  vertical-align: middle;
   font-size: 12px;
   font-weight: 600;
   color: rgb(71, 85, 105);
@@ -744,7 +780,7 @@ body {
   background: rgb(59, 130, 246);
 }
 
-.cell-edit-input {
+.ss-cell-edit-input {
   width: 100%;
   height: 100%;
   padding: 4px 8px;
@@ -756,7 +792,7 @@ body {
   background: transparent;
 }
 
-.cell-edit-input:focus {
+.ss-cell-edit-input:focus {
   outline: none;
 }
 
@@ -804,14 +840,13 @@ body {
   z-index: 100;
 }
 
-.fill-handle {
+.ss-fill-handle {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 6px;
-  height: 6px;
-  border: 1px solid rgb(71, 85, 105);
-  background: rgb(71, 85, 105);
+  bottom: 0;
+  right: 0;
+  width: 7px;
+  height: 7px;
+  background-color: #1a73e8;
   cursor: crosshair;
 }
 
