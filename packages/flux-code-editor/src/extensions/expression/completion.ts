@@ -56,6 +56,8 @@ export function expressionCompletionSource(
   return function contextCompletion(
     context: CompletionContext,
   ): CompletionResult | null {
+    if (context.view?.composing) return null;
+
     const textBefore = context.state.doc.sliceString(0, context.pos);
 
     const dotMatch = textBefore.match(/([\w.]+)\.(\w*)$/);

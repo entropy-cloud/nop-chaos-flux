@@ -54,6 +54,8 @@ export function sqlCompletionSource(tables: TableSchema[]) {
   return function contextCompletion(
     context: CompletionContext,
   ): CompletionResult | null {
+    if (context.view?.composing) return null;
+
     const doc = context.state.doc.toString();
     const textBefore = doc.slice(0, context.pos);
     const aliasMap = parseTableAliases(textBefore, tables);
