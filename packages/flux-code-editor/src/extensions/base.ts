@@ -11,7 +11,10 @@ import { json, jsonParseLinter } from '@codemirror/lang-json';
 import { html } from '@codemirror/lang-html';
 import { css } from '@codemirror/lang-css';
 import { linter } from '@codemirror/lint';
-import type { EditorLanguage, SQLDialect as SQLDialectType } from '../types';
+import { autocompletion } from '@codemirror/autocomplete';
+import { expressionCompletionSource } from './expression/completion';
+import { sqlCompletionSource } from './sql/completion';
+import type { EditorLanguage, SQLDialect as SQLDialectType, VariableItem, FuncGroup, TableSchema } from '../types';
 
 const defaultLightTheme = EditorView.theme({
   '&': {
@@ -76,6 +79,13 @@ export interface CreateBaseExtensionsOptions {
   autoHeight?: boolean;
   editorTheme?: 'light' | 'dark';
   sqlDialect?: SQLDialectType;
+  completionConfig?: CompletionConfig;
+}
+
+export interface CompletionConfig {
+  variables?: VariableItem[];
+  functions?: FuncGroup[];
+  tables?: TableSchema[];
 }
 
 export function createBaseExtensions(options: CreateBaseExtensionsOptions): Extension[] {
@@ -106,6 +116,23 @@ export function createBaseExtensions(options: CreateBaseExtensionsOptions): Exte
     extensions.push(createSQLDialectExtension(options.sqlDialect));
   } else {
     extensions.push(createLanguageExtension(options.language));
+  }
+
+  if (options.language === 'expression' && options.completionConfig) {
+    const { variables = [], functions = [] } = options.completionConfig;
+    extensions.push(
+      autocompletion({
+        override: [expressionCompletionSource(variables, functions)],
+      }),
+    );
+  }
+
+  if (options.language === 'sql' && options.completionConfig?.tables?.length) {
+    extensions.push(
+      autocompletion({
+        override: [sqlCompletionSource(options.completionConfig.tables)],
+      }),
+    );
   }
 
   return extensions;

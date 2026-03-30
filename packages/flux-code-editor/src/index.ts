@@ -35,3 +35,6 @@ export { useCodeMirror } from './use-code-mirror';
 export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror';
 
 export { CodeEditorRenderer, codeEditorRendererDefinition, codeEditorFieldRules } from './code-editor-renderer';
+
+export { createBaseExtensions, createLanguageExtension, createSQLDialectExtension } from './extensions/base';
+export type { CompletionConfig, CreateBaseExtensionsOptions } from './extensions/base';

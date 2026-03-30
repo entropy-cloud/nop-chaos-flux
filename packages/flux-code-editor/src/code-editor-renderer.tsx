@@ -6,12 +6,16 @@ import { createBaseExtensions } from './extensions/base';
 import type {
   CodeEditorSchema,
   EditorLanguage,
+  ExpressionEditorConfig,
   SQLEditorConfig,
 } from './types';
 import {
   getDefaultLineNumbers,
   getDefaultAutoHeight,
   getDefaultHeight,
+  resolveVariables,
+  resolveFunctions,
+  resolveTables,
 } from './types';
 
 export const codeEditorFieldRules: SchemaFieldRule[] = [
@@ -45,6 +49,8 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
   const lineNumbers = props.props.lineNumbers as boolean | undefined ?? getDefaultLineNumbers(language);
   const folding = props.props.folding as boolean | undefined ?? false;
   const autoHeight = props.props.autoHeight as boolean | undefined ?? getDefaultAutoHeight(language);
+
+  const expressionConfig = props.props.expressionConfig as ExpressionEditorConfig | undefined;
   const sqlConfig = props.props.sqlConfig as SQLEditorConfig | undefined;
 
   const name = String(props.props.name ?? props.schema.name ?? '');
@@ -59,6 +65,21 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
     value = String(props.props.value ?? '');
   }
 
+  const completionConfig = useMemo(() => {
+    if (language === 'expression' && expressionConfig) {
+      return {
+        variables: resolveVariables(expressionConfig),
+        functions: resolveFunctions(expressionConfig),
+      };
+    }
+    if (language === 'sql' && sqlConfig) {
+      return {
+        tables: resolveTables(sqlConfig),
+      };
+    }
+    return undefined;
+  }, [language, expressionConfig, sqlConfig]);
+
   const extensions = useMemo(
     () =>
       createBaseExtensions({
@@ -68,8 +89,9 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
         autoHeight,
         editorTheme,
         sqlDialect: sqlConfig?.dialect,
+        completionConfig,
       }),
-    [language, lineNumbers, folding, autoHeight, editorTheme, sqlConfig?.dialect],
+    [language, lineNumbers, folding, autoHeight, editorTheme, sqlConfig?.dialect, completionConfig],
   );
 
   const handleChange = (newValue: string) => {
