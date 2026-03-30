@@ -110,10 +110,10 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   const [jsonOpen, setJsonOpen] = React.useState(false);
   const jsonOffsetRef = useRef({ x: 0, y: 0 });
   const jsonDocument = useMemo(() => {
-    if (!core) return null;
+    if (!core || !jsonOpen) return null;
     try { return JSON.parse(core.exportDocument()); }
     catch { return null; }
-  }, [core, jsonOpen]);
+  }, [core, jsonOpen, snapshot.doc]);
 
   useLayoutEffect(() => {
     if (!actionScope || !mergedDesignerProvider) {
@@ -210,7 +210,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
         </div>
         {hasRendererSlotContent(dialogsSlot) ? <div className="relative">{dialogsSlot}</div> : null}
       </div>
-      <Dialog open={jsonOpen} onOpenChange={setJsonOpen} draggable noOverlay noCenter>
+      <Dialog open={jsonOpen} onOpenChange={setJsonOpen} draggable noOverlay noCenter closeOnOutsideClick={false}>
         <DialogContent
           offsetRef={jsonOffsetRef}
           aria-describedby={undefined}
