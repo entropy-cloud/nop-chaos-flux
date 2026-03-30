@@ -186,9 +186,12 @@ export function ReportDesignerDemo() {
   // Cell editing state
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
   const [editValue, setEditValue] = useState('');
+  const editingCellRef = useRef<{ row: number; col: number } | null>(null);
+  const editValueRef = useRef('');
 
   // Field drop target state
   const [dropTargetCell, setDropTargetCell] = useState<{ row: number; col: number } | null>(null);
+  const dropTargetCellRef = useRef<{ row: number; col: number } | null>(null);
 
   // Fill handle state
   const [fillHandleState, setFillHandleState] = useState<FillHandleState>({
@@ -201,6 +204,8 @@ export function ReportDesignerDemo() {
     currentCol: 0,
     isCtrlPressed: false,
   });
+  const fillHandleRef = useRef<FillHandleState>(fillHandleState);
+  fillHandleRef.current = fillHandleState;
 
   const gridRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef<DragState>({
@@ -311,8 +316,20 @@ export function ReportDesignerDemo() {
 
   // Cell selection
   const handleCellClick = useCallback((row: number, col: number) => {
-    // Only update selection if not dragging
     if (!hasDraggedRef.current) {
+      if (editingCellRef.current) {
+        const currentEditCell = editingCellRef.current;
+        const currentEditValue = editValueRef.current;
+        const addr = cellAddress(currentEditCell.row, currentEditCell.col);
+        editingCellRef.current = null;
+        editValueRef.current = '';
+        setEditingCell(null);
+        spreadsheetBridge.dispatch({
+          type: 'spreadsheet:setCellValue',
+          cell: { sheetId, address: addr, row: currentEditCell.row, col: currentEditCell.col },
+          value: currentEditValue,
+        });
+      }
       setSelectedCell({ row, col });
       setDragState({ isDragging: false, startRow: row, startCol: col, endRow: row, endCol: col });
       const cell = snapshot.activeSheet?.cells?.[cellAddress(row, col)];
@@ -322,7 +339,7 @@ export function ReportDesignerDemo() {
       addLog(`Selected ${cellAddress(row, col)}`);
     }
     hasDraggedRef.current = false;
-  }, [snapshot, addLog]);
+  }, [snapshot, addLog, spreadsheetBridge, sheetId]);
 
   // Drag selection handlers
   const handleCellMouseDown = useCallback((row: number, col: number, e: React.MouseEvent) => {
@@ -357,24 +374,32 @@ export function ReportDesignerDemo() {
   const handleCellDoubleClick = useCallback((row: number, col: number) => {
     const addr = cellAddress(row, col);
     const cell = snapshot.activeSheet?.cells?.[addr];
-    setEditingCell({ row, col });
-    setEditValue(cell?.value != null ? String(cell.value) : '');
+    const editCell = { row, col };
+    const val = cell?.value != null ? String(cell.value) : '';
+    setEditingCell(editCell);
+    editingCellRef.current = editCell;
+    setEditValue(val);
+    editValueRef.current = val;
   }, [snapshot]);
 
   const handleEditSave = useCallback(async () => {
-    if (!editingCell) return;
-    const addr = cellAddress(editingCell.row, editingCell.col);
-    const currentEditCell = editingCell;
-    const currentEditValue = editValue;
+    const currentEditCell = editingCellRef.current;
+    if (!currentEditCell) return;
+    const currentEditValue = editValueRef.current;
+    const addr = cellAddress(currentEditCell.row, currentEditCell.col);
+    editingCellRef.current = null;
+    editValueRef.current = '';
     setEditingCell(null);
     await spreadsheetBridge.dispatch({
       type: 'spreadsheet:setCellValue',
       cell: { sheetId, address: addr, row: currentEditCell.row, col: currentEditCell.col },
       value: currentEditValue,
     });
-  }, [editingCell, editValue, spreadsheetBridge, sheetId]);
+  }, [spreadsheetBridge, sheetId]);
 
   const handleEditCancel = useCallback(() => {
+    editingCellRef.current = null;
+    editValueRef.current = '';
     setEditingCell(null);
   }, []);
 
@@ -402,9 +427,8 @@ export function ReportDesignerDemo() {
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!gridRef.current) return;
-      const cells = gridRef.current.querySelectorAll('td.cell');
+      const cells = gridRef.current.querySelectorAll('td.ss-cell');
       
-      // Find cell under cursor
       let targetCell: HTMLElement | null = null;
       for (const cell of cells) {
         if (cell instanceof HTMLElement) {
@@ -421,19 +445,15 @@ export function ReportDesignerDemo() {
         const row = parseInt(targetCell.dataset.row || '-1');
         const col = parseInt(targetCell.dataset.col || '-1');
         if (row >= 0 && col >= 0) {
-          setFillHandleState(prev => ({
-            ...prev,
-            currentRow: row,
-            currentCol: col,
-          }));
+          fillHandleRef.current = { ...fillHandleRef.current, currentRow: row, currentCol: col };
+          setFillHandleState(prev => ({ ...prev, currentRow: row, currentCol: col }));
         }
       }
     };
 
     const handleMouseUp = async () => {
-      const { startRow, startCol, endRow, endCol, currentRow, currentCol, isCtrlPressed } = fillHandleState;
+      const { startRow, startCol, endRow, endCol, currentRow, currentCol, isCtrlPressed } = fillHandleRef.current;
       
-      // Determine fill direction and range
       let fillDirection: 'down' | 'right' | null = null;
       let targetRange: SpreadsheetRange = { sheetId, startRow, startCol, endRow, endCol };
 
@@ -448,7 +468,6 @@ export function ReportDesignerDemo() {
       if (fillDirection) {
         const sourceRange = { sheetId, startRow, startCol, endRow, endCol };
         if (isCtrlPressed) {
-          // Copy fill - use copyCells then pasteCells
           await spreadsheetBridge.dispatch({ type: 'spreadsheet:copyCells', range: sourceRange });
           const targetAddr = fillDirection === 'down' 
             ? cellAddress(endRow + 1, startCol)
@@ -459,7 +478,6 @@ export function ReportDesignerDemo() {
           });
           addLog(`Copy fill ${fillDirection}`);
         } else {
-          // Series fill
           await spreadsheetBridge.dispatch({
             type: 'spreadsheet:fillSeries',
             range: targetRange,
@@ -469,17 +487,18 @@ export function ReportDesignerDemo() {
         }
       }
 
-      setFillHandleState(prev => ({ ...prev, isFilling: false }));
+      setFillHandleState({ isFilling: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0, currentRow: 0, currentCol: 0, isCtrlPressed: false });
+      fillHandleRef.current = { isFilling: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0, currentRow: 0, currentCol: 0, isCtrlPressed: false };
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp, { once: true });
+    window.addEventListener('mouseup', handleMouseUp);
     
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [fillHandleState.isFilling, fillHandleState, spreadsheetBridge, sheetId, addLog]);
+  }, [fillHandleState.isFilling, spreadsheetBridge, sheetId, addLog]);
 
   const handleMouseUp = useCallback(() => {
     if (dragStateRef.current.isDragging) {
@@ -878,7 +897,7 @@ export function ReportDesignerDemo() {
 
   // Field drag-drop
   const handleFieldDrop = useCallback(async () => {
-    const targetCell = dropTargetCell || selectedCell;
+    const targetCell = dropTargetCellRef.current || dropTargetCell || selectedCell;
     if (!draggingField || !targetCell) return;
     const addr = cellAddress(targetCell.row, targetCell.col);
     await spreadsheetBridge.dispatch({
@@ -902,6 +921,7 @@ export function ReportDesignerDemo() {
     addLog(`Bound field "${draggingField.label}" to ${addr}`);
     setDraggingField(null);
     setDropTargetCell(null);
+    dropTargetCellRef.current = null;
   }, [draggingField, dropTargetCell, selectedCell, spreadsheetBridge, designerBridge, sheetId, addLog]);
 
   // Keyboard shortcuts
@@ -1133,9 +1153,14 @@ export function ReportDesignerDemo() {
           className="report-designer-demo__canvas"
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleFieldDrop}
+          onMouseDown={(e) => {
+            if (editingCellRef.current && (e.target as HTMLElement).tagName !== 'INPUT') {
+              handleEditSave();
+            }
+          }}
         >
           {/* Grid */}
-          <div className="spreadsheet-grid">
+          <div className="spreadsheet-grid" data-fill-dragging={fillHandleState.isFilling || undefined}>
             <table>
               <thead>
                 <tr>
@@ -1232,7 +1257,7 @@ export function ReportDesignerDemo() {
                           onDoubleClick={() => handleCellDoubleClick(r, c)}
                           onMouseDown={(e) => handleCellMouseDown(r, c, e)}
                           onMouseEnter={() => handleCellMouseEnter(r, c)}
-                          onDragOver={(e) => { e.preventDefault(); setDropTargetCell({ row: r, col: c }); }}
+                          onDragOver={(e) => { e.preventDefault(); const t = { row: r, col: c }; setDropTargetCell(t); dropTargetCellRef.current = t; }}
                           onDragLeave={() => setDropTargetCell(null)}
                         >
                           {isEditing ? (
@@ -1240,7 +1265,7 @@ export function ReportDesignerDemo() {
                               type="text"
                               className="ss-cell-edit-input"
                               value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
+                              onChange={(e) => { setEditValue(e.target.value); editValueRef.current = e.target.value; }}
                               onBlur={handleEditSave}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {

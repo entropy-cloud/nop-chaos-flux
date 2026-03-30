@@ -706,6 +706,14 @@ body {
   background: rgb(255, 255, 255);
 }
 
+.spreadsheet-grid[data-fill-dragging] {
+  cursor: crosshair;
+}
+
+.spreadsheet-grid[data-fill-dragging] .ss-cell {
+  cursor: crosshair;
+}
+
 .spreadsheet-grid table {
   border-collapse: separate;
   border-spacing: 0;
