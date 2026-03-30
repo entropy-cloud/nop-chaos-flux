@@ -335,18 +335,15 @@ importers:
 
   packages/spreadsheet-renderers:
     dependencies:
-      '@nop-chaos/flux-core':
-        specifier: workspace:*
-        version: link:../flux-core
-      '@nop-chaos/flux-react':
-        specifier: workspace:*
-        version: link:../flux-react
-      '@nop-chaos/flux-runtime':
-        specifier: workspace:*
-        version: link:../flux-runtime
       '@nop-chaos/spreadsheet-core':
         specifier: workspace:*
         version: link:../spreadsheet-core
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
+      lucide-react:
+        specifier: ^0.525.0
+        version: 0.525.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -2389,6 +2386,11 @@ packages:
   lru-cache@11.2.7:
     resolution: {integrity: sha512-aY/R+aEsRelme17KGQa/1ZSIpLpNYYrhcrepKTZgE+W3WM16YMCaPwOHLHsmopZHELU0Ojin1lPVxKR0MihncA==}
     engines: {node: 20 || >=22}
+
+  lucide-react@0.525.0:
+    resolution: {integrity: sha512-Tm1txJ2OkymCGkvwoHt33Y2JpN5xucVq1slHcgE6Lk0WjDfjgKWor5CdVER8U6DvcfMwh4M8XxmpTiyzfmfDYQ==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   lucide-react@0.542.0:
     resolution: {integrity: sha512-w3hD8/SQB7+lzU2r4VdFyzzOzKnUjTZIF/MQJGSSvni7Llewni4vuViRppfRAa2guOsY5k4jZyxw/i9DQHv+dw==}
@@ -4872,6 +4874,10 @@ snapshots:
   lru-cache@10.4.3: {}
 
   lru-cache@11.2.7: {}
+
+  lucide-react@0.525.0(react@19.2.4):
+    dependencies:
+      react: 19.2.4
 
   lucide-react@0.542.0(react@19.2.4):
     dependencies:

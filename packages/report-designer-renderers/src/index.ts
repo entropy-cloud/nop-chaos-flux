@@ -21,3 +21,6 @@ export {
   reportDesignerRendererDefinitions,
   registerReportDesignerRenderers,
 } from './renderers.js';
+
+export type { ReportFieldPanelProps } from './report-field-panel.js';
+export { ReportFieldPanel } from './report-field-panel.js';

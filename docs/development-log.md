@@ -28,6 +28,19 @@ This file is intentionally lightweight.
 - Ref: `docs/architecture/report-designer/spreadsheet-canvas-css.md`
 - Next step: Implement freeze panes reusing the same sticky architecture.
 
+### 2026-03-30 (ReportDesignerDemo Refactoring)
+
+- Refactored `apps/playground/src/pages/ReportDesignerDemo.tsx` (1426 lines) into reusable packages per AGENTS.md methodology.
+- Extracted 4 modules:
+  - `packages/spreadsheet-renderers/src/use-spreadsheet-interactions.ts` — generic hook managing all cell selection, drag, fill handle, resize, editing, clipboard, style, merge, freeze, undo/redo, find/replace, comments, keyboard shortcuts
+  - `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx` — pure table/cell rendering component
+  - `packages/spreadsheet-renderers/src/spreadsheet-toolbar.tsx` — toolbar buttons + find/replace + formula bar
+  - `packages/report-designer-renderers/src/report-field-panel.tsx` — draggable field sources panel
+- Demo file reduced to ~430 lines (from 1426) — only demo-specific wiring, layout, inspector panel, log panel
+- Generic code moved to packages; playground only has demo-specific configuration and layout
+- Updated `index.ts` exports in both packages
+- All typechecks pass; pre-existing test failure (jsdom env) unrelated to changes
+
 ### 2026-03-29 (testid Support)
 
 - Added `testid` field to `BaseSchema` in `packages/flux-core/src/types.ts` � schema authors can now declare `testid` on any node for test anchoring.
