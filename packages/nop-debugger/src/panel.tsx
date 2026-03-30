@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Maximize2, Bug } from 'lucide-react';
-import type { NopDebugEvent, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
+import type { NopComponentInspectResult, NopDebugEvent, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
 import { buildOverview, DEFAULT_FILTERS } from './diagnostics';
 
 const DEBUGGER_STYLE_ID = 'nop-debugger-styles';
@@ -490,6 +490,96 @@ const DEBUGGER_STYLES = `
 
 .ndbg-icon-button:hover::before {
   opacity: 1;
+}
+
+.ndbg-inspect-hint {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(28, 118, 196, 0.12);
+  border: 1px solid rgba(28, 118, 196, 0.25);
+  color: #9bd9ff;
+  font-size: 12px;
+  text-align: center;
+}
+.ndbg-inspect-panel {
+  display: grid;
+  gap: 8px;
+}
+.ndbg-inspect-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ndbg-inspect-section {
+  display: grid;
+  gap: 6px;
+}
+.ndbg-inspect-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--nop-debugger-muted-text);
+  cursor: pointer;
+  user-select: none;
+}
+.ndbg-inspect-section-title:hover {
+  color: var(--nop-debugger-text);
+}
+.ndbg-inspect-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(28, 118, 196, 0.15);
+  color: #9bd9ff;
+  font-size: 11px;
+  font-family: monospace;
+}
+.ndbg-inspect-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 11px;
+  color: var(--nop-debugger-muted-text);
+}
+.ndbg-form-tab {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--nop-debugger-chip-border);
+  background: transparent;
+  color: var(--nop-debugger-muted-text);
+  font-size: 11px;
+  cursor: pointer;
+}
+.ndbg-form-tab[data-active] {
+  background: var(--nop-debugger-chip-active-bg);
+  border-color: var(--nop-debugger-chip-active-border);
+  color: var(--nop-debugger-chip-active-text);
+}
+.ndbg-eval-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--nop-debugger-chip-border);
+  background: var(--nop-debugger-chip-bg);
+  color: var(--nop-debugger-text);
+  font-size: 12px;
+  font-family: monospace;
+  outline: none;
+}
+.ndbg-eval-input:focus {
+  border-color: var(--nop-debugger-chip-active-border);
+}
+.ndbg-eval-input::placeholder {
+  color: var(--nop-debugger-muted-text);
+}
+.ndbg-eval-result {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--nop-debugger-detail-bg);
+  font-size: 12px;
+  color: var(--nop-debugger-detail-text);
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 `;
 
@@ -1064,6 +1154,10 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const hoverOverlayRef = useRef<HTMLDivElement | null>(null);
   const activeOverlayRef = useRef<HTMLDivElement | null>(null);
   const [componentTree, setComponentTree] = useState<Array<{cid: number; type: string; label: string; depth: number; element: HTMLElement}>>([]);
+  const [inspectData, setInspectData] = useState<NopComponentInspectResult | null>(null);
+  const [evalInput, setEvalInput] = useState('');
+  const [evalResult, setEvalResult] = useState<string | null>(null);
+  const [formTab, setFormTab] = useState<'values' | 'errors' | 'meta'>('values');
 
   useEffect(() => {
     const hover = document.createElement('div');
@@ -1131,6 +1225,11 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
       setInspectMode(false);
       props.controller.setActiveTab('node');
       setNodeIdInput(cid);
+
+      const inspectResult = props.controller.inspectByElement(target as HTMLElement);
+      setInspectData(inspectResult ?? null);
+      setFormTab('values');
+      setEvalResult(null);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -1140,6 +1239,17 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
       document.removeEventListener('click', handleClick, true);
     };
   }, [inspectMode, props.controller]);
+
+  useEffect(() => {
+    if (!inspectMode) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setInspectMode(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [inspectMode]);
 
   const scanComponentTree = () => {
     const elements = document.querySelectorAll('[data-cid]');
@@ -1161,6 +1271,20 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
       tree.push({ cid: parseInt(cid, 10), type: 'element', label, depth, element: el as HTMLElement });
     });
     setComponentTree(tree);
+  };
+
+  const handleEvalExpression = () => {
+    if (!evalInput.trim()) return;
+    try {
+      const data = inspectData?.scopeData ?? inspectData?.formState?.values ?? {};
+      const keys = Object.keys(data);
+      const values = Object.values(data);
+      const fn = new Function(...keys, `return (${evalInput});`);
+      const result = fn(...values);
+      setEvalResult(typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result));
+    } catch (err) {
+      setEvalResult(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    }
   };
 
   useEffect(() => {
@@ -1526,11 +1650,64 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
                 Scan
               </button>
             </div>
-            {selectedElement ? (
+            {inspectMode ? (
+              <div className="ndbg-inspect-hint">
+                🔍 Click an element on the page to inspect it. (Press Esc to cancel)
+              </div>
+            ) : null}
+            {inspectData ? (
+              <div className="ndbg-inspect-panel">
+                <article className="ndbg-metric-card">
+                  <div className="ndbg-inspect-header">
+                    <span className="ndbg-metric-label">Component Inspector</span>
+                    <button onClick={() => { setSelectedElement(null); setInspectData(null); }} style={{ fontSize: '11px', background: 'none', border: 'none', color: 'var(--nop-debugger-text)', cursor: 'pointer', padding: 0 }}>✕</button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <strong>#{inspectData.cid}</strong>
+                    {inspectData.tagName ? <span className="ndbg-inspect-tag">&lt;{inspectData.tagName}&gt;</span> : null}
+                    {inspectData.handleType ? <span className="ndbg-badge" data-group="node">{inspectData.handleType}</span> : null}
+                  </div>
+                  <div className="ndbg-inspect-meta">
+                    {inspectData.handleName ? <span>Name: {inspectData.handleName}</span> : null}
+                    {inspectData.handleId ? <span>ID: {inspectData.handleId}</span> : null}
+                    {inspectData.className ? <span>Class: {inspectData.className.slice(0, 60)}{inspectData.className.length > 60 ? '…' : ''}</span> : null}
+                    <span>{inspectData.mounted ? '● mounted' : '○ unmounted'}</span>
+                  </div>
+                </article>
+
+                {inspectData.formState ? (
+                  <div className="ndbg-inspect-section">
+                    <span className="ndbg-inspect-section-title">Form State</span>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      {(['values', 'errors', 'meta'] as const).map((tab) => (
+                        <button key={tab} type="button" className="ndbg-form-tab" data-active={formTab === tab ? '' : undefined} onClick={() => setFormTab(tab)}>
+                          {tab}
+                        </button>
+                      ))}
+                    </div>
+                    <JsonViewer
+                      data={
+                        formTab === 'values' ? inspectData.formState.values :
+                        formTab === 'errors' ? inspectData.formState.errors :
+                        { touched: inspectData.formState.touched, dirty: inspectData.formState.dirty, visited: inspectData.formState.visited, submitting: inspectData.formState.submitting }
+                      }
+                      defaultExpanded={2}
+                    />
+                  </div>
+                ) : null}
+
+                {inspectData.scopeData ? (
+                  <div className="ndbg-inspect-section">
+                    <span className="ndbg-inspect-section-title">Scope Data</span>
+                    <JsonViewer data={inspectData.scopeData} defaultExpanded={2} />
+                  </div>
+                ) : null}
+              </div>
+            ) : selectedElement ? (
               <article className="ndbg-metric-card" style={{ marginBottom: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span className="ndbg-metric-label">Selected Element</span>
-                  <button onClick={() => { setSelectedElement(null); }} style={{ fontSize: '11px', background: 'none', border: 'none', color: 'var(--nop-debugger-text)', cursor: 'pointer', padding: 0 }}>✕</button>
+                  <button onClick={() => setSelectedElement(null)} style={{ fontSize: '11px', background: 'none', border: 'none', color: 'var(--nop-debugger-text)', cursor: 'pointer', padding: 0 }}>✕</button>
                 </div>
                 <strong>data-cid: {selectedElement.getAttribute('data-cid')}</strong>
                 <span>{selectedElement.tagName.toLowerCase()}</span>
@@ -1547,6 +1724,11 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
                       setInspectMode(false);
                       props.controller.setActiveTab('node');
                       setNodeIdInput(String(item.cid));
+
+                      const inspectResult = props.controller.inspectByElement(item.element);
+                      setInspectData(inspectResult ?? null);
+                      setFormTab('values');
+                      setEvalResult(null);
                     }}
                     style={{ paddingLeft: `${item.depth * 16 + 8}px` }}
                   >
@@ -1640,6 +1822,20 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           ) : (
             <p className="ndbg-empty">Enter a nodeId above to view node diagnostics.</p>
           )}
+          {inspectData ? (
+            <div className="ndbg-inspect-section">
+              <span className="ndbg-inspect-section-title">Expression Evaluator</span>
+              <input
+                type="text"
+                className="ndbg-eval-input"
+                placeholder="Evaluate expression on component data..."
+                value={evalInput}
+                onChange={(e) => setEvalInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleEvalExpression(); }}
+              />
+              {evalResult !== null ? <div className="ndbg-eval-result">{evalResult}</div> : null}
+            </div>
+          ) : null}
         </>
       ) : null}
     </div>

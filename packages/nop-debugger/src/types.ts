@@ -228,6 +228,8 @@ export interface NopComponentInspectResult {
     submitting: boolean;
   };
   scopeData?: Record<string, unknown>;
+  tagName?: string;
+  className?: string;
 }
 
 export interface NopDebuggerAutomationApi {

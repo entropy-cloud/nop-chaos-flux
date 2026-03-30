@@ -37,6 +37,18 @@ type InternalComponentHandle = {
   name?: string;
   type: string;
   _mounted?: boolean;
+  capabilities?: {
+    store?: {
+      getState(): {
+        values?: Record<string, unknown>;
+        errors?: Record<string, unknown>;
+        touched?: Record<string, boolean>;
+        dirty?: Record<string, boolean>;
+        visited?: Record<string, boolean>;
+        submitting?: boolean;
+      };
+    };
+  };
 };
 
 function findHandleByCid(registry: ComponentHandleRegistry, cid: number): InternalComponentHandle | undefined {
@@ -57,7 +69,8 @@ function findHandleByCid(registry: ComponentHandleRegistry, cid: number): Intern
 function buildInspectResult(
   cid: number,
   handle: InternalComponentHandle | undefined,
-  mounted: boolean
+  mounted: boolean,
+  element?: HTMLElement
 ): NopComponentInspectResult {
   const result: NopComponentInspectResult = {
     cid,
@@ -68,6 +81,28 @@ function buildInspectResult(
     result.handleName = handle.name;
     result.handleType = handle.type;
   }
+
+  if (handle?.capabilities?.store) {
+    try {
+      const state = handle.capabilities.store.getState();
+      result.formState = {
+        values: state.values ?? {},
+        errors: state.errors ?? {},
+        touched: state.touched ?? {},
+        dirty: state.dirty ?? {},
+        visited: state.visited ?? {},
+        submitting: state.submitting ?? false
+      };
+      result.scopeData = state.values ?? {};
+    } catch {
+    }
+  }
+
+  if (element) {
+    result.tagName = element.tagName.toLowerCase();
+    result.className = element.className || undefined;
+  }
+
   return result;
 }
 
@@ -108,7 +143,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     const element = document.querySelector(`[data-cid="${cid}"]`);
     const handle = element ? findHandleByCid(componentRegistry, cid) : undefined;
     if (!handle && !element) return undefined;
-    return buildInspectResult(cid, handle, !!element);
+    return buildInspectResult(cid, handle, !!element, element ?? undefined);
   };
 
   const inspectByElement = (element: HTMLElement): NopComponentInspectResult | undefined => {
@@ -117,7 +152,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     const cid = Number(cidAttr);
     if (!Number.isFinite(cid)) return undefined;
     const handle = componentRegistry ? findHandleByCid(componentRegistry, cid) : undefined;
-    return buildInspectResult(cid, handle, true);
+    return buildInspectResult(cid, handle, true, element);
   };
 
   const getSnapshot = () => store.getSnapshot();
