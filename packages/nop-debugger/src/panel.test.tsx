@@ -333,15 +333,11 @@ describe('NopDebuggerPanel', () => {
     expect(style.padding).toBe('8px 14px');
   });
 
-  it('minimized bar shows Debugger title and event count', () => {
+  it('minimized bar shows event count badge', () => {
     const snapshot = { ...createSnapshot(), minimized: true, events: [{ id: 1, sessionId: 's', timestamp: 1, kind: 'render:end' as const, group: 'render' as const, level: 'info' as const, source: 'test', summary: 'render' }] };
-    const controller = createController(snapshot);
-
-    render(<NopDebuggerPanel controller={controller} />);
-
-    expect(screen.getByText('Debugger')).toBeTruthy();
+    render(<Panel snapshot={snapshot} controller={controller} />);
     expect(screen.getByText('1')).toBeTruthy();
-  });
+    expect(document.querySelector('.ndbg-minimized-badge')).toBeTruthy();
 
   it('minimized bar shows error badge when errors exist', () => {
     const snapshot = { ...createSnapshot(), minimized: true, events: [

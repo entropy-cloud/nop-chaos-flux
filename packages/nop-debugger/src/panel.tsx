@@ -1263,7 +1263,6 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         <span className="ndbg-launcher-icon">
           <Bug size={14} />
         </span>
-        <span className="ndbg-minimized-title">Debugger</span>
         {errorCount > 0 ? (
           <span className="ndbg-minimized-error-badge">{badgeDisplay}</span>
         ) : (
