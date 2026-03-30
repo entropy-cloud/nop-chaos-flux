@@ -33,3 +33,5 @@ export {
 
 export { useCodeMirror } from './use-code-mirror';
 export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror';
+
+export { CodeEditorRenderer, codeEditorRendererDefinition, codeEditorFieldRules } from './code-editor-renderer';
