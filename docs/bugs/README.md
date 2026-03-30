@@ -25,3 +25,8 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/11-xyflow-node-drag-not-initialized-fix.md`
 - `docs/bugs/12-flow-designer-visual-parity-canvas-node-style-fix.md`
 - `docs/bugs/13-flow-designer-minimap-centered-square-mask-fix.md`
+- `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`
+- `docs/bugs/15-render-nodes-setstate-during-render-fix.md`
+- `docs/bugs/16-dialog-drag-pointer-capture-boundary-clamp-fix.md`
+- `docs/bugs/17-json-viewer-class-override-breaks-highlighting-fix.md`
+- `docs/bugs/18-tailwind-source-wrong-relative-path-flux-lib-unscanned.md`
