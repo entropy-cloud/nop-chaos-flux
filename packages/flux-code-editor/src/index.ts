@@ -38,3 +38,9 @@ export { CodeEditorRenderer, codeEditorRendererDefinition, codeEditorFieldRules 
 
 export { createBaseExtensions, createLanguageExtension, createSQLDialectExtension } from './extensions/base';
 export type { CompletionConfig, CreateBaseExtensionsOptions } from './extensions/base';
+
+export { createExpressionLinter } from './extensions/expression/linter';
+
+export { createFriendlyNameDecoration } from './extensions/expression/decoration';
+
+export { createTemplateModeExtension } from './extensions/expression/template-mode';

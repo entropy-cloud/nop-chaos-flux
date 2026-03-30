@@ -13,8 +13,11 @@ import { css } from '@codemirror/lang-css';
 import { linter } from '@codemirror/lint';
 import { autocompletion } from '@codemirror/autocomplete';
 import { expressionCompletionSource } from './expression/completion';
+import { createFriendlyNameDecoration } from './expression/decoration';
+import { createTemplateModeExtension } from './expression/template-mode';
 import { sqlCompletionSource } from './sql/completion';
-import type { EditorLanguage, SQLDialect as SQLDialectType, VariableItem, FuncGroup, TableSchema } from '../types';
+import { createExpressionLinter } from './expression/linter';
+import type { EditorLanguage, EditorMode, SQLDialect as SQLDialectType, ExpressionLintConfig, VariableItem, FuncGroup, TableSchema } from '../types';
 
 const defaultLightTheme = EditorView.theme({
   '&': {
@@ -74,12 +77,15 @@ export function createSQLDialectExtension(dialect: SQLDialectType): Extension {
 
 export interface CreateBaseExtensionsOptions {
   language: EditorLanguage;
+  mode?: EditorMode;
   lineNumbers?: boolean;
   folding?: boolean;
   autoHeight?: boolean;
   editorTheme?: 'light' | 'dark';
   sqlDialect?: SQLDialectType;
   completionConfig?: CompletionConfig;
+  lintConfig?: boolean | ExpressionLintConfig;
+  showFriendlyNames?: boolean;
 }
 
 export interface CompletionConfig {
@@ -114,11 +120,14 @@ export function createBaseExtensions(options: CreateBaseExtensionsOptions): Exte
 
   if (options.language === 'sql' && options.sqlDialect) {
     extensions.push(createSQLDialectExtension(options.sqlDialect));
+  } else if (options.language === 'expression' && options.mode === 'template' && options.completionConfig) {
+    const { variables = [], functions = [] } = options.completionConfig;
+    extensions.push(createTemplateModeExtension(variables, functions));
   } else {
     extensions.push(createLanguageExtension(options.language));
   }
 
-  if (options.language === 'expression' && options.completionConfig) {
+  if (options.language === 'expression' && options.mode !== 'template' && options.completionConfig) {
     const { variables = [], functions = [] } = options.completionConfig;
     extensions.push(
       autocompletion({
@@ -133,6 +142,21 @@ export function createBaseExtensions(options: CreateBaseExtensionsOptions): Exte
         override: [sqlCompletionSource(options.completionConfig.tables)],
       }),
     );
+  }
+
+  if (options.language === 'expression' && options.lintConfig) {
+    const enabled = options.lintConfig === true || options.lintConfig.enabled;
+    if (enabled) {
+      extensions.push(createExpressionLinter(options.lintConfig));
+    }
+  }
+
+  if (
+    options.language === 'expression' &&
+    options.showFriendlyNames &&
+    options.completionConfig?.variables?.length
+  ) {
+    extensions.push(createFriendlyNameDecoration(options.completionConfig.variables));
   }
 
   return extensions;

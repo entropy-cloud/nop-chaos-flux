@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import type { RendererComponentProps, RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
 import { useCodeMirror } from './use-code-mirror';
@@ -6,6 +6,7 @@ import { createBaseExtensions } from './extensions/base';
 import type {
   CodeEditorSchema,
   EditorLanguage,
+  EditorMode,
   ExpressionEditorConfig,
   SQLEditorConfig,
 } from './types';
@@ -43,12 +44,17 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
   const currentForm = useCurrentForm();
 
   const language = (props.props.language as EditorLanguage) ?? 'plaintext';
+  const mode = props.props.mode as EditorMode | undefined;
   const readOnly = Boolean(props.props.readOnly ?? props.meta.disabled);
   const placeholder = props.props.placeholder as string | undefined;
   const editorTheme = (props.props.editorTheme as 'light' | 'dark') ?? 'light';
   const lineNumbers = props.props.lineNumbers as boolean | undefined ?? getDefaultLineNumbers(language);
   const folding = props.props.folding as boolean | undefined ?? false;
   const autoHeight = props.props.autoHeight as boolean | undefined ?? getDefaultAutoHeight(language);
+
+  const allowFullscreen = props.props.allowFullscreen as boolean | undefined ?? false;
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const toggleFullscreen = useCallback(() => setIsFullscreen(v => !v), []);
 
   const expressionConfig = props.props.expressionConfig as ExpressionEditorConfig | undefined;
   const sqlConfig = props.props.sqlConfig as SQLEditorConfig | undefined;
@@ -84,14 +90,17 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
     () =>
       createBaseExtensions({
         language,
+        mode,
         lineNumbers,
         folding,
         autoHeight,
         editorTheme,
         sqlDialect: sqlConfig?.dialect,
         completionConfig,
+        lintConfig: language === 'expression' ? expressionConfig?.lint : undefined,
+        showFriendlyNames: language === 'expression' ? expressionConfig?.showFriendlyNames : undefined,
       }),
-    [language, lineNumbers, folding, autoHeight, editorTheme, sqlConfig?.dialect, completionConfig],
+    [language, mode, lineNumbers, folding, autoHeight, editorTheme, sqlConfig?.dialect, completionConfig, expressionConfig?.lint, expressionConfig?.showFriendlyNames],
   );
 
   const handleChange = (newValue: string) => {
@@ -122,12 +131,25 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
   const width = props.props.width as number | string | undefined ?? '100%';
 
   const containerStyle = useMemo<React.CSSProperties>(
-    () => ({
-      height: typeof height === 'number' ? `${height}px` : height,
-      width: typeof width === 'number' ? `${width}px` : width,
-      overflow: autoHeight ? undefined : 'auto',
-    }),
-    [height, width, autoHeight],
+    () => {
+      const base: React.CSSProperties = {
+        height: typeof height === 'number' ? `${height}px` : height,
+        width: typeof width === 'number' ? `${width}px` : width,
+        overflow: autoHeight ? undefined : 'auto',
+      };
+      if (isFullscreen) {
+        return {
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          backgroundColor: editorTheme === 'dark' ? '#1e1e1e' : '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+        };
+      }
+      return base;
+    },
+    [height, width, autoHeight, isFullscreen, editorTheme],
   );
 
   const { editorRef } = useCodeMirror({
@@ -146,7 +168,30 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
       data-testid={props.meta.testid}
       style={containerStyle}
     >
-      <div ref={editorRef} />
+      {allowFullscreen && (
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          style={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            zIndex: 10000,
+            border: 'none',
+            background: isFullscreen ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)',
+            color: isFullscreen ? '#fff' : '#333',
+            cursor: 'pointer',
+            fontSize: 16,
+            lineHeight: 1,
+            padding: '4px 6px',
+            borderRadius: 3,
+          }}
+          aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+        >
+          {isFullscreen ? '✕' : '⛶'}
+        </button>
+      )}
+      <div ref={editorRef} style={isFullscreen ? { flex: 1, overflow: 'auto' } : undefined} />
     </div>
   );
 }
