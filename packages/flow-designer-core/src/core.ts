@@ -48,6 +48,8 @@ export interface DesignerCore {
   restore(): void;
   exportDocument(): string;
   isDirty(): boolean;
+
+  layoutNodes(positions: Map<string, { x: number; y: number }>): void;
 }
 
 interface HistoryEntry {
@@ -603,6 +605,19 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     return savedDoc !== null && JSON.stringify(doc) !== JSON.stringify(savedDoc);
   }
 
+  function layoutNodes(positions: Map<string, { x: number; y: number }>): void {
+    const newNodes = doc.nodes.map((node) => {
+      const newPos = positions.get(node.id);
+      if (!newPos || (node.position.x === newPos.x && node.position.y === newPos.y)) {
+        return node;
+      }
+      return { ...node, position: { ...newPos } };
+    });
+    doc = { ...doc, nodes: newNodes };
+    pushHistory();
+    emit({ type: 'documentChanged', doc });
+  }
+
   history.push({ doc: cloneDocument(doc) });
   historyIndex = 0;
 
@@ -636,5 +651,6 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     restore,
     exportDocument,
     isDirty,
+    layoutNodes,
   };
 }
