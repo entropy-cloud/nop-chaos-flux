@@ -21,6 +21,39 @@ import {
 import {
   createReportDesignerBridge,
 } from '@nop-chaos/report-designer-renderers';
+import { Button } from '@nop-chaos/ui';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@nop-chaos/ui';
+import {
+  Undo2,
+  Redo2,
+  Copy,
+  Scissors,
+  ClipboardPaste,
+  Trash2,
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Merge,
+  TableCellsMerge,
+  TableCellsSplit,
+  ArrowDown,
+  ArrowRight,
+  Plus,
+  Minus,
+  Search,
+  MessageSquare,
+  Snowflake,
+  Sun,
+  Type,
+} from 'lucide-react';
 
 const fieldSources: FieldSourceSnapshot[] = [
   {
@@ -959,67 +992,78 @@ export function ReportDesignerDemo() {
         <h2>Report Designer Playground</h2>
 
         {/* Main toolbar */}
-        <div className="toolbar">
-          <div className="toolbar-group">
-            <button onClick={handleUndo} title="Undo (Ctrl+Z)">↩ Undo</button>
-            <button onClick={handleRedo} title="Redo (Ctrl+Y)">↪ Redo</button>
+        <TooltipProvider>
+          <div className="rd-toolbar">
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleUndo}><Undo2 /></Button></TooltipTrigger><TooltipContent>Undo <kbd>Ctrl+Z</kbd></TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleRedo}><Redo2 /></Button></TooltipTrigger><TooltipContent>Redo <kbd>Ctrl+Y</kbd></TooltipContent></Tooltip>
+            </div>
+            <span className="rd-toolbar-separator" />
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleCopy} disabled={!selectedCell}><Copy /></Button></TooltipTrigger><TooltipContent>Copy <kbd>Ctrl+C</kbd></TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleCut} disabled={!selectedCell}><Scissors /></Button></TooltipTrigger><TooltipContent>Cut <kbd>Ctrl+X</kbd></TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handlePaste} disabled={!selectedCell}><ClipboardPaste /></Button></TooltipTrigger><TooltipContent>Paste <kbd>Ctrl+V</kbd></TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleClear} disabled={!selectedCell}><Trash2 /></Button></TooltipTrigger><TooltipContent>Clear <kbd>Delete</kbd></TooltipContent></Tooltip>
+            </div>
+            <span className="rd-toolbar-separator" />
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => handleStyleTool('bold')} disabled={!selectedCell}><Bold /></Button></TooltipTrigger><TooltipContent>Bold <kbd>Ctrl+B</kbd></TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => handleStyleTool('italic')} disabled={!selectedCell}><Italic /></Button></TooltipTrigger><TooltipContent>Italic <kbd>Ctrl+I</kbd></TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => handleStyleTool('underline')} disabled={!selectedCell}><Underline /></Button></TooltipTrigger><TooltipContent>Underline <kbd>Ctrl+U</kbd></TooltipContent></Tooltip>
+            </div>
+            <span className="rd-toolbar-separator" />
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => handleStyleTool('align-left')} disabled={!selectedCell}><AlignLeft /></Button></TooltipTrigger><TooltipContent>Align Left</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => handleStyleTool('align-center')} disabled={!selectedCell}><AlignCenter /></Button></TooltipTrigger><TooltipContent>Align Center</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => handleStyleTool('align-right')} disabled={!selectedCell}><AlignRight /></Button></TooltipTrigger><TooltipContent>Align Right</TooltipContent></Tooltip>
+            </div>
+            <span className="rd-toolbar-separator" />
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="bg-btn bg-yellow" onClick={() => handleStyleTool('bg-yellow')} disabled={!selectedCell}></Button></TooltipTrigger><TooltipContent>Yellow Background</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="bg-btn bg-green" onClick={() => handleStyleTool('bg-green')} disabled={!selectedCell}></Button></TooltipTrigger><TooltipContent>Green Background</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="bg-btn bg-blue" onClick={() => handleStyleTool('bg-blue')} disabled={!selectedCell}></Button></TooltipTrigger><TooltipContent>Blue Background</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="bg-btn bg-none" onClick={() => handleStyleTool('bg-none')} disabled={!selectedCell}></Button></TooltipTrigger><TooltipContent>No Background</TooltipContent></Tooltip>
+            </div>
+            <span className="rd-toolbar-separator" />
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="color-btn color-red" onClick={() => handleStyleTool('font-color-red')} disabled={!selectedCell}><Type /></Button></TooltipTrigger><TooltipContent>Red Font</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="color-btn color-blue" onClick={() => handleStyleTool('font-color-blue')} disabled={!selectedCell}><Type /></Button></TooltipTrigger><TooltipContent>Blue Font</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="color-btn color-black" onClick={() => handleStyleTool('font-color-black')} disabled={!selectedCell}><Type /></Button></TooltipTrigger><TooltipContent>Black Font</TooltipContent></Tooltip>
+            </div>
+            <span className="rd-toolbar-separator" />
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleMerge} disabled={!selectedCell}><TableCellsMerge /></Button></TooltipTrigger><TooltipContent>Merge Cells</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleUnmerge} disabled={!selectedCell}><TableCellsSplit /></Button></TooltipTrigger><TooltipContent>Unmerge Cells</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleMergeCenter} disabled={!selectedCell}><Merge /></Button></TooltipTrigger><TooltipContent>Merge &amp; Center</TooltipContent></Tooltip>
+            </div>
+            <span className="rd-toolbar-separator" />
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleFillDown} disabled={!selectedCell}><ArrowDown /></Button></TooltipTrigger><TooltipContent>Fill Down</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => handleFillSeries('right')} disabled={!selectedCell}><ArrowRight /></Button></TooltipTrigger><TooltipContent>Fill Series Right</TooltipContent></Tooltip>
+            </div>
+            <span className="rd-toolbar-separator" />
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleInsertRow} disabled={!selectedCell}><Plus /></Button></TooltipTrigger><TooltipContent>Insert Row</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleDeleteRow} disabled={!selectedCell}><Minus /></Button></TooltipTrigger><TooltipContent>Delete Row</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleInsertColumn} disabled={!selectedCell}><Plus /></Button></TooltipTrigger><TooltipContent>Insert Column</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleDeleteColumn} disabled={!selectedCell}><Minus /></Button></TooltipTrigger><TooltipContent>Delete Column</TooltipContent></Tooltip>
+            </div>
+            <span className="rd-toolbar-separator" />
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => setShowCommentInput(!showCommentInput)} disabled={!selectedCell}><MessageSquare /></Button></TooltipTrigger><TooltipContent>Comment</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => setShowFindReplace(!showFindReplace)}><Search /></Button></TooltipTrigger><TooltipContent>Find &amp; Replace <kbd>Ctrl+F</kbd></TooltipContent></Tooltip>
+            </div>
+            <span className="rd-toolbar-separator" />
+            <div className="rd-toolbar-group">
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleFreeze} disabled={!selectedCell}><Snowflake /></Button></TooltipTrigger><TooltipContent>Freeze Panes</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={handleUnfreeze}><Sun /></Button></TooltipTrigger><TooltipContent>Unfreeze Panes</TooltipContent></Tooltip>
+            </div>
+            <div className="rd-toolbar-status">
+              <span className="rd-toolbar-cell-addr">{selectedCell ? cellAddress(selectedCell.row, selectedCell.col) : ''}</span>
+              {frozen && <span className="rd-toolbar-frozen-badge">Frozen</span>}
+            </div>
           </div>
-          <div className="toolbar-group">
-            <button onClick={handleCopy} disabled={!selectedCell} title="Copy (Ctrl+C)">📋 Copy</button>
-            <button onClick={handleCut} disabled={!selectedCell} title="Cut (Ctrl+X)">✂ Cut</button>
-            <button onClick={handlePaste} disabled={!selectedCell} title="Paste (Ctrl+V)">📌 Paste</button>
-            <button onClick={handleClear} disabled={!selectedCell} title="Clear (Delete)">🗑 Clear</button>
-          </div>
-          <div className="toolbar-group">
-            <button onClick={() => handleStyleTool('bold')} disabled={!selectedCell} title="Bold (Ctrl+B)"><strong>B</strong></button>
-            <button onClick={() => handleStyleTool('italic')} disabled={!selectedCell} title="Italic (Ctrl+I)"><em>I</em></button>
-            <button onClick={() => handleStyleTool('underline')} disabled={!selectedCell} title="Underline (Ctrl+U)"><u>U</u></button>
-          </div>
-          <div className="toolbar-group">
-            <button onClick={() => handleStyleTool('align-left')} disabled={!selectedCell}>⫷</button>
-            <button onClick={() => handleStyleTool('align-center')} disabled={!selectedCell}>☰</button>
-            <button onClick={() => handleStyleTool('align-right')} disabled={!selectedCell}>⫸</button>
-          </div>
-          <div className="toolbar-group">
-            <button className="bg-btn bg-yellow" onClick={() => handleStyleTool('bg-yellow')} disabled={!selectedCell} />
-            <button className="bg-btn bg-green" onClick={() => handleStyleTool('bg-green')} disabled={!selectedCell} />
-            <button className="bg-btn bg-blue" onClick={() => handleStyleTool('bg-blue')} disabled={!selectedCell} />
-            <button className="bg-btn bg-none" onClick={() => handleStyleTool('bg-none')} disabled={!selectedCell}>✕</button>
-          </div>
-          <div className="toolbar-group">
-            <button className="color-btn color-red" onClick={() => handleStyleTool('font-color-red')} disabled={!selectedCell}>A</button>
-            <button className="color-btn color-blue" onClick={() => handleStyleTool('font-color-blue')} disabled={!selectedCell}>A</button>
-            <button className="color-btn color-black" onClick={() => handleStyleTool('font-color-black')} disabled={!selectedCell}>A</button>
-          </div>
-          <div className="toolbar-group">
-            <button onClick={handleMerge} disabled={!selectedCell}>Merge</button>
-            <button onClick={handleUnmerge} disabled={!selectedCell}>Unmerge</button>
-            <button onClick={handleMergeCenter} disabled={!selectedCell}>Center</button>
-          </div>
-          <div className="toolbar-group">
-            <button onClick={handleFillDown} title="Fill Down">↓ Fill</button>
-            <button onClick={() => handleFillSeries('down')} title="Fill Series Down">↓ Series</button>
-            <button onClick={() => handleFillSeries('right')} title="Fill Series Right">→ Series</button>
-          </div>
-          <div className="toolbar-group">
-            <button onClick={handleInsertRow} disabled={!selectedCell}>+Row</button>
-            <button onClick={handleDeleteRow} disabled={!selectedCell}>-Row</button>
-            <button onClick={handleInsertColumn} disabled={!selectedCell}>+Col</button>
-            <button onClick={handleDeleteColumn} disabled={!selectedCell}>-Col</button>
-          </div>
-          <div className="toolbar-group">
-            <button onClick={() => setShowCommentInput(!showCommentInput)} disabled={!selectedCell}>💬</button>
-            <button onClick={() => setShowFindReplace(!showFindReplace)} title="Find (Ctrl+F)">🔍</button>
-          </div>
-          <div className="toolbar-group">
-            <button onClick={handleFreeze} disabled={!selectedCell} title="Freeze at selection">❄ Freeze</button>
-            <button onClick={handleUnfreeze} title="Unfreeze">☀ Unfreeze</button>
-          </div>
-          <div className="toolbar-group status">
-            <span>{selectedCell ? cellAddress(selectedCell.row, selectedCell.col) : 'No selection'}</span>
-            {frozen && <span className="frozen-indicator">❄ Frozen</span>}
-          </div>
-        </div>
+        </TooltipProvider>
 
         {/* Find/Replace Panel */}
         {showFindReplace && (
@@ -1168,10 +1212,20 @@ export function ReportDesignerDemo() {
                       return (
                         <td
                           key={c}
-                          className={`cell ${isSelected ? 'cell--selected' : ''} ${inRange ? 'cell--in-range' : ''} ${hasBinding ? 'cell--bound' : ''} ${hasComment ? 'cell--comment' : ''} ${isFrozen ? 'cell--frozen' : ''} ${mergeInfo.isMerged ? 'cell--merged' : ''} ${isEditing ? 'cell--editing' : ''} ${isDropTarget ? 'cell--drop-target' : ''} ${isFillPreview(r, c) ? 'cell--fill-preview' : ''}`}
+                          className="ss-cell"
                           style={style}
                           data-row={r}
                           data-col={c}
+                          data-cell-active={isSelected || undefined}
+                          data-cell-selected={isSelected || undefined}
+                          data-range-highlight={inRange || undefined}
+                          data-cell-bound={hasBinding || undefined}
+                          data-cell-comment={hasComment || undefined}
+                          data-cell-frozen={isFrozen || undefined}
+                          data-cell-merged={mergeInfo.isMerged || undefined}
+                          data-cell-editing={isEditing || undefined}
+                          data-cell-drop-target={isDropTarget || undefined}
+                          data-cell-fill-preview={isFillPreview(r, c) || undefined}
                           rowSpan={mergeInfo.rowSpan > 1 ? mergeInfo.rowSpan : undefined}
                           colSpan={mergeInfo.colSpan > 1 ? mergeInfo.colSpan : undefined}
                           onClick={() => handleCellClick(r, c)}
@@ -1184,7 +1238,7 @@ export function ReportDesignerDemo() {
                           {isEditing ? (
                             <input
                               type="text"
-                              className="cell-edit-input"
+                              className="ss-cell-edit-input"
                               value={editValue}
                               onChange={(e) => setEditValue(e.target.value)}
                               onBlur={handleEditSave}
@@ -1200,10 +1254,9 @@ export function ReportDesignerDemo() {
                           ) : (
                             <>
                               {cell?.value != null ? String(cell.value) : ''}
-                              {hasComment && <span className="comment-indicator">💬</span>}
                               {isFillHandleCell && (
                                 <div
-                                  className="fill-handle"
+                                  className="ss-fill-handle"
                                   onMouseDown={(e) => handleFillHandleMouseDown(r, c, e)}
                                 />
                               )}
