@@ -1322,7 +1322,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           {mergedRequests.map((req) => (
             <article key={req.requestKey} className="ndbg-entry" onClick={() => setNetworkExpandedKey(networkExpandedKey === req.requestKey ? null : req.requestKey)}>
               <div className="ndbg-entry-topline">
-                <span className={`ndbg-badge nop-debugger__status-${req.status}`} data-group="api">{req.status}</span>
+                <span className={`ndbg-badge ndbg-status-${req.status}`} data-group="api">{req.status}</span>
                 <time>{formatClock(req.startEvent?.timestamp ?? 0)}</time>
               </div>
               <strong className="ndbg-entry-summary">{req.summary}</strong>
