@@ -73,6 +73,65 @@ This file is intentionally lightweight.
 - Updated AGENTS.md "Build Artifacts" section with rules about preventing build output leaks into `src/`.
 - Next step: implement NodeRenderer selective scope subscription (Plan 21).
 
+### 2026-03-30 (flux-code-editor Full Implementation)
+
+- Implemented `@nop-chaos/flux-code-editor` package — CodeMirror 6 based code editor renderer
+- Based on design doc: `docs/architecture/code-editor.md`
+- 12 commits on `feat-expression-editor` branch:
+
+| Commit | Description |
+|--------|-------------|
+| `52cfda9` | Package scaffold + types (all interfaces from design doc) |
+| `4208f78` | `useCodeMirror` hook (CM6-React bridge with Compartments) |
+| `9ac109b` | Base CM6 extensions factory (8 languages, themes, SQL dialects) |
+| `e256a15` | `CodeEditorRenderer` + `RendererDefinition` |
+| `f13f912` | Expression completion source |
+| `7333e95` | SQL completion source |
+| `03d59f1` | Playground page (multi-language editor demos) |
+| `6a72088` | Unit tests (28 tests, 3 test files) |
+| `1232a74` | Lint fix (unused import) |
+| `074946d` | Wire autocompletion sources into CM6 extensions + export `CompletionConfig` |
+| `55bb2bd` | Fullscreen mode, expression linter, friendly name decoration, template mode |
+| `51d4df8` | Enhanced playground with expressionConfig, template mode, fullscreen demos |
+
+- **Package structure**: `packages/flux-code-editor/src/`
+  - `types.ts` — All interfaces (CodeEditorSchema, VariableItem, FuncGroup, TableSchema, etc.)
+  - `use-code-mirror.ts` — CM6-React bridge with Compartment hot-swap
+  - `code-editor-renderer.tsx` — Renderer component + RendererDefinition
+  - `extensions/base.ts` — Extension factory with CompletionConfig, lint, decoration wiring
+  - `extensions/expression/completion.ts` — Expression autocomplete (dot-path + top-level)
+  - `extensions/expression/linter.ts` — Syntax validation via `new Function()` try/catch
+  - `extensions/expression/decoration.ts` — FriendlyNameWidget (blur-only variable label replacement)
+  - `extensions/expression/template-mode.ts` — StreamLanguage for `${...}` interpolation
+  - `extensions/sql/completion.ts` — SQL autocomplete (table/column/keyword)
+- **Features**: 8 languages, expression/SQL completion, expression linter, friendly name decorations, template mode with `${...}` parsing, fullscreen toggle, light/dark themes, form integration
+- **Tests**: 28 passing (types: 14, expression completion: 8, SQL completion: 6)
+- **Verification**: typecheck ✅, build ✅, lint ✅, test ✅ across entire workspace
+- Key decision: Unified expression and SQL editors into single `code-editor` renderer, differentiated by `language` field
+- Key decision: Used `new Function()` for lightweight expression linting instead of a full parser
+- Key decision: Friendly name decorations only show on blur (matches design doc Section 九)
+- Ref: `docs/architecture/code-editor.md`, `packages/flux-code-editor/`
+
+### 2026-03-30 (CodeMirror 6 代码编辑器设计文档)
+
+- Added `docs/architecture/code-editor.md` — CodeMirror 6 代码编辑器 JSON Schema 设计文档
+- 定义了 `CodeEditorSchema` 接口：`type: 'code-editor'`，支持 `language` (expression/sql/json/javascript/typescript/html/css/plaintext) 和 `mode` (expression/template/code)
+- 表达式编辑器：支持 `VariableItem` 树形变量数据、`FuncGroup` 函数分组、内联补全、AST 驱动的友好名标记、语法校验
+- SQL 编辑器：支持 `TableSchema` + `ColumnSchema`、别名解析、列名/表名/关键字补全、多方言支持
+- 变量和函数数据支持三种来源：内联数组、scope 引用、API 获取
+- 核心改进：内联 autocomplete 替代 amis 的侧边面板、无全局状态、CM6 Extension 架构实现关注点分离
+- 建议新建 `packages/flux-code-editor` 包
+- Key decision: 统一表达式编辑器和 SQL 编辑器为同一个 `code-editor` 渲染器，通过 `language` 区分行为
+- Next step: 实现代码实现
+
+### 2026-03-30
+
+- Added `docs/analysis/amis-editor-architecture-research.md` — comprehensive research on amis CodeMirror 5 + Monaco Editor integration patterns
+- Key finding: amis uses CM5 for formula editing (custom mode via `multiplexingMode` + AST-driven markText)), Monaco for general code editing
+- amis has no SQL editor implementation — need to build from scratch with `@codemirror/lang-sql`
+- CM6 migration plan: reuse `@codemirror/lang-javascript` for expression highlighting, custom autocomplete for variable/method suggestions, `Decoration` + `WidgetType` for friendly name replacement
+- Next step: design expression editor component architecture for `flux-formula` or a new package
+
 ### 2026-03-30 (Condition Builder Phase 1 Improvements — Code Review Fixes)
 
 - Completed deep code review of condition-builder renderer changes on `feat-improve-flow-designer` branch vs `master`.
