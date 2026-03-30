@@ -5,20 +5,18 @@ export function resolveVariablePath(
   variables: VariableItem[],
   path: string,
 ): VariableItem | null {
-  const segments = path.split('.');
-  let current: VariableItem[] = variables;
-
-  for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i];
-    const found = current.find(
-      (v) => lastSegment(v.value) === segment || v.value === segment,
-    );
-    if (!found) return null;
-    if (i === segments.length - 1) return found;
-    current = found.children ?? [];
+  function findInTree(items: VariableItem[]): VariableItem | null {
+    for (const item of items) {
+      if (item.value === path) return item;
+      if (item.children) {
+        const found = findInTree(item.children);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 
-  return null;
+  return findInTree(variables);
 }
 
 export function lastSegment(value: string): string {
