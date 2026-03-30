@@ -14,6 +14,8 @@
   "dependencies": {
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/ui": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "use-sync-external-store": "^1.6.0"

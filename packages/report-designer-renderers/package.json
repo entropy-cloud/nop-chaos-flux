@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@nop-chaos/spreadsheet-core": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/spreadsheet-renderers": "workspace:*",
     "@nop-chaos/report-designer-core": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
