@@ -17,11 +17,67 @@ const schema = {
         {
           type: 'code-editor',
           name: 'expression',
-          label: 'Expression Editor',
+          label: 'Expression Editor (with completion)',
           language: 'expression',
           mode: 'expression',
           placeholder: 'Type an expression, e.g. data.age > 18',
           autoHeight: true,
+          expressionConfig: {
+            variables: [
+              { label: 'Name', value: 'data.name', type: 'string' },
+              { label: 'Age', value: 'data.age', type: 'number' },
+              {
+                label: 'Order',
+                value: 'data.order',
+                type: 'object',
+                children: [
+                  { label: 'Order ID', value: 'data.order.id', type: 'string' },
+                  { label: 'Amount', value: 'data.order.amount', type: 'number' },
+                ],
+              },
+              { label: 'Role', value: 'role', type: 'string', tags: ['system'] },
+            ],
+            functions: [
+              {
+                groupName: 'Logic',
+                items: [
+                  { name: 'IF', description: 'Conditional', example: 'IF(cond, t, f)', returnType: 'any' },
+                ],
+              },
+              {
+                groupName: 'Text',
+                items: [
+                  { name: 'CONCAT', description: 'Concat strings', example: 'CONCAT(a, b)', returnType: 'string' },
+                  { name: 'UPPER', description: 'Uppercase', example: 'UPPER(str)', returnType: 'string' },
+                ],
+              },
+            ],
+            lint: true,
+            showFriendlyNames: true,
+          },
+        },
+        {
+          type: 'code-editor',
+          name: 'templateExpr',
+          label: 'Template Mode',
+          language: 'expression',
+          mode: 'template',
+          placeholder: 'Text with ${...} expressions',
+          autoHeight: true,
+          expressionConfig: {
+            variables: [
+              { label: 'Name', value: 'data.name', type: 'string' },
+              { label: 'Age', value: 'data.age', type: 'number' },
+            ],
+            functions: [
+              {
+                groupName: 'Text',
+                items: [
+                  { name: 'UPPER', description: 'Uppercase', example: 'UPPER(str)', returnType: 'string' },
+                ],
+              },
+            ],
+          },
         },
         {
           type: 'code-editor',
@@ -60,11 +116,12 @@ const schema = {
         {
           type: 'code-editor',
           name: 'jsonSchema',
-          label: 'JSON Editor',
+          label: 'JSON Editor (Fullscreen)',
           language: 'json',
           height: 200,
           lineNumbers: true,
           folding: true,
+          allowFullscreen: true,
           placeholder: '{\n  "key": "value"\n}',
         },
         {
