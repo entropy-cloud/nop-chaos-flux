@@ -236,7 +236,8 @@ export const inputRendererDefinitions: RendererDefinition[] = [
             aria-invalid={presentation.showError ? true : undefined}
             aria-label={String(props.meta.label ?? props.props.label ?? name)}
             onFocus={handlers.onFocus}
-            onCheckedChange={(checked) => handlers.onChange(String(Boolean(checked)))}
+            type="checkbox"
+            onChange={(e) => handlers.onChange(String(Boolean(e.target.checked)))}
             onBlur={handlers.onBlur}
           />
           <span className="font-semibold">{value ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>

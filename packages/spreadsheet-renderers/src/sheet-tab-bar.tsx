@@ -166,9 +166,7 @@ export function SheetTabBar({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
             <Button variant="destructive" onClick={handleConfirmDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>

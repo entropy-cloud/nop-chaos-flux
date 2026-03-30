@@ -61,7 +61,7 @@ export function FieldSelect({ fields, value, onChange, disabled, searchable, use
   };
 
   return (
-    <Select value={value ?? ''} onValueChange={onChange} disabled={disabled}>
+    <Select value={value ?? ''} onValueChange={(v) => { if (v != null) onChange(v); }} disabled={disabled}>
       <SelectTrigger size="sm" className="h-7 text-xs min-w-[100px] max-w-[160px]">
         <SelectValue placeholder={t('selectField')} />
       </SelectTrigger>

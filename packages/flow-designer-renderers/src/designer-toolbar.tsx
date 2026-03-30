@@ -216,10 +216,11 @@ export function DesignerToolbarContent(props: {
             <label key={key} className="inline-flex items-center gap-1.5 cursor-pointer select-none">
               {item.label ? <span className="text-sm text-muted-foreground whitespace-nowrap">{item.label}</span> : null}
               <Switch
-                size="sm"
+                data-size="sm"
                 checked={checked}
                 disabled={disabled}
-                onCheckedChange={() => {
+                type="checkbox"
+                onChange={() => {
                   if (command) dispatch(command);
                 }}
               />

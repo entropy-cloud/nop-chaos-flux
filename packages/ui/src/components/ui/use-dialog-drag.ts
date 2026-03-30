@@ -118,7 +118,9 @@ export function useDialogDrag(
       el.style.transition = 'none'
       document.body.style.userSelect = 'none'
       document.body.style.webkitUserSelect = 'none'
-      el.setPointerCapture(e.pointerId)
+      if (typeof el.setPointerCapture === 'function') {
+        el.setPointerCapture(e.pointerId)
+      }
 
       dragStateRef.current = {
         startX: e.clientX,

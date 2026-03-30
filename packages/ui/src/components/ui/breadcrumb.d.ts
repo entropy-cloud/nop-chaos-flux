@@ -1,0 +1,10 @@
+import * as React from "react";
+import { useRender } from "@base-ui/react/use-render";
+declare function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">): import("react/jsx-runtime").JSX.Element;
+declare function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">): import("react/jsx-runtime").JSX.Element;
+declare function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">): import("react/jsx-runtime").JSX.Element;
+declare function BreadcrumbLink({ className, render, ...props }: useRender.ComponentProps<"a">): React.ReactElement<unknown, string | React.JSXElementConstructor<any>>;
+declare function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">): import("react/jsx-runtime").JSX.Element;
+declare function BreadcrumbSeparator({ children, className, ...props }: React.ComponentProps<"li">): import("react/jsx-runtime").JSX.Element;
+declare function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<"span">): import("react/jsx-runtime").JSX.Element;
+export { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis, };

@@ -19,7 +19,7 @@ export function OperatorSelect({ operators, value, onChange, disabled }: Operato
   }
 
   return (
-    <Select value={value ?? ''} onValueChange={onChange} disabled={disabled}>
+    <Select value={value ?? ''} onValueChange={(op) => { if (op != null) onChange(op); }} disabled={disabled}>
       <SelectTrigger size="sm" className="h-7 text-xs min-w-[80px] max-w-[120px]">
         <SelectValue placeholder="条件" />
       </SelectTrigger>

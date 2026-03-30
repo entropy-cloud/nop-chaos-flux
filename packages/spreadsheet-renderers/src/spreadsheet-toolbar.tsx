@@ -1,4 +1,4 @@
-import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@nop-chaos/ui';
+import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@nop-chaos/ui';
 import {
   Undo2,
   Redo2,
@@ -130,78 +130,76 @@ export function SpreadsheetToolbar({
 }: SpreadsheetToolbarProps) {
   return (
     <>
-      <TooltipProvider>
         <div className="rd-toolbar">
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onUndo}><Undo2 /></Button></TooltipTrigger><TooltipContent>Undo <kbd>Ctrl+Z</kbd></TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onRedo}><Redo2 /></Button></TooltipTrigger><TooltipContent>Redo <kbd>Ctrl+Y</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onUndo}><Undo2 /></Button></TooltipTrigger><TooltipContent>Undo <kbd>Ctrl+Z</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onRedo}><Redo2 /></Button></TooltipTrigger><TooltipContent>Redo <kbd>Ctrl+Y</kbd></TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onCopy} disabled={!hasSelection}><Copy /></Button></TooltipTrigger><TooltipContent>Copy <kbd>Ctrl+C</kbd></TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onCut} disabled={!hasSelection}><Scissors /></Button></TooltipTrigger><TooltipContent>Cut <kbd>Ctrl+X</kbd></TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onPaste} disabled={!hasSelection}><ClipboardPaste /></Button></TooltipTrigger><TooltipContent>Paste <kbd>Ctrl+V</kbd></TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onClear} disabled={!hasSelection}><Trash2 /></Button></TooltipTrigger><TooltipContent>Clear <kbd>Delete</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onCopy} disabled={!hasSelection}><Copy /></Button></TooltipTrigger><TooltipContent>Copy <kbd>Ctrl+C</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onCut} disabled={!hasSelection}><Scissors /></Button></TooltipTrigger><TooltipContent>Cut <kbd>Ctrl+X</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onPaste} disabled={!hasSelection}><ClipboardPaste /></Button></TooltipTrigger><TooltipContent>Paste <kbd>Ctrl+V</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onClear} disabled={!hasSelection}><Trash2 /></Button></TooltipTrigger><TooltipContent>Clear <kbd>Delete</kbd></TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('bold')} disabled={!hasSelection}><Bold /></Button></TooltipTrigger><TooltipContent>Bold <kbd>Ctrl+B</kbd></TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('italic')} disabled={!hasSelection}><Italic /></Button></TooltipTrigger><TooltipContent>Italic <kbd>Ctrl+I</kbd></TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('underline')} disabled={!hasSelection}><Underline /></Button></TooltipTrigger><TooltipContent>Underline <kbd>Ctrl+U</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('bold')} disabled={!hasSelection}><Bold /></Button></TooltipTrigger><TooltipContent>Bold <kbd>Ctrl+B</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('italic')} disabled={!hasSelection}><Italic /></Button></TooltipTrigger><TooltipContent>Italic <kbd>Ctrl+I</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('underline')} disabled={!hasSelection}><Underline /></Button></TooltipTrigger><TooltipContent>Underline <kbd>Ctrl+U</kbd></TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('align-left')} disabled={!hasSelection}><AlignLeft /></Button></TooltipTrigger><TooltipContent>Align Left</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('align-center')} disabled={!hasSelection}><AlignCenter /></Button></TooltipTrigger><TooltipContent>Align Center</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('align-right')} disabled={!hasSelection}><AlignRight /></Button></TooltipTrigger><TooltipContent>Align Right</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('align-left')} disabled={!hasSelection}><AlignLeft /></Button></TooltipTrigger><TooltipContent>Align Left</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('align-center')} disabled={!hasSelection}><AlignCenter /></Button></TooltipTrigger><TooltipContent>Align Center</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('align-right')} disabled={!hasSelection}><AlignRight /></Button></TooltipTrigger><TooltipContent>Align Right</TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="bg-btn bg-yellow" onClick={() => onStyleTool('bg-yellow')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>Yellow Background</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="bg-btn bg-green" onClick={() => onStyleTool('bg-green')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>Green Background</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="bg-btn bg-blue" onClick={() => onStyleTool('bg-blue')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>Blue Background</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="bg-btn bg-none" onClick={() => onStyleTool('bg-none')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>No Background</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="bg-btn bg-yellow" onClick={() => onStyleTool('bg-yellow')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>Yellow Background</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="bg-btn bg-green" onClick={() => onStyleTool('bg-green')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>Green Background</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="bg-btn bg-blue" onClick={() => onStyleTool('bg-blue')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>Blue Background</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="bg-btn bg-none" onClick={() => onStyleTool('bg-none')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>No Background</TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="color-btn color-red" onClick={() => onStyleTool('font-color-red')} disabled={!hasSelection}><Type /></Button></TooltipTrigger><TooltipContent>Red Font</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="color-btn color-blue" onClick={() => onStyleTool('font-color-blue')} disabled={!hasSelection}><Type /></Button></TooltipTrigger><TooltipContent>Blue Font</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className="color-btn color-black" onClick={() => onStyleTool('font-color-black')} disabled={!hasSelection}><Type /></Button></TooltipTrigger><TooltipContent>Black Font</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="color-btn color-red" onClick={() => onStyleTool('font-color-red')} disabled={!hasSelection}><Type /></Button></TooltipTrigger><TooltipContent>Red Font</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="color-btn color-blue" onClick={() => onStyleTool('font-color-blue')} disabled={!hasSelection}><Type /></Button></TooltipTrigger><TooltipContent>Blue Font</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="color-btn color-black" onClick={() => onStyleTool('font-color-black')} disabled={!hasSelection}><Type /></Button></TooltipTrigger><TooltipContent>Black Font</TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onMerge} disabled={!hasSelection}><TableCellsMerge /></Button></TooltipTrigger><TooltipContent>Merge Cells</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onUnmerge} disabled={!hasSelection}><TableCellsSplit /></Button></TooltipTrigger><TooltipContent>Unmerge Cells</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onMergeCenter} disabled={!hasSelection}><Merge /></Button></TooltipTrigger><TooltipContent>Merge &amp; Center</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onMerge} disabled={!hasSelection}><TableCellsMerge /></Button></TooltipTrigger><TooltipContent>Merge Cells</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onUnmerge} disabled={!hasSelection}><TableCellsSplit /></Button></TooltipTrigger><TooltipContent>Unmerge Cells</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onMergeCenter} disabled={!hasSelection}><Merge /></Button></TooltipTrigger><TooltipContent>Merge &amp; Center</TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onFillDown} disabled={!hasSelection}><ArrowDown /></Button></TooltipTrigger><TooltipContent>Fill Down</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={() => onFillSeries('right')} disabled={!hasSelection}><ArrowRight /></Button></TooltipTrigger><TooltipContent>Fill Series Right</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onFillDown} disabled={!hasSelection}><ArrowDown /></Button></TooltipTrigger><TooltipContent>Fill Down</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onFillSeries('right')} disabled={!hasSelection}><ArrowRight /></Button></TooltipTrigger><TooltipContent>Fill Series Right</TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onInsertRow} disabled={!hasSelection}><Plus /></Button></TooltipTrigger><TooltipContent>Insert Row</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onDeleteRow} disabled={!hasSelection}><Minus /></Button></TooltipTrigger><TooltipContent>Delete Row</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onInsertColumn} disabled={!hasSelection}><Plus /></Button></TooltipTrigger><TooltipContent>Insert Column</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onDeleteColumn} disabled={!hasSelection}><Minus /></Button></TooltipTrigger><TooltipContent>Delete Column</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onInsertRow} disabled={!hasSelection}><Plus /></Button></TooltipTrigger><TooltipContent>Insert Row</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onDeleteRow} disabled={!hasSelection}><Minus /></Button></TooltipTrigger><TooltipContent>Delete Row</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onInsertColumn} disabled={!hasSelection}><Plus /></Button></TooltipTrigger><TooltipContent>Insert Column</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onDeleteColumn} disabled={!hasSelection}><Minus /></Button></TooltipTrigger><TooltipContent>Delete Column</TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onToggleCommentInput} disabled={!hasSelection}><MessageSquare /></Button></TooltipTrigger><TooltipContent>Comment</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onToggleFindReplace}><Search /></Button></TooltipTrigger><TooltipContent>Find &amp; Replace <kbd>Ctrl+F</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onToggleCommentInput} disabled={!hasSelection}><MessageSquare /></Button></TooltipTrigger><TooltipContent>Comment</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onToggleFindReplace}><Search /></Button></TooltipTrigger><TooltipContent>Find &amp; Replace <kbd>Ctrl+F</kbd></TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onFreeze} disabled={!hasSelection}><Snowflake /></Button></TooltipTrigger><TooltipContent>Freeze Panes</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" onClick={onUnfreeze}><Sun /></Button></TooltipTrigger><TooltipContent>Unfreeze Panes</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onFreeze} disabled={!hasSelection}><Snowflake /></Button></TooltipTrigger><TooltipContent>Freeze Panes</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onUnfreeze}><Sun /></Button></TooltipTrigger><TooltipContent>Unfreeze Panes</TooltipContent></Tooltip>
           </div>
           <div className="rd-toolbar-status">
             <span className="rd-toolbar-cell-addr">{selectedCell ? cellAddress : ''}</span>
             {frozen && <span className="rd-toolbar-frozen-badge">Frozen</span>}
           </div>
         </div>
-      </TooltipProvider>
 
       {showFindReplace && (
         <div className="find-replace-panel">

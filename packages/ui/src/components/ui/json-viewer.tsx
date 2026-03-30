@@ -41,21 +41,29 @@ function DataViewer({ data, defaultExpand = true, className }: DataViewerProps) 
 
   return (
     <div className={cn("flex flex-col", className)}>
-      <Tabs
-        value={format}
-        onValueChange={(v) => setFormat(v as "json" | "yaml")}
-      >
-        <TabsList variant="line" className="shrink-0">
-          <TabsTrigger value="json">JSON</TabsTrigger>
-          <TabsTrigger value="yaml">YAML</TabsTrigger>
-        </TabsList>
-        <TabsContent value="json" className="overflow-auto min-h-[300px] max-h-[calc(100vh-200px)]">
-          <JsonViewer data={data} defaultExpand={defaultExpand} />
-        </TabsContent>
-        <TabsContent value="yaml" className="overflow-auto min-h-[300px] max-h-[calc(100vh-200px)]">
-          <pre className="font-mono text-xs leading-relaxed whitespace-pre">{yamlText}</pre>
-        </TabsContent>
-      </Tabs>
+      <div className="flex flex-col space-y-2">
+        <div className="grid w-full grid-cols-2 gap-2">
+          <button 
+            onClick={() => setFormat("json")}
+            className="px-4 py-2 rounded-md bg-muted hover:bg-muted/80"
+          >
+            JSON
+          </button>
+          <button 
+            onClick={() => setFormat("yaml")}
+            className="px-4 py-2 rounded-md bg-muted hover:bg-muted/80"
+          >
+            YAML
+          </button>
+        </div>
+        <div className="overflow-auto min-h-[300px] max-h-[calc(100vh-200px)]">
+          {format === "json" ? (
+            <JsonViewer data={data} defaultExpand={defaultExpand} />
+          ) : (
+            <pre className="font-mono text-xs leading-relaxed whitespace-pre">{yamlText}</pre>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -37,7 +37,7 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
           onChange={(e) => handleChange(e.target.value)}
         />
       ) : fieldType === 'select' && options ? (
-        <Select value={String(value)} onValueChange={(nextValue) => handleChange(nextValue)}>
+        <Select value={String(value)} onValueChange={(nextValue) => { if (nextValue != null) handleChange(nextValue); }}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>

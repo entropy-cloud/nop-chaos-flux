@@ -58,6 +58,7 @@ for pkg in "${PACKAGES[@]}"; do
 
   rm -rf "$dst"
   cp -R "$src" "$dst"
+  rm -rf "$dst/src"
   rm -rf "$dst/node_modules"
 
   echo "OK: $pkg"
