@@ -316,6 +316,7 @@ export function ReportDesignerDemo() {
 
   // Cell selection
   const handleCellClick = useCallback((row: number, col: number) => {
+    if (fillHandleRef.current.isFilling) return;
     if (!hasDraggedRef.current) {
       if (editingCellRef.current) {
         const currentEditCell = editingCellRef.current;
@@ -343,6 +344,7 @@ export function ReportDesignerDemo() {
 
   // Drag selection handlers
   const handleCellMouseDown = useCallback((row: number, col: number, e: React.MouseEvent) => {
+    if (fillHandleRef.current.isFilling) return;
     if (e.button !== 0) return; // Only left click
     e.preventDefault();
     hasDraggedRef.current = false;
@@ -409,7 +411,7 @@ export function ReportDesignerDemo() {
     e.stopPropagation();
     const range = getSelectedRange();
     if (!range) return;
-    setFillHandleState({
+    const state: FillHandleState = {
       isFilling: true,
       startRow: range.startRow,
       startCol: range.startCol,
@@ -418,44 +420,32 @@ export function ReportDesignerDemo() {
       currentRow: row,
       currentCol: col,
       isCtrlPressed: e.ctrlKey || e.metaKey,
-    });
+    };
+    fillHandleRef.current = state;
+    setFillHandleState(state);
   }, [getSelectedRange]);
 
-  // Global handlers for fill handle dragging
   useEffect(() => {
     if (!fillHandleState.isFilling) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!gridRef.current) return;
-      const cells = gridRef.current.querySelectorAll('td.ss-cell');
-      
-      let targetCell: HTMLElement | null = null;
-      for (const cell of cells) {
-        if (cell instanceof HTMLElement) {
-          const rect = cell.getBoundingClientRect();
-          if (e.clientX >= rect.left && e.clientX <= rect.right &&
-              e.clientY >= rect.top && e.clientY <= rect.bottom) {
-            targetCell = cell;
-            break;
-          }
-        }
-      }
-
-      if (targetCell) {
-        const row = parseInt(targetCell.dataset.row || '-1');
-        const col = parseInt(targetCell.dataset.col || '-1');
-        if (row >= 0 && col >= 0) {
-          fillHandleRef.current = { ...fillHandleRef.current, currentRow: row, currentCol: col };
-          setFillHandleState(prev => ({ ...prev, currentRow: row, currentCol: col }));
-        }
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (!el) return;
+      const td = (el as HTMLElement).closest('td.ss-cell');
+      if (!td) return;
+      const row = parseInt((td as HTMLElement).dataset.row || '-1');
+      const col = parseInt((td as HTMLElement).dataset.col || '-1');
+      if (row >= 0 && col >= 0) {
+        fillHandleRef.current = { ...fillHandleRef.current, currentRow: row, currentCol: col };
+        setFillHandleState(prev => ({ ...prev, currentRow: row, currentCol: col }));
       }
     };
 
     const handleMouseUp = async () => {
-      const { startRow, startCol, endRow, endCol, currentRow, currentCol, isCtrlPressed } = fillHandleRef.current;
-      
+      const { startRow, startCol, endRow, endCol, currentRow, currentCol } = fillHandleRef.current;
+
       let fillDirection: 'down' | 'right' | null = null;
-      let targetRange: SpreadsheetRange = { sheetId, startRow, startCol, endRow, endCol };
+      let targetRange: SpreadsheetRange | null = null;
 
       if (currentRow > endRow) {
         fillDirection = 'down';
@@ -465,35 +455,23 @@ export function ReportDesignerDemo() {
         targetRange = { sheetId, startRow, startCol, endRow, endCol: currentCol };
       }
 
-      if (fillDirection) {
-        const sourceRange = { sheetId, startRow, startCol, endRow, endCol };
-        if (isCtrlPressed) {
-          await spreadsheetBridge.dispatch({ type: 'spreadsheet:copyCells', range: sourceRange });
-          const targetAddr = fillDirection === 'down' 
-            ? cellAddress(endRow + 1, startCol)
-            : cellAddress(startRow, endCol + 1);
-          await spreadsheetBridge.dispatch({
-            type: 'spreadsheet:pasteCells',
-            target: { sheetId, address: targetAddr, row: fillDirection === 'down' ? endRow + 1 : startRow, col: fillDirection === 'right' ? endCol + 1 : startCol },
-          });
-          addLog(`Copy fill ${fillDirection}`);
-        } else {
-          await spreadsheetBridge.dispatch({
-            type: 'spreadsheet:fillSeries',
-            range: targetRange,
-            direction: fillDirection,
-          });
-          addLog(`Series fill ${fillDirection}`);
-        }
+      if (fillDirection && targetRange) {
+        await spreadsheetBridge.dispatch({
+          type: 'spreadsheet:fillSeries',
+          range: targetRange,
+          direction: fillDirection,
+        });
+        addLog(`Series fill ${fillDirection}: ${cellAddress(startRow, startCol)}:${cellAddress(targetRange.endRow, targetRange.endCol)}`);
       }
 
-      setFillHandleState({ isFilling: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0, currentRow: 0, currentCol: 0, isCtrlPressed: false });
-      fillHandleRef.current = { isFilling: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0, currentRow: 0, currentCol: 0, isCtrlPressed: false };
+      const reset: FillHandleState = { isFilling: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0, currentRow: 0, currentCol: 0, isCtrlPressed: false };
+      fillHandleRef.current = reset;
+      setFillHandleState(reset);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-    
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);

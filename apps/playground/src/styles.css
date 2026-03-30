@@ -862,12 +862,13 @@ body {
 
 .ss-fill-handle {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 7px;
-  height: 7px;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
   background-color: #1a73e8;
   cursor: crosshair;
+  z-index: 5;
 }
 
 .find-replace-panel {
