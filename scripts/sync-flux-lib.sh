@@ -44,6 +44,7 @@ pnpm -r build
 echo ""
 echo "=== Syncing to $FLUX_LIB_DIR ==="
 
+rm -rf "$FLUX_LIB_DIR"
 mkdir -p "$FLUX_LIB_DIR"
 
 for pkg in "${PACKAGES[@]}"; do
@@ -57,7 +58,6 @@ for pkg in "${PACKAGES[@]}"; do
 
   rm -rf "$dst"
   cp -R "$src" "$dst"
-  rm -rf "$dst/src"
   rm -rf "$dst/node_modules"
 
   echo "OK: $pkg"
