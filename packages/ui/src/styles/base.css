@@ -14,3 +14,6 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* react-json-view-lite CSS (bundled here so dist consumers don't need the npm package directly) */
+@import 'react-json-view-lite/dist/index.css';

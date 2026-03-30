@@ -1,6 +1,5 @@
 import * as React from "react"
 import { JsonView, allExpanded, defaultStyles } from "react-json-view-lite"
-import "react-json-view-lite/dist/index.css"
 import { stringify } from "yaml"
 import { cn } from "../../lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs"
