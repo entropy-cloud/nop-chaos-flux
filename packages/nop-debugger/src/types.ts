@@ -84,6 +84,7 @@ export interface NopDebuggerPinnedErrors {
 export interface NopDebuggerSnapshot {
   enabled: boolean;
   panelOpen: boolean;
+  minimized: boolean;
   paused: boolean;
   activeTab: NopDebuggerTab;
   position: { x: number; y: number };
@@ -254,6 +255,8 @@ export interface NopDebuggerAutomationApi {
   show(): void;
   hide(): void;
   toggle(): void;
+  minimize(): void;
+  unminimize(): void;
   setActiveTab(tab: NopDebuggerTab): void;
   setPanelPosition(position: { x: number; y: number }): void;
 }
@@ -294,6 +297,8 @@ export interface NopDebuggerController {
   show(): void;
   hide(): void;
   toggle(): void;
+  minimize(): void;
+  unminimize(): void;
   clear(): void;
   pause(): void;
   resume(): void;

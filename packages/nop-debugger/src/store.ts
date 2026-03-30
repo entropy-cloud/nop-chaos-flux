@@ -9,6 +9,8 @@ export interface NopDebuggerStore {
   show(): void;
   hide(): void;
   toggle(): void;
+  minimize(): void;
+  unminimize(): void;
   pause(): void;
   resume(): void;
   setActiveTab(tab: NopDebuggerTab): void;
@@ -22,7 +24,7 @@ export function createDebuggerStore(input: {
   maxEvents: number;
   defaultOpen: boolean;
   defaultTab: NopDebuggerTab;
-  position: { x: number; y: number }
+  position: { x: number; y: number };
   errorBufferKeepEarliest: number;
   errorBufferKeepLatest: number;
   persistPosition?: (position: { x: number; y: number }) => void;
@@ -33,6 +35,7 @@ export function createDebuggerStore(input: {
   let snapshot: NopDebuggerSnapshot = {
     enabled: input.enabled,
     panelOpen: input.defaultOpen,
+    minimized: false,
     paused: false,
     activeTab: input.defaultTab,
     position: input.position,
@@ -162,6 +165,12 @@ export function createDebuggerStore(input: {
     },
     toggle() {
       setSnapshot((current) => ({ ...current, panelOpen: !current.panelOpen }));
+    },
+    minimize() {
+      setSnapshot((current) => ({ ...current, minimized: true }));
+    },
+    unminimize() {
+      setSnapshot((current) => ({ ...current, minimized: false }));
     },
     pause() {
       setSnapshot((current) => ({ ...current, paused: true }));
