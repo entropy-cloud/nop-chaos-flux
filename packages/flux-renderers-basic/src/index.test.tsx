@@ -219,7 +219,8 @@ describe('basicRendererDefinitions', () => {
       />
     );
 
-    const container = screen.getByText('Card content').parentElement;
+    const textElement = screen.getByText('Card content');
+    const container = textElement.closest('.nop-container');
     expect(container?.className).toContain('bg-white');
     expect(container?.className).toContain('rounded-lg');
     expect(container?.className).toContain('shadow-md');
