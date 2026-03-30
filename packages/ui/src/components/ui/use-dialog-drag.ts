@@ -42,36 +42,45 @@ export function useDialogDrag(
       return
     }
 
-    const newOffset: Offset = {
+    const rawOffset: Offset = {
       x: dragState.initialOffset.x + (e.clientX - dragState.startX),
       y: dragState.initialOffset.y + (e.clientY - dragState.startY)
     }
 
+    el.style.transform = `${baseTransform} translate(${rawOffset.x}px, ${rawOffset.y}px)`
+    const rect = el.getBoundingClientRect()
     const vw = window.innerWidth
     const vh = window.innerHeight
-    const rect = el.getBoundingClientRect()
     const minVisible = 30
 
-    newOffset.x = Math.max(
-      -(rect.width - minVisible),
-      Math.min(vw - minVisible, newOffset.x)
-    )
-    newOffset.y = Math.max(
-      -(rect.height - minVisible),
-      Math.min(vh - minVisible, newOffset.y)
-    )
+    let clampedX = rawOffset.x
+    let clampedY = rawOffset.y
 
-    offsetRef.current = newOffset
-    applyTransform(el, newOffset)
-  }, [offsetRef, applyTransform])
+    if (rect.left < minVisible) {
+      clampedX = rawOffset.x + (minVisible - rect.left)
+    } else if (rect.right > vw - minVisible) {
+      clampedX = rawOffset.x - (rect.right - (vw - minVisible))
+    }
 
-  const stopDrag = React.useCallback(() => {
+    if (rect.top < minVisible) {
+      clampedY = rawOffset.y + (minVisible - rect.top)
+    } else if (rect.bottom > vh - minVisible) {
+      clampedY = rawOffset.y - (rect.bottom - (vh - minVisible))
+    }
+
+    offsetRef.current = { x: clampedX, y: clampedY }
+    applyTransform(el, offsetRef.current)
+  }, [offsetRef, applyTransform, baseTransform])
+
+  const stopDrag = React.useCallback((e?: PointerEvent) => {
     const el = internalRef.current
     if (el) {
+      try { el.releasePointerCapture(e?.pointerId ?? 0); } catch {}
       el.style.transition = ''
       el.removeEventListener('pointermove', handlePointerMove)
       el.removeEventListener('pointerup', stopDrag)
       el.removeEventListener('pointercancel', stopDrag)
+      el.removeEventListener('lostpointercapture', stopDrag)
     }
     document.body.style.removeProperty('user-select')
     document.body.style.removeProperty('-webkit-user-select')
@@ -109,6 +118,7 @@ export function useDialogDrag(
       el.style.transition = 'none'
       document.body.style.userSelect = 'none'
       document.body.style.webkitUserSelect = 'none'
+      el.setPointerCapture(e.pointerId)
 
       dragStateRef.current = {
         startX: e.clientX,
@@ -119,6 +129,7 @@ export function useDialogDrag(
       el.addEventListener('pointermove', handlePointerMove)
       el.addEventListener('pointerup', stopDrag)
       el.addEventListener('pointercancel', stopDrag)
+      el.addEventListener('lostpointercapture', stopDrag)
     },
     [handlePointerMove, stopDrag, offsetRef]
   )
@@ -137,6 +148,7 @@ export function useDialogDrag(
         el.removeEventListener('pointermove', handlePointerMove)
         el.removeEventListener('pointerup', stopDrag)
         el.removeEventListener('pointercancel', stopDrag)
+        el.removeEventListener('lostpointercapture', stopDrag)
       }
     }
   }, [handlePointerMove, stopDrag])
