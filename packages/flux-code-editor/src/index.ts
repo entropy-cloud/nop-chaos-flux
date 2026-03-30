@@ -30,3 +30,6 @@ export {
   resolveFunctions,
   resolveTables,
 } from './types';
+
+export { useCodeMirror } from './use-code-mirror';
+export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror';
