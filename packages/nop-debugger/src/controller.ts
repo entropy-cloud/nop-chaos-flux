@@ -274,8 +274,8 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       return store.subscribe(listener);
     },
     getSnapshot,
-    setComponentRegistry(registry: ComponentHandleRegistry) {
-      componentRegistry = registry;
+    setComponentRegistry(registry: ComponentHandleRegistry | null) {
+      componentRegistry = registry ?? undefined;
     },
     inspectByCid,
     inspectByElement

@@ -1,5 +1,5 @@
 export { createDefaultEnv, createDefaultRegistry } from './defaults';
-export { createSchemaRenderer } from './schema-renderer';
+export { createSchemaRenderer, getSchemaRendererRegistry } from './schema-renderer';
 export { resolveRendererSlotContent, hasRendererSlotContent } from './render-nodes';
 export {
   mergeActionContext,

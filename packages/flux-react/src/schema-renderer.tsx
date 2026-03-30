@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import type {
+  ComponentHandleRegistry,
   RendererDefinition,
   SchemaRendererProps
 } from '@nop-chaos/flux-core';
@@ -14,6 +15,12 @@ import {
 } from './contexts';
 import { RenderNodes, EMPTY_SCOPE_DATA } from './helpers';
 import { DialogHost } from './dialog-host';
+
+let lastRootComponentRegistry: ComponentHandleRegistry | undefined;
+
+export function getSchemaRendererRegistry(): ComponentHandleRegistry | undefined {
+  return lastRootComponentRegistry;
+}
 
 export function createSchemaRenderer(registryDefinitions: RendererDefinition[] = []) {
   const registry = createRendererRegistry(registryDefinitions);
@@ -49,6 +56,8 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       () => props.componentRegistry ?? runtime.createComponentHandleRegistry({ id: 'root-component-registry' }),
       [props.componentRegistry, runtime]
     );
+
+    lastRootComponentRegistry = rootComponentRegistry;
 
     return (
       <RuntimeContext.Provider value={runtime}>

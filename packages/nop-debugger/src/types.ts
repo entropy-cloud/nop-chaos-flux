@@ -312,7 +312,7 @@ export interface NopDebuggerController {
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
-  setComponentRegistry(registry: import('@nop-chaos/flux-core').ComponentHandleRegistry): void;
+  setComponentRegistry(registry: import('@nop-chaos/flux-core').ComponentHandleRegistry | null): void;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
   subscribe(listener: () => void): () => void;
