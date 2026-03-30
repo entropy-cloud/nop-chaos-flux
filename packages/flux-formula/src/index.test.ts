@@ -128,5 +128,53 @@ describe('createExpressionCompiler', () => {
 
     expect(result.value).toBe('Bob');
   });
+
+  it('falls back to static for strings with invalid ${...} template syntax', () => {
+    const compiler = createExpressionCompiler();
+    const compiled = compiler.compileValue('Text with ${...} expressions');
+
+    expect(compiled.kind).toBe('static');
+    if (compiled.kind !== 'static') {
+      throw new Error('Expected static compiled value');
+    }
+    expect(compiled.value).toBe('Text with ${...} expressions');
+  });
+
+  it('falls back to static for nested objects with invalid expression strings', () => {
+    const compiler = createExpressionCompiler();
+    const input = {
+      config: {
+        variables: [
+          { label: 'Name', value: 'data.name', type: 'string' },
+          { label: 'Order', value: 'data.order.amount', type: 'number' },
+        ],
+      },
+      validTemplate: 'Hello ${name}',
+    };
+    const compiled = compiler.compileValue(input);
+
+    expect(compiled.kind).toBe('dynamic');
+    if (compiled.kind !== 'dynamic') {
+      throw new Error('Expected dynamic compiled value');
+    }
+
+    const state = compiler.createState(compiled);
+    const scope = createScope({ name: 'World' });
+    const result = compiler.evaluateWithState(compiled, scope, env, state);
+
+    expect(result.value.config).toEqual(input.config);
+    expect((result.value as any).validTemplate).toBe('Hello World');
+  });
+
+  it('falls back to static for pure expression with invalid syntax', () => {
+    const compiler = createExpressionCompiler();
+    const compiled = compiler.compileValue('${...}');
+
+    expect(compiled.kind).toBe('static');
+    if (compiled.kind !== 'static') {
+      throw new Error('Expected static compiled value');
+    }
+    expect(compiled.value).toBe('${...}');
+  });
 });
 
