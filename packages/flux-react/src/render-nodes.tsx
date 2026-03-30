@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import type {
   CompiledSchemaNode,
   RenderFragmentOptions,
@@ -119,6 +119,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     data: Record<string, unknown>;
     scope: ScopeRef;
   } | undefined>(undefined);
+  const pendingDataRef = useRef<Record<string, unknown> | null>(null);
 
   let scope = currentScope;
   const actionScope = props.options?.actionScope ?? currentActionScope;
@@ -159,11 +160,18 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
       scope = cached.scope;
 
       if (!shallowEqual(cached.data, nextData)) {
-        scope.store?.setSnapshot(nextData);
+        pendingDataRef.current = nextData;
         cached.data = nextData;
       }
     }
   }
+
+  useEffect(() => {
+    if (pendingDataRef.current && scope?.store) {
+      scope.store.setSnapshot(pendingDataRef.current);
+      pendingDataRef.current = null;
+    }
+  });
 
   if (Array.isArray(compiled)) {
     return (
