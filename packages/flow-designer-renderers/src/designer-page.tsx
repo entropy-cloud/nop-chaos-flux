@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { ActionNamespaceProvider, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv } from '@nop-chaos/flux-react';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
+import { DataViewer } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
 import type { DesignerPageSchema } from './schemas';
 import {
@@ -106,6 +108,12 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   }, [designerProvider, upstreamBackHandler]);
   const designerScope = useDesignerHostScope({ snapshot, config, core: core!, path: props.path });
   const [jsonOpen, setJsonOpen] = React.useState(false);
+  const jsonOffsetRef = useRef({ x: 0, y: 0 });
+  const jsonDocument = useMemo(() => {
+    if (!core) return null;
+    try { return JSON.parse(core.exportDocument()); }
+    catch { return null; }
+  }, [core, jsonOpen]);
 
   useLayoutEffect(() => {
     if (!actionScope || !mergedDesignerProvider) {
@@ -202,19 +210,22 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
         </div>
         {hasRendererSlotContent(dialogsSlot) ? <div className="relative">{dialogsSlot}</div> : null}
       </div>
-      {jsonOpen ? (
-        <div role="dialog" aria-label="Flow JSON preview">
-          <div className="fixed right-4 top-[72px] w-[min(560px,calc(100vw-32px))] max-h-[calc(100vh-96px)] border border-border rounded-[14px] bg-card shadow-[0_16px_40px_rgba(15,23,42,0.18)] overflow-hidden z-60">
-            <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-b border-border">
-              <h3 className="m-0 text-[13px] font-bold text-foreground">Flow JSON</h3>
-              <button type="button" className="border border-border rounded-lg bg-secondary text-secondary-foreground w-7 h-7 cursor-pointer hover:bg-secondary/80" aria-label="Close JSON preview" onClick={() => setJsonOpen(false)}>
-                ✕
-              </button>
-            </div>
-            <pre className="m-0 p-3 overflow-auto max-h-[calc(100vh-156px)] font-mono text-xs leading-relaxed bg-[#0b1220] text-[#dbe9ff]">{core.exportDocument()}</pre>
+      <Dialog open={jsonOpen} onOpenChange={setJsonOpen} draggable noOverlay noCenter>
+        <DialogContent
+          offsetRef={jsonOffsetRef}
+          aria-describedby={undefined}
+          className="right-4 top-[72px] w-[min(560px,calc(100vw-32px))] max-h-[calc(100vh-96px)] p-0 overflow-hidden z-60 flex flex-col sm:max-w-2xl"
+        >
+          <DialogHeader className="px-4 pt-4 pb-0 shrink-0">
+            <DialogTitle className="text-sm">Flow JSON</DialogTitle>
+          </DialogHeader>
+          <div className="px-4 pb-4">
+            {jsonDocument && (
+              <DataViewer data={jsonDocument} />
+            )}
           </div>
-        </div>
-      ) : null}
+        </DialogContent>
+      </Dialog>
     </DesignerContext.Provider>
   );
 }

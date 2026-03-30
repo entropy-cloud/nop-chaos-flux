@@ -312,17 +312,17 @@ test('verifies flow-designer button behaviors for toolbar and quick actions', as
   await expect(page.locator('.react-flow__edge')).toHaveCount(5);
 });
 
-test('toggles JSON preview panel from toolbar JSON button', async ({ page }) => {
+test('toggles JSON preview dialog from toolbar JSON button', async ({ page }) => {
   await openFlowDesigner(page);
 
   const topToolbar = page.locator('.nop-designer__header [data-testid="designer-toolbar"]').first();
   await topToolbar.getByRole('button', { name: /^JSON$/ }).click();
 
-  const jsonPanel = page.locator('[aria-label="Flow JSON preview"]');
-  await expect(jsonPanel).toBeAttached();
-  await expect(jsonPanel).toContainText('"nodes"');
-  await expect(jsonPanel).toContainText('"edges"');
+  const jsonDialog = page.locator('[role="dialog"][data-slot="dialog-content"]');
+  await expect(jsonDialog).toBeAttached();
+  await expect(jsonDialog).toContainText('"nodes"');
+  await expect(jsonDialog).toContainText('"edges"');
 
-  await topToolbar.getByRole('button', { name: /^JSON$/ }).click();
-  await expect(jsonPanel).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(jsonDialog).toHaveCount(0);
 });
