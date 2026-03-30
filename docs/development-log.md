@@ -18,6 +18,32 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-30 (Condition Builder Phase 1 Improvements — Code Review Fixes)
+
+- Completed deep code review of condition-builder renderer changes on `feat-improve-flow-designer` branch vs `master`.
+- Fixes applied:
+  - **FieldSelect.tsx**: Fixed `end }` syntax error on line 33 → `}`
+  - **i18n.ts**: Replaced broken generic `tf()` overload with explicit overloads (`tf('conditionCount', n)` and `tf('requiredMessage', label)`)
+  - **ConditionBuilder.tsx**: Replaced local `genId`/`groupValuesEqual` with imports from `id-utils`/`utils`; added `nop-condition-builder` marker class; replaced hardcoded Chinese strings with `t()`/`tf()` i18n calls
+  - **utils.ts**: Added missing `computeUsedFields()` function; fixed type narrowing in `groupValuesEqual()` (swapped mismatched branch logic for group vs item comparison)
+  - **types.ts**: Reverted `fields?: ConditionField[]` and `operators?: ConditionOperatorOverrides` to `any[]`/`any` to avoid TS2411 clash with `BaseSchema`'s `[key: string]: SchemaValue` index signature
+  - **ConditionGroup.tsx**: Fixed unused `dragHandleProps` parameter in SortableItem wrapper for nested groups (lint error)
+- New files:
+  - `value-input.test.tsx`: 12 tests covering null rendering, text/number/between inputs, onChange callbacks
+  - `field-select.test.ts`: 4 tests covering `flattenFields()` utility (simple, grouped, empty, nested groups)
+- All validation passing: typecheck, build, lint, test (130 tests)
+
+### 2026-03-30 (Condition Builder Design Document)
+
+- Added `docs/architecture/condition-builder.md` — full design document for the `condition-builder` renderer.
+- Researched AMIS `condition-builder` implementation at `~/sources/amis/packages/amis-ui/src/components/condition-builder/`.
+- Key decisions:
+  - Functional parity with AMIS (all field types, operators, nesting, drag-drop, remote fields, formula integration, showIf)
+  - Visual redesign using Tailwind + shadcn/ui (card layout, pill toggles, modern spacing)
+  - JSON-driven configuration through `ConditionBuilderSchema` with full operator overrides, custom fields, and expression-based visibility
+  - 4-phase implementation plan: core → interaction → advanced → polish
+- Next step: implement Phase 1 (core structure, types, group/item components, basic value inputs)
+
 ### 2026-03-29 (testid Support)
 
 - Added `testid` field to `BaseSchema` in `packages/flux-core/src/types.ts` � schema authors can now declare `testid` on any node for test anchoring.
@@ -1099,3 +1125,37 @@ This file is intentionally lightweight.
 - Kept exported session data useful by preserving request/response shape metadata while masking sensitive values in `exportedData`.
 - Started splitting `packages/amis-debugger/src/index.tsx` into dedicated modules for shared types, diagnostics helpers, redaction logic, and the floating panel UI to reduce the monolithic package entry.
 - Next likely step: add focused tests for debugger event collection and refine API response summaries so the network tab shows more useful payload metadata.
+
+
+### 2026-03-30 (Condition Builder Implementation)
+
+- Implemented full condition-builder renderer in `packages/flux-renderers-form/src/renderers/condition-builder/`
+- Files: types.ts, operators.ts, FieldSelect.tsx, OperatorSelect.tsx, ValueInput.tsx, ConditionItem.tsx, ConditionGroup.tsx, ConditionBuilder.tsx
+- Features: embedded/picker mode, AND/OR/NOT conjunction, field search, groups, unique fields, nested groups, custom operators. type-specific value inputs
+- Registered as `condition-builder` renderer definition
+- Created playground test page with 4 test configurations (basic, simple, picker, custom operators)
+- Added `lucide-react` dependency to `flux-renderers-form`
+- All typecheck + build pass
+
+### 2026-03-30 (Condition Builder Config Integration Tests)
+
+- Added `config-integration.test.tsx` with 34 component-level integration tests
+- Tests render ConditionGroup directly (mocking @nop-chaos/ui) to avoid vitest/jsdom hang with radix primitives
+- Verified configuration options take effect at runtime:
+  - showANDOR: AND/OR toggle buttons vs static label, simple mode override
+  - showNot: NOT toggle visibility and checkmark state
+  - builderMode: full vs simple (add group button visibility)
+  - maxDepth: nesting prevention at depth limit
+  - maxItemsPerGroup: add button hiding at limit
+  - custom button labels: addConditionLabel, addGroupLabel
+  - draggable: grip icon rendering
+  - placeholder: custom empty text
+  - addCondition/addGroup: item and group creation on click
+  - remove: item and nested group removal
+  - operatorsOverride: custom operator labels
+  - initial data: rendering with pre-populated values and nested groups
+  - uniqueFields: usedFields propagation
+  - disabled: button disabled state
+- All 111 tests pass (34 new + 77 existing)
+- Key decision: use `vi.mock('@nop-chaos/ui')` with simple mock components instead of SchemaRenderer to avoid jsdom hang
+- Next step: implement drag-and-drop reordering, date/time/datetime inputs

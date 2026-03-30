@@ -31,6 +31,12 @@ const NAV_CARDS: NavCard[] = [
     title: 'Debugger Lab',
     eyebrow: 'DevTools',
     description: 'Debugger API, event timeline, network trace, interaction diagnostics, and automation hooks.'
+  },
+  {
+    id: 'condition-builder',
+    title: 'Condition Builder',
+    eyebrow: 'Form Control',
+    description: 'Condition builder renderer: embedded/picker modes, AND/OR/NOT toggles, field search, nested groups, unique fields, custom operators.'
   }
 ];
 
