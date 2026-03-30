@@ -22,4 +22,5 @@ export * from './components/ui/alert';
 export * from './components/ui/progress';
 export * from './components/ui/skeleton';
 export * from './components/ui/spinner';
+export * from './components/ui/json-viewer';
 export { cn } from './lib/utils';
