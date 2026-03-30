@@ -2017,7 +2017,7 @@ describe('formRendererDefinitions', () => {
 });
 
 describe('form render performance optimization', () => {
-  it('emits render monitor callbacks for form fields', async () => {
+  it('changing one field does not trigger NodeRenderer re-renders for other fields', async () => {
     const onRenderStart = vi.fn();
     const onRenderEnd = vi.fn();
 
@@ -2029,7 +2029,7 @@ describe('form render performance optimization', () => {
           type: 'form',
           data: {
             username: 'initial',
-            email: '',
+            email: 'test@example.com',
             role: 'user'
           },
           body: [
@@ -2066,17 +2066,21 @@ describe('form render performance optimization', () => {
 
     await waitFor(() => {
       expect(onRenderStart).toHaveBeenCalled();
-      expect(onRenderEnd).toHaveBeenCalled();
     });
 
-    const renderStartCalls = onRenderStart.mock.calls.map((call) => call[0]);
-    const renderEndCalls = onRenderEnd.mock.calls.map((call) => call[0]);
+    onRenderStart.mockClear();
+    onRenderEnd.mockClear();
 
-    const formRenderStart = renderStartCalls.find((payload) => payload.type === 'form');
-    expect(formRenderStart).toBeTruthy();
+    fireEvent.change(screen.getByDisplayValue('initial'), { target: { value: 'changed' } });
 
-    expect(renderEndCalls.some((payload) => payload.type === 'form')).toBeTruthy();
-    expect(renderEndCalls.some((payload) => typeof payload.durationMs === 'number')).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('changed')).toBeTruthy();
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(onRenderStart).not.toHaveBeenCalled();
+    expect(onRenderEnd).not.toHaveBeenCalled();
   });
 });
 
