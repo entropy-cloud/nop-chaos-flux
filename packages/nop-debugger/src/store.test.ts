@@ -439,4 +439,48 @@ describe('createDebuggerStore', () => {
     expect(snapshot.events[1].summary).toBe('render-1');
     expect(snapshot.events[1].detail).toBeUndefined();
   });
+
+  it('minimize and unminimize toggle minimized state', () => {
+    const store = createDebuggerStore({
+      enabled: true,
+      sessionId: 'test',
+      maxEvents: 10,
+      defaultOpen: true,
+      defaultTab: 'overview',
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 0,
+      errorBufferKeepLatest: 0
+    });
+
+    expect(store.getSnapshot().minimized).toBe(false);
+
+    store.minimize();
+    expect(store.getSnapshot().minimized).toBe(true);
+    expect(store.getSnapshot().panelOpen).toBe(true);
+
+    store.unminimize();
+    expect(store.getSnapshot().minimized).toBe(false);
+    expect(store.getSnapshot().panelOpen).toBe(true);
+  });
+
+  it('minimize does not affect panelOpen state', () => {
+    const store = createDebuggerStore({
+      enabled: true,
+      sessionId: 'test',
+      maxEvents: 10,
+      defaultOpen: true,
+      defaultTab: 'overview',
+      position: { x: 0, y: 0 },
+      errorBufferKeepEarliest: 0,
+      errorBufferKeepLatest: 0
+    });
+
+    store.minimize();
+    expect(store.getSnapshot().panelOpen).toBe(true);
+    expect(store.getSnapshot().minimized).toBe(true);
+
+    store.hide();
+    expect(store.getSnapshot().panelOpen).toBe(false);
+    expect(store.getSnapshot().minimized).toBe(true);
+  });
 });

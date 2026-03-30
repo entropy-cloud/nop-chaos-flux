@@ -9,6 +9,7 @@ function createSnapshot(): NopDebuggerSnapshot {
   return {
     enabled: true,
     panelOpen: true,
+    minimized: false,
     paused: false,
     activeTab: 'overview',
     position: { x: 24, y: 24 },
@@ -92,6 +93,8 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
       show,
       hide,
       toggle() {},
+      minimize() {},
+      unminimize() {},
       setActiveTab,
       setPanelPosition,
       inspectByCid: vi.fn(() => undefined),
@@ -102,6 +105,8 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     show,
     hide,
     toggle() {},
+    minimize: vi.fn(),
+    unminimize: vi.fn(),
     clear,
     pause,
     resume,
@@ -145,15 +150,15 @@ describe('NopDebuggerPanel', () => {
     expect(screen.getByText(/node user-form/i)).toBeTruthy();
   });
 
-  it('calls hide when minimize button is clicked', () => {
+  it('calls minimize when minimize button is clicked', () => {
     const snapshot = createSnapshot();
     const controller = createController(snapshot);
 
     render(<NopDebuggerPanel controller={controller} />);
 
-    fireEvent.click(screen.getByTitle('Minimize'));
+    fireEvent.click(screen.getByTestId('ndbg-minimize'));
 
-    expect(controller.hide).toHaveBeenCalledTimes(1);
+    expect(controller.minimize).toHaveBeenCalledTimes(1);
   });
 
   it('opens launcher on click without drag', () => {
@@ -293,6 +298,113 @@ describe('NopDebuggerPanel', () => {
     render(<NopDebuggerPanel controller={controller} />);
 
     expect(screen.getByText('network')).toBeTruthy();
+  });
+
+  it('renders minimized bar with correct size and layout when minimized', () => {
+    const snapshot = { ...createSnapshot(), minimized: true };
+    const controller = createController(snapshot);
+
+    const { container } = render(<NopDebuggerPanel controller={controller} />);
+
+    const minimizedBar = container.querySelector('.nop-debugger--minimized');
+    expect(minimizedBar).toBeTruthy();
+
+    const style = getComputedStyle(minimizedBar!);
+    expect(style.display).toBe('flex');
+    expect(style.borderRadius).toBe('999px');
+    expect(style.cursor).toBe('grab');
+
+    expect(screen.getByText('Debugger')).toBeTruthy();
+  });
+
+  it('minimized bar has correct CSS layout properties', () => {
+    const snapshot = { ...createSnapshot(), minimized: true };
+    const controller = createController(snapshot);
+
+    const { container } = render(<NopDebuggerPanel controller={controller} />);
+
+    const minimizedBar = container.querySelector('.nop-debugger--minimized');
+    expect(minimizedBar).toBeTruthy();
+
+    const style = getComputedStyle(minimizedBar!);
+    expect(style.display).toBe('flex');
+    expect(style.borderRadius).toBe('999px');
+    expect(style.cursor).toBe('grab');
+    expect(style.padding).toBe('8px 14px');
+  });
+
+  it('minimized bar shows Debugger title and event count', () => {
+    const snapshot = { ...createSnapshot(), minimized: true, events: [{ id: 1, sessionId: 's', timestamp: 1, kind: 'render:end' as const, group: 'render' as const, level: 'info' as const, source: 'test', summary: 'render' }] };
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('Debugger')).toBeTruthy();
+    expect(screen.getByText('1')).toBeTruthy();
+  });
+
+  it('minimized bar shows error badge when errors exist', () => {
+    const snapshot = { ...createSnapshot(), minimized: true, events: [
+      { id: 1, sessionId: 's', timestamp: 1, kind: 'error' as const, group: 'error' as const, level: 'error' as const, source: 'test', summary: 'err' },
+      { id: 2, sessionId: 's', timestamp: 2, kind: 'error' as const, group: 'error' as const, level: 'error' as const, source: 'test', summary: 'err2' },
+      { id: 3, sessionId: 's', timestamp: 3, kind: 'render:end' as const, group: 'render' as const, level: 'info' as const, source: 'test', summary: 'render' }
+    ] };
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('2')).toBeTruthy();
+    expect(document.querySelector('.ndbg-minimized-error-badge')).toBeTruthy();
+    expect(document.querySelector('.ndbg-minimized-badge')).toBeFalsy();
+  });
+
+  it('shows full panel after unminimize', () => {
+    const listeners = new Set<() => void>();
+    let currentSnapshot: NopDebuggerSnapshot = { ...createSnapshot(), minimized: true };
+    const controller = createController(currentSnapshot);
+    controller.getSnapshot = () => currentSnapshot;
+    controller.subscribe = (listener) => {
+      listeners.add(listener);
+      return () => { listeners.delete(listener); };
+    };
+
+    const { rerender } = render(<NopDebuggerPanel controller={controller} />);
+
+    expect(document.querySelector('.nop-debugger--minimized')).toBeTruthy();
+
+    currentSnapshot = { ...currentSnapshot, minimized: false };
+    listeners.forEach(l => l());
+    rerender(<NopDebuggerPanel controller={controller} />);
+
+    expect(document.querySelector('.nop-debugger--minimized')).toBeFalsy();
+    expect(document.querySelector('.ndbg-drag-handle')).toBeTruthy();
+    expect(screen.getByText('Runtime Console')).toBeTruthy();
+  });
+
+  // Click-to-restore and drag are verified via E2E (Playwright) — jsdom lacks pointer capture support.
+  // Store-level minimize/unminimize state is tested in store.test.ts.
+
+  it('shows full panel after unminimize', () => {
+    const listeners = new Set<() => void>();
+    let currentSnapshot: NopDebuggerSnapshot = { ...createSnapshot(), minimized: true };
+    const controller = createController(currentSnapshot);
+    controller.getSnapshot = () => currentSnapshot;
+    controller.subscribe = (listener) => {
+      listeners.add(listener);
+      return () => { listeners.delete(listener); };
+    };
+
+    const { rerender } = render(<NopDebuggerPanel controller={controller} />);
+
+    expect(document.querySelector('.nop-debugger--minimized')).toBeTruthy();
+
+    currentSnapshot = { ...currentSnapshot, minimized: false };
+    listeners.forEach(l => l());
+    rerender(<NopDebuggerPanel controller={controller} />);
+
+    expect(document.querySelector('.nop-debugger--minimized')).toBeFalsy();
+    expect(document.querySelector('.ndbg-drag-handle')).toBeTruthy();
+    expect(screen.getByText('Runtime Console')).toBeTruthy();
   });
 
 });

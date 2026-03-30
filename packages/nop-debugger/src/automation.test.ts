@@ -30,6 +30,7 @@ describe('debugger automation helpers', () => {
     const snapshot: NopDebuggerSnapshot = {
       enabled: true,
       panelOpen: true,
+      minimized: false,
       paused: false,
       activeTab: 'timeline',
       position: { x: 1, y: 2 },
@@ -150,6 +151,8 @@ describe('debugger automation helpers', () => {
       show,
       hide,
       toggle,
+      minimize: vi.fn(),
+      unminimize: vi.fn(),
       setActiveTab,
       setPanelPosition,
       inspectByCid,
@@ -184,6 +187,7 @@ describe('debugger automation helpers', () => {
     const snapshot: NopDebuggerSnapshot = {
       enabled: true,
       panelOpen: false,
+      minimized: false,
       paused: false,
       activeTab: 'timeline',
       position: { x: 0, y: 0 },
@@ -267,6 +271,8 @@ describe('debugger automation helpers', () => {
       show() {},
       hide() {},
       toggle() {},
+      minimize() {},
+      unminimize() {},
       setActiveTab() {},
       setPanelPosition() {},
       inspectByCid: vi.fn(() => undefined),

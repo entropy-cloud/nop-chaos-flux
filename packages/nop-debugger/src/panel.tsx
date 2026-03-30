@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
+import { Pause, Play, Trash2, Crosshair, Minimize2, Maximize2, Bug } from 'lucide-react';
 import type { NopDebugEvent, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
 import { buildOverview, DEFAULT_FILTERS } from './diagnostics';
 
@@ -383,6 +383,114 @@ const DEBUGGER_STYLES = `
 .ndbg-resize-handle:active {
   background: rgba(255, 207, 139, 0.25);
 }
+
+.ndbg-errors-only-toggle {
+  background: var(--nop-debugger-badge-error-bg);
+  color: var(--nop-debugger-badge-error-text);
+}
+
+.nop-debugger--minimized {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  max-height: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  overflow: visible;
+}
+
+.nop-debugger--minimized .ndbg-resize-handle {
+  display: none;
+}
+
+.ndbg-minimized-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ndbg-minimized-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ndbg-minimized-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--nop-debugger-text);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ndbg-minimized-error-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 128, 128, 0.2);
+  color: var(--nop-debugger-badge-error-text);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ndbg-icon-button {
+  position: relative;
+}
+
+.ndbg-icon-button::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+
+.ndbg-icon-button:hover::after {
+  opacity: 1;
+}
+
+.ndbg-icon-button::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+
+.ndbg-icon-button:hover::before {
+  opacity: 1;
+}
 `;
 
 const FILTER_LABELS: Record<NopDebuggerFilterKind, string> = {
@@ -627,15 +735,19 @@ function useDebuggerSnapshot(controller: NopDebuggerController) {
   return snapshot;
 }
 
-function useDraggablePosition(controller: NopDebuggerController, initial: { x: number; y: number }) {
+function useDraggablePosition(controller: NopDebuggerController, initial: { x: number; y: number }, onTap?: () => void) {
   const [position, setPosition] = useState(initial);
   const positionRef = useRef(initial);
   const dragState = useRef<{
     pointerId: number;
     offsetX: number;
     offsetY: number;
+    startX: number;
+    startY: number;
+    hasMoved: boolean;
     target: HTMLElement;
   } | null>(null);
+  const hasMovedRef = useRef(false);
 
   useEffect(() => {
     positionRef.current = position;
@@ -658,7 +770,13 @@ function useDraggablePosition(controller: NopDebuggerController, initial: { x: n
         void error;
       }
 
-      controller.setPanelPosition(positionRef.current);
+      if (dragState.current.hasMoved) {
+        controller.setPanelPosition(positionRef.current);
+      } else {
+        onTap?.();
+      }
+
+      hasMovedRef.current = dragState.current.hasMoved;
       dragState.current = null;
     };
 
@@ -670,6 +788,13 @@ function useDraggablePosition(controller: NopDebuggerController, initial: { x: n
       if (event.buttons === 0) {
         clearDrag(event);
         return;
+      }
+
+      const deltaX = event.clientX - dragState.current.startX;
+      const deltaY = event.clientY - dragState.current.startY;
+
+      if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+        dragState.current.hasMoved = true;
       }
 
       const next = {
@@ -690,7 +815,7 @@ function useDraggablePosition(controller: NopDebuggerController, initial: { x: n
       window.removeEventListener('pointerup', clearDrag);
       window.removeEventListener('pointercancel', clearDrag);
     };
-  }, [controller]);
+  }, [controller, onTap]);
 
   const bind = {
     onPointerDown(event: ReactPointerEvent<HTMLElement>) {
@@ -703,10 +828,14 @@ function useDraggablePosition(controller: NopDebuggerController, initial: { x: n
         return;
       }
 
+      hasMovedRef.current = false;
       dragState.current = {
         pointerId: event.pointerId,
         offsetX: event.clientX - position.x,
         offsetY: event.clientY - position.y,
+        startX: event.clientX,
+        startY: event.clientY,
+        hasMoved: false,
         target
       };
 
@@ -715,7 +844,16 @@ function useDraggablePosition(controller: NopDebuggerController, initial: { x: n
     }
   };
 
-  return { position, bind };
+  const consumeClick = () => {
+    if (hasMovedRef.current) {
+      hasMovedRef.current = false;
+      return true;
+    }
+    hasMovedRef.current = false;
+    return false;
+  };
+
+  return { position, bind, consumeClick };
 }
 
 function useResizablePanel() {
@@ -907,7 +1045,9 @@ function useInjectDebuggerStyles(enabled: boolean) {
 
 export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const snapshot = useDebuggerSnapshot(props.controller);
-  const { position, bind } = useDraggablePosition(props.controller, snapshot.position);
+  const onTapRef = useRef<(() => void) | undefined>(undefined);
+  onTapRef.current = snapshot.minimized ? () => props.controller.unminimize() : undefined;
+  const { position, bind: dragBind, consumeClick } = useDraggablePosition(props.controller, snapshot.position, () => onTapRef.current?.());
   const { width: panelWidth, bind: resizeBind } = useResizablePanel();
   const { position: launcherPosition, bind: launcherBind, wasDraggedRef, consumeSuppressedClick } = useLauncherDrag(props.controller, snapshot.position);
   useInjectDebuggerStyles(snapshot.enabled);
@@ -1113,6 +1253,26 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     );
   }
 
+  if (snapshot.minimized) {
+    return (
+      <div
+        className="nop-debugger nop-theme-root nop-debugger--minimized"
+        style={{ left: `${position.x}px`, top: `${position.y}px`, display: 'flex', borderRadius: '999px', padding: '8px 14px', width: 'auto', maxHeight: 'none', overflow: 'visible', gap: '8px', alignItems: 'center', cursor: 'grab' }}
+        {...dragBind}
+      >
+        <span className="ndbg-launcher-icon">
+          <Bug size={14} />
+        </span>
+        <span className="ndbg-minimized-title">Debugger</span>
+        {errorCount > 0 ? (
+          <span className="ndbg-minimized-error-badge">{badgeDisplay}</span>
+        ) : (
+          <span className="ndbg-minimized-badge">{snapshot.events.length}</span>
+        )}
+      </div>
+    );
+  }
+
   const activeTimelineEvents = errorsOnly
     ? searchedEvents.filter((e) => e.group === 'error' || e.level === 'error' || e.level === 'warning')
     : searchedEvents;
@@ -1121,15 +1281,15 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     <div className="nop-debugger nop-theme-root" style={{ left: `${position.x}px`, top: `${position.y}px`, width: `${panelWidth}px` }}>
       <div className="ndbg-resize-handle" {...resizeBind} />
       <div className="ndbg-header">
-        <div className="ndbg-drag-handle" {...bind}>
+        <div className="ndbg-drag-handle" {...dragBind}>
           <p className="ndbg-eyebrow">Framework Debugger</p>
           <h2>Runtime Console</h2>
         </div>
         <div className="ndbg-header-actions">
-          <button type="button" className="ndbg-icon-button" onClick={() => (snapshot.paused ? props.controller.resume() : props.controller.pause())} title={snapshot.paused ? 'Resume' : 'Pause'}>
+          <button type="button" className="ndbg-icon-button" onClick={() => (snapshot.paused ? props.controller.resume() : props.controller.pause())} data-tooltip={snapshot.paused ? 'Resume' : 'Pause'}>
             {snapshot.paused ? <Play size={14} /> : <Pause size={14} />}
           </button>
-          <button type="button" className="ndbg-icon-button" onClick={() => props.controller.clear()} title="Clear">
+          <button type="button" className="ndbg-icon-button" onClick={() => props.controller.clear()} data-tooltip="Clear">
             <Trash2 size={14} />
           </button>
           <button
@@ -1141,12 +1301,12 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
               }
               setInspectMode(!inspectMode);
             }}
-            title={inspectMode ? 'Cancel pick' : 'Pick element'}
+            data-tooltip={inspectMode ? 'Cancel pick' : 'Pick element'}
             style={inspectMode ? { background: 'rgba(28,118,196,0.3)', color: '#9bd9ff' } : undefined}
           >
             <Crosshair size={14} />
           </button>
-          <button type="button" className="ndbg-icon-button" onClick={() => props.controller.hide()} title="Minimize">
+          <button type="button" className="ndbg-icon-button" data-testid="ndbg-minimize" onClick={() => props.controller.minimize()} data-tooltip="Minimize">
             <Minimize2 size={14} />
           </button>
         </div>

@@ -29,6 +29,7 @@ function createSnapshot(events: NopDebugEvent[]): NopDebuggerSnapshot {
   return {
     enabled: true,
     panelOpen: true,
+    minimized: false,
     paused: false,
     activeTab: 'timeline',
     position: { x: 1, y: 2 },
