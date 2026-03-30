@@ -18,6 +18,16 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-30
+
+- Sticky row/column headers for Report Designer spreadsheet.
+- Changed `.col-header` and `.row-header` from `position: relative` to `position: sticky` with z-index/top/left values in `apps/playground/src/styles.css`.
+- Added `.header-corner` class (`position: sticky; left: 0; top: 0; z-index: 11`) and applied it to the corner `<th>` in `apps/playground/src/pages/ReportDesignerDemo.tsx`.
+- Row numbers now stay fixed during horizontal scroll; column headers stay fixed during vertical scroll.
+- Key decision: `position: sticky` on `<table>` with `border-collapse: separate` provides the correct visual behavior with simpler CSS and lays groundwork for future freeze panes.
+- Ref: `docs/architecture/report-designer/spreadsheet-canvas-css.md`
+- Next step: Implement freeze panes reusing the same sticky architecture.
+
 ### 2026-03-29 (testid Support)
 
 - Added `testid` field to `BaseSchema` in `packages/flux-core/src/types.ts` � schema authors can now declare `testid` on any node for test anchoring.
