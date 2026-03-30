@@ -324,6 +324,45 @@ const DEBUGGER_STYLES = `
     grid-template-columns: 1fr;
   }
 }
+
+.nop-debugger-overlay {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000;
+  border-radius: 2px;
+  transition: all 0.05s ease;
+}
+.nop-debugger-overlay--hover {
+  outline: 1px dashed #1c76c4;
+  background: rgba(28, 118, 196, 0.06);
+}
+.nop-debugger-overlay--active {
+  outline: 2px solid #1c76c4;
+  background: rgba(28, 118, 196, 0.1);
+}
+.nop-debugger__component-tree {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--nop-debugger-chip-border);
+  border-radius: 8px;
+  padding: 4px;
+}
+.nop-debugger__tree-item {
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.nop-debugger__tree-item:hover {
+  background: var(--nop-debugger-chip-active-bg);
+}
+.nop-debugger__tree-item.selected {
+  background: rgba(28, 118, 196, 0.15);
+  outline: 1px solid rgba(28, 118, 196, 0.3);
+}
+.nop-debugger__tree-section {
+  display: grid;
+  gap: 8px;
+}
 `;
 
 const FILTER_LABELS: Record<NopDebuggerFilterKind, string> = {
@@ -811,6 +850,116 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const [nodeIdInput, setNodeIdInput] = useState('');
   const [networkExpandedKey, setNetworkExpandedKey] = useState<string | null>(null);
   const [errorGroupExpanded, setErrorGroupExpanded] = useState<string | null>(null);
+  const [inspectMode, setInspectMode] = useState(false);
+  const [hoveredElement, setHoveredElement] = useState<HTMLElement | null>(null);
+  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
+  const hoverOverlayRef = useRef<HTMLDivElement | null>(null);
+  const activeOverlayRef = useRef<HTMLDivElement | null>(null);
+  const [componentTree, setComponentTree] = useState<Array<{cid: number; type: string; label: string; depth: number; element: HTMLElement}>>([]);
+
+  useEffect(() => {
+    const hover = document.createElement('div');
+    hover.className = 'nop-debugger-overlay nop-debugger-overlay--hover';
+    hover.style.display = 'none';
+    document.body.appendChild(hover);
+    hoverOverlayRef.current = hover;
+
+    const active = document.createElement('div');
+    active.className = 'nop-debugger-overlay nop-debugger-overlay--active';
+    active.style.display = 'none';
+    document.body.appendChild(active);
+    activeOverlayRef.current = active;
+
+    return () => {
+      hover.remove();
+      active.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!inspectMode || !hoveredElement || !hoverOverlayRef.current) {
+      if (hoverOverlayRef.current) hoverOverlayRef.current.style.display = 'none';
+      return;
+    }
+    const rect = hoveredElement.getBoundingClientRect();
+    hoverOverlayRef.current.style.display = 'block';
+    hoverOverlayRef.current.style.top = rect.top + 'px';
+    hoverOverlayRef.current.style.left = rect.left + 'px';
+    hoverOverlayRef.current.style.width = rect.width + 'px';
+    hoverOverlayRef.current.style.height = rect.height + 'px';
+  }, [inspectMode, hoveredElement]);
+
+  useEffect(() => {
+    if (!selectedElement || !activeOverlayRef.current) {
+      if (activeOverlayRef.current) activeOverlayRef.current.style.display = 'none';
+      return;
+    }
+    const rect = selectedElement.getBoundingClientRect();
+    activeOverlayRef.current.style.display = 'block';
+    activeOverlayRef.current.style.top = rect.top + 'px';
+    activeOverlayRef.current.style.left = rect.left + 'px';
+    activeOverlayRef.current.style.width = rect.width + 'px';
+    activeOverlayRef.current.style.height = rect.height + 'px';
+  }, [selectedElement]);
+
+  useEffect(() => {
+    if (!inspectMode) {
+      setHoveredElement(null);
+      return;
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('[data-cid]');
+      setHoveredElement(target as HTMLElement | null);
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('[data-cid]');
+      if (!target || (e.target as HTMLElement).closest('.nop-debugger, .nop-debugger-launcher')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const cid = target.getAttribute('data-cid') || '0';
+      setSelectedElement(target as HTMLElement);
+      setInspectMode(false);
+      props.controller.setActiveTab('node');
+      setNodeIdInput(cid);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('click', handleClick, true);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('click', handleClick, true);
+    };
+  }, [inspectMode, props.controller]);
+
+  const scanComponentTree = () => {
+    const elements = document.querySelectorAll('[data-cid]');
+    const tree: Array<{cid: number; type: string; label: string; depth: number; element: HTMLElement}> = [];
+    const seen = new Set<string>();
+
+    elements.forEach((el) => {
+      const cid = el.getAttribute('data-cid') || '0';
+      if (seen.has(cid)) return;
+      seen.add(cid);
+      const textContent = el.textContent?.trim().slice(0, 30) || '';
+      const label = textContent || el.tagName.toLowerCase();
+      let depth = 0;
+      let parent = el.parentElement;
+      while (parent && parent !== document.body) {
+        if (parent.hasAttribute('data-cid')) depth++;
+        parent = parent.parentElement;
+      }
+      tree.push({ cid: parseInt(cid, 10), type: 'element', label, depth, element: el as HTMLElement });
+    });
+    setComponentTree(tree);
+  };
+
+  useEffect(() => {
+    if (snapshot.activeTab === 'node') {
+      scanComponentTree();
+    }
+  }, [snapshot.activeTab]);
 
   const filteredEvents = useMemo(
     () => snapshot.events.filter((event) => snapshot.filters.includes(event.group)),
@@ -916,6 +1065,19 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           </button>
           <button type="button" className="nop-debugger__icon-button" onClick={() => props.controller.clear()}>
             Clear
+          </button>
+          <button
+            type="button"
+            className="nop-debugger__icon-button"
+            onClick={() => {
+              if (!snapshot.panelOpen) {
+                props.controller.show();
+              }
+              setInspectMode(!inspectMode);
+            }}
+            style={inspectMode ? { background: 'rgba(28,118,196,0.3)', color: '#9bd9ff' } : undefined}
+          >
+            {inspectMode ? '\u2952 Click an element...' : '\u2287 Pick element'}
           </button>
           <button type="button" className="nop-debugger__icon-button" onClick={() => props.controller.hide()} title="Minimize">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -1136,6 +1298,47 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
       {snapshot.activeTab === 'node' ? (
         <>
+          <div className="nop-debugger__tree-section">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="nop-debugger__metric-label">Components ({componentTree.length})</span>
+              <button onClick={scanComponentTree} style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--nop-debugger-chip-border)', background: 'transparent', color: 'var(--nop-debugger-text)', cursor: 'pointer' }}>
+                Scan
+              </button>
+            </div>
+            {selectedElement ? (
+              <article className="nop-debugger__metric-card" style={{ marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span className="nop-debugger__metric-label">Selected Element</span>
+                  <button onClick={() => { setSelectedElement(null); }} style={{ fontSize: '11px', background: 'none', border: 'none', color: 'var(--nop-debugger-text)', cursor: 'pointer', padding: 0 }}>✕</button>
+                </div>
+                <strong>data-cid: {selectedElement.getAttribute('data-cid')}</strong>
+                <span>{selectedElement.tagName.toLowerCase()}</span>
+              </article>
+            ) : null}
+            {componentTree.length > 0 ? (
+              <div className="nop-debugger__component-tree">
+                {componentTree.map((item) => (
+                  <div
+                    key={item.cid}
+                    className={`nop-debugger__tree-item ${selectedElement === item.element ? 'selected' : ''}`}
+                    onClick={() => {
+                      setSelectedElement(item.element);
+                      setInspectMode(false);
+                      props.controller.setActiveTab('node');
+                      setNodeIdInput(String(item.cid));
+                    }}
+                    style={{ paddingLeft: `${item.depth * 16 + 8}px` }}
+                  >
+                    <span style={{ fontSize: '11px', color: 'var(--nop-debugger-muted-text)' }}>#{item.cid}</span>
+                    {' '}
+                    <span style={{ fontSize: '12px' }}>{item.label || 'element'}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="nop-debugger__empty">Click "Scan" to find components.</p>
+            )}
+          </div>
           <input
             type="text"
             className="nop-debugger__node-input"
