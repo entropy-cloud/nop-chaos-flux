@@ -18,6 +18,33 @@ This file is intentionally lightweight.
 
 ## Entries
 
+### 2026-03-31
+
+- Created `docs/references/refactoring-guidelines.md` — 重构规范文档。包含：重构计划模板、原因分析框架、安全重构流程、低代码系统特殊考量（类型系统与动态 schema、提取 vs 内联、文件拆分代价、包边界、性能）、审计经验教训、重构前检查清单。
+- Updated `docs/plans/23-architecture-audit-fix-plan.md` — 基于代码验证结果修正了 6 处不准确描述（types.ts 行数、Record<string,any> 数量、node-renderer Provider 数量、P2-2 已部分统一、P2-4 Branded Types 不推荐、P2-1 过度设计），重写了 Summary 表格和执行优先级。
+- Key decision: Branded Types (P2-4) 标记为不推荐。低代码系统中 schema 来自 JSON 运行时解析，branded types 只会导致到处 `as SchemaPath`，ROI 极低。
+- Updated `docs/index.md` to add refactoring-guidelines entry in the navigation table.
+
+### 2026-03-31
+
+- Implemented Plan 22: Debugger Node Tab Inspector Enhancement (`docs/plans/22-debugger-node-inspector-enhancement-plan.md`).
+- **types.ts**: Added `tagName` and `className` optional fields to `NopComponentInspectResult`.
+- **controller.ts**: Extended `InternalComponentHandle` with `capabilities.store` typing. Enhanced `buildInspectResult` to extract `formState` (values/errors/touched/dirty/visited/submitting) from handle's store and populate `scopeData` from form values. Added DOM element info (`tagName`, `className`).
+- **panel.tsx**: Replaced flat selected-element display with rich Component Inspector panel showing handle metadata, form state (Values/Errors/Meta tabs via JsonViewer), scope data. Added inspect-mode hint text, Esc-key cancel, expression evaluator, and new CSS classes (`ndbg-inspect-*`, `ndbg-form-tab`, `ndbg-eval-*`).
+- **controller-inspect.test.ts**: Added 3 new tests for formState filling, DOM info filling, and tagName/className from inspectByCid.
+- Note: `scopeChain` not implemented because `ComponentHandle` doesn't expose scope references — scope is only available on `FormRuntime`, not on handles.
+- Pre-existing issue: `panel.test.tsx` has a parse error at line 407 (unrelated to Plan 22).
+
+### 2026-03-31
+
+- Completed comprehensive architecture audit of core packages (flux-core, flux-runtime, flux-react, flux-formula, 3 renderer packages).
+- Audit methodology: 7 background agents (4 explore, 1 librarian, 1 cross-cutting, 1 Oracle) + direct code analysis. ~32,000 lines of non-test source code analyzed.
+- Key findings documented in `docs/plans/23-architecture-audit-fix-plan.md`.
+- **Important correction**: Initially flagged "flux-core contains runtime code" as P0 critical. After re-evaluation, flux-core's design is correct — it's a foundation package with shared pure utilities, not a pure-types package. The AGENTS.md description was inaccurate, not the code. Downgraded to P2 (docs fix only).
+- Top actionable issues: (1) require() in ESM hooks.ts, (2) 43 instances of `Record<string, any>`, (3) types.ts is 902 lines, (4) duplicated patterns in form-runtime (validateForm child validation, debounce, boolean state).
+- Good news: form-runtime is already decomposed into 10 submodules, dependency flow is clean, no reverse dependencies.
+- Next step: begin with P0-1 (require() fix) + P2-7 (AGENTS.md docs correction).
+
 ### 2026-03-30
 
 - Fixed 8 of 9 failing tests in `packages/flux-renderers-form/src/index.test.tsx`.
