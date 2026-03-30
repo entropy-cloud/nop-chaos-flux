@@ -14,8 +14,8 @@
       "types": "./dist/lib/utils.d.ts",
       "default": "./dist/lib/utils.js"
     },
-    "./base.css": "./src/styles/base.css",
-    "./styles.css": "./src/styles/index.css"
+    "./base.css": "./dist/styles/base.css",
+    "./styles.css": "./dist/styles/index.css"
   },
   "peerDependencies": {
     "react": "^19.0.0",
@@ -27,14 +27,16 @@
     "lucide-react": "^0.577.0",
     "radix-ui": "^1.4.3",
     "react-json-view-lite": "^2.5.0",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
+    "vaul": "^1.1.2",
     "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@types/react": "^19.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && cp -r src/styles dist/styles",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx"
