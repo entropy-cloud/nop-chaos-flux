@@ -37,7 +37,7 @@
     "@types/react": "^19.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && cp -r src/styles dist/styles",
+    "build": "tsc -p tsconfig.build.json && rm -rf dist/styles && cp -r src/styles dist/styles",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx"
