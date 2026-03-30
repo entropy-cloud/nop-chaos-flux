@@ -277,6 +277,9 @@ importers:
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
+      lucide-react:
+        specifier: 0.542.0
+        version: 0.542.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
