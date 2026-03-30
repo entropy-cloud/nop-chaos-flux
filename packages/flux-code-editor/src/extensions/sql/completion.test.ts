@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   parseTableAliases,
-  sqlCompletionSource,
   SQL_KEYWORDS,
 } from './completion';
 import type { TableSchema } from '../../types';
