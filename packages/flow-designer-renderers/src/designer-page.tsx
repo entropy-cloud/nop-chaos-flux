@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { ActionNamespaceProvider, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv } from '@nop-chaos/flux-react';
-import { createDesignerCore } from '@nop-chaos/flow-designer-core';
+import { createDesignerCore, layoutWithElk } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { DataViewer } from '@nop-chaos/ui';
@@ -70,6 +70,15 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
     },
     [commandAdapter, env]
   );
+
+  const handleAutoLayout = useCallback(async () => {
+    if (!core) return;
+    const doc = core.getDocument();
+    if (doc.nodes.length === 0) return;
+
+    const positions = await layoutWithElk(doc.nodes, doc.edges, core.getConfig().nodeTypes);
+    core.layoutNodes(positions);
+  }, [core]);
 
   const ctxValue = useMemo<DesignerContextValue>(
     () => ({ core: core!, commandAdapter: commandAdapter!, dispatch, snapshot, config }),
@@ -195,7 +204,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
       {config.themeStyles && <style>{config.themeStyles}</style>}
       <div className="nop-designer grid grid-rows-[auto_minmax(0,1fr)] h-full min-h-0 gap-3 p-6 text-foreground" style={{ background: 'linear-gradient(135deg, rgba(167, 243, 208, 0.15) 0%, rgba(196, 181, 253, 0.12) 50%, rgba(153, 246, 228, 0.1) 100%)' }}>
         <div className="nop-designer__header min-h-0">
-          {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} />}
+          {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} onAutoLayout={handleAutoLayout} />}
         </div>
         <div className="grid grid-cols-[15rem_minmax(0,1fr)_22rem] grid-rows-1 gap-3 min-h-0 h-full max-[1023px]:grid-cols-[15rem_minmax(0,1fr)] max-[1023px]:[&>*:nth-child(3)]:hidden max-[767px]:grid-cols-1 max-[767px]:[&>*:first-child]:hidden">
           <div className="nop-designer__palette min-h-0 overflow-hidden rounded-xl border border-border shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }}>

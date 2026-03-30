@@ -91,6 +91,7 @@ function toCommand(action: string | undefined): import('./designer-command-adapt
 export function DesignerToolbarContent(props: {
   onExportToggle?: () => void;
   exportActive?: boolean;
+  onAutoLayout?: () => void;
 }) {
   const { config, snapshot, dispatch } = useDesignerContext();
   const actionScope = useCurrentActionScope();
@@ -188,6 +189,10 @@ export function DesignerToolbarContent(props: {
               size="sm"
               disabled={disabled}
               onClick={() => {
+                if (item.action === 'designer:autoLayout') {
+                  props.onAutoLayout?.();
+                  return;
+                }
                 if (command) {
                   if (command.type === 'export' && props.onExportToggle) {
                     props.onExportToggle();
