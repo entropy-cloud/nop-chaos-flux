@@ -14,7 +14,7 @@ Some renderers (e.g. `code-editor`) may need FieldFrame wrapping in form context
 
 Bug #19 exposed a specific symptom: `FieldFrame` renders a `<label>` wrapper, and HTML spec causes `<label>` to forward clicks to its first labelable descendant. Inside a code-editor that had a `<button>` for fullscreen toggle, clicking anywhere in the editor text area would trigger that button.
 
-The immediate fix was switching `<button>` to `<span role="button">`, but the deeper issue is that the wrapping decision should be controllable from the JSON schema level.
+**Code-editor 已通过 `<span role="button">` 替代 `<button>` 修复（commit `c5027b8`），无需迁移到 `frameWrap`。** 此计划是为未来其他遇到类似需求的 renderer 提供的通用框架级方案。
 
 ## 1. Design
 
@@ -123,23 +123,7 @@ function resolveShouldWrap(
 }
 ```
 
-### Step 3: Update code-editor to demonstrate
-
-**Package**: `flux-code-editor`
-
-No code changes needed — the renderer keeps `wrap: true`. The playground schema can demonstrate:
-
-```json
-{
-  "type": "code-editor",
-  "name": "standaloneEditor",
-  "frameWrap": false,
-  "language": "json",
-  "height": 200
-}
-```
-
-### Step 4: Add unit tests
+### Step 3: Add unit tests
 
 **Package**: `flux-react`
 
@@ -153,9 +137,9 @@ No code changes needed — the renderer keeps `wrap: true`. The playground schem
   - `definitionWrap: true` + `frameWrap: 'label'` → `label`
 - Integration test: render a `wrap: true` component with `frameWrap: false` and verify no `<label>` wrapper in output
 
-### Step 5: Update playground
+### Step 4: Update playground
 
-Add a standalone code-editor without FieldFrame wrapping to demonstrate the feature.
+Add a renderer using `frameWrap: false` to demonstrate the feature. Code-editor 无需改动（已通过 `<span>` 修复），可用其他 renderer（如一个独立使用、不需要 label 包裹的控件）来演示。
 
 ## 3. Docs To Update
 
@@ -174,8 +158,7 @@ Add a standalone code-editor without FieldFrame wrapping to demonstrate the feat
 
 | Doc | What to change |
 |---|---|
-| `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md` | Add a "Future Improvement" note pointing to this plan as the proper schema-level fix. |
-| `docs/architecture/code-editor.md` | Mention `frameWrap: false` as an option for standalone code-editor usage outside forms. |
+| `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md` | Add note: code-editor 已通过 `<span role="button">` 修复，不需要 `frameWrap` 迁移。 |
 | `docs/development-log.md` | Entry when this plan is implemented. |
 
 ## 4. Scope and Risk
@@ -197,3 +180,4 @@ Add a standalone code-editor without FieldFrame wrapping to demonstrate the feat
 - Changing `FieldFrame` to use `<div>` instead of `<label>` (separate concern)
 - Adding `frameWrap` to `RendererDefinition` (stays schema-only)
 - Any changes to form validation or field state management
+- Migrating code-editor to use `frameWrap` (already fixed via `<span role="button">`)
