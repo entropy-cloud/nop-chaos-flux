@@ -595,6 +595,8 @@ export interface CompiledNodeRuntimeState {
   props?: RuntimeValueState<Record<string, unknown>>;
   resolvedMeta?: ResolvedNodeMeta;
   resolvedProps?: Readonly<Record<string, unknown>>;
+  _staticPropsResult?: ResolvedNodeProps;
+  _lastPropsResult?: ResolvedNodeProps;
 }
 
 export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {

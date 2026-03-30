@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
   ComponentHandleRegistry,
@@ -7,6 +8,8 @@ import type {
   FormRuntime,
   PageRuntime,
   RendererComponentProps,
+  ResolvedNodeMeta,
+  ResolvedNodeProps,
   ScopeRef,
   XuiImportSpec
 } from '@nop-chaos/flux-core';
@@ -69,13 +72,26 @@ export function NodeRenderer(props: {
   const renderStartedAtRef = useRef(0);
   renderStartedAtRef.current = Date.now();
 
-  useSyncExternalStore(
-    props.scope.store?.subscribe ?? (() => () => undefined),
-    props.scope.store?.getSnapshot ?? (() => null)
-  );
+  const isStatic = props.node.flags.isStatic;
 
-  const meta = runtime.resolveNodeMeta(props.node, props.scope, nodeState);
-  const resolvedProps = runtime.resolveNodeProps(props.node, props.scope, nodeState);
+  const { meta, resolvedProps } = isStatic
+    ? {
+        meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
+        resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
+      }
+    : useSyncExternalStoreWithSelector(
+        props.scope.store?.subscribe ?? (() => () => undefined),
+        () => props.scope.readOwn(),
+        () => props.scope.readOwn(),
+        () => ({
+          meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
+          resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
+        }),
+        (prev: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps } | null, next: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps }) => {
+          if (!prev) return false;
+          return prev.meta === next.meta && prev.resolvedProps === next.resolvedProps;
+        }
+      );
 
   const nodeClassAliases = (props.node.schema as { classAliases?: Record<string, string> }).classAliases;
   const mergedClassAliases = mergeClassAliases(parentClassAliases, nodeClassAliases);

@@ -43,10 +43,8 @@ export function createNodeRuntime(input: {
     };
 
     if (state?.resolvedMeta && shallowEqual(state.resolvedMeta, resolved)) {
-      return {
-        ...state.resolvedMeta,
-        changed: false
-      };
+      state.resolvedMeta.changed = false;
+      return state.resolvedMeta;
     }
 
     if (state) {
@@ -58,11 +56,18 @@ export function createNodeRuntime(input: {
 
   function resolveNodeProps(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps {
     if (node.props.kind === 'static') {
-      return {
+      if (state?._staticPropsResult) {
+        return state._staticPropsResult;
+      }
+      const result: ResolvedNodeProps = {
         value: node.props.value,
         changed: false,
         reusedReference: true
       };
+      if (state) {
+        state._staticPropsResult = result;
+      }
+      return result;
     }
 
     const execution = input.expressionCompiler.evaluateWithState(
@@ -74,6 +79,10 @@ export function createNodeRuntime(input: {
 
     if (state) {
       state.resolvedProps = execution.value;
+      if (execution.reusedReference && state._lastPropsResult) {
+        return state._lastPropsResult;
+      }
+      state._lastPropsResult = execution;
     }
 
     return execution;
@@ -84,4 +93,3 @@ export function createNodeRuntime(input: {
     resolveNodeProps
   };
 }
-

@@ -2029,7 +2029,7 @@ describe('formRendererDefinitions', () => {
 });
 
 describe('form render performance optimization', () => {
-  it.skip('changing one field does not trigger NodeRenderer re-renders for other fields', async () => {
+  it('changing one field does not trigger NodeRenderer re-renders for other fields', async () => {
     const onRenderStart = vi.fn();
     const onRenderEnd = vi.fn();
 
