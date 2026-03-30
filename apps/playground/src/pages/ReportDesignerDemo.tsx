@@ -1139,7 +1139,7 @@ export function ReportDesignerDemo() {
             <table>
               <thead>
                 <tr>
-                  <th className="row-header" style={{ width: 40 }}></th>
+                  <th className="row-header header-corner" style={{ width: 40 }}></th>
                   {Array.from({ length: COLS }, (_, c) => (
                     <th
                       key={c}
