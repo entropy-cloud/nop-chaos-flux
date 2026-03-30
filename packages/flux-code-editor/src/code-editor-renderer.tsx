@@ -168,27 +168,49 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
       {isFullscreen && allowFullscreen && (
         <div className="nop-code-editor__header">
           <span className="nop-code-editor__header-title">{props.meta.label || props.schema.label}</span>
-          <button
-            type="button"
+          <span
+            role="button"
+            tabIndex={0}
             className="nop-code-editor__header-close"
             onClick={() => setIsFullscreen(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIsFullscreen(false);
+              }
+            }}
             aria-label="Exit fullscreen"
           >
             ×
-          </button>
+          </span>
         </div>
       )}
       {allowFullscreen && !isFullscreen && (
         <div className="nop-code-editor__toolbar">
-          <button
-            type="button"
+          {/*
+            Intentionally using <span role="button"> instead of <button>.
+            FieldFrame wraps this component in a <label>. A <label> forwards
+            clicks to its first *labelable* descendant (<button>, <input>, etc.).
+            If we used <button> here, clicking anywhere inside the <label> —
+            including the editor text area — would trigger this handler.
+            <span> is NOT labelable, so the label won't forward clicks to it.
+          */}
+          <span
+            role="button"
+            tabIndex={0}
             className="nop-code-editor__toolbar-fullscreen"
             onClick={toggleFullscreen}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleFullscreen();
+              }
+            }}
             aria-label="Enter fullscreen"
             title="Fullscreen"
           >
             ⛶
-          </button>
+          </span>
         </div>
       )}
       <div ref={editorRef} style={isFullscreen ? { flex: 1, overflow: 'auto' } : undefined} />
