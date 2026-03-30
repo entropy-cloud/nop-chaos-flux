@@ -52,14 +52,19 @@ const DEBUGGER_STYLES = `
   box-shadow: var(--nop-debugger-shadow);
   color: var(--nop-debugger-text);
   backdrop-filter: blur(16px);
+  overflow: auto;
+}
+
+.nop-debugger__header {
+  position: sticky;
+  top: -14px;
+  z-index: 1;
+  background: var(--nop-debugger-bg);
+  padding-bottom: 2px;
 }
 
 .nop-debugger__header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
 
 .nop-debugger__drag-handle {
   flex: 1;
@@ -362,6 +367,20 @@ const DEBUGGER_STYLES = `
 .nop-debugger__tree-section {
   display: grid;
   gap: 8px;
+}
+.nop-debugger__resize-handle {
+  position: absolute;
+  left: 0;
+  top: 22px;
+  bottom: 22px;
+  width: 6px;
+  cursor: ew-resize;
+  border-radius: 3px 0 0 3px;
+  z-index: 2;
+}
+.nop-debugger__resize-handle:hover,
+.nop-debugger__resize-handle:active {
+  background: rgba(255, 207, 139, 0.25);
 }
 `;
 
@@ -698,6 +717,53 @@ function useDraggablePosition(controller: NopDebuggerController, initial: { x: n
   return { position, bind };
 }
 
+function useResizablePanel() {
+  const [width, setWidth] = useState(420);
+  const resizeState = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null);
+
+  useEffect(() => {
+    const clear = (event: PointerEvent) => {
+      if (!resizeState.current || resizeState.current.pointerId !== event.pointerId) return;
+      resizeState.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    const move = (event: PointerEvent) => {
+      if (!resizeState.current || resizeState.current.pointerId !== event.pointerId) {
+        clear(event);
+        return;
+      }
+      const delta = event.clientX - resizeState.current.startX;
+      const next = Math.max(280, Math.min(window.innerWidth - 40, resizeState.current.startWidth - delta));
+      setWidth(next);
+    };
+
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', clear);
+    window.addEventListener('pointercancel', clear);
+
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', clear);
+      window.removeEventListener('pointercancel', clear);
+    };
+  }, []);
+
+  const bind = {
+    onPointerDown(event: ReactPointerEvent<HTMLElement>) {
+      if (event.button !== 0) return;
+      resizeState.current = { pointerId: event.pointerId, startX: event.clientX, startWidth: width };
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+      event.preventDefault();
+    }
+  };
+
+  return { width, bind };
+}
+
 function useLauncherDrag(
   controller: NopDebuggerController,
   initial: { x: number; y: number }
@@ -841,6 +907,7 @@ function useInjectDebuggerStyles(enabled: boolean) {
 export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const snapshot = useDebuggerSnapshot(props.controller);
   const { position, bind } = useDraggablePosition(props.controller, snapshot.position);
+  const { width: panelWidth, bind: resizeBind } = useResizablePanel();
   const { position: launcherPosition, bind: launcherBind, wasDraggedRef, consumeSuppressedClick } = useLauncherDrag(props.controller, snapshot.position);
   useInjectDebuggerStyles(snapshot.enabled);
 
@@ -1053,7 +1120,8 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     : searchedEvents;
 
   return (
-    <div className="nop-debugger nop-theme-root" style={{ left: `${position.x}px`, top: `${position.y}px` }}>
+    <div className="nop-debugger nop-theme-root" style={{ left: `${position.x}px`, top: `${position.y}px`, width: `${panelWidth}px` }}>
+      <div className="nop-debugger__resize-handle" {...resizeBind} />
       <div className="nop-debugger__header">
         <div className="nop-debugger__drag-handle" {...bind}>
           <p className="nop-debugger__eyebrow">Framework Debugger</p>
