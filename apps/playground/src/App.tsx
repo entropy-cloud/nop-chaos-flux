@@ -5,7 +5,7 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
-import { HomePage, FluxBasicPage, FlowDesignerPage, ReportDesignerPage, DebuggerLabPage, ConditionBuilderPage, CodeEditorPage } from './pages';
+import { HomePage, FluxBasicPage, FlowDesignerPage, ReportDesignerPage, DebuggerLabPage, ConditionBuilderPage, CodeEditorPage, WordEditorPage } from './pages';
 import type { PageId } from './pages';
 
 const registry = createDefaultRegistry();
@@ -48,6 +48,7 @@ export function App() {
       {activePage === 'debugger-lab' && <DebuggerLabPage debuggerController={debuggerController} onBack={handleBackHome} />}
       {activePage === 'condition-builder' && <ConditionBuilderPage onBack={handleBackHome} />}
       {activePage === 'code-editor' && <CodeEditorPage onBack={handleBackHome} />}
+      {activePage === 'word-editor' && <WordEditorPage onBack={handleBackHome} />}
       <NopDebuggerPanel controller={debuggerController} />
     </div>
   );

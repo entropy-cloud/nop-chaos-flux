@@ -43,6 +43,12 @@ const NAV_CARDS: NavCard[] = [
     title: 'Code Editor',
     eyebrow: 'CodeMirror 6',
     description: 'Code editors for expression, SQL, JSON, JavaScript, CSS, HTML. Syntax highlighting, auto-completion, themes, line numbers, folding, and read-only mode.'
+  },
+  {
+    id: 'word-editor',
+    title: 'Word Editor',
+    eyebrow: 'Document Template',
+    description: 'Word-like document editor with canvas 2D rendering, template expressions, formatting toolbar, and paper settings.'
   }
 ];
 
