@@ -98,11 +98,45 @@ export interface ExpressionLintRule {
   validate: string;
 }
 
+export interface SQLFormatConfig {
+  enabled: boolean;
+  language?: 'sql' | 'mysql' | 'postgresql' | 'mariadb' | 'tsql' | 'plsql';
+  tabWidth?: number;
+  keywordCase?: 'upper' | 'lower' | 'preserve';
+  indentStyle?: 'standard' | 'tabularLeft' | 'tabularRight';
+  logicalOperatorNewline?: 'before' | 'after';
+}
+
+export interface CodeSnippetTemplate {
+  name: string;
+  template: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface VariablePanelConfig {
+  enabled: boolean;
+  variables?: VariableItem[] | VariableSourceRef;
+  insertTemplate?: string;
+}
+
+export interface SQLExecutionConfig {
+  enabled: boolean;
+  onExecute?: string | ApiObject;
+  resultPath?: string;
+  params?: Record<string, string>;
+  showPreview?: boolean;
+}
+
 export interface SQLEditorConfig {
   tables?: TableSchema[] | SQLSchemaSourceRef;
   dialect?: SQLDialect;
   keywords?: boolean;
   uppercaseKeywords?: boolean;
+  format?: boolean | SQLFormatConfig;
+  execution?: SQLExecutionConfig;
+  snippets?: CodeSnippetTemplate[];
+  variablePanel?: VariablePanelConfig;
 }
 
 export type SQLDialect = 'standard' | 'mysql' | 'postgresql' | 'sqlite' | 'mssql';
@@ -187,4 +221,25 @@ export function resolveTables(config: SQLEditorConfig | undefined): TableSchema[
   if (!config?.tables) return [];
   if (isSQLSchemaSourceRef(config.tables)) return [];
   return config.tables;
+}
+
+export function resolveFormatConfig(config: SQLEditorConfig | undefined): SQLFormatConfig | undefined {
+  if (!config?.format) return undefined;
+  if (config.format === true) return { enabled: true };
+  return config.format;
+}
+
+export function resolveSQLVariables(config: SQLEditorConfig | undefined): VariableItem[] {
+  if (!config?.variablePanel?.variables) return [];
+  if (isVariableSourceRef(config.variablePanel.variables)) return [];
+  return config.variablePanel.variables;
+}
+
+export function renderInsertTemplate(
+  template: string,
+  variable: { value: string; label: string },
+): string {
+  return template
+    .replace(/\$\{value\}/g, variable.value)
+    .replace(/\$\{label\}/g, variable.label);
 }

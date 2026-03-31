@@ -28,13 +28,14 @@
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "sql-formatter": "^15.7.3"
   },
   "devDependencies": {
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
-    "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/flux-renderers-data": "workspace:*",
+    "@nop-chaos/flux-renderers-form": "workspace:*",
     "@testing-library/react": "^16.3.0"
   },
   "scripts": {
