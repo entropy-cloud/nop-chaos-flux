@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
@@ -28,20 +28,8 @@ import { useRendererRuntime } from './hooks';
 import { createHelpers } from './helpers';
 import { RenderNodes } from './render-nodes';
 import { FieldFrame } from './field-frame';
-
-function createNodeOwnedActionScope(runtime: import('@nop-chaos/flux-core').RendererRuntime, parent: ActionScope | undefined, node: CompiledSchemaNode) {
-  return runtime.createActionScope({
-    id: `${node.id}:action-scope`,
-    parent
-  });
-}
-
-function createNodeOwnedComponentRegistry(runtime: import('@nop-chaos/flux-core').RendererRuntime, parent: ComponentHandleRegistry | undefined, node: CompiledSchemaNode) {
-  return runtime.createComponentHandleRegistry({
-    id: `${node.id}:component-registry`,
-    parent
-  });
-}
+import { useNodeForm } from './useNodeForm';
+import { useNodeScopes } from './useNodeScopes';
 
 function getNodeImports(node: CompiledSchemaNode): readonly XuiImportSpec[] | undefined {
   return 'xui:imports' in node.schema
@@ -70,7 +58,9 @@ export function NodeRenderer(props: {
 
   const nodeState = stateRef.current.state;
   const renderStartedAtRef = useRef(0);
-  renderStartedAtRef.current = Date.now();
+  if (runtime.env.monitor) {
+    renderStartedAtRef.current = Date.now();
+  }
 
   const isStatic = props.node.flags.isStatic;
 
@@ -100,84 +90,10 @@ export function NodeRenderer(props: {
     ? { ...meta, className: resolvedClassName }
     : meta;
 
-  const formRef = useRef<{
-    nodeId: string;
-    formId: string;
-    formName?: string;
-    parentScope: ScopeRef;
-    page?: PageRuntime;
-    validation: CompiledSchemaNode['validation'];
-    form: FormRuntime;
-  } | undefined>(undefined);
-  let activeForm = props.form;
-  const nodeActionScopeRef = useRef<{ nodeId: string; scope: ActionScope } | undefined>(undefined);
-  const nodeComponentRegistryRef = useRef<{ nodeId: string; registry: ComponentHandleRegistry } | undefined>(undefined);
-
-  if (props.node.component.scopePolicy === 'form') {
-    const formId = typeof resolvedProps.value.id === 'string' ? resolvedProps.value.id : props.node.id;
-    const formName = typeof resolvedProps.value.name === 'string' ? resolvedProps.value.name : undefined;
-    const initialValues =
-      resolvedProps.value.data && typeof resolvedProps.value.data === 'object'
-        ? (resolvedProps.value.data as Record<string, unknown>)
-        : undefined;
-
-    if (
-      !formRef.current ||
-      formRef.current.nodeId !== props.node.id ||
-      formRef.current.formId !== formId ||
-      formRef.current.formName !== formName ||
-      formRef.current.parentScope !== props.scope ||
-      formRef.current.page !== props.page ||
-      formRef.current.validation !== props.node.validation
-    ) {
-      formRef.current = {
-        nodeId: props.node.id,
-        formId,
-        formName,
-        parentScope: props.scope,
-        page: props.page,
-        validation: props.node.validation,
-        form: runtime.createFormRuntime({
-          id: formId,
-          name: formName,
-          initialValues,
-          parentScope: props.scope,
-          page: props.page,
-          validation: props.node.validation
-        })
-      };
-    }
-
-    activeForm = formRef.current.form;
-  }
-
-  if (
-    props.node.component.actionScopePolicy === 'new' &&
-    (!nodeActionScopeRef.current || nodeActionScopeRef.current.nodeId !== props.node.id)
-  ) {
-    nodeActionScopeRef.current = {
-      nodeId: props.node.id,
-      scope: createNodeOwnedActionScope(runtime, props.actionScope, props.node)
-    };
-  }
-
-  if (
-    props.node.component.componentRegistryPolicy === 'new' &&
-    (!nodeComponentRegistryRef.current || nodeComponentRegistryRef.current.nodeId !== props.node.id)
-  ) {
-    nodeComponentRegistryRef.current = {
-      nodeId: props.node.id,
-      registry: createNodeOwnedComponentRegistry(runtime, props.componentRegistry, props.node)
-    };
-  }
+  const activeForm = useNodeForm(runtime, props.node, props.scope, props.page, resolvedProps, props.form);
+  const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, props.node, props.actionScope, props.componentRegistry);
 
   const activeScope = activeForm?.scope ?? props.scope;
-  const activeActionScope = props.node.component.actionScopePolicy === 'new'
-    ? nodeActionScopeRef.current?.scope
-    : props.actionScope;
-  const activeComponentRegistry = props.node.component.componentRegistryPolicy === 'new'
-    ? nodeComponentRegistryRef.current?.registry
-    : props.componentRegistry;
   const nodeImports = getNodeImports(props.node);
 
   useEffect(() => {

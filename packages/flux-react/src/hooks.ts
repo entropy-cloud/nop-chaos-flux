@@ -23,6 +23,7 @@ import {
   ScopeContext,
   useRequiredContext
 } from './contexts';
+import { createHelpers } from './helpers';
 import { EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
 
 export function useRendererRuntime(): RendererRuntime {
@@ -45,11 +46,11 @@ export function useRendererEnv() {
   return useRendererRuntime().env;
 }
 
-export function useScopeSelector<T>(selector: (scopeData: any) => T, equalityFn: (a: T, b: T) => boolean = Object.is): T {
+export function useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn: (a: T, b: T) => boolean = Object.is): T {
   const scope = useRenderScope();
   const store = scope.store;
   const subscribe = store?.subscribe ?? (() => () => undefined);
-  const getSnapshot = () => scope.readOwn();
+  const getSnapshot = () => scope.readOwn() as unknown as S;
 
   return useSyncExternalStoreWithSelector(
     subscribe,
@@ -137,11 +138,7 @@ export function useRenderFragment() {
   const page = useCurrentPage();
 
   return useMemo(
-    () => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { createHelpers } = require('./helpers');
-      return createHelpers({ runtime, scope, actionScope, componentRegistry, form, page }).render;
-    },
+    () => createHelpers({ runtime, scope, actionScope, componentRegistry, form, page }).render,
     [runtime, scope, actionScope, componentRegistry, form, page]
   );
 }
