@@ -7,7 +7,7 @@
 **Tech Stack**: React 19, Zustand, TypeScript 5.9, Vite 8, Vitest, pnpm workspace.
 
 **Workspace Packages**:
-- `@nop-chaos/flux-core` - Pure types/interfaces (no runtime code).
+- `@nop-chaos/flux-core` - Foundation contracts and shared utilities. Contains type definitions, constants, and side-effect-free pure utility functions shared across all packages.
 - `@nop-chaos/flux-formula` - Expression compiler/evaluator.
 - `@nop-chaos/flux-runtime` - Core runtime (Zustand stores, validation, actions).
 - `@nop-chaos/flux-react` - React rendering layer.
@@ -15,7 +15,6 @@
 - `@nop-chaos/flux-renderers-form` - Form renderers.
 - `@nop-chaos/flux-renderers-data` - Data renderers.
 - `@nop-chaos/nop-debugger` - Devtools/debugger panel.
-- `@nop-chaos/flux-testing` - Shared test utilities.
 - `apps/playground` - Dev playground.
 
 **Dependency Flow**:
