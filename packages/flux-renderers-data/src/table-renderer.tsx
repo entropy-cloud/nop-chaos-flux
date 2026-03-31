@@ -37,8 +37,9 @@ type SortState = { column: string; direction: 'asc' | 'desc' | null };
 type FilterState = Record<string, Set<string>>;
 
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
-  const columns = Array.isArray(props.props.columns) ? (props.props.columns as TableColumnSchema[]) : [];
-  const source = Array.isArray(props.props.source) ? (props.props.source as Array<Record<string, any>>) : [];
+  const schemaProps = props.props as unknown as TableSchema;
+  const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : [];
+  const source = Array.isArray(schemaProps.source) ? (schemaProps.source as Array<Record<string, any>>) : [];
   const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: 'No data' });
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
@@ -47,20 +48,20 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const [sortState, setSortState] = useState<SortState>({ column: '', direction: null });
   const [filterState, setFilterState] = useState<FilterState>({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(props.props.pagination?.pageSize ?? 10);
+  const [pageSize, setPageSize] = useState(schemaProps.pagination?.pageSize ?? 10);
   const [selectedRowKeys, setSelectedRowKeys] = useState<Set<string>>(
-    new Set(props.props.rowSelection?.selectedRowKeys ?? [])
+    new Set(schemaProps.rowSelection?.selectedRowKeys ?? [])
   );
   const [expandedRowKeys, setExpandedRowKeys] = useState<Set<string>>(
-    new Set(props.props.expandable?.expandedRowKeys ?? [])
+    new Set(schemaProps.expandable?.expandedRowKeys ?? [])
   );
   const [allSelected, setAllSelected] = useState(false);
 
-  const columnCount = columns.length + (props.props.rowSelection ? 1 : 0) + (props.props.expandable ? 1 : 0);
-  const isLoading = props.props.loading === true;
-  const isStriped = props.props.stripe === true;
-  const isBordered = props.props.bordered === true;
-  const paginationEnabled = props.props.pagination?.enabled !== false;
+  const columnCount = columns.length + (schemaProps.rowSelection ? 1 : 0) + (schemaProps.expandable ? 1 : 0);
+  const isLoading = schemaProps.loading === true;
+  const isStriped = schemaProps.stripe === true;
+  const isBordered = schemaProps.bordered === true;
+  const paginationEnabled = schemaProps.pagination?.enabled !== false;
 
   const handleSort = useCallback(
     (columnName: string) => {
@@ -237,18 +238,18 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         >
           <TableHeader className="nop-table__header">
             <TableRow>
-              {props.props.expandable ? (
+              {schemaProps.expandable ? (
                 <TableHead className="nop-table__expand-column" style={{ width: '40px' }}>
                   <span className="sr-only">Expand</span>
                 </TableHead>
               ) : null}
 
-              {props.props.rowSelection ? (
+              {schemaProps.rowSelection ? (
                 <TableHead className="nop-table__select-column" style={{ width: '40px' }}>
-                  {props.props.rowSelection.type === 'checkbox' && (
+                  {schemaProps.rowSelection.type === 'checkbox' && (
                     <Checkbox
                       checked={allSelected && selectedRowKeys.size === source.length && source.length > 0}
-                      onChange={(checked) => handleSelectAll(checked)}
+                      onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
                     />
                   )}
                 </TableHead>
@@ -260,7 +261,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 const isSortable = column.sortable === true;
                 const isFilterable = column.filterable === true && Array.isArray(column.filterOptions) && column.filterOptions.length > 0;
                 const currentSort = sortState.column === column.name ? sortState.direction : null;
-                const activeFilters = filterState[column.name] ?? new Set();
+                const activeFilters = column.name ? (filterState[column.name] ?? new Set()) : new Set<string>();
 
                 return (
                   <TableHead
@@ -282,15 +283,17 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
                         {isFilterable && (
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                className={`h-6 w-6 rounded hover:bg-accent ${activeFilters.size > 0 ? 'text-primary' : 'text-muted-foreground'}`}
-                                aria-label="Filter"
-                              >
-                                <span className="sr-only">Filter</span>
-                                <ChevronDownIcon className="size-3" />
-                              </button>
-                            </DropdownMenuTrigger>
+                            <DropdownMenuTrigger
+                              render={
+                                <button
+                                  className={`h-6 w-6 rounded hover:bg-accent ${activeFilters.size > 0 ? 'text-primary' : 'text-muted-foreground'}`}
+                                  aria-label="Filter"
+                                >
+                                  <span className="sr-only">Filter</span>
+                                  <ChevronDownIcon className="size-3" />
+                                </button>
+                              }
+                            />
                             <DropdownMenuContent>
                               {column.filterOptions!.map((option) => (
                                 <DropdownMenuCheckboxItem
@@ -349,12 +352,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                               void props.events.onRowClick?.(event, {
                                 scope: rowScope,
                               })
-                          : props.props.expandable?.expandRowByClick
+                          : schemaProps.expandable?.expandRowByClick
                             ? () => handleToggleExpand(rowKey)
                             : undefined
                       }
                     >
-                      {props.props.expandable ? (
+                      {schemaProps.expandable ? (
                         <TableCell className="nop-table__expand-cell">
                           <button
                             onClick={(e) => {
@@ -369,12 +372,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                         </TableCell>
                       ) : null}
 
-                      {props.props.rowSelection ? (
+                      {schemaProps.rowSelection ? (
                         <TableCell className="nop-table__select-cell" onClick={(e) => e.stopPropagation()}>
-                          {props.props.rowSelection.type === 'checkbox' ? (
-                            <Checkbox checked={isSelected} onChange={(checked) => handleSelectRow(rowKey, checked)} />
+                          {schemaProps.rowSelection.type === 'checkbox' ? (
+                            <Checkbox checked={isSelected} onCheckedChange={(checked) => handleSelectRow(rowKey, Boolean(checked))} />
                           ) : (
-                            <RadioGroupItem value={rowKey} checked={isSelected} onChange={() => handleSelectRow(rowKey, true)} />
+                            <RadioGroupItem value={rowKey} />
                           )}
                         </TableCell>
                       ) : null}
@@ -427,10 +430,10 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                       })}
                     </TableRow>
 
-                    {isExpanded && props.props.expandable?.expandedRowRegionKey ? (
+                    {isExpanded && schemaProps.expandable?.expandedRowRegionKey ? (
                       <TableRow className="nop-table__expanded-row">
                         <TableCell colSpan={columnCount} className="nop-table__expanded-cell">
-                          {props.regions[props.props.expandable.expandedRowRegionKey]?.render({
+                          {props.regions[schemaProps.expandable.expandedRowRegionKey]?.render({
                             scope: rowScope,
                             pathSuffix: `expanded.${rowKey}`,
                           })}
@@ -463,7 +466,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
               onChange={(e) => handlePageSizeChange(Number(e.target.value))}
               size="sm"
             >
-              {props.props.pagination?.pageSizeOptions?.map((size) => (
+              {schemaProps.pagination?.pageSizeOptions?.map((size: number) => (
                 <NativeSelectOption key={size} value={String(size)}>
                   {size}
                 </NativeSelectOption>
@@ -476,7 +479,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
+                  aria-disabled={currentPage === 1}
                   className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                 />
               </PaginationItem>
@@ -547,7 +550,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
               <PaginationItem>
                 <PaginationNext
                   onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
+                  aria-disabled={currentPage === totalPages}
                   className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                 />
               </PaginationItem>
