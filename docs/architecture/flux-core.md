@@ -12,11 +12,23 @@ Use it when you need the highest-level answer to:
 
 Code-level source of truth lives primarily in `packages/flux-core/src/index.ts`, `packages/flux-runtime/src/index.ts`, and `packages/flux-react/src/index.tsx`.
 
-## Current Code Anchors
+## Package Role: `@nop-chaos/flux-core`
+
+flux-core is the **foundation contracts and shared utilities** package — the lowest-level shared layer that all other packages depend on. It contains:
+
+- **Type definitions and interfaces**: Core contracts (`ScopeRef`, `FormRuntime`, `RendererRuntime`, `CompiledValueNode`, etc.) that define the boundaries between packages.
+- **Constants**: Shared constants like `META_FIELDS`.
+- **Side-effect-free pure utility functions**: Functions that have no external dependencies and no side effects — e.g. `getIn`, `isPlainObject`, `shallowEqual`, `buildCompiledFormValidationModel`. These are shared across all packages because they operate on language-level primitives, not business logic.
+- **Validation model data transforms**: Pure functions for validation model construction (`buildCompiledFormValidationModel`, `buildCompiledValidationOrder`, etc.) that are needed by both `flux-formula` and `flux-runtime`.
+
+**What does NOT belong in flux-core**: Business logic with side effects, framework-specific code (React/Zustand), or any function that depends on external state. The dependency direction is strictly `flux-core ← all other packages`.
+
+ ## flux-core Package
+
 
 When this document needs to be checked against code, start with:
 
-- `packages/flux-core/src/index.ts` for core contracts
+- `packages/flux-core/src/index.ts` for core contracts and shared utilities
 - `packages/flux-runtime/src/schema-compiler.ts` for compiled node assembly
 - `packages/flux-runtime/src/action-runtime.ts` for action semantics
 - `packages/flux-runtime/src/page-runtime.ts` and `packages/flux-runtime/src/form-runtime.ts` for page/form runtime behavior

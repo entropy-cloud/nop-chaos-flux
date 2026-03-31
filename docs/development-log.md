@@ -20,6 +20,23 @@ This file is intentionally lightweight.
 
 ### 2026-03-31
 
+- Ran all automated tests across 17 workspace packages. Fixed 3 test failures.
+- Bug fix: `packages/nop-debugger/src/panel.test.tsx` — missing bracket closure, undefined variables, wrong assertion target (easy diagnosis).
+- Bug fix: `packages/flux-runtime/src/node-runtime.ts` — `resolveNodeProps` returned stale cached result when `reusedReference` flag changed (medium diagnosis).
+- Bug fix: `packages/spreadsheet-renderers/src/renderers.integration.test.tsx` — `A1ValueProbe` used `scope.readOwn()` (synchronous, non-reactive) instead of `useScopeSelector` (reactive subscription). Test helper bypassed the store subscription, so component never re-rendered after scope data changed (hard diagnosis, cross-4-package trace).
+- Documented hard bug: `docs/bugs/22-spreadsheet-integration-test-scope-reactive-read-fix.md`
+- All 17 packages pass `pnpm test` cleanly.
+
+### 2026-03-31
+
+- Split `packages/flux-core/src/types.ts` (904 lines) into 7 domain modules under `packages/flux-core/src/types/`.
+- Files: `schema.ts`, `scope.ts`, `compilation.ts`, `validation.ts`, `runtime.ts`, `renderer.ts`, `actions.ts` + barrel `index.ts`.
+- Original `types.ts` replaced with `export * from './types/index'` — zero downstream changes needed.
+- Cross-file dependencies use `import type` throughout (circular type-only refs between renderer↔runtime↔actions are safe).
+- Plan reference: `docs/plans/23-architecture-audit-fix-plan.md` P1-1.
+
+### 2026-03-31
+
 - Created `docs/references/refactoring-guidelines.md` — 重构规范文档。包含：重构计划模板、原因分析框架、安全重构流程、低代码系统特殊考量（类型系统与动态 schema、提取 vs 内联、文件拆分代价、包边界、性能）、审计经验教训、重构前检查清单。
 - Updated `docs/plans/23-architecture-audit-fix-plan.md` — 基于代码验证结果修正了 6 处不准确描述（types.ts 行数、Record<string,any> 数量、node-renderer Provider 数量、P2-2 已部分统一、P2-4 Branded Types 不推荐、P2-1 过度设计），重写了 Summary 表格和执行优先级。
 - Key decision: Branded Types (P2-4) 标记为不推荐。低代码系统中 schema 来自 JSON 运行时解析，branded types 只会导致到处 `as SchemaPath`，ROI 极低。

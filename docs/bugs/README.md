@@ -33,3 +33,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/19-report-designer-fill-series-trailing-digit-fix.md`
 - `docs/bugs/20-report-designer-fill-handle-drag-single-cell-fix.md`
 - `docs/bugs/21-report-designer-field-drop-edit-exit-cursor-stuck-fix.md`
+- `docs/bugs/22-spreadsheet-integration-test-scope-reactive-read-fix.md`
