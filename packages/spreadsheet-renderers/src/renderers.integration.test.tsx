@@ -3,7 +3,7 @@ import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer, createDefaultRegistry, useRenderScope } from '@nop-chaos/flux-react';
+import { createSchemaRenderer, createDefaultRegistry, useScopeSelector } from '@nop-chaos/flux-react';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import { defineSpreadsheetPageSchema, registerSpreadsheetRenderers } from './index.js';
@@ -24,21 +24,14 @@ const actionButtonRenderer: RendererDefinition = {
 };
 
 function A1ValueProbe() {
-  const scope = useRenderScope();
-  const scopeData = scope.readOwn() as {
-    spreadsheetSnapshot?: {
-      document?: {
-        workbook?: {
-          sheets?: Array<{ id: string; cells?: Record<string, { value?: unknown }> }>;
-        };
-      };
-      activeSheetId?: string;
-    };
-  };
-  const activeSheet = scopeData.spreadsheetSnapshot?.document?.workbook?.sheets?.find(
-    (sheet) => sheet.id === scopeData.spreadsheetSnapshot?.activeSheetId,
-  );
-  const a1Value = activeSheet?.cells?.A1?.value;
+  const a1Value = useScopeSelector((data: any) => {
+    const snapshot = data.spreadsheetSnapshot;
+    if (!snapshot) return undefined;
+    const activeSheet = snapshot.document?.workbook?.sheets?.find(
+      (s: any) => s.id === snapshot.activeSheetId,
+    );
+    return activeSheet?.cells?.A1?.value;
+  });
   return <span data-testid="a1-value">{a1Value == null ? '' : String(a1Value)}</span>;
 }
 
