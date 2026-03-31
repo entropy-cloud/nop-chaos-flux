@@ -37,6 +37,38 @@ This file is intentionally lightweight.
 
 ### 2026-03-31
 
+- Completed Phases 1-4 of the Word Editor development plan (`docs/plans/24-word-editor-development-plan.md`).
+- **Template Expression Model** (`packages/word-editor-core/src/template-expr.ts`): Parse/generate for EL expressions (`${expr}`), XPL tags (`<c:if test="...">`), field references, and template strings. 42 unit tests.
+- **Template Tags** (`packages/word-editor-core/src/template-tags.ts`): 15 built-in tags (c:if, c:for, c:forEach, c:choose, c:when, c:otherwise, c:set, c:out + closing/selfclose variants). 15 unit tests.
+- **Bridge Expression API** (`packages/word-editor-core/src/canvas-editor-bridge.ts`): Added `insertTemplateExpression(expr)` and `insertFieldExpression(datasetName, fieldName)` using canvas-editor's hyperlink mechanism with `expr:`/`xpl:` URL prefixes.
+- **Dataset Model + Store** (`packages/word-editor-core/src/dataset-model.ts`, `dataset-store.ts`): Full CRUD dataset management with columns, validation, selection. 23 + 39 unit tests.
+- **Dataset Persistence** (`packages/word-editor-core/src/document-io.ts`): Added `saveDatasets()`/`loadDatasets()` for localStorage persistence. 3 new tests (9 total).
+- **4 new UI components** in `@nop-chaos/word-editor-renderers`:
+  - `toolbar/TemplateControls.tsx` — Template toolbar group with ExprInsertDialog trigger
+  - `dialogs/ExprInsertDialog.tsx` — EL/XPL expression insert dialog with tag selector
+  - `panels/TemplateSnippets.tsx` — Template tag snippets sidebar
+  - `dialogs/DatasetDialog.tsx` — Dataset create/edit dialog with column management
+- **WordEditorPage.tsx wiring**: Connected all components — DatasetDialog, handleFieldClick → bridge.insertFieldExpression, handleInsertExpr → bridge.insertTemplateExpression, handleInsertTag → bridge.insertTemplateExpression(tag-open), RibbonToolbar receives onInsertExpr/onInsertTag props.
+- **RibbonToolbar updated**: Added TemplateControls with `onInsertExpr` and `onInsertTag` props.
+- Fixed WordEditorPage.tsx store API mismatch (`addDataset` → `add`, `updateDataset` → `update` with proper `Omit<DataSet, 'id'>` type).
+- **148 tests passing** in `@nop-chaos/word-editor-core` across 7 test files.
+- Both packages typecheck and build clean.
+- Key decision: Template expressions stored as hyperlinks in canvas-editor, aligned with nop-entropy's `WordTemplateParser` which reads these from DOCX hyperlinks.
+- Next step: Phase 5-8 (advanced template features, import/export, performance optimization).
+
+### 2026-03-31
+
+- Completed Phase 1 (Basic Editor Integration MVP) of the Word Editor development plan (`docs/plans/24-word-editor-development-plan.md`).
+- Created two new packages: `@nop-chaos/word-editor-core` (bridge layer, Zustand store, document I/O) and `@nop-chaos/word-editor-renderers` (EditorCanvas, RibbonToolbar, FontControls, WordEditorPage).
+- Registered packages in workspace config: root `tsconfig.json` references, `tsconfig.base.json` paths, `vite.workspace-alias.ts` aliases, playground deps.
+- Integrated `@hufe921/canvas-editor@0.9.130` as the canvas rendering engine via a bridge pattern (`CanvasEditorBridge` class).
+- Playground routing: added `word-editor` to `PageId`, `HomePage` nav card, `App.tsx` lazy route with `<WordEditorPage>`.
+- Key design decisions: `word-editor-core` has zero React deps (framework-agnostic bridge + store), renderers package depends on core, `PaperDirection` enum imported as value (not type-only), `getWordCount()` is async (returns `Promise<number>`).
+- All typecheck, build, and lint pass for the two new packages. Pre-existing errors in `@nop-chaos/ui` and `nop-debugger` are unrelated.
+- Next step: `pnpm dev` manual QA to verify canvas renders, then proceed to Phase 2 (template model + data binding) of the plan.
+
+### 2026-03-31
+
 - Created `docs/references/refactoring-guidelines.md` — 重构规范文档。包含：重构计划模板、原因分析框架、安全重构流程、低代码系统特殊考量（类型系统与动态 schema、提取 vs 内联、文件拆分代价、包边界、性能）、审计经验教训、重构前检查清单。
 - Updated `docs/plans/23-architecture-audit-fix-plan.md` — 基于代码验证结果修正了 6 处不准确描述（types.ts 行数、Record<string,any> 数量、node-renderer Provider 数量、P2-2 已部分统一、P2-4 Branded Types 不推荐、P2-1 过度设计），重写了 Summary 表格和执行优先级。
 - Key decision: Branded Types (P2-4) 标记为不推荐。低代码系统中 schema 来自 JSON 运行时解析，branded types 只会导致到处 `as SchemaPath`，ROI 极低。
@@ -1354,3 +1386,13 @@ Spreadsheet Canvas CSS)
 - All 111 tests pass (34 new + 77 existing)
 - Key decision: use `vi.mock('@nop-chaos/ui')` with simple mock components instead of SchemaRenderer to avoid jsdom hang
 - Next step: implement drag-and-drop reordering, date/time/datetime inputs
+
+### 2026-03-31
+
+- Completed Phase 1 (基础编辑器集成 — Core MVP) toolbar controls for Word Editor
+- Files created: `packages/word-editor-renderers/src/toolbar/ParagraphControls.tsx` (alignment, heading, list, line spacing), `InsertControls.tsx` (table, image, hyperlink, separator, page break), `PageControls.tsx` (page mode, zoom, paper size, orientation, margins, watermark, print), `SearchReplace.tsx` (search/replace panel with debounce + navigation)
+- Files modified: `RibbonToolbar.tsx` (integrated all control groups + search toggle), `index.ts` (added exports for all new components)
+- Shared toolbar infrastructure: `toolbar/shared.tsx` with `ToolbarButton`, `ToolbarSeparator`, `ToolbarGroup`
+- Key discovery: `IDrawImagePayload` uses `value` not `dataUrl`; lucide-react v1.7 has `List`/`ListOrdered` not `ListUl`/`ListOl`; `executeTitle` expects `TitleLevel | null` not `string | null`; no `PageBreak` icon exists — used `ArrowDownToLine` instead
+- Both `@nop-chaos/word-editor-core` and `@nop-chaos/word-editor-renderers` typecheck clean
+- Next step: unit tests + E2E tests (in progress), then Phase 2 (template model + data binding)
