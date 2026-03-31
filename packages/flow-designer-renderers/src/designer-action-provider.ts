@@ -28,7 +28,16 @@ export function createDesignerActionProvider(core: DesignerCore): ActionNamespac
         'toggleGrid',
         'setViewport',
         'save',
-        'restore'
+        'restore',
+        'beginTransaction',
+        'commitTransaction',
+        'rollbackTransaction',
+        'toggleNodeSelection',
+        'toggleEdgeSelection',
+        'selectAllNodes',
+        'setSelection',
+        'moveNodes',
+        'updateMultipleNodes'
       ];
     },
     invoke(method, payload, ctx) {
@@ -147,6 +156,65 @@ export function createDesignerActionProvider(core: DesignerCore): ActionNamespac
         case 'restore': {
           const result = adapter.execute({ type: 'restore' });
           return toActionResult(result);
+        }
+        case 'beginTransaction': {
+          const txId = core.beginTransaction(
+            typeof payload?.label === 'string' ? payload.label : undefined,
+            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined
+          );
+          return { ok: true, data: txId };
+        }
+        case 'commitTransaction': {
+          core.commitTransaction(
+            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined
+          );
+          return { ok: true };
+        }
+        case 'rollbackTransaction': {
+          core.rollbackTransaction(
+            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined
+          );
+          return { ok: true };
+        }
+        case 'toggleNodeSelection': {
+          if (typeof payload?.nodeId !== 'string') {
+            return { ok: false, error: new Error('toggleNodeSelection requires nodeId') };
+          }
+          core.toggleNodeSelection(payload.nodeId);
+          return { ok: true };
+        }
+        case 'toggleEdgeSelection': {
+          if (typeof payload?.edgeId !== 'string') {
+            return { ok: false, error: new Error('toggleEdgeSelection requires edgeId') };
+          }
+          core.toggleEdgeSelection(payload.edgeId);
+          return { ok: true };
+        }
+        case 'selectAllNodes': {
+          core.selectAllNodes();
+          return { ok: true };
+        }
+        case 'setSelection': {
+          const nodeIds = Array.isArray(payload?.nodeIds) ? payload.nodeIds.map(String) : [];
+          const edgeIds = Array.isArray(payload?.edgeIds) ? payload.edgeIds.map(String) : [];
+          core.setSelection(nodeIds, edgeIds);
+          return { ok: true };
+        }
+        case 'moveNodes': {
+          if (!payload?.deltas || typeof payload.deltas !== 'object') {
+            return { ok: false, error: new Error('moveNodes requires deltas') };
+          }
+          core.moveNodes(payload.deltas as Record<string, { dx: number; dy: number }>);
+          return { ok: true };
+        }
+        case 'updateMultipleNodes': {
+          if (!Array.isArray(payload?.updates)) {
+            return { ok: false, error: new Error('updateMultipleNodes requires updates array') };
+          }
+          core.updateMultipleNodes(
+            payload.updates as Array<{ nodeId: string; data: Record<string, unknown> }>
+          );
+          return { ok: true };
         }
         default:
           return { ok: false, error: new Error(`Unknown designer method: ${method}`) };
