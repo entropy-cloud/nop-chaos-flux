@@ -84,18 +84,32 @@ function compileNode<T>(input: T, formulaCompiler: FormulaCompiler): CompiledVal
 
     const trimmed = input.trim();
     if (isPureExpression(trimmed)) {
-      return {
-        kind: 'expression-node',
-        source: input,
-        compiled: formulaCompiler.compileExpression<T>(input)
-      };
+      try {
+        return {
+          kind: 'expression-node',
+          source: input,
+          compiled: formulaCompiler.compileExpression<T>(input)
+        };
+      } catch {
+        return {
+          kind: 'static-node',
+          value: input
+        } as StaticValueNode<T>;
+      }
     }
 
-    return {
-      kind: 'template-node',
-      source: input,
-      compiled: formulaCompiler.compileTemplate<T>(input)
-    };
+    try {
+      return {
+        kind: 'template-node',
+        source: input,
+        compiled: formulaCompiler.compileTemplate<T>(input)
+      };
+    } catch {
+      return {
+        kind: 'static-node',
+        value: input
+      } as StaticValueNode<T>;
+    }
   }
 
   if (Array.isArray(input)) {
