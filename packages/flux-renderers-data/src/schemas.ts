@@ -7,6 +7,10 @@ export interface TableColumnSchema extends BaseSchema {
   cellRegionKey?: string;
   buttons?: BaseSchema[];
   buttonsRegionKey?: string;
+  width?: number | string;
+  sortable?: boolean;
+  filterable?: boolean;
+  filterOptions?: Array<{label: string; value: string}>;
 }
 
 export interface TableSchema extends BaseSchema {
@@ -14,4 +18,28 @@ export interface TableSchema extends BaseSchema {
   columns?: TableColumnSchema[];
   onRowClick?: BaseSchema;
   empty?: BaseSchema | BaseSchema[] | string;
+  loading?: boolean;
+  loadingSlot?: BaseSchema | BaseSchema[] | string;
+  stripe?: boolean;
+  bordered?: boolean;
+  pagination?: {
+    enabled?: boolean;
+    pageSize?: number;
+    pageSizeOptions?: number[];
+    showSizeChanger?: boolean;
+  };
+  rowSelection?: {
+    type?: 'checkbox' | 'radio';
+    selectedRowKeys?: string[];
+  };
+  expandable?: {
+    expandedRowKeys?: string[];
+    expandRowByClick?: boolean;
+    expandedRowRegionKey?: string;
+  };
+  onSortChange?: BaseSchema;
+  onFilterChange?: BaseSchema;
+  onPageChange?: BaseSchema;
 }
+
+export * from './chart-schemas';
