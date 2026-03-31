@@ -7,7 +7,6 @@ import {
   getCompiledValidationRootPath,
   getCompiledValidationTraversalOrder,
   hasCompiledValidationNodes,
-  buildCompiledValidationFieldMap,
   buildCompiledValidationDependentMap,
   buildCompiledValidationOrder,
   buildCompiledFormValidationModel,
@@ -1388,9 +1387,10 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
+        nodes: {
           username: {
             path: 'username',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Username',
             behavior: {
@@ -1407,7 +1407,9 @@ describe('createRendererRuntime', () => {
                 },
                 message: 'Username already exists'
               }, 'username')
-            ]
+            ],
+            children: [],
+            parent: ''
           }
         },
         order: ['username'],
@@ -1451,9 +1453,10 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
+        nodes: {
           username: {
             path: 'username',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Username',
             behavior: {
@@ -1468,7 +1471,9 @@ describe('createRendererRuntime', () => {
                   url: '/api/validate-username'
                 }
               }, 'username')
-            ]
+            ],
+            children: [],
+            parent: ''
           }
         },
         order: ['username'],
@@ -1519,9 +1524,10 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
+        nodes: {
           username: {
             path: 'username',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Username',
             behavior: {
@@ -1537,7 +1543,9 @@ describe('createRendererRuntime', () => {
                 },
                 message: 'Username already exists'
               }, 'username')
-            ]
+            ],
+            children: [],
+            parent: ''
           }
         },
         order: ['username'],
@@ -1596,9 +1604,10 @@ describe('createRendererRuntime', () => {
             triggers: ['blur'],
             showErrorOn: ['touched', 'submit']
           },
-          fields: {
+          nodes: {
             username: {
               path: 'username',
+              kind: 'field',
               controlType: 'input-text',
               label: 'Username',
               behavior: {
@@ -1614,7 +1623,9 @@ describe('createRendererRuntime', () => {
                     url: '/api/validate-username'
                   }
                 }, 'username')
-              ]
+              ],
+              children: [],
+              parent: ''
             }
           },
           order: ['username'],
@@ -1657,16 +1668,19 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
+        nodes: {
           username: {
             path: 'username',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Username',
             behavior: {
               triggers: ['blur'],
               showErrorOn: ['touched', 'submit']
             },
-            rules: []
+            rules: [],
+            children: [],
+            parent: ''
           }
         },
         order: ['username'],
@@ -1721,10 +1735,10 @@ describe('createRendererRuntime', () => {
 
     expect(node.validation.behavior.triggers).toEqual(['submit']);
     expect(node.validation.behavior.showErrorOn).toEqual(['touched', 'submit']);
-    expect(node.validation.fields.username.behavior.triggers).toEqual(['blur', 'change']);
-    expect(node.validation.fields.username.behavior.showErrorOn).toEqual(['touched', 'submit']);
-    expect(node.validation.fields.nickname.behavior.triggers).toEqual(['submit']);
-    expect(node.validation.fields.nickname.behavior.showErrorOn).toEqual(['touched', 'submit']);
+    expect(node.validation.nodes.username.behavior.triggers).toEqual(['blur', 'change']);
+    expect(node.validation.nodes.username.behavior.showErrorOn).toEqual(['touched', 'submit']);
+    expect(node.validation.nodes.nickname.behavior.triggers).toEqual(['submit']);
+    expect(node.validation.nodes.nickname.behavior.showErrorOn).toEqual(['touched', 'submit']);
   });
 
   it('compiles error visibility policy with field override and form fallback', () => {
@@ -1755,8 +1769,8 @@ describe('createRendererRuntime', () => {
     }) as any;
 
     expect(node.validation.behavior.showErrorOn).toEqual(['submit']);
-    expect(node.validation.fields.username.behavior.showErrorOn).toEqual(['visited', 'dirty']);
-    expect(node.validation.fields.nickname.behavior.showErrorOn).toEqual(['submit']);
+    expect(node.validation.nodes.username.behavior.showErrorOn).toEqual(['visited', 'dirty']);
+    expect(node.validation.nodes.nickname.behavior.showErrorOn).toEqual(['submit']);
   });
 
   it('reuses pooled validation behavior objects for equivalent field policies', () => {
@@ -1792,9 +1806,9 @@ describe('createRendererRuntime', () => {
       ]
     }) as any;
 
-    expect(node.validation.fields.username.behavior).toBe(node.validation.fields.nickname.behavior);
-    expect(node.validation.fields.username.behavior).not.toBe(node.validation.fields.email.behavior);
-    expect(node.validation.fields.username.behavior).toBe(node.validation.nodes.username.behavior);
+    expect(node.validation.nodes.username.behavior).toBe(node.validation.nodes.nickname.behavior);
+    expect(node.validation.nodes.username.behavior).not.toBe(node.validation.nodes.email.behavior);
+    expect(node.validation.nodes.username.behavior).toBe(node.validation.nodes.username.behavior);
   });
 
   it('compiles relational validation rules and dependency metadata', () => {
@@ -1832,12 +1846,12 @@ describe('createRendererRuntime', () => {
       ]
     }) as any;
 
-    expect(node.validation.fields.confirmPassword.rules[0].rule).toMatchObject({
+    expect(node.validation.nodes.confirmPassword.rules[0].rule).toMatchObject({
       kind: 'equalsField',
       path: 'password'
     });
-    expect(node.validation.fields.confirmPassword.rules[0].dependencyPaths).toEqual(['password']);
-    expect(node.validation.fields.adminCode.rules[0].rule).toMatchObject({
+    expect(node.validation.nodes.confirmPassword.rules[0].dependencyPaths).toEqual(['password']);
+    expect(node.validation.nodes.adminCode.rules[0].rule).toMatchObject({
       kind: 'requiredWhen',
       path: 'role',
       equals: 'admin'
@@ -1867,19 +1881,23 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
+        nodes: {
           password: {
             path: 'password',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Password',
             behavior: {
               triggers: ['blur'],
               showErrorOn: ['touched', 'submit']
             },
-            rules: []
+            rules: [],
+            children: [],
+            parent: ''
           },
           confirmPassword: {
             path: 'confirmPassword',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Confirm Password',
             behavior: {
@@ -1896,20 +1914,26 @@ describe('createRendererRuntime', () => {
                 },
                 dependencyPaths: ['password']
               }
-            ]
+            ],
+            children: [],
+            parent: ''
           },
           role: {
             path: 'role',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Role',
             behavior: {
               triggers: ['blur'],
               showErrorOn: ['touched', 'submit']
             },
-            rules: []
+            rules: [],
+            children: [],
+            parent: ''
           },
           adminCode: {
             path: 'adminCode',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Admin Code',
             behavior: {
@@ -1927,7 +1951,9 @@ describe('createRendererRuntime', () => {
                 },
                 dependencyPaths: ['role']
               }
-            ]
+            ],
+            children: [],
+            parent: ''
           }
         },
         order: ['password', 'confirmPassword', 'role', 'adminCode'],
@@ -1983,39 +2009,49 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
+        nodes: {
           username: {
             path: 'username',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Username',
             behavior: {
               triggers: ['blur'],
               showErrorOn: ['touched', 'submit']
             },
-            rules: []
+            rules: [],
+            children: [],
+            parent: ''
           },
           backupUsername: {
             path: 'backupUsername',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Backup Username',
             behavior: {
               triggers: ['blur'],
               showErrorOn: ['touched', 'submit']
             },
-            rules: [compiledRule({ kind: 'notEqualsField', path: 'username', message: 'Backup username must differ' }, 'backupUsername')]
+            rules: [compiledRule({ kind: 'notEqualsField', path: 'username', message: 'Backup username must differ' }, 'backupUsername')],
+            children: [],
+            parent: ''
           },
           status: {
             path: 'status',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Status',
             behavior: {
               triggers: ['blur'],
               showErrorOn: ['touched', 'submit']
             },
-            rules: []
+            rules: [],
+            children: [],
+            parent: ''
           },
           publishReason: {
             path: 'publishReason',
+            kind: 'field',
             controlType: 'input-text',
             label: 'Publish Reason',
             behavior: {
@@ -2032,7 +2068,9 @@ describe('createRendererRuntime', () => {
                 },
                 'publishReason'
               )
-            ]
+            ],
+            children: [],
+            parent: ''
           }
         },
         order: ['username', 'backupUsername', 'status', 'publishReason'],
@@ -2105,7 +2143,7 @@ describe('createRendererRuntime', () => {
 
     expect(node.validation.nodes.reviewers.kind).toBe('array');
     expect(node.validation.nodes[''].children).toContain('reviewers');
-    expect(node.validation.fields.reviewers.rules[0].rule).toMatchObject({
+    expect(node.validation.nodes.reviewers.rules[0].rule).toMatchObject({
       kind: 'minItems',
       value: 1
     });
@@ -2117,7 +2155,6 @@ describe('createRendererRuntime', () => {
         triggers: ['blur'],
         showErrorOn: ['touched', 'submit']
       },
-      fields: {},
       order: ['reviewers'],
       dependents: {
         role: ['adminCode']
@@ -2195,13 +2232,6 @@ describe('createRendererRuntime', () => {
         showErrorOn: ['dirty']
       }
     });
-    expect(buildCompiledValidationFieldMap(validation.nodes, validation.behavior)).toMatchObject({
-      reviewers: {
-        path: 'reviewers',
-        controlType: 'array-editor',
-        label: 'Reviewers'
-      }
-    });
   });
 
   it('validates array-level rules through field and subtree validation', async () => {
@@ -2222,18 +2252,6 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
-          reviewers: {
-            path: 'reviewers',
-            controlType: 'array-editor',
-            label: 'Reviewers',
-            behavior: {
-              triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
-            },
-            rules: [compiledRule({ kind: 'minItems', value: 1, message: 'Add at least one reviewer' }, 'reviewers')]
-          }
-        },
         order: ['reviewers'],
         dependents: {},
         nodes: {
@@ -2248,6 +2266,10 @@ describe('createRendererRuntime', () => {
             kind: 'array',
             controlType: 'array-editor',
             label: 'Reviewers',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
             rules: [compiledRule({ kind: 'minItems', value: 1, message: 'Add at least one reviewer' }, 'reviewers')],
             children: [],
             parent: ''
@@ -2297,18 +2319,6 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
-          reviewers: {
-            path: 'reviewers',
-            controlType: 'array-editor',
-            label: 'Reviewers',
-            behavior: {
-              triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
-            },
-            rules: [compiledRule({ kind: 'maxItems', value: 1, message: 'Only one reviewer is allowed' }, 'reviewers')]
-          }
-        },
         order: ['reviewers'],
         dependents: {},
         nodes: {
@@ -2323,6 +2333,10 @@ describe('createRendererRuntime', () => {
             kind: 'array',
             controlType: 'array-editor',
             label: 'Reviewers',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
             rules: [compiledRule({ kind: 'maxItems', value: 1, message: 'Only one reviewer is allowed' }, 'reviewers')],
             children: ['reviewers.0.value', 'reviewers.1.value'],
             parent: ''
@@ -2381,23 +2395,6 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
-          reviewers: {
-            path: 'reviewers',
-            controlType: 'array-editor',
-            label: 'Reviewers',
-            behavior: {
-              triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
-            },
-            rules: [
-              compiledRule(
-                { kind: 'atLeastOneFilled', itemPath: 'value', message: 'Add at least one reviewer value' },
-                'reviewers'
-              )
-            ]
-          }
-        },
         order: ['reviewers'],
         dependents: {},
         nodes: {
@@ -2412,6 +2409,10 @@ describe('createRendererRuntime', () => {
             kind: 'array',
             controlType: 'array-editor',
             label: 'Reviewers',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
             rules: [
               compiledRule(
                 { kind: 'atLeastOneFilled', itemPath: 'value', message: 'Add at least one reviewer value' },
@@ -2458,27 +2459,6 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
-          metadata: {
-            path: 'metadata',
-            controlType: 'key-value',
-            label: 'Metadata',
-            behavior: {
-              triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
-            },
-            rules: [
-              compiledRule(
-                {
-                  kind: 'allOrNone',
-                  itemPaths: ['key', 'value'],
-                  message: 'Metadata entries must fill both key and value or leave both empty'
-                },
-                'metadata'
-              )
-            ]
-          }
-        },
         order: ['metadata'],
         dependents: {},
         nodes: {
@@ -2493,6 +2473,10 @@ describe('createRendererRuntime', () => {
             kind: 'array',
             controlType: 'key-value',
             label: 'Metadata',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
             rules: [
               compiledRule(
                 {
@@ -2548,27 +2532,6 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
-          metadata: {
-            path: 'metadata',
-            controlType: 'key-value',
-            label: 'Metadata',
-            behavior: {
-              triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
-            },
-            rules: [
-              compiledRule(
-                {
-                  kind: 'uniqueBy',
-                  itemPath: 'key',
-                  message: 'Metadata keys must be unique'
-                },
-                'metadata'
-              )
-            ]
-          }
-        },
         order: ['metadata'],
         dependents: {},
         nodes: {
@@ -2583,6 +2546,10 @@ describe('createRendererRuntime', () => {
             kind: 'array',
             controlType: 'key-value',
             label: 'Metadata',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
             rules: [
               compiledRule(
                 {
@@ -2644,27 +2611,6 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
-          contact: {
-            path: 'contact',
-            controlType: 'contact-group',
-            label: 'Contact',
-            behavior: {
-              triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
-            },
-            rules: [
-              compiledRule(
-                {
-                  kind: 'atLeastOneOf',
-                  paths: ['email', 'phone'],
-                  message: 'Provide at least an email or phone number'
-                },
-                'contact'
-              )
-            ]
-          }
-        },
         order: ['contact'],
         dependents: {},
         nodes: {
@@ -2679,6 +2625,10 @@ describe('createRendererRuntime', () => {
             kind: 'object',
             controlType: 'contact-group',
             label: 'Contact',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
             rules: [
               compiledRule(
                 {
@@ -2737,27 +2687,6 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
-          credentials: {
-            path: 'credentials',
-            controlType: 'credentials-group',
-            label: 'Credentials',
-            behavior: {
-              triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
-            },
-            rules: [
-              compiledRule(
-                {
-                  kind: 'allOrNone',
-                  itemPaths: ['username', 'password'],
-                  message: 'Provide both username and password or leave both empty'
-                },
-                'credentials'
-              )
-            ]
-          }
-        },
         order: ['credentials'],
         dependents: {},
         nodes: {
@@ -2772,6 +2701,10 @@ describe('createRendererRuntime', () => {
             kind: 'object',
             controlType: 'credentials-group',
             label: 'Credentials',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
             rules: [
               compiledRule(
                 {
@@ -2844,18 +2777,6 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
-          metadata: {
-            path: 'metadata',
-            controlType: 'key-value',
-            label: 'Metadata',
-            behavior: {
-              triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
-            },
-            rules: []
-          }
-        },
         order: ['metadata'],
         dependents: {},
         nodes: {
@@ -2870,6 +2791,10 @@ describe('createRendererRuntime', () => {
             kind: 'array',
             controlType: 'key-value',
             label: 'Metadata',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
             rules: [],
             children: ['metadata.0.key', 'metadata.0.value'],
             parent: ''
@@ -2930,18 +2855,6 @@ describe('createRendererRuntime', () => {
           triggers: ['blur'],
           showErrorOn: ['touched', 'submit']
         },
-        fields: {
-          reviewers: {
-            path: 'reviewers',
-            controlType: 'array-editor',
-            label: 'Reviewers',
-            behavior: {
-              triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
-            },
-            rules: [compiledRule({ kind: 'minItems', value: 1, message: 'Need at least one reviewer' }, 'reviewers')]
-          }
-        },
         order: ['reviewers'],
         dependents: {},
         nodes: {
@@ -2956,6 +2869,10 @@ describe('createRendererRuntime', () => {
             kind: 'array',
             controlType: 'array-editor',
             label: 'Reviewers',
+            behavior: {
+              triggers: ['blur'],
+              showErrorOn: ['touched', 'submit']
+            },
             rules: [compiledRule({ kind: 'minItems', value: 1, message: 'Need at least one reviewer' }, 'reviewers')],
             children: ['reviewers.0.value'],
             parent: ''
