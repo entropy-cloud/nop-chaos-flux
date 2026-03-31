@@ -10,6 +10,7 @@ import type {
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { isNamespacedAction } from './action-scope';
+import { cancelPendingDebounce, scheduleDebounce } from './utils/debounce';
 
 interface ActionDispatcherInput {
   env: RendererEnv;
@@ -426,28 +427,22 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     }
 
     const key = createActionKey(action, ctx);
-    const previous = pendingDebounces.get(key);
+    const cancelledResult = createCancelledResult();
 
-    if (previous) {
-      clearTimeout(previous.timer);
-      const cancelledResult = createCancelledResult();
+    if (cancelPendingDebounce<string, ActionResult>(pendingDebounces, key, cancelledResult)) {
       input.env.monitor?.onActionEnd?.({
         ...buildActionMonitorPayload(action, ctx),
         durationMs: 0,
         result: cancelledResult
       });
-      previous.resolve(cancelledResult);
-      pendingDebounces.delete(key);
     }
 
-    return new Promise<ActionResult>((resolve) => {
-      const timer = setTimeout(async () => {
-        pendingDebounces.delete(key);
-        resolve(await runSingleAction(action, ctx));
-      }, action.debounce);
-
-      pendingDebounces.set(key, { timer, resolve });
-    });
+    return scheduleDebounce<string, ActionResult>(
+      pendingDebounces,
+      key,
+      action.debounce,
+      () => runSingleAction(action, ctx)
+    );
   }
 
   async function dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult> {

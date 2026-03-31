@@ -13,7 +13,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     submitting: false
   }));
 
-  function setBooleanState<K extends 'touched' | 'dirty' | 'visited'>(key: K, path: string, nextValue: boolean) {
+  function setBooleanState<K extends 'touched' | 'dirty' | 'visited' | 'validating'>(key: K, path: string, nextValue: boolean) {
     const current = store.getState()[key];
 
     if (nextValue) {
@@ -77,20 +77,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       setPathErrors(path, errors);
     },
     setValidating(path, validating) {
-      const current = store.getState().validating;
-
-      if (validating) {
-        store.setState({ validating: { ...current, [path]: true } });
-        return;
-      }
-
-      if (!current[path]) {
-        return;
-      }
-
-      const next = { ...current };
-      delete next[path];
-      store.setState({ validating: next });
+      setBooleanState('validating', path, validating);
     },
     setValidatingState(validating) {
       store.setState({ validating });

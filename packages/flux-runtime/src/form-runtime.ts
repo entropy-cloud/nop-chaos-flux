@@ -11,7 +11,7 @@ import {
   swapArrayValue
 } from '@nop-chaos/flux-core';
 import { createFormStore } from './form-store';
-import { remapArrayFieldState, replaceManagedArrayValue } from './form-runtime-array';
+import { executeArrayMutation } from './form-runtime-array';
 import { findRuntimeRegistration } from './form-runtime-registration';
 import { buildInitialFieldState } from './form-runtime-state';
 import { collectSubtreeValidationTargets } from './form-runtime-subtree';
@@ -146,34 +146,25 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         }
       }
 
+      async function validateRegisteredChildren(registration: RuntimeFieldRegistration) {
+        if (!registration.validateChild || !registration.childPaths?.length) return;
+        for (const childPath of registration.childPaths) {
+          const result = await thisForm.validateField(childPath);
+          if (!result.ok) {
+            fieldErrors[childPath] = result.errors;
+            errors.push(...result.errors);
+          }
+        }
+      }
+
       for (const [path, registration] of runtimeFieldRegistrations) {
         if (getCompiledValidationField(inputValue.validation, path)) {
-          if (registration.validateChild && registration.childPaths?.length) {
-            for (const childPath of registration.childPaths) {
-              const result = await thisForm.validateField(childPath);
-
-              if (!result.ok) {
-                fieldErrors[childPath] = result.errors;
-                errors.push(...result.errors);
-              }
-            }
-          }
-
+          await validateRegisteredChildren(registration);
           continue;
         }
 
         if (!registration.validate) {
-          if (registration.validateChild && registration.childPaths?.length) {
-            for (const childPath of registration.childPaths) {
-              const result = await thisForm.validateField(childPath);
-
-              if (!result.ok) {
-                fieldErrors[childPath] = result.errors;
-                errors.push(...result.errors);
-              }
-            }
-          }
-
+          await validateRegisteredChildren(registration);
           continue;
         }
 
@@ -184,16 +175,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           errors.push(...result.errors);
         }
 
-        if (registration.validateChild && registration.childPaths?.length) {
-          for (const childPath of registration.childPaths) {
-            const childResult = await thisForm.validateField(childPath);
-
-            if (!childResult.ok) {
-              fieldErrors[childPath] = childResult.errors;
-              errors.push(...childResult.errors);
-            }
-          }
-        }
+        await validateRegisteredChildren(registration);
       }
 
       const mergedErrors = {
@@ -385,26 +367,24 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       void revalidateDependents(name);
     },
     appendValue(path, value) {
-      const currentValue = scope.get(path);
-      const nextValue = insertArrayValue(Array.isArray(currentValue) ? currentValue : [], Number.MAX_SAFE_INTEGER, value);
-      remapArrayFieldState(sharedState, path, (index) => index, (targetPath) => cancelValidationDebounce(sharedState, targetPath));
-      replaceManagedArrayValue({
+      executeArrayMutation({
         sharedState,
+        scope,
         arrayPath: path,
-        nextValue,
+        arrayOperation: (current) => insertArrayValue(current, Number.MAX_SAFE_INTEGER, value),
+        indexTransform: (index) => index,
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
         clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
       });
     },
     prependValue(path, value) {
-      const currentValue = scope.get(path);
-      const nextValue = insertArrayValue(Array.isArray(currentValue) ? currentValue : [], 0, value);
-      remapArrayFieldState(sharedState, path, (index) => index + 1, (targetPath) => cancelValidationDebounce(sharedState, targetPath));
-      replaceManagedArrayValue({
+      executeArrayMutation({
         sharedState,
+        scope,
         arrayPath: path,
-        nextValue,
+        arrayOperation: (current) => insertArrayValue(current, 0, value),
+        indexTransform: (index) => index + 1,
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
         clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
@@ -414,17 +394,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       const currentValue = scope.get(path);
       const safeArray = Array.isArray(currentValue) ? currentValue : [];
       const insertIndex = clampInsertIndex(index, safeArray.length);
-      const nextValue = insertArrayValue(safeArray, insertIndex, value);
-      remapArrayFieldState(
+      executeArrayMutation({
         sharedState,
-        path,
-        (candidate) => (candidate >= insertIndex ? candidate + 1 : candidate),
-        (targetPath) => cancelValidationDebounce(sharedState, targetPath)
-      );
-      replaceManagedArrayValue({
-        sharedState,
+        scope,
         arrayPath: path,
-        nextValue,
+        arrayOperation: () => insertArrayValue(safeArray, insertIndex, value),
+        indexTransform: (candidate) => (candidate >= insertIndex ? candidate + 1 : candidate),
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
         clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
@@ -438,23 +413,18 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       }
 
       const removeIndex = clampArrayIndex(index, currentValue.length);
-      const nextValue = removeArrayValue(currentValue, removeIndex);
-      remapArrayFieldState(
+      executeArrayMutation({
         sharedState,
-        path,
-        (candidate) => {
+        scope,
+        arrayPath: path,
+        arrayOperation: () => removeArrayValue(currentValue, removeIndex),
+        indexTransform: (candidate) => {
           if (candidate === removeIndex) {
             return undefined;
           }
 
           return candidate > removeIndex ? candidate - 1 : candidate;
         },
-        (targetPath) => cancelValidationDebounce(sharedState, targetPath)
-      );
-      replaceManagedArrayValue({
-        sharedState,
-        arrayPath: path,
-        nextValue,
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
         clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
@@ -474,11 +444,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         return;
       }
 
-      const nextValue = moveArrayValue(currentValue, fromIndex, toIndex);
-      remapArrayFieldState(
+      executeArrayMutation({
         sharedState,
-        path,
-        (candidate) => {
+        scope,
+        arrayPath: path,
+        arrayOperation: () => moveArrayValue(currentValue, fromIndex, toIndex),
+        indexTransform: (candidate) => {
           if (candidate === fromIndex) {
             return toIndex;
           }
@@ -493,12 +464,6 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
           return candidate;
         },
-        (targetPath) => cancelValidationDebounce(sharedState, targetPath)
-      );
-      replaceManagedArrayValue({
-        sharedState,
-        arrayPath: path,
-        nextValue,
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
         clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
@@ -518,11 +483,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         return;
       }
 
-      const nextValue = swapArrayValue(currentValue, first, second);
-      remapArrayFieldState(
+      executeArrayMutation({
         sharedState,
-        path,
-        (candidate) => {
+        scope,
+        arrayPath: path,
+        arrayOperation: () => swapArrayValue(currentValue, first, second),
+        indexTransform: (candidate) => {
           if (candidate === first) {
             return second;
           }
@@ -533,12 +499,6 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
           return candidate;
         },
-        (targetPath) => cancelValidationDebounce(sharedState, targetPath)
-      );
-      replaceManagedArrayValue({
-        sharedState,
-        arrayPath: path,
-        nextValue,
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
         clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
@@ -546,16 +506,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
     replaceValue(path, value) {
       const nextValue = Array.isArray(value) ? value : [];
-      remapArrayFieldState(
+      executeArrayMutation({
         sharedState,
-        path,
-        (candidate) => (candidate < nextValue.length ? candidate : undefined),
-        (targetPath) => cancelValidationDebounce(sharedState, targetPath)
-      );
-      replaceManagedArrayValue({
-        sharedState,
+        scope,
         arrayPath: path,
-        nextValue,
+        arrayOperation: () => nextValue,
+        indexTransform: (candidate) => (candidate < nextValue.length ? candidate : undefined),
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
         clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents

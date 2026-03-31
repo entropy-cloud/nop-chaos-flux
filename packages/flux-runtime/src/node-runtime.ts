@@ -79,10 +79,9 @@ export function createNodeRuntime(input: {
 
     if (state) {
       state.resolvedProps = execution.value;
-      if (execution.reusedReference && state._lastPropsResult) {
-        return state._lastPropsResult;
+      if (!execution.reusedReference) {
+        state._lastPropsResult = execution;
       }
-      state._lastPropsResult = execution;
     }
 
     return execution;

@@ -1,3 +1,4 @@
+import type { ScopeRef } from '@nop-chaos/flux-core';
 import { remapBooleanState, remapErrorState, transformArrayIndexedPath } from './form-path-state';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
 
@@ -100,4 +101,29 @@ export function replaceManagedArrayValue(input: {
   input.sharedState.store.setValue(input.arrayPath, input.nextValue);
   input.clearErrors(input.arrayPath);
   void input.revalidateDependents(input.arrayPath);
+}
+
+export function executeArrayMutation(ctx: {
+  sharedState: ManagedFormRuntimeSharedState;
+  scope: ScopeRef;
+  arrayPath: string;
+  arrayOperation: (current: unknown[]) => unknown[];
+  indexTransform: (candidateIndex: number) => number | undefined;
+  cancelValidationDebounce: (path: string) => void;
+  clearErrors: (path?: string) => void;
+  revalidateDependents: (path: string) => Promise<void>;
+}): void {
+  const currentValue = ctx.scope.get(ctx.arrayPath);
+  const currentArray = Array.isArray(currentValue) ? currentValue : [];
+  const nextValue = ctx.arrayOperation(currentArray);
+
+  remapArrayFieldState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform, ctx.cancelValidationDebounce);
+  replaceManagedArrayValue({
+    sharedState: ctx.sharedState,
+    arrayPath: ctx.arrayPath,
+    nextValue,
+    cancelValidationDebounce: ctx.cancelValidationDebounce,
+    clearErrors: ctx.clearErrors,
+    revalidateDependents: ctx.revalidateDependents
+  });
 }
