@@ -1,0 +1,219 @@
+import { useRef, useMemo, useEffect, useState, useCallback } from 'react'
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
+import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react'
+import { CanvasEditorBridge, createDatasetStore, createEditorStore, saveDocument, loadDocument } from '@nop-chaos/word-editor-core'
+import type { DataSetSourceType, DataColumnInput, DataSet } from '@nop-chaos/word-editor-core'
+import { EditorCanvas } from './EditorCanvas.js'
+import { RibbonToolbar } from './toolbar/RibbonToolbar.js'
+import { OutlinePanel } from './panels/OutlinePanel.js'
+import { DatasetPanel } from './panels/DatasetPanel.js'
+import { FieldList } from './panels/FieldList.js'
+import { DatasetDialog } from './dialogs/DatasetDialog.js'
+
+interface WordEditorPageProps {
+  onBack: () => void
+}
+
+export function WordEditorPage({ onBack }: WordEditorPageProps) {
+  const bridge = useRef<CanvasEditorBridge>(new CanvasEditorBridge())
+  const editorStore = useMemo(() => createEditorStore(), [])
+  const datasetStore = useMemo(() => createDatasetStore(), [])
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [showDatasetPanel, setShowDatasetPanel] = useState(true)
+  const [datasetDialogOpen, setDatasetDialogOpen] = useState(false)
+  const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null)
+
+  const isDirty = useSyncExternalStoreWithSelector(
+    editorStore.subscribe,
+    editorStore.getState,
+    editorStore.getState,
+    (state) => state.isDirty
+  )
+
+  const wordCount = useSyncExternalStoreWithSelector(
+    editorStore.subscribe,
+    editorStore.getState,
+    editorStore.getState,
+    (state) => state.wordCount
+  )
+
+  useEffect(() => {
+    const savedDocument = loadDocument()
+    if (savedDocument) {
+      console.log('Loaded saved document:', savedDocument.savedAt)
+    }
+  }, [])
+
+  const handleSave = () => {
+    const success = saveDocument(bridge.current)
+    if (success) {
+      editorStore.setDirty(false)
+      setSaveMessage('Document saved')
+      setTimeout(() => setSaveMessage(null), 2000)
+    }
+  }
+
+  const handleAddDataset = () => {
+    setEditingDatasetId(null)
+    setDatasetDialogOpen(true)
+  }
+
+  const handleEditDataset = (datasetId: string) => {
+    setEditingDatasetId(datasetId)
+    setDatasetDialogOpen(true)
+  }
+
+  const handleSaveDataset = useCallback((data: { name: string; description: string; type: DataSetSourceType; columns: DataColumnInput[] }) => {
+    const datasetData: Omit<DataSet, 'id'> = {
+      name: data.name,
+      description: data.description,
+      type: data.type,
+      columns: data.columns.map(col => ({
+        name: col.name ?? '',
+        label: col.label ?? '',
+        description: col.description,
+        type: (col.type as DataSetSourceType) ?? 'static'
+      }))
+    }
+    if (editingDatasetId) {
+      datasetStore.update(editingDatasetId, datasetData)
+    } else {
+      datasetStore.add(datasetData)
+    }
+    setDatasetDialogOpen(false)
+    setEditingDatasetId(null)
+  }, [editingDatasetId, datasetStore])
+
+  const handleFieldClick = useCallback((datasetName: string, columnName: string) => {
+    bridge.current.insertFieldExpression(datasetName, columnName)
+  }, [bridge])
+
+  const handleInsertExpr = useCallback((expr: string) => {
+    bridge.current.insertTemplateExpression({
+      kind: 'el',
+      expr: expr.replace(/^\$\{/, '').replace(/\}$/, '')
+    })
+  }, [bridge])
+
+  const handleInsertTag = useCallback((tagName: string) => {
+    bridge.current.insertTemplateExpression({
+      kind: 'tag-open',
+      expr: '',
+      tagName
+    })
+  }, [bridge])
+
+  const editingDataset = editingDatasetId
+    ? datasetStore.getState().datasets.find(ds => ds.id === editingDatasetId)
+    : null
+
+  return (
+    <main className="flex flex-col h-screen bg-[var(--nop-app-bg)]">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-[var(--nop-border)] bg-[var(--nop-nav-surface)]">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="px-3 py-2 rounded-full border border-[var(--nop-nav-border)] bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] font-sans text-[13px] font-bold cursor-pointer transition-[transform,box-shadow,border-color] duration-160 hover:-translate-y-px hover:shadow-[var(--nop-nav-shadow-active)] hover:border-[var(--nop-nav-hover-border)]"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
+            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">Word Editor</h1>
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] text-[var(--nop-body-copy)]">
+            <Type className="w-3.5 h-3.5 opacity-70" />
+            <span className="tabular-nums">{wordCount.toLocaleString()} words</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          className={`px-4 py-2 rounded-full border font-sans text-[13px] font-bold cursor-pointer transition-all duration-160 flex items-center gap-2 ${
+            isDirty
+              ? 'bg-[var(--nop-accent)] text-white border-[var(--nop-accent)] hover:bg-[var(--nop-accent-strong)]'
+              : 'bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] border-[var(--nop-nav-border)] hover:shadow-[var(--nop-nav-shadow-active)] hover:border-[var(--nop-nav-hover-border)]'
+          }`}
+        >
+          <Save className="w-4 h-4" />
+          {saveMessage || 'Save'}
+        </button>
+      </header>
+
+      <RibbonToolbar bridge={bridge.current} store={editorStore} onInsertExpr={handleInsertExpr} onInsertTag={handleInsertTag} />
+
+      <div className="flex flex-1 min-h-0">
+        <aside className="w-[280px] border-r border-[var(--nop-border)] bg-[var(--nop-surface)] flex flex-col">
+          <div className="flex border-b border-[var(--nop-border)]">
+            <button
+              type="button"
+              onClick={() => setShowDatasetPanel(true)}
+              className={`flex-1 px-4 py-2.5 text-xs font-medium border-b-2 outline-none focus:bg-[var(--nop-surface-soft)] transition-colors ${
+                showDatasetPanel
+                  ? 'text-[var(--nop-accent)] border-[var(--nop-accent)]'
+                  : 'text-[var(--nop-body-copy)] border-transparent hover:bg-[var(--nop-surface-soft)]'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <Database className="w-3.5 h-3.5" />
+                <span>Datasets</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDatasetPanel(false)}
+              className={`flex-1 px-4 py-2.5 text-xs font-medium border-b-2 outline-none focus:bg-[var(--nop-surface-soft)] transition-colors ${
+                !showDatasetPanel
+                  ? 'text-[var(--nop-accent)] border-[var(--nop-accent)]'
+                  : 'text-[var(--nop-body-copy)] border-transparent hover:bg-[var(--nop-surface-soft)]'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <Columns className="w-3.5 h-3.5" />
+                <span>Fields</span>
+              </div>
+            </button>
+          </div>
+          {showDatasetPanel ? (
+            <DatasetPanel
+              store={datasetStore}
+              onAddDataset={handleAddDataset}
+              onEditDataset={handleEditDataset}
+            />
+          ) : (
+            <FieldList
+              store={datasetStore}
+              onFieldClick={handleFieldClick}
+            />
+          )}
+        </aside>
+
+        <section className="flex-1 min-w-0 bg-[var(--nop-playground-stage-bg)]">
+          <EditorCanvas editorStore={editorStore} bridge={bridge.current} />
+        </section>
+
+        <aside className="w-[280px] border-l border-[var(--nop-border)] bg-[var(--nop-surface)]">
+          <OutlinePanel bridge={bridge.current} />
+        </aside>
+      </div>
+
+      <DatasetDialog
+        open={datasetDialogOpen}
+        onClose={() => { setDatasetDialogOpen(false); setEditingDatasetId(null) }}
+        onSave={handleSaveDataset}
+        initialData={editingDataset ? {
+          name: editingDataset.name,
+          description: editingDataset.description,
+          type: editingDataset.type,
+          columns: editingDataset.columns.map(col => ({
+            name: col.name,
+            label: col.label,
+            description: col.description,
+            type: col.type
+          }))
+        } : null}
+      />
+    </main>
+  )
+}
