@@ -6,7 +6,10 @@ import type {
   NormalizedDesignerConfig,
   DesignerSnapshot,
   SelectionSummary,
-  DesignerEvent
+  DesignerEvent,
+  NodeTypeConfig,
+  NodeConstraintConfig,
+  NodePermissionConfig
 } from './types';
 
 export interface DesignerCore {
@@ -31,6 +34,13 @@ export interface DesignerCore {
   selectEdge(edgeId: string | null): void;
   clearSelection(): void;
 
+  toggleNodeSelection(nodeId: string): void;
+  toggleEdgeSelection(edgeId: string): void;
+  selectAllNodes(): void;
+  setSelection(nodeIds: string[], edgeIds: string[]): void;
+  moveNodes(deltas: Record<string, { dx: number; dy: number }>): void;
+  updateMultipleNodes(updates: Array<{ nodeId: string; data: Partial<GraphNode> }>): void;
+
   undo(): void;
   redo(): void;
   canUndo(): boolean;
@@ -50,6 +60,11 @@ export interface DesignerCore {
   isDirty(): boolean;
 
   layoutNodes(positions: Map<string, { x: number; y: number }>): void;
+
+  beginTransaction(label?: string, transactionId?: string): string;
+  commitTransaction(transactionId?: string): void;
+  rollbackTransaction(transactionId?: string): void;
+  isInTransaction(): boolean;
 }
 
 interface HistoryEntry {
@@ -106,6 +121,51 @@ function cloneDocument(doc: GraphDocument): GraphDocument {
     nodes: doc.nodes.map(cloneNode),
     edges: doc.edges.map(cloneEdge),
   };
+}
+
+function evaluatePermission(value: boolean | string | undefined, context: Record<string, unknown>): boolean {
+  if (value === undefined) return true;
+  if (typeof value === 'boolean') return value;
+  try {
+    const keys = Object.keys(context);
+    const values = Object.values(context);
+    const fn = new Function(...keys, `"use strict"; return (${value});`);
+    return !!fn(...values);
+  } catch {
+    return true;
+  }
+}
+
+function checkNodePermission(
+  nodeType: NodeTypeConfig | undefined,
+  permissionKey: keyof NodePermissionConfig,
+  context: Record<string, unknown>
+): boolean {
+  if (!nodeType?.permissions) return true;
+  return evaluatePermission(nodeType.permissions[permissionKey], context);
+}
+
+function countNodesOfType(doc: GraphDocument, type: string): number {
+  return doc.nodes.filter((n) => n.type === type).length;
+}
+
+function countIncomingEdges(doc: GraphDocument, nodeId: string): number {
+  return doc.edges.filter((e) => e.target === nodeId).length;
+}
+
+function countOutgoingEdges(doc: GraphDocument, nodeId: string): number {
+  return doc.edges.filter((e) => e.source === nodeId).length;
+}
+
+function checkMaxInstances(doc: GraphDocument, constraints: NodeConstraintConfig | undefined, type: string): boolean {
+  if (!constraints?.maxInstances) return true;
+  if (constraints.maxInstances === 'unlimited') return true;
+  return countNodesOfType(doc, type) < constraints.maxInstances;
+}
+
+function checkMinInstances(doc: GraphDocument, constraints: NodeConstraintConfig | undefined, type: string): boolean {
+  if (constraints?.minInstances === undefined) return true;
+  return countNodesOfType(doc, type) > constraints.minInstances;
 }
 
 function hasEdgeConnection(doc: GraphDocument, source: string, target: string, ignoreEdgeId?: string): boolean {
@@ -200,6 +260,7 @@ function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfig {
       snapToGrid: true,
       ...config.canvas,
     },
+    hooks: config.hooks,
     classAliases: config.classAliases,
     themeStyles: config.themeStyles,
   };
@@ -215,10 +276,12 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   let savedDoc: GraphDocument | null = cloneDocument(doc);
   let clipboard: GraphNode | null = null;
 
-  let activeNodeId: string | null = null;
-  let activeEdgeId: string | null = null;
+  let selectedNodeIds: string[] = [];
+  let selectedEdgeIds: string[] = [];
   let gridEnabled = true;
   let viewport = normalizeViewport(doc.viewport);
+
+  let transactionStack: Array<{ id: string; label: string; snapshotBefore: GraphDocument }> = [];
 
   const maxHistorySize = 50;
 
@@ -226,6 +289,11 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     for (const listener of listeners) {
       listener(event);
     }
+  }
+
+  function emitMutation(event: DesignerEvent) {
+    emit(event);
+    normalizedConfig.hooks?.afterCommand?.(event);
   }
 
   function pushHistory() {
@@ -251,14 +319,16 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
   function getSelectionSummary(): SelectionSummary {
     return {
-      selectedNodeIds: activeNodeId ? [activeNodeId] : [],
-      selectedEdgeIds: activeEdgeId ? [activeEdgeId] : [],
-      activeNodeId,
-      activeEdgeId,
+      selectedNodeIds,
+      selectedEdgeIds,
+      activeNodeId: selectedNodeIds[0] ?? null,
+      activeEdgeId: selectedEdgeIds[0] ?? null,
     };
   }
 
   function getSnapshot(): DesignerSnapshot {
+    const activeNodeId = selectedNodeIds[0] ?? null;
+    const activeEdgeId = selectedEdgeIds[0] ?? null;
     return {
       doc,
       selection: getSelectionSummary(),
@@ -286,17 +356,37 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function addNode(type: string, position: { x: number; y: number }, data?: Record<string, unknown>): GraphNode | null {
+    const permContext = { doc, type, position, data };
+    if (!evaluatePermission(normalizedConfig.permissions.canAddNode, permContext)) {
+      return null;
+    }
+
+    if (normalizedConfig.hooks?.beforeCreateNode) {
+      try {
+        const result = normalizedConfig.hooks.beforeCreateNode({ type, position, data });
+        if (result === false) {
+          return null;
+        }
+        type = result.type;
+        position = result.position;
+        data = result.data;
+      } catch (err) {
+        emit({ type: 'lifecycleHookError', hook: 'beforeCreateNode', error: String(err) });
+        return null;
+      }
+    }
+
     const nodeType = normalizedConfig.nodeTypes.get(type);
     if (!nodeType) {
       return null;
     }
 
-    if (type === 'start') {
-      const startNodes = doc.nodes.filter((n) => n.type === 'start');
-      const maxInstances = nodeType.constraints?.maxInstances ?? 1;
-      if (maxInstances !== 'unlimited' && startNodes.length >= maxInstances) {
-        return null;
-      }
+    if (!checkNodePermission(nodeType, 'canCreate', { doc, nodeType, type, position, data })) {
+      return null;
+    }
+
+    if (!checkMaxInstances(doc, nodeType.constraints, type)) {
+      return null;
     }
 
     const newNode: GraphNode = {
@@ -307,8 +397,8 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     };
 
     doc = { ...doc, nodes: [...doc.nodes, newNode] };
-    pushHistory();
-    emit({ type: 'nodeAdded', node: newNode });
+    if (transactionStack.length === 0) pushHistory();
+    emitMutation({ type: 'nodeAdded', node: newNode });
     emit({ type: 'documentChanged', doc });
 
     return newNode;
@@ -320,13 +410,25 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       return;
     }
 
+    const node = doc.nodes[nodeIndex];
+    const nodeType = normalizedConfig.nodeTypes.get(node.type);
+    const permContext = { doc, node, nodeType, nodeId, data };
+
+    if (!evaluatePermission(normalizedConfig.permissions.canEditNode, permContext)) {
+      return;
+    }
+
+    if (!checkNodePermission(nodeType, 'canEdit', permContext)) {
+      return;
+    }
+
     const updatedNode = { ...doc.nodes[nodeIndex], data: { ...doc.nodes[nodeIndex].data, ...data } };
     const newNodes = [...doc.nodes];
     newNodes[nodeIndex] = updatedNode;
     doc = { ...doc, nodes: newNodes };
 
-    pushHistory();
-    emit({ type: 'nodeUpdated', node: updatedNode });
+    if (transactionStack.length === 0) pushHistory();
+    emitMutation({ type: 'nodeUpdated', node: updatedNode });
     emit({ type: 'documentChanged', doc });
   }
 
@@ -336,19 +438,46 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       return;
     }
 
+    const node = doc.nodes[nodeIndex];
+    const nodeType = normalizedConfig.nodeTypes.get(node.type);
+    const permContext = { doc, node, nodeType, nodeId, position };
+
+    if (!checkNodePermission(nodeType, 'canMove', permContext)) {
+      return;
+    }
+
+    if (nodeType?.constraints?.allowMove === false) {
+      return;
+    }
+
     const updatedNode = { ...doc.nodes[nodeIndex], position: { ...position } };
     const newNodes = [...doc.nodes];
     newNodes[nodeIndex] = updatedNode;
     doc = { ...doc, nodes: newNodes };
 
-    pushHistory();
-    emit({ type: 'nodeMoved', node: updatedNode });
+    if (transactionStack.length === 0) pushHistory();
+    emitMutation({ type: 'nodeMoved', node: updatedNode });
     emit({ type: 'documentChanged', doc });
   }
 
   function duplicateNode(nodeId: string): GraphNode | null {
     const source = doc.nodes.find((n) => n.id === nodeId);
     if (!source) {
+      return null;
+    }
+
+    const nodeType = normalizedConfig.nodeTypes.get(source.type);
+    const permContext = { doc, source, nodeType, nodeId };
+
+    if (!evaluatePermission(normalizedConfig.permissions.canAddNode, permContext)) {
+      return null;
+    }
+
+    if (!checkNodePermission(nodeType, 'canDuplicate', permContext)) {
+      return null;
+    }
+
+    if (nodeType && !checkMaxInstances(doc, nodeType.constraints, source.type)) {
       return null;
     }
 
@@ -361,21 +490,109 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       return;
     }
 
+    const node = doc.nodes[nodeIndex];
+    const nodeType = normalizedConfig.nodeTypes.get(node.type);
+    const permContext = { doc, node, nodeType, nodeId };
+
+    if (!evaluatePermission(normalizedConfig.permissions.canDeleteNode, permContext)) {
+      return;
+    }
+
+    if (!checkNodePermission(nodeType, 'canDelete', permContext)) {
+      return;
+    }
+
+    if (nodeType && !checkMinInstances(doc, nodeType.constraints, node.type)) {
+      return;
+    }
+
+    if (normalizedConfig.hooks?.beforeDelete) {
+      try {
+        const result = normalizedConfig.hooks.beforeDelete({ type: 'node', id: nodeId });
+        if (result === false) {
+          return;
+        }
+        nodeId = result.id;
+      } catch (err) {
+        emit({ type: 'lifecycleHookError', hook: 'beforeDelete', error: String(err) });
+        return;
+      }
+    }
+
     const newNodes = doc.nodes.filter((n) => n.id !== nodeId);
     const newEdges = doc.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
     doc = { ...doc, nodes: newNodes, edges: newEdges };
 
-    if (activeNodeId === nodeId) {
-      activeNodeId = null;
+    if (selectedNodeIds.includes(nodeId)) {
+      selectedNodeIds = selectedNodeIds.filter(id => id !== nodeId);
     }
 
-    pushHistory();
-    emit({ type: 'nodeDeleted', nodeId });
+    if (transactionStack.length === 0) pushHistory();
+    emitMutation({ type: 'nodeDeleted', nodeId });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'selectionChanged', selection: getSelectionSummary() });
   }
 
   function addEdge(source: string, target: string, data?: Record<string, unknown>): GraphEdge | null {
+    const sourceNode = doc.nodes.find((n) => n.id === source);
+    const targetNode = doc.nodes.find((n) => n.id === target);
+    const permContext = { doc, source, target, data, sourceNode, targetNode };
+
+    if (!evaluatePermission(normalizedConfig.permissions.canConnect, permContext)) {
+      return null;
+    }
+
+    if (sourceNode) {
+      const sourceType = normalizedConfig.nodeTypes.get(sourceNode.type);
+      if (!checkNodePermission(sourceType, 'canConnect', permContext)) {
+        return null;
+      }
+      if (sourceType?.constraints?.allowOutgoing === false) {
+        return null;
+      }
+      const maxOut = sourceType?.constraints?.maxOutgoing;
+      if (maxOut !== undefined && countOutgoingEdges(doc, source) >= maxOut) {
+        return null;
+      }
+    }
+
+    if (targetNode) {
+      const targetType = normalizedConfig.nodeTypes.get(targetNode.type);
+      if (!checkNodePermission(targetType, 'canConnect', permContext)) {
+        return null;
+      }
+      if (targetType?.constraints?.allowIncoming === false) {
+        return null;
+      }
+      const maxIn = targetType?.constraints?.maxIncoming;
+      if (maxIn !== undefined && countIncomingEdges(doc, target) >= maxIn) {
+        return null;
+      }
+    }
+
+    if (normalizedConfig.rules.validateConnection) {
+      const expr = normalizedConfig.rules.validateConnection;
+      const valid = evaluatePermission(expr, { doc, source, target, data, sourceNode, targetNode });
+      if (!valid) {
+        return null;
+      }
+    }
+
+    if (normalizedConfig.hooks?.beforeConnect) {
+      try {
+        const result = normalizedConfig.hooks.beforeConnect({ source, target, data });
+        if (result === false) {
+          return null;
+        }
+        source = result.source;
+        target = result.target;
+        data = result.data;
+      } catch (err) {
+        emit({ type: 'lifecycleHookError', hook: 'beforeConnect', error: String(err) });
+        return null;
+      }
+    }
+
     const validationError = validateEdgeConnection(doc, normalizedConfig, source, target);
     if (validationError) {
       return null;
@@ -390,8 +607,8 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     };
 
     doc = { ...doc, edges: [...doc.edges, newEdge] };
-    pushHistory();
-    emit({ type: 'edgeAdded', edge: newEdge });
+    if (transactionStack.length === 0) pushHistory();
+    emitMutation({ type: 'edgeAdded', edge: newEdge });
     emit({ type: 'documentChanged', doc });
 
     return newEdge;
@@ -418,8 +635,8 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       };
     }
 
-    activeEdgeId = edgeId;
-    activeNodeId = null;
+    selectedEdgeIds = [edgeId];
+    selectedNodeIds = [];
 
     if (currentEdge.source === source && currentEdge.target === target) {
       emit({ type: 'selectionChanged', selection: getSelectionSummary() });
@@ -435,8 +652,8 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     newEdges[edgeIndex] = updatedEdge;
     doc = { ...doc, edges: newEdges };
 
-    pushHistory();
-    emit({ type: 'edgeUpdated', edge: updatedEdge });
+    if (transactionStack.length === 0) pushHistory();
+    emitMutation({ type: 'edgeUpdated', edge: updatedEdge });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'selectionChanged', selection: getSelectionSummary() });
 
@@ -454,12 +671,25 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     newEdges[edgeIndex] = updatedEdge;
     doc = { ...doc, edges: newEdges };
 
-    pushHistory();
-    emit({ type: 'edgeUpdated', edge: updatedEdge });
+    if (transactionStack.length === 0) pushHistory();
+    emitMutation({ type: 'edgeUpdated', edge: updatedEdge });
     emit({ type: 'documentChanged', doc });
   }
 
   function deleteEdge(edgeId: string): void {
+    if (normalizedConfig.hooks?.beforeDelete) {
+      try {
+        const result = normalizedConfig.hooks.beforeDelete({ type: 'edge', id: edgeId });
+        if (result === false) {
+          return;
+        }
+        edgeId = result.id;
+      } catch (err) {
+        emit({ type: 'lifecycleHookError', hook: 'beforeDelete', error: String(err) });
+        return;
+      }
+    }
+
     const edgeIndex = doc.edges.findIndex((e) => e.id === edgeId);
     if (edgeIndex === -1) {
       return;
@@ -467,44 +697,105 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     doc = { ...doc, edges: doc.edges.filter((e) => e.id !== edgeId) };
 
-    if (activeEdgeId === edgeId) {
-      activeEdgeId = null;
+    if (selectedEdgeIds.includes(edgeId)) {
+      selectedEdgeIds = selectedEdgeIds.filter(id => id !== edgeId);
     }
 
-    pushHistory();
-    emit({ type: 'edgeDeleted', edgeId });
+    if (transactionStack.length === 0) pushHistory();
+    emitMutation({ type: 'edgeDeleted', edgeId });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'selectionChanged', selection: getSelectionSummary() });
   }
 
   function selectNode(nodeId: string | null): void {
-    if (activeNodeId === nodeId) {
+    if (selectedNodeIds.length === 1 && selectedNodeIds[0] === nodeId) {
       return;
     }
 
-    activeNodeId = nodeId;
-    activeEdgeId = null;
+    selectedNodeIds = nodeId ? [nodeId] : [];
+    selectedEdgeIds = [];
     emit({ type: 'selectionChanged', selection: getSelectionSummary() });
   }
 
   function selectEdge(edgeId: string | null): void {
-    if (activeEdgeId === edgeId) {
+    if (selectedEdgeIds.length === 1 && selectedEdgeIds[0] === edgeId) {
       return;
     }
 
-    activeEdgeId = edgeId;
-    activeNodeId = null;
+    selectedEdgeIds = edgeId ? [edgeId] : [];
+    selectedNodeIds = [];
     emit({ type: 'selectionChanged', selection: getSelectionSummary() });
   }
 
   function clearSelection(): void {
-    if (!activeNodeId && !activeEdgeId) {
+    if (selectedNodeIds.length === 0 && selectedEdgeIds.length === 0) {
       return;
     }
 
-    activeNodeId = null;
-    activeEdgeId = null;
+    selectedNodeIds = [];
+    selectedEdgeIds = [];
     emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+  }
+
+  function toggleNodeSelection(nodeId: string): void {
+    if (selectedNodeIds.includes(nodeId)) {
+      selectedNodeIds = selectedNodeIds.filter(id => id !== nodeId);
+    } else {
+      selectedNodeIds = [...selectedNodeIds, nodeId];
+      selectedEdgeIds = [];
+    }
+    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+  }
+
+  function toggleEdgeSelection(edgeId: string): void {
+    if (selectedEdgeIds.includes(edgeId)) {
+      selectedEdgeIds = selectedEdgeIds.filter(id => id !== edgeId);
+    } else {
+      selectedEdgeIds = [...selectedEdgeIds, edgeId];
+      selectedNodeIds = [];
+    }
+    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+  }
+
+  function selectAllNodes(): void {
+    selectedNodeIds = doc.nodes.map(n => n.id);
+    selectedEdgeIds = [];
+    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+  }
+
+  function setSelection(nodeIds: string[], edgeIds: string[]): void {
+    selectedNodeIds = nodeIds;
+    selectedEdgeIds = edgeIds;
+    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+  }
+
+  function moveNodes(deltas: Record<string, { dx: number; dy: number }>): void {
+    if (transactionStack.length === 0) pushHistory();
+    for (const [nodeId, delta] of Object.entries(deltas)) {
+      const nodeIndex = doc.nodes.findIndex(n => n.id === nodeId);
+      if (nodeIndex === -1) continue;
+      const node = doc.nodes[nodeIndex];
+      const nodeType = normalizedConfig.nodeTypes.get(node.type);
+      if (!checkNodePermission(nodeType, 'canMove', { doc, node, nodeType, nodeId, position: node.position })) continue;
+      if (nodeType?.constraints?.allowMove === false) continue;
+      const updatedNode = { ...doc.nodes[nodeIndex], position: { x: node.position.x + delta.dx, y: node.position.y + delta.dy } };
+      const newNodes = [...doc.nodes];
+      newNodes[nodeIndex] = updatedNode;
+      doc = { ...doc, nodes: newNodes };
+    }
+    emitMutation({ type: 'nodes:moved' });
+    emit({ type: 'documentChanged', doc });
+  }
+
+  function updateMultipleNodes(updates: Array<{ nodeId: string; data: Partial<GraphNode> }>): void {
+    if (transactionStack.length === 0) pushHistory();
+    for (const { nodeId, data } of updates) {
+      const idx = doc.nodes.findIndex(n => n.id === nodeId);
+      if (idx === -1) continue;
+      doc.nodes[idx] = { ...doc.nodes[idx], ...data };
+    }
+    emitMutation({ type: 'nodes:updated' });
+    emit({ type: 'documentChanged', doc });
   }
 
   function undo(): void {
@@ -534,6 +825,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function copySelection(): void {
+    const activeNodeId = selectedNodeIds[0] ?? null;
     if (!activeNodeId) {
       return;
     }
@@ -574,7 +866,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     viewport = normalizedViewport;
     doc = { ...doc, viewport };
-    pushHistory();
+    if (transactionStack.length === 0) pushHistory();
     emit({ type: 'viewportChanged', viewport });
     emit({ type: 'documentChanged', doc });
   }
@@ -591,7 +883,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     doc = cloneDocument(savedDoc);
     viewport = normalizeViewport(doc.viewport);
-    pushHistory();
+    if (transactionStack.length === 0) pushHistory();
     emit({ type: 'documentChanged', doc });
     emit({ type: 'dirtyChanged', isDirty: false });
     emit({ type: 'viewportChanged', viewport });
@@ -614,8 +906,88 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       return { ...node, position: { ...newPos } };
     });
     doc = { ...doc, nodes: newNodes };
-    pushHistory();
+    if (transactionStack.length === 0) {
+      pushHistory();
+    }
     emit({ type: 'documentChanged', doc });
+  }
+
+  function isInTransaction(): boolean {
+    return transactionStack.length > 0;
+  }
+
+  function beginTransaction(label?: string, transactionId?: string): string {
+    const id = transactionId ?? generateId();
+    transactionStack.push({
+      id,
+      label: label ?? '',
+      snapshotBefore: cloneDocument(doc),
+    });
+    emit({ type: 'transactionStarted', transactionId: id, label });
+    return id;
+  }
+
+  function commitTransaction(transactionId?: string): void {
+    if (transactionStack.length === 0) {
+      return;
+    }
+
+    if (transactionId) {
+      const index = transactionStack.findIndex((t) => t.id === transactionId);
+      if (index === -1) {
+        return;
+      }
+
+      if (index === 0) {
+        const txn = transactionStack.pop()!;
+        transactionStack = [];
+        pushHistory();
+        emit({ type: 'transactionCommitted', transactionId: txn.id });
+      } else {
+        const txn = transactionStack[index];
+        transactionStack.splice(index, 1);
+        emit({ type: 'transactionCommitted', transactionId: txn.id });
+        if (transactionStack.length === 0) {
+          pushHistory();
+        }
+      }
+    } else {
+      const txn = transactionStack.pop()!;
+      emit({ type: 'transactionCommitted', transactionId: txn.id });
+      if (transactionStack.length === 0) {
+        pushHistory();
+      }
+    }
+  }
+
+  function rollbackTransaction(transactionId?: string): void {
+    if (transactionStack.length === 0) {
+      return;
+    }
+
+    if (transactionId) {
+      const index = transactionStack.findIndex((t) => t.id === transactionId);
+      if (index === -1) {
+        return;
+      }
+
+      const txn = transactionStack[index];
+      const innerStack = transactionStack.splice(index);
+      doc = cloneDocument(txn.snapshotBefore);
+      viewport = normalizeViewport(doc.viewport);
+      emit({ type: 'transactionRolledBack', transactionId: txn.id });
+      for (let i = innerStack.length - 2; i >= 0; i--) {
+        emit({ type: 'transactionRolledBack', transactionId: innerStack[i].id });
+      }
+    } else {
+      const txn = transactionStack.pop()!;
+      doc = cloneDocument(txn.snapshotBefore);
+      viewport = normalizeViewport(doc.viewport);
+      emit({ type: 'transactionRolledBack', transactionId: txn.id });
+    }
+
+    emit({ type: 'documentChanged', doc });
+    emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
   }
 
   history.push({ doc: cloneDocument(doc) });
@@ -638,6 +1010,12 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     selectNode,
     selectEdge,
     clearSelection,
+    toggleNodeSelection,
+    toggleEdgeSelection,
+    selectAllNodes,
+    setSelection,
+    moveNodes,
+    updateMultipleNodes,
     undo,
     redo,
     canUndo,
@@ -652,5 +1030,9 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     exportDocument,
     isDirty,
     layoutNodes,
+    beginTransaction,
+    commitTransaction,
+    rollbackTransaction,
+    isInTransaction,
   };
 }

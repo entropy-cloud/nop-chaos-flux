@@ -35,6 +35,13 @@ export interface GraphEdge {
   data: Record<string, unknown>;
 }
 
+export interface DesignerLifecycleHooks {
+  beforeCreateNode?(input: { type: string; position: { x: number; y: number }; data?: Record<string, unknown> }): { type: string; position: { x: number; y: number }; data?: Record<string, unknown> } | false;
+  beforeConnect?(input: { source: string; target: string; sourcePort?: string; targetPort?: string; data?: Record<string, unknown> }): { source: string; target: string; sourcePort?: string; targetPort?: string; data?: Record<string, unknown> } | false;
+  beforeDelete?(target: { type: 'node' | 'edge'; id: string }): { type: 'node' | 'edge'; id: string } | false;
+  afterCommand?(event: DesignerEvent): void;
+}
+
 export interface DesignerConfig {
   $schema?: string;
   version: string;
@@ -49,6 +56,7 @@ export interface DesignerConfig {
   rules?: DesignerRules;
   permissions?: DesignerPermissions;
   canvas?: CanvasConfig;
+  hooks?: DesignerLifecycleHooks;
   classAliases?: Record<string, string>;
   themeStyles?: string;
 }
@@ -243,6 +251,7 @@ export interface NormalizedDesignerConfig {
   rules: DesignerRules;
   permissions: DesignerPermissions;
   canvas: CanvasConfig;
+  hooks?: DesignerLifecycleHooks;
   classAliases?: Record<string, string>;
   themeStyles?: string;
 }
@@ -279,6 +288,12 @@ export type DesignerEvent =
   | { type: 'historyChanged'; canUndo: boolean; canRedo: boolean }
   | { type: 'dirtyChanged'; isDirty: boolean }
   | { type: 'viewportChanged'; viewport: { x: number; y: number; zoom: number } }
-  | { type: 'gridToggled'; enabled: boolean };
+  | { type: 'gridToggled'; enabled: boolean }
+  | { type: 'transactionStarted'; transactionId: string; label?: string }
+  | { type: 'transactionCommitted'; transactionId: string }
+  | { type: 'transactionRolledBack'; transactionId: string }
+  | { type: 'lifecycleHookError'; hook: string; error: string }
+  | { type: 'nodes:moved' }
+  | { type: 'nodes:updated' };
 
 export type DesignerEventType = DesignerEvent['type'];
