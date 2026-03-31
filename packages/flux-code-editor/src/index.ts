@@ -17,6 +17,10 @@ export type {
   SQLSchemaSourceRef,
   TableSchema,
   ColumnSchema,
+  SQLFormatConfig,
+  CodeSnippetTemplate,
+  VariablePanelConfig,
+  SQLExecutionConfig,
 } from './types';
 
 export {
@@ -29,6 +33,9 @@ export {
   resolveVariables,
   resolveFunctions,
   resolveTables,
+  resolveFormatConfig,
+  resolveSQLVariables,
+  renderInsertTemplate,
 } from './types';
 
 export { useCodeMirror } from './use-code-mirror';
@@ -44,3 +51,8 @@ export { createExpressionLinter } from './extensions/expression/linter';
 export { createFriendlyNameDecoration } from './extensions/expression/decoration';
 
 export { createTemplateModeExtension } from './extensions/expression/template-mode';
+
+export { SnippetPanel } from './extensions/snippet-panel';
+export { VariablePanel } from './variable-panel';
+export { SQLResultPanel } from './sql-result-panel';
+export type { SQLResultState } from './sql-result-panel';

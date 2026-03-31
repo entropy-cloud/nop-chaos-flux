@@ -1,8 +1,14 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import type { RendererComponentProps, RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
+import type { ApiObject, ActionResult } from '@nop-chaos/flux-core';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
 import { useCodeMirror } from './use-code-mirror';
 import { createBaseExtensions } from './extensions/base';
+import { formatSQL } from './extensions/sql/format';
+import { SnippetPanel } from './extensions/snippet-panel';
+import { VariablePanel } from './variable-panel';
+import { SQLResultPanel } from './sql-result-panel';
+import type { SQLResultState } from './sql-result-panel';
 import type {
   CodeEditorSchema,
   EditorLanguage,
@@ -17,6 +23,8 @@ import {
   resolveVariables,
   resolveFunctions,
   resolveTables,
+  resolveFormatConfig,
+  resolveSQLVariables,
 } from './types';
 
 export const codeEditorFieldRules: SchemaFieldRule[] = [
@@ -60,6 +68,18 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
   const sqlConfig = props.props.sqlConfig as SQLEditorConfig | undefined;
 
   const name = String(props.props.name ?? props.schema.name ?? '');
+
+  const formatConfig = resolveFormatConfig(sqlConfig);
+  const hasSnippets = Boolean(sqlConfig?.snippets?.length);
+  const hasVariablePanel = Boolean(sqlConfig?.variablePanel?.enabled);
+  const hasExecution = Boolean(sqlConfig?.execution?.enabled);
+
+  const hasSQLToolbar = language === 'sql' && (
+    Boolean(formatConfig) || hasSnippets || hasVariablePanel || hasExecution
+  );
+
+  const [variablePanelCollapsed, setVariablePanelCollapsed] = useState(false);
+  const [sqlResult, setSqlResult] = useState<SQLResultState>({ status: 'idle' });
 
   let value: string;
   if (currentForm && name) {
@@ -148,7 +168,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
 
-  const { editorRef } = useCodeMirror({
+  const { editorRef, view } = useCodeMirror({
     initialValue: value,
     placeholder,
     readOnly,
@@ -158,9 +178,100 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
     onBlur: handleBlur,
   });
 
+  const insertAtCursor = useCallback((text: string) => {
+    if (!view) return;
+    const pos = view.state.selection.main.head;
+    view.dispatch({
+      changes: { from: pos, to: pos, insert: text },
+    });
+    view.focus();
+  }, [view]);
+
+  const handleFormatSQL = useCallback(() => {
+    if (!view || !sqlConfig?.format) return;
+    const currentSQL = view.state.doc.toString();
+    const formatted = formatSQL(currentSQL, sqlConfig.format, sqlConfig.dialect);
+    if (formatted !== currentSQL) {
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: formatted },
+      });
+      view.focus();
+    }
+  }, [view, sqlConfig]);
+
+  const handleExecuteSQL = useCallback(async () => {
+    if (!sqlConfig?.execution?.enabled || !view) return;
+
+    setSqlResult({ status: 'loading' });
+
+    try {
+      const sqlText = view.state.doc.toString();
+      const onExecute = sqlConfig.execution.onExecute;
+
+      let result: ActionResult;
+      if (typeof onExecute === 'string') {
+        result = await props.helpers.dispatch({
+          action: onExecute,
+          args: { sql: sqlText },
+        } as any);
+      } else if (onExecute && typeof onExecute === 'object') {
+        const apiAction: any = {
+          action: 'ajax',
+          api: {
+            ...(onExecute as ApiObject),
+            data: { sql: sqlText },
+          },
+        };
+        result = await props.helpers.dispatch(apiAction);
+      } else {
+        result = await props.helpers.dispatch({
+          action: 'ajax',
+          api: {
+            url: '/api/report/execSql',
+            method: 'POST',
+            data: { sql: sqlText },
+          },
+        } as any);
+      }
+
+      if (result.ok && result.data != null) {
+        const resultPath = sqlConfig.execution.resultPath;
+        let data = result.data as any;
+        if (resultPath) {
+          data = resultPath.split('.').reduce((obj: any, key: string) => obj?.[key], data);
+        }
+
+        if (Array.isArray(data)) {
+          const columns = data.length > 0 ? Object.keys(data[0]) : [];
+          setSqlResult({ status: 'success', data, columns });
+        } else {
+          setSqlResult({ status: 'success', data: [{ result: String(data) }], columns: ['result'] });
+        }
+      } else {
+        setSqlResult({
+          status: 'error',
+          message: result.error ? String(result.error) : 'Execution returned no data',
+        });
+      }
+    } catch (err: any) {
+      setSqlResult({
+        status: 'error',
+        message: err?.message ?? String(err),
+      });
+    }
+  }, [view, sqlConfig, props.helpers]);
+
+  const handleClearResult = useCallback(() => {
+    setSqlResult({ status: 'idle' });
+  }, []);
+
+  const sqlVariables = resolveSQLVariables(sqlConfig);
+
+  const showToolbar = (allowFullscreen && !isFullscreen) || hasSQLToolbar;
+
   return (
     <div
-      className={`nop-code-editor${isFullscreen ? ' nop-code-editor--fullscreen' : ''}${allowFullscreen && !isFullscreen ? ' nop-code-editor--has-toolbar' : ''}`}
+      className={`nop-code-editor${isFullscreen ? ' nop-code-editor--fullscreen' : ''}${showToolbar ? ' nop-code-editor--has-toolbar' : ''}`}
       data-testid={props.meta.testid}
       data-theme={editorTheme}
       style={!isFullscreen ? containerStyle : undefined}
@@ -185,35 +296,109 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
           </span>
         </div>
       )}
-      {allowFullscreen && !isFullscreen && (
+      {showToolbar && (
         <div className="nop-code-editor__toolbar">
-          {/*
-            Intentionally using <span role="button"> instead of <button>.
-            FieldFrame wraps this component in a <label>. A <label> forwards
-            clicks to its first *labelable* descendant (<button>, <input>, etc.).
-            If we used <button> here, clicking anywhere inside the <label> —
-            including the editor text area — would trigger this handler.
-            <span> is NOT labelable, so the label won't forward clicks to it.
-          */}
-          <span
-            role="button"
-            tabIndex={0}
-            className="nop-code-editor__toolbar-fullscreen"
-            onClick={toggleFullscreen}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleFullscreen();
-              }
-            }}
-            aria-label="Enter fullscreen"
-            title="Fullscreen"
-          >
-            ⛶
-          </span>
+          {language === 'sql' && (
+            <>
+              {formatConfig && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className="nop-code-editor__toolbar-format"
+                  onClick={handleFormatSQL}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleFormatSQL();
+                    }
+                  }}
+                  title="Format SQL"
+                >
+                  Format
+                </span>
+              )}
+              {hasSnippets && (
+                <SnippetPanel
+                  snippets={sqlConfig!.snippets!}
+                  onInsert={insertAtCursor}
+                />
+              )}
+              {hasVariablePanel && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className={`nop-code-editor__toolbar-var-toggle${variablePanelCollapsed ? ' is-collapsed' : ''}`}
+                  onClick={() => setVariablePanelCollapsed(v => !v)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setVariablePanelCollapsed(v => !v);
+                    }
+                  }}
+                  title={variablePanelCollapsed ? 'Hide variables' : 'Show variables'}
+                >
+                  {variablePanelCollapsed ? '▷ Vars' : '▽ Vars'}
+                </span>
+              )}
+              {hasExecution && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className="nop-code-editor__toolbar-execute"
+                  onClick={handleExecuteSQL}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleExecuteSQL();
+                    }
+                  }}
+                  title="Execute SQL"
+                >
+                  ▶ Run
+                </span>
+              )}
+            </>
+          )}
+          {allowFullscreen && !isFullscreen && (
+            <span
+              role="button"
+              tabIndex={0}
+              className="nop-code-editor__toolbar-fullscreen"
+              onClick={toggleFullscreen}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleFullscreen();
+                }
+              }}
+              aria-label="Enter fullscreen"
+              title="Fullscreen"
+            >
+              ⛶
+            </span>
+          )}
         </div>
       )}
-      <div ref={editorRef} style={isFullscreen ? { flex: 1, overflow: 'auto' } : undefined} />
+      <div className={hasVariablePanel ? 'nop-code-editor__body' : undefined} style={hasVariablePanel ? { display: 'flex', flex: 1, minHeight: 0 } : undefined}>
+        <div
+          ref={editorRef}
+          style={isFullscreen ? { flex: 1, overflow: 'auto' } : hasVariablePanel ? { flex: 1, minHeight: 0 } : undefined}
+        />
+        {hasVariablePanel && (
+          <VariablePanel
+            variables={sqlVariables}
+            insertTemplate={sqlConfig!.variablePanel!.insertTemplate}
+            onInsert={insertAtCursor}
+            collapsed={variablePanelCollapsed}
+            onToggleCollapse={() => setVariablePanelCollapsed(v => !v)}
+          />
+        )}
+      </div>
+      {hasExecution && sqlResult.status !== 'idle' && (
+        <div className="nop-code-editor__result-container">
+          <SQLResultPanel result={sqlResult} onClose={handleClearResult} />
+        </div>
+      )}
     </div>
   );
 }
