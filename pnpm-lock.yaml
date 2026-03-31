@@ -104,6 +104,12 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:^
         version: link:../../packages/ui
+      '@nop-chaos/word-editor-core':
+        specifier: workspace:*
+        version: link:../../packages/word-editor-core
+      '@nop-chaos/word-editor-renderers':
+        specifier: workspace:*
+        version: link:../../packages/word-editor-renderers
       '@xyflow/react':
         specifier: ^12.10.1
         version: 12.10.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -554,6 +560,42 @@ importers:
         specifier: ^19.0.0
         version: 19.2.14
 
+  packages/word-editor-core:
+    dependencies:
+      '@hufe921/canvas-editor':
+        specifier: ^0.9.130
+        version: 0.9.130
+      zustand:
+        specifier: ^5.0.11
+        version: 5.0.11(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
+
+  packages/word-editor-renderers:
+    dependencies:
+      '@hufe921/canvas-editor':
+        specifier: ^0.9.130
+        version: 0.9.130
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
+      '@nop-chaos/word-editor-core':
+        specifier: workspace:*
+        version: link:../word-editor-core
+      '@types/use-sync-external-store':
+        specifier: ^0.0.6
+        version: 0.0.6
+      lucide-react:
+        specifier: ^0.525.0
+        version: 0.525.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
+      use-sync-external-store:
+        specifier: ^1.6.0
+        version: 1.6.0(react@19.2.4)
+
 packages:
 
   '@alloc/quick-lru@5.2.0':
@@ -902,6 +944,10 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@hufe921/canvas-editor@0.9.130':
+    resolution: {integrity: sha512-qn2kOp7l3CZN8krkK4xIOyhttDn3XLpYErN9qCjuB6Gc7W54j4IyH+BTNNBlthkim3dhQxs1Ou84I9LvnxFWXA==}
+    engines: {node: '>=16.9.1'}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -3809,6 +3855,8 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
 
   '@floating-ui/utils@0.2.11': {}
+
+  '@hufe921/canvas-editor@0.9.130': {}
 
   '@humanfs/core@0.19.1': {}
 

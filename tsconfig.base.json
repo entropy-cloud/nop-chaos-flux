@@ -33,7 +33,9 @@
       "@nop-chaos/report-designer-renderers": ["packages/report-designer-renderers/src/index.ts"],
       "@nop-chaos/flow-designer-core": ["packages/flow-designer-core/src/index.ts"],
       "@nop-chaos/flow-designer-renderers": ["packages/flow-designer-renderers/src/index.tsx"],
-      "@nop-chaos/flux-code-editor": ["packages/flux-code-editor/src/index.ts"]
+      "@nop-chaos/flux-code-editor": ["packages/flux-code-editor/src/index.ts"],
+      "@nop-chaos/word-editor-core": ["packages/word-editor-core/src/index.ts"],
+      "@nop-chaos/word-editor-renderers": ["packages/word-editor-renderers/src/index.ts"]
     }
   }
 }

@@ -18,5 +18,7 @@ export const workspacePackageAliases = {
   '@nop-chaos/report-designer-core': fileURLToPath(new URL('./packages/report-designer-core/src/index.ts', import.meta.url)),
   '@nop-chaos/report-designer-renderers': fileURLToPath(new URL('./packages/report-designer-renderers/src/index.ts', import.meta.url)),
   '@nop-chaos/flow-designer-core': fileURLToPath(new URL('./packages/flow-designer-core/src/index.ts', import.meta.url)),
-  '@nop-chaos/flow-designer-renderers': fileURLToPath(new URL('./packages/flow-designer-renderers/src/index.tsx', import.meta.url))
+  '@nop-chaos/flow-designer-renderers': fileURLToPath(new URL('./packages/flow-designer-renderers/src/index.tsx', import.meta.url)),
+  '@nop-chaos/word-editor-core': fileURLToPath(new URL('./packages/word-editor-core/src/index.ts', import.meta.url)),
+  '@nop-chaos/word-editor-renderers': fileURLToPath(new URL('./packages/word-editor-renderers/src/index.ts', import.meta.url))
 };

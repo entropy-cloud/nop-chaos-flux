@@ -14,6 +14,8 @@
     { "path": "./packages/spreadsheet-renderers" },
     { "path": "./packages/report-designer-core" },
     { "path": "./packages/report-designer-renderers" },
+    { "path": "./packages/word-editor-core" },
+    { "path": "./packages/word-editor-renderers" },
     { "path": "./apps/playground" }
   ]
 }
