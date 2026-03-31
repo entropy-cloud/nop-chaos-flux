@@ -115,6 +115,91 @@ const schema = {
         },
         {
           type: 'code-editor',
+          name: 'sqlEnhanced',
+          label: 'SQL Editor (Format + Snippets + Variables + Execution)',
+          language: 'sql',
+          height: 400,
+          lineNumbers: true,
+          sqlConfig: {
+            tables: [
+              {
+                name: 'users',
+                description: 'User table',
+                columns: [
+                  { name: 'id', type: 'BIGINT', description: 'Primary key' },
+                  { name: 'username', type: 'VARCHAR(64)', description: 'Username' },
+                  { name: 'email', type: 'VARCHAR(128)' },
+                  { name: 'created_at', type: 'TIMESTAMP' },
+                ],
+              },
+              {
+                name: 'orders',
+                alias: 'o',
+                description: 'Order table',
+                columns: [
+                  { name: 'id', type: 'BIGINT' },
+                  { name: 'user_id', type: 'BIGINT' },
+                  { name: 'amount', type: 'DECIMAL(10,2)' },
+                  { name: 'status', type: 'VARCHAR(16)' },
+                ],
+              },
+            ],
+            dialect: 'mysql',
+            uppercaseKeywords: true,
+            format: {
+              enabled: true,
+              keywordCase: 'upper',
+              tabWidth: 2,
+            },
+            snippets: [
+              {
+                name: 'IF 条件',
+                template: '<if test="${condition}">\n  AND ${column} = #{${param}}\n</if>',
+                description: 'MyBatis 动态 SQL 条件块',
+              },
+              {
+                name: 'FOREACH 循环',
+                template: '<foreach collection="${list}" item="${item}" open="(" separator="," close=")">\n  #{${item}}\n</foreach>',
+                description: 'MyBatis 循环',
+              },
+              {
+                name: 'WHERE 1=1',
+                template: 'WHERE 1=1\n  AND ',
+                description: '通用 WHERE 模板',
+              },
+            ],
+            variablePanel: {
+              enabled: true,
+              variables: [
+                { label: '用户ID', value: 'userId', type: 'number' },
+                { label: '用户名', value: 'userName', type: 'string' },
+                { label: '商户号', value: 'merchantNo', type: 'string' },
+                {
+                  label: '订单信息',
+                  value: 'order',
+                  type: 'object',
+                  children: [
+                    { label: '订单ID', value: 'order.id', type: 'number' },
+                    { label: '订单状态', value: 'order.status', type: 'string' },
+                  ],
+                },
+              ],
+              insertTemplate: '<if test="${value} != null">\n  AND ${value} = #{${value}}\n</if>',
+            },
+            execution: {
+              enabled: true,
+              onExecute: {
+                url: '/api/report/execSql',
+                method: 'POST',
+                data: { tplSql: '${value}' },
+              },
+              resultPath: 'responseData',
+              showPreview: true,
+            },
+          },
+        },
+        {
+          type: 'code-editor',
           name: 'jsonSchema',
           label: 'JSON Editor (Fullscreen)',
           language: 'json',
