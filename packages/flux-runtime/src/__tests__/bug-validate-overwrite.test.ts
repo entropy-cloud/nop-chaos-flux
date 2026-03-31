@@ -32,9 +32,10 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
       initialValues: { name: '' },
       parentScope: createStubScope(),
       validation: {
-        fields: {
+        nodes: {
           name: {
             path: 'name',
+            kind: 'field',
             controlType: 'input-text',
             rules: [
               {
@@ -43,7 +44,9 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
                 dependencyPaths: []
               }
             ],
-            behavior: { triggers: ['submit'], showErrorOn: ['submit'] }
+            behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
+            children: [],
+            parent: ''
           }
         },
         order: ['name'],
@@ -83,9 +86,10 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
       initialValues: { name: '' },
       parentScope: createStubScope(),
       validation: {
-        fields: {
+        nodes: {
           name: {
             path: 'name',
+            kind: 'field',
             controlType: 'input-text',
             rules: [
               {
@@ -94,7 +98,9 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
                 dependencyPaths: []
               }
             ],
-            behavior: { triggers: ['submit'], showErrorOn: ['submit'] }
+            behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
+            children: [],
+            parent: ''
           }
         },
         order: ['name'],
@@ -126,9 +132,10 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
       initialValues: { name: '', email: '' },
       parentScope: createStubScope(),
       validation: {
-        fields: {
+        nodes: {
           name: {
             path: 'name',
+            kind: 'field',
             controlType: 'input-text',
             rules: [
               {
@@ -137,7 +144,9 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
                 dependencyPaths: []
               }
             ],
-            behavior: { triggers: ['submit'], showErrorOn: ['submit'] }
+            behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
+            children: [],
+            parent: ''
           }
         },
         order: ['name'],
@@ -179,18 +188,15 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
       initialValues: { name: '' },
       parentScope: createStubScope(),
       validation: {
-        fields: {
+        nodes: {
           name: {
             path: 'name',
+            kind: 'field',
             controlType: 'input-text',
-            rules: [
-              {
-                id: 'name#0:required',
-                rule: { kind: 'required', message: 'Name is required' },
-                dependencyPaths: []
-              }
-            ],
-            behavior: { triggers: ['submit'], showErrorOn: ['submit'] }
+            rules: [],
+            behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
+            children: [],
+            parent: ''
           }
         },
         order: ['name'],
@@ -237,12 +243,15 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
       initialValues: { name: '' },
       parentScope: createStubScope(),
       validation: {
-        fields: {
+        nodes: {
           name: {
             path: 'name',
+            kind: 'field',
             controlType: 'input-text',
             rules: [],
-            behavior: { triggers: ['submit'], showErrorOn: ['submit'] }
+            behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
+            children: [],
+            parent: ''
           }
         },
         order: ['name'],
@@ -281,9 +290,10 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
       initialValues: { a: '', b: '' },
       parentScope: createStubScope(),
       validation: {
-        fields: {
+        nodes: {
           a: {
             path: 'a',
+            kind: 'field',
             controlType: 'input-text',
             rules: [
               {
@@ -292,10 +302,13 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
                 dependencyPaths: []
               }
             ],
-            behavior: { triggers: ['submit'], showErrorOn: ['submit'] }
+            behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
+            children: [],
+            parent: ''
           },
           b: {
             path: 'b',
+            kind: 'field',
             controlType: 'input-text',
             rules: [
               {
@@ -304,7 +317,9 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
                 dependencyPaths: []
               }
             ],
-            behavior: { triggers: ['submit'], showErrorOn: ['submit'] }
+            behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
+            children: [],
+            parent: ''
           }
         },
         order: ['a', 'b'],

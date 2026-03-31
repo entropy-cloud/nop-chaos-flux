@@ -83,7 +83,6 @@ export interface CompiledValidationNode {
 }
 
 export interface CompiledFormValidationModel {
-  fields: Record<string, CompiledFormValidationField>;
   order: string[];
   behavior: CompiledValidationBehavior;
   dependents: Record<string, string[]>;

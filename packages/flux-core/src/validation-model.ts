@@ -16,10 +16,16 @@ export function isCompiledValidationFieldNode(
   return !!node && node.kind !== 'form' && typeof node.controlType === 'string' && !!node.behavior;
 }
 
-export function toCompiledValidationField(
-  node: CompiledValidationNode,
-  fallbackBehavior: CompiledValidationBehavior
+export function getCompiledValidationField(
+  model: CompiledFormValidationModel | undefined,
+  path: string
 ): CompiledFormValidationField | undefined {
+  if (!model) {
+    return undefined;
+  }
+
+  const node = model.nodes?.[path];
+
   if (!isCompiledValidationFieldNode(node)) {
     return undefined;
   }
@@ -29,40 +35,8 @@ export function toCompiledValidationField(
     controlType: node.controlType,
     label: node.label,
     rules: node.rules,
-    behavior: node.behavior ?? fallbackBehavior
+    behavior: node.behavior
   };
-}
-
-export function getCompiledValidationField(
-  model: CompiledFormValidationModel | undefined,
-  path: string
-): CompiledFormValidationField | undefined {
-  if (!model) {
-    return undefined;
-  }
-
-  return model.fields[path] ?? (model.nodes?.[path] ? toCompiledValidationField(model.nodes[path], model.behavior) : undefined);
-}
-
-export function buildCompiledValidationFieldMap(
-  nodes: Record<string, CompiledValidationNode> | undefined,
-  fallbackBehavior: CompiledValidationBehavior
-): Record<string, CompiledFormValidationField> {
-  if (!nodes) {
-    return {};
-  }
-
-  const fields: Record<string, CompiledFormValidationField> = {};
-
-  for (const [path, node] of Object.entries(nodes)) {
-    const field = toCompiledValidationField(node, fallbackBehavior);
-
-    if (field) {
-      fields[path] = field;
-    }
-  }
-
-  return fields;
 }
 
 export function buildCompiledValidationDependentMap(
@@ -143,7 +117,6 @@ export function buildCompiledFormValidationModel(input: {
   }
 
   return {
-    fields: buildCompiledValidationFieldMap(nodes, input.behavior),
     order: validationOrder,
     behavior: input.behavior,
     dependents: buildCompiledValidationDependentMap(nodes),
