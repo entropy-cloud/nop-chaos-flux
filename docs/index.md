@@ -6,7 +6,7 @@ This `docs/` tree is the curated entry point for the current repository state.
 
 - start here before changing architecture docs
 - prefer active files under `docs/architecture/`, `docs/references/`, and `docs/examples/`
-- use `docs/development-log.md` for short dated notes about recent documentation, decisions, and next implementation steps
+- use `docs/logs/` for short dated notes about recent documentation, decisions, and next implementation steps (one file per day: `docs/logs/{year}/{month}-{day}.md`)
 - treat `docs/archive/` as preserved draft history
 - treat `docs/plans/` as working or historical planning material, not the default source of truth for current behavior
 
@@ -46,7 +46,7 @@ Choose the smallest document that matches the task.
 | Review current renderer and runtime contracts by name | `docs/references/renderer-interfaces.md` | `packages/flux-core/src/index.ts` |
 | Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
 | Review prototype lessons or external research notes | `docs/references/` | the related architecture file for the active baseline |
-| Quickly review recent doc work, design notes, or near-term next steps | `docs/development-log.md` | the most relevant active doc |
+| Quickly review recent doc work, design notes, or near-term next steps | `docs/logs/` (daily files) | the most relevant active doc |
 
 ## Active Source Of Truth
 
@@ -81,7 +81,7 @@ Example behavior is best cross-checked with:
 - `docs/amis-types/` - AMIS component TypeScript type definitions extracted from amis@6.13.0, useful for understanding upstream AMIS schema structure
 - `docs/examples/` - small representative schemas and usage notes
 - `docs/analysis/` - comparative, investigatory, or decision-oriented reports; primarily for conclusions and tradeoff records, not the active contract
-- `docs/development-log.md` - quick dated development notes for recent doc additions, decisions, and immediate next work
+- `docs/logs/` - per-day development logs (`{year}/{month}-{day}.md`), see `docs/logs/README.md` for conventions
 - `docs/bugs/` - numbered defect histories and fix notes for non-obvious regressions; useful for root-cause context and regression tracking, but secondary to architecture docs
 - start new bug notes from `docs/bugs/00-bug-fix-note-writing-guide.md`
 - `docs/plans/` - implementation plans, checklists, and completion records; historical unless a plan is being actively executed

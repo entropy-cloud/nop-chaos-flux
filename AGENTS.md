@@ -60,11 +60,13 @@ Always run `typecheck`, `build`, and `lint` after making changes. Run tests when
 
 After completing any significant work, you MUST:
 
-1. **Update `docs/development-log.md`** with a dated entry containing:
+ 1. **Update the daily dev log** at `docs/logs/{year}/{month}-{day}.md` with a dated entry containing:
    - What was added/changed
    - Key decisions made
    - Next steps (if known)
    - Brief context useful for future work
+   - New entries are appended at the top of the file (reverse chronological)
+   - See `docs/logs/README.md` for writing conventions
 
 2. **Update relevant architecture docs** when changing:
    - Package boundaries or ownership â†’ `docs/architecture/flux-runtime-module-boundaries.md`
@@ -97,7 +99,7 @@ After completing any significant work, you MUST:
 | `docs/plans/` | Implementation plans and checklists |
 | `docs/bugs/` | Numbered defect histories and fix notes |
 | `docs/archive/` | Preserved legacy drafts |
-| `docs/development-log.md` | Quick dated notes for recent changes |
+| `docs/logs/` | Daily dev logs — `docs/logs/{year}/{month}-{day}.md`, see `docs/logs/README.md` for conventions |
 
 ### Entry Point
 
@@ -337,7 +339,7 @@ src/
 
 4. Add to `tsconfig.json` project references.
 
-5. Update `docs/development-log.md`.
+ 5. Update the daily dev log in `docs/logs/`.
 
 ---
 
@@ -357,6 +359,6 @@ Before finishing any task:
 - [ ] `pnpm build` passes
 - [ ] `pnpm lint` passes (if applicable)
 - [ ] `pnpm test` passes (if applicable)
-- [ ] `docs/development-log.md` updated (for significant changes)
+- [ ] `docs/logs/` updated (for significant changes)
 - [ ] Relevant architecture docs updated (if design changed)
 
