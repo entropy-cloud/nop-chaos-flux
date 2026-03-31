@@ -377,6 +377,48 @@ interface SQLEditorConfig {
 
   // --- 自动大写关键字 ---
   uppercaseKeywords?: boolean;
+
+  // --- SQL 格式化 (Phase 1) ---
+  format?: boolean | SQLFormatConfig;
+
+  // --- 代码片段模板 (Phase 2) ---
+  snippets?: CodeSnippetTemplate[];
+
+  // --- 变量面板 (Phase 3) ---
+  variablePanel?: VariablePanelConfig;
+
+  // --- SQL 执行 + 结果预览 (Phase 4) ---
+  execution?: SQLExecutionConfig;
+}
+
+interface SQLFormatConfig {
+  enabled: boolean;
+  language?: 'sql' | 'mysql' | 'postgresql' | 'mariadb' | 'tsql' | 'plsql';
+  tabWidth?: number;
+  keywordCase?: 'upper' | 'lower' | 'preserve';
+  indentStyle?: 'standard' | 'tabularLeft' | 'tabularRight';
+  logicalOperatorNewline?: 'before' | 'after';
+}
+
+interface CodeSnippetTemplate {
+  name: string;
+  template: string;
+  description?: string;
+  icon?: string;
+}
+
+interface VariablePanelConfig {
+  enabled: boolean;
+  variables?: VariableItem[] | VariableSourceRef;
+  insertTemplate?: string;
+}
+
+interface SQLExecutionConfig {
+  enabled: boolean;
+  onExecute?: string | ApiObject;
+  resultPath?: string;
+  params?: Record<string, string>;
+  showPreview?: boolean;
 }
 
 type SQLDialect = 'standard' | 'mysql' | 'postgresql' | 'sqlite' | 'mssql';
@@ -543,7 +585,67 @@ type SQLSchemaSourceRef = {
 }
 ```
 
-### 5.4 只读代码查看器
+### 5.4 SQL 编辑器增强（格式化 + 代码片段 + 变量面板 + 执行预览）
+
+```json
+{
+  "type": "code-editor",
+  "name": "sqlEnhanced",
+  "label": "SQL 查询（增强版）",
+  "language": "sql",
+  "height": 400,
+  "lineNumbers": true,
+  "sqlConfig": {
+    "tables": [
+      {
+        "name": "users",
+        "columns": [
+          { "name": "id", "type": "BIGINT" },
+          { "name": "username", "type": "VARCHAR(64)" }
+        ]
+      }
+    ],
+    "dialect": "mysql",
+    "uppercaseKeywords": true,
+    "format": {
+      "enabled": true,
+      "keywordCase": "upper",
+      "tabWidth": 2
+    },
+    "snippets": [
+      {
+        "name": "IF 条件",
+        "template": "<if test=\"${condition}\">\n  AND ${column} = #{${param}}\n</if>",
+        "description": "MyBatis 动态 SQL 条件块"
+      },
+      {
+        "name": "FOREACH 循环",
+        "template": "<foreach collection=\"${list}\" item=\"${item}\" open=\"(\" separator=\",\" close=\")\">\n  #{${item}}\n</foreach>"
+      }
+    ],
+    "variablePanel": {
+      "enabled": true,
+      "variables": [
+        { "label": "用户ID", "value": "userId", "type": "number" },
+        { "label": "用户名", "value": "userName", "type": "string" }
+      ],
+      "insertTemplate": "<if test=\"${value} != null\">\n  AND ${value} = #{${value}}\n</if>"
+    },
+    "execution": {
+      "enabled": true,
+      "onExecute": {
+        "url": "/api/report/execSql",
+        "method": "POST",
+        "data": { "tplSql": "${value}" }
+      },
+      "resultPath": "responseData",
+      "showPreview": true
+    }
+  }
+}
+```
+
+### 5.5 只读代码查看器
 
 ```json
 {
@@ -558,7 +660,7 @@ type SQLSchemaSourceRef = {
 }
 ```
 
-### 5.5 JSON Schema 编辑器
+### 5.6 JSON Schema 编辑器
 
 ```json
 {
@@ -826,6 +928,86 @@ function sqlCompletionSource(tables: TableSchema[]) {
 
 ---
 
+## 八.5 SQL 增强功能
+
+### 8.5.1 SQL 格式化（Phase 1）
+
+通过 `sql-formatter` 库实现一键美化 SQL。配置通过 `sqlConfig.format` 控制：
+
+```typescript
+// packages/flux-code-editor/src/extensions/sql/format.ts
+import { format as sqlFormat } from 'sql-formatter';
+
+const DIALECT_MAP: Record<SQLDialect, string> = {
+  standard: 'sql',
+  mysql: 'mysql',
+  postgresql: 'postgresql',
+  sqlite: 'sqlite',
+  mssql: 'tsql',
+};
+
+export function formatSQL(
+  sql: string,
+  config: boolean | SQLFormatConfig | undefined,
+  dialect?: SQLDialect,
+): string {
+  if (!config) return sql;
+  const resolved = config === true ? { enabled: true } : config;
+  return sqlFormat(sql, {
+    language: resolved.language ?? DIALECT_MAP[dialect ?? 'standard'] ?? 'sql',
+    tabWidth: resolved.tabWidth ?? 2,
+    keywordCase: resolved.keywordCase ?? 'upper',
+    indentStyle: resolved.indentStyle ?? 'standard',
+    logicalOperatorNewline: resolved.logicalOperatorNewline ?? 'before',
+  });
+}
+```
+
+Toolbar 按钮：当 `language === 'sql'` 且 `sqlConfig.format` 为 truthy 时显示。
+
+### 8.5.2 代码片段模板（Phase 2）
+
+`SnippetPanel` 组件提供下拉菜单显示可配置的代码片段。点击后通过 `view.dispatch` 在光标位置插入模板文本：
+
+```tsx
+// packages/flux-code-editor/src/extensions/snippet-panel.tsx
+export function SnippetPanel({ snippets, onInsert }: SnippetPanelProps) {
+  // 下拉菜单，点击调用 onInsert(template)
+}
+```
+
+模板中的 `${var}` 占位符直接插入文本（简单版），后续可扩展为 CM6 placeholder tab-stop。
+
+### 8.5.3 变量面板（Phase 3）
+
+`VariablePanel` 组件在编辑器左侧显示变量列表，支持：
+- **复制**：将变量值复制到剪贴板
+- **插入**：将变量值插入到光标位置
+- **模板渲染**：当配置了 `insertTemplate` 时，插入操作会渲染模板（`${value}` → 变量值，`${label}` → 变量名）
+
+```
+┌─────────────────────────────────────────────────┐
+│ [变量面板]  │  [CodeMirror Editor]               │
+│ 系统变量    │  SELECT * FROM users                │
+│ ├ userId    │  WHERE 1=1                          │
+│ └ userName  │  <if test="userId != null">         │
+│ [复制][插入]│    AND user_id = #{userId}          │
+└─────────────────────────────────────────────────┘
+```
+
+### 8.5.4 SQL 执行 + 结果预览（Phase 4）
+
+通过 Flux 动作系统执行 SQL 并展示结果：
+1. 用户点击"执行"按钮
+2. 获取当前 SQL 文本
+3. 通过 `props.helpers.dispatch` 发送 API 请求（复用 `ApiObject` 或 action string）
+4. 响应通过 `execution.resultPath` 提取
+5. 结果展示在编辑器下方的预览表格中
+
+`SQLResultPanel` 组件支持四种状态：`idle` / `loading` / `success`（数据表格）/ `error`（错误信息）。
+
+---
+
 ## 九、友好名标记（Decoration）
 
 ### 9.1 设计决策
@@ -877,16 +1059,21 @@ packages/flux-code-editor/
 │   ├── index.ts                        # 公共导出
 │   ├── types.ts                        # CodeEditorSchema, 配置类型
 │   ├── use-code-mirror.ts              # CM6 React Hook
+│   ├── code-editor-renderer.tsx         # 渲染器组件
+│   ├── variable-panel.tsx              # 变量面板组件 (Phase 3)
+│   ├── sql-result-panel.tsx            # SQL 执行结果预览 (Phase 4)
 │   ├── extensions/
 │   │   ├── expression/
 │   │   │   ├── completion.ts           # 表达式补全源
 │   │   │   ├── decoration.ts           # 变量友好名装饰器
 │   │   │   └── linter.ts               # 表达式语法校验
+│   │   │   └── template-mode.ts        # 模板模式 StreamLanguage
 │   │   ├── sql/
 │   │   │   ├── completion.ts           # SQL 补全源
-│   │   │   └── dialects.ts             # SQL 方言定义
+│   │   │   ├── format.ts               # SQL 格式化 (Phase 1)
+│   │   │   └── index.ts                # SQL 扩展 barrel
+│   │   ├── snippet-panel.tsx           # 代码片段面板 (Phase 2)
 │   │   └── base.ts                     # 通用 Extension 工厂
-│   └── code-editor-renderer.tsx         # 渲染器组件
 ├── package.json
 ├── tsconfig.json
 └── tsconfig.build.json

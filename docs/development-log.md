@@ -73,6 +73,22 @@ This file is intentionally lightweight.
 - Updated AGENTS.md "Build Artifacts" section with rules about preventing build output leaks into `src/`.
 - Next step: implement NodeRenderer selective scope subscription (Plan 21).
 
+### 2026-03-31 (Code Editor SQL Enhancement — Plan 22)
+
+- Implemented all 4 phases from `docs/plans/22-code-editor-sql-enhancement-plan.md`.
+- **Phase 1 (P0) — SQL 格式化**: Added `sql-formatter` dependency, `SQLFormatConfig` type, `formatSQL()` function in `extensions/sql/format.ts`, toolbar Format button.
+- **Phase 2 (P1) — 代码片段模板**: Added `CodeSnippetTemplate` type, `SnippetPanel` component in `extensions/snippet-panel.tsx`, toolbar dropdown for snippet insertion.
+- **Phase 3 (P1) — 变量面板**: Added `VariablePanelConfig` type, `VariablePanel` component with copy/insert operations, `insertTemplate` rendering, collapsible side panel layout.
+- **Phase 4 (P2) — SQL 执行 + 结果预览**: Added `SQLExecutionConfig` type, `SQLResultPanel` component (idle/loading/success/error states), execute handler via Flux action system (`props.helpers.dispatch`), result table rendering.
+- **Types**: Extended `SQLEditorConfig` with `format`, `snippets`, `variablePanel`, `execution` fields in `types.ts`. Added `resolveFormatConfig()` and `resolveSQLVariables()` helpers.
+- **Tests**: Added `sql-result-panel.test.tsx` (11 tests covering all 4 states). Total: 45 tests passing.
+- **Playground**: Updated `CodeEditorPage.tsx` with enhanced SQL editor demo showing all 4 features.
+- **Docs**: Updated `docs/architecture/code-editor.md` with SQL enhancement types, examples, and architecture section (Section 8.5).
+- **Verification**: typecheck ✅, build ✅, lint ✅, test ✅ (45/45).
+- Key decision: SQL execution reuses Flux action system (`props.helpers.dispatch`) instead of implementing HTTP requests independently.
+- Key decision: Variable panel uses flex layout alongside editor, no absolute positioning.
+- Ref: `docs/plans/22-code-editor-sql-enhancement-plan.md`, `packages/flux-code-editor/src/`
+
 ### 2026-03-30 (flux-code-editor Full Implementation)
 
 - Implemented `@nop-chaos/flux-code-editor` package — CodeMirror 6 based code editor renderer
