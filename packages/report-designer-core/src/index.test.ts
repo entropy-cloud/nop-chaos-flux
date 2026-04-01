@@ -525,22 +525,28 @@ describe('createReportDesignerCore', () => {
     expect(result.ok).toBe(false);
   });
 
-  it('should handle import without adapter', async () => {
+  it('should fail import when no codec configured in profile', async () => {
     const result = await core.dispatch({
       type: 'report-designer:importTemplate',
       payload: {},
     });
 
     expect(result.ok).toBe(false);
+    expect(result.changed).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as Error).message).toBe('No codec configured in profile');
   });
 
-  it('should handle export without adapter', async () => {
+  it('should fail export when no codec configured in profile', async () => {
     const result = await core.dispatch({
       type: 'report-designer:exportTemplate',
       format: 'json',
     });
 
     expect(result.ok).toBe(false);
+    expect(result.changed).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as Error).message).toBe('No codec configured in profile');
   });
 
   it('should set selection target', async () => {
@@ -756,6 +762,103 @@ describe('createReportDesignerCore', () => {
     expect(result.ok).toBe(true);
     expect(configPreviewCalled).toBe(false);
     expect(result.data).toEqual({ source: 'profile' });
+  });
+});
+
+describe('importTemplate / exportTemplate commands', () => {
+  it('should import document via codec and reset selection', async () => {
+    const spreadsheetDoc = createEmptyDocument();
+    const originalDoc = createReportTemplateDocument(spreadsheetDoc, 'Original');
+    const importedDoc = createReportTemplateDocument(createEmptyDocument(), 'Imported');
+
+    const core = createReportDesignerCore({
+      document: originalDoc,
+      config: defaultConfig,
+      profile: { id: 'p1', kind: 'report-template', fieldSourceIds: [], inspectorIds: [], fieldDropIds: [], codecId: 'json-codec' },
+    });
+
+    core.registerCodec({
+      id: 'json-codec',
+      async importDocument(_payload, _context) {
+        return importedDoc;
+      },
+      exportDocument(_doc, _format, _context) {
+        return {};
+      },
+    });
+
+    await core.setSelectionTarget({ kind: 'workbook' });
+    expect(core.getSnapshot().selectionTarget?.kind).toBe('workbook');
+
+    const result = await core.dispatch({
+      type: 'report-designer:importTemplate',
+      payload: { data: 'test' },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.changed).toBe(true);
+    expect(core.getSnapshot().document.name).toBe('Imported');
+    expect(core.getSnapshot().selectionTarget).toBeUndefined();
+  });
+
+  it('should export document via codec and return data', async () => {
+    const spreadsheetDoc = createEmptyDocument();
+    const doc = createReportTemplateDocument(spreadsheetDoc, 'Export Me');
+
+    const core = createReportDesignerCore({
+      document: doc,
+      config: defaultConfig,
+      profile: { id: 'p1', kind: 'report-template', fieldSourceIds: [], inspectorIds: [], fieldDropIds: [], codecId: 'json-codec' },
+    });
+
+    core.registerCodec({
+      id: 'json-codec',
+      importDocument(_payload, _context) {
+        return createReportTemplateDocument(createEmptyDocument());
+      },
+      exportDocument(exportedDoc, format, _context) {
+        return { name: exportedDoc.name, format };
+      },
+    });
+
+    const result = await core.dispatch({
+      type: 'report-designer:exportTemplate',
+      format: 'json',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.changed).toBe(false);
+    expect(result.data).toEqual({ name: 'Export Me', format: 'json' });
+  });
+
+  it('should fail with structured error when codecId not in registry', async () => {
+    const spreadsheetDoc = createEmptyDocument();
+    const doc = createReportTemplateDocument(spreadsheetDoc);
+
+    const core = createReportDesignerCore({
+      document: doc,
+      config: defaultConfig,
+      profile: { id: 'p1', kind: 'report-template', fieldSourceIds: [], inspectorIds: [], fieldDropIds: [], codecId: 'missing-codec' },
+    });
+
+    const importResult = await core.dispatch({
+      type: 'report-designer:importTemplate',
+      payload: {},
+    });
+
+    expect(importResult.ok).toBe(false);
+    expect(importResult.changed).toBe(false);
+    expect(importResult.error).toBeInstanceOf(Error);
+    expect((importResult.error as Error).message).toBe('Codec not found: missing-codec');
+
+    const exportResult = await core.dispatch({
+      type: 'report-designer:exportTemplate',
+      format: 'json',
+    });
+
+    expect(exportResult.ok).toBe(false);
+    expect(exportResult.error).toBeInstanceOf(Error);
+    expect((exportResult.error as Error).message).toBe('Codec not found: missing-codec');
   });
 });
 

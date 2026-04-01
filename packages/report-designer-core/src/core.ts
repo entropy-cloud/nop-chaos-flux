@@ -699,13 +699,43 @@ export function createReportDesignerCore(
           }
         }
 
-        case 'report-designer:importTemplate':
-        case 'report-designer:exportTemplate':
-          return {
-            ok: false,
-            changed: false,
-            error: new Error(`${command.type} is not implemented by the core package`),
-          };
+        case 'report-designer:importTemplate': {
+          const codecId = profile?.codecId;
+          if (!codecId) {
+            return { ok: false, changed: false, error: new Error('No codec configured in profile') };
+          }
+          const codec = registry.codecs.get(codecId);
+          if (!codec) {
+            return { ok: false, changed: false, error: new Error(`Codec not found: ${codecId}`) };
+          }
+          const imported = await codec.importDocument(
+            command.payload,
+            createAdapterContext({ config, document: store.getState().document, designer: store.getState(), profile }),
+          );
+          store.setState((current) => ({
+            ...current,
+            document: imported,
+            selectionTarget: undefined,
+          }));
+          return { ok: true, changed: true };
+        }
+
+        case 'report-designer:exportTemplate': {
+          const codecId = profile?.codecId;
+          if (!codecId) {
+            return { ok: false, changed: false, error: new Error('No codec configured in profile') };
+          }
+          const codec = registry.codecs.get(codecId);
+          if (!codec) {
+            return { ok: false, changed: false, error: new Error(`Codec not found: ${codecId}`) };
+          }
+          const exported = await codec.exportDocument(
+            store.getState().document,
+            command.format,
+            createAdapterContext({ config, document: store.getState().document, designer: store.getState(), profile }),
+          );
+          return { ok: true, changed: false, data: exported };
+        }
 
         default:
           return { ok: false, changed: false, error: `Unknown command: ${(command as any).type}` };
