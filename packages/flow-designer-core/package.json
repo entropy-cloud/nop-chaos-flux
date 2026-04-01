@@ -21,6 +21,6 @@
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "elkjs": "^0.11.1",
-    "zustand": "^5.0.0"
+    "zustand": "^5.0.12"
   }
 }

@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@nop-chaos/spreadsheet-core": "workspace:*",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.12"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
