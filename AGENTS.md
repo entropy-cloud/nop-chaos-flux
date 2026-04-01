@@ -66,7 +66,7 @@ After completing any significant work, you MUST:
    - Next steps (if known)
    - Brief context useful for future work
    - New entries are appended at the top of the file (reverse chronological)
-   - See `docs/logs/README.md` for writing conventions
+   - See `docs/logs/index.md` for writing conventions
 
 2. **Update relevant architecture docs** when changing:
    - Package boundaries or ownership â†’ `docs/architecture/flux-runtime-module-boundaries.md`
@@ -99,7 +99,7 @@ After completing any significant work, you MUST:
 | `docs/plans/` | Implementation plans and checklists |
 | `docs/bugs/` | Numbered defect histories and fix notes |
 | `docs/archive/` | Preserved legacy drafts |
-| `docs/logs/` | Daily dev logs — `docs/logs/{year}/{month}-{day}.md`, see `docs/logs/README.md` for conventions |
+| `docs/logs/` | Daily dev logs — `docs/logs/{year}/{month}-{day}.md`, see `docs/logs/index.md` for writing guide and index |
 
 ### Entry Point
 

@@ -81,7 +81,7 @@ Example behavior is best cross-checked with:
 - `docs/amis-types/` - AMIS component TypeScript type definitions extracted from amis@6.13.0, useful for understanding upstream AMIS schema structure
 - `docs/examples/` - small representative schemas and usage notes
 - `docs/analysis/` - comparative, investigatory, or decision-oriented reports; primarily for conclusions and tradeoff records, not the active contract
-- `docs/logs/` - per-day development logs (`{year}/{month}-{day}.md`), see `docs/logs/README.md` for conventions
+- `docs/logs/` - per-day development logs (`{year}/{month}-{day}.md`), see `docs/logs/index.md` for writing guide and index
 - `docs/bugs/` - numbered defect histories and fix notes for non-obvious regressions; useful for root-cause context and regression tracking, but secondary to architecture docs
 - start new bug notes from `docs/bugs/00-bug-fix-note-writing-guide.md`
 - `docs/plans/` - implementation plans, checklists, and completion records; historical unless a plan is being actively executed
