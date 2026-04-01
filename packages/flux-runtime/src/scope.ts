@@ -47,6 +47,27 @@ function createScopeReader(parent: ScopeRef | undefined, store: ScopeStore<Recor
   };
 }
 
+function createCompositeScopeStore(
+  ownStore: ScopeStore<Record<string, any>>,
+  parent: ScopeRef,
+  read: () => Record<string, any>
+): ScopeStore<Record<string, any>> {
+  return {
+    getSnapshot: read,
+    setSnapshot(next: Record<string, any>) {
+      ownStore.setSnapshot(next);
+    },
+    subscribe(listener: () => void): () => void {
+      const unsubOwn = ownStore.subscribe(listener);
+      const unsubParent = parent.store?.subscribe(listener) ?? (() => {});
+      return () => {
+        unsubOwn();
+        unsubParent();
+      };
+    }
+  };
+}
+
 function hasOwnPathValue(input: Record<string, any>, path: string): boolean {
   const segments = parsePath(path);
 
@@ -134,14 +155,18 @@ export function createScopeRef(input: {
   isolate?: boolean;
   update?: (path: string, value: unknown) => void;
 }): ScopeRef {
-  const store = input.store ?? createScopeStore(input.initialData ?? {});
-  const read = createScopeReader(input.parent, store, input.isolate);
+  const ownStore = input.store ?? createScopeStore(input.initialData ?? {});
+  const read = createScopeReader(input.parent, ownStore, input.isolate);
+
+  const exposedStore = (input.parent && !input.isolate)
+    ? createCompositeScopeStore(ownStore, input.parent, read)
+    : ownStore;
 
   return {
     id: input.id,
     path: input.path,
     parent: input.parent,
-    store,
+    store: exposedStore,
     get value() {
       return read();
     },
@@ -152,7 +177,7 @@ export function createScopeRef(input: {
       return hasScopePath(this, path);
     },
     readOwn() {
-      return store.getSnapshot();
+      return ownStore.getSnapshot();
     },
     read,
     update(path, value) {
@@ -161,8 +186,8 @@ export function createScopeRef(input: {
         return;
       }
 
-      const snapshot = store.getSnapshot();
-      store.setSnapshot(setIn(snapshot, path, value));
+      const snapshot = ownStore.getSnapshot();
+      ownStore.setSnapshot(setIn(snapshot, path, value));
     }
   };
 }
