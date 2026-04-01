@@ -43,6 +43,15 @@ function createTestDesignerConfig(): DesignerConfig {
   };
 }
 
+function createTestDesignerConfigNoMultiEdge(): DesignerConfig {
+  return {
+    ...createTestDesignerConfig(),
+    rules: {
+      allowMultiEdge: false
+    }
+  };
+}
+
 function createBasicDocument(): GraphDocument {
   return {
     id: 'doc-1',
@@ -159,12 +168,24 @@ describe('createDesignerCore', () => {
     expect(exported).toContain('"nodes"');
   });
 
-  it('rejects duplicate edges and disallowed self-loops through shared core rules', () => {
-    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+  it('rejects duplicate edges when allowMultiEdge is false', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfigNoMultiEdge());
 
     const duplicateEdge = core.addEdge('start-1', 'task-1');
     expect(duplicateEdge).toBeNull();
     expect(core.getSnapshot().doc.edges).toHaveLength(2);
+  });
+
+  it('allows duplicate edges when allowMultiEdge is true', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+
+    const duplicateEdge = core.addEdge('start-1', 'task-1');
+    expect(duplicateEdge).not.toBeNull();
+    expect(core.getSnapshot().doc.edges).toHaveLength(3);
+  });
+
+  it('rejects self-loop edges when allowSelfLoop is false', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
 
     const selfLoop = core.addEdge('task-1', 'task-1');
     expect(selfLoop).toBeNull();
@@ -223,7 +244,7 @@ describe('createDesignerCore', () => {
   });
 
   it('rejects invalid reconnect attempts without mutating edges', () => {
-    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig()) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfigNoMultiEdge()) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
 
     const unknown = (core as any).reconnectEdge('missing-edge', 'task-1', 'end-1');
     expect(unknown).toMatchObject({ ok: false });

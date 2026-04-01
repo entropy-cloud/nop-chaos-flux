@@ -194,10 +194,6 @@ function validateEdgeConnection(
     return EDGE_DUPLICATE_ERROR;
   }
 
-  if (normalizedConfig.rules.allowMultiEdge && hasEdgeConnection(doc, source, target, ignoreEdgeId)) {
-    return EDGE_DUPLICATE_ERROR;
-  }
-
   return undefined;
 }
 
