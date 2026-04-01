@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef } from 'react';
+import { useContext, useEffect, useMemo, useRef, memo } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
@@ -37,7 +37,7 @@ function getNodeImports(node: CompiledSchemaNode): readonly XuiImportSpec[] | un
     : undefined;
 }
 
-export function NodeRenderer(props: {
+export const NodeRenderer = memo(function NodeRenderer(props: {
   node: CompiledSchemaNode;
   scope: ScopeRef;
   actionScope?: ActionScope;
@@ -269,4 +269,4 @@ export function NodeRenderer(props: {
       </ActionScopeContext.Provider>
     </NodeMetaContext.Provider>
   );
-}
+});
