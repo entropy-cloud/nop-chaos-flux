@@ -71,8 +71,8 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       }
     : useSyncExternalStoreWithSelector(
         props.scope.store?.subscribe ?? (() => () => undefined),
-        () => props.scope.readOwn(),
-        () => props.scope.readOwn(),
+        () => props.scope.read(),
+        () => props.scope.read(),
         () => ({
           meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
           resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)

@@ -112,8 +112,8 @@ const probeQueryInputRenderer: RendererDefinition = {
 };
 
 function PageValueProbe() {
-  const scope = useRenderScope();
-  return <span data-testid="page-value">{String(scope.get('currentUser.name') ?? '')}</span>;
+  const name = useScopeSelector((data: { currentUser?: { name?: string } }) => data.currentUser?.name ?? '');
+  return <span data-testid="page-value">{name}</span>;
 }
 
 const pageValueProbeRenderer: RendererDefinition = {

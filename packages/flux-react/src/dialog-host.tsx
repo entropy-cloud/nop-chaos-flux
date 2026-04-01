@@ -64,8 +64,8 @@ function DialogView(props: {
 }) {
   useSyncExternalStoreWithSelector(
     props.dialog.scope.store?.subscribe ?? (() => () => undefined),
-    () => props.dialog.scope.readOwn(),
-    () => props.dialog.scope.readOwn(),
+    () => props.dialog.scope.read(),
+    () => props.dialog.scope.read(),
     (state: unknown) => state,
     Object.is
   );
