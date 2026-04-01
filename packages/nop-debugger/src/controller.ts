@@ -143,7 +143,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     const element = document.querySelector(`[data-cid="${cid}"]`);
     const handle = element ? findHandleByCid(componentRegistry, cid) : undefined;
     if (!handle && !element) return undefined;
-    return buildInspectResult(cid, handle, !!element, element ?? undefined);
+    return buildInspectResult(cid, handle, !!element, (element as HTMLElement) ?? undefined);
   };
 
   const inspectByElement = (element: HTMLElement): NopComponentInspectResult | undefined => {

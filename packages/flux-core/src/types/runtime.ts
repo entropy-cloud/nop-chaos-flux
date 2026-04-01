@@ -1,7 +1,7 @@
-import type { ApiObject, SchemaPath } from './schema';
-import type { ScopeRef, ScopeStore } from './scope';
+import type { ApiObject } from './schema';
+import type { ScopeRef } from './scope';
 import type { ValidationRule, ValidationError, ValidationResult, FormValidationResult, CompiledFormValidationModel, RuntimeFieldRegistration } from './validation';
-import type { ActionScope, ActionContext, ActionResult } from './actions';
+import type { ActionScope, ActionResult } from './actions';
 import type { ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
 import type { ReactNode } from 'react';
 

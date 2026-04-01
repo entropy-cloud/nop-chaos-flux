@@ -5,7 +5,7 @@ import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
 import { DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core'
 import type { PaperSettings, SavedDocumentData } from '@nop-chaos/word-editor-core'
 import { loadDocument } from '@nop-chaos/word-editor-core'
-import '@hufe921/canvas-editor/dist/canvas-editor.css'
+
 
 export interface EditorCanvasProps {
   editorStore: EditorStoreApi

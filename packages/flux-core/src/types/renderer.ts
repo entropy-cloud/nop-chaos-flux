@@ -24,9 +24,7 @@ import type {
   PageRuntime,
   PageStoreApi,
   FormErrorQuery,
-  FormFieldStateSnapshot,
-  DialogState,
-  DialogRendererProps
+  FormFieldStateSnapshot
 } from './runtime';
 
 export interface ComponentTarget {
