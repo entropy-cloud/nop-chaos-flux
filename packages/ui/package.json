@@ -40,7 +40,7 @@
     "yaml": "^2.8.3"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0"
+    "@types/react": "^19.0.10"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && rm -rf dist/styles && cp -r src/styles dist/styles",
