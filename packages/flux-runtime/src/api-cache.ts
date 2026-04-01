@@ -13,44 +13,101 @@ export interface ApiCacheStore {
   clear(): void;
 }
 
-export function createApiCacheStore(): ApiCacheStore {
-  const cache = new Map<string, CacheEntry<unknown>>();
+const MAX_ENTRIES = 200;
 
-  function isExpired<T>(entry: CacheEntry<T> | undefined): boolean {
-    if (!entry) return true;
-    return Date.now() > entry.expiresAt;
+interface LRUNode {
+  key: string;
+  data: unknown;
+  expiresAt: number;
+  prev: LRUNode | null;
+  next: LRUNode | null;
+}
+
+export function createApiCacheStore(): ApiCacheStore {
+  const cache = new Map<string, LRUNode>();
+  let head: LRUNode | null = null;
+  let tail: LRUNode | null = null;
+
+  function removeFromList(node: LRUNode): void {
+    if (node.prev) node.prev.next = node.next;
+    else head = node.next;
+    if (node.next) node.next.prev = node.prev;
+    else tail = node.prev;
+  }
+
+  function pushToFront(node: LRUNode): void {
+    node.prev = null;
+    node.next = head;
+    if (head) head.prev = node;
+    head = node;
+    if (!tail) tail = node;
+  }
+
+  function isExpired(node: LRUNode | undefined): boolean {
+    if (!node) return true;
+    return Date.now() > node.expiresAt;
   }
 
   return {
     get<T>(key: string): CacheEntry<T> | undefined {
-      const entry = cache.get(key) as CacheEntry<T> | undefined;
-      if (isExpired(entry)) {
-        cache.delete(key);
+      const node = cache.get(key);
+      if (!node || isExpired(node)) {
+        if (node) {
+          cache.delete(key);
+          removeFromList(node);
+        }
         return undefined;
       }
-      return entry;
+      removeFromList(node);
+      pushToFront(node);
+      return { data: node.data as T, expiresAt: node.expiresAt };
     },
 
     set<T>(key: string, data: T, ttl: number): void {
       const expiresAt = Date.now() + ttl;
-      cache.set(key, { data, expiresAt });
+      const existing = cache.get(key);
+      if (existing) {
+        existing.data = data;
+        existing.expiresAt = expiresAt;
+        removeFromList(existing);
+        pushToFront(existing);
+        return;
+      }
+      const node: LRUNode = { key, data, expiresAt, prev: null, next: null };
+      cache.set(key, node);
+      pushToFront(node);
+      if (cache.size > MAX_ENTRIES && tail) {
+        cache.delete(tail.key);
+        removeFromList(tail);
+      }
     },
 
     has(key: string): boolean {
-      const entry = cache.get(key);
-      if (isExpired(entry)) {
-        cache.delete(key);
+      const node = cache.get(key);
+      if (!node || isExpired(node)) {
+        if (node) {
+          cache.delete(key);
+          removeFromList(node);
+        }
         return false;
       }
+      removeFromList(node);
+      pushToFront(node);
       return true;
     },
 
     delete(key: string): boolean {
-      return cache.delete(key);
+      const node = cache.get(key);
+      if (!node) return false;
+      cache.delete(key);
+      removeFromList(node);
+      return true;
     },
 
     clear(): void {
       cache.clear();
+      head = null;
+      tail = null;
     }
   };
 }
