@@ -222,6 +222,19 @@ export function applyResponseAdaptor(
   );
 }
 
+export async function executeApiObject(
+  api: ApiObject,
+  scope: ScopeRef,
+  env: RendererEnv,
+  expressionCompiler: ExpressionCompiler,
+  options?: { signal?: AbortSignal }
+): Promise<{ data: unknown; ok: boolean }> {
+  const adaptedApi = applyRequestAdaptor(expressionCompiler, api, scope, env);
+  const response = await env.fetcher(adaptedApi, { scope, env, signal: options?.signal });
+  const adaptedData = applyResponseAdaptor(expressionCompiler, adaptedApi, response.data, scope, env);
+  return { data: adaptedData, ok: response.ok };
+}
+
 export function createApiRequestExecutor(env: RendererEnv) {
   const activeRequests = new Map<string, AbortController>();
 

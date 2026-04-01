@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ApiObject, DataSourceSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRendererEnv, useRendererRuntime } from '@nop-chaos/flux-react';
-import { createApiCacheStore, resolveCacheKey } from '@nop-chaos/flux-runtime';
+import { createApiCacheStore, executeApiObject, resolveCacheKey } from '@nop-chaos/flux-runtime';
 import { Alert, AlertDescription } from '@nop-chaos/ui';
 import { Skeleton } from '@nop-chaos/ui';
 
@@ -17,7 +17,7 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
   const runtime = useRendererRuntime();
   const env = useRendererEnv();
   const schema = props.schema;
-  const api = schema.api;
+  const api = props.props.api as ApiObject;
   const dataPath = schema.dataPath;
   const interval = schema.interval;
   const stopWhen = schema.stopWhen;
@@ -52,9 +52,7 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
       }
 
       try {
-        const evaluatedApi = runtime.evaluate<ApiObject>(api, props.helpers.createScope({}));
-        
-        const cacheKey = resolveCacheKey(evaluatedApi);
+        const cacheKey = resolveCacheKey(api);
         
         if (cacheKey) {
           const cached = globalApiCache.get<unknown>(cacheKey);
@@ -66,20 +64,17 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
           }
         }
 
-        const response = await env.fetcher(evaluatedApi, {
-          scope: props.helpers.createScope({}),
-          env,
-          signal: controller.signal
-        });
+        const scope = props.helpers.createScope({});
+        const result = await executeApiObject(api, scope, env, runtime.expressionCompiler, { signal: controller.signal });
 
         if (!mountedRef.current) return;
 
         if (controller.signal.aborted) return;
 
-        const responseData = response.data;
+        const responseData = result.data;
 
-        if (cacheKey && evaluatedApi.cacheTTL && evaluatedApi.cacheTTL > 0) {
-          globalApiCache.set(cacheKey, responseData, evaluatedApi.cacheTTL);
+        if (cacheKey && api.cacheTTL && api.cacheTTL > 0) {
+          globalApiCache.set(cacheKey, responseData, api.cacheTTL);
         }
 
         setState({ loading: false, error: undefined, data: responseData });

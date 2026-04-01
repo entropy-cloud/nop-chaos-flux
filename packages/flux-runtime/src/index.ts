@@ -50,6 +50,7 @@ export { createApiCacheStore, resolveCacheKey } from './api-cache';
 export {
   applyRequestAdaptor,
   applyResponseAdaptor,
+  executeApiObject,
   prepareApiData,
   buildUrlWithParams
 } from './request-runtime';
