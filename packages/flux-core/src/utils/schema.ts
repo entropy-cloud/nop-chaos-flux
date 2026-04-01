@@ -18,5 +18,5 @@ export function createNodeId(path: string, schema: BaseSchema): string {
     return schema.id;
   }
 
-  return path.replace(/[^a-zA-Z0-9-_:.]/g, '_');
+  return path.replace(/[^a-zA-Z0-9_.\-:]/g, '_');
 }
