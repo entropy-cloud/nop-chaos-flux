@@ -54,8 +54,13 @@ function toEvalContext(input: EvalContext | ScopeRef | object): EvalContext {
   return createObjectEvalContext(input);
 }
 
+const formulaScopeCache = new WeakMap<EvalContext, Record<string, any>>();
+
 function createFormulaScope(context: EvalContext): Record<string, any> {
-  return new Proxy(
+  const cached = formulaScopeCache.get(context);
+  if (cached) return cached;
+
+  const proxy = new Proxy(
     {},
     {
       get(_target, property) {
@@ -67,9 +72,8 @@ function createFormulaScope(context: EvalContext): Record<string, any> {
           return undefined;
         }
 
-        if (context.has(property)) {
-          return context.resolve(property);
-        }
+        const value = context.resolve(property);
+        if (value !== undefined) return value;
 
         return getIn(context.materialize(), property);
       },
@@ -99,6 +103,9 @@ function createFormulaScope(context: EvalContext): Record<string, any> {
       }
     }
   );
+
+  formulaScopeCache.set(context, proxy);
+  return proxy;
 }
 
 export { toEvalContext, createFormulaScope };
