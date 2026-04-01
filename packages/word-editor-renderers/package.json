@@ -16,7 +16,7 @@
     "@nop-chaos/word-editor-core": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@types/use-sync-external-store": "^0.0.6",
-    "lucide-react": "^0.525.0",
+    "lucide-react": "^1.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "use-sync-external-store": "^1.6.0"

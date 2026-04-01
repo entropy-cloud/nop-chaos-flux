@@ -21,7 +21,7 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.7.0",
     "react": "^19.0.0"
   },
   "scripts": {
