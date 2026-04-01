@@ -137,7 +137,25 @@ function evaluateArray(
     throw new Error('Invalid runtime state for array-node');
   }
 
-  const nextValue = node.items.map((item, index) => evaluateNode(item, context, env, stateNode.items[index]).value);
+  if (stateNode.items.length !== node.items.length) {
+    stateNode.items = node.items.map((item) => createStateFromNode(item).root);
+    stateNode.initialized = false;
+  }
+
+  let anyChildChanged = false;
+  const nextValue = node.items.map((item, index) => {
+    const result = evaluateNode(item, context, env, stateNode.items[index]);
+    if (result.changed) anyChildChanged = true;
+    return result.value;
+  });
+
+  if (!anyChildChanged && stateNode.initialized && stateNode.lastValue) {
+    return {
+      value: stateNode.lastValue,
+      changed: false,
+      reusedReference: true
+    };
+  }
 
   if (stateNode.initialized && stateNode.lastValue && shallowEqual(stateNode.lastValue, nextValue)) {
     return {
@@ -167,10 +185,35 @@ function evaluateObject(
     throw new Error('Invalid runtime state for object-node');
   }
 
-  const nextValue: Record<string, unknown> = {};
+  const currentKeys = Object.keys(stateNode.entries);
+  const needsRebuild =
+    node.keys.some((key) => !(key in stateNode.entries)) ||
+    currentKeys.some((key) => !node.keys.includes(key));
+  if (needsRebuild) {
+    const entries: Record<string, RuntimeValueStateNode> = {};
+    for (const key of node.keys) {
+      entries[key] = key in stateNode.entries
+        ? stateNode.entries[key]
+        : createStateFromNode(node.entries[key]).root;
+    }
+    stateNode.entries = entries;
+    stateNode.initialized = false;
+  }
 
+  let anyChildChanged = false;
+  const nextValue: Record<string, unknown> = {};
   for (const key of node.keys) {
-    nextValue[key] = evaluateNode(node.entries[key], context, env, stateNode.entries[key]).value;
+    const result = evaluateNode(node.entries[key], context, env, stateNode.entries[key]);
+    if (result.changed) anyChildChanged = true;
+    nextValue[key] = result.value;
+  }
+
+  if (!anyChildChanged && stateNode.initialized && stateNode.lastValue) {
+    return {
+      value: stateNode.lastValue,
+      changed: false,
+      reusedReference: true
+    };
   }
 
   if (stateNode.initialized && stateNode.lastValue && shallowEqual(stateNode.lastValue, nextValue)) {
