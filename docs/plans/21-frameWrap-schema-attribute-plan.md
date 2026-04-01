@@ -159,7 +159,7 @@ Add a renderer using `frameWrap: false` to demonstrate the feature. Code-editor 
 | Doc | What to change |
 |---|---|
 | `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md` | Add note: code-editor 已通过 `<span role="button">` 修复，不需要 `frameWrap` 迁移。 |
-| `docs/development-log.md` | Entry when this plan is implemented. |
+| `docs/logs/index.md` | Entry when this plan is implemented. |
 
 ## 4. Scope and Risk
 

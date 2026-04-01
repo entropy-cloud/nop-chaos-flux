@@ -21,7 +21,7 @@
 - [ ] Playground pages rewritten with Tailwind
 - [ ] All test assertions migrated (~16 BEM class assertions)
 - [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` all pass
-- [ ] `docs/development-log.md` updated
+- [ ] `docs/logs/index.md` updated
 
 ---
 
@@ -580,7 +580,7 @@ pnpm typecheck && pnpm build && pnpm lint && pnpm test
 
 | File | Update |
 |---|---|
-| `docs/development-log.md` | Add entry describing the BEM removal |
+| `docs/logs/index.md` | Add entry describing the BEM removal |
 | `docs/references/maintenance-checklist.md` | Add link to `docs/architecture/bem-removal.md` |
 | `docs/architecture/bem-removal.md` | Mark as current (update if any deviations occurred) |
 

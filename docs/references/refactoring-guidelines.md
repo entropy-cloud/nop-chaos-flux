@@ -65,7 +65,7 @@
 
 完成重构后：
 
-1. 在 `docs/development-log.md` 添加条目，链接到计划文件
+1. 在 `docs/logs/index.md` 添加条目，链接到计划文件
 2. 如果涉及包边界或公共 API 变更，更新对应的 `docs/architecture/*.md`
 3. 运行完整验证：`pnpm typecheck && pnpm build && pnpm lint && pnpm test`
 4. 如果重构过程中发现了新的问题，**创建单独的计划文件**，不要顺手修

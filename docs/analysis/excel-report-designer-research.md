@@ -517,5 +517,5 @@ The next artifacts that would make implementation concrete are:
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/flux-core.md`
 - `docs/references/maintenance-checklist.md`
-- `docs/development-log.md`
+- `docs/logs/index.md`
 

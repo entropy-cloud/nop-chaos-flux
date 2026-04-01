@@ -293,7 +293,7 @@ pnpm --filter @nop-chaos/flux-playground dev
 
 ### 入口文档
 - **[docs/index.md](docs/index.md)** - 文档导航总入口
-- **[docs/development-log.md](docs/development-log.md)** - 开发日志（最近变更记录）
+- **[docs/logs/index.md](docs/logs/index.md)** - 开发日志（最近变更记录）
 
 ### 架构文档
 - **[docs/architecture/flux-core.md](docs/architecture/flux-core.md)** - Flux 核心架构

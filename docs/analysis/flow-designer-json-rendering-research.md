@@ -445,7 +445,7 @@ interface DesignerSnapshot {
 
 ### 文档更新
 
-- [ ] 更新 `docs/development-log.md`
+- [ ] 更新 `docs/logs/index.md`
 - [ ] 更新 `docs/architecture/playground-experience.md` (如适用)
 
 ## 9. 风险与缓解

@@ -508,7 +508,7 @@ Spreadsheet Editor (可独立使用)
 
 6. **严格的包边界**: 17 个包，依赖方向严格单向。每包职责清晰，可独立构建/测试/发布。
 
-7. **文档体系完善**: docs/ 目录结构清晰，architecture/ 为当前规范，references/ 为稳定参考，development-log.md 记录变更。
+7. **文档体系完善**: docs/ 目录结构清晰，architecture/ 为当前规范，references/ 为稳定参考，docs/logs/ 记录变更。
 
 ### 5.2 架构风险
 

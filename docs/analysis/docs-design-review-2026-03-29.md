@@ -23,7 +23,7 @@
 
 ### 2.1 断裂的文档引用: `amis-core.md` 已重命名但引用未同步
 
-`docs/architecture/amis-core.md` 已重命名为 `docs/architecture/flux-core.md` (见 `development-log.md:439`)，但以下文档的 "Related Documents" 和交叉引用**未同步更新**，指向不存在的文件:
+`docs/architecture/amis-core.md` 已重命名为 `docs/architecture/flux-core.md` (见 `docs/logs/2026/03-20.md`)，但以下文档的 "Related Documents" 和交叉引用**未同步更新**，指向不存在的文件:
 
 | 文件 | 问题行 |
 |------|--------|
@@ -142,7 +142,7 @@ data-field-invalid={showError || undefined}
 |----------|-----------|---------------|
 | `README.md:339` | `__NOP_DEBUGGER_API__` | ✓ |
 | `docs/analysis/framework-debugger-design.md:715` | `__NOP_FLUX_DEBUGGER_API__` | ✗ |
-| `docs/development-log.md:1092` | `__NOP_FLUX_DEBUGGER_API__` | ✗ |
+| `docs/logs/index.md` (原 development-log.md:1092) | `__NOP_FLUX_DEBUGGER_API__` | ✗ |
 
 **实际代码** (`packages/nop-debugger/src/automation.ts:98` 和 `packages/nop-debugger/src/types.ts:302`):
 ```ts
