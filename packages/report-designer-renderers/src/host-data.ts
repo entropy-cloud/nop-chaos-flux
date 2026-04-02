@@ -50,6 +50,15 @@ export interface ReportDesignerHostData {
 export function createHostData(core: ReportDesignerCore, snapshot: ReportDesignerRuntimeSnapshot): ReportDesignerHostData {
   const inspectorPanels = core.getInspectorPanels();
   const fieldCount = getFieldCount(snapshot.fieldSources);
+  const reportDocument = {
+    ...snapshot.document,
+    spreadsheet: {
+      ...snapshot.document.spreadsheet,
+      workbook: {
+        ...snapshot.document.spreadsheet.workbook,
+      },
+    },
+  };
 
   return {
     reportDesignerCore: core,
@@ -74,8 +83,8 @@ export function createHostData(core: ReportDesignerCore, snapshot: ReportDesigne
     preview: snapshot.preview,
     inspectorPanels,
     selectionTarget: snapshot.selectionTarget,
-    reportDocument: snapshot.document,
-    workbook: snapshot.document.spreadsheet.workbook,
+    reportDocument,
+    workbook: reportDocument.spreadsheet.workbook,
     activeSheet: getActiveSheet(snapshot, snapshot.selectionTarget),
   };
 }

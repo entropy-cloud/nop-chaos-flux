@@ -15,7 +15,7 @@ import {
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import type { ChartSchema } from './chart-schemas';
 
 echarts.use([

@@ -147,7 +147,7 @@ export interface SpreadsheetInteractionsReturn {
 }
 
 export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig): SpreadsheetInteractionsReturn {
-  const { bridge, sheetId, rows: _rows = 30, cols: _cols = 10, onLog } = config;
+  const { bridge, sheetId, onLog } = config;
   const addLog = useCallback((msg: string) => { onLog?.(msg); }, [onLog]);
 
   // -- Snapshot subscription --
@@ -505,7 +505,7 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
   }, [resizeState]);
 
   // -- Canvas --
-  const onCanvasMouseDown = useCallback((_e: React.MouseEvent) => {
+  const onCanvasMouseDown = useCallback(() => {
     if (editingCellRef.current) {
       handleEditSave();
     }

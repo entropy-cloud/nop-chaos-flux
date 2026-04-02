@@ -1566,11 +1566,11 @@ export function createSpreadsheetCore(
 
         // Auto-fit (placeholder - actual measurement needs UI)
         case 'spreadsheet:autoFitRow': {
-          return { ok: true, changed: false, data: 'autoFitRow requires UI measurement' };
+          return { ok: false, changed: false, error: new Error('autoFitRow requires host measurement support') };
         }
 
         case 'spreadsheet:autoFitColumn': {
-          return { ok: true, changed: false, data: 'autoFitColumn requires UI measurement' };
+          return { ok: false, changed: false, error: new Error('autoFitColumn requires host measurement support') };
         }
 
         // Merge options

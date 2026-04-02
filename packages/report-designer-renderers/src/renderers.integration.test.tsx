@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { afterEach } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer, createDefaultRegistry, useRenderScope } from '@nop-chaos/flux-react';
+import { createSchemaRenderer, createDefaultRegistry, useScopeSelector } from '@nop-chaos/flux-react';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import { createReportTemplateDocument, type ReportDesignerConfig } from '@nop-chaos/report-designer-core';
@@ -35,8 +35,7 @@ const textRenderer: RendererDefinition = {
 };
 
 function WorkbookTitleProbe() {
-  const scope = useRenderScope();
-  const scopeData = scope.readOwn() as {
+  const scopeData = useScopeSelector((data: Record<string, unknown>) => data) as {
     reportDocument?: { semantic?: { workbookMeta?: { title?: string } } };
   };
   const title = scopeData.reportDocument?.semantic?.workbookMeta?.title;

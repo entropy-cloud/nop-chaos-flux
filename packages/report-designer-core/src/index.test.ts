@@ -779,10 +779,10 @@ describe('importTemplate / exportTemplate commands', () => {
 
     core.registerCodec({
       id: 'json-codec',
-      async importDocument(_payload, _context) {
+      async importDocument() {
         return importedDoc;
       },
-      exportDocument(_doc, _format, _context) {
+      exportDocument() {
         return {};
       },
     });
@@ -813,10 +813,10 @@ describe('importTemplate / exportTemplate commands', () => {
 
     core.registerCodec({
       id: 'json-codec',
-      importDocument(_payload, _context) {
+      importDocument() {
         return createReportTemplateDocument(createEmptyDocument());
       },
-      exportDocument(exportedDoc, format, _context) {
+      exportDocument(exportedDoc, format) {
         return { name: exportedDoc.name, format };
       },
     });

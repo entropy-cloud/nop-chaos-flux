@@ -1,6 +1,6 @@
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
-import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
@@ -19,7 +19,7 @@ const SchemaRenderer = createSchemaRenderer();
 const pageFormulaCompiler = createFormulaCompiler();
 
 const pageEnv: RendererEnv = {
-  async fetcher<T>(_api: ApiObject, _ctx: ApiRequestContext) {
+  async fetcher<T>() {
     return { ok: true, status: 200, data: null as T };
   },
   notify(level, message) {

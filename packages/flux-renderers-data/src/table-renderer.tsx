@@ -13,9 +13,7 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuCheckboxItem,
-  DropdownMenuSeparator,
 } from '@nop-chaos/ui';
 import {
   Pagination,
@@ -31,7 +29,7 @@ import { RadioGroupItem } from '@nop-chaos/ui';
 import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import { Spinner } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon, ArrowUpDownIcon } from 'lucide-react';
-import type { TableColumnSchema, TableSchema } from './schemas';
+import type { TableSchema } from './schemas';
 
 type SortState = { column: string; direction: 'asc' | 'desc' | null };
 type FilterState = Record<string, Set<string>>;
