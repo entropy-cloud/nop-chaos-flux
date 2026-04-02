@@ -6,7 +6,6 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
 
 const ARTIFACT_EXTENSIONS = ['.d.ts', '.js', '.js.map'];
-const EXCLUDED_PACKAGES = ['ui'];
 
 async function scanForArtifacts(dir, relativePath = '') {
   const artifacts = [];
@@ -17,10 +16,6 @@ async function scanForArtifacts(dir, relativePath = '') {
     const entryRelativePath = relativePath ? join(relativePath, entry.name) : entry.name;
 
     if (entry.isDirectory()) {
-      // Skip excluded packages
-      if (EXCLUDED_PACKAGES.includes(entry.name)) {
-        continue;
-      }
       const subArtifacts = await scanForArtifacts(fullPath, entryRelativePath);
       artifacts.push(...subArtifacts);
     } else if (entry.isFile()) {
@@ -40,10 +35,6 @@ async function main() {
   let allArtifacts = [];
 
   for (const pkg of packageNames) {
-    if (pkg.isDirectory() && EXCLUDED_PACKAGES.includes(pkg.name)) {
-      continue;
-    }
-
     const srcDir = join(packagesDir, pkg.name, 'src');
     try {
       const statResult = await stat(srcDir);
