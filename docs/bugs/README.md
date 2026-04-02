@@ -5,6 +5,7 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 ## Rules
 
 - use numbered filenames such as `01-...`, `02-...`, `03-...`
+- when number prefixes repeat across domains, treat the full filename as the canonical bug id in links and discussions
 - keep notes short and focused on memory, not full implementation history
 - use `docs/bugs/00-bug-fix-note-writing-guide.md` as the writing template
 - keep current design truth in `docs/architecture/`; use bug notes only for historical problem and fix context

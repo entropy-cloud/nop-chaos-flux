@@ -7,8 +7,8 @@ This `docs/` tree is the curated entry point for the current repository state.
 - start here before changing architecture docs
 - prefer active files under `docs/architecture/`, `docs/references/`, and `docs/examples/`
 - use `docs/logs/` for short dated notes about recent documentation, decisions, and next implementation steps (one file per day: `docs/logs/{year}/{month}-{day}.md`)
-- treat `docs/archive/` as preserved draft history
-- treat `docs/plans/` as working or historical planning material, not the default source of truth for current behavior
+- treat `docs/plans/` as execution documents; plan status inside each file should describe the plan's current execution state
+- non-`plans` and non-`bugs` docs should describe the latest design baseline only
 
 ## Read This First
 
@@ -37,6 +37,9 @@ Choose the smallest document that matches the task.
 | Decide where runtime or validation code should live | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
 | Check workspace structure, package roles, or tooling baseline | `docs/architecture/frontend-baseline.md` | `package.json` |
 | Plan playground information architecture or debugger UX | `docs/architecture/playground-experience.md` | `docs/analysis/framework-debugger-design.md` |
+| Review security boundary and runtime safety requirements | `docs/architecture/security-design-requirements.md` | `docs/architecture/action-scope-and-imports.md` |
+| Review performance design constraints and hot-path rules | `docs/architecture/performance-design-requirements.md` | `docs/architecture/renderer-runtime.md` |
+| Review recurring regression guardrails distilled from historical bug fixes | `docs/references/architecture-guardrails-from-bugs.md` | `docs/architecture/renderer-runtime.md` |
 | Check shared terminology such as `CompiledValueNode`, `RenderRegionHandle`, `value-or-region`, or `FormRuntime` | `docs/references/terminology.md` | `docs/references/renderer-interfaces.md` |
 | Check which docs must be updated after a code change | `docs/references/maintenance-checklist.md` | the most relevant file in `docs/architecture/` |
 | Check AMIS JSON conventions (expression, action, variant/level, icon) | `docs/references/flux-json-conventions.md` | `docs/architecture/flow-designer/config-schema.md` |
@@ -60,6 +63,8 @@ Architecture intent lives primarily in:
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/playground-experience.md`
 - `docs/architecture/theme-compatibility.md`
+- `docs/architecture/security-design-requirements.md`
+- `docs/architecture/performance-design-requirements.md`
 - `docs/architecture/flow-designer/design.md`
 - `docs/architecture/flow-designer/canvas-adapters.md`
 - `docs/architecture/report-designer/design.md`
@@ -81,21 +86,10 @@ Example behavior is best cross-checked with:
 - `docs/amis-types/` - AMIS component TypeScript type definitions extracted from amis@6.13.0, useful for understanding upstream AMIS schema structure
 - `docs/examples/` - small representative schemas and usage notes
 - `docs/analysis/` - comparative, investigatory, or decision-oriented reports; primarily for conclusions and tradeoff records, not the active contract
+- `docs/articles/` - architecture rationale and principle essays used as boundary references
 - `docs/logs/` - per-day development logs (`{year}/{month}-{day}.md`), see `docs/logs/index.md` for writing guide and index
 - `docs/bugs/` - numbered defect histories and fix notes for non-obvious regressions; useful for root-cause context and regression tracking, but secondary to architecture docs
 - start new bug notes from `docs/bugs/00-bug-fix-note-writing-guide.md`
-- `docs/plans/` - implementation plans, checklists, and completion records; historical unless a plan is being actively executed
-- `docs/archive/` - preserved original drafts and legacy source material
-
-## Archive Sources
-
-The original root-level source materials are preserved under `docs/archive/` for cross-checking and historical context:
-
-- `docs/archive/nop-chaos-amis.md`
-- `docs/archive/nop-chaos-amis-renderer-design.md`
-- `docs/archive/nop-chaos-frontend-arch.md`
-- `docs/archive/nop-chaos-amis-renderer-interfaces.ts`
-- `docs/archive/expression-processor.js`
-
-When updating documentation, edit the active curated file first and consult the archive only when you need original draft context.
+- `docs/plans/` - implementation plans and execution checklists; every plan file should include explicit status
+- `docs/skills/` - reusable internal workflow prompts and task playbooks
 

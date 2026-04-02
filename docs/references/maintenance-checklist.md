@@ -27,9 +27,12 @@ If you do not know where to start, check these first:
 3. `docs/references/terminology.md` if vocabulary changed
 4. `docs/references/renderer-interfaces.md` if public or semi-public contracts changed
 5. `docs/examples/user-management-schema.md` if authoring semantics or action behavior changed
-6. latest architecture conformance audit index under `docs/analysis/` when planning broad refactors:
-	- `docs/analysis/architecture-conformance-audit-2026-03-29-index.md`
+6. latest documentation design review under `docs/analysis/` when planning broad refactors:
+	- `docs/analysis/docs-design-review-2026-03-29.md`
 7. `docs/references/refactoring-guidelines.md` when planning or reviewing any refactoring
+8. `docs/architecture/security-design-requirements.md` for boundary/safety-sensitive changes
+9. `docs/architecture/performance-design-requirements.md` for hot-path/perf-sensitive changes
+10. `docs/references/architecture-guardrails-from-bugs.md` for recurring regression patterns and review checks
 
 ## Change Triggers
 
@@ -248,6 +251,52 @@ Review:
 - `docs/architecture/report-designer/api.md`
 - `docs/index.md` if the recommended entry point changes
 
+## 11. Security boundary or dynamic execution changes
+
+Examples:
+
+- introducing or modifying permission handling behavior in renderer/runtime
+- introducing expression execution via JS dynamic code evaluation
+- changing action/import boundaries that affect capability isolation
+- changing request/adaptor scope exposure that affects data leakage risk
+
+Review:
+
+- `docs/architecture/security-design-requirements.md`
+- `docs/architecture/action-scope-and-imports.md`
+- `docs/architecture/renderer-runtime.md`
+- `docs/index.md`
+
+## 12. Performance-sensitive path changes
+
+Examples:
+
+- changing interactive graph/canvas update loops
+- changing dirty-check logic, history tracking, or cache invalidation
+- changing subscription granularity or state update strategy
+- changing async coordination in debounce/throttle/request dedupe paths
+
+Review:
+
+- `docs/architecture/performance-design-requirements.md`
+- `docs/architecture/renderer-runtime.md`
+- `docs/architecture/flux-core.md`
+- `docs/index.md`
+
+## 13. Recurring regression pattern or postmortem-to-architecture updates
+
+Examples:
+
+- a fix in `docs/bugs/` reveals a repeatable architecture-level failure mode
+- new review rules are needed to prevent the same class of bug
+- architecture guardrails need stronger anti-pattern examples or checks
+
+Review:
+
+- `docs/references/architecture-guardrails-from-bugs.md`
+- relevant architecture source of truth under `docs/architecture/`
+- `docs/index.md` if navigation path should change
+
 ## What Usually Does Not Need Immediate Doc Changes
 
 - refactors that preserve contracts, behavior, and ownership
@@ -286,4 +335,7 @@ Before finishing a code change, ask:
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/action-scope-and-imports.md`
+- `docs/architecture/security-design-requirements.md`
+- `docs/architecture/performance-design-requirements.md`
+- `docs/references/architecture-guardrails-from-bugs.md`
 
