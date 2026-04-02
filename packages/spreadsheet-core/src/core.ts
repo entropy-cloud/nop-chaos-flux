@@ -654,17 +654,17 @@ function replaceAllInDocument(
     if (!sheet.cells) continue;
     for (const [addr, cell] of Object.entries(sheet.cells)) {
       const value = String(cell.value ?? '');
-      let shouldReplace = false;
-
-      if (options.matchWholeCell) {
+      const shouldReplace = options.matchWholeCell
+        ? (() => {
         const compareValue = options.matchCase ? value : value.toLowerCase();
         const compareQuery = options.matchCase ? query : query.toLowerCase();
-        shouldReplace = compareValue === compareQuery;
-      } else {
-        const compareValue = options.matchCase ? value : value.toLowerCase();
-        const compareQuery = options.matchCase ? query : query.toLowerCase();
-        shouldReplace = compareValue.includes(compareQuery);
-      }
+          return compareValue === compareQuery;
+        })()
+        : (() => {
+          const compareValue = options.matchCase ? value : value.toLowerCase();
+          const compareQuery = options.matchCase ? query : query.toLowerCase();
+          return compareValue.includes(compareQuery);
+        })();
 
       if (shouldReplace) {
         result = replaceInDocument(result, { sheetId: sheet.id, address: addr, row: cell.row, col: cell.col }, query, replacement, options);
