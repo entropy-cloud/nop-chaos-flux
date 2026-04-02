@@ -8,6 +8,7 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { useAggregateError, useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from './index';
+import { useFieldHandlers } from './field-utils';
 
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => undefined;
@@ -34,6 +35,7 @@ async function selectOption(labelText: string, optionText: string) {
 }
 
 const submitCalls: Array<Record<string, any>> = [];
+const sharedFormulaCompiler = createFormulaCompiler();
 
 const env: RendererEnv = {
   fetcher: async function <T>(_api: ApiObject, ctx: ApiRequestContext) {
@@ -142,6 +144,26 @@ const scopeStateProbeRenderer: RendererDefinition = {
   component: ScopeStateProbeRenderer
 };
 
+const handlerIdentitySnapshots: Array<ReturnType<typeof useFieldHandlers>> = [];
+
+function HandlerIdentityProbeRenderer(props: RendererComponentProps) {
+  const scope = useRenderScope();
+  const form = useCurrentForm();
+  const name = String(props.props.name ?? props.schema.name ?? '');
+  const handlers = useFieldHandlers({ name, currentForm: form, scope });
+
+  React.useEffect(() => {
+    handlerIdentitySnapshots.push(handlers);
+  }, [handlers]);
+
+  return <span data-testid="handler-identity-probe">{name}</span>;
+}
+
+const handlerIdentityProbeRenderer: RendererDefinition = {
+  type: 'handler-identity-probe',
+  component: HandlerIdentityProbeRenderer
+};
+
 describe('formRendererDefinitions', () => {
   it('submits updated form values from input and select renderers', async () => {
     submitCalls.length = 0;
@@ -240,6 +262,45 @@ describe('formRendererDefinitions', () => {
 
     fireEvent.change(screen.getByLabelText(/Email/), { target: { value: 'abc@example.com' } });
     expect((screen.getByLabelText(/Email/) as HTMLInputElement).value).toBe('abc@example.com');
+  });
+
+  it('keeps field handler object identity stable across host rerenders when inputs are unchanged', () => {
+    cleanup();
+    handlerIdentitySnapshots.length = 0;
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, handlerIdentityProbeRenderer]);
+
+    const schema = {
+      type: 'form',
+      data: {
+        username: 'alice'
+      },
+      body: [
+        {
+          type: 'handler-identity-probe',
+          name: 'username'
+        }
+      ]
+    } as const;
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schema={schema}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    expect(handlerIdentitySnapshots).toHaveLength(1);
+
+    rerender(
+      <SchemaRenderer
+        schema={schema}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    expect(handlerIdentitySnapshots).toHaveLength(1);
   });
 
   it('submits checkbox values through shared field handlers', async () => {

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   getIn,
   getCompiledValidationField,
@@ -9,6 +10,7 @@ import {
 } from '@nop-chaos/flux-core';
 import {
   resolveRendererSlotContent,
+  useCurrentForm,
   useAggregateError,
   useChildFieldState,
   useCurrentFormState,
@@ -111,6 +113,52 @@ export function createFieldHandlers(args: {
         }
       }
     }
+  };
+}
+
+function identityValue(nextValue: unknown) {
+  return nextValue;
+}
+
+export function useFieldHandlers(args: {
+  name: string;
+  currentForm: FormRuntime | undefined;
+  scope: ReturnType<typeof useRenderScope>;
+  toFormValue?: (value: unknown) => unknown;
+}) {
+  const { name, currentForm, scope, toFormValue = identityValue } = args;
+
+  return useMemo(
+    () => createFieldHandlers({
+      name,
+      currentForm,
+      scope,
+      setValue(nextValue) {
+        currentForm?.setValue(name, toFormValue(nextValue));
+      }
+    }),
+    [name, currentForm, scope, toFormValue]
+  );
+}
+
+export function useFormFieldController(name: string, options?: { toFormValue?: (value: unknown) => unknown }) {
+  const scope = useRenderScope();
+  const currentForm = useCurrentForm();
+  const value = useBoundFieldValue(name, currentForm);
+  const presentation = useFieldPresentation(name, currentForm);
+  const handlers = useFieldHandlers({
+    name,
+    currentForm,
+    scope,
+    toFormValue: options?.toFormValue
+  });
+
+  return {
+    currentForm,
+    scope,
+    value,
+    presentation,
+    handlers
   };
 }
 
