@@ -1,6 +1,7 @@
 interface PendingEntry<T> {
   timer: ReturnType<typeof setTimeout>;
   resolve: (result: T) => void;
+  reject: (error: unknown) => void;
 }
 
 export function cancelPendingDebounce<K, T>(
@@ -24,12 +25,17 @@ export function scheduleDebounce<K, T>(
 ): Promise<T> {
   cancelPendingDebounce(pendingMap, key);
 
-  return new Promise<T>((resolve) => {
+  return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(async () => {
-      pendingMap.delete(key);
-      resolve(await factory());
+      try {
+        pendingMap.delete(key);
+        resolve(await factory());
+      } catch (error) {
+        pendingMap.delete(key);
+        reject(error);
+      }
     }, timeoutMs);
 
-    pendingMap.set(key, { timer, resolve });
+    pendingMap.set(key, { timer, resolve, reject });
   });
 }

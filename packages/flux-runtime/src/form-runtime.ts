@@ -48,7 +48,11 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   const formId = inputValue.id ?? `${inputValue.parentScope.id}-form`;
   const formName = inputValue.name;
   const validationRuns = new Map<string, number>();
-  const pendingValidationDebounces = new Map<string, { timer: ReturnType<typeof setTimeout>; resolve: (run: boolean) => void }>();
+  const pendingValidationDebounces = new Map<string, {
+    timer: ReturnType<typeof setTimeout>;
+    resolve: (run: boolean) => void;
+    reject: (error: unknown) => void;
+  }>();
   const runtimeFieldRegistrations = new Map<string, RuntimeFieldRegistration>();
   const initialFieldState = buildInitialFieldState(inputValue.initialValues ?? {}, inputValue.validation);
   const defaultValidationTriggers = inputValue.validation?.behavior.triggers ?? ['blur'];

@@ -123,7 +123,11 @@ function finishAction(
 }
 
 export function createActionDispatcher(input: ActionDispatcherInput) {
-  const pendingDebounces = new Map<string, { timer: ReturnType<typeof setTimeout>; resolve: (result: ActionResult) => void }>();
+  const pendingDebounces = new Map<string, {
+    timer: ReturnType<typeof setTimeout>;
+    resolve: (result: ActionResult) => void;
+    reject: (error: unknown) => void;
+  }>();
 
   async function runBuiltInAction(
     action: ActionSchema,

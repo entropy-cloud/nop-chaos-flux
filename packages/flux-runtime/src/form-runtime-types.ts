@@ -42,6 +42,7 @@ export interface InitialFieldState {
 export interface PendingValidationDebounce {
   timer: ReturnType<typeof setTimeout>;
   resolve: (run: boolean) => void;
+  reject: (error: unknown) => void;
 }
 
 export interface ManagedFormRuntimeSharedState {

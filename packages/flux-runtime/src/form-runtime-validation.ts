@@ -8,7 +8,7 @@ import { getCompiledValidationField, hasCompiledValidationNodes } from '@nop-cha
 import { findRuntimeRegistration, syncRegisteredFieldValue } from './form-runtime-registration';
 import { collectSubtreeNodePaths, collectSubtreePaths } from './form-runtime-subtree';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
-import { cancelPendingDebounce, scheduleDebounce } from './utils/debounce';
+import { scheduleDebounce } from './utils/debounce';
 import { normalizeRuntimeValidationErrors } from './validation';
 
 function createValidationResult(errors: ValidationError[]): ValidationResult {
