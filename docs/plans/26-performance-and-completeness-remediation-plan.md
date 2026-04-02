@@ -458,7 +458,7 @@ Status: partially completed on 2026-04-02.
 
 Current note:
 
-- The guard script and repository verification path are now in place, and the final workspace validation passed with `verify-no-src-artifacts` clean.
+- The guard script and repository verification path are now in place, and the rule applies to all `packages/*/src/` directories with no package-level exception.
 - The broader long-term policy clarification described here is still open as a governance follow-up, not a code blocker for this execution pass.
 
 Problem description:

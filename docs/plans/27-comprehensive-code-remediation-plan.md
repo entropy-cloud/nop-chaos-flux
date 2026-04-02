@@ -5,7 +5,7 @@
 > Verified: 2026-04-02
 > Source: repository-wide architecture and implementation audit (flux-core, flux-formula, flux-runtime, flux-react, all renderer packages, flow-designer, spreadsheet, report-designer, nop-debugger)
 
----
+---继续
 
 ## Verification Notes (2026-04-02)
 
@@ -13,8 +13,8 @@ All items were verified against the current codebase. Summary:
 
 | Status | Items |
 |--------|-------|
-| **Confirmed — proceed with fix** | P0-2, P0-3, P0-4, P0-5, P0-7, P0-8, P1-1 through P1-14, P1-16, P1-17, P2-3, P2-4, P2-6, P2-7, P2-8, P2-9, P2-10 |
-| **Already fixed — skip** | P0-1 (no stray artifacts in non-UI packages), P0-6 (debounce already has `try/catch` + `reject`) |
+| **Confirmed — proceed with fix** | P0-1, P0-2, P0-3, P0-4, P0-5, P0-7, P0-8, P1-1 through P1-14, P1-16, P1-17, P2-3, P2-4, P2-6, P2-7, P2-8, P2-9, P2-10 |
+| **Already fixed — skip** | P0-6 (debounce already has `try/catch` + `reject`) |
 | **Not a real issue — remove** | P2-5 (generic `S` IS properly used in `hooks.ts:49`: `selector: (scopeData: S) => T`) |
 | **Fix needs refinement** | P0-5 (cancellation signal needs type changes to `ValidationResult`), P0-7 (existing code at `form-runtime.ts:192-203` partially addresses stale errors but has a logic flaw — fix must clean `mergedErrors` before `setErrors()`) |
 
@@ -46,13 +46,13 @@ Provide an execution-ready, independently-verifiable remediation plan for every 
 
 ---
 
-### P0-1: ~~Stray Build Artifacts (.js/.d.ts/.js.map) in `src/` Directories~~ [ALREADY FIXED]
+### P0-1: Stray Build Artifacts (.js/.d.ts/.js.map) in `src/` Directories
 
-> **Status: Already fixed.** No stray build artifacts found in non-UI packages. Only `packages/ui/src/` contains `.js`/`.d.ts`/`.js.map` files (intentional — shadcn components). Skip this item.
+> **Status: Re-opened on 2026-04-02.** The earlier assumption that `packages/ui/src/` was an intentional exception is obsolete. All `src/` directories must contain source only.
 
 **Severity:** High
 **Category:** Engineering Consistency
-**Affected packages:** ~~`flux-core`, `flux-formula`, `flux-runtime`, `flux-react`, `spreadsheet-core`, `spreadsheet-renderers`, `ui`~~
+**Affected packages:** `flux-core`, `flux-formula`, `flux-runtime`, `flux-react`, `spreadsheet-core`, `spreadsheet-renderers`, `ui`
 
 **Problem:**
 
@@ -65,19 +65,20 @@ This creates implementation drift risk between TS and JS tracks, bloats the repo
 **How to verify:**
 
 ```bash
-# Run from repo root — should return zero results (excluding packages/ui/src/)
-find packages/flux-core/src packages/flux-formula/src packages/flux-runtime/src packages/flux-react/src packages/spreadsheet-core/src packages/spreadsheet-renderers/src -name '*.js' -not -path '*/node_modules/*' | head -20
+# Run from repo root — should return zero results for every package src/
+find packages/*/src \( -name '*.js' -o -name '*.d.ts' -o -name '*.js.map' \)
 ```
-
-**Result:** Zero files returned. Issue was already resolved.
 
 **Fix plan:**
 
-No action needed.
+1. Remove all generated `.js` / `.d.ts` / `.js.map` files from every `packages/*/src/` directory, including `packages/ui/src/`.
+2. Keep build output in `dist/` only.
+3. Enforce this uniformly with `scripts/verify-no-src-artifacts.mjs` and `.gitignore`.
 
 **Acceptance:**
 
-Already satisfied.
+- Zero generated artifacts in every `packages/*/src/` directory.
+- No package-level exception for `ui`.
 
 ---
 
@@ -682,6 +683,8 @@ Every array mutation triggers `remapArrayFieldState`, which iterates **all** key
 
 ### P1-9: `relatedPaths` Mapping Has Flawed Path Resolution Logic
 
+> Status: completed 2026-04-02
+
 **Severity:** Medium
 **Category:** Correctness
 **File:** `packages/flux-runtime/src/form-path-state.ts:82-92`
@@ -712,6 +715,8 @@ The heuristic `relatedPath.includes('.')` to decide whether a related path is al
 ---
 
 ### P1-10: `createFieldHandlers` Creates New Object Every Render
+
+> Status: completed 2026-04-02
 
 **Severity:** Medium
 **Category:** Performance
@@ -810,6 +815,8 @@ Only works for columns A-Z (0-25). Column 26 produces `[` instead of `AA`.
 
 ### P1-13: Import Namespace Errors Are Silently Swallowed
 
+> Status: completed 2026-04-02
+
 **Severity:** Medium
 **Category:** Observability
 **File:** `packages/flux-react/src/node-renderer.tsx:100-115`
@@ -869,7 +876,7 @@ These renderers use BEM-style classes like `nop-page__header`, `nop-page__toolba
 1. Replace BEM classes with `data-slot` attributes and Tailwind utility classes:
    - `nop-page__header` → `data-slot="page-header"` with Tailwind classes
    - `nop-table__pagination` → `data-slot="table-pagination"` with Tailwind classes
-2. Follow `docs/architecture/bem-removal.md` for migration patterns.
+2. Follow `docs/architecture/renderer-markers-and-selectors.md` for current marker and selector patterns.
 3. Run `pnpm typecheck && pnpm lint && pnpm test`.
 
 **Acceptance:**
@@ -962,6 +969,8 @@ The table renderer mixes sorting, filtering, pagination, row selection, row expa
 
 ### P1-17: Form Renderer Handler Boilerplate Duplicated 7 Times
 
+> Status: completed 2026-04-02
+
 **Severity:** Medium
 **Category:** Consistency
 **File:** `packages/flux-renderers-form/src/renderers/input.tsx` (SelectRenderer, TextareaRenderer, CheckboxRenderer, SwitchRenderer, RadioGroupRenderer, CheckboxGroupRenderer)
@@ -1014,6 +1023,8 @@ This is copy-pasted 7 times with minor variations.
 ---
 
 ### P2-1: `renderer.ts` Type Definition File Is 385 Lines
+
+> Status: completed 2026-04-02
 
 **Severity:** Low
 **Category:** Design
@@ -1078,6 +1089,8 @@ The `createManagedFormRuntime` function is a single 524-line function containing
 ---
 
 ### P2-3: Module-Level Mutable State in `schema-renderer.tsx`
+
+> Status: completed 2026-04-02
 
 **Severity:** Low
 **Category:** Design
@@ -1176,6 +1189,8 @@ Already satisfied.
 
 ### P2-6: `schema-compiler.ts` `validation-collection.ts` Brace Indentation Mismatch
 
+> Status: completed 2026-04-02
+
 **Severity:** Low
 **Category:** Consistency
 **File:** `packages/flux-runtime/src/schema-compiler/validation-collection.ts:136-140`
@@ -1225,6 +1240,8 @@ Lines 138-140 have mismatched brace indentation. The closing `}` at line 138 is 
 
 ### P2-8: `field-frame.tsx` Subscribes to Empty String Path When `name` Is Undefined
 
+> Status: completed 2026-04-02
+
 **Severity:** Low
 **Category:** Performance
 **File:** `packages/flux-react/src/field-frame.tsx:59-60`
@@ -1253,6 +1270,8 @@ When `name` is `undefined`, `useOwnedFieldState('')` and `useAggregateError('')`
 ---
 
 ### P2-9: Inline Anonymous Component Definitions in Renderer Definitions Array
+
+> Status: completed 2026-04-02
 
 **Severity:** Low
 **Category:** Design
@@ -1283,6 +1302,8 @@ SelectRenderer, TextareaRenderer, CheckboxRenderer, SwitchRenderer, RadioGroupRe
 ---
 
 ### P2-10: Dynamic Renderer Blindly Casts API Response to `BaseSchema`
+
+> Status: completed 2026-04-02
 
 **Severity:** Low
 **Category:** Type Safety

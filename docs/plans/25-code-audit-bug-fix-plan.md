@@ -48,7 +48,7 @@ However, `revised.md` correctly identified a secondary issue: the range `-_` (45
 **Status**: ✅ Confirmed (artifacts already cleaned, guard script missing)  
 **Problem**: `scripts/verify-no-src-artifacts.mjs` does not exist. No CI protection against future leaks.  
 **Fix**: 
-1. Create `scripts/verify-no-src-artifacts.mjs` that scans `packages/*/src/` for `.d.ts`, `.js`, `.js.map` files (excluding `packages/ui/src/`).
+1. Create `scripts/verify-no-src-artifacts.mjs` that scans all `packages/*/src/` directories for `.d.ts`, `.js`, `.js.map` files.
 2. Add `"check:src-artifacts": "node scripts/verify-no-src-artifacts.mjs"` to root `package.json`.
 3. Wire into `lint` script or CI pipeline.  
 **Verification**: `pnpm check:src-artifacts` passes cleanly.

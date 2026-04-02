@@ -4,7 +4,7 @@
 > Last Reviewed: 2026-04-02
 
 
-> **Design doc:** `docs/architecture/bem-removal.md`
+> **Design doc:** `docs/architecture/renderer-markers-and-selectors.md`
 >
 > **Implementation Status: ⚠️ PARTIALLY COMPLETED (Phases 1–7)**
 > **Done:** BEM CSS rules removed from `styles.css` (no `.app-shell`, `.hero-card`, `.nav-card` found); `field-frame.tsx` uses `data-field-*` attributes instead of BEM; `dialog-host.tsx` uses shadcn Dialog components; marker class system (`nop-*`) established; Tailwind + `classAliases` in production use.
@@ -12,7 +12,7 @@
 >
 > This status was verified against the codebase on 2026-03-30.
 
-> Design doc: `docs/architecture/bem-removal.md`
+> Design doc: `docs/architecture/renderer-markers-and-selectors.md`
 
 ## Exit Criteria
 
@@ -585,8 +585,8 @@ pnpm typecheck && pnpm build && pnpm lint && pnpm test
 | File | Update |
 |---|---|
 | `docs/logs/index.md` | Add entry describing the BEM removal |
-| `docs/references/maintenance-checklist.md` | Add link to `docs/architecture/bem-removal.md` |
-| `docs/architecture/bem-removal.md` | Mark as current (update if any deviations occurred) |
+| `docs/references/maintenance-checklist.md` | Add link to `docs/architecture/renderer-markers-and-selectors.md` |
+| `docs/architecture/renderer-markers-and-selectors.md` | Mark as current (update if any deviations occurred) |
 
 ---
 
