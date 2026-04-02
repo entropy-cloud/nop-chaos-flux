@@ -1,5 +1,9 @@
 # Development Plan
 
+> Plan Status: superseded
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: COMPLETED (P0–P6) · PARTIALLY ACTIVE (P7).**
 > P0–P6 are fully implemented: workspace, expression compiler, schema compiler, runtime/React integration, basic renderers, form/action system, and data renderers/CRUD are all in place.
 > P7 (convergence/hardening) is partially done — see "Current priority tasks" below for remaining items.
@@ -277,3 +281,5 @@ Recommended next sequence:
 - `docs/architecture/renderer-runtime.md`
 - `docs/references/renderer-interfaces.md`
 - `docs/examples/user-management-schema.md`
+
+

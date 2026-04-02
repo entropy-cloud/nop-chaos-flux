@@ -1,5 +1,9 @@
 # NOP Debugger 完整实现计划
 
+> Plan Status: in-progress
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: ✅ COMPLETED (Phases 1–3) / Phase 4 Not Started**
 > **Done (Phases 1–3):** JsonViewer with collapsible tree, render throttling, search/filter, localStorage persistence, error badge with count, error aggregation (pinned/latest/earliest buffers), API chain merging, `data-cid` injection on all rendered nodes, `inspectByCid()` global API, Node Tab with scope/form data display, and global `__NOP_DEBUGGER_API__` for automation.
 > **Not started (Phase 4):** Virtualized tree for large schemas, `state:snapshot` serialization, enhanced search with regex/path support, and final performance hardening.
@@ -8,7 +12,7 @@
 
 > 制定日期: 2026-03-29
 > 基于: `docs/analysis/framework-debugger-design.md` 设计草案
-> 状态: 待实施
+> 状态: 部分完成，Phase 4 待实施
 
 ---
 
@@ -738,3 +742,5 @@ Phase 4.3 (搜索增强) ──────────────────�
 | NodeRenderer | `packages/flux-react/src/node-renderer.tsx` | data-cid 注入点 |
 | FieldFrame | `packages/flux-react/src/field-frame.tsx` | wrap 节点 data-cid |
 | Playground 接入 | `apps/playground/src/App.tsx` | 宿主集成 |
+
+

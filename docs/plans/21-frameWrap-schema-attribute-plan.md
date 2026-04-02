@@ -1,5 +1,9 @@
 # 21 frameWrap Schema Attribute Plan
 
+> Plan Status: pending
+> Last Reviewed: 2026-04-02
+
+
 > Date: 2026-03-31
 > Status: Pending
 > Triggered by: `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md`
@@ -181,3 +185,5 @@ Add a renderer using `frameWrap: false` to demonstrate the feature. Code-editor 
 - Adding `frameWrap` to `RendererDefinition` (stays schema-only)
 - Any changes to form validation or field state management
 - Migrating code-editor to use `frameWrap` (already fixed via `<span role="button">`)
+
+

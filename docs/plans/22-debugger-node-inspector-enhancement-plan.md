@@ -1,5 +1,9 @@
 # Plan 22: Node Tab 增强 — 元素检查与 Store/Scope 数据展示
 
+> Plan Status: completed
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: ✅ COMPLETED**
 > All 5 phases implemented: `buildInspectResult()` now fills `formState`/`scopeData` from `handle.capabilities.store` and `tagName`/`className` from the DOM element. Node Tab shows a full Component Inspector panel with handle info, Form State tabs (Values/Errors/Meta), Scope Data viewer, and Expression Evaluator. Inspect mode shows hint text and supports Esc to cancel. New CSS styles for `ndbg-inspect-*` classes. 3 new tests in `controller-inspect.test.ts` verify formState filling and DOM info extraction.
 >
@@ -8,7 +12,7 @@
 > 制定日期: 2026-03-30
 > 基于: `docs/analysis/framework-debugger-design.md` §10.4 Node / §12.5 DOM cid 反查机制
 > 参考: `~/sources/amis/packages/amis-core/src/utils/debug.tsx`
-> 状态: 待实施
+> 状态: 已完成
 
 ---
 
@@ -348,3 +352,5 @@ Phase 1 (controller) → Phase 2 (types) → Phase 3 (panel UI) → Phase 4 (UX)
 - 深度订阅 form/page store 私有状态的实时变更
 - 远程上传日志
 - Action replay
+
+

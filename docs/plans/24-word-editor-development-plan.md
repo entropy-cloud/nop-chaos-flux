@@ -1,5 +1,9 @@
 # Word Editor 开发计划
 
+> Plan Status: planned
+> Last Reviewed: 2026-04-02
+
+
 ## Purpose
 
 基于 `@hufe921/canvas-editor` 构建一个类 Word 文档编辑器，作为 nop-chaos-flux 平台的文档模板设计器。整体功能布局仿照 SpringReport 的 docDesign 页面，但模板表达式体系采用 NOP 平台的 XLang 语法（`${expr}` + `<tag>content</tag>`），与 nop-entropy 的 WordTemplate 模型对齐。
@@ -704,3 +708,5 @@ canvas-editor 内部管理自己的状态（文本、选区、格式），我们
 
 ### Phase 8 (生产化)
 - 快捷键、性能、测试、无障碍全部到位
+
+

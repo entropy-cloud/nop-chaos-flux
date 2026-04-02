@@ -1,5 +1,9 @@
 # Plan 21: NodeRenderer Selective Scope Subscription
 
+> Plan Status: completed
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: ✅ COMPLETED**
 > Replaced broad `useSyncExternalStore` with `useSyncExternalStoreWithSelector` in `node-renderer.tsx`. The selector runs `resolveNodeMeta` + `resolveNodeProps` inside the selector callback and uses reference equality to prevent unnecessary re-renders. Static nodes (`flags.isStatic`) bypass the subscription entirely. Both `resolveNodeMeta` and `resolveNodeProps` now return reference-stable cached results when values haven't changed (using `state.resolvedMeta` and `state._staticPropsResult`/`state._lastPropsResult`). The skipped test in `flux-renderers-form/src/index.test.tsx` has been unskipped and passes.
 >
@@ -90,3 +94,5 @@ This is the cleanest but requires auditing all renderer components to ensure the
 - [x] Plan approved
 - [x] Implementation
 - [x] Test un-skipped
+
+

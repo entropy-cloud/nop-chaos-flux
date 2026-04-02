@@ -1,5 +1,9 @@
 # Form Validation Low-Code Integrated Refactor Roadmap
 
+> Plan Status: in-progress
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: ⚠️ PARTIALLY COMPLETED**
 > **Done (Stages 0–3):** Canonical validation graph, compilation tightening, graph-driven execution.
 > **Not started (Stages 4–8):** Normalization pipeline, composite compiler migration, state compression, extensibility API, diagnostics/introspection tooling.
@@ -849,4 +853,6 @@ The recommended next implementation step is to start with Stage 0 and Stage 1 to
 5. migrate internal callers to the canonical graph before removing redundant structures
 
 This is the highest-leverage place to begin because it creates the foundation for every later optimization in memory use, execution model, and composite-control integration.
+
+
 

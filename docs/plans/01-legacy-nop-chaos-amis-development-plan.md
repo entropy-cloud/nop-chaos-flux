@@ -1,5 +1,9 @@
 # NOP Chaos AMIS Renderer Development Plan
 
+> Plan Status: superseded
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: SUPERSEDED — Replaced by `docs/plans/02-development-plan.md`.**
 > All phases P0–P6 described in this plan have been completed. See Plan 02 for the current status of P7 (convergence/hardening).
 >
@@ -665,4 +669,6 @@ playground 中至少长期保留以下 demo：
 - 最后高级场景
 
 只要严格按阶段推进，并始终以 `docs/architecture/renderer-runtime.md` 和 `docs/references/renderer-interfaces.md` 作为核心约束，框架会更稳，也更容易在后期扩展到 designer、plugin、schema market 等能力。
+
+
 

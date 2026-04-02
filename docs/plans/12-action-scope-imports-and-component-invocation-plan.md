@@ -1,5 +1,9 @@
 # Action Scope, Imports, And Component Invocation Implementation Plan
 
+> Plan Status: completed
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: ✅ COMPLETED**
 > All core items implemented: `ActionScope` class (`action-scope.ts`, 79 lines), `ComponentHandleRegistry` (`component-handle-registry.ts`, 223 lines), `xui:import` processing (`imports.ts`, 260 lines), `component:<method>` dispatch, and `designer:*` namespace provider in designer-page. Full action extension architecture is operational.
 >
@@ -626,4 +630,6 @@ Only after that should `xui:import` be implemented.
 - `docs/architecture/flow-designer/api.md`
 - `docs/architecture/report-designer/design.md`
 - `docs/architecture/report-designer/contracts.md`
+
+
 

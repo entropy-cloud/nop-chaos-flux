@@ -1,5 +1,9 @@
 # Form Validation Completion Plan
 
+> Plan Status: completed
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: ✅ COMPLETED**
 > All four levels of validation capability (field-level, form-level, cross-field, async) have been implemented in `packages/flux-runtime/src/validation/` (8 files: errors.ts, message.ts, registry.ts, rules.ts, validators.ts, index.ts + tests). Form-runtime array operations (appendValue, insertValue, removeValue, moveValue, swapValue) and custom validators (equalsField, requiredWhen, requiredUnless, atLeastOneFilled, allOrNone, uniqueBy) are all present.
 >
@@ -782,3 +786,5 @@ That phase gives the biggest practical jump toward production-grade behavior whi
 - `docs/architecture/amis-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/plans/02-development-plan.md`
+
+

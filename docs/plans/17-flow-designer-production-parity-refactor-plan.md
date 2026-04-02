@@ -1,5 +1,9 @@
 # 17 - Flow Designer 生产可用性与 Flow Editor 对齐重构计划
 
+> Plan Status: in-progress
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: ⚠️ PARTIALLY COMPLETED**
 > **Done:** Drag-drop with `draggable` attribute on palette items, `screenToFlowPosition` for canvas coordinate mapping, grid toggle, keyboard shortcuts (undo/redo/copy/paste/delete via `matchesShortcut` in `designer-page.tsx`), toolbar improvements.
 > **Remaining:** Collapsible panels in inspector, some edge interaction polish, and full production hardening may still need work.
@@ -208,4 +212,6 @@
 - 完整复制 legacy list page 全 CRUD 后台能力。
 - 引入新的后端持久化协议。
 - 大规模重写节点视觉体系（本轮以功能与布局可用性优先）。
+
+
 

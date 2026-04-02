@@ -1,5 +1,9 @@
 # 16 - Flow Designer 样式 JSON 驱动迁移计划
 
+> Plan Status: in-progress
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: ⚠️ PARTIALLY COMPLETED**
 > **Done:** Steps 1–10 largely completed — `styles.css` deleted from both `flow-designer-renderers` and `report-designer-renderers`; Tailwind + `classAliases` mechanism in use for flow/report designer styling; no business-specific styles in framework CSS files.
 > **Remaining:** `themeStyles` injection for dynamic theming may need verification; full audit of all edge/node styles in JSON config may have gaps.
@@ -440,3 +444,5 @@ styles.css (约1200行，纯骨架)
 2. **xyflow 选中状态样式丢失**: 保留通用的 `:first-child` 选择器规则
 3. **图标渐变无法用 Tailwind 表达**: 使用 `themeStyles` escape hatch
 4. **视觉回归**: 每个 Step 完成后运行 `pnpm dev` 目视验证，可随时回退
+
+

@@ -1,5 +1,9 @@
 # Architecture Audit Fix Plan
 
+> Plan Status: planned
+> Last Reviewed: 2026-04-02
+
+
 > **Status: 📋 PLANNED**
 > Source audit conducted 2026-03-31 via automated codebase analysis (7 agents + Oracle verification).
 > Covers `flux-core`, `flux-runtime`, `flux-react`, `flux-formula` and 3 renderer packages.
@@ -757,3 +761,5 @@ Priority: `spreadsheet-core` first (largest at 1698 lines), then `flow-designer-
 3. **中期** (迭代中逐步): P2-5 → P1-1 → P3-1 → P1-4
 4. **跳过**: ~~P2-4 Branded Types~~
 5. **待定**: P3-2, P3-3
+
+

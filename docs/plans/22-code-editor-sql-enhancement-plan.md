@@ -1,5 +1,9 @@
 # 22 Code Editor SQL Enhancement Plan
 
+> Plan Status: completed
+> Last Reviewed: 2026-04-02
+
+
 > Date: 2026-03-31
 > Status: Completed
 > Triggered by: SpringReport SQL Editor 功能对比分析
@@ -420,3 +424,5 @@ export function formatSQL(
 - [ ] Playground 页面新增 SQL editor 完整演示（格式化 + snippets + 变量面板 + 执行预览）
 - [ ] JSON Schema 向后兼容（现有配置不受影响）
 - [ ] `docs/architecture/code-editor.md` 同步更新
+
+

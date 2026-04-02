@@ -1,5 +1,9 @@
 # NOP Chaos Flux 改善计划
 
+> Plan Status: pending
+> Last Reviewed: 2026-04-02
+
+
 > 创建日期: 2026-03-31
 > 状态: 待审批
 > 优先级: 按阶段排序
@@ -332,3 +336,5 @@ crud renderer
 | Flow Designer 权限系统 | 2-3 天 | 企业级能力 |
 | Table 高级功能 (虚拟滚动/树形/合并) | 5-7 天 | 完整能力 |
 | Report Designer nop-report 适配器 | 5-7 天 | 首个重要适配目标 |
+
+

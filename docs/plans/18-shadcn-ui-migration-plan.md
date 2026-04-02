@@ -1,5 +1,9 @@
 # shadcn/ui Migration Plan
 
+> Plan Status: in-progress
+> Last Reviewed: 2026-04-02
+
+
 > **Implementation Status: ✅ COMPLETED (Phases 1–3) / Phase 4 Pending**
 > **Done (Phases 1–3):** `packages/ui/` contains 56 shadcn component files. 23 renderer files import from `@nop-chaos/ui`. Dialog, Button, Input, Select, Tabs, Tooltip, Popover, and many other components are in production use across renderers and designer packages.
 > **Not verified (Phase 4):** Comprehensive testing of all migrated components; some less-used components may not yet be wired into renderers.
@@ -220,3 +224,5 @@ Total: 5-7 days
 - `docs/architecture/styling-system.md` - Overall styling architecture
 - `docs/architecture/theme-compatibility.md` - Theme CSS variables
 - `nop-chaos-next-master/packages/ui/` - Source components
+
+
