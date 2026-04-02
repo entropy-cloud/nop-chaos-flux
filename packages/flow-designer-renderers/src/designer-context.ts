@@ -117,7 +117,7 @@ export function useDesignerHostScope(input: {
       })
     };
   } else {
-    scopeRef.current.scope.store?.setSnapshot(scopeData);
+    scopeRef.current.scope.merge(scopeData);
   }
 
   return scopeRef.current.scope;

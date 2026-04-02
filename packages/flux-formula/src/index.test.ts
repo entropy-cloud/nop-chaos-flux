@@ -26,7 +26,8 @@ function createScope(data: Record<string, any>): ScopeRef {
     readOwn: () => data,
     value: data,
     read: () => data,
-    update: () => undefined
+    update: () => undefined,
+    merge: () => {}
   };
 }
 

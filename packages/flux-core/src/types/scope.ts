@@ -21,6 +21,7 @@ export interface ScopeRef {
   readOwn(): Record<string, any>;
   read(): Record<string, any>;
   update(path: string, value: unknown): void;
+  merge(data: Record<string, unknown>): void;
 }
 
 export interface CreateScopeOptions {

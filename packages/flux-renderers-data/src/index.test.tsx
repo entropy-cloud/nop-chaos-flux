@@ -294,7 +294,7 @@ describe('dataRendererDefinitions', () => {
   });
 
   describe('data-source', () => {
-    it('fetches data and renders body', async () => {
+    it('fetches data and injects into scope', async () => {
       cleanup();
       const fetcher = vi.fn(async () => ({
         ok: true,
@@ -316,17 +316,15 @@ describe('dataRendererDefinitions', () => {
               {
                 type: 'data-source',
                 api: { url: '/api/user/1' },
-                dataPath: 'user',
-                body: { type: 'text', text: 'Hello, ${user.name}' }
-              }
+                dataPath: 'user'
+              },
+              { type: 'text', text: 'Hello, ${user.name}' }
             ]
           }}
           env={{ ...env, fetcher }}
           formulaCompiler={createFormulaCompiler()}
         />
       );
-
-      expect(document.querySelector('[data-slot="skeleton"]')).toBeTruthy();
 
       await waitFor(() => {
         expect(screen.getByText('Hello, Alice')).toBeTruthy();
@@ -358,9 +356,9 @@ describe('dataRendererDefinitions', () => {
                 type: 'data-source',
                 api: { url: '/api/user/1' },
                 dataPath: 'user',
-                initialData: { name: 'Initial' },
-                body: { type: 'text', text: 'Hello, ${user.name}' }
-              }
+                initialData: { name: 'Initial' }
+              },
+              { type: 'text', text: 'Hello, ${user.name}' }
             ]
           }}
           env={{ ...env, fetcher }}
@@ -470,9 +468,9 @@ describe('dataRendererDefinitions', () => {
           {
             type: 'data-source',
             api: { url: '/api/data', cacheTTL: 60000, cacheKey: 'test-cache' },
-            dataPath: 'data',
-            body: { type: 'text', text: 'Value: ${data.value}' }
-          }
+            dataPath: 'data'
+          },
+          { type: 'text', text: 'Value: ${data.value}' }
         ]
       } as const;
 

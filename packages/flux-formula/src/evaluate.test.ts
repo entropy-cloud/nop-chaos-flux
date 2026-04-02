@@ -35,7 +35,8 @@ function makeScope(data: Record<string, any>) {
     },
     readOwn: () => data,
     read: () => data,
-    update: () => undefined
+    update: () => undefined,
+    merge: () => {}
   };
 }
 

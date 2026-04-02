@@ -60,6 +60,10 @@ When adding a new log entry for today:
 
 ## Index (Reverse Chronological)
 
+### 2026-04
+
+- [04-02](2026/04-02.md) — data-source redesign: removed body region, scope injection semantics
+
 ### 2026-03
 
 - [03-31](2026/03-31.md) — test fixes, types.ts split, word editor phases, architecture audit, debugger inspector, refactoring guidelines

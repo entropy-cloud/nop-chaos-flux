@@ -17,7 +17,8 @@ function createStubScope(): ScopeRef {
     get: () => undefined,
     has: () => false,
     readOwn: () => ({}),
-    read: () => ({})
+    read: () => ({}),
+    merge: () => {}
   };
 }
 

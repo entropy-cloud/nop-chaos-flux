@@ -59,7 +59,6 @@ export interface DataSourceSchema extends BaseSchema {
   stopWhen?: string;
   silent?: boolean;
   initialData?: SchemaValue;
-  body?: SchemaInput;
 }
 
 export interface DynamicRendererSchema extends BaseSchema {

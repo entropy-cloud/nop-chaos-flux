@@ -188,6 +188,29 @@ export function createScopeRef(input: {
 
       const snapshot = ownStore.getSnapshot();
       ownStore.setSnapshot(setIn(snapshot, path, value));
+    },
+    merge(data) {
+      const current = ownStore.getSnapshot();
+      const keys = Object.keys(data);
+
+      if (keys.length === 0) {
+        return;
+      }
+
+      let changed = false;
+
+      for (let i = 0; i < keys.length; i++) {
+        if (!Object.is(current[keys[i]], data[keys[i]])) {
+          changed = true;
+          break;
+        }
+      }
+
+      if (!changed) {
+        return;
+      }
+
+      ownStore.setSnapshot({ ...current, ...data });
     }
   };
 }

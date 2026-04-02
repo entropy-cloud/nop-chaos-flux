@@ -161,7 +161,7 @@ Response caching reduces redundant network requests.
 
 ## DataSourceSchema
 
-`DataSourceSchema` is a renderer that fetches data and injects it into scope.
+`DataSourceSchema` is a non-rendering component that fetches data and injects it into the **current scope**. It renders nothing itself (`null`). Sibling nodes that share the same scope automatically re-render when the fetched data arrives.
 
 ### Interface
 
@@ -174,7 +174,6 @@ interface DataSourceSchema extends BaseSchema {
   stopWhen?: string;
   silent?: boolean;
   initialData?: SchemaValue;
-  body?: SchemaInput;
 }
 ```
 
@@ -183,35 +182,82 @@ interface DataSourceSchema extends BaseSchema {
 | Field | Type | Description |
 |-------|------|-------------|
 | `api` | `ApiObject` | Request configuration (required) |
-| `dataPath` | `string` | Path to write response data into scope |
+| `dataPath` | `string` | Scope key to write response data into |
 | `interval` | `number` | Polling interval in milliseconds |
 | `stopWhen` | `string` | Expression to stop polling when true |
 | `silent` | `boolean` | Suppress error notifications |
-| `initialData` | `SchemaValue` | Initial data before first fetch |
-| `body` | `SchemaInput` | Content to render after data loads |
+| `initialData` | `SchemaValue` | Initial value to write to scope before first fetch |
+
+### Scope Injection Behavior
+
+`data-source` writes the response into the **current scope** — the scope in which it is rendered. Sibling nodes rendered in the same scope see the updated data and re-render automatically.
+
+**With `dataPath`:** The entire response is written to `scope[dataPath]`.
+
+```
+scope[dataPath] = responseData
+```
+
+**Without `dataPath`:** The response is treated as a `Record` and merged into the current scope. Non-object responses are silently ignored.
+
+```
+scope = { ...scope, ...responseData }
+```
+
+`initialData` follows the same injection rules and is written to scope before the first fetch begins.
 
 ### Behavior
 
-1. On mount, sets `initialData` (if provided) to `dataPath`
+1. If `initialData` is provided, writes it to scope before the first fetch
 2. Executes the API request
-3. Writes response to `dataPath` in scope
+3. Writes response to scope using the injection rules above
 4. If `interval` is set, starts polling
-5. Evaluates `stopWhen` after each response; stops polling if true
-6. Renders `body` when data is available
+5. Evaluates `stopWhen` against scope after each response; stops polling when true
+6. On error, calls `env.notify('error', message)` unless `silent` is true
+
+### Loading and Error State
+
+`data-source` renders `null`. There is no built-in loading skeleton or error widget.
+
+- **Loading**: manage loading UX externally (e.g., conditional visibility on sibling nodes)
+- **Error**: `env.notify('error', message)` is called (suppressed when `silent: true`)
 
 ### Examples
 
-**Basic data source:**
+**Basic data source with `dataPath`:**
 
 ```json
 {
-  "type": "data-source",
-  "api": { "url": "/api/user/${userId}" },
-  "dataPath": "user",
-  "body": {
-    "type": "text",
-    "text": "Hello, ${user.name}"
-  }
+  "type": "container",
+  "body": [
+    {
+      "type": "data-source",
+      "api": { "url": "/api/user/${userId}" },
+      "dataPath": "user"
+    },
+    {
+      "type": "text",
+      "text": "Hello, ${user.name}"
+    }
+  ]
+}
+```
+
+**No `dataPath` — response merged into scope:**
+
+```json
+{
+  "type": "container",
+  "body": [
+    {
+      "type": "data-source",
+      "api": { "url": "/api/context" }
+    },
+    {
+      "type": "text",
+      "text": "Project: ${projectName}, User: ${userName}"
+    }
+  ]
 }
 ```
 
@@ -219,15 +265,20 @@ interface DataSourceSchema extends BaseSchema {
 
 ```json
 {
-  "type": "data-source",
-  "api": { "url": "/api/job/${jobId}/status" },
-  "dataPath": "status",
-  "interval": 3000,
-  "stopWhen": "${status.complete}",
-  "body": {
-    "type": "text",
-    "text": "Progress: ${status.progress}%"
-  }
+  "type": "container",
+  "body": [
+    {
+      "type": "data-source",
+      "api": { "url": "/api/job/${jobId}/status" },
+      "dataPath": "status",
+      "interval": 3000,
+      "stopWhen": "${status.complete}"
+    },
+    {
+      "type": "text",
+      "text": "Progress: ${status.progress}%"
+    }
+  ]
 }
 ```
 
@@ -235,17 +286,22 @@ interface DataSourceSchema extends BaseSchema {
 
 ```json
 {
-  "type": "data-source",
-  "api": {
-    "url": "/api/tasks",
-    "includeScope": ["projectId"],
-    "params": { "status": "active" }
-  },
-  "dataPath": "tasks",
-  "body": {
-    "type": "text",
-    "text": "Found ${tasks.length} active tasks"
-  }
+  "type": "container",
+  "body": [
+    {
+      "type": "data-source",
+      "api": {
+        "url": "/api/tasks",
+        "includeScope": ["projectId"],
+        "params": { "status": "active" }
+      },
+      "dataPath": "tasks"
+    },
+    {
+      "type": "text",
+      "text": "Found ${tasks.length} active tasks"
+    }
+  ]
 }
 ```
 
@@ -272,8 +328,8 @@ interface DataSourceSchema extends BaseSchema {
 ### dataPath vs ActionSchema.dataPath
 
 - `ApiObject` no longer contains `dataPath`
-- `ActionSchema.dataPath` controls where ajax action results are written
-- `DataSourceSchema.dataPath` controls where fetched data is written
+- `ActionSchema.dataPath` controls where ajax action results are written (page store)
+- `DataSourceSchema.dataPath` controls where fetched data is written (current scope)
 
 This separation keeps `ApiObject` focused on request description.
 

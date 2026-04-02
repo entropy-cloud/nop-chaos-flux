@@ -23,8 +23,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'data-source',
-    component: DataSourceRenderer,
-    regions: ['body']
+    component: DataSourceRenderer
   },
   {
     type: 'chart',
