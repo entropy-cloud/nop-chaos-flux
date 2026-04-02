@@ -43,9 +43,9 @@
     "@types/react": "^19.0.10"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && rm -rf dist/styles && cp -r src/styles dist/styles",
+    "build": "tsc -p tsconfig.build.json && node -e \"const fs=require('fs');fs.rmSync('dist/styles',{recursive:true,force:true});fs.cpSync('src/styles','dist/styles',{recursive:true});\"",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
-    "lint": "eslint src --ext .ts,.tsx"
+    "lint": "eslint \"src/**/*.{ts,tsx}\" --ignore-pattern \"**/*.d.ts\""
   }
 }

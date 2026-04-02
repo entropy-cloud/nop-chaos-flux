@@ -43,7 +43,7 @@ declare const sidebarMenuButtonVariants: (props?: ({
     variant?: "default" | "outline" | null | undefined;
     size?: "default" | "sm" | "lg" | null | undefined;
 } & import("class-variance-authority/types").ClassProp) | undefined) => string;
-declare function SidebarMenuButton({ render, isActive, variant, size, tooltip, className, ...props }: useRender.ComponentProps<"button"> & React.ComponentProps<"button"> & {
+declare function SidebarMenuButton({ isActive, variant, size, tooltip, className, ...props }: useRender.ComponentProps<"button"> & React.ComponentProps<"button"> & {
     isActive?: boolean;
     tooltip?: string | React.ComponentProps<typeof TooltipContent>;
 } & VariantProps<typeof sidebarMenuButtonVariants>): React.ReactElement<unknown, string | React.JSXElementConstructor<any>>;

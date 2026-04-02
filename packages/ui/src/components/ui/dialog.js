@@ -22,7 +22,7 @@ function DialogOverlay({ className, ...props }) {
     return (_jsx(DialogPrimitive.Backdrop, { "data-slot": "dialog-overlay", className: cn("fixed inset-0 z-50 bg-black/55 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0", className), ...props }));
 }
 const DialogContent = React.forwardRef(function DialogContent({ className, children, showCloseButton = true, offsetRef, baseTransform, ...props }, ref) {
-    const { draggable, noOverlay, noCenter, closeOnOutsideClick } = React.useContext(DialogContext);
+    const { draggable, noOverlay, noCenter } = React.useContext(DialogContext);
     const { contentRef, handlePointerDown } = useDialogDrag({ enabled: draggable, offsetRef, baseTransform: noCenter ? '' : baseTransform }, ref);
     return (_jsxs(DialogPortal, { "data-slot": "dialog-portal", children: [!noOverlay && _jsx(DialogOverlay, {}), _jsxs(DialogPrimitive.Popup, { ref: contentRef, "data-slot": "dialog-content", className: cn("fixed z-50 w-full max-w-[calc(100%-2rem)] rounded-xl border bg-background p-6 shadow-lg duration-200 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 sm:max-w-lg", noCenter ? "flex flex-col" : "grid gap-4 top-[50%] left-[50%]", !draggable && !noCenter && "-translate-x-1/2 -translate-y-1/2 data-open:zoom-in-95 data-closed:zoom-out-95", className), ...props, style: draggable
                     ? { transform: noCenter ? undefined : (baseTransform ?? 'translate(-50%, -50%)'), ...props.style }

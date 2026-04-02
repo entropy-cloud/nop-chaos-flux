@@ -179,13 +179,13 @@ const sidebarMenuButtonVariants = cva("peer/menu-button group/menu-button flex w
         size: "default",
     },
 });
-function SidebarMenuButton({ render, isActive = false, variant = "default", size = "default", tooltip, className, ...props }) {
-    const { isMobile, state } = useSidebar();
+function SidebarMenuButton({ isActive = false, variant = "default", size = "default", tooltip, className, ...props }) {
     const comp = useRender({
         defaultTagName: "button",
         props: mergeProps({
             className: cn(sidebarMenuButtonVariants({ variant, size }), className),
         }, props),
+        render: props.render,
         state: {
             slot: "sidebar-menu-button",
             sidebar: "menu-button",

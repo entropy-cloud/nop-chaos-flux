@@ -17,9 +17,7 @@ import {
 } from './sheet'
 import { Skeleton } from './skeleton'
 import {
-  Tooltip,
   TooltipContent,
-  TooltipTrigger,
 } from './tooltip'
 import { PanelLeftIcon } from "lucide-react"
 
@@ -495,7 +493,6 @@ const sidebarMenuButtonVariants = cva(
 )
 
 function SidebarMenuButton({
-  render,
   isActive = false,
   variant = "default",
   size = "default",
@@ -507,7 +504,6 @@ function SidebarMenuButton({
     isActive?: boolean
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const { isMobile, state } = useSidebar()
   const comp = useRender({
     defaultTagName: "button",
     props: mergeProps<"button">(
@@ -516,6 +512,7 @@ function SidebarMenuButton({
       },
       props
     ),
+    render: props.render,
 
     state: {
       slot: "sidebar-menu-button",

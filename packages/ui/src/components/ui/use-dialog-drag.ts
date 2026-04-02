@@ -21,7 +21,7 @@ export function useDialogDrag(
   options: UseDialogDragOptions = {},
   forwardedRef?: React.ForwardedRef<HTMLDivElement>
 ) {
-  const { enabled = false, offsetRef: externalOffsetRef, baseTransform = 'translate(-50%, -50%)' } = options
+  const { offsetRef: externalOffsetRef, baseTransform = 'translate(-50%, -50%)' } = options
   const internalOffsetRef = React.useRef<Offset>({ x: 0, y: 0 })
   const offsetRef = externalOffsetRef ?? internalOffsetRef
   const internalRef = React.useRef<HTMLDivElement | null>(null)
@@ -75,7 +75,7 @@ export function useDialogDrag(
   const stopDrag = React.useCallback((e?: PointerEvent) => {
     const el = internalRef.current
     if (el) {
-      try { el.releasePointerCapture(e?.pointerId ?? 0); } catch {}
+      try { el.releasePointerCapture(e?.pointerId ?? 0); } catch { void 0 }
       el.style.transition = ''
       el.removeEventListener('pointermove', handlePointerMove)
       el.removeEventListener('pointerup', stopDrag)

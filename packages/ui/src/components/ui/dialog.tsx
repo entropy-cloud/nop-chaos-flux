@@ -65,7 +65,7 @@ const DialogContent = React.forwardRef<
     baseTransform?: string
   }
 >(function DialogContent({ className, children, showCloseButton = true, offsetRef, baseTransform, ...props }, ref) {
-  const { draggable, noOverlay, noCenter, closeOnOutsideClick } = React.useContext(DialogContext)
+  const { draggable, noOverlay, noCenter } = React.useContext(DialogContext)
   const { contentRef, handlePointerDown } = useDialogDrag({ enabled: draggable, offsetRef, baseTransform: noCenter ? '' : baseTransform }, ref)
 
   return (

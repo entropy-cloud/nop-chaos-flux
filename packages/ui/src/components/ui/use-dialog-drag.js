@@ -1,6 +1,6 @@
 import * as React from 'react';
 export function useDialogDrag(options = {}, forwardedRef) {
-    const { enabled = false, offsetRef: externalOffsetRef, baseTransform = 'translate(-50%, -50%)' } = options;
+    const { offsetRef: externalOffsetRef, baseTransform = 'translate(-50%, -50%)' } = options;
     const internalOffsetRef = React.useRef({ x: 0, y: 0 });
     const offsetRef = externalOffsetRef ?? internalOffsetRef;
     const internalRef = React.useRef(null);
@@ -51,7 +51,9 @@ export function useDialogDrag(options = {}, forwardedRef) {
             try {
                 el.releasePointerCapture(e?.pointerId ?? 0);
             }
-            catch { }
+            catch {
+                void 0;
+            }
             el.style.transition = '';
             el.removeEventListener('pointermove', handlePointerMove);
             el.removeEventListener('pointerup', stopDrag);
