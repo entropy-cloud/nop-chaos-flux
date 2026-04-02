@@ -150,7 +150,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                   className="border-0 hover:bg-black/8 dark:hover:bg-white/10"
                   onClick={actionScope.onEdit}
                 >
-                  <DesignerIcon icon="pencil" className="nop-icon nop-icon--pencil" />
+                  <DesignerIcon icon="pencil" />
                 </Button>
                 <Button
                   type="button"
@@ -160,7 +160,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                   className="border-0 hover:bg-black/8 dark:hover:bg-white/10"
                   onClick={actionScope.onDuplicate}
                 >
-                  <DesignerIcon icon="copy" className="nop-icon nop-icon--copy" />
+                  <DesignerIcon icon="copy" />
                 </Button>
                 <Button
                   type="button"
@@ -170,7 +170,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                   className="border-0 hover:bg-destructive/15 hover:text-destructive"
                   onClick={actionScope.onDelete}
                 >
-                  <DesignerIcon icon="trash-2" className="nop-icon nop-icon--trash-2" />
+                  <DesignerIcon icon="trash-2" />
                 </Button>
               </div>
             )}

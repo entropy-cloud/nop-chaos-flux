@@ -170,7 +170,7 @@ export function DesignerToolbarContent(props: {
                 void invokeAction(item.action ?? 'designer:navigate-back');
               }}
             >
-              <DesignerIcon icon="arrow-left" className="nop-icon nop-icon--arrow-left" />
+              <DesignerIcon icon="arrow-left" />
             </Button>
           );
         }
@@ -202,7 +202,7 @@ export function DesignerToolbarContent(props: {
                 }
               }}
             >
-              {item.icon ? <DesignerIcon icon={item.icon} className={`nop-icon nop-icon--${item.icon}`} /> : null}
+              {item.icon ? <DesignerIcon icon={item.icon} /> : null}
               {item.label ? <span>{item.label}</span> : null}
             </Button>
           );

@@ -119,7 +119,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
               aria-label="Select edge"
               onClick={handleLabelClick}
             >
-              <DesignerIcon icon="pencil" className="nop-icon nop-icon--pencil" />
+              <DesignerIcon icon="pencil" />
             </Button>
             <Button
               type="button"
@@ -129,7 +129,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
               aria-label="Delete edge"
               onClick={handleDeleteEdge}
             >
-              <DesignerIcon icon="trash-2" className="nop-icon nop-icon--trash-2" />
+              <DesignerIcon icon="trash-2" />
             </Button>
           </div>
         </EdgeLabelRenderer>

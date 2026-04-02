@@ -77,7 +77,7 @@ export function DesignerPaletteContent() {
                         title={nt.description ?? nt.label}
                       >
                         <span className={`w-8 h-8 rounded-lg inline-flex items-center justify-center text-white shrink-0 nop-gradient-${nt.id}`} data-type={nt.id} aria-hidden="true">
-                          {nt.icon ? <DesignerIcon icon={nt.icon} className="nop-icon nop-icon--white" /> : '◇'}
+                          {nt.icon ? <DesignerIcon icon={nt.icon} className="text-white" /> : '◇'}
                         </span>
                         <span className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{nt.label}</span>
                       </button>

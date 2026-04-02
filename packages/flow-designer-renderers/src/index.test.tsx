@@ -7,6 +7,7 @@ import { createFormulaCompiler } from '../../flux-formula/src/index';
 import { createSchemaRenderer } from '../../flux-react/src/index';
 import { basicRendererDefinitions } from '../../flux-renderers-basic/src/index';
 import { render, within } from '@testing-library/react';
+import { DesignerIcon } from './designer-icon';
 
 class ResizeObserverMock {
   observe() {}
@@ -241,6 +242,19 @@ describe('createDesignerActionProvider', () => {
     const result = await provider.invoke('moveNode', { nodeId: 'node-1', position: { x: 30, y: 50 } }, {} as any);
 
     expect(result).toMatchObject({ ok: true, data: expect.objectContaining({ id: 'node-1', position: { x: 30, y: 50 } }) });
+  });
+});
+
+describe('DesignerIcon markers', () => {
+  it('uses data-icon for icon identity without modifier marker classes', () => {
+    render(<DesignerIcon icon="arrow-left" className="text-white" />);
+
+    const icon = document.querySelector('[data-icon="arrow-left"]');
+    expect(icon).toBeTruthy();
+    const className = icon?.getAttribute('class') ?? '';
+    expect(className).toContain('nop-icon');
+    expect(className).not.toContain('nop-icon--');
+    expect(className).toContain('text-white');
   });
 });
 
