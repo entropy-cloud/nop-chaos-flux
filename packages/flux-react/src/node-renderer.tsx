@@ -38,7 +38,10 @@ function getNodeImports(node: CompiledSchemaNode): readonly XuiImportSpec[] | un
 }
 
 function shouldWarnOnImportFailure(): boolean {
-  return typeof process === 'undefined' || process.env.NODE_ENV !== 'production';
+  const nodeEnv = 'process' in globalThis
+    ? (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV
+    : undefined;
+  return nodeEnv !== 'production';
 }
 
 export const NodeRenderer = memo(function NodeRenderer(props: {

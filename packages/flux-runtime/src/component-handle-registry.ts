@@ -1,7 +1,10 @@
 import type { ComponentHandle, ComponentHandleRegistry, ComponentTarget } from '@nop-chaos/flux-core';
 
 export function createComponentHandleRegistry(input: { id: string; parent?: ComponentHandleRegistry }): ComponentHandleRegistry {
-  const DEBUG_MODE = process.env.NODE_ENV !== 'production';
+  const nodeEnv = 'process' in globalThis
+    ? (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV
+    : undefined;
+  const DEBUG_MODE = nodeEnv !== 'production';
   let staticCidCounter = 0;
   let dynamicLoadedCidCounter = -1;
   const handles = new Set<ComponentHandle>();
