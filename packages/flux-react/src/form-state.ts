@@ -10,6 +10,15 @@ export const EMPTY_FORM_STORE_STATE: FormStoreState = {
   submitting: false
 };
 
+export const EMPTY_FORM_FIELD_STATE: FormFieldStateSnapshot = {
+  error: undefined,
+  validating: false,
+  touched: false,
+  dirty: false,
+  visited: false,
+  submitting: false
+};
+
 function matchesFormErrorQuery(error: ValidationError, query?: FormErrorQuery): boolean {
   if (!query) {
     return true;

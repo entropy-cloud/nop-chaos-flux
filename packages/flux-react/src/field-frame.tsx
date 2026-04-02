@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { useCurrentForm, useOwnedFieldState, useAggregateError } from './hooks';
+import { useCurrentForm, useCurrentFormState } from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
+import { EMPTY_FORM_FIELD_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
 
 export interface FieldFrameProps {
   name?: string;
@@ -56,8 +57,20 @@ export function FieldFrame(props: FieldFrameProps) {
   } = props;
 
   const currentForm = useCurrentForm();
-  const fieldState = useOwnedFieldState(name ?? '');
-  const aggregateError = useAggregateError(name ?? '');
+  const fieldState = useCurrentFormState(
+    (state) => name ? selectCurrentFormFieldState(state, name, { path: name, ownerPath: name }) : EMPTY_FORM_FIELD_STATE,
+    (left, right) =>
+      left.error === right.error &&
+      left.validating === right.validating &&
+      left.touched === right.touched &&
+      left.dirty === right.dirty &&
+      left.visited === right.visited &&
+      left.submitting === right.submitting
+  );
+  const aggregateError = useCurrentFormState(
+    (state) => name ? selectCurrentFormErrors(state, { path: name, ownerPath: name, sourceKinds: ['array', 'object', 'form', 'runtime-registration'] })[0] : undefined,
+    Object.is
+  );
   const fieldBehavior = name ? getCompiledValidationField(currentForm?.validation, name)?.behavior : undefined;
   const behavior = validationBehavior ?? fieldBehavior ?? currentForm?.validation?.behavior ?? defaultBehavior;
 

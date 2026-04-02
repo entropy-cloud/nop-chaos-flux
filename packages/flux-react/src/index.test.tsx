@@ -5,6 +5,7 @@ import type { RendererComponentProps, RendererDefinition, RendererEnv, RendererH
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
+  FormContext,
   createSchemaRenderer,
   hasRendererSlotContent,
   resolveRendererSlotContent,
@@ -21,6 +22,8 @@ import {
   useScopeSelector,
   useValidationNodeState
 } from './index';
+import { FieldFrame } from './field-frame';
+import { EMPTY_FORM_STORE_STATE } from './form-state';
 
 const env: RendererEnv = {
   fetcher: async function <T>() {
@@ -899,6 +902,28 @@ describe('createSchemaRenderer', () => {
     expect(screen.getByTestId('component-registry-id').textContent).toContain('component-registry');
   });
 
+  it('reports root component registry lifecycle through an explicit callback', () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer]);
+    const onComponentRegistryChange = vi.fn();
+
+    const { unmount } = render(
+      <SchemaRenderer
+        schema={{ type: 'page', body: [{ type: 'text', text: 'Hello' }] }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+        onComponentRegistryChange={onComponentRegistryChange}
+      />
+    );
+
+    expect(onComponentRegistryChange).toHaveBeenCalledTimes(1);
+    expect(onComponentRegistryChange.mock.calls[0]?.[0]?.id).toContain('component-registry');
+
+    unmount();
+
+    expect(onComponentRegistryChange).toHaveBeenCalledTimes(2);
+    expect(onComponentRegistryChange.mock.calls[1]?.[0]).toBeNull();
+  });
+
   it('prefers nested action scopes and component registries over parent providers', async () => {
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
@@ -1607,21 +1632,22 @@ describe('createSchemaRenderer', () => {
   it('emits render monitor callbacks for rendered nodes', async () => {
     const onRenderStart = vi.fn();
     const onRenderEnd = vi.fn();
+    const monitoredEnv = {
+      ...env,
+      monitor: {
+        onRenderStart,
+        onRenderEnd
+      }
+    };
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
 
-    render(
+    const view = render(
       <SchemaRenderer
         schema={{
           type: 'text',
           text: 'Monitored render'
         }}
-        env={{
-          ...env,
-          monitor: {
-            onRenderStart,
-            onRenderEnd
-          }
-        }}
+        env={monitoredEnv}
         formulaCompiler={createFormulaCompiler()}
       />
     );
@@ -1641,6 +1667,26 @@ describe('createSchemaRenderer', () => {
         })
       );
     });
+
+    const initialStartCalls = onRenderStart.mock.calls.length;
+    const initialEndCalls = onRenderEnd.mock.calls.length;
+
+    expect(initialStartCalls).toBeGreaterThan(0);
+    expect(initialEndCalls).toBeGreaterThan(0);
+
+    view.rerender(
+      <SchemaRenderer
+        schema={{
+          type: 'text',
+          text: 'Monitored render'
+        }}
+        env={monitoredEnv}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(onRenderStart).toHaveBeenCalledTimes(initialStartCalls);
+    expect(onRenderEnd).toHaveBeenCalledTimes(initialEndCalls);
   });
 
   it('projects form errors by owner path and source kind', async () => {
@@ -1670,6 +1716,39 @@ describe('createSchemaRenderer', () => {
       expect(screen.getByTestId('aggregate-error').textContent).toBe('Metadata requires at least one entry');
       expect(screen.getByTestId('field-error').textContent).toBe('Entry 1 value is required');
     });
+  });
+});
+
+describe('FieldFrame', () => {
+  it('ignores root-path form errors when no field name is provided', () => {
+    const form = {
+      store: {
+        subscribe: () => () => undefined,
+        getState: () => ({
+          ...EMPTY_FORM_STORE_STATE,
+          errors: {
+            '': [
+              {
+                path: '',
+                rule: 'form',
+                message: 'Root error',
+                sourceKind: 'form'
+              }
+            ]
+          }
+        })
+      },
+      validation: undefined
+    } as any;
+
+    render(
+      <FormContext.Provider value={form}>
+        <FieldFrame label="Unbound field">content</FieldFrame>
+      </FormContext.Provider>
+    );
+
+    expect(screen.getByText('Unbound field')).toBeTruthy();
+    expect(screen.queryByText('Root error')).toBeNull();
   });
 });
 

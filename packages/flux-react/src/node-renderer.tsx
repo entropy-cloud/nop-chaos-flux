@@ -225,48 +225,51 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       ...payload,
       durationMs: Math.max(0, Date.now() - renderStartedAtRef.current)
     });
-  });
+  }, [
+    runtime.env.monitor,
+    props.node.id,
+    props.node.path,
+    props.node.type,
+    resolvedMeta.visible,
+    resolvedMeta.hidden
+  ]);
 
   if (!resolvedMeta.visible || resolvedMeta.hidden) {
     return null;
   }
 
-  const renderComponent = () => {
-    const element = <Comp {...componentProps} />;
+  const element = <Comp {...componentProps} />;
 
-    if (props.node.component.wrap) {
-      const fieldName = typeof resolvedProps.value.name === 'string'
-        ? resolvedProps.value.name
-        : typeof props.node.schema.name === 'string'
-          ? props.node.schema.name
-          : undefined;
-      const labelValue = resolvedMeta.label
-        ?? (regions.label ? regions.label.render() : props.node.schema.label);
+  let content = element;
 
-      return (
-        <FieldFrame
-          name={fieldName}
-          label={labelValue}
-          required={props.node.schema.required === true}
-          className={resolvedMeta.className}
-          testid={resolvedMeta.testid}
-          cid={resolvedCid}
-        >
-          {element}
-        </FieldFrame>
-      );
-    }
+  if (props.node.component.wrap) {
+    const fieldName = typeof resolvedProps.value.name === 'string'
+      ? resolvedProps.value.name
+      : typeof props.node.schema.name === 'string'
+        ? props.node.schema.name
+        : undefined;
+    const labelValue = resolvedMeta.label
+      ?? (regions.label ? regions.label.render() : props.node.schema.label);
 
-    if (resolvedCid != null) {
-      return (
-        <div data-cid={resolvedCid}>
-          {element}
-        </div>
-      );
-    }
-
-    return element;
-  };
+    content = (
+      <FieldFrame
+        name={fieldName}
+        label={labelValue}
+        required={props.node.schema.required === true}
+        className={resolvedMeta.className}
+        testid={resolvedMeta.testid}
+        cid={resolvedCid}
+      >
+        {element}
+      </FieldFrame>
+    );
+  } else if (resolvedCid != null) {
+    content = (
+      <div data-cid={resolvedCid}>
+        {element}
+      </div>
+    );
+  }
 
   return (
     <NodeMetaContext.Provider value={{ id: props.node.id, path: props.node.path, type: props.node.type }}>
@@ -276,7 +279,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
             <FormContext.Provider value={activeForm}>
               <PageContext.Provider value={props.page}>
                 <ClassAliasesContext.Provider value={mergedClassAliases}>
-                  {renderComponent()}
+                  {content}
                 </ClassAliasesContext.Provider>
               </PageContext.Provider>
             </FormContext.Provider>
