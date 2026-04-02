@@ -49,6 +49,7 @@ export interface ApiObject extends SchemaObject {
   requestAdaptor?: string;
   cacheTTL?: number;
   cacheKey?: string;
+  dedupStrategy?: 'cancel-previous' | 'parallel' | 'ignore-new';
 }
 
 export interface DataSourceSchema extends BaseSchema {

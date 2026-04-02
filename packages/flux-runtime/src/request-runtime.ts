@@ -1,4 +1,4 @@
-import type { ExpressionCompiler, ApiObject, FormRuntime, RendererEnv, ScopeRef, SchemaValue } from '@nop-chaos/flux-core';
+import type { ApiResponse, ExpressionCompiler, ApiObject, FormRuntime, RendererEnv, ScopeRef, SchemaValue } from '@nop-chaos/flux-core';
 import { isPlainObject, setIn } from '@nop-chaos/flux-core';
 
 function getPathValue(input: unknown, path: string): unknown {
@@ -25,9 +25,35 @@ function normalizeAdaptorSource(source: string): string {
   return trimmed.replace(/;\s*$/, '').trim();
 }
 
-function createAdaptorScopeView(scope: ScopeRef): object {
-  let cachedKeys: Array<string | symbol> | undefined;
+function stableSerialize(value: unknown): string {
+  if (value === null) {
+    return 'null';
+  }
 
+  if (value === undefined) {
+    return 'undefined';
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+    return String(value);
+  }
+
+  if (typeof value === 'string') {
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableSerialize(entry)).join(',')}]`;
+  }
+
+  if (typeof value === 'object') {
+    return `{${Object.keys(value as Record<string, unknown>).sort().map((key) => `${JSON.stringify(key)}:${stableSerialize((value as Record<string, unknown>)[key])}`).join(',')}}`;
+  }
+
+  return JSON.stringify(String(value));
+}
+
+function createAdaptorScopeView(scope: ScopeRef): object {
   return new Proxy(
     {},
     {
@@ -46,24 +72,20 @@ function createAdaptorScopeView(scope: ScopeRef): object {
         return typeof property === 'string' ? scope.has(property) : false;
       },
       ownKeys() {
-        if (!cachedKeys) {
-          const keys = new Set<string | symbol>();
-          let current: ScopeRef | undefined = scope;
+        const keys = new Set<string | symbol>();
+        let current: ScopeRef | undefined = scope;
 
-          while (current) {
-            for (const key of Reflect.ownKeys(current.readOwn())) {
-              if (typeof key === 'string' || typeof key === 'symbol') {
-                keys.add(key);
-              }
+        while (current) {
+          for (const key of Reflect.ownKeys(current.readOwn())) {
+            if (typeof key === 'string' || typeof key === 'symbol') {
+              keys.add(key);
             }
-
-            current = current.parent;
           }
 
-          cachedKeys = Array.from(keys);
+          current = current.parent;
         }
 
-        return cachedKeys;
+        return Array.from(keys);
       },
       getOwnPropertyDescriptor(_target, property) {
         if (typeof property !== 'string') {
@@ -87,7 +109,15 @@ function createAdaptorScopeView(scope: ScopeRef): object {
 
 function createRequestKey(actionType: string, api: ApiObject, scope: ScopeRef, form?: FormRuntime): string {
   const owner = form?.id ?? scope.id;
-  return `${owner}:${actionType}:${api.method ?? 'get'}:${api.url}`;
+  return [
+    owner,
+    actionType,
+    api.method ?? 'get',
+    api.url,
+    stableSerialize(api.params),
+    stableSerialize(api.data),
+    stableSerialize(api.headers)
+  ].join(':');
 }
 
 export function extractScopeData(scope: ScopeRef, includeScope: '*' | string[] | undefined): Record<string, unknown> {
@@ -227,42 +257,65 @@ export async function executeApiObject(
   scope: ScopeRef,
   env: RendererEnv,
   expressionCompiler: ExpressionCompiler,
-  options?: { signal?: AbortSignal }
-): Promise<{ data: unknown; ok: boolean }> {
+  options?: {
+    signal?: AbortSignal;
+    executor?: <T>(adaptedApi: ApiObject) => Promise<ApiResponse<T>>;
+  }
+): Promise<{ data: unknown; ok: boolean; status?: number }> {
   const adaptedApi = applyRequestAdaptor(expressionCompiler, api, scope, env);
-  const response = await env.fetcher(adaptedApi, { scope, env, signal: options?.signal });
+  const response = options?.executor
+    ? await options.executor(adaptedApi)
+    : await env.fetcher(adaptedApi, { scope, env, signal: options?.signal });
   const adaptedData = applyResponseAdaptor(expressionCompiler, adaptedApi, response.data, scope, env);
-  return { data: adaptedData, ok: response.ok };
+  return { data: adaptedData, ok: response.ok, status: response.status };
 }
 
 export function createApiRequestExecutor(env: RendererEnv) {
-  const activeRequests = new Map<string, AbortController>();
+  const activeControllers = new Map<string, AbortController>();
+  const activePromises = new Map<string, Promise<ApiResponse<any>>>();
 
   return async function executeApiRequest<T>(actionType: string, api: ApiObject, scope: ScopeRef, form?: FormRuntime) {
+    const dedupStrategy = api.dedupStrategy ?? 'cancel-previous';
     const requestKey = createRequestKey(actionType, api, scope, form);
-    const previous = activeRequests.get(requestKey);
+    const previousController = activeControllers.get(requestKey);
+    const previousPromise = activePromises.get(requestKey);
 
-    if (previous) {
-      previous.abort();
+    if (previousPromise) {
+      if (dedupStrategy === 'ignore-new') {
+        return previousPromise as Promise<ApiResponse<T>>;
+      }
+
+      if (dedupStrategy === 'cancel-previous' && previousController) {
+        previousController.abort();
+      }
     }
 
     const controller = new AbortController();
-    activeRequests.set(requestKey, controller);
     env.monitor?.onApiRequest?.({
       api,
       nodeId: undefined,
       path: undefined
     });
 
-    try {
-      return await env.fetcher<T>(api, {
+    const requestPromise = env.fetcher<T>(api, {
         scope,
         env,
         signal: controller.signal
       });
+
+    if (dedupStrategy !== 'parallel') {
+      activeControllers.set(requestKey, controller);
+      activePromises.set(requestKey, requestPromise);
+    }
+
+    try {
+      return await requestPromise;
     } finally {
-      if (activeRequests.get(requestKey) === controller) {
-        activeRequests.delete(requestKey);
+      if (activeControllers.get(requestKey) === controller) {
+        activeControllers.delete(requestKey);
+      }
+      if (activePromises.get(requestKey) === requestPromise) {
+        activePromises.delete(requestKey);
       }
     }
   };

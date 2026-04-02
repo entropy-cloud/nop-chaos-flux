@@ -30,10 +30,9 @@ import { createImportManager } from './imports';
 import { createNodeRuntime } from './node-runtime';
 import { createManagedPageRuntime } from './page-runtime';
 import {
-  applyRequestAdaptor,
-  applyResponseAdaptor,
   applyResponseDataPath,
-  createApiRequestExecutor
+  createApiRequestExecutor,
+  executeApiObject
 } from './request-runtime';
 import { createSchemaCompiler } from './schema-compiler';
 import { createScopeRef, createScopeStore, toRecord } from './scope';
@@ -48,8 +47,6 @@ export { createComponentHandleRegistry } from './component-handle-registry';
 export { createFormComponentHandle } from './form-component-handle';
 export { createApiCacheStore, resolveCacheKey } from './api-cache';
 export {
-  applyRequestAdaptor,
-  applyResponseAdaptor,
   executeApiObject,
   prepareApiData,
   buildUrlWithParams
@@ -115,9 +112,11 @@ export function createRendererRuntime(input: {
     scope: ScopeRef
   ): Promise<ValidationError | undefined> {
     try {
-      const api = applyRequestAdaptor(expressionCompiler, evaluate<ApiObject>(rule.api, scope), scope, input.env);
-      const response = await executeApiRequest(`validate:${field.path}`, api, scope);
-      const adaptedData = applyResponseAdaptor(expressionCompiler, api, response.data, scope, input.env);
+      const api = evaluate<ApiObject>(rule.api, scope);
+      const response = await executeApiObject(api, scope, input.env, expressionCompiler, {
+        executor: (adaptedApi) => executeApiRequest(`validate:${field.path}`, adaptedApi, scope)
+      });
+      const adaptedData = response.data;
 
       if (response.ok && adaptedData && typeof adaptedData === 'object') {
         const candidate = adaptedData as { valid?: boolean; message?: string };
@@ -173,33 +172,33 @@ export function createRendererRuntime(input: {
       executeValidationRule,
       validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry),
       submitApi: async (api, scope) => {
-        const adaptedApi = applyRequestAdaptor(expressionCompiler, api, scope, input.env);
-        const response = await executeApiRequest('submitForm', adaptedApi, scope);
-        const adaptedData = applyResponseAdaptor(expressionCompiler, adaptedApi, response.data, scope, input.env);
+        const response = await executeApiObject(api, scope, input.env, expressionCompiler, {
+          executor: (adaptedApi) => executeApiRequest('submitForm', adaptedApi, scope)
+        });
 
         return {
           ok: response.ok,
-          data: adaptedData,
-          error: response.ok ? undefined : adaptedData
+          data: response.data,
+          error: response.ok ? undefined : response.data
         };
       }
     });
   }
 
   async function executeAjaxAction(api: ApiObject, action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
-    const adaptedApi = applyRequestAdaptor(expressionCompiler, api, ctx.scope, input.env);
-    const response = await executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form);
-    const adaptedData = applyResponseAdaptor(expressionCompiler, adaptedApi, response.data, ctx.scope, input.env);
+    const response = await executeApiObject(api, ctx.scope, input.env, expressionCompiler, {
+      executor: (adaptedApi) => executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form)
+    });
 
     if (action.dataPath && response.ok && ctx.page) {
-      const nextData = applyResponseDataPath(ctx.page.store.getState().data, action.dataPath, adaptedData);
+      const nextData = applyResponseDataPath(ctx.page.store.getState().data, action.dataPath, response.data);
       ctx.page.store.setData(nextData);
     }
 
     return {
       ok: response.ok,
-      data: adaptedData,
-      error: response.ok ? undefined : adaptedData
+      data: response.data,
+      error: response.ok ? undefined : response.data
     };
   }
 

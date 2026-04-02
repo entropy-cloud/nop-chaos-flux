@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { ApiObject, ScopeRef } from '@nop-chaos/flux-core';
+import { vi } from 'vitest';
+import type { ApiObject, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
 import { createScopeRef, createScopeStore } from '../scope';
 import {
+  createApiRequestExecutor,
   extractScopeData,
   buildUrlWithParams,
   prepareApiData
@@ -244,5 +246,65 @@ describe('prepareApiData', () => {
     };
     const result = prepareApiData(api, scope);
     expect(result.data).toEqual({ name: 'test' });
+  });
+});
+
+describe('createApiRequestExecutor', () => {
+  it('treats different params as distinct requests', async () => {
+    let resolveFirst: ((value: any) => void) | undefined;
+    const fetcher = vi.fn((api: ApiObject) => new Promise((resolve) => {
+      if (api.params && (api.params as Record<string, unknown>).page === 1) {
+        resolveFirst = resolve;
+        return;
+      }
+
+      resolve({ ok: true, status: 200, data: { page: 2 } });
+    }));
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(env);
+    const scope = createTestScope({});
+
+    const firstPromise = execute('ajax', { url: '/api/items', params: { page: 1 } }, scope);
+    const secondPromise = execute('ajax', { url: '/api/items', params: { page: 2 } }, scope);
+
+    resolveFirst?.({ ok: true, status: 200, data: { page: 1 } });
+
+    await expect(firstPromise).resolves.toMatchObject({ ok: true, data: { page: 1 } });
+    await expect(secondPromise).resolves.toMatchObject({ ok: true, data: { page: 2 } });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it('supports parallel dedup strategy without cancelling earlier requests', async () => {
+    const fetcher = vi.fn(async (api: ApiObject) => ({ ok: true, status: 200, data: { requestId: api.data } }));
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(env);
+    const scope = createTestScope({});
+
+    const first = execute('ajax', { url: '/api/items', data: { requestId: 1 }, dedupStrategy: 'parallel' }, scope);
+    const second = execute('ajax', { url: '/api/items', data: { requestId: 2 }, dedupStrategy: 'parallel' }, scope);
+
+    await expect(first).resolves.toMatchObject({ ok: true, data: { requestId: { requestId: 1 } } });
+    await expect(second).resolves.toMatchObject({ ok: true, data: { requestId: { requestId: 2 } } });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns the in-flight promise for ignore-new dedup strategy', async () => {
+    let resolveFirst: ((value: any) => void) | undefined;
+    const fetcher = vi.fn(() => new Promise((resolve) => {
+      resolveFirst = resolve;
+    }));
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(env);
+    const scope = createTestScope({});
+
+    const first = execute('ajax', { url: '/api/items', data: { requestId: 1 }, dedupStrategy: 'ignore-new' }, scope);
+    const second = execute('ajax', { url: '/api/items', data: { requestId: 1 }, dedupStrategy: 'ignore-new' }, scope);
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    resolveFirst?.({ ok: true, status: 200, data: { requestId: 1 } });
+
+    await expect(first).resolves.toMatchObject({ ok: true, data: { requestId: 1 } });
+    await expect(second).resolves.toMatchObject({ ok: true, data: { requestId: 1 } });
   });
 });
