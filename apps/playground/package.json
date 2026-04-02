@@ -26,13 +26,13 @@
     "@nop-chaos/ui": "workspace:^",
     "@nop-chaos/word-editor-core": "workspace:*",
     "@nop-chaos/word-editor-renderers": "workspace:*",
-    "@xyflow/react": "^12.10.1",
+    "@xyflow/react": "^12.10.2",
     "lucide-react": "^1.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.1",
-    "vite": "^8.0.0"
+    "vite": "^8.0.3"
   }
 }

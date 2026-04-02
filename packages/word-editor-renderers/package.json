@@ -13,9 +13,9 @@
   },
   "dependencies": {
     "@hufe921/canvas-editor": "^0.9.130",
-    "@nop-chaos/word-editor-core": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "@types/use-sync-external-store": "^0.0.6",
+    "@nop-chaos/word-editor-core": "workspace:*",
+    "@types/use-sync-external-store": "^1.5.0",
     "lucide-react": "^1.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

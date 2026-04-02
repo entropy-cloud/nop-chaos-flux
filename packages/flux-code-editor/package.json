@@ -23,7 +23,7 @@
     "@codemirror/lint": "^6.8.5",
     "@codemirror/state": "^6.5.2",
     "@codemirror/theme-one-dark": "^6.1.2",
-    "@codemirror/view": "^6.36.8",
+    "@codemirror/view": "^6.41.0",
     "@lezer/highlight": "^1.2.1",
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
