@@ -62,6 +62,7 @@ When adding a new log entry for today:
 
 ### 2026-04
 
+- [04-02](2026/04-02.md) — plan #25/#26 implementation: flow-designer/runtime hardening, dirty-tracking and dedup fixes, full repo verification
 - [04-01](2026/04-01.md) — code audit bug fix plan #25 execution and verification
 - [04-02](2026/04-02.md) — data-source redesign: removed body region, scope injection semantics
 

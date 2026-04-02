@@ -1,6 +1,6 @@
 # Performance and Completeness Remediation Plan (#26)
 
-> Plan Status: in-progress
+> Plan Status: mostly-completed
 > Last Reviewed: 2026-04-02
 
 
@@ -72,6 +72,8 @@ Out of scope for this plan:
 
 ## P0-1 Remove Runtime Permission System From Flow Designer (Architecture Violation)
 
+Status: completed on 2026-04-02.
+
 Problem description:
 
 - Current design includes runtime permission fields and checks in Flow Designer core.
@@ -104,6 +106,8 @@ Acceptance:
 
 ## P0-2 Ban Dynamic Code Execution in Source (`new Function` / `eval`)
 
+Status: completed on 2026-04-02.
+
 Problem description:
 
 - Multiple source modules use `new Function` for expression probing/evaluation.
@@ -134,6 +138,8 @@ Acceptance:
 
 ## P0-3 Designer Page Uses `core!` Before Null Guard
 
+Status: completed on 2026-04-02.
+
 Problem description:
 
 - `core` can be null when `document/config` is missing.
@@ -160,6 +166,8 @@ Acceptance:
 ---
 
 ## P0-4 Debounce Promise Handling Is Incomplete
+
+Status: completed on 2026-04-02.
 
 Problem description:
 
@@ -189,6 +197,14 @@ Acceptance:
 ---
 
 ## P0-5 Request Dedup Key Is Too Coarse
+
+Status: substantially completed on 2026-04-02.
+
+Implementation note:
+
+- Semantic dedup keys now include params/body/headers.
+- `cancel-previous` and `parallel` behaviors are covered by tests.
+- Optional `ignore-new` strategy was added to the contract/runtime surface but is not yet fully validated as a closed item.
 
 Problem description:
 
@@ -222,6 +238,8 @@ Acceptance:
 
 ## P1-1 Dirty Check Uses Full JSON Stringify in Hot Paths
 
+Status: completed on 2026-04-02.
+
 Problem description:
 
 - Dirty-state checks rely on `JSON.stringify` deep comparisons.
@@ -249,6 +267,8 @@ Acceptance:
 
 ## P1-2 Flow Core Node Update Path Has O(n^2) and Mutable Updates
 
+Status: completed on 2026-04-02.
+
 Problem description:
 
 - Multi-node updates repeatedly use `findIndex` and mutate `doc.nodes[idx]` in place.
@@ -273,6 +293,8 @@ Acceptance:
 ---
 
 ## P1-3 XYFlow Sync Has O(n^2) Merge and Viewport Control Drift
+
+Status: completed on 2026-04-02.
 
 Problem description:
 
@@ -300,6 +322,13 @@ Acceptance:
 
 ## P1-4 Import Namespace Errors Are Silently Swallowed
 
+Status: not completed.
+
+Current note:
+
+- Nearby hook-safety issues in `flux-react` were fixed during repository verification.
+- The specific observability improvement described here was not implemented in this execution pass.
+
 Problem description:
 
 - Namespace import setup failures are caught and ignored.
@@ -323,6 +352,8 @@ Acceptance:
 ---
 
 ## P1-5 Remove Permission Fields From Schemas and Test Fixtures
+
+Status: completed on 2026-04-02.
 
 Problem description:
 
@@ -349,6 +380,8 @@ Acceptance:
 
 ## P2-1 Playground History Snapshots Can Capture Stale Sibling State
 
+Status: completed on 2026-04-02.
+
 Problem description:
 
 - History writes in node and edge handlers reference closure-captured sibling state.
@@ -371,6 +404,8 @@ Acceptance:
 ---
 
 ## P2-2 Spreadsheet Auto-Fit Commands Are Placeholder Implementations
+
+Status: completed on 2026-04-02.
 
 Problem description:
 
@@ -395,6 +430,8 @@ Acceptance:
 
 ## P2-3 Scope Proxy Key Cache Can Become Stale
 
+Status: completed on 2026-04-02.
+
 Problem description:
 
 - Adaptor scope proxy caches `ownKeys` once and does not invalidate when scope changes.
@@ -416,6 +453,13 @@ Acceptance:
 ---
 
 ## P2-4 Source Artifact Governance Drift (TS/JS Coexistence in src)
+
+Status: partially completed on 2026-04-02.
+
+Current note:
+
+- The guard script and repository verification path are now in place, and the final workspace validation passed with `verify-no-src-artifacts` clean.
+- The broader long-term policy clarification described here is still open as a governance follow-up, not a code blocker for this execution pass.
 
 Problem description:
 
@@ -504,15 +548,21 @@ Phase C (Week 3): Completeness and engineering governance
 
 ## Verification Checklist
 
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] Targeted package tests for each fixed module
-- [ ] Add/refresh regression tests for all P0 and P1 defects
-- [ ] Documentation updated for behavior changes
-- [ ] Source scan shows zero `new Function`/`eval` in `packages/**/src` and `apps/**/src`
-- [ ] Flow Designer no longer interprets permission semantics at runtime
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] Targeted package tests for each fixed module
+- [x] Add/refresh regression tests for all completed P0 and P1 defects in this plan scope
+- [x] Documentation updated for behavior changes
+- [x] Source scan shows zero `new Function`/`eval` in `packages/**/src` and `apps/**/src`
+- [x] Flow Designer no longer interprets permission semantics at runtime
+
+Open follow-up items retained from this plan:
+
+- P1-4 import namespace failure observability
+- Full closure/validation of optional `ignore-new` dedup behavior from P0-5
+- Governance clarification portion of P2-4
 
 ---
 

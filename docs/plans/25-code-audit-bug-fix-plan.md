@@ -251,15 +251,20 @@ Week 3 — Performance
 
 After all fixes:
 
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm build` passes (no TS5055)
-- [ ] `pnpm lint` passes
-- [ ] `pnpm test` passes
-- [ ] `pnpm check:src-artifacts` passes
-- [ ] `pnpm --filter @nop-chaos/flow-designer-core test` covers `allowMultiEdge` both true/false
-- [ ] `pnpm --filter @nop-chaos/report-designer-core test` covers import/export success + error
-- [ ] `pnpm --filter @nop-chaos/flux-formula test` passes (boundary + allocation fixes)
-- [ ] Same `ApiObject` under `data-source` and `ajax` paths produces identical results
+- [x] `pnpm typecheck` passes
+- [x] `pnpm build` passes (no TS5055)
+- [x] `pnpm lint` passes
+- [x] `pnpm test` passes
+- [x] `pnpm check:src-artifacts` passes
+- [x] `pnpm --filter @nop-chaos/flow-designer-core test` covers `allowMultiEdge` both true/false
+- [x] `pnpm --filter @nop-chaos/report-designer-core test` covers import/export success + error
+- [x] `pnpm --filter @nop-chaos/flux-formula test` passes (boundary + allocation fixes)
+- [x] Same `ApiObject` under `data-source` and `ajax` paths produces identical results
+
+Closure note:
+
+- This plan is complete as of 2026-04-02.
+- Deferred items in Phase 5 remain intentionally out of scope for plan #25 and should not block closure.
 
 ---
 
