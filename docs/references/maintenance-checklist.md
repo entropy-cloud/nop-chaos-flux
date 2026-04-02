@@ -199,6 +199,7 @@ Review:
 
 - `docs/architecture/theme-compatibility.md`
 - `docs/architecture/styling-system.md`
+- `docs/architecture/renderer-markers-and-selectors.md` when marker classes, `data-slot`, or `data-*` / `aria-*` selector contracts change
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/flow-designer/design.md` when Flow Designer host-shell expectations change
 - `docs/architecture/playground-experience.md` when playground-specific styling ownership changes
@@ -215,6 +216,7 @@ Examples:
 Review:
 
 - `docs/architecture/styling-system.md`
+- `docs/architecture/renderer-markers-and-selectors.md` when changing root markers, `data-slot`, or state selector conventions
 - `docs/architecture/theme-compatibility.md`
 - `packages/flux-renderers-basic/src/index.tsx` implementation reference
 

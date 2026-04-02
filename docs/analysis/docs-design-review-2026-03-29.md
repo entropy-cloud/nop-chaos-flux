@@ -116,7 +116,7 @@ data-field-dirty={fieldState.dirty || undefined}
 data-field-invalid={showError || undefined}
 ```
 
-这与 `bem-removal.md` 的规定完全一致，但 `field-frame.md` 还在描述已废弃的 BEM 方案。
+这与 `renderer-markers-and-selectors.md` 的规定完全一致，但 `field-frame.md` 还在描述已废弃的 BEM 方案。
 
 **修复方案**: 重写 `field-frame.md`，更新 Code Anchors、Component API、Render Structure 和 CSS Class Mapping 表，对齐到 `packages/flux-react/src/field-frame.tsx` 的实际实现。
 
@@ -154,16 +154,16 @@ __NOP_DEBUGGER_API__?: NopDebuggerAutomationApi;  // types.ts Window 接口
 
 **修复方案**: 将 `framework-debugger-design.md` 中所有 `__NOP_FLUX_DEBUGGER_*` 统一为 `__NOP_DEBUGGER_*`。
 
-### 3.3 `field-frame.md` 与 `bem-removal.md` 直接矛盾
+### 3.3 `field-frame.md` 与 `renderer-markers-and-selectors.md` 直接矛盾
 
 `docs/architecture/field-frame.md` 的 CSS Class Mapping 表 (L198-211) 将 BEM 状态类列为**当前行为**:
 ```
 nop-field--invalid, nop-field--touched, nop-field--dirty
 ```
 
-但 `docs/architecture/bem-removal.md` (L177-223) 明确规定这些 BEM 状态类**必须删除**，替换为 `data-field-*` 属性。
+但 `docs/architecture/renderer-markers-and-selectors.md` 明确规定这些 BEM 状态类**必须删除**，替换为 `data-field-*` 属性。
 
-实际代码已经采用了 `bem-removal.md` 的方案（`data-field-*` 属性），`field-frame.md` 严重过时。
+实际代码已经采用了 `renderer-markers-and-selectors.md` 的方案（`data-field-*` 属性），`field-frame.md` 严重过时。
 
 ### 3.4 `maintenance-checklist.md` 引用已废弃概念 `stylePresets`
 
@@ -247,7 +247,7 @@ flux-renderers-basic, flux-renderers-form, flux-renderers-data
 |------|------|
 | `flux-core.md`、`renderer-runtime.md`、`form-validation.md` | 英文 |
 | `flow-designer/design.md`、`flow-designer/collaboration.md` | 中文 |
-| `bem-removal.md` | 中文 |
+| `renderer-markers-and-selectors.md` | 中文 |
 | `styling-system.md`、`theme-compatibility.md` | 英文 |
 | `component-resolution.md` | 中文 |
 | `field-frame.md` | 英文 |

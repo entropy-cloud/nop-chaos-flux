@@ -13,7 +13,7 @@
 - The Vitest config uses workspace aliases (`vite.workspace-alias.ts`) that resolve `@nop-chaos/flux-runtime` to `packages/flux-runtime/src/index.ts`, which then imports `./scope` via relative path
 - Checked for stale artifacts: `ls packages/flux-runtime/src/scope.js` — **found it**. A compiled `scope.js` existed alongside the source `scope.ts`
 - Vite/Vitest resolves `./scope` by finding `scope.js` before `scope.ts`, so the old compiled code ran instead of the modified source
-- Found **102 stale `.js`/`.d.ts`/`.js.map` files** in `packages/flux-runtime/src/` alone, and 162 total across all packages (excluding `packages/ui/src/` which intentionally contains `.js` source files)
+- Found **102 stale `.js`/`.d.ts`/`.js.map` files** in `packages/flux-runtime/src/` alone, and 162 total across all packages under `packages/*/src/`
 
 ## Root Cause
 
@@ -38,7 +38,7 @@ Two independent issues:
 
 ### Stale artifacts cleanup
 
-- Deleted all `.js`/`.d.ts`/`.js.map` files from `packages/*/src/` (except `packages/ui/src/`)
+- Deleted all `.js`/`.d.ts`/`.js.map` files from `packages/*/src/`
 - This is the same issue described in AGENTS.md: "NEVER emit .js, .d.ts, or .js.map files into packages/*/src/ directories"
 
 ## Tests
@@ -59,6 +59,6 @@ Two independent issues:
 ## Notes For Future Refactors
 
 1. **Always verify stale artifacts after build config changes.** If `tsconfig.build.json` has incorrect `outDir`, `.js` files leak into `src/` and silently shadow source during tests. The `.gitignore` excludes them but they persist on disk.
-2. **After any source change that doesn't seem to take effect in tests, check for `.js` files in `src/`.** Run `find packages/*/src -name "*.js" -not -path "*/ui/src/*"` to audit.
+2. **After any source change that doesn't seem to take effect in tests, check for generated files in `src/`.** Run `find packages/*/src \( -name "*.js" -o -name "*.d.ts" -o -name "*.js.map" \)` to audit.
 3. **Dialog scope parent reactivity** depends on the composite store pattern. If `ScopeRef.store` subscription semantics change, verify that child scopes with parents still receive parent store notifications.
 4. **`scope.get()` vs `useScopeSelector`** — `scope.get()` does not subscribe and will not trigger re-renders. Any component that needs reactive scope data in render must use `useScopeSelector`.

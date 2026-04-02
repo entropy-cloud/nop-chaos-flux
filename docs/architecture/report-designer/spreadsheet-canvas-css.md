@@ -60,7 +60,7 @@ Spreadsheet canvas 内部采用三层混合方案：
 
 ### 2.3 交互状态：data-* 属性
 
-遵循项目 `docs/architecture/bem-removal.md` 的规范：**交互状态用 `data-*` 属性，不用 class 修饰符**。这与 shadcn/ui 的 `data-state`、flux renderer 的 `data-field-*` 模式保持一致。
+遵循项目 `docs/architecture/renderer-markers-and-selectors.md` 的规范：**交互状态用 `data-*` 属性，不用 class 修饰符**。这与 shadcn/ui 的 `data-state`、flux renderer 的 `data-field-*` 模式保持一致。
 
 | 状态 | data-* 属性 | 触发时机 |
 |---|---|---|

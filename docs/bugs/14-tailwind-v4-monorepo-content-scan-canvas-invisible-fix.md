@@ -85,7 +85,7 @@
 
 ### 补充修复：添加 Layer 2 语义标记
 
-之前的 `fd-` 前缀类名（如 `fd-page__canvas`、`fd-palette__item`）在迁移中被删除，但没有替换为 `nop-` 前缀的语义标记。按照 `docs/architecture/bem-removal.md` 的规范补全：
+之前的 `fd-` 前缀类名（如 `fd-page__canvas`、`fd-palette__item`）在调整过程中被删除，但没有替换为 `nop-` 前缀的语义标记。按照 `docs/architecture/renderer-markers-and-selectors.md` 的规范补全：
 
 | 标记 | 组件 | 含义 |
 |---|---|---|
@@ -119,7 +119,7 @@
 - `packages/flow-designer-renderers/src/designer-inspector.tsx` — 添加 `nop-inspector`
 - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowNode.tsx` — 添加 `nop-designer-node`、`nop-designer-node-toolbar`
 - `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx` — 添加 `nop-designer-edge__label`、`nop-designer-edge__actions`
-- `docs/architecture/bem-removal.md` — 添加 flow designer 语义标记清单
+- `docs/architecture/renderer-markers-and-selectors.md` — 添加 flow designer 语义标记清单
 - `tests/e2e/tailwind-css-scan.spec.ts` — 修复测试逻辑
 - `tests/e2e/flow-designer-ui.spec.ts` — 全面更新选择器和标签
 - `tests/e2e/flow-designer-css-diag.spec.ts` — 更新选择器

@@ -956,6 +956,6 @@ condition-builder.op.not_equal = "不等于"
 - `docs/architecture/renderer-runtime.md` — renderer component contract
 - `docs/architecture/form-validation.md` — validation integration
 - `docs/architecture/styling-system.md` — styling conventions
-- `docs/architecture/bem-removal.md` — marker class and data-slot patterns
+- `docs/architecture/renderer-markers-and-selectors.md` — marker class and data-slot patterns
 - `docs/references/flux-json-conventions.md` — JSON schema conventions
 - `docs/architecture/api-data-source.md` — remote data loading patterns

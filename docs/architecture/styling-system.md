@@ -8,6 +8,12 @@ This document defines how the low-code framework handles styling in a TailwindCS
 - `classAliases` mechanism for reusable class definitions
 - shadcn/ui component library integration
 
+This is the umbrella styling architecture document.
+
+- Use this file for renderer styling contracts, semantic props, class aliasing, spacing rules, and shadcn/ui integration.
+- Use `docs/architecture/renderer-markers-and-selectors.md` for the focused DOM marker protocol: which root `nop-*` markers stay, when `data-slot` replaces renderer-internal regions, and when state must move to `data-*` / `aria-*`.
+- If the two ever appear to disagree, this file defines the higher-level styling architecture and `renderer-markers-and-selectors.md` must be aligned to it.
+
 ## UI Component Library: shadcn/ui
 
 ### Why shadcn/ui
@@ -26,6 +32,8 @@ The framework uses shadcn/ui components (from `@nop-chaos/ui`) as the UI compone
 4. **Accessibility Built-in**: radix-ui primitives provide ARIA support, keyboard navigation, focus management out of the box.
 
 5. **Variant System**: `class-variance-authority` (cva) provides clean variant/size APIs that map naturally to schema props.
+
+For the detailed DOM marker contract around `role`, `data-slot`, root `nop-*` markers, and state attributes, see `docs/architecture/renderer-markers-and-selectors.md`.
 
 ### Architecture Integration
 
@@ -365,7 +373,7 @@ Every renderer (container, flex, text, icon, etc.) must follow a strict separati
 
 ### Marker Class Naming
 
-Renderer marker classes use the `nop-` prefix and follow BEM-inspired naming:
+Renderer marker classes use the `nop-` prefix for root-level semantic markers only:
 
 | Renderer | Marker class | Purpose |
 |----------|-------------|---------|
@@ -374,7 +382,16 @@ Renderer marker classes use the `nop-` prefix and follow BEM-inspired naming:
 | Text | (none) | Inline element, no wrapper needed |
 | Button | (handled by shadcn/ui) | `data-slot="button"` via shadcn |
 
-Marker classes must NOT carry any visual styles. They exist solely for CSS selectors and debugging.
+Marker classes must NOT carry any visual styles. They exist solely for CSS selectors, debugging, host integration, and test anchoring.
+
+Rules:
+
+- Keep root semantic markers such as `nop-container`, `nop-page`, `nop-table`, `nop-field`.
+- Do not introduce new BEM-style internal region classes such as `nop-page__header` or `nop-table__pagination`.
+- Express internal renderer regions with `data-slot`.
+- Express renderer state with `data-*` or `aria-*`, not with `--modifier` classes.
+
+This rule is about semantic boundary clarity, not raw DOM performance. Replacing a class with a `data-*` attribute is not treated as a hot-path optimization by itself.
 
 ### Exception: Semantic Props Are Explicit
 

@@ -116,7 +116,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 |------|-----------|-----------|-----|
 | Modify any renderer component (JSX, props, hooks) | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` | Renderer contracts, hooks, fragment rendering |
 | Add or change a renderer's styling, className, or layout | `docs/architecture/styling-system.md` | `docs/architecture/theme-compatibility.md` | Renderer styling contract, classAliases, spacing conventions, marker class rules |
-| Change CSS, Tailwind utilities, or design tokens | `docs/architecture/styling-system.md` → "Renderer Styling Contract" section | `docs/architecture/bem-removal.md` | No implicit layout in renderers; use marker classes + schema-driven styles |
+| Change CSS, Tailwind utilities, or design tokens | `docs/architecture/styling-system.md` → "Renderer Styling Contract" section | `docs/architecture/renderer-markers-and-selectors.md` | No implicit layout in renderers; use marker classes + schema-driven styles |
 | Add a new Tailwind utility or global CSS rule | `docs/architecture/styling-system.md` | `packages/tailwind-preset/src/styles/base.css` | Spacing conventions, stack/hstack alias patterns |
 | Work on Flow Designer canvas, nodes, edges, or interactions | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md` | Layered architecture, host-bridge adapter contract |
 | Change Flow Designer visual style (node cards, icons, badges) | `docs/architecture/styling-system.md` → "Spacing Conventions" section | `docs/analysis/flow-designer-style-parity-research.md` | Context-based spacing guide, parity audit |
@@ -142,7 +142,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 | `packages/flux-react/src/` | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md` |
 | `packages/flux-renderers-*/src/` | `docs/architecture/styling-system.md`, `docs/architecture/renderer-runtime.md` |
 | `packages/tailwind-preset/src/` | `docs/architecture/styling-system.md` → "Renderer Styling Contract" and "Spacing Conventions" |
-| `packages/ui/src/` | `docs/plans/18-shadcn-ui-migration-plan.md`, `docs/architecture/bem-removal.md` |
+| `packages/ui/src/` | `docs/plans/18-shadcn-ui-migration-plan.md`, `docs/architecture/renderer-markers-and-selectors.md` |
 | `packages/flow-designer-*/src/` | `docs/architecture/flow-designer/` (start with `design.md`) |
 | `packages/spreadsheet-*/src/` or `packages/report-designer-*/src/` | `docs/architecture/report-designer/` (start with `design.md`) |
 | `apps/playground/src/` | `docs/architecture/playground-experience.md` |
@@ -155,7 +155,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 |-----------|---------|-----|
 | Renderer Styling Contract | Renderers only emit marker classes (`nop-*`). No implicit gap/direction/padding. | `docs/architecture/styling-system.md` |
 | Spacing Conventions | Context-based spacing via `stack-*`/`hstack-*` aliases, always explicit at usage site. | `docs/architecture/styling-system.md` |
-| No BEM | Use shadcn `data-slot`, flux semantic markers, and Tailwind visual classes. | `docs/architecture/bem-removal.md` |
+| No BEM | Use shadcn `data-slot`, flux semantic markers, and Tailwind visual classes. | `docs/architecture/renderer-markers-and-selectors.md` |
 | Theme Independence | No React ThemeProvider; CSS variables and stable class names for host integration. | `docs/architecture/theme-compatibility.md` |
 | Tailwind v4 monorepo | `@source "../../../packages"` in `styles.css` to scan workspace packages. | `docs/bugs/14-*.md` |
 

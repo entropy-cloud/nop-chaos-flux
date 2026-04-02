@@ -230,7 +230,7 @@ function RadioGroupRenderer(props) {
 | `data-field-dirty` | Set when field value has changed |
 | `data-field-invalid` | Set when field has a visible validation error |
 
-These data attributes follow the convention documented in `docs/architecture/bem-removal.md` — state is communicated via data attributes rather than BEM modifier classes.
+These data attributes follow the convention documented in `docs/architecture/renderer-markers-and-selectors.md` — state is communicated via data attributes rather than BEM modifier classes.
 
 ## Comparison with AMIS FormItem
 
@@ -261,4 +261,4 @@ These data attributes follow the convention documented in `docs/architecture/bem
 - `docs/architecture/field-metadata-slot-modeling.md` - field semantics model
 - `docs/architecture/form-validation.md` - validation behavior
 - `docs/architecture/renderer-runtime.md` - renderer component contracts
-- `docs/architecture/bem-removal.md` - data attribute convention
+- `docs/architecture/renderer-markers-and-selectors.md` - data attribute convention
