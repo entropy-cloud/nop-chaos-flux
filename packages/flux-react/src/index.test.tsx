@@ -814,6 +814,48 @@ describe('createSchemaRenderer', () => {
     cleanup();
   });
 
+  it('warns in development when imported namespace setup fails during render', async () => {
+    const importLoader = {
+      load: vi.fn(async () => {
+        throw new Error('broken during render');
+      })
+    };
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const SchemaRenderer = createSchemaRenderer([buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'button',
+          label: 'Broken import button',
+          'xui:imports': [{ from: 'broken-lib', as: 'broken' }],
+          onClick: {
+            action: 'broken:open'
+          }
+        }}
+        env={{
+          ...env,
+          importLoader
+        }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[flux-react] Failed to ensure imported namespaces',
+        expect.objectContaining({
+          nodeId: '_',
+          path: '$',
+          imports: [{ from: 'broken-lib', as: 'broken' }],
+          error: expect.any(Error)
+        })
+      );
+    });
+
+    warnSpy.mockRestore();
+  });
+
   it('supports useScopeSelector with parent scopes that do not expose a store', () => {
     const SchemaRenderer = createSchemaRenderer([selectorRenderer]);
     const { rerender } = render(
