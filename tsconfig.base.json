@@ -17,7 +17,9 @@
     "declaration": true,
     "sourceMap": true,
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
+      "@hufe921/canvas-editor": ["types/hufe921__canvas-editor.d.ts"],
       "@nop-chaos/flux-core": ["packages/flux-core/src/index.ts"],
       "@nop-chaos/flux-formula": ["packages/flux-formula/src/index.ts"],
       "@nop-chaos/nop-debugger": ["packages/nop-debugger/src/index.tsx"],

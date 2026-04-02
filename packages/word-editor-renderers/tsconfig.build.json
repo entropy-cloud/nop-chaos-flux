@@ -2,7 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": "src",
-    "paths": {},
+    "paths": {
+      "@hufe921/canvas-editor": ["../../types/hufe921__canvas-editor.d.ts"]
+    },
     "noEmit": false,
     "sourceMap": false,
     "outDir": "dist"
