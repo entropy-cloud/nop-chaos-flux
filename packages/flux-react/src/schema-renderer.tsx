@@ -1,6 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import type {
-  ComponentHandleRegistry,
   RendererDefinition,
   SchemaRendererProps
 } from '@nop-chaos/flux-core';
@@ -16,16 +15,12 @@ import {
 import { RenderNodes, EMPTY_SCOPE_DATA } from './helpers';
 import { DialogHost } from './dialog-host';
 
-let lastRootComponentRegistry: ComponentHandleRegistry | undefined;
-
-export function getSchemaRendererRegistry(): ComponentHandleRegistry | undefined {
-  return lastRootComponentRegistry;
-}
-
 export function createSchemaRenderer(registryDefinitions: RendererDefinition[] = []) {
   const registry = createRendererRegistry(registryDefinitions);
 
   return function SchemaRenderer(props: SchemaRendererProps) {
+    const onComponentRegistryChange = props.onComponentRegistryChange;
+
     const runtime = useMemo(() => {
       const resolvedRegistry = props.registry ?? registry;
       const expressionCompiler = createExpressionCompiler(props.formulaCompiler ?? createFormulaCompiler());
@@ -41,11 +36,14 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [props.env, props.formulaCompiler, props.plugins, props.registry, props.pageStore, props.onActionError]);
 
     const pageData = props.data ?? EMPTY_SCOPE_DATA;
-    const page = useMemo(() => runtime.createPageRuntime(), [runtime]);
+    const initialPageDataRef = useRef(pageData);
+    const page = useMemo(() => runtime.createPageRuntime(initialPageDataRef.current), [runtime]);
 
-    if (page.store.getState().data !== pageData) {
-      page.store.setData(pageData);
-    }
+    useEffect(() => {
+      if (page.store.getState().data !== pageData) {
+        page.store.setData(pageData);
+      }
+    }, [page, pageData]);
 
     const rootScope = props.parentScope ?? page.scope;
     const rootActionScope = useMemo(
@@ -57,7 +55,13 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       [props.componentRegistry, runtime]
     );
 
-    lastRootComponentRegistry = rootComponentRegistry;
+    useEffect(() => {
+      onComponentRegistryChange?.(rootComponentRegistry);
+
+      return () => {
+        onComponentRegistryChange?.(null);
+      };
+    }, [onComponentRegistryChange, rootComponentRegistry]);
 
     return (
       <RuntimeContext.Provider value={runtime}>

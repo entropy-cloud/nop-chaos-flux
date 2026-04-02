@@ -22,7 +22,6 @@ vi.mock('@nop-chaos/flux-renderers-data', () => ({
 
 vi.mock('@nop-chaos/flux-react', () => ({
   createDefaultRegistry: () => ({ register: () => undefined }),
-  getSchemaRendererRegistry: () => undefined,
   createSchemaRenderer: () => {
     return function MockSchemaRenderer(props: { env: any; data?: Record<string, unknown> }) {
       rendererSnapshots.push({ env: props.env, data: props.data });
