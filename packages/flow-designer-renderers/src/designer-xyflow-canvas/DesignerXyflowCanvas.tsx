@@ -118,9 +118,11 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
         return snapshotNodes;
       }
 
+      const currentNodeMap = new Map(currentNodes.map((node) => [node.id, node]));
+
       const lastCommitted = lastCommittedPositionsRef.current;
       const mergedNodes = snapshotNodes.map((snapshotNode) => {
-        const localNode = currentNodes.find((n) => n.id === snapshotNode.id);
+        const localNode = currentNodeMap.get(snapshotNode.id);
         if (!localNode) {
           return snapshotNode;
         }
@@ -264,7 +266,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
             nodeTypes={xyflowNodeTypes}
             edgeTypes={xyflowEdgeTypes}
             onInit={(instance) => setReactFlowInstance(instance)}
-            defaultViewport={controlledViewport}
+          viewport={controlledViewport}
             fitView
             nodesConnectable
             elementsSelectable

@@ -214,10 +214,6 @@
           "maxInstances": 1,
           "allowIncoming": false
         },
-        "permissions": {
-          "canDelete": false,
-          "canDuplicate": false
-        },
         "inspector": {
           "body": {
             "type": "form",

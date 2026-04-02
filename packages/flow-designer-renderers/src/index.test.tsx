@@ -76,7 +76,6 @@ describe('createDesignerActionProvider', () => {
         rules: { allowSelfLoop: false, allowMultiEdge: true },
         edgeTypes: new Map(),
         features: {},
-        permissions: {},
         canvas: {}
       }),
       addNode: (type: string, position: { x: number; y: number }, data?: Record<string, unknown>) => ({ id: 'n1', type, position, data }),
@@ -142,7 +141,6 @@ describe('createDesignerActionProvider', () => {
         rules: { allowSelfLoop: false, allowMultiEdge: true },
         edgeTypes: new Map(),
         features: {},
-        permissions: {},
         canvas: {}
       }),
       addEdge: () => null
@@ -181,7 +179,6 @@ describe('createDesignerActionProvider', () => {
         rules: { allowSelfLoop: false, allowMultiEdge: true },
         edgeTypes: new Map(),
         features: {},
-        permissions: {},
         canvas: {}
       }),
       setViewport: (nextViewport: { x: number; y: number; zoom: number }) => {
@@ -231,7 +228,6 @@ describe('createDesignerActionProvider', () => {
         rules: { allowSelfLoop: false, allowMultiEdge: true },
         edgeTypes: new Map(),
         features: {},
-        permissions: {},
         canvas: {}
       }),
       moveNode: (nodeId: string, nextPosition: { x: number; y: number }) => {
@@ -295,5 +291,19 @@ describe('DesignerPageRenderer basic rendering', () => {
     const canvas = within(view.container);
     expect(canvas.getByRole('application')).toBeTruthy();
     expect(view.container.querySelectorAll('.react-flow__node')).toHaveLength(2);
+  });
+
+  it('renders a fallback when document or config is missing', () => {
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...flowDesignerRendererDefinitions]);
+
+    const view = render(
+      <SchemaRenderer
+        schema={{ type: 'designer-page' } as any}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(view.getByText('Designer requires document and config props')).toBeTruthy();
   });
 });

@@ -51,28 +51,18 @@ function matchesShortcut(event: KeyboardEvent, shortcuts: string[] | undefined):
 
 export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {
   const rawSchemaProps = props.schema as Record<string, SchemaValue>;
-  const document = rawSchemaProps.document as unknown as GraphDocument;
-  const config = rawSchemaProps.config as unknown as DesignerConfig;
+  const document = rawSchemaProps.document as GraphDocument | undefined;
+  const config = rawSchemaProps.config as DesignerConfig | undefined;
 
-  const core = useMemo(() => {
-    if (!document || !config) return null;
-    return createDesignerCore(document, config);
-  }, [document, config]);
+  if (!document || !config) {
+    return <div>Designer requires document and config props</div>;
+  }
 
-  const snapshot = useDesignerSnapshot(core!);
-  const env = useRendererEnv();
-  const commandAdapter = useMemo(() => (core ? createDesignerCommandAdapter(core) : null), [core]);
-  const dispatch = useCallback(
-    (command: import('./designer-command-adapter').DesignerCommand) => {
-      const result = commandAdapter!.execute(command);
-      notifyCommandFailure(env.notify, result.error, result.reason);
-      return result;
-    },
-    [commandAdapter, env]
-  );
+  return DesignerPageRendererInner(props, document, config);
+}
 
+function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPageSchema>, core: ReturnType<typeof createDesignerCore>, snapshot: ReturnType<typeof useDesignerSnapshot>, commandAdapter: ReturnType<typeof createDesignerCommandAdapter>, dispatch: (command: import('./designer-command-adapter').DesignerCommand) => ReturnType<typeof commandAdapter.execute>, config: DesignerConfig) {
   const handleAutoLayout = useCallback(async () => {
-    if (!core) return;
     const doc = core.getDocument();
     if (doc.nodes.length === 0) return;
 
@@ -81,11 +71,11 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   }, [core]);
 
   const ctxValue = useMemo<DesignerContextValue>(
-    () => ({ core: core!, commandAdapter: commandAdapter!, dispatch, snapshot, config }),
+    () => ({ core, commandAdapter, dispatch, snapshot, config }),
     [commandAdapter, core, dispatch, snapshot, config]
   );
   const actionScope = useCurrentActionScope();
-  const designerProvider = useMemo(() => (core ? createDesignerActionProvider(core) : undefined), [core]);
+  const designerProvider = useMemo(() => createDesignerActionProvider(core), [core]);
   const upstreamBackHandler = useMemo(() => actionScope?.resolve('designer:navigate-back'), [actionScope]);
   const mergedDesignerProvider = useMemo<ActionNamespaceProvider | undefined>(() => {
     if (!designerProvider) {
@@ -115,11 +105,11 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
       }
     };
   }, [designerProvider, upstreamBackHandler]);
-  const designerScope = useDesignerHostScope({ snapshot, config, core: core!, path: props.path });
+  const designerScope = useDesignerHostScope({ snapshot, config, core, path: props.path });
   const [jsonOpen, setJsonOpen] = React.useState(false);
   const jsonOffsetRef = useRef({ x: 0, y: 0 });
   const jsonDocument = useMemo(() => {
-    if (!core || !jsonOpen) return null;
+    if (!jsonOpen) return null;
     try { return JSON.parse(core.exportDocument()); }
     catch { return null; }
   }, [core, jsonOpen, snapshot.doc]);
@@ -133,9 +123,6 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   }, [actionScope, mergedDesignerProvider]);
 
   useEffect(() => {
-    if (!core) {
-      return;
-    }
     if (!core.getConfig().features.shortcuts) {
       return;
     }
@@ -195,10 +182,6 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   const inspectorSlot = props.regions.inspector?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).inspector as React.ReactNode);
   const dialogsSlot = props.regions.dialogs?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).dialogs as React.ReactNode);
 
-  if (!core) {
-    return <div>Designer requires document and config props</div>;
-  }
-
   return (
     <DesignerContext.Provider value={ctxValue}>
       {config.themeStyles && <style>{config.themeStyles}</style>}
@@ -237,6 +220,23 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
       </Dialog>
     </DesignerContext.Provider>
   );
+}
+
+function DesignerPageRendererInner(props: RendererComponentProps<DesignerPageSchema>, document: GraphDocument, config: DesignerConfig) {
+  const env = useRendererEnv();
+  const core = useMemo(() => createDesignerCore(document, config), [document, config]);
+  const snapshot = useDesignerSnapshot(core);
+  const commandAdapter = useMemo(() => createDesignerCommandAdapter(core), [core]);
+  const dispatch = useCallback(
+    (command: import('./designer-command-adapter').DesignerCommand) => {
+      const result = commandAdapter.execute(command);
+      notifyCommandFailure(env.notify, result.error, result.reason);
+      return result;
+    },
+    [commandAdapter, env]
+  );
+
+  return DesignerPageRendererInnerBody(props, core, snapshot, commandAdapter, dispatch, config);
 }
 
 export function DesignerCanvasRenderer() {
