@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { Pause, Play, Trash2, Crosshair, Minimize2, Maximize2, Bug } from 'lucide-react';
+import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
 import type { NopComponentInspectResult, NopDebugEvent, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
 import { buildOverview, DEFAULT_FILTERS } from './diagnostics';
 
@@ -1137,7 +1137,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const snapshot = useDebuggerSnapshot(props.controller);
   const onTapRef = useRef<(() => void) | undefined>(undefined);
   onTapRef.current = snapshot.minimized ? () => props.controller.unminimize() : undefined;
-  const { position, bind: dragBind, consumeClick } = useDraggablePosition(props.controller, snapshot.position, () => onTapRef.current?.());
+  const { position, bind: dragBind } = useDraggablePosition(props.controller, snapshot.position, () => onTapRef.current?.());
   const { width: panelWidth, bind: resizeBind } = useResizablePanel();
   const { position: launcherPosition, bind: launcherBind, wasDraggedRef, consumeSuppressedClick } = useLauncherDrag(props.controller, snapshot.position);
   useInjectDebuggerStyles(snapshot.enabled);
@@ -1275,16 +1275,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
   const handleEvalExpression = () => {
     if (!evalInput.trim()) return;
-    try {
-      const data = inspectData?.scopeData ?? inspectData?.formState?.values ?? {};
-      const keys = Object.keys(data);
-      const values = Object.values(data);
-      const fn = new Function(...keys, `return (${evalInput});`);
-      const result = fn(...values);
-      setEvalResult(typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result));
-    } catch (err) {
-      setEvalResult(`Error: ${err instanceof Error ? err.message : String(err)}`);
-    }
+    setEvalResult('Expression evaluation is disabled. Inspect scope data directly instead.');
   };
 
   useEffect(() => {
@@ -1828,7 +1819,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
               <input
                 type="text"
                 className="ndbg-eval-input"
-                placeholder="Evaluate expression on component data..."
+                placeholder="Evaluate formula expression on component data..."
                 value={evalInput}
                 onChange={(e) => setEvalInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleEvalExpression(); }}

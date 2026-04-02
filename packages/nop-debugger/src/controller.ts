@@ -95,6 +95,7 @@ function buildInspectResult(
       };
       result.scopeData = state.values ?? {};
     } catch {
+      void 0;
     }
   }
 
