@@ -84,7 +84,6 @@ interface DesignerConfig {
   palette?: PaletteConfig
   features?: DesignerFeatures
   rules?: DesignerRules
-  permissions?: DesignerPermissions
   canvas?: CanvasConfig
   presets?: string[]
 }
@@ -129,7 +128,6 @@ interface NodeTypeConfig {
   ports?: PortConfig[]
   roles?: NodeRoleConfig
   constraints?: NodeConstraintConfig
-  permissions?: NodePermissionConfig
   defaults?: Record<string, unknown>
   inspector?: {
     mode?: 'panel' | 'drawer' | 'dialog'
@@ -371,31 +369,18 @@ interface NodeConstraintConfig {
 }
 ```
 
-## 8. NodePermissionConfig
+## 8. Permission Boundary
 
-```ts
-interface NodePermissionConfig {
-  canCreate?: boolean | string
-  canDelete?: boolean | string
-  canMove?: boolean | string
-  canDuplicate?: boolean | string
-  canEdit?: boolean | string
-  canConnect?: boolean | string
-}
-```
+Flow Designer runtime does not own permission semantics.
 
-值可以是：
+- `designer-page` and `DesignerConfig` should not carry runtime permission evaluation fields.
+- Permission pruning is an upstream platform responsibility.
+- Runtime only executes graph/document constraints (topology, role/port matching, limits, and validation) on already-pruned schema.
 
-- 固定布尔值
-- 表达式字符串，由现有 formula/expression compiler 求值
+See:
 
-表达式约束建议：
-
-- permission 与 rule expressions 在 designer config normalize 阶段完成编译，运行时只做求值
-- 允许访问的 scope 应保持白名单，例如 `doc`、`selection`、`runtime`、`node`、`edge`、`nodeType`、`edgeType`
-- 连接校验场景可额外暴露 `sourceNode`、`targetNode`、`sourcePort`、`targetPort`
-- 不向表达式层暴露可直接改写 graph store 的对象
-- 表达式异常应返回结构化诊断，而不是悄悄吞掉并继续写图
+- `docs/architecture/security-design-requirements.md`
+- `docs/architecture/flow-designer/design.md`
 
 ## 9. EdgeTypeConfig
 
@@ -559,7 +544,7 @@ interface DesignerRules {
 
 - `validateConnection` 是附加校验，不替代 port/node role 匹配
 
-建议它与 `NodePermissionConfig` 共享同一表达式编译缓存与错误报告模型。
+建议 `validateConnection` 的表达式编译与错误报告模型与通用规则表达式保持一致。
 
 ## 12. DesignerFeatures
 
@@ -668,7 +653,7 @@ interface DesignerConfig {
 }
 ```
 
-> **注意**：统一使用 `${xxx}` 表达式，不需要 `xxxOn` 后缀。详见 `docs/references/amis-json-conventions.md`。
+> **注意**：统一使用 `${xxx}` 表达式，不需要 `xxxOn` 后缀。详见 `docs/references/flux-json-conventions.md`。
 
 ### 默认工具栏
 
@@ -838,7 +823,7 @@ const schema = {
 
 ## 16. 通用约定
 
-以下约定参见 `docs/references/amis-json-conventions.md`：
+以下约定参见 `docs/references/flux-json-conventions.md`：
 
 - **表达式语法**：统一使用 `${xxx}`，不需要 `xxxOn` 后缀
 - **Action 语法**：简单 action 直接写 `{ "action": "designer:save" }`

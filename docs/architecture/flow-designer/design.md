@@ -36,7 +36,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
                            v
 +---------------- Flow Designer Core -----------------+
 | graph document | node types | ports | role matcher  |
-| permissions    | history    | selection | layout    |
+| constraints    | history    | selection | layout    |
 | serialization  | validation | graph actions         |
 +-----------------------------------------------------+
 ```
@@ -65,9 +65,14 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - undo/redo 历史
 - 选择态和批量操作模型
 - 布局接口
-- 权限判断
 - 文档序列化、反序列化、迁移
 - designer action 的底层执行器
+
+权限边界：
+
+- Flow Designer runtime 不负责权限表达式求值。
+- 权限裁剪由上游平台在 schema 进入 runtime 前完成。
+- core 仅处理图编辑约束与校验，不处理访问控制语义。
 
 当前 MVP 已实现的重点能力：
 
@@ -486,13 +491,13 @@ Flow Designer 需要统一的事务边界，即使历史底层实现最终同时
 
 - config normalize / validate 错误
 - migration 错误
-- permission / rule expression 错误
+- rule expression 错误
 - graph action 执行错误
 - canvas adapter / renderer 集成错误
 
 测试建议分层：
 
-- `core`：纯文档变换、连接校验、history、migration、permission evaluation、transaction 合并
+- `core`：纯文档变换、连接校验、history、migration、rule evaluation、transaction 合并
 - `renderers`：宿主 scope 注入、`designer:*` action 接线、schema inspector/createDialog 集成、canvas adapter 互操作
 
 ## 15. 与旧示例的关系
