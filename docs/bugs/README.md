@@ -35,3 +35,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/18-tailwind-source-wrong-relative-path-flux-lib-unscanned.md`
 - `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md`
 - `docs/bugs/22-spreadsheet-integration-test-scope-reactive-read-fix.md`
+- `docs/bugs/23-stale-js-artifacts-shadow-source-in-vitest-fix.md`
