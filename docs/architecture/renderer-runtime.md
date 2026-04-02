@@ -56,6 +56,16 @@ Schema compilation should happen once per schema identity, while renders mostly 
 
 Helpers such as `evaluate`, `dispatch`, `render`, and `createScope` should be stable across renders unless ownership truly changes.
 
+## Architecture Guardrails (Bug-Derived)
+
+The following are architecture-level constraints distilled from historical regressions.
+
+- Reactive render paths must subscribe. Components that need reactive scope data in render must use selector/subscription APIs such as `useScopeSelector`, not imperative reads such as `scope.get(...)`.
+- Render phase must stay side-effect free. Renderer paths must not call store writers or state setters during render. If synchronization is needed, buffer and flush in an effect.
+- Scope identity and lifecycle must stay stable. Fragment/dialog render paths should avoid unnecessary scope recreation and must preserve parent-child reactivity when parent scope data changes.
+
+Use `docs/references/architecture-guardrails-from-bugs.md` for concrete anti-patterns, regression examples, and verification checks.
+
 ## Active Internal Shape
 
 The current renderer stack is effectively split into:

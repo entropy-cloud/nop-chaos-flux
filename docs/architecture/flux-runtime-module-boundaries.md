@@ -32,6 +32,16 @@ It should stay limited to:
 
 If new logic is not trivial assembly code, it should move to a focused runtime module.
 
+## Architecture Guardrails (Bug-Derived)
+
+This document remains a placement guide, but the following boundaries are mandatory:
+
+- Mutating async runtime methods must define explicit concurrency behavior (reject, dedupe, or queue) and return consistent cancellation semantics for intentionally skipped operations.
+- Runtime-facing reactive contracts must be subscription-first. Non-reactive reads are allowed for command/event paths, but not as reactive render dependencies.
+- Runtime state transitions should avoid silent race patterns where one in-flight call can clear state for another in-flight call.
+
+Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-guardrail mapping and verification patterns.
+
 ## Current Runtime Ownership
 
 ### Entry and assembly

@@ -130,6 +130,16 @@ Core components:
 
 ## Design Principles
 
+## Architecture Guardrails (Bug-Derived)
+
+These constraints prevent silent styling regressions in monorepo and renderer integration flows:
+
+- Tailwind class generation must be treated as a runtime dependency, not an assumption. In monorepo apps, `@source` coverage and path correctness are required.
+- `@source` and `@config` paths must be validated relative to the CSS file location, especially after directory moves.
+- Semantic marker classes (for testing and host integration) are architecture contracts and should not be removed during visual refactors.
+
+Use `docs/references/architecture-guardrails-from-bugs.md` for practical diagnostics and regression checks.
+
 ### 1. TailwindCSS as the Foundation
 
 All styling ultimately resolves to TailwindCSS classes. The framework does not introduce a parallel styling system.
