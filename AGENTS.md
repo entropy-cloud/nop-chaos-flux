@@ -75,7 +75,6 @@ After completing any significant work, you MUST:
    - Slot/field metadata patterns â†’ `docs/architecture/field-metadata-slot-modeling.md`
    - General architecture â†’ `docs/architecture/flux-core.md`
 
-3. **Update `docs/references/maintenance-checklist.md`** if new doc links are needed.
 
 ### Development Log Format
 
@@ -178,7 +177,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 - Each package's `tsconfig.json` must use `noEmit: true` (for typecheck) or specify `outDir` explicitly (for build).
 - Build output goes to `packages/<name>/dist/` only.
 - Temporary files (coverage, cache, etc.) belong in the package root or `node_modules/.cache/`, never in `src/`.
-- `.gitignore` already excludes `packages/*/src/**/*.js`, `packages/*/src/**/*.d.ts`, `packages/*/src/**/*.js.map` (except `packages/ui/src/` which intentionally contains `.js` source files).
+- `.gitignore` already excludes `packages/*/src/**/*.js`, `packages/*/src/**/*.d.ts`, `packages/*/src/**/*.js.map` 
 - If stray build artifacts appear in `src/`, delete them and investigate the `tsconfig` that caused the leak.
 
 ### Package Structure
