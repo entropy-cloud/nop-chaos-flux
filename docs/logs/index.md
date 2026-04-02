@@ -44,7 +44,7 @@ Each daily log captures short dated notes about:
 ### YYYY-MM-DD
 
 - Brief description of what happened.
-- Link to doc or code path: `docs/architecture/foo.md` or `packages/bar/src/baz.ts:42`
+- Link to doc or code path: `docs/architecture/flux-core.md` or `packages/bar/src/baz.ts:42`
 - Key decision: ...
 - Next step: ...
 ```
@@ -62,6 +62,7 @@ When adding a new log entry for today:
 
 ### 2026-04
 
+- [04-01](2026/04-01.md) — code audit bug fix plan #25 execution and verification
 - [04-02](2026/04-02.md) — data-source redesign: removed body region, scope injection semantics
 
 ### 2026-03
