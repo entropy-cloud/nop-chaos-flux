@@ -64,6 +64,7 @@ export function SpreadsheetGrid({
   onFieldDragLeave,
 }: SpreadsheetGridProps) {
   const frozen: SpreadsheetFrozenPane | undefined = snapshot.activeSheet?.frozen;
+  const selectedRange = getSelectedRange();
 
   return (
     <div className="spreadsheet-grid" data-fill-dragging={fillHandleState.isFilling || undefined}>
@@ -77,7 +78,7 @@ export function SpreadsheetGrid({
                 style={{ width: columnWidths[c] ?? 80 }}
                 className="col-header"
               >
-                {String.fromCharCode(65 + c)}
+                {cellAddress(0, c).replace(/[0-9]/g, '')}
                 <div
                   className="col-resize-handle"
                   onMouseDown={(e) => onColumnResizeStart(c, e)}
@@ -112,7 +113,6 @@ export function SpreadsheetGrid({
                 const isEditing = editingCell?.row === r && editingCell?.col === c;
                 const isDropTarget = dropTargetCell?.row === r && dropTargetCell?.col === c && !!draggingField;
 
-                const selectedRange = getSelectedRange();
                 const isFillHandleCell = selectedRange &&
                   r === selectedRange.endRow &&
                   c === selectedRange.endCol &&
