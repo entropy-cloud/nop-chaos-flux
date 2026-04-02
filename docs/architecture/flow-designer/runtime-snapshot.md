@@ -139,7 +139,7 @@ interface DesignerSnapshot {
 当前实现注意点:
 
 - 只有执行过 `save()` 之后，dirty 语义才真正有参照物
-- 目前底层仍然通过 `JSON.stringify(doc)` 与 `savedDoc` 比较
+- 底层通过 document revision 与 saved revision 比较，不再在热路径上做 `JSON.stringify` 深比较
 
 ### `gridEnabled`
 

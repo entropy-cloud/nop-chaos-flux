@@ -310,4 +310,51 @@ describe('createDesignerCore', () => {
     expect(core.getSnapshot().viewport).toEqual({ x: 15, y: 30, zoom: 1.2 });
     expect(core.getSnapshot().isDirty).toBe(false);
   });
+
+  it('updates multiple nodes immutably in a single pass', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+
+    core.updateMultipleNodes([
+      { nodeId: 'start-1', data: { position: { x: 25, y: 35 } } },
+      { nodeId: 'task-1', data: { data: { label: 'Task Updated' } } }
+    ]);
+
+    const snapshot = core.getSnapshot();
+    expect(snapshot.doc.nodes.find((node) => node.id === 'start-1')?.position).toEqual({ x: 25, y: 35 });
+    expect(snapshot.doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe('Task Updated');
+    expect(snapshot.isDirty).toBe(true);
+  });
+
+  it('moves multiple nodes while preserving non-movable constraints', () => {
+    const core = createDesignerCore(createBasicDocument(), {
+      ...createTestDesignerConfig(),
+      nodeTypes: [
+        {
+          id: 'start',
+          label: 'Start',
+          defaults: { label: 'Start', description: '', config: '{}' },
+          constraints: { allowMove: false }
+        },
+        {
+          id: 'task',
+          label: 'Task',
+          defaults: { label: 'Task', description: '', config: '{}' }
+        },
+        {
+          id: 'end',
+          label: 'End',
+          defaults: { label: 'End', description: '', config: '{}' }
+        }
+      ]
+    });
+
+    core.moveNodes({
+      'start-1': { dx: 10, dy: 10 },
+      'task-1': { dx: 15, dy: 20 }
+    });
+
+    const snapshot = core.getSnapshot();
+    expect(snapshot.doc.nodes.find((node) => node.id === 'start-1')?.position).toEqual({ x: 10, y: 20 });
+    expect(snapshot.doc.nodes.find((node) => node.id === 'task-1')?.position).toEqual({ x: 135, y: 80 });
+  });
 });

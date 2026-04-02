@@ -54,7 +54,6 @@ export interface DesignerConfig {
   shortcuts?: ShortcutsConfig;
   features?: DesignerFeatures;
   rules?: DesignerRules;
-  permissions?: DesignerPermissions;
   canvas?: CanvasConfig;
   hooks?: DesignerLifecycleHooks;
   classAliases?: Record<string, string>;
@@ -71,7 +70,6 @@ export interface NodeTypeConfig {
   appearance?: NodeTypeAppearance;
   roles?: NodeRoleConfig;
   constraints?: NodeConstraintConfig;
-  permissions?: NodePermissionConfig;
   defaults?: Record<string, unknown>;
   inspector?: {
     mode?: 'panel' | 'drawer' | 'dialog';
@@ -130,15 +128,6 @@ export interface NodeConstraintConfig {
   maxOutgoing?: number;
 }
 
-export interface NodePermissionConfig {
-  canCreate?: boolean | string;
-  canDelete?: boolean | string;
-  canMove?: boolean | string;
-  canDuplicate?: boolean | string;
-  canEdit?: boolean | string;
-  canConnect?: boolean | string;
-}
-
 export interface EdgeTypeConfig {
   id: string;
   label?: string;
@@ -179,7 +168,6 @@ export interface DesignerRules {
   allowSelfLoop?: boolean;
   allowMultiEdge?: boolean;
   defaultEdgeType?: string;
-  validateConnection?: string;
 }
 
 export interface DesignerFeatures {
@@ -195,14 +183,6 @@ export interface DesignerFeatures {
   clipboard?: boolean;
   autoLayout?: boolean;
   multiSelect?: boolean;
-}
-
-export interface DesignerPermissions {
-  canAddNode?: boolean | string;
-  canDeleteNode?: boolean | string;
-  canEditNode?: boolean | string;
-  canConnect?: boolean | string;
-  canExport?: boolean | string;
 }
 
 export interface CanvasConfig {
@@ -249,7 +229,6 @@ export interface NormalizedDesignerConfig {
   shortcuts: ShortcutsConfig;
   features: DesignerFeatures;
   rules: DesignerRules;
-  permissions: DesignerPermissions;
   canvas: CanvasConfig;
   hooks?: DesignerLifecycleHooks;
   classAliases?: Record<string, string>;

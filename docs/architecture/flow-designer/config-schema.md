@@ -536,15 +536,14 @@ interface DesignerRules {
   allowSelfLoop?: boolean
   allowMultiEdge?: boolean
   defaultEdgeType?: string
-  validateConnection?: string
 }
 ```
 
 说明：
 
-- `validateConnection` 是附加校验，不替代 port/node role 匹配
-
-建议 `validateConnection` 的表达式编译与错误报告模型与通用规则表达式保持一致。
+- `DesignerRules` 只保留可静态声明的结构化连线约束
+- 节点可连接性应通过 port/node role、schema 预裁剪、以及 host 侧显式命令校验实现
+- 不再支持运行时字符串表达式形式的 `validateConnection`，避免把动态表达式执行引入 designer core
 
 ## 12. DesignerFeatures
 

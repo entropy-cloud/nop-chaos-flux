@@ -7,9 +7,7 @@ import type {
   DesignerSnapshot,
   SelectionSummary,
   DesignerEvent,
-  NodeTypeConfig,
-  NodeConstraintConfig,
-  NodePermissionConfig
+  NodeConstraintConfig
 } from './types';
 
 export interface DesignerCore {
@@ -69,6 +67,7 @@ export interface DesignerCore {
 
 interface HistoryEntry {
   doc: GraphDocument;
+  revision: number;
 }
 
 const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playground example.';
@@ -121,28 +120,6 @@ function cloneDocument(doc: GraphDocument): GraphDocument {
     nodes: doc.nodes.map(cloneNode),
     edges: doc.edges.map(cloneEdge),
   };
-}
-
-function evaluatePermission(value: boolean | string | undefined, context: Record<string, unknown>): boolean {
-  if (value === undefined) return true;
-  if (typeof value === 'boolean') return value;
-  try {
-    const keys = Object.keys(context);
-    const values = Object.values(context);
-    const fn = new Function(...keys, `"use strict"; return (${value});`);
-    return !!fn(...values);
-  } catch {
-    return true;
-  }
-}
-
-function checkNodePermission(
-  nodeType: NodeTypeConfig | undefined,
-  permissionKey: keyof NodePermissionConfig,
-  context: Record<string, unknown>
-): boolean {
-  if (!nodeType?.permissions) return true;
-  return evaluatePermission(nodeType.permissions[permissionKey], context);
 }
 
 function countNodesOfType(doc: GraphDocument, type: string): number {
@@ -237,14 +214,6 @@ function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfig {
       defaultEdgeType: 'default',
       ...config.rules,
     },
-    permissions: {
-      canAddNode: true,
-      canDeleteNode: true,
-      canEditNode: true,
-      canConnect: true,
-      canExport: true,
-      ...config.permissions,
-    },
     canvas: {
       background: 'dots',
       gridSize: 24,
@@ -270,6 +239,8 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   let history: HistoryEntry[] = [];
   let historyIndex = -1;
   let savedDoc: GraphDocument | null = cloneDocument(doc);
+  let docRevision = 0;
+  let savedRevision = 0;
   let clipboard: GraphNode | null = null;
 
   let selectedNodeIds: string[] = [];
@@ -292,11 +263,30 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     normalizedConfig.hooks?.afterCommand?.(event);
   }
 
+  function updateDirtyState() {
+    emit({ type: 'dirtyChanged', isDirty: isDirty() });
+  }
+
+  function setDocument(nextDoc: GraphDocument) {
+    if (nextDoc === doc) {
+      return false;
+    }
+
+    doc = nextDoc;
+    docRevision += 1;
+    return true;
+  }
+
+  function replaceDocument(nextDoc: GraphDocument, revision: number) {
+    doc = nextDoc;
+    docRevision = revision;
+  }
+
   function pushHistory() {
     if (historyIndex < history.length - 1) {
       history = history.slice(0, historyIndex + 1);
     }
-    history.push({ doc: cloneDocument(doc) });
+    history.push({ doc: cloneDocument(doc), revision: docRevision });
     if (history.length > maxHistorySize) {
       history.shift();
     } else {
@@ -332,7 +322,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       activeEdge: activeEdgeId ? doc.edges.find((e) => e.id === activeEdgeId) ?? null : null,
       canUndo: canUndo(),
       canRedo: canRedo(),
-      isDirty: savedDoc !== null && JSON.stringify(doc) !== JSON.stringify(savedDoc),
+      isDirty: isDirty(),
       gridEnabled,
       viewport,
     };
@@ -352,11 +342,6 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function addNode(type: string, position: { x: number; y: number }, data?: Record<string, unknown>): GraphNode | null {
-    const permContext = { doc, type, position, data };
-    if (!evaluatePermission(normalizedConfig.permissions.canAddNode, permContext)) {
-      return null;
-    }
-
     if (normalizedConfig.hooks?.beforeCreateNode) {
       try {
         const result = normalizedConfig.hooks.beforeCreateNode({ type, position, data });
@@ -377,10 +362,6 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       return null;
     }
 
-    if (!checkNodePermission(nodeType, 'canCreate', { doc, nodeType, type, position, data })) {
-      return null;
-    }
-
     if (!checkMaxInstances(doc, nodeType.constraints, type)) {
       return null;
     }
@@ -392,10 +373,11 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       data: { ...nodeType.defaults, ...data },
     };
 
-    doc = { ...doc, nodes: [...doc.nodes, newNode] };
+    setDocument({ ...doc, nodes: [...doc.nodes, newNode] });
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodeAdded', node: newNode });
     emit({ type: 'documentChanged', doc });
+    updateDirtyState();
 
     return newNode;
   }
@@ -406,26 +388,15 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       return;
     }
 
-    const node = doc.nodes[nodeIndex];
-    const nodeType = normalizedConfig.nodeTypes.get(node.type);
-    const permContext = { doc, node, nodeType, nodeId, data };
-
-    if (!evaluatePermission(normalizedConfig.permissions.canEditNode, permContext)) {
-      return;
-    }
-
-    if (!checkNodePermission(nodeType, 'canEdit', permContext)) {
-      return;
-    }
-
     const updatedNode = { ...doc.nodes[nodeIndex], data: { ...doc.nodes[nodeIndex].data, ...data } };
     const newNodes = [...doc.nodes];
     newNodes[nodeIndex] = updatedNode;
-    doc = { ...doc, nodes: newNodes };
+    setDocument({ ...doc, nodes: newNodes });
 
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodeUpdated', node: updatedNode });
     emit({ type: 'documentChanged', doc });
+    updateDirtyState();
   }
 
   function moveNode(nodeId: string, position: { x: number; y: number }): void {
@@ -436,12 +407,6 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     const node = doc.nodes[nodeIndex];
     const nodeType = normalizedConfig.nodeTypes.get(node.type);
-    const permContext = { doc, node, nodeType, nodeId, position };
-
-    if (!checkNodePermission(nodeType, 'canMove', permContext)) {
-      return;
-    }
-
     if (nodeType?.constraints?.allowMove === false) {
       return;
     }
@@ -449,11 +414,12 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     const updatedNode = { ...doc.nodes[nodeIndex], position: { ...position } };
     const newNodes = [...doc.nodes];
     newNodes[nodeIndex] = updatedNode;
-    doc = { ...doc, nodes: newNodes };
+    setDocument({ ...doc, nodes: newNodes });
 
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodeMoved', node: updatedNode });
     emit({ type: 'documentChanged', doc });
+    updateDirtyState();
   }
 
   function duplicateNode(nodeId: string): GraphNode | null {
@@ -463,15 +429,6 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     }
 
     const nodeType = normalizedConfig.nodeTypes.get(source.type);
-    const permContext = { doc, source, nodeType, nodeId };
-
-    if (!evaluatePermission(normalizedConfig.permissions.canAddNode, permContext)) {
-      return null;
-    }
-
-    if (!checkNodePermission(nodeType, 'canDuplicate', permContext)) {
-      return null;
-    }
 
     if (nodeType && !checkMaxInstances(doc, nodeType.constraints, source.type)) {
       return null;
@@ -488,15 +445,6 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     const node = doc.nodes[nodeIndex];
     const nodeType = normalizedConfig.nodeTypes.get(node.type);
-    const permContext = { doc, node, nodeType, nodeId };
-
-    if (!evaluatePermission(normalizedConfig.permissions.canDeleteNode, permContext)) {
-      return;
-    }
-
-    if (!checkNodePermission(nodeType, 'canDelete', permContext)) {
-      return;
-    }
 
     if (nodeType && !checkMinInstances(doc, nodeType.constraints, node.type)) {
       return;
@@ -517,7 +465,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     const newNodes = doc.nodes.filter((n) => n.id !== nodeId);
     const newEdges = doc.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
-    doc = { ...doc, nodes: newNodes, edges: newEdges };
+    setDocument({ ...doc, nodes: newNodes, edges: newEdges });
 
     if (selectedNodeIds.includes(nodeId)) {
       selectedNodeIds = selectedNodeIds.filter(id => id !== nodeId);
@@ -527,22 +475,15 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     emitMutation({ type: 'nodeDeleted', nodeId });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    updateDirtyState();
   }
 
   function addEdge(source: string, target: string, data?: Record<string, unknown>): GraphEdge | null {
     const sourceNode = doc.nodes.find((n) => n.id === source);
     const targetNode = doc.nodes.find((n) => n.id === target);
-    const permContext = { doc, source, target, data, sourceNode, targetNode };
-
-    if (!evaluatePermission(normalizedConfig.permissions.canConnect, permContext)) {
-      return null;
-    }
 
     if (sourceNode) {
       const sourceType = normalizedConfig.nodeTypes.get(sourceNode.type);
-      if (!checkNodePermission(sourceType, 'canConnect', permContext)) {
-        return null;
-      }
       if (sourceType?.constraints?.allowOutgoing === false) {
         return null;
       }
@@ -554,22 +495,11 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     if (targetNode) {
       const targetType = normalizedConfig.nodeTypes.get(targetNode.type);
-      if (!checkNodePermission(targetType, 'canConnect', permContext)) {
-        return null;
-      }
       if (targetType?.constraints?.allowIncoming === false) {
         return null;
       }
       const maxIn = targetType?.constraints?.maxIncoming;
       if (maxIn !== undefined && countIncomingEdges(doc, target) >= maxIn) {
-        return null;
-      }
-    }
-
-    if (normalizedConfig.rules.validateConnection) {
-      const expr = normalizedConfig.rules.validateConnection;
-      const valid = evaluatePermission(expr, { doc, source, target, data, sourceNode, targetNode });
-      if (!valid) {
         return null;
       }
     }
@@ -602,10 +532,11 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       data: { ...data },
     };
 
-    doc = { ...doc, edges: [...doc.edges, newEdge] };
+    setDocument({ ...doc, edges: [...doc.edges, newEdge] });
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'edgeAdded', edge: newEdge });
     emit({ type: 'documentChanged', doc });
+    updateDirtyState();
 
     return newEdge;
   }
@@ -646,12 +577,13 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     };
     const newEdges = [...doc.edges];
     newEdges[edgeIndex] = updatedEdge;
-    doc = { ...doc, edges: newEdges };
+    setDocument({ ...doc, edges: newEdges });
 
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'edgeUpdated', edge: updatedEdge });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    updateDirtyState();
 
     return { ok: true, edge: updatedEdge };
   }
@@ -665,11 +597,12 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     const updatedEdge = { ...doc.edges[edgeIndex], data: { ...doc.edges[edgeIndex].data, ...data } };
     const newEdges = [...doc.edges];
     newEdges[edgeIndex] = updatedEdge;
-    doc = { ...doc, edges: newEdges };
+    setDocument({ ...doc, edges: newEdges });
 
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'edgeUpdated', edge: updatedEdge });
     emit({ type: 'documentChanged', doc });
+    updateDirtyState();
   }
 
   function deleteEdge(edgeId: string): void {
@@ -691,7 +624,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       return;
     }
 
-    doc = { ...doc, edges: doc.edges.filter((e) => e.id !== edgeId) };
+    setDocument({ ...doc, edges: doc.edges.filter((e) => e.id !== edgeId) });
 
     if (selectedEdgeIds.includes(edgeId)) {
       selectedEdgeIds = selectedEdgeIds.filter(id => id !== edgeId);
@@ -701,6 +634,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     emitMutation({ type: 'edgeDeleted', edgeId });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    updateDirtyState();
   }
 
   function selectNode(nodeId: string | null): void {
@@ -766,32 +700,72 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function moveNodes(deltas: Record<string, { dx: number; dy: number }>): void {
-    if (transactionStack.length === 0) pushHistory();
-    for (const [nodeId, delta] of Object.entries(deltas)) {
-      const nodeIndex = doc.nodes.findIndex(n => n.id === nodeId);
-      if (nodeIndex === -1) continue;
-      const node = doc.nodes[nodeIndex];
+    const nextNodes = doc.nodes.map((node) => {
+      const delta = deltas[node.id];
+      if (!delta) {
+        return node;
+      }
+
       const nodeType = normalizedConfig.nodeTypes.get(node.type);
-      if (!checkNodePermission(nodeType, 'canMove', { doc, node, nodeType, nodeId, position: node.position })) continue;
-      if (nodeType?.constraints?.allowMove === false) continue;
-      const updatedNode = { ...doc.nodes[nodeIndex], position: { x: node.position.x + delta.dx, y: node.position.y + delta.dy } };
-      const newNodes = [...doc.nodes];
-      newNodes[nodeIndex] = updatedNode;
-      doc = { ...doc, nodes: newNodes };
+      if (nodeType?.constraints?.allowMove === false) {
+        return node;
+      }
+
+      const nextPosition = {
+        x: node.position.x + delta.dx,
+        y: node.position.y + delta.dy
+      };
+
+      if (node.position.x === nextPosition.x && node.position.y === nextPosition.y) {
+        return node;
+      }
+
+      return {
+        ...node,
+        position: nextPosition
+      };
+    });
+    const changed = nextNodes.some((node, index) => node !== doc.nodes[index]);
+
+    if (!changed) {
+      return;
     }
+
+    setDocument({ ...doc, nodes: nextNodes });
+    if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodes:moved' });
     emit({ type: 'documentChanged', doc });
+    updateDirtyState();
   }
 
   function updateMultipleNodes(updates: Array<{ nodeId: string; data: Partial<GraphNode> }>): void {
-    if (transactionStack.length === 0) pushHistory();
-    for (const { nodeId, data } of updates) {
-      const idx = doc.nodes.findIndex(n => n.id === nodeId);
-      if (idx === -1) continue;
-      doc.nodes[idx] = { ...doc.nodes[idx], ...data };
+    const updatesById = new Map(updates.map((entry) => [entry.nodeId, entry.data]));
+    const nextNodes = doc.nodes.map((node) => {
+      const patch = updatesById.get(node.id);
+      if (!patch) {
+        return node;
+      }
+
+      const nextNode = {
+        ...node,
+        ...patch,
+        position: patch.position ? { ...patch.position } : node.position,
+        data: patch.data ? { ...node.data, ...patch.data } : node.data
+      };
+
+      return nextNode;
+    });
+    const changed = nextNodes.some((node, index) => node !== doc.nodes[index]);
+
+    if (!changed) {
+      return;
     }
+
+    setDocument({ ...doc, nodes: nextNodes });
+    if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodes:updated' });
     emit({ type: 'documentChanged', doc });
+    updateDirtyState();
   }
 
   function undo(): void {
@@ -800,11 +774,12 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     }
 
     historyIndex--;
-    doc = cloneDocument(history[historyIndex].doc);
+    replaceDocument(cloneDocument(history[historyIndex].doc), history[historyIndex].revision);
     viewport = normalizeViewport(doc.viewport);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'viewportChanged', viewport });
+    updateDirtyState();
   }
 
   function redo(): void {
@@ -813,11 +788,12 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     }
 
     historyIndex++;
-    doc = cloneDocument(history[historyIndex].doc);
+    replaceDocument(cloneDocument(history[historyIndex].doc), history[historyIndex].revision);
     viewport = normalizeViewport(doc.viewport);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'viewportChanged', viewport });
+    updateDirtyState();
   }
 
   function copySelection(): void {
@@ -861,14 +837,16 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     }
 
     viewport = normalizedViewport;
-    doc = { ...doc, viewport };
+    setDocument({ ...doc, viewport });
     if (transactionStack.length === 0) pushHistory();
     emit({ type: 'viewportChanged', viewport });
     emit({ type: 'documentChanged', doc });
+    updateDirtyState();
   }
 
   function save(): void {
     savedDoc = cloneDocument(doc);
+    savedRevision = docRevision;
     emit({ type: 'dirtyChanged', isDirty: false });
   }
 
@@ -877,7 +855,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       return;
     }
 
-    doc = cloneDocument(savedDoc);
+    replaceDocument(cloneDocument(savedDoc), savedRevision);
     viewport = normalizeViewport(doc.viewport);
     if (transactionStack.length === 0) pushHistory();
     emit({ type: 'documentChanged', doc });
@@ -890,7 +868,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function isDirty(): boolean {
-    return savedDoc !== null && JSON.stringify(doc) !== JSON.stringify(savedDoc);
+    return savedDoc !== null && docRevision !== savedRevision;
   }
 
   function layoutNodes(positions: Map<string, { x: number; y: number }>): void {
@@ -901,11 +879,16 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       }
       return { ...node, position: { ...newPos } };
     });
-    doc = { ...doc, nodes: newNodes };
+    if (!newNodes.some((node, index) => node !== doc.nodes[index])) {
+      return;
+    }
+
+    setDocument({ ...doc, nodes: newNodes });
     if (transactionStack.length === 0) {
       pushHistory();
     }
     emit({ type: 'documentChanged', doc });
+    updateDirtyState();
   }
 
   function isInTransaction(): boolean {
@@ -969,7 +952,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
       const txn = transactionStack[index];
       const innerStack = transactionStack.splice(index);
-      doc = cloneDocument(txn.snapshotBefore);
+      replaceDocument(cloneDocument(txn.snapshotBefore), history[historyIndex]?.revision ?? docRevision);
       viewport = normalizeViewport(doc.viewport);
       emit({ type: 'transactionRolledBack', transactionId: txn.id });
       for (let i = innerStack.length - 2; i >= 0; i--) {
@@ -977,16 +960,17 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       }
     } else {
       const txn = transactionStack.pop()!;
-      doc = cloneDocument(txn.snapshotBefore);
+      replaceDocument(cloneDocument(txn.snapshotBefore), history[historyIndex]?.revision ?? docRevision);
       viewport = normalizeViewport(doc.viewport);
       emit({ type: 'transactionRolledBack', transactionId: txn.id });
     }
 
     emit({ type: 'documentChanged', doc });
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
+    updateDirtyState();
   }
 
-  history.push({ doc: cloneDocument(doc) });
+  history.push({ doc: cloneDocument(doc), revision: docRevision });
   historyIndex = 0;
 
   return {
