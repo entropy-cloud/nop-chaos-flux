@@ -345,5 +345,54 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     expect(storeErrors['a']).toEqual([err('a', 'a required')]);
     expect(storeErrors['b']).toEqual([err('b', 'b required')]);
   });
+
+  it('clears stale errors for fields that become valid after validateForm', async () => {
+    const form = createManagedFormRuntime({
+      id: 'test-form',
+      initialValues: { name: '' },
+      parentScope: createStubScope(),
+      validation: {
+        nodes: {
+          name: {
+            path: 'name',
+            kind: 'field',
+            controlType: 'input-text',
+            rules: [
+              {
+                id: 'name#0:required',
+                rule: { kind: 'required', message: 'Name is required' },
+                dependencyPaths: []
+              }
+            ],
+            behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
+            children: [],
+            parent: ''
+          }
+        },
+        order: ['name'],
+        behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
+        dependents: {}
+      },
+      executeValidationRule: async () => undefined,
+      validateRule: (_compiledRule, value) => {
+        if (value === '') {
+          return err('name', 'Name is required');
+        }
+
+        return undefined;
+      },
+      submitApi: async () => ({ ok: true, data: {} })
+    });
+
+    await form.validateForm();
+    expect(form.store.getState().errors['name']).toEqual([err('name', 'Name is required')]);
+
+    form.setValue('name', 'Alice');
+    const result = await form.validateForm();
+
+    expect(result.ok).toBe(true);
+    expect(result.fieldErrors['name']).toBeUndefined();
+    expect(form.store.getState().errors['name']).toBeUndefined();
+  });
 });
 

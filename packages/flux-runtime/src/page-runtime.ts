@@ -2,13 +2,6 @@ import type { PageRuntime, PageStoreApi, RendererRuntime } from '@nop-chaos/flux
 import { createPageStore } from './form-store';
 import { createScopeRef } from './scope';
 
-let dialogCounter = 0;
-
-function createDialogId(nodeId: string) {
-  dialogCounter += 1;
-  return `${nodeId}-dialog-${dialogCounter}`;
-}
-
 export function createManagedPageRuntime(input: {
   data?: Record<string, any>;
   pageStore?: PageStoreApi;
@@ -27,6 +20,12 @@ export function createManagedPageRuntime(input: {
     },
     update: (path, value) => store.updateData(path, value)
   });
+  let dialogCounter = 0;
+
+  function createDialogId(nodeId: string) {
+    dialogCounter += 1;
+    return `${nodeId}-dialog-${dialogCounter}`;
+  }
 
   return {
     store,

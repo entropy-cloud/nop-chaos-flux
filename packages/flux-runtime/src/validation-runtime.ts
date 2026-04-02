@@ -6,12 +6,22 @@ import type {
 } from '@nop-chaos/flux-core';
 import { createBuiltInValidationRegistry, type ValidationRegistry } from './validation';
 
+let builtInValidationRegistry: ValidationRegistry | undefined;
+
+function getBuiltInValidationRegistry(): ValidationRegistry {
+  if (!builtInValidationRegistry) {
+    builtInValidationRegistry = createBuiltInValidationRegistry();
+  }
+
+  return builtInValidationRegistry;
+}
+
 export function validateRule(
   compiledRule: CompiledValidationRule,
   value: unknown,
   field: CompiledFormValidationField,
   scope: ScopeRef,
-  registry: ValidationRegistry = createBuiltInValidationRegistry()
+  registry: ValidationRegistry = getBuiltInValidationRegistry()
 ): ValidationError | undefined {
   const rule = compiledRule.rule;
 

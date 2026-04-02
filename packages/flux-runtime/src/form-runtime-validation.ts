@@ -18,6 +18,8 @@ function createValidationResult(errors: ValidationError[]): ValidationResult {
   };
 }
 
+const VALIDATION_CANCELLED = Symbol('validation-cancelled');
+
 function setPathErrors(sharedState: ManagedFormRuntimeSharedState, path: string, errors: ValidationError[]) {
   sharedState.store.setPathErrors(path, errors);
 }
@@ -106,7 +108,7 @@ async function validateCompiledField(
         const shouldRun = await waitForValidationDebounce(sharedState, path, rule.debounce, runId);
 
         if (!shouldRun) {
-          return createValidationResult([]);
+          throw VALIDATION_CANCELLED;
         }
 
         const asyncError = await sharedState.inputValue.executeValidationRule(compiledRule, rule, field, sharedState.scope);
@@ -167,7 +169,15 @@ export async function validatePath(sharedState: ManagedFormRuntimeSharedState, p
     return createValidationResult([]);
   }
 
-  return validateCompiledField(sharedState, path, field);
+  try {
+    return await validateCompiledField(sharedState, path, field);
+  } catch (error) {
+    if (error === VALIDATION_CANCELLED) {
+      return createValidationResult([]);
+    }
+
+    throw error;
+  }
 }
 
 export async function validateSubtreeByNode(

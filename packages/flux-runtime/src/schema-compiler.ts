@@ -59,19 +59,19 @@ function rewriteActionTargets(
     output[key] = rewriteActionTargets(candidate, byId, byName);
   }
 
-    if (typeof source.action === 'string' && source.action.startsWith('component:')) {
-      if (typeof source.componentId === 'string') {
-        const resolvedCid = byId.get(source.componentId);
-        if (resolvedCid !== undefined) {
-          output._targetCid = resolvedCid;
-        }
-      } else if (typeof source.componentName === 'string') {
-        const resolvedCid = byName.get(source.componentName);
-        if (resolvedCid !== undefined) {
-          output._targetCid = resolvedCid;
-        }
+  if (typeof source.action === 'string' && source.action.startsWith('component:')) {
+    if (typeof source.componentId === 'string') {
+      const resolvedCid = byId.get(source.componentId);
+      if (resolvedCid !== undefined) {
+        output._targetCid = resolvedCid;
+      }
+    } else if (typeof source.componentName === 'string') {
+      const resolvedCid = byName.get(source.componentName);
+      if (resolvedCid !== undefined) {
+        output._targetCid = resolvedCid;
       }
     }
+  }
 
   return output;
 }

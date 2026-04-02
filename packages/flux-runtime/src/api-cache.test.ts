@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createApiCacheStore } from './api-cache';
+import { createApiCacheStore, generateCacheKey } from './api-cache';
 
 const LONG_TTL = 60_000;
 
@@ -163,6 +163,25 @@ describe('createApiCacheStore', () => {
       expect(cache.get('key-1')).toBeUndefined();
       cache.set('key-202', 'v202', LONG_TTL);
       expect(cache.get('key-2')).toBeUndefined();
+    });
+  });
+
+  describe('generateCacheKey', () => {
+    it('uses stable object-key ordering for params and data', () => {
+      const keyA = generateCacheKey({
+        method: 'post',
+        url: '/api/users',
+        data: { a: 1, b: 2 },
+        params: { q: 'alice', page: 1 }
+      });
+      const keyB = generateCacheKey({
+        method: 'post',
+        url: '/api/users',
+        data: { b: 2, a: 1 },
+        params: { page: 1, q: 'alice' }
+      });
+
+      expect(keyA).toBe(keyB);
     });
   });
 });

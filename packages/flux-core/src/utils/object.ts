@@ -15,6 +15,14 @@ export function shallowEqual(left: unknown, right: unknown): boolean {
     return false;
   }
 
+  if (Array.isArray(left) && Array.isArray(right)) {
+    if (left.length !== right.length) {
+      return false;
+    }
+
+    return left.every((value, index) => Object.is(value, right[index]));
+  }
+
   const leftKeys = Object.keys(left);
   const rightKeys = Object.keys(right);
 

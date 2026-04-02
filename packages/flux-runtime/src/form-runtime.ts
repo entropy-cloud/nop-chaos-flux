@@ -138,10 +138,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       const fieldErrors: Record<string, ValidationError[]> = {};
       const errors: ValidationError[] = [];
       const initialErrors = store.getState().errors;
+      const validatedPaths = new Set<string>();
 
       const validationPaths = getCompiledValidationTraversalOrder(inputValue.validation);
 
       for (const path of validationPaths) {
+        validatedPaths.add(path);
         const result = await thisForm.validateField(path);
 
         if (!result.ok) {
@@ -153,6 +155,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       async function validateRegisteredChildren(registration: RuntimeFieldRegistration) {
         if (!registration.validateChild || !registration.childPaths?.length) return;
         for (const childPath of registration.childPaths) {
+          validatedPaths.add(childPath);
           const result = await thisForm.validateField(childPath);
           if (!result.ok) {
             fieldErrors[childPath] = result.errors;
@@ -162,6 +165,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       }
 
       for (const [path, registration] of runtimeFieldRegistrations) {
+        validatedPaths.add(path);
+
         if (getCompiledValidationField(inputValue.validation, path)) {
           await validateRegisteredChildren(registration);
           continue;
@@ -182,8 +187,22 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         await validateRegisteredChildren(registration);
       }
 
+      const currentErrors = store.getState().errors;
+      const preservedErrors: Record<string, ValidationError[]> = {};
+
+      for (const [path, pathErrors] of Object.entries(currentErrors)) {
+        if (!validatedPaths.has(path)) {
+          preservedErrors[path] = pathErrors;
+          continue;
+        }
+
+        if (fieldErrors[path]) {
+          preservedErrors[path] = fieldErrors[path];
+        }
+      }
+
       const mergedErrors = {
-        ...store.getState().errors,
+        ...preservedErrors,
         ...fieldErrors
       };
 

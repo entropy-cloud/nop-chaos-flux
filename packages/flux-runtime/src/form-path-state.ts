@@ -80,16 +80,13 @@ export function remapErrorState(
         ? transformArrayIndexedPath(error.ownerPath, arrayPath, transformIndex) ?? error.ownerPath
         : error.ownerPath;
       const mappedRelatedPaths = error.relatedPaths?.map((relatedPath) => {
-        const fullRelatedPath = relatedPath.includes('.') || !path.startsWith(arrayPath) ? relatedPath : `${arrayPath}.${relatedPath}`;
-        const mappedRelatedPath = transformArrayIndexedPath(fullRelatedPath, arrayPath, transformIndex);
+        const mappedRelatedPath = transformArrayIndexedPath(relatedPath, arrayPath, transformIndex);
 
-        if (!mappedRelatedPath) {
+        if (!mappedRelatedPath || mappedRelatedPath === relatedPath) {
           return relatedPath;
         }
 
-        return relatedPath.includes('.') || !mappedRelatedPath.startsWith(`${arrayPath}.`)
-          ? mappedRelatedPath
-          : mappedRelatedPath.slice(arrayPath.length + 1);
+        return mappedRelatedPath;
       });
 
       nextErrors.push({

@@ -8,7 +8,13 @@ export function remapValidationRunState(
   transformIndex: (index: number) => number | undefined,
   cancelValidationDebounce: (path: string) => void
 ) {
+  const prefix = `${arrayPath}.`;
+
   for (const path of Array.from(sharedState.validationRuns.keys())) {
+    if (!path.startsWith(prefix)) {
+      continue;
+    }
+
     const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
 
     if (!nextPath) {
@@ -27,6 +33,10 @@ export function remapValidationRunState(
   }
 
   for (const path of Array.from(sharedState.pendingValidationDebounces.keys())) {
+    if (!path.startsWith(prefix)) {
+      continue;
+    }
+
     const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
 
     if (!nextPath) {

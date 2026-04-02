@@ -135,7 +135,7 @@ export function collectValidationModel(
 
         if (validationNodes[parentPath]) {
           validationNodes[parentPath].children.push(fieldPath);
-      }
+        }
 
       }
     }

@@ -23,6 +23,20 @@ interface LRUNode {
   next: LRUNode | null;
 }
 
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableStringify(entry)).join(',')}]`;
+  }
+
+  const record = value as Record<string, unknown>;
+  const keys = Object.keys(record).sort();
+  return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`).join(',')}}`;
+}
+
 export function createApiCacheStore(): ApiCacheStore {
   const cache = new Map<string, LRUNode>();
   let head: LRUNode | null = null;
@@ -115,10 +129,10 @@ export function createApiCacheStore(): ApiCacheStore {
 export function generateCacheKey(api: ApiObject): string {
   const method = api.method ?? 'get';
   const url = api.url;
-  
-  const dataStr = api.data ? JSON.stringify(api.data) : '';
-  const paramsStr = api.params ? JSON.stringify(api.params) : '';
-  
+
+  const dataStr = api.data ? stableStringify(api.data) : '';
+  const paramsStr = api.params ? stableStringify(api.params) : '';
+
   return `${method}:${url}:${dataStr}:${paramsStr}`;
 }
 
