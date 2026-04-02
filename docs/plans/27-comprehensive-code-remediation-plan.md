@@ -1,8 +1,9 @@
 # Comprehensive Code Remediation Plan (#27)
 
-> Plan Status: verified
+> Plan Status: completed
 > Created: 2026-04-02
 > Verified: 2026-04-02
+> Completed: 2026-04-02
 > Source: repository-wide architecture and implementation audit (flux-core, flux-formula, flux-runtime, flux-react, all renderer packages, flow-designer, spreadsheet, report-designer, nop-debugger)
 
 ---继续
@@ -17,6 +18,34 @@ All items were verified against the current codebase. Summary:
 | **Already fixed — skip** | P0-6 (debounce already has `try/catch` + `reject`) |
 | **Not a real issue — remove** | P2-5 (generic `S` IS properly used in `hooks.ts:49`: `selector: (scopeData: S) => T`) |
 | **Fix needs refinement** | P0-5 (cancellation signal needs type changes to `ValidationResult`), P0-7 (existing code at `form-runtime.ts:192-203` partially addresses stale errors but has a logic flaw — fix must clean `mergedErrors` before `setErrors()`) |
+
+---
+
+## Execution Update (2026-04-02)
+
+This plan was executed for the verified correctness and runtime-impact items. The remaining unchecked work should not all stay in the same bucket.
+
+### Completed in this pass
+
+- Completed and validated: P0-2, P0-3, P0-4, P0-5, P0-7, P0-8, P1-1 through P1-14 except P1-15 and P1-16, P1-17, P2-1, P2-3, P2-4, P2-6, P2-8, P2-9, P2-10.
+- Confirmed separately: P0-1 is now closed in the current workspace. `node scripts/verify-no-src-artifacts.mjs` passes with no generated artifacts in `src/` directories.
+
+### Keep only as dedicated follow-up issues
+
+- P1-16: `packages/flux-renderers-data/src/table-renderer.tsx` is still large at 523 lines, but this is now a maintainability refactor rather than an active correctness or performance defect.
+- P2-2: `packages/flux-runtime/src/form-runtime.ts` is still large at 475 lines, but extraction should happen as a focused refactor issue, not as open-ended remediation work.
+- Broader renderer BEM cleanup beyond the original basic/data scope still exists in flow designer, form, spreadsheet, and report designer renderers. That should be tracked as a dedicated styling migration task rather than left implicit under this plan.
+
+### Do not continue as standalone remediation items
+
+- P1-15: "missing test coverage" is too generic to remain actionable after the targeted regression tests added during this pass. Future tests should be driven by concrete bug surfaces or feature contracts.
+- P2-7: narrowing `DialogView` subscriptions was attempted and reverted after introducing a test/runtime regression. Re-open only with profiling data or a reproducible user-visible issue.
+
+### Verification snapshot after execution
+
+- Workspace `pnpm test` passes.
+- Workspace `pnpm lint` passes.
+- Workspace `pnpm typecheck` and `pnpm build` remain blocked by unrelated pre-existing issues in `packages/ui` and `packages/word-editor-core`.
 
 ---
 
@@ -48,7 +77,7 @@ Provide an execution-ready, independently-verifiable remediation plan for every 
 
 ### P0-1: Stray Build Artifacts (.js/.d.ts/.js.map) in `src/` Directories
 
-> **Status: Re-opened on 2026-04-02.** The earlier assumption that `packages/ui/src/` was an intentional exception is obsolete. All `src/` directories must contain source only.
+> **Status: Resolved in the current workspace on 2026-04-02.** `node scripts/verify-no-src-artifacts.mjs` now passes. Keep this item for historical context and regression prevention only.
 
 **Severity:** High
 **Category:** Engineering Consistency
