@@ -4,6 +4,10 @@ import { useRendererEnv, useRendererRuntime } from '@nop-chaos/flux-react';
 import { executeApiObject } from '@nop-chaos/flux-runtime';
 import { classNames } from './utils';
 
+function isBaseSchemaLike(value: unknown): value is BaseSchema {
+  return Boolean(value) && typeof value === 'object' && typeof (value as { type?: unknown }).type === 'string';
+}
+
 type DynamicRendererState = {
   loading: boolean;
   error: unknown;
@@ -33,7 +37,12 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
         if (!mountedRef.current) return;
 
-        setState({ loading: false, error: undefined, schema: result.data as BaseSchema });
+        if (!isBaseSchemaLike(result.data)) {
+          setState({ loading: false, error: 'Invalid schema received from API', schema: null });
+          return;
+        }
+
+        setState({ loading: false, error: undefined, schema: result.data });
       } catch (err) {
         if (!mountedRef.current) return;
         setState({ loading: false, error: err, schema: null });

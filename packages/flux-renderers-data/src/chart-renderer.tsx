@@ -117,14 +117,15 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
   return (
     <div
-      className="nop-chart-wrap"
+      className="nop-chart"
       style={{ height: chartHeight } as CSSProperties}
       data-testid={props.meta.testid || undefined}
     >
       {isEmpty ? (
-        <div className="nop-chart__empty">{emptyContent}</div>
+        <div data-slot="chart-empty">{emptyContent}</div>
       ) : (
         <div
+          data-slot="chart-canvas"
           ref={chartRef}
           style={{ width: '100%', height: '100%' }}
           onClick={(event) => void props.events.onClick?.(event, {})}

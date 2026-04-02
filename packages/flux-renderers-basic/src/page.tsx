@@ -12,16 +12,16 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   return (
     <section className={classNames('nop-page', props.meta.className)} data-testid={props.meta.testid || undefined}>
       {hasRendererSlotContent(titleContent) ? (
-        <header className="nop-page__header">
+        <header data-slot="page-header">
           <h2>{titleContent}</h2>
         </header>
       ) : null}
       {hasRendererSlotContent(headerContent) ? (
-        <div className="nop-page__toolbar">{headerContent}</div>
+        <div data-slot="page-toolbar">{headerContent}</div>
       ) : null}
-      <div className="nop-page__body">{props.regions.body?.render()}</div>
+      <div data-slot="page-body">{props.regions.body?.render()}</div>
       {hasRendererSlotContent(footerContent) ? (
-        <footer className="nop-page__footer">{footerContent}</footer>
+        <footer data-slot="page-footer">{footerContent}</footer>
       ) : null}
     </section>
   );

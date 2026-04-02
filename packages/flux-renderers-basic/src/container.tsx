@@ -23,9 +23,10 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
 
   return (
     <div className={classNames('nop-container', props.meta.className)} data-testid={props.meta.testid || undefined}>
-      {hasRendererSlotContent(headerContent) ? <div className="nop-container__header">{headerContent}</div> : null}
+      {hasRendererSlotContent(headerContent) ? <div data-slot="container-header">{headerContent}</div> : null}
       {useFlexChild ? (
         <div
+          data-slot="container-body"
           className={classNames(
             'flex',
             resolveDirection(direction),
@@ -41,9 +42,9 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
           {bodyContent}
         </div>
       ) : (
-        bodyContent
+        <div data-slot="container-body">{bodyContent}</div>
       )}
-      {hasRendererSlotContent(footerContent) ? <div className="nop-container__footer">{footerContent}</div> : null}
+      {hasRendererSlotContent(footerContent) ? <div data-slot="container-footer">{footerContent}</div> : null}
     </div>
   );
 }

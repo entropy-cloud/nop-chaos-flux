@@ -228,22 +228,24 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   return (
     <div className="nop-table-wrap grid gap-4" data-testid={props.meta.testid || undefined}>
-      {hasRendererSlotContent(headerContent) ? <div className="nop-table__header">{headerContent}</div> : null}
+      {hasRendererSlotContent(headerContent) ? <div data-slot="table-header-region">{headerContent}</div> : null}
 
-      <div className="relative nop-table__container">
+      <div className="relative" data-slot="table-container">
         <Table
-          className={`nop-table ${isStriped ? 'nop-table--striped' : ''} ${isBordered ? 'nop-table--bordered' : ''}`}
+          className="nop-table"
+          data-striped={isStriped || undefined}
+          data-bordered={isBordered || undefined}
         >
-          <TableHeader className="nop-table__header">
+          <TableHeader data-slot="table-header">
             <TableRow>
               {schemaProps.expandable ? (
-                <TableHead className="nop-table__expand-column" style={{ width: '40px' }}>
+                <TableHead data-slot="table-expand-column" style={{ width: '40px' }}>
                   <span className="sr-only">Expand</span>
                 </TableHead>
               ) : null}
 
               {schemaProps.rowSelection ? (
-                <TableHead className="nop-table__select-column" style={{ width: '40px' }}>
+                <TableHead data-slot="table-select-column" style={{ width: '40px' }}>
                   {schemaProps.rowSelection.type === 'checkbox' && (
                     <Checkbox
                       checked={allSelected && selectedRowKeys.size === source.length && source.length > 0}
@@ -265,7 +267,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                   <TableHead
                     key={`${column.name ?? column.label ?? 'column'}-${index}`}
                     style={column.width ? { width: column.width } : undefined}
-                    className={isSortable || isFilterable ? 'nop-table__head--interactive' : ''}
+                    data-slot="table-head"
+                    data-interactive={isSortable || isFilterable || undefined}
                   >
                     {isSortable || isFilterable ? (
                       <div className="flex items-center gap-1">
@@ -317,8 +320,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
           <TableBody>
             {processedData.length === 0 ? (
-              <TableRow className="nop-table__empty-row">
-                <TableCell colSpan={columnCount} className="nop-table__empty-cell">
+              <TableRow data-slot="table-empty-row">
+                <TableCell colSpan={columnCount} data-slot="table-empty-cell">
                   {emptyContent}
                 </TableCell>
               </TableRow>
@@ -341,9 +344,10 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 return (
                   <React.Fragment key={rowKey}>
                     <TableRow
-                      className={`nop-table__row ${props.events.onRowClick ? 'nop-table__row--interactive' : ''} ${
-                        isExpanded ? 'nop-table__row--expanded' : ''
-                      } ${isStriped && isEven ? 'nop-table__row--striped' : ''}`}
+                      data-slot="table-row"
+                      data-interactive={Boolean(props.events.onRowClick) || undefined}
+                      data-expanded={isExpanded || undefined}
+                      data-striped={isStriped && isEven ? true : undefined}
                       onClick={
                         props.events.onRowClick
                           ? (event) =>
@@ -356,7 +360,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                       }
                     >
                       {schemaProps.expandable ? (
-                        <TableCell className="nop-table__expand-cell">
+                        <TableCell data-slot="table-expand-cell">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -371,7 +375,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                       ) : null}
 
                       {schemaProps.rowSelection ? (
-                        <TableCell className="nop-table__select-cell" onClick={(e) => e.stopPropagation()}>
+                        <TableCell data-slot="table-select-cell" onClick={(e) => e.stopPropagation()}>
                           {schemaProps.rowSelection.type === 'checkbox' ? (
                             <Checkbox checked={isSelected} onCheckedChange={(checked) => handleSelectRow(rowKey, Boolean(checked))} />
                           ) : (
@@ -387,7 +391,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                         if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
                           return (
                             <TableCell key={`op-${columnIndex}`} style={column.width ? { width: column.width } : undefined}>
-                              <div className="nop-table__actions flex flex-wrap gap-3" onClick={(event) => event.stopPropagation()}>
+                              <div data-slot="table-actions" className="flex flex-wrap gap-3" onClick={(event) => event.stopPropagation()}>
                                 {buttonRegion
                                   ? buttonRegion.render({
                                       scope: rowScope,
@@ -429,8 +433,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                     </TableRow>
 
                     {isExpanded && schemaProps.expandable?.expandedRowRegionKey ? (
-                      <TableRow className="nop-table__expanded-row">
-                        <TableCell colSpan={columnCount} className="nop-table__expanded-cell">
+                      <TableRow data-slot="table-expanded-row">
+                        <TableCell colSpan={columnCount} data-slot="table-expanded-cell">
                           {props.regions[schemaProps.expandable.expandedRowRegionKey]?.render({
                             scope: rowScope,
                             pathSuffix: `expanded.${rowKey}`,
@@ -446,7 +450,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         </Table>
 
         {isLoading && (
-          <div className="nop-table__loading-overlay absolute inset-0 bg-background/80 flex items-center justify-center z-10">
+          <div data-slot="table-loading-overlay" className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
             <div className="flex flex-col items-center gap-2">
               <Spinner className="size-6" />
               {hasRendererSlotContent(loadingContent) && <span className="text-sm text-muted-foreground">{loadingContent}</span>}
@@ -456,7 +460,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       </div>
 
       {paginationEnabled && source.length > 0 && (
-        <div className="nop-table__pagination flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div data-slot="table-pagination" className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Rows per page:</span>
             <NativeSelect
@@ -561,7 +565,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         </div>
       )}
 
-      {hasRendererSlotContent(footerContent) ? <div className="nop-table__footer">{footerContent}</div> : null}
+      {hasRendererSlotContent(footerContent) ? <div data-slot="table-footer">{footerContent}</div> : null}
     </div>
   );
 }

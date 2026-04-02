@@ -61,7 +61,9 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
         if (cacheKey) {
           const cached = globalApiCache.get<unknown>(cacheKey);
           if (cached) {
+            await Promise.resolve();
             if (!mountedRef.current) return;
+            if (controller.signal.aborted) return;
             writeToScope(cached.data);
             if (checkStopCondition()) {
               pollingRef.current = false;

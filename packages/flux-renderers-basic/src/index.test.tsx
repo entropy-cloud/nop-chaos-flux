@@ -301,6 +301,34 @@ describe('basicRendererDefinitions', () => {
     cleanup();
   });
 
+  it('uses data-icon for icon identity without a modifier marker class', () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'icon',
+              icon: 'gear',
+              testid: 'settings-icon'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const icon = screen.getByTestId('settings-icon');
+    const className = icon.getAttribute('class') ?? '';
+    expect(icon.getAttribute('data-icon')).toBe('gear');
+    expect(className).toContain('nop-icon');
+    expect(className).not.toContain('nop-icon--');
+    cleanup();
+  });
+
   describe('dynamic-renderer', () => {
     it('renders body content while loading', () => {
       const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
@@ -387,6 +415,39 @@ describe('basicRendererDefinitions', () => {
       await waitFor(() => {
         expect(screen.getByText('Error: Failed to load schema')).toBeTruthy();
       });
+      cleanup();
+    });
+
+    it('shows an error when the API returns an invalid schema payload', async () => {
+      const fetcher = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        data: { text: 'Missing type field' }
+      })) as RendererEnv['fetcher'];
+
+      const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'dynamic-renderer',
+                schemaApi: { url: '/api/schema' },
+                body: { type: 'text', text: 'Loading...' }
+              }
+            ]
+          }}
+          env={{ ...env, fetcher }}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Error: Invalid schema received from API')).toBeTruthy();
+      });
+
       cleanup();
     });
   });

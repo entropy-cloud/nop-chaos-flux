@@ -59,7 +59,7 @@ export function IconRenderer(props: RendererComponentProps<IconSchema>) {
 
   return (
     <IconComp
-      className={classNames('nop-icon', `nop-icon--${icon}`, props.meta.className)}
+      className={classNames('nop-icon', props.meta.className)}
       data-icon={icon}
       data-testid={props.meta.testid || undefined}
       size={16}
