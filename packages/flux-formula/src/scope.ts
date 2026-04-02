@@ -1,5 +1,5 @@
 import type { EvalContext, ScopeRef } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
+import { getIn, parsePath } from '@nop-chaos/flux-core';
 import { createEvalContext } from './evaluate';
 
 function isEvalContext(input: EvalContext | object): input is EvalContext {
@@ -23,7 +23,18 @@ function createObjectEvalContext(data: object): EvalContext {
       return getIn(record, path);
     },
     has(path: string) {
-      return getIn(record, path) !== undefined;
+      const segments = parsePath(path);
+      let current: unknown = record;
+
+      for (const segment of segments) {
+        if (current == null || typeof current !== 'object' || !(segment in current)) {
+          return false;
+        }
+
+        current = (current as Record<string, unknown>)[segment];
+      }
+
+      return true;
     },
     materialize() {
       return record;
@@ -54,13 +65,8 @@ function toEvalContext(input: EvalContext | ScopeRef | object): EvalContext {
   return createObjectEvalContext(input);
 }
 
-const formulaScopeCache = new WeakMap<EvalContext, Record<string, any>>();
-
 function createFormulaScope(context: EvalContext): Record<string, any> {
-  const cached = formulaScopeCache.get(context);
-  if (cached) return cached;
-
-  const proxy = new Proxy(
+  return new Proxy(
     {},
     {
       get(_target, property) {
@@ -103,9 +109,6 @@ function createFormulaScope(context: EvalContext): Record<string, any> {
       }
     }
   );
-
-  formulaScopeCache.set(context, proxy);
-  return proxy;
 }
 
 export { toEvalContext, createFormulaScope };

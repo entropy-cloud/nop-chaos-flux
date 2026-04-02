@@ -19,24 +19,14 @@ function makeEvalContext(data: Record<string, any>): EvalContext {
   };
 }
 
-describe('createFormulaScope Proxy caching (FIX-14)', () => {
-  it('returns same Proxy instance for same EvalContext', () => {
+describe('createFormulaScope', () => {
+  it('returns a new Proxy instance for each call', () => {
     const ctx = makeEvalContext({ x: 1 });
     const scope1 = createFormulaScope(ctx);
     const scope2 = createFormulaScope(ctx);
-    expect(scope1).toBe(scope2);
-  });
-
-  it('returns different Proxy for different EvalContext', () => {
-    const ctx1 = makeEvalContext({ x: 1 });
-    const ctx2 = makeEvalContext({ x: 1 });
-    const scope1 = createFormulaScope(ctx1);
-    const scope2 = createFormulaScope(ctx2);
     expect(scope1).not.toBe(scope2);
   });
-});
 
-describe('createFormulaScope single resolve (FIX-11)', () => {
   it('resolves top-level property via resolve only', () => {
     const ctx = makeEvalContext({ name: 'Alice' });
     const scope = createFormulaScope(ctx);

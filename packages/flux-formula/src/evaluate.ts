@@ -186,9 +186,10 @@ function evaluateObject(
   }
 
   const currentKeys = Object.keys(stateNode.entries);
+  const keySet = new Set(node.keys);
   const needsRebuild =
     node.keys.some((key) => !(key in stateNode.entries)) ||
-    currentKeys.some((key) => !node.keys.includes(key));
+    currentKeys.some((key) => !keySet.has(key));
   if (needsRebuild) {
     const entries: Record<string, RuntimeValueStateNode> = {};
     for (const key of node.keys) {
