@@ -37,6 +37,10 @@ function getNodeImports(node: CompiledSchemaNode): readonly XuiImportSpec[] | un
     : undefined;
 }
 
+function shouldWarnOnImportFailure(): boolean {
+  return typeof process === 'undefined' || process.env.NODE_ENV !== 'production';
+}
+
 export const NodeRenderer = memo(function NodeRenderer(props: {
   node: CompiledSchemaNode;
   scope: ScopeRef;
@@ -63,25 +67,26 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   }
 
   const isStatic = props.node.flags.isStatic;
+  const subscribe = isStatic
+    ? (() => () => undefined)
+    : (props.scope.store?.subscribe ?? (() => () => undefined));
+  const getSnapshot = isStatic
+    ? (() => null)
+    : (() => props.scope.read());
 
-  const { meta, resolvedProps } = isStatic
-    ? {
-        meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
-        resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
-      }
-    : useSyncExternalStoreWithSelector(
-        props.scope.store?.subscribe ?? (() => () => undefined),
-        () => props.scope.read(),
-        () => props.scope.read(),
-        () => ({
-          meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
-          resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
-        }),
-        (prev: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps } | null, next: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps }) => {
-          if (!prev) return false;
-          return prev.meta === next.meta && prev.resolvedProps === next.resolvedProps;
-        }
-      );
+  const { meta, resolvedProps } = useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getSnapshot,
+    () => ({
+      meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
+      resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
+    }),
+    (prev: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps } | null, next: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps }) => {
+      if (!prev) return false;
+      return prev.meta === next.meta && prev.resolvedProps === next.resolvedProps;
+    }
+  );
 
   const nodeClassAliases = (props.node.schema as { classAliases?: Record<string, string> }).classAliases;
   const mergedClassAliases = mergeClassAliases(parentClassAliases, nodeClassAliases);
@@ -109,7 +114,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       cid: compiledCid
     });
     return unregister;
-  }, [activeComponentRegistry, activeForm]);
+  }, [activeComponentRegistry, activeForm, props.node]);
 
   useEffect(() => {
     void runtime.ensureImportedNamespaces({
@@ -118,7 +123,18 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       componentRegistry: activeComponentRegistry,
       scope: activeScope,
       node: props.node
-    }).catch(() => undefined);
+    }).catch((error) => {
+      if (!shouldWarnOnImportFailure()) {
+        return;
+      }
+
+      console.warn('[flux-react] Failed to ensure imported namespaces', {
+        nodeId: props.node.id,
+        path: props.node.path,
+        imports: nodeImports,
+        error
+      });
+    });
 
     return () => {
       runtime.releaseImportedNamespaces({

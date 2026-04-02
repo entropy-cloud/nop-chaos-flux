@@ -125,10 +125,6 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const actionScope = props.options?.actionScope ?? currentActionScope;
   const componentRegistry = props.options?.componentRegistry ?? currentComponentRegistry;
 
-  if (!compiled) {
-    return null;
-  }
-
   if (props.options?.scope) {
     scope = props.options.scope;
   } else if (props.options?.data) {
@@ -172,6 +168,10 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
       pendingDataRef.current = null;
     }
   });
+
+  if (!compiled) {
+    return null;
+  }
 
   if (Array.isArray(compiled)) {
     return (
