@@ -1,10 +1,10 @@
 import type { Extension } from '@codemirror/state';
 import { linter, type Diagnostic } from '@codemirror/lint';
 import { EditorView } from '@codemirror/view';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { ExpressionLintConfig } from '../../types';
 
-const PREFIX = 'return (';
-const PREFIX_LEN = PREFIX.length;
+const formulaCompiler = createFormulaCompiler();
 
 function lintExpression(view: EditorView): Diagnostic[] {
   const doc = view.state.doc;
@@ -13,24 +13,12 @@ function lintExpression(view: EditorView): Diagnostic[] {
   if (!expr.trim()) return [];
 
   try {
-    new Function(PREFIX + expr + ')');
+    formulaCompiler.compileExpression(expr);
     return [];
   } catch (err: any) {
     const message = err instanceof SyntaxError ? err.message : String(err);
-
-    let from = 0;
-    let to = expr.length;
-
-    const posMatch = message.match(/position\s+(\d+)/);
-    if (posMatch) {
-      const reportedPos = Number(posMatch[1]) - PREFIX_LEN;
-      if (reportedPos >= 0 && reportedPos <= expr.length) {
-        from = reportedPos;
-        to = Math.min(reportedPos + 1, expr.length);
-      }
-    }
-
-    if (from >= to) from = 0;
+    const from = 0;
+    const to = expr.length;
 
     return [
       {
