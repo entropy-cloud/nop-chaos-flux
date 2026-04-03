@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, ArrowLeft, ArrowRight, X, ReplaceAll } from 'lucide-react'
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
+import { Button, Input } from '@nop-chaos/ui'
 import { ToolbarButton, ToolbarSeparator } from './shared.js'
 
 interface SearchReplaceProps {
@@ -61,39 +62,40 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
     <div className="flex items-center gap-1 p-2 border-l bg-gray-50">
       <div className="flex items-center gap-1 flex-1">
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
-          <input
-            type="text"
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+          <Input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search..."
-            className="pl-7 pr-2 py-1 border rounded text-sm w-32 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            size="sm"
+            className="pl-7 w-32"
           />
         </div>
         <ToolbarButton icon={ArrowLeft} onClick={handlePrev} disabled={!searchText} title="Previous" />
         <ToolbarButton icon={ArrowRight} onClick={handleNext} disabled={!searchText} title="Next" />
-        {resultCount > 0 && <span className="text-xs text-gray-600">{resultCount}</span>}
+        {resultCount > 0 && <span className="text-xs text-muted-foreground">{resultCount}</span>}
       </div>
       <ToolbarSeparator />
       <div className="flex items-center gap-1 flex-1">
         <div className="relative">
-          <ReplaceAll className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
-          <input
-            type="text"
+          <ReplaceAll className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+          <Input
             value={replaceText}
             onChange={(e) => setReplaceText(e.target.value)}
             placeholder="Replace..."
-            className="pl-7 pr-2 py-1 border rounded text-sm w-32 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            size="sm"
+            className="pl-7 w-32"
           />
         </div>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="xs"
           onClick={handleReplace}
           disabled={!searchText}
-          className="px-2 py-1 text-xs rounded border bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-gray-700"
         >
           Replace
-        </button>
+        </Button>
       </div>
       <ToolbarSeparator />
       <ToolbarButton icon={X} onClick={handleClose} title="Close" />

@@ -1,4 +1,6 @@
 import type { ComponentType } from 'react'
+import { Button, Separator } from '@nop-chaos/ui'
+import { cn } from '@nop-chaos/ui'
 
 export interface ToolbarButtonProps {
   icon?: ComponentType<{ className?: string }>
@@ -17,28 +19,41 @@ export function ToolbarButton({
   title,
   label
 }: ToolbarButtonProps) {
+  if (label) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="xs"
+        onClick={onClick}
+        disabled={disabled}
+        title={title}
+        aria-pressed={active}
+        className={cn('flex-shrink-0', active && 'bg-accent text-accent-foreground')}
+      >
+        {Icon && <Icon className="w-4 h-4" />}
+        <span>{label}</span>
+      </Button>
+    )
+  }
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon-xs"
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`p-1.5 rounded transition cursor-pointer flex-shrink-0 flex items-center gap-1 text-sm ${
-        disabled
-          ? 'opacity-40 cursor-not-allowed'
-          : active
-            ? 'bg-blue-50 text-blue-600'
-            : 'hover:bg-gray-100 text-gray-700'
-      }`}
+      aria-pressed={active}
+      className={cn('flex-shrink-0', active && 'bg-accent text-accent-foreground')}
     >
       {Icon && <Icon className="w-4 h-4" />}
-      {label && <span>{label}</span>}
-    </button>
+    </Button>
   )
 }
 
 export function ToolbarSeparator() {
-  return <div className="w-px h-6 bg-gray-200 mx-1 flex-shrink-0" />
+  return <Separator orientation="vertical" className="h-6 mx-1 flex-shrink-0" />
 }
 
 export function ToolbarGroup({

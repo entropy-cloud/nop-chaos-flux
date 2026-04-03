@@ -1,6 +1,7 @@
 import { Bold, Italic, Underline, Strikethrough, Superscript, Subscript, Undo2, Redo2, Paintbrush } from 'lucide-react'
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
 import type { EditorSelectionState } from '@nop-chaos/word-editor-core'
+import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui'
 import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js'
 
 interface FontControlsProps {
@@ -19,30 +20,32 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
       <ToolbarSeparator />
       <ToolbarButton icon={Paintbrush} onClick={() => bridge?.command?.executePainter({ isDblclick: false })} title="Format Painter" />
       <ToolbarSeparator />
-      <select
+      <NativeSelect
         value={selection.font || 'Microsoft YaHei'}
         onChange={(e) => bridge?.command?.executeFont(e.target.value)}
-        className="border rounded text-sm px-1.5 py-1 flex-shrink-0 max-w-[130px]"
         title="Font"
+        size="xs"
+        className="flex-shrink-0 max-w-[130px]"
       >
         {FONTS.map((font) => (
-          <option key={font} value={font}>
+          <NativeSelectOption key={font} value={font}>
             {font}
-          </option>
+          </NativeSelectOption>
         ))}
-      </select>
-      <select
+      </NativeSelect>
+      <NativeSelect
         value={selection.size}
         onChange={(e) => bridge?.command?.executeSize(Number(e.target.value))}
-        className="border rounded text-sm px-1.5 py-1 flex-shrink-0 w-14"
         title="Font Size"
+        size="xs"
+        className="flex-shrink-0 w-14"
       >
         {FONT_SIZES.map((size) => (
-          <option key={size} value={size}>
+          <NativeSelectOption key={size} value={size}>
             {size}
-          </option>
+          </NativeSelectOption>
         ))}
-      </select>
+      </NativeSelect>
       <ToolbarButton
         icon={Bold}
         onClick={() => bridge?.command?.executeBold()}

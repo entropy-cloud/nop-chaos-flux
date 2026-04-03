@@ -1,6 +1,7 @@
 import { AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered } from 'lucide-react'
 import type { CanvasEditorBridge, EditorSelectionState } from '@nop-chaos/word-editor-core'
 import { RowFlex, TitleLevel, ListType } from '@nop-chaos/word-editor-core'
+import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui'
 import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js'
 
 interface ParagraphControlsProps {
@@ -48,21 +49,22 @@ export function ParagraphControls({ bridge, selection }: ParagraphControlsProps)
         title="Justify"
       />
       <ToolbarSeparator />
-      <select
+      <NativeSelect
         value={selection.level ?? 'normal'}
         onChange={(e) => {
           const value = e.target.value
           bridge?.command?.executeTitle(value === 'normal' ? null : (value as TitleLevel))
         }}
-        className="border rounded text-sm px-1.5 py-1 max-w-[90px]"
         title="Heading Level"
+        size="xs"
+        className="max-w-[90px]"
       >
         {HEADING_LEVELS.map((h) => (
-          <option key={h.value} value={h.value}>
+          <NativeSelectOption key={h.value} value={h.value}>
             {h.label}
-          </option>
+          </NativeSelectOption>
         ))}
-      </select>
+      </NativeSelect>
       <ToolbarSeparator />
       <ToolbarButton
         icon={List}
@@ -77,18 +79,19 @@ export function ParagraphControls({ bridge, selection }: ParagraphControlsProps)
         title="Numbered List"
       />
       <ToolbarSeparator />
-      <select
+      <NativeSelect
         value={selection.rowMargin || 1}
         onChange={(e) => bridge?.command?.executeRowMargin(Number(e.target.value))}
-        className="border rounded text-sm px-1.5 py-1 w-16"
         title="Line Spacing"
+        size="xs"
+        className="w-16"
       >
         {LINE_SPACINGS.map((s) => (
-          <option key={s} value={s}>
+          <NativeSelectOption key={s} value={s}>
             {s}x
-          </option>
+          </NativeSelectOption>
         ))}
-      </select>
+      </NativeSelect>
     </ToolbarGroup>
   )
 }

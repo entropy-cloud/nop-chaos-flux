@@ -11,6 +11,16 @@ import {
 } from 'lucide-react'
 import type { CanvasEditorBridge, EditorStoreApi } from '@nop-chaos/word-editor-core'
 import { PAPER_SIZE_PRESETS, PageMode, PaperDirection } from '@nop-chaos/word-editor-core'
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  NativeSelect,
+  NativeSelectOption
+} from '@nop-chaos/ui'
 import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js'
 
 interface PageControlsProps {
@@ -92,18 +102,19 @@ export function PageControls({ bridge, store }: PageControlsProps) {
       <ToolbarButton icon={ZoomIn} onClick={handleZoomIn} title="Zoom In" />
       <ToolbarButton icon={Maximize} onClick={handleZoomReset} title="Reset Zoom" />
       <ToolbarSeparator />
-      <select
+      <NativeSelect
         value="a4"
         onChange={(e) => handlePaperSize(e.target.value)}
-        className="border rounded text-sm px-1.5 py-1 max-w-[80px]"
         title="Paper Size"
+        size="xs"
+        className="max-w-[80px]"
       >
         {Object.entries(PAPER_SIZE_PRESETS).map(([key]) => (
-          <option key={key} value={key}>
+          <NativeSelectOption key={key} value={key}>
             {key.toUpperCase()}
-          </option>
+          </NativeSelectOption>
         ))}
-      </select>
+      </NativeSelect>
       <ToolbarButton
         icon={Rows3}
         onClick={handleOrientation}
@@ -113,59 +124,61 @@ export function PageControls({ bridge, store }: PageControlsProps) {
       <ToolbarSeparator />
       <ToolbarButton icon={FileText} onClick={() => setShowWatermarkDialog(true)} title="Watermark" />
       <ToolbarButton icon={Printer} onClick={() => bridge?.command?.executePrint()} title="Print" />
-      {showMarginDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowMarginDialog(false)}>
-          <div className="bg-white rounded-lg shadow-xl p-6 w-96 max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-sm font-semibold mb-3">Page Margins</h3>
-            <div className="space-y-2">
-              {(['Top', 'Right', 'Bottom', 'Left'] as const).map((label, i) => (
-                <div key={label} className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 w-14">{label}</span>
-                  <input
-                    type="number"
-                    value={margins[i]}
-                    onChange={(e) => {
-                      const newMargins = [...margins] as [number, number, number, number]
-                      newMargins[i] = Number(e.target.value) || 0
-                      setMargins(newMargins)
-                    }}
-                    className="flex-1 border rounded px-2 py-1 text-sm"
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-end gap-2 mt-3">
-              <button type="button" onClick={() => setShowMarginDialog(false)} className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
-              <button type="button" onClick={handleApplyMargins} className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">Apply</button>
-            </div>
+
+      <Dialog open={showMarginDialog} onOpenChange={(open) => { if (!open) setShowMarginDialog(false) }}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Page Margins</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(['Top', 'Right', 'Bottom', 'Left'] as const).map((label, i) => (
+              <div key={label} className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground w-14">{label}</span>
+                <Input
+                  type="number"
+                  value={margins[i]}
+                  onChange={(e) => {
+                    const newMargins = [...margins] as [number, number, number, number]
+                    newMargins[i] = Number(e.target.value) || 0
+                    setMargins(newMargins)
+                  }}
+                  size="sm"
+                  className="flex-1"
+                />
+              </div>
+            ))}
           </div>
-        </div>
-      )}
-      {showWatermarkDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowWatermarkDialog(false)}>
-          <div className="bg-white rounded-lg shadow-xl p-6 w-96 max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-sm font-semibold mb-3">Watermark</h3>
-            <input
-              type="text"
-              placeholder="Watermark text"
-              value={watermarkText}
-              onChange={(e) => setWatermarkText(e.target.value)}
-              className="w-full border rounded px-2 py-1 text-sm"
-            />
-            <div className="flex justify-end gap-2 mt-3">
-              <button type="button" onClick={handleDeleteWatermark} className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded">
-                Delete
-              </button>
-              <button type="button" onClick={handleAddWatermark} className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">
-                Add
-              </button>
-              <button type="button" onClick={() => { setShowWatermarkDialog(false); setWatermarkText('') }} className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded">
-                Cancel
-              </button>
-            </div>
+          <div className="flex justify-end gap-2 mt-3">
+            <Button variant="ghost" size="sm" onClick={() => setShowMarginDialog(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleApplyMargins}>Apply</Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showWatermarkDialog} onOpenChange={(open) => { if (!open) { setShowWatermarkDialog(false); setWatermarkText('') } }}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Watermark</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Watermark text"
+            value={watermarkText}
+            onChange={(e) => setWatermarkText(e.target.value)}
+            size="sm"
+          />
+          <div className="flex justify-end gap-2 mt-3">
+            <Button variant="destructive" size="sm" onClick={handleDeleteWatermark}>
+              Delete
+            </Button>
+            <Button size="sm" onClick={handleAddWatermark} disabled={!watermarkText.trim()}>
+              Add
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => { setShowWatermarkDialog(false); setWatermarkText('') }}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </ToolbarGroup>
   )
 }
