@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import type { DesignerCore, DesignerSnapshot, DesignerConfig, NodeTypeConfig, EdgeTypeConfig, NormalizedDesignerConfig } from '@nop-chaos/flow-designer-core';
@@ -23,17 +23,11 @@ export function useDesignerContext(): DesignerContextValue {
 }
 
 export function useDesignerSnapshot(core: DesignerCore): DesignerSnapshot {
-  const [snapshot, setSnapshot] = useState<DesignerSnapshot>(() => core.getSnapshot());
-
-  useEffect(() => {
-    setSnapshot(core.getSnapshot());
-    const unsub = core.subscribe(() => {
-      setSnapshot(core.getSnapshot());
-    });
-    return unsub;
-  }, [core]);
-
-  return snapshot;
+  return useSyncExternalStore(
+    core.subscribe,
+    core.getSnapshot,
+    core.getSnapshot,
+  );
 }
 
 export function notifyCommandFailure(
@@ -105,22 +99,20 @@ export function useDesignerHostScope(input: {
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
   const scopeData = useMemo(() => buildDesignerScopeData(input), [input]);
-  const scopeRef = React.useRef<{ parentScope: ScopeRef; scope: ScopeRef; path: string } | undefined>(undefined);
-
-  if (!scopeRef.current || scopeRef.current.parentScope !== parentScope || scopeRef.current.path !== input.path) {
-    scopeRef.current = {
-      parentScope,
-      path: input.path,
-      scope: runtime.createChildScope(parentScope, scopeData, {
+  const scope = useMemo(
+    () =>
+      runtime.createChildScope(parentScope, scopeData, {
         scopeKey: `${input.path}:designer-host`,
         pathSuffix: 'designer'
-      })
-    };
-  } else {
-    scopeRef.current.scope.merge(scopeData);
-  }
+      }),
+    [input.path, parentScope, runtime, scopeData]
+  );
 
-  return scopeRef.current.scope;
+  useEffect(() => {
+    scope.merge(scopeData);
+  }, [scope, scopeData]);
+
+  return scope;
 }
 
 export function useNormalizedConfig(): NormalizedDesignerConfig {

@@ -112,7 +112,7 @@ function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPag
     if (!jsonOpen) return null;
     try { return JSON.parse(core.exportDocument()); }
     catch { return null; }
-  }, [core, jsonOpen, snapshot.doc]);
+  }, [core, jsonOpen]);
 
   useLayoutEffect(() => {
     if (!actionScope || !mergedDesignerProvider) {

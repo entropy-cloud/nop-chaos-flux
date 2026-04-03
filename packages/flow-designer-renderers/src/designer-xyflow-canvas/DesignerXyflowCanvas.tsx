@@ -22,7 +22,7 @@ import '@xyflow/react/dist/style.css';
 import { DesignerXyflowNode } from './DesignerXyflowNode';
 import { DesignerXyflowEdge } from './DesignerXyflowEdge';
 import { createXyflowNodes, createXyflowEdges, normalizeControlledViewport, viewportsEqual, normalizeViewportChange, normalizePositionSignature } from './xyflow-utils';
-import type { DesignerXyflowControlledViewport, XyflowViewportChange } from './types';
+import type { XyflowViewportChange } from './types';
 import type { CanvasConfig, DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 
 export const DESIGNER_PALETTE_NODE_MIME = 'application/x-flow-designer-node-type';
@@ -74,7 +74,6 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     [props.snapshot.doc.viewport, props.snapshot.viewport]
   );
 
-  const [controlledViewport, setControlledViewport] = useState<DesignerXyflowControlledViewport>(viewport);
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const lastCommittedPositionsRef = useRef<Map<string, string>>(new Map());
@@ -103,10 +102,6 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
       minimapSvg.setAttribute('preserveAspectRatio', 'none');
     }
   }, [showMinimap, localNodes, localEdges]);
-
-  useEffect(() => {
-    setControlledViewport((current) => (viewportsEqual(current, viewport) ? current : viewport));
-  }, [viewport]);
 
   useEffect(() => {
     const snapshotPositionMap = new Map(
@@ -193,8 +188,6 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
       return;
     }
 
-    setControlledViewport((current) => (viewportsEqual(current, normalized) ? current : normalized));
-
     if (!viewportsEqual(viewport, normalized)) {
       props.onViewportChange(normalized, undefined);
     }
@@ -266,7 +259,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
             nodeTypes={xyflowNodeTypes}
             edgeTypes={xyflowEdgeTypes}
             onInit={(instance) => setReactFlowInstance(instance)}
-          viewport={controlledViewport}
+          viewport={viewport}
             fitView
             nodesConnectable
             elementsSelectable

@@ -49,6 +49,14 @@ interface HistorySnapshot {
   revision: number;
 }
 
+function createInitialSnapshot(initialDocument?: FlowCanvasDocument): HistorySnapshot {
+  return {
+    nodes: cloneNodes(initialDocument?.nodes ?? []),
+    edges: cloneEdges(initialDocument?.edges ?? []),
+    revision: 0
+  };
+}
+
 function cloneNodes(nodes: FlowCanvasNode[]): FlowCanvasNode[] {
   return structuredClone(nodes);
 }
@@ -66,24 +74,30 @@ function shouldRecordHistory(changes: Array<NodeChange | EdgeChange>): boolean {
 }
 
 export function useFlowCanvasStore(initialDocument?: FlowCanvasDocument): FlowCanvasStore {
-  const [nodes, setNodes] = useState<FlowCanvasNode[]>(() => initialDocument?.nodes ?? []);
-  const [edges, setEdges] = useState<FlowCanvasEdge[]>(() => initialDocument?.edges ?? []);
+  const initialSnapshot = useMemo(() => createInitialSnapshot(initialDocument), [initialDocument]);
+  const [nodes, setNodes] = useState<FlowCanvasNode[]>(() => cloneNodes(initialSnapshot.nodes));
+  const [edges, setEdges] = useState<FlowCanvasEdge[]>(() => cloneEdges(initialSnapshot.edges));
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-  const [revision, setRevision] = useState(0);
-  const [savedRevision, setSavedRevision] = useState(0);
+  const [revision, setRevision] = useState(() => initialSnapshot.revision);
+  const [savedRevision, setSavedRevision] = useState(() => initialSnapshot.revision);
+  const [historyIndex, setHistoryIndex] = useState(() => 0);
+  const [historyLength, setHistoryLength] = useState(() => 1);
 
-  const savedDocumentRef = useRef<FlowCanvasDocument | null>(null);
-  const historyRef = useRef<HistorySnapshot[]>([]);
-  const historyIndexRef = useRef<number>(-1);
-  const revisionRef = useRef(0);
+  const savedDocumentRef = useRef<FlowCanvasDocument | null>({
+    nodes: cloneNodes(initialSnapshot.nodes),
+    edges: cloneEdges(initialSnapshot.edges)
+  });
+  const historyRef = useRef<HistorySnapshot[]>([initialSnapshot]);
+  const historyIndexRef = useRef<number>(0);
+  const revisionRef = useRef(initialSnapshot.revision);
   const nodesRef = useRef<FlowCanvasNode[]>(nodes);
   const edgesRef = useRef<FlowCanvasEdge[]>(edges);
 
   const dirty = useMemo(() => revision !== savedRevision, [revision, savedRevision]);
 
-  const canUndo = historyIndexRef.current > 0;
-  const canRedo = historyIndexRef.current < historyRef.current.length - 1;
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < historyLength - 1;
 
   useEffect(() => {
     nodesRef.current = nodes;
@@ -93,33 +107,15 @@ export function useFlowCanvasStore(initialDocument?: FlowCanvasDocument): FlowCa
     edgesRef.current = edges;
   }, [edges]);
 
-  useEffect(() => {
-    if (initialDocument) {
-      const nextNodes = cloneNodes(initialDocument.nodes);
-      const nextEdges = cloneEdges(initialDocument.edges);
-      savedDocumentRef.current = {
-        nodes: cloneNodes(initialDocument.nodes),
-        edges: cloneEdges(initialDocument.edges)
-      };
-      nodesRef.current = nextNodes;
-      edgesRef.current = nextEdges;
-      revisionRef.current = 0;
-      setRevision(0);
-      setSavedRevision(0);
-      setNodes(nextNodes);
-      setEdges(nextEdges);
-      historyRef.current = [{ nodes: cloneNodes(initialDocument.nodes), edges: cloneEdges(initialDocument.edges), revision: 0 }];
-      historyIndexRef.current = 0;
-    }
-  }, [initialDocument]);
-
   const recordHistory = useCallback((snapshot: HistorySnapshot) => {
     const history = historyRef.current;
     const index = historyIndexRef.current;
-    
+
     history.splice(index + 1);
     history.push(snapshot);
     historyIndexRef.current = history.length - 1;
+    setHistoryIndex(history.length - 1);
+    setHistoryLength(history.length);
   }, []);
 
   const commitSnapshot = useCallback((nextNodes: FlowCanvasNode[], nextEdges: FlowCanvasEdge[], options?: { recordHistory?: boolean }) => {
@@ -250,6 +246,7 @@ export function useFlowCanvasStore(initialDocument?: FlowCanvasDocument): FlowCa
     if (index > 0) {
       const snapshot = history[index - 1];
       historyIndexRef.current = index - 1;
+      setHistoryIndex(index - 1);
       const nextNodes = cloneNodes(snapshot.nodes);
       const nextEdges = cloneEdges(snapshot.edges);
       nodesRef.current = nextNodes;
@@ -268,6 +265,7 @@ export function useFlowCanvasStore(initialDocument?: FlowCanvasDocument): FlowCa
     if (index < history.length - 1) {
       const snapshot = history[index + 1];
       historyIndexRef.current = index + 1;
+      setHistoryIndex(index + 1);
       const nextNodes = cloneNodes(snapshot.nodes);
       const nextEdges = cloneEdges(snapshot.edges);
       nodesRef.current = nextNodes;

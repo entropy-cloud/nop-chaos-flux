@@ -247,6 +247,18 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   let selectedEdgeIds: string[] = [];
   let gridEnabled = true;
   let viewport = normalizeViewport(doc.viewport);
+  let cachedSelection = getSelectionSummary();
+  let cachedSnapshot: DesignerSnapshot = {
+    doc,
+    selection: cachedSelection,
+    activeNode: null,
+    activeEdge: null,
+    canUndo: canUndo(),
+    canRedo: canRedo(),
+    isDirty: isDirty(),
+    gridEnabled,
+    viewport,
+  };
 
   let transactionStack: Array<{ id: string; label: string; snapshotBefore: GraphDocument }> = [];
 
@@ -315,17 +327,47 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   function getSnapshot(): DesignerSnapshot {
     const activeNodeId = selectedNodeIds[0] ?? null;
     const activeEdgeId = selectedEdgeIds[0] ?? null;
-    return {
+    const selection = getSelectionSummary();
+    const activeNode = activeNodeId ? doc.nodes.find((n) => n.id === activeNodeId) ?? null : null;
+    const activeEdge = activeEdgeId ? doc.edges.find((e) => e.id === activeEdgeId) ?? null : null;
+    const nextCanUndo = canUndo();
+    const nextCanRedo = canRedo();
+    const nextIsDirty = isDirty();
+
+    const selectionUnchanged =
+      cachedSelection.activeNodeId === selection.activeNodeId &&
+      cachedSelection.activeEdgeId === selection.activeEdgeId &&
+      cachedSelection.selectedNodeIds === selection.selectedNodeIds &&
+      cachedSelection.selectedEdgeIds === selection.selectedEdgeIds;
+
+    if (
+      cachedSnapshot.doc === doc &&
+      selectionUnchanged &&
+      cachedSnapshot.activeNode === activeNode &&
+      cachedSnapshot.activeEdge === activeEdge &&
+      cachedSnapshot.canUndo === nextCanUndo &&
+      cachedSnapshot.canRedo === nextCanRedo &&
+      cachedSnapshot.isDirty === nextIsDirty &&
+      cachedSnapshot.gridEnabled === gridEnabled &&
+      cachedSnapshot.viewport === viewport
+    ) {
+      return cachedSnapshot;
+    }
+
+    cachedSelection = selection;
+    cachedSnapshot = {
       doc,
-      selection: getSelectionSummary(),
-      activeNode: activeNodeId ? doc.nodes.find((n) => n.id === activeNodeId) ?? null : null,
-      activeEdge: activeEdgeId ? doc.edges.find((e) => e.id === activeEdgeId) ?? null : null,
-      canUndo: canUndo(),
-      canRedo: canRedo(),
-      isDirty: isDirty(),
+      selection,
+      activeNode,
+      activeEdge,
+      canUndo: nextCanUndo,
+      canRedo: nextCanRedo,
+      isDirty: nextIsDirty,
       gridEnabled,
       viewport,
     };
+
+    return cachedSnapshot;
   }
 
   function getDocument(): GraphDocument {
