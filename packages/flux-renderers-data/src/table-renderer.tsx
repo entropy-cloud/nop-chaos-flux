@@ -233,7 +233,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   }, [source.length, pageSize, paginationEnabled]);
 
   return (
-    <div className="nop-table-wrap grid gap-4" data-testid={props.meta.testid || undefined}>
+    <div className="nop-table-wrap grid gap-4" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {hasRendererSlotContent(headerContent) ? <div data-slot="table-header-region">{headerContent}</div> : null}
 
       <div className="relative" data-slot="table-container">

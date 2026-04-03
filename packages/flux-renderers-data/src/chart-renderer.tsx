@@ -123,6 +123,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       className="nop-chart"
       style={{ height: chartHeight } as CSSProperties}
       data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
     >
       {isEmpty ? (
         <div data-slot="chart-empty">{emptyContent}</div>
