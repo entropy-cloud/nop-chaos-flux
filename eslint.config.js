@@ -3,6 +3,8 @@ const tseslint = require('typescript-eslint');
 const reactHooks = require('eslint-plugin-react-hooks');
 const globals = require('globals');
 
+const reactHooksLatest = reactHooks.configs.flat['recommended-latest'];
+
 module.exports = [
   {
     ignores: ['dist/**', 'coverage/**', 'node_modules/**']
@@ -17,11 +19,9 @@ module.exports = [
         ...globals.node
       }
     },
-    plugins: {
-      'react-hooks': reactHooks
-    },
+    plugins: reactHooksLatest.plugins,
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      ...reactHooksLatest.rules,
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
       'no-new-func': 'error',

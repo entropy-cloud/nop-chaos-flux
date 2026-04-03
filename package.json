@@ -4,17 +4,19 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "pnpm --filter @nop-chaos/flux-playground dev",
+    "postinstall": "node scripts/patch-lucide-react.mjs",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "check:src-artifacts": "node scripts/verify-no-src-artifacts.mjs",
-    "lint": "pnpm -r lint && node scripts/verify-no-src-artifacts.mjs",
-    "clean": "pnpm -r exec npx rimraf node_modules dist && npx rimraf node_modules"
+    "lint": "node scripts/clean-src-artifacts.mjs && node scripts/verify-no-src-artifacts.mjs && pnpm -r lint",
+    "clean": "pnpm -r exec npx rimraf node_modules dist && npx rimraf node_modules",
+    "clean:src-artifacts": "node scripts/clean-src-artifacts.mjs"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.39.4",
     "@playwright/test": "1.59.1",
     "@tailwindcss/postcss": "^4.1.4",
     "@tailwindcss/vite": "^4.2.2",
@@ -23,7 +25,7 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^6.0.1",
-    "eslint": "^10.1.0",
+    "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
     "jsdom": "^29.0.1",
