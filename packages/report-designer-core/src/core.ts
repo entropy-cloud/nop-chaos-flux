@@ -25,8 +25,6 @@ import type {
   ReportDesignerProfile,
 } from './adapters.js';
 import {
-  getCodecId,
-  getPreviewProviderId,
   getProfileFieldDropIds,
   resolveRegistry,
 } from './runtime/registry.js';
@@ -47,6 +45,15 @@ import {
   loadFieldSources,
 } from './runtime/field-sources.js';
 import { createAdapterContext } from './runtime/adapter-context.js';
+import {
+  resolvePreviewAdapter,
+  runPreviewCommand,
+} from './runtime/preview-commands.js';
+import {
+  exportTemplateWithCodec,
+  importTemplateWithCodec,
+  resolveCodecAdapter,
+} from './runtime/codec-commands.js';
 
 export interface ReportDesignerCore {
   getSnapshot(): ReportDesignerRuntimeSnapshot;
@@ -299,35 +306,28 @@ export function createReportDesignerCore(
             preview: { ...current.preview, running: true, mode: command.mode },
           }));
 
-          const previewProviderId = getPreviewProviderId(config, profile);
-          if (!previewProviderId) {
+          const previewResolution = resolvePreviewAdapter({
+            config,
+            adapters: registry,
+            profile,
+          });
+          if ('error' in previewResolution) {
             store.setState((current) => ({
               ...current,
               preview: { running: false, mode: command.mode },
             }));
-            return { ok: false, changed: false, error: new Error('No preview provider configured') };
-          }
-
-          const previewAdapter = registry.previews.get(previewProviderId);
-          if (!previewAdapter) {
-            store.setState((current) => ({
-              ...current,
-              preview: { running: false, mode: command.mode },
-            }));
-            return { ok: false, changed: false, error: new Error(`Preview adapter not found: ${previewProviderId}`) };
+            return { ok: false, changed: false, error: previewResolution.error };
           }
 
           try {
-            const result = await previewAdapter.preview({
-              document: cloneDocument(store.getState().document),
+            const result = await runPreviewCommand({
+              adapter: previewResolution.adapter,
+              config,
+              document: store.getState().document,
+              designer: store.getState(),
+              profile,
               mode: command.mode,
-              params: command.args,
-              context: createAdapterContext({
-                config,
-                document: store.getState().document,
-                designer: store.getState(),
-                profile,
-              }),
+              commandArgs: command.args,
             });
 
             store.setState((current) => ({
@@ -346,18 +346,18 @@ export function createReportDesignerCore(
         }
 
         case 'report-designer:importTemplate': {
-          const codecId = getCodecId(profile);
-          if (!codecId) {
-            return { ok: false, changed: false, error: new Error('No codec configured in profile') };
+          const codecResolution = resolveCodecAdapter({ adapters: registry, profile });
+          if ('error' in codecResolution) {
+            return { ok: false, changed: false, error: codecResolution.error };
           }
-          const codec = registry.codecs.get(codecId);
-          if (!codec) {
-            return { ok: false, changed: false, error: new Error(`Codec not found: ${codecId}`) };
-          }
-          const imported = await codec.importDocument(
-            command.payload,
-            createAdapterContext({ config, document: store.getState().document, designer: store.getState(), profile }),
-          );
+          const imported = await importTemplateWithCodec({
+            adapter: codecResolution.adapter,
+            payload: command.payload,
+            config,
+            document: store.getState().document,
+            designer: store.getState(),
+            profile,
+          });
           store.setState((current) => ({
             ...current,
             document: imported,
@@ -367,19 +367,18 @@ export function createReportDesignerCore(
         }
 
         case 'report-designer:exportTemplate': {
-          const codecId = getCodecId(profile);
-          if (!codecId) {
-            return { ok: false, changed: false, error: new Error('No codec configured in profile') };
+          const codecResolution = resolveCodecAdapter({ adapters: registry, profile });
+          if ('error' in codecResolution) {
+            return { ok: false, changed: false, error: codecResolution.error };
           }
-          const codec = registry.codecs.get(codecId);
-          if (!codec) {
-            return { ok: false, changed: false, error: new Error(`Codec not found: ${codecId}`) };
-          }
-          const exported = await codec.exportDocument(
-            store.getState().document,
-            command.format,
-            createAdapterContext({ config, document: store.getState().document, designer: store.getState(), profile }),
-          );
+          const exported = await exportTemplateWithCodec({
+            adapter: codecResolution.adapter,
+            document: store.getState().document,
+            format: command.format,
+            config,
+            designer: store.getState(),
+            profile,
+          });
           return { ok: true, changed: false, data: exported };
         }
 
