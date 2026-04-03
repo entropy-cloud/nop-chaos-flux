@@ -3,22 +3,24 @@ import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 
-import { useIsMobile } from '../../hooks/use-mobile'
-import { cn } from '../../lib/utils'
-import { Button } from './button'
-import { Input } from './input'
-import { Separator } from './separator'
+import { useIsMobile } from "../../hooks/use-mobile"
+import { cn } from "../../lib/utils"
+import { Button } from "./button"
+import { Input } from "./input"
+import { Separator } from "./separator"
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from './sheet'
-import { Skeleton } from './skeleton'
+} from "./sheet"
+import { Skeleton } from "./skeleton"
 import {
+  Tooltip,
   TooltipContent,
-} from './tooltip'
+  TooltipTrigger,
+} from "./tooltip"
 import { PanelLeftIcon } from "lucide-react"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
@@ -493,6 +495,7 @@ const sidebarMenuButtonVariants = cva(
 )
 
 function SidebarMenuButton({
+  render,
   isActive = false,
   variant = "default",
   size = "default",
@@ -504,6 +507,7 @@ function SidebarMenuButton({
     isActive?: boolean
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
+  const { isMobile, state } = useSidebar()
   const comp = useRender({
     defaultTagName: "button",
     props: mergeProps<"button">(
@@ -512,8 +516,7 @@ function SidebarMenuButton({
       },
       props
     ),
-    render: props.render,
-
+    render: !tooltip ? render : <TooltipTrigger render={render} />,
     state: {
       slot: "sidebar-menu-button",
       sidebar: "menu-button",
@@ -526,7 +529,23 @@ function SidebarMenuButton({
     return comp
   }
 
-  return comp
+  if (typeof tooltip === "string") {
+    tooltip = {
+      children: tooltip,
+    }
+  }
+
+  return (
+    <Tooltip>
+      {comp}
+      <TooltipContent
+        side="right"
+        align="center"
+        hidden={state !== "collapsed" || isMobile}
+        {...tooltip}
+      />
+    </Tooltip>
+  )
 }
 
 function SidebarMenuAction({
