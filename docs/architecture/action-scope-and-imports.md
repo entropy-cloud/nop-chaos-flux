@@ -801,6 +801,13 @@ Current implementation semantics:
 
 Action monitoring should be extended so namespaced actions can be inspected clearly.
 
+Current runtime also exposes a minimal debug snapshot contract on `ActionScope`:
+
+- `getDebugSnapshot?.()` returns the current scope id, parent id, and registered namespace entries
+- each namespace entry can include provider kind (`host` / `import`) and listed methods when the provider exposes them
+
+This keeps debugger and host tooling out of `ActionScope` private maps while still allowing stable inspection-oriented integrations.
+
 Useful fields include:
 
 - original `action.action`
@@ -865,4 +872,3 @@ The active decisions from this document are:
 - `docs/architecture/flow-designer/api.md`
 - `docs/architecture/report-designer/design.md`
 - `docs/architecture/report-designer/contracts.md`
-

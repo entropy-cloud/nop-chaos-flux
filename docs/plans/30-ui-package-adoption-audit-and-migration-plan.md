@@ -1,8 +1,8 @@
 # UI 包统一化审计与迁移计划
 
-> Plan Status: planned
+> Plan Status: in-progress
 > Last Reviewed: 2026-04-03
-> Source: 全仓库通用组件审计——检查所有包是否正确使用 `@nop-chaos/ui` 的通用组件，仅领域特殊组件才自行实现。
+> Source: 全仓库通用组件审计——检查所有包是否正确使用 `@nop-chaos/ui` 的通用组件，仅领域特殊组件才自行实现。包含 toolbar 统一策略分析。
 
 ## 1. 审计结论总览
 
@@ -99,28 +99,15 @@
 
 **现状**：有 `@nop-chaos/ui` 依赖但仅导入 `ScrollArea`。大量原生 HTML + 手写 modal。
 
-#### Toolbar 基元评估
+#### Toolbar 基元
 
-word editor 有三个自建 toolbar 基元：
+word editor 有三个自建 toolbar 基元（`toolbar/shared.tsx`）：
 
-- **`ToolbarButton`**（`toolbar/shared.tsx:12`）：带 icon、active/disabled 状态的按钮，用 inline Tailwind 样式。
-- **`ToolbarSeparator`**（`toolbar/shared.tsx:40`）：`w-px h-6 bg-gray-200` 竖线分隔符。
-- **`ToolbarGroup`**（`toolbar/shared.tsx:44`）：`flex items-center gap-0.5` 容器。
+- **`ToolbarButton`**：带 icon、active/disabled 状态的按钮，inline Tailwind。
+- **`ToolbarSeparator`**：`w-px h-6 bg-gray-200` 竖线分隔符。
+- **`ToolbarGroup`**：`flex items-center gap-0.5` 容器。
 
-**这些是否应该提升为通用 toolbar 抽象？**
-
-**结论：不建立单独的 ribbon/toolbar 抽象。** 理由：
-
-1. 三个编辑器包的 toolbar 架构差异很大：
-   - **word editor**：硬编码 JSX，每个控制区域有丰富的下拉框/颜色选择器/文件上传
-   - **flow designer**：schema 驱动渲染，用表达式求值绑定状态，从 JSON 配置动态生成 toolbar
-   - **spreadsheet**：纯 props 驱动，40+ 回调 props
-2. 基元数量太少（3 个），抽象化收益不足以覆盖 API 设计和维护成本。
-3. `ToolbarButton` 用 `Button variant="ghost" size="icon"` + 自定义 active className 即可替代。
-4. `ToolbarSeparator` 用 `Separator orientation="vertical"` 替代。
-5. `ToolbarGroup` 就是 `<div className="flex items-center gap-0.5">`，不值得抽象。
-
-**方案：在各自包内直接使用 `@nop-chaos/ui` 的 Button/Separator，不新增共享 toolbar 抽象。**
+**方案：迁移到 `@nop-chaos/ui` 的 Button/Separator（详见第 3 节 toolbar 策略）。** 其中 `ToolbarButton` 替换为 `Button variant="ghost" size="icon"` + active className；`ToolbarSeparator` 替换为 `Separator orientation="vertical"`；`ToolbarGroup` 就是 flex div，保留。
 
 #### 迁移清单
 
@@ -147,7 +134,28 @@ word editor 有三个自建 toolbar 基元：
 
 ### 2.4 `@nop-chaos/report-designer-renderers`：中优先级迁移
 
-**现状**：零 `@nop-chaos/ui` 导入，无 `@nop-chaos/ui` 依赖。
+**现状**：零 `@nop-chaos/ui` 导入，无 `@nop-chaos/ui` 依赖。report designer **没有自己的 toolbar**——playground demo 直接导入并实例化 `SpreadsheetToolbar`（来自 `@nop-chaos/spreadsheet-renderers`），绕过了 page renderer 的 `toolbar` region slot。
+
+#### Toolbar 现状与问题
+
+1. **Playground demo 直接实例化 SpreadsheetToolbar**（`ReportDesignerDemo.tsx:224-266`），传入 40+ props。
+2. **Page renderer 有 toolbar region slot**（`page-renderer.tsx:92,112`），但 demo 未使用——toolbar 是在 renderer 外部硬编码的。
+3. **SpreadsheetToolbar 的局限**：
+   - 无字体/字号下拉（word editor 有完整的 `<select>` 下拉）
+   - 无颜色自由选择（仅预设色块：红/蓝/黑/黄/绿，word editor 用 `<input type="color">`）
+   - 无 active 状态反馈（Bold/Italic/Underline 按钮不反映当前样式）
+   - 无删除线/上标/下标
+   - 样式依赖 `apps/playground/src/styles.css` 中的 `.rd-toolbar` / `.rd-toolbar-group` / `.rd-toolbar-separator` CSS 类（散落在 playground，不在组件包内）
+4. **SpreadsheetToolbar 适合纯 spreadsheet，不适合 report designer**——report designer 需要：字段绑定、元数据标注、预览/导出、模板管理等，这些不在 spreadsheet toolbar 的职责范围内。
+
+#### 方案
+
+Report designer 应该有**自己的 toolbar 组件**（`ReportDesignerToolbar`），而不是复用 SpreadsheetToolbar：
+
+1. **组合共享 toolbar 控件**（见第 3 节）——Bold/Italic/Underline + active 态、字体/字号下拉、颜色选择、对齐、撤销/重做、复制/剪切/粘贴。
+2. **叠加 report designer 特有控件**——字段绑定、元数据查看/编辑、预览/导出、模板设置。
+3. **通过 page renderer 的 `toolbar` region slot 注入**，而非在 demo 中直接实例化。
+4. 保留对 spreadsheet 桥的命令调用（底层仍是 spreadsheet 操作），只是 UI 层和 props 接口由 report designer 自己控制。
 
 #### 迁移清单
 
@@ -155,6 +163,8 @@ word editor 有三个自建 toolbar 基元：
 |--------|------|--------|
 | P1 | 原生 `<button className="nop-report-designer__tab">` | `Tabs` / `TabsList` / `TabsTrigger` |
 | P1 | 原生 `<button>` Save/Submit | `Button` |
+| P1 | 直接复用 SpreadsheetToolbar | 新建 `ReportDesignerToolbar`，组合共享控件 + 领域控件 |
+| P2 | `styles.css` 中的 `.rd-toolbar-*` CSS | Tailwind inline classes（迁移后清理） |
 
 #### 前置条件
 
@@ -189,34 +199,139 @@ demo 应用，不影响包的规范性。如需迁移：
 
 ---
 
-## 3. 不新增 ribbon/toolbar 共享抽象的理由
+## 3. Toolbar 统一策略
 
-经审查三个编辑器包（word editor、flow designer、spreadsheet）的 toolbar 实现，确认不建立统一的 ribbon toolbar 抽象：
+### 3.1 两个 toolbar 的对比
 
-1. **架构差异过大**：
-   | 维度 | word editor | flow designer | spreadsheet |
-   |------|------------|---------------|-------------|
-   | 渲染模式 | 硬编码 JSX | schema 驱动 | 硬编码 JSX |
-   | 状态绑定 | bridge + store hook | context + 表达式求值 | 纯 props |
-   | 动作分发 | `bridge.executeXxx()` | `dispatch(command)` | 回调 props |
+经审查 word editor 和 spreadsheet 的 toolbar 实现，两者有大量重叠：
 
-2. **基元太少不值得抽象**：`ToolbarButton` → Button variant、`ToolbarSeparator` → Separator、`ToolbarGroup` → flex div。三个都是对已有组件的简单包装，引入新的抽象层反而增加理解成本。
+| 控件组 | Word Editor (`RibbonToolbar`) | Spreadsheet (`SpreadsheetToolbar`) | 共享？ |
+|--------|------|------|------|
+| Undo/Redo | ✅ `Undo2` / `Redo2`，基于 `selection.undo/redo` disabled | ✅ `Undo2` / `Redo2`，基于 `hasSelection` disabled | ✅ 相同 icon，不同状态源 |
+| Copy/Cut/Paste | ✅ `Copy`/`Scissors`/`ClipboardPaste` | ✅ 同 | ✅ 完全相同 |
+| Bold/Italic/Underline | ✅ 有 **active 态**（`selection.bold` 等） | ✅ **无 active 态** | ⚠️ 控件相同，spreadsheet 缺反馈 |
+| Strikethrough | ✅ | ❌ | ❌ |
+| Superscript/Subscript | ✅ | ❌ | ❌ |
+| Alignment | ✅ `AlignLeft/Center/Right` | ✅ 同 | ✅ 相同 |
+| Font dropdown | ✅ `<select>` 6 种字体 | ❌ | ❌ |
+| Font size dropdown | ✅ `<select>` 16 种字号 | ❌ | ❌ |
+| Color picker | ✅ `<input type="color">` 自由选色 | ⚠️ 预设色块（红/蓝/黑/黄/绿） | ⚠️ 功能差距大 |
+| Background color | ✅ `<input type="color">` | ⚠️ 预设色块（黄/绿/蓝/无） | ⚠️ 同上 |
+| Format Painter | ✅ `Paintbrush` | ❌ | ❌ |
+| Find/Replace | ✅ 独立 `SearchReplace` 子组件 | ✅ 行内面板 | ⚠️ UI 不同，功能相同 |
+| Merge/Unmerge | ❌ | ✅ `TableCellsMerge`/`TableCellsSplit` | ❌ spreadsheet 特有 |
+| Insert/Delete Row/Col | ❌ | ✅ `Plus`/`Minus` | ❌ spreadsheet 特有 |
+| Freeze/Unfreeze | ❌ | ✅ `Snowflake`/`Sun` | ❌ spreadsheet 特有 |
+| Fill Down/Right | ❌ | ✅ `ArrowDown`/`ArrowRight` | ❌ spreadsheet 特有 |
+| Comments | ❌ | ✅ `MessageSquare` | ❌ spreadsheet 特有 |
+| Insert controls | ✅ 表达式/标签/水印/图片/表格 | ❌ | ❌ word 特有 |
+| Template controls | ✅ 数据集/字段插入 | ❌ | ❌ word 特有 |
+| Page controls | ✅ 纸张/边距/方向 | ❌ | ❌ word 特有 |
 
-3. **领域特定控件占比高**：字体下拉、颜色选择器、文件上传、表达式插入、格式刷、纸张设置等都是 word editor 独有的，无法泛化。
+**结论：约 40% 的控件可在两个 toolbar 间共享。**
 
-4. **flow designer 已有更灵活的方案**：它的 schema-driven toolbar 渲染引擎是架构亮点，强行统一会降低其灵活性。
+### 3.2 架构差异
 
-**各包直接使用 `@nop-chaos/ui` 的 Button/Separator/Tabs 等组件即可。**
+| 维度 | Word Editor | Spreadsheet |
+|------|------------|-------------|
+| 渲染模式 | 硬编码 JSX，分 7 个子组件（`FontControls`/`ParagraphControls`/`InsertControls`/`TemplateControls`/`PageControls`/`SearchReplace`/`RibbonToolbar`） | 单文件 261 行，全部 inline |
+| UI 组件 | 原生 `<button>` + inline Tailwind（`ToolbarButton` 自建） | `@nop-chaos/ui` Button + Tooltip |
+| 状态绑定 | bridge + Zustand store hook（`useSyncExternalStoreWithSelector` 读 `selection`） | 纯 props（40+ 回调） |
+| 样式来源 | 全部 inline Tailwind | `.rd-toolbar-*` CSS 类（定义在 `apps/playground/src/styles.css`） |
+| 颜色选择 | `<input type="color">` 自由选色 | 预设色块 |
+
+### 3.3 共享 toolbar 控件组
+
+提取以下可复用的 toolbar 控件组。每组接收统一的 callback 接口，不绑定具体的状态管理：
+
+#### Tier 1 — 高共享度，立即提取
+
+| 控件组 | 包含 | Props 接口 |
+|--------|------|-----------|
+| **TextFormatControls** | Bold/Italic/Underline/Strikethrough（带 active 态） | `{ onStyle: (tool: string) => void; getActive: (tool: string) => boolean; disabled?: boolean }` |
+| **AlignmentControls** | AlignLeft/Center/Right（带 active 态） | `{ onAlign: (align: string) => void; getActive?: (align: string) => boolean; disabled?: boolean }` |
+| **ClipboardControls** | Copy/Cut/Paste/Clear | `{ onCopy, onCut, onPaste, onClear, disabled?: boolean }` |
+| **UndoRedoControls** | Undo/Redo | `{ onUndo, onRedo, canUndo?, canRedo? }` |
+
+#### Tier 2 — 中共享度，可提取但需适配
+
+| 控件组 | 包含 | 说明 |
+|--------|------|------|
+| **FontFamilySelect** | 字体下拉 | word editor 有 6 种字体，spreadsheet 暂无；report designer 需要。提取为 `<NativeSelect>` 包装。 |
+| **FontSizeSelect** | 字号下拉 | 同上。提取为 `<NativeSelect>` 包装。 |
+| **ColorPickerButton** | 颜色选择按钮 | word editor 用 `<input type="color">`，spreadsheet 用预设色块。统一为：自由选色 + 可选预设色板。 |
+| **FindReplacePanel** | 查找替换 | 两者都有，但 UI 不同。可提取共享逻辑（find/replace/findNext/replaceAll），UI 各自适配。 |
+
+#### Tier 3 — 不共享，各包自有
+
+| 控件组 | 归属 | 原因 |
+|--------|------|------|
+| Merge/Unmerge/FillControls | spreadsheet, report designer | 单元格操作，word 无概念 |
+| Insert/Delete Row/Col | spreadsheet, report designer | 同上 |
+| Freeze/Unfreeze | spreadsheet, report designer | 同上 |
+| InsertControls (Expr/Tag/Watermark/Table) | word editor | 文档模型特有 |
+| TemplateControls (Dataset/Field) | word editor | 文档模板特有 |
+| PageControls (Paper/Margin/Orientation) | word editor | 文档页面设置 |
+| FieldBinding/Inspect/Preview/Export | report designer | 报表特有 |
+
+### 3.4 放置位置
+
+**共享控件放在 `@nop-chaos/ui` 中**。理由：
+
+1. 这些控件是对 `@nop-chaos/ui` 基础组件（Button、Separator、NativeSelect、Input）的组装，无领域逻辑。
+2. 与现有 `@nop-chaos/ui` 组件（Button/Separator/Tabs）同层级，消费方一致。
+3. 不需要新建包——增加维护成本，且共享控件数量有限（4 组 Tier 1 + 可选 Tier 2）。
+4. Flow designer 的 schema-driven toolbar 不受影响——它不使用这些控件组。
+
+命名约定：`packages/ui/src/components/toolbar/` 目录，导出：
+- `TextFormatControls` / `AlignmentControls` / `ClipboardControls` / `UndoRedoControls`
+- 可选：`FontFamilySelect` / `FontSizeSelect` / `ColorPickerButton`
+
+### 3.5 各编辑器 toolbar 路线图
+
+#### Word Editor (`RibbonToolbar`)
+
+1. 迁移 `ToolbarButton` → `Button variant="ghost" size="icon"`
+2. 用共享控件替换 `FontControls` 中的 Bold/Italic/Underline/Strikethrough、`ParagraphControls` 中的 Alignment
+3. `UndoRedoControls`、`ClipboardControls` 替换对应部分
+4. 领域特有控件（Insert/Template/Page）保留在 word-editor-renderers 包内
+
+#### Spreadsheet (`SpreadsheetToolbar`)
+
+1. 用共享 `TextFormatControls` 替换 Bold/Italic/Underline，**补上 active 态**（当前缺失）
+2. 用共享 `AlignmentControls` 替换对齐按钮
+3. 用共享 `ClipboardControls` 和 `UndoRedoControls` 替换对应部分
+4. 清除 `apps/playground/src/styles.css` 中的 `.rd-toolbar-*` CSS，改用 inline Tailwind
+5. 可选：添加 `FontFamilySelect` / `FontSizeSelect` / `ColorPickerButton`（提升功能到与 word editor 对齐）
+6. 领域特有控件（Merge/Fill/RowCol/Freeze/Comment）保留在 spreadsheet-renderers 包内
+
+#### Report Designer（新建 `ReportDesignerToolbar`）
+
+1. **不复用 SpreadsheetToolbar**。新建 `ReportDesignerToolbar` 组件。
+2. 组合共享控件：`UndoRedoControls` + `ClipboardControls` + `TextFormatControls` + `AlignmentControls` + 可选 `FontFamilySelect`/`FontSizeSelect`/`ColorPickerButton`
+3. 叠加 spreadsheet 操作控件（从 SpreadsheetToolbar 提取）：Merge/Unmerge/Fill/Insert Row-Col/Freeze
+4. 叠加 report designer 特有控件：字段绑定、元数据查看、预览/导出
+5. 通过 `page-renderer.tsx` 的 `toolbar` region slot 注入，而非在 demo 中直接实例化
+6. 状态绑定：通过 `ReportDesignerBridge` 统一调度 spreadsheet core + designer core
+
+### 3.6 不做的事
+
+1. **不建完整的 ribbon/toolbar 框架**——没有 toolbar layout engine、没有 tab 分页、没有动态配置。只是提取可复用的控件组（React 组件 + props 接口）。
+2. **不改 flow designer 的 toolbar**——它用 schema-driven 渲染，架构不同，共享控件对它无收益。
+3. **不统一状态管理**——各编辑器的状态源不同（bridge/store/props），共享控件通过 callback props 解耦。
 
 ---
 
 ## 4. 执行顺序
 
-0. **@nop-chaos/ui 新增 size 变体**（前置步骤）：Input `sm`、Dialog `size` prop、SelectTrigger `xs`、NativeSelect `xs`
+0. **@nop-chaos/ui 新增 size 变体 + 共享 toolbar 控件组**（前置步骤）：
+   - Size 变体：Input `sm`、Dialog `size` prop、SelectTrigger `xs`、NativeSelect `xs`
+   - Toolbar 控件组：`TextFormatControls`、`AlignmentControls`、`ClipboardControls`、`UndoRedoControls`（Tier 1）
+   - 可选 Tier 2：`FontFamilySelect`、`FontSizeSelect`、`ColorPickerButton`
 1. **flux-code-editor**（最简单，无主题冲突，收益最高——消除最多样板代码）
-2. **word-editor-renderers**（影响面大但模式清晰——toolbar 基元 + dialog 统一）
-3. **report-designer-renderers**（改动量最小）
-4. **spreadsheet-renderers**（补全剩余原生 HTML）
+2. **word-editor-renderers**（toolbar 基元迁移 + 共享控件替换 + dialog 统一）
+3. **report-designer-renderers**（新建 `ReportDesignerToolbar`，组合共享控件 + 领域控件，不再复用 SpreadsheetToolbar）
+4. **spreadsheet-renderers**（用共享控件替换 + 补 active 态 + 清理 `.rd-toolbar-*` CSS）
 5. ~~nop-debugger~~（不迁移）
 6. ~~apps/playground~~（低优先级）
 

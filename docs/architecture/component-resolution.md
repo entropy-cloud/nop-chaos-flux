@@ -125,21 +125,32 @@ function resolveDynamicComponent(
 
 ### 数据结构
 
+运行时内部仍可维护 `cid` / `id` / `name` / dynamic-template 等索引，但这些索引不应作为跨包公开契约暴露给 debugger 或宿主工具。
+
+当前对外稳定的是较窄的调试接口：
+
 ```typescript
 interface ComponentHandleRegistry {
   id: string;
   parent?: ComponentHandleRegistry;
-  
-  // 静态组件：cid -> handle
-  handles: Map<number, ComponentHandle>;
-  
-  // 动态组件：templateId -> (instanceKey -> handle)
-  dynamicHandles: Map<string, Map<string, ComponentHandle>>;
-  
-  // name -> cid（仅调试模式）
-  nameIndex?: Map<string, Set<number>>;
+  register(...): () => void;
+  unregister(handle: ComponentHandle): void;
+  cleanupDynamic(templateId: string): void;
+  resolve(target: ComponentTarget): ComponentHandle | undefined;
+  getHandleByCid?(cid: number): ComponentHandle | undefined;
+  getDebugSnapshot?(): {
+    handles: Array<{
+      cid?: number;
+      id?: string;
+      name?: string;
+      type: string;
+      mounted: boolean;
+    }>;
+  };
 }
 ```
+
+这允许 debugger 按 `cid` 做稳定 inspect，同时避免直接依赖 registry 内部 `Map` 布局。
 
 ### 注册流程
 

@@ -317,6 +317,12 @@ Current scope selector semantics:
 - `useOwnScopeSelector()` reads and subscribes against the current scope's own snapshot only.
 - `readOwn()` stays narrowly defined as "current layer only" and should not be overloaded with parent-chain data.
 
+Current env-handling baseline:
+
+- `env` remains the host integration boundary for fetch/notify/navigation/import hooks.
+- runtime internals read the latest env via a stable getter instead of assuming the first `env` object identity is permanent.
+- React hosts should still treat `env` as semantically stable, but accidental wrapper re-creation no longer implies runtime teardown.
+
 ## Performance Principles
 
 Priority order:

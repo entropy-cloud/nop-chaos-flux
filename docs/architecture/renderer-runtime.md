@@ -344,15 +344,32 @@ interface SchemaRendererProps {
   plugins?: RendererPlugin[];
   pageStore?: PageStoreApi;
   parentScope?: ScopeRef;
+   onComponentRegistryChange?: (componentRegistry: ComponentHandleRegistry | null) => void;
+   onActionScopeChange?: (actionScope: ActionScope | null) => void;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }
 ```
+
+Current root lifecycle callbacks exist for host tooling integrations such as the debugger panel:
+
+- `onComponentRegistryChange` exposes the active root component registry boundary
+- `onActionScopeChange` exposes the active root action-scope boundary
+
+These callbacks are for diagnostics/tooling handoff, not normal renderer data flow.
 
 Root uses explicit props because:
 
 - ownership stays obvious
 - tests stay straightforward
 - embedding and plugin scenarios stay easier to reason about
+
+`env` is still conceptually a host-owned long-lived environment object, but current implementation no longer rebuilds runtime/page state just because the outer `env` wrapper identity changes.
+
+- `SchemaRenderer` keeps runtime/page instances stable across non-structural `env` identity churn
+- runtime subsystems read the latest `env` through a stable getter instead of closing over the initial object
+- `env` changes trigger a lightweight page refresh so env-dependent expressions and props can re-evaluate without dropping form/page state
+
+Hosts should still prefer stable `env` objects when practical, but memoization is now an optimization, not a correctness requirement.
 
 ## Form And Table Expectations
 
