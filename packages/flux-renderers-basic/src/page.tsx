@@ -10,7 +10,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const footerContent = resolveRendererSlotContent(props, 'footer');
 
   return (
-    <section className={classNames('nop-page', props.meta.className)} data-testid={props.meta.testid || undefined}>
+    <section className={classNames('nop-page', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {hasRendererSlotContent(titleContent) ? (
         <header data-slot="page-header">
           <h2>{titleContent}</h2>

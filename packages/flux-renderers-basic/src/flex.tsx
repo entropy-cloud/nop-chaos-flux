@@ -46,6 +46,7 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
       )}
       style={gap.style}
       data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
     >
       {bodyContent ?? itemsContent}
     </div>

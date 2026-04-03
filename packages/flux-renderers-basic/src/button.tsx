@@ -11,12 +11,13 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
     props.props.size === 'sm' || props.props.size === 'lg' ? props.props.size : 'default';
 
   return (
-    <Button
+ <Button
       variant={variant}
       size={size}
       className={props.meta.className}
       type="button"
       data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
       onClick={() => void props.events.onClick?.()}
       disabled={props.meta.disabled}
     >

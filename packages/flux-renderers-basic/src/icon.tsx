@@ -62,6 +62,7 @@ export function IconRenderer(props: RendererComponentProps<IconSchema>) {
       className={classNames('nop-icon', props.meta.className)}
       data-icon={icon}
       data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
       size={16}
       strokeWidth={1.8}
       aria-hidden="true"
