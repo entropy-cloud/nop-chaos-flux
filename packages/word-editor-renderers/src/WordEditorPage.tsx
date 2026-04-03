@@ -3,6 +3,14 @@ import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/w
 import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react'
 import { CanvasEditorBridge, createDatasetStore, createEditorStore, saveDocument, loadDocument } from '@nop-chaos/word-editor-core'
 import type { DataSetSourceType, DataColumnInput, DataSet } from '@nop-chaos/word-editor-core'
+import {
+  Button,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  cn
+} from '@nop-chaos/ui'
 import { EditorCanvas } from './EditorCanvas.js'
 import { RibbonToolbar } from './toolbar/RibbonToolbar.js'
 import { OutlinePanel } from './panels/OutlinePanel.js'
@@ -19,7 +27,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
   const editorStore = useMemo(() => createEditorStore(), [])
   const datasetStore = useMemo(() => createDatasetStore(), [])
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
-  const [showDatasetPanel, setShowDatasetPanel] = useState(true)
+  const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets')
   const [datasetDialogOpen, setDatasetDialogOpen] = useState(false)
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null)
 
@@ -111,13 +119,15 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
     <main className="flex flex-col h-screen bg-[var(--nop-app-bg)]">
       <header className="flex items-center justify-between px-4 py-3 border-b border-[var(--nop-border)] bg-[var(--nop-nav-surface)]">
         <div className="flex items-center gap-3">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon-sm"
             onClick={onBack}
-            className="px-3 py-2 rounded-full border border-[var(--nop-nav-border)] bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] font-sans text-[13px] font-bold cursor-pointer transition-[transform,box-shadow,border-color] duration-160 hover:-translate-y-px hover:shadow-[var(--nop-nav-shadow-active)] hover:border-[var(--nop-nav-hover-border)]"
+            title="Back"
           >
             <ArrowLeft className="w-4 h-4" />
-          </button>
+          </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
             <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">Word Editor</h1>
@@ -127,66 +137,56 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
             <span className="tabular-nums">{wordCount.toLocaleString()} words</span>
           </div>
         </div>
-        <button
+        <Button
           type="button"
+          variant={isDirty ? 'default' : 'outline'}
+          size="sm"
           onClick={handleSave}
-          className={`px-4 py-2 rounded-full border font-sans text-[13px] font-bold cursor-pointer transition-all duration-160 flex items-center gap-2 ${
-            isDirty
-              ? 'bg-[var(--nop-accent)] text-white border-[var(--nop-accent)] hover:bg-[var(--nop-accent-strong)]'
-              : 'bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] border-[var(--nop-nav-border)] hover:shadow-[var(--nop-nav-shadow-active)] hover:border-[var(--nop-nav-hover-border)]'
-          }`}
+          className="rounded-full"
         >
           <Save className="w-4 h-4" />
           {saveMessage || 'Save'}
-        </button>
+        </Button>
       </header>
 
       <RibbonToolbar bridge={bridge} store={editorStore} onInsertExpr={handleInsertExpr} onInsertTag={handleInsertTag} />
 
       <div className="flex flex-1 min-h-0">
         <aside className="w-[280px] border-r border-[var(--nop-border)] bg-[var(--nop-surface)] flex flex-col">
-          <div className="flex border-b border-[var(--nop-border)]">
-            <button
-              type="button"
-              onClick={() => setShowDatasetPanel(true)}
-              className={`flex-1 px-4 py-2.5 text-xs font-medium border-b-2 outline-none focus:bg-[var(--nop-surface-soft)] transition-colors ${
-                showDatasetPanel
-                  ? 'text-[var(--nop-accent)] border-[var(--nop-accent)]'
-                  : 'text-[var(--nop-body-copy)] border-transparent hover:bg-[var(--nop-surface-soft)]'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-1.5">
+          <Tabs data-orientation="horizontal" className="flex-col gap-0">
+            <TabsList variant="line" className="w-full rounded-none border-b border-[var(--nop-border)] px-0">
+              <TabsTrigger
+                data-state={activePanel === 'datasets' ? 'active' : 'inactive'}
+                onClick={() => setActivePanel('datasets')}
+                className={cn('flex-1 py-2.5')}
+              >
                 <Database className="w-3.5 h-3.5" />
                 <span>Datasets</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowDatasetPanel(false)}
-              className={`flex-1 px-4 py-2.5 text-xs font-medium border-b-2 outline-none focus:bg-[var(--nop-surface-soft)] transition-colors ${
-                !showDatasetPanel
-                  ? 'text-[var(--nop-accent)] border-[var(--nop-accent)]'
-                  : 'text-[var(--nop-body-copy)] border-transparent hover:bg-[var(--nop-surface-soft)]'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-1.5">
+              </TabsTrigger>
+              <TabsTrigger
+                data-state={activePanel === 'fields' ? 'active' : 'inactive'}
+                onClick={() => setActivePanel('fields')}
+                className={cn('flex-1 py-2.5')}
+              >
                 <Columns className="w-3.5 h-3.5" />
                 <span>Fields</span>
-              </div>
-            </button>
-          </div>
-          {showDatasetPanel ? (
-            <DatasetPanel
-              store={datasetStore}
-              onAddDataset={handleAddDataset}
-              onEditDataset={handleEditDataset}
-            />
-          ) : (
-            <FieldList
-              store={datasetStore}
-              onFieldClick={handleFieldClick}
-            />
-          )}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent className="flex-1 min-h-0 overflow-hidden">
+              {activePanel === 'datasets' ? (
+                <DatasetPanel
+                  store={datasetStore}
+                  onAddDataset={handleAddDataset}
+                  onEditDataset={handleEditDataset}
+                />
+              ) : (
+                <FieldList
+                  store={datasetStore}
+                  onFieldClick={handleFieldClick}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </aside>
 
         <section className="flex-1 min-w-0 bg-[var(--nop-playground-stage-bg)]">
