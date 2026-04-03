@@ -6,7 +6,6 @@ import type {
   ReportSelectionTarget,
   MetadataBag,
   FieldDragState,
-  FieldDragPayload,
   FieldSourceSnapshot,
   InspectorRuntimeState,
 } from './types.js';
@@ -20,13 +19,34 @@ import type {
 } from './commands.js';
 import type {
   ReportDesignerAdapterRegistry,
-  ReportDesignerAdapterContext,
   InspectorProvider,
   InspectorPanelDescriptor,
   FieldDropAdapter,
   ReportDesignerProfile,
 } from './adapters.js';
-import { createEmptyAdapterRegistry } from './adapters.js';
+import {
+  getCodecId,
+  getPreviewProviderId,
+  getProfileFieldDropIds,
+  resolveRegistry,
+} from './runtime/registry.js';
+import {
+  applyFieldDrop,
+  cloneDocument,
+  cloneMetadataBag,
+  mergeMetadata,
+  writeMetadata,
+} from './runtime/metadata.js';
+import {
+  buildInspectorProvidersByKind,
+  getProfileInspectorIds,
+  resolveInspectorPanelsForTarget,
+} from './runtime/inspector-panels.js';
+import {
+  getProfileFieldSourceIds,
+  loadFieldSources,
+} from './runtime/field-sources.js';
+import { createAdapterContext } from './runtime/adapter-context.js';
 
 export interface ReportDesignerCore {
   getSnapshot(): ReportDesignerRuntimeSnapshot;
@@ -66,29 +86,6 @@ interface ReportDesignerInternalState {
   };
 }
 
-function cloneDocument(document: ReportTemplateDocument): ReportTemplateDocument {
-  return JSON.parse(JSON.stringify(document)) as ReportTemplateDocument;
-}
-
-function cloneMetadataBag(input: MetadataBag | undefined): MetadataBag | undefined {
-  return input ? { ...input } : undefined;
-}
-
-function shallowEqualMetadata(left: MetadataBag | undefined, right: MetadataBag | undefined): boolean {
-  if (left === right) return true;
-  if (!left || !right) return !left && !right;
-  const leftKeys = Object.keys(left);
-  const rightKeys = Object.keys(right);
-  if (leftKeys.length !== rightKeys.length) return false;
-  return leftKeys.every((key) => Object.is(left[key], right[key]));
-}
-
-function normalizeMetadataBag(value: MetadataBag | undefined): MetadataBag | undefined {
-  if (!value) return undefined;
-  const entries = Object.entries(value).filter(([, item]) => item !== undefined);
-  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
-}
-
 function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntimeSnapshot {
   const meta = state.selectionTarget
     ? getTargetMeta(state.document.semantic, state.selectionTarget)
@@ -105,364 +102,11 @@ function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntim
   };
 }
 
-function getMetaContainer(document: ReportTemplateDocument, sheetId: string, kind: 'cell' | 'row' | 'column'): Record<string, MetadataBag> {
-  const semantic = (document.semantic ??= {});
-  switch (kind) {
-    case 'cell': {
-      const cellMeta = (semantic.cellMeta ??= {});
-      return (cellMeta[sheetId] ??= {});
-    }
-    case 'row': {
-      const rowMeta = (semantic.rowMeta ??= {});
-      return (rowMeta[sheetId] ??= {});
-    }
-    case 'column': {
-      const columnMeta = (semantic.columnMeta ??= {});
-      return (columnMeta[sheetId] ??= {});
-    }
-  }
-}
-
-function writeMetadata(
-  document: ReportTemplateDocument,
-  target: ReportSelectionTarget,
-  nextMeta: MetadataBag | undefined,
-): boolean {
-  const normalized = normalizeMetadataBag(nextMeta);
-
-  switch (target.kind) {
-    case 'workbook': {
-      const semantic = (document.semantic ??= {});
-      const changed = !shallowEqualMetadata(semantic.workbookMeta, normalized);
-      semantic.workbookMeta = normalized;
-      return changed;
-    }
-    case 'sheet': {
-      const semantic = (document.semantic ??= {});
-      const sheetMeta = (semantic.sheetMeta ??= {});
-      const currentMeta = sheetMeta[target.sheetId];
-      const changed = !shallowEqualMetadata(currentMeta, normalized);
-      if (normalized) {
-        sheetMeta[target.sheetId] = normalized;
-      } else {
-        delete sheetMeta[target.sheetId];
-      }
-      return changed;
-    }
-    case 'row': {
-      const container = getMetaContainer(document, target.sheetId, 'row');
-      const key = String(target.row);
-      const changed = !shallowEqualMetadata(container[key], normalized);
-      if (normalized) {
-        container[key] = normalized;
-      } else {
-        delete container[key];
-      }
-      return changed;
-    }
-    case 'column': {
-      const container = getMetaContainer(document, target.sheetId, 'column');
-      const key = String(target.col);
-      const changed = !shallowEqualMetadata(container[key], normalized);
-      if (normalized) {
-        container[key] = normalized;
-      } else {
-        delete container[key];
-      }
-      return changed;
-    }
-    case 'cell': {
-      const container = getMetaContainer(document, target.cell.sheetId, 'cell');
-      const key = target.cell.address;
-      const changed = !shallowEqualMetadata(container[key], normalized);
-      if (normalized) {
-        container[key] = normalized;
-      } else {
-        delete container[key];
-      }
-      return changed;
-    }
-    case 'range': {
-      const semantic = (document.semantic ??= {});
-      const rangeMeta = (semantic.rangeMeta ??= {});
-      const sheetRanges = (rangeMeta[target.range.sheetId] ??= []);
-      const range = target.range;
-      const id = `${range.sheetId}:${range.startRow}:${range.startCol}:${range.endRow}:${range.endCol}`;
-      const index = sheetRanges.findIndex((item) => item.id === id);
-      const previous = index >= 0 ? sheetRanges[index].meta : undefined;
-      const changed = !shallowEqualMetadata(previous, normalized);
-
-      if (!normalized) {
-        if (index >= 0) {
-          sheetRanges.splice(index, 1);
-        }
-        return changed;
-      }
-
-      const nextEntry = { id, range: { ...range }, meta: normalized };
-      if (index >= 0) {
-        sheetRanges[index] = nextEntry;
-      } else {
-        sheetRanges.push(nextEntry);
-      }
-      return changed;
-    }
-  }
-}
-
-function mergeMetadata(base: MetadataBag | undefined, patch: MetadataBag): MetadataBag {
-  return { ...(base ?? {}), ...patch };
-}
-
-function applyFieldDrop(
-  document: ReportTemplateDocument,
-  field: FieldDragPayload,
-  target: Extract<ReportSelectionTarget, { kind: 'cell' | 'range' }>,
-): ReportTemplateDocument {
-  const patch: MetadataBag = {
-    [field.type]: {
-      sourceId: field.sourceId,
-      fieldId: field.fieldId,
-      data: field.data,
-    },
-  };
-
-  if (target.kind === 'cell') {
-    writeMetadata(document, target, mergeMetadata(
-      getTargetMeta(document.semantic, target),
-      patch,
-    ));
-    return document;
-  }
-
-  const range = target.range;
-  for (let r = range.startRow; r <= range.endRow; r++) {
-    for (let c = range.startCol; c <= range.endCol; c++) {
-      const cellTarget: ReportSelectionTarget = {
-        kind: 'cell',
-        cell: {
-          sheetId: range.sheetId,
-          address: `${String.fromCharCode(65 + c)}${r + 1}`,
-          row: r,
-          col: c,
-        },
-      };
-      writeMetadata(document, cellTarget, mergeMetadata(
-        getTargetMeta(document.semantic, cellTarget),
-        patch,
-      ));
-    }
-  }
-  return document;
-}
-
-function dedupePanels(panels: InspectorPanelDescriptor[]): InspectorPanelDescriptor[] {
-  const seen = new Set<string>();
-  const deduped: InspectorPanelDescriptor[] = [];
-  for (const panel of panels) {
-    if (!seen.has(panel.id)) {
-      seen.add(panel.id);
-      deduped.push(panel);
-    }
-  }
-  return deduped;
-}
-
-function sortPanels(left: InspectorPanelDescriptor, right: InspectorPanelDescriptor): number {
-  const orderDelta = (left.order ?? 0) - (right.order ?? 0);
-  if (orderDelta !== 0) return orderDelta;
-  return left.title.localeCompare(right.title);
-}
-
-function createAdapterRegistrySnapshot(input?: Partial<ReportDesignerAdapterRegistry>): ReportDesignerAdapterRegistry {
-  return {
-    fieldSources: new Map(input?.fieldSources ?? []),
-    inspectors: new Map(input?.inspectors ?? []),
-    fieldDrops: new Map(input?.fieldDrops ?? []),
-    previews: new Map(input?.previews ?? []),
-    codecs: new Map(input?.codecs ?? []),
-    expressions: new Map(input?.expressions ?? []),
-    references: new Map(input?.references ?? []),
-    inspectorValues: new Map(input?.inspectorValues ?? []),
-  };
-}
-
-function getProfileFieldSourceIds(config: ReportDesignerConfig, profile?: ReportDesignerProfile): string[] {
-  if (profile?.fieldSourceIds?.length) return profile.fieldSourceIds;
-  return config.fieldSources?.map((fs) => fs.id) ?? [];
-}
-
-function getProfileInspectorIds(config: ReportDesignerConfig, profile?: ReportDesignerProfile): string[] {
-  if (profile?.inspectorIds?.length) return profile.inspectorIds;
-  return config.inspector?.providers.map((p) => p.id) ?? [];
-}
-
-function getProfileFieldDropIds(profile?: ReportDesignerProfile): Set<string> | undefined {
-  if (!profile?.fieldDropIds?.length) {
-    return undefined;
-  }
-
-  return new Set(profile.fieldDropIds);
-}
-
-function getPreviewProviderId(config: ReportDesignerConfig, profile?: ReportDesignerProfile): string | undefined {
-  return profile?.previewId ?? config.preview?.provider;
-}
-
-function cloneFieldSourceSnapshot(source: FieldSourceSnapshot): FieldSourceSnapshot {
-  return {
-    id: source.id,
-    label: source.label,
-    groups: source.groups.map((group) => ({
-      id: group.id,
-      label: group.label,
-      expanded: group.expanded ?? true,
-      fields: group.fields.map((field) => ({ ...field })),
-    })),
-  };
-}
-
-type ConfiguredInspectorProvider = NonNullable<ReportDesignerConfig['inspector']>['providers'][number];
-
-function buildInspectorProvidersByKind(providers: ConfiguredInspectorProvider[]): Map<ReportSelectionTarget['kind'], ConfiguredInspectorProvider[]> {
-  const providersByKind = new Map<ReportSelectionTarget['kind'], ConfiguredInspectorProvider[]>();
-
-  for (const provider of providers) {
-    for (const kind of provider.match.kinds) {
-      const existing = providersByKind.get(kind);
-      if (existing) {
-        existing.push(provider);
-      } else {
-        providersByKind.set(kind, [provider]);
-      }
-    }
-  }
-
-  return providersByKind;
-}
-
-function createAdapterContext(input: {
-  config: ReportDesignerConfig;
-  document: ReportTemplateDocument;
-  designer: ReportDesignerRuntimeSnapshot;
-  profile?: ReportDesignerProfile;
-}): ReportDesignerAdapterContext {
-  return {
-    config: input.config,
-    document: cloneDocument(input.document),
-    designer: {
-      ...input.designer,
-      document: cloneDocument(input.designer.document),
-      activeMeta: cloneMetadataBag(input.designer.activeMeta),
-      fieldSources: input.designer.fieldSources.map((source) => ({
-        ...source,
-        groups: source.groups.map((group) => ({
-          ...group,
-          fields: group.fields.map((field) => ({ ...field })),
-        })),
-      })),
-      fieldDrag: input.designer.fieldDrag.payload
-        ? {
-            ...input.designer.fieldDrag,
-            payload: { ...input.designer.fieldDrag.payload, data: { ...input.designer.fieldDrag.payload.data } },
-          }
-        : { ...input.designer.fieldDrag },
-    },
-    profile: input.profile,
-  };
-}
-
-async function loadFieldSources(args: {
-  config: ReportDesignerConfig;
-  document: ReportTemplateDocument;
-  adapters: ReportDesignerAdapterRegistry;
-  profile?: ReportDesignerProfile;
-  selectedFieldSourceIds: Set<string>;
-  staticFieldSourceTemplates: FieldSourceSnapshot[];
-  getSnapshot(): ReportDesignerRuntimeSnapshot;
-}): Promise<FieldSourceSnapshot[]> {
-  const staticSources = args.staticFieldSourceTemplates.map(cloneFieldSourceSnapshot);
-
-  const dynamicSources: FieldSourceSnapshot[] = [];
-  const adapterContext = createAdapterContext({
-    config: args.config,
-    document: args.document,
-    designer: args.getSnapshot(),
-    profile: args.profile,
-  });
-
-  for (const fieldSource of args.config.fieldSources ?? []) {
-    if (!fieldSource.provider || !args.selectedFieldSourceIds.has(fieldSource.id)) continue;
-    const provider = args.adapters.fieldSources.get(fieldSource.provider);
-    if (!provider) continue;
-    const loaded = await provider.load(adapterContext);
-    dynamicSources.push(...loaded);
-  }
-
-  return [...staticSources, ...dynamicSources];
-}
-
-async function resolveInspectorPanelsForTarget(args: {
-  config: ReportDesignerConfig;
-  document: ReportTemplateDocument;
-  adapters: ReportDesignerAdapterRegistry;
-  target: ReportSelectionTarget | undefined;
-  profile?: ReportDesignerProfile;
-  providersByKind: Map<ReportSelectionTarget['kind'], ConfiguredInspectorProvider[]>;
-  designer: ReportDesignerRuntimeSnapshot;
-}): Promise<InspectorPanelDescriptor[]> {
-  if (!args.target) return [];
-
-  const metadata = getTargetMeta(args.document.semantic, args.target);
-  const adapterContext = createAdapterContext({
-    config: args.config,
-    document: args.document,
-    designer: args.designer,
-    profile: args.profile,
-  });
-  const panelContext = {
-    target: args.target,
-    metadata: cloneMetadataBag(metadata),
-    designer: adapterContext.designer,
-    adapterContext,
-  };
-
-  const configuredProviders = args.providersByKind.get(args.target.kind) ?? [];
-  const matchedPanels: InspectorPanelDescriptor[] = [];
-
-  for (const providerConfig of configuredProviders) {
-    if (providerConfig.body) {
-      matchedPanels.push({
-        id: providerConfig.id,
-        title: providerConfig.label ?? providerConfig.id,
-        targetKind: args.target.kind,
-        group: providerConfig.group,
-        order: providerConfig.order,
-        mode: providerConfig.mode,
-        body: providerConfig.body,
-        submitAction: providerConfig.submitAction,
-        readonly: providerConfig.readonly,
-        badge: providerConfig.badge,
-      });
-    }
-
-    if (!providerConfig.provider) continue;
-    const provider = args.adapters.inspectors.get(providerConfig.provider);
-    if (!provider || !provider.match(args.target, adapterContext)) continue;
-    const panels = await provider.getPanels(panelContext);
-    matchedPanels.push(...panels.map((panel) => ({ ...panel, targetKind: panel.targetKind ?? args.target!.kind })));
-  }
-
-  return dedupePanels(matchedPanels).sort(sortPanels);
-}
-
 export function createReportDesignerCore(
   options: CreateReportDesignerCoreOptions,
 ): ReportDesignerCore {
   const { document, config, adapters: providedAdapters, profile } = options;
-  const registry = providedAdapters
-    ? createAdapterRegistrySnapshot(providedAdapters)
-    : createEmptyAdapterRegistry();
+  const registry = resolveRegistry(providedAdapters);
 
   const initialDocument = cloneDocument(document);
   const selectedFieldSourceIds = new Set(getProfileFieldSourceIds(config, profile));
@@ -702,7 +346,7 @@ export function createReportDesignerCore(
         }
 
         case 'report-designer:importTemplate': {
-          const codecId = profile?.codecId;
+          const codecId = getCodecId(profile);
           if (!codecId) {
             return { ok: false, changed: false, error: new Error('No codec configured in profile') };
           }
@@ -723,7 +367,7 @@ export function createReportDesignerCore(
         }
 
         case 'report-designer:exportTemplate': {
-          const codecId = profile?.codecId;
+          const codecId = getCodecId(profile);
           if (!codecId) {
             return { ok: false, changed: false, error: new Error('No codec configured in profile') };
           }
