@@ -126,6 +126,7 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [], pinnedErrors: { earliest: [], latest: [] } }),
     waitForEvent: async () => snapshot.events[0]!,
     setComponentRegistry: vi.fn(),
+    setActionScope: vi.fn(),
     inspectByCid: vi.fn(() => undefined),
     inspectByElement: vi.fn(() => undefined),
     subscribe: () => () => {},

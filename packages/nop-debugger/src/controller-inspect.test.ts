@@ -38,7 +38,7 @@ describe('controller inspector methods', () => {
     document.body.appendChild(div);
     expect(ctrl.inspectByCid(77)).toBeUndefined();
 
-    const mockRegistry = { id: 'reg-1', handles: new Map() };
+    const mockRegistry = { id: 'reg-1', getHandleByCid: () => undefined };
     ctrl.setComponentRegistry(mockRegistry as never);
     const result = ctrl.inspectByCid(77);
     expect(result).toMatchObject({ cid: 77, mounted: true });
@@ -46,7 +46,7 @@ describe('controller inspector methods', () => {
 
   it('inspectByCid returns undefined when element not found', () => {
     const ctrl = createNopDebugger({ id: 'inspect-missing', enabled: true });
-    const mockRegistry = { id: 'reg-1', handles: new Map() };
+    const mockRegistry = { id: 'reg-1', getHandleByCid: () => undefined };
     ctrl.setComponentRegistry(mockRegistry as never);
     const result = ctrl.inspectByCid(999);
     expect(result).toBeUndefined();
@@ -70,7 +70,7 @@ describe('controller inspector methods', () => {
     const mockHandle = { id: 'handle-1', name: 'testForm', type: 'form', _cid: 100, _mounted: true };
     const mockRegistry = {
       id: 'reg-1',
-      handles: new Map([[1, mockHandle]])
+      getHandleByCid: (cid: number) => (cid === 100 ? mockHandle : undefined)
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -106,7 +106,7 @@ describe('controller inspector methods', () => {
 
     const mockRegistry = {
       id: 'reg-1',
-      handles: new Map([[1, mockHandle]])
+      getHandleByCid: (cid: number) => (cid === 200 ? mockHandle : undefined)
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -146,7 +146,7 @@ describe('controller inspector methods', () => {
     span.className = 'test-span';
     document.body.appendChild(span);
 
-    const mockRegistry = { id: 'reg-1', handles: new Map() };
+    const mockRegistry = { id: 'reg-1', getHandleByCid: () => undefined };
     ctrl.setComponentRegistry(mockRegistry as never);
     const result = ctrl.inspectByCid(400);
     expect(result).toMatchObject({

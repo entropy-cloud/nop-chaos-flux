@@ -1,5 +1,6 @@
 import type {
   ActionContext,
+  ActionScope,
   ComponentHandleRegistry,
   RendererEnv,
   RendererPlugin
@@ -31,44 +32,9 @@ import type {
   NopWaitForEventOptions
 } from './types';
 
-type InternalComponentHandle = {
-  _cid?: number;
-  id?: string;
-  name?: string;
-  type: string;
-  _mounted?: boolean;
-  capabilities?: {
-    store?: {
-      getState(): {
-        values?: Record<string, unknown>;
-        errors?: Record<string, unknown>;
-        touched?: Record<string, boolean>;
-        dirty?: Record<string, boolean>;
-        visited?: Record<string, boolean>;
-        submitting?: boolean;
-      };
-    };
-  };
-};
-
-function findHandleByCid(registry: ComponentHandleRegistry, cid: number): InternalComponentHandle | undefined {
-  const typed = registry as unknown as {
-    handles?: Map<number, InternalComponentHandle>;
-  };
-  if (typed.handles) {
-    for (const handle of typed.handles.values()) {
-      if (handle._cid === cid) return handle;
-    }
-  }
-  if (registry.parent) {
-    return findHandleByCid(registry.parent, cid);
-  }
-  return undefined;
-}
-
 function buildInspectResult(
   cid: number,
-  handle: InternalComponentHandle | undefined,
+  handle: ReturnType<NonNullable<ComponentHandleRegistry['getHandleByCid']>> | undefined,
   mounted: boolean,
   element?: HTMLElement
 ): NopComponentInspectResult {
@@ -82,9 +48,20 @@ function buildInspectResult(
     result.handleType = handle.type;
   }
 
-  if (handle?.capabilities?.store) {
+  const capabilityStore = handle?.capabilities?.store as {
+    getState(): {
+      values?: Record<string, unknown>;
+      errors?: Record<string, unknown>;
+      touched?: Record<string, boolean>;
+      dirty?: Record<string, boolean>;
+      visited?: Record<string, boolean>;
+      submitting?: boolean;
+    };
+  } | undefined;
+
+  if (capabilityStore) {
     try {
-      const state = handle.capabilities.store.getState();
+      const state = capabilityStore.getState();
       result.formState = {
         values: state.values ?? {},
         errors: state.errors ?? {},
@@ -138,11 +115,12 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
 
   const requestState = new Map<string, { startedAt: number }>();
   let componentRegistry: ComponentHandleRegistry | undefined;
+  let actionScope: ActionScope | undefined;
 
   const inspectByCid = (cid: number): NopComponentInspectResult | undefined => {
     if (!componentRegistry) return undefined;
     const element = document.querySelector(`[data-cid="${cid}"]`);
-    const handle = element ? findHandleByCid(componentRegistry, cid) : undefined;
+    const handle = element ? componentRegistry.getHandleByCid?.(cid) : undefined;
     if (!handle && !element) return undefined;
     return buildInspectResult(cid, handle, !!element, (element as HTMLElement) ?? undefined);
   };
@@ -152,7 +130,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     if (!cidAttr) return undefined;
     const cid = Number(cidAttr);
     if (!Number.isFinite(cid)) return undefined;
-    const handle = componentRegistry ? findHandleByCid(componentRegistry, cid) : undefined;
+    const handle = componentRegistry?.getHandleByCid?.(cid);
     return buildInspectResult(cid, handle, true, element);
   };
 
@@ -334,6 +312,10 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     setComponentRegistry(registry: ComponentHandleRegistry | null) {
       componentRegistry = registry ?? undefined;
     },
+    setActionScope(nextActionScope: ActionScope | null) {
+      actionScope = nextActionScope ?? undefined;
+      void actionScope;
+    },
     inspectByCid,
     inspectByElement
   } satisfies NopDebuggerController;
@@ -357,4 +339,3 @@ export function createNopDiagnosticReport(
 ): NopDiagnosticReport {
   return controller.createDiagnosticReport(options);
 }
-

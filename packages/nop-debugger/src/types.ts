@@ -1,4 +1,4 @@
-import type { ActionContext, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
+import type { ActionContext, ActionScope, ComponentHandleRegistry, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
 
 export type NopDebuggerTab = 'overview' | 'timeline' | 'network' | 'node';
 
@@ -319,7 +319,8 @@ export interface NopDebuggerController {
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
-  setComponentRegistry(registry: import('@nop-chaos/flux-core').ComponentHandleRegistry | null): void;
+  setComponentRegistry(registry: ComponentHandleRegistry | null): void;
+  setActionScope(actionScope: ActionScope | null): void;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
   subscribe(listener: () => void): () => void;
@@ -333,4 +334,3 @@ declare global {
     __NOP_DEBUGGER_HUB__?: NopDebuggerHub;
   }
 }
-
