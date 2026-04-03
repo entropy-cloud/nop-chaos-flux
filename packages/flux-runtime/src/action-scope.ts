@@ -69,6 +69,17 @@ export function createActionScope(input: { id: string; parent?: ActionScope }): 
     },
     listNamespaces() {
       return Array.from(namespaces.keys());
+    },
+    getDebugSnapshot() {
+      return {
+        id: input.id,
+        parentId: input.parent?.id,
+        namespaces: Array.from(namespaces.entries()).map(([namespace, provider]) => ({
+          namespace,
+          providerKind: provider.kind,
+          methods: provider.listMethods?.()
+        }))
+      };
     }
   };
 }
@@ -76,4 +87,3 @@ export function createActionScope(input: { id: string; parent?: ActionScope }): 
 export function isNamespacedAction(actionName: string): boolean {
   return parseActionName(actionName) !== undefined;
 }
-

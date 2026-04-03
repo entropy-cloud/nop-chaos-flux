@@ -57,6 +57,18 @@ export interface ResolvedActionHandler {
   sourceScopeId: string;
 }
 
+export interface ActionScopeDebugNamespaceEntry {
+  namespace: string;
+  providerKind?: 'host' | 'import';
+  methods?: readonly string[];
+}
+
+export interface ActionScopeDebugSnapshot {
+  id: string;
+  parentId?: string;
+  namespaces: ActionScopeDebugNamespaceEntry[];
+}
+
 export interface ActionScope {
   id: string;
   parent?: ActionScope;
@@ -64,6 +76,7 @@ export interface ActionScope {
   registerNamespace(namespace: string, provider: ActionNamespaceProvider): () => void;
   unregisterNamespace(namespace: string): void;
   listNamespaces(): readonly string[];
+  getDebugSnapshot?(): ActionScopeDebugSnapshot;
 }
 
 export interface ImportedLibraryModule {

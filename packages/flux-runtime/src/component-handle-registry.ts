@@ -220,7 +220,27 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
         unindexHandle(handle);
       }
     },
-    resolve: resolveInScope
+    resolve: resolveInScope,
+    getHandleByCid(cid) {
+      const handle = handlesByCid.get(cid);
+
+      if (handle && handle._mounted !== false) {
+        return handle;
+      }
+
+      return input.parent?.getHandleByCid?.(cid);
+    },
+    getDebugSnapshot() {
+      return {
+        handles: Array.from(handles).map((handle) => ({
+          cid: handle._cid,
+          id: handle.id,
+          name: handle.name,
+          type: handle.type,
+          mounted: handle._mounted !== false,
+          capabilities: handle.capabilities,
+        }))
+      };
+    }
   };
 }
-

@@ -26,6 +26,19 @@ export interface ComponentHandle {
   capabilities: ComponentCapabilities;
 }
 
+export interface ComponentHandleDebugEntry {
+  cid?: number;
+  id?: string;
+  name?: string;
+  type: string;
+  mounted: boolean;
+  capabilities?: ComponentCapabilities;
+}
+
+export interface ComponentHandleRegistryDebugSnapshot {
+  handles: ComponentHandleDebugEntry[];
+}
+
 export interface ComponentHandleRegistry {
   id: string;
   parent?: ComponentHandleRegistry;
@@ -41,4 +54,6 @@ export interface ComponentHandleRegistry {
   unregister(handle: ComponentHandle): void;
   cleanupDynamic(templateId: string): void;
   resolve(target: ComponentTarget): ComponentHandle | undefined;
+  getHandleByCid?(cid: number): ComponentHandle | undefined;
+  getDebugSnapshot?(): ComponentHandleRegistryDebugSnapshot;
 }
