@@ -18,7 +18,9 @@ export function createSharedVitestConfig(options: SharedVitestConfigOptions) {
           }
         }),
     test: {
-      environment: options.environment
+      environment: options.environment,
+      include: ['**/*.{test,spec}.ts', '**/*.{test,spec}.tsx'],
+      exclude: ['**/node_modules/**', '**/.git/**', '**/dist/**']
     }
   });
 }
