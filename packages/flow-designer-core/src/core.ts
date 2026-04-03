@@ -5,7 +5,6 @@ import type {
   DesignerConfig,
   NormalizedDesignerConfig,
   DesignerSnapshot,
-  SelectionSummary,
   DesignerEvent
 } from './types';
 import { cloneDocument, cloneNode, generateId } from './core/clone';
@@ -24,6 +23,51 @@ import {
   normalizeViewportInput,
   viewportsEqual,
 } from './core/viewport';
+import {
+  canRedoHistory,
+  canUndoHistory,
+  createHistoryState,
+  getCurrentRevision,
+  pushHistoryEntry,
+  redoHistory,
+  undoHistory,
+  type DesignerHistoryState,
+} from './core/history';
+import {
+  clearSelectionState,
+  createSelectionState,
+  getSelectionSummary,
+  removeEdgeFromSelection,
+  removeNodeFromSelection,
+  selectAllNodeIds,
+  selectSingleEdge,
+  selectSingleNode,
+  setSelectionState,
+  toggleExistingEdgeSelection,
+  toggleNodeSelection as toggleExistingNodeSelection,
+  type DesignerSelectionState,
+} from './core/selection';
+import {
+  beginTransactionState,
+  commitTransactionState,
+  rollbackTransactionState,
+  type DesignerTransaction,
+} from './core/transactions';
+import {
+  addNodeToDocument,
+  layoutNodesInDocument,
+  moveNodesInDocument,
+  removeNodeFromDocument,
+  replaceNodeInDocument,
+  updateMultipleNodesInDocument,
+  updateNodeDataInDocument,
+} from './core/node-operations';
+import {
+  addEdgeToDocument,
+  removeEdgeFromDocument,
+  replaceEdgeInDocument,
+  updateEdgeDataInDocument,
+} from './core/edge-operations';
 
 export interface DesignerCore {
   getSnapshot(): DesignerSnapshot;
@@ -80,28 +124,21 @@ export interface DesignerCore {
   isInTransaction(): boolean;
 }
 
-interface HistoryEntry {
-  doc: GraphDocument;
-  revision: number;
-}
-
 export function createDesignerCore(initialDoc: GraphDocument, config: DesignerConfig): DesignerCore {
   let doc = cloneDocument(initialDoc);
   const normalizedConfig = normalizeConfig(config);
   const listeners = new Set<(event: DesignerEvent) => void>();
 
-  let history: HistoryEntry[] = [];
-  let historyIndex = -1;
+  let historyState: DesignerHistoryState = createHistoryState(doc, 0);
   let savedDoc: GraphDocument | null = cloneDocument(doc);
   let docRevision = 0;
   let savedRevision = 0;
   let clipboard: GraphNode | null = null;
 
-  let selectedNodeIds: string[] = [];
-  let selectedEdgeIds: string[] = [];
+  let selectionState: DesignerSelectionState = createSelectionState();
   let gridEnabled = true;
   let viewport = normalizeViewport(doc.viewport);
-  let cachedSelection = getSelectionSummary();
+  let cachedSelection = getSelectionSummary(selectionState);
   let cachedSnapshot: DesignerSnapshot = {
     doc,
     selection: cachedSelection,
@@ -114,7 +151,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     viewport,
   };
 
-  let transactionStack: Array<{ id: string; label: string; snapshotBefore: GraphDocument }> = [];
+  let transactionStack: DesignerTransaction[] = [];
 
   const maxHistorySize = 50;
 
@@ -149,39 +186,22 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function pushHistory() {
-    if (historyIndex < history.length - 1) {
-      history = history.slice(0, historyIndex + 1);
-    }
-    history.push({ doc: cloneDocument(doc), revision: docRevision });
-    if (history.length > maxHistorySize) {
-      history.shift();
-    } else {
-      historyIndex++;
-    }
+    historyState = pushHistoryEntry(historyState, doc, docRevision, maxHistorySize);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
   }
 
   function canUndo(): boolean {
-    return historyIndex > 0;
+    return canUndoHistory(historyState);
   }
 
   function canRedo(): boolean {
-    return historyIndex < history.length - 1;
-  }
-
-  function getSelectionSummary(): SelectionSummary {
-    return {
-      selectedNodeIds,
-      selectedEdgeIds,
-      activeNodeId: selectedNodeIds[0] ?? null,
-      activeEdgeId: selectedEdgeIds[0] ?? null,
-    };
+    return canRedoHistory(historyState);
   }
 
   function getSnapshot(): DesignerSnapshot {
-    const activeNodeId = selectedNodeIds[0] ?? null;
-    const activeEdgeId = selectedEdgeIds[0] ?? null;
-    const selection = getSelectionSummary();
+    const selection = getSelectionSummary(selectionState);
+    const activeNodeId = selection.activeNodeId;
+    const activeEdgeId = selection.activeEdgeId;
     const activeNode = activeNodeId ? doc.nodes.find((n) => n.id === activeNodeId) ?? null : null;
     const activeEdge = activeEdgeId ? doc.edges.find((e) => e.id === activeEdgeId) ?? null : null;
     const nextCanUndo = canUndo();
@@ -269,7 +289,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       data: { ...nodeType.defaults, ...data },
     };
 
-    setDocument({ ...doc, nodes: [...doc.nodes, newNode] });
+    setDocument(addNodeToDocument(doc, newNode));
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodeAdded', node: newNode });
     emit({ type: 'documentChanged', doc });
@@ -279,15 +299,12 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function updateNode(nodeId: string, data: Record<string, unknown>): void {
-    const nodeIndex = doc.nodes.findIndex((n) => n.id === nodeId);
-    if (nodeIndex === -1) {
+    const updatedNode = updateNodeDataInDocument(doc, nodeId, data);
+    if (!updatedNode) {
       return;
     }
 
-    const updatedNode = { ...doc.nodes[nodeIndex], data: { ...doc.nodes[nodeIndex].data, ...data } };
-    const newNodes = [...doc.nodes];
-    newNodes[nodeIndex] = updatedNode;
-    setDocument({ ...doc, nodes: newNodes });
+    setDocument(replaceNodeInDocument(doc, nodeId, updatedNode));
 
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodeUpdated', node: updatedNode });
@@ -308,9 +325,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     }
 
     const updatedNode = { ...doc.nodes[nodeIndex], position: { ...position } };
-    const newNodes = [...doc.nodes];
-    newNodes[nodeIndex] = updatedNode;
-    setDocument({ ...doc, nodes: newNodes });
+    setDocument(replaceNodeInDocument(doc, nodeId, updatedNode));
 
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodeMoved', node: updatedNode });
@@ -359,18 +374,13 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       }
     }
 
-    const newNodes = doc.nodes.filter((n) => n.id !== nodeId);
-    const newEdges = doc.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
-    setDocument({ ...doc, nodes: newNodes, edges: newEdges });
-
-    if (selectedNodeIds.includes(nodeId)) {
-      selectedNodeIds = selectedNodeIds.filter(id => id !== nodeId);
-    }
+    setDocument(removeNodeFromDocument(doc, nodeId));
+    selectionState = removeNodeFromSelection(selectionState, nodeId);
 
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodeDeleted', nodeId });
     emit({ type: 'documentChanged', doc });
-    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
     updateDirtyState();
   }
 
@@ -428,7 +438,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       data: { ...data },
     };
 
-    setDocument({ ...doc, edges: [...doc.edges, newEdge] });
+    setDocument(addEdgeToDocument(doc, newEdge));
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'edgeAdded', edge: newEdge });
     emit({ type: 'documentChanged', doc });
@@ -458,11 +468,10 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       };
     }
 
-    selectedEdgeIds = [edgeId];
-    selectedNodeIds = [];
+    selectionState = selectSingleEdge(selectionState, edgeId);
 
     if (currentEdge.source === source && currentEdge.target === target) {
-      emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+      emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
       return { ok: true, edge: currentEdge, reason: 'unchanged' };
     }
 
@@ -471,29 +480,24 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       source,
       target
     };
-    const newEdges = [...doc.edges];
-    newEdges[edgeIndex] = updatedEdge;
-    setDocument({ ...doc, edges: newEdges });
+    setDocument(replaceEdgeInDocument(doc, edgeId, updatedEdge));
 
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'edgeUpdated', edge: updatedEdge });
     emit({ type: 'documentChanged', doc });
-    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
     updateDirtyState();
 
     return { ok: true, edge: updatedEdge };
   }
 
   function updateEdge(edgeId: string, data: Record<string, unknown>): void {
-    const edgeIndex = doc.edges.findIndex((e) => e.id === edgeId);
-    if (edgeIndex === -1) {
+    const updatedEdge = updateEdgeDataInDocument(doc, edgeId, data);
+    if (!updatedEdge) {
       return;
     }
 
-    const updatedEdge = { ...doc.edges[edgeIndex], data: { ...doc.edges[edgeIndex].data, ...data } };
-    const newEdges = [...doc.edges];
-    newEdges[edgeIndex] = updatedEdge;
-    setDocument({ ...doc, edges: newEdges });
+    setDocument(replaceEdgeInDocument(doc, edgeId, updatedEdge));
 
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'edgeUpdated', edge: updatedEdge });
@@ -520,114 +524,73 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       return;
     }
 
-    setDocument({ ...doc, edges: doc.edges.filter((e) => e.id !== edgeId) });
-
-    if (selectedEdgeIds.includes(edgeId)) {
-      selectedEdgeIds = selectedEdgeIds.filter(id => id !== edgeId);
-    }
+    setDocument(removeEdgeFromDocument(doc, edgeId));
+    selectionState = removeEdgeFromSelection(selectionState, edgeId);
 
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'edgeDeleted', edgeId });
     emit({ type: 'documentChanged', doc });
-    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
     updateDirtyState();
   }
 
   function selectNode(nodeId: string | null): void {
-    if (selectedNodeIds.length === 1 && selectedNodeIds[0] === nodeId) {
+    const nextSelection = selectSingleNode(selectionState, nodeId);
+    if (nextSelection === selectionState) {
       return;
     }
 
-    selectedNodeIds = nodeId ? [nodeId] : [];
-    selectedEdgeIds = [];
-    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    selectionState = nextSelection;
+    emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
   }
 
   function selectEdge(edgeId: string | null): void {
-    if (selectedEdgeIds.length === 1 && selectedEdgeIds[0] === edgeId) {
+    const nextSelection = selectSingleEdge(selectionState, edgeId);
+    if (nextSelection === selectionState) {
       return;
     }
 
-    selectedEdgeIds = edgeId ? [edgeId] : [];
-    selectedNodeIds = [];
-    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    selectionState = nextSelection;
+    emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
   }
 
   function clearSelection(): void {
-    if (selectedNodeIds.length === 0 && selectedEdgeIds.length === 0) {
+    const nextSelection = clearSelectionState(selectionState);
+    if (nextSelection === selectionState) {
       return;
     }
 
-    selectedNodeIds = [];
-    selectedEdgeIds = [];
-    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    selectionState = nextSelection;
+    emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
   }
 
   function toggleNodeSelection(nodeId: string): void {
-    if (selectedNodeIds.includes(nodeId)) {
-      selectedNodeIds = selectedNodeIds.filter(id => id !== nodeId);
-    } else {
-      selectedNodeIds = [...selectedNodeIds, nodeId];
-      selectedEdgeIds = [];
-    }
-    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    selectionState = toggleExistingNodeSelection(selectionState, nodeId);
+    emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
   }
 
   function toggleEdgeSelection(edgeId: string): void {
-    if (selectedEdgeIds.includes(edgeId)) {
-      selectedEdgeIds = selectedEdgeIds.filter(id => id !== edgeId);
-    } else {
-      selectedEdgeIds = [...selectedEdgeIds, edgeId];
-      selectedNodeIds = [];
-    }
-    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    selectionState = toggleExistingEdgeSelection(selectionState, edgeId);
+    emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
   }
 
   function selectAllNodes(): void {
-    selectedNodeIds = doc.nodes.map(n => n.id);
-    selectedEdgeIds = [];
-    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    selectionState = selectAllNodeIds(selectionState, doc.nodes.map((node) => node.id));
+    emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
   }
 
   function setSelection(nodeIds: string[], edgeIds: string[]): void {
-    selectedNodeIds = nodeIds;
-    selectedEdgeIds = edgeIds;
-    emit({ type: 'selectionChanged', selection: getSelectionSummary() });
+    selectionState = setSelectionState(selectionState, nodeIds, edgeIds);
+    emit({ type: 'selectionChanged', selection: getSelectionSummary(selectionState) });
   }
 
   function moveNodes(deltas: Record<string, { dx: number; dy: number }>): void {
-    const nextNodes = doc.nodes.map((node) => {
-      const delta = deltas[node.id];
-      if (!delta) {
-        return node;
-      }
-
-      const nodeType = normalizedConfig.nodeTypes.get(node.type);
-      if (nodeType?.constraints?.allowMove === false) {
-        return node;
-      }
-
-      const nextPosition = {
-        x: node.position.x + delta.dx,
-        y: node.position.y + delta.dy
-      };
-
-      if (node.position.x === nextPosition.x && node.position.y === nextPosition.y) {
-        return node;
-      }
-
-      return {
-        ...node,
-        position: nextPosition
-      };
-    });
-    const changed = nextNodes.some((node, index) => node !== doc.nodes[index]);
-
-    if (!changed) {
+    const nextDoc = moveNodesInDocument(doc, deltas, normalizedConfig);
+    if (!nextDoc) {
       return;
     }
 
-    setDocument({ ...doc, nodes: nextNodes });
+    setDocument(nextDoc);
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodes:moved' });
     emit({ type: 'documentChanged', doc });
@@ -635,29 +598,12 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function updateMultipleNodes(updates: Array<{ nodeId: string; data: Partial<GraphNode> }>): void {
-    const updatesById = new Map(updates.map((entry) => [entry.nodeId, entry.data]));
-    const nextNodes = doc.nodes.map((node) => {
-      const patch = updatesById.get(node.id);
-      if (!patch) {
-        return node;
-      }
-
-      const nextNode = {
-        ...node,
-        ...patch,
-        position: patch.position ? { ...patch.position } : node.position,
-        data: patch.data ? { ...node.data, ...patch.data } : node.data
-      };
-
-      return nextNode;
-    });
-    const changed = nextNodes.some((node, index) => node !== doc.nodes[index]);
-
-    if (!changed) {
+    const nextDoc = updateMultipleNodesInDocument(doc, updates);
+    if (!nextDoc) {
       return;
     }
 
-    setDocument({ ...doc, nodes: nextNodes });
+    setDocument(nextDoc);
     if (transactionStack.length === 0) pushHistory();
     emitMutation({ type: 'nodes:updated' });
     emit({ type: 'documentChanged', doc });
@@ -665,12 +611,13 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function undo(): void {
-    if (!canUndo()) {
+    const result = undoHistory(historyState);
+    if (!result) {
       return;
     }
 
-    historyIndex--;
-    replaceDocument(cloneDocument(history[historyIndex].doc), history[historyIndex].revision);
+    historyState = result.state;
+    replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
     viewport = normalizeViewport(doc.viewport);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
@@ -679,12 +626,13 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function redo(): void {
-    if (!canRedo()) {
+    const result = redoHistory(historyState);
+    if (!result) {
       return;
     }
 
-    historyIndex++;
-    replaceDocument(cloneDocument(history[historyIndex].doc), history[historyIndex].revision);
+    historyState = result.state;
+    replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
     viewport = normalizeViewport(doc.viewport);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
@@ -693,7 +641,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function copySelection(): void {
-    const activeNodeId = selectedNodeIds[0] ?? null;
+    const activeNodeId = selectionState.selectedNodeIds[0] ?? null;
     if (!activeNodeId) {
       return;
     }
@@ -768,18 +716,12 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function layoutNodes(positions: Map<string, { x: number; y: number }>): void {
-    const newNodes = doc.nodes.map((node) => {
-      const newPos = positions.get(node.id);
-      if (!newPos || (node.position.x === newPos.x && node.position.y === newPos.y)) {
-        return node;
-      }
-      return { ...node, position: { ...newPos } };
-    });
-    if (!newNodes.some((node, index) => node !== doc.nodes[index])) {
+    const nextDoc = layoutNodesInDocument(doc, positions);
+    if (!nextDoc) {
       return;
     }
 
-    setDocument({ ...doc, nodes: newNodes });
+    setDocument(nextDoc);
     if (transactionStack.length === 0) {
       pushHistory();
     }
@@ -792,82 +734,43 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function beginTransaction(label?: string, transactionId?: string): string {
-    const id = transactionId ?? generateId();
-    transactionStack.push({
-      id,
-      label: label ?? '',
-      snapshotBefore: cloneDocument(doc),
-    });
+    const nextState = beginTransactionState(transactionStack, doc, label, transactionId);
+    transactionStack = nextState.stack;
+    const { id } = nextState;
     emit({ type: 'transactionStarted', transactionId: id, label });
     return id;
   }
 
   function commitTransaction(transactionId?: string): void {
-    if (transactionStack.length === 0) {
+    const result = commitTransactionState(transactionStack, transactionId);
+    if (!result?.committedId) {
       return;
     }
 
-    if (transactionId) {
-      const index = transactionStack.findIndex((t) => t.id === transactionId);
-      if (index === -1) {
-        return;
-      }
-
-      if (index === 0) {
-        const txn = transactionStack.pop()!;
-        transactionStack = [];
-        pushHistory();
-        emit({ type: 'transactionCommitted', transactionId: txn.id });
-      } else {
-        const txn = transactionStack[index];
-        transactionStack.splice(index, 1);
-        emit({ type: 'transactionCommitted', transactionId: txn.id });
-        if (transactionStack.length === 0) {
-          pushHistory();
-        }
-      }
-    } else {
-      const txn = transactionStack.pop()!;
-      emit({ type: 'transactionCommitted', transactionId: txn.id });
-      if (transactionStack.length === 0) {
-        pushHistory();
-      }
+    transactionStack = result.stack;
+    if (result.shouldPushHistory) {
+      pushHistory();
     }
+    emit({ type: 'transactionCommitted', transactionId: result.committedId });
   }
 
   function rollbackTransaction(transactionId?: string): void {
-    if (transactionStack.length === 0) {
+    const result = rollbackTransactionState(transactionStack, transactionId);
+    if (!result) {
       return;
     }
 
-    if (transactionId) {
-      const index = transactionStack.findIndex((t) => t.id === transactionId);
-      if (index === -1) {
-        return;
-      }
-
-      const txn = transactionStack[index];
-      const innerStack = transactionStack.splice(index);
-      replaceDocument(cloneDocument(txn.snapshotBefore), history[historyIndex]?.revision ?? docRevision);
-      viewport = normalizeViewport(doc.viewport);
-      emit({ type: 'transactionRolledBack', transactionId: txn.id });
-      for (let i = innerStack.length - 2; i >= 0; i--) {
-        emit({ type: 'transactionRolledBack', transactionId: innerStack[i].id });
-      }
-    } else {
-      const txn = transactionStack.pop()!;
-      replaceDocument(cloneDocument(txn.snapshotBefore), history[historyIndex]?.revision ?? docRevision);
-      viewport = normalizeViewport(doc.viewport);
-      emit({ type: 'transactionRolledBack', transactionId: txn.id });
+    transactionStack = result.stack;
+    replaceDocument(result.snapshotBefore, getCurrentRevision(historyState) ?? docRevision);
+    viewport = normalizeViewport(doc.viewport);
+    for (const rolledBackId of result.rolledBackIds) {
+      emit({ type: 'transactionRolledBack', transactionId: rolledBackId });
     }
 
     emit({ type: 'documentChanged', doc });
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     updateDirtyState();
   }
-
-  history.push({ doc: cloneDocument(doc), revision: docRevision });
-  historyIndex = 0;
 
   return {
     getSnapshot,
