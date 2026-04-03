@@ -409,11 +409,9 @@ describe('dataRendererDefinitions', () => {
 
     it('suppresses error notification when silent is true', async () => {
       cleanup();
-      const fetcher = vi.fn(async () => ({
-        ok: false,
-        status: 500,
-        data: { message: 'Server error' }
-      })) as RendererEnv['fetcher'];
+      const fetcher = vi.fn(async () => {
+        throw new Error('Server error');
+      }) as RendererEnv['fetcher'];
 
       const notify = vi.fn();
 
@@ -448,7 +446,7 @@ describe('dataRendererDefinitions', () => {
       expect(notify).not.toHaveBeenCalled();
     });
 
-    it('uses cache when cacheTTL is set', async () => {
+    it('keeps cache isolated between independent renderer roots', async () => {
       cleanup();
       const fetcher = vi.fn(async () => ({
         ok: true,
@@ -503,8 +501,7 @@ describe('dataRendererDefinitions', () => {
         expect(screen.getByText('Value: cached')).toBeTruthy();
       });
 
-      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(fetcher).toHaveBeenCalledTimes(2);
     });
   });
 });
-

@@ -24,7 +24,9 @@ import type {
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createActionScope } from './action-scope';
 import { createActionDispatcher } from './action-runtime';
+import { createApiCacheStore } from './api-cache';
 import { createComponentHandleRegistry } from './component-handle-registry';
+import { createDataSourceController } from './data-source-runtime';
 import { createManagedFormRuntime } from './form-runtime';
 import { createImportManager } from './imports';
 import { createNodeRuntime } from './node-runtime';
@@ -67,6 +69,7 @@ export function createRendererRuntime(input: {
     expressionCompiler,
     plugins: input.plugins
   });
+  const apiCache = createApiCacheStore();
   const executeApiRequest = createApiRequestExecutor(input.env);
   const validationRegistry = createBuiltInValidationRegistry();
   let actionScopeCounter = 0;
@@ -264,6 +267,14 @@ export function createRendererRuntime(input: {
     },
     dispatch,
     createPageRuntime,
+    createDataSourceController(inputValue) {
+      return createDataSourceController({
+        runtime,
+        apiCache,
+        executeApiRequest: (actionType, api, scope, options) => executeApiRequest(actionType, api, scope, undefined, options),
+        ...inputValue
+      });
+    },
     createFormRuntime
   };
 
@@ -271,4 +282,3 @@ export function createRendererRuntime(input: {
 
   return runtime;
 }
-

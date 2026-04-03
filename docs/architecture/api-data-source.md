@@ -215,6 +215,15 @@ scope = { ...scope, ...responseData }
 5. Evaluates `stopWhen` against scope after each response; stops polling when true
 6. On error, calls `env.notify('error', message)` unless `silent` is true
 
+### Runtime Ownership
+
+Current implementation keeps request orchestration in `@nop-chaos/flux-runtime`, not in the React renderer.
+
+- `DataSourceRenderer` remains a `null` renderer and only wires controller lifecycle (`start()` / `stop()`).
+- `RendererRuntime.createDataSourceController(...)` owns request execution, cache reads/writes, polling timers, stop-condition evaluation, and abort lifecycle.
+- Data-source cache ownership is runtime-local. Independent renderer roots do not share a process-global data-source cache implicitly.
+- Request execution reuses the runtime request executor, so data-source fetches follow the same dedup semantics as other runtime-managed API work.
+
 ### Loading and Error State
 
 `data-source` renders `null`. There is no built-in loading skeleton or error widget.

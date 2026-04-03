@@ -274,7 +274,13 @@ export function createApiRequestExecutor(env: RendererEnv) {
   const activeControllers = new Map<string, AbortController>();
   const activePromises = new Map<string, Promise<ApiResponse<any>>>();
 
-  return async function executeApiRequest<T>(actionType: string, api: ApiObject, scope: ScopeRef, form?: FormRuntime) {
+  return async function executeApiRequest<T>(
+    actionType: string,
+    api: ApiObject,
+    scope: ScopeRef,
+    form?: FormRuntime,
+    options?: { signal?: AbortSignal }
+  ) {
     const dedupStrategy = api.dedupStrategy ?? 'cancel-previous';
     const requestKey = createRequestKey(actionType, api, scope, form);
     const previousController = activeControllers.get(requestKey);
@@ -296,6 +302,14 @@ export function createApiRequestExecutor(env: RendererEnv) {
       nodeId: undefined,
       path: undefined
     });
+
+    if (options?.signal) {
+      if (options.signal.aborted) {
+        controller.abort();
+      } else {
+        options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+      }
+    }
 
     const requestPromise = env.fetcher<T>(api, {
         scope,
@@ -320,4 +334,3 @@ export function createApiRequestExecutor(env: RendererEnv) {
     }
   };
 }
-

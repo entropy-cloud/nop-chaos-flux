@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { vi } from 'vitest';
 import type { ApiObject, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
+import { createRendererRegistry } from '../registry';
+import { createRendererRuntime } from '../index';
 import { createScopeRef, createScopeStore } from '../scope';
 import {
   createApiRequestExecutor,
@@ -306,5 +308,120 @@ describe('createApiRequestExecutor', () => {
 
     await expect(first).resolves.toMatchObject({ ok: true, data: { requestId: 1 } });
     await expect(second).resolves.toMatchObject({ ok: true, data: { requestId: 1 } });
+  });
+});
+
+describe('createDataSourceController', () => {
+  it('stops polling once stopWhen becomes true', async () => {
+    vi.useFakeTimers();
+    let callCount = 0;
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env: {
+        fetcher: vi.fn(async () => {
+          callCount += 1;
+          return {
+            ok: true,
+            status: 200,
+            data: { status: callCount >= 2 ? 'done' : 'running' }
+          };
+        }),
+        notify: vi.fn()
+      } as RendererEnv
+    });
+    const page = runtime.createPageRuntime({});
+    const controller = runtime.createDataSourceController({
+      api: { url: '/api/job' },
+      scope: page.scope,
+      dataPath: 'job',
+      interval: 10,
+      stopWhen: '${job.status === "done"}'
+    });
+
+    controller.start();
+    await vi.runAllTimersAsync();
+
+    expect(callCount).toBe(2);
+    expect(page.scope.get('job')).toEqual({ status: 'done' });
+
+    await vi.advanceTimersByTimeAsync(50);
+    expect(callCount).toBe(2);
+    controller.stop();
+    vi.useRealTimers();
+  });
+
+  it('aborts the active request when stopped', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    let releaseRequest: (() => void) | undefined;
+    const fetcher = vi.fn(async (_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+      capturedSignal = ctx.signal;
+      await new Promise<void>((resolve) => {
+        releaseRequest = resolve;
+      });
+      if (ctx.signal?.aborted) {
+        const error = new Error('aborted');
+        (error as Error & { name: string }).name = 'AbortError';
+        throw error;
+      }
+      return { ok: true, status: 200, data: { ok: true } };
+    });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env: {
+        fetcher,
+        notify: vi.fn()
+      } as RendererEnv
+    });
+    const page = runtime.createPageRuntime({});
+    const controller = runtime.createDataSourceController({
+      api: { url: '/api/slow' },
+      scope: page.scope,
+      dataPath: 'payload'
+    });
+
+    controller.start();
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    controller.stop();
+    expect(capturedSignal?.aborted).toBe(true);
+    releaseRequest?.();
+  });
+
+  it('reuses runtime-local cache across controller refreshes', async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      data: { value: 'cached' }
+    }));
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env: {
+        fetcher,
+        notify: vi.fn()
+      } as RendererEnv
+    });
+    const page = runtime.createPageRuntime({});
+    const controller = runtime.createDataSourceController({
+      api: { url: '/api/cache', cacheTTL: 60_000, cacheKey: 'shared-cache' },
+      scope: page.scope,
+      dataPath: 'payload'
+    });
+
+    controller.start();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ value: 'cached' });
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    page.scope.update('payload', { value: 'stale-local' });
+    await controller.refresh();
+
+    expect(page.scope.get('payload')).toEqual({ value: 'cached' });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    controller.stop();
   });
 });
