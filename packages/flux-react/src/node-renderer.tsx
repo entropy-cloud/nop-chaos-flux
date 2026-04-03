@@ -53,6 +53,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   page?: PageRuntime;
 }) {
   const runtime = useRendererRuntime();
+  const activeImportLoader = runtime.env.importLoader;
   const parentClassAliases = useContext(ClassAliasesContext);
   const nodeState = useMemo<CompiledNodeRuntimeState>(() => props.node.createRuntimeState(), [props.node]);
 
@@ -132,7 +133,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         actionScope: activeActionScope
       });
     };
-  }, [runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node]);
+  }, [runtime, activeImportLoader, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node]);
 
   const helpers = useMemo(
     () =>

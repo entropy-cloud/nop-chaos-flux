@@ -1051,6 +1051,72 @@ describe('createRendererRuntime', () => {
     ).rejects.toThrow('Namespace collision for import alias: demo');
   });
 
+  it('retries a failed import within the same action scope when loader behavior changes', async () => {
+    let shouldFail = true;
+    const importLoader = {
+      load: vi.fn(async (spec: { from: string; as: string }) => {
+        if (shouldFail) {
+          throw new Error('loader exploded');
+        }
+
+        return {
+          createNamespace: () => ({
+            kind: 'import' as const,
+            invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
+              ok: true,
+              data: `${spec.from}:${method}:${String(payload?.value ?? '')}`
+            })
+          })
+        };
+      })
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        importLoader
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const actionScope = runtime.createActionScope({ id: 'retry-import-scope' });
+    const imports = [{ from: 'retry-lib', as: 'retry' }] as const;
+
+    await expect(
+      runtime.ensureImportedNamespaces({
+        imports,
+        actionScope,
+        scope: page.scope
+      })
+    ).rejects.toThrow('Imported namespace retry failed to load: loader exploded');
+
+    shouldFail = false;
+
+    await expect(
+      runtime.ensureImportedNamespaces({
+        imports,
+        actionScope,
+        scope: page.scope
+      })
+    ).resolves.toBeUndefined();
+
+    const result = await runtime.dispatch(
+      {
+        action: 'retry:ping',
+        args: { value: 'ok' }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        actionScope
+      }
+    );
+
+    expect(importLoader.load).toHaveBeenCalledTimes(2);
+    expect(result).toMatchObject({ ok: true, data: 'retry-lib:ping:ok' });
+  });
+
   it('opens and closes dialogs through dialog actions', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({

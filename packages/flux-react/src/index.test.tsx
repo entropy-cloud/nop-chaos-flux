@@ -912,6 +912,90 @@ describe('createSchemaRenderer', () => {
     warnSpy.mockRestore();
   });
 
+  it('retries failed imports after env importLoader updates without recreating the tree', async () => {
+    let shouldFail = true;
+    const notify = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, dispatchProbeRenderer]);
+
+    function Host() {
+      const [tick, setTick] = React.useState(0);
+      const importLoader = React.useMemo(() => ({
+        load: vi.fn(async (spec: { from: string; as: string }) => {
+          if (shouldFail) {
+            throw new Error(`loader exploded ${tick}`);
+          }
+
+          return {
+            createNamespace: () => ({
+              kind: 'import' as const,
+              invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
+                ok: true,
+                data: `${spec.from}:${method}:${String(payload?.value ?? '')}`
+              })
+            })
+          };
+        })
+      }), [tick]);
+
+      return (
+        <div>
+          <button type="button" onClick={() => setTick((current) => current + 1)}>
+            Refresh env {tick}
+          </button>
+          <SchemaRenderer
+            schema={{
+              type: 'page',
+              body: [
+                {
+                  type: 'dispatch-probe',
+                  label: 'Run retried import',
+                  resultKey: 'retry-import-result',
+                  'xui:imports': [{ from: 'retry-lib', as: 'retry' }],
+                  runAction: {
+                    action: 'retry:ping',
+                    args: { value: 'live' }
+                  }
+                }
+              ]
+            }}
+            env={{
+              ...env,
+              notify,
+              importLoader
+            }}
+            formulaCompiler={sharedFormulaCompiler}
+          />
+        </div>
+      );
+    }
+
+    cleanup();
+    render(<Host />);
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('error', 'Imported namespace retry failed to load: loader exploded 0');
+    });
+
+    fireEvent.click(screen.getByText('Run retried import'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('retry-import-result').textContent).toContain('Imported namespace retry failed to load: loader exploded 0');
+    });
+
+    shouldFail = false;
+    fireEvent.click(screen.getByText('Refresh env 0'));
+
+    await waitFor(() => {
+      expect(notify).not.toHaveBeenCalledWith('error', 'Imported namespace retry failed to load: loader exploded 1');
+    });
+
+    fireEvent.click(screen.getByText('Run retried import'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('retry-import-result').textContent).toBe('retry-lib:ping:live');
+    });
+  });
+
   it('supports useScopeSelector with parent scopes that do not expose a store', () => {
     const SchemaRenderer = createSchemaRenderer([selectorRenderer]);
     const { rerender } = render(

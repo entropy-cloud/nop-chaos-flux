@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
@@ -82,6 +82,18 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
   const [directoryUsers, setDirectoryUsers] = useState(users);
   const [searchResults, setSearchResults] = useState(users);
   const [searchQuery, setSearchQuery] = useState('');
+  const [decoratedEnv, setDecoratedEnv] = useState<RendererEnv | null>(null);
+
+  const directoryUsersRef = useRef(directoryUsers);
+  const searchQueryRef = useRef(searchQuery);
+
+  useEffect(() => {
+    directoryUsersRef.current = directoryUsers;
+  }, [directoryUsers]);
+
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
 
   const env = useMemo<RendererEnv>(
     () => ({
@@ -91,7 +103,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
 
           const query = String((api.data as Record<string, unknown> | undefined)?.query ?? '');
           const normalizedQuery = query.trim().toLowerCase();
-          const results = filterUsersByQuery(directoryUsers, normalizedQuery);
+          const results = filterUsersByQuery(directoryUsersRef.current, normalizedQuery);
 
           setSearchQuery(normalizedQuery);
           setSearchResults(results);
@@ -109,14 +121,14 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
 
         if (api.url === '/api/users') {
           const scopeData = ctx.scope.readOwn();
-          const activeSearchQuery = searchQuery;
+          const activeSearchQuery = searchQueryRef.current;
           let createdUser = {
             id: Date.now(),
             username: String(scopeData.username ?? ''),
             email: String(scopeData.email ?? ''),
             role: String(scopeData.role ?? 'viewer')
           };
-          let totalUsers = directoryUsers.length;
+          let totalUsers = directoryUsersRef.current.length;
 
           setDirectoryUsers((current) => {
             createdUser = {
@@ -147,14 +159,14 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
           await delay(450, ctx.signal);
 
           const username = String((api.data as Record<string, unknown> | undefined)?.username ?? '').trim().toLowerCase();
-          const exists = directoryUsers.some((user) => user.username.toLowerCase() === username);
+          const exists = directoryUsersRef.current.some((user) => user.username.toLowerCase() === username);
 
           return {
             ok: true,
             status: 200,
             data: {
               valid: !exists,
-              message: exists ? 'Username is already taken' : 'Username is available',
+              message: exists ? 'Username is already-taken' : 'Username is available',
               summary: `username=${username || '(empty)'}`
             } as T
           };
@@ -185,10 +197,12 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
         console.info(`[playground notify] ${level}: ${message}`);
       }
     }),
-    [directoryUsers, searchQuery]
+    []
   );
 
-  const decoratedEnv = useMemo(() => debuggerController.decorateEnv(env), [debuggerController, env]);
+  useEffect(() => {
+    setDecoratedEnv(debuggerController.decorateEnv(env));
+  }, [debuggerController, env]);
 
   return (
     <main className="min-h-screen grid place-items-center p-6">
@@ -252,7 +266,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
                 users: directoryUsers,
                 searchResults
               }}
-              env={decoratedEnv}
+              env={decoratedEnv ?? env}
               registry={registry}
               formulaCompiler={formulaCompiler}
               plugins={[debuggerController.plugin]}

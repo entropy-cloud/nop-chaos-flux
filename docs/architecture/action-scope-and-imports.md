@@ -794,7 +794,8 @@ Current implementation semantics:
 - React-owned import registration installs a scope-local placeholder provider immediately during owned lifecycle, so namespaced dispatch can fail explicitly even before the module finishes loading
 - dispatch against a still-loading namespace returns a normal failed `ActionResult` with an error message like `Imported namespace <alias> is still loading`
 - loader failures and same-scope alias collisions are reported through `env.notify('error', ...)` and `monitor.onError(...)` during render-owned registration
-- once a load fails, later dispatches against that namespace continue returning the stored failure instead of falling back to `Unsupported action` until the owning boundary is replaced
+- once a load fails, later dispatches against that namespace continue returning the stored failure instead of falling back to `Unsupported action`
+- if the same owned import boundary re-runs registration for the same import key (for example after `env.importLoader` changes), the failed entry is retried in place rather than requiring full runtime teardown
 - import registrations remain reference-counted per action scope and are released on owning subtree unmount or replacement
 
 ## Diagnostics

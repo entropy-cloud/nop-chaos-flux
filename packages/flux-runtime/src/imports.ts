@@ -121,12 +121,60 @@ export function createImportManager(input: {
     const existing = moduleLoads.get(key);
 
     if (existing) {
-      return existing;
+      try {
+        return await existing;
+      } catch {
+        moduleLoads.delete(key);
+      }
     }
 
     const pending = loader.load(spec);
     moduleLoads.set(key, pending);
-    return pending;
+
+    try {
+      return await pending;
+    } catch (error) {
+      moduleLoads.delete(key);
+      throw error;
+    }
+  }
+
+  function createReadyPromise(args: {
+    spec: XuiImportSpec;
+    entry: ScopeRegistrationEntry;
+    actionScope: ActionScope;
+    componentRegistry?: ComponentHandleRegistry;
+    scope: ScopeRef;
+    node?: CompiledSchemaNode;
+  }) {
+    return (async () => {
+      try {
+        const module = await loadModule(args.spec);
+        const context: ImportedNamespaceContext = {
+          runtime: input.getRuntime(),
+          env: input.getEnv(),
+          actionScope: args.actionScope,
+          componentRegistry: args.componentRegistry,
+          scope: args.scope,
+          spec: args.spec,
+          node: args.node
+        };
+        const provider = await module.createNamespace(context);
+        args.entry.provider = {
+          ...provider,
+          kind: provider.kind ?? 'import'
+        };
+        args.entry.state = 'ready';
+      } catch (error) {
+        args.entry.state = 'error';
+        args.entry.error = createImportError(
+          `Imported namespace ${args.spec.as} failed to load: ${toErrorMessage(error)}`,
+          error
+        );
+        reportImportError(args.entry.error, args.node);
+        throw args.entry.error;
+      }
+    })();
   }
 
   async function ensureImportedNamespaces(args: {
@@ -154,6 +202,28 @@ export function createImportManager(input: {
       const existing = registrations.get(key);
 
       if (existing) {
+        const currentState = existing.state;
+
+        if (currentState === 'error') {
+          existing.refCount = Math.max(existing.refCount, 1);
+          existing.state = 'loading';
+          existing.error = undefined;
+          existing.provider = undefined;
+
+          const retryPromise = createReadyPromise({
+            spec,
+            entry: existing,
+            actionScope: args.actionScope,
+            componentRegistry: args.componentRegistry,
+            scope: args.scope,
+            node: args.node
+          });
+
+          existing.pending = retryPromise.catch(() => undefined);
+          await retryPromise;
+          continue;
+        }
+
         existing.refCount += 1;
         await existing.pending;
 
@@ -174,42 +244,35 @@ export function createImportManager(input: {
       };
 
       if (args.actionScope.listNamespaces().includes(spec.as)) {
-        entry.state = 'error';
-        entry.error = createImportError(`Namespace collision for import alias: ${spec.as}`);
-        reportImportError(entry.error, args.node);
-        throw entry.error;
+        const sameAliasRegistration = Array.from(registrations.entries()).find(([existingKey, candidate]) => {
+          if (existingKey === key) {
+            return false;
+          }
+
+          const candidateSpec = JSON.parse(existingKey) as XuiImportSpec;
+          return candidateSpec.as === spec.as && candidate.refCount > 0;
+        });
+
+        if (sameAliasRegistration) {
+          entry.state = 'error';
+          entry.error = createImportError(`Namespace collision for import alias: ${spec.as}`);
+          reportImportError(entry.error, args.node);
+          throw entry.error;
+        }
+
+        registrations.delete(key);
       }
 
       entry.release = args.actionScope.registerNamespace(spec.as, createPlaceholderProvider(spec, entry));
 
-      const readyPromise = (async () => {
-        try {
-          const module = await loadModule(spec);
-          const context: ImportedNamespaceContext = {
-            runtime: input.getRuntime(),
-            env: input.getEnv(),
-            actionScope: args.actionScope!,
-            componentRegistry: args.componentRegistry,
-            scope: args.scope,
-            spec,
-            node: args.node
-          };
-          const provider = await module.createNamespace(context);
-          entry.provider = {
-            ...provider,
-            kind: provider.kind ?? 'import'
-          };
-          entry.state = 'ready';
-        } catch (error) {
-          entry.state = 'error';
-          entry.error = createImportError(
-            `Imported namespace ${spec.as} failed to load: ${toErrorMessage(error)}`,
-            error
-          );
-          reportImportError(entry.error, args.node);
-          throw entry.error;
-        }
-      })();
+      const readyPromise = createReadyPromise({
+        spec,
+        entry,
+        actionScope: args.actionScope,
+        componentRegistry: args.componentRegistry,
+        scope: args.scope,
+        node: args.node
+      });
 
       entry.pending = readyPromise.catch(() => undefined);
 
