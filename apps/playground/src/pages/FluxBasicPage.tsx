@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
@@ -82,18 +82,8 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
   const [directoryUsers, setDirectoryUsers] = useState(users);
   const [searchResults, setSearchResults] = useState(users);
   const [searchQuery, setSearchQuery] = useState('');
-  const directoryUsersRef = useRef(directoryUsers);
-  const searchQueryRef = useRef(searchQuery);
 
-  useEffect(() => {
-    directoryUsersRef.current = directoryUsers;
-  }, [directoryUsers]);
-
-  useEffect(() => {
-    searchQueryRef.current = searchQuery;
-  }, [searchQuery]);
-
-  const baseEnv = useMemo<RendererEnv>(
+  const env = useMemo<RendererEnv>(
     () => ({
       async fetcher<T>(api: ApiObject, ctx: ApiRequestContext) {
         if (api.url === '/api/search') {
@@ -101,9 +91,8 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
 
           const query = String((api.data as Record<string, unknown> | undefined)?.query ?? '');
           const normalizedQuery = query.trim().toLowerCase();
-          const results = filterUsersByQuery(directoryUsersRef.current, normalizedQuery);
+          const results = filterUsersByQuery(directoryUsers, normalizedQuery);
 
-          searchQueryRef.current = normalizedQuery;
           setSearchQuery(normalizedQuery);
           setSearchResults(results);
 
@@ -120,14 +109,14 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
 
         if (api.url === '/api/users') {
           const scopeData = ctx.scope.readOwn();
-          const activeSearchQuery = searchQueryRef.current;
+          const activeSearchQuery = searchQuery;
           let createdUser = {
             id: Date.now(),
             username: String(scopeData.username ?? ''),
             email: String(scopeData.email ?? ''),
             role: String(scopeData.role ?? 'viewer')
           };
-          let totalUsers = directoryUsersRef.current.length;
+          let totalUsers = directoryUsers.length;
 
           setDirectoryUsers((current) => {
             createdUser = {
@@ -139,7 +128,6 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
             const nextResults = filterUsersByQuery(nextUsers, activeSearchQuery);
 
             totalUsers = nextUsers.length;
-            directoryUsersRef.current = nextUsers;
             setSearchResults(nextResults);
             return nextUsers;
           });
@@ -159,7 +147,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
           await delay(450, ctx.signal);
 
           const username = String((api.data as Record<string, unknown> | undefined)?.username ?? '').trim().toLowerCase();
-          const exists = directoryUsersRef.current.some((user) => user.username.toLowerCase() === username);
+          const exists = directoryUsers.some((user) => user.username.toLowerCase() === username);
 
           return {
             ok: true,
@@ -197,10 +185,10 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
         console.info(`[playground notify] ${level}: ${message}`);
       }
     }),
-    []
+    [directoryUsers, searchQuery]
   );
 
-  const env = useMemo(() => debuggerController.decorateEnv(baseEnv), [baseEnv, debuggerController]);
+  const decoratedEnv = useMemo(() => debuggerController.decorateEnv(env), [debuggerController, env]);
 
   return (
     <main className="min-h-screen grid place-items-center p-6">
@@ -264,7 +252,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
                 users: directoryUsers,
                 searchResults
               }}
-              env={env}
+              env={decoratedEnv}
               registry={registry}
               formulaCompiler={formulaCompiler}
               plugins={[debuggerController.plugin]}

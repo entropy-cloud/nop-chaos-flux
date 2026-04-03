@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   createSpreadsheetCore,
   createEmptyDocument,
@@ -106,7 +106,7 @@ export function ReportDesignerDemo() {
   const designerCore = useMemo(() => createReportDesignerCore({ document: reportDoc, config: designerConfig }), [reportDoc, designerConfig]);
   const designerBridge = useMemo(() => createReportDesignerBridge(spreadsheetBridge, designerCore), [spreadsheetBridge, designerCore]);
 
-  useMemo(() => {
+  useEffect(() => {
     designerCore.registerInspector(cellInspectorProvider);
     designerCore.registerFieldDrop(dropAdapter);
   }, [designerCore]);
