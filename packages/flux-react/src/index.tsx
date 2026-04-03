@@ -18,6 +18,7 @@ export {
   useCurrentComponentRegistry,
   useRendererEnv,
   useScopeSelector,
+  useOwnScopeSelector,
   useCurrentForm,
   useCurrentFormState,
   useCurrentFormErrors,

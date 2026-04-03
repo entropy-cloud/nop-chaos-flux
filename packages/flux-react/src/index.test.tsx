@@ -17,6 +17,7 @@ import {
   useCurrentFormError,
   useCurrentFormErrors,
   useFieldError,
+  useOwnScopeSelector,
   useOwnedFieldState,
   useRenderScope,
   useScopeSelector,
@@ -163,6 +164,23 @@ function SelectorText() {
   return <span>{String(value)}</span>;
 }
 
+function ScopeLayerProbe() {
+  const lexicalValue = useScopeSelector((scope: { shared?: string }) => scope.shared ?? '');
+  const ownValue = useOwnScopeSelector((scope: { shared?: string }) => scope.shared ?? '');
+
+  return (
+    <div>
+      <span data-testid="lexical-value">{lexicalValue}</span>
+      <span data-testid="own-value">{ownValue}</span>
+    </div>
+  );
+}
+
+function OwnScopeValueProbe() {
+  const childValue = useOwnScopeSelector((scope: { child?: string }) => scope.child ?? '');
+  return <span data-testid="own-child-value">{childValue}</span>;
+}
+
 function ActionScopeProbe() {
   const actionScope = useCurrentActionScope();
   const componentRegistry = useCurrentComponentRegistry();
@@ -178,6 +196,16 @@ function ActionScopeProbe() {
 const selectorRenderer: RendererDefinition = {
   type: 'selector-text',
   component: SelectorText
+};
+
+const scopeLayerProbeRenderer: RendererDefinition = {
+  type: 'scope-layer-probe',
+  component: ScopeLayerProbe
+};
+
+const ownScopeValueProbeRenderer: RendererDefinition = {
+  type: 'own-scope-value-probe',
+  component: OwnScopeValueProbe
 };
 
 const actionScopeProbeRenderer: RendererDefinition = {
@@ -285,9 +313,34 @@ function FragmentRenderHost(props: RendererComponentProps) {
   );
 }
 
+function FragmentScopeProbeHost(props: RendererComponentProps) {
+  const [tick, setTick] = React.useState(0);
+  const childValue = tick === 0 ? 'child-a' : 'child-b';
+
+  return (
+    <div>
+      <button type="button" onClick={() => setTick((current) => current + 1)}>
+        Refresh fragment {tick}
+      </button>
+      {props.regions.body?.render({
+        data: {
+          child: childValue
+        },
+        pathSuffix: 'fragment'
+      })}
+    </div>
+  );
+}
+
 const fragmentRenderHostRenderer: RendererDefinition = {
   type: 'fragment-render-host',
   component: FragmentRenderHost
+};
+
+const fragmentScopeProbeHostRenderer: RendererDefinition = {
+  type: 'fragment-scope-probe-host',
+  component: FragmentScopeProbeHost,
+  regions: ['body']
 };
 
 const scopedHostRenderer: RendererDefinition = {
@@ -882,6 +935,49 @@ describe('createSchemaRenderer', () => {
     );
 
     expect(screen.getByText('Scoped update')).toBeTruthy();
+  });
+
+  it('uses lexical scope data by default and isolates own-scope subscriptions when requested', async () => {
+    const pageStore = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env,
+      expressionCompiler: createExpressionCompiler(sharedFormulaCompiler)
+    }).createPageRuntime({ data: { shared: 'parent-a' } }).store;
+    const SchemaRenderer = createSchemaRenderer([fragmentScopeProbeHostRenderer, scopeLayerProbeRenderer, ownScopeValueProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'fragment-scope-probe-host',
+          body: [
+            { type: 'scope-layer-probe' },
+            { type: 'own-scope-value-probe' }
+          ]
+        } as any}
+        data={{ shared: 'parent-a' }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+        pageStore={pageStore}
+      />
+    );
+
+    expect(screen.getByTestId('lexical-value').textContent).toBe('parent-a');
+    expect(screen.getByTestId('own-value').textContent).toBe('');
+    expect(screen.getByTestId('own-child-value').textContent).toBe('child-a');
+
+    pageStore.updateData('shared', 'parent-b');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lexical-value').textContent).toBe('parent-b');
+      expect(screen.getByTestId('own-value').textContent).toBe('');
+      expect(screen.getByTestId('own-child-value').textContent).toBe('child-a');
+    });
+
+    fireEvent.click(screen.getByText('Refresh fragment 0'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('own-child-value').textContent).toBe('child-b');
+    });
   });
 
   it('provides nested action scope and component registry boundaries through the render tree', () => {
@@ -2020,4 +2116,3 @@ describe('reactive meta', () => {
     expect(content.style.transform).toBe('translate(-50%, -50%)');
   });
 });
-

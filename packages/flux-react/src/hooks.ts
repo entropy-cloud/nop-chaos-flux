@@ -26,6 +26,33 @@ import {
 import { createHelpers } from './helpers';
 import { EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
 
+function emptyUnsubscribe() {
+  return undefined;
+}
+
+function createScopeOwnSubscribe(scope: ScopeRef) {
+  return (listener: () => void) => {
+    const subscribe = scope.store?.subscribe;
+
+    if (!subscribe) {
+      return emptyUnsubscribe;
+    }
+
+    let previousSnapshot = scope.readOwn();
+
+    return subscribe(() => {
+      const nextSnapshot = scope.readOwn();
+
+      if (nextSnapshot === previousSnapshot) {
+        return;
+      }
+
+      previousSnapshot = nextSnapshot;
+      listener();
+    });
+  };
+}
+
 export function useRendererRuntime(): RendererRuntime {
   return useRequiredContext(RuntimeContext, 'RendererRuntime');
 }
@@ -49,8 +76,22 @@ export function useRendererEnv() {
 export function useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn: (a: T, b: T) => boolean = Object.is): T {
   const scope = useRenderScope();
   const store = scope.store;
-  const subscribe = store?.subscribe ?? (() => () => undefined);
+  const subscribe = store?.subscribe ?? (() => emptyUnsubscribe);
   const getSnapshot = () => (store?.getSnapshot() ?? scope.read()) as unknown as S;
+
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getSnapshot,
+    selector,
+    equalityFn
+  );
+}
+
+export function useOwnScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn: (a: T, b: T) => boolean = Object.is): T {
+  const scope = useRenderScope();
+  const subscribe = useMemo(() => createScopeOwnSubscribe(scope), [scope]);
+  const getSnapshot = () => scope.readOwn() as unknown as S;
 
   return useSyncExternalStoreWithSelector(
     subscribe,
@@ -149,6 +190,7 @@ export const rendererHooks = {
   useCurrentActionScope,
   useCurrentComponentRegistry,
   useScopeSelector,
+  useOwnScopeSelector,
   useRendererEnv,
   useActionDispatcher,
   useCurrentForm,

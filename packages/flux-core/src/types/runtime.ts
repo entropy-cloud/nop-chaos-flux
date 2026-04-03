@@ -75,6 +75,12 @@ export interface PageStoreApi {
   refresh(): void;
 }
 
+export interface DataSourceController {
+  start(): void;
+  stop(): void;
+  refresh(): Promise<void>;
+}
+
 export interface FormRuntime {
   id: string;
   name?: string;

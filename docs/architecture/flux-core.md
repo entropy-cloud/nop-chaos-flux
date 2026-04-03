@@ -304,11 +304,18 @@ Important current hooks include:
 - `useRendererRuntime()`
 - `useRenderScope()`
 - `useScopeSelector()`
+- `useOwnScopeSelector()`
 - `useCurrentForm()`
 - `useCurrentPage()`
 - `useActionDispatcher()`
 - `useCurrentNodeMeta()`
 - `useRenderFragment()`
+
+Current scope selector semantics:
+
+- `useScopeSelector()` reads and subscribes against the lexical-scope-visible snapshot.
+- `useOwnScopeSelector()` reads and subscribes against the current scope's own snapshot only.
+- `readOwn()` stays narrowly defined as "current layer only" and should not be overloaded with parent-chain data.
 
 ## Performance Principles
 

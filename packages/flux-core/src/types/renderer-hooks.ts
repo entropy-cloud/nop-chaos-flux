@@ -36,6 +36,7 @@ export interface RendererHookApi {
   useCurrentActionScope(): ActionScope | undefined;
   useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
   useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn?: (a: T, b: T) => boolean): T;
+  useOwnScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn?: (a: T, b: T) => boolean): T;
   useRendererEnv(): RendererEnv;
   useActionDispatcher(): RendererRuntime['dispatch'];
   useCurrentForm(): FormRuntime | undefined;
@@ -70,6 +71,7 @@ export interface SchemaRendererProps {
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   onComponentRegistryChange?: (componentRegistry: ComponentHandleRegistry | null) => void;
+  onActionScopeChange?: (actionScope: ActionScope | null) => void;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }
 

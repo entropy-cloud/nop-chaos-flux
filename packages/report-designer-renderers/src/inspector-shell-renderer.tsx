@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, resolveRendererSlotContent, useOwnScopeSelector, useRenderScope } from '@nop-chaos/flux-react';
 import type {
   InspectorPanelDescriptor,
   MetadataBag,
@@ -14,7 +14,7 @@ import type { ReportInspectorShellSchema } from './types.js';
 export function ReportInspectorShellRenderer(props: RendererComponentProps<ReportInspectorShellSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
   const scope = useRenderScope();
-  const scopeData = useScopeSelector((data: Record<string, unknown>) => data);
+  const scopeData = useOwnScopeSelector((data: Record<string, unknown>) => data);
   const target = scopeData.selectionTarget as ReportSelectionTarget | undefined;
   const inspector = scopeData.inspector as ReportDesignerRuntimeSnapshot['inspector'] | undefined;
   const panels = useMemo(
@@ -181,4 +181,3 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
     </section>
   );
 }
-

@@ -140,6 +140,7 @@ Use hooks for ambient runtime state and services:
 - `useCurrentActionScope()`
 - `useCurrentComponentRegistry()`
 - `useScopeSelector()`
+- `useOwnScopeSelector()`
 - `useRendererEnv()`
 - `useActionDispatcher()`
 - `useCurrentForm()`
@@ -159,6 +160,7 @@ function useRenderScope(): ScopeRef;
 function useCurrentActionScope(): ActionScope | undefined;
 function useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
 function useScopeSelector<T>(selector: (scopeData: any) => T, equalityFn?: (a: T, b: T) => boolean): T;
+function useOwnScopeSelector<T>(selector: (scopeData: any) => T, equalityFn?: (a: T, b: T) => boolean): T;
 function useRendererEnv(): RendererEnv;
 function useActionDispatcher(): RendererRuntime['dispatch'];
 function useCurrentForm(): FormRuntime | undefined;
@@ -166,6 +168,12 @@ function useCurrentPage(): PageRuntime | undefined;
 function useCurrentNodeMeta(): { id: string; path: string; type: string };
 function useRenderFragment(): RendererHelpers['render'];
 ```
+
+Current scope-hook semantics are:
+
+- `useScopeSelector()` subscribes to the lexical-scope-visible snapshot, so child renderers react when parent scope data changes.
+- `useOwnScopeSelector()` subscribes only to the current scope's own snapshot, for paths that intentionally ignore parent-scope churn.
+- `readOwn()` remains a current-layer-only API; selector inheritance should come from hook choice, not hidden fields on own snapshots.
 
 Form-specific hooks such as `useCurrentFormErrors`, `useCurrentFormFieldState`, `useFieldError`, and `useAggregateError` also exist and are part of the active form integration surface.
 
@@ -403,4 +411,3 @@ List, table, and tree renderers should avoid eager child-scope creation for work
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
 - `docs/references/renderer-interfaces.md`
-

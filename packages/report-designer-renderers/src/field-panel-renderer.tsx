@@ -1,6 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent, useScopeSelector } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, resolveRendererSlotContent, useOwnScopeSelector } from '@nop-chaos/flux-react';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { getFieldCount, joinClassNames } from './helpers.js';
 import { renderFieldSourceSections } from './fallbacks.js';
@@ -8,7 +8,7 @@ import type { ReportFieldPanelSchema } from './types.js';
 
 export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFieldPanelSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
-  const scopeData = useScopeSelector((data: Record<string, unknown>) => data);
+  const scopeData = useOwnScopeSelector((data: Record<string, unknown>) => data);
   const fieldSources = Array.isArray(scopeData.fieldSources) ? (scopeData.fieldSources as FieldSourceSnapshot[]) : [];
   const designer = scopeData.designer as { documentName?: string; fieldCount?: number } | undefined;
 
@@ -33,4 +33,3 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
     </section>
   );
 }
-
