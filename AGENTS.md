@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`nop-chaos-flux` (formerly nop-chaos-amis) is a modern rewrite of the AMIS low-code renderer.
+`nop-chaos-flux` is a modern rewrite of the AMIS low-code renderer.
 
 **Tech Stack**: React 19, Zustand, TypeScript 5.9, Vite 8, Vitest, pnpm workspace.
 
@@ -95,7 +95,7 @@ After completing any significant work, you MUST:
 | `docs/references/` | Stable lookup material (terminology, interfaces, maintenance) |
 | `docs/analysis/` | Investigatory/comparison reports |
 | `docs/examples/` | Representative schemas and usage notes |
-| `docs/plans/` | Implementation plans and checklists |
+| `docs/plans/` | Historical execution plans (not normative; superseded by `docs/architecture/`) |
 | `docs/bugs/` | Numbered defect histories and fix notes |
 | `docs/archive/` | Preserved legacy drafts |
 | `docs/logs/` | Daily dev logs — `docs/logs/{year}/{month}-{day}.md`, see `docs/logs/index.md` for writing guide and index |
@@ -126,7 +126,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 | Change form field wrappers, labels, hints, or error slots | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/field-frame.md` | Slot classification, unified field chrome |
 | Add new actions, event handlers, or `xui:import` usage | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` | Namespaced actions, import semantics, scope boundaries |
 | Change API requests, data sources, polling, or adaptors | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` | ApiObject, DataSourceSchema, scope injection |
-| Add or modify a shadcn/ui component in `@nop-chaos/ui` | `docs/plans/18-shadcn-ui-migration-plan.md` | `docs/architecture/styling-system.md` | Migration status, component list, variant mapping |
+| Add or modify a shadcn/ui component in `@nop-chaos/ui` | `docs/architecture/styling-system.md` | `packages/ui/src/index.ts` | shadcn/ui integration, component list, how to add components |
 | Change package boundaries, create a new package, or move code | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/frontend-baseline.md` | Module ownership, file placement rules |
 | Change core architecture (compilation, scope, expressions) | `docs/architecture/flux-core.md` | `docs/references/terminology.md` | Unified value semantics, scope model, key terms |
 | Change playground pages, navigation, or debugger UX | `docs/architecture/playground-experience.md` | `docs/analysis/framework-debugger-design.md` | Scenario-based navigation, floating debugger panel |
@@ -142,7 +142,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 | `packages/flux-react/src/` | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md` |
 | `packages/flux-renderers-*/src/` | `docs/architecture/styling-system.md`, `docs/architecture/renderer-runtime.md` |
 | `packages/tailwind-preset/src/` | `docs/architecture/styling-system.md` → "Renderer Styling Contract" and "Spacing Conventions" |
-| `packages/ui/src/` | `docs/plans/18-shadcn-ui-migration-plan.md`, `docs/architecture/renderer-markers-and-selectors.md` |
+| `packages/ui/src/` | `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md` |
 | `packages/flow-designer-*/src/` | `docs/architecture/flow-designer/` (start with `design.md`) |
 | `packages/spreadsheet-*/src/` or `packages/report-designer-*/src/` | `docs/architecture/report-designer/` (start with `design.md`) |
 | `apps/playground/src/` | `docs/architecture/playground-experience.md` |
@@ -162,6 +162,106 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 ---
 
 ## Code Conventions
+
+### MANDATORY: UI Component Usage
+
+**NEVER use raw HTML elements when `@nop-chaos/ui` provides a component.**
+
+Before writing any JSX, check `packages/ui/src/index.ts` for available components. If a needed component is missing, add it following shadcn/ui conventions (see `docs/architecture/styling-system.md` → "How to add a new shadcn/ui component").
+
+| Raw HTML | Must use from `@nop-chaos/ui` |
+|----------|-------------------------------|
+| `<button>` | `<Button>` |
+| `<input>` | `<Input>` |
+| `<textarea>` | `<Textarea>` |
+| `<select>` / `<option>` | `<Select>` (rich) or `<NativeSelect>` (simple) |
+| `<label>` | `<Label>` |
+| checkbox | `<Checkbox>` |
+| radio | `<RadioGroup>` + `<RadioGroupItem>` |
+| toggle/switch | `<Switch>` |
+| dialog/modal | `<Dialog>`, `<Sheet>`, or `<Drawer>` |
+| tabs | `<Tabs>`, `<TabsList>`, `<TabsTrigger>`, `<TabsContent>` |
+| tooltip | `<Tooltip>`, `<TooltipTrigger>`, `<TooltipContent>` |
+| popover | `<Popover>`, `<PopoverTrigger>`, `<PopoverContent>` |
+| dropdown menu | `<DropdownMenu>` and sub-components |
+| table | `<Table>`, `<TableHeader>`, `<TableBody>`, `<TableRow>`, `<TableHead>`, `<TableCell>` |
+| card | `<Card>`, `<CardHeader>`, `<CardContent>`, `<CardFooter>` |
+| badge/tag | `<Badge>` |
+| loading indicator | `<Spinner>`, `<Skeleton>`, `<Progress>` |
+| scroll container | `<ScrollArea>` |
+| divider | `<Separator>` |
+| toast/notification | `<Toaster>` + `toast()` from sonner |
+| slider/range | `<Slider>` |
+| keyboard shortcut | `<Kbd>` |
+| field wrapper | `<Field>` |
+| button group | `<ButtonGroup>` |
+| combo box | `<Combobox>` |
+| sidebar layout | `<Sidebar>` and related |
+| resizable panels | `<ResizablePanelGroup>`, `<ResizablePanel>`, `<ResizableHandle>` |
+| icon button | `<Button variant="ghost" size="icon">` |
+| empty state | `<Empty>` |
+
+Import pattern:
+```tsx
+import { Button, Input, Dialog, cn } from '@nop-chaos/ui';
+```
+
+### MANDATORY: Renderer Component Contract
+
+All renderer components MUST follow the `RendererComponentProps` pattern:
+
+```tsx
+import type { RendererComponentProps } from '@nop-chaos/flux-react';
+import { Button } from '@nop-chaos/ui';
+
+function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
+  return (
+    <Button
+      variant={props.props.variant}
+      size={props.props.size}
+      disabled={props.meta.disabled}
+      className={props.meta.className}
+      onClick={() => props.events.onClick?.()}
+      data-testid={props.meta.testid}
+    >
+      {props.props.label}
+    </Button>
+  );
+}
+```
+
+**Where to read data from:**
+
+| Source | What it provides | When to use |
+|--------|-----------------|-------------|
+| `props.props` | Resolved runtime values (label, variant, placeholder...) | Reading schema-driven values |
+| `props.meta` | Resolved meta (disabled, visible, className, testid) | Checking control state |
+| `props.regions` | Precompiled child render handles | Rendering child fragments via `.render()` |
+| `props.events` | Runtime event handlers from schema | Attaching click/change/submit handlers |
+| `props.helpers` | Stable runtime helpers | render, evaluate, dispatch |
+
+**NEVER** access stores directly in renderers. Use the standard hooks:
+
+| Need | Hook | Package |
+|------|------|---------|
+| Runtime instance | `useRendererRuntime()` | `@nop-chaos/flux-react` |
+| Current scope ref | `useRenderScope()` | `@nop-chaos/flux-react` |
+| Reactive scope data | `useScopeSelector(selector)` | `@nop-chaos/flux-react` |
+| Action dispatch | `useActionDispatcher()` | `@nop-chaos/flux-react` |
+| Current form | `useCurrentForm()` | `@nop-chaos/flux-react` |
+| Current page | `useCurrentPage()` | `@nop-chaos/flux-react` |
+| Render ad-hoc fragment | `useRenderFragment()` | `@nop-chaos/flux-react` |
+| Current node meta | `useCurrentNodeMeta()` | `@nop-chaos/flux-react` |
+
+**NEVER** create ad-hoc React contexts or prop-drilling chains for data these hooks already provide.
+
+### MANDATORY: Styling Rules
+
+1. Renderers emit **marker classes ONLY** (`nop-container`, `nop-flex`, `nop-page`, etc.). Markers carry zero visual styles.
+2. **NO implicit layout** in renderer code — no hardcoded `gap-4`, `flex`, `p-4`, `grid` in renderer components. All visual styles come from schema (`className`, semantic props, `classAliases`).
+3. Use `cn()` from `@nop-chaos/ui` for class merging, not `classNames` or template literals.
+4. Use `stack-*`/`hstack-*` aliases from `packages/tailwind-preset/src/styles/base.css` for layout in schema.
+5. See `docs/architecture/styling-system.md` for the full styling contract.
 
 ### General
 

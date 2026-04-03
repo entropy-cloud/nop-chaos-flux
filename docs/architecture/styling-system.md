@@ -125,16 +125,31 @@ Excluded dependencies (not needed for basic rendering):
 
 ### Included Components
 
-See `docs/plans/18-shadcn-ui-migration-plan.md` for the full migration list.
+The authoritative list is `packages/ui/src/index.ts`. Current core components:
 
-Core components:
 - Button, Checkbox, Switch, RadioGroup
 - Dialog, Sheet, Drawer
-- Select, Input, Textarea, Label
+- Select, NativeSelect, Input, InputGroup, Textarea, Label
 - Tabs, DropdownMenu, Popover, Tooltip
 - Table, Card, Badge, Avatar
 - ScrollArea, Separator, Progress
-- Alert, Skeleton, Spinner
+- Alert, AlertDialog, Skeleton, Spinner
+- Accordion, Breadcrumb, Calendar, Carousel, Collapsible
+- Command, Combobox, ContextMenu, HoverCard
+- InputOTP, Kbd, Menubar, NavigationMenu, Pagination
+- RadioGroup, Resizable, Sidebar, Slider
+- Toggle, ToggleGroup
+- Field, ButtonGroup, Empty, Item, JsonViewer
+- Toaster + toast (from sonner)
+- Toolbar components (UndoRedoControls, ClipboardControls, etc.)
+
+### How to add a new shadcn/ui component
+
+1. Copy the shadcn/ui component source into `packages/ui/src/components/ui/<name>.tsx`.
+2. Ensure imports use `@/lib/utils` → `../../lib/utils` (relative path within the package).
+3. Add `export * from './components/ui/<name>';` to `packages/ui/src/index.ts`.
+4. If the component needs a new dependency (e.g. a radix primitive), add it to `packages/ui/package.json`.
+5. Verify with `pnpm --filter @nop-chaos/ui typecheck && pnpm --filter @nop-chaos/ui build`.
 
 ## Design Principles
 
@@ -588,6 +603,7 @@ interface BadSchema {
 ## Related Docs
 - `docs/architecture/theme-compatibility.md` - CSS variables and host theming
 - `docs/architecture/renderer-runtime.md` - Renderer props resolution
+- `docs/architecture/renderer-markers-and-selectors.md` - DOM marker protocol
+- `packages/ui/src/index.ts` - Authoritative UI component export list
 - `packages/flux-core/src/index.ts` - `BaseSchema.classAliases` type
 - `packages/flux-runtime/src/class-aliases.ts` - Resolution implementation
-- `docs/plans/18-shadcn-ui-migration-plan.md` - shadcn/ui migration plan
