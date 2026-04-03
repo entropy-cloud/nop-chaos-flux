@@ -176,7 +176,9 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     isFilling: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0, currentRow: 0, currentCol: 0,
   });
   const fillHandleRef = useRef<FillHandleState>(fillHandleState);
-  fillHandleRef.current = fillHandleState;
+  useEffect(() => {
+    fillHandleRef.current = fillHandleState;
+  }, [fillHandleState]);
 
   // -- Resize state --
   const [resizeState, setResizeState] = useState<ResizeState>({
@@ -830,16 +832,6 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleCopy, handleCut, handlePaste, handleUndo, handleRedo, handleStyleTool, handleClear, selectedCell]);
-
-  // -- Update cellValue on selection change --
-  useEffect(() => {
-    if (selectedCell) {
-      const cell = snapshot.activeSheet?.cells?.[cellAddress(selectedCell.row, selectedCell.col)];
-      setCellValue(String(cell?.value ?? ''));
-      const comment = cell?.comment;
-      setCommentText(typeof comment === 'string' ? comment : comment?.text ?? '');
-    }
-  }, [selectedCell, snapshot]);
 
   return {
     snapshot,

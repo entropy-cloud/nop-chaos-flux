@@ -1143,6 +1143,8 @@ export function createSpreadsheetCore(
     transactionDoc: null,
     clipboard: null,
   }));
+  let cachedState = store.getState();
+  let cachedSnapshot = buildSnapshot(cachedState);
 
   async function dispatch(command: SpreadsheetCommand): Promise<SpreadsheetCommandResult> {
     const state = store.getState();
@@ -1665,7 +1667,12 @@ export function createSpreadsheetCore(
 
   return {
     getSnapshot() {
-      return buildSnapshot(store.getState());
+      const state = store.getState();
+      if (state !== cachedState) {
+        cachedState = state;
+        cachedSnapshot = buildSnapshot(state);
+      }
+      return cachedSnapshot;
     },
 
     subscribe(listener: () => void) {

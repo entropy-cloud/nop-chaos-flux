@@ -56,7 +56,9 @@ export function useCodeMirror(options: UseCodeMirrorOptions): UseCodeMirrorResul
   const [view, setView] = useState<EditorView | null>(null);
   const optionsRef = useRef(options);
 
-  optionsRef.current = options;
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   useEffect(() => {
     if (!containerRef.current) return;

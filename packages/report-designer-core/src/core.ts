@@ -498,6 +498,8 @@ export function createReportDesignerCore(
     fieldDrag: { active: false },
     preview: { running: false },
   }));
+  let cachedState = store.getState();
+  let cachedSnapshot = buildSnapshot(cachedState);
 
   async function refreshDerivedState() {
     const snapshot = store.getState();
@@ -764,7 +766,12 @@ export function createReportDesignerCore(
 
   return {
     getSnapshot() {
-      return buildSnapshot(store.getState());
+      const state = store.getState();
+      if (state !== cachedState) {
+        cachedState = state;
+        cachedSnapshot = buildSnapshot(state);
+      }
+      return cachedSnapshot;
     },
 
     subscribe(listener: () => void) {

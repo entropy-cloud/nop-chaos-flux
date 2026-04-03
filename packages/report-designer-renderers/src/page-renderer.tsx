@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope } from '@nop-chaos/flux-react';
 import type {
@@ -82,14 +82,11 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
     void core.refreshFieldSources();
   }, [core]);
 
-  const [snapshot, setSnapshot] = useState(() => core.getSnapshot());
-
-  useEffect(() => {
-    setSnapshot(core.getSnapshot());
-    return core.subscribe(() => {
-      setSnapshot(core.getSnapshot());
-    });
-  }, [core]);
+  const snapshot = useSyncExternalStore(
+    core.subscribe,
+    core.getSnapshot,
+    core.getSnapshot,
+  );
 
   const hostData = useMemo(() => createHostData(core, snapshot), [core, snapshot]);
   const toolbarContent = props.regions.toolbar?.render({ data: hostData });

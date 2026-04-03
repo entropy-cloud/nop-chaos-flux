@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope } from '@nop-chaos/flux-react';
 import { createSpreadsheetCore, type SpreadsheetConfig, type SpreadsheetDocument, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
@@ -89,14 +89,11 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
     return actionScope.registerNamespace('spreadsheet', spreadsheetProvider);
   }, [actionScope, spreadsheetProvider]);
 
-  const [snapshot, setSnapshot] = useState(() => spreadsheetCore.getSnapshot());
-
-  useEffect(() => {
-    setSnapshot(spreadsheetCore.getSnapshot());
-    return spreadsheetCore.subscribe(() => {
-      setSnapshot(spreadsheetCore.getSnapshot());
-    });
-  }, [spreadsheetCore]);
+  const snapshot = useSyncExternalStore(
+    spreadsheetCore.subscribe,
+    spreadsheetCore.getSnapshot,
+    spreadsheetCore.getSnapshot,
+  );
 
   const spreadsheet = useMemo(() => deriveHostSnapshot(snapshot), [snapshot]);
   const hostData = useMemo<SpreadsheetPageHostData>(
