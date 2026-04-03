@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, memo } from 'react';
+import { useContext, useEffect, useMemo, memo } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
@@ -54,20 +54,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 }) {
   const runtime = useRendererRuntime();
   const parentClassAliases = useContext(ClassAliasesContext);
-  const stateRef = useRef<{ nodeId: string; state: CompiledNodeRuntimeState } | undefined>(undefined);
-
-  if (!stateRef.current || stateRef.current.nodeId !== props.node.id) {
-    stateRef.current = {
-      nodeId: props.node.id,
-      state: props.node.createRuntimeState()
-    };
-  }
-
-  const nodeState = stateRef.current.state;
-  const renderStartedAtRef = useRef(0);
-  if (runtime.env.monitor) {
-    renderStartedAtRef.current = Date.now();
-  }
+  const nodeState = useMemo<CompiledNodeRuntimeState>(() => props.node.createRuntimeState(), [props.node]);
 
   const isStatic = props.node.flags.isStatic;
   const subscribe = isStatic
@@ -213,10 +200,15 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const resolvedCid = typeof cidFromSchema === 'number' ? cidFromSchema : undefined;
 
   useEffect(() => {
+    if (!runtime.env.monitor) {
+      return;
+    }
+
     if (!resolvedMeta.visible || resolvedMeta.hidden) {
       return;
     }
 
+    const startedAt = Date.now();
     const payload = {
       nodeId: props.node.id,
       path: props.node.path,
@@ -226,7 +218,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     runtime.env.monitor?.onRenderStart?.(payload);
     runtime.env.monitor?.onRenderEnd?.({
       ...payload,
-      durationMs: Math.max(0, Date.now() - renderStartedAtRef.current)
+      durationMs: Math.max(0, Date.now() - startedAt)
     });
   }, [
     runtime.env.monitor,

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo } from 'react';
 import type {
   ActionScope,
   CompiledSchemaNode,
@@ -29,34 +29,27 @@ export function useNodeScopes(
   activeActionScope: ActionScope | undefined;
   activeComponentRegistry: ComponentHandleRegistry | undefined;
 } {
-  const nodeActionScopeRef = useRef<{ nodeId: string; scope: ActionScope } | undefined>(undefined);
-  const nodeComponentRegistryRef = useRef<{ nodeId: string; registry: ComponentHandleRegistry } | undefined>(undefined);
+  const nodeActionScope = useMemo(() => {
+    if (node.component.actionScopePolicy !== 'new') {
+      return undefined;
+    }
 
-  if (
-    node.component.actionScopePolicy === 'new' &&
-    (!nodeActionScopeRef.current || nodeActionScopeRef.current.nodeId !== node.id)
-  ) {
-    nodeActionScopeRef.current = {
-      nodeId: node.id,
-      scope: createNodeOwnedActionScope(runtime, actionScope, node)
-    };
-  }
+    return createNodeOwnedActionScope(runtime, actionScope, node);
+  }, [runtime, actionScope, node]);
 
-  if (
-    node.component.componentRegistryPolicy === 'new' &&
-    (!nodeComponentRegistryRef.current || nodeComponentRegistryRef.current.nodeId !== node.id)
-  ) {
-    nodeComponentRegistryRef.current = {
-      nodeId: node.id,
-      registry: createNodeOwnedComponentRegistry(runtime, componentRegistry, node)
-    };
-  }
+  const nodeComponentRegistry = useMemo(() => {
+    if (node.component.componentRegistryPolicy !== 'new') {
+      return undefined;
+    }
+
+    return createNodeOwnedComponentRegistry(runtime, componentRegistry, node);
+  }, [runtime, componentRegistry, node]);
 
   const activeActionScope = node.component.actionScopePolicy === 'new'
-    ? nodeActionScopeRef.current?.scope
+    ? nodeActionScope
     : actionScope;
   const activeComponentRegistry = node.component.componentRegistryPolicy === 'new'
-    ? nodeComponentRegistryRef.current?.registry
+    ? nodeComponentRegistry
     : componentRegistry;
 
   return { activeActionScope, activeComponentRegistry };

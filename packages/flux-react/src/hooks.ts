@@ -50,7 +50,7 @@ export function useScopeSelector<T, S = Record<string, unknown>>(selector: (scop
   const scope = useRenderScope();
   const store = scope.store;
   const subscribe = store?.subscribe ?? (() => () => undefined);
-  const getSnapshot = () => scope.readOwn() as unknown as S;
+  const getSnapshot = () => (store?.getSnapshot() ?? scope.read()) as unknown as S;
 
   return useSyncExternalStoreWithSelector(
     subscribe,
