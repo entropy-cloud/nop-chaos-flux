@@ -270,7 +270,7 @@ export async function executeApiObject(
   return { data: adaptedData, ok: response.ok, status: response.status };
 }
 
-export function createApiRequestExecutor(env: RendererEnv) {
+export function createApiRequestExecutor(getEnv: () => RendererEnv) {
   const activeControllers = new Map<string, AbortController>();
   const activePromises = new Map<string, Promise<ApiResponse<any>>>();
 
@@ -285,6 +285,7 @@ export function createApiRequestExecutor(env: RendererEnv) {
     const requestKey = createRequestKey(actionType, api, scope, form);
     const previousController = activeControllers.get(requestKey);
     const previousPromise = activePromises.get(requestKey);
+    const env = getEnv();
 
     if (previousPromise) {
       if (dedupStrategy === 'ignore-new') {

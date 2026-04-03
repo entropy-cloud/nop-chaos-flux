@@ -26,19 +26,20 @@ function evaluateCompiledValue<T>(
 
 export function createNodeRuntime(input: {
   expressionCompiler: ExpressionCompiler;
-  env: RendererEnv;
+  getEnv: () => RendererEnv;
 }) {
   function resolveNodeMeta(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta {
+    const env = input.getEnv();
     const resolved: ResolvedNodeMeta = {
-      id: evaluateCompiledValue(input.expressionCompiler, node.meta.id, scope, input.env, state?.meta.id),
-      name: evaluateCompiledValue(input.expressionCompiler, node.meta.name, scope, input.env, state?.meta.name),
-      label: evaluateCompiledValue(input.expressionCompiler, node.meta.label, scope, input.env, state?.meta.label),
-      title: evaluateCompiledValue(input.expressionCompiler, node.meta.title, scope, input.env, state?.meta.title),
-      className: evaluateCompiledValue(input.expressionCompiler, node.meta.className, scope, input.env, state?.meta.className),
-      visible: Boolean(evaluateCompiledValue(input.expressionCompiler, node.meta.visible, scope, input.env, state?.meta.visible) ?? true),
-      hidden: Boolean(evaluateCompiledValue(input.expressionCompiler, node.meta.hidden, scope, input.env, state?.meta.hidden) ?? false),
-      disabled: Boolean(evaluateCompiledValue(input.expressionCompiler, node.meta.disabled, scope, input.env, state?.meta.disabled) ?? false),
-      testid: evaluateCompiledValue(input.expressionCompiler, node.meta.testid, scope, input.env, state?.meta.testid),
+      id: evaluateCompiledValue(input.expressionCompiler, node.meta.id, scope, env, state?.meta.id),
+      name: evaluateCompiledValue(input.expressionCompiler, node.meta.name, scope, env, state?.meta.name),
+      label: evaluateCompiledValue(input.expressionCompiler, node.meta.label, scope, env, state?.meta.label),
+      title: evaluateCompiledValue(input.expressionCompiler, node.meta.title, scope, env, state?.meta.title),
+      className: evaluateCompiledValue(input.expressionCompiler, node.meta.className, scope, env, state?.meta.className),
+      visible: Boolean(evaluateCompiledValue(input.expressionCompiler, node.meta.visible, scope, env, state?.meta.visible) ?? true),
+      hidden: Boolean(evaluateCompiledValue(input.expressionCompiler, node.meta.hidden, scope, env, state?.meta.hidden) ?? false),
+      disabled: Boolean(evaluateCompiledValue(input.expressionCompiler, node.meta.disabled, scope, env, state?.meta.disabled) ?? false),
+      testid: evaluateCompiledValue(input.expressionCompiler, node.meta.testid, scope, env, state?.meta.testid),
       changed: true
     };
 
@@ -70,10 +71,11 @@ export function createNodeRuntime(input: {
       return result;
     }
 
+    const env = input.getEnv();
     const execution = input.expressionCompiler.evaluateWithState(
       node.props,
       scope,
-      input.env,
+      env,
       state?.props ?? node.props.createState()
     );
 

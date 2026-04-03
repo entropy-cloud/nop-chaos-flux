@@ -54,9 +54,9 @@ function toErrorMessage(error: unknown): string {
 }
 
 export function createImportManager(input: {
-  loader?: ImportedLibraryLoader;
+  getLoader: () => ImportedLibraryLoader | undefined;
   getRuntime: () => RendererRuntime;
-  env: RendererEnv;
+  getEnv: () => RendererEnv;
 }) {
   const moduleLoads = new Map<string, Promise<Awaited<ReturnType<ImportedLibraryLoader['load']>>>>();
   type ImportState = 'loading' | 'ready' | 'error';
@@ -71,8 +71,9 @@ export function createImportManager(input: {
   const scopeRegistrations = new WeakMap<ActionScope, Map<string, ScopeRegistrationEntry>>();
 
   function reportImportError(error: Error, node?: CompiledSchemaNode) {
-    input.env.notify('error', error.message);
-    input.env.monitor?.onError?.({
+    const env = input.getEnv();
+    env.notify('error', error.message);
+    env.monitor?.onError?.({
       phase: 'render',
       error,
       nodeId: node?.id,
@@ -110,7 +111,9 @@ export function createImportManager(input: {
   }
 
   async function loadModule(spec: XuiImportSpec) {
-    if (!input.loader) {
+    const loader = input.getLoader();
+
+    if (!loader) {
       throw new Error(`No import loader configured for namespace ${spec.as}`);
     }
 
@@ -121,7 +124,7 @@ export function createImportManager(input: {
       return existing;
     }
 
-    const pending = input.loader.load(spec);
+    const pending = loader.load(spec);
     moduleLoads.set(key, pending);
     return pending;
   }
@@ -184,7 +187,7 @@ export function createImportManager(input: {
           const module = await loadModule(spec);
           const context: ImportedNamespaceContext = {
             runtime: input.getRuntime(),
-            env: input.env,
+            env: input.getEnv(),
             actionScope: args.actionScope!,
             componentRegistry: args.componentRegistry,
             scope: args.scope,
@@ -257,4 +260,3 @@ export function createImportManager(input: {
     releaseImportedNamespaces
   };
 }
-

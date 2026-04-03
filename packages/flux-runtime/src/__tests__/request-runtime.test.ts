@@ -263,7 +263,7 @@ describe('createApiRequestExecutor', () => {
       resolve({ ok: true, status: 200, data: { page: 2 } });
     }));
     const env = { fetcher } as unknown as RendererEnv;
-    const execute = createApiRequestExecutor(env);
+    const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
 
     const firstPromise = execute('ajax', { url: '/api/items', params: { page: 1 } }, scope);
@@ -279,7 +279,7 @@ describe('createApiRequestExecutor', () => {
   it('supports parallel dedup strategy without cancelling earlier requests', async () => {
     const fetcher = vi.fn(async (api: ApiObject) => ({ ok: true, status: 200, data: { requestId: api.data } }));
     const env = { fetcher } as unknown as RendererEnv;
-    const execute = createApiRequestExecutor(env);
+    const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
 
     const first = execute('ajax', { url: '/api/items', data: { requestId: 1 }, dedupStrategy: 'parallel' }, scope);
@@ -296,7 +296,7 @@ describe('createApiRequestExecutor', () => {
       resolveFirst = resolve;
     }));
     const env = { fetcher } as unknown as RendererEnv;
-    const execute = createApiRequestExecutor(env);
+    const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
 
     const first = execute('ajax', { url: '/api/items', data: { requestId: 1 }, dedupStrategy: 'ignore-new' }, scope);

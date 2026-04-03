@@ -13,7 +13,7 @@ import { isNamespacedAction } from './action-scope';
 import { cancelPendingDebounce, scheduleDebounce } from './utils/debounce';
 
 interface ActionDispatcherInput {
-  env: RendererEnv;
+  getEnv: () => RendererEnv;
   plugins?: RendererPlugin[];
   onActionError?: (error: unknown, ctx: ActionContext) => void;
   evaluate: <T = unknown>(target: unknown, scope: ScopeRef) => T;
@@ -114,7 +114,7 @@ function finishAction(
   startedAt: number,
   result: ActionResult
 ): ActionResult {
-  input.env.monitor?.onActionEnd?.({
+  input.getEnv().monitor?.onActionEnd?.({
     ...actionPayload,
     durationMs: Date.now() - startedAt,
     result
@@ -159,7 +159,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         }
 
         const api = input.evaluate<ApiObject>(action.api, ctx.scope);
-        input.env.monitor?.onApiRequest?.({
+        input.getEnv().monitor?.onApiRequest?.({
           api,
           nodeId: ctx.node?.id,
           path: ctx.node?.path
@@ -217,7 +217,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         const api = action.api ? input.evaluate<ApiObject>(action.api, ctx.scope) : undefined;
 
         if (api) {
-          input.env.monitor?.onApiRequest?.({
+          input.getEnv().monitor?.onApiRequest?.({
             api,
             nodeId: ctx.node?.id,
             path: ctx.node?.path
@@ -365,7 +365,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
   async function runSingleAction(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
     const startedAt = Date.now();
     const actionPayload = buildActionMonitorPayload(action, ctx);
-    input.env.monitor?.onActionStart?.(actionPayload);
+    input.getEnv().monitor?.onActionStart?.(actionPayload);
 
     try {
       const processedAction = await (input.plugins ?? []).reduce<Promise<ActionSchema>>(
@@ -401,7 +401,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     } catch (error) {
       if (isAbortError(error)) {
         const result = createCancelledResult(error);
-        input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+        input.getEnv().monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
         return result;
       }
 
@@ -420,7 +420,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         ok: false,
         error
       };
-      input.env.monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+      input.getEnv().monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
       return result;
     }
   }
@@ -434,7 +434,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     const cancelledResult = createCancelledResult();
 
     if (cancelPendingDebounce<string, ActionResult>(pendingDebounces, key, cancelledResult)) {
-      input.env.monitor?.onActionEnd?.({
+      input.getEnv().monitor?.onActionEnd?.({
         ...buildActionMonitorPayload(action, ctx),
         durationMs: 0,
         result: cancelledResult
@@ -479,4 +479,3 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
 
   return { dispatch };
 }
-

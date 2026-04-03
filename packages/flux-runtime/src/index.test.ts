@@ -714,6 +714,36 @@ describe('createRendererRuntime', () => {
     }
   });
 
+  it('exposes component registry debug helpers through the public contract', () => {
+    const componentRegistry = createComponentHandleRegistry({ id: 'debug-components' });
+    const handle = {
+      id: 'debug-form',
+      name: 'debugForm',
+      type: 'form',
+      capabilities: {
+        invoke: vi.fn()
+      }
+    };
+
+    const unregister = componentRegistry.register(handle, { cid: 88 });
+
+    expect(componentRegistry.getHandleByCid?.(88)).toBe(handle);
+    expect(componentRegistry.getDebugSnapshot?.()).toEqual({
+      handles: [
+        expect.objectContaining({
+          cid: 88,
+          id: 'debug-form',
+          name: 'debugForm',
+          type: 'form',
+          mounted: true
+        })
+      ]
+    });
+
+    unregister();
+    expect(componentRegistry.getHandleByCid?.(88)).toBeUndefined();
+  });
+
   it('resolves namespaced actions through parent action scopes', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
@@ -747,6 +777,29 @@ describe('createRendererRuntime', () => {
 
     expect(result).toMatchObject({ ok: true, data: { exported: true } });
     expect(invoke).toHaveBeenCalledWith('export', { source: 'toolbar' }, expect.objectContaining({ actionScope: childActionScope }));
+  });
+
+  it('exposes action scope debug snapshots through the public contract', () => {
+    const parentActionScope = createActionScope({ id: 'parent-debug-scope' });
+    const childActionScope = createActionScope({ id: 'child-debug-scope', parent: parentActionScope });
+
+    childActionScope.registerNamespace('designer', {
+      kind: 'host',
+      invoke: vi.fn(),
+      listMethods: () => ['export', 'save']
+    });
+
+    expect(childActionScope.getDebugSnapshot?.()).toEqual({
+      id: 'child-debug-scope',
+      parentId: 'parent-debug-scope',
+      namespaces: [
+        {
+          namespace: 'designer',
+          providerKind: 'host',
+          methods: ['export', 'save']
+        }
+      ]
+    });
   });
 
   it('treats top-level action fields as payload when args is omitted', async () => {
@@ -3688,6 +3741,75 @@ describe('createRendererRuntime', () => {
         role: 'admin'
       }
     });
+  });
+
+  it('uses the latest env fetcher without recreating runtime state', async () => {
+    const firstFetcher = vi.fn(async <T,>(api: ApiObject) => ({
+      ok: true,
+      status: 200,
+      data: { tick: api.headers?.['x-tick'], source: 'first' } as T
+    }));
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: firstFetcher as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const firstResult = await runtime.dispatch(
+      {
+        action: 'ajax',
+        api: {
+          url: '/api/env',
+          method: 'get',
+          headers: {
+            'x-tick': '0'
+          }
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(firstResult).toMatchObject({ ok: true, data: { tick: '0', source: 'first' } });
+
+    const secondFetcher = vi.fn(async <T,>(api: ApiObject) => ({
+      ok: true,
+      status: 200,
+      data: { tick: api.headers?.['x-tick'], source: 'second' } as T
+    }));
+    Object.assign(runtime.env, {
+      ...runtime.env,
+      fetcher: secondFetcher as RendererEnv['fetcher']
+    });
+
+    const secondResult = await runtime.dispatch(
+      {
+        action: 'ajax',
+        api: {
+          url: '/api/env',
+          method: 'get',
+          headers: {
+            'x-tick': '1'
+          }
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(secondResult).toMatchObject({ ok: true, data: { tick: '1', source: 'second' } });
+    expect(firstFetcher).toHaveBeenCalledTimes(1);
+    expect(secondFetcher).toHaveBeenCalledTimes(1);
   });
 
   it('cancels concurrent submitForm actions instead of reporting a duplicate failure', async () => {

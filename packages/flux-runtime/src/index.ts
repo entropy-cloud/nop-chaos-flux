@@ -69,15 +69,19 @@ export function createRendererRuntime(input: {
     expressionCompiler,
     plugins: input.plugins
   });
+  const envRef: { current: RendererEnv } = {
+    current: input.env
+  };
+  const getEnv = () => envRef.current;
   const apiCache = createApiCacheStore();
-  const executeApiRequest = createApiRequestExecutor(input.env);
+  const executeApiRequest = createApiRequestExecutor(getEnv);
   const validationRegistry = createBuiltInValidationRegistry();
   let actionScopeCounter = 0;
   let componentRegistryCounter = 0;
   const runtimeRef: { current?: RendererRuntime } = {};
   const nodeRuntime = createNodeRuntime({
     expressionCompiler,
-    env: input.env
+    getEnv
   });
 
   function createOwnedActionScope(scopeInput: { id?: string; parent?: ActionScope } = {}) {
@@ -97,7 +101,7 @@ export function createRendererRuntime(input: {
   }
 
   const importManager = createImportManager({
-    loader: input.env.importLoader,
+    getLoader: () => getEnv().importLoader,
     getRuntime: () => {
       if (!runtimeRef.current) {
         throw new Error('Renderer runtime is not initialized yet');
@@ -105,7 +109,7 @@ export function createRendererRuntime(input: {
 
       return runtimeRef.current;
     },
-    env: input.env
+    getEnv
   });
 
   async function executeValidationRule(
@@ -116,7 +120,7 @@ export function createRendererRuntime(input: {
   ): Promise<ValidationError | undefined> {
     try {
       const api = evaluate<ApiObject>(rule.api, scope);
-      const response = await executeApiObject(api, scope, input.env, expressionCompiler, {
+      const response = await executeApiObject(api, scope, getEnv(), expressionCompiler, {
         executor: (adaptedApi) => executeApiRequest(`validate:${field.path}`, adaptedApi, scope)
       });
       const adaptedData = response.data;
@@ -175,7 +179,7 @@ export function createRendererRuntime(input: {
       executeValidationRule,
       validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry),
       submitApi: async (api, scope) => {
-        const response = await executeApiObject(api, scope, input.env, expressionCompiler, {
+        const response = await executeApiObject(api, scope, getEnv(), expressionCompiler, {
           executor: (adaptedApi) => executeApiRequest('submitForm', adaptedApi, scope)
         });
 
@@ -189,7 +193,7 @@ export function createRendererRuntime(input: {
   }
 
   async function executeAjaxAction(api: ApiObject, action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
-    const response = await executeApiObject(api, ctx.scope, input.env, expressionCompiler, {
+    const response = await executeApiObject(api, ctx.scope, getEnv(), expressionCompiler, {
       executor: (adaptedApi) => executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form)
     });
 
@@ -207,11 +211,11 @@ export function createRendererRuntime(input: {
 
   function evaluate<T = unknown>(target: unknown, scope: ScopeRef): T {
     const compiled = expressionCompiler.compileValue(target);
-    return expressionCompiler.evaluateValue(compiled, scope, input.env) as T;
+    return expressionCompiler.evaluateValue(compiled, scope, getEnv()) as T;
   }
 
   const { dispatch } = createActionDispatcher({
-    env: input.env,
+    getEnv,
     plugins: input.plugins,
     onActionError: input.onActionError,
     evaluate,
@@ -235,7 +239,9 @@ export function createRendererRuntime(input: {
 
   const runtime: RendererRuntime = {
     registry: input.registry,
-    env: input.env,
+    get env() {
+      return getEnv();
+    },
     expressionCompiler,
     schemaCompiler,
     plugins: input.plugins ?? [],
