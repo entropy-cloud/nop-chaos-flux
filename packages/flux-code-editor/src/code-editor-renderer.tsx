@@ -2,6 +2,8 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import type { RendererComponentProps, RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import type { ApiObject, ActionResult } from '@nop-chaos/flux-core';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
+import { Button } from '@nop-chaos/ui';
+import { XIcon, Maximize2Icon, PlayIcon, ChevronRightIcon, ChevronDownIcon } from 'lucide-react';
 import { useCodeMirror } from './use-code-mirror';
 import { createBaseExtensions } from './extensions/base';
 import { formatSQL } from './extensions/sql/format';
@@ -279,21 +281,14 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
       {isFullscreen && allowFullscreen && (
         <div className="nop-code-editor__header">
           <span className="nop-code-editor__header-title">{props.meta.label || props.schema.label}</span>
-          <span
-            role="button"
-            tabIndex={0}
-            className="nop-code-editor__header-close"
+          <Button
+            variant="ghost"
+            size="icon-xs"
             onClick={() => setIsFullscreen(false)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setIsFullscreen(false);
-              }
-            }}
             aria-label="Exit fullscreen"
           >
-            ×
-          </span>
+            <XIcon />
+          </Button>
         </div>
       )}
       {showToolbar && (
@@ -301,21 +296,14 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
           {language === 'sql' && (
             <>
               {formatConfig && (
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className="nop-code-editor__toolbar-format"
+                <Button
+                  variant="ghost"
+                  size="xs"
                   onClick={handleFormatSQL}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleFormatSQL();
-                    }
-                  }}
                   title="Format SQL"
                 >
                   Format
-                </span>
+                </Button>
               )}
               {hasSnippets && (
                 <SnippetPanel
@@ -324,58 +312,39 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
                 />
               )}
               {hasVariablePanel && (
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className={`nop-code-editor__toolbar-var-toggle${variablePanelCollapsed ? ' is-collapsed' : ''}`}
+                <Button
+                  variant="ghost"
+                  size="xs"
                   onClick={() => setVariablePanelCollapsed(v => !v)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setVariablePanelCollapsed(v => !v);
-                    }
-                  }}
-                  title={variablePanelCollapsed ? 'Hide variables' : 'Show variables'}
+                  title={variablePanelCollapsed ? 'Show variables' : 'Hide variables'}
                 >
-                  {variablePanelCollapsed ? '▷ Vars' : '▽ Vars'}
-                </span>
+                  {variablePanelCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
+                  Vars
+                </Button>
               )}
               {hasExecution && (
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className="nop-code-editor__toolbar-execute"
+                <Button
+                  variant="ghost"
+                  size="xs"
                   onClick={handleExecuteSQL}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleExecuteSQL();
-                    }
-                  }}
                   title="Execute SQL"
                 >
-                  ▶ Run
-                </span>
+                  <PlayIcon />
+                  Run
+                </Button>
               )}
             </>
           )}
           {allowFullscreen && !isFullscreen && (
-            <span
-              role="button"
-              tabIndex={0}
-              className="nop-code-editor__toolbar-fullscreen"
+            <Button
+              variant="ghost"
+              size="icon-xs"
               onClick={toggleFullscreen}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  toggleFullscreen();
-                }
-              }}
               aria-label="Enter fullscreen"
               title="Fullscreen"
             >
-              ⛶
-            </span>
+              <Maximize2Icon />
+            </Button>
           )}
         </div>
       )}

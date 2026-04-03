@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { SQLResultPanel } from './sql-result-panel';
 import type { SQLResultState } from './sql-result-panel';
@@ -102,32 +102,6 @@ describe('SQLResultPanel', () => {
 
     const closeButton = screen.getByRole('button');
     closeButton.click();
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('close button triggers on Enter key', () => {
-    const onClose = vi.fn();
-    const result: SQLResultState = {
-      status: 'error',
-      message: 'Test error'
-    };
-    render(<SQLResultPanel result={result} onClose={onClose} />);
-
-    const closeButton = screen.getByRole('button');
-    fireEvent.keyDown(closeButton, { key: 'Enter' });
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('close button triggers on Space key', () => {
-    const onClose = vi.fn();
-    const result: SQLResultState = {
-      status: 'error',
-      message: 'Test error'
-    };
-    render(<SQLResultPanel result={result} onClose={onClose} />);
-
-    const closeButton = screen.getByRole('button');
-    fireEvent.keyDown(closeButton, { key: ' ' });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

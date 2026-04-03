@@ -1,3 +1,6 @@
+import { Button, Spinner, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@nop-chaos/ui';
+import { XIcon } from 'lucide-react';
+
 export type SQLResultState =
   | { status: 'idle' }
   | { status: 'loading' }
@@ -15,7 +18,7 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
   if (result.status === 'loading') {
     return (
       <div className="nop-code-editor__result-panel nop-code-editor__result-loading">
-        <span className="nop-code-editor__result-spinner" />
+        <Spinner className="size-4" />
         Executing...
       </div>
     );
@@ -27,17 +30,9 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
         <div className="nop-code-editor__result-header">
           <span>Error</span>
           {onClose && (
-            <span
-              role="button"
-              tabIndex={0}
-              className="nop-code-editor__result-close"
-              onClick={onClose}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose(); }
-              }}
-            >
-              ×
-            </span>
+            <Button variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
+              <XIcon />
+            </Button>
           )}
         </div>
         <div>{result.message}</div>
@@ -52,32 +47,26 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
       <div className="nop-code-editor__result-header">
         <span>Result ({result.data.length} rows)</span>
         {onClose && (
-          <span
-            role="button"
-            tabIndex={0}
-            className="nop-code-editor__result-close"
-            onClick={onClose}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose(); }
-            }}
-          >
-            ×
-          </span>
+          <Button variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
+            <XIcon />
+          </Button>
         )}
       </div>
       <div className="nop-code-editor__result-table-wrapper">
-        <table className="nop-code-editor__result-table">
-          <thead>
-            <tr>{columns.map(col => <th key={col}>{col}</th>)}</tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {columns.map(col => <TableHead key={col}>{col}</TableHead>)}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {result.data.map((row, i) => (
-              <tr key={i}>
-                {columns.map(col => <td key={col}>{String(row[col] ?? '')}</td>)}
-              </tr>
+              <TableRow key={i}>
+                {columns.map(col => <TableCell key={col}>{String(row[col] ?? '')}</TableCell>)}
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

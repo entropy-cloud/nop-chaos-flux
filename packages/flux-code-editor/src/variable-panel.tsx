@@ -1,3 +1,6 @@
+import type { ReactNode } from 'react';
+import { Button, ScrollArea } from '@nop-chaos/ui';
+import { ChevronRightIcon, ChevronLeftIcon, CopyIcon, CornerDownRightIcon } from 'lucide-react';
 import type { VariableItem } from './types';
 import { renderInsertTemplate } from './types';
 
@@ -19,18 +22,15 @@ export function VariablePanel({
   if (collapsed) {
     return (
       <div className="nop-code-editor__var-panel nop-code-editor__var-panel--collapsed">
-        <span
-          role="button"
-          tabIndex={0}
-          className="nop-code-editor__var-panel-toggle"
+        <Button
+          variant="ghost"
+          size="icon-xs"
           onClick={onToggleCollapse}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleCollapse?.(); }
-          }}
           title="Expand variable panel"
+          aria-label="Expand variable panel"
         >
-          {'▶'}
-        </span>
+          <ChevronRightIcon />
+        </Button>
       </div>
     );
   }
@@ -55,23 +55,20 @@ export function VariablePanel({
       <div className="nop-code-editor__var-panel-header">
         <span className="nop-code-editor__var-panel-title">Variables</span>
         {onToggleCollapse && (
-          <span
-            role="button"
-            tabIndex={0}
-            className="nop-code-editor__var-panel-toggle"
+          <Button
+            variant="ghost"
+            size="icon-xs"
             onClick={onToggleCollapse}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleCollapse(); }
-            }}
             title="Collapse variable panel"
+            aria-label="Collapse variable panel"
           >
-            {'◀'}
-          </span>
+            <ChevronLeftIcon />
+          </Button>
         )}
       </div>
-      <div className="nop-code-editor__var-panel-list">
+      <ScrollArea className="nop-code-editor__var-panel-list">
         {renderVariableList(variables, handleInsert, handleCopy)}
-      </div>
+      </ScrollArea>
     </div>
   );
 }
@@ -81,7 +78,7 @@ function renderVariableList(
   onInsert: (variable: VariableItem) => void,
   onCopy: (variable: VariableItem) => void,
   depth = 0,
-): React.ReactNode {
+): ReactNode {
   return variables.map((variable) => (
     <div key={variable.value} className="nop-code-editor__var-item" style={{ paddingLeft: depth * 12 }}>
       <div className="nop-code-editor__var-item-main">
@@ -89,30 +86,24 @@ function renderVariableList(
         <span className="nop-code-editor__var-item-value">{variable.value}</span>
       </div>
       <div className="nop-code-editor__var-item-actions">
-        <span
-          role="button"
-          tabIndex={0}
-          className="nop-code-editor__var-item-copy"
+        <Button
+          variant="ghost"
+          size="icon-xs"
           onClick={() => onCopy(variable)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCopy(variable); }
-          }}
           title="Copy to clipboard"
+          aria-label="Copy to clipboard"
         >
-          Copy
-        </span>
-        <span
-          role="button"
-          tabIndex={0}
-          className="nop-code-editor__var-item-insert"
+          <CopyIcon />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-xs"
           onClick={() => onInsert(variable)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onInsert(variable); }
-          }}
           title="Insert at cursor"
+          aria-label="Insert at cursor"
         >
-          Insert
-        </span>
+          <CornerDownRightIcon />
+        </Button>
       </div>
       {variable.children && variable.children.length > 0 && (
         <div className="nop-code-editor__var-item-children">
