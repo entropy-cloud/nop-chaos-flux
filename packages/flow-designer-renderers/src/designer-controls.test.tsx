@@ -78,7 +78,7 @@ describe('flow designer controls', () => {
     expect(mockContext.dispatch).toHaveBeenCalledTimes(1);
 
     const gridButton = screen.getByRole('button', { name: 'Grid' });
-    expect((gridButton as HTMLElement).getAttribute('data-variant')).toBe('default');
+    expect((gridButton as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(gridButton);
     expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'toggleGrid' });
   });

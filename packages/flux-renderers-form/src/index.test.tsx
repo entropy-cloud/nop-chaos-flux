@@ -469,7 +469,7 @@ describe('formRendererDefinitions', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('checkbox', { name: /Featured/ }));
+    fireEvent.click(screen.getByRole('switch', { name: /Featured/ }));
     fireEvent.click(screen.getByRole('checkbox', { name: /Beta/ }));
     fireEvent.click(screen.getByText('Submit release'));
 
