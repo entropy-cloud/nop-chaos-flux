@@ -20,6 +20,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
 
   return function SchemaRenderer(props: SchemaRendererProps) {
     const onComponentRegistryChange = props.onComponentRegistryChange;
+    const onActionScopeChange = props.onActionScopeChange;
 
     const runtime = useMemo(() => {
       const resolvedRegistry = props.registry ?? registry;
@@ -62,6 +63,14 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
         onComponentRegistryChange?.(null);
       };
     }, [onComponentRegistryChange, rootComponentRegistry]);
+
+    useEffect(() => {
+      onActionScopeChange?.(rootActionScope);
+
+      return () => {
+        onActionScopeChange?.(null);
+      };
+    }, [onActionScopeChange, rootActionScope]);
 
     return (
       <RuntimeContext.Provider value={runtime}>
