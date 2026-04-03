@@ -6,9 +6,24 @@ import type {
   NormalizedDesignerConfig,
   DesignerSnapshot,
   SelectionSummary,
-  DesignerEvent,
-  NodeConstraintConfig
+  DesignerEvent
 } from './types';
+import { cloneDocument, cloneNode, generateId } from './core/clone';
+import {
+  checkMaxInstances,
+  checkMinInstances,
+  countIncomingEdges,
+  countOutgoingEdges,
+  EDGE_MISSING_NODE_ERROR,
+  EDGE_SELF_LOOP_ERROR,
+  validateEdgeConnection,
+} from './core/constraints';
+import { normalizeConfig } from './core/config';
+import {
+  normalizeViewport,
+  normalizeViewportInput,
+  viewportsEqual,
+} from './core/viewport';
 
 export interface DesignerCore {
   getSnapshot(): DesignerSnapshot;
@@ -68,167 +83,6 @@ export interface DesignerCore {
 interface HistoryEntry {
   doc: GraphDocument;
   revision: number;
-}
-
-const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playground example.';
-const EDGE_MISSING_NODE_ERROR = 'Edges must connect existing nodes.';
-const EDGE_DUPLICATE_ERROR = 'Duplicate edges are not supported in the playground example.';
-
-function normalizeViewport(viewport: GraphDocument['viewport']) {
-  return viewport ? { ...viewport } : { x: 0, y: 0, zoom: 1 };
-}
-
-function clampZoom(zoom: number) {
-  return Math.max(0.1, Math.min(4, Number(zoom.toFixed(1))));
-}
-
-function normalizeViewportInput(viewport: { x: number; y: number; zoom: number }) {
-  return {
-    x: Math.round(viewport.x),
-    y: Math.round(viewport.y),
-    zoom: clampZoom(viewport.zoom)
-  };
-}
-
-function viewportsEqual(left: { x: number; y: number; zoom: number }, right: { x: number; y: number; zoom: number }) {
-  return left.x === right.x && left.y === right.y && left.zoom === right.zoom;
-}
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function cloneNode(node: GraphNode): GraphNode {
-  return {
-    ...node,
-    position: { ...node.position },
-    data: { ...node.data },
-  };
-}
-
-function cloneEdge(edge: GraphEdge): GraphEdge {
-  return {
-    ...edge,
-    data: { ...edge.data },
-  };
-}
-
-function cloneDocument(doc: GraphDocument): GraphDocument {
-  return {
-    ...doc,
-    viewport: doc.viewport ? { ...doc.viewport } : undefined,
-    nodes: doc.nodes.map(cloneNode),
-    edges: doc.edges.map(cloneEdge),
-  };
-}
-
-function countNodesOfType(doc: GraphDocument, type: string): number {
-  return doc.nodes.filter((n) => n.type === type).length;
-}
-
-function countIncomingEdges(doc: GraphDocument, nodeId: string): number {
-  return doc.edges.filter((e) => e.target === nodeId).length;
-}
-
-function countOutgoingEdges(doc: GraphDocument, nodeId: string): number {
-  return doc.edges.filter((e) => e.source === nodeId).length;
-}
-
-function checkMaxInstances(doc: GraphDocument, constraints: NodeConstraintConfig | undefined, type: string): boolean {
-  if (!constraints?.maxInstances) return true;
-  if (constraints.maxInstances === 'unlimited') return true;
-  return countNodesOfType(doc, type) < constraints.maxInstances;
-}
-
-function checkMinInstances(doc: GraphDocument, constraints: NodeConstraintConfig | undefined, type: string): boolean {
-  if (constraints?.minInstances === undefined) return true;
-  return countNodesOfType(doc, type) > constraints.minInstances;
-}
-
-function hasEdgeConnection(doc: GraphDocument, source: string, target: string, ignoreEdgeId?: string): boolean {
-  return doc.edges.some((edge) => edge.id !== ignoreEdgeId && edge.source === source && edge.target === target);
-}
-
-function validateEdgeConnection(
-  doc: GraphDocument,
-  normalizedConfig: NormalizedDesignerConfig,
-  source: string,
-  target: string,
-  ignoreEdgeId?: string
-): string | undefined {
-  const sourceNode = doc.nodes.find((node) => node.id === source);
-  const targetNode = doc.nodes.find((node) => node.id === target);
-
-  if (!sourceNode || !targetNode) {
-    return EDGE_MISSING_NODE_ERROR;
-  }
-
-  if (!normalizedConfig.rules.allowSelfLoop && source === target) {
-    return EDGE_SELF_LOOP_ERROR;
-  }
-
-  if (!normalizedConfig.rules.allowMultiEdge && hasEdgeConnection(doc, source, target, ignoreEdgeId)) {
-    return EDGE_DUPLICATE_ERROR;
-  }
-
-  return undefined;
-}
-
-function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfig {
-  const nodeTypes = new Map(config.nodeTypes.map((nt) => [nt.id, nt]));
-  const edgeTypes = new Map((config.edgeTypes ?? []).map((et) => [et.id, et]));
-
-  return {
-    version: config.version,
-    kind: config.kind,
-    nodeTypes,
-    edgeTypes,
-    palette: config.palette,
-    toolbar: config.toolbar,
-    shortcuts: {
-      undo: ['Ctrl+Z', 'Cmd+Z'],
-      redo: ['Ctrl+Y', 'Cmd+Y', 'Ctrl+Shift+Z', 'Cmd+Shift+Z'],
-      copy: ['Ctrl+C', 'Cmd+C'],
-      paste: ['Ctrl+V', 'Cmd+V'],
-      delete: ['Delete', 'Backspace'],
-      ...config.shortcuts,
-    },
-    features: {
-      undo: true,
-      redo: true,
-      history: true,
-      grid: true,
-      minimap: true,
-      fitView: true,
-      export: true,
-      shortcuts: true,
-      floatingToolbar: true,
-      clipboard: true,
-      autoLayout: false,
-      multiSelect: false,
-      ...config.features,
-    },
-    rules: {
-      allowSelfLoop: false,
-      allowMultiEdge: true,
-      defaultEdgeType: 'default',
-      ...config.rules,
-    },
-    canvas: {
-      background: 'dots',
-      gridSize: 24,
-      minZoom: 0.1,
-      maxZoom: 4,
-      defaultZoom: 1,
-      pannable: true,
-      zoomable: true,
-      snapToGrid: true,
-      ...config.canvas,
-    },
-    hooks: config.hooks,
-    classAliases: config.classAliases,
-    themeStyles: config.themeStyles,
-  };
 }
 
 export function createDesignerCore(initialDoc: GraphDocument, config: DesignerConfig): DesignerCore {
