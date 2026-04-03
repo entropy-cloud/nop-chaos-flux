@@ -43,7 +43,7 @@ export function RibbonToolbar({ bridge, store, onInsertExpr, onInsertTag }: Ribb
         <ToolbarSeparator />
         <ToolbarButton icon={Search} onClick={() => setShowSearch(!showSearch)} active={showSearch} title="Search & Replace" />
       </div>
-      <SearchReplace bridge={bridge} visible={showSearch} onClose={() => setShowSearch(false)} />
+      <SearchReplace key={showSearch ? 'search-open' : 'search-closed'} bridge={bridge} visible={showSearch} onClose={() => setShowSearch(false)} />
     </div>
   )
 }

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "paths": {
-      "@hufe921/canvas-editor": ["../../types/hufe921__canvas-editor.d.ts"]
+      "@hufe921/canvas-editor": ["types/hufe921__canvas-editor.d.ts"]
     },
     "noEmit": false,
     "sourceMap": false,

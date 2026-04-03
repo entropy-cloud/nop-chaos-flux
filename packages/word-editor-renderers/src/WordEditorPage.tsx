@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect, useState, useCallback } from 'react'
+import { useMemo, useEffect, useState, useCallback } from 'react'
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
 import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react'
 import { CanvasEditorBridge, createDatasetStore, createEditorStore, saveDocument, loadDocument } from '@nop-chaos/word-editor-core'
@@ -15,7 +15,7 @@ interface WordEditorPageProps {
 }
 
 export function WordEditorPage({ onBack }: WordEditorPageProps) {
-  const bridge = useRef<CanvasEditorBridge>(new CanvasEditorBridge())
+  const bridge = useMemo(() => new CanvasEditorBridge(), [])
   const editorStore = useMemo(() => createEditorStore(), [])
   const datasetStore = useMemo(() => createDatasetStore(), [])
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
@@ -45,7 +45,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
   }, [])
 
   const handleSave = () => {
-    const success = saveDocument(bridge.current)
+    const success = saveDocument(bridge)
     if (success) {
       editorStore.setDirty(false)
       setSaveMessage('Document saved')
@@ -85,18 +85,18 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
   }, [editingDatasetId, datasetStore])
 
   const handleFieldClick = useCallback((datasetName: string, columnName: string) => {
-    bridge.current.insertFieldExpression(datasetName, columnName)
+    bridge.insertFieldExpression(datasetName, columnName)
   }, [bridge])
 
   const handleInsertExpr = useCallback((expr: string) => {
-    bridge.current.insertTemplateExpression({
+    bridge.insertTemplateExpression({
       kind: 'el',
       expr: expr.replace(/^\$\{/, '').replace(/\}$/, '')
     })
   }, [bridge])
 
   const handleInsertTag = useCallback((tagName: string) => {
-    bridge.current.insertTemplateExpression({
+    bridge.insertTemplateExpression({
       kind: 'tag-open',
       expr: '',
       tagName
@@ -141,7 +141,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
         </button>
       </header>
 
-      <RibbonToolbar bridge={bridge.current} store={editorStore} onInsertExpr={handleInsertExpr} onInsertTag={handleInsertTag} />
+      <RibbonToolbar bridge={bridge} store={editorStore} onInsertExpr={handleInsertExpr} onInsertTag={handleInsertTag} />
 
       <div className="flex flex-1 min-h-0">
         <aside className="w-[280px] border-r border-[var(--nop-border)] bg-[var(--nop-surface)] flex flex-col">
@@ -190,15 +190,16 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
         </aside>
 
         <section className="flex-1 min-w-0 bg-[var(--nop-playground-stage-bg)]">
-          <EditorCanvas editorStore={editorStore} bridge={bridge.current} />
+          <EditorCanvas editorStore={editorStore} bridge={bridge} />
         </section>
 
         <aside className="w-[280px] border-l border-[var(--nop-border)] bg-[var(--nop-surface)]">
-          <OutlinePanel bridge={bridge.current} />
+          <OutlinePanel bridge={bridge} />
         </aside>
       </div>
 
       <DatasetDialog
+        key={`${editingDatasetId ?? 'new'}:${datasetDialogOpen ? 'open' : 'closed'}`}
         open={datasetDialogOpen}
         onClose={() => { setDatasetDialogOpen(false); setEditingDatasetId(null) }}
         onSave={handleSaveDataset}

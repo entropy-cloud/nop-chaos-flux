@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import type { DataSetSourceType, DataColumnInput } from '@nop-chaos/word-editor-core'
 import { ScrollArea } from '@nop-chaos/ui'
@@ -11,24 +11,10 @@ interface DatasetDialogProps {
 }
 
 export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDialogProps) {
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [type, setType] = useState<DataSetSourceType>('static')
-  const [columns, setColumns] = useState<DataColumnInput[]>([])
-
-  useEffect(() => {
-    if (initialData) {
-      setName(initialData.name)
-      setDescription(initialData.description)
-      setType(initialData.type)
-      setColumns(initialData.columns)
-    } else {
-      setName('')
-      setDescription('')
-      setType('static')
-      setColumns([])
-    }
-  }, [initialData, open])
+  const [name, setName] = useState(() => initialData?.name ?? '')
+  const [description, setDescription] = useState(() => initialData?.description ?? '')
+  const [type, setType] = useState<DataSetSourceType>(() => initialData?.type ?? 'static')
+  const [columns, setColumns] = useState<DataColumnInput[]>(() => initialData?.columns ?? [])
 
   const handleAddColumn = () => {
     setColumns([...columns, { name: '', label: '', type: 'static' }])

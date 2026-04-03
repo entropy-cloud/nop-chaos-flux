@@ -16,6 +16,7 @@ export type { IRangeStyle }
 
 export class CanvasEditorBridge {
   private instance: Editor | null = null
+  private contentChangeSubscribers = new Set<() => void>()
 
   get command() {
     return this.instance?.command
@@ -51,19 +52,32 @@ export class CanvasEditorBridge {
     return this.instance !== null
   }
 
-  private setupListeners(options?: CanvasEditorBridgeOptions): void {
-    if (!this.instance || !options) return
+  subscribeContentChange(listener: () => void): () => void {
+    this.contentChangeSubscribers.add(listener)
 
-    if (options.onContentChange) {
-      this.instance.listener.contentChange = options.onContentChange
+    return () => {
+      this.contentChangeSubscribers.delete(listener)
     }
-    if (options.onRangeStyleChange) {
+  }
+
+  private setupListeners(options?: CanvasEditorBridgeOptions): void {
+    if (!this.instance) return
+
+    this.instance.listener.contentChange = () => {
+      options?.onContentChange?.()
+
+      for (const subscriber of this.contentChangeSubscribers) {
+        subscriber()
+      }
+    }
+
+    if (options?.onRangeStyleChange) {
       this.instance.listener.rangeStyleChange = options.onRangeStyleChange
     }
-    if (options.onPageSizeChange) {
+    if (options?.onPageSizeChange) {
       this.instance.listener.pageSizeChange = options.onPageSizeChange
     }
-    if (options.onPageScaleChange) {
+    if (options?.onPageScaleChange) {
       this.instance.listener.pageScaleChange = options.onPageScaleChange
     }
   }

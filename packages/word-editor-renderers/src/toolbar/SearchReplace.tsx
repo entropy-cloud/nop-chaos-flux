@@ -12,18 +12,8 @@ interface SearchReplaceProps {
 export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) {
   const [searchText, setSearchText] = useState('')
   const [replaceText, setReplaceText] = useState('')
-  const [resultCount, setResultCount] = useState(0)
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    if (!visible) {
-      setSearchText('')
-      setReplaceText('')
-      setResultCount(0)
-      bridge?.command?.executeSearch(null)
-      return
-    }
-  }, [visible, bridge])
+  const resultCount = searchText ? 1 : 0
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -31,14 +21,12 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
     }
 
     if (!searchText) {
-      setResultCount(0)
       bridge?.command?.executeSearch(null)
       return
     }
 
     searchTimeoutRef.current = setTimeout(() => {
       bridge?.command?.executeSearch(searchText)
-      setResultCount(1)
     }, 300)
 
     return () => {
@@ -61,6 +49,8 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
   }
 
   const handleClose = () => {
+    setSearchText('')
+    setReplaceText('')
     bridge?.command?.executeSearch(null)
     onClose()
   }

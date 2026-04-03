@@ -26,109 +26,109 @@ const TITLE_LEVEL_ORDER: Record<TitleLevel, number> = {
   sixth: 6
 }
 
+function extractHeadings(elements: IElement[]): HeadingItem[] {
+  const headings: HeadingItem[] = []
+
+  for (const element of elements) {
+    if (element.level) {
+      headings.push({
+        id: element.titleId || element.id || Math.random().toString(),
+        name: element.value || 'Untitled',
+        level: element.level,
+        pageNo: 1,
+        subCatalog: [],
+        expanded: element.level === 'first' || element.level === 'second'
+      })
+    }
+  }
+
+  return headings
+}
+
+function buildHeadingTree(headings: HeadingItem[]): HeadingItem[] {
+  const result: HeadingItem[] = []
+  const stack: HeadingItem[] = []
+
+  for (const heading of headings) {
+    while (stack.length > 0 && TITLE_LEVEL_ORDER[stack[stack.length - 1].level] >= TITLE_LEVEL_ORDER[heading.level]) {
+      stack.pop()
+    }
+
+    if (stack.length === 0) {
+      result.push(heading)
+    } else {
+      stack[stack.length - 1].subCatalog.push(heading)
+    }
+
+    stack.push(heading)
+  }
+
+  return result
+}
+
+function readOutline(bridge: CanvasEditorBridge | null): HeadingItem[] {
+  if (!bridge?.command?.getValue) {
+    return []
+  }
+
+  try {
+    const result = bridge.command.getValue()
+    if (!result?.data?.main) {
+      return []
+    }
+
+    return buildHeadingTree(extractHeadings(result.data.main))
+  } catch (error) {
+    console.error('Failed to fetch outline:', error)
+    return []
+  }
+}
+
+function applyExpandedState(items: HeadingItem[], expandedState: Record<string, boolean>): HeadingItem[] {
+  return items.map((item) => ({
+    ...item,
+    expanded: expandedState[item.id] ?? item.expanded,
+    subCatalog: applyExpandedState(item.subCatalog, expandedState)
+  }))
+}
+
 export function OutlinePanel({ bridge }: OutlinePanelProps) {
-  const [outline, setOutline] = useState<HeadingItem[]>([])
-
-  const refreshOutline = useCallback(() => {
-    if (!bridge?.command?.getValue) {
-      setOutline([])
-      return
-    }
-
-    try {
-      const result = bridge.command.getValue()
-      if (!result?.data?.main) {
-        setOutline([])
-        return
-      }
-
-      const extractHeadings = (elements: IElement[]): HeadingItem[] => {
-        const headings: HeadingItem[] = []
-
-        for (const element of elements) {
-          if (element.level) {
-            headings.push({
-              id: element.titleId || element.id || Math.random().toString(),
-              name: element.value || 'Untitled',
-              level: element.level,
-              pageNo: 1,
-              subCatalog: [],
-              expanded: element.level === 'first' || element.level === 'second'
-            })
-          }
-        }
-
-        return headings
-      }
-
-      const buildHeadingTree = (headings: HeadingItem[]): HeadingItem[] => {
-        const result: HeadingItem[] = []
-        const stack: HeadingItem[] = []
-
-        for (const heading of headings) {
-          while (stack.length > 0 && TITLE_LEVEL_ORDER[stack[stack.length - 1].level] >= TITLE_LEVEL_ORDER[heading.level]) {
-            stack.pop()
-          }
-
-          if (stack.length === 0) {
-            result.push(heading)
-          } else {
-            stack[stack.length - 1].subCatalog.push(heading)
-          }
-
-          stack.push(heading)
-        }
-
-        return result
-      }
-
-      const allHeadings = extractHeadings(result.data.main)
-      const tree = buildHeadingTree(allHeadings)
-
-      setOutline(tree)
-    } catch (error) {
-      console.error('Failed to fetch outline:', error)
-      setOutline([])
-    }
-  }, [bridge])
-
-  useEffect(() => {
-    refreshOutline()
-  }, [refreshOutline])
+  const [outlineRevision, setOutlineRevision] = useState(0)
+  const [expandedState, setExpandedState] = useState<Record<string, boolean>>({})
+  void outlineRevision
+  const outline = applyExpandedState(readOutline(bridge), expandedState)
 
   const toggleExpanded = useCallback((itemIndex: number) => {
-    setOutline(prev => {
-      const newOutline = [...prev]
-      newOutline[itemIndex].expanded = !newOutline[itemIndex].expanded
-      return newOutline
+    setExpandedState((prev) => {
+      const item = outline[itemIndex]
+      if (!item) {
+        return prev
+      }
+
+      return {
+        ...prev,
+        [item.id]: !item.expanded
+      }
     })
-  }, [])
+  }, [outline])
 
   useEffect(() => {
-    if (!bridge?.listener) return
-
-    const originalOnContentChange = bridge.listener.contentChange
+    if (!bridge) return
 
     let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-    bridge.listener!.contentChange = () => {
-      if (originalOnContentChange) {
-        originalOnContentChange()
-      }
-
+    const unsubscribe = bridge.subscribeContentChange(() => {
       if (debounceTimer) clearTimeout(debounceTimer)
       debounceTimer = setTimeout(() => {
-        refreshOutline()
+        setOutlineRevision((prev) => prev + 1)
       }, 500)
-    }
+    })
 
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer)
-      if (originalOnContentChange) {
-        bridge.listener!.contentChange = originalOnContentChange
-      }
+      unsubscribe()
     }
-  }, [bridge, refreshOutline])
+  }, [bridge])
 
   const navigateToHeading = useCallback((item: HeadingItem) => {
     if (!bridge?.command?.executeLocationCatalog) return
