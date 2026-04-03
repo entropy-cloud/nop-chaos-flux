@@ -1020,6 +1020,28 @@ describe('createSchemaRenderer', () => {
     expect(onComponentRegistryChange.mock.calls[1]?.[0]).toBeNull();
   });
 
+  it('reports root action scope lifecycle through an explicit callback', () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer]);
+    const onActionScopeChange = vi.fn();
+
+    const { unmount } = render(
+      <SchemaRenderer
+        schema={{ type: 'page', body: [{ type: 'text', text: 'Hello' }] }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+        onActionScopeChange={onActionScopeChange}
+      />
+    );
+
+    expect(onActionScopeChange).toHaveBeenCalledTimes(1);
+    expect(onActionScopeChange.mock.calls[0]?.[0]?.id).toContain('action-scope');
+
+    unmount();
+
+    expect(onActionScopeChange).toHaveBeenCalledTimes(2);
+    expect(onActionScopeChange.mock.calls[1]?.[0]).toBeNull();
+  });
+
   it('prefers nested action scopes and component registries over parent providers', async () => {
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
@@ -1393,7 +1415,7 @@ describe('createSchemaRenderer', () => {
     expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
   });
 
-  it('recreates the form runtime when env identity changes', () => {
+  it('preserves the form runtime when env identity changes', () => {
     const SchemaRenderer = createSchemaRenderer([formRenderer, probeInputRenderer]);
 
     function Host() {
@@ -1434,7 +1456,7 @@ describe('createSchemaRenderer', () => {
 
     fireEvent.click(canvas.getByText('Refresh env 0'));
 
-    expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('');
+    expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
   });
 
   it('renders dialog content after dispatching a dialog action', async () => {

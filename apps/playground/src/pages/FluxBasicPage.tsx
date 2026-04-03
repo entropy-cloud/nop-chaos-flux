@@ -257,6 +257,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
               formulaCompiler={formulaCompiler}
               plugins={[debuggerController.plugin]}
               onComponentRegistryChange={(componentRegistry) => debuggerController.setComponentRegistry(componentRegistry)}
+              onActionScopeChange={(actionScope) => debuggerController.setActionScope(actionScope)}
               onActionError={debuggerController.onActionError}
             />
           </div>
