@@ -156,6 +156,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
           <Tabs data-orientation="horizontal" className="flex-col gap-0">
             <TabsList variant="line" className="w-full rounded-none border-b border-[var(--nop-border)] px-0">
               <TabsTrigger
+                value="datasets"
                 data-state={activePanel === 'datasets' ? 'active' : 'inactive'}
                 onClick={() => setActivePanel('datasets')}
                 className={cn('flex-1 py-2.5')}
@@ -164,6 +165,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
                 <span>Datasets</span>
               </TabsTrigger>
               <TabsTrigger
+                value="fields"
                 data-state={activePanel === 'fields' ? 'active' : 'inactive'}
                 onClick={() => setActivePanel('fields')}
                 className={cn('flex-1 py-2.5')}
@@ -172,7 +174,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
                 <span>Fields</span>
               </TabsTrigger>
             </TabsList>
-            <TabsContent className="flex-1 min-h-0 overflow-hidden">
+            <TabsContent value="datasets" className="flex-1 min-h-0 overflow-hidden">
               {activePanel === 'datasets' ? (
                 <DatasetPanel
                   store={datasetStore}

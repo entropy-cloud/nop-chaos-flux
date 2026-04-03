@@ -69,12 +69,14 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
         <Tabs data-orientation="horizontal" className="flex-col gap-0">
           <TabsList className="mb-4">
             <TabsTrigger
+              value="el"
               data-state={exprType === 'el' ? 'active' : 'inactive'}
               onClick={() => setExprType('el')}
             >
               EL Expression
             </TabsTrigger>
             <TabsTrigger
+              value="xpl"
               data-state={exprType === 'xpl' ? 'active' : 'inactive'}
               onClick={() => setExprType('xpl')}
             >
@@ -82,7 +84,7 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent className="mb-4">
+          <TabsContent value="el" className="mb-4">
             {exprType === 'el' ? (
               <Textarea
                 value={expression}

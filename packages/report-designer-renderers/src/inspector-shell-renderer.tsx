@@ -156,8 +156,8 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
                 {tabPanels.map((panel) => (
                   <TabsTrigger
                     key={panel.id}
+                    value={panel.id}
                     type="button"
-                    data-state={activePanelId === panel.id ? 'active' : 'inactive'}
                     onClick={() => setActivePanelId(panel.id)}
                   >
                     <span>{panel.title}</span>

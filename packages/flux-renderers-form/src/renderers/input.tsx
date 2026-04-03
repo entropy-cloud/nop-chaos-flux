@@ -142,8 +142,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
         aria-invalid={presentation.showError ? true : undefined}
         aria-label={String(props.meta.label ?? props.props.label ?? name)}
         onFocus={handlers.onFocus}
-        type="checkbox"
-        onChange={(e) => handlers.onChange(String(Boolean(e.target.checked)))}
+        onCheckedChange={(nextChecked) => handlers.onChange(String(Boolean(nextChecked)))}
         onBlur={handlers.onBlur}
       />
       <span className="font-semibold">{checked ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>

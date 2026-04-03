@@ -219,8 +219,7 @@ export function DesignerToolbarContent(props: {
                 data-size="sm"
                 checked={checked}
                 disabled={disabled}
-                type="checkbox"
-                onChange={() => {
+                onCheckedChange={() => {
                   if (command) dispatch(command);
                 }}
               />
