@@ -1,21 +1,48 @@
 # Architecture Audit Fix Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-04-02
+> Plan Status: completed
+> Last Reviewed: 2026-04-03
 
 
-> **Status: 📋 PLANNED**
+> **Status: ✅ REVIEWED / COMPLETED AS AN EXECUTION PLAN**
 > Source audit conducted 2026-03-31 via automated codebase analysis (7 agents + Oracle verification).
 > Covers `flux-core`, `flux-runtime`, `flux-react`, `flux-formula` and 3 renderer packages.
-> Domain packages (`flow-designer-*`, `spreadsheet-*`, `report-designer-*`) excluded — recommend separate audit.
+> Most core-package items in this file have since been implemented.
+> Remaining domain-package structure follow-up has moved to dedicated plans such as `docs/plans/29-domain-runtime-and-debugger-refactor-plan.md`.
 
 ## Overview
 
 This document lists every issue found during the architecture audit, explains the root cause, and proposes a concrete fix plan with scope boundaries. Issues are ordered by priority (P0 → P3).
 
+## 2026-04-03 复审结论
+
+这份文档现在更适合作为“审计结论 + 执行状态台账”，不再是纯待办清单。
+
+| ID | 当前状态 | 是否还在本计划执行 | 复审结论 |
+|----|----------|--------------------|----------|
+| P0-1 | 已实现 | 否 | `packages/flux-react/src/hooks.ts` 已移除 `require()` |
+| P2-7 | 已实现 | 否 | `AGENTS.md` 和 `docs/architecture/flux-core.md` 已修正定位 |
+| P1-1 | 已实现 | 否 | `packages/flux-core/src/types/` 已拆分；`types.ts` 保留为兼容 re-export，更合理 |
+| P1-2 | 已实现 | 否 | 仅推荐的 Phase B 已落地；Phase A/C 继续不执行 |
+| P1-3 | 已实现 | 否 | `validateRegisteredChildren` 已提取 |
+| P1-4 | 已部分实现并关闭 | 否 | 核心拆分已完成；剩余 provider 合并方案不推荐继续 |
+| P2-1 | 已实现 | 否 | `scheduleDebounce` / `cancelPendingDebounce` 已落地 |
+| P2-2 | 已实现 | 否 | `setValidating` 已复用 `setBooleanState` |
+| P2-3 | 已实现 | 否 | `executeArrayMutation` 已提取 |
+| ~~P2-4~~ | 已废弃 | 否 | 继续保持不推荐 |
+| P2-5 | 已实现 | 否 | `schema-compiler/` 子模块已落地；主文件保留 orchestrator |
+| P2-6 | 已实现 | 否 | 文档已移除不存在的 `flux-testing` 包 |
+| P3-1 | 已实现 | 否 | `flux-formula` 已拆为 5 个模块 |
+| P3-2 | 已实现 | 否 | `docs/architecture/flux-core.md` 已补充 `amis-formula` 适配边界说明 |
+| P3-3 | 已转移 / 废弃 | 否 | 后续领域包结构工作改由专门计划跟踪 |
+
+**不应继续从本计划推进的项**：`P1-4` 剩余步骤、`P3-3` 领域包专项审计总项、以及所有已完成的 core-package 重构项。
+
 ---
 
 ## ~~P0-1~~ P2-7: flux-core 定位重新审视（降级为文档修正）
+
+> **2026-04-03 复审状态**: 已实现。`AGENTS.md` 与 `docs/architecture/flux-core.md` 都已经改为 “Foundation contracts and shared utilities” 的定位描述，本项关闭。
 
 > **2026-03-31 修订**: 经重新审视，flux-core 包含运行时工具函数的设计本身是合理的。
 > 问题仅在于 AGENTS.md 中的描述不准确。将此问题从 P0 降级为 P2（文档修正）。
@@ -62,6 +89,8 @@ flux-core 的实际定位不是"纯类型包"，而是**基础契约与共享工
 
 ## P0-1: ESM 项目中使用 `require()`
 
+> **2026-04-03 复审状态**: 已实现。`packages/flux-react/src/hooks.ts` 已改为静态 `import { createHelpers } from './helpers';`，`require()` 和对应的 `eslint-disable` 已移除，本项关闭。
+
 ### Problem
 
 `packages/flux-react/src/hooks.ts` line 142:
@@ -96,6 +125,8 @@ Replace `require()` with the static import that already exists. The file `helper
 ---
 
 ## P1-1: types.ts (904 行) 拆分
+
+> **2026-04-03 复审状态**: 已实现，但实现方式比原计划更合理。`packages/flux-core/src/types/` 已存在，`packages/flux-core/src/types.ts` 现为单行 `export * from './types/index';` 兼容壳。原计划的 Step 3“彻底删除 `types.ts`”已过时，不建议再执行。
 
 ### Problem
 
@@ -138,6 +169,8 @@ flux-core/src/types/
 ---
 
 ## P1-2: `Record<string, any>` 类型安全改善
+
+> **2026-04-03 复审状态**: 已实现（仅 Phase B）。`useScopeSelector` 现在是 `useScopeSelector<T, S = Record<string, unknown>>`。Phase A / Phase C 继续维持不推荐结论。
 
 > **2026-03-31 审计修订**: 经代码验证，原审计计数偏低（43 → 47，仅源码非测试文件）。
 > Phase A 和 Phase C 经评估 ROI 不高，标记为不推荐。仅保留 Phase B。
@@ -190,6 +223,8 @@ useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, 
 ---
 
 ## P1-3: validateForm() 子验证逻辑重复
+
+> **2026-04-03 复审状态**: 已实现。`packages/flux-runtime/src/form-runtime.ts` 已提取 `validateRegisteredChildren()` 并替换 3 处重复逻辑，本项关闭。
 
 ### Problem
 
@@ -254,6 +289,8 @@ merge all errors
 ---
 
 ## P1-4: node-renderer.tsx 关注点分离
+
+> **2026-04-03 复审状态**: 已部分实现并建议关闭。`useNodeForm.ts`、`useNodeScopes.ts` 已提取，监控代码已受 `runtime.env.monitor` 守卫，`node-renderer.tsx` 已降到 286 行。剩余的 provider 合并方案继续不推荐，额外拆分也暂时没有足够 ROI。
 
 ### Problem
 
@@ -330,6 +367,8 @@ This reduces provider nesting but requires updating all consumers. Mark as optio
 
 ## P2-1: 防抖辅助函数提取
 
+> **2026-04-03 复审状态**: 已实现。`packages/flux-runtime/src/utils/debounce.ts` 已存在 `scheduleDebounce()`，并额外演进出 `cancelPendingDebounce()` 供调用点复用，本项关闭。
+
 ### Problem
 
 Two conceptually similar debounce implementations:
@@ -390,6 +429,8 @@ Each call site keeps its own `pendingMap` and domain-specific logic (monitoring,
 ---
 
 ## P2-2: setValidating 未复用已有辅助函数
+
+> **2026-04-03 复审状态**: 已实现。`setValidating()` 已改为调用 `setBooleanState('validating', ...)`，本项关闭。
 
 > **2026-03-31 审计修订**: 原描述"4 个近乎相同的方法需提取辅助函数"与实际不符。
 > 经代码验证，`form-store.ts` 已有 `setBooleanState` 辅助函数，`setTouched`、`setDirty`、`setVisited` 三个方法已在使用它。
@@ -467,6 +508,8 @@ function setBooleanState<K extends 'touched' | 'dirty' | 'visited' | 'validating
 
 ## P2-3: 数组操作通用模板
 
+> **2026-04-03 复审状态**: 已实现。`packages/flux-runtime/src/form-runtime-array.ts` 已新增 `executeArrayMutation()`，`form-runtime.ts` 中 7 个数组方法都已收口到该模板。
+
 ### Problem
 
 `packages/flux-runtime/src/form-runtime.ts` lines 387-563 has 7 array mutation methods (appendValue, prependValue, insertValue, removeValue, moveValue, swapValue, replaceValue). Each follows the same template:
@@ -535,6 +578,8 @@ appendValue(path, value) {
 
 ## ~~P2-4~~: 添加 Branded Types — ⛔ 不推荐实施
 
+> **2026-04-03 复审状态**: 已废弃。维持“不推荐实施”的结论，不再作为执行项追踪。
+
 > **2026-03-31 审计修订**: 经评估 ROI 极低，标记为不推荐实施。保留原分析供参考。
 
 ### Problem
@@ -565,6 +610,8 @@ This means any string can be passed where a path is expected, and the compiler c
 ---
 
 ## P2-5: schema-compiler.ts 拆分
+
+> **2026-04-03 复审状态**: 已实现，但实现方式比原计划更合理。`packages/flux-runtime/src/schema-compiler/` 子模块已经落地，`schema-compiler.ts` 已缩减为编排层。原计划的 Step 4 仅在 barrel 需要调整时才有意义，不再单独执行。
 
 ### Problem
 
@@ -613,6 +660,8 @@ packages/flux-runtime/src/
 
 ## P2-6: 缺失的 flux-testing 包
 
+> **2026-04-03 复审状态**: 已实现（Option B）。`AGENTS.md` 已不再声明 `@nop-chaos/flux-testing`，仓库中也不存在该包；当前只需维持现状，不要再从本计划创建此包。
+
 ### Problem
 
 `AGENTS.md` documents `@nop-chaos/flux-testing` as a workspace package providing "Shared test utilities". But `packages/flux-testing/` does not exist in the filesystem.
@@ -646,6 +695,8 @@ Recommend **Option B** unless 3+ packages share significant test boilerplate.
 ---
 
 ## P3-1: flux-formula 拆分
+
+> **2026-04-03 复审状态**: 已实现。`packages/flux-formula/src/` 已拆为 `index.ts`、`compile.ts`、`evaluate.ts`、`template.ts`、`scope.ts`，共享的 `countBraceDepth()` 也已落地，本项关闭。
 
 ### Problem
 
@@ -684,6 +735,8 @@ Additionally, extract a shared `countBraceDepth(str, start)` helper used by both
 
 ## P3-2: 审视 amis-formula 依赖
 
+> **2026-04-03 完成状态**: 已实现。`docs/architecture/flux-core.md` 已补充当前为何继续通过 `flux-formula` 适配 `amis-formula`、以及该依赖必须被限制在 `@nop-chaos/flux-formula` 包内的说明。当前代码中 `amis-formula` 只在 `packages/flux-formula/src/compile.ts` 被直接导入，边界保持干净，本项关闭。
+
 ### Problem
 
 `flux-formula` imports `parse` and `evaluate` from `amis-formula` (an npm package). The project is positioned as a "modern rewrite of AMIS", yet depends on AMIS's expression engine at runtime.
@@ -707,6 +760,8 @@ No immediate code change. Document the decision:
 ---
 
 ## P3-3: 领域包专项审计
+
+> **2026-04-03 复审状态**: 作为本计划的后续项已废弃/转移。领域包的结构性后续工作已经转入专门计划，例如 `docs/plans/29-domain-runtime-and-debugger-refactor-plan.md`；不要再把这一条作为 #23 的活跃待办。
 
 ### Problem
 
@@ -733,33 +788,30 @@ Priority: `spreadsheet-core` first (largest at 1698 lines), then `flow-designer-
 
 ## Summary
 
-> **2026-03-31 审计修订**: 修正了原 Summary 表中的 ID 映射错误（P2-4/P2-5 互换）、
-> 过时的工作量估算、以及添加了审计结论列。
+> **2026-04-03 复审总结**: 这份计划中的核心 `flux-*` 项目现已全部落地；剩余范围外的领域包结构工作已经转移到其他专项计划。
 
-| ID | Priority | Issue | Effort | 审计结论 |
-|----|----------|-------|--------|---------|
-| P0-1 | 🔴 Critical | require() in ESM | 30 min | ✅ 准确，需立即修复 |
-| P2-7 | 🟡 Medium | flux-core 定位文档修正 | 30 min | ✅ 准确，零风险 |
-| P2-6 | 🟡 Medium | flux-testing 文档清理 | 30 min | ✅ 准确，推荐 Option B |
-| P2-2 | 🟢 Trivial | setValidating 复用辅助函数 | 5 min | ⚠️ 原描述过时（已部分统一），仅需 1 行改动 |
-| P1-3 | 🟠 High | validateForm() 子验证重复 | 1 day | ✅ 准确，3 处重复确认 |
-| P2-3 | 🟡 Medium | Array mutation template | 0.5 day | ✅ 准确，7 方法模板重复 |
-| P1-2 | 🟡 Medium | useScopeSelector 泛型 | 0.5 day | ⚠️ 仅 Phase B 推荐（Phase A/C 不推荐） |
-| P2-1 | 🟡 Medium | Debounce 简化方案 | 0.5 day | ⚠️ 原方案过度设计，已简化 |
-| P2-5 | 🟡 Medium | schema-compiler.ts split | 2 days | ✅ 准确，635 行 15+ 职责 |
-| P1-1 | 🟠 High | types.ts split | 1-2 days | ✅ 基本准确（904 行非 902） |
-| P3-1 | Low | flux-formula split | 1 day | ✅ 准确，大括号解析器重复确认 |
-| P1-4 | 🟠 High | node-renderer.tsx 分离 | 2 days | ⚠️ 行数 356 非 340，Provider 7 非 6，跳过 Step 3 |
-| ~~P2-4~~ | ~~Medium~~ | ~~Branded Types~~ | ~~1-2 days~~ | ⛔ 不推荐，ROI 极低 |
-| P3-2 | Low | amis-formula dependency audit | 1 hour | ✅ 准确，仅限 flux-formula 内部 |
-| P3-3 | Low | Domain package audits | 3-5 days | ✅ 合理，范围外 |
+| ID | 当前状态 | 方案复核 | 当前处理建议 |
+|----|----------|----------|--------------|
+| P0-1 | 已实现 | 原方案合理 | 关闭 |
+| P2-7 | 已实现 | 原方案合理 | 关闭 |
+| P2-6 | 已实现 | 原方案合理，Option B 正确 | 关闭 |
+| P2-2 | 已实现 | 原方案合理 | 关闭 |
+| P1-3 | 已实现 | 原方案合理 | 关闭 |
+| P2-3 | 已实现 | 原方案合理 | 关闭 |
+| P1-2 | 已实现 | 仅 Phase B 合理 | 关闭 |
+| P2-1 | 已实现 | 原方案合理，最终实现略强于计划 | 关闭 |
+| P2-5 | 已实现 | 原方向合理；保留 orchestrator 比“彻底拆空主文件”更合理 | 关闭 |
+| P1-1 | 已实现 | 原方向合理；保留兼容 `types.ts` 比彻底删除更合理 | 关闭 |
+| P3-1 | 已实现 | 原方案合理 | 关闭 |
+| P1-4 | 已部分实现 | Step 1/2 合理；Step 3 不合理 | 不再作为独立任务继续 |
+| ~~P2-4~~ | 已废弃 | 继续不推荐 | 保持废弃 |
+| P3-2 | 已实现 | 原方案在收窄为 docs-only 后合理 | 关闭 |
+| P3-3 | 已转移 / 废弃 | 不应继续挂在本计划下 | 改看 `docs/plans/29-domain-runtime-and-debugger-refactor-plan.md` 等专项计划 |
 
-**Recommended execution order** (修订后):
+**当前处理建议**:
 
-1. **立即做** (≤ 30 min each): P0-1 → P2-7 → P2-6 → P2-2
-2. **短期** (1-2 weeks): P1-3 → P2-3 → P1-2 (Phase B only) → P2-1
-3. **中期** (迭代中逐步): P2-5 → P1-1 → P3-1 → P1-4
-4. **跳过**: ~~P2-4 Branded Types~~
-5. **待定**: P3-2, P3-3
+1. 本计划可以视为已完成，不再作为活跃执行清单使用。
+2. 不要再从这份计划继续推进 `P1-4` 的 provider 合并或额外抽象。
+3. 领域包的大文件/结构债务后续直接看 `docs/plans/29-domain-runtime-and-debugger-refactor-plan.md`，不要回到 #23 聚合处理。
 
 

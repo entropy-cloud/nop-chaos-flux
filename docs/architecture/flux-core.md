@@ -95,6 +95,13 @@ Current implementation keeps `read()` as a cached merged-object fallback, but th
 
 Expression execution is built on `flux-formula` through `FormulaCompiler` and `ExpressionCompiler`.
 
+Current implementation detail:
+
+- `flux-formula` currently wraps `amis-formula` for parsing and evaluation.
+- This is an intentional adapter boundary, not a leak of AMIS runtime concerns into the rest of the workspace.
+- Direct `amis-formula` imports should stay confined to `@nop-chaos/flux-formula`; other packages depend only on Flux contracts such as `FormulaCompiler`, `ExpressionCompiler`, and `EvalContext`.
+- Replacing `amis-formula` is a future option only if expression semantics need to diverge materially or the dependency becomes a maintenance burden.
+
 The production direction is:
 
 - compile expressions and templates once
@@ -347,4 +354,3 @@ Those topics should be described as design direction, not as already-finalized p
 - `docs/architecture/form-validation.md`
 - `docs/architecture/flux-runtime-module-boundaries.md`
 - `docs/references/renderer-interfaces.md`
-
