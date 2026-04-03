@@ -1,6 +1,6 @@
 # 领域运行时与调试器重构计划
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-04-03
 > Source: 2026-04-03 repository refactor review as a focused follow-up to domain-package maintainability work left after `docs/plans/23-architecture-audit-fix-plan.md` and the now-completed repo-wide audit `docs/plans/27-comprehensive-code-remediation-plan.md`.
 
