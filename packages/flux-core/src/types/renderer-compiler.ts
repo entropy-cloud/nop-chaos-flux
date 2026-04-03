@@ -45,6 +45,7 @@ export interface ResolvedNodeMeta {
   disabled: boolean;
   testid?: string;
   changed: boolean;
+  cid?: number;
 }
 
 export interface CompiledNodeRuntimeState {
