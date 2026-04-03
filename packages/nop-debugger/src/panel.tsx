@@ -1,9 +1,40 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
 import type { NopComponentInspectResult, NopDebugEvent, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab, NopInteractionTrace } from './types';
 import { buildOverview, DEFAULT_FILTERS } from './diagnostics';
 
 const DEBUGGER_STYLE_ID = 'nop-debugger-styles';
+type PointerCaptureTarget = HTMLElement & {
+  setPointerCapture?: (pointerId: number) => void;
+  releasePointerCapture?: (pointerId: number) => void;
+};
+
+function setPointerCaptureSafely(target: HTMLElement, pointerId: number) {
+  const pointerCaptureTarget = target as PointerCaptureTarget;
+  if (typeof pointerCaptureTarget.setPointerCapture !== 'function') {
+    return;
+  }
+
+  try {
+    pointerCaptureTarget.setPointerCapture(pointerId);
+  } catch (error) {
+    void error;
+  }
+}
+
+function releasePointerCaptureSafely(target: HTMLElement, pointerId: number) {
+  const pointerCaptureTarget = target as PointerCaptureTarget;
+  if (typeof pointerCaptureTarget.releasePointerCapture !== 'function') {
+    return;
+  }
+
+  try {
+    pointerCaptureTarget.releasePointerCapture(pointerId);
+  } catch (error) {
+    void error;
+  }
+}
+
 const DEBUGGER_STYLES = `
 .nop-theme-root {
   --nop-debugger-bg:
@@ -813,16 +844,11 @@ function groupErrors(events: NopDebugEvent[]): ErrorGroup[] {
 }
 
 function useDebuggerSnapshot(controller: NopDebuggerController) {
-  const [snapshot, setSnapshot] = useState(controller.getSnapshot());
-
-  useEffect(() => {
-    setSnapshot(controller.getSnapshot());
-    return controller.subscribe(() => {
-      setSnapshot(controller.getSnapshot());
-    });
-  }, [controller]);
-
-  return snapshot;
+  return useSyncExternalStore(
+    controller.subscribe,
+    controller.getSnapshot,
+    controller.getSnapshot
+  );
 }
 
 function useDraggablePosition(controller: NopDebuggerController, initial: { x: number; y: number }, onTap?: () => void) {
@@ -844,21 +870,12 @@ function useDraggablePosition(controller: NopDebuggerController, initial: { x: n
   }, [position]);
 
   useEffect(() => {
-    setPosition(initial);
-    positionRef.current = initial;
-  }, [initial]);
-
-  useEffect(() => {
     const clearDrag = (event: PointerEvent) => {
       if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
         return;
       }
 
-      try {
-        dragState.current.target.releasePointerCapture(event.pointerId);
-      } catch (error) {
-        void error;
-      }
+      releasePointerCaptureSafely(dragState.current.target, event.pointerId);
 
       if (dragState.current.hasMoved) {
         controller.setPanelPosition(positionRef.current);
@@ -929,7 +946,7 @@ function useDraggablePosition(controller: NopDebuggerController, initial: { x: n
         target
       };
 
-      target.setPointerCapture(event.pointerId);
+      setPointerCaptureSafely(target, event.pointerId);
       event.preventDefault();
     }
   };
@@ -985,7 +1002,7 @@ function useResizablePanel() {
       resizeState.current = { pointerId: event.pointerId, startX: event.clientX, startWidth: width };
       document.body.style.cursor = 'ew-resize';
       document.body.style.userSelect = 'none';
-      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+      setPointerCaptureSafely(event.currentTarget as HTMLElement, event.pointerId);
       event.preventDefault();
     }
   };
@@ -1016,21 +1033,12 @@ function useLauncherDrag(
   }, [position]);
 
   useEffect(() => {
-    setPosition(initial);
-    positionRef.current = initial;
-  }, [initial]);
-
-  useEffect(() => {
     const clearDrag = (event: PointerEvent) => {
       if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
         return;
       }
 
-      try {
-        dragState.current.target.releasePointerCapture(event.pointerId);
-      } catch (error) {
-        void error;
-      }
+      releasePointerCaptureSafely(dragState.current.target, event.pointerId);
 
       if (dragState.current.hasMoved) {
         controller.setPanelPosition(positionRef.current);
@@ -1098,7 +1106,7 @@ function useLauncherDrag(
         hasMoved: false,
         target
       };
-      target.setPointerCapture(event.pointerId);
+      setPointerCaptureSafely(target, event.pointerId);
       event.preventDefault();
     }
   };
@@ -1133,11 +1141,40 @@ function useInjectDebuggerStyles(enabled: boolean) {
   }, [enabled]);
 }
 
+function collectComponentTree() {
+  if (typeof document === 'undefined') {
+    return [] as Array<{cid: number; type: string; label: string; depth: number; element: HTMLElement}>;
+  }
+
+  const elements = document.querySelectorAll('[data-cid]');
+  const tree: Array<{cid: number; type: string; label: string; depth: number; element: HTMLElement}> = [];
+  const seen = new Set<string>();
+
+  elements.forEach((el) => {
+    const cid = el.getAttribute('data-cid') || '0';
+    if (seen.has(cid)) return;
+    seen.add(cid);
+    const textContent = el.textContent?.trim().slice(0, 30) || '';
+    const label = textContent || el.tagName.toLowerCase();
+    let depth = 0;
+    let parent = el.parentElement;
+    while (parent && parent !== document.body) {
+      if (parent.hasAttribute('data-cid')) depth++;
+      parent = parent.parentElement;
+    }
+    tree.push({ cid: parseInt(cid, 10), type: 'element', label, depth, element: el as HTMLElement });
+  });
+
+  return tree;
+}
+
 export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const snapshot = useDebuggerSnapshot(props.controller);
-  const onTapRef = useRef<(() => void) | undefined>(undefined);
-  onTapRef.current = snapshot.minimized ? () => props.controller.unminimize() : undefined;
-  const { position, bind: dragBind } = useDraggablePosition(props.controller, snapshot.position, () => onTapRef.current?.());
+  const handlePanelTap = useMemo(
+    () => (snapshot.minimized ? () => props.controller.unminimize() : undefined),
+    [props.controller, snapshot.minimized]
+  );
+  const { position, bind: dragBind } = useDraggablePosition(props.controller, snapshot.position, handlePanelTap);
   const { width: panelWidth, bind: resizeBind } = useResizablePanel();
   const { position: launcherPosition, bind: launcherBind, wasDraggedRef, consumeSuppressedClick } = useLauncherDrag(props.controller, snapshot.position);
   useInjectDebuggerStyles(snapshot.enabled);
@@ -1153,7 +1190,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
   const hoverOverlayRef = useRef<HTMLDivElement | null>(null);
   const activeOverlayRef = useRef<HTMLDivElement | null>(null);
-  const [componentTree, setComponentTree] = useState<Array<{cid: number; type: string; label: string; depth: number; element: HTMLElement}>>([]);
+  const [componentTreeRevision, setComponentTreeRevision] = useState(0);
   const [inspectData, setInspectData] = useState<NopComponentInspectResult | null>(null);
   const [evalInput, setEvalInput] = useState('');
   const [evalResult, setEvalResult] = useState<string | null>(null);
@@ -1178,18 +1215,28 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     };
   }, []);
 
+  const visibleHoveredElement = inspectMode ? hoveredElement : null;
+  const componentTree = useMemo(() => {
+    void componentTreeRevision;
+    if (snapshot.activeTab !== 'node') {
+      return [] as Array<{cid: number; type: string; label: string; depth: number; element: HTMLElement}>;
+    }
+
+    return collectComponentTree();
+  }, [componentTreeRevision, snapshot.activeTab]);
+
   useEffect(() => {
-    if (!inspectMode || !hoveredElement || !hoverOverlayRef.current) {
+    if (!inspectMode || !visibleHoveredElement || !hoverOverlayRef.current) {
       if (hoverOverlayRef.current) hoverOverlayRef.current.style.display = 'none';
       return;
     }
-    const rect = hoveredElement.getBoundingClientRect();
+    const rect = visibleHoveredElement.getBoundingClientRect();
     hoverOverlayRef.current.style.display = 'block';
     hoverOverlayRef.current.style.top = rect.top + 'px';
     hoverOverlayRef.current.style.left = rect.left + 'px';
     hoverOverlayRef.current.style.width = rect.width + 'px';
     hoverOverlayRef.current.style.height = rect.height + 'px';
-  }, [inspectMode, hoveredElement]);
+  }, [inspectMode, visibleHoveredElement]);
 
   useEffect(() => {
     if (!selectedElement || !activeOverlayRef.current) {
@@ -1206,7 +1253,6 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
   useEffect(() => {
     if (!inspectMode) {
-      setHoveredElement(null);
       return;
     }
 
@@ -1252,37 +1298,13 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   }, [inspectMode]);
 
   const scanComponentTree = () => {
-    const elements = document.querySelectorAll('[data-cid]');
-    const tree: Array<{cid: number; type: string; label: string; depth: number; element: HTMLElement}> = [];
-    const seen = new Set<string>();
-
-    elements.forEach((el) => {
-      const cid = el.getAttribute('data-cid') || '0';
-      if (seen.has(cid)) return;
-      seen.add(cid);
-      const textContent = el.textContent?.trim().slice(0, 30) || '';
-      const label = textContent || el.tagName.toLowerCase();
-      let depth = 0;
-      let parent = el.parentElement;
-      while (parent && parent !== document.body) {
-        if (parent.hasAttribute('data-cid')) depth++;
-        parent = parent.parentElement;
-      }
-      tree.push({ cid: parseInt(cid, 10), type: 'element', label, depth, element: el as HTMLElement });
-    });
-    setComponentTree(tree);
+    setComponentTreeRevision((prev) => prev + 1);
   };
 
   const handleEvalExpression = () => {
     if (!evalInput.trim()) return;
     setEvalResult('Expression evaluation is disabled. Inspect scope data directly instead.');
   };
-
-  useEffect(() => {
-    if (snapshot.activeTab === 'node') {
-      scanComponentTree();
-    }
-  }, [snapshot.activeTab]);
 
   const filteredEvents = useMemo(
     () => snapshot.events.filter((event) => snapshot.filters.includes(event.group)),
