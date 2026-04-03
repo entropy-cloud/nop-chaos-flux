@@ -7,6 +7,7 @@ import type {
   ReportDesignerRuntimeSnapshot,
   ReportSelectionTarget,
 } from '@nop-chaos/report-designer-core';
+import { Button, Tabs, TabsList, TabsTrigger } from '@nop-chaos/ui';
 import { formatSelectionLabel, joinClassNames } from './helpers.js';
 import { renderFallbackInspector } from './fallbacks.js';
 import type { ReportInspectorShellSchema } from './types.js';
@@ -105,9 +106,14 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
         })}
         {panel.submitAction && !panel.readonly ? (
           <div className="nop-report-designer__toolbar">
-            <button type="button" onClick={() => void handleSubmit(panel)} disabled={submittingPanelId === panel.id}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void handleSubmit(panel)}
+              disabled={submittingPanelId === panel.id}
+            >
               {submittingPanelId === panel.id ? 'Saving...' : String(props.props.saveLabel ?? 'Save Panel')}
-            </button>
+            </Button>
             {submitResult && panel.id === submittingPanelId ? (
               submitResult.ok ? <span>Saved</span> : submitResult.error ? <span>Save failed</span> : null
             ) : null}
@@ -145,15 +151,22 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
       ) : (
         <div className="nop-report-designer__stack">
           {tabPanels.length > 1 ? (
-            <div className="nop-report-designer__toolbar">
-              {tabPanels.map((panel) => (
-                <button key={panel.id} type="button" className="nop-report-designer__tab" onClick={() => setActivePanelId(panel.id)}>
-                  <span>{panel.title}</span>
-                  {panel.badge ? <span>{panel.badge}</span> : null}
-                  {panel.readonly ? <span>Read only</span> : null}
-                </button>
-              ))}
-            </div>
+            <Tabs data-orientation="horizontal" className="flex-col gap-0">
+              <TabsList variant="line" className="w-full rounded-none px-0">
+                {tabPanels.map((panel) => (
+                  <TabsTrigger
+                    key={panel.id}
+                    type="button"
+                    data-state={activePanelId === panel.id ? 'active' : 'inactive'}
+                    onClick={() => setActivePanelId(panel.id)}
+                  >
+                    <span>{panel.title}</span>
+                    {panel.badge ? <span>{panel.badge}</span> : null}
+                    {panel.readonly ? <span>Read only</span> : null}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           ) : null}
           {activePanel ? renderPanelChrome(activePanel, { showHeader: tabPanels.length <= 1 }) : null}
           {groupedSectionPanels.map((group) => (
