@@ -1,4 +1,4 @@
-import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@nop-chaos/ui';
+import { Button, Input, Tooltip, TooltipContent, TooltipTrigger } from '@nop-chaos/ui';
 import {
   Undo2,
   Redo2,
@@ -205,25 +205,25 @@ export function SpreadsheetToolbar({
         <div className="find-replace-panel">
           <div className="find-row">
             <label>Find:</label>
-            <input
-              type="text"
+            <Input
+              size="sm"
               value={findQuery}
               onChange={(e) => onFindQueryChange(e.target.value)}
               placeholder="Search text..."
               autoFocus
             />
-            <button onClick={onFind}>Find Next</button>
+            <Button variant="ghost" size="xs" onClick={onFind}>Find Next</Button>
           </div>
           <div className="find-row">
             <label>Replace:</label>
-            <input
-              type="text"
+            <Input
+              size="sm"
               value={replaceText}
               onChange={(e) => onReplaceTextChange(e.target.value)}
               placeholder="Replace with..."
             />
-            <button onClick={onReplace} disabled={!hasSelection}>Replace</button>
-            <button onClick={onReplaceAll}>Replace All</button>
+            <Button variant="ghost" size="xs" onClick={onReplace} disabled={!hasSelection}>Replace</Button>
+            <Button variant="ghost" size="xs" onClick={onReplaceAll}>Replace All</Button>
           </div>
           {findResults && <div className="find-results">{findResults}</div>}
         </div>
@@ -233,8 +233,8 @@ export function SpreadsheetToolbar({
         <div className="cell-editor">
           <label>
             {cellAddress}:
-            <input
-              type="text"
+            <Input
+              size="sm"
               value={cellValue}
               onChange={(e) => onCellValueChange(e.target.value)}
               placeholder="Enter cell value"
@@ -242,15 +242,15 @@ export function SpreadsheetToolbar({
           </label>
           {showCommentInput && (
             <div className="comment-editor">
-              <input
-                type="text"
+              <Input
+                size="sm"
                 value={commentText}
                 onChange={(e) => onCommentTextChange(e.target.value)}
                 placeholder="Add comment..."
               />
-              <button onClick={onAddComment}>Add</button>
+              <Button variant="ghost" size="xs" onClick={onAddComment}>Add</Button>
               {hasComment && (
-                <button onClick={onDeleteComment}>Delete</button>
+                <Button variant="ghost" size="xs" onClick={onDeleteComment}>Delete</Button>
               )}
             </div>
           )}

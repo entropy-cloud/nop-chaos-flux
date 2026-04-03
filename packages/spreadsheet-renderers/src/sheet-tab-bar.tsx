@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { WorksheetDocument } from '@nop-chaos/spreadsheet-core';
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -8,8 +9,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
+  Input,
 } from '@nop-chaos/ui';
-import { Button } from '@nop-chaos/ui';
 
 export interface SheetTabBarProps {
   sheets: WorksheetDocument[];
@@ -102,20 +103,22 @@ export function SheetTabBar({
     <>
       <div className="ss-sheet-bar">
         <div className="ss-sheet-bar-tabs">
-        {visibleSheets.map((sheet) => {
+          {visibleSheets.map((sheet) => {
           const isActive = sheet.id === activeSheetId;
           const isRenaming = renamingSheetId === sheet.id;
 
           return (
-            <button
+            <Button
               key={sheet.id}
+              variant="ghost"
+              size="xs"
               className="ss-sheet-tab"
               data-active={isActive || undefined}
               onClick={() => handleTabClick(sheet.id)}
               onDoubleClick={() => handleTabDoubleClick(sheet.id, sheet.name)}
             >
               {isRenaming ? (
-                <input
+                <Input
                   ref={renameInputRef}
                   className="ss-sheet-tab-rename"
                   value={renameValue}
@@ -123,6 +126,7 @@ export function SheetTabBar({
                   onBlur={handleRenameSubmit}
                   onKeyDown={handleRenameKeyDown}
                   autoFocus
+                  size="sm"
                 />
               ) : (
                 <>
@@ -144,17 +148,19 @@ export function SheetTabBar({
                   )}
                 </>
               )}
-            </button>
+            </Button>
           );
         })}
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="icon-xs"
           className="ss-sheet-add"
           onClick={onAddSheet}
           aria-label="Add sheet"
         >
           +
-        </button>
+        </Button>
       </div>
 
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
