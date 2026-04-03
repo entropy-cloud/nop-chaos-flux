@@ -63,8 +63,9 @@ const DialogContent = React.forwardRef<
     showCloseButton?: boolean
     offsetRef?: React.MutableRefObject<{ x: number; y: number }>
     baseTransform?: string
+    size?: "sm" | "default" | "lg"
   }
->(function DialogContent({ className, children, showCloseButton = true, offsetRef, baseTransform, ...props }, ref) {
+>(function DialogContent({ className, children, showCloseButton = true, offsetRef, baseTransform, size = "default", ...props }, ref) {
   const { draggable, noOverlay, noCenter } = React.useContext(DialogContext)
   const { contentRef, handlePointerDown } = useDialogDrag({ enabled: draggable, offsetRef, baseTransform: noCenter ? '' : baseTransform }, ref)
 
@@ -74,8 +75,10 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Popup
         ref={contentRef}
         data-slot="dialog-content"
+        data-size={size}
         className={cn(
-          "fixed z-50 w-full max-w-[calc(100%-2rem)] rounded-xl border bg-background p-6 shadow-lg duration-200 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 sm:max-w-lg",
+          "fixed z-50 w-full max-w-[calc(100%-2rem)] rounded-xl border bg-background p-6 shadow-lg duration-200 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+          "data-[size=sm]:sm:max-w-sm data-[size=default]:sm:max-w-lg data-[size=lg]:sm:max-w-2xl",
           noCenter ? "flex flex-col" : "grid gap-4 top-[50%] left-[50%]",
           !draggable && !noCenter && "-translate-x-1/2 -translate-y-1/2 data-open:zoom-in-95 data-closed:zoom-out-95",
           className
