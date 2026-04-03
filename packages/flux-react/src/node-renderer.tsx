@@ -197,8 +197,6 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   };
 
   const Comp = props.node.component.component;
-  const cidFromSchema = (props.node.schema as unknown as { _cid?: unknown })._cid;
-  const resolvedCid = typeof cidFromSchema === 'number' ? cidFromSchema : undefined;
 
   useEffect(() => {
     if (!runtime.env.monitor) {
@@ -254,16 +252,10 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         required={props.node.schema.required === true}
         className={resolvedMeta.className}
         testid={resolvedMeta.testid}
-        cid={resolvedCid}
+        cid={resolvedMeta.cid}
       >
         {element}
       </FieldFrame>
-    );
-  } else if (resolvedCid != null) {
-    content = (
-      <div data-cid={resolvedCid}>
-        {element}
-      </div>
     );
   }
 
