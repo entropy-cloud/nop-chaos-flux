@@ -24,7 +24,9 @@ let capturedForm: FormRuntime | undefined;
 
 function FormHandleProbe() {
   const form = useCurrentForm();
-  capturedForm = form;
+  React.useEffect(() => {
+    capturedForm = form;
+  }, [form]);
   return null;
 }
 
@@ -32,6 +34,8 @@ const formHandleProbeRenderer: RendererDefinition = {
   type: 'form-handle-probe',
   component: FormHandleProbe
 };
+
+const PlainScopeSchemaRenderer = createSchemaRenderer(formRendererDefinitions);
 
 const buttonRenderer: RendererDefinition = {
   type: 'button',
@@ -47,7 +51,6 @@ const buttonRenderer: RendererDefinition = {
 };
 
 function PlainScopeArrayHost() {
-  const SchemaRenderer = React.useMemo(() => createSchemaRenderer(formRendererDefinitions), []);
   const [data, setData] = React.useState({ items: [{ id: 'item-0', value: 'alice' }] });
 
   return (
@@ -55,7 +58,7 @@ function PlainScopeArrayHost() {
       <button type="button" onClick={() => setData({ items: [{ id: 'item-0', value: 'carol' }] })}>
         Reset plain array
       </button>
-      <SchemaRenderer
+      <PlainScopeSchemaRenderer
         schema={{
           type: 'array-editor',
           name: 'items',
@@ -70,7 +73,6 @@ function PlainScopeArrayHost() {
 }
 
 function PlainScopeKeyValueHost() {
-  const SchemaRenderer = React.useMemo(() => createSchemaRenderer(formRendererDefinitions), []);
   const [data, setData] = React.useState({ metadata: [{ id: 'pair-0', key: 'env', value: 'prod' }] });
 
   return (
@@ -81,7 +83,7 @@ function PlainScopeKeyValueHost() {
       >
         Reset plain metadata
       </button>
-      <SchemaRenderer
+      <PlainScopeSchemaRenderer
         schema={{
           type: 'key-value',
           name: 'metadata',

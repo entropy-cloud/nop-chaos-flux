@@ -29,15 +29,21 @@ import { RadioGroupItem } from '@nop-chaos/ui';
 import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import { Spinner } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon, ArrowUpDownIcon } from 'lucide-react';
-import type { TableSchema } from './schemas';
+import type { TableColumnSchema, TableSchema } from './schemas';
 
 type SortState = { column: string; direction: 'asc' | 'desc' | null };
 type FilterState = Record<string, Set<string>>;
+const EMPTY_TABLE_COLUMNS: TableColumnSchema[] = [];
+const EMPTY_TABLE_ROWS: Array<Record<string, any>> = [];
 
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const schemaProps = props.props as unknown as TableSchema;
-  const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : [];
-  const source = Array.isArray(schemaProps.source) ? (schemaProps.source as Array<Record<string, any>>) : [];
+  const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : EMPTY_TABLE_COLUMNS;
+  const source = Array.isArray(schemaProps.source) ? (schemaProps.source as Array<Record<string, any>>) : EMPTY_TABLE_ROWS;
+  const onSortChange = props.events.onSortChange;
+  const onFilterChange = props.events.onFilterChange;
+  const onPageChange = props.events.onPageChange;
+  const helpers = props.helpers;
   const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: 'No data' });
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
@@ -80,17 +86,17 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         }
 
         const newState = { column: columnName, direction: newDirection };
-        props.events.onSortChange?.(
+        onSortChange?.(
           null,
           {
-            scope: props.helpers.createScope({ column: columnName, direction: newDirection }, { scopeKey: 'sort', pathSuffix: 'sort' }),
+            scope: helpers.createScope({ column: columnName, direction: newDirection }, { scopeKey: 'sort', pathSuffix: 'sort' }),
           }
         );
 
         return newState;
       });
     },
-    [columns, props.events.onSortChange, props.helpers]
+    [columns, onSortChange, helpers]
   );
 
   const handleFilter = useCallback(
@@ -111,44 +117,44 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
           newFilters[columnName] = currentFilters;
         }
 
-        props.events.onFilterChange?.(
+        onFilterChange?.(
           null,
           {
-            scope: props.helpers.createScope({ column: columnName, filters: Array.from(currentFilters) }, { scopeKey: 'filter', pathSuffix: 'filter' }),
+            scope: helpers.createScope({ column: columnName, filters: Array.from(currentFilters) }, { scopeKey: 'filter', pathSuffix: 'filter' }),
           }
         );
 
         return newFilters;
       });
     },
-    [props.events.onFilterChange, props.helpers]
+    [onFilterChange, helpers]
   );
 
   const handlePageChange = useCallback(
     (page: number) => {
       setCurrentPage(page);
-      props.events.onPageChange?.(
+      onPageChange?.(
         null,
         {
-          scope: props.helpers.createScope({ page, pageSize }, { scopeKey: 'pagination', pathSuffix: 'pagination' }),
+          scope: helpers.createScope({ page, pageSize }, { scopeKey: 'pagination', pathSuffix: 'pagination' }),
         }
       );
     },
-    [pageSize, props.events.onPageChange, props.helpers]
+    [pageSize, onPageChange, helpers]
   );
 
   const handlePageSizeChange = useCallback(
     (newPageSize: number) => {
       setPageSize(newPageSize);
       setCurrentPage(1);
-      props.events.onPageChange?.(
+      onPageChange?.(
         null,
         {
-          scope: props.helpers.createScope({ page: 1, pageSize: newPageSize }, { scopeKey: 'pagination', pathSuffix: 'pagination' }),
+          scope: helpers.createScope({ page: 1, pageSize: newPageSize }, { scopeKey: 'pagination', pathSuffix: 'pagination' }),
         }
       );
     },
-    [props.events.onPageChange, props.helpers]
+    [onPageChange, helpers]
   );
 
   const handleSelectAll = useCallback(

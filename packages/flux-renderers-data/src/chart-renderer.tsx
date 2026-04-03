@@ -16,7 +16,10 @@ import {
 import { CanvasRenderer } from 'echarts/renderers';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
-import type { ChartSchema } from './chart-schemas';
+import type { ChartSchema, ChartSeriesSchema } from './chart-schemas';
+
+const EMPTY_CHART_SOURCE: Array<Record<string, unknown>> = [];
+const EMPTY_CHART_SERIES: ChartSeriesSchema[] = [];
 
 echarts.use([
   BarChart,
@@ -36,8 +39,8 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
   const chartType = props.props.chartType ?? 'bar';
   const title = props.props.title;
-  const source = Array.isArray(props.props.source) ? props.props.source : [];
-  const series = Array.isArray(props.props.series) ? props.props.series : [];
+  const source = Array.isArray(props.props.source) ? props.props.source : EMPTY_CHART_SOURCE;
+  const series: ChartSeriesSchema[] = Array.isArray(props.props.series) ? props.props.series : EMPTY_CHART_SERIES;
   const xAxis = props.props.xAxis as { dataKey?: string; label?: string } | undefined;
   const yAxis = props.props.yAxis as { label?: string } | undefined;
   const height = props.props.height ?? 400;

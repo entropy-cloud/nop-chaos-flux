@@ -142,13 +142,15 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
   const childPaths = React.useMemo(() => items.map((_, index) => `${name}.${index}.value`), [items, name]);
 
-  if (registrationRef.current) {
-    registrationRef.current.childPaths = childPaths;
-  }
-
   React.useEffect(() => {
     itemsRef.current = items;
   }, [items]);
+
+  React.useEffect(() => {
+    if (registrationRef.current) {
+      registrationRef.current.childPaths = childPaths;
+    }
+  }, [childPaths]);
 
   const formExternalValue = useCurrentFormState(
     (state) => (currentForm && name ? toArrayEditorItems(getIn(state.values, name)) : undefined),

@@ -69,13 +69,11 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     groupValuesEqual,
   ) as ConditionGroupValue | undefined;
   const externalValue = currentForm ? formExternalValue : scopeExternalValue;
+  const effectiveValue = externalValue ?? localValue;
 
   useEffect(() => {
-    if (externalValue !== undefined && !groupValuesEqual(externalValue, valueRef.current)) {
-      valueRef.current = externalValue;
-      setLocalValue(externalValue);
-    }
-  }, [externalValue]);
+    valueRef.current = effectiveValue;
+  }, [effectiveValue]);
 
   const syncValue = useCallback(
     (next: ConditionGroupValue) => {
@@ -124,7 +122,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   if (!embed) {
     return (
       <PickerModeContent
-        value={localValue}
+        value={effectiveValue}
         fields={fields}
         schema={schemaOverride}
         operatorsOverride={operatorsOverride}
@@ -146,7 +144,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     >
       <FieldLabel content={labelContent} />
       <ConditionGroup
-        value={localValue}
+        value={effectiveValue}
         schema={schemaOverride}
         fields={fields}
         operatorsOverride={operatorsOverride}

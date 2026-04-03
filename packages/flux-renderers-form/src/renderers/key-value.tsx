@@ -208,13 +208,15 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     [name, pairs]
   );
 
-  if (registrationRef.current) {
-    registrationRef.current.childPaths = childPaths;
-  }
-
   React.useEffect(() => {
     pairsRef.current = pairs;
   }, [pairs]);
+
+  React.useEffect(() => {
+    if (registrationRef.current) {
+      registrationRef.current.childPaths = childPaths;
+    }
+  }, [childPaths]);
 
   const formExternalValue = useCurrentFormState(
     (state) => (currentForm && name ? toKeyValuePairs(getIn(state.values, name)) : undefined),
