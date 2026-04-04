@@ -309,6 +309,63 @@ describe('createApiRequestExecutor', () => {
     await expect(first).resolves.toMatchObject({ ok: true, data: { requestId: 1 } });
     await expect(second).resolves.toMatchObject({ ok: true, data: { requestId: 1 } });
   });
+
+  it('treats different params as distinct requests for ignore-new dedup strategy', async () => {
+    let resolvePageOne: ((value: any) => void) | undefined;
+    const fetcher = vi.fn((api: ApiObject) => new Promise((resolve) => {
+      if ((api.params as Record<string, unknown> | undefined)?.page === 1) {
+        resolvePageOne = resolve;
+        return;
+      }
+
+      resolve({ ok: true, status: 200, data: { page: 2 } });
+    }));
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+
+    const first = execute('ajax', { url: '/api/items', params: { page: 1 }, dedupStrategy: 'ignore-new' }, scope);
+    const second = execute('ajax', { url: '/api/items', params: { page: 2 }, dedupStrategy: 'ignore-new' }, scope);
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+
+    resolvePageOne?.({ ok: true, status: 200, data: { page: 1 } });
+
+    await expect(first).resolves.toMatchObject({ ok: true, data: { page: 1 } });
+    await expect(second).resolves.toMatchObject({ ok: true, data: { page: 2 } });
+  });
+
+  it('reuses the same in-flight fetch only for identical ignore-new request keys', async () => {
+    let release: ((value: any) => void) | undefined;
+    const fetcher = vi.fn(() => new Promise((resolve) => {
+      release = resolve;
+    }));
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+
+    const first = execute('ajax', {
+      url: '/api/items',
+      params: { page: 1 },
+      data: { filter: 'active' },
+      headers: { 'x-mode': 'live' },
+      dedupStrategy: 'ignore-new'
+    }, scope);
+    const second = execute('ajax', {
+      url: '/api/items',
+      params: { page: 1 },
+      data: { filter: 'active' },
+      headers: { 'x-mode': 'live' },
+      dedupStrategy: 'ignore-new'
+    }, scope);
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    release?.({ ok: true, status: 200, data: { ok: true } });
+
+    await expect(first).resolves.toMatchObject({ ok: true, data: { ok: true } });
+    await expect(second).resolves.toMatchObject({ ok: true, data: { ok: true } });
+  });
 });
 
 describe('createDataSourceController', () => {

@@ -45,6 +45,10 @@ function createImportError(message: string, cause?: unknown): Error {
   return error;
 }
 
+type ReportedImportError = Error & {
+  __fluxImportReported?: boolean;
+};
+
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
@@ -70,14 +74,19 @@ export function createImportManager(input: {
   };
   const scopeRegistrations = new WeakMap<ActionScope, Map<string, ScopeRegistrationEntry>>();
 
-  function reportImportError(error: Error, node?: CompiledSchemaNode) {
+  function reportImportError(error: Error, node?: CompiledSchemaNode, spec?: XuiImportSpec) {
     const env = input.getEnv();
+    (error as ReportedImportError).__fluxImportReported = true;
     env.notify('error', error.message);
     env.monitor?.onError?.({
       phase: 'render',
       error,
       nodeId: node?.id,
-      path: node?.path
+      path: node?.path,
+      details: {
+        reason: 'import-namespace-setup-failed',
+        imports: spec ? [spec] : []
+      }
     });
   }
 
@@ -171,10 +180,10 @@ export function createImportManager(input: {
           `Imported namespace ${args.spec.as} failed to load: ${toErrorMessage(error)}`,
           error
         );
-        reportImportError(args.entry.error, args.node);
-        throw args.entry.error;
-      }
-    })();
+          reportImportError(args.entry.error, args.node, args.spec);
+          throw args.entry.error;
+        }
+      })();
   }
 
   async function ensureImportedNamespaces(args: {
@@ -256,7 +265,7 @@ export function createImportManager(input: {
         if (sameAliasRegistration) {
           entry.state = 'error';
           entry.error = createImportError(`Namespace collision for import alias: ${spec.as}`);
-          reportImportError(entry.error, args.node);
+          reportImportError(entry.error, args.node, spec);
           throw entry.error;
         }
 

@@ -215,3 +215,25 @@ docs/examples/workflow-designer/
   "document": { "参见": "docs/examples/workflow-designer/document.json" }
 }
 ```
+
+## 10. Field Chrome Control
+
+`frameWrap` controls per-instance FieldFrame behavior for renderers that already declare `wrap: true`.
+
+```json
+{
+  "type": "input-text",
+  "name": "title",
+  "label": "Title",
+  "frameWrap": "group"
+}
+```
+
+Allowed values:
+
+- unset: follow the renderer definition default
+- `false` or `'none'`: skip FieldFrame for this instance
+- `true` or `'label'`: use the default label wrapper
+- `'group'`: use grouped `<fieldset>/<legend>` layout
+
+`frameWrap` does not force wrapping onto renderers that registered with `wrap: false`.

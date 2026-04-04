@@ -87,6 +87,13 @@ The repository should keep these checks passing:
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm lint`
+- `node scripts/verify-no-src-artifacts.mjs`
+
+Source artifact policy:
+
+- `packages/*/src/` is source-only across the workspace
+- generated `.js`, `.d.ts`, and `.js.map` files belong in `dist/`, not in `src/`
+- there is no dual-source TS/JS ownership mode for workspace package source directories
 
 Testing expectations:
 
@@ -135,4 +142,3 @@ Treat the following as stable defaults unless there is a strong reason to change
 - Core architecture: `docs/architecture/flux-core.md`
 - Runtime design: `docs/architecture/renderer-runtime.md`
 - Delivery planning: `docs/plans/02-development-plan.md`
-

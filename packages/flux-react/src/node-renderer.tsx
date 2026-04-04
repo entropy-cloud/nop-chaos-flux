@@ -31,6 +31,25 @@ import { FieldFrame } from './field-frame';
 import { useNodeForm } from './useNodeForm';
 import { useNodeScopes } from './useNodeScopes';
 
+export function resolveFrameWrapMode(
+  definitionWrap: boolean | undefined,
+  schemaFrameWrap: boolean | 'label' | 'group' | 'none' | undefined
+): 'label' | 'group' | 'none' {
+  if (!definitionWrap) {
+    return 'none';
+  }
+
+  if (schemaFrameWrap === false || schemaFrameWrap === 'none') {
+    return 'none';
+  }
+
+  if (schemaFrameWrap === 'group') {
+    return 'group';
+  }
+
+  return 'label';
+}
+
 function getNodeImports(node: CompiledSchemaNode): readonly XuiImportSpec[] | undefined {
   return 'xui:imports' in node.schema
     ? ((node.schema as { 'xui:imports'?: readonly XuiImportSpec[] })['xui:imports'])
@@ -42,6 +61,10 @@ function shouldWarnOnImportFailure(): boolean {
     ? (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV
     : undefined;
   return nodeEnv !== 'production';
+}
+
+function isReportedImportError(error: unknown): boolean {
+  return error instanceof Error && Boolean((error as Error & { __fluxImportReported?: boolean }).__fluxImportReported);
 }
 
 export const NodeRenderer = memo(function NodeRenderer(props: {
@@ -125,6 +148,20 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         imports: nodeImports,
         error
       });
+
+      if (!isReportedImportError(error)) {
+        runtime.env.notify('error', `Imported namespaces failed for ${props.node.path}: ${error instanceof Error ? error.message : String(error)}`);
+        runtime.env.monitor?.onError?.({
+          phase: 'render',
+          error,
+          nodeId: props.node.id,
+          path: props.node.path,
+          details: {
+            reason: 'import-namespace-setup-failed',
+            imports: nodeImports ?? []
+          }
+        });
+      }
     });
 
     return () => {
@@ -235,8 +272,12 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const element = <Comp {...componentProps} />;
 
   let content = element;
+  const frameWrapMode = resolveFrameWrapMode(
+    props.node.component.wrap,
+    props.node.schema.frameWrap
+  );
 
-  if (props.node.component.wrap) {
+  if (frameWrapMode !== 'none') {
     const fieldName = typeof resolvedProps.value.name === 'string'
       ? resolvedProps.value.name
       : typeof props.node.schema.name === 'string'
@@ -250,6 +291,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         name={fieldName}
         label={labelValue}
         required={props.node.schema.required === true}
+        layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
         className={resolvedMeta.className}
         testid={resolvedMeta.testid}
         cid={resolvedMeta.cid}

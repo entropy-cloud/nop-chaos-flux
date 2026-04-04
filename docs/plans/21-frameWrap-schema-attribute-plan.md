@@ -1,14 +1,26 @@
 # 21 frameWrap Schema Attribute Plan
 
-> Plan Status: pending
-> Last Reviewed: 2026-04-02
+> Plan Status: completed
+> Last Reviewed: 2026-04-04
 
 
 > Date: 2026-03-31
-> Status: Pending
+> Status: Completed on 2026-04-04
 > Triggered by: `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md`
 
 ---
+
+## Implementation Status
+
+Completed on 2026-04-04.
+
+Implemented in the current workspace:
+
+- `BaseSchema.frameWrap` and `FrameWrapMode` added in `packages/flux-core/src/types/schema.ts`
+- `resolveFrameWrapMode()` added in `packages/flux-react/src/node-renderer.tsx`
+- `NodeRenderer` now resolves label/group/none wrapping per schema instance
+- integration and unit coverage added in `packages/flux-react/src/index.test.tsx`
+- direct and contextual docs listed below were updated during implementation
 
 ## 0. Background
 

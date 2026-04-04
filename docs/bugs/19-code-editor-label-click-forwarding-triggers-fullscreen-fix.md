@@ -56,3 +56,4 @@
 2. **This applies to all renderers with `wrap: true`.** If a renderer needs internal clickable controls, they cannot be `<button>`, `<input>`, `<select>`, `<textarea>`, or `<meter>` — all are labelable per HTML spec.
 3. **A code comment is present** explaining the `<span>` choice — do not "fix" it back to `<button>` without understanding the `<label>` forwarding issue.
 4. **Alternative fix**: change `FieldFrame` to use `<div>` instead of `<label>` when the child is a code editor. This would be a broader framework change with its own trade-offs.
+5. **Follow-up**: the framework now supports `BaseSchema.frameWrap` as a per-instance opt-out for wrap-compatible renderers, but code-editor itself remains on the explicit `<span role="button">` fix rather than depending on schema migration.

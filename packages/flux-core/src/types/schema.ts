@@ -12,6 +12,7 @@ export type ValidationTrigger = 'change' | 'blur' | 'submit';
 export type ValidationVisibilityTrigger = 'touched' | 'dirty' | 'visited' | 'submit';
 export type ScopePolicy = 'inherit' | 'isolate' | 'page' | 'form' | 'dialog' | 'row';
 export type SchemaFieldKind = 'meta' | 'prop' | 'region' | 'value-or-region' | 'event' | 'ignored';
+export type FrameWrapMode = boolean | 'label' | 'group' | 'none';
 
 export interface BaseSchema extends SchemaObject {
   type: string;
@@ -25,6 +26,7 @@ export interface BaseSchema extends SchemaObject {
   hidden?: boolean | string;
   disabled?: boolean | string;
   testid?: string;
+  frameWrap?: FrameWrapMode;
   validateOn?: ValidationTrigger | ValidationTrigger[];
   showErrorOn?: ValidationVisibilityTrigger | ValidationVisibilityTrigger[];
   'xui:imports'?: XuiImportSpec[];

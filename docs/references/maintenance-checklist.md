@@ -80,6 +80,7 @@ Examples:
 Review:
 
 - `docs/architecture/renderer-runtime.md`
+- `docs/architecture/field-frame.md` when `RendererDefinition.wrap`, `BaseSchema.frameWrap`, or FieldFrame layout resolution changes
 - `docs/architecture/theme-compatibility.md` when renderer-owned class boundaries, theme roots, or CSS variable expectations change
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
@@ -340,4 +341,3 @@ Before finishing a code change, ask:
 - `docs/architecture/security-design-requirements.md`
 - `docs/architecture/performance-design-requirements.md`
 - `docs/references/architecture-guardrails-from-bugs.md`
-

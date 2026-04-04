@@ -36,7 +36,16 @@ FieldFrame is a presentational wrapper component. Controls pass their input elem
 
 ### Opt-in per control
 
-Controls decide whether to use FieldFrame. Not all controls need wrapping (e.g., hidden fields).
+Controls opt into FieldFrame at renderer-definition time through `RendererDefinition.wrap`.
+
+Schema instances can then refine that default with `frameWrap` on `BaseSchema`:
+
+- unset: follow the renderer definition's `wrap`
+- `false` or `'none'`: suppress FieldFrame for this instance
+- `true` or `'label'`: use the default `<label>` layout
+- `'group'`: use the grouped `<fieldset>/<legend>` layout
+
+`frameWrap` only customizes renderers that already declared `wrap: true`. It does not force wrapping onto a renderer that is not FieldFrame-compatible.
 
 ### Layered hints
 
@@ -80,6 +89,10 @@ Key props:
 | `className` | `string?` | Additional CSS classes on the root element. |
 | `testid` | `string?` | Test anchoring attribute, rendered as `data-testid`. |
 | `children` | `ReactNode` | The actual form control. |
+
+Related schema contract:
+
+- `BaseSchema.frameWrap?: boolean | 'label' | 'group' | 'none'`
 
 ## Internal Behavior
 
@@ -170,6 +183,19 @@ function InputRenderer(props) {
   );
 }
 ```
+
+### Per-instance opt-out of FieldFrame
+
+```json
+{
+  "type": "code-editor",
+  "name": "script",
+  "label": "Script",
+  "frameWrap": false
+}
+```
+
+This keeps the renderer's normal root element and skips the outer `<label>`/`<fieldset>` field chrome for that instance.
 
 ### Checkbox group with custom layout
 

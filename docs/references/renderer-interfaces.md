@@ -24,6 +24,7 @@ Key shapes:
 Role summary:
 
 - `BaseSchema` is the common schema base for renderers
+- `BaseSchema.frameWrap` is the per-instance FieldFrame override for wrap-compatible renderers
 - `SchemaInput` allows one schema node or an array of nodes
 - `ApiObject` describes request configuration, adaptors, scope injection, and query params
 - `DataSourceSchema` describes declarative data fetching with optional polling
@@ -231,4 +232,3 @@ For deeper design intent, continue with:
 - `docs/architecture/form-validation.md`
 
 For historical draft material, see `docs/archive/nop-chaos-amis-renderer-interfaces.ts`.
-

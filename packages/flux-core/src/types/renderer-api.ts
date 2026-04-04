@@ -29,6 +29,7 @@ export interface ErrorMonitorPayload {
   error: unknown;
   nodeId?: string;
   path?: SchemaPath;
+  details?: Record<string, unknown>;
 }
 
 export interface ApiMonitorPayload {

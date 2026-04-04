@@ -1,7 +1,7 @@
 # Performance and Completeness Remediation Plan (#26)
 
-> Plan Status: mostly-completed
-> Last Reviewed: 2026-04-02
+> Plan Status: completed
+> Last Reviewed: 2026-04-04
 
 
 > Source: repository-wide design and implementation audit completed on 2026-04-02.
@@ -198,13 +198,13 @@ Acceptance:
 
 ## P0-5 Request Dedup Key Is Too Coarse
 
-Status: substantially completed on 2026-04-02.
+Status: completed on 2026-04-04.
 
 Implementation note:
 
 - Semantic dedup keys now include params/body/headers.
 - `cancel-previous` and `parallel` behaviors are covered by tests.
-- Optional `ignore-new` strategy was added to the contract/runtime surface but is not yet fully validated as a closed item.
+- `ignore-new` is now validated as a closed item, including distinct semantic requests and identical-key in-flight reuse behavior.
 
 Problem description:
 
@@ -322,12 +322,12 @@ Acceptance:
 
 ## P1-4 Import Namespace Errors Are Silently Swallowed
 
-Status: not completed.
+Status: completed on 2026-04-04.
 
 Current note:
 
-- Nearby hook-safety issues in `flux-react` were fixed during repository verification.
-- The specific observability improvement described here was not implemented in this execution pass.
+- Import setup failures now emit structured `monitor.onError` payloads with import-spec context from `packages/flux-runtime/src/imports.ts`.
+- `flux-react` keeps non-blocking rendering and development-time warning output in `packages/flux-react/src/node-renderer.tsx`.
 
 Problem description:
 
@@ -454,12 +454,12 @@ Acceptance:
 
 ## P2-4 Source Artifact Governance Drift (TS/JS Coexistence in src)
 
-Status: partially completed on 2026-04-02.
+Status: completed on 2026-04-04.
 
 Current note:
 
-- The guard script and repository verification path are now in place, and the rule applies to all `packages/*/src/` directories with no package-level exception.
-- The broader long-term policy clarification described here is still open as a governance follow-up, not a code blocker for this execution pass.
+- The guard script and repository verification path are in place, and the rule applies to all `packages/*/src/` directories with no package-level exception.
+- The repository baseline now explicitly documents strict source-only `src/` directories and `dist/`-only generated output in `docs/architecture/frontend-baseline.md`.
 
 Problem description:
 

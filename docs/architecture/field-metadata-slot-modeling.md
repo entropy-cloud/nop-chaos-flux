@@ -80,6 +80,8 @@ Concrete renderer components should not repeatedly inspect raw schema to decide 
 
 That interpretation belongs in field metadata plus compiler logic.
 
+For field chrome, the exception is intentional and narrow: `BaseSchema.frameWrap` is a schema-level instance override consumed by `NodeRenderer` to refine `RendererDefinition.wrap` without turning field wrapper layout into a normal renderer prop.
+
 ## Current Foundation in the Codebase
 
 The current architecture already has the base pieces for this direction:
@@ -481,4 +483,3 @@ That change should be implemented in:
 - `docs/references/terminology.md`
 - `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
-

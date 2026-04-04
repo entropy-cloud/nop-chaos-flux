@@ -25,6 +25,7 @@ import {
 } from './index';
 import { FieldFrame } from './field-frame';
 import { EMPTY_FORM_STORE_STATE } from './form-state';
+import { resolveFrameWrapMode } from './node-renderer';
 
 const env: RendererEnv = {
   fetcher: async function <T>() {
@@ -291,6 +292,27 @@ const buttonRenderer: RendererDefinition = {
     </button>
   ),
   fields: [{ key: 'onClick', kind: 'event' }]
+};
+
+const cidProbeRenderer: RendererDefinition = {
+  type: 'cid-probe',
+  component: (props) => (
+    <span data-testid="cid-root" data-cid={props.meta.cid || undefined}>
+      {String(props.props.text ?? 'cid probe')}
+    </span>
+  )
+};
+
+const wrapProbeRenderer: RendererDefinition = {
+  type: 'wrap-probe',
+  wrap: true,
+  component: (props) => (
+    <input
+      aria-label={String(props.meta.label ?? props.props.label ?? 'Wrap probe')}
+      data-testid="wrap-probe-input"
+      defaultValue={String(props.props.value ?? '')}
+    />
+  )
 };
 
 function FragmentRenderHost(props: RendererComponentProps) {
@@ -850,7 +872,11 @@ describe('createSchemaRenderer', () => {
     expect(onError).toHaveBeenCalledWith(
       expect.objectContaining({
         phase: 'render',
-        error: expect.objectContaining({ message: 'Imported namespace broken failed to load: loader exploded' })
+        error: expect.objectContaining({ message: 'Imported namespace broken failed to load: loader exploded' }),
+        details: {
+          reason: 'import-namespace-setup-failed',
+          imports: [{ from: 'broken-lib', as: 'broken' }]
+        }
       })
     );
 
@@ -1918,6 +1944,88 @@ describe('createSchemaRenderer', () => {
       expect(screen.getByTestId('aggregate-error').textContent).toBe('Metadata requires at least one entry');
       expect(screen.getByTestId('field-error').textContent).toBe('Entry 1 value is required');
     });
+  });
+
+  it('does not insert an extra wrapper for non-wrap nodes with cid', () => {
+    const SchemaRenderer = createSchemaRenderer([cidProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'cid-probe',
+          text: 'CID probe'
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const root = screen.getByTestId('cid-root');
+    const cid = root.getAttribute('data-cid');
+
+    expect(cid).toMatch(/^\d+$/);
+    expect(document.querySelectorAll(`[data-cid="${cid}"]`)).toHaveLength(1);
+  });
+
+  it('skips FieldFrame when frameWrap is false', () => {
+    const SchemaRenderer = createSchemaRenderer([wrapProbeRenderer]);
+
+    const { container } = render(
+      <SchemaRenderer
+        schema={{
+          type: 'wrap-probe',
+          label: 'Standalone editor',
+          frameWrap: false
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByTestId('wrap-probe-input')).toBeTruthy();
+    expect(container.querySelector('label.nop-field')).toBeNull();
+    expect(container.querySelector('fieldset.nop-field')).toBeNull();
+  });
+
+  it('uses group layout when frameWrap is group', () => {
+    const SchemaRenderer = createSchemaRenderer([wrapProbeRenderer]);
+
+    const { container } = render(
+      <SchemaRenderer
+        schema={{
+          type: 'wrap-probe',
+          label: 'Grouped editor',
+          frameWrap: 'group'
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(container.querySelector('fieldset.nop-field')).toBeTruthy();
+    expect(container.querySelector('legend.nop-field__label')?.textContent).toContain('Grouped editor');
+  });
+});
+
+describe('resolveFrameWrapMode', () => {
+  it('returns none when renderer definition is not wrap-compatible', () => {
+    expect(resolveFrameWrapMode(false, undefined)).toBe('none');
+    expect(resolveFrameWrapMode(false, true)).toBe('none');
+    expect(resolveFrameWrapMode(false, 'label')).toBe('none');
+    expect(resolveFrameWrapMode(false, 'group')).toBe('none');
+    expect(resolveFrameWrapMode(false, 'none')).toBe('none');
+  });
+
+  it('preserves default label wrapping when frameWrap is unset or label-like', () => {
+    expect(resolveFrameWrapMode(true, undefined)).toBe('label');
+    expect(resolveFrameWrapMode(true, true)).toBe('label');
+    expect(resolveFrameWrapMode(true, 'label')).toBe('label');
+  });
+
+  it('allows wrap-compatible renderers to opt out or use group layout', () => {
+    expect(resolveFrameWrapMode(true, false)).toBe('none');
+    expect(resolveFrameWrapMode(true, 'none')).toBe('none');
+    expect(resolveFrameWrapMode(true, 'group')).toBe('group');
   });
 });
 
