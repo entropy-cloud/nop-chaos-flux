@@ -36,7 +36,8 @@ Choose the smallest document that matches the task.
 | Change validation behavior or form field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` |
 | Decide where runtime or validation code should live | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
 | Check workspace structure, package roles, or tooling baseline | `docs/architecture/frontend-baseline.md` | `package.json` |
-| Plan playground information architecture or debugger UX | `docs/architecture/playground-experience.md` | `docs/analysis/framework-debugger-design.md` |
+| Plan playground information architecture or debugger UX | `docs/architecture/playground-experience.md` | `docs/architecture/debugger-runtime.md` |
+| Design debugger automation API, inspect capability, or AI/E2E diagnostics | `docs/architecture/debugger-runtime.md` | `docs/analysis/framework-debugger-design.md` |
 | Review security boundary and runtime safety requirements | `docs/architecture/security-design-requirements.md` | `docs/architecture/action-scope-and-imports.md` |
 | Review performance design constraints and hot-path rules | `docs/architecture/performance-design-requirements.md` | `docs/architecture/renderer-runtime.md` |
 | Review recurring regression guardrails distilled from historical bug fixes | `docs/references/architecture-guardrails-from-bugs.md` | `docs/architecture/renderer-runtime.md` |
@@ -62,6 +63,7 @@ Architecture intent lives primarily in:
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/flux-runtime-module-boundaries.md`
 - `docs/architecture/action-scope-and-imports.md`
+- `docs/architecture/debugger-runtime.md`
 - `docs/architecture/playground-experience.md`
 - `docs/architecture/theme-compatibility.md`
 - `docs/architecture/security-design-requirements.md`

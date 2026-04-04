@@ -1,18 +1,18 @@
 # NOP Debugger 完整实现计划
 
-> Plan Status: in-progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-04
 
 
-> **Implementation Status: ⚠️ IN PROGRESS (Phases 1–3 completed, Phase 4 partially completed)**
+> **Implementation Status: ✅ COMPLETED (2026-04-04)**
 > **Done (Phases 1–3):** JsonViewer with collapsible tree, render throttling, search/filter, localStorage persistence, error badge with count, error aggregation (pinned/latest/earliest buffers), API chain merging, `data-cid` injection on all rendered nodes, `inspectByCid()` global API, Node Tab with scope/form data display, and global `__NOP_DEBUGGER_API__` for automation.
-> **Phase 4 progress:** enhanced Timeline search now supports `path:` queries, `/regex/flags` matching, plain-text highlight, and local history persistence; the event model now also includes `state:snapshot` entries for attach-time `ActionScope.getDebugSnapshot()` payloads. Remaining follow-ups are virtualized tree rendering and final performance hardening.
+> **Phase 4 completion:** Timeline search supports `path:` queries, `/regex/flags` matching, plain-text highlight, and local history persistence; the event model includes `state:snapshot` entries for attach-time `ActionScope.getDebugSnapshot()` payloads; and large timeline lists now use a lightweight virtualized rendering path when no row is expanded.
 >
 > This status was re-verified against the codebase on 2026-04-04.
 
 > 制定日期: 2026-03-29
 > 基于: `docs/analysis/framework-debugger-design.md` 设计草案
-> 状态: 部分完成，Phase 4 待实施
+> 状态: 已完成
 
 ---
 

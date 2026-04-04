@@ -7,7 +7,7 @@
 - playground 不再作为一个把所有示例堆在同一页里的巨型演示页
 - debugger 不再默认占用主工作区，而是变成可拖拽、可展开、可收起的悬浮工具
 
-这份文档描述的是接下来应当落地的产品化设计方向，供后续实现、拆分页面与 debugger 交互重构时对照。
+这份文档描述 playground 信息架构与 debugger UI 交互的产品化方向。`nop-debugger` 的自动化 API、事件模型、AI 诊断职责与当前达成度，以 `docs/architecture/debugger-runtime.md` 为准。
 
 ## Current Code Anchors
 
@@ -185,6 +185,7 @@ launcher 与完整面板都应支持拖拽。
 
 ## Related Documents
 
+- `docs/architecture/debugger-runtime.md`
 - `docs/architecture/frontend-baseline.md`
 - `docs/analysis/framework-debugger-design.md`
 - `docs/references/maintenance-checklist.md`

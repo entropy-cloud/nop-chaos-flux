@@ -1,12 +1,12 @@
 # Word Editor 开发计划
 
-> Plan Status: in-progress
+> Plan Status: superseded
 > Last Reviewed: 2026-04-04
 
-> **Implementation Status: ⚠️ IN PROGRESS (Phases 1–4 largely completed; later phases partial)**
+> **Implementation Status: ⚠️ SUPERSEDED AFTER FOUNDATION DELIVERY**
 > `@nop-chaos/word-editor-core` and `@nop-chaos/word-editor-renderers` now exist in the workspace, `@hufe921/canvas-editor` is integrated, playground-accessible `WordEditorPage` is implemented, Phases 1–4 core surfaces (editor shell, template expression model, dataset management, toolbar/panel/dialog UX) are largely present, and later follow-ups such as preview, chart/code dialogs, dataset persistence, and `WorkbenchShell` alignment have partially landed.
 >
-> The original “from zero” package/bootstrap tasks in this plan are no longer current. Remaining work is concentrated in true DOCX import/export, backend/template compilation integration, and broader productionization items; shared workbench-shell convergence now primarily lives in `docs/plans/33-complex-control-platform-convergence-refactor-plan.md`.
+> The original “from zero” package/bootstrap tasks in this plan are no longer current. The remaining items are no longer a single repository-local execution slice; they are a future product/integration roadmap covering true DOCX import/export, backend template compilation, `nop-entropy` integration, `Xpt` / `XplGenConfig`, and broader productionization work. Those should be reopened later as narrower plans when scope, backend contracts, and product priority are concrete.
 >
 > This status was re-verified against the codebase on 2026-04-04.
 

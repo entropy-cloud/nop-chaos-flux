@@ -337,8 +337,8 @@ pnpm --filter @nop-chaos/flux-playground dev
 ```typescript
 // 全局 API
 window.__NOP_DEBUGGER_API__.getPinnedErrors();
-window.__NOP_DEBUGGER_API__.getLatestErrors();
-window.__NOP_DEBUGGER_API__.getEarliestErrors();
+window.__NOP_DEBUGGER_API__.getLatestFailedRequest();
+window.__NOP_DEBUGGER_API__.getRecentFailures({ limit: 5 });
 ```
 
 ### Playwright E2E 测试
@@ -402,4 +402,3 @@ packages/<name>/
 ## 🙏 致谢
 
 本项目受到百度 AMIS 的启发，但进行了全面的架构重写和性能优化。感谢 AMIS 团队为低代码领域做出的贡献。
-
