@@ -328,6 +328,38 @@ describe('FormRuntime performance-oriented behavior', () => {
     expect(state.validating['list.0.name']).toBe(true);
   });
 
+  it('coalesces array removeValue state migration into a bounded number of commits', () => {
+    const form = createManagedFormRuntime({
+      id: 'test-form',
+      initialValues: {
+        list: [
+          { name: 'A' },
+          { name: 'B' }
+        ]
+      },
+      parentScope: createStubScope(),
+      executeValidationRule: async () => undefined,
+      validateRule: () => undefined,
+      submitApi: async () => ({ ok: true, data: {} })
+    });
+
+    form.store.setPathErrors('list.1.name', [err('list.1.name', 'Bad')]);
+    form.store.setTouched('list.1.name', true);
+    form.store.setDirty('list.1.name', true);
+    form.store.setVisited('list.1.name', true);
+    form.store.setValidating('list.1.name', true);
+
+    let commits = 0;
+    const unsubscribe = form.store.subscribe(() => {
+      commits += 1;
+    });
+
+    form.removeValue('list', 0);
+    unsubscribe();
+
+    expect(commits).toBeLessThanOrEqual(2);
+  });
+
   it('coalesces runtime registration sync write during validateField', async () => {
     const form = createManagedFormRuntime({
       id: 'test-form',

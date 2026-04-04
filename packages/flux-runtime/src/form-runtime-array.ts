@@ -1,4 +1,4 @@
-import type { ScopeRef } from '@nop-chaos/flux-core';
+import type { ScopeRef, ValidationError } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
 import { remapBooleanState, remapErrorState, transformArrayIndexedPath } from './form-path-state';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
@@ -81,55 +81,51 @@ export function remapArrayFieldState(
   sharedState: ManagedFormRuntimeSharedState,
   arrayPath: string,
   transformIndex: (index: number) => number | undefined,
-  cancelValidationDebounce: (path: string) => void
+  state: ReturnType<ManagedFormRuntimeSharedState['store']['getState']>
 ) {
-  const state = sharedState.store.getState();
-  sharedState.store.batchUpdate({
+  return {
     errors: remapErrorState(state.errors, arrayPath, transformIndex),
     touched: remapBooleanState(state.touched, arrayPath, transformIndex),
     dirty: remapBooleanState(state.dirty, arrayPath, transformIndex),
     visited: remapBooleanState(state.visited, arrayPath, transformIndex),
     validating: remapBooleanState(state.validating, arrayPath, transformIndex)
-  });
-  remapValidationRunState(sharedState, arrayPath, transformIndex, cancelValidationDebounce);
-  remapInitialFieldState(sharedState, arrayPath, transformIndex);
+  };
 }
 
 export function replaceManagedArrayValue(input: {
-  sharedState: ManagedFormRuntimeSharedState;
   arrayPath: string;
   nextValue: unknown[];
-  cancelValidationDebounce: (path: string) => void;
-  revalidateDependents: (path: string) => Promise<void>;
+  state: ReturnType<ManagedFormRuntimeSharedState['store']['getState']>;
+  initialFieldState: ManagedFormRuntimeSharedState['initialFieldState'];
+  remappedState: {
+    errors: Record<string, ValidationError[]>;
+    touched: Record<string, boolean>;
+    dirty: Record<string, boolean>;
+    visited: Record<string, boolean>;
+    validating: Record<string, boolean>;
+  };
 }) {
-  input.sharedState.validationRuns.set(
-    input.arrayPath,
-    (input.sharedState.validationRuns.get(input.arrayPath) ?? 0) + 1
-  );
-  input.cancelValidationDebounce(input.arrayPath);
-
-  const state = input.sharedState.store.getState();
-  const baseline = input.sharedState.initialFieldState.initialValues[input.arrayPath];
+  const baseline = input.initialFieldState.initialValues[input.arrayPath];
   const isDirty = !Object.is(baseline, input.nextValue);
 
-  const nextValidating = { ...state.validating };
+  const nextValidating = { ...input.remappedState.validating };
   delete nextValidating[input.arrayPath];
 
   const nextDirty = isDirty
-    ? { ...state.dirty, [input.arrayPath]: true }
-    : (() => { const d = { ...state.dirty }; delete d[input.arrayPath]; return d; })();
+    ? { ...input.remappedState.dirty, [input.arrayPath]: true }
+    : (() => { const d = { ...input.remappedState.dirty }; delete d[input.arrayPath]; return d; })();
 
-  const nextErrors = { ...state.errors };
+  const nextErrors = { ...input.remappedState.errors };
   delete nextErrors[input.arrayPath];
 
-  input.sharedState.store.batchUpdate({
-    validating: nextValidating,
+  return {
+    values: setIn(input.state.values, input.arrayPath, input.nextValue),
+    errors: nextErrors,
+    touched: input.remappedState.touched,
     dirty: nextDirty,
-    values: setIn(state.values, input.arrayPath, input.nextValue),
-    errors: nextErrors
-  });
-
-  void input.revalidateDependents(input.arrayPath);
+    visited: input.remappedState.visited,
+    validating: nextValidating
+  };
 }
 
 export function executeArrayMutation(ctx: {
@@ -145,12 +141,24 @@ export function executeArrayMutation(ctx: {
   const currentArray = Array.isArray(currentValue) ? currentValue : [];
   const nextValue = ctx.arrayOperation(currentArray);
 
-  remapArrayFieldState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform, ctx.cancelValidationDebounce);
-  replaceManagedArrayValue({
-    sharedState: ctx.sharedState,
+  ctx.sharedState.validationRuns.set(
+    ctx.arrayPath,
+    (ctx.sharedState.validationRuns.get(ctx.arrayPath) ?? 0) + 1
+  );
+  ctx.cancelValidationDebounce(ctx.arrayPath);
+
+  const state = ctx.sharedState.store.getState();
+  const remappedState = remapArrayFieldState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform, state);
+  const nextStoreState = replaceManagedArrayValue({
     arrayPath: ctx.arrayPath,
     nextValue,
-    cancelValidationDebounce: ctx.cancelValidationDebounce,
-    revalidateDependents: ctx.revalidateDependents
+    state,
+    initialFieldState: ctx.sharedState.initialFieldState,
+    remappedState
   });
+
+  ctx.sharedState.store.batchUpdate(nextStoreState);
+  remapValidationRunState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform, ctx.cancelValidationDebounce);
+  remapInitialFieldState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform);
+  void ctx.revalidateDependents(ctx.arrayPath);
 }

@@ -512,7 +512,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         return;
       }
 
-      let state = store.getState();
+      const state = store.getState();
       let nextValues = state.values;
       let nextDirty = state.dirty;
       let nextErrors = state.errors;
