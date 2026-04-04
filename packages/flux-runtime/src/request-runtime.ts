@@ -279,7 +279,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv) {
     api: ApiObject,
     scope: ScopeRef,
     form?: FormRuntime,
-    options?: { signal?: AbortSignal }
+    options?: { signal?: AbortSignal; interactionId?: string }
   ) {
     const dedupStrategy = api.dedupStrategy ?? 'cancel-previous';
     const requestKey = createRequestKey(actionType, api, scope, form);
@@ -298,12 +298,6 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv) {
     }
 
     const controller = new AbortController();
-    env.monitor?.onApiRequest?.({
-      api,
-      nodeId: undefined,
-      path: undefined
-    });
-
     if (options?.signal) {
       if (options.signal.aborted) {
         controller.abort();
@@ -315,7 +309,8 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv) {
     const requestPromise = env.fetcher<T>(api, {
         scope,
         env,
-        signal: controller.signal
+        signal: controller.signal,
+        interactionId: options?.interactionId
       });
 
     if (dedupStrategy !== 'parallel') {

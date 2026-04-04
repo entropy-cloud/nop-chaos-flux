@@ -25,6 +25,12 @@ interface ActionDispatcherInput {
   runtime: { compile(schema: any): any };
 }
 
+let nextInteractionId = 1;
+
+function createInteractionId() {
+  return `interaction-${nextInteractionId++}`;
+}
+
 function createCancelledResult(error?: unknown): ActionResult {
   return {
     ok: false,
@@ -52,7 +58,8 @@ function buildActionMonitorPayload(action: ActionSchema, ctx: ActionContext) {
   return {
     actionType: action.action,
     nodeId: ctx.node?.id,
-    path: ctx.node?.path
+    path: ctx.node?.path,
+    interactionId: ctx.interactionId
   };
 }
 
@@ -456,6 +463,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     for (const current of actions) {
       const actionContext = {
         ...ctx,
+        interactionId: ctx.interactionId ?? createInteractionId(),
         prevResult: previous
       };
       const result = await runActionWithDebounce(current, actionContext);
@@ -469,6 +477,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       if (current.then) {
         previous = await dispatch(current.then, {
           ...ctx,
+          interactionId: actionContext.interactionId,
           prevResult: result
         });
       }

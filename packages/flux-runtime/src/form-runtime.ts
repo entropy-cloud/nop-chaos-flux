@@ -290,7 +290,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       store.setPathErrors(path);
     },
-    async submit(api?: ApiObject) {
+    async submit(api?: ApiObject, options?: { interactionId?: string }) {
       if (store.getState().submitting) {
         return {
           ok: false,
@@ -340,7 +340,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       }
 
       try {
-        return await inputValue.submitApi(api, scope);
+        return await inputValue.submitApi(api, scope, options);
       } finally {
         store.setSubmitting(false);
       }
@@ -544,4 +544,3 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
   return thisForm;
 }
-

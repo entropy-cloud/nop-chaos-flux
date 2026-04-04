@@ -3396,6 +3396,7 @@ describe('createRendererRuntime', () => {
     expect(result.ok).toBe(true);
     expect(onActionStart).toHaveBeenCalledWith({
       actionType: 'ajax',
+      interactionId: expect.any(String),
       nodeId: node.id,
       path: node.path
     });

@@ -31,7 +31,7 @@ export interface CreateManagedFormRuntimeInput {
     field: CompiledFormValidationField,
     scope: ScopeRef
   ) => ValidationError | undefined;
-  submitApi: (api: ApiObject, scope: ScopeRef) => Promise<ActionResult>;
+  submitApi: (api: ApiObject, scope: ScopeRef, options?: { interactionId?: string }) => Promise<ActionResult>;
 }
 
 export interface InitialFieldState {
@@ -54,4 +54,3 @@ export interface ManagedFormRuntimeSharedState {
   pendingValidationDebounces: Map<string, PendingValidationDebounce>;
   runtimeFieldRegistrations: Map<string, RuntimeFieldRegistration>;
 }
-

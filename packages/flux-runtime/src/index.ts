@@ -178,9 +178,11 @@ export function createRendererRuntime(input: {
       ...inputValue,
       executeValidationRule,
       validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry),
-      submitApi: async (api, scope) => {
+      submitApi: async (api, scope, options) => {
         const response = await executeApiObject(api, scope, getEnv(), expressionCompiler, {
-          executor: (adaptedApi) => executeApiRequest('submitForm', adaptedApi, scope)
+          executor: (adaptedApi) => executeApiRequest('submitForm', adaptedApi, scope, undefined, {
+            interactionId: options?.interactionId
+          })
         });
 
         return {
@@ -194,7 +196,9 @@ export function createRendererRuntime(input: {
 
   async function executeAjaxAction(api: ApiObject, action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
     const response = await executeApiObject(api, ctx.scope, getEnv(), expressionCompiler, {
-      executor: (adaptedApi) => executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form)
+      executor: (adaptedApi) => executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
+        interactionId: ctx.interactionId
+      })
     });
 
     if (action.dataPath && response.ok && ctx.page) {
@@ -220,7 +224,7 @@ export function createRendererRuntime(input: {
     onActionError: input.onActionError,
     evaluate,
     executeAjaxAction,
-    submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api),
+    submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
     runtime: {
       compile(schema) {
         return schemaCompiler.compile(schema);

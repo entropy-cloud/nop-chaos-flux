@@ -1,4 +1,4 @@
-import type { ComponentHandle, ComponentHandleRegistry, ComponentTarget } from '@nop-chaos/flux-core';
+import type { ComponentHandle, ComponentHandleDebugData, ComponentHandleRegistry, ComponentTarget } from '@nop-chaos/flux-core';
 
 export function createComponentHandleRegistry(input: { id: string; parent?: ComponentHandleRegistry }): ComponentHandleRegistry {
   const nodeEnv = 'process' in globalThis
@@ -9,6 +9,7 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
   let dynamicLoadedCidCounter = -1;
   const handles = new Set<ComponentHandle>();
   const handlesByCid = new Map<number, ComponentHandle>();
+  const debugDataByCid = new Map<number, ComponentHandleDebugData>();
   const handlesById = new Map<string, ComponentHandle>();
   const handlesByName = new Map<string, ComponentHandle>();
   const dynamicHandles = new Map<string, Map<string, ComponentHandle>>();
@@ -82,6 +83,7 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
   function unindexHandle(handle: ComponentHandle) {
     if (typeof handle._cid === 'number' && handlesByCid.get(handle._cid) === handle) {
       handlesByCid.delete(handle._cid);
+      debugDataByCid.delete(handle._cid);
     }
 
     if (handle.id && handlesById.get(handle.id) === handle) {
@@ -229,6 +231,17 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       }
 
       return input.parent?.getHandleByCid?.(cid);
+    },
+    setHandleDebugData(cid, data) {
+      if (data) {
+        debugDataByCid.set(cid, data);
+        return;
+      }
+
+      debugDataByCid.delete(cid);
+    },
+    getHandleDebugData(cid) {
+      return debugDataByCid.get(cid) ?? input.parent?.getHandleDebugData?.(cid);
     },
     getDebugSnapshot() {
       return {

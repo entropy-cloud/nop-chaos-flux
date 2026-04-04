@@ -105,9 +105,12 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const nodeClassAliases = (props.node.schema as { classAliases?: Record<string, string> }).classAliases;
   const mergedClassAliases = mergeClassAliases(parentClassAliases, nodeClassAliases);
   const resolvedClassName = resolveClassAliases(meta.className, mergedClassAliases);
-  const resolvedMeta = resolvedClassName !== meta.className
-    ? { ...meta, className: resolvedClassName }
-    : meta;
+  const resolvedMeta = useMemo(
+    () => (resolvedClassName !== meta.className
+      ? { ...meta, className: resolvedClassName }
+      : meta),
+    [meta, resolvedClassName]
+  );
 
   const activeForm = useNodeForm(runtime, props.node, props.scope, props.page, resolvedProps, props.form);
   const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, props.node, props.actionScope, props.componentRegistry);
@@ -129,6 +132,28 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     });
     return unregister;
   }, [activeComponentRegistry, activeForm, props.node]);
+
+  useEffect(() => {
+    const cid = resolvedMeta.cid;
+
+    if (!activeComponentRegistry || typeof cid !== 'number') {
+      return;
+    }
+
+    activeComponentRegistry.setHandleDebugData?.(cid, {
+      nodeId: props.node.id,
+      path: props.node.path,
+      rendererType: props.node.type,
+      scope: activeScope,
+      resolvedMeta,
+      resolvedProps: resolvedProps.value,
+      updatedAt: Date.now()
+    });
+
+    return () => {
+      activeComponentRegistry.setHandleDebugData?.(cid, undefined);
+    };
+  }, [activeComponentRegistry, activeScope, props.node.id, props.node.path, props.node.type, resolvedMeta, resolvedProps.value]);
 
   useEffect(() => {
     void runtime.ensureImportedNamespaces({

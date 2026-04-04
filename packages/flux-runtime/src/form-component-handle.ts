@@ -22,7 +22,7 @@ export function createFormComponentHandle(form: FormRuntime): ComponentHandle {
 
         switch (method) {
           case 'submit':
-            return form.submit(input.api as never);
+            return form.submit(input.api as never, { interactionId: payload && 'interactionId' in payload ? String(payload.interactionId ?? '') || undefined : undefined });
           case 'validate': {
             const result = await form.validateForm();
             return {
