@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { ChevronRight, ChevronDown, FileText } from 'lucide-react'
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
-import { Button, ScrollArea } from '@nop-chaos/ui'
+import { Button, ScrollArea, cn } from '@nop-chaos/ui'
 import type { IElement, TitleLevel } from '@hufe921/canvas-editor'
 
 interface OutlinePanelProps {
@@ -163,7 +163,7 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
               type="button"
               variant="ghost"
               onClick={() => navigateToHeading(subItem)}
-              className={`flex items-center gap-1.5 w-full text-left justify-start h-auto px-2 py-1 ${getLevelTextSize(subItem.level)} text-[var(--nop-body-copy)] hover:text-[var(--nop-accent)]`}
+              className={cn('flex items-center gap-1.5 w-full text-left justify-start h-auto px-2 py-1 text-[var(--nop-body-copy)] hover:text-[var(--nop-accent)]', getLevelTextSize(subItem.level))}
             >
               <span className="truncate flex-1">{subItem.name}</span>
             </Button>
@@ -217,7 +217,7 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
                           type="button"
                           variant="ghost"
                           onClick={() => navigateToHeading(item)}
-                          className={`flex items-center gap-1.5 w-full text-left justify-start flex-1 h-auto px-2 py-1 ${getLevelTextSize(item.level)} text-[var(--nop-body-copy)] hover:text-[var(--nop-accent)]`}
+                          className={cn('flex items-center gap-1.5 w-full text-left justify-start flex-1 h-auto px-2 py-1 text-[var(--nop-body-copy)] hover:text-[var(--nop-accent)]', getLevelTextSize(item.level))}
                         >
                           <span className="truncate">{item.name}</span>
                         </Button>
