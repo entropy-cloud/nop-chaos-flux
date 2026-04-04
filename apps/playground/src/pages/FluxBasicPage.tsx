@@ -236,26 +236,27 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
           from the left-bottom launcher while interacting with the schema.
         </p>
         <p className="mt-2.5 text-[15px] leading-relaxed text-[var(--nop-body-copy)]">
-          AI automation can read the structured debugger API from `window.__NOP_FLUX_DEBUGGER_API__` or the
-          multi-instance registry at `window.__NOP_FLUX_DEBUGGER_HUB__`.
+          AI automation can read the structured debugger API from `window.__NOP_DEBUGGER_API__` or the
+          multi-instance registry at `window.__NOP_DEBUGGER_HUB__`.
         </p>
         <div className="mt-[18px] p-[18px] rounded-[18px] bg-gradient-to-b from-slate-900/94 to-slate-950/98 border border-amber-200/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <p className="mb-2.5 uppercase tracking-[0.14em] text-[11px] font-bold text-amber-300">AI Debug Script</p>
-          <pre className="p-3.5 rounded-[14px] bg-black/30 text-sky-200 text-[13px] leading-relaxed overflow-x-auto">{`const api = window.__NOP_FLUX_DEBUGGER_API__;
- const latestError = api?.getLatestError();
- const usersRequest = await api?.waitForEvent({ kind: 'api:end', text: '/api/users' });
- const nodeReport = api?.getNodeDiagnostics({ nodeId: 'user-form' });
+          <pre className="p-3.5 rounded-[14px] bg-black/30 text-sky-200 text-[13px] leading-relaxed overflow-x-auto">{`const api = window.__NOP_DEBUGGER_API__;
+  const latestError = api?.getLatestError();
+  const usersRequest = await api?.waitForEvent({ kind: 'api:end', text: '/api/users' });
+  const nodeReport = api?.getNodeDiagnostics({ nodeId: 'user-form' });
  const inferredTrace = api?.getInteractionTrace({ inferFromLatest: true });
  const exactTrace = api?.getInteractionTrace({
    eventId: usersRequest?.id,
    mode: 'exact'
  });
- const exported = api?.exportSession({ eventLimit: 30 }); // redacted snapshot
- const diagnostic = api?.createDiagnosticReport({
-   eventLimit: 20,
-   includeLatestInteractionTrace: true
- });
- const latestTrace = diagnostic?.latestInteractionTrace;`}</pre>
+  const exported = api?.exportSession({ eventLimit: 30 }); // redacted snapshot
+  const diagnostic = api?.createDiagnosticReport({
+    eventLimit: 20,
+    includeLatestInteractionTrace: true
+  });
+  const latestTrace = diagnostic?.latestInteractionTrace;
+  const failedRequest = api?.getLatestFailedRequest();`}</pre>
         </div>
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(280px,360px)] gap-6 items-start">
           <div className="p-6 rounded-[20px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]">

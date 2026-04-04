@@ -153,6 +153,9 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
                 <ActionButton label="Fire Action" onClick={fireActionEvent} variant="primary" />
                 <ActionButton label="Fire API" onClick={fireApiEvent} variant="primary" />
                 <ActionButton label="Fire Error" onClick={fireErrorEvent} variant="danger" />
+                <ActionButton label="Wait For API" onClick={() => handleShowOutput('WaitForEvent', async () => api?.waitForEvent({ kind: 'api:start', text: '/api/lab-test', timeoutMs: 1000 }))} />
+                <ActionButton label="Latest Failed Request" onClick={() => handleShowOutput('LatestFailedRequest', () => api?.getLatestFailedRequest())} />
+                <ActionButton label="Recent Failures" onClick={() => handleShowOutput('RecentFailures', () => api?.getRecentFailures({ limit: 5 }))} />
               </div>
             </SectionCard>
 
@@ -180,6 +183,7 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
                 <ActionButton label="Get Latest Error" onClick={() => handleShowOutput('LatestError (API)', () => api?.getLatestError())} />
                 <ActionButton label="Get Pinned Errors" onClick={() => handleShowOutput('PinnedErrors (API)', () => api?.getPinnedErrors())} />
                 <ActionButton label="Get Overview" onClick={() => handleShowOutput('Overview (API)', () => api?.getOverview())} />
+                <ActionButton label="Get Trace" onClick={() => handleShowOutput('InteractionTrace (API)', () => api?.getInteractionTrace({ inferFromLatest: true }))} />
               </div>
             </SectionCard>
 
