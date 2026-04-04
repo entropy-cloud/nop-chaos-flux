@@ -1,7 +1,7 @@
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
 import { Database, Plus, MoreVertical } from 'lucide-react'
 import type { DatasetStoreApi } from '@nop-chaos/word-editor-core'
-import { ScrollArea } from '@nop-chaos/ui'
+import { Button, ScrollArea } from '@nop-chaos/ui'
 
 interface DatasetPanelProps {
   store: DatasetStoreApi
@@ -53,14 +53,15 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
       <div className="px-4 py-3 border-b border-[var(--nop-border)]">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">Datasets</h2>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-xs"
             onClick={onAddDataset}
-            className="p-1.5 rounded-md hover:bg-[var(--nop-surface-soft)] transition-colors outline-none focus:ring-2 focus:ring-[var(--nop-accent)] focus:ring-opacity-30"
             title="Add Dataset"
           >
             <Plus className="w-4 h-4 text-[var(--nop-accent)]" />
-          </button>
+          </Button>
         </div>
       </div>
       <ScrollArea className="flex-1">
@@ -74,13 +75,14 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
               <p className="text-[10px] text-[var(--nop-body-copy)] opacity-50 mt-1">
                 Create a dataset to get started
               </p>
-              <button
+              <Button
                 type="button"
+                size="xs"
                 onClick={onAddDataset}
-                className="mt-3 px-3 py-1.5 text-xs bg-[var(--nop-accent)] text-white rounded-md hover:bg-[var(--nop-accent-strong)] transition-colors outline-none focus:ring-2 focus:ring-[var(--nop-accent)] focus:ring-opacity-30"
+                className="mt-3"
               >
                 Add Dataset
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="space-y-1">
@@ -116,14 +118,16 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
                         </div>
                       )}
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-xs"
                       onClick={(e) => handleDatasetMenu(dataset.id, e)}
-                      className="p-1 rounded hover:bg-[var(--nop-surface-card)] opacity-0 group-hover:opacity-100 transition-opacity outline-none focus:opacity-100"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
                       title="Dataset Options"
                     >
                       <MoreVertical className="w-4 h-4 text-[var(--nop-body-copy)]" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
