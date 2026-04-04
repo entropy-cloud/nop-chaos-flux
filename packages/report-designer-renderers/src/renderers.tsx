@@ -6,6 +6,8 @@ import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { ReportFieldPanelRenderer } from './field-panel-renderer.js';
 import { ReportInspectorShellRenderer } from './inspector-shell-renderer.js';
 import { ReportDesignerPageRenderer } from './page-renderer.js';
+import { ReportInspectorRenderer } from './report-designer-inspector.js';
+import { ReportToolbarRenderer } from './report-designer-toolbar.js';
 import type {
   ReportDesignerPageSchemaInput,
   ReportDesignerPageSchema,
@@ -24,6 +26,11 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
     fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
   },
   {
+    type: 'report-inspector',
+    component: ReportInspectorRenderer,
+    fields: [{ key: 'inspectorPanels', kind: 'prop' }],
+  },
+  {
     type: 'report-field-panel',
     component: ReportFieldPanelRenderer,
     fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
@@ -33,6 +40,11 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
     component: ReportDesignerPageRenderer,
     regions: ['toolbar', 'fieldPanel', 'inspector', 'dialogs', 'body'],
     fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
+  },
+  {
+    type: 'report-toolbar',
+    component: ReportToolbarRenderer,
+    fields: [{ key: 'itemsOverride', kind: 'prop' }],
   },
 ];
 
