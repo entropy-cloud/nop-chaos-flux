@@ -60,10 +60,17 @@ export function PageControls({ bridge, store }: PageControlsProps) {
     setPageMode(nextMode)
   }
 
+  const paperSizeKey = Object.entries(PAPER_SIZE_PRESETS).find(
+    ([, preset]) => preset.width === paperSettings.width && preset.height === paperSettings.height
+  )?.[0] ?? 'a4'
+
   const handlePaperSize = (key: string) => {
     const preset = PAPER_SIZE_PRESETS[key]
     if (preset) {
-      bridge?.command?.executePaperSize(preset.width, preset.height)
+      store.setPaperSettings({ ...paperSettings, width: preset.width, height: preset.height })
+      requestAnimationFrame(() => {
+        bridge?.command?.executePaperSize(preset.width, preset.height)
+      })
     }
   }
 
@@ -71,7 +78,10 @@ export function PageControls({ bridge, store }: PageControlsProps) {
     const newDir = paperSettings.direction === 'vertical'
       ? PaperDirection.HORIZONTAL
       : PaperDirection.VERTICAL
-    bridge?.command?.executePaperDirection(newDir)
+    store.setPaperSettings({ ...paperSettings, direction: newDir === PaperDirection.VERTICAL ? 'vertical' : 'horizontal' })
+    requestAnimationFrame(() => {
+      bridge?.command?.executePaperDirection(newDir)
+    })
   }
 
   const handleApplyMargins = () => {
@@ -103,7 +113,7 @@ export function PageControls({ bridge, store }: PageControlsProps) {
       <ToolbarButton icon={Maximize} onClick={handleZoomReset} title="Reset Zoom" />
       <ToolbarSeparator />
       <NativeSelect
-        value="a4"
+        value={paperSizeKey}
         onChange={(e) => handlePaperSize(e.target.value)}
         title="Paper Size"
         size="xs"
