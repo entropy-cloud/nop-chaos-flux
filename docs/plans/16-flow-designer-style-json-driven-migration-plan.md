@@ -1,14 +1,24 @@
 # 16 - Flow Designer 样式 JSON 驱动迁移计划
 
-> Plan Status: in-progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-02
 
 
-> **Implementation Status: ⚠️ PARTIALLY COMPLETED**
-> **Done:** Steps 1–10 largely completed — `styles.css` deleted from both `flow-designer-renderers` and `report-designer-renderers`; Tailwind + `classAliases` mechanism in use for flow/report designer styling; no business-specific styles in framework CSS files.
-> **Remaining:** `themeStyles` injection for dynamic theming may need verification; full audit of all edge/node styles in JSON config may have gaps.
+> **Implementation Status: ✅ COMPLETED**
+> The codebase and later docs indicate the migration goal is already met: framework-owned business CSS was removed, designer styling now relies on Tailwind utilities, `classAliases`, and the documented theme/token contract. The earlier `themeStyles` escape hatch discussed in this plan was explored during migration but was not retained as the final styling direction, so it should not remain as an open requirement.
 >
-> This status was verified against the codebase on 2026-03-30.
+> This status was re-verified against the codebase on 2026-04-04.
+
+## Final Audit Note
+
+This plan is complete in the current workspace.
+
+Final re-check performed on 2026-04-04:
+
+- `styles.css` has been removed from `flow-designer-renderers` and `report-designer-renderers`
+- later logs document that `themeStyles` was explored and then removed in favor of a cleaner `classAliases`-led direction
+- current styling architecture is defined by `docs/architecture/styling-system.md` and `docs/architecture/theme-compatibility.md`, not by an unverified `themeStyles` escape hatch
+- no evidence remains that framework packages still own the business-specific workflow styling this plan was meant to remove
 
 ## 目标
 

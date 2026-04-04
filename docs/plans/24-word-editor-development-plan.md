@@ -1,7 +1,12 @@
 # Word Editor 开发计划
 
-> Plan Status: planned
-> Last Reviewed: 2026-04-02
+> Plan Status: in-progress
+> Last Reviewed: 2026-04-04
+
+> **Implementation Status: ⚠️ PARTIALLY COMPLETED**
+> `@nop-chaos/word-editor-core` and `@nop-chaos/word-editor-renderers` now exist in the workspace, `@hufe921/canvas-editor` is integrated, playground-accessible `WordEditorPage` is implemented, and a substantial toolbar/panel/dialog surface already exists.
+>
+> The original “from zero” package/bootstrap tasks in this plan are no longer current. Remaining work is concentrated in deeper capability completion, save/session boundary tightening, and convergence with newer shared workbench goals tracked in `docs/plans/33-complex-control-platform-convergence-refactor-plan.md`.
 
 
 ## Purpose
@@ -714,5 +719,4 @@ canvas-editor 内部管理自己的状态（文本、选区、格式），我们
 
 ### Phase 8 (生产化)
 - 快捷键、性能、测试、无障碍全部到位
-
 

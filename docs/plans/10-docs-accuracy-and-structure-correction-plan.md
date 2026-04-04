@@ -1,13 +1,24 @@
 # Documentation Accuracy and Structure Correction Plan
 
-> Plan Status: in-progress
-> Last Reviewed: 2026-04-02
+> Plan Status: completed
+> Last Reviewed: 2026-04-04
 
 
-> **Implementation Status: ⚠️ PARTIALLY COMPLETED**
-> Most W1–W5 corrections completed per development log entries. Some W6/W7 items (final cross-reference audit, archive cleanup) may remain. The `docs/` directory is well-structured with clear `architecture/`, `references/`, `analysis/`, `examples/`, `plans/`, and `bugs/` subdirectories, and an active `index.md` navigation entry.
+> **Implementation Status: ✅ COMPLETED**
+> W1–W7 are now closed at the repository level. A final 2026-04-04 audit confirmed that active docs under `docs/index.md`, `docs/architecture/`, `docs/references/`, and `docs/examples/` no longer carry the stale `amis-*` file references, `DialogInstance`, or `form-validation-errors.ts` references called out in this plan. Secondary analysis/reference material now clearly identifies itself as comparative or historical rather than current source of truth.
 >
-> This status was verified against the codebase on 2026-03-30.
+> This status was re-verified against the codebase on 2026-04-04.
+
+## Final Audit Note
+
+This plan is complete in the current workspace.
+
+Final re-check performed on 2026-04-04:
+
+- active docs no longer point at `docs/architecture/amis-core.md` or `docs/architecture/amis-runtime-module-boundaries.md`
+- active docs no longer use stale type/file references such as `DialogInstance` or `packages/flux-runtime/src/form-validation-errors.ts`
+- `docs/analysis/form-validation-comparison.md` and the validation template notes clearly frame themselves as secondary research material
+- `docs/index.md` provides a coherent current reading path and clearly distinguishes active docs from plans/logs/analysis
 
 ## Purpose
 

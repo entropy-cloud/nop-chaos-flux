@@ -1,16 +1,27 @@
 # 19-BEM-to-Tailwind Migration Plan
 
-> Plan Status: in-progress (Flow Designer part ✅ COMPLETED)
+> Plan Status: completed
 > Last Reviewed: 2026-04-04
 
 
 > **Design doc:** `docs/architecture/renderer-markers-and-selectors.md`
 >
-> **Implementation Status: ⚠️ PARTIALLY COMPLETED (Phases 1–7)**
-> **Done:** BEM CSS rules removed from `styles.css` (no `.app-shell`, `.hero-card`, `.nav-card` found); `field-frame.tsx` uses `data-field-*` attributes instead of BEM; `dialog-host.tsx` uses shadcn Dialog components; marker class system (`nop-*`) established; Tailwind + `classAliases` in production use; Phase 6 (Flow Designer CSS deletion) ✅ COMPLETED — `styles.css` deleted, no CSS imports, no BEM classes remaining. Verified with E2E tests (7/7 pass).
-> **Remaining (non-Flow-Designer):** `table-renderer.tsx` does NOT yet use shadcn Table components; playground page BEM class cleanup may be incomplete; test assertion migration (Phase 9) and final CSS audit (Phase 12) not verified.
+> **Implementation Status: ✅ COMPLETED**
+> Final 2026-04-04 audit: `table-renderer.tsx` already uses shadcn Table components, playground page BEM classes called out by this plan are gone, renderer state modifiers have moved to `data-*`, dialog host uses shadcn Dialog, and the remaining `nop-*` / `nop-*__*` classes align with the current marker-selector architecture rather than the deprecated visual BEM layer.
 >
 > This status was verified against the codebase on 2026-04-04.
+
+## Final Audit Note
+
+This plan is complete in the current workspace.
+
+Final re-check performed on 2026-04-04:
+
+- `packages/flux-renderers-data/src/table-renderer.tsx` already uses `@nop-chaos/ui` Table primitives
+- `apps/playground/src/` no longer contains `.app-shell`, `.hero-card`, or `.nav-card`
+- deprecated modifier-style classes such as `nop-field--*` and deprecated wrapper classes such as `nop-checkbox__*` / `nop-switch__*` / `nop-radio__*` are gone from active source
+- current remaining semantic classes such as `nop-field__label` and `nop-table__row` are intentional marker classes allowed by `docs/architecture/renderer-markers-and-selectors.md`
+- `docs/references/maintenance-checklist.md` already routes marker/selector changes to the correct architecture doc
 
 > Design doc: `docs/architecture/renderer-markers-and-selectors.md`
 
@@ -623,5 +634,4 @@ Each phase is independent and reversible:
 | Test files modified | 2 |
 | Doc files updated | 3 |
 | **Total** | **~23 files** |
-
 

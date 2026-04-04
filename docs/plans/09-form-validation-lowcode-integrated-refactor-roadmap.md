@@ -1,15 +1,25 @@
 # Form Validation Low-Code Integrated Refactor Roadmap
 
-> Plan Status: in-progress
+> Plan Status: deferred
 > Last Reviewed: 2026-04-02
 
 
-> **Implementation Status: ⚠️ PARTIALLY COMPLETED**
+> **Implementation Status: ⚠️ PARTIALLY COMPLETED / LONG-RANGE ROADMAP**
 > **Done (Stages 0–3):** Canonical validation graph, compilation tightening, graph-driven execution.
 > **Not started (Stages 4–8):** Normalization pipeline, composite compiler migration, state compression, extensibility API, diagnostics/introspection tooling.
-> The core validation infrastructure is solid and production-capable; the advanced roadmap items for full low-code integration remain future work.
+> The core validation infrastructure is solid and production-capable; the remaining stages describe longer-range architecture evolution rather than current correctness gaps. They should be scheduled only when a concrete product or performance need justifies reopening validation internals.
 >
-> This status was verified against the codebase on 2026-03-30.
+> This status was re-verified against the codebase on 2026-04-04.
+
+## Deferral Note
+
+This roadmap remains useful, but it should not be treated as an active must-finish execution plan.
+
+Reasons for deferral:
+
+- the completed stages already provide a production-capable validation baseline
+- the remaining stages are architectural optimization and extensibility work, not urgent contract violations
+- later repository work has focused on runtime hardening, renderer contracts, and designer platform convergence rather than forcing a large validation redesign immediately
 
 ## Purpose
 
