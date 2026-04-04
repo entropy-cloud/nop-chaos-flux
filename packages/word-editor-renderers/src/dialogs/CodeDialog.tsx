@@ -9,7 +9,8 @@ import {
   Input,
   Label,
   NativeSelect,
-  NativeSelectOption
+  NativeSelectOption,
+  cn
 } from '@nop-chaos/ui'
 
 const QR_CODE_PATTERN = [
@@ -150,7 +151,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
                   {QR_CODE_PATTERN.map((isFilled, i) => (
                     <div
                       key={i}
-                      className={`w-full h-full ${isFilled ? 'bg-foreground' : 'bg-muted/50'}`}
+                      className={cn('w-full h-full', isFilled ? 'bg-foreground' : 'bg-muted/50')}
                     />
                   ))}
                 </div>

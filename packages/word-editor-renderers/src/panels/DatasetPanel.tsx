@@ -104,7 +104,7 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
                           {dataset.name}
                         </h3>
                         <span
-                          className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getTypeColor(dataset.type)}`}
+                          className={cn('px-1.5 py-0.5 text-[10px] font-medium rounded', getTypeColor(dataset.type))}
                         >
                           {getTypeLabel(dataset.type)}
                         </span>
