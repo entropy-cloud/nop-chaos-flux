@@ -162,6 +162,7 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
   // -- Selection state --
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [cellValue, setCellValue] = useState('');
+  const [dragEnd, setDragEnd] = useState<{ row: number; col: number } | null>(null);
   const dragStateRef = useRef<DragState>({ isDragging: false, startRow: -1, startCol: -1, endRow: -1, endCol: -1 });
   const hasDraggedRef = useRef(false);
 
@@ -235,7 +236,7 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
       };
     }
     return null;
-  }, [selectedCell, sheetId]);
+  }, [selectedCell, dragEnd, sheetId]);
 
   const isInRange = useCallback((row: number, col: number): boolean => {
     const range = getSelectedRange();
@@ -314,6 +315,7 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     e.preventDefault();
     hasDraggedRef.current = false;
     dragStateRef.current = { isDragging: true, startRow: row, startCol: col, endRow: row, endCol: col };
+    setDragEnd(null);
     setSelectedCell({ row, col });
   }, []);
 
@@ -321,6 +323,7 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     if (dragStateRef.current.isDragging) {
       hasDraggedRef.current = true;
       dragStateRef.current = { ...dragStateRef.current, endRow: row, endCol: col };
+      setDragEnd({ row, col });
     }
   }, []);
 
