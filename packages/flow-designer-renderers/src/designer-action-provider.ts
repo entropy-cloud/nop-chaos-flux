@@ -26,6 +26,8 @@ export function createDesignerActionProvider(core: DesignerCore): ActionNamespac
         'undo',
         'redo',
         'toggleGrid',
+        'togglePalette',
+        'toggleInspector',
         'setViewport',
         'save',
         'restore',
@@ -140,6 +142,14 @@ export function createDesignerActionProvider(core: DesignerCore): ActionNamespac
         }
         case 'toggleGrid': {
           const result = adapter.execute({ type: 'toggleGrid' });
+          return toActionResult(result);
+        }
+        case 'togglePalette': {
+          const result = adapter.execute({ type: 'togglePalette' });
+          return toActionResult(result);
+        }
+        case 'toggleInspector': {
+          const result = adapter.execute({ type: 'toggleInspector' });
           return toActionResult(result);
         }
         case 'setViewport': {

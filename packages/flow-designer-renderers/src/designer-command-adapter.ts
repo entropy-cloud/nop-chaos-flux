@@ -92,6 +92,12 @@ export type DesignerCommand =
       type: 'toggleGrid';
     }
   | {
+      type: 'togglePalette';
+    }
+  | {
+      type: 'toggleInspector';
+    }
+  | {
       type: 'undo';
     }
   | {
@@ -342,6 +348,12 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
       }
       case 'toggleGrid':
         core.toggleGrid();
+        return createSuccess(core);
+      case 'togglePalette':
+        core.togglePalette();
+        return createSuccess(core);
+      case 'toggleInspector':
+        core.toggleInspector();
         return createSuccess(core);
       case 'undo':
         if (!core.canUndo()) {

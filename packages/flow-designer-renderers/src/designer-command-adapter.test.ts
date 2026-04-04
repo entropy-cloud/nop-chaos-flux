@@ -116,4 +116,80 @@ describe('createDesignerCommandAdapter', () => {
 
     expect(unchanged).toMatchObject({ ok: true, reason: 'unchanged' });
   });
+
+  it('toggles palette collapsed state', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+
+    const result = adapter.execute({ type: 'togglePalette' });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(result.snapshot.paletteCollapsed).toBe(true);
+    expect(result.snapshot.inspectorCollapsed).toBe(false);
+  });
+
+  it('toggles palette back to expanded state', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+
+    adapter.execute({ type: 'togglePalette' });
+    const result = adapter.execute({ type: 'togglePalette' });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(result.snapshot.paletteCollapsed).toBe(false);
+    expect(result.snapshot.inspectorCollapsed).toBe(false);
+  });
+
+  it('toggles inspector collapsed state', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+
+    const result = adapter.execute({ type: 'toggleInspector' });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(result.snapshot.inspectorCollapsed).toBe(true);
+    expect(result.snapshot.paletteCollapsed).toBe(false);
+  });
+
+  it('toggles inspector back to expanded state', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+
+    adapter.execute({ type: 'toggleInspector' });
+    const result = adapter.execute({ type: 'toggleInspector' });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(result.snapshot.inspectorCollapsed).toBe(false);
+    expect(result.snapshot.paletteCollapsed).toBe(false);
+  });
+
+  it('palette toggle does not affect inspector state', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+
+    const paletteResult = adapter.execute({ type: 'togglePalette' });
+
+    expect(paletteResult).toMatchObject({ ok: true });
+    expect(paletteResult.snapshot.paletteCollapsed).toBe(true);
+    expect(paletteResult.snapshot.inspectorCollapsed).toBe(false);
+
+    const inspectorResult = adapter.execute({ type: 'toggleInspector' });
+
+    expect(inspectorResult).toMatchObject({ ok: true });
+    expect(inspectorResult.snapshot.paletteCollapsed).toBe(true);
+    expect(inspectorResult.snapshot.inspectorCollapsed).toBe(true);
+  });
+
+  it('toggle commands return fresh snapshot', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+
+    const firstResult = adapter.execute({ type: 'togglePalette' });
+    const secondResult = adapter.execute({ type: 'toggleInspector' });
+
+    expect(firstResult.snapshot.paletteCollapsed).toBe(true);
+    expect(firstResult.snapshot.inspectorCollapsed).toBe(false);
+    expect(secondResult.snapshot.paletteCollapsed).toBe(true);
+    expect(secondResult.snapshot.inspectorCollapsed).toBe(true);
+  });
 });
