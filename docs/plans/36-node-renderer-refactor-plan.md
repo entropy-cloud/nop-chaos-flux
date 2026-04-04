@@ -1,8 +1,27 @@
 # NodeRenderer 降压式重构计划
 
-> Plan Status: proposed
+> Plan Status: completed
 > Created: 2026-04-04
 > Source: `packages/flux-react/src/node-renderer.tsx` (346 行)
+
+> **Implementation Status: ✅ COMPLETED (2026-04-04)**
+
+Implemented scope:
+
+- completed `node-renderer-utils.ts`
+- completed `useNodeImports.ts`
+- completed `useFormComponentHandleRegistration.ts`
+- completed `useNodeDebugData.ts`
+- completed optional `node-frame-wrapper.tsx`
+- kept `useNodeEvents`, `useNodeRegions`, `useRenderMonitor`, and provider composition inline by design
+
+Verification summary:
+
+- `pnpm --filter @nop-chaos/flux-react typecheck` ✅
+- `pnpm --filter @nop-chaos/flux-react test` ✅
+- `pnpm typecheck` ✅
+- `pnpm build` ✅
+- `pnpm lint` blocked by a pre-existing unrelated workspace lint error in `packages/flux-runtime/src/form-runtime.ts:515` (`prefer-const`)
 
 ---
 
