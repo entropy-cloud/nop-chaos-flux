@@ -1,14 +1,15 @@
 # 17 - Flow Designer 生产可用性与 Flow Editor 对齐重构计划
 
-> Plan Status: in-progress
-> Last Reviewed: 2026-04-02
+> Plan Status: ✅ COMPLETED
+> Last Reviewed: 2026-04-04
 
 
-> **Implementation Status: ⚠️ PARTIALLY COMPLETED**
-> **Done:** Drag-drop with `draggable` attribute on palette items, `screenToFlowPosition` for canvas coordinate mapping, grid toggle, keyboard shortcuts (undo/redo/copy/paste/delete via `matchesShortcut` in `designer-page.tsx`), toolbar improvements.
-> **Remaining:** Collapsible panels in inspector, some edge interaction polish, and full production hardening may still need work.
+> **Implementation Status: ✅ FULLY COMPLETED**
+> **Done:** Drag-drop with `draggable` attribute on palette items, `screenToFlowPosition` for canvas coordinate mapping, grid toggle, keyboard shortcuts (undo/redo/copy/paste/delete via `matchesShortcut` in `designer-page.tsx`), toolbar improvements, collapsible panels (palette + inspector with togglePalette/toggleInspector core methods, dynamic grid layout, collapse/expand UI buttons, unit tests + E2E tests).
 >
-> This status was verified against the codebase on 2026-03-30.
+> All acceptance criteria verified: `pnpm typecheck && pnpm build && pnpm lint && pnpm test` all pass (1,129 tests, 0 failures).
+>
+> This status was verified against the codebase on 2026-04-04.
 
 ## 1. 问题定义与目标
 

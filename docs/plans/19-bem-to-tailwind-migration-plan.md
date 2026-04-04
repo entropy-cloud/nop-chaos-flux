@@ -1,16 +1,16 @@
 # 19-BEM-to-Tailwind Migration Plan
 
-> Plan Status: in-progress
-> Last Reviewed: 2026-04-02
+> Plan Status: in-progress (Flow Designer part ✅ COMPLETED)
+> Last Reviewed: 2026-04-04
 
 
 > **Design doc:** `docs/architecture/renderer-markers-and-selectors.md`
 >
 > **Implementation Status: ⚠️ PARTIALLY COMPLETED (Phases 1–7)**
-> **Done:** BEM CSS rules removed from `styles.css` (no `.app-shell`, `.hero-card`, `.nav-card` found); `field-frame.tsx` uses `data-field-*` attributes instead of BEM; `dialog-host.tsx` uses shadcn Dialog components; marker class system (`nop-*`) established; Tailwind + `classAliases` in production use.
-> **Remaining:** `table-renderer.tsx` does NOT yet use shadcn Table components; playground page BEM class cleanup may be incomplete; test assertion migration (Phase 11) and final CSS audit (Phase 12) not verified.
+> **Done:** BEM CSS rules removed from `styles.css` (no `.app-shell`, `.hero-card`, `.nav-card` found); `field-frame.tsx` uses `data-field-*` attributes instead of BEM; `dialog-host.tsx` uses shadcn Dialog components; marker class system (`nop-*`) established; Tailwind + `classAliases` in production use; Phase 6 (Flow Designer CSS deletion) ✅ COMPLETED — `styles.css` deleted, no CSS imports, no BEM classes remaining. Verified with E2E tests (7/7 pass).
+> **Remaining (non-Flow-Designer):** `table-renderer.tsx` does NOT yet use shadcn Table components; playground page BEM class cleanup may be incomplete; test assertion migration (Phase 9) and final CSS audit (Phase 12) not verified.
 >
-> This status was verified against the codebase on 2026-03-30.
+> This status was verified against the codebase on 2026-04-04.
 
 > Design doc: `docs/architecture/renderer-markers-and-selectors.md`
 
