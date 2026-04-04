@@ -129,6 +129,10 @@
   background-color: #e8f0fe;
 }
 
+.ss-cell:has(.ss-fill-handle) {
+  overflow: visible;
+}
+
 .ss-cell[data-cell-editing] {
   outline: 2px solid #1a73e8;
   outline-offset: -1px;
