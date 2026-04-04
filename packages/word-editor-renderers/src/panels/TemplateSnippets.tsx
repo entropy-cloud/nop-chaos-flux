@@ -1,6 +1,6 @@
 import { Code2, GitBranch, Repeat, GitMerge, Settings, FileOutput } from 'lucide-react'
 import { BUILTIN_TEMPLATE_TAGS } from '@nop-chaos/word-editor-core'
-import { ScrollArea } from '@nop-chaos/ui'
+import { Button, ScrollArea } from '@nop-chaos/ui'
 
 interface TemplateSnippetsProps {
   onInsertTag: (tagName: string) => void
@@ -41,11 +41,12 @@ export function TemplateSnippets({ onInsertTag }: TemplateSnippetsProps) {
               {filteredTags.map((tag) => {
                 const Icon = TAG_ICONS[tag.name] || Code2
                 return (
-                  <button
+                  <Button
                     key={`${tag.name}-${tag.kind}`}
                     type="button"
+                    variant="ghost"
                     onClick={() => onInsertTag(tag.name)}
-                    className="w-full text-left rounded-lg border border-[var(--nop-border)] p-3 hover:border-[var(--nop-accent)] hover:bg-[var(--nop-surface-soft)] transition-all duration-160 outline-none focus:ring-2 focus:ring-[var(--nop-accent)] focus:ring-opacity-30"
+                    className="w-full text-left justify-start h-auto p-3"
                   >
                     <div className="flex items-start gap-3">
                       <Icon className="w-5 h-5 text-[var(--nop-accent)] flex-shrink-0 mt-0.5" />
@@ -63,7 +64,7 @@ export function TemplateSnippets({ onInsertTag }: TemplateSnippetsProps) {
                         </p>
                       </div>
                     </div>
-                  </button>
+                  </Button>
                 )
               })}
             </div>

@@ -1,7 +1,7 @@
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
 import { Columns, Copy, Info } from 'lucide-react'
 import type { DatasetStoreApi } from '@nop-chaos/word-editor-core'
-import { ScrollArea } from '@nop-chaos/ui'
+import { Button, ScrollArea } from '@nop-chaos/ui'
 
 interface FieldListProps {
   store: DatasetStoreApi
@@ -74,13 +74,14 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
           ) : (
             <div className="space-y-2">
               {selectedDataset.columns.map((column) => (
-                <button
+                <Button
                   key={column.name}
                   type="button"
+                  variant="ghost"
                   onClick={() => handleFieldClick(column)}
-                  className="w-full text-left group rounded-lg border border-[var(--nop-border)] p-3 hover:border-[var(--nop-accent)] hover:bg-[var(--nop-surface-soft)] transition-all duration-160 outline-none focus:ring-2 focus:ring-[var(--nop-accent)] focus:ring-opacity-30"
+                  className="w-full text-left justify-start h-auto p-3 group"
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-2 w-full">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-sm font-medium text-[var(--nop-text-strong)] truncate">
@@ -101,19 +102,21 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
                         </p>
                       )}
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-xs"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleFieldClick(column)
                       }}
-                      className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[var(--nop-surface-card)] transition-all outline-none focus:opacity-100"
+                      className="opacity-0 group-hover:opacity-100 transition-all"
                       title="Copy field reference"
                     >
                       <Copy className="w-3.5 h-3.5 text-[var(--nop-body-copy)]" />
-                    </button>
+                    </Button>
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
           )}
