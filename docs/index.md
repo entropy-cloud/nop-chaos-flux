@@ -17,7 +17,7 @@ Choose the smallest document that matches the task.
 | If you need to... | Read this first | Then read |
 | --- | --- | --- |
 | Understand the current architecture baseline | `docs/architecture/flux-core.md` | `docs/architecture/renderer-runtime.md` |
-| Design API requests, scope injection (includeScope), params, or DataSource polling | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` |
+| Design API requests, scope injection (includeScope), params, DataSource polling, unified formula/api source semantics, or non-rendering reaction/watch nodes | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` |
 | 了解基于 SchemaRenderer 的图设计器规划架构 | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md` |
 | 看清 Flow Designer 各层协作细节、命名空间动作流转、画布/Inspector 调用链 | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
 | 核对 Flow Designer 当前真实的 snapshot 契约、host scope 落地状态、哪些字段已接线 | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |
@@ -47,7 +47,7 @@ Choose the smallest document that matches the task.
 | Check AMIS JSON conventions (expression, action, variant/level, icon) | `docs/references/flux-json-conventions.md` | `docs/architecture/flow-designer/config-schema.md` |
 | Look up AMIS component TypeScript type definitions | `docs/amis-types/` | specific component `.d.ts` file |
 | Check complex component design process (Flow Designer, Report Designer) | `docs/references/complex-component-design-process.md` | `docs/architecture/flow-designer/design.md` |
-| Design the open extensibility model for designer-of-designers, profile/adapters, or host-scope/command unification | `docs/architecture/open-designer-extensibility.md` | `docs/architecture/complex-control-host-protocol.md` |
+| Design Flux as the final DSL runtime, decide loader-vs-runtime extensibility boundaries, or model complex controls/design tools as special schema types | `docs/architecture/flux-dsl-vm-extensibility.md` | `docs/articles/flux-design-introduction.md` |
 | Plan or review a refactoring, or check low-code-specific design guidelines | `docs/references/refactoring-guidelines.md` | `docs/plans/23-architecture-audit-fix-plan.md` |
 | Review current renderer and runtime contracts by name | `docs/references/renderer-interfaces.md` | `packages/flux-core/src/index.ts` |
 | Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
@@ -70,7 +70,7 @@ Architecture intent lives primarily in:
 - `docs/architecture/theme-compatibility.md`
 - `docs/architecture/security-design-requirements.md`
 - `docs/architecture/performance-design-requirements.md`
-- `docs/architecture/open-designer-extensibility.md`
+- `docs/architecture/flux-dsl-vm-extensibility.md`
 - `docs/architecture/flow-designer/design.md`
 - `docs/architecture/flow-designer/canvas-adapters.md`
 - `docs/architecture/report-designer/design.md`
