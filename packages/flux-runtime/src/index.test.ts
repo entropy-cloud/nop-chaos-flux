@@ -424,6 +424,41 @@ describe('createRendererRuntime', () => {
     expect(page.store.getState().data.message).toBe('World');
   });
 
+  it('updates multiple page scope values through setValues action', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const page = runtime.createPageRuntime({ message: 'Hello', status: 'idle' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'setValues',
+        values: {
+          message: 'World',
+          status: 'done'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      data: {
+        message: 'World',
+        status: 'done'
+      }
+    });
+    expect(page.store.getState().data).toMatchObject({ message: 'World', status: 'done' });
+  });
+
   it('dispatches component:<method> to explicit form handles by id and name', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
@@ -3808,6 +3843,135 @@ describe('createRendererRuntime', () => {
         role: 'admin'
       }
     });
+  });
+
+  it('updates multiple form values through setValues action with bounded commits', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ pageValue: 'root' });
+    const form = runtime.createFormRuntime({
+      id: 'profile-form',
+      initialValues: { username: 'Alice', role: 'viewer' },
+      parentScope: page.scope,
+      page
+    });
+
+    let commits = 0;
+    const unsubscribe = form.store.subscribe(() => {
+      commits += 1;
+    });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'setValues',
+        formId: 'profile-form',
+        values: {
+          username: 'Bob',
+          role: 'admin'
+        }
+      },
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form
+      }
+    );
+
+    unsubscribe();
+
+    expect(result).toMatchObject({
+      ok: true,
+      data: {
+        username: 'Bob',
+        role: 'admin'
+      }
+    });
+    expect(form.scope.get('username')).toBe('Bob');
+    expect(form.scope.get('role')).toBe('admin');
+    expect(commits).toBeLessThanOrEqual(1);
+  });
+
+  it('can replace chained setValue actions with one setValues action for equivalent form updates', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'profile-form',
+      initialValues: { username: 'Alice', role: 'viewer' },
+      parentScope: page.scope,
+      page
+    });
+
+    let chainedCommits = 0;
+    const unsubscribeChained = form.store.subscribe(() => {
+      chainedCommits += 1;
+    });
+
+    await runtime.dispatch(
+      [
+        {
+          action: 'setValue',
+          formId: 'profile-form',
+          componentPath: 'username',
+          value: 'Bob'
+        },
+        {
+          action: 'setValue',
+          formId: 'profile-form',
+          componentPath: 'role',
+          value: 'admin'
+        }
+      ],
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form
+      }
+    );
+
+    unsubscribeChained();
+
+    const chainedSnapshot = form.store.getState();
+
+    form.reset({ username: 'Alice', role: 'viewer' });
+
+    let batchedCommits = 0;
+    const unsubscribeBatched = form.store.subscribe(() => {
+      batchedCommits += 1;
+    });
+
+    await runtime.dispatch(
+      {
+        action: 'setValues',
+        formId: 'profile-form',
+        values: {
+          username: 'Bob',
+          role: 'admin'
+        }
+      },
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form
+      }
+    );
+
+    unsubscribeBatched();
+
+    const batchedSnapshot = form.store.getState();
+
+    expect(chainedSnapshot.values).toEqual(batchedSnapshot.values);
+    expect(chainedSnapshot.errors).toEqual(batchedSnapshot.errors);
+    expect(batchedCommits).toBeLessThan(chainedCommits);
   });
 
   it('uses the latest env fetcher without recreating runtime state', async () => {

@@ -74,6 +74,7 @@ const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
   'dialog',
   'dataPath',
   'value',
+  'values',
   'debounce',
   'continueOnError',
   'then',
@@ -154,6 +155,25 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         }
 
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: evaluated });
+      }
+      case 'setValues': {
+        const evaluatedValues = action.values
+          ? input.evaluate<Record<string, unknown>>(action.values, ctx.scope)
+          : {};
+
+        if (Object.keys(evaluatedValues).length === 0) {
+          return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: evaluatedValues });
+        }
+
+        if (ctx.form && action.formId && ctx.form.id === action.formId) {
+          ctx.form.setValues(evaluatedValues);
+        } else {
+          for (const [targetPath, evaluated] of Object.entries(evaluatedValues)) {
+            ctx.scope.update(targetPath, evaluated);
+          }
+        }
+
+        return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: evaluatedValues });
       }
       case 'ajax': {
         if (!action.api) {

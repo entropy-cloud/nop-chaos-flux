@@ -12,10 +12,10 @@ export function createFormComponentHandle(form: FormRuntime): ComponentHandle {
     capabilities: {
       store: form.store,
       hasMethod(method) {
-        return ['submit', 'validate', 'reset', 'setValue'].includes(method);
+        return ['submit', 'validate', 'reset', 'setValue', 'setValues'].includes(method);
       },
       listMethods() {
-        return ['submit', 'validate', 'reset', 'setValue'];
+        return ['submit', 'validate', 'reset', 'setValue', 'setValues'];
       },
       async invoke(method, payload) {
         const input = toPayloadRecord(payload);
@@ -37,6 +37,9 @@ export function createFormComponentHandle(form: FormRuntime): ComponentHandle {
           case 'setValue':
             form.setValue(String(input.name ?? ''), input.value);
             return { ok: true, data: input.value };
+          case 'setValues':
+            form.setValues((input.values as Record<string, unknown> | undefined) ?? {});
+            return { ok: true, data: input.values ?? {} };
           default:
             return {
               ok: false,

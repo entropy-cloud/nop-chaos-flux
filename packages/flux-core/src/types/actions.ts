@@ -16,6 +16,7 @@ export interface ActionSchema extends SchemaObject {
   dialog?: Record<string, any>;
   dataPath?: string;
   value?: SchemaValue;
+  values?: Record<string, SchemaValue>;
   args?: Record<string, SchemaValue>;
   debounce?: number;
   continueOnError?: boolean;

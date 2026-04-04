@@ -1,4 +1,4 @@
-import type { RuntimeFieldRegistration } from '@nop-chaos/flux-core';
+import { setIn, type RuntimeFieldRegistration } from '@nop-chaos/flux-core';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
 
 export function findRuntimeRegistration(
@@ -44,8 +44,20 @@ export function syncRegisteredFieldValue(sharedState: ManagedFormRuntimeSharedSt
   }
 
   const baseline = sharedState.initialFieldState.initialValues[path];
-  sharedState.store.setDirty(path, !Object.is(baseline, nextValue));
-  sharedState.store.setValue(path, nextValue);
+  const state = sharedState.store.getState();
+  const isDirty = !Object.is(baseline, nextValue);
+  const nextDirty = isDirty
+    ? { ...state.dirty, [path]: true }
+    : (() => {
+        const next = { ...state.dirty };
+        delete next[path];
+        return next;
+      })();
+
+  sharedState.store.batchUpdate({
+    dirty: nextDirty,
+    values: setIn(state.values, path, nextValue)
+  });
+
   return nextValue;
 }
-

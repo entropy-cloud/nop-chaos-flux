@@ -19,6 +19,8 @@ export interface CreateManagedFormRuntimeInput {
   parentScope: ScopeRef;
   page?: PageRuntime;
   validation?: CompiledFormValidationModel;
+  validatingDelay?: number;
+  submittingDelay?: number;
   executeValidationRule: (
     compiledRule: CompiledValidationRule,
     rule: Extract<ValidationRule, { kind: 'async' }>,

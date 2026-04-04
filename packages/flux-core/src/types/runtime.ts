@@ -1,6 +1,6 @@
 import type { ApiObject } from './schema';
 import type { ScopeRef } from './scope';
-import type { ValidationRule, ValidationError, ValidationResult, FormValidationResult, CompiledFormValidationModel, RuntimeFieldRegistration } from './validation';
+import type { ValidationRule, ValidationError, ValidationResult, FormValidationResult, CompiledFormValidationModel, CompiledFormValidationField, RuntimeFieldRegistration } from './validation';
 import type { ActionScope, ActionResult } from './actions';
 import type { ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
 import type { ReactNode } from 'react';
@@ -47,6 +47,7 @@ export interface FormStoreApi {
   setVisited(path: string, visited: boolean): void;
   setVisitedState(visited: Record<string, boolean>): void;
   setSubmitting(submitting: boolean): void;
+  batchUpdate(updates: Partial<FormStoreState>): void;
 }
 
 export interface DialogState {
@@ -102,6 +103,7 @@ export interface FormRuntime {
   submit(api?: ApiObject, options?: { interactionId?: string }): Promise<ActionResult>;
   reset(values?: object): void;
   setValue(name: string, value: unknown): void;
+  setValues(values: Record<string, unknown>): void;
   appendValue(path: string, value: unknown): void;
   prependValue(path: string, value: unknown): void;
   insertValue(path: string, index: number, value: unknown): void;
@@ -109,6 +111,10 @@ export interface FormRuntime {
   moveValue(path: string, from: number, to: number): void;
   swapValue(path: string, a: number, b: number): void;
   replaceValue(path: string, value: unknown): void;
+  getField(path: string): CompiledFormValidationField | undefined;
+  getDependents(path: string): string[];
+  findByPrefix(prefix: string): string[];
+  getChildren(path: string): string[];
 }
 
 export interface PageRuntime {

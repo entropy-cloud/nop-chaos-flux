@@ -2,6 +2,49 @@ import { createStore } from 'zustand/vanilla';
 import type { FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, ValidationError } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
 
+function validationErrorsEqual(
+  left: ValidationError[] | undefined,
+  right: ValidationError[] | undefined
+) {
+  if (left === right) {
+    return true;
+  }
+
+  if (!left || !right || left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((error, index) => {
+    const candidate = right[index];
+
+    return candidate?.path === error.path && candidate?.rule === error.rule && candidate?.message === error.message;
+  });
+}
+
+function errorStateEqual(
+  left: Record<string, ValidationError[]>,
+  right: Record<string, ValidationError[]>
+) {
+  if (left === right) {
+    return true;
+  }
+
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  for (const key of leftKeys) {
+    if (!validationErrorsEqual(left[key], right[key])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function createFormStore(initialValues: Record<string, any>): FormStoreApi {
   const store = createStore<FormStoreState>(() => ({
     values: initialValues,
@@ -49,7 +92,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       return;
     }
 
-    if (existing === errors) {
+    if (validationErrorsEqual(existing, errors)) {
       return;
     }
 
@@ -71,6 +114,10 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       store.setState({ values: setIn(current, path, value) });
     },
     setErrors(errors) {
+      if (errorStateEqual(store.getState().errors, errors)) {
+        return;
+      }
+
       store.setState({ errors });
     },
     setPathErrors(path, errors) {
@@ -102,6 +149,9 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     },
     setSubmitting(submitting) {
       store.setState({ submitting });
+    },
+    batchUpdate(updates) {
+      store.setState(updates);
     }
   };
 }
@@ -151,4 +201,3 @@ export function createPageStore(initialData: Record<string, any>): PageStoreApi 
     }
   };
 }
-

@@ -5,9 +5,11 @@ import {
   getCompiledValidationDependents,
   getCompiledValidationField,
   getCompiledValidationTraversalOrder,
+  getCompiledValidationNode,
   insertArrayValue,
   moveArrayValue,
   removeArrayValue,
+  setIn,
   swapArrayValue
 } from '@nop-chaos/flux-core';
 import { createFormStore } from './form-store';
@@ -43,6 +45,48 @@ function validationErrorsEqual(
   });
 }
 
+function buildTouchedStateWithPath(input: Record<string, boolean>, path: string): Record<string, boolean> {
+  if (input[path]) {
+    return input;
+  }
+
+  return {
+    ...input,
+    [path]: true
+  };
+}
+
+function buildBooleanPathState(input: Record<string, boolean>, path: string, nextValue: boolean): Record<string, boolean> {
+  if (nextValue) {
+    if (input[path]) {
+      return input;
+    }
+
+    return {
+      ...input,
+      [path]: true
+    };
+  }
+
+  if (!input[path]) {
+    return input;
+  }
+
+  const next = { ...input };
+  delete next[path];
+  return next;
+}
+
+function buildErrorPathState(input: Record<string, ValidationError[]>, path: string): Record<string, ValidationError[]> {
+  if (!input[path]) {
+    return input;
+  }
+
+  const next = { ...input };
+  delete next[path];
+  return next;
+}
+
 export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInput): FormRuntime {
   const store = createFormStore(inputValue.initialValues ?? {});
   const formId = inputValue.id ?? `${inputValue.parentScope.id}-form`;
@@ -56,6 +100,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   const runtimeFieldRegistrations = new Map<string, RuntimeFieldRegistration>();
   const initialFieldState = buildInitialFieldState(inputValue.initialValues ?? {}, inputValue.validation);
   const defaultValidationTriggers = inputValue.validation?.behavior.triggers ?? ['blur'];
+  const submittingDelay = inputValue.submittingDelay ?? 0;
+
+  let isSubmittingInternal = false;
 
   const scope = createScopeRef({
     id: formId,
@@ -79,6 +126,34 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     runtimeFieldRegistrations
   };
 
+  function applyFieldValuePatch(
+    state: ReturnType<typeof store.getState>,
+    name: string,
+    value: unknown,
+    forceDirty: boolean
+  ) {
+    const runtimeTarget = findRuntimeRegistration(sharedState.runtimeFieldRegistrations, name);
+    const nextValues = setIn(state.values, name, value);
+    const nextValidating = buildBooleanPathState(state.validating, name, false);
+    const nextErrors = buildErrorPathState(state.errors, name);
+
+    if (runtimeTarget.childPath && runtimeTarget.registration) {
+      return {
+        nextValues,
+        nextValidating,
+        nextErrors,
+        nextDirty: buildBooleanPathState(state.dirty, name, true)
+      };
+    }
+
+    return {
+      nextValues,
+      nextValidating,
+      nextErrors,
+      nextDirty: buildBooleanPathState(state.dirty, name, forceDirty)
+    };
+  }
+
   async function revalidateDependents(path: string) {
     const dependentPaths = getCompiledValidationDependents(inputValue.validation, path);
 
@@ -89,16 +164,25 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       sharedState.validationRuns.set(dependentPath, (sharedState.validationRuns.get(dependentPath) ?? 0) + 1);
       cancelValidationDebounce(sharedState, dependentPath);
-      store.setValidating(dependentPath, false);
 
       const currentDependentValue = scope.get(dependentPath);
       const dependentBaseline = initialFieldState.initialValues[dependentPath];
-      store.setDirty(dependentPath, !Object.is(dependentBaseline, currentDependentValue));
+      const isDirty = !Object.is(dependentBaseline, currentDependentValue);
+
+      const state = store.getState();
+      const nextValidating = { ...state.validating };
+      delete nextValidating[dependentPath];
+
+      const nextDirty = isDirty
+        ? { ...state.dirty, [dependentPath]: true }
+        : (() => { const d = { ...state.dirty }; delete d[dependentPath]; return d; })();
+
+      store.batchUpdate({ validating: nextValidating, dirty: nextDirty });
 
       if (
         store.getState().touched[dependentPath] ||
         store.getState().visited[dependentPath] ||
-        store.getState().submitting
+        isSubmittingInternal
       ) {
         await thisForm.validateField(dependentPath);
       } else {
@@ -206,7 +290,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         ...fieldErrors
       };
 
-      store.setErrors(mergedErrors);
+      if (mergedErrors !== currentErrors) {
+        store.setErrors(mergedErrors);
+      }
 
       for (const [path, pathErrors] of Object.entries(mergedErrors)) {
         if (fieldErrors[path]) {
@@ -291,7 +377,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       store.setPathErrors(path);
     },
     async submit(api?: ApiObject, options?: { interactionId?: string }) {
-      if (store.getState().submitting) {
+      if (isSubmittingInternal) {
         return {
           ok: false,
           cancelled: true,
@@ -299,9 +385,24 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         };
       }
 
-      store.setSubmitting(true);
+      isSubmittingInternal = true;
+
+      let submittingTimer: ReturnType<typeof setTimeout> | undefined;
+
+      if (submittingDelay > 0) {
+        submittingTimer = setTimeout(() => {
+          submittingTimer = undefined;
+
+          if (isSubmittingInternal) {
+            store.setSubmitting(true);
+          }
+        }, submittingDelay);
+      } else {
+        store.setSubmitting(true);
+      }
 
       const submitTargets = getCompiledValidationTraversalOrder(inputValue.validation);
+      let nextTouched = store.getState().touched;
 
       for (const path of submitTargets) {
         const behavior = getCompiledValidationField(inputValue.validation, path)?.behavior;
@@ -309,24 +410,36 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         const showErrorOn = behavior?.showErrorOn ?? inputValue.validation?.behavior.showErrorOn ?? ['touched', 'submit'];
 
         if (triggers.includes('submit') || showErrorOn.includes('submit')) {
-          store.setTouched(path, true);
+          nextTouched = buildTouchedStateWithPath(nextTouched, path);
         }
       }
 
       for (const path of runtimeFieldRegistrations.keys()) {
-        store.setTouched(path, true);
+        nextTouched = buildTouchedStateWithPath(nextTouched, path);
       }
 
       for (const registration of runtimeFieldRegistrations.values()) {
         for (const childPath of registration.childPaths ?? []) {
-          store.setTouched(childPath, true);
+          nextTouched = buildTouchedStateWithPath(nextTouched, childPath);
         }
+      }
+
+      if (nextTouched !== store.getState().touched) {
+        store.batchUpdate({ touched: nextTouched });
       }
 
       const validation = await thisForm.validateForm();
 
       if (!validation.ok) {
+        isSubmittingInternal = false;
+
+        if (submittingTimer !== undefined) {
+          clearTimeout(submittingTimer);
+          submittingTimer = undefined;
+        }
+
         store.setSubmitting(false);
+
         return {
           ok: false,
           error: validation.errors,
@@ -335,13 +448,28 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       }
 
       if (!api) {
+        isSubmittingInternal = false;
+
+        if (submittingTimer !== undefined) {
+          clearTimeout(submittingTimer);
+          submittingTimer = undefined;
+        }
+
         store.setSubmitting(false);
+
         return { ok: true, data: store.getState().values };
       }
 
       try {
         return await inputValue.submitApi(api, scope, options);
       } finally {
+        isSubmittingInternal = false;
+
+        if (submittingTimer !== undefined) {
+          clearTimeout(submittingTimer);
+          submittingTimer = undefined;
+        }
+
         store.setSubmitting(false);
       }
     },
@@ -351,43 +479,82 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       initialFieldState.initialValues = nextInitialFieldState.initialValues;
       cancelAllValidationDebounces(sharedState);
-      store.setValues(nextValues);
-      store.setErrors({});
-      for (const path of Object.keys(store.getState().validating)) {
-        store.setValidating(path, false);
-      }
-      for (const path of Object.keys(store.getState().touched)) {
-        store.setTouched(path, false);
-      }
-      for (const path of Object.keys(store.getState().dirty)) {
-        store.setDirty(path, false);
-      }
-      for (const path of Object.keys(store.getState().visited)) {
-        store.setVisited(path, false);
-      }
+      store.batchUpdate({
+        values: nextValues,
+        errors: {},
+        validating: {},
+        touched: {},
+        dirty: {},
+        visited: {}
+      });
     },
     setValue(name, value) {
-      const runtimeTarget = findRuntimeRegistration(sharedState.runtimeFieldRegistrations, name);
+      validationRuns.set(name, (validationRuns.get(name) ?? 0) + 1);
+      cancelValidationDebounce(sharedState, name);
 
-      if (runtimeTarget.childPath && runtimeTarget.registration) {
-        validationRuns.set(name, (validationRuns.get(name) ?? 0) + 1);
-        cancelValidationDebounce(sharedState, name);
-        store.setValidating(name, false);
-        store.setDirty(name, true);
-        store.setValue(name, value);
-        thisForm.clearErrors(name);
-        void revalidateDependents(name);
+      const state = store.getState();
+      const baseline = initialFieldState.initialValues[name];
+      const patch = applyFieldValuePatch(state, name, value, !Object.is(baseline, value));
+
+      store.batchUpdate({
+        validating: patch.nextValidating,
+        dirty: patch.nextDirty,
+        values: patch.nextValues,
+        errors: patch.nextErrors
+      });
+
+      void revalidateDependents(name);
+    },
+    setValues(values) {
+      const entries = Object.entries(values);
+
+      if (entries.length === 0) {
         return;
       }
 
-      validationRuns.set(name, (validationRuns.get(name) ?? 0) + 1);
-      cancelValidationDebounce(sharedState, name);
-      store.setValidating(name, false);
-      const baseline = initialFieldState.initialValues[name];
-      store.setDirty(name, !Object.is(baseline, value));
-      store.setValue(name, value);
-      thisForm.clearErrors(name);
-      void revalidateDependents(name);
+      let state = store.getState();
+      let nextValues = state.values;
+      let nextDirty = state.dirty;
+      let nextErrors = state.errors;
+      let nextValidating = state.validating;
+      const changedPaths: string[] = [];
+
+      for (const [name, value] of entries) {
+        validationRuns.set(name, (validationRuns.get(name) ?? 0) + 1);
+        cancelValidationDebounce(sharedState, name);
+
+        const baseline = initialFieldState.initialValues[name];
+        const patch = applyFieldValuePatch(
+          {
+            ...state,
+            values: nextValues,
+            dirty: nextDirty,
+            errors: nextErrors,
+            validating: nextValidating
+          },
+          name,
+          value,
+          !Object.is(baseline, value)
+        );
+
+        nextValues = patch.nextValues;
+        nextDirty = patch.nextDirty;
+        nextErrors = patch.nextErrors;
+        nextValidating = patch.nextValidating;
+
+        changedPaths.push(name);
+      }
+
+      store.batchUpdate({
+        values: nextValues,
+        dirty: nextDirty,
+        errors: nextErrors,
+        validating: nextValidating
+      });
+
+      for (const changedPath of changedPaths) {
+        void revalidateDependents(changedPath);
+      }
     },
     appendValue(path, value) {
       executeArrayMutation({
@@ -397,7 +564,6 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         arrayOperation: (current) => insertArrayValue(current, Number.MAX_SAFE_INTEGER, value),
         indexTransform: (index) => index,
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
       });
     },
@@ -409,7 +575,6 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         arrayOperation: (current) => insertArrayValue(current, 0, value),
         indexTransform: (index) => index + 1,
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
       });
     },
@@ -424,7 +589,6 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         arrayOperation: () => insertArrayValue(safeArray, insertIndex, value),
         indexTransform: (candidate) => (candidate >= insertIndex ? candidate + 1 : candidate),
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
       });
     },
@@ -449,7 +613,6 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           return candidate > removeIndex ? candidate - 1 : candidate;
         },
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
       });
     },
@@ -488,7 +651,6 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           return candidate;
         },
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
       });
     },
@@ -523,7 +685,6 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           return candidate;
         },
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
       });
     },
@@ -536,9 +697,22 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         arrayOperation: () => nextValue,
         indexTransform: (candidate) => (candidate < nextValue.length ? candidate : undefined),
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        clearErrors: (targetPath) => thisForm.clearErrors(targetPath),
         revalidateDependents
       });
+    },
+    getField(path) {
+      return getCompiledValidationField(inputValue.validation, path);
+    },
+    getDependents(path) {
+      return getCompiledValidationDependents(inputValue.validation, path);
+    },
+    findByPrefix(prefix) {
+      const order = getCompiledValidationTraversalOrder(inputValue.validation);
+      return order.filter((p) => p === prefix || p.startsWith(`${prefix}.`));
+    },
+    getChildren(path) {
+      const node = getCompiledValidationNode(inputValue.validation, path);
+      return node?.children ?? [];
     }
   };
 
