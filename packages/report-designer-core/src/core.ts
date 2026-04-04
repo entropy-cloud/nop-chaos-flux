@@ -91,6 +91,8 @@ interface ReportDesignerInternalState {
     mode?: string;
     lastResult?: unknown;
   };
+  undoStack: ReportTemplateDocument[];
+  redoStack: ReportTemplateDocument[];
 }
 
 function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntimeSnapshot {
@@ -106,6 +108,8 @@ function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntim
     fieldSources: state.fieldSources,
     fieldDrag: state.fieldDrag,
     preview: state.preview,
+    canUndo: state.undoStack.length > 0,
+    canRedo: state.redoStack.length > 0,
   };
 }
 
@@ -148,6 +152,8 @@ export function createReportDesignerCore(
     fieldSources: [],
     fieldDrag: { active: false },
     preview: { running: false },
+    undoStack: [],
+    redoStack: [],
   }));
   let cachedState = store.getState();
   let cachedSnapshot = buildSnapshot(cachedState);
@@ -162,7 +168,7 @@ export function createReportDesignerCore(
       profile,
       selectedFieldSourceIds,
       staticFieldSourceTemplates,
-      getSnapshot: () => store.getState(),
+      getSnapshot: () => buildSnapshot(store.getState()),
     });
 
     const panels = await resolveInspectorPanelsForTarget({
@@ -172,7 +178,7 @@ export function createReportDesignerCore(
       target: snapshot.selectionTarget,
       profile,
       providersByKind: inspectorProvidersByKind,
-      designer: store.getState(),
+      designer: buildSnapshot(store.getState()),
     });
 
     const providerIds = panels.map((panel) => panel.id);
@@ -215,6 +221,13 @@ export function createReportDesignerCore(
     await refreshDerivedState();
   }
 
+  function pushUndoEntry(current: ReportDesignerInternalState): Partial<ReportDesignerInternalState> {
+    const maxDepth = config.maxUndoDepth ?? 50;
+    const undoStack = [...current.undoStack, cloneDocument(current.document)];
+    if (undoStack.length > maxDepth) undoStack.shift();
+    return { undoStack, redoStack: [] };
+  }
+
   async function dispatch(command: ReportDesignerCommand): Promise<ReportDesignerCommandResult> {
     try {
       switch (command.type) {
@@ -226,6 +239,7 @@ export function createReportDesignerCore(
             );
 
             if (!adapter) {
+              store.setState((s) => ({ ...s, ...pushUndoEntry(s) }));
               applyFieldDrop(current.document, command.field, command.target);
               store.setState({ fieldDrag: { active: false } });
               return { ok: true, changed: true };
@@ -234,7 +248,7 @@ export function createReportDesignerCore(
             const adapterContext = createAdapterContext({
               config,
               document: current.document,
-              designer: current,
+              designer: buildSnapshot(current),
               profile,
             });
             const currentMeta = getTargetMeta(current.document.semantic, command.target);
@@ -245,6 +259,7 @@ export function createReportDesignerCore(
               context: adapterContext,
             });
             const nextMeta = mergeMetadata(currentMeta, patch);
+            store.setState((s) => ({ ...s, ...pushUndoEntry(s) }));
             writeMetadata(current.document, command.target, nextMeta);
 
             store.setState({
@@ -267,6 +282,7 @@ export function createReportDesignerCore(
             const current = store.getState();
             const currentMeta = getTargetMeta(current.document.semantic, command.target);
             const nextMeta = mergeMetadata(currentMeta, command.patch);
+            store.setState((s) => ({ ...s, ...pushUndoEntry(s) }));
             const changed = writeMetadata(current.document, command.target, nextMeta);
 
             return { ok: true, changed };
@@ -276,6 +292,7 @@ export function createReportDesignerCore(
         case 'report-designer:replaceMeta': {
           return withDerivedRefresh(async () => {
             const current = store.getState();
+            store.setState((s) => ({ ...s, ...pushUndoEntry(s) }));
             const changed = writeMetadata(current.document, command.target, command.nextMeta);
 
             return { ok: true, changed };
@@ -324,7 +341,7 @@ export function createReportDesignerCore(
               adapter: previewResolution.adapter,
               config,
               document: store.getState().document,
-              designer: store.getState(),
+              designer: buildSnapshot(store.getState()),
               profile,
               mode: command.mode,
               commandArgs: command.args,
@@ -355,7 +372,7 @@ export function createReportDesignerCore(
             payload: command.payload,
             config,
             document: store.getState().document,
-            designer: store.getState(),
+            designer: buildSnapshot(store.getState()),
             profile,
           });
           store.setState((current) => ({
@@ -376,9 +393,58 @@ export function createReportDesignerCore(
             document: store.getState().document,
             format: command.format,
             config,
-            designer: store.getState(),
+            designer: buildSnapshot(store.getState()),
             profile,
           });
+          return { ok: true, changed: false, data: exported };
+        }
+
+        case 'report-designer:stopPreview': {
+          store.setState((current) => ({
+            ...current,
+            preview: { ...current.preview, running: false },
+          }));
+          return { ok: true, changed: true };
+        }
+
+        case 'report-designer:undo': {
+          const current = store.getState();
+          if (current.undoStack.length === 0) {
+            return { ok: false, changed: false, error: 'Nothing to undo' };
+          }
+          const undoStack = [...current.undoStack];
+          const prevDocument = undoStack.pop()!;
+          const redoStack = [...current.redoStack, cloneDocument(current.document)];
+          store.setState((s) => ({
+            ...s,
+            document: prevDocument,
+            undoStack,
+            redoStack,
+          }));
+          await refreshDerivedState();
+          return { ok: true, changed: true };
+        }
+
+        case 'report-designer:redo': {
+          const current = store.getState();
+          if (current.redoStack.length === 0) {
+            return { ok: false, changed: false, error: 'Nothing to redo' };
+          }
+          const redoStack = [...current.redoStack];
+          const nextDocument = redoStack.pop()!;
+          const undoStack = [...current.undoStack, cloneDocument(current.document)];
+          store.setState((s) => ({
+            ...s,
+            document: nextDocument,
+            undoStack,
+            redoStack,
+          }));
+          await refreshDerivedState();
+          return { ok: true, changed: true };
+        }
+
+        case 'report-designer:save': {
+          const exported = cloneDocument(store.getState().document);
           return { ok: true, changed: false, data: exported };
         }
 
@@ -398,7 +464,7 @@ export function createReportDesignerCore(
       profile,
       selectedFieldSourceIds,
       staticFieldSourceTemplates,
-      getSnapshot: () => store.getState(),
+      getSnapshot: () => buildSnapshot(store.getState()),
     });
 
     store.setState((current) => ({ ...current, fieldSources }));

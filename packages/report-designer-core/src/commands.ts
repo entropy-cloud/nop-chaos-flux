@@ -11,6 +11,10 @@ export type ReportDesignerCommand =
   | OpenInspectorCommand
   | CloseInspectorCommand
   | PreviewReportCommand
+  | StopPreviewCommand
+  | UndoCommand
+  | RedoCommand
+  | SaveCommand
   | ImportTemplateCommand
   | ExportTemplateCommand;
 
@@ -50,6 +54,22 @@ export interface PreviewReportCommand extends ReportDesignerCommandBase {
   type: 'report-designer:preview';
   mode?: 'inline' | 'dialog' | 'replace-page' | 'download';
   args?: Record<string, unknown>;
+}
+
+export interface StopPreviewCommand extends ReportDesignerCommandBase {
+  type: 'report-designer:stopPreview';
+}
+
+export interface UndoCommand extends ReportDesignerCommandBase {
+  type: 'report-designer:undo';
+}
+
+export interface RedoCommand extends ReportDesignerCommandBase {
+  type: 'report-designer:redo';
+}
+
+export interface SaveCommand extends ReportDesignerCommandBase {
+  type: 'report-designer:save';
 }
 
 export interface ImportTemplateCommand extends ReportDesignerCommandBase {

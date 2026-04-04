@@ -100,6 +100,8 @@ export interface ReportDesignerRuntimeSnapshot {
     mode?: string;
     lastResult?: unknown;
   };
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export interface ReportDesignerConfig {
