@@ -357,4 +357,159 @@ describe('createDesignerCore', () => {
     expect(snapshot.doc.nodes.find((node) => node.id === 'start-1')?.position).toEqual({ x: 10, y: 20 });
     expect(snapshot.doc.nodes.find((node) => node.id === 'task-1')?.position).toEqual({ x: 135, y: 80 });
   });
+
+  it('toggles palette collapsed state', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    expect(core.getSnapshot().paletteCollapsed).toBe(false);
+
+    core.togglePalette();
+    expect(core.getSnapshot().paletteCollapsed).toBe(true);
+
+    core.togglePalette();
+    expect(core.getSnapshot().paletteCollapsed).toBe(false);
+  });
+
+  it('toggles inspector collapsed state', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    expect(core.getSnapshot().inspectorCollapsed).toBe(false);
+
+    core.toggleInspector();
+    expect(core.getSnapshot().inspectorCollapsed).toBe(true);
+
+    core.toggleInspector();
+    expect(core.getSnapshot().inspectorCollapsed).toBe(false);
+  });
+
+  it('sets palette collapsed with idempotent behavior', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    const before = core.getSnapshot();
+    core.setPaletteCollapsed(true);
+    expect(core.getSnapshot().paletteCollapsed).toBe(true);
+
+    core.setPaletteCollapsed(true);
+    expect(core.getSnapshot().paletteCollapsed).toBe(true);
+    expect(core.getSnapshot().canUndo).toBe(before.canUndo);
+    expect(core.getSnapshot().canRedo).toBe(before.canRedo);
+  });
+
+  it('sets inspector collapsed with idempotent behavior', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    const before = core.getSnapshot();
+    core.setInspectorCollapsed(true);
+    expect(core.getSnapshot().inspectorCollapsed).toBe(true);
+
+    core.setInspectorCollapsed(true);
+    expect(core.getSnapshot().inspectorCollapsed).toBe(true);
+    expect(core.getSnapshot().canUndo).toBe(before.canUndo);
+    expect(core.getSnapshot().canRedo).toBe(before.canRedo);
+  });
+
+  it('restores palette when setting collapsed to false', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    core.setPaletteCollapsed(true);
+    expect(core.getSnapshot().paletteCollapsed).toBe(true);
+
+    core.setPaletteCollapsed(false);
+    expect(core.getSnapshot().paletteCollapsed).toBe(false);
+
+    core.setPaletteCollapsed(false);
+    expect(core.getSnapshot().paletteCollapsed).toBe(false);
+  });
+
+  it('restores inspector when setting collapsed to false', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    core.setInspectorCollapsed(true);
+    expect(core.getSnapshot().inspectorCollapsed).toBe(true);
+
+    core.setInspectorCollapsed(false);
+    expect(core.getSnapshot().inspectorCollapsed).toBe(false);
+
+    core.setInspectorCollapsed(false);
+    expect(core.getSnapshot().inspectorCollapsed).toBe(false);
+  });
+
+  it('emits paletteCollapseChanged event with correct payload', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+    const events: any[] = [];
+    core.subscribe((e) => events.push(e));
+
+    core.togglePalette();
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('paletteCollapseChanged');
+    expect(events[0].collapsed).toBe(true);
+
+    events.length = 0;
+    core.togglePalette();
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('paletteCollapseChanged');
+    expect(events[0].collapsed).toBe(false);
+  });
+
+  it('emits inspectorCollapseChanged event with correct payload', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+    const events: any[] = [];
+    core.subscribe((e) => events.push(e));
+
+    core.toggleInspector();
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('inspectorCollapseChanged');
+    expect(events[0].collapsed).toBe(true);
+
+    events.length = 0;
+    core.toggleInspector();
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('inspectorCollapseChanged');
+    expect(events[0].collapsed).toBe(false);
+  });
+
+  it('collapse state does not affect undo/redo history', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    core.save();
+    const before = core.getSnapshot();
+
+    core.setPaletteCollapsed(true);
+    expect(core.getSnapshot().paletteCollapsed).toBe(true);
+    expect(core.getSnapshot().canUndo).toBe(before.canUndo);
+    expect(core.getSnapshot().canRedo).toBe(before.canRedo);
+    expect(core.getSnapshot().isDirty).toBe(false);
+
+    core.setInspectorCollapsed(true);
+    expect(core.getSnapshot().inspectorCollapsed).toBe(true);
+    expect(core.getSnapshot().canUndo).toBe(before.canUndo);
+    expect(core.getSnapshot().canRedo).toBe(before.canRedo);
+    expect(core.getSnapshot().isDirty).toBe(false);
+
+    core.togglePalette();
+    expect(core.getSnapshot().paletteCollapsed).toBe(false);
+    expect(core.getSnapshot().canUndo).toBe(before.canUndo);
+    expect(core.getSnapshot().canRedo).toBe(before.canRedo);
+    expect(core.getSnapshot().isDirty).toBe(false);
+  });
+
+  it('toggles palette and inspector independently without affecting each other', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    core.togglePalette();
+    expect(core.getSnapshot().paletteCollapsed).toBe(true);
+    expect(core.getSnapshot().inspectorCollapsed).toBe(false);
+
+    core.toggleInspector();
+    expect(core.getSnapshot().paletteCollapsed).toBe(true);
+    expect(core.getSnapshot().inspectorCollapsed).toBe(true);
+
+    core.setPaletteCollapsed(false);
+    expect(core.getSnapshot().paletteCollapsed).toBe(false);
+    expect(core.getSnapshot().inspectorCollapsed).toBe(true);
+
+    core.setInspectorCollapsed(false);
+    expect(core.getSnapshot().paletteCollapsed).toBe(false);
+    expect(core.getSnapshot().inspectorCollapsed).toBe(false);
+  });
 });

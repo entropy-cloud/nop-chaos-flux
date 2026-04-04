@@ -251,6 +251,8 @@ export interface DesignerSnapshot {
   canRedo: boolean;
   isDirty: boolean;
   gridEnabled: boolean;
+  paletteCollapsed: boolean;
+  inspectorCollapsed: boolean;
   viewport: { x: number; y: number; zoom: number };
 }
 
@@ -268,6 +270,8 @@ export type DesignerEvent =
   | { type: 'dirtyChanged'; isDirty: boolean }
   | { type: 'viewportChanged'; viewport: { x: number; y: number; zoom: number } }
   | { type: 'gridToggled'; enabled: boolean }
+  | { type: 'paletteCollapseChanged'; collapsed: boolean }
+  | { type: 'inspectorCollapseChanged'; collapsed: boolean }
   | { type: 'transactionStarted'; transactionId: string; label?: string }
   | { type: 'transactionCommitted'; transactionId: string }
   | { type: 'transactionRolledBack'; transactionId: string }

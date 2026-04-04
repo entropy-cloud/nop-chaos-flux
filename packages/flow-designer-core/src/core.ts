@@ -109,6 +109,11 @@ export interface DesignerCore {
   toggleGrid(): void;
   setGrid(enabled: boolean): void;
 
+  togglePalette(): void;
+  setPaletteCollapsed(collapsed: boolean): void;
+  toggleInspector(): void;
+  setInspectorCollapsed(collapsed: boolean): void;
+
   setViewport(viewport: { x: number; y: number; zoom: number }): void;
 
   save(): void;
@@ -137,6 +142,8 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
   let selectionState: DesignerSelectionState = createSelectionState();
   let gridEnabled = true;
+  let paletteCollapsed = false;
+  let inspectorCollapsed = false;
   let viewport = normalizeViewport(doc.viewport);
   let cachedSelection = getSelectionSummary(selectionState);
   let cachedSnapshot: DesignerSnapshot = {
@@ -148,6 +155,8 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     canRedo: canRedo(),
     isDirty: isDirty(),
     gridEnabled,
+    paletteCollapsed,
+    inspectorCollapsed,
     viewport,
   };
 
@@ -223,6 +232,8 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       cachedSnapshot.canRedo === nextCanRedo &&
       cachedSnapshot.isDirty === nextIsDirty &&
       cachedSnapshot.gridEnabled === gridEnabled &&
+      cachedSnapshot.paletteCollapsed === paletteCollapsed &&
+      cachedSnapshot.inspectorCollapsed === inspectorCollapsed &&
       cachedSnapshot.viewport === viewport
     ) {
       return cachedSnapshot;
@@ -238,6 +249,8 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       canRedo: nextCanRedo,
       isDirty: nextIsDirty,
       gridEnabled,
+      paletteCollapsed,
+      inspectorCollapsed,
       viewport,
     };
 
@@ -674,6 +687,34 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     emit({ type: 'gridToggled', enabled: gridEnabled });
   }
 
+  function togglePalette(): void {
+    paletteCollapsed = !paletteCollapsed;
+    emit({ type: 'paletteCollapseChanged', collapsed: paletteCollapsed });
+  }
+
+  function setPaletteCollapsed(collapsed: boolean): void {
+    if (paletteCollapsed === collapsed) {
+      return;
+    }
+
+    paletteCollapsed = collapsed;
+    emit({ type: 'paletteCollapseChanged', collapsed: paletteCollapsed });
+  }
+
+  function toggleInspector(): void {
+    inspectorCollapsed = !inspectorCollapsed;
+    emit({ type: 'inspectorCollapseChanged', collapsed: inspectorCollapsed });
+  }
+
+  function setInspectorCollapsed(collapsed: boolean): void {
+    if (inspectorCollapsed === collapsed) {
+      return;
+    }
+
+    inspectorCollapsed = collapsed;
+    emit({ type: 'inspectorCollapseChanged', collapsed: inspectorCollapsed });
+  }
+
   function setViewport(newViewport: { x: number; y: number; zoom: number }): void {
     const normalizedViewport = normalizeViewportInput(newViewport);
     if (viewportsEqual(viewport, normalizedViewport)) {
@@ -803,6 +844,10 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     pasteClipboard,
     toggleGrid,
     setGrid,
+    togglePalette,
+    setPaletteCollapsed,
+    toggleInspector,
+    setInspectorCollapsed,
     setViewport,
     save,
     restore,
