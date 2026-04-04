@@ -163,5 +163,20 @@ describe('report-designer namespaced actions integration', () => {
       expect(screen.getByTestId('sheet-title').textContent).toBe('Inspector Updated');
     });
   });
+
+  it('renders toolbar via report-toolbar schema in page', async () => {
+    renderReportDesignerPage({
+      toolbar: {
+        type: 'report-toolbar',
+        itemsOverride: [
+          { id: 'save', type: 'button', label: 'Custom Save', action: 'report-designer:save' },
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Custom Save')).toBeTruthy();
+    });
+  });
 });
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
-import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } from '@nop-chaos/flux-core';
+import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, RenderNodeInput } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope } from '@nop-chaos/flux-react';
 import type {
   ReportDesignerAdapterRegistry,
@@ -89,9 +89,20 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
   );
 
   const hostData = useMemo(() => createHostData(core, snapshot), [core, snapshot]);
-  const toolbarContent = props.regions.toolbar?.render({ data: hostData });
-  const fieldPanelContent = props.regions.fieldPanel?.render({ data: hostData });
-  const inspectorContent = props.regions.inspector?.render({ data: hostData });
+
+  const toolbarSchema = props.props.toolbar as RenderNodeInput | undefined;
+  const fieldPanelSchema = props.props.fieldPanel as RenderNodeInput | undefined;
+  const inspectorSchema = props.props.inspector as RenderNodeInput | undefined;
+
+  const toolbarContent = toolbarSchema
+    ? props.helpers.render(toolbarSchema, { data: hostData })
+    : props.regions.toolbar?.render({ data: hostData });
+  const fieldPanelContent = fieldPanelSchema
+    ? props.helpers.render(fieldPanelSchema, { data: hostData })
+    : props.regions.fieldPanel?.render({ data: hostData });
+  const inspectorContent = inspectorSchema
+    ? props.helpers.render(inspectorSchema, { data: hostData })
+    : props.regions.inspector?.render({ data: hostData });
   const dialogsContent = props.regions.dialogs?.render({ data: hostData });
   const bodyContent = props.regions.body?.render({ data: hostData });
 
