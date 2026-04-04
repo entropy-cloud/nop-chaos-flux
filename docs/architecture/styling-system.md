@@ -594,6 +594,55 @@ interface BadSchema {
 }
 ```
 
+## Performance-Critical Domain: Spreadsheet Canvas
+
+The Renderer Styling Contract above governs the typical low-code renderers (buttons, forms, containers) where each component renders independently. The spreadsheet canvas is a fundamentally different rendering domain: it renders **thousands of homogeneous cells** in a single subtree, making Tailwind's per-element class strategy unsuitable.
+
+### Why Tailwind Doesn't Scale Here
+
+A typical visible spreadsheet area renders ~100 rows × 26 columns = **2,600 cells**. Applying Tailwind to each cell causes:
+
+1. **DOM bloat**: ~80 chars of Tailwind classes × 2,600 cells = ~200 KB extra DOM text
+2. **Continuous values**: Font sizes (13px), colors(#FF5733), font families(宋体) are continuous values Tailwind cannot express as utility classes
+3. **Rule matching cost**: Each cell must match 10+ CSS rules at layout time
+
+### Hybrid CSS Strategy
+
+The spreadsheet canvas uses a three-layer hybrid approach instead:
+
+| Layer | When | How |
+|-------|------|-----|
+| Predefined CSS classes (`ss-*`) | CellStyle properties with finite value sets (bold, alignment, border style) | Dedicated CSS file: `canvas-styles.css` |
+| Inline `style` | CellStyle properties with continuous values (font size, font family, colors) | React `style` prop |
+| `data-*` attributes | Interaction state (selected, editing, range highlight) | CSS attribute selectors |
+
+This is a self-contained rendering subtree. The `ss-*` classes stay inside the canvas boundary and do not leak to the outer shell (toolbar, sidebar, dialogs), which continues to use shadcn/ui + Tailwind.
+
+### Architecture Boundary
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Outer shell (toolbar, sidebar, inspector, dialogs)            │
+│   shadcn/ui + Tailwind — matches this document                │
+├─────────────────────────────────────────────────────────────┤
+│ Spreadsheet Canvas (grid, cells, row/col headers, selection)   │
+│   Predefined CSS (ss-*) + inline style + data-* — perf-first  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Design Points
+
+1. **Baseline class `ss-cell`**: Carries Excel-default styles (Calibri 11pt, 22px height, left-aligned, gray gridlines). Only non-default properties produce additional classes or inline styles.
+2. **`ss-*` prefix**: Namespace-isolated from `nop-*` marker classes and Tailwind utilities.
+3. **`data-*` for state**: Follows the same pattern as shadcn/ui's `data-state` and flux renderer's `data-field-*`.
+4. **No `cell-style-map.ts` in current implementation**: The current `spreadsheet-grid.tsx` applies inline styles directly from `cell?.style` — the mapping is implicit via React's `style` prop, The `ss-bold`, `ss-italic` etc. classes exist in `canvas-styles.css` but are not yet wired through an explicit style-to-class mapper.
+
+### Full Design Doc
+
+See `docs/architecture/report-designer/spreadsheet-canvas-css.md` for the complete hybrid CSS design rationale, property classification table, class inventory, and performance optimization strategies.
+
+CSS file: `packages/spreadsheet-renderers/src/canvas-styles.css`
+
 ## Non-Goals
 
 - NOT a CSS-in-JS solution - aliases resolve to plain Tailwind classes
