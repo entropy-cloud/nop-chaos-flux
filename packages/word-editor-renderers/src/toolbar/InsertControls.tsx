@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
-import { Table, ImagePlus, Link2, SeparatorHorizontal, ArrowDownToLine } from 'lucide-react'
-import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
+import { Table, ImagePlus, Link2, SeparatorHorizontal, ArrowDownToLine, BarChart3, QrCode } from 'lucide-react'
+import type { CanvasEditorBridge, DocChart, DocCode } from '@nop-chaos/word-editor-core'
 import {
   Button,
   Dialog,
@@ -10,13 +10,19 @@ import {
   Input
 } from '@nop-chaos/ui'
 import { ToolbarButton, ToolbarGroup } from './shared.js'
+import { ChartDialog } from '../dialogs/ChartDialog.js'
+import { CodeDialog } from '../dialogs/CodeDialog.js'
 
 interface InsertControlsProps {
   bridge: CanvasEditorBridge | null
+  onChartSave?: (chart: DocChart) => void
+  onCodeSave?: (code: DocCode) => void
 }
 
-export function InsertControls({ bridge }: InsertControlsProps) {
+export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertControlsProps) {
   const [showLinkDialog, setShowLinkDialog] = useState(false)
+  const [showChartDialog, setShowChartDialog] = useState(false)
+  const [showCodeDialog, setShowCodeDialog] = useState(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
 
   const [hyperlinkUrl, setHyperlinkUrl] = useState('')
@@ -61,6 +67,8 @@ export function InsertControls({ bridge }: InsertControlsProps) {
       <ToolbarButton icon={Table} onClick={() => bridge?.command?.executeInsertTable(3, 3)} title="Insert Table (3×3)" />
       <ToolbarButton icon={ImagePlus} onClick={() => imageInputRef.current?.click()} title="Insert Image" />
       <ToolbarButton icon={Link2} onClick={() => setShowLinkDialog(true)} title="Insert Hyperlink" />
+      <ToolbarButton icon={BarChart3} onClick={() => setShowChartDialog(true)} title="Insert Chart" />
+      <ToolbarButton icon={QrCode} onClick={() => setShowCodeDialog(true)} title="Insert Barcode/QR Code" />
       <ToolbarButton icon={SeparatorHorizontal} onClick={() => bridge?.command?.executeSeparator([])} title="Separator" />
       <ToolbarButton icon={ArrowDownToLine} onClick={() => bridge?.command?.executePageBreak()} title="Page Break" />
       <input
@@ -99,6 +107,24 @@ export function InsertControls({ bridge }: InsertControlsProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ChartDialog
+        open={showChartDialog}
+        onClose={() => setShowChartDialog(false)}
+        onSave={(chart) => {
+          onChartSave?.(chart)
+          setShowChartDialog(false)
+        }}
+      />
+
+      <CodeDialog
+        open={showCodeDialog}
+        onClose={() => setShowCodeDialog(false)}
+        onSave={(code) => {
+          onCodeSave?.(code)
+          setShowCodeDialog(false)
+        }}
+      />
     </ToolbarGroup>
   )
 }
