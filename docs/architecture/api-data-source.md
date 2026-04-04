@@ -1,8 +1,24 @@
-# ApiObject and DataSource Design
+# ApiObject, DataSource, and Reaction Design
 
 ## Purpose
 
-This document describes the design of `ApiObject` for HTTP requests and `DataSourceSchema` for declarative data fetching.
+This document defines:
+
+- `ApiObject` as the declarative HTTP request contract
+- `DataSourceSchema` as the unified declarative source model in Flux
+- `ReactionSchema` as the declarative side-effect watcher model paired with sources
+
+`data-source` should not be treated as a special visual component category. It is a non-rendering source declaration that publishes a derived value into the current scope.
+
+Under this model:
+
+- a `formula`-backed `data-source` is a synchronous derived value, conceptually similar to a Vue `computed`
+- an `api`-backed `data-source` is an asynchronous derived value, conceptually similar to an async computed/source ref
+- future stream or provider-backed sources should follow the same model rather than introducing a parallel abstraction
+
+This keeps Flux aligned with its role as a final DSL runtime: schema declares derived values, runtime owns source lifecycle, and React only hosts the execution boundary.
+
+`reaction` is the companion abstraction for imperative consequences. A source derives values. A reaction watches derived or raw values and dispatches actions when those values change.
 
 ## ApiObject
 
@@ -22,99 +38,79 @@ interface ApiObject extends SchemaObject {
   requestAdaptor?: string;
   cacheTTL?: number;
   cacheKey?: string;
+  dedupStrategy?: 'cancel-previous' | 'parallel' | 'ignore-new';
 }
 ```
 
 ### Fields
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | `url` | `string` | Request URL (required) |
 | `method` | `string` | HTTP method (default: `get`) |
 | `data` | `SchemaValue` | Request body data |
-| `params` | `SchemaValue` | URL query parameters (auto-appended to URL) |
+| `params` | `SchemaValue` | URL query parameters |
 | `headers` | `Record<string, string>` | Request headers |
-| `includeScope` | `'*' \| string[]` | Auto-include scope variables in `data` |
+| `includeScope` | `'*' \| string[]` | Auto-include scope variables in request data |
 | `responseAdaptor` | `string` | Expression to transform response |
 | `requestAdaptor` | `string` | Expression to transform request |
 | `cacheTTL` | `number` | Cache time-to-live in milliseconds |
-| `cacheKey` | `string` | Custom cache key (default: auto-generated from url/method/data/params) |
+| `cacheKey` | `string` | Custom cache key |
+| `dedupStrategy` | `'cancel-previous' \| 'parallel' \| 'ignore-new'` | In-flight request coordination policy |
 
 ### includeScope
 
-The `includeScope` field controls automatic scope variable injection into request data.
+`includeScope` controls automatic scope-variable injection into request data.
 
-**Merge Logic:**
-```
+Merge rule:
+
+```text
 finalData = { ...extractScope(includeScope), ...data }
 ```
 
-`data` values take precedence over `includeScope` extracted values for the same keys.
-
-**Examples:**
-
-```json
-// Include all scope variables
-{
-  "url": "/api/save",
-  "includeScope": "*"
-}
-
-// Include specific fields
-{
-  "url": "/api/save",
-  "includeScope": ["userId", "projectId"]
-}
-
-// Merge scope with explicit data (data overrides scope)
-{
-  "url": "/api/save",
-  "includeScope": ["userId"],
-  "data": { "userId": "${overrideUserId}", "extra": "value" }
-}
-```
+Explicit `data` keys win over extracted scope keys.
 
 ### params
 
-The `params` field specifies URL query parameters. These are automatically appended to the URL.
+`params` describes URL query parameters.
 
-**Examples:**
+Examples:
 
 ```json
-// GET request with params
 {
   "url": "/api/users",
   "method": "get",
   "params": { "status": "active", "page": 1 }
 }
-// Result: /api/users?status=active&page=1
+```
 
-// POST request with both params and body
+```json
 {
   "url": "/api/users",
   "method": "post",
   "params": { "version": "v2" },
   "data": { "name": "Alice" }
 }
-// Result: /api/users?version=v2 with body { "name": "Alice" }
 ```
 
 ### requestAdaptor / responseAdaptor
 
-Adaptors allow transforming requests and responses using expressions.
+Adaptors transform request/response payloads using the expression engine.
 
-**requestAdaptor Context:**
-- `api` - The ApiObject
-- `scope` - Scope proxy for reading variables
-- `data` - The request data
-- `headers` - The request headers
+Request-adaptor context:
 
-**responseAdaptor Context:**
-- `payload` / `response` - The response data
-- `api` - The ApiObject
-- `scope` - Scope proxy
+- `api`
+- `scope`
+- `data`
+- `headers`
 
-**Example:**
+Response-adaptor context:
+
+- `payload` / `response`
+- `api`
+- `scope`
+
+Example:
 
 ```json
 {
@@ -124,135 +120,210 @@ Adaptors allow transforming requests and responses using expressions.
 }
 ```
 
-### cacheTTL / cacheKey
+### cacheTTL / cacheKey / dedupStrategy
 
-Response caching reduces redundant network requests.
+These fields describe request coordination, not rendering behavior.
 
-**cacheTTL**: Time-to-live in milliseconds. If not set, caching is disabled.
+- `cacheTTL`: cache lifetime in milliseconds
+- `cacheKey`: custom cache identity for cross-source sharing
+- `dedupStrategy`: in-flight coordination policy for equivalent requests
 
-**cacheKey**: Custom cache key for sharing cache across components. Default is auto-generated from `method:url:data:params`.
+### Required Request Execution Flow
 
-**Examples:**
+`executeApiObject(...)` should be the single convergence path for request execution.
 
-```json
-// Cache for 5 minutes
-{
-  "url": "/api/config",
-  "cacheTTL": 300000
-}
+The required flow is:
 
-// Custom cache key for cross-component sharing
-{
-  "url": "/api/user",
-  "cacheTTL": 60000,
-  "cacheKey": "current-user"
-}
+1. Evaluate dynamic request config in the current scope
+2. Extract and merge `includeScope` into request data
+3. Build the final URL with `params`
+4. Apply `requestAdaptor`
+5. Execute through runtime-managed fetch / abort / dedup / cache coordination
+6. Apply `responseAdaptor`
+7. Return the adapted payload to the caller
 
-// No caching (default)
-{
-  "url": "/api/realtime-data"
-}
-```
+Important note:
 
-**Cache behavior:**
-- Cache is checked before making network requests
-- Expired entries are automatically removed on access
-- Setting `cacheTTL` to 0 or undefined disables caching
+- this document describes the intended unified contract
+- current code still has some preparation steps split across helper functions and not yet fully converged into one execution path
 
 ## DataSourceSchema
 
-`DataSourceSchema` is a non-rendering component that fetches data and injects it into the **current scope**. It renders nothing itself (`null`). Sibling nodes that share the same scope automatically re-render when the fetched data arrives.
+`data-source` is a non-rendering source declaration. It does not exist to render UI. It exists to register a derived value in the current scope.
+
+This is the key conceptual shift:
+
+- `data-source` is not only "fetch remote data"
+- `data-source` is the general DSL concept for "derive a value from the current context"
+- remote requests are one producer kind under that abstraction
+- formula-based computation is another producer kind under the same abstraction
 
 ### Interface
 
 ```typescript
-interface DataSourceSchema extends BaseSchema {
+interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
-  api: ApiObject;
   dataPath?: string;
+  initialData?: SchemaValue;
+}
+
+interface FormulaDataSourceSchema extends BaseDataSourceSchema {
+  formula: SchemaValue;
+}
+
+interface ApiDataSourceSchema extends BaseDataSourceSchema {
+  api: ApiObject;
   interval?: number;
   stopWhen?: string;
   silent?: boolean;
-  initialData?: SchemaValue;
 }
+
+type DataSourceSchema = FormulaDataSourceSchema | ApiDataSourceSchema;
 ```
 
-### Fields
+Rules:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `api` | `ApiObject` | Request configuration (required) |
-| `dataPath` | `string` | Scope key to write response data into |
-| `interval` | `number` | Polling interval in milliseconds |
-| `stopWhen` | `string` | Expression to stop polling when true |
-| `silent` | `boolean` | Suppress error notifications |
-| `initialData` | `SchemaValue` | Initial value to write to scope before first fetch |
+- a single `data-source` declares one producer kind
+- `formula` and `api` are mutually exclusive in the same node
+- new schemas should prefer explicit `dataPath`
+- formula-backed sources should require explicit `dataPath`
 
-### Scope Injection Behavior
+### Binding Target
 
-`data-source` writes the response into the **current scope** — the scope in which it is rendered. Sibling nodes rendered in the same scope see the updated data and re-render automatically.
+`dataPath` is the preferred binding target for a source value.
 
-**With `dataPath`:** The entire response is written to `scope[dataPath]`.
+Example:
 
-```
-scope[dataPath] = responseData
+```text
+scope[dataPath] = sourceValue
 ```
 
-**Without `dataPath`:** The response is treated as a `Record` and merged into the current scope. Non-object responses are silently ignored.
+For API-backed sources, current code still supports the older merge-into-scope behavior when `dataPath` is omitted and the response is an object. That behavior is compatibility-oriented. The preferred design direction is explicit binding because it preserves the mental model of:
 
+```text
+one data-source = one logical derived value
 ```
-scope = { ...scope, ...responseData }
-```
 
-`initialData` follows the same injection rules and is written to scope before the first fetch begins.
+`initialData` seeds the source target before the first real evaluation or fetch begins.
 
-### Behavior
+### Producer Kinds
 
-1. If `initialData` is provided, writes it to scope before the first fetch
-2. Executes the API request
-3. Writes response to scope using the injection rules above
-4. If `interval` is set, starts polling
-5. Evaluates `stopWhen` against scope after each response; stops polling when true
-6. On error, calls `env.notify('error', message)` unless `silent` is true
+#### Formula source
+
+A formula-backed source is a synchronous derived value.
+
+- input: current scope
+- producer: compiled expression / compiled value tree
+- output: derived value written to `dataPath`
+- mental model: computed ref, not effect
+
+Its semantics should be:
+
+- dependencies are inferred automatically from expression access
+- upstream changes mark the source dirty
+- the source recomputes lazily on next read or subscribed use
+- unchanged semantic values should preserve identity when possible
+
+Important boundary:
+
+- formula-backed `data-source` describes a derived value
+- it should not be used as a hidden imperative write-effect engine for arbitrary sibling updates
+- side-effect reactions belong to a separate reaction/watch abstraction, not to the source abstraction itself
+
+#### Api source
+
+An API-backed source is an asynchronous derived value.
+
+- input: current scope plus `ApiObject`
+- producer: runtime-managed request execution
+- output: adapted response value written to `dataPath`
+- mental model: async computed/source ref
+
+Its semantics should be:
+
+- dependencies come from expressions used by the request config
+- dependency changes invalidate the source and trigger refresh according to source policy
+- runtime owns loading, error, cache, dedup, abort, and polling behavior
+
+`interval` and `stopWhen` remain API-source-specific controls.
+
+### Dependency Tracking And Invalidation
+
+Flux should not require authors to manually enumerate source dependencies for normal computed-style usage.
+
+Preferred model:
+
+1. compile-time static extraction when the expression tree makes dependencies obvious
+2. runtime dynamic access tracking during evaluation to refine the actual dependency set
+
+This hybrid model gives:
+
+- good initial indexing
+- correct behavior for dynamic access paths
+- lazy recomputation semantics closer to modern reactive systems
+
+When an upstream path changes:
+
+- dependent sources are marked dirty
+- formula sources recompute lazily
+- API sources invalidate and refresh according to source policy
+
+The runtime goal is targeted invalidation, not eager full-tree re-evaluation.
 
 ### Runtime Ownership
 
-Current implementation keeps request orchestration in `@nop-chaos/flux-runtime`, not in the React renderer.
+`data-source` stays runtime-owned, not renderer-owned.
 
-- `DataSourceRenderer` remains a `null` renderer and only wires controller lifecycle (`start()` / `stop()`).
-- `RendererRuntime.createDataSourceController(...)` owns request execution, cache reads/writes, polling timers, stop-condition evaluation, and abort lifecycle.
-- Data-source cache ownership is runtime-local. Independent renderer roots do not share a process-global data-source cache implicitly.
-- Request execution reuses the runtime request executor, so data-source fetches follow the same dedup semantics as other runtime-managed API work.
+Required boundary:
 
-### Loading and Error State
+- `DataSourceRenderer` remains a `null` renderer
+- React only wires lifecycle
+- runtime owns source registration, source invalidation, request control, polling, abort, and cache coordination
 
-`data-source` renders `null`. There is no built-in loading skeleton or error widget.
+The intended end state is a runtime-local source registry where formula and API producers share the same conceptual lifecycle model.
 
-- **Loading**: manage loading UX externally (e.g., conditional visibility on sibling nodes)
-- **Error**: `env.notify('error', message)` is called (suppressed when `silent: true`)
+### Loading And Error State
+
+`data-source` itself renders `null`.
+
+The source abstraction is responsible for value production, not for built-in loading or error chrome.
+
+- formula sources usually expose only a current value
+- API sources also have runtime status such as loading / error / stale
+- UI should choose how to observe and present those states rather than forcing a built-in widget into the source abstraction
 
 ### Examples
 
-**Basic data source with `dataPath`:**
+#### Formula-backed derived field
 
 ```json
 {
-  "type": "container",
+  "type": "form",
   "body": [
     {
+      "type": "input-text",
+      "name": "price",
+      "label": "Price"
+    },
+    {
+      "type": "input-text",
+      "name": "qty",
+      "label": "Qty"
+    },
+    {
       "type": "data-source",
-      "api": { "url": "/api/user/${userId}" },
-      "dataPath": "user"
+      "dataPath": "total",
+      "formula": "${Number(price || 0) * Number(qty || 0)}"
     },
     {
       "type": "text",
-      "text": "Hello, ${user.name}"
+      "text": "Total: ${total}"
     }
   ]
 }
 ```
 
-**No `dataPath` — response merged into scope:**
+#### API-backed source with explicit binding
 
 ```json
 {
@@ -260,17 +331,22 @@ Current implementation keeps request orchestration in `@nop-chaos/flux-runtime`,
   "body": [
     {
       "type": "data-source",
-      "api": { "url": "/api/context" }
+      "dataPath": "tasks",
+      "api": {
+        "url": "/api/tasks",
+        "includeScope": ["projectId"],
+        "params": { "status": "active" }
+      }
     },
     {
       "type": "text",
-      "text": "Project: ${projectName}, User: ${userName}"
+      "text": "Found ${tasks.length} active tasks"
     }
   ]
 }
 ```
 
-**Polling with stop condition:**
+#### Polling API-backed source
 
 ```json
 {
@@ -278,8 +354,8 @@ Current implementation keeps request orchestration in `@nop-chaos/flux-runtime`,
   "body": [
     {
       "type": "data-source",
-      "api": { "url": "/api/job/${jobId}/status" },
       "dataPath": "status",
+      "api": { "url": "/api/job/${jobId}/status" },
       "interval": 3000,
       "stopWhen": "${status.complete}"
     },
@@ -291,59 +367,199 @@ Current implementation keeps request orchestration in `@nop-chaos/flux-runtime`,
 }
 ```
 
-**With scope injection and params:**
+## ReactionSchema
+
+`reaction` is a non-rendering watcher node. It does not publish a value into scope. It observes a value expression and triggers actions when the observed value changes.
+
+This keeps Flux's runtime semantics clean:
+
+- `data-source` is for derived values
+- `reaction` is for side effects
+
+The two abstractions should share the same dependency-tracking substrate, but they must not share the same semantic role.
+
+### Interface
+
+```typescript
+interface ReactionSchema extends BaseSchema {
+  type: 'reaction';
+  watch: SchemaValue;
+  when?: string;
+  immediate?: boolean;
+  debounce?: number;
+  once?: boolean;
+  actions: ActionSchema | ActionSchema[];
+}
+```
+
+### Fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `watch` | `SchemaValue` | Expression or value node to observe |
+| `when` | `string` | Optional guard expression evaluated against current and previous watch values |
+| `immediate` | `boolean` | Whether to evaluate and potentially fire immediately on mount |
+| `debounce` | `number` | Optional debounce delay before action dispatch |
+| `once` | `boolean` | Auto-dispose after the first successful trigger |
+| `actions` | `ActionSchema \| ActionSchema[]` | Action pipeline to dispatch when triggered |
+
+### Semantics
+
+`reaction` should behave like a runtime watch/effect node, not like a renderer lifecycle hook.
+
+Required behavior:
+
+1. Compile `watch` as a runtime value
+2. Evaluate `watch` with dependency tracking
+3. Record the current watch value as `value`
+4. On upstream dependency change, re-evaluate `watch`
+5. If the watch value changed, evaluate `when` if provided
+6. If allowed, dispatch `actions`
+
+The runtime context available to `when` and `actions` should include at least:
+
+- `value`: current observed value
+- `prev`: previous observed value
+- `changed`: boolean value-change result
+- `changedPaths`: changed upstream paths when available
+
+### Change Detection
+
+Default change detection should use semantic equality close to `Object.is` at the top-level observed value.
+
+The baseline rule is:
+
+- no trigger if the observed value is semantically unchanged
+- trigger only after the new observed value has stabilized for the current update cycle
+
+This avoids turning `reaction` into a noisy per-write effect system.
+
+### Scheduling
+
+Reactions should run after the relevant update has been committed, not in the middle of an incomplete mutation chain.
+
+Preferred scheduling model:
+
+- source invalidation happens first
+- state write settles
+- watch values are re-evaluated
+- reactions dispatch actions afterward
+
+This keeps reaction semantics closer to declarative watch semantics and reduces accidental re-entrancy.
+
+### Loop Prevention
+
+Because reactions can dispatch actions that mutate the same scope, runtime must guard against loops.
+
+Required protections:
+
+- per-cycle trigger dedupe
+- depth / cascade guard
+- debounce support
+- `once` support for one-shot reactions
+- do not re-trigger when the watched value remains unchanged after an action-induced writeback
+
+### Relationship To DataSource
+
+`reaction` should reuse the same dependency collection mechanism as `data-source`, but the output contract is different.
+
+- `data-source`: produces and publishes a value
+- `reaction`: observes a value and dispatches actions
+
+This means a reaction can watch:
+
+- raw scope fields
+- formula-backed sources
+- API-backed sources
+- arbitrary expressions built from those values
+
+Conceptually:
+
+```text
+data-source = value producer
+reaction = value observer with side effects
+```
+
+### Examples
+
+#### Reset another field when a value changes
 
 ```json
 {
-  "type": "container",
-  "body": [
+  "type": "reaction",
+  "watch": "${country}",
+  "when": "${value !== prev}",
+  "actions": [
     {
-      "type": "data-source",
-      "api": {
-        "url": "/api/tasks",
-        "includeScope": ["projectId"],
-        "params": { "status": "active" }
-      },
-      "dataPath": "tasks"
-    },
-    {
-      "type": "text",
-      "text": "Found ${tasks.length} active tasks"
+      "action": "setValue",
+      "args": {
+        "path": "state",
+        "value": ""
+      }
     }
   ]
 }
 ```
 
-## Implementation Notes
+#### Trigger dialog when a threshold flips to true
 
-### Request Processing Flow
+```json
+{
+  "type": "reaction",
+  "watch": "${total > 1000}",
+  "when": "${value === true && prev !== true}",
+  "actions": [
+    {
+      "action": "dialog",
+      "dialog": {
+        "title": "High Amount"
+      }
+    }
+  ]
+}
+```
 
-1. **Prepare data:**
-   - Extract scope variables based on `includeScope`
-   - Merge with explicit `data` (data takes precedence)
+### Design Boundary
 
-2. **Build URL:**
-   - Append `params` to URL as query string
+`reaction` is intentionally narrower than a general-purpose embedded effect language.
 
-3. **Apply requestAdaptor:**
-   - Transform request before sending
+It should not become:
 
-4. **Execute fetcher:**
-   - Call `env.fetcher(api, context)`
+- a second scripting runtime
+- an unrestricted hidden imperative layer inside declarative schema
+- a replacement for explicit action dispatch from user interactions
 
-5. **Apply responseAdaptor:**
-   - Transform response before returning
+Its purpose is to model data-driven side effects that are awkward or impossible to express as pure derived values.
 
-### dataPath vs ActionSchema.dataPath
+## Current Implementation Status
 
-- `ApiObject` no longer contains `dataPath`
-- `ActionSchema.dataPath` controls where ajax action results are written (page store)
-- `DataSourceSchema.dataPath` controls where fetched data is written (current scope)
+Current code already implements part of this model:
 
-This separation keeps `ApiObject` focused on request description.
+- API-backed `data-source` orchestration lives in `@nop-chaos/flux-runtime`
+- `DataSourceRenderer` is already a `null` renderer that only wires lifecycle
+- request execution, cache reads/writes, polling timers, stop-condition evaluation, and abort lifecycle are runtime-owned
+
+Current code is not yet fully converged to the target model:
+
+- formula-backed sources are not yet unified under the same runtime source abstraction
+- source dependency tracking is not yet a full static-plus-dynamic invalidation system
+- request preparation is still not fully converged through a single execution path
+- API-backed sources still allow legacy merge semantics when `dataPath` is omitted
+- `reaction` does not yet exist as a first-class runtime watch node
+
+## dataPath vs ActionSchema.dataPath
+
+- `ActionSchema.dataPath` controls where an ajax action result is written in page data
+- `DataSourceSchema.dataPath` controls where a derived source value is published in the current scope
+
+These are related but distinct concepts.
+
+`ApiObject` remains request description only. The write target belongs to the consumer context: action result target or source binding target.
 
 ## Related Documents
 
 - `docs/references/renderer-interfaces.md`
 - `docs/references/terminology.md`
 - `docs/architecture/flux-core.md`
+- `docs/architecture/renderer-runtime.md`
+- `docs/architecture/action-scope-and-imports.md`
