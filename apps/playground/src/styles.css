@@ -266,6 +266,10 @@ body {
   color: rgb(29, 78, 216);
 }
 
+.rd-toolbar [data-toolbar-active] {
+  background-color: #e0e7ff;
+}
+
 .field-source {
   margin-bottom: 16px;
 }
