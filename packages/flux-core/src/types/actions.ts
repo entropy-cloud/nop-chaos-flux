@@ -33,6 +33,7 @@ export interface ActionContext {
   runtime: RendererRuntime;
   scope: ScopeRef;
   getInstanceKey?: () => string | undefined;
+  interactionId?: string;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   event?: unknown;
@@ -101,6 +102,7 @@ export interface ActionMonitorPayload {
   actionType: string;
   nodeId?: string;
   path?: SchemaPath;
+  interactionId?: string;
   dispatchMode?: 'built-in' | 'component' | 'namespace';
   namespace?: string;
   method?: string;

@@ -99,7 +99,7 @@ export interface FormRuntime {
   touchField(path: string): void;
   visitField(path: string): void;
   clearErrors(path?: string): void;
-  submit(api?: ApiObject): Promise<ActionResult>;
+  submit(api?: ApiObject, options?: { interactionId?: string }): Promise<ActionResult>;
   reset(values?: object): void;
   setValue(name: string, value: unknown): void;
   appendValue(path: string, value: unknown): void;

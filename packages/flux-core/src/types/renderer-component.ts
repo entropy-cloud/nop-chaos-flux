@@ -1,4 +1,6 @@
 import type { ActionContext, ActionResult } from './actions';
+import type { ResolvedNodeMeta, ResolvedNodeProps } from './renderer-compiler';
+import type { ScopeRef } from './scope';
 
 export interface ComponentTarget {
   _targetCid?: number;
@@ -13,6 +15,17 @@ export interface ComponentCapabilities {
   invoke(method: string, payload: Record<string, unknown> | undefined, ctx: ActionContext): Promise<ActionResult> | ActionResult;
   hasMethod?(method: string): boolean;
   listMethods?(): readonly string[];
+  getDebugData?(): Record<string, unknown> | undefined;
+}
+
+export interface ComponentHandleDebugData {
+  nodeId?: string;
+  path?: string;
+  rendererType?: string;
+  scope?: ScopeRef;
+  resolvedMeta?: ResolvedNodeMeta;
+  resolvedProps?: ResolvedNodeProps['value'];
+  updatedAt?: number;
 }
 
 export interface ComponentHandle {
@@ -55,5 +68,7 @@ export interface ComponentHandleRegistry {
   cleanupDynamic(templateId: string): void;
   resolve(target: ComponentTarget): ComponentHandle | undefined;
   getHandleByCid?(cid: number): ComponentHandle | undefined;
+  setHandleDebugData?(cid: number, data: ComponentHandleDebugData | undefined): void;
+  getHandleDebugData?(cid: number): ComponentHandleDebugData | undefined;
   getDebugSnapshot?(): ComponentHandleRegistryDebugSnapshot;
 }

@@ -6,6 +6,8 @@ export interface ApiRequestContext {
   scope: ScopeRef;
   env: RendererEnv;
   signal?: AbortSignal;
+  interactionId?: string;
+  requestInstanceId?: string;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -36,6 +38,8 @@ export interface ApiMonitorPayload {
   api: import('./schema').ApiObject;
   nodeId?: string;
   path?: SchemaPath;
+  interactionId?: string;
+  requestInstanceId?: string;
 }
 
 export interface RendererMonitor {
