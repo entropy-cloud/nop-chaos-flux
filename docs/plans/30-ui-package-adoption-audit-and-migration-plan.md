@@ -1,8 +1,22 @@
 # UI 包统一化审计与迁移计划
 
-> Plan Status: in-progress
-> Last Reviewed: 2026-04-03
+> Plan Status: completed
+> Last Reviewed: 2026-04-04
 > Source: 全仓库通用组件审计——检查所有包是否正确使用 `@nop-chaos/ui` 的通用组件，仅领域特殊组件才自行实现。包含 toolbar 统一策略分析。
+
+## Implementation Status
+
+Completed on 2026-04-04.
+
+Current workspace status relative to this audit:
+
+- `@nop-chaos/ui` already provides the prerequisite size variants and Tier 1 toolbar control groups described in this plan
+- `flux-code-editor` already uses `Button`, `Popover`, `ScrollArea`, `Spinner`, and `Table`
+- `word-editor-renderers` already uses `Button`, `Separator`, `Tabs`, `Dialog`, `Input`, `NativeSelect`, `Textarea`, and related shared UI primitives across toolbar/page/dialog flows
+- `report-designer-renderers` already depends on `@nop-chaos/ui` and includes a dedicated `ReportToolbarRenderer`
+- `nop-debugger` remains intentionally independent, matching the plan decision
+
+This file remains useful as historical audit context, but its primary execution items are already reflected in the current codebase.
 
 ## 1. 审计结论总览
 

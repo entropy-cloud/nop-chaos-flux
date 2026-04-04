@@ -1,10 +1,22 @@
 # 消除 NodeRenderer 中间 wrapper div：data-cid 下沉到 renderer 组件
 
-> Plan Status: draft
+> Plan Status: completed
 > Last Reviewed: 2026-04-04
 > Source: NodeRenderer 对 `wrap=false` 且有 `_cid` 的节点插入 `<div data-cid={cid}>`，导致无意义 DOM 中间层。应将 `cid` 传入 `ResolvedNodeMeta`，让各 renderer 组件在根元素上直接输出 `data-cid`，与 `data-testid`、`className` 模式一致。
 
 ---
+
+## Implementation Status
+
+Completed on 2026-04-04.
+
+Implemented in the current workspace:
+
+- `ResolvedNodeMeta.cid` is available to renderer components
+- `resolveNodeMeta()` resolves `_cid` into meta
+- `NodeRenderer` no longer inserts the extra wrapper div for non-wrap nodes
+- renderer roots emit `data-cid={props.meta.cid}` directly where they render DOM
+- regression coverage exists in `packages/flux-react/src/index.test.tsx`
 
 ## 1. 问题分析
 
