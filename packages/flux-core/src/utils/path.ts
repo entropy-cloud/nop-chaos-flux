@@ -1,16 +1,27 @@
 import { isPlainObject } from './object';
 
+const parsePathCache = new Map<string, string[]>();
+
 export function parsePath(path: string): string[] {
   if (!path) {
     return [];
   }
 
-  const normalized = path.replace(/\[(\d+)\]/g, '.$1');
+  const cached = parsePathCache.get(path);
 
-  return normalized
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const normalized = path.replace(/\[(\d+)\]/g, '.$1');
+  const result = normalized
     .split('.')
     .map((segment) => segment.trim())
     .filter(Boolean);
+
+  parsePathCache.set(path, result);
+
+  return result;
 }
 
 export function getIn(input: unknown, path: string): unknown {
