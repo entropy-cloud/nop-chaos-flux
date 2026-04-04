@@ -48,7 +48,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `@nop-chaos/flow-designer-core` 已落地纯内存 graph runtime，覆盖节点/边增删改查、单选、undo/redo、dirty tracking、save/restore、导出。
 - `@nop-chaos/flow-designer-renderers` 已落地 `designer-page` 宿主与 schema/runtime bridge，并通过本地 `ActionScope` 注册 `designer:*` 动作。
 - playground 已有实际示例，证明 schema-driven toolbar、schema-driven inspector、固定 host scope、保存/导出回调可以协同工作。
-- `@xyflow/react` 现在已经作为 live canvas adapter 接入，且成为默认画布；与此同时，card adapter 与 `xyflow-preview` adapter 仍保留，用于 fallback、契约验证和更聚焦的回归测试。
+- `@xyflow/react` 现在已经作为唯一受支持的画布实现接入；Flow Designer 不再为 parity、preview 或 fallback 维护第二种画布实现。
 
 ## 3. 模块拆分
 
@@ -107,7 +107,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `designer-page` 在自身 action-scope 边界内注册 `designer` namespace provider，并让 toolbar/inspector 片段沿该边界执行
 - 当前 `designer-page` 不只是在 React 树上把 toolbar/inspector 放在同一 action-scope 边界里，还会在 region render 调用时显式透传 host `scope` 与 `actionScope`，降低后续 render-path 调整时丢失 designer namespace 绑定的风险
 - `designer-page.shortcuts`，用于在宿主层把键盘事件映射到已有 `designer:*` / shared action 链
-- `card` / `xyflow-preview` / `xyflow` 三种 canvas adapter，统一经由 `DesignerCanvasContent` host 映射到 command adapter dispatch
+- 单一 `@xyflow/react` canvas bridge，经由 `DesignerCanvasContent` host 映射到 command adapter dispatch
 
 ### 3.3 `@xyflow/react` 适配边界
 
@@ -345,25 +345,17 @@ interface DesignerPageSchema {
 
 当前 playground 里的键盘快捷键也保持在宿主 schema 层定义，通过 `designer-page.shortcuts` 把 `Ctrl/Cmd+Z`、`Ctrl/Cmd+Y`、`Ctrl/Cmd+C`、`Ctrl/Cmd+V` 和 `Delete` 映射到现有 action；renderer 只负责监听并分发，core 不直接感知具体按键策略。
 
-当前卡片式 canvas 还额外实现了 hover-driven quick-action shell：节点和边的 Edit / Duplicate / Delete 只是在 renderer 层按 hover 或 active 状态显隐，真正的删除、复制、选中仍然走既有 command/action 边界。
+当前画布 shell 还额外实现了 hover-driven quick-action shell：节点和边的 Edit / Duplicate / Delete 只是在 renderer 层按 hover 或 active 状态显隐，真正的删除、复制、选中仍然走既有 command/action 边界。
 
 当前 `designer-page` 还内建了窄屏 inspector fallback：当视口收窄到移动布局时，右侧 inspector 不再强依赖三栏布局，而是折叠为位于 canvas 下方的可展开面板；选择节点或边时会自动展开，但 inspector schema、nodeTypes/edgeTypes 的 `inspector.body` 契约保持不变。
 
 当前 playground 还补上了轻量 viewport controls parity：renderer shell 暴露 Zoom in / Zoom out / Fit view 控件与快捷键，底层仍然通过 core command 修改 `GraphDocument.viewport`，用来证明缩放和视口摘要也可以沿用同一条 command/history/action 边界，而不是做成独立页面局部状态。
 
-当前 card/list canvas 也加入了 minimap-style overview shell：它仍然不是最终 `@xyflow/react` minimap 适配器，而是 renderer 层基于节点坐标生成的轻量概览图，用于验证 overview UI、节点空间分布摘要以及“从概览选择节点”这类交互同样可以复用既有 selection/inspector 边界。
-
 当前 edge list 与 export shell 也开始更接近 legacy parity：edge row 不再只显示 label 和 source/target，而是额外暴露 condition 摘要与 line-style badge；playground 的 latest export 面板则会从导出的 JSON 中解析节点数、边数、line styles 和 viewport zoom，帮助验证 inspector 改动是否如预期反映到导出结构。
-
-当前 card/list canvas 还补上了一个轻量 connection mode shell：用户可以先从节点 quick action 或 footer 进入“Start connection”，再点击第二个节点完成 `addEdge`，从而在真正接入 `@xyflow/react` handles 前，先验证“连接 affordance 只是 renderer 事件桥接，真正的连线 mutation 仍走 core command/history 边界”。
 
 当前 playground toolbar 也继续朝 document-level flow actions 补齐：像 `Clear Selection` 这类动作仍然保持 schema-driven，由 host toolbar 直接 dispatch `designer:*` action，而不是把这类页面命令硬编码进共享 runtime UI。
 
-当前 card/list canvas 也开始显式模拟 pane-click 语义：点击空白 canvas surface 会退出 connection mode 并清空 selection，用来先验证未来 `@xyflow/react` pane click 到 `clearSelection` 的桥接契约。
-
-当前 renderer 内部也开始把 card/list MVP 视图提炼成单独 canvas adapter 组件，先把现有 shell 交互从 page shell 中拆出去，为后续替换成真正的 `@xyflow/react` adapter 做边界收敛。
-
-当前 `designer-page` 也开始显式接受 `canvasAdapter` 选择，renderer 内部已经可以在同一套 host scope / core command 契约上切换 card adapter 与 xyflow-preview adapter，用来先固定 callback/selection/connect 语义，再落真正的 `@xyflow/react` 依赖。
+当前 Flow Designer 只支持 live `@xyflow/react` 画布。overview、pane click、connect/reconnect、viewport sync 等交互都应沿同一条 command/history/action 边界归一化；`canvas-bridge` 现在只表示 React Flow 集成边界，不再代表多画布实现或 `canvasAdapter` 公开配置。
 
 ### 10.1 事务与历史边界
 
@@ -514,4 +506,3 @@ Flow Designer 需要统一的事务边界，即使历史底层实现最终同时
 4. 接入 fixed scope 和 `designer:*` action
 5. 用 schema 片段跑通 inspector / create dialog
 6. 最后补齐 preset、layout、导出、验证
-

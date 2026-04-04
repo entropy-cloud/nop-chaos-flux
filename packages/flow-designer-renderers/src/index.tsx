@@ -14,7 +14,6 @@ export { DesignerFieldRenderer } from './designer-field';
 export {
   DesignerXyflowCanvasBridge,
   renderDesignerCanvasBridge,
-  type DesignerCanvasAdapterKind,
   type DesignerCanvasBridgeProps
 } from './canvas-bridge';
 export {

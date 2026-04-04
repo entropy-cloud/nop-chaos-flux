@@ -1,6 +1,5 @@
 {
   "type": "designer-page",
-  "canvasAdapter": "xyflow",
   "document": {
     "id": "flow-101",
     "kind": "workflow",
@@ -763,4 +762,3 @@
     }
   }
 }
-

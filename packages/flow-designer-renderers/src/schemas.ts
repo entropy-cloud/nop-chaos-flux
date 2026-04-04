@@ -1,9 +1,7 @@
 import type { BaseSchema } from '@nop-chaos/flux-core';
-import type { DesignerCanvasAdapterKind } from './canvas-bridge';
 
 export interface DesignerPageSchema extends BaseSchema {
   type: 'designer-page';
-  canvasAdapter?: DesignerCanvasAdapterKind;
 }
 
 export interface DesignerFieldSchema extends BaseSchema {

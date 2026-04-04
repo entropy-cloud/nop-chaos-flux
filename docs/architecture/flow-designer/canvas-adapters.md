@@ -1,21 +1,20 @@
-# Flow Designer Canvas Adapters
+# Flow Designer React Flow Canvas Integration
 
 ## Purpose
 
-This document explains how `flow-designer2` models canvas rendering as adapter variants that all reuse one host-owned command boundary.
+This document explains how Flow Designer integrates `@xyflow/react` behind one host-owned command boundary.
 
 Use it when changing:
 
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
-- `packages/flow-designer-renderers/src/index.tsx`
-- `designer-page.canvasAdapter` behavior
+- `packages/flow-designer-renderers/src/designer-xyflow-canvas/`
 - live `@xyflow/react` callback translation
 
 ## Core Model
 
-Flow Designer does not let each canvas implementation mutate graph state directly.
+Flow Designer does not let the canvas layer mutate graph state directly.
 
-Instead, every canvas adapter sits behind the same bridge contract:
+Instead, the React Flow integration sits behind the same host-owned bridge contract:
 
 ```ts
 interface DesignerCanvasBridgeProps {
@@ -39,54 +38,24 @@ interface DesignerCanvasBridgeProps {
 }
 ```
 
-The host keeps graph mutation ownership. Adapters only translate UI gestures into these callbacks.
+The host keeps graph mutation ownership. The React Flow layer only translates UI gestures into these callbacks.
 
-## Adapter Kinds
+## Single Supported Implementation
 
-Current adapter union:
+- The current public architecture baseline supports only `@xyflow/react` (React Flow).
+- There is no supported `designer-page.canvasAdapter` selection in the active design baseline.
+- If code still keeps names such as `canvas-bridge` or a single-value kind like `'xyflow'`, treat those as implementation details of the React Flow boundary, not as a promise of multiple canvas implementations.
 
-```ts
-type DesignerCanvasAdapterKind = 'card' | 'xyflow-preview' | 'xyflow'
-```
-
-### `card`
-
-- Legacy parity harness rendered as cards and SVG edges.
-- Useful for focused regression tests and fallback behavior.
-- Still follows the same callback contract as the newer adapters.
-
-### `xyflow-preview`
-
-- Contract rehearsal layer, not a real graph canvas.
-- Exposes explicit buttons for selection, connect, reconnect, move, and viewport sync.
-- Useful for locking behavior before depending on live `@xyflow/react` event details.
-
-### `xyflow`
-
-- Real `@xyflow/react` integration.
-- Controlled by host snapshot and translated back into shared callbacks.
-- This is now the default adapter when `designer-page` does not specify `canvasAdapter`.
-
-## Default Behavior
-
-`designer-page` and `designer-canvas` now default to `xyflow`.
-
-That means:
-
-- omitted `canvasAdapter` -> live `xyflow`
-- explicit `canvasAdapter: 'card'` -> fallback parity canvas
-- explicit `canvasAdapter: 'xyflow-preview'` -> contract preview harness
-
-The default should only change when the live adapter is considered the most representative host experience.
+This is a deliberate product choice: Flow Designer only needs one real canvas implementation, and that implementation is React Flow.
 
 ## Host Responsibilities
 
-The adapter host lives in `DesignerCanvasContent` inside `packages/flow-designer-renderers/src/index.tsx`.
+The bridge host lives in `DesignerCanvasContent`.
 
 Its responsibilities are:
 
 - own transient UI intent such as `pendingConnectionSourceId` and `reconnectingEdgeId`
-- map bridge callbacks onto adapter-backed `dispatch(...)` calls
+- map bridge callbacks onto React Flow-backed `dispatch(...)` calls
 - keep warning visibility centralized through shared command failure handling
 - decide when transient intent clears after success or remains after failure
 
@@ -107,15 +76,11 @@ the host keeps the pending connection or reconnect intent active.
 
 This rule exists so users can immediately retry another target or cancel, instead of losing the gesture context after a rejected command.
 
-This behavior must remain consistent across:
-
-- `card`
-- `xyflow-preview`
-- `xyflow`
+This behavior must remain consistent across all React Flow entry points in the renderer shell.
 
 ## Live Xyflow Translation Rules
 
-The live `xyflow` adapter translates library callbacks back into the host contract.
+The React Flow integration translates library callbacks back into the host contract.
 
 Key mappings:
 
@@ -129,21 +94,19 @@ Key mappings:
 - `onEdgesChange(remove)` -> `onDeleteEdge`
 - `onMove` and `onMoveEnd` -> normalized `onViewportChange`
 
-The adapter may keep UI-library-local transient state such as controlled viewport bookkeeping, but document updates still belong to the host command path.
+The React Flow layer may keep UI-library-local transient state such as controlled viewport bookkeeping, but document updates still belong to the host command path.
 
-For live `xyflow`, reconnect completion must carry both the edge id and the source/target pair produced by the library callback, because reconnect gestures are allowed to move either side of the edge instead of assuming the original source is unchanged.
+Reconnect completion must carry both the edge id and the source/target pair produced by the library callback, because reconnect gestures are allowed to move either side of the edge instead of assuming the original source is unchanged.
 
 ## Testing Expectations
 
-When changing adapter behavior, keep coverage in at least these places:
+When changing React Flow bridge behavior, keep coverage in at least these places:
 
 - `packages/flow-designer-renderers/src/canvas-bridge.test.tsx`
 - `packages/flow-designer-renderers/src/index.test.tsx`
 
 Minimum regression areas:
 
-- default adapter selection
-- explicit adapter switching
 - connect and reconnect success translation
 - warning visibility on semantic failures
 - failure-intent retention after rejected connect or reconnect commands
@@ -153,6 +116,6 @@ Minimum regression areas:
 ## Code Anchors
 
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
-- `packages/flow-designer-renderers/src/index.tsx`
+- `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
 - `packages/flow-designer-renderers/src/canvas-bridge.test.tsx`
 - `packages/flow-designer-renderers/src/index.test.tsx`

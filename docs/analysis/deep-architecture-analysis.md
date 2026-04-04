@@ -300,10 +300,9 @@ designer-page (根节点)
 - 连接校验 (port-level role matching)
 - 事务边界 (批量操作合并为一条历史)
 
-**Canvas Adapter 三层架构**:
-- `card` → parity/fallback harness
-- `xyflow-preview` → callback contract rehearsal
-- `xyflow` (live) → 默认画布，基于 @xyflow/react
+**Canvas Integration（单实现）**:
+- 当前公开基线只支持 `@xyflow/react`（React Flow）一种画布实现
+- `canvas-bridge` 表示 React Flow 集成边界，不再表示多画布实现切换点
 
 **Command Adapter 模式**:
 ```
@@ -315,7 +314,7 @@ UI 手势 (拖拽/点击/连线)
   → DesignerCommandResult { ok, snapshot, error, reason }
 ```
 
-**分析**: 三层 adapter 设计非常务实。card adapter 用于快速验证契约，xyflow-preview 用于回调排练，live xyflow 用于生产。三者复用同一套 command bridge，避免了双写问题。Command adapter 在调用 core 之前进行语义验证，返回结构化错误 (reason: 'duplicate-edge' | 'self-loop' | 'missing-node')，UI 可在失败时保留临时意图状态。
+**分析**: 单一 React Flow 集成更符合当前产品边界。它仍然复用同一套 command bridge，避免双写问题。Command adapter 在调用 core 之前进行语义验证，返回结构化错误 (`reason: 'duplicate-edge' | 'self-loop' | 'missing-node'`)，UI 可在失败时保留临时意图状态，但架构层不再承诺第二种或第三种画布实现。
 
 **Schema 片段嵌入**:
 ```typescript
@@ -378,7 +377,7 @@ Spreadsheet Editor (可独立使用)
 |------|------|------|
 | **Domain Core 独立** | 纯逻辑，无 React/SchemaRenderer 依赖 | flow-designer-core, spreadsheet-core, report-designer-core |
 | **Renderer Bridge** | 将 core 接入 SchemaRenderer | flow-designer-renderers, spreadsheet-renderers, report-designer-renderers |
-| **Canvas Adapter** | UI 手势 → command 归一化 | card/xyflow/preview adapters |
+| **Canvas Integration** | UI 手势 → command 归一化 | React Flow callbacks |
 | **Schema Fragment 嵌入** | body: SchemaInput 驱动渲染 | nodeTypes.body, inspector.body, createDialog.body |
 | **ActionScope 命名空间隔离** | 局部 action-scope 边界注册命名空间 | designer:*, spreadsheet:*, report-designer:* |
 | **Command Adapter 验证** | 语义验证后再调用 core | 自环/重复边/节点存在性检查 |

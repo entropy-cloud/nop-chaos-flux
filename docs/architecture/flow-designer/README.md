@@ -24,7 +24,7 @@
 - `packages/flow-designer-core/` 已提供最小可运行的 graph runtime：`GraphDocument`、`GraphNode`、`GraphEdge`、`DesignerConfig`、single-selection、undo/redo、dirty tracking、save/restore、导出 JSON。
 - `packages/flow-designer-renderers/` 已提供 `designer-page`、`designer-field`、基础占位 renderer 注册，并通过 `designer-page` 自身的 `ActionScope` 边界接入 `designer:*` 动作。
 - `apps/playground/src/App.tsx` 已提供一个可运行的 playground 集成入口，当前仓库里保留的直连 React 示例仍在 `apps/playground/src/FlowDesignerExample.tsx`，而 schema/runtime 集成路径以 `designer-page` renderer 为主。
-- 当前 canvas 已形成三层 adapter：`card` 作为 parity/fallback harness、`xyflow-preview` 作为 callback contract rehearsal、live `xyflow` 作为默认真实画布；三者都复用同一套 host-owned command bridge，而不是各自持有第二份 graph mutation 状态。
+- 当前画布只支持 live `@xyflow/react`（React Flow），并复用同一套 host-owned command bridge，而不是在多种画布实现之间切换。
 
 ## 文档
 
@@ -33,7 +33,7 @@
 - `docs/architecture/flow-designer/api.md` - 包 API、宿主 scope、designer actions、扩展点
 - `docs/architecture/flow-designer/runtime-snapshot.md` - 当前 `DesignerSnapshot`、`DesignerContextValue`、host scope 落地现状，以及“已接线字段”与“设计目标字段”的区别
 - `docs/architecture/flow-designer/collaboration.md` - `designer-page`、ActionScope、command adapter、canvas host、inspector 之间的协作链路与调用链图
-- `docs/architecture/flow-designer/canvas-adapters.md` - `card` / `xyflow-preview` / `xyflow` 画布分层、默认策略、失败语义、回调翻译边界
+- `docs/architecture/flow-designer/canvas-adapters.md` - 当前唯一的 React Flow 画布边界、失败语义、回调翻译边界
 - `docs/analysis/flow-designer-documentation-review.md` - 对早期改进意见的复核结论与已采纳约束
 
 ## 设计原则

@@ -60,7 +60,7 @@ export function DesignerCanvasContent() {
     [dispatch]
   );
 
-  return renderDesignerCanvasBridge('xyflow', {
+  return renderDesignerCanvasBridge({
     snapshot,
     canvasConfig: config.canvas,
     nodeTypeSizeMap,

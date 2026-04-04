@@ -8,7 +8,7 @@
 
 - 想快速看懂 `designer-page` 从挂载到可交互的完整链路
 - 想定位 toolbar / inspector / canvas 为什么都能复用同一套 runtime
-- 想确认 graph mutation、SchemaRenderer runtime、canvas adapter 之间的职责边界
+- 想确认 graph mutation、SchemaRenderer runtime、React Flow canvas 集成之间的职责边界
 
 ## Current Code Anchors
 
@@ -28,7 +28,7 @@
 Flow Designer 不是独立页面引擎，而是把图编辑能力拆成两层后挂到现有 `SchemaRenderer` 体系上:
 
 1. `@nop-chaos/flow-designer-core` 持有 graph document 和 graph command
-2. `@nop-chaos/flow-designer-renderers` 把 graph 能力接到 SchemaRenderer 的 region、scope、action、dialog、form、canvas adapter 上
+2. `@nop-chaos/flow-designer-renderers` 把 graph 能力接到 SchemaRenderer 的 region、scope、action、dialog、form、React Flow canvas 集成上
 
 可以把当前实现理解成:
 
@@ -83,9 +83,9 @@ Flow Designer 复用这层，而不是重新做一套页面状态机。
 - 注册 `designer` namespace provider
 - 把 UI 手势翻译成 command
 
-### 4. Canvas adapter 层
+### 4. Canvas integration 层
 
-这层由 `card` / `xyflow-preview` / `xyflow` 三种 adapter 组成。
+这层当前只由 `@xyflow/react` 一个受支持实现组成。
 
 它只负责:
 
@@ -101,13 +101,13 @@ Flow Designer 复用这层，而不是重新做一套页面状态机。
 | `flux-runtime` / `flux-react` | page, form, scope, dialog, action scope | 否 | 是 | `createRendererRuntime()`, `RenderNodes` |
 | `flow-designer-core` | document, selection, history, viewport, grid | 是 | 否 | `createDesignerCore()` |
 | `flow-designer-renderers` | bridge host local intent | 间接 | 是 | `DesignerPageRenderer` |
-| canvas adapters | UI library local transient state | 否 | 否 | `renderDesignerCanvasBridge()` |
+| React Flow canvas integration | UI library local transient state | 否 | 否 | `renderDesignerCanvasBridge()` |
 
 当前有一个很重要的规则:
 
 - graph mutation 只能落到 `DesignerCore`
 - schema fragment 只能读 snapshot 和发命令
-- canvas adapter 只能翻译 UI 手势
+- React Flow 适配层只能翻译 UI 手势
 
 ## 挂载协作链路
 
@@ -174,7 +174,7 @@ packages/flow-designer-renderers/src/index.tsx
   -> DesignerCanvasContent
 
 packages/flow-designer-renderers/src/canvas-bridge.tsx
-  -> card / xyflow-preview / xyflow callbacks
+  -> @xyflow/react callbacks
 
 packages/flow-designer-renderers/src/designer-command-adapter.ts
   -> normalize command result / validation failure / unchanged semantics
@@ -469,4 +469,3 @@ playground registry setup
 - `docs/architecture/flow-designer/canvas-adapters.md`
 - `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
-

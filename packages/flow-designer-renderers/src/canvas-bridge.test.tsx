@@ -190,6 +190,8 @@ function createSnapshot(): DesignerSnapshot {
     canRedo: false,
     isDirty: false,
     gridEnabled: true,
+    paletteCollapsed: false,
+    inspectorCollapsed: false,
     viewport: { x: 0, y: 0, zoom: 1 }
   };
 }
@@ -279,7 +281,7 @@ describe('DesignerXyflowCanvasBridge', () => {
 
 describe('renderDesignerCanvasBridge', () => {
   it('renders xyflow bridge by default', () => {
-    const result = renderDesignerCanvasBridge('xyflow', {
+    const result = renderDesignerCanvasBridge({
       snapshot: createSnapshot(),
       pendingConnectionSourceId: null,
       reconnectingEdgeId: null,

@@ -33,12 +33,8 @@ vi.mock('./canvas-bridge', async () => {
   return {
     ...actual,
     DesignerXyflowCanvasBridge: MockXyflowBridge,
-    renderDesignerCanvasBridge(kind: string, props: any) {
-      if (kind === 'xyflow') {
-        return <MockXyflowBridge {...props} />;
-      }
-
-      return actual.renderDesignerCanvasBridge(kind as any, props);
+    renderDesignerCanvasBridge(props: any) {
+      return <MockXyflowBridge {...props} />;
     }
   };
 });
@@ -53,11 +49,13 @@ function createTestConfig(): DesignerConfig {
       {
         id: 'task',
         label: 'Task',
+        body: { type: 'text', text: 'Task' },
         defaults: { label: 'Task' }
       },
       {
         id: 'end',
         label: 'End',
+        body: { type: 'text', text: 'End' },
         defaults: { label: 'End' }
       }
     ],
@@ -82,7 +80,7 @@ function renderDesignerPage(document: GraphDocument, notify = vi.fn()) {
 
   const view = render(
     <SchemaRenderer
-      schema={{ type: 'designer-page', document, config: createTestConfig(), canvasAdapter: 'xyflow' } as any}
+      schema={{ type: 'designer-page', document, config: createTestConfig() } as any}
       env={createRendererEnv(notify)}
       formulaCompiler={createFormulaCompiler()}
     />
