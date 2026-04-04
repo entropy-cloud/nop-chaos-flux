@@ -84,7 +84,7 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="el" className="mb-4">
+          <TabsContent value={exprType} className="mb-4">
             {exprType === 'el' ? (
               <Textarea
                 value={expression}
