@@ -47,6 +47,14 @@ export interface SpreadsheetToolbarProps {
   cellValue: string;
   frozen: boolean;
   hasSelection: boolean;
+  currentCellStyle?: {
+    fontWeight?: string;
+    fontStyle?: string;
+    textDecoration?: string;
+    textAlign?: string;
+    backgroundColor?: string;
+    fontColor?: string;
+  };
   onUndo: () => void;
   onRedo: () => void;
   onCopy: () => void;
@@ -91,6 +99,7 @@ export function SpreadsheetToolbar({
   cellValue,
   frozen,
   hasSelection,
+  currentCellStyle,
   onUndo,
   onRedo,
   onCopy,
@@ -128,6 +137,11 @@ export function SpreadsheetToolbar({
   onDeleteComment,
   hasComment,
 }: SpreadsheetToolbarProps) {
+  const isBold = currentCellStyle?.fontWeight === 'bold';
+  const isItalic = currentCellStyle?.fontStyle === 'italic';
+  const isUnderline = currentCellStyle?.textDecoration === 'underline';
+  const textAlign = currentCellStyle?.textAlign ?? 'left';
+
   return (
     <>
         <div className="rd-toolbar">
@@ -144,15 +158,15 @@ export function SpreadsheetToolbar({
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('bold')} disabled={!hasSelection}><Bold /></Button></TooltipTrigger><TooltipContent>Bold <kbd>Ctrl+B</kbd></TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('italic')} disabled={!hasSelection}><Italic /></Button></TooltipTrigger><TooltipContent>Italic <kbd>Ctrl+I</kbd></TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('underline')} disabled={!hasSelection}><Underline /></Button></TooltipTrigger><TooltipContent>Underline <kbd>Ctrl+U</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant={isBold ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('bold')} disabled={!hasSelection} data-toolbar-active={isBold || undefined}><Bold /></Button></TooltipTrigger><TooltipContent>Bold <kbd>Ctrl+B</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant={isItalic ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('italic')} disabled={!hasSelection} data-toolbar-active={isItalic || undefined}><Italic /></Button></TooltipTrigger><TooltipContent>Italic <kbd>Ctrl+I</kbd></TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant={isUnderline ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('underline')} disabled={!hasSelection} data-toolbar-active={isUnderline || undefined}><Underline /></Button></TooltipTrigger><TooltipContent>Underline <kbd>Ctrl+U</kbd></TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('align-left')} disabled={!hasSelection}><AlignLeft /></Button></TooltipTrigger><TooltipContent>Align Left</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('align-center')} disabled={!hasSelection}><AlignCenter /></Button></TooltipTrigger><TooltipContent>Align Center</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onStyleTool('align-right')} disabled={!hasSelection}><AlignRight /></Button></TooltipTrigger><TooltipContent>Align Right</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant={textAlign === 'left' ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('align-left')} disabled={!hasSelection} data-toolbar-active={textAlign === 'left' || undefined}><AlignLeft /></Button></TooltipTrigger><TooltipContent>Align Left</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant={textAlign === 'center' ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('align-center')} disabled={!hasSelection} data-toolbar-active={textAlign === 'center' || undefined}><AlignCenter /></Button></TooltipTrigger><TooltipContent>Align Center</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger ><Button variant={textAlign === 'right' ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('align-right')} disabled={!hasSelection} data-toolbar-active={textAlign === 'right' || undefined}><AlignRight /></Button></TooltipTrigger><TooltipContent>Align Right</TooltipContent></Tooltip>
           </div>
           <span className="rd-toolbar-separator" />
           <div className="rd-toolbar-group">
