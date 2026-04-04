@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@hufe921/canvas-editor": "^0.9.130",
+    "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@nop-chaos/word-editor-core": "workspace:*",
     "@types/use-sync-external-store": "^1.5.0",

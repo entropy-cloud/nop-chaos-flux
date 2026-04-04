@@ -589,6 +589,9 @@ importers:
       '@hufe921/canvas-editor':
         specifier: ^0.9.130
         version: 0.9.130
+      '@nop-chaos/flux-react':
+        specifier: workspace:*
+        version: link:../flux-react
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui

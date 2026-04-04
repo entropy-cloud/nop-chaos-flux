@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, useCallback } from 'react'
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
 import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react'
-import { CanvasEditorBridge, createDatasetStore, createEditorStore, saveDocument, loadDocument } from '@nop-chaos/word-editor-core'
+import { CanvasEditorBridge, createDatasetStore, createEditorStore, saveDocument, loadDocument, saveDatasets, loadDatasets } from '@nop-chaos/word-editor-core'
 import type { DataSetSourceType, DataColumnInput, DataSet, DocChart, DocCode } from '@nop-chaos/word-editor-core'
 import {
   Button,
@@ -9,8 +9,8 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-  cn
 } from '@nop-chaos/ui'
+import { WorkbenchShell } from '@nop-chaos/flux-react'
 import { EditorCanvas } from './EditorCanvas.js'
 import { RibbonToolbar } from './toolbar/RibbonToolbar.js'
 import { OutlinePanel } from './panels/OutlinePanel.js'
@@ -31,6 +31,8 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
   const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets')
   const [datasetDialogOpen, setDatasetDialogOpen] = useState(false)
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null)
+  const [leftCollapsed, setLeftCollapsed] = useState(false)
+  const [rightCollapsed, setRightCollapsed] = useState(false)
 
   const isDirty = useSyncExternalStoreWithSelector(
     editorStore.subscribe,
@@ -51,18 +53,28 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
     if (savedDocument) {
       console.log('Loaded saved document:', savedDocument.savedAt)
     }
-  }, [])
+    const savedDatasets = loadDatasets()
+    if (savedDatasets.length > 0) {
+      datasetStore.load(savedDatasets)
+    }
+  }, [datasetStore])
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     const success = saveDocument(bridge)
     if (success) {
+      saveDatasets(datasetStore.getAll())
       editorStore.setDirty(false)
-      setSaveMessage('Document saved')
+      setSaveMessage('Saved')
       setTimeout(() => setSaveMessage(null), 2000)
     }
-  }
+  }, [bridge, datasetStore, editorStore])
 
   useWordEditorShortcuts({ bridge, onSave: handleSave })
+
+  const handleBack = useCallback(() => {
+    if (isDirty && !window.confirm('You have unsaved changes. Leave without saving?')) return
+    onBack()
+  }, [isDirty, onBack])
 
   const handleAddDataset = () => {
     setEditingDatasetId(null)
@@ -126,15 +138,15 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
     ? datasetStore.getState().datasets.find(ds => ds.id === editingDatasetId)
     : null
 
-  return (
-    <main className="flex flex-col h-screen bg-[var(--nop-app-bg)] overflow-hidden">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[var(--nop-border)] bg-[var(--nop-nav-surface)] shrink-0">
+  const headerSlot = (
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-[var(--nop-nav-surface)]">
         <div className="flex items-center gap-3">
           <Button
             type="button"
             variant="outline"
             size="icon-sm"
-            onClick={onBack}
+            onClick={handleBack}
             title="Back"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -158,78 +170,90 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
           <Save className="w-4 h-4" />
           {saveMessage || 'Save'}
         </Button>
-      </header>
-
-      <div className="shrink-0">
-        <RibbonToolbar bridge={bridge} store={editorStore} onInsertExpr={handleInsertExpr} onInsertTag={handleInsertTag} onChartSave={handleChartSave} onCodeSave={handleCodeSave} />
       </div>
+      <RibbonToolbar bridge={bridge} store={editorStore} onInsertExpr={handleInsertExpr} onInsertTag={handleInsertTag} onChartSave={handleChartSave} onCodeSave={handleCodeSave} />
+    </div>
+  )
 
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        <aside className="w-[280px] border-r border-[var(--nop-border)] bg-[var(--nop-surface)] flex flex-col overflow-hidden">
-          <Tabs data-orientation="horizontal" className="flex-col gap-0 h-full">
-            <TabsList variant="line" className="w-full rounded-none border-b border-[var(--nop-border)] px-0 shrink-0">
-              <TabsTrigger
-                value="datasets"
-                data-state={activePanel === 'datasets' ? 'active' : 'inactive'}
-                onClick={() => setActivePanel('datasets')}
-                className={cn('flex-1 py-2.5')}
-              >
-                <Database className="w-3.5 h-3.5" />
-                <span>Datasets</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="fields"
-                data-state={activePanel === 'fields' ? 'active' : 'inactive'}
-                onClick={() => setActivePanel('fields')}
-                className={cn('flex-1 py-2.5')}
-              >
-                <Columns className="w-3.5 h-3.5" />
-                <span>Fields</span>
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value={activePanel} className="flex-1 min-h-0 overflow-hidden">
-              {activePanel === 'datasets' ? (
-                <DatasetPanel
-                  store={datasetStore}
-                  onAddDataset={handleAddDataset}
-                  onEditDataset={handleEditDataset}
-                />
-              ) : (
-                <FieldList
-                  store={datasetStore}
-                  onFieldClick={handleFieldClick}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
-        </aside>
+  const leftPanelSlot = (
+    <Tabs data-orientation="horizontal" className="flex-col gap-0 h-full">
+      <TabsList variant="line" className="w-full rounded-none border-b border-border px-0 shrink-0">
+        <TabsTrigger
+          value="datasets"
+          data-state={activePanel === 'datasets' ? 'active' : 'inactive'}
+          onClick={() => setActivePanel('datasets')}
+          className="flex-1 py-2.5"
+        >
+          <Database className="w-3.5 h-3.5" />
+          <span>Datasets</span>
+        </TabsTrigger>
+        <TabsTrigger
+          value="fields"
+          data-state={activePanel === 'fields' ? 'active' : 'inactive'}
+          onClick={() => setActivePanel('fields')}
+          className="flex-1 py-2.5"
+        >
+          <Columns className="w-3.5 h-3.5" />
+          <span>Fields</span>
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value={activePanel} className="flex-1 min-h-0 overflow-hidden">
+        {activePanel === 'datasets' ? (
+          <DatasetPanel
+            store={datasetStore}
+            onAddDataset={handleAddDataset}
+            onEditDataset={handleEditDataset}
+          />
+        ) : (
+          <FieldList
+            store={datasetStore}
+            onFieldClick={handleFieldClick}
+          />
+        )}
+      </TabsContent>
+    </Tabs>
+  )
 
-        <section className="flex-1 min-w-0 bg-[var(--nop-playground-stage-bg)] overflow-auto">
-          <EditorCanvas editorStore={editorStore} bridge={bridge} />
-        </section>
+  const canvasSlot = (
+    <div className="flex flex-col h-full min-h-0 overflow-auto bg-[var(--nop-playground-stage-bg)]">
+      <EditorCanvas editorStore={editorStore} bridge={bridge} />
+    </div>
+  )
 
-        <aside className="w-[280px] border-l border-[var(--nop-border)] bg-[var(--nop-surface)] overflow-y-auto">
-          <OutlinePanel bridge={bridge} />
-        </aside>
-      </div>
-
-      <DatasetDialog
-        key={`${editingDatasetId ?? 'new'}:${datasetDialogOpen ? 'open' : 'closed'}`}
-        open={datasetDialogOpen}
-        onClose={() => { setDatasetDialogOpen(false); setEditingDatasetId(null) }}
-        onSave={handleSaveDataset}
-        initialData={editingDataset ? {
-          name: editingDataset.name,
-          description: editingDataset.description,
-          type: editingDataset.type,
-          columns: editingDataset.columns.map(col => ({
-            name: col.name,
-            label: col.label,
-            description: col.description,
-            type: col.type
-          }))
-        } : null}
+  return (
+    <div className="nop-word-editor h-screen overflow-hidden bg-[var(--nop-app-bg)]">
+      <WorkbenchShell
+        style={{ padding: 0 }}
+        header={headerSlot}
+        leftPanel={leftPanelSlot}
+        leftCollapsed={leftCollapsed}
+        onLeftToggle={() => setLeftCollapsed(v => !v)}
+        leftLabel="Expand field panel"
+        canvas={canvasSlot}
+        rightPanel={<OutlinePanel bridge={bridge} />}
+        rightCollapsed={rightCollapsed}
+        onRightToggle={() => setRightCollapsed(v => !v)}
+        rightLabel="Expand outline"
+        dialogs={
+          <DatasetDialog
+            key={`${editingDatasetId ?? 'new'}:${datasetDialogOpen ? 'open' : 'closed'}`}
+            open={datasetDialogOpen}
+            onClose={() => { setDatasetDialogOpen(false); setEditingDatasetId(null) }}
+            onSave={handleSaveDataset}
+            initialData={editingDataset ? {
+              name: editingDataset.name,
+              description: editingDataset.description,
+              type: editingDataset.type,
+              columns: editingDataset.columns.map(col => ({
+                name: col.name,
+                label: col.label,
+                description: col.description,
+                type: col.type
+              }))
+            } : null}
+          />
+        }
       />
-    </main>
+    </div>
   )
 }
