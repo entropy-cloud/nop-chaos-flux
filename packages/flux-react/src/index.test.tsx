@@ -25,7 +25,7 @@ import {
 } from './index';
 import { FieldFrame } from './field-frame';
 import { EMPTY_FORM_STORE_STATE } from './form-state';
-import { resolveFrameWrapMode } from './node-renderer';
+import { resolveFrameWrapMode } from './node-renderer-utils';
 
 const env: RendererEnv = {
   fetcher: async function <T>() {

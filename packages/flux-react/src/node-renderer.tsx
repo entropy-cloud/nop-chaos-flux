@@ -10,11 +10,9 @@ import type {
   RendererComponentProps,
   ResolvedNodeMeta,
   ResolvedNodeProps,
-  ScopeRef,
-  XuiImportSpec
+  ScopeRef
 } from '@nop-chaos/flux-core';
 import { mergeClassAliases, resolveClassAliases } from '@nop-chaos/flux-core';
-import { createFormComponentHandle } from '@nop-chaos/flux-runtime';
 import {
   ActionScopeContext,
   ClassAliasesContext,
@@ -28,44 +26,19 @@ import { useRendererRuntime } from './hooks';
 import { createHelpers } from './helpers';
 import { RenderNodes } from './render-nodes';
 import { FieldFrame } from './field-frame';
+import {
+  getNodeClassAliases,
+  getNodeImports,
+  getNodeSchemaFrameWrap,
+  resolveFrameWrapMode
+} from './node-renderer-utils';
 import { useNodeForm } from './useNodeForm';
 import { useNodeScopes } from './useNodeScopes';
+import { useNodeImports } from './useNodeImports';
+import { useFormComponentHandleRegistration } from './useFormComponentHandleRegistration';
+import { useNodeDebugData } from './useNodeDebugData';
 
-export function resolveFrameWrapMode(
-  definitionWrap: boolean | undefined,
-  schemaFrameWrap: boolean | 'label' | 'group' | 'none' | undefined
-): 'label' | 'group' | 'none' {
-  if (!definitionWrap) {
-    return 'none';
-  }
-
-  if (schemaFrameWrap === false || schemaFrameWrap === 'none') {
-    return 'none';
-  }
-
-  if (schemaFrameWrap === 'group') {
-    return 'group';
-  }
-
-  return 'label';
-}
-
-function getNodeImports(node: CompiledSchemaNode): readonly XuiImportSpec[] | undefined {
-  return 'xui:imports' in node.schema
-    ? ((node.schema as { 'xui:imports'?: readonly XuiImportSpec[] })['xui:imports'])
-    : undefined;
-}
-
-function shouldWarnOnImportFailure(): boolean {
-  const nodeEnv = 'process' in globalThis
-    ? (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV
-    : undefined;
-  return nodeEnv !== 'production';
-}
-
-function isReportedImportError(error: unknown): boolean {
-  return error instanceof Error && Boolean((error as Error & { __fluxImportReported?: boolean }).__fluxImportReported);
-}
+export { resolveFrameWrapMode } from './node-renderer-utils';
 
 export const NodeRenderer = memo(function NodeRenderer(props: {
   node: CompiledSchemaNode;
@@ -76,7 +49,6 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   page?: PageRuntime;
 }) {
   const runtime = useRendererRuntime();
-  const activeImportLoader = runtime.env.importLoader;
   const parentClassAliases = useContext(ClassAliasesContext);
   const nodeState = useMemo<CompiledNodeRuntimeState>(() => props.node.createRuntimeState(), [props.node]);
 
@@ -102,7 +74,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     }
   );
 
-  const nodeClassAliases = (props.node.schema as { classAliases?: Record<string, string> }).classAliases;
+  const nodeClassAliases = getNodeClassAliases(props.node);
   const mergedClassAliases = mergeClassAliases(parentClassAliases, nodeClassAliases);
   const resolvedClassName = resolveClassAliases(meta.className, mergedClassAliases);
   const resolvedMeta = useMemo(
@@ -118,84 +90,9 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const activeScope = activeForm?.scope ?? props.scope;
   const nodeImports = getNodeImports(props.node);
 
-  useEffect(() => {
-    if (!activeForm || !activeComponentRegistry) {
-      return;
-    }
-
-    const schemaWithCid = props.node.schema as unknown as { _cid?: unknown };
-    const compiledCid = typeof schemaWithCid._cid === 'number'
-      ? schemaWithCid._cid
-      : undefined;
-    const unregister = activeComponentRegistry.register(createFormComponentHandle(activeForm), {
-      cid: compiledCid
-    });
-    return unregister;
-  }, [activeComponentRegistry, activeForm, props.node]);
-
-  useEffect(() => {
-    const cid = resolvedMeta.cid;
-
-    if (!activeComponentRegistry || typeof cid !== 'number') {
-      return;
-    }
-
-    activeComponentRegistry.setHandleDebugData?.(cid, {
-      nodeId: props.node.id,
-      path: props.node.path,
-      rendererType: props.node.type,
-      scope: activeScope,
-      resolvedMeta,
-      resolvedProps: resolvedProps.value,
-      updatedAt: Date.now()
-    });
-
-    return () => {
-      activeComponentRegistry.setHandleDebugData?.(cid, undefined);
-    };
-  }, [activeComponentRegistry, activeScope, props.node.id, props.node.path, props.node.type, resolvedMeta, resolvedProps.value]);
-
-  useEffect(() => {
-    void runtime.ensureImportedNamespaces({
-      imports: nodeImports,
-      actionScope: activeActionScope,
-      componentRegistry: activeComponentRegistry,
-      scope: activeScope,
-      node: props.node
-    }).catch((error) => {
-      if (!shouldWarnOnImportFailure()) {
-        return;
-      }
-
-      console.warn('[flux-react] Failed to ensure imported namespaces', {
-        nodeId: props.node.id,
-        path: props.node.path,
-        imports: nodeImports,
-        error
-      });
-
-      if (!isReportedImportError(error)) {
-        runtime.env.notify('error', `Imported namespaces failed for ${props.node.path}: ${error instanceof Error ? error.message : String(error)}`);
-        runtime.env.monitor?.onError?.({
-          phase: 'render',
-          error,
-          nodeId: props.node.id,
-          path: props.node.path,
-          details: {
-            reason: 'import-namespace-setup-failed',
-            imports: nodeImports ?? []
-          }
-        });
-      }
-    });
-
-    return () => {
-      runtime.releaseImportedNamespaces({
-        imports: nodeImports,
-        actionScope: activeActionScope
-      });
-    };
-  }, [runtime, activeImportLoader, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node]);
+  useFormComponentHandleRegistration(activeForm, activeComponentRegistry, props.node);
+  useNodeDebugData(activeComponentRegistry, resolvedMeta.cid, props.node, activeScope, resolvedMeta, resolvedProps.value);
+  useNodeImports(runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node);
 
   const helpers = useMemo(
     () =>
@@ -299,7 +196,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   let content = element;
   const frameWrapMode = resolveFrameWrapMode(
     props.node.component.wrap,
-    props.node.schema.frameWrap
+    getNodeSchemaFrameWrap(props.node)
   );
 
   if (frameWrapMode !== 'none') {
