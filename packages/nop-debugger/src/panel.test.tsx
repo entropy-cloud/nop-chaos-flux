@@ -234,6 +234,91 @@ describe('NopDebuggerPanel', () => {
 
     expect(screen.getByText('User login')).toBeTruthy();
     expect(screen.getByText('User logout')).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText('Search events, /regex/, or path:body.0'), {
+      target: { value: 'login' }
+    });
+
+    expect(screen.getByText('User login')).toBeTruthy();
+    expect(screen.queryByText('User logout')).toBeNull();
+  });
+
+  it('filters timeline events by path: query', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'timeline';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'action:start',
+        group: 'action',
+        level: 'info',
+        source: 'test',
+        summary: 'Submit body.0',
+        path: 'body.0',
+        actionType: 'submit'
+      },
+      {
+        id: 2,
+        sessionId: 'session-test',
+        timestamp: 200,
+        kind: 'action:start',
+        group: 'action',
+        level: 'info',
+        source: 'test',
+        summary: 'Submit footer.0',
+        path: 'footer.0',
+        actionType: 'submit'
+      }
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    fireEvent.change(screen.getByPlaceholderText('Search events, /regex/, or path:body.0'), {
+      target: { value: 'path:body.0' }
+    });
+
+    expect(screen.getByText('Submit body.0')).toBeTruthy();
+    expect(screen.queryByText('Submit footer.0')).toBeNull();
+  });
+
+  it('filters timeline events by regex query', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'timeline';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'notify',
+        group: 'notify',
+        level: 'info',
+        source: 'toast',
+        summary: 'Saved successfully'
+      },
+      {
+        id: 2,
+        sessionId: 'session-test',
+        timestamp: 200,
+        kind: 'notify',
+        group: 'notify',
+        level: 'info',
+        source: 'toast',
+        summary: 'Save failed'
+      }
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    fireEvent.change(screen.getByPlaceholderText('Search events, /regex/, or path:body.0'), {
+      target: { value: '/saved/i' }
+    });
+
+    expect(screen.getByText('Saved successfully')).toBeTruthy();
+    expect(screen.queryByText('Save failed')).toBeNull();
   });
 
   it('shows error badge on launcher when errors exist', () => {

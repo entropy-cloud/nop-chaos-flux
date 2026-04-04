@@ -25,6 +25,65 @@ function includesText(target: string | undefined, query: string) {
   return (target ?? '').toLowerCase().includes(query.toLowerCase());
 }
 
+function parseRegexLiteral(input: string): RegExp | null {
+  const match = /^\/(.*)\/([a-z]*)$/.exec(input.trim());
+  if (!match) {
+    return null;
+  }
+
+  try {
+    return new RegExp(match[1], match[2]);
+  } catch {
+    return null;
+  }
+}
+
+function matchesRegex(event: import('./types').NopDebugEvent, regex: RegExp): boolean {
+  return [
+    event.summary,
+    event.detail,
+    event.source,
+    event.nodeId,
+    event.path,
+    event.requestKey
+  ].some((value) => value != null && regex.test(value));
+}
+
+function matchesSearchQuery(event: import('./types').NopDebugEvent, rawQuery: string): boolean {
+  const query = rawQuery.trim();
+  if (!query) {
+    return true;
+  }
+
+  if (query.startsWith('path:')) {
+    const pathQuery = query.slice(5).trim();
+    if (!pathQuery) {
+      return true;
+    }
+
+    const pathRegex = parseRegexLiteral(pathQuery);
+    if (pathRegex) {
+      return pathRegex.test(event.path ?? '');
+    }
+
+    return includesText(event.path, pathQuery);
+  }
+
+  const regex = parseRegexLiteral(query);
+  if (regex) {
+    return matchesRegex(event, regex);
+  }
+
+  return (
+    includesText(event.summary, query) ||
+    includesText(event.detail, query) ||
+    includesText(event.source, query) ||
+    includesText(event.nodeId, query) ||
+    includesText(event.path, query) ||
+    includesText(event.requestKey, query)
+  );
+}
+
 export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const snapshot = useDebuggerSnapshot(props.controller);
   const handlePanelTap = useMemo(
@@ -75,14 +134,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
   const searchedEvents = useMemo(() => {
     if (!searchText.trim()) return filteredEvents;
-    return filteredEvents.filter((event) =>
-      includesText(event.summary, searchText) ||
-      includesText(event.detail, searchText) ||
-      includesText(event.source, searchText) ||
-      includesText(event.nodeId, searchText) ||
-      includesText(event.path, searchText) ||
-      includesText(event.requestKey, searchText)
-    );
+    return filteredEvents.filter((event) => matchesSearchQuery(event, searchText));
   }, [filteredEvents, searchText]);
 
   const networkEvents = useMemo(

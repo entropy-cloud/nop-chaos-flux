@@ -29,7 +29,13 @@ export function TimelineTab(props: {
   const { snapshot, searchText, setSearchText, errorsOnly, toggleErrorsOnly, filterLabels, toggleFilter, errorGroups, errorGroupExpanded, setErrorGroupExpanded, activeTimelineEvents, expandedId, setExpandedId } = props;
   return (
     <>
-      <input type="search" className="ndbg-search" placeholder="Search events..." value={searchText} onChange={(event) => setSearchText(event.target.value)} />
+      <input
+        type="search"
+        className="ndbg-search"
+        placeholder="Search events, /regex/, or path:body.0"
+        value={searchText}
+        onChange={(event) => setSearchText(event.target.value)}
+      />
       <div className="ndbg-filters">
         <button type="button" className={`ndbg-filter ${errorsOnly ? 'ndbg-errors-only-toggle' : ''}`} data-active={errorsOnly ? '' : undefined} onClick={toggleErrorsOnly}>
           Errors Only
