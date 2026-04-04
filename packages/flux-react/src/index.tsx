@@ -47,3 +47,5 @@ export {
   useRequiredContext
 } from './contexts';
 export { EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
+export { useBridgeSnapshot, useHostScope, useNamespaceRegistration, WorkbenchShell } from './workbench';
+export type { WorkbenchShellProps } from './workbench';
