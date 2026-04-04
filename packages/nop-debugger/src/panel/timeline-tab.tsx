@@ -1,7 +1,12 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_FILTERS } from '../diagnostics';
 import type { NopDebugEvent, NopDebuggerFilterKind, NopDebuggerSnapshot } from '../types';
 import type { ErrorGroup } from './event-groups';
 import { JsonViewer } from './json-viewer';
+
+const VIRTUALIZE_AFTER = 60;
+const VIRTUAL_ROW_HEIGHT = 96;
+const VIRTUAL_OVERSCAN = 4;
 
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -55,6 +60,78 @@ export function TimelineTab(props: {
   setExpandedId(value: number | null): void;
 }) {
   const { snapshot, searchText, setSearchText, submitSearch, searchHistory, applySearchHistory, errorsOnly, toggleErrorsOnly, filterLabels, toggleFilter, errorGroups, errorGroupExpanded, setErrorGroupExpanded, activeTimelineEvents, expandedId, setExpandedId } = props;
+  const virtualListRef = useRef<HTMLDivElement | null>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(360);
+  const virtualizationEnabled = !errorsOnly && expandedId == null && activeTimelineEvents.length > VIRTUALIZE_AFTER;
+
+  useEffect(() => {
+    if (!virtualizationEnabled) {
+      return;
+    }
+
+    const element = virtualListRef.current;
+    if (!element) {
+      return;
+    }
+
+    const measure = () => {
+      setViewportHeight(element.clientHeight || 360);
+    };
+
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [virtualizationEnabled]);
+
+  const resetKey = `${activeTimelineEvents.length}:${errorsOnly ? 'errors' : 'all'}:${searchText}:${snapshot.filters.join(',')}`;
+
+  useEffect(() => {
+    if (virtualListRef.current) {
+      virtualListRef.current.scrollTop = 0;
+    }
+  }, [resetKey]);
+
+  const virtualWindow = useMemo(() => {
+    if (!virtualizationEnabled) {
+      return null;
+    }
+
+    const startIndex = Math.max(0, Math.floor(scrollTop / VIRTUAL_ROW_HEIGHT) - VIRTUAL_OVERSCAN);
+    const visibleCount = Math.ceil(viewportHeight / VIRTUAL_ROW_HEIGHT) + VIRTUAL_OVERSCAN * 2;
+    const endIndex = Math.min(activeTimelineEvents.length, startIndex + visibleCount);
+
+    return {
+      startIndex,
+      endIndex,
+      offsetTop: startIndex * VIRTUAL_ROW_HEIGHT,
+      totalHeight: activeTimelineEvents.length * VIRTUAL_ROW_HEIGHT,
+      events: activeTimelineEvents.slice(startIndex, endIndex),
+    };
+  }, [activeTimelineEvents, scrollTop, viewportHeight, virtualizationEnabled]);
+
+  const renderEventEntry = (event: NopDebugEvent) => {
+    const isSlowRender = event.kind === 'render:end' && event.durationMs != null && event.durationMs > 16;
+    return (
+      <article key={event.id} className="ndbg-entry" onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}>
+        <div className="ndbg-entry-topline">
+          <span className="ndbg-badge" data-group={event.group} data-slow={isSlowRender ? '' : undefined}>{event.group}</span>
+          <time>{formatClock(event.timestamp)}</time>
+        </div>
+        <strong className="ndbg-entry-summary">{renderHighlightedText(event.summary, searchText)}{isSlowRender ? ' ⚠️ ' : ''}</strong>
+        <span className="ndbg-entry-meta">{event.source}</span>
+        {expandedId === event.id ? (
+          <div className="ndbg-entry-expanded" onClick={(clickEvent) => clickEvent.stopPropagation()}>
+            {event.detail ? <code className="ndbg-entry-detail">{event.detail}</code> : null}
+            {event.network ? <div><span className="ndbg-json-key">Network: </span><JsonViewer data={event.network} defaultExpanded={2} /></div> : null}
+            {event.exportedData != null ? <div><span className="ndbg-json-key">Data: </span><JsonViewer data={event.exportedData} defaultExpanded={2} /></div> : null}
+            {!event.detail && !event.network && event.exportedData == null ? <span className="ndbg-empty">No detailed data available.</span> : null}
+          </div>
+        ) : null}
+      </article>
+    );
+  };
+
   return (
     <>
       <input
@@ -119,30 +196,26 @@ export function TimelineTab(props: {
           ))}
         </div>
       ) : (
-        <div className="ndbg-list">
-          {activeTimelineEvents.length === 0 ? <p className="ndbg-empty">No events match the active filters.</p> : null}
-          {activeTimelineEvents.map((event) => {
-            const isSlowRender = event.kind === 'render:end' && event.durationMs != null && event.durationMs > 16;
-            return (
-              <article key={event.id} className="ndbg-entry" onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}>
-                <div className="ndbg-entry-topline">
-                  <span className="ndbg-badge" data-group={event.group} data-slow={isSlowRender ? '' : undefined}>{event.group}</span>
-                  <time>{formatClock(event.timestamp)}</time>
-                </div>
-                <strong className="ndbg-entry-summary">{renderHighlightedText(event.summary, searchText)}{isSlowRender ? ' ⚠️ ' : ''}</strong>
-                <span className="ndbg-entry-meta">{event.source}</span>
-                {expandedId === event.id ? (
-                  <div className="ndbg-entry-expanded" onClick={(clickEvent) => clickEvent.stopPropagation()}>
-                    {event.detail ? <code className="ndbg-entry-detail">{event.detail}</code> : null}
-                    {event.network ? <div><span className="ndbg-json-key">Network: </span><JsonViewer data={event.network} defaultExpanded={2} /></div> : null}
-                    {event.exportedData != null ? <div><span className="ndbg-json-key">Data: </span><JsonViewer data={event.exportedData} defaultExpanded={2} /></div> : null}
-                    {!event.detail && !event.network && event.exportedData == null ? <span className="ndbg-empty">No detailed data available.</span> : null}
-                  </div>
-                ) : null}
-              </article>
-            );
-          })}
-        </div>
+        virtualizationEnabled && virtualWindow ? (
+          <div
+            ref={virtualListRef}
+            className="ndbg-list ndbg-list--virtual"
+            data-testid="ndbg-timeline-list"
+            onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
+          >
+            {activeTimelineEvents.length === 0 ? <p className="ndbg-empty">No events match the active filters.</p> : null}
+            <div className="ndbg-virtual-spacer" style={{ height: `${virtualWindow.totalHeight}px` }}>
+              <div className="ndbg-virtual-window" style={{ transform: `translateY(${virtualWindow.offsetTop}px)` }}>
+                {virtualWindow.events.map(renderEventEntry)}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="ndbg-list" data-testid="ndbg-timeline-list">
+            {activeTimelineEvents.length === 0 ? <p className="ndbg-empty">No events match the active filters.</p> : null}
+            {activeTimelineEvents.map(renderEventEntry)}
+          </div>
+        )
       )}
     </>
   );

@@ -42,6 +42,8 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     matchedEvents: [],
     relatedErrors: [],
     requestKeys: ['POST /api/users | user-form | body.1'],
+    requestInstanceIds: ['req-1'],
+    interactionIds: ['interaction-1'],
     actionTypes: ['submitForm'],
     nodeIds: ['user-form'],
     paths: ['body.1']
@@ -84,6 +86,10 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
       getPinnedErrors: () => ({ earliest: [], latest: [] }),
       getNodeDiagnostics: () => ({ rendererTypes: [], totalEvents: 0, countsByGroup: {}, countsByKind: {}, recentEvents: [] }),
       getInteractionTrace: () => latestTrace,
+      getLatestFailedRequest: () => undefined,
+      getLatestFailedAction: () => undefined,
+      getNodeAnomalies: () => undefined,
+      getRecentFailures: () => [],
       createDiagnosticReport: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters }, overview: emptyOverview, recentEvents: [], pinnedErrors: { earliest: [], latest: [] } }),
       exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [], pinnedErrors: { earliest: [], latest: [] } }),
       waitForEvent: async () => snapshot.events[0]!,
@@ -98,7 +104,8 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
       setActiveTab,
       setPanelPosition,
       inspectByCid: vi.fn(() => undefined),
-      inspectByElement: vi.fn(() => undefined)
+      inspectByElement: vi.fn(() => undefined),
+      evaluateNodeExpression: vi.fn(() => ({ expression: 'x', ok: true, value: 1 }))
     },
     decorateEnv: (env) => env,
     onActionError() {},
@@ -121,6 +128,10 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     getPinnedErrors: () => ({ earliest: [], latest: [] }),
     getNodeDiagnostics: () => ({ rendererTypes: [], totalEvents: 0, countsByGroup: {}, countsByKind: {}, recentEvents: [] }),
     getInteractionTrace: () => latestTrace,
+    getLatestFailedRequest: () => undefined,
+    getLatestFailedAction: () => undefined,
+    getNodeAnomalies: () => undefined,
+    getRecentFailures: () => [],
     getOverview: () => emptyOverview,
     createDiagnosticReport: vi.fn(() => metricReport),
     exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [], pinnedErrors: { earliest: [], latest: [] } }),
@@ -129,6 +140,7 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     setActionScope: vi.fn(),
     inspectByCid: vi.fn(() => undefined),
     inspectByElement: vi.fn(() => undefined),
+    evaluateNodeExpression: vi.fn(() => ({ expression: 'x', ok: true, value: 1 })),
     subscribe: () => () => {},
     getSnapshot: () => snapshot
   };
@@ -376,6 +388,34 @@ describe('NopDebuggerPanel', () => {
 
     expect(screen.getByText('Saved successfully')).toBeTruthy();
     expect(screen.queryByText('Save failed')).toBeNull();
+  });
+
+  it('virtualizes large timeline lists and reveals later items on scroll', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'timeline';
+    snapshot.events = Array.from({ length: 120 }, (_, index) => ({
+      id: index + 1,
+      sessionId: 'session-test',
+      timestamp: index * 100,
+      kind: 'action:start' as const,
+      group: 'action' as const,
+      level: 'info' as const,
+      source: 'test',
+      summary: `Event ${index}`,
+      actionType: 'submit'
+    }));
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    expect(screen.getByText('Event 0')).toBeTruthy();
+    expect(screen.queryByText('Event 80')).toBeNull();
+
+    const list = screen.getByTestId('ndbg-timeline-list');
+    list.scrollTop = 80 * 96;
+    fireEvent.scroll(list);
+
+    expect(screen.getByText('Event 80')).toBeTruthy();
   });
 
   it('shows error badge on launcher when errors exist', () => {

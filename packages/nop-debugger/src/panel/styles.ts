@@ -131,6 +131,28 @@ export const DEBUGGER_STYLES = `
   overflow: auto;
 }
 
+.ndbg-list--virtual {
+  position: relative;
+  max-height: 420px;
+  min-height: 240px;
+  align-content: start;
+}
+
+.ndbg-virtual-spacer {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+}
+
+.ndbg-virtual-window {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 10px;
+}
+
 .ndbg-overview {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
 import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types';
 import { buildOverview } from './diagnostics';
@@ -99,6 +99,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const [searchHistory, setSearchHistory] = useState<string[]>(() => loadPersistedSearchHistory(props.controller.id));
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState('');
+  const deferredSearchText = useDeferredValue(searchText);
   const [errorsOnly, setErrorsOnly] = useState(false);
   const [nodeIdInput, setNodeIdInput] = useState('');
   const [networkExpandedKey, setNetworkExpandedKey] = useState<string | null>(null);
@@ -125,8 +126,12 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   });
 
   const handleEvalExpression = () => {
-    if (!evalInput.trim()) return;
-    setEvalResult('Expression evaluation is disabled. Inspect scope data directly instead.');
+    if (!evalInput.trim() || !inspectData) return;
+    const evaluated = props.controller.evaluateNodeExpression({
+      cid: inspectData.cid,
+      expression: evalInput.trim()
+    });
+    setEvalResult(evaluated.ok ? JSON.stringify(evaluated.value, null, 2) : `Error: ${evaluated.error}`);
   };
 
   const filteredEvents = useMemo(
@@ -135,9 +140,9 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   );
 
   const searchedEvents = useMemo(() => {
-    if (!searchText.trim()) return filteredEvents;
-    return filteredEvents.filter((event) => matchesSearchQuery(event, searchText));
-  }, [filteredEvents, searchText]);
+    if (!deferredSearchText.trim()) return filteredEvents;
+    return filteredEvents.filter((event) => matchesSearchQuery(event, deferredSearchText));
+  }, [deferredSearchText, filteredEvents]);
 
   const networkEvents = useMemo(
     () => filteredEvents.filter((event) => event.group === 'api'),
@@ -149,10 +154,10 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const errorGroups = useMemo(() => groupErrors(snapshot.events), [snapshot.events]);
 
   const overview = useMemo(() => buildOverview(snapshot.events), [snapshot.events]);
-  const latestTrace = props.controller.createDiagnosticReport({
+  const latestTrace = useMemo(() => props.controller.createDiagnosticReport({
     eventLimit: 20,
     includeLatestInteractionTrace: true
-  }).latestInteractionTrace;
+  }).latestInteractionTrace, [props.controller]);
   const latestTraceSummary = useMemo(() => formatTraceSummary(latestTrace), [latestTrace]);
 
   const nodeDiagnostics = useMemo(() => {
