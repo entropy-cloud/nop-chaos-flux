@@ -229,7 +229,9 @@ It already includes:
 - `submit(api?)`
 - `reset(values?)`
 - `setValue(name, value)`
+- `setValues(values)` for form-local multi-path value updates that should reuse the same batching and dependent-revalidation machinery as `setValue(...)`
 - first-class array operations such as `appendValue`, `prependValue`, `insertValue`, `removeValue`, `moveValue`, `swapValue`, and `replaceValue`
+- lightweight read-only query helpers: `getField(path)`, `getDependents(path)`, `findByPrefix(prefix)`, and `getChildren(path)`
 
 Submission flow is currently:
 
@@ -254,9 +256,33 @@ Current runtime behavior includes:
 
 - sync and async field errors are stored in `errors`
 - async field rules can expose field-level `validating` state while requests are in flight
+- async field rules may delay `validating=true` for short-lived requests so fast validations do not flash UI loading state
 - async field rules may declare `debounce`, and superseded runs are suppressed before request execution
 - blur-triggered validation is wired for standard form renderers
 - standard form renderers show errors according to `showErrorOn`, not a hard-coded single policy
+- submit flow may delay `submitting=true` separately from duplicate-submit guarding so short submits do not flash loading state
+- local write coalescing exists for hot paths such as `setValue(...)`, `reset(...)`, dependent dirtiness updates, and array remapping; this is a thin store patch primitive, not a global transaction system
+- form-local write coalescing now also includes `setValues(...)`, which lets one form runtime apply multiple path updates through the same local batching path without introducing a hidden global transaction model
+- action-layer write coalescing may target that runtime capability through the constrained `setValues` built-in action, but this remains a form-local API surface rather than a dispatcher-wide transaction wrapper
+
+## Lightweight Field Query Facade
+
+Current form runtime exposes a small read-only field query facade for form-subdomain consumers.
+
+The active boundary is intentionally narrow:
+
+- it is owned by `FormRuntime`, not by a platform-wide field object model
+- it is primarily backed by compiled validation metadata today
+- it is meant to support dependent revalidation, debug helpers, and future constrained linkage work without introducing heavyweight field instances
+
+Current queries are:
+
+- `getField(path)` for a compiled field view when the path is a compiled field
+- `getDependents(path)` for dependency-driven revalidation lookups
+- `findByPrefix(prefix)` for prefix-scoped subtree scans over compiled validation targets
+- `getChildren(path)` for direct compiled child-node lookup
+
+This facade should stay read-only and thin. It must not grow into a second runtime object graph.
 
 ## Validation Timing And Error Visibility
 
@@ -383,4 +409,3 @@ But do not let them override the active low-code-first architecture described he
 - `docs/architecture/flux-runtime-module-boundaries.md`
 - `docs/references/react-hook-form-template-notes.md`
 - `docs/references/yup-template-notes.md`
-

@@ -186,10 +186,12 @@ Own:
 
 The active runtime now also exposes two non-data runtime registries:
 
-- `ActionScope` for namespaced non-built-in action providers
+- `ActionScope` for namespaced non-built-in action providers; treat it as capability lexical scope, not a global registry
 - `ComponentHandleRegistry` for explicit component-handle registration and lookup by `componentId` or `componentName`
 
 These are intentionally not folded into `ScopeRef`.
+
+Detailed `ActionScope` resolution, `xui:import`, collision, and lifecycle semantics live in `docs/architecture/action-scope-and-imports.md`.
 
 ### React renderer
 

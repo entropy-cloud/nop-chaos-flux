@@ -311,6 +311,8 @@ The active React layer now carries three separate execution lookups through expl
 - `ActionScope` for namespaced action resolution such as `designer:export`
 - `ComponentHandleRegistry` for instance-targeted capability invocation such as `component:submit`
 
+This document only describes how React render boundaries carry those execution contexts. The resolution model, lexical-visibility rules, and `xui:import` provisioning semantics belong to `docs/architecture/action-scope-and-imports.md`.
+
 `NodeRenderer` may explicitly create a fresh action-scope boundary or component-registry boundary when a renderer definition opts into `actionScopePolicy: 'new'` or `componentRegistryPolicy: 'new'`.
 
 Current concrete uses:

@@ -59,13 +59,52 @@ Flow-designer already demonstrates the pressure point. The current renderer has 
 Keep two distinct lookup systems:
 
 - data scope resolves values such as `${doc.name}` or `${activeNode.id}`
-- action scope resolves callable namespaces such as `designer.addNode` or `demo.open`
+- action scope resolves callable namespaces such as `designer:addNode` or `demo:open`
 
 And add a third explicit targeting mechanism:
 
 - component registry resolves one specific rendered component instance such as `componentId: userForm`
 
 Do not overload `ScopeRef` so that one mechanism must serve both roles.
+
+## Mental Model
+
+The current runtime should be read as four distinct layers:
+
+- `ScopeRef` = data lexical scope
+- `ActionScope` = capability lexical scope
+- `ComponentHandleRegistry` = instance-target capability lookup
+- `xui:import` = declarative provisioning of imported namespace providers into the local `ActionScope`
+
+Important consequences:
+
+- Flux does not use a global action registry as the primary extension model
+- namespaced behavior resolves from the current `ActionScope` first, then walks the parent `ActionScope` chain
+- `xui:import` does not make JSON executable by itself; it only declares that a subtree needs an external namespace provider attached to its local capability scope
+
+## Why Not Global Action Registry
+
+The active design intentionally avoids a single global namespace table.
+
+Why:
+
+- one page can embed multiple workbench-like hosts such as designer, spreadsheet, or report shells
+- dialogs and explicitly rendered fragments may need the same namespace name inside different host boundaries
+- child hosts must be able to shadow parent namespace providers deliberately without mutating application-global state
+- page composition should not depend on which subtree registered `designer`, `spreadsheet`, or `report-designer` first
+
+This is why `ActionScope` is lexical.
+
+Typical shape:
+
+```text
+RootActionScope
+  -> PageActionScope
+    -> DesignerActionScope(namespaces: designer)
+      -> DialogActionScope(optional child shadowing)
+```
+
+Resolution always starts at the current action boundary and walks upward. That keeps imported and host-provided capabilities local to the subtree that owns them.
 
 ## Non-Goals
 
@@ -97,16 +136,25 @@ It must not become the main registry for arbitrary callable behaviors.
 
 It resolves namespaced actions that are not built-in platform actions.
 
-Recommended shape:
+Current exported shape is directionally:
 
 ```ts
 interface ActionScope {
   id: string;
   parent?: ActionScope;
   resolve(actionName: string): ResolvedActionHandler | undefined;
-  registerNamespace(namespace: string, provider: ActionNamespaceProvider): void;
+  registerNamespace(namespace: string, provider: ActionNamespaceProvider): () => void;
   unregisterNamespace(namespace: string): void;
-  listNamespaces?(): readonly string[];
+  listNamespaces(): readonly string[];
+  getDebugSnapshot?(): {
+    id: string;
+    parentId?: string;
+    namespaces: Array<{
+      namespace: string;
+      providerKind?: string;
+      methods?: readonly string[];
+    }>;
+  };
 }
 
 interface ResolvedActionHandler {
@@ -215,6 +263,14 @@ Therefore the rule is:
 
 `xui:import` is a declarative dependency import mechanism for action namespaces.
 
+Its runtime job is narrow:
+
+- load an external module through the host-controlled import loader
+- ask that module to create an `ActionNamespaceProvider`
+- register that provider on the owning local `ActionScope`
+
+In other words, `xui:import` is one provisioning path for `ActionScope`, not a separate dispatch system.
+
 It is intentionally modeled after import semantics:
 
 - declaration-oriented, not event-oriented
@@ -245,11 +301,12 @@ The active design therefore keeps namespaced action lookup explicit and separate
 When an action is dispatched, runtime should resolve it in this order:
 
 1. built-in platform action handled directly by the core dispatcher
-2. namespaced action resolved from the current `ActionScope`
-3. parent `ActionScope` chain lookup
-4. not-found error with namespace and scope trace
+2. component-targeted action matching `component:<method>` through `ComponentHandleRegistry`
+3. namespaced action resolved from the current `ActionScope`
+4. parent `ActionScope` chain lookup
+5. not-found error with namespace and scope trace
 
-This means built-in actions such as `ajax` and `submitForm` remain first-class runtime features, while `designer:addNode` or `demo.open` are delegated to the action-scope layer.
+This means built-in actions such as `ajax` and `submitForm` remain first-class runtime features, component-targeted calls such as `component:submit` stay explicit, and namespaced calls such as `designer:addNode` or `demo:open` are delegated to the action-scope layer.
 
 ### Naming Rule
 
@@ -261,14 +318,12 @@ Preferred examples:
 - `designer:export`
 - `spreadsheet:setCellValue`
 - `report-designer:preview`
-- `demo.open`
-- `chart.render`
+- `demo:open`
+- `chart:render`
 
 Do not make the design depend on implicit bare action names like `save` or `validate`.
 
-For clarity, the preferred runtime action namespace separator is `:` for dispatched action names such as `designer:addNode` and `report-designer:preview`.
-
-Imported library examples such as `demo.open` in this document describe namespace-plus-method intent, but the implementation should normalize on one dispatch syntax instead of mixing multiple separators at runtime.
+For clarity, the runtime action namespace separator is `:` for dispatched action names such as `designer:addNode`, `report-designer:preview`, and `demo:open`.
 
 ### Built-In Versus Extended Actions
 
@@ -287,7 +342,7 @@ Examples:
 
 - graph editing commands for flow-designer
 - workbook/report editing commands for report-designer
-- imported library capabilities such as `demo.open`
+- imported library capabilities such as `demo:open`
 
 ## Schema Shape
 
@@ -322,7 +377,7 @@ Examples:
 
 ```json
 {
-  "action": "demo.open",
+  "action": "demo:open",
   "args": {
     "id": "${activeNode.id}",
     "mode": "inspect"
@@ -520,7 +575,7 @@ Recommended shape:
       "onEvent": {
         "click": {
           "actions": [
-            { "action": "demo.open", "args": { "id": "${id}" } }
+            { "action": "demo:open", "args": { "id": "${id}" } }
           ]
         }
       }
@@ -560,6 +615,23 @@ interface ImportedLibraryLoader {
 ```
 
 The loader may cache modules globally, but scope visibility is still controlled by the action-scope chain.
+
+### Current Runtime Semantics
+
+The current implementation already fixes several behaviors that should be documented as baseline, not as future intent.
+
+- import visibility is lexical by owning `ActionScope`, not global
+- module loads are deduplicated by normalized module key
+- scope registrations are deduplicated and reference-counted per owning `ActionScope`
+- runtime installs a placeholder provider immediately so dispatch fails explicitly while the namespace is still loading
+- same-scope alias collisions fail fast instead of silently overriding another provider
+- unmount or boundary replacement releases the owned registration through the action-scope lifecycle
+
+The placeholder-provider behavior is especially important:
+
+- before the module is ready, `namespace:method` dispatch returns a normal failed `ActionResult`
+- after a load failure, subsequent dispatches keep returning that recorded failure instead of degrading into `Unsupported action`
+- when the same owned import boundary retries the same import key, the existing failed entry is retried in place
 
 ### Deduplication Rules
 
@@ -612,10 +684,10 @@ That produces stable behavior:
 
 ```text
 PageActionScope
-  â””â”€â”€ ContainerActionScope(namespaces: demo)
-        â”œâ”€â”€ ButtonA -> demo.open
-        â”œâ”€â”€ ButtonB -> demo.close
-        â””â”€â”€ ChildPanel -> demo.validate
+  -> ContainerActionScope(namespaces: demo)
+    -> ButtonA -> demo:open
+    -> ButtonB -> demo:close
+    -> ChildPanel -> demo:validate
 ```
 
 Imported namespaces and component-targeted handles are complementary:
