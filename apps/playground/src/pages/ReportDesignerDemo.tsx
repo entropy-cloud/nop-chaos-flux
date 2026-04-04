@@ -227,6 +227,7 @@ export function ReportDesignerDemo() {
           cellValue={cellValue}
           frozen={!!frozen}
           hasSelection={!!selectedCell}
+          currentCellStyle={currentCell?.style}
           onUndo={handleUndo}
           onRedo={handleRedo}
           onCopy={handleCopy}

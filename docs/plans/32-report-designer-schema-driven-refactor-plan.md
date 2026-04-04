@@ -1,7 +1,8 @@
 # 32 Report Designer Schema-Driven 重构计划
 
-> Plan Status: draft
+> Plan Status: ✅ completed
 > Last Reviewed: 2026-04-04
+> Completed: 2026-04-04
 
 
 ## 背景与目标
