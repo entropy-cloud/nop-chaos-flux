@@ -1119,3 +1119,43 @@ flux-renderers-form (表单场景集成)
 - `docs/architecture/flux-core.md` — 核心架构
 - `docs/references/flux-json-conventions.md` — JSON 约定
 - `docs/architecture/field-metadata-slot-modeling.md` — 字段元数据
+- `docs/architecture/complex-control-host-protocol.md` — 复杂控件平台协议
+
+---
+
+## 十二、当前实现状态校准
+
+> 更新于 2026-04-04，基于 `packages/flux-code-editor/src/` 实际代码
+
+本节明确区分"当前代码已落地"和"文档设计目标（尚未落地）"，避免将 code-editor 误认为平台级设计器。
+
+### 12.1 已落地
+
+- `CodeEditorSchema` 完整类型定义（`types.ts`）
+- `useCodeMirror` Hook：初始值注入、change/focus/blur 回调、extensions 创建
+- `code-editor-renderer.tsx`：渲染器已注册，支持 `language`、`mode`、`lineNumbers`、`folding`、`autoHeight`、`editorTheme`、`placeholder`
+- change 事件：在 form context 中调用 `currentForm.setValue(name, newValue)`；无 form 时调用 `scope.update(name, newValue)`
+- focus/blur 事件：已接线到 `props.events.onFocus` / `props.events.onBlur`
+- 内联变量/函数数组（非 source-ref）路径：`resolveVariables`、`resolveFunctions`、`resolveTables`、`resolveSQLVariables` 已正确返回内联数据
+- `expressionConfig.variables`、`expressionConfig.functions` 内联数组可驱动 autocomplete 补全
+
+### 12.2 已知缺口（Phase 6 目标）
+
+**source-ref 路径静默回退空数组：**
+
+`types.ts:208-236` 中 `resolveVariables`、`resolveFunctions`、`resolveTables`、`resolveSQLVariables` 遇到 `source-ref` 时（即 `isVariableSourceRef(config.variables)` 为 true）直接返回空数组，无错误提示。这意味着 `VariableSourceRef`、`FuncSourceRef`、`SQLSchemaSourceRef` 在文档里已定义，但当前实现不会真正从 scope 或 API 拉取数据。
+
+**`onChange` 事件未接入 Flux 事件系统：**
+
+`code-editor-renderer.tsx:128-136` 的 `handleChange` 只更新 form/scope，没有调用 `props.events.onChange`。其他标准字段控件（如 input）在 change 时会同时调用 `props.events.onChange`；code-editor 目前不一致。
+
+### 12.3 定位说明
+
+`code-editor` 是字段级 renderer，不是页面级设计器：
+
+- 不拥有自己的 `DomainBridge` 或 host scope
+- 不需要 session/dirty/leave-guard
+- 不需要 workbench shell 或 namespaced action namespace
+- 共享异步动作规范（fullscreen、SQL result）将在 Phase 6 末期对齐，但不引入新的 page shell 或 designer-core
+
+Phase 6 完成后，source-ref 解析路径和 change event 应与其他字段控件对齐，但组件定位不变。
