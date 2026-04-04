@@ -22,12 +22,14 @@ import {
   getDefaultLineNumbers,
   getDefaultAutoHeight,
   getDefaultHeight,
-  resolveVariables,
-  resolveFunctions,
-  resolveTables,
   resolveFormatConfig,
-  resolveSQLVariables,
 } from './types';
+import {
+  useResolvedVariables,
+  useResolvedFunctions,
+  useResolvedTables,
+  useResolvedSQLVariables,
+} from './source-resolvers';
 
 export const codeEditorFieldRules: SchemaFieldRule[] = [
   { key: 'value', kind: 'prop' },
@@ -93,20 +95,24 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
     value = String(props.props.value ?? '');
   }
 
+  const resolvedVariables = useResolvedVariables(expressionConfig, scope, props.helpers.dispatch);
+  const resolvedFunctions = useResolvedFunctions(expressionConfig, props.helpers.dispatch);
+  const resolvedTables = useResolvedTables(sqlConfig, scope, props.helpers.dispatch);
+
   const completionConfig = useMemo(() => {
     if (language === 'expression' && expressionConfig) {
       return {
-        variables: resolveVariables(expressionConfig),
-        functions: resolveFunctions(expressionConfig),
+        variables: resolvedVariables,
+        functions: resolvedFunctions,
       };
     }
     if (language === 'sql' && sqlConfig) {
       return {
-        tables: resolveTables(sqlConfig),
+        tables: resolvedTables,
       };
     }
     return undefined;
-  }, [language, expressionConfig, sqlConfig]);
+  }, [language, expressionConfig, sqlConfig, resolvedVariables, resolvedFunctions, resolvedTables]);
 
   const extensions = useMemo(
     () =>
@@ -128,11 +134,10 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
   const handleChange = (newValue: string) => {
     if (currentForm && name) {
       currentForm.setValue(name, newValue);
-      return;
-    }
-    if (name) {
+    } else if (name) {
       scope.update(name, newValue);
     }
+    props.events.onChange?.({ value: newValue });
   };
 
   const handleFocus = () => {
@@ -267,7 +272,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
     setSqlResult({ status: 'idle' });
   }, []);
 
-  const sqlVariables = resolveSQLVariables(sqlConfig);
+  const sqlVariables = useResolvedSQLVariables(sqlConfig, scope, props.helpers.dispatch);
 
   const showToolbar = (allowFullscreen && !isFullscreen) || hasSQLToolbar;
 

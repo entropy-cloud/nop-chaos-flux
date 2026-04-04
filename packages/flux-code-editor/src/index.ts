@@ -30,13 +30,16 @@ export {
   isVariableSourceRef,
   isFuncSourceRef,
   isSQLSchemaSourceRef,
-  resolveVariables,
-  resolveFunctions,
-  resolveTables,
   resolveFormatConfig,
-  resolveSQLVariables,
   renderInsertTemplate,
 } from './types';
+
+export {
+  useResolvedVariables,
+  useResolvedFunctions,
+  useResolvedTables,
+  useResolvedSQLVariables,
+} from './source-resolvers';
 
 export { useCodeMirror } from './use-code-mirror';
 export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror';
