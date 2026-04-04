@@ -1,4 +1,4 @@
-import { Button, Input, Tooltip, TooltipContent, TooltipTrigger } from '@nop-chaos/ui';
+import { Button, Input, Label, Tooltip, TooltipContent, TooltipTrigger } from '@nop-chaos/ui';
 import {
   Undo2,
   Redo2,
@@ -218,7 +218,7 @@ export function SpreadsheetToolbar({
       {showFindReplace && (
         <div className="find-replace-panel">
           <div className="find-row">
-            <label>Find:</label>
+            <Label>Find:</Label>
             <Input
               size="sm"
               value={findQuery}
@@ -229,7 +229,7 @@ export function SpreadsheetToolbar({
             <Button variant="ghost" size="xs" onClick={onFind}>Find Next</Button>
           </div>
           <div className="find-row">
-            <label>Replace:</label>
+            <Label>Replace:</Label>
             <Input
               size="sm"
               value={replaceText}
@@ -245,7 +245,7 @@ export function SpreadsheetToolbar({
 
       {selectedCell && (
         <div className="cell-editor">
-          <label>
+          <Label>
             {cellAddress}:
             <Input
               size="sm"
@@ -253,7 +253,7 @@ export function SpreadsheetToolbar({
               onChange={(e) => onCellValueChange(e.target.value)}
               placeholder="Enter cell value"
             />
-          </label>
+          </Label>
           {showCommentInput && (
             <div className="comment-editor">
               <Input
