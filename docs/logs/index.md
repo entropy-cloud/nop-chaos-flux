@@ -62,6 +62,7 @@ When adding a new log entry for today:
 
 ### 2026-04
 
+- [04-04](2026/04-04.md) — plan closures (#10/#19/#21/#26/#30/#31), debugger Phase 4 search/snapshot enhancements, Flow Designer baseline cleanup, and complex-control convergence planning
 - [04-03](2026/04-03.md) — runtime follow-ups, UI package adoption, refactor closures, and a new general UI interaction review checklist
 - [04-02](2026/04-02.md) — plan #25/#26 implementation: flow-designer/runtime hardening, dirty-tracking and dedup fixes, full repo verification
 - [04-01](2026/04-01.md) — code audit bug fix plan #25 execution and verification
