@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+import type { ScopeRef } from '@nop-chaos/flux-core';
+import { useHostScope } from '@nop-chaos/flux-react';
 import type {
   FieldSourceSnapshot,
   ReportDesignerCore,
@@ -45,6 +48,10 @@ export interface ReportDesignerHostData {
   reportDocument: ReportDesignerRuntimeSnapshot['document'];
   workbook: ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook'];
   activeSheet: ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook']['sheets'][number] | undefined;
+  canUndo: boolean;
+  canRedo: boolean;
+  documentName: string;
+  fieldCount: number;
 }
 
 export function createHostData(core: ReportDesignerCore, snapshot: ReportDesignerRuntimeSnapshot): ReportDesignerHostData {
@@ -86,5 +93,68 @@ export function createHostData(core: ReportDesignerCore, snapshot: ReportDesigne
     reportDocument,
     workbook: reportDocument.spreadsheet.workbook,
     activeSheet: getActiveSheet(snapshot, snapshot.selectionTarget),
+    canUndo: snapshot.canUndo,
+    canRedo: snapshot.canRedo,
+    documentName: snapshot.document.name,
+    fieldCount,
   };
+}
+
+export function buildReportDesignerScopeData(
+  core: ReportDesignerCore,
+  snapshot: ReportDesignerRuntimeSnapshot,
+): Record<string, unknown> {
+  const inspectorPanels = core.getInspectorPanels();
+  const fieldCount = getFieldCount(snapshot.fieldSources);
+
+  return {
+    designer: {
+      kind: snapshot.document.kind,
+      documentId: snapshot.document.id,
+      documentName: snapshot.document.name,
+      selectionTarget: snapshot.selectionTarget,
+      selectionKind: snapshot.selectionTarget?.kind,
+      inspector: snapshot.inspector,
+      inspectorPanels,
+      fieldDrag: snapshot.fieldDrag,
+      preview: snapshot.preview,
+      activeMeta: snapshot.activeMeta,
+      fieldSources: snapshot.fieldSources,
+      fieldSourceCount: snapshot.fieldSources.length,
+      fieldCount,
+    },
+    runtime: {
+      canUndo: snapshot.canUndo,
+      canRedo: snapshot.canRedo,
+      previewRunning: snapshot.preview.running,
+      previewMode: snapshot.preview.mode,
+      dirty: false,
+    },
+    fieldSources: snapshot.fieldSources,
+    fieldDrag: snapshot.fieldDrag,
+    meta: snapshot.activeMeta,
+    preview: snapshot.preview,
+    inspectorPanels,
+    selectionTarget: snapshot.selectionTarget,
+    reportDocument: snapshot.document,
+    workbook: snapshot.document.spreadsheet.workbook,
+    activeSheet: getActiveSheet(snapshot, snapshot.selectionTarget),
+    canUndo: snapshot.canUndo,
+    canRedo: snapshot.canRedo,
+    documentName: snapshot.document.name,
+    fieldCount,
+    reportDesignerCore: core,
+  };
+}
+
+export function useReportDesignerHostScope(
+  core: ReportDesignerCore,
+  snapshot: ReportDesignerRuntimeSnapshot,
+  path: string,
+): ScopeRef {
+  const scopeData = useMemo(
+    () => buildReportDesignerScopeData(core, snapshot),
+    [core, snapshot],
+  );
+  return useHostScope(scopeData, path, 'report-designer');
 }

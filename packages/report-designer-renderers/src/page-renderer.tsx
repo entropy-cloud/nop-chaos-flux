@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
+import React, { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, RenderNodeInput } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, WorkbenchShell } from '@nop-chaos/flux-react';
 import type {
   ReportDesignerAdapterRegistry,
   ReportDesignerConfig,
@@ -8,9 +8,10 @@ import type {
   ReportTemplateDocument,
 } from '@nop-chaos/report-designer-core';
 import { createReportDesignerCore } from '@nop-chaos/report-designer-core';
-import { renderFallbackCanvas, renderFallbackFieldPanel, renderFallbackInspector } from './fallbacks.js';
-import { getFieldCount, joinClassNames } from './helpers.js';
-import { createHostData } from './host-data.js';
+import { renderFallbackFieldPanel, renderFallbackInspector } from './fallbacks.js';
+import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
+import { getFieldCount } from './helpers.js';
+import { useReportDesignerHostScope } from './host-data.js';
 import type { ReportDesignerPageSchema } from './types.js';
 
 function toActionResult(response: unknown): ActionResult {
@@ -88,27 +89,30 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
     core.getSnapshot,
   );
 
-  const hostData = useMemo(() => createHostData(core, snapshot), [core, snapshot]);
+  const reportDesignerScope = useReportDesignerHostScope(core, snapshot, props.path);
 
   const toolbarSchema = props.props.toolbar as RenderNodeInput | undefined;
   const fieldPanelSchema = props.props.fieldPanel as RenderNodeInput | undefined;
   const inspectorSchema = props.props.inspector as RenderNodeInput | undefined;
 
   const toolbarContent = toolbarSchema
-    ? props.helpers.render(toolbarSchema, { data: hostData })
-    : props.regions.toolbar?.render({ data: hostData });
+    ? props.helpers.render(toolbarSchema, { scope: reportDesignerScope, actionScope })
+    : props.regions.toolbar?.render({ scope: reportDesignerScope, actionScope });
   const fieldPanelContent = fieldPanelSchema
-    ? props.helpers.render(fieldPanelSchema, { data: hostData })
-    : props.regions.fieldPanel?.render({ data: hostData });
+    ? props.helpers.render(fieldPanelSchema, { scope: reportDesignerScope, actionScope })
+    : props.regions.fieldPanel?.render({ scope: reportDesignerScope, actionScope });
   const inspectorContent = inspectorSchema
-    ? props.helpers.render(inspectorSchema, { data: hostData })
-    : props.regions.inspector?.render({ data: hostData });
-  const dialogsContent = props.regions.dialogs?.render({ data: hostData });
-  const bodyContent = props.regions.body?.render({ data: hostData });
+    ? props.helpers.render(inspectorSchema, { scope: reportDesignerScope, actionScope })
+    : props.regions.inspector?.render({ scope: reportDesignerScope, actionScope });
+  const dialogsContent = props.regions.dialogs?.render({ scope: reportDesignerScope, actionScope });
+  const bodyContent = props.regions.body?.render({ scope: reportDesignerScope, actionScope });
 
-  return (
-    <section className={joinClassNames('nop-report-designer', props.meta.className)}>
-      <header className="nop-report-designer__header">
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+
+  const headerSlot = (
+    <>
+      <div className="nop-report-designer__header">
         <div>
           <p className="nop-report-designer__eyebrow">Report Designer</p>
           {hasRendererSlotContent(titleContent) ? <h2>{titleContent}</h2> : <h2>{snapshot.document.name}</h2>}
@@ -117,28 +121,27 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
           <span>Target: {snapshot.selectionTarget?.kind ?? 'none'}</span>
           <span>Fields: {getFieldCount(snapshot.fieldSources)}</span>
         </div>
-      </header>
-
+      </div>
       {hasRendererSlotContent(toolbarContent) ? (
         <div className="nop-report-designer__toolbar">{toolbarContent}</div>
       ) : null}
+    </>
+  );
 
-      <div className="nop-report-designer__layout">
-        <aside className="nop-report-designer__field-panel">
-          {hasRendererSlotContent(fieldPanelContent) ? fieldPanelContent : renderFallbackFieldPanel(snapshot.fieldSources)}
-        </aside>
-
-        <main className="nop-report-designer__canvas">
-          {hasRendererSlotContent(bodyContent) ? bodyContent : renderFallbackCanvas(snapshot)}
-        </main>
-
-        <aside className="nop-report-designer__inspector">
-          {hasRendererSlotContent(inspectorContent) ? inspectorContent : renderFallbackInspector(snapshot.activeMeta)}
-        </aside>
-      </div>
-
-      {hasRendererSlotContent(dialogsContent) ? <div className="nop-report-designer__dialogs">{dialogsContent}</div> : null}
-    </section>
+  return (
+    <WorkbenchShell
+      className={props.meta.className ? `nop-report-designer ${props.meta.className}` : 'nop-report-designer'}
+      header={headerSlot}
+      leftPanel={hasRendererSlotContent(fieldPanelContent) ? fieldPanelContent : renderFallbackFieldPanel(snapshot.fieldSources)}
+      leftCollapsed={leftCollapsed}
+      onLeftToggle={() => setLeftCollapsed((v) => !v)}
+      leftLabel="Expand field panel"
+      canvas={hasRendererSlotContent(bodyContent) ? bodyContent : <ReportSpreadsheetCanvas core={core} snapshot={snapshot} />}
+      rightPanel={hasRendererSlotContent(inspectorContent) ? inspectorContent : renderFallbackInspector(snapshot.activeMeta)}
+      rightCollapsed={rightCollapsed}
+      onRightToggle={() => setRightCollapsed((v) => !v)}
+      rightLabel="Expand inspector"
+      dialogs={hasRendererSlotContent(dialogsContent) ? dialogsContent : undefined}
+    />
   );
 }
-
