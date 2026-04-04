@@ -1,11 +1,16 @@
 # NOP Chaos Flux 改善计划
 
-> Plan Status: pending
-> Last Reviewed: 2026-04-02
+> Plan Status: superseded
+> Last Reviewed: 2026-04-04
+
+> **Implementation Status: ⚠️ SUPERSEDED BY LATER SPECIALIZED PLANS**
+> This document was a broad audit snapshot from 2026-03-31, not a realistic single execution plan anymore. Since then, many items here have either landed or moved into narrower active plans such as `docs/plans/20-nop-debugger-implementation-plan.md`, `docs/plans/24-word-editor-development-plan.md`, `docs/plans/25-code-audit-bug-fix-plan.md`, `docs/plans/26-performance-and-completeness-remediation-plan.md`, `docs/plans/32-report-designer-schema-driven-refactor-plan.md`, and `docs/plans/33-complex-control-platform-convergence-refactor-plan.md`.
+
+> Keep this file as historical audit context only; do not treat it as a pending approval gate.
 
 
 > 创建日期: 2026-03-31
-> 状态: 待审批
+> 状态: 已归档（被后续专项计划替代）
 > 优先级: 按阶段排序
 
 ---

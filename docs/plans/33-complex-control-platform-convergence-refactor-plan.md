@@ -1,8 +1,11 @@
 # 33 复杂控件平台协议收敛重构计划
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-04-04
 > Source: `docs/analysis/framework-stability-and-complex-control-unification-analysis.md` and `docs/plans/33-review.md` reviewed against current code anchors on 2026-04-04
+
+> **Implementation Status: ✅ COMPLETED (2026-04-04)**
+> All 6 phases are landed. Shared workbench protocol/types in `packages/flux-core/src/workbench/`, React host helpers and `WorkbenchShell` in `packages/flux-react/src/workbench/`, Flow Designer and Report Designer migrated to `WorkbenchShell`, Word Editor aligned with datasets/leave-guard, Code Editor source-ref resolvers and event wiring complete.
 
 ## 复审结论
 

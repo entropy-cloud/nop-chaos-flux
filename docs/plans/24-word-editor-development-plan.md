@@ -3,10 +3,12 @@
 > Plan Status: in-progress
 > Last Reviewed: 2026-04-04
 
-> **Implementation Status: ⚠️ PARTIALLY COMPLETED**
-> `@nop-chaos/word-editor-core` and `@nop-chaos/word-editor-renderers` now exist in the workspace, `@hufe921/canvas-editor` is integrated, playground-accessible `WordEditorPage` is implemented, and a substantial toolbar/panel/dialog surface already exists.
+> **Implementation Status: ⚠️ IN PROGRESS (Phases 1–4 largely completed; later phases partial)**
+> `@nop-chaos/word-editor-core` and `@nop-chaos/word-editor-renderers` now exist in the workspace, `@hufe921/canvas-editor` is integrated, playground-accessible `WordEditorPage` is implemented, Phases 1–4 core surfaces (editor shell, template expression model, dataset management, toolbar/panel/dialog UX) are largely present, and later follow-ups such as preview, chart/code dialogs, dataset persistence, and `WorkbenchShell` alignment have partially landed.
 >
-> The original “from zero” package/bootstrap tasks in this plan are no longer current. Remaining work is concentrated in deeper capability completion, save/session boundary tightening, and convergence with newer shared workbench goals tracked in `docs/plans/33-complex-control-platform-convergence-refactor-plan.md`.
+> The original “from zero” package/bootstrap tasks in this plan are no longer current. Remaining work is concentrated in true DOCX import/export, backend/template compilation integration, and broader productionization items; shared workbench-shell convergence now primarily lives in `docs/plans/33-complex-control-platform-convergence-refactor-plan.md`.
+>
+> This status was re-verified against the codebase on 2026-04-04.
 
 
 ## Purpose
@@ -719,4 +721,3 @@ canvas-editor 内部管理自己的状态（文本、选区、格式），我们
 
 ### Phase 8 (生产化)
 - 快捷键、性能、测试、无障碍全部到位
-

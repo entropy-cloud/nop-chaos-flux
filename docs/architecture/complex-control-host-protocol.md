@@ -130,12 +130,13 @@ Namespace 命名规则：
 | 能力 | Flow Designer | Spreadsheet | Report Designer | Word Editor |
 |------|--------------|-------------|-----------------|-------------|
 | `DomainBridge` 实现 | 内部（DesignerCore 可适配） | ✓ `SpreadsheetBridge` | ✓ `ReportDesignerBridge` | ✗ 待接入 |
-| Host scope 注入 | ✓ `useDesignerHostScope` | 通过 region data | 通过 region data | ✗ 无 |
-| Namespace action 注册 | ✓ `designer:*` | ✓ `spreadsheet:*` | ✓ `report-designer:*` | ✗ 待接入 |
-| Session/dirty/leave-guard | 通过 `isDirty` snapshot | 通过 `dirty` snapshot | 通过 `dirty` snapshot | 手工 `isDirty` state |
+| Host scope 注入 | ✓ `useDesignerHostScope` | 通过 region data | 通过 region data | ✗ 无（非 Flux renderer） |
+| Namespace action 注册 | ✓ `designer:*` | ✓ `spreadsheet:*` | ✓ `report-designer:*` | ✗ 无（非 Flux renderer） |
+| Session/dirty/leave-guard | 通过 `isDirty` snapshot | 通过 `dirty` snapshot | 通过 `dirty` snapshot | ✓ `isDirty` + `handleBack` leave-guard |
 | 真实 canvas 默认挂载 | ✓ | fallback when no body | ✓ `ReportSpreadsheetCanvas` | ✓（直接渲染） |
-| toolbar ↔ core 命令面对齐 | ✓ | ✓ | ✓ undo/redo/save/stopPreview 命令已实现 | 无 schema toolbar |
-| `WorkbenchShell` 复用 | ✓ 已迁移 | ✗ 自有布局 | ✓ 已迁移 | ✗ 待接入 |
+| toolbar ↔ core 命令面对齐 | ✓ | ✓ | ✓ undo/redo/save/stopPreview 命令已实现 | ✓ `RibbonToolbar` + `handleSave` |
+| `WorkbenchShell` 复用 | ✓ 已迁移 | ✗ 自有布局 | ✓ 已迁移 | ✓ 已迁移 |
+| datasets 保存边界 | N/A | N/A | N/A | ✓ `saveDatasets`/`loadDatasets` 已接线 |
 
 ## 11. 参考实现基线（Phase 2 结论）
 
@@ -146,10 +147,13 @@ Flow Designer 的 `designer-page.tsx` + `designer-context.ts` 是当前最成熟
 - `useDesignerSnapshot` → 等价于 `useBridgeSnapshot`（Phase 1 提炼的共享 helper）
 - `DesignerContext` → 域内部 React context，不应被共享协议强制替换
 
-## 12. 待完成工作（Phase 5 目标）
+## 12. 已完成工作
 
 - **Phase 4** ✓：从 flow-designer 与 report-designer 共同验证后抽取 `WorkbenchShell`（完成 2026-04-04）
-- **Phase 5**：Word Editor 接入 `WorkbenchShell` + `word-editor:*` namespace + datasets 保存边界
+- **Phase 5** ✓：Word Editor 接入 `WorkbenchShell` + datasets 保存边界 + leave-guard（完成 2026-04-04）
+- **Phase 6** ✓：Code Editor source-ref 解析（scope/api）、change/focus/blur 事件全部接入 Flux 事件系统，与其他字段控件对齐（完成 2026-04-04）
+
+Plan 33 全部阶段已完成。
 
 ## Related Documents
 
