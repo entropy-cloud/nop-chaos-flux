@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ActionNamespaceProvider, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, useNamespaceRegistration, WorkbenchShell } from '@nop-chaos/flux-react';
 import { createDesignerCore, layoutWithElk } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
-import { DataViewer, Button } from '@nop-chaos/ui';
+import { DataViewer } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
 import type { DesignerPageSchema } from './schemas';
 import {
@@ -19,7 +19,6 @@ import { DesignerPaletteContent } from './designer-palette';
 import { DesignerCanvasContent } from './designer-canvas';
 import { DefaultInspector } from './designer-inspector';
 import { DesignerToolbarContent } from './designer-toolbar';
-import { DesignerIcon } from './designer-icon';
 
 function normalizeShortcut(input: string): string[] {
   return input.toLowerCase().split('+').map((part) => part.trim()).filter(Boolean);
@@ -71,15 +70,6 @@ function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPag
     core.layoutNodes(positions);
   }, [core]);
 
-  const gridColsClass = useMemo(() => {
-    const p = snapshot.paletteCollapsed;
-    const i = snapshot.inspectorCollapsed;
-    if (p && i) return 'grid-cols-[2rem_minmax(0,1fr)_2rem]';
-    if (p) return 'grid-cols-[2rem_minmax(0,1fr)_22rem]';
-    if (i) return 'grid-cols-[15rem_minmax(0,1fr)_2rem]';
-    return 'grid-cols-[15rem_minmax(0,1fr)_22rem]';
-  }, [snapshot.paletteCollapsed, snapshot.inspectorCollapsed]);
-
   const ctxValue = useMemo<DesignerContextValue>(
     () => ({ core, commandAdapter, dispatch, snapshot, config }),
     [commandAdapter, core, dispatch, snapshot, config]
@@ -124,13 +114,7 @@ function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPag
     catch { return null; }
   }, [core, jsonOpen]);
 
-  useLayoutEffect(() => {
-    if (!actionScope || !mergedDesignerProvider) {
-      return;
-    }
-
-    return actionScope.registerNamespace('designer', mergedDesignerProvider);
-  }, [actionScope, mergedDesignerProvider]);
+  useNamespaceRegistration(actionScope, 'designer', mergedDesignerProvider);
 
   useEffect(() => {
     if (!core.getConfig().features.shortcuts) {
@@ -195,39 +179,21 @@ function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPag
   return (
     <DesignerContext.Provider value={ctxValue}>
       {config.themeStyles && <style>{config.themeStyles}</style>}
-      <div className="nop-designer grid grid-rows-[auto_minmax(0,1fr)] h-full min-h-0 gap-3 p-6 text-foreground" style={{ background: 'linear-gradient(135deg, rgba(167, 243, 208, 0.15) 0%, rgba(196, 181, 253, 0.12) 50%, rgba(153, 246, 228, 0.1) 100%)' }}>
-        <div className="nop-designer__header min-h-0">
-          {hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} onAutoLayout={handleAutoLayout} />}
-        </div>
-        <div className={`grid ${gridColsClass} grid-rows-1 gap-3 min-h-0 h-full max-[1023px]:grid-cols-[15rem_minmax(0,1fr)] max-[1023px]:[&>*:nth-child(3)]:hidden max-[767px]:grid-cols-1 max-[767px]:[&>*:first-child]:hidden`}>
-          {snapshot.paletteCollapsed ? (
-            <div className="nop-designer__palette flex items-center justify-center min-h-0 rounded-xl border border-border shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }} data-testid="palette-collapsed">
-              <Button variant="ghost" size="icon-sm" onClick={() => dispatch({ type: 'togglePalette' })} aria-label="Expand palette" data-testid="expand-palette">
-                <DesignerIcon icon="chevron-right" />
-              </Button>
-            </div>
-          ) : (
-            <div className="nop-designer__palette min-h-0 overflow-hidden rounded-xl border border-border shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }} data-testid="palette-expanded">
-              <DesignerPaletteContent />
-            </div>
-          )}
-          <div className="nop-designer__canvas relative min-h-0 overflow-hidden rounded-xl border border-border shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }}>
-            <DesignerCanvasContent />
-          </div>
-          {snapshot.inspectorCollapsed ? (
-            <div className="nop-designer__inspector flex items-center justify-center min-h-0 rounded-xl border border-border shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }} data-testid="inspector-collapsed">
-              <Button variant="ghost" size="icon-sm" onClick={() => dispatch({ type: 'toggleInspector' })} aria-label="Expand inspector" data-testid="expand-inspector">
-                <DesignerIcon icon="chevron-left" />
-              </Button>
-            </div>
-          ) : (
-            <div className="nop-designer__inspector min-h-0 overflow-hidden rounded-xl border border-border shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }} data-testid="inspector-expanded">
-              {hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector />}
-            </div>
-          )}
-        </div>
-        {hasRendererSlotContent(dialogsSlot) ? <div className="relative">{dialogsSlot}</div> : null}
-      </div>
+      <WorkbenchShell
+        className="nop-designer text-foreground"
+        style={{ background: 'linear-gradient(135deg, rgba(167, 243, 208, 0.15) 0%, rgba(196, 181, 253, 0.12) 50%, rgba(153, 246, 228, 0.1) 100%)' }}
+        header={hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} onAutoLayout={handleAutoLayout} />}
+        leftPanel={<DesignerPaletteContent />}
+        leftCollapsed={snapshot.paletteCollapsed}
+        onLeftToggle={() => dispatch({ type: 'togglePalette' })}
+        leftLabel="Expand palette"
+        canvas={<DesignerCanvasContent />}
+        rightPanel={hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector />}
+        rightCollapsed={snapshot.inspectorCollapsed}
+        onRightToggle={() => dispatch({ type: 'toggleInspector' })}
+        rightLabel="Expand inspector"
+        dialogs={hasRendererSlotContent(dialogsSlot) ? dialogsSlot : undefined}
+      />
       <Dialog open={jsonOpen} onOpenChange={setJsonOpen} draggable noOverlay noCenter closeOnOutsideClick={false}>
         <DialogContent
           offsetRef={jsonOffsetRef}

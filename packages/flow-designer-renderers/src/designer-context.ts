@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
+import React, { useMemo, useSyncExternalStore } from 'react';
 import type { ScopeRef } from '@nop-chaos/flux-core';
-import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
+import { useHostScope } from '@nop-chaos/flux-react';
 import type { DesignerCore, DesignerSnapshot, DesignerConfig, NodeTypeConfig, EdgeTypeConfig, NormalizedDesignerConfig } from '@nop-chaos/flow-designer-core';
 import type { DesignerCommandAdapter } from './designer-command-adapter';
 
@@ -96,23 +96,8 @@ export function useDesignerHostScope(input: {
   core: DesignerCore;
   path: string;
 }): ScopeRef {
-  const runtime = useRendererRuntime();
-  const parentScope = useRenderScope();
   const scopeData = useMemo(() => buildDesignerScopeData(input), [input]);
-  const scope = useMemo(
-    () =>
-      runtime.createChildScope(parentScope, scopeData, {
-        scopeKey: `${input.path}:designer-host`,
-        pathSuffix: 'designer'
-      }),
-    [input.path, parentScope, runtime, scopeData]
-  );
-
-  useEffect(() => {
-    scope.merge(scopeData);
-  }, [scope, scopeData]);
-
-  return scope;
+  return useHostScope(scopeData, input.path, 'designer');
 }
 
 export function useNormalizedConfig(): NormalizedDesignerConfig {
