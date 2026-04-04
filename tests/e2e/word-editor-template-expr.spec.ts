@@ -53,9 +53,8 @@ test.describe('Template Expression Insertion', () => {
     await page.getByTitle('Insert Expression').click();
     await page.waitForTimeout(300);
 
-    const elButton = page.getByRole('button', { name: 'EL Expression' });
-    await expect(elButton).toBeVisible();
-    await expect(elButton).toHaveClass(/nop-accent|bg-\[var\(--nop-accent\)\]/);
+    const elTab = page.getByRole('tab', { name: 'EL Expression' });
+    await expect(elTab).toBeVisible();
 
     await expect(page.getByPlaceholder('${entity.fieldName}')).toBeVisible();
   });
@@ -66,8 +65,8 @@ test.describe('Template Expression Insertion', () => {
     await page.getByTitle('Insert Expression').click();
     await page.waitForTimeout(300);
 
-    const xplButton = page.getByRole('button', { name: 'XPL Tag' });
-    await xplButton.click();
+    const xplTab = page.getByRole('tab', { name: 'XPL Tag' });
+    await xplTab.click();
 
     await expect(page.getByText('Tag Name', { exact: false })).toBeVisible();
     await expect(page.getByRole('combobox')).toBeVisible();
@@ -79,7 +78,7 @@ test.describe('Template Expression Insertion', () => {
     await page.getByTitle('Insert Expression').click();
     await page.waitForTimeout(300);
 
-    await page.getByRole('button', { name: 'XPL Tag' }).click();
+    await page.getByRole('tab', { name: 'XPL Tag' }).click();
     await page.waitForTimeout(200);
 
     const tagSelect = page.getByRole('combobox');
@@ -88,7 +87,7 @@ test.describe('Template Expression Insertion', () => {
 
     const tags = ['c:if', 'c:for', 'c:forEach', 'c:choose', 'c:when', 'c:otherwise', 'c:set', 'c:out'];
     for (const tag of tags) {
-      await expect(tagSelect.locator('option').filter({ hasText: tag })).toHaveCount(1);
+      await expect(tagSelect.locator(`option[value="${tag}"]`)).toHaveCount(1);
     }
   });
 

@@ -32,10 +32,10 @@ test.describe('Dataset Sidebar Panel', () => {
     await openWordEditor(page);
 
     await expect(
-      page.getByRole('button', { name: /Datasets/ }).first()
+      page.getByRole('tab', { name: 'Datasets' })
     ).toBeVisible({ timeout: 15000 });
     await expect(
-      page.getByRole('button', { name: /Fields/ }).first()
+      page.getByRole('tab', { name: 'Fields' })
     ).toBeVisible();
   });
 
@@ -70,7 +70,7 @@ test.describe('Dataset Sidebar Panel', () => {
   test('Fields tab shows empty state when no dataset is selected', async ({ page }) => {
     await openWordEditor(page);
 
-    const fieldsTab = page.locator('aside button').filter({ hasText: 'Fields' });
+    const fieldsTab = page.getByRole('tab', { name: 'Fields' });
     await expect(fieldsTab).toBeVisible({ timeout: 15000 });
     await fieldsTab.click();
     await page.waitForTimeout(300);
