@@ -33,7 +33,8 @@ export class CanvasEditorBridge {
   mount(
     container: HTMLDivElement,
     data: IEditorData,
-    options?: CanvasEditorBridgeOptions
+    options?: CanvasEditorBridgeOptions,
+    paperSettings?: PaperSettings
   ): void {
     if (this.instance) {
       this.unmount()
@@ -41,6 +42,10 @@ export class CanvasEditorBridge {
 
     this.instance = new Editor(container, data)
     this.setupListeners(options)
+
+    if (paperSettings) {
+      this.applyPaperSettings(paperSettings)
+    }
   }
 
   unmount(): void {
