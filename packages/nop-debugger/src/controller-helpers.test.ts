@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildScopeChain,
   buildNetworkSummary,
-  createRequestInstanceId,
+  createRequestInstanceIdFactory,
   createRequestKey,
   createSessionId,
   formatActionResult,
@@ -80,7 +80,7 @@ describe('controller helpers', () => {
     expect(formatActionResult({ ok: false })).toBe('failed');
     expect(summarizeApi({ url: '/api/demo', method: 'post' })).toBe('POST /api/demo');
     expect(createRequestKey({ url: '/api/demo', method: 'post' }, 'node-1', 'body.0')).toBe('POST /api/demo | node-1 | body.0');
-    expect(createRequestInstanceId()).toMatch(/^req-\d+$/);
+    expect(createRequestInstanceIdFactory()()).toMatch(/^req-\d+$/);
   });
 
   it('summarizes value shapes, network metadata, and compiled roots', () => {

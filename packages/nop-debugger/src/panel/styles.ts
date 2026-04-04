@@ -64,6 +64,7 @@ export const DEBUGGER_STYLES = `
 
 .ndbg-header {
   display: flex;
+}
 
 .ndbg-drag-handle {
   flex: 1;

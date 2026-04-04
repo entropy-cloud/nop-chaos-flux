@@ -3,6 +3,7 @@ import type { ApiObject, RendererEnv } from '@nop-chaos/flux-core';
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
 import { normalizeRedactionOptions } from './redaction';
 import { createDebuggerStore } from './store';
+import { createRequestInstanceIdFactory } from './controller-helpers';
 import type { NopDebugEvent } from './types';
 
 function createStore() {
@@ -72,7 +73,8 @@ describe('debugger adapters', () => {
       env,
       store,
       redaction: normalizeRedactionOptions({ redactKeys: ['token'], mask: '[MASKED]' }),
-      requestState: new Map()
+      requestState: new Map(),
+      nextRequestInstanceId: createRequestInstanceIdFactory()
     });
 
     decoratedEnv.monitor?.onRenderStart?.({ nodeId: 'node-1', path: 'body.0', type: 'text' });
@@ -140,7 +142,8 @@ describe('debugger adapters', () => {
       env,
       store,
       redaction: normalizeRedactionOptions(undefined),
-      requestState: new Map()
+      requestState: new Map(),
+      nextRequestInstanceId: createRequestInstanceIdFactory()
     });
     appendActionErrorEvent(store, new Error('root failed'), {
       runtime: {} as never,

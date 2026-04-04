@@ -9,7 +9,7 @@ import type {
   SchemaInput,
   CompiledSchemaNode
 } from '@nop-chaos/flux-core';
-import { buildNetworkSummary, createRequestInstanceId, createRequestKey, formatActionResult, formatErrorDetail, normalizeCompiledRoot, summarizeApi, summarizeValueShape } from './controller-helpers';
+import { buildNetworkSummary, createRequestKey, formatActionResult, formatErrorDetail, normalizeCompiledRoot, summarizeApi, summarizeValueShape } from './controller-helpers';
 import { redactData, type NormalizedRedactionOptions } from './redaction';
 import type { NopDebuggerStore } from './store';
 
@@ -77,6 +77,7 @@ export function decorateDebuggerEnv(input: {
   store: NopDebuggerStore;
   redaction: NormalizedRedactionOptions;
   requestState: Map<string, { startedAt: number; requestInstanceId: string; interactionId?: string; nodeId?: string; path?: string }>;
+  nextRequestInstanceId: () => string;
 }): RendererEnv {
   if (!input.enabled) {
     return input.env;
@@ -147,7 +148,7 @@ export function decorateDebuggerEnv(input: {
     },
     onApiRequest(payload) {
       const requestKey = createRequestKey(payload.api, payload.nodeId, payload.path);
-      const requestInstanceId = payload.requestInstanceId ?? createRequestInstanceId();
+      const requestInstanceId = payload.requestInstanceId ?? input.nextRequestInstanceId();
       if (!input.requestState.has(requestInstanceId)) {
         input.requestState.set(requestInstanceId, {
           startedAt: Date.now(),
@@ -192,7 +193,7 @@ export function decorateDebuggerEnv(input: {
   const decoratedFetcher = async <T,>(api: ApiObject, ctx: ApiRequestContext): Promise<ApiResponse<T>> => {
     const requestKey = createRequestKey(api);
     const startedAt = Date.now();
-    const requestInstanceId = ctx.requestInstanceId ?? createRequestInstanceId();
+    const requestInstanceId = ctx.requestInstanceId ?? input.nextRequestInstanceId();
     const existingRequest = input.requestState.get(requestInstanceId);
     input.requestState.set(requestInstanceId, {
       startedAt,

@@ -4,6 +4,7 @@ import type {
   NopDebugEventQuery,
   NopDebuggerAutomationApi,
   NopDebuggerController,
+  NopDebuggerFailureSummary,
   NopDebuggerHub,
   NopDebuggerPinnedErrors,
   NopDebuggerSessionExport,
@@ -13,8 +14,10 @@ import type {
   NopDebuggerWindowConfig,
   NopDiagnosticReport,
   NopDiagnosticReportOptions,
+  NopExpressionEvaluationResult,
   NopInteractionTrace,
   NopInteractionTraceQuery,
+  NopNodeAnomalySummary,
   NopNodeDiagnostics,
   NopNodeDiagnosticsOptions,
   NopWaitForEventOptions,
@@ -34,10 +37,10 @@ export function createAutomationApi(input: {
   getPinnedErrors(): NopDebuggerPinnedErrors;
   getNodeDiagnostics(options: NopNodeDiagnosticsOptions): NopNodeDiagnostics;
   getInteractionTrace(query: NopInteractionTraceQuery): NopInteractionTrace;
-  getLatestFailedRequest(): NonNullable<NopDebuggerAutomationApi['getLatestFailedRequest']> extends (...args: never[]) => infer T ? T : never;
-  getLatestFailedAction(): NonNullable<NopDebuggerAutomationApi['getLatestFailedAction']> extends (...args: never[]) => infer T ? T : never;
-  getNodeAnomalies(options: NopNodeDiagnosticsOptions): NonNullable<NopDebuggerAutomationApi['getNodeAnomalies']> extends (...args: never[]) => infer T ? T : never;
-  getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NonNullable<NopDebuggerAutomationApi['getRecentFailures']> extends (...args: never[]) => infer T ? T : never;
+  getLatestFailedRequest(): NopDebuggerFailureSummary | undefined;
+  getLatestFailedAction(): NopDebuggerFailureSummary | undefined;
+  getNodeAnomalies(options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined;
+  getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[];
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
@@ -53,7 +56,7 @@ export function createAutomationApi(input: {
   setPanelPosition(position: { x: number; y: number }): void;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
-  evaluateNodeExpression(args: { cid: number; expression: string }): NonNullable<NopDebuggerAutomationApi['evaluateNodeExpression']> extends (...args: never[]) => infer T ? T : never;
+  evaluateNodeExpression(args: { cid: number; expression: string }): NopExpressionEvaluationResult;
 }): NopDebuggerAutomationApi {
   return {
     controllerId: input.controllerId,

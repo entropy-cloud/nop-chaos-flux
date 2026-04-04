@@ -14,7 +14,7 @@ import {
   installNopDebuggerWindowFlag,
   registerAutomationApi
 } from './automation';
-import { buildScopeChain, createSessionId, loadPersistedMinimized, loadPersistedPanelOpen, loadPersistedPosition, persistMinimized, persistPanelOpen, persistPosition, readWindowConfig } from './controller-helpers';
+import { buildScopeChain, createRequestInstanceIdFactory, createSessionId, loadPersistedMinimized, loadPersistedPanelOpen, loadPersistedPosition, persistMinimized, persistPanelOpen, persistPosition, readWindowConfig } from './controller-helpers';
 import { applyEventQuery, buildInteractionTrace, buildNodeDiagnostics, buildOverview, buildSessionExport, createDiagnosticReport, getLatestFailedAction, getLatestFailedRequest, getNodeAnomalies, getRecentFailures } from './diagnostics';
 import { normalizeRedactionOptions } from './redaction';
 import { createDebuggerStore } from './store';
@@ -171,6 +171,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   }
 
   const requestState = new Map<string, { startedAt: number; requestInstanceId: string; interactionId?: string; nodeId?: string; path?: string }>();
+  const nextRequestInstanceId = createRequestInstanceIdFactory();
   let componentRegistry: ComponentHandleRegistry | undefined;
   let actionScope: ActionScope | undefined;
 
@@ -226,7 +227,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         expression: args.expression,
         ok: true,
         value: compiled.exec(inspectResult.scopeChain[0].data, {
-          fetcher: async <T,>() => ({ ok: true, status: 200, data: undefined as T }),
+          fetcher: async () => { throw new Error('API calls are not available during expression evaluation.'); },
           notify() {
             return undefined;
           }
@@ -348,7 +349,8 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         env,
         store,
         redaction,
-        requestState
+        requestState,
+        nextRequestInstanceId
       });
     },
     onActionError(error: unknown, ctx: ActionContext) {

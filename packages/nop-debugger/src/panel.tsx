@@ -154,10 +154,13 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const errorGroups = useMemo(() => groupErrors(snapshot.events), [snapshot.events]);
 
   const overview = useMemo(() => buildOverview(snapshot.events), [snapshot.events]);
-  const latestTrace = useMemo(() => props.controller.createDiagnosticReport({
-    eventLimit: 20,
-    includeLatestInteractionTrace: true
-  }).latestInteractionTrace, [props.controller]);
+  const latestTrace = useMemo(() => {
+    void snapshot.events;
+    return props.controller.createDiagnosticReport({
+      eventLimit: 20,
+      includeLatestInteractionTrace: true
+    }).latestInteractionTrace;
+  }, [props.controller, snapshot.events]);
   const latestTraceSummary = useMemo(() => formatTraceSummary(latestTrace), [latestTrace]);
 
   const nodeDiagnostics = useMemo(() => {

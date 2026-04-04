@@ -106,10 +106,15 @@ export function createRequestKey(api: ApiObject, nodeId?: string, path?: string)
   return `${String(api.method ?? 'get').toUpperCase()} ${api.url} | ${nodeId ?? 'n/a'} | ${path ?? 'n/a'}`;
 }
 
-let nextRequestInstanceId = 1;
+export function createRequestInstanceIdFactory() {
+  let nextId = 1;
+  return () => `req-${nextId++}`;
+}
+
+const createRequestInstanceIdFromDefaultFactory = createRequestInstanceIdFactory();
 
 export function createRequestInstanceId() {
-  return `req-${nextRequestInstanceId++}`;
+  return createRequestInstanceIdFromDefaultFactory();
 }
 
 export function buildScopeChain(scope: ScopeRef | undefined): NopScopeChainEntry[] | undefined {
