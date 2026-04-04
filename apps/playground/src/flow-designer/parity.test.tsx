@@ -67,7 +67,9 @@ function createEmptySnapshot(): DesignerSnapshot {
     canUndo: false,
     canRedo: false,
     isDirty: false,
-    gridEnabled: true
+    gridEnabled: true,
+    paletteCollapsed: false,
+    inspectorCollapsed: false
   };
 }
 
@@ -162,7 +164,9 @@ describe('Flow Designer Parity Components', () => {
         canUndo: true,
         canRedo: false,
         isDirty: false,
-        gridEnabled: true
+        gridEnabled: true,
+        paletteCollapsed: false,
+        inspectorCollapsed: false
       };
 
       render(
@@ -205,7 +209,9 @@ describe('Flow Designer Parity Components', () => {
         canUndo: true,
         canRedo: false,
         isDirty: false,
-        gridEnabled: true
+        gridEnabled: true,
+        paletteCollapsed: false,
+        inspectorCollapsed: false
       };
 
       render(
@@ -247,7 +253,9 @@ describe('Flow Designer Parity Components', () => {
         canUndo: false,
         canRedo: false,
         isDirty: false,
-        gridEnabled: true
+        gridEnabled: true,
+        paletteCollapsed: false,
+        inspectorCollapsed: false
       };
 
       render(
