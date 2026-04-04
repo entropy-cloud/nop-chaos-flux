@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge, Button, Input } from '@nop-chaos/ui';
 import { useDesignerContext } from './designer-context';
+import { DesignerIcon } from './designer-icon';
 
 export function DefaultInspector() {
   const { dispatch, snapshot } = useDesignerContext();
@@ -20,6 +21,9 @@ export function DefaultInspector() {
           <div className="text-sm font-semibold text-foreground">属性面板</div>
           <div className="text-sm text-muted-foreground">编辑节点或连线属性</div>
         </div>
+        <Button variant="ghost" size="icon-sm" onClick={() => dispatch({ type: 'toggleInspector' })} aria-label="Collapse inspector" data-testid="collapse-inspector">
+          <DesignerIcon icon="chevron-right" />
+        </Button>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto p-4">
         <div className="rounded-lg border border-border p-4 mb-4" style={{ background: 'rgba(255, 255, 255, 0.4)' }}>

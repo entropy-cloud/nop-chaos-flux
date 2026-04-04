@@ -27,6 +27,10 @@ function readState(name: string, snapshot: ReturnType<typeof useDesignerContext>
       return snapshot.isDirty;
     case 'gridEnabled':
       return snapshot.gridEnabled;
+    case 'paletteCollapsed':
+      return snapshot.paletteCollapsed;
+    case 'inspectorCollapsed':
+      return snapshot.inspectorCollapsed;
     default:
       return undefined;
   }
@@ -65,6 +69,8 @@ function evalTextTemplate(template: string | undefined, snapshot: ReturnType<typ
     if (expr === 'canUndo') return String(snapshot.canUndo);
     if (expr === 'canRedo') return String(snapshot.canRedo);
     if (expr === 'gridEnabled') return String(snapshot.gridEnabled);
+    if (expr === 'paletteCollapsed') return String(snapshot.paletteCollapsed);
+    if (expr === 'inspectorCollapsed') return String(snapshot.inspectorCollapsed);
     return '';
   });
 }
@@ -77,6 +83,10 @@ function toCommand(action: string | undefined): import('./designer-command-adapt
       return { type: 'redo' };
     case 'designer:toggle-grid':
       return { type: 'toggleGrid' };
+    case 'designer:toggle-palette':
+      return { type: 'togglePalette' };
+    case 'designer:toggle-inspector':
+      return { type: 'toggleInspector' };
     case 'designer:restore':
       return { type: 'restore' };
     case 'designer:save':

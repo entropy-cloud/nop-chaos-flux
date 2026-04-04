@@ -3,6 +3,7 @@ import type { NodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge';
+import { Button } from '@nop-chaos/ui';
 
 export function DesignerPaletteContent() {
   const { config, dispatch, snapshot } = useDesignerContext();
@@ -40,7 +41,12 @@ export function DesignerPaletteContent() {
           <div className="text-sm font-semibold text-foreground">节点库</div>
           <div className="text-sm text-muted-foreground">拖拽或点击添加</div>
         </div>
-        <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border bg-transparent">{nodeTypes.length}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border bg-transparent">{nodeTypes.length}</span>
+          <Button variant="ghost" size="icon-sm" onClick={() => dispatch({ type: 'togglePalette' })} aria-label="Collapse palette" data-testid="collapse-palette">
+            <DesignerIcon icon="chevron-left" />
+          </Button>
+        </div>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto p-3">
         {filteredGroups.map((group) => (
