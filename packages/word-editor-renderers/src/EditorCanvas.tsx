@@ -96,9 +96,7 @@ export function EditorCanvas({ editorStore, bridge }: EditorCanvasProps) {
       onPageScaleChange: (payload) => {
         editorStore.setScale(payload)
       }
-    })
-
-    bridge.applyPaperSettings(paperSettings)
+    }, paperSettings)
 
     editorStore.setBridge(bridge)
 

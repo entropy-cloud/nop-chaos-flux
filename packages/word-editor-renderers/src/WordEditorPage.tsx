@@ -2,7 +2,7 @@ import { useMemo, useEffect, useState, useCallback } from 'react'
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
 import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react'
 import { CanvasEditorBridge, createDatasetStore, createEditorStore, saveDocument, loadDocument } from '@nop-chaos/word-editor-core'
-import type { DataSetSourceType, DataColumnInput, DataSet } from '@nop-chaos/word-editor-core'
+import type { DataSetSourceType, DataColumnInput, DataSet, DocChart, DocCode } from '@nop-chaos/word-editor-core'
 import {
   Button,
   Tabs,
@@ -17,6 +17,7 @@ import { OutlinePanel } from './panels/OutlinePanel.js'
 import { DatasetPanel } from './panels/DatasetPanel.js'
 import { FieldList } from './panels/FieldList.js'
 import { DatasetDialog } from './dialogs/DatasetDialog.js'
+import { useWordEditorShortcuts } from './hooks/useWordEditorShortcuts.js'
 
 interface WordEditorPageProps {
   onBack: () => void
@@ -60,6 +61,8 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
       setTimeout(() => setSaveMessage(null), 2000)
     }
   }
+
+  useWordEditorShortcuts({ bridge, onSave: handleSave })
 
   const handleAddDataset = () => {
     setEditingDatasetId(null)
@@ -111,13 +114,21 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
     })
   }, [bridge])
 
+  const handleChartSave = useCallback((chart: DocChart) => {
+    console.log('Chart saved:', chart)
+  }, [])
+
+  const handleCodeSave = useCallback((code: DocCode) => {
+    console.log('Code saved:', code)
+  }, [])
+
   const editingDataset = editingDatasetId
     ? datasetStore.getState().datasets.find(ds => ds.id === editingDatasetId)
     : null
 
   return (
-    <main className="flex flex-col h-screen bg-[var(--nop-app-bg)]">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[var(--nop-border)] bg-[var(--nop-nav-surface)]">
+    <main className="flex flex-col h-screen bg-[var(--nop-app-bg)] overflow-hidden">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-[var(--nop-border)] bg-[var(--nop-nav-surface)] shrink-0">
         <div className="flex items-center gap-3">
           <Button
             type="button"
@@ -149,12 +160,14 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
         </Button>
       </header>
 
-      <RibbonToolbar bridge={bridge} store={editorStore} onInsertExpr={handleInsertExpr} onInsertTag={handleInsertTag} />
+      <div className="shrink-0">
+        <RibbonToolbar bridge={bridge} store={editorStore} onInsertExpr={handleInsertExpr} onInsertTag={handleInsertTag} onChartSave={handleChartSave} onCodeSave={handleCodeSave} />
+      </div>
 
-      <div className="flex flex-1 min-h-0">
-        <aside className="w-[280px] border-r border-[var(--nop-border)] bg-[var(--nop-surface)] flex flex-col">
-          <Tabs data-orientation="horizontal" className="flex-col gap-0">
-            <TabsList variant="line" className="w-full rounded-none border-b border-[var(--nop-border)] px-0">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <aside className="w-[280px] border-r border-[var(--nop-border)] bg-[var(--nop-surface)] flex flex-col overflow-hidden">
+          <Tabs data-orientation="horizontal" className="flex-col gap-0 h-full">
+            <TabsList variant="line" className="w-full rounded-none border-b border-[var(--nop-border)] px-0 shrink-0">
               <TabsTrigger
                 value="datasets"
                 data-state={activePanel === 'datasets' ? 'active' : 'inactive'}
@@ -174,7 +187,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
                 <span>Fields</span>
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="datasets" className="flex-1 min-h-0 overflow-hidden">
+            <TabsContent value={activePanel} className="flex-1 min-h-0 overflow-hidden">
               {activePanel === 'datasets' ? (
                 <DatasetPanel
                   store={datasetStore}
@@ -191,11 +204,11 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
           </Tabs>
         </aside>
 
-        <section className="flex-1 min-w-0 bg-[var(--nop-playground-stage-bg)]">
+        <section className="flex-1 min-w-0 bg-[var(--nop-playground-stage-bg)] overflow-auto">
           <EditorCanvas editorStore={editorStore} bridge={bridge} />
         </section>
 
-        <aside className="w-[280px] border-l border-[var(--nop-border)] bg-[var(--nop-surface)]">
+        <aside className="w-[280px] border-l border-[var(--nop-border)] bg-[var(--nop-surface)] overflow-y-auto">
           <OutlinePanel bridge={bridge} />
         </aside>
       </div>
