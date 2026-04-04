@@ -1,7 +1,7 @@
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
 import { Columns, Copy, Info } from 'lucide-react'
 import type { DatasetStoreApi } from '@nop-chaos/word-editor-core'
-import { Button, ScrollArea } from '@nop-chaos/ui'
+import { Button, ScrollArea, cn } from '@nop-chaos/ui'
 
 interface FieldListProps {
   store: DatasetStoreApi
@@ -88,7 +88,7 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
                           {column.name}
                         </h3>
                         <span
-                          className={`px-1.5 py-0.5 text-[10px] font-medium rounded border ${getTypeColor(column.type)}`}
+                          className={cn('px-1.5 py-0.5 text-[10px] font-medium rounded border', getTypeColor(column.type))}
                         >
                           {getTypeLabel(column.type)}
                         </span>

@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  Label,
   NativeSelect,
   NativeSelectOption
 } from '@nop-chaos/ui'
@@ -60,9 +61,9 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium mb-1">
+            <Label>
               Code Name <span className="text-destructive">*</span>
-            </label>
+            </Label>
             <Input
               value={codeName}
               onChange={(e) => setCodeName(e.target.value)}
@@ -72,7 +73,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">Code Type</label>
+            <Label>Code Type</Label>
             <NativeSelect
               value={codeType}
               onChange={(e) => setCodeType(e.target.value as 'barcode' | 'qrcode')}
@@ -84,7 +85,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">Dataset ID</label>
+            <Label>Dataset ID</Label>
             <Input
               value={datasetId}
               onChange={(e) => setDatasetId(e.target.value)}
@@ -94,9 +95,9 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">
+            <Label>
               Value Field <span className="text-destructive">*</span>
-            </label>
+            </Label>
             <Input
               value={valueField}
               onChange={(e) => setValueField(e.target.value)}
@@ -106,7 +107,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           </div>
 
           <div className="border-t pt-4">
-            <label className="block text-xs font-medium mb-2">Preview</label>
+            <Label>Preview</Label>
             <div className="flex items-center justify-center p-4 border rounded-lg bg-muted/20">
               {codeType === 'barcode' ? (
                 <div className="flex items-center gap-[2px] h-16">

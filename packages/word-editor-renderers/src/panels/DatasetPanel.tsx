@@ -1,7 +1,7 @@
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
 import { Database, Plus, MoreVertical } from 'lucide-react'
 import type { DatasetStoreApi } from '@nop-chaos/word-editor-core'
-import { Button, ScrollArea } from '@nop-chaos/ui'
+import { Button, ScrollArea, cn } from '@nop-chaos/ui'
 
 interface DatasetPanelProps {
   store: DatasetStoreApi
@@ -90,11 +90,12 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
                 <div
                   key={dataset.id}
                   onClick={() => onEditDataset(dataset.id)}
-                  className={`group rounded-lg border p-3 cursor-pointer transition-all duration-160 outline-none focus:ring-2 focus:ring-[var(--nop-accent)] focus:ring-opacity-30 ${
+                  className={cn(
+                    'group rounded-lg border p-3 cursor-pointer transition-all duration-160 outline-none focus:ring-2 focus:ring-[var(--nop-accent)] focus:ring-opacity-30',
                     selectedDatasetId === dataset.id
                       ? 'border-[var(--nop-accent)] bg-[var(--nop-surface-soft)]'
                       : 'border-[var(--nop-border)] hover:border-[var(--nop-accent)] hover:bg-[var(--nop-surface-soft)]'
-                  }`}
+                  )}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">

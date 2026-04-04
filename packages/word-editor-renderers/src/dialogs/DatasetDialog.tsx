@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  Label,
   NativeSelect,
   NativeSelectOption,
   ScrollArea,
@@ -78,9 +79,9 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
           <ScrollArea className="flex-1">
             <div className="p-1 space-y-4">
               <div>
-                <label className="block text-xs font-medium mb-1">
+                <Label>
                   Name <span className="text-destructive">*</span>
-                </label>
+                </Label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -90,7 +91,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1">Description</label>
+                <Label>Description</Label>
                 <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -101,7 +102,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1">Type</label>
+                <Label>Type</Label>
                 <NativeSelect
                   value={type}
                   onChange={(e) => setType(e.target.value as DataSetSourceType)}
@@ -116,7 +117,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-medium">Columns</label>
+                  <Label>Columns</Label>
                   <Button
                     type="button"
                     size="xs"
@@ -139,9 +140,9 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                       <div key={index} className="flex items-start gap-2 p-3 border rounded-lg">
                         <div className="flex-1 grid grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-[10px] font-medium mb-1">
+                            <Label className="text-[10px]">
                               Name <span className="text-destructive">*</span>
-                            </label>
+                            </Label>
                             <Input
                               value={column.name || ''}
                               onChange={(e) => handleColumnChange(index, 'name', e.target.value)}
@@ -150,7 +151,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-medium mb-1">Label</label>
+                            <Label className="text-[10px]">Label</Label>
                             <Input
                               value={column.label || ''}
                               onChange={(e) => handleColumnChange(index, 'label', e.target.value)}
@@ -159,7 +160,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-medium mb-1">Type</label>
+                            <Label className="text-[10px]">Type</Label>
                             <NativeSelect
                               value={column.type || 'static'}
                               onChange={(e) => handleColumnChange(index, 'type', e.target.value)}
@@ -173,7 +174,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                             </NativeSelect>
                           </div>
                           <div>
-                            <label className="block text-[10px] font-medium mb-1">Description</label>
+                            <Label className="text-[10px]">Description</Label>
                             <Input
                               value={column.description || ''}
                               onChange={(e) => handleColumnChange(index, 'description', e.target.value)}

@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  Label,
   NativeSelect,
   NativeSelectOption,
   Tabs,
@@ -94,8 +95,8 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
               />
             ) : (
               <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium mb-1">Tag Name</label>
+              <div>
+                <Label>Tag Name</Label>
                   <NativeSelect
                     value={selectedTag}
                     onChange={(e) => {
@@ -116,7 +117,7 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
                   <div className="space-y-2">
                     {Object.entries(currentTagDef.defaultAttrs).map(([attrName]) => (
                       <div key={attrName}>
-                        <label className="block text-xs font-medium mb-1">{attrName}</label>
+                        <Label>{attrName}</Label>
                         <Input
                           value={tagAttrs[attrName] || ''}
                           onChange={(e) => setTagAttrs(prev => ({ ...prev, [attrName]: e.target.value }))}

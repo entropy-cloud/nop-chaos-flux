@@ -32,6 +32,7 @@ vi.mock('@nop-chaos/ui', () => {
       <button data-testid="tabs-trigger" onClick={onClick} {...props}>{children}</button>
     ),
     TabsContent: ({ children }: any) => <div data-testid="tabs-content">{children}</div>,
+    Label: ({ children, ...props }: any) => <label data-testid="label" {...props}>{children}</label>,
     cn: (...args: any[]) => args.filter(Boolean).join(' ')
   };
 });
