@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ApiObject, RendererEnv } from '@nop-chaos/flux-core';
+import type { ActionScope, ApiObject, RendererEnv } from '@nop-chaos/flux-core';
 import { createNopDebugger, getNopDebuggerAutomationApi, installNopDebuggerWindowFlag } from './index';
 
 const windowStub = {} as Window & typeof globalThis;
@@ -322,5 +322,61 @@ describe('nop-debugger automation api', () => {
     );
     expect(window.__NOP_DEBUGGER_HUB__?.activeControllerId).toBe('second-controller');
   });
-});
 
+  it('records state:snapshot events when an action scope with debug snapshot is attached', () => {
+    const debuggerController = createNopDebugger({
+      id: 'action-scope-snapshot',
+      enabled: true
+    });
+
+    const actionScope: ActionScope = {
+      id: 'scope-root',
+      resolve() {
+        return undefined;
+      },
+      registerNamespace() {
+        return () => undefined;
+      },
+      unregisterNamespace() {
+        return undefined;
+      },
+      listNamespaces() {
+        return ['app'];
+      },
+      getDebugSnapshot() {
+        return {
+          id: 'scope-root',
+          namespaces: [
+            {
+              namespace: 'app',
+              providerKind: 'host',
+              methods: ['save', 'refresh']
+            }
+          ]
+        };
+      }
+    };
+
+    debuggerController.setActionScope(actionScope);
+
+    const snapshotEvent = debuggerController.getLatestEvent({ kind: 'state:snapshot' });
+    expect(snapshotEvent).toMatchObject({
+      kind: 'state:snapshot',
+      group: 'node',
+      source: 'controller.setActionScope'
+    });
+    expect(snapshotEvent?.exportedData).toMatchObject({
+      id: 'scope-root',
+      namespaces: [
+        {
+          namespace: 'app',
+          providerKind: 'host',
+          methods: ['save', 'refresh']
+        }
+      ]
+    });
+
+    const nodeEvents = debuggerController.queryEvents({ group: 'node' });
+    expect(nodeEvents.some((event) => event.kind === 'state:snapshot')).toBe(true);
+  });
+});

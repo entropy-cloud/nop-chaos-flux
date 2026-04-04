@@ -12,6 +12,7 @@ export type NopDebugEventKind =
   | 'api:start'
   | 'api:end'
   | 'api:abort'
+  | 'state:snapshot'
   | 'notify'
   | 'error';
 

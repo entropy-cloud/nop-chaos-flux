@@ -84,6 +84,26 @@ function buildInspectResult(
   return result;
 }
 
+function appendActionScopeSnapshotEvent(args: {
+  store: ReturnType<typeof createDebuggerStore>;
+  actionScope: ActionScope;
+}) {
+  const debugSnapshot = args.actionScope.getDebugSnapshot?.();
+  if (!debugSnapshot) {
+    return;
+  }
+
+  args.store.append({
+    kind: 'state:snapshot',
+    group: 'node',
+    level: 'info',
+    source: 'controller.setActionScope',
+    summary: `action scope snapshot (${debugSnapshot.namespaces.length} namespace${debugSnapshot.namespaces.length === 1 ? '' : 's'})`,
+    detail: `scopeId=${debugSnapshot.id} | parentId=${debugSnapshot.parentId ?? 'none'}`,
+    exportedData: debugSnapshot
+  });
+}
+
 export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebuggerController {
   const windowConfig = readWindowConfig();
   const enabled = options.enabled ?? windowConfig.enabled;
@@ -314,7 +334,12 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     },
     setActionScope(nextActionScope: ActionScope | null) {
       actionScope = nextActionScope ?? undefined;
-      void actionScope;
+      if (actionScope) {
+        appendActionScopeSnapshotEvent({
+          store,
+          actionScope
+        });
+      }
     },
     inspectByCid,
     inspectByElement
