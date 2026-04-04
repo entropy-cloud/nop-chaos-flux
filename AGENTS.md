@@ -122,6 +122,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 | Change Flow Designer visual style (node cards, icons, badges) | `docs/architecture/styling-system.md` → "Spacing Conventions" section | `docs/analysis/flow-designer-style-parity-research.md` | Context-based spacing guide, parity audit |
 | Change Flow Designer config schema (nodeTypes, ports, permissions) | `docs/architecture/flow-designer/config-schema.md` | `docs/architecture/flow-designer/api.md` | NodeTypeConfig, port definitions, inspector schema |
 | Work on Report Designer or Spreadsheet Editor | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` | Layered architecture, package boundaries, interface contracts |
+| Change spreadsheet cell CSS, `ss-*` classes, or cell rendering styles | `docs/architecture/report-designer/spreadsheet-canvas-css.md` | `docs/architecture/styling-system.md` → "Performance-Critical Domain: Spreadsheet Canvas" | Hybrid CSS strategy (predefined class + inline style + data-*), perf-first, NOT Tailwind |
 | Change form validation, error display, or field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` | Validation rules, timing, renderer participation |
 | Change form field wrappers, labels, hints, or error slots | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/field-frame.md` | Slot classification, unified field chrome |
 | Add new actions, event handlers, or `xui:import` usage | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` | Namespaced actions, import semantics, scope boundaries |
@@ -145,6 +146,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 | `packages/ui/src/` | `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md` |
 | `packages/flow-designer-*/src/` | `docs/architecture/flow-designer/` (start with `design.md`) |
 | `packages/spreadsheet-*/src/` or `packages/report-designer-*/src/` | `docs/architecture/report-designer/` (start with `design.md`) |
+| `packages/spreadsheet-renderers/src/canvas-styles.css` or `spreadsheet-grid.tsx` | `docs/architecture/report-designer/spreadsheet-canvas-css.md`, `docs/architecture/styling-system.md` → "Performance-Critical Domain: Spreadsheet Canvas" |
 | `apps/playground/src/` | `docs/architecture/playground-experience.md` |
 | `apps/playground/src/styles.css` | `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`, `docs/architecture/styling-system.md` |
 | `apps/playground/src/schemas/*.json` | `docs/references/flux-json-conventions.md`, `docs/architecture/styling-system.md` (classAliases) |
