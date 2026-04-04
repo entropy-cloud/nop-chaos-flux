@@ -231,6 +231,19 @@ export const DEBUGGER_STYLES = `
   color: var(--nop-debugger-muted-text);
 }
 
+.ndbg-search-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ndbg-highlight {
+  border-radius: 4px;
+  background: rgba(255, 207, 139, 0.22);
+  color: #fff3d6;
+  padding: 0 2px;
+}
+
 .ndbg-entry { cursor: pointer; }
 .ndbg-entry-expanded {
   display: grid;

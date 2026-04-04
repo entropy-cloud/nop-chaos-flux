@@ -219,3 +219,34 @@ export function loadPersistedMinimized(id: string): boolean | undefined {
   }
 }
 
+export function loadPersistedSearchHistory(id: string): string[] {
+  if (typeof localStorage === 'undefined') {
+    return [];
+  }
+
+  try {
+    const raw = localStorage.getItem(`nop-debugger:${id}:search-history`);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === 'string').slice(0, 8)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function persistSearchHistory(id: string, history: readonly string[]) {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+
+  try {
+    localStorage.setItem(`nop-debugger:${id}:search-history`, JSON.stringify(history.slice(0, 8)));
+  } catch {
+    void undefined;
+  }
+}

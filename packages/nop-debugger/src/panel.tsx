@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
 import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types';
 import { buildOverview } from './diagnostics';
+import { loadPersistedSearchHistory, persistSearchHistory } from './controller-helpers';
 import { formatTraceSummary, groupErrors, mergeNetworkRequests } from './panel/event-groups';
 import { useDebuggerSnapshot, useDraggablePosition, useLauncherDrag, useResizablePanel } from './panel/hooks';
 import { NetworkTab } from './panel/network-tab';
@@ -95,6 +96,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const { position: launcherPosition, bind: launcherBind, wasDraggedRef, consumeSuppressedClick } = useLauncherDrag(props.controller, snapshot.position);
   useInjectDebuggerStyles(snapshot.enabled);
 
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => loadPersistedSearchHistory(props.controller.id));
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState('');
   const [errorsOnly, setErrorsOnly] = useState(false);
@@ -169,6 +171,30 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
   const errorCount = overview.errorCount;
   const badgeDisplay = errorCount > 99 ? '99+' : String(errorCount);
+
+  useEffect(() => {
+    persistSearchHistory(props.controller.id, searchHistory);
+  }, [props.controller.id, searchHistory]);
+
+  const handleSearchTextChange = (value: string) => {
+    setSearchText(value);
+  };
+
+  const handleSearchSubmit = () => {
+    const query = searchText.trim();
+    if (!query) {
+      return;
+    }
+
+    setSearchHistory((current) => {
+      const next = [query, ...current.filter((item) => item !== query)];
+      return next.slice(0, 8);
+    });
+  };
+
+  const handleSearchHistorySelect = (query: string) => {
+    setSearchText(query);
+  };
 
   if (!snapshot.enabled) {
     return null;
@@ -282,7 +308,10 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         <TimelineTab
           snapshot={snapshot}
           searchText={searchText}
-          setSearchText={setSearchText}
+          setSearchText={handleSearchTextChange}
+          submitSearch={handleSearchSubmit}
+          searchHistory={searchHistory}
+          applySearchHistory={handleSearchHistorySelect}
           errorsOnly={errorsOnly}
           toggleErrorsOnly={toggleErrorsOnly}
           filterLabels={FILTER_LABELS}

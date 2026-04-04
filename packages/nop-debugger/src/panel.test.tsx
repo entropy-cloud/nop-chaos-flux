@@ -239,8 +239,65 @@ describe('NopDebuggerPanel', () => {
       target: { value: 'login' }
     });
 
-    expect(screen.getByText('User login')).toBeTruthy();
+    expect(screen.getByText((_, element) => element?.textContent === 'User login')).toBeTruthy();
     expect(screen.queryByText('User logout')).toBeNull();
+  });
+
+  it('stores search history on enter and reuses it from chips', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'timeline';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'notify',
+        group: 'notify',
+        level: 'info',
+        source: 'toast',
+        summary: 'Saved successfully'
+      }
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    const search = screen.getByPlaceholderText('Search events, /regex/, or path:body.0');
+    fireEvent.change(search, { target: { value: 'saved' } });
+    fireEvent.keyDown(search, { key: 'Enter' });
+
+    expect(screen.getByRole('button', { name: 'saved' })).toBeTruthy();
+
+    fireEvent.change(search, { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'saved' }));
+
+    expect((screen.getByPlaceholderText('Search events, /regex/, or path:body.0') as HTMLInputElement).value).toBe('saved');
+  });
+
+  it('highlights plain-text search matches in event summaries', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'timeline';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'notify',
+        group: 'notify',
+        level: 'info',
+        source: 'toast',
+        summary: 'Saved successfully'
+      }
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    fireEvent.change(screen.getByPlaceholderText('Search events, /regex/, or path:body.0'), {
+      target: { value: 'saved' }
+    });
+
+    expect(document.querySelector('.ndbg-highlight')?.textContent?.toLowerCase()).toBe('saved');
   });
 
   it('filters timeline events by path: query', () => {

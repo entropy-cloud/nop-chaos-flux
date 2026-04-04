@@ -3,6 +3,31 @@ import type { NopDebugEvent, NopDebuggerFilterKind, NopDebuggerSnapshot } from '
 import type { ErrorGroup } from './event-groups';
 import { JsonViewer } from './json-viewer';
 
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function isPlainHighlightQuery(query: string) {
+  const trimmed = query.trim();
+  return Boolean(trimmed) && !trimmed.startsWith('path:') && !(/^\/(.*)\/([a-z]*)$/.test(trimmed));
+}
+
+function renderHighlightedText(text: string, query: string) {
+  if (!isPlainHighlightQuery(query)) {
+    return text;
+  }
+
+  const trimmed = query.trim();
+  const regex = new RegExp(`(${escapeRegex(trimmed)})`, 'ig');
+  const parts = text.split(regex);
+
+  return parts.map((part, index) => (
+    part.toLowerCase() === trimmed.toLowerCase()
+      ? <mark key={`${part}-${index}`} className="ndbg-highlight">{part}</mark>
+      : <span key={`${part}-${index}`}>{part}</span>
+  ));
+}
+
 function formatClock(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString([], {
     hour: '2-digit',
@@ -15,6 +40,9 @@ export function TimelineTab(props: {
   snapshot: NopDebuggerSnapshot;
   searchText: string;
   setSearchText(value: string): void;
+  submitSearch(): void;
+  searchHistory: string[];
+  applySearchHistory(query: string): void;
   errorsOnly: boolean;
   toggleErrorsOnly(): void;
   filterLabels: Record<NopDebuggerFilterKind, string>;
@@ -26,7 +54,7 @@ export function TimelineTab(props: {
   expandedId: number | null;
   setExpandedId(value: number | null): void;
 }) {
-  const { snapshot, searchText, setSearchText, errorsOnly, toggleErrorsOnly, filterLabels, toggleFilter, errorGroups, errorGroupExpanded, setErrorGroupExpanded, activeTimelineEvents, expandedId, setExpandedId } = props;
+  const { snapshot, searchText, setSearchText, submitSearch, searchHistory, applySearchHistory, errorsOnly, toggleErrorsOnly, filterLabels, toggleFilter, errorGroups, errorGroupExpanded, setErrorGroupExpanded, activeTimelineEvents, expandedId, setExpandedId } = props;
   return (
     <>
       <input
@@ -35,7 +63,21 @@ export function TimelineTab(props: {
         placeholder="Search events, /regex/, or path:body.0"
         value={searchText}
         onChange={(event) => setSearchText(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            submitSearch();
+          }
+        }}
       />
+      {searchHistory.length > 0 ? (
+        <div className="ndbg-search-history">
+          {searchHistory.map((query) => (
+            <button key={query} type="button" className="ndbg-filter" onClick={() => applySearchHistory(query)}>
+              {query}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className="ndbg-filters">
         <button type="button" className={`ndbg-filter ${errorsOnly ? 'ndbg-errors-only-toggle' : ''}`} data-active={errorsOnly ? '' : undefined} onClick={toggleErrorsOnly}>
           Errors Only
@@ -87,7 +129,7 @@ export function TimelineTab(props: {
                   <span className="ndbg-badge" data-group={event.group} data-slow={isSlowRender ? '' : undefined}>{event.group}</span>
                   <time>{formatClock(event.timestamp)}</time>
                 </div>
-                <strong className="ndbg-entry-summary">{event.summary}{isSlowRender ? ' ⚠️ ' : ''}</strong>
+                <strong className="ndbg-entry-summary">{renderHighlightedText(event.summary, searchText)}{isSlowRender ? ' ⚠️ ' : ''}</strong>
                 <span className="ndbg-entry-meta">{event.source}</span>
                 {expandedId === event.id ? (
                   <div className="ndbg-entry-expanded" onClick={(clickEvent) => clickEvent.stopPropagation()}>
