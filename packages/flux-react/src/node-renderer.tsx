@@ -25,13 +25,11 @@ import {
 import { useRendererRuntime } from './hooks';
 import { createHelpers } from './helpers';
 import { RenderNodes } from './render-nodes';
-import { FieldFrame } from './field-frame';
 import {
   getNodeClassAliases,
-  getNodeImports,
-  getNodeSchemaFrameWrap,
-  resolveFrameWrapMode
+  getNodeImports
 } from './node-renderer-utils';
+import { NodeFrameWrapper } from './node-frame-wrapper';
 import { useNodeForm } from './useNodeForm';
 import { useNodeScopes } from './useNodeScopes';
 import { useNodeImports } from './useNodeImports';
@@ -193,35 +191,16 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   const element = <Comp {...componentProps} />;
 
-  let content = element;
-  const frameWrapMode = resolveFrameWrapMode(
-    props.node.component.wrap,
-    getNodeSchemaFrameWrap(props.node)
+  const content = (
+    <NodeFrameWrapper
+      node={props.node}
+      resolvedMeta={resolvedMeta}
+      resolvedPropsValue={resolvedProps.value}
+      regions={regions}
+    >
+      {element}
+    </NodeFrameWrapper>
   );
-
-  if (frameWrapMode !== 'none') {
-    const fieldName = typeof resolvedProps.value.name === 'string'
-      ? resolvedProps.value.name
-      : typeof props.node.schema.name === 'string'
-        ? props.node.schema.name
-        : undefined;
-    const labelValue = resolvedMeta.label
-      ?? (regions.label ? regions.label.render() : props.node.schema.label);
-
-    content = (
-      <FieldFrame
-        name={fieldName}
-        label={labelValue}
-        required={props.node.schema.required === true}
-        layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
-        className={resolvedMeta.className}
-        testid={resolvedMeta.testid}
-        cid={resolvedMeta.cid}
-      >
-        {element}
-      </FieldFrame>
-    );
-  }
 
   return (
     <NodeMetaContext.Provider value={{ id: props.node.id, path: props.node.path, type: props.node.type }}>
