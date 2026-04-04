@@ -22,6 +22,12 @@ async function prepareFreshPage(page: import('@playwright/test').Page): Promise<
   await page.waitForTimeout(500);
 }
 
+async function openFluxBasicPage(page: import('@playwright/test').Page): Promise<void> {
+  await prepareFreshPage(page);
+  await page.getByText('Core Renderers').click();
+  await page.waitForTimeout(1200);
+}
+
 test.describe('Nop Debugger', () => {
   test('launcher renders on home page with zero console errors', async ({ page }) => {
     const errors = collectConsoleErrors(page);
@@ -58,7 +64,7 @@ test.describe('Nop Debugger', () => {
     await prepareFreshPage(page);
 
     const apiInfo = await page.evaluate(() => {
-      const api = (window as Record<string, unknown>).__NOP_DEBUGGER_API__;
+      const api = (window as unknown as { __NOP_DEBUGGER_API__?: unknown }).__NOP_DEBUGGER_API__;
       if (!api || typeof api !== 'object') return { available: false };
       const snap = (api as { getSnapshot: () => Record<string, unknown> }).getSnapshot();
       const overview = (api as { getOverview: () => Record<string, unknown> }).getOverview();
@@ -114,6 +120,46 @@ test.describe('Nop Debugger', () => {
     await page.waitForTimeout(300);
     await expect(outputPanel).toContainText('[Snapshot]');
     await expect(outputPanel).toContainText('"enabled": true');
+  });
+
+  test('automation contract covers real form submit, trace, inspect, and redaction', async ({ page }) => {
+    await openFluxBasicPage(page);
+
+    await page.getByLabel('Username').fill('debugger-user');
+    await page.getByLabel('Email').fill('debugger@example.com');
+    await page.getByLabel('Role').click();
+    await page.getByRole('option', { name: 'Admin' }).click();
+    await page.getByLabel('Admin Code').fill('4321');
+    await page.getByLabel('Reviewer Notes').fill('ready for debugger validation');
+
+    const submitButton = page.getByRole('button', { name: 'Submit Form' });
+    await submitButton.click();
+
+    const result = await page.evaluate(async () => {
+      const api = (window as unknown as { __NOP_DEBUGGER_API__: { waitForEvent(options?: unknown): Promise<any>; getInteractionTrace(options: unknown): any; getLatestFailedRequest(): any; exportSession(options?: unknown): any; inspectByElement(element: HTMLElement): any } }).__NOP_DEBUGGER_API__;
+      const submitted = await api.waitForEvent({ kind: 'api:end', text: '/api/users', timeoutMs: 4000 });
+      const trace = api.getInteractionTrace({ eventId: submitted.id, mode: 'related' });
+      const latestFailedRequest = api.getLatestFailedRequest();
+      const exported = api.exportSession({ query: { kind: ['api:start', 'api:end'] }, eventLimit: 10 });
+      const field = document.querySelector('[data-cid]') as HTMLElement | null;
+      const inspected = field ? api.inspectByElement(field) : undefined;
+
+      return {
+        submitted,
+        trace,
+        latestFailedRequest,
+        exported,
+        inspected
+      };
+    });
+
+    expect(result.submitted.kind).toBe('api:end');
+    expect(result.submitted.requestInstanceId).toBeTruthy();
+    expect(result.trace.requestInstanceIds).toContain(result.submitted.requestInstanceId);
+    expect(result.trace.interactionIds.length).toBeGreaterThan(0);
+    expect(result.latestFailedRequest ?? null).toBeNull();
+    expect(result.exported.events.some((event: { network?: { url?: string } }) => event.network?.url === '/api/users')).toBe(true);
+    expect(result.inspected?.scopeChain?.length ?? 0).toBeGreaterThan(0);
   });
 
   test('no console errors on any page', async ({ page }) => {
@@ -230,6 +276,9 @@ test.describe('Nop Debugger', () => {
     const bar = page.locator('.nop-debugger--minimized');
     const boxBefore = await bar.boundingBox();
     expect(boxBefore).not.toBeNull();
+    if (!boxBefore) {
+      throw new Error('Expected minimized bar bounding box');
+    }
 
     await page.mouse.move(boxBefore.x + boxBefore.width / 2, boxBefore.y + boxBefore.height / 2);
     await page.mouse.down();
@@ -239,8 +288,11 @@ test.describe('Nop Debugger', () => {
 
     const boxAfter = await bar.boundingBox();
     expect(boxAfter).not.toBeNull();
-    expect(boxAfter.x).not.toBeCloseTo(boxBefore.x, { tolerance: 20 });
-    expect(boxAfter.y).not.toBeCloseTo(boxBefore.y, { tolerance: 20 });
+    if (!boxAfter) {
+      throw new Error('Expected dragged bar bounding box');
+    }
+    expect(Math.abs(boxAfter.x - boxBefore.x)).toBeGreaterThan(20);
+    expect(Math.abs(boxAfter.y - boxBefore.y)).toBeGreaterThan(20);
   });
 
   test('minimized bar shows event count badge', async ({ page }) => {
