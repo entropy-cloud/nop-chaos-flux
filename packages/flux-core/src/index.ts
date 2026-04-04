@@ -16,3 +16,11 @@ export { resolveClassAliases, mergeClassAliases } from './class-aliases';
 export { isPlainObject, shallowEqual } from './utils/object';
 export { parsePath, getIn, setIn } from './utils/path';
 export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema';
+
+export type {
+  DomainBridge,
+  BusyActionPhase,
+  BusyActionState,
+  WorkbenchSessionState,
+  ResourceBrowserInteractionPolicy,
+} from './workbench';
