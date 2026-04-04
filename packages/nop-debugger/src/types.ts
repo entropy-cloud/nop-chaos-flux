@@ -40,6 +40,9 @@ export interface NopDebugEventQuery {
   rendererType?: string;
   actionType?: string;
   requestKey?: string;
+  requestInstanceId?: string;
+  interactionId?: string;
+  parentEventId?: number;
   text?: string;
   sinceTimestamp?: number;
   untilTimestamp?: number;
@@ -72,9 +75,19 @@ export interface NopDebugEvent {
   rendererType?: string;
   actionType?: string;
   requestKey?: string;
+  requestInstanceId?: string;
+  interactionId?: string;
+  parentEventId?: number;
   durationMs?: number;
   network?: NopDebugEventNetworkSummary;
   exportedData?: unknown;
+}
+
+export interface NopScopeChainEntry {
+  id?: string;
+  path?: string;
+  label: string;
+  data: Record<string, unknown>;
 }
 
 export interface NopDebuggerPinnedErrors {
@@ -130,6 +143,8 @@ export type NopInteractionTraceMode = 'exact' | 'related';
 export interface NopInteractionTraceQuery {
   eventId?: number;
   requestKey?: string;
+  requestInstanceId?: string;
+  interactionId?: string;
   actionType?: string;
   nodeId?: string;
   path?: string;
@@ -151,6 +166,8 @@ export interface NopInteractionTrace {
   latestApi?: NopDebugEvent;
   latestError?: NopDebugEvent;
   requestKeys: string[];
+  requestInstanceIds: string[];
+  interactionIds: string[];
   actionTypes: string[];
   nodeIds: string[];
   paths: string[];
@@ -220,6 +237,9 @@ export interface NopComponentInspectResult {
   handleName?: string;
   handleType?: string;
   mounted: boolean;
+  nodeId?: string;
+  path?: string;
+  rendererType?: string;
   formState?: {
     values: Record<string, unknown>;
     errors: Record<string, unknown>;
@@ -229,8 +249,40 @@ export interface NopComponentInspectResult {
     submitting: boolean;
   };
   scopeData?: Record<string, unknown>;
+  scopeChain?: NopScopeChainEntry[];
+  metaSummary?: Record<string, unknown>;
+  propsSummary?: Record<string, unknown>;
+  availableMethods?: readonly string[];
+  registryEntry?: Record<string, unknown>;
+  debugData?: Record<string, unknown>;
   tagName?: string;
   className?: string;
+}
+
+export interface NopDebuggerFailureSummary {
+  event?: NopDebugEvent;
+  requestInstanceId?: string;
+  interactionId?: string;
+  nodeId?: string;
+  path?: string;
+  actionType?: string;
+  requestKey?: string;
+  hints: string[];
+}
+
+export interface NopNodeAnomalySummary {
+  nodeId?: string;
+  path?: string;
+  recentEvents: NopDebugEvent[];
+  hints: string[];
+}
+
+export interface NopExpressionEvaluationResult {
+  expression: string;
+  ok: boolean;
+  value?: unknown;
+  error?: string;
+  usedScopeLabel?: string;
 }
 
 export interface NopDebuggerAutomationApi {
@@ -247,11 +299,16 @@ export interface NopDebuggerAutomationApi {
   getPinnedErrors(): NopDebuggerPinnedErrors;
   getNodeDiagnostics(options: NopNodeDiagnosticsOptions): NopNodeDiagnostics;
   getInteractionTrace(query: NopInteractionTraceQuery): NopInteractionTrace;
+  getLatestFailedRequest(): NopDebuggerFailureSummary | undefined;
+  getLatestFailedAction(): NopDebuggerFailureSummary | undefined;
+  getNodeAnomalies(options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined;
+  getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[];
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
+  evaluateNodeExpression(args: { cid: number; expression: string }): NopExpressionEvaluationResult;
   clear(): void;
   pause(): void;
   resume(): void;
@@ -316,6 +373,10 @@ export interface NopDebuggerController {
   getPinnedErrors(): NopDebuggerPinnedErrors;
   getNodeDiagnostics(options: NopNodeDiagnosticsOptions): NopNodeDiagnostics;
   getInteractionTrace(query: NopInteractionTraceQuery): NopInteractionTrace;
+  getLatestFailedRequest(): NopDebuggerFailureSummary | undefined;
+  getLatestFailedAction(): NopDebuggerFailureSummary | undefined;
+  getNodeAnomalies(options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined;
+  getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[];
   getOverview(): NopDebuggerOverview;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
@@ -324,6 +385,7 @@ export interface NopDebuggerController {
   setActionScope(actionScope: ActionScope | null): void;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
+  evaluateNodeExpression(args: { cid: number; expression: string }): NopExpressionEvaluationResult;
   subscribe(listener: () => void): () => void;
   getSnapshot(): NopDebuggerSnapshot;
 }

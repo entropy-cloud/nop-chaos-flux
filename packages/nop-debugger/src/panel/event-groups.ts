@@ -1,7 +1,9 @@
 import type { NopDebugEvent, NopInteractionTrace } from '../types';
 
 export type MergedRequest = {
+  key: string;
   requestKey: string;
+  requestInstanceId?: string;
   startEvent?: NopDebugEvent;
   endEvent?: NopDebugEvent;
   abortEvent?: NopDebugEvent;
@@ -29,7 +31,7 @@ export function formatTraceSummary(trace: NopInteractionTrace | undefined) {
   const relatedBits = [
     trace.resolvedQuery.nodeId ? `node ${trace.resolvedQuery.nodeId}` : undefined,
     trace.resolvedQuery.actionType ? `action ${trace.resolvedQuery.actionType}` : undefined,
-    trace.resolvedQuery.requestKey ? 'request linked' : undefined,
+    trace.resolvedQuery.requestInstanceId ? `request ${trace.resolvedQuery.requestInstanceId}` : trace.resolvedQuery.requestKey ? 'request linked' : undefined,
   ].filter(Boolean);
 
   return {
@@ -43,23 +45,26 @@ export function mergeNetworkRequests(events: NopDebugEvent[]): MergedRequest[] {
 
   for (const event of events) {
     const key = event.requestKey ?? event.summary;
-    const existing = map.get(key);
+    const instanceKey = event.requestInstanceId ?? key;
+    const existing = map.get(instanceKey);
 
     if (event.kind === 'api:start') {
       if (!existing) {
-        map.set(key, {
+        map.set(instanceKey, {
+          key: instanceKey,
           requestKey: key,
+          requestInstanceId: event.requestInstanceId,
           startEvent: event,
           status: 'pending',
           summary: event.summary,
         });
       } else if (!existing.startEvent) {
-        map.set(key, { ...existing, startEvent: event, summary: event.summary });
+        map.set(instanceKey, { ...existing, startEvent: event, summary: event.summary });
       }
     } else if (event.kind === 'api:end') {
-      const base = existing ?? { requestKey: key, status: 'pending' as const, summary: event.summary };
+      const base = existing ?? { key: instanceKey, requestKey: key, requestInstanceId: event.requestInstanceId, status: 'pending' as const, summary: event.summary };
       const ok = event.level === 'success' || event.level === 'info';
-      map.set(key, {
+      map.set(instanceKey, {
         ...base,
         endEvent: event,
         status: ok ? 'completed' : 'failed',
@@ -67,8 +72,8 @@ export function mergeNetworkRequests(events: NopDebugEvent[]): MergedRequest[] {
         summary: base.summary ?? event.summary,
       });
     } else if (event.kind === 'api:abort') {
-      const base = existing ?? { requestKey: key, status: 'pending' as const, summary: event.summary };
-      map.set(key, {
+      const base = existing ?? { key: instanceKey, requestKey: key, requestInstanceId: event.requestInstanceId, status: 'pending' as const, summary: event.summary };
+      map.set(instanceKey, {
         ...base,
         abortEvent: event,
         status: 'aborted',

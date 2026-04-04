@@ -34,6 +34,10 @@ export function createAutomationApi(input: {
   getPinnedErrors(): NopDebuggerPinnedErrors;
   getNodeDiagnostics(options: NopNodeDiagnosticsOptions): NopNodeDiagnostics;
   getInteractionTrace(query: NopInteractionTraceQuery): NopInteractionTrace;
+  getLatestFailedRequest(): NonNullable<NopDebuggerAutomationApi['getLatestFailedRequest']> extends (...args: never[]) => infer T ? T : never;
+  getLatestFailedAction(): NonNullable<NopDebuggerAutomationApi['getLatestFailedAction']> extends (...args: never[]) => infer T ? T : never;
+  getNodeAnomalies(options: NopNodeDiagnosticsOptions): NonNullable<NopDebuggerAutomationApi['getNodeAnomalies']> extends (...args: never[]) => infer T ? T : never;
+  getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NonNullable<NopDebuggerAutomationApi['getRecentFailures']> extends (...args: never[]) => infer T ? T : never;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
@@ -49,6 +53,7 @@ export function createAutomationApi(input: {
   setPanelPosition(position: { x: number; y: number }): void;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
+  evaluateNodeExpression(args: { cid: number; expression: string }): NonNullable<NopDebuggerAutomationApi['evaluateNodeExpression']> extends (...args: never[]) => infer T ? T : never;
 }): NopDebuggerAutomationApi {
   return {
     controllerId: input.controllerId,
@@ -64,6 +69,10 @@ export function createAutomationApi(input: {
     getPinnedErrors: input.getPinnedErrors,
     getNodeDiagnostics: input.getNodeDiagnostics,
     getInteractionTrace: input.getInteractionTrace,
+    getLatestFailedRequest: input.getLatestFailedRequest,
+    getLatestFailedAction: input.getLatestFailedAction,
+    getNodeAnomalies: input.getNodeAnomalies,
+    getRecentFailures: input.getRecentFailures,
     createDiagnosticReport: input.createDiagnosticReport,
     exportSession: input.exportSession,
     waitForEvent: input.waitForEvent,
@@ -78,7 +87,8 @@ export function createAutomationApi(input: {
     setActiveTab: input.setActiveTab,
     setPanelPosition: input.setPanelPosition,
     inspectByCid: input.inspectByCid,
-    inspectByElement: input.inspectByElement
+    inspectByElement: input.inspectByElement,
+    evaluateNodeExpression: input.evaluateNodeExpression
   };
 }
 

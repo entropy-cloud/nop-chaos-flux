@@ -116,8 +116,9 @@ describe('debugger adapters', () => {
 
     expect(baseMonitor.onRenderStart).toHaveBeenCalled();
     expect(baseMonitor.onApiRequest).toHaveBeenCalledTimes(2);
-    expect(apiStartEvents).toHaveLength(1);
+    expect(apiStartEvents).toHaveLength(2);
     expect(apiStartEvents[0].exportedData).toMatchObject({ token: '[MASKED]', keep: 'visible' });
+    expect(apiStartEvents[0].requestInstanceId).toBeTruthy();
     expect(apiEndEvent?.exportedData).toMatchObject({ echoedUrl: '/api/demo', token: '[MASKED]' });
     expect(apiEndEvent?.network).toMatchObject({ method: 'POST', status: 200, responseType: 'object' });
     expect(notifyEvent).toMatchObject({ summary: 'warning: watch out' });
@@ -155,4 +156,3 @@ describe('debugger adapters', () => {
     });
   });
 });
-

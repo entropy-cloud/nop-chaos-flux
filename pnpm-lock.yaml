@@ -413,6 +413,9 @@ importers:
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../flux-formula
       lucide-react:
         specifier: ^1.7.0
         version: 1.7.0(react@19.2.4)

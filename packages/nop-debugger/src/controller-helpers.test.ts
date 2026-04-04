@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  buildScopeChain,
   buildNetworkSummary,
+  createRequestInstanceId,
   createRequestKey,
   createSessionId,
   formatActionResult,
@@ -78,6 +80,7 @@ describe('controller helpers', () => {
     expect(formatActionResult({ ok: false })).toBe('failed');
     expect(summarizeApi({ url: '/api/demo', method: 'post' })).toBe('POST /api/demo');
     expect(createRequestKey({ url: '/api/demo', method: 'post' }, 'node-1', 'body.0')).toBe('POST /api/demo | node-1 | body.0');
+    expect(createRequestInstanceId()).toMatch(/^req-\d+$/);
   });
 
   it('summarizes value shapes, network metadata, and compiled roots', () => {
@@ -128,6 +131,34 @@ describe('controller helpers', () => {
       firstType: 'page',
       firstPath: 'root'
     });
+
+    expect(buildScopeChain({
+      id: 'child',
+      path: '$page.form',
+      readOwn() {
+        return { username: 'alice' };
+      },
+      parent: {
+        id: 'page',
+        path: '$page',
+        readOwn() {
+          return { currentUser: 'architect' };
+        }
+      }
+    } as never)).toEqual([
+      {
+        id: 'child',
+        path: '$page.form',
+        label: '$page.form',
+        data: { username: 'alice' }
+      },
+      {
+        id: 'page',
+        path: '$page',
+        label: '$page',
+        data: { currentUser: 'architect' }
+      }
+    ]);
   });
 
   describe('position persistence', () => {

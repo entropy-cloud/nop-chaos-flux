@@ -9,7 +9,7 @@ import type {
   SchemaInput,
   CompiledSchemaNode
 } from '@nop-chaos/flux-core';
-import { buildNetworkSummary, createRequestKey, formatActionResult, formatErrorDetail, normalizeCompiledRoot, summarizeApi, summarizeValueShape } from './controller-helpers';
+import { buildNetworkSummary, createRequestInstanceId, createRequestKey, formatActionResult, formatErrorDetail, normalizeCompiledRoot, summarizeApi, summarizeValueShape } from './controller-helpers';
 import { redactData, type NormalizedRedactionOptions } from './redaction';
 import type { NopDebuggerStore } from './store';
 
@@ -76,7 +76,7 @@ export function decorateDebuggerEnv(input: {
   env: RendererEnv;
   store: NopDebuggerStore;
   redaction: NormalizedRedactionOptions;
-  requestState: Map<string, { startedAt: number }>;
+  requestState: Map<string, { startedAt: number; requestInstanceId: string; interactionId?: string; nodeId?: string; path?: string }>;
 }): RendererEnv {
   if (!input.enabled) {
     return input.env;
@@ -123,6 +123,7 @@ export function decorateDebuggerEnv(input: {
         summary: `${payload.actionType} started`,
         detail: `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`,
         actionType: payload.actionType,
+        interactionId: payload.interactionId,
         nodeId: payload.nodeId,
         path: payload.path
       });
@@ -137,6 +138,7 @@ export function decorateDebuggerEnv(input: {
         summary: `${payload.actionType} ${formatActionResult(payload.result)} in ${payload.durationMs}ms`,
         detail: `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`,
         actionType: payload.actionType,
+        interactionId: payload.interactionId,
         nodeId: payload.nodeId,
         path: payload.path,
         durationMs: payload.durationMs
@@ -145,8 +147,15 @@ export function decorateDebuggerEnv(input: {
     },
     onApiRequest(payload) {
       const requestKey = createRequestKey(payload.api, payload.nodeId, payload.path);
-      if (!input.requestState.has(requestKey)) {
-        input.requestState.set(requestKey, { startedAt: Date.now() });
+      const requestInstanceId = payload.requestInstanceId ?? createRequestInstanceId();
+      if (!input.requestState.has(requestInstanceId)) {
+        input.requestState.set(requestInstanceId, {
+          startedAt: Date.now(),
+          requestInstanceId,
+          interactionId: payload.interactionId,
+          nodeId: payload.nodeId,
+          path: payload.path
+        });
         input.store.append({
           kind: 'api:start',
           group: 'api',
@@ -157,6 +166,8 @@ export function decorateDebuggerEnv(input: {
           nodeId: payload.nodeId,
           path: payload.path,
           requestKey,
+          requestInstanceId,
+          interactionId: payload.interactionId,
           exportedData: redactData(payload.api.data, input.redaction),
           network: buildNetworkSummary({ api: payload.api })
         });
@@ -181,7 +192,15 @@ export function decorateDebuggerEnv(input: {
   const decoratedFetcher = async <T,>(api: ApiObject, ctx: ApiRequestContext): Promise<ApiResponse<T>> => {
     const requestKey = createRequestKey(api);
     const startedAt = Date.now();
-    input.requestState.set(requestKey, { startedAt });
+    const requestInstanceId = ctx.requestInstanceId ?? createRequestInstanceId();
+    const existingRequest = input.requestState.get(requestInstanceId);
+    input.requestState.set(requestInstanceId, {
+      startedAt,
+      requestInstanceId,
+      interactionId: ctx.interactionId ?? existingRequest?.interactionId,
+      nodeId: existingRequest?.nodeId,
+      path: existingRequest?.path
+    });
 
     if (!ctx.env.monitor?.onApiRequest) {
       input.store.append({
@@ -192,6 +211,8 @@ export function decorateDebuggerEnv(input: {
         summary: summarizeApi(api),
         detail: 'request started via fetcher wrapper',
         requestKey,
+        requestInstanceId,
+        interactionId: ctx.interactionId,
         exportedData: redactData(api.data, input.redaction),
         network: buildNetworkSummary({ api })
       });
@@ -208,6 +229,8 @@ export function decorateDebuggerEnv(input: {
         summary: `${summarizeApi(api)} -> ${response.status}`,
         detail: response.data == null ? 'no response data' : `response ${responseShape.responseType}${responseShape.keys.length ? ` | keys=${responseShape.keys.join(',')}` : ''}`,
         requestKey,
+        requestInstanceId,
+        interactionId: ctx.interactionId ?? existingRequest?.interactionId,
         durationMs: Math.max(0, Date.now() - startedAt),
         exportedData: redactData(response.data, input.redaction),
         network: buildNetworkSummary({
@@ -215,7 +238,7 @@ export function decorateDebuggerEnv(input: {
           response: response as ApiResponse<unknown>
         })
       });
-      input.requestState.delete(requestKey);
+      input.requestState.delete(requestInstanceId);
       return response;
     } catch (error) {
       const aborted = error instanceof Error && error.name === 'AbortError';
@@ -227,13 +250,15 @@ export function decorateDebuggerEnv(input: {
         summary: aborted ? `${summarizeApi(api)} aborted` : `${summarizeApi(api)} failed`,
         detail: formatErrorDetail(error),
         requestKey,
+        requestInstanceId,
+        interactionId: ctx.interactionId ?? existingRequest?.interactionId,
         durationMs: Math.max(0, Date.now() - startedAt),
         network: buildNetworkSummary({
           api,
           aborted
         })
       });
-      input.requestState.delete(requestKey);
+      input.requestState.delete(requestInstanceId);
       throw error;
     }
   };
@@ -268,4 +293,3 @@ export function appendActionErrorEvent(store: NopDebuggerStore, error: unknown, 
     rendererType: ctx.node?.type
   });
 }
-

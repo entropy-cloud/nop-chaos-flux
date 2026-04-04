@@ -6,6 +6,10 @@ import {
   buildOverview,
   buildSessionExport,
   createDiagnosticReport,
+  getLatestFailedAction,
+  getLatestFailedRequest,
+  getNodeAnomalies,
+  getRecentFailures,
   matchesEventQuery
 } from './diagnostics';
 import { normalizeRedactionOptions } from './redaction';
@@ -54,7 +58,9 @@ describe('diagnostics helpers', () => {
       path: 'body.0',
       rendererType: 'form',
       actionType: 'submitForm',
-      requestKey: 'POST /api/users | node-1 | body.0'
+      requestKey: 'POST /api/users | node-1 | body.0',
+      requestInstanceId: 'req-1',
+      interactionId: 'interaction-1'
     });
     const errorEvent = createEvent({
       id: 3,
@@ -128,10 +134,12 @@ describe('diagnostics helpers', () => {
         level: 'warning',
         source: 'fetcher',
         summary: 'POST /api/users aborted',
-        requestKey: 'POST /api/users | node-1 | body.0',
-        nodeId: 'node-1',
-        path: 'body.0',
-        actionType: 'submitForm'
+       requestKey: 'POST /api/users | node-1 | body.0',
+       requestInstanceId: 'req-1',
+       interactionId: 'interaction-1',
+       nodeId: 'node-1',
+       path: 'body.0',
+       actionType: 'submitForm'
       }),
       createEvent({
         id: 8,
@@ -142,6 +150,7 @@ describe('diagnostics helpers', () => {
         source: 'monitor.onActionEnd',
         summary: 'submitForm ok in 8ms',
         actionType: 'submitForm',
+        interactionId: 'interaction-1',
         nodeId: 'node-1',
         path: 'body.0'
       }),
@@ -234,6 +243,8 @@ describe('diagnostics helpers', () => {
     expect(trace.latestApi?.kind).toBe('api:abort');
     expect(trace.latestError?.kind).toBe('error');
     expect(trace.requestKeys).toEqual(['POST /api/users | node-1 | body.0']);
+    expect(trace.requestInstanceIds).toEqual(['req-1']);
+    expect(trace.interactionIds).toEqual(['interaction-1']);
     expect(trace.actionTypes).toEqual(['submitForm']);
     expect(trace.nodeIds).toEqual(['node-1']);
     expect(trace.paths).toEqual(['body.0']);
@@ -258,6 +269,8 @@ describe('diagnostics helpers', () => {
     expect(eventAnchoredTrace.resolvedQuery).toMatchObject({
       eventId: 9,
       requestKey: 'POST /api/users | node-1 | body.0',
+      requestInstanceId: 'req-1',
+      interactionId: 'interaction-1',
       actionType: 'submitForm',
       nodeId: 'node-1',
       path: 'body.0',
@@ -325,5 +338,64 @@ describe('diagnostics helpers', () => {
     const emptyReport = createDiagnosticReport('controller-empty', createSnapshot([]));
     expect(emptyReport.sessionId).toBe('unknown');
     expect(emptyReport.recentEvents).toEqual([]);
+  });
+
+  it('builds failure summaries and node anomalies', () => {
+    const events = [
+      createEvent({
+        id: 3,
+        timestamp: 300,
+        kind: 'error',
+        group: 'error',
+        level: 'error',
+        source: 'root.onActionError',
+        summary: 'submit failed',
+        nodeId: 'user-form',
+        path: 'body.1',
+        actionType: 'submitForm',
+        interactionId: 'interaction-2'
+      }),
+      createEvent({
+        id: 2,
+        timestamp: 250,
+        kind: 'api:end',
+        group: 'api',
+        level: 'error',
+        source: 'fetcher',
+        summary: 'POST /api/users -> 500',
+        requestKey: 'POST /api/users | user-form | body.1',
+        requestInstanceId: 'req-9',
+        interactionId: 'interaction-2',
+        nodeId: 'user-form',
+        path: 'body.1'
+      }),
+      createEvent({
+        id: 1,
+        timestamp: 200,
+        kind: 'render:start',
+        group: 'render',
+        level: 'info',
+        source: 'monitor.onRenderStart',
+        summary: 'form render start',
+        nodeId: 'user-form',
+        path: 'body.1'
+      })
+    ];
+
+    expect(getLatestFailedRequest(events)).toMatchObject({
+      requestInstanceId: 'req-9',
+      interactionId: 'interaction-2',
+      hints: ['request failed']
+    });
+
+    expect(getLatestFailedAction(events)).toMatchObject({
+      interactionId: 'interaction-2'
+    });
+
+    expect(getNodeAnomalies(events, { nodeId: 'user-form' })).toMatchObject({
+      nodeId: 'user-form'
+    });
+
+    expect(getRecentFailures(events, { limit: 2 })).toHaveLength(2);
   });
 });

@@ -66,6 +66,8 @@ describe('debugger automation helpers', () => {
       matchedEvents: [],
       relatedErrors: [],
       requestKeys: [],
+      requestInstanceIds: [],
+      interactionIds: [],
       actionTypes: [],
       nodeIds: [],
       paths: []
@@ -128,6 +130,11 @@ describe('debugger automation helpers', () => {
     const setPanelPosition = vi.fn();
     const inspectByCid = vi.fn(() => undefined);
     const inspectByElement = vi.fn(() => undefined);
+    const getLatestFailedRequest = vi.fn(() => undefined);
+    const getLatestFailedAction = vi.fn(() => undefined);
+    const getNodeAnomalies = vi.fn(() => undefined);
+    const getRecentFailures = vi.fn(() => []);
+    const evaluateNodeExpression = vi.fn(() => ({ expression: 'x', ok: true, value: 1 }));
 
     const automation = createAutomationApi({
       controllerId: 'controller-a',
@@ -142,6 +149,10 @@ describe('debugger automation helpers', () => {
       getPinnedErrors,
       getNodeDiagnostics,
       getInteractionTrace,
+      getLatestFailedRequest,
+      getLatestFailedAction,
+      getNodeAnomalies,
+      getRecentFailures,
       createDiagnosticReport,
       exportSession,
       waitForEvent,
@@ -156,7 +167,8 @@ describe('debugger automation helpers', () => {
       setActiveTab,
       setPanelPosition,
       inspectByCid,
-      inspectByElement
+      inspectByElement,
+      evaluateNodeExpression
     });
 
     expect(automation.controllerId).toBe('controller-a');
@@ -216,6 +228,8 @@ describe('debugger automation helpers', () => {
       matchedEvents: [],
       relatedErrors: [],
       requestKeys: [],
+      requestInstanceIds: [],
+      interactionIds: [],
       actionTypes: [],
       nodeIds: [],
       paths: []
@@ -262,6 +276,10 @@ describe('debugger automation helpers', () => {
       getPinnedErrors: () => ({ earliest: [], latest: [] }),
       getNodeDiagnostics: () => diagnostics,
       getInteractionTrace: () => trace,
+      getLatestFailedRequest: () => undefined,
+      getLatestFailedAction: () => undefined,
+      getNodeAnomalies: () => undefined,
+      getRecentFailures: () => [],
       createDiagnosticReport: () => report,
       exportSession: () => exportPayload,
       waitForEvent: async () => waitedEvent,
@@ -276,7 +294,8 @@ describe('debugger automation helpers', () => {
       setActiveTab() {},
       setPanelPosition() {},
       inspectByCid: vi.fn(() => undefined),
-      inspectByElement: vi.fn(() => undefined)
+      inspectByElement: vi.fn(() => undefined),
+      evaluateNodeExpression: vi.fn(() => ({ expression: 'x', ok: true, value: 1 }))
     });
     const automationB = { ...automationA, controllerId: 'b', sessionId: 's-b' };
 

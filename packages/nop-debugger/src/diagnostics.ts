@@ -12,6 +12,8 @@ import type {
   NopDiagnosticReportOptions,
   NopInteractionTrace,
   NopInteractionTraceQuery,
+  NopDebuggerFailureSummary,
+  NopNodeAnomalySummary,
   NopNodeDiagnostics,
   NopNodeDiagnosticsOptions
 } from './types';
@@ -35,12 +37,14 @@ function includesText(target: string | undefined, query: string) {
 }
 
 function hasInteractionSelectors(query: NopInteractionTraceQuery | undefined) {
-  return query?.eventId != null || !!query?.requestKey || !!query?.actionType || !!query?.nodeId || !!query?.path;
+  return query?.eventId != null || !!query?.requestKey || !!query?.requestInstanceId || !!query?.interactionId || !!query?.actionType || !!query?.nodeId || !!query?.path;
 }
 
 function toEventQuery(query: NopInteractionTraceQuery): NopDebugEventQuery {
   return {
     requestKey: query.requestKey,
+    requestInstanceId: query.requestInstanceId,
+    interactionId: query.interactionId,
     actionType: query.actionType,
     nodeId: query.nodeId,
     path: query.path,
@@ -64,6 +68,8 @@ function resolveInteractionTraceQuery(events: NopDebugEvent[], query: NopInterac
   const resolvedQuery: NopInteractionTraceQuery = {
     ...query,
     requestKey: query.requestKey ?? anchorEvent?.requestKey,
+    requestInstanceId: query.requestInstanceId ?? anchorEvent?.requestInstanceId,
+    interactionId: query.interactionId ?? anchorEvent?.interactionId,
     actionType: query.actionType ?? anchorEvent?.actionType,
     nodeId: query.nodeId ?? anchorEvent?.nodeId,
     path: query.path ?? anchorEvent?.path,
@@ -121,6 +127,18 @@ export function matchesEventQuery(event: NopDebugEvent, query: NopDebugEventQuer
     return false;
   }
 
+  if (query.requestInstanceId && event.requestInstanceId !== query.requestInstanceId) {
+    return false;
+  }
+
+  if (query.interactionId && event.interactionId !== query.interactionId) {
+    return false;
+  }
+
+  if (query.parentEventId != null && event.parentEventId !== query.parentEventId) {
+    return false;
+  }
+
   if (query.sinceTimestamp != null && event.timestamp < query.sinceTimestamp) {
     return false;
   }
@@ -136,7 +154,9 @@ export function matchesEventQuery(event: NopDebugEvent, query: NopDebugEventQuer
       includesText(event.source, query.text) ||
       includesText(event.path, query.text) ||
       includesText(event.nodeId, query.text) ||
-      includesText(event.requestKey, query.text);
+      includesText(event.requestKey, query.text) ||
+      includesText(event.requestInstanceId, query.text) ||
+      includesText(event.interactionId, query.text);
 
     if (!matchesText) {
       return false;
@@ -284,6 +304,8 @@ export function buildInteractionTrace(events: NopDebugEvent[], query: NopInterac
         }
 
         const matches = [
+          resolvedQuery.interactionId != null && event.interactionId === resolvedQuery.interactionId,
+          resolvedQuery.requestInstanceId != null && event.requestInstanceId === resolvedQuery.requestInstanceId,
           resolvedQuery.requestKey != null && event.requestKey === resolvedQuery.requestKey,
           resolvedQuery.actionType != null && event.actionType === resolvedQuery.actionType,
           resolvedQuery.nodeId != null && event.nodeId === resolvedQuery.nodeId,
@@ -313,10 +335,133 @@ export function buildInteractionTrace(events: NopDebugEvent[], query: NopInterac
     latestApi: matchedEvents.find((event) => event.group === 'api'),
     latestError: matchedEvents.find((event) => event.group === 'error'),
     requestKeys: Array.from(new Set(matchedEvents.map((event) => event.requestKey).filter((value): value is string => !!value))),
+    requestInstanceIds: Array.from(new Set(matchedEvents.map((event) => event.requestInstanceId).filter((value): value is string => !!value))),
+    interactionIds: Array.from(new Set(matchedEvents.map((event) => event.interactionId).filter((value): value is string => !!value))),
     actionTypes: Array.from(new Set(matchedEvents.map((event) => event.actionType).filter((value): value is string => !!value))),
     nodeIds: Array.from(new Set(matchedEvents.map((event) => event.nodeId).filter((value): value is string => !!value))),
     paths: Array.from(new Set(matchedEvents.map((event) => event.path).filter((value): value is string => !!value)))
   };
+}
+
+function createFailureHints(event: NopDebugEvent | undefined, relatedEvents: NopDebugEvent[] = []): string[] {
+  if (!event) {
+    return [];
+  }
+
+  const hints: string[] = [];
+
+  if (event.kind === 'api:abort') {
+    hints.push('request aborted');
+  }
+
+  if (event.group === 'api' && event.level === 'error') {
+    hints.push('request failed');
+  }
+
+  if (event.group === 'error' && relatedEvents.some((candidate) => candidate.group === 'api' && candidate.level === 'error')) {
+    hints.push('action ended with error after api failure');
+  }
+
+  if (relatedEvents.filter((candidate) => candidate.kind === 'render:start').length >= 3) {
+    hints.push('repeated render bursts');
+  }
+
+  return hints;
+}
+
+export function getLatestFailedRequest(events: NopDebugEvent[]): NopDebuggerFailureSummary | undefined {
+  const event = events.find((candidate) => candidate.group === 'api' && (candidate.level === 'error' || candidate.kind === 'api:abort'));
+
+  if (!event) {
+    return undefined;
+  }
+
+  return {
+    event,
+    requestInstanceId: event.requestInstanceId,
+    interactionId: event.interactionId,
+    nodeId: event.nodeId,
+    path: event.path,
+    actionType: event.actionType,
+    requestKey: event.requestKey,
+    hints: createFailureHints(event)
+  };
+}
+
+export function getLatestFailedAction(events: NopDebugEvent[]): NopDebuggerFailureSummary | undefined {
+  const event = events.find((candidate) => candidate.group === 'error' || (candidate.group === 'action' && candidate.level === 'error'));
+
+  if (!event) {
+    return undefined;
+  }
+
+  const relatedEvents = buildInteractionTrace(events, {
+    eventId: event.id,
+    inferFromLatest: false,
+    mode: 'related',
+    limit: 20
+  }).matchedEvents;
+
+  return {
+    event,
+    requestInstanceId: event.requestInstanceId,
+    interactionId: event.interactionId,
+    nodeId: event.nodeId,
+    path: event.path,
+    actionType: event.actionType,
+    requestKey: event.requestKey,
+    hints: createFailureHints(event, relatedEvents)
+  };
+}
+
+export function getNodeAnomalies(events: NopDebugEvent[], options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined {
+  const diagnostics = buildNodeDiagnostics(events, {
+    ...options,
+    limit: options.limit ?? 10
+  });
+
+  if (diagnostics.totalEvents === 0) {
+    return undefined;
+  }
+
+  const hints: string[] = [];
+
+  if ((diagnostics.countsByGroup.error ?? 0) > 0) {
+    hints.push('node has recent errors');
+  }
+
+  if ((diagnostics.countsByGroup.api ?? 0) > 1 && diagnostics.recentEvents.some((event) => event.kind === 'api:abort')) {
+    hints.push('request churn or aborts');
+  }
+
+  if (diagnostics.recentEvents.filter((event) => event.kind === 'render:start').length >= 3) {
+    hints.push('repeated render bursts');
+  }
+
+  return {
+    nodeId: diagnostics.nodeId,
+    path: diagnostics.path,
+    recentEvents: diagnostics.recentEvents,
+    hints
+  };
+}
+
+export function getRecentFailures(events: NopDebugEvent[], options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[] {
+  return applyEventQuery(events, {
+    sinceTimestamp: options?.sinceTimestamp,
+    limit: options?.limit ?? 10
+  })
+    .filter((event) => event.group === 'error' || (event.group === 'api' && (event.level === 'error' || event.kind === 'api:abort')))
+    .map((event) => ({
+      event,
+      requestInstanceId: event.requestInstanceId,
+      interactionId: event.interactionId,
+      nodeId: event.nodeId,
+      path: event.path,
+      actionType: event.actionType,
+      requestKey: event.requestKey,
+      hints: createFailureHints(event)
+    }));
 }
 
 export function buildSessionExport(

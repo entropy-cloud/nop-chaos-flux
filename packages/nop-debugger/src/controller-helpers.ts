@@ -1,5 +1,5 @@
-import type { ActionResult, ApiObject, ApiResponse, CompiledSchemaNode } from '@nop-chaos/flux-core';
-import type { NopDebugEventNetworkSummary, NopDebuggerWindowConfig } from './types';
+import type { ActionResult, ApiObject, ApiResponse, CompiledSchemaNode, ScopeRef } from '@nop-chaos/flux-core';
+import type { NopDebugEventNetworkSummary, NopDebuggerWindowConfig, NopScopeChainEntry } from './types';
 
 const DEFAULT_POSITION = { x: 24, y: 24 };
 
@@ -104,6 +104,33 @@ export function summarizeValueShape(value: unknown) {
 
 export function createRequestKey(api: ApiObject, nodeId?: string, path?: string) {
   return `${String(api.method ?? 'get').toUpperCase()} ${api.url} | ${nodeId ?? 'n/a'} | ${path ?? 'n/a'}`;
+}
+
+let nextRequestInstanceId = 1;
+
+export function createRequestInstanceId() {
+  return `req-${nextRequestInstanceId++}`;
+}
+
+export function buildScopeChain(scope: ScopeRef | undefined): NopScopeChainEntry[] | undefined {
+  if (!scope) {
+    return undefined;
+  }
+
+  const chain: NopScopeChainEntry[] = [];
+  let current: ScopeRef | undefined = scope;
+
+  while (current) {
+    chain.push({
+      id: current.id,
+      path: current.path,
+      label: current.path || current.id,
+      data: current.readOwn() as Record<string, unknown>
+    });
+    current = current.parent;
+  }
+
+  return chain;
 }
 
 export function buildNetworkSummary(input: {

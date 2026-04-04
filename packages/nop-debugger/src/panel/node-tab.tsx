@@ -113,6 +113,34 @@ export function NodeTab(props: {
                 <JsonViewer data={inspectData.scopeData} defaultExpanded={2} />
               </div>
             ) : null}
+
+            {inspectData.scopeChain?.length ? (
+              <div className="ndbg-inspect-section">
+                <span className="ndbg-inspect-section-title">Scope Chain</span>
+                <JsonViewer data={inspectData.scopeChain} defaultExpanded={3} />
+              </div>
+            ) : null}
+
+            {inspectData.metaSummary ? (
+              <div className="ndbg-inspect-section">
+                <span className="ndbg-inspect-section-title">Meta Summary</span>
+                <JsonViewer data={inspectData.metaSummary} defaultExpanded={2} />
+              </div>
+            ) : null}
+
+            {inspectData.propsSummary ? (
+              <div className="ndbg-inspect-section">
+                <span className="ndbg-inspect-section-title">Props Summary</span>
+                <JsonViewer data={inspectData.propsSummary} defaultExpanded={2} />
+              </div>
+            ) : null}
+
+            {inspectData.availableMethods?.length ? (
+              <div className="ndbg-inspect-section">
+                <span className="ndbg-inspect-section-title">Available Methods</span>
+                <JsonViewer data={inspectData.availableMethods} defaultExpanded={1} />
+              </div>
+            ) : null}
           </div>
         ) : selectedElement ? (
           <article className="ndbg-metric-card" style={{ marginBottom: 8 }}>

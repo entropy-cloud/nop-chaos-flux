@@ -1,10 +1,12 @@
 import type {
+  ComponentHandle,
   ActionContext,
   ActionScope,
   ComponentHandleRegistry,
   RendererEnv,
   RendererPlugin
 } from '@nop-chaos/flux-core';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
 import {
   createAutomationApi,
@@ -12,8 +14,8 @@ import {
   installNopDebuggerWindowFlag,
   registerAutomationApi
 } from './automation';
-import { createSessionId, loadPersistedMinimized, loadPersistedPanelOpen, loadPersistedPosition, persistMinimized, persistPanelOpen, persistPosition, readWindowConfig } from './controller-helpers';
-import { applyEventQuery, buildInteractionTrace, buildNodeDiagnostics, buildOverview, buildSessionExport, createDiagnosticReport } from './diagnostics';
+import { buildScopeChain, createSessionId, loadPersistedMinimized, loadPersistedPanelOpen, loadPersistedPosition, persistMinimized, persistPanelOpen, persistPosition, readWindowConfig } from './controller-helpers';
+import { applyEventQuery, buildInteractionTrace, buildNodeDiagnostics, buildOverview, buildSessionExport, createDiagnosticReport, getLatestFailedAction, getLatestFailedRequest, getNodeAnomalies, getRecentFailures } from './diagnostics';
 import { normalizeRedactionOptions } from './redaction';
 import { createDebuggerStore } from './store';
 import type {
@@ -22,6 +24,7 @@ import type {
   NopDebugEventQuery,
   NopDebuggerAutomationApi,
   NopDebuggerController,
+  NopExpressionEvaluationResult,
   NopDebuggerOptions,
   NopDebuggerSessionExportOptions,
   NopDebuggerTab,
@@ -32,12 +35,26 @@ import type {
   NopWaitForEventOptions
 } from './types';
 
+function pickRecord(source: Record<string, unknown> | undefined, keys: readonly string[]) {
+  if (!source) {
+    return undefined;
+  }
+
+  return Object.fromEntries(keys.filter((key) => key in source).map((key) => [key, source[key]]));
+}
+
+function getAvailableMethods(handle: ComponentHandle | undefined) {
+  return handle?.capabilities?.listMethods?.();
+}
+
 function buildInspectResult(
   cid: number,
   handle: ReturnType<NonNullable<ComponentHandleRegistry['getHandleByCid']>> | undefined,
   mounted: boolean,
-  element?: HTMLElement
+  element?: HTMLElement,
+  registry?: ComponentHandleRegistry
 ): NopComponentInspectResult {
+  const debugData = registry?.getHandleDebugData?.(cid);
   const result: NopComponentInspectResult = {
     cid,
     mounted
@@ -47,6 +64,26 @@ function buildInspectResult(
     result.handleName = handle.name;
     result.handleType = handle.type;
   }
+
+  result.nodeId = debugData?.nodeId;
+  result.path = debugData?.path;
+  result.rendererType = debugData?.rendererType;
+  result.availableMethods = getAvailableMethods(handle);
+  result.registryEntry = handle ? {
+    id: handle.id,
+    name: handle.name,
+    type: handle.type,
+    mounted: handle._mounted !== false
+  } : undefined;
+  result.debugData = handle?.capabilities?.getDebugData?.();
+
+  if (debugData?.scope) {
+    result.scopeChain = buildScopeChain(debugData.scope);
+    result.scopeData = debugData.scope.read();
+  }
+
+  result.metaSummary = pickRecord(debugData?.resolvedMeta as Record<string, unknown> | undefined, ['id', 'name', 'label', 'title', 'className', 'visible', 'hidden', 'disabled', 'testid', 'cid']);
+  result.propsSummary = pickRecord(debugData?.resolvedProps as Record<string, unknown> | undefined, ['id', 'name', 'label', 'title', 'type', 'value', 'placeholder', 'options']);
 
   const capabilityStore = handle?.capabilities?.store as {
     getState(): {
@@ -133,7 +170,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     store.minimize();
   }
 
-  const requestState = new Map<string, { startedAt: number }>();
+  const requestState = new Map<string, { startedAt: number; requestInstanceId: string; interactionId?: string; nodeId?: string; path?: string }>();
   let componentRegistry: ComponentHandleRegistry | undefined;
   let actionScope: ActionScope | undefined;
 
@@ -142,7 +179,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     const element = document.querySelector(`[data-cid="${cid}"]`);
     const handle = element ? componentRegistry.getHandleByCid?.(cid) : undefined;
     if (!handle && !element) return undefined;
-    return buildInspectResult(cid, handle, !!element, (element as HTMLElement) ?? undefined);
+    return buildInspectResult(cid, handle, !!element, (element as HTMLElement) ?? undefined, componentRegistry);
   };
 
   const inspectByElement = (element: HTMLElement): NopComponentInspectResult | undefined => {
@@ -151,7 +188,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     const cid = Number(cidAttr);
     if (!Number.isFinite(cid)) return undefined;
     const handle = componentRegistry?.getHandleByCid?.(cid);
-    return buildInspectResult(cid, handle, true, element);
+    return buildInspectResult(cid, handle, true, element, componentRegistry);
   };
 
   const getSnapshot = () => store.getSnapshot();
@@ -164,8 +201,47 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const getPinnedErrors = () => getSnapshot().pinnedErrors;
   const getNodeDiagnostics = (nodeOptions: NopNodeDiagnosticsOptions) => buildNodeDiagnostics(getSnapshot().events, nodeOptions);
   const getInteractionTrace = (traceQuery: NopInteractionTraceQuery) => buildInteractionTrace(getSnapshot().events, traceQuery);
+  const getLatestFailedRequestSummary = () => getLatestFailedRequest(getSnapshot().events);
+  const getLatestFailedActionSummary = () => getLatestFailedAction(getSnapshot().events);
+  const getNodeAnomaliesSummary = (nodeOptions: NopNodeDiagnosticsOptions) => getNodeAnomalies(getSnapshot().events, nodeOptions);
+  const getRecentFailuresSummary = (options?: { sinceTimestamp?: number; limit?: number }) => getRecentFailures(getSnapshot().events, options);
   const createReport = (reportOptions?: NopDiagnosticReportOptions) => createDiagnosticReport(debuggerId, getSnapshot(), reportOptions);
   const exportSession = (sessionOptions?: NopDebuggerSessionExportOptions) => buildSessionExport(debuggerId, sessionId, getSnapshot(), redaction, sessionOptions);
+  const evaluateNodeExpression = (args: { cid: number; expression: string }): NopExpressionEvaluationResult => {
+    const inspectResult = inspectByCid(args.cid);
+
+    if (!inspectResult?.scopeChain?.[0]) {
+      return {
+        expression: args.expression,
+        ok: false,
+        error: 'Node scope is unavailable for expression evaluation.'
+      };
+    }
+
+    try {
+      const compiler = createFormulaCompiler();
+      const compiled = compiler.compileExpression(args.expression);
+
+      return {
+        expression: args.expression,
+        ok: true,
+        value: compiled.exec(inspectResult.scopeChain[0].data, {
+          fetcher: async <T,>() => ({ ok: true, status: 200, data: undefined as T }),
+          notify() {
+            return undefined;
+          }
+        }),
+        usedScopeLabel: inspectResult.scopeChain[0].label
+      };
+    } catch (error) {
+      return {
+        expression: args.expression,
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+        usedScopeLabel: inspectResult.scopeChain[0].label
+      };
+    }
+  };
   const waitForEvent = (waitOptions?: NopWaitForEventOptions) => {
     const timeoutMs = waitOptions?.timeoutMs ?? 5000;
     const immediate = getLatestEvent(waitOptions);
@@ -209,6 +285,10 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     getPinnedErrors,
     getNodeDiagnostics,
     getInteractionTrace,
+    getLatestFailedRequest: getLatestFailedRequestSummary,
+    getLatestFailedAction: getLatestFailedActionSummary,
+    getNodeAnomalies: getNodeAnomaliesSummary,
+    getRecentFailures: getRecentFailuresSummary,
     createDiagnosticReport: createReport,
     exportSession,
     waitForEvent,
@@ -250,7 +330,8 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       persistPosition(debuggerId, position);
     },
     inspectByCid,
-    inspectByElement
+    inspectByElement,
+    evaluateNodeExpression
   });
 
   const plugin: RendererPlugin = createDebuggerPlugin(store);
@@ -321,6 +402,10 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     getPinnedErrors,
     getNodeDiagnostics,
     getInteractionTrace,
+    getLatestFailedRequest: getLatestFailedRequestSummary,
+    getLatestFailedAction: getLatestFailedActionSummary,
+    getNodeAnomalies: getNodeAnomaliesSummary,
+    getRecentFailures: getRecentFailuresSummary,
     getOverview,
     createDiagnosticReport: createReport,
     exportSession,
@@ -342,7 +427,8 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       }
     },
     inspectByCid,
-    inspectByElement
+    inspectByElement,
+    evaluateNodeExpression
   } satisfies NopDebuggerController;
 
   if (exposeAutomationApi) {
