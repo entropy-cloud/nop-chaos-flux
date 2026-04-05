@@ -2003,7 +2003,7 @@ describe('formRendererDefinitions', () => {
 
   it('renders input labels from schema fragments through field metadata', async () => {
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, buttonRenderer]);
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
 
     render(
       <SchemaRenderer
@@ -2032,7 +2032,7 @@ describe('formRendererDefinitions', () => {
 
   it('renders composite field labels from schema fragments through field metadata', async () => {
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, buttonRenderer]);
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
 
     render(
       <SchemaRenderer
@@ -2060,7 +2060,7 @@ describe('formRendererDefinitions', () => {
 
   it('renders form body and actions through shared slot helpers', () => {
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, buttonRenderer]);
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
 
     render(
       <SchemaRenderer
@@ -2156,4 +2156,3 @@ describe('form render performance optimization', () => {
     expect(onRenderEnd).not.toHaveBeenCalled();
   });
 });
-
