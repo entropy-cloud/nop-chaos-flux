@@ -142,10 +142,20 @@ The required flow is:
 6. Apply `responseAdaptor`
 7. Return the adapted payload to the caller
 
-Important note:
+Current baseline note:
 
-- this document describes the intended unified contract
-- current code still has some preparation steps split across helper functions and not yet fully converged into one execution path
+- `executeApiObject(...)` now owns the main request convergence path used by ajax actions, form submit, validation, and data-source execution
+- callers may still pass declarative request objects; `executeApiObject(...)` evaluates those values in scope before canonical request preparation so request execution semantics stay unified across actions, forms, validation, and data-sources
+- request preparation is split into explicit helpers, but the runtime now converges those helpers into one canonical executable request shape before fetch
+- dedup and runtime-local cache coordination are keyed by that final executable request semantics rather than only by the original declarative `ApiObject`
+- executable request canonicalization normalizes `params` into the final URL and removes `params` from the fetcher-facing request object so equivalent `url + params` forms share the same identity
+- adaptor expressions and object-shaped runtime values are now cached by source/object identity on the hot path so repeated dispatch/request execution avoids ad hoc recompilation where schema identity is stable
+- ajax-side API monitor callbacks should observe the final executable request shape, not the pre-canonical declarative request object, so diagnostics line up with what fetch/dedup/cache actually execute
+- current source-runtime baseline now includes a runtime-owned source registry scoped by `ScopeRef.id`; `DataSourceRenderer` only registers/disposes entries while runtime owns controller start/stop and replacement semantics
+- current `DataSourceSchema` baseline now supports both `api` and `formula` producers under the same runtime-owned registration path
+- current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
+- current `DataSourceController` baseline now exposes a minimal runtime state surface via `getState()` with `started`, `loading`, `stale`, `value`, and `error`; api sources actively drive all fields while formula sources currently use the same shape with lightweight synchronous semantics
+- current runtime baseline now also exposes explicit source refresh by id at the runtime boundary; refresh remains scope-scoped first, so duplicate source ids in different scopes do not collapse into one page-global namespace
 
 ## DataSourceSchema
 
