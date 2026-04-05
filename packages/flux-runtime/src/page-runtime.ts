@@ -14,6 +14,11 @@ export function createManagedPageRuntime(input: {
     sourceScopeId: 'page',
     kind: 'replace'
   };
+
+  function setLastChange(change: ScopeChange) {
+    lastChange = change;
+  }
+
   const scope = createScopeRef({
     id: 'page',
     path: '$page',
@@ -22,16 +27,23 @@ export function createManagedPageRuntime(input: {
       getSnapshot: () => store.getState().data,
       getLastChange: () => lastChange,
       setSnapshot: (next, change) => {
-        lastChange = change ?? {
+        setLastChange(change ?? {
           paths: ['*'],
           sourceScopeId: 'page',
           kind: 'replace'
-        };
+        });
         store.setData(next);
       },
       subscribe: (listener) => store.subscribe(() => listener(lastChange))
     },
-    update: (path, value) => store.updateData(path, value)
+    update: (path, value) => {
+      setLastChange({
+        paths: [path || '*'],
+        sourceScopeId: 'page',
+        kind: 'update'
+      });
+      store.updateData(path, value);
+    }
   });
   let dialogCounter = 0;
 

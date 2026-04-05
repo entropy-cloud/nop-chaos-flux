@@ -109,6 +109,10 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     kind: 'replace' as const
   };
 
+  function setLastChange(change: ScopeChange) {
+    lastChange = change;
+  }
+
   const scope = createScopeRef({
     id: formId,
     path: `${inputValue.parentScope.path}.form`,
@@ -117,16 +121,23 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       getSnapshot: () => store.getState().values,
       getLastChange: () => lastChange,
       setSnapshot: (next, change) => {
-        lastChange = change ?? {
+        setLastChange(change ?? {
           paths: ['*'],
           sourceScopeId: formId,
           kind: 'replace'
-        };
+        });
         store.setValues(next);
       },
       subscribe: (listener) => store.subscribe(() => listener(lastChange))
     },
-    update: (path, value) => store.setValue(path, value)
+    update: (path, value) => {
+      setLastChange({
+        paths: [path || '*'],
+        sourceScopeId: formId,
+        kind: 'update'
+      });
+      store.setValue(path, value);
+    }
   });
 
   const sharedState: ManagedFormRuntimeSharedState = {

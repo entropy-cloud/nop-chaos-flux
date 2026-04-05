@@ -5,6 +5,11 @@ import type { RendererComponentProps, RendererDefinition, RendererEnv, RendererH
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
+  ActionScopeContext,
+  ComponentRegistryContext,
+  PageContext,
+  RuntimeContext,
+  ScopeContext,
   FormContext,
   createSchemaRenderer,
   hasRendererSlotContent,
@@ -25,6 +30,7 @@ import {
 } from './index';
 import { FieldFrame } from './field-frame';
 import { EMPTY_FORM_STORE_STATE } from './form-state';
+import { RenderNodes } from './helpers';
 import { resolveFrameWrapMode } from './node-renderer-utils';
 
 const env: RendererEnv = {
@@ -212,6 +218,11 @@ const ownScopeValueProbeRenderer: RendererDefinition = {
 const actionScopeProbeRenderer: RendererDefinition = {
   type: 'action-scope-probe',
   component: ActionScopeProbe
+};
+
+const countingTextRenderer: RendererDefinition = {
+  type: 'counting-text',
+  component: (props) => <span>{String(props.props.text ?? '')}</span>
 };
 
 function CompositeErrorProbe() {
@@ -517,6 +528,29 @@ function createScope(data: Record<string, any>): ScopeRef {
     update: () => undefined,
     merge: () => {}
   };
+}
+
+function renderWithRuntimeProviders(input: {
+  runtime: ReturnType<typeof createRendererRuntime>;
+  page: ReturnType<ReturnType<typeof createRendererRuntime>['createPageRuntime']>;
+  schema: Record<string, unknown>;
+}) {
+  const actionScope = input.runtime.createActionScope({ id: 'test-action-scope' });
+  const componentRegistry = input.runtime.createComponentHandleRegistry({ id: 'test-component-registry' });
+
+  return render(
+    <RuntimeContext.Provider value={input.runtime}>
+      <ActionScopeContext.Provider value={actionScope}>
+        <ComponentRegistryContext.Provider value={componentRegistry}>
+          <ScopeContext.Provider value={input.page.scope}>
+            <PageContext.Provider value={input.page}>
+              <RenderNodes input={input.schema as any} options={{ actionScope, componentRegistry }} />
+            </PageContext.Provider>
+          </ScopeContext.Provider>
+        </ComponentRegistryContext.Provider>
+      </ActionScopeContext.Provider>
+    </RuntimeContext.Provider>
+  );
 }
 
 describe('createSchemaRenderer', () => {
@@ -1045,6 +1079,64 @@ describe('createSchemaRenderer', () => {
     );
 
     expect(screen.getByText('Scoped update')).toBeTruthy();
+  });
+
+  it('does not recompute unrelated NodeRenderer props and meta on unrelated path changes', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([pageRenderer, countingTextRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(sharedFormulaCompiler)
+    });
+    const page = runtime.createPageRuntime({ user: { name: 'Alice' }, title: 'Architect' });
+    const originalResolveNodeMeta = runtime.resolveNodeMeta;
+    const originalResolveNodeProps = runtime.resolveNodeProps;
+    const metaCalls: string[] = [];
+    const propCalls: string[] = [];
+
+    runtime.resolveNodeMeta = ((node, scope, state) => {
+      metaCalls.push(node.id);
+      return originalResolveNodeMeta(node, scope, state);
+    }) as typeof runtime.resolveNodeMeta;
+    runtime.resolveNodeProps = ((node, scope, state) => {
+      propCalls.push(node.id);
+      return originalResolveNodeProps(node, scope, state);
+    }) as typeof runtime.resolveNodeProps;
+
+    renderWithRuntimeProviders({
+      runtime,
+      page,
+      schema: {
+        type: 'page',
+        body: [
+          { id: 'user-node', type: 'counting-text', text: 'User ${user.name}', visible: '${user.name !== ""}' },
+          { id: 'title-node', type: 'counting-text', text: 'Title ${title}', visible: '${title !== ""}' }
+        ]
+      }
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('User Alice')).toBeTruthy();
+      expect(screen.getByText('Title Architect')).toBeTruthy();
+    });
+
+    metaCalls.length = 0;
+    propCalls.length = 0;
+
+    page.scope.update('user.name', 'Bob');
+
+    await waitFor(() => {
+      expect(screen.getByText('User Bob')).toBeTruthy();
+    });
+
+    const userHits = propCalls.filter((id) => id.includes('user-node')).length;
+    const titleHits = propCalls.filter((id) => id.includes('title-node')).length;
+    const userMetaHits = metaCalls.filter((id) => id.includes('user-node')).length;
+    const titleMetaHits = metaCalls.filter((id) => id.includes('title-node')).length;
+
+    expect(userHits).toBeGreaterThan(0);
+    expect(userMetaHits).toBeGreaterThan(0);
+    expect(titleHits).toBe(0);
+    expect(titleMetaHits).toBe(0);
   });
 
   it('uses lexical scope data by default and isolates own-scope subscriptions when requested', async () => {
