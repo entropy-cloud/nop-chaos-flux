@@ -35,6 +35,9 @@ If a narrower document conflicts with this document about whether a concept is a
 - **logical value**: one authoritative published binding target together with producer-owned runtime status, not multiple unrelated writes spread across the schema
 - **capability**: an author-visible authority path that may cause effects
 - **host projection**: readonly snapshot data projected from host/domain runtime into schema-visible scope
+- **authoring model**: an editable, round-trip-preserving model that may include source metadata, aliases, editor-only structure, or other concerns not executed directly by Flux
+- **execution model**: the final execution schema plus runtime-owned state and sidecars that Flux actually evaluates
+- **semantic overlay**: a runtime layer whose ownership follows the base tree or lexical scopes while remaining orthogonal to ordinary scope data values
 
 ## Core Claim
 
@@ -54,6 +57,39 @@ The design target is:
 - without forcing domain complexity into Flux core vocabulary
 
 This is what "optimal" means in this document.
+
+## Optimization Envelope
+
+This document claims optimality for a specific class of systems:
+
+- next-generation low-code platforms whose frontend core executes already-assembled DSL programs rather than owning authoring-time structural assembly
+- platforms that must support ordinary pages, forms, data views, dialogs, and complex workbench-like hosts under one runtime
+- platforms that prefer stable author-visible semantics and domain isolation over plugin-marketplace-first runtime extensibility
+
+Outside this envelope, other architectures may be locally preferable.
+Inside it, the correct optimization target is the smallest stable cross-domain primitive set that keeps new complexity in domain or host layers rather than in Flux core.
+
+## Practical Success Test
+
+The model should be considered successful only if all of the following remain true as the platform grows:
+
+- new domain complexity mainly grows domain schema, domain core, or thin host protocols
+- renderer authors can reuse existing value/resource/reaction/capability rules without inventing renderer-local lifecycle semantics
+- adding a new complex host does not require new Flux-wide provider families, ambient registries, or extra schema authority channels
+
+This is the architecture acceptance test for the optimality claim.
+
+## Platform Layering
+
+A next-generation low-code platform built on Flux should be read as four separated layers:
+
+1. authoring model and round-trip concerns
+2. loader / projection / policy trimming / final schema assembly
+3. Flux final execution runtime
+4. host and domain runtimes behind projection and capability boundaries
+
+Flux is the execution core of the platform, not the whole platform.
+The optimality claim in this document depends on keeping those layers separate rather than collapsing them into one browser-side mega-runtime.
 
 ## Execution Schema Boundary
 
@@ -75,6 +111,28 @@ Flux core still performs runtime work, but only runtime work such as:
 - host projection consumption
 
 Flux core does not perform major structural assembly at runtime.
+
+Allowed runtime structural multiplication is narrow and derivative only.
+
+It includes cases such as:
+
+- rendering already-declared child templates against item scopes
+- conditional activation or omission of already-compiled regions or nodes
+- virtualization or retention strategies that do not change the final node kinds or author-visible structural contract
+
+It does not include open-ended loader-like schema rewriting, type invention, inheritance expansion, or profile assembly in the browser runtime.
+
+## Authoring Model And Execution Model
+
+Flux core owns only the execution model.
+
+Normative rules:
+
+1. authoring models may preserve round-trip fidelity, source locations, aliases, editor-only fields, and domain editing concerns
+2. loader/projection layers translate those authoring models into the final execution schema consumed by Flux
+3. Flux runtime semantics must not depend on authoring-only metadata
+4. if removing authoring-only metadata changes runtime execution semantics, the boundary is wrong
+5. complex designers may maintain their own editable document/session models, but Flux still consumes only execution projections plus host capabilities
 
 ## Primitive Sufficiency And Promotion Rule
 
@@ -233,7 +291,7 @@ No separate designer platform primitive is needed.
 
 4. A validation message derived from current form state reduces to:
 
-- scope: form values and error summaries in lexical scope or runtime-fed projection
+- scope: form values and scope-intrinsic editable validation summaries owned by the form runtime itself
 - value: expressions derive what to show
 - capability: submit/validate actions remain effect paths
 
@@ -300,7 +358,13 @@ This owns:
 
 Hard rule:
 
-- lexical capability and instance capability are different categories
+- lexical capability lookup and instance capability lookup are different resolution modes inside the same capability primitive
+- `componentId` targeting must be unique within the visible runtime host tree; ambiguity is a configuration error
+- `componentName` targeting is secondary convenience only; multiple matches are an error, not an implicit first-match rule
+- if a targeted handle is gone or replaced before dispatch resolves, the action fails with a stale-target or not-found diagnostic
+- explicit instance-capability lookup is limited to the current visible runtime host tree or an explicitly composed registry boundary; there is no hidden ambient parent walk across disjoint host trees
+
+In this document, `visible runtime host tree` or `explicitly composed registry boundary` means the renderer-owned `ComponentHandleRegistry` chain that the active render/action context intentionally composes for descendant execution.
 
 ### 7. Host projection
 
@@ -327,12 +391,37 @@ This is not:
 | `ComponentTree` | base tree |
 | `StateTree` | lexical data scope plus scope-owned runtime sidecars |
 | `ActionTree` | lexical capability scope |
-| `base tree + overlays` | acceptable intuition, but not a separate primitive ontology |
+| `base tree + overlays` | correct operational picture; the overlays are runtime organization over the same primitive categories, not an extra ontology |
 
 Important clarification:
 
 - Flux core is not "one scope chain explains everything"
 - Flux core is one structure tree plus a few orthogonal primitive categories
+
+## Operational Picture: Base Tree Plus Semantic Overlays
+
+Operationally Flux is best understood as:
+
+- one base tree anchoring structure, mount lifetime, and renderer selection
+- a lexical data overlay through `ScopeRef`
+- a lexical capability overlay through `ActionScope`
+- runtime-owned execution overlays for resources and reactions, keyed by lexical ownership
+- explicit instance capability lookup through `ComponentHandleRegistry`
+- host projection overlays that inject readonly host snapshots into schema-visible data scope
+
+This is the recommended architecture-review mental model.
+It is not a second primitive ontology.
+The seven primitive categories above remain normative.
+
+At author-facing level, lookup stays simple:
+
+- expressions and dynamic values read from the currently visible data scope
+- actions resolve from the current capability scope
+- component methods require explicit instance targeting
+- projected host data reads like ordinary readonly scope data once admitted
+
+Internally these overlays must remain orthogonal.
+Flux must not collapse them into one mixed runtime bag.
 
 ## Structural Model
 
@@ -399,6 +488,35 @@ It must stay separate from both `ScopeRef` and `ActionScope`.
 
 This split is architectural, not incidental.
 
+### Author-facing lookup rule
+
+At usage level, Flux should feel lexically uniform without becoming internally monolithic:
+
+- value reads follow `ScopeRef`
+- capability lookup follows `ActionScope`
+- instance capability calls require explicit target identity
+- host-projected data becomes readable only after passing the scope admission rule
+
+The user-facing simplicity is deliberate.
+The internal separation is non-negotiable.
+
+### Ordinary scope data owned by runtime subsystems
+
+Some runtime subsystems such as page or form runtime may own ordinary lexical scope fields inside the scopes they already govern.
+
+This does not create a new primitive or publication channel.
+
+Hard rules:
+
+- once admitted, that data is just ordinary scope data
+- it must obey the scope admission rule
+- it must not expose imperative handles, protocol controllers, or mutable host/domain objects
+- if it needs producer lifecycle, acquisition policy, refresh/invalidation, or async coordination, it is a resource instead
+- if it originates from an external host or domain runtime snapshot, it is host projection instead
+- its owning subsystem and write authority must be identifiable from the execution model and narrower subsystem contract, not ambient runtime behavior
+- collisions with reserved host projection paths or authoritative resource binding targets are invalid and must fail fast
+- if a subsystem wants schema-visible companion summaries for its own ordinary scope data, those summaries must be declared as ordinary named scope fields in that subsystem contract rather than ambient hidden publication
+
 ## Scope Admission Rule
 
 Flux must be strict about what may appear in schema-visible scope.
@@ -429,7 +547,7 @@ Admission test:
 | Primitive | Owns authoritative value | May cause side effects | Lifecycle owner | Reads from | Writes to | Change basis | Schema-visible |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Value | no | no | none beyond evaluation state | `ScopeRef` | nowhere | semantic top-level equality | yes |
-| Resource | yes, for its published value | producer-internal acquisition effects only; never arbitrary schema-addressable effects | runtime, scoped by lexical ownership | `ScopeRef` plus producer config | one explicit binding target | semantic top-level equality on published value | yes, through published value and optional readonly status summaries |
+| Resource | yes, for its authoritative published value | producer-internal acquisition effects only; never arbitrary schema-addressable effects | runtime, scoped by lexical ownership | `ScopeRef` plus producer config | one explicit authoritative value target, plus optional explicit readonly status-summary target | semantic top-level equality on published value and summary DTO | yes, through its authoritative value target and optional explicit readonly status-summary target |
 | Reaction | no | yes, by dispatching consequences | runtime, scoped by lexical ownership | watched values from `ScopeRef` / runtime evaluation | no authoritative business value target | semantic top-level equality on watched value | yes, as schema node; runtime state may be partially inspectable |
 | Capability | no | yes | runtime / host / addressed component | action payload, current scope, runtime context | host/domain effects or targeted instance methods | n/a | yes |
 | Host projection | no | no | host renderer | host snapshot | nowhere directly | host snapshot refresh semantics | yes |
@@ -476,20 +594,60 @@ This rule is normative.
 
 1. `data-source` is the current schema surface for the resource primitive.
 2. One resource publishes one logical value.
-3. A logical value means one authoritative published binding target in scope, together with runtime-owned status attached to that producer rather than spread across unrelated schema fields.
-4. Explicit `dataPath` is the normative binding contract.
-5. Omitted `dataPath` merge-into-scope behavior is legacy compatibility, not the preferred model.
-6. Resource lifecycle is runtime-owned and scope-owned.
-7. Resource registration, replacement, and disposal follow lexical scope ownership.
-8. Resource runtime state and controllers do not become methods on `ScopeRef`.
-9. Loading, error, stale, cancellation, retry, dedup, and polling belong to resource runtime state, not to plain values and not to reactions.
-10. External I/O performed by a resource belongs to the producer implementation contract, not to a second schema authority model.
-11. The only author-visible resource control paths are lexical activation, dependency invalidation, and explicit capability-driven refresh or invalidate.
-12. If a schema feature needs arbitrary protocol commands rather than value publication, it is not a resource primitive; it belongs behind capabilities or outside Flux core.
+3. A logical value means one authoritative published binding target in scope.
+4. A resource may additionally expose one optional readonly status-summary DTO through an explicit `statusPath`.
+5. That status summary is runtime-derived, not authoritatively writable business data, and not a second logical value.
+6. Explicit `dataPath` is the normative binding contract.
+7. Explicit `statusPath`, when used, is the normative schema-visible status contract.
+8. Any compatibility behavior that publishes without explicit `dataPath` is non-normative and outside the architecture baseline.
+9. Resource lifecycle is runtime-owned and scope-owned.
+10. Resource registration, replacement, and disposal follow lexical scope ownership.
+11. Resource runtime state and controllers do not become methods on `ScopeRef`.
+12. Loading, error, stale, cancellation, retry, dedup, and polling belong to resource runtime state, not to plain values and not to reactions.
+13. External I/O performed by a resource belongs to the producer implementation contract, not to a second schema authority model.
+14. The only author-visible resource control paths are lexical activation, dependency invalidation, and explicit capability-driven refresh or invalidate.
+15. If a schema feature needs arbitrary protocol commands rather than value publication, it is not a resource primitive; it belongs behind capabilities or outside Flux core.
+16. Formula-backed resources require explicit `dataPath`.
+17. Ordinary resource dependencies are runtime-owned and inferred from evaluation or narrower subsystem rules; schema authors should not manually enumerate dependencies for normal derived-value usage.
+18. Within one owning lexical scope, a binding target may have at most one active resource publisher.
+19. Declaring multiple active resources that publish to the same `dataPath` in the same owning lexical scope is invalid and must fail fast.
+20. Child scopes may shadow a parent publication only through ordinary lexical scope shadowing; this does not create multiple publishers for one owning scope.
+21. While a resource is active, unrelated schema writes to its authoritative binding target are an architectural error unless a narrower subsystem doc explicitly defines a replacement or disposal transition first.
+22. Descendant writes beneath a resource-owned binding target are treated as writes to that authoritative value and are therefore invalid unless a narrower subsystem doc explicitly defines a handoff, editable draft projection, or replacement transition.
+23. If `statusPath` is present, it is reserved for that resource's readonly summary DTO, and collisions or schema writes to that path are invalid.
+24. Resource ids used for built-in resource targeting are scoped by lexical ownership first, not globally.
+25. Duplicate resource ids in different lexical scopes are allowed; built-in targeting resolves within the current visible scope-owned resource registry boundary before any parent scope boundary.
+26. Duplicate resource ids within the same owning lexical scope are invalid and must fail fast.
+27. Synchronous resource-to-resource dependency chains within one settled update turn must resolve to quiescence before reactions for that turn evaluate watched values.
+28. Cycles in synchronous resource dependency chains are invalid and must stop with a structured cycle diagnostic rather than degrade into implicit repeated publication.
 
 `lexical activation` means resource activation caused by the resource node being present within the currently active rendered subtree and owned lexical scope.
 
-Resource status may be surfaced to schema only through readonly status summaries exposed by the runtime or host under an explicit convention. Those summaries are derived runtime views, not additional authoritative published values and not a second publication channel.
+For the core model, `currently active rendered subtree` means:
+
+- the subtree is mounted in the live runtime host tree
+- it is not disposed or replaced
+- it is not marked inactive by an explicit host/runtime boundary contract that narrows activation semantics, such as retained-but-suspended subtrees
+
+If a host or narrower subsystem introduces retained, preloaded, virtualized, hidden, or suspended subtrees, it must explicitly define whether resources and reactions in that boundary are active, suspended, or disposed.
+It must not leave activation semantics implicit.
+
+Resource runtime state is not ambient schema-visible data.
+Host code and debuggers may inspect it out of band.
+Flux core defines no implicit sibling-path, hidden status-summary, or second publication rule for resources.
+
+If schema must render producer status such as loading, stale, or error, the resource must declare `statusPath` explicitly.
+`statusPath` publishes one readonly summary DTO owned by that resource primitive.
+This is not a second business-value publication, and it is not an ambient hidden channel.
+
+### Resource versus host projection
+
+The distinction is normative:
+
+- use a resource when the execution schema declares how a value is produced, refreshed, invalidated, or polled
+- use host projection when an external host/domain runtime already owns the value, its session, and its refresh semantics, and Flux only consumes snapshot data
+- do not model a workbench snapshot as a resource merely because it changes over time
+- do not model schema-authored fetch/compute policy as host projection merely because the data originates outside the browser
 
 ### Reaction rules
 
@@ -500,17 +658,29 @@ Resource status may be surfaced to schema only through readonly status summaries
 5. `immediate` means evaluate on activation and dispatch only when normal guard/change rules allow it.
 6. `debounce` delays reaction dispatch, not resource publication.
 7. `once` disposes the reaction after its first successful trigger.
+8. Guards and action payload evaluation may read a readonly reaction context.
+9. The reserved reaction-context names are `value`, `prev`, `changed`, and `changedPaths`.
+10. Those names are injected only for reaction guard/payload evaluation, not into ordinary lexical scope.
+11. Reaction-context names take precedence over same-named ordinary scope fields during that evaluation.
+12. On first activation before any prior observed value exists, `prev` is `undefined`, `changed` is `true` only if the reaction is running under `immediate` and the current evaluation produced a value eligible for normal guard/change checks, and `changedPaths` is `[]`.
+13. `changedPaths` is a readonly list of paths relative to the reaction's owning lexical scope, reported for the current settled update turn.
+14. Paths use the same path notation as normal scope-path addressing, and runtimes may conservatively report parent or wildcard paths when finer-grained provenance is unavailable.
+15. A reaction never executes host logic inline; it only dispatches through the capability model.
 
 ### Scheduling rules
 
 1. Resource invalidation happens before reaction dispatch.
 2. Scope writes settle before reactions run.
 3. Reactions run asynchronously after the settled update cycle, never inline inside the originating mutation path.
-4. Formula-backed resources are invalidated by dependency changes and recompute through resource semantics.
-5. API-backed resources invalidate and refresh according to source policy.
+4. Formula-backed resources are invalidated by dependency changes and, when their next value is synchronously computable in the current turn, they publish before reactions for that turn evaluate watched values.
+5. API-backed and other asynchronous resources invalidate immediately but publish new values only when the producer completes in a later settled update turn.
 6. Per-turn dedupe means repeated triggers for the same reaction within one settled update turn coalesce into one execution attempt.
 7. Bounded cascade protection means reaction-triggered writeback may cascade only up to a finite runtime limit before the cycle is stopped and surfaced as an error.
 8. No re-trigger occurs when writeback leaves the watched value semantically unchanged.
+9. High-frequency gesture loops, animation-frame coordination, and protocol-state machines are not required to route each tick through reaction scheduling; they may remain host/domain systems that interact with Flux only at stable publication or command boundaries.
+10. Within one settled update turn, ready reactions execute in stable base-tree path order of their owning reaction nodes; when multiple live instances share the same compiled node path, execution order is the stable lexical-instance order created by the runtime for that boundary.
+11. Scope writes or async completions produced by a reaction schedule a later settled update turn rather than interleaving into the already-running reaction flush.
+12. If the bounded cascade limit is reached, runtime aborts the remaining reaction queue for that turn and surfaces a structured cycle error.
 
 `settled update cycle` or `settled update turn` means the runtime boundary after synchronous writes for the current mutation path have completed and before asynchronous reaction work is flushed.
 
@@ -528,10 +698,66 @@ This has three operational forms:
 
 Built-in schema actions resolve to reserved built-in capabilities, not a second unrelated authority model.
 
+Built-in platform capabilities may carry built-in targeting fields only for a closed set of Flux-core-owned target classes explicitly defined by narrower core docs.
+Current baseline examples are:
+
+- the current lexical/runtime context owned by the action dispatch path
+- registered resource ids owned by the resource registry
+- core dialog/page stack semantics already defined by Flux runtime
+
+Current baseline rule:
+
+- built-in targets are limited to contextual scope/form/page/dialog semantics and registered resource ids
+- built-in targets do not address host bridges, domain runtimes, imported namespaces, or component instances
+
+Built-in targeting must not expand into a generic runtime-object address space.
+They must not become a generic targeting surface for host or domain runtimes.
+Anything host-specific or domain-specific must still route through namespaced capabilities or explicit instance capabilities.
+
+Built-in targeting fields are part of each built-in action contract.
+They are not implicitly shared with `component:<method>` targeting.
+Reusing a field name such as `componentId` for backwards compatibility does not change the semantic target class.
+
+Capability resolution order is normative:
+
+1. built-in platform capability
+2. explicit instance capability matching `component:<method>` through `ComponentHandleRegistry`
+3. lexical namespaced capability resolution through the current `ActionScope` chain
+4. not-found diagnostic
+
+Built-in action names are reserved by Flux core.
+Hosts, imports, and schema conventions must not redefine or shadow them.
+`component:` is also a reserved instance-capability prefix.
+Lexical capability providers and imports must not claim or shadow that prefix.
+A `component:<method>` action without explicit target identity is invalid and must fail before lexical capability lookup.
+
+Component-targeted capability surfaces are explicit.
+There is no implicit fallback to arbitrary store, controller, or bridge methods.
+
 Env hooks are not schema-level behavior primitives.
 They are host implementation behind capability execution.
 
 `env` means the host-provided environment boundary for side-effect integrations such as fetch, notify, navigate, open external resources, or similar runtime host services.
+
+### Capability surface and final-model closure
+
+The final execution schema declares the capability names, imports, target identities, and host-boundary placements that authored behavior may refer to.
+
+Current import surface:
+
+- capability imports are declaration-style provisioning specs in the final execution schema, currently surfaced as `xui:imports`
+- they provision namespaces into the owning `ActionScope` boundary
+- they are order-independent, lexical by ownership, and may shadow parent namespaces intentionally
+- they do not create a new primitive or a second dispatch system
+
+The embedding host/runtime may provide, deny, or policy-filter the corresponding handlers, but it may not:
+
+- reinterpret the meaning of an action name after compilation
+- make capability visibility depend on sibling render order
+- turn ambient global registration into the primary authority mechanism
+- invent new author-visible capability categories at runtime
+
+In other words, runtime provisioning is part of the execution environment contract, not a license for semantic drift.
 
 Resource execution does not create a second schema authority channel.
 A resource may perform producer-internal acquisition effects such as fetch, subscribe, poll, retry, and cancel only through a host-registered producer contract.
@@ -553,12 +779,43 @@ Normative rules:
 1. Host-visible schema data is readonly snapshot projection only.
 2. Schema-visible host surface contains only DTO-style snapshot data.
 3. Snapshot freshness is host-driven: the host owns when a new snapshot is projected, and schema observes the latest projected state through normal scope reactivity.
-4. Projected host data is read by value semantics; no stable mutable identity contract is implied beyond ordinary runtime identity reuse optimizations.
-5. Renderer-private internals may exist in renderer code, React context, or host helpers, but they are not schema contract.
-6. Temporary debug exposure of richer objects is non-normative and must not become author-facing contract.
-7. A "special host type" means only a specialized renderer and shell integration pattern over the same Flux primitive set. It does not authorize new core primitives by itself.
+4. Projection is mounted at a host-owned lexical boundary as ordinary readonly fields such as `session`, `doc`, `selection`, `activeNode`, `activeEdge`, or `runtime`; Flux core does not require one universal reserved `host.*` root object.
+5. Projected host data is read by value semantics; no stable mutable identity contract is implied beyond ordinary runtime identity reuse optimizations.
+6. Hosts must replace projected snapshots rather than rely on schema-visible in-place mutation of nested objects.
+7. Renderer-private internals may exist in renderer code, React context, or host helpers, but they are not schema contract.
+8. Temporary debug exposure of richer objects is non-normative and must not become author-facing contract.
+9. A "special host type" means only a specialized renderer and shell integration pattern over the same Flux primitive set. It does not authorize new core primitives by itself.
+10. If schema authors own fetch, refresh, invalidation, or polling policy for a value, that value belongs to the resource model rather than to host projection.
+11. Projection field names are fixed by the host contract for that special host type, not ad hoc aliases per renderer instance.
+12. Those projected field names are reserved within the host-owned lexical boundary.
+13. A projection path collision with schema-owned ordinary scope data or resource publication in the same owning boundary is invalid and must fail fast.
+14. Writes to projected host fields are invalid and must fail with a diagnostic rather than silently shadow-writing or mutating the host snapshot.
+15. Host snapshot replacement enters the normal settled update mechanism as scope-visible readonly data; multiple host updates may coalesce within a turn, and reactions observe the latest settled projection for that turn.
+16. Descendant ordinary scopes inside the same host-owned lexical boundary must not shadow reserved projection field names such as `session`, `doc`, `selection`, `activeNode`, `activeEdge`, or `runtime` unless a narrower host contract explicitly defines a nested host boundary that rebinds them.
+17. Projection becomes schema-visible only after the host boundary is created; it is available to descendant schema rendered inside that boundary, not to the special host node's own pre-boundary prop resolution unless a narrower host contract explicitly says otherwise.
 
 In other words, a `special host type` is still just a normal schema node kind rendered through specialized host integration; it is not a privileged primitive class.
+
+### Thin host protocol pattern
+
+Complex platforms may standardize a thin host-side protocol for workbench-like nodes.
+Typical host-side concerns include:
+
+- snapshot subscription
+- command dispatch
+- session summaries such as dirty/busy/undo/redo/leave-guard
+- namespace registration for host capabilities
+
+Normative rules:
+
+- this protocol is host architecture, not a schema-visible primitive category
+- schema still reads only projected snapshot data and invokes capabilities
+- domain cores remain behind the host boundary
+- the existence of a shared host protocol does not authorize exposing raw bridges or session controllers into schema-visible scope
+- the protocol must stay reducible to snapshot subscription, command dispatch, session summaries, and namespace wiring
+- it must not become a generic plugin/provider registry, arbitrary method table, or schema-defined free-form command bus
+- host policy may deny or filter declared capabilities, but must not invent new author-visible capability classes at runtime
+- shared helper types such as bridge interfaces, busy-state summaries, undo/redo summaries, leave-guard summaries, or interaction-policy DTOs are acceptable only as host-private contracts or projected readonly data, never as new schema-visible primitive families
 
 ## What Stays Outside Flux Core
 
@@ -598,6 +855,17 @@ These may appear to Flux only through:
 Hard rule:
 
 - if it has imperative methods, protocol state, session ownership, or domain mutation authority, it is outside Flux core
+
+### Time, protocol, and collaboration processes
+
+Flux may standardize the author-visible surface of these systems without absorbing their internals.
+
+- cross-domain value publication enters through resources when the execution schema owns production policy
+- watched consequences enter through reactions
+- host-owned snapshots enter through host projection
+- arbitrary protocol commands, collaboration engines, gesture state machines, and spatial algorithms remain host/domain systems unless a future cross-domain semantic passes the promotion test
+
+This is why the model can remain closed without pretending every process must collapse into ordinary scope values.
 
 ## Flow Designer As A Minimal Example
 
@@ -662,6 +930,8 @@ Flux core must keep these invariants.
 8. Schema-visible host surface and renderer-private host internals stay distinct.
 9. Schema causes effects only through the capability model.
 10. New domain complexity does not automatically create new Flux-wide primitive categories.
+11. Authoring-model concerns and execution-model semantics stay separate.
+12. Shared workbench/session host protocols may exist, but schema still sees only projection and capabilities.
 
 ## Failure Conditions
 
@@ -674,6 +944,7 @@ The model should be considered under architectural failure pressure if any of th
 - resources repeatedly need schema-defined protocol commands or direct external-operation authority beyond value publication
 - reactions become general-purpose workflow scripting
 - host projection turns into a mutable or imperative host bag
+- shared workbench/session helpers start leaking raw bridges, controllers, or domain runtimes into schema-visible scope
 - new domains repeatedly require new Flux-wide provider or adapter categories
 - authoring-model data leaks into runtime renderer contracts because the authoring/execution boundary is ignored
 
@@ -687,6 +958,8 @@ This document closes the following decisions.
 4. Built-in actions are part of the capability model, not a separate authority system.
 5. Host/session/workbench/bridge are not Flux core primitives.
 6. Flow Designer may validate the host-boundary pattern, but it must not define Flux core concepts.
+7. A thin shared host protocol is allowed as host architecture, but it does not change the core primitive set.
+8. Authoring model and execution model are distinct layers; Flux owns only the latter.
 
 The following still require narrower subsystem docs, not new core primitives.
 
@@ -698,10 +971,11 @@ The following still require narrower subsystem docs, not new core primitives.
 
 The following example shows how the core primitives integrate without introducing any extra platform concepts.
 
-It intentionally demonstrates both capability resolution modes:
+It intentionally demonstrates all three capability operational forms:
 
+- built-in platform capability: `refreshSource`
 - lexical capability: `designer:addNode`
-- explicit instance capability: `component:validate`, `component:submit`, and built-in `refreshSource` targeting a registered resource id
+- explicit instance capability: `component:validate`, `component:submit`
 
 ```json
 {
@@ -711,11 +985,9 @@ It intentionally demonstrates both capability resolution modes:
       "type": "data-source",
       "id": "countries",
       "dataPath": "lookups.countries",
-      "source": {
-        "api": {
-          "url": "/api/countries",
-          "method": "get"
-        }
+      "api": {
+        "url": "/api/countries",
+        "method": "get"
       }
     },
     {
@@ -724,7 +996,7 @@ It intentionally demonstrates both capability resolution modes:
       "body": [
         {
           "type": "text",
-          "text": "Current user: ${host.session.userName}"
+          "text": "Current user: ${currentUserName}"
         },
         {
           "type": "input-text",
@@ -740,27 +1012,29 @@ It intentionally demonstrates both capability resolution modes:
         {
           "type": "reaction",
           "watch": "${shipping.country}",
-          "when": "${shipping.country}",
-          "dispatch": {
-            "action": "component:validate",
-            "componentId": "shipping-form"
-          }
+          "when": "${value !== prev}",
+          "actions": [
+            {
+              "action": "component:validate",
+              "componentId": "shipping-form"
+            }
+          ]
         }
       ]
     },
     {
-      "type": "flow-designer",
-      "props": {
-        "document": "${host.designer.document}",
-        "readonly": "${!host.session.canEditFlow}"
-      }
+      "type": "designer-page",
+      "document": "${flowDocument}",
+      "readonly": true
     },
     {
       "type": "button",
       "label": "Add Task Node",
       "onClick": {
         "action": "designer:addNode",
-        "nodeType": "task"
+        "args": {
+          "nodeType": "task"
+        }
       }
     },
     {
@@ -768,7 +1042,7 @@ It intentionally demonstrates both capability resolution modes:
       "label": "Refresh Countries",
       "onClick": {
         "action": "refreshSource",
-        "componentId": "countries"
+        "targetId": "countries"
       }
     },
     {
@@ -786,11 +1060,11 @@ It intentionally demonstrates both capability resolution modes:
 Read the example through these callouts:
 
 1. `/body/0` is **resource publication** to `lookups.countries`.
-2. `/body/1/body/0`, `/body/1/body/1`, and `/body/1/body/2` show **ordinary value and scope use** through `${host.session.userName}`, `name`, and `${lookups.countries}`.
+2. `/body/1/body/0`, `/body/1/body/1`, and `/body/1/body/2` show **ordinary value and scope use** through `${currentUserName}`, `name`, and `${lookups.countries}`.
 3. `/body/1/body/3` is a **reaction** watching a scope value and dispatching a consequence.
-4. `/body/2` is a **special host type** consuming readonly host projection through `${host.designer.document}`.
+4. `/body/2` is a **special host type** whose descendants may later consume readonly host projection inside the host boundary.
 5. `/body/3/onClick` is **lexical capability** resolution through `designer:addNode`.
-6. `/body/4/onClick` is a **built-in capability** targeting a registered resource id via `refreshSource`.
+6. `/body/4/onClick` is a **built-in platform capability** operating on a registered resource id via `refreshSource`.
 7. `/body/5/onClick` is **explicit instance capability** targeting `shipping-form`.
 
 Taken together, the example shows one integrated model:
