@@ -7,7 +7,7 @@ import type { CompiledNodeRuntimeState, CompiledSchemaNode, ResolvedNodeMeta, Re
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
 import type { RendererPlugin } from './renderer-plugin';
 import type { DataSourceController, DataSourceRegistration, FormRuntime, PageRuntime } from './runtime';
-import type { ApiObject, BaseSchema, DataSourceSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, XuiImportSpec } from './schema';
+import type { ApiObject, BaseSchema, DataSourceSchema, ReactionSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, XuiImportSpec } from './schema';
 import type { CreateScopeOptions, ScopeRef } from './scope';
 import type { CompiledFormValidationModel, ValidationRule } from './validation';
 
@@ -108,6 +108,12 @@ export interface RendererRuntime {
     id: string;
     scope?: ScopeRef;
   }): Promise<boolean>;
+  registerReaction(input: {
+    id: string;
+    schema: ReactionSchema;
+    scope: ScopeRef;
+    dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+  }): { id: string; dispose(): void };
   createFormRuntime(input: {
     id?: string;
     name?: string;

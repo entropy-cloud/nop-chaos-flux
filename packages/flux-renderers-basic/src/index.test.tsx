@@ -150,6 +150,103 @@ describe('basicRendererDefinitions', () => {
     cleanup();
   });
 
+  it('runs reaction actions immediately when configured', async () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'reaction',
+              watch: '${count}',
+              immediate: true,
+              actions: {
+                action: 'setValue',
+                componentPath: 'message',
+                value: 'count:${count}'
+              }
+            },
+            { type: 'text', text: '${message}' }
+          ]
+        }}
+        data={{ count: 3 }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('count:3')).toBeTruthy();
+    });
+    cleanup();
+  });
+
+  it('gates reaction execution with when and once', async () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'reaction',
+              watch: '${status}',
+              immediate: true,
+              once: true,
+              when: 'value === "ready" && prev !== value',
+              actions: {
+                action: 'setValue',
+                componentPath: 'message',
+                value: 'triggered:${status}'
+              }
+            },
+            {
+              type: 'button',
+              label: 'Ready',
+              onClick: {
+                action: 'setValue',
+                componentPath: 'status',
+                value: 'ready'
+              }
+            },
+            {
+              type: 'button',
+              label: 'Done',
+              onClick: {
+                action: 'setValue',
+                componentPath: 'status',
+                value: 'done'
+              }
+            },
+            { type: 'text', text: '${message}' }
+          ]
+        }}
+        data={{ status: 'idle', message: 'initial' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('initial')).toBeTruthy();
+
+    screen.getByText('Done').click();
+    await Promise.resolve();
+    expect(screen.getByText('initial')).toBeTruthy();
+
+    screen.getByText('Ready').click();
+    await waitFor(() => {
+      expect(screen.getByText('triggered:ready')).toBeTruthy();
+    });
+
+    screen.getByText('Done').click();
+    await Promise.resolve();
+    expect(screen.getByText('triggered:ready')).toBeTruthy();
+    cleanup();
+  });
+
   it('renders page header and footer through normalized regions', () => {
     const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
 
@@ -452,4 +549,3 @@ describe('basicRendererDefinitions', () => {
     });
   });
 });
-

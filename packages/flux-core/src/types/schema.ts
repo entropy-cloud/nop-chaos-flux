@@ -77,6 +77,16 @@ export interface ApiDataSourceSchema extends BaseDataSourceSchema {
 
 export type DataSourceSchema = FormulaDataSourceSchema | ApiDataSourceSchema;
 
+export interface ReactionSchema extends BaseSchema {
+  type: 'reaction';
+  watch: SchemaValue;
+  when?: string;
+  immediate?: boolean;
+  debounce?: number;
+  once?: boolean;
+  actions: SchemaValue;
+}
+
 export interface DynamicRendererSchema extends BaseSchema {
   type: 'dynamic-renderer';
   schemaApi: ApiObject;

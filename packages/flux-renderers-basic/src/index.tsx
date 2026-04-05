@@ -8,6 +8,7 @@ import { ButtonRenderer } from './button';
 import { IconRenderer } from './icon';
 import { BadgeRenderer } from './badge';
 import { DynamicRenderer } from './dynamic-renderer';
+import { ReactionRenderer } from './reaction';
 
 export * from './schemas';
 export * from './utils';
@@ -19,6 +20,7 @@ export { ButtonRenderer } from './button';
 export { IconRenderer } from './icon';
 export { BadgeRenderer } from './badge';
 export { DynamicRenderer } from './dynamic-renderer';
+export { ReactionRenderer } from './reaction';
 
 export const basicRendererDefinitions: RendererDefinition[] = [
   {
@@ -62,6 +64,18 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     type: 'dynamic-renderer',
     component: DynamicRenderer,
     regions: ['body']
+  },
+  {
+    type: 'reaction',
+    component: ReactionRenderer,
+    fields: [
+      { key: 'watch', kind: 'prop' },
+      { key: 'when', kind: 'prop' },
+      { key: 'immediate', kind: 'prop' },
+      { key: 'debounce', kind: 'prop' },
+      { key: 'once', kind: 'prop' },
+      { key: 'actions', kind: 'prop' }
+    ]
   }
 ];
 
