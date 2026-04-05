@@ -97,6 +97,8 @@ export interface ResourceBrowserInteractionPolicy {
 const hostScope = useHostScope(scopeData, props.path, 'designer');
 ```
 
+其中第三个参数只是 host boundary 标签，不是 schema-visible root key。
+
 挂载规则：
 - 只读快照投影（`doc`、`selection`、`activeNode`、`activeEdge`、`runtime` 等）放进 host scope
 - 写操作必须通过 namespaced action（`designer:*`、`spreadsheet:*`、`report-designer:*` 等）提交
@@ -130,7 +132,7 @@ Namespace 命名规则：
 | 能力 | Flow Designer | Spreadsheet | Report Designer | Word Editor |
 |------|--------------|-------------|-----------------|-------------|
 | `DomainBridge` 实现 | 内部（DesignerCore 可适配） | ✓ `SpreadsheetBridge` | ✓ `ReportDesignerBridge` | ✗ 待接入 |
-| Host scope 注入 | ✓ `useDesignerHostScope` | 通过 region data | 通过 region data | ✗ 无（非 Flux renderer） |
+| Host scope 注入 | ✓ `useDesignerHostScope` | 通过 region data | ✓ `useReportDesignerHostScope` | ✗ 无（非 Flux renderer） |
 | Namespace action 注册 | ✓ `designer:*` | ✓ `spreadsheet:*` | ✓ `report-designer:*` | ✗ 无（非 Flux renderer） |
 | Session/dirty/leave-guard | 通过 `isDirty` snapshot | 通过 `dirty` snapshot | 通过 `dirty` snapshot | ✓ `isDirty` + `handleBack` leave-guard |
 | 真实 canvas 默认挂载 | ✓ | fallback when no body | ✓ `ReportSpreadsheetCanvas` | ✓（直接渲染） |

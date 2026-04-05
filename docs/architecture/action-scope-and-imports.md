@@ -2,12 +2,12 @@
 
 ## Purpose
 
-This document defines the future extension model for non-built-in actions and declarative external library imports.
+This document defines the active extension model for non-built-in actions and declarative external library imports.
 
 Use it when:
 
 - extending the action system for complex domain hosts such as flow-designer or report-designer
-- introducing declarative external library imports through `xui:import`
+- introducing declarative external library imports through `xui:imports`
 - deciding how schema fragments should invoke host or imported capabilities
 - changing the boundary between data scope, action dispatch, and host runtime bridges
 
@@ -25,7 +25,7 @@ The active runtime today has these properties:
 - actions are dispatched by a centralized built-in dispatcher keyed by `action.action`; see `packages/flux-runtime/src/action-runtime.ts:70`
 - `ActionSchema` uses `action: string` and optional structured fields such as `args?: Record<string, SchemaValue>`; see `packages/flux-core/src/index.ts:847`
 - React renderers can only change descendant scope explicitly through fragment render options such as `render({ scope })` or `render({ data })`; see `packages/flux-react/src/index.tsx:195` and `packages/flux-react/src/index.tsx:202`
-- flow-designer and report-designer architecture already assume `schema reads fixed host scope snapshot` and `writes go through namespaced actions or a bridge dispatch API`; see `docs/architecture/flow-designer/design.md:192` and `docs/architecture/report-designer/design.md:292`
+- flow-designer and report-designer architecture already assume `schema reads fixed host scope snapshot` and `writes go through namespaced actions`; see `docs/architecture/flow-designer/design.md:192` and `docs/architecture/report-designer/design.md:292`
 
 Those constraints mean the extension model must preserve:
 
@@ -54,7 +54,7 @@ But it becomes awkward for complex domain hosts and imported libraries because:
 - action authors sometimes need to reach one specific component instance such as a form, table, or designer shell by id or name
 - data scope and behavior lookup are currently forced through unrelated mechanisms
 
-Flow-designer already demonstrates the pressure point. The current renderer has direct `core.*` calls for canvas and palette behavior in `packages/flow-designer-renderers/src/index.tsx:154`, `packages/flow-designer-renderers/src/index.tsx:226`, and nearby code, while the documented target architecture prefers `designer:*` actions or bridge dispatch.
+Flow-designer already demonstrates the pressure point. The current renderer has direct `core.*` calls for canvas and palette behavior in `packages/flow-designer-renderers/src/index.tsx:154`, `packages/flow-designer-renderers/src/index.tsx:226`, and nearby code, while the documented target architecture prefers `designer:*` actions resolved through `ActionScope` and mapped to the host bridge behind that boundary.
 
 ## Main Design Rule
 
@@ -76,13 +76,13 @@ The current runtime should be read as four distinct layers:
 - `ScopeRef` = data lexical scope
 - `ActionScope` = capability lexical scope
 - `ComponentHandleRegistry` = instance-target capability lookup
-- `xui:import` = declarative provisioning of imported namespace providers into the local `ActionScope`
+- `xui:imports` = declarative provisioning of imported namespace providers into the local `ActionScope`
 
 Important consequences:
 
 - Flux does not use a global action registry as the primary extension model
 - namespaced behavior resolves from the current `ActionScope` first, then walks the parent `ActionScope` chain
-- `xui:import` does not make JSON executable by itself; it only declares that a subtree needs an external namespace provider attached to its local capability scope
+- `xui:imports` does not make JSON executable by itself; it only declares that a subtree needs an external namespace provider attached to its local capability scope
 
 ## Why Not Global Action Registry
 
@@ -200,7 +200,10 @@ Recommended shape:
 interface ComponentHandleRegistry {
   register(handle: ComponentHandle): void;
   unregister(handle: ComponentHandle): void;
-  resolve(target: ComponentTarget): ComponentHandle | undefined;
+  resolve(target: ComponentTarget):
+    | { kind: 'found'; handle: ComponentHandle }
+    | { kind: 'not-found' }
+    | { kind: 'ambiguous'; matches: readonly ComponentHandle[] };
 }
 
 interface ComponentTarget {
@@ -261,9 +264,9 @@ Therefore the rule is:
 - externally callable behavior must still be explicitly surfaced through `capabilities.invoke()`
 - no implicit fallback from unknown method name to `handle.store[method]`
 
-### `xui:import`
+### `xui:imports`
 
-`xui:import` is a declarative dependency import mechanism for action namespaces.
+`xui:imports` is the declarative dependency import mechanism for action namespaces.
 
 Its runtime job is narrow:
 
@@ -271,7 +274,7 @@ Its runtime job is narrow:
 - ask that module to create an `ActionNamespaceProvider`
 - register that provider on the owning local `ActionScope`
 
-In other words, `xui:import` is one provisioning path for `ActionScope`, not a separate dispatch system.
+In other words, `xui:imports` is one provisioning path for `ActionScope`, not a separate dispatch system.
 
 It is intentionally modeled after import semantics:
 
@@ -553,11 +556,11 @@ function createFormComponentHandle(form: FormRuntime): ComponentHandle {
 
 The important rule is that `submit`, `validate`, `reset`, and `setValue` are explicit public capabilities. The caller is not permitted to assume that every property or method on the underlying store is externally callable.
 
-## `xui:import` Design
+## `xui:imports` Design
 
 ### Semantics
 
-`xui:import` behaves like import declaration semantics, not like sequential execution.
+`xui:imports` behaves like import declaration semantics, not like sequential execution.
 
 Rules:
 
@@ -711,7 +714,7 @@ Do not try to model imported library capabilities by pretending they are compone
 
 ### Renderer Runtime Surface
 
-The runtime will eventually need an action-scope-aware dispatch path, but the contract should remain consistent with the current `RendererRuntime.dispatch()` shape in `packages/flux-core/src/index.ts:881`.
+The runtime already needs an action-scope-aware dispatch path, and the contract should remain consistent with the current `RendererRuntime.dispatch()` shape in `packages/flux-core/src/index.ts:881`.
 
 One reasonable evolution path is:
 
@@ -832,7 +835,7 @@ This keeps the action model consistent with `docs/architecture/report-designer/d
 
 ## Security Model For Imports
 
-`xui:import` must be a controlled capability system, not arbitrary script execution.
+`xui:imports` must be a controlled capability system, not arbitrary script execution.
 
 Rules:
 
@@ -928,7 +931,7 @@ This is necessary because debugging namespaced action resolution otherwise becom
 - register explicit component handles for forms and other addressable component instances that need method invocation by id or name
 - keep direct imperative host interaction only for high-frequency canvas/editor loops
 
-### Phase 3: Add `xui:import`
+### Phase 3: Add `xui:imports`
 
 - define import spec authoring
 - add trusted module loader policy
@@ -945,7 +948,7 @@ The active decisions from this document are:
 - keep built-in platform actions centralized and explicit
 - use namespaced actions for domain hosts and imported libraries
 - do not treat store methods as automatically callable public API; components explicitly expose supported capabilities
-- define `xui:import` with declaration-style import semantics: order-independent, repeatable, deduplicated, and scope-visible by container ownership
+- define `xui:imports` with declaration-style import semantics: order-independent, repeatable, deduplicated, and scope-visible by container ownership
 
 ## Related Documents
 

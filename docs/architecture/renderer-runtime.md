@@ -92,6 +92,15 @@ Current registry baseline:
 - `RendererDefinition` now also carries the first tooling metadata baseline directly on the runtime contract: `displayName`, `icon`, `category`, `defaultSchema`, `propSchema`, and `sourcePackage`
 - these metadata fields are intended to be the canonical source for tooling/loader/AI inspection rather than a separate parallel manifest
 
+Current complex-state ownership baseline:
+
+- complex renderers no longer need to treat all interactive state as implicitly local
+- the first explicit ownership slice is `table.paginationOwnership`, currently supporting `local` and `controlled`
+- the second explicit ownership slice is `table.selectionOwnership`, also supporting `local` and `controlled`
+- `local` keeps the renderer's internal state as the source of truth
+- `controlled` treats schema/runtime props as the source of truth and expects external updates after `onPageChange` / `onSelectionChange`
+- this baseline is still intentionally narrow; `sort`, `filter`, and `expand` are not yet moved into the same ownership model here
+
 ```text
 raw schema
   -> SchemaCompiler
@@ -326,7 +335,7 @@ The active React layer now carries three separate execution lookups through expl
 - `ActionScope` for namespaced action resolution such as `designer:export`
 - `ComponentHandleRegistry` for instance-targeted capability invocation such as `component:submit`
 
-This document only describes how React render boundaries carry those execution contexts. The resolution model, lexical-visibility rules, and `xui:import` provisioning semantics belong to `docs/architecture/action-scope-and-imports.md`.
+This document only describes how React render boundaries carry those execution contexts. The resolution model, lexical-visibility rules, and `xui:imports` provisioning semantics belong to `docs/architecture/action-scope-and-imports.md`.
 
 `NodeRenderer` may explicitly create a fresh action-scope boundary or component-registry boundary when a renderer definition opts into `actionScopePolicy: 'new'` or `componentRegistryPolicy: 'new'`.
 

@@ -95,7 +95,13 @@ Examples:
 
 ### requestAdaptor / responseAdaptor
 
-Adaptors transform request/response payloads using the expression engine.
+Adaptors transform request/response payloads using a dedicated adaptor expression surface owned by request execution.
+
+Normative boundary:
+
+- adaptors are not arbitrary JavaScript execution exposed through `new Function(...)`
+- adaptors are not plain Flux value expressions either; they are a narrower request/response transformation surface evaluated by the request runtime
+- implementation may currently reuse Flux expression infrastructure internally, but the public contract is an adaptor-specific transformation surface with explicit request/response context
 
 Request-adaptor context:
 
@@ -115,8 +121,8 @@ Example:
 ```json
 {
   "url": "/api/data",
-  "requestAdaptor": "return { ...api, data: { ...api.data, timestamp: Date.now() } }",
-  "responseAdaptor": "return payload.data.items"
+  "requestAdaptor": "${withRequestData(api.data, { timestamp: now() })}",
+  "responseAdaptor": "${payload.data.items}"
 }
 ```
 
@@ -156,9 +162,10 @@ Current baseline note:
 - current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
 - current `DataSourceController` baseline now exposes a minimal runtime state surface via `getState()` with `started`, `loading`, `stale`, `value`, and `error`; api sources actively drive all fields while formula sources currently use the same shape with lightweight synchronous semantics
 - current runtime baseline now also exposes explicit source refresh by id at the runtime boundary; refresh remains scope-scoped first, so duplicate source ids in different scopes do not collapse into one page-global namespace
+- current code may still accept older built-in target field names for `refreshSource` for compatibility, but the architecture baseline treats source refresh as built-in runtime-entry targeting rather than component-handle targeting
 - current source runtime now has a dependency-aware invalidation baseline: formula sources automatically recompute and api sources automatically refresh when changed scope paths hit the dependencies collected from formula evaluation or request-config evaluation
 - current invalidation also includes a self-target loop guard so a source does not immediately retrigger itself from writes to its own published `dataPath`
-- current action/runtime integration now includes a built-in `refreshSource` action that targets a registered source id via `componentId` or `componentPath` and delegates to the runtime-owned source registry refresh semantics
+- current action/runtime integration now includes a built-in `refreshSource` action that targets a registered source id via a built-in target field such as `targetId` and delegates to the runtime-owned source registry refresh semantics; this is runtime-entry targeting, not component-handle dispatch, even if older field naming remains in code for compatibility
 
 ## DataSourceSchema
 
@@ -176,7 +183,7 @@ This is the key conceptual shift:
 ```typescript
 interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
-  dataPath?: string;
+  dataPath: string;
   initialData?: SchemaValue;
 }
 
@@ -198,12 +205,12 @@ Rules:
 
 - a single `data-source` declares one producer kind
 - `formula` and `api` are mutually exclusive in the same node
-- new schemas should prefer explicit `dataPath`
+- explicit `dataPath` is the normative binding contract for the architecture baseline
 - formula-backed sources should require explicit `dataPath`
 
 ### Binding Target
 
-`dataPath` is the preferred binding target for a source value.
+`dataPath` is the normative binding target for a source value.
 
 Example:
 
@@ -211,7 +218,7 @@ Example:
 scope[dataPath] = sourceValue
 ```
 
-For API-backed sources, current code still supports the older merge-into-scope behavior when `dataPath` is omitted and the response is an object. That behavior is compatibility-oriented. The preferred design direction is explicit binding because it preserves the mental model of:
+For API-backed sources, current code still supports the older merge-into-scope behavior when `dataPath` is omitted and the response is an object. That behavior is compatibility-oriented and outside the architecture baseline described by `docs/architecture/frontend-programming-model.md`. The normative design direction is explicit binding because it preserves the mental model of:
 
 ```text
 one data-source = one logical derived value
@@ -234,7 +241,8 @@ Its semantics should be:
 
 - dependencies are inferred automatically from expression access
 - upstream changes mark the source dirty
-- the source recomputes lazily on next read or subscribed use
+- when the next value is synchronously computable in the current settled update turn, publication occurs before reactions for that turn evaluate watched values
+- otherwise the source recomputes lazily on next read, subscribed use, or explicit refresh according to narrower runtime rules
 - unchanged semantic values should preserve identity when possible
 
 Important boundary:
@@ -278,7 +286,7 @@ This hybrid model gives:
 When an upstream path changes:
 
 - dependent sources are marked dirty
-- formula sources recompute lazily
+- formula sources recompute according to the synchronous-before-reaction rule above when possible, otherwise lazily on next consumption or explicit refresh
 - API sources invalidate and refresh according to source policy
 
 The runtime goal is targeted invalidation, not eager full-tree re-evaluation.
@@ -340,6 +348,8 @@ The source abstraction is responsible for value production, not for built-in loa
 - formula sources usually expose only a current value
 - API sources also have runtime status such as loading / error / stale
 - UI should choose how to observe and present those states rather than forcing a built-in widget into the source abstraction
+- if schema needs author-visible status, it must read an explicit companion value declared in execution schema or host projection rather than rely on an implicit hidden sibling path
+- a narrower subsystem may choose a concrete convention such as a second declared `data-source`, a host-projected summary field, or another explicit named value, but the path and ownership must be explicit in schema-visible data
 
 ### Examples
 
@@ -612,9 +622,9 @@ Current code is not yet fully converged to the target model:
 
 - formula-backed sources are not yet unified under the same runtime source abstraction
 - source dependency tracking is not yet a full static-plus-dynamic invalidation system
-- request preparation is still not fully converged through a single execution path
+- some producer-specific details still remain narrower implementation work even though request execution now converges through `executeApiObject(...)`
 - API-backed sources still allow legacy merge semantics when `dataPath` is omitted
-- `reaction` does not yet exist as a first-class runtime watch node
+- richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete
 
 ## dataPath vs ActionSchema.dataPath
 

@@ -5,7 +5,7 @@
 本文单独说明当前 Flow Designer 在运行时真正稳定暴露出来的快照与宿主上下文，重点回答两个问题:
 
 - `DesignerCore.getSnapshot()` 现在到底长什么样
-- `designer-page` 当前哪些值真的暴露给了 schema 层，哪些还只是设计目标
+- `designer-page` 当前哪些值已经通过 region host scope 暴露给了 schema 层，哪些还只是更广范围的设计目标
 
 这份文档故意区分"当前代码事实"和"更理想的宿主 scope 设计"，避免把设计稿里的字段误认为已经接线完成。
 
@@ -216,7 +216,7 @@ props.regions.inspector?.render({ scope: designerScope, actionScope })
 props.regions.dialogs?.render({ scope: designerScope, actionScope })
 ```
 
-因此这三个 region 内部的 schema 表达式**已经**可以读取由 `buildDesignerScopeData` 投影出的所有字段:
+因此这三个 region 内部的 schema 表达式**已经**可以读取由 `buildDesignerScopeData` 投影出的字段:
 
 - `doc`
 - `selection`（含 `kind`、`count`、`nodeIds`、`edgeIds`、`activeNodeId`、`activeEdgeId`）
@@ -226,7 +226,6 @@ props.regions.dialogs?.render({ scope: designerScope, actionScope })
 - `palette`
 - `nodeTypes`
 - `edgeTypes`
-- `designerCore`
 
 注意边界: 这些字段只对通过 `render({ scope: designerScope })` 挂载的 region 内部有效；`designer-page` 之外的 schema 全局 scope 不自动获得这些字段。
 
@@ -252,7 +251,9 @@ props.regions.dialogs?.render({ scope: designerScope, actionScope })
 ### 尚未落地（保留设计目标）
 
 - `designer-page` 之外的 schema 全局 scope 自动获得 designer 快照字段（目前只有 region 内部有效）
-- schema 层通过 `designerCore` 直接操作核心（当前仅 region 内 scope 可读，写路径必须走 action）
+- schema 层直接拿到 imperative core/bridge 对象
+
+当前如果实现代码中仍存在把 `designerCore` 一类 imperative 对象带进 child scope 的兼容性泄漏，应视为待清理实现细节，不属于架构允许的 schema-visible contract。
 
 ## 6. 当前已落地的三条消费路径
 
@@ -354,7 +355,6 @@ runtime     // { canUndo, canRedo, dirty, isDirty, gridEnabled, zoom, viewport }
 palette
 nodeTypes
 edgeTypes
-designerCore
 ```
 
 ## 9. 当前不应写成"已经存在"的能力

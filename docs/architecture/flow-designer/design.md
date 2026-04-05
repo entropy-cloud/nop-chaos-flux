@@ -209,7 +209,7 @@ interface DesignerPageSchema {
 目标态桥接约束如下：
 
 - schema 片段通过固定宿主 scope 读取 graph runtime 的只读快照
-- schema 片段通过 `designer:*` actions 或 bridge dispatch API 提交写操作
+- schema 片段通过 `designer:*` actions 提交写操作
 - toolbar / inspector 片段当前已经显式收到该宿主 scope 与 action-scope；dialog 则通过共享 dialog runtime 继承打开它时的 action-scope，因此不会形成第二条 graph action 路径
 - schema 层不得直接拿到底层 graph store 并原地修改 document
 - bridge 对外暴露的是稳定快照与有限命令面，而不是整套 store 私有实现
@@ -370,11 +370,11 @@ Flow Designer 需要统一的事务边界，即使历史底层实现最终同时
 
 ## 11. 固定宿主 Scope
 
-本节描述的是目标架构，不等同于当前代码已经完整落地的 host scope 注入状态。
+本节描述的是当前已落地的 region-level host scope 架构，以及更广范围可见性仍未扩大的边界。
 
 当前真实 snapshot 契约、`DesignerContext` 暴露面，以及哪些字段尚未进入 schema 表达式 scope，请先看 `docs/architecture/flow-designer/runtime-snapshot.md`。
 
-目标上，为了让 schema 片段稳定工作，`designer-page` 应注入固定宿主 scope。
+当前为了让 schema 片段稳定工作，`designer-page` 已为 region 片段注入固定宿主 scope。
 
 推荐暴露：
 
@@ -383,9 +383,8 @@ Flow Designer 需要统一的事务边界，即使历史底层实现最终同时
 - `activeNode`：当前激活节点
 - `activeEdge`：当前激活边
 - `runtime`：只读运行时能力摘要
-- `actions`：供 schema 层引用的辅助能力
 
-如果后续这套 host scope 真正落地，inspector 和 toolbar schema 可以稳定写成：
+因此 inspector 和 toolbar schema 可以稳定写成：
 
 ```json
 {

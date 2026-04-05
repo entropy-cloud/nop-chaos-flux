@@ -4,8 +4,8 @@
 
 `component:<method>` 调用需要定位目标组件，涉及以下核心问题：
 
-1. **定位方式**：如何通过 componentId/componentName 精确或模糊定位组件
-2. **Scope边界**：组件查找的范围限制，避免跨页面污染
+1. **定位方式**：如何通过 componentId/componentName 精确定位组件
+2. **Host tree边界**：组件查找的范围限制，避免跨页面或跨宿主树污染
 3. **性能优化**：编译期预解析，避免运行期逐个查找
 4. **动态组件**：表格行、迭代器等动态生成的组件如何处理
 
@@ -14,7 +14,7 @@
 1. **精确定位**：关键操作（表单提交、验证）必须精确定位目标组件
 2. **性能优化**：90%+ 的静态组件查找应该是 O(1)
 3. **支持动态**：表格行等动态组件需要上下文感知的定位
-4. **局部唯一**：大 JSON 分解存放时，只需保证 scope 内唯一
+4. **边界内唯一**：同一可见 registry 边界内必须满足定位唯一性
 
 ---
 
@@ -24,20 +24,20 @@
 
 | 标识 | 用途 | 唯一性范围 | 示例 |
 |------|------|-----------|------|
-| `id` | 用户定义的组件ID | scope内唯一 | `userForm` |
-| `name` | 用户定义的逻辑名（也是数据绑定路径） | scope内唯一 | `submitBtn` |
+| `id` | 用户定义的组件ID | 当前可见 registry 边界内唯一 | `userForm` |
+| `name` | 用户定义的逻辑名（也是数据绑定路径） | 仅作次级便利定位，当前可见 registry 边界内唯一 | `submitBtn` |
 | `testid` | 测试定位锚点（输出为 `data-testid`） | 无强制唯一要求 | `login-form` |
 | `_cid` | 编译期分配的内部索引 | 全局唯一 | `42` |
 | `_templateId` | 动态组件的模板标识 | 全局唯一 | `table.row.form` |
 
-### Scope边界
+### Host Tree边界
 
-组件查找**不超过 Page 范围**，内部通过自然边界隔离：
+组件查找**不超过当前可见 runtime host tree / 显式组合的 registry 边界**，内部通过宿主边界隔离：
 
 ```
-PageScope (最大边界)
-  └── FormScope / DialogScope / CRUDScope (自然隔离边界)
-        └── 嵌套组件 (在父 scope 内唯一即可)
+Runtime host tree / explicit registry boundary
+  └── Form / Dialog / CRUD 等局部 registry 边界
+        └── 嵌套组件（在当前可见 registry 边界内唯一即可）
 ```
 
 **自动创建 Scope 边界的组件**：
@@ -136,7 +136,10 @@ interface ComponentHandleRegistry {
   register(...): () => void;
   unregister(handle: ComponentHandle): void;
   cleanupDynamic(templateId: string): void;
-  resolve(target: ComponentTarget): ComponentHandle | undefined;
+  resolve(target: ComponentTarget):
+    | { kind: 'found'; handle: ComponentHandle }
+    | { kind: 'not-found' }
+    | { kind: 'ambiguous'; matches: readonly ComponentHandle[] };
   getHandleByCid?(cid: number): ComponentHandle | undefined;
   getDebugSnapshot?(): {
     handles: Array<{
@@ -191,25 +194,30 @@ function registerComponent(
 function resolveComponent(
   target: ResolvedTarget,
   context?: ActionContext
-): ComponentHandle | undefined {
+):
+  | { kind: 'found'; handle: ComponentHandle }
+  | { kind: 'not-found' }
+  | { kind: 'ambiguous'; matches: readonly ComponentHandle[] } {
   
   // 优先：编译期已解析的静态组件
   if (target._cid !== undefined) {
-    return registry.handles.get(target._cid);
+    const byCid = registry.handles.get(target._cid);
+    return byCid ? { kind: 'found', handle: byCid } : { kind: 'not-found' };
   }
   
   // 动态组件：需要上下文
   if (target._templateId && context) {
     const instanceKey = context.getInstanceKey();
-    return registry.dynamicHandles.get(target._templateId)?.get(instanceKey);
+    const dynamic = registry.dynamicHandles.get(target._templateId)?.get(instanceKey);
+    return dynamic ? { kind: 'found', handle: dynamic } : { kind: 'not-found' };
   }
   
-  // Fallback：运行时动态解析（兼容旧模式）
+  // 运行时按 registry 边界做精确解析
   if (target.componentId || target.componentName) {
-    return resolveByNameOrId(target, context?.scope);
+    return registry.resolve(target);
   }
-  
-  return undefined;
+
+  return { kind: 'not-found' };
 }
 ```
 
@@ -243,7 +251,7 @@ interface ActionContext {
 
 ## 调试模式检查
 
-仅在调试模式下检查同名组件：
+重复名称不是调试提示，而是无效配置：
 
 ```typescript
 function checkDuplicateName(
@@ -257,8 +265,8 @@ function checkDuplicateName(
   
   const existing = scope.nameIndex.get(name);
   if (existing && existing.size > 0) {
-    console.warn(
-      `[ComponentRegistry] Duplicate component name "${name}" in scope "${scope.id}". ` +
+    throw new Error(
+      `[ComponentRegistry] Duplicate component name "${name}" in registry boundary "${scope.id}". ` +
       `Existing cids: [${Array.from(existing).join(', ')}], new cid: ${cid}`
     );
   }
@@ -277,8 +285,8 @@ function checkDuplicateName(
 
 | 场景 | 传统方式 | 优化后 |
 |------|---------|--------|
-| 静态组件查找 | O(n) 遍历 scope 链 | O(1) Map 查找 |
-| 动态组件查找 | O(n) 遍历 + 过滤 | O(1) 双层 Map |
+| 静态组件查找 | O(n) 边界扫描 | O(1) Map 查找 |
+| 动态组件查找 | O(n) 边界扫描 + 过滤 | O(1) 双层 Map |
 | 编译期解析 | 无 | 一次性解析，运行期直接使用 |
 
 ---
@@ -287,8 +295,8 @@ function checkDuplicateName(
 
 ### 向后兼容
 
-1. **保留 componentId/componentName**：未编译或无法解析的场景仍支持运行时查找
-2. **渐进增强**：已编译的 Schema 包含 `_cid`/`_templateId`，旧版运行时忽略并 fallback
+1. **保留 componentId/componentName**：未编译或无法静态解析的场景仍支持运行时 registry 解析
+2. **渐进增强**：已编译的 Schema 包含 `_cid`/`_templateId`，旧版运行时忽略并退回精确 registry 解析，而不是模糊查找
 
 ### Schema 版本标识
 
@@ -314,17 +322,12 @@ interface SchemaMeta {
 
 ### 跨 Scope 调用
 
-子 scope 内的组件调用父 scope 组件时，沿 scope 链向上查找：
+子边界内的组件调用外层组件时，应沿显式组合的 component registry 边界查找，而不是沿数据 `ScopeRef` 链查找：
 
 ```typescript
-function resolveAcrossScope(target: string, startScope: Scope): ComponentHandle | undefined {
-  let current = startScope;
-  while (current) {
-    const handle = current.registry.resolveByName(target);
-    if (handle) return handle;
-    current = current.parent;
-  }
-  return undefined;
+function resolveAcrossBoundary(target: string, registry: ComponentHandleRegistry): ComponentHandle | undefined {
+  const result = registry.resolve({ componentName: target });
+  return result.kind === 'found' ? result.handle : undefined;
 }
 ```
 
@@ -337,7 +340,7 @@ function resolveAcrossScope(target: string, startScope: Scope): ComponentHandle 
     { "type": "dialog", "body": [
       { "type": "button", "onClick": { 
         "action": "component:submit", 
-        "componentName": "pageForm"  // 沿 scope 链向上找到 page 级表单
+        "componentName": "pageForm"  // 通过当前可见 registry 边界解析 page 级表单
       }}
     ]}
   ]

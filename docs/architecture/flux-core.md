@@ -198,7 +198,7 @@ Current design direction also treats `data-source` / `reaction` ownership as sco
 - this keeps source/reaction lifecycle aligned with lexical data scopes without turning `ScopeRef` into a mixed data-plus-behavior abstraction
 - a practical first implementation is `RendererRuntime`-owned `scopeEntries: Map<scopeId, Map<entryId, Entry>>`
 
-Detailed `ActionScope` resolution, `xui:import`, collision, and lifecycle semantics live in `docs/architecture/action-scope-and-imports.md`.
+Detailed `ActionScope` resolution, `xui:imports`, collision, and lifecycle semantics live in `docs/architecture/action-scope-and-imports.md`.
 
 ### React renderer
 
