@@ -294,6 +294,38 @@ describe('dataRendererDefinitions', () => {
   });
 
   describe('data-source', () => {
+    it('evaluates formula sources into explicit dataPath bindings', async () => {
+      cleanup();
+
+      const SchemaRenderer = createSchemaRenderer([
+        pageRenderer,
+        textRenderer,
+        ...dataRendererDefinitions
+      ]);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'data-source',
+                dataPath: 'total',
+                formula: '${4 * 6}'
+              },
+              { type: 'text', text: 'Total: ${total}' }
+            ]
+          }}
+          env={env}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Total: 24')).toBeTruthy();
+      });
+    });
+
     it('fetches data and injects into scope', async () => {
       cleanup();
       const fetcher = vi.fn(async () => ({

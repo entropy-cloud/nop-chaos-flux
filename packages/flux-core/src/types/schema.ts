@@ -54,15 +54,28 @@ export interface ApiObject extends SchemaObject {
   dedupStrategy?: 'cancel-previous' | 'parallel' | 'ignore-new';
 }
 
-export interface DataSourceSchema extends BaseSchema {
+export interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
-  api: ApiObject;
   dataPath?: string;
+  initialData?: SchemaValue;
+}
+
+export interface FormulaDataSourceSchema extends BaseDataSourceSchema {
+  formula: SchemaValue;
+  api?: never;
+  interval?: never;
+  stopWhen?: never;
+  silent?: never;
+}
+
+export interface ApiDataSourceSchema extends BaseDataSourceSchema {
+  api: ApiObject;
   interval?: number;
   stopWhen?: string;
   silent?: boolean;
-  initialData?: SchemaValue;
 }
+
+export type DataSourceSchema = FormulaDataSourceSchema | ApiDataSourceSchema;
 
 export interface DynamicRendererSchema extends BaseSchema {
   type: 'dynamic-renderer';

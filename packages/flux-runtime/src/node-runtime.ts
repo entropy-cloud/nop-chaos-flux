@@ -60,7 +60,7 @@ function evaluateCompiledValue<T>(
   return compiler.evaluateValue(value, scope, env, state);
 }
 
-function collectRuntimeDependencies(state: RuntimeValueState<unknown> | undefined): ScopeDependencySet | undefined {
+export function collectRuntimeDependencies(state: RuntimeValueState<unknown> | undefined): ScopeDependencySet | undefined {
   if (!state) {
     return undefined;
   }

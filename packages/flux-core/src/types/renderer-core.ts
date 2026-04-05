@@ -6,8 +6,8 @@ import type { RendererEnv } from './renderer-api';
 import type { CompiledNodeRuntimeState, CompiledSchemaNode, ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
 import type { RendererPlugin } from './renderer-plugin';
-import type { DataSourceController, FormRuntime, PageRuntime } from './runtime';
-import type { ApiObject, BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, XuiImportSpec } from './schema';
+import type { DataSourceController, DataSourceRegistration, FormRuntime, PageRuntime } from './runtime';
+import type { ApiObject, BaseSchema, DataSourceSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, XuiImportSpec } from './schema';
 import type { CreateScopeOptions, ScopeRef } from './scope';
 import type { CompiledFormValidationModel, ValidationRule } from './validation';
 
@@ -99,6 +99,15 @@ export interface RendererRuntime {
     silent?: boolean;
     initialData?: unknown;
   }): DataSourceController;
+  registerDataSource(input: {
+    id: string;
+    schema: DataSourceSchema;
+    scope: ScopeRef;
+  }): DataSourceRegistration;
+  refreshDataSource(input: {
+    id: string;
+    scope?: ScopeRef;
+  }): Promise<boolean>;
   createFormRuntime(input: {
     id?: string;
     name?: string;

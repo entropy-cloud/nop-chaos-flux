@@ -4,6 +4,7 @@ import type {
   ActionResult,
   ActionSchema,
   ApiObject,
+  CompiledRuntimeValue,
   CompiledFormValidationField,
   CompiledFormValidationModel,
   ComponentHandleRegistry,
@@ -39,6 +40,7 @@ import {
 import { sortRendererPlugins } from './runtime-plugins';
 import { createSchemaCompiler } from './schema-compiler';
 import { createScopeRef, createScopeStore, toRecord } from './scope';
+import { createRuntimeSourceRegistry } from './source-registry';
 import { validateRule } from './validation-runtime';
 import { createBuiltInValidationRegistry, createValidationError } from './validation';
 
@@ -76,8 +78,10 @@ export function createRendererRuntime(input: {
     current: input.env
   };
   const getEnv = () => envRef.current;
+  const compiledValueCache = new WeakMap<object, ReturnType<ExpressionCompiler['compileValue']>>();
   const apiCache = createApiCacheStore();
   const executeApiRequest = createApiRequestExecutor(getEnv);
+  const sourceRegistryRef: { current?: ReturnType<typeof createRuntimeSourceRegistry> } = {};
   const validationRegistry = createBuiltInValidationRegistry();
   let actionScopeCounter = 0;
   let componentRegistryCounter = 0;
@@ -122,8 +126,8 @@ export function createRendererRuntime(input: {
     scope: ScopeRef
   ): Promise<ValidationError | undefined> {
     try {
-      const api = evaluate<ApiObject>(rule.api, scope);
-      const response = await executeApiObject(api, scope, getEnv(), expressionCompiler, {
+      const response = await executeApiObject(rule.api, scope, getEnv(), expressionCompiler, {
+        evaluate,
         executor: (adaptedApi) => executeApiRequest(`validate:${field.path}`, adaptedApi, scope)
       });
       const adaptedData = response.data;
@@ -183,6 +187,7 @@ export function createRendererRuntime(input: {
       validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry),
       submitApi: async (api, scope, options) => {
         const response = await executeApiObject(api, scope, getEnv(), expressionCompiler, {
+          evaluate,
           executor: (adaptedApi) => executeApiRequest('submitForm', adaptedApi, scope, undefined, {
             interactionId: options?.interactionId
           })
@@ -198,11 +203,25 @@ export function createRendererRuntime(input: {
   }
 
   async function executeAjaxAction(api: ApiObject, action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
+    let monitoredApi: ApiObject | undefined;
     const response = await executeApiObject(api, ctx.scope, getEnv(), expressionCompiler, {
+      evaluate,
+      onPreparedRequest: (preparedApi) => {
+        monitoredApi = preparedApi;
+      },
       executor: (adaptedApi) => executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
         interactionId: ctx.interactionId
       })
     });
+
+    if (monitoredApi) {
+      getEnv().monitor?.onApiRequest?.({
+        api: monitoredApi,
+        nodeId: ctx.node?.id,
+        path: ctx.node?.path,
+        interactionId: ctx.interactionId
+      });
+    }
 
     if (action.dataPath && response.ok && ctx.page) {
       const nextData = applyResponseDataPath(ctx.page.store.getState().data, action.dataPath, response.data);
@@ -217,7 +236,28 @@ export function createRendererRuntime(input: {
   }
 
   function evaluate<T = unknown>(target: unknown, scope: ScopeRef): T {
+    return evaluateCompiled(compileValue<T>(target as T), scope);
+  }
+
+  function compileValue<T = unknown>(target: T): CompiledRuntimeValue<T> {
+    const cacheable = target != null && typeof target === 'object';
+
+    if (!cacheable) {
+      return expressionCompiler.compileValue(target);
+    }
+
+    const cached = compiledValueCache.get(target as object);
+
+    if (cached) {
+      return cached as CompiledRuntimeValue<T>;
+    }
+
     const compiled = expressionCompiler.compileValue(target);
+    compiledValueCache.set(target as object, compiled);
+    return compiled as CompiledRuntimeValue<T>;
+  }
+
+  function evaluateCompiled<T = unknown>(compiled: CompiledRuntimeValue<T>, scope: ScopeRef): T {
     return expressionCompiler.evaluateValue(compiled, scope, getEnv()) as T;
   }
 
@@ -226,6 +266,8 @@ export function createRendererRuntime(input: {
     plugins,
     onActionError: input.onActionError,
     evaluate,
+    compileValue,
+    evaluateCompiled,
     executeAjaxAction,
     submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
     runtime: {
@@ -288,8 +330,37 @@ export function createRendererRuntime(input: {
         ...inputValue
       });
     },
+    registerDataSource(inputValue: {
+      id: string;
+      schema: import('@nop-chaos/flux-core').DataSourceSchema;
+      scope: ScopeRef;
+    }) {
+      if (!sourceRegistryRef.current) {
+        throw new Error('Runtime source registry is not initialized yet');
+      }
+
+      return sourceRegistryRef.current.registerDataSource({
+        ...inputValue
+      });
+    },
+    refreshDataSource(inputValue: {
+      id: string;
+      scope?: ScopeRef;
+    }) {
+      if (!sourceRegistryRef.current) {
+        throw new Error('Runtime source registry is not initialized yet');
+      }
+
+      return sourceRegistryRef.current.refreshDataSource(inputValue);
+    },
     createFormRuntime
   };
+
+  sourceRegistryRef.current = createRuntimeSourceRegistry({
+    runtime,
+    apiCache,
+    executeApiRequest: (actionType, api, scope, options) => executeApiRequest(actionType, api, scope, undefined, options)
+  });
 
   runtimeRef.current = runtime;
 

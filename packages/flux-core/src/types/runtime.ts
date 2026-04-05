@@ -77,9 +77,22 @@ export interface PageStoreApi {
 }
 
 export interface DataSourceController {
+  getState(): {
+    started: boolean;
+    loading: boolean;
+    stale: boolean;
+    value?: unknown;
+    error?: unknown;
+  };
   start(): void;
   stop(): void;
   refresh(): Promise<void>;
+}
+
+export interface DataSourceRegistration {
+  id: string;
+  controller: DataSourceController;
+  dispose(): void;
 }
 
 export interface FormRuntime {

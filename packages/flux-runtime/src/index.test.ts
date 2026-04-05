@@ -1226,6 +1226,407 @@ describe('createRendererRuntime', () => {
     expect(result).toMatchObject({ ok: true, data: 'retry-lib:ping:ok' });
   });
 
+  it('registers data sources in a scope-local runtime registry and replaces same-id entries', async () => {
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiObject) => ({
+      ok: true,
+      status: 200,
+      data: { value: api.url } as T
+    });
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const first = runtime.registerDataSource({
+      id: 'users',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/first' },
+        dataPath: 'payload'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ value: '/api/first' });
+    });
+
+    const second = runtime.registerDataSource({
+      id: 'users',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/second' },
+        dataPath: 'payload'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ value: '/api/second' });
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+
+    first.dispose();
+    second.dispose();
+  });
+
+  it('disposes registered data sources and aborts their active requests', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    let releaseRequest: (() => void) | undefined;
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+      capturedSignal = ctx.signal;
+      await new Promise<void>((resolve) => {
+        releaseRequest = resolve;
+      });
+
+      if (ctx.signal?.aborted) {
+        const error = new Error('aborted');
+        (error as Error & { name: string }).name = 'AbortError';
+        throw error;
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        data: { ok: true } as T
+      };
+    };
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const registration = runtime.registerDataSource({
+      id: 'slow-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/slow' },
+        dataPath: 'payload'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    registration.dispose();
+
+    expect(capturedSignal?.aborted).toBe(true);
+    releaseRequest?.();
+  });
+
+  it('exposes source state for api-backed sources across loading and success', async () => {
+    let releaseRequest: ((value: { ok: boolean; status: number; data: { value: string } }) => void) | undefined;
+    const fetcherImpl: RendererEnv['fetcher'] = async () => new Promise((resolve) => {
+      releaseRequest = resolve as typeof releaseRequest;
+    });
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const registration = runtime.registerDataSource({
+      id: 'stateful-api-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/stateful' },
+        dataPath: 'payload',
+        initialData: { value: 'initial' }
+      }
+    });
+
+    expect(registration.controller.getState()).toMatchObject({
+      started: true,
+      loading: true,
+      stale: true,
+      value: { value: 'initial' },
+      error: undefined
+    });
+
+    releaseRequest?.({ ok: true, status: 200, data: { value: 'loaded' } });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ value: 'loaded' });
+    });
+
+    expect(registration.controller.getState()).toMatchObject({
+      started: true,
+      loading: false,
+      stale: false,
+      value: { value: 'loaded' },
+      error: undefined
+    });
+
+    registration.dispose();
+  });
+
+  it('exposes source state for api-backed sources after request failure', async () => {
+    const fetcherImpl: RendererEnv['fetcher'] = async () => {
+      throw new Error('source failed');
+    };
+    const fetcher = vi.fn(fetcherImpl);
+    const notify = vi.fn();
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        notify,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const registration = runtime.registerDataSource({
+      id: 'failing-api-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/fail' },
+        dataPath: 'payload',
+        initialData: { value: 'initial' }
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('error', 'source failed');
+    });
+
+    expect(registration.controller.getState()).toMatchObject({
+      started: true,
+      loading: false,
+      stale: true,
+      value: { value: 'initial' }
+    });
+    expect(registration.controller.getState().error).toBeInstanceOf(Error);
+
+    registration.dispose();
+  });
+
+  it('registers formula data sources and refreshes derived values through runtime ownership', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ price: 3, qty: 4 });
+
+    const registration = runtime.registerDataSource({
+      id: 'total-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'total',
+        formula: '${(price || 0) * (qty || 0)}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(12);
+    });
+
+    page.scope.update('qty', 5);
+    await registration.controller.refresh();
+
+    expect(page.scope.get('total')).toBe(15);
+    expect(registration.controller.getState()).toMatchObject({
+      started: true,
+      loading: false,
+      stale: false,
+      value: 15,
+      error: undefined
+    });
+
+    registration.dispose();
+  });
+
+  it('refreshes registered data sources by id within an explicit scope', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ price: 2, qty: 3 });
+
+    const registration = runtime.registerDataSource({
+      id: 'scoped-total',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'total',
+        formula: '${(price || 0) * (qty || 0)}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(6);
+    });
+
+    page.scope.update('qty', 5);
+
+    await expect(runtime.refreshDataSource({ id: 'scoped-total', scope: page.scope })).resolves.toBe(true);
+    expect(page.scope.get('total')).toBe(10);
+
+    registration.dispose();
+  });
+
+  it('auto-recomputes formula sources when dependent scope paths change', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ price: 2, qty: 3, note: 'ignore' });
+
+    const registration = runtime.registerDataSource({
+      id: 'auto-total',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'total',
+        formula: '${(price || 0) * (qty || 0)}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(6);
+    });
+
+    page.scope.update('note', 'still ignore');
+    await Promise.resolve();
+    expect(page.scope.get('total')).toBe(6);
+
+    page.scope.update('qty', 4);
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(8);
+    });
+
+    registration.dispose();
+  });
+
+  it('auto-refreshes api sources when request dependencies change', async () => {
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiObject) => ({
+      ok: true,
+      status: 200,
+      data: { url: api.url } as T
+    });
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ userId: 1, note: 'ignore' });
+
+    const registration = runtime.registerDataSource({
+      id: 'user-api-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/users/${userId}' },
+        dataPath: 'payload'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/1' });
+    });
+
+    page.scope.update('note', 'still ignore');
+    await Promise.resolve();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    page.scope.update('userId', 2);
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/2' });
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    registration.dispose();
+  });
+
+  it('refreshes the matching source inside the provided scope when ids collide', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const firstScope = runtime.createChildScope(page.scope, { value: 1 }, { pathSuffix: 'first-source-scope' });
+    const secondScope = runtime.createChildScope(page.scope, { value: 10 }, { pathSuffix: 'second-source-scope' });
+
+    const first = runtime.registerDataSource({
+      id: 'shared-source',
+      scope: firstScope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'derived',
+        formula: '${value}'
+      }
+    });
+    const second = runtime.registerDataSource({
+      id: 'shared-source',
+      scope: secondScope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'derived',
+        formula: '${value}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(firstScope.get('derived')).toBe(1);
+      expect(secondScope.get('derived')).toBe(10);
+    });
+
+    secondScope.update('value', 11);
+
+    await expect(runtime.refreshDataSource({ id: 'shared-source', scope: secondScope })).resolves.toBe(true);
+
+    expect(firstScope.get('derived')).toBe(1);
+    expect(secondScope.get('derived')).toBe(11);
+
+    first.dispose();
+    second.dispose();
+  });
+
+  it('returns false when refreshing an unknown data source id', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    await expect(runtime.refreshDataSource({ id: 'missing-source', scope: page.scope })).resolves.toBe(false);
+  });
+
   it('opens and closes dialogs through dialog actions', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
@@ -1525,6 +1926,60 @@ describe('createRendererRuntime', () => {
         count: 1
       }
     });
+  });
+
+  it('evaluates declarative ajax api values before request execution convergence', async () => {
+    const fetchCalls: ApiObject[] = [];
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>(api: ApiObject) => {
+          fetchCalls.push(api);
+          return {
+            ok: true,
+            status: 200,
+            data: { ok: true } as T
+          };
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ userId: 7, token: 'page-token' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'ajax',
+        api: {
+          url: '/api/users/${userId}',
+          method: 'post',
+          includeScope: ['token'],
+          params: {
+            mode: '${token}'
+          },
+          data: {
+            userId: '${userId}'
+          }
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(fetchCalls).toHaveLength(1);
+    expect(fetchCalls[0]).toMatchObject({
+      url: '/api/users/7?mode=page-token',
+      method: 'post',
+      data: {
+        token: 'page-token',
+        userId: 7
+      }
+    });
+    expect(fetchCalls[0].params).toBeUndefined();
   });
 
   it('evaluates adaptor scope through lexical scope view without eager whole-scope reads', async () => {
@@ -3509,11 +3964,12 @@ describe('createRendererRuntime', () => {
       nodeId: node.id,
       path: node.path
     });
-    expect(onApiRequest).toHaveBeenCalledWith({
-      api: expect.objectContaining({ url: '/api/monitored', method: 'get' }),
+    expect(onApiRequest).toHaveBeenCalledWith(expect.objectContaining({
+      api: expect.objectContaining({ url: '/api/monitored', method: 'get', params: undefined }),
       nodeId: node.id,
-      path: node.path
-    });
+      path: node.path,
+      interactionId: expect.any(String)
+    }));
     expect(onActionEnd).toHaveBeenCalledWith(
       expect.objectContaining({
         actionType: 'ajax',
@@ -3523,6 +3979,187 @@ describe('createRendererRuntime', () => {
         result: expect.objectContaining({ ok: true })
       })
     );
+  });
+
+  it('monitors the final executable ajax request after params canonicalization', async () => {
+    const onApiRequest = vi.fn();
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiObject) => ({
+      ok: true,
+      status: 200,
+      data: { url: api.url } as T
+    });
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        monitor: {
+          onApiRequest
+        },
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ token: 'live' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'ajax',
+        api: {
+          url: '/api/items',
+          method: 'get',
+          params: { mode: '${token}' }
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(onApiRequest).toHaveBeenCalledWith(expect.objectContaining({
+      api: expect.objectContaining({
+        url: '/api/items?mode=live',
+        method: 'get',
+        params: undefined
+      }),
+      nodeId: undefined,
+      path: undefined,
+      interactionId: expect.any(String)
+    }));
+    expect(fetcher).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/items?mode=live',
+        params: undefined
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it('reuses compiled action payload/api objects across repeated dispatches', async () => {
+    const customCompiler = createExpressionCompiler(createFormulaCompiler());
+    const originalCompileValue = customCompiler.compileValue.bind(customCompiler);
+    customCompiler.compileValue = ((input: unknown) => {
+      return originalCompileValue(input);
+    }) as typeof customCompiler.compileValue;
+    const compileValueSpy = vi.spyOn(customCompiler, 'compileValue');
+
+    const invoke = vi.fn().mockResolvedValue({ ok: true, data: { ok: true } });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: customCompiler
+    });
+    const page = runtime.createPageRuntime({ baseX: 10, token: 'cached' });
+    const actionScope = createActionScope({ id: 'cached-action-scope' });
+    actionScope.registerNamespace('designer', {
+      kind: 'host',
+      invoke
+    });
+
+    const action = {
+      action: 'designer:addNode',
+      args: {
+        nodeType: 'task',
+        position: {
+          x: '${baseX}',
+          y: 20
+        }
+      }
+    } as any;
+
+    const ajaxAction = {
+      action: 'ajax',
+      api: {
+        url: '/api/items/${baseX}',
+        params: {
+          token: '${token}'
+        }
+      }
+    } as any;
+
+    await runtime.dispatch(action, {
+      runtime,
+      scope: page.scope,
+      page,
+      actionScope
+    });
+    await runtime.dispatch(action, {
+      runtime,
+      scope: page.scope,
+      page,
+      actionScope
+    });
+    await runtime.dispatch(ajaxAction, {
+      runtime,
+      scope: page.scope,
+      page
+    });
+    await runtime.dispatch(ajaxAction, {
+      runtime,
+      scope: page.scope,
+      page
+    });
+
+    const compiledArgsCount = compileValueSpy.mock.calls.filter(([input]) => input === action.args).length;
+    const compiledApiCount = compileValueSpy.mock.calls.filter(([input]) => input === ajaxAction.api).length;
+
+    expect(compiledArgsCount).toBe(1);
+    expect(compiledApiCount).toBe(1);
+    expect(invoke).toHaveBeenCalledTimes(2);
+  });
+
+  it('supports top-level action payload compatibility with cached extraction', async () => {
+    const customCompiler = createExpressionCompiler(createFormulaCompiler());
+    const originalCompileValue = customCompiler.compileValue.bind(customCompiler);
+    customCompiler.compileValue = ((input: unknown) => {
+      return originalCompileValue(input);
+    }) as typeof customCompiler.compileValue;
+    const compileValueSpy = vi.spyOn(customCompiler, 'compileValue');
+
+    const invoke = vi.fn().mockResolvedValue({ ok: true, data: { ok: true } });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: customCompiler
+    });
+    const page = runtime.createPageRuntime({ baseX: 10 });
+    const actionScope = createActionScope({ id: 'top-level-action-scope' });
+    actionScope.registerNamespace('designer', {
+      kind: 'host',
+      invoke
+    });
+
+    const action = {
+      action: 'designer:addNode',
+      nodeType: 'task',
+      position: {
+        x: '${baseX}',
+        y: 20
+      }
+    } as any;
+
+    await runtime.dispatch(action, {
+      runtime,
+      scope: page.scope,
+      page,
+      actionScope
+    });
+    await runtime.dispatch(action, {
+      runtime,
+      scope: page.scope,
+      page,
+      actionScope
+    });
+
+    const compiledTopLevelPayloadCount = compileValueSpy.mock.calls.filter(
+      ([input]) => input !== action && !!input && typeof input === 'object' && (input as any).nodeType === 'task'
+    ).length;
+
+    expect(compiledTopLevelPayloadCount).toBe(1);
+    expect(invoke).toHaveBeenCalledTimes(2);
   });
 
   it('emits delegated action monitor metadata for component and namespace dispatch', async () => {
