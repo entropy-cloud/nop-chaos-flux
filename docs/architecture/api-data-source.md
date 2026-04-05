@@ -536,7 +536,10 @@ Current baseline note:
 - the current baseline supports `watch`, optional `when`, `immediate`, `debounce`, `once`, and `actions`
 - watch evaluation reuses the same dependency collection substrate as source/runtime value evaluation
 - reactions are scheduled asynchronously after the triggering scope write settles rather than firing inline in the same mutation callback
-- this first cut does not yet include a heavier shared reaction registry API, advanced loop-depth diagnostics, or debugger-specific reaction inspection surfaces
+- the current guard baseline also coalesces pending changed paths while a reaction is already queued and hard-stops a self-cascading reaction after a small bounded number of firings
+- reaction ownership is now routed through a scope-scoped runtime reaction registry so same-scope same-id registrations replace prior reactions instead of leaking duplicate watchers
+- runtime now exposes a minimal reaction debug snapshot surface that reports registered reaction ids, scope ids, watch config, dependency paths, disposal state, and fire counts
+- this first cut still does not include richer debugger integration or advanced loop-depth diagnostics beyond the current bounded-fire safety rail
 - arbitrary expressions built from those values
 
 Conceptually:
