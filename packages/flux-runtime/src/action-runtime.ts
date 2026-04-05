@@ -20,6 +20,7 @@ interface ActionDispatcherInput {
   evaluate: <T = unknown>(target: unknown, scope: ScopeRef) => T;
   compileValue: <T = unknown>(target: T) => CompiledRuntimeValue<T>;
   evaluateCompiled: <T = unknown>(compiled: CompiledRuntimeValue<T>, scope: ScopeRef) => T;
+  refreshDataSource: (input: { id: string; scope?: ScopeRef }) => Promise<boolean>;
   executeAjaxAction: (api: ApiObject, action: ActionSchema, ctx: ActionContext) => Promise<ActionResult>;
   submitFormAction: (api: ApiObject | undefined, action: ActionSchema, ctx: ActionContext) => Promise<ActionResult>;
   createDialogScope: (ctx: ActionContext) => ScopeRef;
@@ -279,6 +280,29 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
           ok: true,
           data: ctx.page?.store.getState().refreshTick
+        });
+      }
+      case 'refreshSource': {
+        const sourceId = action.componentId ?? action.componentPath;
+
+        if (!sourceId) {
+          return finishAction(
+            input,
+            { ...actionPayload, dispatchMode: 'built-in' },
+            startedAt,
+            { ok: false, error: new Error('refreshSource requires componentId or componentPath') }
+          );
+        }
+
+        const refreshed = await input.refreshDataSource({
+          id: String(sourceId),
+          scope: ctx.scope
+        });
+
+        return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+          ok: refreshed,
+          data: refreshed,
+          error: refreshed ? undefined : new Error(`Source not found: ${sourceId}`)
         });
       }
       case 'submitForm': {

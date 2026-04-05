@@ -37,6 +37,7 @@ import {
   createApiRequestExecutor,
   executeApiObject
 } from './request-runtime';
+import { registerReaction } from './reaction-runtime';
 import { sortRendererPlugins } from './runtime-plugins';
 import { createSchemaCompiler } from './schema-compiler';
 import { createScopeRef, createScopeStore, toRecord } from './scope';
@@ -268,6 +269,7 @@ export function createRendererRuntime(input: {
     evaluate,
     compileValue,
     evaluateCompiled,
+    refreshDataSource: (inputValue) => runtime.refreshDataSource(inputValue),
     executeAjaxAction,
     submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
     runtime: {
@@ -352,6 +354,22 @@ export function createRendererRuntime(input: {
       }
 
       return sourceRegistryRef.current.refreshDataSource(inputValue);
+    },
+    registerReaction(inputValue) {
+      return registerReaction({
+        id: inputValue.id,
+        runtime,
+        scope: inputValue.scope,
+        watch: inputValue.schema.watch,
+        when: inputValue.schema.when,
+        immediate: inputValue.schema.immediate,
+        debounce: inputValue.schema.debounce,
+        once: inputValue.schema.once,
+        actions: inputValue.schema.actions,
+        helpers: {
+          dispatch: inputValue.dispatch
+        }
+      });
     },
     createFormRuntime
   };

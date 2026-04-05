@@ -3866,6 +3866,72 @@ describe('createRendererRuntime', () => {
     expect(page.store.getState().refreshTick).toBe(2);
   });
 
+  it('refreshes registered sources through refreshSource actions', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ price: 2, qty: 3 });
+
+    const registration = runtime.registerDataSource({
+      id: 'total-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'total',
+        formula: '${(price || 0) * (qty || 0)}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(6);
+    });
+
+    page.scope.update('qty', 4);
+
+    const result = await runtime.dispatch(
+      {
+        action: 'refreshSource',
+        componentId: 'total-source'
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result).toMatchObject({ ok: true, data: true });
+    expect(page.scope.get('total')).toBe(8);
+
+    registration.dispose();
+  });
+
+  it('returns a failure result when refreshSource cannot resolve a source id', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const result = await runtime.dispatch(
+      {
+        action: 'refreshSource',
+        componentId: 'missing-source'
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+  });
+
   it('debounces matching actions and cancels superseded executions', async () => {
     vi.useFakeTimers();
 
