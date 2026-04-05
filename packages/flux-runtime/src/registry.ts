@@ -4,11 +4,25 @@ export function createRendererRegistry(initialDefinitions: RendererDefinition[] 
   const map = new Map<string, RendererDefinition>();
 
   for (const definition of initialDefinitions) {
+    if (map.has(definition.type)) {
+      throw new Error(`Duplicate renderer definition for type "${definition.type}"`);
+    }
+
     map.set(definition.type, definition);
   }
 
   return {
-    register(definition) {
+    register(definition, options) {
+      const existing = map.get(definition.type);
+
+      if (existing && existing !== definition && !options?.override) {
+        throw new Error(`Duplicate renderer definition for type "${definition.type}"`);
+      }
+
+      if (existing && existing !== definition && options?.override) {
+        console.warn(`[RendererRegistry] Overriding renderer definition for type "${definition.type}"`);
+      }
+
       map.set(definition.type, definition);
     },
     get(type) {
@@ -33,4 +47,3 @@ export function registerRendererDefinitions(
 
   return registry;
 }
-

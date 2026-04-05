@@ -90,6 +90,7 @@ const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
   'values',
   'when',
   'parallel',
+  'retry',
   'debounce',
   'continueOnError',
   'then',
@@ -588,7 +589,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
 
   function runActionWithDebounce(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
     if (!action.debounce || action.debounce <= 0) {
-      return runSingleActionWithTimeout(action, ctx);
+      return runSingleActionWithRetry(action, ctx);
     }
 
     const key = createActionKey(action, ctx);
@@ -606,8 +607,41 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       pendingDebounces,
       key,
       action.debounce,
-      () => runSingleActionWithTimeout(action, ctx)
+      () => runSingleActionWithRetry(action, ctx)
     );
+  }
+
+  async function runSingleActionWithRetry(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
+    const retryTimes = Math.max(0, action.retry?.times ?? 0);
+    const retryDelay = Math.max(0, action.retry?.delay ?? 0);
+
+    let attempts = 0;
+    let lastResult: ActionResult | undefined;
+
+    while (attempts <= retryTimes) {
+      attempts += 1;
+      lastResult = await runSingleActionWithTimeout(action, ctx);
+
+      if (lastResult.ok || lastResult.skipped || lastResult.cancelled || lastResult.timedOut) {
+        return {
+          ...lastResult,
+          attempts
+        };
+      }
+
+      if (attempts > retryTimes) {
+        break;
+      }
+
+      if (retryDelay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      }
+    }
+
+    return {
+      ...(lastResult ?? { ok: false, error: new Error('Action failed without result') }),
+      attempts
+    };
   }
 
   function runSingleActionWithTimeout(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {

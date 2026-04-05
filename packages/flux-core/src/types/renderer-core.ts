@@ -65,6 +65,12 @@ export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
 export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   type: S['type'];
   component: ComponentType<RendererComponentProps<any>>;
+  displayName?: string;
+  icon?: string;
+  category?: string;
+  defaultSchema?: Partial<S>;
+  propSchema?: Record<string, unknown>;
+  sourcePackage?: string;
   regions?: readonly string[];
   fields?: readonly SchemaFieldRule[];
   scopePolicy?: ScopePolicy;
@@ -75,7 +81,7 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
 }
 
 export interface RendererRegistry {
-  register(definition: RendererDefinition): void;
+  register(definition: RendererDefinition, options?: { override?: boolean }): void;
   get(type: string): RendererDefinition | undefined;
   has(type: string): boolean;
   list(): RendererDefinition[];

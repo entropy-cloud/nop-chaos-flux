@@ -360,6 +360,7 @@ interface ActionSchema {
   args?: Record<string, SchemaValue>;
   when?: string;
   parallel?: ActionSchema[];
+  retry?: { times: number; delay?: number };
   timeout?: number;
   // existing fields remain valid
 }
@@ -399,6 +400,7 @@ Runtime compatibility note:
 - that compatibility path keeps existing schemas such as `{ action: 'designer:addNode', nodeType: 'task' }` working while newer shared docs can still prefer `args`
 - `when` now acts as a structured precondition; a false result returns a normal `ActionResult` with `skipped: true`
 - `parallel` now runs child actions with first-cut `Promise.all` semantics and returns an aggregate `ActionResult` with `results`
+- `retry` now supports a first-cut fixed-count/fixed-delay policy and returns `attempts` on the final `ActionResult`
 - `timeout` now returns a structured `ActionResult` with `timedOut: true`; request-style actions cooperate with abort signals, while non-cancellable actions only time out structurally and may still finish in the background
 
 In practice this means both of the following are valid today:

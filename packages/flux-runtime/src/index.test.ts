@@ -101,6 +101,77 @@ const env: RendererEnv = {
 };
 
 describe('createSchemaCompiler', () => {
+  it('fails fast on duplicate initial renderer definitions', () => {
+    expect(() => createRendererRegistry([textRenderer, textRenderer])).toThrow(
+      'Duplicate renderer definition for type "text"'
+    );
+  });
+
+  it('rejects duplicate renderer registrations without explicit override', () => {
+    const registry = createRendererRegistry([textRenderer]);
+
+    expect(() => registry.register({ ...textRenderer, component: () => 'override' } as RendererDefinition)).toThrow(
+      'Duplicate renderer definition for type "text"'
+    );
+  });
+
+  it('allows explicit renderer overrides and warns when replacing definitions', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      const registry = createRendererRegistry([textRenderer]);
+      const override = { ...textRenderer, component: () => 'override' } as RendererDefinition;
+
+      registry.register(override, { override: true });
+
+      expect(registry.get('text')).toBe(override);
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[RendererRegistry] Overriding renderer definition for type "text"'
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('preserves renderer metadata through the registry contract', () => {
+    const metadataRenderer: RendererDefinition = {
+      type: 'metadata-text',
+      component: () => null,
+      displayName: 'Metadata Text',
+      category: 'content',
+      icon: 'type',
+      sourcePackage: '@nop-chaos/test-renderers',
+      defaultSchema: {
+        type: 'metadata-text',
+        text: 'Hello'
+      },
+      propSchema: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' }
+        }
+      }
+    };
+    const registry = createRendererRegistry([metadataRenderer]);
+
+    expect(registry.get('metadata-text')).toMatchObject({
+      displayName: 'Metadata Text',
+      category: 'content',
+      icon: 'type',
+      sourcePackage: '@nop-chaos/test-renderers',
+      defaultSchema: {
+        type: 'metadata-text',
+        text: 'Hello'
+      },
+      propSchema: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' }
+        }
+      }
+    });
+  });
+
   it('compiles regions and dynamic props', () => {
     const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const compiler = createSchemaCompiler({
@@ -4179,6 +4250,85 @@ describe('createRendererRuntime', () => {
       timedOut: true
     });
     expect(capturedSignal?.aborted).toBe(true);
+  });
+
+  it('retries failed actions until one succeeds', async () => {
+    let callCount = 0;
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>() => {
+      callCount += 1;
+
+      if (callCount < 3) {
+        throw new Error(`fail-${callCount}`);
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        data: { ok: true } as T
+      };
+    };
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const result = await runtime.dispatch(
+      {
+        action: 'ajax',
+        retry: { times: 2, delay: 0 },
+        api: { url: '/api/retry-success' }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result).toMatchObject({ ok: true, attempts: 3, data: { ok: true } });
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+
+  it('returns the final failure result after retry attempts are exhausted', async () => {
+    let callCount = 0;
+    const fetcherImpl: RendererEnv['fetcher'] = async () => {
+      callCount += 1;
+      throw new Error(`fail-${callCount}`);
+    };
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const result = await runtime.dispatch(
+      {
+        action: 'ajax',
+        retry: { times: 2, delay: 0 },
+        api: { url: '/api/retry-fail' }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.attempts).toBe(3);
+    expect(result.error).toBeInstanceOf(Error);
+    expect(fetcher).toHaveBeenCalledTimes(3);
   });
 
   it('returns a failure result when refreshSource cannot resolve a source id', async () => {

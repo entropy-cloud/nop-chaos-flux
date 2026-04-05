@@ -84,6 +84,14 @@ The current renderer stack is effectively split into:
 4. split React contexts and hooks
 5. `SchemaRenderer` and `NodeRenderer`
 
+Current registry baseline:
+
+- duplicate renderer types now fail fast by default during both initial registry construction and later `register(...)` calls
+- hosts still have an explicit override path via `register(definition, { override: true })`
+- explicit overrides emit a warning instead of silently replacing the previous renderer definition
+- `RendererDefinition` now also carries the first tooling metadata baseline directly on the runtime contract: `displayName`, `icon`, `category`, `defaultSchema`, `propSchema`, and `sourcePackage`
+- these metadata fields are intended to be the canonical source for tooling/loader/AI inspection rather than a separate parallel manifest
+
 ```text
 raw schema
   -> SchemaCompiler
