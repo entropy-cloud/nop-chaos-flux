@@ -26,6 +26,16 @@ More specific architecture docs still own subsystem detail.
 
 If a narrower document conflicts with this document about whether a concept is a Flux core primitive, a host concept, or a domain concept, this document wins.
 
+## Key Terms
+
+- **final execution schema**: the already-assembled schema consumed by Flux at runtime after static structure decisions, default expansion, and static trimming are complete
+- **primitive category**: an irreducible, author-visible semantic role in Flux core
+- **schema-visible scope**: the lexical data visible to schema evaluation and schema-authored behavior, subject to the scope admission rule
+- **lexical ownership**: runtime lifetime, shadowing, replacement, and disposal that follow the current scope or subtree boundary
+- **logical value**: one authoritative published binding target together with producer-owned runtime status, not multiple unrelated writes spread across the schema
+- **capability**: an author-visible authority path that may cause effects
+- **host projection**: readonly snapshot data projected from host/domain runtime into schema-visible scope
+
 ## Core Claim
 
 Flux is a **final-model frontend runtime** for a **frontend programming model**.
@@ -103,6 +113,14 @@ A concept may become a new Flux primitive only if all of the following are true:
 
 If any item fails, the concept stays outside Flux core.
 
+## Three Exclusion Rules
+
+The following rules govern the whole document.
+
+1. Not every important runtime system is a primitive.
+2. Schema-visible scope carries data, not imperative authority objects.
+3. Schema causes author-visible effects only through capabilities.
+
 ### Derived runtime systems are not automatically primitives
 
 Flux may have many important runtime systems built from the primitive set.
@@ -157,10 +175,14 @@ Flux has one lexical data-environment primitive:
 - parent shadowing
 - optional materialization fallback
 
+`optional materialization fallback` means the runtime may construct a temporary whole-object view of the currently visible lexical data only for APIs or evaluation paths that truly need object materialization. It is a fallback, not the preferred hot path.
+
 This is the real core behind what older documents loosely called `StateTree`.
 
 But Flux does not have one giant state object tree.
 It has lexical data scopes plus runtime-owned sidecars attached to scope ownership.
+
+`runtime-owned sidecars` means runtime registries or state holders whose lifetime follows a lexical scope boundary without becoming fields or methods on `ScopeRef` itself.
 
 ### 3. Value
 
@@ -406,9 +428,9 @@ Admission test:
 
 | Primitive | Owns authoritative value | May cause side effects | Lifecycle owner | Reads from | Writes to | Change basis | Schema-visible |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Value | no | no | none beyond evaluation state | `ScopeRef` | nowhere | semantic value equality | yes |
-| Resource | yes, for its published value | no direct imperative side effects beyond production lifecycle | runtime, scoped by lexical ownership | `ScopeRef` plus producer config | one explicit binding target | semantic value equality on published value | yes, through published value and optional readonly status summaries |
-| Reaction | no | yes, by dispatching consequences | runtime, scoped by lexical ownership | watched values from `ScopeRef` / runtime evaluation | no authoritative business value target | semantic watched-value change | yes, as schema node; runtime state may be partially inspectable |
+| Value | no | no | none beyond evaluation state | `ScopeRef` | nowhere | semantic top-level equality | yes |
+| Resource | yes, for its published value | producer-internal acquisition effects only; never arbitrary schema-addressable effects | runtime, scoped by lexical ownership | `ScopeRef` plus producer config | one explicit binding target | semantic top-level equality on published value | yes, through published value and optional readonly status summaries |
+| Reaction | no | yes, by dispatching consequences | runtime, scoped by lexical ownership | watched values from `ScopeRef` / runtime evaluation | no authoritative business value target | semantic top-level equality on watched value | yes, as schema node; runtime state may be partially inspectable |
 | Capability | no | yes | runtime / host / addressed component | action payload, current scope, runtime context | host/domain effects or targeted instance methods | n/a | yes |
 | Host projection | no | no | host renderer | host snapshot | nowhere directly | host snapshot refresh semantics | yes |
 
@@ -423,6 +445,13 @@ It closes the boundary between value, resource, reaction, authority, and host pr
 1. Flux has one executable value model: literal, expression, template, array, and object values all compile to the same value IR and evaluate against `ScopeRef`.
 2. Derived business values belong to expressions or resources, not to reactions.
 3. Change detection uses semantic top-level equality with `Object.is`-style baseline semantics.
+
+In this document, `semantic top-level equality` means:
+
+- primitive comparison follows `Object.is`
+- arrays and objects compare by top-level structure and top-level entry identity/value only
+- deeper structural equivalence is not the default semantic contract unless a narrower subsystem explicitly says otherwise
+
 4. Identity reuse is an optimization, not the public semantic definition of value equality.
 
 ### When a derivation stays a value versus becomes a resource
@@ -454,6 +483,13 @@ This rule is normative.
 7. Resource registration, replacement, and disposal follow lexical scope ownership.
 8. Resource runtime state and controllers do not become methods on `ScopeRef`.
 9. Loading, error, stale, cancellation, retry, dedup, and polling belong to resource runtime state, not to plain values and not to reactions.
+10. External I/O performed by a resource belongs to the producer implementation contract, not to a second schema authority model.
+11. The only author-visible resource control paths are lexical activation, dependency invalidation, and explicit capability-driven refresh or invalidate.
+12. If a schema feature needs arbitrary protocol commands rather than value publication, it is not a resource primitive; it belongs behind capabilities or outside Flux core.
+
+`lexical activation` means resource activation caused by the resource node being present within the currently active rendered subtree and owned lexical scope.
+
+Resource status may be surfaced to schema only through readonly status summaries exposed by the runtime or host under an explicit convention. Those summaries are derived runtime views, not additional authoritative published values and not a second publication channel.
 
 ### Reaction rules
 
@@ -476,9 +512,11 @@ This rule is normative.
 7. Bounded cascade protection means reaction-triggered writeback may cascade only up to a finite runtime limit before the cycle is stopped and surfaced as an error.
 8. No re-trigger occurs when writeback leaves the watched value semantically unchanged.
 
+`settled update cycle` or `settled update turn` means the runtime boundary after synchronous writes for the current mutation path have completed and before asynchronous reaction work is flushed.
+
 ## Authority Model
 
-Flux core allows schema to cause effects through one authority model only:
+Flux core allows schema to cause author-visible effects through one authority model only:
 
 - **capability invocation**
 
@@ -488,10 +526,17 @@ This has three operational forms:
 2. lexical namespaced capabilities through `ActionScope`
 3. explicit instance capabilities through `ComponentHandleRegistry`
 
-Built-in actions are reserved built-in capabilities, not a second unrelated authority model.
+Built-in schema actions resolve to reserved built-in capabilities, not a second unrelated authority model.
 
 Env hooks are not schema-level behavior primitives.
 They are host implementation behind capability execution.
+
+`env` means the host-provided environment boundary for side-effect integrations such as fetch, notify, navigate, open external resources, or similar runtime host services.
+
+Resource execution does not create a second schema authority channel.
+A resource may perform producer-internal acquisition effects such as fetch, subscribe, poll, retry, and cancel only through a host-registered producer contract.
+Schema authorizes publication of one logical value at `dataPath`; it does not gain arbitrary external command authority by declaring a resource.
+Any author-visible start, stop, refresh, invalidate, or mutation request must still occur through capability invocation.
 
 Hard rule:
 
@@ -513,9 +558,13 @@ Normative rules:
 6. Temporary debug exposure of richer objects is non-normative and must not become author-facing contract.
 7. A "special host type" means only a specialized renderer and shell integration pattern over the same Flux primitive set. It does not authorize new core primitives by itself.
 
+In other words, a `special host type` is still just a normal schema node kind rendered through specialized host integration; it is not a privileged primitive class.
+
 ## What Stays Outside Flux Core
 
 The following are outside Flux core, even if they matter to real products.
+
+These exclusions are direct applications of the promotion test and the three exclusion rules above.
 
 - authoring-model round-trip concerns
 - XML/JSON round-trip concerns
@@ -622,6 +671,7 @@ The model should be considered under architectural failure pressure if any of th
 - domain-core objects are repeatedly exposed into schema-visible scope
 - component handles are treated as ordinary scope values
 - resources are used as implicit imperative write engines
+- resources repeatedly need schema-defined protocol commands or direct external-operation authority beyond value publication
 - reactions become general-purpose workflow scripting
 - host projection turns into a mutable or imperative host bag
 - new domains repeatedly require new Flux-wide provider or adapter categories
@@ -643,6 +693,115 @@ The following still require narrower subsystem docs, not new core primitives.
 1. detailed producer-specific resource behavior
 2. detailed debugger surfaces for resource and reaction runtime
 3. browser-side authoring document and execution projection details for design tools
+
+## Integrated JSON Example
+
+The following example shows how the core primitives integrate without introducing any extra platform concepts.
+
+It intentionally demonstrates both capability resolution modes:
+
+- lexical capability: `designer:addNode`
+- explicit instance capability: `component:validate`, `component:submit`, and built-in `refreshSource` targeting a registered resource id
+
+```json
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "countries",
+      "dataPath": "lookups.countries",
+      "source": {
+        "api": {
+          "url": "/api/countries",
+          "method": "get"
+        }
+      }
+    },
+    {
+      "type": "form",
+      "id": "shipping-form",
+      "body": [
+        {
+          "type": "text",
+          "text": "Current user: ${host.session.userName}"
+        },
+        {
+          "type": "input-text",
+          "name": "shipping.city",
+          "label": "City"
+        },
+        {
+          "type": "select",
+          "name": "shipping.country",
+          "label": "Country",
+          "options": "${lookups.countries}"
+        },
+        {
+          "type": "reaction",
+          "watch": "${shipping.country}",
+          "when": "${shipping.country}",
+          "dispatch": {
+            "action": "component:validate",
+            "componentId": "shipping-form"
+          }
+        }
+      ]
+    },
+    {
+      "type": "flow-designer",
+      "props": {
+        "document": "${host.designer.document}",
+        "readonly": "${!host.session.canEditFlow}"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Add Task Node",
+      "onClick": {
+        "action": "designer:addNode",
+        "nodeType": "task"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Refresh Countries",
+      "onClick": {
+        "action": "refreshSource",
+        "componentId": "countries"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Submit Shipping",
+      "onClick": {
+        "action": "component:submit",
+        "componentId": "shipping-form"
+      }
+    }
+  ]
+}
+```
+
+Read the example through these callouts:
+
+1. `/body/0` is **resource publication** to `lookups.countries`.
+2. `/body/1/body/0`, `/body/1/body/1`, and `/body/1/body/2` show **ordinary value and scope use** through `${host.session.userName}`, `name`, and `${lookups.countries}`.
+3. `/body/1/body/3` is a **reaction** watching a scope value and dispatching a consequence.
+4. `/body/2` is a **special host type** consuming readonly host projection through `${host.designer.document}`.
+5. `/body/3/onClick` is **lexical capability** resolution through `designer:addNode`.
+6. `/body/4/onClick` is a **built-in capability** targeting a registered resource id via `refreshSource`.
+7. `/body/5/onClick` is **explicit instance capability** targeting `shipping-form`.
+
+Taken together, the example shows one integrated model:
+
+- one base tree
+- one lexical data model
+- one value model
+- one resource model
+- one reaction model
+- one capability model
+- one host projection model
 
 ## Related Documents
 
