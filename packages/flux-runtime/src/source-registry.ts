@@ -11,7 +11,7 @@ import type {
   ScopeRef
 } from '@nop-chaos/flux-core';
 import type { ApiCacheStore } from './api-cache';
-import { createDataSourceController, trackApiRequestDependencies } from './data-source-runtime';
+import { createDataSourceController } from './data-source-runtime';
 import { collectRuntimeDependencies } from './node-runtime';
 import { scopeChangeHitsDependencies } from './scope-change';
 
