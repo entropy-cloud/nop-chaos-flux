@@ -248,58 +248,51 @@ describe('basicRendererDefinitions', () => {
   });
 
   it('coalesces reaction triggers during debounce windows', async () => {
-    vi.useFakeTimers();
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
 
-    try {
-      const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'reaction',
+              watch: '${count}',
+              debounce: 20,
+              actions: {
+                action: 'setValue',
+                componentPath: 'message',
+                value: 'count:${count}'
+              }
+            },
+            {
+              type: 'button',
+              label: 'Inc',
+              onClick: {
+                action: 'setValue',
+                componentPath: 'count',
+                value: '${count + 1}'
+              }
+            },
+            { type: 'text', text: '${message}' }
+          ]
+        }}
+        data={{ count: 0, message: 'start' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
 
-      render(
-        <SchemaRenderer
-          schema={{
-            type: 'page',
-            body: [
-              {
-                type: 'reaction',
-                watch: '${count}',
-                debounce: 20,
-                actions: {
-                  action: 'setValue',
-                  componentPath: 'message',
-                  value: 'count:${count}'
-                }
-              },
-              {
-                type: 'button',
-                label: 'Inc',
-                onClick: {
-                  action: 'setValue',
-                  componentPath: 'count',
-                  value: '${count + 1}'
-                }
-              },
-              { type: 'text', text: '${message}' }
-            ]
-          }}
-          data={{ count: 0, message: 'start' }}
-          env={env}
-          formulaCompiler={createFormulaCompiler()}
-        />
-      );
+    const button = screen.getByText('Inc');
+    fireEvent.click(button);
+    fireEvent.click(button);
+    fireEvent.click(button);
 
-      const button = screen.getByText('Inc');
-      fireEvent.click(button);
-      fireEvent.click(button);
-      fireEvent.click(button);
+    await waitFor(() => {
+      expect(screen.getByText('count:3')).toBeTruthy();
+    });
 
-      await vi.runAllTimersAsync();
-
-      await waitFor(() => {
-        expect(screen.getByText('count:3')).toBeTruthy();
-      });
-    } finally {
-      vi.useRealTimers();
-      cleanup();
-    }
+    cleanup();
   });
 
   it('prevents unbounded self-trigger cascades in reactions', async () => {
