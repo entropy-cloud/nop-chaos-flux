@@ -48,7 +48,7 @@ pnpm --filter @nop-chaos/flux-runtime test
 pnpm --filter @nop-chaos/flux-runtime lint
 ```
 
-Always run `typecheck`, `build`, and `lint` after making changes. Run tests when relevant.
+Always run `typecheck`, `build`, and `lint` after making **CODE** changes. Run tests when relevant.
 
 ---
 
@@ -58,12 +58,11 @@ Always run `typecheck`, `build`, and `lint` after making changes. Run tests when
 
 ### Mandatory Updates
 
-After completing any significant work, you MUST:
+After completing any significant **CODE CHANGE**, you MUST:
 
  1. **Update the daily dev log** at `docs/logs/{year}/{month}-{day}.md` with a dated entry containing:
    - What was added/changed
    - Key decisions made
-   - Next steps (if known)
    - Brief context useful for future work
    - New entries are appended at the top of the file (reverse chronological)
    - See `docs/logs/index.md` for writing conventions
