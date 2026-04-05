@@ -282,6 +282,42 @@ Required boundary:
 
 The intended end state is a runtime-local source registry where formula and API producers share the same conceptual lifecycle model.
 
+More precisely:
+
+- source and reaction semantics belong to the current lexical data scope
+- runtime should maintain source/reaction registries as scope-scoped sidecars keyed by `ScopeRef.id`
+- child scopes may therefore own child source/reaction buckets
+- disposing a scope should also dispose the source/reaction registrations owned by that scope
+- this must not be modeled by turning `ScopeRef` itself into a behavior registry
+
+A practical first implementation shape is:
+
+```ts
+interface RuntimeSourceRegistry {
+  scopeEntries: Map<string, Map<string, RuntimeSourceEntry>>;
+}
+
+interface RuntimeReactionRegistry {
+  scopeEntries: Map<string, Map<string, RuntimeReactionEntry>>;
+}
+```
+
+Where:
+
+- the outer key is `ScopeRef.id`
+- the inner key is a stable entry id such as `node.id`
+- the owner is `RendererRuntime`, not `ScopeRef` and not a page-global bag
+
+Conceptually:
+
+```text
+ScopeRef = pure data contract
+RendererRuntime.sourceRegistry.scopeEntries[scopeId] = source entries for that scope
+RendererRuntime.reactionRegistry.scopeEntries[scopeId] = reaction entries for that scope
+```
+
+This preserves the existing design rule that data lookup remains on `ScopeRef`, while source/reaction lifecycle, invalidation, polling, and watcher scheduling remain runtime-owned.
+
 ### Loading And Error State
 
 `data-source` itself renders `null`.
@@ -465,6 +501,15 @@ Required protections:
 
 - `data-source`: produces and publishes a value
 - `reaction`: observes a value and dispatches actions
+
+Both should still be registered against the current data-scope bucket rather than a page-global bag.
+
+For the current architecture, the preferred activation model remains:
+
+- a `null` renderer mounts
+- it registers the source/reaction with runtime
+- runtime owns the actual lifecycle and cleanup record
+- unmount disposes that registration
 
 This means a reaction can watch:
 

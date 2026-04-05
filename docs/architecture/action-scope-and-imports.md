@@ -20,6 +20,8 @@ It also defines a separate component-targeted invocation model for actions that 
 The active runtime today has these properties:
 
 - `ScopeRef` is a data scope, not a behavior registry; see `packages/flux-runtime/src/scope.ts`
+- source/reaction runtime ownership may still be scoped by `ScopeRef.id`, but that ownership should live in runtime sidecars rather than as methods on `ScopeRef`
+- if a scope-scoped runtime sidecar is needed, prefer a `RendererRuntime`-owned `scopeEntries` structure keyed by `ScopeRef.id`
 - actions are dispatched by a centralized built-in dispatcher keyed by `action.action`; see `packages/flux-runtime/src/action-runtime.ts:70`
 - `ActionSchema` uses `action: string` and optional structured fields such as `args?: Record<string, SchemaValue>`; see `packages/flux-core/src/index.ts:847`
 - React renderers can only change descendant scope explicitly through fragment render options such as `render({ scope })` or `render({ data })`; see `packages/flux-react/src/index.tsx:195` and `packages/flux-react/src/index.tsx:202`

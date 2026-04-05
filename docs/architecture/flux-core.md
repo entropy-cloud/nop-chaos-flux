@@ -191,6 +191,13 @@ The active runtime now also exposes two non-data runtime registries:
 
 These are intentionally not folded into `ScopeRef`.
 
+Current design direction also treats `data-source` / `reaction` ownership as scope-scoped runtime state, but still not as part of the `ScopeRef` behavior surface:
+
+- `ScopeRef` stays the pure data lookup and update contract
+- source/reaction registration should live in runtime-owned sidecar registries keyed by `ScopeRef.id`
+- this keeps source/reaction lifecycle aligned with lexical data scopes without turning `ScopeRef` into a mixed data-plus-behavior abstraction
+- a practical first implementation is `RendererRuntime`-owned `scopeEntries: Map<scopeId, Map<entryId, Entry>>`
+
 Detailed `ActionScope` resolution, `xui:import`, collision, and lifecycle semantics live in `docs/architecture/action-scope-and-imports.md`.
 
 ### React renderer
