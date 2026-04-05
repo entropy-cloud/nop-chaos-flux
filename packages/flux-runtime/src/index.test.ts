@@ -1627,6 +1627,120 @@ describe('createRendererRuntime', () => {
     await expect(runtime.refreshDataSource({ id: 'missing-source', scope: page.scope })).resolves.toBe(false);
   });
 
+  it('replaces same-id reactions within the same scope through runtime registry ownership', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ count: 1 });
+    const updates: string[] = [];
+
+    const first = runtime.registerReaction({
+      id: 'count-reaction',
+      scope: page.scope,
+      schema: {
+        type: 'reaction',
+        watch: '${count}',
+        actions: {
+          action: 'setValue',
+          componentPath: 'message',
+          value: 'first:${count}'
+        }
+      },
+      dispatch: async (action, ctx) => {
+        updates.push('first');
+        return runtime.dispatch(action, {
+          runtime,
+          scope: ctx?.scope ?? page.scope,
+          page
+        });
+      }
+    });
+
+    const second = runtime.registerReaction({
+      id: 'count-reaction',
+      scope: page.scope,
+      schema: {
+        type: 'reaction',
+        watch: '${count}',
+        actions: {
+          action: 'setValue',
+          componentPath: 'message',
+          value: 'second:${count}'
+        }
+      },
+      dispatch: async (action, ctx) => {
+        updates.push('second');
+        return runtime.dispatch(action, {
+          runtime,
+          scope: ctx?.scope ?? page.scope,
+          page
+        });
+      }
+    });
+
+    page.scope.update('count', 2);
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('message')).toBe('second:2');
+    });
+
+    expect(updates).toEqual(['second']);
+
+    first.dispose();
+    second.dispose();
+  });
+
+  it('exposes reaction debug snapshots through the public runtime contract', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ count: 1 });
+
+    const registration = runtime.registerReaction({
+      id: 'debug-reaction',
+      scope: page.scope,
+      schema: {
+        type: 'reaction',
+        watch: '${count}',
+        immediate: true,
+        actions: {
+          action: 'setValue',
+          componentPath: 'message',
+          value: 'count:${count}'
+        }
+      },
+      dispatch: (action, ctx) => runtime.dispatch(action, {
+        runtime,
+        scope: ctx?.scope ?? page.scope,
+        page
+      })
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('message')).toBe('count:1');
+    });
+
+    expect(runtime.getReactionDebugSnapshot?.()).toEqual({
+      reactions: [
+        expect.objectContaining({
+          id: 'debug-reaction',
+          scopeId: page.scope.id,
+          immediate: true,
+          fireCount: 1,
+          disposed: false,
+          dependencies: ['count']
+        })
+      ]
+    });
+
+    registration.dispose();
+    expect(runtime.getReactionDebugSnapshot?.()).toEqual({ reactions: [] });
+  });
+
   it('opens and closes dialogs through dialog actions', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
@@ -3906,6 +4020,165 @@ describe('createRendererRuntime', () => {
     expect(page.scope.get('total')).toBe(8);
 
     registration.dispose();
+  });
+
+  it('skips actions when the when precondition evaluates false', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ enabled: false, message: 'initial' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'setValue',
+        when: '${enabled}',
+        componentPath: 'message',
+        value: 'updated'
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result).toMatchObject({ ok: true, skipped: true });
+    expect(page.scope.get('message')).toBe('initial');
+  });
+
+  it('runs parallel actions and returns aggregated results', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ left: 'a', right: 'b' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'noop',
+        parallel: [
+          {
+            action: 'setValue',
+            componentPath: 'left',
+            value: 'left-updated'
+          },
+          {
+            action: 'setValue',
+            componentPath: 'right',
+            value: 'right-updated'
+          }
+        ]
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.results).toHaveLength(2);
+    expect(page.scope.get('left')).toBe('left-updated');
+    expect(page.scope.get('right')).toBe('right-updated');
+  });
+
+  it('returns a timedOut result for actions that exceed timeout', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+        return new Promise((resolve, reject) => {
+          ctx.signal?.addEventListener('abort', () => {
+            const error = new Error('aborted');
+            (error as Error & { name: string }).name = 'AbortError';
+            reject(error);
+          }, { once: true });
+        }) as Promise<{ ok: true; status: number; data: T }>;
+      };
+      const fetcher = vi.fn(fetcherImpl);
+      const runtime = createRendererRuntime({
+        registry: createRendererRegistry([textRenderer]),
+        env: {
+          ...env,
+          fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        },
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      });
+      const page = runtime.createPageRuntime({});
+
+      const resultPromise = runtime.dispatch(
+        {
+          action: 'ajax',
+          timeout: 10,
+          api: { url: '/api/slow' }
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page
+        }
+      );
+
+      await vi.advanceTimersByTimeAsync(10);
+
+      await expect(resultPromise).resolves.toMatchObject({
+        ok: false,
+        cancelled: true,
+        timedOut: true
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('aborts ajax requests when action timeouts fire', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+      capturedSignal = ctx.signal;
+
+      return new Promise((resolve, reject) => {
+        ctx.signal?.addEventListener('abort', () => {
+          const error = new Error('aborted');
+          (error as Error & { name: string }).name = 'AbortError';
+          reject(error);
+        }, { once: true });
+      }) as Promise<{ ok: true; status: number; data: T }>;
+    };
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const resultPromise = runtime.dispatch(
+      {
+        action: 'ajax',
+        timeout: 5,
+        api: { url: '/api/slow' }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    await expect(resultPromise).resolves.toMatchObject({
+      ok: false,
+      cancelled: true,
+      timedOut: true
+    });
+    expect(capturedSignal?.aborted).toBe(true);
   });
 
   it('returns a failure result when refreshSource cannot resolve a source id', async () => {
