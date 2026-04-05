@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -244,6 +244,98 @@ describe('basicRendererDefinitions', () => {
     screen.getByText('Done').click();
     await Promise.resolve();
     expect(screen.getByText('triggered:ready')).toBeTruthy();
+    cleanup();
+  });
+
+  it('coalesces reaction triggers during debounce windows', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'reaction',
+                watch: '${count}',
+                debounce: 20,
+                actions: {
+                  action: 'setValue',
+                  componentPath: 'message',
+                  value: 'count:${count}'
+                }
+              },
+              {
+                type: 'button',
+                label: 'Inc',
+                onClick: {
+                  action: 'setValue',
+                  componentPath: 'count',
+                  value: '${count + 1}'
+                }
+              },
+              { type: 'text', text: '${message}' }
+            ]
+          }}
+          data={{ count: 0, message: 'start' }}
+          env={env}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      const button = screen.getByText('Inc');
+      fireEvent.click(button);
+      fireEvent.click(button);
+      fireEvent.click(button);
+
+      await vi.runAllTimersAsync();
+
+      await waitFor(() => {
+        expect(screen.getByText('count:3')).toBeTruthy();
+      });
+    } finally {
+      vi.useRealTimers();
+      cleanup();
+    }
+  });
+
+  it('prevents unbounded self-trigger cascades in reactions', async () => {
+    const notify = vi.fn();
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'reaction',
+              watch: '${count}',
+              immediate: true,
+              actions: {
+                action: 'setValue',
+                componentPath: 'count',
+                value: '${count + 1}'
+              }
+            },
+            { type: 'text', text: '${count}' }
+          ]
+        }}
+        data={{ count: 0 }}
+        env={{ ...env, notify }}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      const value = Number(screen.getByText(/^[0-9]+$/).textContent ?? '0');
+      expect(value).toBeGreaterThan(0);
+      expect(value).toBeLessThanOrEqual(10);
+    });
+
     cleanup();
   });
 

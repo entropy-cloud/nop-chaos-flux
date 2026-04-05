@@ -156,6 +156,9 @@ Current baseline note:
 - current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
 - current `DataSourceController` baseline now exposes a minimal runtime state surface via `getState()` with `started`, `loading`, `stale`, `value`, and `error`; api sources actively drive all fields while formula sources currently use the same shape with lightweight synchronous semantics
 - current runtime baseline now also exposes explicit source refresh by id at the runtime boundary; refresh remains scope-scoped first, so duplicate source ids in different scopes do not collapse into one page-global namespace
+- current source runtime now has a dependency-aware invalidation baseline: formula sources automatically recompute and api sources automatically refresh when changed scope paths hit the dependencies collected from formula evaluation or request-config evaluation
+- current invalidation also includes a self-target loop guard so a source does not immediately retrigger itself from writes to its own published `dataPath`
+- current action/runtime integration now includes a built-in `refreshSource` action that targets a registered source id via `componentId` or `componentPath` and delegates to the runtime-owned source registry refresh semantics
 
 ## DataSourceSchema
 
@@ -526,6 +529,14 @@ This means a reaction can watch:
 - raw scope fields
 - formula-backed sources
 - API-backed sources
+
+Current baseline note:
+
+- `reaction` is now available as a first runtime-owned null-renderer node
+- the current baseline supports `watch`, optional `when`, `immediate`, `debounce`, `once`, and `actions`
+- watch evaluation reuses the same dependency collection substrate as source/runtime value evaluation
+- reactions are scheduled asynchronously after the triggering scope write settles rather than firing inline in the same mutation callback
+- this first cut does not yet include a heavier shared reaction registry API, advanced loop-depth diagnostics, or debugger-specific reaction inspection surfaces
 - arbitrary expressions built from those values
 
 Conceptually:
