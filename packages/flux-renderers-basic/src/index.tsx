@@ -25,22 +25,38 @@ export { ReactionRenderer } from './reaction';
 export const basicRendererDefinitions: RendererDefinition[] = [
   {
     type: 'page',
+    displayName: 'Page',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'page', body: [] },
     component: PageRenderer,
     regions: ['body', 'header', 'footer'],
     fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }]
   },
   {
     type: 'container',
+    displayName: 'Container',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'container', body: [] },
     component: ContainerRenderer,
     regions: ['body', 'header', 'footer']
   },
   {
     type: 'flex',
+    displayName: 'Flex',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'flex', body: [] },
     component: FlexRenderer,
     regions: ['body', 'items']
   },
   {
     type: 'text',
+    displayName: 'Text',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'text', text: 'Text' },
     component: TextRenderer,
     fields: [
       { key: 'text', kind: 'prop' },
@@ -49,24 +65,40 @@ export const basicRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'button',
+    displayName: 'Button',
+    category: 'actions',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'button', label: 'Button' },
     component: ButtonRenderer,
     fields: [{ key: 'onClick', kind: 'event' }]
   },
   {
     type: 'icon',
+    displayName: 'Icon',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: IconRenderer
   },
   {
     type: 'badge',
+    displayName: 'Badge',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: BadgeRenderer
   },
   {
     type: 'dynamic-renderer',
+    displayName: 'Dynamic Renderer',
+    category: 'advanced',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: DynamicRenderer,
     regions: ['body']
   },
   {
     type: 'reaction',
+    displayName: 'Reaction',
+    category: 'logic',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: ReactionRenderer,
     fields: [
       { key: 'watch', kind: 'prop' },

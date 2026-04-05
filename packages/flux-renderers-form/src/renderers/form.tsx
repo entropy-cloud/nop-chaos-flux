@@ -16,9 +16,12 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
 
 export const formRendererDefinition: RendererDefinition = {
   type: 'form',
+  displayName: 'Form',
+  category: 'form',
+  sourcePackage: '@nop-chaos/flux-renderers-form',
+  defaultSchema: { type: 'form', body: [], actions: [] },
   component: FormRenderer,
   regions: ['body', 'actions'],
   scopePolicy: 'form',
   componentRegistryPolicy: 'new'
 };
-

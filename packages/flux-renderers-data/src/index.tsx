@@ -12,6 +12,9 @@ export { ChartRenderer } from './chart-renderer';
 export const dataRendererDefinitions: RendererDefinition[] = [
   {
     type: 'table',
+    displayName: 'Table',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
     component: TableRenderer,
     fields: [
       { key: 'onRowClick', kind: 'event' },
@@ -23,10 +26,16 @@ export const dataRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'data-source',
+    displayName: 'Data Source',
+    category: 'logic',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
     component: DataSourceRenderer
   },
   {
     type: 'chart',
+    displayName: 'Chart',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
     component: ChartRenderer,
     fields: [
       { key: 'onClick', kind: 'event' },
