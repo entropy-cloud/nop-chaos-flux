@@ -21,8 +21,8 @@ interface ActionDispatcherInput {
   compileValue: <T = unknown>(target: T) => CompiledRuntimeValue<T>;
   evaluateCompiled: <T = unknown>(compiled: CompiledRuntimeValue<T>, scope: ScopeRef) => T;
   refreshDataSource: (input: { id: string; scope?: ScopeRef }) => Promise<boolean>;
-  executeAjaxAction: (api: ApiObject, action: ActionSchema, ctx: ActionContext) => Promise<ActionResult>;
-  submitFormAction: (api: ApiObject | undefined, action: ActionSchema, ctx: ActionContext) => Promise<ActionResult>;
+  executeAjaxAction: (api: ApiObject, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
+  submitFormAction: (api: ApiObject | undefined, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
   createDialogScope: (ctx: ActionContext) => ScopeRef;
   getDialogActionScope?: (ctx: ActionContext) => ActionContext['actionScope'];
   getDialogComponentRegistry?: (ctx: ActionContext) => ActionContext['componentRegistry'];
@@ -39,6 +39,15 @@ function createCancelledResult(error?: unknown): ActionResult {
   return {
     ok: false,
     cancelled: true,
+    error
+  };
+}
+
+function createTimedOutResult(error?: unknown): ActionResult {
+  return {
+    ok: false,
+    cancelled: true,
+    timedOut: true,
     error
   };
 }
@@ -79,6 +88,8 @@ const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
   'dataPath',
   'value',
   'values',
+  'when',
+  'parallel',
   'debounce',
   'continueOnError',
   'then',
@@ -175,6 +186,14 @@ function finishAction(
   return result;
 }
 
+function shouldRunActionWhen(action: ActionSchema, ctx: ActionContext, input: ActionDispatcherInput): boolean {
+  if (!action.when) {
+    return true;
+  }
+
+  return Boolean(input.evaluate<boolean>(action.when, ctx.scope));
+}
+
 export function createActionDispatcher(input: ActionDispatcherInput) {
   const pendingDebounces = new Map<string, {
     timer: ReturnType<typeof setTimeout>;
@@ -186,7 +205,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     action: ActionSchema,
     ctx: ActionContext,
     startedAt: number,
-    actionPayload: ActionMonitorPayload
+    actionPayload: ActionMonitorPayload,
+    signal?: AbortSignal
   ): Promise<ActionResult | undefined> {
     switch (action.action) {
       case 'setValue': {
@@ -243,7 +263,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
           );
         }
 
-        const result = await input.executeAjaxAction(api, action, ctx);
+        const result = await input.executeAjaxAction(api, action, ctx, signal);
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
       }
       case 'dialog': {
@@ -327,7 +347,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
           });
         }
 
-        const result = await input.submitFormAction(api, action, ctx);
+        const result = await input.submitFormAction(api, action, ctx, signal);
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
       }
       default:
@@ -465,7 +485,32 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     );
   }
 
-  async function runSingleAction(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
+  async function runParallelActions(
+    action: ActionSchema,
+    ctx: ActionContext,
+    startedAt: number,
+    actionPayload: ActionMonitorPayload
+  ): Promise<ActionResult | undefined> {
+    if (!action.parallel || action.parallel.length === 0) {
+      return undefined;
+    }
+
+    const results = await Promise.all(
+      action.parallel.map((entry) => runActionWithDebounce(entry, {
+        ...ctx,
+        interactionId: ctx.interactionId ?? createInteractionId(),
+        prevResult: ctx.prevResult
+      }))
+    );
+
+    return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+      ok: results.every((result) => result.ok || result.skipped || result.cancelled),
+      data: results,
+      results
+    });
+  }
+
+  async function runSingleAction(action: ActionSchema, ctx: ActionContext, signal?: AbortSignal): Promise<ActionResult> {
     const startedAt = Date.now();
     const actionPayload = buildActionMonitorPayload(action, ctx);
     input.getEnv().monitor?.onActionStart?.(actionPayload);
@@ -479,7 +524,20 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         Promise.resolve(action)
       );
 
-      const builtInResult = await runBuiltInAction(processedAction, ctx, startedAt, actionPayload);
+      if (!shouldRunActionWhen(processedAction, ctx, input)) {
+        return finishAction(input, actionPayload, startedAt, {
+          ok: true,
+          skipped: true
+        });
+      }
+
+      const parallelResult = await runParallelActions(processedAction, ctx, startedAt, actionPayload);
+
+      if (parallelResult) {
+        return parallelResult;
+      }
+
+      const builtInResult = await runBuiltInAction(processedAction, ctx, startedAt, actionPayload, signal);
 
       if (builtInResult) {
         return builtInResult;
@@ -530,7 +588,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
 
   function runActionWithDebounce(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
     if (!action.debounce || action.debounce <= 0) {
-      return runSingleAction(action, ctx);
+      return runSingleActionWithTimeout(action, ctx);
     }
 
     const key = createActionKey(action, ctx);
@@ -548,8 +606,49 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       pendingDebounces,
       key,
       action.debounce,
-      () => runSingleAction(action, ctx)
+      () => runSingleActionWithTimeout(action, ctx)
     );
+  }
+
+  function runSingleActionWithTimeout(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
+    if (!action.timeout || action.timeout <= 0) {
+      return runSingleAction(action, ctx);
+    }
+
+    const controller = new AbortController();
+
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const timeoutId = setTimeout(() => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        controller.abort();
+        resolve(createTimedOutResult(new Error(`Action timed out after ${action.timeout}ms`)));
+      }, action.timeout);
+
+      void runSingleAction(action, ctx, controller.signal)
+        .then((result) => {
+          if (settled) {
+            return;
+          }
+
+          settled = true;
+          clearTimeout(timeoutId);
+          resolve(result);
+        })
+        .catch((error) => {
+          if (settled) {
+            return;
+          }
+
+          settled = true;
+          clearTimeout(timeoutId);
+          reject(error);
+        });
+    });
   }
 
   async function dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult> {

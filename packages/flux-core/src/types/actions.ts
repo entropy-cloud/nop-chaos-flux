@@ -18,6 +18,13 @@ export interface ActionSchema extends SchemaObject {
   value?: SchemaValue;
   values?: Record<string, SchemaValue>;
   args?: Record<string, SchemaValue>;
+  when?: string;
+  parallel?: ActionSchema[];
+  retry?: {
+    times: number;
+    delay?: number;
+  };
+  timeout?: number;
   debounce?: number;
   continueOnError?: boolean;
   then?: ActionSchema | ActionSchema[];
@@ -26,7 +33,11 @@ export interface ActionSchema extends SchemaObject {
 export interface ActionResult {
   ok: boolean;
   cancelled?: boolean;
+  skipped?: boolean;
+  timedOut?: boolean;
   data?: unknown;
+  results?: ActionResult[];
+  attempts?: number;
   error?: unknown;
 }
 
