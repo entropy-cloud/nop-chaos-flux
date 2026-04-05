@@ -9,6 +9,7 @@ function createStubScope(): ScopeRef {
     parent: undefined as any,
     store: {
       getSnapshot: () => ({}),
+      getLastChange: () => ({ paths: ['*'], sourceScopeId: 'root', kind: 'replace' as const }),
       setSnapshot: () => {},
       subscribe: () => () => {}
     },
@@ -73,4 +74,3 @@ describe('FormRuntime.submit() concurrent submission bug', () => {
     expect(form.store.getState().submitting).toBe(false);
   });
 });
-

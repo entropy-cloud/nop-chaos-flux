@@ -1,4 +1,4 @@
-import type { PageRuntime, PageStoreApi, RendererRuntime } from '@nop-chaos/flux-core';
+import type { PageRuntime, PageStoreApi, RendererRuntime, ScopeChange } from '@nop-chaos/flux-core';
 import { createPageStore } from './form-store';
 import { createScopeRef } from './scope';
 
@@ -9,14 +9,27 @@ export function createManagedPageRuntime(input: {
   const data = input.data ?? {};
   const store = input.pageStore ?? createPageStore(data);
   store.setData(data);
+  let lastChange: ScopeChange = {
+    paths: ['*'],
+    sourceScopeId: 'page',
+    kind: 'replace'
+  };
   const scope = createScopeRef({
     id: 'page',
     path: '$page',
     initialData: store.getState().data,
     store: {
       getSnapshot: () => store.getState().data,
-      setSnapshot: (next) => store.setData(next),
-      subscribe: (listener) => store.subscribe(listener)
+      getLastChange: () => lastChange,
+      setSnapshot: (next, change) => {
+        lastChange = change ?? {
+          paths: ['*'],
+          sourceScopeId: 'page',
+          kind: 'replace'
+        };
+        store.setData(next);
+      },
+      subscribe: (listener) => store.subscribe(() => listener(lastChange))
     },
     update: (path, value) => store.updateData(path, value)
   });
@@ -51,4 +64,3 @@ export function createManagedPageRuntime(input: {
     }
   };
 }
-

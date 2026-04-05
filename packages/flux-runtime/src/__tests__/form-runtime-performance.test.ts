@@ -9,6 +9,7 @@ function createStubScope(): ScopeRef {
     parent: undefined as any,
     store: {
       getSnapshot: () => ({}),
+      getLastChange: () => ({ paths: ['*'], sourceScopeId: 'root', kind: 'replace' as const }),
       setSnapshot: () => {},
       subscribe: () => () => {}
     },

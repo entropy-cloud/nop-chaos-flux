@@ -398,6 +398,38 @@ describe('createRendererRuntime', () => {
     expect(second.reusedReference).toBe(true);
   });
 
+  it('records changed-path dependencies for node props and meta', () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = runtime.compile({
+      type: 'text',
+      text: '${user.name}',
+      visible: '${showText}'
+    }) as any;
+
+    const page = runtime.createPageRuntime({ user: { name: 'Alice' }, showText: true });
+    const state = node.createRuntimeState();
+
+    runtime.resolveNodeMeta(node, page.scope, state);
+    runtime.resolveNodeProps(node, page.scope, state);
+
+    expect(state.metaDependencies).toEqual({
+      paths: ['showText'],
+      wildcard: false,
+      broadAccess: false
+    });
+    expect(state.propsDependencies).toEqual({
+      paths: ['user', 'user.name'],
+      wildcard: false,
+      broadAccess: false
+    });
+  });
+
   it('updates page scope through setValue action', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
@@ -422,6 +454,48 @@ describe('createRendererRuntime', () => {
     );
 
     expect(page.store.getState().data.message).toBe('World');
+  });
+
+  it('runs plugins by ascending priority and preserves declaration order on ties', () => {
+    const order: string[] = [];
+    const plugins: RendererPlugin[] = [
+      {
+        name: 'late',
+        priority: 20,
+        beforeCompile(schema) {
+          order.push('late');
+          return schema;
+        }
+      },
+      {
+        name: 'first-tie',
+        priority: 5,
+        beforeCompile(schema) {
+          order.push('first-tie');
+          return schema;
+        }
+      },
+      {
+        name: 'second-tie',
+        priority: 5,
+        beforeCompile(schema) {
+          order.push('second-tie');
+          return schema;
+        }
+      }
+    ];
+
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+      plugins
+    });
+
+    runtime.compile({ type: 'text', text: 'hello' });
+
+    expect(order).toEqual(['first-tie', 'second-tie', 'late']);
+    expect(runtime.plugins.map((plugin) => plugin.name)).toEqual(['first-tie', 'second-tie', 'late']);
   });
 
   it('updates multiple page scope values through setValues action', async () => {

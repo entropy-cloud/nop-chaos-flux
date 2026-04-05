@@ -29,6 +29,7 @@ This is a normative design requirements document.
 
 - Prefer selective subscriptions and scoped updates.
 - Avoid full-tree updates for local state changes.
+- When the substrate supports it, carry changed-path payloads through subscriptions so render-time resolution can cheaply skip unrelated work.
 
 4. Immutable update semantics for observable state.
 

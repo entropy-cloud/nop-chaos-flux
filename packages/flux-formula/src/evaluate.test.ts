@@ -5,6 +5,7 @@ import type {
   RendererEnv,
   StaticValueNode
 } from '@nop-chaos/flux-core';
+import { createFormulaCompiler } from './compile';
 import { createEvalContext, createStateFromNode, evaluateNode } from './evaluate';
 
 const env: RendererEnv = {
@@ -151,5 +152,38 @@ describe('early-exit optimization (FIX-12)', () => {
     const r2 = evaluateNode(node, ctx, env, state.root);
     expect(r2.reusedReference).toBe(true);
     expect(r2.value).toBe(r1.value);
+  });
+});
+
+describe('dependency tracking', () => {
+  it('refreshes leaf dependencies after each successful evaluation', () => {
+    const formulaCompiler = createFormulaCompiler();
+    const node = {
+      kind: 'expression-node' as const,
+      source: '${flag ? a : b}',
+      compiled: formulaCompiler.compileExpression<string>('${flag ? a : b}')
+    };
+    const state = createStateFromNode(node);
+
+    const firstScope = makeScope({ flag: true, a: 'left', b: 'right' });
+    const first = evaluateNode(node, createEvalContext(firstScope), env, state.root);
+
+    expect(first.value).toBe('left');
+    expect(state.root.kind).toBe('leaf-state');
+    expect(state.root.kind === 'leaf-state' ? state.root.dependencies : undefined).toEqual({
+      paths: ['a', 'flag'],
+      wildcard: false,
+      broadAccess: false
+    });
+
+    const secondScope = makeScope({ flag: false, a: 'left', b: 'right' });
+    const second = evaluateNode(node, createEvalContext(secondScope), env, state.root);
+
+    expect(second.value).toBe('right');
+    expect(state.root.kind === 'leaf-state' ? state.root.dependencies : undefined).toEqual({
+      paths: ['b', 'flag'],
+      wildcard: false,
+      broadAccess: false
+    });
   });
 });

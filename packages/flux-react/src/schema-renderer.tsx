@@ -43,8 +43,14 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const page = useMemo(() => runtime.createPageRuntime(initialPageDataRef.current), [runtime]);
 
     useEffect(() => {
-      if (page.store.getState().data !== pageData) {
-        page.store.setData(pageData);
+      const currentData = page.store.getState().data;
+
+      if (currentData !== pageData) {
+        page.scope.store?.setSnapshot(pageData, {
+          paths: ['*'],
+          sourceScopeId: page.scope.id,
+          kind: 'replace'
+        });
       }
     }, [page, pageData]);
 

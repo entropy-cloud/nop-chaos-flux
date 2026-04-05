@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EvalContext } from '@nop-chaos/flux-core';
-import { createFormulaScope } from './scope';
+import { createFormulaScope, createScopeDependencyCollector } from './scope';
 
 function makeEvalContext(data: Record<string, any>): EvalContext {
   return {
@@ -37,5 +37,39 @@ describe('createFormulaScope', () => {
     const ctx = makeEvalContext({ user: { name: 'Bob' } });
     const scope = createFormulaScope(ctx);
     expect(scope['user.name']).toBe('Bob');
+  });
+
+  it('records direct path access in the dependency collector', () => {
+    const tracked = createScopeDependencyCollector();
+    const ctx: EvalContext = {
+      ...makeEvalContext({ user: { name: 'Bob' } }),
+      collector: tracked.collector
+    };
+
+    const scope = createFormulaScope(ctx);
+    const user = scope.user as { name: string };
+    expect(user.name).toBe('Bob');
+
+    expect(tracked.finalize()).toEqual({
+      paths: ['user', 'user.name'],
+      wildcard: false,
+      broadAccess: false
+    });
+  });
+
+  it('falls back to wildcard dependency for ownKeys access', () => {
+    const tracked = createScopeDependencyCollector();
+    const ctx: EvalContext = {
+      ...makeEvalContext({ user: { name: 'Bob' } }),
+      collector: tracked.collector
+    };
+
+    Reflect.ownKeys(createFormulaScope(ctx));
+
+    expect(tracked.finalize()).toEqual({
+      paths: ['*'],
+      wildcard: true,
+      broadAccess: true
+    });
   });
 });

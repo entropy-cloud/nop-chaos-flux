@@ -1,5 +1,6 @@
 import type { CompiledRuntimeValue, RuntimeValueState } from './compilation';
 import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema';
+import type { ScopeDependencySet } from './scope';
 import type { CompiledFormValidationModel } from './validation';
 
 export interface CompiledSchemaMeta {
@@ -51,6 +52,8 @@ export interface ResolvedNodeMeta {
 export interface CompiledNodeRuntimeState {
   meta: Record<string, RuntimeValueState<unknown>>;
   props?: RuntimeValueState<Record<string, unknown>>;
+  metaDependencies?: ScopeDependencySet;
+  propsDependencies?: ScopeDependencySet;
   resolvedMeta?: ResolvedNodeMeta;
   resolvedProps?: Readonly<Record<string, unknown>>;
   _staticPropsResult?: ResolvedNodeProps;

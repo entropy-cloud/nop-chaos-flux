@@ -36,6 +36,7 @@ import {
   createApiRequestExecutor,
   executeApiObject
 } from './request-runtime';
+import { sortRendererPlugins } from './runtime-plugins';
 import { createSchemaCompiler } from './schema-compiler';
 import { createScopeRef, createScopeStore, toRecord } from './scope';
 import { validateRule } from './validation-runtime';
@@ -48,6 +49,7 @@ export { createActionScope } from './action-scope';
 export { createComponentHandleRegistry } from './component-handle-registry';
 export { createFormComponentHandle } from './form-component-handle';
 export { createApiCacheStore, resolveCacheKey } from './api-cache';
+export { scopeChangeHitsDependencies } from './scope-change';
 export {
   executeApiObject,
   prepareApiData,
@@ -63,11 +65,12 @@ export function createRendererRuntime(input: {
   pageStore?: PageStoreApi;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }): RendererRuntime {
+  const plugins = sortRendererPlugins(input.plugins);
   const expressionCompiler = input.expressionCompiler ?? createExpressionCompiler(createFormulaCompiler());
   const schemaCompiler = input.schemaCompiler ?? createSchemaCompiler({
     registry: input.registry,
     expressionCompiler,
-    plugins: input.plugins
+    plugins
   });
   const envRef: { current: RendererEnv } = {
     current: input.env
@@ -220,7 +223,7 @@ export function createRendererRuntime(input: {
 
   const { dispatch } = createActionDispatcher({
     getEnv,
-    plugins: input.plugins,
+    plugins,
     onActionError: input.onActionError,
     evaluate,
     executeAjaxAction,
@@ -248,7 +251,7 @@ export function createRendererRuntime(input: {
     },
     expressionCompiler,
     schemaCompiler,
-    plugins: input.plugins ?? [],
+    plugins,
     compile(schema) {
       return schemaCompiler.compile(schema);
     },

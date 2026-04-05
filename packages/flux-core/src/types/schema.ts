@@ -10,7 +10,7 @@ export type SchemaPath = string;
 
 export type ValidationTrigger = 'change' | 'blur' | 'submit';
 export type ValidationVisibilityTrigger = 'touched' | 'dirty' | 'visited' | 'submit';
-export type ScopePolicy = 'inherit' | 'isolate' | 'page' | 'form' | 'dialog' | 'row';
+export type ScopePolicy = 'inherit' | 'form';
 export type SchemaFieldKind = 'meta' | 'prop' | 'region' | 'value-or-region' | 'event' | 'ignored';
 export type FrameWrapMode = boolean | 'label' | 'group' | 'none';
 

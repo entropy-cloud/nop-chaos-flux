@@ -108,6 +108,9 @@ This directory is the default home for reusable validation helpers.
   - request execution
   - adaptor application
   - request cancellation plumbing
+- focused helpers such as `packages/flux-runtime/src/scope-change.ts` and `packages/flux-runtime/src/runtime-plugins.ts`
+  - changed-path dependency matching
+  - plugin ordering and similar hot-path coordination helpers
 
 ### Scope and state plumbing
 
@@ -199,10 +202,15 @@ No runtime entry file should become the default home for new behavior.
 
 When in doubt, prefer one more focused module over growing a general-purpose file.
 
+Current rule for plugin ordering:
+
+- sort renderer plugins once at runtime creation
+- lower `priority` runs first
+- equal priorities preserve original declaration order
+
 ## Related Documents
 
 - `docs/references/terminology.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/flux-core.md`
-

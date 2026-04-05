@@ -24,13 +24,6 @@ export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
   collectRules?(schema: S, ctx: ValidationCollectContext<S>): ValidationRule[];
 }
 
-export interface ResolvePropsArgs<S extends BaseSchema = BaseSchema> {
-  schema: S;
-  node: CompiledSchemaNode<S>;
-  scope: ScopeRef;
-  runtime: RendererRuntime;
-}
-
 export interface RendererHelpers {
   render: (input: RenderNodeInput, options?: RenderFragmentOptions) => ReactNode;
   evaluate: <T = unknown>(target: unknown, scope?: ScopeRef) => T;
@@ -57,11 +50,9 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   component: ComponentType<RendererComponentProps<any>>;
   regions?: readonly string[];
   fields?: readonly SchemaFieldRule[];
-  memo?: boolean;
   scopePolicy?: ScopePolicy;
   actionScopePolicy?: 'inherit' | 'new';
   componentRegistryPolicy?: 'inherit' | 'new';
-  resolveProps?: (args: ResolvePropsArgs<S>) => Record<string, unknown>;
   validation?: ValidationContributor<S>;
   wrap?: boolean;
 }

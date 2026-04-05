@@ -46,23 +46,33 @@ describe('ScopeRef.merge', () => {
 
   it('triggers store update when at least one value changes', () => {
     const scope = createTestScope({ a: 1, b: 2 });
-    const listener = vi.fn();
+    const listener = vi.fn<(change: any) => void>();
     scope.store?.subscribe(listener);
 
     scope.merge({ a: 1, b: 99 });
 
     expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith({
+      paths: ['a', 'b'],
+      sourceScopeId: 'test-scope',
+      kind: 'merge'
+    });
     expect(scope.readOwn()).toEqual({ a: 1, b: 99 });
   });
 
   it('triggers store update when a new key is added', () => {
     const scope = createTestScope({ a: 1 });
-    const listener = vi.fn();
+    const listener = vi.fn<(change: any) => void>();
     scope.store?.subscribe(listener);
 
     scope.merge({ b: 2 });
 
     expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith({
+      paths: ['b'],
+      sourceScopeId: 'test-scope',
+      kind: 'merge'
+    });
     expect(scope.readOwn()).toEqual({ a: 1, b: 2 });
   });
 
@@ -115,5 +125,36 @@ describe('ScopeRef.merge', () => {
     scope.merge({ a: obj });
 
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('reports precise update paths for scope.update', () => {
+    const scope = createTestScope({ user: { name: 'Alice' } });
+    const listener = vi.fn<(change: any) => void>();
+    scope.store?.subscribe(listener);
+
+    scope.update('user.name', 'Bob');
+
+    expect(listener).toHaveBeenCalledWith({
+      paths: ['user.name'],
+      sourceScopeId: 'test-scope',
+      kind: 'update'
+    });
+    expect(scope.get('user.name')).toBe('Bob');
+  });
+
+  it('forwards parent scope changes through composite stores', () => {
+    const parent = createTestScope({ user: { name: 'Alice' } });
+    const child = createChildScope(parent, { local: true });
+    const listener = vi.fn<(change: any) => void>();
+    child.store?.subscribe(listener);
+
+    parent.update('user.name', 'Bob');
+
+    expect(listener).toHaveBeenCalledWith({
+      paths: ['user.name'],
+      sourceScopeId: 'test-scope',
+      kind: 'update'
+    });
+    expect(child.get('user.name')).toBe('Bob');
   });
 });

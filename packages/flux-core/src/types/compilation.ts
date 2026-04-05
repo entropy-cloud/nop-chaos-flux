@@ -1,4 +1,4 @@
-import type { EvalContext, ScopeRef } from './scope';
+import type { EvalContext, ScopeDependencySet, ScopeRef } from './scope';
 import type { RendererEnv } from './renderer';
 
 export interface CompiledExpression<T = unknown> {
@@ -64,6 +64,7 @@ export interface LeafValueState<T = unknown> {
   kind: 'leaf-state';
   initialized: boolean;
   lastValue?: T;
+  dependencies?: ScopeDependencySet;
 }
 
 export interface ArrayValueState<T = unknown[]> {

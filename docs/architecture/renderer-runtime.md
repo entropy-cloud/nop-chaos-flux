@@ -43,6 +43,13 @@ Components that need one piece of state should not rerender for unrelated change
 
 Prefer selector-style reads over broad `scope.read()` access.
 
+Current runtime baseline now carries this one step further for compiled node resolution:
+
+- dynamic value execution records the scope paths it actually read
+- scope subscriptions carry `ScopeChange.paths`
+- `NodeRenderer` only re-runs `resolveNodeMeta()` / `resolveNodeProps()` when the incoming changed paths intersect the node's last dependency set
+- wildcard or broad-access reads remain conservatively invalidated on any scope change
+
 ### Compile once, execute many times
 
 Schema compilation should happen once per schema identity, while renders mostly resolve compiled nodes.

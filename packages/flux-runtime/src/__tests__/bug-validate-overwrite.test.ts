@@ -9,6 +9,7 @@ function createStubScope(): ScopeRef {
     parent: undefined as any,
     store: {
       getSnapshot: () => ({}),
+      getLastChange: () => ({ paths: ['*'], sourceScopeId: 'root', kind: 'replace' as const }),
       setSnapshot: () => {},
       subscribe: () => () => {}
     },
@@ -395,4 +396,3 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     expect(form.store.getState().errors['name']).toBeUndefined();
   });
 });
-

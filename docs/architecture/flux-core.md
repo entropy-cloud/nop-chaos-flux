@@ -220,6 +220,7 @@ interface EvalContext {
   resolve(path: string): unknown;
   has(path: string): boolean;
   materialize(): Record<string, any>;
+  collector?: ScopeDependencyCollector;
 }
 ```
 
@@ -227,12 +228,26 @@ Rules:
 
 - variable access should go through `resolve(path)`
 - `materialize()` exists for the minority case that needs a complete object view
+- when dynamic values are evaluated on the tracked path, runtime may attach a dependency collector so each successful run refreshes the actual path set it read
 
 ### `ScopeRef`
 
 Current exported contract:
 
 ```ts
+interface ScopeChange {
+  paths: readonly string[];
+  sourceScopeId?: string;
+  kind?: 'update' | 'merge' | 'replace';
+}
+
+interface ScopeStore<T = Record<string, any>> {
+  getSnapshot(): T;
+  getLastChange(): ScopeChange | undefined;
+  setSnapshot(next: T, change?: ScopeChange): void;
+  subscribe(listener: (change: ScopeChange) => void): () => void;
+}
+
 interface ScopeRef {
   id: string;
   path: string;
@@ -246,6 +261,13 @@ interface ScopeRef {
   update(path: string, value: unknown): void;
 }
 ```
+
+Current invalidation baseline:
+
+- scope writes report changed paths through `ScopeChange`
+- `update(path, value)` reports the exact path it wrote
+- `merge(data)` reports changed top-level keys and can conservatively fall back to `['*']` when enumeration is not trustworthy
+- composite child scopes preserve the original `sourceScopeId` when parent changes flow through
 
 Lookup preserves lexical shadowing:
 

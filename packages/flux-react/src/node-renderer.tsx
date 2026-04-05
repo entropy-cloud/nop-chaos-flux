@@ -10,9 +10,11 @@ import type {
   RendererComponentProps,
   ResolvedNodeMeta,
   ResolvedNodeProps,
+  ScopeChange,
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { mergeClassAliases, resolveClassAliases } from '@nop-chaos/flux-core';
+import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
 import {
   ActionScopeContext,
   ClassAliasesContext,
@@ -51,21 +53,29 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const nodeState = useMemo<CompiledNodeRuntimeState>(() => props.node.createRuntimeState(), [props.node]);
 
   const isStatic = props.node.flags.isStatic;
+  const getNodeResolution = () => ({
+    meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
+    resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
+  });
   const subscribe = isStatic
     ? (() => () => undefined)
-    : (props.scope.store?.subscribe ?? (() => () => undefined));
+    : ((listener: () => void) => props.scope.store?.subscribe((change: ScopeChange) => {
+      const metaHit = scopeChangeHitsDependencies(change, nodeState.metaDependencies);
+      const propsHit = scopeChangeHitsDependencies(change, nodeState.propsDependencies);
+
+      if (metaHit || propsHit) {
+        listener();
+      }
+    }) ?? (() => undefined));
   const getSnapshot = isStatic
     ? (() => null)
-    : (() => props.scope.read());
+    : (() => props.scope.store?.getLastChange() ?? null);
 
   const { meta, resolvedProps } = useSyncExternalStoreWithSelector(
     subscribe,
     getSnapshot,
     getSnapshot,
-    () => ({
-      meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
-      resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
-    }),
+    getNodeResolution,
     (prev: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps } | null, next: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps }) => {
       if (!prev) return false;
       return prev.meta === next.meta && prev.resolvedProps === next.resolvedProps;

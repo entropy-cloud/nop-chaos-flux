@@ -1,4 +1,4 @@
-import type { ApiObject, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ValidationError } from '@nop-chaos/flux-core';
+import type { ApiObject, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
 import {
   clampArrayIndex,
   clampInsertIndex,
@@ -103,6 +103,11 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   const submittingDelay = inputValue.submittingDelay ?? 0;
 
   let isSubmittingInternal = false;
+  let lastChange: ScopeChange = {
+    paths: ['*'],
+    sourceScopeId: formId,
+    kind: 'replace' as const
+  };
 
   const scope = createScopeRef({
     id: formId,
@@ -110,8 +115,16 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     parent: inputValue.parentScope,
     store: {
       getSnapshot: () => store.getState().values,
-      setSnapshot: (next) => store.setValues(next),
-      subscribe: (listener) => store.subscribe(listener)
+      getLastChange: () => lastChange,
+      setSnapshot: (next, change) => {
+        lastChange = change ?? {
+          paths: ['*'],
+          sourceScopeId: formId,
+          kind: 'replace'
+        };
+        store.setValues(next);
+      },
+      subscribe: (listener) => store.subscribe(() => listener(lastChange))
     },
     update: (path, value) => store.setValue(path, value)
   });

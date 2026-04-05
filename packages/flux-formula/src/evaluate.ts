@@ -12,6 +12,7 @@ import type {
   ValueEvaluationResult
 } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
+import { createScopeDependencyCollector } from './scope';
 
 function createEvalContext(scope: ScopeRef): EvalContext {
   let materialized: Record<string, any> | undefined;
@@ -107,9 +108,15 @@ function evaluateLeaf<T>(
     throw new Error(`Invalid runtime state for ${node.kind}`);
   }
 
-  const value = node.compiled.exec(context, env);
+  const { collector, finalize } = createScopeDependencyCollector();
+  const value = node.compiled.exec({
+    ...context,
+    collector
+  }, env);
+  const dependencies = finalize();
 
   if (stateNode.initialized && Object.is(stateNode.lastValue, value)) {
+    stateNode.dependencies = dependencies;
     return {
       value: stateNode.lastValue as T,
       changed: false,
@@ -119,6 +126,7 @@ function evaluateLeaf<T>(
 
   stateNode.initialized = true;
   stateNode.lastValue = value;
+  stateNode.dependencies = dependencies;
 
   return {
     value,
