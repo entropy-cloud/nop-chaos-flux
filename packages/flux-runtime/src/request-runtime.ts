@@ -1,5 +1,7 @@
-import type { ApiResponse, ExpressionCompiler, ApiObject, FormRuntime, RendererEnv, ScopeRef, SchemaValue } from '@nop-chaos/flux-core';
+import type { ApiResponse, CompiledExpression, ExpressionCompiler, ApiObject, FormRuntime, RendererEnv, ScopeRef, SchemaValue } from '@nop-chaos/flux-core';
 import { isPlainObject, setIn } from '@nop-chaos/flux-core';
+
+const adaptorExpressionCache = new WeakMap<ExpressionCompiler, Map<string, CompiledExpression<unknown>>>();
 
 function getPathValue(input: unknown, path: string): unknown {
   if (!path || input == null || typeof input !== 'object') {
@@ -23,6 +25,26 @@ function normalizeAdaptorSource(source: string): string {
   }
 
   return trimmed.replace(/;\s*$/, '').trim();
+}
+
+function getCachedAdaptorExpression<T = unknown>(expressionCompiler: ExpressionCompiler, source: string): CompiledExpression<T> {
+  let compilerCache = adaptorExpressionCache.get(expressionCompiler);
+
+  if (!compilerCache) {
+    compilerCache = new Map<string, CompiledExpression<unknown>>();
+    adaptorExpressionCache.set(expressionCompiler, compilerCache);
+  }
+
+  const normalizedSource = normalizeAdaptorSource(source);
+  const cached = compilerCache.get(normalizedSource);
+
+  if (cached) {
+    return cached as CompiledExpression<T>;
+  }
+
+  const compiled = expressionCompiler.formulaCompiler.compileExpression<T>(normalizedSource);
+  compilerCache.set(normalizedSource, compiled as CompiledExpression<unknown>);
+  return compiled;
 }
 
 function stableSerialize(value: unknown): string {
@@ -114,10 +136,22 @@ function createRequestKey(actionType: string, api: ApiObject, scope: ScopeRef, f
     actionType,
     api.method ?? 'get',
     api.url,
-    stableSerialize(api.params),
     stableSerialize(api.data),
     stableSerialize(api.headers)
   ].join(':');
+}
+
+export interface PreparedApiRequest {
+  request: ApiObject;
+  data: SchemaValue | undefined;
+  params: Record<string, unknown> | undefined;
+  finalUrl: string;
+}
+
+function normalizeParams(params: SchemaValue | undefined): Record<string, unknown> | undefined {
+  return isPlainObject(params)
+    ? (params as Record<string, unknown>)
+    : undefined;
 }
 
 export function extractScopeData(scope: ScopeRef, includeScope: '*' | string[] | undefined): Record<string, unknown> {
@@ -159,14 +193,34 @@ export function buildUrlWithParams(url: string, params: Record<string, unknown> 
   return `${url}${separator}${queryString}`;
 }
 
+function canonicalizeUrlWithParams(url: string, params: Record<string, unknown> | undefined): string {
+  if (!params || Object.keys(params).length === 0) {
+    return url;
+  }
+
+  const [baseUrl, existingQuery = ''] = url.split('?', 2);
+  const searchParams = new URLSearchParams(existingQuery);
+
+  for (const [key, value] of Object.entries(params)) {
+    searchParams.delete(key);
+
+    if (value !== undefined && value !== null) {
+      searchParams.append(key, String(value));
+    }
+  }
+
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+}
+
 export function prepareApiData(
   api: ApiObject,
   scope: ScopeRef
 ): { data: SchemaValue | undefined; params: Record<string, unknown> | undefined } {
   const extractedData = extractScopeData(scope, api.includeScope);
-  
+
   const explicitData = api.data;
-  
+
   let mergedData: SchemaValue | undefined;
   if (isPlainObject(explicitData)) {
     mergedData = { ...extractedData, ...(explicitData as Record<string, unknown>) } as SchemaValue;
@@ -176,11 +230,49 @@ export function prepareApiData(
     mergedData = extractedData as SchemaValue;
   }
 
-  const params = api.params && isPlainObject(api.params)
-    ? api.params as Record<string, unknown>
-    : undefined;
+  const params = normalizeParams(api.params);
 
   return { data: mergedData, params };
+}
+
+export function finalizeApiRequest(api: ApiObject): PreparedApiRequest {
+  const params = normalizeParams(api.params);
+  const finalUrl = canonicalizeUrlWithParams(api.url, params);
+
+  return {
+    request: {
+      ...api,
+      url: finalUrl,
+      params: undefined
+    },
+    data: api.data,
+    params,
+    finalUrl
+  };
+}
+
+export function materializeApiRequest(api: ApiObject, scope: ScopeRef): PreparedApiRequest {
+  const prepared = prepareApiData(api, scope);
+  const finalUrl = buildUrlWithParams(api.url, prepared.params);
+
+  return {
+    request: {
+      ...api,
+      url: finalUrl,
+      data: prepared.data,
+      params: prepared.params as SchemaValue | undefined
+    },
+    data: prepared.data,
+    params: prepared.params,
+    finalUrl
+  };
+}
+
+export function finalizeMaterializedApiRequest(api: ApiObject): PreparedApiRequest {
+  return finalizeApiRequest({
+    ...api,
+    params: api.params as SchemaValue | undefined
+  });
 }
 
 export function applyResponseDataPath(
@@ -214,7 +306,7 @@ export function applyRequestAdaptor(
     return api;
   }
 
-  const compiled = expressionCompiler.formulaCompiler.compileExpression<ApiObject>(normalizeAdaptorSource(api.requestAdaptor));
+  const compiled = getCachedAdaptorExpression<ApiObject>(expressionCompiler, api.requestAdaptor);
   const adapted = compiled.exec(
     {
       api,
@@ -239,7 +331,7 @@ export function applyResponseAdaptor(
     return responseData;
   }
 
-  const compiled = expressionCompiler.formulaCompiler.compileExpression(normalizeAdaptorSource(api.responseAdaptor));
+  const compiled = getCachedAdaptorExpression(expressionCompiler, api.responseAdaptor);
 
   return compiled.exec(
     {
@@ -252,6 +344,17 @@ export function applyResponseAdaptor(
   );
 }
 
+export function prepareApiRequestForExecution(
+  api: ApiObject,
+  scope: ScopeRef,
+  env: RendererEnv,
+  expressionCompiler: ExpressionCompiler
+): PreparedApiRequest {
+  const materializedRequest = materializeApiRequest(api, scope);
+  const adaptedApi = applyRequestAdaptor(expressionCompiler, materializedRequest.request, scope, env);
+  return finalizeMaterializedApiRequest(adaptedApi);
+}
+
 export async function executeApiObject(
   api: ApiObject,
   scope: ScopeRef,
@@ -259,14 +362,20 @@ export async function executeApiObject(
   expressionCompiler: ExpressionCompiler,
   options?: {
     signal?: AbortSignal;
+    evaluate?: <T = unknown>(target: unknown, scope: ScopeRef) => T;
+    preparedRequest?: PreparedApiRequest;
+    onPreparedRequest?: (api: ApiObject) => void;
     executor?: <T>(adaptedApi: ApiObject) => Promise<ApiResponse<T>>;
   }
 ): Promise<{ data: unknown; ok: boolean; status?: number }> {
-  const adaptedApi = applyRequestAdaptor(expressionCompiler, api, scope, env);
+  const resolvedApi = options?.evaluate ? options.evaluate<ApiObject>(api, scope) : api;
+  const preparedRequest = options?.preparedRequest ?? prepareApiRequestForExecution(resolvedApi, scope, env, expressionCompiler);
+  const executableApi = preparedRequest.request;
+  options?.onPreparedRequest?.(executableApi);
   const response = options?.executor
-    ? await options.executor(adaptedApi)
-    : await env.fetcher(adaptedApi, { scope, env, signal: options?.signal });
-  const adaptedData = applyResponseAdaptor(expressionCompiler, adaptedApi, response.data, scope, env);
+    ? await options.executor(executableApi)
+    : await env.fetcher(executableApi, { scope, env, signal: options?.signal });
+  const adaptedData = applyResponseAdaptor(expressionCompiler, executableApi, response.data, scope, env);
   return { data: adaptedData, ok: response.ok, status: response.status };
 }
 
@@ -281,8 +390,9 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv) {
     form?: FormRuntime,
     options?: { signal?: AbortSignal; interactionId?: string }
   ) {
+    const executableApi = finalizeApiRequest(api).request;
+    const requestKey = createRequestKey(actionType, executableApi, scope, form);
     const dedupStrategy = api.dedupStrategy ?? 'cancel-previous';
-    const requestKey = createRequestKey(actionType, api, scope, form);
     const previousController = activeControllers.get(requestKey);
     const previousPromise = activePromises.get(requestKey);
     const env = getEnv();
@@ -306,12 +416,12 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv) {
       }
     }
 
-    const requestPromise = env.fetcher<T>(api, {
-        scope,
-        env,
-        signal: controller.signal,
-        interactionId: options?.interactionId
-      });
+    const requestPromise = env.fetcher<T>(executableApi, {
+      scope,
+      env,
+      signal: controller.signal,
+      interactionId: options?.interactionId
+    });
 
     if (dedupStrategy !== 'parallel') {
       activeControllers.set(requestKey, controller);

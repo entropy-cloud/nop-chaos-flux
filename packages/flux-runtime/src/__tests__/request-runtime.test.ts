@@ -8,8 +8,11 @@ import {
   createApiRequestExecutor,
   extractScopeData,
   buildUrlWithParams,
-  prepareApiData
+  finalizeApiRequest,
+  prepareApiData,
+  prepareApiRequestForExecution
 } from '../request-runtime';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 function createTestScope(data: Record<string, any>): ScopeRef {
   return createScopeRef({
@@ -251,11 +254,87 @@ describe('prepareApiData', () => {
   });
 });
 
+describe('prepareApiRequestForExecution', () => {
+  it('merges includeScope, builds final url, and strips params from executable request', () => {
+    const scope = createTestScope({ token: 'abc', projectId: 7 });
+    const env = { fetcher: vi.fn(), notify: vi.fn() } as unknown as RendererEnv;
+    const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+
+    const prepared = prepareApiRequestForExecution(
+      {
+        url: '/api/tasks',
+        method: 'post',
+        includeScope: ['token'],
+        data: { projectId: 99 },
+        params: { page: 2, status: 'open' }
+      },
+      scope,
+      env,
+      expressionCompiler
+    );
+
+    expect(prepared.finalUrl).toBe('/api/tasks?page=2&status=open');
+    expect(prepared.data).toEqual({ token: 'abc', projectId: 99 });
+    expect(prepared.params).toEqual({ page: 2, status: 'open' });
+    expect(prepared.request).toMatchObject({
+      url: '/api/tasks?page=2&status=open',
+      method: 'post',
+      data: { token: 'abc', projectId: 99 }
+    });
+    expect(prepared.request.params).toBeUndefined();
+  });
+
+  it('rebuilds final url after requestAdaptor mutates params and data', () => {
+    const scope = createTestScope({ token: 'secure-token' });
+    const env = { fetcher: vi.fn(), notify: vi.fn() } as unknown as RendererEnv;
+    const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+
+    const prepared = prepareApiRequestForExecution(
+      {
+        url: '/api/users',
+        method: 'get',
+        params: { page: 1 },
+        requestAdaptor: 'return {params: {page: api.params.page, token: scope.token}, data: {query: scope.token}};'
+      },
+      scope,
+      env,
+      expressionCompiler
+    );
+
+    expect(prepared.finalUrl).toBe('/api/users?page=1&token=secure-token');
+    expect(prepared.request).toMatchObject({
+      url: '/api/users?page=1&token=secure-token',
+      method: 'get',
+      data: { query: 'secure-token' }
+    });
+    expect(prepared.request.params).toBeUndefined();
+  });
+});
+
+describe('finalizeApiRequest', () => {
+  it('uses final url instead of params in canonical executable request', () => {
+    const finalized = finalizeApiRequest({
+      url: '/api/items',
+      method: 'get',
+      params: { page: 3, filter: 'active' },
+      data: { q: 'demo' }
+    });
+
+    expect(finalized.finalUrl).toBe('/api/items?page=3&filter=active');
+    expect(finalized.request).toEqual({
+      url: '/api/items?page=3&filter=active',
+      method: 'get',
+      data: { q: 'demo' },
+      params: undefined
+    });
+  });
+});
+
 describe('createApiRequestExecutor', () => {
   it('treats different params as distinct requests', async () => {
     let resolveFirst: ((value: any) => void) | undefined;
     const fetcher = vi.fn((api: ApiObject) => new Promise((resolve) => {
-      if (api.params && (api.params as Record<string, unknown>).page === 1) {
+      if (api.url.includes('page=1')) {
         resolveFirst = resolve;
         return;
       }
@@ -313,7 +392,7 @@ describe('createApiRequestExecutor', () => {
   it('treats different params as distinct requests for ignore-new dedup strategy', async () => {
     let resolvePageOne: ((value: any) => void) | undefined;
     const fetcher = vi.fn((api: ApiObject) => new Promise((resolve) => {
-      if ((api.params as Record<string, unknown> | undefined)?.page === 1) {
+      if (api.url.includes('page=1')) {
         resolvePageOne = resolve;
         return;
       }
@@ -356,6 +435,35 @@ describe('createApiRequestExecutor', () => {
       params: { page: 1 },
       data: { filter: 'active' },
       headers: { 'x-mode': 'live' },
+      dedupStrategy: 'ignore-new'
+    }, scope);
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    release?.({ ok: true, status: 200, data: { ok: true } });
+
+    await expect(first).resolves.toMatchObject({ ok: true, data: { ok: true } });
+    await expect(second).resolves.toMatchObject({ ok: true, data: { ok: true } });
+  });
+
+  it('dedupes identical final executable requests after adaptor rewrites params into the url', async () => {
+    let release: ((value: any) => void) | undefined;
+    const fetcher = vi.fn(() => new Promise((resolve) => {
+      release = resolve;
+    }));
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+
+    const first = execute('ajax', {
+      url: '/api/items?page=1',
+      method: 'get',
+      dedupStrategy: 'ignore-new'
+    }, scope);
+    const second = execute('ajax', {
+      url: '/api/items',
+      method: 'get',
+      params: { page: 1 },
       dedupStrategy: 'ignore-new'
     }, scope);
 
@@ -480,5 +588,47 @@ describe('createDataSourceController', () => {
     expect(page.scope.get('payload')).toEqual({ value: 'cached' });
     expect(fetcher).toHaveBeenCalledTimes(1);
     controller.stop();
+  });
+
+  it('reuses cache for equivalent final executable requests after params canonicalization', async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      data: { value: 'cached' }
+    }));
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env: {
+        fetcher,
+        notify: vi.fn()
+      } as RendererEnv
+    });
+    const page = runtime.createPageRuntime({ page: 1 });
+    const first = runtime.createDataSourceController({
+      api: { url: '/api/cache?page=1', cacheTTL: 60_000 },
+      scope: page.scope,
+      dataPath: 'payload'
+    });
+    const second = runtime.createDataSourceController({
+      api: { url: '/api/cache', params: { page: 1 }, cacheTTL: 60_000 },
+      scope: page.scope,
+      dataPath: 'payload2'
+    });
+
+    first.start();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ value: 'cached' });
+    });
+
+    second.start();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload2')).toEqual({ value: 'cached' });
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    first.stop();
+    second.stop();
   });
 });
