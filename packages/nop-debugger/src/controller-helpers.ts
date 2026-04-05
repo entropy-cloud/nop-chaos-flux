@@ -74,6 +74,14 @@ export function formatActionResult(result: ActionResult | undefined) {
     return 'cancelled';
   }
 
+  if (result.skipped) {
+    return 'skipped';
+  }
+
+  if (result.timedOut) {
+    return 'timed out';
+  }
+
   return result.ok ? 'ok' : 'failed';
 }
 

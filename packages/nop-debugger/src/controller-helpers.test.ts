@@ -76,6 +76,8 @@ describe('controller helpers', () => {
     expect(formatErrorDetail({ code: 500 })).toBe('{"code":500}');
     expect(formatActionResult(undefined)).toBe('completed');
     expect(formatActionResult({ ok: false, cancelled: true })).toBe('cancelled');
+    expect(formatActionResult({ ok: true, skipped: true })).toBe('skipped');
+    expect(formatActionResult({ ok: false, timedOut: true })).toBe('timed out');
     expect(formatActionResult({ ok: true })).toBe('ok');
     expect(formatActionResult({ ok: false })).toBe('failed');
     expect(summarizeApi({ url: '/api/demo', method: 'post' })).toBe('POST /api/demo');
