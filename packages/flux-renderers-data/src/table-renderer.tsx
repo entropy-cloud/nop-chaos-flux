@@ -38,11 +38,14 @@ const EMPTY_TABLE_ROWS: Array<Record<string, any>> = [];
 
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const schemaProps = props.props as unknown as TableSchema;
+  const paginationOwnership = schemaProps.paginationOwnership ?? 'local';
+  const selectionOwnership = schemaProps.selectionOwnership ?? 'local';
   const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : EMPTY_TABLE_COLUMNS;
   const source = Array.isArray(schemaProps.source) ? (schemaProps.source as Array<Record<string, any>>) : EMPTY_TABLE_ROWS;
   const onSortChange = props.events.onSortChange;
   const onFilterChange = props.events.onFilterChange;
   const onPageChange = props.events.onPageChange;
+  const onSelectionChange = props.events.onSelectionChange;
   const helpers = props.helpers;
   const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: 'No data' });
   const headerContent = resolveRendererSlotContent(props, 'header');
@@ -51,9 +54,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   const [sortState, setSortState] = useState<SortState>({ column: '', direction: null });
   const [filterState, setFilterState] = useState<FilterState>({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(schemaProps.pagination?.pageSize ?? 10);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<Set<string>>(
+  const [localCurrentPage, setLocalCurrentPage] = useState(1);
+  const [localPageSize, setLocalPageSize] = useState(schemaProps.pagination?.pageSize ?? 10);
+  const [localSelectedRowKeys, setLocalSelectedRowKeys] = useState<Set<string>>(
     new Set(schemaProps.rowSelection?.selectedRowKeys ?? [])
   );
   const [expandedRowKeys, setExpandedRowKeys] = useState<Set<string>>(
@@ -66,6 +69,17 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const isStriped = schemaProps.stripe === true;
   const isBordered = schemaProps.bordered === true;
   const paginationEnabled = schemaProps.pagination?.enabled !== false;
+  const currentPage = paginationOwnership === 'controlled'
+    ? Math.max(1, Number(schemaProps.pagination?.currentPage ?? 1))
+    : localCurrentPage;
+  const pageSize = paginationOwnership === 'controlled'
+    ? Math.max(1, Number(schemaProps.pagination?.pageSize ?? 10))
+    : localPageSize;
+  const controlledSelectedRowKeys = useMemo(
+    () => new Set((schemaProps.rowSelection?.selectedRowKeys ?? []).map((key) => String(key))),
+    [schemaProps.rowSelection?.selectedRowKeys]
+  );
+  const selectedRowKeys = selectionOwnership === 'controlled' ? controlledSelectedRowKeys : localSelectedRowKeys;
 
   const handleSort = useCallback(
     (columnName: string) => {
@@ -132,7 +146,10 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   const handlePageChange = useCallback(
     (page: number) => {
-      setCurrentPage(page);
+      if (paginationOwnership === 'local') {
+        setLocalCurrentPage(page);
+      }
+
       onPageChange?.(
         null,
         {
@@ -140,13 +157,16 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         }
       );
     },
-    [pageSize, onPageChange, helpers]
+    [paginationOwnership, pageSize, onPageChange, helpers]
   );
 
   const handlePageSizeChange = useCallback(
     (newPageSize: number) => {
-      setPageSize(newPageSize);
-      setCurrentPage(1);
+      if (paginationOwnership === 'local') {
+        setLocalPageSize(newPageSize);
+        setLocalCurrentPage(1);
+      }
+
       onPageChange?.(
         null,
         {
@@ -154,35 +174,61 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         }
       );
     },
-    [onPageChange, helpers]
+    [paginationOwnership, onPageChange, helpers]
   );
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
+      const nextKeys = checked
+        ? new Set(source.map((r) => String(r.id ?? '')))
+        : new Set<string>();
+
       setAllSelected(checked);
-      if (checked) {
-        const allKeys = new Set(source.map((r) => String(r.id ?? '')));
-        setSelectedRowKeys(allKeys);
-      } else {
-        setSelectedRowKeys(new Set());
+      if (selectionOwnership === 'local') {
+        setLocalSelectedRowKeys(nextKeys);
+      }
+
+      onSelectionChange?.(
+        null,
+        {
+          scope: helpers.createScope({ selectedRowKeys: Array.from(nextKeys) }, { scopeKey: 'selection', pathSuffix: 'selection' }),
+        }
+      );
+
+      if (selectionOwnership === 'controlled') {
+        return;
       }
     },
-    [source]
+    [selectionOwnership, source, onSelectionChange, helpers]
   );
 
   const handleSelectRow = useCallback(
     (rowKey: string, checked: boolean) => {
-      setSelectedRowKeys((prev) => {
-        const newSet = new Set(prev);
-        if (checked) {
-          newSet.add(rowKey);
-        } else {
-          newSet.delete(rowKey);
+      const baseSet = selectionOwnership === 'controlled' ? selectedRowKeys : localSelectedRowKeys;
+      const newSet = new Set(baseSet);
+
+      if (checked) {
+        newSet.add(rowKey);
+      } else {
+        newSet.delete(rowKey);
+      }
+
+      if (selectionOwnership === 'local') {
+        setLocalSelectedRowKeys(newSet);
+      }
+
+      onSelectionChange?.(
+        null,
+        {
+          scope: helpers.createScope({ selectedRowKeys: Array.from(newSet) }, { scopeKey: 'selection', pathSuffix: 'selection' }),
         }
-        return newSet;
-      });
+      );
+
+      if (selectionOwnership === 'controlled') {
+        return;
+      }
     },
-    []
+    [helpers, localSelectedRowKeys, onSelectionChange, selectedRowKeys, selectionOwnership]
   );
 
   const handleToggleExpand = useCallback((rowKey: string) => {

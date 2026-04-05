@@ -15,6 +15,8 @@ export interface TableColumnSchema extends BaseSchema {
 
 export interface TableSchema extends BaseSchema {
   type: 'table';
+  paginationOwnership?: 'local' | 'controlled';
+  selectionOwnership?: 'local' | 'controlled';
   columns?: TableColumnSchema[];
   onRowClick?: BaseSchema;
   empty?: BaseSchema | BaseSchema[] | string;
@@ -24,6 +26,7 @@ export interface TableSchema extends BaseSchema {
   bordered?: boolean;
   pagination?: {
     enabled?: boolean;
+    currentPage?: number;
     pageSize?: number;
     pageSizeOptions?: number[];
     showSizeChanger?: boolean;
@@ -40,6 +43,7 @@ export interface TableSchema extends BaseSchema {
   onSortChange?: BaseSchema;
   onFilterChange?: BaseSchema;
   onPageChange?: BaseSchema;
+  onSelectionChange?: BaseSchema;
 }
 
 export * from './chart-schemas';

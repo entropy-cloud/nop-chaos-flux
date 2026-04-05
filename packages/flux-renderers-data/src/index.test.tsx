@@ -259,6 +259,210 @@ describe('dataRendererDefinitions', () => {
     expect(screen.getByText('Alice')).toBeTruthy();
   });
 
+  it('uses local pagination state by default', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columns: [{ label: 'Name', name: 'name' }],
+              source: [
+                { id: 1, name: 'Alice' },
+                { id: 2, name: 'Bob' },
+                { id: 3, name: 'Carol' }
+              ],
+              pagination: {
+                currentPage: 1,
+                pageSize: 1,
+                pageSizeOptions: [1]
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('Alice')).toBeTruthy();
+    expect(screen.queryByText('Bob')).toBeNull();
+
+    fireEvent.click(document.querySelector('[data-slot="table-pagination"] [aria-label="Go to next page"]')!);
+
+    await waitFor(() => {
+      expect(screen.getByText('Bob')).toBeTruthy();
+    });
+  });
+
+  it('uses controlled pagination when configured and waits for external prop updates', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    const controlledSchema = {
+      type: 'page',
+      body: [
+        {
+          type: 'table',
+          paginationOwnership: 'controlled',
+          onPageChange: {
+            action: 'setValue',
+            componentPath: 'pageState',
+            value: '${page}'
+          },
+          columns: [{ label: 'Name', name: 'name' }],
+          source: [
+            { id: 1, name: 'Alice' },
+            { id: 2, name: 'Bob' },
+            { id: 3, name: 'Carol' }
+          ],
+          pagination: {
+            currentPage: '${pageState || 1}',
+            pageSize: 1,
+            pageSizeOptions: [1]
+          }
+        }
+      ]
+    } as const;
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schema={controlledSchema}
+        data={{ pageState: 1 }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('Alice')).toBeTruthy();
+    expect(screen.queryByText('Bob')).toBeNull();
+
+    fireEvent.click(document.querySelector('[data-slot="table-pagination"] [aria-label="Go to next page"]')!);
+
+    expect(screen.getByText('Alice')).toBeTruthy();
+
+    rerender(
+      <SchemaRenderer
+        schema={controlledSchema}
+        data={{ pageState: 2 }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Bob')).toBeTruthy();
+    });
+  });
+
+  it('uses local row selection state by default', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              rowSelection: {
+                type: 'checkbox',
+                selectedRowKeys: []
+              },
+              columns: [{ label: 'Name', name: 'name' }],
+              source: [
+                { id: 1, name: 'Alice' },
+                { id: 2, name: 'Bob' }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const checkboxes = document.querySelectorAll('[data-slot="checkbox"]');
+    fireEvent.click(checkboxes[1]!);
+
+    await waitFor(() => {
+      expect(checkboxes[1]?.getAttribute('aria-checked')).toBe('true');
+    });
+  });
+
+  it('uses controlled row selection and waits for external prop updates', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    const controlledSchema = {
+      type: 'page',
+      body: [
+        {
+          type: 'table',
+          selectionOwnership: 'controlled',
+          rowSelection: {
+            type: 'checkbox',
+            selectedRowKeys: '${selectedKeys || []}'
+          },
+          columns: [{ label: 'Name', name: 'name' }],
+          source: [
+            { id: 1, name: 'Alice' },
+            { id: 2, name: 'Bob' }
+          ]
+        }
+      ]
+    } as const;
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schema={controlledSchema}
+        data={{ selectedKeys: [] }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const initialCheckboxes = document.querySelectorAll('[data-slot="checkbox"]');
+    fireEvent.click(initialCheckboxes[1]!);
+
+    expect(initialCheckboxes[1]?.getAttribute('aria-checked')).not.toBe('true');
+
+    rerender(
+      <SchemaRenderer
+        schema={controlledSchema}
+        data={{ selectedKeys: ['1'] }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      const updatedCheckboxes = document.querySelectorAll('[data-slot="checkbox"]');
+      expect(updatedCheckboxes[1]?.getAttribute('aria-checked')).toBe('true');
+    });
+  });
+
   it('renders schema-based column cells through compiled cell regions with row scope', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
