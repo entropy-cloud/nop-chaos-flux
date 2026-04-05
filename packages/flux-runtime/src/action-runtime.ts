@@ -3,6 +3,7 @@ import type {
   ActionMonitorPayload,
   ActionResult,
   ActionSchema,
+  CompiledRuntimeValue,
   ApiObject,
   ComponentHandle,
   RendererEnv,
@@ -17,6 +18,8 @@ interface ActionDispatcherInput {
   plugins?: RendererPlugin[];
   onActionError?: (error: unknown, ctx: ActionContext) => void;
   evaluate: <T = unknown>(target: unknown, scope: ScopeRef) => T;
+  compileValue: <T = unknown>(target: T) => CompiledRuntimeValue<T>;
+  evaluateCompiled: <T = unknown>(compiled: CompiledRuntimeValue<T>, scope: ScopeRef) => T;
   executeAjaxAction: (api: ApiObject, action: ActionSchema, ctx: ActionContext) => Promise<ActionResult>;
   submitFormAction: (api: ApiObject | undefined, action: ActionSchema, ctx: ActionContext) => Promise<ActionResult>;
   createDialogScope: (ctx: ActionContext) => ScopeRef;
@@ -91,9 +94,50 @@ function extractTopLevelActionPayload(action: ActionSchema): Record<string, unkn
   return Object.fromEntries(payloadEntries);
 }
 
-function evaluateActionArgs(action: ActionSchema, ctx: ActionContext, evaluate: <T = unknown>(target: unknown, scope: ScopeRef) => T) {
-  const payload = action.args ?? extractTopLevelActionPayload(action);
-  return payload ? evaluate<Record<string, unknown>>(payload, ctx.scope) : undefined;
+const topLevelPayloadCache = new WeakMap<ActionSchema, Record<string, unknown> | null>();
+
+function getTopLevelActionPayload(action: ActionSchema): Record<string, unknown> | undefined {
+  const cached = topLevelPayloadCache.get(action);
+
+  if (cached !== undefined) {
+    return cached ?? undefined;
+  }
+
+  const payload = extractTopLevelActionPayload(action);
+  topLevelPayloadCache.set(action, payload ?? null);
+  return payload;
+}
+
+const compiledValueCache = new WeakMap<object, CompiledRuntimeValue<unknown>>();
+
+function getCompiledValue<T = unknown>(
+  value: T,
+  compileValue: <R = unknown>(target: R) => CompiledRuntimeValue<R>
+): CompiledRuntimeValue<T> {
+  if (!value || typeof value !== 'object') {
+    return compileValue(value);
+  }
+
+  const cached = compiledValueCache.get(value as object);
+
+  if (cached) {
+    return cached as CompiledRuntimeValue<T>;
+  }
+
+  const compiled = compileValue(value);
+  compiledValueCache.set(value as object, compiled as CompiledRuntimeValue<unknown>);
+  return compiled;
+}
+
+function evaluateActionArgs(action: ActionSchema, ctx: ActionContext, input: ActionDispatcherInput) {
+  const payload = action.args ?? getTopLevelActionPayload(action);
+
+  if (!payload) {
+    return undefined;
+  }
+
+  const compiled = getCompiledValue(payload, input.compileValue);
+  return input.evaluateCompiled<Record<string, unknown>>(compiled, ctx.scope);
 }
 
 function normalizeActionResult(result: ActionResult | unknown): ActionResult {
@@ -185,12 +229,18 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
           );
         }
 
-        const api = input.evaluate<ApiObject>(action.api, ctx.scope);
-        input.getEnv().monitor?.onApiRequest?.({
-          api,
-          nodeId: ctx.node?.id,
-          path: ctx.node?.path
-        });
+        const api = action.api
+          ? input.evaluateCompiled<ApiObject>(getCompiledValue(action.api, input.compileValue), ctx.scope)
+          : undefined;
+
+        if (!api) {
+          return finishAction(
+            input,
+            { ...actionPayload, dispatchMode: 'built-in' },
+            startedAt,
+            { ok: false, error: new Error('Missing api in ajax action') }
+          );
+        }
 
         const result = await input.executeAjaxAction(api, action, ctx);
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
@@ -241,7 +291,9 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
           );
         }
 
-        const api = action.api ? input.evaluate<ApiObject>(action.api, ctx.scope) : undefined;
+        const api = action.api
+          ? input.evaluateCompiled<ApiObject>(getCompiledValue(action.api, input.compileValue), ctx.scope)
+          : undefined;
 
         if (api) {
           input.getEnv().monitor?.onApiRequest?.({
@@ -336,7 +388,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       );
     }
 
-    const payload = evaluateActionArgs(action, ctx, input.evaluate);
+    const payload = evaluateActionArgs(action, ctx, input);
     const result = normalizeActionResult(await handle.capabilities.invoke(method, payload, ctx));
     return finishAction(
       input,
@@ -372,7 +424,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       });
     }
 
-    const payload = evaluateActionArgs(action, ctx, input.evaluate);
+    const payload = evaluateActionArgs(action, ctx, input);
     const result = normalizeActionResult(await resolved.provider.invoke(resolved.method, payload, ctx));
     return finishAction(
       input,
