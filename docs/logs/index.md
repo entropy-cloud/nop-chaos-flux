@@ -62,6 +62,7 @@ When adding a new log entry for today:
 
 ### 2026-04
 
+- [04-06](2026/04-06.md) — frontend programming model closure, supporting-doc cleanup, and next runtime-alignment targets
 - [04-05](2026/04-05.md) — Flux core runtime architecture convergence planning
 - [04-04](2026/04-04.md) — plan closures (#10/#19/#21/#26/#30/#31), debugger Phase 4 search/snapshot enhancements, Flow Designer baseline cleanup, and complex-control convergence planning
 - [04-03](2026/04-03.md) — runtime follow-ups, UI package adoption, refactor closures, and a new general UI interaction review checklist

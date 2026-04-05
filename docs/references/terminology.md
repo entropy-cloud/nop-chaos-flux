@@ -271,12 +271,12 @@ Examples include:
 
 ## `DataSourceSchema`
 
-A renderer type that fetches data from an API and injects it into scope.
+A non-rendering source declaration that publishes one derived value into scope.
 
 It supports:
 
-- one-time or polling data fetching
-- `dataPath` for writing response data to scope
+- formula-backed or API-backed producers under one resource model
+- `dataPath` for publishing the derived value to scope
 - `stopWhen` expression for conditional polling termination
 - `includeScope` on its `ApiObject` for automatic scope variable injection
 
@@ -318,4 +318,3 @@ It allows later actions to consume outputs from earlier ones without inventing a
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
 - `docs/references/renderer-interfaces.md`
-

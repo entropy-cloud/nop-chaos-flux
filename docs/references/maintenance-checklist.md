@@ -107,7 +107,7 @@ Review:
 Examples also include:
 
 - adding namespaced host actions such as `designer:*`, `spreadsheet:*`, or `report-designer:*`
-- introducing or changing `xui:import` semantics
+- introducing or changing `xui:imports` semantics
 - changing action-scope resolution or imported namespace visibility
 
 ## 5. Page or dialog runtime changes
@@ -225,9 +225,9 @@ Review:
 
 Examples:
 
-- changes in future action-scope runtime infrastructure
+- changes in action-scope runtime infrastructure
 - changes in namespaced action resolution order
-- changes in `xui:import` loading, dedupe, namespace visibility, or policy checks
+- changes in `xui:imports` loading, dedupe, namespace visibility, or policy checks
 - changes in host bridge registration for complex components
 
 Review:
