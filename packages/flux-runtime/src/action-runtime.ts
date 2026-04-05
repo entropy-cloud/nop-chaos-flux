@@ -63,7 +63,7 @@ function isAbortError(error: unknown): boolean {
 
 function createActionKey(action: ActionSchema, ctx: ActionContext): string {
   const owner = ctx.node?.id ?? ctx.form?.id ?? ctx.scope.id;
-  const target = action.componentPath ?? action.componentId ?? action.formId ?? action.dialogId ?? action.api?.url ?? '';
+  const target = action.targetId ?? action.componentPath ?? action.componentId ?? action.formId ?? action.dialogId ?? action.api?.url ?? '';
   return `${owner}:${action.action}:${target}`;
 }
 
@@ -78,6 +78,7 @@ function buildActionMonitorPayload(action: ActionSchema, ctx: ActionContext) {
 
 const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
   'action',
+  'targetId',
   'componentId',
   'componentName',
   'componentPath',
@@ -304,14 +305,14 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         });
       }
       case 'refreshSource': {
-        const sourceId = action.componentId ?? action.componentPath;
+        const sourceId = action.targetId ?? action.componentId ?? action.componentPath;
 
         if (!sourceId) {
           return finishAction(
             input,
             { ...actionPayload, dispatchMode: 'built-in' },
             startedAt,
-            { ok: false, error: new Error('refreshSource requires componentId or componentPath') }
+            { ok: false, error: new Error('refreshSource requires targetId') }
           );
         }
 

@@ -4078,7 +4078,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'refreshSource',
-        componentId: 'total-source'
+        targetId: 'total-source'
       },
       {
         runtime,
@@ -4342,7 +4342,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'refreshSource',
-        componentId: 'missing-source'
+        targetId: 'missing-source'
       },
       {
         runtime,

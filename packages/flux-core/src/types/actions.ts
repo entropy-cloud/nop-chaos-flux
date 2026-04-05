@@ -7,6 +7,7 @@ export interface ActionSchema extends SchemaObject {
   action: string;
   _targetCid?: number;
   _targetTemplateId?: string;
+  targetId?: string;
   componentId?: string;
   componentName?: string;
   componentPath?: string;
@@ -118,6 +119,7 @@ export interface ActionMonitorPayload {
   dispatchMode?: 'built-in' | 'component' | 'namespace';
   namespace?: string;
   method?: string;
+  targetId?: string;
   sourceScopeId?: string;
   providerKind?: 'host' | 'import';
   componentId?: string;
