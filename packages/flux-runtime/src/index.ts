@@ -37,7 +37,7 @@ import {
   createApiRequestExecutor,
   executeApiObject
 } from './request-runtime';
-import { registerReaction } from './reaction-runtime';
+import { createRuntimeReactionRegistry } from './reaction-runtime';
 import { sortRendererPlugins } from './runtime-plugins';
 import { createSchemaCompiler } from './schema-compiler';
 import { createScopeRef, createScopeStore, toRecord } from './scope';
@@ -83,6 +83,7 @@ export function createRendererRuntime(input: {
   const apiCache = createApiCacheStore();
   const executeApiRequest = createApiRequestExecutor(getEnv);
   const sourceRegistryRef: { current?: ReturnType<typeof createRuntimeSourceRegistry> } = {};
+  const reactionRegistryRef: { current?: ReturnType<typeof createRuntimeReactionRegistry> } = {};
   const validationRegistry = createBuiltInValidationRegistry();
   let actionScopeCounter = 0;
   let componentRegistryCounter = 0;
@@ -203,14 +204,16 @@ export function createRendererRuntime(input: {
     });
   }
 
-  async function executeAjaxAction(api: ApiObject, action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
+  async function executeAjaxAction(api: ApiObject, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal): Promise<ActionResult> {
     let monitoredApi: ApiObject | undefined;
     const response = await executeApiObject(api, ctx.scope, getEnv(), expressionCompiler, {
+      signal,
       evaluate,
       onPreparedRequest: (preparedApi) => {
         monitoredApi = preparedApi;
       },
       executor: (adaptedApi) => executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
+        signal,
         interactionId: ctx.interactionId
       })
     });
@@ -271,7 +274,7 @@ export function createRendererRuntime(input: {
     evaluateCompiled,
     refreshDataSource: (inputValue) => runtime.refreshDataSource(inputValue),
     executeAjaxAction,
-    submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
+      submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
     runtime: {
       compile(schema) {
         return schemaCompiler.compile(schema);
@@ -355,8 +358,17 @@ export function createRendererRuntime(input: {
 
       return sourceRegistryRef.current.refreshDataSource(inputValue);
     },
-    registerReaction(inputValue) {
-      return registerReaction({
+    registerReaction(inputValue: {
+      id: string;
+      schema: import('@nop-chaos/flux-core').ReactionSchema;
+      scope: ScopeRef;
+      dispatch: (action: import('@nop-chaos/flux-core').ActionSchema | import('@nop-chaos/flux-core').ActionSchema[], ctx?: Partial<import('@nop-chaos/flux-core').ActionContext>) => Promise<import('@nop-chaos/flux-core').ActionResult>;
+    }) {
+      if (!reactionRegistryRef.current) {
+        throw new Error('Runtime reaction registry is not initialized yet');
+      }
+
+      return reactionRegistryRef.current.registerReaction({
         id: inputValue.id,
         runtime,
         scope: inputValue.scope,
@@ -371,6 +383,9 @@ export function createRendererRuntime(input: {
         }
       });
     },
+    getReactionDebugSnapshot() {
+      return reactionRegistryRef.current?.getDebugSnapshot() ?? { reactions: [] };
+    },
     createFormRuntime
   };
 
@@ -379,6 +394,7 @@ export function createRendererRuntime(input: {
     apiCache,
     executeApiRequest: (actionType, api, scope, options) => executeApiRequest(actionType, api, scope, undefined, options)
   });
+  reactionRegistryRef.current = createRuntimeReactionRegistry();
 
   runtimeRef.current = runtime;
 

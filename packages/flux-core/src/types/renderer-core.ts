@@ -31,6 +31,23 @@ export interface RendererHelpers {
   dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
 }
 
+export interface ReactionDebugEntry {
+  id: string;
+  scopeId: string;
+  watch: unknown;
+  when?: string;
+  immediate?: boolean;
+  debounce?: number;
+  once?: boolean;
+  disposed: boolean;
+  fireCount: number;
+  dependencies?: readonly string[];
+}
+
+export interface ReactionRegistryDebugSnapshot {
+  reactions: ReactionDebugEntry[];
+}
+
 export type RendererEventHandler = (event?: unknown, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
 
 export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
@@ -114,6 +131,7 @@ export interface RendererRuntime {
     scope: ScopeRef;
     dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
   }): { id: string; dispose(): void };
+  getReactionDebugSnapshot?(): ReactionRegistryDebugSnapshot;
   createFormRuntime(input: {
     id?: string;
     name?: string;
