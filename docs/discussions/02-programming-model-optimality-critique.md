@@ -450,3 +450,569 @@ TanStack Query 的查询缓存、去重、后台重试、失效传播机制与 F
 > - 当前讨论的评价对象始终是 core engine design；此前把问题表述成“评价对象被偷换”不成立。
 > - `Capability` 更准确地说是 authority / `ActionScope` 组织问题；action algebra 的不足不应直接归因于 primitive category 定义本身。
 > - 后续所有保留异议都必须附带可行的改进设计，不能停留在“证明不了最优”式的抽象反驳。
+
+---
+
+## 第 5 轮
+
+### 用户回答
+
+用户进一步补充了一个此前没有被充分纳入判断的前提条件：
+
+- 后端是 Java 服务端。
+- XML / JSON 转换、DSL Loader、结构装配、权限裁剪、i18n 等大量平台层工作在 Java 端完成。
+- 需要重新判断：这一前提是否会改变对 `docs/architecture/frontend-programming-model.md` “是否最优”的评价。
+
+### AI 整理
+
+这一轮的关键不是“后端语言偏好”，而是**系统总体分层是否会改变前端 core programming model 的最优解**。
+
+如果 Java 服务端已经承担：
+
+- final schema 装配
+- XML / JSON 双向转换
+- 权限裁剪与 feature 结构裁剪
+- i18n 文本替换
+- profile / inheritance / metaprogramming 变换
+
+那么前端 `Flux` 的最优目标就不再是“尽量做成一个更强的统一前端程序运行时”，而更可能是：
+
+- 一个更窄的 final-model runtime
+- 一个更稳定、更语言中立的 DSL VM
+- 一个与 Java loader 共享清晰 JSON / DTO 契约的 execution engine
+
+### AI 分析
+
+#### 影响一：`Final Execution Schema` 假设在 Nop 里更成立，而不是更弱
+
+此前对 `Final Execution Schema` 的质疑，更适合 generic low-code 框架语境，不完全适合 Nop 当前架构。
+
+现有文档已经多次明确：
+
+- `docs/discussions/01-core-design-clarification.md:95-113`：XML / JSON 转换与很多结构变换在 Java 端 DSL Loader 完成。
+- `docs/articles/flux-design-introduction.md:350-429`：Nop 平台层在送入 Flux 前执行 i18n、权限裁剪、模块合并、编译期元编程与 XML/JSON 转换。
+- `docs/discussions/02-programming-model-optimality-critique.md:79-89`：此前围绕 loader 不充分的反驳已经撤回。
+
+因此，在 Nop 架构下，`Final Execution Schema` 不是抽象乐观假设，而是前后端分工的一部分。对这点估计不足，会把本应放在 Java loader 的复杂性错误地重新拉回前端 runtime。
+
+#### 影响二：前端公开模型应更强调语言中立性，而不是更强的前端运行时统一性
+
+既然后端是 Java，前后端之间真正稳定的共享面应当是：
+
+- 标准字段命名
+- 明确的 JSON / DTO 合同
+- 可分析、可诊断的 declarative schema 与 action
+- 少量稳定 primitive
+
+这会强化当前文档的若干主张：
+
+- `Value` / `Resource` / `Reaction` / `Capability` / `Host Projection` 继续保持职责分离
+- `Schema-visible Scope` 不进入 imperative object / bridge / controller
+- effect 仍然只通过 `Capability` 发生
+- 运行时不应为了前端 convenience 重新发明一套厚重的 runtime object protocol
+
+换言之，Java backend 的存在会提高“更窄、更稳定、更语言中立”的设计价值，降低“更强的前端统一 runtime 图模型”的必要性。
+
+#### 影响三：SSR / hydration 不再适合作为 primitive 设计的主导目标
+
+在 React / Node 全栈语境里，SSR / hydration 很容易被提升为顶层目标。
+
+但在 Nop 里，后端主体系是 Java，这意味着：
+
+- SSR 可以是宿主集成能力
+- server-side pre-render 可以存在
+- loader 可以运行在 server / pre-render infrastructure
+- 但前端 core primitive 不应为了适应 `RSC` / hydration-first 叙事而重构
+
+因此，先前把 SSR / hydration readiness 视为“下一代前端低代码框架必须内建的一等原语驱动力”，这个判断在 Nop 架构下需要降权。它仍然重要，但更像 host integration concern，而不是 primitive redesign 的首要依据。
+
+#### 影响四：协作 / patch / version 更应先表述为 host protocol + backend contract，而不是 core primitive 压力
+
+Java 服务端天然更适合承接：
+
+- 文档版本
+- patch DTO 校验
+- 并发控制
+- 持久化
+- 审计与回滚
+
+因此，在 Nop 的真实架构里，更合理的补强方向不是把 collaboration 提升成新的 core primitive，而是：
+
+- 保持 `Host Projection` 只读
+- 通过 `Capability` 写回
+- 但把 projection side 的 patch / version feed 契约写得更明确
+
+这说明此前分析中的“统一 `Binding` + patch-driven collaborative host”那部分并非完全无价值，但更适合下沉为 host/runtime 边界补强，而不是上升为替换整套 primitive closure 的理由。
+
+#### 修正后的判断
+
+在 generic next-generation low-code runtime 语境里，一个更强的 staged reactive model 仍然有吸引力。
+
+但在 Nop 这个**Java loader 主导**、前端被明确收敛为 final-model runtime 的体系里，判断需要修正为：
+
+- `docs/architecture/frontend-programming-model.md` 更接近正确方向。
+- 先前提出的替代方案不应被视为新的 baseline。
+- 它更适合被降格为“边界补强素材来源”，只保留少数仍然对 Nop 有价值的点，例如：
+  - 更硬的 `dynamic-renderer` / composition boundary wording
+  - 更明确的 multi-surface / multi-runtime boundary wording
+  - 更清楚的 projection patch / version feed contract
+
+### 待澄清问题
+
+1. 是否需要在 `docs/architecture/frontend-programming-model.md` 中显式增加对 Java loader / Nop 平台层的 cross-reference，避免未来再次按 Node/SSR-first 前提误判？
+2. 是否应把替代方案里仍有价值的 3 个补强点拆成更窄的 follow-up docs，而不是继续讨论整套 primitive replacement？
+
+---
+
+## 第 6 轮
+
+### 用户回答
+
+用户补充了一个更底层的设计准则，并要求后续判断始终以 DSL 层语义是否保持渐进演化为核心标准。要点如下：
+
+- 系统设计不应从各种业务场景 / 业务需求中提取抽象；传统那种按业务场景归纳概念的抽象方式本身就是错的。
+- 设计必须是渐进式的：在 DSL 层面必须允许从简单到复杂的演化；如果一个简单需求已经有最直观最简单的表达，那么需求变复杂后，这个简单表达不能被推翻。
+- 对 `Value` / `Resource` 的直觉应回到“组件只消费内存中的值，不关心值的来源；值变动后触发重新渲染或后续动作”。这些值由 store 统一管理，并形成词法作用域可见的树。
+- `attrName: attrValue` 中，`attrValue` 可以是静态值、表达式值、动态 API 拉取到的值、或动态函数执行得到的值。
+- `data-source` 的本质不是另一类完全不同的值，而是“把一个动态值命名后注册到 scope 中”，并顺带提供 `status` / `error` / 事务态等外围监控信息。没有 `dataPath` 时，通过 `name` 就自动完成注册；`dataPath` 更像额外的复制/投影机制。
+- 也可以把动态值机制直接内嵌到某个 `attrValue` 上，但这样会失去精细的状态、错误、刷新、定向操作能力，因为它没有被命名。
+- 在结构 DSL 层面，可以直接给节点增加 `when` 表达式来做条件选择，也可以有 `type:loop` 这种循环节点负责循环渲染。
+- `dynamic-render` 本身不一定有问题；需要重点考虑的是：任何调用 API 的地方在执行层本质上都像 action 调用，因此需要考虑它与 `ActionScope` 函数调用、远程 API 调用之间是否应该复用同一执行逻辑，甚至是否应进一步统一到某种更一般的 action 抽象或 DAG 编排上。
+
+### AI 整理
+
+这一轮把评判标准从“primitive 是否足够优雅”进一步压到了更硬的一层：
+
+> 任何架构判断都必须先看 DSL 层是否保持了从简单到复杂的稳定语义演化，而不是先看 runtime 内部是否实现得整齐。
+
+这个标准非常重要，因为它会直接改变对若干设计分歧的判断方式：
+
+- 不再先问 `Value` / `Resource` 在 runtime ontology 上是否应该彻底合并。
+- 而是先问：在 DSL 层，简单值、表达式值、匿名动态值、可命名动态值，是否能构成一条连续、可提升、但不破坏已有简单写法的演化路径。
+
+### AI 分析
+
+#### 结论一：最核心的抽象单位应当是“可见语义的渐进演化”，而不是“按业务场景归纳能力类别”
+
+这一点我认同，而且它会强化当前文档中的 primitive closure 方向，同时约束它的写法。
+
+更准确地说：
+
+- 不应该从“表单场景需要什么、表格场景需要什么、设计器场景需要什么”出发发明新概念。
+- 应该从“DSL 作者最先看到的简单表达是什么；当需求变复杂时，是否只是显式提升，而不是改写原有世界观”出发设计概念。
+
+这意味着，一个设计即使 runtime 内部非常漂亮，只要它让 DSL 从简单到复杂时发生概念断裂，它就不是好设计。
+
+#### 结论二：`Value` / `Resource` 的正确理解应分成“消费视角”和“生产视角”
+
+用户给出的直觉很重要：对 renderer / component 的消费视角来说，前端只是在消费内存中的值，并不关心值来自：
+
+- 字面量
+- 表达式
+- API 拉取
+- 动态函数
+- 其他动态机制
+
+这个消费视角在 DSL 层必须保持稳定。
+
+但在生产侧，仍然需要区分：
+
+- 一个值是否只是临时求值结果
+- 还是一个需要被命名、被追踪状态、被刷新、被显式操作的动态值实体
+
+因此，一个更贴近当前体系、又满足“渐进演化”原则的表达应是：
+
+- `Value` 是消费侧统一语义：字段读取的是值。
+- `data-source` / `Resource` 是生产侧提升语义：当一个动态值需要具名、可观测、可刷新、可定向操作时，把它提升为一个被注册到 scope 的命名动态值。
+
+这样理解后，`Value` / `Resource` 不是在 DSL 层彼此竞争的两种世界观，而是同一条演化路径上的两个层次：
+
+1. 最简单：静态值
+2. 其次：表达式值
+3. 再进一步：匿名动态值
+4. 需要可操作性时：具名 `data-source`
+
+这里真正需要补强的是文档对这条“promotion path”的明确描述，而不是急于改 primitive taxonomy。
+
+#### 结论三：`data-source` 的本质确实更接近“命名后的动态值注册”，但 `dataPath` 仍需严格界定为投影还是第二权威写点
+
+用户这里提出的判断我大体认同：`data-source` 的核心不是“另一类渲染节点”，而是：
+
+- 给动态值一个名字
+- 把它注册进 scope
+- 暴露状态和错误等附属信息
+- 允许后续刷新、失效、定向操作
+
+这比单纯把它理解成“远程请求节点”要准确得多。
+
+同时，`dataPath` 作为额外复制/投影机制的说法也有启发性，但这里必须补一条硬约束：
+
+- 从 DSL authoring 角度，可以把 `dataPath` 看成额外投影。
+- 但从 runtime ownership 角度，不能把它变成第二个独立权威写入点。
+
+更稳妥的说法应当是：
+
+- `name` 定义被操作、被识别的动态值身份。
+- 默认情况下，它也定义默认注册路径。
+- `dataPath` 若存在，最好被定义为运行时维护的额外只读投影 / alias / projection，而不是另一个可独立写入的业务值根。
+
+否则 DSL 虽然表面简化了，但 runtime 会失去“一个动态值只有一个权威来源”的可诊断性。
+
+#### 结论四：允许“匿名动态值”是对的，但它应该被明确定位为低能力等级写法
+
+用户提出：`attrValue` 本身也可以内嵌动态 API 拉取或动态函数值；只是没有名字时，就会失去精细的 `status` / `error` / `refresh` / targeted control。
+
+这个判断我认同，而且它非常符合“渐进演化”原则。
+
+更好的表述是：
+
+- 匿名动态值可以作为 DSL 的简写层。
+- 它适合只关心“拿到值就渲染”的简单场景。
+- 一旦需要可观测状态、重试、刷新、错误分支、跨节点复用、或外部 action 定向操作，就应提升为具名 `data-source`。
+
+这比“一开始就要求所有动态值都写成具名 data-source”更符合 DSL 的自然学习路径。
+
+#### 结论五：`when` 和 `loop` 应作为比 `dynamic-renderer` 更基础的结构 DSL，`dynamic-renderer` 保持窄边界即可
+
+用户这里的判断也是对的。
+
+对于普通结构表达，最自然的 DSL 层演化应当是：
+
+- `when`：条件出现 / 条件替换
+- `loop`：循环展开 / collection rendering
+- `dynamic-renderer`：只有在确实需要动态加载外部 fragment、远程 schema、或宿主延迟组装片段时才使用
+
+也就是说：
+
+- `dynamic-renderer` 不是错。
+- 真正的问题是不要让它吞掉本该由更简单、更基础的结构 DSL 表达的 `when` / `loop` 语义。
+
+这和前一轮“Java loader 主导”的判断并不冲突：
+
+- 能在 loader 解决的结构装配仍然前移。
+- 留到 runtime 的结构变化，也应先用最简单的 DSL 结构节点表达，而不是先上重型动态加载机制。
+
+#### 结论六：`api` 调用、`ActionScope` 函数调用、`data-source` producer 可以共享执行底座，但不应过早统一成同一种 authoring DSL
+
+用户提出的方向非常值得保留：
+
+- 远程 API 调用
+- namespaced action 调用
+- 具名动态值的 producer 执行
+
+在执行层确实都像“一个可取消、可超时、可重试、可追踪的 operation”。
+
+因此，更合理的架构不是让它们各长一套 runtime，而是：
+
+- 底层共享同一个 operation execution substrate
+- 上层 authoring 仍然保留不同 DSL 语义
+
+建议把三层区别说清楚：
+
+1. `Action`：一次 effect dispatch / control flow
+2. `data-source`：一个具名动态值的注册与生命周期管理
+3. `ApiObject`：底层 transport / adaptor contract
+
+这三者在 runtime 可以共享：
+
+- timeout
+- cancellation
+- retry
+- dedup
+- monitor / tracing
+- structured result
+
+但 DSL 层不必一开始就强行统一成一个“大而全”的 DAG 语言。
+
+更符合渐进原则的路径应是：
+
+1. 单步 action
+2. `then` / `onError`
+3. `parallel` / `sequence`
+4. 只有在确实出现复杂依赖图 authoring 压力时，才提升到显式 DAG
+
+同理，`data-source` 也不应被动作编排 DSL 吞掉，因为它除了“执行一次 operation”之外，还承担了“注册一个具名动态值”这一更稳定的 DSL 角色。
+
+### 待澄清问题
+
+1. 对 `name + dataPath`，你更倾向于：`dataPath` 是只读投影 / alias，还是允许它成为第二个完整注册路径？
+2. 对匿名动态值，你更倾向于先作为解释层概念存在，还是希望尽快给出明确的 DSL 语法形态？
+4. 对结构 DSL，你更偏向于 `when` 作为普通节点字段、`loop` 作为专用节点类型，还是两者都做成 wrapper node 以便统一编译？
+
+---
+
+## 第 8 轮
+
+### 用户回答
+
+用户进一步确认并补充如下：
+
+- 对 `data-source` 的特殊发布语义，选择 `mergeToScope: true`。
+- `when` 在内部实现时可以 lowering 成一个 wrap 结构；这属于编译 / runtime 内部组织问题，不必强迫外部 DSL 也写成 wrapper node。
+- 在记录 discussion 之后，需要根据当前讨论结论回头修正 `docs/analysis/frontend-programming-model-staged-reactive-alternative.md`，并重新判断其中原先提出的整套设计现在是否还合适。
+
+### AI 整理
+
+这一轮实际上完成了三个关键收口：
+
+1. `data-source` 的 authoring 形态正式收敛为 `name` 为主，`mergeToScope: true` 作为唯一明确的特殊发布扩展。
+2. `when` 的 DSL 形态继续保持“节点属性”更自然，而编译后是否转成 wrapper 是内部实现自由度。
+3. 需要把先前提出的 staged-reactive alternative 从“潜在替代 baseline”重新降格评估为“分析性备选”，只保留仍然有价值的窄结论。
+
+### AI 分析
+
+#### 结论一：`mergeToScope: true` 现在是比 `dataPath` 更合适的唯一特殊发布语义
+
+在前几轮讨论后，这一点已经足够明确：
+
+- 新 DSL 的正常路径应当只有 `name`
+- `name` 同时承担资源身份与默认注册路径
+- `dataPath` 不再适合作为主设计继续扩展
+
+唯一需要单独保留的特殊情况是：
+
+- 结果是 object / map
+- 希望把结果顶层字段浅合并到当前 scope
+
+因此 `mergeToScope: true` 比 `publishMode: 'merge-scope'` 更合适，因为：
+
+- 它只表达一个非常具体的特例
+- 它不会重新引入一个看似可无限扩展的发布模式体系
+- 它更符合“简单 DSL 不为未来假想复杂度预留过多形态”的原则
+
+推荐语义应固定为：
+
+1. `name` 仍然是资源身份
+2. 默认仍注册 `${name}`
+3. `mergeToScope: true` 时，若结果为 object，则其顶层字段额外浅合并进当前 scope
+4. 这不是第二个独立权威写点，而是一次额外投影/灌入语义
+
+#### 结论二：`when` 的正确分层是“外部属性 + 内部 wrapper lowering”
+
+这也是一个很清晰的收口：
+
+- DSL authoring 上，`when` 继续做属性更自然
+- 编译器 / runtime 内部完全可以把它 lowering 成一个 wrapper-like operator
+
+这说明此前围绕 `when` 是否必须成为独立结构 primitive 的争论，其实混淆了两层：
+
+- DSL 形态
+- 内部执行形态
+
+更合理的结论是：
+
+- 外部 DSL 优先自然表达
+- 内部实现优先统一编译
+
+所以，`when` 这个名字和形态都可以保留，只要继续坚持：
+
+- `visible` 控制显示
+- `when` 控制激活 / 结构存在性 / 生命周期
+
+#### 结论三：先前 staged-reactive alternative 中“大范围 primitive replacement”的部分现在看起来已经不合适
+
+经过第 5 至第 8 轮讨论，原替代方案里几块大的改造现在都显得过头了：
+
+1. 用 `Compiled Program` 替代 `Final Execution Schema` 作为新总纲，不再合适。
+原因：Nop 的 Java loader / platform layer 已经承担了大量装配工作，前端仍应以 final-model runtime 为主定位。
+
+2. 用统一 `Binding` primitive 替代 `Value` / `Resource` / `Host Projection`，不再合适。
+原因：这会削弱 DSL 从“静态值 -> 表达式值 -> 匿名动态值 -> 具名动态值”这条渐进演化路径的可见性。
+
+3. 把 `SSR` / hydration 作为 primitive redesign 的主驱动力，不再合适。
+原因：在 Nop 的 Java 服务端前提下，这不是最优先的前端 core 设计约束。
+
+4. 把大量结构问题优先上升为 `Composition Boundary` primitive，不再合适。
+原因：`when` / `loop` / `dynamic-renderer` 本身已经构成更自然的 DSL 分层，没必要先统一为更重的总括原语。
+
+因此，原替代方案不应再被当成新的潜在 baseline，而应改写成：
+
+- 对当前基线的反思性分析
+- 只保留少数仍有价值的补强建议
+
+#### 结论四：原替代方案中仍然保留价值的部分，只剩窄边界补强
+
+在当前讨论结论下，仍然值得保留的点主要有：
+
+- `dynamic-renderer` 边界需要更清晰的窄定义
+- 多 surface / 多 runtime 边界仍值得更明确建模，但未必要上升为新 primitive
+- host projection 一侧的 patch / version feed 契约仍值得补充
+- `action` / `data-source` / `api` 共享执行底座仍然是正确方向
+- `Action` 的执行语义应明确承认是 DAG，而 authoring surface 继续保持渐进写法
+
+### 待澄清问题
+
+1. 是否现在就把 `docs/analysis/frontend-programming-model-staged-reactive-alternative.md` 改写为“已收缩的反思性分析”，明确撤回其中的大范围 primitive replacement 主张？
+2. 在 architecture 文档真正修改前，是否还需要在 discussion 中单独补一轮最小 action DAG 语义规则？
+
+---
+
+## 第 7 轮
+
+### 用户回答
+
+用户进一步收敛了几个具体判断：
+
+- `dataPath` 不应作为一个普遍存在的“任意路径发布机制”。对于一般变量命名，`name` 就足够了，根本没有必要使用 `dataPath`。
+- 真正常见的特殊情况只有一种：如果动态值是一个 `Map` / object，可能希望把结果合并到当前 scope 中。这时需要一个专门属性来表达“合并到当前 scope”的语义；如果 `dataPath` 这个名字不合适，可以另设一个更窄的属性。
+- `when` 和 `loop` 若考虑可视化设计，适合作为 wrap 节点；若考虑 DSL 自然性，则 `loop` 更像节点，而 `when` 更像类似 `visible` 的属性。
+- 需要评估 `when` 这个命名是否会和现有其他语义冲突。
+- `Action` 很容易扩展：
+  - 基本 action 是单步
+  - 通过 `when` 控制是否执行
+  - 通过 `then` 构成串行执行
+  - 通过 `onError` 引入错误处理
+  - 通过 `parallel` 引入并行子分支
+  - 并行分支结束后自然合并到 `then`
+- 因此从执行结构上说，这本身天然就是一个 `DAG`，不需要人为把 “DAG” 当成另一个遥远阶段才考虑。
+
+### AI 整理
+
+这一轮让几个此前还模糊的方向进一步收紧了：
+
+1. `data-source` authoring 形态应强烈偏向 `name`，并把“合并到当前 scope”压缩成一个单独的窄特例，而不是保留宽泛的 `dataPath`。
+2. `when` / `loop` 的外部 DSL 应优先服从自然表达；编译后是否统一为 wrapper node 是内部实现问题。
+3. 对 `Action`，重点不应是“未来是否升级到 DAG”，而应承认：一旦引入 `when`、`then`、`onError`、`parallel`，其执行图语义事实上已经是一个 DAG，只是 authoring surface 仍然可以保持渐进和直观。
+
+### AI 分析
+
+#### 结论一：`dataPath` 最好退化为历史兼容字段，新 DSL 应以 `name` 为唯一正常路径
+
+这一点我现在基本认同。
+
+如果按 DSL 渐进演化原则看：
+
+- 最简单的具名动态值写法应当只有 `name`
+- 作者无需再同时思考“身份”和“发布路径”两套概念
+- 复杂性只应在确实存在特殊需求时才显式出现
+
+因此，更合理的方向是：
+
+- `name` = 动态值身份
+- `name` = 默认注册路径
+- `dataPath` 不再作为推荐主路径，只保留兼容语义
+
+这比继续把 `dataPath` 保持为通用路径映射能力更符合 DSL 的自然性。
+
+#### 结论二：特殊场景不应再依赖宽泛 `dataPath`，而应单独提供一个窄语义属性
+
+用户指出的真实特殊情况非常具体：
+
+- 动态值结果是 object / map
+- 希望把结果的顶层字段并入当前 scope
+
+这不是“任意路径发布”问题，而是“是否把结果浅合并到当前 scope”的问题。
+
+因此更合适的 DSL 不是保留一个过宽的 `dataPath`，而是给一个更窄、更可诊断的属性，例如：
+
+- `mergeToScope: true`
+- 或 `publishMode: 'named' | 'merge-scope'`
+
+我更倾向于后一种，因为它更便于未来扩展同时仍保持语义集中，例如：
+
+```json
+{
+  "type": "data-source",
+  "name": "userProfile",
+  "api": {
+    "url": "/api/profile"
+  },
+  "publishMode": "merge-scope"
+}
+```
+
+语义固定为：
+
+- `name` 仍然是资源身份
+- 默认仍然存在具名注册 `${userProfile}`
+- `merge-scope` 只是把 object 顶层字段额外浅合并进当前 scope
+- 这是一种特殊发布策略，不是第二个独立权威根
+
+如果担心 authoring 太重，也可以用更直接的 `mergeToScope: true`。两者中我略偏向 `mergeToScope: true`，因为它最直观，也最符合“只覆盖一个特殊情况”的目标。
+
+#### 结论三：`when` 这个命名可以保留，但必须把它定义成统一的 guard 概念，并和 `visible` 明确分层
+
+关于命名冲突，我的建议是：
+
+- 保留 `when`
+- 不要改成 `visibleWhen`、`renderWhen`、`mountWhen` 这一类更长名字
+
+原因不是因为它绝对不会冲突，而是因为它最容易形成 DSL 级统一语义：
+
+- 节点上的 `when`：该节点是否激活
+- action 上的 `when`：该 step 是否执行
+- reaction / effect 上的 `when`：该观察结果是否允许触发
+
+这样 `when` 在整个 DSL 中始终表达的是同一件事：
+
+> guard / activation condition
+
+真正需要严格区分的是：
+
+- `visible`：仅影响显示，不改变节点身份和生命周期
+- `when`：影响节点是否存在 / 是否激活，可能导致挂载、卸载、注册、dispose
+
+所以问题不在于 `when` 这个词能不能用，而在于文档必须把 `when` 与 `visible` 的生命周期语义明确切开。
+
+#### 结论四：外部 DSL 上，`loop` 更适合做节点，`when` 更适合做属性；编译后可统一降成 wrapper
+
+用户给出的区分我认同。
+
+如果从 DSL 自然性看：
+
+- `when` 更像给现有节点加 guard，因此适合做属性
+- `loop` 会引入 `item` / `index` / `key` / `empty` / child scope 等结构语义，因此更适合做节点
+
+这意味着最自然的 authoring shape 是：
+
+- `when` 作为普通节点字段
+- `type: 'loop'` 作为专用结构节点
+
+而在编译器内部：
+
+- 完全可以把两者都 lowering 成 wrapper-like structural operators
+
+这样可视化设计器和 runtime 实现都能获益，但不会把 authoring DSL 反向拉得不自然。
+
+#### 结论五：`Action` 不是“未来可能升级成 DAG”，而是现在这种递进式语法天然就已经是 DAG
+
+这一点是本轮最重要的修正。
+
+此前说“先 sequence，再 parallel，以后有压力再提升到 DAG”是不准确的，因为：
+
+- 单步 action 是一个节点
+- `when` 是节点 guard
+- `then` 是成功边
+- `onError` 是失败边
+- `parallel` 是一个 fan-out 聚合节点
+- `parallel` 结束后继续流入 `then`
+
+从执行图角度，这已经天然构成了一个 DAG。
+
+所以更准确的表述应当是：
+
+- DSL authoring surface 可以保持渐进和简单
+- 但 runtime / semantics 层应当明确承认它的执行模型本质上是 DAG
+
+这不是要求立刻引入复杂的显式 `steps + dependsOn` authoring 语法；而是要求文档不要把 DAG 说成一个遥远的未来阶段，仿佛只有显式图语法才算 DAG。
+
+#### 结论六：更好的分层方式是“DAG execution semantics + progressive authoring surface”
+
+结合这一轮和前一轮，`Action` 更合理的最终判断应当是：
+
+- authoring surface 保持渐进：单步、`when`、`then`、`onError`、`parallel`
+- runtime execution semantics 明确认定为 DAG
+- `ActionScope` / `Capability` 继续只解决 authority lookup，不吞掉 action graph semantics
+
+这样有几个好处：
+
+- 对 DSL 作者，仍然是直观写法，不必一开始学习图语言
+- 对 runtime，实现上可以统一处理调度、结果归并、错误传播、取消、超时、监控
+- 对后续扩展，如果真的需要显式步骤图，只是 authoring 上层新增一种更显式写法，而不是语义基础重做
+
+### 待澄清问题
+
+1. 对 `data-source` 的特殊发布语义，你更倾向于 `mergeToScope: true` 这种直接字段，还是 `publishMode: 'merge-scope'` 这种更可扩展但稍重的写法？
+2. 对 `when`，你是否同意把它定义为统一 guard 概念，并明确与 `visible` 做生命周期级别的区分？
+3. 对 `Action`，下一步是否应该在讨论层先明确一份“DAG 语义但渐进 authoring”的最小执行规则，而不是继续停留在字段直觉层？
+3. 对结构 DSL，你更偏向于 `when` 作为普通节点字段、`loop` 作为专用节点类型，还是两者都做成 wrapper node 以便统一编译？
