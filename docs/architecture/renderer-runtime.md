@@ -95,10 +95,13 @@ Current registry baseline:
 Current complex-state ownership baseline:
 
 - complex renderers no longer need to treat all interactive state as implicitly local
-- the first explicit ownership slice is `table.paginationOwnership`, currently supporting `local` and `controlled`
-- the second explicit ownership slice is `table.selectionOwnership`, also supporting `local` and `controlled`
+- the first explicit ownership slice is `table.paginationOwnership`, currently supporting `local`, `controlled`, and `scope`
+- the second explicit ownership slice is `table.selectionOwnership`, also supporting `local`, `controlled`, and `scope`
 - `local` keeps the renderer's internal state as the source of truth
 - `controlled` treats schema/runtime props as the source of truth and expects external updates after `onPageChange` / `onSelectionChange`
+- `scope` treats explicit current-scope paths as the source of truth through `paginationStatePath` and `selectionStatePath`; renderer interactions write back to those paths directly and re-read them reactively through the normal scope subscription model
+- table also now exposes the first instance capability baseline through its component handle: `component:refresh`, `component:getSelection`, and `component:setSelection`
+- `component:refresh` preserves the caller action context when delegating to `onRefresh`, so runtime-owned actions such as `refreshSource` still resolve against the correct scope-owned source registry entry
 - this baseline is still intentionally narrow; `sort`, `filter`, and `expand` are not yet moved into the same ownership model here
 
 ```text

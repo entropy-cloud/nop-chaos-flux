@@ -365,6 +365,8 @@ interface ActionSchema {
   parallel?: ActionSchema[];
   retry?: { times: number; delay?: number };
   timeout?: number;
+  then?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
   // existing fields remain valid
 }
 ```
@@ -402,9 +404,20 @@ Runtime compatibility note:
 - if `args` is omitted, namespaced actions also treat non-reserved top-level action fields as payload
 - that compatibility path keeps existing schemas such as `{ action: 'designer:addNode', nodeType: 'task' }` working while newer shared docs can still prefer `args`
 - `when` now acts as a structured precondition; a false result returns a normal `ActionResult` with `skipped: true`
-- `parallel` now runs child actions with first-cut `Promise.all` semantics and returns an aggregate `ActionResult` with `results`
+- `parallel` now runs child actions with `Promise.allSettled`-style aggregate semantics and returns an aggregate `ActionResult` with `results` in stable input order
 - `retry` now supports a first-cut fixed-count/fixed-delay policy and returns `attempts` on the final `ActionResult`
 - `timeout` now returns a structured `ActionResult` with `timedOut: true`; request-style actions cooperate with abort signals, while non-cancellable actions only time out structurally and may still finish in the background
+- `then` is the success branch and `onError` is the failure branch for chained actions
+
+### Chained Action Result Context
+
+For expressions evaluated inside `then` and `onError`, the reserved branch-result context is:
+
+- `result`: the triggering `ActionResult`
+- `error`: `result.error` for failure-branch evaluation
+- `prevResult`: the prior result in the current action chain when one exists
+
+These names are reserved for chained-action evaluation. They are not ordinary `ScopeRef` data and must not be modeled as ambient host or page scope fields.
 
 In practice this means both of the following are valid today:
 

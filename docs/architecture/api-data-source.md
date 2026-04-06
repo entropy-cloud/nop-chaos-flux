@@ -183,8 +183,11 @@ This is the key conceptual shift:
 ```typescript
 interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
-  dataPath: string;
+  statusPath?: string;
+  dataPath?: string;
   initialData?: SchemaValue;
+  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
+  mergeKey?: string;
 }
 
 interface FormulaDataSourceSchema extends BaseDataSourceSchema {
@@ -205,26 +208,47 @@ Rules:
 
 - a single `data-source` declares one producer kind
 - `formula` and `api` are mutually exclusive in the same node
-- explicit `dataPath` is the normative binding contract for the architecture baseline
-- formula-backed sources should require explicit `dataPath`
+- explicit publication binding is mandatory through `name` or `dataPath`
+- `name` is the preferred author-visible identity for refresh/targeting
+- `dataPath`, when present, overrides the published binding path
+- `statusPath`, when present, is the readonly status-summary path for loading/error/stale state
+- formula-backed sources should still require explicit binding through `name` or `dataPath`
 
 ### Binding Target
 
-`dataPath` is the normative binding target for a source value.
+`name` is the preferred identity and default publication target for a source value.
+
+`dataPath`, when present, overrides the published binding path.
+
+The authoritative publication contract is therefore:
+
+- `name`, when present and `dataPath` is absent
+- `dataPath`, when present
 
 Example:
 
 ```text
-scope[dataPath] = sourceValue
+scope[publishedPath] = sourceValue
 ```
 
-For API-backed sources, current code still supports the older merge-into-scope behavior when `dataPath` is omitted and the response is an object. That behavior is compatibility-oriented and outside the architecture baseline described by `docs/architecture/frontend-programming-model.md`. The normative design direction is explicit binding because it preserves the mental model of:
+Example publication combinations:
+
+| Configuration | Runtime target identity | Published path |
+| --- | --- | --- |
+| `name` only | `name` | `name` |
+| `name` + `dataPath` | `name` | `dataPath` |
+| legacy `id` + `dataPath` | `id` | `dataPath` |
+| anonymous `dataPath` only | none | `dataPath` |
+
+For API-backed sources, current code may still support older merge-into-scope behavior when no explicit target is declared and the response is an object. That behavior is compatibility-oriented and outside the architecture baseline described by `docs/architecture/frontend-programming-model-v3.md`. The normative design direction is explicit binding because it preserves the mental model of:
 
 ```text
 one data-source = one logical derived value
 ```
 
 `initialData` seeds the source target before the first real evaluation or fetch begins.
+
+When `statusPath` is present, the source may additionally publish a readonly summary DTO containing fields such as `loading`, `ready`, `stale`, `error`, `optimisticPending`, and `canRollback`.
 
 ### Producer Kinds
 
@@ -234,7 +258,7 @@ A formula-backed source is a synchronous derived value.
 
 - input: current scope
 - producer: compiled expression / compiled value tree
-- output: derived value written to `dataPath`
+- output: derived value written to the explicit published binding path
 - mental model: computed ref, not effect
 
 Its semantics should be:
@@ -257,7 +281,7 @@ An API-backed source is an asynchronous derived value.
 
 - input: current scope plus `ApiObject`
 - producer: runtime-managed request execution
-- output: adapted response value written to `dataPath`
+- output: adapted response value written to the explicit published binding path
 - mental model: async computed/source ref
 
 Its semantics should be:
@@ -348,8 +372,9 @@ The source abstraction is responsible for value production, not for built-in loa
 - formula sources usually expose only a current value
 - API sources also have runtime status such as loading / error / stale
 - UI should choose how to observe and present those states rather than forcing a built-in widget into the source abstraction
-- if schema needs author-visible status, it must read an explicit companion value declared in execution schema or host projection rather than rely on an implicit hidden sibling path
-- a narrower subsystem may choose a concrete convention such as a second declared `data-source`, a host-projected summary field, or another explicit named value, but the path and ownership must be explicit in schema-visible data
+- if schema needs author-visible source status, the preferred cross-runtime contract is explicit `statusPath`
+- `statusPath` is readonly runtime summary data, not a second authoritative business value
+- narrower subsystems may still project additional summary values, but they must not replace the core `statusPath` contract with implicit hidden sibling paths
 
 ### Examples
 
