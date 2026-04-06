@@ -29,6 +29,7 @@ export interface ActionSchema extends SchemaObject {
   debounce?: number;
   continueOnError?: boolean;
   then?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
 }
 
 export interface ActionResult {

@@ -56,8 +56,11 @@ export interface ApiObject extends SchemaObject {
 
 export interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
+  statusPath?: string;
   dataPath?: string;
   initialData?: SchemaValue;
+  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
+  mergeKey?: string;
 }
 
 export interface FormulaDataSourceSchema extends BaseDataSourceSchema {
