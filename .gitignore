@@ -7,6 +7,7 @@ coverage/
 .opencode/
 nop-task.md
 nul
+test-results/
 
 # Prevent TypeScript build artifacts from leaking into src/ directories.
 # All compiled output must go to dist/ via tsconfig.build.json (outDir: "dist").
