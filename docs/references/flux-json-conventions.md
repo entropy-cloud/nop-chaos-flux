@@ -30,9 +30,17 @@
 - 三元表达式：`${condition ? 'yes' : 'no'}`
 - 属性访问：`${obj.prop}`, `${arr[0]}`
 
-## 2. Action 语法
+## 2. Action 与 Source 语法
 
-### 2.1 简单 Action
+### 2.1 Action Selector 命名
+
+推荐规则：
+
+- 内置 action 使用 camelCase：`ajax`、`setValue`、`refreshSource`、`openDialog`、`showToast`
+- 组件实例 action 使用 `component:<method>`：`component:submit`
+- 导入库/宿主 action 使用 `namespace:method`：`designer:addNode`、`dict:getCountryOptions`
+
+### 2.2 简单 Action
 
 不带参数的 action 可以直接写：
 
@@ -42,25 +50,83 @@
 }
 ```
 
-### 2.2 带参数的 Action
+### 2.3 带参数的 Action
 
 ```json
 {
   "onClick": {
     "action": "designer:addNode",
-    "nodeType": "task",
-    "position": { "x": 100, "y": 100 }
+    "args": {
+      "nodeType": "task",
+      "position": { "x": 100, "y": 100 }
+    }
   }
 }
 ```
 
-### 2.3 Action 链
+### 2.4 Action 链
 
 ```json
 {
   "onClick": {
-    "action": "dialog:close",
+    "action": "closeDialog",
     "then": { "action": "designer:save" }
+  }
+}
+```
+
+### 2.5 事件入口只接收单个根 Action
+
+推荐：事件字段使用一个根 `ActionSchema` 对象，而不是直接传数组。
+
+```json
+{
+  "onClick": {
+    "action": "ajax",
+    "api": {
+      "url": "/api/users/save",
+      "method": "post"
+    },
+    "then": {
+      "action": "showToast",
+      "args": {
+        "level": "success",
+        "message": "保存成功"
+      }
+    }
+  }
+}
+```
+
+### 2.6 Source 值
+
+字段值除了静态值和 `${expr}` 外，还可以使用内联的 `type: 'source'` carrier：
+
+```json
+{
+  "options": {
+    "type": "source",
+    "action": "ajax",
+    "api": {
+      "url": "/api/countries"
+    },
+    "control": {
+      "dedup": "cancel-previous"
+    }
+  }
+}
+```
+
+或者调用导入库：
+
+```json
+{
+  "options": {
+    "type": "source",
+    "action": "dict:getCountryOptions",
+    "args": {
+      "region": "${form.region}"
+    }
   }
 }
 ```
