@@ -18,6 +18,7 @@ Choose the smallest document that matches the task.
 | --- | --- | --- |
 | Understand the current architecture baseline | `docs/architecture/flux-core.md` | `docs/architecture/renderer-runtime.md` |
 | Understand Flux's top-level frontend programming model, primitive categories, Java-loader/final-model positioning, and base tree + coordination/execution layering | `docs/architecture/frontend-programming-model.md` | `docs/architecture/flux-core.md` |
+| Review the surviving follow-up improvements to the top-level frontend programming model without reopening the primitive closure | `docs/architecture/frontend-programming-model-improvement-design.md` | `docs/architecture/frontend-programming-model.md` |
 | Design API requests, scope injection (includeScope), params, DataSource polling, unified formula/api source semantics, or non-rendering reaction/watch nodes | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` |
 | 了解基于 SchemaRenderer 的图设计器规划架构 | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md` |
 | 看清 Flow Designer 各层协作细节、命名空间动作流转、画布/Inspector 调用链 | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
@@ -62,6 +63,7 @@ Architecture intent lives primarily in:
 
 - `docs/architecture/flux-core.md`
 - `docs/architecture/frontend-programming-model.md`
+- `docs/architecture/frontend-programming-model-improvement-design.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
