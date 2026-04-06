@@ -367,6 +367,55 @@ describe('dataRendererDefinitions', () => {
     });
   });
 
+  it('uses scope-backed pagination when configured and updates through scope state', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              paginationOwnership: 'scope',
+              paginationStatePath: 'tableState.pagination',
+              columns: [{ label: 'Name', name: 'name' }],
+              source: [
+                { id: 1, name: 'Alice' },
+                { id: 2, name: 'Bob' },
+                { id: 3, name: 'Carol' }
+              ],
+              pagination: {
+                currentPage: 1,
+                pageSize: 1,
+                pageSizeOptions: [1]
+              }
+            },
+            { type: 'text', text: 'Page state: ${tableState.pagination.currentPage}' }
+          ]
+        }}
+        data={{ tableState: { pagination: { currentPage: 1, pageSize: 1 } } }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('Alice')).toBeTruthy();
+    expect(screen.queryByText('Bob')).toBeNull();
+
+    fireEvent.click(document.querySelector('[data-slot="table-pagination"] [aria-label="Go to next page"]')!);
+
+    await waitFor(() => {
+      expect(screen.getByText('Bob')).toBeTruthy();
+      expect(screen.getByText('Page state: 2')).toBeTruthy();
+    });
+  });
+
   it('uses local row selection state by default', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
@@ -460,6 +509,196 @@ describe('dataRendererDefinitions', () => {
     await waitFor(() => {
       const updatedCheckboxes = document.querySelectorAll('[data-slot="checkbox"]');
       expect(updatedCheckboxes[1]?.getAttribute('aria-checked')).toBe('true');
+    });
+  });
+
+  it('uses scope-backed row selection when configured and updates through scope state', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              selectionOwnership: 'scope',
+              selectionStatePath: 'tableState.selectedKeys',
+              rowSelection: {
+                type: 'checkbox',
+                selectedRowKeys: []
+              },
+              columns: [{ label: 'Name', name: 'name' }],
+              source: [
+                { id: 1, name: 'Alice' },
+                { id: 2, name: 'Bob' }
+              ]
+            },
+            { type: 'text', text: 'Selected state: ${tableState.selectedKeys}' }
+          ]
+        }}
+        data={{ tableState: { selectedKeys: [] } }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const checkboxes = document.querySelectorAll('[data-slot="checkbox"]');
+    fireEvent.click(checkboxes[1]!);
+
+    await waitFor(() => {
+      const updatedCheckboxes = document.querySelectorAll('[data-slot="checkbox"]');
+      expect(updatedCheckboxes[1]?.getAttribute('aria-checked')).toBe('true');
+      expect(screen.getByText('Selected state: 1')).toBeTruthy();
+    });
+  });
+
+  it('exposes table selection through component handle actions', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      buttonRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              id: 'users-table',
+              rowSelection: {
+                type: 'checkbox',
+                selectedRowKeys: []
+              },
+              columns: [{ label: 'Name', name: 'name' }],
+              source: [
+                { id: 1, name: 'Alice' },
+                { id: 2, name: 'Bob' }
+              ]
+            },
+            {
+              type: 'button',
+              label: 'Select Alice',
+              onClick: {
+                action: 'component:setSelection',
+                componentId: 'users-table',
+                args: {
+                  selectedRowKeys: ['1']
+                }
+              }
+            },
+            {
+              type: 'button',
+              label: 'Read Selection',
+              onClick: {
+                action: 'component:getSelection',
+                componentId: 'users-table',
+                then: {
+                  action: 'setValue',
+                  componentPath: 'selectionResult',
+                  value: '${prevResult.data}'
+                }
+              }
+            },
+            { type: 'text', text: '${selectionResult}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Select Alice'));
+
+    await waitFor(() => {
+      const checkboxes = document.querySelectorAll('[data-slot="checkbox"]');
+      expect(checkboxes[1]?.getAttribute('aria-checked')).toBe('true');
+    });
+
+    fireEvent.click(screen.getByText('Read Selection'));
+
+    await waitFor(() => {
+      expect(screen.getByText('1')).toBeTruthy();
+    });
+  });
+
+  it('exposes table refresh through component handle actions', async () => {
+    cleanup();
+    let responseCount = 0;
+    const fetcherSpy = vi.fn(async (api: unknown, ctx: unknown) => {
+      void api;
+      void ctx;
+      responseCount += 1;
+
+      return {
+        ok: true,
+        status: 200,
+        data: { value: `refreshed-${responseCount}` }
+      };
+    });
+    const fetcher = ((...args: Parameters<RendererEnv['fetcher']>) => fetcherSpy(...args)) as RendererEnv['fetcher'];
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      buttonRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'data-source',
+              id: 'table-source',
+              api: { url: '/api/table-refresh', cacheTTL: 0 },
+              dataPath: 'tableData'
+            },
+            {
+              type: 'table',
+              id: 'refreshable-table',
+              source: '${tableData ? [tableData] : []}',
+              onRefresh: {
+                action: 'refreshSource',
+                componentId: 'table-source'
+              },
+              columns: [{ label: 'Value', name: 'value' }]
+            },
+            {
+              type: 'button',
+              label: 'Refresh Table',
+              onClick: {
+                action: 'component:refresh',
+                componentId: 'refreshable-table'
+              }
+            }
+          ]
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(fetcherSpy).toHaveBeenCalled();
+    });
+
+    const initialCalls = fetcherSpy.mock.calls.length;
+    fireEvent.click(screen.getByText('Refresh Table'));
+
+    await waitFor(() => {
+      expect(fetcherSpy.mock.calls.length).toBeGreaterThan(initialCalls);
+      expect(screen.getByText(`refreshed-${fetcherSpy.mock.calls.length}`)).toBeTruthy();
     });
   });
 

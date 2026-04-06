@@ -1,5 +1,7 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { getIn } from '@nop-chaos/flux-core';
+import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
+import { useCurrentComponentRegistry, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import {
   Table,
@@ -36,16 +38,35 @@ type FilterState = Record<string, Set<string>>;
 const EMPTY_TABLE_COLUMNS: TableColumnSchema[] = [];
 const EMPTY_TABLE_ROWS: Array<Record<string, any>> = [];
 
+function toPositiveNumber(value: unknown, fallback: number) {
+  const next = Number(value);
+  return Number.isFinite(next) && next > 0 ? next : fallback;
+}
+
+function toStringArray(value: unknown) {
+  return Array.isArray(value) ? value.map((entry) => String(entry)) : [];
+}
+
+function toSelectionPayload(payload: Record<string, unknown> | undefined) {
+  return new Set(toStringArray(payload?.selectedRowKeys));
+}
+
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
+  const componentRegistry = useCurrentComponentRegistry();
+  const renderScope = useRenderScope();
   const schemaProps = props.props as unknown as TableSchema;
   const paginationOwnership = schemaProps.paginationOwnership ?? 'local';
   const selectionOwnership = schemaProps.selectionOwnership ?? 'local';
+  const paginationStatePath = typeof schemaProps.paginationStatePath === 'string' ? schemaProps.paginationStatePath : undefined;
+  const selectionStatePath = typeof schemaProps.selectionStatePath === 'string' ? schemaProps.selectionStatePath : undefined;
+  const scopeData = useScopeSelector((scope) => scope);
   const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : EMPTY_TABLE_COLUMNS;
   const source = Array.isArray(schemaProps.source) ? (schemaProps.source as Array<Record<string, any>>) : EMPTY_TABLE_ROWS;
   const onSortChange = props.events.onSortChange;
   const onFilterChange = props.events.onFilterChange;
   const onPageChange = props.events.onPageChange;
   const onSelectionChange = props.events.onSelectionChange;
+  const onRefresh = props.events.onRefresh;
   const helpers = props.helpers;
   const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: 'No data' });
   const headerContent = resolveRendererSlotContent(props, 'header');
@@ -69,17 +90,32 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const isStriped = schemaProps.stripe === true;
   const isBordered = schemaProps.bordered === true;
   const paginationEnabled = schemaProps.pagination?.enabled !== false;
+  const scopePaginationState = paginationOwnership === 'scope' && paginationStatePath
+    ? (getIn(scopeData, paginationStatePath) as Record<string, unknown> | undefined)
+    : undefined;
   const currentPage = paginationOwnership === 'controlled'
-    ? Math.max(1, Number(schemaProps.pagination?.currentPage ?? 1))
-    : localCurrentPage;
+    ? toPositiveNumber(schemaProps.pagination?.currentPage, 1)
+    : paginationOwnership === 'scope'
+      ? toPositiveNumber(scopePaginationState?.currentPage, toPositiveNumber(schemaProps.pagination?.currentPage, 1))
+      : localCurrentPage;
   const pageSize = paginationOwnership === 'controlled'
-    ? Math.max(1, Number(schemaProps.pagination?.pageSize ?? 10))
-    : localPageSize;
+    ? toPositiveNumber(schemaProps.pagination?.pageSize, 10)
+    : paginationOwnership === 'scope'
+      ? toPositiveNumber(scopePaginationState?.pageSize, toPositiveNumber(schemaProps.pagination?.pageSize, 10))
+      : localPageSize;
   const controlledSelectedRowKeys = useMemo(
-    () => new Set((schemaProps.rowSelection?.selectedRowKeys ?? []).map((key) => String(key))),
+    () => new Set(toStringArray(schemaProps.rowSelection?.selectedRowKeys)),
     [schemaProps.rowSelection?.selectedRowKeys]
   );
-  const selectedRowKeys = selectionOwnership === 'controlled' ? controlledSelectedRowKeys : localSelectedRowKeys;
+  const scopeSelectedRowKeys = useMemo(
+    () => new Set(toStringArray(selectionOwnership === 'scope' && selectionStatePath ? getIn(scopeData, selectionStatePath) : undefined)),
+    [scopeData, selectionOwnership, selectionStatePath]
+  );
+  const selectedRowKeys = selectionOwnership === 'controlled'
+    ? controlledSelectedRowKeys
+    : selectionOwnership === 'scope'
+      ? scopeSelectedRowKeys
+      : localSelectedRowKeys;
 
   const handleSort = useCallback(
     (columnName: string) => {
@@ -148,6 +184,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     (page: number) => {
       if (paginationOwnership === 'local') {
         setLocalCurrentPage(page);
+      } else if (paginationOwnership === 'scope' && paginationStatePath) {
+        renderScope.update(paginationStatePath, {
+          currentPage: page,
+          pageSize
+        });
       }
 
       onPageChange?.(
@@ -157,7 +198,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         }
       );
     },
-    [paginationOwnership, pageSize, onPageChange, helpers]
+    [paginationOwnership, paginationStatePath, pageSize, onPageChange, helpers, renderScope]
   );
 
   const handlePageSizeChange = useCallback(
@@ -165,6 +206,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       if (paginationOwnership === 'local') {
         setLocalPageSize(newPageSize);
         setLocalCurrentPage(1);
+      } else if (paginationOwnership === 'scope' && paginationStatePath) {
+        renderScope.update(paginationStatePath, {
+          currentPage: 1,
+          pageSize: newPageSize
+        });
       }
 
       onPageChange?.(
@@ -174,7 +220,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         }
       );
     },
-    [paginationOwnership, onPageChange, helpers]
+    [paginationOwnership, paginationStatePath, onPageChange, helpers, renderScope]
   );
 
   const handleSelectAll = useCallback(
@@ -186,6 +232,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       setAllSelected(checked);
       if (selectionOwnership === 'local') {
         setLocalSelectedRowKeys(nextKeys);
+      } else if (selectionOwnership === 'scope' && selectionStatePath) {
+        renderScope.update(selectionStatePath, Array.from(nextKeys));
       }
 
       onSelectionChange?.(
@@ -199,7 +247,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         return;
       }
     },
-    [selectionOwnership, source, onSelectionChange, helpers]
+    [selectionOwnership, selectionStatePath, source, onSelectionChange, helpers, renderScope]
   );
 
   const handleSelectRow = useCallback(
@@ -215,6 +263,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
       if (selectionOwnership === 'local') {
         setLocalSelectedRowKeys(newSet);
+      } else if (selectionOwnership === 'scope' && selectionStatePath) {
+        renderScope.update(selectionStatePath, Array.from(newSet));
       }
 
       onSelectionChange?.(
@@ -228,7 +278,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         return;
       }
     },
-    [helpers, localSelectedRowKeys, onSelectionChange, selectedRowKeys, selectionOwnership]
+    [helpers, localSelectedRowKeys, onSelectionChange, renderScope, selectedRowKeys, selectionOwnership, selectionStatePath]
   );
 
   const handleToggleExpand = useCallback((rowKey: string) => {
@@ -277,6 +327,88 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     if (!paginationEnabled) return 1;
     return Math.ceil(source.length / pageSize);
   }, [source.length, pageSize, paginationEnabled]);
+
+  const tableHandle = useMemo<ComponentHandle>(() => ({
+    id: props.id,
+    type: 'table',
+    capabilities: {
+      invoke(method, payload, ctx) {
+        switch (method) {
+          case 'refresh': {
+            if (onRefresh) {
+              onRefresh(null, {
+                scope: ctx.scope,
+                actionScope: ctx.actionScope,
+                componentRegistry: ctx.componentRegistry,
+                form: ctx.form,
+                page: ctx.page,
+                node: ctx.node
+              });
+            } else {
+              props.events.onPageChange?.(null, {
+                scope: helpers.createScope({ page: currentPage, pageSize }, { scopeKey: 'pagination', pathSuffix: 'pagination' }),
+                actionScope: ctx.actionScope,
+                componentRegistry: ctx.componentRegistry,
+                form: ctx.form,
+                page: ctx.page,
+                node: ctx.node
+              });
+            }
+            return { ok: true, data: { page: currentPage, pageSize } };
+          }
+          case 'getSelection': {
+            return { ok: true, data: Array.from(selectedRowKeys) };
+          }
+          case 'setSelection': {
+            const nextKeys = toSelectionPayload(payload);
+
+            if (selectionOwnership === 'local') {
+              setLocalSelectedRowKeys(nextKeys);
+            } else if (selectionOwnership === 'scope' && selectionStatePath) {
+              renderScope.update(selectionStatePath, Array.from(nextKeys));
+            }
+
+            onSelectionChange?.(
+              null,
+              {
+                scope: helpers.createScope({ selectedRowKeys: Array.from(nextKeys) }, { scopeKey: 'selection', pathSuffix: 'selection' }),
+              }
+            );
+
+            return { ok: true, data: Array.from(nextKeys) };
+          }
+          default:
+            return { ok: false, error: new Error(`Unsupported table handle method: ${method}`) };
+        }
+      },
+      hasMethod(method) {
+        return method === 'refresh' || method === 'getSelection' || method === 'setSelection';
+      },
+      listMethods() {
+        return ['refresh', 'getSelection', 'setSelection'];
+      },
+      getDebugData() {
+        return {
+          paginationOwnership,
+          selectionOwnership,
+          paginationStatePath,
+          selectionStatePath,
+          currentPage,
+          pageSize,
+          selectedRowKeys: Array.from(selectedRowKeys)
+        };
+      },
+      store: undefined
+    }
+  }), [props.id, props.events, helpers, currentPage, pageSize, selectedRowKeys, selectionOwnership, selectionStatePath, onSelectionChange, paginationOwnership, paginationStatePath, onRefresh, renderScope]);
+
+  useEffect(() => {
+    if (!componentRegistry) {
+      return;
+    }
+
+    return componentRegistry.register(tableHandle, { cid: props.meta.cid });
+  }, [componentRegistry, tableHandle, props.meta.cid]);
 
   return (
     <div className="nop-table-wrap grid gap-4" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>

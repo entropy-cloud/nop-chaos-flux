@@ -21,6 +21,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'onSortChange', kind: 'event' },
       { key: 'onFilterChange', kind: 'event' },
       { key: 'onPageChange', kind: 'event' },
+      { key: 'onSelectionChange', kind: 'event' },
+      { key: 'onRefresh', kind: 'event' },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' }
     ]
   },
