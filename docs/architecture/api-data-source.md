@@ -1,33 +1,35 @@
-# ApiObject, DataSource, and Reaction Design
+# ApiSchema, Source, DataSource, and Reaction Design
 
 ## Purpose
 
 This document defines:
 
-- `ApiObject` as the declarative HTTP request contract
-- `DataSourceSchema` as the unified declarative source model in Flux
+- `ApiSchema` as the declarative HTTP request contract
+- `SourceSchema` as the anonymous action-based value producer form
+- `DataSourceSchema` as the named and scheduled source form in Flux
 - `ReactionSchema` as the declarative side-effect watcher model paired with sources
 
-`data-source` should not be treated as a special visual component category. It is a non-rendering source declaration that publishes a derived value into the current scope.
+`data-source` should not be treated as a special visual component category. It is a non-rendering named source declaration that publishes a derived value into the current scope.
 
 Under this model:
 
-- a `formula`-backed `data-source` is a synchronous derived value, conceptually similar to a Vue `computed`
-- an `api`-backed `data-source` is an asynchronous derived value, conceptually similar to an async computed/source ref
-- future stream or provider-backed sources should follow the same model rather than introducing a parallel abstraction
+- plain `${...}` expressions remain the preferred synchronous derived-value form
+- `type: 'source'` is the anonymous execution-backed value form for field-local consumption
+- `type: 'data-source'` is the named and scheduled source form when publication, refresh, or reuse semantics are needed
+- request-backed and invoke-backed producers should follow the same model rather than introducing parallel abstractions
 
 This keeps Flux aligned with its role as a final DSL runtime: schema declares derived values, runtime owns source lifecycle, and React only hosts the execution boundary.
 
 `reaction` is the companion abstraction for imperative consequences. A source derives values. A reaction watches derived or raw values and dispatches actions when those values change.
 
-## ApiObject
+## ApiSchema
 
-`ApiObject` describes an HTTP request configuration.
+`ApiSchema` describes declarative request configuration in schema authoring.
 
 ### Interface
 
 ```typescript
-interface ApiObject extends SchemaObject {
+interface ApiSchema extends SchemaObject {
   url: string;
   method?: string;
   data?: SchemaValue;
@@ -36,9 +38,6 @@ interface ApiObject extends SchemaObject {
   includeScope?: '*' | string[];
   responseAdaptor?: string;
   requestAdaptor?: string;
-  cacheTTL?: number;
-  cacheKey?: string;
-  dedupStrategy?: 'cancel-previous' | 'parallel' | 'ignore-new';
 }
 ```
 
@@ -54,9 +53,30 @@ interface ApiObject extends SchemaObject {
 | `includeScope` | `'*' \| string[]` | Auto-include scope variables in request data |
 | `responseAdaptor` | `string` | Expression to transform response |
 | `requestAdaptor` | `string` | Expression to transform request |
-| `cacheTTL` | `number` | Cache time-to-live in milliseconds |
-| `cacheKey` | `string` | Custom cache key |
-| `dedupStrategy` | `'cancel-previous' \| 'parallel' \| 'ignore-new'` | In-flight request coordination policy |
+
+### ExecutableApiRequest
+
+The runtime prepares an `ExecutableApiRequest` from `ApiSchema` before the request reaches the fetch layer.
+
+Directionally:
+
+```typescript
+interface ExecutableApiRequest {
+  url: string;
+  method?: string;
+  data?: unknown;
+  headers?: Record<string, string>;
+}
+```
+
+This executable shape is not the same concept as the declarative `ApiSchema`:
+
+- dynamic expressions have already been evaluated
+- `includeScope` has already been merged into request data
+- `params` have already been canonicalized into the final URL
+- `requestAdaptor` has already been applied
+
+`PreparedApiRequest` remains the request-runtime internal artifact that carries the final executable request plus preparation metadata such as `finalUrl`, `data`, and `params`.
 
 ### includeScope
 
@@ -126,17 +146,25 @@ Example:
 }
 ```
 
-### cacheTTL / cacheKey / dedupStrategy
+### Operation Control
 
-These fields describe request coordination, not rendering behavior.
+Request coordination does not belong to `ApiSchema`.
 
-- `cacheTTL`: cache lifetime in milliseconds
-- `cacheKey`: custom cache identity for cross-source sharing
-- `dedupStrategy`: in-flight coordination policy for equivalent requests
+Fields such as:
+
+- `timeout`
+- `retry`
+- `debounce`
+- `throttle`
+- `cacheTTL`
+- `cacheKey`
+- `dedup`
+
+belong to `Operation Control`, not to transport description. Action-backed and source-backed consumers may carry those controls through their own narrower schema surfaces, but the transport contract stays focused on request inputs and adaptors.
 
 ### Required Request Execution Flow
 
-`executeApiObject(...)` should be the single convergence path for request execution.
+`executeApiObject(...)` should be the single convergence path for request execution from declarative `ApiSchema` to fetcher-facing `ExecutableApiRequest`.
 
 The required flow is:
 
@@ -153,7 +181,7 @@ Current baseline note:
 - `executeApiObject(...)` now owns the main request convergence path used by ajax actions, form submit, validation, and data-source execution
 - callers may still pass declarative request objects; `executeApiObject(...)` evaluates those values in scope before canonical request preparation so request execution semantics stay unified across actions, forms, validation, and data-sources
 - request preparation is split into explicit helpers, but the runtime now converges those helpers into one canonical executable request shape before fetch
-- dedup and runtime-local cache coordination are keyed by that final executable request semantics rather than only by the original declarative `ApiObject`
+- dedup and runtime-local cache coordination are keyed by that final executable request semantics rather than only by the original declarative `ApiSchema`
 - executable request canonicalization normalizes `params` into the final URL and removes `params` from the fetcher-facing request object so equivalent `url + params` forms share the same identity
 - adaptor expressions and object-shaped runtime values are now cached by source/object identity on the hot path so repeated dispatch/request execution avoids ad hoc recompilation where schema identity is stable
 - ajax-side API monitor callbacks should observe the final executable request shape, not the pre-canonical declarative request object, so diagnostics line up with what fetch/dedup/cache actually execute
@@ -167,16 +195,67 @@ Current baseline note:
 - current invalidation also includes a self-target loop guard so a source does not immediately retrigger itself from writes to its own published `dataPath`
 - current action/runtime integration now includes a built-in `refreshSource` action that targets a registered source id via a built-in target field such as `targetId` and delegates to the runtime-owned source registry refresh semantics; this is runtime-entry targeting, not component-handle dispatch, even if older field naming remains in code for compatibility
 
+## SourceSchema
+
+`type: 'source'` is the anonymous execution-backed value form.
+
+It is used when a field needs a runtime-managed dynamic value but does not need named publication into scope.
+
+`source` is modeled as an action-shaped execution descriptor whose result is consumed as a value rather than only as an effect.
+
+Directionally:
+
+```typescript
+interface SourceSchema extends ActionSchema {
+  type: 'source';
+}
+```
+
+Examples:
+
+```json
+{
+  "options": {
+    "type": "source",
+    "action": "ajax",
+    "api": {
+      "url": "/api/countries",
+      "params": {
+        "region": "${form.region}"
+      },
+      "responseAdaptor": "${payload.items}"
+    },
+    "control": {
+      "dedup": "cancel-previous"
+    }
+  }
+}
+```
+
+```json
+{
+  "options": {
+    "type": "source",
+    "action": "dict:getCountryOptions",
+    "args": {
+      "region": "${form.region}"
+    }
+  }
+}
+```
+
+Anonymous `source` may still expose runtime state such as `loading` or `error` to the local consumer. The difference from `data-source` is not whether state exists, but whether the produced value is explicitly named, published, refreshed, and reused outside the local consumer boundary.
+
 ## DataSourceSchema
 
-`data-source` is a non-rendering source declaration. It does not exist to render UI. It exists to register a derived value in the current scope.
+`data-source` is a non-rendering named source declaration. It exists to register a derived value in the current scope.
 
 This is the key conceptual shift:
 
 - `data-source` is not only "fetch remote data"
-- `data-source` is the general DSL concept for "derive a value from the current context"
-- remote requests are one producer kind under that abstraction
-- formula-based computation is another producer kind under the same abstraction
+- `data-source` is the named and managed source form for values that need publication, refresh, or reuse
+- request-backed and invoke-backed execution are producer kinds under that abstraction
+- pure synchronous computation should stay a plain `${expr}` unless it needs named publication or runtime-managed source semantics
 
 ### Interface
 
@@ -190,29 +269,22 @@ interface BaseDataSourceSchema extends BaseSchema {
   mergeKey?: string;
 }
 
-interface FormulaDataSourceSchema extends BaseDataSourceSchema {
-  formula: SchemaValue;
-}
-
-interface ApiDataSourceSchema extends BaseDataSourceSchema {
-  api: ApiObject;
+interface DataSourceSchema extends BaseDataSourceSchema, ActionSchema {
   interval?: number;
   stopWhen?: string;
   silent?: boolean;
 }
-
-type DataSourceSchema = FormulaDataSourceSchema | ApiDataSourceSchema;
 ```
 
 Rules:
 
-- a single `data-source` declares one producer kind
-- `formula` and `api` are mutually exclusive in the same node
+- `data-source` extends source-style action execution with named publication and scheduling controls
+- `action`, `args`, `api`, `control`, `then`, `onError`, and `parallel` follow the same execution semantics used by action-backed sources
 - explicit publication binding is mandatory through `name` or `dataPath`
 - `name` is the preferred author-visible identity for refresh/targeting
 - `dataPath`, when present, overrides the published binding path
 - `statusPath`, when present, is the readonly status-summary path for loading/error/stale state
-- formula-backed sources should still require explicit binding through `name` or `dataPath`
+- `interval`, `stopWhen`, and publication controls remain `data-source`-specific extensions above plain `source`
 
 ### Binding Target
 
@@ -252,41 +324,18 @@ When `statusPath` is present, the source may additionally publish a readonly sum
 
 ### Producer Kinds
 
-#### Formula source
-
-A formula-backed source is a synchronous derived value.
-
-- input: current scope
-- producer: compiled expression / compiled value tree
-- output: derived value written to the explicit published binding path
-- mental model: computed ref, not effect
-
-Its semantics should be:
-
-- dependencies are inferred automatically from expression access
-- upstream changes mark the source dirty
-- when the next value is synchronously computable in the current settled update turn, publication occurs before reactions for that turn evaluate watched values
-- otherwise the source recomputes lazily on next read, subscribed use, or explicit refresh according to narrower runtime rules
-- unchanged semantic values should preserve identity when possible
-
-Important boundary:
-
-- formula-backed `data-source` describes a derived value
-- it should not be used as a hidden imperative write-effect engine for arbitrary sibling updates
-- side-effect reactions belong to a separate reaction/watch abstraction, not to the source abstraction itself
-
 #### Api source
 
-An API-backed source is an asynchronous derived value.
+An action-backed request source is an asynchronous derived value.
 
-- input: current scope plus `ApiObject`
-- producer: runtime-managed request execution
+- input: current scope plus `ApiSchema` or another action-backed producer
+- producer: runtime-managed action execution consumed as a value
 - output: adapted response value written to the explicit published binding path
 - mental model: async computed/source ref
 
 Its semantics should be:
 
-- dependencies come from expressions used by the request config
+- dependencies come from expressions used by the producer config
 - dependency changes invalidate the source and trigger refresh according to source policy
 - runtime owns loading, error, cache, dedup, abort, and polling behavior
 
@@ -453,7 +502,7 @@ The source abstraction is responsible for value production, not for built-in loa
 
 ## ReactionSchema
 
-`reaction` is a non-rendering watcher node. It does not publish a value into scope. It observes a value expression and triggers actions when the observed value changes.
+`reaction` is a non-rendering watcher node. It does not publish a value into scope. It observes a value expression and triggers one root action object when the observed value changes.
 
 This keeps Flux's runtime semantics clean:
 
@@ -472,7 +521,7 @@ interface ReactionSchema extends BaseSchema {
   immediate?: boolean;
   debounce?: number;
   once?: boolean;
-  actions: ActionSchema | ActionSchema[];
+  actions: ActionSchema;
 }
 ```
 
@@ -485,7 +534,7 @@ interface ReactionSchema extends BaseSchema {
 | `immediate` | `boolean` | Whether to evaluate and potentially fire immediately on mount |
 | `debounce` | `number` | Optional debounce delay before action dispatch |
 | `once` | `boolean` | Auto-dispose after the first successful trigger |
-| `actions` | `ActionSchema \| ActionSchema[]` | Action pipeline to dispatch when triggered |
+| `actions` | `ActionSchema` | Root action object to dispatch when triggered |
 
 ### Semantics
 
@@ -593,15 +642,13 @@ reaction = value observer with side effects
   "type": "reaction",
   "watch": "${country}",
   "when": "${value !== prev}",
-  "actions": [
-    {
-      "action": "setValue",
-      "args": {
-        "path": "state",
-        "value": ""
-      }
+  "actions": {
+    "action": "setValue",
+    "args": {
+      "path": "state",
+      "value": ""
     }
-  ]
+  }
 }
 ```
 
@@ -612,14 +659,12 @@ reaction = value observer with side effects
   "type": "reaction",
   "watch": "${total > 1000}",
   "when": "${value === true && prev !== true}",
-  "actions": [
-    {
-      "action": "dialog",
-      "dialog": {
-        "title": "High Amount"
-      }
+  "actions": {
+    "action": "openDialog",
+    "args": {
+      "title": "High Amount"
     }
-  ]
+  }
 }
 ```
 
@@ -658,7 +703,7 @@ Current code is not yet fully converged to the target model:
 
 These are related but distinct concepts.
 
-`ApiObject` remains request description only. The write target belongs to the consumer context: action result target or source binding target.
+`ApiSchema` remains request description only. The write target belongs to the consumer context: action result target or source binding target.
 
 ## Related Documents
 

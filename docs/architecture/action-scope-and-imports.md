@@ -330,6 +330,8 @@ Do not make the design depend on implicit bare action names like `save` or `vali
 
 For clarity, the runtime action namespace separator is `:` for dispatched action names such as `designer:addNode`, `report-designer:preview`, and `demo:open`.
 
+Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `openDialog`, `closeDialog`, `openDrawer`, and `showToast`.
+
 ### Built-In Versus Extended Actions
 
 Built-in actions stay inside `action-runtime` because they are platform semantics.
@@ -337,9 +339,10 @@ Built-in actions stay inside `action-runtime` because they are platform semantic
 Examples:
 
 - data mutation in the current scope or form
-- dialog stack control
+- dialog and drawer stack control
 - AJAX execution
 - form submission
+- toast and navigation feedback
 
 Extended actions should be delegated only when they are domain-specific or import-provided.
 
@@ -361,6 +364,8 @@ Recommended authoring shape:
 interface ActionSchema {
   action: string;
   args?: Record<string, SchemaValue>;
+  api?: ApiSchema;
+  control?: Record<string, SchemaValue>;
   when?: string;
   parallel?: ActionSchema[];
   retry?: { times: number; delay?: number };
@@ -397,6 +402,11 @@ Examples:
 ```
 
 `args` should continue to be object-shaped, not positional arrays. That keeps expression evaluation, future extensibility, and debugging aligned with the current schema runtime.
+
+Authoring rule:
+
+- event entry points such as `onClick`, `onChange`, `submitAction`, and `reaction.actions` should accept one root `ActionSchema` object
+- action lists remain a runtime convenience or a lowered internal form, not the preferred authoring root shape
 
 Runtime compatibility note:
 
@@ -611,6 +621,22 @@ Recommended shape:
 ```
 
 This avoids the misleading impression that import success depends on whether the import node rendered before the button.
+
+`xui:imports` also project imported aliases into the expression environment. If a container imports `{ from: 'demo-lib', as: 'demo' }`, then actions dispatch through `demo:method` while expressions may access the same imported binding as `$demo`.
+
+Examples:
+
+```json
+{
+  "type": "text",
+  "text": "${$demo.formatName(user.firstName, user.lastName)}"
+}
+```
+
+The import declaration remains one mechanism. The runtime simply exposes two views of the same imported capability set:
+
+- action dispatch view: `demo:open`
+- expression view: `$demo.formatName(...)`
 
 ### Import Spec
 

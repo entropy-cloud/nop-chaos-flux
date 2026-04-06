@@ -1,4 +1,4 @@
-# Flux Frontend Programming Model V6
+# Flux Frontend Programming Model
 
 ## Purpose
 
@@ -14,8 +14,6 @@ It answers six questions:
 6. What must remain outside `Flux` core?
 
 This document is normative architecture.
-
-This document is the successor to `docs/architecture/frontend-programming-model.md`.
 
 ## Precedence
 
@@ -79,30 +77,6 @@ Rules:
 | `Feasibility Baseline` | the current platform constraints under which a superior solution must be implementable today |
 | `Settled Update Turn` | the runtime boundary after synchronous writes for the current mutation path have completed and before asynchronous consequence work is flushed |
 
-### Terms To Avoid As Canonical Names
-
-| Avoid As Canonical Name | Use Instead |
-| --- | --- |
-| `ComponentTree` | `Base Tree` |
-| `StateTree` | `ScopeRef` / `Schema-visible Scope` |
-| `ActionTree` | `ActionScope` |
-| `workflow primitive` | `Action Algebra` when describing derived control flow, or host/domain workflow engine when describing long-running process semantics |
-| `data-source primitive` | `Resource` |
-| `watcher primitive` / `effect primitive` | `Reaction` |
-| `host bag` / `host scope` | `Host Projection` |
-| `authoring model` and `execution model` used interchangeably | distinguish `Authoring Model` and `Execution Model` |
-| `api config` used for timeout/throttle/retry/dedup as one undifferentiated thing | distinguish `ApiObject`, `Operation Control`, and consumer-specific policy |
-
-## Key Terms
-
-| Term | Definition |
-| --- | --- |
-| `Schema-visible Scope` | the lexical data visible to `Schema` evaluation and `Schema`-authored behavior |
-| `Lexical Ownership` | runtime lifetime, shadowing, replacement, and disposal that follow the current scope or subtree boundary |
-| `Logical Value` | one authoritative published binding target together with producer-owned runtime status |
-| `Dependency Set` | the tracked path set that links dynamic reads to targeted invalidation |
-| `Known-Solution Envelope` | the relevant set of industry-known solutions, including non-mainstream but implementable ones |
-| `Feasibility Baseline` | the current browser and application infrastructure baseline within which a superior design must work |
 
 ## Core Claim
 
@@ -503,7 +477,7 @@ A derivation becomes a `Resource` when any of the following are true:
 
 1. literal or static value
 2. expression or template value
-3. narrower anonymous dynamic-value forms, when a consumer-specific DSL surface chooses to admit them and only the resulting value matters
+3. `type: 'source'` anonymous dynamic-value forms when a field needs execution-backed value production
 4. named `data-source` when the dynamic value needs explicit naming, status/error observation, refresh/targeting, or scope reuse
 
 Promoting a derivation into a named `Resource` adds producer lifecycle and naming semantics. It does not change the fact that readers still consume values.
@@ -734,26 +708,26 @@ For the core model, `currently active rendered subtree` means:
 
 If a host or narrower subsystem introduces retained, preloaded, virtualized, hidden, or suspended subtrees, it must explicitly define whether `Resource` and `Reaction` instances in that boundary are active, suspended, or disposed. Activation semantics must not remain implicit.
 
-#### `Operation Control` And `ApiObject`
+#### `Operation Control` And `ApiSchema`
 
-`ApiObject` is not the right dumping ground for every execution-control concern.
+`ApiSchema` is not the right dumping ground for every execution-control concern.
 
 The normative layering is:
 
-1. `ApiObject` = transport and adaptor contract
+1. `ApiSchema` = declarative transport and adaptor contract
 2. `Operation Control` = timeout, cancellation, throttle, debounce, retry, dedup, tracing, and related execution coordination
 3. consumer-specific policy = resource polling, stop conditions, merge policy, stale policy, publication rules, or action-branch behavior
 
 Current compatibility note:
 
-- the active repo still carries some execution-control-adjacent fields on `ApiObject`, notably `cacheTTL`, `cacheKey`, and `dedupStrategy`
-- v6 classifies those as compatibility-era placement, not as a reason to keep growing `ApiObject` into a universal policy bag
+- the active repo still carries some execution-control-adjacent fields on request schema, notably `cacheTTL`, `cacheKey`, and `dedupStrategy`
+- the architecture classifies those as compatibility-era placement, not as a reason to keep growing `ApiSchema` into a universal policy bag
 - during convergence, selected control fields may remain on current consumer-specific schema surfaces even when their conceptual layer is `Operation Control`
 - when the same concern can appear on multiple current surfaces during convergence, the narrower consumer contract must define the effective precedence explicitly; silent ambiguity is invalid
 
 This means:
 
-- `ApiObject` should remain focused on request inputs and output adaptation
+- `ApiSchema` should remain focused on request inputs and output adaptation
 - `transport timeout` is not a new primitive and is not the whole meaning of timeout across the system
 - `Resource` may use shared `Operation Control` machinery without forcing all resource schema into action-shaped control flow
 - `Action Algebra` may use the same substrate without collapsing `ActionSchema` and `DataSourceSchema` into one authoring shape
@@ -767,7 +741,7 @@ During convergence, `Operation Control` may be carried through different author-
 Allowed current carriers include:
 
 - `ActionSchema` fields such as `timeout`, `retry`, and `debounce`
-- `ApiObject` compatibility fields such as `cacheTTL`, `cacheKey`, and `dedupStrategy`
+- compatibility-era request-schema fields such as `cacheTTL`, `cacheKey`, and `dedupStrategy`
 - `DataSourceSchema` resource-owned controls such as `interval` and `stopWhen`
 
 Hard rule:
@@ -1026,6 +1000,37 @@ By default, ordered action lists execute sequentially in stable input order unle
 
 This is the best-known feasible path because it preserves a small, direct `DSL` while still giving the runtime one graph-shaped execution model for sequencing, cancellation, timeout, retry, aggregation, and error propagation.
 
+### Compiler-Assembled Acyclic Graph
+
+The action-execution `DAG` is assembled from schema structure during compilation. It is not an arbitrary runtime graph language authored through back-references.
+
+This has two important consequences:
+
+1. ordinary `ActionSchema` authoring remains structurally acyclic because `then`, `onError`, `parallel`, and ordered lists are nested schema structure rather than runtime pointer graphs
+2. executor complexity should focus on branch semantics, result propagation, aggregation, timeout, cancellation, and scheduling rather than on discovering arbitrary graph cycles inside one compiled action tree
+
+Important boundary:
+
+- this does not remove the need for runtime cascade protection at the broader store / `Reaction` / writeback level
+- it only means the action tree itself should be treated as a compiler-assembled acyclic execution shape under normal schema authoring
+
+### Compiler Validation Responsibilities
+
+Because the execution graph is compiler-assembled from schema structure, static validation belongs to compile-time contracts before dispatch reaches the executor.
+
+The action compiler or narrower schema validator should be responsible for checks such as:
+
+1. required action-shape fields are present for the selected action contract
+2. expression syntax is valid before execution
+3. target references required by a narrower contract are structurally valid
+4. reserved control-flow fields such as `then`, `onError`, and `parallel` are parsed as control-flow structure rather than leaked as ordinary payload fields
+5. nesting and shape limits are enforced by compilation or schema validation rules when a narrower subsystem defines them
+
+Current compatibility note:
+
+- some target validity checks in this repo still require runtime state because component instances and lexical capability providers may not exist until execution time
+- therefore compile-time validation should be read as "validate everything structurally knowable before execution" rather than as a claim that every target can be proven valid statically in advance
+
 ### Active Baseline Versus Convergence Target
 
 At the time of writing, the active runtime already supports important parts of this algebra, including:
@@ -1075,6 +1080,11 @@ Current typed schema fields already include:
 - `continueOnError`
 - `then`
 - `onError`
+
+Naming rule:
+
+- built-in platform actions use plain camelCase selectors such as `ajax`, `setValue`, `refreshSource`, `openDialog`, `closeDialog`, `openDrawer`, and `showToast`
+- instance and imported capabilities keep the explicit `component:<method>` and `namespace:method` selector forms
 
 The normalized `ActionResult` vocabulary already includes:
 
@@ -1245,7 +1255,7 @@ It should own concerns such as:
 
 Important boundary:
 
-- `ApiObject` remains a fetcher input/output contract
+- `ApiSchema` remains the declarative request contract while runtime prepares an executable request for the fetch layer
 - `Operation Control` carries execution-control semantics
 - consumer-specific policy stays above both
 
@@ -1255,7 +1265,7 @@ Consumer-specific policy examples:
 - `Action Algebra`: `then`, `onError`, `parallel`, chain abortion, result propagation
 - `FormRuntime`: validation-before-submit and duplicate-submit handling
 
-This is the best-known feasible split because it avoids polluting `ApiObject` while still allowing shared runtime machinery for `Resource` and action execution.
+This is the best-known feasible split because it avoids polluting `ApiSchema` while still allowing shared runtime machinery for `Resource` and action execution.
 
 ### 7. `Host Projection`
 
@@ -1623,12 +1633,19 @@ Preferred shape:
       }
     }
   },
-  "onSubmitSuccess": [
-    { "action": "navigate", "args": { "to": "/confirmation" } }
-  ],
-  "onSubmitError": [
-    { "action": "toast", "level": "error", "message": "Submit failed" }
-  ]
+  
+  "onSubmitSuccess": { 
+    "action": "navigate", 
+    "args": { "to": "/confirmation" } 
+  },
+
+  "onSubmitError":{
+      "action": "showToast",
+      "args": {
+        "level": "error",
+        "message": "Submit failed"
+      }
+    }
 }
 ```
 
@@ -1901,7 +1918,7 @@ If a future known feasible architecture clearly dominates this one within the sa
 11. dependency tracking is a first-class execution baseline shared by `Value`, `Resource`, and `Reaction`
 12. dependency changes do not directly dispatch arbitrary actions
 13. semantic lifecycle-driven business pipelines should live on the owning semantic node when such a boundary exists
-14. new execution-control growth should not treat `ApiObject` as a universal execution-control bag; existing compatibility fields may remain while contracts converge
+14. new execution-control growth should not treat `ApiSchema` as a universal execution-control bag; existing compatibility fields may remain while contracts converge
 15. shared execution control may exist across `Resource` and action execution without forcing one schema shape
 16. new domain complexity does not automatically create new primitive categories
 17. `Authoring Model` and `Execution Model` stay separate
@@ -1921,7 +1938,7 @@ The model should be considered under architectural failure pressure if any of th
 - `Reaction` becomes a general workflow scripting runtime
 - dependency changes repeatedly demand direct arbitrary action execution without `Reaction` or semantic lifecycle boundaries
 - `Action Algebra` is repeatedly stretched into a long-running business workflow language
-- new execution-control growth repeatedly accretes into `ApiObject` without compatibility rationale or layer discipline
+- new execution-control growth repeatedly accretes into `ApiSchema` without compatibility rationale or layer discipline
 - `Host Projection` turns into a mutable host bag
 - host helper protocols leak raw bridges, controllers, or domain runtimes into schema
 - new domains repeatedly require new global provider categories
@@ -1941,8 +1958,8 @@ The model should be considered under architectural failure pressure if any of th
 9. `onError` is the explicit failure-branch design target, but current executor behavior has not fully implemented it yet
 10. built-in actions are part of `Capability`, not a separate authority system
 11. `Capability` is the primitive authority layer; `Action Algebra` is derived runtime structure
-12. `Operation Control` is shared execution-control substrate, not a primitive category and not a synonym for `ApiObject`
-13. `ApiObject` remains the fetcher input/output contract as the design target; existing compatibility fields may remain while contracts converge, but new control growth should not keep accreting there
+12. `Operation Control` is shared execution-control substrate, not a primitive category and not a synonym for `ApiSchema`
+13. `ApiSchema` remains the declarative request contract as the design target; runtime may derive an executable request for the fetch layer, and existing compatibility fields may remain while contracts converge, but new control growth should not keep accreting there
 14. `Resource` and action execution may share execution-control substrate without requiring identical schema shapes
 15. dependency tracking is a first-class execution baseline and does not directly trigger arbitrary effects
 16. semantic lifecycle entry is the preferred design for node-owned business pipelines such as form submit
