@@ -213,11 +213,27 @@ Key rule:
 `dynamic-renderer` and `data-source` are not the same thing:
 
 - `dynamic-renderer` performs fragment assembly and decides what fragment to render
-- `data-source` declares a `Resource` and decides how a `Logical Value` is produced and published
+- `data-source` declares a `Resource`, registers a named dynamic value into scope, and decides how that `Logical Value` is produced and published
 
 `dynamic-renderer` is therefore not a second `Resource` surface. It is a controlled runtime assembly boundary.
 
 When the input that determines `dynamic-renderer` loading changes, the old fragment must be disposed and a new fragment must be assembled. That is re-assembly, not ordinary `Resource` invalidation.
+
+### `visible`, `when`, `loop`, And `dynamic-renderer`
+
+For ordinary structure DSL, the preferred author-visible layering is:
+
+- `visible`: visual presence only; it does not by itself redefine structural ownership or lifecycle
+- `when`: structural activation guard for a node or fragment
+- `loop`: collection-driven structural expansion with item/index/key scope semantics
+- `dynamic-renderer`: delayed or remote fragment assembly that cannot be expressed as ordinary `when` or `loop`
+
+Normative rules:
+
+1. `when` should remain a natural node property in authoring DSL even when compiler/runtime lower it to an internal wrapper form
+2. `loop` is more naturally expressed as a structural node in authoring DSL even when it lowers to shared wrapper-like execution machinery
+3. `dynamic-renderer` should stay narrow and should not absorb ordinary conditional or collection structure that already fits `when` or `loop`
+4. `visible` and `when` are not synonyms: `visible` is display-level state; `when` affects activation, existence, and lifecycle participation
 
 ## `Final Execution Schema` Boundary
 
@@ -259,6 +275,11 @@ Normative rules:
 3. runtime semantics must not depend on authoring-only metadata
 4. if removing authoring-only metadata changes runtime behavior, the boundary is wrong
 5. complex designers may keep their own editing session models, collaboration state, or local-first synchronization layers, but `Flux` still consumes only execution projections plus host capabilities
+
+Important `DSL` continuity rule:
+
+- when a simple requirement already has a natural simple `DSL` form, later complexity should extend that form rather than replacing it with a different baseline mental model
+- this document therefore prefers progressive authoring surfaces even when runtime execution can be modeled more uniformly underneath
 
 ## Primitive Sufficiency And Promotion
 
@@ -455,6 +476,13 @@ Current baseline note:
 
 #### `Value` Versus `Resource`
 
+From the consumer side, renderers and expressions still only read values from scope.
+
+The important distinction is on the producer side:
+
+- a plain `Value` is recomputed from current scope
+- a `Resource` is the named dynamic-value form when production needs runtime-owned lifecycle, status, refresh, targeting, or reuse semantics
+
 A derivation stays a plain `Value` when all of the following are true:
 
 - it needs no runtime-owned lifecycle
@@ -468,6 +496,17 @@ A derivation becomes a `Resource` when any of the following are true:
 - it needs explicit publication into scope
 - it needs loading/error/stale semantics
 - it needs invalidation, refresh, cancellation, polling, dedup, subscribe, or cache coordination
+
+#### DSL Promotion Path
+
+`Flux` should preserve a progressive authoring path from simple to complex:
+
+1. literal or static value
+2. expression or template value
+3. narrower anonymous dynamic-value forms, when a consumer-specific DSL surface chooses to admit them and only the resulting value matters
+4. named `data-source` when the dynamic value needs explicit naming, status/error observation, refresh/targeting, or scope reuse
+
+Promoting a derivation into a named `Resource` adds producer lifecycle and naming semantics. It does not change the fact that readers still consume values.
 
 #### Constructive Example
 
@@ -533,31 +572,35 @@ The current public schema surface remains:
 Hard rules:
 
 - one `Resource` publishes one `Logical Value`
-- publication target is normatively explicit through `name` or `dataPath`
+- `name` is the normative author-visible identity and default publication path
+- legacy `dataPath` publication override is compatibility-only and should not be introduced in new schema
+- `mergeToScope: true` is the only narrowed special publish extension beyond the named publication path
 - `Resource` lifecycle is runtime-owned
 - `Resource` is not a hidden imperative effect engine
 - author-visible mutation requests do not happen through `Resource`; they happen through `Capability`
 
 #### Public Surface And Identity
 
-`name` is the preferred author-visible identity.
+`name` is the preferred author-visible identity and the default publication path.
 
 Normative identity rules:
 
-1. new schema should use `name` as the preferred author-visible `Resource` identity
-2. `id` remains the active runtime registration and refresh key in the current repo and therefore remains required for current executable targeting
-3. if both `name` and `id` exist today, current runtime targeting still resolves by `id`; `name` is the preferred convergence direction for future author-visible identity
-4. `name` is an identifier, not a path expression; it must not contain path syntax such as `.` or `[]`
-5. anonymous resources are valid only when they do not need explicit targeting through `Capability`
+1. new schema should use `name` as the preferred author-visible `Resource` identity and default publication path
+2. `name` should use ordinary scope-path syntax because schema reads the published value through that path
+3. `id` remains the active runtime registration and refresh key in the current repo and therefore remains required for current executable targeting in some paths
+4. if both `name` and `id` exist today, current runtime targeting still resolves by `id`; `name` is the preferred convergence direction for future author-visible identity
+5. legacy `dataPath` may remain only as a compatibility publication override during convergence
+6. anonymous `Resource` declarations are compatibility-only; if a dynamic value does not need naming or control, prefer a plain `Value` form instead of an anonymous `data-source`
 
 | Configuration | Runtime target identity | Published path |
 | --- | --- | --- |
 | `name` only | convergence target: `name`; current repo targeting may still require `id` | `name` |
-| `name` + `dataPath` | convergence target: `name`; current repo targeting may still require `id` | `dataPath` |
+| `name` + `mergeToScope: true` | convergence target: `name`; current repo targeting may still require `id` | `name` plus shallow object-field merge into current scope |
+| legacy `name` + `dataPath` | convergence target: `name`; current repo targeting may still require `id` | `dataPath` |
 | legacy `id` + `dataPath` | `id` | `dataPath` |
-| anonymous `dataPath` only | none | `dataPath` |
+| anonymous legacy `dataPath` only | none | `dataPath` |
 
-#### Why `name` Instead Of Legacy Merge-Into-Scope
+#### Why `name` Instead Of Legacy Implicit Merge-Into-Scope
 
 The legacy AMIS-style behavior of publishing without an explicit binding target by merging into the current scope is non-normative and rejected because:
 
@@ -565,18 +608,21 @@ The legacy AMIS-style behavior of publishing without an explicit binding target 
 - it hides ownership
 - it makes collisions and debugging ambiguous
 
+The only narrowed exception is explicit `mergeToScope: true` on a named `Resource`.
+
 #### Publication Contract
 
-The authoritative publication-path contract is:
+The normative publication contract is:
 
-- `name`, when present and `dataPath` is absent
-- `dataPath`, when present
+- `name` is the authoritative default publication path
+- `mergeToScope: true`, when present, adds an explicit shallow top-level object merge into the current scope
+- legacy `dataPath`, when present, overrides the published binding path only as a compatibility contract during convergence
 
 Current runtime compatibility note:
 
 - `refreshSource` and source-registry lookup are still keyed by runtime `id` in the current repo
-- formula-backed publication currently falls back to `dataPath ?? id`
-- therefore `name`-first identity should be read as the preferred convergence direction, not as a statement that current runtime targeting has already moved away from `id`
+- formula-backed publication may still fall back to `dataPath ?? id` in some runtime paths
+- therefore `name`-first identity/publication should be read as the preferred convergence direction, not as a statement that current runtime targeting has already moved away from `id` or fully stopped accepting legacy `dataPath`
 
 `statusPath`, when present, is the preferred readonly status-summary contract.
 
@@ -598,6 +644,35 @@ When `statusPath` is used, the `Resource` may publish a readonly summary DTO con
 `statusPath` is not a second `Logical Value`. It is runtime-owned summary data.
 
 `Resource` runtime state is not ambient schema-visible data. Host code and debuggers may inspect it out of band. If schema must render producer status, it must declare `statusPath` explicitly; there is no implicit hidden sibling-path or second hidden publication channel.
+
+#### `mergeToScope`
+
+`mergeToScope: true` is the only normative special publish extension beyond the named publication path.
+
+Rules:
+
+1. `name` remains the authoritative identity and default publication path
+2. if the published value is a plain object, runtime additionally shallow-merges its top-level fields into the current lexical scope
+3. the merged fields are derived projections from the same `Logical Value`; they are not a second independently writable business root
+4. collisions with reserved projection names, active `Resource` targets, or ordinary scope data in the same owning lexical scope are invalid unless a narrower contract explicitly reserves them
+5. if the published value is not object-like, `mergeToScope: true` is invalid and publication fails diagnostically
+6. implicit merge without `mergeToScope: true` remains non-normative
+
+Example:
+
+```json
+{
+  "type": "data-source",
+  "name": "userProfile",
+  "mergeToScope": true,
+  "api": {
+    "url": "/api/profile",
+    "method": "get"
+  }
+}
+```
+
+In that case schema may read `${userProfile}` as the named value and may also read merged top-level fields such as `${displayName}` only because the merge was explicitly declared.
 
 Current runtime compatibility note:
 
@@ -927,20 +1002,29 @@ Important boundary:
 - `Action Algebra` is a derived runtime system
 - `Action Algebra` may evolve without changing the primitive count
 
-### Gradual Expansion Path
+### Progressive Authoring Surface And `DAG` Semantics
 
-`Action Algebra` should expand gradually instead of jumping directly to a general workflow graph.
+`Action Algebra` should keep a progressive authoring surface instead of forcing authors to start from explicit graph syntax.
 
-Recommended growth path:
+Recommended authoring growth surface:
 
 1. single-step dispatch with `{ action, args }`
-2. success/failure branching with `then` and `onError`
-3. stable sequential lists plus `parallel` aggregates
-4. explicit `DAG`-style dependency graphs only if simpler sequence/branch/aggregate forms stop being sufficient
+2. structured step guard with `when`
+3. success/failure branching with `then` and `onError`
+4. `parallel` fan-out aggregates
+5. explicit graph syntax only if these simpler forms stop being sufficient
+
+But semantically, once `when`, `then`, `onError`, and `parallel` exist, action execution is already a `DAG`:
+
+- one action step is one node
+- `when` is a guard on that node
+- `then` is a success edge
+- `onError` is a failure edge
+- `parallel` is a fan-out/join aggregate
 
 By default, ordered action lists execute sequentially in stable input order unless a narrower aggregate node such as `parallel` says otherwise.
 
-This is the best-known feasible path because it preserves a small, understandable action model while still leaving room for future control-flow growth.
+This is the best-known feasible path because it preserves a small, direct `DSL` while still giving the runtime one graph-shaped execution model for sequencing, cancellation, timeout, retry, aggregation, and error propagation.
 
 ### Active Baseline Versus Convergence Target
 
@@ -1048,6 +1132,7 @@ Convergence rules:
 6. `continueOnError` affects only chain abortion behavior; it does not convert a `failure-class` result into `success-class`
 7. `cancelled` and `timedOut` are `failure-class` by default
 8. `then` and `onError` are sibling control-flow branches; they do not both execute for one result
+9. ordered lists plus `then` / `onError` / `parallel` are authoring forms over one `DAG`-shaped execution model
 
 Current baseline note:
 
@@ -1069,6 +1154,7 @@ Convergence rules:
 4. if any child is `failure-class`, the aggregate result is `failure-class`
 5. `parallel` does not automatically cancel sibling actions when one child fails
 6. `then` or `onError` attached to the aggregate node read the aggregate `ActionResult`
+7. when the aggregate node has downstream `then` or `onError`, child branches join into the aggregate result before that downstream branch is evaluated
 
 Current baseline note:
 
@@ -1883,8 +1969,7 @@ Important compatibility note:
   "body": [
     {
       "type": "data-source",
-      "name": "countries",
-      "dataPath": "lookups.countries",
+      "name": "lookups.countries",
       "api": {
         "url": "/api/countries",
         "method": "get"
