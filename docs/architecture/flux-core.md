@@ -10,6 +10,10 @@ Use it when you need the highest-level answer to:
 - how runtime, scope, forms, pages, and actions fit together
 - which design directions are current behavior versus future refinement
 
+For the dedicated template/instance identity model, continue with `docs/architecture/template-instantiation-and-node-identity.md`.
+
+If this document conflicts with template versus runtime-instance ownership, `docs/architecture/template-instantiation-and-node-identity.md` wins.
+
 Code-level source of truth lives primarily in `packages/flux-core/src/index.ts`, `packages/flux-runtime/src/index.ts`, and `packages/flux-react/src/index.tsx`.
 
 ## Package Role: `@nop-chaos/flux-core`
@@ -130,13 +134,15 @@ The active system is organized into five layers:
 
 ```text
 raw schema
-  -> SchemaCompiler
-compiled schema node tree
-  -> RendererRuntime
-resolved node meta + resolved props + action dispatch + page/form runtimes
+  -> TemplateCompiler
+compiled template graph
+  -> RendererRuntime.instantiate(...)
+runtime node instances + action dispatch + page/form runtimes
   -> React renderer
 concrete component render
 ```
+
+Current code still routes through `SchemaCompiler` and `CompiledSchemaNode`. Treat that as the implementation in flight, not the target architecture contract.
 
 ## Layer Responsibilities
 
@@ -148,6 +154,14 @@ Owns:
 - region extraction such as `body`, `actions`, and renderer-owned nested regions
 - field classification through renderer field metadata
 - compiled props, meta, event, and validation assembly
+- template graph construction, including template-local node ids and duplicate-`id` reporting by template path
+
+Current internal-id baseline:
+
+- `cid` should converge to live runtime node identity allocated at mount time for a mounted inspectable node
+- template-level node identity should use `templateNodeId`
+- runtime state should be instantiated separately from template structure
+- full compiled node trees should not be reused as if they were live runtime instances; compile-once benefits should come from immutable template reuse plus per-instance runtime state
 
 ### `ExpressionCompiler`
 
@@ -156,7 +170,11 @@ Owns:
 - literal, expression, template, array, and object recognition
 - value-tree compilation
 - static versus dynamic classification
-- runtime state creation for dynamic execution and identity reuse
+- program generation for dynamic execution and identity reuse
+
+Target note:
+
+- runtime state allocation belongs to runtime instantiation, not to template ownership
 
 ### `RendererRuntime`
 
@@ -301,6 +319,12 @@ Important note:
 
 - current compiled nodes carry resolved event metadata and validation metadata in addition to props and regions
 - `props` is a compiled runtime value, not a raw plain object
+
+Transitional note:
+
+- `createRuntimeState()` is part of the current code shape
+- it should be treated as legacy/current-only once the template/instance split is implemented
+- the clean-slate target is `TemplateNode` plus explicit `NodeInstance` allocation during `instantiate(...)`
 
 ## Action Baseline
 

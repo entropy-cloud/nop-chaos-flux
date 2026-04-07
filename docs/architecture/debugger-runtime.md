@@ -66,7 +66,7 @@
 - `amis` 主要暴露 UI 和 console log；`nop-debugger` 还暴露 `window.__NOP_DEBUGGER_API__` 与 `window.__NOP_DEBUGGER_HUB__`
 - `amis` 的查询能力主要依赖人工查看面板；`nop-debugger` 提供 `queryEvents()`、`waitForEvent()`、`getInteractionTrace()`、`exportSession()`、`createDiagnosticReport()`
 - `amis` 以松散日志为主；`nop-debugger` 已形成统一事件模型 `compile/render/action/api/notify/error/state:snapshot`
-- `amis` inspect 主要读取组件 `props.data` 原型链；`nop-debugger` 已支持 `data-cid -> handle -> formState/scopeData`
+- `amis` inspect 主要读取组件 `props.data` 原型链；`nop-debugger` 当前实现已支持通过 `data-cid` 回查 handle 和 form/scope 数据。clean-slate 设计不是移除 `data-cid`，而是要求通过 `data-cid` 先回到 live node，再提升到 canonical `NodeLocator`，见 `docs/architecture/template-instantiation-and-node-identity.md`
 - `amis` 文档只覆盖“开启调试器 + 查看日志/数据链”；`nop-debugger` 已具备面向集成测试的 API 设计和 Playwright 基础回归
 
 ### 2.3 AMIS 仍然提醒我们的风险
@@ -131,9 +131,34 @@
 - `interactionId`: 一次动作链或用户交互的关联标识
 - `trace anchor event`: 用于推断 interaction trace 的锚点事件
 - `scopeChain`: inspect 返回的逐层 scope 快照数组
-- `node inspect payload`: `inspectByCid()` / `inspectByElement()` 返回的聚合节点上下文
+- `node inspect payload`: `inspectByCid()` / `inspectByElement()` 返回的聚合节点上下文；其中 `cid` 是 live runtime node id，`locator` 是 canonical structural/runtime identity
 
 这已经满足 AI 进行结构化检索的最基本要求。
+
+### 3.2.1 Identity Contract
+
+Target architecture rule:
+
+- `locator` is the canonical node identity for debugger events, traces, inspect payloads, and anomaly grouping
+- `nodeId` and `path` may remain as convenience summaries for humans; `nodeId` here means the author-facing schema/node summary field, not `templateNodeId`
+- `cid` is the compact live-node identity used by DOM and debugger round-trips
+- repeated nodes may and should expose live `data-cid` while mounted; `locator` remains the deeper remount-stable structural identity
+- any serialized/debug-session use of `cid` outside the immediate mounted runtime should pair it with `runtimeId` or prefer `locator`
+
+Target event shape:
+
+```ts
+interface DebuggerEvent {
+  kind: string;
+  summary: string;
+  locator?: NodeLocator;
+  nodeId?: string;
+  path?: string;
+  rendererType?: string;
+  interactionId?: string;
+  requestKey?: string;
+}
+```
 
 ### 3.3 Automation API
 
@@ -150,7 +175,7 @@
 - `createDiagnosticReport()`
 - `exportSession()`
 - `waitForEvent()`
-- `inspectByCid()`
+- `inspectNode()`
 - `inspectByElement()`
 - `getLatestFailedRequest()`
 - `getLatestFailedAction()`
@@ -165,7 +190,7 @@
 - `getSnapshot()` / `getOverview()` / `queryEvents()` / `getLatestEvent()`
 - `waitForEvent()`
 - `getInteractionTrace()`
-- `inspectByCid()` / `inspectByElement()`
+- `inspectNode()` / `inspectByElement()`
 - `exportSession()` / `createDiagnosticReport()`
 - `getLatestFailedRequest()` / `getLatestFailedAction()` / `getRecentFailures()` / `getNodeAnomalies()`
 
@@ -219,10 +244,32 @@
 - 等待异步事件完成，而不是盲等 timeout
 - 提取最近错误、最近请求、最近 action
 - 导出脱敏 session 数据用于失败诊断
-- 通过 `data-cid` 与 inspect API 从页面元素回查组件状态
+- 通过 `data-cid` 与 inspect API 从页面元素回查组件状态，并继续下钻到对应 `locator` / scopeChain
 - 在多事件流中按 `kind/group/nodeId/path/requestKey` 做筛选
 
 这意味着 `nop-debugger` 已经不只是“给人看”的工具，而是可被测试和 AI 程序消费的诊断层。
+
+Target DOM inspect rule:
+
+- mounted inspectable nodes expose `data-cid`
+- `inspectByElement()` climbs to the nearest inspectable owner marker
+- `inspectByCid()` returns the live node inspect payload and includes its `locator`
+- virtualized or disposed nodes return explicit not-mounted diagnostics instead of guessing from stale DOM
+
+Target lookup result rule:
+
+- debugger-facing lookup should distinguish `notMaterialized` from `notFound`
+- `notMaterialized` means the structural target is valid but there is no current live mounted/materialized node to inspect
+- `notFound` means the requested target identity is invalid in the current runtime/template context
+
+Target inspect contract:
+
+```ts
+type InspectResult =
+  | { kind: 'resolved'; payload: NodeInspectPayload }
+  | { kind: 'notMaterialized'; locator?: NodeLocator }
+  | { kind: 'notFound' };
+```
 
 ### 4.3 Why It Is Not Fully There Yet
 

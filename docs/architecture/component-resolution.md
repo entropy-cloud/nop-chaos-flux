@@ -1,525 +1,240 @@
-# 组件定位机制设计
+# Component Resolution
 
-## 问题背景
+## Purpose
 
-`component:<method>` 调用需要定位目标组件，涉及以下核心问题：
+This document defines how component-targeted actions resolve their live targets.
 
-1. **定位方式**：如何通过 componentId/componentName 精确定位组件
-2. **Host tree边界**：组件查找的范围限制，避免跨页面或跨宿主树污染
-3. **性能优化**：编译期预解析，避免运行期逐个查找
-4. **动态组件**：表格行、迭代器等动态生成的组件如何处理
+It depends on the clean-slate template/instance model in:
 
-## 设计目标
+- `docs/architecture/template-instantiation-and-node-identity.md`
 
-1. **精确定位**：关键操作（表单提交、验证）必须精确定位目标组件
-2. **性能优化**：90%+ 的静态组件查找应该是 O(1)
-3. **支持动态**：表格行等动态组件需要上下文感知的定位
-4. **边界内唯一**：同一可见 registry 边界内必须满足定位唯一性
+This document is intentionally narrow. It does not redefine template ids, repeated-instance identity, scope ownership, or debugger identity.
 
----
+## Main Rule
 
-## 组件标识设计
+Component resolution should target live node instances, not raw schema nodes.
 
-### 三层标识体系
+Compile-time lowering may point to template structure, but runtime resolution must end at a live `NodeLocator` or a live `ComponentHandle`.
 
-| 标识 | 用途 | 唯一性范围 | 示例 |
-|------|------|-----------|------|
-| `id` | 用户定义的组件ID | 当前可见 registry 边界内唯一 | `userForm` |
-| `name` | 用户定义的逻辑名（也是数据绑定路径） | 仅作次级便利定位，当前可见 registry 边界内唯一 | `submitBtn` |
-| `testid` | 测试定位锚点（输出为 `data-testid`） | 无强制唯一要求 | `login-form` |
-| `_cid` | 编译期分配的内部索引 | 全局唯一 | `42` |
-| `_templateId` | 动态组件的模板标识 | 全局唯一 | `table.row.form` |
+Compile-time lowering must not directly target live `cid`, because `cid` is allocated at runtime per live node instance.
 
-### Host Tree边界
+## Target Categories
 
-组件查找**不超过当前可见 runtime host tree / 显式组合的 registry 边界**，内部通过宿主边界隔离：
+### 1. Canonical runtime target
 
-```
-Runtime host tree / explicit registry boundary
-  └── Form / Dialog / CRUD 等局部 registry 边界
-        └── 嵌套组件（在当前可见 registry 边界内唯一即可）
-```
+The canonical target is a `NodeLocator`.
 
-**自动创建 Scope 边界的组件**：
-- `form` - 表单容器
-- `dialog` / `drawer` - 弹窗容器
-- `crud` - CRUD 容器
-- `wizard` - 向导容器
-
----
-
-## 编译期优化
-
-### 静态组件
-
-对于非动态生成的组件，编译期预解析引用：
-
-```typescript
-// 源 Schema
-{
-  "type": "button",
-  "onClick": {
-    "action": "component:submit",
-    "componentName": "userForm"
-  }
-}
-
-// 编译后
-{
-  "action": "component:submit",
-  "_targetCid": 42,        // 直接引用目标组件的内部索引
-  "_resolved": true        // 标记已解析
+```ts
+interface NodeLocator {
+  runtimeId: string;
+  templateGraphId: string;
+  templateNodeId: number;
+  instancePath?: readonly InstanceFrame[];
 }
 ```
 
-**运行期查找**：
-```typescript
-function resolveStaticComponent(cid: number): ComponentHandle {
-  return registry.handles.get(cid);  // O(1)
+If a caller already has a `NodeLocator`, no further semantic resolution is needed.
+
+Canonical singleton rule:
+
+- singleton nodes omit `instancePath`
+- `undefined` is the canonical singleton representation
+- `[]` must be normalized to the same singleton case and must not represent a distinct identity
+
+### 2. Compile-time static target plan
+
+For a singleton target known at compile time:
+
+```ts
+interface StaticTargetPlan {
+  kind: 'static';
+  templateGraphId: string;
+  templateNodeId: number;
 }
 ```
 
-### 动态组件
+Runtime combines this with the current `runtimeId` to form a singleton `NodeLocator`.
 
-表格行、迭代器等动态生成的组件，编译期标记模板：
+Live `cid` resolution happens only after the singleton instance is materialized.
 
-```typescript
-// 表格行内的表单
-{
-  "type": "table",
-  "columns": [{
-    "body": {
-      "type": "form",
-      "name": "rowForm",
-      "_templateId": "table.row.rowForm",  // 编译期生成
-      "_isDynamic": true
-    }
-  }]
-}
+### 3. Compile-time repeated target plan
 
-// 行内按钮动作
-{
-  "type": "button",
-  "onClick": {
-    "action": "component:submit",
-    "_targetTemplateId": "table.row.rowForm",
-    "_isDynamic": true
-  }
+For a target inside a repeated boundary:
+
+```ts
+interface RepeatedTargetPlan {
+  kind: 'repeated';
+  templateGraphId: string;
+  templateNodeId: number;
+  repeatedTemplateId: string;
 }
 ```
 
-**运行期查找**（需要上下文）：
-```typescript
-function resolveDynamicComponent(
-  templateId: string, 
-  context: ActionContext
-): ComponentHandle | undefined {
-  const instanceKey = context.getInstanceKey();  // "row:0", "row:1", ...
-  return registry.dynamicHandles.get(templateId)?.get(instanceKey);
-}
-```
+`repeatedTemplateId` must identify exactly one repeated boundary within the owning `templateGraphId`.
 
----
+Runtime combines this with the current repeated-instance context to form the final `NodeLocator`.
 
-## 注册表设计
+Live `cid` resolution happens only after the repeated instance is materialized.
 
-### 数据结构
+### 4. Explicit repeated-instance selector
 
-运行时内部仍可维护 `cid` / `id` / `name` / dynamic-template 等索引，但这些索引不应作为跨包公开契约暴露给 debugger 或宿主工具。
+For cross-instance repeated targeting, the action may carry an explicit repeated-instance selector:
 
-当前对外稳定的是较窄的调试接口：
-
-```typescript
-interface ComponentHandleRegistry {
-  id: string;
-  parent?: ComponentHandleRegistry;
-  register(...): () => void;
-  unregister(handle: ComponentHandle): void;
-  cleanupDynamic(templateId: string): void;
-  resolve(target: ComponentTarget):
-    | { kind: 'found'; handle: ComponentHandle }
-    | { kind: 'not-found' }
-    | { kind: 'ambiguous'; matches: readonly ComponentHandle[] };
-  getHandleByCid?(cid: number): ComponentHandle | undefined;
-  getDebugSnapshot?(): {
-    handles: Array<{
-      cid?: number;
-      id?: string;
-      name?: string;
-      type: string;
-      mounted: boolean;
-    }>;
-  };
-}
-```
-
-这允许 debugger 按 `cid` 做稳定 inspect，同时避免直接依赖 registry 内部 `Map` 布局。
-
-### 注册流程
-
-```typescript
-function registerComponent(
-  handle: ComponentHandle,
-  scope: ComponentHandleRegistry,
-  options: { isDynamic?: boolean; instanceKey?: string }
-): number {
-  
-  if (options.isDynamic) {
-    // 动态组件：注册到 dynamicHandles
-    const { templateId, instanceKey } = handle;
-    if (!scope.dynamicHandles.has(templateId)) {
-      scope.dynamicHandles.set(templateId, new Map());
-    }
-    scope.dynamicHandles.get(templateId)!.set(instanceKey, handle);
-    return -1;  // 动态组件无全局 cid
-  }
-  
-  // 静态组件：分配 cid
-  const cid = allocateCid();
-  handle._cid = cid;
-  scope.handles.set(cid, handle);
-  
-  // 调试模式：检查重复
-  if (DEBUG_MODE && handle.name) {
-    checkDuplicateName(scope, handle.name, cid);
-  }
-  
-  return cid;
-}
-```
-
-### 解析流程
-
-```typescript
-function resolveComponent(
-  target: ResolvedTarget,
-  context?: ActionContext
-):
-  | { kind: 'found'; handle: ComponentHandle }
-  | { kind: 'not-found' }
-  | { kind: 'ambiguous'; matches: readonly ComponentHandle[] } {
-  
-  // 优先：编译期已解析的静态组件
-  if (target._cid !== undefined) {
-    const byCid = registry.handles.get(target._cid);
-    return byCid ? { kind: 'found', handle: byCid } : { kind: 'not-found' };
-  }
-  
-  // 动态组件：需要上下文
-  if (target._templateId && context) {
-    const instanceKey = context.getInstanceKey();
-    const dynamic = registry.dynamicHandles.get(target._templateId)?.get(instanceKey);
-    return dynamic ? { kind: 'found', handle: dynamic } : { kind: 'not-found' };
-  }
-  
-  // 运行时按 registry 边界做精确解析
-  if (target.componentId || target.componentName) {
-    return registry.resolve(target);
-  }
-
-  return { kind: 'not-found' };
-}
-```
-
----
-
-## 上下文传递
-
-动态组件的定位依赖于执行上下文：
-
-```typescript
-interface ActionContext {
-  scope: Scope;                    // 当前 scope
-  node: RenderContextNode;         // 当前渲染节点
-  data: Record<string, unknown>;   // 当前数据
-  
-  // 动态组件实例信息
-  getInstanceKey(): string | undefined;  // "row:0", "item:1", ...
-}
-```
-
-### 实例键生成规则
-
-| 容器类型 | instanceKey 格式 | 示例 |
-|---------|-----------------|------|
-| Table 行 | `row:{index}` | `row:0`, `row:15` |
-| 迭代器 | `item:{index}` | `item:0`, `item:5` |
-| Combo | `combo:{index}` | `combo:0`, `combo:2` |
-| Tabs | `tab:{index}` | `tab:0`, `tab:2` |
-
----
-
-## 调试模式检查
-
-重复名称不是调试提示，而是无效配置：
-
-```typescript
-function checkDuplicateName(
-  scope: ComponentHandleRegistry,
-  name: string,
-  cid: number
-): void {
-  if (!scope.nameIndex) {
-    scope.nameIndex = new Map();
-  }
-  
-  const existing = scope.nameIndex.get(name);
-  if (existing && existing.size > 0) {
-    throw new Error(
-      `[ComponentRegistry] Duplicate component name "${name}" in registry boundary "${scope.id}". ` +
-      `Existing cids: [${Array.from(existing).join(', ')}], new cid: ${cid}`
-    );
-  }
-  
-  if (!existing) {
-    scope.nameIndex.set(name, new Set([cid]));
-  } else {
-    existing.add(cid);
-  }
-}
-```
-
----
-
-## 性能对比
-
-| 场景 | 传统方式 | 优化后 |
-|------|---------|--------|
-| 静态组件查找 | O(n) 边界扫描 | O(1) Map 查找 |
-| 动态组件查找 | O(n) 边界扫描 + 过滤 | O(1) 双层 Map |
-| 编译期解析 | 无 | 一次性解析，运行期直接使用 |
-
----
-
-## 兼容性
-
-### 向后兼容
-
-1. **保留 componentId/componentName**：未编译或无法静态解析的场景仍支持运行时 registry 解析
-2. **渐进增强**：已编译的 Schema 包含 `_cid`/`_templateId`，旧版运行时忽略并退回精确 registry 解析，而不是模糊查找
-
-### Schema 版本标识
-
-```typescript
-interface SchemaMeta {
-  _compiled?: boolean;      // 是否经过编译
-  _compilerVersion?: string; // 编译器版本
-}
-```
-
----
-
-## 实现路径
-
-1. **Phase 1**：实现 ComponentHandleRegistry 的基础结构
-2. **Phase 2**：编译期分配 `_cid`，静态组件直接索引
-3. **Phase 3**：动态组件的 templateId + instanceKey 机制
-4. **Phase 4**：调试模式的重复检查
-
----
-
-## 边缘场景处理
-
-### 跨 Scope 调用
-
-子边界内的组件调用外层组件时，应沿显式组合的 component registry 边界查找，而不是沿数据 `ScopeRef` 链查找：
-
-```typescript
-function resolveAcrossBoundary(target: string, registry: ComponentHandleRegistry): ComponentHandle | undefined {
-  const result = registry.resolve({ componentName: target });
-  return result.kind === 'found' ? result.handle : undefined;
-}
-```
-
-**示例**：Dialog 内按钮提交 Page 级表单
-```json
-{
-  "type": "page",
-  "body": [
-    { "type": "form", "name": "pageForm" },
-    { "type": "dialog", "body": [
-      { "type": "button", "onClick": { 
-        "action": "component:submit", 
-        "componentName": "pageForm"  // 通过当前可见 registry 边界解析 page 级表单
-      }}
-    ]}
-  ]
-}
-```
-
-### 嵌套动态组件
-
-嵌套表格、表格内迭代器等场景，使用复合 instanceKey：
-
-```typescript
-interface InstanceKeyContext {
-  chain: Array<{ kind: 'row' | 'item' | 'combo' | 'tab'; index: number }>;
-}
-
-function formatInstanceKey(ctx: InstanceKeyContext): string {
-  return ctx.chain.map(c => `${c.kind}:${c.index}`).join('.');
-}
-```
-
-**示例**：
-| 场景 | instanceKey |
-|------|-------------|
-| 表格第3行 | `row:2` |
-| 嵌套表格：主表第2行的子表第4行 | `row:1.nested:3` |
-| 表格行内迭代器第5项 | `row:2.item:4` |
-| Combo 第1项内的表格第3行 | `combo:0.row:2` |
-
-### 条件渲染组件
-
-`visibleOn`/`hiddenOn` 控制的组件，handle 增加挂载状态：
-
-```typescript
-interface ComponentHandle {
-  _cid: number;
-  _templateId?: string;
-  _mounted: boolean;  // 运行时挂载状态
-}
-
-// 查找时检查有效性
-function resolveComponent(target: ResolvedTarget): ComponentHandle | undefined {
-  const handle = registry.handles.get(target._cid);
-  if (handle && !handle._mounted) {
-    return undefined;  // 组件存在但未挂载
-  }
-  return handle;
-}
-```
-
-### 动态加载组件
-
-远程加载的 schema 片段，使用负数 cid 区间避免冲突：
-
-```typescript
-const CID_RANGES = {
-  STATIC: { min: 1, max: 2 ** 31 - 1 },      // 静态组件：正数
-  DYNAMIC_LOADED: { min: -1, max: -2 ** 31 } // 动态加载：负数
-};
-
-function allocateCid(isDynamicLoaded: boolean): number {
-  const range = isDynamicLoaded ? CID_RANGES.DYNAMIC_LOADED : CID_RANGES.STATIC;
-  // 使用原子计数器分配
-}
-```
-
-### InstanceKey 稳定性
-
-表格排序/过滤后，`row:0` 对应的数据可能变化，引入 epoch 机制：
-
-```typescript
-interface DynamicHandleKey {
-  templateId: string;
+```ts
+interface RepeatedInstanceSelector {
+  templateGraphId: string;
+  repeatedTemplateId: string;
   instanceKey: string;
-  epoch: number;  // 每次数据重排递增
-}
-
-// 表格数据变化时
-function onDataChanged(table: TableComponent) {
-  table._epoch = (table._epoch || 0) + 1;
-  // 清理旧 epoch 的 handles
-  cleanupOldEpochs(table._templateId, table._epoch);
+  templateNodeId: number;
 }
 ```
 
-**替代方案**：使用数据 ID 而非行索引
-```typescript
-// 优先使用数据主键
-function getInstanceKey(row: TableRow, index: number): string {
-  const dataId = row.data?.id;
-  if (dataId !== undefined) {
-    return `row:id:${dataId}`;
+This is the preferred path when the caller means "that specific row/item instance", not "the current repeated instance".
+
+Constraint for nested repeated structures:
+
+- `RepeatedInstanceSelector` is only unambiguous when `repeatedTemplateId + instanceKey` identifies a unique repeated instance in the current runtime/template context
+- if nested or cross-owner repeated structures make that selector ambiguous, callers should use full `NodeLocator` instead of relying on `RepeatedInstanceSelector`
+
+### 5. Author selectors
+
+Author selectors are convenience selectors, not canonical targets:
+
+- `componentId`
+- `componentName`
+
+They resolve inside the visible component-registry boundary.
+
+## Compile-Time Lowering Rules
+
+### Lower unique singleton `componentId`
+
+If a `componentId` points to a unique singleton target inside the compiled template, lower it to `StaticTargetPlan`.
+
+### Lower repeated-local targets only when the repeated boundary is explicit
+
+If the source and target both live inside the same repeated template boundary, lowering to `RepeatedTargetPlan` is valid.
+
+### Do not globally lower `componentName`
+
+`componentName` should not lower to a global template id map.
+
+Reasons:
+
+- conditional branches may legally reuse names
+- name uniqueness is naturally enforced by visible registry boundaries, not the whole compiled page tree
+
+## Runtime Resolution Algorithm
+
+Resolution order should be:
+
+1. if action already carries `NodeLocator`, resolve directly
+2. if action carries `StaticTargetPlan`, materialize singleton locator and resolve
+3. if action carries `RepeatedTargetPlan`, combine with current repeated-instance context and resolve
+4. otherwise, resolve `componentId` / `componentName` inside the visible registry boundary
+
+Canonical result contract:
+
+```ts
+type ResolutionResult =
+  | { kind: 'resolved'; locator: NodeLocator; handle?: ComponentHandle }
+  | { kind: 'notMaterialized'; locator: NodeLocator }
+  | { kind: 'notFound' }
+  | { kind: 'ambiguous'; matches: readonly NodeLocator[] };
+```
+
+Structural target resolution is runtime-owned. The component registry may contribute live-handle lookup and selector lookup, but it is not the canonical source of structural/template truth.
+
+```ts
+function resolveTarget(target: ActionTarget, ctx: ResolutionContext): ResolutionResult {
+  if (target.locator) {
+    return runtime.resolveNode(target.locator);
   }
-  return `row:idx:${index}`;
-}
-```
 
----
-
-## 生命周期管理
-
-### 注册/注销流程
-
-```typescript
-interface ComponentHandleRegistry {
-  // 注册组件
-  register(handle: ComponentHandle): void;
-  
-  // 注销组件（组件卸载时调用）
-  unregister(handle: ComponentHandle): void;
-  
-  // 清理动态组件（表格销毁、数据刷新时调用）
-  cleanupDynamic(templateId: string): void;
-}
-
-// 组件卸载时自动清理
-function onComponentUnmount(handle: ComponentHandle) {
-  if (handle._templateId) {
-    // 动态组件：从 dynamicHandles 移除
-    registry.dynamicHandles.get(handle._templateId)?.delete(handle._instanceKey);
-  } else {
-    // 静态组件：从 handles 移除，标记未挂载
-    handle._mounted = false;
-    registry.handles.delete(handle._cid);
+  if (target.staticPlan) {
+    return runtime.resolveNode({
+      runtimeId: ctx.runtimeId,
+      templateGraphId: target.staticPlan.templateGraphId,
+      templateNodeId: target.staticPlan.templateNodeId
+    });
   }
-}
-```
 
-### 内存清理策略
-
-大量动态组件场景下的清理策略：
-
-```typescript
-interface CleanupPolicy {
-  // 最大缓存的动态组件数量
-  maxDynamicHandles: number;  // 默认 1000
-  
-  // LRU 清理阈值
-  lruThreshold: number;  // 默认 0.8 (80%)
-}
-
-// 惰性清理
-function checkAndCleanup(registry: ComponentHandleRegistry, policy: CleanupPolicy) {
-  let totalDynamic = 0;
-  registry.dynamicHandles.forEach(map => totalDynamic += map.size);
-  
-  if (totalDynamic > policy.maxDynamicHandles * policy.lruThreshold) {
-    // 按最近使用时间清理最旧的 20%
-    cleanupLRU(registry, Math.floor(totalDynamic * 0.2));
+  if (target.repeatedPlan) {
+    return runtime.resolveNode({
+      runtimeId: ctx.runtimeId,
+      templateGraphId: target.repeatedPlan.templateGraphId,
+      templateNodeId: target.repeatedPlan.templateNodeId,
+      instancePath: ctx.instancePathFor(target.repeatedPlan.repeatedTemplateId)
+    });
   }
-}
-```
 
----
-
-## 多页面实例隔离
-
-多标签页、SPA 场景下的 cid 冲突防护：
-
-```typescript
-interface PageInstanceRegistry {
-  pageId: string;  // 页面实例唯一标识
-  cidCounter: number;
-  
-  allocateCid(): number {
-    // 格式：pageId 局部唯一，全局通过 pageId 隔离
-    return ++this.cidCounter;
+  if (target.repeatedSelector) {
+    return runtime.resolveNode({
+      runtimeId: ctx.runtimeId,
+      templateGraphId: target.repeatedSelector.templateGraphId,
+      templateNodeId: target.repeatedSelector.templateNodeId,
+      instancePath: ctx.instancePathForExplicit(
+        target.repeatedSelector.repeatedTemplateId,
+        target.repeatedSelector.instanceKey
+      )
+    });
   }
-}
 
-// 全局查找时需要 pageId
-function resolveGlobal(pageId: string, cid: number): ComponentHandle | undefined {
-  return pageRegistries.get(pageId)?.handles.get(cid);
+  return registry.resolveSelector({
+    id: target.componentId,
+    name: target.componentName
+  }, ctx);
 }
 ```
 
----
+`ResolutionContext.instancePathFor(...)` and `instancePathForExplicit(...)` must reconstruct the full ancestor `instancePath`, not only the innermost repeated frame. Nested repeated targeting cannot safely work from one flat row/item token alone.
 
-## 相关文档
+## Registry Boundary Rule
 
-- [Form Validation](./form-validation.md) - 表单验证中的组件定位
-- [Renderer Runtime](./renderer-runtime.md) - 渲染器与运行时的交互
-- [Flux Core Architecture](./flux-core.md) - 整体架构概览
+Selector resolution must follow visible component-registry boundaries, not lexical data scope chains.
+
+That means:
+
+- `ScopeRef` is not the component-resolution carrier
+- component lookup crosses form/dialog/local registry boundaries only through explicit registry composition
+
+## Repeated Structures
+
+Table rows and future `type: 'loop'` use the same model:
+
+- template compiles once
+- each repeated instance contributes an `instancePath`
+- repeated-local targets resolve by `templateGraphId + templateNodeId + instancePath`
+
+There is no need for a fake compile-time global `cid` space.
+
+Selectors inside repeated content follow this rule:
+
+- `componentId` / `componentName` are convenience lookups in the current visible registry boundary
+- they are suitable for targeting the current repeated instance when that boundary is unambiguous
+- they are not the preferred cross-instance targeting mechanism
+- cross-instance operations should use `RepeatedInstanceSelector` or a full `NodeLocator`
+
+## Failure Modes
+
+### Duplicate `componentId`
+
+If compile-time analysis finds duplicate `componentId` definitions in the same compiled template where singleton lowering would be required, it must report the conflicting template paths and skip static lowering.
+
+### Missing repeated context
+
+If a repeated target plan is evaluated outside the required repeated-instance context, resolution must fail explicitly. It should not silently fall back to an arbitrary instance.
+
+### Not materialized versus not found
+
+If a target is structurally valid but not currently materialized because of virtualization, conditional rendering, or deferred fragment lifetime, resolution must return an explicit `notMaterialized` result rather than `notFound`.
+
+### Ambiguous selector resolution
+
+If runtime selector lookup by `componentId` or `componentName` is ambiguous inside the visible registry boundary, the result must be explicit ambiguity, not "pick first".
+
+## Related Documents
+
+- `docs/architecture/template-instantiation-and-node-identity.md`
+- `docs/architecture/renderer-runtime.md`
+- `docs/architecture/debugger-runtime.md`

@@ -391,20 +391,26 @@ Flux should not require authors to manually enumerate source dependencies for no
 
 Preferred model:
 
-1. compile-time static extraction when the expression tree makes dependencies obvious
-2. runtime dynamic access tracking during evaluation to refine the actual dependency set
+1. when a producer declares dependency roots explicitly, runtime uses that declaration as authoritative
+2. otherwise runtime collects dependency roots dynamically during evaluation
+3. runtime fallback tracks lexical root bindings such as `user`, `filters`, or `row`, not deep member paths such as `user.name`
+4. whole-scope enumeration or materialization degrades to wildcard
 
-This hybrid model gives:
+This model gives:
 
-- good initial indexing
-- correct behavior for dynamic access paths
-- lazy recomputation semantics closer to modern reactive systems
+- lower runtime and compiler complexity than a static-plus-dynamic union model
+- behavior aligned with lexical scope rather than deep object shape
+- a clear escape hatch for advanced cases through an explicit producer-level declaration
 
-When an upstream path changes:
+Any future explicit carrier such as `dependsOn` belongs on `data-source` / `reaction`, not on `ApiSchema`.
+
+When an upstream root changes:
 
 - dependent sources are marked dirty
 - formula sources recompute according to the synchronous-before-reaction rule above when possible, otherwise lazily on next consumption or explicit refresh
 - API sources invalidate and refresh according to source policy
+
+Collection owners such as tables or loops should translate parent collection changes into row-local root changes so row consumers can depend on `row` or `record` instead of invalidating on the whole collection binding.
 
 The runtime goal is targeted invalidation, not eager full-tree re-evaluation.
 
@@ -735,7 +741,8 @@ Current code already implements part of this model:
 Current code is not yet fully converged to the target model:
 
 - formula-backed sources are not yet unified under the same runtime source abstraction
-- source dependency tracking is not yet a full static-plus-dynamic invalidation system
+- source dependency tracking still uses the current deep-path runtime collection and has not yet converged to the explicit-roots-plus-runtime-root-fallback model described above
+- explicit dependency declarations for sources and reactions are not yet wired on the current schema types
 - some producer-specific details still remain narrower implementation work even though request execution now converges through `executeApiSchema(...)`
 - API-backed sources still allow legacy merge semantics when neither `name` nor `dataPath` is declared; this is compatibility-oriented and non-normative
 - richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete

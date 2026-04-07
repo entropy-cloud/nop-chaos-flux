@@ -75,7 +75,7 @@ Rules:
 | `DomainBridge` | a host-private bridge contract, not a core primitive |
 | `Known-Solution Envelope` | the set of known architectural solution families relevant to this problem space, including non-mainstream but feasible ones |
 | `Feasibility Baseline` | the current platform constraints under which a superior solution must be implementable today |
-| `Settled Update Turn` | the runtime boundary after synchronous writes for the current mutation path have completed and before asynchronous consequence work is flushed |
+| `Settled Update Turn` | the semantic runtime-store settlement boundary after a synchronous mutation path has published its current snapshot and before queued consequence work for that boundary begins; it is not defined by macro-task, microtask, frame, or host render timing |
 
 
 ## Core Claim
@@ -861,7 +861,7 @@ Current baseline note:
 6. `debounce` delays dispatch, not `Resource` publication
 7. `once` disposes the `Reaction` after its first successful trigger
 8. on first activation before any prior observed value exists, `prev` is `undefined`, `changed` is `true` only if the reaction is running under `immediate` and the current evaluation passes normal change/guard checks, and `changedPaths` is `[]`
-9. `changedPaths` is a readonly list of paths relative to the owning lexical scope for the current settled update turn
+9. `changedPaths` is a readonly list of paths relative to the owning lexical scope for the current queued reaction execution; runtimes may coalesce multiple triggering scope changes before that execution begins
 10. runtimes may conservatively report parent or wildcard paths when finer-grained provenance is unavailable
 11. `Reaction` never executes host logic inline; it only dispatches through `Capability`
 12. dependency changes do not bypass `Reaction` semantics and directly call arbitrary actions
@@ -1439,29 +1439,37 @@ This is the recommended architecture-review mental model. It is not a second pri
 
 ## Scheduling Model
 
+These rules define semantic publication and consequence boundaries for the runtime store.
+
+They do not require one globally visible scheduler, one specific event-loop carrier, or one author-visible flush primitive.
+
 Preferred scheduling rules:
 
 1. dependency hits are processed before consequence dispatch
 2. `Resource` invalidation happens before `Reaction` dispatch
 3. scope writes settle before `Reaction` execution
-4. `Reaction` runs asynchronously after the `Settled Update Turn`, never inline inside the originating mutation path
-5. synchronously computable `Resource` updates publish before `Reaction` evaluation for that turn
-6. async `Resource` producers publish only when they complete in a later `Settled Update Turn`
-7. repeated triggers for the same `Reaction` within one `Settled Update Turn` coalesce into one execution attempt
-8. reaction-triggered writeback may cascade only up to a finite runtime limit
-9. no re-trigger occurs when the watched value is unchanged under the active watcher comparator for that subsystem
-10. high-frequency gesture loops, animation-frame coordination, protocol state machines, collaboration engines, and local-first synchronization processes may remain host/domain systems as long as they cross into `Flux` only at stable publication or command boundaries
-11. ready `Reaction` values execute in stable `Base Tree` path order; where multiple live instances share one compiled node path, runtime uses stable lexical instance order
-12. writes or async completions produced by a `Reaction` schedule a later `Settled Update Turn` instead of interleaving into the active reaction flush
-13. if the cascade limit is reached, runtime aborts the remaining queue for that turn and surfaces a structured cycle error
-14. dependency change does not directly enter arbitrary action execution; effect crossing still requires `Reaction` or a semantic lifecycle trigger
+4. `Settled Update Turn` is the runtime-store settlement boundary for a synchronous mutation path; it is not itself a macro-task, microtask, frame, or host render boundary
+5. `Reaction` runs asynchronously after the current `Settled Update Turn`, never inline inside the originating mutation path
+6. synchronously computable `Resource` updates publish before `Reaction` evaluation for that boundary when they settle in the same synchronous mutation path
+7. async `Resource` producers publish only when they complete in a later `Settled Update Turn`
+8. repeated triggers for the same `Reaction` may be coalesced before its queued execution begins; a runtime is not required to expose one global reaction queue to satisfy this
+9. reaction-triggered writeback may cascade only up to a finite runtime limit
+10. no re-trigger occurs when the watched value is unchanged under the active watcher comparator for that subsystem
+11. high-frequency gesture loops, animation-frame coordination, protocol state machines, collaboration engines, and local-first synchronization processes may remain host/domain systems as long as they cross into `Flux` only at stable publication or command boundaries
+12. when a runtime standardizes cross-reaction ordering, stable `Base Tree` path order is the preferred rule; where multiple live instances share one compiled node path, stable lexical instance order is the preferred tie-breaker
+13. writes or async completions produced by a `Reaction` enter a later `Settled Update Turn` instead of interleaving into the currently running reaction execution
+14. if the cascade limit is reached, runtime aborts the remaining queue for that turn and surfaces a structured cycle error
+15. dependency change does not directly enter arbitrary action execution; effect crossing still requires `Reaction` or a semantic lifecycle trigger
 
 Implementation notes:
 
 - the active runtime today uses per-reaction microtask scheduling with local coalescing rather than one globally visible ordered scheduler
+- formula-backed source initial publication also uses microtask deferral, while source refresh and request-backed producers follow their own controller lifecycles; this architecture should not be read as "one global queue plus one `Promise.resolve().then(...)`" for all runtime work
 - stable `Base Tree` path ordering and structured cycle-error surfacing remain preferred convergence behavior rather than fully realized current runtime guarantees
 - `Settled Update Turn` is a runtime-store concept, not a `React useEffect` ordering concept
-- `React` may replay renders in concurrent mode, but it must not redefine what `Flux` considers the stable set of published values for a turn
+- `React` may interrupt, replay, discard, or re-read renders in concurrent mode; `Flux` does not and need not constrain that scheduler behavior
+- the narrower integration contract is that `Flux` defines when a store turn has settled and which store snapshot is considered published for that turn; the UI host may observe that published snapshot according to its own external-store scheduling model
+- no author-visible `$flush` action is implied by this model; if tests or debugger tooling later need an explicit drain hook, it should remain a runtime/debug surface unless a separate author-visible use case is standardized
 - the cascade-protection limit should be configurable and should have a finite nonzero default
 
 ## Derived Runtime System: `Semantic Lifecycle Entry`
@@ -2029,12 +2037,10 @@ Important compatibility note:
           "type": "reaction",
           "watch": "${shipping.country}",
           "when": "${value !== prev}",
-          "actions": [
-            {
-              "action": "component:validate",
-              "componentId": "shipping-form"
-            }
-          ]
+          "actions": {
+            "action": "component:validate",
+            "componentId": "shipping-form"
+          }
         }
       ]
     },

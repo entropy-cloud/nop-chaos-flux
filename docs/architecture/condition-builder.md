@@ -56,7 +56,7 @@ interface ConditionBuilderSchema extends BaseSchema {
   name: string;
 
   fields: ConditionField[];
-  source?: string | ApiObject;
+  source?: string | ApiSchema;
 
   builderMode?: 'full' | 'simple';
   embed?: boolean;

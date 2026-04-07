@@ -608,12 +608,9 @@ Recommended shape:
   "body": [
     {
       "type": "button",
-      "onEvent": {
-        "click": {
-          "actions": [
-            { "action": "demo:open", "args": { "id": "${id}" } }
-          ]
-        }
+      "onClick": {
+        "action": "demo:open",
+        "args": { "id": "${id}" }
       }
     }
   ]

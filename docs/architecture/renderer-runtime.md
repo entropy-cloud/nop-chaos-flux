@@ -14,6 +14,8 @@ Use it when changing:
 
 For detailed slot and field-semantics rules, use `docs/architecture/field-metadata-slot-modeling.md` as the primary document.
 
+For the clean-slate template/instance split, compiled-node identity, and table/loop instance rules, use `docs/architecture/template-instantiation-and-node-identity.md`.
+
 ## Current Code Anchors
 
 When this document needs to be checked against code, start with:
@@ -52,7 +54,15 @@ Current runtime baseline now carries this one step further for compiled node res
 
 ### Compile once, execute many times
 
-Schema compilation should happen once per schema identity, while renders mostly resolve compiled nodes.
+Template compilation should happen once per schema identity, while runtime mostly instantiates templates and resolves live node instances.
+
+Current later-compile note:
+
+- runtime-assembled fragments such as `dynamic-renderer` payloads or dialog title/body should follow the same two-step rule: compile to template, then instantiate into the current runtime context
+- the long-term architecture goal is to stop treating compiled nodes as live instances and instead pass explicit runtime node instances through the render path
+- live mounted nodes should receive runtime `cid` at mount time so DOM/debugger round-trips can stay compact via `data-cid`
+
+Current code still renders `CompiledSchemaNode` directly. Treat that as the active implementation, not the target contract.
 
 ### Static fast path and identity reuse are mandatory
 
@@ -145,6 +155,30 @@ Meaning:
 - `events` is the map of runtime event handlers derived from declarative event fields
 - `helpers` exposes stable imperative runtime helpers
 
+### Target contract
+
+The clean-slate target contract should move from compiled nodes to runtime node instances:
+
+```ts
+interface RendererComponentProps<S = unknown> {
+  locator: NodeLocator;
+  templateNode: TemplateNode<S>;
+  node: NodeInstance<S>;
+  props: Readonly<Record<string, unknown>>;
+  meta: ResolvedNodeMeta;
+  regions: Readonly<Record<string, RenderRegionHandle>>;
+  events: Readonly<Record<string, RendererEventHandler | undefined>>;
+  helpers: RendererHelpers;
+}
+```
+
+Target meaning:
+
+- `locator` is the canonical live-node identity
+- `templateNode` is the immutable structural definition
+- `node` is the live runtime instance
+- renderers no longer receive a bare compiled node as if it were also the live instance
+
 ## Props Versus Hooks
 
 ### Pass by props
@@ -227,6 +261,32 @@ Why this is preferred:
 - scope creation and path tracking stay consistent
 - monitor and debug behavior remain centralized
 
+### Target region contract
+
+The clean-slate target is an instantiation-oriented region handle:
+
+```ts
+interface RenderRegionHandle {
+  key: string;
+  instantiate(options?: {
+    scope?: ScopeRef;
+    bindings?: Record<string, unknown>;
+    ownerLocator?: NodeLocator;
+    instancePath?: readonly InstanceFrame[];
+  }): React.ReactNode;
+}
+```
+
+Rules:
+
+- `bindings` is optional convenience input for creating a child scope when the caller wants to inject local values
+- `scope` is for callers that already created the right scope explicitly
+- renderers should not pass both `scope` and `bindings` unless the child-scope merge rule is well-defined for that region
+- repeated renderers should prefer explicit `instancePath` plus stable-key-derived bindings over index-only conventions
+- `instancePath` is the full absolute repeated-instance path for the instantiated child subtree, not an owner-relative suffix
+
+This makes repeated rendering explicit instead of smuggling identity through `scopeKey` and `pathSuffix`.
+
 ### Pattern 1: render declared regions directly
 
 ```tsx
@@ -250,10 +310,11 @@ function ListRenderer(props: RendererComponentProps<ListSchema>) {
   return (
     <div>
       {items.map((item, index) => (
-        <div key={index}>
-          {props.regions.item?.render({
-            data: { item, index },
-            scopeKey: `item:${index}`
+        <div key={String((item as { id?: string }).id ?? index)}>
+          {props.regions.item?.instantiate({
+            bindings: { item, index },
+            instancePath: [{ repeatedTemplateId: 'list.item', instanceKey: String((item as { id?: string }).id ?? index) }],
+            ownerLocator: props.locator
           })}
         </div>
       ))}
@@ -261,6 +322,8 @@ function ListRenderer(props: RendererComponentProps<ListSchema>) {
   );
 }
 ```
+
+In the target architecture, the repeated renderer should not invent identity through `index` alone. The repeated scope bindings and `instancePath` come from the repeated-template instantiation model in `docs/architecture/template-instantiation-and-node-identity.md`.
 
 ### Pattern 3: render an ad hoc fragment through helpers
 

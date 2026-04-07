@@ -34,7 +34,7 @@
 | `docs/references/expression-processor-notes.md` | L76 |
 | `docs/analysis/excel-report-designer-research.md` | L518 |
 | `docs/standardization.md` | L840 |
-| `docs/component-list.md` | L755 |
+| `docs/components/roadmap.md` | L755 |
 
 **注意**: `docs/index.md` 和 `AGENTS.md` 已经正确使用 `flux-core.md`。问题仅出在 `references/`、`examples/`、`analysis/`、`standardization.md` 等二级文档。
 

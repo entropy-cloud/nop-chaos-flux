@@ -296,14 +296,14 @@ interface FuncParam {
 type VariableSourceRef = {
   source: 'scope' | 'api';
   scopePath?: string;
-  api?: ApiObject;
+  api?: ApiSchema;
   dataPath?: string;
 };
 
 type FuncSourceRef = {
   source: 'builtin' | 'api';
   builtinSet?: string[];
-  api?: ApiObject;
+  api?: ApiSchema;
   dataPath?: string;
 };
 ```

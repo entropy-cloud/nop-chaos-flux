@@ -280,11 +280,11 @@ It supports:
 - `mergeToScope: true` as the only narrowed special publish extension beyond the named path
 - legacy `dataPath` as a compatibility-only publication override (new schema should use `name`)
 - `stopWhen` expression for conditional polling termination
-- `includeScope` on its `ApiObject` for automatic scope variable injection
+- `includeScope` on its `ApiSchema` for automatic scope variable injection
 
 ## `includeScope`
 
-An `ApiObject` field that controls automatic scope variable injection into request data.
+An `ApiSchema` field that controls automatic scope variable injection into request data.
 
 Values:
 
@@ -296,7 +296,7 @@ Merge rule: `finalData = { ...extractScope(includeScope), ...data }`
 
 ## `params`
 
-An `ApiObject` field for URL query parameters.
+An `ApiSchema` field for URL query parameters.
 
 Unlike `data` (request body), `params` are automatically appended to the URL as a query string.
 

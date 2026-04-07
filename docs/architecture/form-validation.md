@@ -177,7 +177,7 @@ type ValidationRule =
   | { kind: 'notEqualsField'; path: string; message?: string }
   | { kind: 'requiredWhen'; path: string; equals: unknown; message?: string }
   | { kind: 'requiredUnless'; path: string; equals: unknown; message?: string }
-  | { kind: 'async'; api: ApiObject; debounce?: number; message?: string };
+  | { kind: 'async'; api: ApiSchema; debounce?: number; message?: string };
 ```
 
 This means the active runtime already supports more than the original first-wave scalar-only rule set.
