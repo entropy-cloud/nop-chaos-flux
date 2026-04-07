@@ -1,8 +1,10 @@
 # 34 NOP Debugger AI 诊断能力增强计划
 
-> Plan Status: planned
-> Last Reviewed: 2026-04-04
-> Source: `docs/architecture/debugger-runtime.md` reviewed against current code anchors on 2026-04-04
+> Plan Status: in progress
+> Last Reviewed: 2026-04-07
+> Source: `docs/architecture/debugger-runtime.md` reviewed against current code anchors on 2026-04-07
+
+> Status Note: 核心实现切片已经基本落地，请求实例关联、inspect payload 增强、高层失败摘要、受控表达式诊断和关键 E2E automation contract 都已进入代码与测试；当前未收口项主要是文档/术语漂移清理与 plan 级验收结案回写。
 
 ## 复审结论
 

@@ -1,8 +1,11 @@
 # 35 Form Runtime 性能与联动能力实施计划
 
-> Plan Status: planned
-> Last Reviewed: 2026-04-04; audited against codebase on 2026-04-04
-> Source: `docs/analysis/formily-vs-flux-final-report.md` reviewed against current code anchors on 2026-04-04
+> Plan Status: in progress
+> Last Reviewed: 2026-04-07; audited against codebase on 2026-04-07
+> Source: `docs/analysis/formily-vs-flux-final-report.md` reviewed against current code anchors on 2026-04-07
+
+> Status Note: 前半段执行切片已经落地，包括延迟 `validating/submitting`、路径缓存、轻量字段查询接口、validation 写回收敛、显式 `setValues(...)`、数组热路径优化；但受限声明式联动模型、字段 presentation 派生快照及更长期 selector/validation-model follow-up 仍未完成，因此本计划不能标记 completed。
+> Outdated Note: 与依赖追踪/selector 细化直接相关的后续方向，现应以 `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` 的 root-level dependency model 为准；本计划中仍保留的“编译期依赖提取”旧表述只作为历史上下文，不再作为当前执行基线。
 
 ## 复审结论
 
@@ -252,12 +255,15 @@ Exit criteria: `FieldFrame` 和字段 renderer 不再反复拼装相同展示逻
 
 **Phase 9 — 长期项：更细 selector 与 validation model 结构收口**
 
+> 过时标记（2026-04-07）：本阶段中“编译期依赖提取”相关表述已被 `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` 和 `docs/architecture/dependency-tracking.md` 取代。后续若继续推进 selector 细化，应建立在 explicit-root-first + runtime fallback 的 root-level dependency model 上，而不是回到静态依赖提取主线。
+
 Targets: `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/hooks.ts`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/validation/*`, related docs/tests
 
 - 基于前面阶段的数据再判断是否推进：
-  - `编译期依赖提取与更细 selector`
+  - [过时] `编译期依赖提取与更细 selector`
   - `validation model` 去重/收口
-- 第一阶段只覆盖少量可静态提取的表达式形态和已知热路径，不以完备依赖分析为目标。
+- [过时] 第一阶段只覆盖少量可静态提取的表达式形态和已知热路径，不以完备依赖分析为目标。
+- selector 相关后续若继续推进，应改读为“基于 Plan 39 root-level dependency model 的更细失效控制”，而不是重新引入静态依赖提取路线。
 - 如果 `NodeRenderer` provider 层级仍被 profile 证明为瓶颈，再单独开具体计划，不在此计划里预先承诺结构重写。
 
 Exit criteria: 只有在有充分 profile 证据的情况下，才继续推进更细 selector 或 validation model 收口；否则保持当前架构简单性。

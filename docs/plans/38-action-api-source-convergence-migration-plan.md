@@ -1,7 +1,7 @@
 # 38 Action / Api / Source 收敛迁移计划
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-06
+> Plan Status: completed
+> Last Reviewed: 2026-04-07
 > Source: `docs/discussions/03-action-api-design-evolution.md`
 
 ## Purpose
@@ -241,14 +241,14 @@ Validation:
 
 在计划完成前，至少满足：
 
-- [ ] `ApiSchema` / `ExecutableApiRequest` / `PreparedApiRequest` 三层命名在文档和类型中一致。
-- [ ] `ActionSchema` / `SourceSchema` / `DataSourceSchema` 关系在文档和类型中一致。
-- [ ] `type: 'source'` 可以在字段值中表达匿名执行型动态值。
-- [ ] built-in action 命名统一为 camelCase 动宾式。
-- [ ] 事件入口 authoring 只保留单根 `ActionSchema`。
-- [ ] action/source/data-source 共享的 `api` / `args` / `control` 结构在文档与代码中一致。
-- [ ] import dual projection (`namespace:method` + `$alias`) 文档与实现一致。
-- [ ] 示例、测试、调试面同步更新。
+- [x] `ApiSchema` / `ExecutableApiRequest` / `PreparedApiRequest` 三层命名在文档和类型中一致。
+- [x] `ActionSchema` / `SourceSchema` / `DataSourceSchema` 关系在文档和类型中一致。
+- [x] `type: 'source'` 可以在字段值中表达匿名执行型动态值。
+- [x] built-in action 命名统一为 camelCase 动宾式。
+- [x] 事件入口 authoring 只保留单根 `ActionSchema`。
+- [x] action/source/data-source 共享的 `api` / `args` / `control` 结构在文档与代码中一致。
+- [x] import dual projection (`namespace:method` + `$alias`) 文档与实现一致。
+- [x] 示例、测试、调试面同步更新。
 
 ## Suggested Execution Order
 
