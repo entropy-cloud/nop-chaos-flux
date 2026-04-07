@@ -1,3 +1,4 @@
+import type { NodeLocator } from './node-identity';
 import type { SchemaObject, SchemaValue, SchemaPath, ApiSchema, OperationControlConfig } from './schema';
 import type { ScopeRef } from './scope';
 import type { ComponentHandleRegistry, RendererRuntime, CompiledSchemaNode, RendererEnv } from './renderer';
@@ -42,6 +43,7 @@ export interface ActionResult {
 export interface ActionContext {
   runtime: RendererRuntime;
   scope: ScopeRef;
+  locator?: NodeLocator;
   getInstanceKey?: () => string | undefined;
   interactionId?: string;
   actionScope?: ActionScope;
@@ -110,6 +112,7 @@ export interface ImportedNamespaceContext {
 
 export interface ActionMonitorPayload {
   actionType: string;
+  locator?: NodeLocator;
   nodeId?: string;
   path?: SchemaPath;
   interactionId?: string;

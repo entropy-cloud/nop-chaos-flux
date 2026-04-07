@@ -1,3 +1,4 @@
+export * from './node-identity';
 export * from './renderer-component';
 export * from './renderer-api';
 export * from './renderer-compiler';

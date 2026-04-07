@@ -7,7 +7,7 @@ export interface CompiledExpression<T = unknown> {
   exec(context: EvalContext | object, env: RendererEnv): T;
 }
 
-export interface CompiledTemplate<T = unknown> {
+export interface CompiledStringTemplate<T = unknown> {
   kind: 'template';
   source: string;
   exec(context: EvalContext | object, env: RendererEnv): T;
@@ -16,7 +16,7 @@ export interface CompiledTemplate<T = unknown> {
 export interface FormulaCompiler {
   hasExpression(input: string): boolean;
   compileExpression<T = unknown>(source: string): CompiledExpression<T>;
-  compileTemplate<T = unknown>(source: string): CompiledTemplate<T>;
+  compileTemplate<T = unknown>(source: string): CompiledStringTemplate<T>;
 }
 
 export interface StaticValueNode<T = unknown> {
@@ -33,7 +33,7 @@ export interface ExpressionValueNode<T = unknown> {
 export interface TemplateValueNode<T = unknown> {
   kind: 'template-node';
   source: string;
-  compiled: CompiledTemplate<T>;
+  compiled: CompiledStringTemplate<T>;
 }
 
 export interface ArrayValueNode {

@@ -1,7 +1,9 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope } from './actions';
 import type { ExpressionCompiler } from './compilation';
-import type { ComponentHandleRegistry } from './renderer-component';
+import type { NodeLocator, ResolutionContext, ResolutionResult } from './node-identity';
+import type { NodeInstance } from './node-identity';
+import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
 import type { CompiledNodeRuntimeState, CompiledSchemaNode, ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
@@ -56,6 +58,7 @@ export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   path: SchemaPath;
   schema: S;
   node: CompiledSchemaNode<S>;
+  nodeInstance: NodeInstance<S>;
   props: Readonly<Record<string, unknown>>;
   meta: ResolvedNodeMeta;
   regions: Readonly<Record<string, RenderRegionHandle>>;
@@ -89,6 +92,7 @@ export interface RendererRegistry {
 }
 
 export interface RendererRuntime {
+  runtimeId: string;
   registry: RendererRegistry;
   env: RendererEnv;
   expressionCompiler: ExpressionCompiler;
@@ -96,6 +100,8 @@ export interface RendererRuntime {
   plugins: readonly RendererPlugin[];
   compile(schema: SchemaInput): CompiledSchemaNode | CompiledSchemaNode[];
   evaluate<T = unknown>(target: unknown, scope: ScopeRef): T;
+  resolveNode(locator: NodeLocator, options?: { componentRegistry?: ComponentHandleRegistry }): ResolutionResult;
+  resolveTarget(target: ComponentTarget, ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry }): ResolutionResult;
   resolveNodeMeta(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta;
   resolveNodeProps(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps;
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;

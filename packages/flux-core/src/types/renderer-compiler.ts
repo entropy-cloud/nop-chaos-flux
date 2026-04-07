@@ -66,6 +66,8 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   type: S['type'];
   path: SchemaPath;
   cid?: number;
+  templateGraphId?: string;
+  templateNodeId?: number;
   schema: S;
   component: import('./renderer-core').RendererDefinition<S>;
   meta: CompiledSchemaMeta;

@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import type { ActionContext, ActionScope } from './actions';
 import type { FormulaCompiler } from './compilation';
+import type { InstanceFrame } from './node-identity';
 import type { ComponentHandleRegistry } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
 import type { CompiledSchemaNode } from './renderer-compiler';
@@ -14,6 +15,7 @@ import type { ValidationError } from './validation';
 export interface RenderFragmentOptions {
   data?: object;
   scope?: ScopeRef;
+  instancePath?: readonly InstanceFrame[];
   scopeKey?: string;
   isolate?: boolean;
   pathSuffix?: string;
@@ -34,6 +36,7 @@ export type RenderNodeInput = SchemaInput | CompiledSchemaNode | CompiledSchemaN
 export interface RendererHookApi {
   useRendererRuntime(): RendererRuntime;
   useRenderScope(): ScopeRef;
+  useRenderInstancePath(): readonly InstanceFrame[] | undefined;
   useCurrentActionScope(): ActionScope | undefined;
   useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
   useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn?: (a: T, b: T) => boolean): T;

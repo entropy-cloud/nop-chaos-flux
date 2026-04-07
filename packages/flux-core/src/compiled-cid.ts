@@ -2,6 +2,8 @@ const COMPILED_CID_STATE = Symbol('compiled-cid-state');
 
 export interface CompiledCidState {
   nextCid: number;
+  templateGraphId: string;
+  nextTemplateNodeId: number;
   byId: Map<string, number>;
   idPaths: Map<string, string[]>;
   duplicateIds: Set<string>;
@@ -14,6 +16,8 @@ type ObjectWithCompiledCidState = {
 export function createCompiledCidState(nextCid = 0): CompiledCidState {
   return {
     nextCid,
+    templateGraphId: `compiled-template-${nextCid || 0}`,
+    nextTemplateNodeId: 0,
     byId: new Map<string, number>(),
     idPaths: new Map<string, string[]>(),
     duplicateIds: new Set<string>()

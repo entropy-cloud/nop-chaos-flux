@@ -1,7 +1,7 @@
 import { evaluate, parse } from 'amis-formula';
 import type {
   CompiledExpression,
-  CompiledTemplate,
+  CompiledStringTemplate,
   CompiledValueNode,
   EvalContext,
   FormulaCompiler,
@@ -190,7 +190,7 @@ function createFormulaCompiler(): FormulaCompiler {
         }
       };
     },
-    compileTemplate<T = unknown>(source: string): CompiledTemplate<T> {
+    compileTemplate<T = unknown>(source: string): CompiledStringTemplate<T> {
       const segments: CompiledTemplateSegment[] = parseTemplateSegments(source).map((segment) => {
         if (segment.type === 'text') {
           return {
