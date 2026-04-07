@@ -13,6 +13,7 @@ import {
   type ActionSchema,
   type ApiObject,
   type ApiRequestContext,
+  type CompiledSchemaNode,
   type CompiledFormValidationModel,
   type RendererDefinition,
   type RendererEnv,
@@ -293,6 +294,40 @@ describe('createSchemaCompiler', () => {
     const buttonNode = bodyNodes[1];
     expect(typeof formNode.cid).toBe('number');
     expect(buttonNode.eventActions.onClick._targetCid).toBe(formNode.cid);
+    expect(buttonNode.eventActions.onClick.__componentTarget).toMatchObject({
+      staticPlan: {
+        kind: 'static',
+        templateGraphId: formNode.templateGraphId,
+        templateNodeId: formNode.templateNodeId
+      }
+    });
+  });
+
+  it('assigns transitional template identity to compiled nodes', () => {
+    const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
+    const compiler = createSchemaCompiler({ registry });
+    const compiled = compiler.compile({
+      type: 'page',
+      body: {
+        type: 'form',
+        id: 'user-form',
+        actions: [
+          {
+            type: 'action-button',
+            onClick: { action: 'component:validate', componentId: 'user-form' }
+          }
+        ]
+      }
+    }) as CompiledSchemaNode;
+
+    const formNode = compiled.regions.body.node as CompiledSchemaNode;
+    const buttonNode = (formNode.regions.actions.node as CompiledSchemaNode[])[0];
+
+    expect(compiled.templateGraphId).toBeDefined();
+    expect(formNode.templateGraphId).toBe(compiled.templateGraphId);
+    expect(typeof compiled.templateNodeId).toBe('number');
+    expect(typeof formNode.templateNodeId).toBe('number');
+    expect(typeof buttonNode.templateNodeId).toBe('number');
   });
 
   it('does not pre-resolve componentName targets during compile', () => {
@@ -870,6 +905,133 @@ describe('createRendererRuntime', () => {
     }
   });
 
+  it('dispatches component action by locator through the runtime-owned resolver path', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+      plugins: [{
+        name: 'inject-component-locator-target',
+        beforeAction(action) {
+          if (action.action !== 'component:setValue') {
+            return action;
+          }
+
+          return {
+            ...action,
+            __componentTarget: {
+              locator: {
+                runtimeId,
+                templateGraphId: 'page-root',
+                templateNodeId: 88
+              }
+            }
+          } as ActionSchema;
+        }
+      }]
+    });
+    const runtimeId = runtime.runtimeId;
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const form = runtime.createFormRuntime({
+      id: 'locator-form',
+      name: 'locatorForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+    const handle = createFormComponentHandle(form);
+    const unregister = componentRegistry.register(handle, {
+      cid: 43,
+      locator: {
+        runtimeId,
+        templateGraphId: 'page-root',
+        templateNodeId: 88
+      }
+    });
+
+    try {
+      const result = await runtime.dispatch(
+        {
+          action: 'component:setValue',
+          args: {
+            name: 'username',
+            value: 'Eve'
+          }
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry
+        }
+      );
+
+      expect(result).toMatchObject({ ok: true, data: 'Eve' });
+      expect(form.scope.get('username')).toBe('Eve');
+    } finally {
+      unregister();
+    }
+  });
+
+  it('dispatches component action by compiled internal static target plan', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const form = runtime.createFormRuntime({
+      id: 'internal-plan-form',
+      name: 'internalPlanForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+    const handle = createFormComponentHandle(form);
+    const unregister = componentRegistry.register(handle, {
+      cid: 51,
+      locator: {
+        runtimeId: runtime.runtimeId,
+        templateGraphId: 'page-root',
+        templateNodeId: 91
+      }
+    });
+
+    try {
+      const result = await runtime.dispatch(
+        {
+          action: 'component:setValue',
+          __componentTarget: {
+            staticPlan: {
+              kind: 'static',
+              templateGraphId: 'page-root',
+              templateNodeId: 91
+            }
+          },
+          args: {
+            name: 'username',
+            value: 'Frank'
+          }
+        } as ActionSchema,
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry
+        }
+      );
+
+      expect(result).toMatchObject({ ok: true, data: 'Frank' });
+      expect(form.scope.get('username')).toBe('Frank');
+    } finally {
+      unregister();
+    }
+  });
+
   it('rejects component action without any resolvable target', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
@@ -892,7 +1054,7 @@ describe('createRendererRuntime', () => {
 
     expect(result.ok).toBe(false);
     expect((result.error as Error).message).toBe(
-      'component:<method> requires _targetCid, _targetTemplateId, componentId or componentName'
+      'component:<method> requires an internal target, _targetCid, _targetTemplateId, componentId or componentName'
     );
   });
 
@@ -985,6 +1147,62 @@ describe('createRendererRuntime', () => {
 
     unregister();
     expect(componentRegistry.getHandleByCid?.(88)).toBeUndefined();
+  });
+
+  it('stores locator-aware registry state without breaking legacy cid helpers', () => {
+    const componentRegistry = createComponentHandleRegistry({ id: 'debug-components' });
+    const locator = {
+      runtimeId: 'page-1',
+      templateGraphId: 'page-root',
+      templateNodeId: 12,
+      instancePath: []
+    };
+    const handle = {
+      id: 'debug-form',
+      name: 'debugForm',
+      type: 'form',
+      capabilities: {
+        invoke: vi.fn()
+      }
+    };
+
+    const unregister = componentRegistry.register(handle, { cid: 88, locator });
+
+    expect(componentRegistry.getHandleByCid?.(88)).toBe(handle);
+    expect(componentRegistry.resolveHandle?.({
+      runtimeId: 'page-1',
+      templateGraphId: 'page-root',
+      templateNodeId: 12
+    })).toBe(handle);
+    expect(componentRegistry.getLocatorByCid?.(88)).toEqual({
+      runtimeId: 'page-1',
+      templateGraphId: 'page-root',
+      templateNodeId: 12
+    });
+    expect(componentRegistry.getDebugSnapshot?.()).toEqual({
+      handles: [
+        expect.objectContaining({
+          cid: 88,
+          locator: {
+            runtimeId: 'page-1',
+            templateGraphId: 'page-root',
+            templateNodeId: 12
+          },
+          id: 'debug-form',
+          name: 'debugForm',
+          type: 'form',
+          mounted: true
+        })
+      ]
+    });
+
+    unregister();
+    expect(componentRegistry.getHandleByCid?.(88)).toBeUndefined();
+    expect(componentRegistry.resolveHandle?.({
+      runtimeId: 'page-1',
+      templateGraphId: 'page-root',
+      templateNodeId: 12
+    })).toBeUndefined();
   });
 
   it('resolves namespaced actions through parent action scopes', async () => {

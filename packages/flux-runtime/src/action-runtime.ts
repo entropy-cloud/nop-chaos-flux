@@ -3,6 +3,7 @@ import type {
   ActionMonitorPayload,
   ActionResult,
   ActionSchema,
+  ComponentTarget,
   OperationControlConfig,
   CompiledRuntimeValue,
   ApiSchema,
@@ -31,10 +32,29 @@ interface ActionDispatcherInput {
   showToast?: (args: Record<string, unknown> | undefined, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
   runtime: {
     compile(schema: any): any;
+    resolveTarget(target: ComponentTarget, ctx: { runtimeId: string; componentRegistry?: ActionContext['componentRegistry'] }): import('@nop-chaos/flux-core').ResolutionResult;
     schemaCompiler: {
       compile(schema: any, options?: { basePath?: string; parentPath?: string; cidState?: import('@nop-chaos/flux-core').CompiledCidState }): any;
     };
   };
+}
+
+type InternalComponentActionTarget = ComponentTarget & {
+  readonly __kind?: 'internal-component-target';
+};
+
+function getInternalComponentActionTarget(action: ActionSchema): InternalComponentActionTarget | undefined {
+  const candidate = (action as ActionSchema & { __componentTarget?: InternalComponentActionTarget }).__componentTarget;
+
+  if (!candidate || typeof candidate !== 'object') {
+    return undefined;
+  }
+
+  return candidate;
+}
+
+function getActionRuntimeId(ctx: ActionContext): string {
+  return ctx.locator?.runtimeId ?? ctx.runtime.runtimeId;
 }
 
 let nextInteractionId = 1;
@@ -78,6 +98,7 @@ function createActionKey(action: ActionSchema, ctx: ActionContext): string {
 function buildActionMonitorPayload(action: ActionSchema, ctx: ActionContext) {
   return {
     actionType: action.action,
+    locator: ctx.locator,
     nodeId: ctx.node?.id,
     path: ctx.node?.path,
     interactionId: ctx.interactionId
@@ -454,7 +475,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       });
     }
 
-    const target = {
+    const target = getInternalComponentActionTarget(action) ?? {
       _targetCid: typeof action._targetCid === 'number' ? action._targetCid : undefined,
       _targetTemplateId: typeof action._targetTemplateId === 'string' ? action._targetTemplateId : undefined,
       componentInstanceKey: ctx.getInstanceKey?.(),
@@ -462,16 +483,28 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       componentName: action.componentName
     };
 
-    if (!target.componentId && !target.componentName && target._targetCid === undefined && !target._targetTemplateId) {
+    if (
+      !target.locator &&
+      !target.staticPlan &&
+      !target.repeatedPlan &&
+      !target.repeatedSelector &&
+      !target.componentId &&
+      !target.componentName &&
+      target._targetCid === undefined &&
+      !target._targetTemplateId
+    ) {
       return finishAction(input, { ...actionPayload, dispatchMode: 'component', method }, startedAt, {
         ok: false,
-        error: new Error('component:<method> requires _targetCid, _targetTemplateId, componentId or componentName')
+        error: new Error('component:<method> requires an internal target, _targetCid, _targetTemplateId, componentId or componentName')
       });
     }
 
-    const handle = ctx.componentRegistry?.resolve(target);
+    const resolution = input.runtime.resolveTarget(target, {
+      runtimeId: getActionRuntimeId(ctx),
+      componentRegistry: ctx.componentRegistry
+    });
 
-    if (!handle) {
+    if (resolution.kind !== 'resolved' || !resolution.handle) {
       return finishAction(
         input,
         {
@@ -485,6 +518,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         { ok: false, error: new Error('Component handle not found') }
       );
     }
+
+    const handle = resolution.handle;
 
     if (!canInvokeHandleMethod(handle, method)) {
       return finishAction(

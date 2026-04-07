@@ -35,6 +35,7 @@ import { createManagedFormRuntime } from './form-runtime';
 import { createImportManager } from './imports';
 import { createNodeRuntime } from './node-runtime';
 import { createManagedPageRuntime } from './page-runtime';
+import { createRuntimeNodeResolver } from './node-resolver';
 import {
   applyResponseDataPath,
   createApiRequestExecutor,
@@ -71,6 +72,7 @@ export function createRendererRuntime(input: {
   pageStore?: PageStoreApi;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }): RendererRuntime {
+  const runtimeId = `runtime-${Math.random().toString(36).slice(2, 10)}`;
   const plugins = sortRendererPlugins(input.plugins);
   const expressionCompiler = input.expressionCompiler ?? createExpressionCompiler(createFormulaCompiler());
   const schemaCompiler = input.schemaCompiler ?? createSchemaCompiler({
@@ -95,6 +97,7 @@ export function createRendererRuntime(input: {
     expressionCompiler,
     getEnv
   });
+  const runtimeNodeResolverRef: { current?: ReturnType<typeof createRuntimeNodeResolver> } = {};
 
   function createOwnedActionScope(scopeInput: { id?: string; parent?: ActionScope } = {}) {
     actionScopeCounter += 1;
@@ -294,6 +297,9 @@ export function createRendererRuntime(input: {
       compile(schema) {
         return schemaCompiler.compile(schema);
       },
+      resolveTarget(target, ctx) {
+        return runtime.resolveTarget(target, ctx);
+      },
       schemaCompiler
     },
     createDialogScope: (ctx) =>
@@ -308,6 +314,7 @@ export function createRendererRuntime(input: {
   });
 
   const runtime: RendererRuntime = {
+    runtimeId,
     registry: input.registry,
     get env() {
       return getEnv();
@@ -319,6 +326,20 @@ export function createRendererRuntime(input: {
       return schemaCompiler.compile(schema);
     },
     evaluate,
+    resolveNode(locator, options) {
+      if (!runtimeNodeResolverRef.current) {
+        throw new Error('Runtime node resolver is not initialized yet');
+      }
+
+      return runtimeNodeResolverRef.current.resolveNode(locator, options);
+    },
+    resolveTarget(target, ctx) {
+      if (!runtimeNodeResolverRef.current) {
+        throw new Error('Runtime node resolver is not initialized yet');
+      }
+
+      return runtimeNodeResolverRef.current.resolveTarget(target, ctx);
+    },
     resolveNodeMeta: nodeRuntime.resolveNodeMeta,
     resolveNodeProps: nodeRuntime.resolveNodeProps,
     createChildScope(parent, patch, options) {
@@ -428,6 +449,7 @@ export function createRendererRuntime(input: {
   });
 
   runtimeRef.current = runtime;
+  runtimeNodeResolverRef.current = createRuntimeNodeResolver(runtime);
 
   return runtime;
 }
