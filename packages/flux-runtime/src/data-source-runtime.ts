@@ -1,7 +1,11 @@
 import type {
-  ApiObject,
+  ActionContext,
+  ActionResult,
+  ActionSchema,
+  ApiSchema,
   DataSourceController,
   DynamicRuntimeValue,
+  OperationControlConfig,
   RendererRuntime,
   RuntimeValueState,
   ScopeDependencySet,
@@ -9,7 +13,7 @@ import type {
   StaticRuntimeValue
 } from '@nop-chaos/flux-core';
 import { resolveCacheKey, type ApiCacheStore } from './api-cache';
-import { executeApiObject, prepareApiRequestForExecution } from './request-runtime';
+import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime';
 import { collectRuntimeDependencies } from './node-runtime';
 
 function isAbortError(error: unknown): boolean {
@@ -33,23 +37,23 @@ function writeDataToScope(scope: ScopeRef, dataPath: string | undefined, data: u
 
 export function trackApiRequestDependencies(input: {
   runtime: RendererRuntime;
-  api: ApiObject;
+  api: ApiSchema;
   scope: ScopeRef;
-  state?: RuntimeValueState<ApiObject>;
+  state?: RuntimeValueState<ApiSchema>;
 }): {
-  resolvedApi: ApiObject;
+  resolvedApi: ApiSchema;
   dependencies?: ScopeDependencySet;
 } {
   const compiled = input.runtime.expressionCompiler.compileValue(input.api);
 
   if (compiled.isStatic) {
     return {
-      resolvedApi: (compiled as StaticRuntimeValue<ApiObject>).value,
+      resolvedApi: (compiled as StaticRuntimeValue<ApiSchema>).value,
       dependencies: undefined
     };
   }
 
-  const dynamicCompiled = compiled as DynamicRuntimeValue<ApiObject>;
+  const dynamicCompiled = compiled as DynamicRuntimeValue<ApiSchema>;
   const runtimeState = input.state ?? dynamicCompiled.createState();
   const result = input.runtime.expressionCompiler.evaluateWithState(dynamicCompiled, input.scope, input.runtime.env, runtimeState);
 
@@ -62,8 +66,8 @@ export function trackApiRequestDependencies(input: {
 export function createDataSourceController(input: {
   runtime: RendererRuntime;
   apiCache: ApiCacheStore;
-  executeApiRequest: <T>(actionType: string, api: ApiObject, scope: ScopeRef, options?: { signal?: AbortSignal }) => Promise<{ ok: boolean; status: number; data: T }>;
-  api: ApiObject;
+  executeApiRequest: <T>(actionType: string, api: import('@nop-chaos/flux-core').ExecutableApiRequest, scope: ScopeRef, options?: { signal?: AbortSignal; control?: import('@nop-chaos/flux-core').OperationControlConfig }) => Promise<{ ok: boolean; status: number; data: T }>;
+  api: ApiSchema;
   scope: ScopeRef;
   dataPath?: string;
   interval?: number;
@@ -94,7 +98,7 @@ export function createDataSourceController(input: {
   let value: unknown = initialData;
   let error: unknown;
   const compiledApi = input.runtime.expressionCompiler.compileValue(api);
-  const apiState: RuntimeValueState<ApiObject> | undefined = compiledApi.isStatic ? undefined : (compiledApi as DynamicRuntimeValue<ApiObject>).createState();
+  const apiState: RuntimeValueState<ApiSchema> | undefined = compiledApi.isStatic ? undefined : (compiledApi as DynamicRuntimeValue<ApiSchema>).createState();
 
   function checkStopCondition(): boolean {
     if (!stopWhen || !interval) {
@@ -131,7 +135,7 @@ export function createDataSourceController(input: {
       });
       input.onDependenciesChange?.(trackedApi.dependencies);
       const preparedRequest = prepareApiRequestForExecution(trackedApi.resolvedApi, requestScope, runtime.env, runtime.expressionCompiler);
-      const cacheKey = resolveCacheKey(preparedRequest.request);
+      const cacheKey = resolveCacheKey(preparedRequest.request, api);
 
       if (cacheKey) {
         const cached = apiCache.get<unknown>(cacheKey);
@@ -156,11 +160,15 @@ export function createDataSourceController(input: {
         }
       }
 
-      const response = await executeApiObject(trackedApi.resolvedApi, requestScope, runtime.env, runtime.expressionCompiler, {
+      const response = await executeApiSchema(trackedApi.resolvedApi, requestScope, runtime.env, runtime.expressionCompiler, {
         signal: controller.signal,
         evaluate: runtime.evaluate,
         preparedRequest,
-        executor: (adaptedApi) => executeApiRequest('data-source', adaptedApi, requestScope, { signal: controller.signal })
+        executor: (adaptedApi) => executeApiRequest('data-source', adaptedApi, requestScope, {
+          signal: controller.signal,
+          control: trackedApi.resolvedApi.control as OperationControlConfig | undefined
+        }),
+        control: trackedApi.resolvedApi.control as OperationControlConfig | undefined
       });
 
       if (stopped || controller.signal.aborted) {
@@ -245,5 +253,29 @@ export function createDataSourceController(input: {
     refresh() {
       return runRequest();
     }
+  };
+}
+
+export function createSourceExecutor(input: {
+  runtime: RendererRuntime;
+  executeAction: (action: ActionSchema, ctx: ActionContext) => Promise<ActionResult>;
+}) {
+  return async function executeSource(source: import('@nop-chaos/flux-core').SourceSchema, scope: ScopeRef, ctx?: Partial<ActionContext>) {
+    if (source.formula !== undefined) {
+      const value = input.runtime.evaluate(source.formula, scope);
+      return { ok: true, data: value };
+    }
+
+    if (!source.action) {
+      return { ok: false, error: new Error('Source requires action or formula') };
+    }
+
+    const result = await input.executeAction(source as ActionSchema, {
+      runtime: input.runtime,
+      scope,
+      ...ctx
+    });
+
+    return result;
   };
 }

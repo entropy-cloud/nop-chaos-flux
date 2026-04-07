@@ -1,5 +1,5 @@
 import type {
-  ApiObject,
+  ApiSchema,
   DataSourceController,
   DataSourceRegistration,
   DataSourceSchema,
@@ -105,6 +105,18 @@ function createDependencyAwareFormulaController(input: {
   };
 }
 
+function asNumber(value: unknown): number | undefined {
+  return typeof value === 'number' ? value : undefined;
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function asBoolean(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
+}
+
 export interface RuntimeSourceRegistry {
   registerDataSource(input: {
     id: string;
@@ -121,7 +133,7 @@ export interface RuntimeSourceRegistry {
 export function createRuntimeSourceRegistry(input: {
   runtime: RendererRuntime;
   apiCache: ApiCacheStore;
-  executeApiRequest: <T>(actionType: string, api: ApiObject, scope: ScopeRef, options?: { signal?: AbortSignal }) => Promise<{ ok: boolean; status: number; data: T }>;
+  executeApiRequest: <T>(actionType: string, api: import('@nop-chaos/flux-core').ExecutableApiRequest, scope: ScopeRef, options?: { signal?: AbortSignal; control?: import('@nop-chaos/flux-core').OperationControlConfig }) => Promise<{ ok: boolean; status: number; data: T }>;
 }): RuntimeSourceRegistry {
   const scopeEntries = new Map<string, Map<string, RuntimeSourceEntry>>();
 
@@ -141,17 +153,17 @@ export function createRuntimeSourceRegistry(input: {
 
     let dependencies: ScopeDependencySet | undefined;
     const targetPath = args.schema.dataPath;
-    const controller = 'api' in args.schema
-      ? createDataSourceController({
+      const controller = 'api' in args.schema && args.schema.api
+        ? createDataSourceController({
           runtime: input.runtime,
           apiCache: input.apiCache,
           executeApiRequest: input.executeApiRequest,
-          api: args.schema.api as ApiObject,
+          api: args.schema.api as ApiSchema,
           scope: args.scope,
           dataPath: args.schema.dataPath,
-          interval: args.schema.interval,
-          stopWhen: args.schema.stopWhen,
-          silent: args.schema.silent,
+          interval: asNumber(args.schema.interval),
+          stopWhen: asString(args.schema.stopWhen),
+          silent: asBoolean(args.schema.silent),
           initialData: args.schema.initialData,
           onDependenciesChange(nextDependencies: ScopeDependencySet | undefined) {
             dependencies = nextDependencies;
