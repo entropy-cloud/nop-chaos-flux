@@ -1,4 +1,4 @@
-import type { ApiObject } from '@nop-chaos/flux-core';
+import type { ApiSchema, ExecutableApiRequest } from '@nop-chaos/flux-core';
 
 interface CacheEntry<T> {
   data: T;
@@ -126,19 +126,18 @@ export function createApiCacheStore(): ApiCacheStore {
   };
 }
 
-export function generateCacheKey(api: ApiObject): string {
+export function generateCacheKey(api: ExecutableApiRequest): string {
   const method = api.method ?? 'get';
   const url = api.url;
 
   const dataStr = api.data ? stableStringify(api.data) : '';
-  const paramsStr = api.params ? stableStringify(api.params) : '';
 
-  return `${method}:${url}:${dataStr}:${paramsStr}`;
+  return `${method}:${url}:${dataStr}`;
 }
 
-export function resolveCacheKey(api: ApiObject): string | null {
-  if (api.cacheTTL === undefined || api.cacheTTL <= 0) {
+export function resolveCacheKey(api: ExecutableApiRequest, control?: Pick<ApiSchema, 'cacheTTL' | 'cacheKey'>): string | null {
+  if (control?.cacheTTL === undefined || control.cacheTTL <= 0) {
     return null;
   }
-  return api.cacheKey ?? generateCacheKey(api);
+  return control.cacheKey ?? generateCacheKey(api);
 }

@@ -171,14 +171,12 @@ describe('createApiCacheStore', () => {
       const keyA = generateCacheKey({
         method: 'post',
         url: '/api/users',
-        data: { a: 1, b: 2 },
-        params: { q: 'alice', page: 1 }
+        data: { a: 1, b: 2 }
       });
       const keyB = generateCacheKey({
         method: 'post',
         url: '/api/users',
-        data: { b: 2, a: 1 },
-        params: { page: 1, q: 'alice' }
+        data: { b: 2, a: 1 }
       });
 
       expect(keyA).toBe(keyB);

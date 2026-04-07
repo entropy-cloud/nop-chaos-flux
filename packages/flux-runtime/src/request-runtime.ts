@@ -1,4 +1,16 @@
-import type { ApiResponse, CompiledExpression, ExpressionCompiler, ApiObject, FormRuntime, RendererEnv, ScopeRef, SchemaValue } from '@nop-chaos/flux-core';
+import type {
+  ApiResponse,
+  CompiledExpression,
+  ExecutableApiRequest,
+  ExpressionCompiler,
+  ApiSchema,
+  FormRuntime,
+  OperationControlConfig,
+  PreparedApiRequest,
+  RendererEnv,
+  ScopeRef,
+  SchemaValue
+} from '@nop-chaos/flux-core';
 import { isPlainObject, setIn } from '@nop-chaos/flux-core';
 
 const adaptorExpressionCache = new WeakMap<ExpressionCompiler, Map<string, CompiledExpression<unknown>>>();
@@ -129,7 +141,7 @@ function createAdaptorScopeView(scope: ScopeRef): object {
   );
 }
 
-function createRequestKey(actionType: string, api: ApiObject, scope: ScopeRef, form?: FormRuntime): string {
+function createRequestKey(actionType: string, api: ExecutableApiRequest, scope: ScopeRef, form?: FormRuntime): string {
   const owner = form?.id ?? scope.id;
   return [
     owner,
@@ -141,17 +153,14 @@ function createRequestKey(actionType: string, api: ApiObject, scope: ScopeRef, f
   ].join(':');
 }
 
-export interface PreparedApiRequest {
-  request: ApiObject;
-  data: SchemaValue | undefined;
-  params: Record<string, unknown> | undefined;
-  finalUrl: string;
-}
-
 function normalizeParams(params: SchemaValue | undefined): Record<string, unknown> | undefined {
   return isPlainObject(params)
     ? (params as Record<string, unknown>)
     : undefined;
+}
+
+function resolveRequestDedup(api: ApiSchema, control?: OperationControlConfig) {
+  return control?.dedup ?? api.dedupStrategy ?? 'cancel-previous';
 }
 
 export function extractScopeData(scope: ScopeRef, includeScope: '*' | string[] | undefined): Record<string, unknown> {
@@ -214,7 +223,7 @@ function canonicalizeUrlWithParams(url: string, params: Record<string, unknown> 
 }
 
 export function prepareApiData(
-  api: ApiObject,
+  api: ApiSchema,
   scope: ScopeRef
 ): { data: SchemaValue | undefined; params: Record<string, unknown> | undefined } {
   const extractedData = extractScopeData(scope, api.includeScope);
@@ -235,15 +244,21 @@ export function prepareApiData(
   return { data: mergedData, params };
 }
 
-export function finalizeApiRequest(api: ApiObject): PreparedApiRequest {
+export function finalizeApiRequest(api: ApiSchema): PreparedApiRequest {
   const params = normalizeParams(api.params);
   const finalUrl = canonicalizeUrlWithParams(api.url, params);
+  const rest = {
+    url: api.url,
+    method: api.method,
+    data: api.data,
+    headers: api.headers
+  };
 
   return {
     request: {
-      ...api,
+      ...rest,
       url: finalUrl,
-      params: undefined
+      data: api.data
     },
     data: api.data,
     params,
@@ -251,16 +266,20 @@ export function finalizeApiRequest(api: ApiObject): PreparedApiRequest {
   };
 }
 
-export function materializeApiRequest(api: ApiObject, scope: ScopeRef): PreparedApiRequest {
+export function materializeApiRequest(api: ApiSchema, scope: ScopeRef): PreparedApiRequest {
   const prepared = prepareApiData(api, scope);
   const finalUrl = buildUrlWithParams(api.url, prepared.params);
+  const rest = {
+    url: api.url,
+    method: api.method,
+    headers: api.headers
+  };
 
   return {
     request: {
-      ...api,
+      ...rest,
       url: finalUrl,
-      data: prepared.data,
-      params: prepared.params as SchemaValue | undefined
+      data: prepared.data
     },
     data: prepared.data,
     params: prepared.params,
@@ -268,7 +287,7 @@ export function materializeApiRequest(api: ApiObject, scope: ScopeRef): Prepared
   };
 }
 
-export function finalizeMaterializedApiRequest(api: ApiObject): PreparedApiRequest {
+export function finalizeMaterializedApiRequest(api: ApiSchema): PreparedApiRequest {
   return finalizeApiRequest({
     ...api,
     params: api.params as SchemaValue | undefined
@@ -298,15 +317,15 @@ export function applyResponseDataPath(
 
 export function applyRequestAdaptor(
   expressionCompiler: ExpressionCompiler,
-  api: ApiObject,
+  api: ApiSchema,
   scope: ScopeRef,
   env: RendererEnv
-): ApiObject {
+): ApiSchema {
   if (!api.requestAdaptor) {
     return api;
   }
 
-  const compiled = getCachedAdaptorExpression<ApiObject>(expressionCompiler, api.requestAdaptor);
+  const compiled = getCachedAdaptorExpression<ApiSchema>(expressionCompiler, api.requestAdaptor);
   const adapted = compiled.exec(
     {
       api,
@@ -317,21 +336,22 @@ export function applyRequestAdaptor(
     env
   );
 
-  return isPlainObject(adapted) ? ({ ...api, ...(adapted as Record<string, unknown>) } as ApiObject) : api;
+  return isPlainObject(adapted) ? ({ ...api, ...(adapted as Record<string, unknown>) } as ApiSchema) : api;
 }
 
 export function applyResponseAdaptor(
   expressionCompiler: ExpressionCompiler,
-  api: ApiObject,
+  api: ExecutableApiRequest,
+  sourceApi: ApiSchema,
   responseData: unknown,
   scope: ScopeRef,
   env: RendererEnv
 ): unknown {
-  if (!api.responseAdaptor) {
+  if (!sourceApi.responseAdaptor) {
     return responseData;
   }
 
-  const compiled = getCachedAdaptorExpression(expressionCompiler, api.responseAdaptor);
+  const compiled = getCachedAdaptorExpression(expressionCompiler, sourceApi.responseAdaptor);
 
   return compiled.exec(
     {
@@ -345,18 +365,23 @@ export function applyResponseAdaptor(
 }
 
 export function prepareApiRequestForExecution(
-  api: ApiObject,
+  api: ApiSchema,
   scope: ScopeRef,
   env: RendererEnv,
   expressionCompiler: ExpressionCompiler
 ): PreparedApiRequest {
   const materializedRequest = materializeApiRequest(api, scope);
-  const adaptedApi = applyRequestAdaptor(expressionCompiler, materializedRequest.request, scope, env);
+  const adaptedApi = applyRequestAdaptor(expressionCompiler, {
+    ...api,
+    url: materializedRequest.request.url,
+    data: materializedRequest.data,
+    params: materializedRequest.params as SchemaValue | undefined
+  }, scope, env);
   return finalizeMaterializedApiRequest(adaptedApi);
 }
 
-export async function executeApiObject(
-  api: ApiObject,
+export async function executeApiSchema(
+  api: ApiSchema,
   scope: ScopeRef,
   env: RendererEnv,
   expressionCompiler: ExpressionCompiler,
@@ -364,20 +389,23 @@ export async function executeApiObject(
     signal?: AbortSignal;
     evaluate?: <T = unknown>(target: unknown, scope: ScopeRef) => T;
     preparedRequest?: PreparedApiRequest;
-    onPreparedRequest?: (api: ApiObject) => void;
-    executor?: <T>(adaptedApi: ApiObject) => Promise<ApiResponse<T>>;
+    onPreparedRequest?: (api: ExecutableApiRequest) => void;
+    executor?: <T>(adaptedApi: ExecutableApiRequest) => Promise<ApiResponse<T>>;
+    control?: OperationControlConfig;
   }
 ): Promise<{ data: unknown; ok: boolean; status?: number }> {
-  const resolvedApi = options?.evaluate ? options.evaluate<ApiObject>(api, scope) : api;
+  const resolvedApi = options?.evaluate ? options.evaluate<ApiSchema>(api, scope) : api;
   const preparedRequest = options?.preparedRequest ?? prepareApiRequestForExecution(resolvedApi, scope, env, expressionCompiler);
   const executableApi = preparedRequest.request;
   options?.onPreparedRequest?.(executableApi);
   const response = options?.executor
     ? await options.executor(executableApi)
     : await env.fetcher(executableApi, { scope, env, signal: options?.signal });
-  const adaptedData = applyResponseAdaptor(expressionCompiler, executableApi, response.data, scope, env);
+  const adaptedData = applyResponseAdaptor(expressionCompiler, executableApi, resolvedApi, response.data, scope, env);
   return { data: adaptedData, ok: response.ok, status: response.status };
 }
+
+export const executeApiObject = executeApiSchema;
 
 export function createApiRequestExecutor(getEnv: () => RendererEnv) {
   const activeControllers = new Map<string, AbortController>();
@@ -385,14 +413,14 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv) {
 
   return async function executeApiRequest<T>(
     actionType: string,
-    api: ApiObject,
+    api: ApiSchema | ExecutableApiRequest,
     scope: ScopeRef,
     form?: FormRuntime,
-    options?: { signal?: AbortSignal; interactionId?: string }
+    options?: { signal?: AbortSignal; interactionId?: string; control?: OperationControlConfig }
   ) {
-    const executableApi = finalizeApiRequest(api).request;
+    const executableApi = finalizeApiRequest(api as ApiSchema).request;
     const requestKey = createRequestKey(actionType, executableApi, scope, form);
-    const dedupStrategy = api.dedupStrategy ?? 'cancel-previous';
+    const dedupStrategy = resolveRequestDedup(api as ApiSchema, options?.control);
     const previousController = activeControllers.get(requestKey);
     const previousPromise = activePromises.get(requestKey);
     const env = getEnv();
