@@ -3,8 +3,9 @@ import type {
   ActionMonitorPayload,
   ActionResult,
   ActionSchema,
+  OperationControlConfig,
   CompiledRuntimeValue,
-  ApiObject,
+  ApiSchema,
   ComponentHandle,
   RendererEnv,
   RendererPlugin,
@@ -21,11 +22,13 @@ interface ActionDispatcherInput {
   compileValue: <T = unknown>(target: T) => CompiledRuntimeValue<T>;
   evaluateCompiled: <T = unknown>(compiled: CompiledRuntimeValue<T>, scope: ScopeRef) => T;
   refreshDataSource: (input: { id: string; scope?: ScopeRef }) => Promise<boolean>;
-  executeAjaxAction: (api: ApiObject, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
-  submitFormAction: (api: ApiObject | undefined, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
+  executeAjaxAction: (api: ApiSchema, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
+  submitFormAction: (api: ApiSchema | undefined, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
   createDialogScope: (ctx: ActionContext) => ScopeRef;
   getDialogActionScope?: (ctx: ActionContext) => ActionContext['actionScope'];
   getDialogComponentRegistry?: (ctx: ActionContext) => ActionContext['componentRegistry'];
+  openDrawer?: (drawer: Record<string, any>, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
+  showToast?: (args: Record<string, unknown> | undefined, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
   runtime: { compile(schema: any): any };
 }
 
@@ -196,6 +199,38 @@ function shouldRunActionWhen(action: ActionSchema, ctx: ActionContext, input: Ac
   return Boolean(input.evaluate<boolean>(action.when, ctx.scope));
 }
 
+function resolveActionControl(action: ActionSchema): OperationControlConfig | undefined {
+  const control = action.control;
+
+  if (!control || typeof control !== 'object' || Array.isArray(control)) {
+    return undefined;
+  }
+
+  return control as OperationControlConfig;
+}
+
+function getNumericControl(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function getRetryControl(value: unknown): OperationControlConfig['retry'] | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const candidate = value as { times?: unknown; delay?: unknown };
+  const times = getNumericControl(candidate.times);
+
+  if (times === undefined) {
+    return undefined;
+  }
+
+  return {
+    times,
+    delay: getNumericControl(candidate.delay)
+  };
+}
+
 export function createActionDispatcher(input: ActionDispatcherInput) {
   const pendingDebounces = new Map<string, {
     timer: ReturnType<typeof setTimeout>;
@@ -253,7 +288,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         }
 
         const api = action.api
-          ? input.evaluateCompiled<ApiObject>(getCompiledValue(action.api, input.compileValue), ctx.scope)
+          ? input.evaluateCompiled<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx.scope)
           : undefined;
 
         if (!api) {
@@ -268,7 +303,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         const result = await input.executeAjaxAction(api, action, ctx, signal);
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
       }
-      case 'dialog': {
+      case 'dialog':
+      case 'openDialog': {
         if (!ctx.page || !action.dialog) {
           return finishAction(
             input,
@@ -285,6 +321,27 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         });
         dialogScope.update('dialogId', dialogId);
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: { dialogId } });
+      }
+      case 'openDrawer': {
+        if (!action.drawer) {
+          return finishAction(
+            input,
+            { ...actionPayload, dispatchMode: 'built-in' },
+            startedAt,
+            { ok: false, error: new Error('openDrawer requires drawer config') }
+          );
+        }
+
+        const result = await input.openDrawer?.(action.drawer, ctx);
+        return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result ?? { ok: true, data: action.drawer });
+      }
+      case 'closeDrawer': {
+        return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true });
+      }
+      case 'showToast': {
+        const payload = evaluateActionArgs(action, ctx, input);
+        const result = await input.showToast?.(payload, ctx);
+        return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result ?? { ok: true, data: payload });
       }
       case 'closeDialog': {
         if (ctx.page) {
@@ -338,12 +395,17 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         }
 
         const api = action.api
-          ? input.evaluateCompiled<ApiObject>(getCompiledValue(action.api, input.compileValue), ctx.scope)
+          ? input.evaluateCompiled<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx.scope)
           : undefined;
 
         if (api) {
           input.getEnv().monitor?.onApiRequest?.({
-            api,
+            api: {
+              url: api.url,
+              method: api.method,
+              data: api.data,
+              headers: api.headers
+            },
             nodeId: ctx.node?.id,
             path: ctx.node?.path
           });
@@ -589,7 +651,9 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
   }
 
   function runActionWithDebounce(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
-    if (!action.debounce || action.debounce <= 0) {
+    const debounceMs = getNumericControl(action.debounce);
+
+    if (!debounceMs || debounceMs <= 0) {
       return runSingleActionWithRetry(action, ctx);
     }
 
@@ -607,14 +671,15 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     return scheduleDebounce<string, ActionResult>(
       pendingDebounces,
       key,
-      action.debounce,
+      debounceMs,
       () => runSingleActionWithRetry(action, ctx)
     );
   }
 
   async function runSingleActionWithRetry(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
-    const retryTimes = Math.max(0, action.retry?.times ?? 0);
-    const retryDelay = Math.max(0, action.retry?.delay ?? 0);
+    const retry = getRetryControl(action.retry);
+    const retryTimes = Math.max(0, retry?.times ?? 0);
+    const retryDelay = Math.max(0, retry?.delay ?? 0);
 
     let attempts = 0;
     let lastResult: ActionResult | undefined;
@@ -646,7 +711,9 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
   }
 
   function runSingleActionWithTimeout(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
-    if (!action.timeout || action.timeout <= 0) {
+    const timeoutMs = getNumericControl(action.timeout);
+
+    if (!timeoutMs || timeoutMs <= 0) {
       return runSingleAction(action, ctx);
     }
 
@@ -661,8 +728,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
 
         settled = true;
         controller.abort();
-        resolve(createTimedOutResult(new Error(`Action timed out after ${action.timeout}ms`)));
-      }, action.timeout);
+        resolve(createTimedOutResult(new Error(`Action timed out after ${timeoutMs}ms`)));
+      }, timeoutMs);
 
       void runSingleAction(action, ctx, controller.signal)
         .then((result) => {
@@ -696,19 +763,40 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         interactionId: ctx.interactionId ?? createInteractionId(),
         prevResult: previous
       };
-      const result = await runActionWithDebounce(current, actionContext);
+      const control = resolveActionControl(current);
+      const normalizedAction = control
+        ? {
+            ...current,
+            timeout: current.timeout ?? control.timeout,
+            debounce: current.debounce ?? control.debounce,
+            retry: current.retry ?? control.retry
+          }
+        : current;
+      const result = await runActionWithDebounce(normalizedAction, actionContext);
 
       previous = result;
 
-      if (!result.ok && !current.continueOnError) {
+      if (!result.ok && !normalizedAction.continueOnError) {
         return result;
       }
 
-      if (current.then) {
-        previous = await dispatch(current.then, {
+      if (normalizedAction.then) {
+        previous = await dispatch(normalizedAction.then, {
           ...ctx,
           interactionId: actionContext.interactionId,
           prevResult: result
+        });
+      } else if (!result.ok && normalizedAction.onError) {
+        previous = await dispatch(normalizedAction.onError, {
+          ...ctx,
+          interactionId: actionContext.interactionId,
+          prevResult: result,
+          event: {
+            ...(ctx.event && typeof ctx.event === 'object' ? ctx.event as Record<string, unknown> : {}),
+            result,
+            error: result.error,
+            prevResult: ctx.prevResult
+          }
         });
       }
     }
