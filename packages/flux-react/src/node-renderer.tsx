@@ -37,6 +37,7 @@ import { useNodeScopes } from './useNodeScopes';
 import { useNodeImports } from './useNodeImports';
 import { useFormComponentHandleRegistration } from './useFormComponentHandleRegistration';
 import { useNodeDebugData } from './useNodeDebugData';
+import { useNodeSourceProps } from './use-node-source-props';
 
 export { resolveFrameWrapMode } from './node-renderer-utils';
 
@@ -96,10 +97,11 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, props.node, props.actionScope, props.componentRegistry);
 
   const activeScope = activeForm?.scope ?? props.scope;
+  const resolvedComponentProps = useNodeSourceProps(props.node, resolvedProps.value, activeScope);
   const nodeImports = getNodeImports(props.node);
 
   useFormComponentHandleRegistration(activeForm, activeComponentRegistry, props.node);
-  useNodeDebugData(activeComponentRegistry, resolvedMeta.cid, props.node, activeScope, resolvedMeta, resolvedProps.value);
+  useNodeDebugData(activeComponentRegistry, resolvedMeta.cid, props.node, activeScope, resolvedMeta, resolvedComponentProps);
   useNodeImports(runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node);
 
   const helpers = useMemo(
@@ -156,7 +158,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     path: props.node.path,
     schema: props.node.schema,
     node: props.node,
-    props: resolvedProps.value,
+    props: resolvedComponentProps,
     meta: resolvedMeta,
     regions,
     events,
@@ -205,7 +207,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     <NodeFrameWrapper
       node={props.node}
       resolvedMeta={resolvedMeta}
-      resolvedPropsValue={resolvedProps.value}
+      resolvedPropsValue={resolvedComponentProps}
       regions={regions}
     >
       {element}

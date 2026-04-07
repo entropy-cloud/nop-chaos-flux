@@ -64,6 +64,13 @@ export function createHelpers(input: {
     createScope(patch, options) {
       return input.runtime.createChildScope(input.scope, patch, options);
     },
-    dispatch
+    dispatch,
+    executeSource(source, options) {
+      return input.runtime.executeSource({
+        source,
+        scope: options?.scope ?? input.scope,
+        ctx: mergeActionContext(input)
+      });
+    }
   };
 }

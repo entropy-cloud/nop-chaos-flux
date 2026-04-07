@@ -44,7 +44,8 @@ const sharedFormulaCompiler = createFormulaCompiler();
 
 const textRenderer: RendererDefinition = {
   type: 'text',
-  component: (props) => <span>{String(props.props.text ?? '')}</span>
+  component: (props) => <span>{String(props.props.text ?? '')}</span>,
+  fields: [{ key: 'text', kind: 'prop', allowSource: true }]
 };
 
 const pageRenderer: RendererDefinition = {
@@ -1137,6 +1138,78 @@ describe('createSchemaRenderer', () => {
     expect(userMetaHits).toBeGreaterThan(0);
     expect(titleHits).toBe(0);
     expect(titleMetaHits).toBe(0);
+  });
+
+  it('resolves source-enabled props before passing them to renderers', async () => {
+    const executeSource = vi.fn(async ({ source }: { source: { formula?: unknown } }) => ({
+      ok: true,
+      data: source.formula
+    }));
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(sharedFormulaCompiler)
+    });
+
+    runtime.executeSource = executeSource as typeof runtime.executeSource;
+
+    renderWithRuntimeProviders({
+      runtime,
+      page: runtime.createPageRuntime({}),
+      schema: {
+        type: 'text',
+        text: {
+          type: 'source',
+          formula: 'Source-backed hello'
+        }
+      }
+    });
+
+    expect(await screen.findByText('Source-backed hello')).toBeTruthy();
+    expect(executeSource).toHaveBeenCalled();
+  });
+
+  it('injects a companion transient state prop for source-enabled fields', async () => {
+    const executeSource = vi.fn(async ({ source }: { source: { formula?: unknown } }) => ({
+      ok: true,
+      data: source.formula
+    }));
+    const probeRenderer: RendererDefinition = {
+      type: 'source-probe',
+      fields: [{ key: 'text', kind: 'prop', allowSource: true, sourceStateKey: 'textState' }],
+      component: (props) => {
+        const textState = props.props.textState as { loading: boolean; status: string } | undefined;
+        return (
+          <div>
+            <span>{String(props.props.text ?? '')}</span>
+            <span data-testid="source-status">{textState?.status ?? 'missing'}</span>
+          </div>
+        );
+      }
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([probeRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(sharedFormulaCompiler)
+    });
+
+    runtime.executeSource = executeSource as typeof runtime.executeSource;
+
+    renderWithRuntimeProviders({
+      runtime,
+      page: runtime.createPageRuntime({}),
+      schema: {
+        type: 'source-probe',
+        text: {
+          type: 'source',
+          formula: 'Hello source state'
+        }
+      }
+    });
+
+    expect(screen.getByTestId('source-status').textContent).toBe('loading');
+    expect(await screen.findByText('Hello source state')).toBeTruthy();
+    expect(screen.getByTestId('source-status').textContent).toBe('ready');
   });
 
   it('uses lexical scope data by default and isolates own-scope subscriptions when requested', async () => {
