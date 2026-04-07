@@ -19,6 +19,7 @@ import {
   FormContext,
   NodeMetaContext,
   PageContext,
+  RenderInstancePathContext,
   RuntimeContext,
   ScopeContext,
   useRequiredContext
@@ -59,6 +60,10 @@ export function useRendererRuntime(): RendererRuntime {
 
 export function useRenderScope(): ScopeRef {
   return useRequiredContext(ScopeContext, 'RenderScope');
+}
+
+export function useRenderInstancePath(): readonly import('@nop-chaos/flux-core').InstanceFrame[] | undefined {
+  return useContext(RenderInstancePathContext);
 }
 
 export function useCurrentActionScope(): ActionScope | undefined {
@@ -187,6 +192,7 @@ export function useRenderFragment() {
 export const rendererHooks = {
   useRendererRuntime,
   useRenderScope,
+  useRenderInstancePath,
   useCurrentActionScope,
   useCurrentComponentRegistry,
   useScopeSelector,

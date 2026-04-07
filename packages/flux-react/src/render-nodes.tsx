@@ -10,7 +10,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getCompiledCidState, isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope, useCurrentActionScope, useCurrentComponentRegistry, useCurrentForm, useCurrentPage } from './hooks';
-import { CompiledNodeContext } from './contexts';
+import { CompiledNodeContext, RenderInstancePathContext } from './contexts';
 import { NodeRenderer } from './node-renderer';
 
 function isCompiledNode(input: unknown): input is CompiledSchemaNode {
@@ -126,6 +126,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const currentForm = useCurrentForm();
   const currentPage = useCurrentPage();
   const currentCompiledNode = useContext(CompiledNodeContext);
+  const currentInstancePath = useContext(RenderInstancePathContext);
   const fragmentScopeCacheKey = useId();
   const options = props.options;
   const explicitScope = options?.scope;
@@ -210,6 +211,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const actionScope = options?.actionScope ?? currentActionScope;
   const componentRegistry = options?.componentRegistry ?? currentComponentRegistry;
   const scope = explicitScope ?? fragmentScope ?? currentScope;
+  const instancePath = options?.instancePath ?? currentInstancePath;
 
   if (!compiled) {
     return null;
@@ -217,30 +219,34 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
 
   if (Array.isArray(compiled)) {
     return (
-      <>
-        {compiled.map((node) => (
-          <NodeRenderer
-            key={node.id}
-            node={node}
-            scope={scope}
-            actionScope={actionScope}
-            componentRegistry={componentRegistry}
-            form={currentForm}
-            page={currentPage}
-          />
-        ))}
-      </>
+      <RenderInstancePathContext.Provider value={instancePath}>
+        <>
+          {compiled.map((node) => (
+            <NodeRenderer
+              key={node.id}
+              node={node}
+              scope={scope}
+              actionScope={actionScope}
+              componentRegistry={componentRegistry}
+              form={currentForm}
+              page={currentPage}
+            />
+          ))}
+        </>
+      </RenderInstancePathContext.Provider>
     );
   }
 
   return (
-    <NodeRenderer
-      node={compiled}
-      scope={scope}
-      actionScope={actionScope}
-      componentRegistry={componentRegistry}
-      form={currentForm}
-      page={currentPage}
-    />
+    <RenderInstancePathContext.Provider value={instancePath}>
+      <NodeRenderer
+        node={compiled}
+        scope={scope}
+        actionScope={actionScope}
+        componentRegistry={componentRegistry}
+        form={currentForm}
+        page={currentPage}
+      />
+    </RenderInstancePathContext.Provider>
   );
 }

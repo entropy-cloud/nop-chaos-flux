@@ -10,6 +10,7 @@ import type {
   RendererRuntime,
   RenderNodeInput,
   RenderFragmentOptions,
+  NodeLocator,
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { RenderNodes } from './render-nodes';
@@ -24,6 +25,7 @@ export function mergeActionContext(base: {
   form?: FormRuntime;
   page?: PageRuntime;
   node?: CompiledSchemaNode;
+  locator?: NodeLocator;
 }, partial?: Partial<ActionContext>): ActionContext {
   return {
     runtime: base.runtime,
@@ -31,6 +33,7 @@ export function mergeActionContext(base: {
     actionScope: partial?.actionScope ?? base.actionScope,
     componentRegistry: partial?.componentRegistry ?? base.componentRegistry,
     node: partial?.node ?? base.node,
+    locator: partial?.locator ?? base.locator,
     form: partial?.form ?? base.form,
     page: partial?.page ?? base.page,
     event: partial?.event,
@@ -49,6 +52,7 @@ export function createHelpers(input: {
   form?: FormRuntime;
   page?: PageRuntime;
   node?: CompiledSchemaNode;
+  locator?: NodeLocator;
 }): RendererHelpers {
   const dispatch = (action: any, ctx?: Partial<ActionContext>) => input.runtime.dispatch(action, mergeActionContext(input, ctx));
   (dispatch as typeof dispatch & { __actionScope?: ActionScope; __componentRegistry?: ComponentHandleRegistry }).__actionScope = input.actionScope;

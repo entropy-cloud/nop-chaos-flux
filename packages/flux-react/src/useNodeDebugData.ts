@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import type {
   ComponentHandleRegistry,
   CompiledSchemaNode,
+  NodeInstance,
+  NodeLocator,
   ResolvedNodeMeta,
   ResolvedNodeProps,
   ScopeRef
@@ -10,6 +12,8 @@ import type {
 export function useNodeDebugData(
   activeComponentRegistry: ComponentHandleRegistry | undefined,
   cid: number | undefined,
+  nodeInstance: NodeInstance,
+  locator: NodeLocator | undefined,
   node: CompiledSchemaNode,
   activeScope: ScopeRef,
   resolvedMeta: ResolvedNodeMeta,
@@ -24,6 +28,8 @@ export function useNodeDebugData(
       nodeId: node.id,
       path: node.path,
       rendererType: node.type,
+      nodeInstance,
+      locator,
       scope: activeScope,
       resolvedMeta,
       resolvedProps: resolvedPropsValue,
@@ -33,5 +39,5 @@ export function useNodeDebugData(
     return () => {
       activeComponentRegistry.setHandleDebugData?.(cid, undefined);
     };
-  }, [activeComponentRegistry, cid, activeScope, node.id, node.path, node.type, resolvedMeta, resolvedPropsValue]);
+  }, [activeComponentRegistry, cid, nodeInstance, locator, activeScope, node.id, node.path, node.type, resolvedMeta, resolvedPropsValue]);
 }

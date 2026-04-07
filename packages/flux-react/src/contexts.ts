@@ -5,6 +5,7 @@ import type {
   ComponentHandleRegistry,
   CompiledSchemaNode,
   FormRuntime,
+  InstanceFrame,
   PageRuntime,
   RenderNodeMeta,
   RendererRuntime,
@@ -12,6 +13,7 @@ import type {
 } from '@nop-chaos/flux-core';
 
 export const RuntimeContext = createContext<RendererRuntime | null>(null);
+export const RenderInstancePathContext = createContext<readonly InstanceFrame[] | undefined>(undefined);
 export const ScopeContext = createContext<ScopeRef | null>(null);
 export const ActionScopeContext = createContext<ActionScope | undefined>(undefined);
 export const ComponentRegistryContext = createContext<ComponentHandleRegistry | undefined>(undefined);

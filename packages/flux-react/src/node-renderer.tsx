@@ -25,14 +25,16 @@ import {
   PageContext,
   ScopeContext
 } from './contexts';
-import { useRendererRuntime } from './hooks';
+import { useRenderInstancePath, useRendererRuntime } from './hooks';
 import { createHelpers } from './helpers';
 import { RenderNodes } from './render-nodes';
 import {
+  getCompiledNodeLocator,
   getNodeClassAliases,
   getNodeImports
 } from './node-renderer-utils';
 import { NodeFrameWrapper } from './node-frame-wrapper';
+import { createCompatibilityNodeInstance } from './node-instance';
 import { useNodeForm } from './useNodeForm';
 import { useNodeScopes } from './useNodeScopes';
 import { useNodeImports } from './useNodeImports';
@@ -51,6 +53,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   page?: PageRuntime;
 }) {
   const runtime = useRendererRuntime();
+  const instancePath = useRenderInstancePath();
   const parentClassAliases = useContext(ClassAliasesContext);
   const nodeState = useMemo<CompiledNodeRuntimeState>(() => props.node.createRuntimeState(), [props.node]);
 
@@ -121,9 +124,21 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     ? { ...importedMeta, className: importedResolvedClassName }
     : importedMeta;
   const resolvedComponentProps = useNodeSourceProps(props.node, importedResolvedProps.value, renderScope);
+  const nodeLocator = getCompiledNodeLocator(props.node, runtime.runtimeId, instancePath);
+  const nodeInstance = useMemo(
+    () => createCompatibilityNodeInstance({
+      node: props.node,
+      locator: nodeLocator,
+      scope: renderScope,
+      state: importNodeState,
+      cid: finalResolvedMeta.cid,
+      mounted: true
+    }),
+    [props.node, nodeLocator, renderScope, importNodeState, finalResolvedMeta.cid]
+  );
 
   useFormComponentHandleRegistration(activeForm, activeComponentRegistry, props.node);
-  useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, props.node, renderScope, finalResolvedMeta, resolvedComponentProps);
+  useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, nodeInstance, nodeLocator, props.node, renderScope, finalResolvedMeta, resolvedComponentProps);
 
   const helpers = useMemo(
     () =>
@@ -134,9 +149,10 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         componentRegistry: activeComponentRegistry,
         form: activeForm,
         page: props.page,
-        node: props.node
+        node: props.node,
+        locator: nodeLocator
       }),
-    [runtime, renderScope, activeActionScope, activeComponentRegistry, activeForm, props.page, props.node]
+    [runtime, renderScope, activeActionScope, activeComponentRegistry, activeForm, props.page, props.node, nodeLocator]
   );
 
   const events = useMemo(() => {
@@ -153,6 +169,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
           (event?: unknown, eventContext?: Partial<import('@nop-chaos/flux-core').ActionContext>) =>
             helpers.dispatch(action as any, {
               ...eventContext,
+              locator: eventContext?.locator ?? nodeLocator,
               event
             })
         ];
@@ -179,6 +196,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     path: props.node.path,
     schema: props.node.schema,
     node: props.node,
+    nodeInstance,
     props: resolvedComponentProps,
     meta: finalResolvedMeta,
     regions,

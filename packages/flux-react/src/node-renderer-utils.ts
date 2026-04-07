@@ -1,4 +1,4 @@
-import type { CompiledSchemaNode, XuiImportSpec } from '@nop-chaos/flux-core';
+import type { CompiledSchemaNode, NodeLocator, XuiImportSpec } from '@nop-chaos/flux-core';
 
 export function resolveFrameWrapMode(
   definitionWrap: boolean | undefined,
@@ -31,6 +31,23 @@ export function getNodeClassAliases(node: CompiledSchemaNode): Record<string, st
 
 export function getNodeCompiledCid(node: CompiledSchemaNode): number | undefined {
   return node.cid;
+}
+
+export function getCompiledNodeLocator(
+  node: CompiledSchemaNode,
+  runtimeId = 'runtime',
+  instancePath?: readonly import('@nop-chaos/flux-core').InstanceFrame[]
+): NodeLocator | undefined {
+  if (!node.templateGraphId || typeof node.templateNodeId !== 'number') {
+    return undefined;
+  }
+
+  return {
+    runtimeId,
+    templateGraphId: node.templateGraphId,
+    templateNodeId: node.templateNodeId,
+    instancePath
+  };
 }
 
 export function getNodeSchemaFrameWrap(node: CompiledSchemaNode): boolean | 'label' | 'group' | 'none' | undefined {

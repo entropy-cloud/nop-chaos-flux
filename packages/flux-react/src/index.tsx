@@ -43,6 +43,7 @@ export {
   FormContext,
   NodeMetaContext,
   PageContext,
+  RenderInstancePathContext,
   RuntimeContext,
   ScopeContext,
   useRequiredContext
