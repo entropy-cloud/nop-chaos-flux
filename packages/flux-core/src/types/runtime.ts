@@ -2,7 +2,7 @@ import type { ApiSchema } from './schema';
 import type { ScopeRef } from './scope';
 import type { ValidationRule, ValidationError, ValidationResult, FormValidationResult, CompiledFormValidationModel, CompiledFormValidationField, RuntimeFieldRegistration } from './validation';
 import type { ActionScope, ActionResult } from './actions';
-import type { ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
+import type { CompiledSchemaNode, ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
 import type { ReactNode } from 'react';
 
 export interface FormStoreState {
@@ -140,6 +140,7 @@ export interface PageRuntime {
     options?: {
       actionScope?: ActionScope;
       componentRegistry?: ComponentHandleRegistry;
+      ownerNode?: CompiledSchemaNode;
     }
   ): string;
   closeDialog(dialogId?: string): void;

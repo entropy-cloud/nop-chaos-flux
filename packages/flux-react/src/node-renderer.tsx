@@ -18,6 +18,7 @@ import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
 import {
   ActionScopeContext,
   ClassAliasesContext,
+  CompiledNodeContext,
   ComponentRegistryContext,
   FormContext,
   NodeMetaContext,
@@ -72,7 +73,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     ? (() => null)
     : (() => props.scope.store?.getLastChange() ?? null);
 
-  const { meta, resolvedProps } = useSyncExternalStoreWithSelector(
+  const { meta: baseMeta, resolvedProps: baseResolvedProps } = useSyncExternalStoreWithSelector(
     subscribe,
     getSnapshot,
     getSnapshot,
@@ -85,37 +86,57 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   const nodeClassAliases = getNodeClassAliases(props.node);
   const mergedClassAliases = mergeClassAliases(parentClassAliases, nodeClassAliases);
-  const resolvedClassName = resolveClassAliases(meta.className, mergedClassAliases);
-  const resolvedMeta = useMemo(
-    () => (resolvedClassName !== meta.className
-      ? { ...meta, className: resolvedClassName }
-      : meta),
-    [meta, resolvedClassName]
-  );
+  const resolvedClassName = resolveClassAliases(baseMeta.className, mergedClassAliases);
+  const resolvedMeta = resolvedClassName !== baseMeta.className
+    ? { ...baseMeta, className: resolvedClassName }
+    : baseMeta;
 
-  const activeForm = useNodeForm(runtime, props.node, props.scope, props.page, resolvedProps, props.form);
+  const activeForm = useNodeForm(runtime, props.node, props.scope, props.page, baseResolvedProps, props.form);
   const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, props.node, props.actionScope, props.componentRegistry);
 
   const activeScope = activeForm?.scope ?? props.scope;
-  const resolvedComponentProps = useNodeSourceProps(props.node, resolvedProps.value, activeScope);
   const nodeImports = getNodeImports(props.node);
+  const importExpressionBindings = useNodeImports(runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node, props.page);
+  const renderScope = useMemo(
+    () => Object.keys(importExpressionBindings).length === 0
+      ? activeScope
+      : runtime.createChildScope(activeScope, { __imports: importExpressionBindings }, {
+          pathSuffix: 'imports',
+          scopeKey: `${props.node.id}:imports`
+        }),
+    [runtime, activeScope, importExpressionBindings, props.node.id]
+  );
+  const importNodeState = useMemo(
+    () => (renderScope === activeScope ? nodeState : props.node.createRuntimeState()),
+    [renderScope, activeScope, nodeState, props.node]
+  );
+  const importedMeta = renderScope === activeScope
+    ? resolvedMeta
+    : runtime.resolveNodeMeta(props.node, renderScope, importNodeState);
+  const importedResolvedProps = renderScope === activeScope
+    ? baseResolvedProps
+    : runtime.resolveNodeProps(props.node, renderScope, importNodeState);
+  const importedResolvedClassName = resolveClassAliases(importedMeta.className, mergedClassAliases);
+  const finalResolvedMeta = importedResolvedClassName !== importedMeta.className
+    ? { ...importedMeta, className: importedResolvedClassName }
+    : importedMeta;
+  const resolvedComponentProps = useNodeSourceProps(props.node, importedResolvedProps.value, renderScope);
 
   useFormComponentHandleRegistration(activeForm, activeComponentRegistry, props.node);
-  useNodeDebugData(activeComponentRegistry, resolvedMeta.cid, props.node, activeScope, resolvedMeta, resolvedComponentProps);
-  useNodeImports(runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node);
+  useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, props.node, renderScope, finalResolvedMeta, resolvedComponentProps);
 
   const helpers = useMemo(
     () =>
       createHelpers({
         runtime,
-        scope: activeScope,
+        scope: renderScope,
         actionScope: activeActionScope,
         componentRegistry: activeComponentRegistry,
         form: activeForm,
         page: props.page,
         node: props.node
       }),
-    [runtime, activeScope, activeActionScope, activeComponentRegistry, activeForm, props.page, props.node]
+    [runtime, renderScope, activeActionScope, activeComponentRegistry, activeForm, props.page, props.node]
   );
 
   const events = useMemo(() => {
@@ -159,7 +180,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     schema: props.node.schema,
     node: props.node,
     props: resolvedComponentProps,
-    meta: resolvedMeta,
+    meta: finalResolvedMeta,
     regions,
     events,
     helpers
@@ -172,7 +193,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       return;
     }
 
-    if (!resolvedMeta.visible || resolvedMeta.hidden) {
+    if (!finalResolvedMeta.visible || finalResolvedMeta.hidden) {
       return;
     }
 
@@ -193,11 +214,11 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     props.node.id,
     props.node.path,
     props.node.type,
-    resolvedMeta.visible,
-    resolvedMeta.hidden
+    finalResolvedMeta.visible,
+    finalResolvedMeta.hidden
   ]);
 
-  if (!resolvedMeta.visible || resolvedMeta.hidden) {
+  if (!finalResolvedMeta.visible || finalResolvedMeta.hidden) {
     return null;
   }
 
@@ -206,7 +227,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const content = (
     <NodeFrameWrapper
       node={props.node}
-      resolvedMeta={resolvedMeta}
+      resolvedMeta={finalResolvedMeta}
       resolvedPropsValue={resolvedComponentProps}
       regions={regions}
     >
@@ -215,20 +236,22 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   );
 
   return (
-    <NodeMetaContext.Provider value={{ id: props.node.id, path: props.node.path, type: props.node.type }}>
-      <ActionScopeContext.Provider value={activeActionScope}>
-        <ComponentRegistryContext.Provider value={activeComponentRegistry}>
-          <ScopeContext.Provider value={activeScope}>
-            <FormContext.Provider value={activeForm}>
-              <PageContext.Provider value={props.page}>
-                <ClassAliasesContext.Provider value={mergedClassAliases}>
-                  {content}
-                </ClassAliasesContext.Provider>
-              </PageContext.Provider>
-            </FormContext.Provider>
-          </ScopeContext.Provider>
-        </ComponentRegistryContext.Provider>
-      </ActionScopeContext.Provider>
-    </NodeMetaContext.Provider>
+    <CompiledNodeContext.Provider value={props.node}>
+      <NodeMetaContext.Provider value={{ id: props.node.id, path: props.node.path, type: props.node.type, node: props.node }}>
+        <ActionScopeContext.Provider value={activeActionScope}>
+          <ComponentRegistryContext.Provider value={activeComponentRegistry}>
+            <ScopeContext.Provider value={renderScope}>
+              <FormContext.Provider value={activeForm}>
+                <PageContext.Provider value={props.page}>
+                  <ClassAliasesContext.Provider value={mergedClassAliases}>
+                    {content}
+                  </ClassAliasesContext.Provider>
+                </PageContext.Provider>
+              </FormContext.Provider>
+            </ScopeContext.Provider>
+          </ComponentRegistryContext.Provider>
+        </ActionScopeContext.Provider>
+      </NodeMetaContext.Provider>
+    </CompiledNodeContext.Provider>
   );
 });

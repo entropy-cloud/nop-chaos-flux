@@ -56,7 +56,13 @@ export function createHelpers(input: {
 
   return {
     render(renderInput: RenderNodeInput, options?: RenderFragmentOptions) {
-      return React.createElement(RenderNodes, { input: renderInput, options });
+      return React.createElement(RenderNodes, {
+        input: renderInput,
+        options: {
+          ...options,
+          ownerNode: options?.ownerNode ?? input.node
+        }
+      });
     },
     evaluate(target, scope) {
       return input.runtime.evaluate(target, scope ?? input.scope);

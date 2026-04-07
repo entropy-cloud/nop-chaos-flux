@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import type { RendererComponentProps, RendererDefinition, RendererEnv, RendererHelpers, RendererPlugin, ScopeRef } from '@nop-chaos/flux-core';
+import type { DataSourceSchema, RendererComponentProps, RendererDefinition, RendererEnv, RendererHelpers, RendererPlugin, ScopeRef } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
@@ -25,6 +25,7 @@ import {
   useOwnScopeSelector,
   useOwnedFieldState,
   useRenderScope,
+  useRendererRuntime,
   useScopeSelector,
   useValidationNodeState
 } from './index';
@@ -304,6 +305,30 @@ const buttonRenderer: RendererDefinition = {
     </button>
   ),
   fields: [{ key: 'onClick', kind: 'event' }]
+};
+
+function PollingSource(props: RendererComponentProps<DataSourceSchema>) {
+  const runtime = useRendererRuntime();
+  const scope = useRenderScope();
+
+  React.useEffect(() => {
+    const registration = runtime.registerDataSource({
+      id: props.id,
+      scope,
+      schema: props.schema
+    });
+
+    return () => {
+      registration.dispose();
+    };
+  }, [props.id, props.schema, runtime, scope]);
+
+  return null;
+}
+
+const pollingSourceRenderer: RendererDefinition = {
+  type: 'polling-source',
+  component: PollingSource
 };
 
 const cidProbeRenderer: RendererDefinition = {
@@ -640,6 +665,44 @@ describe('createSchemaRenderer', () => {
     await waitFor(() => {
       expect(importLoader.load).toHaveBeenCalledWith({ from: 'demo-lib', as: 'demo' });
     });
+  });
+
+  it('projects imported aliases into expressions as $alias bindings', async () => {
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => ({ ok: true }),
+          formatName(first: string, last: string) {
+            return `${first} ${last}`;
+          }
+        })
+      }))
+    };
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'text',
+          'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+          text: 'Imported ${$demo.formatName(user.firstName, user.lastName)}'
+        } as any}
+        data={{
+          user: {
+            firstName: 'Ada',
+            lastName: 'Lovelace'
+          }
+        }}
+        env={{
+          ...env,
+          importLoader
+        }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    expect(await screen.findByText('Imported Ada Lovelace')).toBeTruthy();
   });
 
   it('dedupes repeated imports within one action scope and shares them with descendants', async () => {
@@ -1978,6 +2041,89 @@ describe('createSchemaRenderer', () => {
     fireEvent.click(screen.getByText('Open fresh dialog'));
     expect(await screen.findByText('Fresh dialog')).toBeTruthy();
     expect(screen.queryByText('changed')).toBeNull();
+  });
+
+  it('stops dialog-scoped polling data sources after closing the dialog', async () => {
+    cleanup();
+
+    const fetcherImpl: RendererEnv['fetcher'] = async function <T>() {
+      return {
+        ok: true,
+        status: 200,
+        data: { value: 'polled' } as T
+      };
+    };
+    const fetcherSpy = vi.fn(fetcherImpl);
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer, pollingSourceRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button',
+              label: 'Open polling dialog',
+              onClick: {
+                action: 'dialog',
+                dialog: {
+                  title: 'Polling dialog',
+                  body: [
+                    {
+                      type: 'polling-source',
+                      id: 'dialog-poller',
+                      api: { url: '/api/dialog-poll' },
+                      dataPath: 'payload',
+                      interval: 50
+                    },
+                    { type: 'text', text: '${payload.value}' }
+                  ]
+                }
+              }
+            }
+          ]
+        }}
+        env={{
+          ...env,
+          fetcher: ((api, ctx) => fetcherSpy(api, ctx)) as RendererEnv['fetcher']
+        }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Open polling dialog'));
+
+    await waitFor(() => {
+      expect(fetcherSpy).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(fetcherSpy.mock.calls.length).toBeGreaterThanOrEqual(3);
+    }, { timeout: 1000 });
+
+    const callsBeforeClose = fetcherSpy.mock.calls.length;
+
+    fireEvent.click(document.querySelector('[data-slot="dialog-close"]')!);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Polling dialog')).toBeNull();
+    });
+
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 120);
+    });
+
+    const callsAfterClose = fetcherSpy.mock.calls.length;
+
+    expect(callsAfterClose).toBeLessThanOrEqual(callsBeforeClose + 1);
+
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 180);
+    });
+
+    expect(fetcherSpy).toHaveBeenCalledTimes(callsAfterClose);
+
+    cleanup();
   });
 
   it('supports wrapComponent plugins in the renderer pipeline', () => {

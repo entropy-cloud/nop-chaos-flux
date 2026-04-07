@@ -30,8 +30,7 @@ export function getNodeClassAliases(node: CompiledSchemaNode): Record<string, st
 }
 
 export function getNodeCompiledCid(node: CompiledSchemaNode): number | undefined {
-  const cid = (node.schema as { _cid?: unknown })._cid;
-  return typeof cid === 'number' ? cid : undefined;
+  return node.cid;
 }
 
 export function getNodeSchemaFrameWrap(node: CompiledSchemaNode): boolean | 'label' | 'group' | 'none' | undefined {

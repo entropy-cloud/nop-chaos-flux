@@ -293,7 +293,8 @@ export function createRendererRuntime(input: {
     runtime: {
       compile(schema) {
         return schemaCompiler.compile(schema);
-      }
+      },
+      schemaCompiler
     },
     createDialogScope: (ctx) =>
       createScopeRef({
@@ -336,6 +337,9 @@ export function createRendererRuntime(input: {
     createComponentHandleRegistry: createOwnedComponentRegistry,
     ensureImportedNamespaces(args) {
       return importManager.ensureImportedNamespaces(args);
+    },
+    getImportedExpressionBindings(args) {
+      return importManager.getImportedExpressionBindings(args);
     },
     releaseImportedNamespaces(args) {
       importManager.releaseImportedNamespaces(args);

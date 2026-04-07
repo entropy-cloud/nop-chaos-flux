@@ -29,7 +29,12 @@ interface ActionDispatcherInput {
   getDialogComponentRegistry?: (ctx: ActionContext) => ActionContext['componentRegistry'];
   openDrawer?: (drawer: Record<string, any>, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
   showToast?: (args: Record<string, unknown> | undefined, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
-  runtime: { compile(schema: any): any };
+  runtime: {
+    compile(schema: any): any;
+    schemaCompiler: {
+      compile(schema: any, options?: { basePath?: string; parentPath?: string; cidState?: import('@nop-chaos/flux-core').CompiledCidState }): any;
+    };
+  };
 }
 
 let nextInteractionId = 1;
@@ -317,7 +322,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         const dialogScope = input.createDialogScope(ctx);
         const dialogId = ctx.page.openDialog(action.dialog, dialogScope, input.runtime as any, {
           actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
-          componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry
+          componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
+          ownerNode: ctx.node
         });
         dialogScope.update('dialogId', dialogId);
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: { dialogId } });

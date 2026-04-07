@@ -19,6 +19,7 @@ export interface RenderFragmentOptions {
   pathSuffix?: string;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
+  ownerNode?: CompiledSchemaNode;
 }
 
 export interface RenderRegionHandle {
@@ -49,7 +50,7 @@ export interface RendererHookApi {
   useChildFieldState(path: string): FormFieldStateSnapshot;
   useAggregateError(path: string): ValidationError | undefined;
   useCurrentPage(): PageRuntime | undefined;
-  useCurrentNodeMeta(): { id: string; path: SchemaPath; type: string };
+  useCurrentNodeMeta(): RenderNodeMeta;
   useRenderFragment(): RendererHelpers['render'];
 }
 
@@ -57,6 +58,7 @@ export interface RenderNodeMeta {
   id: string;
   path: SchemaPath;
   type: string;
+  node: CompiledSchemaNode;
 }
 
 export interface SchemaRendererProps {

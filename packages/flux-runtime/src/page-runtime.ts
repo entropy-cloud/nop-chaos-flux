@@ -1,4 +1,5 @@
 import type { PageRuntime, PageStoreApi, RendererRuntime, ScopeChange } from '@nop-chaos/flux-core';
+import { getCompiledCidState } from '@nop-chaos/flux-core';
 import { createPageStore } from './form-store';
 import { createScopeRef } from './scope';
 
@@ -57,14 +58,34 @@ export function createManagedPageRuntime(input: {
     scope,
     openDialog(dialog, dialogScope, runtime: RendererRuntime, options) {
       const id = createDialogId(dialogScope.id);
+      const ownerNode = options?.ownerNode;
+      const cidState = ownerNode ? getCompiledCidState(ownerNode) : undefined;
+      const titleCompileOptions = ownerNode && dialog.title && typeof dialog.title !== 'string'
+        ? {
+            cidState,
+            basePath: `${ownerNode.path}.dialog.${id}.title`,
+            parentPath: ownerNode.path
+          }
+        : undefined;
+      const bodyCompileOptions = ownerNode && dialog.body
+        ? {
+            cidState,
+            basePath: `${ownerNode.path}.dialog.${id}.body`,
+            parentPath: ownerNode.path
+          }
+        : undefined;
       store.openDialog({
         id,
         dialog,
         scope: dialogScope,
         actionScope: options?.actionScope,
         componentRegistry: options?.componentRegistry,
-        title: typeof dialog.title === 'string' ? dialog.title : dialog.title ? runtime.compile(dialog.title as any) : undefined,
-        body: dialog.body ? runtime.compile(dialog.body as any) : undefined
+        title: typeof dialog.title === 'string'
+          ? dialog.title
+          : dialog.title
+            ? runtime.schemaCompiler.compile(dialog.title as any, titleCompileOptions)
+            : undefined,
+        body: dialog.body ? runtime.schemaCompiler.compile(dialog.body as any, bodyCompileOptions) : undefined
       });
       return id;
     },

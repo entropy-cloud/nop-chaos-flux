@@ -2,6 +2,7 @@ import type { CompiledRuntimeValue, RuntimeValueState } from './compilation';
 import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema';
 import type { ScopeDependencySet } from './scope';
 import type { CompiledFormValidationModel } from './validation';
+import type { CompiledCidState } from '../compiled-cid';
 
 export interface CompiledSchemaMeta {
   id?: CompiledRuntimeValue<string | undefined>;
@@ -64,6 +65,7 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   id: string;
   type: S['type'];
   path: SchemaPath;
+  cid?: number;
   schema: S;
   component: import('./renderer-core').RendererDefinition<S>;
   meta: CompiledSchemaMeta;
@@ -82,6 +84,7 @@ export interface CompileSchemaOptions {
   basePath?: SchemaPath;
   parentPath?: SchemaPath;
   parentScopePolicy?: ScopePolicy;
+  cidState?: CompiledCidState;
 }
 
 export interface CompileNodeOptions {

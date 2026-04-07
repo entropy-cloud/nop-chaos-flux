@@ -327,8 +327,38 @@ export function createImportManager(input: {
     }
   }
 
+  function getImportedExpressionBindings(args: {
+    imports?: readonly XuiImportSpec[];
+    actionScope?: ActionScope;
+  }): Readonly<Record<string, unknown>> {
+    const imports = args.imports?.map(normalizeImportSpec).filter((spec) => spec.from && spec.as) ?? [];
+
+    if (!args.actionScope || imports.length === 0) {
+      return {};
+    }
+
+    const registrations = scopeRegistrations.get(args.actionScope);
+
+    if (!registrations) {
+      return {};
+    }
+
+    return Object.fromEntries(
+      imports.flatMap((spec) => {
+        const entry = registrations.get(createImportKey(spec));
+
+        if (!entry || entry.state !== 'ready' || !entry.provider) {
+          return [];
+        }
+
+        return [[spec.as, entry.provider] as const];
+      })
+    );
+  }
+
   return {
     ensureImportedNamespaces,
+    getImportedExpressionBindings,
     releaseImportedNamespaces
   };
 }

@@ -1,13 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
   CompiledSchemaNode,
+  PageRuntime,
   RendererRuntime,
   ScopeRef,
   XuiImportSpec
 } from '@nop-chaos/flux-core';
 import { isReportedImportError, shouldWarnOnImportFailure } from './node-renderer-utils';
+
+const EMPTY_IMPORT_BINDINGS: Readonly<Record<string, unknown>> = Object.freeze({});
 
 export function useNodeImports(
   runtime: RendererRuntime,
@@ -15,18 +18,44 @@ export function useNodeImports(
   activeActionScope: ActionScope | undefined,
   activeComponentRegistry: ComponentHandleRegistry | undefined,
   activeScope: ScopeRef,
-  node: CompiledSchemaNode
-): void {
+  node: CompiledSchemaNode,
+  page?: PageRuntime
+): Readonly<Record<string, unknown>> {
+  const hasImports = Boolean(nodeImports?.length && activeActionScope);
   const activeImportLoader = runtime.env.importLoader;
+  const [, setBindingsVersion] = useState(0);
+  const expressionBindings = hasImports
+    ? runtime.getImportedExpressionBindings({
+        imports: nodeImports,
+        actionScope: activeActionScope
+      })
+    : EMPTY_IMPORT_BINDINGS;
 
   useEffect(() => {
+    if (!hasImports || !activeActionScope) {
+      return;
+    }
+
+    let disposed = false;
+
     void runtime.ensureImportedNamespaces({
       imports: nodeImports,
       actionScope: activeActionScope,
       componentRegistry: activeComponentRegistry,
       scope: activeScope,
       node
+    }).then(() => {
+      if (disposed) {
+        return;
+      }
+
+      setBindingsVersion((value) => value + 1);
+      page?.refresh();
     }).catch((error) => {
+      if (disposed) {
+        return;
+      }
+
       if (!shouldWarnOnImportFailure()) {
         return;
       }
@@ -54,10 +83,13 @@ export function useNodeImports(
     });
 
     return () => {
+      disposed = true;
       runtime.releaseImportedNamespaces({
         imports: nodeImports,
         actionScope: activeActionScope
       });
     };
-  }, [runtime, activeImportLoader, nodeImports, activeActionScope, activeComponentRegistry, activeScope, node]);
+  }, [runtime, activeImportLoader, hasImports, nodeImports, activeActionScope, activeComponentRegistry, activeScope, node, page]);
+
+  return hasImports ? expressionBindings : EMPTY_IMPORT_BINDINGS;
 }

@@ -1,5 +1,6 @@
-import React, { useEffect, useId, useMemo } from 'react';
+import React, { useContext, useEffect, useId, useMemo } from 'react';
 import type {
+  CompileSchemaOptions,
   CompiledSchemaNode,
   RenderFragmentOptions,
   RenderNodeInput,
@@ -7,8 +8,9 @@ import type {
   RendererRuntime,
   ScopeRef
 } from '@nop-chaos/flux-core';
-import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
+import { getCompiledCidState, isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope, useCurrentActionScope, useCurrentComponentRegistry, useCurrentForm, useCurrentPage } from './hooks';
+import { CompiledNodeContext } from './contexts';
 import { NodeRenderer } from './node-renderer';
 
 function isCompiledNode(input: unknown): input is CompiledSchemaNode {
@@ -37,7 +39,11 @@ const fragmentScopeCache = new Map<string, {
   scopeKey: string | undefined;
 }>();
 
-export function normalizeNodeInput(runtime: RendererRuntime, input: RenderNodeInput): CompiledSchemaNode | CompiledSchemaNode[] | null {
+export function normalizeNodeInput(
+  runtime: RendererRuntime,
+  input: RenderNodeInput,
+  compileOptions?: CompileSchemaOptions
+): CompiledSchemaNode | CompiledSchemaNode[] | null {
   if (!input) {
     return null;
   }
@@ -52,7 +58,7 @@ export function normalizeNodeInput(runtime: RendererRuntime, input: RenderNodeIn
     }
 
     if (isSchemaArray(input)) {
-      return runtime.compile(input);
+      return runtime.schemaCompiler.compile(input, compileOptions);
     }
 
     return input as CompiledSchemaNode[];
@@ -63,7 +69,7 @@ export function normalizeNodeInput(runtime: RendererRuntime, input: RenderNodeIn
   }
 
   if (isSchema(input)) {
-    return runtime.compile(input) as CompiledSchemaNode;
+    return runtime.schemaCompiler.compile(input, compileOptions) as CompiledSchemaNode;
   }
 
   return input as CompiledSchemaNode;
@@ -119,6 +125,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const currentComponentRegistry = useCurrentComponentRegistry();
   const currentForm = useCurrentForm();
   const currentPage = useCurrentPage();
+  const currentCompiledNode = useContext(CompiledNodeContext);
   const fragmentScopeCacheKey = useId();
   const options = props.options;
   const explicitScope = options?.scope;
@@ -126,7 +133,25 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const isolate = options?.isolate;
   const pathSuffix = options?.pathSuffix;
   const scopeKey = options?.scopeKey;
-  const compiled = useMemo(() => normalizeNodeInput(runtime, props.input), [runtime, props.input]);
+  const ownerNode = options?.ownerNode ?? currentCompiledNode ?? undefined;
+  const compileOptions = useMemo<CompileSchemaOptions | undefined>(() => {
+    const cidState = ownerNode ? getCompiledCidState(ownerNode) : undefined;
+
+    if (!cidState && !ownerNode) {
+      return undefined;
+    }
+
+    const basePath = ownerNode
+      ? `${ownerNode.path}.${pathSuffix ?? 'fragment'}`
+      : undefined;
+
+    return {
+      cidState,
+      basePath,
+      parentPath: ownerNode?.path
+    };
+  }, [ownerNode, pathSuffix]);
+  const compiled = useMemo(() => normalizeNodeInput(runtime, props.input, compileOptions), [runtime, props.input, compileOptions]);
   const shouldUseFragmentScope = !explicitScope && !!fragmentData;
   const fragmentScope = useMemo(() => {
     if (!shouldUseFragmentScope || !fragmentData) {

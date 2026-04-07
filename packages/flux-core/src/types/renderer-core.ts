@@ -108,6 +108,10 @@ export interface RendererRuntime {
     scope: ScopeRef;
     node?: CompiledSchemaNode;
   }): Promise<void>;
+  getImportedExpressionBindings(input: {
+    imports?: readonly XuiImportSpec[];
+    actionScope?: ActionScope;
+  }): Readonly<Record<string, unknown>>;
   releaseImportedNamespaces(input: {
     imports?: readonly XuiImportSpec[];
     actionScope?: ActionScope;

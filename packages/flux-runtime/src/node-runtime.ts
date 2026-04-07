@@ -120,7 +120,6 @@ export function createNodeRuntime(input: {
 }) {
   function resolveNodeMeta(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta {
     const env = input.getEnv();
-    const cidFromSchema = (node.schema as unknown as { _cid?: unknown })._cid;
     const resolved: ResolvedNodeMeta = {
       id: evaluateCompiledValue(input.expressionCompiler, node.meta.id, scope, env, state?.meta.id),
       name: evaluateCompiledValue(input.expressionCompiler, node.meta.name, scope, env, state?.meta.name),
@@ -132,7 +131,7 @@ export function createNodeRuntime(input: {
       disabled: Boolean(evaluateCompiledValue(input.expressionCompiler, node.meta.disabled, scope, env, state?.meta.disabled) ?? false),
       testid: evaluateCompiledValue(input.expressionCompiler, node.meta.testid, scope, env, state?.meta.testid),
       changed: true,
-      cid: typeof cidFromSchema === 'number' ? cidFromSchema : undefined,
+      cid: node.cid,
     };
 
     if (state?.resolvedMeta && shallowEqual(state.resolvedMeta, resolved)) {

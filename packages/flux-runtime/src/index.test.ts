@@ -267,7 +267,35 @@ describe('createSchemaCompiler', () => {
     expect(node.eventActions.onClick).toMatchObject({ action: 'setValue' });
   });
 
-  it('pre-resolves component targets to _targetCid during compile', () => {
+  it('pre-resolves component targets to _targetCid during compile when componentId is unique', () => {
+    const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = compiler.compile({
+      type: 'page',
+      body: [
+        { type: 'form', id: 'user-form', name: 'userForm' },
+        {
+          type: 'action-button',
+          onClick: {
+            action: 'component:validate',
+            componentId: 'user-form'
+          }
+        }
+      ]
+    }) as any;
+
+    const bodyNodes = Array.isArray(node.regions.body.node) ? node.regions.body.node : [node.regions.body.node];
+    const formNode = bodyNodes[0];
+    const buttonNode = bodyNodes[1];
+    expect(typeof formNode.cid).toBe('number');
+    expect(buttonNode.eventActions.onClick._targetCid).toBe(formNode.cid);
+  });
+
+  it('does not pre-resolve componentName targets during compile', () => {
     const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
     const compiler = createSchemaCompiler({
       registry,
@@ -289,10 +317,45 @@ describe('createSchemaCompiler', () => {
     }) as any;
 
     const bodyNodes = Array.isArray(node.regions.body.node) ? node.regions.body.node : [node.regions.body.node];
-    const formNode = bodyNodes[0];
     const buttonNode = bodyNodes[1];
-    expect(typeof formNode.schema._cid).toBe('number');
-    expect(buttonNode.eventActions.onClick._targetCid).toBe(formNode.schema._cid);
+    expect(buttonNode.eventActions.onClick._targetCid).toBeUndefined();
+  });
+
+  it('warns with duplicate id paths and disables static cid resolution for that id', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
+      const compiler = createSchemaCompiler({
+        registry,
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      });
+
+      const node = compiler.compile({
+        type: 'page',
+        body: [
+          { type: 'form', id: 'dup-form' },
+          { type: 'form', id: 'dup-form' },
+          {
+            type: 'action-button',
+            onClick: {
+              action: 'component:validate',
+              componentId: 'dup-form'
+            }
+          }
+        ]
+      }) as any;
+
+      const bodyNodes = Array.isArray(node.regions.body.node) ? node.regions.body.node : [node.regions.body.node];
+      const buttonNode = bodyNodes[2];
+
+      expect(buttonNode.eventActions.onClick._targetCid).toBeUndefined();
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[SchemaCompiler] Duplicate component id "dup-form" detected. Static cid resolution is disabled for this id. Paths: $.body[0], $.body[1]'
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it('preserves xui:imports on compiled schema for runtime registration', () => {
@@ -1892,6 +1955,52 @@ describe('createRendererRuntime', () => {
     expect(dialogState.title?.component).toBeTruthy();
     expect(Array.isArray(dialogState.body)).toBe(true);
     expect(dialogState.body[0]?.component).toBeTruthy();
+  });
+
+  it('continues cid and path allocation when compiling dialog fragments from an owner node', async () => {
+    const buttonRenderer: RendererDefinition = {
+      type: 'button',
+      component: () => null
+    };
+    const registry = createRendererRegistry([pageRenderer, textRenderer, buttonRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const pageNode = runtime.compile({
+      type: 'page',
+      body: [
+        {
+          type: 'button',
+          label: 'Open dialog'
+        }
+      ]
+    }) as any;
+    const page = runtime.createPageRuntime({});
+    const triggerNode = Array.isArray(pageNode.regions.body.node) ? pageNode.regions.body.node[0] : pageNode.regions.body.node;
+
+    await runtime.dispatch(
+      {
+        action: 'dialog',
+        dialog: {
+          title: { type: 'text', text: 'Compiled title' },
+          body: [{ type: 'text', text: 'Compiled body' }]
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        node: triggerNode
+      }
+    );
+
+    const dialogState = page.store.getState().dialogs[0] as any;
+    expect(dialogState.title.cid).toBeGreaterThan(triggerNode.cid);
+    expect(dialogState.title.path).toContain(`${triggerNode.path}.dialog.`);
+    expect(dialogState.body[0].cid).toBeGreaterThan(dialogState.title.cid);
+    expect(dialogState.body[0].path).toContain(`${triggerNode.path}.dialog.`);
   });
 
   it('evaluates expressions against child row scopes', () => {
