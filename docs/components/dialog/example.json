@@ -4,6 +4,20 @@
   "defaultOpen": false,
   "size": "lg",
   "showCloseButton": true,
+  "onOpen": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "dialog opened"
+    }
+  },
+  "onClose": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "dialog closed"
+    }
+  },
   "body": [
     {
       "type": "text",

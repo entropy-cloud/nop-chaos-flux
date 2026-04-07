@@ -2,5 +2,12 @@
   "type": "link",
   "label": "查看详情",
   "href": "/users/${user.id}",
-  "target": "_self"
+  "target": "_self",
+  "onClick": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "navigate to detail"
+    }
+  }
 }

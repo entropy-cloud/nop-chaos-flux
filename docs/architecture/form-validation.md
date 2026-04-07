@@ -12,6 +12,8 @@ Use it when changing:
 - validation timing and error visibility behavior
 - runtime registration for complex controls
 
+For standalone JSON schema file validation before compilation, use `docs/architecture/schema-file-validator.md`.
+
 For validation file placement and module ownership, use `docs/architecture/flux-runtime-module-boundaries.md`.
 
 ## Current Code Anchors

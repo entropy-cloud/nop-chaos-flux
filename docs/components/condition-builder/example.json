@@ -3,7 +3,7 @@
   "name": "rule",
   "label": "触发条件",
   "builderMode": "full",
-  "showANDOR": true,
+  "showAndOr": true,
   "showNot": true,
   "required": true,
   "fields": [

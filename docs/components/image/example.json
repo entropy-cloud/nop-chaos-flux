@@ -4,5 +4,12 @@
   "alt": "封面图",
   "width": 320,
   "height": 180,
-  "preview": true
+  "preview": true,
+  "onClick": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "image clicked"
+    }
+  }
 }

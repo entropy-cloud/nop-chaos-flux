@@ -7,7 +7,7 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前已落地 `document`、`config`、`readonly`、`toolbar`、`body`、`dialogs`。
+- 当前已落地 `document`、`config`、`readOnly`、`toolbar`、`body`、`dialogs`。
 - `statusbar` 等工作台补充区域仍可后续加入，但不影响当前根壳层契约。
 
 ## 3. Flux 中的 renderer/type 定义
@@ -20,13 +20,13 @@
 ## 4. schema 设计
 
 - `document` 是核心必填输入。
-- `config`、`readonly` 为宿主配置。
+- `config`、`readOnly` 为宿主配置。
 - `toolbar`、`body`、`dialogs` 为主要 regions。
 
 ## 5. 字段分类
 
 - `title`: `value-or-region`
-- `document`、`config`、`readonly`: `value`
+- `document`、`config`、`readOnly`: `value`
 - `toolbar`、`body`、`dialogs`: `region`
 
 ## 6. regions 与 slot 约定

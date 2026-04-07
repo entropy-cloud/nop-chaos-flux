@@ -20,10 +20,12 @@
 
 - 核心字段是 `itemsOverride`，其元素类型为 `ToolbarItem`。
 - `ToolbarItem` 当前支持 `button`、`divider`、`spacer`、`text`、`badge`、`switch`、`title`。
+- `ToolbarItem` 是领域专用的轻量配置对象，不是任意 renderer schema；按钮项通过 `action` 直接映射到命名空间动作，而不是再包一层 `onClick: ActionSchema`。
 
 ## 5. 字段分类
 
 - `itemsOverride`: `value`
+- `itemsOverride[].action`: `value`，其语义是 toolbar item 命令名，不是通用 renderer event 字段
 
 ## 6. regions 与 slot 约定
 
@@ -37,7 +39,8 @@
 
 ## 8. 事件、动作与组件句柄能力
 
-- 工具项的 `action` 应映射到命名空间动作。
+- 工具项的 `action` 应映射到命名空间动作，例如 `report-designer:save`、`spreadsheet:undo`。
+- 这里选择 `action` 而非 `onClick: ActionSchema`，是因为 `ToolbarItem` 不是标准 renderer 子节点，而是内部固定 toolbar 的轻量命令描述。
 - 工具栏本体无需专用组件句柄。
 
 ## 9. 数据源、表达式、导入能力接入点

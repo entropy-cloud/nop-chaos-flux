@@ -191,6 +191,33 @@
 }
 ```
 
+### 5.1 命名空间扩展属性
+
+当某个属性属于扩展方或宿主方，而不是 Flux 核心裸字段时，使用 `namespace:suffix` 形式的 key：
+
+```json
+{
+  "type": "page",
+  "xui:imports": [
+    { "from": "demo-lib", "as": "demo" }
+  ],
+  "acme:layout": {
+    "density": "compact"
+  }
+}
+```
+
+约定：
+
+- 非命名空间字段继续使用 camelCase，例如 `className`、`visible`、`validateOn`。
+- 命名空间字段用于扩展负载，不要把本来属于核心 contract 的普通字段伪装成 `vendor:*` 来绕过校验。
+- schema 文件 validator 应支持 `delegate-or-ignore` 策略：如果存在对应 namespace validator，则委托该扩展校验；否则忽略该 key 及其整个子树，不参与核心校验。
+- 对于已经进入 Flux 主契约的核心 namespace（当前最明确的是 `xui:*`），标准 validator bundle 应内置对应 namespace validator，而不是把它们一律当成“未知扩展”跳过。
+- 忽略命名空间字段不等于放宽普通字段校验；像 `visibel`、`layotu` 这类非命名空间拼写错误至少应告警，在 CI 或文档示例校验这类严格场景中应视为错误。
+- 即使采用“编译期集成 diagnostics”方案，也不应把未知裸字段自动并入正常 compiled props；如需透传，默认只允许 namespaced 扩展字段通过单独 extension 通道保留。
+
+推荐把扩展方自己的结构都收敛在对应命名空间 key 下面，避免把一组扩展字段平铺到顶层污染核心命名空间。
+
 ## 6. Config 与 Data 分离
 
 复杂组件的配置和实例数据分离：

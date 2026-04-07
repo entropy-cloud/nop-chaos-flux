@@ -25,6 +25,7 @@ Choose the smallest document that matches the task.
 | 核对 Flow Designer 当前真实的 snapshot 契约、host scope 落地状态、哪些字段已接线 | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |
 | Understand Flow Designer React Flow integration, callback translation, or canvas failure semantics | `docs/architecture/flow-designer/canvas-adapters.md` | `docs/architecture/flow-designer/api.md` |
 | Plan parity work against `nop-chaos-next` `flow-editor` and identify which behaviors must become configuration-driven | `docs/plans/13-flow-editor-parity-gap-analysis-and-migration-plan.md` | `docs/architecture/flow-designer/design.md` |
+| Plan implementation of compiler-integrated schema diagnostics | `docs/plans/41-compiler-integrated-schema-diagnostics-implementation-plan.md` | `docs/architecture/schema-file-validator.md`, `docs/architecture/flux-runtime-module-boundaries.md` |
 | Design theme-compatible styling, host CSS variable integration, or `.na-theme-root` migration strategy | `docs/architecture/theme-compatibility.md` | `docs/architecture/renderer-runtime.md` |
 | Design semantic props vs Tailwind className, custom style presets, or shadcn/ui integration | `docs/architecture/styling-system.md` | `docs/architecture/renderer-markers-and-selectors.md` |
 | Plan shadcn/ui migration from nop-chaos-next-master | `docs/plans/18-shadcn-ui-migration-plan.md` | `docs/architecture/styling-system.md` |
@@ -34,9 +35,11 @@ Choose the smallest document that matches the task.
 | 了解 report designer 与 nop-report 的导入导出/round-trip 设计 | `docs/architecture/report-designer/codec-design.md` | `docs/architecture/report-designer/nop-report-profile.md` |
 | 设计 report designer 的右侧属性面板与 expression/reference 字段编辑边界 | `docs/architecture/report-designer/inspector-design.md` | `docs/architecture/report-designer/contracts.md` |
 | Change React integration, renderer props, hooks, or fragment rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
-| Design compile-once/runtime-instantiation behavior, `cid`/template-node identity, repeated-instance identity, table row instance behavior, or future `type: 'loop'` rules | `docs/architecture/template-instantiation-and-node-identity.md` | `docs/architecture/component-resolution.md` |
+| Design compile-once/runtime-instantiation behavior, `cid`/template-node identity, repeated-instance identity, or future `type: 'loop'` rules | `docs/architecture/template-instantiation-and-node-identity.md` | `docs/architecture/component-resolution.md` |
+| Design high-performance table row identity, `rowKey`, row-scope reuse, row-local invalidation, or same-row field access inside tables | `docs/architecture/table-row-identity-and-scope-performance.md` | `docs/architecture/dependency-tracking.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
 | 设计或实现某个具体组件的 schema 契约、核心能力和落地路线 | `docs/components/index.md` | 对应组件目录下的 `docs/components/<component>/design.md`，再回看相关 `docs/architecture/*.md` |
 | Design namespaced action extension, host action scopes, or `xui:imports` semantics | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` |
+| 设计 Flux schema 文件校验器、导入前结构校验或命名空间属性忽略策略 | `docs/architecture/schema-file-validator.md` | `docs/architecture/action-scope-and-imports.md`, `docs/references/flux-json-conventions.md` |
 | Change slot-like fields such as `title`, `empty`, or `onClick` | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
 | Change validation behavior or form field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` |
 | Decide where runtime or validation code should live | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
@@ -65,10 +68,12 @@ Choose the smallest document that matches the task.
 Architecture intent lives primarily in:
 
 - `docs/architecture/flux-core.md`
+- `docs/architecture/schema-file-validator.md`
 - `docs/architecture/frontend-programming-model.md`
 - `docs/architecture/frontend-programming-model-improvement-design.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/template-instantiation-and-node-identity.md`
+- `docs/architecture/table-row-identity-and-scope-performance.md`
 - `docs/architecture/component-resolution.md`
 - `docs/architecture/dependency-tracking.md`
 - `docs/architecture/form-validation.md`

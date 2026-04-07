@@ -43,6 +43,7 @@
 
 - 推荐支持 `component:open`、`component:close`。
 - `onOpen`、`onClose` 通过 action schema 触发。
+- `example.json` 应同时展示 `onOpen` / `onClose` 的最小事件示例。
 
 ## 9. 数据源、表达式、导入能力接入点
 

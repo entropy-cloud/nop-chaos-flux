@@ -38,6 +38,7 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 推荐支持 `component:open`、`component:close`。
+- `onOpen`、`onClose` 通过 action schema 触发，示例应覆盖至少一组最小事件用法。
 
 ## 9. 数据源、表达式、导入能力接入点
 

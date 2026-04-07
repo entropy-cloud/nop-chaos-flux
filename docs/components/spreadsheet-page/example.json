@@ -1,7 +1,7 @@
 {
   "type": "spreadsheet-page",
   "title": "电子表格编辑器",
-  "readonly": false,
+  "readOnly": false,
   "document": {
     "id": "sheet-demo",
     "kind": "spreadsheet",

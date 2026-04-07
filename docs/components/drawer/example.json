@@ -4,6 +4,20 @@
   "defaultOpen": false,
   "side": "right",
   "size": "md",
+  "onOpen": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "drawer opened"
+    }
+  },
+  "onClose": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "drawer closed"
+    }
+  },
   "body": [
     {
       "type": "text",

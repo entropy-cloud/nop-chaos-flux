@@ -2,6 +2,13 @@
   "type": "table",
   "paginationOwnership": "local",
   "selectionOwnership": "local",
+  "onRowClick": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "row clicked"
+    }
+  },
   "columns": [
     {
       "name": "name",

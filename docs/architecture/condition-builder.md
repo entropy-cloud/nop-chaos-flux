@@ -66,7 +66,7 @@ interface ConditionBuilderSchema extends BaseSchema {
   searchable?: boolean;
 
   draggable?: boolean;
-  showANDOR?: boolean;
+  showAndOr?: boolean;
   showNot?: boolean;
   showIf?: boolean;
   uniqueFields?: boolean;
@@ -453,7 +453,7 @@ Example value:
   "type": "condition-builder",
   "name": "filters",
   "builderMode": "simple",
-  "showANDOR": true,
+  "showAndOr": true,
   "draggable": false,
   "fields": [
     { "name": "name", "label": "名称", "type": "text" },
@@ -697,7 +697,7 @@ When `source` is provided:
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  [AND ▾]                                             │  ← showANDOR toggle (optional)
+│  [AND]                                               │  ← static conjunction label in simple mode
 │  ┌─────────────────────────────────────────────────┐ │
 │  │  [字段A ▾]  [等于 ▾]  [值输入___]         ✕    │ │
 │  └─────────────────────────────────────────────────┘ │
@@ -761,8 +761,8 @@ Per `docs/architecture/styling-system.md`:
 | `title` | `string` | — | Popup title for picker mode |
 | `selectMode` | `'list' \| 'tree' \| 'chained'` | `'list'` | Field selection display mode |
 | `searchable` | `boolean` | `false` | Enable search in field selector |
-| `draggable` | `boolean` | `true` | Enable drag-and-drop reordering |
-| `showANDOR` | `boolean` | `false` | Show AND/OR toggle in simple mode (always shown in full mode) |
+| `draggable` | `boolean` | `false` | Enable drag-and-drop reordering |
+| `showAndOr` | `boolean` | `true` | In full mode, show the AND/OR toggle inside the conjunction bar. In simple mode, the UI still renders a static conjunction label rather than a toggle. Set `false` to hide the toggle and keep only the static label when the bar still exists because of `showNot`. |
 | `showNot` | `boolean` | `false` | Show NOT toggle per group |
 | `showIf` | `boolean` | `false` | Show condition trigger (if-expression) per item |
 | `uniqueFields` | `boolean` | `false` | Prevent the same field from appearing in multiple conditions |
