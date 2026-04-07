@@ -136,6 +136,8 @@ export function createSchemaCompiler(input: {
     const path = options.path;
     const meta = buildCompiledMeta(schema, renderer, expressionCompiler);
     const propSource: Record<string, unknown> = {};
+    const sourcePropKeys = new Set<string>();
+    const sourceStatePropKeys: Record<string, string> = {};
     const regions: Record<string, CompiledRegion> = {};
     const eventActions: Record<string, unknown> = {};
     const eventKeys: string[] = [];
@@ -173,6 +175,14 @@ export function createSchemaCompiler(input: {
             compileSchema
           })
         : value;
+
+      if (rule.allowSource) {
+        sourcePropKeys.add(key);
+
+        if (rule.sourceStateKey) {
+          sourceStatePropKeys[key] = rule.sourceStateKey;
+        }
+      }
     }
 
     const props = expressionCompiler.compileValue(propSource);
@@ -196,6 +206,8 @@ export function createSchemaCompiler(input: {
       component: renderer,
       meta,
       props,
+      sourcePropKeys: Array.from(sourcePropKeys).sort(),
+      sourceStatePropKeys,
       validation:
         renderer.scopePolicy === 'form'
           ? collectValidationModel(

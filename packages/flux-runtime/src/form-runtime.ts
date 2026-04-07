@@ -1,4 +1,4 @@
-import type { ApiObject, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
+import type { ApiSchema, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
 import {
   clampArrayIndex,
   clampInsertIndex,
@@ -400,7 +400,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       store.setPathErrors(path);
     },
-    async submit(api?: ApiObject, options?: { interactionId?: string }) {
+    async submit(api?: ApiSchema, options?: { interactionId?: string }) {
       if (isSubmittingInternal) {
         return {
           ok: false,

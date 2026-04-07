@@ -4454,7 +4454,7 @@ describe('createRendererRuntime', () => {
       path: node.path
     });
     expect(onApiRequest).toHaveBeenCalledWith(expect.objectContaining({
-      api: expect.objectContaining({ url: '/api/monitored', method: 'get', params: undefined }),
+      api: expect.objectContaining({ url: '/api/monitored', method: 'get', data: undefined }),
       nodeId: node.id,
       path: node.path,
       interactionId: expect.any(String)
@@ -4512,7 +4512,7 @@ describe('createRendererRuntime', () => {
       api: expect.objectContaining({
         url: '/api/items?mode=live',
         method: 'get',
-        params: undefined
+        data: undefined
       }),
       nodeId: undefined,
       path: undefined,
@@ -4520,8 +4520,7 @@ describe('createRendererRuntime', () => {
     }));
     expect(fetcher).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: '/api/items?mode=live',
-        params: undefined
+        url: '/api/items?mode=live'
       }),
       expect.any(Object)
     );

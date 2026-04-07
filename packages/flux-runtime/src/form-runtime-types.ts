@@ -1,6 +1,6 @@
 import type {
   ActionResult,
-  ApiObject,
+  ApiSchema,
   CompiledFormValidationField,
   CompiledFormValidationModel,
   CompiledValidationRule,
@@ -33,7 +33,7 @@ export interface CreateManagedFormRuntimeInput {
     field: CompiledFormValidationField,
     scope: ScopeRef
   ) => ValidationError | undefined;
-  submitApi: (api: ApiObject, scope: ScopeRef, options?: { interactionId?: string }) => Promise<ActionResult>;
+  submitApi: (api: ApiSchema, scope: ScopeRef, options?: { interactionId?: string }) => Promise<ActionResult>;
 }
 
 export interface InitialFieldState {

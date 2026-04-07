@@ -3,7 +3,10 @@ import type {
   ActionScope,
   ActionResult,
   ActionSchema,
-  ApiObject,
+  ApiSchema,
+  ExecutableApiRequest,
+  OperationControlConfig,
+  SourceSchema,
   CompiledRuntimeValue,
   CompiledFormValidationField,
   CompiledFormValidationModel,
@@ -27,7 +30,7 @@ import { createActionScope } from './action-scope';
 import { createActionDispatcher } from './action-runtime';
 import { createApiCacheStore } from './api-cache';
 import { createComponentHandleRegistry } from './component-handle-registry';
-import { createDataSourceController } from './data-source-runtime';
+import { createDataSourceController, createSourceExecutor } from './data-source-runtime';
 import { createManagedFormRuntime } from './form-runtime';
 import { createImportManager } from './imports';
 import { createNodeRuntime } from './node-runtime';
@@ -35,7 +38,7 @@ import { createManagedPageRuntime } from './page-runtime';
 import {
   applyResponseDataPath,
   createApiRequestExecutor,
-  executeApiObject
+  executeApiSchema
 } from './request-runtime';
 import { createRuntimeReactionRegistry } from './reaction-runtime';
 import { sortRendererPlugins } from './runtime-plugins';
@@ -128,7 +131,7 @@ export function createRendererRuntime(input: {
     scope: ScopeRef
   ): Promise<ValidationError | undefined> {
     try {
-      const response = await executeApiObject(rule.api, scope, getEnv(), expressionCompiler, {
+      const response = await executeApiSchema(rule.api, scope, getEnv(), expressionCompiler, {
         evaluate,
         executor: (adaptedApi) => executeApiRequest(`validate:${field.path}`, adaptedApi, scope)
       });
@@ -188,7 +191,7 @@ export function createRendererRuntime(input: {
       executeValidationRule,
       validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry),
       submitApi: async (api, scope, options) => {
-        const response = await executeApiObject(api, scope, getEnv(), expressionCompiler, {
+        const response = await executeApiSchema(api, scope, getEnv(), expressionCompiler, {
           evaluate,
           executor: (adaptedApi) => executeApiRequest('submitForm', adaptedApi, scope, undefined, {
             interactionId: options?.interactionId
@@ -204,9 +207,9 @@ export function createRendererRuntime(input: {
     });
   }
 
-  async function executeAjaxAction(api: ApiObject, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal): Promise<ActionResult> {
-    let monitoredApi: ApiObject | undefined;
-    const response = await executeApiObject(api, ctx.scope, getEnv(), expressionCompiler, {
+  async function executeAjaxAction(api: ApiSchema, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal): Promise<ActionResult> {
+    let monitoredApi: ExecutableApiRequest | undefined;
+    const response = await executeApiSchema(api, ctx.scope, getEnv(), expressionCompiler, {
       signal,
       evaluate,
       onPreparedRequest: (preparedApi) => {
@@ -214,8 +217,10 @@ export function createRendererRuntime(input: {
       },
       executor: (adaptedApi) => executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
         signal,
-        interactionId: ctx.interactionId
-      })
+        interactionId: ctx.interactionId,
+        control: action.control as OperationControlConfig | undefined
+      }),
+      control: action.control as OperationControlConfig | undefined
     });
 
     if (monitoredApi) {
@@ -265,6 +270,8 @@ export function createRendererRuntime(input: {
     return expressionCompiler.evaluateValue(compiled, scope, getEnv()) as T;
   }
 
+  const executeSourceRef: { current?: (source: SourceSchema, scope: ScopeRef, ctx?: Partial<ActionContext>) => Promise<ActionResult> } = {};
+
   const { dispatch } = createActionDispatcher({
     getEnv,
     plugins,
@@ -274,7 +281,19 @@ export function createRendererRuntime(input: {
     evaluateCompiled,
     refreshDataSource: (inputValue) => runtime.refreshDataSource(inputValue),
     executeAjaxAction,
-      submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
+    submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
+    openDrawer: async (drawer, ctx) => {
+      ctx.runtime.env.notify('info', 'Drawer support is not wired yet');
+      return { ok: true, data: drawer };
+    },
+    showToast: async (args, ctx) => {
+      const level = typeof args?.level === 'string' && ['info', 'success', 'warning', 'error'].includes(args.level)
+        ? args.level as 'info' | 'success' | 'warning' | 'error'
+        : 'info';
+      const message = typeof args?.message === 'string' ? args.message : 'Action completed';
+      ctx.runtime.env.notify(level, message);
+      return { ok: true, data: args };
+    },
     runtime: {
       compile(schema) {
         return schemaCompiler.compile(schema);
@@ -326,6 +345,13 @@ export function createRendererRuntime(input: {
       importManager.releaseImportedNamespaces(args);
     },
     dispatch,
+    executeSource(inputValue) {
+      if (!executeSourceRef.current) {
+        throw new Error('Source executor is not initialized yet');
+      }
+
+      return executeSourceRef.current(inputValue.source, inputValue.scope, inputValue.ctx);
+    },
     createPageRuntime,
     createDataSourceController(inputValue) {
       return createDataSourceController({
@@ -395,6 +421,11 @@ export function createRendererRuntime(input: {
     executeApiRequest: (actionType, api, scope, options) => executeApiRequest(actionType, api, scope, undefined, options)
   });
   reactionRegistryRef.current = createRuntimeReactionRegistry();
+
+  executeSourceRef.current = createSourceExecutor({
+    runtime,
+    executeAction: (action, ctx) => dispatch(action, ctx)
+  });
 
   runtimeRef.current = runtime;
 
