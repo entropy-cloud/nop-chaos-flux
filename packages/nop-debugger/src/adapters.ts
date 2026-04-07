@@ -50,6 +50,7 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
         summary: `${action.action} prepared`,
         detail: `nodeId=${ctx.node?.id ?? 'n/a'} | path=${ctx.node?.path ?? 'n/a'}`,
         actionType: action.action,
+        locator: ctx.locator,
         nodeId: ctx.node?.id,
         path: ctx.node?.path,
         rendererType: ctx.node?.type
@@ -125,6 +126,7 @@ export function decorateDebuggerEnv(input: {
         detail: `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`,
         actionType: payload.actionType,
         interactionId: payload.interactionId,
+        locator: payload.locator,
         nodeId: payload.nodeId,
         path: payload.path
       });
@@ -140,6 +142,7 @@ export function decorateDebuggerEnv(input: {
         detail: `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`,
         actionType: payload.actionType,
         interactionId: payload.interactionId,
+        locator: payload.locator,
         nodeId: payload.nodeId,
         path: payload.path,
         durationMs: payload.durationMs
@@ -289,6 +292,7 @@ export function appendActionErrorEvent(store: NopDebuggerStore, error: unknown, 
     source: 'root.onActionError',
     summary: 'action error',
     detail: formatErrorDetail(error),
+    locator: ctx.locator,
     nodeId: ctx.node?.id,
     path: ctx.node?.path,
     rendererType: ctx.node?.type

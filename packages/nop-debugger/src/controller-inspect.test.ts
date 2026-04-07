@@ -78,6 +78,78 @@ describe('controller inspector methods', () => {
     expect(result).toMatchObject({ cid: 100, mounted: true });
   });
 
+  it('inspectByCid prefers registry inspectCid locator data when available', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-registry-locator', enabled: true });
+    const div = document.createElement('div');
+    div.setAttribute('data-cid', '101');
+    document.body.appendChild(div);
+
+    const mockRegistry = {
+      id: 'reg-1',
+      inspectCid: (cid: number) => cid === 101
+        ? {
+            kind: 'resolved',
+            payload: {
+              cid: 101,
+              locator: {
+                runtimeId: 'runtime',
+                templateGraphId: 'page-root',
+                templateNodeId: 55
+              }
+            }
+          }
+        : { kind: 'notFound' },
+      getHandleByCid: () => undefined
+    };
+
+    ctrl.setComponentRegistry(mockRegistry as never);
+    const result = ctrl.inspectByCid(101);
+    expect(result).toMatchObject({
+      cid: 101,
+      mounted: true,
+      locator: {
+        runtimeId: 'runtime',
+        templateGraphId: 'page-root',
+        templateNodeId: 55
+      }
+    });
+  });
+
+  it('inspectByCid exposes nodeInstance-backed node state summary when present in debug data', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-node-instance-state', enabled: true });
+    const div = document.createElement('div');
+    div.setAttribute('data-cid', '102');
+    document.body.appendChild(div);
+
+    const mockRegistry = {
+      id: 'reg-1',
+      getHandleByCid: () => undefined,
+      getHandleDebugData: (cid: number) => cid === 102
+        ? {
+            nodeInstance: {
+              state: {
+                mounted: true,
+                metaState: {},
+                propsState: undefined,
+                metaDependencies: new Set(['record.name']),
+                propsDependencies: undefined
+              }
+            }
+          }
+        : undefined
+    };
+
+    ctrl.setComponentRegistry(mockRegistry as never);
+    const result = ctrl.inspectByCid(102);
+    expect(result?.debugData).toMatchObject({
+      nodeState: {
+        mounted: true,
+        hasMetaDependencies: true,
+        hasPropsDependencies: false
+      }
+    });
+  });
+
   it('fills formState from handle capabilities.store', () => {
     const ctrl = createNopDebugger({ id: 'inspect-formstate', enabled: true });
     const div = document.createElement('div');

@@ -1,4 +1,4 @@
-import type { ActionContext, ActionScope, ComponentHandleRegistry, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
+import type { ActionContext, ActionScope, ComponentHandleRegistry, NodeLocator, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
 
 export type NopDebuggerTab = 'overview' | 'timeline' | 'network' | 'node';
 
@@ -70,6 +70,7 @@ export interface NopDebugEvent {
   source: string;
   summary: string;
   detail?: string;
+  locator?: NodeLocator;
   nodeId?: string;
   path?: string;
   rendererType?: string;
@@ -233,6 +234,7 @@ export interface NopWaitForEventOptions extends NopDebugEventQuery {
 
 export interface NopComponentInspectResult {
   cid: number;
+  locator?: NodeLocator;
   handleId?: string;
   handleName?: string;
   handleType?: string;

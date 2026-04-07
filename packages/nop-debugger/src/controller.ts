@@ -68,6 +68,7 @@ function buildInspectResult(
   result.nodeId = debugData?.nodeId;
   result.path = debugData?.path;
   result.rendererType = debugData?.rendererType;
+  result.locator = debugData?.locator ?? handle?._locator ?? registry?.getLocatorByCid?.(cid);
   result.availableMethods = getAvailableMethods(handle);
   result.registryEntry = handle ? {
     id: handle.id,
@@ -84,6 +85,15 @@ function buildInspectResult(
 
   result.metaSummary = pickRecord(debugData?.resolvedMeta as Record<string, unknown> | undefined, ['id', 'name', 'label', 'title', 'className', 'visible', 'hidden', 'disabled', 'testid', 'cid']);
   result.propsSummary = pickRecord(debugData?.resolvedProps as Record<string, unknown> | undefined, ['id', 'name', 'label', 'title', 'type', 'value', 'placeholder', 'options']);
+  if (!result.debugData && debugData?.nodeInstance?.state) {
+    result.debugData = {
+      nodeState: {
+        mounted: debugData.nodeInstance.state.mounted,
+        hasMetaDependencies: Boolean(debugData.nodeInstance.state.metaDependencies),
+        hasPropsDependencies: Boolean(debugData.nodeInstance.state.propsDependencies)
+      }
+    };
+  }
 
   const capabilityStore = handle?.capabilities?.store as {
     getState(): {
@@ -177,8 +187,14 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
 
   const inspectByCid = (cid: number): NopComponentInspectResult | undefined => {
     if (!componentRegistry) return undefined;
+    const inspected = componentRegistry.inspectCid?.(cid);
     const element = document.querySelector(`[data-cid="${cid}"]`);
     const handle = element ? componentRegistry.getHandleByCid?.(cid) : undefined;
+    if (inspected?.kind === 'resolved') {
+      const result = buildInspectResult(cid, handle, !!element, (element as HTMLElement) ?? undefined, componentRegistry);
+      result.locator = inspected.payload.locator;
+      return result;
+    }
     if (!handle && !element) return undefined;
     return buildInspectResult(cid, handle, !!element, (element as HTMLElement) ?? undefined, componentRegistry);
   };

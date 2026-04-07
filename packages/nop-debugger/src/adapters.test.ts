@@ -27,7 +27,12 @@ describe('debugger adapters', () => {
     plugin.beforeCompile?.({ type: 'page' });
     plugin.afterCompile?.({ type: 'page', path: 'root' } as never);
     plugin.beforeAction?.({ action: 'submitForm' } as never, {
-      node: { id: 'node-1', path: 'body.0', type: 'form' }
+      node: { id: 'node-1', path: 'body.0', type: 'form' },
+      locator: {
+        runtimeId: 'runtime-1',
+        templateGraphId: 'page-root',
+        templateNodeId: 12
+      }
     } as never);
     plugin.onError?.(new Error('plugin failed'), {
       phase: 'render',
@@ -40,7 +45,12 @@ describe('debugger adapters', () => {
     expect(events.map((event: NopDebugEvent) => event.kind)).toEqual(['error', 'action:start', 'compile:end', 'compile:start']);
     expect(events[1]).toMatchObject({
       actionType: 'submitForm',
-      rendererType: 'form'
+      rendererType: 'form',
+      locator: {
+        runtimeId: 'runtime-1',
+        templateGraphId: 'page-root',
+        templateNodeId: 12
+      }
     });
   });
 
@@ -79,8 +89,20 @@ describe('debugger adapters', () => {
 
     decoratedEnv.monitor?.onRenderStart?.({ nodeId: 'node-1', path: 'body.0', type: 'text' });
     decoratedEnv.monitor?.onRenderEnd?.({ nodeId: 'node-1', path: 'body.0', type: 'text', durationMs: 5 });
-    decoratedEnv.monitor?.onActionStart?.({ actionType: 'reload', nodeId: 'node-1', path: 'body.0' });
-    decoratedEnv.monitor?.onActionEnd?.({ actionType: 'reload', nodeId: 'node-1', path: 'body.0', durationMs: 7, result: { ok: true } });
+    decoratedEnv.monitor?.onActionStart?.({
+      actionType: 'reload',
+      locator: { runtimeId: 'runtime-1', templateGraphId: 'page-root', templateNodeId: 1 },
+      nodeId: 'node-1',
+      path: 'body.0'
+    });
+    decoratedEnv.monitor?.onActionEnd?.({
+      actionType: 'reload',
+      locator: { runtimeId: 'runtime-1', templateGraphId: 'page-root', templateNodeId: 1 },
+      nodeId: 'node-1',
+      path: 'body.0',
+      durationMs: 7,
+      result: { ok: true }
+    });
     decoratedEnv.monitor?.onApiRequest?.({
       api: {
         url: '/api/demo',
@@ -118,6 +140,11 @@ describe('debugger adapters', () => {
 
     expect(baseMonitor.onRenderStart).toHaveBeenCalled();
     expect(baseMonitor.onApiRequest).toHaveBeenCalledTimes(2);
+    expect(snapshot.events.find((event: NopDebugEvent) => event.kind === 'action:start')?.locator).toMatchObject({
+      runtimeId: 'runtime-1',
+      templateGraphId: 'page-root',
+      templateNodeId: 1
+    });
     expect(apiStartEvents).toHaveLength(2);
     expect(apiStartEvents[0].exportedData).toMatchObject({ token: '[MASKED]', keep: 'visible' });
     expect(apiStartEvents[0].requestInstanceId).toBeTruthy();
