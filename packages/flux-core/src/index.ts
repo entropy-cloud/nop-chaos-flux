@@ -1,6 +1,7 @@
 export * from './types';
 export * from './validation-model';
 export * from './constants';
+export * from './compiled-cid';
 
 export {
   clampArrayIndex,
