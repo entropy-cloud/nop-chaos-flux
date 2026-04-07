@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { scopeChangeHitsDependencies } from '../scope-change';
+import { createRootDependencySet, filterScopeChangeByIgnoredRoots, scopeChangeHitsDependencies } from '../scope-change';
 
 describe('scopeChangeHitsDependencies', () => {
-  it('matches child-path changes against parent-path dependencies', () => {
+  it('matches child-path changes against root dependencies', () => {
     expect(scopeChangeHitsDependencies(
       { paths: ['user.name'], sourceScopeId: 'scope', kind: 'update' },
       { paths: ['user'], wildcard: false, broadAccess: false }
     )).toBe(true);
   });
 
-  it('matches parent replacements against child-path dependencies', () => {
+  it('normalizes dependency roots before matching', () => {
     expect(scopeChangeHitsDependencies(
       { paths: ['user'], sourceScopeId: 'scope', kind: 'merge' },
       { paths: ['user.name'], wildcard: false, broadAccess: false }
@@ -28,5 +28,24 @@ describe('scopeChangeHitsDependencies', () => {
       { paths: ['settings.theme'], sourceScopeId: 'scope', kind: 'update' },
       { paths: ['user.name'], wildcard: false, broadAccess: false }
     )).toBe(false);
+  });
+
+  it('filters ignored self roots before dependency matching', () => {
+    expect(filterScopeChangeByIgnoredRoots(
+      { paths: ['payload.total', 'note'], sourceScopeId: 'scope', kind: 'merge' },
+      ['payload']
+    )).toEqual({
+      paths: ['note'],
+      sourceScopeId: 'scope',
+      kind: 'merge'
+    });
+  });
+
+  it('builds normalized root dependency sets from explicit roots', () => {
+    expect(createRootDependencySet(['user.name', 'filters.status'])).toEqual({
+      paths: ['filters', 'user'],
+      wildcard: false,
+      broadAccess: false
+    });
   });
 });

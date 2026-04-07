@@ -1,51 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { NopComponentInspectResult, NopDebuggerController } from '../types';
+import type { NopComponentInspectResult, NopComponentTreeItem, NopDebuggerController } from '../types';
 
-export type ComponentTreeItem = {
-  cid: number;
-  type: string;
-  label: string;
-  depth: number;
-  element: HTMLElement;
-};
-
-function collectComponentTree() {
+function findMountedElement(cid: number) {
   if (typeof document === 'undefined') {
-    return [] as ComponentTreeItem[];
+    return null;
   }
 
-  const elements = document.querySelectorAll('[data-cid]');
-  const tree: ComponentTreeItem[] = [];
-  const seen = new Set<string>();
-
-  elements.forEach((el) => {
-    const cid = el.getAttribute('data-cid') || '0';
-    if (seen.has(cid)) {
-      return;
-    }
-    seen.add(cid);
-
-    const textContent = el.textContent?.trim().slice(0, 30) || '';
-    const label = textContent || el.tagName.toLowerCase();
-    let depth = 0;
-    let parent = el.parentElement;
-    while (parent && parent !== document.body) {
-      if (parent.hasAttribute('data-cid')) {
-        depth += 1;
-      }
-      parent = parent.parentElement;
-    }
-
-    tree.push({
-      cid: parseInt(cid, 10),
-      type: 'element',
-      label,
-      depth,
-      element: el as HTMLElement,
-    });
-  });
-
-  return tree;
+  return document.querySelector(`[data-cid="${cid}"]`) as HTMLElement | null;
 }
 
 function useInspectOverlays(inspectMode: boolean, hoveredElement: HTMLElement | null, selectedElement: HTMLElement | null) {
@@ -134,6 +95,22 @@ export function useInspectMode(args: {
     args.setEvalResult(null);
   }, [args]);
 
+  const inspectTreeItem = useCallback((item: NopComponentTreeItem) => {
+    const element = findMountedElement(item.cid);
+
+    setSelectedElement(element);
+    setInspectMode(false);
+    args.controller.setActiveTab('node');
+    args.setNodeIdInput(String(item.cid));
+
+    const inspectResult = args.controller.inspectByCid(item.cid)
+      ?? (element ? args.controller.inspectByElement(element) : undefined);
+
+    setInspectData(inspectResult ?? null);
+    args.setFormTab('values');
+    args.setEvalResult(null);
+  }, [args]);
+
   useEffect(() => {
     if (!inspectMode) {
       return;
@@ -180,10 +157,10 @@ export function useInspectMode(args: {
   const componentTree = useMemo(() => {
     void componentTreeRevision;
     if (args.activeTab !== 'node') {
-      return [] as ComponentTreeItem[];
+      return [] as NopComponentTreeItem[];
     }
-    return collectComponentTree();
-  }, [args.activeTab, componentTreeRevision]);
+    return args.controller.getComponentTree();
+  }, [args.activeTab, args.controller, componentTreeRevision]);
 
   return {
     inspectMode,
@@ -192,7 +169,7 @@ export function useInspectMode(args: {
     setInspectData,
     selectedElement,
     setSelectedElement,
-    inspectElement,
+    inspectTreeItem,
     componentTree,
     scanComponentTree() {
       setComponentTreeRevision((value) => value + 1);

@@ -6,6 +6,7 @@ import type {
   RendererEnv,
   RendererPlugin
 } from '@nop-chaos/flux-core';
+import { parsePath } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
 import {
@@ -20,6 +21,7 @@ import { normalizeRedactionOptions } from './redaction';
 import { createDebuggerStore } from './store';
 import type {
   NopComponentInspectResult,
+  NopComponentTreeItem,
   NopDebugEvent,
   NopDebugEventQuery,
   NopDebuggerAutomationApi,
@@ -131,6 +133,49 @@ function buildInspectResult(
   return result;
 }
 
+function compareOptionalText(left: string | undefined, right: string | undefined) {
+  return (left ?? '').localeCompare(right ?? '');
+}
+
+function getComponentTreeDepth(path: string | undefined, locator: NopComponentTreeItem['locator']) {
+  const pathDepth = path
+    ? Math.max(parsePath(path).filter((segment) => segment !== '$').length - 1, 0)
+    : 0;
+
+  return pathDepth + (locator?.instancePath?.length ?? 0);
+}
+
+function compareComponentTreeItems(left: NopComponentTreeItem, right: NopComponentTreeItem) {
+  const pathCompare = compareOptionalText(left.path, right.path);
+
+  if (pathCompare !== 0) {
+    return pathCompare;
+  }
+
+  const graphCompare = compareOptionalText(left.locator?.templateGraphId, right.locator?.templateGraphId);
+
+  if (graphCompare !== 0) {
+    return graphCompare;
+  }
+
+  const nodeCompare = (left.locator?.templateNodeId ?? Number.MAX_SAFE_INTEGER) - (right.locator?.templateNodeId ?? Number.MAX_SAFE_INTEGER);
+
+  if (nodeCompare !== 0) {
+    return nodeCompare;
+  }
+
+  const instanceCompare = compareOptionalText(
+    JSON.stringify(left.locator?.instancePath ?? null),
+    JSON.stringify(right.locator?.instancePath ?? null)
+  );
+
+  if (instanceCompare !== 0) {
+    return instanceCompare;
+  }
+
+  return left.cid - right.cid;
+}
+
 function appendActionScopeSnapshotEvent(args: {
   store: ReturnType<typeof createDebuggerStore>;
   actionScope: ActionScope;
@@ -189,14 +234,28 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     if (!componentRegistry) return undefined;
     const inspected = componentRegistry.inspectCid?.(cid);
     const element = document.querySelector(`[data-cid="${cid}"]`);
-    const handle = element ? componentRegistry.getHandleByCid?.(cid) : undefined;
+    const handle = componentRegistry.getHandleByCid?.(cid);
+
     if (inspected?.kind === 'resolved') {
-      const result = buildInspectResult(cid, handle, !!element, (element as HTMLElement) ?? undefined, componentRegistry);
+      const result = buildInspectResult(
+        cid,
+        handle,
+        inspected.payload.state?.mounted ?? handle?._mounted !== false,
+        (element as HTMLElement) ?? undefined,
+        componentRegistry
+      );
       result.locator = inspected.payload.locator;
       return result;
     }
+
+    if (inspected?.kind === 'notMaterialized') {
+      const result = buildInspectResult(cid, handle, false, (element as HTMLElement) ?? undefined, componentRegistry);
+      result.locator = inspected.locator;
+      return result;
+    }
+
     if (!handle && !element) return undefined;
-    return buildInspectResult(cid, handle, !!element, (element as HTMLElement) ?? undefined, componentRegistry);
+    return buildInspectResult(cid, handle, !!element || handle?._mounted !== false, (element as HTMLElement) ?? undefined, componentRegistry);
   };
 
   const inspectByElement = (element: HTMLElement): NopComponentInspectResult | undefined => {
@@ -206,6 +265,40 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     if (!Number.isFinite(cid)) return undefined;
     const handle = componentRegistry?.getHandleByCid?.(cid);
     return buildInspectResult(cid, handle, true, element, componentRegistry);
+  };
+
+  const getComponentTree = (): NopComponentTreeItem[] => {
+    const handles = componentRegistry?.getDebugSnapshot?.().handles;
+
+    if (!handles) {
+      return [];
+    }
+
+    return handles
+      .filter((entry): entry is typeof entry & { cid: number } => entry.mounted && typeof entry.cid === 'number')
+      .map((entry) => {
+        const debugData = componentRegistry?.getHandleDebugData?.(entry.cid);
+        const locator = debugData?.locator ?? entry.locator ?? componentRegistry?.getLocatorByCid?.(entry.cid);
+        const element = document.querySelector(`[data-cid="${entry.cid}"]`) as HTMLElement | null;
+        const className = typeof element?.className === 'string' && element.className.length > 0
+          ? element.className
+          : undefined;
+
+        return {
+          cid: entry.cid,
+          type: debugData?.rendererType ?? entry.type,
+          label: debugData?.nodeId ?? entry.name ?? entry.id ?? debugData?.path ?? debugData?.rendererType ?? entry.type,
+          depth: getComponentTreeDepth(debugData?.path, locator),
+          mounted: entry.mounted,
+          locator,
+          nodeId: debugData?.nodeId,
+          path: debugData?.path,
+          rendererType: debugData?.rendererType,
+          tagName: element?.tagName?.toLowerCase(),
+          className
+        } satisfies NopComponentTreeItem;
+      })
+      .sort(compareComponentTreeItems);
   };
 
   const getSnapshot = () => store.getSnapshot();
@@ -444,6 +537,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         });
       }
     },
+    getComponentTree,
     inspectByCid,
     inspectByElement,
     evaluateNodeExpression

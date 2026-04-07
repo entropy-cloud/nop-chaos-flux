@@ -33,12 +33,14 @@ const nodeInstanceProbeRenderer: RendererDefinition = {
   )
 };
 
+function RowScopeIdProbeRenderer() {
+  const scope = useRenderScope();
+  return <span data-testid="row-scope-id-probe">{scope.id}</span>;
+}
+
 const rowScopeIdProbeRenderer: RendererDefinition = {
   type: 'row-scope-id-probe',
-  component: () => {
-    const scope = useRenderScope();
-    return <span data-testid="row-scope-id-probe">{scope.id}</span>;
-  }
+  component: RowScopeIdProbeRenderer
 };
 
 function DispatchProbeRenderer(props: RendererComponentProps) {
@@ -870,9 +872,7 @@ describe('dataRendererDefinitions', () => {
       />
     );
 
-    expect((await screen.findByTestId('node-instance-probe')).textContent).toBe(
-      expect.stringMatching(/^\[\{"repeatedTemplateId":"table-row:/) as unknown as string
-    );
+    expect((await screen.findByTestId('node-instance-probe')).textContent ?? '').toMatch(/^\[\{"repeatedTemplateId":"table-row:/);
   });
 
   it('passes row locator through helpers.dispatch action context', async () => {

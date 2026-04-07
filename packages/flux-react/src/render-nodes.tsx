@@ -11,6 +11,7 @@ import type {
 import { getCompiledCidState, isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope, useCurrentActionScope, useCurrentComponentRegistry, useCurrentForm, useCurrentPage } from './hooks';
 import { CompiledNodeContext, RenderInstancePathContext } from './contexts';
+import { createFragmentScopeChange } from './fragment-scope';
 import { NodeRenderer } from './node-renderer';
 
 function isCompiledNode(input: unknown): input is CompiledSchemaNode {
@@ -201,11 +202,19 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
       return;
     }
 
-    if (fragmentScope.readOwn() === fragmentData) {
+    const currentOwnSnapshot = fragmentScope.readOwn();
+
+    if (currentOwnSnapshot === fragmentData) {
       return;
     }
 
-    fragmentScope.store.setSnapshot(fragmentData);
+    const change = createFragmentScopeChange(currentOwnSnapshot, fragmentData);
+
+    if (!change) {
+      return;
+    }
+
+    fragmentScope.store.setSnapshot(fragmentData, change);
   }, [fragmentData, fragmentScope, shouldUseFragmentScope]);
 
   const actionScope = options?.actionScope ?? currentActionScope;

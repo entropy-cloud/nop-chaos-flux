@@ -4,7 +4,7 @@
 
 This document defines the dependency tracking architecture for Flux: how runtime evaluations discover which lexical bindings they read, how scope writes publish changed bindings, and how `Value`, `Resource`, and `Reaction` use that information to decide when to re-evaluate.
 
-It also defines the convergence path from the current deep-path-plus-wildcard implementation toward an "explicit roots first, lexical-root runtime fallback" model.
+The active runtime baseline is now "explicit roots first, lexical-root runtime fallback". Deep member paths may still appear in raw `ScopeChange.paths` for diagnostics, but invalidation and runtime dependency collection operate on normalized lexical roots.
 
 This document is normative architecture for dependency tracking concerns.
 
@@ -47,7 +47,7 @@ If this document conflicts with `docs/architecture/frontend-programming-model.md
 [Invalidation]
   scope.store.subscribe(change => {
     scopeChangeHitsDependencies(change, dependencies)
-      -> pathMatchesDependency("user.name", "user")
+      -> normalizeRoot("user.name") === normalizeRoot("user")
       -> true -> trigger refresh
   })
 ```
@@ -58,7 +58,7 @@ Source: `packages/flux-core/src/types/scope.ts`
 
 ```typescript
 interface ScopeDependencySet {
-  paths: readonly string[];   // currently sorted dot-paths or ['*']
+  paths: readonly string[];   // normalized lexical roots or ['*']
   wildcard: boolean;
   broadAccess: boolean;
 }
@@ -101,7 +101,7 @@ Source: `packages/flux-formula/src/scope.ts`
 
 Dependency collection is driven by a Proxy-based scope wrapper that intercepts property reads during formula evaluation.
 
-`createFormulaScope(context: EvalContext)` returns a `Proxy` whose traps record reads:
+`createFormulaScope(context: EvalContext)` returns a `Proxy` whose traps record reads. Recording is root-normalized even when the expression touches deeper members.
 
 | Proxy trap | Recording | Trigger example |
 |---|---|---|
@@ -110,12 +110,12 @@ Dependency collection is driven by a Proxy-based scope wrapper that intercepts p
 | `ownKeys(target)` | `collector.recordWildcard()` | `Object.keys(scope)` |
 | `getOwnPropertyDescriptor` | `collector.recordWildcard()` | JSON.stringify-like operations |
 
-Nested objects are currently recursively wrapped via `wrapTrackedValue(value, basePath)`, so `scope.user.name` records both `"user"` and `"user.name"`.
+Nested objects are recursively wrapped via `wrapTrackedValue(value, basePath)`, but nested member access still records only the lexical root binding. For example, `scope.user.name` records `"user"`, not `"user.name"`.
 
-Current wildcard behavior is conservative but broad:
+Current wildcard behavior is scoped deliberately:
 - enumerating the top-level scope records wildcard
-- enumerating a recursively wrapped nested object also records wildcard
-- materialized whole-scope access can also drive wildcard through proxy traps
+- enumerating a recursively wrapped nested object records its owning lexical root, not whole-scope wildcard
+- materialized whole-scope access can still drive wildcard through top-level proxy traps
 
 A fresh `ScopeDependencyCollector` is created for every leaf evaluation. The compiled expression receives this collector through the `EvalContext` injection point. After evaluation, `finalize()` returns the `ScopeDependencySet`, which is stored on the `LeafValueState`.
 
@@ -128,7 +128,7 @@ Source: `packages/flux-runtime/src/node-runtime.ts`
 - `array-state`: recursively visits `node.items`
 - `object-state`: recursively visits `Object.values(node.entries)`
 
-Returns a merged `ScopeDependencySet` with deduplicated, sorted paths.
+Returns a merged `ScopeDependencySet` with deduplicated, sorted lexical roots.
 
 ### 1.5 Scope Change Propagation
 
@@ -152,12 +152,12 @@ Source: `packages/flux-runtime/src/scope-change.ts`
 `scopeChangeHitsDependencies(change, dependencies)`:
 1. If either is missing -> `true` (conservative: invalidate on everything)
 2. If `dependencies.wildcard` or `change.paths.includes('*')` -> `true`
-3. Otherwise, check if ANY change path matches ANY dependency path via `pathMatchesDependency`
+3. Otherwise, normalize both sides to lexical roots and check root equality
 
-`pathMatchesDependency` currently supports hierarchical matching:
-- exact match: `"user" === "user"`
-- change is child of dependency: `"user.name"` starts with `"user."`
-- dependency is child of change: `"user"` starts with `"user.name."`
+Examples:
+- `user.name` change hits `user`
+- `filters.status` change hits `filters`
+- wildcard still conservatively hits everything
 
 ### 1.7 Source Invalidation
 
@@ -167,26 +167,29 @@ On registration, each source subscribes to `scope.store`:
 
 ```typescript
 const unsubscribe = scope.store?.subscribe((change) => {
-  // Skip self-referential writes
-  if (targetPath && change.paths.every(p => p === targetPath || p.startsWith(`${targetPath}.`))) {
+  // Remove the source's own published root before dependency matching.
+  const observedChange = targetPath
+    ? filterScopeChangeByIgnoredRoots(change, [targetPath])
+    : change;
+  if (!observedChange) {
     return;
   }
   // Skip if change doesn't hit dependencies
-  if (!scopeChangeHitsDependencies(change, dependencies)) return;
+  if (!scopeChangeHitsDependencies(observedChange, dependencies)) return;
   // Trigger refresh
   void controller.refresh();
 });
 ```
 
-For formula sources, `collectRuntimeDependencies(runtimeState)` is called after each evaluation and replaces the stored dependency set.
+For formula sources, `collectRuntimeDependencies(runtimeState)` is called after each evaluation and replaces the stored dependency set only when the schema does not declare explicit `dependsOn` roots.
 
-For API sources, `trackApiRequestDependencies()` re-evaluates the API schema on each request, collects which scope paths were read, and updates the stored dependency set.
+For API sources, `trackApiRequestDependencies()` re-evaluates the API schema on each request, collects which lexical roots were read, and updates the stored dependency set only when the schema does not declare explicit `dependsOn` roots.
 
 ### 1.8 Reaction Invalidation
 
 Source: `packages/flux-runtime/src/reaction-runtime.ts`
 
-On registration, each reaction evaluates `watch` once, stores the resulting dependency set, and then subscribes to `scope.store`:
+On registration, each reaction evaluates `watch` once, stores the resulting dependency set, and then subscribes to `scope.store`. Explicit `dependsOn` roots override runtime fallback collection when present.
 
 ```typescript
 const unsubscribe = scope.store?.subscribe((change) => {

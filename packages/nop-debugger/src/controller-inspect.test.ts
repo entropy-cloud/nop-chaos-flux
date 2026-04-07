@@ -115,6 +115,108 @@ describe('controller inspector methods', () => {
     });
   });
 
+  it('inspectByCid treats registry-resolved live nodes as mounted even without a matching DOM element', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-registry-without-dom', enabled: true });
+
+    const mockHandle = {
+      id: 'handle-103',
+      name: 'runtimeForm',
+      type: 'form',
+      _cid: 103,
+      _mounted: true
+    };
+    const mockRegistry = {
+      id: 'reg-1',
+      inspectCid: (cid: number) => cid === 103
+        ? {
+            kind: 'resolved',
+            payload: {
+              cid: 103,
+              locator: {
+                runtimeId: 'runtime',
+                templateGraphId: 'page-root',
+                templateNodeId: 77
+              },
+              state: {
+                mounted: true,
+                metaState: {}
+              }
+            }
+          }
+        : { kind: 'notFound' },
+      getHandleByCid: (cid: number) => (cid === 103 ? mockHandle : undefined)
+    };
+
+    ctrl.setComponentRegistry(mockRegistry as never);
+
+    expect(ctrl.inspectByCid(103)).toMatchObject({
+      cid: 103,
+      mounted: true,
+      handleId: 'handle-103',
+      locator: {
+        runtimeId: 'runtime',
+        templateGraphId: 'page-root',
+        templateNodeId: 77
+      }
+    });
+  });
+
+  it('getComponentTree enumerates mounted registry snapshot entries even without matching DOM elements', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-component-tree', enabled: true });
+    const mockRegistry = {
+      id: 'reg-1',
+      getDebugSnapshot: () => ({
+        handles: [
+          {
+            cid: 104,
+            id: 'form-104',
+            name: 'userForm',
+            type: 'form',
+            mounted: true,
+            locator: {
+              runtimeId: 'runtime',
+              templateGraphId: 'page-root',
+              templateNodeId: 88
+            }
+          },
+          {
+            cid: 105,
+            id: 'stale-105',
+            name: 'staleHandle',
+            type: 'text',
+            mounted: false
+          }
+        ]
+      }),
+      getHandleDebugData: (cid: number) => cid === 104
+        ? {
+            nodeId: 'user-form',
+            path: 'body.0.form',
+            rendererType: 'form'
+          }
+        : undefined
+    };
+
+    ctrl.setComponentRegistry(mockRegistry as never);
+
+    const result = ctrl.getComponentTree();
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      cid: 104,
+      type: 'form',
+      label: 'user-form',
+      path: 'body.0.form',
+      mounted: true,
+      locator: {
+        runtimeId: 'runtime',
+        templateGraphId: 'page-root',
+        templateNodeId: 88
+      }
+    });
+    expect(result[0]?.depth).toBeGreaterThan(0);
+  });
+
   it('inspectByCid exposes nodeInstance-backed node state summary when present in debug data', () => {
     const ctrl = createNopDebugger({ id: 'inspect-node-instance-state', enabled: true });
     const div = document.createElement('div');

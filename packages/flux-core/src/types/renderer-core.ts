@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope } from './actions';
 import type { ExpressionCompiler } from './compilation';
+import type { RendererSchemaValidator } from '../schema-diagnostics';
 import type { NodeLocator, ResolutionContext, ResolutionResult } from './node-identity';
 import type { NodeInstance } from './node-identity';
 import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component';
@@ -77,6 +78,7 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   sourcePackage?: string;
   regions?: readonly string[];
   fields?: readonly SchemaFieldRule[];
+  schemaValidator?: RendererSchemaValidator<S>;
   scopePolicy?: ScopePolicy;
   actionScopePolicy?: 'inherit' | 'new';
   componentRegistryPolicy?: 'inherit' | 'new';

@@ -3,6 +3,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NopDebuggerPanel } from './panel';
+import type { NopComponentTreeItem } from './types';
 import type { NopDebuggerController, NopDebuggerOverview, NopDebuggerSnapshot, NopDiagnosticReport, NopInteractionTrace } from './types';
 
 function createSnapshot(): NopDebuggerSnapshot {
@@ -138,6 +139,7 @@ function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController 
     waitForEvent: async () => snapshot.events[0]!,
     setComponentRegistry: vi.fn(),
     setActionScope: vi.fn(),
+    getComponentTree: () => [] as NopComponentTreeItem[],
     inspectByCid: vi.fn(() => undefined),
     inspectByElement: vi.fn(() => undefined),
     evaluateNodeExpression: vi.fn(() => ({ expression: 'x', ok: true, value: 1 })),
@@ -172,6 +174,31 @@ describe('NopDebuggerPanel', () => {
     fireEvent.click(screen.getByTestId('ndbg-minimize'));
 
     expect(controller.minimize).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders controller-backed component tree entries and inspects them by cid', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'node';
+    const controller = createController(snapshot);
+    const inspectByCid = vi.fn(() => ({ cid: 41, mounted: true, handleType: 'form' }));
+
+    controller.getComponentTree = () => [
+      {
+        cid: 41,
+        type: 'form',
+        label: 'user-form',
+        depth: 0,
+        mounted: true
+      }
+    ];
+    controller.inspectByCid = inspectByCid;
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    fireEvent.click(screen.getByText('user-form'));
+
+    expect(inspectByCid).toHaveBeenCalledWith(41);
+    expect(screen.getByText('Component Inspector')).toBeTruthy();
   });
 
   it('opens launcher on click without drag', () => {

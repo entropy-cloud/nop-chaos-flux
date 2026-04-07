@@ -114,7 +114,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     setInspectData,
     selectedElement,
     setSelectedElement,
-    inspectElement,
+    inspectTreeItem,
     componentTree,
     scanComponentTree,
   } = useInspectMode({
@@ -348,7 +348,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
               setInspectData(null);
             }
           }}
-          inspectElement={inspectElement}
+          inspectTreeItem={inspectTreeItem}
           nodeIdInput={nodeIdInput}
           onNodeIdInputChange={setNodeIdInput}
           nodeDiagnostics={nodeDiagnostics}

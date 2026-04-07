@@ -1,4 +1,5 @@
 import type { CompiledRuntimeValue, RuntimeValueState } from './compilation';
+import type { SchemaCompileDiagnosticsOptions, SchemaCompileValidationOptions, SchemaDiagnostic } from '../schema-diagnostics';
 import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema';
 import type { ScopeDependencySet } from './scope';
 import type { CompiledFormValidationModel } from './validation';
@@ -69,6 +70,7 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   templateGraphId?: string;
   templateNodeId?: number;
   schema: S;
+  extensions?: Readonly<Record<string, unknown>>;
   component: import('./renderer-core').RendererDefinition<S>;
   meta: CompiledSchemaMeta;
   props: CompiledRuntimeValue<Record<string, unknown>>;
@@ -87,6 +89,8 @@ export interface CompileSchemaOptions {
   parentPath?: SchemaPath;
   parentScopePolicy?: ScopePolicy;
   cidState?: CompiledCidState;
+  diagnostics?: SchemaCompileDiagnosticsOptions;
+  validation?: SchemaCompileValidationOptions;
 }
 
 export interface CompileNodeOptions {
@@ -99,4 +103,5 @@ export interface CompileNodeOptions {
 export interface SchemaCompiler {
   compile(schema: SchemaInput, options?: CompileSchemaOptions): CompiledSchemaNode | CompiledSchemaNode[];
   compileNode(schema: BaseSchema, options: CompileNodeOptions): CompiledSchemaNode;
+  validate?(schema: SchemaInput, options?: CompileSchemaOptions): SchemaDiagnostic[];
 }

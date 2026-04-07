@@ -10,7 +10,7 @@ import type {
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { collectRuntimeDependencies } from './node-runtime';
-import { scopeChangeHitsDependencies } from './scope-change';
+import { createRootDependencySet, scopeChangeHitsDependencies } from './scope-change';
 
 export interface ReactionRegistration {
   id: string;
@@ -23,6 +23,7 @@ export interface RuntimeReactionRegistry {
     runtime: RendererRuntime;
     scope: ScopeRef;
     watch: unknown;
+    dependsOn?: readonly string[];
     when?: string;
     immediate?: boolean;
     debounce?: number;
@@ -45,6 +46,7 @@ export function registerReaction(input: {
   runtime: RendererRuntime;
   scope: ScopeRef;
   watch: unknown;
+  dependsOn?: readonly string[];
   when?: string;
   immediate?: boolean;
   debounce?: number;
@@ -60,6 +62,7 @@ export function registerReaction(input: {
   const compiledWatch = input.runtime.expressionCompiler.compileValue(input.watch);
   const dynamicWatch = compiledWatch.isStatic ? undefined : compiledWatch as DynamicRuntimeValue<unknown>;
   const watchState: RuntimeValueState<unknown> | undefined = dynamicWatch?.createState();
+  const explicitDependencies = createRootDependencySet(input.dependsOn);
   const compiledWhen = input.when
     ? input.runtime.expressionCompiler.formulaCompiler.compileExpression<boolean>(input.when)
     : undefined;
@@ -67,7 +70,7 @@ export function registerReaction(input: {
   let disposed = false;
   let initialized = false;
   let previousValue: unknown;
-  let dependencies: ScopeDependencySet | undefined;
+  let dependencies: ScopeDependencySet | undefined = explicitDependencies;
   let triggerQueued = false;
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
   let fireCount = 0;
@@ -87,7 +90,10 @@ export function registerReaction(input: {
       ? input.runtime.expressionCompiler.evaluateWithState(dynamicWatch, input.scope, input.runtime.env, watchState!).value
       : (compiledWatch as CompiledRuntimeValue<unknown> & { value: unknown }).value;
 
-    dependencies = collectRuntimeDependencies(watchState);
+    if (!explicitDependencies) {
+      dependencies = collectRuntimeDependencies(watchState);
+    }
+
     return value;
   }
 
@@ -243,6 +249,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     runtime: RendererRuntime;
     scope: ScopeRef;
     watch: unknown;
+    dependsOn?: readonly string[];
     when?: string;
     immediate?: boolean;
     debounce?: number;

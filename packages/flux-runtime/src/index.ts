@@ -50,7 +50,7 @@ import { validateRule } from './validation-runtime';
 import { createBuiltInValidationRegistry, createValidationError } from './validation';
 
 export { createRendererRegistry, registerRendererDefinitions } from './registry';
-export { createSchemaCompiler } from './schema-compiler';
+export { createSchemaCompiler, validateSchema } from './schema-compiler';
 export { createScopeRef } from './scope';
 export { createActionScope } from './action-scope';
 export { createComponentHandleRegistry } from './component-handle-registry';
@@ -420,6 +420,7 @@ export function createRendererRuntime(input: {
         runtime,
         scope: inputValue.scope,
         watch: inputValue.schema.watch,
+        dependsOn: inputValue.schema.dependsOn,
         when: inputValue.schema.when,
         immediate: inputValue.schema.immediate,
         debounce: inputValue.schema.debounce,

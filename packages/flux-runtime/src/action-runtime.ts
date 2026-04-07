@@ -30,13 +30,17 @@ interface ActionDispatcherInput {
   getDialogComponentRegistry?: (ctx: ActionContext) => ActionContext['componentRegistry'];
   openDrawer?: (drawer: Record<string, any>, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
   showToast?: (args: Record<string, unknown> | undefined, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
-  runtime: {
-    compile(schema: any): any;
-    resolveTarget(target: ComponentTarget, ctx: { runtimeId: string; componentRegistry?: ActionContext['componentRegistry'] }): import('@nop-chaos/flux-core').ResolutionResult;
-    schemaCompiler: {
-      compile(schema: any, options?: { basePath?: string; parentPath?: string; cidState?: import('@nop-chaos/flux-core').CompiledCidState }): any;
+    runtime: {
+      compile(schema: any): any;
+      resolveTarget(target: ComponentTarget, ctx: {
+        runtimeId: string;
+        instancePath?: import('@nop-chaos/flux-core').ResolutionContext['instancePath'];
+        componentRegistry?: ActionContext['componentRegistry'];
+      }): import('@nop-chaos/flux-core').ResolutionResult;
+      schemaCompiler: {
+        compile(schema: any, options?: { basePath?: string; parentPath?: string; cidState?: import('@nop-chaos/flux-core').CompiledCidState }): any;
+      };
     };
-  };
 }
 
 type InternalComponentActionTarget = ComponentTarget & {
@@ -501,6 +505,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
 
     const resolution = input.runtime.resolveTarget(target, {
       runtimeId: getActionRuntimeId(ctx),
+      instancePath: ctx.locator?.instancePath,
       componentRegistry: ctx.componentRegistry
     });
 

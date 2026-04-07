@@ -1,12 +1,26 @@
 import type {
   ComponentTarget,
   ComponentHandleRegistry,
+  InstanceFrame,
   NodeLocator,
   ResolutionContext,
   ResolutionResult,
   RendererRuntime
 } from '@nop-chaos/flux-core';
-import { normalizeNodeLocator } from '@nop-chaos/flux-core';
+import { normalizeInstancePath, normalizeNodeLocator } from '@nop-chaos/flux-core';
+
+function resolveContextualInstancePath(
+  ctx: ResolutionContext,
+  repeatedTemplateId: string
+): readonly InstanceFrame[] | undefined {
+  const contextualInstancePath = normalizeInstancePath(ctx.instancePath);
+
+  if (contextualInstancePath?.some((frame) => frame.repeatedTemplateId === repeatedTemplateId)) {
+    return contextualInstancePath;
+  }
+
+  return ctx.instancePathFor?.(repeatedTemplateId);
+}
 
 export function createRuntimeNodeResolver(_runtime: RendererRuntime) {
   void _runtime;
@@ -45,7 +59,7 @@ export function createRuntimeNodeResolver(_runtime: RendererRuntime) {
       }
 
       if (target.repeatedPlan) {
-        const instancePath = ctx.instancePathFor?.(target.repeatedPlan.repeatedTemplateId);
+        const instancePath = resolveContextualInstancePath(ctx, target.repeatedPlan.repeatedTemplateId);
 
         if (!instancePath) {
           return {
@@ -67,7 +81,12 @@ export function createRuntimeNodeResolver(_runtime: RendererRuntime) {
       }
 
       if (target.repeatedSelector) {
-        const instancePath = ctx.instancePathForExplicit?.(target.repeatedSelector.repeatedTemplateId, target.repeatedSelector.instanceKey);
+        const contextualInstancePath = normalizeInstancePath(ctx.instancePath);
+        const instancePath = contextualInstancePath?.some(
+          (frame) => frame.repeatedTemplateId === target.repeatedSelector?.repeatedTemplateId && frame.instanceKey === target.repeatedSelector?.instanceKey
+        )
+          ? contextualInstancePath
+          : ctx.instancePathForExplicit?.(target.repeatedSelector.repeatedTemplateId, target.repeatedSelector.instanceKey);
 
         if (!instancePath) {
           return {

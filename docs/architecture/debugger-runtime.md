@@ -245,6 +245,7 @@ interface DebuggerEvent {
 - 提取最近错误、最近请求、最近 action
 - 导出脱敏 session 数据用于失败诊断
 - 通过 `data-cid` 与 inspect API 从页面元素回查组件状态，并继续下钻到对应 `locator` / scopeChain
+- Node 面板的组件树可以从 runtime/registry mounted snapshot 枚举当前 live handles，而不是全量扫描页面上的 `[data-cid]`
 - 在多事件流中按 `kind/group/nodeId/path/requestKey` 做筛选
 
 这意味着 `nop-debugger` 已经不只是“给人看”的工具，而是可被测试和 AI 程序消费的诊断层。
@@ -253,7 +254,7 @@ Target DOM inspect rule:
 
 - mounted inspectable nodes expose `data-cid`
 - `inspectByElement()` climbs to the nearest inspectable owner marker
-- `inspectByCid()` returns the live node inspect payload and includes its `locator`
+- `inspectByCid()` returns the live node inspect payload and includes its `locator`; registry/runtime inspect data is the primary mounted-state source, while DOM presence is supplemental metadata for tag/class correlation
 - virtualized or disposed nodes return explicit not-mounted diagnostics instead of guessing from stale DOM
 
 Target lookup result rule:

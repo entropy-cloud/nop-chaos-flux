@@ -175,7 +175,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         ];
       })
     );
-  }, [helpers, props.node.eventActions, props.node.eventKeys]);
+  }, [helpers, nodeLocator, props.node.eventActions, props.node.eventKeys]);
 
   const regions = useMemo(() => {
     return Object.fromEntries(

@@ -261,6 +261,20 @@ export interface NopComponentInspectResult {
   className?: string;
 }
 
+export interface NopComponentTreeItem {
+  cid: number;
+  type: string;
+  label: string;
+  depth: number;
+  mounted: boolean;
+  locator?: NodeLocator;
+  nodeId?: string;
+  path?: string;
+  rendererType?: string;
+  tagName?: string;
+  className?: string;
+}
+
 export interface NopDebuggerFailureSummary {
   event?: NopDebugEvent;
   requestInstanceId?: string;
@@ -385,6 +399,7 @@ export interface NopDebuggerController {
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
   setComponentRegistry(registry: ComponentHandleRegistry | null): void;
   setActionScope(actionScope: ActionScope | null): void;
+  getComponentTree(): NopComponentTreeItem[];
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
   evaluateNodeExpression(args: { cid: number; expression: string }): NopExpressionEvaluationResult;

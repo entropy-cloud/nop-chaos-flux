@@ -51,7 +51,24 @@ describe('createFormulaScope', () => {
     expect(user.name).toBe('Bob');
 
     expect(tracked.finalize()).toEqual({
-      paths: ['user', 'user.name'],
+      paths: ['user'],
+      wildcard: false,
+      broadAccess: false
+    });
+  });
+
+  it('anchors nested object enumeration to the lexical root binding', () => {
+    const tracked = createScopeDependencyCollector();
+    const ctx: EvalContext = {
+      ...makeEvalContext({ user: { name: 'Bob', role: 'admin' }, note: 'ignore' }),
+      collector: tracked.collector
+    };
+
+    const scope = createFormulaScope(ctx);
+    expect(Object.keys(scope.user as Record<string, unknown>)).toEqual(['name', 'role']);
+
+    expect(tracked.finalize()).toEqual({
+      paths: ['user'],
       wildcard: false,
       broadAccess: false
     });

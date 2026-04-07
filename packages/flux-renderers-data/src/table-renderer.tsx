@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useLayoutEffect } from 'react';
 import { getIn } from '@nop-chaos/flux-core';
 import type { ComponentHandle, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
@@ -147,8 +147,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const loadingContent = resolveRendererSlotContent(props, 'loadingSlot');
   const ownerKey = useMemo(() => createTableOwnerKey(props), [props]);
   const rowRepeatedTemplateId = useMemo(() => createTableRowRepeatedTemplateId(props.node.templateNodeId), [props.node.templateNodeId]);
-  const rowScopeCacheRef = useRef(new Map<string, ScopeRef>());
-  const rowScopeSnapshotRef = useRef(new Map<string, { record: Record<string, any>; index: number }>());
+  const [rowScopeCache] = useState(() => new Map<string, ScopeRef>());
+  const [rowScopeSnapshots] = useState(() => new Map<string, { record: Record<string, any>; index: number }>());
 
   const [sortState, setSortState] = useState<SortState>({ column: '', direction: null });
   const [filterState, setFilterState] = useState<FilterState>({});
@@ -404,43 +404,52 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     }));
   }, [source, schemaProps.rowKey, sortState, filterState, currentPage, pageSize, paginationEnabled]);
 
-  useLayoutEffect(() => {
-    const nextVisibleKeys = new Set<string>();
-
-    for (const entry of processedData) {
-      nextVisibleKeys.add(entry.rowKey);
-      const existingScope = rowScopeCacheRef.current.get(entry.rowKey);
+  const materializedRows = useMemo(() => {
+    return processedData.map((entry) => {
       const payload = {
         record: entry.record,
         index: entry.sourceIndex
       };
+        let rowScope = rowScopeCache.get(entry.rowKey);
 
-      if (!existingScope) {
-        const createdScope = props.helpers.createScope(payload, {
-          scopeKey: createRowScopeId(ownerKey, entry.rowKey),
-          pathSuffix: createRowScopePath(props.path, entry.rowKey),
-          isolate: true,
-          source: 'row'
-        });
-        rowScopeCacheRef.current.set(entry.rowKey, createdScope);
-        rowScopeSnapshotRef.current.set(entry.rowKey, payload);
-        continue;
-      }
+        if (!rowScope) {
+          rowScope = props.helpers.createScope(payload, {
+            scopeKey: createRowScopeId(ownerKey, entry.rowKey),
+            pathSuffix: createRowScopePath(props.path, entry.rowKey),
+            isolate: true,
+            source: 'row'
+          });
+          rowScopeCache.set(entry.rowKey, rowScope);
+          rowScopeSnapshots.set(entry.rowKey, payload);
+        }
 
-      const previous = rowScopeSnapshotRef.current.get(entry.rowKey);
-      syncRowScope(existingScope, payload, previous);
-      rowScopeSnapshotRef.current.set(entry.rowKey, payload);
+      return {
+        entry,
+        rowScope,
+        payload
+      };
+    });
+  }, [processedData, ownerKey, props.helpers, props.path, rowScopeCache, rowScopeSnapshots]);
+
+  useLayoutEffect(() => {
+    const nextVisibleKeys = new Set<string>();
+
+    for (const row of materializedRows) {
+      nextVisibleKeys.add(row.entry.rowKey);
+      const previous = rowScopeSnapshots.get(row.entry.rowKey);
+      syncRowScope(row.rowScope, row.payload, previous);
+      rowScopeSnapshots.set(row.entry.rowKey, row.payload);
     }
 
-    for (const key of Array.from(rowScopeCacheRef.current.keys())) {
+    for (const key of Array.from(rowScopeCache.keys())) {
       if (nextVisibleKeys.has(key)) {
         continue;
       }
 
-      rowScopeCacheRef.current.delete(key);
-      rowScopeSnapshotRef.current.delete(key);
+      rowScopeCache.delete(key);
+      rowScopeSnapshots.delete(key);
     }
-  }, [processedData, ownerKey, props.helpers, props.path]);
+  }, [materializedRows, rowScopeCache, rowScopeSnapshots]);
 
   const totalPages = useMemo(() => {
     if (!paginationEnabled) return 1;
@@ -632,13 +641,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 </TableCell>
               </TableRow>
             ) : (
-              processedData.map((entry) => {
-                const rowScope = rowScopeCacheRef.current.get(entry.rowKey);
-
-                if (!rowScope) {
-                  return null;
-                }
-
+              materializedRows.map(({ entry, rowScope }) => {
                 const rowKey = entry.rowKey;
                 const rowInstancePath = [
                   ...(props.nodeInstance.locator.instancePath ?? []),

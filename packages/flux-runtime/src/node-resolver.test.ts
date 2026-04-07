@@ -202,4 +202,122 @@ describe('node identity contracts', () => {
       unregister();
     }
   });
+
+  it('resolves repeated plans against the current contextual instancePath before fallback lookup', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const runtimeId = runtime.runtimeId;
+    const instancePath = [{ repeatedTemplateId: 'table-row:12', instanceKey: 'row-42' }] as const;
+    const handle = {
+      type: 'form',
+      capabilities: {
+        invoke() {
+          return { ok: true };
+        }
+      }
+    };
+
+    const unregister = componentRegistry.register(handle, {
+      locator: {
+        runtimeId,
+        templateGraphId: 'page-root',
+        templateNodeId: 99,
+        instancePath
+      }
+    });
+
+    try {
+      const instancePathFor = () => {
+        throw new Error('instancePathFor should not be used when ctx.instancePath already matches');
+      };
+
+      expect(runtime.resolveTarget({
+        repeatedPlan: {
+          kind: 'repeated',
+          templateGraphId: 'page-root',
+          templateNodeId: 99,
+          repeatedTemplateId: 'table-row:12'
+        }
+      }, {
+        runtimeId,
+        instancePath,
+        instancePathFor,
+        componentRegistry
+      })).toEqual({
+        kind: 'resolved',
+        locator: {
+          runtimeId,
+          templateGraphId: 'page-root',
+          templateNodeId: 99,
+          instancePath
+        },
+        handle
+      });
+    } finally {
+      unregister();
+    }
+  });
+
+  it('resolves repeated selectors against the current contextual instancePath before explicit fallback lookup', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const runtimeId = runtime.runtimeId;
+    const instancePath = [{ repeatedTemplateId: 'table-row:12', instanceKey: 'row-42' }] as const;
+    const handle = {
+      type: 'form',
+      capabilities: {
+        invoke() {
+          return { ok: true };
+        }
+      }
+    };
+
+    const unregister = componentRegistry.register(handle, {
+      locator: {
+        runtimeId,
+        templateGraphId: 'page-root',
+        templateNodeId: 100,
+        instancePath
+      }
+    });
+
+    try {
+      const instancePathForExplicit = () => {
+        throw new Error('instancePathForExplicit should not be used when ctx.instancePath already matches');
+      };
+
+      expect(runtime.resolveTarget({
+        repeatedSelector: {
+          templateGraphId: 'page-root',
+          repeatedTemplateId: 'table-row:12',
+          instanceKey: 'row-42',
+          templateNodeId: 100
+        }
+      }, {
+        runtimeId,
+        instancePath,
+        instancePathForExplicit,
+        componentRegistry
+      })).toEqual({
+        kind: 'resolved',
+        locator: {
+          runtimeId,
+          templateGraphId: 'page-root',
+          templateNodeId: 100,
+          instancePath
+        },
+        handle
+      });
+    } finally {
+      unregister();
+    }
+  });
 });

@@ -31,6 +31,20 @@ When this document needs to be checked against code, start with:
 - `packages/flux-core/src/types/schema.ts` for shared schema contracts such as `BaseSchema`, `ReactionSchema`, and `XuiImportSpec`
 - `docs/architecture/action-scope-and-imports.md` for namespaced action and `xui:imports` compatibility rules
 
+## Current Baseline Note
+
+The first compiler-integrated diagnostics slice is now implemented.
+
+- `CompileSchemaOptions` now carries explicit `diagnostics` and `validation` options.
+- `createSchemaCompiler(...).validate(...)` reuses the same compiler-owned analysis helpers as `compile(...)`.
+- `validateSchema(...)` is available as a convenience adapter that builds a compiler and delegates to that same analysis path.
+- built-in `xui:imports` validation now runs through a namespace validator instead of falling into generic passthrough.
+- closed prop models can now report unknown bare keys, and namespaced passthrough can be preserved through `CompiledSchemaNode.extensions` instead of leaking into normal compiled props.
+
+Current limitation:
+
+- unknown bare-key diagnostics are only reliable for renderers that expose a closed prop surface such as `propSchema` and/or richer renderer-owned validation; open-ended renderers still need incremental metadata or `schemaValidator` contributions before strict unknown-key checks become authoritative.
+
 ## Problem
 
 The current repository already has two related but different validation paths:
@@ -166,13 +180,23 @@ interface SchemaDiagnosticCollector {
 type SchemaDiagnosticReporter = (issue: SchemaDiagnostic) => void;
 ```
 
-Default convenience API:
+Current convenience APIs:
 
 ```ts
-function validateSchema(input: unknown, options?: CompileSchemaOptions): SchemaDiagnostic[];
+interface SchemaCompiler {
+  validate?(schema: SchemaInput, options?: CompileSchemaOptions): SchemaDiagnostic[];
+}
+
+function validateSchema(input: {
+  schema: SchemaInput;
+  registry: RendererRegistry;
+  expressionCompiler?: ExpressionCompiler;
+  plugins?: RendererPlugin[];
+  options?: CompileSchemaOptions;
+}): SchemaDiagnostic[];
 ```
 
-That helper should internally reuse the same compiler-owned analysis path rather than introducing a second standalone validator implementation.
+Both entry points reuse the same compiler-owned analysis path rather than introducing a second standalone validator implementation.
 
 ## Default Profiles
 

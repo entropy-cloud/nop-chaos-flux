@@ -102,6 +102,7 @@ export interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
   statusPath?: string;
   dataPath?: string;
+  dependsOn?: string[];
   initialData?: SchemaValue;
   mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
   mergeKey?: string;
@@ -135,6 +136,7 @@ export type DataSourceSchema = FormulaDataSourceSchema | ActionDataSourceSchema;
 export interface ReactionSchema extends BaseSchema {
   type: 'reaction';
   watch: SchemaValue;
+  dependsOn?: string[];
   when?: string;
   immediate?: boolean;
   debounce?: number;

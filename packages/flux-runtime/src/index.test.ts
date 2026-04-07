@@ -593,7 +593,7 @@ describe('createRendererRuntime', () => {
       broadAccess: false
     });
     expect(state.propsDependencies).toEqual({
-      paths: ['user', 'user.name'],
+      paths: ['user'],
       wildcard: false,
       broadAccess: false
     });
@@ -1027,6 +1027,71 @@ describe('createRendererRuntime', () => {
 
       expect(result).toMatchObject({ ok: true, data: 'Frank' });
       expect(form.scope.get('username')).toBe('Frank');
+    } finally {
+      unregister();
+    }
+  });
+
+  it('dispatches component action by internal repeated plan using the current locator instancePath', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const form = runtime.createFormRuntime({
+      id: 'internal-repeated-plan-form',
+      name: 'internalRepeatedPlanForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+    const handle = createFormComponentHandle(form);
+    const instancePath = [{ repeatedTemplateId: 'table-row:91', instanceKey: 'row:1' }] as const;
+    const unregister = componentRegistry.register(handle, {
+      locator: {
+        runtimeId: runtime.runtimeId,
+        templateGraphId: 'page-root',
+        templateNodeId: 191,
+        instancePath
+      }
+    });
+
+    try {
+      const result = await runtime.dispatch(
+        {
+          action: 'component:setValue',
+          __componentTarget: {
+            repeatedPlan: {
+              kind: 'repeated',
+              templateGraphId: 'page-root',
+              templateNodeId: 191,
+              repeatedTemplateId: 'table-row:91'
+            }
+          },
+          args: {
+            name: 'username',
+            value: 'Grace'
+          }
+        } as ActionSchema,
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry,
+          locator: {
+            runtimeId: runtime.runtimeId,
+            templateGraphId: 'page-root',
+            templateNodeId: 500,
+            instancePath
+          }
+        }
+      );
+
+      expect(result).toMatchObject({ ok: true, data: 'Grace' });
+      expect(form.scope.get('username')).toBe('Grace');
     } finally {
       unregister();
     }
@@ -2091,6 +2156,47 @@ describe('createRendererRuntime', () => {
 
     registration.dispose();
     expect(runtime.getReactionDebugSnapshot?.()).toEqual({ reactions: [] });
+  });
+
+  it('coalesces debounced reaction updates against the latest scope value', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ count: 0, message: 'start' });
+
+    const registration = runtime.registerReaction({
+      id: 'debounced-reaction',
+      scope: page.scope,
+      schema: {
+        type: 'reaction',
+        watch: '${count}',
+        debounce: 20,
+        actions: {
+          action: 'setValue',
+          componentPath: 'message',
+          value: 'count:${count}'
+        }
+      },
+      dispatch: (action, ctx) => runtime.dispatch(action, {
+        runtime,
+        scope: ctx?.scope ?? page.scope,
+        page
+      })
+    });
+
+    try {
+      page.scope.update('count', 1);
+      page.scope.update('count', 2);
+      page.scope.update('count', 3);
+
+      await vi.waitFor(() => {
+        expect(page.scope.get('message')).toBe('count:3');
+      });
+    } finally {
+      registration.dispose();
+    }
   });
 
   it('opens and closes dialogs through dialog actions', async () => {

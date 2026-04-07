@@ -1,4 +1,4 @@
-import type { NopComponentInspectResult, NopNodeDiagnostics } from '../types';
+import type { NopComponentInspectResult, NopComponentTreeItem, NopNodeDiagnostics } from '../types';
 import { JsonViewer } from './json-viewer';
 
 function formatClock(timestamp: number) {
@@ -9,16 +9,14 @@ function formatClock(timestamp: number) {
   });
 }
 
-type ComponentTreeItem = { cid: number; type: string; label: string; depth: number; element: HTMLElement };
-
 export function NodeTab(props: {
-  componentTree: ComponentTreeItem[];
+  componentTree: NopComponentTreeItem[];
   scanComponentTree(): void;
   inspectMode: boolean;
   inspectData: NopComponentInspectResult | null;
   selectedElement: HTMLElement | null;
   setSelectedElement(value: HTMLElement | null): void;
-  inspectElement(element: HTMLElement): void;
+  inspectTreeItem(item: NopComponentTreeItem): void;
   nodeIdInput: string;
   onNodeIdInputChange(value: string): void;
   nodeDiagnostics: NopNodeDiagnostics | null;
@@ -38,7 +36,7 @@ export function NodeTab(props: {
     inspectData,
     selectedElement,
     setSelectedElement,
-    inspectElement,
+    inspectTreeItem,
     nodeIdInput,
     onNodeIdInputChange,
     nodeDiagnostics,
@@ -157,8 +155,8 @@ export function NodeTab(props: {
             {componentTree.map((item) => (
               <div
                 key={item.cid}
-                className={`ndbg-tree-item ${selectedElement === item.element ? 'selected' : ''}`}
-                onClick={() => inspectElement(item.element)}
+                className={`ndbg-tree-item ${inspectData?.cid === item.cid || selectedElement?.getAttribute('data-cid') === String(item.cid) ? 'selected' : ''}`}
+                onClick={() => inspectTreeItem(item)}
                 style={{ paddingLeft: `${item.depth * 16 + 8}px` }}
               >
                 <span style={{ fontSize: '11px', color: 'var(--nop-debugger-muted-text)' }}>#{item.cid}</span>

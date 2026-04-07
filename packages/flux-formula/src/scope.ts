@@ -1,15 +1,9 @@
 import type { EvalContext, ScopeDependencyCollector, ScopeDependencySet, ScopeRef } from '@nop-chaos/flux-core';
-import { getIn, parsePath } from '@nop-chaos/flux-core';
+import { getIn, normalizeRootPath, parsePath } from '@nop-chaos/flux-core';
 import { createEvalContext } from './evaluate';
 
 function normalizeTrackedPath(path: string): string | undefined {
-  const segments = parsePath(path);
-
-  if (segments.length === 0) {
-    return undefined;
-  }
-
-  return segments.join('.');
+  return normalizeRootPath(path);
 }
 
 export function createScopeDependencyCollector(): {
@@ -140,12 +134,12 @@ function createFormulaScope(context: EvalContext): Record<string, any> {
         return Reflect.has(target, property);
       },
       ownKeys(target) {
-        context.collector?.recordWildcard();
+        context.collector?.recordPath(basePath);
         return Reflect.ownKeys(target);
       },
       getOwnPropertyDescriptor(target, property) {
         if (typeof property === 'string') {
-          context.collector?.recordWildcard();
+          context.collector?.recordPath(basePath);
         }
 
         return Reflect.getOwnPropertyDescriptor(target, property);

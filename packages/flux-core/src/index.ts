@@ -1,4 +1,5 @@
 export * from './types';
+export * from './schema-diagnostics';
 export * from './validation-model';
 export * from './constants';
 export * from './compiled-cid';
@@ -15,7 +16,7 @@ export {
 export { resolveClassAliases, mergeClassAliases } from './class-aliases';
 
 export { isPlainObject, shallowEqual } from './utils/object';
-export { parsePath, getIn, setIn } from './utils/path';
+export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn } from './utils/path';
 export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema';
 
 export type {

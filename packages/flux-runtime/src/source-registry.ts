@@ -13,7 +13,7 @@ import type {
 import type { ApiCacheStore } from './api-cache';
 import { createDataSourceController } from './data-source-runtime';
 import { collectRuntimeDependencies } from './node-runtime';
-import { scopeChangeHitsDependencies } from './scope-change';
+import { createRootDependencySet, filterScopeChangeByIgnoredRoots, scopeChangeHitsDependencies } from './scope-change';
 
 interface RuntimeSourceEntry {
   id: string;
@@ -151,10 +151,11 @@ export function createRuntimeSourceRegistry(input: {
       existing.dispose();
     }
 
-    let dependencies: ScopeDependencySet | undefined;
+    const explicitDependencies = createRootDependencySet(args.schema.dependsOn);
+    let dependencies: ScopeDependencySet | undefined = explicitDependencies;
     const targetPath = args.schema.dataPath;
-      const controller = 'api' in args.schema && args.schema.api
-        ? createDataSourceController({
+    const controller = 'api' in args.schema && args.schema.api
+      ? createDataSourceController({
           runtime: input.runtime,
           apiCache: input.apiCache,
           executeApiRequest: input.executeApiRequest,
@@ -166,7 +167,9 @@ export function createRuntimeSourceRegistry(input: {
           silent: asBoolean(args.schema.silent),
           initialData: args.schema.initialData,
           onDependenciesChange(nextDependencies: ScopeDependencySet | undefined) {
-            dependencies = nextDependencies;
+            if (!explicitDependencies) {
+              dependencies = nextDependencies;
+            }
           }
         })
       : createDependencyAwareFormulaController({
@@ -176,7 +179,9 @@ export function createRuntimeSourceRegistry(input: {
           formula: args.schema.formula,
           initialData: args.schema.initialData,
           onDependenciesChange(nextDependencies) {
-            dependencies = nextDependencies;
+            if (!explicitDependencies) {
+              dependencies = nextDependencies;
+            }
           }
         });
 
@@ -185,11 +190,15 @@ export function createRuntimeSourceRegistry(input: {
         return;
       }
 
-      if (targetPath && change.paths.every((path) => path === targetPath || path.startsWith(`${targetPath}.`))) {
+      const observedChange = targetPath
+        ? filterScopeChangeByIgnoredRoots(change, [targetPath])
+        : change;
+
+      if (!observedChange) {
         return;
       }
 
-      if (!scopeChangeHitsDependencies(change, dependencies)) {
+      if (!scopeChangeHitsDependencies(observedChange, dependencies)) {
         return;
       }
 

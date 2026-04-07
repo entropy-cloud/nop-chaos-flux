@@ -24,6 +24,42 @@ export function parsePath(path: string): string[] {
   return result;
 }
 
+export function normalizeRootPath(path: string): string | undefined {
+  if (path === '*') {
+    return '*';
+  }
+
+  const segments = parsePath(path);
+
+  if (segments.length === 0) {
+    return undefined;
+  }
+
+  return segments[0];
+}
+
+export function normalizeRootPaths(paths: readonly string[]): string[] {
+  let wildcard = false;
+  const roots = new Set<string>();
+
+  for (const path of paths) {
+    const root = normalizeRootPath(path);
+
+    if (!root) {
+      continue;
+    }
+
+    if (root === '*') {
+      wildcard = true;
+      break;
+    }
+
+    roots.add(root);
+  }
+
+  return wildcard ? ['*'] : Array.from(roots).sort();
+}
+
 export function getIn(input: unknown, path: string): unknown {
   if (!path) {
     return input;

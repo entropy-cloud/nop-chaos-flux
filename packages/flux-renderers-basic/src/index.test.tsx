@@ -295,6 +295,44 @@ describe('basicRendererDefinitions', () => {
     cleanup();
   });
 
+  it('applies repeated button setValue actions against the latest scope value', async () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button',
+              label: 'Inc',
+              onClick: {
+                action: 'setValue',
+                componentPath: 'count',
+                value: '${count + 1}'
+              }
+            },
+            { type: 'text', text: '${count}' }
+          ]
+        }}
+        data={{ count: 0 }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const button = screen.getByText('Inc');
+    fireEvent.click(button);
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(screen.getByText('3')).toBeTruthy();
+    });
+
+    cleanup();
+  });
+
   it('prevents unbounded self-trigger cascades in reactions', async () => {
     const notify = vi.fn();
     const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
@@ -327,6 +365,40 @@ describe('basicRendererDefinitions', () => {
       const value = Number(screen.getByText(/^[0-9]+$/).textContent ?? '0');
       expect(value).toBeGreaterThan(0);
       expect(value).toBeLessThanOrEqual(10);
+    });
+
+    cleanup();
+  });
+
+  it('does not overwrite mount-time reaction writes with the initial page data sync effect', async () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'reaction',
+              watch: '${count}',
+              immediate: true,
+              actions: {
+                action: 'setValue',
+                componentPath: 'message',
+                value: 'count:${count}'
+              }
+            },
+            { type: 'text', text: '${message}' }
+          ]
+        }}
+        data={{ count: 1, message: 'initial' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('count:1')).toBeTruthy();
     });
 
     cleanup();
