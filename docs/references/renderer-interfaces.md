@@ -18,7 +18,7 @@ Key shapes:
 - `SchemaObject`
 - `BaseSchema`
 - `SchemaInput`
-- `ApiObject`
+- `ApiSchema`
 - `DataSourceSchema`
 
 Role summary:
@@ -26,7 +26,7 @@ Role summary:
 - `BaseSchema` is the common schema base for renderers
 - `BaseSchema.frameWrap` is the per-instance FieldFrame override for wrap-compatible renderers
 - `SchemaInput` allows one schema node or an array of nodes
-- `ApiObject` describes request configuration, adaptors, scope injection, and query params
+- `ApiSchema` describes request configuration, adaptors, scope injection, and query params
 - `DataSourceSchema` describes declarative data fetching with optional polling
 
 ## Runtime Environment
@@ -40,6 +40,7 @@ Key contracts:
 Role summary:
 
 - `fetcher` handles request transport
+- `fetcher` returns `ApiResponse` only at the host boundary; runtime consumers should see successful data or a thrown error, not a non-OK response object
 - `notify` handles user-facing messages
 - optional navigation, confirmation, functions, and filters extend the runtime environment
 - monitor hooks expose render, action, API, and error observability

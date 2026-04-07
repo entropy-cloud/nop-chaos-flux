@@ -276,7 +276,9 @@ A non-rendering source declaration that publishes one derived value into scope.
 It supports:
 
 - formula-backed or API-backed producers under one resource model
-- `dataPath` for publishing the derived value to scope
+- `name` as the normative author-visible identity and default publication path
+- `mergeToScope: true` as the only narrowed special publish extension beyond the named path
+- legacy `dataPath` as a compatibility-only publication override (new schema should use `name`)
 - `stopWhen` expression for conditional polling termination
 - `includeScope` on its `ApiObject` for automatic scope variable injection
 
@@ -297,6 +299,20 @@ Merge rule: `finalData = { ...extractScope(includeScope), ...data }`
 An `ApiObject` field for URL query parameters.
 
 Unlike `data` (request body), `params` are automatically appended to the URL as a query string.
+
+## `ApiResponse`
+
+The host-boundary result type returned by `env.fetcher(...)`.
+
+It is not the business-level result type consumed by action, form, or source callers.
+
+Active runtime rule:
+
+- `ok: true` responses continue through adaptor processing and return adapted `data`
+- non-OK responses are converted into thrown errors inside request runtime
+- thrown fetcher errors also propagate as thrown errors
+
+This keeps the post-fetch runtime contract simple: success returns data, failure throws.
 
 ## `ActionContext`
 
