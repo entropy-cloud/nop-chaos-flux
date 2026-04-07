@@ -7,7 +7,7 @@ import type { CompiledNodeRuntimeState, CompiledSchemaNode, ResolvedNodeMeta, Re
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
 import type { RendererPlugin } from './renderer-plugin';
 import type { DataSourceController, DataSourceRegistration, FormRuntime, PageRuntime } from './runtime';
-import type { ApiObject, BaseSchema, DataSourceSchema, ReactionSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, XuiImportSpec } from './schema';
+import type { ApiSchema, BaseSchema, DataSourceSchema, ReactionSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, SourceSchema, XuiImportSpec } from './schema';
 import type { CreateScopeOptions, ScopeRef } from './scope';
 import type { CompiledFormValidationModel, ValidationRule } from './validation';
 
@@ -29,6 +29,7 @@ export interface RendererHelpers {
   evaluate: <T = unknown>(target: unknown, scope?: ScopeRef) => T;
   createScope: (patch?: object, options?: CreateScopeOptions) => ScopeRef;
   dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+  executeSource: (source: SourceSchema, options?: { scope?: ScopeRef }) => Promise<ActionResult>;
 }
 
 export interface ReactionDebugEntry {
@@ -112,9 +113,14 @@ export interface RendererRuntime {
     actionScope?: ActionScope;
   }): void;
   dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult>;
+  executeSource(input: {
+    source: SourceSchema;
+    scope: ScopeRef;
+    ctx?: Partial<ActionContext>;
+  }): Promise<ActionResult>;
   createPageRuntime(data?: Record<string, any>): PageRuntime;
   createDataSourceController(input: {
-    api: ApiObject;
+    api: ApiSchema;
     scope: ScopeRef;
     dataPath?: string;
     interval?: number;

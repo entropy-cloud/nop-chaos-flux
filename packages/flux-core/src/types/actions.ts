@@ -1,4 +1,4 @@
-import type { SchemaObject, SchemaValue, SchemaPath, ApiObject } from './schema';
+import type { SchemaObject, SchemaValue, SchemaPath, ApiSchema, OperationControlConfig } from './schema';
 import type { ScopeRef } from './scope';
 import type { ComponentHandleRegistry, RendererRuntime, CompiledSchemaNode, RendererEnv } from './renderer';
 import type { FormRuntime, PageRuntime } from './runtime';
@@ -13,20 +13,16 @@ export interface ActionSchema extends SchemaObject {
   componentPath?: string;
   formId?: string;
   dialogId?: string;
-  api?: ApiObject;
+  api?: ApiSchema;
   dialog?: Record<string, any>;
+  drawer?: Record<string, any>;
   dataPath?: string;
   value?: SchemaValue;
   values?: Record<string, SchemaValue>;
   args?: Record<string, SchemaValue>;
+  control?: OperationControlConfig;
   when?: string;
   parallel?: ActionSchema[];
-  retry?: {
-    times: number;
-    delay?: number;
-  };
-  timeout?: number;
-  debounce?: number;
   continueOnError?: boolean;
   then?: ActionSchema | ActionSchema[];
   onError?: ActionSchema | ActionSchema[];

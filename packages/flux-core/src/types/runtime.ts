@@ -1,4 +1,4 @@
-import type { ApiObject } from './schema';
+import type { ApiSchema } from './schema';
 import type { ScopeRef } from './scope';
 import type { ValidationRule, ValidationError, ValidationResult, FormValidationResult, CompiledFormValidationModel, CompiledFormValidationField, RuntimeFieldRegistration } from './validation';
 import type { ActionScope, ActionResult } from './actions';
@@ -113,7 +113,7 @@ export interface FormRuntime {
   touchField(path: string): void;
   visitField(path: string): void;
   clearErrors(path?: string): void;
-  submit(api?: ApiObject, options?: { interactionId?: string }): Promise<ActionResult>;
+  submit(api?: ApiSchema, options?: { interactionId?: string }): Promise<ActionResult>;
   reset(values?: object): void;
   setValue(name: string, value: unknown): void;
   setValues(values: Record<string, unknown>): void;

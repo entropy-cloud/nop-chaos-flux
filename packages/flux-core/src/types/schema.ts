@@ -1,3 +1,5 @@
+import type { ActionSchema } from './actions';
+
 export type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
 export type SchemaValue = Primitive | SchemaObject | ReadonlyArray<SchemaValue> | SchemaValue[];
@@ -38,9 +40,26 @@ export interface SchemaFieldRule {
   key: string;
   kind: SchemaFieldKind;
   regionKey?: string;
+  allowSource?: boolean;
+  sourceStateKey?: string;
 }
 
-export interface ApiObject extends SchemaObject {
+export type RequestDedupStrategy = 'cancel-previous' | 'parallel' | 'ignore-new';
+
+export interface OperationControlConfig extends SchemaObject {
+  timeout?: number;
+  retry?: {
+    times: number;
+    delay?: number;
+  };
+  debounce?: number;
+  throttle?: number;
+  cacheTTL?: number;
+  cacheKey?: string;
+  dedup?: RequestDedupStrategy;
+}
+
+export interface ApiSchema extends SchemaObject {
   url: string;
   method?: string;
   data?: SchemaValue;
@@ -49,9 +68,34 @@ export interface ApiObject extends SchemaObject {
   includeScope?: '*' | string[];
   responseAdaptor?: string;
   requestAdaptor?: string;
+
+  // Legacy compatibility carriers. Prefer ActionSchema/SourceSchema.control.
   cacheTTL?: number;
   cacheKey?: string;
-  dedupStrategy?: 'cancel-previous' | 'parallel' | 'ignore-new';
+  dedupStrategy?: RequestDedupStrategy;
+}
+
+export type ApiObject = ApiSchema;
+
+export interface ExecutableApiRequest extends SchemaObject {
+  url: string;
+  method?: string;
+  data?: SchemaValue;
+  headers?: Record<string, string>;
+  params?: never;
+  includeScope?: never;
+  responseAdaptor?: never;
+  requestAdaptor?: never;
+  cacheTTL?: never;
+  cacheKey?: never;
+  dedupStrategy?: never;
+}
+
+export interface PreparedApiRequest {
+  request: ExecutableApiRequest;
+  data: SchemaValue | undefined;
+  params: Record<string, unknown> | undefined;
+  finalUrl: string;
 }
 
 export interface BaseDataSourceSchema extends BaseSchema {
@@ -63,22 +107,30 @@ export interface BaseDataSourceSchema extends BaseSchema {
   mergeKey?: string;
 }
 
-export interface FormulaDataSourceSchema extends BaseDataSourceSchema {
-  formula: SchemaValue;
-  api?: never;
-  interval?: never;
-  stopWhen?: never;
-  silent?: never;
+export interface SourceActionSchema extends Omit<ActionSchema, 'action'> {
+  action?: string;
+  formula?: SchemaValue;
 }
 
-export interface ApiDataSourceSchema extends BaseDataSourceSchema {
-  api: ApiObject;
+export interface SourceSchema extends SourceActionSchema {
+  type: 'source';
+}
+
+export interface FormulaDataSourceSchema extends BaseDataSourceSchema, Omit<ActionSchema, 'action'> {
+  formula: SchemaValue;
+  action?: never;
+  api?: never;
+}
+
+export interface ActionDataSourceSchema extends BaseDataSourceSchema, SourceActionSchema {
+  action?: string;
+  api: ApiSchema;
   interval?: number;
   stopWhen?: string;
   silent?: boolean;
 }
 
-export type DataSourceSchema = FormulaDataSourceSchema | ApiDataSourceSchema;
+export type DataSourceSchema = FormulaDataSourceSchema | ActionDataSourceSchema;
 
 export interface ReactionSchema extends BaseSchema {
   type: 'reaction';
@@ -87,12 +139,12 @@ export interface ReactionSchema extends BaseSchema {
   immediate?: boolean;
   debounce?: number;
   once?: boolean;
-  actions: SchemaValue;
+  actions: ActionSchema;
 }
 
 export interface DynamicRendererSchema extends BaseSchema {
   type: 'dynamic-renderer';
-  schemaApi: ApiObject;
+  schemaApi: ApiSchema;
   body?: SchemaInput;
 }
 

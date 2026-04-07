@@ -68,6 +68,8 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   component: import('./renderer-core').RendererDefinition<S>;
   meta: CompiledSchemaMeta;
   props: CompiledRuntimeValue<Record<string, unknown>>;
+  sourcePropKeys: readonly string[];
+  sourceStatePropKeys: Readonly<Record<string, string>>;
   validation?: CompiledFormValidationModel;
   regions: Readonly<Record<string, CompiledRegion>>;
   eventActions: Readonly<Record<string, unknown>>;

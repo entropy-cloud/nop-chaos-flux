@@ -1,6 +1,6 @@
 import type { ActionMonitorPayload, ActionResult, ImportedLibraryLoader } from './actions';
 import type { ScopeRef } from './scope';
-import type { SchemaPath } from './schema';
+import type { ExecutableApiRequest, SchemaPath } from './schema';
 
 export interface ApiRequestContext {
   scope: ScopeRef;
@@ -18,7 +18,7 @@ export interface ApiResponse<T = unknown> {
   raw?: unknown;
 }
 
-export type ApiFetcher = <T = unknown>(api: import('./schema').ApiObject, ctx: ApiRequestContext) => Promise<ApiResponse<T>>;
+export type ApiFetcher = <T = unknown>(api: ExecutableApiRequest, ctx: ApiRequestContext) => Promise<ApiResponse<T>>;
 
 export interface RenderMonitorPayload {
   nodeId: string;
@@ -35,7 +35,7 @@ export interface ErrorMonitorPayload {
 }
 
 export interface ApiMonitorPayload {
-  api: import('./schema').ApiObject;
+  api: ExecutableApiRequest;
   nodeId?: string;
   path?: SchemaPath;
   interactionId?: string;
