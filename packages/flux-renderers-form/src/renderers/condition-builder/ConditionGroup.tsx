@@ -54,7 +54,7 @@ export function ConditionGroup({
 }: ConditionGroupProps) {
   const {
     builderMode = 'full',
-    showANDOR = true,
+    showAndOr = true,
     showNot = false,
     draggable = false,
     searchable = false,
@@ -255,9 +255,9 @@ export function ConditionGroup({
           </button>
         )}
 
-        {(showANDOR || showNot) && (
+        {(showAndOr || showNot) && (
           <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border bg-muted/30 rounded-t-lg">
-            {showANDOR && !isSimple ? (
+            {showAndOr && !isSimple ? (
               <div className="flex items-center rounded-full border border-border p-0.5 bg-background">
                 <button
                   type="button"

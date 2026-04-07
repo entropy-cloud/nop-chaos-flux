@@ -64,16 +64,16 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   const titleContent = resolveRendererSlotContent(props, 'title');
   const resolvedDocument = props.props.document as SpreadsheetDocument;
   const resolvedConfig = props.props.config as SpreadsheetConfig | undefined;
-  const resolvedReadonly = props.props.readonly as boolean | undefined;
+  const resolvedReadOnly = props.props.readOnly as boolean | undefined;
 
   const spreadsheetCore = useMemo(
     () =>
       createSpreadsheetCore({
         document: resolvedDocument,
         config: resolvedConfig,
-        readonly: resolvedReadonly,
+        readonly: resolvedReadOnly,
       }),
-    [resolvedConfig, resolvedDocument, resolvedReadonly],
+    [resolvedConfig, resolvedDocument, resolvedReadOnly],
   );
   const actionScope = useCurrentActionScope();
   const spreadsheetProvider = useMemo(

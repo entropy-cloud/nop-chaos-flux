@@ -13,7 +13,7 @@ export interface SpreadsheetPageSchemaInput {
   disabled?: boolean | string;
   document: SpreadsheetDocument;
   config?: SpreadsheetConfig;
-  readonly?: boolean;
+  readOnly?: boolean;
   toolbar?: BaseSchema | BaseSchema[];
   body?: BaseSchema | BaseSchema[];
   dialogs?: BaseSchema | BaseSchema[];

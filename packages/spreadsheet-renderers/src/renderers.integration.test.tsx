@@ -40,6 +40,16 @@ const a1ProbeRenderer: RendererDefinition = {
   component: A1ValueProbe,
 };
 
+function ReadOnlyProbe() {
+  const isReadOnly = useScopeSelector((data: any) => data.spreadsheet?.runtime?.readonly);
+  return <span data-testid="read-only-value">{String(Boolean(isReadOnly))}</span>;
+}
+
+const readOnlyProbeRenderer: RendererDefinition = {
+  type: 'read-only-probe',
+  component: ReadOnlyProbe,
+};
+
 afterEach(() => {
   cleanup();
 });
@@ -93,5 +103,35 @@ describe('spreadsheet-page namespaced actions integration', () => {
       expect(screen.getByTestId('a1-value').textContent).toBe('42');
     });
   });
-});
 
+  it('passes readOnly schema prop into the spreadsheet runtime', async () => {
+    const document = createEmptyDocument('read-only-spreadsheet');
+    const schema = defineSpreadsheetPageSchema({
+      type: 'spreadsheet-page',
+      document,
+      readOnly: true,
+      body: [
+        {
+          type: 'read-only-probe',
+        },
+      ],
+    });
+
+    const registry = createDefaultRegistry([actionButtonRenderer, a1ProbeRenderer, readOnlyProbeRenderer]);
+    registerSpreadsheetRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schema={schema}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('read-only-value').textContent).toBe('true');
+    });
+  });
+});

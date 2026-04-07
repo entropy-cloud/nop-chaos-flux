@@ -141,7 +141,7 @@ export interface ConditionBuilderSchema extends BaseSchema {
   selectMode?: 'list' | 'tree' | 'chained';
   searchable?: boolean;
   draggable?: boolean;
-  showANDOR?: boolean;
+  showAndOr?: boolean;
   showNot?: boolean;
   showIf?: boolean;
   uniqueFields?: boolean;

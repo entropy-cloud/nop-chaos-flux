@@ -228,5 +228,14 @@ describe('registerSpreadsheetRenderers', () => {
     expect(definition).toBeDefined();
     expect(definition?.regions).toEqual(['toolbar', 'body', 'dialogs']);
   });
-});
 
+  it('exports readOnly in the page schema helper type', () => {
+    const schema = {
+      type: 'spreadsheet-page' as const,
+      document: createEmptyDocument(),
+      readOnly: true,
+    };
+
+    expect(schema.readOnly).toBe(true);
+  });
+});

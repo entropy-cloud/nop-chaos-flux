@@ -154,33 +154,33 @@ function renderGroup(
 afterEach(cleanup);
 
 describe('condition-builder config integration', () => {
-  describe('showANDOR', () => {
-    it('renders AND/OR toggle buttons when showANDOR is true and builderMode is full', () => {
-      renderGroup({ showANDOR: true, builderMode: 'full' });
+  describe('showAndOr', () => {
+    it('renders AND/OR toggle buttons when showAndOr is true and builderMode is full', () => {
+      renderGroup({ showAndOr: true, builderMode: 'full' });
       expect(screen.queryAllByText('并且').length).toBeGreaterThanOrEqual(1);
       expect(screen.queryAllByText('或者').length).toBeGreaterThanOrEqual(1);
     });
 
-    it('hides AND/OR toggle when showANDOR is false', () => {
-      renderGroup({ showANDOR: false, showNot: false });
+    it('hides AND/OR toggle when showAndOr is false', () => {
+      renderGroup({ showAndOr: false, showNot: false });
       expect(screen.queryAllByText('或者')).toHaveLength(0);
     });
 
-    it('shows static conjunction label when showNot is true but showANDOR is false', () => {
-      renderGroup({ showANDOR: false, showNot: true });
+    it('shows static conjunction label when showNot is true but showAndOr is false', () => {
+      renderGroup({ showAndOr: false, showNot: true });
       expect(screen.queryAllByText('或者')).toHaveLength(0);
       expect(screen.queryAllByText('并且').length).toBeGreaterThanOrEqual(1);
     });
 
-    it('renders static conjunction label in simple mode even when showANDOR is true', () => {
-      renderGroup({ showANDOR: true, builderMode: 'simple' });
+    it('renders static conjunction label in simple mode even when showAndOr is true', () => {
+      renderGroup({ showAndOr: true, builderMode: 'simple' });
       expect(screen.queryAllByText('或者')).toHaveLength(0);
       expect(screen.queryAllByText('并且').length).toBeGreaterThanOrEqual(1);
     });
 
     it('toggles conjunction on button click', () => {
       const onChange = vi.fn();
-      renderGroup({ showANDOR: true, builderMode: 'full' }, makeEmptyGroup(), onChange);
+      renderGroup({ showAndOr: true, builderMode: 'full' }, makeEmptyGroup(), onChange);
       const orBtns = screen.queryAllByText('或者');
       fireEvent.click(orBtns[0]);
       expect(onChange).toHaveBeenCalledWith(
@@ -191,18 +191,18 @@ describe('condition-builder config integration', () => {
 
   describe('showNot', () => {
     it('does not render NOT toggle when showNot is false (default)', () => {
-      renderGroup({ showNot: false, showANDOR: true });
+      renderGroup({ showNot: false, showAndOr: true });
       expect(screen.queryAllByText('取反')).toHaveLength(0);
     });
 
     it('renders NOT toggle when showNot is true', () => {
-      renderGroup({ showNot: true, showANDOR: true });
+      renderGroup({ showNot: true, showAndOr: true });
       expect(screen.queryAllByText('取反').length).toBeGreaterThanOrEqual(1);
     });
 
     it('toggles not on click', () => {
       const onChange = vi.fn();
-      renderGroup({ showNot: true, showANDOR: true }, makeEmptyGroup(), onChange);
+      renderGroup({ showNot: true, showAndOr: true }, makeEmptyGroup(), onChange);
       const notBtns = screen.queryAllByText('取反');
       fireEvent.click(notBtns[0]);
       expect(onChange).toHaveBeenCalledWith(
@@ -212,7 +212,7 @@ describe('condition-builder config integration', () => {
 
     it('shows checkmark when not is already true', () => {
       renderGroup(
-        { showNot: true, showANDOR: true },
+        { showNot: true, showAndOr: true },
         { id: 'g1', conjunction: 'and', not: true, children: [] },
       );
       expect(screen.queryAllByText('取反 ✓').length).toBeGreaterThanOrEqual(1);
@@ -476,7 +476,7 @@ describe('condition-builder config integration', () => {
           { id: 'i2', left: { type: 'field', field: 'age' }, op: 'greater', right: 18 },
         ],
       };
-      renderGroup({ showANDOR: true, builderMode: 'full' }, value);
+      renderGroup({ showAndOr: true, builderMode: 'full' }, value);
       expect(screen.queryAllByText('或者').length).toBeGreaterThanOrEqual(1);
       expect(screen.queryAllByTestId('mock-select').length).toBeGreaterThanOrEqual(2);
     });
@@ -495,7 +495,7 @@ describe('condition-builder config integration', () => {
           },
         ],
       };
-      renderGroup({ showANDOR: true, builderMode: 'full' }, value);
+      renderGroup({ showAndOr: true, builderMode: 'full' }, value);
       expect(screen.queryAllByText('或者').length).toBeGreaterThanOrEqual(1);
     });
   });
