@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { getIn } from '@nop-chaos/flux-core';
-import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
+import type { ComponentHandle, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import {
@@ -35,8 +35,81 @@ import type { TableColumnSchema, TableSchema } from './schemas';
 
 type SortState = { column: string; direction: 'asc' | 'desc' | null };
 type FilterState = Record<string, Set<string>>;
+type TableRowEntry = {
+  rowKey: string;
+  sourceIndex: number;
+  record: Record<string, any>;
+  viewIndex?: number;
+};
 const EMPTY_TABLE_COLUMNS: TableColumnSchema[] = [];
 const EMPTY_TABLE_ROWS: Array<Record<string, any>> = [];
+
+function normalizeRowKey(record: Record<string, any>, sourceIndex: number, rowKeyField?: string): string {
+  const explicitValue = rowKeyField ? getIn(record, rowKeyField) : undefined;
+  const compatibilityValue = explicitValue ?? record.__rowKey ?? record.id;
+
+  if (compatibilityValue === null || compatibilityValue === undefined || compatibilityValue === '') {
+    return `legacy-index:${sourceIndex}`;
+  }
+
+  return String(compatibilityValue);
+}
+
+function buildTableRowEntries(source: Array<Record<string, any>>, rowKeyField?: string): TableRowEntry[] {
+  return source.map((record, sourceIndex) => ({
+    rowKey: normalizeRowKey(record, sourceIndex, rowKeyField),
+    sourceIndex,
+    record
+  }));
+}
+
+function serializeInstancePath(instancePath: readonly { repeatedTemplateId: string; instanceKey: string }[] | undefined): string {
+  return instancePath?.length ? JSON.stringify(instancePath) : 'root';
+}
+
+function createTableRowRepeatedTemplateId(tableNodeId: number | undefined): string {
+  return `table-row:${tableNodeId ?? 'unknown'}`;
+}
+
+function createTableOwnerKey(props: RendererComponentProps<TableSchema>): string {
+  return `${props.node.templateNodeId ?? props.meta.cid ?? props.id}:${serializeInstancePath(props.nodeInstance.locator.instancePath)}`;
+}
+
+function createRowScopeId(ownerKey: string, rowKey: string): string {
+  return `table:${ownerKey}:row:${rowKey}`;
+}
+
+function createRowScopePath(ownerPath: string, rowKey: string): string {
+  return `${ownerPath}.rowsByKey.${rowKey}`;
+}
+
+function syncRowScope(scope: ScopeRef, payload: { record: Record<string, any>; index: number }, previous: { record: Record<string, any>; index: number } | undefined) {
+  if (!previous || previous.record !== payload.record) {
+    scope.merge({ record: payload.record });
+  }
+
+  if (!previous || previous.index !== payload.index) {
+    scope.merge({ index: payload.index });
+  }
+}
+
+function warnOnDuplicateRowKeys(entries: TableRowEntry[]) {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+
+  for (const entry of entries) {
+    if (seen.has(entry.rowKey)) {
+      duplicates.add(entry.rowKey);
+      continue;
+    }
+
+    seen.add(entry.rowKey);
+  }
+
+  if (duplicates.size > 0) {
+    console.warn(`[TableRenderer] Duplicate rowKey values detected: ${Array.from(duplicates).join(', ')}`);
+  }
+}
 
 function toPositiveNumber(value: unknown, fallback: number) {
   const next = Number(value);
@@ -72,6 +145,10 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
   const loadingContent = resolveRendererSlotContent(props, 'loadingSlot');
+  const ownerKey = useMemo(() => createTableOwnerKey(props), [props]);
+  const rowRepeatedTemplateId = useMemo(() => createTableRowRepeatedTemplateId(props.node.templateNodeId), [props.node.templateNodeId]);
+  const rowScopeCacheRef = useRef(new Map<string, ScopeRef>());
+  const rowScopeSnapshotRef = useRef(new Map<string, { record: Record<string, any>; index: number }>());
 
   const [sortState, setSortState] = useState<SortState>({ column: '', direction: null });
   const [filterState, setFilterState] = useState<FilterState>({});
@@ -294,12 +371,13 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   }, []);
 
   const processedData = useMemo(() => {
-    let data = [...source];
+    let data = buildTableRowEntries(source, schemaProps.rowKey);
+    warnOnDuplicateRowKeys(data);
 
     if (sortState.column && sortState.direction) {
       data.sort((a, b) => {
-        const aVal = a[sortState.column];
-        const bVal = b[sortState.column];
+        const aVal = a.record[sortState.column];
+        const bVal = b.record[sortState.column];
         if (aVal === bVal) return 0;
         if (aVal == null) return 1;
         if (bVal == null) return -1;
@@ -311,7 +389,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
     Object.entries(filterState).forEach(([columnName, values]) => {
       if (values.size > 0) {
-        data = data.filter((row) => values.has(String(row[columnName])));
+        data = data.filter((row) => values.has(String(row.record[columnName])));
       }
     });
 
@@ -320,8 +398,49 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       data = data.slice(startIndex, startIndex + pageSize);
     }
 
-    return data;
-  }, [source, sortState, filterState, currentPage, pageSize, paginationEnabled]);
+    return data.map((entry, viewIndex) => ({
+      ...entry,
+      viewIndex
+    }));
+  }, [source, schemaProps.rowKey, sortState, filterState, currentPage, pageSize, paginationEnabled]);
+
+  useLayoutEffect(() => {
+    const nextVisibleKeys = new Set<string>();
+
+    for (const entry of processedData) {
+      nextVisibleKeys.add(entry.rowKey);
+      const existingScope = rowScopeCacheRef.current.get(entry.rowKey);
+      const payload = {
+        record: entry.record,
+        index: entry.sourceIndex
+      };
+
+      if (!existingScope) {
+        const createdScope = props.helpers.createScope(payload, {
+          scopeKey: createRowScopeId(ownerKey, entry.rowKey),
+          pathSuffix: createRowScopePath(props.path, entry.rowKey),
+          isolate: true,
+          source: 'row'
+        });
+        rowScopeCacheRef.current.set(entry.rowKey, createdScope);
+        rowScopeSnapshotRef.current.set(entry.rowKey, payload);
+        continue;
+      }
+
+      const previous = rowScopeSnapshotRef.current.get(entry.rowKey);
+      syncRowScope(existingScope, payload, previous);
+      rowScopeSnapshotRef.current.set(entry.rowKey, payload);
+    }
+
+    for (const key of Array.from(rowScopeCacheRef.current.keys())) {
+      if (nextVisibleKeys.has(key)) {
+        continue;
+      }
+
+      rowScopeCacheRef.current.delete(key);
+      rowScopeSnapshotRef.current.delete(key);
+    }
+  }, [processedData, ownerKey, props.helpers, props.path]);
 
   const totalPages = useMemo(() => {
     if (!paginationEnabled) return 1;
@@ -407,8 +526,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       return;
     }
 
-    return componentRegistry.register(tableHandle, { cid: props.meta.cid });
-  }, [componentRegistry, tableHandle, props.meta.cid]);
+    return componentRegistry.register(tableHandle, {
+      cid: props.meta.cid,
+      locator: props.nodeInstance.locator
+    });
+  }, [componentRegistry, tableHandle, props.meta.cid, props.nodeInstance.locator]);
 
   return (
     <div className="nop-table-wrap grid gap-4" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
@@ -510,20 +632,21 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 </TableCell>
               </TableRow>
             ) : (
-              processedData.map((record, index) => {
-                const rowScope = props.helpers.createScope(
-                  { record, index },
-                  {
-                    scopeKey: `row:${record.id ?? index}`,
-                    pathSuffix: `rows.${index}`,
-                    source: 'row',
-                  }
-                );
-                const rowKey = String(record.id ?? index);
+              processedData.map((entry) => {
+                const rowScope = rowScopeCacheRef.current.get(entry.rowKey);
+
+                if (!rowScope) {
+                  return null;
+                }
+
+                const rowKey = entry.rowKey;
+                const rowInstancePath = [
+                  ...(props.nodeInstance.locator.instancePath ?? []),
+                  { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey }
+                ] as const;
                 const isExpanded = expandedRowKeys.has(rowKey);
                 const isSelected = selectedRowKeys.has(rowKey);
-                const rowIndex = source.indexOf(record);
-                const isEven = rowIndex % 2 === 0;
+                const isEven = entry.sourceIndex % 2 === 0;
 
                 return (
                   <React.Fragment key={rowKey}>
@@ -579,12 +702,14 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                                 {buttonRegion
                                   ? buttonRegion.render({
                                       scope: rowScope,
+                                      instancePath: rowInstancePath,
                                       pathSuffix: `buttons.${columnIndex}`,
                                     })
                                   : (column.buttons ?? []).map((button, buttonIndex) => (
                                       <div key={`btn-${buttonIndex}`}>
                                         {props.helpers.render(button, {
                                           scope: rowScope,
+                                          instancePath: rowInstancePath,
                                           pathSuffix: `buttons.${buttonIndex}`,
                                         })}
                                       </div>
@@ -602,6 +727,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                             >
                               {cellRegion.render({
                                 scope: rowScope,
+                                instancePath: rowInstancePath,
                                 pathSuffix: `cells.${columnIndex}`,
                               })}
                             </TableCell>
@@ -610,7 +736,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
                         return (
                           <TableCell key={`${column.name ?? columnIndex}`} style={column.width ? { width: column.width } : undefined}>
-                            {column.name ? String(record[column.name] ?? '') : ''}
+                            {column.name ? String(entry.record[column.name] ?? '') : ''}
                           </TableCell>
                         );
                       })}
@@ -621,6 +747,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                         <TableCell colSpan={columnCount} data-slot="table-expanded-cell">
                           {props.regions[schemaProps.expandable.expandedRowRegionKey]?.render({
                             scope: rowScope,
+                            instancePath: rowInstancePath,
                             pathSuffix: `expanded.${rowKey}`,
                           })}
                         </TableCell>

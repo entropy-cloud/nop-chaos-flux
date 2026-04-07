@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { ActionContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { createSchemaRenderer, useCurrentComponentRegistry, useRenderScope } from '@nop-chaos/flux-react';
 import { dataRendererDefinitions } from './index';
 
 const env: RendererEnv = {
@@ -24,16 +24,74 @@ const textRenderer: RendererDefinition = {
   component: (props) => <span>{String(props.props.text ?? '')}</span>
 };
 
-const buttonRenderer: RendererDefinition = {
-  type: 'button',
+const nodeInstanceProbeRenderer: RendererDefinition = {
+  type: 'node-instance-probe',
   component: (props) => (
+    <span data-testid="node-instance-probe">
+      {JSON.stringify(props.nodeInstance.locator.instancePath ?? null)}
+    </span>
+  )
+};
+
+const rowScopeIdProbeRenderer: RendererDefinition = {
+  type: 'row-scope-id-probe',
+  component: () => {
+    const scope = useRenderScope();
+    return <span data-testid="row-scope-id-probe">{scope.id}</span>;
+  }
+};
+
+function DispatchProbeRenderer(props: RendererComponentProps) {
+  return (
     <button
       type="button"
+      data-testid="dispatch-probe"
+      onClick={() => void props.helpers.dispatch({ action: 'probe:recordLocator' } as never)}
+    >
+      Dispatch probe
+    </button>
+  );
+}
+
+const dispatchProbeRenderer: RendererDefinition = {
+  type: 'dispatch-probe',
+  component: DispatchProbeRenderer
+};
+
+function TestButtonRenderer(props: RendererComponentProps) {
+  const componentRegistry = useCurrentComponentRegistry();
+
+  useEffect(() => {
+    if (!componentRegistry || props.meta.cid === undefined) {
+      return;
+    }
+
+    return componentRegistry.register({
+      type: 'button',
+      capabilities: {
+        invoke() {
+          return { ok: true };
+        }
+      }
+    }, {
+      cid: props.meta.cid
+    });
+  }, [componentRegistry, props.meta.cid]);
+
+  return (
+    <button
+      type="button"
+      data-cid={props.meta.cid}
       onClick={() => void props.events.onClick?.()}
     >
       {String(props.props.label ?? props.meta.label ?? 'Button')}
     </button>
-  ),
+  );
+}
+
+const buttonRenderer: RendererDefinition = {
+  type: 'button',
+  component: TestButtonRenderer,
   fields: [{ key: 'onClick', kind: 'event' }]
 };
 
@@ -734,6 +792,220 @@ describe('dataRendererDefinitions', () => {
     );
 
     expect(await screen.findByText('Member Alice')).toBeTruthy();
+  });
+
+  it('propagates repeated table row instancePath into row child locators', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      buttonRenderer,
+      ...dataRendererDefinitions
+    ]);
+    const onComponentRegistryChange = vi.fn();
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columns: [
+                {
+                  type: 'operation',
+                  buttons: [
+                    { type: 'button', label: 'Row action' }
+                  ]
+                }
+              ],
+              source: [{ id: 1, name: 'Alice' }]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        onComponentRegistryChange={onComponentRegistryChange}
+      />
+    );
+
+    const rowButton = await screen.findByText('Row action');
+    const cid = Number(rowButton.getAttribute('data-cid'));
+    const registry = onComponentRegistryChange.mock.calls[0]?.[0];
+
+    expect(Number.isFinite(cid)).toBe(true);
+    expect(registry?.getHandleDebugData?.(cid)?.locator).toMatchObject({
+      instancePath: [{ repeatedTemplateId: expect.stringMatching(/^table-row:/), instanceKey: '1' }]
+    });
+  });
+
+  it('exposes repeated instancePath through nodeInstance for row child renderers', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      nodeInstanceProbeRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columns: [
+                {
+                  label: 'Probe',
+                  cell: { type: 'node-instance-probe' }
+                }
+              ],
+              source: [{ id: 1, name: 'Alice' }]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect((await screen.findByTestId('node-instance-probe')).textContent).toBe(
+      expect.stringMatching(/^\[\{"repeatedTemplateId":"table-row:/) as unknown as string
+    );
+  });
+
+  it('passes row locator through helpers.dispatch action context', async () => {
+    cleanup();
+    const observedLocators: unknown[] = [];
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      dispatchProbeRenderer,
+      ...dataRendererDefinitions
+    ]);
+    const onActionScopeChange = vi.fn((actionScope) => {
+      if (!actionScope) {
+        return;
+      }
+
+      actionScope.registerNamespace('probe', {
+        kind: 'host',
+        invoke(method: string, _payload: Record<string, unknown> | undefined, ctx: ActionContext) {
+          if (method === 'recordLocator') {
+            observedLocators.push(ctx.locator);
+            return { ok: true, data: ctx.locator };
+          }
+
+          return { ok: false, error: new Error(`Unsupported method: ${method}`) };
+        }
+      });
+    });
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columns: [
+                {
+                  label: 'Dispatch',
+                  cell: { type: 'dispatch-probe' }
+                }
+              ],
+              source: [{ id: 1, name: 'Alice' }]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        onActionScopeChange={onActionScopeChange}
+      />
+    );
+
+    fireEvent.click(await screen.findByTestId('dispatch-probe'));
+
+    await waitFor(() => {
+      expect(observedLocators).toEqual([
+        expect.objectContaining({
+          instancePath: [{ repeatedTemplateId: expect.stringMatching(/^table-row:/), instanceKey: '1' }]
+        })
+      ]);
+    });
+  });
+
+  it('uses schema rowKey as stable repeated identity instead of source index', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      nodeInstanceProbeRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'table',
+            rowKey: '__rowKey',
+            columns: [{ label: 'Probe', cell: { type: 'node-instance-probe' } }],
+            source: [{ id: 99, __rowKey: 'client-a', name: 'Alice' }]
+          }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect((await screen.findByTestId('node-instance-probe')).textContent).toContain('client-a');
+  });
+
+  it('reuses one stable row scope per materialized row key', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      rowScopeIdProbeRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'table',
+            rowKey: 'id',
+            columns: [{ label: 'Scope', cell: { type: 'row-scope-id-probe' } }],
+            source: [{ id: 1, name: 'Alice' }]
+          }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const initialScopeId = (await screen.findByTestId('row-scope-id-probe')).textContent;
+
+    rerender(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'table',
+            rowKey: 'id',
+            columns: [{ label: 'Scope', cell: { type: 'row-scope-id-probe' } }],
+            source: [{ id: 1, name: 'Alice updated' }]
+          }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect((await screen.findByTestId('row-scope-id-probe')).textContent).toBe(initialScopeId);
   });
 
   describe('data-source', () => {

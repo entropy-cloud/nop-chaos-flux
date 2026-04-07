@@ -15,6 +15,7 @@ export interface TableColumnSchema extends BaseSchema {
 
 export interface TableSchema extends BaseSchema {
   type: 'table';
+  rowKey?: string;
   paginationOwnership?: 'local' | 'controlled' | 'scope';
   selectionOwnership?: 'local' | 'controlled' | 'scope';
   paginationStatePath?: string;
