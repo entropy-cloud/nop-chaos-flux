@@ -109,6 +109,32 @@ What is still evolving is not the existence of `value-or-region` itself, but how
 
 Renderer field metadata should evolve to express field semantics more precisely.
 
+Field metadata may also opt specific value fields into anonymous source execution when the field is a value channel that can safely consume `type: 'source'`.
+
+Recommended opt-in flag:
+
+- `allowSource?: boolean`
+- `sourceStateKey?: string`
+
+Meaning:
+
+- only fields explicitly marked with `allowSource` may treat `type: 'source'` objects as source carriers
+- unmarked `prop` or `value-or-region` fields keep their existing plain-value or region semantics
+- this avoids global object-shape guessing and preserves the design rule that renderer metadata owns field interpretation
+- when `sourceStateKey` is present, runtime also injects one companion prop carrying transient execution state for that source-enabled field
+
+Recommended transient state shape:
+
+```ts
+interface SourceTransientState {
+  loading: boolean;
+  error: unknown;
+  status: 'idle' | 'loading' | 'ready' | 'error';
+}
+```
+
+This is intended for lightweight renderer chrome such as loading indicators, temporary disabled state, or inline error affordances. It should stay a narrow UI-facing execution summary, not a second full data-source controller API.
+
 Recommended semantic categories:
 
 - `meta`
@@ -141,6 +167,8 @@ Recommended behavior by field semantic:
 - `value`
   - include in `propSource`
   - compile through the normal value-tree compiler
+  - if the field also sets `allowSource`, runtime may execute `type: 'source'` carriers for that prop before the renderer receives `props`
+  - if `sourceStateKey` is also present, runtime injects a transient state prop alongside the resolved value prop
 - `region`
   - require schema or schema array input
   - compile recursively into a `CompiledRegion`
@@ -458,6 +486,16 @@ Recommended normalization targets:
 - `event` -> declarative action data retained for callback adaptation
 
 The renderer should then consume only standardized inputs rather than raw schema guessing.
+
+For source-enabled value fields, the same rule still applies:
+
+- schema author writes one field such as `options` or `text`
+- renderer metadata declares that field as `allowSource`
+- renderer metadata may additionally declare a companion transient-state prop such as `optionsSourceState`
+- compile/runtime records that opt-in metadata once
+- React resolves the source-backed value before the concrete renderer sees `props`
+
+This keeps source execution as a field-level contract, not a renderer-local hook workaround and not a repo-wide magic object interpretation rule.
 
 ## Non-Goals
 

@@ -41,7 +41,7 @@ The current action model is effective for platform actions such as:
 
 - `setValue`
 - `ajax`
-- `dialog`
+- `openDialog`
 - `closeDialog`
 - `refreshTable`
 - `submitForm`
@@ -342,7 +342,7 @@ Examples:
 - dialog and drawer stack control
 - AJAX execution
 - form submission
-- toast and navigation feedback
+- `showToast` and navigation feedback
 
 Extended actions should be delegated only when they are domain-specific or import-provided.
 

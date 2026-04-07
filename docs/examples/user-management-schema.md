@@ -18,7 +18,7 @@ Covered capabilities:
 - `ajax`
 - `requestAdaptor` and `responseAdaptor`
 - `dataPath`
-- `dialog`
+- `openDialog`
 - `submitForm`
 - `closeDialog`
 - `refreshTable`
@@ -74,7 +74,7 @@ Covered capabilities:
               "label": "新增用户",
               "visible": "${currentUser.role === 'admin'}",
               "onClick": {
-                "action": "dialog",
+                "action": "openDialog",
                 "dialog": {
                   "title": "新增用户",
                   "body": {
@@ -182,7 +182,7 @@ Covered capabilities:
                   "type": "button",
                   "label": "查看",
                   "onClick": {
-                    "action": "dialog",
+                    "action": "openDialog",
                     "dialog": {
                       "title": "用户详情",
                       "body": {

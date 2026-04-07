@@ -164,7 +164,7 @@ belong to `Operation Control`, not to transport description. Action-backed and s
 
 ### Required Request Execution Flow
 
-`executeApiObject(...)` should be the single convergence path for request execution from declarative `ApiSchema` to fetcher-facing `ExecutableApiRequest`.
+`executeApiSchema(...)` should be the single convergence path for request execution from declarative `ApiSchema` to fetcher-facing `ExecutableApiRequest`.
 
 The required flow is:
 
@@ -178,8 +178,8 @@ The required flow is:
 
 Current baseline note:
 
-- `executeApiObject(...)` now owns the main request convergence path used by ajax actions, form submit, validation, and data-source execution
-- callers may still pass declarative request objects; `executeApiObject(...)` evaluates those values in scope before canonical request preparation so request execution semantics stay unified across actions, forms, validation, and data-sources
+- `executeApiSchema(...)` now owns the main request convergence path used by ajax actions, form submit, validation, and data-source execution
+- callers may still pass declarative request objects; `executeApiSchema(...)` evaluates those values in scope before canonical request preparation so request execution semantics stay unified across actions, forms, validation, and data-sources
 - request preparation is split into explicit helpers, but the runtime now converges those helpers into one canonical executable request shape before fetch
 - dedup and runtime-local cache coordination are keyed by that final executable request semantics rather than only by the original declarative `ApiSchema`
 - executable request canonicalization normalizes `params` into the final URL and removes `params` from the fetcher-facing request object so equivalent `url + params` forms share the same identity
@@ -692,7 +692,7 @@ Current code is not yet fully converged to the target model:
 
 - formula-backed sources are not yet unified under the same runtime source abstraction
 - source dependency tracking is not yet a full static-plus-dynamic invalidation system
-- some producer-specific details still remain narrower implementation work even though request execution now converges through `executeApiObject(...)`
+- some producer-specific details still remain narrower implementation work even though request execution now converges through `executeApiSchema(...)`
 - API-backed sources still allow legacy merge semantics when `dataPath` is omitted
 - richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete
 
