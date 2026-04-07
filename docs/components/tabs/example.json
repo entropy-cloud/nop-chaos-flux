@@ -1,0 +1,26 @@
+{
+  "type": "tabs",
+  "value": "profile",
+  "items": [
+    {
+      "key": "profile",
+      "title": "基本信息",
+      "body": [
+        {
+          "type": "text",
+          "text": "这里展示用户基本资料。"
+        }
+      ]
+    },
+    {
+      "key": "security",
+      "title": "安全设置",
+      "body": [
+        {
+          "type": "text",
+          "text": "这里展示安全配置项。"
+        }
+      ]
+    }
+  ]
+}

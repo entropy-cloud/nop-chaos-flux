@@ -28,11 +28,14 @@ Choose the smallest document that matches the task.
 | Design theme-compatible styling, host CSS variable integration, or `.na-theme-root` migration strategy | `docs/architecture/theme-compatibility.md` | `docs/architecture/renderer-runtime.md` |
 | Design semantic props vs Tailwind className, custom style presets, or shadcn/ui integration | `docs/architecture/styling-system.md` | `docs/architecture/renderer-markers-and-selectors.md` |
 | Plan shadcn/ui migration from nop-chaos-next-master | `docs/plans/18-shadcn-ui-migration-plan.md` | `docs/architecture/styling-system.md` |
+| Plan dependency-tracking runtime convergence under the root-binding model | `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` | `docs/architecture/dependency-tracking.md` |
 | 了解基于 SchemaRenderer 的报表设计器与 spreadsheet editor 规划架构 | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` |
 | 了解通用 report designer 如何适配 nop-report | `docs/architecture/report-designer/nop-report-profile.md` | `docs/analysis/excel-report-designer-research.md` |
 | 了解 report designer 与 nop-report 的导入导出/round-trip 设计 | `docs/architecture/report-designer/codec-design.md` | `docs/architecture/report-designer/nop-report-profile.md` |
 | 设计 report designer 的右侧属性面板与 expression/reference 字段编辑边界 | `docs/architecture/report-designer/inspector-design.md` | `docs/architecture/report-designer/contracts.md` |
 | Change React integration, renderer props, hooks, or fragment rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
+| Design compile-once/runtime-instantiation behavior, `cid`/template-node identity, repeated-instance identity, table row instance behavior, or future `type: 'loop'` rules | `docs/architecture/template-instantiation-and-node-identity.md` | `docs/architecture/component-resolution.md` |
+| 设计或实现某个具体组件的 schema 契约、核心能力和落地路线 | `docs/components/index.md` | 对应组件目录下的 `docs/components/<component>/design.md`，再回看相关 `docs/architecture/*.md` |
 | Design namespaced action extension, host action scopes, or `xui:imports` semantics | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` |
 | Change slot-like fields such as `title`, `empty`, or `onClick` | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
 | Change validation behavior or form field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` |
@@ -65,6 +68,9 @@ Architecture intent lives primarily in:
 - `docs/architecture/frontend-programming-model.md`
 - `docs/architecture/frontend-programming-model-improvement-design.md`
 - `docs/architecture/renderer-runtime.md`
+- `docs/architecture/template-instantiation-and-node-identity.md`
+- `docs/architecture/component-resolution.md`
+- `docs/architecture/dependency-tracking.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/flux-runtime-module-boundaries.md`
@@ -92,6 +98,7 @@ Example behavior is best cross-checked with:
 ## Directory Roles
 
 - `docs/architecture/` - current normative design and package ownership notes
+- `docs/components/` - per-component design inputs; each component keeps its own directory with schema, capability, and implementation notes
 - `docs/references/` - stable lookup material such as terminology, interface maps, maintenance guidance, and source-specific reference notes; useful, but secondary to architecture docs
 - `docs/amis-types/` - AMIS component TypeScript type definitions extracted from amis@6.13.0, useful for understanding upstream AMIS schema structure
 - `docs/examples/` - small representative schemas and usage notes

@@ -1,0 +1,17 @@
+{
+  "type": "container",
+  "direction": "column",
+  "align": "stretch",
+  "gap": "md",
+  "body": [
+    {
+      "type": "text",
+      "text": "容器头部说明"
+    },
+    {
+      "type": "button",
+      "label": "继续",
+      "variant": "default"
+    }
+  ]
+}

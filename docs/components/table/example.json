@@ -1,0 +1,53 @@
+{
+  "type": "table",
+  "paginationOwnership": "local",
+  "selectionOwnership": "local",
+  "columns": [
+    {
+      "name": "name",
+      "label": "姓名",
+      "sortable": true
+    },
+    {
+      "name": "role",
+      "label": "角色",
+      "filterable": true,
+      "filterOptions": [
+        {
+          "label": "管理员",
+          "value": "admin"
+        },
+        {
+          "label": "编辑",
+          "value": "editor"
+        }
+      ]
+    }
+  ],
+  "source": [
+    {
+      "id": "u-1",
+      "name": "Alice",
+      "role": "admin"
+    },
+    {
+      "id": "u-2",
+      "name": "Bob",
+      "role": "editor"
+    }
+  ],
+  "rowSelection": {
+    "type": "checkbox"
+  },
+  "pagination": {
+    "enabled": true,
+    "currentPage": 1,
+    "pageSize": 10,
+    "pageSizeOptions": [
+      10,
+      20,
+      50
+    ]
+  },
+  "empty": "暂无数据"
+}

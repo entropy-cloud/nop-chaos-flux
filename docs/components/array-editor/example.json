@@ -1,0 +1,6 @@
+{
+  "type": "array-editor",
+  "name": "reviewers",
+  "label": "评审人",
+  "itemLabel": "评审人"
+}

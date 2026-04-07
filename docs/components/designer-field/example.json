@@ -1,0 +1,16 @@
+{
+  "type": "designer-field",
+  "name": "nodeType",
+  "label": "节点类型",
+  "fieldType": "select",
+  "options": [
+    {
+      "label": "开始",
+      "value": "start"
+    },
+    {
+      "label": "任务",
+      "value": "task"
+    }
+  ]
+}

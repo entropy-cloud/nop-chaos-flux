@@ -1,0 +1,8 @@
+{
+  "type": "input-text",
+  "name": "fullName",
+  "label": "姓名",
+  "placeholder": "请输入姓名",
+  "required": true,
+  "minLength": 2
+}

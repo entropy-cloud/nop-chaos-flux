@@ -1,0 +1,35 @@
+{
+  "type": "condition-builder",
+  "name": "rule",
+  "label": "触发条件",
+  "builderMode": "full",
+  "showANDOR": true,
+  "showNot": true,
+  "required": true,
+  "fields": [
+    {
+      "name": "status",
+      "label": "状态",
+      "type": "select",
+      "options": [
+        {
+          "label": "启用",
+          "value": "active"
+        },
+        {
+          "label": "停用",
+          "value": "inactive"
+        }
+      ]
+    },
+    {
+      "name": "priority",
+      "label": "优先级",
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    }
+  ],
+  "addConditionLabel": "添加条件",
+  "addGroupLabel": "添加条件组"
+}

@@ -1,0 +1,31 @@
+{
+  "type": "chart",
+  "chartType": "bar",
+  "title": "周活跃用户",
+  "height": 320,
+  "source": [
+    {
+      "day": "Mon",
+      "value": 120
+    },
+    {
+      "day": "Tue",
+      "value": 156
+    },
+    {
+      "day": "Wed",
+      "value": 140
+    }
+  ],
+  "xAxis": {
+    "dataKey": "day",
+    "label": "日期"
+  },
+  "series": [
+    {
+      "name": "活跃人数",
+      "type": "bar",
+      "data": [120, 156, 140]
+    }
+  ]
+}

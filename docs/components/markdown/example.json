@@ -1,0 +1,4 @@
+{
+  "type": "markdown",
+  "content": "## 发布说明\n\n- 支持 **Markdown**\n- 当前版本：${release.version}"
+}

@@ -1,0 +1,7 @@
+{
+  "type": "button",
+  "label": "提交",
+  "variant": "default",
+  "size": "md",
+  "disabled": false
+}

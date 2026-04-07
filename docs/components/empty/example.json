@@ -1,0 +1,12 @@
+{
+  "type": "empty",
+  "title": "暂无数据",
+  "description": "当前筛选条件下没有结果。",
+  "actions": [
+    {
+      "type": "button",
+      "label": "重置筛选",
+      "variant": "ghost"
+    }
+  ]
+}

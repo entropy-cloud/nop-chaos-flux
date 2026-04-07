@@ -1,0 +1,29 @@
+{
+  "type": "list",
+  "items": [
+    {
+      "title": "Alice",
+      "description": "产品经理"
+    },
+    {
+      "title": "Bob",
+      "description": "工程师"
+    }
+  ],
+  "item": {
+    "type": "container",
+    "direction": "column",
+    "gap": "xs",
+    "body": [
+      {
+        "type": "text",
+        "text": "${item.title}"
+      },
+      {
+        "type": "text",
+        "text": "${item.description}"
+      }
+    ]
+  },
+  "empty": "暂无成员"
+}

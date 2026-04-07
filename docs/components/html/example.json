@@ -1,0 +1,5 @@
+{
+  "type": "html",
+  "content": "<strong>系统运行正常</strong>",
+  "sanitize": true
+}

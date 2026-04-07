@@ -1,0 +1,25 @@
+{
+  "type": "dialog",
+  "title": "编辑资料",
+  "defaultOpen": false,
+  "size": "lg",
+  "showCloseButton": true,
+  "body": [
+    {
+      "type": "text",
+      "text": "这里是对话框主体内容。"
+    }
+  ],
+  "actions": [
+    {
+      "type": "button",
+      "label": "关闭",
+      "variant": "ghost"
+    },
+    {
+      "type": "button",
+      "label": "保存",
+      "variant": "default"
+    }
+  ]
+}

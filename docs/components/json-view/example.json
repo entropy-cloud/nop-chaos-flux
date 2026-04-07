@@ -1,0 +1,13 @@
+{
+  "type": "json-view",
+  "value": {
+    "id": "u-1001",
+    "name": "Alice",
+    "roles": [
+      "admin",
+      "editor"
+    ]
+  },
+  "collapsed": 1,
+  "showCopy": true
+}

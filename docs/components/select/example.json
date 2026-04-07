@@ -1,0 +1,16 @@
+{
+  "type": "select",
+  "name": "status",
+  "label": "状态",
+  "placeholder": "请选择状态",
+  "options": [
+    {
+      "label": "启用",
+      "value": "active"
+    },
+    {
+      "label": "停用",
+      "value": "inactive"
+    }
+  ]
+}

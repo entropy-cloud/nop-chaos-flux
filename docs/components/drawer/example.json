@@ -1,0 +1,20 @@
+{
+  "type": "drawer",
+  "title": "侧边详情",
+  "defaultOpen": false,
+  "side": "right",
+  "size": "md",
+  "body": [
+    {
+      "type": "text",
+      "text": "这里是抽屉主体内容。"
+    }
+  ],
+  "actions": [
+    {
+      "type": "button",
+      "label": "关闭",
+      "variant": "ghost"
+    }
+  ]
+}

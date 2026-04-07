@@ -1,0 +1,17 @@
+{
+  "type": "card",
+  "title": "项目概览",
+  "body": [
+    {
+      "type": "text",
+      "text": "这是卡片正文区域。"
+    }
+  ],
+  "actions": [
+    {
+      "type": "button",
+      "label": "查看详情",
+      "variant": "ghost"
+    }
+  ]
+}

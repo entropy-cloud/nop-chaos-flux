@@ -1,0 +1,8 @@
+{
+  "type": "input-password",
+  "name": "password",
+  "label": "密码",
+  "placeholder": "请输入密码",
+  "required": true,
+  "minLength": 8
+}

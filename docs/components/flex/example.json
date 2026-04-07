@@ -1,0 +1,18 @@
+{
+  "type": "flex",
+  "direction": "row",
+  "justify": "between",
+  "align": "center",
+  "gap": "md",
+  "body": [
+    {
+      "type": "text",
+      "text": "左侧说明"
+    },
+    {
+      "type": "button",
+      "label": "右侧操作",
+      "variant": "ghost"
+    }
+  ]
+}

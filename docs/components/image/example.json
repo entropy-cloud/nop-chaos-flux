@@ -1,0 +1,8 @@
+{
+  "type": "image",
+  "src": "https://example.com/assets/cover.png",
+  "alt": "封面图",
+  "width": 320,
+  "height": 180,
+  "preview": true
+}

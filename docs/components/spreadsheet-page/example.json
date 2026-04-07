@@ -1,0 +1,56 @@
+{
+  "type": "spreadsheet-page",
+  "title": "电子表格编辑器",
+  "readonly": false,
+  "document": {
+    "id": "sheet-demo",
+    "kind": "spreadsheet",
+    "name": "销售报表",
+    "version": "1.0.0",
+    "workbook": {
+      "sheets": [
+        {
+          "id": "sheet-1",
+          "name": "Sheet1",
+          "order": 0,
+          "cells": {
+            "A1": {
+              "address": "A1",
+              "row": 0,
+              "col": 0,
+              "value": "地区"
+            },
+            "B1": {
+              "address": "B1",
+              "row": 0,
+              "col": 1,
+              "value": "销售额"
+            },
+            "A2": {
+              "address": "A2",
+              "row": 1,
+              "col": 0,
+              "value": "华东"
+            },
+            "B2": {
+              "address": "B2",
+              "row": 1,
+              "col": 1,
+              "value": 128000
+            }
+          }
+        }
+      ]
+    }
+  },
+  "config": {
+    "defaultRowHeight": 24,
+    "defaultColumnWidth": 96
+  },
+  "toolbar": [
+    {
+      "type": "text",
+      "text": "电子表格工具栏"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "type": "dynamic-renderer",
+  "schemaApi": {
+    "url": "/api/widgets/profile-card"
+  },
+  "body": [
+    {
+      "type": "text",
+      "text": "${dynamicMessage}"
+    }
+  ]
+}

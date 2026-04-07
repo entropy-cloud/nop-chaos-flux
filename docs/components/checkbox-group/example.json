@@ -1,0 +1,19 @@
+{
+  "type": "checkbox-group",
+  "name": "channels",
+  "label": "通知渠道",
+  "options": [
+    {
+      "label": "邮件",
+      "value": "email"
+    },
+    {
+      "label": "短信",
+      "value": "sms"
+    },
+    {
+      "label": "站内信",
+      "value": "inbox"
+    }
+  ]
+}

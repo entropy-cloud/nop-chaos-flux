@@ -1,0 +1,8 @@
+{
+  "type": "textarea",
+  "name": "summary",
+  "label": "摘要",
+  "placeholder": "请输入摘要",
+  "rows": 4,
+  "maxLength": 200
+}

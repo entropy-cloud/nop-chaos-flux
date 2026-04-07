@@ -1,0 +1,19 @@
+{
+  "type": "radio-group",
+  "name": "priority",
+  "label": "优先级",
+  "options": [
+    {
+      "label": "高",
+      "value": "high"
+    },
+    {
+      "label": "中",
+      "value": "medium"
+    },
+    {
+      "label": "低",
+      "value": "low"
+    }
+  ]
+}

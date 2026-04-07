@@ -1,0 +1,15 @@
+{
+  "type": "data-source",
+  "name": "jobStatus",
+  "api": {
+    "url": "/api/job/${jobId}/status",
+    "includeScope": [
+      "jobId"
+    ],
+    "params": {
+      "verbose": true
+    }
+  },
+  "interval": 3000,
+  "stopWhen": "${jobStatus.complete}"
+}

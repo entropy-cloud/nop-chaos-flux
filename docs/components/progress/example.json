@@ -1,0 +1,7 @@
+{
+  "type": "progress",
+  "value": 72,
+  "max": 100,
+  "label": "发布进度",
+  "showValue": true
+}

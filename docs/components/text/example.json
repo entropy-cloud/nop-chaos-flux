@@ -1,0 +1,5 @@
+{
+  "type": "text",
+  "tag": "p",
+  "text": "你好，${currentUser.name}。"
+}

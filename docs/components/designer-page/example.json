@@ -1,0 +1,129 @@
+{
+  "type": "designer-page",
+  "document": {
+    "id": "flow-101",
+    "kind": "workflow",
+    "name": "审批流程",
+    "version": "1.0.0",
+    "nodes": [
+      {
+        "id": "start-1",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 160
+        },
+        "data": {
+          "label": "开始"
+        }
+      },
+      {
+        "id": "task-1",
+        "type": "task",
+        "position": {
+          "x": 280,
+          "y": 160
+        },
+        "data": {
+          "label": "审批"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1",
+        "type": "default",
+        "source": "start-1",
+        "target": "task-1",
+        "data": {}
+      }
+    ]
+  },
+  "config": {
+    "version": "1.0.0",
+    "kind": "workflow",
+    "nodeTypes": [
+      {
+        "id": "start",
+        "label": "开始",
+        "body": [
+          {
+            "type": "text",
+            "text": "开始节点"
+          }
+        ],
+        "ports": [
+          {
+            "id": "out",
+            "direction": "output",
+            "position": "right"
+          }
+        ]
+      },
+      {
+        "id": "task",
+        "label": "任务",
+        "body": [
+          {
+            "type": "text",
+            "text": "任务节点"
+          }
+        ],
+        "ports": [
+          {
+            "id": "in",
+            "direction": "input",
+            "position": "left"
+          },
+          {
+            "id": "out",
+            "direction": "output",
+            "position": "right"
+          }
+        ]
+      }
+    ],
+    "edgeTypes": [
+      {
+        "id": "default",
+        "label": "默认连线"
+      }
+    ],
+    "palette": {
+      "groups": [
+        {
+          "id": "basic",
+          "label": "基础节点",
+          "nodeTypes": [
+            "start",
+            "task"
+          ],
+          "expanded": true
+        }
+      ]
+    },
+    "features": {
+      "undo": true,
+      "redo": true,
+      "clipboard": true,
+      "shortcuts": true
+    }
+  },
+  "toolbar": [
+    {
+      "type": "button",
+      "label": "保存",
+      "variant": "default",
+      "onClick": {
+        "action": "designer:save"
+      }
+    }
+  ],
+  "inspector": [
+    {
+      "type": "designer-field",
+      "label": "节点名称",
+      "fieldType": "text"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "type": "input-email",
+  "name": "email",
+  "label": "邮箱",
+  "placeholder": "you@example.com",
+  "required": true
+}

@@ -1,0 +1,9 @@
+{
+  "type": "switch",
+  "name": "enabled",
+  "label": "启用状态",
+  "option": {
+    "onLabel": "开启",
+    "offLabel": "关闭"
+  }
+}

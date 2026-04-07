@@ -1,0 +1,37 @@
+{
+  "type": "form",
+  "id": "profile-form",
+  "data": {
+    "fullName": "Alice",
+    "email": "alice@example.com"
+  },
+  "body": [
+    {
+      "type": "input-text",
+      "name": "fullName",
+      "label": "姓名",
+      "required": true
+    },
+    {
+      "type": "input-email",
+      "name": "email",
+      "label": "邮箱",
+      "required": true
+    }
+  ],
+  "actions": [
+    {
+      "type": "button",
+      "label": "提交",
+      "variant": "default",
+      "onClick": {
+        "action": "submitForm",
+        "formId": "profile-form",
+        "api": {
+          "method": "post",
+          "url": "/api/profile"
+        }
+      }
+    }
+  ]
+}

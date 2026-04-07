@@ -1,0 +1,17 @@
+{
+  "type": "reaction",
+  "watch": "currentUser.role",
+  "when": "${currentUser.role === 'admin'}",
+  "immediate": true,
+  "once": true,
+  "actions": {
+    "action": "openDialog",
+    "dialog": {
+      "title": "管理员提示",
+      "body": {
+        "type": "text",
+        "text": "当前用户具备管理员权限。"
+      }
+    }
+  }
+}

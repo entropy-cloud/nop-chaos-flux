@@ -1,0 +1,8 @@
+{
+  "type": "report-inspector-shell",
+  "title": "属性面板",
+  "emptyLabel": "暂无属性配置",
+  "noSelectionLabel": "请选择一个工作表对象",
+  "saveLabel": "保存",
+  "errorLabel": "保存失败"
+}

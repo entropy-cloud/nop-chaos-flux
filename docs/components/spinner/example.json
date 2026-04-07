@@ -1,0 +1,6 @@
+{
+  "type": "spinner",
+  "label": "正在加载数据",
+  "size": "md",
+  "visible": true
+}

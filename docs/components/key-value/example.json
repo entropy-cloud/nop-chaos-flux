@@ -1,0 +1,7 @@
+{
+  "type": "key-value",
+  "name": "headers",
+  "label": "请求头",
+  "addLabel": "新增请求头",
+  "uniqueKeys": true
+}

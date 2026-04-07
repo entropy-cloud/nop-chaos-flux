@@ -1,0 +1,26 @@
+{
+  "type": "page",
+  "title": "用户详情",
+  "body": [
+    {
+      "type": "text",
+      "tag": "h2",
+      "text": "用户资料"
+    },
+    {
+      "type": "container",
+      "direction": "column",
+      "gap": "md",
+      "body": [
+        {
+          "type": "text",
+          "text": "姓名：${user.name}"
+        },
+        {
+          "type": "text",
+          "text": "邮箱：${user.email}"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "type": "link",
+  "label": "查看详情",
+  "href": "/users/${user.id}",
+  "target": "_self"
+}

@@ -1,0 +1,19 @@
+{
+  "type": "report-toolbar",
+  "itemsOverride": [
+    {
+      "type": "title",
+      "text": "报表设计器"
+    },
+    {
+      "type": "spacer"
+    },
+    {
+      "type": "button",
+      "id": "save",
+      "label": "保存",
+      "action": "report-designer:save",
+      "variant": "primary"
+    }
+  ]
+}

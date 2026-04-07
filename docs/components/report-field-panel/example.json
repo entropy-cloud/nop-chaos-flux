@@ -1,0 +1,7 @@
+{
+  "type": "report-field-panel",
+  "title": "字段源",
+  "showFieldSourceHeader": true,
+  "dragEnabled": true,
+  "emptyLabel": "暂无字段源"
+}
