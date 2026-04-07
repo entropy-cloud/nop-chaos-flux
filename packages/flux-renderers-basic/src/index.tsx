@@ -59,7 +59,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     defaultSchema: { type: 'text', text: 'Text' },
     component: TextRenderer,
     fields: [
-      { key: 'text', kind: 'prop' },
+      { key: 'text', kind: 'prop', allowSource: true },
       { key: 'body', kind: 'prop' }
     ]
   },

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type { ApiObject, BaseSchema, DynamicRendererSchema, RendererComponentProps } from '@nop-chaos/flux-core';
+import type { BaseSchema, DynamicRendererSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRendererEnv, useRendererRuntime } from '@nop-chaos/flux-react';
 import { executeApiObject } from '@nop-chaos/flux-runtime';
 import { classNames } from './utils';
@@ -33,7 +33,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     const loadSchema = async () => {
       try {
         const scope = props.helpers.createScope({});
-        const result = await executeApiObject(schemaApi as ApiObject, scope, env, runtime.expressionCompiler);
+        const result = await executeApiObject(schemaApi as DynamicRendererSchema['schemaApi'], scope, env, runtime.expressionCompiler);
 
         if (!mountedRef.current) return;
 

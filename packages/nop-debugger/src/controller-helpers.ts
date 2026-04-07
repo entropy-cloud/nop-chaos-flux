@@ -1,4 +1,4 @@
-import type { ActionResult, ApiObject, ApiResponse, CompiledSchemaNode, ScopeRef } from '@nop-chaos/flux-core';
+import type { ActionResult, ExecutableApiRequest, ApiResponse, CompiledSchemaNode, ScopeRef } from '@nop-chaos/flux-core';
 import type { NopDebugEventNetworkSummary, NopDebuggerWindowConfig, NopScopeChainEntry } from './types';
 
 const DEFAULT_POSITION = { x: 24, y: 24 };
@@ -85,7 +85,7 @@ export function formatActionResult(result: ActionResult | undefined) {
   return result.ok ? 'ok' : 'failed';
 }
 
-export function summarizeApi(api: ApiObject) {
+export function summarizeApi(api: ExecutableApiRequest) {
   return `${String(api.method ?? 'get').toUpperCase()} ${api.url}`;
 }
 
@@ -110,7 +110,7 @@ export function summarizeValueShape(value: unknown) {
   };
 }
 
-export function createRequestKey(api: ApiObject, nodeId?: string, path?: string) {
+export function createRequestKey(api: ExecutableApiRequest, nodeId?: string, path?: string) {
   return `${String(api.method ?? 'get').toUpperCase()} ${api.url} | ${nodeId ?? 'n/a'} | ${path ?? 'n/a'}`;
 }
 
@@ -147,7 +147,7 @@ export function buildScopeChain(scope: ScopeRef | undefined): NopScopeChainEntry
 }
 
 export function buildNetworkSummary(input: {
-  api: ApiObject;
+  api: ExecutableApiRequest;
   response?: ApiResponse<unknown>;
   aborted?: boolean;
 }): NopDebugEventNetworkSummary {

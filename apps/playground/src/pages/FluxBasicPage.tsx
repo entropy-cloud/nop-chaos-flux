@@ -2,7 +2,7 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
-import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiRequestContext, ExecutableApiRequest, RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
@@ -97,7 +97,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
 
   const env = useMemo<RendererEnv>(
     () => ({
-      async fetcher<T>(api: ApiObject, ctx: ApiRequestContext) {
+      async fetcher<T>(api: ExecutableApiRequest, ctx: ApiRequestContext) {
         if (api.url === '/api/search') {
           await delay(700, ctx.signal);
 

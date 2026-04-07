@@ -183,7 +183,7 @@
               "label": "Open Preview Dialog",
               "visible": "${currentUser.name === \"Architect\"}",
               "onClick": {
-                "action": "dialog",
+                "action": "openDialog",
                 "dialog": {
                   "title": "Form Preview",
                   "body": {
@@ -370,7 +370,7 @@
                   "type": "button",
                   "label": "Inspect",
                   "onClick": {
-                    "action": "dialog",
+                    "action": "openDialog",
                     "dialog": {
                       "title": "User Details",
                       "body": {

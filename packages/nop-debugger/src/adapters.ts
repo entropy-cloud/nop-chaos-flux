@@ -1,8 +1,8 @@
 import type {
   ActionContext,
-  ApiObject,
   ApiRequestContext,
   ApiResponse,
+  ExecutableApiRequest,
   RendererEnv,
   RendererMonitor,
   RendererPlugin,
@@ -190,7 +190,7 @@ export function decorateDebuggerEnv(input: {
     }
   };
 
-  const decoratedFetcher = async <T,>(api: ApiObject, ctx: ApiRequestContext): Promise<ApiResponse<T>> => {
+  const decoratedFetcher = async <T,>(api: ExecutableApiRequest, ctx: ApiRequestContext): Promise<ApiResponse<T>> => {
     const requestKey = createRequestKey(api);
     const startedAt = Date.now();
     const requestInstanceId = ctx.requestInstanceId ?? input.nextRequestInstanceId();
