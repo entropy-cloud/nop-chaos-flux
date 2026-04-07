@@ -1,4 +1,12 @@
-import type { ApiObject, BaseSchema } from '@nop-chaos/flux-core';
+import type { ApiSchema, BaseSchema, SourceSchema } from '@nop-chaos/flux-core';
+
+export interface SelectOptionSchema {
+  [key: string]: import('@nop-chaos/flux-core').SchemaValue;
+  label: string;
+  value: string;
+}
+
+export type SelectOptionsValue = SelectOptionSchema[] | SourceSchema;
 
 export interface InputSchema extends BaseSchema {
   name?: string;
@@ -8,7 +16,7 @@ export interface InputSchema extends BaseSchema {
   maxLength?: number;
   pattern?: string;
   validate?: {
-    api?: ApiObject;
+    api?: ApiSchema;
     debounce?: number;
     message?: string;
   };
@@ -22,7 +30,7 @@ export interface FormSchema extends BaseSchema {
 }
 
 export interface SelectSchema extends InputSchema {
-  options?: Array<{ label: string; value: string }>;
+  options?: SelectOptionsValue;
 }
 
 export interface TextareaSchema extends InputSchema {
@@ -30,11 +38,11 @@ export interface TextareaSchema extends InputSchema {
 }
 
 export interface RadioGroupSchema extends InputSchema {
-  options?: Array<{ label: string; value: string }>;
+  options?: SelectOptionsValue;
 }
 
 export interface CheckboxGroupSchema extends InputSchema {
-  options?: Array<{ label: string; value: string }>;
+  options?: SelectOptionsValue;
 }
 
 export interface CheckboxSchema extends InputSchema {
