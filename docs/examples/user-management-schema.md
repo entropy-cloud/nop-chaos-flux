@@ -7,7 +7,7 @@ This example is intentionally small but complete.
 - each important capability appears once
 - similar dialogs and actions are not repeated
 - `closeDialog` uses the default nearest-dialog behavior
-- page data updates rely on current `ajax` plus `dataPath` semantics instead of outdated `setValue` assumptions
+- page data updates rely on current `ajax` plus `dataPath` semantics instead of outdated `setValue` assumptions (note: `dataPath` here is `ActionSchema.dataPath` for ajax action result targeting, not `DataSourceSchema.dataPath` for Resource publication)
 
 Covered capabilities:
 
@@ -17,7 +17,7 @@ Covered capabilities:
 - search form
 - `ajax`
 - `requestAdaptor` and `responseAdaptor`
-- `dataPath`
+- `dataPath` (ajax action result targeting)
 - `openDialog`
 - `submitForm`
 - `closeDialog`
@@ -230,5 +230,5 @@ Covered capabilities:
 
 - This example demonstrates the current preferred authoring direction, not every historical AMIS-compatible variation.
 - Page-level values such as `currentUser`, `keyword`, `page`, `perPage`, and `searching` are assumed to come from the host application's root render data rather than from a page-local schema `data` field.
-- The search flow uses one `ajax` action with `dataPath` to update page data. That matches the current runtime more closely than chaining `setValue` to mutate page state from inside a form-local action context.
+- The search flow uses one `ajax` action with `dataPath` to update page data. That matches the current runtime more closely than chaining `setValue` to mutate page state from inside a form-local action context. Note: this `dataPath` is `ActionSchema.dataPath` for action result targeting, not the `DataSourceSchema` publication path (which should use `name` per the normative Resource publication contract in `docs/architecture/frontend-programming-model.md`).
 - If schema semantics change, update `docs/architecture/flux-core.md` first, then update this example.

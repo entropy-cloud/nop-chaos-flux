@@ -78,6 +78,37 @@ This executable shape is not the same concept as the declarative `ApiSchema`:
 
 `PreparedApiRequest` remains the request-runtime internal artifact that carries the final executable request plus preparation metadata such as `finalUrl`, `data`, and `params`.
 
+### Fetcher Boundary
+
+`env.fetcher(...)` is the host transport boundary.
+
+Directionally:
+
+```typescript
+type ApiFetcher = <T = unknown>(api: ExecutableApiRequest, ctx: ApiRequestContext) => Promise<ApiResponse<T>>;
+
+interface ApiResponse<T = unknown> {
+  ok: boolean;
+  status: number;
+  data: T;
+  headers?: Record<string, string>;
+  raw?: unknown;
+}
+```
+
+Normative rule:
+
+- `ApiResponse` is only the fetcher boundary result
+- runtime callers should not consume non-OK `ApiResponse` values as normal business results
+- `executeApiSchema(...)` converts non-OK responses into thrown errors
+- therefore runtime and renderer consumers observe successful adapted `data` or an exception
+
+Recommended host behavior:
+
+- either return `ok: true` responses for success
+- or throw an `Error` for failures
+- returning `ok: false` is still tolerated at the fetcher boundary, but request runtime will immediately convert it into a thrown error before the result reaches action/source/form consumers
+
 ### includeScope
 
 `includeScope` controls automatic scope-variable injection into request data.
@@ -174,7 +205,8 @@ The required flow is:
 4. Apply `requestAdaptor`
 5. Execute through runtime-managed fetch / abort / dedup / cache coordination
 6. Apply `responseAdaptor`
-7. Return the adapted payload to the caller
+7. If the fetcher result is non-OK, throw an error
+8. Return the adapted payload to the caller
 
 Current baseline note:
 
@@ -262,6 +294,8 @@ This is the key conceptual shift:
 ```typescript
 interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
+  name?: string;
+  mergeToScope?: boolean;
   statusPath?: string;
   dataPath?: string;
   initialData?: SchemaValue;
@@ -280,43 +314,53 @@ Rules:
 
 - `data-source` extends source-style action execution with named publication and scheduling controls
 - `action`, `args`, `api`, `control`, `then`, `onError`, and `parallel` follow the same execution semantics used by action-backed sources
-- explicit publication binding is mandatory through `name` or `dataPath`
-- `name` is the preferred author-visible identity for refresh/targeting
-- `dataPath`, when present, overrides the published binding path
+- `name` is the normative author-visible identity and default publication path
+- `mergeToScope: true` is the only narrowed special publish extension beyond the named publication path
+- legacy `dataPath` publication override is compatibility-only and should not be introduced in new schema
 - `statusPath`, when present, is the readonly status-summary path for loading/error/stale state
 - `interval`, `stopWhen`, and publication controls remain `data-source`-specific extensions above plain `source`
 
 ### Binding Target
 
-`name` is the preferred identity and default publication target for a source value.
+`name` is the normative author-visible identity and default publication path.
 
-`dataPath`, when present, overrides the published binding path.
+The normative publication contract is:
 
-The authoritative publication contract is therefore:
-
-- `name`, when present and `dataPath` is absent
-- `dataPath`, when present
+- `name` is the authoritative default publication path
+- `mergeToScope: true`, when present, adds an explicit shallow top-level object merge into the current scope
+- legacy `dataPath`, when present, overrides the published binding path only as a compatibility contract during convergence
 
 Example:
 
 ```text
-scope[publishedPath] = sourceValue
+scope[name] = sourceValue
 ```
 
-Example publication combinations:
+Publication combinations:
 
 | Configuration | Runtime target identity | Published path |
 | --- | --- | --- |
 | `name` only | `name` | `name` |
-| `name` + `dataPath` | `name` | `dataPath` |
+| `name` + `mergeToScope: true` | `name` | `name` plus shallow object-field merge into current scope |
+| legacy `name` + `dataPath` | `name` | `dataPath` |
 | legacy `id` + `dataPath` | `id` | `dataPath` |
-| anonymous `dataPath` only | none | `dataPath` |
+| anonymous legacy `dataPath` only | none | `dataPath` |
 
-For API-backed sources, current code may still support older merge-into-scope behavior when no explicit target is declared and the response is an object. That behavior is compatibility-oriented and outside the architecture baseline described by `docs/architecture/frontend-programming-model-v3.md`. The normative design direction is explicit binding because it preserves the mental model of:
+The legacy AMIS-style behavior of publishing without an explicit binding target by merging into the current scope is non-normative and rejected because it causes namespace pollution, hides ownership, and makes collisions and debugging ambiguous. The only narrowed exception is explicit `mergeToScope: true` on a named `Resource`.
 
-```text
-one data-source = one logical derived value
-```
+`mergeToScope: true` rules:
+
+1. `name` remains the authoritative identity and default publication path
+2. if the published value is a plain object, runtime additionally shallow-merges its top-level fields into the current lexical scope
+3. the merged fields are derived projections from the same logical value; they are not a second independently writable business root
+4. collisions with reserved projection names, active `Resource` targets, or ordinary scope data in the same owning lexical scope are invalid
+5. if the published value is not object-like, `mergeToScope: true` is invalid and publication fails diagnostically
+
+Current runtime compatibility note:
+
+- `refreshSource` and source-registry lookup are still keyed by runtime `id` in the current repo
+- formula-backed publication may still fall back to `dataPath ?? id` in some runtime paths
+- therefore `name`-first identity/publication should be read as the preferred convergence direction, not as a statement that current runtime targeting has already moved away from `id` or fully stopped accepting legacy `dataPath`
 
 `initialData` seeds the source target before the first real evaluation or fetch begins.
 
@@ -445,7 +489,7 @@ The source abstraction is responsible for value production, not for built-in loa
     },
     {
       "type": "data-source",
-      "dataPath": "total",
+      "name": "total",
       "formula": "${Number(price || 0) * Number(qty || 0)}"
     },
     {
@@ -464,7 +508,7 @@ The source abstraction is responsible for value production, not for built-in loa
   "body": [
     {
       "type": "data-source",
-      "dataPath": "tasks",
+      "name": "tasks",
       "api": {
         "url": "/api/tasks",
         "includeScope": ["projectId"],
@@ -487,7 +531,7 @@ The source abstraction is responsible for value production, not for built-in loa
   "body": [
     {
       "type": "data-source",
-      "dataPath": "status",
+      "name": "status",
       "api": { "url": "/api/job/${jobId}/status" },
       "interval": 3000,
       "stopWhen": "${status.complete}"
@@ -693,20 +737,21 @@ Current code is not yet fully converged to the target model:
 - formula-backed sources are not yet unified under the same runtime source abstraction
 - source dependency tracking is not yet a full static-plus-dynamic invalidation system
 - some producer-specific details still remain narrower implementation work even though request execution now converges through `executeApiSchema(...)`
-- API-backed sources still allow legacy merge semantics when `dataPath` is omitted
+- API-backed sources still allow legacy merge semantics when neither `name` nor `dataPath` is declared; this is compatibility-oriented and non-normative
 - richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete
 
 ## dataPath vs ActionSchema.dataPath
 
 - `ActionSchema.dataPath` controls where an ajax action result is written in page data
-- `DataSourceSchema.dataPath` controls where a derived source value is published in the current scope
+- `DataSourceSchema.dataPath` controls where a derived source value is published in the current scope (legacy compatibility override; new schema should use `name`)
 
-These are related but distinct concepts.
+These are related but distinct concepts. `name` is the normative publication path for `DataSourceSchema`; `dataPath` on `DataSourceSchema` remains only as a compatibility override during convergence.
 
 `ApiSchema` remains request description only. The write target belongs to the consumer context: action result target or source binding target.
 
 ## Related Documents
 
+- `docs/architecture/frontend-programming-model.md` (normative Resource publication contract)
 - `docs/references/renderer-interfaces.md`
 - `docs/references/terminology.md`
 - `docs/architecture/flux-core.md`

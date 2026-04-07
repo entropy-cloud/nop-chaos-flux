@@ -219,7 +219,7 @@ Flux 的解决方案是：**职责拆分**。
         "url": "/api/user/${userId}",
         "includeScope": ["userId"]
       },
-      "dataPath": "user",
+      "name": "user",
       "interval": 3000,
       "stopWhen": "${user.loaded}"
     },
@@ -231,7 +231,7 @@ Flux 的解决方案是：**职责拆分**。
 }
 ```
 
-`data-source` 专门负责声明式数据获取。它是一个不直接渲染 UI 的副作用组件：负责根据 `api` 发起请求、按 `dataPath` 将结果写入当前作用域，并可选地通过 `interval` + `stopWhen` 轮询。它自身返回 `null`，因此 loading skeleton、空态或错误展示通常由同一作用域下的兄弟节点或宿主通知机制承担。
+`data-source` 专门负责声明式数据获取。它是一个不直接渲染 UI 的副作用组件：负责根据 `api` 发起请求、按 `name` 将结果写入当前作用域，并可选地通过 `interval` + `stopWhen` 轮询。`name` 是规范的发布路径标识；如果返回值为对象且需要将其顶层字段浅合并到当前作用域，可设置 `mergeToScope: true`。它自身返回 `null`，因此 loading skeleton、空态或错误展示通常由同一作用域下的兄弟节点或宿主通知机制承担。
 
 ```json
 {
