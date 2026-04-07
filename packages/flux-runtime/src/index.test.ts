@@ -4830,6 +4830,8 @@ describe('createRendererRuntime', () => {
     );
 
     expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as Error).message).toBe('boom');
     expect(page.store.getState().data.status).toBe('idle');
   });
 
@@ -4870,6 +4872,7 @@ describe('createRendererRuntime', () => {
     expect(result.ok).toBe(true);
     expect(page.store.getState().data.status).toBe('done');
   });
+
 
   it('runs then actions after a successful action', async () => {
     const runtime = createRendererRuntime({

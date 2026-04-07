@@ -401,6 +401,22 @@ export async function executeApiSchema(
   const response = options?.executor
     ? await options.executor(executableApi)
     : await env.fetcher(executableApi, { scope, env, signal: options?.signal });
+
+  if (!response.ok) {
+    const responseData = response.data;
+
+    if (
+      responseData &&
+      typeof responseData === 'object' &&
+      'message' in (responseData as Record<string, unknown>) &&
+      typeof (responseData as { message?: unknown }).message === 'string'
+    ) {
+      throw new Error((responseData as { message: string }).message);
+    }
+
+    throw new Error(`Request failed with status ${response.status}`);
+  }
+
   const adaptedData = applyResponseAdaptor(expressionCompiler, executableApi, resolvedApi, response.data, scope, env);
   return { data: adaptedData, ok: response.ok, status: response.status };
 }

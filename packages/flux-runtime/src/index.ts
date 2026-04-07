@@ -137,7 +137,7 @@ export function createRendererRuntime(input: {
       });
       const adaptedData = response.data;
 
-      if (response.ok && adaptedData && typeof adaptedData === 'object') {
+      if (adaptedData && typeof adaptedData === 'object') {
         const candidate = adaptedData as { valid?: boolean; message?: string };
 
         if (candidate.valid === false) {
@@ -151,10 +151,6 @@ export function createRendererRuntime(input: {
         if (candidate.valid === true) {
           return undefined;
         }
-      }
-
-      if (!response.ok) {
-        return createValidationError(field, compiledRule, rule.message ?? `${field.label ?? field.path} failed async validation`);
       }
 
       return undefined;
@@ -199,9 +195,9 @@ export function createRendererRuntime(input: {
         });
 
         return {
-          ok: response.ok,
+          ok: true,
           data: response.data,
-          error: response.ok ? undefined : response.data
+          error: undefined
         };
       }
     });
@@ -232,15 +228,15 @@ export function createRendererRuntime(input: {
       });
     }
 
-    if (action.dataPath && response.ok && ctx.page) {
+    if (action.dataPath && ctx.page) {
       const nextData = applyResponseDataPath(ctx.page.store.getState().data, action.dataPath, response.data);
       ctx.page.store.setData(nextData);
     }
 
     return {
-      ok: response.ok,
+      ok: true,
       data: response.data,
-      error: response.ok ? undefined : response.data
+      error: undefined
     };
   }
 
