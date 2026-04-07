@@ -253,9 +253,14 @@ interface DebuggerEvent {
 Target DOM inspect rule:
 
 - mounted inspectable nodes expose `data-cid`
-- `inspectByElement()` climbs to the nearest inspectable owner marker
+- `inspectByElement()` climbs to the nearest inspectable owner marker instead of requiring the clicked descendant itself to carry `data-cid`
 - `inspectByCid()` returns the live node inspect payload and includes its `locator`; registry/runtime inspect data is the primary mounted-state source, while DOM presence is supplemental metadata for tag/class correlation
 - virtualized or disposed nodes return explicit not-mounted diagnostics instead of guessing from stale DOM
+
+Target locator inspect rule:
+
+- `inspectNode(locator)` resolves through registry/runtime structural lookup first, not through DOM search
+- structurally valid but currently unmounted targets return explicit non-mounted diagnostics while preserving the requested `locator`
 
 Target lookup result rule:
 

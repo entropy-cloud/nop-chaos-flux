@@ -31,6 +31,25 @@ describe('controller inspector methods', () => {
     expect(result?.handleId).toBeUndefined();
   });
 
+  it('inspectByElement climbs to the nearest inspectable owner marker', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-closest-owner', enabled: true });
+    const owner = document.createElement('div');
+    owner.setAttribute('data-cid', '98');
+    owner.className = 'owner-node';
+    const child = document.createElement('span');
+    owner.appendChild(child);
+    document.body.appendChild(owner);
+
+    const result = ctrl.inspectByElement(child);
+
+    expect(result).toMatchObject({
+      cid: 98,
+      mounted: true,
+      tagName: 'div',
+      className: 'owner-node'
+    });
+  });
+
   it('inspectByCid requires setComponentRegistry to find elements', () => {
     const ctrl = createNopDebugger({ id: 'inspect-reg-required', enabled: true });
     const div = document.createElement('div');
@@ -215,6 +234,65 @@ describe('controller inspector methods', () => {
       }
     });
     expect(result[0]?.depth).toBeGreaterThan(0);
+  });
+
+  it('inspectNode resolves mounted handles through the registry locator path', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-node-by-locator', enabled: true });
+    const locator = {
+      runtimeId: 'runtime',
+      templateGraphId: 'page-root',
+      templateNodeId: 106
+    };
+    const mockHandle = {
+      id: 'handle-106',
+      name: 'locatorForm',
+      type: 'form',
+      _cid: 106,
+      _mounted: true,
+      _locator: locator
+    };
+    const mockRegistry = {
+      id: 'reg-1',
+      resolveTarget: () => ({
+        kind: 'resolved',
+        locator,
+        handle: mockHandle
+      }),
+      getHandleByCid: (cid: number) => (cid === 106 ? mockHandle : undefined)
+    };
+
+    ctrl.setComponentRegistry(mockRegistry as never);
+
+    expect(ctrl.inspectNode(locator)).toMatchObject({
+      cid: 106,
+      mounted: true,
+      handleId: 'handle-106',
+      locator
+    });
+  });
+
+  it('inspectNode returns explicit unmounted data when the locator is valid but not materialized', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-node-not-materialized', enabled: true });
+    const locator = {
+      runtimeId: 'runtime',
+      templateGraphId: 'page-root',
+      templateNodeId: 107
+    };
+    const mockRegistry = {
+      id: 'reg-1',
+      resolveTarget: () => ({
+        kind: 'notMaterialized',
+        locator
+      })
+    };
+
+    ctrl.setComponentRegistry(mockRegistry as never);
+
+    expect(ctrl.inspectNode(locator)).toMatchObject({
+      cid: -1,
+      mounted: false,
+      locator
+    });
   });
 
   it('inspectByCid exposes nodeInstance-backed node state summary when present in debug data', () => {

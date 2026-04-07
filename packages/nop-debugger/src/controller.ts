@@ -3,6 +3,7 @@ import type {
   ActionContext,
   ActionScope,
   ComponentHandleRegistry,
+  NodeLocator,
   RendererEnv,
   RendererPlugin
 } from '@nop-chaos/flux-core';
@@ -133,6 +134,10 @@ function buildInspectResult(
   return result;
 }
 
+function findInspectableOwner(element: HTMLElement): HTMLElement | null {
+  return element.closest('[data-cid]');
+}
+
 function compareOptionalText(left: string | undefined, right: string | undefined) {
   return (left ?? '').localeCompare(right ?? '');
 }
@@ -258,13 +263,66 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     return buildInspectResult(cid, handle, !!element || handle?._mounted !== false, (element as HTMLElement) ?? undefined, componentRegistry);
   };
 
+  const inspectNode = (locator: NodeLocator): NopComponentInspectResult | undefined => {
+    if (!componentRegistry) {
+      return undefined;
+    }
+
+    const resolution = componentRegistry.resolveTarget?.({ locator });
+
+    if (resolution?.kind === 'notFound') {
+      return undefined;
+    }
+
+    if (resolution?.kind === 'notMaterialized') {
+      return {
+        cid: -1,
+        mounted: false,
+        locator: resolution.locator
+      };
+    }
+
+    const handle = resolution?.kind === 'resolved'
+      ? resolution.handle ?? componentRegistry.resolveHandle?.(locator)
+      : componentRegistry.resolveHandle?.(locator);
+
+    if (!handle) {
+      return {
+        cid: -1,
+        mounted: false,
+        locator
+      };
+    }
+
+    if (typeof handle._cid === 'number') {
+      return inspectByCid(handle._cid) ?? {
+        cid: handle._cid,
+        mounted: handle._mounted !== false,
+        locator: handle._locator ?? locator,
+        handleId: handle.id,
+        handleName: handle.name,
+        handleType: handle.type
+      };
+    }
+
+    return {
+      cid: -1,
+      mounted: handle._mounted !== false,
+      locator: handle._locator ?? locator,
+      handleId: handle.id,
+      handleName: handle.name,
+      handleType: handle.type
+    };
+  };
+
   const inspectByElement = (element: HTMLElement): NopComponentInspectResult | undefined => {
-    const cidAttr = element.getAttribute('data-cid');
+    const owner = findInspectableOwner(element);
+    const cidAttr = owner?.getAttribute('data-cid');
     if (!cidAttr) return undefined;
     const cid = Number(cidAttr);
     if (!Number.isFinite(cid)) return undefined;
     const handle = componentRegistry?.getHandleByCid?.(cid);
-    return buildInspectResult(cid, handle, true, element, componentRegistry);
+    return buildInspectResult(cid, handle, true, owner ?? undefined, componentRegistry);
   };
 
   const getComponentTree = (): NopComponentTreeItem[] => {
@@ -402,6 +460,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     createDiagnosticReport: createReport,
     exportSession,
     waitForEvent,
+    inspectNode,
     clear() {
       store.clear();
     },
@@ -538,6 +597,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       }
     },
     getComponentTree,
+    inspectNode,
     inspectByCid,
     inspectByElement,
     evaluateNodeExpression

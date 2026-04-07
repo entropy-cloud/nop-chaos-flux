@@ -44,6 +44,7 @@ export function createAutomationApi(input: {
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
+  inspectNode(locator: import('@nop-chaos/flux-core').NodeLocator): NopComponentInspectResult | undefined;
   clear(): void;
   pause(): void;
   resume(): void;
@@ -79,6 +80,7 @@ export function createAutomationApi(input: {
     createDiagnosticReport: input.createDiagnosticReport,
     exportSession: input.exportSession,
     waitForEvent: input.waitForEvent,
+    inspectNode: input.inspectNode,
     clear: input.clear,
     pause: input.pause,
     resume: input.resume,
