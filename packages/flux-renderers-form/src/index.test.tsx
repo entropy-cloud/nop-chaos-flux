@@ -512,12 +512,7 @@ describe('formRendererDefinitions', () => {
           ...env,
           fetcher: async function <T>(api: ApiObject) {
             if (api.url === '/api/select-error') {
-              return {
-                ok: false,
-                status: 500,
-                data: undefined as T,
-                error: new Error('Select options failed')
-              };
+              throw new Error('Select options failed');
             }
 
             return {
@@ -531,7 +526,7 @@ describe('formRendererDefinitions', () => {
       />
     );
 
-    expect(await screen.findByText('Failed to load options.')).toBeTruthy();
+    expect(await screen.findByText('Select options failed')).toBeTruthy();
   });
 
   it('shows inline error text when source-backed radio-group options fail to load', async () => {
@@ -561,12 +556,7 @@ describe('formRendererDefinitions', () => {
           ...env,
           fetcher: async function <T>(api: ApiObject) {
             if (api.url === '/api/radio-error') {
-              return {
-                ok: false,
-                status: 500,
-                data: undefined as T,
-                error: new Error('Radio options failed')
-              };
+              throw new Error('Radio options failed');
             }
 
             return {
@@ -580,7 +570,7 @@ describe('formRendererDefinitions', () => {
       />
     );
 
-    expect(await screen.findByText('Failed to load options.')).toBeTruthy();
+    expect(await screen.findByText('Radio options failed')).toBeTruthy();
   });
 
   it('shows inline error text when source-backed checkbox-group options fail to load', async () => {
@@ -610,12 +600,7 @@ describe('formRendererDefinitions', () => {
           ...env,
           fetcher: async function <T>(api: ApiObject) {
             if (api.url === '/api/checkbox-error') {
-              return {
-                ok: false,
-                status: 500,
-                data: undefined as T,
-                error: new Error('Checkbox options failed')
-              };
+              throw new Error('Checkbox options failed');
             }
 
             return {
@@ -629,7 +614,7 @@ describe('formRendererDefinitions', () => {
       />
     );
 
-    expect(await screen.findByText('Failed to load options.')).toBeTruthy();
+    expect(await screen.findByText('Checkbox options failed')).toBeTruthy();
   });
 
   it('allows appending multiple characters in input-email fields', () => {
