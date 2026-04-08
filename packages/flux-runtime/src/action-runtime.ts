@@ -13,6 +13,7 @@ import type {
   RendererRuntime,
   ScopeRef
 } from '@nop-chaos/flux-core';
+import { getIn, parsePath } from '@nop-chaos/flux-core';
 import { isNamespacedAction } from './action-scope';
 import { withRetry, withTimeout } from './operation-control';
 import { cancelPendingDebounce, scheduleDebounce } from './utils/debounce';
@@ -101,6 +102,161 @@ function buildActionMonitorPayload(action: ActionSchema, ctx: ActionContext) {
   };
 }
 
+type ActionResultClass = 'success' | 'failure' | 'neutral';
+
+function classifyActionResult(result: ActionResult): ActionResultClass {
+  if (result.skipped) {
+    return 'neutral';
+  }
+
+  if (!result.ok || result.cancelled || result.timedOut) {
+    return 'failure';
+  }
+
+  return 'success';
+}
+
+function isFailureClass(result: ActionResult): boolean {
+  return classifyActionResult(result) === 'failure';
+}
+
+function getBindingValue(bindings: Record<string, unknown>, path: string): unknown {
+  const segments = parsePath(path);
+
+  if (segments.length === 0) {
+    return undefined;
+  }
+
+  const [head, ...rest] = segments;
+
+  if (!Object.prototype.hasOwnProperty.call(bindings, head)) {
+    return undefined;
+  }
+
+  const rootValue = bindings[head];
+  return rest.length === 0 ? rootValue : getIn(rootValue, rest.join('.'));
+}
+
+function hasBindingRoot(bindings: Record<string, unknown>, path: string): boolean {
+  const segments = parsePath(path);
+
+  return segments.length > 0 && Object.prototype.hasOwnProperty.call(bindings, segments[0]);
+}
+
+function hasBindingValue(bindings: Record<string, unknown>, path: string): boolean {
+  const segments = parsePath(path);
+
+  if (segments.length === 0) {
+    return false;
+  }
+
+  const [head, ...rest] = segments;
+
+  if (!Object.prototype.hasOwnProperty.call(bindings, head)) {
+    return false;
+  }
+
+  if (rest.length === 0) {
+    return true;
+  }
+
+  let current: unknown = bindings[head];
+
+  for (const segment of rest) {
+    if (current == null || typeof current !== 'object' || !(segment in current)) {
+      return false;
+    }
+
+    current = (current as Record<string, unknown>)[segment];
+  }
+
+  return true;
+}
+
+function withEvaluationBindings(scope: ScopeRef, bindings: Record<string, unknown> | undefined): ScopeRef {
+  if (!bindings || Object.keys(bindings).length === 0) {
+    return scope;
+  }
+
+  let materialized: Record<string, unknown> | undefined;
+
+  return {
+    id: scope.id,
+    path: scope.path,
+    parent: scope.parent,
+    store: scope.store,
+    get value() {
+      return this.read();
+    },
+    get(path) {
+      if (hasBindingRoot(bindings, path)) {
+        return getBindingValue(bindings, path);
+      }
+
+      return scope.get(path);
+    },
+    has(path) {
+      return hasBindingRoot(bindings, path)
+        ? hasBindingValue(bindings, path)
+        : scope.has(path);
+    },
+    readOwn() {
+      return scope.readOwn();
+    },
+    read() {
+      if (!materialized) {
+        materialized = {
+          ...scope.read(),
+          ...bindings
+        };
+      }
+
+      return materialized;
+    },
+    update(path, value) {
+      scope.update(path, value);
+    },
+    merge(data) {
+      scope.merge(data);
+    }
+  };
+}
+
+function getEvaluationScope(ctx: ActionContext): ScopeRef {
+  return withEvaluationBindings(ctx.scope, ctx.evaluationBindings);
+}
+
+function evaluateInActionContext<T = unknown>(
+  target: unknown,
+  ctx: ActionContext,
+  input: ActionDispatcherInput
+): T {
+  return input.evaluate<T>(target, getEvaluationScope(ctx));
+}
+
+function evaluateCompiledInActionContext<T = unknown>(
+  compiled: CompiledRuntimeValue<T>,
+  ctx: ActionContext,
+  input: ActionDispatcherInput
+): T {
+  return input.evaluateCompiled<T>(compiled, getEvaluationScope(ctx));
+}
+
+function createBranchEvaluationBindings(result: ActionResult, previousResult: ActionResult | undefined): Record<string, unknown> {
+  return {
+    result,
+    error: isFailureClass(result) ? result.error : undefined,
+    prevResult: previousResult
+  };
+}
+
+function mergeEvaluationBindings(
+  base: Record<string, unknown> | undefined,
+  next: Record<string, unknown>
+): Record<string, unknown> {
+  return base ? { ...base, ...next } : next;
+}
+
 const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
   'action',
   'targetId',
@@ -111,15 +267,19 @@ const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
   'dialogId',
   'api',
   'dialog',
+  'drawer',
   'dataPath',
   'value',
   'values',
   'when',
   'parallel',
+  'control',
+  'timeout',
   'retry',
   'debounce',
   'continueOnError',
   'then',
+  'onError',
   'args'
 ]);
 
@@ -176,7 +336,7 @@ function evaluateActionArgs(action: ActionSchema, ctx: ActionContext, input: Act
   }
 
   const compiled = getCompiledValue(payload, input.compileValue);
-  return input.evaluateCompiled<Record<string, unknown>>(compiled, ctx.scope);
+  return evaluateCompiledInActionContext<Record<string, unknown>>(compiled, ctx, input);
 }
 
 function normalizeActionResult(result: ActionResult | unknown): ActionResult {
@@ -218,7 +378,7 @@ function shouldRunActionWhen(action: ActionSchema, ctx: ActionContext, input: Ac
     return true;
   }
 
-  return Boolean(input.evaluate<boolean>(action.when, ctx.scope));
+  return Boolean(evaluateInActionContext<boolean>(action.when, ctx, input));
 }
 
 function resolveActionControl(action: ActionSchema): OperationControlConfig | undefined {
@@ -270,7 +430,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     switch (action.action) {
       case 'setValue': {
         const targetPath = action.componentPath ?? action.componentId ?? '';
-        const evaluated = action.value === undefined ? undefined : input.evaluate(action.value, ctx.scope);
+        const evaluated = action.value === undefined ? undefined : evaluateInActionContext(action.value, ctx, input);
 
         if (ctx.form && action.formId && ctx.form.id === action.formId) {
           ctx.form.setValue(targetPath, evaluated);
@@ -282,7 +442,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       }
       case 'setValues': {
         const evaluatedValues = action.values
-          ? input.evaluate<Record<string, unknown>>(action.values, ctx.scope)
+          ? evaluateInActionContext<Record<string, unknown>>(action.values, ctx, input)
           : {};
 
         if (Object.keys(evaluatedValues).length === 0) {
@@ -310,7 +470,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         }
 
         const api = action.api
-          ? input.evaluateCompiled<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx.scope)
+          ? evaluateCompiledInActionContext<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx, input)
           : undefined;
 
         if (!api) {
@@ -370,7 +530,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       case 'closeDialog': {
         if (ctx.page) {
           if (action.dialogId) {
-            ctx.page.closeDialog(String(input.evaluate(action.dialogId, ctx.scope)));
+            ctx.page.closeDialog(String(evaluateInActionContext(action.dialogId, ctx, input)));
           } else {
             ctx.page.closeDialog(ctx.dialogId);
           }
@@ -419,7 +579,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         }
 
         const api = action.api
-          ? input.evaluateCompiled<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx.scope)
+          ? evaluateCompiledInActionContext<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx, input)
           : undefined;
 
         if (api) {
@@ -622,7 +782,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     );
 
     return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
-      ok: results.every((result) => result.ok || result.skipped || result.cancelled),
+      ok: results.every((result) => classifyActionResult(result) !== 'failure'),
       data: results,
       results
     });
@@ -769,7 +929,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       const actionContext = {
         ...ctx,
         interactionId: ctx.interactionId ?? createInteractionId(),
-        prevResult: previous
+        prevResult: previous,
+        evaluationBindings: ctx.evaluationBindings
       };
       const control = resolveActionControl(current);
       const normalizedAction = control
@@ -781,20 +942,21 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
           }
         : current;
       const result = await runActionWithDebounce(normalizedAction, actionContext);
+      const resultClass = classifyActionResult(result);
 
       previous = result;
 
-      if (!result.ok && !normalizedAction.continueOnError) {
-        return result;
-      }
-
-      if (normalizedAction.then) {
+      if (resultClass === 'success' && normalizedAction.then) {
         previous = await dispatch(normalizedAction.then, {
           ...ctx,
           interactionId: actionContext.interactionId,
-          prevResult: result
+          prevResult: result,
+          evaluationBindings: mergeEvaluationBindings(
+            ctx.evaluationBindings,
+            createBranchEvaluationBindings(result, actionContext.prevResult)
+          )
         });
-      } else if (!result.ok && normalizedAction.onError) {
+      } else if (resultClass === 'failure' && normalizedAction.onError) {
         previous = await dispatch(normalizedAction.onError, {
           ...ctx,
           interactionId: actionContext.interactionId,
@@ -803,9 +965,17 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
             ...(ctx.event && typeof ctx.event === 'object' ? ctx.event as Record<string, unknown> : {}),
             result,
             error: result.error,
-            prevResult: ctx.prevResult
-          }
+            prevResult: actionContext.prevResult
+          },
+          evaluationBindings: mergeEvaluationBindings(
+            ctx.evaluationBindings,
+            createBranchEvaluationBindings(result, actionContext.prevResult)
+          )
         });
+      }
+
+      if (resultClass === 'failure' && !normalizedAction.continueOnError) {
+        return result;
       }
     }
 

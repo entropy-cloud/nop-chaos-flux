@@ -41,7 +41,8 @@ export function mergeActionContext(base: {
     page: partial?.page ?? base.page,
     event: partial?.event,
     dialogId: partial?.dialogId,
-    prevResult: partial?.prevResult
+    prevResult: partial?.prevResult,
+    evaluationBindings: partial?.evaluationBindings
   };
 }
 

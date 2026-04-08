@@ -134,6 +134,12 @@ export function registerReaction(input: {
         prev,
         changed,
         changedPaths: changePaths
+      },
+      evaluationBindings: {
+        value: nextValue,
+        prev,
+        changed,
+        changedPaths: changePaths
       }
     });
 

@@ -22,6 +22,9 @@ export interface ActionSchema extends SchemaObject {
   values?: Record<string, SchemaValue>;
   args?: Record<string, SchemaValue>;
   control?: OperationControlConfig;
+  timeout?: number;
+  retry?: OperationControlConfig['retry'];
+  debounce?: number;
   when?: string;
   parallel?: ActionSchema[];
   continueOnError?: boolean;
@@ -55,6 +58,7 @@ export interface ActionContext {
   page?: PageRuntime;
   dialogId?: string;
   prevResult?: ActionResult;
+  evaluationBindings?: Record<string, unknown>;
 }
 
 export interface ActionNamespaceProvider {

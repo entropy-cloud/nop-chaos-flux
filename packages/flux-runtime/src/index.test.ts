@@ -2424,6 +2424,46 @@ describe('createRendererRuntime', () => {
     }
   });
 
+  it('exposes reaction value bindings to action evaluation', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ count: 1 });
+
+    const registration = runtime.registerReaction({
+      id: 'reaction-bindings',
+      scope: page.scope,
+      schema: {
+        type: 'reaction',
+        watch: '${count}',
+        actions: {
+          action: 'setValue',
+          componentPath: 'message',
+          value: '${value}:${prev}:${changed}:${changedPaths[0]}'
+        }
+      },
+      dispatch: (action, ctx) => runtime.dispatch(action, {
+        runtime,
+        scope: ctx?.scope ?? page.scope,
+        page,
+        event: ctx?.event,
+        evaluationBindings: ctx?.evaluationBindings
+      })
+    });
+
+    try {
+      page.scope.update('count', 2);
+
+      await vi.waitFor(() => {
+        expect(page.scope.get('message')).toBe('2:1:true:count');
+      });
+    } finally {
+      registration.dispose();
+    }
+  });
+
   it('opens and closes dialogs through dialog actions', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
@@ -4918,6 +4958,66 @@ describe('createRendererRuntime', () => {
     expect(page.scope.get('right')).toBe('right-updated');
   });
 
+  it('treats cancelled parallel children as aggregate failures', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+        return new Promise((resolve, reject) => {
+          ctx.signal?.addEventListener('abort', () => {
+            const error = new Error('aborted');
+            (error as Error & { name: string }).name = 'AbortError';
+            reject(error);
+          }, { once: true });
+        }) as Promise<{ ok: true; status: number; data: T }>;
+      };
+      const runtime = createRendererRuntime({
+        registry: createRendererRegistry([textRenderer]),
+        env: {
+          ...env,
+          fetcher: fetcherImpl
+        },
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      });
+      const page = runtime.createPageRuntime({});
+
+      const resultPromise = runtime.dispatch(
+        {
+          action: 'noop',
+          parallel: [
+            {
+              action: 'setValue',
+              componentPath: 'left',
+              value: 'ok'
+            },
+            {
+              action: 'ajax',
+              timeout: 5,
+              api: { url: '/api/slow' }
+            }
+          ]
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page
+        }
+      );
+
+      await vi.advanceTimersByTimeAsync(5);
+
+      await expect(resultPromise).resolves.toMatchObject({
+        ok: false,
+        results: [
+          expect.objectContaining({ ok: true }),
+          expect.objectContaining({ ok: false, timedOut: true, cancelled: true })
+        ]
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('returns a timedOut result for actions that exceed timeout', async () => {
     vi.useFakeTimers();
 
@@ -5652,7 +5752,7 @@ describe('createRendererRuntime', () => {
         then: {
           action: 'setValue',
           componentPath: 'lastResult',
-          value: 'success'
+          value: '${result.data}'
         }
       },
       {
@@ -5665,8 +5765,166 @@ describe('createRendererRuntime', () => {
     expect(result.ok).toBe(true);
     expect(page.store.getState().data).toMatchObject({
       status: 'loading',
-      lastResult: 'success'
+      lastResult: 'loading'
     });
+  });
+
+  it('does not run then actions for skipped results', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ status: 'idle', marker: 'unchanged' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'setValue',
+        componentPath: 'status',
+        value: 'loading',
+        when: '${false}',
+        then: {
+          action: 'setValue',
+          componentPath: 'marker',
+          value: 'then-ran'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result).toMatchObject({ ok: true, skipped: true });
+    expect(page.store.getState().data).toMatchObject({
+      status: 'idle',
+      marker: 'unchanged'
+    });
+  });
+
+  it('runs onError by default for failure-class results', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T })
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ status: 'idle', failure: 'none' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'ajax',
+        api: {
+          url: '/api/fail',
+          method: 'get'
+        },
+        onError: {
+          action: 'setValue',
+          componentPath: 'failure',
+          value: '${error.message}:${result.ok}:${prevResult.ok}'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result.ok).toBe(false);
+    expect(page.store.getState().data).toMatchObject({
+      status: 'idle',
+      failure: 'boom:false:true'
+    });
+  });
+
+  it('does not run then actions for failure-class results even when continueOnError is enabled', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T })
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ status: 'idle', failure: 'none', success: 'none' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'ajax',
+        api: {
+          url: '/api/fail',
+          method: 'get'
+        },
+        continueOnError: true,
+        then: {
+          action: 'setValue',
+          componentPath: 'success',
+          value: 'then-ran'
+        },
+        onError: {
+          action: 'setValue',
+          componentPath: 'failure',
+          value: '${error.message}'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(page.store.getState().data).toMatchObject({
+      status: 'idle',
+      failure: 'boom',
+      success: 'none'
+    });
+  });
+
+  it('does not leak onError as top-level payload to namespaced actions', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const actionScope = createActionScope({ id: 'designer-scope' });
+    const invoke = vi.fn().mockResolvedValue({ ok: true });
+    actionScope.registerNamespace('designer', {
+      kind: 'host',
+      invoke
+    });
+
+    await runtime.dispatch(
+      {
+        action: 'designer:addNode',
+        nodeType: 'task',
+        onError: {
+          action: 'setValue',
+          componentPath: 'ignored',
+          value: 'ignored'
+        }
+      } as any,
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        actionScope
+      }
+    );
+
+    expect(invoke).toHaveBeenCalledWith(
+      'addNode',
+      {
+        nodeType: 'task'
+      },
+      expect.objectContaining({ actionScope })
+    );
   });
 
   it('lets beforeAction plugins rewrite actions before dispatch', async () => {

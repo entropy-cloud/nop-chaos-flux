@@ -288,6 +288,38 @@ export function createScopeRef(input: {
         sourceScopeId: input.id,
         kind: 'merge'
       });
+    },
+    replace(data) {
+      const next = toRecord(data);
+      const current = ownStore.getSnapshot();
+
+      if (current === next) {
+        return;
+      }
+
+      const changedPaths = new Set<string>();
+
+      for (const key of Object.keys(current)) {
+        if (!Object.prototype.hasOwnProperty.call(next, key) || !Object.is(current[key], next[key])) {
+          changedPaths.add(key);
+        }
+      }
+
+      for (const key of Object.keys(next)) {
+        if (!Object.prototype.hasOwnProperty.call(current, key) || !Object.is(current[key], next[key])) {
+          changedPaths.add(key);
+        }
+      }
+
+      if (changedPaths.size === 0) {
+        return;
+      }
+
+      ownStore.setSnapshot(next, {
+        paths: Array.from(changedPaths).sort(),
+        sourceScopeId: input.id,
+        kind: 'replace'
+      });
     }
   };
 

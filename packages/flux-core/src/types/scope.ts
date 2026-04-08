@@ -41,6 +41,7 @@ export interface ScopeRef {
   read(): Record<string, any>;
   update(path: string, value: unknown): void;
   merge(data: Record<string, unknown>): void;
+  replace?(data: Record<string, unknown>): void;
 }
 
 export interface CreateScopeOptions {
