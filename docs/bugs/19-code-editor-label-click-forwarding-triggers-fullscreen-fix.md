@@ -12,7 +12,7 @@
 - Inspected the renderer JSX — `onClick={toggleFullscreen}` was only on the `<button>`, not on any parent `<div>`
 - Checked `wrap: true` in the renderer definition — this causes `FieldFrame` to wrap the component in `<label>` (see `packages/flux-react/src/field-frame.tsx` line 75)
 - **Decisive evidence**: HTML spec — a `<label>` element forwards clicks to its first *labelable* descendant (`<button>`, `<input>`, `<select>`, etc.). The fullscreen `<button>` was the first labelable element inside the `<label>`, so clicking anywhere in the label (including the editor area) triggered it
-- Confirmed via Playwright: `document.querySelector('.nop-code-editor__toolbar-fullscreen')` returned `<button>`, and clicking the editor textbox triggered fullscreen
+- Confirmed via Playwright at the time: `document.querySelector('[data-slot="code-editor-toolbar-fullscreen"]')` resolved the fullscreen trigger, and clicking the editor textbox triggered fullscreen
 - Same issue affected the fullscreen header close `<button>` — clicking editor text in fullscreen exited fullscreen
 
 ## Root Cause

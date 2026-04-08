@@ -418,6 +418,7 @@ Runtime compatibility note:
 - `retry` now supports a first-cut fixed-count/fixed-delay policy and returns `attempts` on the final `ActionResult`
 - `timeout` now returns a structured `ActionResult` with `timedOut: true`; request-style actions cooperate with abort signals, while non-cancellable actions only time out structurally and may still finish in the background
 - `then` is the success branch and `onError` is the failure branch for chained actions
+- `result`, `error`, and `prevResult` are now injected through transient action-evaluation bindings for chained branches rather than via ambient scope publication
 
 ### Chained Action Result Context
 

@@ -219,6 +219,7 @@ Current baseline note:
 - ajax-side API monitor callbacks should observe the final executable request shape, not the pre-canonical declarative request object, so diagnostics line up with what fetch/dedup/cache actually execute
 - current source-runtime baseline now includes a runtime-owned source registry scoped by `ScopeRef.id`; `DataSourceRenderer` only registers/disposes entries while runtime owns controller start/stop and replacement semantics
 - current `DataSourceSchema` baseline now supports both `api` and `formula` producers under the same runtime-owned registration path
+- formula `data-source` no longer requires `dataPath`; `name`-first publication is allowed for both api and formula producers
 - current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
 - current `DataSourceController` baseline now exposes a minimal runtime state surface via `getState()` with `started`, `loading`, `stale`, `value`, and `error`; api sources actively drive all fields while formula sources currently use the same shape with lightweight synchronous semantics
 - current runtime baseline now also exposes explicit source refresh by id at the runtime boundary; refresh remains scope-scoped first, so duplicate source ids in different scopes do not collapse into one page-global namespace

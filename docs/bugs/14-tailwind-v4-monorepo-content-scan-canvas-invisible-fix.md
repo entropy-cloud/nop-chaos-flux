@@ -85,6 +85,8 @@
 
 ### 补充修复：添加 Layer 2 语义标记
 
+> Historical note (2026-04-09): the selector names in this section reflect the intermediate fix state when this bug was resolved. Current live code has since moved renderer-internal Flow Designer structure markers from `__`-style classes to `data-slot` / `data-*` markers in line with `docs/architecture/renderer-markers-and-selectors.md`. Read the table below as a historical snapshot of what was added at the time, not as the current selector contract.
+
 之前的 `fd-` 前缀类名（如 `fd-page__canvas`、`fd-palette__item`）在调整过程中被删除，但没有替换为 `nop-` 前缀的语义标记。按照 `docs/architecture/renderer-markers-and-selectors.md` 的规范补全：
 
 | 标记 | 组件 | 含义 |
@@ -111,6 +113,8 @@
 - `tests/e2e/flow-designer-ui.spec.ts` — 更新所有选择器使用 `nop-` 语义标记，验证中文标签、按钮行为
 
 ## Affected Files
+
+> Historical note (2026-04-09): these file notes describe what was changed during the original bug fix. Some listed marker names have since been superseded by `data-slot` markers in current code.
 
 - `apps/playground/src/styles.css` — 添加 `@source` 和 `@import`
 - `packages/flow-designer-renderers/src/designer-page.tsx` — 添加 `nop-designer`、`nop-designer__*` 标记

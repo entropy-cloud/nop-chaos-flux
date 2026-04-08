@@ -1,13 +1,13 @@
 # 19-BEM-to-Tailwind Migration Plan
 
 > Plan Status: completed
-> Last Reviewed: 2026-04-04
+> Last Reviewed: 2026-04-08
 
 
 > **Design doc:** `docs/architecture/renderer-markers-and-selectors.md`
 >
 > **Implementation Status: ✅ COMPLETED**
-> Final 2026-04-04 audit: `table-renderer.tsx` already uses shadcn Table components, playground page BEM classes called out by this plan are gone, renderer state modifiers have moved to `data-*`, dialog host uses shadcn Dialog, and the remaining `nop-*` / `nop-*__*` classes align with the current marker-selector architecture rather than the deprecated visual BEM layer.
+> Re-audited on 2026-04-08 after comparing the plan against live code instead of the prior checklist-only conclusion. The stale 2026-04-04 completion note was too optimistic: active renderer/playground code still contained internal `__` region classes at that time. Those remaining internal markers have now been migrated to `data-slot` / `data-*`, and the completion status is based on the current workspace state.
 >
 > This status was verified against the codebase on 2026-04-04.
 
@@ -15,12 +15,13 @@
 
 This plan is complete in the current workspace.
 
-Final re-check performed on 2026-04-04:
+Final re-check performed on 2026-04-08:
 
 - `packages/flux-renderers-data/src/table-renderer.tsx` already uses `@nop-chaos/ui` Table primitives
 - `apps/playground/src/` no longer contains `.app-shell`, `.hero-card`, or `.nav-card`
 - deprecated modifier-style classes such as `nop-field--*` and deprecated wrapper classes such as `nop-checkbox__*` / `nop-switch__*` / `nop-radio__*` are gone from active source
-- current remaining semantic classes such as `nop-field__label` and `nop-table__row` are intentional marker classes allowed by `docs/architecture/renderer-markers-and-selectors.md`
+- internal field/code-editor/report/spreadsheet/workbench/playground region markers that previously still used `__` have been migrated to `data-slot` / `data-*`
+- active `packages/**/*.ts?(x)` and `apps/**/*.ts?(x)` no longer contain `className="...__..."` internal region markers
 - `docs/references/maintenance-checklist.md` already routes marker/selector changes to the correct architecture doc
 
 > Design doc: `docs/architecture/renderer-markers-and-selectors.md`
@@ -65,6 +66,8 @@ Final re-check performed on 2026-04-04:
 
 ### Files
 
+> Historical note (2026-04-09): the file-by-file examples in this section capture earlier migration steps and may still show pre-`data-slot` intermediate markup. The current authoritative rule is in `docs/architecture/renderer-markers-and-selectors.md`, and active code no longer treats internal `__` region classes shown below as the target end state.
+
 | File | Change |
 |---|---|
 | `packages/flux-react/src/field-frame.tsx` | BEM state classes → `data-field-*` attributes + Tailwind `grid gap-2` |
@@ -96,13 +99,13 @@ const stateClasses = [
 >
 ```
 
-Sub-elements remain unchanged:
-- `nop-field__label` — keep
-- `nop-field__control` — keep
-- `nop-field__error` — keep
-- `nop-field__hint` — keep
-- `nop-field__description` — keep
-- `nop-field__required` — keep
+Internal regions now use `data-slot` markers:
+- `data-slot="field-label"`
+- `data-slot="field-control"`
+- `data-slot="field-error"`
+- `data-slot="field-hint"`
+- `data-slot="field-description"`
+- `data-slot="field-required"`
 
 ### `field-utils.tsx` Change Detail
 
@@ -191,6 +194,8 @@ Typecheck only — tests break here intentionally, fixed in Phase 9.
 | `src/renderers/shared/help-text.tsx` | None (class names kept as semantic markers) | — |
 
 ### Key Changes in `input.tsx`
+
+> Historical note (2026-04-09): this before/after block documents the original Tailwind migration step. For current field chrome and internal renderer region guidance, prefer `data-slot` examples in `docs/architecture/field-frame.md` and `docs/architecture/renderer-markers-and-selectors.md`.
 
 **Checkbox — Before:**
 ```tsx
@@ -501,8 +506,8 @@ pnpm --filter @nop-chaos/playground-app typecheck
 | `childField?.className).toContain('nop-child-field--touched')` | `childField?.hasAttribute('data-child-field-touched')).toBe(true)` |
 | `childField?.className).toContain('nop-child-field--dirty')` | `childField?.hasAttribute('data-child-field-dirty')).toBe(true)` |
 | `childField?.className).toContain('nop-child-field--invalid')` | `childField?.hasAttribute('data-child-field-invalid')).toBe(true)` |
-| `screen.getByText('Username is required').className).toContain('nop-field__error')` | **No change** — `nop-field__error` is kept |
-| `screen.getByText('Validating...').className).toContain('nop-field__hint')` | **No change** — `nop-field__hint` is kept |
+| `screen.getByText('Username is required').className).toContain('nop-field__error')` | `screen.getByText('Username is required').getAttribute('data-slot') === 'field-error'` |
+| `screen.getByText('Validating...').className).toContain('nop-field__hint')` | `screen.getByText('Validating...').getAttribute('data-slot') === 'field-hint'` |
 
 ### DOM Traversal Updates
 

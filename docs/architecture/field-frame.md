@@ -144,24 +144,24 @@ export function FieldFrame(props: FieldFrameProps) {
          data-field-dirty={fieldState.dirty || undefined}
          data-field-invalid={showError || undefined}>
       {label ? (
-        <LabelTag className="nop-field__label">
+        <LabelTag data-slot="field-label">
           {label}
-          {required ? <span className="nop-field__required">*</span> : null}
+          {required ? <span data-slot="field-required">*</span> : null}
         </LabelTag>
       ) : null}
 
-      <div className="nop-field__control">
+      <div data-slot="field-control">
         {children}
       </div>
 
       {error && showError ? (
-        <span className="nop-field__error">{error.message}</span>
+        <span data-slot="field-error">{error.message}</span>
       ) : fieldState.validating ? (
-        <span className="nop-field__hint">Validating...</span>
+        <span data-slot="field-hint">Validating...</span>
       ) : !error && hint ? (
-        <span className="nop-field__hint">{hint}</span>
+        <span data-slot="field-hint">{hint}</span>
       ) : !error && !hint && description ? (
-        <span className="nop-field__description">{description}</span>
+        <span data-slot="field-description">{description}</span>
       ) : null}
     </Tag>
   );
@@ -206,7 +206,7 @@ function CheckboxRenderer(props) {
     <FieldFrame name={props.schema.name} label={label} layout="checkbox">
       <span className="nop-checkbox">
         <input type="checkbox" />
-        <span className="nop-checkbox__label">{option?.label}</span>
+        <span data-slot="checkbox-label">{option?.label}</span>
       </span>
     </FieldFrame>
   );
@@ -224,7 +224,7 @@ function RadioGroupRenderer(props) {
         {options.map(opt => (
           <label key={opt.value} className="nop-radio">
             <input type="radio" value={opt.value} />
-            <span className="nop-radio__label">{opt.label}</span>
+            <span data-slot="radio-label">{opt.label}</span>
           </label>
         ))}
       </div>
@@ -240,12 +240,12 @@ function RadioGroupRenderer(props) {
 | Class | Purpose |
 |-------|---------|
 | `nop-field` | Root wrapper (with `grid gap-2`) |
-| `nop-field__label` | Label text |
-| `nop-field__required` | Required asterisk |
-| `nop-field__control` | Control wrapper |
-| `nop-field__error` | Error message |
-| `nop-field__hint` | Hint/focus message or "Validating..." indicator |
-| `nop-field__description` | Description text |
+| `data-slot="field-label"` | Label text |
+| `data-slot="field-required"` | Required asterisk |
+| `data-slot="field-control"` | Control wrapper |
+| `data-slot="field-error"` | Error message |
+| `data-slot="field-hint"` | Hint/focus message or "Validating..." indicator |
+| `data-slot="field-description"` | Description text |
 
 ### Data Attributes (State)
 

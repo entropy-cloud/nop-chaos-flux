@@ -892,6 +892,8 @@ Namespace import setup failures are caught and ignored. This can leave actions p
 
 These renderers use BEM-style classes like `nop-page__header`, `nop-page__toolbar`, `nop-container__footer`, `nop-table__header`, `nop-table__pagination`, etc. AGENTS.md states: "No BEM — Use shadcn `data-slot`, flux semantic markers, and Tailwind visual classes."
 
+Historical note (2026-04-09): this remediation item described a real gap when the plan was written. The active renderer code has since been migrated away from those internal `__` region classes; keep this section as historical audit context, not as evidence that the gap still exists today.
+
 **How to verify:**
 
 1. Search for `__` in the renderer source files:

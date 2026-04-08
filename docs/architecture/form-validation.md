@@ -284,6 +284,16 @@ Submission flow is currently:
 3. stop if validation fails
 4. only execute submit request behavior after validation passes
 
+For `form` schemas, the semantic lifecycle surface above that flow is now explicit:
+
+- `initAction` runs once per form activation instance after the form-owned boundary and imports are ready
+- `submitAction` is the form-owned request entry that runs after validation passes
+- `onValidateError` runs when submit is blocked by validation failure
+- `onSubmitSuccess` runs for success-class submit results
+- `onSubmitError` runs for failure-class submit results
+
+This keeps validation-before-submit owned by the form semantic boundary rather than by individual submit buttons.
+
 ## Current Runtime State
 
 The active form store tracks:
@@ -308,6 +318,7 @@ Current runtime behavior includes:
 - local write coalescing exists for hot paths such as `setValue(...)`, `reset(...)`, dependent dirtiness updates, and array remapping; this is a thin store patch primitive, not a global transaction system
 - form-local write coalescing now also includes `setValues(...)`, which lets one form runtime apply multiple path updates through the same local batching path without introducing a hidden global transaction model
 - action-layer write coalescing may target that runtime capability through the constrained `setValues` built-in action, but this remains a form-local API surface rather than a dispatcher-wide transaction wrapper
+- form-owned submit follow-ups reuse the current `Action Algebra` branch-result bindings, so `onSubmitSuccess`, `onSubmitError`, and `onValidateError` can read `result`, `error`, and `prevResult` during expression evaluation without publishing those names into ordinary form scope data
 
 ## Lightweight Field Query Facade
 

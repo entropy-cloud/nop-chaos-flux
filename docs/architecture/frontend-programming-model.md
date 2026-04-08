@@ -848,8 +848,7 @@ Preferred convergence rule:
 Current baseline note:
 
 - the active runtime already provides these names to `Reaction.when`
-- action dispatch triggered by a reaction currently carries them as `ActionContext.event`, not as general expression-scope bindings for `args`, `value`, or nested `when`
-- full expression-scope injection for reaction-triggered action evaluation remains a convergence target
+- action dispatch triggered by a reaction now also injects them into transient expression-scope bindings for `args`, `value`, `values`, and nested `when`
 
 #### `Reaction` Rules
 
@@ -1107,9 +1106,9 @@ For control-flow purposes, `ActionResult` values fall into three classes:
 
 Current baseline note:
 
-- the active runtime executes `then`, but it does not yet implement full `failure-class` branching through `onError`
-- current sequential dispatch mainly stops on `!result.ok` unless `continueOnError` is set
-- current `parallel` aggregation also treats `cancelled` as non-failing for aggregate `ok` calculation
+- the active runtime now executes `then` only for `success-class` and `onError` only for `failure-class`
+- current sequential dispatch still uses `continueOnError` as the main-chain continuation flag, but that flag no longer decides whether `onError` runs
+- current `parallel` aggregation now treats `cancelled` / `timedOut` as `failure-class` for aggregate `ok` calculation
 
 Therefore the result classes above are the preferred convergence contract for future control-flow semantics, not a claim that every branch rule is already active in the executor today.
 
@@ -1146,10 +1145,9 @@ Convergence rules:
 
 Current baseline note:
 
-- `when` and `then` are active today
-- `onError` is present in the type surface but is not yet executed by `packages/flux-runtime/src/action-runtime.ts`
-- because `onError` is not yet reserved from top-level payload extraction, namespaced/component actions without explicit `args` may currently receive `onError` as ordinary payload data
-- `prevResult` exists on `ActionContext`, but reserved branch-result names such as `result` and `error` are not yet injected into ordinary expression evaluation
+- `when`, `then`, and `onError` are active today
+- `onError` is reserved from top-level payload extraction, so namespaced/component actions without explicit `args` no longer receive control-flow fields as ordinary payload data
+- reserved branch-result names `result`, `error`, and `prevResult` are now injected through transient action-evaluation bindings rather than ambient scope publication
 - current fallback behavior is host/runtime specific through `onActionError`, plugin hooks, and env notification paths rather than one fully standardized framework fallback branch
 
 ### `parallel`
@@ -1169,8 +1167,7 @@ Convergence rules:
 Current baseline note:
 
 - the active executor currently uses `Promise.all` over child dispatches because dispatch normalizes failures into `ActionResult` values
-- aggregate `ok` currently evaluates true when every child is `ok`, `skipped`, or `cancelled`
-- the stricter failure-class treatment above is the preferred convergence contract rather than the exact current aggregate rule
+- aggregate `ok` now evaluates true only when every child is `success-class` or `neutral-class`
 
 ### `onError` Chain Semantics
 
@@ -1296,9 +1293,8 @@ It is not:
 
 Current compatibility note:
 
-- some current hosts in this repo, especially Flow Designer, still admit richer host-boundary values such as config fragments and `designerCore` into the host scope
-- that current exposure should be read as compatibility-era host wiring, not as the desired long-term `Host Projection` contract
-- the normative target remains DTO-style readonly snapshot projection plus capability-based command dispatch
+- current workbench hosts now use DTO-style host scope projection and snapshot replacement semantics; `designerCore`, `reportDesignerCore`, `spreadsheetCore`, and `spreadsheetSnapshot` are no longer part of the schema-visible host contract
+- host projection writes are now rejected diagnostically at the host-scope boundary rather than silently mutating projected fields
 9. a special host type is still just a normal schema node kind plus special shell integration, not a new primitive
 10. if schema authors own fetch, refresh, invalidate, polling, or caching policy for a value, that value belongs to `Resource`, not `Host Projection`
 11. projection field names are fixed by host contract, not ad hoc aliases
@@ -1530,12 +1526,12 @@ Current code-level anchor:
 
 - forms already own submit semantics through `FormRuntime.submit(api?)`
 - external callers already enter that semantic boundary through `submitForm` or `component:submit`
-- the current core schema does not yet expose a universal form-level `submitAction` / `onSubmitSuccess` / `onSubmitError` contract in `flux-core` base schema
+- form schemas now expose `initAction`, `submitAction`, `onSubmitSuccess`, `onSubmitError`, and `onValidateError` as the active form-first semantic lifecycle surface
 
 Therefore:
 
 - the semantic boundary is already real at runtime
-- the generalized schema field shape described below is the preferred convergence direction, not a claim that every field is already active in the current repo-wide schema contract
+- the generalized schema field shape described below is now active for `form` schemas in the current repo baseline
 
 Recommended semantic fields are:
 
@@ -1549,8 +1545,8 @@ Important boundary:
 
 - these are semantic entry names, not new primitives
 - existing runtime contracts such as `FormRuntime.submit(...)`, `submitForm`, and `component:submit` are the code-level anchor for this boundary
-- narrower docs may still express equivalent behavior with existing action wiring while schema field convergence continues
-- when current code has not yet standardized the schema-owned field shape, trigger-local action wiring remains compatibility behavior rather than proof that the semantic boundary does not exist
+- `component:submit` remains the preferred thin trigger when external UI nodes need to request a form-owned submit pipeline
+- compatibility-era trigger-local action wiring may still exist in older schemas, but it is no longer the preferred baseline for new form business flows
 
 ### Page, Dialog, And Host Baseline
 
@@ -1615,11 +1611,9 @@ These should remain node-owned semantic entries, not free-floating UI-event scri
 
 ### Preferred Convergence Shape
 
-The following example is the preferred schema convergence shape for semantic form submit.
+The following example is the active form-first schema shape for semantic form submit.
 
-It is not yet the universal active repo-wide schema contract today.
-
-Equivalent current behavior is still anchored by `FormRuntime.submit(...)`, `submitForm`, and `component:submit` while schema field convergence continues.
+Equivalent semantic entry still runs through the runtime-owned `FormRuntime.submit(...)` boundary, and external callers still use `submitForm` or `component:submit` to enter that boundary.
 
 ### Trigger Example
 

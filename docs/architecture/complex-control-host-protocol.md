@@ -132,7 +132,7 @@ Namespace 命名规则：
 | 能力 | Flow Designer | Spreadsheet | Report Designer | Word Editor |
 |------|--------------|-------------|-----------------|-------------|
 | `DomainBridge` 实现 | 内部（DesignerCore 可适配） | ✓ `SpreadsheetBridge` | ✓ `ReportDesignerBridge` | ✗ 待接入 |
-| Host scope 注入 | ✓ `useDesignerHostScope` | 通过 region data | ✓ `useReportDesignerHostScope` | ✗ 无（非 Flux renderer） |
+| Host scope 注入 | ✓ `useDesignerHostScope` | ✓ `useHostScope` | ✓ `useReportDesignerHostScope` | ✗ 无（非 Flux renderer） |
 | Namespace action 注册 | ✓ `designer:*` | ✓ `spreadsheet:*` | ✓ `report-designer:*` | ✗ 无（非 Flux renderer） |
 | Session/dirty/leave-guard | 通过 `isDirty` snapshot | 通过 `dirty` snapshot | 通过 `dirty` snapshot | ✓ `isDirty` + `handleBack` leave-guard |
 | 真实 canvas 默认挂载 | ✓ | fallback when no body | ✓ `ReportSpreadsheetCanvas` | ✓（直接渲染） |
@@ -148,6 +148,11 @@ Flow Designer 的 `designer-page.tsx` + `designer-context.ts` 是当前最成熟
 - `createDesignerActionProvider` + `useLayoutEffect` → namespace 注册模式
 - `useDesignerSnapshot` → 等价于 `useBridgeSnapshot`（Phase 1 提炼的共享 helper）
 - `DesignerContext` → 域内部 React context，不应被共享协议强制替换
+
+Current baseline note:
+
+- spreadsheet page renderer 现在也已切换到 `useHostScope`，不再通过 region `data` 把 `spreadsheetCore` / `spreadsheetSnapshot` 直接暴露给 schema
+- `useHostScope` 当前采用 snapshot replacement 语义，并在 projected host field 写入时抛出诊断错误
 
 ## 12. 已完成工作
 

@@ -190,7 +190,7 @@ CSS 文件通过 playground 的 `styles.css` 中 `@import` 引入（与 `base.cs
 
 - **不冲突**：`ss-*` class 只在 spreadsheet canvas 内部使用，不会泄漏到外壳
 - **不替代**：外壳（toolbar、sidebar、inspector、dialog）仍然使用 shadcn/ui + Tailwind
-- **不违反 Renderer Styling Contract**：canvas renderer 的 marker class 仍然是 `nop-spreadsheet-page__body`，`ss-*` 是 canvas 内部的渲染细节
+- **不违反 Renderer Styling Contract**：canvas renderer 外壳已改用 `data-slot="spreadsheet-page-body"` 等结构 marker，`ss-*` 仍然只用于 canvas 内部的渲染细节
 - **与 data-* 模式一致**：交互状态用 `data-cell-*` 属性，与 `data-field-*`、`data-state` 同一模式
 
 ## 8. 测试策略
