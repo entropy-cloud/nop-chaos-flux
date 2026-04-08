@@ -561,16 +561,16 @@ Normative identity rules:
 
 1. new schema should use `name` as the preferred author-visible `Resource` identity and default publication path
 2. `name` should use ordinary scope-path syntax because schema reads the published value through that path
-3. `id` remains the active runtime registration and refresh key in the current repo and therefore remains required for current executable targeting in some paths
-4. if both `name` and `id` exist today, current runtime targeting still resolves by `id`; `name` is the preferred convergence direction for future author-visible identity
+3. current runtime accepts `name` as the preferred publication path and refresh target, while legacy `id` remains a compatibility registration key
+4. if both `name` and `id` exist, new schema should target the `Resource` by `name`; legacy `id` refresh targeting remains supported during convergence
 5. legacy `dataPath` may remain only as a compatibility publication override during convergence
 6. anonymous `Resource` declarations are compatibility-only; if a dynamic value does not need naming or control, prefer a plain `Value` form instead of an anonymous `data-source`
 
 | Configuration | Runtime target identity | Published path |
 | --- | --- | --- |
-| `name` only | convergence target: `name`; current repo targeting may still require `id` | `name` |
-| `name` + `mergeToScope: true` | convergence target: `name`; current repo targeting may still require `id` | `name` plus shallow object-field merge into current scope |
-| legacy `name` + `dataPath` | convergence target: `name`; current repo targeting may still require `id` | `dataPath` |
+| `name` only | `name` | `name` |
+| `name` + `mergeToScope: true` | `name` | `name` plus shallow object-field merge into current scope |
+| legacy `name` + `dataPath` | `name` | `dataPath` |
 | legacy `id` + `dataPath` | `id` | `dataPath` |
 | anonymous legacy `dataPath` only | none | `dataPath` |
 
@@ -594,9 +594,9 @@ The normative publication contract is:
 
 Current runtime compatibility note:
 
-- `refreshSource` and source-registry lookup are still keyed by runtime `id` in the current repo
-- formula-backed publication may still fall back to `dataPath ?? id` in some runtime paths
-- therefore `name`-first identity/publication should be read as the preferred convergence direction, not as a statement that current runtime targeting has already moved away from `id` or fully stopped accepting legacy `dataPath`
+- current runtime now publishes `data-source` values through `name` first and accepts `name` in `refreshSource` / source-registry lookup
+- legacy `id` targeting and legacy `dataPath` publication overrides remain supported as compatibility paths during convergence
+- anonymous formula-backed resources may still fall back to runtime `id`; new schema should not rely on that compatibility path
 
 `statusPath`, when present, is the preferred readonly status-summary contract.
 

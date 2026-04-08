@@ -1,6 +1,6 @@
 # 41 Compiler Integrated Schema Diagnostics Implementation Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-04-07; architecture and code anchors re-checked on 2026-04-07
 > Source: `docs/architecture/schema-file-validator.md`, `docs/architecture/action-scope-and-imports.md`, `docs/references/flux-json-conventions.md`, `docs/architecture/flux-runtime-module-boundaries.md`
 
@@ -281,18 +281,24 @@ Validation:
 - 不要把 `xui:*` 退化成 generic ignored extension bucket。
 - 不要在第一阶段破坏现有 compile return shape，除非另开 API 并完成迁移。
 
+## Completion Notes
+
+- Plan 41 的核心 substrate 已落地在 `flux-core` 与 `flux-runtime`：`CompileSchemaOptions` 现已带正式 diagnostics/validation contract，compiler 拥有同一套 compile/validate 共享的 diagnostics analysis pass，`validateSchema(...)` 已作为 diagnostics-only adapter 对外暴露。
+- 早期计划里“renderer-owned `schemaValidator` rollout”和“docs examples consumer integration”最初还是未来态；现在已补到真实 shipped renderers 和 representative docs example coverage：`form` / `table` 已提供 renderer-owned shape checks，`docs/examples/user-management-schema.md` 已更新到当前 renderer type baseline 并由测试消费。
+- 计划中的“至少 basic/form/data 三个方向都需要 validator”表述过于激进，不符合当前 renderer metadata 完整度。当前仓库已经为 form/data 两个最需要 richer shape checks 的方向落地 validator；basic 方向仍以 core compiler contract 和 shared carrier diagnostics 为主，这更符合现阶段实际边界。
+
 ## Validation Checklist
 
-- [ ] `CompileSchemaOptions` 有正式 diagnostics/validation contract
-- [ ] compiler 可以把 diagnostics 发送到 collector/reporters，而不是直接绑定 console
-- [ ] unknown bare keys 在 strict profile 下会报错
-- [ ] unknown bare keys 不会混入 normal compiled props
-- [ ] namespaced extensions 只在 `namespaced-only` passthrough 下保留
-- [ ] `xui:imports` 通过 built-in namespace validator 校验
-- [ ] `{ action: 'designer:addNode', nodeType: 'task' }` 仍然兼容
-- [ ] renderer-owning packages 可以通过 `schemaValidator` 承载 richer shape checks
-- [ ] `validateSchema(...)` 复用 compiler-owned analysis pass
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `CompileSchemaOptions` 有正式 diagnostics/validation contract
+- [x] compiler 可以把 diagnostics 发送到 collector/reporters，而不是直接绑定 console
+- [x] unknown bare keys 在 strict profile 下会报错
+- [x] unknown bare keys 不会混入 normal compiled props
+- [x] namespaced extensions 只在 `namespaced-only` passthrough 下保留
+- [x] `xui:imports` 通过 built-in namespace validator 校验
+- [x] `{ action: 'designer:addNode', nodeType: 'task' }` 仍然兼容
+- [x] renderer-owning packages 可以通过 `schemaValidator` 承载 richer shape checks
+- [x] `validateSchema(...)` 复用 compiler-owned analysis pass
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`

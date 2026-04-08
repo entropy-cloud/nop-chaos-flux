@@ -153,7 +153,7 @@ interface ScopeRef {
 
 **ActionScope** 负责动作能力，也就是可以执行的操作。动作通过命名空间组织——`designer:addNode`、`spreadsheet:setCellValue`——命名空间由 `xui:imports` 动态注册，与数据作用域完全隔离，不会因动作的增减影响变量查找。动作的解析顺序在 ActionScope 内部有明确的优先级：先查内置平台动作（`setValue`、`ajax`、`dialog`），再查组件目标动作（`component:submit`、`component:validate`），最后查命名空间动作（`designer:export`、`spreadsheet:mergeRange`）。这种层级既保证了灵活性，又提供了合理的默认行为。
 
-**ComponentHandleRegistry** 负责组件实例的定位和访问。`id` 是 page 范围内稳定唯一的定位锚点；`name` 是局部逻辑名，适合在不同局部边界内复用，但在同一解析边界内应避免重复。schema 作者通过 `component:<method>` 配合 `componentId` 或 `componentName` 指定目标组件；运行时可对可静态解析的目标做内部索引优化，以降低常见查找成本。
+**ComponentHandleRegistry** 负责组件实例的定位和访问。`id` 是 page 范围内稳定唯一的定位锚点；`name` 是局部逻辑名，适合在不同局部边界内复用，但在同一解析边界内如果重复会触发显式 ambiguity 错误。schema 作者通过 `component:<method>` 配合 `componentId` 或 `componentName` 指定目标组件；运行时可对可静态解析的目标做内部索引优化，以降低常见查找成本。
 
 这三棵树共享同一套设计直觉：**链式词法查找**。`ScopeRef.get(path)` 解析变量名，`ActionScope.resolve('demo:open')` 沿链查找 `demo` 命名空间（就像编程语言中词法作用域解析函数名一样），`ComponentHandleRegistry.resolve(target)` 定位组件句柄。三棵树各自维护独立的生命周期语义，但每棵树内部的查找逻辑都遵循相同的链式向上原则，保持了整体设计的一致性。
 
@@ -186,7 +186,7 @@ Flux 借鉴了 ES 模块导入的设计，引入了 `xui:imports` 声明：
 }
 ```
 
-`from` 指定要导入的库，`as` 指定导入后的命名空间前缀。导入的库被注册到当前容器的 `ActionScope` 中，成为该容器及其后代可用的动作命名空间。
+`from` 指定要导入的库，`as` 指定导入后的命名空间前缀。导入的库被注册到当前容器的 `ActionScope` 中，成为该容器及其后代可用的动作命名空间。复杂宿主如 Flow Designer、Report Designer、Spreadsheet 也遵循同样的词法边界纪律：每个宿主页面建立自己的本地 `ActionScope`，再在该边界内注册宿主命名空间。
 
 `xui:imports` 有几个关键特性：
 
@@ -231,7 +231,9 @@ Flux 的解决方案是：**职责拆分**。
 }
 ```
 
-`data-source` 专门负责声明式数据获取。它是一个不直接渲染 UI 的副作用组件：负责根据 `api` 发起请求、按 `name` 将结果写入当前作用域，并可选地通过 `interval` + `stopWhen` 轮询。`name` 是规范的发布路径标识；如果返回值为对象且需要将其顶层字段浅合并到当前作用域，可设置 `mergeToScope: true`。它自身返回 `null`，因此 loading skeleton、空态或错误展示通常由同一作用域下的兄弟节点或宿主通知机制承担。
+`data-source` 专门负责声明式数据获取。它是一个不直接渲染 UI 的副作用组件：负责根据 `api` 发起请求、按 `name` 将结果写入当前作用域，并可选地通过 `interval` + `stopWhen` 轮询。`name` 是规范的发布路径标识；如果返回值为对象且需要将其顶层字段浅合并到当前作用域，可设置 `mergeToScope: true`。如果 schema 需要显式渲染 producer 状态，则通过 `statusPath` 读取 runtime 发布的只读 summary DTO，而不是依赖隐式 sibling 路径。它自身返回 `null`，因此 loading skeleton、空态或错误展示通常由同一作用域下的兄弟节点或宿主通知机制承担。
+
+当前实现说明：`data-source` 的 `name`-first 发布、`mergeToScope: true` 显式浅合并、以及 `statusPath` 状态摘要已经进入主链；但 live `NodeInstance` 仍在 Plan 40 继续收敛，文章中涉及节点身份的更强结论应以对应架构计划为准。
 
 ```json
 {

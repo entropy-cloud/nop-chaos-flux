@@ -1,6 +1,6 @@
 # 40 Template Instantiation And Node Identity Implementation Plan
 
-> Plan Status: planned
+> Plan Status: in-progress
 > Last Reviewed: 2026-04-07; architecture signoff re-checked against related docs on 2026-04-07
 > Source: `docs/architecture/template-instantiation-and-node-identity.md`, `docs/architecture/component-resolution.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/debugger-runtime.md`, `docs/architecture/flux-core.md`
 

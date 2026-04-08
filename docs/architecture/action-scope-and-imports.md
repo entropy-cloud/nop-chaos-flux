@@ -858,6 +858,12 @@ This aligns with the existing bridge and fixed-host-scope intent in `docs/archit
 
 The same pattern applies to spreadsheet and report-designer, but the provider should map to typed command buses rather than ad hoc free-form methods.
 
+Current runtime baseline:
+
+- `report-designer-page` creates a local `ActionScope` boundary and registers `report-designer` on that boundary
+- `spreadsheet-page` creates a local `ActionScope` boundary and registers `spreadsheet` on that boundary
+- sibling hosts therefore do not depend on parent-scope registration order when exposing host-owned namespace providers
+
 Examples:
 
 - `spreadsheet:setCellValue`

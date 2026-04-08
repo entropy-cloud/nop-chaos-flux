@@ -358,9 +358,9 @@ The legacy AMIS-style behavior of publishing without an explicit binding target 
 
 Current runtime compatibility note:
 
-- `refreshSource` and source-registry lookup are still keyed by runtime `id` in the current repo
-- formula-backed publication may still fall back to `dataPath ?? id` in some runtime paths
-- therefore `name`-first identity/publication should be read as the preferred convergence direction, not as a statement that current runtime targeting has already moved away from `id` or fully stopped accepting legacy `dataPath`
+- current runtime now publishes `data-source` values through `name` first and accepts `name` in `refreshSource` / source-registry lookup
+- legacy `id` targeting and legacy `dataPath` publication overrides remain supported as compatibility paths during convergence
+- anonymous formula-backed resources may still fall back to runtime `id`; new schema should not rely on that compatibility path
 
 `initialData` seeds the source target before the first real evaluation or fetch begins.
 

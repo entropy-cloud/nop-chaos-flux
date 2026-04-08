@@ -135,6 +135,7 @@ interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   path: string;
   schema: S;
   node: CompiledSchemaNode<S>;
+  nodeInstance: NodeInstance<S>;
   props: Readonly<Record<string, unknown>>;
   meta: ResolvedNodeMeta;
   regions: Readonly<Record<string, RenderRegionHandle>>;
@@ -147,6 +148,7 @@ Meaning:
 
 - `schema` is the declared source shape
 - `node` is the compiled node metadata
+- `nodeInstance` is the current live runtime instance and carries locator/state ownership for the mounted node
 - `props` is the resolved runtime prop object for the current render
 - `meta` is the resolved node meta such as visibility or disabled state
 - `meta.testid` is the resolved testid for `data-testid` attribute output on the root element
@@ -208,7 +210,13 @@ Use hooks for ambient runtime state and services:
 - `useCurrentForm()`
 - `useCurrentPage()`
 - `useCurrentNodeMeta()`
+- `useCurrentNodeInstance()`
 - `useRenderFragment()`
+
+Current compatibility note:
+
+- the active code still exposes `CompiledSchemaNode` through `RendererComponentProps.node` and `useCurrentNodeMeta()` for compatibility
+- `nodeInstance` / `useCurrentNodeInstance()` are now the preferred live-node source for locator-aware helpers and future template-instance migration work
 
 This split matches actual ownership and change frequency better than either â€œeverything by propsâ€ or â€œeverything by hooksâ€.
 
