@@ -35,8 +35,8 @@ Covered capabilities:
       "type": "container",
       "body": [
         {
-          "type": "tpl",
-          "tpl": "Hello ${currentUser.name}, welcome to the user center."
+          "type": "text",
+          "text": "Hello ${currentUser.name}, welcome to the user center."
         },
         {
           "type": "form",
@@ -189,16 +189,16 @@ Covered capabilities:
                         "type": "container",
                         "body": [
                           {
-                            "type": "tpl",
-                            "tpl": "用户名：${record.username}"
+                            "type": "text",
+                            "text": "用户名：${record.username}"
                           },
                           {
-                            "type": "tpl",
-                            "tpl": "邮箱：${record.email}"
+                            "type": "text",
+                            "text": "邮箱：${record.email}"
                           },
                           {
-                            "type": "tpl",
-                            "tpl": "角色：${record.role}"
+                            "type": "text",
+                            "text": "角色：${record.role}"
                           },
                           {
                             "type": "button",
@@ -217,8 +217,8 @@ Covered capabilities:
           ]
         },
         {
-          "type": "tpl",
-          "tpl": "共 ${searchResult.total || 0} 条记录，当前第 ${page} 页，每页 ${perPage} 条。"
+          "type": "text",
+          "text": "共 ${searchResult.total || 0} 条记录，当前第 ${page} 页，每页 ${perPage} 条。"
         }
       ]
     }
