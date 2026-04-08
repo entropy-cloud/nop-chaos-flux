@@ -129,7 +129,7 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
 
   const edge = page.locator('.react-flow__edge').nth(1);
   await edge.hover({ force: true });
-  const edgeQuickActions = page.locator('.nop-designer-edge__actions').first();
+  const edgeQuickActions = page.locator('[data-slot="designer-edge-actions"]').first();
   await expect(edgeQuickActions).toBeVisible();
   await expect(edgeQuickActions.locator('[data-icon="pencil"]')).toHaveCount(1);
   await expect(edgeQuickActions.locator('[data-icon="trash-2"]')).toHaveCount(1);
@@ -160,14 +160,14 @@ test('verifies palette and top toolbar visual structure', async ({ page }) => {
   const palette = page.locator('[data-testid="left-panel-expanded"] .nop-palette').first();
   await expect(palette).toBeVisible();
   await expect(palette).toContainText('节点库');
-  await expect(palette.locator('.nop-palette__item button:has-text("开始节点") [data-icon="play"]')).toHaveCount(1);
+  await expect(palette.locator('[data-slot="designer-palette-item"] button:has-text("开始节点") [data-icon="play"]')).toHaveCount(1);
 
-  const topToolbar = page.locator('.nop-workbench__header [data-testid="designer-toolbar"]').first();
+  const topToolbar = page.locator('[data-slot="workbench-header"] [data-testid="designer-toolbar"]').first();
   await expect(topToolbar).toBeVisible();
   await expect(topToolbar.locator('button')).toHaveCount(7);
   await expect(page.locator('.react-flow__minimap')).toBeVisible();
   await expect(page.locator('.react-flow__controls')).toBeVisible();
-  await expect(page.locator('.nop-designer-edge__label').first()).toBeVisible();
+  await expect(page.getByText('触发').first()).toBeVisible();
 });
 
 test('verifies flow-designer button behaviors for toolbar and quick actions', async ({ page }) => {
@@ -176,7 +176,7 @@ test('verifies flow-designer button behaviors for toolbar and quick actions', as
   const nodeCount = page.locator('.react-flow__node');
   await expect(nodeCount).toHaveCount(6);
 
-  const addTaskButton = page.locator('.nop-palette__item').filter({ hasText: '任务节点' }).locator('button').nth(1);
+  const addTaskButton = page.locator('[data-slot="designer-palette-item"]').filter({ hasText: '任务节点' }).locator('button').nth(1);
   await addTaskButton.click();
   await expect(nodeCount).toHaveCount(7);
 
@@ -191,7 +191,7 @@ test('verifies flow-designer button behaviors for toolbar and quick actions', as
 test('toggles JSON preview dialog from toolbar JSON button', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const topToolbar = page.locator('.nop-workbench__header [data-testid="designer-toolbar"]').first();
+  const topToolbar = page.locator('[data-slot="workbench-header"] [data-testid="designer-toolbar"]').first();
   await topToolbar.getByText('JSON').click();
 
   const jsonDialog = page.locator('[role="dialog"][data-slot="dialog-content"]');

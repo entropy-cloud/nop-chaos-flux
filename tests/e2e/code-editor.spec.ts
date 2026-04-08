@@ -27,7 +27,7 @@ async function openCodeEditor(page: import('@playwright/test').Page) {
 
 /**
  * Find the code-editor container that has a label matching the given text.
- * The label is in a .nop-field__label element, and the editor is a sibling
+ * The label is in a [data-slot="field-label"] element, and the editor is a sibling
  * within the same form field wrapper.
  */
 function findEditorByLabel(page: import('@playwright/test').Page, labelText: string) {
@@ -54,13 +54,13 @@ test('SQL enhanced editor has all toolbar buttons', async ({ page }) => {
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const toolbar = field.locator('.nop-code-editor__toolbar').first();
+  const toolbar = field.locator('[data-slot="code-editor-toolbar"]').first();
   await expect(toolbar).toBeVisible();
 
-  await expect(toolbar.locator('.nop-code-editor__toolbar-format')).toBeVisible();
-  await expect(toolbar.locator('.nop-code-editor__snippet-panel')).toBeVisible();
-  await expect(toolbar.locator('.nop-code-editor__toolbar-var-toggle')).toBeVisible();
-  await expect(toolbar.locator('.nop-code-editor__toolbar-execute')).toBeVisible();
+  await expect(toolbar.locator('[data-slot="code-editor-toolbar-format"]')).toBeVisible();
+  await expect(toolbar.locator('[data-slot="code-editor-snippet-panel"]')).toBeVisible();
+  await expect(toolbar.locator('[data-slot="code-editor-toolbar-var-toggle"]')).toBeVisible();
+  await expect(toolbar.locator('[data-slot="code-editor-toolbar-execute"]')).toBeVisible();
 });
 
 test('SQL format button formats the editor content', async ({ page }) => {
@@ -69,7 +69,7 @@ test('SQL format button formats the editor content', async ({ page }) => {
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const formatBtn = field.locator('.nop-code-editor__toolbar-format').first();
+  const formatBtn = field.locator('[data-slot="code-editor-toolbar-format"]').first();
   await expect(formatBtn).toBeVisible();
 
   const editorEl = field.locator('.cm-editor').first();
@@ -91,15 +91,15 @@ test('snippet panel dropdown shows configured snippets', async ({ page }) => {
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const snippetToggle = field.locator('.nop-code-editor__snippet-toggle').first();
+  const snippetToggle = field.locator('[data-slot="code-editor-snippet-toggle"]').first();
   await expect(snippetToggle).toBeVisible();
 
   await snippetToggle.click();
 
-  const dropdown = page.locator('.nop-code-editor__snippet-dropdown').filter({ has: page.locator('.nop-code-editor__snippet-item') }).first();
+  const dropdown = page.locator('[data-slot="code-editor-snippet-dropdown"]').filter({ has: page.locator('[data-slot="code-editor-snippet-item"]') }).first();
   await expect(dropdown).toBeVisible();
 
-  await expect(dropdown.locator('.nop-code-editor__snippet-item')).toHaveCount(3);
+  await expect(dropdown.locator('[data-slot="code-editor-snippet-item"]')).toHaveCount(3);
   await expect(dropdown.locator('text=IF 条件')).toBeVisible();
   await expect(dropdown.locator('text=FOREACH 循环')).toBeVisible();
   await expect(dropdown.locator('text=WHERE 1=1')).toBeVisible();
@@ -111,10 +111,10 @@ test('snippet insertion inserts text into editor', async ({ page }) => {
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const snippetToggle = field.locator('.nop-code-editor__snippet-toggle').first();
+  const snippetToggle = field.locator('[data-slot="code-editor-snippet-toggle"]').first();
   await snippetToggle.click();
 
-  const dropdown = page.locator('.nop-code-editor__snippet-dropdown').filter({ has: page.locator('.nop-code-editor__snippet-item') }).first();
+  const dropdown = page.locator('[data-slot="code-editor-snippet-dropdown"]').filter({ has: page.locator('[data-slot="code-editor-snippet-item"]') }).first();
   await expect(dropdown).toBeVisible();
 
   const beforeContent = await field.locator('.cm-content').first().innerText();
@@ -133,18 +133,18 @@ test('variable panel toggle shows/hides panel', async ({ page }) => {
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const varPanel = field.locator('.nop-code-editor__var-panel').first();
+  const varPanel = field.locator('[data-slot="code-editor-var-panel"]').first();
   await expect(varPanel).toBeVisible();
-  await expect(varPanel.locator('.nop-code-editor__var-item-label')).toHaveCount(6);
+  await expect(varPanel.locator('[data-slot="code-editor-var-item-label"]')).toHaveCount(6);
   await expect(varPanel.locator('text=用户ID')).toBeVisible();
   await expect(varPanel.locator('text=用户名')).toBeVisible();
   await expect(varPanel.locator('text=商户号')).toBeVisible();
   await expect(varPanel.locator('text=订单信息')).toBeVisible();
 
-  const varToggle = field.locator('.nop-code-editor__toolbar-var-toggle').first();
+  const varToggle = field.locator('[data-slot="code-editor-toolbar-var-toggle"]').first();
   await varToggle.click();
 
-  const collapsedPanel = field.locator('.nop-code-editor__var-panel--collapsed').first();
+  const collapsedPanel = field.locator('[data-slot="code-editor-var-panel"][data-collapsed]').first();
   await expect(collapsedPanel).toBeVisible();
 });
 
@@ -154,12 +154,12 @@ test('variable panel insert inserts templated text', async ({ page }) => {
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const varPanel = field.locator('.nop-code-editor__var-panel').first();
+  const varPanel = field.locator('[data-slot="code-editor-var-panel"]').first();
   await expect(varPanel).toBeVisible();
 
   const beforeContent = await field.locator('.cm-content').first().evaluate((el) => el.textContent);
 
-  const insertBtn = varPanel.locator('.nop-code-editor__var-item-insert').first();
+  const insertBtn = varPanel.locator('[data-slot="code-editor-var-item-insert"]').first();
   await expect(insertBtn).toBeVisible();
   await insertBtn.click();
 
@@ -178,10 +178,10 @@ test('variable panel copy copies value to clipboard', async ({ browser }) => {
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const varPanel = field.locator('.nop-code-editor__var-panel').first();
+  const varPanel = field.locator('[data-slot="code-editor-var-panel"]').first();
   await expect(varPanel).toBeVisible();
 
-  const copyBtn = varPanel.locator('.nop-code-editor__var-item-copy').first();
+  const copyBtn = varPanel.locator('[data-slot="code-editor-var-item-copy"]').first();
   await expect(copyBtn).toBeVisible();
 
   await copyBtn.click();
@@ -198,13 +198,13 @@ test('variable panel collapse hides panel content', async ({ page }) => {
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const varPanel = field.locator('.nop-code-editor__var-panel').first();
+  const varPanel = field.locator('[data-slot="code-editor-var-panel"]').first();
   await expect(varPanel).toBeVisible();
 
-  const collapseBtn = varPanel.locator('.nop-code-editor__var-panel-toggle').first();
+  const collapseBtn = varPanel.locator('[data-slot="code-editor-var-panel-toggle"]').first();
   await collapseBtn.click();
 
-  const collapsedPanel = field.locator('.nop-code-editor__var-panel--collapsed').first();
+  const collapsedPanel = field.locator('[data-slot="code-editor-var-panel"][data-collapsed]').first();
   await expect(collapsedPanel).toBeVisible();
 });
 
@@ -214,7 +214,7 @@ test('execute button is visible in enhanced SQL editor', async ({ page }) => {
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const executeBtn = field.locator('.nop-code-editor__toolbar-execute').first();
+  const executeBtn = field.locator('[data-slot="code-editor-toolbar-execute"]').first();
   await expect(executeBtn).toBeVisible();
   await expect(executeBtn).toContainText('Run');
 });
@@ -225,10 +225,10 @@ test('SQL result panel shows loading and error states on execute', async ({ page
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const executeBtn = field.locator('.nop-code-editor__toolbar-execute').first();
+  const executeBtn = field.locator('[data-slot="code-editor-toolbar-execute"]').first();
   await executeBtn.click();
 
-  const resultContainer = field.locator('.nop-code-editor__result-container').first();
+  const resultContainer = field.locator('[data-slot="code-editor-result-container"]').first();
 
   const loadingOrError = await resultContainer.locator('text=Executing...').isVisible({ timeout: 3000 })
     || await resultContainer.locator('text=Error').isVisible({ timeout: 10000 });
@@ -242,12 +242,12 @@ test('SQL result panel shows close button and can be dismissed', async ({ page }
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
   await expect(field).toBeVisible();
 
-  const executeBtn = field.locator('.nop-code-editor__toolbar-execute').first();
+  const executeBtn = field.locator('[data-slot="code-editor-toolbar-execute"]').first();
   await executeBtn.click();
 
-  const resultContainer = field.locator('.nop-code-editor__result-container').first();
+  const resultContainer = field.locator('[data-slot="code-editor-result-container"]').first();
 
-  const closeBtn = resultContainer.locator('.nop-code-editor__result-close').first();
+  const closeBtn = resultContainer.locator('[data-slot="code-editor-result-close"]').first();
   await expect(closeBtn).toBeVisible({ timeout: 10000 });
   await closeBtn.click();
 
@@ -276,10 +276,10 @@ test('JSON editor renders with fullscreen button', async ({ page }) => {
   const editor = field.locator('.cm-editor').first();
   await expect(editor).toBeVisible();
 
-  const toolbar = field.locator('.nop-code-editor__toolbar').first();
+  const toolbar = field.locator('[data-slot="code-editor-toolbar"]').first();
   await expect(toolbar).toBeVisible();
 
-  const fullscreenBtn = toolbar.locator('.nop-code-editor__toolbar-fullscreen').first();
+  const fullscreenBtn = toolbar.locator('[data-slot="code-editor-toolbar-fullscreen"]').first();
   await expect(fullscreenBtn).toBeVisible();
 });
 

@@ -152,7 +152,7 @@ test('checks specific CSS properties on canvas slot and children', async ({ page
   await openFlowDesigner(page);
 
   const props = await page.evaluate(() => {
-    const canvasSlot = document.querySelector('.nop-designer__canvas') as HTMLElement | null
+    const canvasSlot = document.querySelector('[data-slot="workbench-canvas"]') as HTMLElement | null
       ?? document.querySelector('.react-flow')?.closest('.relative') as HTMLElement | null;
     if (!canvasSlot) {
       return { error: 'canvas slot not found' };

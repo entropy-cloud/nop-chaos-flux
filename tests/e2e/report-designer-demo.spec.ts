@@ -30,12 +30,12 @@ test('verifies report designer demo layout styles', async ({ page }) => {
 
   const styleMetrics = await page.evaluate(() => {
     const root = document.querySelector('.report-designer-demo') as HTMLElement | null;
-    const header = document.querySelector('.report-designer-demo__header') as HTMLElement | null;
-    const body = document.querySelector('.report-designer-demo__body') as HTMLElement | null;
-    const fieldPanel = document.querySelector('.report-designer-demo__field-panel') as HTMLElement | null;
-    const canvas = document.querySelector('.report-designer-demo__canvas') as HTMLElement | null;
-    const inspector = document.querySelector('.report-designer-demo__inspector') as HTMLElement | null;
-    const log = document.querySelector('.report-designer-demo__log') as HTMLElement | null;
+    const header = document.querySelector('[data-slot="report-demo-header"]') as HTMLElement | null;
+    const body = document.querySelector('[data-slot="report-demo-body"]') as HTMLElement | null;
+    const fieldPanel = document.querySelector('[data-slot="report-demo-field-panel"]') as HTMLElement | null;
+    const canvas = document.querySelector('[data-slot="report-demo-canvas"]') as HTMLElement | null;
+    const inspector = document.querySelector('[data-slot="report-demo-inspector"]') as HTMLElement | null;
+    const log = document.querySelector('[data-slot="report-demo-log"]') as HTMLElement | null;
     const toolbar = document.querySelector('.rd-toolbar') as HTMLElement | null;
     const fieldSource = document.querySelector('.field-source') as HTMLElement | null;
     const spreadsheetGrid = document.querySelector('.spreadsheet-grid') as HTMLElement | null;
@@ -47,12 +47,12 @@ test('verifies report designer demo layout styles', async ({ page }) => {
 
     const missing: string[] = [];
     if (!root) missing.push('.report-designer-demo');
-    if (!header) missing.push('.report-designer-demo__header');
-    if (!body) missing.push('.report-designer-demo__body');
-    if (!fieldPanel) missing.push('.report-designer-demo__field-panel');
-    if (!canvas) missing.push('.report-designer-demo__canvas');
-    if (!inspector) missing.push('.report-designer-demo__inspector');
-    if (!log) missing.push('.report-designer-demo__log');
+    if (!header) missing.push('[data-slot="report-demo-header"]');
+    if (!body) missing.push('[data-slot="report-demo-body"]');
+    if (!fieldPanel) missing.push('[data-slot="report-demo-field-panel"]');
+    if (!canvas) missing.push('[data-slot="report-demo-canvas"]');
+    if (!inspector) missing.push('[data-slot="report-demo-inspector"]');
+    if (!log) missing.push('[data-slot="report-demo-log"]');
     if (!toolbar) missing.push('.rd-toolbar');
     if (!fieldSource) missing.push('.field-source');
     if (!spreadsheetGrid) missing.push('.spreadsheet-grid');
@@ -154,10 +154,10 @@ test('verifies report designer demo layout styles', async ({ page }) => {
   expect(['relative', 'sticky']).toContain(styleMetrics!.colHeaderPosition);
 
   await expect(page.locator('.report-designer-demo')).toBeVisible();
-  await expect(page.locator('.report-designer-demo__header')).toBeVisible();
-  await expect(page.locator('.report-designer-demo__body')).toBeVisible();
-  await expect(page.locator('.report-designer-demo__field-panel')).toBeVisible();
-  await expect(page.locator('.report-designer-demo__inspector')).toBeVisible();
+  await expect(page.locator('[data-slot="report-demo-header"]')).toBeVisible();
+  await expect(page.locator('[data-slot="report-demo-body"]')).toBeVisible();
+  await expect(page.locator('[data-slot="report-demo-field-panel"]')).toBeVisible();
+  await expect(page.locator('[data-slot="report-demo-inspector"]')).toBeVisible();
   await expect(page.locator('.rd-toolbar')).toBeVisible();
   await expect(page.locator('.field-source')).toBeVisible();
   await expect(page.locator('.spreadsheet-grid')).toBeVisible();
@@ -167,8 +167,8 @@ test('verifies field items and inspector elements are visible', async ({ page })
   await openReportDesignerDemo(page);
 
   await expect(page.locator('.field-item')).toHaveCount(4);
-  await expect(page.locator('.field-item__type')).toHaveCount(4);
-  await expect(page.locator('.field-item__label')).toHaveCount(4);
+  await expect(page.locator('[data-slot="field-item-type"]')).toHaveCount(4);
+  await expect(page.locator('[data-slot="field-item-label"]')).toHaveCount(4);
 
   const fieldItems = page.locator('.field-item');
   await expect(fieldItems.first()).toContainText('Order ID');
