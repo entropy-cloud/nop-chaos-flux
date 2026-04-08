@@ -56,6 +56,7 @@ export { createActionScope } from './action-scope';
 export { createComponentHandleRegistry } from './component-handle-registry';
 export { createFormComponentHandle } from './form-component-handle';
 export { createApiCacheStore, resolveCacheKey } from './api-cache';
+export { createAbortScope, withRetry, withTimeout, type RetryOptions } from './operation-control';
 export { scopeChangeHitsDependencies } from './scope-change';
 export {
   executeApiObject,
@@ -271,48 +272,6 @@ export function createRendererRuntime(input: {
 
   const executeSourceRef: { current?: (source: SourceSchema, scope: ScopeRef, ctx?: Partial<ActionContext>) => Promise<ActionResult> } = {};
 
-  const { dispatch } = createActionDispatcher({
-    getEnv,
-    plugins,
-    onActionError: input.onActionError,
-    evaluate,
-    compileValue,
-    evaluateCompiled,
-    refreshDataSource: (inputValue) => runtime.refreshDataSource(inputValue),
-    executeAjaxAction,
-    submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
-    openDrawer: async (drawer, ctx) => {
-      ctx.runtime.env.notify('info', 'Drawer support is not wired yet');
-      return { ok: true, data: drawer };
-    },
-    showToast: async (args, ctx) => {
-      const level = typeof args?.level === 'string' && ['info', 'success', 'warning', 'error'].includes(args.level)
-        ? args.level as 'info' | 'success' | 'warning' | 'error'
-        : 'info';
-      const message = typeof args?.message === 'string' ? args.message : 'Action completed';
-      ctx.runtime.env.notify(level, message);
-      return { ok: true, data: args };
-    },
-    runtime: {
-      compile(schema) {
-        return schemaCompiler.compile(schema);
-      },
-      resolveTarget(target, ctx) {
-        return runtime.resolveTarget(target, ctx);
-      },
-      schemaCompiler
-    },
-    createDialogScope: (ctx) =>
-      createScopeRef({
-        id: `${ctx.node?.id ?? ctx.scope.id}:dialog-scope`,
-        path: `${ctx.scope.path}.dialog`,
-        parent: ctx.scope,
-        initialData: {
-          dialogId: `${ctx.node?.id ?? ctx.scope.id}-pending`
-        }
-      })
-  });
-
   const runtime: RendererRuntime = {
     runtimeId,
     registry: input.registry,
@@ -365,7 +324,9 @@ export function createRendererRuntime(input: {
     releaseImportedNamespaces(args) {
       importManager.releaseImportedNamespaces(args);
     },
-    dispatch,
+    dispatch(action, ctx) {
+      return actionDispatcher.dispatch(action, ctx);
+    },
     executeSource(inputValue) {
       if (!executeSourceRef.current) {
         throw new Error('Source executor is not initialized yet');
@@ -379,7 +340,8 @@ export function createRendererRuntime(input: {
         runtime,
         apiCache,
         executeApiRequest: (actionType, api, scope, options) => executeApiRequest(actionType, api, scope, undefined, options),
-        ...inputValue
+        ...inputValue,
+        targetPath: inputValue.dataPath
       });
     },
     registerDataSource(inputValue: {
@@ -437,6 +399,40 @@ export function createRendererRuntime(input: {
     createFormRuntime
   };
 
+  const actionDispatcher = createActionDispatcher({
+    getEnv,
+    plugins,
+    onActionError: input.onActionError,
+    evaluate,
+    compileValue,
+    evaluateCompiled,
+    refreshDataSource: (inputValue) => runtime.refreshDataSource(inputValue),
+    executeAjaxAction,
+    submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
+    openDrawer: async (drawer, ctx) => {
+      ctx.runtime.env.notify('info', 'Drawer support is not wired yet');
+      return { ok: true, data: drawer };
+    },
+    showToast: async (args, ctx) => {
+      const level = typeof args?.level === 'string' && ['info', 'success', 'warning', 'error'].includes(args.level)
+        ? args.level as 'info' | 'success' | 'warning' | 'error'
+        : 'info';
+      const message = typeof args?.message === 'string' ? args.message : 'Action completed';
+      ctx.runtime.env.notify(level, message);
+      return { ok: true, data: args };
+    },
+    runtime,
+    createDialogScope: (ctx) =>
+      createScopeRef({
+        id: `${ctx.node?.id ?? ctx.scope.id}:dialog-scope`,
+        path: `${ctx.scope.path}.dialog`,
+        parent: ctx.scope,
+        initialData: {
+          dialogId: `${ctx.node?.id ?? ctx.scope.id}-pending`
+        }
+      })
+  });
+
   sourceRegistryRef.current = createRuntimeSourceRegistry({
     runtime,
     apiCache,
@@ -446,7 +442,7 @@ export function createRendererRuntime(input: {
 
   executeSourceRef.current = createSourceExecutor({
     runtime,
-    executeAction: (action, ctx) => dispatch(action, ctx)
+    executeAction: (action, ctx) => actionDispatcher.dispatch(action, ctx)
   });
 
   runtimeRef.current = runtime;

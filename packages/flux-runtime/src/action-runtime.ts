@@ -10,9 +10,11 @@ import type {
   ComponentHandle,
   RendererEnv,
   RendererPlugin,
+  RendererRuntime,
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { isNamespacedAction } from './action-scope';
+import { withRetry, withTimeout } from './operation-control';
 import { cancelPendingDebounce, scheduleDebounce } from './utils/debounce';
 
 interface ActionDispatcherInput {
@@ -30,17 +32,7 @@ interface ActionDispatcherInput {
   getDialogComponentRegistry?: (ctx: ActionContext) => ActionContext['componentRegistry'];
   openDrawer?: (drawer: Record<string, any>, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
   showToast?: (args: Record<string, unknown> | undefined, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
-    runtime: {
-      compile(schema: any): any;
-      resolveTarget(target: ComponentTarget, ctx: {
-        runtimeId: string;
-        instancePath?: import('@nop-chaos/flux-core').ResolutionContext['instancePath'];
-        componentRegistry?: ActionContext['componentRegistry'];
-      }): import('@nop-chaos/flux-core').ResolutionResult;
-      schemaCompiler: {
-        compile(schema: any, options?: { basePath?: string; parentPath?: string; cidState?: import('@nop-chaos/flux-core').CompiledCidState }): any;
-      };
-    };
+  runtime: RendererRuntime;
 }
 
 type InternalComponentActionTarget = ComponentTarget & {
@@ -740,31 +732,14 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
 
   async function runSingleActionWithRetry(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
     const retry = getRetryControl(action.retry);
-    const retryTimes = Math.max(0, retry?.times ?? 0);
-    const retryDelay = Math.max(0, retry?.delay ?? 0);
-
-    let attempts = 0;
-    let lastResult: ActionResult | undefined;
-
-    while (attempts <= retryTimes) {
-      attempts += 1;
-      lastResult = await runSingleActionWithTimeout(action, ctx);
-
-      if (lastResult.ok || lastResult.skipped || lastResult.cancelled || lastResult.timedOut) {
-        return {
-          ...lastResult,
-          attempts
-        };
-      }
-
-      if (attempts > retryTimes) {
-        break;
-      }
-
-      if (retryDelay > 0) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-      }
-    }
+    const { result: lastResult, attempts } = await withRetry(
+      () => runSingleActionWithTimeout(action, ctx),
+      {
+        times: retry?.times ?? 0,
+        delay: retry?.delay ?? 0
+      },
+      (result) => Boolean(result.ok || result.skipped || result.cancelled || result.timedOut)
+    );
 
     return {
       ...(lastResult ?? { ok: false, error: new Error('Action failed without result') }),
@@ -779,40 +754,11 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       return runSingleAction(action, ctx);
     }
 
-    const controller = new AbortController();
-
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      const timeoutId = setTimeout(() => {
-        if (settled) {
-          return;
-        }
-
-        settled = true;
-        controller.abort();
-        resolve(createTimedOutResult(new Error(`Action timed out after ${timeoutMs}ms`)));
-      }, timeoutMs);
-
-      void runSingleAction(action, ctx, controller.signal)
-        .then((result) => {
-          if (settled) {
-            return;
-          }
-
-          settled = true;
-          clearTimeout(timeoutId);
-          resolve(result);
-        })
-        .catch((error) => {
-          if (settled) {
-            return;
-          }
-
-          settled = true;
-          clearTimeout(timeoutId);
-          reject(error);
-        });
-    });
+    return withTimeout(
+      (signal) => runSingleAction(action, ctx, signal),
+      timeoutMs,
+      () => createTimedOutResult(new Error(`Action timed out after ${timeoutMs}ms`))
+    );
   }
 
   async function dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult> {
