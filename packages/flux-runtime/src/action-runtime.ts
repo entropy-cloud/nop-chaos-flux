@@ -348,7 +348,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         const dialogId = ctx.page.openDialog(action.dialog, dialogScope, input.runtime as any, {
           actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
           componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
-          ownerNode: ctx.node
+          ownerNode: ctx.node,
+          ownerNodeInstance: ctx.nodeInstance
         });
         dialogScope.update('dialogId', dialogId);
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: { dialogId } });
@@ -508,6 +509,21 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       instancePath: ctx.locator?.instancePath,
       componentRegistry: ctx.componentRegistry
     });
+
+    if (resolution.kind === 'ambiguous') {
+      return finishAction(
+        input,
+        {
+          ...actionPayload,
+          dispatchMode: 'component',
+          method,
+          componentId: target.componentId,
+          componentName: target.componentName
+        },
+        startedAt,
+        { ok: false, error: new Error(`Ambiguous component target${target.componentName ? `: ${target.componentName}` : ''}`) }
+      );
+    }
 
     if (resolution.kind !== 'resolved' || !resolution.handle) {
       return finishAction(

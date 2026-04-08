@@ -75,11 +75,11 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
       }),
     [resolvedConfig, resolvedDocument, resolvedReadOnly],
   );
-  const actionScope = useCurrentActionScope();
   const spreadsheetProvider = useMemo(
     () => createSpreadsheetActionProvider((command) => spreadsheetCore.dispatch(command as any)),
     [spreadsheetCore],
   );
+  const actionScope = useCurrentActionScope();
 
   useEffect(() => {
     if (!actionScope) {

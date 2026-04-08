@@ -40,6 +40,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
     component: ReportDesignerPageRenderer,
     regions: ['toolbar', 'fieldPanel', 'inspector', 'dialogs', 'body'],
     fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
+    actionScopePolicy: 'new',
   },
   {
     type: 'report-toolbar',

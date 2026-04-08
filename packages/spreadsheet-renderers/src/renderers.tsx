@@ -8,6 +8,7 @@ export const spreadsheetRendererDefinitions: RendererDefinition[] = [
     component: SpreadsheetPageRenderer,
     regions: ['toolbar', 'body', 'dialogs'],
     fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
+    actionScopePolicy: 'new',
   },
 ];
 

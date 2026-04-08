@@ -227,6 +227,7 @@ describe('registerSpreadsheetRenderers', () => {
     const definition = registry.get('spreadsheet-page');
     expect(definition).toBeDefined();
     expect(definition?.regions).toEqual(['toolbar', 'body', 'dialogs']);
+    expect(definition?.actionScopePolicy).toBe('new');
   });
 
   it('exports readOnly in the page schema helper type', () => {

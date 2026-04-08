@@ -17,6 +17,7 @@ import { createRootDependencySet, filterScopeChangeByIgnoredRoots, scopeChangeHi
 
 interface RuntimeSourceEntry {
   id: string;
+  name?: string;
   ownerScopeId: string;
   scope: ScopeRef;
   controller: DataSourceController;
@@ -25,10 +26,32 @@ interface RuntimeSourceEntry {
   dispose(): void;
 }
 
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function resolvePublishedTarget(schema: DataSourceSchema, fallbackId: string): string | undefined {
+  if (typeof schema.name === 'string' && schema.name.length > 0) {
+    return schema.name;
+  }
+
+  if (typeof schema.dataPath === 'string' && schema.dataPath.length > 0) {
+    return schema.dataPath;
+  }
+
+  if ('api' in schema && schema.api) {
+    return undefined;
+  }
+
+  return fallbackId;
+}
+
 function createDependencyAwareFormulaController(input: {
   runtime: RendererRuntime;
   scope: ScopeRef;
-  dataPath: string;
+  targetPath?: string;
+  mergeToScope?: boolean;
+  statusPath?: string;
   formula: unknown;
   initialData?: unknown;
   onDependenciesChange?: (dependencies: ScopeDependencySet | undefined) => void;
@@ -44,6 +67,20 @@ function createDependencyAwareFormulaController(input: {
   let stale = false;
   let value: unknown = input.initialData;
   let error: unknown;
+
+  function publishStatus() {
+    if (!input.statusPath) {
+      return;
+    }
+
+    input.scope.update(input.statusPath, {
+      started,
+      loading,
+      ready: started && !loading && !error,
+      stale,
+      error: error ? { message: error instanceof Error ? error.message : String(error) } : undefined
+    });
+  }
 
   function updateDependencies() {
     input.onDependenciesChange?.(collectRuntimeDependencies(runtimeState));
@@ -66,7 +103,15 @@ function createDependencyAwareFormulaController(input: {
     loading = false;
     stale = false;
     updateDependencies();
-    input.scope.update(input.dataPath, nextValue);
+    if (input.targetPath) {
+      input.scope.update(input.targetPath, nextValue);
+    }
+
+    if (input.mergeToScope && isObjectRecord(nextValue)) {
+      input.scope.merge(nextValue);
+    }
+
+    publishStatus();
   }
 
   return {
@@ -89,8 +134,16 @@ function createDependencyAwareFormulaController(input: {
 
       if (input.initialData !== undefined) {
         value = input.initialData;
-        input.scope.update(input.dataPath, input.initialData);
+        if (input.targetPath) {
+          input.scope.update(input.targetPath, input.initialData);
+        }
+
+        if (input.mergeToScope && isObjectRecord(input.initialData)) {
+          input.scope.merge(input.initialData);
+        }
       }
+
+      publishStatus();
 
       void Promise.resolve().then(() => {
         publish();
@@ -98,6 +151,7 @@ function createDependencyAwareFormulaController(input: {
     },
     stop() {
       stopped = true;
+      publishStatus();
     },
     async refresh() {
       publish();
@@ -153,7 +207,7 @@ export function createRuntimeSourceRegistry(input: {
 
     const explicitDependencies = createRootDependencySet(args.schema.dependsOn);
     let dependencies: ScopeDependencySet | undefined = explicitDependencies;
-    const targetPath = args.schema.dataPath;
+    const targetPath = resolvePublishedTarget(args.schema, args.id);
     const controller = 'api' in args.schema && args.schema.api
       ? createDataSourceController({
           runtime: input.runtime,
@@ -161,7 +215,9 @@ export function createRuntimeSourceRegistry(input: {
           executeApiRequest: input.executeApiRequest,
           api: args.schema.api as ApiSchema,
           scope: args.scope,
-          dataPath: args.schema.dataPath,
+          targetPath,
+          mergeToScope: args.schema.mergeToScope,
+          statusPath: args.schema.statusPath,
           interval: asNumber(args.schema.interval),
           stopWhen: asString(args.schema.stopWhen),
           silent: asBoolean(args.schema.silent),
@@ -175,7 +231,9 @@ export function createRuntimeSourceRegistry(input: {
       : createDependencyAwareFormulaController({
           runtime: input.runtime,
           scope: args.scope,
-          dataPath: args.schema.dataPath ?? `${args.id}`,
+          targetPath,
+          mergeToScope: args.schema.mergeToScope,
+          statusPath: args.schema.statusPath,
           formula: args.schema.formula,
           initialData: args.schema.initialData,
           onDependenciesChange(nextDependencies) {
@@ -185,13 +243,15 @@ export function createRuntimeSourceRegistry(input: {
           }
         });
 
+    const ignoredRoots = [targetPath, args.schema.statusPath].filter((value): value is string => Boolean(value));
+
     const unsubscribe = args.scope.store?.subscribe((change) => {
       if (disposed) {
         return;
       }
 
-      const observedChange = targetPath
-        ? filterScopeChangeByIgnoredRoots(change, [targetPath])
+      const observedChange = ignoredRoots.length > 0
+        ? filterScopeChangeByIgnoredRoots(change, ignoredRoots)
         : change;
 
       if (!observedChange) {
@@ -209,6 +269,7 @@ export function createRuntimeSourceRegistry(input: {
 
     const entry: RuntimeSourceEntry = {
       id: args.id,
+      name: args.schema.name,
       ownerScopeId,
       scope: args.scope,
       controller,
@@ -262,7 +323,8 @@ export function createRuntimeSourceRegistry(input: {
     scope?: ScopeRef;
   }): Promise<boolean> {
     if (args.scope) {
-      const entry = scopeEntries.get(args.scope.id)?.get(args.id);
+      const bucket = scopeEntries.get(args.scope.id);
+      const entry = bucket?.get(args.id) ?? Array.from(bucket?.values() ?? []).find((candidate) => candidate.name === args.id);
 
       if (!entry) {
         return false;
@@ -273,7 +335,7 @@ export function createRuntimeSourceRegistry(input: {
     }
 
     for (const bucket of scopeEntries.values()) {
-      const entry = bucket.get(args.id);
+      const entry = bucket.get(args.id) ?? Array.from(bucket.values()).find((candidate) => candidate.name === args.id);
 
       if (!entry) {
         continue;

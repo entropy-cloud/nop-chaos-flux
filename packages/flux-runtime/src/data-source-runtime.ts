@@ -24,15 +24,40 @@ function isAbortError(error: unknown): boolean {
   );
 }
 
-function writeDataToScope(scope: ScopeRef, dataPath: string | undefined, data: unknown): void {
-  if (dataPath) {
-    scope.update(dataPath, data);
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function writeDataToScope(scope: ScopeRef, targetPath: string | undefined, mergeToScope: boolean | undefined, data: unknown): void {
+  if (targetPath) {
+    scope.update(targetPath, data);
     return;
   }
 
-  if (data && typeof data === 'object' && !Array.isArray(data)) {
-    scope.merge(data as Record<string, unknown>);
+  if (mergeToScope && isObjectRecord(data)) {
+    scope.merge(data);
   }
+}
+
+function writeStatusToScope(scope: ScopeRef, statusPath: string | undefined, state: {
+  started: boolean;
+  loading: boolean;
+  stale: boolean;
+  error: unknown;
+}): void {
+  if (!statusPath) {
+    return;
+  }
+
+  scope.update(statusPath, {
+    started: state.started,
+    loading: state.loading,
+    ready: state.started && !state.loading && !state.error,
+    stale: state.stale,
+    error: state.error
+      ? { message: state.error instanceof Error ? state.error.message : String(state.error) }
+      : undefined
+  });
 }
 
 export function trackApiRequestDependencies(input: {
@@ -69,7 +94,9 @@ export function createDataSourceController(input: {
   executeApiRequest: <T>(actionType: string, api: import('@nop-chaos/flux-core').ExecutableApiRequest, scope: ScopeRef, options?: { signal?: AbortSignal; control?: import('@nop-chaos/flux-core').OperationControlConfig }) => Promise<{ ok: boolean; status: number; data: T }>;
   api: ApiSchema;
   scope: ScopeRef;
-  dataPath?: string;
+  targetPath?: string;
+  mergeToScope?: boolean;
+  statusPath?: string;
   interval?: number;
   stopWhen?: string;
   silent?: boolean;
@@ -82,7 +109,9 @@ export function createDataSourceController(input: {
     executeApiRequest,
     api,
     scope,
-    dataPath,
+    targetPath,
+    mergeToScope,
+    statusPath,
     interval,
     stopWhen,
     silent,
@@ -120,6 +149,7 @@ export function createDataSourceController(input: {
     loading = true;
     stale = value !== undefined;
     error = undefined;
+    writeStatusToScope(scope, statusPath, { started, loading, stale, error });
 
     abortController?.abort();
     abortController = new AbortController();
@@ -150,7 +180,8 @@ export function createDataSourceController(input: {
           value = cached.data;
           loading = false;
           stale = false;
-          writeDataToScope(scope, dataPath, cached.data);
+          writeDataToScope(scope, targetPath, mergeToScope, cached.data);
+          writeStatusToScope(scope, statusPath, { started, loading, stale, error });
 
           if (checkStopCondition()) {
             stop();
@@ -183,7 +214,8 @@ export function createDataSourceController(input: {
       loading = false;
       stale = false;
       error = undefined;
-      writeDataToScope(scope, dataPath, response.data);
+      writeDataToScope(scope, targetPath, mergeToScope, response.data);
+      writeStatusToScope(scope, statusPath, { started, loading, stale, error });
 
       if (checkStopCondition()) {
         stop();
@@ -196,6 +228,7 @@ export function createDataSourceController(input: {
       loading = false;
       stale = value !== undefined;
       error = caughtError;
+      writeStatusToScope(scope, statusPath, { started, loading, stale, error });
 
       if (!silent) {
         const message = caughtError instanceof Error ? caughtError.message : String(caughtError);
@@ -214,8 +247,10 @@ export function createDataSourceController(input: {
 
     if (initialData !== undefined) {
       value = initialData;
-      writeDataToScope(scope, dataPath, initialData);
+      writeDataToScope(scope, targetPath, mergeToScope, initialData);
     }
+
+    writeStatusToScope(scope, statusPath, { started, loading, stale, error });
 
     void runRequest();
 
@@ -236,6 +271,7 @@ export function createDataSourceController(input: {
 
     abortController?.abort();
     abortController = undefined;
+    writeStatusToScope(scope, statusPath, { started, loading, stale, error });
   }
 
   return {

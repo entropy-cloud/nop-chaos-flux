@@ -100,6 +100,8 @@ export interface PreparedApiRequest {
 
 export interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
+  name?: string;
+  mergeToScope?: boolean;
   statusPath?: string;
   dataPath?: string;
   dependsOn?: string[];

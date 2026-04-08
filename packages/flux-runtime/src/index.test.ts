@@ -813,6 +813,56 @@ describe('createRendererRuntime', () => {
     }
   });
 
+  it('fails component action when componentName resolves ambiguously', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const firstForm = runtime.createFormRuntime({
+      id: 'first-form',
+      name: 'sharedForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+    const secondForm = runtime.createFormRuntime({
+      id: 'second-form',
+      name: 'sharedForm',
+      initialValues: { username: 'Bob' },
+      parentScope: page.scope,
+      page
+    });
+
+    const unregisterFirst = componentRegistry.register(createFormComponentHandle(firstForm));
+    const unregisterSecond = componentRegistry.register(createFormComponentHandle(secondForm));
+
+    try {
+      const result = await runtime.dispatch(
+        {
+          action: 'component:validate',
+          componentName: 'sharedForm'
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry
+        }
+      );
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeInstanceOf(Error);
+      expect((result.error as Error).message).toBe('Ambiguous component target: sharedForm');
+    } finally {
+      unregisterSecond();
+      unregisterFirst();
+    }
+  });
+
   it('dispatches component action by compiled _targetCid without componentId/componentName', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
@@ -1643,6 +1693,51 @@ describe('createRendererRuntime', () => {
     expect(result).toMatchObject({ ok: true, data: 'retry-lib:ping:ok' });
   });
 
+  it('passes nodeInstance through imported namespace setup context', async () => {
+    const createNamespace = vi.fn(() => ({
+      kind: 'import' as const,
+      invoke: async () => ({ ok: true })
+    }));
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace
+      }))
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        importLoader
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const actionScope = runtime.createActionScope({ id: 'node-instance-import-scope' });
+    const node = runtime.compile({ type: 'text', text: 'imports' }) as any;
+    const nodeInstance = {
+      locator: {
+        runtimeId: runtime.runtimeId,
+        templateGraphId: node.templateGraphId ?? 'test:imports',
+        templateNodeId: node.templateNodeId ?? node.cid ?? -1
+      }
+    } as any;
+
+    await runtime.ensureImportedNamespaces({
+      imports: [{ from: 'demo-lib', as: 'demo' }],
+      actionScope,
+      scope: page.scope,
+      node,
+      nodeInstance
+    });
+
+    expect(createNamespace).toHaveBeenCalledWith(expect.objectContaining({
+      node,
+      nodeInstance,
+      actionScope,
+      scope: page.scope
+    }));
+  });
+
   it('registers data sources in a scope-local runtime registry and replaces same-id entries', async () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiObject) => ({
       ok: true,
@@ -1873,6 +1968,136 @@ describe('createRendererRuntime', () => {
       stale: false,
       value: 15,
       error: undefined
+    });
+
+    registration.dispose();
+  });
+
+  it('publishes named data-source values without requiring dataPath', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ price: 3, qty: 4 });
+
+    const registration = runtime.registerDataSource({
+      id: 'total-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        name: 'total',
+        formula: '${(price || 0) * (qty || 0)}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(12);
+    });
+
+    registration.dispose();
+  });
+
+  it('does not implicitly merge unnamed object-valued data sources into scope', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ existing: 'keep' });
+
+    const registration = runtime.registerDataSource({
+      id: 'implicit-merge-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/object' },
+        initialData: { merged: true }
+      }
+    });
+
+    await Promise.resolve();
+
+    expect(page.scope.get('merged')).toBeUndefined();
+    expect(page.scope.get('existing')).toBe('keep');
+
+    registration.dispose();
+  });
+
+  it('shallow-merges named object-valued data sources only when mergeToScope is enabled', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ existing: 'keep' });
+
+    const registration = runtime.registerDataSource({
+      id: 'merge-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        name: 'payload',
+        mergeToScope: true,
+        formula: '${{ merged: true, count: 3 }}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ merged: true, count: 3 });
+      expect(page.scope.get('merged')).toBe(true);
+      expect(page.scope.get('count')).toBe(3);
+    });
+
+    registration.dispose();
+  });
+
+  it('publishes data-source status summaries through statusPath', async () => {
+    let releaseRequest: ((value: { ok: boolean; status: number; data: { value: string } }) => void) | undefined;
+    const fetcherImpl: RendererEnv['fetcher'] = async () => new Promise((resolve) => {
+      releaseRequest = resolve as typeof releaseRequest;
+    });
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const registration = runtime.registerDataSource({
+      id: 'statusful-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        name: 'payload',
+        statusPath: 'payloadStatus',
+        api: { url: '/api/status' },
+        initialData: { value: 'initial' }
+      }
+    });
+
+    expect(page.scope.get('payloadStatus')).toMatchObject({
+      started: true,
+      loading: true,
+      ready: false,
+      stale: true,
+      error: undefined
+    });
+
+    releaseRequest?.({ ok: true, status: 200, data: { value: 'loaded' } });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payloadStatus')).toMatchObject({
+        started: true,
+        loading: false,
+        ready: true,
+        stale: false,
+        error: undefined
+      });
     });
 
     registration.dispose();
@@ -2303,6 +2528,13 @@ describe('createRendererRuntime', () => {
     }) as any;
     const page = runtime.createPageRuntime({});
     const triggerNode = Array.isArray(pageNode.regions.body.node) ? pageNode.regions.body.node[0] : pageNode.regions.body.node;
+    const triggerNodeInstance = {
+      locator: {
+        runtimeId: runtime.runtimeId,
+        templateGraphId: triggerNode.templateGraphId ?? 'test:dialog-owner',
+        templateNodeId: triggerNode.templateNodeId ?? triggerNode.cid ?? -1
+      }
+    } as any;
 
     await runtime.dispatch(
       {
@@ -2316,11 +2548,14 @@ describe('createRendererRuntime', () => {
         runtime,
         scope: page.scope,
         page,
-        node: triggerNode
+        node: triggerNode,
+        nodeInstance: triggerNodeInstance
       }
     );
 
     const dialogState = page.store.getState().dialogs[0] as any;
+    expect(dialogState.ownerNode).toBe(triggerNode);
+    expect(dialogState.ownerNodeInstance).toBe(triggerNodeInstance);
     expect(dialogState.title.cid).toBeGreaterThan(triggerNode.cid);
     expect(dialogState.title.path).toContain(`${triggerNode.path}.dialog.`);
     expect(dialogState.body[0].cid).toBeGreaterThan(dialogState.title.cid);
@@ -4512,6 +4747,48 @@ describe('createRendererRuntime', () => {
       {
         action: 'refreshSource',
         targetId: 'total-source'
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result).toMatchObject({ ok: true, data: true });
+    expect(page.scope.get('total')).toBe(8);
+
+    registration.dispose();
+  });
+
+  it('refreshes registered sources through refreshSource actions using data-source names', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ price: 2, qty: 3 });
+
+    const registration = runtime.registerDataSource({
+      id: 'total-source-id',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        name: 'total',
+        formula: '${(price || 0) * (qty || 0)}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(6);
+    });
+
+    page.scope.update('qty', 4);
+
+    const result = await runtime.dispatch(
+      {
+        action: 'refreshSource',
+        targetId: 'total'
       },
       {
         runtime,

@@ -21,7 +21,7 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
   const handlesByLocator = new Map<string, ComponentHandle>();
   const debugDataByCid = new Map<number, ComponentHandleDebugData>();
   const handlesById = new Map<string, ComponentHandle>();
-  const handlesByName = new Map<string, ComponentHandle>();
+  const handlesByName = new Map<string, Set<ComponentHandle>>();
   const dynamicHandles = new Map<string, Map<string, ComponentHandle>>();
   const nameIndex = new Map<string, Set<number>>();
 
@@ -81,10 +81,13 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
     }
 
     if (handle.name) {
-      handlesByName.set(handle.name, handle);
       if (typeof handle._cid === 'number') {
         checkDuplicateName(handle.name, handle._cid);
       }
+
+      const existingByName = handlesByName.get(handle.name) ?? new Set<ComponentHandle>();
+      existingByName.add(handle);
+      handlesByName.set(handle.name, existingByName);
     }
 
     if (handle._templateId && handle._instanceKey) {
@@ -111,8 +114,13 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       handlesById.delete(handle.id);
     }
 
-    if (handle.name && handlesByName.get(handle.name) === handle) {
-      handlesByName.delete(handle.name);
+    if (handle.name) {
+      const indexedByName = handlesByName.get(handle.name);
+      indexedByName?.delete(handle);
+      if (indexedByName && indexedByName.size === 0) {
+        handlesByName.delete(handle.name);
+      }
+
       if (typeof handle._cid === 'number') {
         clearNameIndex(handle.name, handle._cid);
       }
@@ -175,10 +183,10 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
     }
 
     if (target.componentName) {
-      const byName = handlesByName.get(target.componentName);
+      const byName = Array.from(handlesByName.get(target.componentName) ?? []).filter((handle) => handle._mounted !== false);
 
-      if (byName) {
-        return byName;
+      if (byName.length === 1) {
+        return byName[0];
       }
     }
 
@@ -232,6 +240,24 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
     }
 
     const handle = resolveInScope(target);
+    if (!handle && target.componentName) {
+      const matchingByName = Array.from(handlesByName.get(target.componentName) ?? []).filter((candidate) => candidate._mounted !== false);
+
+      if (matchingByName.length > 1) {
+        return {
+          kind: 'ambiguous',
+          matches: matchingByName.map((candidate) => candidate._locator ?? {
+            runtimeId: 'runtime',
+            templateGraphId: candidate._templateId ?? 'legacy:component-registry',
+            templateNodeId: candidate._cid ?? -1,
+            instancePath: candidate._instanceKey
+              ? [{ repeatedTemplateId: candidate._templateId ?? 'legacy:component-registry', instanceKey: candidate._instanceKey }]
+              : undefined
+          })
+        };
+      }
+    }
+
     if (handle?._locator) {
       return {
         kind: 'resolved',
@@ -277,15 +303,6 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
         if (existingById && existingById !== handle) {
           handles.delete(existingById);
           unindexHandle(existingById);
-        }
-      }
-
-      if (handle.name) {
-        const existingByName = handlesByName.get(handle.name);
-
-        if (existingByName && existingByName !== handle) {
-          handles.delete(existingByName);
-          unindexHandle(existingByName);
         }
       }
 

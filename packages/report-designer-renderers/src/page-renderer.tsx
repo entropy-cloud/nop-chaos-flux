@@ -65,11 +65,11 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
       }),
     [resolvedAdapters, resolvedDesigner, resolvedDocument, resolvedProfile],
   );
-  const actionScope = useCurrentActionScope();
   const reportDesignerProvider = useMemo(
     () => createReportDesignerActionProvider((command) => core.dispatch(command as any)),
     [core],
   );
+  const actionScope = useCurrentActionScope();
 
   useEffect(() => {
     if (!actionScope) {
