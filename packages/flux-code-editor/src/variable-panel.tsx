@@ -25,6 +25,7 @@ export function VariablePanel({
         <Button
           variant="ghost"
           size="icon-xs"
+          className="nop-code-editor__var-panel-toggle"
           onClick={onToggleCollapse}
           title="Expand variable panel"
           aria-label="Expand variable panel"
@@ -58,6 +59,7 @@ export function VariablePanel({
           <Button
             variant="ghost"
             size="icon-xs"
+            className="nop-code-editor__var-panel-toggle"
             onClick={onToggleCollapse}
             title="Collapse variable panel"
             aria-label="Collapse variable panel"
@@ -89,6 +91,7 @@ function renderVariableList(
         <Button
           variant="ghost"
           size="icon-xs"
+          className="nop-code-editor__var-item-copy"
           onClick={() => onCopy(variable)}
           title="Copy to clipboard"
           aria-label="Copy to clipboard"
@@ -98,6 +101,7 @@ function renderVariableList(
         <Button
           variant="ghost"
           size="icon-xs"
+          className="nop-code-editor__var-item-insert"
           onClick={() => onInsert(variable)}
           title="Insert at cursor"
           aria-label="Insert at cursor"

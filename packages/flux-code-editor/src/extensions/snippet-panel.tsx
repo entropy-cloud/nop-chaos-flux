@@ -16,20 +16,22 @@ export function SnippetPanel({ snippets, onInsert }: SnippetPanelProps) {
 
   return (
     <Popover>
-      <PopoverTrigger
-        render={
-          <Button variant="ghost" size="xs" title="Insert snippet">
-            {'{…}'}
-          </Button>
-        }
-      />
-      <PopoverContent align="start" className="w-48 p-1">
+      <div className="nop-code-editor__snippet-panel">
+        <PopoverTrigger
+          render={
+            <Button variant="ghost" size="xs" className="nop-code-editor__snippet-toggle" title="Insert snippet">
+              {'{…}'}
+            </Button>
+          }
+        />
+      </div>
+      <PopoverContent align="start" className="nop-code-editor__snippet-dropdown w-48 p-1">
         {snippets.map((snippet, i) => (
           <Button
             key={i}
             variant="ghost"
             size="xs"
-            className="w-full justify-start gap-2"
+            className="nop-code-editor__snippet-item w-full justify-start gap-2"
             title={snippet.description}
             onClick={() => handleSelect(snippet.template)}
           >

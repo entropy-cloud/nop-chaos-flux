@@ -304,6 +304,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
                 <Button
                   variant="ghost"
                   size="xs"
+                  className="nop-code-editor__toolbar-format"
                   onClick={handleFormatSQL}
                   title="Format SQL"
                 >
@@ -320,6 +321,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
                 <Button
                   variant="ghost"
                   size="xs"
+                  className="nop-code-editor__toolbar-var-toggle"
                   onClick={() => setVariablePanelCollapsed(v => !v)}
                   title={variablePanelCollapsed ? 'Show variables' : 'Hide variables'}
                 >
@@ -331,6 +333,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
                 <Button
                   variant="ghost"
                   size="xs"
+                  className="nop-code-editor__toolbar-execute"
                   onClick={handleExecuteSQL}
                   title="Execute SQL"
                 >
@@ -344,6 +347,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
             <Button
               variant="ghost"
               size="icon-xs"
+              className="nop-code-editor__toolbar-fullscreen"
               onClick={toggleFullscreen}
               aria-label="Enter fullscreen"
               title="Fullscreen"

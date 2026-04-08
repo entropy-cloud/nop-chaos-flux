@@ -30,7 +30,7 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
         <div className="nop-code-editor__result-header">
           <span>Error</span>
           {onClose && (
-            <Button variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
+            <Button className="nop-code-editor__result-close" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
               <XIcon />
             </Button>
           )}
@@ -47,7 +47,7 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
       <div className="nop-code-editor__result-header">
         <span>Result ({result.data.length} rows)</span>
         {onClose && (
-          <Button variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
+          <Button className="nop-code-editor__result-close" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
             <XIcon />
           </Button>
         )}
