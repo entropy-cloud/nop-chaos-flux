@@ -2,11 +2,14 @@ import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux
 import type {
   BaseSchema,
   CompiledCidState,
+  CompiledNodeLinkage,
+  CompiledNodeLinkageEffect,
   CompiledSchemaNode,
   CompiledRegion,
   CompileNodeOptions,
   CompileSchemaOptions,
   ExpressionCompiler,
+  FieldLinkageSchema,
   RendererDefinition,
   RendererPlugin,
   RendererRegistry,
@@ -494,6 +497,52 @@ function analyzeSchemaInput(
   }
 }
 
+function compileLinkageEffect(
+  effect: Record<string, unknown> | undefined,
+  expressionCompiler: ExpressionCompiler
+): CompiledNodeLinkageEffect | undefined {
+  if (!effect) {
+    return undefined;
+  }
+
+  const compiled: CompiledNodeLinkageEffect = {};
+
+  if (effect.visible !== undefined) {
+    compiled.visible = expressionCompiler.compileValue(effect.visible as boolean | string);
+  }
+
+  if (effect.disabled !== undefined) {
+    compiled.disabled = expressionCompiler.compileValue(effect.disabled as boolean | string);
+  }
+
+  if (effect.required !== undefined) {
+    compiled.required = expressionCompiler.compileValue(effect.required as boolean | string);
+  }
+
+  if (effect.options !== undefined) {
+    compiled.options = expressionCompiler.compileValue(effect.options);
+  }
+
+  return Object.keys(compiled).length > 0 ? compiled : undefined;
+}
+
+function compileNodeLinkage(
+  linkage: FieldLinkageSchema | undefined,
+  expressionCompiler: ExpressionCompiler
+): CompiledNodeLinkage | undefined {
+  if (!linkage || typeof linkage.when !== 'string' || linkage.when.length === 0) {
+    return undefined;
+  }
+
+  return {
+    source: linkage,
+    dependencies: linkage.dependencies,
+    when: expressionCompiler.compileValue(linkage.when),
+    fulfill: compileLinkageEffect(linkage.fulfill as Record<string, unknown> | undefined, expressionCompiler),
+    otherwise: compileLinkageEffect(linkage.otherwise as Record<string, unknown> | undefined, expressionCompiler)
+  };
+}
+
 function collectCompiledNodes(entry: CompiledSchemaNode | CompiledSchemaNode[], out: CompiledSchemaNode[]) {
   if (Array.isArray(entry)) {
     entry.forEach((item) => collectCompiledNodes(item, out));
@@ -664,6 +713,7 @@ export function createSchemaCompiler(input: {
     const path = options.path;
     const fieldInspection = inspectSchemaNodeFields(schema, renderer, path, diagnostics, false);
     const meta = buildCompiledMeta(schema, renderer, expressionCompiler);
+    const linkage = compileNodeLinkage(fieldInspection.extensions?.['xui:linkage'] as FieldLinkageSchema | undefined, expressionCompiler);
     const propSource: Record<string, unknown> = {};
     const sourcePropKeys = new Set<string>();
     const sourceStatePropKeys: Record<string, string> = {};
@@ -721,11 +771,12 @@ export function createSchemaCompiler(input: {
     const props = expressionCompiler.compileValue(propSource);
 
     const flags = {
-      hasVisibilityRule: !!meta.visible,
+      hasVisibilityRule: !!meta.visible || !!linkage?.fulfill?.visible || !!linkage?.otherwise?.visible,
       hasHiddenRule: !!meta.hidden,
-      hasDisabledRule: !!meta.disabled,
+      hasDisabledRule: !!meta.disabled || !!linkage?.fulfill?.disabled || !!linkage?.otherwise?.disabled,
       isContainer: Object.keys(regions).length > 0,
       isStatic:
+        !linkage &&
         Object.values(meta).every((value) => isCompiledStatic(value)) &&
         props.kind === 'static' &&
         Object.values(regions).every((region) => region.node == null)
@@ -740,6 +791,7 @@ export function createSchemaCompiler(input: {
       component: renderer,
       meta,
       props,
+      linkage,
       sourcePropKeys: Array.from(sourcePropKeys).sort(),
       sourceStatePropKeys,
       validation:

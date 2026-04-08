@@ -50,7 +50,7 @@ export {
   ScopeContext,
   useRequiredContext
 } from './contexts';
-export { EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
+export { EMPTY_FORM_STORE_STATE, isFieldEffectivelyRequired, selectCurrentFormErrors, selectCurrentFormFieldPresentation, selectCurrentFormFieldState } from './form-state';
 export { useBridgeSnapshot, useHostScope, useNamespaceRegistration, WorkbenchShell } from './workbench';
 export { useSourceValue } from './useSourceValue';
 export type { SourceTransientState } from './use-node-source-props';

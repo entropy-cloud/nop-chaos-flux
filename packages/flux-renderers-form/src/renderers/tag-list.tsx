@@ -17,7 +17,10 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const currentForm = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
   const value = readCheckboxGroupValue(scope, name);
-  const presentation = useFieldPresentation(name, currentForm);
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required ?? props.schema.required)
+  });
   const labelContent = resolveFieldLabelContent(props);
   const labelText = resolveFieldLabelText(props, name);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];
@@ -80,6 +83,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
               type="button"
               variant={active ? 'secondary' : 'outline'}
               size="sm"
+              disabled={presentation.effectiveDisabled}
               onFocus={() => {
                 if (currentForm && name) {
                   currentForm.visitField(name);

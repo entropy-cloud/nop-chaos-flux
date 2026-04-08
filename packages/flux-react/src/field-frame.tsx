@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useCurrentForm, useCurrentFormState } from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
-import { EMPTY_FORM_FIELD_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
+import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
 
 export interface FieldFrameProps {
   name?: string;
@@ -73,6 +73,7 @@ export function FieldFrame(props: FieldFrameProps) {
   );
   const fieldBehavior = name ? getCompiledValidationField(currentForm?.validation, name)?.behavior : undefined;
   const behavior = validationBehavior ?? fieldBehavior ?? currentForm?.validation?.behavior ?? defaultBehavior;
+  const values = useCurrentFormState((state) => state.values, Object.is);
 
   const error = aggregateError ?? fieldState.error;
   const showError = Boolean(
@@ -87,6 +88,7 @@ export function FieldFrame(props: FieldFrameProps) {
   const isGroup = layout === 'checkbox' || layout === 'radio';
   const Tag = isGroup ? 'fieldset' : 'label';
   const LabelTag = isGroup ? 'legend' : 'span';
+  const effectiveRequired = Boolean(required) || Boolean(name && isFieldEffectivelyRequired(currentForm?.validation, name, values));
 
   return (
     <Tag
@@ -101,7 +103,7 @@ export function FieldFrame(props: FieldFrameProps) {
       {label ? (
         <LabelTag className="nop-field__label">
           {label}
-          {required ? <span className="nop-field__required">*</span> : null}
+          {effectiveRequired ? <span className="nop-field__required" aria-hidden="true">*</span> : null}
         </LabelTag>
       ) : null}
 

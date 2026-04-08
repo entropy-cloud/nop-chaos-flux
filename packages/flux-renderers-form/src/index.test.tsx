@@ -1735,7 +1735,7 @@ describe('formRendererDefinitions', () => {
 
     const usernameInput = screen.getByLabelText('Username');
     const backupInput = screen.getByLabelText('Backup Username');
-    const publishReasonInput = screen.getByLabelText('Publish Reason');
+    const publishReasonInput = screen.getByRole('textbox', { name: /Publish Reason/ });
 
     fireEvent.focus(backupInput);
     fireEvent.blur(backupInput);
@@ -1760,6 +1760,127 @@ describe('formRendererDefinitions', () => {
     await waitFor(() => {
       expect(screen.queryByText('Publish reason is required before publishing')).toBeNull();
     });
+  });
+
+  it('supports xui:linkage for disabled and required field presentation', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            role: 'viewer',
+            adminCode: ''
+          },
+          body: [
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              options: [
+                { label: 'Viewer', value: 'viewer' },
+                { label: 'Admin', value: 'admin' }
+              ]
+            },
+            {
+              type: 'input-text',
+              name: 'adminCode',
+              label: 'Admin Code',
+              'xui:linkage': {
+                dependencies: ['role'],
+                when: '${role === "admin"}',
+                fulfill: {
+                  disabled: false,
+                  required: true
+                },
+                otherwise: {
+                  disabled: true,
+                  required: false
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const adminCodeInput = screen.getByLabelText('Admin Code') as HTMLInputElement;
+    expect(adminCodeInput.disabled).toBe(true);
+    expect(screen.queryByText((_content, node) => node?.textContent === 'Admin Code*')).toBeNull();
+
+    await selectOption('Role', 'Admin');
+
+    await waitFor(() => {
+      expect(adminCodeInput.disabled).toBe(false);
+    });
+
+    const adminCodeLabel = screen.getByText('Admin Code').closest('.nop-field__label');
+    expect(adminCodeLabel?.querySelector('.nop-field__required')).toBeTruthy();
+  });
+
+  it('supports xui:linkage for visible and options branches', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            role: 'viewer',
+            permission: 'read'
+          },
+          body: [
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              options: [
+                { label: 'Viewer', value: 'viewer' },
+                { label: 'Admin', value: 'admin' }
+              ]
+            },
+            {
+              type: 'radio-group',
+              name: 'permission',
+              label: 'Permission',
+              'xui:linkage': {
+                dependencies: ['role'],
+                when: '${role === "admin"}',
+                fulfill: {
+                  visible: true,
+                  options: [
+                    { label: 'Manage users', value: 'manage-users' },
+                    { label: 'Publish content', value: 'publish-content' }
+                  ]
+                },
+                otherwise: {
+                  visible: false,
+                  options: [
+                    { label: 'Read only', value: 'read' }
+                  ]
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.queryByLabelText('Manage users')).toBeNull();
+    expect(screen.queryByText('Permission')).toBeNull();
+
+    await selectOption('Role', 'Admin');
+
+    expect(await screen.findByText('Permission')).toBeTruthy();
+    expect(screen.getByText('Manage users')).toBeTruthy();
+    expect(screen.getByText('Publish content')).toBeTruthy();
   });
 
   it('supports array-level minItems validation in the UI', async () => {

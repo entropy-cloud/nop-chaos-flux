@@ -26,8 +26,9 @@ function ArrayEditorRow(props: {
   items: ArrayEditorItem[];
   itemsRef: React.MutableRefObject<ArrayEditorItem[]>;
   itemLabel?: string;
+  disabled?: boolean;
 }) {
-  const { item, index, name, currentForm, childBehavior, onSync, items, itemsRef, itemLabel } = props;
+  const { item, index, name, currentForm, childBehavior, onSync, items, itemsRef, itemLabel, disabled } = props;
   const itemPath = `${name}.${index}.value`;
   const itemFieldState = useCompositeChildFieldState(itemPath);
   const itemUi = getChildFieldUiState({
@@ -47,6 +48,7 @@ function ArrayEditorRow(props: {
         <Input
           type="text"
           value={item.value}
+          disabled={disabled}
           placeholder={itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}
           aria-invalid={itemUi.showError ? true : undefined}
           onFocus={() => {
@@ -89,6 +91,7 @@ function ArrayEditorRow(props: {
         type="button"
         variant="destructive"
         size="sm"
+        disabled={disabled}
         onClick={() => {
           const nextItems = items.filter((candidate) => candidate.id !== item.id);
           itemsRef.current = nextItems;
@@ -134,7 +137,10 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
-  const presentation = useFieldPresentation(name, currentForm);
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required ?? props.schema.required)
+  });
   const labelContent = resolveFieldLabelContent(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const [items, setItems] = React.useState<ArrayEditorItem[]>(() => toArrayEditorItems(readFieldValue(scope, name)));
@@ -262,6 +268,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
               items={items}
               itemsRef={itemsRef}
               itemLabel={props.props.itemLabel ? String(props.props.itemLabel) : undefined}
+              disabled={presentation.effectiveDisabled}
             />
           );
         })}
@@ -269,6 +276,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           type="button"
           variant="outline"
           size="sm"
+          disabled={presentation.effectiveDisabled}
           onClick={() => {
             const nextItem = { id: `item-${items.length + 1}`, value: '' };
             const nextItems = [...items, nextItem];

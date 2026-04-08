@@ -1,6 +1,6 @@
 import type { CompiledRuntimeValue, RuntimeValueState } from './compilation';
 import type { SchemaCompileDiagnosticsOptions, SchemaCompileValidationOptions, SchemaDiagnostic } from '../schema-diagnostics';
-import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema';
+import type { BaseSchema, FieldLinkageSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema';
 import type { ScopeDependencySet } from './scope';
 import type { CompiledFormValidationModel } from './validation';
 import type { CompiledCidState } from '../compiled-cid';
@@ -31,6 +31,21 @@ export interface CompiledNodeFlags {
   isStatic: boolean;
 }
 
+export interface CompiledNodeLinkageEffect {
+  visible?: CompiledRuntimeValue<boolean | unknown>;
+  disabled?: CompiledRuntimeValue<boolean | unknown>;
+  required?: CompiledRuntimeValue<boolean | unknown>;
+  options?: CompiledRuntimeValue<unknown>;
+}
+
+export interface CompiledNodeLinkage {
+  source: FieldLinkageSchema;
+  dependencies?: readonly string[];
+  when: CompiledRuntimeValue<boolean | unknown>;
+  fulfill?: CompiledNodeLinkageEffect;
+  otherwise?: CompiledNodeLinkageEffect;
+}
+
 export interface ResolvedNodeProps {
   value: Readonly<Record<string, unknown>>;
   changed: boolean;
@@ -54,6 +69,11 @@ export interface ResolvedNodeMeta {
 export interface CompiledNodeRuntimeState {
   meta: Record<string, RuntimeValueState<unknown>>;
   props?: RuntimeValueState<Record<string, unknown>>;
+  linkage?: {
+    when?: RuntimeValueState<unknown>;
+    fulfill?: Record<string, RuntimeValueState<unknown>>;
+    otherwise?: Record<string, RuntimeValueState<unknown>>;
+  };
   metaDependencies?: ScopeDependencySet;
   propsDependencies?: ScopeDependencySet;
   resolvedMeta?: ResolvedNodeMeta;
@@ -74,6 +94,7 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   component: import('./renderer-core').RendererDefinition<S>;
   meta: CompiledSchemaMeta;
   props: CompiledRuntimeValue<Record<string, unknown>>;
+  linkage?: CompiledNodeLinkage;
   sourcePropKeys: readonly string[];
   sourceStatePropKeys: Readonly<Record<string, string>>;
   validation?: CompiledFormValidationModel;

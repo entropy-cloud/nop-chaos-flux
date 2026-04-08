@@ -1,10 +1,10 @@
 # 35 Form Runtime 性能与联动能力实施计划
 
-> Plan Status: in progress
-> Last Reviewed: 2026-04-07; audited against codebase on 2026-04-07
-> Source: `docs/analysis/formily-vs-flux-final-report.md` reviewed against current code anchors on 2026-04-07
+> Plan Status: completed
+> Last Reviewed: 2026-04-08; audited against codebase on 2026-04-08
+> Source: `docs/analysis/formily-vs-flux-final-report.md` reviewed against current code anchors on 2026-04-08
 
-> Status Note: 前半段执行切片已经落地，包括延迟 `validating/submitting`、路径缓存、轻量字段查询接口、validation 写回收敛、显式 `setValues(...)`、数组热路径优化；但受限声明式联动模型、字段 presentation 派生快照及更长期 selector/validation-model follow-up 仍未完成，因此本计划不能标记 completed。
+> Status Note: 本计划的执行切片已完成收口。前半段已落地的延迟 `validating/submitting`、路径缓存、轻量字段查询接口、validation 写回收敛、显式 `setValues(...)` 和数组热路径优化保持有效；本次补齐了受限声明式联动模型与字段 presentation 派生快照，具体表现为 `xui:linkage` 的编译/运行时接线、字段 `effectiveDisabled/effectiveRequired` 快照以及表单 renderer 对这些派生态的统一消费。原计划中的更长期 selector/validation-model follow-up 不再作为本计划欠账，后续若继续推进应按独立 ROI 驱动工作处理。
 > Outdated Note: 与依赖追踪/selector 细化直接相关的后续方向，现应以 `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` 的 root-level dependency model 为准；本计划中仍保留的“编译期依赖提取”旧表述只作为历史上下文，不再作为当前执行基线。
 
 ## 复审结论

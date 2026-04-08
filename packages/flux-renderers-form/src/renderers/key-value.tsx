@@ -32,8 +32,9 @@ function KeyValueRow(props: {
   onSync(nextPairs: KeyValuePair[]): void;
   pairs: KeyValuePair[];
   pairsRef: React.MutableRefObject<KeyValuePair[]>;
+  disabled?: boolean;
 }) {
-  const { pair, index, name, currentForm, childBehavior, onSync, pairs, pairsRef } = props;
+  const { pair, index, name, currentForm, childBehavior, onSync, pairs, pairsRef, disabled } = props;
   const keyPath = `${name}.${index}.key`;
   const valuePath = `${name}.${index}.value`;
   const keyFieldState = useCompositeChildFieldState(keyPath);
@@ -59,6 +60,7 @@ function KeyValueRow(props: {
         <Input
           type="text"
           value={pair.key}
+          disabled={disabled}
           placeholder="Key"
           aria-invalid={keyUi.showError ? true : undefined}
           onFocus={() => {
@@ -107,6 +109,7 @@ function KeyValueRow(props: {
         <Input
           type="text"
           value={pair.value}
+          disabled={disabled}
           placeholder="Value"
           aria-invalid={valueUi.showError ? true : undefined}
           onFocus={() => {
@@ -149,6 +152,7 @@ function KeyValueRow(props: {
         type="button"
         variant="destructive"
         size="sm"
+        disabled={disabled}
         onClick={() => {
           const nextPairs = pairs.filter((candidate) => candidate.id !== pair.id);
           pairsRef.current = nextPairs;
@@ -197,7 +201,10 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
-  const presentation = useFieldPresentation(name, currentForm);
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required ?? props.schema.required)
+  });
   const labelContent = resolveFieldLabelContent(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const [pairs, setPairs] = React.useState<KeyValuePair[]>(() => toKeyValuePairs(readFieldValue(scope, name)));
@@ -353,6 +360,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
               onSync={syncField}
               pairs={pairs}
               pairsRef={pairsRef}
+              disabled={presentation.effectiveDisabled}
             />
           );
         })}
@@ -360,6 +368,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           type="button"
           variant="outline"
           size="sm"
+          disabled={presentation.effectiveDisabled}
           onClick={() => {
             const nextEntry = { id: `pair-${pairs.length + 1}`, key: '', value: '' };
             const nextPairs = [...pairs, nextEntry];

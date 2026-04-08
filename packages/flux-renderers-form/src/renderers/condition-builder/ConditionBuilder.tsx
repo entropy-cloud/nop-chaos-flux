@@ -43,7 +43,10 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
-  const presentation = useFieldPresentation(name, currentForm);
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required ?? props.schema.required)
+  });
   const labelContent = resolveFieldLabelContent(props);
 
   const operatorsOverride = props.props.operators as ConditionOperatorOverrides | undefined;
@@ -127,7 +130,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
         schema={schemaOverride}
         operatorsOverride={operatorsOverride}
         onChange={syncValue}
-        disabled={presentation.fieldState.submitting}
+        disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
         labelContent={labelContent}
         presentation={presentation}
       />
@@ -149,7 +152,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
         fields={fields}
         operatorsOverride={operatorsOverride}
         onChange={syncValue}
-        disabled={presentation.fieldState.submitting}
+        disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
         depth={0}
       />
       <FieldHint
@@ -192,20 +195,22 @@ function PickerModeContent({
     >
       <FieldLabel content={labelContent} />
       <Popover>
-        <PopoverTrigger>
-          <button
-            type="button"
-            className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent hover:text-accent-foreground"
-            disabled={disabled}
-          >
-            <span className={hasConditions ? '' : 'text-muted-foreground'}>
-              {hasConditions
-                ? tf('conditionCount', value.children.length)
-                : schema.placeholder ?? t('pickerPlaceholder')}
-            </span>
-            <ChevronDownIcon className="size-4 text-muted-foreground" />
-          </button>
-        </PopoverTrigger>
+        <PopoverTrigger
+          render={
+            <button
+              type="button"
+              className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent hover:text-accent-foreground"
+              disabled={disabled}
+            >
+              <span className={hasConditions ? '' : 'text-muted-foreground'}>
+                {hasConditions
+                  ? tf('conditionCount', value.children.length)
+                  : schema.placeholder ?? t('pickerPlaceholder')}
+              </span>
+              <ChevronDownIcon className="size-4 text-muted-foreground" />
+            </button>
+          }
+        />
         <PopoverContent className="w-auto p-0" align="start">
           <div className="p-3 max-h-[60vh] overflow-auto">
             <ConditionGroup

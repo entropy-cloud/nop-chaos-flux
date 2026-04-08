@@ -234,6 +234,48 @@ It already includes:
 - `setValues(values)` for form-local multi-path value updates that should reuse the same batching and dependent-revalidation machinery as `setValue(...)`
 - first-class array operations such as `appendValue`, `prependValue`, `insertValue`, `removeValue`, `moveValue`, `swapValue`, and `replaceValue`
 - lightweight read-only query helpers: `getField(path)`, `getDependents(path)`, `findByPrefix(prefix)`, and `getChildren(path)`
+- field-presentation derivation used by `FieldFrame` and renderer hooks, including `effectiveDisabled`, `effectiveRequired`, and stable error-visibility decisions for bound fields
+
+## Declarative Field Linkage
+
+The current form stack supports a constrained schema-level linkage carrier through `xui:linkage`.
+
+Current supported shape:
+
+```ts
+interface FieldLinkageSchema {
+  dependencies?: string[];
+  when: string;
+  fulfill?: {
+    visible?: boolean | string;
+    disabled?: boolean | string;
+    required?: boolean | string;
+    options?: SchemaValue;
+  };
+  otherwise?: {
+    visible?: boolean | string;
+    disabled?: boolean | string;
+    required?: boolean | string;
+    options?: SchemaValue;
+  };
+}
+```
+
+Design constraints:
+
+- linkage remains explicit and field-local
+- dependencies use lexical root bindings, consistent with the current dependency-tracking baseline
+- there is no generic effect runtime, no `$observable`, and no arbitrary script side effects
+- linkage compiles onto existing node meta/props resolution and validation semantics rather than creating a second form-runtime engine
+
+Current first-wave coverage is intentionally narrow:
+
+- `visible`
+- `disabled`
+- `required`
+- `options`
+
+This means common field coordination can move out of scattered inline expressions while still preserving Flux's compile-first and explicit-runtime boundaries.
 
 Submission flow is currently:
 

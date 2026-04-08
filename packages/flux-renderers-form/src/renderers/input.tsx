@@ -3,6 +3,7 @@ import type { SourceTransientState } from '@nop-chaos/flux-react';
 import { Checkbox, Input, RadioGroup, RadioGroupItem, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Switch, Textarea } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
+  useFieldPresentation,
   useFormFieldController
 } from '../field-utils';
 import type {
@@ -18,12 +19,17 @@ import type {
 export function createInputRenderer(inputType: string) {
   return function InputRenderer(props: RendererComponentProps<InputSchema>) {
     const name = String(props.props.name ?? props.schema.name ?? '');
-    const { value, presentation, handlers } = useFormFieldController(name);
+    const { value, handlers, currentForm } = useFormFieldController(name);
+    const presentation = useFieldPresentation(name, currentForm, {
+      disabled: props.meta.disabled,
+      required: Boolean(props.props.required ?? props.schema.required)
+    });
 
     return (
       <Input
         type={inputType}
         value={String(value)}
+        disabled={presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
         placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
         onFocus={handlers.onFocus}
@@ -87,7 +93,11 @@ export function createFieldValidation(nameResolver?: (schema: InputSchema) => st
 
 function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, presentation, handlers } = useFormFieldController(name);
+  const { value, handlers, currentForm } = useFormFieldController(name);
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required ?? props.schema.required)
+  });
   const options = Array.isArray(props.props.options) ? props.props.options : [];
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const ariaLabel = String(props.meta.label ?? props.props.label ?? name);
@@ -97,7 +107,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 
   return (
     <div className="grid gap-2">
-      <Select value={String(value)} onValueChange={(nextValue) => handlers.onChange(nextValue)} disabled={loading}>
+      <Select value={String(value)} onValueChange={(nextValue) => handlers.onChange(nextValue)} disabled={loading || presentation.effectiveDisabled}>
         <SelectTrigger
           className="w-full"
           aria-label={ariaLabel}
@@ -123,12 +133,17 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 
 function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
   const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, presentation, handlers } = useFormFieldController(name);
+  const { value, handlers, currentForm } = useFormFieldController(name);
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required ?? props.schema.required)
+  });
 
   return (
     <Textarea
       value={String(value)}
       rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
+      disabled={presentation.effectiveDisabled}
       aria-invalid={presentation.showError ? true : undefined}
       placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
       onFocus={handlers.onFocus}
@@ -140,7 +155,11 @@ function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
 
 function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
   const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, presentation, handlers } = useFormFieldController(name, { toFormValue: coerceBooleanString });
+  const { value, handlers, currentForm } = useFormFieldController(name, { toFormValue: coerceBooleanString });
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required ?? props.schema.required)
+  });
   const option = props.props.option as CheckboxSchema['option'] | undefined;
   const optionLabel = option?.label;
 
@@ -148,6 +167,7 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
     <span className="inline-flex items-center gap-2.5">
       <Checkbox
         checked={Boolean(value)}
+        disabled={presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
         aria-label={optionLabel}
         onFocus={handlers.onFocus}
@@ -161,7 +181,11 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
 
 function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, presentation, handlers } = useFormFieldController(name, { toFormValue: coerceBooleanString });
+  const { value, handlers, currentForm } = useFormFieldController(name, { toFormValue: coerceBooleanString });
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required ?? props.schema.required)
+  });
   const option = props.props.option as SwitchSchema['option'] | undefined;
   const checked = Boolean(value);
 
@@ -169,6 +193,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
     <span className="inline-flex items-center gap-3">
       <Switch
         checked={checked}
+        disabled={presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
         aria-label={String(props.meta.label ?? props.props.label ?? name)}
         onFocus={handlers.onFocus}
@@ -182,7 +207,11 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
 
 function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
   const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, presentation, handlers } = useFormFieldController(name);
+  const { value, handlers, currentForm } = useFormFieldController(name);
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required ?? props.schema.required)
+  });
   const options = Array.isArray(props.props.options) ? props.props.options : [];
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = optionsSourceState?.loading === true;
@@ -199,6 +228,7 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
       <RadioGroup
         className="grid gap-2.5"
         value={String(value)}
+        disabled={loading || presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
         onFocus={handlers.onFocus}
         onValueChange={(nextValue) => handlers.onChange(nextValue)}
@@ -218,7 +248,11 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
 
 function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema>) {
   const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value: rawValue, presentation, handlers } = useFormFieldController(name);
+  const { value: rawValue, handlers, currentForm } = useFormFieldController(name);
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required ?? props.schema.required)
+  });
   const value = Array.isArray(rawValue) ? rawValue : [];
   const options = Array.isArray(props.props.options) ? props.props.options : [];
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -240,7 +274,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
           <label key={option.value} className="inline-flex items-center gap-2.5">
             <Checkbox
               checked={checked}
-              disabled={loading}
+              disabled={loading || presentation.effectiveDisabled}
               aria-invalid={presentation.showError ? true : undefined}
               aria-label={option.label}
               onFocus={handlers.onFocus}

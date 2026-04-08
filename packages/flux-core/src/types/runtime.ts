@@ -32,6 +32,14 @@ export interface FormFieldStateSnapshot {
   submitting: boolean;
 }
 
+export interface FormFieldPresentationSnapshot extends FormFieldStateSnapshot {
+  effectiveDisabled: boolean;
+  effectiveRequired: boolean;
+  showError: boolean;
+  interactive: boolean;
+  readOnly: boolean;
+}
+
 export interface FormStoreApi {
   getState(): FormStoreState;
   subscribe(listener: () => void): () => void;

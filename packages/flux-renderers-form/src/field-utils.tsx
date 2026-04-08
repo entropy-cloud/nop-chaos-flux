@@ -9,11 +9,11 @@ import {
   type SchemaFieldRule
 } from '@nop-chaos/flux-core';
 import {
+  selectCurrentFormFieldPresentation,
   resolveRendererSlotContent,
   useCurrentForm,
-  useAggregateError,
-  useChildFieldState,
   useCurrentFormState,
+  useChildFieldState,
   useOwnedFieldState,
   useRenderScope,
   useScopeSelector
@@ -214,32 +214,73 @@ export function getChildFieldUiState(input: {
   };
 }
 
-export function useFieldPresentation(name: string, currentForm: FormRuntime | undefined) {
+export function useFieldPresentation(
+  name: string,
+  currentForm: FormRuntime | undefined,
+  options?: {
+    disabled?: boolean;
+    readOnly?: boolean;
+    required?: boolean;
+  }
+) {
   const fieldState = useFormFieldState(name);
   const behavior = getFieldValidationBehavior(name, currentForm);
-  const aggregateError = useAggregateError(name);
-  const visibleError = aggregateError ?? fieldState.error;
-  const showError = Boolean(
-    visibleError &&
-      shouldShowFieldError(behavior, {
-        touched: fieldState.touched,
-        dirty: fieldState.dirty,
-        visited: fieldState.visited,
-        submitting: fieldState.submitting
-      })
+  const currentPresentation = useCurrentFormState(
+    (state) => selectCurrentFormFieldPresentation(state, {
+      path: name,
+      validation: currentForm?.validation,
+      disabled: options?.disabled,
+      readOnly: options?.readOnly,
+      required: options?.required,
+      query: { path: name, ownerPath: name }
+    }),
+    (left, right) =>
+      left.error === right.error &&
+      left.validating === right.validating &&
+      left.touched === right.touched &&
+      left.dirty === right.dirty &&
+      left.visited === right.visited &&
+      left.submitting === right.submitting &&
+      left.effectiveDisabled === right.effectiveDisabled &&
+      left.effectiveRequired === right.effectiveRequired &&
+      left.showError === right.showError &&
+      left.interactive === right.interactive &&
+      left.readOnly === right.readOnly
   );
+  const presentation = currentForm
+    ? currentPresentation
+    : {
+        ...fieldState,
+        effectiveDisabled: Boolean(options?.disabled),
+        effectiveRequired: Boolean(options?.required),
+        showError: Boolean(
+          fieldState.error &&
+            shouldShowFieldError(behavior, {
+              touched: fieldState.touched,
+              dirty: fieldState.dirty,
+              visited: fieldState.visited,
+              submitting: fieldState.submitting
+            })
+        ),
+        interactive: !options?.disabled && !options?.readOnly,
+        readOnly: Boolean(options?.readOnly)
+      };
 
   return {
     fieldState: {
-      ...fieldState,
-      error: visibleError
+      ...presentation,
+      error: presentation.error
     },
-    showError,
+    effectiveDisabled: presentation.effectiveDisabled,
+    effectiveRequired: presentation.effectiveRequired,
+    interactive: presentation.interactive,
+    readOnly: presentation.readOnly,
+    showError: presentation.showError,
     className: 'nop-field',
-    'data-field-visited': fieldState.visited || undefined,
-    'data-field-touched': fieldState.touched || undefined,
-    'data-field-dirty': fieldState.dirty || undefined,
-    'data-field-invalid': showError || undefined,
+    'data-field-visited': presentation.visited || undefined,
+    'data-field-touched': presentation.touched || undefined,
+    'data-field-dirty': presentation.dirty || undefined,
+    'data-field-invalid': presentation.showError || undefined,
   };
 }
 

@@ -1,4 +1,5 @@
-import type { FormErrorQuery, FormFieldStateSnapshot, FormStoreState, ValidationError } from '@nop-chaos/flux-core';
+import { getCompiledValidationField, getIn } from '@nop-chaos/flux-core';
+import type { CompiledFormValidationModel, FormErrorQuery, FormFieldPresentationSnapshot, FormFieldStateSnapshot, FormStoreState, ValidationError } from '@nop-chaos/flux-core';
 
 export const EMPTY_FORM_STORE_STATE: FormStoreState = {
   values: {},
@@ -74,6 +75,64 @@ export function selectCurrentFormFieldState(
     dirty: state.dirty[path] === true,
     visited: state.visited[path] === true,
     submitting: state.submitting
+  };
+}
+
+export function isFieldEffectivelyRequired(
+  validation: CompiledFormValidationModel | undefined,
+  path: string,
+  values: Record<string, any>
+): boolean {
+  const field = getCompiledValidationField(validation, path);
+
+  return Boolean(field?.rules.some(({ rule }) => {
+    if (rule.kind === 'required') {
+      return true;
+    }
+
+    if (rule.kind === 'requiredWhen') {
+      return Object.is(getIn(values, rule.path), rule.equals);
+    }
+
+    if (rule.kind === 'requiredUnless') {
+      return !Object.is(getIn(values, rule.path), rule.equals);
+    }
+
+    return false;
+  }));
+}
+
+export function selectCurrentFormFieldPresentation(
+  state: FormStoreState,
+  input: {
+    path: string;
+    validation?: CompiledFormValidationModel;
+    disabled?: boolean;
+    readOnly?: boolean;
+    required?: boolean;
+    query?: FormErrorQuery;
+  }
+): FormFieldPresentationSnapshot {
+  const fieldState = selectCurrentFormFieldState(state, input.path, input.query ?? { path: input.path, ownerPath: input.path });
+  const error = selectCurrentFormErrors(state, {
+    path: input.path,
+    ownerPath: input.path,
+    sourceKinds: ['array', 'object', 'form', 'runtime-registration']
+  })[0] ?? fieldState.error;
+  const showError = Boolean(
+    error && (fieldState.touched || fieldState.dirty || fieldState.visited || fieldState.submitting)
+  );
+  const effectiveDisabled = Boolean(input.disabled);
+  const readOnly = Boolean(input.readOnly);
+
+  return {
+    ...fieldState,
+    error,
+    effectiveDisabled,
+    effectiveRequired: Boolean(input.required) || isFieldEffectivelyRequired(input.validation, input.path, state.values),
+    showError,
+    interactive: !effectiveDisabled && !readOnly,
+    readOnly
   };
 }
 

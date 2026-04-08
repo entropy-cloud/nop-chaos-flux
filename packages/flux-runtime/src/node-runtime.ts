@@ -1,4 +1,6 @@
 import type {
+  CompiledNodeLinkage,
+  CompiledNodeLinkageEffect,
   CompiledNodeRuntimeState,
   CompiledRuntimeValue,
   CompiledSchemaNode,
@@ -114,6 +116,62 @@ function collectMetaDependencies(state: CompiledNodeRuntimeState | undefined): S
   return mergeDependencySets(Object.values(state.meta).map((entry) => collectRuntimeDependencies(entry)));
 }
 
+function createDependencySet(paths: readonly string[] | undefined): ScopeDependencySet | undefined {
+  if (!paths || paths.length === 0) {
+    return undefined;
+  }
+
+  return {
+    paths: Array.from(new Set(paths)).sort(),
+    wildcard: paths.includes('*'),
+    broadAccess: paths.includes('*')
+  };
+}
+
+function evaluateLinkageEffect(
+  effect: CompiledNodeLinkageEffect | undefined,
+  compiler: ExpressionCompiler,
+  scope: ScopeRef,
+  env: RendererEnv,
+  stateBucket: Record<string, RuntimeValueState<unknown>> | undefined
+) {
+  return {
+    visible: evaluateCompiledValue(compiler, effect?.visible, scope, env, stateBucket?.visible),
+    disabled: evaluateCompiledValue(compiler, effect?.disabled, scope, env, stateBucket?.disabled),
+    required: evaluateCompiledValue(compiler, effect?.required, scope, env, stateBucket?.required),
+    options: evaluateCompiledValue(compiler, effect?.options, scope, env, stateBucket?.options)
+  };
+}
+
+function collectLinkageDependencies(
+  linkage: CompiledNodeLinkage | undefined,
+  state: CompiledNodeRuntimeState | undefined,
+  target: 'meta' | 'props'
+): ScopeDependencySet | undefined {
+  if (!linkage || !state?.linkage) {
+    return createDependencySet(linkage?.dependencies);
+  }
+
+  const explicit = createDependencySet(linkage.dependencies);
+  const effectBucket = state.linkage.fulfill && target === 'meta'
+    ? [state.linkage.fulfill.visible, state.linkage.fulfill.disabled]
+    : state.linkage.fulfill && target === 'props'
+      ? [state.linkage.fulfill.required, state.linkage.fulfill.options]
+      : [];
+  const otherwiseBucket = state.linkage.otherwise && target === 'meta'
+    ? [state.linkage.otherwise.visible, state.linkage.otherwise.disabled]
+    : state.linkage.otherwise && target === 'props'
+      ? [state.linkage.otherwise.required, state.linkage.otherwise.options]
+      : [];
+
+  return mergeDependencySets([
+    explicit,
+    collectRuntimeDependencies(state.linkage.when),
+    ...effectBucket.map((entry) => collectRuntimeDependencies(entry)),
+    ...otherwiseBucket.map((entry) => collectRuntimeDependencies(entry))
+  ]);
+}
+
 export function createNodeRuntime(input: {
   expressionCompiler: ExpressionCompiler;
   getEnv: () => RendererEnv;
@@ -134,14 +192,28 @@ export function createNodeRuntime(input: {
       cid: node.cid,
     };
 
+    if (node.linkage) {
+      const whenResult = Boolean(evaluateCompiledValue(input.expressionCompiler, node.linkage.when, scope, env, state?.linkage?.when) ?? false);
+      const branch = whenResult ? node.linkage.fulfill : node.linkage.otherwise;
+      const branchValues = evaluateLinkageEffect(branch, input.expressionCompiler, scope, env, whenResult ? state?.linkage?.fulfill : state?.linkage?.otherwise);
+
+      if (branchValues.visible !== undefined) {
+        resolved.visible = Boolean(branchValues.visible);
+      }
+
+      if (branchValues.disabled !== undefined) {
+        resolved.disabled = Boolean(branchValues.disabled);
+      }
+    }
+
     if (state?.resolvedMeta && shallowEqual(state.resolvedMeta, resolved)) {
-      state.metaDependencies = collectMetaDependencies(state);
+      state.metaDependencies = mergeDependencySets([collectMetaDependencies(state), collectLinkageDependencies(node.linkage, state, 'meta')]);
       state.resolvedMeta.changed = false;
       return state.resolvedMeta;
     }
 
     if (state) {
-      state.metaDependencies = collectMetaDependencies(state);
+      state.metaDependencies = mergeDependencySets([collectMetaDependencies(state), collectLinkageDependencies(node.linkage, state, 'meta')]);
       state.resolvedMeta = resolved;
     }
 
@@ -149,38 +221,66 @@ export function createNodeRuntime(input: {
   }
 
   function resolveNodeProps(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps {
-    if (node.props.kind === 'static') {
-      if (state?._staticPropsResult) {
-        return state._staticPropsResult;
-      }
-      const result: ResolvedNodeProps = {
-        value: node.props.value,
-        changed: false,
-        reusedReference: true
-      };
-      if (state) {
-        state._staticPropsResult = result;
-      }
-      return result;
+    const env = input.getEnv();
+    const execution = node.props.kind === 'static'
+      ? (state?._staticPropsResult ?? {
+          value: node.props.value,
+          changed: false,
+          reusedReference: true
+        })
+      : input.expressionCompiler.evaluateWithState(
+          node.props,
+          scope,
+          env,
+          state?.props ?? node.props.createState()
+        );
+
+    if (node.props.kind === 'static' && state && !state._staticPropsResult) {
+      state._staticPropsResult = execution;
     }
 
-    const env = input.getEnv();
-    const execution = input.expressionCompiler.evaluateWithState(
-      node.props,
-      scope,
-      env,
-      state?.props ?? node.props.createState()
-    );
+    let nextValue = execution.value;
+
+    if (node.linkage) {
+      const env = input.getEnv();
+      const whenResult = Boolean(evaluateCompiledValue(input.expressionCompiler, node.linkage.when, scope, env, state?.linkage?.when) ?? false);
+      const branch = whenResult ? node.linkage.fulfill : node.linkage.otherwise;
+      const branchValues = evaluateLinkageEffect(branch, input.expressionCompiler, scope, env, whenResult ? state?.linkage?.fulfill : state?.linkage?.otherwise);
+      const overrides: Record<string, unknown> = {};
+
+      if (branchValues.required !== undefined) {
+        overrides.required = Boolean(branchValues.required);
+      }
+
+      if (branchValues.options !== undefined) {
+        overrides.options = branchValues.options;
+      }
+
+      if (Object.keys(overrides).length > 0) {
+        nextValue = {
+          ...nextValue,
+          ...overrides
+        };
+      }
+    }
+
+    const result = nextValue === execution.value
+      ? execution
+      : {
+          value: nextValue,
+          changed: true,
+          reusedReference: false
+        };
 
     if (state) {
-      state.resolvedProps = execution.value;
-      state.propsDependencies = collectRuntimeDependencies(state.props);
-      if (!execution.reusedReference) {
-        state._lastPropsResult = execution;
+      state.resolvedProps = result.value;
+      state.propsDependencies = mergeDependencySets([collectRuntimeDependencies(state.props), collectLinkageDependencies(node.linkage, state, 'props')]);
+      if (!result.reusedReference) {
+        state._lastPropsResult = result;
       }
     }
 
-    return execution;
+    return result;
   }
 
   return {
