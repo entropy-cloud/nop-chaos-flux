@@ -177,13 +177,69 @@ export function normalizeCompiledRoot(node: CompiledSchemaNode | CompiledSchemaN
   };
 }
 
+function findPropertyDescriptor(target: object, key: PropertyKey): PropertyDescriptor | undefined {
+  let current: object | null = target;
+
+  while (current) {
+    const descriptor = Object.getOwnPropertyDescriptor(current, key);
+    if (descriptor) {
+      return descriptor;
+    }
+    current = Object.getPrototypeOf(current);
+  }
+
+  return undefined;
+}
+
+function resolveStorageFromDescriptor(target: object, descriptor: PropertyDescriptor | undefined): Storage | undefined {
+  if (!descriptor) {
+    return undefined;
+  }
+
+  if ('value' in descriptor && descriptor.value) {
+    return descriptor.value as Storage;
+  }
+
+  if (typeof descriptor.get === 'function') {
+    try {
+      return descriptor.get.call(target) as Storage;
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
+}
+
+function getBrowserLocalStorage(): Storage | undefined {
+  const globalStorageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  if (globalStorageDescriptor && 'value' in globalStorageDescriptor && globalStorageDescriptor.value) {
+    return globalStorageDescriptor.value as Storage;
+  }
+
+  if (typeof window !== 'undefined') {
+    const windowDescriptor = findPropertyDescriptor(window, 'localStorage');
+    const windowStorage = resolveStorageFromDescriptor(window, windowDescriptor);
+    if (windowStorage) {
+      return windowStorage;
+    }
+  }
+
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  return undefined;
+}
+
 export function loadPersistedPosition(id: string): { x: number; y: number } | undefined {
-  if (typeof localStorage === 'undefined') {
+  const storage = getBrowserLocalStorage();
+  if (!storage) {
     return undefined;
   }
 
   try {
-    const raw = localStorage.getItem(`nop-debugger:${id}:position`);
+    const raw = storage.getItem(`nop-debugger:${id}:position`);
     if (!raw) return undefined;
     const parsed = JSON.parse(raw);
     if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number') {
@@ -196,24 +252,26 @@ export function loadPersistedPosition(id: string): { x: number; y: number } | un
 }
 
 export function persistPosition(id: string, position: { x: number; y: number }) {
-  if (typeof localStorage === 'undefined') {
+  const storage = getBrowserLocalStorage();
+  if (!storage) {
     return;
   }
 
   try {
-    localStorage.setItem(`nop-debugger:${id}:position`, JSON.stringify(position));
+    storage.setItem(`nop-debugger:${id}:position`, JSON.stringify(position));
   } catch {
     void undefined;
   }
 }
 
 export function loadPersistedPanelOpen(id: string): boolean | undefined {
-  if (typeof localStorage === 'undefined') {
+  const storage = getBrowserLocalStorage();
+  if (!storage) {
     return undefined;
   }
 
   try {
-    const raw = localStorage.getItem(`nop-debugger:${id}:panelOpen`);
+    const raw = storage.getItem(`nop-debugger:${id}:panelOpen`);
     if (raw === null) return undefined;
     return raw === 'true';
   } catch {
@@ -222,36 +280,39 @@ export function loadPersistedPanelOpen(id: string): boolean | undefined {
 }
 
 export function persistPanelOpen(id: string, panelOpen: boolean) {
-  if (typeof localStorage === 'undefined') {
+  const storage = getBrowserLocalStorage();
+  if (!storage) {
     return;
   }
 
   try {
-    localStorage.setItem(`nop-debugger:${id}:panelOpen`, String(panelOpen));
+    storage.setItem(`nop-debugger:${id}:panelOpen`, String(panelOpen));
   } catch {
     void undefined;
   }
 }
 
 export function persistMinimized(id: string, minimized: boolean) {
-  if (typeof localStorage === 'undefined') {
+  const storage = getBrowserLocalStorage();
+  if (!storage) {
     return;
   }
 
   try {
-    localStorage.setItem(`nop-debugger:${id}:minimized`, String(minimized));
+    storage.setItem(`nop-debugger:${id}:minimized`, String(minimized));
   } catch {
     void undefined;
   }
 }
 
 export function loadPersistedMinimized(id: string): boolean | undefined {
-  if (typeof localStorage === 'undefined') {
+  const storage = getBrowserLocalStorage();
+  if (!storage) {
     return undefined;
   }
 
   try {
-    const raw = localStorage.getItem(`nop-debugger:${id}:minimized`);
+    const raw = storage.getItem(`nop-debugger:${id}:minimized`);
     if (raw === null) return undefined;
     return raw === 'true';
   } catch {
@@ -260,12 +321,13 @@ export function loadPersistedMinimized(id: string): boolean | undefined {
 }
 
 export function loadPersistedSearchHistory(id: string): string[] {
-  if (typeof localStorage === 'undefined') {
+  const storage = getBrowserLocalStorage();
+  if (!storage) {
     return [];
   }
 
   try {
-    const raw = localStorage.getItem(`nop-debugger:${id}:search-history`);
+    const raw = storage.getItem(`nop-debugger:${id}:search-history`);
     if (!raw) {
       return [];
     }
@@ -280,12 +342,13 @@ export function loadPersistedSearchHistory(id: string): string[] {
 }
 
 export function persistSearchHistory(id: string, history: readonly string[]) {
-  if (typeof localStorage === 'undefined') {
+  const storage = getBrowserLocalStorage();
+  if (!storage) {
     return;
   }
 
   try {
-    localStorage.setItem(`nop-debugger:${id}:search-history`, JSON.stringify(history.slice(0, 8)));
+    storage.setItem(`nop-debugger:${id}:search-history`, JSON.stringify(history.slice(0, 8)));
   } catch {
     void undefined;
   }

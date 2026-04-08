@@ -7,5 +7,8 @@ export default defineConfig({
   resolve: {
     alias: workspacePackageAliases
   },
-  plugins: [tailwindcss(), react()]
+  plugins: [tailwindcss(), react()],
+  build: {
+    chunkSizeWarningLimit: 6000
+  }
 });

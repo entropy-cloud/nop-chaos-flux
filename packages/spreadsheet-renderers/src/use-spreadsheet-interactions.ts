@@ -162,7 +162,7 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
   // -- Selection state --
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [cellValue, setCellValue] = useState('');
-  const [dragEnd, setDragEnd] = useState<{ row: number; col: number } | null>(null);
+  const [, setDragEnd] = useState<{ row: number; col: number } | null>(null);
   const dragStateRef = useRef<DragState>({ isDragging: false, startRow: -1, startCol: -1, endRow: -1, endCol: -1 });
   const hasDraggedRef = useRef(false);
 
@@ -236,7 +236,7 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
       };
     }
     return null;
-  }, [selectedCell, dragEnd, sheetId]);
+  }, [selectedCell, sheetId]);
 
   const isInRange = useCallback((row: number, col: number): boolean => {
     const range = getSelectedRange();
