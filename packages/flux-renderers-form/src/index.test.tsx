@@ -35,6 +35,7 @@ async function selectOption(labelText: string, optionText: string) {
 }
 
 const submitCalls: Array<Record<string, any>> = [];
+const notifyCalls: Array<{ level: string; message: string }> = [];
 const sharedFormulaCompiler = createFormulaCompiler();
 
 const env: RendererEnv = {
@@ -46,7 +47,9 @@ const env: RendererEnv = {
       data: ctx.scope.readOwn() as T
     };
   },
-  notify: () => undefined
+  notify: (level, message) => {
+    notifyCalls.push({ level, message });
+  }
 };
 
 const buttonRenderer: RendererDefinition = {
@@ -71,7 +74,7 @@ function ContactGroupRenderer(props: RendererComponentProps) {
 
   return (
     <label className="nop-field">
-      <span className="nop-field__label">{String(props.meta.label ?? 'Contact')}</span>
+      <span data-slot="field-label">{String(props.meta.label ?? 'Contact')}</span>
       <input
         aria-label="Contact Email"
         className="nop-input"
@@ -100,7 +103,7 @@ function ContactGroupRenderer(props: RendererComponentProps) {
           form?.touchField(name);
         }}
       />
-      {error ? <span className="nop-field__error">{error}</span> : null}
+      {error ? <span data-slot="field-error">{error}</span> : null}
     </label>
   );
 }
@@ -165,8 +168,246 @@ const handlerIdentityProbeRenderer: RendererDefinition = {
 };
 
 describe('formRendererDefinitions', () => {
+  it('runs form-owned submitAction and follow-up branches through component:submit', async () => {
+    submitCalls.length = 0;
+    notifyCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'profile-form',
+          data: {
+            username: 'Alice'
+          },
+          submitAction: {
+            action: 'ajax',
+            api: {
+              url: '/api/semantic-submit',
+              method: 'post'
+            }
+          },
+          onSubmitSuccess: {
+            action: 'showToast',
+            args: {
+              level: 'success',
+              message: '${result.data.username}'
+            }
+          },
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit semantic form',
+              onClick: {
+                action: 'component:submit',
+                componentId: 'profile-form'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit semantic form'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+      expect(notifyCalls).toEqual([{ level: 'success', message: 'Alice' }]);
+    });
+
+    expect(submitCalls[0]).toMatchObject({ username: 'Alice' });
+  });
+
+  it('runs form-owned onSubmitError when submitAction fails', async () => {
+    submitCalls.length = 0;
+    notifyCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'failing-form',
+          data: {
+            username: 'Alice'
+          },
+          submitAction: {
+            action: 'ajax',
+            api: {
+              url: '/api/semantic-submit-failure',
+              method: 'post'
+            }
+          },
+          onSubmitError: {
+            action: 'showToast',
+            args: {
+              level: 'error',
+              message: '${error.message}'
+            }
+          },
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit failing semantic form',
+              onClick: {
+                action: 'component:submit',
+                componentId: 'failing-form'
+              }
+            }
+          ]
+        }}
+        env={{
+          ...env,
+          fetcher: async () => {
+            throw new Error('semantic failure');
+          }
+        }}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit failing semantic form'));
+
+    await waitFor(() => {
+      expect(notifyCalls).toEqual([{ level: 'error', message: 'semantic failure' }]);
+    });
+
+    expect(submitCalls).toHaveLength(0);
+  });
+
+  it('runs form-owned onValidateError when semantic submit is blocked by validation', async () => {
+    submitCalls.length = 0;
+    notifyCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'validated-form',
+          data: {
+            username: ''
+          },
+          body: [
+            {
+              type: 'input-text',
+              name: 'username',
+              label: 'Username',
+              required: true
+            }
+          ],
+          submitAction: {
+            action: 'ajax',
+            api: {
+              url: '/api/validated-submit',
+              method: 'post'
+            }
+          },
+          onValidateError: {
+            action: 'showToast',
+            args: {
+              level: 'error',
+              message: '${error[0].message}'
+            }
+          },
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit validated form',
+              onClick: {
+                action: 'component:submit',
+                componentId: 'validated-form'
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit validated form'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Username is required')).toBeTruthy();
+      expect(notifyCalls).toEqual([{ level: 'error', message: 'Username is required' }]);
+    });
+
+    expect(submitCalls).toHaveLength(0);
+  });
+
+  it('runs form-owned initAction once per activation instance', async () => {
+    submitCalls.length = 0;
+    notifyCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'init-form',
+          initAction: {
+            action: 'showToast',
+            args: {
+              level: 'info',
+              message: 'init-ready'
+            }
+          },
+          body: [
+            {
+              type: 'scope-state-probe',
+              name: 'status'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(notifyCalls).toEqual([{ level: 'info', message: 'init-ready' }]);
+    });
+
+    rerender(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'init-form',
+          initAction: {
+            action: 'showToast',
+            args: {
+              level: 'info',
+              message: 'init-ready'
+            }
+          },
+          body: [
+            {
+              type: 'scope-state-probe',
+              name: 'status'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(notifyCalls).toEqual([{ level: 'info', message: 'init-ready' }]);
+    });
+  });
+
   it('submits updated form values from input and select renderers', async () => {
     submitCalls.length = 0;
+    notifyCalls.length = 0;
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
     render(
@@ -1818,8 +2059,8 @@ describe('formRendererDefinitions', () => {
       expect(adminCodeInput.disabled).toBe(false);
     });
 
-    const adminCodeLabel = screen.getByText('Admin Code').closest('.nop-field__label');
-    expect(adminCodeLabel?.querySelector('.nop-field__required')).toBeTruthy();
+    const adminCodeLabel = screen.getByText('Admin Code').closest('[data-slot="field-label"]');
+    expect(adminCodeLabel?.querySelector('[data-slot="field-required"]')).toBeTruthy();
   });
 
   it('supports xui:linkage for visible and options branches', async () => {

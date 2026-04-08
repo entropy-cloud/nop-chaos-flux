@@ -1,5 +1,20 @@
-import { parsePath, type BaseSchema, type RendererComponentProps, type RendererDefinition, type RendererSchemaValidationContext } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { useEffect, useMemo, useRef } from 'react';
+import {
+  parsePath,
+  serializeNodeLocator,
+  type BaseSchema,
+  type RendererComponentProps,
+  type RendererDefinition,
+  type RendererSchemaValidationContext,
+  type ScopeRef
+} from '@nop-chaos/flux-core';
+import {
+  hasRendererSlotContent,
+  resolveRendererSlotContent,
+  useCurrentActionScope,
+  useCurrentForm,
+  useRendererRuntime
+} from '@nop-chaos/flux-react';
 import type { FormSchema } from '../schemas';
 
 function escapeJsonPointerSegment(segment: string) {
@@ -49,14 +64,173 @@ function validateFormSchema(context: RendererSchemaValidationContext<BaseSchema>
   }
 }
 
+function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Record<string, unknown>>): ScopeRef {
+  if (Object.keys(importBindings).length === 0) {
+    return scope;
+  }
+
+  return {
+    id: scope.id,
+    path: scope.path,
+    parent: scope.parent,
+    store: scope.store,
+    get value() {
+      return this.read();
+    },
+    get(path) {
+      if (path === '__imports') {
+        return importBindings;
+      }
+
+      return scope.get(path);
+    },
+    has(path) {
+      if (path === '__imports') {
+        return true;
+      }
+
+      return scope.has(path);
+    },
+    readOwn() {
+      return scope.readOwn();
+    },
+    read() {
+      return {
+        ...scope.read(),
+        __imports: importBindings
+      };
+    },
+    update(path, value) {
+      scope.update(path, value);
+    },
+    merge(data) {
+      scope.merge(data);
+    },
+    replace(data) {
+      scope.replace?.(data);
+    }
+  };
+}
+
 export function FormRenderer(props: RendererComponentProps<FormSchema>) {
+  const runtime = useRendererRuntime();
+  const currentForm = useCurrentForm();
+  const currentActionScope = useCurrentActionScope();
+  const nodeImports = Array.isArray(props.schema['xui:imports']) ? props.schema['xui:imports'] : undefined;
   const bodyContent = resolveRendererSlotContent(props, 'body');
   const actionsContent = resolveRendererSlotContent(props, 'actions');
+  const importBindings = useMemo(
+    () => runtime.getImportedExpressionBindings({
+      imports: nodeImports,
+      actionScope: currentActionScope
+    }),
+    [runtime, nodeImports, currentActionScope]
+  );
+  const importsReady = !nodeImports?.length || Object.keys(importBindings).length === nodeImports.length;
+  const baseLifecycleScope = currentForm?.scope ?? props.nodeInstance.scope;
+  const lifecycleScope = useMemo(
+    () => createFormLifecycleScope(baseLifecycleScope, importBindings),
+    [baseLifecycleScope, importBindings]
+  );
+  const initAction = props.events['initAction'];
+  const submitAction = props.events['submitAction'];
+  const submitSuccessAction = props.events['onSubmitSuccess'];
+  const submitErrorAction = props.events['onSubmitError'];
+  const validateErrorAction = props.events['onValidateError'];
+  const activationKey = props.nodeInstance.locator
+    ? serializeNodeLocator(props.nodeInstance.locator)
+    : props.locator
+      ? serializeNodeLocator(props.locator)
+      : `${props.id}:${props.path}`;
+  const lastInitKeyRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!currentForm) {
+      return;
+    }
+
+    currentForm.setLifecycleHandlers({
+      submitAction: submitAction
+        ? (options) => submitAction(undefined, {
+            scope: lifecycleScope,
+            interactionId: options?.interactionId
+          })
+        : undefined,
+      onSubmitSuccess: submitSuccessAction
+        ? (result, options) => submitSuccessAction(undefined, {
+            scope: lifecycleScope,
+            interactionId: options?.interactionId,
+            prevResult: result,
+            event: {
+              result,
+              error: undefined,
+              prevResult: undefined
+            },
+            evaluationBindings: {
+              result,
+              error: undefined,
+              prevResult: undefined
+            }
+          })
+        : undefined,
+      onSubmitError: submitErrorAction
+        ? (result, options) => submitErrorAction(undefined, {
+            scope: lifecycleScope,
+            interactionId: options?.interactionId,
+            prevResult: result,
+            event: {
+              result,
+              error: result.error,
+              prevResult: undefined
+            },
+            evaluationBindings: {
+              result,
+              error: result.error,
+              prevResult: undefined
+            }
+          })
+        : undefined,
+      onValidateError: validateErrorAction
+        ? (result, options) => validateErrorAction(undefined, {
+            scope: lifecycleScope,
+            interactionId: options?.interactionId,
+            prevResult: result,
+            event: {
+              result,
+              error: result.error,
+              prevResult: undefined
+            },
+            evaluationBindings: {
+              result,
+              error: result.error,
+              prevResult: undefined
+            }
+          })
+        : undefined
+    });
+
+    return () => {
+      currentForm.setLifecycleHandlers(undefined);
+    };
+  }, [currentForm, lifecycleScope, submitAction, submitErrorAction, submitSuccessAction, validateErrorAction]);
+
+  useEffect(() => {
+    if (!initAction || !importsReady) {
+      return;
+    }
+
+    if (lastInitKeyRef.current === activationKey) {
+      return;
+    }
+
+    lastInitKeyRef.current = activationKey;
+    void initAction(undefined, { scope: lifecycleScope });
+  }, [activationKey, importsReady, initAction, lifecycleScope]);
 
   return (
     <section className="nop-form flex flex-col gap-4" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
-      {hasRendererSlotContent(bodyContent) ? <div className="nop-form__body grid gap-4">{bodyContent}</div> : null}
-      {hasRendererSlotContent(actionsContent) ? <div className="nop-form__actions flex flex-wrap gap-3">{actionsContent}</div> : null}
+      {hasRendererSlotContent(bodyContent) ? <div data-slot="form-body" className="grid gap-4">{bodyContent}</div> : null}
+      {hasRendererSlotContent(actionsContent) ? <div data-slot="form-actions" className="flex flex-wrap gap-3">{actionsContent}</div> : null}
     </section>
   );
 }
@@ -69,6 +243,13 @@ export const formRendererDefinition: RendererDefinition = {
   defaultSchema: { type: 'form', body: [], actions: [] },
   component: FormRenderer,
   regions: ['body', 'actions'],
+  fields: [
+    { key: 'initAction', kind: 'event' },
+    { key: 'submitAction', kind: 'event' },
+    { key: 'onSubmitSuccess', kind: 'event' },
+    { key: 'onSubmitError', kind: 'event' },
+    { key: 'onValidateError', kind: 'event' }
+  ],
   scopePolicy: 'form',
   componentRegistryPolicy: 'new',
   schemaValidator: validateFormSchema

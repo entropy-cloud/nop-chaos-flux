@@ -1,8 +1,9 @@
+import type { ActionResult } from './actions';
 import type { ApiSchema } from './schema';
 import type { NodeInstance } from './node-identity';
 import type { ScopeRef } from './scope';
 import type { ValidationRule, ValidationError, ValidationResult, FormValidationResult, CompiledFormValidationModel, CompiledFormValidationField, RuntimeFieldRegistration } from './validation';
-import type { ActionScope, ActionResult } from './actions';
+import type { ActionScope } from './actions';
 import type { CompiledSchemaNode, ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
 import type { ReactNode } from 'react';
 
@@ -59,6 +60,13 @@ export interface FormStoreApi {
   batchUpdate(updates: Partial<FormStoreState>): void;
 }
 
+export interface FormLifecycleHandlers {
+  submitAction?: (options?: { interactionId?: string }) => Promise<ActionResult>;
+  onSubmitSuccess?: (result: ActionResult, options?: { interactionId?: string }) => Promise<ActionResult>;
+  onSubmitError?: (result: ActionResult, options?: { interactionId?: string }) => Promise<ActionResult>;
+  onValidateError?: (result: ActionResult, options?: { interactionId?: string }) => Promise<ActionResult>;
+}
+
 export interface DialogState {
   id: string;
   dialog: Record<string, any>;
@@ -112,6 +120,7 @@ export interface FormRuntime {
   store: FormStoreApi;
   scope: ScopeRef;
   validation?: CompiledFormValidationModel;
+  setLifecycleHandlers(handlers?: FormLifecycleHandlers): void;
   registerField(registration: RuntimeFieldRegistration): () => void;
   validateField(path: string): Promise<ValidationResult>;
   validateSubtree(path: string): Promise<FormValidationResult>;

@@ -8,7 +8,7 @@ import type { RendererEnv } from './renderer-api';
 import type { CompiledNodeRuntimeState, CompiledSchemaNode, ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
 import type { RendererPlugin } from './renderer-plugin';
-import type { DataSourceController, DataSourceRegistration, FormRuntime, PageRuntime } from './runtime';
+import type { DataSourceController, DataSourceRegistration, FormLifecycleHandlers, FormRuntime, PageRuntime } from './runtime';
 import type { ApiSchema, BaseSchema, DataSourceSchema, ReactionSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, SourceSchema, XuiImportSpec } from './schema';
 import type { CreateScopeOptions, ScopeRef } from './scope';
 import type { CompiledFormValidationModel, ValidationRule } from './validation';
@@ -165,5 +165,6 @@ export interface RendererRuntime {
     parentScope: ScopeRef;
     page?: PageRuntime;
     validation?: CompiledFormValidationModel;
+    lifecycle?: FormLifecycleHandlers;
   }): FormRuntime;
 }

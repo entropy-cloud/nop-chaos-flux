@@ -4,6 +4,7 @@ import type {
   CompiledFormValidationField,
   CompiledFormValidationModel,
   CompiledValidationRule,
+  FormLifecycleHandlers,
   FormStoreApi,
   PageRuntime,
   RuntimeFieldRegistration,
@@ -19,6 +20,7 @@ export interface CreateManagedFormRuntimeInput {
   parentScope: ScopeRef;
   page?: PageRuntime;
   validation?: CompiledFormValidationModel;
+  lifecycle?: FormLifecycleHandlers;
   validatingDelay?: number;
   submittingDelay?: number;
   executeValidationRule: (

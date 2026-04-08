@@ -1,4 +1,4 @@
-import type { ApiSchema, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
+import type { ApiSchema, FormLifecycleHandlers, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
 import {
   clampArrayIndex,
   clampInsertIndex,
@@ -43,6 +43,18 @@ function validationErrorsEqual(
 
     return candidate?.path === error.path && candidate?.rule === error.rule && candidate?.message === error.message;
   });
+}
+
+function classifySubmitResult(result: import('@nop-chaos/flux-core').ActionResult): 'success' | 'failure' | 'neutral' {
+  if (result.skipped) {
+    return 'neutral';
+  }
+
+  if (!result.ok || result.cancelled || result.timedOut) {
+    return 'failure';
+  }
+
+  return 'success';
 }
 
 function buildTouchedStateWithPath(input: Record<string, boolean>, path: string): Record<string, boolean> {
@@ -101,6 +113,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   const initialFieldState = buildInitialFieldState(inputValue.initialValues ?? {}, inputValue.validation);
   const defaultValidationTriggers = inputValue.validation?.behavior.triggers ?? ['blur'];
   const submittingDelay = inputValue.submittingDelay ?? 0;
+  let lifecycleHandlers: FormLifecycleHandlers | undefined = inputValue.lifecycle;
 
   let isSubmittingInternal = false;
   let lastChange: ScopeChange = {
@@ -221,6 +234,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     store,
     scope,
     validation: inputValue.validation,
+    setLifecycleHandlers(handlers) {
+      lifecycleHandlers = handlers;
+    },
     registerField(registration) {
       runtimeFieldRegistrations.set(registration.path, registration);
 
@@ -455,23 +471,16 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       const validation = await thisForm.validateForm();
 
       if (!validation.ok) {
-        isSubmittingInternal = false;
-
-        if (submittingTimer !== undefined) {
-          clearTimeout(submittingTimer);
-          submittingTimer = undefined;
-        }
-
-        store.setSubmitting(false);
-
-        return {
+        const validationFailure = {
           ok: false,
           error: validation.errors,
           data: validation.fieldErrors
-        };
-      }
+        } as const;
 
-      if (!api) {
+        const lifecycleResult = lifecycleHandlers?.onValidateError
+          ? await lifecycleHandlers.onValidateError(validationFailure, options)
+          : undefined;
+
         isSubmittingInternal = false;
 
         if (submittingTimer !== undefined) {
@@ -481,11 +490,33 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
         store.setSubmitting(false);
 
-        return { ok: true, data: store.getState().values };
+        return lifecycleResult ?? validationFailure;
       }
 
+      const submitLifecycleAction = lifecycleHandlers?.submitAction;
+      const executeSubmit = submitLifecycleAction
+        ? () => submitLifecycleAction(options)
+        : api
+          ? () => inputValue.submitApi(api, scope, options)
+          : () => Promise.resolve({ ok: true, data: store.getState().values });
+
       try {
-        return await inputValue.submitApi(api, scope, options);
+        const result = await executeSubmit();
+        const resultClass = classifySubmitResult(result);
+
+        if (resultClass === 'success') {
+          return lifecycleHandlers?.onSubmitSuccess
+            ? await lifecycleHandlers.onSubmitSuccess(result, options)
+            : result;
+        }
+
+        if (resultClass === 'failure') {
+          return lifecycleHandlers?.onSubmitError
+            ? await lifecycleHandlers.onSubmitError(result, options)
+            : result;
+        }
+
+        return result;
       } finally {
         isSubmittingInternal = false;
 

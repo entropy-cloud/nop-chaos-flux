@@ -1,4 +1,4 @@
-import type { ApiSchema, BaseSchema, SourceSchema } from '@nop-chaos/flux-core';
+import type { ActionSchema, ApiSchema, BaseSchema, SourceSchema } from '@nop-chaos/flux-core';
 
 export interface SelectOptionSchema {
   [key: string]: import('@nop-chaos/flux-core').SchemaValue;
@@ -27,6 +27,11 @@ export interface FormSchema extends BaseSchema {
   body?: BaseSchema[];
   actions?: BaseSchema[];
   data?: Record<string, any>;
+  initAction?: ActionSchema | ActionSchema[];
+  submitAction?: ActionSchema | ActionSchema[];
+  onSubmitSuccess?: ActionSchema | ActionSchema[];
+  onSubmitError?: ActionSchema | ActionSchema[];
+  onValidateError?: ActionSchema | ActionSchema[];
 }
 
 export interface SelectSchema extends InputSchema {

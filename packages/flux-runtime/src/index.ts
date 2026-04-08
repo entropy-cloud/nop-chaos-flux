@@ -185,6 +185,7 @@ export function createRendererRuntime(input: {
     parentScope: ScopeRef;
     page?: PageRuntime;
     validation?: CompiledFormValidationModel;
+    lifecycle?: import('@nop-chaos/flux-core').FormLifecycleHandlers;
   }): FormRuntime {
     return createManagedFormRuntime({
       ...inputValue,
