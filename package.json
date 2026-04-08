@@ -10,8 +10,9 @@
     "test": "pnpm -r test",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
+    "check:react19": "node scripts/check-react19-legacy-apis.mjs",
     "check:src-artifacts": "node scripts/verify-no-src-artifacts.mjs",
-    "lint": "node scripts/clean-src-artifacts.mjs && node scripts/verify-no-src-artifacts.mjs && pnpm -r lint",
+    "lint": "node scripts/clean-src-artifacts.mjs && node scripts/verify-no-src-artifacts.mjs && node scripts/check-react19-legacy-apis.mjs && pnpm -r lint",
     "clean": "pnpm -r exec npx rimraf node_modules dist && npx rimraf node_modules",
     "clean:src-artifacts": "node scripts/clean-src-artifacts.mjs"
   },
