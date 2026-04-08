@@ -9,10 +9,6 @@ export interface FlowDesignerInspectorProps {
   onDeleteEdge: (edgeId: string) => void;
 }
 
-function classNames(...values: Array<string | undefined | false>) {
-  return values.filter(Boolean).join(' ');
-}
-
 function NodeTypeBadge({ type }: { type: string }) {
   const icons: Record<string, string> = {
     start: '▶',
@@ -23,7 +19,7 @@ function NodeTypeBadge({ type }: { type: string }) {
     loop: '↻'
   };
   return (
-    <span className={classNames('fd-type-badge', `fd-type-badge--${type}`)}>
+    <span data-slot="flow-designer-type-badge" data-type={type}>
       {icons[type] ?? '○'} {type}
     </span>
   );
@@ -41,10 +37,10 @@ function NodeSpecificFields({
   switch (nodeType) {
     case 'condition':
       return (
-        <div className="fd-inspector__section">
-          <label className="fd-inspector__label">Condition Expression</label>
+        <div data-slot="flow-designer-inspector-section">
+          <label data-slot="flow-designer-inspector-label">Condition Expression</label>
           <textarea
-            className="fd-inspector__textarea"
+            data-slot="flow-designer-inspector-textarea"
             rows={3}
             value={String(data.condition ?? '')}
             onChange={(e) => onUpdate({ condition: e.target.value })}
@@ -55,21 +51,21 @@ function NodeSpecificFields({
     case 'loop':
       return (
         <>
-          <div className="fd-inspector__section">
-            <label className="fd-inspector__label">Collection Expression</label>
+          <div data-slot="flow-designer-inspector-section">
+            <label data-slot="flow-designer-inspector-label">Collection Expression</label>
             <input
               type="text"
-              className="fd-inspector__input"
+              data-slot="flow-designer-inspector-input"
               value={String(data.collection ?? '')}
               onChange={(e) => onUpdate({ collection: e.target.value })}
               placeholder="e.g., items"
             />
           </div>
-          <div className="fd-inspector__section">
-            <label className="fd-inspector__label">Variable Name</label>
+          <div data-slot="flow-designer-inspector-section">
+            <label data-slot="flow-designer-inspector-label">Variable Name</label>
             <input
               type="text"
-              className="fd-inspector__input"
+              data-slot="flow-designer-inspector-input"
               value={String(data.variable ?? 'item')}
               onChange={(e) => onUpdate({ variable: e.target.value })}
               placeholder="item"
@@ -79,11 +75,11 @@ function NodeSpecificFields({
       );
     case 'parallel':
       return (
-        <div className="fd-inspector__section">
-          <label className="fd-inspector__label">Branch Count</label>
+        <div data-slot="flow-designer-inspector-section">
+          <label data-slot="flow-designer-inspector-label">Branch Count</label>
           <input
             type="number"
-            className="fd-inspector__input"
+            data-slot="flow-designer-inspector-input"
             min={2}
             max={10}
             value={Number(data.branchCount ?? 2)}
@@ -93,11 +89,11 @@ function NodeSpecificFields({
       );
     case 'task':
       return (
-        <div className="fd-inspector__section">
-          <label className="fd-inspector__label">Service Name</label>
+        <div data-slot="flow-designer-inspector-section">
+          <label data-slot="flow-designer-inspector-label">Service Name</label>
           <input
             type="text"
-            className="fd-inspector__input"
+            data-slot="flow-designer-inspector-input"
             value={String(data.serviceName ?? '')}
             onChange={(e) => onUpdate({ serviceName: e.target.value })}
             placeholder="e.g., myService"
@@ -134,27 +130,27 @@ export function FlowDesignerInspector({
   };
 
   return (
-    <div className="fd-page__inspector">
+    <div data-slot="flow-designer-inspector-shell">
       {node ? (
-        <div className="fd-inspector">
-          <h3 className="fd-inspector__title">Node Properties</h3>
-          <div className="fd-inspector__section">
+        <div data-slot="flow-designer-inspector">
+          <h3 data-slot="flow-designer-inspector-title">Node Properties</h3>
+          <div data-slot="flow-designer-inspector-section">
             <NodeTypeBadge type={node.type} />
           </div>
-          <div className="fd-inspector__section">
-            <label className="fd-inspector__label">Label</label>
+          <div data-slot="flow-designer-inspector-section">
+            <label data-slot="flow-designer-inspector-label">Label</label>
             <input
               type="text"
-              className="fd-inspector__input"
+              data-slot="flow-designer-inspector-input"
               value={String(node.data.label ?? '')}
               onChange={(e) => handleNodeUpdate({ label: e.target.value })}
               placeholder="Enter node label"
             />
           </div>
-          <div className="fd-inspector__section">
-            <label className="fd-inspector__label">Description</label>
+          <div data-slot="flow-designer-inspector-section">
+            <label data-slot="flow-designer-inspector-label">Description</label>
             <textarea
-              className="fd-inspector__textarea"
+              data-slot="flow-designer-inspector-textarea"
               rows={2}
               value={String(node.data.description ?? '')}
               onChange={(e) => handleNodeUpdate({ description: e.target.value })}
@@ -166,9 +162,10 @@ export function FlowDesignerInspector({
             data={node.data}
             onUpdate={handleNodeUpdate}
           />
-          <div className="fd-inspector__actions">
+          <div data-slot="flow-designer-inspector-actions">
             <button
-              className="fd-inspector__button fd-inspector__button--danger"
+              data-slot="flow-designer-inspector-button"
+              data-variant="danger"
               onClick={() => onDeleteNode(node.id)}
               type="button"
             >
@@ -177,32 +174,32 @@ export function FlowDesignerInspector({
           </div>
         </div>
       ) : edge ? (
-        <div className="fd-inspector">
-          <h3 className="fd-inspector__title">Edge Properties</h3>
-          <div className="fd-inspector__section">
-            <label className="fd-inspector__label">Label</label>
+        <div data-slot="flow-designer-inspector">
+          <h3 data-slot="flow-designer-inspector-title">Edge Properties</h3>
+          <div data-slot="flow-designer-inspector-section">
+            <label data-slot="flow-designer-inspector-label">Label</label>
             <input
               type="text"
-              className="fd-inspector__input"
+              data-slot="flow-designer-inspector-input"
               value={String(edge.data.label ?? '')}
               onChange={(e) => handleEdgeUpdate({ label: e.target.value })}
               placeholder="Enter edge label"
             />
           </div>
-          <div className="fd-inspector__section">
-            <label className="fd-inspector__label">Condition</label>
+          <div data-slot="flow-designer-inspector-section">
+            <label data-slot="flow-designer-inspector-label">Condition</label>
             <input
               type="text"
-              className="fd-inspector__input"
+              data-slot="flow-designer-inspector-input"
               value={String(edge.data.condition ?? '')}
               onChange={(e) => handleEdgeUpdate({ condition: e.target.value })}
               placeholder="e.g., status === 'approved'"
             />
           </div>
-          <div className="fd-inspector__section">
-            <label className="fd-inspector__label">Line Style</label>
+          <div data-slot="flow-designer-inspector-section">
+            <label data-slot="flow-designer-inspector-label">Line Style</label>
             <select
-              className="fd-inspector__select"
+              data-slot="flow-designer-inspector-select"
               value={String(edge.data.lineStyle ?? 'solid')}
               onChange={(e) => handleEdgeUpdate({ lineStyle: e.target.value })}
             >
@@ -211,9 +208,10 @@ export function FlowDesignerInspector({
               <option value="dotted">Dotted</option>
             </select>
           </div>
-          <div className="fd-inspector__actions">
+          <div data-slot="flow-designer-inspector-actions">
             <button
-              className="fd-inspector__button fd-inspector__button--danger"
+              data-slot="flow-designer-inspector-button"
+              data-variant="danger"
               onClick={() => onDeleteEdge(edge.id)}
               type="button"
             >
@@ -222,8 +220,8 @@ export function FlowDesignerInspector({
           </div>
         </div>
       ) : (
-        <div className="fd-inspector fd-inspector--empty">
-          <p className="fd-inspector__empty-text">Select a node or edge to edit its properties</p>
+        <div data-slot="flow-designer-inspector" data-empty="">
+          <p data-slot="flow-designer-inspector-empty-text">Select a node or edge to edit its properties</p>
         </div>
       )}
     </div>

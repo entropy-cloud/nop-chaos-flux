@@ -278,17 +278,20 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
 
   return (
     <div
-      className={`nop-code-editor${isFullscreen ? ' nop-code-editor--fullscreen' : ''}${showToolbar ? ' nop-code-editor--has-toolbar' : ''}`}
+      className="nop-code-editor"
       data-testid={props.meta.testid}
       data-theme={editorTheme}
+      data-fullscreen={isFullscreen || undefined}
+      data-has-toolbar={showToolbar || undefined}
       style={!isFullscreen ? containerStyle : undefined}
     >
       {isFullscreen && allowFullscreen && (
-        <div className="nop-code-editor__header">
-          <span className="nop-code-editor__header-title">{props.meta.label || props.schema.label}</span>
+        <div data-slot="code-editor-header">
+          <span data-slot="code-editor-header-title">{props.meta.label || props.schema.label}</span>
           <Button
             variant="ghost"
             size="icon-xs"
+            data-slot="code-editor-header-close"
             onClick={() => setIsFullscreen(false)}
             aria-label="Exit fullscreen"
           >
@@ -297,14 +300,14 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
         </div>
       )}
       {showToolbar && (
-        <div className="nop-code-editor__toolbar">
+        <div data-slot="code-editor-toolbar">
           {language === 'sql' && (
             <>
               {formatConfig && (
                 <Button
                   variant="ghost"
                   size="xs"
-                  className="nop-code-editor__toolbar-format"
+                  data-slot="code-editor-toolbar-format"
                   onClick={handleFormatSQL}
                   title="Format SQL"
                 >
@@ -321,7 +324,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
                 <Button
                   variant="ghost"
                   size="xs"
-                  className="nop-code-editor__toolbar-var-toggle"
+                  data-slot="code-editor-toolbar-var-toggle"
                   onClick={() => setVariablePanelCollapsed(v => !v)}
                   title={variablePanelCollapsed ? 'Show variables' : 'Hide variables'}
                 >
@@ -333,7 +336,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
                 <Button
                   variant="ghost"
                   size="xs"
-                  className="nop-code-editor__toolbar-execute"
+                  data-slot="code-editor-toolbar-execute"
                   onClick={handleExecuteSQL}
                   title="Execute SQL"
                 >
@@ -347,7 +350,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
             <Button
               variant="ghost"
               size="icon-xs"
-              className="nop-code-editor__toolbar-fullscreen"
+              data-slot="code-editor-toolbar-fullscreen"
               onClick={toggleFullscreen}
               aria-label="Enter fullscreen"
               title="Fullscreen"
@@ -357,7 +360,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
           )}
         </div>
       )}
-      <div className={hasVariablePanel ? 'nop-code-editor__body' : undefined} style={hasVariablePanel ? { display: 'flex', flex: 1, minHeight: 0 } : undefined}>
+      <div data-slot={hasVariablePanel ? 'code-editor-body' : undefined} style={hasVariablePanel ? { display: 'flex', flex: 1, minHeight: 0 } : undefined}>
         <div
           ref={editorRef}
           style={isFullscreen ? { flex: 1, overflow: 'auto' } : hasVariablePanel ? { flex: 1, minHeight: 0 } : undefined}
@@ -373,7 +376,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
         )}
       </div>
       {hasExecution && sqlResult.status !== 'idle' && (
-        <div className="nop-code-editor__result-container">
+        <div data-slot="code-editor-result-container">
           <SQLResultPanel result={sqlResult} onClose={handleClearResult} />
         </div>
       )}

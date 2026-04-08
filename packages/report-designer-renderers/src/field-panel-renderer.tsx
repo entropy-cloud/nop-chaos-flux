@@ -24,27 +24,27 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
   const emptyLabel = String(props.props.emptyLabel ?? 'No field sources registered.');
 
   return (
-    <section className={joinClassNames('nop-report-designer__field-panel-shell', props.meta.className)}>
+    <section className={joinClassNames('nop-report-designer', props.meta.className)} data-slot="report-field-panel-shell">
       {hasRendererSlotContent(titleContent) ? (
-        <header className="nop-report-designer__section-header">
+        <header data-slot="report-designer-section-header">
           <h3>{titleContent}</h3>
           <span>{designer?.fieldCount ?? getFieldCount(fieldSources)} fields</span>
         </header>
       ) : designer?.documentName ? (
-        <header className="nop-report-designer__section-header">
+        <header data-slot="report-designer-section-header">
           <h3>{designer.documentName}</h3>
           <span>{designer?.fieldCount ?? getFieldCount(fieldSources)} fields</span>
         </header>
       ) : null}
       {fieldSources.length === 0 ? (
-        <p className="nop-report-designer__empty">{emptyLabel}</p>
+        <p data-slot="report-designer-empty">{emptyLabel}</p>
       ) : (
-        <div className="nop-report-designer__stack">
+        <div data-slot="report-designer-stack">
           {fieldSources.map((source) => (
-            <section key={source.id} className="nop-report-designer__section">
+            <section key={source.id} data-slot="report-designer-section">
               {showHeader ? <h4>{source.label}</h4> : null}
               {source.groups.map((group) => (
-                <div key={group.id} className="nop-report-designer__group">
+                <div key={group.id} data-slot="report-designer-group">
                   {showHeader ? <strong>{group.label}</strong> : null}
                   <ul>
                     {group.fields.map((field) => (

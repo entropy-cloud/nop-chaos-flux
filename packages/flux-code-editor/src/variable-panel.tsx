@@ -21,11 +21,11 @@ export function VariablePanel({
 }: VariablePanelProps) {
   if (collapsed) {
     return (
-      <div className="nop-code-editor__var-panel nop-code-editor__var-panel--collapsed">
+      <div data-slot="code-editor-var-panel" data-collapsed="">
         <Button
           variant="ghost"
           size="icon-xs"
-          className="nop-code-editor__var-panel-toggle"
+          data-slot="code-editor-var-panel-toggle"
           onClick={onToggleCollapse}
           title="Expand variable panel"
           aria-label="Expand variable panel"
@@ -52,14 +52,14 @@ export function VariablePanel({
   };
 
   return (
-    <div className="nop-code-editor__var-panel">
-      <div className="nop-code-editor__var-panel-header">
-        <span className="nop-code-editor__var-panel-title">Variables</span>
+    <div data-slot="code-editor-var-panel">
+      <div data-slot="code-editor-var-panel-header">
+        <span data-slot="code-editor-var-panel-title">Variables</span>
         {onToggleCollapse && (
           <Button
             variant="ghost"
             size="icon-xs"
-            className="nop-code-editor__var-panel-toggle"
+            data-slot="code-editor-var-panel-toggle"
             onClick={onToggleCollapse}
             title="Collapse variable panel"
             aria-label="Collapse variable panel"
@@ -68,7 +68,7 @@ export function VariablePanel({
           </Button>
         )}
       </div>
-      <ScrollArea className="nop-code-editor__var-panel-list">
+      <ScrollArea data-slot="code-editor-var-panel-list">
         {renderVariableList(variables, handleInsert, handleCopy)}
       </ScrollArea>
     </div>
@@ -82,16 +82,16 @@ function renderVariableList(
   depth = 0,
 ): ReactNode {
   return variables.map((variable) => (
-    <div key={variable.value} className="nop-code-editor__var-item" style={{ paddingLeft: depth * 12 }}>
-      <div className="nop-code-editor__var-item-main">
-        <span className="nop-code-editor__var-item-label">{variable.label}</span>
-        <span className="nop-code-editor__var-item-value">{variable.value}</span>
+    <div key={variable.value} data-slot="code-editor-var-item" style={{ paddingLeft: depth * 12 }}>
+      <div data-slot="code-editor-var-item-main">
+        <span data-slot="code-editor-var-item-label">{variable.label}</span>
+        <span data-slot="code-editor-var-item-value">{variable.value}</span>
       </div>
-      <div className="nop-code-editor__var-item-actions">
+      <div data-slot="code-editor-var-item-actions">
         <Button
           variant="ghost"
           size="icon-xs"
-          className="nop-code-editor__var-item-copy"
+          data-slot="code-editor-var-item-copy"
           onClick={() => onCopy(variable)}
           title="Copy to clipboard"
           aria-label="Copy to clipboard"
@@ -101,7 +101,7 @@ function renderVariableList(
         <Button
           variant="ghost"
           size="icon-xs"
-          className="nop-code-editor__var-item-insert"
+          data-slot="code-editor-var-item-insert"
           onClick={() => onInsert(variable)}
           title="Insert at cursor"
           aria-label="Insert at cursor"
@@ -110,7 +110,7 @@ function renderVariableList(
         </Button>
       </div>
       {variable.children && variable.children.length > 0 && (
-        <div className="nop-code-editor__var-item-children">
+        <div data-slot="code-editor-var-item-children">
           {renderVariableList(variable.children, onInsert, onCopy, depth + 1)}
         </div>
       )}

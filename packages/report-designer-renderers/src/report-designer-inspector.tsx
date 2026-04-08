@@ -28,7 +28,7 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
   if (!hasSelection) {
     return (
       <section className="nop-report-inspector">
-        <p className="nop-report-designer__empty">{noSelectionLabel}</p>
+        <p data-slot="report-designer-empty">{noSelectionLabel}</p>
       </section>
     );
   }
@@ -36,7 +36,7 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
   if (panels.length === 0) {
     return (
       <section className="nop-report-inspector">
-        <p className="nop-report-designer__empty">{emptyLabel}</p>
+        <p data-slot="report-designer-empty">{emptyLabel}</p>
       </section>
     );
   }
@@ -44,8 +44,8 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
   return (
     <section className="nop-report-inspector" data-testid="report-inspector">
       {panels.map((panel) => (
-        <div key={panel.id} className="nop-report-designer__stack">
-          <div className="nop-report-designer__section-header">
+        <div key={panel.id} data-slot="report-designer-stack">
+          <div data-slot="report-designer-section-header">
             <h4>{panel.title}</h4>
           </div>
           {props.helpers.render(panel.body, {

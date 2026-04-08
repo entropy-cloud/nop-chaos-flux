@@ -35,41 +35,41 @@ export function FlowDesignerPalette({
   })).filter((g) => g.nodeTypes.length > 0);
 
   return (
-    <div className="fd-page__palette">
-      <div className="fd-palette">
-        <div className="fd-palette__header">
+    <div data-slot="flow-designer-palette-shell">
+      <div data-slot="flow-designer-palette">
+        <div data-slot="flow-designer-palette-header">
           <h3>Node Palette</h3>
           {config.palette?.searchable !== false && (
             <input
               type="text"
-              className="fd-palette__search"
+              data-slot="flow-designer-palette-search"
               placeholder="Search nodes..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
             />
           )}
         </div>
-        <div className="fd-palette__groups">
+        <div data-slot="flow-designer-palette-groups">
           {filteredGroups.map((group) => (
-            <div key={group.id} className="fd-palette__group">
+            <div key={group.id} data-slot="flow-designer-palette-group">
               <div
-                className="fd-palette__group-header"
+                data-slot="flow-designer-palette-group-header"
                 onClick={() => onToggleGroup(group.id)}
               >
-                <span className="fd-palette__group-toggle">
+                <span data-slot="flow-designer-palette-group-toggle">
                   {expandedGroups.has(group.id) ? '▼' : '▶'}
                 </span>
-                <span className="fd-palette__group-label">{group.label}</span>
+                <span data-slot="flow-designer-palette-group-label">{group.label}</span>
               </div>
               {expandedGroups.has(group.id) && (
-                <div className="fd-palette__group-items">
+                <div data-slot="flow-designer-palette-group-items">
                   {group.nodeTypes.map((ntId) => {
                     const nt = nodeTypes.find((n) => n.id === ntId);
                     if (!nt) return null;
                     return (
                       <button
                         key={nt.id}
-                        className="fd-palette__item"
+                        data-slot="flow-designer-palette-item"
                         draggable
                         onDragStart={(event) => {
                           event.dataTransfer.setData('application/x-flow-designer-node-type', nt.id);
@@ -79,8 +79,8 @@ export function FlowDesignerPalette({
                         title={nt.description ?? nt.label}
                         type="button"
                       >
-                        <span className="fd-palette__item-icon">{nt.icon ?? '○'}</span>
-                        <span className="fd-palette__item-label">{nt.label}</span>
+                        <span data-slot="flow-designer-palette-item-icon">{nt.icon ?? '○'}</span>
+                        <span data-slot="flow-designer-palette-item-label">{nt.label}</span>
                       </button>
                     );
                   })}

@@ -219,7 +219,7 @@ export function ReportDesignerDemo() {
 
   return (
     <div className="report-designer-demo">
-      <div className="report-designer-demo__header">
+      <div data-slot="report-demo-header">
         <h2>Report Designer Playground</h2>
         <SpreadsheetToolbar
           selectedCell={selectedCell}
@@ -267,8 +267,8 @@ export function ReportDesignerDemo() {
         />
       </div>
 
-      <div className="report-designer-demo__body">
-        <div className="report-designer-demo__field-panel">
+      <div data-slot="report-demo-body">
+        <div data-slot="report-demo-field-panel">
           <ReportFieldPanel
             fieldSources={fieldSources}
             onFieldDragStart={(sourceId, fieldId, label) => setDraggingField({ sourceId, fieldId, label })}
@@ -277,7 +277,7 @@ export function ReportDesignerDemo() {
 
         <div
           ref={gridRef}
-          className="report-designer-demo__canvas"
+          data-slot="report-demo-canvas"
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleFieldDrop}
           onMouseDown={(e) => {
@@ -329,7 +329,7 @@ export function ReportDesignerDemo() {
           />
         </div>
 
-        <div className="report-designer-demo__inspector">
+        <div data-slot="report-demo-inspector">
           <h3>Inspector</h3>
           {selectedCell ? (
             <div className="inspector-content">
@@ -391,7 +391,7 @@ export function ReportDesignerDemo() {
         </div>
       </div>
 
-      <div className="report-designer-demo__log">
+      <div data-slot="report-demo-log">
         <h3>Event Log</h3>
         <div className="log-content">
           {log.length === 0 ? (

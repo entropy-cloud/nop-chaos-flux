@@ -12,10 +12,10 @@ export function ReportFieldPanel({ fieldSources, className, onFieldDragStart }: 
       <h3>Field Sources</h3>
       {fieldSources.map((source) => (
         <div key={source.id} className="field-source">
-          <div className="field-source__label">{source.label}</div>
+          <div data-slot="field-source-label">{source.label}</div>
           {source.groups.map((group) => (
             <div key={group.id} className="field-group">
-              <div className="field-group__items">
+              <div data-slot="field-group-items">
                 {group.fields.map((field) => (
                   <div
                     key={field.id}
@@ -23,8 +23,8 @@ export function ReportFieldPanel({ fieldSources, className, onFieldDragStart }: 
                     draggable
                     onDragStart={() => onFieldDragStart(source.id, field.id, field.label)}
                   >
-                    <span className="field-item__type">{field.fieldType}</span>
-                    <span className="field-item__label">{field.label}</span>
+                    <span data-slot="field-item-type">{field.fieldType}</span>
+                    <span data-slot="field-item-label">{field.label}</span>
                   </div>
                 ))}
               </div>

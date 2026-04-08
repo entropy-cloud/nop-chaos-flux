@@ -24,11 +24,11 @@ export function FlowDesignerHoverToolbar({
   }
 
   return (
-    <div className="fd-hover-toolbar">
+    <div data-slot="flow-designer-hover-toolbar">
       {nodeId && (
-        <div className="fd-hover-toolbar__group">
+        <div data-slot="flow-designer-hover-toolbar-group">
           <button
-            className="fd-hover-toolbar__button"
+            data-slot="flow-designer-hover-toolbar-button"
             onClick={() => onEditNode(nodeId)}
             title="Edit node"
             type="button"
@@ -36,7 +36,7 @@ export function FlowDesignerHoverToolbar({
             ✏️
           </button>
           <button
-            className="fd-hover-toolbar__button"
+            data-slot="flow-designer-hover-toolbar-button"
             onClick={() => onDuplicateNode(nodeId)}
             title="Duplicate node"
             type="button"
@@ -44,7 +44,8 @@ export function FlowDesignerHoverToolbar({
             ⧉
           </button>
           <button
-            className="fd-hover-toolbar__button fd-hover-toolbar__button--danger"
+            data-slot="flow-designer-hover-toolbar-button"
+            data-variant="danger"
             onClick={() => onDeleteNode(nodeId)}
             title="Delete node"
             type="button"
@@ -54,9 +55,9 @@ export function FlowDesignerHoverToolbar({
         </div>
       )}
       {edgeId && (
-        <div className="fd-hover-toolbar__group">
+        <div data-slot="flow-designer-hover-toolbar-group">
           <button
-            className="fd-hover-toolbar__button"
+            data-slot="flow-designer-hover-toolbar-button"
             onClick={() => onEditEdge(edgeId)}
             title="Edit edge"
             type="button"
@@ -64,7 +65,8 @@ export function FlowDesignerHoverToolbar({
             ✏️
           </button>
           <button
-            className="fd-hover-toolbar__button fd-hover-toolbar__button--danger"
+            data-slot="flow-designer-hover-toolbar-button"
+            data-variant="danger"
             onClick={() => onDeleteEdge(edgeId)}
             title="Delete edge"
             type="button"

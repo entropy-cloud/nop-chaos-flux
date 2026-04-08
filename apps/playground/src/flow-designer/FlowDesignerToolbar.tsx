@@ -14,10 +14,6 @@ export interface FlowDesignerToolbarProps {
   onTabChange: (tab: 'designer' | 'json') => void;
 }
 
-function classNames(...values: Array<string | undefined | false>) {
-  return values.filter(Boolean).join(' ');
-}
-
 export function FlowDesignerToolbar({
   docName,
   canUndo,
@@ -32,12 +28,12 @@ export function FlowDesignerToolbar({
   onTabChange
 }: FlowDesignerToolbarProps) {
   return (
-    <div className="fd-toolbar">
-      <h2 className="fd-toolbar__title">{docName}</h2>
-      <div className="fd-toolbar__spacer" />
-      <div className="fd-toolbar__group">
+    <div data-slot="flow-designer-toolbar">
+      <h2 data-slot="flow-designer-toolbar-title">{docName}</h2>
+      <div data-slot="flow-designer-toolbar-spacer" />
+      <div data-slot="flow-designer-toolbar-group">
         <button
-          className="fd-toolbar__button"
+          data-slot="flow-designer-toolbar-button"
           onClick={onUndo}
           disabled={!canUndo}
           type="button"
@@ -46,7 +42,7 @@ export function FlowDesignerToolbar({
           ↶ Undo
         </button>
         <button
-          className="fd-toolbar__button"
+          data-slot="flow-designer-toolbar-button"
           onClick={onRedo}
           disabled={!canRedo}
           type="button"
@@ -54,55 +50,51 @@ export function FlowDesignerToolbar({
         >
           ↷ Redo
         </button>
-        <div className="fd-toolbar__divider" />
+        <div data-slot="flow-designer-toolbar-divider" />
         <button
-          className="fd-toolbar__button"
+          data-slot="flow-designer-toolbar-button"
           onClick={onClearSelection}
           type="button"
         >
           Clear Selection
         </button>
-        <div className="fd-toolbar__divider" />
+        <div data-slot="flow-designer-toolbar-divider" />
         <button
-          className="fd-toolbar__button fd-toolbar__button--success"
+          data-slot="flow-designer-toolbar-button"
+          data-variant="success"
           onClick={onSave}
           type="button"
         >
           Save
         </button>
         <button
-          className="fd-toolbar__button"
+          data-slot="flow-designer-toolbar-button"
           onClick={onRestore}
           type="button"
         >
           Restore
         </button>
         <button
-          className="fd-toolbar__button fd-toolbar__button--primary"
+          data-slot="flow-designer-toolbar-button"
+          data-variant="primary"
           onClick={onExport}
           type="button"
         >
           Export JSON
         </button>
       </div>
-      <div className="fd-toolbar__tabs">
+      <div data-slot="flow-designer-toolbar-tabs">
         <button
-          className={classNames(
-            'fd-toolbar__button',
-            'fd-toolbar__button--tab',
-            activeTab === 'designer' && 'fd-toolbar__button--tab-active'
-          )}
+          data-slot="flow-designer-toolbar-tab"
+          data-active={activeTab === 'designer' ? '' : undefined}
           onClick={() => onTabChange('designer')}
           type="button"
         >
           Designer
         </button>
         <button
-          className={classNames(
-            'fd-toolbar__button',
-            'fd-toolbar__button--tab',
-            activeTab === 'json' && 'fd-toolbar__button--tab-active'
-          )}
+          data-slot="flow-designer-toolbar-tab"
+          data-active={activeTab === 'json' ? '' : undefined}
           onClick={() => onTabChange('json')}
           type="button"
         >

@@ -20,7 +20,7 @@ describe('SQLResultPanel', () => {
     render(<SQLResultPanel result={result} />);
     const text = screen.getByText('Executing...');
     expect(text).toBeDefined();
-    expect(text.classList.contains('nop-code-editor__result-loading')).toBe(true);
+    expect(text.closest('[data-slot="code-editor-result-panel"]')?.getAttribute('data-state')).toBe('loading');
   });
 
   it('renders table with correct headers and rows for success state', () => {
@@ -89,7 +89,7 @@ describe('SQLResultPanel', () => {
 
     expect(screen.getByText('Error')).toBeDefined();
     expect(screen.getByText('Syntax error near SELECT')).toBeDefined();
-    expect(screen.getByText('Error').closest('.nop-code-editor__result-error')).toBeTruthy();
+    expect(screen.getByText('Error').closest('[data-slot="code-editor-result-panel"]')?.getAttribute('data-state')).toBe('error');
   });
 
   it('close button calls onClose callback', () => {

@@ -52,7 +52,8 @@ export function DesignerPaletteContent() {
         {filteredGroups.map((group) => (
           <div key={group.id} className="rounded-lg border border-border p-2.5 mb-3 last:mb-0" style={{ background: 'rgba(255, 255, 255, 0.45)' }}>
             <div
-              className="nop-palette__group-header flex items-center gap-1.5 cursor-pointer text-xs font-semibold uppercase tracking-[0.18em] mb-2 px-1"
+              data-slot="designer-palette-group-header"
+              className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold uppercase tracking-[0.18em] mb-2 px-1"
               style={{ color: 'hsl(221.2, 83.2%, 40%)' }}
               onClick={() => toggleGroup(group.id)}
             >
@@ -68,7 +69,8 @@ export function DesignerPaletteContent() {
                   return (
                     <div
                       key={nt.id}
-                      className={`nop-palette__item flex items-center gap-2 rounded-xl border border-border p-2 mb-2 last:mb-0 shadow-[0_1px_2px_rgba(0,0,0,0.05)] ${isSelected ? 'border-primary' : ''}`}
+                      data-slot="designer-palette-item"
+                      className={`flex items-center gap-2 rounded-xl border border-border p-2 mb-2 last:mb-0 shadow-[0_1px_2px_rgba(0,0,0,0.05)] ${isSelected ? 'border-primary' : ''}`}
                       style={{ background: 'rgba(255, 255, 255, 0.7)' }}
                     >
                       <button

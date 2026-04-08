@@ -80,7 +80,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
         <EdgeLabelRenderer>
           <div
             className={classNames(
-              'nop-designer-edge__label px-3 py-1.5 rounded-full border border-border text-sm font-medium text-muted-foreground shadow-sm',
+              'px-3 py-1.5 rounded-full border border-border text-sm font-medium text-muted-foreground shadow-sm',
               props.selected && 'border-primary text-foreground'
             )}
             style={{
@@ -103,7 +103,8 @@ export function DesignerXyflowEdge(props: EdgeProps) {
       {showQuickActions && (
         <EdgeLabelRenderer>
           <div
-            className="nop-designer-edge__actions inline-flex items-center gap-1.5 p-1 rounded-[10px] border border-border bg-white/94 shadow-[0_2px_8px_rgba(15,23,42,0.08)]"
+            data-slot="designer-edge-actions"
+            className="inline-flex items-center gap-1.5 p-1 rounded-[10px] border border-border bg-white/94 shadow-[0_2px_8px_rgba(15,23,42,0.08)]"
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY - 30}px)`,

@@ -6,7 +6,7 @@ export interface FlowDesignerToastProps {
 
 export function FlowDesignerToast({ message }: FlowDesignerToastProps) {
   return (
-    <div className="flow-designer-example__toast">
+    <div data-slot="flow-designer-example-toast">
       {message}
     </div>
   );

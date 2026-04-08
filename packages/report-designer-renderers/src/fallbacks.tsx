@@ -8,12 +8,12 @@ import { formatMetadataValue, getFieldCount } from './helpers.js';
 
 export function renderFieldSourceSections(fieldSources: FieldSourceSnapshot[]) {
   return (
-    <div className="nop-report-designer__stack">
+    <div data-slot="report-designer-stack">
       {fieldSources.map((source) => (
-        <section key={source.id} className="nop-report-designer__section">
+        <section key={source.id} data-slot="report-designer-section">
           <h4>{source.label}</h4>
           {source.groups.map((group) => (
-            <div key={group.id} className="nop-report-designer__group">
+            <div key={group.id} data-slot="report-designer-group">
               <strong>{group.label}</strong>
               <ul>
                 {group.fields.map((field) => (
@@ -30,19 +30,19 @@ export function renderFieldSourceSections(fieldSources: FieldSourceSnapshot[]) {
 
 export function renderFallbackFieldPanel(fieldSources: FieldSourceSnapshot[]) {
   if (fieldSources.length === 0) {
-    return <p className="nop-report-designer__empty">No field sources registered.</p>;
+    return <p data-slot="report-designer-empty">No field sources registered.</p>;
   }
   return renderFieldSourceSections(fieldSources);
 }
 
 export function renderFallbackInspector(meta: MetadataBag | undefined) {
   if (!meta || Object.keys(meta).length === 0) {
-    return <p className="nop-report-designer__empty">No metadata for the current target.</p>;
+    return <p data-slot="report-designer-empty">No metadata for the current target.</p>;
   }
   return (
-    <dl className="nop-report-designer__meta-list">
+    <dl data-slot="report-designer-meta-list">
       {Object.entries(meta).map(([key, value]) => (
-        <div key={key} className="nop-report-designer__meta-row">
+        <div key={key} data-slot="report-designer-meta-row">
           <dt>{key}</dt>
           <dd>{formatMetadataValue(value)}</dd>
         </div>
@@ -53,8 +53,8 @@ export function renderFallbackInspector(meta: MetadataBag | undefined) {
 
 export function renderFallbackCanvas(snapshot: ReportDesignerRuntimeSnapshot) {
   return (
-    <div className="nop-report-designer__canvas-fallback">
-      <p className="nop-report-designer__eyebrow">Report Designer Core</p>
+    <div data-slot="report-designer-canvas-fallback">
+      <p data-slot="report-designer-eyebrow">Report Designer Core</p>
       <h3>{snapshot.document.name}</h3>
       <p>Target: <strong>{snapshot.selectionTarget?.kind ?? 'none'}</strong></p>
       <p>Preview: <strong>{snapshot.preview.lastResult ? 'ready' : snapshot.preview.running ? 'running' : 'idle'}</strong></p>

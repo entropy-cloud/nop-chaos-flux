@@ -5,5 +5,5 @@ export function FieldHelpText(props: { children?: ReactNode }) {
     return null;
   }
 
-  return <span className="nop-field__hint">{props.children}</span>;
+  return <span data-slot="field-hint">{props.children}</span>;
 }

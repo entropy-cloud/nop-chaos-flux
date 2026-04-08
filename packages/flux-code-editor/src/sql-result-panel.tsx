@@ -17,7 +17,7 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
 
   if (result.status === 'loading') {
     return (
-      <div className="nop-code-editor__result-panel nop-code-editor__result-loading">
+      <div data-slot="code-editor-result-panel" data-state="loading">
         <Spinner className="size-4" />
         Executing...
       </div>
@@ -26,11 +26,11 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
 
   if (result.status === 'error') {
     return (
-      <div className="nop-code-editor__result-panel nop-code-editor__result-error">
-        <div className="nop-code-editor__result-header">
+      <div data-slot="code-editor-result-panel" data-state="error">
+        <div data-slot="code-editor-result-header">
           <span>Error</span>
           {onClose && (
-            <Button className="nop-code-editor__result-close" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
+            <Button data-slot="code-editor-result-close" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
               <XIcon />
             </Button>
           )}
@@ -43,16 +43,16 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
   const columns = result.columns ?? (result.data.length > 0 ? Object.keys(result.data[0]) : []);
 
   return (
-    <div className="nop-code-editor__result-panel">
-      <div className="nop-code-editor__result-header">
+    <div data-slot="code-editor-result-panel" data-state="success">
+      <div data-slot="code-editor-result-header">
         <span>Result ({result.data.length} rows)</span>
         {onClose && (
-          <Button className="nop-code-editor__result-close" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
+          <Button data-slot="code-editor-result-close" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
             <XIcon />
           </Button>
         )}
       </div>
-      <div className="nop-code-editor__result-table-wrapper">
+      <div data-slot="code-editor-result-table-wrapper">
         <Table>
           <TableHeader>
             <TableRow>

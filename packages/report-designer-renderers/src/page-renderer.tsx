@@ -112,18 +112,18 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
 
   const headerSlot = (
     <>
-      <div className="nop-report-designer__header">
+      <div data-slot="report-designer-header">
         <div>
-          <p className="nop-report-designer__eyebrow">Report Designer</p>
+          <p data-slot="report-designer-eyebrow">Report Designer</p>
           {hasRendererSlotContent(titleContent) ? <h2>{titleContent}</h2> : <h2>{snapshot.document.name}</h2>}
         </div>
-        <div className="nop-report-designer__status">
+        <div data-slot="report-designer-status">
           <span>Target: {snapshot.selectionTarget?.kind ?? 'none'}</span>
           <span>Fields: {getFieldCount(snapshot.fieldSources)}</span>
         </div>
       </div>
       {hasRendererSlotContent(toolbarContent) ? (
-        <div className="nop-report-designer__toolbar">{toolbarContent}</div>
+        <div data-slot="report-designer-toolbar">{toolbarContent}</div>
       ) : null}
     </>
   );

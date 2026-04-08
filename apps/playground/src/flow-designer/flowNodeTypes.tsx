@@ -6,14 +6,15 @@ export function createFlowNodeTypes(onSelect: (nodeId: string | null) => void) {
       const label = data?.label ?? id;
       return (
         <div
-          className={`flow-node ${selected ? 'flow-node--selected' : ''}`}
+          data-slot="flow-node"
+          data-selected={selected ? '' : undefined}
           onClick={() => onSelect(id)}
         >
-          <Handle type="target" position={Position.Top} className="flow-node__handle" />
-          <div className="flow-node__content">
-            <div className="flow-node__label">{String(label)}</div>
+          <Handle type="target" position={Position.Top} className="flow-node-handle" data-slot="flow-node-handle" />
+          <div data-slot="flow-node-content">
+            <div data-slot="flow-node-label">{String(label)}</div>
           </div>
-          <Handle type="source" position={Position.Bottom} className="flow-node__handle" />
+          <Handle type="source" position={Position.Bottom} className="flow-node-handle" data-slot="flow-node-handle" />
         </div>
       );
     }
@@ -26,9 +27,9 @@ export function createFlowEdgeTypes() {
       const midX = (sourceX + targetX) / 2;
       
       return (
-        <g className={`flow-edge ${selected ? 'flow-edge--selected' : ''}`}>
+        <g data-slot="flow-edge" data-selected={selected ? '' : undefined}>
           <path
-            className="flow-edge__path"
+            data-slot="flow-edge-path"
             d={`M ${sourceX} ${sourceY} C ${midX} ${sourceY}, ${midX} ${targetY}, ${targetX} ${targetY}`}
           />
         </g>

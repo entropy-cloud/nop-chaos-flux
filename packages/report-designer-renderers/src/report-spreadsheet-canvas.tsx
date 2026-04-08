@@ -131,7 +131,7 @@ export function ReportSpreadsheetCanvas({ core, snapshot }: ReportSpreadsheetCan
   return (
     <div
       ref={gridRef}
-      className="nop-report-designer__spreadsheet-canvas"
+      data-slot="report-designer-spreadsheet-canvas"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleFieldDropOnCell}
       onMouseDown={(e) => {

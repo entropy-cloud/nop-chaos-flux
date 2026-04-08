@@ -101,24 +101,24 @@ export function FieldFrame(props: FieldFrameProps) {
       data-field-invalid={showError || undefined}
     >
       {label ? (
-        <LabelTag className="nop-field__label">
+        <LabelTag data-slot="field-label">
           {label}
-          {effectiveRequired ? <span className="nop-field__required" aria-hidden="true">*</span> : null}
+          {effectiveRequired ? <span data-slot="field-required" aria-hidden="true">*</span> : null}
         </LabelTag>
       ) : null}
 
-      <div className="nop-field__control">
+      <div data-slot="field-control">
         {children}
       </div>
 
       {error && showError ? (
-        <span className="nop-field__error">{error.message}</span>
+        <span data-slot="field-error">{error.message}</span>
       ) : fieldState.validating ? (
-        <span className="nop-field__hint">Validating...</span>
+        <span data-slot="field-hint">Validating...</span>
       ) : !error && hint ? (
-        <span className="nop-field__hint">{hint}</span>
+        <span data-slot="field-hint">{hint}</span>
       ) : !error && !hint && description ? (
-        <span className="nop-field__description">{description}</span>
+        <span data-slot="field-description">{description}</span>
       ) : null}
     </Tag>
   );

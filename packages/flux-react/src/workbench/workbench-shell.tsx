@@ -70,7 +70,7 @@ export function WorkbenchShell({
       data-testid={testId}
     >
       {header !== undefined && (
-        <div className="nop-workbench__header min-h-0">
+        <div data-slot="workbench-header" className="min-h-0">
           {header}
         </div>
       )}
@@ -87,7 +87,8 @@ export function WorkbenchShell({
         {hasLeft && (
           leftCollapsed ? (
             <div
-              className={cn(PANEL_CARD, 'nop-workbench__left-panel flex items-center justify-center')}
+              className={cn(PANEL_CARD, 'flex items-center justify-center')}
+              data-slot="workbench-left-panel"
               data-testid="left-panel-collapsed"
             >
               <Button
@@ -102,7 +103,8 @@ export function WorkbenchShell({
             </div>
           ) : (
             <div
-              className={cn(PANEL_CARD, 'nop-workbench__left-panel')}
+              className={cn(PANEL_CARD)}
+              data-slot="workbench-left-panel"
               data-testid="left-panel-expanded"
             >
               {leftPanel}
@@ -110,7 +112,8 @@ export function WorkbenchShell({
           )
         )}
         <div
-          className={cn(PANEL_CARD, 'nop-workbench__canvas relative')}
+          className={cn(PANEL_CARD, 'relative')}
+          data-slot="workbench-canvas"
           data-testid="canvas"
         >
           {canvas}
@@ -118,7 +121,8 @@ export function WorkbenchShell({
         {hasRight && (
           rightCollapsed ? (
             <div
-              className={cn(PANEL_CARD, 'nop-workbench__right-panel flex items-center justify-center')}
+              className={cn(PANEL_CARD, 'flex items-center justify-center')}
+              data-slot="workbench-right-panel"
               data-testid="right-panel-collapsed"
             >
               <Button
@@ -133,7 +137,8 @@ export function WorkbenchShell({
             </div>
           ) : (
             <div
-              className={cn(PANEL_CARD, 'nop-workbench__right-panel')}
+              className={cn(PANEL_CARD)}
+              data-slot="workbench-right-panel"
               data-testid="right-panel-expanded"
             >
               {rightPanel}
@@ -142,7 +147,7 @@ export function WorkbenchShell({
         )}
       </div>
       {dialogs !== undefined && (
-        <div className="nop-workbench__dialogs relative">{dialogs}</div>
+        <div data-slot="workbench-dialogs" className="relative">{dialogs}</div>
       )}
     </div>
   );

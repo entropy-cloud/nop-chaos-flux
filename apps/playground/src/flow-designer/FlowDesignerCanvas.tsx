@@ -98,13 +98,13 @@ export function FlowDesignerCanvas({
 
   return (
     <div
-      className="flow-designer-example__canvas fd-page__canvas"
+      data-slot="flow-designer-canvas-shell"
       onClick={onPaneClick}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <div className="flow-designer-example__canvas-surface fd-canvas">
-        <div className="fd-canvas__nodes">
+      <div data-slot="flow-designer-canvas-surface">
+        <div data-slot="flow-designer-canvas-nodes">
           {doc.nodes.map((node) => (
             <div
               key={node.id}
@@ -113,6 +113,9 @@ export function FlowDesignerCanvas({
                 snapshot.selection.activeNodeId === node.id && 'fd-node--selected',
                 node.type && `fd-node--${node.type}`
               )}
+              data-slot="flow-designer-node"
+              data-selected={snapshot.selection.activeNodeId === node.id ? '' : undefined}
+              data-type={node.type || undefined}
               style={{
                 left: node.position.x,
                 top: node.position.y
@@ -121,22 +124,23 @@ export function FlowDesignerCanvas({
               onMouseEnter={() => onNodeHover?.(node.id)}
               onMouseLeave={() => onNodeHover?.(null)}
             >
-              <div className="fd-node__header">
-                <span className="fd-node__icon">{getNodeIcon(node.type)}</span>
-                <div className="fd-node__info">
-                  <div className="fd-node__title">{String(node.data.label ?? node.type)}</div>
-                  <div className="fd-node__desc">{String(node.data.description ?? '')}</div>
+              <div data-slot="flow-designer-node-header">
+                <span data-slot="flow-designer-node-icon">{getNodeIcon(node.type)}</span>
+                <div data-slot="flow-designer-node-info">
+                  <div data-slot="flow-designer-node-title">{String(node.data.label ?? node.type)}</div>
+                  <div data-slot="flow-designer-node-description">{String(node.data.description ?? '')}</div>
                 </div>
               </div>
-              <div className="fd-node__footer">
-                <span className={`fd-node__chip fd-node__chip--${node.type}`}>
+              <div data-slot="flow-designer-node-footer">
+                <span data-slot="flow-designer-node-chip" data-type={node.type || undefined}>
                   {getChipLabel(node.type)}
                 </span>
               </div>
               {snapshot.selection.activeNodeId === node.id && (
-                <div className="fd-node__actions">
+                <div data-slot="flow-designer-node-actions">
                   <button
-                    className="fd-node__action fd-node__action--duplicate"
+                    data-slot="flow-designer-node-action"
+                    data-action="duplicate"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDuplicateNode(node.id);
@@ -147,7 +151,8 @@ export function FlowDesignerCanvas({
                     ⧉
                   </button>
                   <button
-                    className="fd-node__action fd-node__action--delete"
+                    data-slot="flow-designer-node-action"
+                    data-action="delete"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDeleteNode(node.id);
@@ -162,18 +167,17 @@ export function FlowDesignerCanvas({
               {getNodePorts(node.type).map((port) => (
                 <div
                   key={port.id}
-                  className={classNames(
-                    'fd-port',
-                    `fd-port--${port.direction}`,
-                    `fd-port--${port.position}`
-                  )}
+                  className="fd-port"
+                  data-slot="flow-designer-port"
+                  data-direction={port.direction}
+                  data-position={port.position}
                   title={port.label ?? port.id}
                 />
               ))}
             </div>
           ))}
         </div>
-        <svg className="fd-canvas__edges">
+        <svg data-slot="flow-designer-canvas-edges">
           {doc.edges.map((edge) => {
             const sourceNode = doc.nodes.find((n) => n.id === edge.source);
             const targetNode = doc.nodes.find((n) => n.id === edge.target);
@@ -191,18 +195,20 @@ export function FlowDesignerCanvas({
               <g
                 key={edge.id}
                 className={classNames('fd-edge', snapshot.selection.activeEdgeId === edge.id && 'fd-edge--selected')}
+                data-slot="flow-designer-edge"
+                data-selected={snapshot.selection.activeEdgeId === edge.id ? '' : undefined}
                 onClick={(e) => onEdgeClick(edge.id, e as unknown as React.MouseEvent)}
                 onMouseEnter={() => onEdgeHover?.(edge.id)}
                 onMouseLeave={() => onEdgeHover?.(null)}
               >
                 <path
-                  className="fd-edge__path"
+                  data-slot="flow-designer-edge-path"
                   d={`M ${sourceX} ${sourceY} C ${midX} ${sourceY}, ${midX} ${targetY}, ${targetX} ${targetY}`}
                   markerEnd="url(#flow-designer-example-arrowhead)"
                 />
                 {edgeLabel && (
                   <text
-                    className="fd-edge__label"
+                    data-slot="flow-designer-edge-label"
                     x={midX}
                     y={(sourceY + targetY) / 2 - 10}
                     textAnchor="middle"
@@ -212,15 +218,15 @@ export function FlowDesignerCanvas({
                 )}
                 {snapshot.selection.activeEdgeId === edge.id && (
                   <g
-                    className="fd-edge__action"
+                    data-slot="flow-designer-edge-action"
                     transform={`translate(${midX + 20}, ${(sourceY + targetY) / 2 + 5})`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onEdgeClick(edge.id, e as unknown as React.MouseEvent);
                     }}
                   >
-                    <circle className="fd-edge__action-circle--delete" r={10} />
-                    <text className="fd-edge__action-text" textAnchor="middle" dy={4} fontSize={14}>
+                    <circle data-slot="flow-designer-edge-action-circle" data-action="delete" r={10} />
+                    <text data-slot="flow-designer-edge-action-text" textAnchor="middle" dy={4} fontSize={14}>
                       ×
                     </text>
                   </g>
@@ -237,11 +243,11 @@ export function FlowDesignerCanvas({
               refY={3.5}
               orient="auto"
             >
-              <polygon className="fd-edge__arrow" points="0 0, 10 3.5, 0 7" />
+              <polygon data-slot="flow-designer-edge-arrow" points="0 0, 10 3.5, 0 7" />
             </marker>
           </defs>
         </svg>
-        <div className="fd-canvas__info">
+        <div data-slot="flow-designer-canvas-info">
           Nodes: {doc.nodes.length} | Edges: {doc.edges.length}
         </div>
       </div>

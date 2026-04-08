@@ -95,14 +95,14 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
 
   return (
     <div className="flow-designer-example nop-theme-root fd-theme-root">
-      <div className="flow-designer-example__toolbar">
-        <div className="flow-toolbar">
-          <h3 className="flow-toolbar__title">Flow Designer</h3>
-          {store.dirty && <span className="flow-toolbar__dirty">*</span>}
-          <div className="flow-toolbar__spacer" />
-          <div className="flow-toolbar__actions">
+      <div data-slot="flow-designer-example-toolbar-shell">
+        <div data-slot="flow-designer-example-toolbar">
+          <h3 data-slot="flow-designer-example-toolbar-title">Flow Designer</h3>
+          {store.dirty && <span data-slot="flow-designer-example-toolbar-dirty">*</span>}
+          <div data-slot="flow-designer-example-toolbar-spacer" />
+          <div data-slot="flow-designer-example-toolbar-actions">
             <button
-              className="flow-toolbar__button"
+              data-slot="flow-designer-example-toolbar-button"
               onClick={store.undo}
               disabled={!store.canUndo}
               type="button"
@@ -110,36 +110,36 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
               Undo
             </button>
             <button
-              className="flow-toolbar__button"
+              data-slot="flow-designer-example-toolbar-button"
               onClick={store.redo}
               disabled={!store.canRedo}
               type="button"
             >
               Redo
             </button>
-            <button className="flow-toolbar__button" onClick={handleSave} type="button">
+            <button data-slot="flow-designer-example-toolbar-button" onClick={handleSave} type="button">
               Save
             </button>
-            <button className="flow-toolbar__button" onClick={handleExport} type="button">
+            <button data-slot="flow-designer-example-toolbar-button" onClick={handleExport} type="button">
               Export
             </button>
-            <button className="flow-toolbar__button" onClick={store.reset} type="button">
+            <button data-slot="flow-designer-example-toolbar-button" onClick={store.reset} type="button">
               Reset
             </button>
           </div>
         </div>
       </div>
 
-      <div className="flow-designer-example__body">
-        <div className="flow-designer-example__palette">
-          <div className="flow-palette">
-            <div className="flow-palette__section">
-              <div className="flow-palette__title">Nodes</div>
-              <div className="flow-palette__items">
+      <div data-slot="flow-designer-example-body">
+        <div data-slot="flow-designer-example-palette-shell">
+          <div data-slot="flow-designer-example-palette">
+            <div data-slot="flow-designer-example-palette-section">
+              <div data-slot="flow-designer-example-palette-title">Nodes</div>
+              <div data-slot="flow-designer-example-palette-items">
                 {['start', 'end', 'task', 'condition', 'parallel', 'loop'].map((type) => (
                   <button
                     key={type}
-                    className="flow-palette__item"
+                    data-slot="flow-designer-example-palette-item"
                     onClick={() => {
                       const position = { x: 180 + Math.random() * 400, y: 120 + Math.random() * 300 };
                       store.addNode(type, position, { label: type });
@@ -155,22 +155,23 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
           </div>
         </div>
 
-        <div className="flow-designer-example__canvas">
+        <div data-slot="flow-designer-example-canvas">
           <FlowCanvas store={store} showMinimap showControls showGrid />
         </div>
 
-        <div className="flow-designer-example__inspector">
-          <div className="flow-inspector">
+        <div data-slot="flow-designer-example-inspector-shell">
+          <div data-slot="flow-designer-example-inspector">
             {store.selectedNodeId && (
-              <div className="flow-inspector__section">
-                <div className="flow-inspector__title">Selected Node</div>
-                <div className="flow-inspector__content">
-                  <div className="flow-inspector__field">
+              <div data-slot="flow-designer-example-inspector-section">
+                <div data-slot="flow-designer-example-inspector-title">Selected Node</div>
+                <div data-slot="flow-designer-example-inspector-content">
+                  <div data-slot="flow-designer-example-inspector-field">
                     <label>ID:</label>
                     <span>{store.selectedNodeId}</span>
                   </div>
                   <button
-                    className="flow-inspector__button flow-inspector__button--danger"
+                    data-slot="flow-designer-example-inspector-button"
+                    data-variant="danger"
                     onClick={store.deleteSelected}
                     type="button"
                   >
@@ -180,15 +181,16 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
               </div>
             )}
             {store.selectedEdgeId && (
-              <div className="flow-inspector__section">
-                <div className="flow-inspector__title">Selected Edge</div>
-                <div className="flow-inspector__content">
-                  <div className="flow-inspector__field">
+              <div data-slot="flow-designer-example-inspector-section">
+                <div data-slot="flow-designer-example-inspector-title">Selected Edge</div>
+                <div data-slot="flow-designer-example-inspector-content">
+                  <div data-slot="flow-designer-example-inspector-field">
                     <label>ID:</label>
                     <span>{store.selectedEdgeId}</span>
                   </div>
                   <button
-                    className="flow-inspector__button flow-inspector__button--danger"
+                    data-slot="flow-designer-example-inspector-button"
+                    data-variant="danger"
                     onClick={store.deleteSelected}
                     type="button"
                   >
@@ -198,7 +200,7 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
               </div>
             )}
             {!store.selectedNodeId && !store.selectedEdgeId && (
-              <div className="flow-inspector__empty">
+              <div data-slot="flow-designer-example-inspector-empty">
                 Select a node or edge to inspect
               </div>
             )}
