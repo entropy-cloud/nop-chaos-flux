@@ -55,7 +55,7 @@ export function buildDesignerScopeData(input: {
   config: DesignerConfig;
   core: DesignerCore;
 }) {
-  const { snapshot, config, core } = input;
+  const { snapshot } = input;
   const selectionKind = snapshot.activeNode ? 'node' : snapshot.activeEdge ? 'edge' : 'none';
   const nodeIds = snapshot.selection.selectedNodeIds;
   const edgeIds = snapshot.selection.selectedEdgeIds;
@@ -82,11 +82,7 @@ export function buildDesignerScopeData(input: {
       gridEnabled: snapshot.gridEnabled,
       zoom: snapshot.viewport.zoom,
       viewport: snapshot.viewport
-    },
-    palette: config.palette,
-    nodeTypes: config.nodeTypes,
-    edgeTypes: config.edgeTypes,
-    designerCore: core
+    }
   };
 }
 

@@ -23,7 +23,6 @@ function getActiveSheet(snapshot: ReportDesignerRuntimeSnapshot, target: ReportS
 }
 
 export interface ReportDesignerHostData {
-  reportDesignerCore: ReportDesignerCore;
   designer: {
     kind: string;
     documentId: string;
@@ -68,7 +67,6 @@ export function createHostData(core: ReportDesignerCore, snapshot: ReportDesigne
   };
 
   return {
-    reportDesignerCore: core,
     designer: {
       kind: snapshot.document.kind,
       documentId: snapshot.document.id,
@@ -143,7 +141,6 @@ export function buildReportDesignerScopeData(
     canRedo: snapshot.canRedo,
     documentName: snapshot.document.name,
     fieldCount,
-    reportDesignerCore: core,
   };
 }
 

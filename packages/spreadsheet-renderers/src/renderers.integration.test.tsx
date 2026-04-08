@@ -25,11 +25,7 @@ const actionButtonRenderer: RendererDefinition = {
 
 function A1ValueProbe() {
   const a1Value = useScopeSelector((data: any) => {
-    const snapshot = data.spreadsheetSnapshot;
-    if (!snapshot) return undefined;
-    const activeSheet = snapshot.document?.workbook?.sheets?.find(
-      (s: any) => s.id === snapshot.activeSheetId,
-    );
+    const activeSheet = data.spreadsheet?.activeSheet;
     return activeSheet?.cells?.A1?.value;
   });
   return <span data-testid="a1-value">{a1Value == null ? '' : String(a1Value)}</span>;

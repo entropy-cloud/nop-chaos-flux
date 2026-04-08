@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope } from '@nop-chaos/flux-react';
 import { createSpreadsheetCore, type SpreadsheetConfig, type SpreadsheetDocument, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import { deriveHostSnapshot } from './bridge.js';
 import { buildSpreadsheetStatusLabel, getRuntimeActiveSheetCellCount, getRuntimeActiveSheetName } from './page-model.js';
@@ -41,18 +41,12 @@ function createSpreadsheetActionProvider(
   };
 }
 
-interface SpreadsheetPageHostData {
-  spreadsheetCore: ReturnType<typeof createSpreadsheetCore>;
-  spreadsheetSnapshot: SpreadsheetRuntimeSnapshot;
-  spreadsheet: ReturnType<typeof deriveHostSnapshot>;
-}
-
 function renderFallbackBody(snapshot: SpreadsheetRuntimeSnapshot) {
   const activeSheetName = getRuntimeActiveSheetName(snapshot);
   const cellCount = getRuntimeActiveSheetCellCount(snapshot);
 
   return (
-    <div className="nop-spreadsheet-page__fallback">
+    <div data-slot="spreadsheet-page-fallback">
       <p>Spreadsheet canvas region is not configured.</p>
       <p>Active sheet: {activeSheetName}.</p>
       <p>Cell entries: {cellCount}.</p>
@@ -96,33 +90,26 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   );
 
   const spreadsheet = useMemo(() => deriveHostSnapshot(snapshot), [snapshot]);
-  const hostData = useMemo<SpreadsheetPageHostData>(
-    () => ({
-      spreadsheetCore,
-      spreadsheetSnapshot: snapshot,
-      spreadsheet,
-    }),
-    [spreadsheet, spreadsheetCore, snapshot],
-  );
+  const spreadsheetScope = useHostScope({ spreadsheet }, props.path, 'spreadsheet');
 
-  const toolbarContent = props.regions.toolbar?.render({ data: hostData });
-  const bodyContent = props.regions.body?.render({ data: hostData });
-  const dialogsContent = props.regions.dialogs?.render({ data: hostData });
+  const toolbarContent = props.regions.toolbar?.render({ scope: spreadsheetScope, actionScope });
+  const bodyContent = props.regions.body?.render({ scope: spreadsheetScope, actionScope });
+  const dialogsContent = props.regions.dialogs?.render({ scope: spreadsheetScope, actionScope });
 
   return (
     <section className="nop-spreadsheet-page">
-      <header className="nop-spreadsheet-page__header">
+      <header data-slot="spreadsheet-page-header">
         <h2>{hasRendererSlotContent(titleContent) ? titleContent : 'Spreadsheet Designer'}</h2>
         <p>{buildSpreadsheetStatusLabel(spreadsheet)}</p>
       </header>
 
-      {hasRendererSlotContent(toolbarContent) ? <div className="nop-spreadsheet-page__toolbar">{toolbarContent}</div> : null}
+      {hasRendererSlotContent(toolbarContent) ? <div data-slot="spreadsheet-page-toolbar">{toolbarContent}</div> : null}
 
-      <main className="nop-spreadsheet-page__body">
+      <main data-slot="spreadsheet-page-body">
         {hasRendererSlotContent(bodyContent) ? bodyContent : renderFallbackBody(snapshot)}
       </main>
 
-      {hasRendererSlotContent(dialogsContent) ? <div className="nop-spreadsheet-page__dialogs">{dialogsContent}</div> : null}
+      {hasRendererSlotContent(dialogsContent) ? <div data-slot="spreadsheet-page-dialogs">{dialogsContent}</div> : null}
     </section>
   );
 }
