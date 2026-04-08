@@ -1,10 +1,10 @@
 # 37 Flux 核心运行时架构收敛计划
 
-> Plan Status: in progress
-> Last Reviewed: 2026-04-07; audited against codebase on 2026-04-07
-> Source: `docs/analysis/2026-04-04-flux-architecture-evaluation.md` and `docs/analysis/2026-04-04-lowcode-platform-comparison.md` reviewed against current code anchors on 2026-04-07
+> Plan Status: completed
+> Last Reviewed: 2026-04-08; audited against codebase on 2026-04-08
+> Source: `docs/analysis/2026-04-04-flux-architecture-evaluation.md` and `docs/analysis/2026-04-04-lowcode-platform-comparison.md` reviewed against current code anchors on 2026-04-08
 
-> Status Note: source/reaction runtime、action 最小控制流、注册表硬化、plugin priority 接线、table ownership 等大部分执行切片已经落地；当前主要未收口项集中在依赖追踪基线改造，而这部分已按新的 root-binding baseline 拆分到 `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` 继续执行，所以本计划仍保持 in progress。
+> Status Note: 本计划中的主线执行切片已经完成收口：source/reaction runtime、action 最小控制流、注册表硬化、plugin priority 接线、table ownership 等能力已落地；原先保留为进行中的依赖追踪基线改造已拆分到 `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md`，且 Plan 39 现已完成，因此本计划不再保留 active backlog。
 > Outdated Note: 本计划中凡是仍按 deep member path、hierarchical path hit、静态提取/精确 path 依赖来描述 dependency substrate 的段落，现都应视为旧草案。当前有效基线是 Plan 39 的 lexical root binding + raw-path diagnostics 模型。
 
 ## 复审结论
