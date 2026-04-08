@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import type {
   ComponentHandleRegistry,
-  CompiledSchemaNode,
   NodeInstance,
   NodeLocator,
   ResolvedNodeMeta,
@@ -14,7 +13,6 @@ export function useNodeDebugData(
   cid: number | undefined,
   nodeInstance: NodeInstance,
   locator: NodeLocator | undefined,
-  node: CompiledSchemaNode,
   activeScope: ScopeRef,
   resolvedMeta: ResolvedNodeMeta,
   resolvedPropsValue: ResolvedNodeProps['value']
@@ -25,9 +23,9 @@ export function useNodeDebugData(
     }
 
     activeComponentRegistry.setHandleDebugData?.(cid, {
-      nodeId: node.id,
-      path: node.path,
-      rendererType: node.type,
+      nodeId: nodeInstance.templateNode.id,
+      path: nodeInstance.templateNode.templatePath,
+      rendererType: nodeInstance.templateNode.rendererType,
       nodeInstance,
       locator,
       scope: activeScope,
@@ -39,5 +37,5 @@ export function useNodeDebugData(
     return () => {
       activeComponentRegistry.setHandleDebugData?.(cid, undefined);
     };
-  }, [activeComponentRegistry, cid, nodeInstance, locator, activeScope, node.id, node.path, node.type, resolvedMeta, resolvedPropsValue]);
+  }, [activeComponentRegistry, cid, nodeInstance, locator, activeScope, resolvedMeta, resolvedPropsValue]);
 }

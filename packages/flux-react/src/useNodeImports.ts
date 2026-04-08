@@ -64,20 +64,22 @@ export function useNodeImports(
         return;
       }
 
+      const templateNode = nodeInstanceRef.current.templateNode;
+
       console.warn('[flux-react] Failed to ensure imported namespaces', {
-        nodeId: node.id,
-        path: node.path,
+        nodeId: templateNode.id,
+        path: templateNode.templatePath,
         imports: nodeImports,
         error
       });
 
       if (!isReportedImportError(error)) {
-        runtime.env.notify('error', `Imported namespaces failed for ${node.path}: ${error instanceof Error ? error.message : String(error)}`);
+        runtime.env.notify('error', `Imported namespaces failed for ${templateNode.templatePath}: ${error instanceof Error ? error.message : String(error)}`);
         runtime.env.monitor?.onError?.({
           phase: 'render',
           error,
-          nodeId: node.id,
-          path: node.path,
+          nodeId: templateNode.id,
+          path: templateNode.templatePath,
           details: {
             reason: 'import-namespace-setup-failed',
             imports: nodeImports ?? []

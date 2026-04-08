@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import type { ComponentHandleRegistry, CompiledSchemaNode, FormRuntime } from '@nop-chaos/flux-core';
+import type { ComponentHandleRegistry, FormRuntime, NodeLocator } from '@nop-chaos/flux-core';
 import { createFormComponentHandle } from '@nop-chaos/flux-runtime';
-import { getCompiledNodeLocator, getNodeCompiledCid } from './node-renderer-utils';
 
 export function useFormComponentHandleRegistration(
   activeForm: FormRuntime | undefined,
   activeComponentRegistry: ComponentHandleRegistry | undefined,
-  node: CompiledSchemaNode
+  cid: number | undefined,
+  locator: NodeLocator | undefined
 ): void {
   useEffect(() => {
     if (!activeForm || !activeComponentRegistry) {
@@ -14,9 +14,9 @@ export function useFormComponentHandleRegistration(
     }
 
     const unregister = activeComponentRegistry.register(createFormComponentHandle(activeForm), {
-      cid: getNodeCompiledCid(node),
-      locator: getCompiledNodeLocator(node)
+      cid,
+      locator
     });
     return unregister;
-  }, [activeComponentRegistry, activeForm, node]);
+  }, [activeComponentRegistry, activeForm, cid, locator]);
 }

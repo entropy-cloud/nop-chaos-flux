@@ -2,8 +2,7 @@ import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope } from './actions';
 import type { ExpressionCompiler } from './compilation';
 import type { RendererSchemaValidator } from '../schema-diagnostics';
-import type { NodeLocator, ResolutionContext, ResolutionResult } from './node-identity';
-import type { NodeInstance } from './node-identity';
+import type { NodeLocator, NodeInstance, ResolutionContext, ResolutionResult, TemplateNode } from './node-identity';
 import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
 import type { CompiledNodeRuntimeState, CompiledSchemaNode, ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
@@ -58,6 +57,8 @@ export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   id: string;
   path: SchemaPath;
   schema: S;
+  locator?: NodeLocator;
+  templateNode: TemplateNode<S>;
   node: CompiledSchemaNode<S>;
   nodeInstance: NodeInstance<S>;
   props: Readonly<Record<string, unknown>>;

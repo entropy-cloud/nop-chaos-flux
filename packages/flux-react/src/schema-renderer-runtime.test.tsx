@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { RendererDefinition, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
-import { createSchemaRenderer } from './index';
+import { createSchemaRenderer, NodeInstanceContext, RenderNodes, RuntimeContext, ScopeContext } from './index';
 import {
   actionScopeProbeRenderer,
   buttonRenderer,
@@ -18,6 +18,7 @@ import {
   fragmentRenderHostRenderer,
   fragmentScopeProbeHostRenderer,
   namespaceProviderRenderer,
+  nodeIdentityProbeRenderer,
   ownScopeValueProbeRenderer,
   pageRenderer,
   pageValueProbeRenderer,
@@ -80,6 +81,81 @@ describe('createSchemaRenderer runtime behavior', () => {
     );
 
     expect(screen.getByText('Compiled hello')).toBeTruthy();
+  });
+
+  it('derives inline fragment paths from the current node instance when no compiled owner context exists', () => {
+    const pathProbeRenderer: RendererDefinition = {
+      type: 'path-probe',
+      component: (props) => <span data-testid="path-probe">{props.path}</span>
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([pathProbeRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const ownerNodeInstance = {
+      locator: {
+        runtimeId: runtime.runtimeId,
+        templateGraphId: 'test:inline-owner',
+        templateNodeId: 1,
+        instancePath: [{ repeatedTemplateId: 'rows', instanceKey: 'row-1' }]
+      },
+      templateNode: {
+        templateNodeId: 1,
+        id: 'inline-owner',
+        type: 'host',
+        schema: { type: 'host' },
+        templatePath: 'host.root',
+        rendererType: 'host',
+        propsProgram: {},
+        metaProgram: {},
+        eventPlans: {},
+        regions: {},
+        scopePlan: { kind: 'inherit' }
+      },
+      scope: page.scope,
+      state: {
+        metaState: {},
+        mounted: true
+      }
+    } as any;
+
+    render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <NodeInstanceContext.Provider value={ownerNodeInstance}>
+            <RenderNodes input={{ type: 'path-probe' }} options={{ pathSuffix: 'inline' }} />
+          </NodeInstanceContext.Provider>
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>
+    );
+
+    expect(screen.getByTestId('path-probe').textContent).toBe('host.root.inline');
+  });
+
+  it('exposes locator and template nodes through renderer props and current-node meta hooks', () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, nodeIdentityProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{ id: 'identity-node', type: 'node-identity-probe' }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const propsLocator = JSON.parse(screen.getByTestId('props-locator').textContent ?? 'null');
+    const metaLocator = JSON.parse(screen.getByTestId('meta-locator').textContent ?? 'null');
+
+    expect(propsLocator.runtimeId).toBeTruthy();
+    expect(propsLocator.templateNodeId).toBe(metaLocator.templateNodeId);
+    expect(propsLocator.templateGraphId).toBe(metaLocator.templateGraphId);
+    expect(screen.getByTestId('props-template-path').textContent).toBe('$.body[0]');
+    expect(screen.getByTestId('meta-template-path').textContent).toBe('$.body[0]');
   });
 
   it('supports useScopeSelector with parent scopes that do not expose a store', () => {

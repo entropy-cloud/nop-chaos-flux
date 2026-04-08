@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import type { ActionContext, ActionScope } from './actions';
 import type { FormulaCompiler } from './compilation';
-import type { InstanceFrame, NodeInstance } from './node-identity';
+import type { InstanceFrame, NodeInstance, NodeLocator, TemplateNode } from './node-identity';
 import type { ComponentHandleRegistry } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
 import type { CompiledSchemaNode } from './renderer-compiler';
@@ -63,6 +63,8 @@ export interface RenderNodeMeta {
   id: string;
   path: SchemaPath;
   type: string;
+  locator?: NodeLocator;
+  templateNode: TemplateNode;
   node: CompiledSchemaNode;
   nodeInstance?: NodeInstance;
 }

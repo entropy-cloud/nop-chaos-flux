@@ -59,19 +59,21 @@ export function createManagedPageRuntime(input: {
     openDialog(dialog, dialogScope, runtime: RendererRuntime, options) {
       const id = createDialogId(dialogScope.id);
       const ownerNode = options?.ownerNode;
+      const ownerNodeInstance = options?.ownerNodeInstance;
+      const ownerPath = ownerNode?.path ?? ownerNodeInstance?.templateNode.templatePath;
       const cidState = ownerNode ? getCompiledCidState(ownerNode) : undefined;
-      const titleCompileOptions = ownerNode && dialog.title && typeof dialog.title !== 'string'
+      const titleCompileOptions = ownerPath && dialog.title && typeof dialog.title !== 'string'
         ? {
             cidState,
-            basePath: `${ownerNode.path}.dialog.${id}.title`,
-            parentPath: ownerNode.path
+            basePath: `${ownerPath}.dialog.${id}.title`,
+            parentPath: ownerPath
           }
         : undefined;
-      const bodyCompileOptions = ownerNode && dialog.body
+      const bodyCompileOptions = ownerPath && dialog.body
         ? {
             cidState,
-            basePath: `${ownerNode.path}.dialog.${id}.body`,
-            parentPath: ownerNode.path
+            basePath: `${ownerPath}.dialog.${id}.body`,
+            parentPath: ownerPath
           }
         : undefined;
       store.openDialog({
@@ -81,7 +83,7 @@ export function createManagedPageRuntime(input: {
         actionScope: options?.actionScope,
         componentRegistry: options?.componentRegistry,
         ownerNode,
-        ownerNodeInstance: options?.ownerNodeInstance,
+        ownerNodeInstance,
         title: typeof dialog.title === 'string'
           ? dialog.title
           : dialog.title

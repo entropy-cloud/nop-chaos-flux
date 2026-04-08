@@ -1,28 +1,31 @@
 import { useMemo } from 'react';
 import type {
   ActionScope,
-  CompiledSchemaNode,
   ComponentHandleRegistry,
   RendererRuntime
 } from '@nop-chaos/flux-core';
 
-function createNodeOwnedActionScope(runtime: RendererRuntime, parent: ActionScope | undefined, node: CompiledSchemaNode) {
+function createNodeOwnedActionScope(runtime: RendererRuntime, parent: ActionScope | undefined, nodeId: string) {
   return runtime.createActionScope({
-    id: `${node.id}:action-scope`,
+    id: `${nodeId}:action-scope`,
     parent
   });
 }
 
-function createNodeOwnedComponentRegistry(runtime: RendererRuntime, parent: ComponentHandleRegistry | undefined, node: CompiledSchemaNode) {
+function createNodeOwnedComponentRegistry(runtime: RendererRuntime, parent: ComponentHandleRegistry | undefined, nodeId: string) {
   return runtime.createComponentHandleRegistry({
-    id: `${node.id}:component-registry`,
+    id: `${nodeId}:component-registry`,
     parent
   });
 }
 
 export function useNodeScopes(
   runtime: RendererRuntime,
-  node: CompiledSchemaNode,
+  input: {
+    nodeId: string;
+    actionScopePolicy: 'inherit' | 'new' | undefined;
+    componentRegistryPolicy: 'inherit' | 'new' | undefined;
+  },
   actionScope: ActionScope | undefined,
   componentRegistry: ComponentHandleRegistry | undefined
 ): {
@@ -30,25 +33,25 @@ export function useNodeScopes(
   activeComponentRegistry: ComponentHandleRegistry | undefined;
 } {
   const nodeActionScope = useMemo(() => {
-    if (node.component.actionScopePolicy !== 'new') {
+    if (input.actionScopePolicy !== 'new') {
       return undefined;
     }
 
-    return createNodeOwnedActionScope(runtime, actionScope, node);
-  }, [runtime, actionScope, node]);
+    return createNodeOwnedActionScope(runtime, actionScope, input.nodeId);
+  }, [runtime, actionScope, input.actionScopePolicy, input.nodeId]);
 
   const nodeComponentRegistry = useMemo(() => {
-    if (node.component.componentRegistryPolicy !== 'new') {
+    if (input.componentRegistryPolicy !== 'new') {
       return undefined;
     }
 
-    return createNodeOwnedComponentRegistry(runtime, componentRegistry, node);
-  }, [runtime, componentRegistry, node]);
+    return createNodeOwnedComponentRegistry(runtime, componentRegistry, input.nodeId);
+  }, [runtime, componentRegistry, input.componentRegistryPolicy, input.nodeId]);
 
-  const activeActionScope = node.component.actionScopePolicy === 'new'
+  const activeActionScope = input.actionScopePolicy === 'new'
     ? nodeActionScope
     : actionScope;
-  const activeComponentRegistry = node.component.componentRegistryPolicy === 'new'
+  const activeComponentRegistry = input.componentRegistryPolicy === 'new'
     ? nodeComponentRegistry
     : componentRegistry;
 

@@ -96,7 +96,11 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     : baseMeta;
 
   const activeForm = useNodeForm(runtime, props.node, props.scope, props.page, baseResolvedProps, props.form);
-  const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, props.node, props.actionScope, props.componentRegistry);
+  const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, {
+    nodeId: props.node.id,
+    actionScopePolicy: props.node.component.actionScopePolicy,
+    componentRegistryPolicy: props.node.component.componentRegistryPolicy
+  }, props.actionScope, props.componentRegistry);
 
   const activeScope = activeForm?.scope ?? props.scope;
   const nodeLocator = getCompiledNodeLocator(props.node, runtime.runtimeId, instancePath);
@@ -145,9 +149,10 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     }),
     [props.node, nodeLocator, renderScope, importNodeState, finalResolvedMeta.cid]
   );
+  const templateNode = nodeInstance.templateNode;
 
-  useFormComponentHandleRegistration(activeForm, activeComponentRegistry, props.node);
-  useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, nodeInstance, nodeLocator, props.node, renderScope, finalResolvedMeta, resolvedComponentProps);
+  useFormComponentHandleRegistration(activeForm, activeComponentRegistry, finalResolvedMeta.cid, nodeLocator);
+  useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, nodeInstance, nodeLocator, renderScope, finalResolvedMeta, resolvedComponentProps);
 
   const helpers = useMemo(
     () =>
@@ -211,9 +216,11 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   }, [nodeInstance, props.node]);
 
   const componentProps: RendererComponentProps = {
-    id: props.node.id,
-    path: props.node.path,
-    schema: props.node.schema,
+    id: templateNode.id,
+    path: templateNode.templatePath,
+    schema: templateNode.schema,
+    locator: nodeLocator,
+    templateNode,
     node: props.node,
     nodeInstance,
     props: resolvedComponentProps,
@@ -236,9 +243,9 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
     const startedAt = Date.now();
     const payload = {
-      nodeId: props.node.id,
-      path: props.node.path,
-      type: props.node.type
+      nodeId: templateNode.id,
+      path: templateNode.templatePath,
+      type: templateNode.rendererType
     };
 
     runtime.env.monitor?.onRenderStart?.(payload);
@@ -248,9 +255,9 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     });
   }, [
     runtime.env.monitor,
-    props.node.id,
-    props.node.path,
-    props.node.type,
+    templateNode.id,
+    templateNode.templatePath,
+    templateNode.rendererType,
     finalResolvedMeta.visible,
     finalResolvedMeta.hidden
   ]);
@@ -263,7 +270,8 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   const content = (
     <NodeFrameWrapper
-      node={props.node}
+      templateNode={nodeInstance.templateNode}
+      definitionWrap={props.node.component.wrap}
       resolvedMeta={finalResolvedMeta}
       resolvedPropsValue={resolvedComponentProps}
       regions={regions}
@@ -274,7 +282,15 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   return (
     <CompiledNodeContext.Provider value={props.node}>
-      <NodeMetaContext.Provider value={{ id: props.node.id, path: props.node.path, type: props.node.type, node: props.node, nodeInstance }}>
+      <NodeMetaContext.Provider value={{
+        id: templateNode.id,
+        path: templateNode.templatePath,
+        type: templateNode.rendererType,
+        locator: nodeLocator,
+        templateNode,
+        node: props.node,
+        nodeInstance
+      }}>
         <NodeInstanceContext.Provider value={nodeInstance}>
           <ActionScopeContext.Provider value={activeActionScope}>
             <ComponentRegistryContext.Provider value={activeComponentRegistry}>

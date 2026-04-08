@@ -10,9 +10,16 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getCompiledCidState, isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope, useCurrentActionScope, useCurrentComponentRegistry, useCurrentForm, useCurrentPage } from './hooks';
-import { CompiledNodeContext, RenderInstancePathContext } from './contexts';
+import { CompiledNodeContext, NodeInstanceContext, RenderInstancePathContext } from './contexts';
 import { createFragmentScopeChange } from './fragment-scope';
 import { NodeRenderer } from './node-renderer';
+
+function getOwnerTemplatePath(input: {
+  ownerNode?: CompiledSchemaNode;
+  ownerNodeInstance?: import('@nop-chaos/flux-core').NodeInstance;
+}): string | undefined {
+  return input.ownerNode?.path ?? input.ownerNodeInstance?.templateNode.templatePath;
+}
 
 function isCompiledNode(input: unknown): input is CompiledSchemaNode {
   if (!input || typeof input !== 'object') {
@@ -127,6 +134,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const currentForm = useCurrentForm();
   const currentPage = useCurrentPage();
   const currentCompiledNode = useContext(CompiledNodeContext);
+  const currentNodeInstance = useContext(NodeInstanceContext);
   const currentInstancePath = useContext(RenderInstancePathContext);
   const fragmentScopeCacheKey = useId();
   const options = props.options;
@@ -136,23 +144,25 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const pathSuffix = options?.pathSuffix;
   const scopeKey = options?.scopeKey;
   const ownerNode = options?.ownerNode ?? currentCompiledNode ?? undefined;
+  const ownerNodeInstance = options?.ownerNodeInstance ?? currentNodeInstance ?? undefined;
   const compileOptions = useMemo<CompileSchemaOptions | undefined>(() => {
     const cidState = ownerNode ? getCompiledCidState(ownerNode) : undefined;
+    const ownerTemplatePath = getOwnerTemplatePath({ ownerNode, ownerNodeInstance });
 
-    if (!cidState && !ownerNode) {
+    if (!cidState && !ownerTemplatePath) {
       return undefined;
     }
 
-    const basePath = ownerNode
-      ? `${ownerNode.path}.${pathSuffix ?? 'fragment'}`
+    const basePath = ownerTemplatePath
+      ? `${ownerTemplatePath}.${pathSuffix ?? 'fragment'}`
       : undefined;
 
     return {
       cidState,
       basePath,
-      parentPath: ownerNode?.path
+      parentPath: ownerTemplatePath
     };
-  }, [ownerNode, pathSuffix]);
+  }, [ownerNode, ownerNodeInstance, pathSuffix]);
   const compiled = useMemo(() => normalizeNodeInput(runtime, props.input, compileOptions), [runtime, props.input, compileOptions]);
   const shouldUseFragmentScope = !explicitScope && !!fragmentData;
   const fragmentScope = useMemo(() => {
@@ -220,7 +230,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const actionScope = options?.actionScope ?? currentActionScope;
   const componentRegistry = options?.componentRegistry ?? currentComponentRegistry;
   const scope = explicitScope ?? fragmentScope ?? currentScope;
-  const instancePath = options?.instancePath ?? currentInstancePath;
+  const instancePath = options?.instancePath ?? ownerNodeInstance?.locator.instancePath ?? currentInstancePath;
 
   if (!compiled) {
     return null;

@@ -54,6 +54,7 @@ describe('FieldFrame', () => {
     expect(screen.getByText('Unbound field')).toBeTruthy();
     expect(screen.queryByText('Root error')).toBeNull();
   });
+
 });
 
 describe('renderer slot helpers', () => {

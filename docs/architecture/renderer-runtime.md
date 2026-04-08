@@ -134,6 +134,8 @@ interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   id: string;
   path: string;
   schema: S;
+  locator?: NodeLocator;
+  templateNode: TemplateNode<S>;
   node: CompiledSchemaNode<S>;
   nodeInstance: NodeInstance<S>;
   props: Readonly<Record<string, unknown>>;
@@ -147,6 +149,8 @@ interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
 Meaning:
 
 - `schema` is the declared source shape
+- `locator` is the current live-node locator when the active render path can derive one
+- `templateNode` is the current immutable structural definition mirrored off `nodeInstance`
 - `node` is the compiled node metadata
 - `nodeInstance` is the current live runtime instance and carries locator/state ownership for the mounted node
 - `props` is the resolved runtime prop object for the current render
@@ -216,7 +220,8 @@ Use hooks for ambient runtime state and services:
 Current compatibility note:
 
 - the active code still exposes `CompiledSchemaNode` through `RendererComponentProps.node` and `useCurrentNodeMeta()` for compatibility
-- `nodeInstance` / `useCurrentNodeInstance()` are now the preferred live-node source for locator-aware helpers and future template-instance migration work
+- `locator` / `templateNode` are now also mirrored onto `RendererComponentProps` and `useCurrentNodeMeta()` so renderers and hooks can adopt live identity without waiting for the full `node: NodeInstance` contract flip
+- `nodeInstance` / `useCurrentNodeInstance()` remain the preferred live-node source for locator-aware helpers and future template-instance migration work
 
 This split matches actual ownership and change frequency better than either â€œeverything by propsâ€ or â€œeverything by hooksâ€.
 
@@ -235,7 +240,13 @@ function useRendererEnv(): RendererEnv;
 function useActionDispatcher(): RendererRuntime['dispatch'];
 function useCurrentForm(): FormRuntime | undefined;
 function useCurrentPage(): PageRuntime | undefined;
-function useCurrentNodeMeta(): { id: string; path: string; type: string };
+function useCurrentNodeMeta(): {
+  id: string;
+  path: string;
+  type: string;
+  locator?: NodeLocator;
+  templateNode: TemplateNode;
+};
 function useRenderFragment(): RendererHelpers['render'];
 ```
 

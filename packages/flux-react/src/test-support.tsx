@@ -27,6 +27,7 @@ import {
   useCurrentForm,
   useCurrentFormError,
   useCurrentFormErrors,
+  useCurrentNodeMeta,
   useFieldError,
   useOwnedFieldState,
   useOwnScopeSelector,
@@ -213,6 +214,24 @@ function ActionScopeProbe() {
 export const selectorRenderer: RendererDefinition = {
   type: 'selector-text',
   component: SelectorText
+};
+
+function NodeIdentityProbe(props: RendererComponentProps) {
+  const nodeMeta = useCurrentNodeMeta();
+
+  return (
+    <div>
+      <span data-testid="props-locator">{JSON.stringify(props.locator)}</span>
+      <span data-testid="props-template-path">{props.templateNode.templatePath}</span>
+      <span data-testid="meta-locator">{JSON.stringify(nodeMeta.locator)}</span>
+      <span data-testid="meta-template-path">{nodeMeta.templateNode.templatePath}</span>
+    </div>
+  );
+}
+
+export const nodeIdentityProbeRenderer: RendererDefinition = {
+  type: 'node-identity-probe',
+  component: NodeIdentityProbe
 };
 
 export const scopeLayerProbeRenderer: RendererDefinition = {

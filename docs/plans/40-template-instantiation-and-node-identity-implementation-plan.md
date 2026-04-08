@@ -1,8 +1,9 @@
 # 40 Template Instantiation And Node Identity Implementation Plan
 
-> Plan Status: in-progress
-> Last Reviewed: 2026-04-07; architecture signoff re-checked against related docs on 2026-04-07
+> Plan Status: completed
+> Last Reviewed: 2026-04-08; architecture signoff re-checked against related docs on 2026-04-07
 > Source: `docs/architecture/template-instantiation-and-node-identity.md`, `docs/architecture/component-resolution.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/debugger-runtime.md`, `docs/architecture/flux-core.md`
+> Status Note (2026-04-08): completed on the compatibility-first baseline now implemented in the workspace. The codebase has formal `NodeLocator` / `NodeInstance` / `RuntimeNodeResolver` contracts, runtime-owned locator resolution, registry-backed inspect results, registry-backed debugger component tree enumeration, repeated table row `instancePath` propagation, live-node ownership threaded through dialog/fragment rendering, and React-side compatibility contracts that expose `templateNode` / `locator` without requiring compiled-node-only reads for passive identity consumption. The intentionally deferred remainder is deep clean-slate cleanup only: fully deleting `CompiledSchemaNode` render-path bridges, removing `createRuntimeState()` from the compiled-node compatibility layer, and reworking repeated instantiation onto a dedicated runtime substrate instead of the current compatibility path. Those are future optimization/refactor opportunities, not active plan debt for this migration baseline.
 
 ## Purpose
 

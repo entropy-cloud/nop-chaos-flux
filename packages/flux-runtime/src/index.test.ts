@@ -2562,6 +2562,58 @@ describe('createRendererRuntime', () => {
     expect(dialogState.body[0].path).toContain(`${triggerNode.path}.dialog.`);
   });
 
+  it('derives dialog fragment paths from owner node instances when compiled owners are unavailable', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const ownerNodeInstance = {
+      locator: {
+        runtimeId: runtime.runtimeId,
+        templateGraphId: 'test:dialog-owner-instance',
+        templateNodeId: 12
+      },
+      templateNode: {
+        templateNodeId: 12,
+        id: 'dialog-owner',
+        type: 'button',
+        schema: { type: 'button' },
+        templatePath: 'page.body.0',
+        rendererType: 'button',
+        propsProgram: {},
+        metaProgram: {},
+        eventPlans: {},
+        regions: {},
+        scopePlan: { kind: 'inherit' }
+      },
+      scope: page.scope,
+      state: {
+        metaState: {},
+        mounted: true
+      }
+    } as any;
+
+    page.openDialog(
+      {
+        title: { type: 'text', text: 'Compiled title' },
+        body: [{ type: 'text', text: 'Compiled body' }]
+      },
+      page.scope,
+      runtime,
+      {
+        ownerNodeInstance
+      }
+    );
+
+    const dialogState = page.store.getState().dialogs[0] as any;
+    expect(dialogState.ownerNode).toBeUndefined();
+    expect(dialogState.ownerNodeInstance).toBe(ownerNodeInstance);
+    expect(dialogState.title.path).toContain('page.body.0.dialog.');
+    expect(dialogState.body[0].path).toContain('page.body.0.dialog.');
+  });
+
   it('evaluates expressions against child row scopes', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
