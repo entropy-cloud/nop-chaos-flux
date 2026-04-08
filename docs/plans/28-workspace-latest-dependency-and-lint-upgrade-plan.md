@@ -5,10 +5,10 @@
 > Last Reviewed: 2026-04-04
 > Source: workspace dependency audit, `pnpm.cmd outdated -r`, TypeScript 6 upgrade validation, ESLint 10 + `eslint-plugin-react-hooks` 7 compatibility review
 
-> **Implementation Status: ⚠️ SUPERSEDED BY COMPATIBILITY POLICY**
-> Parts of the original upgrade intent have already landed in the workspace (`typescript` 6, Vite 8, Vitest 4, latest strict `eslint-plugin-react-hooks` baseline, targeted dependency refreshes). However, the core assumptions of this plan are no longer valid: the repository must preserve React 18 compatibility, avoid unnecessary major-version churn, and respect cross-package compatibility constraints instead of blindly upgrading to the latest versions.
+> **Implementation Status: ⚠️ SUPERSEDED BY NEWER REACT 19 BASELINE WORK**
+> Parts of the original upgrade intent have already landed in the workspace (`typescript` 6, Vite 8, Vitest 4, latest strict `eslint-plugin-react-hooks` baseline, targeted dependency refreshes). The supersession rationale below reflects a 2026-04-04 historical assumption that the workspace still needed to preserve React 18 compatibility.
 >
-> This plan should not be executed as written. Any future dependency refresh must be re-scoped as a compatibility-driven upgrade plan with an explicit React support range and package compatibility matrix.
+> That React 18 compatibility assumption is no longer current. The active baseline is React 19 only; use `docs/architecture/frontend-baseline.md` and `docs/plans/43-react-18-to-19-best-practices-migration-plan.md` for current guidance.
 
 ## Supersession Note
 
@@ -17,7 +17,7 @@ This plan is superseded in the current workspace.
 Reasons:
 
 - the original plan explicitly allowed breaking upgrades and treated compatibility as non-goal
-- current repository policy requires React 18 compatibility and package-to-package compatibility validation
+- the then-current 2026-04-04 policy assumption required React 18 compatibility and package-to-package compatibility validation, which is now superseded by the React 19-only baseline
 - some toolchain goals have already been achieved, so the remaining work is not a clean “upgrade everything to latest” pass anymore
 - `pnpm outdated -r` on 2026-04-04 shows only a small remaining candidate set rather than the broad stale baseline this plan started from
 

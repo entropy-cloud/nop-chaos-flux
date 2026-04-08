@@ -32,6 +32,14 @@ Root scripts in `package.json`:
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm lint`
+- `pnpm check:react19`
+
+React rules for this baseline:
+
+- React 19 is the only supported React baseline for this workspace
+- React roots must use `createRoot` or `hydrateRoot`
+- legacy APIs such as `ReactDOM.render`, `ReactDOM.hydrate`, `findDOMNode`, `unmountComponentAtNode`, `react-dom/test-utils`, and `react-test-renderer` must not re-enter the repository
+- lint and `pnpm check:react19` together are the guardrail layer for those legacy patterns
 
 ## Workspace Shape
 
@@ -100,6 +108,7 @@ Testing expectations:
 - local unit and integration tests live beside relevant package source where practical
 - use `*.test.ts` and `*.test.tsx` for Vitest
 - playground changes should be backed by focused tests in the affected package where behavior is core to the architecture
+- prefer `@testing-library/react` for React-facing tests instead of renderer-implementation or shallow-render patterns
 
 ## Naming Conventions
 
