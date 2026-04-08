@@ -98,6 +98,40 @@ const buttonRenderer: RendererDefinition = {
 };
 
 describe('dataRendererDefinitions', () => {
+  it('allows formula data-sources to publish by name without dataPath', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'data-source',
+              name: 'greeting',
+              formula: '${"hello"}'
+            },
+            {
+              type: 'text',
+              text: '${greeting}'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('hello')).toBeTruthy();
+    });
+  });
+
   it('renders row-scope actions that open dialogs with row data', async () => {
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
@@ -665,7 +699,7 @@ describe('dataRendererDefinitions', () => {
                 then: {
                   action: 'setValue',
                   componentPath: 'selectionResult',
-                  value: '${prevResult.data}'
+                  value: '${result.data}'
                 }
               }
             },

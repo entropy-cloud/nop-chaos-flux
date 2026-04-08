@@ -7,10 +7,6 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
   const scope = useRenderScope();
   const schema = props.schema;
 
-  if ('formula' in schema && !schema.dataPath) {
-    throw new Error('Formula data-source requires dataPath');
-  }
-
   useEffect(() => {
     const registration = runtime.registerDataSource({
       id: props.id,
