@@ -40,20 +40,24 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
 
     const pageData = props.data ?? EMPTY_SCOPE_DATA;
     const initialPageDataRef = useRef(pageData);
-    const lastAppliedPageDataRef = useRef(pageData);
+    const initialDataAppliedRef = useRef(false);
     const page = useMemo(() => runtime.createPageRuntime(initialPageDataRef.current), [runtime]);
 
     useEffect(() => {
-      if (lastAppliedPageDataRef.current === pageData) {
+      if (!initialDataAppliedRef.current) {
+        initialDataAppliedRef.current = true;
         return;
       }
 
-      lastAppliedPageDataRef.current = pageData;
-      page.scope.store?.setSnapshot(pageData, {
-        paths: ['*'],
-        sourceScopeId: page.scope.id,
-        kind: 'replace'
-      });
+      const currentData = page.store.getState().data;
+
+      if (currentData !== pageData) {
+        page.scope.store?.setSnapshot(pageData, {
+          paths: ['*'],
+          sourceScopeId: page.scope.id,
+          kind: 'replace'
+        });
+      }
     }, [page, pageData]);
 
     useEffect(() => {

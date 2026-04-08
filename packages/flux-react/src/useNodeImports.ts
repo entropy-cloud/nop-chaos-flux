@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
@@ -25,13 +25,12 @@ export function useNodeImports(
 ): Readonly<Record<string, unknown>> {
   const hasImports = Boolean(nodeImports?.length && activeActionScope);
   const activeImportLoader = runtime.env.importLoader;
-  const [, setBindingsVersion] = useState(0);
-  const expressionBindings = hasImports
-    ? runtime.getImportedExpressionBindings({
-        imports: nodeImports,
-        actionScope: activeActionScope
-      })
-    : EMPTY_IMPORT_BINDINGS;
+  const [expressionBindings, setExpressionBindings] = useState<Readonly<Record<string, unknown>>>(EMPTY_IMPORT_BINDINGS);
+  const nodeInstanceRef = useRef(nodeInstance);
+
+  useEffect(() => {
+    nodeInstanceRef.current = nodeInstance;
+  }, [nodeInstance]);
 
   useEffect(() => {
     if (!hasImports || !activeActionScope) {
@@ -46,14 +45,16 @@ export function useNodeImports(
       componentRegistry: activeComponentRegistry,
       scope: activeScope,
       node,
-      nodeInstance
+      nodeInstance: nodeInstanceRef.current
     }).then(() => {
       if (disposed) {
         return;
       }
 
-      setBindingsVersion((value) => value + 1);
-      page?.refresh();
+      setExpressionBindings(runtime.getImportedExpressionBindings({
+        imports: nodeImports,
+        actionScope: activeActionScope
+      }));
     }).catch((error) => {
       if (disposed) {
         return;
@@ -92,7 +93,7 @@ export function useNodeImports(
         actionScope: activeActionScope
       });
     };
-  }, [runtime, activeImportLoader, hasImports, nodeImports, activeActionScope, activeComponentRegistry, activeScope, node, nodeInstance, page]);
+  }, [runtime, activeImportLoader, hasImports, nodeImports, activeActionScope, activeComponentRegistry, activeScope, node, page]);
 
   return hasImports ? expressionBindings : EMPTY_IMPORT_BINDINGS;
 }

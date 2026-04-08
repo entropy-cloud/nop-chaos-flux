@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, memo } from 'react';
+import { useContext, useEffect, useMemo, memo } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
@@ -100,45 +100,14 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   const activeScope = activeForm?.scope ?? props.scope;
   const nodeLocator = getCompiledNodeLocator(props.node, runtime.runtimeId, instancePath);
-  const nodeLocatorKey = nodeLocator
-    ? JSON.stringify(nodeLocator)
-    : 'none';
-  const importOwnerNodeInstanceRef = useRef<ReturnType<typeof createCompatibilityNodeInstance> | undefined>(undefined);
-  const importOwnerNodeInstanceDepsRef = useRef<{
-    node: CompiledSchemaNode;
-    locatorKey: string;
-    scope: ScopeRef;
-    state: CompiledNodeRuntimeState;
-    cid: number | undefined;
-  } | undefined>(undefined);
-
-  if (
-    !importOwnerNodeInstanceRef.current ||
-    !importOwnerNodeInstanceDepsRef.current ||
-    importOwnerNodeInstanceDepsRef.current.node !== props.node ||
-    importOwnerNodeInstanceDepsRef.current.locatorKey !== nodeLocatorKey ||
-    importOwnerNodeInstanceDepsRef.current.scope !== activeScope ||
-    importOwnerNodeInstanceDepsRef.current.state !== nodeState ||
-    importOwnerNodeInstanceDepsRef.current.cid !== resolvedMeta.cid
-  ) {
-    importOwnerNodeInstanceRef.current = createCompatibilityNodeInstance({
-      node: props.node,
-      locator: nodeLocator,
-      scope: activeScope,
-      state: nodeState,
-      cid: resolvedMeta.cid,
-      mounted: true
-    });
-    importOwnerNodeInstanceDepsRef.current = {
-      node: props.node,
-      locatorKey: nodeLocatorKey,
-      scope: activeScope,
-      state: nodeState,
-      cid: resolvedMeta.cid
-    };
-  }
-
-  const importOwnerNodeInstance = importOwnerNodeInstanceRef.current;
+  const importOwnerNodeInstance = createCompatibilityNodeInstance({
+    node: props.node,
+    locator: nodeLocator,
+    scope: activeScope,
+    state: nodeState,
+    cid: resolvedMeta.cid,
+    mounted: true
+  });
   const nodeImports = getNodeImports(props.node);
   const importExpressionBindings = useNodeImports(runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node, importOwnerNodeInstance, props.page);
   const renderScope = useMemo(
