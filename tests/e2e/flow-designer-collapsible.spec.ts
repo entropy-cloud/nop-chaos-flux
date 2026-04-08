@@ -29,78 +29,78 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
 test('collapses palette panel via collapse button', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const paletteExpanded = page.locator('[data-testid="palette-expanded"]');
-  const paletteCollapsed = page.locator('[data-testid="palette-collapsed"]');
+  const paletteExpanded = page.locator('[data-testid="left-panel-expanded"]');
+  const paletteCollapsed = page.locator('[data-testid="left-panel-collapsed"]');
   const collapseButton = page.locator('[data-testid="collapse-palette"]');
 
   await expect(paletteExpanded).toBeVisible();
-  await expect(paletteCollapsed).toBeHidden();
+  await expect(paletteCollapsed).toHaveCount(0);
 
   await collapseButton.click();
-  await expect(paletteExpanded).toBeHidden();
+  await expect(paletteExpanded).toHaveCount(0);
   await expect(paletteCollapsed).toBeVisible();
 });
 
 test('expands palette panel via expand button', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const paletteExpanded = page.locator('[data-testid="palette-expanded"]');
-  const paletteCollapsed = page.locator('[data-testid="palette-collapsed"]');
+  const paletteExpanded = page.locator('[data-testid="left-panel-expanded"]');
+  const paletteCollapsed = page.locator('[data-testid="left-panel-collapsed"]');
   const collapseButton = page.locator('[data-testid="collapse-palette"]');
-  const expandButton = page.locator('[data-testid="expand-palette"]');
+  const expandButton = page.locator('[data-testid="expand-left-panel"]');
 
   await expect(paletteExpanded).toBeVisible();
 
   await collapseButton.click();
-  await expect(paletteExpanded).toBeHidden();
+  await expect(paletteExpanded).toHaveCount(0);
   await expect(paletteCollapsed).toBeVisible();
 
   await expandButton.click();
-  await expect(paletteCollapsed).toBeHidden();
+  await expect(paletteCollapsed).toHaveCount(0);
   await expect(paletteExpanded).toBeVisible();
 });
 
 test('collapses inspector panel via collapse button', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const inspectorExpanded = page.locator('[data-testid="inspector-expanded"]');
-  const inspectorCollapsed = page.locator('[data-testid="inspector-collapsed"]');
+  const inspectorExpanded = page.locator('[data-testid="right-panel-expanded"]');
+  const inspectorCollapsed = page.locator('[data-testid="right-panel-collapsed"]');
   const collapseButton = page.locator('[data-testid="collapse-inspector"]');
 
   await expect(inspectorExpanded).toBeVisible();
-  await expect(inspectorCollapsed).toBeHidden();
+  await expect(inspectorCollapsed).toHaveCount(0);
 
   await collapseButton.click();
-  await expect(inspectorExpanded).toBeHidden();
+  await expect(inspectorExpanded).toHaveCount(0);
   await expect(inspectorCollapsed).toBeVisible();
 });
 
 test('expands inspector panel via expand button', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const inspectorExpanded = page.locator('[data-testid="inspector-expanded"]');
-  const inspectorCollapsed = page.locator('[data-testid="inspector-collapsed"]');
+  const inspectorExpanded = page.locator('[data-testid="right-panel-expanded"]');
+  const inspectorCollapsed = page.locator('[data-testid="right-panel-collapsed"]');
   const collapseButton = page.locator('[data-testid="collapse-inspector"]');
-  const expandButton = page.locator('[data-testid="expand-inspector"]');
+  const expandButton = page.locator('[data-testid="expand-right-panel"]');
 
   await expect(inspectorExpanded).toBeVisible();
 
   await collapseButton.click();
-  await expect(inspectorExpanded).toBeHidden();
+  await expect(inspectorExpanded).toHaveCount(0);
   await expect(inspectorCollapsed).toBeVisible();
 
   await expandButton.click();
-  await expect(inspectorCollapsed).toBeHidden();
+  await expect(inspectorCollapsed).toHaveCount(0);
   await expect(inspectorExpanded).toBeVisible();
 });
 
 test('collapses both panels simultaneously', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const paletteExpanded = page.locator('[data-testid="palette-expanded"]');
-  const paletteCollapsed = page.locator('[data-testid="palette-collapsed"]');
-  const inspectorExpanded = page.locator('[data-testid="inspector-expanded"]');
-  const inspectorCollapsed = page.locator('[data-testid="inspector-collapsed"]');
+  const paletteExpanded = page.locator('[data-testid="left-panel-expanded"]');
+  const paletteCollapsed = page.locator('[data-testid="left-panel-collapsed"]');
+  const inspectorExpanded = page.locator('[data-testid="right-panel-expanded"]');
+  const inspectorCollapsed = page.locator('[data-testid="right-panel-collapsed"]');
   const collapsePaletteButton = page.locator('[data-testid="collapse-palette"]');
   const collapseInspectorButton = page.locator('[data-testid="collapse-inspector"]');
 
@@ -110,47 +110,47 @@ test('collapses both panels simultaneously', async ({ page }) => {
   await collapsePaletteButton.click();
   await collapseInspectorButton.click();
 
-  await expect(paletteExpanded).toBeHidden();
+  await expect(paletteExpanded).toHaveCount(0);
   await expect(paletteCollapsed).toBeVisible();
-  await expect(inspectorExpanded).toBeHidden();
+  await expect(inspectorExpanded).toHaveCount(0);
   await expect(inspectorCollapsed).toBeVisible();
 });
 
 test('expands both panels back', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const paletteExpanded = page.locator('[data-testid="palette-expanded"]');
-  const paletteCollapsed = page.locator('[data-testid="palette-collapsed"]');
-  const inspectorExpanded = page.locator('[data-testid="inspector-expanded"]');
-  const inspectorCollapsed = page.locator('[data-testid="inspector-collapsed"]');
+  const paletteExpanded = page.locator('[data-testid="left-panel-expanded"]');
+  const paletteCollapsed = page.locator('[data-testid="left-panel-collapsed"]');
+  const inspectorExpanded = page.locator('[data-testid="right-panel-expanded"]');
+  const inspectorCollapsed = page.locator('[data-testid="right-panel-collapsed"]');
   const collapsePaletteButton = page.locator('[data-testid="collapse-palette"]');
   const collapseInspectorButton = page.locator('[data-testid="collapse-inspector"]');
-  const expandPaletteButton = page.locator('[data-testid="expand-palette"]');
-  const expandInspectorButton = page.locator('[data-testid="expand-inspector"]');
+  const expandPaletteButton = page.locator('[data-testid="expand-left-panel"]');
+  const expandInspectorButton = page.locator('[data-testid="expand-right-panel"]');
 
   await collapsePaletteButton.click();
   await collapseInspectorButton.click();
 
-  await expect(paletteExpanded).toBeHidden();
-  await expect(inspectorExpanded).toBeHidden();
+  await expect(paletteExpanded).toHaveCount(0);
+  await expect(inspectorExpanded).toHaveCount(0);
 
   await expandPaletteButton.click();
   await expandInspectorButton.click();
 
-  await expect(paletteCollapsed).toBeHidden();
+  await expect(paletteCollapsed).toHaveCount(0);
   await expect(paletteExpanded).toBeVisible();
-  await expect(inspectorCollapsed).toBeHidden();
+  await expect(inspectorCollapsed).toHaveCount(0);
   await expect(inspectorExpanded).toBeVisible();
 });
 
 test('verifies canvas width changes after collapse and expand', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const canvas = page.locator('.nop-designer__canvas').first();
+  const canvas = page.locator('[data-testid="canvas"]').first();
   const collapsePaletteButton = page.locator('[data-testid="collapse-palette"]');
   const collapseInspectorButton = page.locator('[data-testid="collapse-inspector"]');
-  const expandPaletteButton = page.locator('[data-testid="expand-palette"]');
-  const expandInspectorButton = page.locator('[data-testid="expand-inspector"]');
+  const expandPaletteButton = page.locator('[data-testid="expand-left-panel"]');
+  const expandInspectorButton = page.locator('[data-testid="expand-right-panel"]');
 
   const initialWidth = await canvas.evaluate((el) => (el as HTMLElement).offsetWidth);
 

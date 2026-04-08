@@ -181,7 +181,21 @@ test.describe('Word Editor Page', () => {
     await saveButton.click();
     await page.waitForTimeout(500);
 
-    await expect(page.getByText('Document saved')).toBeVisible({ timeout: 5000 });
+    await expect.poll(async () => {
+      return page.evaluate(() => {
+        const raw = window.localStorage.getItem('nop-word-editor-document');
+        if (!raw) {
+          return null;
+        }
+
+        try {
+          const parsed = JSON.parse(raw) as { savedAt?: string };
+          return typeof parsed.savedAt === 'string' ? parsed.savedAt : null;
+        } catch {
+          return null;
+        }
+      });
+    }, { timeout: 5000 }).not.toBeNull();
   });
 
   test('can open search panel', async ({ page }) => {

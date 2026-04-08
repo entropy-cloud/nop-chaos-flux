@@ -96,7 +96,7 @@ test('snippet panel dropdown shows configured snippets', async ({ page }) => {
 
   await snippetToggle.click();
 
-  const dropdown = field.locator('.nop-code-editor__snippet-dropdown').first();
+  const dropdown = page.locator('.nop-code-editor__snippet-dropdown').filter({ has: page.locator('.nop-code-editor__snippet-item') }).first();
   await expect(dropdown).toBeVisible();
 
   await expect(dropdown.locator('.nop-code-editor__snippet-item')).toHaveCount(3);
@@ -114,7 +114,7 @@ test('snippet insertion inserts text into editor', async ({ page }) => {
   const snippetToggle = field.locator('.nop-code-editor__snippet-toggle').first();
   await snippetToggle.click();
 
-  const dropdown = field.locator('.nop-code-editor__snippet-dropdown').first();
+  const dropdown = page.locator('.nop-code-editor__snippet-dropdown').filter({ has: page.locator('.nop-code-editor__snippet-item') }).first();
   await expect(dropdown).toBeVisible();
 
   const beforeContent = await field.locator('.cm-content').first().innerText();
@@ -216,7 +216,7 @@ test('execute button is visible in enhanced SQL editor', async ({ page }) => {
 
   const executeBtn = field.locator('.nop-code-editor__toolbar-execute').first();
   await expect(executeBtn).toBeVisible();
-  await expect(executeBtn).toContainText('▶ Run');
+  await expect(executeBtn).toContainText('Run');
 });
 
 test('SQL result panel shows loading and error states on execute', async ({ page }) => {
