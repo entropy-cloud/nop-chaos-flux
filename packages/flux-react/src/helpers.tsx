@@ -5,6 +5,7 @@ import type {
   ComponentHandleRegistry,
   CompiledSchemaNode,
   FormRuntime,
+  NodeInstance,
   PageRuntime,
   RendererHelpers,
   RendererRuntime,
@@ -25,6 +26,7 @@ export function mergeActionContext(base: {
   form?: FormRuntime;
   page?: PageRuntime;
   node?: CompiledSchemaNode;
+  nodeInstance?: NodeInstance;
   locator?: NodeLocator;
 }, partial?: Partial<ActionContext>): ActionContext {
   return {
@@ -33,6 +35,7 @@ export function mergeActionContext(base: {
     actionScope: partial?.actionScope ?? base.actionScope,
     componentRegistry: partial?.componentRegistry ?? base.componentRegistry,
     node: partial?.node ?? base.node,
+    nodeInstance: partial?.nodeInstance ?? base.nodeInstance,
     locator: partial?.locator ?? base.locator,
     form: partial?.form ?? base.form,
     page: partial?.page ?? base.page,
@@ -52,6 +55,7 @@ export function createHelpers(input: {
   form?: FormRuntime;
   page?: PageRuntime;
   node?: CompiledSchemaNode;
+  nodeInstance?: NodeInstance;
   locator?: NodeLocator;
 }): RendererHelpers {
   const dispatch = (action: any, ctx?: Partial<ActionContext>) => input.runtime.dispatch(action, mergeActionContext(input, ctx));
@@ -64,7 +68,8 @@ export function createHelpers(input: {
         input: renderInput,
         options: {
           ...options,
-          ownerNode: options?.ownerNode ?? input.node
+          ownerNode: options?.ownerNode ?? input.node,
+          ownerNodeInstance: options?.ownerNodeInstance ?? input.nodeInstance
         }
       });
     },

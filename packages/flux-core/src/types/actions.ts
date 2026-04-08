@@ -1,4 +1,4 @@
-import type { NodeLocator } from './node-identity';
+import type { NodeInstance, NodeLocator } from './node-identity';
 import type { SchemaObject, SchemaValue, SchemaPath, ApiSchema, OperationControlConfig } from './schema';
 import type { ScopeRef } from './scope';
 import type { ComponentHandleRegistry, RendererRuntime, CompiledSchemaNode, RendererEnv } from './renderer';
@@ -44,6 +44,7 @@ export interface ActionContext {
   runtime: RendererRuntime;
   scope: ScopeRef;
   locator?: NodeLocator;
+  nodeInstance?: NodeInstance;
   getInstanceKey?: () => string | undefined;
   interactionId?: string;
   actionScope?: ActionScope;
@@ -108,6 +109,7 @@ export interface ImportedNamespaceContext {
   scope: ScopeRef;
   spec: import('./schema').XuiImportSpec;
   node?: CompiledSchemaNode;
+  nodeInstance?: NodeInstance;
 }
 
 export interface ActionMonitorPayload {

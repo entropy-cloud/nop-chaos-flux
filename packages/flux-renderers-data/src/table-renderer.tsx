@@ -470,7 +470,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 componentRegistry: ctx.componentRegistry,
                 form: ctx.form,
                 page: ctx.page,
-                node: ctx.node
+                node: ctx.node,
+                nodeInstance: ctx.nodeInstance
               });
             } else {
               props.events.onPageChange?.(null, {
@@ -479,7 +480,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 componentRegistry: ctx.componentRegistry,
                 form: ctx.form,
                 page: ctx.page,
-                node: ctx.node
+                node: ctx.node,
+                nodeInstance: ctx.nodeInstance
               });
             }
             return { ok: true, data: { page: currentPage, pageSize } };

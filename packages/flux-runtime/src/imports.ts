@@ -9,7 +9,8 @@ import type {
   RendererRuntime,
   ScopeRef,
   XuiImportSpec,
-  CompiledSchemaNode
+  CompiledSchemaNode,
+  NodeInstance
 } from '@nop-chaos/flux-core';
 
 function normalizeImportSpec(spec: XuiImportSpec): XuiImportSpec {
@@ -155,6 +156,7 @@ export function createImportManager(input: {
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
     node?: CompiledSchemaNode;
+    nodeInstance?: NodeInstance;
   }) {
     return (async () => {
       try {
@@ -166,7 +168,8 @@ export function createImportManager(input: {
           componentRegistry: args.componentRegistry,
           scope: args.scope,
           spec: args.spec,
-          node: args.node
+          node: args.node,
+          nodeInstance: args.nodeInstance
         };
         const provider = await module.createNamespace(context);
         args.entry.provider = {
@@ -192,6 +195,7 @@ export function createImportManager(input: {
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
     node?: CompiledSchemaNode;
+    nodeInstance?: NodeInstance;
   }) {
     const imports = args.imports?.map(normalizeImportSpec).filter((spec) => spec.from && spec.as) ?? [];
 
@@ -225,7 +229,8 @@ export function createImportManager(input: {
             actionScope: args.actionScope,
             componentRegistry: args.componentRegistry,
             scope: args.scope,
-            node: args.node
+            node: args.node,
+            nodeInstance: args.nodeInstance
           });
 
           existing.pending = retryPromise.catch(() => undefined);
@@ -280,7 +285,8 @@ export function createImportManager(input: {
         actionScope: args.actionScope,
         componentRegistry: args.componentRegistry,
         scope: args.scope,
-        node: args.node
+        node: args.node,
+        nodeInstance: args.nodeInstance
       });
 
       entry.pending = readyPromise.catch(() => undefined);

@@ -3,6 +3,7 @@ import type {
   ActionScope,
   ComponentHandleRegistry,
   CompiledSchemaNode,
+  NodeInstance,
   PageRuntime,
   RendererRuntime,
   ScopeRef,
@@ -19,6 +20,7 @@ export function useNodeImports(
   activeComponentRegistry: ComponentHandleRegistry | undefined,
   activeScope: ScopeRef,
   node: CompiledSchemaNode,
+  nodeInstance: NodeInstance,
   page?: PageRuntime
 ): Readonly<Record<string, unknown>> {
   const hasImports = Boolean(nodeImports?.length && activeActionScope);
@@ -43,7 +45,8 @@ export function useNodeImports(
       actionScope: activeActionScope,
       componentRegistry: activeComponentRegistry,
       scope: activeScope,
-      node
+      node,
+      nodeInstance
     }).then(() => {
       if (disposed) {
         return;
@@ -89,7 +92,7 @@ export function useNodeImports(
         actionScope: activeActionScope
       });
     };
-  }, [runtime, activeImportLoader, hasImports, nodeImports, activeActionScope, activeComponentRegistry, activeScope, node, page]);
+  }, [runtime, activeImportLoader, hasImports, nodeImports, activeActionScope, activeComponentRegistry, activeScope, node, nodeInstance, page]);
 
   return hasImports ? expressionBindings : EMPTY_IMPORT_BINDINGS;
 }

@@ -115,6 +115,7 @@ export interface RendererRuntime {
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
     node?: CompiledSchemaNode;
+    nodeInstance?: NodeInstance;
   }): Promise<void>;
   getImportedExpressionBindings(input: {
     imports?: readonly XuiImportSpec[];

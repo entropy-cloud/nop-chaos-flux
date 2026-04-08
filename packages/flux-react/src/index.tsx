@@ -31,6 +31,7 @@ export {
   useAggregateError,
   useCurrentPage,
   useCurrentNodeMeta,
+  useCurrentNodeInstance,
   useActionDispatcher,
   useRenderFragment,
   rendererHooks
@@ -42,6 +43,7 @@ export {
   ComponentRegistryContext,
   FormContext,
   NodeMetaContext,
+  NodeInstanceContext,
   PageContext,
   RenderInstancePathContext,
   RuntimeContext,

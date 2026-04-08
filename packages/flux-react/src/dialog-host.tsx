@@ -80,7 +80,7 @@ function DialogView(props: {
               {typeof dialog.title === 'string'
                 ? dialog.title
                 : isCompiledNode(dialog.title) || isCompiledNodeArray(dialog.title)
-                  ? <RenderNodes input={dialog.title as RenderNodeInput} options={{ scope: dialog.scope, actionScope: dialog.actionScope, componentRegistry: dialog.componentRegistry }} />
+                  ? <RenderNodes input={dialog.title as RenderNodeInput} options={{ scope: dialog.scope, actionScope: dialog.actionScope, componentRegistry: dialog.componentRegistry, ownerNode: dialog.ownerNode, ownerNodeInstance: dialog.ownerNodeInstance }} />
                   : String(dialog.title)}
             </ScopeContext.Provider>
           </ComponentRegistryContext.Provider>
@@ -101,7 +101,7 @@ function DialogView(props: {
               )}
               <RenderNodes
                 input={(dialog.body ?? dialog.dialog.body) as RenderNodeInput}
-                options={{ scope: dialog.scope, actionScope: dialog.actionScope, componentRegistry: dialog.componentRegistry }}
+                options={{ scope: dialog.scope, actionScope: dialog.actionScope, componentRegistry: dialog.componentRegistry, ownerNode: dialog.ownerNode, ownerNodeInstance: dialog.ownerNodeInstance }}
               />
             </ScopeContext.Provider>
           </ComponentRegistryContext.Provider>

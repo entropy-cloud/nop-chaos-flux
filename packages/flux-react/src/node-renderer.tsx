@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, memo } from 'react';
+import { useContext, useEffect, useMemo, useRef, memo } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
@@ -22,6 +22,7 @@ import {
   ComponentRegistryContext,
   FormContext,
   NodeMetaContext,
+  NodeInstanceContext,
   PageContext,
   ScopeContext
 } from './contexts';
@@ -98,8 +99,48 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, props.node, props.actionScope, props.componentRegistry);
 
   const activeScope = activeForm?.scope ?? props.scope;
+  const nodeLocator = getCompiledNodeLocator(props.node, runtime.runtimeId, instancePath);
+  const nodeLocatorKey = nodeLocator
+    ? JSON.stringify(nodeLocator)
+    : 'none';
+  const importOwnerNodeInstanceRef = useRef<ReturnType<typeof createCompatibilityNodeInstance> | undefined>(undefined);
+  const importOwnerNodeInstanceDepsRef = useRef<{
+    node: CompiledSchemaNode;
+    locatorKey: string;
+    scope: ScopeRef;
+    state: CompiledNodeRuntimeState;
+    cid: number | undefined;
+  } | undefined>(undefined);
+
+  if (
+    !importOwnerNodeInstanceRef.current ||
+    !importOwnerNodeInstanceDepsRef.current ||
+    importOwnerNodeInstanceDepsRef.current.node !== props.node ||
+    importOwnerNodeInstanceDepsRef.current.locatorKey !== nodeLocatorKey ||
+    importOwnerNodeInstanceDepsRef.current.scope !== activeScope ||
+    importOwnerNodeInstanceDepsRef.current.state !== nodeState ||
+    importOwnerNodeInstanceDepsRef.current.cid !== resolvedMeta.cid
+  ) {
+    importOwnerNodeInstanceRef.current = createCompatibilityNodeInstance({
+      node: props.node,
+      locator: nodeLocator,
+      scope: activeScope,
+      state: nodeState,
+      cid: resolvedMeta.cid,
+      mounted: true
+    });
+    importOwnerNodeInstanceDepsRef.current = {
+      node: props.node,
+      locatorKey: nodeLocatorKey,
+      scope: activeScope,
+      state: nodeState,
+      cid: resolvedMeta.cid
+    };
+  }
+
+  const importOwnerNodeInstance = importOwnerNodeInstanceRef.current;
   const nodeImports = getNodeImports(props.node);
-  const importExpressionBindings = useNodeImports(runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node, props.page);
+  const importExpressionBindings = useNodeImports(runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node, importOwnerNodeInstance, props.page);
   const renderScope = useMemo(
     () => Object.keys(importExpressionBindings).length === 0
       ? activeScope
@@ -124,7 +165,6 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     ? { ...importedMeta, className: importedResolvedClassName }
     : importedMeta;
   const resolvedComponentProps = useNodeSourceProps(props.node, importedResolvedProps.value, renderScope);
-  const nodeLocator = getCompiledNodeLocator(props.node, runtime.runtimeId, instancePath);
   const nodeInstance = useMemo(
     () => createCompatibilityNodeInstance({
       node: props.node,
@@ -150,9 +190,10 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         form: activeForm,
         page: props.page,
         node: props.node,
+        nodeInstance,
         locator: nodeLocator
       }),
-    [runtime, renderScope, activeActionScope, activeComponentRegistry, activeForm, props.page, props.node, nodeLocator]
+    [runtime, renderScope, activeActionScope, activeComponentRegistry, activeForm, props.page, props.node, nodeInstance, nodeLocator]
   );
 
   const events = useMemo(() => {
@@ -185,11 +226,20 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
           key,
           path: region.path,
           node: region.node,
-          render: (options?: import('@nop-chaos/flux-core').RenderFragmentOptions) => <RenderNodes input={region.node} options={options} />
+          render: (options?: import('@nop-chaos/flux-core').RenderFragmentOptions) => (
+            <RenderNodes
+              input={region.node}
+              options={{
+                ...options,
+                ownerNode: options?.ownerNode ?? props.node,
+                ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance
+              }}
+            />
+          )
         }
       ])
     );
-  }, [props.node.regions]);
+  }, [nodeInstance, props.node]);
 
   const componentProps: RendererComponentProps = {
     id: props.node.id,
@@ -255,20 +305,22 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   return (
     <CompiledNodeContext.Provider value={props.node}>
-      <NodeMetaContext.Provider value={{ id: props.node.id, path: props.node.path, type: props.node.type, node: props.node }}>
-        <ActionScopeContext.Provider value={activeActionScope}>
-          <ComponentRegistryContext.Provider value={activeComponentRegistry}>
-            <ScopeContext.Provider value={renderScope}>
-              <FormContext.Provider value={activeForm}>
-                <PageContext.Provider value={props.page}>
-                  <ClassAliasesContext.Provider value={mergedClassAliases}>
-                    {content}
-                  </ClassAliasesContext.Provider>
-                </PageContext.Provider>
-              </FormContext.Provider>
-            </ScopeContext.Provider>
-          </ComponentRegistryContext.Provider>
-        </ActionScopeContext.Provider>
+      <NodeMetaContext.Provider value={{ id: props.node.id, path: props.node.path, type: props.node.type, node: props.node, nodeInstance }}>
+        <NodeInstanceContext.Provider value={nodeInstance}>
+          <ActionScopeContext.Provider value={activeActionScope}>
+            <ComponentRegistryContext.Provider value={activeComponentRegistry}>
+              <ScopeContext.Provider value={renderScope}>
+                <FormContext.Provider value={activeForm}>
+                  <PageContext.Provider value={props.page}>
+                    <ClassAliasesContext.Provider value={mergedClassAliases}>
+                      {content}
+                    </ClassAliasesContext.Provider>
+                  </PageContext.Provider>
+                </FormContext.Provider>
+              </ScopeContext.Provider>
+            </ComponentRegistryContext.Provider>
+          </ActionScopeContext.Provider>
+        </NodeInstanceContext.Provider>
       </NodeMetaContext.Provider>
     </CompiledNodeContext.Provider>
   );

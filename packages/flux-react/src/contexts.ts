@@ -6,6 +6,7 @@ import type {
   CompiledSchemaNode,
   FormRuntime,
   InstanceFrame,
+  NodeInstance,
   PageRuntime,
   RenderNodeMeta,
   RendererRuntime,
@@ -20,6 +21,7 @@ export const ComponentRegistryContext = createContext<ComponentHandleRegistry | 
 export const FormContext = createContext<FormRuntime | undefined>(undefined);
 export const PageContext = createContext<PageRuntime | undefined>(undefined);
 export const NodeMetaContext = createContext<RenderNodeMeta | null>(null);
+export const NodeInstanceContext = createContext<NodeInstance | null>(null);
 export const CompiledNodeContext = createContext<CompiledSchemaNode | null>(null);
 export const ClassAliasesContext = createContext<Record<string, string> | undefined>(undefined);
 

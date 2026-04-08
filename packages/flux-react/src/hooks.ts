@@ -18,6 +18,7 @@ import {
   ComponentRegistryContext,
   FormContext,
   NodeMetaContext,
+  NodeInstanceContext,
   PageContext,
   RenderInstancePathContext,
   RuntimeContext,
@@ -171,6 +172,10 @@ export function useCurrentNodeMeta(): RenderNodeMeta {
   return useRequiredContext(NodeMetaContext, 'NodeMeta');
 }
 
+export function useCurrentNodeInstance() {
+  return useContext(NodeInstanceContext) ?? undefined;
+}
+
 export function useActionDispatcher() {
   return useRendererRuntime().dispatch;
 }
@@ -182,10 +187,22 @@ export function useRenderFragment() {
   const componentRegistry = useCurrentComponentRegistry();
   const form = useCurrentForm();
   const page = useCurrentPage();
+  const nodeMeta = useContext(NodeMetaContext);
+  const nodeInstance = useContext(NodeInstanceContext);
 
   return useMemo(
-    () => createHelpers({ runtime, scope, actionScope, componentRegistry, form, page }).render,
-    [runtime, scope, actionScope, componentRegistry, form, page]
+    () => createHelpers({
+      runtime,
+      scope,
+      actionScope,
+      componentRegistry,
+      form,
+      page,
+      node: nodeMeta?.node,
+      nodeInstance: nodeInstance ?? undefined,
+      locator: nodeInstance?.locator
+    }).render,
+    [runtime, scope, actionScope, componentRegistry, form, page, nodeMeta, nodeInstance]
   );
 }
 
@@ -210,5 +227,6 @@ export const rendererHooks = {
   useAggregateError,
   useCurrentPage,
   useCurrentNodeMeta,
+  useCurrentNodeInstance,
   useRenderFragment
 };

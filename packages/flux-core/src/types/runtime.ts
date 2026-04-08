@@ -1,4 +1,5 @@
 import type { ApiSchema } from './schema';
+import type { NodeInstance } from './node-identity';
 import type { ScopeRef } from './scope';
 import type { ValidationRule, ValidationError, ValidationResult, FormValidationResult, CompiledFormValidationModel, CompiledFormValidationField, RuntimeFieldRegistration } from './validation';
 import type { ActionScope, ActionResult } from './actions';
@@ -56,6 +57,8 @@ export interface DialogState {
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
+  ownerNode?: CompiledSchemaNode;
+  ownerNodeInstance?: NodeInstance;
   title?: RenderNodeInput | string;
   body?: RenderNodeInput;
 }
@@ -141,6 +144,7 @@ export interface PageRuntime {
       actionScope?: ActionScope;
       componentRegistry?: ComponentHandleRegistry;
       ownerNode?: CompiledSchemaNode;
+      ownerNodeInstance?: NodeInstance;
     }
   ): string;
   closeDialog(dialogId?: string): void;

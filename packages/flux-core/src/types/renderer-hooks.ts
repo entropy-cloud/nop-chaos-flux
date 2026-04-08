@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import type { ActionContext, ActionScope } from './actions';
 import type { FormulaCompiler } from './compilation';
-import type { InstanceFrame } from './node-identity';
+import type { InstanceFrame, NodeInstance } from './node-identity';
 import type { ComponentHandleRegistry } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
 import type { CompiledSchemaNode } from './renderer-compiler';
@@ -22,6 +22,7 @@ export interface RenderFragmentOptions {
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   ownerNode?: CompiledSchemaNode;
+  ownerNodeInstance?: NodeInstance;
 }
 
 export interface RenderRegionHandle {
@@ -54,6 +55,7 @@ export interface RendererHookApi {
   useAggregateError(path: string): ValidationError | undefined;
   useCurrentPage(): PageRuntime | undefined;
   useCurrentNodeMeta(): RenderNodeMeta;
+  useCurrentNodeInstance(): NodeInstance | undefined;
   useRenderFragment(): RendererHelpers['render'];
 }
 
@@ -62,6 +64,7 @@ export interface RenderNodeMeta {
   path: SchemaPath;
   type: string;
   node: CompiledSchemaNode;
+  nodeInstance?: NodeInstance;
 }
 
 export interface SchemaRendererProps {

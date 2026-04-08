@@ -80,6 +80,8 @@ export function createManagedPageRuntime(input: {
         scope: dialogScope,
         actionScope: options?.actionScope,
         componentRegistry: options?.componentRegistry,
+        ownerNode,
+        ownerNodeInstance: options?.ownerNodeInstance,
         title: typeof dialog.title === 'string'
           ? dialog.title
           : dialog.title
