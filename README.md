@@ -2,403 +2,560 @@
 
 <div align="center">
 
-**基于 Schema 驱动的现代化低代码渲染与设计器框架**
+**Write JSON, get UI. A modern low-code rendering framework built on seven primitives.**
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vitejs.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-4-729b63.svg)](https://vitest.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38bdf8.svg)](https://tailwindcss.com/)
+[![pnpm](https://img.shields.io/badge/pnpm-10-f69220.svg)](https://pnpm.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
 
 ---
 
-## 📖 项目简介
+## A 15-Second Introduction
 
-NOP Chaos Flux 是对百度 AMIS 低代码渲染器的现代化重写与架构升级，专注于：
+Describe your UI as JSON. Flux compiles it once, executes it through seven primitives.
 
-- **Schema 驱动的声明式渲染**
-- **Flow Designer（流程设计器）**
-- **Report Designer + Spreadsheet（报表/表格设计器）**
-- **内置调试与诊断工具**
-
-> **定位**：面向现代前端工程与设计器场景的分层重构，强化 runtime + 领域包的清晰边界，而非简单的组件配置中心。
-
----
-
-## ✨ 核心特性
-
-### 通用渲染能力
-- 🎨 **Schema 驱动渲染**：通过声明式 JSON Schema 组织页面、组件、动作与区域
-- 📝 **表达式与模板编译**：统一编译与运行时执行能力（`flux-formula`）
-- ⚡ **运行时与动作系统**：作用域、动作分发、表单状态与校验、请求执行
-- 🐛 **内置调试器**：事件时间线、交互诊断、全局 API（用于开发与自动化）
-
-### 设计器能力
-- 🔄 **Flow Designer**：`designer-page` + `designer:*` 命名空间动作 + 可配置画布/工具栏/面板
-- 📊 **Report Designer / Spreadsheet**：报表语义扩展叠加在 spreadsheet 能力之上
-- 🎯 **可配置性强**：节点类型、端口、连线规则、工具栏、快捷键全部 JSON 配置驱动
-
----
-
-## 🚀 相比 AMIS 的设计改进
-
-### 设计优化
-
-#### 1. 统一值语义
-**AMIS**：使用 `xxxExpr`、`xxxOn` 等平行字段体系（如 `classNameExpr`、`disabledOn`）
-
-**Flux**：单一字段，通过类型系统区分语义
-```typescript
-type CompiledValueNode<T> =
-  | { kind: 'static-node'; value: T }
-  | { kind: 'expression-node'; compiled: ... }
-  | { kind: 'template-node'; compiled: ... }
-```
-
-#### 2. 全值树编译
-**AMIS**：运行时解释执行，局部有缓存
-
-**Flux**：编译时构建值树，静态子树零成本，动态子树尽量复用已有对象，避免新建新对象，这也自然避免了React组件重建。
-
-#### 3. 作用域链查找
-**Flux**：词法路径查找优先，仅在必要时合并对象
-
-### 性能优化
-
-| 优化项 | 实现方式 | 收益 |
-|--------|----------|------|
-| **编译时优化** | 表达式/模板/正则预编译 | 减少运行时解释开销 |
-| **静态值快路径** | `isStatic: true` 直接返回值 | 零成本访问静态配置 |
-| **对象复用** | 结果不变时保持对象引用 | 避免 React 组件重渲染 |
-| **精准订阅** | `useScopeSelector` 选择器订阅 | 避免连锁重渲染 |
-| **高频操作优化** | 防抖、取消、请求缓存 | 减少 API 调用和过期请求 |
-| **增量更新** | 浅比较、结构共享 | 避免全局状态拷贝 |
-
-### 技术栈升级
-
-| 项目 | AMIS | Flux |
-|------|------|------|
-| React 版本 | 较老版本 | **React 19** |
-| 状态管理 | MobX / 其他 | **Zustand 5.0**（更轻量） |
-| 构建工具 | Webpack | **Vite 8.0**（更快） |
-| TypeScript | 旧版本 | **TypeScript 5.9 strict** |
-| 测试框架 | Jest / 其他 | **Vitest 3.2**（更快） |
-| 包管理器 | npm / yarn | **pnpm 10.0**（更高效） |
-| 样式系统 | 自定义 CSS-in-JS | **TailwindCSS 4.1**（原子化 CSS） |
-
-### 可扩展性优化
-
-#### 组件动作
-```json
-{ "action": "component:validate", "componentId": "form" }
-
-```
-
-#### 命名空间动作
-```typescript
-// 设计器专用动作
-"designer:addNode"
-"designer:export"
-
-// 可通过 ActionScope 扩展
-actionScope.register('customAction', handler);
-```
-
-#### ActionScope
-
-`ActionScope` 是本项目一个比较特殊的设计：**动作作用域与数据作用域解耦**。
-
-- **ActionScope** 负责“能调用什么动作”（内置动作、`component:<method>`、`designer:*`、导入库动作）
-- **数据 Scope** 负责“当前有哪些数据”（通过 `data`、`data-source`、`input` 等运行时动态构建）
-
-这种解耦带来两个好处：
-
-1. 动作能力可以独立扩展，不需要绑定到某个固定数据树  
-2. 可以通过 `xui:import` 把外部库动作挂载到当前 ActionScope，而不污染数据 Scope
-
-简化理解：**数据 Scope 管值，ActionScope 管能力**。
-
-#### 可配置设计器
-Flow Designer 和 Report Designer 都通过 JSON 配置驱动，无需修改代码即可定制。
-
----
-
-## 🛠️ 技术栈
-
-- **前端框架**：React 19
-- **类型系统**：TypeScript 5.9（strict）
-- **状态管理**：Zustand 5.0
-- **构建工具**：Vite 8.0
-- **测试框架**：Vitest 3.2 + Playwright 1.54
-- **包管理器**：pnpm 10.0（workspace）
-- **样式系统**：TailwindCSS 4.1
-- **流程图**：@xyflow/react
-
----
-
-## 📁 仓库结构
-
-```text
-flow-designer2/
-├── apps/
-│   └── playground/              # 统一演示入口（Flow/Report/Flux Basic/Debugger）
-├── packages/
-│   ├── flux-core               # 核心类型与约定（纯类型，无运行时代码）
-│   ├── flux-formula            # 表达式/模板编译与执行
-│   ├── flux-runtime            # 运行时（动作、请求、表单、校验）
-│   ├── flux-react              # React 渲染层（hooks, contexts）
-│   ├── flux-renderers-basic    # 基础渲染器（page, text, container 等）
-│   ├── flux-renderers-form     # 表单渲染器
-│   ├── flux-renderers-data     # 数据渲染器
-│   ├── flow-designer-core      # 图文档与设计器核心能力（纯逻辑，不依赖 React）
-│   ├── flow-designer-renderers # Flow Designer 渲染器接线
-│   ├── spreadsheet-core        # Spreadsheet 核心
-│   ├── spreadsheet-renderers   # Spreadsheet 渲染器
-│   ├── report-designer-core    # Report 语义核心
-│   ├── report-designer-renderers # Report Designer 渲染器
-│   ├── nop-debugger            # 调试器面板与 API
-│   └── tailwind-preset         # 样式预设
-└── docs/                        # 架构、参考、分析、示例、开发日志
-```
-
-### 包依赖关系
-
-```
-flux-core (类型定义)
-    ↓
-flux-formula (表达式编译/求值)
-    ↓
-flux-runtime (Zustand stores, 验证, 动作)
-    ↓
-flux-react (React 渲染层)
-    ↓
-flux-renderers-* (各种渲染器)
-    ↓
-nop-debugger (调试工具)
-    ↓
-apps/playground (开发环境)
-```
-
----
-
-## 🏃 快速开始
-
-### 环境要求
-
-- **Node.js**：建议使用当前 LTS 版本
-- **pnpm**：10.0+
-
-### 安装与启动
-
-```bash
-# 安装依赖
-pnpm install
-
-# 启动开发服务器
-pnpm dev
-```
-
-默认会启动 `apps/playground`，访问 http://localhost:5173
-
-### 验证安装
-
-```bash
-# 类型检查
-pnpm typecheck
-
-# 构建
-pnpm build
-
-# 运行测试
-pnpm test
-
-# E2E 测试
-pnpm test:e2e
-```
-
----
-
-## 📋 常用命令
-
-### Workspace 级命令
-
-在仓库根目录执行：
-
-```bash
-pnpm dev            # 启动 playground
-pnpm typecheck      # 全 workspace 类型检查
-pnpm build          # 全 workspace 构建
-pnpm test           # 全 workspace 单测
-pnpm test:e2e       # Playwright e2e（无头模式）
-pnpm test:e2e:headed # Playwright e2e（有头模式）
-pnpm lint           # 全 workspace lint
-pnpm clean          # 清理 node_modules/dist
-```
-
-### 单包命令
-
-按包执行示例：
-
-```bash
-# Flow Designer 相关
-pnpm --filter @nop-chaos/flow-designer-core test
-pnpm --filter @nop-chaos/flow-designer-renderers typecheck
-
-# Flux Runtime 相关
-pnpm --filter @nop-chaos/flux-runtime test
-pnpm --filter @nop-chaos/flux-react build
-
-# Playground
-pnpm --filter @nop-chaos/flux-playground dev
-```
-
----
-
-## 🧩 实现落地点（源码）
-
-
-### 1) 设计器核心能力
-
-- `packages/flow-designer-core/src/core.ts`
-  - 节点/边增删改、undo/redo、dirty tracking、save/restore、export JSON
-
-### 2) 动作分发与扩展
-
-- `packages/flux-runtime/src/action-runtime.ts`
-  - 内置动作（`setValue` / `ajax` / `submitForm`）
-  - 组件动作（`component:<method>`）
-  - 命名空间动作（如 `designer:*`）
-- `packages/flux-runtime/src/action-scope.ts`
-  - `ActionScope` 与 `registerNamespace`（动作能力注册）
-- `packages/flux-runtime/src/imports.ts`
-  - `xui:import` 导入外部动作库到 ActionScope（与数据 Scope 解耦）
-
-### 3) 作用域与订阅
-
-- `packages/flux-react/src/hooks.ts`
-  - `useScopeSelector` 等订阅能力
-- `packages/flux-core/src/types.ts`
-  - `ScopeRef`、`ApiObject` 等核心契约
-
-### 4) 调试与自动化接口
-
-- `packages/nop-debugger/src/automation.ts`
-- `packages/nop-debugger/src/controller.ts`
-  - 全局 API、错误缓冲区与调试器自动化能力
-
----
-
-## 📚 文档索引
-
-### 入口文档
-- **[docs/index.md](docs/index.md)** - 文档导航总入口
-- **[docs/logs/index.md](docs/logs/index.md)** - 开发日志（最近变更记录）
-
-### 架构文档
-- **[docs/architecture/flux-core.md](docs/architecture/flux-core.md)** - Flux 核心架构
-- **[docs/architecture/renderer-runtime.md](docs/architecture/renderer-runtime.md)** - 渲染器运行时
-- **[docs/architecture/form-validation.md](docs/architecture/form-validation.md)** - 表单验证
-- **[docs/architecture/action-scope-and-imports.md](docs/architecture/action-scope-and-imports.md)** - 动作作用域
-
-### Flow Designer
-- **[docs/architecture/flow-designer/design.md](docs/architecture/flow-designer/design.md)** - 设计架构
-- **[docs/architecture/flow-designer/config-schema.md](docs/architecture/flow-designer/config-schema.md)** - 配置 Schema
-- **[docs/architecture/flow-designer/api.md](docs/architecture/flow-designer/api.md)** - API 文档
-- **[docs/architecture/flow-designer/collaboration.md](docs/architecture/flow-designer/collaboration.md)** - 协作机制
-
-### Report Designer
-- **[docs/architecture/report-designer/design.md](docs/architecture/report-designer/design.md)** - 设计架构
-- **[docs/architecture/report-designer/contracts.md](docs/architecture/report-designer/contracts.md)** - 契约定义
-
-### 参考资料
-- **[docs/references/terminology.md](docs/references/terminology.md)** - 术语表
-- **[docs/references/renderer-interfaces.md](docs/references/renderer-interfaces.md)** - 渲染器接口
-- **[docs/references/flux-json-conventions.md](docs/references/flux-json-conventions.md)** - JSON 约定
-
-### 示例
-- **[docs/examples/user-management-schema.md](docs/examples/user-management-schema.md)** - 用户管理 Schema 示例
-
----
-
-## 🧪 测试和调试
-
-### 内置调试器
-
-**固定的错误缓冲区**：
-```typescript
+```jsonc
 {
-  keepEarliest: 3,  // 保留最早的错误
-  keepLatest: 5     // 保留最新的错误
+  "type": "page",
+  "title": "User Details",
+  "body": [
+    {
+      "type": "text",
+      "tag": "h2",
+      "text": "Profile"
+    },
+    {
+      "type": "container",
+      "direction": "column",
+      "gap": "md",
+      "body": [
+        { "type": "text", "text": "Name: ${user.name}" },
+        { "type": "text", "text": "Email: ${user.email}" }
+      ]
+    }
+  ]
 }
 ```
 
-**AI/自动化可访问**：
+Expressions compile once. Static parts return by reference. Dynamic parts track their own dependencies.
+
+```jsonc
+{
+  "type": "form",
+  "id": "profile-form",
+  "data": { "fullName": "Alice", "email": "alice@example.com" },
+  "body": [
+    { "type": "input-text", "name": "fullName", "label": "Full Name", "required": true },
+    { "type": "input-email", "name": "email", "label": "Email", "required": true }
+  ],
+  "actions": [
+    {
+      "type": "button",
+      "label": "Submit",
+      "onClick": {
+        "action": "submitForm",
+        "formId": "profile-form",
+        "api": { "method": "post", "url": "/api/profile" }
+      }
+    }
+  ]
+}
+```
+
+---
+
+## Design Philosophy
+
+**Six core principles. Seven primitives. Clean boundaries.**
+
+Flux is a ground-up rewrite of [Baidu AMIS](https://github.com/baidu/amis) — rethought around six principles.
+
+### 1. DSL-First
+
+**DSL is a first-class artifact — an editable, composable, transformable structure layer.**
+
+In AMIS and similar frameworks, JSON is just input format for runtime. In Flux, DSL lives outside runtime with its own lifecycle:
+
+| Capability | Meaning |
+|---|---|
+| **Edit** | Source location preservation, aliases, editor metadata, round-trip fidelity |
+| **Merge/Inherit** | `x:extends` inheritance, override expansion, fragment composition |
+| **Pruning** | Permission trimming, feature flag pruning, profile assembly |
+| **Transform** | i18n string replacement, static default expansion |
+| **Metaprogramming** | Express variation through structural conventions, not runtime interface growth |
+
+DSL is composable. DSL transforms are layered: permission pruning, i18n replacement, and default expansion operate independently. DSL decouples from runtime: authoring metadata changes must not alter runtime behavior. DSL complexity grows by extending existing simple forms, not by replacing the baseline mental model.
+
+> "If a problem can be solved in structure transformation, it must not be dragged into the runtime surface."
+
+### 2. Write-Execute Separation
+
+**Authoring Model and Execution Model serve different optimization goals, separated by pre-compilation boundary.**
+
+Many frameworks maintain one model that runtime must directly carry the authoring structure. Flux intentionally does not do this. Instead:
+
+| Dimension | Authoring Model | Execution Model |
+|---|---|---|
+| **Optimization goals** | Understandability, domain expressiveness, edit fidelity | Performance, internal concept unification, runtime overhead minimization |
+| **Structure form** | Source location preservation, aliases, editor metadata, domain edit structure | Assembled Final Execution Schema, no redundancy |
+| **Correctness standard** | Round-trip fidelity, author intent not lost | Behavioral equivalence, execution determinism |
+| **Replaceability** | Multiple editors/designers/collaboration engines produce same DSL | Same Final Execution Schema executes across different runtime hosts |
+
+Pre-compilation boundary keeps structural decisions (type resolution, renderer binding, default expansion) in loader phase. Runtime sees zero overhead for these decisions.
+
+### 3. Reactive Data-Driven
+
+**Execution model is declarative reactive with implicit dependency collection.**
+
+Authors don't build imperative coupling chains like in React or Vue apps. When a value reads a path through expression, template, or dynamic value form, it naturally enters dependency graph and re-evaluates when dependencies change.
+
+Basic rhythm: **evaluate → collect dependencies → change propagation → point re-evaluation/invalidation → re-publish.**
+
+| Concept | Principle |
+|---|---|
+| **Implicit dependency establishment** | Dynamic value reads automatically enter dependency set when they access a path |
+| **Dynamic collection** | Dependencies collected during evaluation, not declared statically |
+| **Unified dependency model** | `Value`, `Resource`, `Reaction` share same model, but consequences differ (recompute / dirty refresh / trigger Capability) |
+| **Reactive logic location** | Reactive logic lives in runtime/store layer, not injected into plain data objects |
+| **Write-Read separation** | All side effects converge to single channel: `Capability` dispatch only |
+
+> "Dependency tracking is a top-level execution rule, not implementation detail."
+
+### 4. Progressive Evolution
+
+**Complexity grows along stable paths from simple DSL forms, not by inflating primitive sets.**
+
+When a simple need has a natural simple DSL form, subsequent complexity should extend that form, not replace it with a different baseline mental model.
+
+**DSL layer evolution — simple forms grow naturally:**
+
+| Concept | Simple form → | → Complex form |
+|---|---|---|
+| **Values** | literal → expression → anonymous source → | named `data-source` (Resource) |
+| **Actions** | Single-step dispatch → | `when` guard → `then`/`onError` branches → | `parallel` fan-out → | compiled into DAG-level execution graph |
+| **Structure** | `visible` (display level) → | `when` (lifecycle activation) → | `loop` (collection expansion) → | `dynamic-renderer` (remote assembly) |
+| **Host writes** | Semantic commands → | Generic patch-style `applyPatch` |
+
+**Runtime layer evolution — derived systems compose primitives:**
+
+| Derived system | Composed from primitives | Solves |
+|---|---|---|
+| **Action Algebra** | Capability + Value | Effect orchestration: when/then/onError/parallel compiled as DAG for sequential, branch, aggregation, timeout, retry |
+| **Operation Control** | Capability + Resource | Shared execution control: timeout, cancellation, throttling, dedup, retry, concurrency |
+| **Semantic Lifecycle Entry** | Base Tree + ScopeRef + Value + Capability + Reaction | Node-owned business pipeline: form submit, dialog confirmation, page enter |
+| **FormRuntime / PageRuntime** | All primitives | Domain-specific runtimes: form validation-submit pipeline, page lifecycle |
+
+**Evolution guardrails:** New primitive category only if: cross-domain, non-reducible, semantically stable, author-visible, not just convenience.
+
+Complex runtime capabilities should be derived systems from existing primitives, not new primitives. Derived systems may be important in implementation, but they don't automatically promote to Primitive Category.
+
+### 5. Lexical Ownership
+
+**Data, capabilities, resources, reactions, and runtime sidecars follow lexical/child-tree boundaries, not global registries.**
+
+Flux reactive execution doesn't run on an ambient global runtime object. Data, capability, resource, reaction, and runtime sidecars follow lexical scope or child-tree boundaries.
+
+| Lookup mechanism | Purpose |
+|---|---|
+| **Data lookup (ScopeRef)** | What values are visible here (`${doc.name}`) |
+| **Behavior lookup (ActionScope)** | What actions can fire here (`ajax`, `submitForm`, `designer:addNode`) |
+| **Instance targeting (ComponentHandleRegistry)** | Which live instance to target (`componentId: userForm`) |
+
+Child scopes naturally shadow parent-level publication through lexical scoping, not global override. Resource binding targets determine scope by lexical ownership, not globally. Same binding path can independently exist in different lexical scopes. Duplicate within same lexical scope is invalid.
+
+Runtime sidecars (Resource state, Reaction state, cache, diagnostics) follow lexical ownership, but must not become methods or mutable protocol objects mounted on ScopeRef. Scope's job is to carry data environment, not bridge, controller, or handle objects.
+
+### 6. Domain Isolation and Abstraction
+
+**Core maintains small, stable abstraction layer. Domain complexity lives outside core, embedded through narrow contracts.**
+
+Judgment standard: "Can core provide stable embedding surface for complex systems without forcing domain complexity back into core vocabulary?"
+
+| Direction | Mechanism | Meaning |
+|---|---|---|
+| **Core → Domain (read)** | Host Projection | Read-only snapshot projection, host drives refresh |
+| **Domain → Core (write)** | Capability | Namespaced command dispatch (like `designer:*`) |
+| **Instance targeting** | ComponentHandleRegistry | Explicit component instance method invocation |
+| **Host-private** | DomainBridge | `getSnapshot/subscribe/dispatch`, doesn't enter Schema-visible Scope |
+
+**Why core stays stable:**
+
+Graph algorithms, layout, collision detection, collaboration protocols, CRDT/OT, local-first sync, gesture loops — these are important, but they are **domain systems** and should not become core primitives. In Flux they are just production strategies behind Resource, or host snapshots behind Host Projection, or command systems behind Capability.
+
+New domains embed through declarative host types + projection fields + capability namespace, without introducing new global provider families, environment registries, or new schema authority channels.
+
+---
+
+## What You Can Build
+
+| Capability | Description |
+|---|---|
+| **Pages and layouts** | Compose pages from containers, text, buttons, dialogs — all from JSON |
+| **Forms with validation** | Typed inputs, required rules, async validation, submit-to-API — no JSX required |
+| **Data tables** | CRUD tables with search, pagination, row actions, and scope-per-row |
+| **Flow Designer** | Full graph editor: drag-and-drop nodes, connect ports, undo/redo, configurable toolbar and inspector |
+| **Spreadsheet Editor** | Excel-like multi-sheet editing with merge, resize, selection, and formula support |
+| **Report Designer** | Report semantic overlays on top of spreadsheet, with field panels and preview integration |
+| **Word Editor** | Document editing capability |
+| **Debugger** | Floating dev panel with event timeline, node inspector, scope viewer, plus structured automation API for AI/E2E |
+
+Both designers are driven entirely by JSON configuration — node types, ports, connection rules, toolbar items, inspector panels — without modifying framework code.
+
+---
+
+## Quick Start
+
+```bash
+# prerequisites: Node.js LTS, pnpm 10+
+pnpm install
+pnpm dev            # http://localhost:5173
+```
+
+```bash
+pnpm typecheck      # type-check all packages
+pnpm build          # build all packages
+pnpm test           # unit tests (Vitest)
+pnpm lint           # lint all packages
+pnpm test:e2e       # Playwright E2E (headless)
+
+# per-package
+pnpm --filter @nop-chaos/flux-runtime test
+pnpm --filter @nop-chaos/flow-designer-core typecheck
+```
+
+---
+
+## Your First Form
+
+Start with a simple form. Flux compiles it, handles validation, and dispatches actions.
+
+```jsonc
+{
+  "type": "page",
+  "title": "Contact Form",
+  "body": [
+    {
+      "type": "form",
+      "id": "contact-form",
+      "data": { "name": "", "email": "", "message": "" },
+      "body": [
+        {
+          "type": "input-text",
+          "name": "name",
+          "label": "Name",
+          "required": true
+        },
+        {
+          "type": "input-email",
+          "name": "email",
+          "label": "Email",
+          "required": true
+        },
+        {
+          "type": "textarea",
+          "name": "message",
+          "label": "Message"
+        }
+      ],
+      "actions": [
+        {
+          "type": "button",
+          "label": "Send",
+          "onClick": {
+            "action": "submitForm",
+            "formId": "contact-form",
+            "api": { "method": "post", "url": "/api/contact" }
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+**What happens:**
+
+1. **Compile** — Schema compiles into value tree. Field names and required rules extract into validation model.
+2. **Instantiate** — Runtime creates form instance with its own scope and state.
+3. **Render** — React renderer receives resolved props, meta, and validation state.
+4. **Submit** — `submitForm` action dispatches, validates, and calls API.
+
+**Try it:** Start the playground with `pnpm dev`, then navigate to the "Contact Form" scenario to see this in action.
+
+---
+
+## Adding Validation
+
+Validation rules live in schema. No imperative code in components.
+
+```jsonc
+{
+  "type": "form",
+  "id": "signup-form",
+  "body": [
+    {
+      "type": "input-text",
+      "name": "username",
+      "label": "Username",
+      "validations": [
+        {
+          "type": "pattern",
+          "pattern": "^[a-z0-9_]{3,20}$",
+          "message": "Username must be 3-20 alphanumeric characters"
+        }
+      ]
+    },
+    {
+      "type": "input-password",
+      "name": "password",
+      "label": "Password",
+      "validations": [
+        {
+          "type": "minLength",
+          "minLength": 8,
+          "message": "Password must be at least 8 characters"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Compiler extracts these rules into a validation model. Runtime validates on change and on submit.
+
+---
+
+## Connecting to Data
+
+Data enters scope through three paths:
+
+1. **Page-level data** — `{ "type": "page", "data": { "user": {...} } }`
+2. **Data sources** — Named publishers: `{ "type": "data-source", "name": "users", "api": {...} }`
+3. **Action results** — Targeted via `dataPath`: `{ "action": "ajax", "api": {...}, "dataPath": "searchResult" }`
+
+```jsonc
+{
+  "type": "page",
+  "data": { "currentUser": { "role": "admin" } },
+  "body": [
+    {
+      "type": "button",
+      "label": "Load Users",
+      "onClick": {
+        "action": "ajax",
+        "api": {
+          "method": "get",
+          "url": "/api/users"
+        },
+        "dataPath": "users"
+      }
+    },
+    {
+      "type": "table",
+      "source": "${users.items}",
+      "columns": [
+        { "label": "Name", "name": "name" },
+        { "label": "Email", "name": "email" }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Architecture
+
+### Five Layers
+
+```
+JSON Schema
+  │
+  ▼
+┌─────────────────────────────────────────────────────────┐
+│  FluxCore          Seven primitives, types, utilities    │
+├─────────────────────────────────────────────────────────┤
+│  ExpressionCompiler  Compile expressions & templates     │
+├─────────────────────────────────────────────────────────┤
+│  SchemaCompiler      Normalize schema, classify fields  │
+├─────────────────────────────────────────────────────────┤
+│  RendererRuntime     Scope, actions, forms, validation   │
+├─────────────────────────────────────────────────────────┤
+│  React Renderer      Hooks, render handles, components   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Key Design Rules
+
+**Boundary inputs stay explicit. Ambient runtime capabilities come from hooks. Local fragment rendering uses explicit render handles.**
+
+Renderer components receive explicit props, meta, and regions. They use hooks for runtime services like scope access, action dispatch, and fragment rendering — not prop-drilling chains.
+
+**Renderers emit marker classes only. No implicit layout.**
+
+Markers (`nop-container`, `nop-page`, `nop-field`) identify renderer type only. All visual styles come from schema (`className`, semantic props, `classAliases`). Same renderer can look completely different depending on its schema configuration.
+
+**Theme compatibility is a CSS contract, not a runtime provider contract.**
+
+Renderers emit stable DOM classes and read CSS variables. Hosts override variables under `.nop-theme-root`. No `ThemeProvider` required.
+
+---
+
+## Extension Model
+
+### Namespaced Actions
+
+Built-in actions (`setValue`, `ajax`, `submitForm`, `openDialog`) extend through namespaced action scopes:
+
 ```typescript
-// 全局 API
+// Designer-specific actions — isolated from data scope
+"designer:addNode"
+"designer:export"
+
+// Register your own namespace
+actionScope.register('myApp:open', handler);
+```
+
+### Declarative Capability Import
+
+External library capabilities import into action scope without polluting data scope:
+
+```text
+ScopeRef (data)       →  "what values are visible"   (${doc.name})
+ActionScope (actions)  →  "what actions can fire"     (designer:addNode)
+ComponentRegistry      →  "which instance to target"  (componentId: userForm)
+xui:imports            →  "import external capabilities"
+```
+
+This separation means adding `designer:*` actions for a graph editor doesn't leak into every data scope, and importing an external library doesn't pollute the data tree.
+
+---
+
+## Repository Structure
+
+```text
+nop-chaos-flux/
+├── apps/
+│   └── playground/                    # Dev playground (scenario-based pages)
+├── packages/
+│   ├── flux-core                      # Seven primitives, types, pure utils
+│   ├── flux-formula                   # Expression/template compiler
+│   ├── flux-runtime                   # Runtime: scope, actions, forms, validation
+│   ├── flux-react                     # React layer: hooks, render handles
+│   ├── flux-renderers-basic           # page, text, container, button...
+│   ├── flux-renderers-form            # input, select, form...
+│   ├── flux-renderers-data            # table, crud, tree...
+│   ├── flow-designer-core             # Graph runtime (no React)
+│   ├── flow-designer-renderers        # Flow Designer React integration
+│   ├── spreadsheet-core               # Workbook/cell engine (no React)
+│   ├── spreadsheet-renderers          # Spreadsheet React integration
+│   ├── report-designer-core           # Report semantics (no React)
+│   ├── report-designer-renderers      # Report Designer React integration
+│   ├── word-editor-core / renderers   # Word editor
+│   ├── flux-code-editor              # Code editor
+│   ├── ui                             # shadcn/ui components (@nop-chaos/ui)
+│   ├── nop-debugger                   # Debugger + automation API
+│   └── tailwind-preset                # TailwindCSS preset and base styles
+└── docs/                              # Architecture, references, examples, logs
+```
+
+Domain core packages (`*-core`) are pure logic — no React, no framework dependency. Their matching `-renderers` packages bridge into Flux rendering system.
+
+```text
+flux-core → flux-formula → flux-runtime → flux-react → renderers-*
+                                                      designers-*
+                                                      nop-debugger
+                                                      playground
+```
+
+---
+
+## Tech Stack
+
+| Layer | Choice |
+|---|---|
+| UI framework | React 19 |
+| Type system | TypeScript 6.0 (strict) |
+| State management | Zustand (vanilla stores, framework-agnostic) |
+| Build | Vite 8 |
+| Tests | Vitest 4 + Playwright 1.59 |
+| Styling | TailwindCSS 4 + shadcn/ui |
+| Graph canvas | @xyflow/react |
+
+---
+
+## Debugger
+
+`@nop-chaos/nop-debugger` serves two audiences:
+
+**For developers** — a floating panel with event timeline, node inspector, scope viewer, and action trace.
+
+**For AI agents and E2E tests** — a structured automation API:
+
+```typescript
 window.__NOP_DEBUGGER_API__.getPinnedErrors();
 window.__NOP_DEBUGGER_API__.getLatestFailedRequest();
 window.__NOP_DEBUGGER_API__.getRecentFailures({ limit: 5 });
 ```
 
-### Playwright E2E 测试
+---
 
-```bash
-# 无头模式
-pnpm test:e2e
+## Documentation
 
-# 有头模式（可视化调试）
-pnpm test:e2e:headed
-```
+All documentation lives in `docs/`. Start at [`docs/index.md`](docs/index.md) for a task-based navigation table.
+
+**Core architecture:**
+
+| Document | Covers |
+|---|---|
+| [`flux-core.md`](docs/architecture/flux-core.md) | Seven primitives, unified value semantics, scope model |
+| [`frontend-programming-model.md`](docs/architecture/frontend-programming-model.md) | Primitive promotion test, extensibility boundaries, final execution schema |
+| [`renderer-runtime.md`](docs/architecture/renderer-runtime.md) | Renderer contracts, hooks, fragment rendering |
+| [`field-metadata-slot-modeling.md`](docs/architecture/field-metadata-slot-modeling.md) | Field semantics, value-or-region, renderer metadata |
+| [`component-resolution.md`](docs/architecture/component-resolution.md) | Template vs. instance, static target plans |
+| [`template-instantiation-and-node-identity.md`](docs/architecture/template-instantiation-and-node-identity.md) | Compile-once model, template vs. instance identity |
+
+**Domain-specific:**
+
+| Document | Covers |
+|---|---|
+| [`flow-designer/design.md`](docs/architecture/flow-designer/design.md) | Flow Designer architecture |
+| [`report-designer/design.md`](docs/architecture/report-designer/design.md) | Report Designer / Spreadsheet architecture |
+| [`debugger-runtime.md`](docs/architecture/debugger-runtime.md) | Debugger architecture and automation API |
+| [`form-validation.md`](docs/architecture/form-validation.md) | Validation rules and field participation |
+| [`dependency-tracking.md`](docs/architecture/dependency-tracking.md) | Scope dependency collection and invalidation |
+| [`api-data-source.md`](docs/architecture/api-data-source.md) | API requests, data sources, and reactions |
+| [`flux-dsl-vm-extensibility.md`](docs/architecture/flux-dsl-vm-extensibility.md) | Flux as DSL VM — where extensibility belongs |
+| [`styling-system.md`](docs/architecture/styling-system.md) | Renderer styling contract and shadcn/ui integration |
+| [`theme-compatibility.md`](docs/architecture/theme-compatibility.md) | Host theme integration, CSS variables |
+
+**Implementation guidance:**
+
+| Document | Covers |
+|---|---|
+| [`flux-runtime-module-boundaries.md`](docs/architecture/flux-runtime-module-boundaries.md) | File placement and ownership in runtime package |
+| [`renderer-markers-and-selectors.md`](docs/architecture/renderer-markers-and-selectors.md) | DOM marker protocol, state attributes, testing selectors |
 
 ---
 
-## 🔧 开发约定
+## Code Conventions
 
-### 代码规范
-
-- **ESM-first**：`"type": "module"`
-- **TypeScript strict**：严格类型检查
-- **无注释**：除非用户明确要求
-- **遵循现有代码风格**：在每个文件中模仿现有风格
-
-### 包结构
-
-每个包遵循：
-```
-packages/<name>/
-  src/
-    index.ts          # 公共导出
-    index.test.ts     # 测试（同位置或 __tests__/）
-  tsconfig.json       # 类型检查配置
-  tsconfig.build.json # 构建配置
-  package.json
-```
-
-### 导入规范
-
-- 使用 workspace 协议：`"@nop-chaos/flux-core": "workspace:*"`
-- 包内使用相对路径
-
-### 状态管理
-
-- 使用 Zustand vanilla stores（非 React context stores）
-- Store 是框架无关的
-- 使用 `use-sync-external-store` 进行 React 订阅
-
-### 测试
-
-- 使用 Vitest
-- 测试文件：`*.test.ts` 或 `*.test.tsx`
-- 优先同位置测试或 `__tests__/` 目录
-
-
-## 📄 许可协议
-
-本项目采用 MIT 许可协议 - 详见 [LICENSE](LICENSE) 文件
+- ESM-first, TypeScript strict mode
+- Zustand vanilla stores (framework-agnostic), React subscriptions via `use-sync-external-store`
+- UI components from `@nop-chaos/ui` (shadcn/ui) — no raw HTML elements in renderers
+- Tests: Vitest, colocated (`*.test.ts` / `*.test.tsx`)
+- Workspace protocol: `"@nop-chaos/flux-core": "workspace:*"`
 
 ---
 
-## 🙏 致谢
+## License
 
-本项目受到百度 AMIS 的启发，但进行了全面的架构重写和性能优化。感谢 AMIS 团队为低代码领域做出的贡献。
+MIT — see [LICENSE](LICENSE).
+
+Inspired by [Baidu AMIS](https://github.com/baidu/amis). This project is a full architectural rewrite with seven primitives, unified semantics, and top-down clean design.
