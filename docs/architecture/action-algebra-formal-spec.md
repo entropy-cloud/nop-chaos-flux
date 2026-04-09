@@ -56,6 +56,26 @@ Semantically, once those fields exist, execution is already `DAG`-shaped:
 
 Ordered action lists execute sequentially in stable input order unless a narrower aggregate node such as `parallel` says otherwise.
 
+This ordered-list form is part of the normative authoring surface:
+
+- `then` and `onError` may carry one action or an ordered action list
+- the ordered-list form is progressive shorthand for sequential composition, not a second graph language
+- `parallel` remains the explicit aggregate fan-out node and should not be collapsed into a generic `steps` carrier plus a mode boolean
+
+## Visual Authoring Projection
+
+A future visual action designer may use explicit `next` edges, branch handles, guarded groups, or other authoring-only graph conveniences.
+
+That does not change the exported runtime DSL.
+
+Rules:
+
+1. visual authoring constructs should lower back to ordered arrays, `when`, `then`, `onError`, and `parallel`
+2. designer convenience is not by itself a reason to rename `parallel` or remove ordered-list shorthand
+3. node optionality should continue to lower to `when` plus the existing `skipped` result semantics rather than introducing a new bare `optional` execution field
+
+See `docs/architecture/action-graph-authoring.md` for the authoring-model projection rules.
+
 ## Compiler-Assembled Acyclic Graph
 
 The execution graph is assembled from schema structure during compilation. It is not an arbitrary runtime graph language authored through back-references.
@@ -148,6 +168,7 @@ Rules:
 1. `when` is a structured precondition on one action node
 2. if `when` evaluates false, dispatch returns a normal `ActionResult` with `skipped: true`
 3. a skipped step is `neutral-class`, not `success-class`
+4. `when` is also the canonical exported way to express optional node execution; a future visual authoring tool may wrap this in richer UI, but exported semantics stay on `when`
 
 ### `then`
 
@@ -232,6 +253,7 @@ Narrower docs should call out any subsystem-specific deviations explicitly inste
 ## Related Documents
 
 - `docs/architecture/frontend-programming-model.md`
+- `docs/architecture/action-graph-authoring.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/api-data-source.md`
 - `docs/architecture/form-validation.md`
