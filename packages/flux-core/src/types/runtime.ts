@@ -60,6 +60,20 @@ export interface FormStoreApi {
   batchUpdate(updates: Partial<FormStoreState>): void;
 }
 
+export interface FormStatusSummary {
+  id?: string;
+  name?: string;
+  submitting: boolean;
+  validating: boolean;
+  dirty: boolean;
+  touched: boolean;
+  visited: boolean;
+  valid: boolean;
+  invalid: boolean;
+  hasErrors: boolean;
+  errorCount: number;
+}
+
 export interface FormLifecycleHandlers {
   submitAction?: (options?: { interactionId?: string }) => Promise<ActionResult>;
   onSubmitSuccess?: (result: ActionResult, options?: { interactionId?: string }) => Promise<ActionResult>;

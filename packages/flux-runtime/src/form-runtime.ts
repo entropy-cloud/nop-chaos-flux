@@ -1,4 +1,4 @@
-import type { ApiSchema, FormLifecycleHandlers, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
+import type { ApiSchema, FormLifecycleHandlers, FormStatusSummary, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
 import {
   clampArrayIndex,
   clampInsertIndex,
@@ -99,6 +99,34 @@ function buildErrorPathState(input: Record<string, ValidationError[]>, path: str
   return next;
 }
 
+function buildFormStatusSummary(
+  state: import('@nop-chaos/flux-core').FormStoreState,
+  id: string | undefined,
+  name: string | undefined
+): FormStatusSummary {
+  const errorEntries = Object.values(state.errors);
+  const errorCount = errorEntries.reduce((acc, errs) => acc + errs.length, 0);
+  const hasErrors = errorCount > 0;
+  const validating = Object.values(state.validating).some(Boolean);
+  const dirty = Object.values(state.dirty).some(Boolean);
+  const touched = Object.values(state.touched).some(Boolean);
+  const visited = Object.values(state.visited).some(Boolean);
+
+  return {
+    id,
+    name,
+    submitting: state.submitting,
+    validating,
+    dirty,
+    touched,
+    visited,
+    hasErrors,
+    errorCount,
+    valid: !hasErrors,
+    invalid: hasErrors
+  };
+}
+
 export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInput): FormRuntime {
   const store = createFormStore(inputValue.initialValues ?? {});
   const formId = inputValue.id ?? `${inputValue.parentScope.id}-form`;
@@ -153,10 +181,48 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     }
   });
 
+  const formScopeWithBinding: typeof scope = {
+    ...scope,
+    get(path) {
+      if (path === '$form') {
+        return buildFormStatusSummary(store.getState(), formId, formName);
+      }
+
+      return scope.get(path);
+    },
+    has(path) {
+      if (path === '$form') {
+        return true;
+      }
+
+      return scope.has(path);
+    },
+    readOwn() {
+      return {
+        ...scope.readOwn(),
+        $form: buildFormStatusSummary(store.getState(), formId, formName)
+      };
+    },
+    read() {
+      return {
+        ...scope.read(),
+        $form: buildFormStatusSummary(store.getState(), formId, formName)
+      };
+    }
+  };
+
+  Object.defineProperty(formScopeWithBinding, 'value', {
+    get() {
+      return this.read();
+    },
+    configurable: true,
+    enumerable: false
+  });
+
   const sharedState: ManagedFormRuntimeSharedState = {
     inputValue,
     store,
-    scope,
+    scope: formScopeWithBinding,
     initialFieldState,
     validationRuns,
     pendingValidationDebounces,
@@ -232,7 +298,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     id: formId,
     name: formName,
     store,
-    scope,
+    scope: formScopeWithBinding,
     validation: inputValue.validation,
     setLifecycleHandlers(handlers) {
       lifecycleHandlers = handlers;

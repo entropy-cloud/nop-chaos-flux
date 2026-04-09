@@ -3,6 +3,7 @@ import {
   parsePath,
   serializeNodeLocator,
   type BaseSchema,
+  type FormStatusSummary,
   type RendererComponentProps,
   type RendererDefinition,
   type RendererSchemaValidationContext,
@@ -226,6 +227,44 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     lastInitKeyRef.current = activationKey;
     void initAction(undefined, { scope: lifecycleScope });
   }, [activationKey, importsReady, initAction, lifecycleScope]);
+
+  const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
+  const parentScope = currentForm?.scope.parent;
+
+  useEffect(() => {
+    if (!statusPath || !currentForm || !parentScope) {
+      return;
+    }
+
+    const resolvedStatusPath = statusPath;
+    const resolvedParentScope = parentScope;
+
+    function publishStatus() {
+      const state = currentForm!.store.getState();
+      const errorEntries = Object.values(state.errors);
+      const errorCount = errorEntries.reduce((acc: number, errs) => acc + errs.length, 0);
+      const hasErrors = errorCount > 0;
+      const summary: FormStatusSummary = {
+        id: currentForm!.id,
+        name: currentForm!.name,
+        submitting: state.submitting,
+        validating: Object.values(state.validating).some(Boolean),
+        dirty: Object.values(state.dirty).some(Boolean),
+        touched: Object.values(state.touched).some(Boolean),
+        visited: Object.values(state.visited).some(Boolean),
+        hasErrors,
+        errorCount,
+        valid: !hasErrors,
+        invalid: hasErrors
+      };
+
+      resolvedParentScope.update(resolvedStatusPath, summary);
+    }
+
+    publishStatus();
+
+    return currentForm.store.subscribe(publishStatus);
+  }, [statusPath, currentForm, parentScope]);
 
   return (
     <section className="nop-form flex flex-col gap-4" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>

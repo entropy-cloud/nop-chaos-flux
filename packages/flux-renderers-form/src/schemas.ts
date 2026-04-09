@@ -27,6 +27,7 @@ export interface FormSchema extends BaseSchema {
   body?: BaseSchema[];
   actions?: BaseSchema[];
   data?: Record<string, any>;
+  statusPath?: string;
   initAction?: ActionSchema | ActionSchema[];
   submitAction?: ActionSchema | ActionSchema[];
   onSubmitSuccess?: ActionSchema | ActionSchema[];
