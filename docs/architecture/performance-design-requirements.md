@@ -66,6 +66,8 @@ This is a normative design requirements document.
 ## P5. Predictable async behavior
 
 - Debounce/throttle/request coordination promises must always settle deterministically.
+- All async `useEffect` closures that perform network or runtime requests MUST use `AbortController` for lifecycle management: call `controller.abort()` in the cleanup return to prevent stale updates from being applied after the component unmounts or dependencies change.
+- The two cancellation layers are distinct: (1) **ignore stale results** — check `signal.aborted` before calling `setState`; (2) **abort in-flight tasks** — pass `signal` to fetch/runtime APIs that support it. Both layers must be present when the runtime API accepts a signal.
 
 ## P6. Observability for performance-sensitive failures
 
@@ -79,12 +81,35 @@ This is a normative design requirements document.
 - Prefer explicit cache invalidation over ad-hoc global cache retention.
 - Add targeted regression tests for performance-sensitive logic paths.
 
+## React 19 / Compiler Conventions
+
+### React Compiler
+
+- The playground build chain ingests the React Compiler via `@rolldown/plugin-babel` + `babel-plugin-react-compiler` configured in `apps/playground/vite.config.ts`.
+- The `eslint-plugin-react-compiler` rule `react-compiler/react-compiler` is set to `error` in `eslint.config.js`. Any new code that introduces compiler-hostile patterns (mutating props, conditional hook calls, etc.) will fail lint.
+- **Do not remove existing `useMemo` / `useCallback` without profiling evidence that the compiler has taken over that boundary.** Only retire manual memoization after verifying the compiler successfully compiles the component and a before/after profile confirms no regression.
+
+### `startTransition` / `useTransition`
+
+- Use `startTransition` (or `useTransition`) for state updates that control **non-urgent**, deferred re-renders: pagination page changes, sort/filter toggles, row selection batch updates, and sheet/tab switching. These are already applied in `useTablePagination`, `useTableSelection`.
+- **Never** wrap the user's primary input handler (the click itself, the keystroke capture) inside a transition — only the resulting derived state update belongs in a transition.
+- Use `useDeferredValue` to defer expensive downstream computations (e.g. large filtered dataset) rather than the interaction source.
+
+### Module Boundary Rules for Hot Paths
+
+- Large renderer components must be decomposed into independent modules when they mix data derivation, state management, UI rendering, and side-effect bindings in a single file.
+- See `packages/flux-renderers-data/src/table-renderer/` and `packages/spreadsheet-renderers/src/spreadsheet-interactions/` as reference splits.
+- Each sub-module must be independently typecheckable and testable.
+
 ## Prohibited Patterns
 
 - Repeated `findIndex/find` inside mutation loops on large collections.
 - Deep `JSON.stringify` comparisons on every interactive update.
 - In-place mutation mixed with reference-based change detection.
 - Ambiguous viewport/state ownership in interactive canvas components.
+- Using bare boolean flags (`let cancelled = false`) instead of `AbortController` in async `useEffect` closures.
+- Using `startTransition` around input event handlers or state that must respond synchronously (e.g., typing, pointer capture).
+- Skipping React Compiler output verification after adding or refactoring components in hot-path packages.
 
 ## Design Review Checklist
 

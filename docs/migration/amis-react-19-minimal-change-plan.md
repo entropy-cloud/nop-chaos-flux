@@ -1,75 +1,98 @@
-# AMIS React 19 最小化迁移计划
+# AMIS React 19 独立迁移计划
 
 > Plan Status: draft
-> Last Reviewed: 2026-04-08
+> Last Reviewed: 2026-04-09
 > Target Repo: `C:\can\nop\templates\amis`
 > Scope: 只产出迁移分析与计划，不在目标仓库执行代码修改
 
 ## 目标
 
-在不重构 AMIS 渲染器、编辑器和 MobX 架构的前提下，把当前 `amis` workspace 从 React 18.2 升级到 React 19，并以最小修改达到：
+在 `templates/amis` 仓库内，独立完成 AMIS 到 React 19 的迁移计划。
+
+这里的“独立”有两个含义：
+
+- 迁移问题在 `templates/amis` 内部闭环处理，不混入 `nop-chaos-next-master` 或 `nop-chaos-flux` 的集成方案。
+- React 19 迁移完成后，在这个仓库内单独做安装、类型检查、构建、测试和 smoke 验证。
+
+本计划优先级是：
+
+- 先解决 AMIS runtime 的 React 19 兼容。
+- editor 相关包不是本轮必须完成项，但必须在计划中明确边界和 gate，避免和 runtime 迁移混为一谈。
+
+## 目标结果
+
+### 第一目标：Runtime 可用
+
+在不重写 AMIS 渲染器架构的前提下，让以下运行时闭包在 React 19 下成立：
+
+- `amis-formula`
+- `amis-core`
+- `amis-ui`
+- `amis`
+
+至少达到：
 
 - `npm install` 可完成
-- `npm run typecheck` 通过
-- `npm run build --workspaces` 通过
-- `npm test --workspaces` 通过
-- 示例页、embed 模式、editor 基本可用
+- runtime 相关 `typecheck` 可完成
+- runtime 相关 `build` 可完成
+- runtime 相关 `test` 可完成或只有可接受的非 blocker 警告
+- 示例页与核心运行时交互 smoke 可用
 
-## 当前基线
+### 第二目标：整仓边界清晰
 
-- 根仓库仍固定 `react`/`react-dom` `^18.2.0`，`@types/react`/`@types/react-dom` 为 18，`@testing-library/react` 为 13.4.0，`react-test-renderer` 为 18。
-- 根 `tsconfig.json` 使用 `"jsx": "react"`，属于 classic JSX transform；React 19 要求 modern JSX transform。
-- 入口层已经部分完成 React 18 迁移：`examples/index.jsx`、`examples/embed.tsx`、`packages/amis-editor/index.tsx` 已改用 `createRoot`。
-- `peerDependencies` 多数写的是 `react >=16.8.6` / `react-dom >=16.8.6`，语义上已覆盖 React 19，因此消费者 peer 范围不是第一优先级。
+- `amis-editor-core`
+- `amis-editor`
+- `amis-theme-editor-helper`
+- `office-viewer`
+
+这些包不和 runtime 主线绑死。
+
+具体策略是：
+
+- editor 包不作为 runtime React 19 迁移完成的前置条件。
+- 是否继续处理 editor，单独作为后续项目或附加 gate。
+- `office-viewer` 只在确认 runtime 主线真的被它阻塞时再纳入首轮；否则不进入主计划主线。
+
+## 当前真实基线
+
+以下基线必须以 `git show HEAD` 为准，而不是以当前工作区未提交实验改动为准。
+
+### 根仓基线
+
+- 根 `package.json` 仍固定：
+  - `react@^18.2.0`
+  - `react-dom@^18.2.0`
+  - `@types/react@^18.0.24`
+  - `@types/react-dom@^18.0.8`
+- 根 `tsconfig.json` 仍是：
+  - `jsx: "react"`
+- 也就是说，当前正式基线仍是 React 18 + classic JSX transform。
+
+### Runtime 包基线
+
+- `packages/amis/package.json` 仍是 React 18、`@testing-library/react@13.4.0`、`react-test-renderer@18`、`mobx-react@6.3.1`。
+- `packages/amis-core/package.json` 仍是 React 18、`mobx-react@6.3.1`。
+- `packages/amis-ui/package.json` 仍是 React 18、`mobx-react@6.3.1`。
+
+### 当前工作树状态
+
+`templates/amis` 当前工作树里已经有一批未提交的 React 19 试验改动，包括：
+
+- React 版本升级
+- `mobx-react` 升到 `9.2.1`
+- `tsconfig.json` 切到 `react-jsx`
+- `Custom` / `Alert` / `ContextMenu` / `debug` 的 `createRoot` 兼容尝试
+- `InputImage` 去掉字符串 ref
+- `mobileCity.test.tsx` 中 `act` 导入迁移
+
+这些改动只能视为“已探索到的 patch 草稿”，不能视为迁移已完成。
 
 ## 关键发现
 
-### 已经就绪的部分
+## 1. React 19 迁移不能只改 React 版本号
 
-- 公共入口并不依赖 `ReactDOM.render`。
-- 大部分类组件默认值都写在 class `defaultProps` 上；React 19 仍支持 class `defaultProps`，这不是 blocker。
-- 大量 DOM 定位调用已经统一走 `findDomCompat`，说明仓库已经有“兼容层优先”的迁移思路。
+当前正式基线里，至少以下内容需要一起处理：
 
-### React 19 硬 blocker
-
-- classic JSX transform：`C:\can\nop\templates\amis\tsconfig.json`
-- 已移除的 `react-dom` 挂载 API：
-- `packages/amis/src/renderers/Custom.tsx`
-- `packages/amis-ui/src/components/Alert.tsx`
-- `packages/amis-ui/src/components/ContextMenu.tsx`
-- `packages/amis-core/src/utils/debug.tsx`
-- 已移除的字符串 ref / `this.refs`：`packages/amis/src/renderers/Form/InputImage.tsx`
-- 已移除的 `react-dom/test-utils` `act` 导入：`packages/amis/__tests__/renderers/Form/mobileCity.test.tsx`
-- 测试依赖版本落后：
-- `@testing-library/react@13.4.0` 只声明支持 React 18
-- `react-test-renderer@18` 必须至少和 React 主版本对齐
-
-### React 19 高风险点，但不建议一上来全面重构
-
-- `packages/amis-core/src/utils/findDomCompat.ts` 直接依赖 React Fiber 内部结构，并在兜底分支调用 `ReactDom.findDOMNode`。
-- 许多组件继续通过 `findDomCompat as findDOMNode` 获取宿主 DOM；这一层如果在 React 19 下仍然稳定，就可以避免大面积改造。
-- `mobx-react@6.3.1` 当前 peer 只覆盖旧 React 版本，且与仓库现有 `mobx@4.5.0` 绑定很深。若它在 React 19 下安装或运行不稳定，迁移就不再是“最小改动”问题，而会升级为 React + MobX 联动升级。
-
-## 最小化修改原则
-
-- 不做 class component 到 function component 重写。
-- 不做 React Router、Vite、Rollup 的连带升级，除非验证阶段证明它们是 blocker。
-- 不先清理全部 `findDOMNode` 风格调用，只先修 React 19 明确移除的 API。
-- 优先新增一个很小的 `createRoot` / `root.unmount()` 兼容 helper，替换散落的隐式挂载逻辑。
-- 不额外引入 `StrictMode`；先保持当前运行模式，避免旧生命周期噪声放大。
-
-## 分阶段计划
-
-### Phase 0: 18.3 预演
-
-- 先把 `react`、`react-dom` 从 `18.2` 升到 `18.3`，不改业务代码。
-- 运行 `npm install`、`npm run typecheck`、`npm run build --workspaces`、`npm test --workspaces`。
-- 记录 React 18.3 给出的 deprecation warning，作为 React 19 清单。
-- 这一步只用于缩小不确定性，不追求长期停留在 18.3。
-
-### Phase 1: 依赖与编译基线
-
-- 升级根仓库和相关 package 的以下依赖到 React 19 对齐版本：
 - `react`
 - `react-dom`
 - `@types/react`
@@ -77,109 +100,322 @@
 - `react-test-renderer`
 - `@types/react-test-renderer`
 - `@testing-library/react`
-- 把根 `tsconfig.json` 的 `jsx` 从 `react` 切到 `react-jsx`。
-- 只在 declaration 配置实际受影响时同步调整 `packages/amis/tsconfig-for-declaration.json`，其他 declaration-only 配置不是首批 blocker。
-- 保持 `peerDependencies` 原样，除非发布验证时发现 npm 解析或文档说明需要更精确的范围。
+- `tsconfig.json` 的 JSX transform
 
-### Phase 1 Gate: MobX 兼容性判定
+其中 `@testing-library/react@13.4.0` 和 `react-test-renderer@18` 都不适合作为 React 19 正式基线继续保留原样。
 
-- 用 React 19 重新安装依赖，先确认 `mobx-react@6.3.1` 是否导致安装失败或关键运行异常。
-- 若只存在 peer warning，但示例、测试、editor 能跑，则继续最小化路线。
-- 若安装或运行失败，不要直接在 React 19 变更中顺手升级 MobX 体系；应单独立项评估 `mobx@4 -> 6`、`mobx-react@6 -> 9`、`mobx-state-tree` 连动升级。到这一步就意味着“最小化修改”前提失效。
+## 2. `mobx-react@6.3.1` 不是“可能有风险”，而是正式 blocker
 
-### Phase 2: 移除 React 19 明确删除的 API
+核对 npm registry 后：
 
-- 把所有仍在使用的 `ReactDOM.render` / `unmountComponentAtNode` 改为 `createRoot` / `root.unmount()`。
-- 优先引入一个小型 root registry/helper，避免在 `Alert`、`ContextMenu`、`debug`、`Custom` 中各写一套重复逻辑。
-- 具体改动点：
+- `mobx-react@6.3.1` 的 peerDependencies 只覆盖 `react: ^16.8.0 || 16.9.0-alpha.0`
+- 它并不覆盖 React 18，更不覆盖 React 19
+
+因此在 React 19 路线上：
+
+- `mobx-react@6.3.1` 不能再被当作“先试试看也许能跑”的组件
+- 它必须被当成明确迁移步骤处理
+
+但这里还有第二层风险：
+
+- `mobx-react@9.2.1` 的 peerDependencies 要求 `mobx:^6.9.0`
+- 而 AMIS 当前运行时包依赖的是 `mobx:^4.5.0`
+
+这意味着：
+
+- `mobx-react` 升级并不是一个孤立变更
+- 它很可能连带 `mobx` 主版本升级
+- 这已经超出“单纯 React API 去旧化”范围，是 React + MobX 联动迁移 gate
+
+所以本计划必须把 MobX 体系兼容性作为单独 gate，而不是一句“顺手升级”。
+
+## 3. React 19 明确删除的 API 仍是 runtime 主 blocker
+
+在 runtime 范围内，当前最明确的问题有：
+
 - `packages/amis/src/renderers/Custom.tsx`
+  - 仍保留 `ReactDOM.render` 语义路径
 - `packages/amis-ui/src/components/Alert.tsx`
+  - 隐式 body 挂载逻辑需要 `createRoot`
 - `packages/amis-ui/src/components/ContextMenu.tsx`
+  - 隐式 body 挂载逻辑需要 `createRoot`
 - `packages/amis-core/src/utils/debug.tsx`
-- 清理 `packages/amis-editor-core/src/component/factory.tsx` 中未使用的旧 `react-dom` 导入，避免误导后续排查。
+  - 调试面板挂载逻辑需要 `createRoot`
+- `packages/amis/src/renderers/Form/InputImage.tsx`
+  - 使用字符串 ref / `this.refs`
+- `packages/amis/__tests__/renderers/Form/mobileCity.test.tsx`
+  - 仍从 `react-dom/test-utils` 取 `act`
+
+当前未提交实验改动已经覆盖了这些点的大部分方向，但还没有经过完整回归。
+
+## 4. `findDomCompat` 是 React 19 最大系统性风险
+
+`packages/amis-core/src/utils/findDomCompat.ts` 当前问题有两层：
+
+- 它依赖 React Fiber 内部结构
+- 在找不到 fiber 时还会回退到 `ReactDom.findDOMNode`
+
+此外，`amis` 和 `amis-ui` 中仍存在大量 `findDomCompat as findDOMNode` 调用，集中在：
+
+- Dialog / Drawer / PopOver
+- QuickEdit
+- Table / ColumnToggler / HeadCell 筛选与搜索下拉
+- Select / NestedSelect / TreeSelect / InputTag / Combo
+- Tooltip / Tabs / DateRangePicker / MonthRangePicker / ColorPicker 等
+
+所以 React 19 runtime 迁移是否能保持“最小改动”，核心就看两点：
+
+- 去掉 `findDOMNode` fallback 后，fiber 路径是否仍足够稳定
+- 即使不稳定，失败是否只集中在少数热点组件
+
+如果失败是系统性的，这个项目就会从“最小迁移”升级成“显式 DOM ref 专项重构”。
+
+## 5. editor 相关问题必须和 runtime 主线分开
+
+当前搜索结果表明：
+
+- editor 体系仍大量使用 `findDOMNode`
+- `packages/amis-editor-core/src/component/factory.tsx` 还直接使用 `react-dom` 的旧挂载 API
+
+这再次说明：
+
+- editor 的 React 19 兼容是独立问题
+- 不应该和 runtime 主线共用完成标准
+
+## 最小化迁移原则
+
+- 不把 class component 全量改写成 function component。
+- 不一次性清理所有 `findDomCompat` 调用。
+- 不把 editor 迁移混入 runtime 主线。
+- 优先用一个共享 `reactRoot` helper 收口所有隐式挂载点。
+- 先修 React 19 明确移除的 API，再观察运行时热点是否需要显式 ref 补丁。
+- 不因为测试工具老旧，就在首轮把所有 snapshot / renderer 测试重写。
+
+## 分阶段计划
+
+### Phase 0: 清理认知和工作树
+
+- 明确所有分析和决策都以 `HEAD` 为基线，不以当前未提交实验改动为基线。
+- 保留当前未提交实验改动作为参考 diff，但不要直接假设它们是正确答案。
+- 先整理出一个 runtime-only 待改文件清单。
+
+### Phase 1: 依赖与编译基线升级
+
+- 根仓升级：
+  - `react`
+  - `react-dom`
+  - `@types/react`
+  - `@types/react-dom`
+- runtime 包升级：
+  - `packages/amis`
+  - `packages/amis-core`
+  - `packages/amis-ui`
+- runtime 测试依赖升级：
+  - `@testing-library/react`
+  - `react-test-renderer`
+  - `@types/react-test-renderer`
+- 把根 `tsconfig.json` 的 `jsx` 从 `react` 切到 `react-jsx`。
+- 同步调整受 declaration 影响的配置：
+  - `packages/amis/tsconfig-for-declaration.json`
+  - `packages/amis-formula/tsconfig-for-declaration.json`
+  - `packages/office-viewer/tsconfig-for-declaration.json`
+
+### Phase 1 Gate: MobX 体系兼容性判定
+
+必须先独立判定：
+
+- React 19 下是否还能保留 `mobx@4.5.0`
+- `mobx-react` 该升到哪个版本
+- runtime 包是否被迫同时升级到 `mobx@6`
+
+建议 gate 规则：
+
+- 若 `mobx@4 + mobx-react@6.3.1` 在安装阶段就因 peer/运行问题失效，则不能继续假装这是非 blocker。
+- 若 runtime 最终必须切到 `mobx@6 + mobx-react@9`，则把它明确定义为本次 React 19 迁移的正式组成部分。
+- 若 editor 对新的 MobX 体系不兼容，不要因此阻塞 runtime 主线；应把 editor 作为单独后续项目。
+
+### Phase 2: 修 React 19 明确删除的 API
+
+- 引入一个共享 `reactRoot` helper：
+  - `createRoot`
+  - root registry
+  - `root.render`
+  - `root.unmount`
+- 用它替换所有 runtime 范围内的隐式挂载点：
+  - `packages/amis/src/renderers/Custom.tsx`
+  - `packages/amis-ui/src/components/Alert.tsx`
+  - `packages/amis-ui/src/components/ContextMenu.tsx`
+  - `packages/amis-core/src/utils/debug.tsx`
+- 在 `amis-core/src/utils/index.ts` 暴露该 helper。
+- 把 `packages/amis/src/renderers/Form/InputImage.tsx` 中的字符串 ref 改成现有 `createRef` 字段。
 - 把 `packages/amis/__tests__/renderers/Form/mobileCity.test.tsx` 的 `act` 导入改到 `react`。
-- 把 `packages/amis/src/renderers/Form/InputImage.tsx` 中的 `this.refs.dropzone` 改为现有 `createRef` 字段 `this.dropzone.current`。
 
-### Phase 3: 保留 `findDomCompat`，只做点状补强
+### Phase 3: 保守处理 `findDomCompat`
 
-- 第一轮不要尝试替换全部 `findDOMNode` 风格调用。
-- 先修改 `packages/amis-core/src/utils/findDomCompat.ts`：
-- 删除对 `ReactDom.findDOMNode` 的运行时依赖兜底。
-- 只保留 Fiber 路径，并在失败时给出更可定位的错误。
-- 在 React 19 下执行高风险交互 smoke test，优先覆盖以下类型：
+首轮不重写所有组件。
+
+只做以下动作：
+
+- 修改 `packages/amis-core/src/utils/findDomCompat.ts`
+- 删除 `ReactDom.findDOMNode` 的运行时兜底
+- 保留 fiber 路径
+- 在失败时给出更可定位的错误
+
+然后只做 runtime 相关高风险 smoke：
+
 - Overlay / PopOver / Tooltip / Dialog / Drawer
 - Table / ColumnToggler / HeadCell filter/search dropdown
-- Select / NestedSelect / TreeSelect / InputTag
+- Select / NestedSelect / TreeSelect / InputTag / Combo
 - QuickEdit / ContextMenu / Alert / Confirm
-- Editor 面板和 region wrapper
-- 若失败点集中在少数组件，再把这些组件改成显式 DOM ref。
-- 若失败呈系统性扩散，不继续硬推“最小改动”，而是转入“显式 ref 替代 `findDomCompat`”专题重构。
+- Custom renderer 子树挂载、更新、卸载
 
-### Phase 4: 测试与回归收口
+结果分流：
 
-- 保留现有 `react-test-renderer` 测试，不在首轮迁移中全面改写到 Testing Library。
-- 只做版本对齐和最少量 API 修正，接受 React 19 对 `react-test-renderer` 的 deprecation warning。
-- 对以下场景做人工 smoke：
-- `examples/index.jsx` 示例页启动
-- `examples/embed.tsx` 的 `updateProps` / `updateSchema` / `unmount`
-- `Custom` renderer 子树挂载、更新、卸载
+- 若失败点集中在少数组件，对这些组件补显式 DOM ref。
+- 若失败大面积扩散，则另起“findDomCompat 清退”专项，不再称为最小迁移。
+
+### Phase 4: Runtime-only 验证与收口
+
+不要继续只用根级 `npm run build --workspaces` / `npm test --workspaces` 作为首轮完成标准，因为这会把 editor 一起拖进来。
+
+首轮应拆成 runtime-only 验证序列：
+
+- `npm install`
+- `npm run typecheck`
+- runtime 包单独 build：
+  - 在 `packages/amis-formula` 下执行 `npm run build`
+  - 在 `packages/amis-core` 下执行 `npm run build`
+  - 在 `packages/amis-ui` 下执行 `npm run build`
+  - 在 `packages/amis` 下执行 `npm run build`
+- runtime 包单独 test：
+  - 在 `packages/amis-formula` 下执行 `npm test`
+  - 在 `packages/amis-core` 下执行 `npm test`
+  - 在 `packages/amis-ui` 下执行 `npm test`
+  - 在 `packages/amis` 下执行 `npm test`
+
+人工 smoke 至少覆盖：
+
+- 示例页启动
+- `embed` 模式挂载、更新、卸载
+- `Custom` renderer
 - `Alert` / `confirm` / `ContextMenu`
 - `Dialog` / `Drawer` / `PopOver`
 - `InputImage` 选择文件
-- `packages/amis-editor/index.tsx` editor 启动
-- 通过后再决定是否处理控制台 warning 和非 blocker 的测试去旧化。
+- 常用下拉和日期类控件
+
+### Phase 5: editor 与附属包单独决策
+
+在 runtime 主线完成后，再决定是否继续处理：
+
+- `amis-editor-core`
+- `amis-editor`
+- `amis-theme-editor-helper`
+- `office-viewer`
+
+这一步的结论应该单独记录，不回写到 runtime 主线完成标准里。
 
 ## 建议的实际改动顺序
 
-1. React 18.3 预演。
-2. 升级 React 19 依赖与 types。
+1. 以 `HEAD` 为基线重新整理 patch，不直接继承当前工作树。
+2. 升级 React / types / 测试依赖。
 3. 切 `react-jsx`。
-4. 修 `ReactDOM.render` / `unmountComponentAtNode`。
-5. 修 `this.refs.dropzone`。
-6. 修 `react-dom/test-utils` `act` 导入。
-7. 验证 `findDomCompat`。
-8. 只对失败热点做显式 ref 补丁。
-9. 完整回归与文档记录。
+4. 处理 MobX 体系 gate。
+5. 引入 `reactRoot` helper。
+6. 替换 `Custom` / `Alert` / `ContextMenu` / `debug` 挂载点。
+7. 修 `InputImage` 字符串 ref。
+8. 修 `act` 导入。
+9. 去掉 `findDomCompat` 的 `findDOMNode` fallback。
+10. 对 runtime 热点做 smoke。
+11. 只对失败热点补显式 ref。
+12. 以 runtime-only 验证序列收口。
+13. 再单独决定 editor / office-viewer 后续计划。
+
+## Runtime 主线改动清单
+
+### 依赖与配置
+
+- `package.json`
+- `tsconfig.json`
+- `packages/amis/package.json`
+- `packages/amis-core/package.json`
+- `packages/amis-ui/package.json`
+- `packages/amis/tsconfig-for-declaration.json`
+- `packages/amis-formula/tsconfig-for-declaration.json`
+- `packages/office-viewer/tsconfig-for-declaration.json`
+
+### runtime 代码
+
+- `packages/amis-core/src/utils/reactRoot.tsx` 新增
+- `packages/amis-core/src/utils/index.ts`
+- `packages/amis-core/src/utils/debug.tsx`
+- `packages/amis-core/src/utils/findDomCompat.ts`
+- `packages/amis/src/renderers/Custom.tsx`
+- `packages/amis/src/renderers/Form/InputImage.tsx`
+- `packages/amis-ui/src/components/Alert.tsx`
+- `packages/amis-ui/src/components/ContextMenu.tsx`
+- `packages/amis/__tests__/renderers/Form/mobileCity.test.tsx`
+
+### 可能追加的热点补丁
+
+- `packages/amis/src/renderers/Dialog.tsx`
+- `packages/amis/src/renderers/Drawer.tsx`
+- `packages/amis/src/renderers/QuickEdit.tsx`
+- `packages/amis/src/renderers/Table/*`
+- `packages/amis/src/renderers/Form/NestedSelect.tsx`
+- `packages/amis/src/renderers/Form/TreeSelect.tsx`
+- `packages/amis/src/renderers/Form/InputTag.tsx`
+- `packages/amis-ui/src/components/Select.tsx`
+- `packages/amis-ui/src/components/Tabs.tsx`
+- `packages/amis-ui/src/components/DateRangePicker.tsx`
 
 ## 非目标
 
-- 不升级 React Router 5。
-- 不把 editor / renderer 全量函数化。
-- 不在本次迁移里升级 MobX 体系，除非 Phase 1 Gate 证明这是不可回避的 blocker。
-- 不在首轮迁移里重写所有 snapshot tests。
-- 不顺手清理全部 `UNSAFE_componentWillReceiveProps` / `UNSAFE_componentWillMount`。
+- 不要求本轮同时完成 editor React 19 兼容。
+- 不要求本轮完成 `office-viewer` React 19 适配，除非 runtime 主线明确被它阻塞。
+- 不要求本轮清零全部 `findDomCompat` 调用。
+- 不要求本轮重写所有 `react-test-renderer` 测试。
+- 不要求把 MobX 体系升级做成独立架构重构，只要求它为 React 19 路线服务。
 
 ## 风险清单
 
 | 风险 | 影响 | 应对 |
 | --- | --- | --- |
-| `mobx-react@6.3.1` 与 React 19 不兼容 | 安装或运行直接失败 | 先做 gate；失败则拆出 MobX 升级项目 |
-| `findDomCompat` 依赖 React internals | 大量弹层/选择器/编辑器 DOM 定位异常 | 先验证 compat helper，再对热点组件补显式 ref |
-| `react-test-renderer` 已废弃 | 测试有 warning | 首轮只对齐版本，不做全量改写 |
-| classic JSX transform 未切换 | React 19 启动即警告或行为不一致 | 在 Phase 1 一次性切到 `react-jsx` |
-| 隐式挂载逻辑分散 | 容易漏掉一个旧 API 点 | 用共享 root helper 收口 |
+| `mobx-react@6.3.1` 与 React 19 正式不兼容 | 安装或运行直接不成立 | 把 MobX 体系兼容性列为 Phase 1 Gate |
+| `mobx-react@9` 反向要求 `mobx@6` | 迁移范围扩大到 MobX 主版本升级 | 明确 React + MobX 联动 gate，不隐含处理 |
+| `findDomCompat` 依赖 React internals | 大量弹层/选择器/定位异常 | 先删 fallback，再做热点 smoke，再决定是否专项重构 |
+| `react-test-renderer` 已废弃 | 测试产生 warning 或部分脆弱 | 首轮只对齐版本并局部修 API，不全量改写 |
+| editor 体系继续大量依赖旧 API | 根级 workspaces 验证被 editor 拖死 | 首轮完成标准改成 runtime-only 验证序列 |
+| `office-viewer` 被 runtime 某些 schema 间接拉起 | 构建或 smoke 出现附加问题 | 只有在 runtime 主线被明确阻塞时再纳入首轮 |
 
 ## Go / No-Go 标准
 
 ### Go
 
-- React 19 下可以完成安装。
-- `mobx-react` 不导致关键路径崩溃。
-- 旧 `react-dom` 挂载 API 已清零。
-- 主要示例、embed、editor smoke 通过。
-- build / typecheck / test 可重复通过。
+- `templates/amis` 已切到 React 19 基线。
+- runtime 包安装、typecheck、build 可以独立完成。
+- React 19 明确删除的挂载 API 已在 runtime 主线上清零。
+- `findDomCompat` 没有再回退到 `ReactDom.findDOMNode`。
+- 关键 runtime smoke 通过。
 
 ### No-Go
 
-- `mobx-react` 迫使同时升级 MobX 4/5/6 体系。
-- `findDomCompat` 在 React 19 下出现系统性失效，需要大面积显式 ref 改造。
-- 关键测试工具链因 React 19 出现大范围重写需求。
+- MobX 体系无法形成可运行的 React 19 组合。
+- `findDomCompat` 在 React 19 下系统性失效，导致 runtime 组件大面积崩溃。
+- runtime-only 范围都无法稳定通过，必须把 editor 一起拖进来才能前进。
 
 ## 结论
 
-按当前仓库状态，AMIS 升 React 19 可以先按“最小化修改”路线推进，但前提是两个 gate 成立：
+`templates/amis` 的 React 19 升级应被定义为一个独立项目，但内部也要继续分层：
 
-- `mobx-react@6.3.1` 在当前 MobX 基线上仍能安装并基本运行；
-- `findDomCompat` 在 React 19 下大体可用。
+- runtime React 19 迁移是主线
+- editor / office-viewer 是后续独立问题
 
-如果这两个 gate 任一失败，这次工作就不再是小升级，而是 React / MobX / DOM ref 兼容层的联合改造，需要另起更大计划。
+按当前真实基线看，这个迁移不是单纯的 API 去旧化，至少包含三条硬问题：
+
+- React 19 依赖与编译基线升级
+- 旧挂载 API 和字符串 ref 清理
+- MobX 体系兼容性 gate
+
+如果 MobX gate 和 `findDomCompat` gate 都能收敛在 runtime 范围内，这个项目仍可按“最小改动”推进。
+
+如果任一 gate 失败，就需要把它升级为更大的 React + MobX + DOM ref 兼容改造项目。
