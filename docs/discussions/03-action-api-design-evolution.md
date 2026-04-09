@@ -32,7 +32,7 @@
 
 #### 一、当前文档基线已经给出的结论
 
-根据 `docs/architecture/frontend-programming-model.md`、`docs/architecture/frontend-programming-model-improvement-design.md`、`docs/architecture/action-scope-and-imports.md`、`docs/architecture/api-data-source.md`，当前基线已经有几条重要结论：
+根据 `docs/architecture/frontend-programming-model.md`、`docs/architecture/action-algebra-formal-spec.md`、`docs/architecture/action-scope-and-imports.md`、`docs/architecture/api-data-source.md`，当前基线已经有几条重要结论：
 
 1. `Action` 与 `Resource` 不能合并成一个 authoring shape。
    - `Action Algebra` 是 effect dispatch 的组合层。
@@ -40,7 +40,7 @@
    - 两者可以共享底层 execution substrate，但 authoring surface 必须区分。
 
 2. `ApiObject` 不应该继续膨胀成“通用策略袋子”。
-   - improvement design 已明确提出三层划分：
+   - 当前 architecture baseline 已明确提出三层划分：
      - `ApiObject` = transport + adaptor contract
      - `Operation Control` = timeout / cancellation / debounce / retry / dedup / tracing 等执行协调
      - consumer-specific policy = resource polling / stale policy / merge policy / action branching / duplicate submit policy 等

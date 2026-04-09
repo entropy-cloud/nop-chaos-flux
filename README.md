@@ -74,7 +74,6 @@ If you need exact contracts or implementation details, continue into `docs/`.
       "label": "Submit",
       "onClick": {
         "action": "submitForm",
-        "formId": "profile-form",
         "api": {
           "method": "post",
           "url": "/api/profile"

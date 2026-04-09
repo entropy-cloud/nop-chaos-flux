@@ -19,7 +19,11 @@ Choose the smallest document that matches the task.
 | Understand the current architecture baseline | `docs/architecture/flux-core.md` | `docs/architecture/renderer-runtime.md` |
 | Understand Flux's top-level frontend programming model, primitive categories, macro layering, and how the primitives compose into one execution model | `docs/architecture/frontend-programming-model.md` | `docs/architecture/flux-core.md` |
 | Understand action control flow such as `when`, `then`, `onError`, `parallel`, result classes, and chained result context | `docs/architecture/action-algebra-formal-spec.md` | `docs/architecture/action-scope-and-imports.md` |
-| Review the surviving follow-up improvements to the top-level frontend programming model without reopening the primitive closure | `docs/architecture/frontend-programming-model-improvement-design.md` | `docs/architecture/frontend-programming-model.md` |
+| 设计 action 可视化编辑、optional step、graph lowering，或判断是否要把 `parallel` 改成 `steps` | `docs/architecture/action-graph-authoring.md` | `docs/architecture/action-algebra-formal-spec.md` |
+| 设计按钮 / 表单 / 选择控件的 async pending、loading、disabled 语义 | `docs/architecture/action-interaction-state.md` | `docs/architecture/form-validation.md`, `docs/architecture/api-data-source.md` |
+| 设计 dialog / drawer / future sheet 的打开态、surface status、`statusPath` 或局部 `$surface` 规则 | `docs/architecture/surface-owner.md` | `docs/architecture/action-interaction-state.md` |
+| 设计 scope 继承、`data` 初始化、`isolate`、row scope、或判断是否需要 `$parentScope` | `docs/architecture/scope-ownership-and-isolation.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/table-row-identity-and-scope-performance.md` |
+| 设计 dialog / drawer 的 `data`、open-state、surface status 与 scope 边界 | `docs/architecture/surface-owner.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/components/dialog/design.md` |
 | Design API requests, scope injection (includeScope), params, DataSource polling, unified formula/api source semantics, or non-rendering reaction/watch nodes | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` |
 | 了解基于 SchemaRenderer 的图设计器规划架构 | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md` |
 | 看清 Flow Designer 各层协作细节、命名空间动作流转、画布/Inspector 调用链 | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
@@ -38,6 +42,11 @@ Choose the smallest document that matches the task.
 | 设计 report designer 的右侧属性面板与 expression/reference 字段编辑边界 | `docs/architecture/report-designer/inspector-design.md` | `docs/architecture/report-designer/contracts.md` |
 | Change React integration, renderer props, hooks, or fragment rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
 | Design compile-once/runtime-instantiation behavior, `cid`/template-node identity, repeated-instance identity, or future `type: 'loop'` rules | `docs/architecture/template-instantiation-and-node-identity.md` | `docs/architecture/component-resolution.md` |
+| Design `loop` node schema, item scope, `itemName` / `indexName`, or `itemData` | `docs/components/loop/design.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
+| Design recursive structural rendering, `recurse`, or nearest-enclosing-loop recursion rules | `docs/components/recurse/design.md` | `docs/components/loop/design.md`, `docs/components/fragment/design.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
+| Design a no-UI grouping node, grouped `when` usage, or decide `fragment` versus `container` | `docs/components/fragment/design.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/components/container/design.md` |
+| Design `list` as a visual collection renderer, or decide its boundary versus `loop` / `table` | `docs/components/list/design.md` | `docs/components/loop/design.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
+| Design `tree` as a visual hierarchical renderer, or decide its boundary versus `loop` / `recurse` / future `input-tree` | `docs/components/tree/design.md` | `docs/components/recurse/design.md`, `docs/components/loop/design.md` |
 | Design high-performance table row identity, `rowKey`, row-scope reuse, row-local invalidation, or same-row field access inside tables | `docs/architecture/table-row-identity-and-scope-performance.md` | `docs/architecture/dependency-tracking.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
 | 设计或实现某个具体组件的 schema 契约、核心能力和落地路线 | `docs/components/index.md` | 对应组件目录下的 `docs/components/<component>/design.md`，再回看相关 `docs/architecture/*.md` |
 | Design namespaced action extension, host action scopes, or `xui:imports` semantics | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` |
@@ -69,11 +78,16 @@ Choose the smallest document that matches the task.
 
 Architecture intent lives primarily in:
 
+- `docs/architecture/README.md` (grouped architecture entry)
+
 - `docs/architecture/flux-core.md`
 - `docs/architecture/schema-file-validator.md`
 - `docs/architecture/frontend-programming-model.md`
 - `docs/architecture/action-algebra-formal-spec.md`
-- `docs/architecture/frontend-programming-model-improvement-design.md`
+- `docs/architecture/action-graph-authoring.md`
+- `docs/architecture/action-interaction-state.md`
+- `docs/architecture/scope-ownership-and-isolation.md`
+- `docs/architecture/surface-owner.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/template-instantiation-and-node-identity.md`
 - `docs/architecture/table-row-identity-and-scope-performance.md`
@@ -106,6 +120,7 @@ Example behavior is best cross-checked with:
 ## Directory Roles
 
 - `docs/architecture/` - current normative design and package ownership notes
+- start architecture navigation from `docs/architecture/README.md` when the flat directory feels too dense
 - `docs/components/` - per-component design inputs; each component keeps its own directory with schema, capability, and implementation notes
 - `docs/references/` - stable lookup material such as terminology, interface maps, maintenance guidance, and source-specific reference notes; useful, but secondary to architecture docs
 - `docs/amis-types/` - AMIS component TypeScript type definitions extracted from amis@6.13.0, useful for understanding upstream AMIS schema structure

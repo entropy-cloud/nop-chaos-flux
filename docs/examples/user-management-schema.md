@@ -5,7 +5,9 @@
 This example is intentionally small but complete.
 
 - each important capability appears once
-- similar dialogs and actions are not repeated
+- form business flow is owned by the `form` node
+- submit buttons stay thin and trigger `component:submit`
+- inside a form subtree, pending UI reads the readonly `$form` binding
 - `closeDialog` uses the default nearest-dialog behavior
 - page data updates rely on current `ajax` plus `dataPath` semantics instead of outdated `setValue` assumptions (note: `dataPath` here is `ActionSchema.dataPath` for ajax action result targeting, not `DataSourceSchema.dataPath` for Resource publication)
 
@@ -19,9 +21,11 @@ Covered capabilities:
 - `requestAdaptor` and `responseAdaptor`
 - `dataPath` (ajax action result targeting)
 - `openDialog`
-- `submitForm`
+- form-owned `submitAction`
+- `component:submit`
+- `$form`
 - `closeDialog`
-- `refreshTable`
+- `component:refresh`
 - table row `record` scope
 
 ## Example
@@ -41,8 +45,20 @@ Covered capabilities:
         {
           "type": "form",
           "id": "searchForm",
+          "statusPath": "searchFormStatus",
           "data": {
             "keyword": "${keyword}"
+          },
+          "submitAction": {
+            "action": "ajax",
+            "debounce": 300,
+            "api": {
+              "method": "post",
+              "url": "/api/users/search",
+              "requestAdaptor": "return {data: {keyword: scope.keyword, page: scope.page, perPage: scope.perPage}};",
+              "responseAdaptor": "return {items: payload.items, total: payload.total};"
+            },
+            "dataPath": "searchResult"
           },
           "body": [
             {
@@ -56,17 +72,10 @@ Covered capabilities:
             {
               "type": "button",
               "label": "查询",
-              "disabled": "${searching}",
+              "disabled": "${$form.submitting}",
               "onClick": {
-                "action": "ajax",
-                "debounce": 300,
-                "api": {
-                  "method": "post",
-                  "url": "/api/users/search",
-                  "requestAdaptor": "return {data: {keyword: scope.keyword, page: scope.page, perPage: scope.perPage}};",
-                  "responseAdaptor": "return {items: payload.items, total: payload.total};"
-                },
-                "dataPath": "searchResult"
+                "action": "component:submit",
+                "componentId": "searchForm"
               }
             },
             {
@@ -85,6 +94,24 @@ Covered capabilities:
                       "email": "",
                       "role": "viewer"
                     },
+                    "submitAction": {
+                      "action": "ajax",
+                      "api": {
+                        "method": "post",
+                        "url": "/api/users",
+                        "requestAdaptor": "return {data: {username: scope.username, email: scope.email, role: scope.role}};",
+                        "responseAdaptor": "return payload.user;"
+                      }
+                    },
+                    "onSubmitSuccess": [
+                      {
+                        "action": "closeDialog"
+                      },
+                      {
+                        "action": "component:refresh",
+                        "componentId": "usersTable"
+                      }
+                    ],
                     "body": [
                       {
                         "type": "input-text",
@@ -127,24 +154,10 @@ Covered capabilities:
                       {
                         "type": "button",
                         "label": "提交",
-                        "disabled": "${saving}",
+                        "disabled": "${$form.submitting}",
                         "onClick": {
-                          "action": "submitForm",
-                          "formId": "createUserForm",
-                          "api": {
-                            "method": "post",
-                            "url": "/api/users",
-                            "requestAdaptor": "return {data: {username: scope.username, email: scope.email, role: scope.role}};",
-                            "responseAdaptor": "return payload.user;"
-                          },
-                          "then": [
-                            {
-                              "action": "closeDialog"
-                            },
-                            {
-                              "action": "refreshTable"
-                            }
-                          ]
+                          "action": "component:submit",
+                          "componentId": "createUserForm"
                         }
                       }
                     ]
@@ -155,7 +168,12 @@ Covered capabilities:
           ]
         },
         {
+          "type": "text",
+          "text": "查询表单状态：${searchFormStatus.submitting ? '查询中' : '空闲'}"
+        },
+        {
           "type": "table",
+          "id": "usersTable",
           "source": "${searchResult.items}",
           "columns": [
             {
@@ -232,6 +250,9 @@ Covered capabilities:
 ## Notes
 
 - This example demonstrates the current preferred authoring direction, not every historical AMIS-compatible variation.
-- Page-level values such as `currentUser`, `keyword`, `page`, `perPage`, and `searching` are assumed to come from the host application's root render data rather than from a page-local schema `data` field.
-- The search flow uses one `ajax` action with `dataPath` to update page data. That matches the current runtime more closely than chaining `setValue` to mutate page state from inside a form-local action context. Note: this `dataPath` is `ActionSchema.dataPath` for action result targeting, not the `DataSourceSchema` publication path (which should use `name` per the normative Resource publication contract in `docs/architecture/frontend-programming-model.md`).
+- Page-level values such as `currentUser`, `keyword`, `page`, and `perPage` are assumed to come from the host application's root render data rather than from a page-local schema `data` field.
+- Submit buttons are intentionally thin: validation, request dispatch, and success follow-up all belong to the owning `form` node through `submitAction` and `onSubmitSuccess`.
+- Inside a form subtree, pending UI reads `${$form.submitting}`. Outside the form subtree, the same readonly status summary can be read through `statusPath`.
+- Form `id` and `name` are for component targeting and diagnostics. They are not implicit data-binding paths.
+- The search flow uses one semantic form submit backed by one `ajax` action with `dataPath` to update page data. Note: this `dataPath` is `ActionSchema.dataPath` for action result targeting, not the `DataSourceSchema` publication path (which should use `name` per the normative Resource publication contract in `docs/architecture/frontend-programming-model.md`).
 - If schema semantics change, update `docs/architecture/flux-core.md` first, then update this example.

@@ -30,6 +30,27 @@
 - 三元表达式：`${condition ? 'yes' : 'no'}`
 - 属性访问：`${obj.prop}`, `${arr[0]}`
 
+### 1.3 保留的 `$` 绑定
+
+`$` 前缀保留给 runtime 注入的特殊只读绑定与导入库别名。
+
+推荐规则：
+
+- 当前表单语义状态使用 `$form`：`${$form.submitting}`
+- 导入库别名使用 `$alias`：`${$dict.getLabel(code)}`
+- 普通业务数据继续使用普通路径：`${user.name}`，不要写成 `${$user.name}`
+- `$store` 不是公开 authoring contract，不应用于 schema 表达式
+
+示例：
+
+```json
+{
+  "type": "button",
+  "label": "提交",
+  "disabled": "${$form.submitting}"
+}
+```
+
 ## 2. Action 与 Source 语法
 
 ### 2.1 Action Selector 命名
