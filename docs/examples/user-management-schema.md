@@ -190,15 +190,18 @@ Covered capabilities:
                         "body": [
                           {
                             "type": "text",
-                            "text": "用户名：${record.username}"
+                            "name": "username",
+                            "label": "用户名"
                           },
                           {
                             "type": "text",
-                            "text": "邮箱：${record.email}"
+                            "name": "email",
+                            "label": "邮箱"
                           },
                           {
                             "type": "text",
-                            "text": "角色：${record.role}"
+                            "name": "role",
+                            "label": "角色"
                           },
                           {
                             "type": "button",
