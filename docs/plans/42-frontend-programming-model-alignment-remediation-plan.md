@@ -2,7 +2,7 @@
 
 > Plan Status: partially completed
 > Last Reviewed: 2026-04-09; refreshed after runtime/host-projection remediation
-> Source: `docs/architecture/frontend-programming-model.md`, `docs/architecture/frontend-programming-model-improvement-design.md`, `docs/architecture/flux-design-principles.md`
+> Source: `docs/architecture/frontend-programming-model.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/flux-design-principles.md`
 
 ## Purpose
 
@@ -70,7 +70,7 @@
 ## Scope
 
 - `docs/architecture/frontend-programming-model.md`
-- `docs/architecture/frontend-programming-model-improvement-design.md`
+- `docs/architecture/action-algebra-formal-spec.md`
 - `docs/architecture/flux-design-principles.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/complex-control-host-protocol.md`

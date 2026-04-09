@@ -48,7 +48,7 @@
 - `docs/architecture/api-data-source.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/frontend-programming-model.md`
-- `docs/architecture/frontend-programming-model-improvement-design.md`
+- `docs/architecture/action-algebra-formal-spec.md`
 - `docs/references/flux-json-conventions.md`
 - `docs/examples/` 下受影响示例
 - `docs/logs/`

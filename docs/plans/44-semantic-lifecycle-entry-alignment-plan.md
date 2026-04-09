@@ -2,7 +2,7 @@
 
 > Plan Status: in progress
 > Last Reviewed: 2026-04-09
-> Source: `docs/architecture/frontend-programming-model.md`, `docs/architecture/frontend-programming-model-improvement-design.md`, `docs/architecture/form-validation.md`
+> Source: `docs/architecture/frontend-programming-model.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/form-validation.md`
 
 ## Purpose
 
@@ -40,7 +40,7 @@
 ## Scope
 
 - `docs/architecture/frontend-programming-model.md`
-- `docs/architecture/frontend-programming-model-improvement-design.md`
+- `docs/architecture/action-algebra-formal-spec.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `packages/flux-renderers-form/src/schemas.ts`

@@ -2,17 +2,21 @@
 
 > Plan Status: proposed
 > Last Reviewed: 2026-04-09
-> Source: `docs/examples/user-management-schema.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/api-data-source.md`, `docs/architecture/form-validation.md`
+> Source: `docs/examples/user-management-schema.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/action-graph-authoring.md`, `docs/architecture/action-interaction-state.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/api-data-source.md`, `docs/architecture/form-validation.md`
+> Related: `docs/plans/47-form-status-visibility-and-reserved-form-binding-plan.md`
 
 ## Purpose
 
-本计划用于收口 `docs/examples/user-management-schema.md` 与当前运行时实现之间的偏差，并补齐 action authoring、adaptor surface、dialog/form targeting、async pending state、`disabled` / `readOnly` 这些分散且部分缺失的文档契约。
+本计划用于收口 `docs/examples/user-management-schema.md` 与当前运行时实现之间的偏差，并补齐 action authoring、visual action projection、adaptor surface、dialog/form targeting、async pending state、`disabled` / `readOnly` 这些分散且部分缺失的文档契约。
 
 目标不是立即重写所有 runtime，而是先把“当前实现已经支持什么”“推荐 authoring 应该怎么写”“哪些字段只是兼容残留”写清楚，避免示例继续误导后续 schema 编写。
 
 ## Current Baseline
 
 - `then` / `onError` 当前都支持 `ActionSchema | ActionSchema[]`；数组形式表示顺序执行，`parallel` 才表示并发。
+- `then` / `onError` 的 array 形态当前不只是兼容残留；它仍是最轻的 ordered-chain shorthand。
+- `when = false` 当前会返回 `skipped`，这已经足以表达 optional single-step，不需要先新增 `sequence` 字段。
+- 目标 authoring 设计中，form subtree 内应通过 `$form` 读取只读 form status；form 外部应通过显式 `statusPath` 读取同一份 summary DTO。
 - adaptor 当前运行时上下文已经明确存在：
   - `requestAdaptor`: `api`, `scope`, `data`, `headers`
   - `responseAdaptor`: `payload` / `response`, `api`, `scope`
@@ -21,12 +25,15 @@
 - `component:<method>` + `componentId` / `componentName` 已是当前组件实例能力调用的推荐方向。
 - `submitForm` 仍是 built-in action，但外部 targeting 的推荐入口已经转向 `component:submit`；`formId` 在当前契约中仍然存在，但缺少“normative vs compatibility”说明。
 - `FormRuntime.submit(...)` 已有 duplicate-submit guard，重复提交会返回 `cancelled`，不是普通业务失败。
-- 通用 button async pending/disable 契约目前没有统一 author-visible 设计；示例里的 `${searching}` / `${saving}` 依赖宿主自行提供状态。
+- 通用 button async pending/disable 契约目前没有统一 generic tracked-interaction surface；但 form semantic submit 的目标读面已经收口为 `$form` + `statusPath`。
+- source-backed `select` / `radio-group` / `checkbox-group` 当前已经会在 options loading 时自动 disabled；这属于 field-local producer state，不是通用 action pending。
+- 通用 `button` renderer 当前只有 `disabled`，没有 runtime-owned `loading` / `pending` surface。
 - runtime presentation 已经有 `readOnly` 概念，但通用 schema 基线、输入 renderer authoring、以及文档说明还没有真正收口。
 
 ## Problems
 
 - `docs/examples/user-management-schema.md` 仍混用了较早期写法与较新的 runtime 方向，读者难以判断哪些是“当前推荐”，哪些只是“暂时还能跑”。
+- 当前文档还没有把“exported action DSL”与“未来 visual designer 的 authoring graph projection”明确分层，导致容易为了设计器便利去反向改写 `parallel` / ordered list / `when` 这些基础字段。
 - 目前没有一份文档明确标注 `ActionSchema` 中各 targeting 字段的地位：
   - 哪些是 built-in 自身语义字段
   - 哪些是组件句柄 targeting 字段
@@ -38,13 +45,15 @@
   - response adaptor 当前拿不到哪些 fetch metadata
 - form semantic submit 的推荐 authoring 已在代码与计划中存在，但代表性示例还没有迁移到 `submitAction` + `component:submit` 方向。
 - `disabled` 与 `readOnly` 的关系目前只有局部 runtime state 和组件命名基线，没有统一 authoring contract。
-- 对“异步 action 进行中时控件是否自动禁用、如何暴露 pending 状态、何时只靠取消/去重即可”的规则还没有稳定文档。
+- 对“异步 action 进行中时控件是否自动禁用、如何暴露 pending 状态、何时只靠取消/去重即可”的规则还没有完全实现，但目标设计文档已经收口。
 
 ## Goals
 
 - 修正 `user-management-schema` 示例，使其体现当前推荐 authoring，而不是历史兼容写法的混合体。
 - 把 action authoring 中的 control-flow、component targeting、dialog close 默认语义、adaptor surface 写成可直接查阅的当前基线。
+- 明确 visual action designer 应投影到当前 `Action Algebra`，而不是反向要求 exported DSL 改成 `steps` 风格容器。
 - 明确 `formId`、`componentPath`、`refreshTable`、`submitForm` 这类旧入口与较新推荐入口之间的关系。
+- 明确 form meta-state 的推荐读取面：form 内 `$form`，form 外 `statusPath`，不使用 `$store`。
 - 为 `disabled` / `readOnly` 提供统一命名和分层语义说明，并尽量与 `@nop-chaos/ui` / shadcn 风格保持一致。
 - 为 async pending / duplicate-click 行为补一份最小但清晰的 author-visible 说明。
 
@@ -54,14 +63,19 @@
 - 本计划不要求先完成通用 pending-state runtime 再写文档。
 - 本计划不要求一次性为所有复杂控件定义完整 `readOnly` 行为。
 - 本计划不要求把 dialog 也强行改造成 `component:<method>` 模型；先说明当前 built-in dialog 语义边界即可。
+- 本计划不要求为了 visual designer 先把 exported `ActionSchema` 重写成新的通用 graph container language。
 
 ## Scope
 
 - `docs/examples/user-management-schema.md`
 - `docs/architecture/frontend-programming-model.md`
+- `docs/architecture/action-algebra-formal-spec.md`
+- `docs/architecture/action-graph-authoring.md`
+- `docs/architecture/action-interaction-state.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/api-data-source.md`
 - `docs/architecture/form-validation.md`
+- `docs/plans/47-form-status-visibility-and-reserved-form-binding-plan.md`
 - `docs/references/flux-json-conventions.md`
 - `docs/components/index.md`
 - relevant runtime anchors under:
@@ -120,13 +134,18 @@ Status: planned
 Targets:
 
 - `docs/architecture/frontend-programming-model.md`
+- `docs/architecture/action-algebra-formal-spec.md`
+- `docs/architecture/action-graph-authoring.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/references/flux-json-conventions.md`
 
 Tasks:
 
-- document that `then` / `onError` accept both single object and array, and that arrays are sequential, not parallel
+- document that `then` / `onError` accept both single object and array, and that arrays are sequential shorthand, not parallel shorthand
 - document when nested `then` is useful versus when array chaining is sufficient
+- document that exported node optionality uses `when`, not a new bare `optional` field
+- document that `parallel` remains an explicit aggregate node; do not rename it to `steps` + mode boolean
+- document that a future visual designer may use `next` edges / guarded groups in authoring IR, but must lower back to ordered arrays + `when` + `then` + `onError` + `parallel`
 - add one “preferred targeting matrix”:
   - component instance -> `component:<method>` + `componentId` / `componentName`
   - dialog stack -> built-in `closeDialog` with nearest default, optional `dialogId`
@@ -166,17 +185,26 @@ Status: planned
 Targets:
 
 - `docs/architecture/form-validation.md`
-- optionally a new focused doc if section growth becomes too large
+- `docs/architecture/action-interaction-state.md`
+- `docs/components/button/design.md`
 
 Tasks:
 
 - document the current semantic-submit entry points: `FormRuntime.submit(...)`, built-in `submitForm`, preferred `component:submit`
 - document duplicate-submit guard semantics as `cancelled`, not business failure
-- document that generic async button pending state is not yet a unified runtime contract
+- document the target form-state read surface:
+  - current form subtree -> `$form`
+  - outside the form subtree -> `statusPath`
+  - reject `$store`
+- document that generic async button pending state is not yet a unified runtime contract and should not be inferred from arbitrary async action graphs
+- define owner-first auto-state guidance:
+  - form submit pending belongs to `form`
+  - source-backed selector loading belongs to the field/source owner
+  - generic button pending needs explicit tracked interaction state once that surface lands
 - define short-term guidance for examples:
   - semantic form submit can rely on runtime duplicate-submit guard for correctness
   - explicit disabled/loading UI still needs author-visible state until a shared pending contract lands
-- decide whether cross-action pending state belongs under `Operation Control` docs or a dedicated interaction-state doc
+- keep cross-action pending state in a dedicated interaction-state doc, while leaving timeout/retry/debounce in `Operation Control`
 
 Exit criteria:
 
@@ -224,6 +252,8 @@ Exit criteria:
 
 - [ ] example no longer recommends `submitForm + formId` for normal new form authoring
 - [ ] docs explicitly state `then` / `onError` single-or-array support
+- [ ] docs explicitly state that `when` is the exported optional-step mechanism
+- [ ] docs explicitly state that `parallel` remains an explicit aggregate node, not `steps` + mode boolean
 - [ ] docs explicitly list adaptor context variables
 - [ ] docs explain `return <expression>;` compatibility semantics
 - [ ] docs explicitly state `closeDialog` nearest-dialog default behavior
@@ -232,15 +262,21 @@ Exit criteria:
 - [ ] docs distinguish `disabled` from `readOnly`
 - [ ] docs define which control families need both states and which only need `disabled`
 - [ ] docs explain current pending-state gap for generic async button actions
+- [ ] docs distinguish semantic-owner auto state from generic tracked-interaction state
+- [ ] docs define form-state read surface as `$form` + `statusPath`
 
 ## Success Criteria
 
 本计划完成后，读者应能只通过文档回答以下问题，而不必再去翻测试和 runtime 代码：
 
 - `then` 能不能写数组，什么时候该写嵌套
+- 为什么 visual designer 不应倒逼 exported DSL 改成 `steps`
+- optional step / guarded segment 应该落在 `when` 还是新字段
 - adaptor 里能用哪些变量，`return` 到底是不是正式支持的写法
 - `closeDialog` 为什么默认不需要 `dialogId`
 - 外部如何正确触发表单/表格这类组件实例能力
 - `formId` 这类字段是否仍应出现在新示例中
+- 表单内部和外部分别如何读取 form status，以及为什么不应暴露 `$store`
 - 异步按钮为什么不会自动拥有统一 pending disabled 语义
+- 哪些控件可以因为 owner-known state 自动 disabled，哪些不能靠 runtime 猜测
 - `disabled` 和 `readOnly` 应该如何区分，以及为什么标准名应是 `readOnly`
