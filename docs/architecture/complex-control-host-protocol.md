@@ -104,6 +104,13 @@ const hostScope = useHostScope(scopeData, props.path, 'designer');
 - 写操作必须通过 namespaced action（`designer:*`、`spreadsheet:*`、`report-designer:*` 等）提交
 - schema 层不得直接持有 core store 引用
 
+补充边界：
+
+- host scope 是 **内部 host projection**，服务于宿主自己挂载的 schema 片段
+- 如果宿主外部也需要读取该复杂控件的只读状态，应使用显式 `statusPath` 发布窄 summary DTO
+- 不要把整份 host scope 提升为 page 全局可见字段
+- 不要新增与 `statusPath` 平行的 `publishScope` 命名
+
 ## 8. Namespace Action 注册约定
 
 所有复杂控件 page-renderer 应在 `useLayoutEffect` 中注册对应 namespace：

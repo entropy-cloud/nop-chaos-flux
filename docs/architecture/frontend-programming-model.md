@@ -66,10 +66,30 @@ This model is optimized for the current practical envelope:
 
 It prefers stable author-visible semantics and domain isolation over runtime-surface growth.
 
-For design rationale and comparison-oriented discussion, use:
+For design rationale, use `docs/architecture/flux-design-principles.md`.
 
-- `docs/architecture/flux-design-principles.md`
-- `docs/architecture/frontend-programming-model-improvement-design.md`
+## Design Continuity Rules
+
+The current programming model includes these stable design rules:
+
+1. Keep the seven-primitive closure.
+2. Keep `Flux` as a `Final Execution Schema` runtime, not a staged-program system or authoring-time structure assembler.
+3. Do not collapse `Value`, `Resource`, and `Host Projection` into one generic binding primitive.
+4. Do not treat SSR, hydration, CRDT, OT, local-first replication, or editor-specific concerns as reasons by themselves to reopen the primitive closure.
+5. Judge future adjustments first by `DSL` continuity rather than runtime elegance alone.
+6. Preserve progressive authoring surfaces:
+
+| Concern | Progressive path |
+| --- | --- |
+| value production | plain value -> `${expr}` -> `type: 'source'` -> `type: 'data-source'` |
+| effect orchestration | single-step dispatch -> `when` -> `then` / `onError` -> `parallel` |
+| structure | `visible` -> `when` -> `loop` -> `dynamic-renderer` |
+
+7. Keep `Capability` focused on authority lookup and targeting; keep `Action Algebra` as derived control flow layered above it.
+8. Keep `ApiSchema` as the declarative transport/adaptor contract, `Operation Control` as the shared execution-control layer, and consumer-specific policy above both.
+9. Keep `Semantic Lifecycle Entry` owned by semantic nodes such as forms, pages, dialogs, and semantic hosts instead of scattering the full business pipeline across UI triggers.
+10. Keep `Resource` publication converged around `name` as the preferred identity and default publication path, `mergeToScope: true` as the only narrowed special publish extension, `statusPath` as readonly status summary, and `dataPath` as a compatibility-only override.
+11. Keep host boundaries strict: read through readonly `Host Projection`, write through `Capability`, and keep bridge/controller/protocol objects host-private.
 
 ## Platform Layering
 
@@ -284,6 +304,9 @@ They may appear to `Flux` only through narrow boundaries such as:
 11. `Capability` is the authority primitive; `Action Algebra` is derived control flow layered above it.
 12. Dependency tracking is a first-class execution baseline, and dependency change does not directly dispatch arbitrary actions.
 13. New domain complexity does not automatically create new primitives.
+14. `ApiSchema` remains the transport/adaptor contract; shared execution control belongs to `Operation Control`.
+15. `Semantic Lifecycle Entry` belongs to the owning semantic node when that boundary exists.
+16. Host integration follows readonly `Host Projection` plus `Capability` write boundaries.
 
 ## Related Documents
 
@@ -292,7 +315,6 @@ Use the narrowest document that owns the detail you need:
 | Need | Document |
 | --- | --- |
 | design rationale and principles | `docs/architecture/flux-design-principles.md` |
-| follow-up convergence work | `docs/architecture/frontend-programming-model-improvement-design.md` |
 | current code-level architecture baseline | `docs/architecture/flux-core.md` |
 | dependency tracking details | `docs/architecture/dependency-tracking.md` |
 | action composition, `then`, `onError`, `parallel`, result classes | `docs/architecture/action-algebra-formal-spec.md` |

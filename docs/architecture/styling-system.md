@@ -82,7 +82,7 @@ For the detailed DOM marker contract around `role`, `data-slot`, root `nop-*` ma
 
 | Concern | Owner | Example |
 |---------|-------|---------|
-| Disabled state | schema/runtime | `disabled: "${form.submitting}"` |
+| Disabled state | schema/runtime | `disabled: "${$form.submitting}"` |
 | Visibility | schema/runtime | `visible: "${hasPermission}"` |
 | Click action | schema/runtime | `onClick: { action: "submitForm" }` |
 | Label text | schema/runtime | `label: "${i18n.submit}"` |
