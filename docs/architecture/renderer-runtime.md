@@ -440,6 +440,13 @@ Expected behavior:
 - `scopeKey` helps keep repeated scopes stable
 - `pathSuffix` helps with path clarity and debugability
 
+Authoring guidance:
+
+- fragment / region render paths should default to lexical inheritance
+- use `data` when a fragment needs a narrow own-scope patch
+- use `isolate: true` only when the fragment should become own-scope-only for clear boundary or performance reasons
+- do not compensate for `isolate: true` by introducing `$parentScope`; explicitly copy/projection-pass the small parent values the fragment really needs
+
 ## Root Entry Contract
 
 Root renderer boundaries stay explicit.
@@ -503,6 +510,11 @@ A table renderer is expected to:
 - create a row scope from `{ record, index }`
 - pass row-local scope into cell or button fragments
 - keep row rendering aligned with the same fragment and action infrastructure used elsewhere
+
+The current performance baseline further narrows that expectation:
+
+- row scopes should be isolated by default
+- non-isolated row scopes are an explicit opt-out for real parent-binding needs
 
 ## Performance Rules
 

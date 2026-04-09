@@ -294,6 +294,64 @@ For `form` schemas, the semantic lifecycle surface above that flow is now explic
 
 This keeps validation-before-submit owned by the form semantic boundary rather than by individual submit buttons.
 
+## Author-Visible Form Status
+
+目标设计中，form 的 author-visible 状态读取面应保持简单并且语义化：
+
+- 表单值继续通过普通 form scope 暴露
+- form meta state 不通过普通字段路径隐式混入 values
+- form subtree 内通过只读保留绑定 `$form` 读取当前 form 的语义状态
+- form subtree 外通过显式 `statusPath` 读取同一份只读状态摘要
+
+推荐 `FormSchema` 扩展：
+
+```ts
+interface FormSchema extends BaseSchema {
+  type: 'form';
+  body?: BaseSchema[];
+  actions?: BaseSchema[];
+  data?: Record<string, any>;
+  statusPath?: string;
+  initAction?: ActionSchema | ActionSchema[];
+  submitAction?: ActionSchema | ActionSchema[];
+  onSubmitSuccess?: ActionSchema | ActionSchema[];
+  onSubmitError?: ActionSchema | ActionSchema[];
+  onValidateError?: ActionSchema | ActionSchema[];
+}
+```
+
+推荐 `$form` / `statusPath` DTO 形态：
+
+```ts
+interface FormStatusSummary {
+  id?: string;
+  name?: string;
+  submitting: boolean;
+  validating: boolean;
+  dirty: boolean;
+  touched: boolean;
+  visited: boolean;
+  valid: boolean;
+  invalid: boolean;
+  hasErrors: boolean;
+  errorCount: number;
+  submitCount: number;
+  lastSubmitStatus: 'idle' | 'success' | 'error' | 'cancelled' | 'timedOut' | 'validationError';
+}
+```
+
+表达式读取规则：
+
+- 当前 form subtree 内：`${$form.submitting}`
+- form 外部但同一 page/scope 中：`${createUserFormStatus.submitting}`，前提是 form 声明了 `statusPath: 'createUserFormStatus'`
+
+边界规则：
+
+- `$form` 是只读语义摘要，不是 `FormRuntime` 或底层 store 对象
+- `statusPath` 发布的是只读 summary DTO，不是第二个可写业务根
+- form 的 `id` / `name` 用于 `component:submit`、调试与实例定位，不自动成为数据读取路径
+- 不暴露 `$store` 作为 schema-visible 读取面
+
 ## Current Runtime State
 
 The active form store tracks:

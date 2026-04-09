@@ -501,6 +501,19 @@ Recommended model:
 
 The architecture must not invent a second repeated rendering system with different identity rules.
 
+Recommended scope baseline for `loop`:
+
+- each repeated item creates one repeated child scope
+- the item scope inherits parent lexical visibility by default
+- item-local bindings such as `item`, `index`, optional `key`, and future `itemData` are injected into that child scope
+- unlike table rows, loop items are not isolated by default
+
+Recommended recursive baseline:
+
+- a future `type: 'recurse'` should not invent a second repeated-instantiation model
+- `recurse` should re-instantiate the nearest enclosing `loop.body` template with a new repeated item set
+- recursive expansion should append another repeated frame to `instancePath` at each level
+
 ### Instance-key rule
 
 Prefer, in order:

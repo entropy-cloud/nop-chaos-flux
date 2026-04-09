@@ -141,6 +141,8 @@ The default minimal row scope payload is:
 }
 ```
 
+Optional projected extras such as future `rowData` must stay additive and narrow. They are not a license to turn every row scope into a second full parent-scope clone.
+
 ### 4. Same-Row Access Model
 
 Row-local expressions and renderers should read same-row values through `record`:
@@ -175,6 +177,45 @@ Future optimization direction:
 - pure-display tables or other tightly constrained row renderers may use lighter row-local evaluation carriers or extra row-local parameters instead of full inherited child scopes, as long as they preserve the same row-local binding contract
 
 This flexibility should be used to reduce unnecessary scope count, not to introduce parallel competing row-state models.
+
+### 5.1 `rowData` Performance Rules
+
+If the table later supports `rowData` as an explicit projection surface for isolated rows, it must preserve the same hot-path discipline as the rest of the row architecture.
+
+Required rules:
+
+1. `rowData` is evaluated once per materialized row by the row owner, not once per cell.
+2. The result is merged into the row scope payload before descendants read it.
+3. `rowData` must be synchronized by `rowKey`, reusing the existing row scope cache.
+4. Unchanged projected values must not republish the row scope.
+5. `rowData` must stay narrow; it is for a small set of explicit extras, not a second parent snapshot clone.
+
+Recommended evaluation context:
+
+- table shell lexical scope
+- current row-local roots such as `record`, `index`, and optional `rowKey`
+
+Rejected baseline:
+
+- evaluating `rowData` separately inside each cell fragment
+- rebuilding a fresh wide object for every render regardless of equality
+- forwarding the full parent/table scope into each isolated row under a new top-level key
+
+### 5.2 Equality And Publication
+
+When `rowData` exists, the row owner should treat it like any other row-local root payload:
+
+- compute the next projected patch for that row
+- compare projected keys against the current cached row payload
+- publish only the row-local roots that changed
+
+Examples:
+
+- `record` replaced, projected extras unchanged -> publish `paths: ['record']`
+- `locale` projected extra changed, `record` unchanged -> publish `paths: ['locale']`
+- both changed -> publish `paths: ['record', 'locale']`
+
+This keeps row invalidation aligned with the same root-based dependency model used elsewhere.
 
 ## Stable Row Key
 
