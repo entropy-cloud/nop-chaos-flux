@@ -18,12 +18,14 @@
 
 ## 4. schema 设计
 
-- 建议字段为 `title`、`body`、`actions`、`open`、`defaultOpen`、`side`、`size`、`showCloseButton`。
+- 建议字段为 `title`、`body`、`actions`、`data`、`open`、`defaultOpen`、`side`、`size`、`showCloseButton`、`statusPath`。
+- `data` 若存在，其语义应与 `page` / `form` / `dialog` 保持一致：初始化 drawer own scope patch。
 
 ## 5. 字段分类
 
 - `title`: `value-or-region`
 - `body`、`actions`: `region`
+- `data`: `value`
 - `open`、`defaultOpen`、`side`、`size`: `value`
 - `onOpen`、`onClose`: `event`
 
@@ -34,15 +36,21 @@
 ## 7. 运行期状态归属
 
 - 打开态与 `dialog` 一样应明确 ownership。
+- drawer 自己拥有的是 surface state，而不是其子树 form/source/table 的业务状态。
+- drawer 外部若需要读取状态，应通过 `statusPath` 读取只读 summary DTO。
+- 若未来需要 subtree-local 读取当前弹层状态，优先与 dialog 共用 `$surface`，不要单独发明 `$drawer`。
+- 共享 surface owner 规则以 `docs/architecture/surface-owner.md` 为准。
 
 ## 8. 事件、动作与组件句柄能力
 
 - 推荐支持 `component:open`、`component:close`。
 - `onOpen`、`onClose` 通过 action schema 触发，示例应覆盖至少一组最小事件用法。
+- `component:open` / `component:close` 只解决 surface control；内部表单提交、source 刷新等仍应进入更具体 owner 的语义入口。
 
 ## 9. 数据源、表达式、导入能力接入点
 
 - 与 `dialog` 一致，内容与标题支持表达式和 regions。
+- `data` 初始化 drawer own scope；drawer subtree 默认仍按普通 lexical scope 规则继承父级，除非某个更窄 fragment 显式 `isolate`。
 
 ## 10. 样式与 DOM marker 约定
 

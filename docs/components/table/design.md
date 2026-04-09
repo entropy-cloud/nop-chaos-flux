@@ -19,12 +19,15 @@
 
 ## 4. schema 设计
 
-- 关键字段包括 `columns`、`pagination`、`rowSelection`、`expandable`、`empty`、`loading`。
+- 关键字段包括 `columns`、`pagination`、`rowSelection`、`expandable`、`empty`、`loading`、`data`、`rowData`。
 - 当前已落地 `paginationOwnership`、`selectionOwnership`、`paginationStatePath`、`selectionStatePath`。
+- 目标设计中，table 若需要对外暴露自身的只读交互状态摘要，也应复用 `statusPath`，而不是发明第二套外部读取命名。
+- `data` 的目标语义应与其他 scope-owning 节点保持一致：初始化 table shell own scope patch。
+- `rowData` 的目标语义是显式声明每个 isolated row scope 还需要哪些额外字段投影，避免 `$parentScope` 一类隐式穿透。
 
 ## 5. 字段分类
 
-- `columns`、`pagination`、`rowSelection`、`expandable`: `value`
+- `columns`、`pagination`、`rowSelection`、`expandable`、`data`、`rowData`: `value`
 - `empty`: `value-or-region`
 - 各类 `onXxx`: `event`
 
@@ -37,16 +40,25 @@
 
 - 当前明确支持 `paginationOwnership` 和 `selectionOwnership`，可取 `local`、`controlled`、`scope`。
 - 排序、筛选和展开尚未完整进入同一 ownership 体系，需要在后续阶段继续统一。
+- table 的 `loading` 默认应视为上游 source/query owner 状态的 UI 投影，而不是 table 自己发明请求协议。
+- 真正属于 table 自己的状态是 selection、pagination，以及未来的 sort/filter/inline-edit 等 interaction state。
+- 目标设计里，table subtree 若需要高频读取这些状态，可提供只读 `$table` 绑定；table 外部观察者仍应通过显式 `statusPath` 读取只读 summary DTO。
+- table shell scope 默认继承 parent lexical scope；若声明 `data`，则在此基础上补充 table own patch。
+- materialized row scopes 默认应保持 `isolate: true`。
+- 如果 isolated row 仍需要少量 table/parent 数据，应通过 `rowData` 显式投影，而不是依赖 `$parentScope`。
 
 ## 8. 事件、动作与组件句柄能力
 
 - 当前事件已覆盖行点击、排序、过滤、分页、选择和刷新。
 - 当前组件句柄基线是 `component:refresh`、`component:getSelection`、`component:setSelection`。
+- `component:refresh` 触发的是 table instance capability；如果表格显示 loading，优先读取其上游 query/source owner 状态，而不是假设 table 自己就是请求 owner。
 
 ## 9. 数据源、表达式、导入能力接入点
 
 - 表格数据应由上游 scope、loader 或 `data-source` 注入为最终 rows。
 - 表格不负责请求协议本身，但可通过 `onRefresh` 与 source runtime 协作。
+- `rowData` 若存在，推荐在“table shell lexical scope + 当前 row-local roots（如 `record`、`index`）”的上下文中求值，再写入 isolated row scope。
+- `rowData` 的实现应由 row owner 一次求值并按 `rowKey` 缓存/增量同步；不要把它做成每个 cell 都重新求值的宽对象。
 
 ## 10. 样式与 DOM marker 约定
 

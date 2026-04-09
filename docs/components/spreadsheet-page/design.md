@@ -22,6 +22,7 @@
 - `document` 是核心必填输入。
 - `config`、`readOnly` 为宿主配置。
 - `toolbar`、`body`、`dialogs` 为主要 regions。
+- 目标设计中，如需让宿主外部读取 spreadsheet host 摘要，应使用 `statusPath`，而不是把完整 host snapshot 暴露到 page 全局 scope。
 
 ## 5. 字段分类
 
@@ -39,6 +40,7 @@
 
 - worksheet document、selection、editing、history 和 viewport 归 spreadsheet core。
 - schema 片段通过宿主数据快照读取运行时摘要，不直接操作内部 store。
+- `spreadsheet-page` 属于 `Domain Host Owner`：内部读面是 host snapshot projection，宿主外部若需要只读观察，应通过窄 `statusPath` 摘要发布。
 
 ## 8. 事件、动作与组件句柄能力
 

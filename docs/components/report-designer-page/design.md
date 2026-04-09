@@ -22,6 +22,7 @@
 - `document` 和 `designer` 是核心必填输入。
 - `profile` 和 `adapters` 是可选宿主扩展入口。
 - `toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body` 是主要 regions。
+- 目标设计中，如需让宿主外部读取 report designer host 摘要，应使用 `statusPath`，而不是把完整 host projection 提升到 page 全局 scope。
 
 ## 5. 字段分类
 
@@ -41,6 +42,7 @@
 - 表格编辑状态归 spreadsheet runtime。
 - 报表语义层状态归 report designer runtime/adapters。
 - schema 片段通过宿主 scope 读取快照，并通过命名空间动作写操作。
+- `report-designer-page` 属于 `Domain Host Owner`：内部读面是 host projection，宿主外部若需要观测状态，应通过窄 `statusPath` 摘要，而不是依赖 page 全局 host 字段。
 
 ## 8. 事件、动作与组件句柄能力
 

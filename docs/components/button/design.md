@@ -37,7 +37,9 @@
 ## 7. 运行期状态归属
 
 - `button` 不维护业务状态。
-- `loading` 若引入，建议遵循 `local`/`controlled` 明确归属，而不是在按钮内静默持有。
+- `loading` 若引入，建议遵循 `local`/`controlled` 或 semantic-owner-explicit-tracking 的明确归属，而不是在按钮内静默持有。
+- 不应因为 `onClick` 触发了一个 async action graph，就让按钮自动推断“主操作 pending”。
+- 对于 form submit 这类语义 owner 明确的场景，按钮可以投影 owner state；对于 generic action，pending 应来自显式 tracked interaction state。
 
 ## 8. 事件、动作与组件句柄能力
 

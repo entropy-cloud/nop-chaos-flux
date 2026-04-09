@@ -21,6 +21,7 @@
 
 - 关键字段是 `document`、`config`、`toolbar`、`inspector`、`dialogs`。
 - `document` 和 `config` 是必填宿主输入，不应通过隐式全局单例获取。
+- 目标设计中，如需让宿主外部读取 designer 状态摘要，应增加 `statusPath`，而不是把 host projection 直接提升到 page 全局 scope。
 
 ## 5. 字段分类
 
@@ -38,6 +39,7 @@
 
 - graph document、selection、history、dirty 等归 `flow-designer-core`。
 - schema 片段通过宿主 scope 读取 designer snapshot，通过 `designer:*` actions 提交写操作。
+- `designer-page` 属于 `Domain Host Owner`：内部读面是 `Host Projection`，宿主外部若需要观测其状态，应通过窄 `statusPath` 摘要而不是通过 `id` / `name` 或全局 host scope 注入读取。
 
 ## 8. 事件、动作与组件句柄能力
 

@@ -19,12 +19,14 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `title`、`header`、`body`、`footer`。
+- 建议正式字段为 `title`、`header`、`body`、`footer`、`data`。
 - 当前 `packages/flux-renderers-basic/src/schemas.ts` 只显式导出 `title`、`body`；文档基线应以 renderer definition 已公开的 region 契约为准，并推动类型补齐。
+- 如果后续 page lifecycle 进入 schema-visible 契约，目标上应优先增加 `statusPath` 一类只读状态摘要发布字段，而不是把 child owner 状态都上卷到 page。
 
 ## 5. 字段分类
 
 - `title`: `value-or-region`
+- `data`: `value`
 - `header`、`body`、`footer`: `region`
 - `className`、`classAliases`、`visible`、`disabled`: 继承 `BaseSchema` 元字段
 
@@ -38,15 +40,21 @@
 
 - `page` 自身不维护复杂交互状态。
 - 页面级数据归属 `PageRuntime` 和当前根 scope，不应在 renderer 内再创建第二份本地状态树。
+- `page.data` 的目标语义是 page root scope 的初始化 patch，而不是第二套局部 props 系统。
+- 目标设计中，`page` 只拥有 page shell 自己的状态，例如 initializing / refreshing / route readiness。
+- `page` 不应成为 dialog、drawer、form、table、source 这些更具体 owner 的统一状态桶。
+- 如果未来需要 schema-visible page shell 状态，外部读取仍应优先通过 `statusPath`；是否增加局部 `$page` 绑定，应等 page lifecycle 语义真正稳定后再决定。
 
 ## 8. 事件、动作与组件句柄能力
 
 - 当前没有专用 page 句柄。
 - 后续如果需要页面刷新、导航或标题同步，优先走 page runtime 或宿主 action，不建议给 `page` 增加过宽的 imperative API。
+- page 若未来提供状态读面，也应保持 data-only summary，不暴露底层 runtime/store。
 
 ## 9. 数据源、表达式、导入能力接入点
 
 - `title` 支持表达式和值片段。
+- `data` 初始化 page root scope，page subtree 默认继承该 root scope。
 - 页面级异步装配应落在 loader、page runtime 或 `data-source`，不应把 `page` 本身设计成请求型组件。
 
 ## 10. 样式与 DOM marker 约定

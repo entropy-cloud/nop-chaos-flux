@@ -209,6 +209,15 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 `tabs` 的核心内部状态是“当前激活项”。该状态不能只有一种本地实现，应该支持 ownership：
 
+从统一 owner 模型看，`tabs` 属于 interaction owner，而不是 page owner，也不是 surface owner。
+
+因此：
+
+- tab 切换状态不应上卷到 `page`
+- tab 切换状态也不应与 dialog/drawer 的 surface open-state 混用
+- 如果未来需要对外发布 tabs 只读状态摘要，优先通过 `statusPath`
+- `valueStatePath` 继续负责可写激活态持久化；`statusPath` 若存在，则负责只读摘要发布
+
 ### 8.1 `local`
 
 默认模式。
@@ -234,6 +243,12 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 - 适合设计器、多视图工作台和需要跨组件联动的页面
 
 这比 AMIS 的“既支持 value、又支持 name、又支持 hash、又可能本地 state”更清晰。
+
+目标设计补充：
+
+- `valueStatePath` 用于 active tab 这一可写交互轴
+- 若后续补充 `statusPath`，其职责应是发布 owner-level readonly summary，例如 `activeKey`、`activeIndex`、`canCloseActive`，而不是替代 `valueStatePath`
+- 是否增加局部 `$tabs` 绑定，应等证明 subtree-local authoring 有稳定需求后再决定，不应先于 `statusPath` 收口
 
 ## 9. 可见性与候选激活项修正
 

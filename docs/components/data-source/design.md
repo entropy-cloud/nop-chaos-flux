@@ -18,7 +18,7 @@
 
 ## 4. schema 设计
 
-- 当前已落地的正式字段围绕 `name`、`formula`、`api`、`interval`、`stopWhen`、`silent`。
+- 当前已落地的正式字段围绕 `name`、`formula`、`api`、`interval`、`stopWhen`、`silent`、`statusPath`。
 - 当使用 API 模式时，参数和 scope 注入位于 `api.params`、`api.includeScope` 之下，而不是提升为 renderer 顶层字段。
 - 具体契约应以 `docs/architecture/api-data-source.md` 和 `packages/flux-core/src/types/schema.ts` 为当前实现基线。
 - `onSuccess`、`onError`、`component:cancel` 等更强运行时控制能力可以作为后续增强，但当前文档不应把它们写成已落地正式字段。
@@ -37,6 +37,7 @@
 
 - 加载、错误和结果状态归 source runtime。
 - 写回目标 scope 的结果是外部可见状态；请求中的临时控制状态不应泄漏成通用页面字段。
+- 如果需要 schema-visible 的加载/错误摘要，优先通过 `statusPath` 发布 readonly summary DTO，而不是依赖隐式 sibling 路径或组件私有对象。
 
 ## 8. 事件、动作与组件句柄能力
 
