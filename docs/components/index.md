@@ -171,6 +171,7 @@ docs/components/
 | --- | --- | --- |
 | 状态归属 | `<axis>Ownership` | `valueOwnership`、`selectionOwnership` |
 | scope 持久化路径 | `<axis>StatePath` | `valueStatePath` |
+| 只读状态摘要发布 | `statusPath` | `userListStatus`、`searchFormStatus` |
 | ownership 值 | `local` / `controlled` / `scope` | `valueOwnership: 'scope'` |
 | 当前值 | 语义化当前值字段 | `value`、`selectedKeys` |
 | 初始化默认值 | `defaultXxx` | `defaultValue`、`defaultOpen` |
@@ -180,6 +181,22 @@ docs/components/
 - `defaultKey` 与 `value`
 - `selected`、`current`、`active` 指向同一语义
 - 组件私有术语和 runtime ownership 术语并存
+
+补充规则：
+
+- `statusPath` 用于发布 owner-level readonly summary DTO
+- `<axis>StatePath` 用于某一可写交互轴的持久化路径
+- 不要用 `id` / `name` 隐式充当状态读取路径
+- `tabs` / `table` 这类 interaction owner 通常同时需要 `<axis>StatePath` 和可选 `statusPath`，二者职责不同，不能互相替代
+
+组件 owner 快速分类：
+
+- producer owner: `data-source`、options loader、autocomplete loader
+- semantic lifecycle owner: `form`、future wizard step commit
+- interaction owner: `table`、`tabs`
+- surface owner: `dialog`、`drawer`
+- shell owner: `page`
+- explicit tracked operation: bulk action / export / arbitrary async graph
 
 ### 6. 样式语义名称
 
@@ -282,6 +299,9 @@ UI primitive 对齐补充规则：
 ### 已文档化但尚未实现的高优先级通用 renderer
 
 - `tabs`
+- `fragment`
+- `loop`
+- `recurse`
 - `dialog`
 - `drawer`
 - `separator`
@@ -304,6 +324,12 @@ UI primitive 对齐补充规则：
 ### 更长尾的候选 renderer
 
 更长尾的候选项和优先级请以 `docs/components/roadmap.md` 为准，这里不再维护第二份优先级列表。
+
+已完成目标设计但暂未进入高优先级实现队列的组件，也应在对应目录中保留 `design.md`，例如 `wizard/`。
+
+当前也包括 `tree/`：它应被理解为带 UI 的层级集合 renderer，而不是 `loop`/`recurse` 的视觉别名。
+
+结构节点与视觉节点要分开理解：例如 `fragment` / `loop` 是无 UI 的结构节点，而 `container` / `list` / `table` 是带 UI 或容器语义的 renderer。
 
 ### 不建议直接照搬 AMIS type 的场景
 
@@ -339,6 +365,7 @@ UI primitive 对齐补充规则：
 - `dynamic-renderer/`
 - `reaction/`
 - `tabs/`
+- `wizard/`
 - `dialog/`
 - `drawer/`
 - `separator/`
@@ -375,6 +402,7 @@ UI primitive 对齐补充规则：
 - `data-source/`
 - `chart/`
 - `list/`
+- `tree/`
 
 ### 领域宿主与设计器组件
 

@@ -118,6 +118,8 @@
 
 - 实现并验证当前已文档化但尚未实现的高优先级通用 renderer，优先顺序建议：`tabs`、`dialog`、`drawer`、`list`、`card`、`link`、`empty`、`json-view`。
 
+`tree` 暂不进入 P1 的原因不是缺少参考，而是它需要先和 `loop` / `recurse` / future `input-tree` / `tree-select` 的边界一起稳定下来。
+
 ### P2
 
 - 在表单和数据展示主线稳定后，再评估时间日期、上传、多媒体和导航族组件。
