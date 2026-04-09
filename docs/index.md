@@ -17,7 +17,8 @@ Choose the smallest document that matches the task.
 | If you need to... | Read this first | Then read |
 | --- | --- | --- |
 | Understand the current architecture baseline | `docs/architecture/flux-core.md` | `docs/architecture/renderer-runtime.md` |
-| Understand Flux's top-level frontend programming model, primitive categories, Java-loader/final-model positioning, and base tree + coordination/execution layering | `docs/architecture/frontend-programming-model.md` | `docs/architecture/flux-core.md` |
+| Understand Flux's top-level frontend programming model, primitive categories, macro layering, and how the primitives compose into one execution model | `docs/architecture/frontend-programming-model.md` | `docs/architecture/flux-core.md` |
+| Understand action control flow such as `when`, `then`, `onError`, `parallel`, result classes, and chained result context | `docs/architecture/action-algebra-formal-spec.md` | `docs/architecture/action-scope-and-imports.md` |
 | Review the surviving follow-up improvements to the top-level frontend programming model without reopening the primitive closure | `docs/architecture/frontend-programming-model-improvement-design.md` | `docs/architecture/frontend-programming-model.md` |
 | Design API requests, scope injection (includeScope), params, DataSource polling, unified formula/api source semantics, or non-rendering reaction/watch nodes | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` |
 | 了解基于 SchemaRenderer 的图设计器规划架构 | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md` |
@@ -71,6 +72,7 @@ Architecture intent lives primarily in:
 - `docs/architecture/flux-core.md`
 - `docs/architecture/schema-file-validator.md`
 - `docs/architecture/frontend-programming-model.md`
+- `docs/architecture/action-algebra-formal-spec.md`
 - `docs/architecture/frontend-programming-model-improvement-design.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/template-instantiation-and-node-identity.md`
