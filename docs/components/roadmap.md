@@ -124,6 +124,8 @@
 
 - 在表单和数据展示主线稳定后，再评估时间日期、上传、多媒体和导航族组件。
 
+树相关组件建议一起看边界：`tree` 是通用 UI，`input-tree` / `tree-select` 是 form field family，`loop + recurse` 是结构层。
+
 ## 迁移原则
 
 - 不再维护 AMIS 风格的大而全组件枚举文档。

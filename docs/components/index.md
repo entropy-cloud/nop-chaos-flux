@@ -329,6 +329,8 @@ UI primitive 对齐补充规则：
 
 当前也包括 `tree/`：它应被理解为带 UI 的层级集合 renderer，而不是 `loop`/`recurse` 的视觉别名。
 
+同理，`input-tree/` 与 `tree-select/` 属于 form field family，不应与通用 `tree/` 混同。
+
 结构节点与视觉节点要分开理解：例如 `fragment` / `loop` 是无 UI 的结构节点，而 `container` / `list` / `table` 是带 UI 或容器语义的 renderer。
 
 ### 不建议直接照搬 AMIS type 的场景
@@ -382,6 +384,8 @@ UI primitive 对齐补充规则：
 ### 表单组件
 
 - `form/`
+- `input-tree/`
+- `tree-select/`
 - `input-text/`
 - `input-email/`
 - `input-password/`

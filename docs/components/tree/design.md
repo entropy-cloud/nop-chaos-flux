@@ -155,6 +155,11 @@ tree node scope = parent lexical visibility + { node, index, depth, optional key
 - 通用树形展示/交互 UI
 - 不直接承担表单值字段语义
 
+当前该边界已单独收口到：
+
+- `docs/components/input-tree/design.md`
+- `docs/components/tree-select/design.md`
+
 ## 12. 结论
 
 最佳设计是：
