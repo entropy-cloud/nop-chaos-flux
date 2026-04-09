@@ -184,6 +184,7 @@ export function useResizablePanel() {
     onPointerDown(event: ReactPointerEvent<HTMLElement>) {
       if (event.button !== 0) return;
       resizeState.current = { pointerId: event.pointerId, startX: event.clientX, startWidth: width };
+      // eslint-disable-next-line react-compiler/react-compiler
       document.body.style.cursor = 'ew-resize';
       document.body.style.userSelect = 'none';
       setPointerCaptureSafely(event.currentTarget as HTMLElement, event.pointerId);

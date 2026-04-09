@@ -147,6 +147,7 @@ export function useDialogDrag(
 
       e.preventDefault()
       el.style.transition = 'none'
+      // eslint-disable-next-line react-compiler/react-compiler
       document.body.style.userSelect = 'none'
       document.body.style.webkitUserSelect = 'none'
       if (typeof el.setPointerCapture === 'function') {

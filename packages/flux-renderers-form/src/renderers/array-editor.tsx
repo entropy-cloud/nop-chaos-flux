@@ -24,11 +24,10 @@ function ArrayEditorRow(props: {
   childBehavior: CompiledValidationBehavior;
   onSync(nextItems: ArrayEditorItem[]): void;
   items: ArrayEditorItem[];
-  itemsRef: React.MutableRefObject<ArrayEditorItem[]>;
   itemLabel?: string;
   disabled?: boolean;
 }) {
-  const { item, index, name, currentForm, childBehavior, onSync, items, itemsRef, itemLabel, disabled } = props;
+  const { item, index, name, currentForm, childBehavior, onSync, items, itemLabel, disabled } = props;
   const itemPath = `${name}.${index}.value`;
   const itemFieldState = useCompositeChildFieldState(itemPath);
   const itemUi = getChildFieldUiState({
@@ -94,7 +93,6 @@ function ArrayEditorRow(props: {
         disabled={disabled}
         onClick={() => {
           const nextItems = items.filter((candidate) => candidate.id !== item.id);
-          itemsRef.current = nextItems;
 
           if (currentForm && name) {
             onSync(nextItems);
@@ -266,7 +264,6 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
               childBehavior={childBehavior}
               onSync={syncItems}
               items={items}
-              itemsRef={itemsRef}
               itemLabel={props.props.itemLabel ? String(props.props.itemLabel) : undefined}
               disabled={presentation.effectiveDisabled}
             />

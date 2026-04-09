@@ -1,0 +1,127 @@
+import { useCallback, useRef, useState } from 'react';
+import { cellAddress, type SpreadsheetRange } from '@nop-chaos/spreadsheet-core';
+import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
+
+export interface DragState {
+  isDragging: boolean;
+  startRow: number;
+  startCol: number;
+  endRow: number;
+  endCol: number;
+}
+
+export function useSelection(
+  snapshot: SpreadsheetHostSnapshot,
+  bridge: SpreadsheetBridge,
+  sheetId: string,
+  addLog: (msg: string) => void,
+  editingCellRef: React.RefObject<{ row: number; col: number } | null>,
+  editValueRef: React.RefObject<string>,
+  setEditingCell: (cell: { row: number; col: number } | null) => void,
+  setCommentText: (text: string) => void,
+  setCellValue: (value: string) => void
+) {
+  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
+  const [, setDragEnd] = useState<{ row: number; col: number } | null>(null);
+  const dragStateRef = useRef<DragState>({ isDragging: false, startRow: -1, startCol: -1, endRow: -1, endCol: -1 });
+  const hasDraggedRef = useRef(false);
+
+  const getSelectedRange = useCallback((): SpreadsheetRange | null => {
+    const state = dragStateRef.current;
+    if (state.startRow >= 0 && state.endRow >= 0) {
+      return {
+        sheetId,
+        startRow: Math.min(state.startRow, state.endRow),
+        startCol: Math.min(state.startCol, state.endCol),
+        endRow: Math.max(state.startRow, state.endRow),
+        endCol: Math.max(state.startCol, state.endCol),
+      };
+    }
+    if (selectedCell) {
+      return {
+        sheetId,
+        startRow: selectedCell.row,
+        startCol: selectedCell.col,
+        endRow: selectedCell.row,
+        endCol: selectedCell.col,
+      };
+    }
+    return null;
+  }, [selectedCell, sheetId]);
+
+  const isInRange = useCallback((row: number, col: number): boolean => {
+    const range = getSelectedRange();
+    if (!range) return false;
+    return row >= range.startRow && row <= range.endRow && col >= range.startCol && col <= range.endCol;
+  }, [getSelectedRange]);
+
+  const handleCellClick = useCallback((row: number, col: number) => {
+    if (!hasDraggedRef.current) {
+      if (editingCellRef.current) {
+        const currentEditCell = editingCellRef.current;
+        const currentEditValue = editValueRef.current;
+        const addr = cellAddress(currentEditCell.row, currentEditCell.col);
+        // eslint-disable-next-line react-compiler/react-compiler
+        editingCellRef.current = null;
+        editValueRef.current = '';
+        setEditingCell(null);
+        bridge.dispatch({
+          type: 'spreadsheet:setCellValue',
+          cell: { sheetId, address: addr, row: currentEditCell.row, col: currentEditCell.col },
+          value: currentEditValue,
+        });
+      }
+      setSelectedCell({ row, col });
+      dragStateRef.current = { isDragging: false, startRow: row, startCol: col, endRow: row, endCol: col };
+      const cell = snapshot.activeSheet?.cells?.[cellAddress(row, col)];
+      setCellValue(String(cell?.value ?? ''));
+      const comment = cell?.comment;
+      setCommentText(typeof comment === 'string' ? comment : comment?.text ?? '');
+      addLog(`Selected ${cellAddress(row, col)}`);
+    }
+    hasDraggedRef.current = false;
+  }, [snapshot, addLog, bridge, sheetId, editingCellRef, editValueRef, setEditingCell, setCommentText, setCellValue]);
+
+  const handleCellMouseDown = useCallback((row: number, col: number, e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    hasDraggedRef.current = false;
+    dragStateRef.current = { isDragging: true, startRow: row, startCol: col, endRow: row, endCol: col };
+    setDragEnd(null);
+    setSelectedCell({ row, col });
+  }, []);
+
+  const handleCellMouseEnter = useCallback((row: number, col: number) => {
+    if (dragStateRef.current.isDragging) {
+      hasDraggedRef.current = true;
+      dragStateRef.current = { ...dragStateRef.current, endRow: row, endCol: col };
+      setDragEnd({ row, col });
+    }
+  }, []);
+
+  const handleMouseUp = useCallback((isResizing: boolean, onResizeEnd: () => void, getSelectedRangeFn: () => SpreadsheetRange | null) => {
+    if (dragStateRef.current.isDragging) {
+      dragStateRef.current = { ...dragStateRef.current, isDragging: false };
+      const range = getSelectedRangeFn();
+      if (range && hasDraggedRef.current) {
+        addLog(`Selected range ${cellAddress(range.startRow, range.startCol)}:${cellAddress(range.endRow, range.endCol)}`);
+      }
+    }
+    if (isResizing) {
+      onResizeEnd();
+    }
+  }, [addLog]);
+
+  return {
+    selectedCell,
+    setSelectedCell,
+    dragStateRef,
+    hasDraggedRef,
+    getSelectedRange,
+    isInRange,
+    handleCellClick,
+    handleCellMouseDown,
+    handleCellMouseEnter,
+    handleMouseUp,
+  };
+}

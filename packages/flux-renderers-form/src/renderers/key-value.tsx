@@ -31,10 +31,9 @@ function KeyValueRow(props: {
   childBehavior: CompiledValidationBehavior;
   onSync(nextPairs: KeyValuePair[]): void;
   pairs: KeyValuePair[];
-  pairsRef: React.MutableRefObject<KeyValuePair[]>;
   disabled?: boolean;
 }) {
-  const { pair, index, name, currentForm, childBehavior, onSync, pairs, pairsRef, disabled } = props;
+  const { pair, index, name, currentForm, childBehavior, onSync, pairs, disabled } = props;
   const keyPath = `${name}.${index}.key`;
   const valuePath = `${name}.${index}.value`;
   const keyFieldState = useCompositeChildFieldState(keyPath);
@@ -155,7 +154,6 @@ function KeyValueRow(props: {
         disabled={disabled}
         onClick={() => {
           const nextPairs = pairs.filter((candidate) => candidate.id !== pair.id);
-          pairsRef.current = nextPairs;
 
           if (currentForm && name) {
             onSync(nextPairs);
@@ -359,7 +357,6 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
               childBehavior={childBehavior}
               onSync={syncField}
               pairs={pairs}
-              pairsRef={pairsRef}
               disabled={presentation.effectiveDisabled}
             />
           );
