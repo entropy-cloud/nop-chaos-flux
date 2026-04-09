@@ -1,7 +1,7 @@
 # 47 Form Status Visibility And Reserved Form Binding Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10
 > Source: `docs/architecture/form-validation.md`, `docs/architecture/action-interaction-state.md`, `docs/components/form/design.md`, `docs/examples/user-management-schema.md`
 > Related: `docs/plans/46-user-management-schema-and-authoring-contract-alignment-plan.md`
 > Related: `docs/plans/48-semantic-owner-status-surface-unification-plan.md`
@@ -57,64 +57,73 @@
 
 ## Workstream 1 - Contract Freeze
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/form-validation.md`, `docs/architecture/action-interaction-state.md`, `docs/components/form/design.md`, `docs/references/flux-json-conventions.md`
 
-- [ ] freeze `$form` as a reserved readonly current-form binding
-- [ ] freeze `statusPath` as the cross-boundary readonly form-status publication path
-- [ ] freeze the minimal `FormStatusSummary` DTO shape and field names
-- [ ] document why `$store` is rejected as public authoring surface
+- [x] freeze `$form` as a reserved readonly current-form binding
+- [x] freeze `statusPath` as the cross-boundary readonly form-status publication path
+- [x] freeze the minimal `FormStatusSummary` DTO shape and field names
+- [x] document why `$store` is rejected as public authoring surface
 
 Exit Criteria:
 
-- [ ] one reader can answer “form 内外分别如何读取状态” without reading runtime code
-- [ ] docs no longer imply that form `id` / `name` is a data-binding path
+- [x] one reader can answer "form 内外分别如何读取状态" without reading runtime code
+- [x] docs no longer imply that form `id` / `name` is a data-binding path
 
 ## Workstream 2 - Runtime Publication And Binding
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/schemas.ts`, `packages/flux-renderers-form/src/renderers/form.tsx`, related runtime/expression plumbing
 
-- [ ] add `statusPath` to `FormSchema`
-- [ ] publish readonly form-status summary to `statusPath` when declared
-- [ ] inject readonly `$form` binding for expressions inside the active form subtree
-- [ ] ensure `$form` / `statusPath` stay data-only and cannot be used as command objects
+- [x] add `statusPath` to `FormSchema`
+- [x] publish readonly form-status summary to `statusPath` when declared
+- [x] inject readonly `$form` binding for expressions inside the active form subtree
+- [x] ensure `$form` / `statusPath` stay data-only and cannot be used as command objects
+
+Implementation notes:
+- `FormStatusSummary` type added to `packages/flux-core/src/types/runtime.ts`
+- `statusPath?: string` added to `FormSchema` in `packages/flux-renderers-form/src/schemas.ts`
+- `$form` injected via scope overlay in `createManagedFormRuntime` (`packages/flux-runtime/src/form-runtime.ts`): `formScopeWithBinding` wraps the form scope, overriding `get`, `has`, `readOwn`, and `read` to include `$form` as a computed `FormStatusSummary`
+- `statusPath` publication implemented in `FormRenderer` via a `useEffect` that subscribes to `currentForm.store` and writes the summary to `parentScope.update(statusPath, summary)` on every store change
+- `submitCount` and `lastSubmitStatus` are deferred to a future plan (form store does not track these yet)
 
 Exit Criteria:
 
-- [ ] `${$form.submitting}` works inside form subtree
-- [ ] `${formStatus.submitting}` works outside form subtree when `statusPath` is declared
+- [x] `${$form.submitting}` works inside form subtree
+- [x] `${formStatus.submitting}` works outside form subtree when `statusPath` is declared
 
 ## Workstream 3 - Example And Pending-State Adoption
 
-Status: planned
+Status: completed
 Targets: `docs/examples/user-management-schema.md`, representative tests, related pending-state docs
 
-- [ ] update representative examples to use `$form.submitting` instead of ad hoc host flags for semantic form submit
-- [ ] update external-trigger examples to use `statusPath` when they need target form status
-- [ ] align pending-state guidance so semantic form submit references `$form` / `statusPath`
+- [x] update representative examples to use `$form.submitting` instead of ad hoc host flags for semantic form submit
+- [x] update external-trigger examples to use `statusPath` when they need target form status
+- [x] align pending-state guidance so semantic form submit references `$form` / `statusPath`
 
 Exit Criteria:
 
-- [ ] representative examples no longer depend on undocumented form meta-state access
-- [ ] action/pending docs and example authoring tell the same story
+- [x] representative examples no longer depend on undocumented form meta-state access
+- [x] action/pending docs and example authoring tell the same story
 
 ## Validation Checklist
 
-- [ ] docs define `$form` as reserved readonly binding
-- [ ] docs define `statusPath` as readonly form-status publication path
-- [ ] docs explicitly reject `$store` as public schema binding
-- [ ] `user-management-schema` demonstrates `$form` and `statusPath`
-- [ ] focused verification for form submit pending/read-state works
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] docs define `$form` as reserved readonly binding
+- [x] docs define `statusPath` as readonly form-status publication path
+- [x] docs explicitly reject `$store` as public schema binding
+- [x] `user-management-schema` demonstrates `$form` and `statusPath`
+- [x] focused verification for form submit pending/read-state works
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: close this plan only when `$form` and `statusPath` are both implemented or any leftover work is explicitly moved to a successor plan.
+Status Note: All workstreams completed. `$form` and `statusPath` are both implemented.
+
+Deferred:
+- `submitCount` and `lastSubmitStatus` fields in `FormStatusSummary` require form store changes; deferred to a future plan.
 
 Follow-up:
-
 - generic interaction tracking can stay in `docs/architecture/action-interaction-state.md` and a separate future implementation plan
