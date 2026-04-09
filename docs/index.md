@@ -7,7 +7,7 @@ This `docs/` tree is the curated entry point for the current repository state.
 - start here before changing architecture docs
 - prefer active files under `docs/architecture/`, `docs/references/`, and `docs/examples/`
 - use `docs/logs/` for short dated notes about recent documentation, decisions, and next implementation steps (one file per day: `docs/logs/{year}/{month}-{day}.md`)
-- treat `docs/plans/` as execution documents; plan status inside each file should describe the plan's current execution state
+- treat `docs/plans/` as execution documents; draft and audit plan files using `docs/plans/00-plan-authoring-and-execution-guide.md`, and keep plan status inside each file aligned with the current execution state
 - non-`plans` and non-`bugs` docs should describe the latest design baseline only
 
 ## Read This First
@@ -24,6 +24,7 @@ Choose the smallest document that matches the task.
 | 看清 Flow Designer 各层协作细节、命名空间动作流转、画布/Inspector 调用链 | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
 | 核对 Flow Designer 当前真实的 snapshot 契约、host scope 落地状态、哪些字段已接线 | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |
 | Understand Flow Designer React Flow integration, callback translation, or canvas failure semantics | `docs/architecture/flow-designer/canvas-adapters.md` | `docs/architecture/flow-designer/api.md` |
+| Draft, execute, or audit a plan under `docs/plans/` | `docs/plans/00-plan-authoring-and-execution-guide.md` | `docs/logs/index.md` |
 | Plan parity work against `nop-chaos-next` `flow-editor` and identify which behaviors must become configuration-driven | `docs/plans/13-flow-editor-parity-gap-analysis-and-migration-plan.md` | `docs/architecture/flow-designer/design.md` |
 | Plan implementation of compiler-integrated schema diagnostics | `docs/plans/41-compiler-integrated-schema-diagnostics-implementation-plan.md` | `docs/architecture/schema-file-validator.md`, `docs/architecture/flux-runtime-module-boundaries.md` |
 | Design theme-compatible styling, host CSS variable integration, or `.na-theme-root` migration strategy | `docs/architecture/theme-compatibility.md` | `docs/architecture/renderer-runtime.md` |
@@ -112,5 +113,5 @@ Example behavior is best cross-checked with:
 - `docs/logs/` - per-day development logs (`{year}/{month}-{day}.md`), see `docs/logs/index.md` for writing guide and index
 - `docs/bugs/` - numbered defect histories and fix notes for non-obvious regressions; useful for root-cause context and regression tracking, but secondary to architecture docs
 - start new bug notes from `docs/bugs/00-bug-fix-note-writing-guide.md`
-- `docs/plans/` - implementation plans and execution checklists; every plan file should include explicit status
+- `docs/plans/` - implementation plans and execution checklists; start new plans from `docs/plans/00-plan-authoring-and-execution-guide.md`, and ensure every plan file includes explicit status
 - `docs/skills/` - reusable internal workflow prompts and task playbooks

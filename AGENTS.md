@@ -86,6 +86,19 @@ After completing any significant **CODE CHANGE**, you MUST:
 - Next step: ...
 ```
 
+### Plan Authoring And Execution
+
+When creating, revising, executing, or auditing a file under `docs/plans/`, you MUST read `docs/plans/00-plan-authoring-and-execution-guide.md` first.
+
+Follow these rules:
+
+1. Plans are execution docs, not idea dumps or architecture substitutes.
+2. Every new or actively maintained plan must include explicit status, `Last Reviewed`, source docs, clear scope/non-goals, phase exit criteria, and a validation checklist.
+3. Re-audit the live repository before claiming a plan is complete; do not trust old completion notes or stale checklist state.
+4. If a plan becomes too broad or mixes already-completed work with remaining gaps, shrink it or split the remaining gap into a new owner plan.
+5. When older text is no longer the current baseline, mark it as outdated or replaced and cross-link the new owner plan instead of silently letting multiple baselines coexist.
+6. Only mark a plan `completed` when the plan's current scope is landed and any leftover work is explicitly out of scope or moved to another plan.
+
 ### Directory Roles
 
 | Directory | Purpose |
@@ -94,7 +107,7 @@ After completing any significant **CODE CHANGE**, you MUST:
 | `docs/references/` | Stable lookup material (terminology, interfaces, maintenance) |
 | `docs/analysis/` | Investigatory/comparison reports |
 | `docs/examples/` | Representative schemas and usage notes |
-| `docs/plans/` | Historical execution plans (not normative; superseded by `docs/architecture/`) |
+| `docs/plans/` | Implementation plans and execution checklists (execution docs, not normative design docs; after closure they become historical records) |
 | `docs/bugs/` | Numbered defect histories and fix notes |
 | `docs/archive/` | Preserved legacy drafts |
 | `docs/logs/` | Daily dev logs — `docs/logs/{year}/{month}-{day}.md`, see `docs/logs/index.md` for writing guide and index |
@@ -121,6 +134,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 | Change Flow Designer visual style (node cards, icons, badges) | `docs/architecture/styling-system.md` → "Spacing Conventions" section | `docs/analysis/flow-designer-style-parity-research.md` | Context-based spacing guide, parity audit |
 | Change Flow Designer config schema (nodeTypes, ports, permissions) | `docs/architecture/flow-designer/config-schema.md` | `docs/architecture/flow-designer/api.md` | NodeTypeConfig, port definitions, inspector schema |
 | Work on Report Designer or Spreadsheet Editor | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` | Layered architecture, package boundaries, interface contracts |
+| Draft, execute, or audit a plan under `docs/plans/` | `docs/plans/00-plan-authoring-and-execution-guide.md` | `docs/logs/index.md` | Plan scope, status, exit criteria, and closure discipline |
 | Change spreadsheet cell CSS, `ss-*` classes, or cell rendering styles | `docs/architecture/report-designer/spreadsheet-canvas-css.md` | `docs/architecture/styling-system.md` → "Performance-Critical Domain: Spreadsheet Canvas" | Hybrid CSS strategy (predefined class + inline style + data-*), perf-first, NOT Tailwind |
 | Change form validation, error display, or field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` | Validation rules, timing, renderer participation |
 | Change form field wrappers, labels, hints, or error slots | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/field-frame.md` | Slot classification, unified field chrome |
@@ -461,4 +475,3 @@ Before finishing any task:
 - [ ] `pnpm test` passes (if applicable)
 - [ ] `docs/logs/` updated (for significant changes)
 - [ ] Relevant architecture docs updated (if design changed)
-
