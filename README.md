@@ -43,7 +43,7 @@ Describe your UI as JSON. Flux compiles it once, executes it through seven primi
 }
 ```
 
-Expressions compile once. Static parts return by reference. Dynamic parts track their own dependencies.
+A form with validation and submit:
 
 ```jsonc
 {
@@ -68,19 +68,38 @@ Expressions compile once. Static parts return by reference. Dynamic parts track 
 }
 ```
 
+**What happens under the hood:**
+
+1. **Compile** — The schema compiles into a value tree. Field names and `required` rules are extracted into a validation model.
+2. **Instantiate** — The runtime creates a form instance with its own scope and state.
+3. **Render** — The React renderer receives resolved props, meta, and validation state.
+4. **Submit** — The `submitForm` action dispatches, validates, and calls the API.
+
 ---
 
 ## Design Philosophy
 
 **Six core principles. Seven primitives. Clean boundaries.**
 
-Flux is a ground-up rewrite of [Baidu AMIS](https://github.com/baidu/amis) — rethought around six principles.
+Flux is a ground-up rewrite of [Baidu AMIS](https://github.com/baidu/amis) — rethought around six principles and seven primitives:
+
+| Primitive | Responsibility |
+|---|---|
+| **Base Tree** | Structure and lifecycle of schema nodes |
+| **ScopeRef** | Lexical data environment |
+| **Value** | Executable value model (literal, expression, template, array, object) |
+| **Resource** | Runtime-owned value producer (data sources, API calls) |
+| **Reaction** | Watch/effect primitive for declarative consequences |
+| **Capability** | Authority primitive — the only path for side effects |
+| **Host Projection** | Readonly host snapshot admission into schema-visible scope |
+
+Everything else — forms, tables, dialogs, designers, validation, action orchestration — builds from these seven primitives. Complex runtime capabilities are derived systems, not new primitives.
 
 ### 1. DSL-First
 
 **DSL is a first-class artifact — an editable, composable, transformable structure layer.**
 
-In AMIS and similar frameworks, JSON is just input format for runtime. In Flux, DSL lives outside runtime with its own lifecycle:
+In AMIS and similar frameworks, JSON is just an input format for the runtime. In Flux, DSL lives outside the runtime with its own lifecycle:
 
 | Capability | Meaning |
 |---|---|
@@ -90,76 +109,72 @@ In AMIS and similar frameworks, JSON is just input format for runtime. In Flux, 
 | **Transform** | i18n string replacement, static default expansion |
 | **Metaprogramming** | Express variation through structural conventions, not runtime interface growth |
 
-DSL is composable. DSL transforms are layered: permission pruning, i18n replacement, and default expansion operate independently. DSL decouples from runtime: authoring metadata changes must not alter runtime behavior. DSL complexity grows by extending existing simple forms, not by replacing the baseline mental model.
+DSL is composable: transforms like permission pruning, i18n replacement, and default expansion operate independently. The DSL layer decouples from the runtime — authoring metadata changes must not alter runtime behavior. Complexity grows by extending existing simple forms, not by replacing the baseline mental model.
 
 > "If a problem can be solved in structure transformation, it must not be dragged into the runtime surface."
 
 ### 2. Write-Execute Separation
 
-**Authoring Model and Execution Model serve different optimization goals, separated by pre-compilation boundary.**
+**Authoring Model and Execution Model serve different optimization goals, separated by a pre-compilation boundary.**
 
-Many frameworks maintain one model that runtime must directly carry the authoring structure. Flux intentionally does not do this. Instead:
+Many frameworks maintain a single model where the runtime must directly carry the authoring structure. Flux intentionally does not do this:
 
 | Dimension | Authoring Model | Execution Model |
 |---|---|---|
-| **Optimization goals** | Understandability, domain expressiveness, edit fidelity | Performance, internal concept unification, runtime overhead minimization |
-| **Structure form** | Source location preservation, aliases, editor metadata, domain edit structure | Assembled Final Execution Schema, no redundancy |
-| **Correctness standard** | Round-trip fidelity, author intent not lost | Behavioral equivalence, execution determinism |
-| **Replaceability** | Multiple editors/designers/collaboration engines produce same DSL | Same Final Execution Schema executes across different runtime hosts |
+| **Optimization goal** | Understandability, domain expressiveness, edit fidelity | Performance, internal concept unification, runtime overhead minimization |
+| **Structure** | Source locations, aliases, editor metadata, domain-specific editing structure | Assembled final execution schema, no redundancy |
+| **Correctness** | Round-trip fidelity, author intent is preserved | Behavioral equivalence, execution determinism |
+| **Replaceability** | Multiple editors/designers/collaboration engines produce the same DSL | The same final execution schema runs across different runtime hosts |
 
-Pre-compilation boundary keeps structural decisions (type resolution, renderer binding, default expansion) in loader phase. Runtime sees zero overhead for these decisions.
+The pre-compilation boundary keeps structural decisions (type resolution, renderer binding, default expansion) in the loader phase. The runtime sees zero overhead for these decisions.
 
 ### 3. Reactive Data-Driven
 
-**Execution model is declarative reactive with implicit dependency collection.**
+**The execution model is declarative-reactive with implicit dependency collection.**
 
-Authors don't build imperative coupling chains like in React or Vue apps. When a value reads a path through expression, template, or dynamic value form, it naturally enters dependency graph and re-evaluates when dependencies change.
+Authors don't build imperative coupling chains unlike typical React or Vue applications. When a value reads a path through an expression, template, or dynamic value form, it naturally enters the dependency graph and re-evaluates when dependencies change.
 
-Basic rhythm: **evaluate → collect dependencies → change propagation → point re-evaluation/invalidation → re-publish.**
+Basic rhythm: **evaluate → collect dependencies → change propagation → selective re-evaluation → re-publish.**
 
 | Concept | Principle |
 |---|---|
-| **Implicit dependency establishment** | Dynamic value reads automatically enter dependency set when they access a path |
-| **Dynamic collection** | Dependencies collected during evaluation, not declared statically |
-| **Unified dependency model** | `Value`, `Resource`, `Reaction` share same model, but consequences differ (recompute / dirty refresh / trigger Capability) |
-| **Reactive logic location** | Reactive logic lives in runtime/store layer, not injected into plain data objects |
-| **Write-Read separation** | All side effects converge to single channel: `Capability` dispatch only |
+| **Implicit dependency** | Dynamic value reads automatically enter the dependency set when they access a path |
+| **Dynamic collection** | Dependencies are collected during evaluation, not declared statically |
+| **Unified model** | `Value`, `Resource`, `Reaction` share the same dependency model, but consequences differ (recompute / dirty refresh / trigger a Capability) |
+| **Store-level logic** | Reactive logic lives in the runtime/store layer, not injected into plain data objects |
+| **Write-read separation** | All side effects converge to a single channel: `Capability` dispatch |
 
-> "Dependency tracking is a top-level execution rule, not implementation detail."
+> "Dependency tracking is a top-level execution rule, not an implementation detail."
 
 ### 4. Progressive Evolution
 
-**Complexity grows along stable paths from simple DSL forms, not by inflating primitive sets.**
+**Complexity grows along stable paths from simple DSL forms, not by inflating the primitive set.**
 
-When a simple need has a natural simple DSL form, subsequent complexity should extend that form, not replace it with a different baseline mental model.
+When a need has a natural, simple DSL form, subsequent complexity should extend that form, not replace it with a different baseline mental model.
 
-**DSL layer evolution — simple forms grow naturally:**
+**DSL layer — simple forms grow naturally:**
 
-| Concept | Simple form → | → Complex form |
+```
+Values:    literal → expression → anonymous source → named data-source (Resource)
+Actions:   single dispatch → when guard → then/onError → parallel fan-out → compiled DAG
+Structure: visible (display) → when (lifecycle) → loop (expansion) → dynamic-renderer (remote)
+Host:      semantic commands → generic patch-style applyPatch
+```
+
+**Runtime layer — derived systems compose primitives:**
+
+| Derived system | Composed from | Solves |
 |---|---|---|
-| **Values** | literal → expression → anonymous source → | named `data-source` (Resource) |
-| **Actions** | Single-step dispatch → | `when` guard → `then`/`onError` branches → | `parallel` fan-out → | compiled into DAG-level execution graph |
-| **Structure** | `visible` (display level) → | `when` (lifecycle activation) → | `loop` (collection expansion) → | `dynamic-renderer` (remote assembly) |
-| **Host writes** | Semantic commands → | Generic patch-style `applyPatch` |
-
-**Runtime layer evolution — derived systems compose primitives:**
-
-| Derived system | Composed from primitives | Solves |
-|---|---|---|
-| **Action Algebra** | Capability + Value | Effect orchestration: when/then/onError/parallel compiled as DAG for sequential, branch, aggregation, timeout, retry |
-| **Operation Control** | Capability + Resource | Shared execution control: timeout, cancellation, throttling, dedup, retry, concurrency |
-| **Semantic Lifecycle Entry** | Base Tree + ScopeRef + Value + Capability + Reaction | Node-owned business pipeline: form submit, dialog confirmation, page enter |
+| **Action Algebra** | Capability + Value | Effect orchestration: when/then/onError/parallel compiled as a DAG |
+| **Operation Control** | Capability + Resource | Shared execution control: timeout, cancellation, throttling, dedup, retry |
+| **Semantic Lifecycle Entry** | Base Tree + ScopeRef + Value + Capability + Reaction | Node-owned business pipeline: form submit, dialog confirm, page enter |
 | **FormRuntime / PageRuntime** | All primitives | Domain-specific runtimes: form validation-submit pipeline, page lifecycle |
 
-**Evolution guardrails:** New primitive category only if: cross-domain, non-reducible, semantically stable, author-visible, not just convenience.
-
-Complex runtime capabilities should be derived systems from existing primitives, not new primitives. Derived systems may be important in implementation, but they don't automatically promote to Primitive Category.
+**Evolution guardrails:** A new primitive category is introduced only if it is cross-domain, non-reducible, semantically stable, author-visible, and not just a convenience. Derived systems may be important in implementation, but they don't automatically promote to primitive status.
 
 ### 5. Lexical Ownership
 
 **Data, capabilities, resources, reactions, and runtime sidecars follow lexical/child-tree boundaries, not global registries.**
-
-Flux reactive execution doesn't run on an ambient global runtime object. Data, capability, resource, reaction, and runtime sidecars follow lexical scope or child-tree boundaries.
 
 | Lookup mechanism | Purpose |
 |---|---|
@@ -167,28 +182,61 @@ Flux reactive execution doesn't run on an ambient global runtime object. Data, c
 | **Behavior lookup (ActionScope)** | What actions can fire here (`ajax`, `submitForm`, `designer:addNode`) |
 | **Instance targeting (ComponentHandleRegistry)** | Which live instance to target (`componentId: userForm`) |
 
-Child scopes naturally shadow parent-level publication through lexical scoping, not global override. Resource binding targets determine scope by lexical ownership, not globally. Same binding path can independently exist in different lexical scopes. Duplicate within same lexical scope is invalid.
+Child scopes naturally shadow parent bindings through lexical scoping, not global override. Resource binding targets determine scope by lexical ownership, not by global identity. The same binding path can independently exist in different lexical scopes. A duplicate within the same lexical scope is invalid.
 
-Runtime sidecars (Resource state, Reaction state, cache, diagnostics) follow lexical ownership, but must not become methods or mutable protocol objects mounted on ScopeRef. Scope's job is to carry data environment, not bridge, controller, or handle objects.
+Runtime sidecars (Resource state, Reaction state, cache, diagnostics) follow lexical ownership, but must not become methods or mutable protocol objects mounted on ScopeRef. The scope's job is to carry the data environment, not bridge, controller, or handle objects.
 
 ### 6. Domain Isolation and Abstraction
 
-**Core maintains small, stable abstraction layer. Domain complexity lives outside core, embedded through narrow contracts.**
+**The core maintains a small, stable abstraction layer. Domain complexity lives outside the core, embedded through narrow contracts.**
 
-Judgment standard: "Can core provide stable embedding surface for complex systems without forcing domain complexity back into core vocabulary?"
+The judgment standard: "Can the core provide a stable embedding surface for complex systems without forcing domain complexity back into the core vocabulary?"
 
 | Direction | Mechanism | Meaning |
 |---|---|---|
 | **Core → Domain (read)** | Host Projection | Read-only snapshot projection, host drives refresh |
 | **Domain → Core (write)** | Capability | Namespaced command dispatch (like `designer:*`) |
 | **Instance targeting** | ComponentHandleRegistry | Explicit component instance method invocation |
-| **Host-private** | DomainBridge | `getSnapshot/subscribe/dispatch`, doesn't enter Schema-visible Scope |
+| **Host-private** | DomainBridge | `getSnapshot/subscribe/dispatch`, doesn't enter schema-visible scope |
 
-**Why core stays stable:**
+**Why the core stays stable:**
 
-Graph algorithms, layout, collision detection, collaboration protocols, CRDT/OT, local-first sync, gesture loops — these are important, but they are **domain systems** and should not become core primitives. In Flux they are just production strategies behind Resource, or host snapshots behind Host Projection, or command systems behind Capability.
+Graph algorithms, layout, collision detection, collaboration protocols, CRDT/OT, local-first sync, gesture loops — these are important, but they are **domain systems** and should not become core primitives. In Flux they are production strategies behind Resource, host snapshots behind Host Projection, or command systems behind Capability.
 
-New domains embed through declarative host types + projection fields + capability namespace, without introducing new global provider families, environment registries, or new schema authority channels.
+New domains embed through declarative host types + projection fields + capability namespaces, without introducing new global provider families, environment registries, or new schema authority channels.
+
+---
+
+## Comparison with AMIS
+
+Flux is a rewrite of AMIS. Here are the key architectural differences:
+
+| Aspect | AMIS | Flux |
+|---|---|---|
+| **Field semantics** | Parallel suffix families: `visible`/`visibleOn`/`hidden`/`hiddenOn`/`disabledOn`/`classNameExpr` | Unified field, compiler determines meaning from metadata |
+| **Expression model** | Runtime interpretation with partial caching | Compile-once value tree, static parts return by reference |
+| **Scope model** | Merged objects per evaluation | Lexical path lookup (`scope.get(path)`) |
+| **Side effects** | Mixed with data access through similar mechanisms | Orthogonal: data (ScopeRef) + actions (ActionScope) + instances (ComponentHandleRegistry) |
+| **Template model** | Compiled nodes treated as live instances | Compile-once template graph + per-instance runtime state |
+| **Theme** | Custom CSS-in-JS | CSS variable contract, no ThemeProvider |
+| **Security** | Some `new Function` / `with(scope)` patterns | No `eval`, `new Function`, or `with(scope)` in first-party source |
+
+```javascript
+// AMIS: parallel field families
+{
+  "visible": true,
+  "visibleOn": "this.status === 'active'",
+  "hidden": false,
+  "hiddenOn": "this.status === 'archived'",
+  "classNameExpr": "statusClass"
+}
+
+// Flux: unified — compiler handles semantics
+{
+  "visible": "${status === 'active'}",
+  "className": "${statusClass}"
+}
+```
 
 ---
 
@@ -201,11 +249,11 @@ New domains embed through declarative host types + projection fields + capabilit
 | **Data tables** | CRUD tables with search, pagination, row actions, and scope-per-row |
 | **Flow Designer** | Full graph editor: drag-and-drop nodes, connect ports, undo/redo, configurable toolbar and inspector |
 | **Spreadsheet Editor** | Excel-like multi-sheet editing with merge, resize, selection, and formula support |
-| **Report Designer** | Report semantic overlays on top of spreadsheet, with field panels and preview integration |
-| **Word Editor** | Document editing capability |
+| **Report Designer** | Report semantic overlays on top of the spreadsheet, with field panels and preview integration |
+| **Word Editor** | Document editing with formatting, tables, and sections |
 | **Debugger** | Floating dev panel with event timeline, node inspector, scope viewer, plus structured automation API for AI/E2E |
 
-Both designers are driven entirely by JSON configuration — node types, ports, connection rules, toolbar items, inspector panels — without modifying framework code.
+All designers and editors are driven entirely by JSON configuration — node types, ports, connection rules, toolbar items, inspector panels — without modifying framework code.
 
 ---
 
@@ -231,109 +279,9 @@ pnpm --filter @nop-chaos/flow-designer-core typecheck
 
 ---
 
-## Your First Form
-
-Start with a simple form. Flux compiles it, handles validation, and dispatches actions.
-
-```jsonc
-{
-  "type": "page",
-  "title": "Contact Form",
-  "body": [
-    {
-      "type": "form",
-      "id": "contact-form",
-      "data": { "name": "", "email": "", "message": "" },
-      "body": [
-        {
-          "type": "input-text",
-          "name": "name",
-          "label": "Name",
-          "required": true
-        },
-        {
-          "type": "input-email",
-          "name": "email",
-          "label": "Email",
-          "required": true
-        },
-        {
-          "type": "textarea",
-          "name": "message",
-          "label": "Message"
-        }
-      ],
-      "actions": [
-        {
-          "type": "button",
-          "label": "Send",
-          "onClick": {
-            "action": "submitForm",
-            "formId": "contact-form",
-            "api": { "method": "post", "url": "/api/contact" }
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
-**What happens:**
-
-1. **Compile** — Schema compiles into value tree. Field names and required rules extract into validation model.
-2. **Instantiate** — Runtime creates form instance with its own scope and state.
-3. **Render** — React renderer receives resolved props, meta, and validation state.
-4. **Submit** — `submitForm` action dispatches, validates, and calls API.
-
-**Try it:** Start the playground with `pnpm dev`, then navigate to the "Contact Form" scenario to see this in action.
-
----
-
-## Adding Validation
-
-Validation rules live in schema. No imperative code in components.
-
-```jsonc
-{
-  "type": "form",
-  "id": "signup-form",
-  "body": [
-    {
-      "type": "input-text",
-      "name": "username",
-      "label": "Username",
-      "validations": [
-        {
-          "type": "pattern",
-          "pattern": "^[a-z0-9_]{3,20}$",
-          "message": "Username must be 3-20 alphanumeric characters"
-        }
-      ]
-    },
-    {
-      "type": "input-password",
-      "name": "password",
-      "label": "Password",
-      "validations": [
-        {
-          "type": "minLength",
-          "minLength": 8,
-          "message": "Password must be at least 8 characters"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Compiler extracts these rules into a validation model. Runtime validates on change and on submit.
-
----
-
 ## Connecting to Data
 
-Data enters scope through three paths:
+Data enters the scope through three paths:
 
 1. **Page-level data** — `{ "type": "page", "data": { "user": {...} } }`
 2. **Data sources** — Named publishers: `{ "type": "data-source", "name": "users", "api": {...} }`
@@ -349,10 +297,7 @@ Data enters scope through three paths:
       "label": "Load Users",
       "onClick": {
         "action": "ajax",
-        "api": {
-          "method": "get",
-          "url": "/api/users"
-        },
+        "api": { "method": "get", "url": "/api/users" },
         "dataPath": "users"
       }
     },
@@ -393,13 +338,21 @@ JSON Schema
 
 ### Key Design Rules
 
-**Boundary inputs stay explicit. Ambient runtime capabilities come from hooks. Local fragment rendering uses explicit render handles.**
+**Boundary inputs stay explicit.**
 
-Renderer components receive explicit props, meta, and regions. They use hooks for runtime services like scope access, action dispatch, and fragment rendering — not prop-drilling chains.
+Renderer components receive explicit props, meta, and regions.
 
-**Renderers emit marker classes only. No implicit layout.**
+**Ambient runtime capabilities come from hooks.**
 
-Markers (`nop-container`, `nop-page`, `nop-field`) identify renderer type only. All visual styles come from schema (`className`, semantic props, `classAliases`). Same renderer can look completely different depending on its schema configuration.
+Components use hooks for scope access, action dispatch, and fragment rendering — not prop-drilling chains.
+
+**Local fragment rendering uses explicit render handles.**
+
+Child regions are pre-compiled render handles passed through `props.regions`, not ad-hoc React calls.
+
+**Renderers emit marker classes only — no implicit layout.**
+
+Markers (`nop-container`, `nop-page`, `nop-field`) identify renderer type only. All visual styles come from schema (`className`, semantic props, `classAliases`). The same renderer can look completely different depending on its schema configuration.
 
 **Theme compatibility is a CSS contract, not a runtime provider contract.**
 
@@ -411,7 +364,7 @@ Renderers emit stable DOM classes and read CSS variables. Hosts override variabl
 
 ### Namespaced Actions
 
-Built-in actions (`setValue`, `ajax`, `submitForm`, `openDialog`) extend through namespaced action scopes:
+The built-in action system extends via namespaced action scopes:
 
 ```typescript
 // Designer-specific actions — isolated from data scope
@@ -424,7 +377,7 @@ actionScope.register('myApp:open', handler);
 
 ### Declarative Capability Import
 
-External library capabilities import into action scope without polluting data scope:
+External library capabilities import into the action scope without polluting the data scope:
 
 ```text
 ScopeRef (data)       →  "what values are visible"   (${doc.name})
@@ -433,7 +386,7 @@ ComponentRegistry      →  "which instance to target"  (componentId: userForm)
 xui:imports            →  "import external capabilities"
 ```
 
-This separation means adding `designer:*` actions for a graph editor doesn't leak into every data scope, and importing an external library doesn't pollute the data tree.
+Adding `designer:*` actions for a graph editor doesn't leak into every data scope. Importing an external library doesn't pollute the data tree.
 
 ---
 
@@ -465,7 +418,7 @@ nop-chaos-flux/
 └── docs/                              # Architecture, references, examples, logs
 ```
 
-Domain core packages (`*-core`) are pure logic — no React, no framework dependency. Their matching `-renderers` packages bridge into Flux rendering system.
+Domain core packages (`*-core`) are pure logic — no React, no framework dependency. Their matching `-renderers` packages bridge into the Flux rendering system.
 
 ```text
 flux-core → flux-formula → flux-runtime → flux-react → renderers-*
@@ -514,6 +467,7 @@ All documentation lives in `docs/`. Start at [`docs/index.md`](docs/index.md) fo
 
 | Document | Covers |
 |---|---|
+| [`flux-design-principles.md`](docs/architecture/flux-design-principles.md) | Six core design principles distilled from the programming model |
 | [`flux-core.md`](docs/architecture/flux-core.md) | Seven primitives, unified value semantics, scope model |
 | [`frontend-programming-model.md`](docs/architecture/frontend-programming-model.md) | Primitive promotion test, extensibility boundaries, final execution schema |
 | [`renderer-runtime.md`](docs/architecture/renderer-runtime.md) | Renderer contracts, hooks, fragment rendering |
@@ -539,18 +493,19 @@ All documentation lives in `docs/`. Start at [`docs/index.md`](docs/index.md) fo
 
 | Document | Covers |
 |---|---|
-| [`flux-runtime-module-boundaries.md`](docs/architecture/flux-runtime-module-boundaries.md) | File placement and ownership in runtime package |
+| [`flux-runtime-module-boundaries.md`](docs/architecture/flux-runtime-module-boundaries.md) | File placement and ownership in the runtime package |
 | [`renderer-markers-and-selectors.md`](docs/architecture/renderer-markers-and-selectors.md) | DOM marker protocol, state attributes, testing selectors |
 
 ---
 
-## Code Conventions
+## Contributing
 
 - ESM-first, TypeScript strict mode
 - Zustand vanilla stores (framework-agnostic), React subscriptions via `use-sync-external-store`
 - UI components from `@nop-chaos/ui` (shadcn/ui) — no raw HTML elements in renderers
 - Tests: Vitest, colocated (`*.test.ts` / `*.test.tsx`)
 - Workspace protocol: `"@nop-chaos/flux-core": "workspace:*"`
+- See [`AGENTS.md`](AGENTS.md) for full development conventions
 
 ---
 
@@ -558,4 +513,4 @@ All documentation lives in `docs/`. Start at [`docs/index.md`](docs/index.md) fo
 
 MIT — see [LICENSE](LICENSE).
 
-Inspired by [Baidu AMIS](https://github.com/baidu/amis). This project is a full architectural rewrite with seven primitives, unified semantics, and top-down clean design.
+Inspired by [Baidu AMIS](https://github.com/baidu/amis). This project is a full architectural rewrite with a compile-once execution model, orthogonal scope design, and top-down, clean-slate architecture.
