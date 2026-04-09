@@ -30,15 +30,16 @@ export function useSourceValue<T>(input: unknown, options?: { scope?: ScopeRef }
   });
 
   useEffect(() => {
-    let cancelled = false;
-
     if (!source) {
       return;
     }
 
+    const controller = new AbortController();
+    const { signal } = controller;
+
     void runtime.executeSource({ source, scope })
       .then((result: ActionResult) => {
-        if (cancelled) {
+        if (signal.aborted) {
           return;
         }
 
@@ -49,7 +50,7 @@ export function useSourceValue<T>(input: unknown, options?: { scope?: ScopeRef }
         });
       })
       .catch((error) => {
-        if (cancelled) {
+        if (signal.aborted) {
           return;
         }
 
@@ -57,7 +58,7 @@ export function useSourceValue<T>(input: unknown, options?: { scope?: ScopeRef }
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [input, runtime, scope, source]);
 

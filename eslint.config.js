@@ -1,6 +1,7 @@
 const js = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const reactHooks = require('eslint-plugin-react-hooks');
+const reactCompiler = require('eslint-plugin-react-compiler');
 const globals = require('globals');
 
 const reactHooksLatest = reactHooks.configs.flat['recommended-latest'];
@@ -39,9 +40,13 @@ module.exports = [
         ...globals.node
       }
     },
-    plugins: reactHooksLatest.plugins,
+    plugins: {
+      ...reactHooksLatest.plugins,
+      'react-compiler': reactCompiler
+    },
     rules: {
       ...reactHooksLatest.rules,
+      'react-compiler/react-compiler': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
       'no-restricted-imports': ['error', { paths: react19RestrictedImports }],

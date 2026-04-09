@@ -41,15 +41,16 @@ export function useResolvedVariables(
 
   useEffect(() => {
     if (!raw || !isVariableSourceRef(raw) || raw.source !== 'api' || !raw.api) return;
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     dispatch({ action: 'ajax', api: raw.api } as any).then((result) => {
-      if (cancelled) return;
+      if (signal.aborted) return;
       if (result.ok && result.data != null) {
         const items = getDataAtPath(result.data, raw.dataPath);
         setApiResolved(Array.isArray(items) ? (items as VariableItem[]) : []);
       }
     }).catch(() => {});
-    return () => { cancelled = true; };
+    return () => { controller.abort(); };
   }, [raw, dispatch]);
 
   return syncResolved !== null ? syncResolved : apiResolved;
@@ -71,15 +72,16 @@ export function useResolvedFunctions(
 
   useEffect(() => {
     if (!raw || !isFuncSourceRef(raw) || raw.source !== 'api' || !raw.api) return;
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     dispatch({ action: 'ajax', api: raw.api } as any).then((result) => {
-      if (cancelled) return;
+      if (signal.aborted) return;
       if (result.ok && result.data != null) {
         const groups = getDataAtPath(result.data, raw.dataPath);
         setApiResolved(Array.isArray(groups) ? (groups as FuncGroup[]) : []);
       }
     }).catch(() => {});
-    return () => { cancelled = true; };
+    return () => { controller.abort(); };
   }, [raw, dispatch]);
 
   return syncResolved !== null ? syncResolved : apiResolved;
@@ -107,15 +109,16 @@ export function useResolvedTables(
 
   useEffect(() => {
     if (!raw || !isSQLSchemaSourceRef(raw) || raw.source !== 'api' || !raw.api) return;
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     dispatch({ action: 'ajax', api: raw.api } as any).then((result) => {
-      if (cancelled) return;
+      if (signal.aborted) return;
       if (result.ok && result.data != null) {
         const items = getDataAtPath(result.data, raw.dataPath);
         setApiResolved(Array.isArray(items) ? (items as TableSchema[]) : []);
       }
     }).catch(() => {});
-    return () => { cancelled = true; };
+    return () => { controller.abort(); };
   }, [raw, scope, dispatch]);
 
   return syncResolved !== null ? syncResolved : apiResolved;
@@ -143,15 +146,16 @@ export function useResolvedSQLVariables(
 
   useEffect(() => {
     if (!raw || !isVariableSourceRef(raw) || raw.source !== 'api' || !raw.api) return;
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     dispatch({ action: 'ajax', api: raw.api } as any).then((result) => {
-      if (cancelled) return;
+      if (signal.aborted) return;
       if (result.ok && result.data != null) {
         const items = getDataAtPath(result.data, raw.dataPath);
         setApiResolved(Array.isArray(items) ? (items as VariableItem[]) : []);
       }
     }).catch(() => {});
-    return () => { cancelled = true; };
+    return () => { controller.abort(); };
   }, [raw, scope, dispatch]);
 
   return syncResolved !== null ? syncResolved : apiResolved;

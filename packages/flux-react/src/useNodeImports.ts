@@ -37,7 +37,8 @@ export function useNodeImports(
       return;
     }
 
-    let disposed = false;
+    const controller = new AbortController();
+    const { signal } = controller;
 
     void runtime.ensureImportedNamespaces({
       imports: nodeImports,
@@ -47,7 +48,7 @@ export function useNodeImports(
       node,
       nodeInstance: nodeInstanceRef.current
     }).then(() => {
-      if (disposed) {
+      if (signal.aborted) {
         return;
       }
 
@@ -56,7 +57,7 @@ export function useNodeImports(
         actionScope: activeActionScope
       }));
     }).catch((error) => {
-      if (disposed) {
+      if (signal.aborted) {
         return;
       }
 
@@ -89,7 +90,7 @@ export function useNodeImports(
     });
 
     return () => {
-      disposed = true;
+      controller.abort();
       runtime.releaseImportedNamespaces({
         imports: nodeImports,
         actionScope: activeActionScope
