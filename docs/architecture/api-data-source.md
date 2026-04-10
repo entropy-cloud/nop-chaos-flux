@@ -167,6 +167,15 @@ Response-adaptor context:
 - `api`
 - `scope`
 
+Current authoring note:
+
+- adaptor `scope` is a lexical proxy over the active `ScopeRef`, so property reads such as `scope.token` and `scope.username` resolve through normal lexical lookup instead of forcing an eager whole-scope materialization
+- adaptor strings remain expression-surface inputs, not general statement blocks
+- `return <expression>;` is accepted today as compatibility sugar; runtime strips the leading `return` and trailing semicolon before compiling the adaptor expression
+- request adaptor results are shallow-merged back onto the current declarative `ApiSchema`, so adaptors can rewrite fields such as `headers`, `data`, and `params`
+- because request preparation finalizes URL canonicalization after adaptor application, request adaptors may still rewrite `params` and affect the final executable URL
+- response adaptors currently receive the adapted fetch payload plus executable request context, but they do not receive a richer fetch-metadata object beyond `payload` / `response`, `api`, and lexical `scope`
+
 Example:
 
 ```json

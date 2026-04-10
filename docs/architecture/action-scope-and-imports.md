@@ -351,6 +351,11 @@ For clarity, the runtime action namespace separator is `:` for dispatched action
 
 Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `openDialog`, `closeDialog`, `openDrawer`, and `showToast`.
 
+Compatibility note:
+
+- older built-in selectors such as `submitForm` and `refreshTable` may still exist in code and tests during convergence
+- new schema authoring should prefer semantic-owner or instance-targeted entry points instead of re-expanding those older built-ins into examples when a narrower contract exists
+
 ### Built-In Versus Extended Actions
 
 Built-in actions stay inside `action-runtime` because they are platform semantics.
@@ -502,6 +507,17 @@ For component-targeted invocation, use `component:<method>` syntax:
 ```
 
 The method name is extracted from the action string after the `component:` prefix. Additional arguments are passed through `args` if needed.
+
+Preferred targeting matrix:
+
+- component instance -> `component:<method>` plus `componentId` or `componentName`
+- dialog stack -> built-in `closeDialog`, which closes the nearest active dialog by default and only needs `dialogId` for an explicit non-default target
+- runtime-owned source entry -> built-in `refreshSource` plus `targetId`
+
+Compatibility carriers:
+
+- `formId` remains a compatibility carrier for older built-in form-targeting paths such as `submitForm`; new schema should prefer `component:submit` targeting the concrete form instance
+- overloaded path-style targeting fields such as `componentPath` are not the preferred authoring baseline for new schema when stable instance targeting by `componentId` or `componentName` is available
 
 ## Action Scope Ownership
 
