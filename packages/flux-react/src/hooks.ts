@@ -200,7 +200,8 @@ export function useRenderFragment() {
       page,
       node: nodeMeta?.node,
       nodeInstance: nodeInstance ?? undefined,
-      locator: nodeInstance?.locator
+      locator: nodeInstance?.locator,
+      dialogId: scope.get('dialogId') as string | undefined
     }).render,
     [runtime, scope, actionScope, componentRegistry, form, page, nodeMeta, nodeInstance]
   );

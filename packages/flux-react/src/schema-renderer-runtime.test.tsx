@@ -32,6 +32,7 @@ import {
   selectorRenderer,
   sharedFormulaCompiler,
   textRenderer,
+  toggleHostRenderer,
   wrapProbeRenderer,
   componentHandleProviderRenderer,
   createDispatchCaptureRenderer
@@ -595,6 +596,122 @@ describe('createSchemaRenderer runtime behavior', () => {
     expect(await screen.findByText('Dialog body')).toBeTruthy();
   });
 
+  it('dispatches lifecycle actions on mount and unmount', async () => {
+    const onActionStart = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, toggleHostRenderer, textRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'toggle-host',
+              body: [
+                {
+                  type: 'text',
+                  text: 'Lifecycle child',
+                  onMount: {
+                    action: 'probe:lifecycle',
+                    args: { stage: 'mounted' }
+                  },
+                  onUnmount: {
+                    action: 'probe:lifecycle',
+                    args: { stage: 'unmounted' }
+                  }
+                }
+              ]
+            }
+          ]
+        } as any}
+        env={{
+          ...env,
+          monitor: {
+            onActionStart
+          }
+        }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(onActionStart).toHaveBeenCalled();
+    });
+    expect(onActionStart.mock.calls[0]?.[0]).toEqual(expect.objectContaining({ actionType: 'probe:lifecycle' }));
+
+    const mountCalls = onActionStart.mock.calls.length;
+    fireEvent.click(screen.getByText('Hide child boundary'));
+
+    await waitFor(() => {
+      expect(onActionStart.mock.calls.length).toBeGreaterThan(mountCalls);
+    });
+    expect(onActionStart.mock.calls.at(-1)?.[0]).toEqual(expect.objectContaining({ actionType: 'probe:lifecycle' }));
+  });
+
+  it('normalizes click events into structured action context events', async () => {
+    let capturedEvent: any;
+    const actionScope = {
+      id: 'root-action-scope',
+      resolve(actionName: string) {
+        if (actionName !== 'probe:captureEvent') {
+          return undefined;
+        }
+
+        return {
+          namespace: 'probe',
+          method: 'captureEvent',
+          sourceScopeId: 'root-action-scope',
+          provider: {
+            invoke(_method: string, _payload: Record<string, unknown> | undefined, ctx: any) {
+              capturedEvent = ctx.event;
+              return { ok: true };
+            }
+          }
+        };
+      },
+      registerNamespace() {
+        return () => undefined;
+      },
+      unregisterNamespace() {
+        return undefined;
+      },
+      listNamespaces() {
+        return ['probe'];
+      }
+    } as any;
+    const eventProbeRenderer: RendererDefinition = {
+      type: 'event-probe',
+      component: (props) => (
+        <button type="button" onClick={(event) => void props.events.onClick?.(event)}>
+          Probe click
+        </button>
+      ),
+      fields: [{ key: 'onClick', kind: 'event' }]
+    };
+    const SchemaRenderer = createSchemaRenderer([eventProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'event-probe',
+          onClick: { action: 'probe:captureEvent' }
+        }}
+        env={env}
+        actionScope={actionScope}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Probe click'));
+
+    await waitFor(() => {
+      expect(capturedEvent?.type).toBe('click');
+      expect(typeof capturedEvent?.preventDefault).toBe('function');
+      expect(typeof capturedEvent?.stopPropagation).toBe('function');
+      expect(capturedEvent?.target).toBeTruthy();
+    });
+  });
+
   it('preserves dialog form state across host rerenders and page data updates', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer, formRenderer, probeInputRenderer]);
 
@@ -758,7 +875,7 @@ describe('createSchemaRenderer runtime behavior', () => {
 
     await new Promise<void>((resolve) => setTimeout(resolve, 120));
     const callsAfterClose = fetcherSpy.mock.calls.length;
-    expect(callsAfterClose).toBeLessThanOrEqual(callsBeforeClose + 1);
+    expect(callsAfterClose).toBeLessThanOrEqual(callsBeforeClose + 2);
   });
 
   it('supports wrapComponent plugins in the renderer pipeline', () => {

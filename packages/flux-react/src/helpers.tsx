@@ -58,6 +58,7 @@ export function createHelpers(input: {
   node?: CompiledSchemaNode;
   nodeInstance?: NodeInstance;
   locator?: NodeLocator;
+  dialogId?: string;
 }): RendererHelpers {
   const dispatch = (action: any, ctx?: Partial<ActionContext>) => input.runtime.dispatch(action, mergeActionContext(input, ctx));
   (dispatch as typeof dispatch & { __actionScope?: ActionScope; __componentRegistry?: ComponentHandleRegistry }).__actionScope = input.actionScope;

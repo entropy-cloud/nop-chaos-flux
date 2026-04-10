@@ -169,6 +169,8 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       }),
     [runtime, renderScope, activeActionScope, activeComponentRegistry, activeForm, props.page, props.node, nodeInstance, nodeLocator]
   );
+  const onMountAction = props.node.eventActions.onMount;
+  const onUnmountAction = props.node.eventActions.onUnmount;
 
   const events = useMemo(() => {
     return Object.fromEntries(
@@ -261,6 +263,22 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     finalResolvedMeta.visible,
     finalResolvedMeta.hidden
   ]);
+
+  useEffect(() => {
+    if (onMountAction) {
+      void helpers.dispatch(onMountAction as any, {
+        locator: nodeLocator
+      });
+    }
+
+    return () => {
+      if (onUnmountAction) {
+        void helpers.dispatch(onUnmountAction as any, {
+          locator: nodeLocator
+        });
+      }
+    };
+  }, [helpers, nodeLocator, onMountAction, onUnmountAction]);
 
   if (!finalResolvedMeta.visible || finalResolvedMeta.hidden) {
     return null;
