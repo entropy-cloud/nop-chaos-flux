@@ -56,10 +56,8 @@ describe('nop-debugger automation api', () => {
     debuggerController.onActionError(new Error('submit exploded'), {
       runtime: {} as never,
       scope: {} as never,
-      node: {
-        id: 'node-1',
-        path: 'body.0',
-        type: 'form'
+      nodeInstance: {
+        templateNode: { id: 'node-1', templatePath: 'body.0', rendererType: 'form' }
       } as never
     });
 
@@ -174,10 +172,8 @@ describe('nop-debugger automation api', () => {
     debuggerController.onActionError(new Error('trace failure'), {
       runtime: {} as never,
       scope: {} as never,
-      node: {
-        id: 'trace-node',
-        path: 'body.2',
-        type: 'form'
+      nodeInstance: {
+        templateNode: { id: 'trace-node', templatePath: 'body.2', rendererType: 'form' }
       } as never
     });
 

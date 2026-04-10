@@ -27,11 +27,8 @@ describe('debugger adapters', () => {
     plugin.beforeCompile?.({ type: 'page' });
     plugin.afterCompile?.({ type: 'page', path: 'root' } as never);
     plugin.beforeAction?.({ action: 'submitForm' } as never, {
-      node: { id: 'node-1', path: 'body.0', type: 'form' },
-      locator: {
-        runtimeId: 'runtime-1',
-        templateGraphId: 'page-root',
-        templateNodeId: 12
+      nodeInstance: {
+        templateNode: { id: 'node-1', templatePath: 'body.0', rendererType: 'form' }
       }
     } as never);
     plugin.onError?.(new Error('plugin failed'), {
@@ -45,12 +42,7 @@ describe('debugger adapters', () => {
     expect(events.map((event: NopDebugEvent) => event.kind)).toEqual(['error', 'action:start', 'compile:end', 'compile:start']);
     expect(events[1]).toMatchObject({
       actionType: 'submitForm',
-      rendererType: 'form',
-      locator: {
-        runtimeId: 'runtime-1',
-        templateGraphId: 'page-root',
-        templateNodeId: 12
-      }
+      rendererType: 'form'
     });
   });
 
@@ -91,13 +83,13 @@ describe('debugger adapters', () => {
     decoratedEnv.monitor?.onRenderEnd?.({ nodeId: 'node-1', path: 'body.0', type: 'text', durationMs: 5 });
     decoratedEnv.monitor?.onActionStart?.({
       actionType: 'reload',
-      locator: { runtimeId: 'runtime-1', templateGraphId: 'page-root', templateNodeId: 1 },
+      instancePath: [],
       nodeId: 'node-1',
       path: 'body.0'
     });
     decoratedEnv.monitor?.onActionEnd?.({
       actionType: 'reload',
-      locator: { runtimeId: 'runtime-1', templateGraphId: 'page-root', templateNodeId: 1 },
+      instancePath: [],
       nodeId: 'node-1',
       path: 'body.0',
       durationMs: 7,
@@ -140,11 +132,7 @@ describe('debugger adapters', () => {
 
     expect(baseMonitor.onRenderStart).toHaveBeenCalled();
     expect(baseMonitor.onApiRequest).toHaveBeenCalledTimes(2);
-    expect(snapshot.events.find((event: NopDebugEvent) => event.kind === 'action:start')?.locator).toMatchObject({
-      runtimeId: 'runtime-1',
-      templateGraphId: 'page-root',
-      templateNodeId: 1
-    });
+    expect(snapshot.events.find((event: NopDebugEvent) => event.kind === 'action:start')?.actionType).toBe('reload');
     expect(apiStartEvents).toHaveLength(2);
     expect(apiStartEvents[0].exportedData).toMatchObject({ token: '[MASKED]', keep: 'visible' });
     expect(apiStartEvents[0].requestInstanceId).toBeTruthy();
@@ -175,7 +163,9 @@ describe('debugger adapters', () => {
     appendActionErrorEvent(store, new Error('root failed'), {
       runtime: {} as never,
       scope: {} as never,
-      node: { id: 'node-root', path: 'body.9', type: 'form' } as never
+      nodeInstance: {
+        templateNode: { id: 'node-root', templatePath: 'body.9', rendererType: 'form' }
+      } as never
     });
 
     expect(sameEnv).toBe(env);

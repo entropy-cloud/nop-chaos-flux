@@ -48,12 +48,12 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
         level: 'info',
         source: 'plugin.beforeAction',
         summary: `${action.action} prepared`,
-        detail: `nodeId=${ctx.node?.id ?? 'n/a'} | path=${ctx.node?.path ?? 'n/a'}`,
+        detail: `nodeId=${ctx.nodeInstance?.templateNode.id ?? 'n/a'} | path=${ctx.nodeInstance?.templateNode.templatePath ?? 'n/a'}`,
         actionType: action.action,
-        locator: ctx.locator,
-        nodeId: ctx.node?.id,
-        path: ctx.node?.path,
-        rendererType: ctx.node?.type
+        instancePath: ctx.instancePath,
+        nodeId: ctx.nodeInstance?.templateNode.id,
+        path: ctx.nodeInstance?.templateNode.templatePath,
+        rendererType: ctx.nodeInstance?.templateNode.rendererType
       });
       return action;
     },
@@ -126,7 +126,7 @@ export function decorateDebuggerEnv(input: {
         detail: `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`,
         actionType: payload.actionType,
         interactionId: payload.interactionId,
-        locator: payload.locator,
+        instancePath: payload.instancePath,
         nodeId: payload.nodeId,
         path: payload.path
       });
@@ -142,7 +142,7 @@ export function decorateDebuggerEnv(input: {
         detail: `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`,
         actionType: payload.actionType,
         interactionId: payload.interactionId,
-        locator: payload.locator,
+        instancePath: payload.instancePath,
         nodeId: payload.nodeId,
         path: payload.path,
         durationMs: payload.durationMs
@@ -292,9 +292,9 @@ export function appendActionErrorEvent(store: NopDebuggerStore, error: unknown, 
     source: 'root.onActionError',
     summary: 'action error',
     detail: formatErrorDetail(error),
-    locator: ctx.locator,
-    nodeId: ctx.node?.id,
-    path: ctx.node?.path,
-    rendererType: ctx.node?.type
+    instancePath: ctx.instancePath,
+    nodeId: ctx.nodeInstance?.templateNode.id,
+    path: ctx.nodeInstance?.templateNode.templatePath,
+    rendererType: ctx.nodeInstance?.templateNode.rendererType
   });
 }

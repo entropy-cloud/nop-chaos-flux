@@ -1,4 +1,4 @@
-import type { ActionContext, ActionScope, ComponentHandleRegistry, NodeLocator, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
+import type { ActionContext, ActionScope, ComponentHandleRegistry, InstanceFrame, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
 
 export type NopDebuggerTab = 'overview' | 'timeline' | 'network' | 'node';
 
@@ -70,7 +70,7 @@ export interface NopDebugEvent {
   source: string;
   summary: string;
   detail?: string;
-  locator?: NodeLocator;
+  instancePath?: readonly InstanceFrame[];
   nodeId?: string;
   path?: string;
   rendererType?: string;
@@ -234,7 +234,7 @@ export interface NopWaitForEventOptions extends NopDebugEventQuery {
 
 export interface NopComponentInspectResult {
   cid: number;
-  locator?: NodeLocator;
+  instancePath?: readonly InstanceFrame[];
   handleId?: string;
   handleName?: string;
   handleType?: string;
@@ -267,7 +267,7 @@ export interface NopComponentTreeItem {
   label: string;
   depth: number;
   mounted: boolean;
-  locator?: NodeLocator;
+  instancePath?: readonly InstanceFrame[];
   nodeId?: string;
   path?: string;
   rendererType?: string;
@@ -322,7 +322,7 @@ export interface NopDebuggerAutomationApi {
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
-  inspectNode(locator: NodeLocator): NopComponentInspectResult | undefined;
+  inspectNode(cid: number): NopComponentInspectResult | undefined;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
   evaluateNodeExpression(args: { cid: number; expression: string }): NopExpressionEvaluationResult;
@@ -401,7 +401,7 @@ export interface NopDebuggerController {
   setComponentRegistry(registry: ComponentHandleRegistry | null): void;
   setActionScope(actionScope: ActionScope | null): void;
   getComponentTree(): NopComponentTreeItem[];
-  inspectNode(locator: NodeLocator): NopComponentInspectResult | undefined;
+  inspectNode(cid: number): NopComponentInspectResult | undefined;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
   evaluateNodeExpression(args: { cid: number; expression: string }): NopExpressionEvaluationResult;

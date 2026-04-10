@@ -97,7 +97,7 @@ describe('controller inspector methods', () => {
     expect(result).toMatchObject({ cid: 100, mounted: true });
   });
 
-  it('inspectByCid prefers registry inspectCid locator data when available', () => {
+  it('inspectByCid prefers registry inspectCid instancePath data when available', () => {
     const ctrl = createNopDebugger({ id: 'inspect-registry-locator', enabled: true });
     const div = document.createElement('div');
     div.setAttribute('data-cid', '101');
@@ -110,11 +110,7 @@ describe('controller inspector methods', () => {
             kind: 'resolved',
             payload: {
               cid: 101,
-              locator: {
-                runtimeId: 'runtime',
-                templateGraphId: 'page-root',
-                templateNodeId: 55
-              }
+              instancePath: []
             }
           }
         : { kind: 'notFound' },
@@ -125,12 +121,7 @@ describe('controller inspector methods', () => {
     const result = ctrl.inspectByCid(101);
     expect(result).toMatchObject({
       cid: 101,
-      mounted: true,
-      locator: {
-        runtimeId: 'runtime',
-        templateGraphId: 'page-root',
-        templateNodeId: 55
-      }
+      mounted: true
     });
   });
 
@@ -151,11 +142,6 @@ describe('controller inspector methods', () => {
             kind: 'resolved',
             payload: {
               cid: 103,
-              locator: {
-                runtimeId: 'runtime',
-                templateGraphId: 'page-root',
-                templateNodeId: 77
-              },
               state: {
                 mounted: true,
                 metaState: {}
@@ -171,12 +157,7 @@ describe('controller inspector methods', () => {
     expect(ctrl.inspectByCid(103)).toMatchObject({
       cid: 103,
       mounted: true,
-      handleId: 'handle-103',
-      locator: {
-        runtimeId: 'runtime',
-        templateGraphId: 'page-root',
-        templateNodeId: 77
-      }
+      handleId: 'handle-103'
     });
   });
 
@@ -191,12 +172,7 @@ describe('controller inspector methods', () => {
             id: 'form-104',
             name: 'userForm',
             type: 'form',
-            mounted: true,
-            locator: {
-              runtimeId: 'runtime',
-              templateGraphId: 'page-root',
-              templateNodeId: 88
-            }
+            mounted: true
           },
           {
             cid: 105,
@@ -211,7 +187,10 @@ describe('controller inspector methods', () => {
         ? {
             nodeId: 'user-form',
             path: 'body.0.form',
-            rendererType: 'form'
+            rendererType: 'form',
+            nodeInstance: {
+              instancePath: [{ repeatedTemplateId: 'list', instanceKey: '0' }]
+            }
           }
         : undefined
     };
@@ -226,73 +205,44 @@ describe('controller inspector methods', () => {
       type: 'form',
       label: 'user-form',
       path: 'body.0.form',
-      mounted: true,
-      locator: {
-        runtimeId: 'runtime',
-        templateGraphId: 'page-root',
-        templateNodeId: 88
-      }
+      mounted: true
     });
     expect(result[0]?.depth).toBeGreaterThan(0);
   });
 
-  it('inspectNode resolves mounted handles through the registry locator path', () => {
-    const ctrl = createNopDebugger({ id: 'inspect-node-by-locator', enabled: true });
-    const locator = {
-      runtimeId: 'runtime',
-      templateGraphId: 'page-root',
-      templateNodeId: 106
-    };
+  it('inspectNode resolves mounted handles by cid', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-node-by-cid', enabled: true });
     const mockHandle = {
       id: 'handle-106',
       name: 'locatorForm',
       type: 'form',
       _cid: 106,
-      _mounted: true,
-      _locator: locator
+      _mounted: true
     };
     const mockRegistry = {
       id: 'reg-1',
-      resolveTarget: () => ({
-        kind: 'resolved',
-        locator,
-        handle: mockHandle
-      }),
       getHandleByCid: (cid: number) => (cid === 106 ? mockHandle : undefined)
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
 
-    expect(ctrl.inspectNode(locator)).toMatchObject({
+    expect(ctrl.inspectNode(106)).toMatchObject({
       cid: 106,
       mounted: true,
-      handleId: 'handle-106',
-      locator
+      handleId: 'handle-106'
     });
   });
 
-  it('inspectNode returns explicit unmounted data when the locator is valid but not materialized', () => {
-    const ctrl = createNopDebugger({ id: 'inspect-node-not-materialized', enabled: true });
-    const locator = {
-      runtimeId: 'runtime',
-      templateGraphId: 'page-root',
-      templateNodeId: 107
-    };
+  it('inspectNode returns undefined when cid is not found', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-node-not-found', enabled: true });
     const mockRegistry = {
       id: 'reg-1',
-      resolveTarget: () => ({
-        kind: 'notMaterialized',
-        locator
-      })
+      getHandleByCid: () => undefined
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
 
-    expect(ctrl.inspectNode(locator)).toMatchObject({
-      cid: -1,
-      mounted: false,
-      locator
-    });
+    expect(ctrl.inspectNode(107)).toBeUndefined();
   });
 
   it('inspectByCid exposes nodeInstance-backed node state summary when present in debug data', () => {
