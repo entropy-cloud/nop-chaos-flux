@@ -74,6 +74,57 @@ export interface FormStatusSummary {
   errorCount: number;
 }
 
+export interface PageStatusSummary {
+  refreshTick: number;
+}
+
+export interface SurfaceStatusSummary {
+  id: string;
+  kind: 'dialog' | 'drawer';
+  open: boolean;
+  active: boolean;
+  opening: boolean;
+  closing: boolean;
+}
+
+export interface TabsStatusSummary {
+  activeValue?: string | number;
+  activeIndex: number;
+  itemCount: number;
+}
+
+export interface DesignerHostStatusSummary {
+  kind: 'designer';
+  dirty: boolean;
+  busy: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  selectionKind: 'node' | 'edge' | 'none';
+  selectionCount: number;
+}
+
+export interface SpreadsheetHostStatusSummary {
+  kind: 'spreadsheet';
+  dirty: boolean;
+  busy: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  readonly: boolean;
+  activeSheetId?: string;
+  selectionKind?: string;
+}
+
+export interface ReportDesignerHostStatusSummary {
+  kind: 'report-designer';
+  dirty: boolean;
+  busy: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  previewRunning: boolean;
+  selectionKind?: string;
+  fieldSourceCount: number;
+}
+
 export interface FormLifecycleHandlers {
   submitAction?: (options?: { interactionId?: string }) => Promise<ActionResult>;
   onSubmitSuccess?: (result: ActionResult, options?: { interactionId?: string }) => Promise<ActionResult>;
@@ -83,7 +134,21 @@ export interface FormLifecycleHandlers {
 
 export interface DialogState {
   id: string;
+  kind?: 'dialog';
   dialog: Record<string, any>;
+  scope: ScopeRef;
+  actionScope?: ActionScope;
+  componentRegistry?: ComponentHandleRegistry;
+  ownerNode?: CompiledSchemaNode;
+  ownerNodeInstance?: NodeInstance;
+  title?: RenderNodeInput | string;
+  body?: RenderNodeInput;
+}
+
+export interface SurfaceState {
+  id: string;
+  kind: 'dialog' | 'drawer';
+  surface: Record<string, any>;
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
@@ -96,6 +161,7 @@ export interface DialogState {
 export interface PageStoreState {
   data: Record<string, any>;
   dialogs: DialogState[];
+  surfaces: SurfaceState[];
   refreshTick: number;
 }
 
@@ -106,6 +172,8 @@ export interface PageStoreApi {
   updateData(path: string, value: unknown): void;
   openDialog(dialog: DialogState): void;
   closeDialog(dialogId?: string): void;
+  openSurface(surface: SurfaceState): void;
+  closeSurface(surfaceId?: string): void;
   refresh(): void;
 }
 
@@ -179,10 +247,28 @@ export interface PageRuntime {
     }
   ): string;
   closeDialog(dialogId?: string): void;
+  openSurface(
+    kind: 'dialog' | 'drawer',
+    surface: Record<string, any>,
+    scope: ScopeRef,
+    runtime: RendererRuntime,
+    options?: {
+      actionScope?: ActionScope;
+      componentRegistry?: ComponentHandleRegistry;
+      ownerNode?: CompiledSchemaNode;
+      ownerNodeInstance?: NodeInstance;
+    }
+  ): string;
+  closeSurface(surfaceId?: string): void;
   refresh(): void;
 }
 
 export interface DialogRendererProps {
   dialogs: DialogState[];
   renderDialog: (dialog: DialogState) => ReactNode;
+}
+
+export interface SurfaceRendererProps {
+  surfaces: SurfaceState[];
+  renderSurface: (surface: SurfaceState) => ReactNode;
 }
