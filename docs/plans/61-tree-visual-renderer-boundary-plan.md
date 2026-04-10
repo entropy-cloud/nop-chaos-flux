@@ -1,4 +1,4 @@
-# 59 Tree Visual Renderer Boundary Plan
+# 61 Tree Visual Renderer Boundary Plan
 
 > Plan Status: completed
 > Last Reviewed: 2026-04-10; live renderer/runtime landed
