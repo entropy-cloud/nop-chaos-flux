@@ -356,6 +356,7 @@ export function createSchemaCompiler(input: {
       lifecycleActions: node.lifecycleActions,
       regions,
       scopePlan,
+      ...(node.linkage !== undefined ? { linkageProgram: node.linkage } : {}),
       validationPlan: node.validation,
       sourcePropKeys: node.sourcePropKeys,
       sourceStatePropKeys: node.sourceStatePropKeys

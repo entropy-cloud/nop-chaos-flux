@@ -54,7 +54,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   const propsProgram = props.node.propsProgram;
   const metaProgram = props.node.metaProgram;
-  const isStatic = propsProgram.kind === 'static' && Object.keys(metaProgram).every((key) => {
+  const isStatic = !props.node.linkageProgram && propsProgram.kind === 'static' && Object.keys(metaProgram).every((key) => {
     const v = metaProgram[key as keyof typeof metaProgram];
     return !v || (v as { kind?: string }).kind !== 'dynamic';
   });
