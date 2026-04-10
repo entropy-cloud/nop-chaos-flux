@@ -1,7 +1,7 @@
 # 59 DOM Ref, Event Passthrough, And Lifecycle Actions
 
-> Plan Status: partially completed
-> Last Reviewed: 2026-04-10; reopened after live repo audit
+> Plan Status: completed
+> Last Reviewed: 2026-04-10; closure-audited against live repo
 > Source: `docs/architecture/action-scope-and-imports.md`, `docs/architecture/renderer-runtime.md`, discussion on xui:imports capability boundary
 > Related: `12-action-scope-imports-and-component-invocation-plan.md` (completed)
 
@@ -11,33 +11,17 @@
 
 ## Current Baseline
 
-### 已有
+- `ActionContext.event` is now a structured `FluxActionEvent`, and runtime normalizes incoming renderer events before dispatch.
+- `BaseSchema` now declares `onMount` / `onUnmount`, and compiled nodes carry those actions through `lifecycleActions` rather than ordinary event metadata.
+- `ComponentHandle` now supports `ref?: HTMLElement | null`, so renderers can expose mounted DOM anchors through the existing component registry.
+- `NodeRenderer` centrally dispatches compiled lifecycle actions, while ordinary renderers only forward UI events.
+- `ButtonRenderer` now forwards click events, and `ChartRenderer` registers a DOM-ref-backed component handle with explicit chart capabilities.
+- Architecture and reference docs now describe the DOM ref access pattern, the event passthrough contract, and lifecycle action handling as current baseline rather than future intent.
 
-- `ActionContext` 传递 `runtime`, `scope`, `form`, `page`, `actionScope`, `componentRegistry`, `nodeInstance`, `event?` 等 (`packages/flux-core/src/types/actions.ts:46-62`)
-- `ImportedNamespaceContext` 传递 `runtime`, `env`, `actionScope`, `scope`, `spec`, `node?`, `nodeInstance?` (`packages/flux-core/src/types/actions.ts:108-117`)
-- `ComponentHandle` 接口有 `capabilities: { store?, invoke(), hasMethod?(), listMethods?(), getDebugData?() }` (`packages/flux-core/src/types/renderer-component.ts:46-56`)
-- form 和 table 已通过 `componentRegistry.register()` 注册 handle (`packages/flux-react/src/useFormComponentHandleRegistration.ts`, `packages/flux-renderers-data/src/table-renderer/use-table-handle.ts`)
-- 部分渲染器传递了原生事件：`chart-renderer.tsx:135` 传了 `onClick={(event) => void props.events.onClick?.(event, {})}`
-- `ActionContext.event` 字段已存在，dispatch 链路 `node-renderer.tsx:184-189` 已把 `event` 传入 `mergeActionContext`
-- Form 渲染器有 `initAction` 字段，在 mount 时触发 (`packages/flux-renderers-form/src/renderers/form.tsx:135,217-228`)——这是生命周期 hook 的 form 特化版本
-- `classifyField` 自动将 `/^on[A-Z]/` 开头的 key 归类为 event (`packages/flux-runtime/src/schema-compiler/fields.ts:38-39`)
+## Outdated Note
 
-### 缺口
-
-1. **无 DOM ref 通道**：`ComponentHandle` 没有 `ref` 字段，provider 无法通过 `componentRegistry.resolve()` 获取任何组件的 DOM 元素
-2. **事件传递不一致**：
-   - `button.tsx:21` — `onClick={() => void props.events.onClick?.()}` — 原生事件被丢弃
-   - `chart-renderer.tsx:135` — `onClick={(event) => void props.events.onClick?.(event, {})}` — 传了原生事件
-   - 无规范要求渲染器必须/禁止传递原生事件
-3. **事件类型不明确**：`ActionContext.event` 类型为 `unknown`，无法区分是 React SyntheticEvent 还是自定义事件
-4. **无通用生命周期 hook**：除 form 的 `initAction` 外，组件无法在 JSON 中表达 mount/unmount 时的副作用。且 `onMount`/`onUnmount` 会被 `classifyField` 误归类为 event（因为匹配 `/^on[A-Z]/`），需要编译时单独处理
-
-### 2026-04-10 审计修正
-
-- live repo 仍然保持 `ActionContext.event?: unknown`，`BaseSchema` 未声明 `onMount` / `onUnmount`，`ComponentHandle` 也尚未暴露 `ref`
-- `NodeRenderer` 当前仍从 `eventActions.onMount` / `eventActions.onUnmount` 读取生命周期 action，而不是从独立的 `lifecycleActions` 契约读取
-- `ButtonRenderer` 仍然丢弃点击事件，`ChartRenderer` 也尚未注册带 `ref` 的 component handle
-- 因此本计划此前的完成记录与实际代码不一致；当前状态应恢复为 `partially completed`，继续按下面的 execution plan 落地
+- Earlier versions of this plan and the 2026-04-10 mid-audit notes captured a real repo gap: missing structured events, missing lifecycle compilation, and missing DOM refs.
+- Those notes are preserved in the execution history below, but they are no longer the live-repo baseline after the landing recorded in `docs/logs/2026/04-10.md`.
 
 ## Goals
 
@@ -82,11 +66,11 @@
 
 ### Phase 1 - 类型扩展：ComponentHandle.ref、FluxActionEvent、BaseSchema lifecycle
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/renderer-component.ts`, `packages/flux-core/src/types/actions.ts`, `packages/flux-core/src/types/schema.ts`, `packages/flux-core/src/types/renderer-compiler.ts`
 
-- [ ] 在 `ComponentHandle` 接口增加 `ref?: HTMLElement | null` 字段
-- [ ] 定义 `FluxActionEvent` 类型：
+- [x] 在 `ComponentHandle` 接口增加 `ref?: HTMLElement | null` 字段
+- [x] 定义 `FluxActionEvent` 类型：
   ```ts
   interface FluxActionEvent {
     nativeEvent?: Event;
@@ -97,25 +81,25 @@ Targets: `packages/flux-core/src/types/renderer-component.ts`, `packages/flux-co
     stopPropagation?(): void;
   }
   ```
-- [ ] 将 `ActionContext.event` 类型从 `unknown` 改为 `FluxActionEvent | undefined`
-- [ ] 在 `BaseSchema` 接口增加 `onMount?: ActionSchema` 和 `onUnmount?: ActionSchema`
-- [ ] 在 `CompiledSchemaNode` 接口增加 `lifecycleActions?: { onMount?: ActionSchema; onUnmount?: ActionSchema }`
-- [ ] 在 `flux-core/src/types/` 的 barrel export 中导出新类型
+- [x] 将 `ActionContext.event` 类型从 `unknown` 改为 `FluxActionEvent | undefined`
+- [x] 在 `BaseSchema` 接口增加 `onMount?: ActionSchema` 和 `onUnmount?: ActionSchema`
+- [x] 在 `CompiledSchemaNode` 接口增加 `lifecycleActions?: { onMount?: ActionSchema; onUnmount?: ActionSchema }`
+- [x] 在 `flux-core/src/types/` 的 barrel export 中导出新类型
 
 Exit Criteria:
 
-- [ ] `ComponentHandle.ref` 字段存在且类型为 `HTMLElement | null | undefined`
-- [ ] `FluxActionEvent` 类型已导出
-- [ ] `BaseSchema.onMount` / `BaseSchema.onUnmount` 类型为 `ActionSchema | undefined`
-- [ ] `CompiledSchemaNode.lifecycleActions` 字段存在
-- [ ] `pnpm typecheck` 通过（下游可能需要适配 `event` 类型变更）
+- [x] `ComponentHandle.ref` 字段存在且类型为 `HTMLElement | null | undefined`
+- [x] `FluxActionEvent` 类型已导出
+- [x] `BaseSchema.onMount` / `BaseSchema.onUnmount` 类型为 `ActionSchema | undefined`
+- [x] `CompiledSchemaNode.lifecycleActions` 字段存在
+- [x] `pnpm typecheck` 通过（下游可能需要适配 `event` 类型变更）
 
 ### Phase 2 - 编译器：识别 lifecycle 字段并单独编译
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/schema-compiler/fields.ts`, `packages/flux-runtime/src/schema-compiler.ts`
 
-- [ ] 在 `fields.ts` 的 `classifyField` 中，增加 lifecycle key 的优先判断：
+- [x] 在 `fields.ts` 的 `classifyField` 中，增加 lifecycle key 的优先判断：
   ```ts
   const LIFECYCLE_KEYS = new Set(['onMount', 'onUnmount']);
 
@@ -127,13 +111,13 @@ Targets: `packages/flux-runtime/src/schema-compiler/fields.ts`, `packages/flux-r
   }
   ```
   这确保 `onMount`/`onUnmount` 不会被 `/^on[A-Z]/` 规则误归类为 event。
-- [ ] 在 `schema-compiler.ts` 的 `compileSingleNode` 中，在现有 `for (const key of Object.keys(schema))` 循环之前或之后，单独提取 lifecycle 字段：
+- [x] 在 `schema-compiler.ts` 的 `compileSingleNode` 中，在现有 `for (const key of Object.keys(schema))` 循环之前或之后，单独提取 lifecycle 字段：
   ```ts
   const lifecycleActions = extractLifecycleActions(schema);
   // schema 中 onMount/onUnmount 已被 classifyField 标记为 ignored，
   // 所以不会进入 eventActions 或 props，只需单独提取
   ```
-- [ ] 将 `lifecycleActions` 写入编译结果（仅当 `onMount` 或 `onUnmount` 存在时才赋值，否则为 `undefined`）：
+- [x] 将 `lifecycleActions` 写入编译结果（仅当 `onMount` 或 `onUnmount` 存在时才赋值，否则为 `undefined`）：
   ```ts
   return {
     // ... 现有字段
@@ -143,17 +127,17 @@ Targets: `packages/flux-runtime/src/schema-compiler/fields.ts`, `packages/flux-r
 
 Exit Criteria:
 
-- [ ] `onMount`/`onUnmount` 不出现在 `CompiledSchemaNode.eventActions` 或 `eventKeys` 中
-- [ ] 声明了 `onMount` 的节点，`lifecycleActions.onMount` 非空
-- [ ] 没有声明 lifecycle 的节点，`lifecycleActions` 为 `undefined`（非空对象）
-- [ ] `pnpm typecheck` 和 `pnpm test` 通过
+- [x] `onMount`/`onUnmount` 不出现在 `CompiledSchemaNode.eventActions` 或 `eventKeys` 中
+- [x] 声明了 `onMount` 的节点，`lifecycleActions.onMount` 非空
+- [x] 没有声明 lifecycle 的节点，`lifecycleActions` 为 `undefined`（非空对象）
+- [x] `pnpm typecheck` 和 `pnpm test` 通过
 
 ### Phase 3 - NodeRenderer：统一处理 lifecycle actions
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/node-renderer.tsx`
 
-- [ ] 在 `NodeRenderer` 中增加 lifecycle 处理，**仅在 `lifecycleActions` 非空时注册 useEffect**：
+- [x] 在 `NodeRenderer` 中增加 lifecycle 处理，**仅在 `lifecycleActions` 非空时注册 useEffect**：
   ```ts
   const lifecycle = props.node.lifecycleActions;
 
@@ -175,75 +159,75 @@ Targets: `packages/flux-react/src/node-renderer.tsx`
 
 Exit Criteria:
 
-- [ ] 声明 `onMount` 的组件在挂载时触发 dispatch
-- [ ] 声明 `onUnmount` 的组件在卸载时触发 dispatch
-- [ ] 未声明 lifecycle 的组件不产生任何 lifecycle action dispatch
-- [ ] `pnpm test` 通过
+- [x] 声明 `onMount` 的组件在挂载时触发 dispatch
+- [x] 声明 `onUnmount` 的组件在卸载时触发 dispatch
+- [x] 未声明 lifecycle 的组件不产生任何 lifecycle action dispatch
+- [x] `pnpm test` 通过
 
 ### Phase 4 - 事件传递标准化
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/helpers.tsx`, `packages/flux-renderers-basic/src/button.tsx`, 所有含 `onClick`/`onChange`/`onSubmit` 的渲染器
 
-- [ ] 在 `helpers.tsx` 的 `mergeActionContext` 中增加事件规范化逻辑：如果传入的 event 是 React SyntheticEvent，提取 `nativeEvent`、`currentTarget`、`target`、`type`、`preventDefault`、`stopPropagation` 构造 `FluxActionEvent`
-- [ ] 修改 `button.tsx`：`onClick={(e) => void props.events.onClick?.(e)}`（传递原生 React 事件）
-- [ ] 审计所有渲染器中的事件调用点，统一传递原生事件参数（而非丢弃）
-- [ ] 确保现有测试不被事件参数变更破坏（因为 `mergeActionContext` 已处理规范化）
+- [x] 在 `helpers.tsx` 的 `mergeActionContext` 中增加事件规范化逻辑：如果传入的 event 是 React SyntheticEvent，提取 `nativeEvent`、`currentTarget`、`target`、`type`、`preventDefault`、`stopPropagation` 构造 `FluxActionEvent`
+- [x] 修改 `button.tsx`：`onClick={(e) => void props.events.onClick?.(e)}`（传递原生 React 事件）
+- [x] 审计所有渲染器中的事件调用点，统一传递原生事件参数（而非丢弃）
+- [x] 确保现有测试不被事件参数变更破坏（因为 `mergeActionContext` 已处理规范化）
 
 Exit Criteria:
 
-- [ ] 所有渲染器的 `onClick`/`onChange`/`onSubmit` 回调均传递原生事件参数
-- [ ] `ActionContext.event` 在 action dispatch 时非空且为 `FluxActionEvent`
-- [ ] `pnpm test` 通过
+- [x] 所有渲染器的 `onClick`/`onChange`/`onSubmit` 回调均传递原生事件参数
+- [x] `ActionContext.event` 在 action dispatch 时非空且为 `FluxActionEvent`
+- [x] `pnpm test` 通过
 
 ### Phase 5 - Chart Renderer 注册 DOM ref
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/chart-renderer.tsx`, `packages/flux-renderers-data/src/chart-schemas.ts`
 
-- [ ] 在 `ChartRenderer` 中注册 `ComponentHandle`，包含 `ref: chartRef.current`
-- [ ] 在 handle 的 `capabilities.invoke` 中暴露 `resize`、`setOption`、`getDataURL` 等图表操作方法
-- [ ] 在 `ChartSchema` 中增加可选 `componentId` 字段（用于外部定位）
+- [x] 在 `ChartRenderer` 中注册 `ComponentHandle`，包含 `ref: chartRef.current`
+- [x] 在 handle 的 `capabilities.invoke` 中暴露 `resize`、`setOption`、`getDataURL` 等图表操作方法
+- [x] 在 `ChartSchema` 中增加可选 `componentId` 字段（用于外部定位）
 
 Exit Criteria:
 
-- [ ] Chart 渲染器的 DOM ref 通过 `componentRegistry.resolve({ componentId })` 可获取
-- [ ] `handle.ref` 为 chart 容器的 `HTMLDivElement`
-- [ ] `pnpm test` 通过
+- [x] Chart 渲染器的 DOM ref 通过 `componentRegistry.resolve({ componentId })` 可获取
+- [x] `handle.ref` 为 chart 容器的 `HTMLDivElement`
+- [x] `pnpm test` 通过
 
 ### Phase 6 - 文档更新
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/action-scope-and-imports.md`, `docs/architecture/renderer-runtime.md`
 
-- [ ] 在 `action-scope-and-imports.md` 增加 "DOM Ref Access" 段落，说明 provider 通过 `componentRegistry.resolve()` 获取 DOM ref 的模式
-- [ ] 在 `renderer-runtime.md` 增加 "Event Passthrough Contract" 段落，明确渲染器必须传递原生事件的规范
-- [ ] 在 `renderer-runtime.md` 增加 "Lifecycle Actions" 段落，说明 `onMount`/`onUnmount` 的编译时处理和运行时行为
-- [ ] 更新 `docs/references/renderer-interfaces.md`（如存在）中 `ComponentHandle` 的文档
+- [x] 在 `action-scope-and-imports.md` 增加 "DOM Ref Access" 段落，说明 provider 通过 `componentRegistry.resolve()` 获取 DOM ref 的模式
+- [x] 在 `renderer-runtime.md` 增加 "Event Passthrough Contract" 段落，明确渲染器必须传递原生事件的规范
+- [x] 在 `renderer-runtime.md` 增加 "Lifecycle Actions" 段落，说明 `onMount`/`onUnmount` 的编译时处理和运行时行为
+- [x] 更新 `docs/references/renderer-interfaces.md`（如存在）中 `ComponentHandle` 的文档
 
 Exit Criteria:
 
-- [ ] DOM ref 获取模式、事件传递契约、lifecycle action 机制在文档中有明确说明
-- [ ] 文档中的代码示例与实际接口一致
+- [x] DOM ref 获取模式、事件传递契约、lifecycle action 机制在文档中有明确说明
+- [x] 文档中的代码示例与实际接口一致
 
 ## Validation Checklist
 
-- [ ] `ComponentHandle.ref` 可被 provider 通过 `ctx.componentRegistry.resolve()` 获取
-- [ ] `ActionContext.event` 在按钮点击、表单提交等场景下为非空 `FluxActionEvent`
-- [ ] 声明 `onMount`/`onUnmount` 的组件正确触发 lifecycle action dispatch
-- [ ] 未声明 lifecycle 的组件 `CompiledSchemaNode.lifecycleActions` 为 `undefined`，不产生 dispatch
-- [ ] `onMount`/`onUnmount` 不出现在 `eventActions` 或 `eventKeys` 中
-- [ ] 现有 form handle、table handle 不受 `ref` 字段新增影响（向后兼容）
-- [ ] 现有 form `initAction` 不受 lifecycle 机制影响（两者共存）
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm build` 通过
-- [ ] `pnpm lint` 通过
-- [ ] `pnpm test` 通过
-- [ ] `docs/logs/` 已更新
+- [x] `ComponentHandle.ref` 可被 provider 通过 `ctx.componentRegistry.resolve()` 获取
+- [x] `ActionContext.event` 在按钮点击、表单提交等场景下为非空 `FluxActionEvent`
+- [x] 声明 `onMount`/`onUnmount` 的组件正确触发 lifecycle action dispatch
+- [x] 未声明 lifecycle 的组件 `CompiledSchemaNode.lifecycleActions` 为 `undefined`，不产生 dispatch
+- [x] `onMount`/`onUnmount` 不出现在 `eventActions` 或 `eventKeys` 中
+- [x] 现有 form handle、table handle 不受 `ref` 字段新增影响（向后兼容）
+- [x] 现有 form `initAction` 不受 lifecycle 机制影响（两者共存）
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm build` 通过
+- [x] `pnpm lint` 通过
+- [x] `pnpm test` 通过
+- [x] `docs/logs/` 已更新
 
 ## Closure
 
-Status Note: （完成时填写）
+Status Note: The live repo now matches the plan's intended contract: structured action events, compiled lifecycle actions, normalized event passthrough, component-handle DOM refs, chart handle registration, and matching architecture/reference docs are all landed and verified.
 
 Follow-up:
 

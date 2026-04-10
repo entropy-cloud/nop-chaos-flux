@@ -1,7 +1,7 @@
 # 46 User Management Schema And Authoring Contract Alignment Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10; closure-audited against live repo
 > Source: `docs/examples/user-management-schema.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/action-graph-authoring.md`, `docs/architecture/action-interaction-state.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/api-data-source.md`, `docs/architecture/form-validation.md`
 > Related: `docs/plans/47-form-status-visibility-and-reserved-form-binding-plan.md`
 
@@ -109,7 +109,7 @@
 
 ### Workstream 1 - Example Correction
 
-Status: planned
+Status: completed
 
 Targets:
 
@@ -129,7 +129,7 @@ Exit criteria:
 
 ### Workstream 2 - Action Authoring Contract Clarification
 
-Status: planned
+Status: completed
 
 Targets:
 
@@ -158,7 +158,7 @@ Exit criteria:
 
 ### Workstream 3 - Adaptor Surface Documentation
 
-Status: planned
+Status: completed
 
 Targets:
 
@@ -180,7 +180,7 @@ Exit criteria:
 
 ### Workstream 4 - Form Submit And Pending-State Guidance
 
-Status: planned
+Status: completed
 
 Targets:
 
@@ -212,7 +212,7 @@ Exit criteria:
 
 ### Workstream 5 - Field Interactivity Contract
 
-Status: planned
+Status: completed
 
 Targets:
 
@@ -250,20 +250,28 @@ Exit criteria:
 
 ## Validation Checklist
 
-- [ ] example no longer recommends `submitForm + formId` for normal new form authoring
-- [ ] docs explicitly state `then` / `onError` single-or-array support
-- [ ] docs explicitly state that `when` is the exported optional-step mechanism
-- [ ] docs explicitly state that `parallel` remains an explicit aggregate node, not `steps` + mode boolean
-- [ ] docs explicitly list adaptor context variables
-- [ ] docs explain `return <expression>;` compatibility semantics
-- [ ] docs explicitly state `closeDialog` nearest-dialog default behavior
-- [ ] docs define preferred component targeting via `component:<method>` + `componentId` / `componentName`
-- [ ] docs define `readOnly` as canonical name
-- [ ] docs distinguish `disabled` from `readOnly`
-- [ ] docs define which control families need both states and which only need `disabled`
-- [ ] docs explain current pending-state gap for generic async button actions
-- [ ] docs distinguish semantic-owner auto state from generic tracked-interaction state
-- [ ] docs define form-state read surface as `$form` + `statusPath`
+- [x] example no longer recommends `submitForm + formId` for normal new form authoring
+- [x] docs explicitly state `then` / `onError` single-or-array support
+- [x] docs explicitly state that `when` is the exported optional-step mechanism
+- [x] docs explicitly state that `parallel` remains an explicit aggregate node, not `steps` + mode boolean
+- [x] docs explicitly list adaptor context variables
+- [x] docs explain `return <expression>;` compatibility semantics
+- [x] docs explicitly state `closeDialog` nearest-dialog default behavior
+- [x] docs define preferred component targeting via `component:<method>` + `componentId` / `componentName`
+- [x] docs define `readOnly` as canonical name
+- [x] docs distinguish `disabled` from `readOnly`
+- [x] docs define which control families need both states and which only need `disabled`
+- [x] docs explain current pending-state gap for generic async button actions
+- [x] docs distinguish semantic-owner auto state from generic tracked-interaction state
+- [x] docs define form-state read surface as `$form` + `statusPath`
+
+## Closure
+
+Status Note: The representative example and the normative authoring docs now align on the current runtime baseline: form-owned submit lifecycle, current action-control-flow projection, adaptor context and compatibility sugar, preferred targeting, nearest-dialog close behavior, pending-state ownership, and `disabled` versus `readOnly` naming.
+
+Follow-up:
+
+- renderer-by-renderer `readOnly` implementation convergence remains a normal implementation backlog, not remaining plan-owned documentation debt
 
 ## Success Criteria
 

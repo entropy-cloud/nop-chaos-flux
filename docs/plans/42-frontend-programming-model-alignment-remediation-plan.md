@@ -1,7 +1,7 @@
 # 42 顶层编程模型对齐修正计划
 
-> Plan Status: partially completed
-> Last Reviewed: 2026-04-09; refreshed after runtime/host-projection remediation
+> Plan Status: completed
+> Last Reviewed: 2026-04-10; closure-audited against live repo
 > Source: `docs/architecture/frontend-programming-model.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/flux-design-principles.md`
 
 ## Purpose
@@ -132,12 +132,20 @@ Exit criteria: 代码、文档、计划、日志都指向同一个 current basel
 - [x] Plan 42 不再把 `Action Algebra` failure branching / branch-result bindings / host snapshot replacement 误写成未完成项
 - [x] Plan 42 不再错误声称 `report-designer` / `spreadsheet` 缺本地 `ActionScope` boundary
 - [x] semantic lifecycle remaining gap 被拆分到独立计划
-- [ ] 相关 architecture / protocol docs 已补 current baseline 更新
-- [ ] `docs/logs/2026/04-09.md` 已记录本轮收口与剩余工作
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 相关 architecture / protocol docs 已补 current baseline 更新
+- [x] `docs/logs/2026/04-10.md` 已记录本轮收口与剩余工作
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure
+
+Status Note: Plan 42 now serves as an audited index of the remaining top-level alignment work rather than a stale mixed implementation backlog. The runtime-side convergence it tracked is reflected in the current architecture docs, and the remaining semantic-lifecycle authoring work was handed to narrower follow-up plans and then closed on their own evidence.
+
+Follow-up:
+
+- no remaining plan-owned work
 
 ## Success Criteria
 

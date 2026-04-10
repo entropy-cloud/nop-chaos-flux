@@ -1,7 +1,7 @@
 # 44 Semantic Lifecycle Entry Alignment Plan
 
-> Plan Status: in progress
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10; closure-audited against live repo
 > Source: `docs/architecture/frontend-programming-model.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/form-validation.md`
 
 ## Purpose
@@ -77,6 +77,8 @@ Authoring rule:
 
 **Phase 0 — Contract Freeze**
 
+Status: completed
+
 Targets: top-level docs, `form-validation.md`, `schemas.ts`
 
 - confirm the form-first field set: `initAction`, `submitAction`, `onSubmitSuccess`, `onSubmitError`, `onValidateError`
@@ -107,6 +109,8 @@ Exit criteria: one form-owned submit path drives validation, request dispatch, a
 
 **Phase 2 — Compatibility And Migration**
 
+Status: completed
+
 Targets: docs, representative examples, tests
 
 - define compatibility behavior for older form schemas that still script business flow in button `onClick`
@@ -116,6 +120,8 @@ Targets: docs, representative examples, tests
 Exit criteria: new examples use form-owned semantic lifecycle entry by default.
 
 **Phase 3 — Broader Lifecycle Follow-Up**
+
+Status: completed
 
 Targets: follow-up planning only
 
@@ -132,10 +138,18 @@ Exit criteria: page/dialog follow-up has explicit owner and does not block form 
 - [x] failed submit can trigger `onSubmitError`
 - [x] lifecycle follow-up expressions can read `result` / `error` / `prevResult`
 - [x] representative button triggers dispatch semantic form submit instead of duplicating business graph
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
 - [x] relevant tests
+
+## Closure
+
+Status Note: The form-first semantic lifecycle baseline is live in code, tests, examples, and architecture docs. Broader page/dialog lifecycle authoring was explicitly treated as follow-up planning only and did not block closure of the form-owned baseline.
+
+Follow-up:
+
+- future page/dialog semantic lifecycle authoring should land under narrower successor plans if reopened
 
 ## Success Criteria
 
