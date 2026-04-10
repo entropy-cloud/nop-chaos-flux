@@ -9,7 +9,6 @@ import type {
   RendererRuntime,
   ScopeRef,
   XuiImportSpec,
-  CompiledSchemaNode,
   NodeInstance
 } from '@nop-chaos/flux-core';
 
@@ -75,15 +74,13 @@ export function createImportManager(input: {
   };
   const scopeRegistrations = new WeakMap<ActionScope, Map<string, ScopeRegistrationEntry>>();
 
-  function reportImportError(error: Error, node?: CompiledSchemaNode, spec?: XuiImportSpec) {
+  function reportImportError(error: Error, spec?: XuiImportSpec) {
     const env = input.getEnv();
     (error as ReportedImportError).__fluxImportReported = true;
     env.notify('error', error.message);
     env.monitor?.onError?.({
       phase: 'render',
       error,
-      nodeId: node?.id,
-      path: node?.path,
       details: {
         reason: 'import-namespace-setup-failed',
         imports: spec ? [spec] : []
@@ -155,7 +152,6 @@ export function createImportManager(input: {
     actionScope: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
-    node?: CompiledSchemaNode;
     nodeInstance?: NodeInstance;
   }) {
     return (async () => {
@@ -168,7 +164,6 @@ export function createImportManager(input: {
           componentRegistry: args.componentRegistry,
           scope: args.scope,
           spec: args.spec,
-          node: args.node,
           nodeInstance: args.nodeInstance
         };
         const provider = await module.createNamespace(context);
@@ -183,7 +178,7 @@ export function createImportManager(input: {
           `Imported namespace ${args.spec.as} failed to load: ${toErrorMessage(error)}`,
           error
         );
-          reportImportError(args.entry.error, args.node, args.spec);
+          reportImportError(args.entry.error, args.spec);
           throw args.entry.error;
         }
       })();
@@ -194,7 +189,6 @@ export function createImportManager(input: {
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
-    node?: CompiledSchemaNode;
     nodeInstance?: NodeInstance;
   }) {
     const imports = args.imports?.map(normalizeImportSpec).filter((spec) => spec.from && spec.as) ?? [];
@@ -229,7 +223,6 @@ export function createImportManager(input: {
             actionScope: args.actionScope,
             componentRegistry: args.componentRegistry,
             scope: args.scope,
-            node: args.node,
             nodeInstance: args.nodeInstance
           });
 
@@ -270,7 +263,7 @@ export function createImportManager(input: {
         if (sameAliasRegistration) {
           entry.state = 'error';
           entry.error = createImportError(`Namespace collision for import alias: ${spec.as}`);
-          reportImportError(entry.error, args.node, spec);
+          reportImportError(entry.error, spec);
           throw entry.error;
         }
 
@@ -285,7 +278,6 @@ export function createImportManager(input: {
         actionScope: args.actionScope,
         componentRegistry: args.componentRegistry,
         scope: args.scope,
-        node: args.node,
         nodeInstance: args.nodeInstance
       });
 

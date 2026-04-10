@@ -21,7 +21,6 @@ import {
   evaluateCompiledInActionContext,
   evaluateInActionContext,
   finishAction,
-  getActionRuntimeId,
   getCompiledValue,
   getInternalComponentActionTarget,
   getNumericControl,
@@ -121,7 +120,6 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         const dialogId = ctx.page.openDialog(action.dialog, dialogScope, input.runtime as any, {
           actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
           componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
-          ownerNode: ctx.node,
           ownerNodeInstance: ctx.nodeInstance
         });
         dialogScope.update('dialogId', dialogId);
@@ -220,8 +218,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
               data: api.data,
               headers: api.headers
             },
-            nodeId: ctx.node?.id,
-            path: ctx.node?.path
+            nodeId: ctx.nodeInstance?.templateNode.id,
+            path: ctx.nodeInstance?.templateNode.templatePath
           });
         }
 
@@ -264,35 +262,30 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
 
     const target = getInternalComponentActionTarget(action) ?? {
       _targetCid: typeof action._targetCid === 'number' ? action._targetCid : undefined,
-      _targetTemplateId: typeof action._targetTemplateId === 'string' ? action._targetTemplateId : undefined,
-      componentInstanceKey: ctx.getInstanceKey?.(),
       componentId: action.componentId,
       componentName: action.componentName
     };
 
     if (
-      !target.locator &&
-      !target.staticPlan &&
-      !target.repeatedPlan &&
-      !target.repeatedSelector &&
       !target.componentId &&
       !target.componentName &&
-      target._targetCid === undefined &&
-      !target._targetTemplateId
+      target._targetCid === undefined
     ) {
       return finishAction(input, { ...actionPayload, dispatchMode: 'component', method }, startedAt, {
         ok: false,
-        error: new Error('component:<method> requires an internal target, _targetCid, _targetTemplateId, componentId or componentName')
+        error: new Error('component:<method> requires _targetCid, componentId or componentName')
       });
     }
 
-    const resolution = input.runtime.resolveTarget(target, {
-      runtimeId: getActionRuntimeId(ctx),
-      instancePath: ctx.locator?.instancePath,
-      componentRegistry: ctx.componentRegistry
-    });
+    let handle: import('@nop-chaos/flux-core').ComponentHandle | undefined;
+    let resolveError: Error | undefined;
+    try {
+      handle = ctx.componentRegistry?.resolve(target);
+    } catch (e) {
+      resolveError = e instanceof Error ? e : new Error('Component handle resolution failed');
+    }
 
-    if (resolution.kind === 'ambiguous') {
+    if (resolveError || !handle) {
       return finishAction(
         input,
         {
@@ -303,26 +296,9 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
           componentName: target.componentName
         },
         startedAt,
-        { ok: false, error: new Error(`Ambiguous component target${target.componentName ? `: ${target.componentName}` : ''}`) }
+        { ok: false, error: resolveError ?? new Error('Component handle not found') }
       );
     }
-
-    if (resolution.kind !== 'resolved' || !resolution.handle) {
-      return finishAction(
-        input,
-        {
-          ...actionPayload,
-          dispatchMode: 'component',
-          method,
-          componentId: target.componentId,
-          componentName: target.componentName
-        },
-        startedAt,
-        { ok: false, error: new Error('Component handle not found') }
-      );
-    }
-
-    const handle = resolution.handle;
 
     if (!canInvokeHandleMethod(handle, method)) {
       return finishAction(
@@ -480,8 +456,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         plugin.onError?.(error, {
           phase: 'action',
           error,
-          nodeId: ctx.node?.id,
-          path: ctx.node?.path
+          nodeId: ctx.nodeInstance?.templateNode.id,
+          path: ctx.nodeInstance?.templateNode.templatePath
         });
       }
 

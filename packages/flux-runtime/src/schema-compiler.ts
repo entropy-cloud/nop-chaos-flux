@@ -8,6 +8,7 @@ import type {
   CompiledNodeRuntimeBoundaries,
   CompiledSchemaNode,
   CompiledRegion,
+  CompiledTemplate,
   CompileNodeOptions,
   CompileSchemaOptions,
   ExpressionCompiler,
@@ -16,6 +17,8 @@ import type {
   RendererRegistry,
   SchemaCompiler,
   SchemaInput,
+  TemplateNode,
+  TemplateRegion,
   WrapProvidersFn
 } from '@nop-chaos/flux-core';
 import {
@@ -116,6 +119,65 @@ export function createSchemaCompiler(input: {
     return (input.plugins ?? []).reduce((current, plugin) => plugin.afterCompile?.(current) ?? current, node);
   }
 
+  function compileSchemaToNodes(schema: SchemaInput, options: CompileSchemaOptions = {}): CompiledSchemaNode | CompiledSchemaNode[] {
+    const prepared = applyBeforeCompilePlugins(schema);
+    const diagnostics = createSchemaCompilerDiagnosticsContext(options, 'compile');
+    const cidState = options.cidState ?? createCompiledCidState();
+
+    if (!isSchemaInput(prepared)) {
+      diagnostics.emit({
+        code: 'invalid-root',
+        path: schemaPathToJsonPointer(options.basePath ?? '$'),
+        message: 'Schema root must be an object or an array of schema objects.'
+      });
+      throw new Error('Invalid schema root');
+    }
+
+    if (diagnostics.enabled) {
+      analyzeSchemaInput(prepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
+    }
+
+    if (Array.isArray(prepared)) {
+      const compiled = prepared.map((item, index) => {
+        const path = options.basePath ? `${options.basePath}[${index}]` : `$[${index}]`;
+        const renderer = input.registry.get(item.type);
+
+        if (!renderer) {
+          throw new Error(`Renderer not found for type: ${item.type}`);
+        }
+
+        const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
+
+        return compileSingleNode(item, {
+          path,
+          parentPath: options.parentPath,
+          renderer: wrappedRenderer
+        }, diagnostics);
+      });
+      return enrichCompiledComponentTargets(applyAfterCompilePlugins(compiled) as CompiledSchemaNode | CompiledSchemaNode[], cidState);
+    }
+
+    const path = options.basePath ?? '$';
+    const renderer = input.registry.get(prepared.type);
+
+    if (!renderer) {
+      throw new Error(`Renderer not found for type: ${prepared.type}`);
+    }
+
+    const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
+
+    return enrichCompiledComponentTargets(
+      applyAfterCompilePlugins(
+        compileSingleNode(prepared, {
+          path,
+          parentPath: options.parentPath,
+          renderer: wrappedRenderer
+        }, diagnostics)
+      ) as CompiledSchemaNode | CompiledSchemaNode[],
+      cidState
+    );
+  }
+
   function compileSingleNode(
     schema: BaseSchema,
     options: CompileNodeOptions,
@@ -154,11 +216,15 @@ export function createSchemaCompiler(input: {
       }
 
       if (rule.kind === 'region' || (rule.kind === 'value-or-region' && isSchemaInput(value))) {
+        const regionMeta = rule.kind === 'region' || isSchemaInput(value)
+          ? { params: rule.params, isolate: rule.isolate }
+          : undefined;
         regions[rule.regionKey ?? key] = createCompiledRegion(
           rule.regionKey ?? key,
           value,
           `${path}.${rule.regionKey ?? key}`,
-          compileSchema
+          compileSchemaToNodes,
+          regionMeta
         );
         continue;
       }
@@ -168,7 +234,7 @@ export function createSchemaCompiler(input: {
             value,
             path,
             regions,
-            compileSchema
+            compileSchema: compileSchemaToNodes
           })
         : value;
 
@@ -249,63 +315,62 @@ export function createSchemaCompiler(input: {
     };
   }
 
-  function compileSchema(schema: SchemaInput, options: CompileSchemaOptions = {}): CompiledSchemaNode | CompiledSchemaNode[] {
-    const prepared = applyBeforeCompilePlugins(schema);
-    const diagnostics = createSchemaCompilerDiagnosticsContext(options, 'compile');
-    const cidState = options.cidState ?? createCompiledCidState();
+  function buildTemplateRegion(region: CompiledRegion): TemplateRegion {
+    return {
+      key: region.key,
+      path: region.path,
+      node: region.node
+        ? Array.isArray(region.node)
+          ? region.node.map(buildTemplateNode)
+          : buildTemplateNode(region.node)
+        : null,
+      ...(region.params !== undefined ? { params: region.params } : {}),
+      ...(region.isolate !== undefined ? { isolate: region.isolate } : {})
+    };
+  }
 
-    if (!isSchemaInput(prepared)) {
-      diagnostics.emit({
-        code: 'invalid-root',
-        path: schemaPathToJsonPointer(options.basePath ?? '$'),
-        message: 'Schema root must be an object or an array of schema objects.'
-      });
-      throw new Error('Invalid schema root');
+  function buildTemplateNode(node: CompiledSchemaNode): TemplateNode {
+    const regions: Record<string, TemplateRegion> = {};
+    for (const [key, region] of Object.entries(node.regions)) {
+      regions[key] = buildTemplateRegion(region);
     }
 
-    if (diagnostics.enabled) {
-      analyzeSchemaInput(prepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
-    }
+    const scopePlan: import('@nop-chaos/flux-core').ScopePlan =
+      node.component.scopePolicy === 'form'
+        ? { kind: 'form' }
+        : node.runtimeBoundaries.mayPublishScope
+          ? { kind: 'child' }
+          : { kind: 'inherit' };
 
-    if (Array.isArray(prepared)) {
-      const compiled = prepared.map((item, index) => {
-        const path = options.basePath ? `${options.basePath}[${index}]` : `$[${index}]`;
-        const renderer = input.registry.get(item.type);
+    return {
+      templateNodeId: node.templateNodeId ?? 0,
+      id: node.id,
+      type: node.type,
+      schema: node.schema,
+      templatePath: node.path,
+      rendererType: node.component.type,
+      component: node.component,
+      propsProgram: node.props,
+      metaProgram: node.meta,
+      eventPlans: node.eventActions,
+      lifecycleActions: node.lifecycleActions,
+      regions,
+      scopePlan,
+      validationPlan: node.validation,
+      sourcePropKeys: node.sourcePropKeys,
+      sourceStatePropKeys: node.sourceStatePropKeys
+    };
+  }
 
-        if (!renderer) {
-          throw new Error(`Renderer not found for type: ${item.type}`);
-        }
+  function buildCompiledTemplate(compiled: CompiledSchemaNode | CompiledSchemaNode[]): CompiledTemplate {
+    const root = Array.isArray(compiled)
+      ? compiled.map(buildTemplateNode) as readonly TemplateNode[]
+      : buildTemplateNode(compiled);
 
-        const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
-
-        return compileSingleNode(item, {
-          path,
-          parentPath: options.parentPath,
-          renderer: wrappedRenderer
-        }, diagnostics);
-      });
-      return enrichCompiledComponentTargets(applyAfterCompilePlugins(compiled) as CompiledSchemaNode | CompiledSchemaNode[], cidState);
-    }
-
-    const path = options.basePath ?? '$';
-    const renderer = input.registry.get(prepared.type);
-
-    if (!renderer) {
-      throw new Error(`Renderer not found for type: ${prepared.type}`);
-    }
-
-    const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
-
-    return enrichCompiledComponentTargets(
-      applyAfterCompilePlugins(
-        compileSingleNode(prepared, {
-          path,
-          parentPath: options.parentPath,
-          renderer: wrappedRenderer
-        }, diagnostics)
-      ) as CompiledSchemaNode | CompiledSchemaNode[],
-      cidState
-    );
+    return {
+      root,
+      repeatedTemplates: new Map()
+    };
   }
 
   function validateSchemaInput(schema: SchemaInput, options: CompileSchemaOptions = {}) {
@@ -326,7 +391,9 @@ export function createSchemaCompiler(input: {
   }
 
   return {
-    compile: compileSchema,
+    compile(schema, options) {
+      return buildCompiledTemplate(compileSchemaToNodes(schema, options));
+    },
     compileNode(schema, options) {
       return compileSingleNode(schema, options);
     },

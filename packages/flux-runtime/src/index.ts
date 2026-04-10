@@ -232,8 +232,8 @@ export function createRendererRuntime(input: {
     if (monitoredApi) {
       getEnv().monitor?.onApiRequest?.({
         api: monitoredApi,
-        nodeId: ctx.node?.id,
-        path: ctx.node?.path,
+        nodeId: ctx.nodeInstance?.templateNode.id,
+        path: ctx.nodeInstance?.templateNode.templatePath,
         interactionId: ctx.interactionId
       });
     }
@@ -291,13 +291,6 @@ export function createRendererRuntime(input: {
       return schemaCompiler.compile(schema);
     },
     evaluate,
-    resolveNode(locator, options) {
-      if (!runtimeNodeResolverRef.current) {
-        throw new Error('Runtime node resolver is not initialized yet');
-      }
-
-      return runtimeNodeResolverRef.current.resolveNode(locator, options);
-    },
     resolveTarget(target, ctx) {
       if (!runtimeNodeResolverRef.current) {
         throw new Error('Runtime node resolver is not initialized yet');
@@ -421,18 +414,17 @@ export function createRendererRuntime(input: {
       }
 
       const drawerScope = createScopeRef({
-        id: `${ctx.node?.id ?? ctx.scope.id}:drawer-scope`,
+        id: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}:drawer-scope`,
         path: `${ctx.scope.path}.drawer`,
         parent: ctx.scope,
         initialData: {
-          dialogId: `${ctx.node?.id ?? ctx.scope.id}-pending`,
-          drawerId: `${ctx.node?.id ?? ctx.scope.id}-pending`
+          dialogId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`,
+          drawerId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`
         }
       });
       const drawerId = ctx.page.openSurface('drawer', drawer, drawerScope, runtime, {
         actionScope: ctx.actionScope,
         componentRegistry: ctx.componentRegistry,
-        ownerNode: ctx.node,
         ownerNodeInstance: ctx.nodeInstance
       });
       drawerScope.update('dialogId', drawerId);
@@ -450,11 +442,11 @@ export function createRendererRuntime(input: {
     runtime,
     createDialogScope: (ctx) =>
       createScopeRef({
-        id: `${ctx.node?.id ?? ctx.scope.id}:dialog-scope`,
+        id: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}:dialog-scope`,
         path: `${ctx.scope.path}.dialog`,
         parent: ctx.scope,
         initialData: {
-          dialogId: `${ctx.node?.id ?? ctx.scope.id}-pending`
+          dialogId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`
         }
       })
   });

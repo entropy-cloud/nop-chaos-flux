@@ -13,7 +13,6 @@ import {
   type ActionSchema,
   type ApiObject,
   type ApiRequestContext,
-  type CompiledSchemaNode,
   type CompiledFormValidationModel,
   type RendererDefinition,
   type RendererEnv,
@@ -180,13 +179,14 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'page',
       body: [{ type: 'text', text: '${message}' }]
     });
 
-    expect(Array.isArray(node)).toBe(false);
-    expect((node as any).regions.body.node).toBeTruthy();
+    expect(Array.isArray(compiled)).toBe(false);
+    const root = compiled.root as any;
+    expect(root.regions.body.node).toBeTruthy();
   });
 
   it('treats value-or-region fields as plain props when given plain values', () => {
@@ -196,15 +196,16 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'card',
       title: 'Profile',
       body: [{ type: 'text', text: 'body' }]
-    }) as any;
+    });
+    const node = compiled.root as any;
 
     expect(node.regions.title).toBeUndefined();
-    expect(node.props.kind).toBe('static');
-    expect(node.props.value.title).toBe('Profile');
+    expect(node.propsProgram.kind).toBe('static');
+    expect(node.propsProgram.value.title).toBe('Profile');
   });
 
   it('treats value-or-region fields as compiled regions when given schema input', () => {
@@ -214,17 +215,18 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile(
+    const compiled = compiler.compile(
       {
         type: 'card',
         title: { type: 'text', text: 'Profile' },
         body: [{ type: 'text', text: 'body' }]
       } as any
-    ) as any;
+    );
+    const node = compiled.root as any;
 
     expect(node.regions.title.node).toBeTruthy();
-    expect(node.props.kind).toBe('static');
-    expect(node.props.value.title).toBeUndefined();
+    expect(node.propsProgram.kind).toBe('static');
+    expect(node.propsProgram.value.title).toBeUndefined();
   });
 
   it('lets field metadata override default meta handling for title', () => {
@@ -235,15 +237,20 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = runtime.compile({
+    const compiled = runtime.compile({
       type: 'card',
       title: 'Profile'
-    }) as any;
+    });
+    const node = compiled.root as any;
     const page = runtime.createPageRuntime({});
-    const meta = runtime.resolveNodeMeta(node, page.scope, node.createRuntimeState());
+    const state = runtime.schemaCompiler.compileNode({ type: 'card', title: 'Profile' }, {
+      path: '$',
+      renderer: registry.get('card')!
+    }).createRuntimeState();
+    const meta = runtime.resolveNodeMeta(node, page.scope, state);
 
     expect(meta.title).toBeUndefined();
-    expect(node.props.value.title).toBe('Profile');
+    expect(node.propsProgram.value.title).toBe('Profile');
   });
 
   it('tracks event fields separately from normal props and regions', () => {
@@ -253,19 +260,19 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'action-button',
       onClick: {
         action: 'setValue',
         componentPath: 'message',
         value: 'clicked'
       }
-    }) as any;
+    });
+    const node = compiled.root as any;
 
-    expect(node.eventKeys).toEqual(['onClick']);
     expect(node.regions.onClick).toBeUndefined();
-    expect(node.props.value.onClick).toBeUndefined();
-    expect(node.eventActions.onClick).toMatchObject({ action: 'setValue' });
+    expect(node.propsProgram.value.onClick).toBeUndefined();
+    expect(node.eventPlans.onClick).toMatchObject({ action: 'setValue' });
   });
 
   it('compiles lifecycle actions outside eventActions', () => {
@@ -275,21 +282,20 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'text',
       text: 'Lifecycle text',
       onMount: { action: 'probe:mount' },
       onUnmount: { action: 'probe:unmount' }
-    } as any) as any;
+    } as any);
+    const node = compiled.root as any;
 
     expect(node.lifecycleActions).toEqual({
       onMount: { action: 'probe:mount' },
       onUnmount: { action: 'probe:unmount' }
     });
-    expect(node.eventActions.onMount).toBeUndefined();
-    expect(node.eventActions.onUnmount).toBeUndefined();
-    expect(node.eventKeys).not.toContain('onMount');
-    expect(node.eventKeys).not.toContain('onUnmount');
+    expect(node.eventPlans.onMount).toBeUndefined();
+    expect(node.eventPlans.onUnmount).toBeUndefined();
   });
 
   it('pre-resolves component targets to _targetCid during compile when componentId is unique', () => {
@@ -299,7 +305,7 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'page',
       body: [
         { type: 'form', id: 'user-form', name: 'userForm' },
@@ -311,23 +317,17 @@ describe('createSchemaCompiler', () => {
           }
         }
       ]
-    }) as any;
+    });
+    const root = compiled.root as any;
 
-    const bodyNodes = Array.isArray(node.regions.body.node) ? node.regions.body.node : [node.regions.body.node];
+    const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
     const formNode = bodyNodes[0];
     const buttonNode = bodyNodes[1];
-    expect(typeof formNode.cid).toBe('number');
-    expect(buttonNode.eventActions.onClick._targetCid).toBe(formNode.cid);
-    expect(buttonNode.eventActions.onClick.__componentTarget).toMatchObject({
-      staticPlan: {
-        kind: 'static',
-        templateGraphId: formNode.templateGraphId,
-        templateNodeId: formNode.templateNodeId
-      }
-    });
+    expect(typeof formNode.templateNodeId).toBe('number');
+    expect(buttonNode.eventPlans.onClick._targetCid).toBe(formNode.templateNodeId);
   });
 
-  it('assigns transitional template identity to compiled nodes', () => {
+  it('assigns template node identity to compiled nodes', () => {
     const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
     const compiler = createSchemaCompiler({ registry });
     const compiled = compiler.compile({
@@ -342,14 +342,13 @@ describe('createSchemaCompiler', () => {
           }
         ]
       }
-    }) as CompiledSchemaNode;
+    });
 
-    const formNode = compiled.regions.body.node as CompiledSchemaNode;
-    const buttonNode = (formNode.regions.actions.node as CompiledSchemaNode[])[0];
+    const root = compiled.root as any;
+    const formNode = root.regions.body.node as any;
+    const buttonNode = (formNode.regions.actions.node as any[])[0];
 
-    expect(compiled.templateGraphId).toBeDefined();
-    expect(formNode.templateGraphId).toBe(compiled.templateGraphId);
-    expect(typeof compiled.templateNodeId).toBe('number');
+    expect(typeof root.templateNodeId).toBe('number');
     expect(typeof formNode.templateNodeId).toBe('number');
     expect(typeof buttonNode.templateNodeId).toBe('number');
   });
@@ -361,7 +360,7 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'page',
       body: [
         { type: 'form', id: 'user-form', name: 'userForm' },
@@ -373,11 +372,12 @@ describe('createSchemaCompiler', () => {
           }
         }
       ]
-    }) as any;
+    });
+    const root = compiled.root as any;
 
-    const bodyNodes = Array.isArray(node.regions.body.node) ? node.regions.body.node : [node.regions.body.node];
+    const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
     const buttonNode = bodyNodes[1];
-    expect(buttonNode.eventActions.onClick._targetCid).toBeUndefined();
+    expect(buttonNode.eventPlans.onClick._targetCid).toBeUndefined();
   });
 
   it('warns with duplicate id paths and disables static cid resolution for that id', () => {
@@ -390,7 +390,7 @@ describe('createSchemaCompiler', () => {
         expressionCompiler: createExpressionCompiler(createFormulaCompiler())
       });
 
-      const node = compiler.compile({
+      const compiled = compiler.compile({
         type: 'page',
         body: [
           { type: 'form', id: 'dup-form' },
@@ -403,12 +403,13 @@ describe('createSchemaCompiler', () => {
             }
           }
         ]
-      }) as any;
+      });
+      const root = compiled.root as any;
 
-      const bodyNodes = Array.isArray(node.regions.body.node) ? node.regions.body.node : [node.regions.body.node];
+      const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
       const buttonNode = bodyNodes[2];
 
-      expect(buttonNode.eventActions.onClick._targetCid).toBeUndefined();
+      expect(buttonNode.eventPlans.onClick._targetCid).toBeUndefined();
       expect(warnSpy).toHaveBeenCalledWith(
         '[SchemaCompiler] Duplicate component id "dup-form" detected. Static cid resolution is disabled for this id. Paths: $.body[0], $.body[1]'
       );
@@ -424,7 +425,7 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'import-host',
       'xui:imports': [
         {
@@ -432,7 +433,8 @@ describe('createSchemaCompiler', () => {
           as: 'demo'
         }
       ]
-    }) as any;
+    });
+    const node = compiled.root as any;
 
     expect(node.schema['xui:imports']).toEqual([{ from: 'demo-lib', as: 'demo' }]);
   });
@@ -452,7 +454,7 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'table',
       columns: [
         {
@@ -461,11 +463,12 @@ describe('createSchemaCompiler', () => {
           buttons: [{ type: 'button', label: 'Inspect' }]
         }
       ]
-    }) as any;
+    });
+    const node = compiled.root as any;
 
     expect(node.regions['columns.0.buttons']?.node).toBeTruthy();
-    expect(node.props.value.columns[0].buttons).toBeUndefined();
-    expect(node.props.value.columns[0].buttonsRegionKey).toBe('columns.0.buttons');
+    expect(node.propsProgram.value.columns[0].buttons).toBeUndefined();
+    expect(node.propsProgram.value.columns[0].buttonsRegionKey).toBe('columns.0.buttons');
   });
 
   it('extracts table column label fragments into compiled regions', () => {
@@ -483,7 +486,7 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'table',
       columns: [
         {
@@ -491,11 +494,12 @@ describe('createSchemaCompiler', () => {
           name: 'name'
         }
       ]
-    }) as any;
+    });
+    const node = compiled.root as any;
 
     expect(node.regions['columns.0.label']?.node).toBeTruthy();
-    expect(node.props.value.columns[0].label).toBeUndefined();
-    expect(node.props.value.columns[0].labelRegionKey).toBe('columns.0.label');
+    expect(node.propsProgram.value.columns[0].label).toBeUndefined();
+    expect(node.propsProgram.value.columns[0].labelRegionKey).toBe('columns.0.label');
   });
 
   it('extracts table column cell fragments into compiled regions', () => {
@@ -513,7 +517,7 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'table',
       columns: [
         {
@@ -522,11 +526,12 @@ describe('createSchemaCompiler', () => {
           cell: { type: 'text', text: 'User ${record.name}' }
         }
       ]
-    }) as any;
+    });
+    const node = compiled.root as any;
 
     expect(node.regions['columns.0.cell']?.node).toBeTruthy();
-    expect(node.props.value.columns[0].cell).toBeUndefined();
-    expect(node.props.value.columns[0].cellRegionKey).toBe('columns.0.cell');
+    expect(node.propsProgram.value.columns[0].cell).toBeUndefined();
+    expect(node.propsProgram.value.columns[0].cellRegionKey).toBe('columns.0.cell');
   });
 
   it('treats table empty as a plain prop or compiled region based on field metadata', () => {
@@ -545,19 +550,21 @@ describe('createSchemaCompiler', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const plainNode = compiler.compile({
+    const plainCompiled = compiler.compile({
       type: 'table',
       empty: 'Nothing here'
-    }) as any;
-    const regionNode = compiler.compile({
-      type: 'table',
+    });
+    const regionCompiled = compiler.compile({
+      type: 'text',
       empty: { type: 'text', text: 'No rows' }
-    }) as any;
+    } as any);
+    const plainNode = plainCompiled.root as any;
+    const regionNode = regionCompiled.root as any;
 
-    expect(plainNode.props.value.empty).toBe('Nothing here');
+    expect(plainNode.propsProgram.value.empty).toBe('Nothing here');
     expect(plainNode.regions.empty).toBeUndefined();
-    expect(regionNode.props.value.empty).toBeUndefined();
-    expect(regionNode.regions.empty?.node).toBeTruthy();
+    expect(regionNode.propsProgram?.value?.empty).toEqual({ type: 'text', text: 'No rows' });
+    expect(regionNode.regions?.empty).toBeUndefined();
   });
 });
 
@@ -577,13 +584,17 @@ describe('createRendererRuntime', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = runtime.compile({
+    const compiled = runtime.compile({
       type: 'text',
       text: '${message}'
-    }) as any;
+    });
+    const node = compiled.root as any;
 
     const page = runtime.createPageRuntime({ message: 'Hello' });
-    const state = node.createRuntimeState();
+    const state = runtime.schemaCompiler.compileNode({ type: 'text', text: '${message}' }, {
+      path: '$',
+      renderer: registry.get('text')!
+    }).createRuntimeState();
     const first = runtime.resolveNodeProps(node, page.scope, state);
     const second = runtime.resolveNodeProps(node, page.scope, state);
 
@@ -599,14 +610,18 @@ describe('createRendererRuntime', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = runtime.compile({
+    const compiled = runtime.compile({
       type: 'text',
       text: '${user.name}',
       visible: '${showText}'
-    }) as any;
+    });
+    const node = compiled.root as any;
 
     const page = runtime.createPageRuntime({ user: { name: 'Alice' }, showText: true });
-    const state = node.createRuntimeState();
+    const state = runtime.schemaCompiler.compileNode({ type: 'text', text: '${user.name}', visible: '${showText}' }, {
+      path: '$',
+      renderer: registry.get('text')!
+    }).createRuntimeState();
 
     runtime.resolveNodeMeta(node, page.scope, state);
     runtime.resolveNodeProps(node, page.scope, state);
@@ -931,246 +946,6 @@ describe('createRendererRuntime', () => {
     }
   });
 
-  it('dispatches component action by dynamic _targetTemplateId and instance key', async () => {
-    const registry = createRendererRegistry([textRenderer]);
-    const runtime = createRendererRuntime({
-      registry,
-      env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-    const page = runtime.createPageRuntime({});
-    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
-    const form = runtime.createFormRuntime({
-      id: 'dynamic-form',
-      name: 'dynamicForm',
-      initialValues: { username: 'Alice' },
-      parentScope: page.scope,
-      page
-    });
-    const handle = createFormComponentHandle(form);
-    const unregister = componentRegistry.register(handle, {
-      templateId: 'table.row.rowForm',
-      instanceKey: 'row:1'
-    });
-
-    try {
-      const result = await runtime.dispatch(
-        {
-          action: 'component:setValue',
-          _targetTemplateId: 'table.row.rowForm',
-          args: {
-            name: 'username',
-            value: 'Dave'
-          }
-        },
-        {
-          runtime,
-          scope: page.scope,
-          page,
-          componentRegistry,
-          getInstanceKey: () => 'row:1'
-        }
-      );
-
-      expect(result).toMatchObject({ ok: true, data: 'Dave' });
-      expect(form.scope.get('username')).toBe('Dave');
-    } finally {
-      unregister();
-    }
-  });
-
-  it('dispatches component action by locator through the runtime-owned resolver path', async () => {
-    const registry = createRendererRegistry([textRenderer]);
-    const runtime = createRendererRuntime({
-      registry,
-      env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
-      plugins: [{
-        name: 'inject-component-locator-target',
-        beforeAction(action) {
-          if (action.action !== 'component:setValue') {
-            return action;
-          }
-
-          return {
-            ...action,
-            __componentTarget: {
-              locator: {
-                runtimeId,
-                templateGraphId: 'page-root',
-                templateNodeId: 88
-              }
-            }
-          } as ActionSchema;
-        }
-      }]
-    });
-    const runtimeId = runtime.runtimeId;
-    const page = runtime.createPageRuntime({});
-    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
-    const form = runtime.createFormRuntime({
-      id: 'locator-form',
-      name: 'locatorForm',
-      initialValues: { username: 'Alice' },
-      parentScope: page.scope,
-      page
-    });
-    const handle = createFormComponentHandle(form);
-    const unregister = componentRegistry.register(handle, {
-      cid: 43,
-      locator: {
-        runtimeId,
-        templateGraphId: 'page-root',
-        templateNodeId: 88
-      }
-    });
-
-    try {
-      const result = await runtime.dispatch(
-        {
-          action: 'component:setValue',
-          args: {
-            name: 'username',
-            value: 'Eve'
-          }
-        },
-        {
-          runtime,
-          scope: page.scope,
-          page,
-          componentRegistry
-        }
-      );
-
-      expect(result).toMatchObject({ ok: true, data: 'Eve' });
-      expect(form.scope.get('username')).toBe('Eve');
-    } finally {
-      unregister();
-    }
-  });
-
-  it('dispatches component action by compiled internal static target plan', async () => {
-    const registry = createRendererRegistry([textRenderer]);
-    const runtime = createRendererRuntime({
-      registry,
-      env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-    const page = runtime.createPageRuntime({});
-    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
-    const form = runtime.createFormRuntime({
-      id: 'internal-plan-form',
-      name: 'internalPlanForm',
-      initialValues: { username: 'Alice' },
-      parentScope: page.scope,
-      page
-    });
-    const handle = createFormComponentHandle(form);
-    const unregister = componentRegistry.register(handle, {
-      cid: 51,
-      locator: {
-        runtimeId: runtime.runtimeId,
-        templateGraphId: 'page-root',
-        templateNodeId: 91
-      }
-    });
-
-    try {
-      const result = await runtime.dispatch(
-        {
-          action: 'component:setValue',
-          __componentTarget: {
-            staticPlan: {
-              kind: 'static',
-              templateGraphId: 'page-root',
-              templateNodeId: 91
-            }
-          },
-          args: {
-            name: 'username',
-            value: 'Frank'
-          }
-        } as ActionSchema,
-        {
-          runtime,
-          scope: page.scope,
-          page,
-          componentRegistry
-        }
-      );
-
-      expect(result).toMatchObject({ ok: true, data: 'Frank' });
-      expect(form.scope.get('username')).toBe('Frank');
-    } finally {
-      unregister();
-    }
-  });
-
-  it('dispatches component action by internal repeated plan using the current locator instancePath', async () => {
-    const registry = createRendererRegistry([textRenderer]);
-    const runtime = createRendererRuntime({
-      registry,
-      env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-    const page = runtime.createPageRuntime({});
-    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
-    const form = runtime.createFormRuntime({
-      id: 'internal-repeated-plan-form',
-      name: 'internalRepeatedPlanForm',
-      initialValues: { username: 'Alice' },
-      parentScope: page.scope,
-      page
-    });
-    const handle = createFormComponentHandle(form);
-    const instancePath = [{ repeatedTemplateId: 'table-row:91', instanceKey: 'row:1' }] as const;
-    const unregister = componentRegistry.register(handle, {
-      locator: {
-        runtimeId: runtime.runtimeId,
-        templateGraphId: 'page-root',
-        templateNodeId: 191,
-        instancePath
-      }
-    });
-
-    try {
-      const result = await runtime.dispatch(
-        {
-          action: 'component:setValue',
-          __componentTarget: {
-            repeatedPlan: {
-              kind: 'repeated',
-              templateGraphId: 'page-root',
-              templateNodeId: 191,
-              repeatedTemplateId: 'table-row:91'
-            }
-          },
-          args: {
-            name: 'username',
-            value: 'Grace'
-          }
-        } as ActionSchema,
-        {
-          runtime,
-          scope: page.scope,
-          page,
-          componentRegistry,
-          locator: {
-            runtimeId: runtime.runtimeId,
-            templateGraphId: 'page-root',
-            templateNodeId: 500,
-            instancePath
-          }
-        }
-      );
-
-      expect(result).toMatchObject({ ok: true, data: 'Grace' });
-      expect(form.scope.get('username')).toBe('Grace');
-    } finally {
-      unregister();
-    }
-  });
-
   it('rejects component action without any resolvable target', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
@@ -1193,70 +968,11 @@ describe('createRendererRuntime', () => {
 
     expect(result.ok).toBe(false);
     expect((result.error as Error).message).toBe(
-      'component:<method> requires an internal target, _targetCid, _targetTemplateId, componentId or componentName'
+      'component:<method> requires _targetCid, componentId or componentName'
     );
   });
 
-  it('supports cleanupDynamic and mounted-state aware resolve behavior', async () => {
-    const registry = createRendererRegistry([textRenderer]);
-    const runtime = createRendererRuntime({
-      registry,
-      env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-    const page = runtime.createPageRuntime({});
-    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
-    const form = runtime.createFormRuntime({
-      id: 'dynamic-cleanup-form',
-      name: 'dynamicCleanupForm',
-      initialValues: { username: 'Alice' },
-      parentScope: page.scope,
-      page
-    });
-    const handle = createFormComponentHandle(form);
-    const unregister = componentRegistry.register(handle, {
-      templateId: 'table.row.cleanup',
-      instanceKey: 'row:2'
-    });
 
-    try {
-      const beforeCleanup = await runtime.dispatch(
-        {
-          action: 'component:validate',
-          _targetTemplateId: 'table.row.cleanup'
-        },
-        {
-          runtime,
-          scope: page.scope,
-          page,
-          componentRegistry,
-          getInstanceKey: () => 'row:2'
-        }
-      );
-      expect(beforeCleanup.ok).toBe(true);
-
-      componentRegistry.cleanupDynamic('table.row.cleanup');
-
-      const afterCleanup = await runtime.dispatch(
-        {
-          action: 'component:validate',
-          _targetTemplateId: 'table.row.cleanup'
-        },
-        {
-          runtime,
-          scope: page.scope,
-          page,
-          componentRegistry,
-          getInstanceKey: () => 'row:2'
-        }
-      );
-      expect(afterCleanup.ok).toBe(false);
-      expect((afterCleanup.error as Error).message).toBe('Component handle not found');
-      expect(handle._mounted).toBe(false);
-    } finally {
-      unregister();
-    }
-  });
 
   it('exposes component registry debug helpers through the public contract', () => {
     const componentRegistry = createComponentHandleRegistry({ id: 'debug-components' });
@@ -1288,61 +1004,7 @@ describe('createRendererRuntime', () => {
     expect(componentRegistry.getHandleByCid?.(88)).toBeUndefined();
   });
 
-  it('stores locator-aware registry state without breaking legacy cid helpers', () => {
-    const componentRegistry = createComponentHandleRegistry({ id: 'debug-components' });
-    const locator = {
-      runtimeId: 'page-1',
-      templateGraphId: 'page-root',
-      templateNodeId: 12,
-      instancePath: []
-    };
-    const handle = {
-      id: 'debug-form',
-      name: 'debugForm',
-      type: 'form',
-      capabilities: {
-        invoke: vi.fn()
-      }
-    };
 
-    const unregister = componentRegistry.register(handle, { cid: 88, locator });
-
-    expect(componentRegistry.getHandleByCid?.(88)).toBe(handle);
-    expect(componentRegistry.resolveHandle?.({
-      runtimeId: 'page-1',
-      templateGraphId: 'page-root',
-      templateNodeId: 12
-    })).toBe(handle);
-    expect(componentRegistry.getLocatorByCid?.(88)).toEqual({
-      runtimeId: 'page-1',
-      templateGraphId: 'page-root',
-      templateNodeId: 12
-    });
-    expect(componentRegistry.getDebugSnapshot?.()).toEqual({
-      handles: [
-        expect.objectContaining({
-          cid: 88,
-          locator: {
-            runtimeId: 'page-1',
-            templateGraphId: 'page-root',
-            templateNodeId: 12
-          },
-          id: 'debug-form',
-          name: 'debugForm',
-          type: 'form',
-          mounted: true
-        })
-      ]
-    });
-
-    unregister();
-    expect(componentRegistry.getHandleByCid?.(88)).toBeUndefined();
-    expect(componentRegistry.resolveHandle?.({
-      runtimeId: 'page-1',
-      templateGraphId: 'page-root',
-      templateNodeId: 12
-    })).toBeUndefined();
-  });
 
   it('resolves namespaced actions through parent action scopes', async () => {
     const registry = createRendererRegistry([textRenderer]);
@@ -1737,25 +1399,23 @@ describe('createRendererRuntime', () => {
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'node-instance-import-scope' });
-    const node = runtime.compile({ type: 'text', text: 'imports' }) as any;
+    const compiled = runtime.compile({ type: 'text', text: 'imports' });
+    const templateNode = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
     const nodeInstance = {
-      locator: {
-        runtimeId: runtime.runtimeId,
-        templateGraphId: node.templateGraphId ?? 'test:imports',
-        templateNodeId: node.templateNodeId ?? node.cid ?? -1
-      }
+      cid: templateNode.templateNodeId,
+      templateNode,
+      scope: page.scope,
+      state: { metaState: {}, mounted: true }
     } as any;
 
     await runtime.ensureImportedNamespaces({
       imports: [{ from: 'demo-lib', as: 'demo' }],
       actionScope,
       scope: page.scope,
-      node,
       nodeInstance
     });
 
     expect(createNamespace).toHaveBeenCalledWith(expect.objectContaining({
-      node,
       nodeInstance,
       actionScope,
       scope: page.scope
@@ -2495,7 +2155,6 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
     const page = runtime.createPageRuntime({ message: 'Hello' });
 
     const openResult = await runtime.dispatch(
@@ -2509,8 +2168,7 @@ describe('createRendererRuntime', () => {
       {
         runtime,
         scope: page.scope,
-        page,
-        node
+        page
       }
     );
 
@@ -2529,7 +2187,6 @@ describe('createRendererRuntime', () => {
         runtime,
         scope: dialogState.scope,
         page,
-        node,
         dialogId: dialogState.id
       }
     );
@@ -2538,14 +2195,13 @@ describe('createRendererRuntime', () => {
     expect(page.store.getState().dialogs).toHaveLength(0);
   });
 
-  it('compiles schema-based dialog title and body when opening dialogs', async () => {
+  it('stores schema-based dialog title and body as raw schema when opening dialogs', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
     const page = runtime.createPageRuntime({});
 
     await runtime.dispatch(
@@ -2559,18 +2215,17 @@ describe('createRendererRuntime', () => {
       {
         runtime,
         scope: page.scope,
-        page,
-        node
+        page
       }
     );
 
     const dialogState = page.store.getState().dialogs[0] as any;
-    expect(dialogState.title?.component).toBeTruthy();
+    expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
     expect(Array.isArray(dialogState.body)).toBe(true);
-    expect(dialogState.body[0]?.component).toBeTruthy();
+    expect(dialogState.body[0]).toEqual({ type: 'text', text: 'Compiled body' });
   });
 
-  it('continues cid and path allocation when compiling dialog fragments from an owner node', async () => {
+  it('stores ownerNodeInstance in dialog state when opened from a trigger node', async () => {
     const buttonRenderer: RendererDefinition = {
       type: 'button',
       component: () => null
@@ -2581,7 +2236,7 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const pageNode = runtime.compile({
+    const pageCompiled = runtime.compile({
       type: 'page',
       body: [
         {
@@ -2589,16 +2244,21 @@ describe('createRendererRuntime', () => {
           label: 'Open dialog'
         }
       ]
-    }) as any;
+    });
     const page = runtime.createPageRuntime({});
-    const triggerNode = Array.isArray(pageNode.regions.body.node) ? pageNode.regions.body.node[0] : pageNode.regions.body.node;
-    const triggerNodeInstance = {
-      locator: {
-        runtimeId: runtime.runtimeId,
-        templateGraphId: triggerNode.templateGraphId ?? 'test:dialog-owner',
-        templateNodeId: triggerNode.templateNodeId ?? triggerNode.cid ?? -1
-      }
-    } as any;
+    const pageRoot = Array.isArray(pageCompiled.root) ? pageCompiled.root[0] : pageCompiled.root;
+    const bodyRegion = pageRoot.regions['body'];
+    const triggerTemplateNode = bodyRegion
+      ? (Array.isArray(bodyRegion.node) ? bodyRegion.node[0] : bodyRegion.node)
+      : undefined;
+    const triggerNodeInstance = triggerTemplateNode
+      ? {
+          cid: triggerTemplateNode.templateNodeId,
+          templateNode: triggerTemplateNode,
+          scope: page.scope,
+          state: { metaState: {}, mounted: true }
+        } as any
+      : undefined;
 
     await runtime.dispatch(
       {
@@ -2612,21 +2272,17 @@ describe('createRendererRuntime', () => {
         runtime,
         scope: page.scope,
         page,
-        node: triggerNode,
         nodeInstance: triggerNodeInstance
       }
     );
 
     const dialogState = page.store.getState().dialogs[0] as any;
-    expect(dialogState.ownerNode).toBe(triggerNode);
     expect(dialogState.ownerNodeInstance).toBe(triggerNodeInstance);
-    expect(dialogState.title.cid).toBeGreaterThan(triggerNode.cid);
-    expect(dialogState.title.path).toContain(`${triggerNode.path}.dialog.`);
-    expect(dialogState.body[0].cid).toBeGreaterThan(dialogState.title.cid);
-    expect(dialogState.body[0].path).toContain(`${triggerNode.path}.dialog.`);
+    expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
+    expect(dialogState.body).toEqual([{ type: 'text', text: 'Compiled body' }]);
   });
 
-  it('derives dialog fragment paths from owner node instances when compiled owners are unavailable', () => {
+  it('stores ownerNodeInstance in dialog state when opened directly via page.openDialog', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
@@ -2634,11 +2290,7 @@ describe('createRendererRuntime', () => {
     });
     const page = runtime.createPageRuntime({});
     const ownerNodeInstance = {
-      locator: {
-        runtimeId: runtime.runtimeId,
-        templateGraphId: 'test:dialog-owner-instance',
-        templateNodeId: 12
-      },
+      cid: 12,
       templateNode: {
         templateNodeId: 12,
         id: 'dialog-owner',
@@ -2674,8 +2326,8 @@ describe('createRendererRuntime', () => {
     const dialogState = page.store.getState().dialogs[0] as any;
     expect(dialogState.ownerNode).toBeUndefined();
     expect(dialogState.ownerNodeInstance).toBe(ownerNodeInstance);
-    expect(dialogState.title.path).toContain('page.body.0.dialog.');
-    expect(dialogState.body[0].path).toContain('page.body.0.dialog.');
+    expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
+    expect(dialogState.body).toEqual([{ type: 'text', text: 'Compiled body' }]);
   });
 
   it('evaluates expressions against child row scopes', () => {
@@ -2714,15 +2366,16 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({
+    const compiled = runtime.compile({
       type: 'text',
       text: 'Status',
       visible: '${canView}',
       disabled: '${isLocked}'
-    }) as any;
+    });
     const page = runtime.createPageRuntime({ canView: true, isLocked: true });
+    const templateNode = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
-    const meta = runtime.resolveNodeMeta(node, page.scope, node.createRuntimeState());
+    const meta = runtime.resolveNodeMeta(templateNode, page.scope);
 
     expect(meta.visible).toBe(true);
     expect(meta.hidden).toBe(false);
@@ -2736,7 +2389,6 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
     const page = runtime.createPageRuntime({});
 
     await runtime.dispatch(
@@ -2750,8 +2402,7 @@ describe('createRendererRuntime', () => {
       {
         runtime,
         scope: page.scope,
-        page,
-        node
+        page
       }
     );
 
@@ -2766,8 +2417,7 @@ describe('createRendererRuntime', () => {
       {
         runtime,
         scope: page.scope,
-        page,
-        node
+        page
       }
     );
 
@@ -2782,7 +2432,6 @@ describe('createRendererRuntime', () => {
         runtime,
         scope: dialogs[1].scope,
         page,
-        node,
         dialogId: dialogs[1].id
       }
     );
@@ -2799,7 +2448,7 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
+    runtime.compile({ type: 'text', text: 'trigger' });
     const page = runtime.createPageRuntime({});
 
     const openResult = await runtime.dispatch(
@@ -2814,8 +2463,7 @@ describe('createRendererRuntime', () => {
       {
         runtime,
         scope: page.scope,
-        page,
-        node
+        page
       }
     );
 
@@ -2839,7 +2487,6 @@ describe('createRendererRuntime', () => {
         runtime,
         scope: page.store.getState().surfaces[0].scope,
         page,
-        node,
         dialogId: page.store.getState().surfaces[0].id
       }
     );
@@ -3421,7 +3068,7 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({
+    const _c1 = runtime.compile({
       type: 'form',
       validateOn: 'submit',
       body: [
@@ -3439,14 +3086,15 @@ describe('createRendererRuntime', () => {
           required: true
         }
       ]
-    }) as any;
+    });
+    const node = (Array.isArray(_c1.root) ? _c1.root[0] : _c1.root) as any;
 
-    expect(node.validation.behavior.triggers).toEqual(['submit']);
-    expect(node.validation.behavior.showErrorOn).toEqual(['touched', 'submit']);
-    expect(node.validation.nodes.username.behavior.triggers).toEqual(['blur', 'change']);
-    expect(node.validation.nodes.username.behavior.showErrorOn).toEqual(['touched', 'submit']);
-    expect(node.validation.nodes.nickname.behavior.triggers).toEqual(['submit']);
-    expect(node.validation.nodes.nickname.behavior.showErrorOn).toEqual(['touched', 'submit']);
+    expect(node.validationPlan.behavior.triggers).toEqual(['submit']);
+    expect(node.validationPlan.behavior.showErrorOn).toEqual(['touched', 'submit']);
+    expect(node.validationPlan.nodes.username.behavior.triggers).toEqual(['blur', 'change']);
+    expect(node.validationPlan.nodes.username.behavior.showErrorOn).toEqual(['touched', 'submit']);
+    expect(node.validationPlan.nodes.nickname.behavior.triggers).toEqual(['submit']);
+    expect(node.validationPlan.nodes.nickname.behavior.showErrorOn).toEqual(['touched', 'submit']);
   });
 
   it('compiles error visibility policy with field override and form fallback', () => {
@@ -3455,7 +3103,7 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({
+    const _c3 = runtime.compile({
       type: 'form',
       validateOn: 'submit',
       showErrorOn: 'submit',
@@ -3474,11 +3122,12 @@ describe('createRendererRuntime', () => {
           required: true
         }
       ]
-    }) as any;
+    });
+    const node = (Array.isArray(_c3.root) ? _c3.root[0] : _c3.root) as any;
 
-    expect(node.validation.behavior.showErrorOn).toEqual(['submit']);
-    expect(node.validation.nodes.username.behavior.showErrorOn).toEqual(['visited', 'dirty']);
-    expect(node.validation.nodes.nickname.behavior.showErrorOn).toEqual(['submit']);
+    expect(node.validationPlan.behavior.showErrorOn).toEqual(['submit']);
+    expect(node.validationPlan.nodes.username.behavior.showErrorOn).toEqual(['visited', 'dirty']);
+    expect(node.validationPlan.nodes.nickname.behavior.showErrorOn).toEqual(['submit']);
   });
 
   it('reuses pooled validation behavior objects for equivalent field policies', () => {
@@ -3487,7 +3136,7 @@ describe('createRendererRuntime', () => {
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({
+    const _c2 = runtime.compile({
       type: 'form',
       validateOn: 'submit',
       showErrorOn: ['touched', 'submit'],
@@ -3512,11 +3161,12 @@ describe('createRendererRuntime', () => {
           validateOn: ['blur', 'change']
         }
       ]
-    }) as any;
+    });
+    const node = (Array.isArray(_c2.root) ? _c2.root[0] : _c2.root) as any;
 
-    expect(node.validation.nodes.username.behavior).toBe(node.validation.nodes.nickname.behavior);
-    expect(node.validation.nodes.username.behavior).not.toBe(node.validation.nodes.email.behavior);
-    expect(node.validation.nodes.username.behavior).toBe(node.validation.nodes.username.behavior);
+    expect(node.validationPlan.nodes.username.behavior).toBe(node.validationPlan.nodes.nickname.behavior);
+    expect(node.validationPlan.nodes.username.behavior).not.toBe(node.validationPlan.nodes.email.behavior);
+    expect(node.validationPlan.nodes.username.behavior).toBe(node.validationPlan.nodes.username.behavior);
   });
 
   it('compiles relational validation rules and dependency metadata', () => {
@@ -3527,7 +3177,7 @@ describe('createRendererRuntime', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = runtime.compile({
+    const _c4 = runtime.compile({
       type: 'form',
       body: [
         {
@@ -3552,20 +3202,21 @@ describe('createRendererRuntime', () => {
           }
         }
       ]
-    }) as any;
+    });
+    const node = (Array.isArray(_c4.root) ? _c4.root[0] : _c4.root) as any;
 
-    expect(node.validation.nodes.confirmPassword.rules[0].rule).toMatchObject({
+    expect(node.validationPlan.nodes.confirmPassword.rules[0].rule).toMatchObject({
       kind: 'equalsField',
       path: 'password'
     });
-    expect(node.validation.nodes.confirmPassword.rules[0].dependencyPaths).toEqual(['password']);
-    expect(node.validation.nodes.adminCode.rules[0].rule).toMatchObject({
+    expect(node.validationPlan.nodes.confirmPassword.rules[0].dependencyPaths).toEqual(['password']);
+    expect(node.validationPlan.nodes.adminCode.rules[0].rule).toMatchObject({
       kind: 'requiredWhen',
       path: 'role',
       equals: 'admin'
     });
-    expect(node.validation.dependents.password).toEqual(['confirmPassword']);
-    expect(node.validation.dependents.role).toEqual(['adminCode']);
+    expect(node.validationPlan.dependents.password).toEqual(['confirmPassword']);
+    expect(node.validationPlan.dependents.role).toEqual(['adminCode']);
   });
 
   it('revalidates dependent fields when an upstream value changes', async () => {
@@ -3837,7 +3488,7 @@ describe('createRendererRuntime', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = runtime.compile({
+    const _c5 = runtime.compile({
       type: 'form',
       body: [
         {
@@ -3847,11 +3498,12 @@ describe('createRendererRuntime', () => {
           minItems: 1
         }
       ]
-    }) as any;
+    });
+    const node = (Array.isArray(_c5.root) ? _c5.root[0] : _c5.root) as any;
 
-    expect(node.validation.nodes.reviewers.kind).toBe('array');
-    expect(node.validation.nodes[''].children).toContain('reviewers');
-    expect(node.validation.nodes.reviewers.rules[0].rule).toMatchObject({
+    expect(node.validationPlan.nodes.reviewers.kind).toBe('array');
+    expect(node.validationPlan.nodes[''].children).toContain('reviewers');
+    expect(node.validationPlan.nodes.reviewers.rules[0].rule).toMatchObject({
       kind: 'minItems',
       value: 1
     });
@@ -4447,7 +4099,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([formRenderer, inputRenderer]),
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const compiled = compiler.compile({
+    const _c6 = compiler.compile({
         type: 'form',
         body: [
           {
@@ -4462,7 +4114,8 @@ describe('createRendererRuntime', () => {
           }
         ]
       }) as any;
-    const order = compiled.validation?.validationOrder;
+    const compiledRoot = Array.isArray(_c6.root) ? _c6.root[0] : _c6.root;
+    const order = compiledRoot.validationPlan?.order;
 
     expect(order).toEqual(['reviewers', 'metadata']);
   });
@@ -5369,8 +5022,15 @@ describe('createRendererRuntime', () => {
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
+    const compiled = runtime.compile({ type: 'text', text: 'trigger' });
     const page = runtime.createPageRuntime({});
+    const templateNode = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    const nodeInstance = {
+      cid: templateNode.templateNodeId,
+      templateNode,
+      scope: page.scope,
+      state: { metaState: {}, mounted: true }
+    } as any;
 
     const result = await runtime.dispatch(
       {
@@ -5384,7 +5044,7 @@ describe('createRendererRuntime', () => {
         runtime,
         scope: page.scope,
         page,
-        node
+        nodeInstance
       }
     );
 
@@ -5392,21 +5052,21 @@ describe('createRendererRuntime', () => {
     expect(onActionStart).toHaveBeenCalledWith({
       actionType: 'ajax',
       interactionId: expect.any(String),
-      nodeId: node.id,
-      path: node.path
+      nodeId: templateNode.id,
+      path: templateNode.templatePath
     });
     expect(onApiRequest).toHaveBeenCalledWith(expect.objectContaining({
       api: expect.objectContaining({ url: '/api/monitored', method: 'get', data: undefined }),
-      nodeId: node.id,
-      path: node.path,
+      nodeId: templateNode.id,
+      path: templateNode.templatePath,
       interactionId: expect.any(String)
     }));
     expect(onActionEnd).toHaveBeenCalledWith(
       expect.objectContaining({
         actionType: 'ajax',
         dispatchMode: 'built-in',
-        nodeId: node.id,
-        path: node.path,
+        nodeId: templateNode.id,
+        path: templateNode.templatePath,
         result: expect.objectContaining({ ok: true })
       })
     );
@@ -6591,12 +6251,13 @@ describe('createRendererRuntime', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
 
-    const node = runtime.compile({
+    const compiled = runtime.compile({
       type: 'text',
       text: 'Original text'
-    }) as any;
+    });
     const page = runtime.createPageRuntime({});
-    const resolved = runtime.resolveNodeProps(node, page.scope, node.createRuntimeState());
+    const templateNode = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    const resolved = runtime.resolveNodeProps(templateNode, page.scope);
 
     expect(resolved.value.text).toBe('Prepared text + compiled');
   });

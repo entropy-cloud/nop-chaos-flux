@@ -23,7 +23,7 @@ function collectCompiledNodes(entry: CompiledSchemaNode | CompiledSchemaNode[], 
 
 function rewriteActionTargets(
   value: unknown,
-  byId: Map<string, { cid: number; templateGraphId?: string; templateNodeId?: number }>
+  byId: Map<string, { cid: number; templateNodeId?: number }>
 ): unknown {
   if (Array.isArray(value)) {
     return value.map((item) => rewriteActionTargets(item, byId));
@@ -45,16 +45,6 @@ function rewriteActionTargets(
       const resolvedTarget = byId.get(source.componentId);
       if (resolvedTarget) {
         output._targetCid = resolvedTarget.cid;
-
-        if (resolvedTarget.templateGraphId && typeof resolvedTarget.templateNodeId === 'number') {
-          output.__componentTarget = {
-            staticPlan: {
-              kind: 'static',
-              templateGraphId: resolvedTarget.templateGraphId,
-              templateNodeId: resolvedTarget.templateNodeId
-            }
-          };
-        }
       }
     }
   }
@@ -106,8 +96,8 @@ function indexNodeIds(nodes: readonly CompiledSchemaNode[], cidState: CompiledCi
   }
 }
 
-function createResolvedIdMap(nodes: readonly CompiledSchemaNode[], cidState: CompiledCidState): Map<string, { cid: number; templateGraphId?: string; templateNodeId?: number }> {
-  const resolved = new Map<string, { cid: number; templateGraphId?: string; templateNodeId?: number }>();
+function createResolvedIdMap(nodes: readonly CompiledSchemaNode[], cidState: CompiledCidState): Map<string, { cid: number; templateNodeId?: number }> {
+  const resolved = new Map<string, { cid: number; templateNodeId?: number }>();
 
   for (const node of nodes) {
     const id = typeof (node.schema as Record<string, unknown>).id === 'string'
@@ -128,7 +118,6 @@ function createResolvedIdMap(nodes: readonly CompiledSchemaNode[], cidState: Com
     if (resolvedCid !== undefined) {
       resolved.set(id, {
         cid: resolvedCid,
-        templateGraphId: node.templateGraphId,
         templateNodeId: node.templateNodeId
       });
     }
@@ -146,7 +135,6 @@ export function enrichCompiledComponentTargets(
 
   for (const node of nodes) {
     cidState.nextTemplateNodeId += 1;
-    node.templateGraphId = cidState.templateGraphId;
     node.templateNodeId = cidState.nextTemplateNodeId;
     cidState.nextCid += 1;
     node.cid = cidState.nextCid;

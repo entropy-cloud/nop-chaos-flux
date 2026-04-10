@@ -6,7 +6,6 @@ import type {
   ScopeChange,
   SurfaceState
 } from '@nop-chaos/flux-core';
-import { getCompiledCidState } from '@nop-chaos/flux-core';
 import { createPageStore } from './form-store';
 import { createScopeRef } from './scope';
 import { publishOwnerStatus } from './status-owner';
@@ -66,7 +65,7 @@ export function createManagedPageRuntime(input: {
     kind: 'dialog' | 'drawer',
     surface: Record<string, any>,
     surfaceScope: typeof scope,
-    runtime: RendererRuntime,
+    _runtime: RendererRuntime,
     options?: {
       actionScope?: import('@nop-chaos/flux-core').ActionScope;
       componentRegistry?: import('@nop-chaos/flux-core').ComponentHandleRegistry;
@@ -75,24 +74,6 @@ export function createManagedPageRuntime(input: {
     }
   ): SurfaceState {
     const id = createSurfaceId(surfaceScope.id, kind);
-    const ownerNode = options?.ownerNode;
-    const ownerNodeInstance = options?.ownerNodeInstance;
-    const ownerPath = ownerNode?.path ?? ownerNodeInstance?.templateNode.templatePath;
-    const cidState = ownerNode ? getCompiledCidState(ownerNode) : undefined;
-    const titleCompileOptions = ownerPath && surface.title && typeof surface.title !== 'string'
-      ? {
-          cidState,
-          basePath: `${ownerPath}.${kind}.${id}.title`,
-          parentPath: ownerPath
-        }
-      : undefined;
-    const bodyCompileOptions = ownerPath && surface.body
-      ? {
-          cidState,
-          basePath: `${ownerPath}.${kind}.${id}.body`,
-          parentPath: ownerPath
-        }
-      : undefined;
 
     return {
       id,
@@ -101,14 +82,12 @@ export function createManagedPageRuntime(input: {
       scope: surfaceScope,
       actionScope: options?.actionScope,
       componentRegistry: options?.componentRegistry,
-      ownerNode,
-      ownerNodeInstance,
+      ownerNode: options?.ownerNode,
+      ownerNodeInstance: options?.ownerNodeInstance,
       title: typeof surface.title === 'string'
         ? surface.title
-        : surface.title
-          ? runtime.schemaCompiler.compile(surface.title as any, titleCompileOptions)
-          : undefined,
-      body: surface.body ? runtime.schemaCompiler.compile(surface.body as any, bodyCompileOptions) : undefined
+        : surface.title || undefined,
+      body: surface.body || undefined
     };
   }
 

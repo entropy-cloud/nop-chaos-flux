@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { NodeLocator, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createComponentHandleRegistry, createRendererRegistry, createRendererRuntime } from './index';
 
@@ -14,36 +14,47 @@ const env: RendererEnv = {
 };
 
 describe('node identity contracts', () => {
-  it('normalizes empty instancePath to the singleton locator form', async () => {
-    const { normalizeNodeLocator, serializeNodeLocator } = await import('@nop-chaos/flux-core');
-
-    const singleton: NodeLocator = {
-      runtimeId: 'page-1',
-      templateGraphId: 'page-root',
-      templateNodeId: 42
-    };
-    const emptyArrayVariant: NodeLocator = {
-      ...singleton,
-      instancePath: []
-    };
-
-    expect(normalizeNodeLocator(emptyArrayVariant)).toEqual(singleton);
-    expect(serializeNodeLocator(emptyArrayVariant)).toBe(serializeNodeLocator(singleton));
-  });
-
-  it('resolves live handles by locator through the new registry/runtime contracts', () => {
+  it('resolveTarget returns undefined for _targetCid when handle is not registered', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
-    const locator: NodeLocator = {
-      runtimeId: 'page-1',
-      templateGraphId: 'page-root',
-      templateNodeId: 7,
-      instancePath: []
-    };
+
+    const result = runtime.resolveTarget({ _targetCid: 42 }, { runtimeId: runtime.runtimeId, componentRegistry });
+
+    expect(result).toBeUndefined();
+  });
+
+  it('resolveTarget returns undefined for unknown componentId', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+
+    const result = runtime.resolveTarget({ componentId: 'nonexistent' }, { runtimeId: runtime.runtimeId, componentRegistry });
+
+    expect(result).toBeUndefined();
+  });
+
+  it('resolveTarget returns undefined for unknown componentName', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+
+    const result = runtime.resolveTarget({ componentName: 'nonexistent' }, { runtimeId: runtime.runtimeId, componentRegistry });
+
+    expect(result).toBeUndefined();
+  });
+
+  it('registers a handle with cid and retrieves it via getHandleByCid', () => {
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
     const handle = {
       id: 'user-form',
       name: 'userForm',
@@ -55,69 +66,23 @@ describe('node identity contracts', () => {
       }
     };
 
-    const unregister = componentRegistry.register(handle, {
-      cid: 101,
-      locator
-    });
+    const unregister = componentRegistry.register(handle, { cid: 101 });
 
     try {
-      expect(componentRegistry.resolveHandle?.({
-        runtimeId: 'page-1',
-        templateGraphId: 'page-root',
-        templateNodeId: 7
-      })).toBe(handle);
-      expect(componentRegistry.getLocatorByCid?.(101)).toEqual({
-        runtimeId: 'page-1',
-        templateGraphId: 'page-root',
-        templateNodeId: 7
-      });
-      expect(runtime.resolveNode({
-        runtimeId: 'page-1',
-        templateGraphId: 'page-root',
-        templateNodeId: 7
-      }, { componentRegistry })).toEqual({
-        kind: 'resolved',
-        locator: {
-          runtimeId: 'page-1',
-          templateGraphId: 'page-root',
-          templateNodeId: 7
-        },
-        handle
-      });
+      expect(componentRegistry.getHandleByCid?.(101)).toBe(handle);
+      expect(componentRegistry.getHandleByCid?.(999)).toBeUndefined();
     } finally {
       unregister();
     }
 
-    expect(runtime.resolveNode({
-      runtimeId: 'page-1',
-      templateGraphId: 'page-root',
-      templateNodeId: 7
-    }, { componentRegistry })).toEqual({
-      kind: 'notMaterialized',
-      locator: {
-        runtimeId: 'page-1',
-        templateGraphId: 'page-root',
-        templateNodeId: 7
-      }
-    });
+    expect(componentRegistry.getHandleByCid?.(101)).toBeUndefined();
   });
 
-  it('resolves component targets through runtime resolveTarget using the registry as a subordinate source', () => {
-    const runtime = createRendererRuntime({
-      registry: createRendererRegistry([textRenderer]),
-      env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
-    const runtimeId = runtime.runtimeId;
-    const locator: NodeLocator = {
-      runtimeId,
-      templateGraphId: 'page-root',
-      templateNodeId: 9
-    };
+  it('getDebugSnapshot reflects registered handles with their cid and mount state', () => {
+    const componentRegistry = createComponentHandleRegistry({ id: 'debug-registry' });
     const handle = {
-      id: 'user-form',
-      name: 'userForm',
+      id: 'debug-form',
+      name: 'debugForm',
       type: 'form',
       capabilities: {
         invoke() {
@@ -126,198 +91,59 @@ describe('node identity contracts', () => {
       }
     };
 
-    const unregister = componentRegistry.register(handle, {
-      cid: 202,
-      locator
+    const unregister = componentRegistry.register(handle, { cid: 55 });
+
+    expect(componentRegistry.getDebugSnapshot?.()).toEqual({
+      handles: [
+        expect.objectContaining({
+          cid: 55,
+          id: 'debug-form',
+          name: 'debugForm',
+          type: 'form',
+          mounted: true
+        })
+      ]
     });
 
-    try {
-      expect(runtime.resolveTarget({ locator }, {
-        runtimeId,
-        componentRegistry
-      })).toEqual({
-        kind: 'resolved',
-        locator,
-        handle
-      });
-    } finally {
-      unregister();
-    }
+    unregister();
 
-    expect(runtime.resolveTarget({ locator }, {
-      runtimeId,
-      componentRegistry
-    })).toEqual({
-      kind: 'notMaterialized',
-      locator
+    expect(componentRegistry.getDebugSnapshot?.()).toEqual({
+      handles: []
     });
   });
 
-  it('allows registry-backed internal locator targets to resolve without any author selector fields', () => {
+  it('registers multiple handles and each is retrievable independently', () => {
+    const componentRegistry = createComponentHandleRegistry({ id: 'multi-registry' });
+    const handleA = { id: 'form-a', type: 'form', capabilities: { invoke: () => ({ ok: true }) } };
+    const handleB = { id: 'form-b', type: 'form', capabilities: { invoke: () => ({ ok: true }) } };
+
+    const unregisterA = componentRegistry.register(handleA, { cid: 10 });
+    const unregisterB = componentRegistry.register(handleB, { cid: 20 });
+
+    try {
+      expect(componentRegistry.getHandleByCid?.(10)).toBe(handleA);
+      expect(componentRegistry.getHandleByCid?.(20)).toBe(handleB);
+    } finally {
+      unregisterA();
+      unregisterB();
+    }
+
+    expect(componentRegistry.getHandleByCid?.(10)).toBeUndefined();
+    expect(componentRegistry.getHandleByCid?.(20)).toBeUndefined();
+  });
+
+  it('compile returns a CompiledTemplate with a root TemplateNode containing a templateNodeId', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
-    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
-    const runtimeId = runtime.runtimeId;
-    const handle = {
-      id: 'internal-target-form',
-      type: 'form',
-      capabilities: {
-        invoke() {
-          return { ok: true };
-        }
-      }
-    };
 
-    const unregister = componentRegistry.register(handle, {
-      locator: {
-        runtimeId,
-        templateGraphId: 'page-root',
-        templateNodeId: 88
-      }
-    });
+    const compiled = runtime.compile({ type: 'text', text: 'hello' });
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
-    try {
-      expect(runtime.resolveTarget({
-        locator: {
-          runtimeId,
-          templateGraphId: 'page-root',
-          templateNodeId: 88
-        }
-      }, {
-        runtimeId,
-        componentRegistry
-      })).toEqual({
-        kind: 'resolved',
-        locator: {
-          runtimeId,
-          templateGraphId: 'page-root',
-          templateNodeId: 88
-        },
-        handle
-      });
-    } finally {
-      unregister();
-    }
-  });
-
-  it('resolves repeated plans against the current contextual instancePath before fallback lookup', () => {
-    const runtime = createRendererRuntime({
-      registry: createRendererRegistry([textRenderer]),
-      env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
-    const runtimeId = runtime.runtimeId;
-    const instancePath = [{ repeatedTemplateId: 'table-row:12', instanceKey: 'row-42' }] as const;
-    const handle = {
-      type: 'form',
-      capabilities: {
-        invoke() {
-          return { ok: true };
-        }
-      }
-    };
-
-    const unregister = componentRegistry.register(handle, {
-      locator: {
-        runtimeId,
-        templateGraphId: 'page-root',
-        templateNodeId: 99,
-        instancePath
-      }
-    });
-
-    try {
-      const instancePathFor = () => {
-        throw new Error('instancePathFor should not be used when ctx.instancePath already matches');
-      };
-
-      expect(runtime.resolveTarget({
-        repeatedPlan: {
-          kind: 'repeated',
-          templateGraphId: 'page-root',
-          templateNodeId: 99,
-          repeatedTemplateId: 'table-row:12'
-        }
-      }, {
-        runtimeId,
-        instancePath,
-        instancePathFor,
-        componentRegistry
-      })).toEqual({
-        kind: 'resolved',
-        locator: {
-          runtimeId,
-          templateGraphId: 'page-root',
-          templateNodeId: 99,
-          instancePath
-        },
-        handle
-      });
-    } finally {
-      unregister();
-    }
-  });
-
-  it('resolves repeated selectors against the current contextual instancePath before explicit fallback lookup', () => {
-    const runtime = createRendererRuntime({
-      registry: createRendererRegistry([textRenderer]),
-      env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
-    const runtimeId = runtime.runtimeId;
-    const instancePath = [{ repeatedTemplateId: 'table-row:12', instanceKey: 'row-42' }] as const;
-    const handle = {
-      type: 'form',
-      capabilities: {
-        invoke() {
-          return { ok: true };
-        }
-      }
-    };
-
-    const unregister = componentRegistry.register(handle, {
-      locator: {
-        runtimeId,
-        templateGraphId: 'page-root',
-        templateNodeId: 100,
-        instancePath
-      }
-    });
-
-    try {
-      const instancePathForExplicit = () => {
-        throw new Error('instancePathForExplicit should not be used when ctx.instancePath already matches');
-      };
-
-      expect(runtime.resolveTarget({
-        repeatedSelector: {
-          templateGraphId: 'page-root',
-          repeatedTemplateId: 'table-row:12',
-          instanceKey: 'row-42',
-          templateNodeId: 100
-        }
-      }, {
-        runtimeId,
-        instancePath,
-        instancePathForExplicit,
-        componentRegistry
-      })).toEqual({
-        kind: 'resolved',
-        locator: {
-          runtimeId,
-          templateGraphId: 'page-root',
-          templateNodeId: 100,
-          instancePath
-        },
-        handle
-      });
-    } finally {
-      unregister();
-    }
+    expect(typeof root.templateNodeId).toBe('number');
+    expect(root.type).toBe('text');
+    expect(root.templatePath).toBeTruthy();
   });
 });

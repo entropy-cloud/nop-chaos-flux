@@ -1,12 +1,8 @@
-import {
-  normalizeNodeLocator,
-  serializeNodeLocator,
-  type ComponentHandle,
-  type ComponentHandleDebugData,
-  type ComponentHandleRegistry,
-  type ComponentTarget,
-  type NodeLocator,
-  type ResolutionResult
+import type {
+  ComponentHandle,
+  ComponentHandleDebugData,
+  ComponentHandleRegistry,
+  ComponentTarget,
 } from '@nop-chaos/flux-core';
 
 export function createComponentHandleRegistry(input: { id: string; parent?: ComponentHandleRegistry }): ComponentHandleRegistry {
@@ -14,27 +10,13 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
     ? (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV
     : undefined;
   const DEBUG_MODE = nodeEnv !== 'production';
-  let staticCidCounter = 0;
-  let dynamicLoadedCidCounter = -1;
   let debugEnabled = false;
   const handles = new Set<ComponentHandle>();
   const handlesByCid = new Map<number, ComponentHandle>();
-  const handlesByLocator = new Map<string, ComponentHandle>();
   const debugDataByCid = new Map<number, ComponentHandleDebugData>();
   const handlesById = new Map<string, ComponentHandle>();
   const handlesByName = new Map<string, Set<ComponentHandle>>();
-  const dynamicHandles = new Map<string, Map<string, ComponentHandle>>();
   const nameIndex = new Map<string, Set<number>>();
-
-  function allocateCid(isDynamicLoaded?: boolean): number {
-    if (isDynamicLoaded) {
-      dynamicLoadedCidCounter -= 1;
-      return dynamicLoadedCidCounter + 1;
-    }
-
-    staticCidCounter += 1;
-    return staticCidCounter;
-  }
 
   function checkDuplicateName(name: string, cid: number) {
     if (!DEBUG_MODE) {
@@ -73,10 +55,6 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       handlesByCid.set(handle._cid, handle);
     }
 
-    if (handle._locator) {
-      handlesByLocator.set(serializeNodeLocator(handle._locator), handle);
-    }
-
     if (handle.id) {
       handlesById.set(handle.id, handle);
     }
@@ -90,24 +68,11 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       existingByName.add(handle);
       handlesByName.set(handle.name, existingByName);
     }
-
-    if (handle._templateId && handle._instanceKey) {
-      const byTemplate = dynamicHandles.get(handle._templateId) ?? new Map<string, ComponentHandle>();
-      byTemplate.set(handle._instanceKey, handle);
-      dynamicHandles.set(handle._templateId, byTemplate);
-    }
   }
 
   function unindexHandle(handle: ComponentHandle) {
     if (typeof handle._cid === 'number' && handlesByCid.get(handle._cid) === handle) {
       handlesByCid.delete(handle._cid);
-    }
-
-    if (handle._locator) {
-      const serializedLocator = serializeNodeLocator(handle._locator);
-      if (handlesByLocator.get(serializedLocator) === handle) {
-        handlesByLocator.delete(serializedLocator);
-      }
     }
 
     if (handle.id && handlesById.get(handle.id) === handle) {
@@ -125,46 +90,13 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
         clearNameIndex(handle.name, handle._cid);
       }
     }
-
-    if (handle._templateId && handle._instanceKey) {
-      const byTemplate = dynamicHandles.get(handle._templateId);
-      if (!byTemplate) {
-        return;
-      }
-
-      if (byTemplate.get(handle._instanceKey) === handle) {
-        byTemplate.delete(handle._instanceKey);
-      }
-
-      if (byTemplate.size === 0) {
-        dynamicHandles.delete(handle._templateId);
-      }
-    }
   }
 
   function resolveInScope(target: ComponentTarget): ComponentHandle | undefined {
-    if (target.locator) {
-      const byLocator = handlesByLocator.get(serializeNodeLocator(normalizeNodeLocator(target.locator)));
-      if (byLocator && byLocator._mounted !== false) {
-        return byLocator;
-      }
-    }
-
     if (typeof target._targetCid === 'number') {
       const byCid = handlesByCid.get(target._targetCid);
       if (byCid && byCid._mounted !== false) {
         return byCid;
-      }
-    }
-
-    if (target._targetTemplateId) {
-      const instanceKey = target.componentInstanceKey;
-      if (instanceKey) {
-        const byTemplate = dynamicHandles.get(target._targetTemplateId);
-        const dynamicHandle = byTemplate?.get(instanceKey);
-        if (dynamicHandle && dynamicHandle._mounted !== false) {
-          return dynamicHandle;
-        }
       }
     }
 
@@ -188,102 +120,15 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       if (byName.length === 1) {
         return byName[0];
       }
+
+      if (byName.length > 1) {
+        const err = new Error(`Ambiguous component target: ${target.componentName}`) as Error & { _ambiguous?: boolean };
+        err._ambiguous = true;
+        throw err;
+      }
     }
 
     return input.parent?.resolve(target);
-  }
-
-  function resolveHandle(locator: NodeLocator): ComponentHandle | undefined {
-    const byLocator = handlesByLocator.get(serializeNodeLocator(normalizeNodeLocator(locator)));
-
-    if (byLocator && byLocator._mounted !== false) {
-      return byLocator;
-    }
-
-    return input.parent?.resolveHandle?.(locator);
-  }
-
-  function getLocatorByCid(cid: number): NodeLocator | undefined {
-    const handle = handlesByCid.get(cid);
-
-    if (handle?._mounted !== false && handle?._locator) {
-      return handle._locator;
-    }
-
-    return input.parent?.getLocatorByCid?.(cid);
-  }
-
-  function getHandleLocator(handle: ComponentHandle): NodeLocator | undefined {
-    if (handle._locator) {
-      return handle._locator;
-    }
-
-    return input.parent?.getHandleLocator?.(handle);
-  }
-
-  function resolveTarget(target: ComponentTarget): ResolutionResult {
-    if (target.locator) {
-      const handle = resolveHandle(target.locator);
-
-      if (handle) {
-        return {
-          kind: 'resolved',
-          locator: target.locator,
-          handle
-        };
-      }
-
-      return {
-        kind: 'notMaterialized',
-        locator: target.locator
-      };
-    }
-
-    const handle = resolveInScope(target);
-    if (!handle && target.componentName) {
-      const matchingByName = Array.from(handlesByName.get(target.componentName) ?? []).filter((candidate) => candidate._mounted !== false);
-
-      if (matchingByName.length > 1) {
-        return {
-          kind: 'ambiguous',
-          matches: matchingByName.map((candidate) => candidate._locator ?? {
-            runtimeId: 'runtime',
-            templateGraphId: candidate._templateId ?? 'legacy:component-registry',
-            templateNodeId: candidate._cid ?? -1,
-            instancePath: candidate._instanceKey
-              ? [{ repeatedTemplateId: candidate._templateId ?? 'legacy:component-registry', instanceKey: candidate._instanceKey }]
-              : undefined
-          })
-        };
-      }
-    }
-
-    if (handle?._locator) {
-      return {
-        kind: 'resolved',
-        locator: handle._locator,
-        handle
-      };
-    }
-
-    if (handle) {
-      return {
-        kind: 'resolved',
-        locator: {
-          runtimeId: 'runtime',
-          templateGraphId: handle._templateId ?? 'legacy:component-registry',
-          templateNodeId: handle._cid ?? -1,
-          instancePath: handle._instanceKey
-            ? [{ repeatedTemplateId: handle._templateId ?? 'legacy:component-registry', instanceKey: handle._instanceKey }]
-            : undefined
-        },
-        handle
-      };
-    }
-
-    return {
-      kind: 'notFound'
-    };
   }
 
   return {
@@ -299,11 +144,10 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       }
     },
     register(handle, options) {
-      const nextCid = options?.cid ?? handle._cid ?? allocateCid(options?.dynamicLoaded);
-      handle._cid = nextCid;
-      handle._locator = options?.locator ? normalizeNodeLocator(options.locator) : handle._locator ? normalizeNodeLocator(handle._locator) : handle._locator;
-      handle._templateId = options?.templateId ?? handle._templateId;
-      handle._instanceKey = options?.instanceKey ?? handle._instanceKey;
+      const nextCid = options?.cid ?? handle._cid;
+      if (typeof nextCid === 'number') {
+        handle._cid = nextCid;
+      }
       handle._mounted = true;
 
       if (handle.id) {
@@ -335,40 +179,19 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       handle._mounted = false;
       unindexHandle(handle);
     },
-    cleanupDynamic(templateId) {
-      const byTemplate = dynamicHandles.get(templateId);
-      if (!byTemplate) {
-        return;
-      }
-
-      const toRemove = Array.from(byTemplate.values());
-      for (const handle of toRemove) {
-        if (!handles.has(handle)) {
-          continue;
-        }
-
-        handles.delete(handle);
-        handle._mounted = false;
-        unindexHandle(handle);
-      }
-    },
     resolve: resolveInScope,
-    resolveHandle,
-    getHandleLocator,
-    getLocatorByCid,
     inspectCid(cid) {
       const handle = handlesByCid.get(cid) ?? input.parent?.getHandleByCid?.(cid);
       const debugData = debugDataByCid.get(cid) ?? input.parent?.getHandleDebugData?.(cid);
-      const locator = debugData?.locator ?? handle?._locator ?? getLocatorByCid(cid);
 
-      if (!handle && !debugData && !locator) {
+      if (!handle && !debugData) {
         return { kind: 'notFound' };
       }
 
-      if ((handle && handle._mounted === false) || (!handle && locator)) {
+      if (handle && handle._mounted === false) {
         return {
           kind: 'notMaterialized',
-          locator
+          cid
         };
       }
 
@@ -376,14 +199,6 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
         kind: 'resolved',
         payload: {
           cid,
-          locator: locator ?? {
-            runtimeId: 'runtime',
-            templateGraphId: handle?._templateId ?? 'legacy:component-registry',
-            templateNodeId: handle?._cid ?? cid,
-            instancePath: handle?._instanceKey
-              ? [{ repeatedTemplateId: handle._templateId ?? 'legacy:component-registry', instanceKey: handle._instanceKey }]
-              : undefined
-          },
           scopeChain: undefined,
           resolvedMeta: debugData?.resolvedMeta,
           resolvedProps: debugData?.resolvedProps,
@@ -391,7 +206,6 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
         }
       };
     },
-    resolveTarget,
     getHandleByCid(cid) {
       const handle = handlesByCid.get(cid);
 
@@ -420,7 +234,6 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       return {
         handles: Array.from(handles).map((handle) => ({
           cid: handle._cid,
-          locator: handle._locator,
           id: handle.id,
           name: handle.name,
           type: handle.type,

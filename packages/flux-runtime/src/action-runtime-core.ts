@@ -48,7 +48,7 @@ export function getInternalComponentActionTarget(action: ActionSchema): Internal
 }
 
 export function getActionRuntimeId(ctx: ActionContext): string {
-  return ctx.locator?.runtimeId ?? ctx.runtime.runtimeId;
+  return ctx.runtime.runtimeId;
 }
 
 let nextInteractionId = 1;
@@ -84,7 +84,7 @@ export function isAbortError(error: unknown): boolean {
 }
 
 export function createActionKey(action: ActionSchema, ctx: ActionContext): string {
-  const owner = ctx.node?.id ?? ctx.form?.id ?? ctx.scope.id;
+  const owner = ctx.nodeInstance?.templateNode.id ?? ctx.form?.id ?? ctx.scope.id;
   const target = action.targetId ?? action.componentPath ?? action.componentId ?? action.formId ?? action.dialogId ?? action.api?.url ?? '';
   return `${owner}:${action.action}:${target}`;
 }
@@ -92,9 +92,9 @@ export function createActionKey(action: ActionSchema, ctx: ActionContext): strin
 export function buildActionMonitorPayload(action: ActionSchema, ctx: ActionContext): ActionMonitorPayload {
   return {
     actionType: action.action,
-    locator: ctx.locator,
-    nodeId: ctx.node?.id,
-    path: ctx.node?.path,
+    instancePath: ctx.instancePath,
+    nodeId: ctx.nodeInstance?.templateNode.id,
+    path: ctx.nodeInstance?.templateNode.templatePath,
     interactionId: ctx.interactionId
   };
 }

@@ -49,7 +49,7 @@ describe('schema compiler diagnostics', () => {
 
   it('keeps unknown bare properties out of compiled props when strict policy is error', () => {
     const compiler = createCompiler(strictTextRenderer);
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'strict-text',
       text: 'Hello',
       txt: 'typo'
@@ -62,13 +62,14 @@ describe('schema compiler diagnostics', () => {
         unknownBarePropertyPolicy: 'error'
       }
     }) as any;
+    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
-    expect(node.props.value).toEqual({ type: 'strict-text', text: 'Hello' });
+    expect(node.propsProgram.value).toEqual({ type: 'strict-text', text: 'Hello' });
   });
 
   it('preserves namespaced extensions outside normal props when namespaced passthrough is enabled', () => {
     const compiler = createCompiler(strictTextRenderer);
-    const node = compiler.compile({
+    const compiled = compiler.compile({
       type: 'strict-text',
       text: 'Hello',
       'acme:layout': {
@@ -84,12 +85,11 @@ describe('schema compiler diagnostics', () => {
         extensionPassthroughPolicy: 'namespaced-only'
       }
     }) as any;
+    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
-    expect(node.props.value).toEqual({ type: 'strict-text', text: 'Hello' });
-    expect(node.extensions).toEqual({
-      'acme:layout': {
-        density: 'compact'
-      }
+    expect(node.propsProgram.value).toEqual({ type: 'strict-text', text: 'Hello' });
+    expect(node.schema?.['acme:layout']).toEqual({
+      density: 'compact'
     });
   });
 
