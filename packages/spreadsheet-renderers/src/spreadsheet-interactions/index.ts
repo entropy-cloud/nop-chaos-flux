@@ -14,3 +14,6 @@ export { useFindReplace } from './use-find-replace.js';
 export { useComments } from './use-comments.js';
 export { useFieldDrop } from './use-field-drop.js';
 export { useKeyboard } from './use-keyboard.js';
+export { useMouseUpBinding } from './use-mouse-up-binding.js';
+export { useCellValueSync } from './use-cell-value-sync.js';
+export { useSpreadsheetShell } from './use-spreadsheet-shell.js';
