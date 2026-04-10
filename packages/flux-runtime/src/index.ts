@@ -58,6 +58,7 @@ export { createFormComponentHandle } from './form-component-handle';
 export { createApiCacheStore, resolveCacheKey } from './api-cache';
 export { createAbortScope, withRetry, withTimeout, type RetryOptions } from './operation-control';
 export { scopeChangeHitsDependencies } from './scope-change';
+export { publishOwnerStatus, createReadonlyScopeBinding } from './status-owner';
 export {
   executeApiObject,
   prepareApiData,
@@ -174,7 +175,11 @@ export function createRendererRuntime(input: {
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
     return createManagedPageRuntime({
       data,
-      pageStore: input.pageStore
+      pageStore: input.pageStore,
+      disposeScope: (scopeId) => {
+        sourceRegistryRef.current?.disposeScopeTree(scopeId);
+        reactionRegistryRef.current?.disposeScopeTree(scopeId);
+      }
     });
   }
 
@@ -411,8 +416,28 @@ export function createRendererRuntime(input: {
     executeAjaxAction,
     submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
     openDrawer: async (drawer, ctx) => {
-      ctx.runtime.env.notify('info', 'Drawer support is not wired yet');
-      return { ok: true, data: drawer };
+      if (!ctx.page) {
+        return { ok: false, error: new Error('openDrawer requires page runtime') };
+      }
+
+      const drawerScope = createScopeRef({
+        id: `${ctx.node?.id ?? ctx.scope.id}:drawer-scope`,
+        path: `${ctx.scope.path}.drawer`,
+        parent: ctx.scope,
+        initialData: {
+          dialogId: `${ctx.node?.id ?? ctx.scope.id}-pending`,
+          drawerId: `${ctx.node?.id ?? ctx.scope.id}-pending`
+        }
+      });
+      const drawerId = ctx.page.openSurface('drawer', drawer, drawerScope, runtime, {
+        actionScope: ctx.actionScope,
+        componentRegistry: ctx.componentRegistry,
+        ownerNode: ctx.node,
+        ownerNodeInstance: ctx.nodeInstance
+      });
+      drawerScope.update('dialogId', drawerId);
+      drawerScope.update('drawerId', drawerId);
+      return { ok: true, data: { drawerId } };
     },
     showToast: async (args, ctx) => {
       const level = typeof args?.level === 'string' && ['info', 'success', 'warning', 'error'].includes(args.level)

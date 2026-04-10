@@ -1,11 +1,20 @@
-import type { PageRuntime, PageStoreApi, RendererRuntime, ScopeChange } from '@nop-chaos/flux-core';
+import type {
+  DialogState,
+  PageRuntime,
+  PageStoreApi,
+  RendererRuntime,
+  ScopeChange,
+  SurfaceState
+} from '@nop-chaos/flux-core';
 import { getCompiledCidState } from '@nop-chaos/flux-core';
 import { createPageStore } from './form-store';
 import { createScopeRef } from './scope';
+import { publishOwnerStatus } from './status-owner';
 
 export function createManagedPageRuntime(input: {
   data?: Record<string, any>;
   pageStore?: PageStoreApi;
+  disposeScope?: (scopeId: string) => void;
 } = {}): PageRuntime {
   const data = input.data ?? {};
   const store = input.pageStore ?? createPageStore(data);
@@ -46,55 +55,142 @@ export function createManagedPageRuntime(input: {
       store.updateData(path, value);
     }
   });
-  let dialogCounter = 0;
+  let surfaceCounter = 0;
 
-  function createDialogId(nodeId: string) {
-    dialogCounter += 1;
-    return `${nodeId}-dialog-${dialogCounter}`;
+  function createSurfaceId(nodeId: string, kind: 'dialog' | 'drawer') {
+    surfaceCounter += 1;
+    return `${nodeId}-${kind}-${surfaceCounter}`;
+  }
+
+  function buildSurfaceState(
+    kind: 'dialog' | 'drawer',
+    surface: Record<string, any>,
+    surfaceScope: typeof scope,
+    runtime: RendererRuntime,
+    options?: {
+      actionScope?: import('@nop-chaos/flux-core').ActionScope;
+      componentRegistry?: import('@nop-chaos/flux-core').ComponentHandleRegistry;
+      ownerNode?: import('@nop-chaos/flux-core').CompiledSchemaNode;
+      ownerNodeInstance?: import('@nop-chaos/flux-core').NodeInstance;
+    }
+  ): SurfaceState {
+    const id = createSurfaceId(surfaceScope.id, kind);
+    const ownerNode = options?.ownerNode;
+    const ownerNodeInstance = options?.ownerNodeInstance;
+    const ownerPath = ownerNode?.path ?? ownerNodeInstance?.templateNode.templatePath;
+    const cidState = ownerNode ? getCompiledCidState(ownerNode) : undefined;
+    const titleCompileOptions = ownerPath && surface.title && typeof surface.title !== 'string'
+      ? {
+          cidState,
+          basePath: `${ownerPath}.${kind}.${id}.title`,
+          parentPath: ownerPath
+        }
+      : undefined;
+    const bodyCompileOptions = ownerPath && surface.body
+      ? {
+          cidState,
+          basePath: `${ownerPath}.${kind}.${id}.body`,
+          parentPath: ownerPath
+        }
+      : undefined;
+
+    return {
+      id,
+      kind,
+      surface,
+      scope: surfaceScope,
+      actionScope: options?.actionScope,
+      componentRegistry: options?.componentRegistry,
+      ownerNode,
+      ownerNodeInstance,
+      title: typeof surface.title === 'string'
+        ? surface.title
+        : surface.title
+          ? runtime.schemaCompiler.compile(surface.title as any, titleCompileOptions)
+          : undefined,
+      body: surface.body ? runtime.schemaCompiler.compile(surface.body as any, bodyCompileOptions) : undefined
+    };
+  }
+
+  function publishSurfaceStatus(surface: SurfaceState) {
+    const statusPath = typeof surface.surface.statusPath === 'string' ? surface.surface.statusPath : undefined;
+    publishOwnerStatus(scope, statusPath, {
+      id: surface.id,
+      kind: surface.kind,
+      open: true,
+      active: true,
+      opening: false,
+      closing: false
+    });
+  }
+
+  function disposeOwnedScope(scopeId: string | undefined) {
+    if (!scopeId) {
+      return;
+    }
+
+    input.disposeScope?.(scopeId);
   }
 
   return {
     store,
     scope,
     openDialog(dialog, dialogScope, runtime: RendererRuntime, options) {
-      const id = createDialogId(dialogScope.id);
-      const ownerNode = options?.ownerNode;
-      const ownerNodeInstance = options?.ownerNodeInstance;
-      const ownerPath = ownerNode?.path ?? ownerNodeInstance?.templateNode.templatePath;
-      const cidState = ownerNode ? getCompiledCidState(ownerNode) : undefined;
-      const titleCompileOptions = ownerPath && dialog.title && typeof dialog.title !== 'string'
-        ? {
-            cidState,
-            basePath: `${ownerPath}.dialog.${id}.title`,
-            parentPath: ownerPath
-          }
-        : undefined;
-      const bodyCompileOptions = ownerPath && dialog.body
-        ? {
-            cidState,
-            basePath: `${ownerPath}.dialog.${id}.body`,
-            parentPath: ownerPath
-          }
-        : undefined;
-      store.openDialog({
-        id,
+      const surface = buildSurfaceState('dialog', dialog, dialogScope, runtime, options);
+      store.openSurface(surface);
+      const dialogState: DialogState = {
+        id: surface.id,
+        kind: 'dialog',
         dialog,
-        scope: dialogScope,
-        actionScope: options?.actionScope,
-        componentRegistry: options?.componentRegistry,
-        ownerNode,
-        ownerNodeInstance,
-        title: typeof dialog.title === 'string'
-          ? dialog.title
-          : dialog.title
-            ? runtime.schemaCompiler.compile(dialog.title as any, titleCompileOptions)
-            : undefined,
-        body: dialog.body ? runtime.schemaCompiler.compile(dialog.body as any, bodyCompileOptions) : undefined
-      });
-      return id;
+        scope: surface.scope,
+        actionScope: surface.actionScope,
+        componentRegistry: surface.componentRegistry,
+        ownerNode: surface.ownerNode,
+        ownerNodeInstance: surface.ownerNodeInstance,
+        title: surface.title,
+        body: surface.body
+      };
+      store.openDialog(dialogState);
+      publishSurfaceStatus(surface);
+      return surface.id;
     },
     closeDialog(dialogId) {
-      store.closeDialog(dialogId);
+      const dialogs = store.getState().dialogs;
+      const targetDialog = dialogId
+        ? dialogs.find((dialog) => dialog.id === dialogId)
+        : dialogs[dialogs.length - 1];
+
+      if (!targetDialog) {
+        return;
+      }
+
+      store.closeDialog(targetDialog.id);
+      store.closeSurface(targetDialog.id);
+      disposeOwnedScope(targetDialog.scope.id);
+    },
+    openSurface(kind, surface, surfaceScope, runtime, options) {
+      const nextSurface = buildSurfaceState(kind, surface, surfaceScope, runtime, options);
+      store.openSurface(nextSurface);
+      publishSurfaceStatus(nextSurface);
+      return nextSurface.id;
+    },
+    closeSurface(surfaceId) {
+      const surfaces = store.getState().surfaces;
+      const targetSurface = surfaceId
+        ? surfaces.find((surface) => surface.id === surfaceId)
+        : surfaces[surfaces.length - 1];
+
+      if (!targetSurface) {
+        return;
+      }
+
+      store.closeSurface(targetSurface.id);
+
+      if (targetSurface.kind === 'dialog') {
+        store.closeDialog(targetSurface.id);
+      }
+
+      disposeOwnedScope(targetSurface.scope.id);
     },
     refresh() {
       store.refresh();

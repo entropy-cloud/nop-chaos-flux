@@ -25,6 +25,7 @@ import {
 } from './form-runtime-validation';
 import type { CreateManagedFormRuntimeInput, ManagedFormRuntimeSharedState } from './form-runtime-types';
 import { createScopeRef, toRecord } from './scope';
+import { createReadonlyScopeBinding } from './status-owner';
 
 function validationErrorsEqual(
   left: ValidationError[] | undefined,
@@ -181,35 +182,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     }
   });
 
-  const formScopeWithBinding: typeof scope = {
-    ...scope,
-    get(path) {
-      if (path === '$form') {
-        return buildFormStatusSummary(store.getState(), formId, formName);
-      }
-
-      return scope.get(path);
-    },
-    has(path) {
-      if (path === '$form') {
-        return true;
-      }
-
-      return scope.has(path);
-    },
-    readOwn() {
-      return {
-        ...scope.readOwn(),
-        $form: buildFormStatusSummary(store.getState(), formId, formName)
-      };
-    },
-    read() {
-      return {
-        ...scope.read(),
-        $form: buildFormStatusSummary(store.getState(), formId, formName)
-      };
-    }
-  };
+  const formScopeWithBinding = createReadonlyScopeBinding(scope, '$form', () => buildFormStatusSummary(store.getState(), formId, formName));
 
   Object.defineProperty(formScopeWithBinding, 'value', {
     get() {

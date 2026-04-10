@@ -32,6 +32,7 @@ export interface RuntimeReactionRegistry {
     helpers: Pick<RendererHelpers, 'dispatch'>;
   }): ReactionRegistration;
   disposeScope(scopeId: string): void;
+  disposeScopeTree(scopeId: string): void;
   getDebugSnapshot(): ReactionRegistryDebugSnapshot;
 }
 
@@ -130,6 +131,7 @@ export function registerReaction(input: {
     await input.helpers.dispatch(normalizeActionArray(input.actions), {
       scope: input.scope,
       event: {
+        type: 'reaction',
         value: nextValue,
         prev,
         changed,
@@ -334,6 +336,14 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     }
   }
 
+  function disposeScopeTree(scopeId: string) {
+    for (const ownerScopeId of Array.from(scopeEntries.keys())) {
+      if (ownerScopeId === scopeId || ownerScopeId.startsWith(`${scopeId}:`)) {
+        disposeScope(ownerScopeId);
+      }
+    }
+  }
+
   function getDebugSnapshot(): ReactionRegistryDebugSnapshot {
     return {
       reactions: Array.from(scopeEntries.values())
@@ -345,6 +355,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
   return {
     registerReaction: register,
     disposeScope,
+    disposeScopeTree,
     getDebugSnapshot
   };
 }

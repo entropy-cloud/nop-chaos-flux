@@ -506,6 +506,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         dialogScope.update('dialogId', dialogId);
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: { dialogId } });
       }
+      case 'drawer':
       case 'openDrawer': {
         if (!action.drawer) {
           return finishAction(
@@ -520,6 +521,14 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result ?? { ok: true, data: action.drawer });
       }
       case 'closeDrawer': {
+        if (ctx.page) {
+          if (action.dialogId) {
+            ctx.page.closeSurface(String(evaluateInActionContext(action.dialogId, ctx, input)));
+          } else {
+            ctx.page.closeSurface(ctx.dialogId);
+          }
+        }
+
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true });
       }
       case 'showToast': {
@@ -957,12 +966,16 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
           )
         });
       } else if (resultClass === 'failure' && normalizedAction.onError) {
+        const eventType = typeof (ctx.event as { type?: unknown } | undefined)?.type === 'string'
+          ? (ctx.event as { type: string }).type
+          : 'actionError';
         previous = await dispatch(normalizedAction.onError, {
           ...ctx,
           interactionId: actionContext.interactionId,
           prevResult: result,
           event: {
             ...(ctx.event && typeof ctx.event === 'object' ? ctx.event as Record<string, unknown> : {}),
+            type: eventType,
             result,
             error: result.error,
             prevResult: actionContext.prevResult

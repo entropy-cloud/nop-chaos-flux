@@ -14,6 +14,7 @@ import type { ApiCacheStore } from './api-cache';
 import { createDataSourceController } from './data-source-runtime';
 import { collectRuntimeDependencies } from './node-runtime';
 import { createRootDependencySet, filterScopeChangeByIgnoredRoots, scopeChangeHitsDependencies } from './scope-change';
+import { publishOwnerStatus } from './status-owner';
 
 interface RuntimeSourceEntry {
   id: string;
@@ -69,11 +70,7 @@ function createDependencyAwareFormulaController(input: {
   let error: unknown;
 
   function publishStatus() {
-    if (!input.statusPath) {
-      return;
-    }
-
-    input.scope.update(input.statusPath, {
+    publishOwnerStatus(input.scope, input.statusPath, {
       started,
       loading,
       ready: started && !loading && !error,
@@ -182,6 +179,7 @@ export interface RuntimeSourceRegistry {
     scope?: ScopeRef;
   }): Promise<boolean>;
   disposeScope(scopeId: string): void;
+  disposeScopeTree(scopeId: string): void;
 }
 
 export function createRuntimeSourceRegistry(input: {
@@ -318,6 +316,14 @@ export function createRuntimeSourceRegistry(input: {
     }
   }
 
+  function disposeScopeTree(scopeId: string) {
+    for (const ownerScopeId of Array.from(scopeEntries.keys())) {
+      if (ownerScopeId === scopeId || ownerScopeId.startsWith(`${scopeId}:`)) {
+        disposeScope(ownerScopeId);
+      }
+    }
+  }
+
   async function refreshDataSource(args: {
     id: string;
     scope?: ScopeRef;
@@ -351,6 +357,7 @@ export function createRuntimeSourceRegistry(input: {
   return {
     registerDataSource,
     refreshDataSource,
-    disposeScope
+    disposeScope,
+    disposeScopeTree
   };
 }

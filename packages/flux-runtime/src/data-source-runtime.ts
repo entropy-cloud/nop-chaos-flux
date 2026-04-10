@@ -15,6 +15,7 @@ import type {
 import { resolveCacheKey, type ApiCacheStore } from './api-cache';
 import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime';
 import { collectRuntimeDependencies } from './node-runtime';
+import { publishOwnerStatus } from './status-owner';
 
 function isAbortError(error: unknown): boolean {
   return Boolean(
@@ -45,11 +46,7 @@ function writeStatusToScope(scope: ScopeRef, statusPath: string | undefined, sta
   stale: boolean;
   error: unknown;
 }): void {
-  if (!statusPath) {
-    return;
-  }
-
-  scope.update(statusPath, {
+  publishOwnerStatus(scope, statusPath, {
     started: state.started,
     loading: state.loading,
     ready: state.started && !state.loading && !state.error,
@@ -142,7 +139,7 @@ export function createDataSourceController(input: {
   }
 
   async function runRequest(): Promise<void> {
-    if (stopped) {
+    if (stopped || loading) {
       return;
     }
 

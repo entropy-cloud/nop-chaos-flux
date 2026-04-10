@@ -2490,7 +2490,7 @@ describe('createRendererRuntime', () => {
       }
     );
 
-    expect(openResult.ok).toBe(true);
+    expect(openResult.ok, String(openResult.error)).toBe(true);
     expect(page.store.getState().dialogs).toHaveLength(1);
     const dialogState = page.store.getState().dialogs[0];
     expect(dialogState.dialog.title).toBe('Runtime dialog');
@@ -2766,6 +2766,62 @@ describe('createRendererRuntime', () => {
     expect(closeResult.ok).toBe(true);
     expect(page.store.getState().dialogs).toHaveLength(1);
     expect(page.store.getState().dialogs[0].id).toBe(dialogs[0].id);
+  });
+
+  it('opens and closes drawers through drawer actions', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const node = runtime.compile({ type: 'text', text: 'trigger' }) as any;
+    const page = runtime.createPageRuntime({});
+
+    const openResult = await runtime.dispatch(
+      {
+        action: 'openDrawer',
+        drawer: {
+          title: 'Runtime drawer',
+          body: [{ type: 'text', text: 'Drawer body' }],
+          statusPath: 'drawerStatus'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        node
+      }
+    );
+
+    expect(openResult.ok).toBe(true);
+    expect(page.store.getState().surfaces).toHaveLength(1);
+    expect(page.store.getState().surfaces[0].kind).toBe('drawer');
+    expect(page.scope.get('drawerStatus')).toEqual({
+      id: page.store.getState().surfaces[0].id,
+      kind: 'drawer',
+      open: true,
+      active: true,
+      opening: false,
+      closing: false,
+    });
+
+    const closeResult = await runtime.dispatch(
+      {
+        action: 'closeDrawer'
+      },
+      {
+        runtime,
+        scope: page.store.getState().surfaces[0].scope,
+        page,
+        node,
+        dialogId: page.store.getState().surfaces[0].id
+      }
+    );
+
+    expect(closeResult.ok).toBe(true);
+    expect(page.store.getState().surfaces).toHaveLength(0);
   });
 
   it('writes ajax response data into page state via dataPath', async () => {

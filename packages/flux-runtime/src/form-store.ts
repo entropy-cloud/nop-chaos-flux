@@ -160,6 +160,7 @@ export function createPageStore(initialData: Record<string, any>): PageStoreApi 
   const store = createStore<PageStoreState>(() => ({
     data: initialData,
     dialogs: [],
+    surfaces: [],
     refreshTick: 0
   }));
 
@@ -194,6 +195,24 @@ export function createPageStore(initialData: Record<string, any>): PageStoreApi 
       }
 
       store.setState({ dialogs: state.dialogs.filter((dialog) => dialog.id !== dialogId) });
+    },
+    openSurface(surface) {
+      const state = store.getState();
+      store.setState({ surfaces: [...state.surfaces, surface] });
+    },
+    closeSurface(surfaceId) {
+      const state = store.getState();
+
+      if (!surfaceId) {
+        if (state.surfaces.length === 0) {
+          return;
+        }
+
+        store.setState({ surfaces: state.surfaces.slice(0, -1) });
+        return;
+      }
+
+      store.setState({ surfaces: state.surfaces.filter((surface) => surface.id !== surfaceId) });
     },
     refresh() {
       const state = store.getState();
