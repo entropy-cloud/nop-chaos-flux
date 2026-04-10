@@ -23,6 +23,7 @@ export interface ReportDesignerPageSchemaInput {
   designer: ReportDesignerConfig;
   profile?: ReportDesignerProfile;
   adapters?: Partial<ReportDesignerAdapterRegistry>;
+  statusPath?: string;
   toolbar?: ReportToolbarSchema;
   fieldPanel?: ReportFieldPanelSchema;
   inspector?: ReportInspectorSchema;
@@ -43,4 +44,3 @@ export interface ReportInspectorShellSchema extends BaseSchema {
   saveLabel?: string;
   errorLabel?: string;
 }
-

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, RenderNodeInput } from '@nop-chaos/flux-core';
+import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, RenderNodeInput, ReportDesignerHostStatusSummary } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, WorkbenchShell } from '@nop-chaos/flux-react';
+import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import type {
   ReportDesignerAdapterRegistry,
   ReportDesignerConfig,
@@ -106,9 +107,28 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
     : props.regions.inspector?.render({ scope: reportDesignerScope, actionScope });
   const dialogsContent = props.regions.dialogs?.render({ scope: reportDesignerScope, actionScope });
   const bodyContent = props.regions.body?.render({ scope: reportDesignerScope, actionScope });
+  const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
 
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (!statusPath) {
+      return;
+    }
+
+    const summary: ReportDesignerHostStatusSummary = {
+      kind: 'report-designer',
+      dirty: false,
+      busy: snapshot.preview.running,
+      canUndo: snapshot.canUndo,
+      canRedo: snapshot.canRedo,
+      previewRunning: snapshot.preview.running,
+      selectionKind: snapshot.selectionTarget?.kind,
+      fieldSourceCount: snapshot.fieldSources.length,
+    };
+    publishOwnerStatus(props.nodeInstance.scope.parent ?? props.nodeInstance.scope, statusPath, summary);
+  }, [props.nodeInstance.scope, snapshot, statusPath]);
 
   const headerSlot = (
     <>

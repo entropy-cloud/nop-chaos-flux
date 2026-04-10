@@ -34,6 +34,12 @@ const textRenderer: RendererDefinition = {
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };
 
+const pageRenderer: RendererDefinition = {
+  type: 'page',
+  component: (props) => <section>{props.regions.body?.render()}</section>,
+  regions: ['body']
+};
+
 function WorkbookTitleProbe() {
   const scopeData = useScopeSelector((data: Record<string, unknown>) => data) as {
     reportDocument?: { semantic?: { workbookMeta?: { title?: string } } };
@@ -46,6 +52,11 @@ const sheetTitleProbeRenderer: RendererDefinition = {
   type: 'sheet-title-probe',
   component: WorkbookTitleProbe,
 };
+
+function ReportStatusProbe() {
+  const status = useScopeSelector((data: any) => data.reportStatus);
+  return <span data-testid="report-status">{status ? `${status.kind}:${status.fieldSourceCount}` : ''}</span>;
+}
 
 function createRuntimeConfig(overrides?: Partial<ReportDesignerConfig>): ReportDesignerConfig {
   return {
@@ -178,5 +189,42 @@ describe('report-designer namespaced actions integration', () => {
       expect(screen.getByText('Custom Save')).toBeTruthy();
     });
   });
-});
 
+  it('publishes report designer host status through statusPath', async () => {
+    const spreadsheet = createEmptyDocument('status-report-designer');
+    const document = createReportTemplateDocument(spreadsheet, 'Status Report');
+    const statusProbeRenderer: RendererDefinition = {
+      type: 'report-status-probe',
+      component: ReportStatusProbe
+    };
+
+    const registry = createDefaultRegistry([pageRenderer, actionButtonRenderer, sheetTitleProbeRenderer, statusProbeRenderer]);
+    registerReportDesignerRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            defineReportDesignerPageSchema({
+              type: 'report-designer-page',
+              document,
+              designer: createRuntimeConfig(),
+              statusPath: 'reportStatus',
+            }),
+            { type: 'report-status-probe' }
+          ]
+        } as any}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{}}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('report-status').textContent).toContain('report-designer:0');
+    });
+  });
+});
