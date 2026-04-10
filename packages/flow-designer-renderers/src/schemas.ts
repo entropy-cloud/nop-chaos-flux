@@ -2,6 +2,7 @@ import type { BaseSchema } from '@nop-chaos/flux-core';
 
 export interface DesignerPageSchema extends BaseSchema {
   type: 'designer-page';
+  statusPath?: string;
 }
 
 export interface DesignerFieldSchema extends BaseSchema {

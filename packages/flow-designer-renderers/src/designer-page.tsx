@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import type { ActionNamespaceProvider, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
+import type { ActionNamespaceProvider, DesignerHostStatusSummary, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, useNamespaceRegistration, WorkbenchShell } from '@nop-chaos/flux-react';
+import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { createDesignerCore, layoutWithElk } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
@@ -62,6 +63,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
 }
 
 function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPageSchema>, core: ReturnType<typeof createDesignerCore>, snapshot: ReturnType<typeof useDesignerSnapshot>, commandAdapter: ReturnType<typeof createDesignerCommandAdapter>, dispatch: (command: import('./designer-command-adapter').DesignerCommand) => ReturnType<typeof commandAdapter.execute>, config: DesignerConfig) {
+  const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
   const handleAutoLayout = useCallback(async () => {
     const doc = core.getDocument();
     if (doc.nodes.length === 0) return;
@@ -175,6 +177,23 @@ function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPag
   const toolbarSlot = props.regions.toolbar?.render({ scope: designerScope, actionScope });
   const inspectorSlot = props.regions.inspector?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).inspector as React.ReactNode);
   const dialogsSlot = props.regions.dialogs?.render({ scope: designerScope, actionScope }) ?? ((props.props as Record<string, unknown>).dialogs as React.ReactNode);
+
+  useEffect(() => {
+    if (!statusPath) {
+      return;
+    }
+
+    const summary: DesignerHostStatusSummary = {
+      kind: 'designer',
+      dirty: snapshot.isDirty,
+      busy: false,
+      canUndo: snapshot.canUndo,
+      canRedo: snapshot.canRedo,
+      selectionKind: snapshot.activeNode ? 'node' : snapshot.activeEdge ? 'edge' : 'none',
+      selectionCount: snapshot.selection.selectedNodeIds.length + snapshot.selection.selectedEdgeIds.length
+    };
+    publishOwnerStatus(props.nodeInstance.scope.parent ?? props.nodeInstance.scope, statusPath, summary);
+  }, [props.nodeInstance.scope, snapshot, statusPath]);
 
   return (
     <DesignerContext.Provider value={ctxValue}>

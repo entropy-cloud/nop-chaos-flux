@@ -1,13 +1,26 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from 'vitest';
-import type { DesignerConfig } from '../../flow-designer-core/src/index';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
 import { createDesignerActionProvider, flowDesignerRendererDefinitions } from './index';
-import { createFormulaCompiler } from '../../flux-formula/src/index';
-import { createSchemaRenderer } from '../../flux-react/src/index';
-import { basicRendererDefinitions } from '../../flux-renderers-basic/src/index';
-import { render, within } from '@testing-library/react';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';
+import { render, waitFor, within } from '@testing-library/react';
 import { DesignerIcon } from './designer-icon';
+
+const textRenderer: RendererDefinition = {
+  type: 'text',
+  component: (props) => <span>{String(props.props.text ?? '')}</span>
+};
+
+const pageRenderer: RendererDefinition = {
+  type: 'page',
+  component: (props) => <section>{props.regions.body?.render()}</section>,
+  regions: ['body']
+};
+
+const basicTestRendererDefinitions: RendererDefinition[] = [pageRenderer, textRenderer];
 
 class ResizeObserverMock {
   observe() {}
@@ -245,6 +258,46 @@ describe('createDesignerActionProvider', () => {
   });
 });
 
+describe('designer-page status publication', () => {
+  it('publishes designer host status through statusPath', async () => {
+    function StatusProbe() {
+      const status = useScopeSelector((data: any) => data.designerStatus);
+      return <span data-testid="designer-status">{status ? `${status.kind}:${status.selectionKind}:${status.selectionCount}` : ''}</span>;
+    }
+
+    const statusProbeRenderer = {
+      type: 'designer-status-probe',
+      component: StatusProbe
+    } as any;
+    const SchemaRenderer = createSchemaRenderer([...basicTestRendererDefinitions, ...flowDesignerRendererDefinitions, statusProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'designer-page',
+              document: { id: 'doc-1', kind: 'flow', name: 'Example', version: '1.0.0', nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } },
+              config: createTestConfig(),
+              statusPath: 'designerStatus'
+            },
+            {
+              type: 'designer-status-probe'
+            }
+          ]
+        } as any}
+        env={createRendererEnv() as any}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-testid="designer-status"]')?.textContent).toBe('designer:none:0');
+    });
+  });
+});
+
 describe('DesignerIcon markers', () => {
   it('uses data-icon for icon identity without modifier marker classes', () => {
     render(<DesignerIcon icon="arrow-left" className="text-white" />);
@@ -277,7 +330,7 @@ describe('flowDesignerRendererDefinitions', () => {
 
 describe('DesignerPageRenderer basic rendering', () => {
   it('renders the designer page with xyflow canvas', () => {
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...flowDesignerRendererDefinitions]);
+    const SchemaRenderer = createSchemaRenderer([...basicTestRendererDefinitions, ...flowDesignerRendererDefinitions]);
 
     const view = render(
       <SchemaRenderer
@@ -308,7 +361,7 @@ describe('DesignerPageRenderer basic rendering', () => {
   });
 
   it('renders a fallback when document or config is missing', () => {
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...flowDesignerRendererDefinitions]);
+    const SchemaRenderer = createSchemaRenderer([...basicTestRendererDefinitions, ...flowDesignerRendererDefinitions]);
 
     const view = render(
       <SchemaRenderer
