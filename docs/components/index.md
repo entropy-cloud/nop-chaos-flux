@@ -122,6 +122,26 @@ docs/components/
 | 单项内容 | `item` |
 | 列表项集合 | `items` |
 
+### 2.1 Structural Renderer Baseline
+
+Current live runtime baseline now includes three no-UI structural renderers in `@nop-chaos/flux-renderers-basic`:
+
+| Type | Purpose | Key runtime rule |
+| --- | --- | --- |
+| `fragment` | group multiple child nodes without a visual wrapper | renders `body` through region handles and can add `data` / `isolate` scope overrides |
+| `loop` | repeat one body template over `items` | creates inherited item scopes and appends repeated `instancePath` frames |
+| `recurse` | lexical recursion inside `loop.body` | re-instantiates the nearest enclosing `loop.body` with a new item collection |
+
+The live runtime baseline also now includes the first tree family split promised by the design docs:
+
+| Type | Layer | Key boundary |
+| --- | --- | --- |
+| `tree` | data renderer | visual hierarchical UI with node-template scope bindings |
+| `input-tree` | form renderer | embedded tree field with value/validation semantics |
+| `tree-select` | form renderer | popup tree field that stays distinct from flat `select` |
+
+These types are now registered runtime components rather than target-contract-only design notes.
+
 ### 3. 事件字段名称
 
 事件入口统一使用 `onXxx`。

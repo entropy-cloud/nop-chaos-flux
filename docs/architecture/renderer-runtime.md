@@ -160,6 +160,7 @@ Meaning:
 - `regions` is the map of precompiled child render handles
 - `events` is the map of runtime event handlers derived from declarative event fields
 - `helpers` exposes stable imperative runtime helpers
+- `node.lifecycleActions` carries compiled `onMount` / `onUnmount` actions when the schema declares them
 
 ### Target contract
 
@@ -224,6 +225,45 @@ Current compatibility note:
 - `nodeInstance` / `useCurrentNodeInstance()` remain the preferred live-node source for locator-aware helpers and future template-instance migration work
 
 This split matches actual ownership and change frequency better than either â€œeverything by propsâ€ or â€œeverything by hooksâ€.
+
+## Event Passthrough Contract
+
+Renderer event handlers should forward the native UI event when one exists.
+
+Required rule:
+
+- DOM or React event entry points such as `onClick`, `onChange`, `onSubmit`, `onFocus`, and `onBlur` should call `props.events.onXxx?.(event)` rather than dropping the event object
+
+Runtime then normalizes that payload into `ActionContext.event` as a structured `FluxActionEvent` shape.
+
+Current normalized baseline includes:
+
+- `type`
+- `nativeEvent?`
+- `currentTarget?`
+- `target?`
+- `preventDefault?()`
+- `stopPropagation?()`
+
+This rule exists so imported namespace providers, component-handle actions, and debugger/automation integrations can rely on one action-event contract instead of renderer-by-renderer ad hoc behavior.
+
+Non-DOM semantic payloads are still allowed when a renderer emits higher-level interaction data, but those payloads should still carry a meaningful `type` field.
+
+## Lifecycle Actions
+
+`BaseSchema` now reserves two lifecycle action fields:
+
+- `onMount?: ActionSchema`
+- `onUnmount?: ActionSchema`
+
+Compiler/runtime rule:
+
+- lifecycle actions are compiled onto `CompiledSchemaNode.lifecycleActions`
+- they do not participate in normal `eventActions` / `eventKeys`
+- renderers do not adapt them manually
+- `NodeRenderer` owns mount/unmount dispatch centrally
+
+This keeps lifecycle behavior consistent across all renderers and avoids per-renderer hook duplication.
 
 ## Current Hooks
 
@@ -515,6 +555,18 @@ The current performance baseline further narrows that expectation:
 
 - row scopes should be isolated by default
 - non-isolated row scopes are an explicit opt-out for real parent-binding needs
+
+### Chart renderer
+
+Chart now participates in the component-handle registry as a DOM-owning renderer.
+
+Current handle baseline:
+
+- chart registers a `ComponentHandle` with an optional `ref`
+- the registered `ref` points at the mounted chart container element when materialized
+- the handle exposes narrow chart instance capabilities such as `resize`, `setOption`, and `getDataURL`
+
+This is the preferred bridge for imported libraries or host tooling that need one concrete chart instance or DOM anchor without turning renderer internals into ambient global state.
 
 ## Performance Rules
 

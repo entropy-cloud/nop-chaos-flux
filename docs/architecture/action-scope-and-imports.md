@@ -215,6 +215,7 @@ interface ComponentHandle {
   id?: string;
   name?: string;
   type: string;
+  ref?: HTMLElement | null;
   capabilities: ComponentCapabilities;
 }
 
@@ -227,6 +228,24 @@ interface ComponentCapabilities {
 ```
 
 `store` is optional metadata, not the public contract. The public contract is the explicitly exposed capability surface.
+
+### DOM Ref Access
+
+Some imported providers or host bridges need access to one mounted element rather than only imperative methods.
+
+Current baseline:
+
+- `ComponentHandle` may expose `ref?: HTMLElement | null`
+- renderers register that ref through the existing `ComponentHandleRegistry`
+- callers resolve the handle first, then read `handle.ref`
+
+Preferred access pattern:
+
+1. resolve a concrete component by `componentId`, `componentName`, or structural target
+2. verify the handle is currently materialized
+3. read `handle.ref` when the renderer deliberately exposes a DOM anchor
+
+This keeps DOM access explicit and instance-scoped. DOM refs should not be copied into `ActionContext` or import namespace context snapshots because they are mounted-instance properties, not stable lexical data.
 
 ### Store Versus Capability
 

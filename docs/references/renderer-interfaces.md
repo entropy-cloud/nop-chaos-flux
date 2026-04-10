@@ -125,6 +125,7 @@ Key contracts:
 - `RenderRegionHandle`
 - `RenderFragmentOptions`
 - `RenderNodeInput`
+- `ComponentHandle`
 
 Role summary:
 
@@ -132,6 +133,7 @@ Role summary:
 - `RendererHelpers` exposes stable runtime helpers such as `render`, `evaluate`, `createScope`, and `dispatch`
 - `RendererEventHandler` is the runtime callback shape used for declarative event fields
 - `RenderRegionHandle` gives components an easy way to render declared child regions
+- `ComponentHandle` may optionally expose `ref?: HTMLElement | null` alongside explicit imperative capabilities
 
 ## Form, Page, And Dialog Contracts
 
@@ -179,7 +181,7 @@ Key contracts:
 Role summary:
 
 - `ActionSchema` is the declarative low-code action format
-- `ActionContext` carries runtime, scope, form, page, node, dialog, and `prevResult` context
+- `ActionContext` carries runtime, scope, form, page, node, dialog, structured `event`, and `prevResult` context
 - `ActionResult` is the normalized runtime result of an action
 
 Current action system supports directionally:

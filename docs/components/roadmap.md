@@ -34,11 +34,14 @@
 - `switch`
 - `radio-group`
 - `checkbox-group`
+- `input-tree`
+- `tree-select`
 - `tag-list`
 - `key-value`
 - `array-editor`
 - `condition-builder`
 - `table`
+- `tree`
 - `data-source`
 - `chart`
 
@@ -86,7 +89,6 @@
 - `steps`
 - `wizard`
 - `timeline`
-- `tree`
 - `dropdown-button`
 - `button-group`
 - `pagination`
@@ -99,7 +101,6 @@
 - `upload`
 - `editor`
 - `transfer`
-- `tree-select`
 - `cascader`
 - `input-tag`
 - `input-color`
@@ -118,7 +119,7 @@
 
 - 实现并验证当前已文档化但尚未实现的高优先级通用 renderer，优先顺序建议：`tabs`、`dialog`、`drawer`、`list`、`card`、`link`、`empty`、`json-view`。
 
-`tree` 暂不进入 P1 的原因不是缺少参考，而是它需要先和 `loop` / `recurse` / future `input-tree` / `tree-select` 的边界一起稳定下来。
+树相关边界已经稳定并落地首版：`tree` 是通用 UI renderer，`input-tree` / `tree-select` 是 form field family，`loop + recurse` 是结构层。
 
 ### P2
 
