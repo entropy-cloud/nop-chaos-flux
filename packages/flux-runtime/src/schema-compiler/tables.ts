@@ -8,8 +8,20 @@ import { extractNestedSchemaRegions } from './regions';
 
 export const TABLE_COLUMN_REGION_FIELDS = [
   { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
-  { key: 'buttons', regionKeySuffix: 'buttons', compiledKey: 'buttonsRegionKey' },
-  { key: 'cell', regionKeySuffix: 'cell', compiledKey: 'cellRegionKey' }
+  {
+    key: 'buttons',
+    regionKeySuffix: 'buttons',
+    compiledKey: 'buttonsRegionKey',
+    params: ['record', 'index'] as readonly string[],
+    isolate: true
+  },
+  {
+    key: 'cell',
+    regionKeySuffix: 'cell',
+    compiledKey: 'cellRegionKey',
+    params: ['record', 'index'] as readonly string[],
+    isolate: true
+  }
 ] as const;
 
 export const TABS_ITEM_REGION_FIELDS = [
