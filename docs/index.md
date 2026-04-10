@@ -21,6 +21,8 @@ Choose the smallest document that matches the task.
 | Understand action control flow such as `when`, `then`, `onError`, `parallel`, result classes, and chained result context | `docs/architecture/action-algebra-formal-spec.md` | `docs/architecture/action-scope-and-imports.md` |
 | 设计 action 可视化编辑、optional step、graph lowering，或判断是否要把 `parallel` 改成 `steps` | `docs/architecture/action-graph-authoring.md` | `docs/architecture/action-algebra-formal-spec.md` |
 | 设计值转换、字段 draft 生命周期、组合式详情字段/详情视图、或 `transformInAction` / `transformOutAction` / `validateValueAction` | `docs/architecture/value-adaptation-and-detail-field.md` | `docs/architecture/action-scope-and-imports.md`, `docs/architecture/renderer-runtime.md` |
+| 设计多态值字段、`string | object`/`string | ActionSchema` 这类 union-like 编辑、自动识别变体、或切换不同编辑器 | `docs/architecture/variant-field.md` | `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/action-scope-and-imports.md` |
+| 设计对象字段、局部 subform、一个字段内部再拆多个属性编辑、或相对对象根的子字段命名 | `docs/architecture/object-field.md` | `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/renderer-runtime.md` |
 | 设计按钮 / 表单 / 选择控件的 async pending、loading、disabled 语义 | `docs/architecture/action-interaction-state.md` | `docs/architecture/form-validation.md`, `docs/architecture/api-data-source.md` |
 | 设计 dialog / drawer / future sheet 的打开态、surface status、`statusPath` 或局部 `$surface` 规则 | `docs/architecture/surface-owner.md` | `docs/architecture/action-interaction-state.md` |
 | 设计 scope 继承、`data` 初始化、`isolate`、row scope、或判断是否需要 `$parentScope` | `docs/architecture/scope-ownership-and-isolation.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/table-row-identity-and-scope-performance.md` |

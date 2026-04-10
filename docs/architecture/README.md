@@ -42,6 +42,8 @@
 - `api-data-source.md`
 - `form-validation.md`
 - `value-adaptation-and-detail-field.md`
+- `variant-field.md`
+- `object-field.md`
 
 ### 3. Scope, Identity, And Rendering
 

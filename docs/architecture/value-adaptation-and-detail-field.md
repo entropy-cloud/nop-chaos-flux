@@ -43,6 +43,42 @@ value-oriented control 可以分为两类：
 - 不用 `parse` / `serialize` 作为总称，因为这组词太偏 AST / codec 语义
 - `transformIn` / `transformOut` 更适合字符串、对象、图、AST、schema、domain DTO 等各种值形态
 
+## Shared Wrapper
+
+是的，这组 `transformInAction` / `transformOutAction` / `validateValueAction` 不应由每个具体控件各自零散实现。
+
+推荐做法是提供一个共享 owner wrapper 或 helper，统一负责：
+
+- 构造默认 payload
+- 执行 action
+- 读取 `ActionResult.data`
+- 应用 replace-not-merge 的 `args` 规则
+- 管理 draft 生命周期中的 transform / validate 调用顺序
+- 统一错误处理和 owner-level diagnostics
+
+推荐把这层视为 value-oriented owner 的公共基础设施。
+
+也就是说：
+
+- `detail-field`
+- `detail-view`
+- `variant-field`
+- `object-field`
+
+都应复用同一套 wrapper/owner helper，而不是把 `transformInAction` / `transformOutAction` / `validateValueAction` 的调度逻辑复制到每个 renderer 里。
+
+推荐方向：
+
+```ts
+interface ValueAdaptationOwnerHelper {
+  runTransformIn(...): Promise<unknown>;
+  runTransformOut(...): Promise<unknown>;
+  runValidate(...): Promise<ValidationResult>;
+}
+```
+
+具体 helper 名称不是本文关心的重点，但“共享 wrapper”这条边界应该保持稳定。
+
 ## Recommended Owner Contract
 
 ### Value Viewer
