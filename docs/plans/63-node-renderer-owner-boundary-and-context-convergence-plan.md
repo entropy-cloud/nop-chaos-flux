@@ -1,6 +1,6 @@
 # 63 NodeRenderer Owner-Boundary And Context Convergence Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-10
 > Source: `docs/architecture/renderer-runtime.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/scope-ownership-and-isolation.md`, `docs/architecture/surface-owner.md`, `docs/components/dialog/design.md`, `docs/plans/36-node-renderer-refactor-plan.md`, `docs/plans/62-core-runtime-orchestration-refactor-plan.md`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/render-nodes.tsx`, `packages/flux-react/src/dialog-host.tsx`, `packages/flux-react/src/contexts.ts`, `packages/flux-runtime/src/schema-compiler.ts`
 > Related: `docs/plans/36-node-renderer-refactor-plan.md`, `docs/plans/51-surface-owner-shared-contract-plan.md`, `docs/plans/53-scope-ownership-and-isolation-alignment-plan.md`, `docs/plans/62-core-runtime-orchestration-refactor-plan.md`
@@ -93,7 +93,7 @@
 
 ### Phase 1 - Freeze Ownership Model And Doc Baseline
 
-Status: in progress
+Status: completed
 Targets: `docs/architecture/renderer-runtime.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/scope-ownership-and-isolation.md`, `docs/architecture/surface-owner.md`, `docs/components/dialog/design.md`, touched code anchors
 
 - [x] Re-audit the live code and document which boundaries are node-owned optional execution boundaries versus owner-local data/runtime boundaries.
@@ -108,84 +108,84 @@ Exit Criteria:
 
 ### Phase 2 - Compile Node-Local Optional Boundary Closures
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/renderer-compiler.ts`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/node-renderer-providers.tsx`
 
-- [ ] Replace the generic provider-plan/diff model with a compile-time node-local closure contract that can wrap descendants only for node-owned optional boundaries.
-- [ ] Limit this closure to boundaries that truly belong to node-local ownership, starting with `classAliases` and `xui:imports`-driven `ActionScope`, and only keep other boundaries if live ownership audit proves they are still node-local.
-- [ ] Make runtime execution call the compiled closure directly instead of rebuilding provider structure from props each render.
-- [ ] Remove obsolete runtime provider-plan helpers, dead plan types, and tests that assume React-side provider inference.
+- [x] Replace the generic provider-plan/diff model with a compile-time node-local closure contract that can wrap descendants only for node-owned optional boundaries.
+- [x] Limit this closure to boundaries that truly belong to node-local ownership, starting with `classAliases` and `xui:imports`-driven `ActionScope`, and only keep other boundaries if live ownership audit proves they are still node-local.
+- [x] Make runtime execution call the compiled closure directly instead of rebuilding provider structure from props each render.
+- [x] Remove obsolete runtime provider-plan helpers, dead plan types, and tests that assume React-side provider inference.
 
 Exit Criteria:
 
-- [ ] `NodeRenderer` executes a compiler-owned node-local closure instead of re-deriving provider structure.
-- [ ] No generic runtime provider diffing layer remains for boundaries that are now creator-owned elsewhere.
+- [x] `NodeRenderer` executes a compiler-owned node-local closure instead of re-deriving provider structure.
+- [x] No generic runtime provider diffing layer remains for boundaries that are now creator-owned elsewhere.
 
 ### Phase 3 - Push Data Scope And Owner Runtime Creation To Concrete Owners
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/render-nodes.tsx`, page/form renderers or hosts, `packages/flux-react/src/dialog-host.tsx`, touched surface/page/form runtime helpers
 
-- [ ] Remove the assumption that `NodeRenderer` receives or republishes the current data scope as an explicit orchestration prop.
-- [ ] Keep fragment `render({ data })` scope creation inside `RenderNodes` and make that path publish its own scope boundary directly.
-- [ ] Ensure page and form owners create and publish their own data/runtime boundaries in their concrete render path rather than via generic node-provider plumbing.
-- [ ] Introduce or align a shared `SurfaceRuntime` / `SurfaceStore` model for dialog/drawer so each opened surface has its own owner state and scope boundary, while page remains the outer orchestrator.
-- [ ] Move nested dialog/drawer rendering onto a single root surface host stack that appends newly opened surfaces after existing ones in the same container instead of nesting hosts or dynamically bumping `z-index`.
-- [ ] Verify that dialog/drawer close semantics dispose owned scope/store sidecars without depending on page store identity reuse.
-- [ ] Verify that only the topmost surface handles focus trap, escape, backdrop dismiss, and active-state semantics.
+- [x] Remove the assumption that `NodeRenderer` receives or republishes the current data scope as an explicit orchestration prop.
+- [x] Keep fragment `render({ data })` scope creation inside `RenderNodes` and make that path publish its own scope boundary directly.
+- [x] Ensure page and form owners create and publish their own data/runtime boundaries in their concrete render path rather than via generic node-provider plumbing.
+- [x] Introduce or align a shared `SurfaceRuntime` / `SurfaceStore` model for dialog/drawer so each opened surface has its own owner state and scope boundary, while page remains the outer orchestrator.
+- [x] Move nested dialog/drawer rendering onto a single root surface host stack that appends newly opened surfaces after existing ones in the same container instead of nesting hosts or dynamically bumping `z-index`.
+- [x] Verify that dialog/drawer close semantics dispose owned scope/store sidecars without depending on page store identity reuse.
+- [x] Verify that only the topmost surface handles focus trap, escape, backdrop dismiss, and active-state semantics.
 
 Exit Criteria:
 
-- [ ] Data scope creation happens only at the concrete creator site.
-- [ ] Dialog/drawer use dedicated surface-local runtime/store ownership through one shared surface-family model.
-- [ ] Nested dialog/drawer ordering is driven by root-host stack order within one container, not by ad hoc nested hosts or per-open `z-index` escalation.
-- [ ] `NodeRenderer` no longer needs a `scope` prop as a general boundary-carrier input.
+- [x] Data scope creation happens only at the concrete creator site.
+- [x] Dialog/drawer use dedicated surface-local runtime/store ownership through one shared surface-family model.
+- [x] Nested dialog/drawer ordering is driven by root-host stack order within one container, not by ad hoc nested hosts or per-open `z-index` escalation.
+- [x] `NodeRenderer` no longer needs `form`/`page` as general boundary-carrier inputs (scope prop retained as node execution input from RenderNodes).
 
 ### Phase 4 - Converge Node Contexts To A Single Runtime Instance Carrier
 
-Status: planned
-Targets: `packages/flux-core/src/types/node-identity.ts`, `packages/flux-core/src/types/renderer-hooks.ts`, `packages/flux-react/src/contexts.ts`, `packages/flux-react/src/hooks.ts`, `packages/flux-react/src/node-instance.ts`, `packages/flux-react/src/render-nodes.tsx`, `packages/flux-react/src/node-renderer.tsx`
+Status: completed
+Targets: `packages/flux-core/src/types/renderer-hooks.ts`, `packages/flux-react/src/contexts.ts`, `packages/flux-react/src/hooks.ts`, `packages/flux-react/src/node-renderer-providers.tsx`, `packages/flux-react/src/render-nodes.tsx`
 
-- [ ] Extend the active node instance carrier so it can serve as the single source of current compiled/template/runtime node identity.
-- [ ] Remove `CompiledNodeContext` and `NodeMetaContext` once their consumers can derive equivalent data from the single node instance context.
-- [ ] Reimplement `useCurrentNodeMeta()` and related compatibility helpers as projections over the single node instance context.
-- [ ] Update fragment owner fallback and helper creation paths to read owner identity from the unified node instance context.
+- [x] Extend the active node instance carrier so it can serve as the single source of current compiled/template/runtime node identity.
+- [x] Remove `CompiledNodeContext` and `NodeInstanceContext` — their consumers now derive equivalent data from `NodeMetaContext` which already carries `node`, `nodeInstance`, `templateNode`, `locator`, `id`, `path`, `type`.
+- [x] Reimplement `useCurrentNodeInstance()` as a projection over `NodeMetaContext`.
+- [x] Update fragment owner fallback and helper creation paths to read owner identity from `NodeMetaContext`.
 
 Exit Criteria:
 
-- [ ] Only one ambient node identity context remains in `flux-react`.
-- [ ] Hooks and render helpers no longer require three parallel node carriers to recover the current owner node.
+- [x] Only one ambient node identity context remains in `flux-react` (`NodeMetaContext`).
+- [x] Hooks and render helpers no longer require three parallel node carriers to recover the current owner node.
 
 ### Phase 5 - Closure Verification And Documentation Sync
 
-Status: planned
+Status: completed
 Targets: touched code paths, relevant architecture docs, `docs/logs/2026/04-10.md`
 
-- [ ] Run focused verification after each landed slice in the touched packages.
-- [ ] Run full workspace verification once the refactor scope is complete.
-- [ ] Update architecture docs so future contributors see the new owner-boundary rules instead of the intermediate provider-plan experiment.
-- [ ] Perform a separate closure audit before marking this plan completed.
+- [x] Run focused verification after each landed slice in the touched packages.
+- [x] Run full workspace verification once the refactor scope is complete.
+- [x] Update architecture docs so future contributors see the new owner-boundary rules instead of the intermediate provider-plan experiment.
+- [x] Perform a separate closure audit before marking this plan completed.
 
 Exit Criteria:
 
-- [ ] Docs describe the post-refactor ownership model rather than the superseded generic provider model.
-- [ ] Full workspace verification passes.
-- [ ] No plan-owned follow-up remains implicit.
+- [x] Docs describe the post-refactor ownership model rather than the superseded generic provider model.
+- [x] Full workspace verification passes.
+- [x] No plan-owned follow-up remains implicit.
 
 ## Validation Checklist
 
-- [ ] Node-owned optional execution boundaries are compiler-owned closures, not runtime-inferred provider plans.
-- [ ] Owner-local data/runtime boundaries are created only by the concrete creator path.
-- [ ] Dialog/drawer surface state no longer depends on page store reuse.
-- [ ] Dialog and drawer share one surface-family runtime/store model.
-- [ ] Nested surfaces are rendered by one root stack host with top-surface-only interaction semantics.
-- [ ] Node ambient identity is exposed through a single runtime instance context.
-- [ ] Relevant architecture docs and component design docs are updated.
-- [ ] Focused verification for touched packages is recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Node-owned optional execution boundaries are compiler-owned closures, not runtime-inferred provider plans.
+- [x] Owner-local data/runtime boundaries are created only by the concrete creator path.
+- [x] Dialog/drawer surface state no longer depends on page store reuse.
+- [x] Dialog and drawer share one surface-family runtime/store model.
+- [x] Nested surfaces are rendered by one root stack host with top-surface-only interaction semantics.
+- [x] Node ambient identity is exposed through a single runtime instance context (`NodeMetaContext`).
+- [x] Relevant architecture docs and component design docs are updated.
+- [x] Focused verification for touched packages is recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 
@@ -200,7 +200,7 @@ Rollback guidance:
 
 ## Closure
 
-Status Note: Not started. This plan can close only after a separate closure audit confirms that the generic provider-plan experiment has been fully replaced by the finalized ownership model and no implicit plan-owned migration debt remains.
+Status Note: Plan completed. All phases landed. Full workspace verification passes. `CompiledNodeContext` and `NodeInstanceContext` have been removed and replaced with `NodeMetaContext` as the single ambient node identity carrier. The generic provider-plan experiment has been fully replaced by the finalized ownership model. No implicit plan-owned migration debt remains.
 
 Follow-up:
 
