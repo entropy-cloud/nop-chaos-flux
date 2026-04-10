@@ -162,11 +162,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             scope: lifecycleScope,
             interactionId: options?.interactionId,
             prevResult: result,
-            event: {
-              result,
-              error: undefined,
-              prevResult: undefined
-            },
             evaluationBindings: {
               result,
               error: undefined,
@@ -179,11 +174,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             scope: lifecycleScope,
             interactionId: options?.interactionId,
             prevResult: result,
-            event: {
-              result,
-              error: result.error,
-              prevResult: undefined
-            },
             evaluationBindings: {
               result,
               error: result.error,
@@ -196,11 +186,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             scope: lifecycleScope,
             interactionId: options?.interactionId,
             prevResult: result,
-            event: {
-              result,
-              error: result.error,
-              prevResult: undefined
-            },
             evaluationBindings: {
               result,
               error: result.error,
