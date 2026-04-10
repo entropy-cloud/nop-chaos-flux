@@ -22,6 +22,10 @@ export function useNodeDebugData(
       return;
     }
 
+    if (!activeComponentRegistry.debugEnabled) {
+      return;
+    }
+
     activeComponentRegistry.setHandleDebugData?.(cid, {
       nodeId: nodeInstance.templateNode.id,
       path: nodeInstance.templateNode.templatePath,
@@ -37,5 +41,5 @@ export function useNodeDebugData(
     return () => {
       activeComponentRegistry.setHandleDebugData?.(cid, undefined);
     };
-  }, [activeComponentRegistry, cid, nodeInstance, locator, activeScope, resolvedMeta, resolvedPropsValue]);
+  }, [activeComponentRegistry, activeComponentRegistry?.debugEnabled, cid, nodeInstance, locator, activeScope, resolvedMeta, resolvedPropsValue]);
 }

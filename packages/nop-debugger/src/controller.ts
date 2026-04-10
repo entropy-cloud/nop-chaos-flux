@@ -585,7 +585,13 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     },
     getSnapshot,
     setComponentRegistry(registry: ComponentHandleRegistry | null) {
+      if (componentRegistry) {
+        componentRegistry.setDebugEnabled?.(false);
+      }
       componentRegistry = registry ?? undefined;
+      if (componentRegistry) {
+        componentRegistry.setDebugEnabled?.(true);
+      }
     },
     setActionScope(nextActionScope: ActionScope | null) {
       actionScope = nextActionScope ?? undefined;

@@ -1001,7 +1001,9 @@ describe('dataRendererDefinitions', () => {
       buttonRenderer,
       ...dataRendererDefinitions
     ]);
-    const onComponentRegistryChange = vi.fn();
+    const onComponentRegistryChange = vi.fn((registry) => {
+      registry?.setDebugEnabled?.(true);
+    });
 
     render(
       <SchemaRenderer
@@ -1033,8 +1035,10 @@ describe('dataRendererDefinitions', () => {
     const registry = onComponentRegistryChange.mock.calls[0]?.[0];
 
     expect(Number.isFinite(cid)).toBe(true);
-    expect(registry?.getHandleDebugData?.(cid)?.locator).toMatchObject({
-      instancePath: [{ repeatedTemplateId: expect.stringMatching(/^table-row:/), instanceKey: '1' }]
+    await waitFor(() => {
+      expect(registry?.getHandleDebugData?.(cid)?.locator).toMatchObject({
+        instancePath: [{ repeatedTemplateId: expect.stringMatching(/^table-row:/), instanceKey: '1' }]
+      });
     });
   });
 

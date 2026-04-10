@@ -16,6 +16,7 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
   const DEBUG_MODE = nodeEnv !== 'production';
   let staticCidCounter = 0;
   let dynamicLoadedCidCounter = -1;
+  let debugEnabled = false;
   const handles = new Set<ComponentHandle>();
   const handlesByCid = new Map<number, ComponentHandle>();
   const handlesByLocator = new Map<string, ComponentHandle>();
@@ -100,7 +101,6 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
   function unindexHandle(handle: ComponentHandle) {
     if (typeof handle._cid === 'number' && handlesByCid.get(handle._cid) === handle) {
       handlesByCid.delete(handle._cid);
-      debugDataByCid.delete(handle._cid);
     }
 
     if (handle._locator) {
@@ -289,6 +289,15 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
   return {
     id: input.id,
     parent: input.parent,
+    get debugEnabled() {
+      return debugEnabled;
+    },
+    setDebugEnabled(enabled: boolean) {
+      debugEnabled = enabled;
+      if (!enabled) {
+        debugDataByCid.clear();
+      }
+    },
     register(handle, options) {
       const nextCid = options?.cid ?? handle._cid ?? allocateCid(options?.dynamicLoaded);
       handle._cid = nextCid;
@@ -393,6 +402,10 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       return input.parent?.getHandleByCid?.(cid);
     },
     setHandleDebugData(cid, data) {
+      if (!debugEnabled) {
+        return;
+      }
+
       if (data) {
         debugDataByCid.set(cid, data);
         return;

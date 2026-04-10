@@ -73,6 +73,8 @@ export interface ComponentHandleRegistryDebugSnapshot {
 export interface ComponentHandleRegistry {
   id: string;
   parent?: ComponentHandleRegistry;
+  debugEnabled?: boolean;
+  setDebugEnabled?(enabled: boolean): void;
   register(
     handle: ComponentHandle,
     options?: {
