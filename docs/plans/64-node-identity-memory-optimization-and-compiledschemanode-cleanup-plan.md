@@ -1,382 +1,457 @@
 # 64 Node Identity Memory Optimization And CompiledSchemaNode Cleanup Plan
 
-> Plan Status: proposed
+> Plan Status: planned
 > Last Reviewed: 2026-04-10
-> Source: Discussion with user about memory optimization and architecture simplification
-> Related: `docs/plans/40-template-instantiation-and-node-identity-implementation-plan.md`
+> Source: Deep analysis of `packages/flux-core/src/types/node-identity.ts`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/node-instance.ts`, `packages/flux-runtime/src/component-handle-registry.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/schema-compiler/target-enrichment.ts`, `packages/flux-core/src/compiled-cid.ts`, `docs/architecture/template-instantiation-and-node-identity.md`. Audit by independent subagent on 2026-04-10.
+> Related: `docs/plans/40-template-instantiation-and-node-identity-implementation-plan.md` (completed, superseded baseline)
 
 ## Purpose
 
-本计划用于：
-1. 简化 node identity 模型，减少内存占用（30-50%）
-2. 清理 CompiledSchemaNode 与 TemplateNode 的混用，统一使用 TemplateNode
-3. 移除不必要的 runtimeId 和 templateGraphId 字段，改用 cid 主定位
+彻底重构 node identity 模型，达到最大化性能、最小化内存占用的目标：
+
+1. 消灭 `NodeLocator` 类型——所有用途由 `cid`（整数）和 `instancePath`（repeated 时的数组）完全替代
+2. `SchemaCompiler` 产出 `CompiledTemplate`（内含 `TemplateNode` 树），消除运行时兼容层转换开销
+3. `NodeRenderer` 直接消费 `NodeInstance`，不再依赖 `CompiledSchemaNode` 运行时路径
+4. 瘦身 `ComponentHandle`，删除冗余 locator 索引，简化 registry 结构
+5. 修复当前渲染路径中每帧创建新对象的性能 bug（通过架构迁移根本解决，跳过临时 Phase 0）
 
 ## Current Baseline
 
-### 当前存在的问题
+### 已经成立的事实
 
-1. **内存占用过大**：
-   - 每个 NodeInstance 包含完整 NodeLocator（runtimeId + templateGraphId + instancePath）
-   - 每个 ComponentHandle 存储 _locator（重复存储）
-   - 对于 repeated 结构，instancePath 在多个节点重复存储
-   - 估算：1000 节点页面占用 0.6-3.5 MB
+- `TemplateNode`、`CompiledTemplate`、`NodeInstance`、`NodeLocator` 类型已在 `flux-core` 中定义
+- `SchemaCompiler` 产出 `CompiledSchemaNode`（非 `TemplateNode`），`NodeLocator` 已被实装但有大量冗余字段
+- `createCompatibilityNodeInstance`（`flux-react/src/node-instance.ts`）每次渲染都创建新的 regions 映射对象
+- `getCompiledNodeLocator`（`node-renderer-utils.ts:36`）每帧 new 一个 locator 对象，导致依赖它的 `nodeInstance` useMemo 每帧失效（`events` useMemo 同样受影响）
+- `ComponentHandle._locator` 存储 locator，`handlesByLocator` 以序列化字符串为 key 做查找
+- `schema-compiler.ts:255` 已支持外部传入 `cidState`（`options.cidState ?? createCompiledCidState()`），page-runtime 通过 `getCompiledCidState(ownerNode)` 复用 ownerNode 的 cidState，但 `RendererRuntime` 层没有持有全局默认 cidState，每次 `createCompiledCidState()` 都从 0 开始
 
-2. **架构混用**：
-   - SchemaCompiler 产出 CompiledSchemaNode（带 React 集成信息）
-   - TemplateNode 存在但不是编译产物
-   - createCompatibilityNodeInstance 作为兼容层在运行时转换
-   - NodeRenderer 直接消费 CompiledSchemaNode，而不是 TemplateNode
+### 关于 NodeLocator 的核心结论
 
-3. **过度设计的 identity 字段**：
-   - NodeLocator 包含 runtimeId（单一 runtime 内不需要）
-   - NodeLocator 包含 templateGraphId（cid 已足够）
-   - 每个 NodeInstance 重复存储 instancePath（应该共享）
+`NodeLocator` 的所有实际用途可以被两个独立概念完全替代：
 
-4. **Plan 40 未完成的部分**：
-   - 建立了类型契约（NodeLocator, NodeInstance, TemplateNode）
-   - 但实际编译/渲染路径仍在使用旧的 CompiledSchemaNode
-   - 兼容层 createCompatibilityNodeInstance 仍在使用
+| 用途 | 实际需要 | 结论 |
+|------|---------|------|
+| `action-runtime.ts:291` repeated action 传 instancePath | 只需要 `instancePath` | 改为 `ctx.instancePath` 直接携带 |
+| `component:method` 找 handle | 只需要 `cid`（`_targetCid` 已写入） | locator 路径完全冗余 |
+| debugger 事件追踪 | 纯调试信息 | `debugEnabled` 开关控制，关闭时零开销 |
+| `inspectNode(locator)` | 可改为 `inspectByCid` | 简化消除 |
+| `render-nodes.tsx:230` 取 instancePath | 只需要 `instancePath` | 直接从 NodeInstance 取（Phase 2 中同步修改）|
+| lifecycle actions 传 locator | 最终只用 instancePath | 改为 `ctx.instancePath` |
+| `action-runtime-core.ts:51` 取 runtimeId | 直接 `ctx.runtime.runtimeId` | 不依赖 locator |
+| `buildActionMonitorPayload` 中 `locator: ctx.locator` | 纯调试字段 | 替换为 `instancePath?: ctx.instancePath` |
 
-### 当前架构状态
+### 关于 staticPlan / repeatedPlan / repeatedSelector
 
-```
-Author Schema
-    ↓
-SchemaCompiler → CompiledSchemaNode (包含 component, renderPlan, flags 等 React 细节)
-    ↓
-NodeRenderer (直接消费 CompiledSchemaNode)
-    ↓
-createCompatibilityNodeInstance → NodeInstance (包含 locator, templateNode 引用)
-    ↓
-ComponentHandle (存储 _cid, _locator 等字段)
-```
+- `staticPlan`（`ComponentTarget`）：由 `target-enrichment.ts:50-57` 写入 `__componentTarget`，仅服务于 locator 解析路径。`_targetCid` 已同时写入且优先使用，locator 路径删除后 `staticPlan`/`__componentTarget` 均可删除。
+- `repeatedPlan`（`ComponentTarget`）：有类型定义和解析逻辑，但 `target-enrichment.ts` 中并未写入——是未被主编译器填充的遗留路径，可删除。
+- `repeatedSelector`（`ComponentTarget`）：同上，未被主编译器填充，可删除。
+- `_targetTemplateId`/`componentInstanceKey`/`dynamicHandles`：服务于 repeated handle 动态查找路径，`action-runtime.ts:267-269` 中仍有引用。Phase 3 删除前需确认无 schema 真实依赖这条路径；`cleanupDynamic` 的调用方也需在 Phase 3 开始前核查清楚。
+
+### 关于 templateNodeId 全局唯一
+
+**方案决策**：`RendererRuntime` 在构造时持有一个全局 cidState 作为 `createSchemaCompiler` 的默认值，所有不显式传入 cidState 的 `compile()` 调用均共享此全局计数器，保证同一 runtime 内 `templateNodeId` 全局唯一，从而可以删除 `templateGraphId` 字段。
+
+此方案需要：
+1. `createSchemaCompiler(input)` 增加 `defaultCidState?: CompiledCidState` 参数
+2. `RendererRuntime` 构造时创建全局 cidState 并注入给 `createSchemaCompiler`
+3. 现有 page-runtime 通过 `getCompiledCidState(ownerNode)` 传递 cidState 的路径仍然工作（显式传入优先）
+
+### 关于 TemplateNode.metaProgram 类型
+
+**类型决策**：`TemplateNode.metaProgram` 类型改为 `CompiledSchemaMeta`（与 `CompiledSchemaNode.meta` 结构一致），`TemplateNode.propsProgram` 类型保持 `CompiledRuntimeValue<Record<string,unknown>>`。这样 `buildTemplateNode` 可以直接赋值，`resolveNodeMeta` 最小改动即可接受 `TemplateNode`。
+
+### 当前性能 bug
+
+跳过 Phase 0（临时修复），通过架构迁移（Phase 1-4）从根本上消除：
+- `node-renderer.tsx:96`：`getCompiledNodeLocator` 每帧 new locator 对象 → Phase 4 删除
+- `node-renderer.tsx:97-104`/`131`：`createCompatibilityNodeInstance` 无充分 memo → Phase 4 删除
+- `node-renderer.tsx:163-183`：`events` useMemo 依赖 `nodeLocator` 每帧重建 → Phase 4 修复
+- `node-instance.ts:50-58`：regions `Object.fromEntries` 每次重建 → Phase 4 删除
+
+### 架构遗留
+
+- `SchemaCompiler` 仍返回 `CompiledSchemaNode`，`CompiledTemplate` 已定义但未被编译器产出
+- `NodeRenderer` 接收 `CompiledSchemaNode`，通过 `createCompatibilityNodeInstance` 转换
+- `ComponentHandle` 上存有 `_locator`、`_templateId`、`_instanceKey` 冗余字段
+- registry 有 `handlesByLocator`、`dynamicHandles` 两个可消除的索引
 
 ## Goals
 
-- 减少 node identity 相关内存占用 30-50%
-- 统一编译产物为 TemplateNode，移除 CompiledSchemaNode 的运行时使用
-- 简化 NodeLocator，移除 runtimeId 和 templateGraphId
-- 移除 createCompatibilityNodeInstance 兼容层
-- 保持 cid 作为主要定位方式
+- 消除 `NodeLocator` 类型，用 `cid`（整数）+ `instancePath`（数组，singleton 时为 `undefined`）替代
+- `SchemaCompiler` 产出 `TemplateNode`（`metaProgram: CompiledSchemaMeta`，`component: RendererDefinition`）
+- `NodeRenderer` 接收 `NodeInstance`，不再依赖 `CompiledSchemaNode` 运行时路径
+- `ComponentHandle` 只保留 `_cid`、`_mounted`、`id`、`name`、`type`、`ref`、`capabilities`
+- Registry 只保留 `handlesByCid`、`handlesById`、`handlesByName` 三个索引
+- `ActionContext` 用 `instancePath` 直接替代 `locator?.instancePath`
+- debugger 调试信息由 `debugEnabled` 开关控制，关闭时零分配开销
+- `runtimeId` 移至 `SchemaRenderer` 根节点 DOM 属性（`data-runtime-id`），不进入任何运行时数据结构
 
 ## Non-Goals
 
-- 不改变 debugger 的 inspect 功能（保留 cid → NodeInstance 的能力）
-- 不改变 templatePath（编译期确定，保留在 TemplateNode）
-- 不改变 componentRegistry 的基本功能
-- 不影响现有的 playground 和测试
+- 不改变 scope 模型（`ScopeRef` 已经是不变对象，无需改动）
+- 不改变 expression compiler 和依赖追踪逻辑
+- 不改变 form validation 架构
+- 不改变 playground 和 debugger UI 的外观功能
+- 不引入 virtualization renderer
+- 不改变 flow-designer / report-designer 的特有协议
 
 ## Scope
 
 ### In Scope
 
-- `packages/flux-core/src/types/node-identity.ts` - NodeLocator, NodeInstance, TemplateNode 定义
-- `packages/flux-core/src/types/renderer-compiler.ts` - CompiledSchemaNode 定义
-- `packages/flux-core/src/types/renderer-component.ts` - ComponentHandle 定义
-- `packages/flux-runtime/src/component-handle-registry.ts` - ComponentHandleRegistry 实现
-- `packages/flux-runtime/src/schema-compiler.ts` - SchemaCompiler 实现
-- `packages/flux-react/src/node-renderer.tsx` - NodeRenderer 实现
-- `packages/flux-react/src/node-instance.ts` - createCompatibilityNodeInstance
-- `packages/flux-runtime/src/node-resolver.ts` - RuntimeNodeResolver
-- `packages/nop-debugger/src/controller.ts` - debugger controller
-- `docs/architecture/template-instantiation-and-node-identity.md` - 更新架构文档
-- `docs/architecture/renderer-runtime.md` - 更新渲染层文档
+**flux-core 类型层**
+- `packages/flux-core/src/types/node-identity.ts` — 删除 `NodeLocator` 及辅助函数，`NodeInstance` 加顶层 `instancePath`（删除 `locator` 字段），删除 `RuntimeNodeResolver` 接口，更新 `NodeRefRegistry.resolveCid` 返回类型，`ActionContext` 删除 `locator` 改为 `instancePath`，`ActionMonitorPayload` 同步更新，删除 `StaticTargetPlan`/`RepeatedTargetPlan`/`RepeatedInstanceSelector` 中的 `templateGraphId`，更新 `ResolutionResult`/`InspectResult`/`NodeInspectPayload`（删除 locator 字段）
+- `packages/flux-core/src/types/renderer-compiler.ts` — `CompiledSchemaNode` 加 `@internal` 注释；`SchemaCompiler.compile()` 返回类型改为 `CompiledTemplate`
+- `packages/flux-core/src/types/renderer-component.ts` — 瘦身 `ComponentHandle`（删除 `_locator`、`_templateId`、`_instanceKey`），删除 `ComponentTarget` 中的 `locator`/`staticPlan`/`repeatedPlan`/`repeatedSelector`/`_targetTemplateId`/`componentInstanceKey`，更新 `ComponentHandleRegistry` 接口（删除 `resolveHandle`/`getHandleLocator`/`getLocatorByCid`/`cleanupDynamic`），更新 `ComponentHandleDebugData`（删除 `locator` 字段）
+- `packages/flux-core/src/types/actions.ts` — `ActionContext.locator` 改为 `instancePath`，`ActionMonitorPayload.locator` 改为 `instancePath`
+- `packages/flux-core/src/types/renderer-core.ts` — `RendererComponentProps` 删除 `locator` 字段，`node` 类型改为 `NodeInstance`；`RendererRuntime.resolveNodeMeta()`/`resolveNodeProps()` 签名接受 `TemplateNode`；删除 `RendererRuntime.resolveNode(locator)` 方法
+- `packages/flux-core/src/types/renderer-hooks.ts` — `RenderNodeMeta` 删除 `locator` 字段，`node?: CompiledSchemaNode` 改为 `node?: NodeInstance`；删除 `RenderFragmentOptions.ownerNode?: CompiledSchemaNode`（以 `ownerNodeInstance` 为准）；`RenderRegionHandle.node` 类型改为 `TemplateNode`；`RenderNodeInput` 删除 `CompiledSchemaNode` 选项
+- `packages/flux-core/src/compiled-cid.ts` — 删除 `templateGraphId` 字段
+
+**flux-runtime 实现层**
+- `packages/flux-runtime/src/schema-compiler.ts` — `compile()` 返回 `CompiledTemplate`（内含 `TemplateNode` 树），实现 `buildTemplateNode` 递归转换（含 `component` 赋值、`metaProgram` 直接赋值 `node.meta`、`scopePlan` 映射、`regions` 递归）；`createSchemaCompiler` 增加 `defaultCidState` 参数
+- `packages/flux-runtime/src/schema-compiler/target-enrichment.ts` — 删除 `__componentTarget`/`staticPlan` 写入逻辑，删除 `templateGraphId` 写入，只保留 `templateNodeId`/`cid` 填充
+- `packages/flux-runtime/src/component-handle-registry.ts` — 删除 `handlesByLocator`、`dynamicHandles`，只保留 `handlesByCid`/`handlesById`/`handlesByName`；删除 `allocateCid` 内部函数；删除 `cleanupDynamic` 实现
+- `packages/flux-runtime/src/node-resolver.ts` — 删除 locator-based 和 plan-based 解析路径，`resolveTarget` 只走 `_targetCid`/`componentId`/`componentName`；`ResolutionContext` 删除 `instancePathFor`/`instancePathForExplicit`
+- `packages/flux-runtime/src/action-runtime.ts` — `ctx.locator?.instancePath` 改为 `ctx.instancePath`；删除 locator/plan/`_targetTemplateId`/`componentInstanceKey` 相关分支
+- `packages/flux-runtime/src/action-runtime-core.ts` — `getActionRuntimeId` 改为 `ctx.runtime.runtimeId`；`buildActionMonitorPayload` 中 `locator` 改为 `instancePath`
+- `packages/flux-runtime/src/node-runtime.ts` — `resolveNodeMeta`/`resolveNodeProps` 接受 `TemplateNode`（`metaProgram: CompiledSchemaMeta`/`propsProgram`），更新字段引用
+- `packages/flux-runtime/src/page-runtime.ts` — 使用 runtime 全局 cidState（不再依赖 `getCompiledCidState(ownerNode)` 手动传递）
+
+**flux-react React 层**
+- `packages/flux-react/src/node-renderer.tsx` — 接收 `TemplateNode`，直接读取 `component`，删除 locator 相关代码，直接构建 `NodeInstance`
+- `packages/flux-react/src/node-instance.ts` — 删除整个文件
+- `packages/flux-react/src/node-renderer-utils.ts` — 删除 `getCompiledNodeLocator`
+- `packages/flux-react/src/node-renderer-providers.tsx` — 删除 `node: CompiledSchemaNode`、`locator` props
+- `packages/flux-react/src/render-nodes.tsx` — `instancePath` 改为从 `ownerNodeInstance?.instancePath` 取（Phase 2 中同步修改，不等到 Phase 4）
+- `packages/flux-react/src/helpers.tsx` — 删除 `locator` 参数，`mergeActionContext` 用 `instancePath` 替代
+- `packages/flux-react/src/hooks.ts` — `useRenderFragment` 中 `locator: nodeMeta?.nodeInstance?.locator` 改为 `instancePath: nodeMeta?.nodeInstance?.instancePath`
+- `packages/flux-react/src/node-renderer-effects.ts` — `useNodeLifecycleActions` 删除 `locator` 参数，dispatch 时传 `instancePath`
+- `packages/flux-react/src/useNodeDebugData.ts` — 删除 locator 写入，所有写入移入 `debugEnabled` 条件分支
+- `packages/flux-react/src/schema-renderer.tsx` — 根节点输出 `data-runtime-id`，注册全局 runtime Map
+
+**renderer 包**
+- `packages/flux-renderers-form/src/renderers/form.tsx` — 删除 `props.locator`/`props.nodeInstance.locator`；`activationKey` 改为 `props.meta.cid !== undefined ? String(props.meta.cid) : \`${props.id}:${props.path}\``
+- `packages/flux-renderers-data/src/table-renderer.tsx` — 删除 `props.nodeInstance.locator.instancePath`，改为 `props.node.instancePath`
+- `packages/flux-renderers-data/src/table-renderer/use-table-handle.ts` — 注册 handle 时删除 locator/templateId/instanceKey 参数
+- `packages/flux-renderers-basic/src/tabs.tsx` — 注册 tabs handle 时删除 locator 参数
+- `packages/flux-renderers-data/src/chart-renderer.tsx` — 注册 chart handle 时删除 locator 参数
+
+**debugger 包**
+- `packages/nop-debugger/src/controller.ts` — 删除 `inspectNode(locator)` 入口，改为 `inspectByCid(cid)`；`getComponentTree` 中 `templateGraphId`-based 排序逻辑改为用 `templateNodeId` 排序，`instancePath.length` 替代 `locator.instancePath.length`
+- `packages/nop-debugger/src/types.ts` — `NopDebugEvent.locator` 改为 `instancePath`；`NopComponentTreeItem.locator`/`NopComponentInspectResult.locator` 字段删除或替换
+- `packages/nop-debugger/src/adapters.ts` — 所有 `ctx.locator`/`payload.locator` 引用更新为 `ctx.instancePath`/`payload.instancePath`
+
+**测试文件**
+- `packages/flux-react/src/schema-renderer-runtime.test.tsx` — 更新 locator 引用（第 172 行等），`exposes locator` 测试用例改为验证 `instancePath`/`templateNodeId`
+- `packages/flux-renderers-basic/src/index.test.tsx` — 更新第 17 行 `props.nodeInstance.locator.instancePath` 引用
+
+**文档**
+- `docs/architecture/template-instantiation-and-node-identity.md`
+- `docs/architecture/renderer-runtime.md`
 
 ### Out Of Scope
 
 - 重写 validation architecture
 - 新增 virtualization renderer
-- flow-designer/report-designer 的特有协议变化
+- flow-designer / report-designer 的特有协议变化
 - debugger UI 增强（只维护 inspect substrate）
+- `ScopeRef` 内部实现变更
 
 ## Execution Plan
 
-### Phase 1 - 简化 NodeLocator 和 ComponentHandle
+### Phase 1 - 更新 TemplateNode 契约，让编译器直接产出 CompiledTemplate
 
 Status: planned
-Targets: `packages/flux-core/src/types/node-identity.ts`, `packages/flux-core/src/types/renderer-component.ts`
+Targets:
+- `packages/flux-core/src/types/node-identity.ts`
+- `packages/flux-core/src/types/renderer-compiler.ts`
+- `packages/flux-core/src/compiled-cid.ts`
+- `packages/flux-runtime/src/schema-compiler.ts`
+- `packages/flux-runtime/src/schema-compiler/target-enrichment.ts`
+- `packages/flux-runtime/src/page-runtime.ts`
 
-- [ ] 简化 NodeLocator，移除 runtimeId 和 templateGraphId
-  ```typescript
-  interface NodeLocator {
-    templateNodeId: number;
-    instancePath?: readonly InstanceFrame[];
-  }
-  ```
+**类型变更：**
+- [ ] `TemplateNode` 定义更新：`metaProgram` 类型改为 `CompiledSchemaMeta`（与 `CompiledSchemaNode.meta` 结构一致）；加入 `component: RendererDefinition` 字段
+- [ ] `CompiledCidState` 删除 `templateGraphId` 字段
+- [ ] `SchemaCompiler.compile()` 返回类型改为 `CompiledTemplate`
+- [ ] `CompiledSchemaNode` 加 `@internal` 注释
 
-- [ ] 简化 ComponentHandle，只保留最小必要字段
-  ```typescript
-  interface ComponentHandle {
-    _cid: number;
-    _templateNodeId: number;
-    _instancePathRef?: string;  // 引用共享的 instancePath
-    // 移除 _locator, _runtimeId, _templateId
-  }
-  ```
-
-- [ ] 添加 instancePathCache 共享机制
-  ```typescript
-  const instancePathCache = new Map<string, readonly InstanceFrame[]>();
-  ```
-
-- [ ] 更新 ComponentHandleRegistry，简化 resolveHandle 和 getHandleLocator
-
-- [ ] 更新 RuntimeNodeResolver，移除 runtimeId 依赖
-
-- [ ] 更新 debugger controller，移除 runtimeId 使用
+**编译器变更：**
+- [ ] `createSchemaCompiler(input)` 增加 `defaultCidState?: CompiledCidState` 参数；内部回退逻辑改为 `options.cidState ?? input.defaultCidState ?? createCompiledCidState()`
+- [ ] `RendererRuntime` 构造时创建全局 cidState，注入给 `createSchemaCompiler`；同步更新 `page-runtime.ts`（确认与现有 `getCompiledCidState(ownerNode)` 路径兼容）
+- [ ] 实现 `buildTemplateNode(compiled: CompiledSchemaNode, registry: RendererRegistry): TemplateNode` 递归转换函数：
+  - `component`：从 `registry.get(compiled.type)` 取
+  - `metaProgram`：直接赋值 `compiled.meta`（类型已对齐）
+  - `propsProgram`：直接赋值 `compiled.props`
+  - `eventPlans`：直接赋值 `compiled.eventActions`
+  - `regions`：递归调用 `buildTemplateNode`，构建 `TemplateRegion` 树
+  - `scopePlan`：根据 `renderer.scopePolicy` 和 schema 字段映射（先阅读 `createSchemaCompiler` 中的 scope boundary 逻辑确认所有可能值）
+  - `validationPlan`：直接赋值 `compiled.validation`
+- [ ] `scopePlan` 映射规则在 `buildTemplateNode` 中实现（不能硬编码 `inherit`）：
+  - `renderer.scopePolicy === 'form'` → `{ kind: 'form' }`
+  - `renderer.scopePolicy === 'dialog'` → `{ kind: 'dialog' }`
+  - `renderer.scopePolicy === 'repeated-item'` → `{ kind: 'repeated-item', ...schema 绑定字段 }`
+  - `renderer.scopePolicy === 'child'` → `{ kind: 'child', bindings }`
+  - 否则 → `{ kind: 'inherit' }`
+- [ ] `enrichCompiledComponentTargets` 更新：删除 `templateGraphId` 写入，只保留 `templateNodeId`/`cid` 填充
+- [ ] `SchemaCompiler.compile()` 实现：在 `enrichCompiledComponentTargets` 之后，调用 `buildTemplateNode` 递归构建 `CompiledTemplate.root`
 
 Exit Criteria:
 
+- [ ] `SchemaCompiler.compile()` 返回 `CompiledTemplate`（含 `root: TemplateNode | TemplateNode[]`）
+- [ ] `TemplateNode` 包含 `component: RendererDefinition` 且 `metaProgram` 类型为 `CompiledSchemaMeta`
+- [ ] 同一 runtime 下所有 `templateNodeId` 全局唯一（不依赖 `templateGraphId`）
 - [ ] `pnpm typecheck` passes
-- [ ] `pnpm test -- --run packages/flux-runtime` passes
-- [ ] `pnpm test -- --run packages/nop-debugger` passes
+- [ ] `pnpm --filter @nop-chaos/flux-runtime build` passes
 
 ---
 
-### Phase 2 - 更新 SchemaCompiler 产出 TemplateNode
+### Phase 2 - 消除 NodeLocator，更新 ActionContext 和 NodeInstance
 
 Status: planned
-Targets: `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-core/src/types/renderer-compiler.ts`
+Targets:
+- `packages/flux-core/src/types/node-identity.ts`
+- `packages/flux-core/src/types/actions.ts`
+- `packages/flux-runtime/src/action-runtime.ts`
+- `packages/flux-runtime/src/action-runtime-core.ts`
+- `packages/flux-react/src/helpers.tsx`
+- `packages/flux-react/src/hooks.ts`
+- `packages/flux-react/src/node-renderer-effects.ts`
+- `packages/flux-react/src/render-nodes.tsx`
 
-- [ ] 重构 SchemaCompiler.compile() 返回类型
-  ```typescript
-  interface CompiledTemplate {
-    templateGraphId: string;
-    root: TemplateNode | readonly TemplateNode[];
-    repeatedTemplates: ReadonlyMap<RepeatedTemplateId, RepeatedTemplate>;
-  }
-  ```
+**类型删除：**
+- [ ] 删除 `NodeLocator` 接口
+- [ ] 删除 `serializeNodeLocator`、`normalizeNodeLocator`、`isNodeLocator` 函数（`normalizeInstancePath` 如有独立用途则保留）
+- [ ] 删除 `RuntimeNodeResolver` 接口（`node-identity.ts:152`）
+- [ ] `NodeRefRegistry.resolveCid` 返回类型从 `NodeLocator | undefined` 改为 `{ templateNodeId: TemplateNodeId; instancePath?: readonly InstanceFrame[] } | undefined`（或删除整个接口，视调用方情况决定）
+- [ ] `NodeInstance` 更新：删除 `locator: NodeLocator`，加入 `instancePath?: readonly InstanceFrame[]`
+- [ ] `ActionContext` 更新：删除 `locator?: NodeLocator`，加入 `instancePath?: readonly InstanceFrame[]`
+- [ ] `ActionMonitorPayload` 更新：`locator?: NodeLocator` 改为 `instancePath?: readonly InstanceFrame[]`
+- [ ] `ResolutionResult`、`InspectResult`、`NodeInspectPayload` 中的 `locator` 字段移除或替换为 `{ templateNodeId: TemplateNodeId; instancePath?: readonly InstanceFrame[] }`
+- [ ] `StaticTargetPlan`、`RepeatedTargetPlan`、`RepeatedInstanceSelector` 删除 `templateGraphId` 字段
 
-- [ ] 实现 TemplateNode 生成逻辑
-  ```typescript
-  function buildTemplateNode(
-    compiled: CompiledSchemaNode,
-    templateGraphId: string,
-    templateNodeId: number
-  ): TemplateNode {
-    return {
-      templateNodeId,
-      templatePath: compiled.path,
-      id: compiled.id,
-      type: compiled.type,
-      schema: compiled.schema,
-      rendererType: compiled.type,
-      propsProgram: compiled.props,
-      metaProgram: compiled.meta as CompiledRuntimeValue<Record<string, unknown>>,
-      eventPlans: compiled.eventActions,
-      regions: convertRegions(compiled.regions),
-      scopePlan: { kind: 'inherit' },
-      validationPlan: compiled.validation
-    };
-  }
-  ```
-
-- [ ] 移除 CompiledSchemaNode.createRuntimeState()
-  - 这个方法应该在 runtime 创建 NodeInstance 时调用，而不是在 compiled node 上
-
-- [ ] 更新 SchemaCompiler 类型定义
-  ```typescript
-  interface SchemaCompiler {
-    compile(schema: SchemaInput): CompiledTemplate;  // 改为返回 CompiledTemplate
-    compileNode(schema: BaseSchema, options: CompileNodeOptions): CompiledSchemaNode;  // 内部使用
-  }
-  ```
-
-- [ ] 更新 RendererRuntime.compile() 返回类型
+**实现更新：**
+- [ ] `action-runtime.ts:291`：`ctx.locator?.instancePath` → `ctx.instancePath`
+- [ ] `action-runtime-core.ts:51`：`ctx.locator?.runtimeId` → `ctx.runtime.runtimeId`
+- [ ] `action-runtime-core.ts:95`：`buildActionMonitorPayload` 中 `locator: ctx.locator` → `instancePath: ctx.instancePath`
+- [ ] `helpers.tsx`：`mergeActionContext` 和 `createHelpers` 删除 `locator` 参数，改用 `instancePath`
+- [ ] `hooks.ts:201`：`locator: nodeMeta?.nodeInstance?.locator` 改为 `instancePath: nodeMeta?.nodeInstance?.instancePath`
+- [ ] `node-renderer-effects.ts`：`useNodeLifecycleActions` 删除 `locator` 参数，dispatch 时传 `instancePath`
+- [ ] `render-nodes.tsx:230`：`ownerNodeInstance?.locator.instancePath` 改为 `ownerNodeInstance?.instancePath`（**必须在本 phase 同步修改**，否则 Phase 2 后 typecheck 失败）
 
 Exit Criteria:
 
+- [ ] 代码中无 `NodeLocator` 类型引用
+- [ ] `ActionContext.instancePath` 可正常传递到 repeated action 解析路径
+- [ ] `render-nodes.tsx:230` 已更新（无 `.locator.instancePath` 访问）
+- [ ] `pnpm typecheck` passes
+- [ ] `pnpm --filter @nop-chaos/flux-runtime test` passes
+
+---
+
+### Phase 3 - 瘦身 ComponentHandle 和 Registry
+
+Status: planned
+Targets:
+- `packages/flux-core/src/types/renderer-component.ts`
+- `packages/flux-runtime/src/component-handle-registry.ts`
+- `packages/flux-runtime/src/node-resolver.ts`
+- `packages/flux-runtime/src/action-runtime.ts`
+- `packages/flux-runtime/src/schema-compiler/target-enrichment.ts`
+
+**前置确认（执行前核查）：**
+- [ ] 确认 `cleanupDynamic` 的所有调用方，评估删除 `dynamicHandles` 后是否需要替代清理机制
+- [ ] 确认无 schema 真实使用 `_targetTemplateId` 进行 repeated 定位的场景（搜索 playground schemas 和测试数据）
+
+**类型变更：**
+- [ ] `ComponentHandle` 接口只保留：`_cid?`、`_mounted?`、`id?`、`name?`、`type`、`ref?`、`capabilities`（删除 `_locator`、`_templateId`、`_instanceKey`）
+- [ ] `ComponentTarget` 接口删除：`locator`、`staticPlan`、`repeatedPlan`、`repeatedSelector`、`_targetTemplateId`、`componentInstanceKey`
+- [ ] `ComponentHandleRegistry` 接口删除：`resolveHandle`、`getHandleLocator`、`getLocatorByCid`、`cleanupDynamic`；`register` options 删除 `locator`、`templateId`、`instanceKey`、`dynamicLoaded`
+- [ ] `ComponentHandleDebugData` 删除 `locator` 字段
+
+**实现变更：**
+- [ ] `createComponentHandleRegistry`：删除 `handlesByLocator`、`dynamicHandles` Map 及相关逻辑；删除 `staticCidCounter`/`dynamicLoadedCidCounter`；删除 `resolveHandle`/`getHandleLocator`/`getLocatorByCid`/`cleanupDynamic` 方法
+- [ ] `resolveInScope` 只走 `_targetCid`/`componentId`/`componentName` 路径
+- [ ] `resolveTarget` 中 ambiguous 分支：删除 `locator` 相关字段的 fallback
+- [ ] `node-resolver.ts`：删除 locator-based 和 plan-based 解析路径；`ResolutionContext` 删除 `instancePathFor`/`instancePathForExplicit`
+- [ ] `action-runtime.ts:267-269`：删除 `_targetTemplateId`/`componentInstanceKey` 分支
+- [ ] `target-enrichment.ts`：删除 `__componentTarget`/`staticPlan` 写入逻辑（第 50-57 行）
+
+Exit Criteria:
+
+- [ ] `handlesByLocator` Map 不存在于任何代码路径
+- [ ] `ComponentHandle._locator` 字段不存在
+- [ ] `dynamicHandles` Map 不存在
+- [ ] `cleanupDynamic` 方法不存在
+- [ ] `pnpm typecheck` passes
+- [ ] `pnpm --filter @nop-chaos/flux-runtime test` passes
+
+---
+
+### Phase 4 - 重构 NodeRenderer 消费 NodeInstance
+
+Status: planned
+Targets:
+- `packages/flux-core/src/types/renderer-core.ts`
+- `packages/flux-core/src/types/renderer-hooks.ts`
+- `packages/flux-runtime/src/node-runtime.ts`
+- `packages/flux-react/src/node-renderer.tsx`
+- `packages/flux-react/src/node-instance.ts`
+- `packages/flux-react/src/node-renderer-utils.ts`
+- `packages/flux-react/src/node-renderer-providers.tsx`
+- `packages/flux-react/src/schema-renderer.tsx`
+
+**类型变更：**
+- [ ] `RendererRuntime.resolveNodeMeta(node: TemplateNode, ...)`/`resolveNodeProps(node: TemplateNode, ...)` 签名更新（接受 `TemplateNode` 替代 `CompiledSchemaNode`）；删除 `RendererRuntime.resolveNode(locator)` 方法
+- [ ] `RendererComponentProps` 更新：删除 `locator` 字段；`node` 类型改为 `NodeInstance`
+- [ ] `RenderNodeMeta` 更新：删除 `locator` 字段；`node?: CompiledSchemaNode` 改为 `node?: NodeInstance`
+- [ ] 删除 `RenderFragmentOptions.ownerNode?: CompiledSchemaNode`（以 `ownerNodeInstance` 为准）
+- [ ] `RenderRegionHandle.node` 类型从 `CompiledSchemaNode | CompiledSchemaNode[] | null` 改为 `TemplateNode | TemplateNode[] | null`
+- [ ] `RenderNodeInput` 删除 `CompiledSchemaNode` 选项
+
+**实现变更：**
+- [ ] `node-runtime.ts`：`resolveNodeMeta`/`resolveNodeProps` 接受 `TemplateNode`，字段引用从 `node.meta` 改为 `node.metaProgram`，从 `node.props` 改为 `node.propsProgram`，`cid` 从 `node.templateNodeId` 取
+- [ ] `NodeRenderer` props 更新为接收 `TemplateNode`（替代 `CompiledSchemaNode`）
+- [ ] `NodeRenderer` 内部：直接从 `props.node.component` 读取 renderer，删除 registry 查找
+- [ ] `NodeRenderer` 内部：删除 `createCompatibilityNodeInstance` 调用，直接构建 `NodeInstance`：
+  ```typescript
+  const nodeInstance = useMemo<NodeInstance>(() => ({
+    cid: props.node.templateNodeId,
+    templateNode: props.node,
+    instancePath: props.instancePath,
+    scope: renderScope,
+    state: importNodeState
+  }), [props.node, props.instancePath, renderScope, importNodeState]);
+  ```
+- [ ] `node-instance.ts`：删除整个文件
+- [ ] `node-renderer-utils.ts`：删除 `getCompiledNodeLocator`
+- [ ] `node-renderer-providers.tsx`：删除 `node: CompiledSchemaNode`、`locator` props
+- [ ] `schema-renderer.tsx`：根节点输出 `data-runtime-id={runtimeId}`，注册/注销全局 runtime Map
+
+Exit Criteria:
+
+- [ ] `node-renderer.tsx` 中无 `CompiledSchemaNode` 引用
+- [ ] `createCompatibilityNodeInstance` 不存在于任何代码路径
+- [ ] `RendererRuntime.resolveNodeMeta`/`resolveNodeProps` 接受 `TemplateNode`
 - [ ] `pnpm typecheck` passes
 - [ ] `pnpm build` passes
-- [ ] `pnpm test -- --run packages/flux-runtime` passes
+- [ ] playground 功能正常（basic page, form, dialog, table）
 
 ---
 
-### Phase 3 - 重构 NodeRenderer 直接使用 TemplateNode
+### Phase 5 - 更新 debugger 和 renderer 包，关闭 locator 入口
 
 Status: planned
-Targets: `packages/flux-react/src/node-renderer.tsx`
+Targets:
+- `packages/nop-debugger/src/controller.ts`
+- `packages/nop-debugger/src/types.ts`
+- `packages/nop-debugger/src/adapters.ts`
+- `packages/flux-react/src/useNodeDebugData.ts`
+- `packages/flux-renderers-form/src/renderers/form.tsx`
+- `packages/flux-renderers-data/src/table-renderer.tsx`
+- `packages/flux-renderers-data/src/table-renderer/use-table-handle.ts`
+- `packages/flux-renderers-basic/src/tabs.tsx`
+- `packages/flux-renderers-data/src/chart-renderer.tsx`
 
-- [ ] 修改 NodeRenderer props
-  ```typescript
-  export const NodeRenderer = memo(function NodeRenderer(props: {
-    templateNode: TemplateNode;  // 替代 CompiledSchemaNode
-    scope: ScopeRef;
-    actionScope?: ActionScope;
-    componentRegistry?: ComponentHandleRegistry;
-  })
-  ```
+**debugger 变更：**
+- [ ] `NopDebugEvent.locator` 改为 `instancePath?: readonly InstanceFrame[]`
+- [ ] `NopComponentTreeItem.locator`/`NopComponentInspectResult.locator` 字段删除或替换
+- [ ] `controller.ts`：删除 `inspectNode(locator)` 入口，改为 `inspectByCid(cid)` 唯一入口
+- [ ] `controller.ts`：`getComponentTree` 中 `templateGraphId`-based 排序逻辑改为用 `templateNodeId` 排序；`instancePath.length` 替代 `locator.instancePath.length`
+- [ ] `adapters.ts`：两处 `ctx.locator`/`payload.locator` 引用改为 `ctx.instancePath`/`payload.instancePath`
+- [ ] `useNodeDebugData.ts`：所有 `debugDataByCid` 写入移入 `debugEnabled` 条件分支
 
-- [ ] 移除 createCompatibilityNodeInstance 调用
-  - 不再需要从 CompiledSchemaNode 转换
-  - 直接从 TemplateNode 创建 NodeInstance
-
-- [ ] 实现 NodeInstance 创建逻辑
-  ```typescript
-  const nodeInstance = useMemo(
-    () => ({
-      cid: finalResolvedMeta.cid,
-      locator: {
-        templateNodeId: templateNode.templateNodeId,
-        instancePath
-      },
-      templateNode,
-      scope: renderScope,
-      state: {
-        metaState: importNodeState.meta,
-        propsState: importNodeState.props,
-        mounted: true
-      }
-    }),
-    [templateNode, instancePath, renderScope, importNodeState, finalResolvedMeta.cid]
-  );
-  ```
-
-- [ ] 更新 ComponentProps 生成逻辑
-  - templateNode.id 替代 node.id
-  - templateNode.templatePath 替代 node.path
-
-- [ ] 移除对 node.component 的直接访问
-  - 改用 runtime.registry.getRenderer()
+**renderer 包变更：**
+- [ ] `form.tsx`：删除 `props.locator`/`props.nodeInstance.locator`；`activationKey` 改为 `props.meta.cid !== undefined ? String(props.meta.cid) : \`${props.id}:${props.path}\``（保证 initAction 不重复执行）
+- [ ] `table-renderer.tsx`：`props.nodeInstance.locator.instancePath` 改为 `props.node.instancePath`
+- [ ] `use-table-handle.ts`：注册 handle 时删除 locator/templateId/instanceKey 参数
+- [ ] `tabs.tsx`：注册 tabs handle 时删除 locator 参数
+- [ ] `chart-renderer.tsx`：注册 chart handle 时删除 locator 参数
 
 Exit Criteria:
 
+- [ ] `debugEnabled = false` 时，`debugDataByCid` Map 完全不写入
+- [ ] `data-runtime-id` 正确出现在 SchemaRenderer 根节点
+- [ ] debugger `inspectByCid` 能正确返回 `{ templateNode, scope, state, resolvedMeta, resolvedProps }`
+- [ ] `form.tsx` 的 initAction 防重执行逻辑正常工作
 - [ ] `pnpm typecheck` passes
-- [ ] `pnpm build` passes
-- [ ] playground 功能正常（测试 basic page, form, dialog, drawer）
+- [ ] `pnpm --filter @nop-chaos/nop-debugger test` passes
 
 ---
 
-### Phase 4 - 移除 CompiledSchemaNode 的运行时使用
+### Phase 6 - 清理剩余引用，更新测试和文档
 
 Status: planned
-Targets: `packages/flux-core/src/types/renderer-compiler.ts`, `packages/flux-react/src/node-instance.ts`
+Targets: 全仓剩余引用，测试文件，文档
 
-- [ ] 标记 CompiledSchemaNode 为 compile-time only
-  ```typescript
-  /**
-   * @internal Compile-time node structure with React integration details.
-   * Use TemplateNode at runtime.
-   */
-  export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
-    // ... existing fields
-  }
-  ```
-
-- [ ] 删除 createCompatibilityNodeInstance 函数
-  - 不再需要兼容层
-
-- [ ] 删除 node-instance.ts 文件
-  - 如果没有其他导出
-
-- [ ] 清理 ActionContext 等类型中的 ownerNode 引用
-  - 改用 ownerTemplateNode 或 ownerNodeInstance
-
-Exit Criteria:
-
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm lint` passes
-- [ ] 所有测试通过
-
----
-
-### Phase 5 - 文档更新和验证
-
-Status: planned
-Targets: `docs/architecture/template-instantiation-and-node-identity.md`, `docs/architecture/renderer-runtime.md`
-
-- [ ] 更新 template-instantiation-and-node-identity.md
-  - 移除 runtimeId 的说明
-  - 更新 NodeLocator 定义
-  - 更新编译流程图
-
-- [ ] 更新 renderer-runtime.md
-  - 更新 NodeRenderer 说明
-  - 移除 CompiledSchemaNode 的运行时引用
-
-- [ ] 更新 Plan 40 的状态
-  - 标记 completed 或 superseded
-  - 引用本计划作为后续优化
-
-- [ ] 更新 AGENTS.md 文档路由表
-  - 如果需要
-
-- [ ] 完整验证
-  - playground: basic page, form, dialog, drawer, table
-  - debugger: inspect, expression evaluation
-  - tests: 所有 packages 测试通过
+- [ ] 全仓 grep `CompiledSchemaNode` 运行时引用，逐一清理或确认已标注 `@internal`
+- [ ] `DialogState`、`SurfaceState` 中的 `ownerNode?: CompiledSchemaNode` 改为 `ownerTemplateNode?: TemplateNode`
+- [ ] `packages/flux-react/src/schema-renderer-runtime.test.tsx`：更新 locator 引用（第 172 行等），`exposes locator` 测试用例改为验证 `instancePath`/`templateNodeId`
+- [ ] `packages/flux-renderers-basic/src/index.test.tsx`：更新第 17 行 `props.nodeInstance.locator.instancePath` 引用
+- [ ] 更新 `docs/architecture/template-instantiation-and-node-identity.md`：反映 NodeLocator 消除、TemplateNode 直接持有 renderer 引用、templateNodeId 全局唯一、instancePath 替代 locator 的新设计
+- [ ] 更新 `docs/architecture/renderer-runtime.md`：移除"current code still renders CompiledSchemaNode"的临时说明
 
 Exit Criteria:
 
 - [ ] `pnpm typecheck && pnpm build && pnpm lint` passes
 - [ ] `pnpm test` passes
-- [ ] playground 所有场景正常
-- [ ] debugger 功能正常
+- [ ] playground 所有场景正常（basic page, form, dialog, drawer, table）
+- [ ] debugger inspect 功能正常
+- [ ] 架构文档与代码一致
 
 ---
 
 ## Validation Checklist
 
-### Phase 1
+### 功能正确性
 
-- [ ] NodeLocator 只有 templateNodeId 和 instancePath
-- [ ] ComponentHandle 只有 _cid, _templateNodeId, _instancePathRef
-- [ ] ComponentHandleRegistry 通过 _cid 主定位
-- [ ] RuntimeNodeResolver 移除 runtimeId 依赖
-- [ ] debugger controller 移除 runtimeId 使用
-- [ ] 内存占用测试：1000 节点页面减少 30-50%
+- [ ] `component:method` action 通过 `_targetCid` 正确找到 ComponentHandle
+- [ ] repeated table row action 通过 `instancePath` 正确解析目标实例
+- [ ] lifecycle onMount/onUnmount actions 正确触发
+- [ ] form submit/validate/reset 正确工作；initAction 不重复执行
+- [ ] dialog open/close 正确工作
+- [ ] xui:imports 正确工作
 
-### Phase 2
+### 性能/内存
 
-- [ ] SchemaCompiler.compile() 返回 CompiledTemplate
-- [ ] CompiledTemplate.root 是 TemplateNode[]
-- [ ] TemplateNode 包含所有必要字段（id, type, schema, propsProgram, metaProgram 等）
-- [ ] CompiledSchemaNode.createRuntimeState() 已移除
+- [ ] `node-renderer.tsx` 中每次渲染不创建新的 locator 对象（locator 已消除）
+- [ ] `nodeInstance` useMemo 在 templateNode 和 instancePath 不变时正确复用
+- [ ] singleton 节点的 `instancePath` 为 `undefined`（不分配数组）
+- [ ] `debugEnabled = false` 时无调试对象分配
 
-### Phase 3
+### 结构正确性
 
-- [ ] NodeRenderer props 是 templateNode: TemplateNode
-- [ ] NodeRenderer 不再调用 createCompatibilityNodeInstance
-- [ ] NodeInstance 从 TemplateNode 直接创建
-- [ ] ComponentProps 从 templateNode 生成
+- [ ] `NodeLocator` 类型不存在于任何运行时代码路径
+- [ ] `ComponentHandle._locator` 字段不存在
+- [ ] `handlesByLocator` Map 不存在
+- [ ] `dynamicHandles` Map 不存在
+- [ ] `createCompatibilityNodeInstance` 函数不存在
+- [ ] `TemplateNode.component` 直接持有 `RendererDefinition`
+- [ ] `TemplateNode.metaProgram` 类型为 `CompiledSchemaMeta`
+- [ ] `templateNodeId` 在同一 runtime 内全局唯一
 
-### Phase 4
+### 验证
 
-- [ ] CompiledSchemaNode 标记为 @internal
-- [ ] createCompatibilityNodeInstance 已删除
-- [ ] node-instance.ts 文件已删除（如无其他导出）
-- [ ] ActionContext 等 type 使用 ownerTemplateNode
+- [ ] `pnpm typecheck`
+- [ ] `pnpm build`
+- [ ] `pnpm lint`
+- [ ] `pnpm test`
 
-### Phase 5
+## Risks And Rollback
 
-- [ ] 架构文档已更新
-- [ ] Plan 40 状态已更新
-- [ ] playground 所有场景正常
-- [ ] debugger 功能正常
-- [ ] 所有测试通过
+1. **Phase 1 scopePlan 映射**：`buildTemplateNode` 中 `scopePlan` 的映射规则需要在执行前完整阅读 `createSchemaCompiler` 中的 scope boundary 逻辑，确认 `scopePolicy` 字段名和所有可能值，避免映射不完整导致 scope boundary 错误。
 
----
+2. **Phase 3 dynamicHandles 删除**：`cleanupDynamic` 的调用方和 `_targetTemplateId` 实际使用场景必须在 Phase 3 开始前核查，否则删除后可能引入静默的功能 bug。
 
-## Risks
+3. **Phase 4 cid 来源**：新设计中 `NodeInstance.cid` 直接使用 `TemplateNode.templateNodeId`（编译期全局唯一分配）。需在 Phase 4 开始前确认 `node-runtime.ts:192` 的 `cid: node.cid` 路径在 Phase 1 后是否替换为 `templateNodeId`，以及 `data-cid` DOM 属性的写入时机是否一致。
 
-1. **兼容性风险**：如果用户代码直接访问 CompiledSchemaNode，会破坏
-   - 缓解：保持一段时间 @deprecated 标记，给出迁移指南
+4. **渲染器兼容**：所有具体 renderer 组件通过 `RendererComponentProps.node` 访问原 `CompiledSchemaNode` 字段的代码需要全部更新，主要集中在 Phase 5/6。建议在 Phase 4 完成后，通过全仓 typecheck 错误驱动逐一修复。
 
-2. **性能风险**：instancePathCache 的管理可能引入新的复杂性
-   - 缓解：使用 WeakMap 或定期清理
+## Closure
 
-3. **测试覆盖**：需要确保所有场景测试覆盖
-   - 缓解：每个 Phase 都有独立的 Exit Criteria
+Status Note: _(待执行完成后填写)_
 
-4. **文档同步**：多个文档需要同步更新
-   - 缓解：Phase 5 统一更新并验证
-
----
-
-## Notes
-
-- 本计划是对 Plan 40 的"deferred remainder"的具体化
-- 遵循"编译期产 TemplateNode，运行时产 NodeInstance"的原则
-- 保持 cid 作为主要定位方式，简化 identity 模型
-- templatePath 保留在 TemplateNode（编译期确定）
+Follow-up:
+- 如有 repeated table row 的 instancePath 传递需要专项优化，移至独立 plan
