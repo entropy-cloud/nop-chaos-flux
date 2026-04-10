@@ -1,7 +1,7 @@
 # 55 Loop Structural Node And Item Scope Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10; live renderer/runtime landed
 > Source: `docs/components/loop/design.md`, `docs/architecture/template-instantiation-and-node-identity.md`, `docs/architecture/scope-ownership-and-isolation.md`
 
 ## Purpose
@@ -13,6 +13,7 @@
 - active architecture docs 已明确 `loop` 应是结构 DSL 节点，而不是普通属性。
 - template/instance 文档已明确 future `type: 'loop'` 必须与 table rows 共享 repeated-instance model。
 - 但 `loop` 的 item scope、变量命名、`itemData`、以及默认继承/隔离规则此前还未冻结。
+- 2026-04-10 live repo now includes `type: 'loop'` registration and renderer support in `packages/flux-renderers-basic/src/index.tsx`, `loop.tsx`, and `structural-loop.tsx`, with focused tests in `packages/flux-renderers-basic/src/index.test.tsx`.
 
 ## Goals
 
@@ -43,27 +44,46 @@
 
 ## Workstream 1 - Contract Freeze
 
-Status: planned
+Status: completed
 Targets: docs listed above
 
-- [ ] freeze `loop` as the node name
-- [ ] freeze `itemName` / `indexName` / `keyName`
-- [ ] freeze inherited loop item scope as the default
-- [ ] freeze `itemData` as the narrow local-derived binding surface
-- [ ] align loop item scope wording across component design and architecture docs
+- [x] freeze `loop` as the node name
+- [x] freeze `itemName` / `indexName` / `keyName`
+- [x] freeze inherited loop item scope as the default
+- [x] freeze `itemData` as the narrow local-derived binding surface
+- [x] align loop item scope wording across component design and architecture docs
 
 Exit Criteria:
 
-- [ ] one reader can answer how loop item scope differs from table row scope
+- [x] one reader can answer how loop item scope differs from table row scope
+
+## Workstream 2 - Runtime And Compiler Landing
+
+Status: completed
+Targets: compiler/runtime/render path, representative tests, examples
+
+- [x] add live schema/compiler support for `type: 'loop'`
+- [x] render `loop.body` through the repeated-instance model with inherited item scope by default
+- [x] expose `itemName` / `indexName` / `keyName` / `itemData` on the item scope
+- [x] add focused tests and one representative example
+
+Exit Criteria:
+
+- [x] `type: 'loop'` renders repeated content with stable repeated identity and documented item bindings
 
 ## Validation Checklist
 
-- [ ] docs define `loop` as a structural node
-- [ ] docs prefer `itemName` over `varName`
-- [ ] docs define inherited loop item scope
-- [ ] docs define `itemData`
-- [ ] docs explain why `rowData` is not immediately promoted to a global repeated-projection field
+- [x] docs define `loop` as a structural node
+- [x] docs prefer `itemName` over `varName`
+- [x] docs define inherited loop item scope
+- [x] docs define `itemData`
+- [x] docs explain why `rowData` is not immediately promoted to a global repeated-projection field
+- [x] runtime/compiler/test implementation exists for `type: 'loop'`
 
 ## Closure
 
-Status Note: close this plan when loop item scope and naming are stable in docs and any implementation work is delegated to a narrower renderer plan.
+Status Note: The documented loop contract is now backed by a live basic renderer implementation that renders repeated instances with inherited item scope and repeated `instancePath` frames.
+
+Follow-up:
+
+- none for this plan scope

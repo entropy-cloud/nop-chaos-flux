@@ -1,7 +1,7 @@
 # 57 Architecture Docs Grouping And Gradual Migration Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10
 > Source: `docs/architecture/README.md`, `docs/index.md`, `docs/analysis/docs-design-review-2026-03-29.md`
 
 ## Purpose
@@ -41,35 +41,39 @@
 
 ## Workstream 1 - Logical Grouping
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/README.md`, `docs/index.md`
 
-- [ ] freeze logical groups for core/action/runtime/ui/host/domain docs
-- [ ] use grouped index as the first navigation layer
+- [x] freeze logical groups for core/action/runtime/ui/host/domain docs
+- [x] use grouped index as the first navigation layer
 
 Exit Criteria:
 
-- [ ] readers can navigate architecture docs by topic without relying on flat filename scanning
+- [x] readers can navigate architecture docs by topic without relying on flat filename scanning
 
 ## Workstream 2 - Gradual Migration Strategy
 
-Status: planned
+Status: completed
 Targets: successor plans if a concrete migration is approved
 
-- [ ] identify one stable doc family for the first physical move
-- [ ] batch-update cross-links for that family only
-- [ ] keep top-level anchors stable unless there is a strong reason to move them
+- [x] identify one stable doc family for the first physical move
+- [x] batch-update cross-links for that family only
+- [x] keep top-level anchors stable unless there is a strong reason to move them
 
 Exit Criteria:
 
-- [ ] any future migration proceeds family-by-family instead of repo-wide at once
+- [x] any future migration proceeds family-by-family instead of repo-wide at once
 
 ## Validation Checklist
 
-- [ ] architecture grouped index exists
-- [ ] docs explicitly state that flat architecture layout is crowded but not yet worth a full immediate move
-- [ ] docs define a gradual migration rule
+- [x] architecture grouped index exists
+- [x] docs explicitly state that flat architecture layout is crowded but not yet worth a full immediate move
+- [x] docs define a gradual migration rule
 
 ## Closure
 
-Status Note: close this plan when architecture-doc navigation is stable and any future physical regrouping proceeds through narrower successor plans instead of one large rename.
+Status Note: Completed. Architecture navigation now has a stable grouped index and future physical moves are explicitly constrained to family-by-family migration.
+
+Follow-up:
+
+- no remaining plan-owned work

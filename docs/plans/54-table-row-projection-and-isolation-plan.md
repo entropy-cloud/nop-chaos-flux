@@ -1,7 +1,7 @@
 # 54 Table Row Projection And Isolation Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10
 > Source: `docs/architecture/scope-ownership-and-isolation.md`, `docs/components/table/design.md`, `docs/architecture/table-row-identity-and-scope-performance.md`
 
 ## Purpose
@@ -42,27 +42,31 @@
 
 ## Workstream 1 - Contract Freeze
 
-Status: planned
+Status: completed
 Targets: docs listed above
 
-- [ ] freeze `isolate` naming
-- [ ] freeze table shell `data` as own-scope init patch
-- [ ] freeze `rowData` as explicit row projection surface
-- [ ] freeze rejection of `$parentScope`
-- [ ] freeze `rowData` as row-owner-evaluated, rowKey-cached, incrementally published payload rather than per-cell recomputation
+- [x] freeze `isolate` naming
+- [x] freeze table shell `data` as own-scope init patch
+- [x] freeze `rowData` as explicit row projection surface
+- [x] freeze rejection of `$parentScope`
+- [x] freeze `rowData` as row-owner-evaluated, rowKey-cached, incrementally published payload rather than per-cell recomputation
 
 Exit Criteria:
 
-- [ ] one reader can answer how isolated rows receive extra non-row-local data
+- [x] one reader can answer how isolated rows receive extra non-row-local data
 
 ## Validation Checklist
 
-- [ ] docs reject renaming `isolate` to `isolateScope`
-- [ ] docs define `rowData`
-- [ ] docs distinguish table shell `data` from row `rowData`
-- [ ] docs reject `$parentScope` for row fallback
-- [ ] docs define the hot-path performance rule for `rowData`
+- [x] docs reject renaming `isolate` to `isolateScope`
+- [x] docs define `rowData`
+- [x] docs distinguish table shell `data` from row `rowData`
+- [x] docs reject `$parentScope` for row fallback
+- [x] docs define the hot-path performance rule for `rowData`
 
 ## Closure
 
-Status Note: close this plan when table row projection rules are stable in docs and any remaining implementation work is delegated to a narrower table-runtime plan.
+Status Note: Completed. Table shell scope, isolated row projection, and `rowData` hot-path rules are now stable in architecture and component docs.
+
+Follow-up:
+
+- no remaining plan-owned work

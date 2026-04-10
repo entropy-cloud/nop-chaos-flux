@@ -1,7 +1,7 @@
 # 60 Form Tree Controls Boundary Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10; live renderer/runtime landed
 > Source: `docs/components/input-tree/design.md`, `docs/components/tree-select/design.md`, `docs/components/tree/design.md`, `docs/components/select/design.md`, `docs/amis-types/form-advanced.d.ts`
 
 ## Purpose
@@ -13,6 +13,7 @@
 - AMIS 已有成熟的 `input-tree` / `tree-select` 参考。
 - Flux 当前已经把 `tree` 定位为通用树 UI renderer。
 - 结构层也已存在 `loop + recurse` 的目标设计。
+- 2026-04-10 live repo now includes `type: 'input-tree'` and `type: 'tree-select'` renderer support in `packages/flux-renderers-form/src/index.tsx`, `schemas.ts`, `renderers/tree-controls.tsx`, and `tree-options.ts`, with focused tests in `packages/flux-renderers-form/src/index.test.tsx`.
 
 ## Goals
 
@@ -43,26 +44,45 @@
 
 ## Workstream 1 - Contract Freeze
 
-Status: planned
+Status: completed
 Targets: docs listed above
 
-- [ ] freeze `input-tree` as embedded form tree field
-- [ ] freeze `tree-select` as popup form tree field
-- [ ] freeze boundaries versus `tree`, `select`, and `loop + recurse`
-- [ ] freeze minimal first-phase field set
+- [x] freeze `input-tree` as embedded form tree field
+- [x] freeze `tree-select` as popup form tree field
+- [x] freeze boundaries versus `tree`, `select`, and `loop + recurse`
+- [x] freeze minimal first-phase field set
 
 Exit Criteria:
 
-- [ ] one reader can explain why AMIS tree references produce three Flux layers instead of one overloaded tree component
+- [x] one reader can explain why AMIS tree references produce three Flux layers instead of one overloaded tree component
+
+## Workstream 2 - Renderer Landing
+
+Status: completed
+Targets: form tree control schema/runtime/renderer/tests, representative docs/examples
+
+- [x] add live schema/runtime support for `type: 'input-tree'` and `type: 'tree-select'`
+- [x] implement the embedded and popup tree-field variants without collapsing them into generic `tree`
+- [x] land the documented minimal first-phase field set
+- [x] add focused tests and representative examples
+
+Exit Criteria:
+
+- [x] `input-tree` and `tree-select` exist as distinct form field renderers with the documented first-phase contract
 
 ## Validation Checklist
 
-- [ ] docs define `input-tree`
-- [ ] docs define `tree-select`
-- [ ] docs distinguish them from `tree`
-- [ ] docs distinguish them from `select`
-- [ ] roadmap reflects the grouped tree family view
+- [x] docs define `input-tree`
+- [x] docs define `tree-select`
+- [x] docs distinguish them from `tree`
+- [x] docs distinguish them from `select`
+- [x] roadmap reflects the grouped tree family view
+- [x] runtime/renderer/test implementation exists for `type: 'input-tree'` / `type: 'tree-select'`
 
 ## Closure
 
-Status Note: close this plan when form tree control boundaries are stable in docs and any implementation work is delegated to narrower renderer plans.
+Status Note: The field-family boundary is now backed by live embedded and popup tree field renderers that reuse the existing form presentation/validation path while staying distinct from visual `tree`.
+
+Follow-up:
+
+- none for this plan scope

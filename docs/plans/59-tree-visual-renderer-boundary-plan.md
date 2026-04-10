@@ -1,7 +1,7 @@
 # 59 Tree Visual Renderer Boundary Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10; live renderer/runtime landed
 > Source: `docs/components/tree/design.md`, `docs/components/recurse/design.md`, `docs/components/loop/design.md`, `docs/amis-types/form-advanced.d.ts`
 
 ## Purpose
@@ -13,6 +13,7 @@
 - AMIS 中已有较强的 tree 参考，但主要集中在 form tree controls 与底层 Tree UI。
 - Flux 当前已经把 `loop` / `fragment` / `recurse` 收口为无 UI 的结构层。
 - 因此需要明确 `tree` 应该站在 UI renderer 层，而不是回头吞并结构原语职责。
+- 2026-04-10 live repo now includes `type: 'tree'` registration and renderer support in `packages/flux-renderers-data/src/index.tsx`, `schemas.ts`, and `tree-renderer.tsx`, with focused tests in `packages/flux-renderers-data/src/index.test.tsx`.
 
 ## Goals
 
@@ -42,25 +43,44 @@
 
 ## Workstream 1 - Contract Freeze
 
-Status: planned
+Status: completed
 Targets: docs listed above
 
-- [ ] freeze `tree` as visual hierarchical renderer
-- [ ] freeze the boundary versus `loop + recurse`
-- [ ] freeze the boundary versus future `input-tree` / `tree-select`
-- [ ] freeze default node-scope bindings
+- [x] freeze `tree` as visual hierarchical renderer
+- [x] freeze the boundary versus `loop + recurse`
+- [x] freeze the boundary versus future `input-tree` / `tree-select`
+- [x] freeze default node-scope bindings
 
 Exit Criteria:
 
-- [ ] one reader can explain why AMIS tree references do not imply collapsing visual tree UI and structural recursion into one node
+- [x] one reader can explain why AMIS tree references do not imply collapsing visual tree UI and structural recursion into one node
+
+## Workstream 2 - Renderer Landing
+
+Status: completed
+Targets: tree schema/runtime/renderer/tests, representative docs/examples
+
+- [x] add live schema/runtime support for `type: 'tree'`
+- [x] implement the visual hierarchical renderer without collapsing structural recursion into the same node
+- [x] publish the documented default node-scope bindings
+- [x] add focused tests and one representative example
+
+Exit Criteria:
+
+- [x] `tree` renders as a visual hierarchical renderer and preserves the documented boundary versus `loop + recurse`
 
 ## Validation Checklist
 
-- [ ] docs define `tree`
-- [ ] docs distinguish `tree` from `loop` / `recurse`
-- [ ] docs distinguish `tree` from future form tree controls
-- [ ] roadmap mentions why tree is not yet P1 despite having AMIS references
+- [x] docs define `tree`
+- [x] docs distinguish `tree` from `loop` / `recurse`
+- [x] docs distinguish `tree` from future form tree controls
+- [x] roadmap mentions why tree is not yet P1 despite having AMIS references
+- [x] runtime/renderer/test implementation exists for `type: 'tree'`
 
 ## Closure
 
-Status Note: close this plan when tree boundary rules are stable in docs and any implementation work is delegated to a narrower renderer plan.
+Status Note: The visual boundary is now backed by a live tree renderer that keeps hierarchical UI concerns separate from the structural `loop + recurse` substrate while publishing documented node-scope bindings.
+
+Follow-up:
+
+- none for this plan scope

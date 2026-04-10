@@ -1,7 +1,7 @@
 # 53 Scope Ownership And Isolation Alignment Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10
 > Source: `docs/architecture/scope-ownership-and-isolation.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/table-row-identity-and-scope-performance.md`, `docs/components/page/design.md`, `docs/components/form/design.md`
 
 ## Purpose
@@ -44,38 +44,42 @@
 
 ## Workstream 1 - Contract Freeze
 
-Status: planned
+Status: completed
 Targets: docs listed above
 
-- [ ] freeze default lexical inheritance
-- [ ] freeze `data` as own-scope initial patch semantics
-- [ ] freeze `isolate` as the only isolation control name
-- [ ] freeze rejection of `$parentScope`
+- [x] freeze default lexical inheritance
+- [x] freeze `data` as own-scope initial patch semantics
+- [x] freeze `isolate` as the only isolation control name
+- [x] freeze rejection of `$parentScope`
 
 Exit Criteria:
 
-- [ ] one reader can answer default inheritance/isolation behavior without reading runtime code
+- [x] one reader can answer default inheritance/isolation behavior without reading runtime code
 
 ## Workstream 2 - Component Alignment
 
-Status: planned
+Status: completed
 Targets: `docs/components/page/design.md`, successor component docs
 
-- [ ] align page with form on `data` semantics
-- [ ] align dialog/drawer with the same `data` semantics when the field is documented
+- [x] align page with form on `data` semantics
+- [x] align dialog/drawer with the same `data` semantics when the field is documented
 
 Exit Criteria:
 
-- [ ] page/form/dialog/drawer no longer imply different meanings for `data`
+- [x] page/form/dialog/drawer no longer imply different meanings for `data`
 
 ## Validation Checklist
 
-- [ ] docs define default scope inheritance
-- [ ] docs define `data` as init patch
-- [ ] docs define `isolate` as the preferred control name
-- [ ] docs reject `$parentScope`
-- [ ] docs explain row scope default isolation as the explicit exception
+- [x] docs define default scope inheritance
+- [x] docs define `data` as init patch
+- [x] docs define `isolate` as the preferred control name
+- [x] docs reject `$parentScope`
+- [x] docs explain row scope default isolation as the explicit exception
 
 ## Closure
 
-Status Note: close this plan when scope ownership and isolation rules are stable in docs and any remaining runtime or schema work is delegated to narrower plans.
+Status Note: Completed. Scope inheritance, `data`, `isolate`, row-scope exception, and `$parentScope` rejection are now aligned across architecture and component docs.
+
+Follow-up:
+
+- no remaining plan-owned work

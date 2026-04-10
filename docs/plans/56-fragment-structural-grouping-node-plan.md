@@ -1,7 +1,7 @@
 # 56 Fragment Structural Grouping Node Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10; live renderer/runtime landed
 > Source: `docs/components/fragment/design.md`, `docs/components/loop/design.md`, `docs/architecture/scope-ownership-and-isolation.md`
 
 ## Purpose
@@ -13,6 +13,7 @@
 - 当前 DSL 已有 `when`，但缺少一个专门的无 UI 分组节点。
 - `container` 已明确拥有容器/壳层语义，不适合作为纯虚拟分组的替代物。
 - `loop` 这类结构节点也已经需要一个天然搭档来承接整体条件控制。
+- 2026-04-10 live repo now includes `type: 'fragment'` registration and renderer support in `packages/flux-renderers-basic/src/index.tsx` and `fragment.tsx`, with focused tests in `packages/flux-renderers-basic/src/index.test.tsx`.
 
 ## Goals
 
@@ -42,25 +43,44 @@
 
 ## Workstream 1 - Contract Freeze
 
-Status: planned
+Status: completed
 Targets: docs listed above
 
-- [ ] freeze `fragment` as the no-UI grouping node
-- [ ] freeze `when` + `fragment` as the preferred grouped condition pattern
-- [ ] freeze rejection of `if` as a parallel condition component
-- [ ] freeze the boundary between `fragment` and `container`
+- [x] freeze `fragment` as the no-UI grouping node
+- [x] freeze `when` + `fragment` as the preferred grouped condition pattern
+- [x] freeze rejection of `if` as a parallel condition component
+- [x] freeze the boundary between `fragment` and `container`
 
 Exit Criteria:
 
-- [ ] one reader can answer how to conditionally group multiple nodes without using `container`
+- [x] one reader can answer how to conditionally group multiple nodes without using `container`
+
+## Workstream 2 - Runtime Landing
+
+Status: completed
+Targets: compiler/render path, representative tests, examples
+
+- [x] add live schema/compiler support for `type: 'fragment'`
+- [x] render fragment children without introducing a visual wrapper by default
+- [x] support grouped `when` / `data` / `isolate` behavior on fragment nodes
+- [x] add focused tests for no-UI grouping behavior
+
+Exit Criteria:
+
+- [x] `fragment` can group multiple child nodes with no visual wrapper while preserving the documented scope rules
 
 ## Validation Checklist
 
-- [ ] docs define `fragment`
-- [ ] docs reject `if` as a new parallel grouping DSL
-- [ ] docs distinguish `fragment` from `container`
-- [ ] loop doc references `fragment` for grouped conditions
+- [x] docs define `fragment`
+- [x] docs reject `if` as a new parallel grouping DSL
+- [x] docs distinguish `fragment` from `container`
+- [x] loop doc references `fragment` for grouped conditions
+- [x] runtime/compiler/test implementation exists for `type: 'fragment'`
 
 ## Closure
 
-Status Note: close this plan when the structural grouping-node contract is stable in docs and any implementation work is delegated to a narrower renderer/runtime plan.
+Status Note: The no-UI grouping contract is now backed by a live basic renderer implementation that forwards grouped body rendering through region handles with optional `data` / `isolate` scope overrides.
+
+Follow-up:
+
+- none for this plan scope

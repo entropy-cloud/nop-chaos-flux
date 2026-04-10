@@ -1,7 +1,7 @@
 # 58 Recursive Structural Rendering Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10; live renderer/runtime landed
 > Source: `docs/components/recurse/design.md`, `docs/components/loop/design.md`, `docs/architecture/template-instantiation-and-node-identity.md`, `docs/components/fragment/design.md`
 
 ## Purpose
@@ -14,6 +14,7 @@
 - `fragment` 已收口为无 UI 的结构分组节点。
 - repeated-instance identity 已在 table/future loop 路径中稳定。
 - 但递归结构尚未有一份明确的组件/文档基线。
+- 2026-04-10 live repo now includes `type: 'recurse'` registration and renderer support in `packages/flux-renderers-basic/src/index.tsx` and `recurse.tsx`, with focused tests in `packages/flux-renderers-basic/src/index.test.tsx`.
 
 ## Goals
 
@@ -44,25 +45,44 @@
 
 ## Workstream 1 - Contract Freeze
 
-Status: planned
+Status: completed
 Targets: docs listed above
 
-- [ ] freeze `recurse` as a lexical recursive node
-- [ ] freeze nearest-enclosing-loop resolution rule
-- [ ] freeze reuse of repeated-instance identity model
-- [ ] freeze rejection of named-template registry as the first recursive baseline
+- [x] freeze `recurse` as a lexical recursive node
+- [x] freeze nearest-enclosing-loop resolution rule
+- [x] freeze reuse of repeated-instance identity model
+- [x] freeze rejection of named-template registry as the first recursive baseline
 
 Exit Criteria:
 
-- [ ] one reader can answer how recursive JSON rendering works without needing self-referential JSON or template registries
+- [x] one reader can answer how recursive JSON rendering works without needing self-referential JSON or template registries
+
+## Workstream 2 - Runtime Landing
+
+Status: completed
+Targets: compiler/render path, representative tests, examples
+
+- [x] add live schema/compiler support for `type: 'recurse'`
+- [x] resolve recurse nodes against the nearest enclosing `loop.body`
+- [x] preserve repeated-instance identity across recursive expansion
+- [x] add focused tests for recursive rendering and grouped `fragment + when` usage
+
+Exit Criteria:
+
+- [x] recursive schemas render through the documented `loop + recurse` contract without introducing a second recursion substrate
 
 ## Validation Checklist
 
-- [ ] docs define `recurse`
-- [ ] docs define nearest-enclosing-loop semantics
-- [ ] docs define `fragment + when` for grouped recursive conditions
-- [ ] docs reject named-template registry as the first baseline
+- [x] docs define `recurse`
+- [x] docs define nearest-enclosing-loop semantics
+- [x] docs define `fragment + when` for grouped recursive conditions
+- [x] docs reject named-template registry as the first baseline
+- [x] runtime/compiler/test implementation exists for `type: 'recurse'`
 
 ## Closure
 
-Status Note: close this plan when recursive structural rendering is stable in docs and any implementation work is delegated to a narrower renderer/runtime plan.
+Status Note: The recursive design baseline is now backed by a live lexical recursion implementation that reuses the nearest enclosing `loop.body` template and the existing repeated-instance path model.
+
+Follow-up:
+
+- none for this plan scope
