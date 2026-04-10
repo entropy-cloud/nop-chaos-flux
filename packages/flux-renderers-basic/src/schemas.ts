@@ -1,4 +1,4 @@
-import type { BaseSchema, DynamicRendererSchema } from '@nop-chaos/flux-core';
+import type { BaseSchema, DynamicRendererSchema, SchemaInput, SchemaValue } from '@nop-chaos/flux-core';
 
 export interface PageSchema extends BaseSchema {
   type: 'page';
@@ -67,6 +67,36 @@ export interface ContainerSchema extends BaseSchema {
   /** 间距：命名 token ('none'|'xs'|'sm'|'md'|'lg'|'xl')、数字(px) 或 CSS 值 (如 '1rem') */
   gap?: number | string;
   body?: BaseSchema[];
+}
+
+export interface FragmentSchema extends BaseSchema {
+  type: 'fragment';
+  body?: SchemaInput;
+  data?: Record<string, SchemaValue>;
+  isolate?: boolean;
+}
+
+export interface LoopSchema extends BaseSchema {
+  type: 'loop';
+  items?: SchemaValue;
+  body?: SchemaInput;
+  empty?: SchemaInput;
+  itemName?: string;
+  indexName?: string;
+  keyName?: string;
+  itemData?: Record<string, SchemaValue>;
+  keyBy?: SchemaValue;
+}
+
+export interface RecurseSchema extends BaseSchema {
+  type: 'recurse';
+  items?: SchemaValue;
+  itemName?: string;
+  indexName?: string;
+  keyName?: string;
+  itemData?: Record<string, SchemaValue>;
+  keyBy?: SchemaValue;
+  maxDepth?: number;
 }
 
 export interface TextSchema extends BaseSchema {

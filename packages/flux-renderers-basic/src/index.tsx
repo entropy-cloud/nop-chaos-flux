@@ -12,6 +12,9 @@ import { ReactionRenderer } from './reaction';
 import { DialogRenderer } from './dialog';
 import { DrawerRenderer } from './drawer';
 import { TabsRenderer } from './tabs';
+import { FragmentRenderer } from './fragment';
+import { LoopRenderer } from './loop';
+import { RecurseRenderer } from './recurse';
 
 export * from './schemas';
 export * from './utils';
@@ -27,6 +30,9 @@ export { ReactionRenderer } from './reaction';
 export { DialogRenderer } from './dialog';
 export { DrawerRenderer } from './drawer';
 export { TabsRenderer } from './tabs';
+export { FragmentRenderer } from './fragment';
+export { LoopRenderer } from './loop';
+export { RecurseRenderer } from './recurse';
 
 export const basicRendererDefinitions: RendererDefinition[] = [
   {
@@ -47,6 +53,52 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     defaultSchema: { type: 'container', body: [] },
     component: ContainerRenderer,
     regions: ['body', 'header', 'footer']
+  },
+  {
+    type: 'fragment',
+    displayName: 'Fragment',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'fragment', body: [] },
+    component: FragmentRenderer,
+    regions: ['body'],
+    fields: [
+      { key: 'data', kind: 'prop' },
+      { key: 'isolate', kind: 'prop' }
+    ]
+  },
+  {
+    type: 'loop',
+    displayName: 'Loop',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'loop', body: [] },
+    component: LoopRenderer,
+    regions: ['body', 'empty'],
+    fields: [
+      { key: 'items', kind: 'prop' },
+      { key: 'itemName', kind: 'prop' },
+      { key: 'indexName', kind: 'prop' },
+      { key: 'keyName', kind: 'prop' },
+      { key: 'itemData', kind: 'prop' },
+      { key: 'keyBy', kind: 'prop' }
+    ]
+  },
+  {
+    type: 'recurse',
+    displayName: 'Recurse',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    component: RecurseRenderer,
+    fields: [
+      { key: 'items', kind: 'prop' },
+      { key: 'itemName', kind: 'prop' },
+      { key: 'indexName', kind: 'prop' },
+      { key: 'keyName', kind: 'prop' },
+      { key: 'itemData', kind: 'prop' },
+      { key: 'keyBy', kind: 'prop' },
+      { key: 'maxDepth', kind: 'prop' }
+    ]
   },
   {
     type: 'flex',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererEnv } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from './index';
@@ -11,6 +11,16 @@ const env: RendererEnv = {
     return { ok: true, status: 200, data: null as T };
   },
   notify: () => undefined
+};
+
+function ScopeProbeRenderer(props: RendererComponentProps) {
+  return <div data-testid={props.meta.testid ?? 'scope-probe'}>{JSON.stringify(props.nodeInstance.locator.instancePath ?? null)}|{String(props.helpers.evaluate((props.props as { value?: unknown }).value))}</div>;
+}
+
+const scopeProbeRenderer: RendererDefinition = {
+  type: 'scope-probe',
+  component: ScopeProbeRenderer,
+  fields: [{ key: 'value', kind: 'prop' }]
 };
 
 describe('basicRendererDefinitions', () => {
@@ -584,6 +594,182 @@ describe('basicRendererDefinitions', () => {
     expect(button.className).toContain('rounded');
     expect(button.className).toContain('bg-blue-500');
     expect(button.className).toContain('text-white');
+    cleanup();
+  });
+
+  it('renders fragment body with inherited scope data', () => {
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, scopeProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'fragment',
+            body: [{ type: 'text', text: 'Hello ${user.name}' }]
+          }]
+        }}
+        data={{ user: { name: 'Alice' } }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('Hello Alice')).toBeTruthy();
+    cleanup();
+  });
+
+  it('supports fragment data with isolate', () => {
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, scopeProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'fragment',
+            data: { localOnly: 'inside' },
+            isolate: true,
+            body: [{ type: 'scope-probe', value: '${localOnly}' }]
+          }]
+        }}
+        data={{ localOnly: 'outside' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByTestId('scope-probe').textContent).toContain('|inside');
+    cleanup();
+  });
+
+  it('renders loop item scopes with inherited parent bindings and stable instancePath', async () => {
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, scopeProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'loop',
+            items: '${users}',
+            keyBy: 'item.id',
+            body: [{ type: 'scope-probe', testid: 'loop-probe', value: '${item.name + ":" + currentRole}' }]
+          }]
+        }}
+        data={{ currentRole: 'admin', users: [{ id: 'u1', name: 'Alice' }] }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      const text = screen.getByTestId('loop-probe').textContent ?? '';
+      expect(text).toContain('u1');
+      expect(text).toContain('Alice:admin');
+    });
+    cleanup();
+  });
+
+  it('renders loop empty region when items are empty', () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'loop',
+            items: '${users}',
+            body: [{ type: 'text', text: '${item.name}' }],
+            empty: [{ type: 'text', text: 'No users' }]
+          }]
+        }}
+        data={{ users: [] }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('No users')).toBeTruthy();
+    cleanup();
+  });
+
+  it('reuses the nearest loop body for recurse', async () => {
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, scopeProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'loop',
+            items: '${nodes}',
+            keyBy: 'item.id',
+            body: [
+              { type: 'text', text: '${item.label}' },
+              {
+                type: 'fragment',
+                when: '${item.children && item.children.length > 0}',
+                body: [{ type: 'recurse', items: '${item.children}' }]
+              }
+            ]
+          }]
+        }}
+        data={{
+          nodes: [
+            { id: 'root', label: 'Root', children: [{ id: 'child', label: 'Child', children: [] }] }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Root')).toBeTruthy();
+      expect(screen.getByText('Child')).toBeTruthy();
+    });
+    cleanup();
+  });
+
+  it('stops recurse when maxDepth is reached', async () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'loop',
+            items: '${nodes}',
+            body: [
+              { type: 'text', text: '${item.label}' },
+              {
+                type: 'fragment',
+                when: '${item.children && item.children.length > 0}',
+                body: [{ type: 'recurse', items: '${item.children}', maxDepth: 1 }]
+              }
+            ]
+          }]
+        }}
+        data={{
+          nodes: [
+            {
+              label: 'Root',
+              children: [{ label: 'Child', children: [{ label: 'Grandchild', children: [] }] }]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Root')).toBeTruthy();
+      expect(screen.queryByText('Grandchild')).toBeNull();
+    });
     cleanup();
   });
 
