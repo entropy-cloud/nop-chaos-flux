@@ -18,8 +18,8 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
       {renderStructuralLoop({
         helpers: props.helpers,
         items,
-        hasBody: Boolean(props.regions.body?.node),
-        hasEmpty: Boolean(props.regions.empty?.node),
+        hasBody: Boolean(props.regions.body?.templateNode),
+        hasEmpty: Boolean(props.regions.empty?.templateNode),
         bindings,
         itemData,
         keyBy: props.props.keyBy,
@@ -28,14 +28,16 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
         parentScope,
         parentInstancePath,
         repeatedTemplateId,
-        renderEmpty: () => props.regions.empty?.render({ pathSuffix: 'empty' }) ?? null,
+        renderEmpty: () => props.regions.empty
+          ? props.helpers.render(props.regions.empty.templateNode, { pathSuffix: 'empty' })
+          : null,
         renderItem: ({ itemKey, scope, instancePath, depth }) => (
           <StructuralLoopContext.Provider
             key={itemKey}
             value={{
               ownerId: props.id,
               path: props.path,
-              bodyNode: props.regions.body?.node ?? null,
+              bodyNode: props.regions.body?.templateNode ?? null,
               bindings,
               itemData,
               keyBy: props.props.keyBy,
@@ -45,11 +47,13 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
               schema: props.props as LoopSchema
             }}
           >
-            {props.regions.body?.render({
-              scope,
-              instancePath,
-              pathSuffix: `body.${itemKey}`
-            })}
+            {props.regions.body
+              ? props.helpers.render(props.regions.body.templateNode, {
+                  scope,
+                  instancePath,
+                  pathSuffix: `body.${itemKey}`
+                })
+              : null}
           </StructuralLoopContext.Provider>
         )
       })}

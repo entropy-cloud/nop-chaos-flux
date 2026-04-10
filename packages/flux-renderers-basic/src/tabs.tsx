@@ -34,7 +34,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     itemCount: items.length,
   }), [activeIndex, items.length, ownedAxis.value]);
 
-  useStatusPathPublication(props.nodeInstance.scope.parent ?? props.nodeInstance.scope, typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined, summary);
+  useStatusPathPublication(props.node.scope.parent ?? props.node.scope, typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined, summary);
 
   const tabsHandle = useMemo<ComponentHandle>(() => ({
     id: props.id,
@@ -73,10 +73,9 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     }
 
     return componentRegistry.register(tabsHandle, {
-      cid: props.meta.cid,
-      locator: props.nodeInstance.locator
+      cid: props.meta.cid
     });
-  }, [componentRegistry, props.meta.cid, props.nodeInstance.locator, tabsHandle]);
+  }, [componentRegistry, props.meta.cid, tabsHandle]);
 
   return (
     <section className={cn('nop-tabs', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
@@ -92,7 +91,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           {items.map((item, index) => {
             const value = getItemValue(item, index);
             const titleRegion = typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
-            const titleContent = titleRegion?.render({ pathSuffix: `items.${index}.title` }) ?? item.title ?? item.label ?? value;
+            const titleContent = titleRegion?.instantiate({ }) ?? item.title ?? item.label ?? value;
             return (
               <TabsTrigger key={value} value={value} disabled={Boolean(item.disabled)}>
                 {titleContent}
@@ -106,8 +105,8 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           const toolbarRegion = typeof item.toolbarRegionKey === 'string' ? props.regions[item.toolbarRegionKey] : undefined;
           return (
             <TabsContent key={value} value={value} className="nop-tabs-content">
-              {toolbarRegion ? <div data-slot="tabs-item-toolbar">{toolbarRegion.render({ pathSuffix: `items.${index}.toolbar` })}</div> : null}
-              {bodyRegion ? bodyRegion.render({ pathSuffix: `items.${index}.body` }) : null}
+              {toolbarRegion ? <div data-slot="tabs-item-toolbar">{toolbarRegion.instantiate()}</div> : null}
+              {bodyRegion ? bodyRegion.instantiate() : null}
             </TabsContent>
           );
         })}

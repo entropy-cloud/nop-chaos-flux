@@ -7,8 +7,8 @@ import { useStatusPathPublication } from './status-hooks';
 
 export function DrawerRenderer(props: RendererComponentProps<DrawerSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
-  const bodyContent = props.regions.body?.render();
-  const actionsContent = props.regions.actions?.render();
+  const bodyContent = props.regions.body?.instantiate();
+  const actionsContent = props.regions.actions?.instantiate();
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
   const summary = useMemo<SurfaceStatusSummary>(() => ({
     id: props.id,
@@ -19,7 +19,7 @@ export function DrawerRenderer(props: RendererComponentProps<DrawerSchema>) {
     closing: false,
   }), [props.id, props.props.defaultOpen, props.props.open]);
 
-  useStatusPathPublication(props.nodeInstance.scope.parent ?? props.nodeInstance.scope, statusPath, summary);
+  useStatusPathPublication(props.node.scope.parent ?? props.node.scope, statusPath, summary);
 
   return (
     <Drawer open={summary.open} onOpenChange={(open) => { if (!open) void props.events.onClose?.(); else void props.events.onOpen?.(); }}>

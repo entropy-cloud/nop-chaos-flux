@@ -32,7 +32,6 @@ export function useTableHandle(
                 componentRegistry: ctx.componentRegistry,
                 form: ctx.form,
                 page: ctx.page,
-                node: ctx.node,
                 nodeInstance: ctx.nodeInstance
               });
             } else {
@@ -42,7 +41,6 @@ export function useTableHandle(
                 componentRegistry: ctx.componentRegistry,
                 form: ctx.form,
                 page: ctx.page,
-                node: ctx.node,
                 nodeInstance: ctx.nodeInstance
               });
             }
@@ -98,8 +96,7 @@ export function useTableHandle(
       return;
     }
     return componentRegistry.register(tableHandle, {
-      cid: props.meta.cid,
-      locator: props.nodeInstance.locator
+      cid: props.meta.cid
     });
-  }, [componentRegistry, tableHandle, props.meta.cid, props.nodeInstance.locator]);
+  }, [componentRegistry, tableHandle, props.meta.cid]);
 }

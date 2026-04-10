@@ -5,12 +5,14 @@ import type { FragmentSchema } from './schemas';
 export function FragmentRenderer(props: RendererComponentProps<FragmentSchema>) {
   return (
     <>
-      {props.regions.body?.render({
-        data: props.props.data as Record<string, unknown> | undefined,
-        isolate: props.props.isolate === true,
-        pathSuffix: 'body',
-        scopeKey: `${props.id}:body`
-      })}
+      {props.regions.body?.templateNode
+        ? props.helpers.render(props.regions.body.templateNode, {
+            data: props.props.data as Record<string, unknown> | undefined,
+            isolate: props.props.isolate === true,
+            pathSuffix: 'body',
+            scopeKey: `${props.id}:body`
+          })
+        : null}
     </>
   );
 }

@@ -39,7 +39,7 @@ const EMPTY_TABLE_COLUMNS: TableColumnSchema[] = [];
 const EMPTY_TABLE_ROWS: Array<Record<string, any>> = [];
 
 function createTableOwnerKey(props: RendererComponentProps<TableSchema>): string {
-  return `${props.node.templateNodeId ?? props.meta.cid ?? props.id}:${serializeInstancePath(props.nodeInstance.locator.instancePath)}`;
+  return `${props.node.templateNode.templateNodeId ?? props.meta.cid ?? props.id}:${serializeInstancePath(props.node.instancePath)}`;
 }
 
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
@@ -58,7 +58,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const loadingContent = resolveRendererSlotContent(props, 'loadingSlot');
 
   const ownerKey = useMemo(() => createTableOwnerKey(props), [props]);
-  const rowRepeatedTemplateId = useMemo(() => createTableRowRepeatedTemplateId(props.node.templateNodeId), [props.node.templateNodeId]);
+  const rowRepeatedTemplateId = useMemo(() => createTableRowRepeatedTemplateId(props.node.templateNode.templateNodeId), [props.node.templateNode.templateNodeId]);
 
   const { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange } = useTablePagination(
     schemaProps,
@@ -135,7 +135,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
               {columns.map((column, index) => {
                 const labelRegion = typeof column.labelRegionKey === 'string' ? props.regions[column.labelRegionKey] : undefined;
-                const labelContent = labelRegion?.render({ pathSuffix: `columns.${index}.label` }) ?? column.label ?? column.name;
+                const labelContent = labelRegion?.instantiate() ?? column.label ?? column.name;
                 const isSortable = column.sortable === true;
                 const isFilterable = column.filterable === true && Array.isArray(column.filterOptions) && column.filterOptions.length > 0;
                 const currentSort = sortState.column === column.name ? sortState.direction : null;
@@ -213,7 +213,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
                 const rowKey = entry.rowKey;
                 const rowInstancePath = [
-                  ...(props.nodeInstance.locator.instancePath ?? []),
+                  ...(props.node.instancePath ?? []),
                   { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey }
                 ] as const;
                 const isExpanded = expandedRowKeys.has(rowKey);
@@ -269,12 +269,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                           return (
                             <TableCell key={`op-${columnIndex}`} style={column.width ? { width: column.width } : undefined}>
                               <div data-slot="table-actions" className="flex flex-wrap gap-3" onClick={(event) => event.stopPropagation()}>
-                                {buttonRegion
-                                  ? buttonRegion.render({
-                                      scope: rowScope,
-                                      instancePath: rowInstancePath,
-                                      pathSuffix: `buttons.${columnIndex}`,
-                                    })
+                                 {buttonRegion
+                                   ? buttonRegion.render({
+                                       bindings: { record: entry.record, index: entry.sourceIndex },
+                                       instancePath: rowInstancePath,
+                                       pathSuffix: `buttons.${columnIndex}`,
+                                     })
                                   : (column.buttons ?? []).map((button, buttonIndex) => (
                                       <div key={`btn-${buttonIndex}`}>
                                         {helpers.render(button, {
@@ -296,7 +296,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                               style={column.width ? { width: column.width } : undefined}
                             >
                               {cellRegion.render({
-                                scope: rowScope,
+                                bindings: { record: entry.record, index: entry.sourceIndex },
                                 instancePath: rowInstancePath,
                                 pathSuffix: `cells.${columnIndex}`,
                               })}
@@ -315,11 +315,13 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                     {isExpanded && schemaProps.expandable?.expandedRowRegionKey ? (
                       <TableRow data-slot="table-expanded-row">
                         <TableCell colSpan={columnCount} data-slot="table-expanded-cell">
-                          {props.regions[schemaProps.expandable.expandedRowRegionKey]?.render({
-                            scope: rowScope,
-                            instancePath: rowInstancePath,
-                            pathSuffix: `expanded.${rowKey}`,
-                          })}
+                          {props.regions[schemaProps.expandable.expandedRowRegionKey]
+                            ? helpers.render(props.regions[schemaProps.expandable.expandedRowRegionKey].templateNode, {
+                                scope: rowScope,
+                                instancePath: rowInstancePath,
+                                pathSuffix: `expanded.${rowKey}`,
+                              })
+                            : null}
                         </TableCell>
                       </TableRow>
                     ) : null}

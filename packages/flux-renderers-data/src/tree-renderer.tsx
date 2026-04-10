@@ -86,10 +86,12 @@ function TreeNodeRenderer(props: {
     [owner.helpers, owner.id, owner.path, scopeData, nodeKey]
   );
   const label = getIn(node, labelField);
-  const nodeContent = owner.regions.node?.render({
-    scope,
-    pathSuffix: `node.${nodeKey}`
-  });
+  const nodeContent = owner.regions.node
+    ? owner.helpers.render(owner.regions.node.templateNode, {
+        scope,
+        pathSuffix: `node.${nodeKey}`
+      })
+    : null;
 
   return (
     <div className="nop-tree-node" data-depth={depth} data-node-key={nodeKey}>
@@ -171,14 +173,14 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
       return;
     }
 
-    publishOwnerStatus(props.nodeInstance.scope.parent ?? props.nodeInstance.scope, statusPath, {
+    publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, {
       kind: 'tree',
       nodeCount: data.length,
       childrenKey,
       keyField,
       labelField
     });
-  }, [props.nodeInstance.scope, statusPath, data.length, childrenKey, keyField, labelField]);
+  }, [props.node.scope, statusPath, data.length, childrenKey, keyField, labelField]);
 
   if (data.length === 0) {
     return hasRendererSlotContent(emptyContent) ? <div data-slot="tree-empty">{emptyContent}</div> : null;

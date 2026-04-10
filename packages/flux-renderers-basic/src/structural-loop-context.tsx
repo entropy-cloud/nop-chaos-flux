@@ -1,5 +1,5 @@
 import React from 'react';
-import type { CompiledSchemaNode, InstanceFrame, ScopeRef } from '@nop-chaos/flux-core';
+import type { InstanceFrame, ScopeRef, TemplateNode } from '@nop-chaos/flux-core';
 import type { LoopSchema } from './schemas';
 
 export interface StructuralLoopBindings {
@@ -11,7 +11,7 @@ export interface StructuralLoopBindings {
 export interface StructuralLoopContextValue {
   ownerId: string;
   path: string;
-  bodyNode: CompiledSchemaNode | CompiledSchemaNode[] | null;
+  bodyNode: TemplateNode | readonly TemplateNode[] | null;
   bindings: StructuralLoopBindings;
   itemData?: Record<string, unknown>;
   keyBy?: unknown;

@@ -5,7 +5,6 @@ import {
 } from '@nop-chaos/flux-react';
 import {
   parsePath,
-  serializeNodeLocator,
   type BaseSchema,
   type FormStatusSummary,
   type RendererComponentProps,
@@ -152,9 +151,9 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       initialValues,
       parentScope,
       page: currentPage,
-      validation: props.node.validation
+      validation: props.templateNode.validationPlan
     }),
-    [runtime, formId, formName, initialValues, parentScope, currentPage, props.node.validation]
+    [runtime, formId, formName, initialValues, parentScope, currentPage, props.templateNode.validationPlan]
   );
 
   const baseLifecycleScope = ownedForm.scope;
@@ -167,11 +166,9 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const submitSuccessAction = props.events['onSubmitSuccess'];
   const submitErrorAction = props.events['onSubmitError'];
   const validateErrorAction = props.events['onValidateError'];
-  const activationKey = props.nodeInstance.locator
-    ? serializeNodeLocator(props.nodeInstance.locator)
-    : props.locator
-      ? serializeNodeLocator(props.locator)
-      : `${props.id}:${props.path}`;
+  const activationKey = props.node.instancePath?.length
+    ? props.node.instancePath.map((f) => `${f.repeatedTemplateId}:${f.instanceKey}`).join('/')
+    : `${props.id}:${props.path}`;
   const lastInitKeyRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -285,10 +282,9 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     }
 
     return currentComponentRegistry.register(createFormComponentHandle(ownedForm), {
-      cid: props.meta.cid,
-      locator: props.nodeInstance.locator ?? props.locator
+      cid: props.meta.cid
     });
-  }, [currentComponentRegistry, ownedForm, props.meta.cid, props.nodeInstance.locator, props.locator]);
+  }, [currentComponentRegistry, ownedForm, props.meta.cid]);
 
   return (
     <FormContext.Provider value={ownedForm}>

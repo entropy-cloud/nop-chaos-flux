@@ -17,7 +17,7 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
   const gap = resolveGap(props.props.gap as number | string | undefined);
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
-  const bodyContent = props.regions.body?.render();
+  const bodyContent = props.regions.body?.instantiate();
 
   const useFlexChild = wrap || align !== undefined || (gap.className || gap.style) || direction !== 'row';
 

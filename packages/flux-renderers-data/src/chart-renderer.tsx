@@ -154,10 +154,9 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     }
 
     return componentRegistry.register(chartHandle, {
-      cid: props.meta.cid,
-      locator: props.nodeInstance.locator
+      cid: props.meta.cid
     });
-  }, [chartHandle, componentRegistry, props.meta.cid, props.nodeInstance.locator]);
+  }, [chartHandle, componentRegistry, props.meta.cid]);
 
   return (
     <div

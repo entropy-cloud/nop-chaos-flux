@@ -31,7 +31,7 @@ const env: RendererEnv = {
 
 const pageRenderer: RendererDefinition = {
   type: 'page',
-  component: (props) => <section>{props.regions.body?.render()}</section>,
+  component: (props) => <section>{props.regions.body?.instantiate()}</section>,
   regions: ['body']
 };
 
@@ -49,7 +49,7 @@ const nodeInstanceProbeRenderer: RendererDefinition = {
   type: 'node-instance-probe',
   component: (props) => (
     <span data-testid="node-instance-probe">
-      {JSON.stringify(props.nodeInstance.locator.instancePath ?? null)}
+      {JSON.stringify(props.node.instancePath ?? null)}
     </span>
   )
 };
@@ -287,7 +287,7 @@ describe('dataRendererDefinitions', () => {
                         action: 'dialog',
                         dialog: {
                           title: 'Record details',
-                          body: [{ type: 'text', text: 'User: ${record.name}' }]
+                          body: [{ type: 'text', text: 'User: ${$slot.record.name}' }]
                         }
                       }
                     }
@@ -935,7 +935,7 @@ describe('dataRendererDefinitions', () => {
                 {
                   label: 'Summary',
                   name: 'name',
-                  cell: { type: 'text', text: 'Member ${record.name}' }
+                  cell: { type: 'text', text: 'Member ${$slot.record.name}' }
                 }
               ],
               source: [{ id: 1, name: 'Alice' }]
@@ -1036,7 +1036,7 @@ describe('dataRendererDefinitions', () => {
 
     expect(Number.isFinite(cid)).toBe(true);
     await waitFor(() => {
-      expect(registry?.getHandleDebugData?.(cid)?.locator).toMatchObject({
+      expect(registry?.getHandleDebugData?.(cid)?.nodeInstance).toMatchObject({
         instancePath: [{ repeatedTemplateId: expect.stringMatching(/^table-row:/), instanceKey: '1' }]
       });
     });
@@ -1094,8 +1094,8 @@ describe('dataRendererDefinitions', () => {
         kind: 'host',
         invoke(method: string, _payload: Record<string, unknown> | undefined, ctx: ActionContext) {
           if (method === 'recordLocator') {
-            observedLocators.push(ctx.locator);
-            return { ok: true, data: ctx.locator };
+            observedLocators.push({ instancePath: ctx.instancePath });
+            return { ok: true, data: ctx.instancePath };
           }
 
           return { ok: false, error: new Error(`Unsupported method: ${method}`) };
