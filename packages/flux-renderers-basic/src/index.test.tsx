@@ -150,6 +150,77 @@ describe('basicRendererDefinitions', () => {
     cleanup();
   });
 
+  it('publishes page status summary through statusPath', async () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          statusPath: 'pageStatus',
+          body: [
+            { type: 'text', text: '${pageStatus.refreshTick}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('0')).toBeTruthy();
+    });
+    cleanup();
+  });
+
+  it('publishes tabs status and supports scope ownership', async () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tabs',
+              valueOwnership: 'scope',
+              valueStatePath: 'ui.activeTab',
+              statusPath: 'ui.tabsStatus',
+              items: [
+                {
+                  key: 'first',
+                  title: 'First',
+                  body: [{ type: 'text', text: 'First body' }]
+                },
+                {
+                  key: 'second',
+                  title: 'Second',
+                  body: [{ type: 'text', text: 'Second body' }]
+                }
+              ]
+            },
+            { type: 'text', text: '${ui.tabsStatus.activeValue}:${ui.tabsStatus.activeIndex}:${ui.activeTab}' }
+          ]
+        }}
+        data={{ ui: { activeTab: 'first' } }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('first:0:first')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText('Second'));
+
+    await waitFor(() => {
+      expect(screen.getByText('second:1:second')).toBeTruthy();
+      expect(screen.getByText('Second body')).toBeTruthy();
+    });
+    cleanup();
+  });
+
   it('runs reaction actions immediately when configured', async () => {
     const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
 

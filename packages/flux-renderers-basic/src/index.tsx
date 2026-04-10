@@ -9,6 +9,9 @@ import { IconRenderer } from './icon';
 import { BadgeRenderer } from './badge';
 import { DynamicRenderer } from './dynamic-renderer';
 import { ReactionRenderer } from './reaction';
+import { DialogRenderer } from './dialog';
+import { DrawerRenderer } from './drawer';
+import { TabsRenderer } from './tabs';
 
 export * from './schemas';
 export * from './utils';
@@ -21,6 +24,9 @@ export { IconRenderer } from './icon';
 export { BadgeRenderer } from './badge';
 export { DynamicRenderer } from './dynamic-renderer';
 export { ReactionRenderer } from './reaction';
+export { DialogRenderer } from './dialog';
+export { DrawerRenderer } from './drawer';
+export { TabsRenderer } from './tabs';
 
 export const basicRendererDefinitions: RendererDefinition[] = [
   {
@@ -107,6 +113,44 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'debounce', kind: 'prop' },
       { key: 'once', kind: 'prop' },
       { key: 'actions', kind: 'prop' }
+    ]
+  },
+  {
+    type: 'dialog',
+    displayName: 'Dialog',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    component: DialogRenderer,
+    regions: ['body', 'actions'],
+    fields: [
+      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'onOpen', kind: 'event' },
+      { key: 'onClose', kind: 'event' }
+    ]
+  },
+  {
+    type: 'drawer',
+    displayName: 'Drawer',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    component: DrawerRenderer,
+    regions: ['body', 'actions'],
+    fields: [
+      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'onOpen', kind: 'event' },
+      { key: 'onClose', kind: 'event' }
+    ]
+  },
+  {
+    type: 'tabs',
+    displayName: 'Tabs',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    component: TabsRenderer,
+    regions: ['toolbar'],
+    fields: [
+      { key: 'onChange', kind: 'event' },
+      { key: 'items', kind: 'prop' }
     ]
   }
 ];

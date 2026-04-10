@@ -1,13 +1,20 @@
 import React from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { useMemo } from 'react';
+import type { PageStatusSummary, RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import type { PageSchema } from './schemas';
 import { classNames } from './utils';
+import { useStatusPathPublication } from './status-hooks';
 
 export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
+  const summary = useMemo<PageStatusSummary>(() => ({
+    refreshTick: Number(props.nodeInstance.scope.get('refreshTick') ?? 0)
+  }), [props.nodeInstance.scope]);
+
+  useStatusPathPublication(props.nodeInstance.scope, typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined, summary);
 
   return (
     <section className={classNames('nop-page', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>

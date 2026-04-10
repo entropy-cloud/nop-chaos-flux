@@ -3,7 +3,57 @@ import type { BaseSchema, DynamicRendererSchema } from '@nop-chaos/flux-core';
 export interface PageSchema extends BaseSchema {
   type: 'page';
   title?: string;
+   data?: Record<string, any>;
+   statusPath?: string;
   body?: BaseSchema[];
+   header?: BaseSchema[];
+   footer?: BaseSchema[];
+}
+
+export interface DialogSchema extends BaseSchema {
+  type: 'dialog';
+  title?: string;
+  body?: BaseSchema[];
+  actions?: BaseSchema[];
+  open?: boolean;
+  defaultOpen?: boolean;
+  statusPath?: string;
+  closeOnOutsideClick?: boolean;
+}
+
+export interface DrawerSchema extends BaseSchema {
+  type: 'drawer';
+  title?: string;
+  body?: BaseSchema[];
+  actions?: BaseSchema[];
+  open?: boolean;
+  defaultOpen?: boolean;
+  side?: 'left' | 'right' | 'top' | 'bottom';
+  statusPath?: string;
+}
+
+export interface TabsItemSchema {
+  key?: string | number;
+  value?: string | number;
+  title?: string;
+  label?: string;
+  disabled?: boolean | string;
+  titleRegionKey?: string;
+  bodyRegionKey?: string;
+  toolbarRegionKey?: string;
+}
+
+export interface TabsSchema extends BaseSchema {
+  type: 'tabs';
+  items?: Array<Record<string, any>>;
+  value?: string | number;
+  defaultValue?: string | number;
+  valueOwnership?: 'local' | 'controlled' | 'scope';
+  valueStatePath?: string;
+  statusPath?: string;
+  toolbar?: BaseSchema | BaseSchema[];
+  orientation?: 'horizontal' | 'vertical';
+  variant?: 'default' | 'line';
 }
 
 export interface ContainerSchema extends BaseSchema {
