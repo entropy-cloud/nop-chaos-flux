@@ -93,9 +93,15 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   const spreadsheet = useMemo(() => deriveHostSnapshot(snapshot), [snapshot]);
   const spreadsheetScope = useHostScope({ spreadsheet }, props.path, 'spreadsheet');
 
-  const toolbarContent = props.regions.toolbar?.render({ scope: spreadsheetScope, actionScope });
-  const bodyContent = props.regions.body?.render({ scope: spreadsheetScope, actionScope });
-  const dialogsContent = props.regions.dialogs?.render({ scope: spreadsheetScope, actionScope });
+  const toolbarContent = props.regions.toolbar
+    ? props.helpers.render(props.regions.toolbar.templateNode, { scope: spreadsheetScope, actionScope })
+    : undefined;
+  const bodyContent = props.regions.body
+    ? props.helpers.render(props.regions.body.templateNode, { scope: spreadsheetScope, actionScope })
+    : undefined;
+  const dialogsContent = props.regions.dialogs
+    ? props.helpers.render(props.regions.dialogs.templateNode, { scope: spreadsheetScope, actionScope })
+    : undefined;
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
 
   useEffect(() => {
@@ -113,8 +119,8 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
       activeSheetId: spreadsheet.activeSheet?.id,
       selectionKind: snapshot.selection.kind,
     };
-    publishOwnerStatus(props.nodeInstance.scope.parent ?? props.nodeInstance.scope, statusPath, summary);
-  }, [props.nodeInstance.scope, snapshot.selection.kind, spreadsheet, statusPath]);
+    publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary);
+  }, [props.node.scope, snapshot.selection.kind, spreadsheet, statusPath]);
 
   return (
     <section className="nop-spreadsheet-page">

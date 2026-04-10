@@ -53,7 +53,7 @@ function SpreadsheetStatusProbe() {
 
 const pageRenderer: RendererDefinition = {
   type: 'page',
-  component: (props) => <section>{props.regions.body?.render()}</section>,
+  component: (props) => <section>{props.regions.body?.instantiate()}</section>,
   regions: ['body']
 };
 

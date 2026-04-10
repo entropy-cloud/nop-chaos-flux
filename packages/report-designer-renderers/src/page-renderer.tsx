@@ -98,15 +98,25 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
 
   const toolbarContent = toolbarSchema
     ? props.helpers.render(toolbarSchema, { scope: reportDesignerScope, actionScope })
-    : props.regions.toolbar?.render({ scope: reportDesignerScope, actionScope });
+    : props.regions.toolbar
+      ? props.helpers.render(props.regions.toolbar.templateNode, { scope: reportDesignerScope, actionScope })
+      : undefined;
   const fieldPanelContent = fieldPanelSchema
     ? props.helpers.render(fieldPanelSchema, { scope: reportDesignerScope, actionScope })
-    : props.regions.fieldPanel?.render({ scope: reportDesignerScope, actionScope });
+    : props.regions.fieldPanel
+      ? props.helpers.render(props.regions.fieldPanel.templateNode, { scope: reportDesignerScope, actionScope })
+      : undefined;
   const inspectorContent = inspectorSchema
     ? props.helpers.render(inspectorSchema, { scope: reportDesignerScope, actionScope })
-    : props.regions.inspector?.render({ scope: reportDesignerScope, actionScope });
-  const dialogsContent = props.regions.dialogs?.render({ scope: reportDesignerScope, actionScope });
-  const bodyContent = props.regions.body?.render({ scope: reportDesignerScope, actionScope });
+    : props.regions.inspector
+      ? props.helpers.render(props.regions.inspector.templateNode, { scope: reportDesignerScope, actionScope })
+      : undefined;
+  const dialogsContent = props.regions.dialogs
+    ? props.helpers.render(props.regions.dialogs.templateNode, { scope: reportDesignerScope, actionScope })
+    : undefined;
+  const bodyContent = props.regions.body
+    ? props.helpers.render(props.regions.body.templateNode, { scope: reportDesignerScope, actionScope })
+    : undefined;
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
 
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -127,8 +137,8 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
       selectionKind: snapshot.selectionTarget?.kind,
       fieldSourceCount: snapshot.fieldSources.length,
     };
-    publishOwnerStatus(props.nodeInstance.scope.parent ?? props.nodeInstance.scope, statusPath, summary);
-  }, [props.nodeInstance.scope, snapshot, statusPath]);
+    publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary);
+  }, [props.node.scope, snapshot, statusPath]);
 
   const headerSlot = (
     <>
