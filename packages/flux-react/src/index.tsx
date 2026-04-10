@@ -14,6 +14,7 @@ export { NodeRenderer } from './node-renderer';
 export {
   useRendererRuntime,
   useRenderScope,
+  useRenderInstancePath,
   useCurrentActionScope,
   useCurrentComponentRegistry,
   useRendererEnv,

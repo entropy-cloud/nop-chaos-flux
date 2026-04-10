@@ -1,0 +1,19 @@
+{
+  "type": "input-tree",
+  "name": "categoryIds",
+  "label": "Categories",
+  "treeMode": "checkbox",
+  "searchable": true,
+  "options": [
+    {
+      "label": "Platform",
+      "value": "platform",
+      "children": [
+        {
+          "label": "Runtime",
+          "value": "runtime"
+        }
+      ]
+    }
+  ]
+}

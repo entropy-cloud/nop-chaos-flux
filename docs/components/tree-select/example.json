@@ -1,0 +1,19 @@
+{
+  "type": "tree-select",
+  "name": "departmentId",
+  "label": "Department",
+  "clearable": true,
+  "searchable": true,
+  "options": [
+    {
+      "label": "Engineering",
+      "value": "engineering",
+      "children": [
+        {
+          "label": "Platform",
+          "value": "platform"
+        }
+      ]
+    }
+  ]
+}

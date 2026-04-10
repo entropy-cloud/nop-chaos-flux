@@ -1,4 +1,4 @@
-import type { BaseSchema } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaInput, SchemaValue } from '@nop-chaos/flux-core';
 
 export interface TableColumnSchema extends BaseSchema {
   label?: string;
@@ -48,6 +48,19 @@ export interface TableSchema extends BaseSchema {
   onPageChange?: BaseSchema;
   onSelectionChange?: BaseSchema;
   onRefresh?: BaseSchema;
+}
+
+export interface TreeSchema extends BaseSchema {
+  type: 'tree';
+  data?: SchemaValue;
+  childrenKey?: string;
+  labelField?: string;
+  keyField?: string;
+  node?: SchemaInput;
+  empty?: SchemaInput | string;
+  initiallyExpanded?: boolean | number;
+  expandOnClickNode?: boolean;
+  statusPath?: string;
 }
 
 export * from './chart-schemas';

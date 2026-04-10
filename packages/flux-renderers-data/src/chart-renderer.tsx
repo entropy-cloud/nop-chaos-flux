@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import * as echarts from 'echarts/core';
 import {
@@ -14,8 +14,8 @@ import {
   LegendComponent
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
+import { resolveRendererSlotContent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import type { ChartSchema, ChartSeriesSchema } from './chart-schemas';
 
 const EMPTY_CHART_SOURCE: Array<Record<string, unknown>> = [];
@@ -34,6 +34,7 @@ echarts.use([
 ]);
 
 export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
+  const componentRegistry = useCurrentComponentRegistry();
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
 
@@ -117,6 +118,46 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const isEmpty = source.length === 0 && series.every((s) => !s.data || s.data.length === 0);
 
   const chartHeight = typeof height === 'number' ? `${height}px` : (height || '400px');
+  const chartHandle = useMemo<ComponentHandle>(() => ({
+    id: typeof props.schema.componentId === 'string' ? props.schema.componentId : props.id,
+    type: 'chart',
+    get ref() {
+      return chartRef.current;
+    },
+    capabilities: {
+      invoke(method, payload) {
+        switch (method) {
+          case 'resize':
+            chartInstance.current?.resize(payload as echarts.ResizeOpts | undefined);
+            return { ok: true };
+          case 'setOption':
+            chartInstance.current?.setOption(payload as echarts.EChartsCoreOption, true);
+            return { ok: true };
+          case 'getDataURL':
+            return { ok: true, data: chartInstance.current?.getDataURL(payload as echarts.EChartsCoreOption) };
+          default:
+            return { ok: false, error: new Error(`Unsupported chart handle method: ${method}`) };
+        }
+      },
+      hasMethod(method) {
+        return method === 'resize' || method === 'setOption' || method === 'getDataURL';
+      },
+      listMethods() {
+        return ['resize', 'setOption', 'getDataURL'];
+      }
+    }
+  }), [props.id, props.schema.componentId]);
+
+  useEffect(() => {
+    if (!componentRegistry) {
+      return;
+    }
+
+    return componentRegistry.register(chartHandle, {
+      cid: props.meta.cid,
+      locator: props.nodeInstance.locator
+    });
+  }, [chartHandle, componentRegistry, props.meta.cid, props.nodeInstance.locator]);
 
   return (
     <div

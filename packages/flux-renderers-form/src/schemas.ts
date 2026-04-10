@@ -51,6 +51,37 @@ export interface CheckboxGroupSchema extends InputSchema {
   options?: SelectOptionsValue;
 }
 
+export interface InputTreeSchema extends InputSchema {
+  type: 'input-tree';
+  options?: SelectOptionsValue;
+  treeMode?: 'normal' | 'radio' | 'checkbox';
+  childrenKey?: string;
+  labelField?: string;
+  valueField?: string;
+  cascade?: boolean;
+  searchable?: boolean;
+  onlyLeaf?: boolean;
+  showIcon?: boolean;
+  showOutline?: boolean;
+  showPathLabel?: boolean;
+}
+
+export interface TreeSelectSchema extends InputSchema {
+  type: 'tree-select';
+  options?: SelectOptionsValue;
+  treeMode?: 'normal' | 'radio' | 'checkbox';
+  childrenKey?: string;
+  labelField?: string;
+  valueField?: string;
+  cascade?: boolean;
+  searchable?: boolean;
+  onlyLeaf?: boolean;
+  showIcon?: boolean;
+  showPathLabel?: boolean;
+  clearable?: boolean;
+  placeholder?: string;
+}
+
 export interface CheckboxSchema extends InputSchema {
   option?: {
     label: string;

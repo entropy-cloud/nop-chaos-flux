@@ -57,7 +57,7 @@ const buttonRenderer: RendererDefinition = {
   component: (props) => (
     <button
       type="button"
-      onClick={() => void props.events.onClick?.()}
+      onClick={(event) => void props.events.onClick?.(event)}
     >
       {String(props.props.label ?? props.meta.label ?? 'Button')}
     </button>
@@ -1111,6 +1111,149 @@ describe('formRendererDefinitions', () => {
       featured: true,
       tags: ['stable', 'beta']
     });
+  });
+
+  it('submits input-tree values through the shared form field path', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            categoryIds: []
+          },
+          body: [
+            {
+              type: 'input-tree',
+              name: 'categoryIds',
+              label: 'Categories',
+              treeMode: 'checkbox',
+              options: [
+                {
+                  label: 'Platform',
+                  value: 'platform',
+                  children: [{ label: 'Runtime', value: 'runtime' }]
+                }
+              ]
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit categories',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/categories',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        } as any}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Runtime' }));
+    fireEvent.click(screen.getByText('Submit categories'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(submitCalls[0]).toMatchObject({ categoryIds: ['runtime'] });
+  });
+
+  it('updates tree-select value through the shared form field path', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            departmentId: ''
+          },
+          body: [
+            {
+              type: 'tree-select',
+              name: 'departmentId',
+              label: 'Department',
+              options: [
+                {
+                  label: 'Engineering',
+                  value: 'eng',
+                  children: [{ label: 'Platform', value: 'platform' }]
+                }
+              ]
+            },
+            {
+              type: 'form-state-probe',
+              name: 'departmentId'
+            }
+          ]
+        } as any}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Department/ }));
+    fireEvent.click(await screen.findByText('Platform'));
+
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('form-state:departmentId').textContent ?? 'null')).toBe('platform');
+    });
+  });
+
+  it('shows inline error text when source-backed tree-select options fail to load', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'tree-select',
+              name: 'departmentId',
+              label: 'Department',
+              options: {
+                type: 'source',
+                action: 'ajax',
+                api: {
+                  url: '/api/tree-select-error'
+                }
+              }
+            }
+          ]
+        } as any}
+        env={{
+          ...env,
+          fetcher: async function <T>(api: ApiObject) {
+            if (api.url === '/api/tree-select-error') {
+              throw new Error('Tree select options failed');
+            }
+
+            return {
+              ok: true,
+              status: 200,
+              data: {} as T
+            };
+          }
+        }}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(await screen.findByText('Tree select options failed')).toBeTruthy();
   });
 
   it('preserves non-string checkbox-group values in form state and submit payloads', async () => {

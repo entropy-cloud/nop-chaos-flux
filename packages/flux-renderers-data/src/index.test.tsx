@@ -6,6 +6,22 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentComponentRegistry, useRenderScope } from '@nop-chaos/flux-react';
 import { dataRendererDefinitions } from './index';
 
+vi.mock('echarts/core', async () => {
+  const init = vi.fn(() => ({
+    setOption: vi.fn(),
+    resize: vi.fn(),
+    getDataURL: vi.fn(() => 'data:image/png;base64,mocked'),
+    showLoading: vi.fn(),
+    hideLoading: vi.fn(),
+    dispose: vi.fn()
+  }));
+
+  return {
+    use: vi.fn(),
+    init
+  };
+});
+
 const env: RendererEnv = {
   fetcher: async function <T>() {
     return { ok: true, status: 200, data: null as T };
@@ -22,6 +38,11 @@ const pageRenderer: RendererDefinition = {
 const textRenderer: RendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>
+};
+
+const iconRenderer: RendererDefinition = {
+  type: 'icon',
+  component: (props) => <span data-testid={props.meta.testid ?? undefined}>{String(props.props.icon ?? '')}</span>
 };
 
 const nodeInstanceProbeRenderer: RendererDefinition = {
@@ -129,6 +150,105 @@ describe('dataRendererDefinitions', () => {
 
     await waitFor(() => {
       expect(screen.getByText('hello')).toBeTruthy();
+    });
+  });
+
+  it('renders visual tree nodes through the node region with inherited bindings', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      iconRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'tree',
+            data: '${nodes}',
+            initiallyExpanded: true,
+            node: [
+              { type: 'icon', icon: '${depth}' },
+              { type: 'text', text: '${node.label}:${depth}:${parentNode ? parentNode.label : "root"}' }
+            ]
+          }]
+        }}
+        data={{
+          nodes: [{ id: 'root', label: 'Root', children: [{ id: 'child', label: 'Child', children: [] }] }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Root:0:root')).toBeTruthy();
+      expect(screen.getByText('Child:1:Root')).toBeTruthy();
+    });
+  });
+
+  it('renders tree empty content when data is empty', () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'tree',
+            data: '${nodes}',
+            empty: { type: 'text', text: 'No nodes yet' }
+          }]
+        }}
+        data={{ nodes: [] }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('No nodes yet')).toBeTruthy();
+  });
+
+  it('publishes tree status summary through statusPath', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tree',
+              data: '${nodes}',
+              statusPath: 'treeStatus'
+            },
+            {
+              type: 'text',
+              text: '${treeStatus.kind}:${treeStatus.nodeCount}:${treeStatus.childrenKey}'
+            }
+          ]
+        }}
+        data={{ nodes: [{ id: 'root', label: 'Root', children: [] }] }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('tree:1:children')).toBeTruthy();
     });
   });
 
@@ -828,6 +948,49 @@ describe('dataRendererDefinitions', () => {
     );
 
     expect(await screen.findByText('Member Alice')).toBeTruthy();
+  });
+
+  it('registers chart handles with DOM refs and imperative methods', async () => {
+    cleanup();
+    const registrySnapshots: any[] = [];
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'chart',
+              componentId: 'sales-chart',
+              chartType: 'pie',
+              source: [{ label: 'Jan', value: 12 }],
+              series: [{ name: 'Revenue', dataRegionKey: 'value' }]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        onComponentRegistryChange={(registry) => {
+          if (registry) {
+            registrySnapshots.push(registry);
+          }
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      const registry = registrySnapshots.at(-1);
+      const handle = registry?.resolve({ componentId: 'sales-chart' });
+      expect(handle?.type).toBe('chart');
+      expect(handle?.ref).toBeTruthy();
+      expect(handle?.capabilities.hasMethod?.('resize')).toBe(true);
+      expect(handle?.capabilities.hasMethod?.('setOption')).toBe(true);
+      expect(handle?.capabilities.hasMethod?.('getDataURL')).toBe(true);
+    });
   });
 
   it('propagates repeated table row instancePath into row child locators', async () => {

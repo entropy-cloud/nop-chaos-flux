@@ -1,0 +1,15 @@
+{
+  "type": "tree",
+  "data": "${fileTree}",
+  "initiallyExpanded": true,
+  "node": [
+    {
+      "type": "text",
+      "text": "${node.label}"
+    }
+  ],
+  "empty": {
+    "type": "text",
+    "text": "No files"
+  }
+}

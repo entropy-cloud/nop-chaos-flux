@@ -11,6 +11,7 @@ export interface ChartSeriesSchema {
 
 export interface ChartSchema extends BaseSchema {
   type: 'chart';
+  componentId?: string;
   chartType?: ChartType;
   title?: string;
   series?: any;

@@ -268,6 +268,30 @@ describe('createSchemaCompiler', () => {
     expect(node.eventActions.onClick).toMatchObject({ action: 'setValue' });
   });
 
+  it('compiles lifecycle actions outside eventActions', () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const node = compiler.compile({
+      type: 'text',
+      text: 'Lifecycle text',
+      onMount: { action: 'probe:mount' },
+      onUnmount: { action: 'probe:unmount' }
+    } as any) as any;
+
+    expect(node.lifecycleActions).toEqual({
+      onMount: { action: 'probe:mount' },
+      onUnmount: { action: 'probe:unmount' }
+    });
+    expect(node.eventActions.onMount).toBeUndefined();
+    expect(node.eventActions.onUnmount).toBeUndefined();
+    expect(node.eventKeys).not.toContain('onMount');
+    expect(node.eventKeys).not.toContain('onUnmount');
+  });
+
   it('pre-resolves component targets to _targetCid during compile when componentId is unique', () => {
     const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
     const compiler = createSchemaCompiler({

@@ -6,6 +6,7 @@ import { formRendererDefinition } from './renderers/form';
 import { inputRendererDefinitions } from './renderers/input';
 import { keyValueRendererDefinition } from './renderers/key-value';
 import { tagListRendererDefinition } from './renderers/tag-list';
+import { treeControlRendererDefinitions } from './renderers/tree-controls';
 
 export { ArrayEditorRenderer, arrayEditorRendererDefinition } from './renderers/array-editor';
 export { ConditionBuilderRenderer, conditionBuilderRendererDefinition } from './renderers/condition-builder/ConditionBuilder';
@@ -14,12 +15,14 @@ export { createFieldValidation, createInputRenderer, inputRendererDefinitions } 
 export { KeyValueRenderer, keyValueRendererDefinition } from './renderers/key-value';
 export * from './renderers/shared';
 export { TagListRenderer, tagListRendererDefinition } from './renderers/tag-list';
+export { treeControlRendererDefinitions } from './renderers/tree-controls';
 export * from './field-utils';
 export * from './schemas';
 
 export const formRendererDefinitions: RendererDefinition[] = [
   formRendererDefinition,
   ...inputRendererDefinitions,
+  ...treeControlRendererDefinitions,
   tagListRendererDefinition,
   keyValueRendererDefinition,
   arrayEditorRendererDefinition,
@@ -29,4 +32,3 @@ export const formRendererDefinitions: RendererDefinition[] = [
 export function registerFormRenderers(registry: RendererRegistry) {
   return registerRendererDefinitions(registry, formRendererDefinitions);
 }
-

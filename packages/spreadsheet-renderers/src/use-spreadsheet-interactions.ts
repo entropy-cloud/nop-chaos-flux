@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { cellAddress } from '@nop-chaos/spreadsheet-core';import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from './bridge.js';
+import { useCallback } from 'react';
+import { cellAddress } from '@nop-chaos/spreadsheet-core';
+import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from './bridge.js';
 import {
   useSnapshot,
   useSelection,
@@ -13,6 +14,9 @@ import {
   useComments,
   useFieldDrop,
   useKeyboard,
+  useMouseUpBinding,
+  useCellValueSync,
+  useSpreadsheetShell,
 } from './spreadsheet-interactions/index.js';
 
 export type { DragState, ResizeState, FillHandleState, StyleToolType } from './spreadsheet-interactions/index.js';
@@ -107,13 +111,9 @@ export interface SpreadsheetInteractionsReturn {
 
 export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig): SpreadsheetInteractionsReturn {
   const { bridge, sheetId, onLog } = config;
-  const addLog = useCallback((msg: string) => { onLog?.(msg); }, [onLog]);
+  const { addLog, cellValue, setCellValue, commentText, setCommentText, gridRef } = useSpreadsheetShell(onLog);
 
   const snapshot = useSnapshot(bridge);
-
-  const [cellValue, setCellValue] = useState('');
-  const [commentText, setCommentText] = useState('');
-  const gridRef = useRef<HTMLDivElement>(null);
 
   const {
     editingCell,
@@ -149,10 +149,7 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     selectionMouseUp(resizeState.isResizing, endResize, getSelectedRange);
   }, [selectionMouseUp, resizeState.isResizing, endResize, getSelectedRange]);
 
-  useEffect(() => {
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => window.removeEventListener('mouseup', handleMouseUp);
-  }, [handleMouseUp]);
+  useMouseUpBinding(handleMouseUp);
 
   const { handleCopy, handleCut, handlePaste, handleClear } = useClipboard(
     snapshot, bridge, sheetId, selectedCell, getSelectedRange, setCellValue, addLog
@@ -200,20 +197,12 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     }
   }, [handleEditSave, editingCellRef]);
 
-  const handleCellValueChange = useCallback((value: string) => {
-    if (!selectedCell) return;
-    setCellValue(value);
-    bridge.dispatch({
-      type: 'spreadsheet:setCellValue',
-      cell: {
-        sheetId,
-        address: cellAddress(selectedCell.row, selectedCell.col),
-        row: selectedCell.row,
-        col: selectedCell.col,
-      },
-      value,
-    });
-  }, [selectedCell, sheetId, bridge]);
+  const handleCellValueChange = useCellValueSync({
+    bridge,
+    sheetId,
+    selectedCell,
+    setCellValue
+  });
 
   const currentCell = selectedCell
     ? snapshot.activeSheet?.cells?.[cellAddress(selectedCell.row, selectedCell.col)]

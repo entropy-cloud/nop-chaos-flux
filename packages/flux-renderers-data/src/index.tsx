@@ -3,6 +3,7 @@ import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { TableRenderer } from './table-renderer';
 import { DataSourceRenderer } from './data-source-renderer';
 import { ChartRenderer } from './chart-renderer';
+import { TreeRenderer } from './tree-renderer';
 import type { TableSchema } from './schemas';
 
 function escapeJsonPointerSegment(segment: string) {
@@ -100,6 +101,7 @@ export * from './schemas';
 export { TableRenderer } from './table-renderer';
 export { DataSourceRenderer } from './data-source-renderer';
 export { ChartRenderer } from './chart-renderer';
+export { TreeRenderer } from './tree-renderer';
 
 export const dataRendererDefinitions: RendererDefinition[] = [
   {
@@ -136,6 +138,24 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'onClick', kind: 'event' },
       { key: 'onHover', kind: 'event' },
       { key: 'empty', kind: 'value-or-region' }
+    ]
+  },
+  {
+    type: 'tree',
+    displayName: 'Tree',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    component: TreeRenderer,
+    regions: ['node'],
+    fields: [
+      { key: 'data', kind: 'prop' },
+      { key: 'childrenKey', kind: 'prop' },
+      { key: 'labelField', kind: 'prop' },
+      { key: 'keyField', kind: 'prop' },
+      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+      { key: 'initiallyExpanded', kind: 'prop' },
+      { key: 'expandOnClickNode', kind: 'prop' },
+      { key: 'statusPath', kind: 'prop' }
     ]
   }
 ];
