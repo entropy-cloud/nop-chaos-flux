@@ -1,7 +1,7 @@
-import type { NodeInstance, NodeLocator } from './node-identity';
+import type { NodeInstance, InstanceFrame } from './node-identity';
 import type { SchemaObject, SchemaValue, SchemaPath, ApiSchema, OperationControlConfig } from './schema';
 import type { ScopeRef } from './scope';
-import type { ComponentHandleRegistry, RendererRuntime, CompiledSchemaNode, RendererEnv } from './renderer';
+import type { ComponentHandleRegistry, RendererRuntime, RendererEnv } from './renderer';
 import type { FormRuntime, PageRuntime } from './runtime';
 
 export interface ActionSchema extends SchemaObject {
@@ -56,14 +56,13 @@ export interface FluxActionEvent {
 export interface ActionContext {
   runtime: RendererRuntime;
   scope: ScopeRef;
-  locator?: NodeLocator;
+  instancePath?: readonly InstanceFrame[];
   nodeInstance?: NodeInstance;
   getInstanceKey?: () => string | undefined;
   interactionId?: string;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   event?: FluxActionEvent;
-  node?: CompiledSchemaNode;
   form?: FormRuntime;
   page?: PageRuntime;
   dialogId?: string;
@@ -122,13 +121,12 @@ export interface ImportedNamespaceContext {
   componentRegistry?: ComponentHandleRegistry;
   scope: ScopeRef;
   spec: import('./schema').XuiImportSpec;
-  node?: CompiledSchemaNode;
   nodeInstance?: NodeInstance;
 }
 
 export interface ActionMonitorPayload {
   actionType: string;
-  locator?: NodeLocator;
+  instancePath?: readonly InstanceFrame[];
   nodeId?: string;
   path?: SchemaPath;
   interactionId?: string;

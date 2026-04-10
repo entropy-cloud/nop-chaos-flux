@@ -45,6 +45,20 @@ export interface SchemaFieldRule {
   regionKey?: string;
   allowSource?: boolean;
   sourceStateKey?: string;
+  /**
+   * Declared parameter names for parameterized regions.
+   * Only valid when kind is 'region' or 'value-or-region'.
+   * Names must not start with '$' (reserved for slot-frame metadata).
+   * At runtime, these bindings are published under the reserved $slot frame
+   * rather than flattened into top-level scope names.
+   */
+  params?: readonly string[];
+  /**
+   * When true, the child scope created for this parameterized region is
+   * isolated from parent lexical scope.
+   * Defaults to false (inherits parent scope).
+   */
+  isolate?: boolean;
 }
 
 export type RequestDedupStrategy = 'cancel-previous' | 'parallel' | 'ignore-new';

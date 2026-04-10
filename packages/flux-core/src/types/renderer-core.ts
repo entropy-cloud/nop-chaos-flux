@@ -2,16 +2,17 @@ import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope } from './actions';
 import type { ExpressionCompiler } from './compilation';
 import type { RendererSchemaValidator } from '../schema-diagnostics';
-import type { NodeLocator, NodeInstance, ResolutionContext, ResolutionResult, TemplateNode } from './node-identity';
+import type { NodeInstance, ResolutionContext, TemplateNode } from './node-identity';
 import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
-import type { CompiledNodeRuntimeState, CompiledSchemaNode, ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
+import type { CompiledNodeRuntimeState, ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
 import type { RendererPlugin } from './renderer-plugin';
 import type { DataSourceController, DataSourceRegistration, FormLifecycleHandlers, FormRuntime, PageRuntime } from './runtime';
 import type { ApiSchema, BaseSchema, DataSourceSchema, ReactionSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, SourceSchema, XuiImportSpec } from './schema';
 import type { CreateScopeOptions, ScopeRef } from './scope';
 import type { CompiledFormValidationModel, ValidationRule } from './validation';
+import type { CompiledTemplate } from './node-identity';
 
 export interface ValidationCollectContext<S extends BaseSchema = BaseSchema> {
   schema: S;
@@ -57,10 +58,8 @@ export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   id: string;
   path: SchemaPath;
   schema: S;
-  locator?: NodeLocator;
   templateNode: TemplateNode<S>;
-  node: CompiledSchemaNode<S>;
-  nodeInstance: NodeInstance<S>;
+  node: NodeInstance<S>;
   props: Readonly<Record<string, unknown>>;
   meta: ResolvedNodeMeta;
   regions: Readonly<Record<string, RenderRegionHandle>>;
@@ -101,12 +100,11 @@ export interface RendererRuntime {
   expressionCompiler: ExpressionCompiler;
   schemaCompiler: SchemaCompiler;
   plugins: readonly RendererPlugin[];
-  compile(schema: SchemaInput): CompiledSchemaNode | CompiledSchemaNode[];
+  compile(schema: SchemaInput): CompiledTemplate;
   evaluate<T = unknown>(target: unknown, scope: ScopeRef): T;
-  resolveNode(locator: NodeLocator, options?: { componentRegistry?: ComponentHandleRegistry }): ResolutionResult;
-  resolveTarget(target: ComponentTarget, ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry }): ResolutionResult;
-  resolveNodeMeta(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta;
-  resolveNodeProps(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps;
+  resolveTarget(target: ComponentTarget, ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry }): NodeInstance | undefined;
+  resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta;
+  resolveNodeProps(node: TemplateNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps;
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;
   createActionScope(input?: { id?: string; parent?: ActionScope }): ActionScope;
   createComponentHandleRegistry(input?: { id?: string; parent?: ComponentHandleRegistry }): ComponentHandleRegistry;
@@ -115,7 +113,6 @@ export interface RendererRuntime {
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
-    node?: CompiledSchemaNode;
     nodeInstance?: NodeInstance;
   }): Promise<void>;
   getImportedExpressionBindings(input: {

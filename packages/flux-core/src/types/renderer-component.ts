@@ -2,23 +2,12 @@ import type { ActionContext, ActionResult } from './actions';
 import type {
   InspectResult,
   NodeInstance,
-  NodeLocator,
-  RepeatedInstanceSelector,
-  RepeatedTargetPlan,
-  ResolutionResult,
-  StaticTargetPlan
 } from './node-identity';
 import type { ResolvedNodeMeta, ResolvedNodeProps } from './renderer-compiler';
 import type { ScopeRef } from './scope';
 
 export interface ComponentTarget {
-  locator?: NodeLocator;
-  staticPlan?: StaticTargetPlan;
-  repeatedPlan?: RepeatedTargetPlan;
-  repeatedSelector?: RepeatedInstanceSelector;
   _targetCid?: number;
-  _targetTemplateId?: string;
-  componentInstanceKey?: string;
   componentId?: string;
   componentName?: string;
 }
@@ -36,7 +25,6 @@ export interface ComponentHandleDebugData {
   path?: string;
   rendererType?: string;
   nodeInstance?: NodeInstance;
-  locator?: NodeLocator;
   scope?: ScopeRef;
   resolvedMeta?: ResolvedNodeMeta;
   resolvedProps?: ResolvedNodeProps['value'];
@@ -45,9 +33,6 @@ export interface ComponentHandleDebugData {
 
 export interface ComponentHandle {
   _cid?: number;
-  _locator?: NodeLocator;
-  _templateId?: string;
-  _instanceKey?: string;
   _mounted?: boolean;
   id?: string;
   name?: string;
@@ -58,7 +43,6 @@ export interface ComponentHandle {
 
 export interface ComponentHandleDebugEntry {
   cid?: number;
-  locator?: NodeLocator;
   id?: string;
   name?: string;
   type: string;
@@ -79,20 +63,11 @@ export interface ComponentHandleRegistry {
     handle: ComponentHandle,
     options?: {
       cid?: number;
-      locator?: NodeLocator;
-      templateId?: string;
-      instanceKey?: string;
-      dynamicLoaded?: boolean;
     }
   ): () => void;
   unregister(handle: ComponentHandle): void;
-  cleanupDynamic(templateId: string): void;
   resolve(target: ComponentTarget): ComponentHandle | undefined;
-  resolveHandle?(locator: NodeLocator): ComponentHandle | undefined;
-  getHandleLocator?(handle: ComponentHandle): NodeLocator | undefined;
-  getLocatorByCid?(cid: number): NodeLocator | undefined;
   inspectCid?(cid: number): InspectResult;
-  resolveTarget?(target: ComponentTarget): ResolutionResult;
   getHandleByCid?(cid: number): ComponentHandle | undefined;
   setHandleDebugData?(cid: number, data: ComponentHandleDebugData | undefined): void;
   getHandleDebugData?(cid: number): ComponentHandleDebugData | undefined;

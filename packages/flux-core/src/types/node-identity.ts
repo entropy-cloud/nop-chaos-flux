@@ -1,9 +1,8 @@
 import type { CompiledRuntimeValue, RuntimeValueState } from './compilation';
 import type { BaseSchema, SchemaPath } from './schema';
 import type { ScopeDependencySet, ScopeRef } from './scope';
-import type { ComponentHandle } from './renderer-component';
+import type { CompiledSchemaMeta } from './renderer-compiler';
 
-export type TemplateGraphId = string;
 export type TemplateNodeId = number;
 export type RepeatedTemplateId = string;
 export type RuntimeId = string;
@@ -14,17 +13,21 @@ export interface InstanceFrame {
   instanceKey: InstanceKey;
 }
 
-export interface NodeLocator {
-  runtimeId: RuntimeId;
-  templateGraphId: TemplateGraphId;
-  templateNodeId: TemplateNodeId;
-  instancePath?: readonly InstanceFrame[];
-}
-
 export interface TemplateRegion {
   key: string;
   path: SchemaPath;
   node: TemplateNode | readonly TemplateNode[] | null;
+  /**
+   * Declared parameter names for parameterized regions (see CompiledRegion.params).
+   * Preserved from CompiledRegion into the template artifact so the runtime can
+   * publish a reserved $slot frame during instantiation.
+   */
+  params?: readonly string[];
+  /**
+   * When true, the child scope created for this parameterized region is
+   * isolated from parent lexical scope.
+   */
+  isolate?: boolean;
 }
 
 export type ScopePlan =
@@ -41,7 +44,7 @@ export type ScopePlan =
     };
 
 export type RegistryPlan = Readonly<Record<string, unknown>>;
-export type ValidationPlan = Readonly<Record<string, unknown>>;
+export type ValidationPlan = import('./validation').CompiledFormValidationModel;
 export type RuntimeProgramState<T = unknown> = RuntimeValueState<T>;
 
 export interface TemplateNode<S extends BaseSchema = BaseSchema> {
@@ -51,13 +54,20 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   schema: S;
   templatePath: SchemaPath;
   rendererType: string;
+  component: import('./renderer-core').RendererDefinition<S>;
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
-  metaProgram: CompiledRuntimeValue<Record<string, unknown>>;
+  metaProgram: CompiledSchemaMeta;
   eventPlans: Readonly<Record<string, unknown>>;
+  lifecycleActions?: Readonly<{
+    onMount?: unknown;
+    onUnmount?: unknown;
+  }>;
   regions: Readonly<Record<string, TemplateRegion>>;
   scopePlan: ScopePlan;
   registryPlan?: RegistryPlan;
   validationPlan?: ValidationPlan;
+  sourcePropKeys: readonly string[];
+  sourceStatePropKeys: Readonly<Record<string, string>>;
 }
 
 export interface RepeatedTemplate {
@@ -72,7 +82,6 @@ export interface RepeatedTemplate {
 }
 
 export interface CompiledTemplate {
-  templateGraphId: TemplateGraphId;
   root: TemplateNode | readonly TemplateNode[];
   repeatedTemplates: ReadonlyMap<RepeatedTemplateId, RepeatedTemplate>;
 }
@@ -88,45 +97,17 @@ export interface NodeState {
 }
 
 export interface NodeInstance<S extends BaseSchema = BaseSchema> {
-  cid?: number;
-  locator: NodeLocator;
+  cid: number;
+  instancePath?: readonly InstanceFrame[];
   templateNode: TemplateNode<S>;
   scope: ScopeRef;
   state: NodeState;
 }
 
-export interface StaticTargetPlan {
-  kind: 'static';
-  templateGraphId: TemplateGraphId;
-  templateNodeId: TemplateNodeId;
-}
-
-export interface RepeatedTargetPlan {
-  kind: 'repeated';
-  templateGraphId: TemplateGraphId;
-  templateNodeId: TemplateNodeId;
-  repeatedTemplateId: RepeatedTemplateId;
-}
-
-export interface RepeatedInstanceSelector {
-  templateGraphId: TemplateGraphId;
-  repeatedTemplateId: RepeatedTemplateId;
-  instanceKey: InstanceKey;
-  templateNodeId: TemplateNodeId;
-}
-
 export interface ResolutionContext {
   runtimeId: RuntimeId;
   instancePath?: readonly InstanceFrame[];
-  instancePathFor?(repeatedTemplateId: RepeatedTemplateId): readonly InstanceFrame[] | undefined;
-  instancePathForExplicit?(repeatedTemplateId: RepeatedTemplateId, instanceKey: InstanceKey): readonly InstanceFrame[] | undefined;
 }
-
-export type ResolutionResult =
-  | { kind: 'resolved'; locator: NodeLocator; handle?: ComponentHandle }
-  | { kind: 'notMaterialized'; locator: NodeLocator }
-  | { kind: 'notFound' }
-  | { kind: 'ambiguous'; matches: readonly NodeLocator[] };
 
 export interface ScopeSnapshot {
   id?: string;
@@ -136,8 +117,8 @@ export interface ScopeSnapshot {
 }
 
 export interface NodeInspectPayload {
-  cid?: number;
-  locator: NodeLocator;
+  cid: number;
+  instancePath?: readonly InstanceFrame[];
   state?: NodeState;
   scopeChain?: readonly ScopeSnapshot[];
   resolvedMeta?: unknown;
@@ -146,15 +127,11 @@ export interface NodeInspectPayload {
 
 export type InspectResult =
   | { kind: 'resolved'; payload: NodeInspectPayload }
-  | { kind: 'notMaterialized'; locator?: NodeLocator }
+  | { kind: 'notMaterialized'; cid?: number }
   | { kind: 'notFound' };
 
-export interface RuntimeNodeResolver {
-  resolveNode(locator: NodeLocator): ResolutionResult;
-}
-
 export interface NodeRefRegistry {
-  resolveCid(cid: number): NodeLocator | undefined;
+  resolveCid(cid: number): NodeInstance | undefined;
   inspectCid(cid: number): InspectResult;
 }
 
@@ -164,64 +141,4 @@ export function normalizeInstancePath(instancePath?: readonly InstanceFrame[] | 
   }
 
   return instancePath;
-}
-
-export function normalizeNodeLocator(locator: NodeLocator): NodeLocator {
-  const instancePath = normalizeInstancePath(locator.instancePath);
-
-  if (instancePath === locator.instancePath) {
-    return locator;
-  }
-
-  return {
-    ...locator,
-    instancePath,
-  };
-}
-
-export function serializeNodeLocator(locator: NodeLocator): string {
-  const normalized = normalizeNodeLocator(locator);
-
-  return JSON.stringify([
-    normalized.runtimeId,
-    normalized.templateGraphId,
-    normalized.templateNodeId,
-    normalized.instancePath ?? null,
-  ]);
-}
-
-export function isNodeLocator(value: unknown): value is NodeLocator {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-  if (typeof candidate.runtimeId !== 'string' || candidate.runtimeId.length === 0) {
-    return false;
-  }
-
-  if (typeof candidate.templateGraphId !== 'string' || candidate.templateGraphId.length === 0) {
-    return false;
-  }
-
-  if (typeof candidate.templateNodeId !== 'number' || !Number.isInteger(candidate.templateNodeId)) {
-    return false;
-  }
-
-  if (candidate.instancePath === undefined) {
-    return true;
-  }
-
-  if (!Array.isArray(candidate.instancePath)) {
-    return false;
-  }
-
-  return candidate.instancePath.every((frame) => {
-    if (!frame || typeof frame !== 'object') {
-      return false;
-    }
-
-    const typedFrame = frame as Record<string, unknown>;
-    return typeof typedFrame.repeatedTemplateId === 'string' && typeof typedFrame.instanceKey === 'string';
-  });
 }

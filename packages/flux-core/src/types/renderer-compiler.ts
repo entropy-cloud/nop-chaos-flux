@@ -4,6 +4,7 @@ import type { BaseSchema, FieldLinkageSchema, SchemaFieldRule, SchemaInput, Sche
 import type { ScopeDependencySet } from './scope';
 import type { CompiledFormValidationModel } from './validation';
 import type { CompiledCidState } from '../compiled-cid';
+import type { CompiledTemplate } from './node-identity';
 
 export interface CompiledSchemaMeta {
   id?: CompiledRuntimeValue<string | undefined>;
@@ -21,6 +22,17 @@ export interface CompiledRegion {
   key: string;
   path: SchemaPath;
   node: CompiledSchemaNode | CompiledSchemaNode[] | null;
+  /**
+   * Declared parameter names for parameterized regions (see SchemaFieldRule.params).
+   * When present, region instantiation publishes a reserved $slot frame containing
+   * the provided bindings rather than flattening them into ordinary top-level scope names.
+   */
+  params?: readonly string[];
+  /**
+   * When true, the child scope created for this parameterized region is
+   * isolated from parent lexical scope.
+   */
+  isolate?: boolean;
 }
 
 export interface CompiledNodeFlags {
@@ -106,6 +118,10 @@ export interface CompiledNodeRuntimeState {
   _lastPropsResult?: ResolvedNodeProps;
 }
 
+/**
+ * @internal Compiler artifact. Do not use in renderer components or runtime paths.
+ * Use TemplateNode (from CompiledTemplate) and NodeInstance instead.
+ */
 export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   id: string;
   type: S['type'];
@@ -152,7 +168,7 @@ export interface CompileNodeOptions {
 }
 
 export interface SchemaCompiler {
-  compile(schema: SchemaInput, options?: CompileSchemaOptions): CompiledSchemaNode | CompiledSchemaNode[];
+  compile(schema: SchemaInput, options?: CompileSchemaOptions): CompiledTemplate;
   compileNode(schema: BaseSchema, options: CompileNodeOptions): CompiledSchemaNode;
   validate?(schema: SchemaInput, options?: CompileSchemaOptions): SchemaDiagnostic[];
 }
