@@ -10,7 +10,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getCompiledCidState, isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope, useCurrentActionScope, useCurrentComponentRegistry } from './hooks';
-import { CompiledNodeContext, NodeInstanceContext, RenderInstancePathContext } from './contexts';
+import { NodeMetaContext, RenderInstancePathContext } from './contexts';
 import { createFragmentScopeChange } from './fragment-scope';
 import { NodeRenderer } from './node-renderer';
 
@@ -131,8 +131,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const currentScope = useRenderScope();
   const currentActionScope = useCurrentActionScope();
   const currentComponentRegistry = useCurrentComponentRegistry();
-  const currentCompiledNode = useContext(CompiledNodeContext);
-  const currentNodeInstance = useContext(NodeInstanceContext);
+  const currentNodeMeta = useContext(NodeMetaContext);
   const currentInstancePath = useContext(RenderInstancePathContext);
   const fragmentScopeCacheKey = useId();
   const options = props.options;
@@ -141,8 +140,8 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const isolate = options?.isolate;
   const pathSuffix = options?.pathSuffix;
   const scopeKey = options?.scopeKey;
-  const ownerNode = options?.ownerNode ?? currentCompiledNode ?? undefined;
-  const ownerNodeInstance = options?.ownerNodeInstance ?? currentNodeInstance ?? undefined;
+  const ownerNode = options?.ownerNode ?? currentNodeMeta?.node ?? undefined;
+  const ownerNodeInstance = options?.ownerNodeInstance ?? currentNodeMeta?.nodeInstance ?? undefined;
   const compileOptions = useMemo<CompileSchemaOptions | undefined>(() => {
     const cidState = ownerNode ? getCompiledCidState(ownerNode) : undefined;
     const ownerTemplatePath = getOwnerTemplatePath({ ownerNode, ownerNodeInstance });

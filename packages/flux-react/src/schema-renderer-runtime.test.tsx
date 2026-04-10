@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { RendererDefinition, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
-import { createSchemaRenderer, NodeInstanceContext, RenderNodes, RuntimeContext, ScopeContext } from './index';
+import { createSchemaRenderer, NodeMetaContext, RenderNodes, RuntimeContext, ScopeContext } from './index';
 import {
   actionScopeProbeRenderer,
   buttonRenderer,
@@ -165,9 +165,16 @@ describe('createSchemaRenderer runtime behavior', () => {
     render(
       <RuntimeContext.Provider value={runtime}>
         <ScopeContext.Provider value={page.scope}>
-          <NodeInstanceContext.Provider value={ownerNodeInstance}>
+          <NodeMetaContext.Provider value={{
+            id: ownerNodeInstance.templateNode.id,
+            path: ownerNodeInstance.templateNode.templatePath,
+            type: ownerNodeInstance.templateNode.rendererType,
+            locator: ownerNodeInstance.locator,
+            templateNode: ownerNodeInstance.templateNode,
+            nodeInstance: ownerNodeInstance
+          }}>
             <RenderNodes input={{ type: 'path-probe' }} options={{ pathSuffix: 'inline' }} />
-          </NodeInstanceContext.Provider>
+          </NodeMetaContext.Provider>
         </ScopeContext.Provider>
       </RuntimeContext.Provider>
     );

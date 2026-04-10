@@ -40,11 +40,9 @@ export {
 export {
   ActionScopeContext,
   ClassAliasesContext,
-  CompiledNodeContext,
   ComponentRegistryContext,
   FormContext,
   NodeMetaContext,
-  NodeInstanceContext,
   PageContext,
   RenderInstancePathContext,
   RuntimeContext,

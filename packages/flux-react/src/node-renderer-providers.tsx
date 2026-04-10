@@ -9,9 +9,7 @@ import type {
 import {
   ActionScopeContext,
   ClassAliasesContext,
-  CompiledNodeContext,
   ComponentRegistryContext,
-  NodeInstanceContext,
   NodeMetaContext,
   ScopeContext
 } from './contexts';
@@ -52,22 +50,18 @@ export function NodeRendererProviders(props: React.PropsWithChildren<{
   ) as React.ReactNode;
 
   return (
-    <CompiledNodeContext.Provider value={props.node}>
-      <NodeMetaContext.Provider value={{
-        id: props.templateNode.id,
-        path: props.templateNode.templatePath,
-        type: props.templateNode.rendererType,
-        locator: props.locator,
-        templateNode: props.templateNode,
-        node: props.node,
-        nodeInstance: props.nodeInstance
-      }}>
-        <NodeInstanceContext.Provider value={props.nodeInstance}>
-          <ScopeContext.Provider value={props.scope}>
-            {wrappedByPlan}
-          </ScopeContext.Provider>
-        </NodeInstanceContext.Provider>
-      </NodeMetaContext.Provider>
-    </CompiledNodeContext.Provider>
+    <NodeMetaContext.Provider value={{
+      id: props.templateNode.id,
+      path: props.templateNode.templatePath,
+      type: props.templateNode.rendererType,
+      locator: props.locator,
+      templateNode: props.templateNode,
+      node: props.node,
+      nodeInstance: props.nodeInstance
+    }}>
+      <ScopeContext.Provider value={props.scope}>
+        {wrappedByPlan}
+      </ScopeContext.Provider>
+    </NodeMetaContext.Provider>
   );
 }

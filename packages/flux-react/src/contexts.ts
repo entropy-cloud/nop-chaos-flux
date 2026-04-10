@@ -3,10 +3,8 @@ import type { Context } from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
-  CompiledSchemaNode,
   FormRuntime,
   InstanceFrame,
-  NodeInstance,
   PageRuntime,
   RenderNodeMeta,
   RendererRuntime,
@@ -21,8 +19,6 @@ export const ComponentRegistryContext = createContext<ComponentHandleRegistry | 
 export const FormContext = createContext<FormRuntime | undefined>(undefined);
 export const PageContext = createContext<PageRuntime | undefined>(undefined);
 export const NodeMetaContext = createContext<RenderNodeMeta | null>(null);
-export const NodeInstanceContext = createContext<NodeInstance | null>(null);
-export const CompiledNodeContext = createContext<CompiledSchemaNode | null>(null);
 export const ClassAliasesContext = createContext<Record<string, string> | undefined>(undefined);
 
 export function useRequiredContext<T>(context: Context<T | null>, label: string): T {

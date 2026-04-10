@@ -18,7 +18,6 @@ import {
   ComponentRegistryContext,
   FormContext,
   NodeMetaContext,
-  NodeInstanceContext,
   PageContext,
   RenderInstancePathContext,
   RuntimeContext,
@@ -173,7 +172,7 @@ export function useCurrentNodeMeta(): RenderNodeMeta {
 }
 
 export function useCurrentNodeInstance() {
-  return useContext(NodeInstanceContext) ?? undefined;
+  return useContext(NodeMetaContext)?.nodeInstance ?? undefined;
 }
 
 export function useActionDispatcher() {
@@ -188,7 +187,6 @@ export function useRenderFragment() {
   const form = useCurrentForm();
   const page = useCurrentPage();
   const nodeMeta = useContext(NodeMetaContext);
-  const nodeInstance = useContext(NodeInstanceContext);
 
   return useMemo(
     () => createHelpers({
@@ -199,11 +197,11 @@ export function useRenderFragment() {
       form,
       page,
       node: nodeMeta?.node,
-      nodeInstance: nodeInstance ?? undefined,
-      locator: nodeInstance?.locator,
+      nodeInstance: nodeMeta?.nodeInstance ?? undefined,
+      locator: nodeMeta?.nodeInstance?.locator,
       dialogId: scope.get('dialogId') as string | undefined
     }).render,
-    [runtime, scope, actionScope, componentRegistry, form, page, nodeMeta, nodeInstance]
+    [runtime, scope, actionScope, componentRegistry, form, page, nodeMeta]
   );
 }
 

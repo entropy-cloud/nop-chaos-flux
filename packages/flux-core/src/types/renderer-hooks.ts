@@ -65,7 +65,7 @@ export interface RenderNodeMeta {
   type: string;
   locator?: NodeLocator;
   templateNode: TemplateNode;
-  node: CompiledSchemaNode;
+  node?: CompiledSchemaNode;
   nodeInstance?: NodeInstance;
 }
 
