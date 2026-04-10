@@ -299,18 +299,26 @@ createScope({
 - 优化点足够明确
 - 性能和语义边界不会互相污染
 
-## Current Gaps To Tighten In Docs
+## Data Field Ownership By Node Family
 
-当前文档还需要进一步收口的点：
+下面是 `data` 字段在各节点家族中的统一归属规则，已基于当前 live codebase 审计：
 
-- `page` 设计文档尚未正式把 `data` 写为 page root scope 初始化字段
-- 缺少一份统一文档解释 `data`、默认继承、`isolate`、row exception、reject `$parentScope`
-- row scope 的“默认隔离但可显式 opt-out”目前主要散在 table performance 文档中，缺少通用说明
+| 节点 | data 语义 | scope 创建者 |
+|---|---|---|
+| `page` | 初始化 page root scope | page renderer/host 在 mount 时创建 `PageRuntime` + page scope |
+| `form` | 初始化 form own scope / initial values | form renderer 在 mount 时创建 `FormRuntime` + form scope |
+| `dialog` | 初始化 dialog own scope | dialog host/renderer 在每次打开时创建 `SurfaceRuntime` + surface scope；不复用 page store |
+| `drawer` | 初始化 drawer own scope | 与 dialog 相同，共用 `SurfaceRuntime`/`SurfaceStore` 模型，`kind: 'drawer'` |
+| fragment `render({ data })` | 创建 fragment child scope | `RenderNodes` 在收到 `options.data` 时创建 child scope；不由 `NodeRenderer` 创建 |
+| table row | 隔离 row scope，包含 `record`/`index`/`rowKey` + 可选 `rowData` 投影 | table renderer 在每行渲染时创建；默认 `isolate: true` |
+| loop item | 继承 parent lexical scope，叠加 item-local bindings | loop renderer 在每项渲染时创建；默认非隔离 |
+
+这些 owner 规则与 `docs/architecture/renderer-runtime.md` 的"Execution Boundary Ownership Matrix"保持一致：creator-owned boundaries 只由具体创建者创建和发布，不经过 `NodeRenderer` 通用层。
 
 ## Recommended Follow-Up
 
-- 在 `page` 组件设计中补齐 `data` 作为 root scope init patch
-- 在 `dialog` / `drawer` 后续若引入 `data`，沿用相同语义
+- 在 `page` 组件设计中补齐 `data` 作为 root scope init patch（如尚未更新）
+- `dialog` / `drawer` 引入 `data` 时沿用相同语义（初始化 surface own scope）
 - 继续保持 row scope 使用现有 `isolate` 术语，不再新增 `isolateScope`
 
 ## Related Documents

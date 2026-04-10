@@ -1,12 +1,10 @@
-import { useContext, useEffect, useMemo, memo } from 'react';
+import { useContext, useMemo, memo } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
   ComponentHandleRegistry,
   CompiledNodeRuntimeState,
   CompiledSchemaNode,
-  FormRuntime,
-  PageRuntime,
   RendererComponentProps,
   ResolvedNodeMeta,
   ResolvedNodeProps,
@@ -16,17 +14,9 @@ import type {
 import { mergeClassAliases, resolveClassAliases } from '@nop-chaos/flux-core';
 import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
 import {
-  ActionScopeContext,
   ClassAliasesContext,
-  CompiledNodeContext,
-  ComponentRegistryContext,
-  FormContext,
-  NodeMetaContext,
-  NodeInstanceContext,
-  PageContext,
-  ScopeContext
 } from './contexts';
-import { useRenderInstancePath, useRendererRuntime } from './hooks';
+import { useRenderInstancePath, useRendererRuntime, useCurrentForm, useCurrentPage } from './hooks';
 import { createHelpers } from './helpers';
 import { createNormalizedActionEvent } from './helpers';
 import { RenderNodes } from './render-nodes';
@@ -37,12 +27,12 @@ import {
 } from './node-renderer-utils';
 import { NodeFrameWrapper } from './node-frame-wrapper';
 import { createCompatibilityNodeInstance } from './node-instance';
-import { useNodeForm } from './useNodeForm';
 import { useNodeScopes } from './useNodeScopes';
 import { useNodeImports } from './useNodeImports';
-import { useFormComponentHandleRegistration } from './useFormComponentHandleRegistration';
 import { useNodeDebugData } from './useNodeDebugData';
 import { useNodeSourceProps } from './use-node-source-props';
+import { useNodeLifecycleActions, useRenderMonitor } from './node-renderer-effects';
+import { NodeRendererProviders } from './node-renderer-providers';
 
 export { resolveFrameWrapMode } from './node-renderer-utils';
 
@@ -51,12 +41,12 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
-  form?: FormRuntime;
-  page?: PageRuntime;
 }) {
   const runtime = useRendererRuntime();
   const instancePath = useRenderInstancePath();
   const parentClassAliases = useContext(ClassAliasesContext);
+  const currentForm = useCurrentForm();
+  const currentPage = useCurrentPage();
   const nodeState = useMemo<CompiledNodeRuntimeState>(() => props.node.createRuntimeState(), [props.node]);
 
   const isStatic = props.node.flags.isStatic;
@@ -96,14 +86,13 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     ? { ...baseMeta, className: resolvedClassName }
     : baseMeta;
 
-  const activeForm = useNodeForm(runtime, props.node, props.scope, props.page, baseResolvedProps, props.form);
   const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, {
     nodeId: props.node.id,
     actionScopePolicy: props.node.component.actionScopePolicy,
     componentRegistryPolicy: props.node.component.componentRegistryPolicy
   }, props.actionScope, props.componentRegistry);
 
-  const activeScope = activeForm?.scope ?? props.scope;
+  const activeScope = props.scope;
   const nodeLocator = getCompiledNodeLocator(props.node, runtime.runtimeId, instancePath);
   const importOwnerNodeInstance = createCompatibilityNodeInstance({
     node: props.node,
@@ -114,7 +103,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     mounted: true
   });
   const nodeImports = getNodeImports(props.node);
-  const importExpressionBindings = useNodeImports(runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node, importOwnerNodeInstance, props.page);
+  const importExpressionBindings = useNodeImports(runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node, importOwnerNodeInstance, currentPage);
   const renderScope = useMemo(
     () => Object.keys(importExpressionBindings).length === 0
       ? activeScope
@@ -152,7 +141,6 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   );
   const templateNode = nodeInstance.templateNode;
 
-  useFormComponentHandleRegistration(activeForm, activeComponentRegistry, finalResolvedMeta.cid, nodeLocator);
   useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, nodeInstance, nodeLocator, renderScope, finalResolvedMeta, resolvedComponentProps);
 
   const helpers = useMemo(
@@ -162,13 +150,13 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         scope: renderScope,
         actionScope: activeActionScope,
         componentRegistry: activeComponentRegistry,
-        form: activeForm,
-        page: props.page,
+        form: currentForm,
+        page: currentPage,
         node: props.node,
         nodeInstance,
         locator: nodeLocator
       }),
-    [runtime, renderScope, activeActionScope, activeComponentRegistry, activeForm, props.page, props.node, nodeInstance, nodeLocator]
+    [runtime, renderScope, activeActionScope, activeComponentRegistry, currentForm, currentPage, props.node, nodeInstance, nodeLocator]
   );
   const lifecycleActions = props.node.lifecycleActions;
 
@@ -234,51 +222,16 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   const Comp = props.node.component.component;
 
-  useEffect(() => {
-    if (!runtime.env.monitor) {
-      return;
-    }
-
-    if (!finalResolvedMeta.visible || finalResolvedMeta.hidden) {
-      return;
-    }
-
-    const startedAt = Date.now();
-    const payload = {
-      nodeId: templateNode.id,
-      path: templateNode.templatePath,
-      type: templateNode.rendererType
-    };
-
-    runtime.env.monitor?.onRenderStart?.(payload);
-    runtime.env.monitor?.onRenderEnd?.({
-      ...payload,
-      durationMs: Math.max(0, Date.now() - startedAt)
-    });
-  }, [
-    runtime.env.monitor,
-    templateNode.id,
-    templateNode.templatePath,
-    templateNode.rendererType,
-    finalResolvedMeta.visible,
-    finalResolvedMeta.hidden
-  ]);
-
-  useEffect(() => {
-    if (lifecycleActions?.onMount) {
-      void helpers.dispatch(lifecycleActions.onMount as any, {
-        locator: nodeLocator
-      });
-    }
-
-    return () => {
-      if (lifecycleActions?.onUnmount) {
-        void helpers.dispatch(lifecycleActions.onUnmount as any, {
-          locator: nodeLocator
-        });
-      }
-    };
-  }, [helpers, lifecycleActions, nodeLocator]);
+  useRenderMonitor({
+    monitor: runtime.env.monitor,
+    templateNode,
+    resolvedMeta: finalResolvedMeta
+  });
+  useNodeLifecycleActions({
+    lifecycleActions,
+    helpers,
+    locator: nodeLocator
+  });
 
   if (!finalResolvedMeta.visible || finalResolvedMeta.hidden) {
     return null;
@@ -299,32 +252,17 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   );
 
   return (
-    <CompiledNodeContext.Provider value={props.node}>
-      <NodeMetaContext.Provider value={{
-        id: templateNode.id,
-        path: templateNode.templatePath,
-        type: templateNode.rendererType,
-        locator: nodeLocator,
-        templateNode,
-        node: props.node,
-        nodeInstance
-      }}>
-        <NodeInstanceContext.Provider value={nodeInstance}>
-          <ActionScopeContext.Provider value={activeActionScope}>
-            <ComponentRegistryContext.Provider value={activeComponentRegistry}>
-              <ScopeContext.Provider value={renderScope}>
-                <FormContext.Provider value={activeForm}>
-                  <PageContext.Provider value={props.page}>
-                    <ClassAliasesContext.Provider value={mergedClassAliases}>
-                      {content}
-                    </ClassAliasesContext.Provider>
-                  </PageContext.Provider>
-                </FormContext.Provider>
-              </ScopeContext.Provider>
-            </ComponentRegistryContext.Provider>
-          </ActionScopeContext.Provider>
-        </NodeInstanceContext.Provider>
-      </NodeMetaContext.Provider>
-    </CompiledNodeContext.Provider>
+    <NodeRendererProviders
+      node={props.node}
+      templateNode={templateNode}
+      locator={nodeLocator}
+      nodeInstance={nodeInstance}
+      actionScope={activeActionScope}
+      componentRegistry={activeComponentRegistry}
+      scope={renderScope}
+      classAliases={mergedClassAliases}
+    >
+      {content}
+    </NodeRendererProviders>
   );
 });

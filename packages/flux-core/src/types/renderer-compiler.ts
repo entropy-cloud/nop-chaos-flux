@@ -31,6 +31,30 @@ export interface CompiledNodeFlags {
   isStatic: boolean;
 }
 
+export interface CompiledNodeRuntimeBoundaries {
+  mayPublishScope: boolean;
+  mayPublishActionScope: boolean;
+  mayPublishComponentRegistry: boolean;
+  mayPublishClassAliases: boolean;
+}
+
+export interface CompiledNodeRenderPlanProviders {
+  actionScope: boolean;
+  componentRegistry: boolean;
+  classAliases: boolean;
+}
+
+export type WrapProvidersFn = (
+  wrapProvider: (kind: string, value: unknown, children: unknown) => unknown,
+  values: Record<string, unknown>,
+  children: unknown
+) => unknown;
+
+export interface CompiledNodeRenderPlan {
+  providers: CompiledNodeRenderPlanProviders;
+  wrapProviders: WrapProvidersFn;
+}
+
 export interface CompiledNodeLinkageEffect {
   visible?: CompiledRuntimeValue<boolean | unknown>;
   disabled?: CompiledRuntimeValue<boolean | unknown>;
@@ -106,6 +130,8 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   eventActions: Readonly<Record<string, unknown>>;
   eventKeys: readonly string[];
   flags: CompiledNodeFlags;
+  renderPlan: CompiledNodeRenderPlan;
+  runtimeBoundaries: CompiledNodeRuntimeBoundaries;
   createRuntimeState(): CompiledNodeRuntimeState;
 }
 

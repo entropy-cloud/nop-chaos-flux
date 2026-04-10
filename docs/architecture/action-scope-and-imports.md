@@ -1016,6 +1016,32 @@ This is necessary because debugging namespaced action resolution otherwise becom
 - register imported namespaces on container-owned action scopes
 - expose import loading/error diagnostics
 
+## Node-Local Versus Owner-Local Capability Boundaries
+
+Not all action-scope and component-registry boundaries have the same creation owner.
+
+### Node-Local Optional Execution Boundaries
+
+These are capability boundaries that belong to a specific node and are compiled into the node-local `renderPlan.wrapProviders` closure at compile time.
+
+- `classAliases` publication — compiled into the node's render plan; `NodeRenderer` executes the closure without re-deriving it at React render time
+- `xui:imports`-driven `ActionScope` overlay — compiled into the render plan when the node declares `xui:imports`; the new `ActionScope` child boundary is created by executing the compiled closure, not by generic runtime provider inference
+
+Rule: if the boundary truly belongs to the node itself and can be determined from the schema at compile time, it is a node-local optional execution boundary. The compiled closure receives the current parent boundary and children as inputs.
+
+### Owner-Local Data And Runtime Boundaries
+
+These are boundaries that belong to specific concrete owner nodes and are created by those owners at runtime:
+
+- page data scope + `PageRuntime` — created by the page renderer/host
+- form data scope + `FormRuntime` — created by the form renderer
+- fragment child data scope — created by `RenderNodes` when `options.data` is passed
+- dialog/drawer surface scope + `SurfaceRuntime`/`SurfaceStore` — created per opened surface by the dialog/drawer host
+
+Rule: these boundaries are not compiled into a generic `NodeRenderer` provider layer. Each is created and published by the concrete owner. `NodeRenderer` does not receive these as props for the purpose of re-publishing them.
+
+Cross-reference: `docs/architecture/renderer-runtime.md` → "Execution Boundary Ownership Matrix" for the complete classification table.
+
 ## Decisions
 
 The active decisions from this document are:

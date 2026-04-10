@@ -23,7 +23,6 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const onActionScopeChange = props.onActionScopeChange;
     const envRef = useRef(props.env);
     envRef.current = props.env;
-
     const runtime = useMemo(() => {
       const resolvedRegistry = props.registry ?? registry;
       const expressionCompiler = createExpressionCompiler(props.formulaCompiler ?? createFormulaCompiler());

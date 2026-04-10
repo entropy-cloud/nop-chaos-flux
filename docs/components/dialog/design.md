@@ -41,10 +41,19 @@
 - 打开态应支持 `local`、`controlled` 或 page/dialog runtime 驱动。
 - 对话框内部表单状态属于其子树的 form runtime，而不是 dialog 自身。
 - dialog 自己拥有的是 surface state，例如 `open` / `active` / `opening` / `closing`。
+- dialog 不应复用 page store 作为自己的 owner store；它应使用 surface family 共用的 `SurfaceRuntime` / `SurfaceStore`。
+- drawer 与 dialog 属于同一 surface family，应共享同一种 runtime/store 结构，只通过 surface kind 区分具体表面类型。
 - 如果后续引入 confirm/commit 语义，那是叠加在 surface 之上的 semantic lifecycle，不应与 open-state 混成一份模糊状态。
 - dialog 外部若需要读取其状态，应通过 `statusPath` 读取只读 summary DTO，而不是通过 page 或 id/name 做隐式查询。
 - 如果未来确认 subtree-local authoring 频繁需要读取当前弹层状态，优先考虑共享 `$surface`，而不是单独发明 `$dialog`。
 - 共享 surface owner 规则以 `docs/architecture/surface-owner.md` 为准。
+
+嵌套 dialog 基线：
+
+- 在 dialog 中再打开 dialog 时，新 surface 仍注册到根 surface host，而不是渲染成当前 dialog DOM 子树内的第二个独立 host
+- 后打开的 dialog 应出现在先打开的 dialog 前面
+- 同一个 root host 容器内优先通过渲染顺序解决前后覆盖关系，不依赖每次打开都提升 `z-index`
+- 只有最上层 dialog 拥有焦点、`Esc`、backdrop dismiss 等 active surface 行为
 
 ## 8. 事件、动作与组件句柄能力
 
@@ -67,6 +76,7 @@
 ## 11. 实现拆分建议
 
 - dialog shell、open-state bridge、host integration 和 actions footer 分开实现。
+- host integration 应围绕共享 surface host / stack 实现，而不是让每个 dialog renderer 自己管理一套嵌套 host。
 
 ## 12. 风险、取舍与后续阶段
 

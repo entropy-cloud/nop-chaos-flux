@@ -1,4 +1,4 @@
-import type { ApiSchema, FormLifecycleHandlers, FormStatusSummary, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
+import type { ApiSchema, FormLifecycleHandlers, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
 import {
   clampArrayIndex,
   clampInsertIndex,
@@ -16,7 +16,9 @@ import { createFormStore } from './form-store';
 import { executeArrayMutation } from './form-runtime-array';
 import { findRuntimeRegistration } from './form-runtime-registration';
 import { buildInitialFieldState } from './form-runtime-state';
+import { createInitialFormScopeChange, createFormScopeWithBinding, validationErrorsEqual } from './form-runtime-status';
 import { collectSubtreeValidationTargets } from './form-runtime-subtree';
+import { buildSubmitTouchedState, classifySubmitResult } from './form-runtime-submit';
 import {
   cancelAllValidationDebounces,
   cancelValidationDebounce,
@@ -25,49 +27,6 @@ import {
 } from './form-runtime-validation';
 import type { CreateManagedFormRuntimeInput, ManagedFormRuntimeSharedState } from './form-runtime-types';
 import { createScopeRef, toRecord } from './scope';
-import { createReadonlyScopeBinding } from './status-owner';
-
-function validationErrorsEqual(
-  left: ValidationError[] | undefined,
-  right: ValidationError[] | undefined
-) {
-  if (left === right) {
-    return true;
-  }
-
-  if (!left || !right || left.length !== right.length) {
-    return false;
-  }
-
-  return left.every((error, index) => {
-    const candidate = right[index];
-
-    return candidate?.path === error.path && candidate?.rule === error.rule && candidate?.message === error.message;
-  });
-}
-
-function classifySubmitResult(result: import('@nop-chaos/flux-core').ActionResult): 'success' | 'failure' | 'neutral' {
-  if (result.skipped) {
-    return 'neutral';
-  }
-
-  if (!result.ok || result.cancelled || result.timedOut) {
-    return 'failure';
-  }
-
-  return 'success';
-}
-
-function buildTouchedStateWithPath(input: Record<string, boolean>, path: string): Record<string, boolean> {
-  if (input[path]) {
-    return input;
-  }
-
-  return {
-    ...input,
-    [path]: true
-  };
-}
 
 function buildBooleanPathState(input: Record<string, boolean>, path: string, nextValue: boolean): Record<string, boolean> {
   if (nextValue) {
@@ -100,34 +59,6 @@ function buildErrorPathState(input: Record<string, ValidationError[]>, path: str
   return next;
 }
 
-function buildFormStatusSummary(
-  state: import('@nop-chaos/flux-core').FormStoreState,
-  id: string | undefined,
-  name: string | undefined
-): FormStatusSummary {
-  const errorEntries = Object.values(state.errors);
-  const errorCount = errorEntries.reduce((acc, errs) => acc + errs.length, 0);
-  const hasErrors = errorCount > 0;
-  const validating = Object.values(state.validating).some(Boolean);
-  const dirty = Object.values(state.dirty).some(Boolean);
-  const touched = Object.values(state.touched).some(Boolean);
-  const visited = Object.values(state.visited).some(Boolean);
-
-  return {
-    id,
-    name,
-    submitting: state.submitting,
-    validating,
-    dirty,
-    touched,
-    visited,
-    hasErrors,
-    errorCount,
-    valid: !hasErrors,
-    invalid: hasErrors
-  };
-}
-
 export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInput): FormRuntime {
   const store = createFormStore(inputValue.initialValues ?? {});
   const formId = inputValue.id ?? `${inputValue.parentScope.id}-form`;
@@ -145,11 +76,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   let lifecycleHandlers: FormLifecycleHandlers | undefined = inputValue.lifecycle;
 
   let isSubmittingInternal = false;
-  let lastChange: ScopeChange = {
-    paths: ['*'],
-    sourceScopeId: formId,
-    kind: 'replace' as const
-  };
+  let lastChange: ScopeChange = createInitialFormScopeChange(formId);
 
   function setLastChange(change: ScopeChange) {
     lastChange = change;
@@ -182,14 +109,11 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     }
   });
 
-  const formScopeWithBinding = createReadonlyScopeBinding(scope, '$form', () => buildFormStatusSummary(store.getState(), formId, formName));
-
-  Object.defineProperty(formScopeWithBinding, 'value', {
-    get() {
-      return this.read();
-    },
-    configurable: true,
-    enumerable: false
+  const formScopeWithBinding = createFormScopeWithBinding({
+    scope,
+    formId,
+    formName,
+    getStoreState: () => store.getState()
   });
 
   const sharedState: ManagedFormRuntimeSharedState = {
@@ -480,28 +404,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         store.setSubmitting(true);
       }
 
-      const submitTargets = getCompiledValidationTraversalOrder(inputValue.validation);
-      let nextTouched = store.getState().touched;
-
-      for (const path of submitTargets) {
-        const behavior = getCompiledValidationField(inputValue.validation, path)?.behavior;
-        const triggers = behavior?.triggers ?? defaultValidationTriggers;
-        const showErrorOn = behavior?.showErrorOn ?? inputValue.validation?.behavior.showErrorOn ?? ['touched', 'submit'];
-
-        if (triggers.includes('submit') || showErrorOn.includes('submit')) {
-          nextTouched = buildTouchedStateWithPath(nextTouched, path);
-        }
-      }
-
-      for (const path of runtimeFieldRegistrations.keys()) {
-        nextTouched = buildTouchedStateWithPath(nextTouched, path);
-      }
-
-      for (const registration of runtimeFieldRegistrations.values()) {
-        for (const childPath of registration.childPaths ?? []) {
-          nextTouched = buildTouchedStateWithPath(nextTouched, childPath);
-        }
-      }
+      const nextTouched = buildSubmitTouchedState({
+        touched: store.getState().touched,
+        validation: inputValue.validation,
+        runtimeFieldRegistrations: runtimeFieldRegistrations.values(),
+        defaultValidationTriggers
+      });
 
       if (nextTouched !== store.getState().touched) {
         store.batchUpdate({ touched: nextTouched });

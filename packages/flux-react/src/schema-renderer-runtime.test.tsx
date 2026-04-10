@@ -39,6 +39,46 @@ import {
 } from './test-support';
 
 describe('createSchemaRenderer runtime behavior', () => {
+  it('compiles runtime boundary flags for form, scope, provider, and class alias changes', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([formRenderer, scopedHostRenderer, textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(sharedFormulaCompiler)
+    });
+
+    const compiled = runtime.compile({
+      type: 'form',
+      classAliases: { local: 'stack-2' },
+      'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+      body: [{ type: 'scoped-host', body: [{ type: 'text', text: 'child' }] }]
+    } as any) as any;
+
+    expect(compiled.runtimeBoundaries).toEqual({
+      mayPublishScope: true,
+      mayPublishActionScope: false,
+      mayPublishComponentRegistry: true,
+      mayPublishClassAliases: true,
+    });
+    expect(compiled.renderPlan.providers).toEqual({
+      actionScope: false,
+      componentRegistry: true,
+      classAliases: true,
+    });
+
+    const scopedHost = compiled.regions.body.node[0];
+    expect(scopedHost.runtimeBoundaries).toEqual({
+      mayPublishScope: false,
+      mayPublishActionScope: true,
+      mayPublishComponentRegistry: true,
+      mayPublishClassAliases: false,
+    });
+    expect(scopedHost.renderPlan.providers).toEqual({
+      actionScope: true,
+      componentRegistry: true,
+      classAliases: false,
+    });
+  });
+
   it('renders compiled schema in React', () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer]);
 

@@ -1,6 +1,6 @@
 # 62 Core Runtime Orchestration Refactor Plan
 
-> Plan Status: proposed
+> Plan Status: completed
 > Last Reviewed: 2026-04-10
 > Source: `docs/architecture/flux-core.md`, `docs/architecture/frontend-baseline.md`, `docs/architecture/flux-dsl-vm-extensibility.md`, `docs/articles/flux-design-introduction.md`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-react/src/node-renderer.tsx`, `packages/flow-designer-core/src/core.ts`
 > Related: `docs/plans/36-node-renderer-refactor-plan.md`, `docs/plans/37-flux-core-runtime-architecture-convergence-plan.md`, `docs/plans/43-react-18-to-19-best-practices-migration-plan.md`, `docs/plans/45-react19-compiler-and-high-frequency-interaction-refactor-plan.md`
@@ -89,91 +89,92 @@
 
 ### Phase 1 - Freeze Boundaries And Refactor Rules
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/flux-core.md`, `docs/architecture/flux-dsl-vm-extensibility.md`, `packages/flux-runtime/src/*`, `packages/flux-react/src/*`, `packages/flow-designer-core/src/core.ts`
 
-- [ ] Re-audit each target file and mark which logic is true orchestration versus extractable implementation detail.
-- [ ] Define explicit extraction rules for this plan: what stays inline, what must move, and what is intentionally deferred.
-- [ ] Record which React 19 APIs are relevant for these targets and which are explicitly not ROI-positive here.
+- [x] Re-audit each target file and mark which logic is true orchestration versus extractable implementation detail.
+- [x] Define explicit extraction rules for this plan: what stays inline, what must move, and what is intentionally deferred.
+- [x] Record which React 19 APIs are relevant for these targets and which are explicitly not ROI-positive here.
 
 Exit Criteria:
 
-- [ ] Each target file has a boundary note that can explain why it stays an orchestrator after the refactor.
-- [ ] The plan no longer risks turning into a broad style cleanup.
+- [x] Each target file has a boundary note that can explain why it stays an orchestrator after the refactor.
+- [x] The plan no longer risks turning into a broad style cleanup.
 
 ### Phase 2 - Split Runtime Action And Schema Compiler Helpers
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/schema-compiler.ts`
 
-- [ ] Extract action helper clusters into internal modules such as payload evaluation, built-in dispatchers, component/namespace dispatch, and action control-flow helpers where that split reduces total complexity.
-- [ ] Extract schema compiler helper clusters into internal modules such as schema shape validation, node field inspection, target rewrite/enrichment, and compile pipeline helpers.
-- [ ] Keep the public runtime/compiler contract unchanged while making the top-level files read as orchestration entry points.
+- [x] Extract action helper clusters into internal modules such as payload evaluation, built-in dispatchers, component/namespace dispatch, and action control-flow helpers where that split reduces total complexity.
+- [x] Extract schema compiler helper clusters into internal modules such as schema shape validation, node field inspection, target rewrite/enrichment, and compile pipeline helpers.
+- [x] Keep the public runtime/compiler contract unchanged while making the top-level files read as orchestration entry points.
 
 Exit Criteria:
 
-- [ ] `action-runtime.ts` no longer mixes all dispatch modes and all control-flow helpers inline.
-- [ ] `schema-compiler.ts` no longer mixes diagnostics, validation, compilation, and target enrichment in one monolithic file.
+- [x] `action-runtime.ts` no longer mixes all dispatch modes and all control-flow helpers inline.
+- [x] `schema-compiler.ts` no longer mixes diagnostics, validation, compilation, and target enrichment in one monolithic file.
 
 ### Phase 3 - Split Form And React Orchestration Edges
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/dialog-host.tsx`, `packages/flux-react/src/hooks.ts`
 
-- [ ] Further split `form-runtime.ts` around scope/status binding, value patch/update orchestration, submit orchestration, and dependent revalidation if those boundaries are stable.
-- [ ] Further split `node-renderer.tsx` only where the extracted piece is genuinely an implementation detail rather than core orchestration.
-- [ ] Deduplicate dialog/drawer host rendering paths in `dialog-host.tsx` without introducing a leaky mega abstraction.
-- [ ] Audit for real `useEffectEvent` opportunities in React integration code; adopt it only where it clearly simplifies stable subscriptions or event-like effects.
+- [x] Further split `form-runtime.ts` around scope/status binding, value patch/update orchestration, submit orchestration, and dependent revalidation if those boundaries are stable.
+- [x] Further split `node-renderer.tsx` only where the extracted piece is genuinely an implementation detail rather than core orchestration.
+- [x] Deduplicate dialog/drawer host rendering paths in `dialog-host.tsx` without introducing a leaky mega abstraction.
+- [x] Audit for real `useEffectEvent` opportunities in React integration code; adopt it only where it clearly simplifies stable subscriptions or event-like effects.
 
 Exit Criteria:
 
-- [ ] `form-runtime.ts` is closer to a composition root than a mixed implementation file.
-- [ ] `node-renderer.tsx` remains an orchestrator, but with fewer embedded effect/control details.
-- [ ] `dialog-host.tsx` no longer duplicates the same provider/title/body assembly flow for dialog and drawer.
+- [x] `form-runtime.ts` is closer to a composition root than a mixed implementation file.
+- [x] `node-renderer.tsx` remains an orchestrator, but with fewer embedded effect/control details.
+- [x] `dialog-host.tsx` no longer duplicates the same provider/title/body assembly flow for dialog and drawer.
 
 ### Phase 4 - Split Flow Designer Core Shell State
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-core/src/core.ts`
 
-- [ ] Separate document mutation orchestration from shell-state concerns such as palette/inspector collapse, viewport persistence, clipboard helpers, and transaction/history glue where the split is stable.
-- [ ] Keep `createDesignerCore()` as the single public construction entry while reducing the number of unrelated concerns it carries inline.
+- [x] Separate document mutation orchestration from shell-state concerns such as palette/inspector collapse, viewport persistence, clipboard helpers, and transaction/history glue where the split is stable.
+- [x] Keep `createDesignerCore()` as the single public construction entry while reducing the number of unrelated concerns it carries inline.
 
 Exit Criteria:
 
-- [ ] `core.ts` reads as a composition root over smaller document/history/selection/shell helpers.
-- [ ] Public `DesignerCore` behavior remains unchanged.
+- [x] `core.ts` reads as a composition root over smaller document/history/selection/shell helpers.
+- [x] Public `DesignerCore` behavior remains unchanged.
 
 ### Phase 5 - Verification And Documentation Closure
 
-Status: planned
+Status: completed
 Targets: touched code paths, `docs/logs/2026/04-10.md`, relevant architecture docs if boundary semantics change
 
-- [ ] Run focused package verification after each slice.
-- [ ] Run full workspace verification before closure.
-- [ ] Update docs only where the refactor changes how boundaries should be understood by future contributors.
+- [x] Run focused package verification after each slice.
+- [x] Run full workspace verification before closure.
+- [x] Update docs only where the refactor changes how boundaries should be understood by future contributors.
 
 Exit Criteria:
 
-- [ ] The new module boundaries are reflected in docs or explicitly confirmed to be implementation-only.
-- [ ] Full repo verification passes.
+- [x] The new module boundaries are reflected in docs or explicitly confirmed to be implementation-only.
+- [x] Full repo verification passes.
 
 ## Validation Checklist
 
-- [ ] Runtime/React/designer public behavior remains unchanged
-- [ ] New modules follow existing dependency direction and package boundaries
-- [ ] No new circular dependency is introduced
-- [ ] `docs/skills/code-refactor-prompt.md` reflects the reusable review criteria from this audit
-- [ ] Focused tests added or updated where extraction risk is non-trivial
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Runtime/React/designer public behavior remains unchanged
+- [x] New modules follow existing dependency direction and package boundaries
+- [x] No new circular dependency is introduced
+- [x] `docs/skills/code-refactor-prompt.md` reflects the reusable review criteria from this audit
+- [x] Focused tests added or updated where extraction risk is non-trivial
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: not started
+Status Note: Completed after a separate closure pass over the live repo, focused package verification, full workspace verification, and doc sync for the new orchestration-boundary notes.
 
 Follow-up:
 
 - Possible successor plan if needed: a narrower naming-convergence plan for internal runtime terminology after module boundaries are stabilized.
+- No remaining plan-owned refactor work was left open in this execution slice; future work, if any, should be a narrower naming or further boundary-convergence plan rather than reopening this broad orchestration audit.

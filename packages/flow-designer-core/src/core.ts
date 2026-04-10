@@ -7,7 +7,7 @@ import type {
   DesignerSnapshot,
   DesignerEvent
 } from './types';
-import { cloneDocument, cloneNode, generateId } from './core/clone';
+import { cloneDocument, generateId } from './core/clone';
 import {
   checkMaxInstances,
   checkMinInstances,
@@ -18,11 +18,6 @@ import {
   validateEdgeConnection,
 } from './core/constraints';
 import { normalizeConfig } from './core/config';
-import {
-  normalizeViewport,
-  normalizeViewportInput,
-  viewportsEqual,
-} from './core/viewport';
 import {
   canRedoHistory,
   canUndoHistory,
@@ -53,6 +48,13 @@ import {
   rollbackTransactionState,
   type DesignerTransaction,
 } from './core/transactions';
+import {
+  createDesignerShellState,
+  resetShellViewportFromDocument,
+  setShellClipboard,
+  setShellViewport,
+} from './core/shell-state';
+import { createDesignerSnapshotCache, getDesignerSnapshot } from './core/snapshot';
 import {
   addNodeToDocument,
   layoutNodesInDocument,
@@ -138,27 +140,17 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   let savedDoc: GraphDocument | null = cloneDocument(doc);
   let docRevision = 0;
   let savedRevision = 0;
-  let clipboard: GraphNode | null = null;
 
   let selectionState: DesignerSelectionState = createSelectionState();
-  let gridEnabled = true;
-  let paletteCollapsed = false;
-  let inspectorCollapsed = false;
-  let viewport = normalizeViewport(doc.viewport);
-  let cachedSelection = getSelectionSummary(selectionState);
-  let cachedSnapshot: DesignerSnapshot = {
+  const shellState = createDesignerShellState(doc);
+  const snapshotCache = createDesignerSnapshotCache({
     doc,
-    selection: cachedSelection,
-    activeNode: null,
-    activeEdge: null,
+    selectionState,
+    shell: shellState,
     canUndo: canUndo(),
     canRedo: canRedo(),
     isDirty: isDirty(),
-    gridEnabled,
-    paletteCollapsed,
-    inspectorCollapsed,
-    viewport,
-  };
+  });
 
   let transactionStack: DesignerTransaction[] = [];
 
@@ -208,53 +200,15 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function getSnapshot(): DesignerSnapshot {
-    const selection = getSelectionSummary(selectionState);
-    const activeNodeId = selection.activeNodeId;
-    const activeEdgeId = selection.activeEdgeId;
-    const activeNode = activeNodeId ? doc.nodes.find((n) => n.id === activeNodeId) ?? null : null;
-    const activeEdge = activeEdgeId ? doc.edges.find((e) => e.id === activeEdgeId) ?? null : null;
-    const nextCanUndo = canUndo();
-    const nextCanRedo = canRedo();
-    const nextIsDirty = isDirty();
-
-    const selectionUnchanged =
-      cachedSelection.activeNodeId === selection.activeNodeId &&
-      cachedSelection.activeEdgeId === selection.activeEdgeId &&
-      cachedSelection.selectedNodeIds === selection.selectedNodeIds &&
-      cachedSelection.selectedEdgeIds === selection.selectedEdgeIds;
-
-    if (
-      cachedSnapshot.doc === doc &&
-      selectionUnchanged &&
-      cachedSnapshot.activeNode === activeNode &&
-      cachedSnapshot.activeEdge === activeEdge &&
-      cachedSnapshot.canUndo === nextCanUndo &&
-      cachedSnapshot.canRedo === nextCanRedo &&
-      cachedSnapshot.isDirty === nextIsDirty &&
-      cachedSnapshot.gridEnabled === gridEnabled &&
-      cachedSnapshot.paletteCollapsed === paletteCollapsed &&
-      cachedSnapshot.inspectorCollapsed === inspectorCollapsed &&
-      cachedSnapshot.viewport === viewport
-    ) {
-      return cachedSnapshot;
-    }
-
-    cachedSelection = selection;
-    cachedSnapshot = {
+    return getDesignerSnapshot({
+      cache: snapshotCache,
       doc,
-      selection,
-      activeNode,
-      activeEdge,
-      canUndo: nextCanUndo,
-      canRedo: nextCanRedo,
-      isDirty: nextIsDirty,
-      gridEnabled,
-      paletteCollapsed,
-      inspectorCollapsed,
-      viewport,
-    };
-
-    return cachedSnapshot;
+      selectionState,
+      shell: shellState,
+      canUndo: canUndo(),
+      canRedo: canRedo(),
+      isDirty: isDirty(),
+    });
   }
 
   function getDocument(): GraphDocument {
@@ -631,10 +585,10 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     historyState = result.state;
     replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
-    viewport = normalizeViewport(doc.viewport);
+    resetShellViewportFromDocument(shellState, doc);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
-    emit({ type: 'viewportChanged', viewport });
+    emit({ type: 'viewportChanged', viewport: shellState.viewport });
     updateDirtyState();
   }
 
@@ -646,10 +600,10 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     historyState = result.state;
     replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
-    viewport = normalizeViewport(doc.viewport);
+    resetShellViewportFromDocument(shellState, doc);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
-    emit({ type: 'viewportChanged', viewport });
+    emit({ type: 'viewportChanged', viewport: shellState.viewport });
     updateDirtyState();
   }
 
@@ -661,70 +615,68 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     const node = doc.nodes.find((n) => n.id === activeNodeId);
     if (node) {
-      clipboard = cloneNode(node);
+      setShellClipboard(shellState, node);
     }
   }
 
   function pasteClipboard(): void {
-    if (!clipboard) {
+    if (!shellState.clipboard) {
       return;
     }
 
-    addNode(clipboard.type, { x: clipboard.position.x + 48, y: clipboard.position.y + 48 }, clipboard.data);
+    addNode(shellState.clipboard.type, { x: shellState.clipboard.position.x + 48, y: shellState.clipboard.position.y + 48 }, shellState.clipboard.data);
   }
 
   function toggleGrid(): void {
-    gridEnabled = !gridEnabled;
-    emit({ type: 'gridToggled', enabled: gridEnabled });
+    shellState.gridEnabled = !shellState.gridEnabled;
+    emit({ type: 'gridToggled', enabled: shellState.gridEnabled });
   }
 
   function setGrid(enabled: boolean): void {
-    if (gridEnabled === enabled) {
+    if (shellState.gridEnabled === enabled) {
       return;
     }
 
-    gridEnabled = enabled;
-    emit({ type: 'gridToggled', enabled: gridEnabled });
+    shellState.gridEnabled = enabled;
+    emit({ type: 'gridToggled', enabled: shellState.gridEnabled });
   }
 
   function togglePalette(): void {
-    paletteCollapsed = !paletteCollapsed;
-    emit({ type: 'paletteCollapseChanged', collapsed: paletteCollapsed });
+    shellState.paletteCollapsed = !shellState.paletteCollapsed;
+    emit({ type: 'paletteCollapseChanged', collapsed: shellState.paletteCollapsed });
   }
 
   function setPaletteCollapsed(collapsed: boolean): void {
-    if (paletteCollapsed === collapsed) {
+    if (shellState.paletteCollapsed === collapsed) {
       return;
     }
 
-    paletteCollapsed = collapsed;
-    emit({ type: 'paletteCollapseChanged', collapsed: paletteCollapsed });
+    shellState.paletteCollapsed = collapsed;
+    emit({ type: 'paletteCollapseChanged', collapsed: shellState.paletteCollapsed });
   }
 
   function toggleInspector(): void {
-    inspectorCollapsed = !inspectorCollapsed;
-    emit({ type: 'inspectorCollapseChanged', collapsed: inspectorCollapsed });
+    shellState.inspectorCollapsed = !shellState.inspectorCollapsed;
+    emit({ type: 'inspectorCollapseChanged', collapsed: shellState.inspectorCollapsed });
   }
 
   function setInspectorCollapsed(collapsed: boolean): void {
-    if (inspectorCollapsed === collapsed) {
+    if (shellState.inspectorCollapsed === collapsed) {
       return;
     }
 
-    inspectorCollapsed = collapsed;
-    emit({ type: 'inspectorCollapseChanged', collapsed: inspectorCollapsed });
+    shellState.inspectorCollapsed = collapsed;
+    emit({ type: 'inspectorCollapseChanged', collapsed: shellState.inspectorCollapsed });
   }
 
   function setViewport(newViewport: { x: number; y: number; zoom: number }): void {
-    const normalizedViewport = normalizeViewportInput(newViewport);
-    if (viewportsEqual(viewport, normalizedViewport)) {
+    if (!setShellViewport(shellState, newViewport)) {
       return;
     }
 
-    viewport = normalizedViewport;
-    setDocument({ ...doc, viewport });
+    setDocument({ ...doc, viewport: shellState.viewport });
     if (transactionStack.length === 0) pushHistory();
-    emit({ type: 'viewportChanged', viewport });
+    emit({ type: 'viewportChanged', viewport: shellState.viewport });
     emit({ type: 'documentChanged', doc });
     updateDirtyState();
   }
@@ -741,11 +693,11 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     }
 
     replaceDocument(cloneDocument(savedDoc), savedRevision);
-    viewport = normalizeViewport(doc.viewport);
+    resetShellViewportFromDocument(shellState, doc);
     if (transactionStack.length === 0) pushHistory();
     emit({ type: 'documentChanged', doc });
     emit({ type: 'dirtyChanged', isDirty: false });
-    emit({ type: 'viewportChanged', viewport });
+    emit({ type: 'viewportChanged', viewport: shellState.viewport });
   }
 
   function exportDocument(): string {
@@ -803,7 +755,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
     transactionStack = result.stack;
     replaceDocument(result.snapshotBefore, getCurrentRevision(historyState) ?? docRevision);
-    viewport = normalizeViewport(doc.viewport);
+    resetShellViewportFromDocument(shellState, doc);
     for (const rolledBackId of result.rolledBackIds) {
       emit({ type: 'transactionRolledBack', transactionId: rolledBackId });
     }

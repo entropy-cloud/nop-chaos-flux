@@ -226,6 +226,14 @@ Current compatibility note:
 
 This split matches actual ownership and change frequency better than either â€œeverything by propsâ€ or â€œeverything by hooksâ€.
 
+Current orchestration boundary note:
+
+- `NodeRenderer` remains the orchestration boundary for compiled-node resolution, lifecycle dispatch, import/capability setup, and final renderer invocation.
+- `NodeRenderer` should not remain a generic creator for every possible descendant boundary. Data scope and owner runtime creation belong to the concrete creator path such as fragment rendering, page/form owners, and surface hosts.
+- Compiler-owned node-local optional boundaries may still be precompiled as node-local closures when the boundary truly belongs to the node itself, such as node-local `classAliases` publication or `xui:imports`-driven capability setup.
+- The React runtime should execute those node-local closures directly instead of re-deriving generic provider structure from scattered runtime props.
+- Effect helpers such as lifecycle dispatch, render-monitor wiring, and narrow boundary execution can still be extracted when they reduce file-level complexity without moving ownership into renderers that do not actually own that boundary.
+
 ## Event Passthrough Contract
 
 Renderer event handlers should forward the native UI event when one exists.
@@ -264,6 +272,11 @@ Compiler/runtime rule:
 - `NodeRenderer` owns mount/unmount dispatch centrally
 
 This keeps lifecycle behavior consistent across all renderers and avoids per-renderer hook duplication.
+
+React 19 ROI note:
+
+- This layer should adopt `useEffectEvent` only when a real subscription or long-lived effect needs the latest values without re-subscribing.
+- The current orchestration refactor does not treat `useEffectEvent`, `startTransition`, or `useDeferredValue` as mandatory syntax migrations for `NodeRenderer` or `DialogHost`; no high-ROI case was identified in the current live code for these extracted paths.
 
 ## Current Hooks
 
@@ -416,6 +429,46 @@ Current implications for renderer authors:
 
 The detailed semantics for `value-or-region`, event fields, and nested region extraction live in `docs/architecture/field-metadata-slot-modeling.md`.
 
+## Execution Boundary Ownership Matrix
+
+Not every boundary in the render tree has the same creator. The table below is the normative classification used to decide where each boundary is created and published.
+
+| Boundary | Owner | Creation Site | Notes |
+|---|---|---|------|
+| `classAliases` publication | Node-local (compile-time closure) | `NodeRenderer` executes compiled closure | Compiled into `renderPlan.wrapProviders` |
+| `xui:imports`-driven `ActionScope` overlay | Node-local (compile-time closure) | `NodeRenderer` executes compiled closure | Only when node declares `xui:imports` |
+| Fragment child data scope | Fragment render path (`RenderNodes`) | Created inside `RenderNodes` when `options.data` is passed | Not `NodeRenderer`'s responsibility |
+| Page data scope + `PageRuntime` | Page owner/renderer | Created by page renderer/host at mount | Published via `PageContext` |
+| Form data scope + `FormRuntime` | Form owner/renderer | Created by form renderer at mount | Published via `FormContext`; form scope is the active child scope for form children |
+| Dialog surface scope + `SurfaceRuntime` | Dialog host/renderer | Created per opened dialog entry | `SurfaceRuntime`/`SurfaceStore` shared with drawer; `page` store is NOT reused |
+| Drawer surface scope + `SurfaceRuntime` | Drawer host/renderer | Created per opened drawer entry | Same `SurfaceRuntime`/`SurfaceStore` model as dialog, `kind: 'drawer'` |
+| `ActionScope` (host-level) | Host owner (e.g. `designer-page`) | Created at host lifecycle | Registered namespace provider during owned lifecycle |
+| `ComponentHandleRegistry` | Form renderer (or other explicit boundary owner) | Created by form renderer at mount | Only concrete owners that need a new registry boundary create one |
+
+Rules derived from this table:
+
+- Node-local optional execution boundaries (`classAliases`, `xui:imports` overlays) are compiled into `renderPlan.wrapProviders` closures and executed by `NodeRenderer`. `NodeRenderer` does not re-derive these at React render time.
+- Data scope, page/form runtime, and surface state are **creator-owned boundaries**: each is created and published by the concrete owner, not by a generic `NodeRenderer` provider layer.
+- `dialog` and `drawer` share one `SurfaceRuntime`/`SurfaceStore` model. `page` runtime/store is NOT the owner of dialog/drawer state.
+- `NodeRenderer` does not create or re-publish page, form, fragment data scope, or surface runtime. It only executes the node-local compiled closure and calls the concrete renderer.
+
+## Node Context Convergence
+
+Current node identity is carried by three parallel React contexts:
+
+- `CompiledNodeContext` — used by `RenderNodes` to get the owner node for compile options
+- `NodeMetaContext` — carries `{ id, path, type, locator, templateNode, node, nodeInstance }` for hooks
+- `NodeInstanceContext` — carries `NodeInstance` for live locator/state
+
+These three overlap. The target is a single node instance carrier:
+
+- `NodeInstanceContext` (or an upgraded equivalent) becomes the single ambient source of current compiled/template/runtime node identity
+- `CompiledNodeContext` and `NodeMetaContext` become compatibility projections over the unified carrier
+- `useCurrentNodeMeta()` derives its result from the single node instance context
+- Fragment owner fallback and helper creation also read from the unified context
+
+Until convergence is complete, all three contexts remain active. The intermediate state is that `NodeMetaContext` mirrors its data from `NodeInstanceContext` rather than being independently populated.
+
 ## Render Context Split
 
 The React layer should not collapse all runtime and render state into one giant context.
@@ -426,7 +479,7 @@ Current split context areas are:
 - scope context
 - action-scope context
 - component-registry context
-- node meta context
+- node-instance context (target: single node instance carrier — see Node Context Convergence above)
 - form context
 - page context
 
@@ -435,6 +488,7 @@ Why:
 - runtime is mostly stable
 - scope and form state change more frequently
 - split context boundaries reduce unrelated rerenders
+- current node identity converges on one ambient runtime-instance carrier rather than parallel node-meta and compiled-node compatibility contexts
 
 ## Local Render Options
 
@@ -462,13 +516,20 @@ The active React layer now carries three separate execution lookups through expl
 
 This document only describes how React render boundaries carry those execution contexts. The resolution model, lexical-visibility rules, and `xui:imports` provisioning semantics belong to `docs/architecture/action-scope-and-imports.md`.
 
-`NodeRenderer` may explicitly create a fresh action-scope boundary or component-registry boundary when a renderer definition opts into `actionScopePolicy: 'new'` or `componentRegistryPolicy: 'new'`.
+Node-local capability boundaries should be created by the owner that actually introduces them.
+
+Current baseline:
+
+- fragment `render({ data })` creates the child data scope in the fragment render path itself
+- page and form renderers/owners create and publish their own data/runtime boundaries
+- node-local `xui:imports` or similar capability overlays may still be compiled into a node-local closure that `NodeRenderer` executes for that node
+- component registries should be created only by the concrete owner that needs a new registry boundary, not by every node pre-emptively
 
 Current concrete uses:
 
 - `designer-page` creates a local action-scope boundary and registers the `designer` namespace provider during owned lifecycle
 - `form` creates a local component-registry boundary and registers an explicit form handle exposing `submit`, `validate`, `reset`, and `setValue`
-- `DialogHost` keeps dialog rendering on the same React/runtime boundary; floating dialog surfaces inherit `.nop-theme-root` CSS-variable theme contract from the app root
+- `DialogHost` owns surface-family rendering and keeps floating dialog/drawer surfaces under one root host while inheriting the app root theme contract
 
 Fragment rendering keeps the same explicitness rule as data scope: callers must pass `actionScope` and `componentRegistry` through `render(options)` when a subtree should inherit or replace those execution boundaries deliberately.
 
@@ -529,6 +590,20 @@ Root uses explicit props because:
 - `env` changes trigger a lightweight page refresh so env-dependent expressions and props can re-evaluate without dropping form/page state
 
 Hosts should still prefer stable `env` objects when practical, but memoization is now an optimization, not a correctness requirement.
+
+## Surface Ownership In React Runtime
+
+Dialog and drawer should be treated as one surface family in the React runtime.
+
+Current baseline:
+
+- `page`, `form`, and `surface` are different owner families and should not all share one owner runtime/store
+- `dialog` and `drawer` should share one `SurfaceRuntime` / `SurfaceStore` model and differ by stable kind metadata such as `kind: 'dialog' | 'drawer'`
+- surfaces are rendered by one root surface host stack rather than by recursively nesting independent hosts inside already-open surfaces
+- a newly opened surface is appended after existing surfaces in the same host container so DOM/render order determines which surface appears in front
+- this ordering rule should be preferred over per-open `z-index` escalation for same-family surfaces inside the same host container
+- only the current top surface should own focus trap, escape handling, backdrop dismiss, and active-surface semantics
+- closing the top surface should restore active ownership and focus to the previous surface in the stack
 
 ## Form And Table Expectations
 

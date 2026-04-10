@@ -60,6 +60,57 @@ surface owner 不直接拥有：
 - dialog/drawer 的状态不应默认上卷到 `page`
 - page 只拥有 page shell 自己的状态
 - 如果 page 上存在多个 dialog/drawer，仍应按各自 surface 区分，而不是合成一个模糊的 `page.surfaceState`
+- page runtime/store 不应直接充当 dialog/drawer 的 owner store；surface family 需要自己的 runtime/store 结构
+
+## Surface Runtime Model
+
+`dialog` 和 `drawer` 应共享一套 surface-family runtime/store，而不是各自发明完全不同的 store，也不是直接复用 page store。
+
+推荐基线：
+
+- `page` 使用 page shell 自己的 runtime/store
+- `form` 使用 form 自己的 runtime/store
+- `dialog` / `drawer` / future `sheet` 共享 `SurfaceRuntime` / `SurfaceStore`
+- surface family 内部通过稳定 kind 区分具体表面，例如 `kind: 'dialog' | 'drawer'`
+
+这样做的原因：
+
+- surface family 共享 open/close/active/dismiss/focus 语义
+- page shell 状态与 surface 状态不是同一个 owner family
+- dialog 和 drawer 在运行期行为上足够接近，没必要为了名字不同拆成两套 store 模型
+
+## Root Host And Stacking
+
+surface 的推荐渲染方式是：统一由根 surface host 维护一个 stack，而不是在已打开的 dialog/drawer DOM 子树里继续嵌套一个新的独立 host。
+
+推荐规则：
+
+- 所有 surface entry 注册到同一个根 host stack
+- 后打开的 surface 追加到 stack 尾部
+- 同一 host 容器内，后渲染的 surface 自然显示在前面
+- 同 family surface 的前后关系优先通过根 host 内的渲染顺序解决，而不是每次打开都递增 `z-index`
+
+这条规则成立的前提是：
+
+- surface 处于同一个 root host / portal 容器
+- 容器自身已经有稳定的 surface-level stacking baseline
+- 不为不同 surface 人为制造额外 stacking context
+
+## Top Surface Rule
+
+stack 中只有最上层 surface 拥有当前交互控制权。
+
+这包括：
+
+- focus trap
+- `Esc` 关闭处理
+- backdrop dismiss
+- active surface 状态
+
+关闭顶层后：
+
+- 交互控制权回到前一个 surface
+- 焦点恢复也应按 stack 顺序回退
 
 ## Read Surfaces
 
@@ -124,6 +175,16 @@ future `sheet` 不能因为名字不同就自动获得独立 owner family。
 - 如果它更接近容器切换或步骤流，归其他 owner family
 
 不要先发明 `$sheet`，先完成 owner classification。
+
+## Relation To NodeRenderer
+
+`NodeRenderer` does not create or manage surface runtime/store boundaries.
+
+- `page` runtime/store is created by the page renderer; `NodeRenderer` does not publish it as a generic provider
+- `SurfaceRuntime`/`SurfaceStore` is created per opened surface entry by the dialog/drawer host, not by `NodeRenderer` plumbing
+- Each opened dialog or drawer entry owns its own `SurfaceRuntime`/`SurfaceStore` instance; ownership is disposed when the surface closes
+
+This rule is part of the broader creator-owned boundary model documented in `docs/architecture/renderer-runtime.md` → "Execution Boundary Ownership Matrix".
 
 ## Related Documents
 

@@ -64,9 +64,38 @@ export const pageRenderer: RendererDefinition = {
   regions: ['body']
 };
 
+function FormStub(props: RendererComponentProps) {
+  const runtime = useRendererRuntime();
+  const parentScope = useRenderScope();
+  const formId = typeof (props.props as Record<string, unknown>).id === 'string'
+    ? (props.props as Record<string, unknown>).id as string
+    : props.id;
+  const initialValues = (props.props as Record<string, unknown>).data &&
+    typeof (props.props as Record<string, unknown>).data === 'object'
+    ? (props.props as Record<string, unknown>).data as Record<string, unknown>
+    : undefined;
+  const ownedForm = React.useMemo(
+    () => runtime.createFormRuntime({
+      id: formId,
+      initialValues,
+      parentScope,
+      validation: props.node.validation
+    }),
+    [runtime, formId, initialValues, parentScope, props.node.validation]
+  );
+
+  return (
+    <FormContext.Provider value={ownedForm}>
+      <ScopeContext.Provider value={ownedForm.scope}>
+        <section>{props.regions.body?.render()}</section>
+      </ScopeContext.Provider>
+    </FormContext.Provider>
+  );
+}
+
 export const formRenderer: RendererDefinition = {
   type: 'form',
-  component: (props) => <section>{props.regions.body?.render()}</section>,
+  component: FormStub,
   regions: ['body'],
   scopePolicy: 'form',
   componentRegistryPolicy: 'new',

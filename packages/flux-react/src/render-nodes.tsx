@@ -9,7 +9,7 @@ import type {
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { getCompiledCidState, isSchema, isSchemaArray } from '@nop-chaos/flux-core';
-import { useRendererRuntime, useRenderScope, useCurrentActionScope, useCurrentComponentRegistry, useCurrentForm, useCurrentPage } from './hooks';
+import { useRendererRuntime, useRenderScope, useCurrentActionScope, useCurrentComponentRegistry } from './hooks';
 import { CompiledNodeContext, NodeInstanceContext, RenderInstancePathContext } from './contexts';
 import { createFragmentScopeChange } from './fragment-scope';
 import { NodeRenderer } from './node-renderer';
@@ -131,8 +131,6 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const currentScope = useRenderScope();
   const currentActionScope = useCurrentActionScope();
   const currentComponentRegistry = useCurrentComponentRegistry();
-  const currentForm = useCurrentForm();
-  const currentPage = useCurrentPage();
   const currentCompiledNode = useContext(CompiledNodeContext);
   const currentNodeInstance = useContext(NodeInstanceContext);
   const currentInstancePath = useContext(RenderInstancePathContext);
@@ -247,8 +245,6 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
               scope={scope}
               actionScope={actionScope}
               componentRegistry={componentRegistry}
-              form={currentForm}
-              page={currentPage}
             />
           ))}
         </>
@@ -263,8 +259,6 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
         scope={scope}
         actionScope={actionScope}
         componentRegistry={componentRegistry}
-        form={currentForm}
-        page={currentPage}
       />
     </RenderInstancePathContext.Provider>
   );

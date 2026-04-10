@@ -194,6 +194,10 @@ Current action dispatch now resolves through three explicit paths in order:
 
 This keeps data scope, namespaced behavior lookup, and instance-targeted capability invocation separate even though all three are available from the same runtime host tree.
 
+Current orchestration boundary note:
+
+- `action-runtime.ts` should stay the action entry/composition root, but payload evaluation, result classification, binding overlays, and target-enrichment helpers may live in internal runtime modules so dispatch-order changes do not require editing one monolithic file.
+
 ### `Store` and `Scope`
 
 Own:
@@ -226,6 +230,12 @@ Owns:
 - fragment rendering
 - dialog hosting
 - selector-based subscriptions and renderer hooks
+
+Current orchestration boundary note:
+
+- `NodeRenderer`, `DialogHost`, and the core React hooks remain the React integration composition roots; provider wiring, lifecycle/render monitor effects, and dialog/drawer shared surface assembly may be extracted as implementation helpers as long as runtime semantics and explicit boundary inputs stay unchanged.
+- Compiled nodes may also carry internal boundary hints describing which runtime contexts can change beneath the node, so the React layer can keep provider structure stable while still avoiding unconditional publication of every boundary on every node.
+- When possible, those hints should converge into a framework-agnostic compiled render plan so runtime frameworks execute precomputed boundary structure instead of rediscovering it per render.
 
 ## Current Value And Node Model
 

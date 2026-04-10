@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import {
+  FormContext,
+  ScopeContext,
+} from '@nop-chaos/flux-react';
+import {
   parsePath,
   serializeNodeLocator,
   type BaseSchema,
@@ -13,9 +17,12 @@ import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useCurrentActionScope,
-  useCurrentForm,
+  useCurrentComponentRegistry,
+  useCurrentPage,
+  useRenderScope,
   useRendererRuntime
 } from '@nop-chaos/flux-react';
+import { createFormComponentHandle } from '@nop-chaos/flux-runtime';
 import type { FormSchema } from '../schemas';
 
 function escapeJsonPointerSegment(segment: string) {
@@ -115,8 +122,10 @@ function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Reco
 
 export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const runtime = useRendererRuntime();
-  const currentForm = useCurrentForm();
   const currentActionScope = useCurrentActionScope();
+  const currentComponentRegistry = useCurrentComponentRegistry();
+  const currentPage = useCurrentPage();
+  const parentScope = useRenderScope();
   const nodeImports = Array.isArray(props.schema['xui:imports']) ? props.schema['xui:imports'] : undefined;
   const bodyContent = resolveRendererSlotContent(props, 'body');
   const actionsContent = resolveRendererSlotContent(props, 'actions');
@@ -128,7 +137,27 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     [runtime, nodeImports, currentActionScope]
   );
   const importsReady = !nodeImports?.length || Object.keys(importBindings).length === nodeImports.length;
-  const baseLifecycleScope = currentForm?.scope ?? props.nodeInstance.scope;
+
+  const formId = typeof props.props.id === 'string' ? props.props.id : props.id;
+  const formName = typeof props.props.name === 'string' ? props.props.name : undefined;
+  const initialValues =
+    props.props.data && typeof props.props.data === 'object'
+      ? (props.props.data as Record<string, unknown>)
+      : undefined;
+
+  const ownedForm = useMemo(
+    () => runtime.createFormRuntime({
+      id: formId,
+      name: formName,
+      initialValues,
+      parentScope,
+      page: currentPage,
+      validation: props.node.validation
+    }),
+    [runtime, formId, formName, initialValues, parentScope, currentPage, props.node.validation]
+  );
+
+  const baseLifecycleScope = ownedForm.scope;
   const lifecycleScope = useMemo(
     () => createFormLifecycleScope(baseLifecycleScope, importBindings),
     [baseLifecycleScope, importBindings]
@@ -146,20 +175,18 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const lastInitKeyRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (!currentForm) {
-      return;
-    }
-
-    currentForm.setLifecycleHandlers({
+    ownedForm.setLifecycleHandlers({
       submitAction: submitAction
         ? (options) => submitAction(undefined, {
             scope: lifecycleScope,
+            form: ownedForm,
             interactionId: options?.interactionId
           })
         : undefined,
       onSubmitSuccess: submitSuccessAction
         ? (result, options) => submitSuccessAction(undefined, {
             scope: lifecycleScope,
+            form: ownedForm,
             interactionId: options?.interactionId,
             prevResult: result,
             evaluationBindings: {
@@ -172,6 +199,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       onSubmitError: submitErrorAction
         ? (result, options) => submitErrorAction(undefined, {
             scope: lifecycleScope,
+            form: ownedForm,
             interactionId: options?.interactionId,
             prevResult: result,
             evaluationBindings: {
@@ -184,6 +212,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       onValidateError: validateErrorAction
         ? (result, options) => validateErrorAction(undefined, {
             scope: lifecycleScope,
+            form: ownedForm,
             interactionId: options?.interactionId,
             prevResult: result,
             evaluationBindings: {
@@ -196,9 +225,9 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     });
 
     return () => {
-      currentForm.setLifecycleHandlers(undefined);
+      ownedForm.setLifecycleHandlers(undefined);
     };
-  }, [currentForm, lifecycleScope, submitAction, submitErrorAction, submitSuccessAction, validateErrorAction]);
+  }, [ownedForm, lifecycleScope, submitAction, submitErrorAction, submitSuccessAction, validateErrorAction]);
 
   useEffect(() => {
     if (!initAction || !importsReady) {
@@ -210,14 +239,13 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     }
 
     lastInitKeyRef.current = activationKey;
-    void initAction(undefined, { scope: lifecycleScope });
-  }, [activationKey, importsReady, initAction, lifecycleScope]);
+    void initAction(undefined, { scope: lifecycleScope, form: ownedForm });
+  }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm]);
 
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
-  const parentScope = currentForm?.scope.parent;
 
   useEffect(() => {
-    if (!statusPath || !currentForm || !parentScope) {
+    if (!statusPath || !parentScope) {
       return;
     }
 
@@ -225,13 +253,13 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     const resolvedParentScope = parentScope;
 
     function publishStatus() {
-      const state = currentForm!.store.getState();
+      const state = ownedForm.store.getState();
       const errorEntries = Object.values(state.errors);
       const errorCount = errorEntries.reduce((acc: number, errs) => acc + errs.length, 0);
       const hasErrors = errorCount > 0;
       const summary: FormStatusSummary = {
-        id: currentForm!.id,
-        name: currentForm!.name,
+        id: ownedForm.id,
+        name: ownedForm.name,
         submitting: state.submitting,
         validating: Object.values(state.validating).some(Boolean),
         dirty: Object.values(state.dirty).some(Boolean),
@@ -248,14 +276,29 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
 
     publishStatus();
 
-    return currentForm.store.subscribe(publishStatus);
-  }, [statusPath, currentForm, parentScope]);
+    return ownedForm.store.subscribe(publishStatus);
+  }, [statusPath, ownedForm, parentScope]);
+
+  useEffect(() => {
+    if (!currentComponentRegistry) {
+      return;
+    }
+
+    return currentComponentRegistry.register(createFormComponentHandle(ownedForm), {
+      cid: props.meta.cid,
+      locator: props.nodeInstance.locator ?? props.locator
+    });
+  }, [currentComponentRegistry, ownedForm, props.meta.cid, props.nodeInstance.locator, props.locator]);
 
   return (
-    <section className="nop-form flex flex-col gap-4" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
-      {hasRendererSlotContent(bodyContent) ? <div data-slot="form-body" className="grid gap-4">{bodyContent}</div> : null}
-      {hasRendererSlotContent(actionsContent) ? <div data-slot="form-actions" className="flex flex-wrap gap-3">{actionsContent}</div> : null}
-    </section>
+    <FormContext.Provider value={ownedForm}>
+      <ScopeContext.Provider value={ownedForm.scope}>
+        <section className="nop-form flex flex-col gap-4" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+          {hasRendererSlotContent(bodyContent) ? <div data-slot="form-body" className="grid gap-4">{bodyContent}</div> : null}
+          {hasRendererSlotContent(actionsContent) ? <div data-slot="form-actions" className="flex flex-wrap gap-3">{actionsContent}</div> : null}
+        </section>
+      </ScopeContext.Provider>
+    </FormContext.Provider>
   );
 }
 

@@ -1,40 +1,15 @@
 import React from 'react';
 import type {
-  CompiledSchemaNode,
   DialogState,
   PageRuntime,
-  RenderNodeInput,
   SurfaceState
 } from '@nop-chaos/flux-core';
-import {
-  ActionScopeContext,
-  ComponentRegistryContext,
-  ScopeContext
-} from './contexts';
 import { useCurrentPage } from './hooks';
-import { RenderNodes } from './render-nodes';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
-
-function isCompiledNode(input: unknown): input is CompiledSchemaNode {
-  if (!input || typeof input !== 'object') {
-    return false;
-  }
-
-  const candidate = input as Partial<CompiledSchemaNode>;
-
-  return (
-    typeof candidate.id === 'string' &&
-    typeof candidate.path === 'string' &&
-    typeof candidate.type === 'string' &&
-    !!candidate.component &&
-    !!candidate.schema &&
-    !!candidate.regions
-  );
-}
-
-function isCompiledNodeArray(input: unknown): input is CompiledSchemaNode[] {
-  return Array.isArray(input) && input.every((item) => isCompiledNode(item));
-}
+import { renderSurfaceNode, SurfaceScopeProviders, useSurfaceScopeSnapshot } from './dialog-host-surface';
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@nop-chaos/ui';
 
 export function DialogHost() {
   const page = useCurrentPage();
@@ -74,13 +49,7 @@ function DialogView(props: {
   dialog: DialogState;
   page: PageRuntime;
 }) {
-  useSyncExternalStoreWithSelector(
-    props.dialog.scope.store?.subscribe ?? (() => () => undefined),
-    () => props.dialog.scope.read(),
-    () => props.dialog.scope.read(),
-    (state: unknown) => state,
-    Object.is
-  );
+  useSurfaceScopeSnapshot(props.dialog.scope);
 
   const { dialog, page } = props;
   const handleClose = React.useCallback(() => {
@@ -99,21 +68,14 @@ function DialogView(props: {
     });
   }, [dialog, page]);
 
-  const titleNode = dialog.title
-    ? (
-        <ActionScopeContext.Provider value={dialog.actionScope}>
-          <ComponentRegistryContext.Provider value={dialog.componentRegistry}>
-            <ScopeContext.Provider value={dialog.scope}>
-              {typeof dialog.title === 'string'
-                ? dialog.title
-                : isCompiledNode(dialog.title) || isCompiledNodeArray(dialog.title)
-                  ? <RenderNodes input={dialog.title as RenderNodeInput} options={{ scope: dialog.scope, actionScope: dialog.actionScope, componentRegistry: dialog.componentRegistry, ownerNode: dialog.ownerNode, ownerNodeInstance: dialog.ownerNodeInstance }} />
-                  : String(dialog.title)}
-            </ScopeContext.Provider>
-          </ComponentRegistryContext.Provider>
-        </ActionScopeContext.Provider>
-      )
-    : null;
+  const surfaceContext = {
+    scope: dialog.scope,
+    actionScope: dialog.actionScope,
+    componentRegistry: dialog.componentRegistry,
+    ownerNode: dialog.ownerNode,
+    ownerNodeInstance: dialog.ownerNodeInstance
+  };
+  const titleNode = dialog.title ? renderSurfaceNode(dialog.title, surfaceContext) : null;
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) handleClose(); }}>
@@ -128,21 +90,14 @@ function DialogView(props: {
           handleClose();
         }
       }}>
-        <ActionScopeContext.Provider value={dialog.actionScope}>
-          <ComponentRegistryContext.Provider value={dialog.componentRegistry}>
-            <ScopeContext.Provider value={dialog.scope}>
+        <SurfaceScopeProviders {...surfaceContext}>
               {titleNode && (
                 <DialogHeader>
                   <DialogTitle>{titleNode}</DialogTitle>
                 </DialogHeader>
               )}
-              <RenderNodes
-                input={(dialog.body ?? dialog.dialog.body) as RenderNodeInput}
-                options={{ scope: dialog.scope, actionScope: dialog.actionScope, componentRegistry: dialog.componentRegistry, ownerNode: dialog.ownerNode, ownerNodeInstance: dialog.ownerNodeInstance }}
-              />
-            </ScopeContext.Provider>
-          </ComponentRegistryContext.Provider>
-        </ActionScopeContext.Provider>
+              {renderSurfaceNode(dialog.body ?? dialog.dialog.body, surfaceContext)}
+        </SurfaceScopeProviders>
       </DialogContent>
     </Dialog>
   );
@@ -152,13 +107,7 @@ function DrawerView(props: {
   surface: SurfaceState;
   page: PageRuntime;
 }) {
-  useSyncExternalStoreWithSelector(
-    props.surface.scope.store?.subscribe ?? (() => () => undefined),
-    () => props.surface.scope.read(),
-    () => props.surface.scope.read(),
-    (state: unknown) => state,
-    Object.is
-  );
+  useSurfaceScopeSnapshot(props.surface.scope);
 
   const { page, surface } = props;
   const handleClose = React.useCallback(() => {
@@ -177,21 +126,14 @@ function DrawerView(props: {
     });
   }, [page, surface]);
 
-  const titleNode = surface.title
-    ? (
-        <ActionScopeContext.Provider value={surface.actionScope}>
-          <ComponentRegistryContext.Provider value={surface.componentRegistry}>
-            <ScopeContext.Provider value={surface.scope}>
-              {typeof surface.title === 'string'
-                ? surface.title
-                : isCompiledNode(surface.title) || isCompiledNodeArray(surface.title)
-                  ? <RenderNodes input={surface.title as RenderNodeInput} options={{ scope: surface.scope, actionScope: surface.actionScope, componentRegistry: surface.componentRegistry, ownerNode: surface.ownerNode, ownerNodeInstance: surface.ownerNodeInstance }} />
-                  : String(surface.title)}
-            </ScopeContext.Provider>
-          </ComponentRegistryContext.Provider>
-        </ActionScopeContext.Provider>
-      )
-    : null;
+  const surfaceContext = {
+    scope: surface.scope,
+    actionScope: surface.actionScope,
+    componentRegistry: surface.componentRegistry,
+    ownerNode: surface.ownerNode,
+    ownerNodeInstance: surface.ownerNodeInstance
+  };
+  const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
   return (
     <Drawer open onOpenChange={(open) => { if (!open) handleClose(); }} direction={surface.surface.side === 'left' ? 'left' : surface.surface.side === 'top' ? 'top' : surface.surface.side === 'bottom' ? 'bottom' : 'right'}>
@@ -206,26 +148,15 @@ function DrawerView(props: {
           handleClose();
         }
       }}>
-        <ActionScopeContext.Provider value={surface.actionScope}>
-          <ComponentRegistryContext.Provider value={surface.componentRegistry}>
-            <ScopeContext.Provider value={surface.scope}>
+        <SurfaceScopeProviders {...surfaceContext}>
               {titleNode && (
                 <DrawerHeader>
                   <DrawerTitle>{titleNode}</DrawerTitle>
                 </DrawerHeader>
               )}
-              <RenderNodes
-                input={(surface.body ?? surface.surface.body) as RenderNodeInput}
-                options={{ scope: surface.scope, actionScope: surface.actionScope, componentRegistry: surface.componentRegistry, ownerNode: surface.ownerNode, ownerNodeInstance: surface.ownerNodeInstance }}
-              />
-            </ScopeContext.Provider>
-          </ComponentRegistryContext.Provider>
-        </ActionScopeContext.Provider>
+              {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+        </SurfaceScopeProviders>
       </DrawerContent>
     </Drawer>
   );
 }
-
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@nop-chaos/ui';

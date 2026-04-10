@@ -76,6 +76,7 @@
 8. 对低代码底层框架，优先收敛 compile-time、runtime、React integration、renderer、designer shell 之间的边界，而不是先做表层代码美化
 9. 区分“合理的核心 orchestrator”与“实现细节不断堆积后的总控文件”；前者可以保留，后者应拆分
 10. React 19 的采用以语义匹配和 ROI 为准，不把“用了新 API”本身当作重构目标
+11. 对核心 orchestrator，优先抽出 payload/validation/effect/provider/shell 这类稳定实现簇；不要把 dispatch 顺序、公开入口或跨层边界拆散
 
 ## 重点排查问题
 
@@ -93,6 +94,7 @@
 - 核心运行时文件同时承担编译、执行、监控、错误处理、状态注入、上下文编排等多种职责
 - 低代码领域本该在 loader/装配期解决的问题，被拖进 runtime 或 renderer 临时处理
 - React 组件里同时混杂 external-store 订阅、scope 解析、副作用注册、context provider 编排、UI 渲染
+- dialog/drawer、node/provider、action/compiler 这类对称或并列路径长期复制，导致主入口难以维持为真正的 composition root
 - 为了兼容历史写法保留的中间层在 v1 项目里已经失去价值，但仍然阻碍边界收敛
 
 ## 针对低代码底层框架的额外判断
@@ -105,6 +107,7 @@
 - React 集成层是否只负责订阅、上下文和渲染边界，而没有侵入 runtime 语义本身
 - renderer 是否仍保持薄层，只负责 schema 驱动渲染，而没有偷偷承载状态机和业务编排
 - designer / complex control 是否被当作“特殊组件”处理，而不是重新长出一套厚重平台内核
+- orchestrator 抽出的 helper 是否仍沿原有依赖方向流动，没有把 runtime 语义重新塞进 UI helper 或 designer shell helper
 
 同时注意：
 
