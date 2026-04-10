@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type {
-  CompiledSchemaNode,
+  NodeInstance,
   RendererHelpers,
   ResolvedNodeMeta,
   TemplateNode
@@ -43,23 +43,23 @@ export function useRenderMonitor(input: {
 }
 
 export function useNodeLifecycleActions(input: {
-  lifecycleActions: CompiledSchemaNode['lifecycleActions'];
+  lifecycleActions: TemplateNode['lifecycleActions'];
   helpers: RendererHelpers;
-  locator: import('@nop-chaos/flux-core').NodeLocator | undefined;
+  nodeInstance: NodeInstance;
 }) {
   useEffect(() => {
     if (input.lifecycleActions?.onMount) {
       void input.helpers.dispatch(input.lifecycleActions.onMount as any, {
-        locator: input.locator
+        nodeInstance: input.nodeInstance
       });
     }
 
     return () => {
       if (input.lifecycleActions?.onUnmount) {
         void input.helpers.dispatch(input.lifecycleActions.onUnmount as any, {
-          locator: input.locator
+          nodeInstance: input.nodeInstance
         });
       }
     };
-  }, [input.helpers, input.lifecycleActions, input.locator]);
+  }, [input.helpers, input.lifecycleActions, input.nodeInstance]);
 }

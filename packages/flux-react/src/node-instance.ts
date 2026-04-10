@@ -1,10 +1,10 @@
 import type {
   CompiledNodeRuntimeState,
-  CompiledSchemaNode,
+  InstanceFrame,
   NodeInstance,
-  NodeLocator,
   NodeState,
-  ScopeRef
+  ScopeRef,
+  TemplateNode
 } from '@nop-chaos/flux-core';
 
 function toNodeState(state: CompiledNodeRuntimeState, mounted: boolean): NodeState {
@@ -19,47 +19,37 @@ function toNodeState(state: CompiledNodeRuntimeState, mounted: boolean): NodeSta
   };
 }
 
-export function createCompatibilityNodeInstance<S extends CompiledSchemaNode['schema']>(input: {
-  node: CompiledSchemaNode<S>;
-  locator: NodeLocator | undefined;
+export function createTemplateNodeRuntimeState(templateNode: TemplateNode): CompiledNodeRuntimeState {
+  const metaEntries: Record<string, any> = {};
+  const meta = templateNode.metaProgram;
+
+  for (const key of Object.keys(meta) as Array<keyof typeof meta>) {
+    const value = meta[key];
+    if (value && typeof value === 'object' && (value as { kind?: string }).kind === 'dynamic') {
+      metaEntries[key] = (value as { createState(): unknown }).createState();
+    }
+  }
+
+  const propsProgram = templateNode.propsProgram;
+
+  return {
+    meta: metaEntries,
+    props: propsProgram.kind === 'dynamic' ? propsProgram.createState() : undefined
+  };
+}
+
+export function createNodeInstance<S extends import('@nop-chaos/flux-core').BaseSchema>(input: {
+  templateNode: TemplateNode<S>;
   scope: ScopeRef;
   state: CompiledNodeRuntimeState;
   cid: number | undefined;
+  instancePath?: readonly InstanceFrame[];
   mounted: boolean;
 }): NodeInstance<S> {
-  const templateNodeId = input.node.templateNodeId ?? input.node.cid ?? -1;
-  const templateGraphId = input.node.templateGraphId ?? 'legacy:compiled-node';
-
   return {
-    cid: input.cid,
-    locator: input.locator ?? {
-      runtimeId: 'runtime',
-      templateGraphId,
-      templateNodeId
-    },
-    templateNode: {
-      templateNodeId,
-      id: input.node.id,
-      type: input.node.type,
-      schema: input.node.schema,
-      templatePath: input.node.path,
-      rendererType: input.node.type,
-      propsProgram: input.node.props,
-      metaProgram: input.node.meta as never,
-      eventPlans: input.node.eventActions,
-      regions: Object.fromEntries(
-        Object.entries(input.node.regions).map(([key, region]) => [
-          key,
-          {
-            key: region.key,
-            path: region.path,
-            node: region.node as never
-          }
-        ])
-      ),
-      scopePlan: { kind: 'inherit' },
-      validationPlan: input.node.validation as never
-    },
+    cid: input.cid ?? input.templateNode.templateNodeId,
+    instancePath: input.instancePath,
+    templateNode: input.templateNode,
     scope: input.scope,
     state: toNodeState(input.state, input.mounted)
   };

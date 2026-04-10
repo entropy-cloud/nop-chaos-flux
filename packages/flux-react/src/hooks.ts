@@ -172,7 +172,7 @@ export function useCurrentNodeMeta(): RenderNodeMeta {
 }
 
 export function useCurrentNodeInstance() {
-  return useContext(NodeMetaContext)?.nodeInstance ?? undefined;
+  return useContext(NodeMetaContext)?.node ?? undefined;
 }
 
 export function useActionDispatcher() {
@@ -196,9 +196,7 @@ export function useRenderFragment() {
       componentRegistry,
       form,
       page,
-      node: nodeMeta?.node,
-      nodeInstance: nodeMeta?.nodeInstance ?? undefined,
-      locator: nodeMeta?.nodeInstance?.locator,
+      nodeInstance: nodeMeta?.node ?? undefined,
       dialogId: scope.get('dialogId') as string | undefined
     }).render,
     [runtime, scope, actionScope, componentRegistry, form, page, nodeMeta]

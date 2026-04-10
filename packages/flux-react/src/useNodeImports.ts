@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
-  CompiledSchemaNode,
   NodeInstance,
   PageRuntime,
   RendererRuntime,
@@ -19,7 +18,6 @@ export function useNodeImports(
   activeActionScope: ActionScope | undefined,
   activeComponentRegistry: ComponentHandleRegistry | undefined,
   activeScope: ScopeRef,
-  node: CompiledSchemaNode,
   nodeInstance: NodeInstance,
   page?: PageRuntime
 ): Readonly<Record<string, unknown>> {
@@ -45,7 +43,6 @@ export function useNodeImports(
       actionScope: activeActionScope,
       componentRegistry: activeComponentRegistry,
       scope: activeScope,
-      node,
       nodeInstance: nodeInstanceRef.current
     }).then(() => {
       if (signal.aborted) {
@@ -96,7 +93,7 @@ export function useNodeImports(
         actionScope: activeActionScope
       });
     };
-  }, [runtime, activeImportLoader, hasImports, nodeImports, activeActionScope, activeComponentRegistry, activeScope, node, page]);
+  }, [runtime, activeImportLoader, hasImports, nodeImports, activeActionScope, activeComponentRegistry, activeScope, page]);
 
   return hasImports ? expressionBindings : EMPTY_IMPORT_BINDINGS;
 }

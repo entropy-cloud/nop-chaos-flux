@@ -2,7 +2,7 @@ import React from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
-  CompiledSchemaNode,
+  NodeInstance,
   ScopeRef,
   TemplateNode
 } from '@nop-chaos/flux-core';
@@ -14,53 +14,59 @@ import {
   ScopeContext
 } from './contexts';
 
-const PROVIDER_CONTEXTS: Record<string, React.Context<any>> = {
-  classAliases: ClassAliasesContext,
-  componentRegistry: ComponentRegistryContext,
-  actionScope: ActionScopeContext,
-};
-
-export function wrapProvider(kind: string, value: unknown, children: unknown): unknown {
-  const context = PROVIDER_CONTEXTS[kind];
-  if (!context) {
-    return children;
-  }
-
-  return React.createElement(context.Provider, { value }, children as React.ReactNode);
-}
-
 export function NodeRendererProviders(props: React.PropsWithChildren<{
-  node: CompiledSchemaNode;
   templateNode: TemplateNode;
-  locator: import('@nop-chaos/flux-core').NodeLocator | undefined;
-  nodeInstance: import('@nop-chaos/flux-core').NodeInstance;
+  nodeInstance: NodeInstance;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   scope: ScopeRef;
   classAliases?: Record<string, string>;
 }>) {
-  const wrappedByPlan = props.node.renderPlan.wrapProviders(
-    wrapProvider,
-    {
-      classAliases: props.classAliases,
-      componentRegistry: props.componentRegistry,
-      actionScope: props.actionScope,
-    },
-    props.children
-  ) as React.ReactNode;
+  const { component, schema } = props.templateNode;
+  const publishActionScope = component.actionScopePolicy === 'new';
+  const publishComponentRegistry = component.componentRegistryPolicy === 'new';
+  const publishClassAliases = Boolean(
+    (schema as { classAliases?: Record<string, string> }).classAliases &&
+    Object.keys((schema as { classAliases?: Record<string, string> }).classAliases!).length > 0
+  );
+
+  let children: React.ReactNode = props.children;
+
+  if (publishActionScope) {
+    children = (
+      <ActionScopeContext.Provider value={props.actionScope}>
+        {children}
+      </ActionScopeContext.Provider>
+    );
+  }
+
+  if (publishComponentRegistry) {
+    children = (
+      <ComponentRegistryContext.Provider value={props.componentRegistry}>
+        {children}
+      </ComponentRegistryContext.Provider>
+    );
+  }
+
+  if (publishClassAliases) {
+    children = (
+      <ClassAliasesContext.Provider value={props.classAliases}>
+        {children}
+      </ClassAliasesContext.Provider>
+    );
+  }
 
   return (
     <NodeMetaContext.Provider value={{
       id: props.templateNode.id,
       path: props.templateNode.templatePath,
       type: props.templateNode.rendererType,
-      locator: props.locator,
+      cid: props.nodeInstance.cid,
       templateNode: props.templateNode,
-      node: props.node,
-      nodeInstance: props.nodeInstance
+      node: props.nodeInstance
     }}>
       <ScopeContext.Provider value={props.scope}>
-        {wrappedByPlan}
+        {children}
       </ScopeContext.Provider>
     </NodeMetaContext.Provider>
   );

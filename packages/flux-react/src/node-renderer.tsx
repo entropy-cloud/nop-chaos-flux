@@ -4,12 +4,12 @@ import type {
   ActionScope,
   ComponentHandleRegistry,
   CompiledNodeRuntimeState,
-  CompiledSchemaNode,
   RendererComponentProps,
   ResolvedNodeMeta,
   ResolvedNodeProps,
   ScopeChange,
-  ScopeRef
+  ScopeRef,
+  TemplateNode
 } from '@nop-chaos/flux-core';
 import { mergeClassAliases, resolveClassAliases } from '@nop-chaos/flux-core';
 import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
@@ -21,23 +21,23 @@ import { createHelpers } from './helpers';
 import { createNormalizedActionEvent } from './helpers';
 import { RenderNodes } from './render-nodes';
 import {
-  getCompiledNodeLocator,
   getNodeClassAliases,
   getNodeImports
 } from './node-renderer-utils';
 import { NodeFrameWrapper } from './node-frame-wrapper';
-import { createCompatibilityNodeInstance } from './node-instance';
+import { createNodeInstance, createTemplateNodeRuntimeState } from './node-instance';
 import { useNodeScopes } from './useNodeScopes';
 import { useNodeImports } from './useNodeImports';
 import { useNodeDebugData } from './useNodeDebugData';
 import { useNodeSourceProps } from './use-node-source-props';
 import { useNodeLifecycleActions, useRenderMonitor } from './node-renderer-effects';
 import { NodeRendererProviders } from './node-renderer-providers';
+import { buildSlotFrame, readSlotFrame, SLOT_KEY } from './slot-frame';
 
 export { resolveFrameWrapMode } from './node-renderer-utils';
 
 export const NodeRenderer = memo(function NodeRenderer(props: {
-  node: CompiledSchemaNode;
+  node: TemplateNode;
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
@@ -47,9 +47,18 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const parentClassAliases = useContext(ClassAliasesContext);
   const currentForm = useCurrentForm();
   const currentPage = useCurrentPage();
-  const nodeState = useMemo<CompiledNodeRuntimeState>(() => props.node.createRuntimeState(), [props.node]);
+  const nodeState = useMemo<CompiledNodeRuntimeState>(
+    () => createTemplateNodeRuntimeState(props.node),
+    [props.node]
+  );
 
-  const isStatic = props.node.flags.isStatic;
+  const propsProgram = props.node.propsProgram;
+  const metaProgram = props.node.metaProgram;
+  const isStatic = propsProgram.kind === 'static' && Object.keys(metaProgram).every((key) => {
+    const v = metaProgram[key as keyof typeof metaProgram];
+    return !v || (v as { kind?: string }).kind !== 'dynamic';
+  });
+
   const getNodeResolution = () => ({
     meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
     resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
@@ -81,10 +90,12 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   const nodeClassAliases = getNodeClassAliases(props.node);
   const mergedClassAliases = mergeClassAliases(parentClassAliases, nodeClassAliases);
-  const resolvedClassName = resolveClassAliases(baseMeta.className, mergedClassAliases);
-  const resolvedMeta = resolvedClassName !== baseMeta.className
-    ? { ...baseMeta, className: resolvedClassName }
-    : baseMeta;
+  const resolvedMeta = useMemo(() => {
+    const resolvedClassName = resolveClassAliases(baseMeta.className, mergedClassAliases);
+    return resolvedClassName !== baseMeta.className
+      ? { ...baseMeta, className: resolvedClassName }
+      : baseMeta;
+  }, [baseMeta, mergedClassAliases]);
 
   const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, {
     nodeId: props.node.id,
@@ -93,17 +104,22 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   }, props.actionScope, props.componentRegistry);
 
   const activeScope = props.scope;
-  const nodeLocator = getCompiledNodeLocator(props.node, runtime.runtimeId, instancePath);
-  const importOwnerNodeInstance = createCompatibilityNodeInstance({
-    node: props.node,
-    locator: nodeLocator,
-    scope: activeScope,
-    state: nodeState,
-    cid: resolvedMeta.cid,
-    mounted: true
-  });
+  const importOwnerNodeInstance = useMemo(
+    () => createNodeInstance({
+      templateNode: props.node,
+      scope: activeScope,
+      state: nodeState,
+      cid: resolvedMeta.cid,
+      instancePath,
+      mounted: true
+    }),
+    [props.node, activeScope, nodeState, resolvedMeta, instancePath]
+  );
   const nodeImports = getNodeImports(props.node);
-  const importExpressionBindings = useNodeImports(runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope, props.node, importOwnerNodeInstance, currentPage);
+  const importExpressionBindings = useNodeImports(
+    runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope,
+    importOwnerNodeInstance, currentPage
+  );
   const renderScope = useMemo(
     () => Object.keys(importExpressionBindings).length === 0
       ? activeScope
@@ -114,7 +130,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     [runtime, activeScope, importExpressionBindings, props.node.id]
   );
   const importNodeState = useMemo(
-    () => (renderScope === activeScope ? nodeState : props.node.createRuntimeState()),
+    () => (renderScope === activeScope ? nodeState : createTemplateNodeRuntimeState(props.node)),
     [renderScope, activeScope, nodeState, props.node]
   );
   const importedMeta = renderScope === activeScope
@@ -129,19 +145,18 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     : importedMeta;
   const resolvedComponentProps = useNodeSourceProps(props.node, importedResolvedProps.value, renderScope);
   const nodeInstance = useMemo(
-    () => createCompatibilityNodeInstance({
-      node: props.node,
-      locator: nodeLocator,
+    () => createNodeInstance({
+      templateNode: props.node,
       scope: renderScope,
       state: importNodeState,
       cid: finalResolvedMeta.cid,
+      instancePath,
       mounted: true
     }),
-    [props.node, nodeLocator, renderScope, importNodeState, finalResolvedMeta.cid]
+    [props.node, renderScope, importNodeState, finalResolvedMeta.cid, instancePath]
   );
-  const templateNode = nodeInstance.templateNode;
 
-  useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, nodeInstance, nodeLocator, renderScope, finalResolvedMeta, resolvedComponentProps);
+  useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, nodeInstance, renderScope, finalResolvedMeta, resolvedComponentProps);
 
   const helpers = useMemo(
     () =>
@@ -152,19 +167,15 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         componentRegistry: activeComponentRegistry,
         form: currentForm,
         page: currentPage,
-        node: props.node,
-        nodeInstance,
-        locator: nodeLocator
+        nodeInstance
       }),
-    [runtime, renderScope, activeActionScope, activeComponentRegistry, currentForm, currentPage, props.node, nodeInstance, nodeLocator]
+    [runtime, renderScope, activeActionScope, activeComponentRegistry, currentForm, currentPage, nodeInstance]
   );
   const lifecycleActions = props.node.lifecycleActions;
 
   const events = useMemo(() => {
     return Object.fromEntries(
-      props.node.eventKeys.map((key) => {
-        const action = props.node.eventActions[key];
-
+      Object.entries(props.node.eventPlans).map(([key, action]) => {
         if (!action) {
           return [key, undefined];
         }
@@ -174,45 +185,71 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
           (event?: unknown, eventContext?: Partial<import('@nop-chaos/flux-core').ActionContext>) =>
             helpers.dispatch(action as any, {
               ...eventContext,
-              locator: eventContext?.locator ?? nodeLocator,
+              nodeInstance: eventContext?.nodeInstance ?? nodeInstance,
               event: createNormalizedActionEvent(event)
             })
         ];
       })
     );
-  }, [helpers, nodeLocator, props.node.eventActions, props.node.eventKeys]);
+  }, [helpers, nodeInstance, props.node.eventPlans]);
 
   const regions = useMemo(() => {
     return Object.fromEntries(
-      Object.entries(props.node.regions).map(([key, region]) => [
-        key,
-        {
-          key,
-          path: region.path,
-          node: region.node,
-          render: (options?: import('@nop-chaos/flux-core').RenderFragmentOptions) => (
+      Object.entries(props.node.regions).map(([key, region]) => {
+        const params = region.params;
+        const regionIsolate = region.isolate;
+
+        function instantiateRegion(options?: import('@nop-chaos/flux-core').RenderFragmentOptions) {
+          const rawBindings = options?.bindings ?? (options?.data as Record<string, unknown> | undefined);
+
+          if (params && params.length > 0 && rawBindings) {
+            const currentScopeData = renderScope.read?.() as Record<string, unknown> | undefined ?? {};
+            const outerSlotFrame = readSlotFrame(currentScopeData);
+            const slotFrame = buildSlotFrame(rawBindings, outerSlotFrame);
+            return (
+              <RenderNodes
+                input={region.node as any}
+                options={{
+                  ...options,
+                  bindings: { [SLOT_KEY]: slotFrame },
+                  isolate: options?.isolate ?? regionIsolate,
+                  ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance
+                }}
+              />
+            );
+          }
+
+          return (
             <RenderNodes
-              input={region.node}
+              input={region.node as any}
               options={{
                 ...options,
-                ownerNode: options?.ownerNode ?? props.node,
                 ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance
               }}
             />
-          )
+          );
         }
-      ])
+
+        return [
+          key,
+          {
+            key,
+            templateNode: region.node,
+            params,
+            render: instantiateRegion,
+            instantiate: instantiateRegion
+          }
+        ];
+      })
     );
-  }, [nodeInstance, props.node]);
+  }, [nodeInstance, renderScope, props.node.regions]);
 
   const componentProps: RendererComponentProps = {
-    id: templateNode.id,
-    path: templateNode.templatePath,
-    schema: templateNode.schema,
-    locator: nodeLocator,
-    templateNode,
-    node: props.node,
-    nodeInstance,
+    id: props.node.id,
+    path: props.node.templatePath,
+    schema: props.node.schema,
+    templateNode: props.node,
+    node: nodeInstance,
     props: resolvedComponentProps,
     meta: finalResolvedMeta,
     regions,
@@ -224,13 +261,13 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   useRenderMonitor({
     monitor: runtime.env.monitor,
-    templateNode,
+    templateNode: props.node,
     resolvedMeta: finalResolvedMeta
   });
   useNodeLifecycleActions({
     lifecycleActions,
     helpers,
-    locator: nodeLocator
+    nodeInstance
   });
 
   if (!finalResolvedMeta.visible || finalResolvedMeta.hidden) {
@@ -241,7 +278,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   const content = (
     <NodeFrameWrapper
-      templateNode={nodeInstance.templateNode}
+      templateNode={props.node}
       definitionWrap={props.node.component.wrap}
       resolvedMeta={finalResolvedMeta}
       resolvedPropsValue={resolvedComponentProps}
@@ -253,9 +290,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   return (
     <NodeRendererProviders
-      node={props.node}
-      templateNode={templateNode}
-      locator={nodeLocator}
+      templateNode={props.node}
       nodeInstance={nodeInstance}
       actionScope={activeActionScope}
       componentRegistry={activeComponentRegistry}

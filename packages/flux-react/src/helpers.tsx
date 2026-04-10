@@ -3,7 +3,6 @@ import type {
   ActionContext,
   ActionScope,
   ComponentHandleRegistry,
-  CompiledSchemaNode,
   FormRuntime,
   NodeInstance,
   PageRuntime,
@@ -11,7 +10,6 @@ import type {
   RendererRuntime,
   RenderNodeInput,
   RenderFragmentOptions,
-  NodeLocator,
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { RenderNodes } from './render-nodes';
@@ -73,9 +71,7 @@ export function mergeActionContext(base: {
   componentRegistry?: ComponentHandleRegistry;
   form?: FormRuntime;
   page?: PageRuntime;
-  node?: CompiledSchemaNode;
   nodeInstance?: NodeInstance;
-  locator?: NodeLocator;
 }, partial?: Partial<ActionContext>): ActionContext {
   const rawEvent = partial?.event as unknown;
 
@@ -84,9 +80,8 @@ export function mergeActionContext(base: {
     scope: partial?.scope ?? base.scope,
     actionScope: partial?.actionScope ?? base.actionScope,
     componentRegistry: partial?.componentRegistry ?? base.componentRegistry,
-    node: partial?.node ?? base.node,
     nodeInstance: partial?.nodeInstance ?? base.nodeInstance,
-    locator: partial?.locator ?? base.locator,
+    instancePath: partial?.instancePath ?? (partial?.nodeInstance ?? base.nodeInstance)?.instancePath,
     form: partial?.form ?? base.form,
     page: partial?.page ?? base.page,
     event: normalizeActionEvent(rawEvent),
@@ -109,9 +104,7 @@ export function createHelpers(input: {
   componentRegistry?: ComponentHandleRegistry;
   form?: FormRuntime;
   page?: PageRuntime;
-  node?: CompiledSchemaNode;
   nodeInstance?: NodeInstance;
-  locator?: NodeLocator;
   dialogId?: string;
 }): RendererHelpers {
   const dispatch = (action: any, ctx?: Partial<ActionContext>) => input.runtime.dispatch(action, mergeActionContext(input, ctx));
@@ -124,7 +117,6 @@ export function createHelpers(input: {
         input: renderInput,
         options: {
           ...options,
-          ownerNode: options?.ownerNode ?? input.node,
           ownerNodeInstance: options?.ownerNodeInstance ?? input.nodeInstance
         }
       });

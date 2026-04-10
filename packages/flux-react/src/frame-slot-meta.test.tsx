@@ -67,9 +67,9 @@ describe('renderer slot helpers', () => {
         regions: {
           title: {
             key: 'title',
-            path: '$.title',
-            node: [] as any,
-            render: () => regionContent
+            templateNode: null,
+            render: () => regionContent,
+            instantiate: () => regionContent
           }
         }
       },

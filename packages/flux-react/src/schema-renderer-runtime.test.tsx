@@ -51,32 +51,19 @@ describe('createSchemaRenderer runtime behavior', () => {
       classAliases: { local: 'stack-2' },
       'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
       body: [{ type: 'scoped-host', body: [{ type: 'text', text: 'child' }] }]
-    } as any) as any;
+    } as any);
 
-    expect(compiled.runtimeBoundaries).toEqual({
-      mayPublishScope: true,
-      mayPublishActionScope: false,
-      mayPublishComponentRegistry: true,
-      mayPublishClassAliases: true,
-    });
-    expect(compiled.renderPlan.providers).toEqual({
-      actionScope: false,
-      componentRegistry: true,
-      classAliases: true,
-    });
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    expect(root.scopePlan.kind).toBe('form');
+    expect(root.component.actionScopePolicy).not.toBe('new');
+    expect(root.component.componentRegistryPolicy).toBe('new');
+    expect(root.schema.classAliases).toBeTruthy();
 
-    const scopedHost = compiled.regions.body.node[0];
-    expect(scopedHost.runtimeBoundaries).toEqual({
-      mayPublishScope: false,
-      mayPublishActionScope: true,
-      mayPublishComponentRegistry: true,
-      mayPublishClassAliases: false,
-    });
-    expect(scopedHost.renderPlan.providers).toEqual({
-      actionScope: true,
-      componentRegistry: true,
-      classAliases: false,
-    });
+    const scopedHost = Array.isArray(root.regions.body.node) ? root.regions.body.node[0] : root.regions.body.node;
+    expect(scopedHost!.scopePlan.kind).toBe('inherit');
+    expect(scopedHost!.component.actionScopePolicy).toBe('new');
+    expect(scopedHost!.component.componentRegistryPolicy).toBe('new');
+    expect(scopedHost!.schema.classAliases).toBeFalsy();
   });
 
   it('renders compiled schema in React', () => {
@@ -136,12 +123,8 @@ describe('createSchemaRenderer runtime behavior', () => {
     });
     const page = runtime.createPageRuntime({});
     const ownerNodeInstance = {
-      locator: {
-        runtimeId: runtime.runtimeId,
-        templateGraphId: 'test:inline-owner',
-        templateNodeId: 1,
-        instancePath: [{ repeatedTemplateId: 'rows', instanceKey: 'row-1' }]
-      },
+      cid: 1,
+      instancePath: [{ repeatedTemplateId: 'rows', instanceKey: 'row-1' }],
       templateNode: {
         templateNodeId: 1,
         id: 'inline-owner',
@@ -149,11 +132,13 @@ describe('createSchemaRenderer runtime behavior', () => {
         schema: { type: 'host' },
         templatePath: 'host.root',
         rendererType: 'host',
-        propsProgram: {},
+        propsProgram: { kind: 'static', value: {} },
         metaProgram: {},
         eventPlans: {},
         regions: {},
-        scopePlan: { kind: 'inherit' }
+        scopePlan: { kind: 'inherit' },
+        sourcePropKeys: [],
+        sourceStatePropKeys: {}
       },
       scope: page.scope,
       state: {
@@ -169,9 +154,9 @@ describe('createSchemaRenderer runtime behavior', () => {
             id: ownerNodeInstance.templateNode.id,
             path: ownerNodeInstance.templateNode.templatePath,
             type: ownerNodeInstance.templateNode.rendererType,
-            locator: ownerNodeInstance.locator,
+            cid: ownerNodeInstance.cid,
             templateNode: ownerNodeInstance.templateNode,
-            nodeInstance: ownerNodeInstance
+            node: ownerNodeInstance
           }}>
             <RenderNodes input={{ type: 'path-probe' }} options={{ pathSuffix: 'inline' }} />
           </NodeMetaContext.Provider>
@@ -182,7 +167,7 @@ describe('createSchemaRenderer runtime behavior', () => {
     expect(screen.getByTestId('path-probe').textContent).toBe('host.root.inline');
   });
 
-  it('exposes locator and template nodes through renderer props and current-node meta hooks', () => {
+  it('exposes template nodes through renderer props and current-node meta hooks', () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, nodeIdentityProbeRenderer]);
 
     render(
@@ -196,12 +181,6 @@ describe('createSchemaRenderer runtime behavior', () => {
       />
     );
 
-    const propsLocator = JSON.parse(screen.getByTestId('props-locator').textContent ?? 'null');
-    const metaLocator = JSON.parse(screen.getByTestId('meta-locator').textContent ?? 'null');
-
-    expect(propsLocator.runtimeId).toBeTruthy();
-    expect(propsLocator.templateNodeId).toBe(metaLocator.templateNodeId);
-    expect(propsLocator.templateGraphId).toBe(metaLocator.templateGraphId);
     expect(screen.getByTestId('props-template-path').textContent).toBe('$.body[0]');
     expect(screen.getByTestId('meta-template-path').textContent).toBe('$.body[0]');
   });

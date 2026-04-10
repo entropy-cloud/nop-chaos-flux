@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ActionResult, CompiledSchemaNode, ScopeRef, SourceSchema } from '@nop-chaos/flux-core';
+import type { ActionResult, TemplateNode, ScopeRef, SourceSchema } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 import { useRendererRuntime } from './hooks';
 import { isSourceSchema } from './useSourceValue';
@@ -43,7 +43,7 @@ function buildStatePatch(
 }
 
 export function useNodeSourceProps(
-  node: CompiledSchemaNode,
+  node: TemplateNode,
   propsValue: Readonly<Record<string, unknown>>,
   scope: ScopeRef
 ): Readonly<Record<string, unknown>> {

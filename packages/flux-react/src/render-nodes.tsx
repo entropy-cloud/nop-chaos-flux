@@ -1,41 +1,55 @@
 import React, { useContext, useEffect, useId, useMemo } from 'react';
 import type {
   CompileSchemaOptions,
-  CompiledSchemaNode,
+  CompiledTemplate,
   RenderFragmentOptions,
   RenderNodeInput,
   RendererComponentProps,
   RendererRuntime,
-  ScopeRef
+  ScopeRef,
+  TemplateNode
 } from '@nop-chaos/flux-core';
-import { getCompiledCidState, isSchema, isSchemaArray } from '@nop-chaos/flux-core';
+import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope, useCurrentActionScope, useCurrentComponentRegistry } from './hooks';
 import { NodeMetaContext, RenderInstancePathContext } from './contexts';
 import { createFragmentScopeChange } from './fragment-scope';
 import { NodeRenderer } from './node-renderer';
 
 function getOwnerTemplatePath(input: {
-  ownerNode?: CompiledSchemaNode;
   ownerNodeInstance?: import('@nop-chaos/flux-core').NodeInstance;
 }): string | undefined {
-  return input.ownerNode?.path ?? input.ownerNodeInstance?.templateNode.templatePath;
+  return input.ownerNodeInstance?.templateNode.templatePath;
 }
 
-function isCompiledNode(input: unknown): input is CompiledSchemaNode {
+function isTemplateNode(input: unknown): input is TemplateNode {
   if (!input || typeof input !== 'object') {
     return false;
   }
 
-  const candidate = input as Partial<CompiledSchemaNode>;
+  const candidate = input as Partial<TemplateNode>;
 
   return (
-    typeof candidate.id === 'string' &&
-    typeof candidate.path === 'string' &&
+    typeof candidate.templateNodeId === 'number' &&
+    typeof candidate.templatePath === 'string' &&
     typeof candidate.type === 'string' &&
     !!candidate.component &&
     !!candidate.schema &&
     !!candidate.regions
   );
+}
+
+function isCompiledTemplate(input: unknown): input is CompiledTemplate {
+  if (!input || typeof input !== 'object') {
+    return false;
+  }
+
+  const candidate = input as Partial<CompiledTemplate>;
+
+  return !!candidate.root && candidate.repeatedTemplates instanceof Map;
+}
+
+function extractTemplateNodes(template: CompiledTemplate): TemplateNode | readonly TemplateNode[] {
+  return template.root;
 }
 
 const fragmentScopeCache = new Map<string, {
@@ -51,7 +65,7 @@ export function normalizeNodeInput(
   runtime: RendererRuntime,
   input: RenderNodeInput,
   compileOptions?: CompileSchemaOptions
-): CompiledSchemaNode | CompiledSchemaNode[] | null {
+): TemplateNode | readonly TemplateNode[] | null {
   if (!input) {
     return null;
   }
@@ -61,26 +75,32 @@ export function normalizeNodeInput(
       return [];
     }
 
-    if (input.every((item) => isCompiledNode(item))) {
-      return input;
+    if (input.every((item) => isTemplateNode(item))) {
+      return input as TemplateNode[];
     }
 
     if (isSchemaArray(input)) {
-      return runtime.schemaCompiler.compile(input, compileOptions);
+      const compiled = runtime.schemaCompiler.compile(input, compileOptions);
+      return extractTemplateNodes(compiled);
     }
 
-    return input as CompiledSchemaNode[];
+    return input as TemplateNode[];
   }
 
-  if (isCompiledNode(input)) {
+  if (isTemplateNode(input)) {
     return input;
   }
 
-  if (isSchema(input)) {
-    return runtime.schemaCompiler.compile(input, compileOptions) as CompiledSchemaNode;
+  if (isCompiledTemplate(input)) {
+    return extractTemplateNodes(input);
   }
 
-  return input as CompiledSchemaNode;
+  if (isSchema(input)) {
+    const compiled = runtime.schemaCompiler.compile(input, compileOptions);
+    return extractTemplateNodes(compiled);
+  }
+
+  return null;
 }
 
 export function resolveRendererSlotContent(
@@ -91,7 +111,7 @@ export function resolveRendererSlotContent(
     fallback?: React.ReactNode;
   }
 ) {
-  const regionContent = props.regions[slotKey]?.render();
+  const regionContent = props.regions[slotKey]?.instantiate();
 
   if (regionContent !== undefined && regionContent !== null) {
     return regionContent;
@@ -136,34 +156,29 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const fragmentScopeCacheKey = useId();
   const options = props.options;
   const explicitScope = options?.scope;
-  const fragmentData = options?.data as Record<string, unknown> | undefined;
+  const fragmentBindings = options?.bindings ?? (options?.data as Record<string, unknown> | undefined);
   const isolate = options?.isolate;
   const pathSuffix = options?.pathSuffix;
   const scopeKey = options?.scopeKey;
-  const ownerNode = options?.ownerNode ?? currentNodeMeta?.node ?? undefined;
-  const ownerNodeInstance = options?.ownerNodeInstance ?? currentNodeMeta?.nodeInstance ?? undefined;
+  const ownerNodeInstance = options?.ownerNodeInstance ?? currentNodeMeta?.node ?? undefined;
   const compileOptions = useMemo<CompileSchemaOptions | undefined>(() => {
-    const cidState = ownerNode ? getCompiledCidState(ownerNode) : undefined;
-    const ownerTemplatePath = getOwnerTemplatePath({ ownerNode, ownerNodeInstance });
+    const ownerTemplatePath = getOwnerTemplatePath({ ownerNodeInstance });
 
-    if (!cidState && !ownerTemplatePath) {
+    if (!ownerTemplatePath) {
       return undefined;
     }
 
-    const basePath = ownerTemplatePath
-      ? `${ownerTemplatePath}.${pathSuffix ?? 'fragment'}`
-      : undefined;
+    const basePath = `${ownerTemplatePath}.${pathSuffix ?? 'fragment'}`;
 
     return {
-      cidState,
       basePath,
       parentPath: ownerTemplatePath
     };
-  }, [ownerNode, ownerNodeInstance, pathSuffix]);
+  }, [ownerNodeInstance, pathSuffix]);
   const compiled = useMemo(() => normalizeNodeInput(runtime, props.input, compileOptions), [runtime, props.input, compileOptions]);
-  const shouldUseFragmentScope = !explicitScope && !!fragmentData;
+  const shouldUseFragmentScope = !explicitScope && !!fragmentBindings;
   const fragmentScope = useMemo(() => {
-    if (!shouldUseFragmentScope || !fragmentData) {
+    if (!shouldUseFragmentScope || !fragmentBindings) {
       return undefined;
     }
 
@@ -179,7 +194,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
       return cachedFragmentScope.scope;
     }
 
-    const scope = runtime.createChildScope(currentScope, fragmentData, {
+    const scope = runtime.createChildScope(currentScope, fragmentBindings, {
       isolate,
       pathSuffix,
       scopeKey,
@@ -196,7 +211,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     });
 
     return scope;
-  }, [currentScope, fragmentData, fragmentScopeCacheKey, isolate, pathSuffix, runtime, scopeKey, shouldUseFragmentScope]);
+  }, [currentScope, fragmentBindings, fragmentScopeCacheKey, isolate, pathSuffix, runtime, scopeKey, shouldUseFragmentScope]);
 
   useEffect(() => {
     return () => {
@@ -205,29 +220,29 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   }, [fragmentScopeCacheKey]);
 
   useEffect(() => {
-    if (!shouldUseFragmentScope || !fragmentData || !fragmentScope?.store) {
+    if (!shouldUseFragmentScope || !fragmentBindings || !fragmentScope?.store) {
       return;
     }
 
     const currentOwnSnapshot = fragmentScope.readOwn();
 
-    if (currentOwnSnapshot === fragmentData) {
+    if (currentOwnSnapshot === fragmentBindings) {
       return;
     }
 
-    const change = createFragmentScopeChange(currentOwnSnapshot, fragmentData);
+    const change = createFragmentScopeChange(currentOwnSnapshot, fragmentBindings);
 
     if (!change) {
       return;
     }
 
-    fragmentScope.store.setSnapshot(fragmentData, change);
-  }, [fragmentData, fragmentScope, shouldUseFragmentScope]);
+    fragmentScope.store.setSnapshot(fragmentBindings, change);
+  }, [fragmentBindings, fragmentScope, shouldUseFragmentScope]);
 
   const actionScope = options?.actionScope ?? currentActionScope;
   const componentRegistry = options?.componentRegistry ?? currentComponentRegistry;
   const scope = explicitScope ?? fragmentScope ?? currentScope;
-  const instancePath = options?.instancePath ?? ownerNodeInstance?.locator.instancePath ?? currentInstancePath;
+  const instancePath = options?.instancePath ?? ownerNodeInstance?.instancePath ?? currentInstancePath;
 
   if (!compiled) {
     return null;
@@ -237,7 +252,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     return (
       <RenderInstancePathContext.Provider value={instancePath}>
         <>
-          {compiled.map((node) => (
+          {(compiled as TemplateNode[]).map((node) => (
             <NodeRenderer
               key={node.id}
               node={node}
@@ -254,7 +269,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   return (
     <RenderInstancePathContext.Provider value={instancePath}>
       <NodeRenderer
-        node={compiled}
+        node={compiled as TemplateNode}
         scope={scope}
         actionScope={actionScope}
         componentRegistry={componentRegistry}

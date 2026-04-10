@@ -26,7 +26,7 @@ export function NodeFrameWrapper(props: {
       ? props.templateNode.schema.name
       : undefined;
   const labelValue = props.resolvedMeta.label
-    ?? (props.regions.label ? props.regions.label.render() : props.templateNode.schema.label);
+    ?? (props.regions.label ? props.regions.label.instantiate() : props.templateNode.schema.label);
 
   return (
     <FieldFrame

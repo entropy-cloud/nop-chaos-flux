@@ -3,10 +3,12 @@ import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/w
 import type {
   ActionScope,
   ComponentHandleRegistry,
-  CompiledSchemaNode,
+  NodeInstance,
   RenderNodeInput,
-  ScopeRef
+  ScopeRef,
+  TemplateNode
 } from '@nop-chaos/flux-core';
+import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import {
   ActionScopeContext,
   ComponentRegistryContext,
@@ -18,20 +20,19 @@ export interface SurfaceRenderContext {
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
-  ownerNode?: CompiledSchemaNode;
-  ownerNodeInstance?: unknown;
+  ownerNodeInstance?: NodeInstance;
 }
 
-function isCompiledNode(input: unknown): input is CompiledSchemaNode {
+function isTemplateNode(input: unknown): input is TemplateNode {
   if (!input || typeof input !== 'object') {
     return false;
   }
 
-  const candidate = input as Partial<CompiledSchemaNode>;
+  const candidate = input as Partial<TemplateNode>;
 
   return (
-    typeof candidate.id === 'string' &&
-    typeof candidate.path === 'string' &&
+    typeof candidate.templateNodeId === 'number' &&
+    typeof candidate.templatePath === 'string' &&
     typeof candidate.type === 'string' &&
     !!candidate.component &&
     !!candidate.schema &&
@@ -39,8 +40,8 @@ function isCompiledNode(input: unknown): input is CompiledSchemaNode {
   );
 }
 
-function isCompiledNodeArray(input: unknown): input is CompiledSchemaNode[] {
-  return Array.isArray(input) && input.every((item) => isCompiledNode(item));
+function isTemplateNodeArray(input: unknown): input is TemplateNode[] {
+  return Array.isArray(input) && input.every((item) => isTemplateNode(item));
 }
 
 export function useSurfaceScopeSnapshot(scope: ScopeRef) {
@@ -77,20 +78,19 @@ export function renderSurfaceNode(
     return node;
   }
 
-  if (isCompiledNode(node) || isCompiledNodeArray(node)) {
+  if (isTemplateNode(node) || isTemplateNodeArray(node) || isSchema(node) || isSchemaArray(node as unknown[])) {
     return (
       <RenderNodes
-        input={node as RenderNodeInput}
+        input={node as unknown as RenderNodeInput}
         options={{
           scope: context.scope,
           actionScope: context.actionScope,
           componentRegistry: context.componentRegistry,
-          ownerNode: context.ownerNode,
-          ownerNodeInstance: context.ownerNodeInstance as any
+          ownerNodeInstance: context.ownerNodeInstance
         }}
       />
     );
   }
 
-  return String(node);
+  return null;
 }

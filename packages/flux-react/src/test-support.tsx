@@ -60,7 +60,7 @@ export const textRenderer: RendererDefinition = {
 
 export const pageRenderer: RendererDefinition = {
   type: 'page',
-  component: (props) => <section>{props.regions.body?.render()}</section>,
+  component: (props) => <section>{props.regions.body?.instantiate()}</section>,
   regions: ['body']
 };
 
@@ -79,15 +79,15 @@ function FormStub(props: RendererComponentProps) {
       id: formId,
       initialValues,
       parentScope,
-      validation: props.node.validation
+      validation: props.templateNode.validationPlan
     }),
-    [runtime, formId, initialValues, parentScope, props.node.validation]
+    [runtime, formId, initialValues, parentScope, props.templateNode.validationPlan]
   );
 
   return (
     <FormContext.Provider value={ownedForm}>
       <ScopeContext.Provider value={ownedForm.scope}>
-        <section>{props.regions.body?.render()}</section>
+        <section>{props.regions.body?.instantiate()}</section>
       </ScopeContext.Provider>
     </FormContext.Provider>
   );
@@ -250,9 +250,7 @@ function NodeIdentityProbe(props: RendererComponentProps) {
 
   return (
     <div>
-      <span data-testid="props-locator">{JSON.stringify(props.locator)}</span>
       <span data-testid="props-template-path">{props.templateNode.templatePath}</span>
-      <span data-testid="meta-locator">{JSON.stringify(nodeMeta.locator)}</span>
       <span data-testid="meta-template-path">{nodeMeta.templateNode.templatePath}</span>
     </div>
   );
@@ -437,7 +435,7 @@ function FragmentScopeProbeHost(props: RendererComponentProps) {
       <button type="button" onClick={() => setTick((current) => current + 1)}>
         Refresh fragment {tick}
       </button>
-      {props.regions.body?.render({
+      {props.helpers.render(props.regions.body?.templateNode as any, {
         data: {
           child: childValue
         },
@@ -460,7 +458,7 @@ export const fragmentScopeProbeHostRenderer: RendererDefinition = {
 
 export const scopedHostRenderer: RendererDefinition = {
   type: 'scoped-host',
-  component: (props) => <section>{props.regions.body?.render()}</section>,
+  component: (props) => <section>{props.regions.body?.instantiate()}</section>,
   regions: ['body'],
   actionScopePolicy: 'new',
   componentRegistryPolicy: 'new'
@@ -562,7 +560,7 @@ function ToggleHost(props: RendererComponentProps) {
       <button type="button" onClick={() => setVisible((current) => !current)}>
         {visible ? 'Hide child boundary' : 'Show child boundary'}
       </button>
-      {visible ? props.regions.body?.render() : null}
+      {visible ? props.regions.body?.instantiate() : null}
     </div>
   );
 }
