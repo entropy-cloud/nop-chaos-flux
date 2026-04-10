@@ -40,6 +40,7 @@
 - `loading` 若引入，建议遵循 `local`/`controlled` 或 semantic-owner-explicit-tracking 的明确归属，而不是在按钮内静默持有。
 - 不应因为 `onClick` 触发了一个 async action graph，就让按钮自动推断“主操作 pending”。
 - 对于 form submit 这类语义 owner 明确的场景，按钮可以投影 owner state；对于 generic action，pending 应来自显式 tracked interaction state。
+- 当前统一契约下，trigger control 只需要 `disabled`，不应额外引入 `readOnly`。
 
 ## 8. 事件、动作与组件句柄能力
 
