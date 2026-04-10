@@ -14,6 +14,7 @@ export interface SpreadsheetPageSchemaInput {
   document: SpreadsheetDocument;
   config?: SpreadsheetConfig;
   readOnly?: boolean;
+  statusPath?: string;
   toolbar?: BaseSchema | BaseSchema[];
   body?: BaseSchema | BaseSchema[];
   dialogs?: BaseSchema | BaseSchema[];

@@ -46,6 +46,17 @@ const readOnlyProbeRenderer: RendererDefinition = {
   component: ReadOnlyProbe,
 };
 
+function SpreadsheetStatusProbe() {
+  const status = useScopeSelector((data: any) => data.spreadsheetStatus);
+  return <span data-testid="spreadsheet-status">{status ? `${status.kind}:${status.readonly}:${status.canUndo}` : ''}</span>;
+}
+
+const pageRenderer: RendererDefinition = {
+  type: 'page',
+  component: (props) => <section>{props.regions.body?.render()}</section>,
+  regions: ['body']
+};
+
 afterEach(() => {
   cleanup();
 });
@@ -128,6 +139,57 @@ describe('spreadsheet-page namespaced actions integration', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('read-only-value').textContent).toBe('true');
+    });
+  });
+
+  it('publishes spreadsheet host status through statusPath', async () => {
+    const document = createEmptyDocument('status-spreadsheet');
+    const schema = defineSpreadsheetPageSchema({
+      type: 'spreadsheet-page',
+      document,
+      statusPath: 'spreadsheetStatus',
+      body: [
+        {
+          type: 'read-only-probe',
+        },
+        {
+          type: 'a1-value-probe',
+        },
+      ],
+      toolbar: [
+        {
+          type: 'action-button',
+          label: 'noop',
+          onClick: {
+            action: 'showToast',
+            args: {
+              message: 'noop'
+            }
+          }
+        }
+      ]
+    });
+
+    const statusProbeRenderer: RendererDefinition = {
+      type: 'spreadsheet-status-probe',
+      component: SpreadsheetStatusProbe
+    };
+
+    const registry = createDefaultRegistry([pageRenderer, actionButtonRenderer, a1ProbeRenderer, readOnlyProbeRenderer, statusProbeRenderer]);
+    registerSpreadsheetRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schema={{ type: 'page', body: [schema, { type: 'spreadsheet-status-probe' }] } as any}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('spreadsheet-status').textContent).toContain('spreadsheet:false');
     });
   });
 });

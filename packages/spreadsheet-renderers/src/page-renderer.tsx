@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
-import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } from '@nop-chaos/flux-core';
+import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, SpreadsheetHostStatusSummary } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope } from '@nop-chaos/flux-react';
+import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { createSpreadsheetCore, type SpreadsheetConfig, type SpreadsheetDocument, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import { deriveHostSnapshot } from './bridge.js';
 import { buildSpreadsheetStatusLabel, getRuntimeActiveSheetCellCount, getRuntimeActiveSheetName } from './page-model.js';
@@ -95,6 +96,25 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   const toolbarContent = props.regions.toolbar?.render({ scope: spreadsheetScope, actionScope });
   const bodyContent = props.regions.body?.render({ scope: spreadsheetScope, actionScope });
   const dialogsContent = props.regions.dialogs?.render({ scope: spreadsheetScope, actionScope });
+  const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
+
+  useEffect(() => {
+    if (!statusPath) {
+      return;
+    }
+
+    const summary: SpreadsheetHostStatusSummary = {
+      kind: 'spreadsheet',
+      dirty: spreadsheet.runtime.dirty,
+      busy: false,
+      canUndo: spreadsheet.runtime.canUndo,
+      canRedo: spreadsheet.runtime.canRedo,
+      readonly: spreadsheet.runtime.readonly,
+      activeSheetId: spreadsheet.activeSheet?.id,
+      selectionKind: snapshot.selection.kind,
+    };
+    publishOwnerStatus(props.nodeInstance.scope.parent ?? props.nodeInstance.scope, statusPath, summary);
+  }, [props.nodeInstance.scope, snapshot.selection.kind, spreadsheet, statusPath]);
 
   return (
     <section className="nop-spreadsheet-page">
