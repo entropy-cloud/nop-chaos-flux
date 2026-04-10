@@ -41,10 +41,12 @@
 - `action-scope-and-imports.md`
 - `api-data-source.md`
 - `form-validation.md`
+- `value-adaptation-and-detail-field.md`
 
 ### 3. Scope, Identity, And Rendering
 
 - `renderer-runtime.md`
+- `scoped-render-slots.md`
 - `scope-ownership-and-isolation.md`
 - `template-instantiation-and-node-identity.md`
 - `component-resolution.md`
@@ -92,6 +94,7 @@
 ### B. `runtime/`
 
 - `renderer-runtime.md`
+- `scoped-render-slots.md`
 - `scope-ownership-and-isolation.md`
 - `template-instantiation-and-node-identity.md`
 - `component-resolution.md`

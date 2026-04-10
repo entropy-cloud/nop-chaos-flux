@@ -10,8 +10,6 @@ This document is the canonical architecture note for:
 - repeated-instance identity for table rows and future `type: 'loop'`
 - the relationship between node state, scope, registry, debugger, and DOM markers
 
-This document replaces the earlier `cid`-centric framing. In the clean-slate model, `cid` is not the top-level architecture concept.
-
 ## Main Rule
 
 Compile once into an immutable template graph, then instantiate that template graph many times at runtime.
@@ -34,24 +32,25 @@ Any design that lets one object behave as both "compiled node" and "live instanc
 
 ### Recommended terms
 
-- `templateGraphId`: the identity of one compiled template graph
-- `templateNodeId`: the compiled identifier of a node inside a compiled template graph
+- `templateNodeId`: the compiled identifier of a node inside a compiled template graph; globally unique within one `RendererRuntime` instance because all compilation calls share the same runtime-level counter
 - `repeatedTemplateId`: the identifier of a repeated template boundary such as a table row template or loop body template
 - `instanceKey`: the identity of one concrete repeated materialization
 - `instancePath`: the chain of repeated instances from the runtime root to the current node
-- `NodeLocator`: the canonical runtime address of one live node instance
+- `cid`: the compact live-node bridge token for DOM markers and registry lookup; equals `templateNodeId` for singleton nodes, and is unique per mounted node instance
+
+### Retired terms
+
+- `templateGraphId`: removed. `templateNodeId` is globally unique within one runtime so no graph qualifier is needed.
+- `NodeLocator`: removed. The old `{ runtimeId, templateGraphId, templateNodeId, instancePath }` bundle added allocation and serialization overhead with no benefit over using `cid` and `instancePath` directly.
 
 ### About `cid`
 
-In the clean architecture, `cid` should mean the live runtime node id.
+In the current architecture, `cid` equals `templateNodeId`.
 
-That means:
-
-- `cid` is allocated when a materialized runtime node becomes a mounted inspectable node
-- `cid` identifies one live node instance
-- template-level identity is named `templateNodeId`
-
-This deliberately changes the old meaning of `cid`.
+- `cid` is assigned from the `templateNodeId` that the compiler allocates at compile time
+- `cid` identifies one live node instance at runtime via DOM and registry
+- for singleton nodes `cid === templateNodeId`
+- for repeated nodes each row/item instance carries the same `cid` (from the template) plus a distinct `instancePath` that makes it unique
 
 ## Core Artifacts
 
@@ -70,27 +69,35 @@ It does not own:
 Compilation produces an immutable template graph.
 
 ```ts
-type TemplateGraphId = string;
 type TemplateNodeId = number;
 type RepeatedTemplateId = string;
 
 interface CompiledTemplate {
-  templateGraphId: TemplateGraphId;
   root: TemplateNode | readonly TemplateNode[];
   repeatedTemplates: ReadonlyMap<RepeatedTemplateId, RepeatedTemplate>;
 }
 
 interface TemplateNode {
-  templateNodeId: TemplateNodeId;
+  templateNodeId: TemplateNodeId;   // globally unique within one RendererRuntime
+  id: string;
+  type: string;
+  schema: BaseSchema;
   templatePath: string;
   rendererType: string;
-  propsProgram: CompiledValueProgram<Record<string, unknown>>;
-  metaProgram: CompiledValueProgram<Record<string, unknown>>;
-  eventPlans: Readonly<Record<string, ActionPlan>>;
+  component: RendererDefinition;    // resolved at compile time; no runtime registry lookup needed
+  propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
+  metaProgram: CompiledSchemaMeta;  // same structure as CompiledSchemaNode.meta
+  eventPlans: Readonly<Record<string, unknown>>;
   regions: Readonly<Record<string, TemplateRegion>>;
   scopePlan: ScopePlan;
-  registryPlan: RegistryPlan;
+  registryPlan?: RegistryPlan;
   validationPlan?: ValidationPlan;
+}
+
+interface TemplateRegion {
+  key: string;
+  path: string;
+  node: TemplateNode | readonly TemplateNode[] | null;
 }
 
 interface RepeatedTemplate {
@@ -105,22 +112,19 @@ interface RepeatedTemplate {
 }
 ```
 
-Identity uniqueness rules inside one compiled template graph:
-
-- `templateNodeId` is unique within one `templateGraphId`
-- `repeatedTemplateId` is unique within one `templateGraphId`
-- one `repeatedTemplateId` identifies exactly one repeated boundary for the lifetime of that compiled template
+`templateNodeId` uniqueness rule: all compilation calls within one `RendererRuntime` share a single counter. `templateNodeId` values are globally unique across pages, dialogs, and dynamic fragments compiled by the same runtime instance.
 
 Template owns:
 
 - structure
 - compiled expressions/programs
-- template-local node ids
+- node ids
 - template paths
 - region topology
 - static action lowering
 - validation structure
 - scope/registry creation plans
+- resolved renderer definition reference
 
 Template does not own:
 
@@ -130,28 +134,11 @@ Template does not own:
 - form/page/dialog live objects
 - row/item-specific state
 
-### `templateGraphId` alternatives
-
-The canonical public/runtime/debugger identity uses an explicit serializable `templateGraphId` allocated per compiled template graph.
-
-Implementations may still use `TemplateNode` object reference identity internally for caches or indexing. Since `TemplateNode` objects are immutable and allocated once per compilation, their JS reference identity is naturally unique and can be an efficient private key.
-
-The trade-off:
-
-- canonical `templateGraphId`: serializable, readable in debug output, stable across message boundaries
-- object reference identity: internal optimization only, zero extra lookup-key allocation, no collision risk
-
-Design rule:
-
-- `NodeLocator` and any debugger/automation payload that crosses boundaries must keep explicit serializable `templateGraphId`
-- object reference identity may optimize internal maps, but it must not replace the public `NodeLocator` contract
-
 ### 3. Runtime instance
 
 Instantiation materializes the template into live instances.
 
 ```ts
-type RuntimeId = string;
 type InstanceKey = string;
 
 interface InstanceFrame {
@@ -159,23 +146,16 @@ interface InstanceFrame {
   instanceKey: InstanceKey;
 }
 
-interface NodeLocator {
-  runtimeId: RuntimeId;
-  templateGraphId: TemplateGraphId;
-  templateNodeId: TemplateNodeId;
-  instancePath?: readonly InstanceFrame[];
-}
-
 interface NodeInstance {
-  cid?: number;
-  locator: NodeLocator;
+  cid: number;                             // equals templateNode.templateNodeId
   templateNode: TemplateNode;
+  instancePath?: readonly InstanceFrame[]; // undefined for singleton nodes
   scope: ScopeRef;
   state: NodeState;
 }
 
 interface NodeState {
-  metaState: RuntimeProgramState;
+  metaState: Record<string, RuntimeProgramState>;
   propsState?: RuntimeProgramState;
   metaDependencies?: ScopeDependencySet;
   propsDependencies?: ScopeDependencySet;
@@ -221,15 +201,14 @@ The component registry owns live capability lookup only.
 Registry owns:
 
 - live handle registration
-- lookup by canonical runtime locator
-- convenience lookup by `id` and `name` within visible registry boundaries
-- cleanup of unmounted repeated instances
+- lookup by `cid`, `id`, or `name` within visible registry boundaries
 
 Registry does not own:
 
 - raw schema
 - template compilation
 - lexical data lookup
+- locator serialization
 
 ## Identity Model
 
@@ -243,73 +222,37 @@ These are authoring concepts, not canonical runtime addresses.
 
 ### Layer 2: Template identity
 
-- `templateGraphId`
 - `templateNodeId`
 - `templatePath`
 - `repeatedTemplateId`
 
-These identify structure inside the compiled template graph.
+These identify structure inside the compiled template. `templateNodeId` is globally unique within one runtime, so no graph qualifier is needed.
 
 ### Layer 3: Instance identity
 
-- `cid`
+- `cid` (equals `templateNodeId`)
 - `instanceKey`
 - `instancePath`
 
-These are runtime-instance identity fields. `instanceKey` and `instancePath` matter specifically for repeated materialization, while `cid` is the compact live-node token for any mounted instance.
-
-### Layer 4: Canonical live node identity
-
-Canonical live node identity is `NodeLocator`:
-
-- `runtimeId`
-- `templateGraphId`
-- `templateNodeId`
-- `instancePath`
-
-This is the stable answer to "which live node are we talking about?"
-
-`cid` is the compact live-instance handle for DOM/debugger round-trips and mounted-node lookup.
+`instancePath` matters specifically for repeated materialization. For singleton nodes `instancePath` is `undefined`.
 
 ### Singleton optimization
 
-The vast majority of nodes are singletons, not inside any repeated boundary. For these nodes `instancePath` should be `undefined` (omitted), not an empty array.
-
-Only nodes materialized inside a repeated boundary (table row, loop item, combo option, tab panel) carry a non-empty `instancePath`.
-
-This avoids per-node array allocation for the common case.
+The vast majority of nodes are singletons, not inside any repeated boundary. For these nodes `instancePath` must be `undefined`, not an empty array.
 
 Canonical singleton rule:
 
 - `undefined` is the canonical singleton representation
-- an empty array must be normalized to the same singleton case
+- an empty array must be normalized to `undefined`
 - `[]` must not be treated as a distinct identity from `undefined`
-
-## Where `cid` Belongs
-
-`cid` belongs to the runtime-instance layer.
-
-In clean architecture terms:
-
-- `cid` is the unique id of one live mounted node instance in a runtime host tree
-- `templateNodeId` is the template-level structural id
-- `templateGraphId + templateNodeId` identifies one template node inside a runtime
-- it is not a scope concept
-- it is appropriate as the compact DOM/debugger handle for live instances
-- it is not the stable structural identity across remounts or rematerialization
-
-Therefore:
-
-- singleton and repeated mounted nodes may both expose `cid` on DOM/debugger surfaces
-- structural reasoning, repeated targeting, and remount-stable meaning still require `NodeLocator`
 
 ## Compilation Model
 
 ### Compile once
 
 ```ts
-interface TemplateCompiler {
-  compile(schema: SchemaInput): CompiledTemplate;
+interface SchemaCompiler {
+  compile(schema: SchemaInput, options?: CompileSchemaOptions): CompiledTemplate;
 }
 ```
 
@@ -327,19 +270,30 @@ For a future `type: 'loop'`:
 - loop body compiles once
 - each item instantiates that one compiled body template
 
+### templateNodeId global counter
+
+`RendererRuntime` holds one shared `CompiledCidState` for its lifetime. All `compile()` calls use this shared counter by default. Compilation calls that explicitly pass their own `cidState` (such as dialog body compilation reusing the owner node's cidState) are still correct because the counter they draw from is the same runtime-level monotone.
+
+This means:
+
+- page nodes, dialog nodes, and dynamic fragment nodes all get distinct `templateNodeId` values
+- no `templateGraphId` namespace qualifier is needed
+- debugger and registry can use bare `templateNodeId` (= `cid`) as the stable key
+
 ### Static lowering
 
-Compile-time lowering should target template structure, not live handle ids.
+Compile-time lowering targets `_targetCid` directly.
 
-Safe lowering examples:
+Safe lowering:
 
-- unique singleton `componentId` -> `StaticTargetPlan { templateGraphId, templateNodeId }`
-- relative repeated target inside the same repeated template -> `RepeatedTargetPlan { templateGraphId, templateNodeId, repeatedTemplateId }`
+- unique singleton `componentId` → `_targetCid: resolvedCid`
 
-Unsafe lowering examples:
+The compiler resolves `componentId` references within the same compiled schema to `_targetCid` at compile time. At runtime, the registry resolves `_targetCid` directly via `handlesByCid` without any locator serialization.
 
-- global `componentName -> templateNodeId`
-- lowering compile-time targets directly to live `cid`
+Unsafe lowering (do not do):
+
+- global `componentName → templateNodeId`
+- storing serialized locators in compiled action schemas
 
 ## Instantiation Model
 
@@ -347,111 +301,74 @@ Unsafe lowering examples:
 
 ```ts
 interface RendererRuntime {
-  instantiate(
-    template: CompiledTemplate | TemplateNode | RepeatedTemplate,
-    options: {
-      runtimeId: RuntimeId;
-      parentScope?: ScopeRef;
-      instancePath?: readonly InstanceFrame[];
-    }
-  ): NodeInstance | readonly NodeInstance[];
+  // NodeRenderer internally constructs NodeInstance from TemplateNode + scope + state
 }
 ```
 
-Instantiation is the runtime step that:
+Instantiation is the step that:
 
-- binds the template to a concrete scope
+- binds the template node to a concrete scope
 - allocates `NodeState`
-- derives a `NodeLocator`
-- creates runtime-owned materialized instance state
+- creates the `NodeInstance` with `cid = templateNode.templateNodeId`
 
 Mount is the host step that:
 
-- allocates `cid`
-- creates DOM-facing inspect/debug bridge state
+- registers the `cid` in the component registry (for interactive nodes)
+- writes `data-cid` to the DOM
 - creates live handle/registry attachments for mounted interactive nodes
 
 ### Materialization lifecycle
 
-The architecture distinguishes three layers that are easy to conflate if left implicit:
+The architecture distinguishes three layers:
 
 1. semantic repeated item: an item identified by `instanceKey` and position inside repeated ownership logic
 2. materialized runtime instance: a `NodeInstance` subtree currently instantiated by the runtime
-3. mounted inspectable node: a materialized runtime instance that currently has mounted host output and therefore a live `cid`, DOM marker, and registry/debugger visibility
+3. mounted inspectable node: a materialized runtime instance that currently has mounted host output, a live `data-cid`, and registry/debugger visibility
 
 Required rules:
 
-- `NodeLocator` describes semantic/runtime identity and may outlive a specific mounted DOM node
+- `cid` + `instancePath` describes semantic/runtime identity and may outlive a specific mounted DOM node
 - `cid` exists only for a currently mounted inspectable node
 - `NodeState` exists only for a currently materialized runtime instance
 - component-handle registry entries exist only while the corresponding live instance is materialized and registered
-- virtualization may dispose a materialized runtime instance entirely or keep runtime-owned cached state, but that policy must not change `NodeLocator` semantics
-- debugger and action resolution must distinguish `not materialized` from `not found`
-
-`NodeInstance` in this document means a materialized runtime instance. A semantic repeated item that is currently virtualized away does not have to own a live `NodeInstance` object.
+- debugger and action resolution must distinguish `notMaterialized` from `notFound`
 
 ### Resolution result categories
-
-Whenever runtime, registry, or debugger lookup targets a structurally valid node that is not currently materialized, the result must be explicit.
 
 Minimum categories:
 
 - `resolved`: the live node instance is materialized and usable
-- `notMaterialized`: the structural target is valid, but there is no current materialized instance or mounted node
+- `notMaterialized`: the structural target is valid, but there is no current materialized instance
 - `notFound`: the target identity itself is invalid in the current runtime/template context
 
 ### `cid` allocation policy
 
-`cid` should be allocated by the runtime that owns the live node instance.
+`cid` equals `templateNodeId`. It is assigned at compile time and carried through to the runtime instance.
 
 Required rule:
 
-- `cid` is allocated at mount time, not merely at materialization time
-- `cid` is a per-runtime-host-tree monotonically increasing integer
-- uniqueness is required within one runtime host tree, not as a process-global or document-global id space
-- if tooling needs a wider debug key, it should compose `runtimeId + cid` or use full `NodeLocator`, not change the meaning of `cid`
-
-This keeps `cid` compact and readable while preserving clean ownership boundaries.
+- `cid` is unique within one runtime host tree (guaranteed by the runtime-level shared counter)
+- uniqueness is required within one runtime instance, not as a process-global id space
+- if tooling needs a wider debug key, it should compose `runtimeId + cid` by reading `data-runtime-id` from the DOM
 
 ### Runtime-assembled fragments
 
-Remote or delayed fragments such as `dynamic-renderer` payloads are not "just more nodes in the old compiled tree".
+Remote or delayed fragments are compiled by the same runtime's shared counter. They receive globally unique `templateNodeId` values within that runtime automatically.
 
-They should follow a two-step model as well:
+Steps:
 
-1. compile the new fragment into a template
-2. instantiate it into the current runtime with an owner-provided `instancePath` / scope context
+1. compile the new fragment using the runtime's shared compiler
+2. `NodeRenderer` instantiates it with the owner-provided `instancePath` / scope context
 
-The key optimization direction is still template reuse, not full compiled-instance reuse.
-
-Every runtime-assembled fragment must receive a fresh `templateGraphId`, even when it is attached to an existing page runtime.
-
-This keeps `NodeLocator` collision-free for:
-
-- page root templates
-- dialog fragments compiled later
-- remote `dynamic-renderer` fragments
-- future loop/table subtemplates compiled independently
+Template reuse remains the key optimization direction.
 
 ### Runtime-assembled fragment ownership
 
-Runtime-assembled fragments need an explicit owner context.
+Runtime-assembled fragments need an explicit owner context:
 
-```ts
-interface FragmentOwnerContext {
-  runtimeId: RuntimeId;
-  ownerLocator: NodeLocator;
-  registryBoundaryId: string;
-  parentScope: ScopeRef;
-}
-```
-
-Ownership rules:
-
-- fragment compile allocates a fresh `templateGraphId`
-- fragment instantiate reuses the owner `runtimeId`
+- `runtimeId` comes from the `data-runtime-id` attribute on the `SchemaRenderer` root
 - fragment scope starts from `parentScope`
-- fragment registry visibility composes with the owner's visible registry boundary unless the fragment explicitly creates a new one
+- fragment registry visibility composes with the owner's visible registry boundary
 - fragment disposal removes all live instances registered under that fragment owner subtree
 
 ## Scope Plan
@@ -461,7 +378,7 @@ Template describes scope creation. Runtime performs it.
 ```ts
 type ScopePlan =
   | { kind: 'inherit' }
-  | { kind: 'child'; bindings?: Readonly<Record<string, ValueProgram>> }
+  | { kind: 'child'; bindings?: Readonly<Record<string, CompiledRuntimeValue<unknown>>> }
   | { kind: 'form' }
   | { kind: 'dialog' }
   | {
@@ -499,20 +416,26 @@ Recommended model:
 
 `type: 'loop'` should use exactly the same repeated-instance model.
 
-The architecture must not invent a second repeated rendering system with different identity rules.
-
 Recommended scope baseline for `loop`:
 
 - each repeated item creates one repeated child scope
 - the item scope inherits parent lexical visibility by default
 - item-local bindings such as `item`, `index`, optional `key`, and future `itemData` are injected into that child scope
-- unlike table rows, loop items are not isolated by default
 
-Recommended recursive baseline:
+### Nested repeated structures
 
-- a future `type: 'recurse'` should not invent a second repeated-instantiation model
-- `recurse` should re-instantiate the nearest enclosing `loop.body` template with a new repeated item set
-- recursive expansion should append another repeated frame to `instancePath` at each level
+Nested table/loop/combo/tab repeated structures extend `instancePath`.
+
+Example:
+
+```ts
+// A node inside a nested repeated structure is identified by:
+const cid = 42;  // templateNodeId, stable across all rows
+const instancePath = [
+  { repeatedTemplateId: 'table.row', instanceKey: 'user:1001' },
+  { repeatedTemplateId: 'loop.line-item', instanceKey: 'line:3' }
+];
+```
 
 ### Instance-key rule
 
@@ -522,215 +445,118 @@ Prefer, in order:
 2. stable record primary key
 3. index as last resort
 
-Index-only keys are acceptable only when reorder/filter semantics are understood to remap identity.
-
-### Nested repeated structures
-
-Nested table/loop/combo/tab repeated structures extend `instancePath`.
-
-Example:
-
-```ts
-const locator = {
-  runtimeId: 'page-1',
-  templateGraphId: 'page-root',
-  templateNodeId: 42,
-  instancePath: [
-    { repeatedTemplateId: 'table.row', instanceKey: 'user:1001' },
-    { repeatedTemplateId: 'loop.line-item', instanceKey: 'line:3' }
-  ]
-};
-```
-
-This is the general solution. A flat `row:0` string is only a degenerate special case.
-
 ## Registry Model
 
-Canonical structural resolution belongs to the runtime-owned resolution layer. The registry is a subordinate live-handle index, not the source of structural truth.
-
-Recommended split:
-
-- runtime resolution resolves structural targets such as `NodeLocator`, static plans, repeated plans, and repeated selectors into explicit resolution results
-- component registry resolves currently live handles and convenience selectors inside visible registry boundaries
-
-```ts
-type ResolutionResult =
-  | { kind: 'resolved'; locator: NodeLocator; handle?: ComponentHandle }
-  | { kind: 'notMaterialized'; locator: NodeLocator }
-  | { kind: 'notFound' }
-  | { kind: 'ambiguous'; matches: readonly NodeLocator[] };
-
-interface RuntimeNodeResolver {
-  resolveNode(locator: NodeLocator): ResolutionResult;
-  resolveTarget(target: ActionTarget, ctx: ResolutionContext): ResolutionResult;
-}
-```
-
-Externally, registry exposes live-handle and convenience-selector lookup only.
+The registry is a live-handle index only. Structural resolution belongs to the runtime.
 
 ```ts
 interface ComponentHandleRegistry {
-  resolveHandle(locator: NodeLocator): ComponentHandle | undefined;
-  resolveSelector(selector: { id?: string; name?: string }, ctx?: ResolutionContext): ResolutionResult;
-  register(handle: ComponentHandle, locator: NodeLocator): () => void;
-  unregister(locator: NodeLocator): void;
+  register(handle: ComponentHandle, options?: { cid?: number; id?: string; name?: string }): () => void;
+  unregister(handle: ComponentHandle): void;
+  resolve(target: ComponentTarget): ComponentHandle | undefined;
+  getHandleByCid(cid: number): ComponentHandle | undefined;
+  inspectCid(cid: number): InspectResult;
+  setHandleDebugData(cid: number, data: ComponentHandleDebugData | undefined): void;
+  getHandleDebugData(cid: number): ComponentHandleDebugData | undefined;
 }
 ```
 
-Internally, registry may use:
+Internal registry indexes:
 
-- locator serialization
-- nested repeated-template maps
-- singleton fast paths by `templateNodeId`
+- `handlesByCid`: primary index for fast O(1) `_targetCid` resolution
+- `handlesById`: lookup by schema `id`
+- `handlesByName`: lookup by schema `name` (may be ambiguous)
 
-The exact map layout is an implementation detail. The semantic contract is the canonical `NodeLocator`, but only the runtime-owned resolution layer may decide whether that locator is currently materialized.
+Removed indexes:
 
-Selector resolution inside repeated content follows this rule:
+- `handlesByLocator`: removed along with `NodeLocator`
+- `dynamicHandles`: removed; repeated instances register under their `cid` directly
 
-- canonical repeated targeting should use `NodeLocator` or repeated target plans
-- `componentId` / `componentName` inside repeated content are convenience selectors against the current visible registry boundary only
-- they are not the recommended way to target a different repeated instance from outside that instance
-
-For explicit cross-instance repeated targeting, the action model should expose an instance-aware target shape instead of guessing from selectors.
+`ComponentTarget` for action dispatch:
 
 ```ts
-type ActionTarget =
-  | { locator: NodeLocator }
-  | { staticPlan: StaticTargetPlan }
-  | { repeatedPlan: RepeatedTargetPlan; instancePath?: readonly InstanceFrame[] }
-  | {
-      repeatedSelector: {
-        templateGraphId: TemplateGraphId;
-        repeatedTemplateId: RepeatedTemplateId;
-        instanceKey: InstanceKey;
-        templateNodeId: TemplateNodeId;
-      };
-    }
-  | { componentId?: string; componentName?: string };
+interface ComponentTarget {
+  _targetCid?: number;    // compiler-resolved at compile time; preferred path
+  componentId?: string;   // fallback author selector
+  componentName?: string; // fallback author selector
+}
 ```
+
+`staticPlan`, `repeatedPlan`, `repeatedSelector`, `_targetTemplateId`, and `componentInstanceKey` are removed. The compiler resolves `componentId` to `_targetCid` at compile time, and `_targetCid` is the only structural resolution path at runtime.
 
 ## Debugger And DOM Identity
 
-Debugger must not stay `cid`-only.
+### DOM markers
 
-The canonical debugger target should be `NodeLocator`.
-
-Recommended inspect API shape:
-
-```ts
-interface DebuggerApi {
-  inspectNode(locator: NodeLocator): InspectResult;
-  inspectByElement(element: Element): InspectResult;
-}
-```
-
-```ts
-type InspectResult =
-  | { kind: 'resolved'; payload: NodeInspectPayload }
-  | { kind: 'notMaterialized'; locator?: NodeLocator }
-  | { kind: 'notFound' };
-```
-
-DOM markers should expose the live runtime node bridge id.
-
-`data-cid` is the preferred DOM-to-runtime bridge.
-
-### Required DOM node-ref mechanism
-
-The runtime must expose a DOM-level node reference mechanism.
-
-This is not optional. It is required so `nop-debugger` and other host tooling can move from a concrete DOM element back to the exact live runtime node instance and inspect:
-
-- the canonical `NodeLocator`
-- the current `NodeState`
-- the current resolved props/meta snapshot
-- the current scope chain, including nested repeated scopes and page/form/dialog/row/item scopes
-
-The marker name should be short.
-
-Preferred marker:
-
-- `data-cid`
-
-Rationale:
-
-- short enough to appear widely in renderer output without excessive DOM noise
-- aligns with debugger and registry expectations for a compact live-instance handle
-- keeps the DOM bridge simple and direct
-
-Do not use DOM `id` for this framework-internal bridge.
-
-Reasons:
-
-- DOM `id` belongs to the host page's global id namespace
-- host/application code may already need `id` for anchors, labels, accessibility wiring, or CSS hooks
-- framework-internal mounted-node refs should not claim that namespace when `data-cid` is sufficient
-
-Recommended shape:
+Every mounted inspectable node writes `data-cid` to the DOM.
 
 ```html
-<div data-cid="1042"></div>
+<div data-cid="42"></div>
 ```
 
-Where `1042` is the live runtime node `cid`.
+The `SchemaRenderer` root writes `data-runtime-id`:
+
+```html
+<div data-runtime-id="runtime-abc123">
+  <!-- rendered tree -->
+</div>
+```
+
+`runtimeId` is not stored in any runtime data structure. Tooling that needs it reads `data-runtime-id` from the DOM by walking up from the target element.
+
+### Inspect flow
+
+```
+user picks DOM element
+  -> read data-cid from nearest ancestor with data-cid
+  -> walk up DOM to find data-runtime-id
+  -> look up runtime in globalRuntimeRegistry (Map<runtimeId, RendererRuntime>)
+  -> runtime.inspectByCid(cid)
+  -> returns { templateNode, scope, state, resolvedMeta, resolvedProps }
+```
 
 ### Required runtime mapping
 
-The runtime/debugger layer must maintain a mapping like:
-
 ```ts
 interface NodeRefRegistry {
-  resolveCid(cid: number): NodeLocator | undefined;
   inspectCid(cid: number): InspectResult;
+}
+
+type InspectResult =
+  | { kind: 'resolved'; payload: NodeInspectPayload }
+  | { kind: 'notMaterialized' }
+  | { kind: 'notFound' };
+
+interface NodeInspectPayload {
+  cid: number;
+  templateNodeId: TemplateNodeId;
+  instancePath?: readonly InstanceFrame[];
+  state?: NodeState;
+  scopeChain?: readonly ScopeSnapshot[];
+  resolvedMeta?: unknown;
+  resolvedProps?: unknown;
 }
 ```
 
-This means `cid` is the compact live-instance bridge token. The deeper structural identity remains `NodeLocator`.
+`inspectByCid` is the sole debugger entry point. `inspectNode(locator)` is removed.
 
-### Mounted tree source
-
-Debugger component trees, mounted-node snapshots, and similar structural inspection views should be built from `NodeRefRegistry` or equivalent runtime-owned registry state, not by scanning DOM.
-
-Rules:
-
-- `inspectByCid(cid)` should resolve through runtime-owned node-ref/handle registries
-- component-tree collection should enumerate mounted nodes from registry state
-- DOM traversal is reserved for pointer-driven element inspection such as `inspectByElement(element)` or overlay hit-testing
-
-### Design rule
+### Design rules
 
 - `data-cid` is the canonical DOM-to-runtime bridge
 - every mounted inspectable node must have a live `cid`
-- repeated nodes, virtualized nodes while mounted, and runtime-assembled fragments are all inspectable through `data-cid`
-- `templateNodeId` must never be written directly to DOM as if it were the live-node bridge id
-
-The debugger event substrate should also carry locator identity:
+- `templateNodeId` must never be written directly to DOM as if it were a separate live-node bridge id (they are equal, but only `data-cid` is the DOM contract)
+- debugger events carry `instancePath` for repeated-safe correlation
 
 ```ts
 interface DebuggerEvent {
   kind: string;
   summary: string;
-  locator?: NodeLocator;
+  instancePath?: readonly InstanceFrame[];
   rendererType?: string;
   interactionId?: string;
   requestKey?: string;
 }
 ```
-
-`nodeId` / `path` may remain as convenience summaries, but `locator` is the canonical repeated-safe identity for correlation, tracing, and anomaly grouping.
-
-### DOM inspect contract
-
-DOM-to-node inspection should use the DOM `data-cid` mechanism above.
-
-Requirements:
-
-- every inspectable mounted node exposes `data-cid`
-- the `cid` resolves to the exact live `NodeLocator`
-- the `cid` also resolves to the current runtime-owned inspect payload, including nested `scopeChain` when available
-- `inspectByElement()` walks from the target element to the nearest inspectable owner marker
-- portals and fragment roots still recover the mounted node locator through the nearest host-owned inspect marker
-- if an element belongs to a virtualized-offscreen node that is no longer mounted, inspect returns "not mounted" rather than guessing
 
 ## Performance And Memory
 
@@ -739,24 +565,22 @@ The performance rule is:
 - share compiled template structure aggressively
 - allocate runtime state only per live instance
 
-This gives the right balance:
+### Key gains from this architecture
 
-- one compile result for fixed table column/body DSL
-- one `NodeState` per mounted row instance
-- one live handle per mounted interactive instance
+- `NodeLocator` object allocation per render eliminated (was created every frame)
+- `createCompatibilityNodeInstance` eliminated (was rebuilding regions map every render)
+- `handlesByLocator` serialization eliminated (was JSON.stringify per registry operation)
+- `TemplateNode.component` resolved at compile time (no registry lookup per render)
 
 ### Virtualization
 
 Virtualization affects mount lifetime, not identity semantics.
 
-Therefore:
-
 - offscreen repeated instances may have no live `NodeState`
 - offscreen repeated instances may have no registered handle
-- their semantic identity is still the same `instancePath`
-- they may or may not retain runtime-owned cached state between materialization cycles; this is an optimization policy, not an identity rule
+- their semantic identity is still the same `cid` + `instancePath`
 
-If an action or debugger query targets an unmounted virtualized instance, runtime should return an explicit "not currently materialized" result.
+If an action or debugger query targets an unmounted virtualized instance, runtime should return an explicit `notMaterialized` result.
 
 ## Dependency Tracking For Repeated Instances
 
@@ -767,15 +591,6 @@ Rules:
 - each mounted repeated instance has its own `NodeState` and dependency caches
 - collection owners reconcile instances by `instanceKey`, not by mount order
 - stable `instanceKey` means the runtime may preserve row/item `NodeState` across reorder and pagination changes
-- missing keys fall back to index semantics and therefore allow identity remapping
-
-Collection-owner responsibilities:
-
-- diff repeated items by `instanceKey`
-- preserve existing instance subtrees when keys match
-- dispose instance subtrees when keys disappear
-- instantiate new subtrees when keys appear
-- batch repeated invalidation work so collection changes do not degrade into full sibling re-evaluation by default
 
 ## Guardrails
 
@@ -783,24 +598,12 @@ Collection-owner responsibilities:
 - do not let one object act as both template node and live node instance
 - do not make `ScopeRef` carry component identity or registry semantics
 - do not use global compile-time `name -> cid` maps
-- do not treat `data-cid` as the canonical repeated-node identity
+- do not treat `data-cid` as the canonical repeated-node identity (pair it with `instancePath`)
 - do not cache full compiled-instance trees across repeated or remounted instances
-
-## Refactoring Direction
-
-If the codebase is refactored toward this architecture, the preferred direction is:
-
-1. `SchemaCompiler` -> `TemplateCompiler`
-2. `CompiledSchemaNode` -> `TemplateNode`
-3. remove `TemplateNode.createRuntimeState()`
-4. introduce explicit `instantiate(...)`
-5. make React rendering consume `NodeInstance`, not bare compiled nodes
-6. move debugger/registry targeting to `NodeLocator`
+- do not use `NodeLocator` (removed); use `cid` + `instancePath` separately
 
 ## Related Documents
 
-- `docs/architecture/component-resolution.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/flux-core.md`
-- `docs/architecture/debugger-runtime.md`
 - `docs/architecture/dependency-tracking.md`

@@ -12,6 +12,171 @@ Every flux renderer is a `(props: RendererComponentProps) => ReactNode` function
 
 Your wrapper component's job is to **bridge** from `RendererComponentProps` to the third-party component's own props API.
 
+In the common case, a normal declarative React component can become a flux renderer with only a thin adapter layer:
+
+- schema value fields become resolved `props.props.xxx`
+- control metadata becomes `props.meta.xxx`
+- declared child content becomes `props.regions.xxx.render()`
+- declarative `onXxx` action fields become `props.events.onXxx`
+
+This means many components are effectively "register + map props" integrations, not custom runtime implementations.
+
+## When Registration Is Enough
+
+Plain registration plus a thin adapter is usually enough when the component:
+
+- takes normal serializable props
+- emits behavior through `onXxx` callbacks
+- exposes nested content through `children` or named slots
+- does not create its own page, form, dialog, or other runtime ownership boundary
+
+Typical examples:
+
+- cards, panels, tabs, badges, charts
+- basic inputs and pickers
+- layout containers with `header` / `footer` / `body`
+
+In those cases you normally only need to decide:
+
+1. which schema fields are normal props
+2. which fields are events
+3. which fields are child regions
+4. whether `wrap: true` or validation is needed
+
+## Slot Mapping Patterns
+
+Third-party components often expose child content through mixed slot APIs instead of one uniform `body` prop. Common examples:
+
+- `children`
+- `header`
+- `footer`
+- `title`
+- `empty`
+- `renderEmpty`
+
+In flux, these should usually be normalized into declared `regions` and then mapped back into the component API inside the renderer adapter.
+
+### Static or node-like slots
+
+If the component expects `ReactNode` values, map them directly from regions:
+
+```tsx
+function PanelRenderer(props: RendererComponentProps) {
+  return (
+    <Panel
+      header={props.regions.header?.render()}
+      footer={props.regions.footer?.render()}
+    >
+      {props.regions.body?.render()}
+    </Panel>
+  );
+}
+```
+
+### Mixed value-or-region slots
+
+If a slot can come from either a literal prop or nested schema, use `resolveRendererSlotContent(...)`:
+
+```tsx
+const titleContent = resolveRendererSlotContent(props, 'title');
+```
+
+This covers APIs where authors may want either:
+
+- `"title": "Orders"`
+- or `"title": { "type": "text", ... }`
+
+### Function-style slots
+
+Some component libraries expose slots as callback props such as `renderEmpty={() => ...}`. If the callback does not need runtime arguments from the third-party component, it can still be backed by a normal region:
+
+```tsx
+function ListRenderer(props: RendererComponentProps) {
+  return (
+    <List
+      renderEmpty={() => props.regions.empty?.render()}
+    >
+      {props.regions.body?.render()}
+    </List>
+  );
+}
+```
+
+The important rule is: the schema still declares `empty` as a region. The renderer adapter only translates that region into the component's callback-shaped slot API.
+
+### Runtime render props need a real adapter
+
+If the component expects a callback that receives local runtime data, that is no longer a pure region mapping.
+
+Examples:
+
+- `renderRow(row, index)`
+- `renderNode(node, state)`
+- `itemRenderer(item, active)`
+
+These cases need an adapter that explicitly bridges the callback arguments into flux rendering, usually by calling `props.helpers.render(...)` or `region.render(...)` with extra bindings or scope setup. They are still integrable, but they are not zero-thought registrations.
+
+## Event Bridging And Normalization
+
+Declaring a field as an `event` lets `NodeRenderer` expose it as `props.events.onXxx`, but your adapter still decides what payload is forwarded.
+
+### Native DOM-style events
+
+If the third-party component gives you a normal DOM or React event, forward it directly:
+
+```tsx
+onClick={(event) => void props.events.onClick?.(event)}
+```
+
+This is the preferred path because the runtime can normalize the event into the standard action-event shape.
+
+### Value-style callbacks
+
+Some components emit values instead of DOM events:
+
+```tsx
+onValueChange={(value) => void props.events.onChange?.({ type: 'change', value })}
+```
+
+Here the adapter is normalizing a library-specific callback into a stable semantic payload that actions can consume.
+
+### Rich callbacks
+
+For callbacks such as `onRowClick(row, index, event)`, forward the native event when present and put the extra callback data into action bindings:
+
+```tsx
+onRowClick={(row, index, event) =>
+  void props.events.onRowClick?.(event, {
+    evaluationBindings: { row, index }
+  })
+}
+```
+
+Use this pattern when the action should be able to access both:
+
+- the user interaction event
+- structured library payload such as `row`, `item`, `option`, or `index`
+
+## Plain Renderer Versus Owner Renderer
+
+The "register and map props" story applies to plain renderers. These components render UI but do not create new runtime ownership boundaries.
+
+Plain renderers usually only consume:
+
+- `props.props`
+- `props.meta`
+- `props.events`
+- `props.regions`
+- hooks for ambient context when needed
+
+Owner renderers are different. They create and publish a new boundary for descendants, for example:
+
+- `form` creates `FormRuntime` and publishes `FormContext` plus form scope
+- page/surface hosts create page or surface ownership state
+- loop/table/tree-like controls may create child scopes or repeated-instance boundaries
+
+These still use the same `RendererDefinition` registration system, but they are not "simple wrapped controls" anymore. They own part of the runtime model.
+
 ## Minimum Viable Renderer
 
 The only required fields on `RendererDefinition` are `type` and `component`:

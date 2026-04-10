@@ -14,6 +14,8 @@
 - 不生成外部源码
 - 不替换现有 `apps/main/src/pages/flow-editor` 示例
 - 不把所有 UI 都做成 graph core 的内建逻辑
+- 不把 `then` / `onError` / `parallel` 等任何特定业务语义内建到 `flow-designer` core 或通用 config DSL
+- 不让 `flow-designer` 自己负责解释 domain-specific lowering、import/export、round-trip codec 或任意动态 JS 执行
 
 ## 2. 总体架构
 
@@ -213,6 +215,30 @@ interface DesignerPageSchema {
 - toolbar / inspector 片段当前已经显式收到该宿主 scope 与 action-scope；dialog 则通过共享 dialog runtime 继承打开它时的 action-scope，因此不会形成第二条 graph action 路径
 - schema 层不得直接拿到底层 graph store 并原地修改 document
 - bridge 对外暴露的是稳定快照与有限命令面，而不是整套 store 私有实现
+
+### 6.4 通用 graph editor 与 domain 语义的边界
+
+`flow-designer` 的核心定位是通用 graph editor，而不是某个具体 domain 的执行语义编辑器。
+
+这意味着：
+
+- `GraphDocument` 只表达通用图结构：`nodes`、`edges`、`ports`、实例 `data`
+- `DesignerConfig` 只表达通用图配置：node type、edge type、palette、canvas、规则、宿主片段入口
+- 某个 domain 如何把 graph lowering 成自己的目标 DSL，属于 designer 之外的 domain library / adapter 责任
+- `flow-designer` 可以承载这些 domain library，但不拥有其解释权
+
+对于动态定制平台，推荐分层：
+
+- 平台固定代码提供 `designer-page`、graph runtime、schema runtime 和受控 `importLoader`
+- schema 在宿主边界通过 `xui:imports` 声明所需的 domain library
+- domain library 通过 namespaced action、owner-level semantic action、或 owner-specific adapter 参与工作流
+- graph -> domain DSL 的 `parse` / `serialize` / `validate` / `import` / `export` 都由该动态库负责
+
+重要约束：
+
+- `flow-designer` 可以让 toolbar / inspector / dialogs 调用导入库能力
+- 但 `flow-designer` 本身不应知道这些能力代表的是 action-flow、state machine、ETL pipeline 还是别的 domain
+- domain-specific validator / codec / exporter 不应下沉进 `@nop-chaos/flow-designer-core`
 
 推荐 bridge 最小能力：
 

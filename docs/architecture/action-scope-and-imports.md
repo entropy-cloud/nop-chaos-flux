@@ -118,6 +118,30 @@ This design does not attempt to:
 - make action visibility depend on sibling render order
 - allow arbitrary remote JavaScript execution without a controlled loader boundary
 
+## Dynamic Domain Libraries
+
+When the shipped low-code platform code is fixed and tenant- or project-specific logic must be loaded dynamically, the active model is:
+
+- schema declares required capabilities through `xui:imports`
+- the host decides whether and how a library may be loaded through `env.importLoader`
+- the imported module exposes a namespace provider, not arbitrary ambient code execution
+
+Recommended boundary split:
+
+- Flux runtime owns lexical visibility, lifetime, ref-counting, retry, and teardown for imported namespaces
+- the host owns module resolution, trust policy, tenancy checks, version routing, integrity checks, caching, and actual dynamic loading
+- imported libraries own their domain-specific behavior only after the host has allowed that module to load
+
+This is especially important for workbench-like hosts such as `flow-designer`.
+
+`flow-designer` may host domain-specific libraries, but it should not itself interpret those domain semantics. A tenant-specific action-graph codec, state-machine codec, or workflow validator should live in the dynamically loaded namespace provider rather than in `@nop-chaos/flow-designer-core`.
+
+Practical recommendation:
+
+- do not put raw URLs into schema
+- treat `spec.from` as a logical module identifier such as `@tenant/acme-action-graph`
+- let the host `importLoader` resolve that identifier to an allowed remote or local module according to platform policy
+
 ## Core Concepts
 
 ### Data Scope
@@ -620,6 +644,41 @@ The important rule is that `submit`, `validate`, `reset`, and `setValue` are exp
 ### Semantics
 
 `xui:imports` behaves like import declaration semantics, not like sequential execution.
+
+It is also not a value-editor codec API by itself.
+
+That distinction matters for graph-backed authoring controls:
+
+- `xui:imports` is a good way to provision a dynamic namespace such as `actionGraph`
+- but a field-like control that edits one value should still be modeled as an owner component with a `name`-bound value contract
+- imported namespaces then implement semantic actions owned by that control, instead of replacing the control's own value lifecycle
+
+In other words:
+
+- `xui:imports` provisions behavior
+- owner components still own value binding, internal state, and commit semantics
+
+### Owner Semantic Actions Backed By Imports
+
+Some owner components need dynamic domain conversion logic while still behaving like ordinary value viewers or value editors.
+
+Recommended pattern:
+
+- the owner component defines semantic action entry points for value adaptation such as `transformInAction`, `transformOutAction`, and `validateValueAction`
+- those semantic action fields accept normal `ActionSchema`
+- schema authors may bind them to imported namespaces such as `actionGraph:toGraph` or `actionGraph:validate`
+- the owner component dispatches those semantic actions at the appropriate lifecycle point and consumes `ActionResult.data`
+
+The important boundary is that the imported namespace provides the conversion or validation behavior, but the owner control still owns:
+
+- reading the current value from `name` or `value`
+- storing internal viewer/editor state or draft state
+- deciding when transforms and validation run
+- writing the committed value back to `name` when the control is editable
+
+The concrete owner pattern and the default payload rule are documented in:
+
+- `docs/architecture/value-adaptation-and-detail-field.md`
 
 Rules:
 

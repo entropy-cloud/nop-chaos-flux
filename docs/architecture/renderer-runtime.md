@@ -25,6 +25,8 @@ When this document needs to be checked against code, start with:
 - `packages/flux-runtime/src/node-runtime.ts` for resolved prop/meta behavior
 - `packages/flux-runtime/src/page-runtime.ts` and `packages/flux-runtime/src/form-runtime.ts` for runtime container creation
 
+For compiled-node identity, template/instance split, and table/loop instance rules, see `docs/architecture/template-instantiation-and-node-identity.md`.
+
 ## Main Design Rule
 
 The core rule is:
@@ -56,13 +58,13 @@ Current runtime baseline now carries this one step further for compiled node res
 
 Template compilation should happen once per schema identity, while runtime mostly instantiates templates and resolves live node instances.
 
-Current later-compile note:
+Current compile model:
 
-- runtime-assembled fragments such as `dynamic-renderer` payloads or dialog title/body should follow the same two-step rule: compile to template, then instantiate into the current runtime context
-- the long-term architecture goal is to stop treating compiled nodes as live instances and instead pass explicit runtime node instances through the render path
-- live mounted nodes should receive runtime `cid` at mount time so DOM/debugger round-trips can stay compact via `data-cid`
-
-Current code still renders `CompiledSchemaNode` directly. Treat that as the active implementation, not the target contract.
+- `SchemaCompiler.compile()` returns `CompiledTemplate` containing a `TemplateNode` tree
+- all compilation calls within one `RendererRuntime` share a single counter, giving every `templateNodeId` a globally unique value within that runtime
+- `TemplateNode.component` carries the resolved `RendererDefinition` directly from compile time — no per-render registry lookup
+- `NodeRenderer` receives `TemplateNode` and constructs `NodeInstance` directly; `CompiledSchemaNode` is an internal compiler artifact and does not appear in the render path
+- `cid` equals `templateNodeId`; it is assigned at compile time and written to `data-cid` on the DOM at mount time
 
 ### Static fast path and identity reuse are mandatory
 
@@ -88,56 +90,90 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for concrete anti-pat
 
 The current renderer stack is effectively split into:
 
-1. `SchemaCompiler`
+1. `SchemaCompiler` → produces `CompiledTemplate` (containing `TemplateNode` tree)
 2. `RendererRegistry`
 3. `RendererRuntime`
 4. split React contexts and hooks
 5. `SchemaRenderer` and `NodeRenderer`
 
-Current registry baseline:
-
-- duplicate renderer types now fail fast by default during both initial registry construction and later `register(...)` calls
-- hosts still have an explicit override path via `register(definition, { override: true })`
-- explicit overrides emit a warning instead of silently replacing the previous renderer definition
-- `RendererDefinition` now also carries the first tooling metadata baseline directly on the runtime contract: `displayName`, `icon`, `category`, `defaultSchema`, `propSchema`, and `sourcePackage`
-- these metadata fields are intended to be the canonical source for tooling/loader/AI inspection rather than a separate parallel manifest
-
-Current complex-state ownership baseline:
-
-- complex renderers no longer need to treat all interactive state as implicitly local
-- the first explicit ownership slice is `table.paginationOwnership`, currently supporting `local`, `controlled`, and `scope`
-- the second explicit ownership slice is `table.selectionOwnership`, also supporting `local`, `controlled`, and `scope`
-- `local` keeps the renderer's internal state as the source of truth
-- `controlled` treats schema/runtime props as the source of truth and expects external updates after `onPageChange` / `onSelectionChange`
-- `scope` treats explicit current-scope paths as the source of truth through `paginationStatePath` and `selectionStatePath`; renderer interactions write back to those paths directly and re-read them reactively through the normal scope subscription model
-- table also now exposes the first instance capability baseline through its component handle: `component:refresh`, `component:getSelection`, and `component:setSelection`
-- `component:refresh` preserves the caller action context when delegating to `onRefresh`, so runtime-owned actions such as `refreshSource` still resolve against the correct scope-owned source registry entry
-- this baseline is still intentionally narrow; `sort`, `filter`, and `expand` are not yet moved into the same ownership model here
-
 ```text
 raw schema
   -> SchemaCompiler
-compiled node tree
+CompiledTemplate (TemplateNode tree)
   -> SchemaRenderer
 runtime + root scope + page context
-  -> NodeRenderer(node)
+  -> NodeRenderer(templateNode, instancePath?)
+NodeInstance (cid, templateNode, instancePath, scope, state)
 resolved meta + resolved props + regions + events + helpers
   -> concrete renderer component
 ```
 
+## End-To-End Render Pipeline
+
+The current mental model is:
+
+1. `SchemaRenderer` is the explicit root boundary
+2. `RenderNodes` normalizes raw schema input into compiled nodes and handles fragment-local rendering concerns
+3. `NodeRenderer` executes one compiled node against the current scope and runtime
+4. the concrete renderer component receives already-resolved inputs plus ambient runtime contexts
+
+Expanded flow:
+
+```text
+JSON schema
+  -> RendererRegistry resolves `schema.type`
+  -> SchemaCompiler classifies fields as meta / prop / region / event / value-or-region
+  -> compiled node tree
+  -> SchemaRenderer creates runtime + page runtime + root scope + root action scope + root component registry
+  -> RenderNodes picks the current child scope / fragment scope
+  -> NodeRenderer resolves node meta and props against that scope
+  -> NodeRenderer builds regions, events, helpers, and node identity context
+  -> concrete renderer runs
+```
+
+Practical ownership split:
+
+- compilation decides what each field means
+- runtime resolution decides what each dynamic field evaluates to now
+- `NodeRenderer` assembles the final renderer contract
+- owner renderers such as `form` create descendant runtime boundaries
+
+## NodeRenderer Responsibilities
+
+`NodeRenderer` is the single-node execution orchestrator. Its current responsibilities are:
+
+- resolve `meta` from the current node and scope
+- resolve `props` from the current node and scope
+- subscribe selectively so unrelated scope writes do not recompute unrelated nodes
+- build `events` from declarative event fields
+- build region handles for child schema
+- create stable `helpers`
+- execute node-local optional provider closures such as action-scope overlays or class-alias publication
+- dispatch node lifecycle actions
+- invoke the concrete renderer component
+
+It is intentionally not the owner of every runtime boundary in the tree.
+
+`NodeRenderer` does not own:
+
+- page runtime creation
+- form runtime creation
+- fragment child scope creation for `render({ data })`
+- dialog / drawer surface runtime ownership
+
+Those boundaries belong to the concrete creator path that introduces them.
+
 ## Renderer Component Contract
 
-Current renderer components receive a contract shaped like:
+Renderer components receive:
 
 ```ts
 interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   id: string;
   path: string;
   schema: S;
-  locator?: NodeLocator;
   templateNode: TemplateNode<S>;
-  node: CompiledSchemaNode<S>;
-  nodeInstance: NodeInstance<S>;
+  node: NodeInstance<S>;
   props: Readonly<Record<string, unknown>>;
   meta: ResolvedNodeMeta;
   regions: Readonly<Record<string, RenderRegionHandle>>;
@@ -149,10 +185,8 @@ interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
 Meaning:
 
 - `schema` is the declared source shape
-- `locator` is the current live-node locator when the active render path can derive one
-- `templateNode` is the current immutable structural definition mirrored off `nodeInstance`
-- `node` is the compiled node metadata
-- `nodeInstance` is the current live runtime instance and carries locator/state ownership for the mounted node
+- `templateNode` is the immutable structural definition produced at compile time; `templateNode.component` carries the resolved `RendererDefinition` directly
+- `node` is the live runtime `NodeInstance` for this mounted node; `node.cid` equals `templateNode.templateNodeId`
 - `props` is the resolved runtime prop object for the current render
 - `meta` is the resolved node meta such as visibility or disabled state
 - `meta.testid` is the resolved testid for `data-testid` attribute output on the root element
@@ -160,31 +194,7 @@ Meaning:
 - `regions` is the map of precompiled child render handles
 - `events` is the map of runtime event handlers derived from declarative event fields
 - `helpers` exposes stable imperative runtime helpers
-- `node.lifecycleActions` carries compiled `onMount` / `onUnmount` actions when the schema declares them
-
-### Target contract
-
-The clean-slate target contract should move from compiled nodes to runtime node instances:
-
-```ts
-interface RendererComponentProps<S = unknown> {
-  locator: NodeLocator;
-  templateNode: TemplateNode<S>;
-  node: NodeInstance<S>;
-  props: Readonly<Record<string, unknown>>;
-  meta: ResolvedNodeMeta;
-  regions: Readonly<Record<string, RenderRegionHandle>>;
-  events: Readonly<Record<string, RendererEventHandler | undefined>>;
-  helpers: RendererHelpers;
-}
-```
-
-Target meaning:
-
-- `locator` is the canonical live-node identity
-- `templateNode` is the immutable structural definition
-- `node` is the live runtime instance
-- renderers no longer receive a bare compiled node as if it were also the live instance
+- `templateNode.lifecycleActions` carries compiled `onMount` / `onUnmount` actions when the schema declares them
 
 ## Props Versus Hooks
 
@@ -218,13 +228,19 @@ Use hooks for ambient runtime state and services:
 - `useCurrentNodeInstance()`
 - `useRenderFragment()`
 
-Current compatibility note:
+This split matches actual ownership and change frequency better than either "everything by props" or "everything by hooks".
 
-- the active code still exposes `CompiledSchemaNode` through `RendererComponentProps.node` and `useCurrentNodeMeta()` for compatibility
-- `locator` / `templateNode` are now also mirrored onto `RendererComponentProps` and `useCurrentNodeMeta()` so renderers and hooks can adopt live identity without waiting for the full `node: NodeInstance` contract flip
-- `nodeInstance` / `useCurrentNodeInstance()` remain the preferred live-node source for locator-aware helpers and future template-instance migration work
+### `props` versus `meta`
 
-This split matches actual ownership and change frequency better than either â€œeverything by propsâ€ or â€œeverything by hooksâ€.
+`props` and `meta` are both resolved by runtime, but they serve different purposes.
+
+- `props` contains the node's business-facing runtime values such as `label`, `options`, `placeholder`, `name`, or `items`
+- `meta` contains node control state and outer-frame information such as `visible`, `hidden`, `disabled`, `className`, `label`, `testid`, or `cid`
+
+Quick rule:
+
+- if the concrete component needs it as a normal input, it is usually in `props`
+- if the runtime needs it to control the node or its outer wrapper, it is usually in `meta`
 
 Current orchestration boundary note:
 
@@ -233,6 +249,94 @@ Current orchestration boundary note:
 - Compiler-owned node-local optional boundaries may still be precompiled as node-local closures when the boundary truly belongs to the node itself, such as node-local `classAliases` publication or `xui:imports`-driven capability setup.
 - The React runtime should execute those node-local closures directly instead of re-deriving generic provider structure from scattered runtime props.
 - Effect helpers such as lifecycle dispatch, render-monitor wiring, and narrow boundary execution can still be extracted when they reduce file-level complexity without moving ownership into renderers that do not actually own that boundary.
+
+## `page` -> `form` -> `input` Walkthrough
+
+The cleanest way to understand props versus context is to follow a typical nested render path.
+
+Example schema shape:
+
+```json
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "form",
+      "body": [
+        {
+          "type": "input-text",
+          "name": "userName",
+          "label": "User Name"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Step 1: page
+
+At the root, `SchemaRenderer` creates:
+
+- renderer runtime
+- page runtime
+- root render scope
+- root action scope
+- root component registry
+
+The compiled `page` node is then passed to `NodeRenderer`.
+
+The concrete `page` renderer mainly consumes explicit renderer props:
+
+- `props.regions.body`
+- `props.regions.header`
+- `props.regions.footer`
+- `props.meta.className`
+- `props.meta.testid`
+
+This is a good example of a renderer that mostly just consumes resolved inputs and renders regions.
+
+### Step 2: form
+
+When `page` renders its `body` region, `RenderNodes` renders the child `form` node under the inherited page scope.
+
+The concrete `form` renderer still receives explicit renderer props such as:
+
+- `props.regions.body`
+- `props.regions.actions`
+- `props.events.submitAction`
+- `props.node.validation`
+
+But `form` is also an owner renderer. It creates a new `FormRuntime` and publishes:
+
+- `FormContext`
+- a new active child `ScopeContext` pointing at `form.scope`
+
+This is the key boundary transition: descendants of the form now read and write through form-owned scope and form runtime, not directly through the page root scope.
+
+### Step 3: input
+
+When the form body region renders an `input-text` node, `NodeRenderer` again resolves the node and calls the input renderer.
+
+The input renderer typically consumes explicit node-local inputs from props:
+
+- `props.props.name`
+- `props.props.placeholder`
+- `props.meta.disabled`
+- `props.meta.label`
+
+But it reads ambient form/runtime services through hooks:
+
+- `useCurrentForm()`
+- `useRenderScope()`
+- form controller hooks such as `useFormFieldController(...)`
+
+That means:
+
+- field configuration comes from renderer props
+- field state, validation state, and write-back behavior come from context-backed hooks
+
+This split is what lets ordinary renderers stay small while still participating in the full low-code runtime.
 
 ## Event Passthrough Contract
 
@@ -266,7 +370,7 @@ Non-DOM semantic payloads are still allowed when a renderer emits higher-level i
 
 Compiler/runtime rule:
 
-- lifecycle actions are compiled onto `CompiledSchemaNode.lifecycleActions`
+- lifecycle actions are compiled onto `TemplateNode.lifecycleActions`
 - they do not participate in normal `eventActions` / `eventKeys`
 - renderers do not adapt them manually
 - `NodeRenderer` owns mount/unmount dispatch centrally
@@ -297,9 +401,11 @@ function useCurrentNodeMeta(): {
   id: string;
   path: string;
   type: string;
-  locator?: NodeLocator;
+  cid: number;
   templateNode: TemplateNode;
+  node: NodeInstance;
 };
+function useCurrentNodeInstance(): NodeInstance | undefined;
 function useRenderFragment(): RendererHelpers['render'];
 ```
 
@@ -315,39 +421,26 @@ Form-specific hooks such as `useCurrentFormErrors`, `useCurrentFormFieldState`, 
 
 Local schema rendering should prefer region handles over raw child schema whenever possible.
 
-Current exported shape:
+Region handle shape:
 
 ```ts
 interface RenderRegionHandle {
   key: string;
-  path: string;
-  node: CompiledSchemaNode | CompiledSchemaNode[] | null;
-  render(options?: RenderFragmentOptions): React.ReactNode;
+  templateNode: TemplateNode | TemplateNode[] | null;
+  instantiate(options?: {
+    scope?: ScopeRef;
+    bindings?: Record<string, unknown>;
+    instancePath?: readonly InstanceFrame[];
+  }): React.ReactNode;
 }
 ```
 
 Why this is preferred:
 
-- child schema is compiled once
+- child schema is compiled once into `TemplateNode` trees
 - the handle is already bound to the current runtime model
 - scope creation and path tracking stay consistent
 - monitor and debug behavior remain centralized
-
-### Target region contract
-
-The clean-slate target is an instantiation-oriented region handle:
-
-```ts
-interface RenderRegionHandle {
-  key: string;
-  instantiate(options?: {
-    scope?: ScopeRef;
-    bindings?: Record<string, unknown>;
-    ownerLocator?: NodeLocator;
-    instancePath?: readonly InstanceFrame[];
-  }): React.ReactNode;
-}
-```
 
 Rules:
 
@@ -385,8 +478,7 @@ function ListRenderer(props: RendererComponentProps<ListSchema>) {
         <div key={String((item as { id?: string }).id ?? index)}>
           {props.regions.item?.instantiate({
             bindings: { item, index },
-            instancePath: [{ repeatedTemplateId: 'list.item', instanceKey: String((item as { id?: string }).id ?? index) }],
-            ownerLocator: props.locator
+            instancePath: [{ repeatedTemplateId: 'list.item', instanceKey: String((item as { id?: string }).id ?? index) }]
           })}
         </div>
       ))}
@@ -454,20 +546,11 @@ Rules derived from this table:
 
 ## Node Context Convergence
 
-Current node identity is carried by three parallel React contexts:
+Current node identity is carried by a single React context:
 
-- `CompiledNodeContext` — used by `RenderNodes` to get the owner node for compile options
-- `NodeMetaContext` — carries `{ id, path, type, locator, templateNode, node, nodeInstance }` for hooks
-- `NodeInstanceContext` — carries `NodeInstance` for live locator/state
-
-These three overlap. The target is a single node instance carrier:
-
-- `NodeInstanceContext` (or an upgraded equivalent) becomes the single ambient source of current compiled/template/runtime node identity
-- `CompiledNodeContext` and `NodeMetaContext` become compatibility projections over the unified carrier
-- `useCurrentNodeMeta()` derives its result from the single node instance context
-- Fragment owner fallback and helper creation also read from the unified context
-
-Until convergence is complete, all three contexts remain active. The intermediate state is that `NodeMetaContext` mirrors its data from `NodeInstanceContext` rather than being independently populated.
+- `NodeInstanceContext` — the single ambient source of current template/runtime node identity; carries `NodeInstance` for live cid/instancePath/state
+- `useCurrentNodeMeta()` and `useCurrentNodeInstance()` both derive from `NodeInstanceContext`
+- Fragment owner fallback and helper creation also read from this context
 
 ## Render Context Split
 
@@ -479,7 +562,7 @@ Current split context areas are:
 - scope context
 - action-scope context
 - component-registry context
-- node-instance context (target: single node instance carrier — see Node Context Convergence above)
+- node-instance context (single carrier — `NodeInstanceContext`)
 - form context
 - page context
 
@@ -488,7 +571,7 @@ Why:
 - runtime is mostly stable
 - scope and form state change more frequently
 - split context boundaries reduce unrelated rerenders
-- current node identity converges on one ambient runtime-instance carrier rather than parallel node-meta and compiled-node compatibility contexts
+- node identity uses one unified `NodeInstanceContext` carrier
 
 ## Local Render Options
 

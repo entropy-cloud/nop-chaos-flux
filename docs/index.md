@@ -20,12 +20,13 @@ Choose the smallest document that matches the task.
 | Understand Flux's top-level frontend programming model, primitive categories, macro layering, and how the primitives compose into one execution model | `docs/architecture/frontend-programming-model.md` | `docs/architecture/flux-core.md` |
 | Understand action control flow such as `when`, `then`, `onError`, `parallel`, result classes, and chained result context | `docs/architecture/action-algebra-formal-spec.md` | `docs/architecture/action-scope-and-imports.md` |
 | 设计 action 可视化编辑、optional step、graph lowering，或判断是否要把 `parallel` 改成 `steps` | `docs/architecture/action-graph-authoring.md` | `docs/architecture/action-algebra-formal-spec.md` |
+| 设计值转换、字段 draft 生命周期、组合式详情字段/详情视图、或 `transformInAction` / `transformOutAction` / `validateValueAction` | `docs/architecture/value-adaptation-and-detail-field.md` | `docs/architecture/action-scope-and-imports.md`, `docs/architecture/renderer-runtime.md` |
 | 设计按钮 / 表单 / 选择控件的 async pending、loading、disabled 语义 | `docs/architecture/action-interaction-state.md` | `docs/architecture/form-validation.md`, `docs/architecture/api-data-source.md` |
 | 设计 dialog / drawer / future sheet 的打开态、surface status、`statusPath` 或局部 `$surface` 规则 | `docs/architecture/surface-owner.md` | `docs/architecture/action-interaction-state.md` |
 | 设计 scope 继承、`data` 初始化、`isolate`、row scope、或判断是否需要 `$parentScope` | `docs/architecture/scope-ownership-and-isolation.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/table-row-identity-and-scope-performance.md` |
 | 设计 dialog / drawer 的 `data`、open-state、surface status 与 scope 边界 | `docs/architecture/surface-owner.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/components/dialog/design.md` |
 | Design API requests, scope injection (includeScope), params, DataSource polling, unified formula/api source semantics, or non-rendering reaction/watch nodes | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` |
-| 了解基于 SchemaRenderer 的图设计器规划架构 | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md` |
+| 了解基于 SchemaRenderer 的图设计器规划架构，或判断 graph designer 与 domain-specific codec / value editor 的边界 | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md`, `docs/architecture/action-scope-and-imports.md` |
 | 看清 Flow Designer 各层协作细节、命名空间动作流转、画布/Inspector 调用链 | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
 | 核对 Flow Designer 当前真实的 snapshot 契约、host scope 落地状态、哪些字段已接线 | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |
 | Understand Flow Designer React Flow integration, callback translation, or canvas failure semantics | `docs/architecture/flow-designer/canvas-adapters.md` | `docs/architecture/flow-designer/api.md` |
@@ -43,6 +44,7 @@ Choose the smallest document that matches the task.
 | Change React integration, renderer props, hooks, or fragment rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
 | Design compile-once/runtime-instantiation behavior, `cid`/template-node identity, repeated-instance identity, or future `type: 'loop'` rules | `docs/architecture/template-instantiation-and-node-identity.md` | `docs/architecture/component-resolution.md` |
 | Design `loop` node schema, item scope, `itemName` / `indexName`, or `itemData` | `docs/components/loop/design.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
+| Design scoped render slots, nested slot scope, render-prop-like region params, or `$slot` semantics | `docs/architecture/scoped-render-slots.md` | `docs/architecture/field-metadata-slot-modeling.md`, `docs/architecture/renderer-runtime.md` |
 | Design recursive structural rendering, `recurse`, or nearest-enclosing-loop recursion rules | `docs/components/recurse/design.md` | `docs/components/loop/design.md`, `docs/components/fragment/design.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
 | Design a no-UI grouping node, grouped `when` usage, or decide `fragment` versus `container` | `docs/components/fragment/design.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/components/container/design.md` |
 | Design `list` as a visual collection renderer, or decide its boundary versus `loop` / `table` | `docs/components/list/design.md` | `docs/components/loop/design.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
@@ -50,7 +52,7 @@ Choose the smallest document that matches the task.
 | Design `input-tree` / `tree-select` as form tree controls, or decide their boundary versus `tree` / `select` | `docs/components/input-tree/design.md`, `docs/components/tree-select/design.md` | `docs/components/tree/design.md`, `docs/components/select/design.md`, `docs/components/form/design.md` |
 | Design high-performance table row identity, `rowKey`, row-scope reuse, row-local invalidation, or same-row field access inside tables | `docs/architecture/table-row-identity-and-scope-performance.md` | `docs/architecture/dependency-tracking.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
 | 设计或实现某个具体组件的 schema 契约、核心能力和落地路线 | `docs/components/index.md` | 对应组件目录下的 `docs/components/<component>/design.md`，再回看相关 `docs/architecture/*.md` |
-| Design namespaced action extension, host action scopes, or `xui:imports` semantics | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` |
+| Design namespaced action extension, host action scopes, `xui:imports` semantics, or dynamic domain libraries loaded into owner semantic actions | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/flow-designer/config-schema.md` |
 | 设计 Flux schema 文件校验器、导入前结构校验或命名空间属性忽略策略 | `docs/architecture/schema-file-validator.md` | `docs/architecture/action-scope-and-imports.md`, `docs/references/flux-json-conventions.md` |
 | Change slot-like fields such as `title`, `empty`, or `onClick` | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
 | Change validation behavior or form field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` |
@@ -90,6 +92,7 @@ Architecture intent lives primarily in:
 - `docs/architecture/scope-ownership-and-isolation.md`
 - `docs/architecture/surface-owner.md`
 - `docs/architecture/renderer-runtime.md`
+- `docs/architecture/scoped-render-slots.md`
 - `docs/architecture/template-instantiation-and-node-identity.md`
 - `docs/architecture/table-row-identity-and-scope-performance.md`
 - `docs/architecture/component-resolution.md`

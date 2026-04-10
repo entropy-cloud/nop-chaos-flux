@@ -521,3 +521,4 @@ That change should be implemented in:
 - `docs/references/terminology.md`
 - `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
+- `docs/architecture/scoped-render-slots.md`

@@ -94,6 +94,36 @@ interface DesignerConfig {
 - `kind` 用于标识文档类型，比如 `workflow`、`state-machine`
 - `extends` 允许继承预设
 - `nodeTypes` 是核心配置
+- `DesignerConfig` 只定义通用 graph editor 配置；某个 domain 如何把 `GraphDocument` round-trip 成自己的值 DSL，不属于 `DesignerConfig` 本体职责
+
+### 3.0 通用 graph config 与动态 domain library
+
+对于“平台固定代码 + 业务逻辑动态加载”的部署模型，推荐把 domain-specific round-trip、validator、codec 放在动态库中，而不是塞进 `flow-designer` core。
+
+推荐模式：
+
+- `designer-page` 或其 owner 容器通过 `xui:imports` 声明需要的 domain namespace
+- host 通过 `env.importLoader` 受控加载动态模块
+- 动态模块把能力暴露为 namespace provider，例如 `actionGraph:*`
+- `DesignerConfig` 继续只描述 graph editor 自身的通用配置，不直接承载某个 domain 的 lowering 语义
+
+这条边界的结果是：
+
+- `flow-designer` 可以作为图形编辑内核被不同 domain 复用
+- 但 `workflow`、`action-graph`、`state-machine` 的 import/export/validate 逻辑仍是外部 domain 库责任
+
+### 3.0.1 Graph-backed owners use the general value adaptation pattern
+
+如果某个 owner 组件把 graph editor 当作内部复杂 UI 使用，那么它仍应走通用的 value adaptation owner pattern，而不是定义一套 graph 专属字段协议。
+
+推荐边界：
+
+- owner 继续通过 `name` 绑定外部值
+- owner 内部可以维护 `GraphDocument` 或其他复杂 draft
+- 值转换和校验通过通用的 `transformInAction` / `transformOutAction` / `validateValueAction` 完成
+- 这些动作可以绑定到 `xui:imports` 动态导入的 domain namespace
+
+详情见：`docs/architecture/value-adaptation-and-detail-field.md`
 
 ### 3.1 版本迁移约束
 
