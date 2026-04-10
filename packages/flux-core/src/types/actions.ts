@@ -43,6 +43,16 @@ export interface ActionResult {
   error?: unknown;
 }
 
+export interface FluxActionEvent {
+  type: string;
+  nativeEvent?: Event;
+  currentTarget?: HTMLElement | null;
+  target?: HTMLElement | null;
+  preventDefault?(): void;
+  stopPropagation?(): void;
+  [key: string]: unknown;
+}
+
 export interface ActionContext {
   runtime: RendererRuntime;
   scope: ScopeRef;
@@ -52,7 +62,7 @@ export interface ActionContext {
   interactionId?: string;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
-  event?: unknown;
+  event?: FluxActionEvent;
   node?: CompiledSchemaNode;
   form?: FormRuntime;
   page?: PageRuntime;

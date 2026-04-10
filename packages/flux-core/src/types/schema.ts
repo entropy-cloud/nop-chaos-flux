@@ -31,6 +31,8 @@ export interface BaseSchema extends SchemaObject {
   frameWrap?: FrameWrapMode;
   validateOn?: ValidationTrigger | ValidationTrigger[];
   showErrorOn?: ValidationVisibilityTrigger | ValidationVisibilityTrigger[];
+  onMount?: ActionSchema | ActionSchema[];
+  onUnmount?: ActionSchema | ActionSchema[];
   'xui:imports'?: XuiImportSpec[];
   'xui:linkage'?: FieldLinkageSchema;
 }

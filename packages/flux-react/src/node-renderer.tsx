@@ -28,6 +28,7 @@ import {
 } from './contexts';
 import { useRenderInstancePath, useRendererRuntime } from './hooks';
 import { createHelpers } from './helpers';
+import { createNormalizedActionEvent } from './helpers';
 import { RenderNodes } from './render-nodes';
 import {
   getCompiledNodeLocator,
@@ -169,8 +170,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       }),
     [runtime, renderScope, activeActionScope, activeComponentRegistry, activeForm, props.page, props.node, nodeInstance, nodeLocator]
   );
-  const onMountAction = props.node.eventActions.onMount;
-  const onUnmountAction = props.node.eventActions.onUnmount;
+  const lifecycleActions = props.node.lifecycleActions;
 
   const events = useMemo(() => {
     return Object.fromEntries(
@@ -187,7 +187,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
             helpers.dispatch(action as any, {
               ...eventContext,
               locator: eventContext?.locator ?? nodeLocator,
-              event
+              event: createNormalizedActionEvent(event)
             })
         ];
       })
@@ -265,20 +265,20 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   ]);
 
   useEffect(() => {
-    if (onMountAction) {
-      void helpers.dispatch(onMountAction as any, {
+    if (lifecycleActions?.onMount) {
+      void helpers.dispatch(lifecycleActions.onMount as any, {
         locator: nodeLocator
       });
     }
 
     return () => {
-      if (onUnmountAction) {
-        void helpers.dispatch(onUnmountAction as any, {
+      if (lifecycleActions?.onUnmount) {
+        void helpers.dispatch(lifecycleActions.onUnmount as any, {
           locator: nodeLocator
         });
       }
     };
-  }, [helpers, nodeLocator, onMountAction, onUnmountAction]);
+  }, [helpers, lifecycleActions, nodeLocator]);
 
   if (!finalResolvedMeta.visible || finalResolvedMeta.hidden) {
     return null;

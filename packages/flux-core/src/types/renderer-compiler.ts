@@ -99,6 +99,10 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   sourceStatePropKeys: Readonly<Record<string, string>>;
   validation?: CompiledFormValidationModel;
   regions: Readonly<Record<string, CompiledRegion>>;
+  lifecycleActions?: Readonly<{
+    onMount?: unknown;
+    onUnmount?: unknown;
+  }>;
   eventActions: Readonly<Record<string, unknown>>;
   eventKeys: readonly string[];
   flags: CompiledNodeFlags;

@@ -52,6 +52,7 @@ export interface ComponentHandle {
   id?: string;
   name?: string;
   type: string;
+  ref?: HTMLElement | null;
   capabilities: ComponentCapabilities;
 }
 

@@ -600,6 +600,23 @@ function rewriteActionTargets(
   return output;
 }
 
+function extractLifecycleActions(schema: BaseSchema) {
+  const lifecycleActions: {
+    onMount?: unknown;
+    onUnmount?: unknown;
+  } = {};
+
+  if (schema.onMount !== undefined) {
+    lifecycleActions.onMount = schema.onMount;
+  }
+
+  if (schema.onUnmount !== undefined) {
+    lifecycleActions.onUnmount = schema.onUnmount;
+  }
+
+  return Object.keys(lifecycleActions).length > 0 ? lifecycleActions : undefined;
+}
+
 function indexNodeIds(nodes: readonly CompiledSchemaNode[], cidState: CompiledCidState): void {
   for (const node of nodes) {
     const id = typeof (node.schema as Record<string, unknown>).id === 'string'
@@ -718,6 +735,7 @@ export function createSchemaCompiler(input: {
     const sourcePropKeys = new Set<string>();
     const sourceStatePropKeys: Record<string, string> = {};
     const regions: Record<string, CompiledRegion> = {};
+    const lifecycleActions = extractLifecycleActions(schema);
     const eventActions: Record<string, unknown> = {};
     const eventKeys: string[] = [];
     const deepNormalizers = DEEP_FIELD_NORMALIZERS[renderer.type] ?? {};
@@ -807,6 +825,7 @@ export function createSchemaCompiler(input: {
             )
           : undefined,
       regions,
+      lifecycleActions,
       eventActions,
       eventKeys,
       flags,

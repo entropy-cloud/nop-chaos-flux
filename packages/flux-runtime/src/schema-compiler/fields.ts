@@ -20,6 +20,8 @@ export const DEFAULT_FIELD_RULES: Record<string, SchemaFieldRule> = {
   columns: { key: 'columns', kind: 'prop' }
 };
 
+const LIFECYCLE_KEYS = new Set(['onMount', 'onUnmount']);
+
 export function classifyField(renderer: RendererDefinition, key: string): SchemaFieldRule {
   const explicit = renderer.fields?.find((field) => field.key === key);
 
@@ -33,6 +35,10 @@ export function classifyField(renderer: RendererDefinition, key: string): Schema
 
   if (renderer.regions?.includes(key)) {
     return { key, kind: 'region', regionKey: key };
+  }
+
+  if (LIFECYCLE_KEYS.has(key)) {
+    return { key, kind: 'ignored' };
   }
 
   if (/^on[A-Z]/.test(key)) {
