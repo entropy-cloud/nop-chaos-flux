@@ -1,8 +1,14 @@
 # React 19 Compiler 与高频交互面重构计划
 
-> Status: ✅ DONE
-> Last Reviewed: 2026-04-09
+> Plan Status: completed
+> Last Reviewed: 2026-04-10; live cleanup re-verified
 > Related: `docs/plans/43-react-18-to-19-best-practices-migration-plan.md`（已完成 React 19 基线迁移，本计划处理其后续高 ROI 技术债）
+
+## Audit Note
+
+- 2026-04-10 live repo audit confirms that the React Compiler is wired into `apps/playground/vite.config.ts`, table controls now use `startTransition`, and `table-renderer.tsx` has already been split into `table-renderer/*` helper modules.
+- The remaining cleanup is now landed: async source/import hooks use explicit abortable effect helpers, code-editor source resolvers follow the same cancellation model, and spreadsheet interactions delegate shell/mouse-up/cell-value responsibilities to `packages/spreadsheet-renderers/src/spreadsheet-interactions/*` modules instead of keeping those concerns inline in one hook body.
+- This plan is now closed again with live repo evidence and targeted package verification.
 
 ## Problem
 
@@ -102,3 +108,16 @@
 - TableRenderer 与 Spreadsheet 交互入口不再由单一超大文件承载多个独立职责。
 - 至少一个高频交互面落地 `startTransition` 或等价并发优化，并有 profiling 或用户体验证据支撑。
 - 全量验证通过：`pnpm typecheck`、`pnpm build`、`pnpm lint`、`pnpm test`。
+
+## Closure
+
+Status Note:
+
+- React Compiler and lint guardrails are already active in the repo baseline.
+- Table hot-path control updates already use `startTransition` in `packages/flux-renderers-data/src/table-renderer/use-table-controls.ts`.
+- Residual async cleanup now uses explicit abortable task helpers in `packages/flux-react/src/abortable-task.ts`, `packages/flux-react/src/useSourceValue.ts`, `packages/flux-react/src/useNodeImports.ts`, `packages/flux-code-editor/src/abortable-task.ts`, and `packages/flux-code-editor/src/source-resolvers.ts`.
+- Spreadsheet interaction orchestration is no longer carrying all shell responsibilities inline: `packages/spreadsheet-renderers/src/use-spreadsheet-interactions.ts` now delegates shell state, mouse-up binding, and cell-value sync to `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-spreadsheet-shell.ts`, `use-mouse-up-binding.ts`, and `use-cell-value-sync.ts`.
+
+Follow-up:
+
+- none for this plan scope

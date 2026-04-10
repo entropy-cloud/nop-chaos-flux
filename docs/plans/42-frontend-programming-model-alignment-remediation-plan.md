@@ -26,7 +26,7 @@
 - Flow/Report/Spreadsheet 的 schema-visible host scope 已去掉 `designerCore` / `reportDesignerCore` / `spreadsheetCore` / `spreadsheetSnapshot` 等泄漏对象，只保留 DTO-style projection。
 - formula `data-source` 已不再错误要求 `dataPath`，与 `name`-first 资源发布合同保持一致。
 - 当前真正仍未收口的顶层缺口已经缩小到两个方向：
-- `Semantic Lifecycle Entry` 仍缺少 form/page/dialog 的 author-visible schema 收口
+- `Semantic Lifecycle Entry` 的 form-first baseline 已由 Plan 44 落地；剩余 gap 主要收敛到 page/dialog 等 surface 的 author-visible lifecycle follow-up
 - 若干 architecture / protocol / plan 文档仍保留 2026-04-08 审计时的过时 current-state 描述，需要刷新 current-vs-target 标记
 
 ## 与现有计划的关系
@@ -43,7 +43,7 @@
 - `componentName` 仍是覆盖式解析
 - `data-source` 未收敛到 `name` / `statusPath` / scope-scoped registry 主线
 - `Action Algebra` 的 failure branch、branch result context、reaction action context、host snapshot replacement 在 2026-04-09 前后已经进入代码主链，但本计划仍没有正确反映这一变化。
-- 当前剩余缺口主要是 schema-level semantic lifecycle ownership 尚未对齐到顶层文档；`form` 仍只有 `body` / `actions` / `data` 这类较早期字段，尚未引入 `initAction` / `submitAction` / `onSubmitSuccess` / `onSubmitError` / `onValidateError` 之类的显式语义入口。
+- 当前剩余缺口主要已经收敛到 page/dialog 等 surface 的 schema-level semantic lifecycle ownership，以及若干仍未刷新的 current-state 文档；`form` 侧的 `initAction` / `submitAction` / `onSubmitSuccess` / `onSubmitError` / `onValidateError` 已由 Plan 44 落地。
 - 部分 narrower docs 仍保留“Spreadsheet host scope 通过 region data 注入”“Host Projection 可能仍泄漏 core/config object”等过时描述，需要更新成当前基线。
 
 ## Root Cause

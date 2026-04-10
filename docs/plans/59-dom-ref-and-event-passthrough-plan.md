@@ -1,7 +1,7 @@
 # 59 DOM Ref, Event Passthrough, And Lifecycle Actions
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-09
+> Plan Status: partially completed
+> Last Reviewed: 2026-04-10; reopened after live repo audit
 > Source: `docs/architecture/action-scope-and-imports.md`, `docs/architecture/renderer-runtime.md`, discussion on xui:imports capability boundary
 > Related: `12-action-scope-imports-and-component-invocation-plan.md` (completed)
 
@@ -31,6 +31,13 @@
    - 无规范要求渲染器必须/禁止传递原生事件
 3. **事件类型不明确**：`ActionContext.event` 类型为 `unknown`，无法区分是 React SyntheticEvent 还是自定义事件
 4. **无通用生命周期 hook**：除 form 的 `initAction` 外，组件无法在 JSON 中表达 mount/unmount 时的副作用。且 `onMount`/`onUnmount` 会被 `classifyField` 误归类为 event（因为匹配 `/^on[A-Z]/`），需要编译时单独处理
+
+### 2026-04-10 审计修正
+
+- live repo 仍然保持 `ActionContext.event?: unknown`，`BaseSchema` 未声明 `onMount` / `onUnmount`，`ComponentHandle` 也尚未暴露 `ref`
+- `NodeRenderer` 当前仍从 `eventActions.onMount` / `eventActions.onUnmount` 读取生命周期 action，而不是从独立的 `lifecycleActions` 契约读取
+- `ButtonRenderer` 仍然丢弃点击事件，`ChartRenderer` 也尚未注册带 `ref` 的 component handle
+- 因此本计划此前的完成记录与实际代码不一致；当前状态应恢复为 `partially completed`，继续按下面的 execution plan 落地
 
 ## Goals
 
