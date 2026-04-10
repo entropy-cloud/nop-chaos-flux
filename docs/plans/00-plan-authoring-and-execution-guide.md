@@ -1,8 +1,8 @@
 # Plan Authoring And Execution Guide
 
 > Status: active workflow guide
-> Last Reviewed: 2026-04-09
-> Sources: `docs/logs/2026/03-31.md`, `docs/logs/2026/04-03.md`, `docs/logs/2026/04-04.md`, `docs/logs/2026/04-07.md`, `docs/logs/2026/04-08.md`, `docs/logs/2026/04-09.md`
+> Last Reviewed: 2026-04-10
+> Sources: `docs/logs/2026/03-31.md`, `docs/logs/2026/04-03.md`, `docs/logs/2026/04-04.md`, `docs/logs/2026/04-07.md`, `docs/logs/2026/04-08.md`, `docs/logs/2026/04-09.md`, `docs/logs/2026/04-10.md`
 
 ## Goal
 
@@ -15,12 +15,13 @@
 
 ## Lessons From History
 
-从 `docs/logs/` 看，最常见的问题只有 4 类：
+从 `docs/logs/` 看，最常见的问题只有 5 类：
 
 1. 没先审 current baseline，直接沿用旧计划或旧 completion note。
 2. 一个计划过宽，后面不得不重写或拆分。
 3. 只记录最近 landing 的改动，没有回头逐条核对整个 plan。
 4. 剩余工作没有明确归属，导致计划看起来完成，实际上还有隐含 debt。
+5. 把“最近一个 slice 已 landing”误当成“整份 plan 可关闭”，缺少独立 closure audit。
 
 所以本指南只保留最少规则，并把它们直接体现在模板里。
 
@@ -33,6 +34,8 @@
 5. 不要求给 `Purpose`、`Scope`、`Risks` 这类说明段落单独标记完成状态。
 6. 只有当前 scope 真正完成，且 leftover 已明确移出 debt，才能标 `completed`。
 7. 旧 baseline 失效时，显式写 `Outdated Note`、`Supersession Note` 或 `replaced/superseded`，不要让多套 baseline 并存。
+8. `completed` 必须来自单独的 closure audit，不要在完成最后一个编码 slice 的同时顺手宣布 plan 关闭。
+9. 任何 execution slice 只要还有一项未完成、blocked、或未移出 scope，plan 就不能标 `completed`。
 
 ## Required Status Markers
 
@@ -220,6 +223,29 @@ Follow-up:
 4. 把剩余工作写进 `Follow-up`，明确 successor plan 或明确无剩余 debt。
 
 如果这 4 件事没做完，就不要把 `Plan Status` 改成 `completed`。
+
+### Closure Audit Rule
+
+把 plan 改成 `completed` 前，必须把“执行”与“收口审计”当成两件事。
+
+最低要求：
+
+1. 关闭动作必须发生在一次明确的 closure-audit pass 中，而不是某个实现 slice 的顺手附带动作。
+2. closure audit 要回看 live repo，而不是只看旧 completion note、旧 checklist、或最近一次提交说明。
+3. 每个 `Phase` / `Workstream` 都必须已经是 `completed`，否则 plan 不能关闭。
+4. 如果某个 slice 的工作不再属于本 plan，先把它显式移到 successor plan 或标注取消原因，再关闭本 plan。
+5. `Validation Checklist` 中的未完成项只能保留在 plan 仍未关闭时；若计划关闭，这些项也必须完成或被移出当前 scope。
+
+推荐 closure-audit 证据来源：
+
+- live code or docs paths that satisfy each slice exit criterion
+- focused verification results or a clearly cited already-green workspace baseline
+- daily log entry recording the closure pass and any final doc-sync work
+
+实操上可以把 closure audit 理解为一轮独立复核：
+
+- 不是“我刚做完最后一项，所以应该没问题”
+- 而是“我现在重新核对整份计划，确认没有剩余 plan-owned work”
 
 ## Practical Rule
 
