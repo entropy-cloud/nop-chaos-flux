@@ -92,7 +92,12 @@ Flux needs both at once.
 
 ### `validating`
 
-`validating` means the current owner still has in-flight async validation work that may affect owned field state.
+`validating` means the current owner still has pending async validation work that may affect owned field state.
+
+Pending work includes:
+
+1. already-started async validation calls
+2. debounced async validation work that has been scheduled but not started yet
 
 ### `ready`
 
@@ -158,6 +163,24 @@ This is the important separation:
 1. validation state and effective-required state are runtime truth
 2. error-message visibility is a UI filtering concern
 
+### `showErrorOn: 'touched'` With `system`
+
+`system` is allowed to make an untouched field invalid.
+
+Typical case:
+
+1. another field changes a `requiredWhen` condition
+2. the owner re-materializes rules for target field `B`
+3. `B` now has `effectiveRequired === true` and may already fail validation
+4. `B` is still untouched, so its error message may remain hidden in field chrome
+
+Rules:
+
+1. hidden field chrome does not imply the owner is valid
+2. `ready` and `canSubmit` react to current validation truth, not to current error visibility
+3. `submit()` may transition untouched invalid fields into visible submit-time errors according to form policy
+4. ordinary `system` revalidation alone does not mutate touched or visited state
+
 ## 3. Native DOM Validation Boundary
 
 Flux validation does not own browser-native validation inside uncontrolled DOM.
@@ -220,6 +243,21 @@ Timing rule:
 2. overlay effectiveness is decided during participation preparation, not at raw registration time
 
 This avoids microtask-order bugs where an overlay and a branch switch happen in the same turn.
+
+### Overlay Merge Semantics
+
+Compiled templates remain the base layer.
+
+Practical merge order:
+
+1. start from compiled templates for the path
+2. append active overlay templates for the same path
+3. if an overlay template reuses an existing `id`, replace the earlier template with that `id`
+4. keep different rule ids even when they share the same `kind`
+
+This keeps overlays explicit and local.
+
+They do not silently erase compiled rules by kind alone.
 
 ## 6. Repeated Items And Identity
 
@@ -368,6 +406,60 @@ Rules:
 2. inactive-path runs must be aborted or ignored
 3. latest-effective pending work should keep `validating` continuously true
 
+A debounced async rule counts as pending owner-local validation work during its debounce window.
+
+That means owner `validating` and readiness may already reflect pending validation before the actual async call starts.
+
+### Entry Arbitration And Supersession
+
+Entry points may overlap in time.
+
+Typical conflict:
+
+1. a debounced `validateAt(path, 'change')` is pending
+2. the user immediately triggers `validateAll('submit')`
+
+Owner-local rule:
+
+1. `submit` and `commit` supersede older lower-priority `change`, `blur`, and `manual` work for affected paths
+2. for owner-wide submit, the affected set is the current owner traversal set plus any already-running lower-priority targets in that owner
+3. for subtree submit or commit, the affected set is the subtree plus any already-running lower-priority targets whose published result would write into that subtree
+4. pending debounce for those lower-priority runs is cancelled
+5. stale async work from those lower-priority runs is ignored on completion
+6. the higher-priority entry validates against the latest value snapshot available when it starts
+
+This is not a separate cross-owner scheduler.
+
+It is owner-local arbitration.
+
+### Rule Execution Is Collect-All
+
+Flux executes all active effective rules for a path in materialized order.
+
+Example:
+
+1. `password` has `required`, `minLength`, and `pattern`
+2. `required` fails on an empty string
+3. the owner may still execute the remaining active rules in the same run
+4. the final field bucket contains all produced errors for that run
+
+This means the runtime does not use implicit first-error short-circuiting.
+
+### Dependency Cycles
+
+Owner-local dependency cycles are legal.
+
+Example:
+
+1. `startDate` depends on `endDate`
+2. `endDate` depends on `startDate`
+
+Execution rule:
+
+1. closure expansion tracks visited paths and converges to a fixed owner-local set
+2. the runtime must not recurse indefinitely just because the dependency graph contains a cycle
+3. compilers may still emit diagnostics for suspiciously large or accidental cycles
+
 ### Step 7: Publish Scope Result
 
 Update:
@@ -381,6 +473,71 @@ API return shape depends on the entry point:
 
 1. `ValidationResult` for local path-centered calls
 2. `ScopeValidationResult` for subtree or owner-scoped calls
+
+## 6.2.1 Transitional Owner Lifecycle
+
+Validation owners may pass through transient lifecycle states before they are ready for ordinary validation work.
+
+### `compiledModel === null`
+
+`compiledModel === null` means the owner currently has no executable compiled validation model attached.
+
+It is valid only while the owner is:
+
+1. `bootstrapping`
+2. `refreshing`
+3. `disposed`
+
+It does not mean a long-lived registration-only validation mode.
+
+### Validation Calls During `bootstrapping` Or `refreshing`
+
+Rules:
+
+1. ordinary validation calls must not execute against a `null` model
+2. implementations may queue or await those calls until the owner becomes `active`
+3. once the owner is `disposed`, new validation calls must be rejected rather than queued forever
+
+### Field Registration During Transitional States
+
+Rules:
+
+1. registrations carry stable `registrationId`, while accepted `modelGeneration` is assigned by the owner runtime
+2. updates or unregister callbacks from an older accepted generation must be ignored for the newer generation
+3. if registration arrives before the owner has an executable model, the runtime may buffer it or require re-registration after activation
+4. buffered registration must not be treated as proof that the path exists in the next compiled model
+5. `registerField(...)` returns an acceptance handle so a mounted field can distinguish accepted participation from rejected participation
+6. registration updates are instance-addressed by `registrationId`, which avoids ambiguity when more than one mounted instance targets the same logical path
+
+## 6.2.2 Submit Snapshot And Child Activation Timing
+
+Parent submit and child activation are intentionally decoupled.
+
+Rules:
+
+1. one submit attempt snapshots the currently active child contracts after the parent owner itself reaches `active`
+2. child owners that have not activated yet are absent from that snapshot and therefore do not participate in that submit attempt
+3. child owners already in the snapshot and marked `recurse-submit` must finish their current refresh before the parent submit resolves
+4. a child with `compiledModel === null` is not active and therefore cannot register an active contract
+
+This prevents parent submit from guessing about child owners that have not finished their own lifecycle.
+
+## 6.2.3 Commit Propagation Across Nested Draft Owners
+
+Commit propagation is one boundary at a time.
+
+Example chain:
+
+1. `parent` owns committed page values
+2. `child` owns a draft object editor
+3. `grandchild` owns a nested draft row editor inside that draft object
+
+Rules:
+
+1. `grandchild` commit writes only into `child`
+2. after that writeback, `child` runs its own impacted-path revalidation
+3. `parent` is unchanged until `child` itself commits upward
+4. there is no implicit `grandchild -> parent` writeback that skips `child`
 
 ## 6.3 Short Config Examples For Common Low-Code Patterns
 
@@ -512,6 +669,159 @@ Interpretation:
 3. split owners only when the value lifecycle genuinely splits, such as a real draft child editor
 4. this is a schematic ownership example, not a required field-storage pattern for wizard UI state
 
+## 6.3.1 Complex Scenario Examples
+
+### Dynamic Requiredness Plus Cross-Field Compare Plus Async Uniqueness
+
+Example mental model:
+
+1. `country` toggles whether `taxId` is required
+2. `confirmTaxId` must equal `taxId`
+3. `taxId` also runs async uniqueness validation against a remote API
+
+When `taxId` changes:
+
+1. closure includes `taxId`
+2. closure includes `confirmTaxId` because of the equality dependency
+3. closure may include aggregate ancestors such as `company`
+4. sync rules publish immediately
+5. async uniqueness run launches under the current owner and current model generation
+6. stale async runs from earlier generations or earlier `taxId` values must not publish
+
+This example is useful because one leaf change fans out into both sync and async downstream work.
+
+`confirmTaxId` depends on the current owner value of `taxId`, not on the completion event of `taxId`'s async validation.
+
+If async uniqueness finishes later without changing owner data, that completion does not by itself create a new dependency-triggered run for `confirmTaxId`.
+
+### `variant-field` Switch With Old Async Still Pending
+
+Example mental model:
+
+1. branch `personal` contains async `validateNationalId`
+2. branch `company` contains async `validateTaxNumber`
+3. user switches from `personal` to `company` before the first async run completes
+
+Rules:
+
+1. old `personal` branch paths become inactive immediately
+2. async runs for inactive branch paths are aborted or marked stale
+3. the new `company` branch may start its own async runs immediately after activation
+4. late completion from the `personal` branch must not publish into current owner state
+
+If the user later switches back to `personal`, the branch participates again from current owner values.
+
+The owner may recompute errors from scratch or reuse retained branch-local state only when that state is still valid for the same owner generation and active-instance mapping.
+
+### Multi-Level Nested Arrays With Aggregate Rules
+
+Example mental model:
+
+1. path template is `orders[].lines[].components[].partId`
+2. `lines` has aggregate rule `uniqueBy(sku)`
+3. `components` has aggregate rule `atLeastOneFilled(partId)`
+4. deleting `orders.0.lines.1` shifts later runtime instance paths
+
+Expected coordination:
+
+1. remove state for the deleted logical row
+2. remap surviving row state by stable logical identity when available
+3. remap nested `components` instances under surviving rows using the same template-to-instance mapping discipline
+4. call `applyChangesAndRevalidate(..., reason: 'system')` on the owning array scope after the structural write
+5. closure expansion includes the changed array root and any affected aggregate ancestors
+
+This example is the practical test for nested repeated-instance bookkeeping rather than single-level `items[]` remapping.
+
+### Form Submit -> Server Errors -> Edit -> Resubmit
+
+Example mental model:
+
+1. local submit-time validation passes
+2. server returns `email already registered` and `username reserved`
+3. host maps those errors into owner paths using `applyExternalErrors(...)`
+4. user edits `email`
+5. owner clears external errors from the same source for `email` and owned ancestors such as `account` if that server result context was attached there
+6. the still-unchanged `username` external error remains until cleared by edit or by replacement from a later server response
+7. next submit performs normal local validation again, then may receive a fresh external error set
+
+This is the canonical round-trip for service-side field validation.
+
+### Parent Form With Dialog Child Draft Owner
+
+Example mental model:
+
+1. parent form owns committed values
+2. dialog hosts a child `FormRuntime` editing local draft values
+3. parent uses `ChildValidationContract` with `ignore` during ordinary editing
+4. dialog confirm validates the child locally before writeback
+5. successful writeback updates parent-owned leaf paths
+6. parent revalidates only impacted parent-owned closure after the commit
+
+If the host explicitly uses `recurse-submit`, parent submit snapshots the active child contract set first, then waits for those child owners to finish their submit-time validation.
+
+### Filter Panel As Non-Form Validation Scope
+
+Example mental model:
+
+1. the scope contains `startDate` and `endDate`
+2. rule requires `startDate <= endDate`
+3. scope triggers search on change rather than on explicit submit
+
+Interpretation:
+
+1. this is a `ValidationScopeRuntime`, not a `FormRuntime`
+2. there is no submit gate or touched policy by default
+3. the owner still computes `valid`, `validating`, and `ready`
+4. the host action may choose to block search when `ready === false`, or may choose to run search only when the scope is valid
+
+### Table Inline Edit With Row Aggregate And Cell Rule
+
+Example mental model:
+
+1. table row path is `contacts.3`
+2. edited cell path is `contacts.3.email`
+3. cell rule checks email pattern
+4. array aggregate rule `uniqueBy(email)` attaches at `contacts`
+
+When `contacts.3.email` changes:
+
+1. closure includes `contacts.3.email`
+2. closure expands to aggregate root `contacts`
+3. target expansion may therefore update both the cell error bucket and the array/root aggregate bucket
+4. row reorder logic, if any, must preserve state by row identity when available
+
+This shows why aggregate closure is broader than one edited cell.
+
+### Detail Dialog Commit Writeback To Parent Owner
+
+Example mental model:
+
+1. parent owner contains `profile.summary` and `profile.contact`
+2. dialog child owner edits draft `profile.contact`
+3. confirm writes back `profile.contact.email` and `profile.contact.phone`
+
+Recommended impacted-path rule:
+
+1. changed leaf paths are the committed leaf writes
+2. closure expands to aggregate ancestors such as `profile.contact`
+3. closure also expands to any owner-local dependents in the parent, such as `profile.summary`
+4. parent revalidation remains owner-local; the child owner's internal buckets are not merged into the parent
+
+### Path Reuse With Owner-Boundary Change
+
+Example mental model:
+
+1. old schema keeps `profile.contact` inline under the parent owner
+2. new schema makes `profile.contact` a child draft editor owner
+
+Although the path string is unchanged:
+
+1. owner identity changed
+2. contract shape changed
+3. field state must not migrate by path alone
+
+This is the canonical hot-reload example for why path reuse is not semantic continuity.
+
 ## 6.4 Performance And Lifecycle Notes
 
 ### Closure Expansion Cost
@@ -533,8 +843,21 @@ If schema is replaced at runtime, owner lifecycle must define how to:
 1. replace `compiledModel`
 2. clear stale caches and active runs
 3. rebuild registrations against the new model
+4. rebuild child contracts and overlay participation against the new model generation
 
-This is not yet fully specified in the architecture docs and should be treated as an explicit follow-up design area.
+The current technical proposal is captured in:
+
+1. `docs/analysis/2026-04-11-dynamic-schema-hot-reload-and-validation-owner-lifecycle.md`
+
+### Recommended Cross-Owner Projection Pattern
+
+When another owner's data must influence validation here, prefer explicit publication into the current owner through an existing runtime path such as:
+
+1. `data-source` + `resultMapping`
+2. host action writeback into current owner data
+3. draft confirm or parent writeback that updates ordinary owner-local values
+
+Do not model this as an automatic cross-owner reactive edge.
 
 ### Conditional Owner Boundaries
 
@@ -564,6 +887,11 @@ Rules:
 2. `validateSubtree()` affects only the current owner
 3. `validateAll()` traverses only paths owned by the current owner
 4. child owners are only included when an explicit parent-child contract requires it
+
+Additional clarification:
+
+1. `validateSubtree()` never recurses into child owners by itself, even with `reason: 'submit'` or `reason: 'commit'`
+2. recursive parent-child coordination belongs to parent `submit()` or explicit host orchestration, not to implicit subtree traversal
 
 This is especially important for nested non-form scopes and draft editors.
 
@@ -667,6 +995,8 @@ If the dialog contains a child form or child editable scope that edits local tem
 2. the contained form is typically a child `FormRuntime`
 3. validation remains local until submit or confirm inside the dialog
 4. successful confirmation writes back to the parent owner and triggers parent revalidation of impacted paths
+
+If the dialog owner is itself hosting nested child draft owners, the same rule applies recursively one owner boundary at a time.
 
 ### Practical Rule
 

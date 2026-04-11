@@ -125,6 +125,11 @@ This document defines the following minimum contract types.
 ```ts
 type ValidateOnPolicy = 'change' | 'blur' | 'submit' | 'manual';
 type ShowErrorOnPolicy = 'change' | 'blur' | 'submit' | 'touched' | 'manual';
+type ValidationOwnerLifecycleState =
+  | 'bootstrapping'
+  | 'active'
+  | 'refreshing'
+  | 'disposed';
 
 type ValidationRuleKind = string;
 
@@ -143,6 +148,7 @@ interface ValidationError {
     | 'array'
     | 'row'
     | 'scope-root'
+    | 'external'
     | 'runtime-overlay'
     | 'runtime-opaque';
 }
@@ -183,6 +189,8 @@ interface ValidationScopeRuntime {
   readonly scopeId: string;
   readonly rootPath: string;
   readonly compiledModel: CompiledValidationModel | null;
+  readonly lifecycleState: ValidationOwnerLifecycleState;
+  readonly modelGeneration: number;
   readonly showErrorOn: Exclude<ShowErrorOnPolicy, 'touched'>;
 
   validateAt(path: string, reason?: ValidationReason): Promise<ValidationResult>;
@@ -190,14 +198,15 @@ interface ValidationScopeRuntime {
   validateAll(reason?: ValidationReason): Promise<ScopeValidationResult>;
 
   applyChangesAndRevalidate(input: ApplyScopeChangesInput): Promise<ScopeValidationResult>;
+  applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationResult;
 
   getFieldState(path: string): FieldValidationStateSnapshot;
   getScopeState(): ScopeValidationStateSnapshot;
   getScopeRootErrors(): ValidationError[];
   isPathOwned(path: string): boolean;
 
-  registerField(state: FieldRegistrationState): () => void;
-  updateFieldRegistration(path: string, patch: Partial<FieldRegistrationState>): void;
+  registerField(state: FieldRegistrationState): FieldRegistrationHandle;
+  updateFieldRegistration(registrationId: string, patch: Partial<FieldRegistrationState>): void;
 }
 
 interface ApplyScopeChangesInput {
@@ -206,10 +215,17 @@ interface ApplyScopeChangesInput {
   reason: ValidationReason;
 }
 
+interface ApplyExternalErrorsInput {
+  sourceId: string;
+  errors: ValidationError[];
+  replace?: boolean;
+}
+
 interface ScopeValidationStateSnapshot {
   valid: boolean;
   hasErrors: boolean;
   validating: boolean;
+  lifecycleState: ValidationOwnerLifecycleState;
   /**
    * Whether this scope is in a state where it can be submitted or confirmed.
    * FormRuntime: form-specific readiness derived from validity, validating state,
@@ -220,7 +236,42 @@ interface ScopeValidationStateSnapshot {
    */
   ready: boolean;
 }
+
+interface FieldRegistrationHandle {
+  accepted: boolean;
+  registrationId: string;
+  unregister(): void;
+}
 ```
+
+Owner lifecycle is normative.
+
+Rules:
+
+1. each owner assumes its `compiledModel` is stable for the lifetime of one active model generation
+2. dynamic schema replacement is an owner lifecycle event, not a silent in-place mutation
+3. `compiledModel === null` is only valid while the owner is `bootstrapping`, `refreshing`, or `disposed`
+4. `compiledModel !== null` is required before ordinary validation work may execute
+5. `disposed` owners must reject new validation and registration requests
+6. owners in `bootstrapping` or `refreshing` may delay validation requests until the owner becomes `active`, but they must not execute validation against a `null` model
+
+`compiledModel: null` therefore does not mean “registration-only validation mode”.
+
+It means the owner currently has no executable compiled validation model attached.
+
+`getScopeState()` and any debugger-facing snapshot must surface the current `lifecycleState` so callers can distinguish `active` from transitional states.
+
+Validation entry arbitration is also owner-local.
+
+Rules:
+
+1. one owner may have multiple validation entry requests in flight, but it must publish only the latest effective result for each owned path
+2. `submit` and `commit` entry points supersede older in-flight `change`, `blur`, or `manual` validation work in the same owner
+3. for `validateAll('submit' | 'commit')`, the supersession set is the full current owner traversal set plus any already-running lower-priority targets in that owner
+4. for `validateSubtree(path, 'submit' | 'commit')`, the supersession set is the validated subtree plus any already-running lower-priority targets whose latest published result would write into that subtree
+5. superseding a lower-priority entry cancels any pending debounce for the supersession set and prevents stale async completions from publishing
+6. superseding never requires waiting for stale lower-priority runs to finish before the newer `submit` or `commit` run starts
+7. `submit` and `commit` validate against the latest owner value snapshot available when that entry begins execution
 
 This runtime exists for any scope that has validation semantics.
 
@@ -289,6 +340,26 @@ Non-form scopes may use `change`, `blur`, `submit`, or `manual`, but not `touche
 The non-form default is intentionally not `change`, because cross-field validation such as date-range constraints is usually too noisy during mid-input editing.
 
 When path `A` changes and closure expansion causes path `B` to revalidate, visibility of `B`'s error still follows `B`'s own resolved display policy rather than the trigger source path.
+
+For `FormRuntime`, `showErrorOn` and touched state do not weaken submit-time validity.
+
+Rules:
+
+1. a field may remain visually hidden by `showErrorOn: 'touched'` after a `system` run if it has not been touched yet
+2. the same field still contributes to owner `valid`, `ready`, and `canSubmit` immediately once the owner has materialized effective rules and found an error
+3. `system` never marks fields as touched or visited by itself
+4. `submit()` may mark fields touched according to form policy, but that is a submit orchestration rule, not a side effect of ordinary `system` validation
+
+Debounce policy is not a separate owner-level authoring feature.
+
+Rules:
+
+1. debounce belongs to async rule configuration, not to `showErrorOn` or to the owner boundary itself
+2. the owner runtime schedules and cancels debounced async runs owner-locally
+3. if an async rule does not declare debounce, it executes without debounce
+4. `submit` and `commit` bypass change-oriented debounce and run required async validation immediately
+5. a debounced async rule that is scheduled but not yet started still counts as owner-local pending validation work for `validating` and readiness purposes
+6. `blur` and `manual` validation use the debounce declared on the async rule unless a higher-priority owner policy explicitly supersedes that run
 
 ## What Counts As A Validation Scope
 
@@ -390,6 +461,10 @@ Additional rules:
 2. child owners register their parent contract only when they become active
 3. owner runtimes must reject runtime validation descriptors whose `ownerId` does not match the receiving owner or whose target paths fall outside the owner's `rootPath` subtree
 
+Owner-boundary changes across schema recompilation are not runtime reclassification.
+
+They are model-replacement lifecycle events that either refresh the current owner generation or dispose and recreate the owner tree.
+
 ## Layered State Model
 
 Validation uses three separate kinds of state.
@@ -456,6 +531,7 @@ This is runtime participation state.
 
 ```ts
 interface FieldRegistrationState {
+  registrationId: string;
   path: string;
   mounted: boolean;
   visible: boolean;
@@ -469,6 +545,20 @@ interface FieldRegistrationState {
   visited: boolean;
 }
 ```
+
+Registration updates are generation-aware.
+
+Rules:
+
+1. `registrationId` is stable for one mounted field instance
+2. the owner runtime binds each accepted registration to the current `modelGeneration`
+3. caller-supplied registration state does not carry generation knowledge; the runtime is the authority on which generation accepted the registration
+4. late `updateFieldRegistration(...)` or unregister callbacks from an older generation must not mutate registration state for a newer generation that reused the same path
+5. registration requests received while the owner is `disposed` must be rejected
+6. registration requests received while the owner is `bootstrapping` or `refreshing` may be buffered or retried by the runtime, but they must not be bound to a `null` compiled model generation
+7. `registerField(...)` returns a `FieldRegistrationHandle` so callers can distinguish accepted registration from rejected registration
+8. `updateFieldRegistration(...)` is instance-addressed by `registrationId`, not path-addressed
+9. multiple mounted instances targeting the same logical path are allowed only if the owner runtime can keep their participation bookkeeping distinct by `registrationId`; otherwise duplicate-path registration must be rejected explicitly
 
 ### Field Validation State
 
@@ -536,8 +626,9 @@ Each `ValidationError` must include a `sourceKind` that distinguishes at least:
 3. `array`
 4. `row`
 5. `scope-root`
-6. `runtime-overlay`
-7. `runtime-opaque`
+6. `external`
+7. `runtime-overlay`
+8. `runtime-opaque`
 
 ### Aggregate And Root Error Attach Points
 
@@ -561,6 +652,18 @@ Rendering rules:
 It does not duplicate ordinary object, array, or row aggregate errors even when they attach to the same `rootPath`.
 
 It is equivalent to reading scope-root messages from the root field state without requiring external code to depend on the owner's `rootPath` string.
+
+External error injection is owner-local as well.
+
+Rules:
+
+1. `applyExternalErrors(...)` is the normative API for server-returned or host-returned field errors that should enter owner field state without being modeled as compiled rules
+2. injected errors must still target paths owned by the current owner
+3. injected errors do not create dependency edges and do not participate in rule materialization
+4. `replace: true` replaces prior injected errors from the same `sourceId`; otherwise the owner merges them with existing errors from that source
+5. `applyExternalErrors(...)` publishes field state and owner summary state atomically and returns the resulting owner snapshot for the applied error set
+6. owner-local value writes clear external errors from the same `sourceId` for the changed leaf path and its owned ancestor chain up to the current owner root, unless a caller deliberately reapplies them
+7. subtree-wide or scope-root external errors therefore clear when a descendant write invalidates the same owner-local external error context
 
 ## Compile-Time Collection
 
@@ -677,6 +780,15 @@ Rules may use expressions for activation, thresholds, cross-field comparisons, a
 
 Schema is not reparsed during validation.
 
+Rule execution does not short-circuit on the first failing rule.
+
+Rules:
+
+1. all active effective rules for a target path execute in materialized order
+2. the owner collects all produced errors for that path in one run
+3. a failing `required` rule does not by itself suppress later `pattern`, `minLength`, aggregate, or async rules
+4. future per-rule short-circuit semantics, if ever introduced, must be explicit rule metadata rather than an implicit runtime optimization
+
 ## Materialization Service
 
 Each validation scope runtime exposes one internal rule materialization service.
@@ -704,6 +816,15 @@ Dependency edges are owner-local.
 Compiled expression dependencies may only create reactive edges within the current owner.
 
 If a rule needs data originating from another owner, that data must be projected into the current owner as an explicit input value rather than modeled as a cross-owner reactive dependency edge.
+
+Dependency closure must be cycle-safe.
+
+Rules:
+
+1. owner-local dependency graphs may contain cycles such as mutual cross-field comparisons
+2. closure expansion must therefore track visited paths and converge to a fixed owner-local target set rather than recurse indefinitely
+3. cycles are not by themselves a compile-time error
+4. the compiler may emit diagnostics for suspicious or needlessly large strongly connected components, but benign owner-local cycles remain legal
 
 ## Participation Rules
 
@@ -794,6 +915,14 @@ Validates an object, array, or local section.
 
 When called with `reason: 'submit'` or `reason: 'commit'`, it waits for all required async rules within that subtree before resolving.
 
+`validateSubtree()` remains owner-local.
+
+Rules:
+
+1. it validates only paths owned by the current owner
+2. it does not recurse into child owners, even when `reason` is `submit` or `commit`
+3. parent-to-child recursive submit coordination belongs to explicit submit orchestration through `ChildValidationContract`, not to implicit `validateSubtree()` traversal
+
 ### `validateAll(reason)`
 
 Validates all active participating paths owned by the current scope.
@@ -801,6 +930,15 @@ Validates all active participating paths owned by the current scope.
 ### `applyChangesAndRevalidate(...)`
 
 Coordinates value writes and revalidation atomically for structural edits, branch switches, draft commits, and other system-side participation changes.
+
+Its atomicity is owner-local.
+
+Rules:
+
+1. all `writes` and `changedPaths` must belong to the current owner
+2. passing paths outside the current owner is an error and must be rejected, not silently filtered
+3. its atomic publish guarantee covers only the current owner's value writes, field validation state, and scope summary state
+4. cross-owner coordination must be modeled as explicit parent/child orchestration rather than one `applyChangesAndRevalidate(...)` call spanning multiple owners
 
 ## Aggregate Rules
 
@@ -833,6 +971,16 @@ interface RuntimeRuleOverlayDescriptor {
 ```
 
 Declarative overlays merge into the same materialization pipeline as compiled rule templates.
+
+Overlay merge order is normative.
+
+Rules:
+
+1. compiled rule templates materialize first
+2. active overlays merge after compiled templates for the same path
+3. deduplication key is `CompiledRuleTemplate.id`
+4. if an overlay reuses an existing rule id, the overlay entry replaces the earlier entry for that id
+5. rules with different ids but the same `kind` all participate unless a higher-level rule kind explicitly defines mutual exclusion
 
 Overlay participation still follows the active instance graph.
 
@@ -867,6 +1015,8 @@ Async validation is part of the same rule pipeline.
 
 Each async run has owner identity, path, rule identity, reason, and run identity.
 
+Async ownership is generation-aware.
+
 Rules:
 
 1. new runs supersede old runs for the same path and rule
@@ -874,6 +1024,7 @@ Rules:
 3. deactivated paths invalidate their runs
 4. submit-owned runs do not wait behind change debounce
 5. `validateAll('submit')` and `validateAll('commit')` wait for required async rules
+6. model-generation changes invalidate all older-generation runs, even when the same path string still exists in the new model
 
 ## Parent And Child Scope Interaction
 
@@ -912,6 +1063,12 @@ Lifecycle rules:
 3. unopened or disposed child owners have no active contract and do not affect parent gating
 4. parent summary and submit gating consider only active contracts
 
+An active child contract requires:
+
+1. child `lifecycleState === 'active'`
+2. child `compiledModel !== null`
+3. completion of that child owner's current model-refresh reconciliation
+
 Mode resolution happens when the child owner activates and registers its contract.
 
 Resolution priority is:
@@ -926,6 +1083,24 @@ Parent `canSubmit` semantics:
 2. child scopes in `ignore` mode do not affect parent `canSubmit`
 3. child scopes in `summary-gate` mode affect parent `canSubmit` through `ready` and `validating` (using `ready` rather than `valid`, to prevent misreading a FormRuntime child as ready when allTouched is false)
 4. child scopes in `recurse-submit` mode are validated during parent submit and may block submit
+
+Parent submit orchestration uses a deterministic child snapshot.
+
+Rules:
+
+1. parent `submit()` first waits for the parent owner's own `bootstrapping` or `refreshing` work to settle before snapshotting child contracts
+2. the set of child contracts consulted by one submit attempt is the set of active contracts at that snapshot point
+3. a child owner that has not reached `active` state by that snapshot point does not participate in that submit attempt because it does not yet have an active contract
+4. a child owner already included in the submit snapshot but still refreshing at invocation time blocks completion until it becomes `active` or is disposed
+
+Commit propagation is also owner-local.
+
+Rules:
+
+1. a child owner commit writes only into its immediate parent owner
+2. a grandchild owner does not write directly into a grandparent owner
+3. multi-level draft propagation therefore proceeds one owner boundary at a time, with each successful writeback followed by parent-local impacted-path revalidation
+4. there is no implicit multi-hop commit that skips an intermediate owner boundary
 
 Default contracts:
 
