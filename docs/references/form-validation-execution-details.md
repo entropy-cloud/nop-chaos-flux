@@ -100,7 +100,7 @@ Flux needs both at once.
 
 Interpretation:
 
-1. `ValidationScopeRuntime`: `ready` is the owner-level readiness signal for non-form scopes
+1. `ValidationScopeRuntime`: `ready = valid && !validating` for non-form scopes
 2. `FormRuntime`: `ready` includes form-specific touch policy in addition to validation state
 3. parent scopes should use `ready` for child gating, not `valid` alone
 4. parent scopes should still consider `validating` separately when deciding whether to block actions
@@ -332,6 +332,10 @@ Typical depth by reason:
 4. `commit`: may expand to all active targets in the committed subtree or owner
 5. `system`: expands to the structurally affected active targets without bypassing visibility policy
 
+Additional rule for structural writes:
+
+1. when `applyChangesAndRevalidate(..., reason: 'system')` changes an aggregate root such as an array root, expansion follows subtree semantics for that changed aggregate root rather than staying leaf-local
+
 Large closure expansion and large target expansion are independent costs.
 
 Even before async work starts, sync target expansion and materialization can dominate runtime in large forms or large inline tables.
@@ -435,11 +439,11 @@ Interpretation:
 
 Interpretation:
 
-1. this is closer to AMIS-style low-code authoring than manual event choreography
+1. this is closer to Flux low-code authoring than manual event choreography
 2. fetched values are projected into the current form owner
 3. dependent validation reacts automatically after projection
 
-### Option Selection With Auto Fill
+### Option Selection With Data Source Plus Projection
 
 ```json
 {
@@ -448,11 +452,25 @@ Interpretation:
     {
       "type": "radios",
       "name": "company",
-      "source": "/api/company/options",
-      "autoFill": {
-        "companyName": "${label}",
-        "companyId": "${value}"
+      "options": {
+        "type": "source",
+        "action": "ajax",
+        "api": {
+          "url": "/api/company/options"
+        }
       }
+    },
+    {
+      "type": "data-source",
+      "name": "companyDetails",
+      "api": {
+        "url": "/api/company/${company}"
+      },
+      "resultMapping": {
+        "companyName": "${payload.name}",
+        "companyId": "${payload.id}"
+      },
+      "mergeToScope": true
     }
   ]
 }
@@ -460,8 +478,9 @@ Interpretation:
 
 Interpretation:
 
-1. for common option-selection linkage, a field-local `autoFill`-style pattern is often more author-friendly than explicit event actions
-2. the autofilled fields become current owner values and validate normally
+1. the selected field changes current scope data
+2. the dependent data-source refreshes from that owner-local value
+3. projected fields become current owner values and validate normally
 
 ### Wizard As One Form Owner With Step-Local Validation
 
@@ -491,6 +510,7 @@ Interpretation:
 1. the default mental model is still one form owner
 2. step progression is UI/state orchestration on top of one owner
 3. split owners only when the value lifecycle genuinely splits, such as a real draft child editor
+4. this is a schematic ownership example, not a required field-storage pattern for wizard UI state
 
 ## 6.4 Performance And Lifecycle Notes
 
@@ -625,6 +645,12 @@ If the dialog contains an actual Flux `form` node:
 2. the dialog remains only a surface
 3. whether that child form edits live values or local draft values affects data lifecycle, but not the fact that the form itself owns validation
 
+Practical authoring rule:
+
+1. if dialog content must edit parent live values directly, do not wrap that subtree in a nested `form`
+2. use bound editable content under the parent owner instead
+3. use a nested `form` only when a real child owner boundary is desired
+
 ### Dialog Containing Non-Form Editable Content
 
 If the dialog contains editable content but not a real Flux `form` node:
@@ -695,6 +721,17 @@ Important distinction:
 
 1. array aggregate validation is owner-level
 2. row identity handling is a repeated-instance concern, not a reason by itself to create a new owner
+
+### Inline Row Edit With Aggregate Rule
+
+Example mental model:
+
+1. `contacts[i].email` is edited inline under the parent owner
+2. array-level `uniqueBy(email)` attaches to `contacts`
+3. changing one row email expands closure to the aggregate root `contacts`
+4. revalidating `contacts` may update aggregate-driven error state for more than one row-affecting path, not only the edited row
+
+This is expected behavior, because aggregate closure is parent-level rather than leaf-local.
 
 ### `variant-field`
 

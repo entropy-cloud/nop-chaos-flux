@@ -214,8 +214,7 @@ interface ScopeValidationStateSnapshot {
    * Whether this scope is in a state where it can be submitted or confirmed.
    * FormRuntime: form-specific readiness derived from validity, validating state,
    * and touch policy.
-   * Non-form ValidationScopeRuntime: owner-local readiness derived from non-form
-   * validation policy.
+   * Non-form ValidationScopeRuntime: ready = valid && !validating.
    * Parent scopes read this field instead of valid when gating on a child scope,
    * to prevent misreading a FormRuntime child as ready when allTouched is false.
    */
@@ -461,6 +460,10 @@ interface FieldRegistrationState {
   mounted: boolean;
   visible: boolean;
   disabled: boolean;
+  /**
+   * These UX fields are actively maintained by FormRuntime.
+   * Base ValidationScopeRuntime may leave them at their default values.
+   */
   touched: boolean;
   dirty: boolean;
   visited: boolean;
@@ -652,7 +655,7 @@ interface CompiledRuleTemplate {
   kind: ValidationRuleKind;
   when?: CompiledRuntimeValue<boolean>;
   args: Record<string, CompiledRuntimeValue<unknown>>;
-  message?: CompiledRuntimeValue<string> | string;
+  message?: CompiledRuntimeValue<string>;
   dependencyPaths: string[];
 }
 
@@ -789,6 +792,8 @@ Leaf or local-root trigger. The owner validates the impacted closure around that
 
 Validates an object, array, or local section.
 
+When called with `reason: 'submit'` or `reason: 'commit'`, it waits for all required async rules within that subtree before resolving.
+
 ### `validateAll(reason)`
 
 Validates all active participating paths owned by the current scope.
@@ -907,6 +912,14 @@ Lifecycle rules:
 3. unopened or disposed child owners have no active contract and do not affect parent gating
 4. parent summary and submit gating consider only active contracts
 
+Mode resolution happens when the child owner activates and registers its contract.
+
+Resolution priority is:
+
+1. an explicit child/host semantic contract, if that owner family defines one
+2. otherwise the runtime default for that child owner family
+3. otherwise `ignore`
+
 Parent `canSubmit` semantics:
 
 1. parent-owned errors always affect parent `canSubmit`
@@ -919,6 +932,7 @@ Default contracts:
 1. child draft editors default to `ignore` until commit time
 2. standalone filter/search scopes use `summary-gate` only when an action explicitly depends on them
 3. nested submit-capable forms default to `ignore` unless explicitly configured otherwise
+4. a literal nested `form` remains a child owner; if a dialog must edit parent live values directly, use bound editable content rather than introducing a nested `form`
 
 ## Scenario Mapping
 
