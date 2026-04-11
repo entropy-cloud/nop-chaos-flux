@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   getIn,
   getCompiledValidationField,
@@ -286,5 +286,21 @@ export function useFieldPresentation(
 
 export function useCompositeChildFieldState(path: string) {
   return useChildFieldState(path);
+}
+
+export function useHiddenFieldPolicy(name: string, hidden: boolean) {
+  const currentForm = useCurrentForm();
+
+  useEffect(() => {
+    if (!currentForm || !name) {
+      return;
+    }
+
+    currentForm.notifyFieldHidden(name, hidden);
+
+    return () => {
+      currentForm.notifyFieldHidden(name, false);
+    };
+  }, [currentForm, name, hidden]);
 }
 

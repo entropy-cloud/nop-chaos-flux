@@ -1,4 +1,4 @@
-import { useContext, useMemo, memo } from 'react';
+import { useContext, useEffect, useMemo, memo } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
@@ -269,6 +269,21 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     helpers,
     nodeInstance
   });
+
+  const fieldName = typeof props.node.schema.name === 'string' ? props.node.schema.name : undefined;
+  const isFieldHidden = Boolean(!finalResolvedMeta.visible || finalResolvedMeta.hidden);
+
+  useEffect(() => {
+    if (!currentForm || !fieldName) {
+      return;
+    }
+
+    currentForm.notifyFieldHidden(fieldName, isFieldHidden);
+
+    return () => {
+      currentForm.notifyFieldHidden(fieldName, false);
+    };
+  }, [currentForm, fieldName, isFieldHidden]);
 
   if (!finalResolvedMeta.visible || finalResolvedMeta.hidden) {
     return null;
