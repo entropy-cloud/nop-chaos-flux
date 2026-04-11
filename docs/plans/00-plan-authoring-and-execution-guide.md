@@ -36,6 +36,7 @@
 7. 旧 baseline 失效时，显式写 `Outdated Note`、`Supersession Note` 或 `replaced/superseded`，不要让多套 baseline 并存。
 8. `completed` 必须来自单独的 closure audit，不要在完成最后一个编码 slice 的同时顺手宣布 plan 关闭。
 9. 任何 execution slice 只要还有一项未完成、blocked、或未移出 scope，plan 就不能标 `completed`。
+10. 如果目标本身是一个用户可感知的完整 feature，优先写成能收口该 feature 的完整实现计划；不要默认先拆成多个彼此依赖的零散计划，除非 live repo 证据已经表明该 feature 无法由一个 owner plan 清晰收口。
 
 ## Required Status Markers
 
@@ -206,6 +207,7 @@ Follow-up:
 2. 如果 `Out Of Scope` 写不清，说明 plan 还太宽。
 3. 如果 `Goals` / `Non-Goals` 写不清，说明边界还不够硬。
 4. 如果 slice 写不出 `Exit Criteria`，说明它还不够可执行。
+5. 如果你正在规划的是一个完整 feature，先问自己这份 plan 是否真的能把 feature 收口；如果答案是否定的，再考虑拆成 successor plans，而不是一开始就把 feature 切碎。
 
 ### When Executing
 
@@ -254,3 +256,8 @@ Follow-up:
 - 当前 baseline 是什么。
 - phase 到哪一步了。
 - 剩余工作归谁。
+
+补充判断：
+
+- 如果读者看完 plan 仍然不知道“这个 feature 什么时候算真正可用”，说明计划可能被切得过碎。
+- 如果计划中的多个 slice 只有全部完成后 feature 才第一次成立，那么默认应把它们放在同一个 owner plan 下，直到 live repo 证据证明需要拆分。
