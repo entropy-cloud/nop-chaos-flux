@@ -427,6 +427,21 @@ Region handle shape:
 interface RenderRegionHandle {
   key: string;
   templateNode: TemplateNode | TemplateNode[] | null;
+  /** Declared slot parameter names for parameterized regions (e.g. ['item', 'index']). */
+  params?: readonly string[];
+  /**
+   * Render the region, optionally injecting slot bindings and instance path.
+   * For parameterized regions (params declared), bindings are published under
+   * the reserved $slot frame rather than flattened into top-level scope.
+   */
+  render(options?: {
+    bindings?: Record<string, unknown>;
+    instancePath?: readonly InstanceFrame[];
+    pathSuffix?: string;
+  }): React.ReactNode;
+  /**
+   * @deprecated Use render() instead. Kept for back-compat on non-parameterized regions.
+   */
   instantiate(options?: {
     scope?: ScopeRef;
     bindings?: Record<string, unknown>;
@@ -466,7 +481,7 @@ function PanelRenderer(props: RendererComponentProps<PanelSchema>) {
 }
 ```
 
-### Pattern 2: render with local data override
+### Pattern 2: render with local data override (parameterized region)
 
 ```tsx
 function ListRenderer(props: RendererComponentProps<ListSchema>) {
@@ -476,7 +491,7 @@ function ListRenderer(props: RendererComponentProps<ListSchema>) {
     <div>
       {items.map((item, index) => (
         <div key={String((item as { id?: string }).id ?? index)}>
-          {props.regions.item?.instantiate({
+          {props.regions.item?.render({
             bindings: { item, index },
             instancePath: [{ repeatedTemplateId: 'list.item', instanceKey: String((item as { id?: string }).id ?? index) }]
           })}
@@ -487,7 +502,9 @@ function ListRenderer(props: RendererComponentProps<ListSchema>) {
 }
 ```
 
-In the target architecture, the repeated renderer should not invent identity through `index` alone. The repeated scope bindings and `instancePath` come from the repeated-template instantiation model in `docs/architecture/template-instantiation-and-node-identity.md`.
+When `params` is declared on the region (e.g. `params: ['item', 'index']`), the `bindings` values are published under the reserved `$slot` frame (`$slot.item`, `$slot.index`) rather than flattened into the parent scope. Schema authors access them as `${$slot.item.name}`.
+
+For non-parameterized regions, `render()` behaves identically to the legacy `instantiate()`. `instantiate()` is retained for back-compat but deprecated.
 
 ### Pattern 3: render an ad hoc fragment through helpers
 

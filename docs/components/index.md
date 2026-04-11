@@ -319,9 +319,6 @@ UI primitive 对齐补充规则：
 ### 已文档化但尚未实现的高优先级通用 renderer
 
 - `tabs`
-- `fragment`
-- `loop`
-- `recurse`
 - `dialog`
 - `drawer`
 - `separator`

@@ -2,523 +2,531 @@
 
 ## Purpose
 
-This document records the active form-validation architecture for `flux`.
+This document defines the active validation architecture for `flux`.
 
 Use it when changing:
 
 - schema-driven validation rules
+- nested form/object/array/table validation behavior
+- draft/detail/dialog validation boundaries
+- field and subtree validation APIs
 - renderer participation in validation
-- form runtime validation behavior
-- validation timing and error visibility behavior
-- runtime registration for complex controls
 
-For standalone JSON schema file validation before compilation, use `docs/architecture/schema-file-validator.md`.
+For validation code placement, use `docs/architecture/flux-runtime-module-boundaries.md`.
 
-For validation file placement and module ownership, use `docs/architecture/flux-runtime-module-boundaries.md`.
+For object-like editors and draft owners, also read:
+
+- `docs/architecture/object-field.md`
+- `docs/architecture/array-field.md`
+- `docs/architecture/value-adaptation-and-detail-field.md`
+- `docs/architecture/surface-owner.md`
 
 ## Current Code Anchors
 
-When this document needs to be checked against code, start with:
+When checking this document against code, start with:
 
-- `packages/flux-core/src/index.ts` for validation contracts
-- `packages/flux-runtime/src/validation/rules.ts` for rule extraction and trigger normalization
-- `packages/flux-runtime/src/form-runtime-validation.ts` for field and subtree validation flow
-- `packages/flux-runtime/src/form-runtime.ts` for form-level validation APIs and submit behavior
-- `packages/flux-renderers-form/src/field-utils.tsx` for shared renderer-side validation behavior wiring
+- `packages/flux-core/src/types/validation.ts` — `HiddenFieldPolicy`, `CompiledFormValidationField`, `CompiledFormValidationModel`
+- `packages/flux-core/src/validation-model.ts` — `resolveHiddenFieldPolicy()`, `getCompiledValidationField()`, `buildCompiledFormValidationModel()`
+- `packages/flux-runtime/src/schema-compiler/validation-collection.ts` — compiles `hiddenFieldPolicy` from schema into `CompiledValidationNode`
+- `packages/flux-runtime/src/form-runtime.ts` — `notifyFieldHidden()`, `hiddenFields: Set<string>` initialization, `clearValueWhenHidden` trigger
+- `packages/flux-runtime/src/form-runtime-validation.ts` — `validatePath()` hidden-field skip logic
+- `packages/flux-runtime/src/form-runtime-types.ts` — `ManagedFormRuntimeSharedState.hiddenFields`
+- `packages/flux-react/src/node-renderer.tsx` — `useEffect` calling `notifyFieldHidden` on visibility change
+- `packages/flux-renderers-form/src/field-utils.tsx` — `useHiddenFieldPolicy()` shared hook
+- `packages/flux-renderers-form/src/schemas.ts` — `InputSchema.hiddenFieldPolicy`, `FormSchema.hiddenFieldPolicy`
 
-## Main Rule
+## Core Claim
 
-Validation is primarily a compiled schema concern, not a renderer-instance side effect.
+Validation is owned by the nearest **validation owner boundary**, not by the nearest visual nesting layer.
+
+This is the key rule for all nested cases.
 
 That means:
 
-- the compiler understands form structure, field paths, and nesting
-- renderer definitions describe how a control participates in validation
-- runtime consumes compiled validation metadata
-- React components render field state and call runtime APIs; they do not invent the validation graph at mount time
+- `table` / `object-field` / `array-field` nesting does **not** automatically create a new validation owner
+- `dialog` / `drawer` / `popover` surface nesting does **not** automatically create a new validation owner
+- a subtree participates in the current validation run only if it belongs to the current validation owner
+- when a subtree edits a local draft and commits later, it should validate inside its own local owner instead of leaking draft-only errors into the parent form
 
-## Why Not Hard-Wire RHF Or Yup
+The question is not “is this UI nested?”
 
-`React Hook Form` and `Yup` are useful references, but they do not define the core architecture here.
+The real question is “which runtime owns this value and its validation state right now?”
 
-Reasons:
+## Main Rule
 
-- `flux-runtime` stays React-independent
-- validation rules come from low-code schema, not JSX registration
-- future adapters may prefer other validation engines or custom rules
-- compilation and runtime validation should work even outside a React form-library lifecycle
+Collect and execute validation by **owner**, not by renderer mount tree alone and not by a dynamic Yup-style object built at interaction time.
 
-## Architecture Layers
+Recommended baseline:
 
-Validation is split into four layers:
+1. compile a validation graph for each validation owner
+2. store validation state in that owner runtime
+3. trigger validation through owner APIs such as `validateField(path)` and `validateSubtree(path)`
+4. let fields request validation, but do not let fields become the top-level source of truth for validation state
 
-1. schema validation declarations
-2. compile-time field and rule extraction
-3. runtime validation execution
-4. React rendering of validation state
+This keeps:
 
-Current implementation split inside `flux-runtime`:
+- cross-field rules possible
+- object/array aggregate rules possible
+- hidden-field policy centralized
+- async cancellation centralized
+- dialog/detail draft validation isolated when needed
 
-- rule extraction and trigger normalization live in `packages/flux-runtime/src/validation/rules.ts`
-- default message building lives in `packages/flux-runtime/src/validation/message.ts`
-- reusable error helpers live in `packages/flux-runtime/src/validation/errors.ts`
-- built-in sync validators live in `packages/flux-runtime/src/validation/validators.ts`
-- validator lookup and registration live in `packages/flux-runtime/src/validation/registry.ts`
-- runtime sequencing lives in `packages/flux-runtime/src/validation-runtime.ts`, `packages/flux-runtime/src/form-runtime-validation.ts`, and `packages/flux-runtime/src/form-runtime.ts`
+## Three Different Boundaries
 
-## Current Compile-Time Responsibility
+Validation design gets confused when these boundaries are mixed together.
 
-The compiler walks the form subtree and collects:
+They are not the same thing.
 
-- field paths such as `username`, `profile.email`, and `addresses.0.city`
-- lexical nesting and node relationships
-- field control type
-- explicit schema rules
-- validation trigger behavior
-- error-visibility behavior
-- dependency paths for relational rules
+### 1. Visual Boundary
 
-The compiler should not hard-code the private details of every renderer implementation.
+Examples:
 
-## Renderer Validation Participation
+- container nesting
+- table cell rendering
+- button opening a dialog
+- field chrome wrapping another control
 
-Each renderer definition may optionally describe how it participates in validation.
+Visual boundaries do not decide validation ownership.
 
-Current exported shape is:
+### 2. Surface Boundary
+
+Examples:
+
+- dialog
+- drawer
+- popover
+- inline-below detail panel
+
+A surface owns open/close state, but it does not automatically own validation.
+
+If a surface body contains a `form`, that inner `form` becomes a new validation owner.
+If a surface only hosts a draft editor, that draft editor may become a local validation owner.
+If a surface is read-only, there may be no validation owner at all.
+
+### 3. Validation Owner Boundary
+
+A validation owner is the runtime that owns:
+
+- the validation graph
+- the error map
+- touched / dirty / visited / validating state
+- validation trigger APIs
+- submit-time final gate
+
+Current concrete owner in code:
+
+- each `form` renderer creates one `FormRuntime`
+
+Recommended future extension:
+
+- draft-based value owners such as editable `detail-field` / `detail-view` may also create a local validation owner for draft-only state
+
+## Participation Model
+
+There are two important participation modes.
+
+### Bound Subtree Participation
+
+The subtree writes directly into the parent form values.
+
+Examples:
+
+- inline `object-field` editing `profile.firstName`
+- inline `array-field` editing `items.0.name`
+- editable table rows bound directly to the outer form
+
+In this mode:
+
+- the subtree belongs to the parent form owner
+- child fields compile to absolute paths under the parent form
+- local interaction uses `validateField(path)` or `validateSubtree(rootPath)` on the parent owner
+- parent submit validates the whole owner
+
+### Draft Owner Participation
+
+The subtree edits a local draft first and commits later.
+
+Examples:
+
+- `detail-field` opens a dialog and edits a temporary object
+- `detail-view` opens a drawer and edits projected row data before confirm
+- a button opens a dialog containing a draft editor that only writes back on confirm
+
+In this mode:
+
+- draft fields do **not** belong to the outer form while the draft is still local
+- validation runs inside the local draft owner
+- outer form validation should only see committed values, not unconfirmed draft state
+- after confirm/commit, the affected outer field or subtree should be revalidated in the parent owner
+
+This is the most important rule for nested detail editors.
+
+## Answer To “Only Collect Current Layer?”
+
+Yes, but “current layer” must mean **current validation owner**, not current DOM layer and not current schema nesting level.
+
+Recommended rule:
+
+- current owner collects all fields and aggregate nodes that belong to it
+- current owner does not collect fields owned by a nested form or local draft owner
+- parent owner only sees the committed value contract of a child draft owner
+
+So:
+
+- nested layout: still same owner, should collect
+- nested object/array editor bound to parent values: still same owner, should collect
+- dialog with inner form: different owner, should not collect into outer form
+- detail dialog editing local draft: different owner while open, should not collect into outer form
+
+## Nested Structures
+
+### `object-field`
+
+If `object-field` is direct-binding:
+
+- it is still a field in the parent form
+- child names are relative for authoring, but compile to absolute paths like `profile.firstName`
+- object-level rules may live on `profile`
+- child-level rules live on `profile.firstName`, `profile.lastName`, etc.
+- `validateSubtree('profile')` is the natural local validation API
+
+If `object-field` is draft-based:
+
+- it should use a local draft owner
+- outer form should validate only the committed `profile` value or committed subtree after apply
+
+### `array-field`
+
+If `array-field` is direct-binding:
+
+- the array root path is part of the parent owner
+- array-level rules live on paths like `items`
+- item object fields live on paths like `items.0.name`
+- row-local validation uses `validateSubtree('items.0')`
+- array-local validation uses `validateSubtree('items')`
+
+For dynamic rows, compile-time metadata may describe the template shape, while runtime registration/materialization fills in concrete indexed paths.
+
+### Editable Table
+
+A table is not automatically a validation owner.
+
+There are two common modes:
+
+1. Inline bound editing
+2. Row detail draft editing
+
+Inline bound editing follows the parent form owner.
+Row detail draft editing should use a local owner for the row draft.
+
+### `detail-view` And `detail-field`
+
+These should not be modeled like ordinary inline fields when they hold an uncommitted draft.
+
+Recommended rule:
+
+- read-only detail: no validation owner needed
+- editable detail with direct binding: parent form owner
+- editable detail with local draft + confirm: local draft owner
+
+On confirm:
+
+1. validate the local draft owner
+2. stop if invalid
+3. run transform/commit
+4. write back to the parent owner
+5. revalidate the affected parent path or subtree
+
+### Button With Nested Dialog
+
+The button is not the validation owner.
+
+If the dialog body contains:
+
+- no form and no draft editor: no validation owner
+- a `form`: inner form owner
+- a draft detail editor: local draft owner
+
+The outer form must not be blocked by unopened or unconfirmed dialog-local fields.
+
+## Aggregate Rules
+
+Field-level validation is not enough for nested editing.
+
+The architecture must support aggregate rules at object and array roots.
+
+Examples:
+
+- object-level “all or none”
+- object-level “at least one of”
+- array-level `minItems` / `maxItems`
+- array-level `uniqueBy`
+- row-object aggregate rules inside an array item
+
+Recommended model:
+
+- keep field nodes and aggregate nodes in the same owner graph
+- allow `validateField(path)` for leaf validation
+- allow `validateSubtree(path)` for object/array-local validation
+- allow owner-level submit validation for final gating
+
+This is why a pure “each field owns only itself” model is insufficient.
+
+Fields can trigger validation, but owner orchestration is still required.
+
+## Validation Graph Shape
+
+Flux should keep an engine-neutral compiled graph as the source of truth.
+
+Current code already follows the right broad direction:
+
+- flat path dictionary
+- explicit node kinds
+- owner runtime APIs: `validateField`, `validateSubtree`, `validateForm`
+
+Recommended model:
 
 ```ts
-interface ValidationContributor<S extends BaseSchema = BaseSchema> {
-  kind: 'field' | 'container' | 'none';
-  valueKind?: 'scalar' | 'array' | 'object';
-  getFieldPath?(schema: S, ctx: ValidationCollectContext<S>): string | undefined;
-  collectRules?(schema: S, ctx: ValidationCollectContext<S>): ValidationRule[];
-}
-```
-
-This lets the compiler understand control semantics through the renderer registry rather than through a growing list of hard-coded `if (type === ...)` branches.
-
-Important note:
-
-- older design sketches sometimes mentioned `normalizeValue?` on `ValidationContributor`
-- that is not part of the current exported contract
-- normalization remains a possible future direction, not current runtime behavior
-
-## Current Compiled Validation Model
-
-Current active validation metadata is richer than the original early sketch.
-
-Key exported types are:
-
-```ts
-interface CompiledValidationBehavior {
-  triggers: ValidationTrigger[];
-  showErrorOn: ValidationVisibilityTrigger[];
-}
-
-interface CompiledValidationRule {
-  id: string;
-  rule: ValidationRule;
-  dependencyPaths: string[];
-  precompiled?: {
-    regex?: RegExp;
-  };
-}
-
-interface CompiledFormValidationField {
-  path: string;
-  controlType: string;
-  label?: string;
-  rules: CompiledValidationRule[];
-  behavior: CompiledValidationBehavior;
-}
-
 interface CompiledValidationNode {
   path: string;
   kind: 'field' | 'object' | 'array' | 'form';
-  controlType?: string;
-  label?: string;
   rules: CompiledValidationRule[];
-  behavior?: CompiledValidationBehavior;
   children: string[];
   parent?: string;
 }
 
-interface CompiledFormValidationModel {
-  fields: Record<string, CompiledFormValidationField>;
-  order: string[];
-  behavior: CompiledValidationBehavior;
+interface CompiledValidationOwnerModel {
+  rootPath: string;
+  nodes: Record<string, CompiledValidationNode>;
   dependents: Record<string, string[]>;
-  nodes?: Record<string, CompiledValidationNode>;
-  validationOrder?: string[];
-  rootPath?: string;
+  validationOrder: string[];
 }
 ```
 
-Current code still exposes both field-centric and node-centric views.
+Important point:
 
-That duplication is part of the active implementation today, even though future refactors may reduce it.
+- this graph is not a React registration tree
+- this graph is not a Yup schema object
+- this graph is the canonical low-code validation model
 
-## Current Validation Rule Model
+## Why Not Make Yup The Core Model
 
-The current exported `ValidationRule` union includes:
+`c:/can/nop/templates/yup` is useful as a reference, but it should not be Flux's primary architecture.
 
-```ts
-type ValidationRule =
-  | { kind: 'required'; message?: string }
-  | { kind: 'minLength'; value: number; message?: string }
-  | { kind: 'maxLength'; value: number; message?: string }
-  | { kind: 'minItems'; value: number; message?: string }
-  | { kind: 'maxItems'; value: number; message?: string }
-  | { kind: 'atLeastOneFilled'; itemPath?: string; message?: string }
-  | { kind: 'allOrNone'; itemPaths: string[]; message?: string }
-  | { kind: 'uniqueBy'; itemPath: string; message?: string }
-  | { kind: 'atLeastOneOf'; paths: string[]; message?: string }
-  | { kind: 'pattern'; value: string; message?: string }
-  | { kind: 'email'; message?: string }
-  | { kind: 'equalsField'; path: string; message?: string }
-  | { kind: 'notEqualsField'; path: string; message?: string }
-  | { kind: 'requiredWhen'; path: string; equals: unknown; message?: string }
-  | { kind: 'requiredUnless'; path: string; equals: unknown; message?: string }
-  | { kind: 'async'; api: ApiSchema; debounce?: number; message?: string };
-```
+Useful observations from Yup:
 
-This means the active runtime already supports more than the original first-wave scalar-only rule set.
+- it keeps an immutable schema tree
+- it separates transforms from tests
+- it supports nested path validation through `reach()` and `validateAt(path, rootValue)`
+- it resolves conditions at validation time
 
-## Rule Sources
+Why Flux should not use Yup as the primary runtime model:
 
-Rules come from two places:
+- Flux validation is owner-scoped, not just value-tree-scoped
+- Flux needs hidden-field participation rules
+- Flux needs runtime registration for complex controls
+- Flux needs dialog/detail draft isolation
+- Flux must stay independent from a specific validation engine
+- Flux compile step already knows renderer semantics and ownership boundaries
 
-### Explicit schema rules
+Recommended conclusion:
 
-Examples in current code include:
+- borrow the idea of `validateAt(path)`
+- do not make a dynamic Yup schema object the source of truth
+- if needed later, provide an adapter from compiled Flux validation metadata to a Yup-like or Standard-Schema-like adapter
 
-- `required`
-- `minLength`
-- `maxLength`
-- `minItems`
-- `maxItems`
-- `pattern`
-- `equalsField`
-- `requiredWhen`
-- `validate` for async API-backed validation
+## What Yup Gets Right For Flux
 
-### Control semantic defaults
+The part worth copying is not the whole library.
 
-Examples:
+The useful pattern is:
 
-- `input-email` contributes an `email` rule
-- array-like or composite controls can contribute array or object semantics through their renderer validation contribution
+- one schema/graph owns nested validation structure
+- local validation can target a path
+- validation still uses the whole root value for cross-field conditions
 
-The merged rule list is computed during compilation.
+In Flux terms, this becomes:
 
-## Current Runtime Contract
+- one validation owner owns a compiled graph
+- `validateField(path)` is the local path-targeted API
+- `validateSubtree(path)` is the local object/array API
+- all rule evaluation still reads the current owner scope for dependencies
 
-Current `FormRuntime` is broader than the earliest design sketch.
+## Why “Each Field Holds Its Own Validation” Is Only Half Right
 
-It already includes:
+Each field should hold enough metadata to request and display validation.
+
+But each field should **not** become the sole owner of validation state.
+
+Recommended split:
+
+- field contributes rules, trigger behavior, UI state wiring
+- owner runtime stores errors and validating state
+- owner runtime executes dependent revalidation and aggregate checks
+
+This gives the right local UX:
+
+- on blur: field asks owner to validate its path
+- on change: field may ask owner to validate its path or dependents
+- on row/object save: owner validates subtree
+- on submit: owner validates whole owner scope
+
+## Local Triggering
+
+Recommended trigger model:
+
+### Field Trigger
 
 - `validateField(path)`
+- used by blur/change of ordinary controls
+- owner may also revalidate dependents
+
+### Subtree Trigger
+
 - `validateSubtree(path)`
-- `validateForm()`
-- `getError(path)` returning `ValidationError[] | undefined`
-- `isValidating(path)`
-- `isTouched(path)`
-- `isDirty(path)`
-- `isVisited(path)`
-- `touchField(path)`
-- `visitField(path)`
-- `clearErrors(path?)`
-- `submit(api?)`
-- `reset(values?)`
-- `setValue(name, value)`
-- `setValues(values)` for form-local multi-path value updates that should reuse the same batching and dependent-revalidation machinery as `setValue(...)`
-- first-class array operations such as `appendValue`, `prependValue`, `insertValue`, `removeValue`, `moveValue`, `swapValue`, and `replaceValue`
-- lightweight read-only query helpers: `getField(path)`, `getDependents(path)`, `findByPrefix(prefix)`, and `getChildren(path)`
-- field-presentation derivation used by `FieldFrame` and renderer hooks, including `effectiveDisabled`, `effectiveRequired`, and stable error-visibility decisions for bound fields
+- used by `object-field`, `array-field`, row editors, complex composite controls
+- should validate aggregate node plus descendants belonging to that subtree
 
-## Declarative Field Linkage
+### Owner Trigger
 
-The current form stack supports a constrained schema-level linkage carrier through `xui:linkage`.
+- `validateForm()` for `FormRuntime`
+- future `validateDraft()` for local draft owners
+- used before submit/confirm
 
-Current supported shape:
+This is the correct answer to partial validation:
+
+- partial validation is owner-scoped path/subtree validation
+- not “rebuild a smaller Yup schema every time”
+- not “only run the exact field forever”
+
+## Hidden And Inactive Content
+
+Hidden/inactive participation must also be owner-scoped.
+
+### Hidden-Field Policy (Live Implementation)
+
+`HiddenFieldPolicy` is a two-field schema contract:
 
 ```ts
-interface FieldLinkageSchema {
-  dependencies?: string[];
-  when: string;
-  fulfill?: {
-    visible?: boolean | string;
-    disabled?: boolean | string;
-    required?: boolean | string;
-    options?: SchemaValue;
-  };
-  otherwise?: {
-    visible?: boolean | string;
-    disabled?: boolean | string;
-    required?: boolean | string;
-    options?: SchemaValue;
-  };
+interface HiddenFieldPolicy {
+  validateWhenHidden?: boolean;   // default: false — hidden fields skip validation
+  clearValueWhenHidden?: boolean; // default: false — hidden fields keep their value
 }
 ```
 
-Design constraints:
-
-- linkage remains explicit and field-local
-- dependencies use lexical root bindings, consistent with the current dependency-tracking baseline
-- there is no generic effect runtime, no `$observable`, and no arbitrary script side effects
-- linkage compiles onto existing node meta/props resolution and validation semantics rather than creating a second form-runtime engine
-
-Current first-wave coverage is intentionally narrow:
-
-- `visible`
-- `disabled`
-- `required`
-- `options`
-
-This means common field coordination can move out of scattered inline expressions while still preserving Flux's compile-first and explicit-runtime boundaries.
-
-Submission flow is currently:
-
-1. mark relevant fields touched when submit-time validation or submit-time error visibility applies
-2. validate the form
-3. stop if validation fails
-4. only execute submit request behavior after validation passes
-
-For `form` schemas, the semantic lifecycle surface above that flow is now explicit:
-
-- `initAction` runs once per form activation instance after the form-owned boundary and imports are ready
-- `submitAction` is the form-owned request entry that runs after validation passes
-- `onValidateError` runs when submit is blocked by validation failure
-- `onSubmitSuccess` runs for success-class submit results
-- `onSubmitError` runs for failure-class submit results
-
-This keeps validation-before-submit owned by the form semantic boundary rather than by individual submit buttons.
-
-## Author-Visible Form Status
-
-目标设计中，form 的 author-visible 状态读取面应保持简单并且语义化：
-
-- 表单值继续通过普通 form scope 暴露
-- form meta state 不通过普通字段路径隐式混入 values
-- form subtree 内通过只读保留绑定 `$form` 读取当前 form 的语义状态
-- form subtree 外通过显式 `statusPath` 读取同一份只读状态摘要
-
-推荐 `FormSchema` 扩展：
-
-```ts
-interface FormSchema extends BaseSchema {
-  type: 'form';
-  body?: BaseSchema[];
-  actions?: BaseSchema[];
-  data?: Record<string, any>;
-  statusPath?: string;
-  initAction?: ActionSchema | ActionSchema[];
-  submitAction?: ActionSchema | ActionSchema[];
-  onSubmitSuccess?: ActionSchema | ActionSchema[];
-  onSubmitError?: ActionSchema | ActionSchema[];
-  onValidateError?: ActionSchema | ActionSchema[];
-}
-```
+Architecture defaults (when no policy is specified):
 
-推荐 `$form` / `statusPath` DTO 形态：
+- hidden fields **retain their value**
+- hidden fields **participate in submit**
+- hidden fields **skip validation**
+- hidden fields **do not auto-clear**
 
-```ts
-interface FormStatusSummary {
-  id?: string;
-  name?: string;
-  submitting: boolean;
-  validating: boolean;
-  dirty: boolean;
-  touched: boolean;
-  visited: boolean;
-  valid: boolean;
-  invalid: boolean;
-  hasErrors: boolean;
-  errorCount: number;
-  submitCount: number;
-  lastSubmitStatus: 'idle' | 'success' | 'error' | 'cancelled' | 'timedOut' | 'validationError';
-}
-```
-
-表达式读取规则：
+Policy resolution order: **field > form > architecture default**
 
-- 当前 form subtree 内：`${$form.submitting}`
-- form 外部但同一 page/scope 中：`${createUserFormStatus.submitting}`，前提是 form 声明了 `statusPath: 'createUserFormStatus'`
+`resolveHiddenFieldPolicy(fieldPolicy, formPolicy)` in `packages/flux-core/src/validation-model.ts` implements this merge.
 
-边界规则：
+Both `InputSchema` and `FormSchema` carry an optional `hiddenFieldPolicy?: HiddenFieldPolicy` field (see `packages/flux-renderers-form/src/schemas.ts`). The form-level policy is passed to `buildCompiledFormValidationModel` as `defaultHiddenFieldPolicy`, then merged at call time in `getCompiledValidationField`.
 
-- `$form` 是只读语义摘要，不是 `FormRuntime` 或底层 store 对象
-- `statusPath` 发布的是只读 summary DTO，不是第二个可写业务根
-- form 的 `id` / `name` 用于 `component:submit`、调试与实例定位，不自动成为数据读取路径
-- 不暴露 `$store` 作为 schema-visible 读取面
+### Runtime Tracking
 
-## Current Runtime State
+`FormRuntime` exposes `notifyFieldHidden(path: string, hidden: boolean): void`. The `NodeRenderer` calls this in a `useEffect` keyed on `[currentForm, fieldName, isFieldHidden]` (see `packages/flux-react/src/node-renderer.tsx:276`). The cleanup function calls `notifyFieldHidden(fieldName, false)` to deregister on unmount.
 
-The active form store tracks:
+The `ManagedFormRuntimeSharedState` maintains `hiddenFields: Set<string>` (see `packages/flux-runtime/src/form-runtime-types.ts`). `notifyFieldHidden` is idempotent — it checks `wasHidden === hidden` before mutating the set.
 
-- `values`
-- `errors`
-- `validating`
-- `touched`
-- `dirty`
-- `visited`
-- `submitting`
+When `hidden=true` and `clearValueWhenHidden=true`, `notifyFieldHidden` immediately calls `setValue(path, undefined)` (see `packages/flux-runtime/src/form-runtime.ts:225`).
 
-Current runtime behavior includes:
+### Validation Skip
 
-- sync and async field errors are stored in `errors`
-- async field rules can expose field-level `validating` state while requests are in flight
-- async field rules may delay `validating=true` for short-lived requests so fast validations do not flash UI loading state
-- async field rules may declare `debounce`, and superseded runs are suppressed before request execution
-- blur-triggered validation is wired for standard form renderers
-- standard form renderers show errors according to `showErrorOn`, not a hard-coded single policy
-- submit flow may delay `submitting=true` separately from duplicate-submit guarding so short submits do not flash loading state
-- local write coalescing exists for hot paths such as `setValue(...)`, `reset(...)`, dependent dirtiness updates, and array remapping; this is a thin store patch primitive, not a global transaction system
-- form-local write coalescing now also includes `setValues(...)`, which lets one form runtime apply multiple path updates through the same local batching path without introducing a hidden global transaction model
-- action-layer write coalescing may target that runtime capability through the constrained `setValues` built-in action, but this remains a form-local API surface rather than a dispatcher-wide transaction wrapper
-- form-owned submit follow-ups reuse the current `Action Algebra` branch-result bindings, so `onSubmitSuccess`, `onSubmitError`, and `onValidateError` can read `result`, `error`, and `prevResult` during expression evaluation without publishing those names into ordinary form scope data
+In `validatePath()` (`packages/flux-runtime/src/form-runtime-validation.ts:273`), if the field's resolved policy has `validateWhenHidden=false` and the path is in `sharedState.hiddenFields`, the function clears the path's errors and returns an empty result.
 
-## Lightweight Field Query Facade
+### Shared Hook
 
-Current form runtime exposes a small read-only field query facade for form-subdomain consumers.
+`useHiddenFieldPolicy(name, hidden)` in `packages/flux-renderers-form/src/field-utils.tsx:291` wraps the same `notifyFieldHidden` pattern for renderer-level use. `NodeRenderer` covers the common case; complex composite renderers may call `useHiddenFieldPolicy` directly.
 
-The active boundary is intentionally narrow:
+### The Important Distinction
 
-- it is owned by `FormRuntime`, not by a platform-wide field object model
-- it is primarily backed by compiled validation metadata today
-- it is meant to support dependent revalidation, debug helpers, and future constrained linkage work without introducing heavyweight field instances
+- hidden field in current owner: same owner, policy decides whether to validate
+- field in another owner that is not active/committed: not current owner's problem
 
-Current queries are:
+## Current Runtime Baseline
 
-- `getField(path)` for a compiled field view when the path is a compiled field
-- `getDependents(path)` for dependency-driven revalidation lookups
-- `findByPrefix(prefix)` for prefix-scoped subtree scans over compiled validation targets
-- `getChildren(path)` for direct compiled child-node lookup
+Current implementation already aligns with part of this design:
 
-This facade should stay read-only and thin. It must not grow into a second runtime object graph.
+- one `FormRuntime` per `form`
+- owner-local APIs: `validateField(path)`, `validateSubtree(path)`, `validateForm()`
+- flat compiled node model
+- runtime registration for complex controls
+- hidden-field tracking via `notifyFieldHidden(path, hidden)` — live in `packages/flux-runtime/src/form-runtime.ts:214`
+- hidden-field validation skip — live in `packages/flux-runtime/src/form-runtime-validation.ts:273`
+- `clearValueWhenHidden` — live in `packages/flux-runtime/src/form-runtime.ts:225`
+- `HiddenFieldPolicy` schema contract and `resolveHiddenFieldPolicy()` — live in `packages/flux-core/src/`
+- `useHiddenFieldPolicy()` shared renderer hook — live in `packages/flux-renderers-form/src/field-utils.tsx:291`
 
-## Validation Timing And Error Visibility
+This baseline is correct and should be preserved.
 
-Validation timing is configurable:
+## Required Extension Beyond Current Code
 
-- `form.validateOn` sets the default trigger policy for descendant fields
-- `field.validateOn` overrides the form default for a specific field
-- supported validation triggers are `change`, `blur`, and `submit`
-- field override wins over form default; form default wins over runtime fallback
-- `submit` remains the final validation gate even when fields also validate earlier
+The main missing architectural idea is a first-class **local draft validation owner**.
 
-Error visibility is configured separately:
+Recommended direction:
 
-- `form.showErrorOn` sets the default visibility policy for descendant fields
-- `field.showErrorOn` overrides the form default for a specific field
-- supported visibility triggers are `touched`, `dirty`, `visited`, and `submit`
-- this lets a field validate on one schedule while revealing errors on another
+- keep `FormRuntime` as the owner for true forms
+- add a lighter draft-owner runtime for value-adaptation/detail editors when they hold uncommitted draft state
+- do not make surface runtime own validation
+- do not merge dialog-local draft validation state into the outer form store
 
-## Error Model
+This lets Flux support:
 
-Current runtime errors are structured.
+- `detail-view` waiting for confirm
+- `detail-field` opening a dialog editor
+- row editor drafts inside table dialogs
+- complex object/array editors that should validate before apply, not before parent submit
 
-Current exported shape is:
+## Relationship To AMIS
 
-```ts
-interface ValidationError {
-  path: string;
-  message: string;
-  rule: ValidationRule['kind'];
-  ruleId?: string;
-  ownerPath?: string;
-  sourceKind?: 'field' | 'object' | 'array' | 'form' | 'runtime-registration';
-  relatedPaths?: string[];
-}
-```
+`c:/can/nop/amis-react19` is also useful, but mainly as a pragmatic mounted-control reference.
 
-This supports:
+Key observations from AMIS:
 
-- direct field errors
-- aggregate object and array errors
-- runtime-registration-produced errors
-- path ownership distinctions for composite controls
+- validation is centered around `FormStore` + `FormItemStore`
+- each form item validates itself through store registration
+- submit walks registered items and triggers item validation
+- hidden-value clearing is explicit through `clearValueOnHidden`
+- dialog/open state can live on form-item stores without automatically merging validation ownership
 
-## Renderer Integration
+What Flux should borrow:
 
-Renderer integration should keep validation behavior centralized.
+- mounted complex controls may still need runtime registration
+- hidden clearing and hidden validation should stay explicit
+- field-triggered local validation is practical
 
-In current code:
+What Flux should not copy as the primary model:
 
-- standard controls reuse shared validation/visibility helpers
-- form hooks expose both field-level and aggregate state selectors
-- shared field chrome lives under `packages/flux-renderers-form/src/renderers/shared/`
+- validation graph emerging only from mounted renderer instances
+- treating renderer/store registration as the only source of truth
 
-Important current renderer-facing utilities include:
+Flux is better served by:
 
-- `useCurrentFormErrors(...)`
-- `useCurrentFormFieldState(...)`
-- `useFieldError(...)`
-- `useAggregateError(...)`
-- helper functions in `packages/flux-renderers-form/src/field-utils.tsx`
+- compile-time owner graph
+- runtime owner orchestration
+- registration only as a supplement for dynamic or composite controls
 
-## Complex Controls And Runtime Registration
+## Recommended Architecture Decision
 
-Most standard fields should be fully modeled at compile time.
+Best current direction for Flux:
 
-Runtime registration remains the supplement for controls that cannot yet be described fully by compile-time rules alone.
-
-Current exported shape is:
-
-```ts
-interface RuntimeFieldRegistration {
-  path: string;
-  getValue(): unknown;
-  childPaths?: string[];
-  syncValue?(): unknown;
-  onRemove?(): void;
-  validateChild?(path: string): Promise<ValidationError[]> | ValidationError[];
-  validate?(): Promise<ValidationError[]> | ValidationError[];
-}
-```
-
-Current implementation status:
-
-- `FormRuntime.registerField(...)` exists
-- runtime registration can contribute validation for paths missing or incomplete in the compiled model
-- `tag-list` is a minimal example of this path
-- `key-value` shows composite editor synchronization with runtime validation
-- `array-editor` uses `childPaths` and `syncValue()` to expose deeper composite structure
-
-## Current Limits And Future Direction
-
-The following are still better described as future direction rather than stable current behavior:
-
-- a formal normalization phase before validation
-- richer custom-validator execution contexts
-- less duplicated stored projection inside compiled validation metadata
-- more compiler-described composite validation with less runtime registration
-- richer introspection APIs such as `describeValidation(...)`
-
-Those ideas are valid and documented elsewhere, but they are not the current implementation contract.
-
-## Relationship To Research Notes
-
-The following references contain useful ideas, but they are not the architecture source of truth:
-
-- `docs/references/react-hook-form-template-notes.md`
-- `docs/references/yup-template-notes.md`
-- `docs/references/legacy-implementation-notes.md`
-
-Borrow from them carefully:
-
-- compile-time rule extraction
-- centralized runtime orchestration
-- async validation cancellation
-- aggregate error ownership
-
-But do not let them override the active low-code-first architecture described here.
+1. Keep owner-scoped compiled validation graphs as the source of truth.
+2. Keep `validateField(path)`, `validateSubtree(path)`, and `validateForm()` as the primary APIs.
+3. Treat `object-field` / `array-field` / inline editable table rows as parent-owner subtrees when they bind directly.
+4. Introduce local draft validation owners for `detail-field` / `detail-view` / dialog editors that edit uncommitted draft values.
+5. Revalidate parent paths only after draft commit.
+6. Keep Yup-like adapters optional and secondary.
+7. Keep runtime registration as a supplement for dynamic composite controls, not as the architecture baseline.
 
 ## Related Documents
 
-- `docs/references/terminology.md`
-- `docs/architecture/flux-core.md`
-- `docs/architecture/renderer-runtime.md`
+- `docs/architecture/object-field.md`
+- `docs/architecture/array-field.md`
+- `docs/architecture/value-adaptation-and-detail-field.md`
+- `docs/architecture/surface-owner.md`
 - `docs/architecture/flux-runtime-module-boundaries.md`
-- `docs/references/react-hook-form-template-notes.md`
-- `docs/references/yup-template-notes.md`

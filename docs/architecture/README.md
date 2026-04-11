@@ -44,6 +44,7 @@
 - `value-adaptation-and-detail-field.md`
 - `variant-field.md`
 - `object-field.md`
+- `array-field.md`
 
 ### 3. Scope, Identity, And Rendering
 
