@@ -766,6 +766,8 @@ Flux 应吸收的是模式，而不是原样复制 API 形态。
 1. `CompiledRuleTemplate.args` 回到 `Record<string, CompiledRuntimeValue<unknown>>`
 2. `system` 默认不绕过字段自己的显示策略
 3. `validateAll()` 只遍历当前 owner，这一点已经有了，应继续保留
+4. non-form scope `ready = valid && !validating`
+5. `validateSubtree(..., 'submit' | 'commit')` 需要等待该 subtree 内必需的 async rule
 
 ### 当前已经补到 execution details 的
 
@@ -774,6 +776,9 @@ Flux 应吸收的是模式，而不是原样复制 API 形态。
 3. overlay 生效时序
 4. 非 form scope schema 示例
 5. Wizard / dialog / draft / table row 等典型模式说明
+6. `system` + aggregate root 的 subtree expansion 规则
+7. dialog 中 live parent value 编辑的 authoring rule
+8. inline row edit + aggregate rule 的 closure 行为说明
 
 ### 仍然更适合补到 implementation plan 的
 
