@@ -1,12 +1,12 @@
-# Form Validation Low-Code Integrated Refactor Roadmap
+﻿# Form Validation Low-Code Integrated Refactor Roadmap
 
 > Plan Status: deferred
 > Last Reviewed: 2026-04-02
 
 
-> **Implementation Status: ⚠️ PARTIALLY COMPLETED / LONG-RANGE ROADMAP**
-> **Done (Stages 0–3):** Canonical validation graph, compilation tightening, graph-driven execution.
-> **Not started (Stages 4–8):** Normalization pipeline, composite compiler migration, state compression, extensibility API, diagnostics/introspection tooling.
+> **Implementation Status: âš ï¸ PARTIALLY COMPLETED / LONG-RANGE ROADMAP**
+> **Done (Stages 0â€“3):** Canonical validation graph, compilation tightening, graph-driven execution.
+> **Not started (Stages 4â€“8):** Normalization pipeline, composite compiler migration, state compression, extensibility API, diagnostics/introspection tooling.
 > The core validation infrastructure is solid and production-capable; the remaining stages describe longer-range architecture evolution rather than current correctness gaps. They should be scheduled only when a concrete product or performance need justifies reopening validation internals.
 >
 > This status was re-verified against the codebase on 2026-04-04.
@@ -51,7 +51,7 @@ It does not propose introducing a parallel validation framework.
 - `docs/architecture/form-validation.md`
 - `docs/plans/03-form-validation-completion-plan.md`
 - `docs/plans/04-form-validation-improvement-execution-plan.md`
-- `docs/analysis/form-validation-comparison.md`
+- `docs/analysis/2026-03-19-form-validation-comparison.md`
 - `docs/references/yup-template-notes.md`
 
 ## Design Constraints
@@ -863,6 +863,7 @@ The recommended next implementation step is to start with Stage 0 and Stage 1 to
 5. migrate internal callers to the canonical graph before removing redundant structures
 
 This is the highest-leverage place to begin because it creates the foundation for every later optimization in memory use, execution model, and composite-control integration.
+
 
 
 

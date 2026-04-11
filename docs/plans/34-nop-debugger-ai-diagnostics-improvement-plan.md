@@ -1,176 +1,176 @@
-# 34 NOP Debugger AI 诊断能力增强计划
+﻿# 34 NOP Debugger AI è¯Šæ–­èƒ½åŠ›å¢žå¼ºè®¡åˆ’
 
 > Plan Status: completed
 > Last Reviewed: 2026-04-08
 > Source: `docs/architecture/debugger-runtime.md` reviewed against current code anchors on 2026-04-08
 
-> Status Note: 本计划对应的核心实现与契约级回归已经进入代码、测试和文档主线：请求实例关联、inspect payload 增强、高层失败摘要、受控表达式诊断、automation API 与关键 E2E 覆盖均已落地。当前剩余事项仅属于常规后续演进，不再构成本计划未完成项。
+> Status Note: æœ¬è®¡åˆ’å¯¹åº”çš„æ ¸å¿ƒå®žçŽ°ä¸Žå¥‘çº¦çº§å›žå½’å·²ç»è¿›å…¥ä»£ç ã€æµ‹è¯•å’Œæ–‡æ¡£ä¸»çº¿ï¼šè¯·æ±‚å®žä¾‹å…³è”ã€inspect payload å¢žå¼ºã€é«˜å±‚å¤±è´¥æ‘˜è¦ã€å—æŽ§è¡¨è¾¾å¼è¯Šæ–­ã€automation API ä¸Žå…³é”® E2E è¦†ç›–å‡å·²è½åœ°ã€‚å½“å‰å‰©ä½™äº‹é¡¹ä»…å±žäºŽå¸¸è§„åŽç»­æ¼”è¿›ï¼Œä¸å†æž„æˆæœ¬è®¡åˆ’æœªå®Œæˆé¡¹ã€‚
 
-## 复审结论
+## å¤å®¡ç»“è®º
 
-- 当前 `@nop-chaos/nop-debugger` 已经完成第一阶段目标：它不再只是 playground 内部日志面板，而是框架级调试基础设施，开发者和 AI 都已经可以实际使用它。
-- 但它还没有达到第二阶段目标：复杂框架问题下的高可靠自动诊断。主要缺口集中在请求/交互因果关联、inspect 上下文完整性、自动化契约级回归覆盖，以及 AI 可直接消费的高层失败摘要。
-- 这份计划不是重复 `docs/plans/20-nop-debugger-implementation-plan.md` 或 `docs/plans/22-debugger-node-inspector-enhancement-plan.md` 的已完成能力，而是承接它们之后的下一阶段强化计划。
+- å½“å‰ `@nop-chaos/nop-debugger` å·²ç»å®Œæˆç¬¬ä¸€é˜¶æ®µç›®æ ‡ï¼šå®ƒä¸å†åªæ˜¯ playground å†…éƒ¨æ—¥å¿—é¢æ¿ï¼Œè€Œæ˜¯æ¡†æž¶çº§è°ƒè¯•åŸºç¡€è®¾æ–½ï¼Œå¼€å‘è€…å’Œ AI éƒ½å·²ç»å¯ä»¥å®žé™…ä½¿ç”¨å®ƒã€‚
+- ä½†å®ƒè¿˜æ²¡æœ‰è¾¾åˆ°ç¬¬äºŒé˜¶æ®µç›®æ ‡ï¼šå¤æ‚æ¡†æž¶é—®é¢˜ä¸‹çš„é«˜å¯é è‡ªåŠ¨è¯Šæ–­ã€‚ä¸»è¦ç¼ºå£é›†ä¸­åœ¨è¯·æ±‚/äº¤äº’å› æžœå…³è”ã€inspect ä¸Šä¸‹æ–‡å®Œæ•´æ€§ã€è‡ªåŠ¨åŒ–å¥‘çº¦çº§å›žå½’è¦†ç›–ï¼Œä»¥åŠ AI å¯ç›´æŽ¥æ¶ˆè´¹çš„é«˜å±‚å¤±è´¥æ‘˜è¦ã€‚
+- è¿™ä»½è®¡åˆ’ä¸æ˜¯é‡å¤ `docs/plans/20-nop-debugger-implementation-plan.md` æˆ– `docs/plans/22-debugger-node-inspector-enhancement-plan.md` çš„å·²å®Œæˆèƒ½åŠ›ï¼Œè€Œæ˜¯æ‰¿æŽ¥å®ƒä»¬ä¹‹åŽçš„ä¸‹ä¸€é˜¶æ®µå¼ºåŒ–è®¡åˆ’ã€‚
 
-## 与现有计划的关系
+## ä¸ŽçŽ°æœ‰è®¡åˆ’çš„å…³ç³»
 
-- `docs/plans/20-nop-debugger-implementation-plan.md` 已完成 debugger 的基础 package 化、automation API、Timeline/Network/Node 面板和基础持久化能力；本计划不重做这些基础能力。
-- `docs/plans/22-debugger-node-inspector-enhancement-plan.md` 已完成 `data-cid`、inspect mode、Node Tab 基础 inspect；本计划在此基础上补齐更强的 scope/props/trace 诊断上下文。
-- `docs/plans/29-domain-runtime-and-debugger-refactor-plan.md` 关注的是文件拆分和结构收口；本计划关注的是 debugger 的诊断能力和测试基础设施强化，不重复做结构性重构。
+- `docs/plans/20-nop-debugger-implementation-plan.md` å·²å®Œæˆ debugger çš„åŸºç¡€ package åŒ–ã€automation APIã€Timeline/Network/Node é¢æ¿å’ŒåŸºç¡€æŒä¹…åŒ–èƒ½åŠ›ï¼›æœ¬è®¡åˆ’ä¸é‡åšè¿™äº›åŸºç¡€èƒ½åŠ›ã€‚
+- `docs/plans/22-debugger-node-inspector-enhancement-plan.md` å·²å®Œæˆ `data-cid`ã€inspect modeã€Node Tab åŸºç¡€ inspectï¼›æœ¬è®¡åˆ’åœ¨æ­¤åŸºç¡€ä¸Šè¡¥é½æ›´å¼ºçš„ scope/props/trace è¯Šæ–­ä¸Šä¸‹æ–‡ã€‚
+- `docs/plans/29-domain-runtime-and-debugger-refactor-plan.md` å…³æ³¨çš„æ˜¯æ–‡ä»¶æ‹†åˆ†å’Œç»“æž„æ”¶å£ï¼›æœ¬è®¡åˆ’å…³æ³¨çš„æ˜¯ debugger çš„è¯Šæ–­èƒ½åŠ›å’Œæµ‹è¯•åŸºç¡€è®¾æ–½å¼ºåŒ–ï¼Œä¸é‡å¤åšç»“æž„æ€§é‡æž„ã€‚
 
 ## Problem
 
-当前 `nop-debugger` 已经可用，但还存在 6 类关键能力缺口，直接限制它在 AI 集成测试和复杂开发诊断场景中的价值。
+å½“å‰ `nop-debugger` å·²ç»å¯ç”¨ï¼Œä½†è¿˜å­˜åœ¨ 6 ç±»å…³é”®èƒ½åŠ›ç¼ºå£ï¼Œç›´æŽ¥é™åˆ¶å®ƒåœ¨ AI é›†æˆæµ‹è¯•å’Œå¤æ‚å¼€å‘è¯Šæ–­åœºæ™¯ä¸­çš„ä»·å€¼ã€‚
 
-- `packages/nop-debugger/src/controller-helpers.ts:105-107` 当前 `requestKey` 仅由 `method + url + nodeId + path` 组成，无法区分同一节点对同一 URL 的并发请求，也无法区分相同 URL 不同 payload 的并发实例。
-- `packages/nop-debugger/src/adapters.ts:146-166` 和 `:181-239` 目前的 API 事件归并仍然主要依赖该弱 `requestKey`，因此 `waitForEvent()`、Network 归并和 interaction trace 在高并发场景下不够稳定。
-- `packages/nop-debugger/src/controller.ts:35-85` 当前 `inspectByCid()` 返回 `formState`、`scopeData`、`tagName`、`className`，但没有稳定的 `scopeChain`、props/meta 摘要、registry/debug snapshot 补充信息，因此“值来自哪里”仍然难以定位。
-- `packages/nop-debugger/src/panel.tsx:128-131` 和 `packages/nop-debugger/src/panel/node-tab.tsx:226-239` 中的 Expression Evaluator 仍是禁用占位，而不是可用诊断能力。
-- `packages/nop-debugger/src/diagnostics.ts:273-320` 当前 `getInteractionTrace()` 主要靠 `requestKey/actionType/nodeId/path` 做启发式关联，还没有显式 interaction id、parent event id 或 request instance id。
-- `tests/e2e/debugger.spec.ts` 已覆盖基础 UI 和 automation API 可访问性，但尚未把 `waitForEvent()`、`inspectByElement()`、`getInteractionTrace()`、`exportSession()` 等真正当作自动化诊断契约来回归测试。
+- `packages/nop-debugger/src/controller-helpers.ts:105-107` å½“å‰ `requestKey` ä»…ç”± `method + url + nodeId + path` ç»„æˆï¼Œæ— æ³•åŒºåˆ†åŒä¸€èŠ‚ç‚¹å¯¹åŒä¸€ URL çš„å¹¶å‘è¯·æ±‚ï¼Œä¹Ÿæ— æ³•åŒºåˆ†ç›¸åŒ URL ä¸åŒ payload çš„å¹¶å‘å®žä¾‹ã€‚
+- `packages/nop-debugger/src/adapters.ts:146-166` å’Œ `:181-239` ç›®å‰çš„ API äº‹ä»¶å½’å¹¶ä»ç„¶ä¸»è¦ä¾èµ–è¯¥å¼± `requestKey`ï¼Œå› æ­¤ `waitForEvent()`ã€Network å½’å¹¶å’Œ interaction trace åœ¨é«˜å¹¶å‘åœºæ™¯ä¸‹ä¸å¤Ÿç¨³å®šã€‚
+- `packages/nop-debugger/src/controller.ts:35-85` å½“å‰ `inspectByCid()` è¿”å›ž `formState`ã€`scopeData`ã€`tagName`ã€`className`ï¼Œä½†æ²¡æœ‰ç¨³å®šçš„ `scopeChain`ã€props/meta æ‘˜è¦ã€registry/debug snapshot è¡¥å……ä¿¡æ¯ï¼Œå› æ­¤â€œå€¼æ¥è‡ªå“ªé‡Œâ€ä»ç„¶éš¾ä»¥å®šä½ã€‚
+- `packages/nop-debugger/src/panel.tsx:128-131` å’Œ `packages/nop-debugger/src/panel/node-tab.tsx:226-239` ä¸­çš„ Expression Evaluator ä»æ˜¯ç¦ç”¨å ä½ï¼Œè€Œä¸æ˜¯å¯ç”¨è¯Šæ–­èƒ½åŠ›ã€‚
+- `packages/nop-debugger/src/diagnostics.ts:273-320` å½“å‰ `getInteractionTrace()` ä¸»è¦é  `requestKey/actionType/nodeId/path` åšå¯å‘å¼å…³è”ï¼Œè¿˜æ²¡æœ‰æ˜¾å¼ interaction idã€parent event id æˆ– request instance idã€‚
+- `tests/e2e/debugger.spec.ts` å·²è¦†ç›–åŸºç¡€ UI å’Œ automation API å¯è®¿é—®æ€§ï¼Œä½†å°šæœªæŠŠ `waitForEvent()`ã€`inspectByElement()`ã€`getInteractionTrace()`ã€`exportSession()` ç­‰çœŸæ­£å½“ä½œè‡ªåŠ¨åŒ–è¯Šæ–­å¥‘çº¦æ¥å›žå½’æµ‹è¯•ã€‚
 
 ## Root Cause
 
-- 第一阶段实现优先完成“可接入、可展示、可查询”的 debugger 基线，先让事件流、面板和 automation API 跑起来，尚未对复杂并发、严格因果链和契约级测试做第二轮设计收口。
-- 现有 monitor 契约 `packages/flux-core/src/types/renderer-api.ts:41-48` 和 action/api 上报链路 `packages/flux-runtime/src/action-runtime.ts` / `request-runtime.ts` 主要是“关键节点上报”，不是为严格 tracing 系统设计的，因此当前 trace 只能做到启发式关联。
-- `ComponentHandle` / `ComponentHandleRegistry` 当前只暴露了最小运行时能力和 `getDebugSnapshot()`，但并没有原生承载 debugger 所需的 richer inspect data，因此 inspect 增强必须以“契约最小补强 + controller 聚合”为原则推进。
-- 先前 E2E 目标更多是确认 UI 存在和面板可操作，而不是把 debugger 当作“测试失败后的第一诊断数据源”来设计。
+- ç¬¬ä¸€é˜¶æ®µå®žçŽ°ä¼˜å…ˆå®Œæˆâ€œå¯æŽ¥å…¥ã€å¯å±•ç¤ºã€å¯æŸ¥è¯¢â€çš„ debugger åŸºçº¿ï¼Œå…ˆè®©äº‹ä»¶æµã€é¢æ¿å’Œ automation API è·‘èµ·æ¥ï¼Œå°šæœªå¯¹å¤æ‚å¹¶å‘ã€ä¸¥æ ¼å› æžœé“¾å’Œå¥‘çº¦çº§æµ‹è¯•åšç¬¬äºŒè½®è®¾è®¡æ”¶å£ã€‚
+- çŽ°æœ‰ monitor å¥‘çº¦ `packages/flux-core/src/types/renderer-api.ts:41-48` å’Œ action/api ä¸ŠæŠ¥é“¾è·¯ `packages/flux-runtime/src/action-runtime.ts` / `request-runtime.ts` ä¸»è¦æ˜¯â€œå…³é”®èŠ‚ç‚¹ä¸ŠæŠ¥â€ï¼Œä¸æ˜¯ä¸ºä¸¥æ ¼ tracing ç³»ç»Ÿè®¾è®¡çš„ï¼Œå› æ­¤å½“å‰ trace åªèƒ½åšåˆ°å¯å‘å¼å…³è”ã€‚
+- `ComponentHandle` / `ComponentHandleRegistry` å½“å‰åªæš´éœ²äº†æœ€å°è¿è¡Œæ—¶èƒ½åŠ›å’Œ `getDebugSnapshot()`ï¼Œä½†å¹¶æ²¡æœ‰åŽŸç”Ÿæ‰¿è½½ debugger æ‰€éœ€çš„ richer inspect dataï¼Œå› æ­¤ inspect å¢žå¼ºå¿…é¡»ä»¥â€œå¥‘çº¦æœ€å°è¡¥å¼º + controller èšåˆâ€ä¸ºåŽŸåˆ™æŽ¨è¿›ã€‚
+- å…ˆå‰ E2E ç›®æ ‡æ›´å¤šæ˜¯ç¡®è®¤ UI å­˜åœ¨å’Œé¢æ¿å¯æ“ä½œï¼Œè€Œä¸æ˜¯æŠŠ debugger å½“ä½œâ€œæµ‹è¯•å¤±è´¥åŽçš„ç¬¬ä¸€è¯Šæ–­æ•°æ®æºâ€æ¥è®¾è®¡ã€‚
 
 ## Goals
 
-- 让 `nop-debugger` 在复杂异步和并发场景下提供稳定的 request/action/interaction 关联能力。
-- 让 `inspectByCid()` 和 Node Tab 提供足够强的 scope、props、meta、handle 上下文，支持 AI 和开发者直接做首轮诊断。
-- 把 `waitForEvent()`、`getInteractionTrace()`、`exportSession()`、`inspectByElement()` 提升为经过 E2E 回归保护的正式自动化契约。
-- 提供更高层、对 AI 更友好的失败摘要接口，降低每次测试失败后重新手工聚合事件的成本。
-- 在保持安全边界的前提下，为 Node 级表达式诊断预留或落地受控的 evaluator 能力。
+- è®© `nop-debugger` åœ¨å¤æ‚å¼‚æ­¥å’Œå¹¶å‘åœºæ™¯ä¸‹æä¾›ç¨³å®šçš„ request/action/interaction å…³è”èƒ½åŠ›ã€‚
+- è®© `inspectByCid()` å’Œ Node Tab æä¾›è¶³å¤Ÿå¼ºçš„ scopeã€propsã€metaã€handle ä¸Šä¸‹æ–‡ï¼Œæ”¯æŒ AI å’Œå¼€å‘è€…ç›´æŽ¥åšé¦–è½®è¯Šæ–­ã€‚
+- æŠŠ `waitForEvent()`ã€`getInteractionTrace()`ã€`exportSession()`ã€`inspectByElement()` æå‡ä¸ºç»è¿‡ E2E å›žå½’ä¿æŠ¤çš„æ­£å¼è‡ªåŠ¨åŒ–å¥‘çº¦ã€‚
+- æä¾›æ›´é«˜å±‚ã€å¯¹ AI æ›´å‹å¥½çš„å¤±è´¥æ‘˜è¦æŽ¥å£ï¼Œé™ä½Žæ¯æ¬¡æµ‹è¯•å¤±è´¥åŽé‡æ–°æ‰‹å·¥èšåˆäº‹ä»¶çš„æˆæœ¬ã€‚
+- åœ¨ä¿æŒå®‰å…¨è¾¹ç•Œçš„å‰æä¸‹ï¼Œä¸º Node çº§è¡¨è¾¾å¼è¯Šæ–­é¢„ç•™æˆ–è½åœ°å—æŽ§çš„ evaluator èƒ½åŠ›ã€‚
 
 ## Non-Goals
 
-- 不把 `nop-debugger` 升级为完整分布式 tracing 平台。
-- 不引入远程日志上报、后端会话存储或线上生产监控平台能力。
-- 不开放任意 JS 执行器给 debugger UI 或 automation API。
-- 不重做当前 panel 视觉形态或 playground 信息架构，除非改动直接服务于本计划中的诊断能力。
-- 不为了 debugger 需求打破现有 `flux-core -> flux-runtime -> flux-react -> nop-debugger` 的依赖边界。
+- ä¸æŠŠ `nop-debugger` å‡çº§ä¸ºå®Œæ•´åˆ†å¸ƒå¼ tracing å¹³å°ã€‚
+- ä¸å¼•å…¥è¿œç¨‹æ—¥å¿—ä¸ŠæŠ¥ã€åŽç«¯ä¼šè¯å­˜å‚¨æˆ–çº¿ä¸Šç”Ÿäº§ç›‘æŽ§å¹³å°èƒ½åŠ›ã€‚
+- ä¸å¼€æ”¾ä»»æ„ JS æ‰§è¡Œå™¨ç»™ debugger UI æˆ– automation APIã€‚
+- ä¸é‡åšå½“å‰ panel è§†è§‰å½¢æ€æˆ– playground ä¿¡æ¯æž¶æž„ï¼Œé™¤éžæ”¹åŠ¨ç›´æŽ¥æœåŠ¡äºŽæœ¬è®¡åˆ’ä¸­çš„è¯Šæ–­èƒ½åŠ›ã€‚
+- ä¸ä¸ºäº† debugger éœ€æ±‚æ‰“ç ´çŽ°æœ‰ `flux-core -> flux-runtime -> flux-react -> nop-debugger` çš„ä¾èµ–è¾¹ç•Œã€‚
 
 ## Fix Plan
 
-**Phase 0 — 文档冻结与契约校准**
+**Phase 0 â€” æ–‡æ¡£å†»ç»“ä¸Žå¥‘çº¦æ ¡å‡†**
 
 Targets: `docs/architecture/debugger-runtime.md`, `README.md`, `apps/playground/src/pages/FluxBasicPage.tsx`, `apps/playground/src/pages/DebuggerLabPage.tsx`
 
-- 清理仍然残留的旧术语，统一以 `window.__NOP_DEBUGGER_API__` / `window.__NOP_DEBUGGER_HUB__` 为唯一全局 API 名称，不再出现 `__NOP_FLUX_DEBUGGER_API__`。
-- 在 `docs/architecture/debugger-runtime.md` 中补充一个“automation contract”小节，明确哪些方法属于稳定接口，哪些只是当前 UI 便捷能力。
-- 校正 playground 页面里的 AI 脚本示例和说明文字，确保示例代码与真实全局 API 一致。
-- 为后续 Phase 1-4 补一个最小术语表：`requestKey`、`requestInstanceId`、`interactionId`、`trace anchor event`、`scopeChain`、`node inspect payload`。
+- æ¸…ç†ä»ç„¶æ®‹ç•™çš„æ—§æœ¯è¯­ï¼Œç»Ÿä¸€ä»¥ `window.__NOP_DEBUGGER_API__` / `window.__NOP_DEBUGGER_HUB__` ä¸ºå”¯ä¸€å…¨å±€ API åç§°ï¼Œä¸å†å‡ºçŽ° `__NOP_FLUX_DEBUGGER_API__`ã€‚
+- åœ¨ `docs/architecture/debugger-runtime.md` ä¸­è¡¥å……ä¸€ä¸ªâ€œautomation contractâ€å°èŠ‚ï¼Œæ˜Žç¡®å“ªäº›æ–¹æ³•å±žäºŽç¨³å®šæŽ¥å£ï¼Œå“ªäº›åªæ˜¯å½“å‰ UI ä¾¿æ·èƒ½åŠ›ã€‚
+- æ ¡æ­£ playground é¡µé¢é‡Œçš„ AI è„šæœ¬ç¤ºä¾‹å’Œè¯´æ˜Žæ–‡å­—ï¼Œç¡®ä¿ç¤ºä¾‹ä»£ç ä¸ŽçœŸå®žå…¨å±€ API ä¸€è‡´ã€‚
+- ä¸ºåŽç»­ Phase 1-4 è¡¥ä¸€ä¸ªæœ€å°æœ¯è¯­è¡¨ï¼š`requestKey`ã€`requestInstanceId`ã€`interactionId`ã€`trace anchor event`ã€`scopeChain`ã€`node inspect payload`ã€‚
 
-Exit criteria: 文档、README、playground 示例和当前实现使用同一套 debugger 术语和全局命名，不再误导 AI、用户或测试脚本。
+Exit criteria: æ–‡æ¡£ã€READMEã€playground ç¤ºä¾‹å’Œå½“å‰å®žçŽ°ä½¿ç”¨åŒä¸€å¥— debugger æœ¯è¯­å’Œå…¨å±€å‘½åï¼Œä¸å†è¯¯å¯¼ AIã€ç”¨æˆ·æˆ–æµ‹è¯•è„šæœ¬ã€‚
 
-**Phase 1 — 稳定请求实例标识与事件因果字段**
+**Phase 1 â€” ç¨³å®šè¯·æ±‚å®žä¾‹æ ‡è¯†ä¸Žäº‹ä»¶å› æžœå­—æ®µ**
 
 Targets: `packages/flux-core/src/types/renderer-api.ts`, `packages/flux-core/src/types/actions.ts`, `packages/nop-debugger/src/types.ts`, `packages/nop-debugger/src/controller-helpers.ts`, `packages/nop-debugger/src/adapters.ts`, `packages/nop-debugger/src/diagnostics.ts`, tests under `packages/nop-debugger/src/*.test.ts`
 
-- 在 debugger 内部事件模型中区分两层概念：
-  - `requestKey`：用于“语义相同请求”的归类
-  - `requestInstanceId`：用于区分具体某一次请求实例
-- 新增事件关联字段，至少包括：
+- åœ¨ debugger å†…éƒ¨äº‹ä»¶æ¨¡åž‹ä¸­åŒºåˆ†ä¸¤å±‚æ¦‚å¿µï¼š
+  - `requestKey`ï¼šç”¨äºŽâ€œè¯­ä¹‰ç›¸åŒè¯·æ±‚â€çš„å½’ç±»
+  - `requestInstanceId`ï¼šç”¨äºŽåŒºåˆ†å…·ä½“æŸä¸€æ¬¡è¯·æ±‚å®žä¾‹
+- æ–°å¢žäº‹ä»¶å…³è”å­—æ®µï¼Œè‡³å°‘åŒ…æ‹¬ï¼š
   - `requestInstanceId?`
   - `interactionId?`
-  - `parentEventId?` 或等价的 `parentSpanId?`
-- 对 `api:start` / `api:end` / `api:abort` 事件改为按实例关联，不再只靠语义 key 归并。
-- 保持现有 monitor 契约尽量最小变动：如果 `flux-core` 上游 monitor payload 暂不增加新字段，则由 `nop-debugger` 在 `decorateEnv()` / `fetcher` wrapper / `beforeAction` 边界自行生成并传播最小关联上下文。
-- `getInteractionTrace()` 在保持现有启发式兼容的前提下，优先消费新的 instance/interaction 关联字段；只有没有新字段时才回退到旧的 `requestKey/nodeId/path/actionType` 规则。
-- 更新 Network Tab 的归并逻辑，让其按 request instance 聚合，再提供可选的“按 requestKey 分组”视图，而不是反过来。
+  - `parentEventId?` æˆ–ç­‰ä»·çš„ `parentSpanId?`
+- å¯¹ `api:start` / `api:end` / `api:abort` äº‹ä»¶æ”¹ä¸ºæŒ‰å®žä¾‹å…³è”ï¼Œä¸å†åªé è¯­ä¹‰ key å½’å¹¶ã€‚
+- ä¿æŒçŽ°æœ‰ monitor å¥‘çº¦å°½é‡æœ€å°å˜åŠ¨ï¼šå¦‚æžœ `flux-core` ä¸Šæ¸¸ monitor payload æš‚ä¸å¢žåŠ æ–°å­—æ®µï¼Œåˆ™ç”± `nop-debugger` åœ¨ `decorateEnv()` / `fetcher` wrapper / `beforeAction` è¾¹ç•Œè‡ªè¡Œç”Ÿæˆå¹¶ä¼ æ’­æœ€å°å…³è”ä¸Šä¸‹æ–‡ã€‚
+- `getInteractionTrace()` åœ¨ä¿æŒçŽ°æœ‰å¯å‘å¼å…¼å®¹çš„å‰æä¸‹ï¼Œä¼˜å…ˆæ¶ˆè´¹æ–°çš„ instance/interaction å…³è”å­—æ®µï¼›åªæœ‰æ²¡æœ‰æ–°å­—æ®µæ—¶æ‰å›žé€€åˆ°æ—§çš„ `requestKey/nodeId/path/actionType` è§„åˆ™ã€‚
+- æ›´æ–° Network Tab çš„å½’å¹¶é€»è¾‘ï¼Œè®©å…¶æŒ‰ request instance èšåˆï¼Œå†æä¾›å¯é€‰çš„â€œæŒ‰ requestKey åˆ†ç»„â€è§†å›¾ï¼Œè€Œä¸æ˜¯åè¿‡æ¥ã€‚
 
-Exit criteria: 并发请求、同 URL 不同 payload、同节点重复提交等场景下，`waitForEvent()`、Network 归并和 interaction trace 都能稳定指向某一次具体请求实例，而不是模糊匹配到“某一类请求”。
+Exit criteria: å¹¶å‘è¯·æ±‚ã€åŒ URL ä¸åŒ payloadã€åŒèŠ‚ç‚¹é‡å¤æäº¤ç­‰åœºæ™¯ä¸‹ï¼Œ`waitForEvent()`ã€Network å½’å¹¶å’Œ interaction trace éƒ½èƒ½ç¨³å®šæŒ‡å‘æŸä¸€æ¬¡å…·ä½“è¯·æ±‚å®žä¾‹ï¼Œè€Œä¸æ˜¯æ¨¡ç³ŠåŒ¹é…åˆ°â€œæŸä¸€ç±»è¯·æ±‚â€ã€‚
 
-**Phase 2 — 增强 inspect payload 与 Node diagnostics**
+**Phase 2 â€” å¢žå¼º inspect payload ä¸Ž Node diagnostics**
 
 Targets: `packages/flux-core/src/types/renderer-component.ts`, `packages/flux-runtime/src/component-handle-registry.ts`, `packages/nop-debugger/src/types.ts`, `packages/nop-debugger/src/controller.ts`, `packages/nop-debugger/src/panel/node-tab.tsx`, related tests
 
-- 扩展 `NopComponentInspectResult`，至少补齐：
+- æ‰©å±• `NopComponentInspectResult`ï¼Œè‡³å°‘è¡¥é½ï¼š
   - `scopeChain?: Array<{ id?: string; label: string; data: Record<string, unknown> }>`
   - `metaSummary?: Record<string, unknown>`
   - `propsSummary?: Record<string, unknown>`
   - `availableMethods?: readonly string[]`
-  - `registryEntry?` 或等价句柄摘要
-- 调研当前 `ScopeRef` / `FormRuntime` / `RendererComponentProps` 可稳定拿到哪些调试数据，优先使用现有公开能力；如需新增 debug-only 契约，保持最小、只读、无副作用。
-- 如果 `ComponentHandle` 需要补充调试接口，优先增加类似 `getDebugData?(): Record<string, unknown>` 或等价的 capabilities 子能力，而不是把 runtime 私有状态直接暴露给 debugger。
-- 在 Node Tab 中分开展示：
-  - Handle / DOM 概览
-  - Props / Meta 摘要
+  - `registryEntry?` æˆ–ç­‰ä»·å¥æŸ„æ‘˜è¦
+- è°ƒç ”å½“å‰ `ScopeRef` / `FormRuntime` / `RendererComponentProps` å¯ç¨³å®šæ‹¿åˆ°å“ªäº›è°ƒè¯•æ•°æ®ï¼Œä¼˜å…ˆä½¿ç”¨çŽ°æœ‰å…¬å¼€èƒ½åŠ›ï¼›å¦‚éœ€æ–°å¢ž debug-only å¥‘çº¦ï¼Œä¿æŒæœ€å°ã€åªè¯»ã€æ— å‰¯ä½œç”¨ã€‚
+- å¦‚æžœ `ComponentHandle` éœ€è¦è¡¥å……è°ƒè¯•æŽ¥å£ï¼Œä¼˜å…ˆå¢žåŠ ç±»ä¼¼ `getDebugData?(): Record<string, unknown>` æˆ–ç­‰ä»·çš„ capabilities å­èƒ½åŠ›ï¼Œè€Œä¸æ˜¯æŠŠ runtime ç§æœ‰çŠ¶æ€ç›´æŽ¥æš´éœ²ç»™ debuggerã€‚
+- åœ¨ Node Tab ä¸­åˆ†å¼€å±•ç¤ºï¼š
+  - Handle / DOM æ¦‚è§ˆ
+  - Props / Meta æ‘˜è¦
   - Form State
   - Scope Chain
   - Recent node events
-- 让 `getNodeDiagnostics()` 与 `inspectByCid()` 之间建立更清晰的互补关系：inspect 面向“当前节点状态”，diagnostics 面向“当前节点最近行为”。必要时新增 `getNodeInspectSnapshot()` 聚合接口，避免 UI 和 AI 反复手工拼装两个接口的结果。
+- è®© `getNodeDiagnostics()` ä¸Ž `inspectByCid()` ä¹‹é—´å»ºç«‹æ›´æ¸…æ™°çš„äº’è¡¥å…³ç³»ï¼šinspect é¢å‘â€œå½“å‰èŠ‚ç‚¹çŠ¶æ€â€ï¼Œdiagnostics é¢å‘â€œå½“å‰èŠ‚ç‚¹æœ€è¿‘è¡Œä¸ºâ€ã€‚å¿…è¦æ—¶æ–°å¢ž `getNodeInspectSnapshot()` èšåˆæŽ¥å£ï¼Œé¿å… UI å’Œ AI åå¤æ‰‹å·¥æ‹¼è£…ä¸¤ä¸ªæŽ¥å£çš„ç»“æžœã€‚
 
-Exit criteria: 选中页面节点后，开发者和 AI 都能直接看见“当前节点是什么、来自哪个 handle、拿到了什么 props/meta、处在哪条 scope chain 上、最近发生过什么事件”，而不是只看到一层 `scopeData` 快照。
+Exit criteria: é€‰ä¸­é¡µé¢èŠ‚ç‚¹åŽï¼Œå¼€å‘è€…å’Œ AI éƒ½èƒ½ç›´æŽ¥çœ‹è§â€œå½“å‰èŠ‚ç‚¹æ˜¯ä»€ä¹ˆã€æ¥è‡ªå“ªä¸ª handleã€æ‹¿åˆ°äº†ä»€ä¹ˆ props/metaã€å¤„åœ¨å“ªæ¡ scope chain ä¸Šã€æœ€è¿‘å‘ç”Ÿè¿‡ä»€ä¹ˆäº‹ä»¶â€ï¼Œè€Œä¸æ˜¯åªçœ‹åˆ°ä¸€å±‚ `scopeData` å¿«ç…§ã€‚
 
-**Phase 3 — AI 友好的高层失败摘要与异常接口**
+**Phase 3 â€” AI å‹å¥½çš„é«˜å±‚å¤±è´¥æ‘˜è¦ä¸Žå¼‚å¸¸æŽ¥å£**
 
 Targets: `packages/nop-debugger/src/types.ts`, `packages/nop-debugger/src/diagnostics.ts`, `packages/nop-debugger/src/controller.ts`, `packages/nop-debugger/src/automation.ts`, tests
 
-- 在现有 `createDiagnosticReport()` 之外，新增更聚焦的高层摘要接口，例如：
+- åœ¨çŽ°æœ‰ `createDiagnosticReport()` ä¹‹å¤–ï¼Œæ–°å¢žæ›´èšç„¦çš„é«˜å±‚æ‘˜è¦æŽ¥å£ï¼Œä¾‹å¦‚ï¼š
   - `getLatestFailedRequest()`
   - `getLatestFailedAction()`
   - `getNodeAnomalies({ nodeId | path })`
   - `getRecentFailures({ sinceTimestamp, limit })`
-- 高层摘要对象必须结构化，不能只是拼字符串；需要直接包含关键事件引用、request instance、node 信息和已聚合的 probable cause hints。
-- “probable cause hints” 只做简单、确定性的规则提示，例如：
+- é«˜å±‚æ‘˜è¦å¯¹è±¡å¿…é¡»ç»“æž„åŒ–ï¼Œä¸èƒ½åªæ˜¯æ‹¼å­—ç¬¦ä¸²ï¼›éœ€è¦ç›´æŽ¥åŒ…å«å…³é”®äº‹ä»¶å¼•ç”¨ã€request instanceã€node ä¿¡æ¯å’Œå·²èšåˆçš„ probable cause hintsã€‚
+- â€œprobable cause hintsâ€ åªåšç®€å•ã€ç¡®å®šæ€§çš„è§„åˆ™æç¤ºï¼Œä¾‹å¦‚ï¼š
   - request aborted
   - repeated render bursts
   - action ended with error after api failure
   - form has validation errors before submit
-- 保持这些 hint 是辅助字段，不把 debugger 变成黑箱诊断系统。
-- `createDiagnosticReport()` 可选择性引用这些高层摘要，但不强制改变现有输出结构，优先做向后兼容增强。
+- ä¿æŒè¿™äº› hint æ˜¯è¾…åŠ©å­—æ®µï¼Œä¸æŠŠ debugger å˜æˆé»‘ç®±è¯Šæ–­ç³»ç»Ÿã€‚
+- `createDiagnosticReport()` å¯é€‰æ‹©æ€§å¼•ç”¨è¿™äº›é«˜å±‚æ‘˜è¦ï¼Œä½†ä¸å¼ºåˆ¶æ”¹å˜çŽ°æœ‰è¾“å‡ºç»“æž„ï¼Œä¼˜å…ˆåšå‘åŽå…¼å®¹å¢žå¼ºã€‚
 
-Exit criteria: 当自动化测试失败时，AI 不需要每次从零遍历所有 events 就能拿到“最近失败的请求/动作/节点异常”这种首轮诊断材料。
+Exit criteria: å½“è‡ªåŠ¨åŒ–æµ‹è¯•å¤±è´¥æ—¶ï¼ŒAI ä¸éœ€è¦æ¯æ¬¡ä»Žé›¶éåŽ†æ‰€æœ‰ events å°±èƒ½æ‹¿åˆ°â€œæœ€è¿‘å¤±è´¥çš„è¯·æ±‚/åŠ¨ä½œ/èŠ‚ç‚¹å¼‚å¸¸â€è¿™ç§é¦–è½®è¯Šæ–­ææ–™ã€‚
 
-**Phase 4 — Node 级表达式诊断能力（受控）**
+**Phase 4 â€” Node çº§è¡¨è¾¾å¼è¯Šæ–­èƒ½åŠ›ï¼ˆå—æŽ§ï¼‰**
 
 Targets: `packages/nop-debugger/src/panel.tsx`, `packages/nop-debugger/src/panel/node-tab.tsx`, `packages/nop-debugger/src/controller.ts`, potentially `packages/flux-formula` integration points, tests/docs
 
-- 把当前禁用占位的 Expression Evaluator 改成真正可用的“公式/表达式调试器”，但只允许走现有表达式引擎，不允许执行任意 JS。
-- 设计一个受控接口，例如：
+- æŠŠå½“å‰ç¦ç”¨å ä½çš„ Expression Evaluator æ”¹æˆçœŸæ­£å¯ç”¨çš„â€œå…¬å¼/è¡¨è¾¾å¼è°ƒè¯•å™¨â€ï¼Œä½†åªå…è®¸èµ°çŽ°æœ‰è¡¨è¾¾å¼å¼•æ“Žï¼Œä¸å…è®¸æ‰§è¡Œä»»æ„ JSã€‚
+- è®¾è®¡ä¸€ä¸ªå—æŽ§æŽ¥å£ï¼Œä¾‹å¦‚ï¼š
   - `evaluateNodeExpression({ cid, expression })`
-  - 或 `evaluateScopeExpression({ scopeChain, expression })`
-- 上下文默认以当前节点最内层 scope 为根，并在返回结果时同时带上：
-  - 结果值
-  - 解析错误（如有）
-  - 用到的主要变量键（如果表达式引擎可提供）
-- UI 层只作为入口，真正能力应同时通过 automation API 暴露，这样 AI 在集成测试中也能使用。
-- 如实现成本或安全边界暂时不满足，本阶段允许降级为“计划内 deferred item”，但必须明确原因和替代接口，而不是继续保留误导性的假入口。
+  - æˆ– `evaluateScopeExpression({ scopeChain, expression })`
+- ä¸Šä¸‹æ–‡é»˜è®¤ä»¥å½“å‰èŠ‚ç‚¹æœ€å†…å±‚ scope ä¸ºæ ¹ï¼Œå¹¶åœ¨è¿”å›žç»“æžœæ—¶åŒæ—¶å¸¦ä¸Šï¼š
+  - ç»“æžœå€¼
+  - è§£æžé”™è¯¯ï¼ˆå¦‚æœ‰ï¼‰
+  - ç”¨åˆ°çš„ä¸»è¦å˜é‡é”®ï¼ˆå¦‚æžœè¡¨è¾¾å¼å¼•æ“Žå¯æä¾›ï¼‰
+- UI å±‚åªä½œä¸ºå…¥å£ï¼ŒçœŸæ­£èƒ½åŠ›åº”åŒæ—¶é€šè¿‡ automation API æš´éœ²ï¼Œè¿™æ · AI åœ¨é›†æˆæµ‹è¯•ä¸­ä¹Ÿèƒ½ä½¿ç”¨ã€‚
+- å¦‚å®žçŽ°æˆæœ¬æˆ–å®‰å…¨è¾¹ç•Œæš‚æ—¶ä¸æ»¡è¶³ï¼Œæœ¬é˜¶æ®µå…è®¸é™çº§ä¸ºâ€œè®¡åˆ’å†… deferred itemâ€ï¼Œä½†å¿…é¡»æ˜Žç¡®åŽŸå› å’Œæ›¿ä»£æŽ¥å£ï¼Œè€Œä¸æ˜¯ç»§ç»­ä¿ç•™è¯¯å¯¼æ€§çš„å‡å…¥å£ã€‚
 
-Exit criteria: Node Tab 中的表达式调试要么成为正式可用功能，要么被明确移除/降级，不再存在看似可用但实际被硬编码禁用的入口。
+Exit criteria: Node Tab ä¸­çš„è¡¨è¾¾å¼è°ƒè¯•è¦ä¹ˆæˆä¸ºæ­£å¼å¯ç”¨åŠŸèƒ½ï¼Œè¦ä¹ˆè¢«æ˜Žç¡®ç§»é™¤/é™çº§ï¼Œä¸å†å­˜åœ¨çœ‹ä¼¼å¯ç”¨ä½†å®žé™…è¢«ç¡¬ç¼–ç ç¦ç”¨çš„å…¥å£ã€‚
 
-**Phase 5 — 契约级 E2E 回归与实验面升级**
+**Phase 5 â€” å¥‘çº¦çº§ E2E å›žå½’ä¸Žå®žéªŒé¢å‡çº§**
 
 Targets: `tests/e2e/debugger.spec.ts`, new focused e2e specs if needed, `apps/playground/src/pages/FluxBasicPage.tsx`, `apps/playground/src/pages/DebuggerLabPage.tsx`
 
-- 把 debugger 当作自动化契约来写 E2E，而不是只测试 UI 可见性。新增至少以下真实场景：
-  - 在 `FluxBasicPage` 提交真实表单后，使用 `waitForEvent({ kind: 'api:end' })` 等待并校验响应事件
-  - 校验 `getInteractionTrace({ inferFromLatest: true })` 能返回该次提交链路
-  - 对真实页面中的表单或字段节点执行 `inspectByElement()` / `inspectByCid()` 并断言结果结构
-  - 校验 `exportSession()` 对敏感字段脱敏
-  - 校验 request instance 级归并在并发请求场景下正确工作
-- 在 `DebuggerLabPage` 中增加专门用于自动化验证的场景按钮或展示区域，例如：
-  - 并发 API 场景
-  - request abort 场景
-  - action -> api -> error 复合链路场景
-  - inspect seed 节点
-- 对 automation API 的回归优先使用 `page.evaluate()` 直接读全局 API，而不是通过 panel DOM 文本断言。
+- æŠŠ debugger å½“ä½œè‡ªåŠ¨åŒ–å¥‘çº¦æ¥å†™ E2Eï¼Œè€Œä¸æ˜¯åªæµ‹è¯• UI å¯è§æ€§ã€‚æ–°å¢žè‡³å°‘ä»¥ä¸‹çœŸå®žåœºæ™¯ï¼š
+  - åœ¨ `FluxBasicPage` æäº¤çœŸå®žè¡¨å•åŽï¼Œä½¿ç”¨ `waitForEvent({ kind: 'api:end' })` ç­‰å¾…å¹¶æ ¡éªŒå“åº”äº‹ä»¶
+  - æ ¡éªŒ `getInteractionTrace({ inferFromLatest: true })` èƒ½è¿”å›žè¯¥æ¬¡æäº¤é“¾è·¯
+  - å¯¹çœŸå®žé¡µé¢ä¸­çš„è¡¨å•æˆ–å­—æ®µèŠ‚ç‚¹æ‰§è¡Œ `inspectByElement()` / `inspectByCid()` å¹¶æ–­è¨€ç»“æžœç»“æž„
+  - æ ¡éªŒ `exportSession()` å¯¹æ•æ„Ÿå­—æ®µè„±æ•
+  - æ ¡éªŒ request instance çº§å½’å¹¶åœ¨å¹¶å‘è¯·æ±‚åœºæ™¯ä¸‹æ­£ç¡®å·¥ä½œ
+- åœ¨ `DebuggerLabPage` ä¸­å¢žåŠ ä¸“é—¨ç”¨äºŽè‡ªåŠ¨åŒ–éªŒè¯çš„åœºæ™¯æŒ‰é’®æˆ–å±•ç¤ºåŒºåŸŸï¼Œä¾‹å¦‚ï¼š
+  - å¹¶å‘ API åœºæ™¯
+  - request abort åœºæ™¯
+  - action -> api -> error å¤åˆé“¾è·¯åœºæ™¯
+  - inspect seed èŠ‚ç‚¹
+- å¯¹ automation API çš„å›žå½’ä¼˜å…ˆä½¿ç”¨ `page.evaluate()` ç›´æŽ¥è¯»å…¨å±€ APIï¼Œè€Œä¸æ˜¯é€šè¿‡ panel DOM æ–‡æœ¬æ–­è¨€ã€‚
 
-Exit criteria: `waitForEvent()`、`getInteractionTrace()`、`inspectByElement()`、`exportSession()` 和 request instance 归并语义都被 Playwright 直接保护，debugger 真正成为集成测试诊断基础设施的一部分。
+Exit criteria: `waitForEvent()`ã€`getInteractionTrace()`ã€`inspectByElement()`ã€`exportSession()` å’Œ request instance å½’å¹¶è¯­ä¹‰éƒ½è¢« Playwright ç›´æŽ¥ä¿æŠ¤ï¼Œdebugger çœŸæ­£æˆä¸ºé›†æˆæµ‹è¯•è¯Šæ–­åŸºç¡€è®¾æ–½çš„ä¸€éƒ¨åˆ†ã€‚
 
-**Phase 6 — 文档收口与兼容性审查**
+**Phase 6 â€” æ–‡æ¡£æ”¶å£ä¸Žå…¼å®¹æ€§å®¡æŸ¥**
 
 Targets: `docs/architecture/debugger-runtime.md`, `README.md`, `docs/logs/`, touched package docs/tests
 
-- 在所有能力落地后，更新 `docs/architecture/debugger-runtime.md`，明确第二阶段目标哪些已经落地，哪些被 deferred。
-- 更新 README 中 debugger 和 AI 调试示例，确保示例方法和全局对象名称准确。
-- 每个阶段完成后补 daily log，记录关键取舍和未做事项。
-- 如果某个能力需要修改 `flux-core` 契约，补一段“为什么值得进 core，而不是停留在 debugger 本地聚合”的说明，避免后续再次漂移。
+- åœ¨æ‰€æœ‰èƒ½åŠ›è½åœ°åŽï¼Œæ›´æ–° `docs/architecture/debugger-runtime.md`ï¼Œæ˜Žç¡®ç¬¬äºŒé˜¶æ®µç›®æ ‡å“ªäº›å·²ç»è½åœ°ï¼Œå“ªäº›è¢« deferredã€‚
+- æ›´æ–° README ä¸­ debugger å’Œ AI è°ƒè¯•ç¤ºä¾‹ï¼Œç¡®ä¿ç¤ºä¾‹æ–¹æ³•å’Œå…¨å±€å¯¹è±¡åç§°å‡†ç¡®ã€‚
+- æ¯ä¸ªé˜¶æ®µå®ŒæˆåŽè¡¥ daily logï¼Œè®°å½•å…³é”®å–èˆå’Œæœªåšäº‹é¡¹ã€‚
+- å¦‚æžœæŸä¸ªèƒ½åŠ›éœ€è¦ä¿®æ”¹ `flux-core` å¥‘çº¦ï¼Œè¡¥ä¸€æ®µâ€œä¸ºä»€ä¹ˆå€¼å¾—è¿› coreï¼Œè€Œä¸æ˜¯åœç•™åœ¨ debugger æœ¬åœ°èšåˆâ€çš„è¯´æ˜Žï¼Œé¿å…åŽç»­å†æ¬¡æ¼‚ç§»ã€‚
 
-Exit criteria: 文档、代码、自动化示例和测试契约对同一套 debugger 能力描述一致，不再依赖旧分析文档或 plan 文件猜测当前状态。
+Exit criteria: æ–‡æ¡£ã€ä»£ç ã€è‡ªåŠ¨åŒ–ç¤ºä¾‹å’Œæµ‹è¯•å¥‘çº¦å¯¹åŒä¸€å¥— debugger èƒ½åŠ›æè¿°ä¸€è‡´ï¼Œä¸å†ä¾èµ–æ—§åˆ†æžæ–‡æ¡£æˆ– plan æ–‡ä»¶çŒœæµ‹å½“å‰çŠ¶æ€ã€‚
 
 ## Scope
 
@@ -192,26 +192,26 @@ Exit criteria: 文档、代码、自动化示例和测试契约对同一套 debu
 - `apps/playground/src/pages/FluxBasicPage.tsx`
 - `apps/playground/src/pages/DebuggerLabPage.tsx`
 - `tests/e2e/debugger.spec.ts`
-- 相关单元测试文件
+- ç›¸å…³å•å…ƒæµ‹è¯•æ–‡ä»¶
 
-## 不在 Scope 内的事项
+## ä¸åœ¨ Scope å†…çš„äº‹é¡¹
 
-- debugger 远程上传、服务端存储或线上会话回放
-- 独立监控后端、告警系统或 tracing 平台接入
-- 把 playground 重构成新的产品级 DevTools 应用
-- 大规模重写 panel 视觉系统或切换 UI 框架
-- 非 debugger 目标驱动的 `flux-runtime` / `flux-react` 结构重构
+- debugger è¿œç¨‹ä¸Šä¼ ã€æœåŠ¡ç«¯å­˜å‚¨æˆ–çº¿ä¸Šä¼šè¯å›žæ”¾
+- ç‹¬ç«‹ç›‘æŽ§åŽç«¯ã€å‘Šè­¦ç³»ç»Ÿæˆ– tracing å¹³å°æŽ¥å…¥
+- æŠŠ playground é‡æž„æˆæ–°çš„äº§å“çº§ DevTools åº”ç”¨
+- å¤§è§„æ¨¡é‡å†™ panel è§†è§‰ç³»ç»Ÿæˆ–åˆ‡æ¢ UI æ¡†æž¶
+- éž debugger ç›®æ ‡é©±åŠ¨çš„ `flux-runtime` / `flux-react` ç»“æž„é‡æž„
 
 ## Effort
 
-- 预计 7-10 个工作日。
-- 建议拆成 6 个独立执行切片：术语校准、请求实例与因果字段、inspect 增强、高层失败摘要、表达式诊断、契约级 E2E。
-- `Phase 1` 与 `Phase 2` 可以并行设计，但实现上建议先完成 `Phase 1`，因为 inspect 与 trace 都会依赖新的关联模型。
-- `Phase 3` 与 `Phase 5` 可以部分并行：摘要接口落地后即可开始补 E2E。
+- é¢„è®¡ 7-10 ä¸ªå·¥ä½œæ—¥ã€‚
+- å»ºè®®æ‹†æˆ 6 ä¸ªç‹¬ç«‹æ‰§è¡Œåˆ‡ç‰‡ï¼šæœ¯è¯­æ ¡å‡†ã€è¯·æ±‚å®žä¾‹ä¸Žå› æžœå­—æ®µã€inspect å¢žå¼ºã€é«˜å±‚å¤±è´¥æ‘˜è¦ã€è¡¨è¾¾å¼è¯Šæ–­ã€å¥‘çº¦çº§ E2Eã€‚
+- `Phase 1` ä¸Ž `Phase 2` å¯ä»¥å¹¶è¡Œè®¾è®¡ï¼Œä½†å®žçŽ°ä¸Šå»ºè®®å…ˆå®Œæˆ `Phase 1`ï¼Œå› ä¸º inspect ä¸Ž trace éƒ½ä¼šä¾èµ–æ–°çš„å…³è”æ¨¡åž‹ã€‚
+- `Phase 3` ä¸Ž `Phase 5` å¯ä»¥éƒ¨åˆ†å¹¶è¡Œï¼šæ‘˜è¦æŽ¥å£è½åœ°åŽå³å¯å¼€å§‹è¡¥ E2Eã€‚
 
 ## Verification
 
-每个阶段至少执行 `@nop-chaos/nop-debugger` 包级验证；若触及 core/runtime/react，再追加对应分包验证。最终做全仓验证。
+æ¯ä¸ªé˜¶æ®µè‡³å°‘æ‰§è¡Œ `@nop-chaos/nop-debugger` åŒ…çº§éªŒè¯ï¼›è‹¥è§¦åŠ core/runtime/reactï¼Œå†è¿½åŠ å¯¹åº”åˆ†åŒ…éªŒè¯ã€‚æœ€ç»ˆåšå…¨ä»“éªŒè¯ã€‚
 
 ```bash
 pnpm --filter @nop-chaos/nop-debugger typecheck
@@ -244,24 +244,25 @@ pnpm test
 
 ## Acceptance Criteria
 
-- 并发请求场景下，debugger 事件可稳定区分“语义相同请求”和“某一次请求实例”。
-- `getInteractionTrace()` 优先依赖显式关联字段，而不是只靠旧启发式匹配。
-- `inspectByCid()` / `inspectByElement()` 返回的结构足够展示 scope chain、props/meta 摘要和 handle 摘要。
-- Node Tab 的表达式入口要么可用、可测试、可通过 automation API 调用，要么被明确删除并在文档中说明。
-- `waitForEvent()`、`getInteractionTrace()`、`inspectByElement()`、`exportSession()` 都有 E2E 回归覆盖。
-- 文档、README、playground 示例和代码使用同一套 debugger 全局对象名称与术语。
+- å¹¶å‘è¯·æ±‚åœºæ™¯ä¸‹ï¼Œdebugger äº‹ä»¶å¯ç¨³å®šåŒºåˆ†â€œè¯­ä¹‰ç›¸åŒè¯·æ±‚â€å’Œâ€œæŸä¸€æ¬¡è¯·æ±‚å®žä¾‹â€ã€‚
+- `getInteractionTrace()` ä¼˜å…ˆä¾èµ–æ˜¾å¼å…³è”å­—æ®µï¼Œè€Œä¸æ˜¯åªé æ—§å¯å‘å¼åŒ¹é…ã€‚
+- `inspectByCid()` / `inspectByElement()` è¿”å›žçš„ç»“æž„è¶³å¤Ÿå±•ç¤º scope chainã€props/meta æ‘˜è¦å’Œ handle æ‘˜è¦ã€‚
+- Node Tab çš„è¡¨è¾¾å¼å…¥å£è¦ä¹ˆå¯ç”¨ã€å¯æµ‹è¯•ã€å¯é€šè¿‡ automation API è°ƒç”¨ï¼Œè¦ä¹ˆè¢«æ˜Žç¡®åˆ é™¤å¹¶åœ¨æ–‡æ¡£ä¸­è¯´æ˜Žã€‚
+- `waitForEvent()`ã€`getInteractionTrace()`ã€`inspectByElement()`ã€`exportSession()` éƒ½æœ‰ E2E å›žå½’è¦†ç›–ã€‚
+- æ–‡æ¡£ã€READMEã€playground ç¤ºä¾‹å’Œä»£ç ä½¿ç”¨åŒä¸€å¥— debugger å…¨å±€å¯¹è±¡åç§°ä¸Žæœ¯è¯­ã€‚
 
-## 风险与回退
+## é£Žé™©ä¸Žå›žé€€
 
-- 风险 1：如果过早把 tracing 字段上推到 `flux-core` monitor 契约，可能导致跨包改动过大。规避方式：优先在 `nop-debugger` 本地 wrapper 中生成关联字段，只有证明多个调用点都需要时才上推契约。
-- 风险 2：inspect 增强若直接暴露 runtime 私有状态，容易破坏包边界。规避方式：优先走只读 debug snapshot 或最小化 debug capability，而不是透传内部对象。
-- 风险 3：表达式 evaluator 若边界不清，容易退化成任意代码执行。规避方式：只允许既有公式/表达式引擎，不允许 JS `eval` / `new Function`。
-- 风险 4：E2E 若继续依赖 panel DOM，会让契约测试脆弱。规避方式：所有关键自动化断言都通过 `window.__NOP_DEBUGGER_API__` 进行。
-- 风险 5：workspace 级验证可能再次命中 unrelated 问题。若出现这种情况，按 repo 规范记录 blocker，不把 unrelated failure 误记为本计划回归。
+- é£Žé™© 1ï¼šå¦‚æžœè¿‡æ—©æŠŠ tracing å­—æ®µä¸ŠæŽ¨åˆ° `flux-core` monitor å¥‘çº¦ï¼Œå¯èƒ½å¯¼è‡´è·¨åŒ…æ”¹åŠ¨è¿‡å¤§ã€‚è§„é¿æ–¹å¼ï¼šä¼˜å…ˆåœ¨ `nop-debugger` æœ¬åœ° wrapper ä¸­ç”Ÿæˆå…³è”å­—æ®µï¼Œåªæœ‰è¯æ˜Žå¤šä¸ªè°ƒç”¨ç‚¹éƒ½éœ€è¦æ—¶æ‰ä¸ŠæŽ¨å¥‘çº¦ã€‚
+- é£Žé™© 2ï¼šinspect å¢žå¼ºè‹¥ç›´æŽ¥æš´éœ² runtime ç§æœ‰çŠ¶æ€ï¼Œå®¹æ˜“ç ´ååŒ…è¾¹ç•Œã€‚è§„é¿æ–¹å¼ï¼šä¼˜å…ˆèµ°åªè¯» debug snapshot æˆ–æœ€å°åŒ– debug capabilityï¼Œè€Œä¸æ˜¯é€ä¼ å†…éƒ¨å¯¹è±¡ã€‚
+- é£Žé™© 3ï¼šè¡¨è¾¾å¼ evaluator è‹¥è¾¹ç•Œä¸æ¸…ï¼Œå®¹æ˜“é€€åŒ–æˆä»»æ„ä»£ç æ‰§è¡Œã€‚è§„é¿æ–¹å¼ï¼šåªå…è®¸æ—¢æœ‰å…¬å¼/è¡¨è¾¾å¼å¼•æ“Žï¼Œä¸å…è®¸ JS `eval` / `new Function`ã€‚
+- é£Žé™© 4ï¼šE2E è‹¥ç»§ç»­ä¾èµ– panel DOMï¼Œä¼šè®©å¥‘çº¦æµ‹è¯•è„†å¼±ã€‚è§„é¿æ–¹å¼ï¼šæ‰€æœ‰å…³é”®è‡ªåŠ¨åŒ–æ–­è¨€éƒ½é€šè¿‡ `window.__NOP_DEBUGGER_API__` è¿›è¡Œã€‚
+- é£Žé™© 5ï¼šworkspace çº§éªŒè¯å¯èƒ½å†æ¬¡å‘½ä¸­ unrelated é—®é¢˜ã€‚è‹¥å‡ºçŽ°è¿™ç§æƒ…å†µï¼ŒæŒ‰ repo è§„èŒƒè®°å½• blockerï¼Œä¸æŠŠ unrelated failure è¯¯è®°ä¸ºæœ¬è®¡åˆ’å›žå½’ã€‚
 
 ## Related Documents
 
 - `docs/architecture/debugger-runtime.md`
-- `docs/analysis/framework-debugger-design.md`
+- `docs/analysis/2026-03-21-framework-debugger-design.md`
 - `docs/plans/20-nop-debugger-implementation-plan.md`
 - `docs/plans/22-debugger-node-inspector-enhancement-plan.md`
+

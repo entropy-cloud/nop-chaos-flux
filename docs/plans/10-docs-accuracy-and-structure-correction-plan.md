@@ -1,11 +1,11 @@
-# Documentation Accuracy and Structure Correction Plan
+﻿# Documentation Accuracy and Structure Correction Plan
 
 > Plan Status: completed
 > Last Reviewed: 2026-04-04
 
 
-> **Implementation Status: ✅ COMPLETED**
-> W1–W7 are now closed at the repository level. A final 2026-04-04 audit confirmed that active docs under `docs/index.md`, `docs/architecture/`, `docs/references/`, and `docs/examples/` no longer carry the stale `amis-*` file references, `DialogInstance`, or `form-validation-errors.ts` references called out in this plan. Secondary analysis/reference material now clearly identifies itself as comparative or historical rather than current source of truth.
+> **Implementation Status: âœ… COMPLETED**
+> W1â€“W7 are now closed at the repository level. A final 2026-04-04 audit confirmed that active docs under `docs/index.md`, `docs/architecture/`, `docs/references/`, and `docs/examples/` no longer carry the stale `amis-*` file references, `DialogInstance`, or `form-validation-errors.ts` references called out in this plan. Secondary analysis/reference material now clearly identifies itself as comparative or historical rather than current source of truth.
 >
 > This status was re-verified against the codebase on 2026-04-04.
 
@@ -17,7 +17,7 @@ Final re-check performed on 2026-04-04:
 
 - active docs no longer point at `docs/architecture/amis-core.md` or `docs/architecture/amis-runtime-module-boundaries.md`
 - active docs no longer use stale type/file references such as `DialogInstance` or `packages/flux-runtime/src/form-validation-errors.ts`
-- `docs/analysis/form-validation-comparison.md` and the validation template notes clearly frame themselves as secondary research material
+- `docs/analysis/2026-03-19-form-validation-comparison.md` and the validation template notes clearly frame themselves as secondary research material
 - `docs/index.md` provides a coherent current reading path and clearly distinguishes active docs from plans/logs/analysis
 
 ## Purpose
@@ -41,7 +41,7 @@ The current `docs/` tree has a strong base, but it now has three problems:
 
 1. some documents still describe older interface shapes or file names
 2. several documents repeat the same design guidance in slightly different words
-3. the documentation tree mixes source-of-truth material with research notes and historical analysis in a way that makes “what should I trust first?” less obvious than it should be
+3. the documentation tree mixes source-of-truth material with research notes and historical analysis in a way that makes â€œwhat should I trust first?â€ less obvious than it should be
 
 The goal of this correction pass is not to rewrite the architecture.
 
@@ -113,10 +113,10 @@ If the code does not implement something yet, the docs should not imply it is al
 
 Use distinctions such as:
 
-- “current implementation”
-- “current exported type”
-- “recommended direction”
-- “possible future refinement”
+- â€œcurrent implementationâ€
+- â€œcurrent exported typeâ€
+- â€œrecommended directionâ€
+- â€œpossible future refinementâ€
 
 ### 5. Keep indexes short and documents deep
 
@@ -188,7 +188,7 @@ Make it obvious which files are authoritative, which are reference notes, and wh
 
 - shorten `docs/index.md`
 - remove duplicated role descriptions where the reading guide already covers the same decision
-- add a tighter “read this first” structure
+- add a tighter â€œread this firstâ€ structure
 - explicitly note that `docs/plans/` is historical working material unless a plan is being actively used
 - make archive and analysis roles more explicit
 
@@ -276,7 +276,7 @@ Keep validation behavior and validation file ownership from repeating each other
 - keep runtime validation behavior, rule model, triggers, visibility, and renderer integration in `docs/architecture/form-validation.md`
 - keep file ownership and placement rules in `docs/architecture/amis-runtime-module-boundaries.md`
 - replace repeated implementation breakdowns with short links where possible
-- ensure “current behavior” sections accurately reflect touched, visited, dirty, async debounce, subtree validation, and array operations
+- ensure â€œcurrent behaviorâ€ sections accurately reflect touched, visited, dirty, async debounce, subtree validation, and array operations
 
 ### Acceptance criteria
 
@@ -315,7 +315,7 @@ Preserve useful research without letting it compete with current architecture do
 
 ### Files in focus
 
-- `docs/analysis/form-validation-comparison.md`
+- `docs/analysis/2026-03-19-form-validation-comparison.md`
 - `docs/references/react-hook-form-template-notes.md`
 - `docs/references/yup-template-notes.md`
 - `docs/references/expression-processor-notes.md`
@@ -324,7 +324,7 @@ Preserve useful research without letting it compete with current architecture do
 ### Planned changes
 
 - keep the two template notes as research notes, but trim clearly duplicated summary sections if needed
-- decide whether `docs/analysis/form-validation-comparison.md` should stay as an active analysis file, move to archive, or be reduced to a short report summary
+- decide whether `docs/analysis/2026-03-19-form-validation-comparison.md` should stay as an active analysis file, move to archive, or be reduced to a short report summary
 - update reference docs so they explicitly say they are not the implementation source of truth
 - keep useful prototype lessons, but prevent obsolete details from reading like active contracts
 
@@ -343,7 +343,7 @@ Make the whole `docs/` tree read like one curated set instead of several partial
 ### Planned changes
 
 - unify terminology for compiled nodes, runtime values, regions, dialog state, and validation nodes
-- normalize “source of truth” notes across active docs
+- normalize â€œsource of truthâ€ notes across active docs
 - fix broken or stale cross-references
 - ensure each major doc links to the smallest useful set of related files
 
@@ -382,7 +382,7 @@ Make the whole `docs/` tree read like one curated set instead of several partial
 ## `docs/architecture/field-metadata-slot-modeling.md`
 
 - keep as the detailed home for `value-or-region` and event-field semantics
-- verify “current foundation in the codebase” against current field-rule and compiler types
+- verify â€œcurrent foundation in the codebaseâ€ against current field-rule and compiler types
 - update any phrasing that still talks as if `value-or-region` is only future work where it is already implemented
 
 ## `docs/architecture/form-validation.md`
@@ -404,7 +404,7 @@ Make the whole `docs/` tree read like one curated set instead of several partial
 - keep example scope small and representative
 - ensure the notes explain what is illustrative versus currently exact
 
-## `docs/analysis/form-validation-comparison.md`
+## `docs/analysis/2026-03-19-form-validation-comparison.md`
 
 - decide whether to keep, compress, or reclassify
 - if kept, add explicit framing that it is a comparative report, not the active contract
@@ -475,6 +475,7 @@ This plan is complete when:
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/amis-runtime-module-boundaries.md`
+
 
 
 

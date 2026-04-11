@@ -1,51 +1,52 @@
-# Flow Designer
+﻿# Flow Designer
 
-`Flow Designer` 不是一套独立于现有 AMIS/SchemaRenderer 体系之外的新渲染引擎，而是构建在 `SchemaRenderer` 之上的图设计器领域扩展。
+`Flow Designer` ä¸æ˜¯ä¸€å¥—ç‹¬ç«‹äºŽçŽ°æœ‰ AMIS/SchemaRenderer ä½“ç³»ä¹‹å¤–çš„æ–°æ¸²æŸ“å¼•æ“Žï¼Œè€Œæ˜¯æž„å»ºåœ¨ `SchemaRenderer` ä¹‹ä¸Šçš„å›¾è®¾è®¡å™¨é¢†åŸŸæ‰©å±•ã€‚
 
-## 定位
+## å®šä½
 
-- 保留现有 `apps/main/src/pages/flow-editor` 示例，不直接改造旧示例
-- 在 `packages` 下新增通用模块，目标是把 flow editor 能力抽象成可配置的设计器基础设施
-- 设计器外围 UI 尽量复用现有 `SchemaRenderer`、`formulaCompiler`、`action`、`form/page runtime`
-- 只有图画布、端口连接、规则匹配、图编辑历史等能力由专用 graph runtime 负责
+- ä¿ç•™çŽ°æœ‰ `apps/main/src/pages/flow-editor` ç¤ºä¾‹ï¼Œä¸ç›´æŽ¥æ”¹é€ æ—§ç¤ºä¾‹
+- åœ¨ `packages` ä¸‹æ–°å¢žé€šç”¨æ¨¡å—ï¼Œç›®æ ‡æ˜¯æŠŠ flow editor èƒ½åŠ›æŠ½è±¡æˆå¯é…ç½®çš„è®¾è®¡å™¨åŸºç¡€è®¾æ–½
+- è®¾è®¡å™¨å¤–å›´ UI å°½é‡å¤ç”¨çŽ°æœ‰ `SchemaRenderer`ã€`formulaCompiler`ã€`action`ã€`form/page runtime`
+- åªæœ‰å›¾ç”»å¸ƒã€ç«¯å£è¿žæŽ¥ã€è§„åˆ™åŒ¹é…ã€å›¾ç¼–è¾‘åŽ†å²ç­‰èƒ½åŠ›ç”±ä¸“ç”¨ graph runtime è´Ÿè´£
 
-## 新架构结论
+## æ–°æž¶æž„ç»“è®º
 
-- `Flow Designer` 作为 `SchemaRenderer` 领域扩展层实现
-- 包结构采用 `@nop-chaos/flow-designer-core` + `@nop-chaos/flow-designer-renderers`
-- 根 schema 采用 `designer-page`
-- 节点类型采用 designer 专用 config，不直接退化成普通 renderer schema
-- inspector、create dialog、toolbar、floating actions 采用 schema 片段驱动
-- 动作统一走 action schema，并扩展 `designer:*` action
-- 文档只持久化 graph 数据，不持久化 hover、selection drawer 等 UI 临时状态
+- `Flow Designer` ä½œä¸º `SchemaRenderer` é¢†åŸŸæ‰©å±•å±‚å®žçŽ°
+- åŒ…ç»“æž„é‡‡ç”¨ `@nop-chaos/flow-designer-core` + `@nop-chaos/flow-designer-renderers`
+- æ ¹ schema é‡‡ç”¨ `designer-page`
+- èŠ‚ç‚¹ç±»åž‹é‡‡ç”¨ designer ä¸“ç”¨ configï¼Œä¸ç›´æŽ¥é€€åŒ–æˆæ™®é€š renderer schema
+- inspectorã€create dialogã€toolbarã€floating actions é‡‡ç”¨ schema ç‰‡æ®µé©±åŠ¨
+- åŠ¨ä½œç»Ÿä¸€èµ° action schemaï¼Œå¹¶æ‰©å±• `designer:*` action
+- æ–‡æ¡£åªæŒä¹…åŒ– graph æ•°æ®ï¼Œä¸æŒä¹…åŒ– hoverã€selection drawer ç­‰ UI ä¸´æ—¶çŠ¶æ€
 
-## 当前 MVP 状态
+## å½“å‰ MVP çŠ¶æ€
 
-- `packages/flow-designer-core/` 已提供最小可运行的 graph runtime：`GraphDocument`、`GraphNode`、`GraphEdge`、`DesignerConfig`、single-selection、undo/redo、dirty tracking、save/restore、导出 JSON。
-- `packages/flow-designer-renderers/` 已提供 `designer-page`、`designer-field`、基础占位 renderer 注册，并通过 `designer-page` 自身的 `ActionScope` 边界接入 `designer:*` 动作。
-- `apps/playground/src/App.tsx` 已提供一个可运行的 playground 集成入口，当前仓库里保留的直连 React 示例仍在 `apps/playground/src/FlowDesignerExample.tsx`，而 schema/runtime 集成路径以 `designer-page` renderer 为主。
-- 当前画布只支持 live `@xyflow/react`（React Flow），并复用同一套 host-owned command bridge，而不是在多种画布实现之间切换。
+- `packages/flow-designer-core/` å·²æä¾›æœ€å°å¯è¿è¡Œçš„ graph runtimeï¼š`GraphDocument`ã€`GraphNode`ã€`GraphEdge`ã€`DesignerConfig`ã€single-selectionã€undo/redoã€dirty trackingã€save/restoreã€å¯¼å‡º JSONã€‚
+- `packages/flow-designer-renderers/` å·²æä¾› `designer-page`ã€`designer-field`ã€åŸºç¡€å ä½ renderer æ³¨å†Œï¼Œå¹¶é€šè¿‡ `designer-page` è‡ªèº«çš„ `ActionScope` è¾¹ç•ŒæŽ¥å…¥ `designer:*` åŠ¨ä½œã€‚
+- `apps/playground/src/App.tsx` å·²æä¾›ä¸€ä¸ªå¯è¿è¡Œçš„ playground é›†æˆå…¥å£ï¼Œå½“å‰ä»“åº“é‡Œä¿ç•™çš„ç›´è¿ž React ç¤ºä¾‹ä»åœ¨ `apps/playground/src/FlowDesignerExample.tsx`ï¼Œè€Œ schema/runtime é›†æˆè·¯å¾„ä»¥ `designer-page` renderer ä¸ºä¸»ã€‚
+- å½“å‰ç”»å¸ƒåªæ”¯æŒ live `@xyflow/react`ï¼ˆReact Flowï¼‰ï¼Œå¹¶å¤ç”¨åŒä¸€å¥— host-owned command bridgeï¼Œè€Œä¸æ˜¯åœ¨å¤šç§ç”»å¸ƒå®žçŽ°ä¹‹é—´åˆ‡æ¢ã€‚
 
-## 文档
+## æ–‡æ¡£
 
-- `docs/architecture/flow-designer/design.md` - 总体架构、运行时边界、性能策略
-- `docs/architecture/flow-designer/config-schema.md` - `designer-page`、`nodeTypes`、`ports`、`edgeTypes`、文档模型
-- `docs/architecture/flow-designer/api.md` - 包 API、宿主 scope、designer actions、扩展点
-- `docs/architecture/flow-designer/runtime-snapshot.md` - 当前 `DesignerSnapshot`、`DesignerContextValue`、host scope 落地现状，以及“已接线字段”与“设计目标字段”的区别
-- `docs/architecture/flow-designer/collaboration.md` - `designer-page`、ActionScope、command adapter、canvas host、inspector 之间的协作链路与调用链图
-- `docs/architecture/flow-designer/canvas-adapters.md` - 当前唯一的 React Flow 画布边界、失败语义、回调翻译边界
-- `docs/analysis/flow-designer-documentation-review.md` - 对早期改进意见的复核结论与已采纳约束
+- `docs/architecture/flow-designer/design.md` - æ€»ä½“æž¶æž„ã€è¿è¡Œæ—¶è¾¹ç•Œã€æ€§èƒ½ç­–ç•¥
+- `docs/architecture/flow-designer/config-schema.md` - `designer-page`ã€`nodeTypes`ã€`ports`ã€`edgeTypes`ã€æ–‡æ¡£æ¨¡åž‹
+- `docs/architecture/flow-designer/api.md` - åŒ… APIã€å®¿ä¸» scopeã€designer actionsã€æ‰©å±•ç‚¹
+- `docs/architecture/flow-designer/runtime-snapshot.md` - å½“å‰ `DesignerSnapshot`ã€`DesignerContextValue`ã€host scope è½åœ°çŽ°çŠ¶ï¼Œä»¥åŠâ€œå·²æŽ¥çº¿å­—æ®µâ€ä¸Žâ€œè®¾è®¡ç›®æ ‡å­—æ®µâ€çš„åŒºåˆ«
+- `docs/architecture/flow-designer/collaboration.md` - `designer-page`ã€ActionScopeã€command adapterã€canvas hostã€inspector ä¹‹é—´çš„åä½œé“¾è·¯ä¸Žè°ƒç”¨é“¾å›¾
+- `docs/architecture/flow-designer/canvas-adapters.md` - å½“å‰å”¯ä¸€çš„ React Flow ç”»å¸ƒè¾¹ç•Œã€å¤±è´¥è¯­ä¹‰ã€å›žè°ƒç¿»è¯‘è¾¹ç•Œ
+- `docs/analysis/2026-03-21-flow-designer-documentation-review.md` - å¯¹æ—©æœŸæ”¹è¿›æ„è§çš„å¤æ ¸ç»“è®ºä¸Žå·²é‡‡çº³çº¦æŸ
 
-## 设计原则
+## è®¾è®¡åŽŸåˆ™
 
-- 配置尽量简化，但基础模块尽量通用
-- 真正需要图编辑特化的能力才进入 `core`
-- 能用 schema renderer 复用的，不在 flow designer 里重造
-- 面向高性能：编译、缓存、局部订阅、增量更新优先
-- 配置和文档结构必须稳定，便于后端存储与版本迁移
+- é…ç½®å°½é‡ç®€åŒ–ï¼Œä½†åŸºç¡€æ¨¡å—å°½é‡é€šç”¨
+- çœŸæ­£éœ€è¦å›¾ç¼–è¾‘ç‰¹åŒ–çš„èƒ½åŠ›æ‰è¿›å…¥ `core`
+- èƒ½ç”¨ schema renderer å¤ç”¨çš„ï¼Œä¸åœ¨ flow designer é‡Œé‡é€ 
+- é¢å‘é«˜æ€§èƒ½ï¼šç¼–è¯‘ã€ç¼“å­˜ã€å±€éƒ¨è®¢é˜…ã€å¢žé‡æ›´æ–°ä¼˜å…ˆ
+- é…ç½®å’Œæ–‡æ¡£ç»“æž„å¿…é¡»ç¨³å®šï¼Œä¾¿äºŽåŽç«¯å­˜å‚¨ä¸Žç‰ˆæœ¬è¿ç§»
 
-## 与现有示例的关系
+## ä¸ŽçŽ°æœ‰ç¤ºä¾‹çš„å…³ç³»
 
-- 现有 flow editor 示例继续作为独立示例保留
-- 新模块目标是沉淀一套可复用的设计器平台能力
-- 后续可以用新模块重新实现一个新的 designer 示例，但不替换旧页
+- çŽ°æœ‰ flow editor ç¤ºä¾‹ç»§ç»­ä½œä¸ºç‹¬ç«‹ç¤ºä¾‹ä¿ç•™
+- æ–°æ¨¡å—ç›®æ ‡æ˜¯æ²‰æ·€ä¸€å¥—å¯å¤ç”¨çš„è®¾è®¡å™¨å¹³å°èƒ½åŠ›
+- åŽç»­å¯ä»¥ç”¨æ–°æ¨¡å—é‡æ–°å®žçŽ°ä¸€ä¸ªæ–°çš„ designer ç¤ºä¾‹ï¼Œä½†ä¸æ›¿æ¢æ—§é¡µ
+

@@ -1,4 +1,4 @@
-# Documentation Maintenance Checklist
+﻿# Documentation Maintenance Checklist
 
 ## Purpose
 
@@ -28,7 +28,7 @@ If you do not know where to start, check these first:
 4. `docs/references/renderer-interfaces.md` if public or semi-public contracts changed
 5. `docs/examples/user-management-schema.md` if authoring semantics or action behavior changed
 6. latest documentation design review under `docs/analysis/` when planning broad refactors:
-	- `docs/analysis/docs-design-review-2026-03-29.md`
+	- `docs/analysis/2026-04-01-docs-design-review-2026-03-29.md`
 7. `docs/references/refactoring-guidelines.md` when planning or reviewing any refactoring
 8. `docs/architecture/security-design-requirements.md` for boundary/safety-sensitive changes
 9. `docs/architecture/performance-design-requirements.md` for hot-path/perf-sensitive changes
@@ -156,7 +156,7 @@ Review:
 - `docs/architecture/form-validation.md`
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
-- `docs/analysis/form-validation-comparison.md` only if the higher-level comparison conclusion changes
+- `docs/analysis/2026-03-19-form-validation-comparison.md` only if the higher-level comparison conclusion changes
 
 ## 8. Workspace or tooling baseline changes
 
@@ -210,7 +210,7 @@ Review:
 Examples:
 
 - changes to `ContainerSchema` semantic props (`direction`, `gap`, `align`, etc.)
-- changes to semantic prop → Tailwind class mapping
+- changes to semantic prop â†’ Tailwind class mapping
 - adding or modifying `classAliases` mechanism
 - changes to className resolution or merging behavior
 
@@ -341,3 +341,4 @@ Before finishing a code change, ask:
 - `docs/architecture/security-design-requirements.md`
 - `docs/architecture/performance-design-requirements.md`
 - `docs/references/architecture-guardrails-from-bugs.md`
+

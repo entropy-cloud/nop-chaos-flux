@@ -1,15 +1,15 @@
-# Debugger Runtime Design
+﻿# Debugger Runtime Design
 
 ## Purpose
 
-本文定义 `@nop-chaos/nop-debugger` 的当前架构基线，以及它在两个场景中的职责边界：
+æœ¬æ–‡å®šä¹‰ `@nop-chaos/nop-debugger` çš„å½“å‰æž¶æž„åŸºçº¿ï¼Œä»¥åŠå®ƒåœ¨ä¸¤ä¸ªåœºæ™¯ä¸­çš„èŒè´£è¾¹ç•Œï¼š
 
-- 作为开发阶段的人机调试工具，帮助开发者定位 render、action、api、scope 与节点 inspect 问题。
-- 作为 AI 与自动化测试可消费的框架诊断基础设施，提供稳定、结构化、非 UI 依赖的诊断接口。
+- ä½œä¸ºå¼€å‘é˜¶æ®µçš„äººæœºè°ƒè¯•å·¥å…·ï¼Œå¸®åŠ©å¼€å‘è€…å®šä½ renderã€actionã€apiã€scope ä¸ŽèŠ‚ç‚¹ inspect é—®é¢˜ã€‚
+- ä½œä¸º AI ä¸Žè‡ªåŠ¨åŒ–æµ‹è¯•å¯æ¶ˆè´¹çš„æ¡†æž¶è¯Šæ–­åŸºç¡€è®¾æ–½ï¼Œæä¾›ç¨³å®šã€ç»“æž„åŒ–ã€éž UI ä¾èµ–çš„è¯Šæ–­æŽ¥å£ã€‚
 
-本文是当前有效设计基线。历史取舍、前期方案和实现计划仍保留在：
+æœ¬æ–‡æ˜¯å½“å‰æœ‰æ•ˆè®¾è®¡åŸºçº¿ã€‚åŽ†å²å–èˆã€å‰æœŸæ–¹æ¡ˆå’Œå®žçŽ°è®¡åˆ’ä»ä¿ç•™åœ¨ï¼š
 
-- `docs/analysis/framework-debugger-design.md`
+- `docs/analysis/2026-03-21-framework-debugger-design.md`
 - `docs/plans/20-nop-debugger-implementation-plan.md`
 - `docs/plans/22-debugger-node-inspector-enhancement-plan.md`
 
@@ -29,61 +29,61 @@
 
 ## 1. Design Position
 
-`nop-debugger` 不是 playground 专属日志面板，也不是仅供人类查看的 UI 组件。
+`nop-debugger` ä¸æ˜¯ playground ä¸“å±žæ—¥å¿—é¢æ¿ï¼Œä¹Ÿä¸æ˜¯ä»…ä¾›äººç±»æŸ¥çœ‹çš„ UI ç»„ä»¶ã€‚
 
-它的正式定位是：
+å®ƒçš„æ­£å¼å®šä½æ˜¯ï¼š
 
-- 一个框架级调试 package
-- 一个统一事件采集与归一化层
-- 一个宿主可挂载的浮动调试面板
-- 一个 AI / E2E / browser automation 可直接读取的结构化诊断 API
+- ä¸€ä¸ªæ¡†æž¶çº§è°ƒè¯• package
+- ä¸€ä¸ªç»Ÿä¸€äº‹ä»¶é‡‡é›†ä¸Žå½’ä¸€åŒ–å±‚
+- ä¸€ä¸ªå®¿ä¸»å¯æŒ‚è½½çš„æµ®åŠ¨è°ƒè¯•é¢æ¿
+- ä¸€ä¸ª AI / E2E / browser automation å¯ç›´æŽ¥è¯»å–çš„ç»“æž„åŒ–è¯Šæ–­ API
 
-这与参考 `amis` 调试器相比，最大的方向性差异是：
+è¿™ä¸Žå‚è€ƒ `amis` è°ƒè¯•å™¨ç›¸æ¯”ï¼Œæœ€å¤§çš„æ–¹å‘æ€§å·®å¼‚æ˜¯ï¼š
 
-- `amis` 更偏向“运行时可视调试工具”
-- `nop-debugger` 明确同时承担“自动化诊断接口”职责
+- `amis` æ›´åå‘â€œè¿è¡Œæ—¶å¯è§†è°ƒè¯•å·¥å…·â€
+- `nop-debugger` æ˜Žç¡®åŒæ—¶æ‰¿æ‹…â€œè‡ªåŠ¨åŒ–è¯Šæ–­æŽ¥å£â€èŒè´£
 
 ## 2. Comparison With AMIS
 
-参考实现：
+å‚è€ƒå®žçŽ°ï¼š
 
 - `C:/can/nop/templates/amis/packages/amis-core/src/utils/debug.tsx`
 - `C:/can/nop/templates/amis/packages/amis-core/src/SchemaRenderer.tsx`
 - `C:/can/nop/templates/amis/docs/zh-CN/extend/debug.md`
 
-### 2.1 AMIS 保留价值
+### 2.1 AMIS ä¿ç•™ä»·å€¼
 
-`amis` 调试器有三点仍然值得保留为参考：
+`amis` è°ƒè¯•å™¨æœ‰ä¸‰ç‚¹ä»ç„¶å€¼å¾—ä¿ç•™ä¸ºå‚è€ƒï¼š
 
-- 调试能力由显式开关启用，不污染默认运行时
-- 同时提供 log 和 inspect 两种视角
-- DOM 元素与组件实例之间有可反查的映射关系
+- è°ƒè¯•èƒ½åŠ›ç”±æ˜¾å¼å¼€å…³å¯ç”¨ï¼Œä¸æ±¡æŸ“é»˜è®¤è¿è¡Œæ—¶
+- åŒæ—¶æä¾› log å’Œ inspect ä¸¤ç§è§†è§’
+- DOM å…ƒç´ ä¸Žç»„ä»¶å®žä¾‹ä¹‹é—´æœ‰å¯åæŸ¥çš„æ˜ å°„å…³ç³»
 
-### 2.2 Flux 已经超出的部分
+### 2.2 Flux å·²ç»è¶…å‡ºçš„éƒ¨åˆ†
 
-当前 `nop-debugger` 在几个关键方向上已经明显超过 `amis` 原始设计：
+å½“å‰ `nop-debugger` åœ¨å‡ ä¸ªå…³é”®æ–¹å‘ä¸Šå·²ç»æ˜Žæ˜¾è¶…è¿‡ `amis` åŽŸå§‹è®¾è®¡ï¼š
 
-- `amis` 主要暴露 UI 和 console log；`nop-debugger` 还暴露 `window.__NOP_DEBUGGER_API__` 与 `window.__NOP_DEBUGGER_HUB__`
-- `amis` 的查询能力主要依赖人工查看面板；`nop-debugger` 提供 `queryEvents()`、`waitForEvent()`、`getInteractionTrace()`、`exportSession()`、`createDiagnosticReport()`
-- `amis` 以松散日志为主；`nop-debugger` 已形成统一事件模型 `compile/render/action/api/notify/error/state:snapshot`
-- `amis` inspect 主要读取组件 `props.data` 原型链；`nop-debugger` 当前实现已支持通过 `data-cid` 回查 handle 和 form/scope 数据。clean-slate 设计不是移除 `data-cid`，而是要求通过 `data-cid` 先回到 live node，再提升到 canonical `NodeLocator`，见 `docs/architecture/template-instantiation-and-node-identity.md`
-- `amis` 文档只覆盖“开启调试器 + 查看日志/数据链”；`nop-debugger` 已具备面向集成测试的 API 设计和 Playwright 基础回归
+- `amis` ä¸»è¦æš´éœ² UI å’Œ console logï¼›`nop-debugger` è¿˜æš´éœ² `window.__NOP_DEBUGGER_API__` ä¸Ž `window.__NOP_DEBUGGER_HUB__`
+- `amis` çš„æŸ¥è¯¢èƒ½åŠ›ä¸»è¦ä¾èµ–äººå·¥æŸ¥çœ‹é¢æ¿ï¼›`nop-debugger` æä¾› `queryEvents()`ã€`waitForEvent()`ã€`getInteractionTrace()`ã€`exportSession()`ã€`createDiagnosticReport()`
+- `amis` ä»¥æ¾æ•£æ—¥å¿—ä¸ºä¸»ï¼›`nop-debugger` å·²å½¢æˆç»Ÿä¸€äº‹ä»¶æ¨¡åž‹ `compile/render/action/api/notify/error/state:snapshot`
+- `amis` inspect ä¸»è¦è¯»å–ç»„ä»¶ `props.data` åŽŸåž‹é“¾ï¼›`nop-debugger` å½“å‰å®žçŽ°å·²æ”¯æŒé€šè¿‡ `data-cid` å›žæŸ¥ handle å’Œ form/scope æ•°æ®ã€‚clean-slate è®¾è®¡ä¸æ˜¯ç§»é™¤ `data-cid`ï¼Œè€Œæ˜¯è¦æ±‚é€šè¿‡ `data-cid` å…ˆå›žåˆ° live nodeï¼Œå†æå‡åˆ° canonical `NodeLocator`ï¼Œè§ `docs/architecture/template-instantiation-and-node-identity.md`
+- `amis` æ–‡æ¡£åªè¦†ç›–â€œå¼€å¯è°ƒè¯•å™¨ + æŸ¥çœ‹æ—¥å¿—/æ•°æ®é“¾â€ï¼›`nop-debugger` å·²å…·å¤‡é¢å‘é›†æˆæµ‹è¯•çš„ API è®¾è®¡å’Œ Playwright åŸºç¡€å›žå½’
 
-### 2.3 AMIS 仍然提醒我们的风险
+### 2.3 AMIS ä»ç„¶æé†’æˆ‘ä»¬çš„é£Žé™©
 
-`amis` 的经验仍然提醒几个现实问题：
+`amis` çš„ç»éªŒä»ç„¶æé†’å‡ ä¸ªçŽ°å®žé—®é¢˜ï¼š
 
-- inspect 是高频场景，必须保证从页面元素快速回到节点和数据域
-- 调试器若只做事件堆叠，很快会淹没有效线索
-- 调试器若只对人友好、不对自动化友好，AI 在集成测试里仍然只能依赖脆弱的 DOM 文本解析
+- inspect æ˜¯é«˜é¢‘åœºæ™¯ï¼Œå¿…é¡»ä¿è¯ä»Žé¡µé¢å…ƒç´ å¿«é€Ÿå›žåˆ°èŠ‚ç‚¹å’Œæ•°æ®åŸŸ
+- è°ƒè¯•å™¨è‹¥åªåšäº‹ä»¶å †å ï¼Œå¾ˆå¿«ä¼šæ·¹æ²¡æœ‰æ•ˆçº¿ç´¢
+- è°ƒè¯•å™¨è‹¥åªå¯¹äººå‹å¥½ã€ä¸å¯¹è‡ªåŠ¨åŒ–å‹å¥½ï¼ŒAI åœ¨é›†æˆæµ‹è¯•é‡Œä»ç„¶åªèƒ½ä¾èµ–è„†å¼±çš„ DOM æ–‡æœ¬è§£æž
 
 ## 3. Current Capability Baseline
 
-截至当前代码基线，`nop-debugger` 已经具备以下正式能力。
+æˆªè‡³å½“å‰ä»£ç åŸºçº¿ï¼Œ`nop-debugger` å·²ç»å…·å¤‡ä»¥ä¸‹æ­£å¼èƒ½åŠ›ã€‚
 
 ### 3.1 Host Integration
 
-宿主通过 `createNopDebugger()` 获得 controller，并在 renderer root 边界接入：
+å®¿ä¸»é€šè¿‡ `createNopDebugger()` èŽ·å¾— controllerï¼Œå¹¶åœ¨ renderer root è¾¹ç•ŒæŽ¥å…¥ï¼š
 
 - `decorateEnv(env)`
 - `plugin`
@@ -91,16 +91,16 @@
 - `setComponentRegistry()`
 - `setActionScope()`
 
-当前 playground 的真实接入路径在：
+å½“å‰ playground çš„çœŸå®žæŽ¥å…¥è·¯å¾„åœ¨ï¼š
 
 - `apps/playground/src/App.tsx`
 - `apps/playground/src/pages/FluxBasicPage.tsx`
 
-这说明 debugger 已经站在框架宿主边界，而不是硬编码在具体 renderer 内部。
+è¿™è¯´æ˜Ž debugger å·²ç»ç«™åœ¨æ¡†æž¶å®¿ä¸»è¾¹ç•Œï¼Œè€Œä¸æ˜¯ç¡¬ç¼–ç åœ¨å…·ä½“ renderer å†…éƒ¨ã€‚
 
 ### 3.2 Unified Event Model
 
-当前统一事件种类为：
+å½“å‰ç»Ÿä¸€äº‹ä»¶ç§ç±»ä¸ºï¼š
 
 - `compile:start`
 - `compile:end`
@@ -115,25 +115,25 @@
 - `error`
 - `state:snapshot`
 
-事件统一包含：
+äº‹ä»¶ç»Ÿä¸€åŒ…å«ï¼š
 
 - `kind`
 - `group`
 - `level`
 - `timestamp`
 - `summary`
-- 以及可选的 `nodeId/path/rendererType/actionType/requestKey/requestInstanceId/interactionId/parentEventId/durationMs/network/exportedData`
+- ä»¥åŠå¯é€‰çš„ `nodeId/path/rendererType/actionType/requestKey/requestInstanceId/interactionId/parentEventId/durationMs/network/exportedData`
 
-术语最小集：
+æœ¯è¯­æœ€å°é›†ï¼š
 
-- `requestKey`: 语义同类请求的分组键
-- `requestInstanceId`: 某一次具体请求实例的稳定标识
-- `interactionId`: 一次动作链或用户交互的关联标识
-- `trace anchor event`: 用于推断 interaction trace 的锚点事件
-- `scopeChain`: inspect 返回的逐层 scope 快照数组
-- `node inspect payload`: `inspectByCid()` / `inspectByElement()` 返回的聚合节点上下文；其中 `cid` 是 live runtime node id，`locator` 是 canonical structural/runtime identity
+- `requestKey`: è¯­ä¹‰åŒç±»è¯·æ±‚çš„åˆ†ç»„é”®
+- `requestInstanceId`: æŸä¸€æ¬¡å…·ä½“è¯·æ±‚å®žä¾‹çš„ç¨³å®šæ ‡è¯†
+- `interactionId`: ä¸€æ¬¡åŠ¨ä½œé“¾æˆ–ç”¨æˆ·äº¤äº’çš„å…³è”æ ‡è¯†
+- `trace anchor event`: ç”¨äºŽæŽ¨æ–­ interaction trace çš„é”šç‚¹äº‹ä»¶
+- `scopeChain`: inspect è¿”å›žçš„é€å±‚ scope å¿«ç…§æ•°ç»„
+- `node inspect payload`: `inspectByCid()` / `inspectByElement()` è¿”å›žçš„èšåˆèŠ‚ç‚¹ä¸Šä¸‹æ–‡ï¼›å…¶ä¸­ `cid` æ˜¯ live runtime node idï¼Œ`locator` æ˜¯ canonical structural/runtime identity
 
-这已经满足 AI 进行结构化检索的最基本要求。
+è¿™å·²ç»æ»¡è¶³ AI è¿›è¡Œç»“æž„åŒ–æ£€ç´¢çš„æœ€åŸºæœ¬è¦æ±‚ã€‚
 
 ### 3.2.1 Identity Contract
 
@@ -162,7 +162,7 @@ interface DebuggerEvent {
 
 ### 3.3 Automation API
 
-当前自动化接口已经不是草案，而是已落地能力。核心方法包括：
+å½“å‰è‡ªåŠ¨åŒ–æŽ¥å£å·²ç»ä¸æ˜¯è‰æ¡ˆï¼Œè€Œæ˜¯å·²è½åœ°èƒ½åŠ›ã€‚æ ¸å¿ƒæ–¹æ³•åŒ…æ‹¬ï¼š
 
 - `getSnapshot()`
 - `getOverview()`
@@ -185,7 +185,7 @@ interface DebuggerEvent {
 
 #### 3.3.1 Automation Contract
 
-以下接口属于当前稳定自动化契约，AI/E2E 应优先直接调用，而不是依赖 panel DOM：
+ä»¥ä¸‹æŽ¥å£å±žäºŽå½“å‰ç¨³å®šè‡ªåŠ¨åŒ–å¥‘çº¦ï¼ŒAI/E2E åº”ä¼˜å…ˆç›´æŽ¥è°ƒç”¨ï¼Œè€Œä¸æ˜¯ä¾èµ– panel DOMï¼š
 
 - `getSnapshot()` / `getOverview()` / `queryEvents()` / `getLatestEvent()`
 - `waitForEvent()`
@@ -194,61 +194,61 @@ interface DebuggerEvent {
 - `exportSession()` / `createDiagnosticReport()`
 - `getLatestFailedRequest()` / `getLatestFailedAction()` / `getRecentFailures()` / `getNodeAnomalies()`
 
-`evaluateNodeExpression()` 也是正式能力，但它只走现有表达式引擎，不执行任意 JS。
+`evaluateNodeExpression()` ä¹Ÿæ˜¯æ­£å¼èƒ½åŠ›ï¼Œä½†å®ƒåªèµ°çŽ°æœ‰è¡¨è¾¾å¼å¼•æ“Žï¼Œä¸æ‰§è¡Œä»»æ„ JSã€‚
 
-全局暴露为：
+å…¨å±€æš´éœ²ä¸ºï¼š
 
 - `window.__NOP_DEBUGGER_API__`
 - `window.__NOP_DEBUGGER_HUB__`
 
-注意：当前仓库的真实全局名称是 `__NOP_DEBUGGER_API__`，不是旧草案中的 `__NOP_FLUX_DEBUGGER_API__`。
+æ³¨æ„ï¼šå½“å‰ä»“åº“çš„çœŸå®žå…¨å±€åç§°æ˜¯ `__NOP_DEBUGGER_API__`ï¼Œä¸æ˜¯æ—§è‰æ¡ˆä¸­çš„ `__NOP_FLUX_DEBUGGER_API__`ã€‚
 
 ### 3.4 Developer-Facing UI
 
-当前面板已经具备以下稳定形态：
+å½“å‰é¢æ¿å·²ç»å…·å¤‡ä»¥ä¸‹ç¨³å®šå½¢æ€ï¼š
 
 - launcher
 - floating panel
 - minimize bar
-- Overview / Timeline / Network / Node 四个 tab
-- 搜索、筛选、暂停、清空
-- 错误聚合
-- network 请求归并
-- inspect mode 与 overlay
-- Node Tab 中的 formState / scopeData 查看
+- Overview / Timeline / Network / Node å››ä¸ª tab
+- æœç´¢ã€ç­›é€‰ã€æš‚åœã€æ¸…ç©º
+- é”™è¯¯èšåˆ
+- network è¯·æ±‚å½’å¹¶
+- inspect mode ä¸Ž overlay
+- Node Tab ä¸­çš„ formState / scopeData æŸ¥çœ‹
 
-对于开发联调，这已经明显超过“简单日志面板”。
+å¯¹äºŽå¼€å‘è”è°ƒï¼Œè¿™å·²ç»æ˜Žæ˜¾è¶…è¿‡â€œç®€å•æ—¥å¿—é¢æ¿â€ã€‚
 
 ### 3.5 Verification Baseline
 
-当前仓库已经有真实回归验证，而不只是文档宣称：
+å½“å‰ä»“åº“å·²ç»æœ‰çœŸå®žå›žå½’éªŒè¯ï¼Œè€Œä¸åªæ˜¯æ–‡æ¡£å®£ç§°ï¼š
 
-- 单元测试覆盖 controller / automation / diagnostics / inspect / panel
-- `tests/e2e/debugger.spec.ts` 已验证 launcher、panel、automation API、最小化持久化等基本行为
-- `DebuggerLabPage` 提供手工和自动化共同使用的 API 实验面
+- å•å…ƒæµ‹è¯•è¦†ç›– controller / automation / diagnostics / inspect / panel
+- `tests/e2e/debugger.spec.ts` å·²éªŒè¯ launcherã€panelã€automation APIã€æœ€å°åŒ–æŒä¹…åŒ–ç­‰åŸºæœ¬è¡Œä¸º
+- `DebuggerLabPage` æä¾›æ‰‹å·¥å’Œè‡ªåŠ¨åŒ–å…±åŒä½¿ç”¨çš„ API å®žéªŒé¢
 
 ## 4. Has It Reached The AI Integration-Test Goal?
 
-结论分两层。
+ç»“è®ºåˆ†ä¸¤å±‚ã€‚
 
 ### 4.1 Short Answer
 
-- 对“让 AI 在集成测试中开始使用 debugger 进行辅助诊断”这个目标，答案是：**基本达成**。
-- 对“已经足够支撑复杂框架问题的高可靠自动归因”这个更高目标，答案是：**还没有完全达成**。
+- å¯¹â€œè®© AI åœ¨é›†æˆæµ‹è¯•ä¸­å¼€å§‹ä½¿ç”¨ debugger è¿›è¡Œè¾…åŠ©è¯Šæ–­â€è¿™ä¸ªç›®æ ‡ï¼Œç­”æ¡ˆæ˜¯ï¼š**åŸºæœ¬è¾¾æˆ**ã€‚
+- å¯¹â€œå·²ç»è¶³å¤Ÿæ”¯æ’‘å¤æ‚æ¡†æž¶é—®é¢˜çš„é«˜å¯é è‡ªåŠ¨å½’å› â€è¿™ä¸ªæ›´é«˜ç›®æ ‡ï¼Œç­”æ¡ˆæ˜¯ï¼š**è¿˜æ²¡æœ‰å®Œå…¨è¾¾æˆ**ã€‚
 
 ### 4.2 Why It Is Already Usable
 
-当前能力已经足够支持 AI 在浏览器自动化或集成测试中做以下事情：
+å½“å‰èƒ½åŠ›å·²ç»è¶³å¤Ÿæ”¯æŒ AI åœ¨æµè§ˆå™¨è‡ªåŠ¨åŒ–æˆ–é›†æˆæµ‹è¯•ä¸­åšä»¥ä¸‹äº‹æƒ…ï¼š
 
-- 不依赖 panel DOM，直接通过全局 API 读取结构化状态
-- 等待异步事件完成，而不是盲等 timeout
-- 提取最近错误、最近请求、最近 action
-- 导出脱敏 session 数据用于失败诊断
-- 通过 `data-cid` 与 inspect API 从页面元素回查组件状态，并继续下钻到对应 `locator` / scopeChain
-- Node 面板的组件树可以从 runtime/registry mounted snapshot 枚举当前 live handles，而不是全量扫描页面上的 `[data-cid]`
-- 在多事件流中按 `kind/group/nodeId/path/requestKey` 做筛选
+- ä¸ä¾èµ– panel DOMï¼Œç›´æŽ¥é€šè¿‡å…¨å±€ API è¯»å–ç»“æž„åŒ–çŠ¶æ€
+- ç­‰å¾…å¼‚æ­¥äº‹ä»¶å®Œæˆï¼Œè€Œä¸æ˜¯ç›²ç­‰ timeout
+- æå–æœ€è¿‘é”™è¯¯ã€æœ€è¿‘è¯·æ±‚ã€æœ€è¿‘ action
+- å¯¼å‡ºè„±æ• session æ•°æ®ç”¨äºŽå¤±è´¥è¯Šæ–­
+- é€šè¿‡ `data-cid` ä¸Ž inspect API ä»Žé¡µé¢å…ƒç´ å›žæŸ¥ç»„ä»¶çŠ¶æ€ï¼Œå¹¶ç»§ç»­ä¸‹é’»åˆ°å¯¹åº” `locator` / scopeChain
+- Node é¢æ¿çš„ç»„ä»¶æ ‘å¯ä»¥ä»Ž runtime/registry mounted snapshot æžšä¸¾å½“å‰ live handlesï¼Œè€Œä¸æ˜¯å…¨é‡æ‰«æé¡µé¢ä¸Šçš„ `[data-cid]`
+- åœ¨å¤šäº‹ä»¶æµä¸­æŒ‰ `kind/group/nodeId/path/requestKey` åšç­›é€‰
 
-这意味着 `nop-debugger` 已经不只是“给人看”的工具，而是可被测试和 AI 程序消费的诊断层。
+è¿™æ„å‘³ç€ `nop-debugger` å·²ç»ä¸åªæ˜¯â€œç»™äººçœ‹â€çš„å·¥å…·ï¼Œè€Œæ˜¯å¯è¢«æµ‹è¯•å’Œ AI ç¨‹åºæ¶ˆè´¹çš„è¯Šæ–­å±‚ã€‚
 
 Target DOM inspect rule:
 
@@ -279,171 +279,171 @@ type InspectResult =
 
 ### 4.3 Why It Is Not Fully There Yet
 
-但如果目标是“复杂框架问题出现时，AI 大概率能稳定拿到足够上下文并做首轮归因”，当前还存在几类关键缺口。
+ä½†å¦‚æžœç›®æ ‡æ˜¯â€œå¤æ‚æ¡†æž¶é—®é¢˜å‡ºçŽ°æ—¶ï¼ŒAI å¤§æ¦‚çŽ‡èƒ½ç¨³å®šæ‹¿åˆ°è¶³å¤Ÿä¸Šä¸‹æ–‡å¹¶åšé¦–è½®å½’å› â€ï¼Œå½“å‰è¿˜å­˜åœ¨å‡ ç±»å…³é”®ç¼ºå£ã€‚
 
 ## 5. Current Gaps
 
 ### 5.1 Request Correlation Is Still Too Weak
 
-当前 `requestKey` 由 `method + url + nodeId + path` 组成。
+å½“å‰ `requestKey` ç”± `method + url + nodeId + path` ç»„æˆã€‚
 
-这有两个直接问题：
+è¿™æœ‰ä¸¤ä¸ªç›´æŽ¥é—®é¢˜ï¼š
 
-- 相同节点对同一 URL 的并发请求会共享同一个 `requestKey`
-- 不同参数但同 URL 的请求会被错误合并为同一链路
+- ç›¸åŒèŠ‚ç‚¹å¯¹åŒä¸€ URL çš„å¹¶å‘è¯·æ±‚ä¼šå…±äº«åŒä¸€ä¸ª `requestKey`
+- ä¸åŒå‚æ•°ä½†åŒ URL çš„è¯·æ±‚ä¼šè¢«é”™è¯¯åˆå¹¶ä¸ºåŒä¸€é“¾è·¯
 
-这会削弱：
+è¿™ä¼šå‰Šå¼±ï¼š
 
-- `waitForEvent()` 的确定性
-- Network 视图的链路准确性
-- AI 在一次失败交互后对“到底是哪次请求失败”的归因能力
+- `waitForEvent()` çš„ç¡®å®šæ€§
+- Network è§†å›¾çš„é“¾è·¯å‡†ç¡®æ€§
+- AI åœ¨ä¸€æ¬¡å¤±è´¥äº¤äº’åŽå¯¹â€œåˆ°åº•æ˜¯å“ªæ¬¡è¯·æ±‚å¤±è´¥â€çš„å½’å› èƒ½åŠ›
 
-结论：当前 API 去重足够应对基础开发调试，但还不够作为复杂并发场景下的强关联标识。
+ç»“è®ºï¼šå½“å‰ API åŽ»é‡è¶³å¤Ÿåº”å¯¹åŸºç¡€å¼€å‘è°ƒè¯•ï¼Œä½†è¿˜ä¸å¤Ÿä½œä¸ºå¤æ‚å¹¶å‘åœºæ™¯ä¸‹çš„å¼ºå…³è”æ ‡è¯†ã€‚
 
-### 5.2 Node Diagnostics 缺少 Stable Scope Chain Model
+### 5.2 Node Diagnostics ç¼ºå°‘ Stable Scope Chain Model
 
-当前 `inspectByCid()` 可以返回 `formState` 和 `scopeData`，但仍然偏向“单层快照”。
+å½“å‰ `inspectByCid()` å¯ä»¥è¿”å›ž `formState` å’Œ `scopeData`ï¼Œä½†ä»ç„¶åå‘â€œå•å±‚å¿«ç…§â€ã€‚
 
-还缺少稳定的：
+è¿˜ç¼ºå°‘ç¨³å®šçš„ï¼š
 
-- scope chain 分层模型
-- 每层 scope 的来源标识
-- 节点 props 摘要
-- 节点编译后关键输入摘要
+- scope chain åˆ†å±‚æ¨¡åž‹
+- æ¯å±‚ scope çš„æ¥æºæ ‡è¯†
+- èŠ‚ç‚¹ props æ‘˜è¦
+- èŠ‚ç‚¹ç¼–è¯‘åŽå…³é”®è¾“å…¥æ‘˜è¦
 
-这意味着开发者能看到一些当前值，但 AI 和开发者都还不容易判断“这个值来自哪里、被哪一层覆盖、为什么此节点拿到的是这份数据”。
+è¿™æ„å‘³ç€å¼€å‘è€…èƒ½çœ‹åˆ°ä¸€äº›å½“å‰å€¼ï¼Œä½† AI å’Œå¼€å‘è€…éƒ½è¿˜ä¸å®¹æ˜“åˆ¤æ–­â€œè¿™ä¸ªå€¼æ¥è‡ªå“ªé‡Œã€è¢«å“ªä¸€å±‚è¦†ç›–ã€ä¸ºä»€ä¹ˆæ­¤èŠ‚ç‚¹æ‹¿åˆ°çš„æ˜¯è¿™ä»½æ•°æ®â€ã€‚
 
 ### 5.3 Interaction Trace Still Depends On Heuristics
 
-`getInteractionTrace()` 已经可用，但当前“related trace”仍然主要依赖：
+`getInteractionTrace()` å·²ç»å¯ç”¨ï¼Œä½†å½“å‰â€œrelated traceâ€ä»ç„¶ä¸»è¦ä¾èµ–ï¼š
 
 - `requestKey`
 - `actionType`
 - `nodeId`
 - `path`
 
-这属于合理的 MVP 方案，但还不是严格的交互因果链模型。
+è¿™å±žäºŽåˆç†çš„ MVP æ–¹æ¡ˆï¼Œä½†è¿˜ä¸æ˜¯ä¸¥æ ¼çš„äº¤äº’å› æžœé“¾æ¨¡åž‹ã€‚
 
-缺少的是真正稳定的：
+ç¼ºå°‘çš„æ˜¯çœŸæ­£ç¨³å®šçš„ï¼š
 
 - interaction id
 - parent event id
-- action -> api -> notify/error 的明确因果边
+- action -> api -> notify/error çš„æ˜Žç¡®å› æžœè¾¹
 
-因此当前 trace 更适合“辅助理解”，还不适合“强因果回放”。
+å› æ­¤å½“å‰ trace æ›´é€‚åˆâ€œè¾…åŠ©ç†è§£â€ï¼Œè¿˜ä¸é€‚åˆâ€œå¼ºå› æžœå›žæ”¾â€ã€‚
 
 ### 5.4 Expression Evaluator Is Not Actually Available
 
-Node Tab 里虽然保留了 Expression Evaluator 区域，但当前 `handleEvalExpression()` 只返回固定文案：
+Node Tab é‡Œè™½ç„¶ä¿ç•™äº† Expression Evaluator åŒºåŸŸï¼Œä½†å½“å‰ `handleEvalExpression()` åªè¿”å›žå›ºå®šæ–‡æ¡ˆï¼š
 
 - `Expression evaluation is disabled. Inspect scope data directly instead.`
 
-这说明该能力在 UI 上存在入口，但并未形成真正可用的诊断功能。
+è¿™è¯´æ˜Žè¯¥èƒ½åŠ›åœ¨ UI ä¸Šå­˜åœ¨å…¥å£ï¼Œä½†å¹¶æœªå½¢æˆçœŸæ­£å¯ç”¨çš„è¯Šæ–­åŠŸèƒ½ã€‚
 
-对于开发者这只是体验缺口；对于 AI 则意味着它无法在选中节点上下文中直接试验表达式结果。
+å¯¹äºŽå¼€å‘è€…è¿™åªæ˜¯ä½“éªŒç¼ºå£ï¼›å¯¹äºŽ AI åˆ™æ„å‘³ç€å®ƒæ— æ³•åœ¨é€‰ä¸­èŠ‚ç‚¹ä¸Šä¸‹æ–‡ä¸­ç›´æŽ¥è¯•éªŒè¡¨è¾¾å¼ç»“æžœã€‚
 
 ### 5.5 E2E Coverage Is Present But Still Shallow
 
-当前 Playwright 只验证了：
+å½“å‰ Playwright åªéªŒè¯äº†ï¼š
 
-- 面板可打开
-- automation API 可访问
-- 基础持久化可工作
-- 实验页按钮能注入事件
+- é¢æ¿å¯æ‰“å¼€
+- automation API å¯è®¿é—®
+- åŸºç¡€æŒä¹…åŒ–å¯å·¥ä½œ
+- å®žéªŒé¡µæŒ‰é’®èƒ½æ³¨å…¥äº‹ä»¶
 
-但还没有覆盖更关键的 AI 诊断链路：
+ä½†è¿˜æ²¡æœ‰è¦†ç›–æ›´å…³é”®çš„ AI è¯Šæ–­é“¾è·¯ï¼š
 
-- `waitForEvent()` 在真实请求生命周期上的可靠性
-- `queryEvents()` / `getInteractionTrace()` 在真实复杂页面上的正确性
-- `inspectByElement()` 对真实表单节点返回的结构完整性
-- `exportSession()` 脱敏输出的契约稳定性
+- `waitForEvent()` åœ¨çœŸå®žè¯·æ±‚ç”Ÿå‘½å‘¨æœŸä¸Šçš„å¯é æ€§
+- `queryEvents()` / `getInteractionTrace()` åœ¨çœŸå®žå¤æ‚é¡µé¢ä¸Šçš„æ­£ç¡®æ€§
+- `inspectByElement()` å¯¹çœŸå®žè¡¨å•èŠ‚ç‚¹è¿”å›žçš„ç»“æž„å®Œæ•´æ€§
+- `exportSession()` è„±æ•è¾“å‡ºçš„å¥‘çº¦ç¨³å®šæ€§
 
-结论：功能已落地，但“作为测试基础设施”的契约回归还不够强。
+ç»“è®ºï¼šåŠŸèƒ½å·²è½åœ°ï¼Œä½†â€œä½œä¸ºæµ‹è¯•åŸºç¡€è®¾æ–½â€çš„å¥‘çº¦å›žå½’è¿˜ä¸å¤Ÿå¼ºã€‚
 
 ### 5.6 Docs And Playground Still Have Terminology Drift
 
-当前代码真实使用的是：
+å½“å‰ä»£ç çœŸå®žä½¿ç”¨çš„æ˜¯ï¼š
 
 - `window.__NOP_DEBUGGER_API__`
 - `window.__NOP_DEBUGGER_HUB__`
 
-但部分旧文档和 playground 页面文本仍残留 `__NOP_FLUX_DEBUGGER_API__` 说法。
+ä½†éƒ¨åˆ†æ—§æ–‡æ¡£å’Œ playground é¡µé¢æ–‡æœ¬ä»æ®‹ç•™ `__NOP_FLUX_DEBUGGER_API__` è¯´æ³•ã€‚
 
-这类命名漂移会直接误导 AI、开发者和测试脚本，是需要持续清理的设计债务。
+è¿™ç±»å‘½åæ¼‚ç§»ä¼šç›´æŽ¥è¯¯å¯¼ AIã€å¼€å‘è€…å’Œæµ‹è¯•è„šæœ¬ï¼Œæ˜¯éœ€è¦æŒç»­æ¸…ç†çš„è®¾è®¡å€ºåŠ¡ã€‚
 
 ## 6. Design Judgment
 
-从架构视角看，当前 `nop-debugger` 已经到达一个重要拐点：
+ä»Žæž¶æž„è§†è§’çœ‹ï¼Œå½“å‰ `nop-debugger` å·²ç»åˆ°è¾¾ä¸€ä¸ªé‡è¦æ‹ç‚¹ï¼š
 
-- 它已经完成了从“playground 内部工具”到“框架级调试基础设施”的跃迁。
+- å®ƒå·²ç»å®Œæˆäº†ä»Žâ€œplayground å†…éƒ¨å·¥å…·â€åˆ°â€œæ¡†æž¶çº§è°ƒè¯•åŸºç¡€è®¾æ–½â€çš„è·ƒè¿ã€‚
 
-但从产品与测试基础设施视角看，它还没有完全达到最终目标：
+ä½†ä»Žäº§å“ä¸Žæµ‹è¯•åŸºç¡€è®¾æ–½è§†è§’çœ‹ï¼Œå®ƒè¿˜æ²¡æœ‰å®Œå…¨è¾¾åˆ°æœ€ç»ˆç›®æ ‡ï¼š
 
-- 它已经足够支撑开发联调。
-- 它已经足够让 AI 在集成测试中开始使用。
-- 它还不够支撑复杂异步链路、并发请求、深层 scope 覆盖问题的高可靠自动诊断。
+- å®ƒå·²ç»è¶³å¤Ÿæ”¯æ’‘å¼€å‘è”è°ƒã€‚
+- å®ƒå·²ç»è¶³å¤Ÿè®© AI åœ¨é›†æˆæµ‹è¯•ä¸­å¼€å§‹ä½¿ç”¨ã€‚
+- å®ƒè¿˜ä¸å¤Ÿæ”¯æ’‘å¤æ‚å¼‚æ­¥é“¾è·¯ã€å¹¶å‘è¯·æ±‚ã€æ·±å±‚ scope è¦†ç›–é—®é¢˜çš„é«˜å¯é è‡ªåŠ¨è¯Šæ–­ã€‚
 
-因此当前最准确的结论不是“已经达成”或“完全未达成”，而是：
+å› æ­¤å½“å‰æœ€å‡†ç¡®çš„ç»“è®ºä¸æ˜¯â€œå·²ç»è¾¾æˆâ€æˆ–â€œå®Œå…¨æœªè¾¾æˆâ€ï¼Œè€Œæ˜¯ï¼š
 
-- **第一阶段目标已达成**：AI 和开发者都已经有可用调试器。
-- **第二阶段目标未完全达成**：复杂问题诊断所需的强关联、强上下文和强回归契约还需要补强。
+- **ç¬¬ä¸€é˜¶æ®µç›®æ ‡å·²è¾¾æˆ**ï¼šAI å’Œå¼€å‘è€…éƒ½å·²ç»æœ‰å¯ç”¨è°ƒè¯•å™¨ã€‚
+- **ç¬¬äºŒé˜¶æ®µç›®æ ‡æœªå®Œå…¨è¾¾æˆ**ï¼šå¤æ‚é—®é¢˜è¯Šæ–­æ‰€éœ€çš„å¼ºå…³è”ã€å¼ºä¸Šä¸‹æ–‡å’Œå¼ºå›žå½’å¥‘çº¦è¿˜éœ€è¦è¡¥å¼ºã€‚
 
 ## 7. Required Next-Step Capabilities
 
-如果目标是把 debugger 升级为真正的 AI 诊断基础设施，后续能力应按以下优先级推进。
+å¦‚æžœç›®æ ‡æ˜¯æŠŠ debugger å‡çº§ä¸ºçœŸæ­£çš„ AI è¯Šæ–­åŸºç¡€è®¾æ–½ï¼ŒåŽç»­èƒ½åŠ›åº”æŒ‰ä»¥ä¸‹ä¼˜å…ˆçº§æŽ¨è¿›ã€‚
 
 ### 7.1 P0: Stable Causality And Correlation
 
-优先补强：
+ä¼˜å…ˆè¡¥å¼ºï¼š
 
-- request instance id，而不是只靠 `requestKey`
-- action / api / error / notify 的关联 id
-- 交互链路中的 parent-child 因果字段
+- request instance idï¼Œè€Œä¸æ˜¯åªé  `requestKey`
+- action / api / error / notify çš„å…³è” id
+- äº¤äº’é“¾è·¯ä¸­çš„ parent-child å› æžœå­—æ®µ
 
-这是 AI 稳定归因最重要的基础。
+è¿™æ˜¯ AI ç¨³å®šå½’å› æœ€é‡è¦çš„åŸºç¡€ã€‚
 
 ### 7.2 P0: Stronger Inspect Payload
 
-优先补强：
+ä¼˜å…ˆè¡¥å¼ºï¼š
 
-- scope chain 分层
-- scope 来源名称
-- 节点 props/meta 摘要
-- 节点最近 render/action/api/error 聚合摘要直接并入 inspect 结果
+- scope chain åˆ†å±‚
+- scope æ¥æºåç§°
+- èŠ‚ç‚¹ props/meta æ‘˜è¦
+- èŠ‚ç‚¹æœ€è¿‘ render/action/api/error èšåˆæ‘˜è¦ç›´æŽ¥å¹¶å…¥ inspect ç»“æžœ
 
-这样 AI 和开发者都不用手工在多个 API 之间拼上下文。
+è¿™æ · AI å’Œå¼€å‘è€…éƒ½ä¸ç”¨æ‰‹å·¥åœ¨å¤šä¸ª API ä¹‹é—´æ‹¼ä¸Šä¸‹æ–‡ã€‚
 
 ### 7.3 P1: Contract-Level E2E Coverage
 
-需要新增集成测试覆盖：
+éœ€è¦æ–°å¢žé›†æˆæµ‹è¯•è¦†ç›–ï¼š
 
-- 真实表单提交后的 `waitForEvent({ kind: 'api:end' })`
-- `getInteractionTrace({ inferFromLatest: true })` 的稳定输出
-- `inspectByElement()` 对页面组件的真实 inspect
-- `exportSession()` 脱敏契约
+- çœŸå®žè¡¨å•æäº¤åŽçš„ `waitForEvent({ kind: 'api:end' })`
+- `getInteractionTrace({ inferFromLatest: true })` çš„ç¨³å®šè¾“å‡º
+- `inspectByElement()` å¯¹é¡µé¢ç»„ä»¶çš„çœŸå®ž inspect
+- `exportSession()` è„±æ•å¥‘çº¦
 
-目标不是测试 UI 像不像，而是测试 automation contract 是否稳定。
+ç›®æ ‡ä¸æ˜¯æµ‹è¯• UI åƒä¸åƒï¼Œè€Œæ˜¯æµ‹è¯• automation contract æ˜¯å¦ç¨³å®šã€‚
 
 ### 7.4 P1: Better Failure Summaries For AI
 
-建议把以下聚合能力提升为一等接口：
+å»ºè®®æŠŠä»¥ä¸‹èšåˆèƒ½åŠ›æå‡ä¸ºä¸€ç­‰æŽ¥å£ï¼š
 
 - latest failed request summary
 - latest failed action summary
 - recent node anomalies
 - probable root cause hints
 
-这类能力不要求替代 AI 推理，但要减少 AI 每次从零聚合数据的成本。
+è¿™ç±»èƒ½åŠ›ä¸è¦æ±‚æ›¿ä»£ AI æŽ¨ç†ï¼Œä½†è¦å‡å°‘ AI æ¯æ¬¡ä»Žé›¶èšåˆæ•°æ®çš„æˆæœ¬ã€‚
 
 ### 7.5 P2: Optional Safe Expression Evaluation
 
-如果要补齐 Node Tab 的表达式诊断能力，应通过已有表达式引擎在受控上下文中执行，而不是开放任意 JS。
+å¦‚æžœè¦è¡¥é½ Node Tab çš„è¡¨è¾¾å¼è¯Šæ–­èƒ½åŠ›ï¼Œåº”é€šè¿‡å·²æœ‰è¡¨è¾¾å¼å¼•æ“Žåœ¨å—æŽ§ä¸Šä¸‹æ–‡ä¸­æ‰§è¡Œï¼Œè€Œä¸æ˜¯å¼€æ”¾ä»»æ„ JSã€‚
 
-这项能力对开发者和 AI 都有价值，但优先级低于链路关联和 inspect 完整性。
+è¿™é¡¹èƒ½åŠ›å¯¹å¼€å‘è€…å’Œ AI éƒ½æœ‰ä»·å€¼ï¼Œä½†ä¼˜å…ˆçº§ä½ŽäºŽé“¾è·¯å…³è”å’Œ inspect å®Œæ•´æ€§ã€‚
 
 ## 8. Rules For AI-Facing Use
 
-面向 AI、E2E 与自动化时，主接口应该始终是：
+é¢å‘ AIã€E2E ä¸Žè‡ªåŠ¨åŒ–æ—¶ï¼Œä¸»æŽ¥å£åº”è¯¥å§‹ç»ˆæ˜¯ï¼š
 
 - `window.__NOP_DEBUGGER_API__`
 - `window.__NOP_DEBUGGER_HUB__`
@@ -451,39 +451,40 @@ Node Tab 里虽然保留了 Expression Evaluator 区域，但当前 `handleEvalE
 - `exportSession()`
 - `createDiagnosticReport()`
 
-不应把以下内容当成稳定接口：
+ä¸åº”æŠŠä»¥ä¸‹å†…å®¹å½“æˆç¨³å®šæŽ¥å£ï¼š
 
-- panel DOM 结构
-- tab 按钮文案
-- launcher 文本
-- 视觉样式 class
-- 人类可读字符串日志
+- panel DOM ç»“æž„
+- tab æŒ‰é’®æ–‡æ¡ˆ
+- launcher æ–‡æœ¬
+- è§†è§‰æ ·å¼ class
+- äººç±»å¯è¯»å­—ç¬¦ä¸²æ—¥å¿—
 
-调试面板是开发体验层，不是自动化契约层。
+è°ƒè¯•é¢æ¿æ˜¯å¼€å‘ä½“éªŒå±‚ï¼Œä¸æ˜¯è‡ªåŠ¨åŒ–å¥‘çº¦å±‚ã€‚
 
 ## 9. Relationship To Playground
 
-playground 继续承担两种职责：
+playground ç»§ç»­æ‰¿æ‹…ä¸¤ç§èŒè´£ï¼š
 
-- 作为 `nop-debugger` 的第一集成面
-- 作为 `DebuggerLabPage` 的调试 API 演示面
+- ä½œä¸º `nop-debugger` çš„ç¬¬ä¸€é›†æˆé¢
+- ä½œä¸º `DebuggerLabPage` çš„è°ƒè¯• API æ¼”ç¤ºé¢
 
-但 playground 不是 debugger 的 source of truth。
+ä½† playground ä¸æ˜¯ debugger çš„ source of truthã€‚
 
-调试器的正式契约应以：
+è°ƒè¯•å™¨çš„æ­£å¼å¥‘çº¦åº”ä»¥ï¼š
 
 - `docs/architecture/debugger-runtime.md`
 - `packages/nop-debugger/src/types.ts`
 - `packages/nop-debugger/src/controller.ts`
 - `packages/nop-debugger/src/automation.ts`
 
-为准。
+ä¸ºå‡†ã€‚
 
 ## Related Documents
 
 - `docs/architecture/playground-experience.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/action-scope-and-imports.md`
-- `docs/analysis/framework-debugger-design.md`
+- `docs/analysis/2026-03-21-framework-debugger-design.md`
 - `docs/plans/20-nop-debugger-implementation-plan.md`
 - `docs/plans/22-debugger-node-inspector-enhancement-plan.md`
+

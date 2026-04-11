@@ -1,46 +1,46 @@
-# CodeMirror 6 代码编辑器设计文档
+﻿# CodeMirror 6 ä»£ç ç¼–è¾‘å™¨è®¾è®¡æ–‡æ¡£
 
 ## Purpose
 
-本文档定义基于 CodeMirror 6 的 `code-editor` 渲染器的 JSON Schema 设计，包括语言模式选择、只读控制、语法补全配置等。
+æœ¬æ–‡æ¡£å®šä¹‰åŸºäºŽ CodeMirror 6 çš„ `code-editor` æ¸²æŸ“å™¨çš„ JSON Schema è®¾è®¡ï¼ŒåŒ…æ‹¬è¯­è¨€æ¨¡å¼é€‰æ‹©ã€åªè¯»æŽ§åˆ¶ã€è¯­æ³•è¡¥å…¨é…ç½®ç­‰ã€‚
 
-本编辑器用于两个核心场景：
-1. **表达式编辑器**：JavaScript 子集，支持变量/属性/方法补全
-2. **SQL 编辑器**：基于表名和别名提供字段补全
+æœ¬ç¼–è¾‘å™¨ç”¨äºŽä¸¤ä¸ªæ ¸å¿ƒåœºæ™¯ï¼š
+1. **è¡¨è¾¾å¼ç¼–è¾‘å™¨**ï¼šJavaScript å­é›†ï¼Œæ”¯æŒå˜é‡/å±žæ€§/æ–¹æ³•è¡¥å…¨
+2. **SQL ç¼–è¾‘å™¨**ï¼šåŸºäºŽè¡¨åå’Œåˆ«åæä¾›å­—æ®µè¡¥å…¨
 
 ## Current Code Anchors
 
-实现阶段参考：
-- `packages/flux-renderers-form/src/renderers/` — 表单控件渲染器
-- `packages/flux-core/src/types.ts` — `BaseSchema` 及核心类型
-- `docs/analysis/amis-editor-rearchitecture-reResearch.md` — amis 编辑器架构调研
+å®žçŽ°é˜¶æ®µå‚è€ƒï¼š
+- `packages/flux-renderers-form/src/renderers/` â€” è¡¨å•æŽ§ä»¶æ¸²æŸ“å™¨
+- `packages/flux-core/src/types.ts` â€” `BaseSchema` åŠæ ¸å¿ƒç±»åž‹
+- `docs/analysis/2026-04-01-amis-editor-rearchitecture-reResearch.md` â€” amis ç¼–è¾‘å™¨æž¶æž„è°ƒç ”
 
 ---
 
-## 一、设计目标
+## ä¸€ã€è®¾è®¡ç›®æ ‡
 
-### 对比 amis 的改进
+### å¯¹æ¯” amis çš„æ”¹è¿›
 
-| amis 问题 | Flux 改进 |
+| amis é—®é¢˜ | Flux æ”¹è¿› |
 |----------|----------|
-| 无内联补全 — 变量/函数选择完全依赖侧边面板 | CM6 `@codemirror/autocomplete` 原生弹出补全 |
-| 无 SQL 编辑器 | 基于 `@codemirror/lang-sql` + 自定义 schema 补全 |
-| `modeRegisted` 全局可变状态 | 无全局状态，每次实例独立创建 |
-| `evalMode` 布尔值混淆（表达式 vs 模板） | 明确的 `mode` 字段：`'expression' | 'template' | 'readonly'` |
-| Class 组件 + 复杂生命周期 | React Hooks + `useCodeMirror` |
-| FormulaPlugin 混合职责（高亮 + 插入 + 验证） | CM6 Extension 拆分：补全源、装饰器、linter 各自独立 |
-| `markText` 原子标记编辑时干扰 | CM6 `Decoration.widget` + 按需启用（仅在 `readonly` 或失焦时） |
+| æ— å†…è”è¡¥å…¨ â€” å˜é‡/å‡½æ•°é€‰æ‹©å®Œå…¨ä¾èµ–ä¾§è¾¹é¢æ¿ | CM6 `@codemirror/autocomplete` åŽŸç”Ÿå¼¹å‡ºè¡¥å…¨ |
+| æ—  SQL ç¼–è¾‘å™¨ | åŸºäºŽ `@codemirror/lang-sql` + è‡ªå®šä¹‰ schema è¡¥å…¨ |
+| `modeRegisted` å…¨å±€å¯å˜çŠ¶æ€ | æ— å…¨å±€çŠ¶æ€ï¼Œæ¯æ¬¡å®žä¾‹ç‹¬ç«‹åˆ›å»º |
+| `evalMode` å¸ƒå°”å€¼æ··æ·†ï¼ˆè¡¨è¾¾å¼ vs æ¨¡æ¿ï¼‰ | æ˜Žç¡®çš„ `mode` å­—æ®µï¼š`'expression' | 'template' | 'readonly'` |
+| Class ç»„ä»¶ + å¤æ‚ç”Ÿå‘½å‘¨æœŸ | React Hooks + `useCodeMirror` |
+| FormulaPlugin æ··åˆèŒè´£ï¼ˆé«˜äº® + æ’å…¥ + éªŒè¯ï¼‰ | CM6 Extension æ‹†åˆ†ï¼šè¡¥å…¨æºã€è£…é¥°å™¨ã€linter å„è‡ªç‹¬ç«‹ |
+| `markText` åŽŸå­æ ‡è®°ç¼–è¾‘æ—¶å¹²æ‰° | CM6 `Decoration.widget` + æŒ‰éœ€å¯ç”¨ï¼ˆä»…åœ¨ `readonly` æˆ–å¤±ç„¦æ—¶ï¼‰ |
 
-### 设计原则
+### è®¾è®¡åŽŸåˆ™
 
-1. **Schema 驱动**：编辑器行为完全由 JSON 配置描述，无需写代码
-2. **关注点分离**：语言、补全、样式各自独立配置
-3. **渐进增强**：最小配置即可工作，高级功能按需开启
-4. **框架无关核心**：CM6 逻辑不依赖 React，通过 Hook 桥接
+1. **Schema é©±åŠ¨**ï¼šç¼–è¾‘å™¨è¡Œä¸ºå®Œå…¨ç”± JSON é…ç½®æè¿°ï¼Œæ— éœ€å†™ä»£ç 
+2. **å…³æ³¨ç‚¹åˆ†ç¦»**ï¼šè¯­è¨€ã€è¡¥å…¨ã€æ ·å¼å„è‡ªç‹¬ç«‹é…ç½®
+3. **æ¸è¿›å¢žå¼º**ï¼šæœ€å°é…ç½®å³å¯å·¥ä½œï¼Œé«˜çº§åŠŸèƒ½æŒ‰éœ€å¼€å¯
+4. **æ¡†æž¶æ— å…³æ ¸å¿ƒ**ï¼šCM6 é€»è¾‘ä¸ä¾èµ– Reactï¼Œé€šè¿‡ Hook æ¡¥æŽ¥
 
 ---
 
-## 二、JSON Schema 定义
+## äºŒã€JSON Schema å®šä¹‰
 
 ### 2.1 CodeEditorSchema
 
@@ -48,127 +48,127 @@
 interface CodeEditorSchema extends BaseSchema {
   type: 'code-editor';
 
-  // --- 必填：语言模式 ---
+  // --- å¿…å¡«ï¼šè¯­è¨€æ¨¡å¼ ---
   language: EditorLanguage;
 
-  // --- 编辑模式 ---
+  // --- ç¼–è¾‘æ¨¡å¼ ---
   mode?: EditorMode;
 
-  // --- 值 ---
+  // --- å€¼ ---
   value?: string;
 
-  // --- 占位提示 ---
+  // --- å ä½æç¤º ---
   placeholder?: string;
 
-  // --- 尺寸 ---
+  // --- å°ºå¯¸ ---
   width?: number | string;
   height?: number | string;
 
-  // --- 行号 ---
+  // --- è¡Œå· ---
   lineNumbers?: boolean;
 
-  // --- 折叠 ---
+  // --- æŠ˜å  ---
   folding?: boolean;
 
-  // --- 自动高度 ---
+  // --- è‡ªåŠ¨é«˜åº¦ ---
   autoHeight?: boolean;
 
-  // --- 全屏 ---
+  // --- å…¨å± ---
   allowFullscreen?: boolean;
 
-  // --- 语言特有配置 ---
+  // --- è¯­è¨€ç‰¹æœ‰é…ç½® ---
   expressionConfig?: ExpressionEditorConfig;
   sqlConfig?: SQLEditorConfig;
 
-  // --- 主题 ---
+  // --- ä¸»é¢˜ ---
   editorTheme?: 'light' | 'dark';
 
-  // --- 原生选项透传 ---
+  // --- åŽŸç”Ÿé€‰é¡¹é€ä¼  ---
   options?: Record<string, unknown>;
 
-  // --- 事件 ---
+  // --- äº‹ä»¶ ---
   onChange?: string;
   onFocus?: string;
   onBlur?: string;
 }
 
 type EditorLanguage =
-  | 'expression'       // 表达式（JS 子集，变量/函数补全）
+  | 'expression'       // è¡¨è¾¾å¼ï¼ˆJS å­é›†ï¼Œå˜é‡/å‡½æ•°è¡¥å…¨ï¼‰
   | 'sql'              // SQL
   | 'json'             // JSON
-  | 'javascript'       // 完整 JavaScript
+  | 'javascript'       // å®Œæ•´ JavaScript
   | 'typescript'       // TypeScript
   | 'html'             // HTML
   | 'css'              // CSS
-  | 'plaintext';       // 纯文本（无语法高亮）
+  | 'plaintext';       // çº¯æ–‡æœ¬ï¼ˆæ— è¯­æ³•é«˜äº®ï¼‰
 
 type EditorMode =
-  | 'expression'       // 纯表达式模式：整个内容是一个表达式
-  | 'template'         // 模板模式：${...} 内嵌表达式，外部为普通文本
-  | 'code';            // 代码模式：完整代码编辑（默认）
+  | 'expression'       // çº¯è¡¨è¾¾å¼æ¨¡å¼ï¼šæ•´ä¸ªå†…å®¹æ˜¯ä¸€ä¸ªè¡¨è¾¾å¼
+  | 'template'         // æ¨¡æ¿æ¨¡å¼ï¼š${...} å†…åµŒè¡¨è¾¾å¼ï¼Œå¤–éƒ¨ä¸ºæ™®é€šæ–‡æœ¬
+  | 'code';            // ä»£ç æ¨¡å¼ï¼šå®Œæ•´ä»£ç ç¼–è¾‘ï¼ˆé»˜è®¤ï¼‰
 ```
 
-### 2.2 字段说明
+### 2.2 å­—æ®µè¯´æ˜Ž
 
-| 字段 | 类型 | 默认值 | 说明 |
+| å­—æ®µ | ç±»åž‹ | é»˜è®¤å€¼ | è¯´æ˜Ž |
 |------|------|--------|------|
-| `language` | `EditorLanguage` | — (必填) | 激活对应的 CM6 语言扩展和补全策略 |
-| `mode` | `EditorMode` | `'code'` | 仅 `language: 'expression'` 时有意义 |
-| `value` | `string` | `''` | 编辑器初始值，支持表达式绑定 |
-| `placeholder` | `string` | `''` | 空内容时的提示文字 |
-| `width` | `number \| string` | `'100%'` | 编辑器宽度 |
-| `height` | `number \| string` | 语言相关 | 编辑器高度（表达式默认 `'auto'`，其他默认 `300`） |
-| `lineNumbers` | `boolean` | `language !== 'expression'` | 是否显示行号 |
-| `folding` | `boolean` | `false` | 是否启用代码折叠 |
-| `autoHeight` | `boolean` | `language === 'expression'` | 自动高度（根据内容调整） |
-| `allowFullscreen` | `boolean` | `false` | 允许全屏编辑 |
-| `expressionConfig` | `ExpressionEditorConfig` | — | 表达式编辑器配置 |
-| `sqlConfig` | `SQLEditorConfig` | — | SQL 编辑器配置 |
-| `editorTheme` | `'light' \| 'dark'` | `'light'` | 编辑器主题 |
-| `options` | `Record<string, unknown>` | `{}` | CM6 原生扩展选项透传 |
-| `onChange` | `string` | — | 值变化时触发的动作 |
-| `onFocus` | `string` | — | 获得焦点时触发的动作 |
-| `onBlur` | `string` | — | 失去焦点时触发的动作 |
+| `language` | `EditorLanguage` | â€” (å¿…å¡«) | æ¿€æ´»å¯¹åº”çš„ CM6 è¯­è¨€æ‰©å±•å’Œè¡¥å…¨ç­–ç•¥ |
+| `mode` | `EditorMode` | `'code'` | ä»… `language: 'expression'` æ—¶æœ‰æ„ä¹‰ |
+| `value` | `string` | `''` | ç¼–è¾‘å™¨åˆå§‹å€¼ï¼Œæ”¯æŒè¡¨è¾¾å¼ç»‘å®š |
+| `placeholder` | `string` | `''` | ç©ºå†…å®¹æ—¶çš„æç¤ºæ–‡å­— |
+| `width` | `number \| string` | `'100%'` | ç¼–è¾‘å™¨å®½åº¦ |
+| `height` | `number \| string` | è¯­è¨€ç›¸å…³ | ç¼–è¾‘å™¨é«˜åº¦ï¼ˆè¡¨è¾¾å¼é»˜è®¤ `'auto'`ï¼Œå…¶ä»–é»˜è®¤ `300`ï¼‰ |
+| `lineNumbers` | `boolean` | `language !== 'expression'` | æ˜¯å¦æ˜¾ç¤ºè¡Œå· |
+| `folding` | `boolean` | `false` | æ˜¯å¦å¯ç”¨ä»£ç æŠ˜å  |
+| `autoHeight` | `boolean` | `language === 'expression'` | è‡ªåŠ¨é«˜åº¦ï¼ˆæ ¹æ®å†…å®¹è°ƒæ•´ï¼‰ |
+| `allowFullscreen` | `boolean` | `false` | å…è®¸å…¨å±ç¼–è¾‘ |
+| `expressionConfig` | `ExpressionEditorConfig` | â€” | è¡¨è¾¾å¼ç¼–è¾‘å™¨é…ç½® |
+| `sqlConfig` | `SQLEditorConfig` | â€” | SQL ç¼–è¾‘å™¨é…ç½® |
+| `editorTheme` | `'light' \| 'dark'` | `'light'` | ç¼–è¾‘å™¨ä¸»é¢˜ |
+| `options` | `Record<string, unknown>` | `{}` | CM6 åŽŸç”Ÿæ‰©å±•é€‰é¡¹é€ä¼  |
+| `onChange` | `string` | â€” | å€¼å˜åŒ–æ—¶è§¦å‘çš„åŠ¨ä½œ |
+| `onFocus` | `string` | â€” | èŽ·å¾—ç„¦ç‚¹æ—¶è§¦å‘çš„åŠ¨ä½œ |
+| `onBlur` | `string` | â€” | å¤±åŽ»ç„¦ç‚¹æ—¶è§¦å‘çš„åŠ¨ä½œ |
 
-### 2.3 与 BaseSchema 的交互
+### 2.3 ä¸Ž BaseSchema çš„äº¤äº’
 
-`BaseSchema` 提供的通用字段行为：
+`BaseSchema` æä¾›çš„é€šç”¨å­—æ®µè¡Œä¸ºï¼š
 
-| BaseSchema 字段 | 在 code-editor 中的语义 |
+| BaseSchema å­—æ®µ | åœ¨ code-editor ä¸­çš„è¯­ä¹‰ |
 |----------------|----------------------|
-| `readOnly` | 编辑器只读模式（CM6 `EditorState.readOnly`） |
-| `visible` / `hidden` | 控制编辑器可见性 |
-| `disabled` | 等同于 `readOnly`，且禁用焦点 |
-| `className` | 附加到编辑器容器 |
-| `label` | 通过 FieldFrame 显示标签 |
-| `validateOn` | 校验触发时机（`'change'` / `'blur'` / `'submit'`） |
+| `readOnly` | ç¼–è¾‘å™¨åªè¯»æ¨¡å¼ï¼ˆCM6 `EditorState.readOnly`ï¼‰ |
+| `visible` / `hidden` | æŽ§åˆ¶ç¼–è¾‘å™¨å¯è§æ€§ |
+| `disabled` | ç­‰åŒäºŽ `readOnly`ï¼Œä¸”ç¦ç”¨ç„¦ç‚¹ |
+| `className` | é™„åŠ åˆ°ç¼–è¾‘å™¨å®¹å™¨ |
+| `label` | é€šè¿‡ FieldFrame æ˜¾ç¤ºæ ‡ç­¾ |
+| `validateOn` | æ ¡éªŒè§¦å‘æ—¶æœºï¼ˆ`'change'` / `'blur'` / `'submit'`ï¼‰ |
 
 ---
 
-## 三、表达式编辑器配置
+## ä¸‰ã€è¡¨è¾¾å¼ç¼–è¾‘å™¨é…ç½®
 
 ### 3.1 ExpressionEditorConfig
 
 ```typescript
 interface ExpressionEditorConfig {
-  // --- 变量源 ---
+  // --- å˜é‡æº ---
   variables?: VariableItem[] | VariableSourceRef;
 
-  // --- 函数源 ---
+  // --- å‡½æ•°æº ---
   functions?: FuncGroup[] | FuncSourceRef;
 
-  // --- 变量友好名标记 ---
+  // --- å˜é‡å‹å¥½åæ ‡è®° ---
   showFriendlyNames?: boolean;
 
-  // --- 语法校验 ---
+  // --- è¯­æ³•æ ¡éªŒ ---
   lint?: boolean | ExpressionLintConfig;
 
-  // --- 函数文档 ---
+  // --- å‡½æ•°æ–‡æ¡£ ---
   showFunctionDocs?: boolean;
 }
 ```
 
-### 3.2 VariableItem（变量数据模型）
+### 3.2 VariableItemï¼ˆå˜é‡æ•°æ®æ¨¡åž‹ï¼‰
 
 ```typescript
 interface VariableItem {
@@ -181,36 +181,36 @@ interface VariableItem {
 }
 ```
 
-**示例**：
+**ç¤ºä¾‹**ï¼š
 
 ```json
 {
   "variables": [
     {
-      "label": "用户名",
+      "label": "ç”¨æˆ·å",
       "value": "data.username",
       "type": "string"
     },
     {
-      "label": "订单",
+      "label": "è®¢å•",
       "value": "data.order",
       "type": "object",
       "children": [
-        { "label": "订单号", "value": "data.order.id", "type": "string" },
-        { "label": "金额", "value": "data.order.amount", "type": "number" },
+        { "label": "è®¢å•å·", "value": "data.order.id", "type": "string" },
+        { "label": "é‡‘é¢", "value": "data.order.amount", "type": "number" },
         {
-          "label": "商品列表",
+          "label": "å•†å“åˆ—è¡¨",
           "value": "data.order.items",
           "type": "array",
           "children": [
-            { "label": "商品名", "value": "data.order.items.name", "type": "string" },
-            { "label": "单价", "value": "data.order.items.price", "type": "number" }
+            { "label": "å•†å“å", "value": "data.order.items.name", "type": "string" },
+            { "label": "å•ä»·", "value": "data.order.items.price", "type": "number" }
           ]
         }
       ]
     },
     {
-      "label": "当前角色",
+      "label": "å½“å‰è§’è‰²",
       "value": "role",
       "type": "string",
       "tags": ["system"]
@@ -219,7 +219,7 @@ interface VariableItem {
 }
 ```
 
-### 3.3 FuncGroup（函数数据模型）
+### 3.3 FuncGroupï¼ˆå‡½æ•°æ•°æ®æ¨¡åž‹ï¼‰
 
 ```typescript
 interface FuncGroup {
@@ -243,17 +243,17 @@ interface FuncParam {
 }
 ```
 
-**示例**：
+**ç¤ºä¾‹**ï¼š
 
 ```json
 {
   "functions": [
     {
-      "groupName": "逻辑函数",
+      "groupName": "é€»è¾‘å‡½æ•°",
       "items": [
         {
           "name": "IF",
-          "description": "条件判断",
+          "description": "æ¡ä»¶åˆ¤æ–­",
           "example": "IF(condition, trueValue, falseValue)",
           "returnType": "any",
           "params": [
@@ -265,17 +265,17 @@ interface FuncParam {
       ]
     },
     {
-      "groupName": "文本函数",
+      "groupName": "æ–‡æœ¬å‡½æ•°",
       "items": [
         {
           "name": "CONCAT",
-          "description": "连接多个字符串",
+          "description": "è¿žæŽ¥å¤šä¸ªå­—ç¬¦ä¸²",
           "example": "CONCAT(str1, str2, ...)",
           "returnType": "string"
         },
         {
           "name": "UPPER",
-          "description": "转大写",
+          "description": "è½¬å¤§å†™",
           "example": "UPPER(str)",
           "returnType": "string",
           "params": [
@@ -288,9 +288,9 @@ interface FuncParam {
 }
 ```
 
-### 3.4 变量源引用
+### 3.4 å˜é‡æºå¼•ç”¨
 
-变量数据除了直接内联，还支持通过数据源引用动态获取：
+å˜é‡æ•°æ®é™¤äº†ç›´æŽ¥å†…è”ï¼Œè¿˜æ”¯æŒé€šè¿‡æ•°æ®æºå¼•ç”¨åŠ¨æ€èŽ·å–ï¼š
 
 ```typescript
 type VariableSourceRef = {
@@ -308,7 +308,7 @@ type FuncSourceRef = {
 };
 ```
 
-**示例 — 从 scope 取变量**：
+**ç¤ºä¾‹ â€” ä»Ž scope å–å˜é‡**ï¼š
 
 ```json
 {
@@ -321,9 +321,9 @@ type FuncSourceRef = {
 }
 ```
 
-运行时从当前 scope 的 `editorVariables` 路径读取 `VariableItem[]`。
+è¿è¡Œæ—¶ä»Žå½“å‰ scope çš„ `editorVariables` è·¯å¾„è¯»å– `VariableItem[]`ã€‚
 
-**示例 — 从 API 获取函数列表**：
+**ç¤ºä¾‹ â€” ä»Ž API èŽ·å–å‡½æ•°åˆ—è¡¨**ï¼š
 
 ```json
 {
@@ -360,34 +360,34 @@ interface ExpressionLintRule {
 
 ---
 
-## 四、SQL 编辑器配置
+## å››ã€SQL ç¼–è¾‘å™¨é…ç½®
 
 ### 4.1 SQLEditorConfig
 
 ```typescript
 interface SQLEditorConfig {
-  // --- 数据库 schema ---
+  // --- æ•°æ®åº“ schema ---
   tables?: TableSchema[] | SQLSchemaSourceRef;
 
-  // --- SQL 方言 ---
+  // --- SQL æ–¹è¨€ ---
   dialect?: SQLDialect;
 
-  // --- 关键字补全 ---
+  // --- å…³é”®å­—è¡¥å…¨ ---
   keywords?: boolean;
 
-  // --- 自动大写关键字 ---
+  // --- è‡ªåŠ¨å¤§å†™å…³é”®å­— ---
   uppercaseKeywords?: boolean;
 
-  // --- SQL 格式化 (Phase 1) ---
+  // --- SQL æ ¼å¼åŒ– (Phase 1) ---
   format?: boolean | SQLFormatConfig;
 
-  // --- 代码片段模板 (Phase 2) ---
+  // --- ä»£ç ç‰‡æ®µæ¨¡æ¿ (Phase 2) ---
   snippets?: CodeSnippetTemplate[];
 
-  // --- 变量面板 (Phase 3) ---
+  // --- å˜é‡é¢æ¿ (Phase 3) ---
   variablePanel?: VariablePanelConfig;
 
-  // --- SQL 执行 + 结果预览 (Phase 4) ---
+  // --- SQL æ‰§è¡Œ + ç»“æžœé¢„è§ˆ (Phase 4) ---
   execution?: SQLExecutionConfig;
 }
 
@@ -424,7 +424,7 @@ interface SQLExecutionConfig {
 type SQLDialect = 'standard' | 'mysql' | 'postgresql' | 'sqlite' | 'mssql';
 ```
 
-### 4.2 TableSchema（表结构数据模型）
+### 4.2 TableSchemaï¼ˆè¡¨ç»“æž„æ•°æ®æ¨¡åž‹ï¼‰
 
 ```typescript
 interface TableSchema {
@@ -443,7 +443,7 @@ interface ColumnSchema {
 }
 ```
 
-**示例**：
+**ç¤ºä¾‹**ï¼š
 
 ```json
 {
@@ -451,10 +451,10 @@ interface ColumnSchema {
     "tables": [
       {
         "name": "users",
-        "description": "用户表",
+        "description": "ç”¨æˆ·è¡¨",
         "columns": [
-          { "name": "id", "type": "BIGINT", "description": "主键" },
-          { "name": "username", "type": "VARCHAR(64)", "description": "用户名" },
+          { "name": "id", "type": "BIGINT", "description": "ä¸»é”®" },
+          { "name": "username", "type": "VARCHAR(64)", "description": "ç”¨æˆ·å" },
           { "name": "email", "type": "VARCHAR(128)", "nullable": true },
           { "name": "role", "type": "VARCHAR(32)", "defaultValue": "'user'" }
         ]
@@ -462,7 +462,7 @@ interface ColumnSchema {
       {
         "name": "orders",
         "alias": "o",
-        "description": "订单表",
+        "description": "è®¢å•è¡¨",
         "columns": [
           { "name": "id", "type": "BIGINT" },
           { "name": "user_id", "type": "BIGINT" },
@@ -477,7 +477,7 @@ interface ColumnSchema {
 }
 ```
 
-### 4.3 SQL Schema 数据源
+### 4.3 SQL Schema æ•°æ®æº
 
 ```typescript
 type SQLSchemaSourceRef = {
@@ -488,7 +488,7 @@ type SQLSchemaSourceRef = {
 };
 ```
 
-**示例 — 动态获取表结构**：
+**ç¤ºä¾‹ â€” åŠ¨æ€èŽ·å–è¡¨ç»“æž„**ï¼š
 
 ```json
 {
@@ -509,9 +509,9 @@ type SQLSchemaSourceRef = {
 
 ---
 
-## 五、JSON Schema 示例
+## äº”ã€JSON Schema ç¤ºä¾‹
 
-### 5.1 表单内嵌表达式编辑器（最简配置）
+### 5.1 è¡¨å•å†…åµŒè¡¨è¾¾å¼ç¼–è¾‘å™¨ï¼ˆæœ€ç®€é…ç½®ï¼‰
 
 ```json
 {
@@ -520,15 +520,15 @@ type SQLSchemaSourceRef = {
     {
       "type": "code-editor",
       "name": "expression",
-      "label": "过滤条件",
+      "label": "è¿‡æ»¤æ¡ä»¶",
       "language": "expression",
       "mode": "expression",
-      "placeholder": "输入过滤表达式，如 data.age > 18",
+      "placeholder": "è¾“å…¥è¿‡æ»¤è¡¨è¾¾å¼ï¼Œå¦‚ data.age > 18",
       "expressionConfig": {
         "variables": [
-          { "label": "姓名", "value": "data.name", "type": "string" },
-          { "label": "年龄", "value": "data.age", "type": "number" },
-          { "label": "角色", "value": "data.role", "type": "string" }
+          { "label": "å§“å", "value": "data.name", "type": "string" },
+          { "label": "å¹´é¾„", "value": "data.age", "type": "number" },
+          { "label": "è§’è‰²", "value": "data.role", "type": "string" }
         ],
         "lint": true
       }
@@ -537,16 +537,16 @@ type SQLSchemaSourceRef = {
 }
 ```
 
-### 5.2 模板模式表达式编辑器
+### 5.2 æ¨¡æ¿æ¨¡å¼è¡¨è¾¾å¼ç¼–è¾‘å™¨
 
 ```json
 {
   "type": "code-editor",
   "name": "template",
-  "label": "消息模板",
+  "label": "æ¶ˆæ¯æ¨¡æ¿",
   "language": "expression",
   "mode": "template",
-  "placeholder": "输入文本，用 ${...} 插入变量",
+  "placeholder": "è¾“å…¥æ–‡æœ¬ï¼Œç”¨ ${...} æ’å…¥å˜é‡",
   "expressionConfig": {
     "variables": {
       "source": "scope",
@@ -558,13 +558,13 @@ type SQLSchemaSourceRef = {
 }
 ```
 
-### 5.3 SQL 编辑器
+### 5.3 SQL ç¼–è¾‘å™¨
 
 ```json
 {
   "type": "code-editor",
   "name": "sql",
-  "label": "SQL 查询",
+  "label": "SQL æŸ¥è¯¢",
   "language": "sql",
   "height": 400,
   "lineNumbers": true,
@@ -585,13 +585,13 @@ type SQLSchemaSourceRef = {
 }
 ```
 
-### 5.4 SQL 编辑器增强（格式化 + 代码片段 + 变量面板 + 执行预览）
+### 5.4 SQL ç¼–è¾‘å™¨å¢žå¼ºï¼ˆæ ¼å¼åŒ– + ä»£ç ç‰‡æ®µ + å˜é‡é¢æ¿ + æ‰§è¡Œé¢„è§ˆï¼‰
 
 ```json
 {
   "type": "code-editor",
   "name": "sqlEnhanced",
-  "label": "SQL 查询（增强版）",
+  "label": "SQL æŸ¥è¯¢ï¼ˆå¢žå¼ºç‰ˆï¼‰",
   "language": "sql",
   "height": 400,
   "lineNumbers": true,
@@ -614,20 +614,20 @@ type SQLSchemaSourceRef = {
     },
     "snippets": [
       {
-        "name": "IF 条件",
+        "name": "IF æ¡ä»¶",
         "template": "<if test=\"${condition}\">\n  AND ${column} = #{${param}}\n</if>",
-        "description": "MyBatis 动态 SQL 条件块"
+        "description": "MyBatis åŠ¨æ€ SQL æ¡ä»¶å—"
       },
       {
-        "name": "FOREACH 循环",
+        "name": "FOREACH å¾ªçŽ¯",
         "template": "<foreach collection=\"${list}\" item=\"${item}\" open=\"(\" separator=\",\" close=\")\">\n  #{${item}}\n</foreach>"
       }
     ],
     "variablePanel": {
       "enabled": true,
       "variables": [
-        { "label": "用户ID", "value": "userId", "type": "number" },
-        { "label": "用户名", "value": "userName", "type": "string" }
+        { "label": "ç”¨æˆ·ID", "value": "userId", "type": "number" },
+        { "label": "ç”¨æˆ·å", "value": "userName", "type": "string" }
       ],
       "insertTemplate": "<if test=\"${value} != null\">\n  AND ${value} = #{${value}}\n</if>"
     },
@@ -645,13 +645,13 @@ type SQLSchemaSourceRef = {
 }
 ```
 
-### 5.5 只读代码查看器
+### 5.5 åªè¯»ä»£ç æŸ¥çœ‹å™¨
 
 ```json
 {
   "type": "code-editor",
   "name": "generatedCode",
-  "label": "生成的代码",
+  "label": "ç”Ÿæˆçš„ä»£ç ",
   "language": "javascript",
   "readOnly": true,
   "lineNumbers": true,
@@ -660,13 +660,13 @@ type SQLSchemaSourceRef = {
 }
 ```
 
-### 5.6 JSON Schema 编辑器
+### 5.6 JSON Schema ç¼–è¾‘å™¨
 
 ```json
 {
   "type": "code-editor",
   "name": "schema",
-  "label": "Schema 定义",
+  "label": "Schema å®šä¹‰",
   "language": "json",
   "height": 500,
   "lineNumbers": true,
@@ -677,7 +677,7 @@ type SQLSchemaSourceRef = {
 
 ---
 
-## 六、渲染器定义
+## å…­ã€æ¸²æŸ“å™¨å®šä¹‰
 
 ### 6.1 RendererRegistration
 
@@ -685,7 +685,7 @@ type SQLSchemaSourceRef = {
 const codeEditorDefinition: RendererDefinition<CodeEditorSchema> = {
   type: 'code-editor',
   component: CodeEditorRenderer,
-  wrap: true,                              // 使用 FieldFrame 包裹
+  wrap: true,                              // ä½¿ç”¨ FieldFrame åŒ…è£¹
   fields: [
     { key: 'value', kind: 'prop' },
     { key: 'language', kind: 'prop' },
@@ -711,7 +711,7 @@ const codeEditorDefinition: RendererDefinition<CodeEditorSchema> = {
     collectRules(schema) {
       const rules: ValidationRule[] = [];
       if (schema.required) {
-        rules.push({ kind: 'required', message: `${schema.label || '代码'}不能为空` });
+        rules.push({ kind: 'required', message: `${schema.label || 'ä»£ç '}ä¸èƒ½ä¸ºç©º` });
       }
       return rules;
     },
@@ -719,12 +719,12 @@ const codeEditorDefinition: RendererDefinition<CodeEditorSchema> = {
 };
 ```
 
-### 6.2 组件接收的 Props
+### 6.2 ç»„ä»¶æŽ¥æ”¶çš„ Props
 
-`CodeEditorRenderer` 通过 `RendererComponentProps<CodeEditorSchema>` 接收：
+`CodeEditorRenderer` é€šè¿‡ `RendererComponentProps<CodeEditorSchema>` æŽ¥æ”¶ï¼š
 
 ```typescript
-// props.props 中可用的属性（经过编译和表达式求值后）
+// props.props ä¸­å¯ç”¨çš„å±žæ€§ï¼ˆç»è¿‡ç¼–è¯‘å’Œè¡¨è¾¾å¼æ±‚å€¼åŽï¼‰
 interface CodeEditorResolvedProps {
   language: EditorLanguage;
   mode: EditorMode;
@@ -746,49 +746,49 @@ interface CodeEditorResolvedProps {
 
 ---
 
-## 七、CM6 Extension 架构
+## ä¸ƒã€CM6 Extension æž¶æž„
 
-### 7.1 Extension 组合策略
+### 7.1 Extension ç»„åˆç­–ç•¥
 
-每种 `language` 对应一组 CM6 Extension：
+æ¯ç§ `language` å¯¹åº”ä¸€ç»„ CM6 Extensionï¼š
 
 ```
 code-editor
-├── Base Extensions (所有语言共享)
-│   ├── history()
-│   ├── keymap.of([indentWithTab])
-│   ├── EditorView.lineWrapping (if autoHeight)
-│   └── placeholder()
-│
-├── Language Extensions (language 决定)
-│   ├── 'expression' → javascript({ expression: true }) + expressionCompletions + expressionLinter
-│   ├── 'sql'        → sql() + sqlCompletions
-│   ├── 'json'       → json() + jsonLinter
-│   ├── 'javascript' → javascript()
-│   ├── 'typescript' → javascript({ typescript: true })
-│   ├── 'html'       → html()
-│   ├── 'css'        → css()
-│   └── 'plaintext'  → (none)
-│
-└── Feature Extensions (按需启用)
-    ├── lineNumbers() (if lineNumbers)
-    ├── foldGutter() (if folding)
-    ├── autocompletion() (if completions available)
-    ├── linter() (if lint enabled)
-    ├── EditorState.readOnly (if readOnly/disabled)
-    └── oneDark / defaultTheme (if editorTheme)
+â”œâ”€â”€ Base Extensions (æ‰€æœ‰è¯­è¨€å…±äº«)
+â”‚   â”œâ”€â”€ history()
+â”‚   â”œâ”€â”€ keymap.of([indentWithTab])
+â”‚   â”œâ”€â”€ EditorView.lineWrapping (if autoHeight)
+â”‚   â””â”€â”€ placeholder()
+â”‚
+â”œâ”€â”€ Language Extensions (language å†³å®š)
+â”‚   â”œâ”€â”€ 'expression' â†’ javascript({ expression: true }) + expressionCompletions + expressionLinter
+â”‚   â”œâ”€â”€ 'sql'        â†’ sql() + sqlCompletions
+â”‚   â”œâ”€â”€ 'json'       â†’ json() + jsonLinter
+â”‚   â”œâ”€â”€ 'javascript' â†’ javascript()
+â”‚   â”œâ”€â”€ 'typescript' â†’ javascript({ typescript: true })
+â”‚   â”œâ”€â”€ 'html'       â†’ html()
+â”‚   â”œâ”€â”€ 'css'        â†’ css()
+â”‚   â””â”€â”€ 'plaintext'  â†’ (none)
+â”‚
+â””â”€â”€ Feature Extensions (æŒ‰éœ€å¯ç”¨)
+    â”œâ”€â”€ lineNumbers() (if lineNumbers)
+    â”œâ”€â”€ foldGutter() (if folding)
+    â”œâ”€â”€ autocompletion() (if completions available)
+    â”œâ”€â”€ linter() (if lint enabled)
+    â”œâ”€â”€ EditorState.readOnly (if readOnly/disabled)
+    â””â”€â”€ oneDark / defaultTheme (if editorTheme)
 ```
 
-### 7.2 Compartment 热替换
+### 7.2 Compartment çƒ­æ›¿æ¢
 
-使用 CM6 `Compartment` 实现运行时动态切换：
+ä½¿ç”¨ CM6 `Compartment` å®žçŽ°è¿è¡Œæ—¶åŠ¨æ€åˆ‡æ¢ï¼š
 
 ```typescript
 const languageCompartment = new Compartment();
 const completionCompartment = new Compartment();
 const readOnlyCompartment = new Compartment();
 
-// 运行时切换只读
+// è¿è¡Œæ—¶åˆ‡æ¢åªè¯»
 function setReadOnly(view: EditorView, readOnly: boolean) {
   view.dispatch({
     effects: readOnlyCompartment.reconfigure(
@@ -800,27 +800,27 @@ function setReadOnly(view: EditorView, readOnly: boolean) {
 
 ---
 
-## 八、补全系统设计
+## å…«ã€è¡¥å…¨ç³»ç»Ÿè®¾è®¡
 
-### 8.1 表达式补全
+### 8.1 è¡¨è¾¾å¼è¡¥å…¨
 
-补全触发条件：
-- 输入 `.` 后 — 属性补全
-- 输入字母后 — 变量/函数名补全
-- 输入 `(` 后 — 函数参数提示
+è¡¥å…¨è§¦å‘æ¡ä»¶ï¼š
+- è¾“å…¥ `.` åŽ â€” å±žæ€§è¡¥å…¨
+- è¾“å…¥å­—æ¯åŽ â€” å˜é‡/å‡½æ•°åè¡¥å…¨
+- è¾“å…¥ `(` åŽ â€” å‡½æ•°å‚æ•°æç¤º
 
-补全源解析逻辑：
-1. 获取光标前的标识符链（如 `data.order.items.n`）
-2. 按 `.` 拆分为路径段
-3. 在 `VariableItem` 树中逐级查找
-4. 返回当前层级的子项作为补全选项
+è¡¥å…¨æºè§£æžé€»è¾‘ï¼š
+1. èŽ·å–å…‰æ ‡å‰çš„æ ‡è¯†ç¬¦é“¾ï¼ˆå¦‚ `data.order.items.n`ï¼‰
+2. æŒ‰ `.` æ‹†åˆ†ä¸ºè·¯å¾„æ®µ
+3. åœ¨ `VariableItem` æ ‘ä¸­é€çº§æŸ¥æ‰¾
+4. è¿”å›žå½“å‰å±‚çº§çš„å­é¡¹ä½œä¸ºè¡¥å…¨é€‰é¡¹
 
 ```typescript
 function expressionCompletionSource(variables: VariableItem[], functions: FuncGroup[]) {
   return function(context: CompletionContext): CompletionResult | null {
     const textBefore = context.state.doc.sliceString(0, context.pos);
 
-    // 场景1：属性访问补全 "xxx.xxx"
+    // åœºæ™¯1ï¼šå±žæ€§è®¿é—®è¡¥å…¨ "xxx.xxx"
     const dotMatch = textBefore.match(/([\w.]+)\.(\w*)$/);
     if (dotMatch) {
       const path = dotMatch[1];
@@ -841,7 +841,7 @@ function expressionCompletionSource(variables: VariableItem[], functions: FuncGr
       }
     }
 
-    // 场景2：顶层变量/函数补全
+    // åœºæ™¯2ï¼šé¡¶å±‚å˜é‡/å‡½æ•°è¡¥å…¨
     const word = context.matchBefore(/\w+/);
     if (!word) return null;
 
@@ -869,14 +869,14 @@ function expressionCompletionSource(variables: VariableItem[], functions: FuncGr
 }
 ```
 
-### 8.2 SQL 补全
+### 8.2 SQL è¡¥å…¨
 
-补全触发条件：
-- 输入 `alias.` 后 — 列名补全
-- 输入字母后 — 表名/关键字补全
-- 在 `FROM`/`JOIN` 后 — 表名补全
+è¡¥å…¨è§¦å‘æ¡ä»¶ï¼š
+- è¾“å…¥ `alias.` åŽ â€” åˆ—åè¡¥å…¨
+- è¾“å…¥å­—æ¯åŽ â€” è¡¨å/å…³é”®å­—è¡¥å…¨
+- åœ¨ `FROM`/`JOIN` åŽ â€” è¡¨åè¡¥å…¨
 
-SQL 补全核心需要解析当前文本中已有的表别名：
+SQL è¡¥å…¨æ ¸å¿ƒéœ€è¦è§£æžå½“å‰æ–‡æœ¬ä¸­å·²æœ‰çš„è¡¨åˆ«åï¼š
 
 ```typescript
 function sqlCompletionSource(tables: TableSchema[]) {
@@ -885,7 +885,7 @@ function sqlCompletionSource(tables: TableSchema[]) {
     const textBefore = doc.slice(0, context.pos);
     const aliasMap = parseTableAliases(textBefore, tables);
 
-    // 场景1：列名补全 "alias.column"
+    // åœºæ™¯1ï¼šåˆ—åè¡¥å…¨ "alias.column"
     const dotMatch = textBefore.match(/(\w+)\.(\w*)$/);
     if (dotMatch) {
       const table = aliasMap.get(dotMatch[1]);
@@ -905,7 +905,7 @@ function sqlCompletionSource(tables: TableSchema[]) {
       }
     }
 
-    // 场景2：表名/别名/关键字补全
+    // åœºæ™¯2ï¼šè¡¨å/åˆ«å/å…³é”®å­—è¡¥å…¨
     const word = context.matchBefore(/\w+/);
     if (!word) return null;
 
@@ -928,11 +928,11 @@ function sqlCompletionSource(tables: TableSchema[]) {
 
 ---
 
-## 八.5 SQL 增强功能
+## å…«.5 SQL å¢žå¼ºåŠŸèƒ½
 
-### 8.5.1 SQL 格式化（Phase 1）
+### 8.5.1 SQL æ ¼å¼åŒ–ï¼ˆPhase 1ï¼‰
 
-通过 `sql-formatter` 库实现一键美化 SQL。配置通过 `sqlConfig.format` 控制：
+é€šè¿‡ `sql-formatter` åº“å®žçŽ°ä¸€é”®ç¾ŽåŒ– SQLã€‚é…ç½®é€šè¿‡ `sqlConfig.format` æŽ§åˆ¶ï¼š
 
 ```typescript
 // packages/flux-code-editor/src/extensions/sql/format.ts
@@ -963,67 +963,67 @@ export function formatSQL(
 }
 ```
 
-Toolbar 按钮：当 `language === 'sql'` 且 `sqlConfig.format` 为 truthy 时显示。
+Toolbar æŒ‰é’®ï¼šå½“ `language === 'sql'` ä¸” `sqlConfig.format` ä¸º truthy æ—¶æ˜¾ç¤ºã€‚
 
-### 8.5.2 代码片段模板（Phase 2）
+### 8.5.2 ä»£ç ç‰‡æ®µæ¨¡æ¿ï¼ˆPhase 2ï¼‰
 
-`SnippetPanel` 组件提供下拉菜单显示可配置的代码片段。点击后通过 `view.dispatch` 在光标位置插入模板文本：
+`SnippetPanel` ç»„ä»¶æä¾›ä¸‹æ‹‰èœå•æ˜¾ç¤ºå¯é…ç½®çš„ä»£ç ç‰‡æ®µã€‚ç‚¹å‡»åŽé€šè¿‡ `view.dispatch` åœ¨å…‰æ ‡ä½ç½®æ’å…¥æ¨¡æ¿æ–‡æœ¬ï¼š
 
 ```tsx
 // packages/flux-code-editor/src/extensions/snippet-panel.tsx
 export function SnippetPanel({ snippets, onInsert }: SnippetPanelProps) {
-  // 下拉菜单，点击调用 onInsert(template)
+  // ä¸‹æ‹‰èœå•ï¼Œç‚¹å‡»è°ƒç”¨ onInsert(template)
 }
 ```
 
-模板中的 `${var}` 占位符直接插入文本（简单版），后续可扩展为 CM6 placeholder tab-stop。
+æ¨¡æ¿ä¸­çš„ `${var}` å ä½ç¬¦ç›´æŽ¥æ’å…¥æ–‡æœ¬ï¼ˆç®€å•ç‰ˆï¼‰ï¼ŒåŽç»­å¯æ‰©å±•ä¸º CM6 placeholder tab-stopã€‚
 
-### 8.5.3 变量面板（Phase 3）
+### 8.5.3 å˜é‡é¢æ¿ï¼ˆPhase 3ï¼‰
 
-`VariablePanel` 组件在编辑器左侧显示变量列表，支持：
-- **复制**：将变量值复制到剪贴板
-- **插入**：将变量值插入到光标位置
-- **模板渲染**：当配置了 `insertTemplate` 时，插入操作会渲染模板（`${value}` → 变量值，`${label}` → 变量名）
+`VariablePanel` ç»„ä»¶åœ¨ç¼–è¾‘å™¨å·¦ä¾§æ˜¾ç¤ºå˜é‡åˆ—è¡¨ï¼Œæ”¯æŒï¼š
+- **å¤åˆ¶**ï¼šå°†å˜é‡å€¼å¤åˆ¶åˆ°å‰ªè´´æ¿
+- **æ’å…¥**ï¼šå°†å˜é‡å€¼æ’å…¥åˆ°å…‰æ ‡ä½ç½®
+- **æ¨¡æ¿æ¸²æŸ“**ï¼šå½“é…ç½®äº† `insertTemplate` æ—¶ï¼Œæ’å…¥æ“ä½œä¼šæ¸²æŸ“æ¨¡æ¿ï¼ˆ`${value}` â†’ å˜é‡å€¼ï¼Œ`${label}` â†’ å˜é‡åï¼‰
 
 ```
-┌─────────────────────────────────────────────────┐
-│ [变量面板]  │  [CodeMirror Editor]               │
-│ 系统变量    │  SELECT * FROM users                │
-│ ├ userId    │  WHERE 1=1                          │
-│ └ userName  │  <if test="userId != null">         │
-│ [复制][插入]│    AND user_id = #{userId}          │
-└─────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ [å˜é‡é¢æ¿]  â”‚  [CodeMirror Editor]               â”‚
+â”‚ ç³»ç»Ÿå˜é‡    â”‚  SELECT * FROM users                â”‚
+â”‚ â”œ userId    â”‚  WHERE 1=1                          â”‚
+â”‚ â”” userName  â”‚  <if test="userId != null">         â”‚
+â”‚ [å¤åˆ¶][æ’å…¥]â”‚    AND user_id = #{userId}          â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-### 8.5.4 SQL 执行 + 结果预览（Phase 4）
+### 8.5.4 SQL æ‰§è¡Œ + ç»“æžœé¢„è§ˆï¼ˆPhase 4ï¼‰
 
-通过 Flux 动作系统执行 SQL 并展示结果：
-1. 用户点击"执行"按钮
-2. 获取当前 SQL 文本
-3. 通过 `props.helpers.dispatch` 发送 API 请求（复用 `ApiObject` 或 action string）
-4. 响应通过 `execution.resultPath` 提取
-5. 结果展示在编辑器下方的预览表格中
+é€šè¿‡ Flux åŠ¨ä½œç³»ç»Ÿæ‰§è¡Œ SQL å¹¶å±•ç¤ºç»“æžœï¼š
+1. ç”¨æˆ·ç‚¹å‡»"æ‰§è¡Œ"æŒ‰é’®
+2. èŽ·å–å½“å‰ SQL æ–‡æœ¬
+3. é€šè¿‡ `props.helpers.dispatch` å‘é€ API è¯·æ±‚ï¼ˆå¤ç”¨ `ApiObject` æˆ– action stringï¼‰
+4. å“åº”é€šè¿‡ `execution.resultPath` æå–
+5. ç»“æžœå±•ç¤ºåœ¨ç¼–è¾‘å™¨ä¸‹æ–¹çš„é¢„è§ˆè¡¨æ ¼ä¸­
 
-`SQLResultPanel` 组件支持四种状态：`idle` / `loading` / `success`（数据表格）/ `error`（错误信息）。
+`SQLResultPanel` ç»„ä»¶æ”¯æŒå››ç§çŠ¶æ€ï¼š`idle` / `loading` / `success`ï¼ˆæ•°æ®è¡¨æ ¼ï¼‰/ `error`ï¼ˆé”™è¯¯ä¿¡æ¯ï¼‰ã€‚
 
 ---
 
-## 九、友好名标记（Decoration）
+## ä¹ã€å‹å¥½åæ ‡è®°ï¼ˆDecorationï¼‰
 
-### 9.1 设计决策
+### 9.1 è®¾è®¡å†³ç­–
 
-amis 在失焦后将变量名替换为友好名（如 `data.username` → `用户名`）。这在 CM5 中通过 `markText({ atomic: true, replacedWith: dom })` 实现。
+amis åœ¨å¤±ç„¦åŽå°†å˜é‡åæ›¿æ¢ä¸ºå‹å¥½åï¼ˆå¦‚ `data.username` â†’ `ç”¨æˆ·å`ï¼‰ã€‚è¿™åœ¨ CM5 ä¸­é€šè¿‡ `markText({ atomic: true, replacedWith: dom })` å®žçŽ°ã€‚
 
-**Flux 方案改进**：
+**Flux æ–¹æ¡ˆæ”¹è¿›**ï¼š
 
-| 特性 | amis (CM5) | Flux (CM6) |
+| ç‰¹æ€§ | amis (CM5) | Flux (CM6) |
 |------|-----------|-----------|
-| 触发时机 | 仅失焦后 | 失焦后 或 `mode: 'readonly'` 时持续显示 |
-| 编辑时行为 | 隐藏标记，显示原始代码 | 始终显示原始代码 |
-| 标记机制 | `markText` + DOM 替换 | `Decoration.widget` + `WidgetType` |
-| 全局状态 | 是 | 否（每个 ViewPlugin 实例独立） |
+| è§¦å‘æ—¶æœº | ä»…å¤±ç„¦åŽ | å¤±ç„¦åŽ æˆ– `mode: 'readonly'` æ—¶æŒç»­æ˜¾ç¤º |
+| ç¼–è¾‘æ—¶è¡Œä¸º | éšè—æ ‡è®°ï¼Œæ˜¾ç¤ºåŽŸå§‹ä»£ç  | å§‹ç»ˆæ˜¾ç¤ºåŽŸå§‹ä»£ç  |
+| æ ‡è®°æœºåˆ¶ | `markText` + DOM æ›¿æ¢ | `Decoration.widget` + `WidgetType` |
+| å…¨å±€çŠ¶æ€ | æ˜¯ | å¦ï¼ˆæ¯ä¸ª ViewPlugin å®žä¾‹ç‹¬ç«‹ï¼‰ |
 
-### 9.2 实现
+### 9.2 å®žçŽ°
 
 ```typescript
 class FriendlyNameWidget extends WidgetType {
@@ -1045,124 +1045,125 @@ class FriendlyNameWidget extends WidgetType {
 }
 ```
 
-标记由 `ViewPlugin` 驱动，利用 `flux-formula` 的 parser 生成 AST，遍历 AST 节点映射位置到 CM6 decoration。
+æ ‡è®°ç”± `ViewPlugin` é©±åŠ¨ï¼Œåˆ©ç”¨ `flux-formula` çš„ parser ç”Ÿæˆ ASTï¼ŒéåŽ† AST èŠ‚ç‚¹æ˜ å°„ä½ç½®åˆ° CM6 decorationã€‚
 
 ---
 
-## 十、包归属
+## åã€åŒ…å½’å±ž
 
-### 10.1 新包建议
+### 10.1 æ–°åŒ…å»ºè®®
 
 ```
 packages/flux-code-editor/
-├── src/
-│   ├── index.ts                        # 公共导出
-│   ├── types.ts                        # CodeEditorSchema, 配置类型
-│   ├── use-code-mirror.ts              # CM6 React Hook
-│   ├── code-editor-renderer.tsx         # 渲染器组件
-│   ├── variable-panel.tsx              # 变量面板组件 (Phase 3)
-│   ├── sql-result-panel.tsx            # SQL 执行结果预览 (Phase 4)
-│   ├── extensions/
-│   │   ├── expression/
-│   │   │   ├── completion.ts           # 表达式补全源
-│   │   │   ├── decoration.ts           # 变量友好名装饰器
-│   │   │   └── linter.ts               # 表达式语法校验
-│   │   │   └── template-mode.ts        # 模板模式 StreamLanguage
-│   │   ├── sql/
-│   │   │   ├── completion.ts           # SQL 补全源
-│   │   │   ├── format.ts               # SQL 格式化 (Phase 1)
-│   │   │   └── index.ts                # SQL 扩展 barrel
-│   │   ├── snippet-panel.tsx           # 代码片段面板 (Phase 2)
-│   │   └── base.ts                     # 通用 Extension 工厂
-├── package.json
-├── tsconfig.json
-└── tsconfig.build.json
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ index.ts                        # å…¬å…±å¯¼å‡º
+â”‚   â”œâ”€â”€ types.ts                        # CodeEditorSchema, é…ç½®ç±»åž‹
+â”‚   â”œâ”€â”€ use-code-mirror.ts              # CM6 React Hook
+â”‚   â”œâ”€â”€ code-editor-renderer.tsx         # æ¸²æŸ“å™¨ç»„ä»¶
+â”‚   â”œâ”€â”€ variable-panel.tsx              # å˜é‡é¢æ¿ç»„ä»¶ (Phase 3)
+â”‚   â”œâ”€â”€ sql-result-panel.tsx            # SQL æ‰§è¡Œç»“æžœé¢„è§ˆ (Phase 4)
+â”‚   â”œâ”€â”€ extensions/
+â”‚   â”‚   â”œâ”€â”€ expression/
+â”‚   â”‚   â”‚   â”œâ”€â”€ completion.ts           # è¡¨è¾¾å¼è¡¥å…¨æº
+â”‚   â”‚   â”‚   â”œâ”€â”€ decoration.ts           # å˜é‡å‹å¥½åè£…é¥°å™¨
+â”‚   â”‚   â”‚   â””â”€â”€ linter.ts               # è¡¨è¾¾å¼è¯­æ³•æ ¡éªŒ
+â”‚   â”‚   â”‚   â””â”€â”€ template-mode.ts        # æ¨¡æ¿æ¨¡å¼ StreamLanguage
+â”‚   â”‚   â”œâ”€â”€ sql/
+â”‚   â”‚   â”‚   â”œâ”€â”€ completion.ts           # SQL è¡¥å…¨æº
+â”‚   â”‚   â”‚   â”œâ”€â”€ format.ts               # SQL æ ¼å¼åŒ– (Phase 1)
+â”‚   â”‚   â”‚   â””â”€â”€ index.ts                # SQL æ‰©å±• barrel
+â”‚   â”‚   â”œâ”€â”€ snippet-panel.tsx           # ä»£ç ç‰‡æ®µé¢æ¿ (Phase 2)
+â”‚   â”‚   â””â”€â”€ base.ts                     # é€šç”¨ Extension å·¥åŽ‚
+â”œâ”€â”€ package.json
+â”œâ”€â”€ tsconfig.json
+â””â”€â”€ tsconfig.build.json
 ```
 
-### 10.2 依赖关系
+### 10.2 ä¾èµ–å…³ç³»
 
 ```
-flux-core (类型)
-  ↓
-flux-formula (表达式 parser/AST)
-  ↓
-flux-code-editor (CM6 编辑器逻辑)
-  ↓
-flux-react (React Hook 桥接、渲染器注册)
-  ↓
-flux-renderers-form (表单场景集成)
+flux-core (ç±»åž‹)
+  â†“
+flux-formula (è¡¨è¾¾å¼ parser/AST)
+  â†“
+flux-code-editor (CM6 ç¼–è¾‘å™¨é€»è¾‘)
+  â†“
+flux-react (React Hook æ¡¥æŽ¥ã€æ¸²æŸ“å™¨æ³¨å†Œ)
+  â†“
+flux-renderers-form (è¡¨å•åœºæ™¯é›†æˆ)
 ```
 
 ---
 
-## 十一、与 amis Schema 的对照
+## åä¸€ã€ä¸Ž amis Schema çš„å¯¹ç…§
 
-| amis Schema | Flux Schema | 改进说明 |
+| amis Schema | Flux Schema | æ”¹è¿›è¯´æ˜Ž |
 |-------------|-------------|---------|
-| `type: 'editor'` + `language: 'javascript'` | `type: 'code-editor'` + `language: 'javascript'` | 语义更清晰 |
-| `type: 'editor'` + `language: 'json'` | `type: 'code-editor'` + `language: 'json'` | 同上 |
-| 无 SQL 支持 | `type: 'code-editor'` + `language: 'sql'` + `sqlConfig` | 新增 |
-| `type: 'input-formula'` | `type: 'code-editor'` + `language: 'expression'` | 统一为同一组件 |
-| `type: 'input-formula'` + `evalMode: true` | `mode: 'expression'` | 命名更明确 |
-| `type: 'input-formula'` + `evalMode: false` | `mode: 'template'` | 命名更明确 |
-| `variables: VariableItem[]` | `expressionConfig.variables: VariableItem[] \| VariableSourceRef` | 支持数据源引用 |
-| `functions: FuncGroup[]` | `expressionConfig.functions: FuncGroup[] \| FuncSourceRef` | 支持数据源引用 |
-| `editorTheme: 'dark'` | `editorTheme: 'dark'` | 兼容 |
-| 侧边面板选择变量 | 内联 autocomplete 补全 | 核心交互改进 |
+| `type: 'editor'` + `language: 'javascript'` | `type: 'code-editor'` + `language: 'javascript'` | è¯­ä¹‰æ›´æ¸…æ™° |
+| `type: 'editor'` + `language: 'json'` | `type: 'code-editor'` + `language: 'json'` | åŒä¸Š |
+| æ—  SQL æ”¯æŒ | `type: 'code-editor'` + `language: 'sql'` + `sqlConfig` | æ–°å¢ž |
+| `type: 'input-formula'` | `type: 'code-editor'` + `language: 'expression'` | ç»Ÿä¸€ä¸ºåŒä¸€ç»„ä»¶ |
+| `type: 'input-formula'` + `evalMode: true` | `mode: 'expression'` | å‘½åæ›´æ˜Žç¡® |
+| `type: 'input-formula'` + `evalMode: false` | `mode: 'template'` | å‘½åæ›´æ˜Žç¡® |
+| `variables: VariableItem[]` | `expressionConfig.variables: VariableItem[] \| VariableSourceRef` | æ”¯æŒæ•°æ®æºå¼•ç”¨ |
+| `functions: FuncGroup[]` | `expressionConfig.functions: FuncGroup[] \| FuncSourceRef` | æ”¯æŒæ•°æ®æºå¼•ç”¨ |
+| `editorTheme: 'dark'` | `editorTheme: 'dark'` | å…¼å®¹ |
+| ä¾§è¾¹é¢æ¿é€‰æ‹©å˜é‡ | å†…è” autocomplete è¡¥å…¨ | æ ¸å¿ƒäº¤äº’æ”¹è¿› |
 
 ---
 
 ## Related Documents
 
-- `docs/analysis/amis-editor-rearchitecture-reResearch.md` — amis 编辑器架构调研
-- `docs/architecture/renderer-runtime.md` — 渲染器运行时契约
-- `docs/architecture/flux-core.md` — 核心架构
-- `docs/references/flux-json-conventions.md` — JSON 约定
-- `docs/architecture/field-metadata-slot-modeling.md` — 字段元数据
-- `docs/architecture/complex-control-host-protocol.md` — 复杂控件平台协议
+- `docs/analysis/2026-04-01-amis-editor-rearchitecture-reResearch.md` â€” amis ç¼–è¾‘å™¨æž¶æž„è°ƒç ”
+- `docs/architecture/renderer-runtime.md` â€” æ¸²æŸ“å™¨è¿è¡Œæ—¶å¥‘çº¦
+- `docs/architecture/flux-core.md` â€” æ ¸å¿ƒæž¶æž„
+- `docs/references/flux-json-conventions.md` â€” JSON çº¦å®š
+- `docs/architecture/field-metadata-slot-modeling.md` â€” å­—æ®µå…ƒæ•°æ®
+- `docs/architecture/complex-control-host-protocol.md` â€” å¤æ‚æŽ§ä»¶å¹³å°åè®®
 
 ---
 
-## 十二、当前实现状态校准
+## åäºŒã€å½“å‰å®žçŽ°çŠ¶æ€æ ¡å‡†
 
-> 更新于 2026-04-04（Phase 6 完成），基于 `packages/flux-code-editor/src/` 实际代码
+> æ›´æ–°äºŽ 2026-04-04ï¼ˆPhase 6 å®Œæˆï¼‰ï¼ŒåŸºäºŽ `packages/flux-code-editor/src/` å®žé™…ä»£ç 
 
-本节明确区分"当前代码已落地"和"文档设计目标（尚未落地）"，避免将 code-editor 误认为平台级设计器。
+æœ¬èŠ‚æ˜Žç¡®åŒºåˆ†"å½“å‰ä»£ç å·²è½åœ°"å’Œ"æ–‡æ¡£è®¾è®¡ç›®æ ‡ï¼ˆå°šæœªè½åœ°ï¼‰"ï¼Œé¿å…å°† code-editor è¯¯è®¤ä¸ºå¹³å°çº§è®¾è®¡å™¨ã€‚
 
-### 12.1 已落地
+### 12.1 å·²è½åœ°
 
-- `CodeEditorSchema` 完整类型定义（`types.ts`）
-- `useCodeMirror` Hook：初始值注入、change/focus/blur 回调、extensions 创建
-- `code-editor-renderer.tsx`：渲染器已注册，支持 `language`、`mode`、`lineNumbers`、`folding`、`autoHeight`、`editorTheme`、`placeholder`
-- change 事件：在 form context 中调用 `currentForm.setValue(name, newValue)`；无 form 时调用 `scope.update(name, newValue)`；同时触发 `props.events.onChange` — 与其他字段控件对齐
-- focus 事件：调用 `currentForm.visitField(name)`（如在表单中），并触发 `props.events.onFocus`
-- blur 事件：调用 `currentForm.touchField(name)`（如在表单中），并触发 `props.events.onBlur`
-- **source-ref 解析**（`source-resolvers.ts`）：
-  - `useResolvedVariables`：`source: 'scope'` 同步从 scope 读取；`source: 'api'` 通过 `dispatch` 异步拉取，cancelled flag 防止 unmount 后 setState
-  - `useResolvedFunctions`：`source: 'api'` 通过 `dispatch` 异步拉取
-  - `useResolvedTables`：`source: 'scope'` 同步；`source: 'api'` 异步
-  - `useResolvedSQLVariables`：`source: 'scope'` 同步；`source: 'api'` 异步
-- 全部 4 个 source-resolver hooks 已从 `index.ts` 导出
-- `expressionConfig.variables`（内联或 source-ref）、`expressionConfig.functions`（内联或 source-ref）可驱动 autocomplete 补全
-- SQL 增强：format、snippets、variablePanel、execution（SQL 执行 + 结果预览）全部已实现
-- 全屏模式：`allowFullscreen` + ESC 退出
+- `CodeEditorSchema` å®Œæ•´ç±»åž‹å®šä¹‰ï¼ˆ`types.ts`ï¼‰
+- `useCodeMirror` Hookï¼šåˆå§‹å€¼æ³¨å…¥ã€change/focus/blur å›žè°ƒã€extensions åˆ›å»º
+- `code-editor-renderer.tsx`ï¼šæ¸²æŸ“å™¨å·²æ³¨å†Œï¼Œæ”¯æŒ `language`ã€`mode`ã€`lineNumbers`ã€`folding`ã€`autoHeight`ã€`editorTheme`ã€`placeholder`
+- change äº‹ä»¶ï¼šåœ¨ form context ä¸­è°ƒç”¨ `currentForm.setValue(name, newValue)`ï¼›æ—  form æ—¶è°ƒç”¨ `scope.update(name, newValue)`ï¼›åŒæ—¶è§¦å‘ `props.events.onChange` â€” ä¸Žå…¶ä»–å­—æ®µæŽ§ä»¶å¯¹é½
+- focus äº‹ä»¶ï¼šè°ƒç”¨ `currentForm.visitField(name)`ï¼ˆå¦‚åœ¨è¡¨å•ä¸­ï¼‰ï¼Œå¹¶è§¦å‘ `props.events.onFocus`
+- blur äº‹ä»¶ï¼šè°ƒç”¨ `currentForm.touchField(name)`ï¼ˆå¦‚åœ¨è¡¨å•ä¸­ï¼‰ï¼Œå¹¶è§¦å‘ `props.events.onBlur`
+- **source-ref è§£æž**ï¼ˆ`source-resolvers.ts`ï¼‰ï¼š
+  - `useResolvedVariables`ï¼š`source: 'scope'` åŒæ­¥ä»Ž scope è¯»å–ï¼›`source: 'api'` é€šè¿‡ `dispatch` å¼‚æ­¥æ‹‰å–ï¼Œcancelled flag é˜²æ­¢ unmount åŽ setState
+  - `useResolvedFunctions`ï¼š`source: 'api'` é€šè¿‡ `dispatch` å¼‚æ­¥æ‹‰å–
+  - `useResolvedTables`ï¼š`source: 'scope'` åŒæ­¥ï¼›`source: 'api'` å¼‚æ­¥
+  - `useResolvedSQLVariables`ï¼š`source: 'scope'` åŒæ­¥ï¼›`source: 'api'` å¼‚æ­¥
+- å…¨éƒ¨ 4 ä¸ª source-resolver hooks å·²ä»Ž `index.ts` å¯¼å‡º
+- `expressionConfig.variables`ï¼ˆå†…è”æˆ– source-refï¼‰ã€`expressionConfig.functions`ï¼ˆå†…è”æˆ– source-refï¼‰å¯é©±åŠ¨ autocomplete è¡¥å…¨
+- SQL å¢žå¼ºï¼šformatã€snippetsã€variablePanelã€executionï¼ˆSQL æ‰§è¡Œ + ç»“æžœé¢„è§ˆï¼‰å…¨éƒ¨å·²å®žçŽ°
+- å…¨å±æ¨¡å¼ï¼š`allowFullscreen` + ESC é€€å‡º
 
-### 12.2 尚未落地（未来可选扩展）
+### 12.2 å°šæœªè½åœ°ï¼ˆæœªæ¥å¯é€‰æ‰©å±•ï¼‰
 
-以下功能在文档中设计了接口，但当前无实现计划（不影响已有功能）：
+ä»¥ä¸‹åŠŸèƒ½åœ¨æ–‡æ¡£ä¸­è®¾è®¡äº†æŽ¥å£ï¼Œä½†å½“å‰æ— å®žçŽ°è®¡åˆ’ï¼ˆä¸å½±å“å·²æœ‰åŠŸèƒ½ï¼‰ï¼š
 
-- `ExpressionLintConfig.customRules`：自定义 lint 规则（`validate: string` 回调）
-- CM6 `Compartment` 热替换：language/theme 运行时切换（当前 extensions 通过 `useMemo` 重建）
-- `FuncSourceRef.source: 'builtin'`：内置函数集合按名称过滤（`builtinSet` 字段）
-- 友好名装饰器（`showFriendlyNames`）：CM6 `Decoration.widget` 实现（接口已定义，extensions 已有占位）
+- `ExpressionLintConfig.customRules`ï¼šè‡ªå®šä¹‰ lint è§„åˆ™ï¼ˆ`validate: string` å›žè°ƒï¼‰
+- CM6 `Compartment` çƒ­æ›¿æ¢ï¼šlanguage/theme è¿è¡Œæ—¶åˆ‡æ¢ï¼ˆå½“å‰ extensions é€šè¿‡ `useMemo` é‡å»ºï¼‰
+- `FuncSourceRef.source: 'builtin'`ï¼šå†…ç½®å‡½æ•°é›†åˆæŒ‰åç§°è¿‡æ»¤ï¼ˆ`builtinSet` å­—æ®µï¼‰
+- å‹å¥½åè£…é¥°å™¨ï¼ˆ`showFriendlyNames`ï¼‰ï¼šCM6 `Decoration.widget` å®žçŽ°ï¼ˆæŽ¥å£å·²å®šä¹‰ï¼Œextensions å·²æœ‰å ä½ï¼‰
 
-### 12.3 定位说明
+### 12.3 å®šä½è¯´æ˜Ž
 
-`code-editor` 是字段级 renderer，不是页面级设计器：
+`code-editor` æ˜¯å­—æ®µçº§ rendererï¼Œä¸æ˜¯é¡µé¢çº§è®¾è®¡å™¨ï¼š
 
-- 不拥有自己的 `DomainBridge` 或 host scope
-- 不需要 session/dirty/leave-guard
-- 不需要 workbench shell 或 namespaced action namespace
-- SQL 执行结果预览通过组件内部状态管理，不引入新的 page shell
+- ä¸æ‹¥æœ‰è‡ªå·±çš„ `DomainBridge` æˆ– host scope
+- ä¸éœ€è¦ session/dirty/leave-guard
+- ä¸éœ€è¦ workbench shell æˆ– namespaced action namespace
+- SQL æ‰§è¡Œç»“æžœé¢„è§ˆé€šè¿‡ç»„ä»¶å†…éƒ¨çŠ¶æ€ç®¡ç†ï¼Œä¸å¼•å…¥æ–°çš„ page shell
 
-所有 source-ref 路径和事件接线已与其他字段控件对齐（Phase 6 完成）。
+æ‰€æœ‰ source-ref è·¯å¾„å’Œäº‹ä»¶æŽ¥çº¿å·²ä¸Žå…¶ä»–å­—æ®µæŽ§ä»¶å¯¹é½ï¼ˆPhase 6 å®Œæˆï¼‰ã€‚
+

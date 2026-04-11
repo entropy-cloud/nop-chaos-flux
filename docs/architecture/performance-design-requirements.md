@@ -1,4 +1,4 @@
-# Performance Design Requirements
+﻿# Performance Design Requirements
 
 ## Purpose
 
@@ -12,7 +12,7 @@ This is a normative design requirements document.
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/flux-runtime-module-boundaries.md`
 - `docs/architecture/flow-designer/design.md`
-- `docs/analysis/deep-architecture-analysis.md`
+- `docs/analysis/2026-03-31-deep-architecture-analysis.md`
 
 ## Performance Boundary Principles
 
@@ -67,7 +67,7 @@ This is a normative design requirements document.
 
 - Debounce/throttle/request coordination promises must always settle deterministically.
 - All async `useEffect` closures that perform network or runtime requests MUST use `AbortController` for lifecycle management: call `controller.abort()` in the cleanup return to prevent stale updates from being applied after the component unmounts or dependencies change.
-- The two cancellation layers are distinct: (1) **ignore stale results** — check `signal.aborted` before calling `setState`; (2) **abort in-flight tasks** — pass `signal` to fetch/runtime APIs that support it. Both layers must be present when the runtime API accepts a signal.
+- The two cancellation layers are distinct: (1) **ignore stale results** â€” check `signal.aborted` before calling `setState`; (2) **abort in-flight tasks** â€” pass `signal` to fetch/runtime APIs that support it. Both layers must be present when the runtime API accepts a signal.
 
 ## P6. Observability for performance-sensitive failures
 
@@ -92,7 +92,7 @@ This is a normative design requirements document.
 ### `startTransition` / `useTransition`
 
 - Use `startTransition` (or `useTransition`) for state updates that control **non-urgent**, deferred re-renders: pagination page changes, sort/filter toggles, row selection batch updates, and sheet/tab switching. These are already applied in `useTablePagination`, `useTableSelection`.
-- **Never** wrap the user's primary input handler (the click itself, the keystroke capture) inside a transition — only the resulting derived state update belongs in a transition.
+- **Never** wrap the user's primary input handler (the click itself, the keystroke capture) inside a transition â€” only the resulting derived state update belongs in a transition.
 - Use `useDeferredValue` to defer expensive downstream computations (e.g. large filtered dataset) rather than the interaction source.
 
 ### Module Boundary Rules for Hot Paths
@@ -129,3 +129,4 @@ When this document changes or related constraints change, review:
 - `docs/index.md`
 - `docs/references/maintenance-checklist.md`
 - architecture docs for impacted packages/modules
+

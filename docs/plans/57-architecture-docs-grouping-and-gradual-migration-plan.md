@@ -1,30 +1,30 @@
-# 57 Architecture Docs Grouping And Gradual Migration Plan
+﻿# 57 Architecture Docs Grouping And Gradual Migration Plan
 
 > Plan Status: completed
 > Last Reviewed: 2026-04-10
-> Source: `docs/architecture/README.md`, `docs/index.md`, `docs/analysis/docs-design-review-2026-03-29.md`
+> Source: `docs/architecture/README.md`, `docs/index.md`, `docs/analysis/2026-04-01-docs-design-review-2026-03-29.md`
 
 ## Purpose
 
-本计划用于处理 `docs/architecture/` 目录越来越拥挤的问题，但避免一次性大搬家导致路径噪音、交叉引用断裂和导航回退。
+æœ¬è®¡åˆ’ç”¨äºŽå¤„ç† `docs/architecture/` ç›®å½•è¶Šæ¥è¶Šæ‹¥æŒ¤çš„é—®é¢˜ï¼Œä½†é¿å…ä¸€æ¬¡æ€§å¤§æ¬å®¶å¯¼è‡´è·¯å¾„å™ªéŸ³ã€äº¤å‰å¼•ç”¨æ–­è£‚å’Œå¯¼èˆªå›žé€€ã€‚
 
 ## Current Baseline
 
-- `docs/architecture/` 当前平铺层已经有 30+ 条目。
-- `flow-designer/` 和 `report-designer/` 已经证明“稳定文档族进入子目录”是可行的。
-- 但 action/runtime/ui 相关文档仍高度交叉引用，直接整批迁移成本较高。
+- `docs/architecture/` å½“å‰å¹³é“ºå±‚å·²ç»æœ‰ 30+ æ¡ç›®ã€‚
+- `flow-designer/` å’Œ `report-designer/` å·²ç»è¯æ˜Žâ€œç¨³å®šæ–‡æ¡£æ—è¿›å…¥å­ç›®å½•â€æ˜¯å¯è¡Œçš„ã€‚
+- ä½† action/runtime/ui ç›¸å…³æ–‡æ¡£ä»é«˜åº¦äº¤å‰å¼•ç”¨ï¼Œç›´æŽ¥æ•´æ‰¹è¿ç§»æˆæœ¬è¾ƒé«˜ã€‚
 
 ## Goals
 
-- 先建立逻辑分组入口，而不是立刻全量物理迁移。
-- 定义哪些文档族未来适合迁入子目录。
-- 保持顶层锚点文档的稳定性。
+- å…ˆå»ºç«‹é€»è¾‘åˆ†ç»„å…¥å£ï¼Œè€Œä¸æ˜¯ç«‹åˆ»å…¨é‡ç‰©ç†è¿ç§»ã€‚
+- å®šä¹‰å“ªäº›æ–‡æ¡£æ—æœªæ¥é€‚åˆè¿å…¥å­ç›®å½•ã€‚
+- ä¿æŒé¡¶å±‚é”šç‚¹æ–‡æ¡£çš„ç¨³å®šæ€§ã€‚
 
 ## Non-Goals
 
-- 不要求当前回合就移动所有 architecture 文档。
-- 不要求为了目录整洁牺牲交叉引用稳定性。
-- 不要求重写全部 `Related Documents` 路径。
+- ä¸è¦æ±‚å½“å‰å›žåˆå°±ç§»åŠ¨æ‰€æœ‰ architecture æ–‡æ¡£ã€‚
+- ä¸è¦æ±‚ä¸ºäº†ç›®å½•æ•´æ´ç‰ºç‰²äº¤å‰å¼•ç”¨ç¨³å®šæ€§ã€‚
+- ä¸è¦æ±‚é‡å†™å…¨éƒ¨ `Related Documents` è·¯å¾„ã€‚
 
 ## Scope
 
@@ -77,3 +77,4 @@ Status Note: Completed. Architecture navigation now has a stable grouped index a
 Follow-up:
 
 - no remaining plan-owned work
+

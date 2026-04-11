@@ -1,199 +1,199 @@
-# Programming Model Optimality Critique
+﻿# Programming Model Optimality Critique
 
-## 第 1 轮
+## ç¬¬ 1 è½®
 
-### 用户原始表述
+### ç”¨æˆ·åŽŸå§‹è¡¨è¿°
 
-用户要求对 `docs/architecture/frontend-programming-model.md` 做独立评审：是否认同它是下一代低代码框架的最优设计？如果不同意，必须提出深刻的反驳意见，附有明确依据和理由，不能为反驳而反驳。
+ç”¨æˆ·è¦æ±‚å¯¹ `docs/architecture/frontend-programming-model.md` åšç‹¬ç«‹è¯„å®¡ï¼šæ˜¯å¦è®¤åŒå®ƒæ˜¯ä¸‹ä¸€ä»£ä½Žä»£ç æ¡†æž¶çš„æœ€ä¼˜è®¾è®¡ï¼Ÿå¦‚æžœä¸åŒæ„ï¼Œå¿…é¡»æå‡ºæ·±åˆ»çš„åé©³æ„è§ï¼Œé™„æœ‰æ˜Žç¡®ä¾æ®å’Œç†ç”±ï¼Œä¸èƒ½ä¸ºåé©³è€Œåé©³ã€‚
 
-### AI 复述
+### AI å¤è¿°
 
-核心问题是：`frontend-programming-model.md` 所定义的七原语封闭集（Structure / Scope / Value / Resource / Reaction / Capability / Host Projection）在实际低代码场景下是否真的达到「最优」，还是存在结构性缺口。
+æ ¸å¿ƒé—®é¢˜æ˜¯ï¼š`frontend-programming-model.md` æ‰€å®šä¹‰çš„ä¸ƒåŽŸè¯­å°é—­é›†ï¼ˆStructure / Scope / Value / Resource / Reaction / Capability / Host Projectionï¼‰åœ¨å®žé™…ä½Žä»£ç åœºæ™¯ä¸‹æ˜¯å¦çœŸçš„è¾¾åˆ°ã€Œæœ€ä¼˜ã€ï¼Œè¿˜æ˜¯å­˜åœ¨ç»“æž„æ€§ç¼ºå£ã€‚
 
-### AI 分析
+### AI åˆ†æž
 
-调研范围：`docs/architecture/frontend-programming-model.md`（全文 1088 行）、`docs/architecture/api-data-source.md`、`docs/architecture/action-scope-and-imports.md`、`docs/architecture/flux-core.md`、`docs/articles/flux-design-introduction.md`、`docs/discussions/01-core-design-clarification.md`、`docs/architecture/flux-dsl-vm-extensibility.md`、`docs/analysis/2026-04-04-flux-architecture-evaluation.md`。
+è°ƒç ”èŒƒå›´ï¼š`docs/architecture/frontend-programming-model.md`ï¼ˆå…¨æ–‡ 1088 è¡Œï¼‰ã€`docs/architecture/api-data-source.md`ã€`docs/architecture/action-scope-and-imports.md`ã€`docs/architecture/flux-core.md`ã€`docs/articles/flux-design-introduction.md`ã€`docs/discussions/01-core-design-clarification.md`ã€`docs/architecture/flux-dsl-vm-extensibility.md`ã€`docs/analysis/2026-04-04-flux-architecture-evaluation.md`ã€‚
 
-提出六条反驳：
+æå‡ºå…­æ¡åé©³ï¼š
 
-#### 反驳一：「Final Execution Schema」假设对真实低代码场景过于乐观
+#### åé©³ä¸€ï¼šã€ŒFinal Execution Schemaã€å‡è®¾å¯¹çœŸå®žä½Žä»£ç åœºæ™¯è¿‡äºŽä¹è§‚
 
-文档断言 Flux 执行已装配完毕的最终模式，所有结构决策（权限、feature flag、wizard 步骤依赖、i18n）归入 loader 层。反驳理由是：许多结构决策天然是运行时决策，例如基于角色的字段权限必须等登录接口返回后才能确定，强推给 loader 层只是概念重标签。
+æ–‡æ¡£æ–­è¨€ Flux æ‰§è¡Œå·²è£…é…å®Œæ¯•çš„æœ€ç»ˆæ¨¡å¼ï¼Œæ‰€æœ‰ç»“æž„å†³ç­–ï¼ˆæƒé™ã€feature flagã€wizard æ­¥éª¤ä¾èµ–ã€i18nï¼‰å½’å…¥ loader å±‚ã€‚åé©³ç†ç”±æ˜¯ï¼šè®¸å¤šç»“æž„å†³ç­–å¤©ç„¶æ˜¯è¿è¡Œæ—¶å†³ç­–ï¼Œä¾‹å¦‚åŸºäºŽè§’è‰²çš„å­—æ®µæƒé™å¿…é¡»ç­‰ç™»å½•æŽ¥å£è¿”å›žåŽæ‰èƒ½ç¡®å®šï¼Œå¼ºæŽ¨ç»™ loader å±‚åªæ˜¯æ¦‚å¿µé‡æ ‡ç­¾ã€‚
 
-#### 反驳二：Resource 的「one logical value」规则不足以覆盖现代异步数据模式
+#### åé©³äºŒï¼šResource çš„ã€Œone logical valueã€è§„åˆ™ä¸è¶³ä»¥è¦†ç›–çŽ°ä»£å¼‚æ­¥æ•°æ®æ¨¡å¼
 
-无限滚动/分页场景数据是累积的而非替换的；乐观更新需要同时维护 optimistic value 和 confirmed value；WebSocket 推送是 delta 流而非单值发布。TanStack Query 等主流方案表明这些是跨领域的稳定语义需求。
+æ— é™æ»šåŠ¨/åˆ†é¡µåœºæ™¯æ•°æ®æ˜¯ç´¯ç§¯çš„è€Œéžæ›¿æ¢çš„ï¼›ä¹è§‚æ›´æ–°éœ€è¦åŒæ—¶ç»´æŠ¤ optimistic value å’Œ confirmed valueï¼›WebSocket æŽ¨é€æ˜¯ delta æµè€Œéžå•å€¼å‘å¸ƒã€‚TanStack Query ç­‰ä¸»æµæ–¹æ¡ˆè¡¨æ˜Žè¿™äº›æ˜¯è·¨é¢†åŸŸçš„ç¨³å®šè¯­ä¹‰éœ€æ±‚ã€‚
 
-#### 反驳三：Reaction 非授权性规则在级联推导场景制造架构摩擦
+#### åé©³ä¸‰ï¼šReaction éžæŽˆæƒæ€§è§„åˆ™åœ¨çº§è”æŽ¨å¯¼åœºæ™¯åˆ¶é€ æž¶æž„æ‘©æ“¦
 
-字段 A 变化后字段 B = f(A) 的联动更新落在 Reaction（不能持有值）与 Resource（没有显式 watch 触发）之间的空隙，被迫走 capability 层，将简单派生逻辑外推给 host/domain 层。
+å­—æ®µ A å˜åŒ–åŽå­—æ®µ B = f(A) çš„è”åŠ¨æ›´æ–°è½åœ¨ Reactionï¼ˆä¸èƒ½æŒæœ‰å€¼ï¼‰ä¸Ž Resourceï¼ˆæ²¡æœ‰æ˜¾å¼ watch è§¦å‘ï¼‰ä¹‹é—´çš„ç©ºéš™ï¼Œè¢«è¿«èµ° capability å±‚ï¼Œå°†ç®€å•æ´¾ç”Ÿé€»è¾‘å¤–æŽ¨ç»™ host/domain å±‚ã€‚
 
-#### 反驳四：Capability Primitive 将三种语义迥异的权限模型合并为「两种解析模式」
+#### åé©³å››ï¼šCapability Primitive å°†ä¸‰ç§è¯­ä¹‰è¿¥å¼‚çš„æƒé™æ¨¡åž‹åˆå¹¶ä¸ºã€Œä¸¤ç§è§£æžæ¨¡å¼ã€
 
-Built-in、Lexical、Instance 三者的失败语义、信任级别、组合语义均不同，文档合并后 schema 作者无法区分失败类型，缺乏 onError 分支处理能力。
+Built-inã€Lexicalã€Instance ä¸‰è€…çš„å¤±è´¥è¯­ä¹‰ã€ä¿¡ä»»çº§åˆ«ã€ç»„åˆè¯­ä¹‰å‡ä¸åŒï¼Œæ–‡æ¡£åˆå¹¶åŽ schema ä½œè€…æ— æ³•åŒºåˆ†å¤±è´¥ç±»åž‹ï¼Œç¼ºä¹ onError åˆ†æ”¯å¤„ç†èƒ½åŠ›ã€‚
 
-#### 反驳五：Host Projection 严格只读与交互式 UI 产生结构性不对称
+#### åé©³äº”ï¼šHost Projection ä¸¥æ ¼åªè¯»ä¸Žäº¤äº’å¼ UI äº§ç”Ÿç»“æž„æ€§ä¸å¯¹ç§°
 
-宿主字段的读路径（host projection）和写路径（capability）使用完全不同机制，造成认知负担；Angular/Vue/React 都证明双向绑定是普遍需求。
+å®¿ä¸»å­—æ®µçš„è¯»è·¯å¾„ï¼ˆhost projectionï¼‰å’Œå†™è·¯å¾„ï¼ˆcapabilityï¼‰ä½¿ç”¨å®Œå…¨ä¸åŒæœºåˆ¶ï¼Œé€ æˆè®¤çŸ¥è´Ÿæ‹…ï¼›Angular/Vue/React éƒ½è¯æ˜ŽåŒå‘ç»‘å®šæ˜¯æ™®ééœ€æ±‚ã€‚
 
-#### 反驳六：没有错误处理原语
+#### åé©³å…­ï¼šæ²¡æœ‰é”™è¯¯å¤„ç†åŽŸè¯­
 
-Capability 执行失败语义未定义，结构渲染错误不在模型内，错误处理满足 promotion test 六条标准却被排除在原语集外。
-
----
-
-## 第 2 轮
-
-### 用户回答
-
-**关于反驳一：**
-
-字段权限/feature flag 通过后端 Java 端的 loader 处理，到了前端之后在送入 render 之前也可以在单纯的 JSON 结构层处理，不需要在 render 层处理。Wizard 步骤本质上在服务端就可以确定，页面中包含所有步骤，只是控制可见性而已。框架因为基于可逆计算理论，在模型结构层自动做大量处理，已对运行时引擎进行极大简化。i18n 等都在 loader 层完成变换。整体设计上从性能优化考虑，Flux 引擎已包含 `dynamic-renderer` 的 schema 动态加载设计。`visible`/`disabled` 条件表达本身就可以控制运行时结构，只是多占用了一些 JSON 内存而已。
-
-**关于反驳二：**
-
-数据累积问题（分页/无限滚动）对于表格等特殊场景存在特殊优化，table store 做一定处理即可；从 resource 抽象上说可以增加一个合并策略选项。WebSocket 推送本来就是这个设计可以容纳的内容（参见 AMIS service 等机制）。乐观更新+回滚不能在 resource 描述中增加标识来完成吗？
-
-关于 `name` 设计：最基本的 `data-source` 可以具有 `name`，如果有 `name`，它就对应于一个数据对象，其中定义所需要的所有内部状态，`dataPath` 只是将这个对象中的内容再复制到其他地方而已。这对当前设计是一种改变，需要仔细评估这样设计是否更好。比较的选项包括：没有 `dataPath` 就更新当前 scope（当前非规范行为）、通过某种特殊的 `dataPath` 表示更新到当前 scope、还是通过某个开关属性来处理。TanStack Query 能直接改造作为 `data-source` 底层支撑吗？
-
-**关于反驳三：**
-
-不能直接通过表达式来表达 B = f(A) 吗？直接表达式绑定不就可以了吗？
-
-**关于反驳四：**
-
-触发 action 的时候如果失败需要有一个失败处理路径，这本身不应该是 action 抽象中需要做的事情吗？action 的每一步都应该有一个失败处理策略可配置，可能是调用其他的 action 等，类似于 then 这种有一个分叉不就可以了吗？框架底层有一个兜底策略就是弹出 toast 提示信息即可。
-
-**关于反驳五：**
-
-一个控件具有 `name`，它自然就是从 scope 中读取 value，它改变了就自动设置这个 value，这是 AMIS 模型中就已经具有的设计，这些常见层面根本不需要额外表达。
-
-**关于反驳六：**
-
-同样是 action 抽象的问题。
-
-### AI 整理
-
-逐条核实用户回答与现有文档的一致性后，各条反驳的结论如下。
-
-#### 反驳一：撤回
-
-文档调研确认：loader 层在多个文档中有完整说明。
-
-- `docs/architecture/flux-dsl-vm-extensibility.md` 明确区分「Loader 装配期」与「Flux 运行期」，权限裁剪、i18n 替换、`x:extends` 结构继承、feature flag 静态裁剪全部归属装配期。
-- `docs/articles/flux-design-introduction.md` §10（lines 345–429）详细描述 Nop 平台层在送入 Flux 前的四阶变换管线。
-- `docs/discussions/01-core-design-clarification.md`（lines 255–256）明确：「Loader 层负责装配最终模型，runtime 只执行 final model，这与可逆计算里变化应优先在模型空间中被处理而不是在运行时接口里漂移的原则一致。」
-- `dynamic-renderer` 的动态 schema 加载设计（`docs/articles/flux-design-introduction.md` §7，lines 200–251）处理了确实需要运行时懒加载结构的场景。
-- `visible`/`disabled` 统一值语义（`docs/references/flux-json-conventions.md` lines 21–22）正是不依赖结构变化来控制可见性的规范做法。
-
-**结论：** `frontend-programming-model.md` 中对 loader 层的描述（lines 84–93，113–123）偏简略，但相关设计在其他文档中已有完整说明。该反驳基于对文档体系的不完整阅读，不成立。建议在 `frontend-programming-model.md` 中增加对 `flux-dsl-vm-extensibility.md` 的 cross-reference。
-
-#### 反驳二：部分成立，核心转化为 `name` 字段设计问题
-
-文档调研确认：
-
-- 当前 `data-source` 设计无 `name` 字段，身份标识用继承自 base schema 的 `id`，发布目标用 `dataPath`（`docs/architecture/api-data-source.md` lines 183–201）。
-- WebSocket 推送和 AMIS service 机制已在架构设计范围内（`docs/articles/flux-design-introduction.md` §7）。
-- 分页合并策略尚未在 resource 规则中定义，是一个实际缺口。
-- 乐观更新尚无 resource 层的显式设计。
-
-关于 `name` 设计的评估详见下方「待澄清问题」第 1 条。TanStack Query 作为 resource 运行时底层的可行性详见第 2 条。
-
-#### 反驳三：撤回
-
-用户的反驳完全成立。`B = f(A)` 在 Flux 中的正确表达是在字段 B 的 `value` 属性上写表达式 `"${f(A)}"`，这是 Value 原语的标准用法，不需要 Reaction。Reaction 只用于需要副作用的场景（如发送 API、弹出通知）。原来的反驳混淆了「表达式派生值」和「有副作用的级联写入」，错误在于没有充分利用 Value 原语已有的能力。
-
-#### 反驳四：部分成立，确认为现有文档记录的缺口
-
-文档调研确认：
-
-- `when`、`parallel`、`retry`（固定次数/固定延迟）、`timeout` 已实现（`docs/architecture/action-scope-and-imports.md` lines 404–407，`docs/logs/2026/04-05.md` lines 40–56）。
-- `continueOnError: boolean` 已有，但这是布尔开关而非分支。
-- **`onError` 分支动作列表（失败时调用另一组 action 的能力）明确未设计**（`docs/analysis/2026-04-04-flux-architecture-evaluation.md` line 157 记录此为缺口）。
-- 用户的解法方向正确：在 action 抽象中增加类似 `onError`/`catch` 的分支字段，框架提供 toast 兜底策略。
-
-**结论：** 这不是「capability 原语需要分裂为三个」的问题，而是 action 控制流规范需要补充 `onError` 分支语义。原来反驳的表述方式有误，但指出的功能缺口是真实的。
-
-#### 反驳五：撤回
-
-用户的反驳完全成立。AMIS/Flux 中 form field 的 `name` 属性自动建立读写绑定到 scope 对应路径，无需 schema 作者额外声明。这与 host projection 的只读约束是两个不同层面：host projection 约束的是宿主投影进 scope 的快照数据（如 `session`、`doc`、`selection`），不约束 schema 自有表单字段的双向绑定。原来的反驳混淆了两者，不成立。
-
-#### 反驳六：归并到反驳四
-
-同反驳四的结论：这是 action 控制流中 `onError` 分支的设计缺口，不需要新增「错误处理原语」。
-
-### 待澄清问题
-
-**1. `data-source` 的 `name` 字段设计：如何选择最优方案？**
-
-用户提出为 `data-source` 增加 `name` 字段，如果存在 `name`，则对应一个包含所有内部状态的数据对象，`dataPath` 将其内容投影到其他 scope 路径。用户同时要求评估以下三个竞争方案，并给出明确建议：
-
-- **方案 A（name 字段）**：`name` 既是资源身份标识，又是默认 scope 发布路径；`dataPath` 作为显式覆盖。
-- **方案 B（无 dataPath = 更新当前 scope）**：不指定 `dataPath` 时，API 响应字段直接 merge 进当前 scope。这是 AMIS `service` 的历史行为，但已被架构文档明确标注为非规范。
-- **方案 C（特殊 dataPath 语法）**：用特殊值（如 `"."`）表示「发布到当前 scope」。
-- **方案 D（开关属性）**：增加 `mergeScope: true` 之类的布尔开关。
-
-**2. TanStack Query 能否作为 `data-source` 运行时底层？**
+Capability æ‰§è¡Œå¤±è´¥è¯­ä¹‰æœªå®šä¹‰ï¼Œç»“æž„æ¸²æŸ“é”™è¯¯ä¸åœ¨æ¨¡åž‹å†…ï¼Œé”™è¯¯å¤„ç†æ»¡è¶³ promotion test å…­æ¡æ ‡å‡†å´è¢«æŽ’é™¤åœ¨åŽŸè¯­é›†å¤–ã€‚
 
 ---
 
-## 第 3 轮
+## ç¬¬ 2 è½®
 
-### 用户回答
+### ç”¨æˆ·å›žç­”
 
-（待补充）
+**å…³äºŽåé©³ä¸€ï¼š**
 
-### AI 整理
+å­—æ®µæƒé™/feature flag é€šè¿‡åŽç«¯ Java ç«¯çš„ loader å¤„ç†ï¼Œåˆ°äº†å‰ç«¯ä¹‹åŽåœ¨é€å…¥ render ä¹‹å‰ä¹Ÿå¯ä»¥åœ¨å•çº¯çš„ JSON ç»“æž„å±‚å¤„ç†ï¼Œä¸éœ€è¦åœ¨ render å±‚å¤„ç†ã€‚Wizard æ­¥éª¤æœ¬è´¨ä¸Šåœ¨æœåŠ¡ç«¯å°±å¯ä»¥ç¡®å®šï¼Œé¡µé¢ä¸­åŒ…å«æ‰€æœ‰æ­¥éª¤ï¼Œåªæ˜¯æŽ§åˆ¶å¯è§æ€§è€Œå·²ã€‚æ¡†æž¶å› ä¸ºåŸºäºŽå¯é€†è®¡ç®—ç†è®ºï¼Œåœ¨æ¨¡åž‹ç»“æž„å±‚è‡ªåŠ¨åšå¤§é‡å¤„ç†ï¼Œå·²å¯¹è¿è¡Œæ—¶å¼•æ“Žè¿›è¡Œæžå¤§ç®€åŒ–ã€‚i18n ç­‰éƒ½åœ¨ loader å±‚å®Œæˆå˜æ¢ã€‚æ•´ä½“è®¾è®¡ä¸Šä»Žæ€§èƒ½ä¼˜åŒ–è€ƒè™‘ï¼ŒFlux å¼•æ“Žå·²åŒ…å« `dynamic-renderer` çš„ schema åŠ¨æ€åŠ è½½è®¾è®¡ã€‚`visible`/`disabled` æ¡ä»¶è¡¨è¾¾æœ¬èº«å°±å¯ä»¥æŽ§åˆ¶è¿è¡Œæ—¶ç»“æž„ï¼Œåªæ˜¯å¤šå ç”¨äº†ä¸€äº› JSON å†…å­˜è€Œå·²ã€‚
 
-以下为对上述两个待澄清问题的分析，供用户确认或修正。
+**å…³äºŽåé©³äºŒï¼š**
+
+æ•°æ®ç´¯ç§¯é—®é¢˜ï¼ˆåˆ†é¡µ/æ— é™æ»šåŠ¨ï¼‰å¯¹äºŽè¡¨æ ¼ç­‰ç‰¹æ®Šåœºæ™¯å­˜åœ¨ç‰¹æ®Šä¼˜åŒ–ï¼Œtable store åšä¸€å®šå¤„ç†å³å¯ï¼›ä»Ž resource æŠ½è±¡ä¸Šè¯´å¯ä»¥å¢žåŠ ä¸€ä¸ªåˆå¹¶ç­–ç•¥é€‰é¡¹ã€‚WebSocket æŽ¨é€æœ¬æ¥å°±æ˜¯è¿™ä¸ªè®¾è®¡å¯ä»¥å®¹çº³çš„å†…å®¹ï¼ˆå‚è§ AMIS service ç­‰æœºåˆ¶ï¼‰ã€‚ä¹è§‚æ›´æ–°+å›žæ»šä¸èƒ½åœ¨ resource æè¿°ä¸­å¢žåŠ æ ‡è¯†æ¥å®Œæˆå—ï¼Ÿ
+
+å…³äºŽ `name` è®¾è®¡ï¼šæœ€åŸºæœ¬çš„ `data-source` å¯ä»¥å…·æœ‰ `name`ï¼Œå¦‚æžœæœ‰ `name`ï¼Œå®ƒå°±å¯¹åº”äºŽä¸€ä¸ªæ•°æ®å¯¹è±¡ï¼Œå…¶ä¸­å®šä¹‰æ‰€éœ€è¦çš„æ‰€æœ‰å†…éƒ¨çŠ¶æ€ï¼Œ`dataPath` åªæ˜¯å°†è¿™ä¸ªå¯¹è±¡ä¸­çš„å†…å®¹å†å¤åˆ¶åˆ°å…¶ä»–åœ°æ–¹è€Œå·²ã€‚è¿™å¯¹å½“å‰è®¾è®¡æ˜¯ä¸€ç§æ”¹å˜ï¼Œéœ€è¦ä»”ç»†è¯„ä¼°è¿™æ ·è®¾è®¡æ˜¯å¦æ›´å¥½ã€‚æ¯”è¾ƒçš„é€‰é¡¹åŒ…æ‹¬ï¼šæ²¡æœ‰ `dataPath` å°±æ›´æ–°å½“å‰ scopeï¼ˆå½“å‰éžè§„èŒƒè¡Œä¸ºï¼‰ã€é€šè¿‡æŸç§ç‰¹æ®Šçš„ `dataPath` è¡¨ç¤ºæ›´æ–°åˆ°å½“å‰ scopeã€è¿˜æ˜¯é€šè¿‡æŸä¸ªå¼€å…³å±žæ€§æ¥å¤„ç†ã€‚TanStack Query èƒ½ç›´æŽ¥æ”¹é€ ä½œä¸º `data-source` åº•å±‚æ”¯æ’‘å—ï¼Ÿ
+
+**å…³äºŽåé©³ä¸‰ï¼š**
+
+ä¸èƒ½ç›´æŽ¥é€šè¿‡è¡¨è¾¾å¼æ¥è¡¨è¾¾ B = f(A) å—ï¼Ÿç›´æŽ¥è¡¨è¾¾å¼ç»‘å®šä¸å°±å¯ä»¥äº†å—ï¼Ÿ
+
+**å…³äºŽåé©³å››ï¼š**
+
+è§¦å‘ action çš„æ—¶å€™å¦‚æžœå¤±è´¥éœ€è¦æœ‰ä¸€ä¸ªå¤±è´¥å¤„ç†è·¯å¾„ï¼Œè¿™æœ¬èº«ä¸åº”è¯¥æ˜¯ action æŠ½è±¡ä¸­éœ€è¦åšçš„äº‹æƒ…å—ï¼Ÿaction çš„æ¯ä¸€æ­¥éƒ½åº”è¯¥æœ‰ä¸€ä¸ªå¤±è´¥å¤„ç†ç­–ç•¥å¯é…ç½®ï¼Œå¯èƒ½æ˜¯è°ƒç”¨å…¶ä»–çš„ action ç­‰ï¼Œç±»ä¼¼äºŽ then è¿™ç§æœ‰ä¸€ä¸ªåˆ†å‰ä¸å°±å¯ä»¥äº†å—ï¼Ÿæ¡†æž¶åº•å±‚æœ‰ä¸€ä¸ªå…œåº•ç­–ç•¥å°±æ˜¯å¼¹å‡º toast æç¤ºä¿¡æ¯å³å¯ã€‚
+
+**å…³äºŽåé©³äº”ï¼š**
+
+ä¸€ä¸ªæŽ§ä»¶å…·æœ‰ `name`ï¼Œå®ƒè‡ªç„¶å°±æ˜¯ä»Ž scope ä¸­è¯»å– valueï¼Œå®ƒæ”¹å˜äº†å°±è‡ªåŠ¨è®¾ç½®è¿™ä¸ª valueï¼Œè¿™æ˜¯ AMIS æ¨¡åž‹ä¸­å°±å·²ç»å…·æœ‰çš„è®¾è®¡ï¼Œè¿™äº›å¸¸è§å±‚é¢æ ¹æœ¬ä¸éœ€è¦é¢å¤–è¡¨è¾¾ã€‚
+
+**å…³äºŽåé©³å…­ï¼š**
+
+åŒæ ·æ˜¯ action æŠ½è±¡çš„é—®é¢˜ã€‚
+
+### AI æ•´ç†
+
+é€æ¡æ ¸å®žç”¨æˆ·å›žç­”ä¸ŽçŽ°æœ‰æ–‡æ¡£çš„ä¸€è‡´æ€§åŽï¼Œå„æ¡åé©³çš„ç»“è®ºå¦‚ä¸‹ã€‚
+
+#### åé©³ä¸€ï¼šæ’¤å›ž
+
+æ–‡æ¡£è°ƒç ”ç¡®è®¤ï¼šloader å±‚åœ¨å¤šä¸ªæ–‡æ¡£ä¸­æœ‰å®Œæ•´è¯´æ˜Žã€‚
+
+- `docs/architecture/flux-dsl-vm-extensibility.md` æ˜Žç¡®åŒºåˆ†ã€ŒLoader è£…é…æœŸã€ä¸Žã€ŒFlux è¿è¡ŒæœŸã€ï¼Œæƒé™è£å‰ªã€i18n æ›¿æ¢ã€`x:extends` ç»“æž„ç»§æ‰¿ã€feature flag é™æ€è£å‰ªå…¨éƒ¨å½’å±žè£…é…æœŸã€‚
+- `docs/articles/flux-design-introduction.md` Â§10ï¼ˆlines 345â€“429ï¼‰è¯¦ç»†æè¿° Nop å¹³å°å±‚åœ¨é€å…¥ Flux å‰çš„å››é˜¶å˜æ¢ç®¡çº¿ã€‚
+- `docs/discussions/01-core-design-clarification.md`ï¼ˆlines 255â€“256ï¼‰æ˜Žç¡®ï¼šã€ŒLoader å±‚è´Ÿè´£è£…é…æœ€ç»ˆæ¨¡åž‹ï¼Œruntime åªæ‰§è¡Œ final modelï¼Œè¿™ä¸Žå¯é€†è®¡ç®—é‡Œå˜åŒ–åº”ä¼˜å…ˆåœ¨æ¨¡åž‹ç©ºé—´ä¸­è¢«å¤„ç†è€Œä¸æ˜¯åœ¨è¿è¡Œæ—¶æŽ¥å£é‡Œæ¼‚ç§»çš„åŽŸåˆ™ä¸€è‡´ã€‚ã€
+- `dynamic-renderer` çš„åŠ¨æ€ schema åŠ è½½è®¾è®¡ï¼ˆ`docs/articles/flux-design-introduction.md` Â§7ï¼Œlines 200â€“251ï¼‰å¤„ç†äº†ç¡®å®žéœ€è¦è¿è¡Œæ—¶æ‡’åŠ è½½ç»“æž„çš„åœºæ™¯ã€‚
+- `visible`/`disabled` ç»Ÿä¸€å€¼è¯­ä¹‰ï¼ˆ`docs/references/flux-json-conventions.md` lines 21â€“22ï¼‰æ­£æ˜¯ä¸ä¾èµ–ç»“æž„å˜åŒ–æ¥æŽ§åˆ¶å¯è§æ€§çš„è§„èŒƒåšæ³•ã€‚
+
+**ç»“è®ºï¼š** `frontend-programming-model.md` ä¸­å¯¹ loader å±‚çš„æè¿°ï¼ˆlines 84â€“93ï¼Œ113â€“123ï¼‰åç®€ç•¥ï¼Œä½†ç›¸å…³è®¾è®¡åœ¨å…¶ä»–æ–‡æ¡£ä¸­å·²æœ‰å®Œæ•´è¯´æ˜Žã€‚è¯¥åé©³åŸºäºŽå¯¹æ–‡æ¡£ä½“ç³»çš„ä¸å®Œæ•´é˜…è¯»ï¼Œä¸æˆç«‹ã€‚å»ºè®®åœ¨ `frontend-programming-model.md` ä¸­å¢žåŠ å¯¹ `flux-dsl-vm-extensibility.md` çš„ cross-referenceã€‚
+
+#### åé©³äºŒï¼šéƒ¨åˆ†æˆç«‹ï¼Œæ ¸å¿ƒè½¬åŒ–ä¸º `name` å­—æ®µè®¾è®¡é—®é¢˜
+
+æ–‡æ¡£è°ƒç ”ç¡®è®¤ï¼š
+
+- å½“å‰ `data-source` è®¾è®¡æ—  `name` å­—æ®µï¼Œèº«ä»½æ ‡è¯†ç”¨ç»§æ‰¿è‡ª base schema çš„ `id`ï¼Œå‘å¸ƒç›®æ ‡ç”¨ `dataPath`ï¼ˆ`docs/architecture/api-data-source.md` lines 183â€“201ï¼‰ã€‚
+- WebSocket æŽ¨é€å’Œ AMIS service æœºåˆ¶å·²åœ¨æž¶æž„è®¾è®¡èŒƒå›´å†…ï¼ˆ`docs/articles/flux-design-introduction.md` Â§7ï¼‰ã€‚
+- åˆ†é¡µåˆå¹¶ç­–ç•¥å°šæœªåœ¨ resource è§„åˆ™ä¸­å®šä¹‰ï¼Œæ˜¯ä¸€ä¸ªå®žé™…ç¼ºå£ã€‚
+- ä¹è§‚æ›´æ–°å°šæ—  resource å±‚çš„æ˜¾å¼è®¾è®¡ã€‚
+
+å…³äºŽ `name` è®¾è®¡çš„è¯„ä¼°è¯¦è§ä¸‹æ–¹ã€Œå¾…æ¾„æ¸…é—®é¢˜ã€ç¬¬ 1 æ¡ã€‚TanStack Query ä½œä¸º resource è¿è¡Œæ—¶åº•å±‚çš„å¯è¡Œæ€§è¯¦è§ç¬¬ 2 æ¡ã€‚
+
+#### åé©³ä¸‰ï¼šæ’¤å›ž
+
+ç”¨æˆ·çš„åé©³å®Œå…¨æˆç«‹ã€‚`B = f(A)` åœ¨ Flux ä¸­çš„æ­£ç¡®è¡¨è¾¾æ˜¯åœ¨å­—æ®µ B çš„ `value` å±žæ€§ä¸Šå†™è¡¨è¾¾å¼ `"${f(A)}"`ï¼Œè¿™æ˜¯ Value åŽŸè¯­çš„æ ‡å‡†ç”¨æ³•ï¼Œä¸éœ€è¦ Reactionã€‚Reaction åªç”¨äºŽéœ€è¦å‰¯ä½œç”¨çš„åœºæ™¯ï¼ˆå¦‚å‘é€ APIã€å¼¹å‡ºé€šçŸ¥ï¼‰ã€‚åŽŸæ¥çš„åé©³æ··æ·†äº†ã€Œè¡¨è¾¾å¼æ´¾ç”Ÿå€¼ã€å’Œã€Œæœ‰å‰¯ä½œç”¨çš„çº§è”å†™å…¥ã€ï¼Œé”™è¯¯åœ¨äºŽæ²¡æœ‰å……åˆ†åˆ©ç”¨ Value åŽŸè¯­å·²æœ‰çš„èƒ½åŠ›ã€‚
+
+#### åé©³å››ï¼šéƒ¨åˆ†æˆç«‹ï¼Œç¡®è®¤ä¸ºçŽ°æœ‰æ–‡æ¡£è®°å½•çš„ç¼ºå£
+
+æ–‡æ¡£è°ƒç ”ç¡®è®¤ï¼š
+
+- `when`ã€`parallel`ã€`retry`ï¼ˆå›ºå®šæ¬¡æ•°/å›ºå®šå»¶è¿Ÿï¼‰ã€`timeout` å·²å®žçŽ°ï¼ˆ`docs/architecture/action-scope-and-imports.md` lines 404â€“407ï¼Œ`docs/logs/2026/04-05.md` lines 40â€“56ï¼‰ã€‚
+- `continueOnError: boolean` å·²æœ‰ï¼Œä½†è¿™æ˜¯å¸ƒå°”å¼€å…³è€Œéžåˆ†æ”¯ã€‚
+- **`onError` åˆ†æ”¯åŠ¨ä½œåˆ—è¡¨ï¼ˆå¤±è´¥æ—¶è°ƒç”¨å¦ä¸€ç»„ action çš„èƒ½åŠ›ï¼‰æ˜Žç¡®æœªè®¾è®¡**ï¼ˆ`docs/analysis/2026-04-04-flux-architecture-evaluation.md` line 157 è®°å½•æ­¤ä¸ºç¼ºå£ï¼‰ã€‚
+- ç”¨æˆ·çš„è§£æ³•æ–¹å‘æ­£ç¡®ï¼šåœ¨ action æŠ½è±¡ä¸­å¢žåŠ ç±»ä¼¼ `onError`/`catch` çš„åˆ†æ”¯å­—æ®µï¼Œæ¡†æž¶æä¾› toast å…œåº•ç­–ç•¥ã€‚
+
+**ç»“è®ºï¼š** è¿™ä¸æ˜¯ã€Œcapability åŽŸè¯­éœ€è¦åˆ†è£‚ä¸ºä¸‰ä¸ªã€çš„é—®é¢˜ï¼Œè€Œæ˜¯ action æŽ§åˆ¶æµè§„èŒƒéœ€è¦è¡¥å…… `onError` åˆ†æ”¯è¯­ä¹‰ã€‚åŽŸæ¥åé©³çš„è¡¨è¿°æ–¹å¼æœ‰è¯¯ï¼Œä½†æŒ‡å‡ºçš„åŠŸèƒ½ç¼ºå£æ˜¯çœŸå®žçš„ã€‚
+
+#### åé©³äº”ï¼šæ’¤å›ž
+
+ç”¨æˆ·çš„åé©³å®Œå…¨æˆç«‹ã€‚AMIS/Flux ä¸­ form field çš„ `name` å±žæ€§è‡ªåŠ¨å»ºç«‹è¯»å†™ç»‘å®šåˆ° scope å¯¹åº”è·¯å¾„ï¼Œæ— éœ€ schema ä½œè€…é¢å¤–å£°æ˜Žã€‚è¿™ä¸Ž host projection çš„åªè¯»çº¦æŸæ˜¯ä¸¤ä¸ªä¸åŒå±‚é¢ï¼šhost projection çº¦æŸçš„æ˜¯å®¿ä¸»æŠ•å½±è¿› scope çš„å¿«ç…§æ•°æ®ï¼ˆå¦‚ `session`ã€`doc`ã€`selection`ï¼‰ï¼Œä¸çº¦æŸ schema è‡ªæœ‰è¡¨å•å­—æ®µçš„åŒå‘ç»‘å®šã€‚åŽŸæ¥çš„åé©³æ··æ·†äº†ä¸¤è€…ï¼Œä¸æˆç«‹ã€‚
+
+#### åé©³å…­ï¼šå½’å¹¶åˆ°åé©³å››
+
+åŒåé©³å››çš„ç»“è®ºï¼šè¿™æ˜¯ action æŽ§åˆ¶æµä¸­ `onError` åˆ†æ”¯çš„è®¾è®¡ç¼ºå£ï¼Œä¸éœ€è¦æ–°å¢žã€Œé”™è¯¯å¤„ç†åŽŸè¯­ã€ã€‚
+
+### å¾…æ¾„æ¸…é—®é¢˜
+
+**1. `data-source` çš„ `name` å­—æ®µè®¾è®¡ï¼šå¦‚ä½•é€‰æ‹©æœ€ä¼˜æ–¹æ¡ˆï¼Ÿ**
+
+ç”¨æˆ·æå‡ºä¸º `data-source` å¢žåŠ  `name` å­—æ®µï¼Œå¦‚æžœå­˜åœ¨ `name`ï¼Œåˆ™å¯¹åº”ä¸€ä¸ªåŒ…å«æ‰€æœ‰å†…éƒ¨çŠ¶æ€çš„æ•°æ®å¯¹è±¡ï¼Œ`dataPath` å°†å…¶å†…å®¹æŠ•å½±åˆ°å…¶ä»– scope è·¯å¾„ã€‚ç”¨æˆ·åŒæ—¶è¦æ±‚è¯„ä¼°ä»¥ä¸‹ä¸‰ä¸ªç«žäº‰æ–¹æ¡ˆï¼Œå¹¶ç»™å‡ºæ˜Žç¡®å»ºè®®ï¼š
+
+- **æ–¹æ¡ˆ Aï¼ˆname å­—æ®µï¼‰**ï¼š`name` æ—¢æ˜¯èµ„æºèº«ä»½æ ‡è¯†ï¼Œåˆæ˜¯é»˜è®¤ scope å‘å¸ƒè·¯å¾„ï¼›`dataPath` ä½œä¸ºæ˜¾å¼è¦†ç›–ã€‚
+- **æ–¹æ¡ˆ Bï¼ˆæ—  dataPath = æ›´æ–°å½“å‰ scopeï¼‰**ï¼šä¸æŒ‡å®š `dataPath` æ—¶ï¼ŒAPI å“åº”å­—æ®µç›´æŽ¥ merge è¿›å½“å‰ scopeã€‚è¿™æ˜¯ AMIS `service` çš„åŽ†å²è¡Œä¸ºï¼Œä½†å·²è¢«æž¶æž„æ–‡æ¡£æ˜Žç¡®æ ‡æ³¨ä¸ºéžè§„èŒƒã€‚
+- **æ–¹æ¡ˆ Cï¼ˆç‰¹æ®Š dataPath è¯­æ³•ï¼‰**ï¼šç”¨ç‰¹æ®Šå€¼ï¼ˆå¦‚ `"."`ï¼‰è¡¨ç¤ºã€Œå‘å¸ƒåˆ°å½“å‰ scopeã€ã€‚
+- **æ–¹æ¡ˆ Dï¼ˆå¼€å…³å±žæ€§ï¼‰**ï¼šå¢žåŠ  `mergeScope: true` ä¹‹ç±»çš„å¸ƒå°”å¼€å…³ã€‚
+
+**2. TanStack Query èƒ½å¦ä½œä¸º `data-source` è¿è¡Œæ—¶åº•å±‚ï¼Ÿ**
 
 ---
 
-#### 问题 1：`data-source` `name` 字段设计评估
+## ç¬¬ 3 è½®
 
-**前提：当前设计的实际问题**
+### ç”¨æˆ·å›žç­”
 
-当前 `data-source` 使用继承自 base schema 的 `id` 作为资源身份（capability targeting 用 `targetId` 引用它），`dataPath` 作为 scope 发布路径，二者是独立字段。对于最常见的场景（资源 id 和发布路径同名），作者需要写两次相同的值：
+ï¼ˆå¾…è¡¥å……ï¼‰
+
+### AI æ•´ç†
+
+ä»¥ä¸‹ä¸ºå¯¹ä¸Šè¿°ä¸¤ä¸ªå¾…æ¾„æ¸…é—®é¢˜çš„åˆ†æžï¼Œä¾›ç”¨æˆ·ç¡®è®¤æˆ–ä¿®æ­£ã€‚
+
+---
+
+#### é—®é¢˜ 1ï¼š`data-source` `name` å­—æ®µè®¾è®¡è¯„ä¼°
+
+**å‰æï¼šå½“å‰è®¾è®¡çš„å®žé™…é—®é¢˜**
+
+å½“å‰ `data-source` ä½¿ç”¨ç»§æ‰¿è‡ª base schema çš„ `id` ä½œä¸ºèµ„æºèº«ä»½ï¼ˆcapability targeting ç”¨ `targetId` å¼•ç”¨å®ƒï¼‰ï¼Œ`dataPath` ä½œä¸º scope å‘å¸ƒè·¯å¾„ï¼ŒäºŒè€…æ˜¯ç‹¬ç«‹å­—æ®µã€‚å¯¹äºŽæœ€å¸¸è§çš„åœºæ™¯ï¼ˆèµ„æº id å’Œå‘å¸ƒè·¯å¾„åŒåï¼‰ï¼Œä½œè€…éœ€è¦å†™ä¸¤æ¬¡ç›¸åŒçš„å€¼ï¼š
 
 ```json
 { "id": "users", "dataPath": "users", "api": { "url": "/api/users" } }
 ```
 
-**四个方案的比较**
+**å››ä¸ªæ–¹æ¡ˆçš„æ¯”è¾ƒ**
 
-| 维度 | 方案 A（name 字段） | 方案 B（无 dataPath = merge scope） | 方案 C（特殊 dataPath 语法） | 方案 D（开关属性） |
+| ç»´åº¦ | æ–¹æ¡ˆ Aï¼ˆname å­—æ®µï¼‰ | æ–¹æ¡ˆ Bï¼ˆæ—  dataPath = merge scopeï¼‰ | æ–¹æ¡ˆ Cï¼ˆç‰¹æ®Š dataPath è¯­æ³•ï¼‰ | æ–¹æ¡ˆ Dï¼ˆå¼€å…³å±žæ€§ï¼‰ |
 |---|---|---|---|---|
-| 常见场景简洁性 | 高（只写 `name`） | 高（省略 `dataPath`） | 低（需要记住魔法值） | 低（两个字段） |
-| namespace 安全 | 安全（发布到明确路径） | 不安全（污染当前 scope） | 不安全（同 B） | 不安全（同 B） |
-| 身份与路径是否统一 | 是 | 否（仍需 `id`） | 否（仍需 `id`） | 否（仍需 `id`） |
-| 向后兼容 | 兼容（`dataPath` 仍有效） | 已被架构文档标为非规范 | 增加隐性约定 | 增加隐性约定 |
-| 乐观更新/内部状态扩展 | 自然（`name` 对象可包含内部字段） | 无明确路径 | 无明确路径 | 无明确路径 |
+| å¸¸è§åœºæ™¯ç®€æ´æ€§ | é«˜ï¼ˆåªå†™ `name`ï¼‰ | é«˜ï¼ˆçœç•¥ `dataPath`ï¼‰ | ä½Žï¼ˆéœ€è¦è®°ä½é­”æ³•å€¼ï¼‰ | ä½Žï¼ˆä¸¤ä¸ªå­—æ®µï¼‰ |
+| namespace å®‰å…¨ | å®‰å…¨ï¼ˆå‘å¸ƒåˆ°æ˜Žç¡®è·¯å¾„ï¼‰ | ä¸å®‰å…¨ï¼ˆæ±¡æŸ“å½“å‰ scopeï¼‰ | ä¸å®‰å…¨ï¼ˆåŒ Bï¼‰ | ä¸å®‰å…¨ï¼ˆåŒ Bï¼‰ |
+| èº«ä»½ä¸Žè·¯å¾„æ˜¯å¦ç»Ÿä¸€ | æ˜¯ | å¦ï¼ˆä»éœ€ `id`ï¼‰ | å¦ï¼ˆä»éœ€ `id`ï¼‰ | å¦ï¼ˆä»éœ€ `id`ï¼‰ |
+| å‘åŽå…¼å®¹ | å…¼å®¹ï¼ˆ`dataPath` ä»æœ‰æ•ˆï¼‰ | å·²è¢«æž¶æž„æ–‡æ¡£æ ‡ä¸ºéžè§„èŒƒ | å¢žåŠ éšæ€§çº¦å®š | å¢žåŠ éšæ€§çº¦å®š |
+| ä¹è§‚æ›´æ–°/å†…éƒ¨çŠ¶æ€æ‰©å±• | è‡ªç„¶ï¼ˆ`name` å¯¹è±¡å¯åŒ…å«å†…éƒ¨å­—æ®µï¼‰ | æ— æ˜Žç¡®è·¯å¾„ | æ— æ˜Žç¡®è·¯å¾„ | æ— æ˜Žç¡®è·¯å¾„ |
 
-方案 B/C/D 的根本问题是 namespace 安全：API 响应可以包含任意 key，merge 到当前 scope 会与其他 scope 字段发生不可预期的冲突。`docs/architecture/frontend-programming-model.md` 的 Scope Admission Rule（lines 520–543）和 resource 规则第 19 条（一个绑定路径只能有一个 active publisher）都在约束这类行为。方案 B 已被架构文档明确标注为非规范。
+æ–¹æ¡ˆ B/C/D çš„æ ¹æœ¬é—®é¢˜æ˜¯ namespace å®‰å…¨ï¼šAPI å“åº”å¯ä»¥åŒ…å«ä»»æ„ keyï¼Œmerge åˆ°å½“å‰ scope ä¼šä¸Žå…¶ä»– scope å­—æ®µå‘ç”Ÿä¸å¯é¢„æœŸçš„å†²çªã€‚`docs/architecture/frontend-programming-model.md` çš„ Scope Admission Ruleï¼ˆlines 520â€“543ï¼‰å’Œ resource è§„åˆ™ç¬¬ 19 æ¡ï¼ˆä¸€ä¸ªç»‘å®šè·¯å¾„åªèƒ½æœ‰ä¸€ä¸ª active publisherï¼‰éƒ½åœ¨çº¦æŸè¿™ç±»è¡Œä¸ºã€‚æ–¹æ¡ˆ B å·²è¢«æž¶æž„æ–‡æ¡£æ˜Žç¡®æ ‡æ³¨ä¸ºéžè§„èŒƒã€‚
 
-**推荐：方案 A，具体语义如下**
+**æŽ¨èï¼šæ–¹æ¡ˆ Aï¼Œå…·ä½“è¯­ä¹‰å¦‚ä¸‹**
 
 ```json
-// 只写 name：数据发布到 ${users}，capability 以 "targetId": "users" 引用
+// åªå†™ nameï¼šæ•°æ®å‘å¸ƒåˆ° ${users}ï¼Œcapability ä»¥ "targetId": "users" å¼•ç”¨
 { "type": "data-source", "name": "users", "api": { "url": "/api/users" } }
 
-// name + dataPath：数据发布到 ${table.users}，capability 仍以 "targetId": "users" 引用
+// name + dataPathï¼šæ•°æ®å‘å¸ƒåˆ° ${table.users}ï¼Œcapability ä»ä»¥ "targetId": "users" å¼•ç”¨
 { "type": "data-source", "name": "users", "dataPath": "table.users", "api": { "url": "/api/users" } }
 
-// 只写 dataPath（向后兼容）：数据发布到 ${lookups.countries}，capability 以 id 引用
+// åªå†™ dataPathï¼ˆå‘åŽå…¼å®¹ï¼‰ï¼šæ•°æ®å‘å¸ƒåˆ° ${lookups.countries}ï¼Œcapability ä»¥ id å¼•ç”¨
 { "type": "data-source", "id": "countries", "dataPath": "lookups.countries", "api": { "url": "/api/countries" } }
 ```
 
-语义规则：
+è¯­ä¹‰è§„åˆ™ï¼š
 
-- `name` 存在时：资源身份 = `name`，默认 scope 发布路径 = `name`
-- `dataPath` 存在时：scope 发布路径覆盖为 `dataPath`，身份仍为 `name`（或 `id`）
-- `name` 与 `id` 都不存在时：匿名资源，无法被 capability 显式引用
-- `id` 保留以向后兼容，语义不变；如果同时声明 `name` 和 `id`，`id` 优先作为 capability targeting 身份
+- `name` å­˜åœ¨æ—¶ï¼šèµ„æºèº«ä»½ = `name`ï¼Œé»˜è®¤ scope å‘å¸ƒè·¯å¾„ = `name`
+- `dataPath` å­˜åœ¨æ—¶ï¼šscope å‘å¸ƒè·¯å¾„è¦†ç›–ä¸º `dataPath`ï¼Œèº«ä»½ä»ä¸º `name`ï¼ˆæˆ– `id`ï¼‰
+- `name` ä¸Ž `id` éƒ½ä¸å­˜åœ¨æ—¶ï¼šåŒ¿åèµ„æºï¼Œæ— æ³•è¢« capability æ˜¾å¼å¼•ç”¨
+- `id` ä¿ç•™ä»¥å‘åŽå…¼å®¹ï¼Œè¯­ä¹‰ä¸å˜ï¼›å¦‚æžœåŒæ—¶å£°æ˜Ž `name` å’Œ `id`ï¼Œ`id` ä¼˜å…ˆä½œä¸º capability targeting èº«ä»½
 
-**乐观更新和内部状态**
+**ä¹è§‚æ›´æ–°å’Œå†…éƒ¨çŠ¶æ€**
 
-有了 `name`，资源的内部状态可以有结构化的表达方式。乐观更新建议通过资源配置标识实现，而不是把乐观值和确认值放到 scope 里的两个路径：
+æœ‰äº† `name`ï¼Œèµ„æºçš„å†…éƒ¨çŠ¶æ€å¯ä»¥æœ‰ç»“æž„åŒ–çš„è¡¨è¾¾æ–¹å¼ã€‚ä¹è§‚æ›´æ–°å»ºè®®é€šè¿‡èµ„æºé…ç½®æ ‡è¯†å®žçŽ°ï¼Œè€Œä¸æ˜¯æŠŠä¹è§‚å€¼å’Œç¡®è®¤å€¼æ”¾åˆ° scope é‡Œçš„ä¸¤ä¸ªè·¯å¾„ï¼š
 
 ```json
 {
@@ -204,9 +204,9 @@ Capability 执行失败语义未定义，结构渲染错误不在模型内，错
 }
 ```
 
-`optimistic: true` 时，资源运行时内部维护 `{ committed, pending, rollback }` 三态，`statusPath`（若声明）的 DTO 增加 `optimisticPending: boolean` 和 `rollbackAvailable: boolean` 字段。scope 发布的仍是单一逻辑值（乐观值或确认值，取决于 pending 状态），与「一个资源发布一个逻辑值」的规则相容。
+`optimistic: true` æ—¶ï¼Œèµ„æºè¿è¡Œæ—¶å†…éƒ¨ç»´æŠ¤ `{ committed, pending, rollback }` ä¸‰æ€ï¼Œ`statusPath`ï¼ˆè‹¥å£°æ˜Žï¼‰çš„ DTO å¢žåŠ  `optimisticPending: boolean` å’Œ `rollbackAvailable: boolean` å­—æ®µã€‚scope å‘å¸ƒçš„ä»æ˜¯å•ä¸€é€»è¾‘å€¼ï¼ˆä¹è§‚å€¼æˆ–ç¡®è®¤å€¼ï¼Œå–å†³äºŽ pending çŠ¶æ€ï¼‰ï¼Œä¸Žã€Œä¸€ä¸ªèµ„æºå‘å¸ƒä¸€ä¸ªé€»è¾‘å€¼ã€çš„è§„åˆ™ç›¸å®¹ã€‚
 
-**分页/合并策略**
+**åˆ†é¡µ/åˆå¹¶ç­–ç•¥**
 
 ```json
 {
@@ -217,178 +217,178 @@ Capability 执行失败语义未定义，结构渲染错误不在模型内，错
 }
 ```
 
-`mergeStrategy` 可选值：`"replace"`（默认）、`"append"`（用于无限滚动，将新页数据 concat 到已有数组）、`"prepend"`。这个扩展不破坏「一个资源发布一个逻辑值」规则，因为 scope 里仍然只有一个 `items` 路径，只是更新策略变了。
+`mergeStrategy` å¯é€‰å€¼ï¼š`"replace"`ï¼ˆé»˜è®¤ï¼‰ã€`"append"`ï¼ˆç”¨äºŽæ— é™æ»šåŠ¨ï¼Œå°†æ–°é¡µæ•°æ® concat åˆ°å·²æœ‰æ•°ç»„ï¼‰ã€`"prepend"`ã€‚è¿™ä¸ªæ‰©å±•ä¸ç ´åã€Œä¸€ä¸ªèµ„æºå‘å¸ƒä¸€ä¸ªé€»è¾‘å€¼ã€è§„åˆ™ï¼Œå› ä¸º scope é‡Œä»ç„¶åªæœ‰ä¸€ä¸ª `items` è·¯å¾„ï¼Œåªæ˜¯æ›´æ–°ç­–ç•¥å˜äº†ã€‚
 
 ---
 
-#### 问题 2：TanStack Query 作为 `data-source` 运行时底层
+#### é—®é¢˜ 2ï¼šTanStack Query ä½œä¸º `data-source` è¿è¡Œæ—¶åº•å±‚
 
-**映射关系**
+**æ˜ å°„å…³ç³»**
 
-| TanStack Query 概念 | Flux resource 对应 |
+| TanStack Query æ¦‚å¿µ | Flux resource å¯¹åº” |
 |---|---|
-| `queryKey` | 资源 `name`/`id` |
-| `queryFn` | env.fetch 驱动的 producer 实现 |
-| `data`, `isLoading`, `error`, `isFetching` | `dataPath` 发布的值，`statusPath` DTO 的各字段 |
-| `staleTime`, `gcTime` | 资源配置中的 cache 策略 |
+| `queryKey` | èµ„æº `name`/`id` |
+| `queryFn` | env.fetch é©±åŠ¨çš„ producer å®žçŽ° |
+| `data`, `isLoading`, `error`, `isFetching` | `dataPath` å‘å¸ƒçš„å€¼ï¼Œ`statusPath` DTO çš„å„å­—æ®µ |
+| `staleTime`, `gcTime` | èµ„æºé…ç½®ä¸­çš„ cache ç­–ç•¥ |
 | `invalidateQueries` | `refreshSource` built-in capability |
-| `useMutation` + `onMutate` (乐观更新) | capability handler + `optimistic: true` 资源标识 |
-| `infiniteQuery` | `mergeStrategy: "append"` + 分页 cursor |
-| `placeholderData` | `initialData` 字段（已存在） |
+| `useMutation` + `onMutate` (ä¹è§‚æ›´æ–°) | capability handler + `optimistic: true` èµ„æºæ ‡è¯† |
+| `infiniteQuery` | `mergeStrategy: "append"` + åˆ†é¡µ cursor |
+| `placeholderData` | `initialData` å­—æ®µï¼ˆå·²å­˜åœ¨ï¼‰ |
 
-**结论：可行，且推荐作为 API 类资源的内部运行时实现**
+**ç»“è®ºï¼šå¯è¡Œï¼Œä¸”æŽ¨èä½œä¸º API ç±»èµ„æºçš„å†…éƒ¨è¿è¡Œæ—¶å®žçŽ°**
 
-TanStack Query 的查询缓存、去重、后台重试、失效传播机制与 Flux resource 原语的运行时责任高度重叠。将 TanStack Query 作为 api-backed resource 的 producer runtime 内部实现，可以获得成熟的 cache 管理而不改变 schema 层语义。关键一点：TanStack Query 的「一个 queryKey 对应一个 queryResult」与 Flux「一个资源发布一个逻辑值」完全对应，没有概念冲突。
+TanStack Query çš„æŸ¥è¯¢ç¼“å­˜ã€åŽ»é‡ã€åŽå°é‡è¯•ã€å¤±æ•ˆä¼ æ’­æœºåˆ¶ä¸Ž Flux resource åŽŸè¯­çš„è¿è¡Œæ—¶è´£ä»»é«˜åº¦é‡å ã€‚å°† TanStack Query ä½œä¸º api-backed resource çš„ producer runtime å†…éƒ¨å®žçŽ°ï¼Œå¯ä»¥èŽ·å¾—æˆç†Ÿçš„ cache ç®¡ç†è€Œä¸æ”¹å˜ schema å±‚è¯­ä¹‰ã€‚å…³é”®ä¸€ç‚¹ï¼šTanStack Query çš„ã€Œä¸€ä¸ª queryKey å¯¹åº”ä¸€ä¸ª queryResultã€ä¸Ž Fluxã€Œä¸€ä¸ªèµ„æºå‘å¸ƒä¸€ä¸ªé€»è¾‘å€¼ã€å®Œå…¨å¯¹åº”ï¼Œæ²¡æœ‰æ¦‚å¿µå†²çªã€‚
 
-注意这是实现层决策，不影响 schema 作者可见的 resource 原语语义。
-
----
-
-### 待澄清问题
-
-1. `name` 字段设计方案 A 是否确认采纳？`id` 是否应被标为 deprecated、可选，还是两者并存但语义互斥？
-2. `mergeStrategy` 字段是否在当前阶段就需要设计进 `DataSourceSchema`，还是留给 table store 层的特殊 resource producer 处理？
-3. `optimistic` 标识和 `statusPath` DTO 的扩展是否在 `api-data-source.md` 中作为 future section 记录，还是推迟到实际需求出现时？
-4. 关于 action `onError` 分支：是否在 `action-scope-and-imports.md` 中增加 `onError: ActionStep[]` 字段规范，并明确与 `continueOnError` 的关系（`continueOnError` 简化为「不声明 `onError` 时的兜底行为」）？
+æ³¨æ„è¿™æ˜¯å®žçŽ°å±‚å†³ç­–ï¼Œä¸å½±å“ schema ä½œè€…å¯è§çš„ resource åŽŸè¯­è¯­ä¹‰ã€‚
 
 ---
 
-## 第 4 轮
+### å¾…æ¾„æ¸…é—®é¢˜
 
-### 用户回答
+1. `name` å­—æ®µè®¾è®¡æ–¹æ¡ˆ A æ˜¯å¦ç¡®è®¤é‡‡çº³ï¼Ÿ`id` æ˜¯å¦åº”è¢«æ ‡ä¸º deprecatedã€å¯é€‰ï¼Œè¿˜æ˜¯ä¸¤è€…å¹¶å­˜ä½†è¯­ä¹‰äº’æ–¥ï¼Ÿ
+2. `mergeStrategy` å­—æ®µæ˜¯å¦åœ¨å½“å‰é˜¶æ®µå°±éœ€è¦è®¾è®¡è¿› `DataSourceSchema`ï¼Œè¿˜æ˜¯ç•™ç»™ table store å±‚çš„ç‰¹æ®Š resource producer å¤„ç†ï¼Ÿ
+3. `optimistic` æ ‡è¯†å’Œ `statusPath` DTO çš„æ‰©å±•æ˜¯å¦åœ¨ `api-data-source.md` ä¸­ä½œä¸º future section è®°å½•ï¼Œè¿˜æ˜¯æŽ¨è¿Ÿåˆ°å®žé™…éœ€æ±‚å‡ºçŽ°æ—¶ï¼Ÿ
+4. å…³äºŽ action `onError` åˆ†æ”¯ï¼šæ˜¯å¦åœ¨ `action-scope-and-imports.md` ä¸­å¢žåŠ  `onError: ActionStep[]` å­—æ®µè§„èŒƒï¼Œå¹¶æ˜Žç¡®ä¸Ž `continueOnError` çš„å…³ç³»ï¼ˆ`continueOnError` ç®€åŒ–ä¸ºã€Œä¸å£°æ˜Ž `onError` æ—¶çš„å…œåº•è¡Œä¸ºã€ï¼‰ï¼Ÿ
 
-用户对上一轮分析提出了明确纠正，并要求后续讨论只保留带有可行改进设计的有效异议。用户的补充重点如下：
+---
 
-- 反驳必须附带一个可行的改进设计，不能停留在“无法证明最优”的抽象层面。
-- 多人协作、CRDT、OT 等明显属于 editor-specific 或 host/domain 层问题，不应作为 `Flux` core programming model 的反驳点。
-- 当前讨论的评价对象始终是 core engine design；此前把问题说成“评价对象被偷换”是口语抬杠，不是有效异议。
-- `Capability` 更准确地说应理解为 `ActionScope` / authority organization；具体 `Action` 概念与控制流能力是独立问题。
-- `Action` 的能力可以渐进扩充：先支持最简单的单步触发，再补 `then` / `catch`，再补 `parallel` / `sequential`，最后才考虑 `DAG` 级表达。
-- `api` 应是发送给底层 fetcher 的完整输入/输出描述；`timeout`、`throttle` 等不应简单塞进 `ApiObject`，而应位于更高一层的执行控制。
-- `data-source` 与 `action` 可以在操作控制层面共享底层实现，例如 `timeout`、`throttle`、cancellation、dedup，但 schema 形态未必需要完全相同。
-- dependency tracking 是表达式语义天然隐含的基线；真正需要设计的是它与 `Reaction` / `Action` 的触发时机。
-- `form` 进入时的 `init`、提交时的 `submit`、验证后再触发远程调用等流程都需要语义化建模，不能把完整 submit pipeline 直接塞到某个 `button.onClick` 内。
+## ç¬¬ 4 è½®
 
-### AI 整理
+### ç”¨æˆ·å›žç­”
 
-本轮纠正后，前一轮里两类无效异议应当撤回：
+ç”¨æˆ·å¯¹ä¸Šä¸€è½®åˆ†æžæå‡ºäº†æ˜Žç¡®çº æ­£ï¼Œå¹¶è¦æ±‚åŽç»­è®¨è®ºåªä¿ç•™å¸¦æœ‰å¯è¡Œæ”¹è¿›è®¾è®¡çš„æœ‰æ•ˆå¼‚è®®ã€‚ç”¨æˆ·çš„è¡¥å……é‡ç‚¹å¦‚ä¸‹ï¼š
 
-- 不再把 collaboration / CRDT / OT / local-first 一类 editor-specific 议题当作 `Flux` core programming model 的反驳理由。`docs/architecture/frontend-programming-model.md:1128-1135` 已经明确把这类系统放在 host/domain 边界之外。
-- 不再把问题表述成“评价对象被偷换”。当前讨论始终围绕 core engine design，只是前一轮在措辞上把“框架整体”与“执行内核”混说了。
+- åé©³å¿…é¡»é™„å¸¦ä¸€ä¸ªå¯è¡Œçš„æ”¹è¿›è®¾è®¡ï¼Œä¸èƒ½åœç•™åœ¨â€œæ— æ³•è¯æ˜Žæœ€ä¼˜â€çš„æŠ½è±¡å±‚é¢ã€‚
+- å¤šäººåä½œã€CRDTã€OT ç­‰æ˜Žæ˜¾å±žäºŽ editor-specific æˆ– host/domain å±‚é—®é¢˜ï¼Œä¸åº”ä½œä¸º `Flux` core programming model çš„åé©³ç‚¹ã€‚
+- å½“å‰è®¨è®ºçš„è¯„ä»·å¯¹è±¡å§‹ç»ˆæ˜¯ core engine designï¼›æ­¤å‰æŠŠé—®é¢˜è¯´æˆâ€œè¯„ä»·å¯¹è±¡è¢«å·æ¢â€æ˜¯å£è¯­æŠ¬æ ï¼Œä¸æ˜¯æœ‰æ•ˆå¼‚è®®ã€‚
+- `Capability` æ›´å‡†ç¡®åœ°è¯´åº”ç†è§£ä¸º `ActionScope` / authority organizationï¼›å…·ä½“ `Action` æ¦‚å¿µä¸ŽæŽ§åˆ¶æµèƒ½åŠ›æ˜¯ç‹¬ç«‹é—®é¢˜ã€‚
+- `Action` çš„èƒ½åŠ›å¯ä»¥æ¸è¿›æ‰©å……ï¼šå…ˆæ”¯æŒæœ€ç®€å•çš„å•æ­¥è§¦å‘ï¼Œå†è¡¥ `then` / `catch`ï¼Œå†è¡¥ `parallel` / `sequential`ï¼Œæœ€åŽæ‰è€ƒè™‘ `DAG` çº§è¡¨è¾¾ã€‚
+- `api` åº”æ˜¯å‘é€ç»™åº•å±‚ fetcher çš„å®Œæ•´è¾“å…¥/è¾“å‡ºæè¿°ï¼›`timeout`ã€`throttle` ç­‰ä¸åº”ç®€å•å¡žè¿› `ApiObject`ï¼Œè€Œåº”ä½äºŽæ›´é«˜ä¸€å±‚çš„æ‰§è¡ŒæŽ§åˆ¶ã€‚
+- `data-source` ä¸Ž `action` å¯ä»¥åœ¨æ“ä½œæŽ§åˆ¶å±‚é¢å…±äº«åº•å±‚å®žçŽ°ï¼Œä¾‹å¦‚ `timeout`ã€`throttle`ã€cancellationã€dedupï¼Œä½† schema å½¢æ€æœªå¿…éœ€è¦å®Œå…¨ç›¸åŒã€‚
+- dependency tracking æ˜¯è¡¨è¾¾å¼è¯­ä¹‰å¤©ç„¶éšå«çš„åŸºçº¿ï¼›çœŸæ­£éœ€è¦è®¾è®¡çš„æ˜¯å®ƒä¸Ž `Reaction` / `Action` çš„è§¦å‘æ—¶æœºã€‚
+- `form` è¿›å…¥æ—¶çš„ `init`ã€æäº¤æ—¶çš„ `submit`ã€éªŒè¯åŽå†è§¦å‘è¿œç¨‹è°ƒç”¨ç­‰æµç¨‹éƒ½éœ€è¦è¯­ä¹‰åŒ–å»ºæ¨¡ï¼Œä¸èƒ½æŠŠå®Œæ•´ submit pipeline ç›´æŽ¥å¡žåˆ°æŸä¸ª `button.onClick` å†…ã€‚
 
-保留的讨论点应收敛为五个，并且每个都必须给出最佳可行改进方向：
+### AI æ•´ç†
 
-1. `Capability` 与 `Action` 控制流应如何分层。
-2. `ApiObject` 与更高层执行控制应如何分离。
-3. `data-source` 与 `action` 是否应共享一套操作控制底座。
-4. dependency tracking 与 `Reaction` / `Action` 的调度时机如何固定为明确语义。
-5. `form` / `page` / `dialog` 等语义生命周期入口如何建模，避免把完整流程写死在 UI 事件上。
+æœ¬è½®çº æ­£åŽï¼Œå‰ä¸€è½®é‡Œä¸¤ç±»æ— æ•ˆå¼‚è®®åº”å½“æ’¤å›žï¼š
 
-在这个修正后的范围内，我的最新判断是：
+- ä¸å†æŠŠ collaboration / CRDT / OT / local-first ä¸€ç±» editor-specific è®®é¢˜å½“ä½œ `Flux` core programming model çš„åé©³ç†ç”±ã€‚`docs/architecture/frontend-programming-model.md:1128-1135` å·²ç»æ˜Žç¡®æŠŠè¿™ç±»ç³»ç»Ÿæ”¾åœ¨ host/domain è¾¹ç•Œä¹‹å¤–ã€‚
+- ä¸å†æŠŠé—®é¢˜è¡¨è¿°æˆâ€œè¯„ä»·å¯¹è±¡è¢«å·æ¢â€ã€‚å½“å‰è®¨è®ºå§‹ç»ˆå›´ç»• core engine designï¼Œåªæ˜¯å‰ä¸€è½®åœ¨æŽªè¾žä¸ŠæŠŠâ€œæ¡†æž¶æ•´ä½“â€ä¸Žâ€œæ‰§è¡Œå†…æ ¸â€æ··è¯´äº†ã€‚
 
-- `docs/architecture/frontend-programming-model.md` 的主线方向仍然成立。
-- 当前最值得继续打磨的不是 primitive 个数，而是 `Action` 代数、执行控制分层、依赖追踪调度、以及语义生命周期入口这几块尚未完全收敛的执行模型。
+ä¿ç•™çš„è®¨è®ºç‚¹åº”æ”¶æ•›ä¸ºäº”ä¸ªï¼Œå¹¶ä¸”æ¯ä¸ªéƒ½å¿…é¡»ç»™å‡ºæœ€ä½³å¯è¡Œæ”¹è¿›æ–¹å‘ï¼š
 
-### AI 分析
+1. `Capability` ä¸Ž `Action` æŽ§åˆ¶æµåº”å¦‚ä½•åˆ†å±‚ã€‚
+2. `ApiObject` ä¸Žæ›´é«˜å±‚æ‰§è¡ŒæŽ§åˆ¶åº”å¦‚ä½•åˆ†ç¦»ã€‚
+3. `data-source` ä¸Ž `action` æ˜¯å¦åº”å…±äº«ä¸€å¥—æ“ä½œæŽ§åˆ¶åº•åº§ã€‚
+4. dependency tracking ä¸Ž `Reaction` / `Action` çš„è°ƒåº¦æ—¶æœºå¦‚ä½•å›ºå®šä¸ºæ˜Žç¡®è¯­ä¹‰ã€‚
+5. `form` / `page` / `dialog` ç­‰è¯­ä¹‰ç”Ÿå‘½å‘¨æœŸå…¥å£å¦‚ä½•å»ºæ¨¡ï¼Œé¿å…æŠŠå®Œæ•´æµç¨‹å†™æ­»åœ¨ UI äº‹ä»¶ä¸Šã€‚
 
-#### 保留问题一：`Capability` 与 `Action` 控制流仍然耦合过紧，最佳方案是“authority layer + action algebra”两层模型
+åœ¨è¿™ä¸ªä¿®æ­£åŽçš„èŒƒå›´å†…ï¼Œæˆ‘çš„æœ€æ–°åˆ¤æ–­æ˜¯ï¼š
 
-当前文档把 `Capability`、`ActionSchema`、`ActionResult`、`then/onError`、`parallel`、`Optimistic Update` 放在同一大节中描述，见 `docs/architecture/frontend-programming-model.md:686-918`，而当前类型层也把这些字段揉在同一个 `ActionSchema` 里，见 `packages/flux-core/src/types/actions.ts:6-33`。这不是 primitive closure 错误，而是**authority lookup** 与 **effect orchestration** 两层语义没有完全拆开。
+- `docs/architecture/frontend-programming-model.md` çš„ä¸»çº¿æ–¹å‘ä»ç„¶æˆç«‹ã€‚
+- å½“å‰æœ€å€¼å¾—ç»§ç»­æ‰“ç£¨çš„ä¸æ˜¯ primitive ä¸ªæ•°ï¼Œè€Œæ˜¯ `Action` ä»£æ•°ã€æ‰§è¡ŒæŽ§åˆ¶åˆ†å±‚ã€ä¾èµ–è¿½è¸ªè°ƒåº¦ã€ä»¥åŠè¯­ä¹‰ç”Ÿå‘½å‘¨æœŸå…¥å£è¿™å‡ å—å°šæœªå®Œå…¨æ”¶æ•›çš„æ‰§è¡Œæ¨¡åž‹ã€‚
 
-我现在认为最佳方案不是拆 primitive，而是把模型明确分为两层：
+### AI åˆ†æž
 
-- `Capability` 只回答“谁有 authority、如何 resolve”，也就是 `ActionScope`、`ComponentHandleRegistry`、built-in capability family，参考 `docs/architecture/action-scope-and-imports.md:302-410`。
-- `Action` 单独回答“一个或多个 effect step 如何组织、分支、聚合、返回结果”。
+#### ä¿ç•™é—®é¢˜ä¸€ï¼š`Capability` ä¸Ž `Action` æŽ§åˆ¶æµä»ç„¶è€¦åˆè¿‡ç´§ï¼Œæœ€ä½³æ–¹æ¡ˆæ˜¯â€œauthority layer + action algebraâ€ä¸¤å±‚æ¨¡åž‹
 
-推荐的渐进式 `Action` 设计是：
+å½“å‰æ–‡æ¡£æŠŠ `Capability`ã€`ActionSchema`ã€`ActionResult`ã€`then/onError`ã€`parallel`ã€`Optimistic Update` æ”¾åœ¨åŒä¸€å¤§èŠ‚ä¸­æè¿°ï¼Œè§ `docs/architecture/frontend-programming-model.md:686-918`ï¼Œè€Œå½“å‰ç±»åž‹å±‚ä¹ŸæŠŠè¿™äº›å­—æ®µæ‰åœ¨åŒä¸€ä¸ª `ActionSchema` é‡Œï¼Œè§ `packages/flux-core/src/types/actions.ts:6-33`ã€‚è¿™ä¸æ˜¯ primitive closure é”™è¯¯ï¼Œè€Œæ˜¯**authority lookup** ä¸Ž **effect orchestration** ä¸¤å±‚è¯­ä¹‰æ²¡æœ‰å®Œå…¨æ‹†å¼€ã€‚
 
-- Phase 1：单步 action，只支持 `{ action, args }`。
-- Phase 2：在单步 action 上增加 `then` 和 `onError`，形成最小分支能力。
-- Phase 3：增加 `parallel`，并把数组顺序执行继续作为默认 `sequence` 语义，而不是一开始就发明复杂图语言。
-- Phase 4：只有在确实出现跨 step 依赖表达压力时，才引入显式 `DAG` 形态，例如 `steps + dependsOn`，而不是过早复杂化。
+æˆ‘çŽ°åœ¨è®¤ä¸ºæœ€ä½³æ–¹æ¡ˆä¸æ˜¯æ‹† primitiveï¼Œè€Œæ˜¯æŠŠæ¨¡åž‹æ˜Žç¡®åˆ†ä¸ºä¸¤å±‚ï¼š
 
-这个改进方向的好处是：
+- `Capability` åªå›žç­”â€œè°æœ‰ authorityã€å¦‚ä½• resolveâ€ï¼Œä¹Ÿå°±æ˜¯ `ActionScope`ã€`ComponentHandleRegistry`ã€built-in capability familyï¼Œå‚è€ƒ `docs/architecture/action-scope-and-imports.md:302-410`ã€‚
+- `Action` å•ç‹¬å›žç­”â€œä¸€ä¸ªæˆ–å¤šä¸ª effect step å¦‚ä½•ç»„ç»‡ã€åˆ†æ”¯ã€èšåˆã€è¿”å›žç»“æžœâ€ã€‚
 
-- primitive 仍然可以保持闭合；不需要为了 action algebra 把 `Capability` 再拆成多个 primitive。
-- `docs/architecture/action-scope-and-imports.md:360-410` 已经具备 `when`、`parallel`、`retry`、`timeout`、`then`、`onError` 的第一版骨架，适合继续演进。
-- schema 作者能更清楚地区分“authority resolution”与“control flow composition”，不会再把 action 能力增长误解为 capability primitive 失控。
+æŽ¨èçš„æ¸è¿›å¼ `Action` è®¾è®¡æ˜¯ï¼š
 
-#### 保留问题二：`ApiObject` 应收敛为 fetcher 输入输出契约，执行控制应上移为独立层
+- Phase 1ï¼šå•æ­¥ actionï¼Œåªæ”¯æŒ `{ action, args }`ã€‚
+- Phase 2ï¼šåœ¨å•æ­¥ action ä¸Šå¢žåŠ  `then` å’Œ `onError`ï¼Œå½¢æˆæœ€å°åˆ†æ”¯èƒ½åŠ›ã€‚
+- Phase 3ï¼šå¢žåŠ  `parallel`ï¼Œå¹¶æŠŠæ•°ç»„é¡ºåºæ‰§è¡Œç»§ç»­ä½œä¸ºé»˜è®¤ `sequence` è¯­ä¹‰ï¼Œè€Œä¸æ˜¯ä¸€å¼€å§‹å°±å‘æ˜Žå¤æ‚å›¾è¯­è¨€ã€‚
+- Phase 4ï¼šåªæœ‰åœ¨ç¡®å®žå‡ºçŽ°è·¨ step ä¾èµ–è¡¨è¾¾åŽ‹åŠ›æ—¶ï¼Œæ‰å¼•å…¥æ˜¾å¼ `DAG` å½¢æ€ï¼Œä¾‹å¦‚ `steps + dependsOn`ï¼Œè€Œä¸æ˜¯è¿‡æ—©å¤æ‚åŒ–ã€‚
 
-`docs/architecture/api-data-source.md:30-60` 目前把 `ApiObject` 定义为请求配置对象，`docs/architecture/api-data-source.md:137-149` 又让 `executeApiObject(...)` 成为统一执行入口。这个方向是对的，但后续扩展时必须守住一个边界：
+è¿™ä¸ªæ”¹è¿›æ–¹å‘çš„å¥½å¤„æ˜¯ï¼š
 
-- `ApiObject` 负责 fetcher 关心的输入输出描述：`url`、`method`、`headers`、`params`、`data`、`requestAdaptor`、`responseAdaptor`。
-- `timeout`、`throttle`、`debounce`、`retry`、cancellation mode、dedup policy 这类内容不应简单并入 `ApiObject`，因为它们属于**操作控制**，而不是请求对象本身。
+- primitive ä»ç„¶å¯ä»¥ä¿æŒé—­åˆï¼›ä¸éœ€è¦ä¸ºäº† action algebra æŠŠ `Capability` å†æ‹†æˆå¤šä¸ª primitiveã€‚
+- `docs/architecture/action-scope-and-imports.md:360-410` å·²ç»å…·å¤‡ `when`ã€`parallel`ã€`retry`ã€`timeout`ã€`then`ã€`onError` çš„ç¬¬ä¸€ç‰ˆéª¨æž¶ï¼Œé€‚åˆç»§ç»­æ¼”è¿›ã€‚
+- schema ä½œè€…èƒ½æ›´æ¸…æ¥šåœ°åŒºåˆ†â€œauthority resolutionâ€ä¸Žâ€œcontrol flow compositionâ€ï¼Œä¸ä¼šå†æŠŠ action èƒ½åŠ›å¢žé•¿è¯¯è§£ä¸º capability primitive å¤±æŽ§ã€‚
 
-最佳改进设计是把运行时合同拆成三层：
+#### ä¿ç•™é—®é¢˜äºŒï¼š`ApiObject` åº”æ”¶æ•›ä¸º fetcher è¾“å…¥è¾“å‡ºå¥‘çº¦ï¼Œæ‰§è¡ŒæŽ§åˆ¶åº”ä¸Šç§»ä¸ºç‹¬ç«‹å±‚
 
-- `ApiObject`：纯 transport / adaptor contract。
-- `OperationControl`：`timeout`、`throttle`、`debounce`、`retry`、dedup、cancellation、concurrency mode。
-- consumer-specific policy：`Action` 侧的 branch / chain control，`Resource` 侧的 polling / refresh / merge / stale policy。
+`docs/architecture/api-data-source.md:30-60` ç›®å‰æŠŠ `ApiObject` å®šä¹‰ä¸ºè¯·æ±‚é…ç½®å¯¹è±¡ï¼Œ`docs/architecture/api-data-source.md:137-149` åˆè®© `executeApiObject(...)` æˆä¸ºç»Ÿä¸€æ‰§è¡Œå…¥å£ã€‚è¿™ä¸ªæ–¹å‘æ˜¯å¯¹çš„ï¼Œä½†åŽç»­æ‰©å±•æ—¶å¿…é¡»å®ˆä½ä¸€ä¸ªè¾¹ç•Œï¼š
 
-这意味着：
+- `ApiObject` è´Ÿè´£ fetcher å…³å¿ƒçš„è¾“å…¥è¾“å‡ºæè¿°ï¼š`url`ã€`method`ã€`headers`ã€`params`ã€`data`ã€`requestAdaptor`ã€`responseAdaptor`ã€‚
+- `timeout`ã€`throttle`ã€`debounce`ã€`retry`ã€cancellation modeã€dedup policy è¿™ç±»å†…å®¹ä¸åº”ç®€å•å¹¶å…¥ `ApiObject`ï¼Œå› ä¸ºå®ƒä»¬å±žäºŽ**æ“ä½œæŽ§åˆ¶**ï¼Œè€Œä¸æ˜¯è¯·æ±‚å¯¹è±¡æœ¬èº«ã€‚
 
-- 同一个 `ApiObject` 可以被 `submit`、`ajax action`、`data-source refresh` 复用，而不必把 submit 场景的控制策略写死进请求对象。
-- `executeApiObject(...)` 继续作为统一请求执行入口，但接收的是“`ApiObject` + 上层 operation control + 当前上下文”这组输入，而不是让 `ApiObject` 本身无限膨胀。
-- `docs/architecture/frontend-programming-model.md:598-599,618-619` 已经在方向上承认 transport timeout 不等于 primitive；接下来更适合把这个边界写得更清楚，而不是继续把更多时序控制混进 request 对象。
+æœ€ä½³æ”¹è¿›è®¾è®¡æ˜¯æŠŠè¿è¡Œæ—¶åˆåŒæ‹†æˆä¸‰å±‚ï¼š
 
-#### 保留问题三：`data-source` 与 `action` 应共享操作控制底座，但 schema 形态应分别设计
+- `ApiObject`ï¼šçº¯ transport / adaptor contractã€‚
+- `OperationControl`ï¼š`timeout`ã€`throttle`ã€`debounce`ã€`retry`ã€dedupã€cancellationã€concurrency modeã€‚
+- consumer-specific policyï¼š`Action` ä¾§çš„ branch / chain controlï¼Œ`Resource` ä¾§çš„ polling / refresh / merge / stale policyã€‚
 
-这不是要求把 `data-source` 和 `action` 合成一个 primitive，而是要求它们不要在 runtime 层各长一套独立的 `timeout`、`throttle`、cancellation、dedup 实现。
+è¿™æ„å‘³ç€ï¼š
 
-最佳方案是建立一个共享的 runtime execution substrate，例如：
+- åŒä¸€ä¸ª `ApiObject` å¯ä»¥è¢« `submit`ã€`ajax action`ã€`data-source refresh` å¤ç”¨ï¼Œè€Œä¸å¿…æŠŠ submit åœºæ™¯çš„æŽ§åˆ¶ç­–ç•¥å†™æ­»è¿›è¯·æ±‚å¯¹è±¡ã€‚
+- `executeApiObject(...)` ç»§ç»­ä½œä¸ºç»Ÿä¸€è¯·æ±‚æ‰§è¡Œå…¥å£ï¼Œä½†æŽ¥æ”¶çš„æ˜¯â€œ`ApiObject` + ä¸Šå±‚ operation control + å½“å‰ä¸Šä¸‹æ–‡â€è¿™ç»„è¾“å…¥ï¼Œè€Œä¸æ˜¯è®© `ApiObject` æœ¬èº«æ— é™è†¨èƒ€ã€‚
+- `docs/architecture/frontend-programming-model.md:598-599,618-619` å·²ç»åœ¨æ–¹å‘ä¸Šæ‰¿è®¤ transport timeout ä¸ç­‰äºŽ primitiveï¼›æŽ¥ä¸‹æ¥æ›´é€‚åˆæŠŠè¿™ä¸ªè¾¹ç•Œå†™å¾—æ›´æ¸…æ¥šï¼Œè€Œä¸æ˜¯ç»§ç»­æŠŠæ›´å¤šæ—¶åºæŽ§åˆ¶æ··è¿› request å¯¹è±¡ã€‚
 
-- 统一的 abort / timeout / cancellation 控制。
-- 统一的 throttle / debounce / dedup 协调器。
-- 统一的 monitor / tracing / structured result 包装。
+#### ä¿ç•™é—®é¢˜ä¸‰ï¼š`data-source` ä¸Ž `action` åº”å…±äº«æ“ä½œæŽ§åˆ¶åº•åº§ï¼Œä½† schema å½¢æ€åº”åˆ†åˆ«è®¾è®¡
 
-然后分别暴露两套 schema：
+è¿™ä¸æ˜¯è¦æ±‚æŠŠ `data-source` å’Œ `action` åˆæˆä¸€ä¸ª primitiveï¼Œè€Œæ˜¯è¦æ±‚å®ƒä»¬ä¸è¦åœ¨ runtime å±‚å„é•¿ä¸€å¥—ç‹¬ç«‹çš„ `timeout`ã€`throttle`ã€cancellationã€dedup å®žçŽ°ã€‚
 
-- `ActionSchema` 继续强调 `then`、`onError`、`parallel`、`retry` 这类一次性 effect orchestration 语义，参考 `packages/flux-core/src/types/actions.ts:22-32`。
-- `DataSourceSchema` 继续强调 `interval`、`stopWhen`、`mergeStrategy`、`statusPath`、publication path 等 runtime-owned producer 语义，参考 `docs/architecture/api-data-source.md:181-215,278-317`。
+æœ€ä½³æ–¹æ¡ˆæ˜¯å»ºç«‹ä¸€ä¸ªå…±äº«çš„ runtime execution substrateï¼Œä¾‹å¦‚ï¼š
 
-这套设计比“完全共用 schema”更好，因为：
+- ç»Ÿä¸€çš„ abort / timeout / cancellation æŽ§åˆ¶ã€‚
+- ç»Ÿä¸€çš„ throttle / debounce / dedup åè°ƒå™¨ã€‚
+- ç»Ÿä¸€çš„ monitor / tracing / structured result åŒ…è£…ã€‚
 
-- `Action` 的核心是一次 dispatch 的控制流。
-- `Resource` / `data-source` 的核心是拥有生命周期的 value producer。
-- 它们可以共用工具，不必共用 authoring shape。
+ç„¶åŽåˆ†åˆ«æš´éœ²ä¸¤å¥— schemaï¼š
 
-#### 保留问题四：dependency tracking 应从实现提示上升为顶层执行基线，并明确与 `Reaction` / `Action` 的时机关系
+- `ActionSchema` ç»§ç»­å¼ºè°ƒ `then`ã€`onError`ã€`parallel`ã€`retry` è¿™ç±»ä¸€æ¬¡æ€§ effect orchestration è¯­ä¹‰ï¼Œå‚è€ƒ `packages/flux-core/src/types/actions.ts:22-32`ã€‚
+- `DataSourceSchema` ç»§ç»­å¼ºè°ƒ `interval`ã€`stopWhen`ã€`mergeStrategy`ã€`statusPath`ã€publication path ç­‰ runtime-owned producer è¯­ä¹‰ï¼Œå‚è€ƒ `docs/architecture/api-data-source.md:181-215,278-317`ã€‚
 
-用户指出 dependency tracking 本来就是表达式语义的隐含基线，这个纠正是成立的。`docs/architecture/api-data-source.md:295-317` 已经把 source dependency tracking 说得比较清楚，但 `frontend-programming-model.md` 目前还没有把它提升为整个 programming model 的显式执行规则。
+è¿™å¥—è®¾è®¡æ¯”â€œå®Œå…¨å…±ç”¨ schemaâ€æ›´å¥½ï¼Œå› ä¸ºï¼š
 
-最佳改进设计不是新增 primitive，而是补一条 shared execution rule：
+- `Action` çš„æ ¸å¿ƒæ˜¯ä¸€æ¬¡ dispatch çš„æŽ§åˆ¶æµã€‚
+- `Resource` / `data-source` çš„æ ¸å¿ƒæ˜¯æ‹¥æœ‰ç”Ÿå‘½å‘¨æœŸçš„ value producerã€‚
+- å®ƒä»¬å¯ä»¥å…±ç”¨å·¥å…·ï¼Œä¸å¿…å…±ç”¨ authoring shapeã€‚
 
-- 每次动态表达式求值都可以产出“值 + 依赖路径集合”。
-- `ScopeChange` 持续携带 changed paths，当前 `ScopeRef` / `ScopeStore` 合同已经有这个方向，见 `docs/architecture/flux-core.md:238-270`。
-- `Value` 的依赖命中只触发局部重新求值。
-- `Resource` 根据依赖命中决定 dirty、refresh、或同步重算后再 publish。
-- `Reaction` 只在相关依赖 settled 后重算 watched value，并在该轮 settled update turn 之后 dispatch action，见 `docs/architecture/frontend-programming-model.md:1058-1081` 与 `docs/architecture/api-data-source.md:521-545`。
-- dependency change 本身不直接触发任意 `Action`；要跨过 effect boundary，仍然必须经过 `Reaction` 或语义 lifecycle trigger。
+#### ä¿ç•™é—®é¢˜å››ï¼šdependency tracking åº”ä»Žå®žçŽ°æç¤ºä¸Šå‡ä¸ºé¡¶å±‚æ‰§è¡ŒåŸºçº¿ï¼Œå¹¶æ˜Žç¡®ä¸Ž `Reaction` / `Action` çš„æ—¶æœºå…³ç³»
 
-这个改进的意义在于：
+ç”¨æˆ·æŒ‡å‡º dependency tracking æœ¬æ¥å°±æ˜¯è¡¨è¾¾å¼è¯­ä¹‰çš„éšå«åŸºçº¿ï¼Œè¿™ä¸ªçº æ­£æ˜¯æˆç«‹çš„ã€‚`docs/architecture/api-data-source.md:295-317` å·²ç»æŠŠ source dependency tracking è¯´å¾—æ¯”è¾ƒæ¸…æ¥šï¼Œä½† `frontend-programming-model.md` ç›®å‰è¿˜æ²¡æœ‰æŠŠå®ƒæå‡ä¸ºæ•´ä¸ª programming model çš„æ˜¾å¼æ‰§è¡Œè§„åˆ™ã€‚
 
-- 它把“表达式天然数据驱动”从直觉变成可实现、可调试、可优化的合同。
-- 它也回答了 dependency tracking 与 action 的关系：**dependency tracking 驱动重算与 watch，effect 仍然通过 `Reaction` 或语义 lifecycle 进入 `Action` 层。**
+æœ€ä½³æ”¹è¿›è®¾è®¡ä¸æ˜¯æ–°å¢ž primitiveï¼Œè€Œæ˜¯è¡¥ä¸€æ¡ shared execution ruleï¼š
 
-#### 保留问题五：`form` / `page` / `dialog` 需要语义生命周期入口，不能让完整流程退化为 UI 事件内联脚本
+- æ¯æ¬¡åŠ¨æ€è¡¨è¾¾å¼æ±‚å€¼éƒ½å¯ä»¥äº§å‡ºâ€œå€¼ + ä¾èµ–è·¯å¾„é›†åˆâ€ã€‚
+- `ScopeChange` æŒç»­æºå¸¦ changed pathsï¼Œå½“å‰ `ScopeRef` / `ScopeStore` åˆåŒå·²ç»æœ‰è¿™ä¸ªæ–¹å‘ï¼Œè§ `docs/architecture/flux-core.md:238-270`ã€‚
+- `Value` çš„ä¾èµ–å‘½ä¸­åªè§¦å‘å±€éƒ¨é‡æ–°æ±‚å€¼ã€‚
+- `Resource` æ ¹æ®ä¾èµ–å‘½ä¸­å†³å®š dirtyã€refreshã€æˆ–åŒæ­¥é‡ç®—åŽå† publishã€‚
+- `Reaction` åªåœ¨ç›¸å…³ä¾èµ– settled åŽé‡ç®— watched valueï¼Œå¹¶åœ¨è¯¥è½® settled update turn ä¹‹åŽ dispatch actionï¼Œè§ `docs/architecture/frontend-programming-model.md:1058-1081` ä¸Ž `docs/architecture/api-data-source.md:521-545`ã€‚
+- dependency change æœ¬èº«ä¸ç›´æŽ¥è§¦å‘ä»»æ„ `Action`ï¼›è¦è·¨è¿‡ effect boundaryï¼Œä»ç„¶å¿…é¡»ç»è¿‡ `Reaction` æˆ–è¯­ä¹‰ lifecycle triggerã€‚
 
-这一点是我现在最认同的新增设计要求。当前 runtime 其实已经部分具备正确方向：
+è¿™ä¸ªæ”¹è¿›çš„æ„ä¹‰åœ¨äºŽï¼š
 
-- `FormRuntime.submit(api?)` 先做 touch + validate，再决定是否执行提交，见 `docs/architecture/form-validation.md:236-241`。
-- 实际代码里 `packages/flux-runtime/src/form-runtime.ts:403-499` 也明确先验证、后提交、最后落回 `ActionResult`。
-- 当前 action 层已经支持 `submitForm` built-in action 与 `component:submit` instance capability，见 `docs/architecture/action-scope-and-imports.md:448-474`。
+- å®ƒæŠŠâ€œè¡¨è¾¾å¼å¤©ç„¶æ•°æ®é©±åŠ¨â€ä»Žç›´è§‰å˜æˆå¯å®žçŽ°ã€å¯è°ƒè¯•ã€å¯ä¼˜åŒ–çš„åˆåŒã€‚
+- å®ƒä¹Ÿå›žç­”äº† dependency tracking ä¸Ž action çš„å…³ç³»ï¼š**dependency tracking é©±åŠ¨é‡ç®—ä¸Ž watchï¼Œeffect ä»ç„¶é€šè¿‡ `Reaction` æˆ–è¯­ä¹‰ lifecycle è¿›å…¥ `Action` å±‚ã€‚**
 
-但 schema 层还可以更进一步，最佳方案是把 `form` 的语义生命周期显式建模出来，而不是把完整 submit pipeline 塞到某个 button 的 `onClick` 里。
+#### ä¿ç•™é—®é¢˜äº”ï¼š`form` / `page` / `dialog` éœ€è¦è¯­ä¹‰ç”Ÿå‘½å‘¨æœŸå…¥å£ï¼Œä¸èƒ½è®©å®Œæ•´æµç¨‹é€€åŒ–ä¸º UI äº‹ä»¶å†…è”è„šæœ¬
 
-推荐的收敛方式是：
+è¿™ä¸€ç‚¹æ˜¯æˆ‘çŽ°åœ¨æœ€è®¤åŒçš„æ–°å¢žè®¾è®¡è¦æ±‚ã€‚å½“å‰ runtime å…¶å®žå·²ç»éƒ¨åˆ†å…·å¤‡æ­£ç¡®æ–¹å‘ï¼š
 
-- `form` 自身拥有语义入口，例如 `initAction`、`submitAction`、`onSubmitSuccess`、`onSubmitError`、`onValidateError`。
-- `submitAction` 可以是 action pipeline，也可以在最简形态下只是一个 `api` 描述；但它始终挂在 form semantic boundary 上，而不是挂在某个 button 上。
-- `button`、Enter 键、wizard 下一步、外部 toolbar 等都只触发 `component:submit` 或 `submitForm` 这一语义入口，不重复声明完整提交流程。
-- `page` / `dialog` / special host 以后也可以采用同样模式，提供 `init` / `enter` / `open` / `close` 这一类语义生命周期，而不是一律回退到零散 `onClick` 或 ad hoc `useEffect`。
+- `FormRuntime.submit(api?)` å…ˆåš touch + validateï¼Œå†å†³å®šæ˜¯å¦æ‰§è¡Œæäº¤ï¼Œè§ `docs/architecture/form-validation.md:236-241`ã€‚
+- å®žé™…ä»£ç é‡Œ `packages/flux-runtime/src/form-runtime.ts:403-499` ä¹Ÿæ˜Žç¡®å…ˆéªŒè¯ã€åŽæäº¤ã€æœ€åŽè½å›ž `ActionResult`ã€‚
+- å½“å‰ action å±‚å·²ç»æ”¯æŒ `submitForm` built-in action ä¸Ž `component:submit` instance capabilityï¼Œè§ `docs/architecture/action-scope-and-imports.md:448-474`ã€‚
 
-一个更合理的 authoring 形态接近：
+ä½† schema å±‚è¿˜å¯ä»¥æ›´è¿›ä¸€æ­¥ï¼Œæœ€ä½³æ–¹æ¡ˆæ˜¯æŠŠ `form` çš„è¯­ä¹‰ç”Ÿå‘½å‘¨æœŸæ˜¾å¼å»ºæ¨¡å‡ºæ¥ï¼Œè€Œä¸æ˜¯æŠŠå®Œæ•´ submit pipeline å¡žåˆ°æŸä¸ª button çš„ `onClick` é‡Œã€‚
+
+æŽ¨èçš„æ”¶æ•›æ–¹å¼æ˜¯ï¼š
+
+- `form` è‡ªèº«æ‹¥æœ‰è¯­ä¹‰å…¥å£ï¼Œä¾‹å¦‚ `initAction`ã€`submitAction`ã€`onSubmitSuccess`ã€`onSubmitError`ã€`onValidateError`ã€‚
+- `submitAction` å¯ä»¥æ˜¯ action pipelineï¼Œä¹Ÿå¯ä»¥åœ¨æœ€ç®€å½¢æ€ä¸‹åªæ˜¯ä¸€ä¸ª `api` æè¿°ï¼›ä½†å®ƒå§‹ç»ˆæŒ‚åœ¨ form semantic boundary ä¸Šï¼Œè€Œä¸æ˜¯æŒ‚åœ¨æŸä¸ª button ä¸Šã€‚
+- `button`ã€Enter é”®ã€wizard ä¸‹ä¸€æ­¥ã€å¤–éƒ¨ toolbar ç­‰éƒ½åªè§¦å‘ `component:submit` æˆ– `submitForm` è¿™ä¸€è¯­ä¹‰å…¥å£ï¼Œä¸é‡å¤å£°æ˜Žå®Œæ•´æäº¤æµç¨‹ã€‚
+- `page` / `dialog` / special host ä»¥åŽä¹Ÿå¯ä»¥é‡‡ç”¨åŒæ ·æ¨¡å¼ï¼Œæä¾› `init` / `enter` / `open` / `close` è¿™ä¸€ç±»è¯­ä¹‰ç”Ÿå‘½å‘¨æœŸï¼Œè€Œä¸æ˜¯ä¸€å¾‹å›žé€€åˆ°é›¶æ•£ `onClick` æˆ– ad hoc `useEffect`ã€‚
+
+ä¸€ä¸ªæ›´åˆç†çš„ authoring å½¢æ€æŽ¥è¿‘ï¼š
 
 ```json
 {
@@ -415,7 +415,7 @@ TanStack Query 的查询缓存、去重、后台重试、失效传播机制与 F
 }
 ```
 
-对应地，按钮只需要：
+å¯¹åº”åœ°ï¼ŒæŒ‰é’®åªéœ€è¦ï¼š
 
 ```json
 {
@@ -428,292 +428,292 @@ TanStack Query 的查询缓存、去重、后台重试、失效传播机制与 F
 }
 ```
 
-这套设计的优点是：
+è¿™å¥—è®¾è®¡çš„ä¼˜ç‚¹æ˜¯ï¼š
 
-- 语义入口挂在真正拥有生命周期的节点上。
-- UI 触发器只负责触发语义入口，不复制业务流程。
-- `submit` 继续保留“validate -> submit api -> success/error branches”的统一合同，不会被不同触发方式写散。
+- è¯­ä¹‰å…¥å£æŒ‚åœ¨çœŸæ­£æ‹¥æœ‰ç”Ÿå‘½å‘¨æœŸçš„èŠ‚ç‚¹ä¸Šã€‚
+- UI è§¦å‘å™¨åªè´Ÿè´£è§¦å‘è¯­ä¹‰å…¥å£ï¼Œä¸å¤åˆ¶ä¸šåŠ¡æµç¨‹ã€‚
+- `submit` ç»§ç»­ä¿ç•™â€œvalidate -> submit api -> success/error branchesâ€çš„ç»Ÿä¸€åˆåŒï¼Œä¸ä¼šè¢«ä¸åŒè§¦å‘æ–¹å¼å†™æ•£ã€‚
 
-### 待澄清问题
+### å¾…æ¾„æ¸…é—®é¢˜
 
-1. 你是否同意把 `Capability` 与 `Action algebra` 明确拆成两个文档层次：primitive closure 里保留 `Capability`，动作控制流单独作为 `Action` 运行时合同持续扩展？
-2. 对 `ApiObject`，你是否倾向于进一步瘦身为纯 fetcher contract，并把 `timeout` / `throttle` / `retry` / dedup 等全部放到更高层的 operation control？
-3. 对 `form` 语义生命周期，你更倾向于字段名采用 `initAction` / `submitAction` / `onSubmitSuccess` / `onSubmitError`，还是采用更统一的 `onInit` / `onSubmit` / `onSuccess` / `onError` 事件式命名？
+1. ä½ æ˜¯å¦åŒæ„æŠŠ `Capability` ä¸Ž `Action algebra` æ˜Žç¡®æ‹†æˆä¸¤ä¸ªæ–‡æ¡£å±‚æ¬¡ï¼šprimitive closure é‡Œä¿ç•™ `Capability`ï¼ŒåŠ¨ä½œæŽ§åˆ¶æµå•ç‹¬ä½œä¸º `Action` è¿è¡Œæ—¶åˆåŒæŒç»­æ‰©å±•ï¼Ÿ
+2. å¯¹ `ApiObject`ï¼Œä½ æ˜¯å¦å€¾å‘äºŽè¿›ä¸€æ­¥ç˜¦èº«ä¸ºçº¯ fetcher contractï¼Œå¹¶æŠŠ `timeout` / `throttle` / `retry` / dedup ç­‰å…¨éƒ¨æ”¾åˆ°æ›´é«˜å±‚çš„ operation controlï¼Ÿ
+3. å¯¹ `form` è¯­ä¹‰ç”Ÿå‘½å‘¨æœŸï¼Œä½ æ›´å€¾å‘äºŽå­—æ®µåé‡‡ç”¨ `initAction` / `submitAction` / `onSubmitSuccess` / `onSubmitError`ï¼Œè¿˜æ˜¯é‡‡ç”¨æ›´ç»Ÿä¸€çš„ `onInit` / `onSubmit` / `onSuccess` / `onError` äº‹ä»¶å¼å‘½åï¼Ÿ
 
 ---
 
-## 纠正
+## çº æ­£
 
-> 针对第 1 轮到第 3 轮中关于最优性评审的若干表述，用户纠正如下：
+> é’ˆå¯¹ç¬¬ 1 è½®åˆ°ç¬¬ 3 è½®ä¸­å…³äºŽæœ€ä¼˜æ€§è¯„å®¡çš„è‹¥å¹²è¡¨è¿°ï¼Œç”¨æˆ·çº æ­£å¦‚ä¸‹ï¼š
 >
-> - 多人协作、CRDT、OT、local-first 等属于 editor-specific 或 host/domain 层议题，不应作为 `Flux` core programming model 的反驳点。`frontend-programming-model.md` 已经把这类问题明确放在 core boundary 之外。
-> - 当前讨论的评价对象始终是 core engine design；此前把问题表述成“评价对象被偷换”不成立。
-> - `Capability` 更准确地说是 authority / `ActionScope` 组织问题；action algebra 的不足不应直接归因于 primitive category 定义本身。
-> - 后续所有保留异议都必须附带可行的改进设计，不能停留在“证明不了最优”式的抽象反驳。
+> - å¤šäººåä½œã€CRDTã€OTã€local-first ç­‰å±žäºŽ editor-specific æˆ– host/domain å±‚è®®é¢˜ï¼Œä¸åº”ä½œä¸º `Flux` core programming model çš„åé©³ç‚¹ã€‚`frontend-programming-model.md` å·²ç»æŠŠè¿™ç±»é—®é¢˜æ˜Žç¡®æ”¾åœ¨ core boundary ä¹‹å¤–ã€‚
+> - å½“å‰è®¨è®ºçš„è¯„ä»·å¯¹è±¡å§‹ç»ˆæ˜¯ core engine designï¼›æ­¤å‰æŠŠé—®é¢˜è¡¨è¿°æˆâ€œè¯„ä»·å¯¹è±¡è¢«å·æ¢â€ä¸æˆç«‹ã€‚
+> - `Capability` æ›´å‡†ç¡®åœ°è¯´æ˜¯ authority / `ActionScope` ç»„ç»‡é—®é¢˜ï¼›action algebra çš„ä¸è¶³ä¸åº”ç›´æŽ¥å½’å› äºŽ primitive category å®šä¹‰æœ¬èº«ã€‚
+> - åŽç»­æ‰€æœ‰ä¿ç•™å¼‚è®®éƒ½å¿…é¡»é™„å¸¦å¯è¡Œçš„æ”¹è¿›è®¾è®¡ï¼Œä¸èƒ½åœç•™åœ¨â€œè¯æ˜Žä¸äº†æœ€ä¼˜â€å¼çš„æŠ½è±¡åé©³ã€‚
 
 ---
 
-## 第 5 轮
+## ç¬¬ 5 è½®
 
-### 用户回答
+### ç”¨æˆ·å›žç­”
 
-用户进一步补充了一个此前没有被充分纳入判断的前提条件：
+ç”¨æˆ·è¿›ä¸€æ­¥è¡¥å……äº†ä¸€ä¸ªæ­¤å‰æ²¡æœ‰è¢«å……åˆ†çº³å…¥åˆ¤æ–­çš„å‰ææ¡ä»¶ï¼š
 
-- 后端是 Java 服务端。
-- XML / JSON 转换、DSL Loader、结构装配、权限裁剪、i18n 等大量平台层工作在 Java 端完成。
-- 需要重新判断：这一前提是否会改变对 `docs/architecture/frontend-programming-model.md` “是否最优”的评价。
+- åŽç«¯æ˜¯ Java æœåŠ¡ç«¯ã€‚
+- XML / JSON è½¬æ¢ã€DSL Loaderã€ç»“æž„è£…é…ã€æƒé™è£å‰ªã€i18n ç­‰å¤§é‡å¹³å°å±‚å·¥ä½œåœ¨ Java ç«¯å®Œæˆã€‚
+- éœ€è¦é‡æ–°åˆ¤æ–­ï¼šè¿™ä¸€å‰ææ˜¯å¦ä¼šæ”¹å˜å¯¹ `docs/architecture/frontend-programming-model.md` â€œæ˜¯å¦æœ€ä¼˜â€çš„è¯„ä»·ã€‚
 
-### AI 整理
+### AI æ•´ç†
 
-这一轮的关键不是“后端语言偏好”，而是**系统总体分层是否会改变前端 core programming model 的最优解**。
+è¿™ä¸€è½®çš„å…³é”®ä¸æ˜¯â€œåŽç«¯è¯­è¨€åå¥½â€ï¼Œè€Œæ˜¯**ç³»ç»Ÿæ€»ä½“åˆ†å±‚æ˜¯å¦ä¼šæ”¹å˜å‰ç«¯ core programming model çš„æœ€ä¼˜è§£**ã€‚
 
-如果 Java 服务端已经承担：
+å¦‚æžœ Java æœåŠ¡ç«¯å·²ç»æ‰¿æ‹…ï¼š
 
-- final schema 装配
-- XML / JSON 双向转换
-- 权限裁剪与 feature 结构裁剪
-- i18n 文本替换
-- profile / inheritance / metaprogramming 变换
+- final schema è£…é…
+- XML / JSON åŒå‘è½¬æ¢
+- æƒé™è£å‰ªä¸Ž feature ç»“æž„è£å‰ª
+- i18n æ–‡æœ¬æ›¿æ¢
+- profile / inheritance / metaprogramming å˜æ¢
 
-那么前端 `Flux` 的最优目标就不再是“尽量做成一个更强的统一前端程序运行时”，而更可能是：
+é‚£ä¹ˆå‰ç«¯ `Flux` çš„æœ€ä¼˜ç›®æ ‡å°±ä¸å†æ˜¯â€œå°½é‡åšæˆä¸€ä¸ªæ›´å¼ºçš„ç»Ÿä¸€å‰ç«¯ç¨‹åºè¿è¡Œæ—¶â€ï¼Œè€Œæ›´å¯èƒ½æ˜¯ï¼š
 
-- 一个更窄的 final-model runtime
-- 一个更稳定、更语言中立的 DSL VM
-- 一个与 Java loader 共享清晰 JSON / DTO 契约的 execution engine
+- ä¸€ä¸ªæ›´çª„çš„ final-model runtime
+- ä¸€ä¸ªæ›´ç¨³å®šã€æ›´è¯­è¨€ä¸­ç«‹çš„ DSL VM
+- ä¸€ä¸ªä¸Ž Java loader å…±äº«æ¸…æ™° JSON / DTO å¥‘çº¦çš„ execution engine
 
-### AI 分析
+### AI åˆ†æž
 
-#### 影响一：`Final Execution Schema` 假设在 Nop 里更成立，而不是更弱
+#### å½±å“ä¸€ï¼š`Final Execution Schema` å‡è®¾åœ¨ Nop é‡Œæ›´æˆç«‹ï¼Œè€Œä¸æ˜¯æ›´å¼±
 
-此前对 `Final Execution Schema` 的质疑，更适合 generic low-code 框架语境，不完全适合 Nop 当前架构。
+æ­¤å‰å¯¹ `Final Execution Schema` çš„è´¨ç–‘ï¼Œæ›´é€‚åˆ generic low-code æ¡†æž¶è¯­å¢ƒï¼Œä¸å®Œå…¨é€‚åˆ Nop å½“å‰æž¶æž„ã€‚
 
-现有文档已经多次明确：
+çŽ°æœ‰æ–‡æ¡£å·²ç»å¤šæ¬¡æ˜Žç¡®ï¼š
 
-- `docs/discussions/01-core-design-clarification.md:95-113`：XML / JSON 转换与很多结构变换在 Java 端 DSL Loader 完成。
-- `docs/articles/flux-design-introduction.md:350-429`：Nop 平台层在送入 Flux 前执行 i18n、权限裁剪、模块合并、编译期元编程与 XML/JSON 转换。
-- `docs/discussions/02-programming-model-optimality-critique.md:79-89`：此前围绕 loader 不充分的反驳已经撤回。
+- `docs/discussions/01-core-design-clarification.md:95-113`ï¼šXML / JSON è½¬æ¢ä¸Žå¾ˆå¤šç»“æž„å˜æ¢åœ¨ Java ç«¯ DSL Loader å®Œæˆã€‚
+- `docs/articles/flux-design-introduction.md:350-429`ï¼šNop å¹³å°å±‚åœ¨é€å…¥ Flux å‰æ‰§è¡Œ i18nã€æƒé™è£å‰ªã€æ¨¡å—åˆå¹¶ã€ç¼–è¯‘æœŸå…ƒç¼–ç¨‹ä¸Ž XML/JSON è½¬æ¢ã€‚
+- `docs/discussions/02-programming-model-optimality-critique.md:79-89`ï¼šæ­¤å‰å›´ç»• loader ä¸å……åˆ†çš„åé©³å·²ç»æ’¤å›žã€‚
 
-因此，在 Nop 架构下，`Final Execution Schema` 不是抽象乐观假设，而是前后端分工的一部分。对这点估计不足，会把本应放在 Java loader 的复杂性错误地重新拉回前端 runtime。
+å› æ­¤ï¼Œåœ¨ Nop æž¶æž„ä¸‹ï¼Œ`Final Execution Schema` ä¸æ˜¯æŠ½è±¡ä¹è§‚å‡è®¾ï¼Œè€Œæ˜¯å‰åŽç«¯åˆ†å·¥çš„ä¸€éƒ¨åˆ†ã€‚å¯¹è¿™ç‚¹ä¼°è®¡ä¸è¶³ï¼Œä¼šæŠŠæœ¬åº”æ”¾åœ¨ Java loader çš„å¤æ‚æ€§é”™è¯¯åœ°é‡æ–°æ‹‰å›žå‰ç«¯ runtimeã€‚
 
-#### 影响二：前端公开模型应更强调语言中立性，而不是更强的前端运行时统一性
+#### å½±å“äºŒï¼šå‰ç«¯å…¬å¼€æ¨¡åž‹åº”æ›´å¼ºè°ƒè¯­è¨€ä¸­ç«‹æ€§ï¼Œè€Œä¸æ˜¯æ›´å¼ºçš„å‰ç«¯è¿è¡Œæ—¶ç»Ÿä¸€æ€§
 
-既然后端是 Java，前后端之间真正稳定的共享面应当是：
+æ—¢ç„¶åŽç«¯æ˜¯ Javaï¼Œå‰åŽç«¯ä¹‹é—´çœŸæ­£ç¨³å®šçš„å…±äº«é¢åº”å½“æ˜¯ï¼š
 
-- 标准字段命名
-- 明确的 JSON / DTO 合同
-- 可分析、可诊断的 declarative schema 与 action
-- 少量稳定 primitive
+- æ ‡å‡†å­—æ®µå‘½å
+- æ˜Žç¡®çš„ JSON / DTO åˆåŒ
+- å¯åˆ†æžã€å¯è¯Šæ–­çš„ declarative schema ä¸Ž action
+- å°‘é‡ç¨³å®š primitive
 
-这会强化当前文档的若干主张：
+è¿™ä¼šå¼ºåŒ–å½“å‰æ–‡æ¡£çš„è‹¥å¹²ä¸»å¼ ï¼š
 
-- `Value` / `Resource` / `Reaction` / `Capability` / `Host Projection` 继续保持职责分离
-- `Schema-visible Scope` 不进入 imperative object / bridge / controller
-- effect 仍然只通过 `Capability` 发生
-- 运行时不应为了前端 convenience 重新发明一套厚重的 runtime object protocol
+- `Value` / `Resource` / `Reaction` / `Capability` / `Host Projection` ç»§ç»­ä¿æŒèŒè´£åˆ†ç¦»
+- `Schema-visible Scope` ä¸è¿›å…¥ imperative object / bridge / controller
+- effect ä»ç„¶åªé€šè¿‡ `Capability` å‘ç”Ÿ
+- è¿è¡Œæ—¶ä¸åº”ä¸ºäº†å‰ç«¯ convenience é‡æ–°å‘æ˜Žä¸€å¥—åŽšé‡çš„ runtime object protocol
 
-换言之，Java backend 的存在会提高“更窄、更稳定、更语言中立”的设计价值，降低“更强的前端统一 runtime 图模型”的必要性。
+æ¢è¨€ä¹‹ï¼ŒJava backend çš„å­˜åœ¨ä¼šæé«˜â€œæ›´çª„ã€æ›´ç¨³å®šã€æ›´è¯­è¨€ä¸­ç«‹â€çš„è®¾è®¡ä»·å€¼ï¼Œé™ä½Žâ€œæ›´å¼ºçš„å‰ç«¯ç»Ÿä¸€ runtime å›¾æ¨¡åž‹â€çš„å¿…è¦æ€§ã€‚
 
-#### 影响三：SSR / hydration 不再适合作为 primitive 设计的主导目标
+#### å½±å“ä¸‰ï¼šSSR / hydration ä¸å†é€‚åˆä½œä¸º primitive è®¾è®¡çš„ä¸»å¯¼ç›®æ ‡
 
-在 React / Node 全栈语境里，SSR / hydration 很容易被提升为顶层目标。
+åœ¨ React / Node å…¨æ ˆè¯­å¢ƒé‡Œï¼ŒSSR / hydration å¾ˆå®¹æ˜“è¢«æå‡ä¸ºé¡¶å±‚ç›®æ ‡ã€‚
 
-但在 Nop 里，后端主体系是 Java，这意味着：
+ä½†åœ¨ Nop é‡Œï¼ŒåŽç«¯ä¸»ä½“ç³»æ˜¯ Javaï¼Œè¿™æ„å‘³ç€ï¼š
 
-- SSR 可以是宿主集成能力
-- server-side pre-render 可以存在
-- loader 可以运行在 server / pre-render infrastructure
-- 但前端 core primitive 不应为了适应 `RSC` / hydration-first 叙事而重构
+- SSR å¯ä»¥æ˜¯å®¿ä¸»é›†æˆèƒ½åŠ›
+- server-side pre-render å¯ä»¥å­˜åœ¨
+- loader å¯ä»¥è¿è¡Œåœ¨ server / pre-render infrastructure
+- ä½†å‰ç«¯ core primitive ä¸åº”ä¸ºäº†é€‚åº” `RSC` / hydration-first å™äº‹è€Œé‡æž„
 
-因此，先前把 SSR / hydration readiness 视为“下一代前端低代码框架必须内建的一等原语驱动力”，这个判断在 Nop 架构下需要降权。它仍然重要，但更像 host integration concern，而不是 primitive redesign 的首要依据。
+å› æ­¤ï¼Œå…ˆå‰æŠŠ SSR / hydration readiness è§†ä¸ºâ€œä¸‹ä¸€ä»£å‰ç«¯ä½Žä»£ç æ¡†æž¶å¿…é¡»å†…å»ºçš„ä¸€ç­‰åŽŸè¯­é©±åŠ¨åŠ›â€ï¼Œè¿™ä¸ªåˆ¤æ–­åœ¨ Nop æž¶æž„ä¸‹éœ€è¦é™æƒã€‚å®ƒä»ç„¶é‡è¦ï¼Œä½†æ›´åƒ host integration concernï¼Œè€Œä¸æ˜¯ primitive redesign çš„é¦–è¦ä¾æ®ã€‚
 
-#### 影响四：协作 / patch / version 更应先表述为 host protocol + backend contract，而不是 core primitive 压力
+#### å½±å“å››ï¼šåä½œ / patch / version æ›´åº”å…ˆè¡¨è¿°ä¸º host protocol + backend contractï¼Œè€Œä¸æ˜¯ core primitive åŽ‹åŠ›
 
-Java 服务端天然更适合承接：
+Java æœåŠ¡ç«¯å¤©ç„¶æ›´é€‚åˆæ‰¿æŽ¥ï¼š
 
-- 文档版本
-- patch DTO 校验
-- 并发控制
-- 持久化
-- 审计与回滚
+- æ–‡æ¡£ç‰ˆæœ¬
+- patch DTO æ ¡éªŒ
+- å¹¶å‘æŽ§åˆ¶
+- æŒä¹…åŒ–
+- å®¡è®¡ä¸Žå›žæ»š
 
-因此，在 Nop 的真实架构里，更合理的补强方向不是把 collaboration 提升成新的 core primitive，而是：
+å› æ­¤ï¼Œåœ¨ Nop çš„çœŸå®žæž¶æž„é‡Œï¼Œæ›´åˆç†çš„è¡¥å¼ºæ–¹å‘ä¸æ˜¯æŠŠ collaboration æå‡æˆæ–°çš„ core primitiveï¼Œè€Œæ˜¯ï¼š
 
-- 保持 `Host Projection` 只读
-- 通过 `Capability` 写回
-- 但把 projection side 的 patch / version feed 契约写得更明确
+- ä¿æŒ `Host Projection` åªè¯»
+- é€šè¿‡ `Capability` å†™å›ž
+- ä½†æŠŠ projection side çš„ patch / version feed å¥‘çº¦å†™å¾—æ›´æ˜Žç¡®
 
-这说明此前分析中的“统一 `Binding` + patch-driven collaborative host”那部分并非完全无价值，但更适合下沉为 host/runtime 边界补强，而不是上升为替换整套 primitive closure 的理由。
+è¿™è¯´æ˜Žæ­¤å‰åˆ†æžä¸­çš„â€œç»Ÿä¸€ `Binding` + patch-driven collaborative hostâ€é‚£éƒ¨åˆ†å¹¶éžå®Œå…¨æ— ä»·å€¼ï¼Œä½†æ›´é€‚åˆä¸‹æ²‰ä¸º host/runtime è¾¹ç•Œè¡¥å¼ºï¼Œè€Œä¸æ˜¯ä¸Šå‡ä¸ºæ›¿æ¢æ•´å¥— primitive closure çš„ç†ç”±ã€‚
 
-#### 修正后的判断
+#### ä¿®æ­£åŽçš„åˆ¤æ–­
 
-在 generic next-generation low-code runtime 语境里，一个更强的 staged reactive model 仍然有吸引力。
+åœ¨ generic next-generation low-code runtime è¯­å¢ƒé‡Œï¼Œä¸€ä¸ªæ›´å¼ºçš„ staged reactive model ä»ç„¶æœ‰å¸å¼•åŠ›ã€‚
 
-但在 Nop 这个**Java loader 主导**、前端被明确收敛为 final-model runtime 的体系里，判断需要修正为：
+ä½†åœ¨ Nop è¿™ä¸ª**Java loader ä¸»å¯¼**ã€å‰ç«¯è¢«æ˜Žç¡®æ”¶æ•›ä¸º final-model runtime çš„ä½“ç³»é‡Œï¼Œåˆ¤æ–­éœ€è¦ä¿®æ­£ä¸ºï¼š
 
-- `docs/architecture/frontend-programming-model.md` 更接近正确方向。
-- 先前提出的替代方案不应被视为新的 baseline。
-- 它更适合被降格为“边界补强素材来源”，只保留少数仍然对 Nop 有价值的点，例如：
-  - 更硬的 `dynamic-renderer` / composition boundary wording
-  - 更明确的 multi-surface / multi-runtime boundary wording
-  - 更清楚的 projection patch / version feed contract
+- `docs/architecture/frontend-programming-model.md` æ›´æŽ¥è¿‘æ­£ç¡®æ–¹å‘ã€‚
+- å…ˆå‰æå‡ºçš„æ›¿ä»£æ–¹æ¡ˆä¸åº”è¢«è§†ä¸ºæ–°çš„ baselineã€‚
+- å®ƒæ›´é€‚åˆè¢«é™æ ¼ä¸ºâ€œè¾¹ç•Œè¡¥å¼ºç´ ææ¥æºâ€ï¼Œåªä¿ç•™å°‘æ•°ä»ç„¶å¯¹ Nop æœ‰ä»·å€¼çš„ç‚¹ï¼Œä¾‹å¦‚ï¼š
+  - æ›´ç¡¬çš„ `dynamic-renderer` / composition boundary wording
+  - æ›´æ˜Žç¡®çš„ multi-surface / multi-runtime boundary wording
+  - æ›´æ¸…æ¥šçš„ projection patch / version feed contract
 
-### 待澄清问题
+### å¾…æ¾„æ¸…é—®é¢˜
 
-1. 是否需要在 `docs/architecture/frontend-programming-model.md` 中显式增加对 Java loader / Nop 平台层的 cross-reference，避免未来再次按 Node/SSR-first 前提误判？
-2. 是否应把替代方案里仍有价值的 3 个补强点拆成更窄的 follow-up docs，而不是继续讨论整套 primitive replacement？
+1. æ˜¯å¦éœ€è¦åœ¨ `docs/architecture/frontend-programming-model.md` ä¸­æ˜¾å¼å¢žåŠ å¯¹ Java loader / Nop å¹³å°å±‚çš„ cross-referenceï¼Œé¿å…æœªæ¥å†æ¬¡æŒ‰ Node/SSR-first å‰æè¯¯åˆ¤ï¼Ÿ
+2. æ˜¯å¦åº”æŠŠæ›¿ä»£æ–¹æ¡ˆé‡Œä»æœ‰ä»·å€¼çš„ 3 ä¸ªè¡¥å¼ºç‚¹æ‹†æˆæ›´çª„çš„ follow-up docsï¼Œè€Œä¸æ˜¯ç»§ç»­è®¨è®ºæ•´å¥— primitive replacementï¼Ÿ
 
 ---
 
-## 第 6 轮
+## ç¬¬ 6 è½®
 
-### 用户回答
+### ç”¨æˆ·å›žç­”
 
-用户补充了一个更底层的设计准则，并要求后续判断始终以 DSL 层语义是否保持渐进演化为核心标准。要点如下：
+ç”¨æˆ·è¡¥å……äº†ä¸€ä¸ªæ›´åº•å±‚çš„è®¾è®¡å‡†åˆ™ï¼Œå¹¶è¦æ±‚åŽç»­åˆ¤æ–­å§‹ç»ˆä»¥ DSL å±‚è¯­ä¹‰æ˜¯å¦ä¿æŒæ¸è¿›æ¼”åŒ–ä¸ºæ ¸å¿ƒæ ‡å‡†ã€‚è¦ç‚¹å¦‚ä¸‹ï¼š
 
-- 系统设计不应从各种业务场景 / 业务需求中提取抽象；传统那种按业务场景归纳概念的抽象方式本身就是错的。
-- 设计必须是渐进式的：在 DSL 层面必须允许从简单到复杂的演化；如果一个简单需求已经有最直观最简单的表达，那么需求变复杂后，这个简单表达不能被推翻。
-- 对 `Value` / `Resource` 的直觉应回到“组件只消费内存中的值，不关心值的来源；值变动后触发重新渲染或后续动作”。这些值由 store 统一管理，并形成词法作用域可见的树。
-- `attrName: attrValue` 中，`attrValue` 可以是静态值、表达式值、动态 API 拉取到的值、或动态函数执行得到的值。
-- `data-source` 的本质不是另一类完全不同的值，而是“把一个动态值命名后注册到 scope 中”，并顺带提供 `status` / `error` / 事务态等外围监控信息。没有 `dataPath` 时，通过 `name` 就自动完成注册；`dataPath` 更像额外的复制/投影机制。
-- 也可以把动态值机制直接内嵌到某个 `attrValue` 上，但这样会失去精细的状态、错误、刷新、定向操作能力，因为它没有被命名。
-- 在结构 DSL 层面，可以直接给节点增加 `when` 表达式来做条件选择，也可以有 `type:loop` 这种循环节点负责循环渲染。
-- `dynamic-render` 本身不一定有问题；需要重点考虑的是：任何调用 API 的地方在执行层本质上都像 action 调用，因此需要考虑它与 `ActionScope` 函数调用、远程 API 调用之间是否应该复用同一执行逻辑，甚至是否应进一步统一到某种更一般的 action 抽象或 DAG 编排上。
+- ç³»ç»Ÿè®¾è®¡ä¸åº”ä»Žå„ç§ä¸šåŠ¡åœºæ™¯ / ä¸šåŠ¡éœ€æ±‚ä¸­æå–æŠ½è±¡ï¼›ä¼ ç»Ÿé‚£ç§æŒ‰ä¸šåŠ¡åœºæ™¯å½’çº³æ¦‚å¿µçš„æŠ½è±¡æ–¹å¼æœ¬èº«å°±æ˜¯é”™çš„ã€‚
+- è®¾è®¡å¿…é¡»æ˜¯æ¸è¿›å¼çš„ï¼šåœ¨ DSL å±‚é¢å¿…é¡»å…è®¸ä»Žç®€å•åˆ°å¤æ‚çš„æ¼”åŒ–ï¼›å¦‚æžœä¸€ä¸ªç®€å•éœ€æ±‚å·²ç»æœ‰æœ€ç›´è§‚æœ€ç®€å•çš„è¡¨è¾¾ï¼Œé‚£ä¹ˆéœ€æ±‚å˜å¤æ‚åŽï¼Œè¿™ä¸ªç®€å•è¡¨è¾¾ä¸èƒ½è¢«æŽ¨ç¿»ã€‚
+- å¯¹ `Value` / `Resource` çš„ç›´è§‰åº”å›žåˆ°â€œç»„ä»¶åªæ¶ˆè´¹å†…å­˜ä¸­çš„å€¼ï¼Œä¸å…³å¿ƒå€¼çš„æ¥æºï¼›å€¼å˜åŠ¨åŽè§¦å‘é‡æ–°æ¸²æŸ“æˆ–åŽç»­åŠ¨ä½œâ€ã€‚è¿™äº›å€¼ç”± store ç»Ÿä¸€ç®¡ç†ï¼Œå¹¶å½¢æˆè¯æ³•ä½œç”¨åŸŸå¯è§çš„æ ‘ã€‚
+- `attrName: attrValue` ä¸­ï¼Œ`attrValue` å¯ä»¥æ˜¯é™æ€å€¼ã€è¡¨è¾¾å¼å€¼ã€åŠ¨æ€ API æ‹‰å–åˆ°çš„å€¼ã€æˆ–åŠ¨æ€å‡½æ•°æ‰§è¡Œå¾—åˆ°çš„å€¼ã€‚
+- `data-source` çš„æœ¬è´¨ä¸æ˜¯å¦ä¸€ç±»å®Œå…¨ä¸åŒçš„å€¼ï¼Œè€Œæ˜¯â€œæŠŠä¸€ä¸ªåŠ¨æ€å€¼å‘½ååŽæ³¨å†Œåˆ° scope ä¸­â€ï¼Œå¹¶é¡ºå¸¦æä¾› `status` / `error` / äº‹åŠ¡æ€ç­‰å¤–å›´ç›‘æŽ§ä¿¡æ¯ã€‚æ²¡æœ‰ `dataPath` æ—¶ï¼Œé€šè¿‡ `name` å°±è‡ªåŠ¨å®Œæˆæ³¨å†Œï¼›`dataPath` æ›´åƒé¢å¤–çš„å¤åˆ¶/æŠ•å½±æœºåˆ¶ã€‚
+- ä¹Ÿå¯ä»¥æŠŠåŠ¨æ€å€¼æœºåˆ¶ç›´æŽ¥å†…åµŒåˆ°æŸä¸ª `attrValue` ä¸Šï¼Œä½†è¿™æ ·ä¼šå¤±åŽ»ç²¾ç»†çš„çŠ¶æ€ã€é”™è¯¯ã€åˆ·æ–°ã€å®šå‘æ“ä½œèƒ½åŠ›ï¼Œå› ä¸ºå®ƒæ²¡æœ‰è¢«å‘½åã€‚
+- åœ¨ç»“æž„ DSL å±‚é¢ï¼Œå¯ä»¥ç›´æŽ¥ç»™èŠ‚ç‚¹å¢žåŠ  `when` è¡¨è¾¾å¼æ¥åšæ¡ä»¶é€‰æ‹©ï¼Œä¹Ÿå¯ä»¥æœ‰ `type:loop` è¿™ç§å¾ªçŽ¯èŠ‚ç‚¹è´Ÿè´£å¾ªçŽ¯æ¸²æŸ“ã€‚
+- `dynamic-render` æœ¬èº«ä¸ä¸€å®šæœ‰é—®é¢˜ï¼›éœ€è¦é‡ç‚¹è€ƒè™‘çš„æ˜¯ï¼šä»»ä½•è°ƒç”¨ API çš„åœ°æ–¹åœ¨æ‰§è¡Œå±‚æœ¬è´¨ä¸Šéƒ½åƒ action è°ƒç”¨ï¼Œå› æ­¤éœ€è¦è€ƒè™‘å®ƒä¸Ž `ActionScope` å‡½æ•°è°ƒç”¨ã€è¿œç¨‹ API è°ƒç”¨ä¹‹é—´æ˜¯å¦åº”è¯¥å¤ç”¨åŒä¸€æ‰§è¡Œé€»è¾‘ï¼Œç”šè‡³æ˜¯å¦åº”è¿›ä¸€æ­¥ç»Ÿä¸€åˆ°æŸç§æ›´ä¸€èˆ¬çš„ action æŠ½è±¡æˆ– DAG ç¼–æŽ’ä¸Šã€‚
 
-### AI 整理
+### AI æ•´ç†
 
-这一轮把评判标准从“primitive 是否足够优雅”进一步压到了更硬的一层：
+è¿™ä¸€è½®æŠŠè¯„åˆ¤æ ‡å‡†ä»Žâ€œprimitive æ˜¯å¦è¶³å¤Ÿä¼˜é›…â€è¿›ä¸€æ­¥åŽ‹åˆ°äº†æ›´ç¡¬çš„ä¸€å±‚ï¼š
 
-> 任何架构判断都必须先看 DSL 层是否保持了从简单到复杂的稳定语义演化，而不是先看 runtime 内部是否实现得整齐。
+> ä»»ä½•æž¶æž„åˆ¤æ–­éƒ½å¿…é¡»å…ˆçœ‹ DSL å±‚æ˜¯å¦ä¿æŒäº†ä»Žç®€å•åˆ°å¤æ‚çš„ç¨³å®šè¯­ä¹‰æ¼”åŒ–ï¼Œè€Œä¸æ˜¯å…ˆçœ‹ runtime å†…éƒ¨æ˜¯å¦å®žçŽ°å¾—æ•´é½ã€‚
 
-这个标准非常重要，因为它会直接改变对若干设计分歧的判断方式：
+è¿™ä¸ªæ ‡å‡†éžå¸¸é‡è¦ï¼Œå› ä¸ºå®ƒä¼šç›´æŽ¥æ”¹å˜å¯¹è‹¥å¹²è®¾è®¡åˆ†æ­§çš„åˆ¤æ–­æ–¹å¼ï¼š
 
-- 不再先问 `Value` / `Resource` 在 runtime ontology 上是否应该彻底合并。
-- 而是先问：在 DSL 层，简单值、表达式值、匿名动态值、可命名动态值，是否能构成一条连续、可提升、但不破坏已有简单写法的演化路径。
+- ä¸å†å…ˆé—® `Value` / `Resource` åœ¨ runtime ontology ä¸Šæ˜¯å¦åº”è¯¥å½»åº•åˆå¹¶ã€‚
+- è€Œæ˜¯å…ˆé—®ï¼šåœ¨ DSL å±‚ï¼Œç®€å•å€¼ã€è¡¨è¾¾å¼å€¼ã€åŒ¿ååŠ¨æ€å€¼ã€å¯å‘½ååŠ¨æ€å€¼ï¼Œæ˜¯å¦èƒ½æž„æˆä¸€æ¡è¿žç»­ã€å¯æå‡ã€ä½†ä¸ç ´åå·²æœ‰ç®€å•å†™æ³•çš„æ¼”åŒ–è·¯å¾„ã€‚
 
-### AI 分析
+### AI åˆ†æž
 
-#### 结论一：最核心的抽象单位应当是“可见语义的渐进演化”，而不是“按业务场景归纳能力类别”
+#### ç»“è®ºä¸€ï¼šæœ€æ ¸å¿ƒçš„æŠ½è±¡å•ä½åº”å½“æ˜¯â€œå¯è§è¯­ä¹‰çš„æ¸è¿›æ¼”åŒ–â€ï¼Œè€Œä¸æ˜¯â€œæŒ‰ä¸šåŠ¡åœºæ™¯å½’çº³èƒ½åŠ›ç±»åˆ«â€
 
-这一点我认同，而且它会强化当前文档中的 primitive closure 方向，同时约束它的写法。
+è¿™ä¸€ç‚¹æˆ‘è®¤åŒï¼Œè€Œä¸”å®ƒä¼šå¼ºåŒ–å½“å‰æ–‡æ¡£ä¸­çš„ primitive closure æ–¹å‘ï¼ŒåŒæ—¶çº¦æŸå®ƒçš„å†™æ³•ã€‚
 
-更准确地说：
+æ›´å‡†ç¡®åœ°è¯´ï¼š
 
-- 不应该从“表单场景需要什么、表格场景需要什么、设计器场景需要什么”出发发明新概念。
-- 应该从“DSL 作者最先看到的简单表达是什么；当需求变复杂时，是否只是显式提升，而不是改写原有世界观”出发设计概念。
+- ä¸åº”è¯¥ä»Žâ€œè¡¨å•åœºæ™¯éœ€è¦ä»€ä¹ˆã€è¡¨æ ¼åœºæ™¯éœ€è¦ä»€ä¹ˆã€è®¾è®¡å™¨åœºæ™¯éœ€è¦ä»€ä¹ˆâ€å‡ºå‘å‘æ˜Žæ–°æ¦‚å¿µã€‚
+- åº”è¯¥ä»Žâ€œDSL ä½œè€…æœ€å…ˆçœ‹åˆ°çš„ç®€å•è¡¨è¾¾æ˜¯ä»€ä¹ˆï¼›å½“éœ€æ±‚å˜å¤æ‚æ—¶ï¼Œæ˜¯å¦åªæ˜¯æ˜¾å¼æå‡ï¼Œè€Œä¸æ˜¯æ”¹å†™åŽŸæœ‰ä¸–ç•Œè§‚â€å‡ºå‘è®¾è®¡æ¦‚å¿µã€‚
 
-这意味着，一个设计即使 runtime 内部非常漂亮，只要它让 DSL 从简单到复杂时发生概念断裂，它就不是好设计。
+è¿™æ„å‘³ç€ï¼Œä¸€ä¸ªè®¾è®¡å³ä½¿ runtime å†…éƒ¨éžå¸¸æ¼‚äº®ï¼Œåªè¦å®ƒè®© DSL ä»Žç®€å•åˆ°å¤æ‚æ—¶å‘ç”Ÿæ¦‚å¿µæ–­è£‚ï¼Œå®ƒå°±ä¸æ˜¯å¥½è®¾è®¡ã€‚
 
-#### 结论二：`Value` / `Resource` 的正确理解应分成“消费视角”和“生产视角”
+#### ç»“è®ºäºŒï¼š`Value` / `Resource` çš„æ­£ç¡®ç†è§£åº”åˆ†æˆâ€œæ¶ˆè´¹è§†è§’â€å’Œâ€œç”Ÿäº§è§†è§’â€
 
-用户给出的直觉很重要：对 renderer / component 的消费视角来说，前端只是在消费内存中的值，并不关心值来自：
+ç”¨æˆ·ç»™å‡ºçš„ç›´è§‰å¾ˆé‡è¦ï¼šå¯¹ renderer / component çš„æ¶ˆè´¹è§†è§’æ¥è¯´ï¼Œå‰ç«¯åªæ˜¯åœ¨æ¶ˆè´¹å†…å­˜ä¸­çš„å€¼ï¼Œå¹¶ä¸å…³å¿ƒå€¼æ¥è‡ªï¼š
 
-- 字面量
-- 表达式
-- API 拉取
-- 动态函数
-- 其他动态机制
+- å­—é¢é‡
+- è¡¨è¾¾å¼
+- API æ‹‰å–
+- åŠ¨æ€å‡½æ•°
+- å…¶ä»–åŠ¨æ€æœºåˆ¶
 
-这个消费视角在 DSL 层必须保持稳定。
+è¿™ä¸ªæ¶ˆè´¹è§†è§’åœ¨ DSL å±‚å¿…é¡»ä¿æŒç¨³å®šã€‚
 
-但在生产侧，仍然需要区分：
+ä½†åœ¨ç”Ÿäº§ä¾§ï¼Œä»ç„¶éœ€è¦åŒºåˆ†ï¼š
 
-- 一个值是否只是临时求值结果
-- 还是一个需要被命名、被追踪状态、被刷新、被显式操作的动态值实体
+- ä¸€ä¸ªå€¼æ˜¯å¦åªæ˜¯ä¸´æ—¶æ±‚å€¼ç»“æžœ
+- è¿˜æ˜¯ä¸€ä¸ªéœ€è¦è¢«å‘½åã€è¢«è¿½è¸ªçŠ¶æ€ã€è¢«åˆ·æ–°ã€è¢«æ˜¾å¼æ“ä½œçš„åŠ¨æ€å€¼å®žä½“
 
-因此，一个更贴近当前体系、又满足“渐进演化”原则的表达应是：
+å› æ­¤ï¼Œä¸€ä¸ªæ›´è´´è¿‘å½“å‰ä½“ç³»ã€åˆæ»¡è¶³â€œæ¸è¿›æ¼”åŒ–â€åŽŸåˆ™çš„è¡¨è¾¾åº”æ˜¯ï¼š
 
-- `Value` 是消费侧统一语义：字段读取的是值。
-- `data-source` / `Resource` 是生产侧提升语义：当一个动态值需要具名、可观测、可刷新、可定向操作时，把它提升为一个被注册到 scope 的命名动态值。
+- `Value` æ˜¯æ¶ˆè´¹ä¾§ç»Ÿä¸€è¯­ä¹‰ï¼šå­—æ®µè¯»å–çš„æ˜¯å€¼ã€‚
+- `data-source` / `Resource` æ˜¯ç”Ÿäº§ä¾§æå‡è¯­ä¹‰ï¼šå½“ä¸€ä¸ªåŠ¨æ€å€¼éœ€è¦å…·åã€å¯è§‚æµ‹ã€å¯åˆ·æ–°ã€å¯å®šå‘æ“ä½œæ—¶ï¼ŒæŠŠå®ƒæå‡ä¸ºä¸€ä¸ªè¢«æ³¨å†Œåˆ° scope çš„å‘½ååŠ¨æ€å€¼ã€‚
 
-这样理解后，`Value` / `Resource` 不是在 DSL 层彼此竞争的两种世界观，而是同一条演化路径上的两个层次：
+è¿™æ ·ç†è§£åŽï¼Œ`Value` / `Resource` ä¸æ˜¯åœ¨ DSL å±‚å½¼æ­¤ç«žäº‰çš„ä¸¤ç§ä¸–ç•Œè§‚ï¼Œè€Œæ˜¯åŒä¸€æ¡æ¼”åŒ–è·¯å¾„ä¸Šçš„ä¸¤ä¸ªå±‚æ¬¡ï¼š
 
-1. 最简单：静态值
-2. 其次：表达式值
-3. 再进一步：匿名动态值
-4. 需要可操作性时：具名 `data-source`
+1. æœ€ç®€å•ï¼šé™æ€å€¼
+2. å…¶æ¬¡ï¼šè¡¨è¾¾å¼å€¼
+3. å†è¿›ä¸€æ­¥ï¼šåŒ¿ååŠ¨æ€å€¼
+4. éœ€è¦å¯æ“ä½œæ€§æ—¶ï¼šå…·å `data-source`
 
-这里真正需要补强的是文档对这条“promotion path”的明确描述，而不是急于改 primitive taxonomy。
+è¿™é‡ŒçœŸæ­£éœ€è¦è¡¥å¼ºçš„æ˜¯æ–‡æ¡£å¯¹è¿™æ¡â€œpromotion pathâ€çš„æ˜Žç¡®æè¿°ï¼Œè€Œä¸æ˜¯æ€¥äºŽæ”¹ primitive taxonomyã€‚
 
-#### 结论三：`data-source` 的本质确实更接近“命名后的动态值注册”，但 `dataPath` 仍需严格界定为投影还是第二权威写点
+#### ç»“è®ºä¸‰ï¼š`data-source` çš„æœ¬è´¨ç¡®å®žæ›´æŽ¥è¿‘â€œå‘½ååŽçš„åŠ¨æ€å€¼æ³¨å†Œâ€ï¼Œä½† `dataPath` ä»éœ€ä¸¥æ ¼ç•Œå®šä¸ºæŠ•å½±è¿˜æ˜¯ç¬¬äºŒæƒå¨å†™ç‚¹
 
-用户这里提出的判断我大体认同：`data-source` 的核心不是“另一类渲染节点”，而是：
+ç”¨æˆ·è¿™é‡Œæå‡ºçš„åˆ¤æ–­æˆ‘å¤§ä½“è®¤åŒï¼š`data-source` çš„æ ¸å¿ƒä¸æ˜¯â€œå¦ä¸€ç±»æ¸²æŸ“èŠ‚ç‚¹â€ï¼Œè€Œæ˜¯ï¼š
 
-- 给动态值一个名字
-- 把它注册进 scope
-- 暴露状态和错误等附属信息
-- 允许后续刷新、失效、定向操作
+- ç»™åŠ¨æ€å€¼ä¸€ä¸ªåå­—
+- æŠŠå®ƒæ³¨å†Œè¿› scope
+- æš´éœ²çŠ¶æ€å’Œé”™è¯¯ç­‰é™„å±žä¿¡æ¯
+- å…è®¸åŽç»­åˆ·æ–°ã€å¤±æ•ˆã€å®šå‘æ“ä½œ
 
-这比单纯把它理解成“远程请求节点”要准确得多。
+è¿™æ¯”å•çº¯æŠŠå®ƒç†è§£æˆâ€œè¿œç¨‹è¯·æ±‚èŠ‚ç‚¹â€è¦å‡†ç¡®å¾—å¤šã€‚
 
-同时，`dataPath` 作为额外复制/投影机制的说法也有启发性，但这里必须补一条硬约束：
+åŒæ—¶ï¼Œ`dataPath` ä½œä¸ºé¢å¤–å¤åˆ¶/æŠ•å½±æœºåˆ¶çš„è¯´æ³•ä¹Ÿæœ‰å¯å‘æ€§ï¼Œä½†è¿™é‡Œå¿…é¡»è¡¥ä¸€æ¡ç¡¬çº¦æŸï¼š
 
-- 从 DSL authoring 角度，可以把 `dataPath` 看成额外投影。
-- 但从 runtime ownership 角度，不能把它变成第二个独立权威写入点。
+- ä»Ž DSL authoring è§’åº¦ï¼Œå¯ä»¥æŠŠ `dataPath` çœ‹æˆé¢å¤–æŠ•å½±ã€‚
+- ä½†ä»Ž runtime ownership è§’åº¦ï¼Œä¸èƒ½æŠŠå®ƒå˜æˆç¬¬äºŒä¸ªç‹¬ç«‹æƒå¨å†™å…¥ç‚¹ã€‚
 
-更稳妥的说法应当是：
+æ›´ç¨³å¦¥çš„è¯´æ³•åº”å½“æ˜¯ï¼š
 
-- `name` 定义被操作、被识别的动态值身份。
-- 默认情况下，它也定义默认注册路径。
-- `dataPath` 若存在，最好被定义为运行时维护的额外只读投影 / alias / projection，而不是另一个可独立写入的业务值根。
+- `name` å®šä¹‰è¢«æ“ä½œã€è¢«è¯†åˆ«çš„åŠ¨æ€å€¼èº«ä»½ã€‚
+- é»˜è®¤æƒ…å†µä¸‹ï¼Œå®ƒä¹Ÿå®šä¹‰é»˜è®¤æ³¨å†Œè·¯å¾„ã€‚
+- `dataPath` è‹¥å­˜åœ¨ï¼Œæœ€å¥½è¢«å®šä¹‰ä¸ºè¿è¡Œæ—¶ç»´æŠ¤çš„é¢å¤–åªè¯»æŠ•å½± / alias / projectionï¼Œè€Œä¸æ˜¯å¦ä¸€ä¸ªå¯ç‹¬ç«‹å†™å…¥çš„ä¸šåŠ¡å€¼æ ¹ã€‚
 
-否则 DSL 虽然表面简化了，但 runtime 会失去“一个动态值只有一个权威来源”的可诊断性。
+å¦åˆ™ DSL è™½ç„¶è¡¨é¢ç®€åŒ–äº†ï¼Œä½† runtime ä¼šå¤±åŽ»â€œä¸€ä¸ªåŠ¨æ€å€¼åªæœ‰ä¸€ä¸ªæƒå¨æ¥æºâ€çš„å¯è¯Šæ–­æ€§ã€‚
 
-#### 结论四：允许“匿名动态值”是对的，但它应该被明确定位为低能力等级写法
+#### ç»“è®ºå››ï¼šå…è®¸â€œåŒ¿ååŠ¨æ€å€¼â€æ˜¯å¯¹çš„ï¼Œä½†å®ƒåº”è¯¥è¢«æ˜Žç¡®å®šä½ä¸ºä½Žèƒ½åŠ›ç­‰çº§å†™æ³•
 
-用户提出：`attrValue` 本身也可以内嵌动态 API 拉取或动态函数值；只是没有名字时，就会失去精细的 `status` / `error` / `refresh` / targeted control。
+ç”¨æˆ·æå‡ºï¼š`attrValue` æœ¬èº«ä¹Ÿå¯ä»¥å†…åµŒåŠ¨æ€ API æ‹‰å–æˆ–åŠ¨æ€å‡½æ•°å€¼ï¼›åªæ˜¯æ²¡æœ‰åå­—æ—¶ï¼Œå°±ä¼šå¤±åŽ»ç²¾ç»†çš„ `status` / `error` / `refresh` / targeted controlã€‚
 
-这个判断我认同，而且它非常符合“渐进演化”原则。
+è¿™ä¸ªåˆ¤æ–­æˆ‘è®¤åŒï¼Œè€Œä¸”å®ƒéžå¸¸ç¬¦åˆâ€œæ¸è¿›æ¼”åŒ–â€åŽŸåˆ™ã€‚
 
-更好的表述是：
+æ›´å¥½çš„è¡¨è¿°æ˜¯ï¼š
 
-- 匿名动态值可以作为 DSL 的简写层。
-- 它适合只关心“拿到值就渲染”的简单场景。
-- 一旦需要可观测状态、重试、刷新、错误分支、跨节点复用、或外部 action 定向操作，就应提升为具名 `data-source`。
+- åŒ¿ååŠ¨æ€å€¼å¯ä»¥ä½œä¸º DSL çš„ç®€å†™å±‚ã€‚
+- å®ƒé€‚åˆåªå…³å¿ƒâ€œæ‹¿åˆ°å€¼å°±æ¸²æŸ“â€çš„ç®€å•åœºæ™¯ã€‚
+- ä¸€æ—¦éœ€è¦å¯è§‚æµ‹çŠ¶æ€ã€é‡è¯•ã€åˆ·æ–°ã€é”™è¯¯åˆ†æ”¯ã€è·¨èŠ‚ç‚¹å¤ç”¨ã€æˆ–å¤–éƒ¨ action å®šå‘æ“ä½œï¼Œå°±åº”æå‡ä¸ºå…·å `data-source`ã€‚
 
-这比“一开始就要求所有动态值都写成具名 data-source”更符合 DSL 的自然学习路径。
+è¿™æ¯”â€œä¸€å¼€å§‹å°±è¦æ±‚æ‰€æœ‰åŠ¨æ€å€¼éƒ½å†™æˆå…·å data-sourceâ€æ›´ç¬¦åˆ DSL çš„è‡ªç„¶å­¦ä¹ è·¯å¾„ã€‚
 
-#### 结论五：`when` 和 `loop` 应作为比 `dynamic-renderer` 更基础的结构 DSL，`dynamic-renderer` 保持窄边界即可
+#### ç»“è®ºäº”ï¼š`when` å’Œ `loop` åº”ä½œä¸ºæ¯” `dynamic-renderer` æ›´åŸºç¡€çš„ç»“æž„ DSLï¼Œ`dynamic-renderer` ä¿æŒçª„è¾¹ç•Œå³å¯
 
-用户这里的判断也是对的。
+ç”¨æˆ·è¿™é‡Œçš„åˆ¤æ–­ä¹Ÿæ˜¯å¯¹çš„ã€‚
 
-对于普通结构表达，最自然的 DSL 层演化应当是：
+å¯¹äºŽæ™®é€šç»“æž„è¡¨è¾¾ï¼Œæœ€è‡ªç„¶çš„ DSL å±‚æ¼”åŒ–åº”å½“æ˜¯ï¼š
 
-- `when`：条件出现 / 条件替换
-- `loop`：循环展开 / collection rendering
-- `dynamic-renderer`：只有在确实需要动态加载外部 fragment、远程 schema、或宿主延迟组装片段时才使用
+- `when`ï¼šæ¡ä»¶å‡ºçŽ° / æ¡ä»¶æ›¿æ¢
+- `loop`ï¼šå¾ªçŽ¯å±•å¼€ / collection rendering
+- `dynamic-renderer`ï¼šåªæœ‰åœ¨ç¡®å®žéœ€è¦åŠ¨æ€åŠ è½½å¤–éƒ¨ fragmentã€è¿œç¨‹ schemaã€æˆ–å®¿ä¸»å»¶è¿Ÿç»„è£…ç‰‡æ®µæ—¶æ‰ä½¿ç”¨
 
-也就是说：
+ä¹Ÿå°±æ˜¯è¯´ï¼š
 
-- `dynamic-renderer` 不是错。
-- 真正的问题是不要让它吞掉本该由更简单、更基础的结构 DSL 表达的 `when` / `loop` 语义。
+- `dynamic-renderer` ä¸æ˜¯é”™ã€‚
+- çœŸæ­£çš„é—®é¢˜æ˜¯ä¸è¦è®©å®ƒåžæŽ‰æœ¬è¯¥ç”±æ›´ç®€å•ã€æ›´åŸºç¡€çš„ç»“æž„ DSL è¡¨è¾¾çš„ `when` / `loop` è¯­ä¹‰ã€‚
 
-这和前一轮“Java loader 主导”的判断并不冲突：
+è¿™å’Œå‰ä¸€è½®â€œJava loader ä¸»å¯¼â€çš„åˆ¤æ–­å¹¶ä¸å†²çªï¼š
 
-- 能在 loader 解决的结构装配仍然前移。
-- 留到 runtime 的结构变化，也应先用最简单的 DSL 结构节点表达，而不是先上重型动态加载机制。
+- èƒ½åœ¨ loader è§£å†³çš„ç»“æž„è£…é…ä»ç„¶å‰ç§»ã€‚
+- ç•™åˆ° runtime çš„ç»“æž„å˜åŒ–ï¼Œä¹Ÿåº”å…ˆç”¨æœ€ç®€å•çš„ DSL ç»“æž„èŠ‚ç‚¹è¡¨è¾¾ï¼Œè€Œä¸æ˜¯å…ˆä¸Šé‡åž‹åŠ¨æ€åŠ è½½æœºåˆ¶ã€‚
 
-#### 结论六：`api` 调用、`ActionScope` 函数调用、`data-source` producer 可以共享执行底座，但不应过早统一成同一种 authoring DSL
+#### ç»“è®ºå…­ï¼š`api` è°ƒç”¨ã€`ActionScope` å‡½æ•°è°ƒç”¨ã€`data-source` producer å¯ä»¥å…±äº«æ‰§è¡Œåº•åº§ï¼Œä½†ä¸åº”è¿‡æ—©ç»Ÿä¸€æˆåŒä¸€ç§ authoring DSL
 
-用户提出的方向非常值得保留：
+ç”¨æˆ·æå‡ºçš„æ–¹å‘éžå¸¸å€¼å¾—ä¿ç•™ï¼š
 
-- 远程 API 调用
-- namespaced action 调用
-- 具名动态值的 producer 执行
+- è¿œç¨‹ API è°ƒç”¨
+- namespaced action è°ƒç”¨
+- å…·ååŠ¨æ€å€¼çš„ producer æ‰§è¡Œ
 
-在执行层确实都像“一个可取消、可超时、可重试、可追踪的 operation”。
+åœ¨æ‰§è¡Œå±‚ç¡®å®žéƒ½åƒâ€œä¸€ä¸ªå¯å–æ¶ˆã€å¯è¶…æ—¶ã€å¯é‡è¯•ã€å¯è¿½è¸ªçš„ operationâ€ã€‚
 
-因此，更合理的架构不是让它们各长一套 runtime，而是：
+å› æ­¤ï¼Œæ›´åˆç†çš„æž¶æž„ä¸æ˜¯è®©å®ƒä»¬å„é•¿ä¸€å¥— runtimeï¼Œè€Œæ˜¯ï¼š
 
-- 底层共享同一个 operation execution substrate
-- 上层 authoring 仍然保留不同 DSL 语义
+- åº•å±‚å…±äº«åŒä¸€ä¸ª operation execution substrate
+- ä¸Šå±‚ authoring ä»ç„¶ä¿ç•™ä¸åŒ DSL è¯­ä¹‰
 
-建议把三层区别说清楚：
+å»ºè®®æŠŠä¸‰å±‚åŒºåˆ«è¯´æ¸…æ¥šï¼š
 
-1. `Action`：一次 effect dispatch / control flow
-2. `data-source`：一个具名动态值的注册与生命周期管理
-3. `ApiObject`：底层 transport / adaptor contract
+1. `Action`ï¼šä¸€æ¬¡ effect dispatch / control flow
+2. `data-source`ï¼šä¸€ä¸ªå…·ååŠ¨æ€å€¼çš„æ³¨å†Œä¸Žç”Ÿå‘½å‘¨æœŸç®¡ç†
+3. `ApiObject`ï¼šåº•å±‚ transport / adaptor contract
 
-这三者在 runtime 可以共享：
+è¿™ä¸‰è€…åœ¨ runtime å¯ä»¥å…±äº«ï¼š
 
 - timeout
 - cancellation
@@ -722,193 +722,193 @@ Java 服务端天然更适合承接：
 - monitor / tracing
 - structured result
 
-但 DSL 层不必一开始就强行统一成一个“大而全”的 DAG 语言。
+ä½† DSL å±‚ä¸å¿…ä¸€å¼€å§‹å°±å¼ºè¡Œç»Ÿä¸€æˆä¸€ä¸ªâ€œå¤§è€Œå…¨â€çš„ DAG è¯­è¨€ã€‚
 
-更符合渐进原则的路径应是：
+æ›´ç¬¦åˆæ¸è¿›åŽŸåˆ™çš„è·¯å¾„åº”æ˜¯ï¼š
 
-1. 单步 action
+1. å•æ­¥ action
 2. `then` / `onError`
 3. `parallel` / `sequence`
-4. 只有在确实出现复杂依赖图 authoring 压力时，才提升到显式 DAG
+4. åªæœ‰åœ¨ç¡®å®žå‡ºçŽ°å¤æ‚ä¾èµ–å›¾ authoring åŽ‹åŠ›æ—¶ï¼Œæ‰æå‡åˆ°æ˜¾å¼ DAG
 
-同理，`data-source` 也不应被动作编排 DSL 吞掉，因为它除了“执行一次 operation”之外，还承担了“注册一个具名动态值”这一更稳定的 DSL 角色。
+åŒç†ï¼Œ`data-source` ä¹Ÿä¸åº”è¢«åŠ¨ä½œç¼–æŽ’ DSL åžæŽ‰ï¼Œå› ä¸ºå®ƒé™¤äº†â€œæ‰§è¡Œä¸€æ¬¡ operationâ€ä¹‹å¤–ï¼Œè¿˜æ‰¿æ‹…äº†â€œæ³¨å†Œä¸€ä¸ªå…·ååŠ¨æ€å€¼â€è¿™ä¸€æ›´ç¨³å®šçš„ DSL è§’è‰²ã€‚
 
-### 待澄清问题
+### å¾…æ¾„æ¸…é—®é¢˜
 
-1. 对 `name + dataPath`，你更倾向于：`dataPath` 是只读投影 / alias，还是允许它成为第二个完整注册路径？
-2. 对匿名动态值，你更倾向于先作为解释层概念存在，还是希望尽快给出明确的 DSL 语法形态？
-4. 对结构 DSL，你更偏向于 `when` 作为普通节点字段、`loop` 作为专用节点类型，还是两者都做成 wrapper node 以便统一编译？
-
----
-
-## 第 8 轮
-
-### 用户回答
-
-用户进一步确认并补充如下：
-
-- 对 `data-source` 的特殊发布语义，选择 `mergeToScope: true`。
-- `when` 在内部实现时可以 lowering 成一个 wrap 结构；这属于编译 / runtime 内部组织问题，不必强迫外部 DSL 也写成 wrapper node。
-- 在记录 discussion 之后，需要根据当前讨论结论回头修正 `docs/analysis/frontend-programming-model-staged-reactive-alternative.md`，并重新判断其中原先提出的整套设计现在是否还合适。
-
-### AI 整理
-
-这一轮实际上完成了三个关键收口：
-
-1. `data-source` 的 authoring 形态正式收敛为 `name` 为主，`mergeToScope: true` 作为唯一明确的特殊发布扩展。
-2. `when` 的 DSL 形态继续保持“节点属性”更自然，而编译后是否转成 wrapper 是内部实现自由度。
-3. 需要把先前提出的 staged-reactive alternative 从“潜在替代 baseline”重新降格评估为“分析性备选”，只保留仍然有价值的窄结论。
-
-### AI 分析
-
-#### 结论一：`mergeToScope: true` 现在是比 `dataPath` 更合适的唯一特殊发布语义
-
-在前几轮讨论后，这一点已经足够明确：
-
-- 新 DSL 的正常路径应当只有 `name`
-- `name` 同时承担资源身份与默认注册路径
-- `dataPath` 不再适合作为主设计继续扩展
-
-唯一需要单独保留的特殊情况是：
-
-- 结果是 object / map
-- 希望把结果顶层字段浅合并到当前 scope
-
-因此 `mergeToScope: true` 比 `publishMode: 'merge-scope'` 更合适，因为：
-
-- 它只表达一个非常具体的特例
-- 它不会重新引入一个看似可无限扩展的发布模式体系
-- 它更符合“简单 DSL 不为未来假想复杂度预留过多形态”的原则
-
-推荐语义应固定为：
-
-1. `name` 仍然是资源身份
-2. 默认仍注册 `${name}`
-3. `mergeToScope: true` 时，若结果为 object，则其顶层字段额外浅合并进当前 scope
-4. 这不是第二个独立权威写点，而是一次额外投影/灌入语义
-
-#### 结论二：`when` 的正确分层是“外部属性 + 内部 wrapper lowering”
-
-这也是一个很清晰的收口：
-
-- DSL authoring 上，`when` 继续做属性更自然
-- 编译器 / runtime 内部完全可以把它 lowering 成一个 wrapper-like operator
-
-这说明此前围绕 `when` 是否必须成为独立结构 primitive 的争论，其实混淆了两层：
-
-- DSL 形态
-- 内部执行形态
-
-更合理的结论是：
-
-- 外部 DSL 优先自然表达
-- 内部实现优先统一编译
-
-所以，`when` 这个名字和形态都可以保留，只要继续坚持：
-
-- `visible` 控制显示
-- `when` 控制激活 / 结构存在性 / 生命周期
-
-#### 结论三：先前 staged-reactive alternative 中“大范围 primitive replacement”的部分现在看起来已经不合适
-
-经过第 5 至第 8 轮讨论，原替代方案里几块大的改造现在都显得过头了：
-
-1. 用 `Compiled Program` 替代 `Final Execution Schema` 作为新总纲，不再合适。
-原因：Nop 的 Java loader / platform layer 已经承担了大量装配工作，前端仍应以 final-model runtime 为主定位。
-
-2. 用统一 `Binding` primitive 替代 `Value` / `Resource` / `Host Projection`，不再合适。
-原因：这会削弱 DSL 从“静态值 -> 表达式值 -> 匿名动态值 -> 具名动态值”这条渐进演化路径的可见性。
-
-3. 把 `SSR` / hydration 作为 primitive redesign 的主驱动力，不再合适。
-原因：在 Nop 的 Java 服务端前提下，这不是最优先的前端 core 设计约束。
-
-4. 把大量结构问题优先上升为 `Composition Boundary` primitive，不再合适。
-原因：`when` / `loop` / `dynamic-renderer` 本身已经构成更自然的 DSL 分层，没必要先统一为更重的总括原语。
-
-因此，原替代方案不应再被当成新的潜在 baseline，而应改写成：
-
-- 对当前基线的反思性分析
-- 只保留少数仍有价值的补强建议
-
-#### 结论四：原替代方案中仍然保留价值的部分，只剩窄边界补强
-
-在当前讨论结论下，仍然值得保留的点主要有：
-
-- `dynamic-renderer` 边界需要更清晰的窄定义
-- 多 surface / 多 runtime 边界仍值得更明确建模，但未必要上升为新 primitive
-- host projection 一侧的 patch / version feed 契约仍值得补充
-- `action` / `data-source` / `api` 共享执行底座仍然是正确方向
-- `Action` 的执行语义应明确承认是 DAG，而 authoring surface 继续保持渐进写法
-
-### 待澄清问题
-
-1. 是否现在就把 `docs/analysis/frontend-programming-model-staged-reactive-alternative.md` 改写为“已收缩的反思性分析”，明确撤回其中的大范围 primitive replacement 主张？
-2. 在 architecture 文档真正修改前，是否还需要在 discussion 中单独补一轮最小 action DAG 语义规则？
+1. å¯¹ `name + dataPath`ï¼Œä½ æ›´å€¾å‘äºŽï¼š`dataPath` æ˜¯åªè¯»æŠ•å½± / aliasï¼Œè¿˜æ˜¯å…è®¸å®ƒæˆä¸ºç¬¬äºŒä¸ªå®Œæ•´æ³¨å†Œè·¯å¾„ï¼Ÿ
+2. å¯¹åŒ¿ååŠ¨æ€å€¼ï¼Œä½ æ›´å€¾å‘äºŽå…ˆä½œä¸ºè§£é‡Šå±‚æ¦‚å¿µå­˜åœ¨ï¼Œè¿˜æ˜¯å¸Œæœ›å°½å¿«ç»™å‡ºæ˜Žç¡®çš„ DSL è¯­æ³•å½¢æ€ï¼Ÿ
+4. å¯¹ç»“æž„ DSLï¼Œä½ æ›´åå‘äºŽ `when` ä½œä¸ºæ™®é€šèŠ‚ç‚¹å­—æ®µã€`loop` ä½œä¸ºä¸“ç”¨èŠ‚ç‚¹ç±»åž‹ï¼Œè¿˜æ˜¯ä¸¤è€…éƒ½åšæˆ wrapper node ä»¥ä¾¿ç»Ÿä¸€ç¼–è¯‘ï¼Ÿ
 
 ---
 
-## 第 7 轮
+## ç¬¬ 8 è½®
 
-### 用户回答
+### ç”¨æˆ·å›žç­”
 
-用户进一步收敛了几个具体判断：
+ç”¨æˆ·è¿›ä¸€æ­¥ç¡®è®¤å¹¶è¡¥å……å¦‚ä¸‹ï¼š
 
-- `dataPath` 不应作为一个普遍存在的“任意路径发布机制”。对于一般变量命名，`name` 就足够了，根本没有必要使用 `dataPath`。
-- 真正常见的特殊情况只有一种：如果动态值是一个 `Map` / object，可能希望把结果合并到当前 scope 中。这时需要一个专门属性来表达“合并到当前 scope”的语义；如果 `dataPath` 这个名字不合适，可以另设一个更窄的属性。
-- `when` 和 `loop` 若考虑可视化设计，适合作为 wrap 节点；若考虑 DSL 自然性，则 `loop` 更像节点，而 `when` 更像类似 `visible` 的属性。
-- 需要评估 `when` 这个命名是否会和现有其他语义冲突。
-- `Action` 很容易扩展：
-  - 基本 action 是单步
-  - 通过 `when` 控制是否执行
-  - 通过 `then` 构成串行执行
-  - 通过 `onError` 引入错误处理
-  - 通过 `parallel` 引入并行子分支
-  - 并行分支结束后自然合并到 `then`
-- 因此从执行结构上说，这本身天然就是一个 `DAG`，不需要人为把 “DAG” 当成另一个遥远阶段才考虑。
+- å¯¹ `data-source` çš„ç‰¹æ®Šå‘å¸ƒè¯­ä¹‰ï¼Œé€‰æ‹© `mergeToScope: true`ã€‚
+- `when` åœ¨å†…éƒ¨å®žçŽ°æ—¶å¯ä»¥ lowering æˆä¸€ä¸ª wrap ç»“æž„ï¼›è¿™å±žäºŽç¼–è¯‘ / runtime å†…éƒ¨ç»„ç»‡é—®é¢˜ï¼Œä¸å¿…å¼ºè¿«å¤–éƒ¨ DSL ä¹Ÿå†™æˆ wrapper nodeã€‚
+- åœ¨è®°å½• discussion ä¹‹åŽï¼Œéœ€è¦æ ¹æ®å½“å‰è®¨è®ºç»“è®ºå›žå¤´ä¿®æ­£ `docs/analysis/2026-04-06-frontend-programming-model-staged-reactive-alternative.md`ï¼Œå¹¶é‡æ–°åˆ¤æ–­å…¶ä¸­åŽŸå…ˆæå‡ºçš„æ•´å¥—è®¾è®¡çŽ°åœ¨æ˜¯å¦è¿˜åˆé€‚ã€‚
 
-### AI 整理
+### AI æ•´ç†
 
-这一轮让几个此前还模糊的方向进一步收紧了：
+è¿™ä¸€è½®å®žé™…ä¸Šå®Œæˆäº†ä¸‰ä¸ªå…³é”®æ”¶å£ï¼š
 
-1. `data-source` authoring 形态应强烈偏向 `name`，并把“合并到当前 scope”压缩成一个单独的窄特例，而不是保留宽泛的 `dataPath`。
-2. `when` / `loop` 的外部 DSL 应优先服从自然表达；编译后是否统一为 wrapper node 是内部实现问题。
-3. 对 `Action`，重点不应是“未来是否升级到 DAG”，而应承认：一旦引入 `when`、`then`、`onError`、`parallel`，其执行图语义事实上已经是一个 DAG，只是 authoring surface 仍然可以保持渐进和直观。
+1. `data-source` çš„ authoring å½¢æ€æ­£å¼æ”¶æ•›ä¸º `name` ä¸ºä¸»ï¼Œ`mergeToScope: true` ä½œä¸ºå”¯ä¸€æ˜Žç¡®çš„ç‰¹æ®Šå‘å¸ƒæ‰©å±•ã€‚
+2. `when` çš„ DSL å½¢æ€ç»§ç»­ä¿æŒâ€œèŠ‚ç‚¹å±žæ€§â€æ›´è‡ªç„¶ï¼Œè€Œç¼–è¯‘åŽæ˜¯å¦è½¬æˆ wrapper æ˜¯å†…éƒ¨å®žçŽ°è‡ªç”±åº¦ã€‚
+3. éœ€è¦æŠŠå…ˆå‰æå‡ºçš„ staged-reactive alternative ä»Žâ€œæ½œåœ¨æ›¿ä»£ baselineâ€é‡æ–°é™æ ¼è¯„ä¼°ä¸ºâ€œåˆ†æžæ€§å¤‡é€‰â€ï¼Œåªä¿ç•™ä»ç„¶æœ‰ä»·å€¼çš„çª„ç»“è®ºã€‚
 
-### AI 分析
+### AI åˆ†æž
 
-#### 结论一：`dataPath` 最好退化为历史兼容字段，新 DSL 应以 `name` 为唯一正常路径
+#### ç»“è®ºä¸€ï¼š`mergeToScope: true` çŽ°åœ¨æ˜¯æ¯” `dataPath` æ›´åˆé€‚çš„å”¯ä¸€ç‰¹æ®Šå‘å¸ƒè¯­ä¹‰
 
-这一点我现在基本认同。
+åœ¨å‰å‡ è½®è®¨è®ºåŽï¼Œè¿™ä¸€ç‚¹å·²ç»è¶³å¤Ÿæ˜Žç¡®ï¼š
 
-如果按 DSL 渐进演化原则看：
+- æ–° DSL çš„æ­£å¸¸è·¯å¾„åº”å½“åªæœ‰ `name`
+- `name` åŒæ—¶æ‰¿æ‹…èµ„æºèº«ä»½ä¸Žé»˜è®¤æ³¨å†Œè·¯å¾„
+- `dataPath` ä¸å†é€‚åˆä½œä¸ºä¸»è®¾è®¡ç»§ç»­æ‰©å±•
 
-- 最简单的具名动态值写法应当只有 `name`
-- 作者无需再同时思考“身份”和“发布路径”两套概念
-- 复杂性只应在确实存在特殊需求时才显式出现
+å”¯ä¸€éœ€è¦å•ç‹¬ä¿ç•™çš„ç‰¹æ®Šæƒ…å†µæ˜¯ï¼š
 
-因此，更合理的方向是：
+- ç»“æžœæ˜¯ object / map
+- å¸Œæœ›æŠŠç»“æžœé¡¶å±‚å­—æ®µæµ…åˆå¹¶åˆ°å½“å‰ scope
 
-- `name` = 动态值身份
-- `name` = 默认注册路径
-- `dataPath` 不再作为推荐主路径，只保留兼容语义
+å› æ­¤ `mergeToScope: true` æ¯” `publishMode: 'merge-scope'` æ›´åˆé€‚ï¼Œå› ä¸ºï¼š
 
-这比继续把 `dataPath` 保持为通用路径映射能力更符合 DSL 的自然性。
+- å®ƒåªè¡¨è¾¾ä¸€ä¸ªéžå¸¸å…·ä½“çš„ç‰¹ä¾‹
+- å®ƒä¸ä¼šé‡æ–°å¼•å…¥ä¸€ä¸ªçœ‹ä¼¼å¯æ— é™æ‰©å±•çš„å‘å¸ƒæ¨¡å¼ä½“ç³»
+- å®ƒæ›´ç¬¦åˆâ€œç®€å• DSL ä¸ä¸ºæœªæ¥å‡æƒ³å¤æ‚åº¦é¢„ç•™è¿‡å¤šå½¢æ€â€çš„åŽŸåˆ™
 
-#### 结论二：特殊场景不应再依赖宽泛 `dataPath`，而应单独提供一个窄语义属性
+æŽ¨èè¯­ä¹‰åº”å›ºå®šä¸ºï¼š
 
-用户指出的真实特殊情况非常具体：
+1. `name` ä»ç„¶æ˜¯èµ„æºèº«ä»½
+2. é»˜è®¤ä»æ³¨å†Œ `${name}`
+3. `mergeToScope: true` æ—¶ï¼Œè‹¥ç»“æžœä¸º objectï¼Œåˆ™å…¶é¡¶å±‚å­—æ®µé¢å¤–æµ…åˆå¹¶è¿›å½“å‰ scope
+4. è¿™ä¸æ˜¯ç¬¬äºŒä¸ªç‹¬ç«‹æƒå¨å†™ç‚¹ï¼Œè€Œæ˜¯ä¸€æ¬¡é¢å¤–æŠ•å½±/çŒå…¥è¯­ä¹‰
 
-- 动态值结果是 object / map
-- 希望把结果的顶层字段并入当前 scope
+#### ç»“è®ºäºŒï¼š`when` çš„æ­£ç¡®åˆ†å±‚æ˜¯â€œå¤–éƒ¨å±žæ€§ + å†…éƒ¨ wrapper loweringâ€
 
-这不是“任意路径发布”问题，而是“是否把结果浅合并到当前 scope”的问题。
+è¿™ä¹Ÿæ˜¯ä¸€ä¸ªå¾ˆæ¸…æ™°çš„æ”¶å£ï¼š
 
-因此更合适的 DSL 不是保留一个过宽的 `dataPath`，而是给一个更窄、更可诊断的属性，例如：
+- DSL authoring ä¸Šï¼Œ`when` ç»§ç»­åšå±žæ€§æ›´è‡ªç„¶
+- ç¼–è¯‘å™¨ / runtime å†…éƒ¨å®Œå…¨å¯ä»¥æŠŠå®ƒ lowering æˆä¸€ä¸ª wrapper-like operator
+
+è¿™è¯´æ˜Žæ­¤å‰å›´ç»• `when` æ˜¯å¦å¿…é¡»æˆä¸ºç‹¬ç«‹ç»“æž„ primitive çš„äº‰è®ºï¼Œå…¶å®žæ··æ·†äº†ä¸¤å±‚ï¼š
+
+- DSL å½¢æ€
+- å†…éƒ¨æ‰§è¡Œå½¢æ€
+
+æ›´åˆç†çš„ç»“è®ºæ˜¯ï¼š
+
+- å¤–éƒ¨ DSL ä¼˜å…ˆè‡ªç„¶è¡¨è¾¾
+- å†…éƒ¨å®žçŽ°ä¼˜å…ˆç»Ÿä¸€ç¼–è¯‘
+
+æ‰€ä»¥ï¼Œ`when` è¿™ä¸ªåå­—å’Œå½¢æ€éƒ½å¯ä»¥ä¿ç•™ï¼Œåªè¦ç»§ç»­åšæŒï¼š
+
+- `visible` æŽ§åˆ¶æ˜¾ç¤º
+- `when` æŽ§åˆ¶æ¿€æ´» / ç»“æž„å­˜åœ¨æ€§ / ç”Ÿå‘½å‘¨æœŸ
+
+#### ç»“è®ºä¸‰ï¼šå…ˆå‰ staged-reactive alternative ä¸­â€œå¤§èŒƒå›´ primitive replacementâ€çš„éƒ¨åˆ†çŽ°åœ¨çœ‹èµ·æ¥å·²ç»ä¸åˆé€‚
+
+ç»è¿‡ç¬¬ 5 è‡³ç¬¬ 8 è½®è®¨è®ºï¼ŒåŽŸæ›¿ä»£æ–¹æ¡ˆé‡Œå‡ å—å¤§çš„æ”¹é€ çŽ°åœ¨éƒ½æ˜¾å¾—è¿‡å¤´äº†ï¼š
+
+1. ç”¨ `Compiled Program` æ›¿ä»£ `Final Execution Schema` ä½œä¸ºæ–°æ€»çº²ï¼Œä¸å†åˆé€‚ã€‚
+åŽŸå› ï¼šNop çš„ Java loader / platform layer å·²ç»æ‰¿æ‹…äº†å¤§é‡è£…é…å·¥ä½œï¼Œå‰ç«¯ä»åº”ä»¥ final-model runtime ä¸ºä¸»å®šä½ã€‚
+
+2. ç”¨ç»Ÿä¸€ `Binding` primitive æ›¿ä»£ `Value` / `Resource` / `Host Projection`ï¼Œä¸å†åˆé€‚ã€‚
+åŽŸå› ï¼šè¿™ä¼šå‰Šå¼± DSL ä»Žâ€œé™æ€å€¼ -> è¡¨è¾¾å¼å€¼ -> åŒ¿ååŠ¨æ€å€¼ -> å…·ååŠ¨æ€å€¼â€è¿™æ¡æ¸è¿›æ¼”åŒ–è·¯å¾„çš„å¯è§æ€§ã€‚
+
+3. æŠŠ `SSR` / hydration ä½œä¸º primitive redesign çš„ä¸»é©±åŠ¨åŠ›ï¼Œä¸å†åˆé€‚ã€‚
+åŽŸå› ï¼šåœ¨ Nop çš„ Java æœåŠ¡ç«¯å‰æä¸‹ï¼Œè¿™ä¸æ˜¯æœ€ä¼˜å…ˆçš„å‰ç«¯ core è®¾è®¡çº¦æŸã€‚
+
+4. æŠŠå¤§é‡ç»“æž„é—®é¢˜ä¼˜å…ˆä¸Šå‡ä¸º `Composition Boundary` primitiveï¼Œä¸å†åˆé€‚ã€‚
+åŽŸå› ï¼š`when` / `loop` / `dynamic-renderer` æœ¬èº«å·²ç»æž„æˆæ›´è‡ªç„¶çš„ DSL åˆ†å±‚ï¼Œæ²¡å¿…è¦å…ˆç»Ÿä¸€ä¸ºæ›´é‡çš„æ€»æ‹¬åŽŸè¯­ã€‚
+
+å› æ­¤ï¼ŒåŽŸæ›¿ä»£æ–¹æ¡ˆä¸åº”å†è¢«å½“æˆæ–°çš„æ½œåœ¨ baselineï¼Œè€Œåº”æ”¹å†™æˆï¼š
+
+- å¯¹å½“å‰åŸºçº¿çš„åæ€æ€§åˆ†æž
+- åªä¿ç•™å°‘æ•°ä»æœ‰ä»·å€¼çš„è¡¥å¼ºå»ºè®®
+
+#### ç»“è®ºå››ï¼šåŽŸæ›¿ä»£æ–¹æ¡ˆä¸­ä»ç„¶ä¿ç•™ä»·å€¼çš„éƒ¨åˆ†ï¼Œåªå‰©çª„è¾¹ç•Œè¡¥å¼º
+
+åœ¨å½“å‰è®¨è®ºç»“è®ºä¸‹ï¼Œä»ç„¶å€¼å¾—ä¿ç•™çš„ç‚¹ä¸»è¦æœ‰ï¼š
+
+- `dynamic-renderer` è¾¹ç•Œéœ€è¦æ›´æ¸…æ™°çš„çª„å®šä¹‰
+- å¤š surface / å¤š runtime è¾¹ç•Œä»å€¼å¾—æ›´æ˜Žç¡®å»ºæ¨¡ï¼Œä½†æœªå¿…è¦ä¸Šå‡ä¸ºæ–° primitive
+- host projection ä¸€ä¾§çš„ patch / version feed å¥‘çº¦ä»å€¼å¾—è¡¥å……
+- `action` / `data-source` / `api` å…±äº«æ‰§è¡Œåº•åº§ä»ç„¶æ˜¯æ­£ç¡®æ–¹å‘
+- `Action` çš„æ‰§è¡Œè¯­ä¹‰åº”æ˜Žç¡®æ‰¿è®¤æ˜¯ DAGï¼Œè€Œ authoring surface ç»§ç»­ä¿æŒæ¸è¿›å†™æ³•
+
+### å¾…æ¾„æ¸…é—®é¢˜
+
+1. æ˜¯å¦çŽ°åœ¨å°±æŠŠ `docs/analysis/2026-04-06-frontend-programming-model-staged-reactive-alternative.md` æ”¹å†™ä¸ºâ€œå·²æ”¶ç¼©çš„åæ€æ€§åˆ†æžâ€ï¼Œæ˜Žç¡®æ’¤å›žå…¶ä¸­çš„å¤§èŒƒå›´ primitive replacement ä¸»å¼ ï¼Ÿ
+2. åœ¨ architecture æ–‡æ¡£çœŸæ­£ä¿®æ”¹å‰ï¼Œæ˜¯å¦è¿˜éœ€è¦åœ¨ discussion ä¸­å•ç‹¬è¡¥ä¸€è½®æœ€å° action DAG è¯­ä¹‰è§„åˆ™ï¼Ÿ
+
+---
+
+## ç¬¬ 7 è½®
+
+### ç”¨æˆ·å›žç­”
+
+ç”¨æˆ·è¿›ä¸€æ­¥æ”¶æ•›äº†å‡ ä¸ªå…·ä½“åˆ¤æ–­ï¼š
+
+- `dataPath` ä¸åº”ä½œä¸ºä¸€ä¸ªæ™®éå­˜åœ¨çš„â€œä»»æ„è·¯å¾„å‘å¸ƒæœºåˆ¶â€ã€‚å¯¹äºŽä¸€èˆ¬å˜é‡å‘½åï¼Œ`name` å°±è¶³å¤Ÿäº†ï¼Œæ ¹æœ¬æ²¡æœ‰å¿…è¦ä½¿ç”¨ `dataPath`ã€‚
+- çœŸæ­£å¸¸è§çš„ç‰¹æ®Šæƒ…å†µåªæœ‰ä¸€ç§ï¼šå¦‚æžœåŠ¨æ€å€¼æ˜¯ä¸€ä¸ª `Map` / objectï¼Œå¯èƒ½å¸Œæœ›æŠŠç»“æžœåˆå¹¶åˆ°å½“å‰ scope ä¸­ã€‚è¿™æ—¶éœ€è¦ä¸€ä¸ªä¸“é—¨å±žæ€§æ¥è¡¨è¾¾â€œåˆå¹¶åˆ°å½“å‰ scopeâ€çš„è¯­ä¹‰ï¼›å¦‚æžœ `dataPath` è¿™ä¸ªåå­—ä¸åˆé€‚ï¼Œå¯ä»¥å¦è®¾ä¸€ä¸ªæ›´çª„çš„å±žæ€§ã€‚
+- `when` å’Œ `loop` è‹¥è€ƒè™‘å¯è§†åŒ–è®¾è®¡ï¼Œé€‚åˆä½œä¸º wrap èŠ‚ç‚¹ï¼›è‹¥è€ƒè™‘ DSL è‡ªç„¶æ€§ï¼Œåˆ™ `loop` æ›´åƒèŠ‚ç‚¹ï¼Œè€Œ `when` æ›´åƒç±»ä¼¼ `visible` çš„å±žæ€§ã€‚
+- éœ€è¦è¯„ä¼° `when` è¿™ä¸ªå‘½åæ˜¯å¦ä¼šå’ŒçŽ°æœ‰å…¶ä»–è¯­ä¹‰å†²çªã€‚
+- `Action` å¾ˆå®¹æ˜“æ‰©å±•ï¼š
+  - åŸºæœ¬ action æ˜¯å•æ­¥
+  - é€šè¿‡ `when` æŽ§åˆ¶æ˜¯å¦æ‰§è¡Œ
+  - é€šè¿‡ `then` æž„æˆä¸²è¡Œæ‰§è¡Œ
+  - é€šè¿‡ `onError` å¼•å…¥é”™è¯¯å¤„ç†
+  - é€šè¿‡ `parallel` å¼•å…¥å¹¶è¡Œå­åˆ†æ”¯
+  - å¹¶è¡Œåˆ†æ”¯ç»“æŸåŽè‡ªç„¶åˆå¹¶åˆ° `then`
+- å› æ­¤ä»Žæ‰§è¡Œç»“æž„ä¸Šè¯´ï¼Œè¿™æœ¬èº«å¤©ç„¶å°±æ˜¯ä¸€ä¸ª `DAG`ï¼Œä¸éœ€è¦äººä¸ºæŠŠ â€œDAGâ€ å½“æˆå¦ä¸€ä¸ªé¥è¿œé˜¶æ®µæ‰è€ƒè™‘ã€‚
+
+### AI æ•´ç†
+
+è¿™ä¸€è½®è®©å‡ ä¸ªæ­¤å‰è¿˜æ¨¡ç³Šçš„æ–¹å‘è¿›ä¸€æ­¥æ”¶ç´§äº†ï¼š
+
+1. `data-source` authoring å½¢æ€åº”å¼ºçƒˆåå‘ `name`ï¼Œå¹¶æŠŠâ€œåˆå¹¶åˆ°å½“å‰ scopeâ€åŽ‹ç¼©æˆä¸€ä¸ªå•ç‹¬çš„çª„ç‰¹ä¾‹ï¼Œè€Œä¸æ˜¯ä¿ç•™å®½æ³›çš„ `dataPath`ã€‚
+2. `when` / `loop` çš„å¤–éƒ¨ DSL åº”ä¼˜å…ˆæœä»Žè‡ªç„¶è¡¨è¾¾ï¼›ç¼–è¯‘åŽæ˜¯å¦ç»Ÿä¸€ä¸º wrapper node æ˜¯å†…éƒ¨å®žçŽ°é—®é¢˜ã€‚
+3. å¯¹ `Action`ï¼Œé‡ç‚¹ä¸åº”æ˜¯â€œæœªæ¥æ˜¯å¦å‡çº§åˆ° DAGâ€ï¼Œè€Œåº”æ‰¿è®¤ï¼šä¸€æ—¦å¼•å…¥ `when`ã€`then`ã€`onError`ã€`parallel`ï¼Œå…¶æ‰§è¡Œå›¾è¯­ä¹‰äº‹å®žä¸Šå·²ç»æ˜¯ä¸€ä¸ª DAGï¼Œåªæ˜¯ authoring surface ä»ç„¶å¯ä»¥ä¿æŒæ¸è¿›å’Œç›´è§‚ã€‚
+
+### AI åˆ†æž
+
+#### ç»“è®ºä¸€ï¼š`dataPath` æœ€å¥½é€€åŒ–ä¸ºåŽ†å²å…¼å®¹å­—æ®µï¼Œæ–° DSL åº”ä»¥ `name` ä¸ºå”¯ä¸€æ­£å¸¸è·¯å¾„
+
+è¿™ä¸€ç‚¹æˆ‘çŽ°åœ¨åŸºæœ¬è®¤åŒã€‚
+
+å¦‚æžœæŒ‰ DSL æ¸è¿›æ¼”åŒ–åŽŸåˆ™çœ‹ï¼š
+
+- æœ€ç®€å•çš„å…·ååŠ¨æ€å€¼å†™æ³•åº”å½“åªæœ‰ `name`
+- ä½œè€…æ— éœ€å†åŒæ—¶æ€è€ƒâ€œèº«ä»½â€å’Œâ€œå‘å¸ƒè·¯å¾„â€ä¸¤å¥—æ¦‚å¿µ
+- å¤æ‚æ€§åªåº”åœ¨ç¡®å®žå­˜åœ¨ç‰¹æ®Šéœ€æ±‚æ—¶æ‰æ˜¾å¼å‡ºçŽ°
+
+å› æ­¤ï¼Œæ›´åˆç†çš„æ–¹å‘æ˜¯ï¼š
+
+- `name` = åŠ¨æ€å€¼èº«ä»½
+- `name` = é»˜è®¤æ³¨å†Œè·¯å¾„
+- `dataPath` ä¸å†ä½œä¸ºæŽ¨èä¸»è·¯å¾„ï¼Œåªä¿ç•™å…¼å®¹è¯­ä¹‰
+
+è¿™æ¯”ç»§ç»­æŠŠ `dataPath` ä¿æŒä¸ºé€šç”¨è·¯å¾„æ˜ å°„èƒ½åŠ›æ›´ç¬¦åˆ DSL çš„è‡ªç„¶æ€§ã€‚
+
+#### ç»“è®ºäºŒï¼šç‰¹æ®Šåœºæ™¯ä¸åº”å†ä¾èµ–å®½æ³› `dataPath`ï¼Œè€Œåº”å•ç‹¬æä¾›ä¸€ä¸ªçª„è¯­ä¹‰å±žæ€§
+
+ç”¨æˆ·æŒ‡å‡ºçš„çœŸå®žç‰¹æ®Šæƒ…å†µéžå¸¸å…·ä½“ï¼š
+
+- åŠ¨æ€å€¼ç»“æžœæ˜¯ object / map
+- å¸Œæœ›æŠŠç»“æžœçš„é¡¶å±‚å­—æ®µå¹¶å…¥å½“å‰ scope
+
+è¿™ä¸æ˜¯â€œä»»æ„è·¯å¾„å‘å¸ƒâ€é—®é¢˜ï¼Œè€Œæ˜¯â€œæ˜¯å¦æŠŠç»“æžœæµ…åˆå¹¶åˆ°å½“å‰ scopeâ€çš„é—®é¢˜ã€‚
+
+å› æ­¤æ›´åˆé€‚çš„ DSL ä¸æ˜¯ä¿ç•™ä¸€ä¸ªè¿‡å®½çš„ `dataPath`ï¼Œè€Œæ˜¯ç»™ä¸€ä¸ªæ›´çª„ã€æ›´å¯è¯Šæ–­çš„å±žæ€§ï¼Œä¾‹å¦‚ï¼š
 
 - `mergeToScope: true`
-- 或 `publishMode: 'named' | 'merge-scope'`
+- æˆ– `publishMode: 'named' | 'merge-scope'`
 
-我更倾向于后一种，因为它更便于未来扩展同时仍保持语义集中，例如：
+æˆ‘æ›´å€¾å‘äºŽåŽä¸€ç§ï¼Œå› ä¸ºå®ƒæ›´ä¾¿äºŽæœªæ¥æ‰©å±•åŒæ—¶ä»ä¿æŒè¯­ä¹‰é›†ä¸­ï¼Œä¾‹å¦‚ï¼š
 
 ```json
 {
@@ -921,98 +921,99 @@ Java 服务端天然更适合承接：
 }
 ```
 
-语义固定为：
+è¯­ä¹‰å›ºå®šä¸ºï¼š
 
-- `name` 仍然是资源身份
-- 默认仍然存在具名注册 `${userProfile}`
-- `merge-scope` 只是把 object 顶层字段额外浅合并进当前 scope
-- 这是一种特殊发布策略，不是第二个独立权威根
+- `name` ä»ç„¶æ˜¯èµ„æºèº«ä»½
+- é»˜è®¤ä»ç„¶å­˜åœ¨å…·åæ³¨å†Œ `${userProfile}`
+- `merge-scope` åªæ˜¯æŠŠ object é¡¶å±‚å­—æ®µé¢å¤–æµ…åˆå¹¶è¿›å½“å‰ scope
+- è¿™æ˜¯ä¸€ç§ç‰¹æ®Šå‘å¸ƒç­–ç•¥ï¼Œä¸æ˜¯ç¬¬äºŒä¸ªç‹¬ç«‹æƒå¨æ ¹
 
-如果担心 authoring 太重，也可以用更直接的 `mergeToScope: true`。两者中我略偏向 `mergeToScope: true`，因为它最直观，也最符合“只覆盖一个特殊情况”的目标。
+å¦‚æžœæ‹…å¿ƒ authoring å¤ªé‡ï¼Œä¹Ÿå¯ä»¥ç”¨æ›´ç›´æŽ¥çš„ `mergeToScope: true`ã€‚ä¸¤è€…ä¸­æˆ‘ç•¥åå‘ `mergeToScope: true`ï¼Œå› ä¸ºå®ƒæœ€ç›´è§‚ï¼Œä¹Ÿæœ€ç¬¦åˆâ€œåªè¦†ç›–ä¸€ä¸ªç‰¹æ®Šæƒ…å†µâ€çš„ç›®æ ‡ã€‚
 
-#### 结论三：`when` 这个命名可以保留，但必须把它定义成统一的 guard 概念，并和 `visible` 明确分层
+#### ç»“è®ºä¸‰ï¼š`when` è¿™ä¸ªå‘½åå¯ä»¥ä¿ç•™ï¼Œä½†å¿…é¡»æŠŠå®ƒå®šä¹‰æˆç»Ÿä¸€çš„ guard æ¦‚å¿µï¼Œå¹¶å’Œ `visible` æ˜Žç¡®åˆ†å±‚
 
-关于命名冲突，我的建议是：
+å…³äºŽå‘½åå†²çªï¼Œæˆ‘çš„å»ºè®®æ˜¯ï¼š
 
-- 保留 `when`
-- 不要改成 `visibleWhen`、`renderWhen`、`mountWhen` 这一类更长名字
+- ä¿ç•™ `when`
+- ä¸è¦æ”¹æˆ `visibleWhen`ã€`renderWhen`ã€`mountWhen` è¿™ä¸€ç±»æ›´é•¿åå­—
 
-原因不是因为它绝对不会冲突，而是因为它最容易形成 DSL 级统一语义：
+åŽŸå› ä¸æ˜¯å› ä¸ºå®ƒç»å¯¹ä¸ä¼šå†²çªï¼Œè€Œæ˜¯å› ä¸ºå®ƒæœ€å®¹æ˜“å½¢æˆ DSL çº§ç»Ÿä¸€è¯­ä¹‰ï¼š
 
-- 节点上的 `when`：该节点是否激活
-- action 上的 `when`：该 step 是否执行
-- reaction / effect 上的 `when`：该观察结果是否允许触发
+- èŠ‚ç‚¹ä¸Šçš„ `when`ï¼šè¯¥èŠ‚ç‚¹æ˜¯å¦æ¿€æ´»
+- action ä¸Šçš„ `when`ï¼šè¯¥ step æ˜¯å¦æ‰§è¡Œ
+- reaction / effect ä¸Šçš„ `when`ï¼šè¯¥è§‚å¯Ÿç»“æžœæ˜¯å¦å…è®¸è§¦å‘
 
-这样 `when` 在整个 DSL 中始终表达的是同一件事：
+è¿™æ · `when` åœ¨æ•´ä¸ª DSL ä¸­å§‹ç»ˆè¡¨è¾¾çš„æ˜¯åŒä¸€ä»¶äº‹ï¼š
 
 > guard / activation condition
 
-真正需要严格区分的是：
+çœŸæ­£éœ€è¦ä¸¥æ ¼åŒºåˆ†çš„æ˜¯ï¼š
 
-- `visible`：仅影响显示，不改变节点身份和生命周期
-- `when`：影响节点是否存在 / 是否激活，可能导致挂载、卸载、注册、dispose
+- `visible`ï¼šä»…å½±å“æ˜¾ç¤ºï¼Œä¸æ”¹å˜èŠ‚ç‚¹èº«ä»½å’Œç”Ÿå‘½å‘¨æœŸ
+- `when`ï¼šå½±å“èŠ‚ç‚¹æ˜¯å¦å­˜åœ¨ / æ˜¯å¦æ¿€æ´»ï¼Œå¯èƒ½å¯¼è‡´æŒ‚è½½ã€å¸è½½ã€æ³¨å†Œã€dispose
 
-所以问题不在于 `when` 这个词能不能用，而在于文档必须把 `when` 与 `visible` 的生命周期语义明确切开。
+æ‰€ä»¥é—®é¢˜ä¸åœ¨äºŽ `when` è¿™ä¸ªè¯èƒ½ä¸èƒ½ç”¨ï¼Œè€Œåœ¨äºŽæ–‡æ¡£å¿…é¡»æŠŠ `when` ä¸Ž `visible` çš„ç”Ÿå‘½å‘¨æœŸè¯­ä¹‰æ˜Žç¡®åˆ‡å¼€ã€‚
 
-#### 结论四：外部 DSL 上，`loop` 更适合做节点，`when` 更适合做属性；编译后可统一降成 wrapper
+#### ç»“è®ºå››ï¼šå¤–éƒ¨ DSL ä¸Šï¼Œ`loop` æ›´é€‚åˆåšèŠ‚ç‚¹ï¼Œ`when` æ›´é€‚åˆåšå±žæ€§ï¼›ç¼–è¯‘åŽå¯ç»Ÿä¸€é™æˆ wrapper
 
-用户给出的区分我认同。
+ç”¨æˆ·ç»™å‡ºçš„åŒºåˆ†æˆ‘è®¤åŒã€‚
 
-如果从 DSL 自然性看：
+å¦‚æžœä»Ž DSL è‡ªç„¶æ€§çœ‹ï¼š
 
-- `when` 更像给现有节点加 guard，因此适合做属性
-- `loop` 会引入 `item` / `index` / `key` / `empty` / child scope 等结构语义，因此更适合做节点
+- `when` æ›´åƒç»™çŽ°æœ‰èŠ‚ç‚¹åŠ  guardï¼Œå› æ­¤é€‚åˆåšå±žæ€§
+- `loop` ä¼šå¼•å…¥ `item` / `index` / `key` / `empty` / child scope ç­‰ç»“æž„è¯­ä¹‰ï¼Œå› æ­¤æ›´é€‚åˆåšèŠ‚ç‚¹
 
-这意味着最自然的 authoring shape 是：
+è¿™æ„å‘³ç€æœ€è‡ªç„¶çš„ authoring shape æ˜¯ï¼š
 
-- `when` 作为普通节点字段
-- `type: 'loop'` 作为专用结构节点
+- `when` ä½œä¸ºæ™®é€šèŠ‚ç‚¹å­—æ®µ
+- `type: 'loop'` ä½œä¸ºä¸“ç”¨ç»“æž„èŠ‚ç‚¹
 
-而在编译器内部：
+è€Œåœ¨ç¼–è¯‘å™¨å†…éƒ¨ï¼š
 
-- 完全可以把两者都 lowering 成 wrapper-like structural operators
+- å®Œå…¨å¯ä»¥æŠŠä¸¤è€…éƒ½ lowering æˆ wrapper-like structural operators
 
-这样可视化设计器和 runtime 实现都能获益，但不会把 authoring DSL 反向拉得不自然。
+è¿™æ ·å¯è§†åŒ–è®¾è®¡å™¨å’Œ runtime å®žçŽ°éƒ½èƒ½èŽ·ç›Šï¼Œä½†ä¸ä¼šæŠŠ authoring DSL åå‘æ‹‰å¾—ä¸è‡ªç„¶ã€‚
 
-#### 结论五：`Action` 不是“未来可能升级成 DAG”，而是现在这种递进式语法天然就已经是 DAG
+#### ç»“è®ºäº”ï¼š`Action` ä¸æ˜¯â€œæœªæ¥å¯èƒ½å‡çº§æˆ DAGâ€ï¼Œè€Œæ˜¯çŽ°åœ¨è¿™ç§é€’è¿›å¼è¯­æ³•å¤©ç„¶å°±å·²ç»æ˜¯ DAG
 
-这一点是本轮最重要的修正。
+è¿™ä¸€ç‚¹æ˜¯æœ¬è½®æœ€é‡è¦çš„ä¿®æ­£ã€‚
 
-此前说“先 sequence，再 parallel，以后有压力再提升到 DAG”是不准确的，因为：
+æ­¤å‰è¯´â€œå…ˆ sequenceï¼Œå† parallelï¼Œä»¥åŽæœ‰åŽ‹åŠ›å†æå‡åˆ° DAGâ€æ˜¯ä¸å‡†ç¡®çš„ï¼Œå› ä¸ºï¼š
 
-- 单步 action 是一个节点
-- `when` 是节点 guard
-- `then` 是成功边
-- `onError` 是失败边
-- `parallel` 是一个 fan-out 聚合节点
-- `parallel` 结束后继续流入 `then`
+- å•æ­¥ action æ˜¯ä¸€ä¸ªèŠ‚ç‚¹
+- `when` æ˜¯èŠ‚ç‚¹ guard
+- `then` æ˜¯æˆåŠŸè¾¹
+- `onError` æ˜¯å¤±è´¥è¾¹
+- `parallel` æ˜¯ä¸€ä¸ª fan-out èšåˆèŠ‚ç‚¹
+- `parallel` ç»“æŸåŽç»§ç»­æµå…¥ `then`
 
-从执行图角度，这已经天然构成了一个 DAG。
+ä»Žæ‰§è¡Œå›¾è§’åº¦ï¼Œè¿™å·²ç»å¤©ç„¶æž„æˆäº†ä¸€ä¸ª DAGã€‚
 
-所以更准确的表述应当是：
+æ‰€ä»¥æ›´å‡†ç¡®çš„è¡¨è¿°åº”å½“æ˜¯ï¼š
 
-- DSL authoring surface 可以保持渐进和简单
-- 但 runtime / semantics 层应当明确承认它的执行模型本质上是 DAG
+- DSL authoring surface å¯ä»¥ä¿æŒæ¸è¿›å’Œç®€å•
+- ä½† runtime / semantics å±‚åº”å½“æ˜Žç¡®æ‰¿è®¤å®ƒçš„æ‰§è¡Œæ¨¡åž‹æœ¬è´¨ä¸Šæ˜¯ DAG
 
-这不是要求立刻引入复杂的显式 `steps + dependsOn` authoring 语法；而是要求文档不要把 DAG 说成一个遥远的未来阶段，仿佛只有显式图语法才算 DAG。
+è¿™ä¸æ˜¯è¦æ±‚ç«‹åˆ»å¼•å…¥å¤æ‚çš„æ˜¾å¼ `steps + dependsOn` authoring è¯­æ³•ï¼›è€Œæ˜¯è¦æ±‚æ–‡æ¡£ä¸è¦æŠŠ DAG è¯´æˆä¸€ä¸ªé¥è¿œçš„æœªæ¥é˜¶æ®µï¼Œä»¿ä½›åªæœ‰æ˜¾å¼å›¾è¯­æ³•æ‰ç®— DAGã€‚
 
-#### 结论六：更好的分层方式是“DAG execution semantics + progressive authoring surface”
+#### ç»“è®ºå…­ï¼šæ›´å¥½çš„åˆ†å±‚æ–¹å¼æ˜¯â€œDAG execution semantics + progressive authoring surfaceâ€
 
-结合这一轮和前一轮，`Action` 更合理的最终判断应当是：
+ç»“åˆè¿™ä¸€è½®å’Œå‰ä¸€è½®ï¼Œ`Action` æ›´åˆç†çš„æœ€ç»ˆåˆ¤æ–­åº”å½“æ˜¯ï¼š
 
-- authoring surface 保持渐进：单步、`when`、`then`、`onError`、`parallel`
-- runtime execution semantics 明确认定为 DAG
-- `ActionScope` / `Capability` 继续只解决 authority lookup，不吞掉 action graph semantics
+- authoring surface ä¿æŒæ¸è¿›ï¼šå•æ­¥ã€`when`ã€`then`ã€`onError`ã€`parallel`
+- runtime execution semantics æ˜Žç¡®è®¤å®šä¸º DAG
+- `ActionScope` / `Capability` ç»§ç»­åªè§£å†³ authority lookupï¼Œä¸åžæŽ‰ action graph semantics
 
-这样有几个好处：
+è¿™æ ·æœ‰å‡ ä¸ªå¥½å¤„ï¼š
 
-- 对 DSL 作者，仍然是直观写法，不必一开始学习图语言
-- 对 runtime，实现上可以统一处理调度、结果归并、错误传播、取消、超时、监控
-- 对后续扩展，如果真的需要显式步骤图，只是 authoring 上层新增一种更显式写法，而不是语义基础重做
+- å¯¹ DSL ä½œè€…ï¼Œä»ç„¶æ˜¯ç›´è§‚å†™æ³•ï¼Œä¸å¿…ä¸€å¼€å§‹å­¦ä¹ å›¾è¯­è¨€
+- å¯¹ runtimeï¼Œå®žçŽ°ä¸Šå¯ä»¥ç»Ÿä¸€å¤„ç†è°ƒåº¦ã€ç»“æžœå½’å¹¶ã€é”™è¯¯ä¼ æ’­ã€å–æ¶ˆã€è¶…æ—¶ã€ç›‘æŽ§
+- å¯¹åŽç»­æ‰©å±•ï¼Œå¦‚æžœçœŸçš„éœ€è¦æ˜¾å¼æ­¥éª¤å›¾ï¼Œåªæ˜¯ authoring ä¸Šå±‚æ–°å¢žä¸€ç§æ›´æ˜¾å¼å†™æ³•ï¼Œè€Œä¸æ˜¯è¯­ä¹‰åŸºç¡€é‡åš
 
-### 待澄清问题
+### å¾…æ¾„æ¸…é—®é¢˜
 
-1. 对 `data-source` 的特殊发布语义，你更倾向于 `mergeToScope: true` 这种直接字段，还是 `publishMode: 'merge-scope'` 这种更可扩展但稍重的写法？
-2. 对 `when`，你是否同意把它定义为统一 guard 概念，并明确与 `visible` 做生命周期级别的区分？
-3. 对 `Action`，下一步是否应该在讨论层先明确一份“DAG 语义但渐进 authoring”的最小执行规则，而不是继续停留在字段直觉层？
-3. 对结构 DSL，你更偏向于 `when` 作为普通节点字段、`loop` 作为专用节点类型，还是两者都做成 wrapper node 以便统一编译？
+1. å¯¹ `data-source` çš„ç‰¹æ®Šå‘å¸ƒè¯­ä¹‰ï¼Œä½ æ›´å€¾å‘äºŽ `mergeToScope: true` è¿™ç§ç›´æŽ¥å­—æ®µï¼Œè¿˜æ˜¯ `publishMode: 'merge-scope'` è¿™ç§æ›´å¯æ‰©å±•ä½†ç¨é‡çš„å†™æ³•ï¼Ÿ
+2. å¯¹ `when`ï¼Œä½ æ˜¯å¦åŒæ„æŠŠå®ƒå®šä¹‰ä¸ºç»Ÿä¸€ guard æ¦‚å¿µï¼Œå¹¶æ˜Žç¡®ä¸Ž `visible` åšç”Ÿå‘½å‘¨æœŸçº§åˆ«çš„åŒºåˆ†ï¼Ÿ
+3. å¯¹ `Action`ï¼Œä¸‹ä¸€æ­¥æ˜¯å¦åº”è¯¥åœ¨è®¨è®ºå±‚å…ˆæ˜Žç¡®ä¸€ä»½â€œDAG è¯­ä¹‰ä½†æ¸è¿› authoringâ€çš„æœ€å°æ‰§è¡Œè§„åˆ™ï¼Œè€Œä¸æ˜¯ç»§ç»­åœç•™åœ¨å­—æ®µç›´è§‰å±‚ï¼Ÿ
+3. å¯¹ç»“æž„ DSLï¼Œä½ æ›´åå‘äºŽ `when` ä½œä¸ºæ™®é€šèŠ‚ç‚¹å­—æ®µã€`loop` ä½œä¸ºä¸“ç”¨èŠ‚ç‚¹ç±»åž‹ï¼Œè¿˜æ˜¯ä¸¤è€…éƒ½åšæˆ wrapper node ä»¥ä¾¿ç»Ÿä¸€ç¼–è¯‘ï¼Ÿ
+

@@ -1,65 +1,65 @@
-# Plan 22: Node Tab 增强 — 元素检查与 Store/Scope 数据展示
+﻿# Plan 22: Node Tab å¢žå¼º â€” å…ƒç´ æ£€æŸ¥ä¸Ž Store/Scope æ•°æ®å±•ç¤º
 
 > Plan Status: completed
 > Last Reviewed: 2026-04-02
 
 
-> **Implementation Status: ✅ COMPLETED**
+> **Implementation Status: âœ… COMPLETED**
 > All 5 phases implemented: `buildInspectResult()` now fills `formState`/`scopeData` from `handle.capabilities.store` and `tagName`/`className` from the DOM element. Node Tab shows a full Component Inspector panel with handle info, Form State tabs (Values/Errors/Meta), Scope Data viewer, and Expression Evaluator. Inspect mode shows hint text and supports Esc to cancel. New CSS styles for `ndbg-inspect-*` classes. 3 new tests in `controller-inspect.test.ts` verify formState filling and DOM info extraction.
 >
 > This status was verified against the codebase on 2026-03-31.
 
-> 制定日期: 2026-03-30
-> 基于: `docs/analysis/framework-debugger-design.md` §10.4 Node / §12.5 DOM cid 反查机制
-> 参考: `~/sources/amis/packages/amis-core/src/utils/debug.tsx`
-> 状态: 已完成
+> åˆ¶å®šæ—¥æœŸ: 2026-03-30
+> åŸºäºŽ: `docs/analysis/2026-03-21-framework-debugger-design.md` Â§10.4 Node / Â§12.5 DOM cid åæŸ¥æœºåˆ¶
+> å‚è€ƒ: `~/sources/amis/packages/amis-core/src/utils/debug.tsx`
+> çŠ¶æ€: å·²å®Œæˆ
 
 ---
 
-## 1. 现状
+## 1. çŽ°çŠ¶
 
-### 1.1 已有的基础设施
+### 1.1 å·²æœ‰çš„åŸºç¡€è®¾æ–½
 
-| 能力 | 状态 | 文件位置 |
+| èƒ½åŠ› | çŠ¶æ€ | æ–‡ä»¶ä½ç½® |
 |------|------|----------|
-| `data-cid` DOM 注入 | ✅ | `flux-react/src/node-renderer.tsx` L312-318, `flux-react/src/field-frame.tsx` |
-| `ComponentHandleRegistry.handlesByCid` | ✅ | `flux-runtime/src/component-handle-registry.ts` |
-| `inspectByCid(cid)` API | ✅ | `nop-debugger/src/controller.ts` L106-112 |
-| `inspectByElement(el)` API | ✅ | `nop-debugger/src/controller.ts` L114-121 |
-| `NopComponentInspectResult` 类型 | ✅ | `nop-debugger/src/types.ts` L216-231 |
-| `setComponentRegistry()` 注入 | ✅ | `nop-debugger/src/controller.ts` L298 |
-| Inspect 模式开关 | ✅ | `panel.tsx` — `inspectMode` state |
-| Hover overlay 创建 | ✅ | `panel.tsx` — `hoverOverlayRef`, CSS `.nop-debugger-overlay--hover` |
-| Active overlay 创建 | ✅ | `panel.tsx` — `activeOverlayRef`, CSS `.nop-debugger-overlay--active` |
-| mousemove 全局监听 | ✅ | `panel.tsx` L1119-1121 — 找最近 `[data-cid]` |
-| click 全局监听 | ✅ | `panel.tsx` L1124-1134 — 选中元素, 关闭 inspect 模式 |
-| Scan 按钮扫描组件树 | ✅ | `panel.tsx` L1144-1164 |
-| 组件树列表 | ✅ | `panel.tsx` L1539-1558 — 树形展示 `[data-cid]` 元素 |
-| Inspect 模式按钮 | ⚠️ | 头部有 inspect 图标按钮但功能不完整 |
+| `data-cid` DOM æ³¨å…¥ | âœ… | `flux-react/src/node-renderer.tsx` L312-318, `flux-react/src/field-frame.tsx` |
+| `ComponentHandleRegistry.handlesByCid` | âœ… | `flux-runtime/src/component-handle-registry.ts` |
+| `inspectByCid(cid)` API | âœ… | `nop-debugger/src/controller.ts` L106-112 |
+| `inspectByElement(el)` API | âœ… | `nop-debugger/src/controller.ts` L114-121 |
+| `NopComponentInspectResult` ç±»åž‹ | âœ… | `nop-debugger/src/types.ts` L216-231 |
+| `setComponentRegistry()` æ³¨å…¥ | âœ… | `nop-debugger/src/controller.ts` L298 |
+| Inspect æ¨¡å¼å¼€å…³ | âœ… | `panel.tsx` â€” `inspectMode` state |
+| Hover overlay åˆ›å»º | âœ… | `panel.tsx` â€” `hoverOverlayRef`, CSS `.nop-debugger-overlay--hover` |
+| Active overlay åˆ›å»º | âœ… | `panel.tsx` â€” `activeOverlayRef`, CSS `.nop-debugger-overlay--active` |
+| mousemove å…¨å±€ç›‘å¬ | âœ… | `panel.tsx` L1119-1121 â€” æ‰¾æœ€è¿‘ `[data-cid]` |
+| click å…¨å±€ç›‘å¬ | âœ… | `panel.tsx` L1124-1134 â€” é€‰ä¸­å…ƒç´ , å…³é—­ inspect æ¨¡å¼ |
+| Scan æŒ‰é’®æ‰«æç»„ä»¶æ ‘ | âœ… | `panel.tsx` L1144-1164 |
+| ç»„ä»¶æ ‘åˆ—è¡¨ | âœ… | `panel.tsx` L1539-1558 â€” æ ‘å½¢å±•ç¤º `[data-cid]` å…ƒç´  |
+| Inspect æ¨¡å¼æŒ‰é’® | âš ï¸ | å¤´éƒ¨æœ‰ inspect å›¾æ ‡æŒ‰é’®ä½†åŠŸèƒ½ä¸å®Œæ•´ |
 
-### 1.2 缺失的关键功能
+### 1.2 ç¼ºå¤±çš„å…³é”®åŠŸèƒ½
 
-1. **选中元素后没有展示 store 数据** — `selectedElement` 只显示 `data-cid` 和 `tagName`，从未调用 `inspectByCid()` 获取 formState/scopeData
-2. **没有 scope chain 可视化** — AMIS 用 Data Level-0/Level-1/... 展示数据域链，我们完全没有
-3. **没有表达式求值输入框** — AMIS 底部有输入框可对选中组件的 data 上下文执行表达式
-4. **Node tab 缺少 Inspect 入口提示** — 进入 inspect 模式后页面没有"Select an element"的提示文案
-5. **inspectByCid 返回数据不完整** — `buildInspectResult()` 没有填充 `formState` 和 `scopeData`（类型定义有，但构建逻辑没有实现）
+1. **é€‰ä¸­å…ƒç´ åŽæ²¡æœ‰å±•ç¤º store æ•°æ®** â€” `selectedElement` åªæ˜¾ç¤º `data-cid` å’Œ `tagName`ï¼Œä»Žæœªè°ƒç”¨ `inspectByCid()` èŽ·å– formState/scopeData
+2. **æ²¡æœ‰ scope chain å¯è§†åŒ–** â€” AMIS ç”¨ Data Level-0/Level-1/... å±•ç¤ºæ•°æ®åŸŸé“¾ï¼Œæˆ‘ä»¬å®Œå…¨æ²¡æœ‰
+3. **æ²¡æœ‰è¡¨è¾¾å¼æ±‚å€¼è¾“å…¥æ¡†** â€” AMIS åº•éƒ¨æœ‰è¾“å…¥æ¡†å¯å¯¹é€‰ä¸­ç»„ä»¶çš„ data ä¸Šä¸‹æ–‡æ‰§è¡Œè¡¨è¾¾å¼
+4. **Node tab ç¼ºå°‘ Inspect å…¥å£æç¤º** â€” è¿›å…¥ inspect æ¨¡å¼åŽé¡µé¢æ²¡æœ‰"Select an element"çš„æç¤ºæ–‡æ¡ˆ
+5. **inspectByCid è¿”å›žæ•°æ®ä¸å®Œæ•´** â€” `buildInspectResult()` æ²¡æœ‰å¡«å…… `formState` å’Œ `scopeData`ï¼ˆç±»åž‹å®šä¹‰æœ‰ï¼Œä½†æž„å»ºé€»è¾‘æ²¡æœ‰å®žçŽ°ï¼‰
 
-### 1.3 AMIS 对比参考
+### 1.3 AMIS å¯¹æ¯”å‚è€ƒ
 
-AMIS debugger (`debug.tsx`) 的核心流程:
+AMIS debugger (`debug.tsx`) çš„æ ¸å¿ƒæµç¨‹:
 
 ```
-1. enableDebug() → 挂载面板 + 注册全局 mousemove/click
-2. handleMouseMove() → 找 [data-debug-id] → store.hoverId = id → autorun 更新蓝色 overlay
-3. handleMouseclick() → 找 [data-debug-id] → store.activeId = id → autorun 更新绿色 overlay
-4. AMISDebug 组件 → 读取 ComponentInfo[activeId]
-   → component.props.data → 通过原型链向上遍历，构建 scope chain
-   → 展示 Data Level-0 (自身数据), Level-1 (父级数据), ...
-5. 底部输入框 → 对选中组件的 data 上下文执行表达式
+1. enableDebug() â†’ æŒ‚è½½é¢æ¿ + æ³¨å†Œå…¨å±€ mousemove/click
+2. handleMouseMove() â†’ æ‰¾ [data-debug-id] â†’ store.hoverId = id â†’ autorun æ›´æ–°è“è‰² overlay
+3. handleMouseclick() â†’ æ‰¾ [data-debug-id] â†’ store.activeId = id â†’ autorun æ›´æ–°ç»¿è‰² overlay
+4. AMISDebug ç»„ä»¶ â†’ è¯»å– ComponentInfo[activeId]
+   â†’ component.props.data â†’ é€šè¿‡åŽŸåž‹é“¾å‘ä¸ŠéåŽ†ï¼Œæž„å»º scope chain
+   â†’ å±•ç¤º Data Level-0 (è‡ªèº«æ•°æ®), Level-1 (çˆ¶çº§æ•°æ®), ...
+5. åº•éƒ¨è¾“å…¥æ¡† â†’ å¯¹é€‰ä¸­ç»„ä»¶çš„ data ä¸Šä¸‹æ–‡æ‰§è¡Œè¡¨è¾¾å¼
 ```
 
-AMIS 的数据域链获取方式:
+AMIS çš„æ•°æ®åŸŸé“¾èŽ·å–æ–¹å¼:
 ```typescript
 let start = activeComponentInspect?.component?.props?.data || {};
 const stacks = [start];
@@ -72,32 +72,32 @@ while (Object.getPrototypeOf(start) !== Object.prototype) {
 
 ---
 
-## 2. 目标
+## 2. ç›®æ ‡
 
-增强 Node tab，使其成为完整的组件检查器:
+å¢žå¼º Node tabï¼Œä½¿å…¶æˆä¸ºå®Œæ•´çš„ç»„ä»¶æ£€æŸ¥å™¨:
 
-1. 点击页面元素 → 显示该组件的完整 store 数据
-2. 可视化 scope chain（当前 scope + 所有父 scope 的数据）
-3. 展示 form store 状态（values、errors、touched、dirty）
-4. 支持对选中组件数据上下文的表达式求值
+1. ç‚¹å‡»é¡µé¢å…ƒç´  â†’ æ˜¾ç¤ºè¯¥ç»„ä»¶çš„å®Œæ•´ store æ•°æ®
+2. å¯è§†åŒ– scope chainï¼ˆå½“å‰ scope + æ‰€æœ‰çˆ¶ scope çš„æ•°æ®ï¼‰
+3. å±•ç¤º form store çŠ¶æ€ï¼ˆvaluesã€errorsã€touchedã€dirtyï¼‰
+4. æ”¯æŒå¯¹é€‰ä¸­ç»„ä»¶æ•°æ®ä¸Šä¸‹æ–‡çš„è¡¨è¾¾å¼æ±‚å€¼
 
 ---
 
-## 3. 实现计划
+## 3. å®žçŽ°è®¡åˆ’
 
-### Phase 1: 补全 inspectByCid 数据填充 (controller 层)
+### Phase 1: è¡¥å…¨ inspectByCid æ•°æ®å¡«å…… (controller å±‚)
 
-**文件**: `packages/nop-debugger/src/controller.ts`
+**æ–‡ä»¶**: `packages/nop-debugger/src/controller.ts`
 
-**问题**: `buildInspectResult()` 只填充了 `cid/handleId/handleName/handleType/mounted`，没有填充 `formState` 和 `scopeData`。
+**é—®é¢˜**: `buildInspectResult()` åªå¡«å……äº† `cid/handleId/handleName/handleType/mounted`ï¼Œæ²¡æœ‰å¡«å…… `formState` å’Œ `scopeData`ã€‚
 
-**需要修改**: `buildInspectResult()` 函数
+**éœ€è¦ä¿®æ”¹**: `buildInspectResult()` å‡½æ•°
 
 ```
-buildInspectResult(cid, handle, mounted) → NopComponentInspectResult {
-  // 现有字段...
+buildInspectResult(cid, handle, mounted) â†’ NopComponentInspectResult {
+  // çŽ°æœ‰å­—æ®µ...
 
-  // 新增: 从 handle.capabilities.store 读取 formState
+  // æ–°å¢ž: ä»Ž handle.capabilities.store è¯»å– formState
   if (handle?.capabilities?.store) {
     const store = handle.capabilities.store;
     result.formState = {
@@ -110,30 +110,30 @@ buildInspectResult(cid, handle, mounted) → NopComponentInspectResult {
     };
   }
 
-  // 新增: 从 handle 获取 scope 数据
-  // ComponentHandle 需要暴露 scope 引用
+  // æ–°å¢ž: ä»Ž handle èŽ·å– scope æ•°æ®
+  // ComponentHandle éœ€è¦æš´éœ² scope å¼•ç”¨
   if (handle?.scope) {
     result.scopeData = handle.scope.readOwn?.() ?? {};
   }
 }
 ```
 
-**依赖**: 需要确认 `InternalComponentHandle` 的实际接口:
-- `capabilities.store` 是否有 `values/errors/touched/dirty/visited/submitting`
-- `scope` 是否可通过 handle 访问
-- 如果 handle 不直接暴露 scope，需要通过 `ComponentHandleRegistry` 的 parent chain 向上遍历
+**ä¾èµ–**: éœ€è¦ç¡®è®¤ `InternalComponentHandle` çš„å®žé™…æŽ¥å£:
+- `capabilities.store` æ˜¯å¦æœ‰ `values/errors/touched/dirty/visited/submitting`
+- `scope` æ˜¯å¦å¯é€šè¿‡ handle è®¿é—®
+- å¦‚æžœ handle ä¸ç›´æŽ¥æš´éœ² scopeï¼Œéœ€è¦é€šè¿‡ `ComponentHandleRegistry` çš„ parent chain å‘ä¸ŠéåŽ†
 
-**验证**: 需要阅读 `packages/flux-runtime/src/component-handle-registry.ts` 和 `packages/flux-runtime/src/form-component-handle.ts` 确认接口。
+**éªŒè¯**: éœ€è¦é˜…è¯» `packages/flux-runtime/src/component-handle-registry.ts` å’Œ `packages/flux-runtime/src/form-component-handle.ts` ç¡®è®¤æŽ¥å£ã€‚
 
-### Phase 2: 增强 NopComponentInspectResult 类型 (类型层)
+### Phase 2: å¢žå¼º NopComponentInspectResult ç±»åž‹ (ç±»åž‹å±‚)
 
-**文件**: `packages/nop-debugger/src/types.ts`
+**æ–‡ä»¶**: `packages/nop-debugger/src/types.ts`
 
-**修改**: 扩展 `NopComponentInspectResult` 增加 scope chain 信息:
+**ä¿®æ”¹**: æ‰©å±• `NopComponentInspectResult` å¢žåŠ  scope chain ä¿¡æ¯:
 
 ```typescript
 export interface NopScopeLevel {
-  name: string;           // 来源标识，如 "page"、"form:user-form"
+  name: string;           // æ¥æºæ ‡è¯†ï¼Œå¦‚ "page"ã€"form:user-form"
   data: Record<string, unknown>;
 }
 
@@ -152,92 +152,92 @@ export interface NopComponentInspectResult {
     submitting: boolean;
   };
   scopeData?: Record<string, unknown>;
-  // 新增: scope 链
+  // æ–°å¢ž: scope é“¾
   scopeChain?: NopScopeLevel[];
-  // 新增: DOM 元素信息
+  // æ–°å¢ž: DOM å…ƒç´ ä¿¡æ¯
   tagName?: string;
   className?: string;
-  // 新增: props 摘要
+  // æ–°å¢ž: props æ‘˜è¦
   propsSummary?: Record<string, unknown>;
 }
 ```
 
-### Phase 3: Node Tab UI — 组件详情面板 (panel 层)
+### Phase 3: Node Tab UI â€” ç»„ä»¶è¯¦æƒ…é¢æ¿ (panel å±‚)
 
-**文件**: `packages/nop-debugger/src/panel.tsx`
+**æ–‡ä»¶**: `packages/nop-debugger/src/panel.tsx`
 
-**修改**: 当 `selectedElement` 有值时，调用 `inspectByElement()` 获取完整数据并展示。
+**ä¿®æ”¹**: å½“ `selectedElement` æœ‰å€¼æ—¶ï¼Œè°ƒç”¨ `inspectByElement()` èŽ·å–å®Œæ•´æ•°æ®å¹¶å±•ç¤ºã€‚
 
-#### 3.1 选中元素后展示组件详情
+#### 3.1 é€‰ä¸­å…ƒç´ åŽå±•ç¤ºç»„ä»¶è¯¦æƒ…
 
-替换现有的简单 cid/tagName 展示，改为结构化面板:
-
-```
-┌─────────────────────────────────────────┐
-│ Component Inspector                     │
-│ ┌─────────────────────────────────────┐ │
-│ │ #42 input-text                       │ │
-│ │ Name: username                        │ │
-│ │ Type: form                            │ │
-│ │ Tag: <div>                            │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ ┌─ Form State ────────────────────────┐ │
-│ │ Values  │ Errors │ Touched │ Dirty  │ │
-│ │ { username: "Alice", ... }            │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ ┌─ Scope Chain ───────────────────────┐ │
-│ │ ▸ Level 0: form (current)            │ │
-│ │   { username: "Alice", role: "admin"}│ │
-│ │ ▸ Level 1: page                      │ │
-│ │   { users: [...], searchQuery: "" }  │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ ┌─ Events for this node ──────────────┐ │
-│ │ render:end  2ms  10:30:01            │ │
-│ │ action:submit  10:30:02              │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ > Evaluate expression...               │
-└─────────────────────────────────────────┘
-```
-
-#### 3.2 Inspect 模式提示文案
-
-当 `inspectMode` 为 true 时，在 Node tab 顶部显示提示:
+æ›¿æ¢çŽ°æœ‰çš„ç®€å• cid/tagName å±•ç¤ºï¼Œæ”¹ä¸ºç»“æž„åŒ–é¢æ¿:
 
 ```
-🔍 Click an element on the page to inspect it. (Press Esc to cancel)
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Component Inspector                     â”‚
+â”‚ â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
+â”‚ â”‚ #42 input-text                       â”‚ â”‚
+â”‚ â”‚ Name: username                        â”‚ â”‚
+â”‚ â”‚ Type: form                            â”‚ â”‚
+â”‚ â”‚ Tag: <div>                            â”‚ â”‚
+â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
+â”‚                                         â”‚
+â”‚ â”Œâ”€ Form State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
+â”‚ â”‚ Values  â”‚ Errors â”‚ Touched â”‚ Dirty  â”‚ â”‚
+â”‚ â”‚ { username: "Alice", ... }            â”‚ â”‚
+â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
+â”‚                                         â”‚
+â”‚ â”Œâ”€ Scope Chain â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
+â”‚ â”‚ â–¸ Level 0: form (current)            â”‚ â”‚
+â”‚ â”‚   { username: "Alice", role: "admin"}â”‚ â”‚
+â”‚ â”‚ â–¸ Level 1: page                      â”‚ â”‚
+â”‚ â”‚   { users: [...], searchQuery: "" }  â”‚ â”‚
+â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
+â”‚                                         â”‚
+â”‚ â”Œâ”€ Events for this node â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
+â”‚ â”‚ render:end  2ms  10:30:01            â”‚ â”‚
+â”‚ â”‚ action:submit  10:30:02              â”‚ â”‚
+â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
+â”‚                                         â”‚
+â”‚ > Evaluate expression...               â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-#### 3.3 Form State 展示
+#### 3.2 Inspect æ¨¡å¼æç¤ºæ–‡æ¡ˆ
 
-使用 `JsonViewer` 组件展示 formState 的各字段。分为 tab 式子面板:
+å½“ `inspectMode` ä¸º true æ—¶ï¼Œåœ¨ Node tab é¡¶éƒ¨æ˜¾ç¤ºæç¤º:
+
+```
+ðŸ” Click an element on the page to inspect it. (Press Esc to cancel)
+```
+
+#### 3.3 Form State å±•ç¤º
+
+ä½¿ç”¨ `JsonViewer` ç»„ä»¶å±•ç¤º formState çš„å„å­—æ®µã€‚åˆ†ä¸º tab å¼å­é¢æ¿:
 - **Values**: `formState.values`
-- **Errors**: `formState.errors`（如有错误，标红）
-- **Meta**: `touched`/`dirty`/`visited`/`submitting` 合并展示
+- **Errors**: `formState.errors`ï¼ˆå¦‚æœ‰é”™è¯¯ï¼Œæ ‡çº¢ï¼‰
+- **Meta**: `touched`/`dirty`/`visited`/`submitting` åˆå¹¶å±•ç¤º
 
-#### 3.4 Scope Chain 展示
+#### 3.4 Scope Chain å±•ç¤º
 
-类似 AMIS 的 Data Level 展示:
-- 每个 scope level 是一个可折叠的 JSON 区块
-- Level 0 默认展开，其余默认折叠
-- 每个 level 显示来源名称（scope name/path）
+ç±»ä¼¼ AMIS çš„ Data Level å±•ç¤º:
+- æ¯ä¸ª scope level æ˜¯ä¸€ä¸ªå¯æŠ˜å çš„ JSON åŒºå—
+- Level 0 é»˜è®¤å±•å¼€ï¼Œå…¶ä½™é»˜è®¤æŠ˜å 
+- æ¯ä¸ª level æ˜¾ç¤ºæ¥æºåç§°ï¼ˆscope name/pathï¼‰
 
-#### 3.5 表达式求值输入框
+#### 3.5 è¡¨è¾¾å¼æ±‚å€¼è¾“å…¥æ¡†
 
-在 Node tab 底部添加输入框:
+åœ¨ Node tab åº•éƒ¨æ·»åŠ è¾“å…¥æ¡†:
 - placeholder: `Evaluate expression on selected component data...`
-- Enter 键触发求值
-- 结果以 Log 形式追加到 Timeline tab
-- 使用 `scopeChain[0].data` 作为求值上下文
+- Enter é”®è§¦å‘æ±‚å€¼
+- ç»“æžœä»¥ Log å½¢å¼è¿½åŠ åˆ° Timeline tab
+- ä½¿ç”¨ `scopeChain[0].data` ä½œä¸ºæ±‚å€¼ä¸Šä¸‹æ–‡
 
-### Phase 4: Inspect 模式 UX 优化
+### Phase 4: Inspect æ¨¡å¼ UX ä¼˜åŒ–
 
-**文件**: `packages/nop-debugger/src/panel.tsx`
+**æ–‡ä»¶**: `packages/nop-debugger/src/panel.tsx`
 
-#### 4.1 Esc 键退出 inspect 模式
+#### 4.1 Esc é”®é€€å‡º inspect æ¨¡å¼
 
 ```typescript
 useEffect(() => {
@@ -252,15 +252,15 @@ useEffect(() => {
 }, [inspectMode]);
 ```
 
-#### 4.2 Inspect 模式激活按钮优化
+#### 4.2 Inspect æ¨¡å¼æ¿€æ´»æŒ‰é’®ä¼˜åŒ–
 
-Node tab header 区域的 inspect 按钮需要更醒目:
-- 激活时高亮（现有 `is-active` CSS）
-- 增加 tooltip 文案
+Node tab header åŒºåŸŸçš„ inspect æŒ‰é’®éœ€è¦æ›´é†’ç›®:
+- æ¿€æ´»æ—¶é«˜äº®ï¼ˆçŽ°æœ‰ `is-active` CSSï¼‰
+- å¢žåŠ  tooltip æ–‡æ¡ˆ
 
-#### 4.3 选中元素后自动展示详情
+#### 4.3 é€‰ä¸­å…ƒç´ åŽè‡ªåŠ¨å±•ç¤ºè¯¦æƒ…
 
-在 click handler 中（L1124-1134），选中元素后自动调用 `inspectByElement`:
+åœ¨ click handler ä¸­ï¼ˆL1124-1134ï¼‰ï¼Œé€‰ä¸­å…ƒç´ åŽè‡ªåŠ¨è°ƒç”¨ `inspectByElement`:
 
 ```typescript
 const handleClick = (e: MouseEvent) => {
@@ -270,20 +270,20 @@ const handleClick = (e: MouseEvent) => {
   props.controller.setActiveTab('node');
   setNodeIdInput(cid);
 
-  // 新增: 自动获取 inspect 数据
+  // æ–°å¢ž: è‡ªåŠ¨èŽ·å– inspect æ•°æ®
   const inspectResult = props.controller.inspectByElement(target as HTMLElement);
   setInspectData(inspectResult ?? null);
 };
 ```
 
-### Phase 5: CSS 样式
+### Phase 5: CSS æ ·å¼
 
-**文件**: `packages/nop-debugger/src/panel.tsx` (DEBUGGER_STYLES)
+**æ–‡ä»¶**: `packages/nop-debugger/src/panel.tsx` (DEBUGGER_STYLES)
 
-新增样式:
+æ–°å¢žæ ·å¼:
 
 ```css
-/* 组件详情面板 */
+/* ç»„ä»¶è¯¦æƒ…é¢æ¿ */
 .ndbg-inspect-panel { ... }
 .ndbg-inspect-header { ... }
 .ndbg-inspect-section { ... }
@@ -293,64 +293,65 @@ const handleClick = (e: MouseEvent) => {
 .ndbg-scope-level { ... }
 .ndbg-scope-level-header { ... }
 
-/* 表达式输入框 */
+/* è¡¨è¾¾å¼è¾“å…¥æ¡† */
 .ndbg-eval-input { ... }
 .ndbg-eval-result { ... }
 
-/* Inspect 模式提示 */
+/* Inspect æ¨¡å¼æç¤º */
 .ndbg-inspect-hint { ... }
 ```
 
 ---
 
-## 4. 文件影响范围
+## 4. æ–‡ä»¶å½±å“èŒƒå›´
 
-| 文件 | 改动类型 | Phase |
+| æ–‡ä»¶ | æ”¹åŠ¨ç±»åž‹ | Phase |
 |------|----------|-------|
-| `packages/nop-debugger/src/types.ts` | 扩展 `NopComponentInspectResult` | 2 |
-| `packages/nop-debugger/src/controller.ts` | `buildInspectResult` 补全数据填充 | 1 |
-| `packages/nop-debugger/src/panel.tsx` | Node tab UI 增强 + Inspect UX + CSS | 3, 4, 5 |
-| `packages/nop-debugger/src/panel.test.tsx` | 更新测试 | 3 |
+| `packages/nop-debugger/src/types.ts` | æ‰©å±• `NopComponentInspectResult` | 2 |
+| `packages/nop-debugger/src/controller.ts` | `buildInspectResult` è¡¥å…¨æ•°æ®å¡«å…… | 1 |
+| `packages/nop-debugger/src/panel.tsx` | Node tab UI å¢žå¼º + Inspect UX + CSS | 3, 4, 5 |
+| `packages/nop-debugger/src/panel.test.tsx` | æ›´æ–°æµ‹è¯• | 3 |
 
-**不需要修改的文件**: store.ts, automation.ts, adapters.ts, diagnostics.ts — 这些已完备。
-
----
-
-## 5. 实施顺序
-
-```
-Phase 1 (controller) → Phase 2 (types) → Phase 3 (panel UI) → Phase 4 (UX) → Phase 5 (CSS)
-    │                        │
-    └── 可并行 ──────────────┘
-```
-
-### 前置调研 (在 Phase 1 之前)
-
-1. 读取 `packages/flux-runtime/src/component-handle-registry.ts` — 确认 handle 暴露了哪些属性
-2. 读取 `packages/flux-runtime/src/form-component-handle.ts` — 确认 store 接口
-3. 读取 `packages/flux-react/src/contexts.tsx` — 确认 scope 如何传递给组件
-4. 读取 `packages/flux-runtime/src/scope.ts` — 确认 scope.readOwn() 或类似 API
-
-### 验证清单
-
-- [ ] `inspectByCid(42)` 返回完整的 formState（对 form 类型组件）
-- [ ] `inspectByCid(42)` 返回 scopeChain 数组
-- [ ] 点击页面元素 → Node tab 展示组件详情面板
-- [ ] Scope chain 可折叠展示各层数据
-- [ ] 表达式输入框可对选中组件数据求值
-- [ ] Esc 键退出 inspect 模式
-- [ ] Inspect 模式下页面有提示文案
-- [ ] 选中元素高亮 overlay 正常工作
-- [ ] 现有测试全部通过
+**ä¸éœ€è¦ä¿®æ”¹çš„æ–‡ä»¶**: store.ts, automation.ts, adapters.ts, diagnostics.ts â€” è¿™äº›å·²å®Œå¤‡ã€‚
 
 ---
 
-## 6. 不在本次范围
+## 5. å®žæ–½é¡ºåº
 
-- 完整 DOM inspect 选择器（类似 Chrome DevTools 的树形 DOM 展示）
-- 通过表达式执行器运行任意 JS 的安全沙箱
-- 深度订阅 form/page store 私有状态的实时变更
-- 远程上传日志
+```
+Phase 1 (controller) â†’ Phase 2 (types) â†’ Phase 3 (panel UI) â†’ Phase 4 (UX) â†’ Phase 5 (CSS)
+    â”‚                        â”‚
+    â””â”€â”€ å¯å¹¶è¡Œ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+```
+
+### å‰ç½®è°ƒç ” (åœ¨ Phase 1 ä¹‹å‰)
+
+1. è¯»å– `packages/flux-runtime/src/component-handle-registry.ts` â€” ç¡®è®¤ handle æš´éœ²äº†å“ªäº›å±žæ€§
+2. è¯»å– `packages/flux-runtime/src/form-component-handle.ts` â€” ç¡®è®¤ store æŽ¥å£
+3. è¯»å– `packages/flux-react/src/contexts.tsx` â€” ç¡®è®¤ scope å¦‚ä½•ä¼ é€’ç»™ç»„ä»¶
+4. è¯»å– `packages/flux-runtime/src/scope.ts` â€” ç¡®è®¤ scope.readOwn() æˆ–ç±»ä¼¼ API
+
+### éªŒè¯æ¸…å•
+
+- [ ] `inspectByCid(42)` è¿”å›žå®Œæ•´çš„ formStateï¼ˆå¯¹ form ç±»åž‹ç»„ä»¶ï¼‰
+- [ ] `inspectByCid(42)` è¿”å›ž scopeChain æ•°ç»„
+- [ ] ç‚¹å‡»é¡µé¢å…ƒç´  â†’ Node tab å±•ç¤ºç»„ä»¶è¯¦æƒ…é¢æ¿
+- [ ] Scope chain å¯æŠ˜å å±•ç¤ºå„å±‚æ•°æ®
+- [ ] è¡¨è¾¾å¼è¾“å…¥æ¡†å¯å¯¹é€‰ä¸­ç»„ä»¶æ•°æ®æ±‚å€¼
+- [ ] Esc é”®é€€å‡º inspect æ¨¡å¼
+- [ ] Inspect æ¨¡å¼ä¸‹é¡µé¢æœ‰æç¤ºæ–‡æ¡ˆ
+- [ ] é€‰ä¸­å…ƒç´ é«˜äº® overlay æ­£å¸¸å·¥ä½œ
+- [ ] çŽ°æœ‰æµ‹è¯•å…¨éƒ¨é€šè¿‡
+
+---
+
+## 6. ä¸åœ¨æœ¬æ¬¡èŒƒå›´
+
+- å®Œæ•´ DOM inspect é€‰æ‹©å™¨ï¼ˆç±»ä¼¼ Chrome DevTools çš„æ ‘å½¢ DOM å±•ç¤ºï¼‰
+- é€šè¿‡è¡¨è¾¾å¼æ‰§è¡Œå™¨è¿è¡Œä»»æ„ JS çš„å®‰å…¨æ²™ç®±
+- æ·±åº¦è®¢é˜… form/page store ç§æœ‰çŠ¶æ€çš„å®žæ—¶å˜æ›´
+- è¿œç¨‹ä¸Šä¼ æ—¥å¿—
 - Action replay
+
 
 

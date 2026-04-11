@@ -1,62 +1,62 @@
-# 35 Form Runtime 性能与联动能力实施计划
+﻿# 35 Form Runtime æ€§èƒ½ä¸Žè”åŠ¨èƒ½åŠ›å®žæ–½è®¡åˆ’
 
 > Plan Status: completed
 > Last Reviewed: 2026-04-08; audited against codebase on 2026-04-08
-> Source: `docs/analysis/formily-vs-flux-final-report.md` reviewed against current code anchors on 2026-04-08
+> Source: `docs/analysis/2026-04-04-formily-vs-flux-final-report.md` reviewed against current code anchors on 2026-04-08
 
-> Status Note: 本计划的执行切片已完成收口。前半段已落地的延迟 `validating/submitting`、路径缓存、轻量字段查询接口、validation 写回收敛、显式 `setValues(...)` 和数组热路径优化保持有效；本次补齐了受限声明式联动模型与字段 presentation 派生快照，具体表现为 `xui:linkage` 的编译/运行时接线、字段 `effectiveDisabled/effectiveRequired` 快照以及表单 renderer 对这些派生态的统一消费。原计划中的更长期 selector/validation-model follow-up 不再作为本计划欠账，后续若继续推进应按独立 ROI 驱动工作处理。
-> Outdated Note: 与依赖追踪/selector 细化直接相关的后续方向，现应以 `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` 的 root-level dependency model 为准；本计划中仍保留的“编译期依赖提取”旧表述只作为历史上下文，不再作为当前执行基线。
+> Status Note: æœ¬è®¡åˆ’çš„æ‰§è¡Œåˆ‡ç‰‡å·²å®Œæˆæ”¶å£ã€‚å‰åŠæ®µå·²è½åœ°çš„å»¶è¿Ÿ `validating/submitting`ã€è·¯å¾„ç¼“å­˜ã€è½»é‡å­—æ®µæŸ¥è¯¢æŽ¥å£ã€validation å†™å›žæ”¶æ•›ã€æ˜¾å¼ `setValues(...)` å’Œæ•°ç»„çƒ­è·¯å¾„ä¼˜åŒ–ä¿æŒæœ‰æ•ˆï¼›æœ¬æ¬¡è¡¥é½äº†å—é™å£°æ˜Žå¼è”åŠ¨æ¨¡åž‹ä¸Žå­—æ®µ presentation æ´¾ç”Ÿå¿«ç…§ï¼Œå…·ä½“è¡¨çŽ°ä¸º `xui:linkage` çš„ç¼–è¯‘/è¿è¡Œæ—¶æŽ¥çº¿ã€å­—æ®µ `effectiveDisabled/effectiveRequired` å¿«ç…§ä»¥åŠè¡¨å• renderer å¯¹è¿™äº›æ´¾ç”Ÿæ€çš„ç»Ÿä¸€æ¶ˆè´¹ã€‚åŽŸè®¡åˆ’ä¸­çš„æ›´é•¿æœŸ selector/validation-model follow-up ä¸å†ä½œä¸ºæœ¬è®¡åˆ’æ¬ è´¦ï¼ŒåŽç»­è‹¥ç»§ç»­æŽ¨è¿›åº”æŒ‰ç‹¬ç«‹ ROI é©±åŠ¨å·¥ä½œå¤„ç†ã€‚
+> Outdated Note: ä¸Žä¾èµ–è¿½è¸ª/selector ç»†åŒ–ç›´æŽ¥ç›¸å…³çš„åŽç»­æ–¹å‘ï¼ŒçŽ°åº”ä»¥ `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` çš„ root-level dependency model ä¸ºå‡†ï¼›æœ¬è®¡åˆ’ä¸­ä»ä¿ç•™çš„â€œç¼–è¯‘æœŸä¾èµ–æå–â€æ—§è¡¨è¿°åªä½œä¸ºåŽ†å²ä¸Šä¸‹æ–‡ï¼Œä¸å†ä½œä¸ºå½“å‰æ‰§è¡ŒåŸºçº¿ã€‚
 
-## 复审结论
+## å¤å®¡ç»“è®º
 
-- `docs/analysis/formily-vs-flux-final-report.md` 已经收敛成 Formily 对 Flux 的唯一对比入口，并且已经把实现边界收窄到“表单子域内的薄能力”，不再主张引入 Proxy 响应式、重量级字段类体系、通用 effect runtime 或全局事务系统。
-- 对当前仓库最值得执行的改进项，已经可以明确拆成 8 条：延迟 `validating/submitting` 状态标志、路径缓存与预解析、轻量字段图 / 查询接口、Validation 写回合并提交、Action 链表单写入收敛、数组热路径优化、受限声明式联动模型、字段 presentation 派生快照。
-- 这份计划的目标不是一次性完成所有长期演进，而是把上述建议转成分阶段、可验证、与当前架构 guardrail 一致的执行路线。
+- `docs/analysis/2026-04-04-formily-vs-flux-final-report.md` å·²ç»æ”¶æ•›æˆ Formily å¯¹ Flux çš„å”¯ä¸€å¯¹æ¯”å…¥å£ï¼Œå¹¶ä¸”å·²ç»æŠŠå®žçŽ°è¾¹ç•Œæ”¶çª„åˆ°â€œè¡¨å•å­åŸŸå†…çš„è–„èƒ½åŠ›â€ï¼Œä¸å†ä¸»å¼ å¼•å…¥ Proxy å“åº”å¼ã€é‡é‡çº§å­—æ®µç±»ä½“ç³»ã€é€šç”¨ effect runtime æˆ–å…¨å±€äº‹åŠ¡ç³»ç»Ÿã€‚
+- å¯¹å½“å‰ä»“åº“æœ€å€¼å¾—æ‰§è¡Œçš„æ”¹è¿›é¡¹ï¼Œå·²ç»å¯ä»¥æ˜Žç¡®æ‹†æˆ 8 æ¡ï¼šå»¶è¿Ÿ `validating/submitting` çŠ¶æ€æ ‡å¿—ã€è·¯å¾„ç¼“å­˜ä¸Žé¢„è§£æžã€è½»é‡å­—æ®µå›¾ / æŸ¥è¯¢æŽ¥å£ã€Validation å†™å›žåˆå¹¶æäº¤ã€Action é“¾è¡¨å•å†™å…¥æ”¶æ•›ã€æ•°ç»„çƒ­è·¯å¾„ä¼˜åŒ–ã€å—é™å£°æ˜Žå¼è”åŠ¨æ¨¡åž‹ã€å­—æ®µ presentation æ´¾ç”Ÿå¿«ç…§ã€‚
+- è¿™ä»½è®¡åˆ’çš„ç›®æ ‡ä¸æ˜¯ä¸€æ¬¡æ€§å®Œæˆæ‰€æœ‰é•¿æœŸæ¼”è¿›ï¼Œè€Œæ˜¯æŠŠä¸Šè¿°å»ºè®®è½¬æˆåˆ†é˜¶æ®µã€å¯éªŒè¯ã€ä¸Žå½“å‰æž¶æž„ guardrail ä¸€è‡´çš„æ‰§è¡Œè·¯çº¿ã€‚
 
-## 与现有计划的关系
+## ä¸ŽçŽ°æœ‰è®¡åˆ’çš„å…³ç³»
 
-- `docs/plans/03-form-validation-completion-plan.md` 和 `docs/plans/04-form-validation-improvement-execution-plan.md` 聚焦的是 validation correctness 和能力补全；本计划不重开基础验证架构，而是在现有 validation 基线上做运行时性能和结构能力增强。
-- `docs/plans/09-form-validation-lowcode-integrated-refactor-roadmap.md` 是长期 validation 路线图，其中大量内容已 deferred；本计划只抽取其中当前最值得执行、且与 Formily 对比结论一致的局部切片，不重启大规模 validation 重构。
-- `docs/plans/21-node-renderer-selective-subscription-plan.md` 已完成 `NodeRenderer` 的 selector 化；本计划不会把系统退回 Proxy 自动追踪，而是把“更细 selector / 更少派生传播”作为后续更窄的长期方向。
+- `docs/plans/03-form-validation-completion-plan.md` å’Œ `docs/plans/04-form-validation-improvement-execution-plan.md` èšç„¦çš„æ˜¯ validation correctness å’Œèƒ½åŠ›è¡¥å…¨ï¼›æœ¬è®¡åˆ’ä¸é‡å¼€åŸºç¡€éªŒè¯æž¶æž„ï¼Œè€Œæ˜¯åœ¨çŽ°æœ‰ validation åŸºçº¿ä¸Šåšè¿è¡Œæ—¶æ€§èƒ½å’Œç»“æž„èƒ½åŠ›å¢žå¼ºã€‚
+- `docs/plans/09-form-validation-lowcode-integrated-refactor-roadmap.md` æ˜¯é•¿æœŸ validation è·¯çº¿å›¾ï¼Œå…¶ä¸­å¤§é‡å†…å®¹å·² deferredï¼›æœ¬è®¡åˆ’åªæŠ½å–å…¶ä¸­å½“å‰æœ€å€¼å¾—æ‰§è¡Œã€ä¸”ä¸Ž Formily å¯¹æ¯”ç»“è®ºä¸€è‡´çš„å±€éƒ¨åˆ‡ç‰‡ï¼Œä¸é‡å¯å¤§è§„æ¨¡ validation é‡æž„ã€‚
+- `docs/plans/21-node-renderer-selective-subscription-plan.md` å·²å®Œæˆ `NodeRenderer` çš„ selector åŒ–ï¼›æœ¬è®¡åˆ’ä¸ä¼šæŠŠç³»ç»Ÿé€€å›ž Proxy è‡ªåŠ¨è¿½è¸ªï¼Œè€Œæ˜¯æŠŠâ€œæ›´ç»† selector / æ›´å°‘æ´¾ç”Ÿä¼ æ’­â€ä½œä¸ºåŽç»­æ›´çª„çš„é•¿æœŸæ–¹å‘ã€‚
 
 ## Problem
 
-当前 Flux 的 compile-first 主架构是正确的，但在复杂表单场景里还存在 8 类具体缺口，影响交互体验、可维护性和热路径成本。
+å½“å‰ Flux çš„ compile-first ä¸»æž¶æž„æ˜¯æ­£ç¡®çš„ï¼Œä½†åœ¨å¤æ‚è¡¨å•åœºæ™¯é‡Œè¿˜å­˜åœ¨ 8 ç±»å…·ä½“ç¼ºå£ï¼Œå½±å“äº¤äº’ä½“éªŒã€å¯ç»´æŠ¤æ€§å’Œçƒ­è·¯å¾„æˆæœ¬ã€‚
 
-- `packages/flux-runtime/src/form-runtime-validation.ts` 与 `packages/flux-runtime/src/form-store.ts` 中，validation 写回仍偏碎片化；一次字段校验或 dependent revalidation 会产生多次 store 提交。
-- `packages/flux-runtime/src/action-runtime.ts` 中，action 与 `then` 链会顺序触发多个 `setValue` / 派生校验路径；每次 `setValue` 又各自触发 `form-runtime.ts` 内部的重校验逻辑，单次交互容易被拆成多轮传播。
-- `packages/flux-core/src/utils/path.ts`、`packages/flux-runtime/src/scope.ts`、`packages/flux-runtime/src/form-store.ts` 当前仍大量即时 `parsePath()`，没有共享缓存与编译期预解析路径片段。
-- `packages/flux-runtime/src/form-runtime-array.ts` 已有数组字段状态重映射，但数组值更新、初始状态映射、validation run 映射、局部引用稳定性还没有形成更明确的 mutation plan。
-- `packages/flux-runtime/src/form-runtime.ts` 与 `packages/flux-runtime/src/form-runtime-validation.ts` 中，`submitting` / `validating` 仍偏即时置真，短请求和短校验会出现 UI 闪烁。
-- `packages/flux-renderers-form/src/field-utils.tsx` 当前已经有 `useFieldPresentation()`，但字段展示态仍分散在 hooks 和 helper 中，缺少更稳定、可复用的局部派生快照边界。
-- 当前 `FormRuntime` 没有轻量只读字段图 / 查询 facade；验证、运行时注册、复杂字段协作、联动和调试都还在消费分散结构。
-- 当前联动主要散落在表达式里，还没有一套受限、可编译、可分析、明确排除 Formily `x-reactions` 隐式复杂度的声明式联动模型。
+- `packages/flux-runtime/src/form-runtime-validation.ts` ä¸Ž `packages/flux-runtime/src/form-store.ts` ä¸­ï¼Œvalidation å†™å›žä»åç¢Žç‰‡åŒ–ï¼›ä¸€æ¬¡å­—æ®µæ ¡éªŒæˆ– dependent revalidation ä¼šäº§ç”Ÿå¤šæ¬¡ store æäº¤ã€‚
+- `packages/flux-runtime/src/action-runtime.ts` ä¸­ï¼Œaction ä¸Ž `then` é“¾ä¼šé¡ºåºè§¦å‘å¤šä¸ª `setValue` / æ´¾ç”Ÿæ ¡éªŒè·¯å¾„ï¼›æ¯æ¬¡ `setValue` åˆå„è‡ªè§¦å‘ `form-runtime.ts` å†…éƒ¨çš„é‡æ ¡éªŒé€»è¾‘ï¼Œå•æ¬¡äº¤äº’å®¹æ˜“è¢«æ‹†æˆå¤šè½®ä¼ æ’­ã€‚
+- `packages/flux-core/src/utils/path.ts`ã€`packages/flux-runtime/src/scope.ts`ã€`packages/flux-runtime/src/form-store.ts` å½“å‰ä»å¤§é‡å³æ—¶ `parsePath()`ï¼Œæ²¡æœ‰å…±äº«ç¼“å­˜ä¸Žç¼–è¯‘æœŸé¢„è§£æžè·¯å¾„ç‰‡æ®µã€‚
+- `packages/flux-runtime/src/form-runtime-array.ts` å·²æœ‰æ•°ç»„å­—æ®µçŠ¶æ€é‡æ˜ å°„ï¼Œä½†æ•°ç»„å€¼æ›´æ–°ã€åˆå§‹çŠ¶æ€æ˜ å°„ã€validation run æ˜ å°„ã€å±€éƒ¨å¼•ç”¨ç¨³å®šæ€§è¿˜æ²¡æœ‰å½¢æˆæ›´æ˜Žç¡®çš„ mutation planã€‚
+- `packages/flux-runtime/src/form-runtime.ts` ä¸Ž `packages/flux-runtime/src/form-runtime-validation.ts` ä¸­ï¼Œ`submitting` / `validating` ä»åå³æ—¶ç½®çœŸï¼ŒçŸ­è¯·æ±‚å’ŒçŸ­æ ¡éªŒä¼šå‡ºçŽ° UI é—ªçƒã€‚
+- `packages/flux-renderers-form/src/field-utils.tsx` å½“å‰å·²ç»æœ‰ `useFieldPresentation()`ï¼Œä½†å­—æ®µå±•ç¤ºæ€ä»åˆ†æ•£åœ¨ hooks å’Œ helper ä¸­ï¼Œç¼ºå°‘æ›´ç¨³å®šã€å¯å¤ç”¨çš„å±€éƒ¨æ´¾ç”Ÿå¿«ç…§è¾¹ç•Œã€‚
+- å½“å‰ `FormRuntime` æ²¡æœ‰è½»é‡åªè¯»å­—æ®µå›¾ / æŸ¥è¯¢ facadeï¼›éªŒè¯ã€è¿è¡Œæ—¶æ³¨å†Œã€å¤æ‚å­—æ®µåä½œã€è”åŠ¨å’Œè°ƒè¯•éƒ½è¿˜åœ¨æ¶ˆè´¹åˆ†æ•£ç»“æž„ã€‚
+- å½“å‰è”åŠ¨ä¸»è¦æ•£è½åœ¨è¡¨è¾¾å¼é‡Œï¼Œè¿˜æ²¡æœ‰ä¸€å¥—å—é™ã€å¯ç¼–è¯‘ã€å¯åˆ†æžã€æ˜Žç¡®æŽ’é™¤ Formily `x-reactions` éšå¼å¤æ‚åº¦çš„å£°æ˜Žå¼è”åŠ¨æ¨¡åž‹ã€‚
 
 ## Root Cause
 
-- Flux 的核心优化已优先投入到编译主干、静态快路径、表达式引用复用、selector 订阅和 action pipeline；表单运行时结构能力仍偏“能用且正确”，还未充分针对超大表单和复杂联动进行第二轮收口。
-- 当前表单状态、校验状态、runtime registration、validation model 和字段展示态各自都合理，但它们之间仍缺少几个足够薄、足够稳定的中间层：字段查询 facade、局部派生快照、显式写入收敛原语。
-- Formily 提供了表单运行时经验，但它的很多能力依赖 Proxy 响应式、Field 对象图和 `x-reactions` 运行时语境；Flux 不能照搬，只能做架构兼容的改写版，这也使得直接执行需要更细的计划约束。
+- Flux çš„æ ¸å¿ƒä¼˜åŒ–å·²ä¼˜å…ˆæŠ•å…¥åˆ°ç¼–è¯‘ä¸»å¹²ã€é™æ€å¿«è·¯å¾„ã€è¡¨è¾¾å¼å¼•ç”¨å¤ç”¨ã€selector è®¢é˜…å’Œ action pipelineï¼›è¡¨å•è¿è¡Œæ—¶ç»“æž„èƒ½åŠ›ä»åâ€œèƒ½ç”¨ä¸”æ­£ç¡®â€ï¼Œè¿˜æœªå……åˆ†é’ˆå¯¹è¶…å¤§è¡¨å•å’Œå¤æ‚è”åŠ¨è¿›è¡Œç¬¬äºŒè½®æ”¶å£ã€‚
+- å½“å‰è¡¨å•çŠ¶æ€ã€æ ¡éªŒçŠ¶æ€ã€runtime registrationã€validation model å’Œå­—æ®µå±•ç¤ºæ€å„è‡ªéƒ½åˆç†ï¼Œä½†å®ƒä»¬ä¹‹é—´ä»ç¼ºå°‘å‡ ä¸ªè¶³å¤Ÿè–„ã€è¶³å¤Ÿç¨³å®šçš„ä¸­é—´å±‚ï¼šå­—æ®µæŸ¥è¯¢ facadeã€å±€éƒ¨æ´¾ç”Ÿå¿«ç…§ã€æ˜¾å¼å†™å…¥æ”¶æ•›åŽŸè¯­ã€‚
+- Formily æä¾›äº†è¡¨å•è¿è¡Œæ—¶ç»éªŒï¼Œä½†å®ƒçš„å¾ˆå¤šèƒ½åŠ›ä¾èµ– Proxy å“åº”å¼ã€Field å¯¹è±¡å›¾å’Œ `x-reactions` è¿è¡Œæ—¶è¯­å¢ƒï¼›Flux ä¸èƒ½ç…§æ¬ï¼Œåªèƒ½åšæž¶æž„å…¼å®¹çš„æ”¹å†™ç‰ˆï¼Œè¿™ä¹Ÿä½¿å¾—ç›´æŽ¥æ‰§è¡Œéœ€è¦æ›´ç»†çš„è®¡åˆ’çº¦æŸã€‚
 
 ## Goals
 
-- 在不破坏 Flux `compile once + explicit selector subscription + identity reuse` 主干的前提下，降低复杂表单的传播成本和维护成本。
-- 为表单子域补上必要但克制的结构能力：字段查询 facade、局部展示态派生、局部写入收敛、数组 mutation plan。
-- 把联动能力从分散表达式，推进到“受限、可分析、可编译”的声明式模型，同时明确排除 Formily `x-reactions` 中高复杂度的隐式运行时能力。
-- 保持实现边界清晰：不引入平台级统一字段对象模型，不引入全局事务系统，不引入第二套通用 effect runtime，不引入完备依赖分析引擎。
+- åœ¨ä¸ç ´å Flux `compile once + explicit selector subscription + identity reuse` ä¸»å¹²çš„å‰æä¸‹ï¼Œé™ä½Žå¤æ‚è¡¨å•çš„ä¼ æ’­æˆæœ¬å’Œç»´æŠ¤æˆæœ¬ã€‚
+- ä¸ºè¡¨å•å­åŸŸè¡¥ä¸Šå¿…è¦ä½†å…‹åˆ¶çš„ç»“æž„èƒ½åŠ›ï¼šå­—æ®µæŸ¥è¯¢ facadeã€å±€éƒ¨å±•ç¤ºæ€æ´¾ç”Ÿã€å±€éƒ¨å†™å…¥æ”¶æ•›ã€æ•°ç»„ mutation planã€‚
+- æŠŠè”åŠ¨èƒ½åŠ›ä»Žåˆ†æ•£è¡¨è¾¾å¼ï¼ŒæŽ¨è¿›åˆ°â€œå—é™ã€å¯åˆ†æžã€å¯ç¼–è¯‘â€çš„å£°æ˜Žå¼æ¨¡åž‹ï¼ŒåŒæ—¶æ˜Žç¡®æŽ’é™¤ Formily `x-reactions` ä¸­é«˜å¤æ‚åº¦çš„éšå¼è¿è¡Œæ—¶èƒ½åŠ›ã€‚
+- ä¿æŒå®žçŽ°è¾¹ç•Œæ¸…æ™°ï¼šä¸å¼•å…¥å¹³å°çº§ç»Ÿä¸€å­—æ®µå¯¹è±¡æ¨¡åž‹ï¼Œä¸å¼•å…¥å…¨å±€äº‹åŠ¡ç³»ç»Ÿï¼Œä¸å¼•å…¥ç¬¬äºŒå¥—é€šç”¨ effect runtimeï¼Œä¸å¼•å…¥å®Œå¤‡ä¾èµ–åˆ†æžå¼•æ“Žã€‚
 
 ## Non-Goals
 
-- 不把 Flux 改造成 Formily 式 Proxy 响应式系统。
-- 不引入 `Field` / `ArrayField` / `VoidField` 重量级类实例树。
-- 不建设平台级统一字段对象模型，要求页面、设计器、报表等非表单子域都迁移到同一抽象。
-- 不把 Validation 写回合并提交或 Action 链表单写入收敛做成全局事务系统。
-- 不引入通用 effect runtime、隐式 scope variable 注入或任意 reaction 脚本。
-- 不以完备依赖图或完整静态分析作为前置目标。
+- ä¸æŠŠ Flux æ”¹é€ æˆ Formily å¼ Proxy å“åº”å¼ç³»ç»Ÿã€‚
+- ä¸å¼•å…¥ `Field` / `ArrayField` / `VoidField` é‡é‡çº§ç±»å®žä¾‹æ ‘ã€‚
+- ä¸å»ºè®¾å¹³å°çº§ç»Ÿä¸€å­—æ®µå¯¹è±¡æ¨¡åž‹ï¼Œè¦æ±‚é¡µé¢ã€è®¾è®¡å™¨ã€æŠ¥è¡¨ç­‰éžè¡¨å•å­åŸŸéƒ½è¿ç§»åˆ°åŒä¸€æŠ½è±¡ã€‚
+- ä¸æŠŠ Validation å†™å›žåˆå¹¶æäº¤æˆ– Action é“¾è¡¨å•å†™å…¥æ”¶æ•›åšæˆå…¨å±€äº‹åŠ¡ç³»ç»Ÿã€‚
+- ä¸å¼•å…¥é€šç”¨ effect runtimeã€éšå¼ scope variable æ³¨å…¥æˆ–ä»»æ„ reaction è„šæœ¬ã€‚
+- ä¸ä»¥å®Œå¤‡ä¾èµ–å›¾æˆ–å®Œæ•´é™æ€åˆ†æžä½œä¸ºå‰ç½®ç›®æ ‡ã€‚
 
 ## Scope
 
-- `docs/analysis/formily-vs-flux-final-report.md`
+- `docs/analysis/2026-04-04-formily-vs-flux-final-report.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/flux-runtime-module-boundaries.md`
 - `docs/architecture/renderer-runtime.md`
@@ -79,235 +79,235 @@
 - `packages/flux-react/src/hooks.ts`
 - `packages/flux-react/src/form-state.ts`
 - `packages/flux-renderers-form/src/field-utils.tsx`
-- 相关分包测试文件
+- ç›¸å…³åˆ†åŒ…æµ‹è¯•æ–‡ä»¶
 
-## 不在 Scope 内的事项
+## ä¸åœ¨ Scope å†…çš„äº‹é¡¹
 
-- 平台级表单对象图重写
-- 全局事务系统或统一 runtime commit coordinator
-- Proxy 自动依赖收集
-- Formily 式 `x-reactions` 运行时复制
-- 页面、设计器、报表等非表单子域的统一重构
-- 大规模 `NodeRenderer` / React context 结构重写
+- å¹³å°çº§è¡¨å•å¯¹è±¡å›¾é‡å†™
+- å…¨å±€äº‹åŠ¡ç³»ç»Ÿæˆ–ç»Ÿä¸€ runtime commit coordinator
+- Proxy è‡ªåŠ¨ä¾èµ–æ”¶é›†
+- Formily å¼ `x-reactions` è¿è¡Œæ—¶å¤åˆ¶
+- é¡µé¢ã€è®¾è®¡å™¨ã€æŠ¥è¡¨ç­‰éžè¡¨å•å­åŸŸçš„ç»Ÿä¸€é‡æž„
+- å¤§è§„æ¨¡ `NodeRenderer` / React context ç»“æž„é‡å†™
 
 ## Execution Plan
 
-**Phase 0 — 文档冻结、profile 基线与执行约束校准**
+**Phase 0 â€” æ–‡æ¡£å†»ç»“ã€profile åŸºçº¿ä¸Žæ‰§è¡Œçº¦æŸæ ¡å‡†**
 
-Targets: `docs/analysis/formily-vs-flux-final-report.md`, `docs/architecture/form-validation.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `packages/flux-runtime/src/form-store.ts`, `packages/flux-runtime/src/form-runtime-validation.ts`, `packages/flux-runtime/src/action-runtime.ts`, local profiling notes/tests
+Targets: `docs/analysis/2026-04-04-formily-vs-flux-final-report.md`, `docs/architecture/form-validation.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `packages/flux-runtime/src/form-store.ts`, `packages/flux-runtime/src/form-runtime-validation.ts`, `packages/flux-runtime/src/action-runtime.ts`, local profiling notes/tests
 
-- 补一轮计划相关的文档边界说明，确保后续实施统一使用本计划中的术语：
-  - `Validation 写回合并提交`
-  - `Action 链表单写入收敛`
-  - `轻量字段图 / 查询接口`
-  - `字段 presentation 派生快照`
-- 为 validation 写回与 action 链写入两个热点做最小 profile 基线。
-- 记录至少以下指标：
-  - 单次交互内 `FormStore` `setState()` 次数
-  - validation 过程中 `revalidateDependents()` 触发次数
-  - 相关 selector / subscriber 触发次数
-  - 常见场景下 renderer 重渲染数量
-- 产出一个明确结论：瓶颈主要来自 store 提交次数、派生传播次数，还是两者都有。
-- 不在此阶段引入任何新抽象；只建立测量基线和名词一致性。
+- è¡¥ä¸€è½®è®¡åˆ’ç›¸å…³çš„æ–‡æ¡£è¾¹ç•Œè¯´æ˜Žï¼Œç¡®ä¿åŽç»­å®žæ–½ç»Ÿä¸€ä½¿ç”¨æœ¬è®¡åˆ’ä¸­çš„æœ¯è¯­ï¼š
+  - `Validation å†™å›žåˆå¹¶æäº¤`
+  - `Action é“¾è¡¨å•å†™å…¥æ”¶æ•›`
+  - `è½»é‡å­—æ®µå›¾ / æŸ¥è¯¢æŽ¥å£`
+  - `å­—æ®µ presentation æ´¾ç”Ÿå¿«ç…§`
+- ä¸º validation å†™å›žä¸Ž action é“¾å†™å…¥ä¸¤ä¸ªçƒ­ç‚¹åšæœ€å° profile åŸºçº¿ã€‚
+- è®°å½•è‡³å°‘ä»¥ä¸‹æŒ‡æ ‡ï¼š
+  - å•æ¬¡äº¤äº’å†… `FormStore` `setState()` æ¬¡æ•°
+  - validation è¿‡ç¨‹ä¸­ `revalidateDependents()` è§¦å‘æ¬¡æ•°
+  - ç›¸å…³ selector / subscriber è§¦å‘æ¬¡æ•°
+  - å¸¸è§åœºæ™¯ä¸‹ renderer é‡æ¸²æŸ“æ•°é‡
+- äº§å‡ºä¸€ä¸ªæ˜Žç¡®ç»“è®ºï¼šç“¶é¢ˆä¸»è¦æ¥è‡ª store æäº¤æ¬¡æ•°ã€æ´¾ç”Ÿä¼ æ’­æ¬¡æ•°ï¼Œè¿˜æ˜¯ä¸¤è€…éƒ½æœ‰ã€‚
+- ä¸åœ¨æ­¤é˜¶æ®µå¼•å…¥ä»»ä½•æ–°æŠ½è±¡ï¼›åªå»ºç«‹æµ‹é‡åŸºçº¿å’Œåè¯ä¸€è‡´æ€§ã€‚
 
-Exit criteria: 有一份简短但可复用的 profile 记录，足以指导后续是优先做提交合并、派生触发去重，还是两者都做。
+Exit criteria: æœ‰ä¸€ä»½ç®€çŸ­ä½†å¯å¤ç”¨çš„ profile è®°å½•ï¼Œè¶³ä»¥æŒ‡å¯¼åŽç»­æ˜¯ä¼˜å…ˆåšæäº¤åˆå¹¶ã€æ´¾ç”Ÿè§¦å‘åŽ»é‡ï¼Œè¿˜æ˜¯ä¸¤è€…éƒ½åšã€‚
 
-**Phase 1 — 延迟 `validating/submitting` 状态标志**
+**Phase 1 â€” å»¶è¿Ÿ `validating/submitting` çŠ¶æ€æ ‡å¿—**
 
 Targets: `packages/flux-runtime/src/form-runtime-validation.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-core/src/types/runtime.ts` if needed, relevant tests under `packages/flux-runtime/src/*.test.ts`
 
-- 给 `validating[path]` 和 `submitting` 增加延迟置真阈值。
-- 保持最终回落到 `false` 的行为立即且确定。
-- 确保与现有 debounce、cancel、stale-run cancellation 协同，不引入“状态永远不回落”或“延迟错位”问题。
-- 新增测试覆盖：
-  - 短 async validation 不显示 validating
-  - 长 async validation 会显示 validating
-  - 短 submit 不显示提交 loading
-  - 长 submit 会显示 submitting 且完成后及时回落
+- ç»™ `validating[path]` å’Œ `submitting` å¢žåŠ å»¶è¿Ÿç½®çœŸé˜ˆå€¼ã€‚
+- ä¿æŒæœ€ç»ˆå›žè½åˆ° `false` çš„è¡Œä¸ºç«‹å³ä¸”ç¡®å®šã€‚
+- ç¡®ä¿ä¸ŽçŽ°æœ‰ debounceã€cancelã€stale-run cancellation ååŒï¼Œä¸å¼•å…¥â€œçŠ¶æ€æ°¸è¿œä¸å›žè½â€æˆ–â€œå»¶è¿Ÿé”™ä½â€é—®é¢˜ã€‚
+- æ–°å¢žæµ‹è¯•è¦†ç›–ï¼š
+  - çŸ­ async validation ä¸æ˜¾ç¤º validating
+  - é•¿ async validation ä¼šæ˜¾ç¤º validating
+  - çŸ­ submit ä¸æ˜¾ç¤ºæäº¤ loading
+  - é•¿ submit ä¼šæ˜¾ç¤º submitting ä¸”å®ŒæˆåŽåŠæ—¶å›žè½
 
-Exit criteria: 短请求/短校验不再产生 UI 闪烁，原有 async 语义和取消语义保持一致。
+Exit criteria: çŸ­è¯·æ±‚/çŸ­æ ¡éªŒä¸å†äº§ç”Ÿ UI é—ªçƒï¼ŒåŽŸæœ‰ async è¯­ä¹‰å’Œå–æ¶ˆè¯­ä¹‰ä¿æŒä¸€è‡´ã€‚
 
-**Phase 2 — 路径缓存与预解析**
+**Phase 2 â€” è·¯å¾„ç¼“å­˜ä¸Žé¢„è§£æž**
 
 Targets: `packages/flux-core/src/utils/path.ts`, `packages/flux-runtime/src/scope.ts`, `packages/flux-runtime/src/form-store.ts`, `packages/flux-runtime/src/schema-compiler.ts`, related tests
 
-- 给 `parsePath()` 引入共享缓存。
-- 审查 `getIn()`、`setIn()`、`resolveScopePath()`、`hasScopePath()` 的调用方式，补一个接受预解析 `segments` 的窄 API 或内部共享辅助函数。
-- 对编译期已知路径预解析为 `segments`，优先挂在适合的编译产物或热路径辅助结构上，而不是创造新的大一统对象模型。
-- 保持现有 path 语义兼容，包括 bracket index 规范化。
-- 针对热路径增加测试或 micro assertions：
-  - path 解析结果正确
-  - 缓存不改变语义
-  - 典型重复路径访问在逻辑上确实复用解析结果
+- ç»™ `parsePath()` å¼•å…¥å…±äº«ç¼“å­˜ã€‚
+- å®¡æŸ¥ `getIn()`ã€`setIn()`ã€`resolveScopePath()`ã€`hasScopePath()` çš„è°ƒç”¨æ–¹å¼ï¼Œè¡¥ä¸€ä¸ªæŽ¥å—é¢„è§£æž `segments` çš„çª„ API æˆ–å†…éƒ¨å…±äº«è¾…åŠ©å‡½æ•°ã€‚
+- å¯¹ç¼–è¯‘æœŸå·²çŸ¥è·¯å¾„é¢„è§£æžä¸º `segments`ï¼Œä¼˜å…ˆæŒ‚åœ¨é€‚åˆçš„ç¼–è¯‘äº§ç‰©æˆ–çƒ­è·¯å¾„è¾…åŠ©ç»“æž„ä¸Šï¼Œè€Œä¸æ˜¯åˆ›é€ æ–°çš„å¤§ä¸€ç»Ÿå¯¹è±¡æ¨¡åž‹ã€‚
+- ä¿æŒçŽ°æœ‰ path è¯­ä¹‰å…¼å®¹ï¼ŒåŒ…æ‹¬ bracket index è§„èŒƒåŒ–ã€‚
+- é’ˆå¯¹çƒ­è·¯å¾„å¢žåŠ æµ‹è¯•æˆ– micro assertionsï¼š
+  - path è§£æžç»“æžœæ­£ç¡®
+  - ç¼“å­˜ä¸æ”¹å˜è¯­ä¹‰
+  - å…¸åž‹é‡å¤è·¯å¾„è®¿é—®åœ¨é€»è¾‘ä¸Šç¡®å®žå¤ç”¨è§£æžç»“æžœ
 
-Exit criteria: 热路径不再对相同 path 重复执行完全相同的字符串解析工作，且 path 语义零回归。
+Exit criteria: çƒ­è·¯å¾„ä¸å†å¯¹ç›¸åŒ path é‡å¤æ‰§è¡Œå®Œå…¨ç›¸åŒçš„å­—ç¬¦ä¸²è§£æžå·¥ä½œï¼Œä¸” path è¯­ä¹‰é›¶å›žå½’ã€‚
 
-**Phase 3 — 轻量字段图 / 查询接口**
+**Phase 3 â€” è½»é‡å­—æ®µå›¾ / æŸ¥è¯¢æŽ¥å£**
 
 Targets: `packages/flux-core/src/types/runtime.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/form-runtime-registration.ts`, `packages/flux-runtime/src/schema-compiler.ts`, possibly `packages/flux-runtime/src/validation/*`, related tests/docs
 
-- 在 `FormRuntime` 范围内新增只读查询 facade。
-- 第一版只覆盖已确认的场景：
+- åœ¨ `FormRuntime` èŒƒå›´å†…æ–°å¢žåªè¯»æŸ¥è¯¢ facadeã€‚
+- ç¬¬ä¸€ç‰ˆåªè¦†ç›–å·²ç¡®è®¤çš„åœºæ™¯ï¼š
   - `getField(path)`
   - `getDependents(path)`
   - `findByPrefix(path)`
-  - 必要时 `getChildren(path)`
-- 数据来源可以组合编译产物、validation model、runtime registration，但不要生成平台级统一总图。
-- 新接口应明确只服务表单子域，避免其他子域被迫迁移到同一模型。
-- 确保复杂字段、dependent revalidation、调试辅助和后续联动模型都能消费这一薄 facade。
+  - å¿…è¦æ—¶ `getChildren(path)`
+- æ•°æ®æ¥æºå¯ä»¥ç»„åˆç¼–è¯‘äº§ç‰©ã€validation modelã€runtime registrationï¼Œä½†ä¸è¦ç”Ÿæˆå¹³å°çº§ç»Ÿä¸€æ€»å›¾ã€‚
+- æ–°æŽ¥å£åº”æ˜Žç¡®åªæœåŠ¡è¡¨å•å­åŸŸï¼Œé¿å…å…¶ä»–å­åŸŸè¢«è¿«è¿ç§»åˆ°åŒä¸€æ¨¡åž‹ã€‚
+- ç¡®ä¿å¤æ‚å­—æ®µã€dependent revalidationã€è°ƒè¯•è¾…åŠ©å’ŒåŽç»­è”åŠ¨æ¨¡åž‹éƒ½èƒ½æ¶ˆè´¹è¿™ä¸€è–„ facadeã€‚
 
-Exit criteria: 表单子域获得统一的只读字段查询入口，且实现仍然保持轻量 facade，而不是新的中心对象模型。
+Exit criteria: è¡¨å•å­åŸŸèŽ·å¾—ç»Ÿä¸€çš„åªè¯»å­—æ®µæŸ¥è¯¢å…¥å£ï¼Œä¸”å®žçŽ°ä»ç„¶ä¿æŒè½»é‡ facadeï¼Œè€Œä¸æ˜¯æ–°çš„ä¸­å¿ƒå¯¹è±¡æ¨¡åž‹ã€‚
 
-**Phase 4 — Validation 写回合并提交**
+**Phase 4 â€” Validation å†™å›žåˆå¹¶æäº¤**
 
 Targets: `packages/flux-core/src/types/runtime.ts`, `packages/flux-runtime/src/form-store.ts`, `packages/flux-runtime/src/form-runtime-validation.ts`, `packages/flux-runtime/src/form-runtime.ts`, related tests
 
-- 基于 Phase 0 的 profile 结果决定优先策略。
-- 如果瓶颈主要在 store 提交次数：
-  - 为 `FormStore` 增加显式 patch/commit 或等价局部合并写回能力。
-  - 把 validation 流程里的 `errors/validating/touched` 等更新收敛到更少次数的提交。
-- 如果瓶颈更多在派生传播次数：
-  - 优先减少 `revalidateDependents()` 或相关派生逻辑的重复触发，再决定是否仍需要 patch/commit。
-- 保持以下边界：
-  - 不改变校验顺序
-  - 不改变错误聚合语义
-  - 不影响 stale-run cancellation
-  - 不引入全局事务模型
+- åŸºäºŽ Phase 0 çš„ profile ç»“æžœå†³å®šä¼˜å…ˆç­–ç•¥ã€‚
+- å¦‚æžœç“¶é¢ˆä¸»è¦åœ¨ store æäº¤æ¬¡æ•°ï¼š
+  - ä¸º `FormStore` å¢žåŠ æ˜¾å¼ patch/commit æˆ–ç­‰ä»·å±€éƒ¨åˆå¹¶å†™å›žèƒ½åŠ›ã€‚
+  - æŠŠ validation æµç¨‹é‡Œçš„ `errors/validating/touched` ç­‰æ›´æ–°æ”¶æ•›åˆ°æ›´å°‘æ¬¡æ•°çš„æäº¤ã€‚
+- å¦‚æžœç“¶é¢ˆæ›´å¤šåœ¨æ´¾ç”Ÿä¼ æ’­æ¬¡æ•°ï¼š
+  - ä¼˜å…ˆå‡å°‘ `revalidateDependents()` æˆ–ç›¸å…³æ´¾ç”Ÿé€»è¾‘çš„é‡å¤è§¦å‘ï¼Œå†å†³å®šæ˜¯å¦ä»éœ€è¦ patch/commitã€‚
+- ä¿æŒä»¥ä¸‹è¾¹ç•Œï¼š
+  - ä¸æ”¹å˜æ ¡éªŒé¡ºåº
+  - ä¸æ”¹å˜é”™è¯¯èšåˆè¯­ä¹‰
+  - ä¸å½±å“ stale-run cancellation
+  - ä¸å¼•å…¥å…¨å±€äº‹åŠ¡æ¨¡åž‹
 
-Exit criteria: validation 路径中的多次碎片化写回明显减少，或等价地派生传播次数明显下降，且行为语义完全兼容。
+Exit criteria: validation è·¯å¾„ä¸­çš„å¤šæ¬¡ç¢Žç‰‡åŒ–å†™å›žæ˜Žæ˜¾å‡å°‘ï¼Œæˆ–ç­‰ä»·åœ°æ´¾ç”Ÿä¼ æ’­æ¬¡æ•°æ˜Žæ˜¾ä¸‹é™ï¼Œä¸”è¡Œä¸ºè¯­ä¹‰å®Œå…¨å…¼å®¹ã€‚
 
-**Phase 5 — Action 链表单写入收敛**
+**Phase 5 â€” Action é“¾è¡¨å•å†™å…¥æ”¶æ•›**
 
 Targets: `packages/flux-core/src/types/actions.ts`, `packages/flux-core/src/types/runtime.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/form-store.ts`, `packages/flux-runtime/src/form-runtime.ts`, related tests
 
-- 单独设计 action chain 范围内的表单写入收敛边界。
-- 优先考虑两类实现：
-  - 显式 API，例如 `form.batchMutations(fn)`
-  - 受控 built-in action，例如 `setValues` / `patchFormState`
-- 不对整个 `dispatch()` 隐式包裹黑盒事务。
-- 保持 `prevResult`、`continueOnError`、debounce、取消、监控时序可观测。
-- 如果 Phase 0/4 证明主要瓶颈并不在提交次数，而在重复 dependent revalidation，则优先做“action chain 内派生去重”，而不是扩大写入边界抽象。
+- å•ç‹¬è®¾è®¡ action chain èŒƒå›´å†…çš„è¡¨å•å†™å…¥æ”¶æ•›è¾¹ç•Œã€‚
+- ä¼˜å…ˆè€ƒè™‘ä¸¤ç±»å®žçŽ°ï¼š
+  - æ˜¾å¼ APIï¼Œä¾‹å¦‚ `form.batchMutations(fn)`
+  - å—æŽ§ built-in actionï¼Œä¾‹å¦‚ `setValues` / `patchFormState`
+- ä¸å¯¹æ•´ä¸ª `dispatch()` éšå¼åŒ…è£¹é»‘ç›’äº‹åŠ¡ã€‚
+- ä¿æŒ `prevResult`ã€`continueOnError`ã€debounceã€å–æ¶ˆã€ç›‘æŽ§æ—¶åºå¯è§‚æµ‹ã€‚
+- å¦‚æžœ Phase 0/4 è¯æ˜Žä¸»è¦ç“¶é¢ˆå¹¶ä¸åœ¨æäº¤æ¬¡æ•°ï¼Œè€Œåœ¨é‡å¤ dependent revalidationï¼Œåˆ™ä¼˜å…ˆåšâ€œaction chain å†…æ´¾ç”ŸåŽ»é‡â€ï¼Œè€Œä¸æ˜¯æ‰©å¤§å†™å…¥è¾¹ç•ŒæŠ½è±¡ã€‚
 
-Exit criteria: 链式表单写入不会把单次交互拆成过多传播回合，同时 action 语义与监控边界仍然清晰可见。
+Exit criteria: é“¾å¼è¡¨å•å†™å…¥ä¸ä¼šæŠŠå•æ¬¡äº¤äº’æ‹†æˆè¿‡å¤šä¼ æ’­å›žåˆï¼ŒåŒæ—¶ action è¯­ä¹‰ä¸Žç›‘æŽ§è¾¹ç•Œä»ç„¶æ¸…æ™°å¯è§ã€‚
 
-**Phase 6 — 数组热路径优化**
+**Phase 6 â€” æ•°ç»„çƒ­è·¯å¾„ä¼˜åŒ–**
 
 Targets: `packages/flux-runtime/src/form-runtime-array.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/form-path-state.ts`, `packages/flux-core/src/utils/path.ts` if needed, related renderer tests
 
-- 当前 `remapArrayFieldState` + `replaceManagedArrayValue` 已完整处理以下四类重映射，但每次数组操作合计发出 **8–9 次顺序 `setState` 调用**（`remapArrayFieldState` 5 次：errors/touched/dirty/visited/validating；`replaceManagedArrayValue` 3–4 次：validating/dirty/value + clearErrors），无任何批量提交：
-  - 数组值替换（`replaceManagedArrayValue`）
-  - errors/touched/dirty/visited/validating 重映射（`remapArrayFieldState`）
-  - validationRuns 重映射（`remapValidationRunState`）
-  - initialFieldState 重映射（`remapInitialFieldState`）
-- 本阶段的工作是优化上述现有实现，而不是重新引入这些函数。
-- 若 Phase 4 已落地通用 patch/commit 原语（如 `form.batchMutations(fn)`），直接将 `remapArrayFieldState` + `replaceManagedArrayValue` 中的顺序写入收敛到该原语内，将 8–9 次缩减为 1–2 次 `setState`。
-- 若 Phase 4 仅收敛了 validation 写回路径而未提供通用原语，则在本阶段单独为数组操作路径提供局部批量能力。
-- 对未受影响索引尽量保留引用稳定性。
-- 审查 renderer 订阅边界，减少数组局部变动引发的整片重渲染。
-- 测试场景至少覆盖：
+- å½“å‰ `remapArrayFieldState` + `replaceManagedArrayValue` å·²å®Œæ•´å¤„ç†ä»¥ä¸‹å››ç±»é‡æ˜ å°„ï¼Œä½†æ¯æ¬¡æ•°ç»„æ“ä½œåˆè®¡å‘å‡º **8â€“9 æ¬¡é¡ºåº `setState` è°ƒç”¨**ï¼ˆ`remapArrayFieldState` 5 æ¬¡ï¼šerrors/touched/dirty/visited/validatingï¼›`replaceManagedArrayValue` 3â€“4 æ¬¡ï¼švalidating/dirty/value + clearErrorsï¼‰ï¼Œæ— ä»»ä½•æ‰¹é‡æäº¤ï¼š
+  - æ•°ç»„å€¼æ›¿æ¢ï¼ˆ`replaceManagedArrayValue`ï¼‰
+  - errors/touched/dirty/visited/validating é‡æ˜ å°„ï¼ˆ`remapArrayFieldState`ï¼‰
+  - validationRuns é‡æ˜ å°„ï¼ˆ`remapValidationRunState`ï¼‰
+  - initialFieldState é‡æ˜ å°„ï¼ˆ`remapInitialFieldState`ï¼‰
+- æœ¬é˜¶æ®µçš„å·¥ä½œæ˜¯ä¼˜åŒ–ä¸Šè¿°çŽ°æœ‰å®žçŽ°ï¼Œè€Œä¸æ˜¯é‡æ–°å¼•å…¥è¿™äº›å‡½æ•°ã€‚
+- è‹¥ Phase 4 å·²è½åœ°é€šç”¨ patch/commit åŽŸè¯­ï¼ˆå¦‚ `form.batchMutations(fn)`ï¼‰ï¼Œç›´æŽ¥å°† `remapArrayFieldState` + `replaceManagedArrayValue` ä¸­çš„é¡ºåºå†™å…¥æ”¶æ•›åˆ°è¯¥åŽŸè¯­å†…ï¼Œå°† 8â€“9 æ¬¡ç¼©å‡ä¸º 1â€“2 æ¬¡ `setState`ã€‚
+- è‹¥ Phase 4 ä»…æ”¶æ•›äº† validation å†™å›žè·¯å¾„è€Œæœªæä¾›é€šç”¨åŽŸè¯­ï¼Œåˆ™åœ¨æœ¬é˜¶æ®µå•ç‹¬ä¸ºæ•°ç»„æ“ä½œè·¯å¾„æä¾›å±€éƒ¨æ‰¹é‡èƒ½åŠ›ã€‚
+- å¯¹æœªå—å½±å“ç´¢å¼•å°½é‡ä¿ç•™å¼•ç”¨ç¨³å®šæ€§ã€‚
+- å®¡æŸ¥ renderer è®¢é˜…è¾¹ç•Œï¼Œå‡å°‘æ•°ç»„å±€éƒ¨å˜åŠ¨å¼•å‘çš„æ•´ç‰‡é‡æ¸²æŸ“ã€‚
+- æµ‹è¯•åœºæ™¯è‡³å°‘è¦†ç›–ï¼š
   - append / prepend / insert / remove / move / swap / replace
-  - shallow array 与 nested array paths（如 `list[0].tags[1].name` 双层索引）
-  - aggregate error / runtime registration child path 保持正确
+  - shallow array ä¸Ž nested array pathsï¼ˆå¦‚ `list[0].tags[1].name` åŒå±‚ç´¢å¼•ï¼‰
+  - aggregate error / runtime registration child path ä¿æŒæ­£ç¡®
 
-Exit criteria: 数组操作后的状态迁移仍正确，且局部更新波及面明显小于当前实现。
+Exit criteria: æ•°ç»„æ“ä½œåŽçš„çŠ¶æ€è¿ç§»ä»æ­£ç¡®ï¼Œä¸”å±€éƒ¨æ›´æ–°æ³¢åŠé¢æ˜Žæ˜¾å°äºŽå½“å‰å®žçŽ°ã€‚
 
-**Phase 7 — 受限声明式联动模型**
+**Phase 7 â€” å—é™å£°æ˜Žå¼è”åŠ¨æ¨¡åž‹**
 
 Targets: `packages/flux-core/src/types/*`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/node-runtime.ts` if needed, `packages/flux-renderers-form/src/*`, docs/tests
 
-- 设计一套最小可用的声明式联动模型，只覆盖高频表单字段联动场景。
-- 第一版只允许：
-  - 显式 `dependencies`
-  - 显式 `when`
-  - 显式 `fulfill/otherwise`
-  - 固定可写目标集合
-- 第一版明确排除：
+- è®¾è®¡ä¸€å¥—æœ€å°å¯ç”¨çš„å£°æ˜Žå¼è”åŠ¨æ¨¡åž‹ï¼Œåªè¦†ç›–é«˜é¢‘è¡¨å•å­—æ®µè”åŠ¨åœºæ™¯ã€‚
+- ç¬¬ä¸€ç‰ˆåªå…è®¸ï¼š
+  - æ˜¾å¼ `dependencies`
+  - æ˜¾å¼ `when`
+  - æ˜¾å¼ `fulfill/otherwise`
+  - å›ºå®šå¯å†™ç›®æ ‡é›†åˆ
+- ç¬¬ä¸€ç‰ˆæ˜Žç¡®æŽ’é™¤ï¼š
   - `$observable`
   - `$effect`
   - `$memo`
-  - 任意脚本副作用
-- 尽量避免把 `$form`、`$self` 这类原始对象直接暴露给 schema。
-- 编译产物应落到现有 runtime/action/validation 能力之上，而不是建设新的通用 effect engine。
-- 首轮落地建议只覆盖：
+  - ä»»æ„è„šæœ¬å‰¯ä½œç”¨
+- å°½é‡é¿å…æŠŠ `$form`ã€`$self` è¿™ç±»åŽŸå§‹å¯¹è±¡ç›´æŽ¥æš´éœ²ç»™ schemaã€‚
+- ç¼–è¯‘äº§ç‰©åº”è½åˆ°çŽ°æœ‰ runtime/action/validation èƒ½åŠ›ä¹‹ä¸Šï¼Œè€Œä¸æ˜¯å»ºè®¾æ–°çš„é€šç”¨ effect engineã€‚
+- é¦–è½®è½åœ°å»ºè®®åªè¦†ç›–ï¼š
   - `visible`
   - `disabled`
   - `required`
   - `options`
-  - 受控的 `value` 或等价简单赋值场景
+  - å—æŽ§çš„ `value` æˆ–ç­‰ä»·ç®€å•èµ‹å€¼åœºæ™¯
 
-Exit criteria: 常见字段联动可以脱离分散表达式，以受限、可分析、可测试的方式表达，并且不复制 Formily `x-reactions` 的隐式复杂度。
+Exit criteria: å¸¸è§å­—æ®µè”åŠ¨å¯ä»¥è„±ç¦»åˆ†æ•£è¡¨è¾¾å¼ï¼Œä»¥å—é™ã€å¯åˆ†æžã€å¯æµ‹è¯•çš„æ–¹å¼è¡¨è¾¾ï¼Œå¹¶ä¸”ä¸å¤åˆ¶ Formily `x-reactions` çš„éšå¼å¤æ‚åº¦ã€‚
 
-**Phase 8 — 字段 presentation 派生快照**
+**Phase 8 â€” å­—æ®µ presentation æ´¾ç”Ÿå¿«ç…§**
 
 Targets: `packages/flux-core/src/types/runtime.ts`, `packages/flux-react/src/form-state.ts`, `packages/flux-react/src/hooks.ts`, `packages/flux-renderers-form/src/field-utils.tsx`, `packages/flux-renderers-form/src/*`, related tests
 
-- 把当前分散的字段展示态判断收口成局部只读 helper 或稳定派生快照。
-- 第一版最小集合：
+- æŠŠå½“å‰åˆ†æ•£çš„å­—æ®µå±•ç¤ºæ€åˆ¤æ–­æ”¶å£æˆå±€éƒ¨åªè¯» helper æˆ–ç¨³å®šæ´¾ç”Ÿå¿«ç…§ã€‚
+- ç¬¬ä¸€ç‰ˆæœ€å°é›†åˆï¼š
   - `effectiveDisabled`
   - `effectiveRequired`
   - `error visibility`
   - `interactive/readOnly presentation`
-- 优先放在 `FormRuntime` / `flux-react` 字段 hooks 的交界处，让 `FieldFrame` 和字段 renderer hooks 直接消费。
-- 不建设新的全局派生状态系统或独立缓存子系统。
-- 明确失效边界，仅对影响展示态的输入变化失效。
+- ä¼˜å…ˆæ”¾åœ¨ `FormRuntime` / `flux-react` å­—æ®µ hooks çš„äº¤ç•Œå¤„ï¼Œè®© `FieldFrame` å’Œå­—æ®µ renderer hooks ç›´æŽ¥æ¶ˆè´¹ã€‚
+- ä¸å»ºè®¾æ–°çš„å…¨å±€æ´¾ç”ŸçŠ¶æ€ç³»ç»Ÿæˆ–ç‹¬ç«‹ç¼“å­˜å­ç³»ç»Ÿã€‚
+- æ˜Žç¡®å¤±æ•ˆè¾¹ç•Œï¼Œä»…å¯¹å½±å“å±•ç¤ºæ€çš„è¾“å…¥å˜åŒ–å¤±æ•ˆã€‚
 
-Exit criteria: `FieldFrame` 和字段 renderer 不再反复拼装相同展示逻辑，字段展示态来源更稳定、更可测试。
+Exit criteria: `FieldFrame` å’Œå­—æ®µ renderer ä¸å†åå¤æ‹¼è£…ç›¸åŒå±•ç¤ºé€»è¾‘ï¼Œå­—æ®µå±•ç¤ºæ€æ¥æºæ›´ç¨³å®šã€æ›´å¯æµ‹è¯•ã€‚
 
-**Phase 9 — 长期项：更细 selector 与 validation model 结构收口**
+**Phase 9 â€” é•¿æœŸé¡¹ï¼šæ›´ç»† selector ä¸Ž validation model ç»“æž„æ”¶å£**
 
-> 过时标记（2026-04-07）：本阶段中“编译期依赖提取”相关表述已被 `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` 和 `docs/architecture/dependency-tracking.md` 取代。后续若继续推进 selector 细化，应建立在 explicit-root-first + runtime fallback 的 root-level dependency model 上，而不是回到静态依赖提取主线。
+> è¿‡æ—¶æ ‡è®°ï¼ˆ2026-04-07ï¼‰ï¼šæœ¬é˜¶æ®µä¸­â€œç¼–è¯‘æœŸä¾èµ–æå–â€ç›¸å…³è¡¨è¿°å·²è¢« `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` å’Œ `docs/architecture/dependency-tracking.md` å–ä»£ã€‚åŽç»­è‹¥ç»§ç»­æŽ¨è¿› selector ç»†åŒ–ï¼Œåº”å»ºç«‹åœ¨ explicit-root-first + runtime fallback çš„ root-level dependency model ä¸Šï¼Œè€Œä¸æ˜¯å›žåˆ°é™æ€ä¾èµ–æå–ä¸»çº¿ã€‚
 
 Targets: `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/hooks.ts`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/validation/*`, related docs/tests
 
-- 基于前面阶段的数据再判断是否推进：
-  - [过时] `编译期依赖提取与更细 selector`
-  - `validation model` 去重/收口
-- [过时] 第一阶段只覆盖少量可静态提取的表达式形态和已知热路径，不以完备依赖分析为目标。
-- selector 相关后续若继续推进，应改读为“基于 Plan 39 root-level dependency model 的更细失效控制”，而不是重新引入静态依赖提取路线。
-- 如果 `NodeRenderer` provider 层级仍被 profile 证明为瓶颈，再单独开具体计划，不在此计划里预先承诺结构重写。
+- åŸºäºŽå‰é¢é˜¶æ®µçš„æ•°æ®å†åˆ¤æ–­æ˜¯å¦æŽ¨è¿›ï¼š
+  - [è¿‡æ—¶] `ç¼–è¯‘æœŸä¾èµ–æå–ä¸Žæ›´ç»† selector`
+  - `validation model` åŽ»é‡/æ”¶å£
+- [è¿‡æ—¶] ç¬¬ä¸€é˜¶æ®µåªè¦†ç›–å°‘é‡å¯é™æ€æå–çš„è¡¨è¾¾å¼å½¢æ€å’Œå·²çŸ¥çƒ­è·¯å¾„ï¼Œä¸ä»¥å®Œå¤‡ä¾èµ–åˆ†æžä¸ºç›®æ ‡ã€‚
+- selector ç›¸å…³åŽç»­è‹¥ç»§ç»­æŽ¨è¿›ï¼Œåº”æ”¹è¯»ä¸ºâ€œåŸºäºŽ Plan 39 root-level dependency model çš„æ›´ç»†å¤±æ•ˆæŽ§åˆ¶â€ï¼Œè€Œä¸æ˜¯é‡æ–°å¼•å…¥é™æ€ä¾èµ–æå–è·¯çº¿ã€‚
+- å¦‚æžœ `NodeRenderer` provider å±‚çº§ä»è¢« profile è¯æ˜Žä¸ºç“¶é¢ˆï¼Œå†å•ç‹¬å¼€å…·ä½“è®¡åˆ’ï¼Œä¸åœ¨æ­¤è®¡åˆ’é‡Œé¢„å…ˆæ‰¿è¯ºç»“æž„é‡å†™ã€‚
 
-Exit criteria: 只有在有充分 profile 证据的情况下，才继续推进更细 selector 或 validation model 收口；否则保持当前架构简单性。
+Exit criteria: åªæœ‰åœ¨æœ‰å……åˆ† profile è¯æ®çš„æƒ…å†µä¸‹ï¼Œæ‰ç»§ç»­æŽ¨è¿›æ›´ç»† selector æˆ– validation model æ”¶å£ï¼›å¦åˆ™ä¿æŒå½“å‰æž¶æž„ç®€å•æ€§ã€‚
 
 ## Implementation Order
 
-建议的执行顺序如下：
+å»ºè®®çš„æ‰§è¡Œé¡ºåºå¦‚ä¸‹ï¼š
 
-1. Phase 0 — profile 基线与文档校准
-2. Phase 1 — 延迟 `validating/submitting`
-3. Phase 2 — 路径缓存与预解析
-4. Phase 3 — 轻量字段图 / 查询接口
-5. Phase 4 — Validation 写回合并提交
-6. Phase 5 — Action 链表单写入收敛
-7. Phase 6 — 数组热路径优化
-8. Phase 7 — 受限声明式联动模型
-9. Phase 8 — 字段 presentation 派生快照
-10. Phase 9 — 长期项按 profile 再决定
+1. Phase 0 â€” profile åŸºçº¿ä¸Žæ–‡æ¡£æ ¡å‡†
+2. Phase 1 â€” å»¶è¿Ÿ `validating/submitting`
+3. Phase 2 â€” è·¯å¾„ç¼“å­˜ä¸Žé¢„è§£æž
+4. Phase 3 â€” è½»é‡å­—æ®µå›¾ / æŸ¥è¯¢æŽ¥å£
+5. Phase 4 â€” Validation å†™å›žåˆå¹¶æäº¤
+6. Phase 5 â€” Action é“¾è¡¨å•å†™å…¥æ”¶æ•›
+7. Phase 6 â€” æ•°ç»„çƒ­è·¯å¾„ä¼˜åŒ–
+8. Phase 7 â€” å—é™å£°æ˜Žå¼è”åŠ¨æ¨¡åž‹
+9. Phase 8 â€” å­—æ®µ presentation æ´¾ç”Ÿå¿«ç…§
+10. Phase 9 â€” é•¿æœŸé¡¹æŒ‰ profile å†å†³å®š
 
-说明：
+è¯´æ˜Žï¼š
 
-- 如果只从收益/体感看，数组热路径优化与延迟状态标志都很亮眼。
-- 但从架构依赖顺序看，字段图 / 查询 facade、路径基础设施和 profile 结论应先于更大范围的优化进入实施。
-- Phase 4 与 Phase 6 共享"减少顺序 `setState` 次数"这一底层机制：若 Phase 4 已落地通用 patch/commit 原语，Phase 6 可直接复用，不需要重复建设批量写入能力；若 Phase 4 仅收敛了 validation 写回路径，Phase 6 需单独为数组操作路径补充局部批量能力。
+- å¦‚æžœåªä»Žæ”¶ç›Š/ä½“æ„Ÿçœ‹ï¼Œæ•°ç»„çƒ­è·¯å¾„ä¼˜åŒ–ä¸Žå»¶è¿ŸçŠ¶æ€æ ‡å¿—éƒ½å¾ˆäº®çœ¼ã€‚
+- ä½†ä»Žæž¶æž„ä¾èµ–é¡ºåºçœ‹ï¼Œå­—æ®µå›¾ / æŸ¥è¯¢ facadeã€è·¯å¾„åŸºç¡€è®¾æ–½å’Œ profile ç»“è®ºåº”å…ˆäºŽæ›´å¤§èŒƒå›´çš„ä¼˜åŒ–è¿›å…¥å®žæ–½ã€‚
+- Phase 4 ä¸Ž Phase 6 å…±äº«"å‡å°‘é¡ºåº `setState` æ¬¡æ•°"è¿™ä¸€åº•å±‚æœºåˆ¶ï¼šè‹¥ Phase 4 å·²è½åœ°é€šç”¨ patch/commit åŽŸè¯­ï¼ŒPhase 6 å¯ç›´æŽ¥å¤ç”¨ï¼Œä¸éœ€è¦é‡å¤å»ºè®¾æ‰¹é‡å†™å…¥èƒ½åŠ›ï¼›è‹¥ Phase 4 ä»…æ”¶æ•›äº† validation å†™å›žè·¯å¾„ï¼ŒPhase 6 éœ€å•ç‹¬ä¸ºæ•°ç»„æ“ä½œè·¯å¾„è¡¥å……å±€éƒ¨æ‰¹é‡èƒ½åŠ›ã€‚
 
 ## Risks
 
-- 把字段图误做成平台级统一对象模型，导致 Flux 重心被重新拖回表单对象图。
-- 把 validation 写回或 action 写入收敛误做成全局事务系统，破坏时序可观测性。
-- 把受限声明式联动模型扩张成第二套通用 DSL / effect runtime。
-- 在缺少 profile 的情况下过早推进派生缓存或依赖提取，导致复杂度先于收益落地。
-- 数组优化只关注 values 而忽略 field state / validation state / runtime registration 路径一致性。
+- æŠŠå­—æ®µå›¾è¯¯åšæˆå¹³å°çº§ç»Ÿä¸€å¯¹è±¡æ¨¡åž‹ï¼Œå¯¼è‡´ Flux é‡å¿ƒè¢«é‡æ–°æ‹–å›žè¡¨å•å¯¹è±¡å›¾ã€‚
+- æŠŠ validation å†™å›žæˆ– action å†™å…¥æ”¶æ•›è¯¯åšæˆå…¨å±€äº‹åŠ¡ç³»ç»Ÿï¼Œç ´åæ—¶åºå¯è§‚æµ‹æ€§ã€‚
+- æŠŠå—é™å£°æ˜Žå¼è”åŠ¨æ¨¡åž‹æ‰©å¼ æˆç¬¬äºŒå¥—é€šç”¨ DSL / effect runtimeã€‚
+- åœ¨ç¼ºå°‘ profile çš„æƒ…å†µä¸‹è¿‡æ—©æŽ¨è¿›æ´¾ç”Ÿç¼“å­˜æˆ–ä¾èµ–æå–ï¼Œå¯¼è‡´å¤æ‚åº¦å…ˆäºŽæ”¶ç›Šè½åœ°ã€‚
+- æ•°ç»„ä¼˜åŒ–åªå…³æ³¨ values è€Œå¿½ç•¥ field state / validation state / runtime registration è·¯å¾„ä¸€è‡´æ€§ã€‚
 
 ## Effort
 
-- 建议按 2 轮执行：
-  - 第一轮：Phase 0-3，先做低风险基础设施和测量基线
-  - 第二轮：Phase 4-8，按 profile 结果推进写回收敛、数组优化和联动模型
-- 预计最小可交付切片为 4-6 个工作日：Phase 0-2
-- 完整执行到 Phase 8 的保守估计为 12-18 个工作日，取决于数组热路径与联动模型复杂度
+- å»ºè®®æŒ‰ 2 è½®æ‰§è¡Œï¼š
+  - ç¬¬ä¸€è½®ï¼šPhase 0-3ï¼Œå…ˆåšä½Žé£Žé™©åŸºç¡€è®¾æ–½å’Œæµ‹é‡åŸºçº¿
+  - ç¬¬äºŒè½®ï¼šPhase 4-8ï¼ŒæŒ‰ profile ç»“æžœæŽ¨è¿›å†™å›žæ”¶æ•›ã€æ•°ç»„ä¼˜åŒ–å’Œè”åŠ¨æ¨¡åž‹
+- é¢„è®¡æœ€å°å¯äº¤ä»˜åˆ‡ç‰‡ä¸º 4-6 ä¸ªå·¥ä½œæ—¥ï¼šPhase 0-2
+- å®Œæ•´æ‰§è¡Œåˆ° Phase 8 çš„ä¿å®ˆä¼°è®¡ä¸º 12-18 ä¸ªå·¥ä½œæ—¥ï¼Œå–å†³äºŽæ•°ç»„çƒ­è·¯å¾„ä¸Žè”åŠ¨æ¨¡åž‹å¤æ‚åº¦
 
 ## Verification
 
-每个阶段至少执行受影响分包验证；最终做全仓验证。
+æ¯ä¸ªé˜¶æ®µè‡³å°‘æ‰§è¡Œå—å½±å“åˆ†åŒ…éªŒè¯ï¼›æœ€ç»ˆåšå…¨ä»“éªŒè¯ã€‚
 
 ```bash
 pnpm --filter @nop-chaos/flux-core typecheck
@@ -336,15 +336,16 @@ pnpm lint
 pnpm test
 ```
 
-额外验证要求：
+é¢å¤–éªŒè¯è¦æ±‚ï¼š
 
-- 对 Phase 0 的 profile 结论保留可复用记录，避免后续“凭感觉优化”。
-- 对 Phase 4-6 补足回归测试，覆盖 validation 写回次数、action chain 派生传播、数组操作状态一致性。
-- 对 Phase 7-8 补足文档和测试，确保受限联动模型与展示态派生边界不会被实现层偷偷放大。
+- å¯¹ Phase 0 çš„ profile ç»“è®ºä¿ç•™å¯å¤ç”¨è®°å½•ï¼Œé¿å…åŽç»­â€œå‡­æ„Ÿè§‰ä¼˜åŒ–â€ã€‚
+- å¯¹ Phase 4-6 è¡¥è¶³å›žå½’æµ‹è¯•ï¼Œè¦†ç›– validation å†™å›žæ¬¡æ•°ã€action chain æ´¾ç”Ÿä¼ æ’­ã€æ•°ç»„æ“ä½œçŠ¶æ€ä¸€è‡´æ€§ã€‚
+- å¯¹ Phase 7-8 è¡¥è¶³æ–‡æ¡£å’Œæµ‹è¯•ï¼Œç¡®ä¿å—é™è”åŠ¨æ¨¡åž‹ä¸Žå±•ç¤ºæ€æ´¾ç”Ÿè¾¹ç•Œä¸ä¼šè¢«å®žçŽ°å±‚å·å·æ”¾å¤§ã€‚
 
 ## Documentation Follow-Up
 
-- 若 Phase 3 落地，更新 `docs/architecture/form-validation.md` 或新建对应 architecture section，明确字段查询 facade 的边界。
-- 若 Phase 4-5 落地，更新 `docs/architecture/form-validation.md` 与 `docs/architecture/flux-runtime-module-boundaries.md`，记录写回收敛与 action chain 收敛的模块归属。
-- 若 Phase 7 落地，更新 `docs/architecture/form-validation.md`、`docs/architecture/renderer-runtime.md` 和相关 schema 约定文档，明确声明式联动模型边界与禁止能力。
-- 若 Phase 8 落地，更新 `docs/architecture/field-metadata-slot-modeling.md` 或相关字段展示文档，记录 presentation 派生快照的位置与消费方式。
+- è‹¥ Phase 3 è½åœ°ï¼Œæ›´æ–° `docs/architecture/form-validation.md` æˆ–æ–°å»ºå¯¹åº” architecture sectionï¼Œæ˜Žç¡®å­—æ®µæŸ¥è¯¢ facade çš„è¾¹ç•Œã€‚
+- è‹¥ Phase 4-5 è½åœ°ï¼Œæ›´æ–° `docs/architecture/form-validation.md` ä¸Ž `docs/architecture/flux-runtime-module-boundaries.md`ï¼Œè®°å½•å†™å›žæ”¶æ•›ä¸Ž action chain æ”¶æ•›çš„æ¨¡å—å½’å±žã€‚
+- è‹¥ Phase 7 è½åœ°ï¼Œæ›´æ–° `docs/architecture/form-validation.md`ã€`docs/architecture/renderer-runtime.md` å’Œç›¸å…³ schema çº¦å®šæ–‡æ¡£ï¼Œæ˜Žç¡®å£°æ˜Žå¼è”åŠ¨æ¨¡åž‹è¾¹ç•Œä¸Žç¦æ­¢èƒ½åŠ›ã€‚
+- è‹¥ Phase 8 è½åœ°ï¼Œæ›´æ–° `docs/architecture/field-metadata-slot-modeling.md` æˆ–ç›¸å…³å­—æ®µå±•ç¤ºæ–‡æ¡£ï¼Œè®°å½• presentation æ´¾ç”Ÿå¿«ç…§çš„ä½ç½®ä¸Žæ¶ˆè´¹æ–¹å¼ã€‚
+
