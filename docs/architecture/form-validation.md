@@ -166,6 +166,12 @@ interface FormSubmitResult {
 }
 ```
 
+`ValidationResult` and `ScopeValidationResult` serve different result scopes.
+
+Use `ValidationResult` for local validation entry points such as `validateAt(path)`, where the caller needs the outcome of one path-centered validation run and does not need a full owner-wide field error map.
+
+Use `ScopeValidationResult` for subtree-level or owner-level operations such as `validateSubtree(path)`, `validateAll()`, and `applyChangesAndRevalidate(...)`, where the caller needs an aggregated view of the validated scope including `fieldErrors`.
+
 ### ValidationScopeRuntime
 
 The core runtime abstraction is `ValidationScopeRuntime`.
@@ -177,6 +183,7 @@ interface ValidationScopeRuntime {
   readonly scopeId: string;
   readonly rootPath: string;
   readonly compiledModel: CompiledValidationModel | null;
+  readonly showErrorOn: Exclude<ShowErrorOnPolicy, 'touched'>;
 
   validateAt(path: string, reason?: ValidationReason): Promise<ValidationResult>;
   validateSubtree(path: string, reason?: ValidationReason): Promise<ScopeValidationResult>;
@@ -205,8 +212,10 @@ interface ScopeValidationStateSnapshot {
   validating: boolean;
   /**
    * Whether this scope is in a state where it can be submitted or confirmed.
-   * FormRuntime: valid && allTouched (or per validateOn policy).
-   * Non-form ValidationScopeRuntime: equivalent to valid.
+   * FormRuntime: form-specific readiness derived from validity, validating state,
+   * and touch policy.
+   * Non-form ValidationScopeRuntime: owner-local readiness derived from non-form
+   * validation policy.
    * Parent scopes read this field instead of valid when gating on a child scope,
    * to prevent misreading a FormRuntime child as ready when allTouched is false.
    */
@@ -267,24 +276,34 @@ Touched / dirty / visited state is stored per field, while UX policy lives in `F
 
 `showErrorOn` controls when validation results become visible in UI, not whether validation executes.
 
+It also does not control whether owner state, effective rules, or effective requiredness are recomputed.
+
 Default display policy:
 
 1. `FormRuntime` defaults to `showErrorOn: 'blur'`
 2. non-form `ValidationScopeRuntime` also defaults to `showErrorOn: 'blur'`
 
+`ValidationScopeRuntime.showErrorOn` is the owner-level display policy for non-form scopes.
+
+Non-form scopes may use `change`, `blur`, `submit`, or `manual`, but not `touched`.
+
 The non-form default is intentionally not `change`, because cross-field validation such as date-range constraints is usually too noisy during mid-input editing.
 
-When path `A` changes and closure expansion causes path `B` to revalidate, visibility of `B`'s error still follows `B`'s own display policy rather than the trigger source path.
+When path `A` changes and closure expansion causes path `B` to revalidate, visibility of `B`'s error still follows `B`'s own resolved display policy rather than the trigger source path.
 
 ## What Counts As A Validation Scope
 
 Not every render scope creates a validation runtime.
 
-A scope becomes a validation scope only if at least one of these is true:
+Validation does not introduce a second parallel author-facing scope DSL.
 
-1. the compiler produces a non-empty validation model for it
-2. it declares a validation scope boundary in schema
-3. it hosts a local draft editor that must validate before commit
+A validation scope exists when an existing data/value owner owns validation-participating nodes.
+
+Typical cases are:
+
+1. `form` owning bound fields and aggregate validation
+2. page/root data scope owning bound fields when there is no nearer form or draft owner
+3. a local draft/value owner created by an existing value-lifecycle construct
 
 A plain visual container with no validation content does not create a validation runtime.
 
@@ -301,28 +320,18 @@ Therefore:
 1. runtime registration may enrich an existing owner
 2. runtime registration may not create a brand-new owner at an unclassified boundary
 
-### Validation Scope Declaration In Schema
+### Inference From Data Scope Ownership
 
-Non-form validation scopes must be declared explicitly in schema or be implied by a component family whose semantics are fixed by this document.
+Validation ownership should be inferred from existing data/value ownership, not from a second explicit `validationScope` authoring block.
 
-The minimal schema-side declaration is:
+Authoring guidance:
 
-```ts
-interface ValidationScopeSchemaContract {
-  validationScope?: {
-    id: string;
-    kind?: 'form' | 'scope' | 'draft';
-    validateOn?: ValidateOnPolicy;
-  };
-}
-```
+1. use `form` when the subtree really has form semantics and a submit/confirm lifecycle
+2. let ordinary fields inside `page` / current lexical data scope attach to that existing owner by default
+3. use existing local-value or draft owner patterns when edits must stay isolated before commit
+4. do not require authors to invent a validation-only id or kind for ordinary containers
 
-Rules:
-
-1. `form` implies `validationScope.kind = 'form'`
-2. a non-form container such as a filter panel must declare `validationScope` if it wants its own validation owner
-3. a draft editor surface must declare or imply `validationScope.kind = 'draft'`
-4. if no such declaration exists, the boundary cannot become a new owner and must resolve to `inherit-owner` or `no-owner`
+This keeps validation attached to the same owner model that already governs data scope and value lifecycle.
 
 ### Owner Resolution Algorithm
 
@@ -356,8 +365,8 @@ Use `create-owner` when the subtree owns a local validation lifecycle distinct f
 Examples:
 
 1. `form`
-2. a draft editor that validates before commit
-3. a filter/search scope that has validation rules but no submit semantics
+2. a dialog child form that owns local editable values
+3. a detail/draft editor that validates before commit
 4. a row-local draft editor
 
 Use `no-owner` when the subtree has no validation structure and no runtime validators.
@@ -642,7 +651,7 @@ interface CompiledRuleTemplate {
   id: string;
   kind: ValidationRuleKind;
   when?: CompiledRuntimeValue<boolean>;
-  args: Record<string, CompiledRuntimeValue<unknown> | unknown>;
+  args: Record<string, CompiledRuntimeValue<unknown>>;
   message?: CompiledRuntimeValue<string> | string;
   dependencyPaths: string[];
 }
@@ -765,8 +774,10 @@ The `system` reason is reserved for owner-driven structural and lifecycle revali
 Rules for `system`:
 
 1. it does not update touched / visited policy state
-2. it may publish field state immediately regardless of display policy, because its purpose is to keep owner state consistent after structural changes
-3. it is appropriate for branch activation, array remap follow-up validation, and other owner-managed participation changes
+2. it recomputes effective rules, effective requiredness, validating state, and owner summary state normally
+3. it does not bypass the target field's own resolved display policy for user-visible error-message surfacing
+4. owner summary validity, diagnostics, and submit/readiness state may still update immediately
+5. it is appropriate for branch activation, array remap follow-up validation, and other owner-managed participation changes
 
 ## Validation APIs
 
