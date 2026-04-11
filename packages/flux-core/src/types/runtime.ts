@@ -2,7 +2,21 @@ import type { ActionResult } from './actions';
 import type { ApiSchema } from './schema';
 import type { NodeInstance } from './node-identity';
 import type { ScopeRef } from './scope';
-import type { ValidationRule, ValidationError, ValidationResult, FormValidationResult, CompiledFormValidationModel, CompiledFormValidationField, RuntimeFieldRegistration } from './validation';
+import type {
+  ValidationRule,
+  ValidationError,
+  ValidationResult,
+  FormValidationResult,
+  CompiledFormValidationModel,
+  CompiledFormValidationField,
+  RuntimeFieldRegistration,
+  ValidationOwnerLifecycleState,
+  ValidationReason,
+  FieldRegistrationHandle,
+  ApplyExternalErrorsInput,
+  ScopeValidationStateSnapshot,
+  ChildValidationContractRegistration
+} from './validation';
 import type { ActionScope } from './actions';
 import type { CompiledSchemaNode, ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
 import type { ReactNode } from 'react';
@@ -196,17 +210,51 @@ export interface DataSourceRegistration {
   dispose(): void;
 }
 
-export interface FormRuntime {
+export interface ApplyScopeChangesInput {
+  writes: Record<string, unknown>;
+  changedPaths: string[];
+  reason: ValidationReason;
+}
+
+export interface ValidationScopeRuntime {
+  readonly scopeId: string;
+  readonly rootPath: string;
+  readonly lifecycleState: ValidationOwnerLifecycleState;
+  readonly modelGeneration: number;
+
+  validateAt(path: string, reason?: ValidationReason): Promise<ValidationResult>;
+  validateSubtree(path: string, reason?: ValidationReason): Promise<FormValidationResult>;
+  validateAll(reason?: ValidationReason): Promise<FormValidationResult>;
+
+  applyChangesAndRevalidate(input: ApplyScopeChangesInput): Promise<FormValidationResult>;
+  applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationStateSnapshot;
+
+  getFieldState(path: string): { ownerId: string; path: string; errors: ValidationError[]; validating: boolean };
+  getScopeState(): ScopeValidationStateSnapshot;
+  getScopeRootErrors(): ValidationError[];
+  isPathOwned(path: string): boolean;
+
+  registerField(registration: RuntimeFieldRegistration): FieldRegistrationHandle;
+  updateFieldRegistration(registrationId: string, patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths'>>): void;
+
+  refreshCompiledModel(newModel: CompiledFormValidationModel): void;
+  dispose(): void;
+
+  registerChildContract(contract: ChildValidationContractRegistration): void;
+  unregisterChildContract(childOwnerId: string): void;
+}
+
+export interface FormRuntime extends ValidationScopeRuntime {
   id: string;
   name?: string;
   store: FormStoreApi;
   scope: ScopeRef;
   validation?: CompiledFormValidationModel;
+  readonly canSubmit: boolean;
+  readonly allTouched: boolean;
   setLifecycleHandlers(handlers?: FormLifecycleHandlers): void;
-  registerField(registration: RuntimeFieldRegistration): () => void;
   notifyFieldHidden(path: string, hidden: boolean): void;
   validateField(path: string): Promise<ValidationResult>;
-  validateSubtree(path: string): Promise<FormValidationResult>;
   validateForm(): Promise<FormValidationResult>;
   getError(path: string): ValidationError[] | undefined;
   isValidating(path: string): boolean;

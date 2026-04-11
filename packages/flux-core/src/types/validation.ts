@@ -29,7 +29,17 @@ export interface ValidationError {
   rule: ValidationRule['kind'];
   ruleId?: string;
   ownerPath?: string;
-  sourceKind?: 'field' | 'object' | 'array' | 'form' | 'runtime-registration';
+  sourceKind?:
+    | 'field'
+    | 'object'
+    | 'array'
+    | 'row'
+    | 'scope-root'
+    | 'external'
+    | 'runtime-overlay'
+    | 'runtime-opaque'
+    | 'form'
+    | 'runtime-registration';
   relatedPaths?: string[];
 }
 
@@ -96,5 +106,47 @@ export interface CompiledFormValidationModel {
   nodes?: Record<string, CompiledValidationNode>;
   validationOrder?: string[];
   rootPath?: string;
+  ownerId?: string;
   defaultHiddenFieldPolicy?: HiddenFieldPolicy;
+}
+
+export type ValidationOwnerLifecycleState =
+  | 'bootstrapping'
+  | 'active'
+  | 'refreshing'
+  | 'disposed';
+
+export type ValidationReason = 'change' | 'blur' | 'submit' | 'commit' | 'system' | 'manual';
+
+export interface FieldRegistrationHandle {
+  accepted: boolean;
+  registrationId: string;
+  unregister(): void;
+}
+
+export interface ApplyExternalErrorsInput {
+  sourceId: string;
+  errors: ValidationError[];
+  replace?: boolean;
+}
+
+export interface ScopeValidationStateSnapshot {
+  valid: boolean;
+  hasErrors: boolean;
+  validating: boolean;
+  lifecycleState: ValidationOwnerLifecycleState;
+  ready: boolean;
+  modelGeneration: number;
+}
+
+export type ChildValidationMode = 'ignore' | 'summary-gate' | 'recurse-submit';
+
+export interface ChildValidationContract {
+  childOwnerId: string;
+  mode: ChildValidationMode;
+}
+
+export interface ChildValidationContractRegistration extends ChildValidationContract {
+  active: boolean;
+  unregister(): void;
 }
