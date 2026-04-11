@@ -1,4 +1,17 @@
-import type { ApiSchema, FormLifecycleHandlers, FormValidationResult, FormRuntime, RuntimeFieldRegistration, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
+import type {
+  ApiSchema,
+  ApplyExternalErrorsInput,
+  ApplyScopeChangesInput,
+  ChildValidationContractRegistration,
+  FieldRegistrationHandle,
+  FormLifecycleHandlers,
+  FormRuntime,
+  FormValidationResult,
+  RuntimeFieldRegistration,
+  ScopeChange,
+  ScopeValidationStateSnapshot,
+  ValidationError
+} from '@nop-chaos/flux-core';
 import {
   clampArrayIndex,
   clampInsertIndex,
@@ -27,6 +40,12 @@ import {
 } from './form-runtime-validation';
 import type { CreateManagedFormRuntimeInput, ManagedFormRuntimeSharedState } from './form-runtime-types';
 import { createScopeRef, toRecord } from './scope';
+
+let _registrationIdCounter = 0;
+
+function nextRegistrationId(): string {
+  return `reg-${++_registrationIdCounter}`;
+}
 
 function buildBooleanPathState(input: Record<string, boolean>, path: string, nextValue: boolean): Record<string, boolean> {
   if (nextValue) {
@@ -69,7 +88,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     resolve: (run: boolean) => void;
     reject: (error: unknown) => void;
   }>();
-  const runtimeFieldRegistrations = new Map<string, RuntimeFieldRegistration>();
+  const runtimeFieldRegistrations = new Map<string, import('./form-runtime-types').RegisteredFieldEntry>();
+  const pathToRegistrationId = new Map<string, string>();
   const initialFieldState = buildInitialFieldState(inputValue.initialValues ?? {}, inputValue.validation);
   const defaultValidationTriggers = inputValue.validation?.behavior.triggers ?? ['blur'];
   const submittingDelay = inputValue.submittingDelay ?? 0;
@@ -77,6 +97,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
   let isSubmittingInternal = false;
   let lastChange: ScopeChange = createInitialFormScopeChange(formId);
+  let currentValidation = inputValue.validation;
 
   function setLastChange(change: ScopeChange) {
     lastChange = change;
@@ -124,8 +145,42 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     validationRuns,
     pendingValidationDebounces,
     runtimeFieldRegistrations,
-    hiddenFields: new Set()
+    pathToRegistrationId,
+    hiddenFields: new Set(),
+    lifecycleState: 'active',
+    modelGeneration: 1,
+    externalErrors: new Map(),
+    childContracts: new Map()
   };
+
+  function computeScopeState(): ScopeValidationStateSnapshot {
+    const state = store.getState();
+    const hasErrors = Object.keys(state.errors).length > 0;
+    const isValidating = Object.values(state.validating).some(Boolean);
+    const valid = !hasErrors;
+    return {
+      valid,
+      hasErrors,
+      validating: isValidating,
+      lifecycleState: sharedState.lifecycleState,
+      ready: valid && !isValidating,
+      modelGeneration: sharedState.modelGeneration
+    };
+  }
+
+  function computeCanSubmit(): boolean {
+    const scopeState = computeScopeState();
+    return scopeState.valid && !scopeState.validating;
+  }
+
+  function computeAllTouched(): boolean {
+    const state = store.getState();
+    const order = getCompiledValidationTraversalOrder(currentValidation);
+    if (order.length === 0) {
+      return true;
+    }
+    return order.every((path) => state.touched[path]);
+  }
 
   function applyFieldValuePatch(
     state: ReturnType<typeof store.getState>,
@@ -133,12 +188,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     value: unknown,
     forceDirty: boolean
   ) {
-    const runtimeTarget = findRuntimeRegistration(sharedState.runtimeFieldRegistrations, name);
+    const runtimeTarget = findRuntimeRegistration(sharedState, name);
     const nextValues = setIn(state.values, name, value);
     const nextValidating = buildBooleanPathState(state.validating, name, false);
     const nextErrors = buildErrorPathState(state.errors, name);
 
-    if (runtimeTarget.childPath && runtimeTarget.registration) {
+    if (runtimeTarget.childPath && runtimeTarget.entry) {
       return {
         nextValues,
         nextValidating,
@@ -156,7 +211,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   }
 
   async function revalidateDependents(path: string) {
-    const dependentPaths = getCompiledValidationDependents(inputValue.validation, path);
+    const dependentPaths = getCompiledValidationDependents(currentValidation, path);
 
     for (const dependentPath of dependentPaths) {
       if (dependentPath === path) {
@@ -197,20 +252,237 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     name: formName,
     store,
     scope: formScopeWithBinding,
-    validation: inputValue.validation,
+
+    get validation() {
+      return currentValidation;
+    },
+
+    get lifecycleState() {
+      return sharedState.lifecycleState;
+    },
+
+    get modelGeneration() {
+      return sharedState.modelGeneration;
+    },
+
+    get scopeId() {
+      return formId;
+    },
+
+    get rootPath() {
+      return currentValidation?.rootPath ?? '';
+    },
+
+    get canSubmit() {
+      return computeCanSubmit();
+    },
+
+    get allTouched() {
+      return computeAllTouched();
+    },
+
+    getScopeState() {
+      return computeScopeState();
+    },
+
+    getScopeRootErrors() {
+      const rootPath = currentValidation?.rootPath ?? '';
+      const state = store.getState();
+      const rootErrors = state.errors[rootPath] ?? [];
+      return rootErrors.filter((e) => e.sourceKind === 'scope-root');
+    },
+
+    isPathOwned(path: string): boolean {
+      const rootPath = currentValidation?.rootPath ?? '';
+      return path === rootPath || path.startsWith(`${rootPath}.`) || rootPath === '';
+    },
+
+    getFieldState(path: string) {
+      const state = store.getState();
+      return {
+        ownerId: formId,
+        path,
+        errors: state.errors[path] ?? [],
+        validating: state.validating[path] === true
+      };
+    },
+
+    applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationStateSnapshot {
+      const { sourceId, errors, replace } = input;
+      const existing = sharedState.externalErrors.get(sourceId);
+
+      if (replace || !existing) {
+        sharedState.externalErrors.set(sourceId, { sourceId, errors });
+      } else {
+        sharedState.externalErrors.set(sourceId, { sourceId, errors: [...existing.errors, ...errors] });
+      }
+
+      const state = store.getState();
+      const nextErrors = { ...state.errors };
+
+      if (replace && existing) {
+        for (const oldErr of existing.errors) {
+          const pathErrors = nextErrors[oldErr.path];
+          if (pathErrors) {
+            const filtered = pathErrors.filter((e) => e.sourceKind !== 'external' || !existing.errors.some((oe) => oe.path === e.path && oe.message === e.message));
+            if (filtered.length === 0) {
+              delete nextErrors[oldErr.path];
+            } else {
+              nextErrors[oldErr.path] = filtered;
+            }
+          }
+        }
+      }
+
+      for (const err of errors) {
+        const pathErrors = nextErrors[err.path] ?? [];
+        const externalErr: ValidationError = { ...err, sourceKind: 'external' };
+        nextErrors[err.path] = [...pathErrors, externalErr];
+      }
+
+      store.setErrors(nextErrors);
+      return computeScopeState();
+    },
+
+    async applyChangesAndRevalidate(input: ApplyScopeChangesInput): Promise<FormValidationResult> {
+      if (sharedState.lifecycleState === 'disposed') {
+        return { ok: true, errors: [], fieldErrors: {} };
+      }
+
+      const { writes, changedPaths } = input;
+      const state = store.getState();
+      let nextValues = state.values;
+
+      for (const [path, value] of Object.entries(writes)) {
+        nextValues = setIn(nextValues, path, value);
+        validationRuns.set(path, (validationRuns.get(path) ?? 0) + 1);
+        cancelValidationDebounce(sharedState, path);
+      }
+
+      store.batchUpdate({ values: nextValues });
+
+      for (const path of changedPaths) {
+        void revalidateDependents(path);
+      }
+
+      return thisForm.validateForm();
+    },
+
+    refreshCompiledModel(newModel) {
+      if (sharedState.lifecycleState === 'disposed') {
+        return;
+      }
+
+      sharedState.lifecycleState = 'refreshing';
+      sharedState.modelGeneration += 1;
+      currentValidation = newModel;
+      sharedState.inputValue = { ...sharedState.inputValue, validation: newModel };
+
+      cancelAllValidationDebounces(sharedState);
+      sharedState.validationRuns.clear();
+
+      const staleRegistrations = Array.from(sharedState.runtimeFieldRegistrations.entries());
+      for (const [regId, entry] of staleRegistrations) {
+        sharedState.runtimeFieldRegistrations.delete(regId);
+        sharedState.pathToRegistrationId.delete(entry.registration.path);
+      }
+
+      sharedState.lifecycleState = 'active';
+    },
+
+    dispose() {
+      if (sharedState.lifecycleState === 'disposed') {
+        return;
+      }
+
+      sharedState.lifecycleState = 'disposed';
+      cancelAllValidationDebounces(sharedState);
+      sharedState.validationRuns.clear();
+      sharedState.runtimeFieldRegistrations.clear();
+      sharedState.pathToRegistrationId.clear();
+      sharedState.childContracts.clear();
+      sharedState.externalErrors.clear();
+      store.batchUpdate({ errors: {}, validating: {}, touched: {}, dirty: {}, visited: {} });
+    },
+
+    registerChildContract(contract: ChildValidationContractRegistration): void {
+      sharedState.childContracts.set(contract.childOwnerId, contract);
+    },
+
+    unregisterChildContract(childOwnerId: string): void {
+      sharedState.childContracts.delete(childOwnerId);
+    },
+
+    validateAt(path) {
+      return thisForm.validateField(path);
+    },
+
+    validateAll() {
+      return thisForm.validateForm();
+    },
+
     setLifecycleHandlers(handlers) {
       lifecycleHandlers = handlers;
     },
-    registerField(registration) {
-      runtimeFieldRegistrations.set(registration.path, registration);
 
-      return () => {
-        if (runtimeFieldRegistrations.get(registration.path) === registration) {
-          registration.onRemove?.();
-          runtimeFieldRegistrations.delete(registration.path);
+    registerField(registration: RuntimeFieldRegistration): FieldRegistrationHandle {
+      if (sharedState.lifecycleState === 'disposed') {
+        return {
+          accepted: false,
+          registrationId: '',
+          unregister() {}
+        };
+      }
+
+      const existingId = pathToRegistrationId.get(registration.path);
+      if (existingId && runtimeFieldRegistrations.has(existingId)) {
+        return {
+          accepted: false,
+          registrationId: '',
+          unregister() {}
+        };
+      }
+
+      const registrationId = nextRegistrationId();
+      const capturedGeneration = sharedState.modelGeneration;
+
+      runtimeFieldRegistrations.set(registrationId, {
+        registrationId,
+        registration,
+        modelGeneration: capturedGeneration
+      });
+      pathToRegistrationId.set(registration.path, registrationId);
+
+      return {
+        accepted: true,
+        registrationId,
+        unregister() {
+          const entry = runtimeFieldRegistrations.get(registrationId);
+          if (!entry) return;
+          if (entry.modelGeneration !== capturedGeneration) return;
+
+          entry.registration.onRemove?.();
+          runtimeFieldRegistrations.delete(registrationId);
+
+          if (pathToRegistrationId.get(registration.path) === registrationId) {
+            pathToRegistrationId.delete(registration.path);
+          }
         }
       };
     },
+
+    updateFieldRegistration(registrationId, patch) {
+      const entry = runtimeFieldRegistrations.get(registrationId);
+      if (!entry) return;
+
+      if (entry.modelGeneration !== sharedState.modelGeneration) return;
+
+      runtimeFieldRegistrations.set(registrationId, {
+        ...entry,
+        registration: { ...entry.registration, ...patch }
+      });
+    },
+
     notifyFieldHidden(path, hidden) {
       const wasHidden = sharedState.hiddenFields.has(path);
 
@@ -220,7 +492,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       if (hidden) {
         sharedState.hiddenFields.add(path);
-        const field = getCompiledValidationField(inputValue.validation, path);
+        const field = getCompiledValidationField(currentValidation, path);
 
         if (field?.hiddenFieldPolicy.clearValueWhenHidden) {
           thisForm.setValue(path, undefined);
@@ -229,11 +501,13 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         sharedState.hiddenFields.delete(path);
       }
     },
+
     async validateField(path) {
       return validatePath(sharedState, path);
     },
+
     async validateForm() {
-      if (!inputValue.validation && runtimeFieldRegistrations.size === 0) {
+      if (!currentValidation && runtimeFieldRegistrations.size === 0) {
         return {
           ok: true,
           errors: [],
@@ -246,7 +520,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       const initialErrors = store.getState().errors;
       const validatedPaths = new Set<string>();
 
-      const validationPaths = getCompiledValidationTraversalOrder(inputValue.validation);
+      const validationPaths = getCompiledValidationTraversalOrder(currentValidation);
 
       for (const path of validationPaths) {
         validatedPaths.add(path);
@@ -270,10 +544,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         }
       }
 
-      for (const [path, registration] of runtimeFieldRegistrations) {
+      for (const entry of runtimeFieldRegistrations.values()) {
+        const { registration } = entry;
+        const path = registration.path;
         validatedPaths.add(path);
 
-        if (getCompiledValidationField(inputValue.validation, path)) {
+        if (getCompiledValidationField(currentValidation, path)) {
           await validateRegisteredChildren(registration);
           continue;
         }
@@ -335,8 +611,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         fieldErrors
       } as FormValidationResult;
     },
+
     async validateSubtree(path) {
-      if (!inputValue.validation) {
+      if (!currentValidation) {
         return {
           ok: true,
           errors: [],
@@ -369,27 +646,35 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         fieldErrors
       } as FormValidationResult;
     },
+
     getError(path) {
       return store.getState().errors[path];
     },
+
     isValidating(path) {
       return store.getState().validating[path] === true;
     },
+
     isTouched(path) {
       return store.getState().touched[path] === true;
     },
+
     isDirty(path) {
       return store.getState().dirty[path] === true;
     },
+
     isVisited(path) {
       return store.getState().visited[path] === true;
     },
+
     touchField(path) {
       store.setTouched(path, true);
     },
+
     visitField(path) {
       store.setVisited(path, true);
     },
+
     clearErrors(path) {
       if (!path) {
         store.setErrors({});
@@ -398,6 +683,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       store.setPathErrors(path);
     },
+
     async submit(api?: ApiSchema, options?: { interactionId?: string }) {
       if (isSubmittingInternal) {
         return {
@@ -405,6 +691,10 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           cancelled: true,
           error: new Error('Submit already in progress')
         };
+      }
+
+      if (sharedState.lifecycleState === 'disposed') {
+        return { ok: false, cancelled: true, error: new Error('Form is disposed') };
       }
 
       isSubmittingInternal = true;
@@ -425,8 +715,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       const nextTouched = buildSubmitTouchedState({
         touched: store.getState().touched,
-        validation: inputValue.validation,
-        runtimeFieldRegistrations: runtimeFieldRegistrations.values(),
+        validation: currentValidation,
+        runtimeFieldRegistrations: Array.from(runtimeFieldRegistrations.values()).map((e) => e.registration),
         defaultValidationTriggers
       });
 
@@ -494,9 +784,10 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         store.setSubmitting(false);
       }
     },
+
     reset(values) {
       const nextValues = toRecord(values);
-      const nextInitialFieldState = buildInitialFieldState(nextValues, inputValue.validation);
+      const nextInitialFieldState = buildInitialFieldState(nextValues, currentValidation);
 
       initialFieldState.initialValues = nextInitialFieldState.initialValues;
       cancelAllValidationDebounces(sharedState);
@@ -509,7 +800,10 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         visited: {}
       });
     },
+
     setValue(name, value) {
+      if (sharedState.lifecycleState === 'disposed') return;
+
       validationRuns.set(name, (validationRuns.get(name) ?? 0) + 1);
       cancelValidationDebounce(sharedState, name);
 
@@ -524,9 +818,23 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         errors: patch.nextErrors
       });
 
+      for (const [sourceId, entry] of sharedState.externalErrors) {
+        const filtered = entry.errors.filter((e) => e.path !== name && !e.path.startsWith(`${name}.`));
+        if (filtered.length !== entry.errors.length) {
+          if (filtered.length === 0) {
+            sharedState.externalErrors.delete(sourceId);
+          } else {
+            sharedState.externalErrors.set(sourceId, { sourceId, errors: filtered });
+          }
+        }
+      }
+
       void revalidateDependents(name);
     },
+
     setValues(values) {
+      if (sharedState.lifecycleState === 'disposed') return;
+
       const entries = Object.entries(values);
 
       if (entries.length === 0) {
@@ -577,6 +885,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         void revalidateDependents(changedPath);
       }
     },
+
     appendValue(path, value) {
       executeArrayMutation({
         sharedState,
@@ -588,6 +897,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         revalidateDependents
       });
     },
+
     prependValue(path, value) {
       executeArrayMutation({
         sharedState,
@@ -599,6 +909,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         revalidateDependents
       });
     },
+
     insertValue(path, index, value) {
       const currentValue = scope.get(path);
       const safeArray = Array.isArray(currentValue) ? currentValue : [];
@@ -613,6 +924,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         revalidateDependents
       });
     },
+
     removeValue(path, index) {
       const currentValue = scope.get(path);
 
@@ -637,6 +949,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         revalidateDependents
       });
     },
+
     moveValue(path, from, to) {
       const currentValue = scope.get(path);
 
@@ -675,6 +988,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         revalidateDependents
       });
     },
+
     swapValue(path, a, b) {
       const currentValue = scope.get(path);
 
@@ -709,6 +1023,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         revalidateDependents
       });
     },
+
     replaceValue(path, value) {
       const nextValue = Array.isArray(value) ? value : [];
       executeArrayMutation({
@@ -721,18 +1036,22 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         revalidateDependents
       });
     },
+
     getField(path) {
-      return getCompiledValidationField(inputValue.validation, path);
+      return getCompiledValidationField(currentValidation, path);
     },
+
     getDependents(path) {
-      return getCompiledValidationDependents(inputValue.validation, path);
+      return getCompiledValidationDependents(currentValidation, path);
     },
+
     findByPrefix(prefix) {
-      const order = getCompiledValidationTraversalOrder(inputValue.validation);
+      const order = getCompiledValidationTraversalOrder(currentValidation);
       return order.filter((p) => p === prefix || p.startsWith(`${prefix}.`));
     },
+
     getChildren(path) {
-      const node = getCompiledValidationNode(inputValue.validation, path);
+      const node = getCompiledValidationNode(currentValidation, path);
       return node?.children ?? [];
     }
   };

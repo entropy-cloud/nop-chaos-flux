@@ -18,12 +18,14 @@ export function collectSubtreePaths(sharedState: ManagedFormRuntimeSharedState, 
     }
   }
 
-  for (const [registrationPath, registration] of sharedState.runtimeFieldRegistrations) {
+  for (const entry of sharedState.runtimeFieldRegistrations.values()) {
+    const registrationPath = entry.registration.path;
+
     if (registrationPath === path || registrationPath.startsWith(`${path}.`) || path.startsWith(`${registrationPath}.`)) {
       paths.add(registrationPath);
     }
 
-    for (const childPath of registration.childPaths ?? []) {
+    for (const childPath of entry.registration.childPaths ?? []) {
       if (childPath === path || childPath.startsWith(`${path}.`) || path.startsWith(`${childPath}.`)) {
         paths.add(childPath);
       }
@@ -86,4 +88,3 @@ export function collectSubtreeValidationTargets(sharedState: ManagedFormRuntimeS
 
   return Array.from(targets);
 }
-

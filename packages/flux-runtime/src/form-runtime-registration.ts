@@ -1,41 +1,40 @@
-import { setIn, type RuntimeFieldRegistration } from '@nop-chaos/flux-core';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import { setIn } from '@nop-chaos/flux-core';
+import type { ManagedFormRuntimeSharedState, RegisteredFieldEntry } from './form-runtime-types';
 
 export function findRuntimeRegistration(
-  runtimeFieldRegistrations: Map<string, RuntimeFieldRegistration>,
+  sharedState: ManagedFormRuntimeSharedState,
   path: string
-): { registration: RuntimeFieldRegistration | undefined; childPath: string | undefined } {
-  const direct = runtimeFieldRegistrations.get(path);
+): { entry: RegisteredFieldEntry | undefined; childPath: string | undefined } {
+  const registrationId = sharedState.pathToRegistrationId.get(path);
 
-  if (direct) {
-    return {
-      registration: direct,
-      childPath: undefined
-    };
-  }
-
-  for (const registration of runtimeFieldRegistrations.values()) {
-    if (registration.childPaths?.includes(path)) {
-      return {
-        registration,
-        childPath: path
-      };
+  if (registrationId) {
+    const entry = sharedState.runtimeFieldRegistrations.get(registrationId);
+    if (entry) {
+      return { entry, childPath: undefined };
     }
   }
 
-  return {
-    registration: undefined,
-    childPath: undefined
-  };
+  for (const entry of sharedState.runtimeFieldRegistrations.values()) {
+    if (entry.registration.childPaths?.includes(path)) {
+      return { entry, childPath: path };
+    }
+  }
+
+  return { entry: undefined, childPath: undefined };
 }
 
 export function syncRegisteredFieldValue(sharedState: ManagedFormRuntimeSharedState, path: string) {
-  const registration = sharedState.runtimeFieldRegistrations.get(path);
-
-  if (!registration) {
+  const registrationId = sharedState.pathToRegistrationId.get(path);
+  if (!registrationId) {
     return undefined;
   }
 
+  const entry = sharedState.runtimeFieldRegistrations.get(registrationId);
+  if (!entry) {
+    return undefined;
+  }
+
+  const registration = entry.registration;
   const nextValue = registration.syncValue ? registration.syncValue() : registration.getValue();
   const currentValue = sharedState.scope.get(path);
 

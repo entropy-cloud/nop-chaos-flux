@@ -1,6 +1,7 @@
 import type {
   CompiledFormValidationField,
   FormValidationResult,
+  RuntimeFieldRegistration,
   ValidationError,
   ValidationResult
 } from '@nop-chaos/flux-core';
@@ -135,7 +136,7 @@ export function waitForValidationDebounce(
 async function validateRuntimeRegistrationRoot(
   sharedState: ManagedFormRuntimeSharedState,
   path: string,
-  registration: NonNullable<ReturnType<typeof findRuntimeRegistration>['registration']>
+  registration: RuntimeFieldRegistration
 ): Promise<ValidationResult> {
   const runtimeErrors = normalizeRuntimeValidationErrors(await registration.validate?.(), registration, path) ?? [];
   commitPathValidationState({
@@ -149,7 +150,7 @@ async function validateRuntimeRegistrationRoot(
 async function validateRuntimeRegistrationChild(
   sharedState: ManagedFormRuntimeSharedState,
   path: string,
-  registration: NonNullable<ReturnType<typeof findRuntimeRegistration>['registration']>,
+  registration: RuntimeFieldRegistration,
   childPath: string
 ): Promise<ValidationResult> {
   const runtimeErrors = normalizeRuntimeValidationErrors(
@@ -171,8 +172,10 @@ async function validateCompiledField(
   path: string,
   field: CompiledFormValidationField
 ): Promise<ValidationResult> {
-  const runtimeRegistration = sharedState.runtimeFieldRegistrations.get(path);
+  const runtimeTarget = findRuntimeRegistration(sharedState, path);
+  const runtimeRegistration = runtimeTarget.entry?.registration;
   const syncedRuntimeValue = syncRegisteredFieldValue(sharedState, path);
+  const capturedGeneration = sharedState.modelGeneration;
   const runId = (sharedState.validationRuns.get(path) ?? 0) + 1;
   sharedState.validationRuns.set(path, runId);
   const value = syncedRuntimeValue ?? sharedState.scope.get(path);
@@ -188,7 +191,7 @@ async function validateCompiledField(
       validatingTimer = setTimeout(() => {
         validatingTimer = undefined;
 
-        if (sharedState.validationRuns.get(path) === runId) {
+        if (sharedState.validationRuns.get(path) === runId && sharedState.modelGeneration === capturedGeneration) {
           sharedState.store.setValidating(path, true);
         }
       }, validatingDelay);
@@ -205,6 +208,10 @@ async function validateCompiledField(
         const shouldRun = await waitForValidationDebounce(sharedState, path, rule.debounce, runId);
 
         if (!shouldRun) {
+          throw VALIDATION_CANCELLED;
+        }
+
+        if (sharedState.modelGeneration !== capturedGeneration) {
           throw VALIDATION_CANCELLED;
         }
 
@@ -232,7 +239,7 @@ async function validateCompiledField(
       }
     }
 
-    if (sharedState.validationRuns.get(path) !== runId) {
+    if (sharedState.validationRuns.get(path) !== runId || sharedState.modelGeneration !== capturedGeneration) {
       finalErrors = [];
       return createValidationResult([]);
     }
@@ -250,7 +257,7 @@ async function validateCompiledField(
       validatingTimer = undefined;
     }
 
-    if (hasAsyncRules && sharedState.validationRuns.get(path) === runId) {
+    if (hasAsyncRules && sharedState.validationRuns.get(path) === runId && sharedState.modelGeneration === capturedGeneration) {
       commitPathValidationState({
         sharedState,
         path,
@@ -262,9 +269,13 @@ async function validateCompiledField(
 }
 
 export async function validatePath(sharedState: ManagedFormRuntimeSharedState, path: string): Promise<ValidationResult> {
+  if (sharedState.lifecycleState === 'disposed') {
+    return createValidationResult([]);
+  }
+
   const field = getCompiledValidationField(sharedState.inputValue.validation, path);
-  const runtimeTarget = findRuntimeRegistration(sharedState.runtimeFieldRegistrations, path);
-  const runtimeRegistration = runtimeTarget.registration;
+  const runtimeTarget = findRuntimeRegistration(sharedState, path);
+  const runtimeRegistration = runtimeTarget.entry?.registration;
 
   if (!field && !runtimeRegistration) {
     return createValidationResult([]);
@@ -344,3 +355,4 @@ export async function validateSubtreeByNode(
     fieldErrors
   };
 }
+

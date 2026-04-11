@@ -10,7 +10,9 @@ import type {
   RuntimeFieldRegistration,
   ScopeRef,
   ValidationError,
-  ValidationRule
+  ValidationRule,
+  ValidationOwnerLifecycleState,
+  ChildValidationContractRegistration
 } from '@nop-chaos/flux-core';
 
 export interface CreateManagedFormRuntimeInput {
@@ -49,6 +51,17 @@ export interface PendingValidationDebounce {
   reject: (error: unknown) => void;
 }
 
+export interface RegisteredFieldEntry {
+  registrationId: string;
+  registration: RuntimeFieldRegistration;
+  modelGeneration: number;
+}
+
+export interface ExternalErrorEntry {
+  sourceId: string;
+  errors: ValidationError[];
+}
+
 export interface ManagedFormRuntimeSharedState {
   inputValue: CreateManagedFormRuntimeInput;
   store: FormStoreApi;
@@ -56,6 +69,11 @@ export interface ManagedFormRuntimeSharedState {
   initialFieldState: InitialFieldState;
   validationRuns: Map<string, number>;
   pendingValidationDebounces: Map<string, PendingValidationDebounce>;
-  runtimeFieldRegistrations: Map<string, RuntimeFieldRegistration>;
+  runtimeFieldRegistrations: Map<string, RegisteredFieldEntry>;
+  pathToRegistrationId: Map<string, string>;
   hiddenFields: Set<string>;
+  lifecycleState: ValidationOwnerLifecycleState;
+  modelGeneration: number;
+  externalErrors: Map<string, ExternalErrorEntry>;
+  childContracts: Map<string, ChildValidationContractRegistration>;
 }

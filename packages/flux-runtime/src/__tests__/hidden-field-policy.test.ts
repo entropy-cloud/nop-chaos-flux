@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import type {
-  CompiledFormValidationField,
   CompiledFormValidationModel,
   CompiledValidationNode
 } from '@nop-chaos/flux-core';
