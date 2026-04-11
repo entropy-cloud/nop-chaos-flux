@@ -61,7 +61,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
 
         return [];
       }
-    });
+    }).unregister;
   }, [currentForm, labelText, name]);
 
   return (

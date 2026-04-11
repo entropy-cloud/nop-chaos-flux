@@ -240,7 +240,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     };
 
     registrationRef.current = registration;
-    return currentForm.registerField(registration);
+    return currentForm.registerField(registration).unregister;
     }, [childPaths, currentForm, name, props.props.itemLabel]);
 
   return (

@@ -320,7 +320,7 @@ function CompositeErrorProbe() {
       validateChild(path) {
         return [{ path, rule: 'required', message: 'Entry 1 value is required' }];
       }
-    });
+    }).unregister;
   }, [form]);
 
   return (

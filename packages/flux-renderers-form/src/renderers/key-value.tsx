@@ -333,7 +333,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     };
 
     registrationRef.current = registration;
-    return currentForm.registerField(registration);
+    return currentForm.registerField(registration).unregister;
     }, [childPaths, currentForm, name]);
 
   return (

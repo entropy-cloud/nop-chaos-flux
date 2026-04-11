@@ -117,7 +117,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     };
 
     registrationRef.current = registration;
-    return currentForm.registerField(registration);
+    return currentForm.registerField(registration).unregister;
   }, [currentForm, name]);
 
   const embed = props.props.embed !== false;
