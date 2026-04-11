@@ -1,4 +1,4 @@
-# NOP Chaos Flux Documentation Index
+﻿# NOP Chaos Flux Documentation Index
 
 ## Purpose
 
@@ -19,19 +19,19 @@ Choose the smallest document that matches the task.
 | Understand the current architecture baseline | `docs/architecture/flux-core.md` | `docs/architecture/renderer-runtime.md` |
 | Understand Flux's top-level frontend programming model, primitive categories, macro layering, and how the primitives compose into one execution model | `docs/architecture/frontend-programming-model.md` | `docs/architecture/flux-core.md` |
 | Understand action control flow such as `when`, `then`, `onError`, `parallel`, result classes, and chained result context | `docs/architecture/action-algebra-formal-spec.md` | `docs/architecture/action-scope-and-imports.md` |
-| 设计 action 可视化编辑、optional step、graph lowering，或判断是否要把 `parallel` 改成 `steps` | `docs/architecture/action-graph-authoring.md` | `docs/architecture/action-algebra-formal-spec.md` |
-| 设计值转换、字段 draft 生命周期、组合式详情字段/详情视图、或 `transformInAction` / `transformOutAction` / `validateValueAction` | `docs/architecture/value-adaptation-and-detail-field.md` | `docs/architecture/action-scope-and-imports.md`, `docs/architecture/renderer-runtime.md` |
-| 设计多态值字段、`string | object`/`string | ActionSchema` 这类 union-like 编辑、自动识别变体、或切换不同编辑器 | `docs/architecture/variant-field.md` | `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/action-scope-and-imports.md` |
-| 设计对象字段、局部 subform、一个字段内部再拆多个属性编辑、或相对对象根的子字段命名 | `docs/architecture/object-field.md` | `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/renderer-runtime.md` |
-| 设计数组字段、标量数组/对象数组编辑、或判断它与 `list` / `loop` / AMIS `combo` / `input-array` 的边界 | `docs/architecture/array-field.md` | `docs/architecture/object-field.md`, `docs/components/list/design.md`, `docs/components/loop/design.md` |
-| 设计按钮 / 表单 / 选择控件的 async pending、loading、disabled 语义 | `docs/architecture/action-interaction-state.md` | `docs/architecture/form-validation.md`, `docs/architecture/api-data-source.md` |
-| 设计 dialog / drawer / future sheet 的打开态、surface status、`statusPath` 或局部 `$surface` 规则 | `docs/architecture/surface-owner.md` | `docs/architecture/action-interaction-state.md` |
-| 设计 scope 继承、`data` 初始化、`isolate`、row scope、或判断是否需要 `$parentScope` | `docs/architecture/scope-ownership-and-isolation.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/table-row-identity-and-scope-performance.md` |
-| 设计 dialog / drawer 的 `data`、open-state、surface status 与 scope 边界 | `docs/architecture/surface-owner.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/components/dialog/design.md` |
+| è®¾è®¡ action å¯è§†åŒ–ç¼–è¾‘ã€optional stepã€graph loweringï¼Œæˆ–åˆ¤æ–­æ˜¯å¦è¦æŠŠ `parallel` æ”¹æˆ `steps` | `docs/architecture/action-graph-authoring.md` | `docs/architecture/action-algebra-formal-spec.md` |
+| è®¾è®¡å€¼è½¬æ¢ã€å­—æ®µ draft ç”Ÿå‘½å‘¨æœŸã€ç»„åˆå¼è¯¦æƒ…å­—æ®µ/è¯¦æƒ…è§†å›¾ã€æˆ– `transformInAction` / `transformOutAction` / `validateValueAction` | `docs/architecture/value-adaptation-and-detail-field.md` | `docs/architecture/action-scope-and-imports.md`, `docs/architecture/renderer-runtime.md` |
+| è®¾è®¡å¤šæ€å€¼å­—æ®µã€`string | object`/`string | ActionSchema` è¿™ç±» union-like ç¼–è¾‘ã€è‡ªåŠ¨è¯†åˆ«å˜ä½“ã€æˆ–åˆ‡æ¢ä¸åŒç¼–è¾‘å™¨ | `docs/architecture/variant-field.md` | `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/action-scope-and-imports.md` |
+| è®¾è®¡å¯¹è±¡å­—æ®µã€å±€éƒ¨ subformã€ä¸€ä¸ªå­—æ®µå†…éƒ¨å†æ‹†å¤šä¸ªå±žæ€§ç¼–è¾‘ã€æˆ–ç›¸å¯¹å¯¹è±¡æ ¹çš„å­å­—æ®µå‘½å | `docs/architecture/object-field.md` | `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/renderer-runtime.md` |
+| è®¾è®¡æ•°ç»„å­—æ®µã€æ ‡é‡æ•°ç»„/å¯¹è±¡æ•°ç»„ç¼–è¾‘ã€æˆ–åˆ¤æ–­å®ƒä¸Ž `list` / `loop` / AMIS `combo` / `input-array` çš„è¾¹ç•Œ | `docs/architecture/array-field.md` | `docs/architecture/object-field.md`, `docs/components/list/design.md`, `docs/components/loop/design.md` |
+| è®¾è®¡æŒ‰é’® / è¡¨å• / é€‰æ‹©æŽ§ä»¶çš„ async pendingã€loadingã€disabled è¯­ä¹‰ | `docs/architecture/action-interaction-state.md` | `docs/architecture/form-validation.md`, `docs/architecture/api-data-source.md` |
+| è®¾è®¡ dialog / drawer / future sheet çš„æ‰“å¼€æ€ã€surface statusã€`statusPath` æˆ–å±€éƒ¨ `$surface` è§„åˆ™ | `docs/architecture/surface-owner.md` | `docs/architecture/action-interaction-state.md` |
+| è®¾è®¡ scope ç»§æ‰¿ã€`data` åˆå§‹åŒ–ã€`isolate`ã€row scopeã€æˆ–åˆ¤æ–­æ˜¯å¦éœ€è¦ `$parentScope` | `docs/architecture/scope-ownership-and-isolation.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/table-row-identity-and-scope-performance.md` |
+| è®¾è®¡ dialog / drawer çš„ `data`ã€open-stateã€surface status ä¸Ž scope è¾¹ç•Œ | `docs/architecture/surface-owner.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/components/dialog/design.md` |
 | Design API requests, scope injection (includeScope), params, DataSource polling, unified formula/api source semantics, or non-rendering reaction/watch nodes | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` |
-| 了解基于 SchemaRenderer 的图设计器规划架构，或判断 graph designer 与 domain-specific codec / value editor 的边界 | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md`, `docs/architecture/action-scope-and-imports.md` |
-| 看清 Flow Designer 各层协作细节、命名空间动作流转、画布/Inspector 调用链 | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
-| 核对 Flow Designer 当前真实的 snapshot 契约、host scope 落地状态、哪些字段已接线 | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |
+| äº†è§£åŸºäºŽ SchemaRenderer çš„å›¾è®¾è®¡å™¨è§„åˆ’æž¶æž„ï¼Œæˆ–åˆ¤æ–­ graph designer ä¸Ž domain-specific codec / value editor çš„è¾¹ç•Œ | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md`, `docs/architecture/action-scope-and-imports.md` |
+| çœ‹æ¸… Flow Designer å„å±‚åä½œç»†èŠ‚ã€å‘½åç©ºé—´åŠ¨ä½œæµè½¬ã€ç”»å¸ƒ/Inspector è°ƒç”¨é“¾ | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
+| æ ¸å¯¹ Flow Designer å½“å‰çœŸå®žçš„ snapshot å¥‘çº¦ã€host scope è½åœ°çŠ¶æ€ã€å“ªäº›å­—æ®µå·²æŽ¥çº¿ | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |
 | Understand Flow Designer React Flow integration, callback translation, or canvas failure semantics | `docs/architecture/flow-designer/canvas-adapters.md` | `docs/architecture/flow-designer/api.md` |
 | Draft, execute, or audit a plan under `docs/plans/` | `docs/plans/00-plan-authoring-and-execution-guide.md` | `docs/logs/index.md` |
 | Plan parity work against `nop-chaos-next` `flow-editor` and identify which behaviors must become configuration-driven | `docs/plans/13-flow-editor-parity-gap-analysis-and-migration-plan.md` | `docs/architecture/flow-designer/design.md` |
@@ -40,10 +40,10 @@ Choose the smallest document that matches the task.
 | Design semantic props vs Tailwind className, custom style presets, or shadcn/ui integration | `docs/architecture/styling-system.md` | `docs/architecture/renderer-markers-and-selectors.md` |
 | Plan shadcn/ui migration from nop-chaos-next-master | `docs/plans/18-shadcn-ui-migration-plan.md` | `docs/architecture/styling-system.md` |
 | Plan dependency-tracking runtime convergence under the root-binding model | `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` | `docs/architecture/dependency-tracking.md` |
-| 了解基于 SchemaRenderer 的报表设计器与 spreadsheet editor 规划架构 | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` |
-| 了解通用 report designer 如何适配 nop-report | `docs/architecture/report-designer/nop-report-profile.md` | `docs/analysis/excel-report-designer-research.md` |
-| 了解 report designer 与 nop-report 的导入导出/round-trip 设计 | `docs/architecture/report-designer/codec-design.md` | `docs/architecture/report-designer/nop-report-profile.md` |
-| 设计 report designer 的右侧属性面板与 expression/reference 字段编辑边界 | `docs/architecture/report-designer/inspector-design.md` | `docs/architecture/report-designer/contracts.md` |
+| äº†è§£åŸºäºŽ SchemaRenderer çš„æŠ¥è¡¨è®¾è®¡å™¨ä¸Ž spreadsheet editor è§„åˆ’æž¶æž„ | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` |
+| äº†è§£é€šç”¨ report designer å¦‚ä½•é€‚é… nop-report | `docs/architecture/report-designer/nop-report-profile.md` | `docs/analysis/2026-03-21-excel-report-designer-research.md` |
+| äº†è§£ report designer ä¸Ž nop-report çš„å¯¼å…¥å¯¼å‡º/round-trip è®¾è®¡ | `docs/architecture/report-designer/codec-design.md` | `docs/architecture/report-designer/nop-report-profile.md` |
+| è®¾è®¡ report designer çš„å³ä¾§å±žæ€§é¢æ¿ä¸Ž expression/reference å­—æ®µç¼–è¾‘è¾¹ç•Œ | `docs/architecture/report-designer/inspector-design.md` | `docs/architecture/report-designer/contracts.md` |
 | Change React integration, renderer props, hooks, or fragment rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
 | Design compile-once/runtime-instantiation behavior, `cid`/template-node identity, repeated-instance identity, or future `type: 'loop'` rules | `docs/architecture/template-instantiation-and-node-identity.md` | `docs/architecture/component-resolution.md` |
 | Design `loop` node schema, item scope, `itemName` / `indexName`, or `itemData` | `docs/components/loop/design.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
@@ -54,15 +54,15 @@ Choose the smallest document that matches the task.
 | Design `tree` as a visual hierarchical renderer, or decide its boundary versus `loop` / `recurse` / future `input-tree` | `docs/components/tree/design.md` | `docs/components/recurse/design.md`, `docs/components/loop/design.md` |
 | Design `input-tree` / `tree-select` as form tree controls, or decide their boundary versus `tree` / `select` | `docs/components/input-tree/design.md`, `docs/components/tree-select/design.md` | `docs/components/tree/design.md`, `docs/components/select/design.md`, `docs/components/form/design.md` |
 | Design high-performance table row identity, `rowKey`, row-scope reuse, row-local invalidation, or same-row field access inside tables | `docs/architecture/table-row-identity-and-scope-performance.md` | `docs/architecture/dependency-tracking.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
-| 设计或实现某个具体组件的 schema 契约、核心能力和落地路线 | `docs/components/index.md` | 对应组件目录下的 `docs/components/<component>/design.md`，再回看相关 `docs/architecture/*.md` |
+| è®¾è®¡æˆ–å®žçŽ°æŸä¸ªå…·ä½“ç»„ä»¶çš„ schema å¥‘çº¦ã€æ ¸å¿ƒèƒ½åŠ›å’Œè½åœ°è·¯çº¿ | `docs/components/index.md` | å¯¹åº”ç»„ä»¶ç›®å½•ä¸‹çš„ `docs/components/<component>/design.md`ï¼Œå†å›žçœ‹ç›¸å…³ `docs/architecture/*.md` |
 | Design namespaced action extension, host action scopes, `xui:imports` semantics, or dynamic domain libraries loaded into owner semantic actions | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/flow-designer/config-schema.md` |
-| 设计 Flux schema 文件校验器、导入前结构校验或命名空间属性忽略策略 | `docs/architecture/schema-file-validator.md` | `docs/architecture/action-scope-and-imports.md`, `docs/references/flux-json-conventions.md` |
+| è®¾è®¡ Flux schema æ–‡ä»¶æ ¡éªŒå™¨ã€å¯¼å…¥å‰ç»“æž„æ ¡éªŒæˆ–å‘½åç©ºé—´å±žæ€§å¿½ç•¥ç­–ç•¥ | `docs/architecture/schema-file-validator.md` | `docs/architecture/action-scope-and-imports.md`, `docs/references/flux-json-conventions.md` |
 | Change slot-like fields such as `title`, `empty`, or `onClick` | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
 | Change validation behavior, hidden-field submit/validate/clear semantics, or form field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` |
 | Decide where runtime or validation code should live | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
 | Check workspace structure, package roles, or tooling baseline | `docs/architecture/frontend-baseline.md` | `package.json` |
 | Plan playground information architecture or debugger UX | `docs/architecture/playground-experience.md` | `docs/architecture/debugger-runtime.md` |
-| Design debugger automation API, inspect capability, or AI/E2E diagnostics | `docs/architecture/debugger-runtime.md` | `docs/analysis/framework-debugger-design.md` |
+| Design debugger automation API, inspect capability, or AI/E2E diagnostics | `docs/architecture/debugger-runtime.md` | `docs/analysis/2026-03-21-framework-debugger-design.md` |
 | Review security boundary and runtime safety requirements | `docs/architecture/security-design-requirements.md` | `docs/architecture/action-scope-and-imports.md` |
 | Review performance design constraints and hot-path rules | `docs/architecture/performance-design-requirements.md` | `docs/architecture/renderer-runtime.md` |
 | Review recurring regression guardrails distilled from historical bug fixes | `docs/references/architecture-guardrails-from-bugs.md` | `docs/architecture/renderer-runtime.md` |
@@ -78,7 +78,7 @@ Choose the smallest document that matches the task.
 | Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
 | Review prototype lessons or external research notes | `docs/references/` | the related architecture file for the active baseline |
 | Quickly review recent doc work, design notes, or near-term next steps | `docs/logs/` (daily files) | the most relevant active doc |
-| Understand nop-chaos-flux's architecture position vs industry frameworks | `docs/analysis/nop-chaos-flux-comparison-report.md` | `docs/architecture/flux-core.md` |
+| Understand nop-chaos-flux's architecture position vs industry frameworks | `docs/analysis/2026-04-04-nop-chaos-flux-comparison-report.md` | `docs/architecture/flux-core.md` |
 
 ## Active Source Of Truth
 
@@ -139,3 +139,4 @@ Example behavior is best cross-checked with:
 - start new bug notes from `docs/bugs/00-bug-fix-note-writing-guide.md`
 - `docs/plans/` - implementation plans and execution checklists; start new plans from `docs/plans/00-plan-authoring-and-execution-guide.md`, and ensure every plan file includes explicit status
 - `docs/skills/` - reusable internal workflow prompts and task playbooks
+
