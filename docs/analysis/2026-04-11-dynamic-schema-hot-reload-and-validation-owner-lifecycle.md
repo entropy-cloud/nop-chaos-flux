@@ -1,12 +1,10 @@
 # Dynamic Schema Hot Reload And Validation Owner Lifecycle
 
-## Purpose
+## Status
 
-This document records the remaining follow-up design problem around dynamic schema replacement.
+Technical design — ready for plan authoring.
 
-The current validation architecture assumes that a `CompiledValidationModel` is stable for the lifetime of one validation owner instance.
-
-That assumption is acceptable for most ordinary runtime flows, but it becomes insufficient in low-code authoring and dynamic-schema-renderer scenarios where schema can change while the runtime is still alive.
+Last Reviewed: 2026-04-11
 
 ---
 
@@ -45,7 +43,292 @@ That is dangerous because the old and new schema may reuse the same path while c
 
 ---
 
-## 3. What Must Not Happen
+## 3. Core Rule
+
+> A validation owner assumes its compiled model is stable for the lifetime of that owner instance. If the compiled model changes semantically, the owner must enter an explicit model-replacement lifecycle.
+
+Dynamic schema replacement is not a "swap one schema prop" operation.
+
+It is an owner lifecycle event.
+
+---
+
+## 4. Model Generation
+
+### 4.1 The `modelGeneration` Counter
+
+Each `ValidationScopeRuntime` instance holds a monotonically increasing integer counter: `modelGeneration: number`.
+
+```ts
+interface ValidationOwnerInternalState {
+  modelGeneration: number;
+  compiledModel: CompiledValidationModel | null;
+  // ... other state
+}
+```
+
+The initial value is `1`. It increments each time `compiledModel` is replaced via the model-replacement lifecycle.
+
+Generation `0` is reserved as a sentinel meaning "owner not yet initialized".
+
+### 4.2 Async Run Identity
+
+Every async validation run records the generation at launch time:
+
+```ts
+interface AsyncRunKey {
+  ownerId: string;
+  modelGeneration: number;
+  path: string;
+  ruleId: string;
+  runGeneration: number;
+}
+```
+
+Rules:
+
+1. when a run completes, it checks whether `owner.modelGeneration === run.modelGeneration` and whether `run.runGeneration` is still the current run for that path+ruleId
+2. if either check fails, the result is discarded without publishing
+3. on `modelGeneration` increment, all pending runs whose `modelGeneration` is less than the new value are considered stale and must not publish
+
+### 4.3 Cache Keys
+
+Materialization cache entries and dependency-closure cache entries must include `modelGeneration` in their cache key or be invalidated wholesale on generation change.
+
+Preferred strategy: store the current `modelGeneration` at cache-write time; on any cache read, compare against current generation and treat a mismatch as a cache miss.
+
+---
+
+## 5. Owner Compatibility Check
+
+### 5.1 What "Compatible" Means
+
+Two compiled models are owner-compatible if and only if all of the following hold:
+
+1. the owner boundary classification (`inherit-owner` / `create-owner` / `no-owner`) for the scope root is unchanged
+2. the `ownerId` is unchanged
+3. the `rootPath` is unchanged
+4. the owner remains in the same owner-tree slot relative to its parent contract boundary
+
+Two compiled models are owner-incompatible if any of the following changed:
+
+1. the scope root changed from `inherit-owner` to `create-owner` or vice versa
+2. the `ownerId` was reassigned
+3. the `rootPath` changed
+
+Owner-compatible models may still have structural differences in their nodes, rules, and dependencies. Those differences are handled by the model-refresh lifecycle, not by owner recreation.
+
+### 5.2 Compatibility Check Algorithm
+
+The owner-tree slot is represented by a stable `ownerSlotId: string` derived from the parent contract location that hosts this owner.
+
+```ts
+function isOwnerCompatible(
+  oldModel: CompiledValidationModel,
+  newModel: CompiledValidationModel,
+  oldOwnerBoundaryKind: 'inherit-owner' | 'create-owner' | 'no-owner',
+  newOwnerBoundaryKind: 'inherit-owner' | 'create-owner' | 'no-owner',
+  oldOwnerSlotId: string,
+  newOwnerSlotId: string
+): boolean {
+  return (
+    oldOwnerBoundaryKind === newOwnerBoundaryKind &&
+    oldOwnerSlotId === newOwnerSlotId &&
+    oldModel.ownerId === newModel.ownerId &&
+    oldModel.rootPath === newModel.rootPath
+  );
+}
+```
+
+This check is intentionally narrow. Owner compatibility is about identity and owner boundary, not about deep structural similarity.
+
+Deeper structural analysis (which nodes changed, which rules changed) happens inside the model-refresh lifecycle, not in the compatibility check.
+
+---
+
+## 6. Two Lifecycle Paths
+
+### 6.1 Owner-Compatible Model Refresh
+
+Use this path when `isOwnerCompatible(oldModel, newModel, oldBoundaryKind, newBoundaryKind, oldOwnerSlotId, newOwnerSlotId)` returns `true`.
+
+Steps:
+
+1. increment `modelGeneration`
+2. replace `compiledModel` with the new compiled model
+3. cancel or mark stale all async runs whose `modelGeneration` is less than the new value
+4. invalidate the materialization cache wholesale (preferred: clear it entirely; allow lazy rebuild)
+5. invalidate the dependency-closure cache
+6. invalidate the active instance graph (branch activation state, repeated item instances)
+7. run a field-registration reconciliation pass: compare old and new compiled node paths; unregister fields whose path no longer exists in the new model; keep registrations for paths that exist in both
+8. for fields that exist in both old and new model, check if their `ruleIdentitySet` changed (see §7.1); if changed, clear field error state for that path
+9. for fields that exist in both and have unchanged `ruleIdentitySet`, field error state may optionally be retained
+10. rebuild the active instance graph from the new model and current scope values
+11. run an owner-local reconciliation pass with `reason: 'system'` before accepting ordinary validation requests again
+
+Step 4 (invalidate cache) must happen before step 11 (reconciliation pass) to ensure the reconciliation uses new compiled rule templates.
+
+### 6.2 Owner-Boundary Change
+
+Use this path when `isOwnerCompatible(oldModel, newModel, oldBoundaryKind, newBoundaryKind, oldOwnerSlotId, newOwnerSlotId)` returns `false`.
+
+Steps:
+
+1. call `dispose()` on the old owner instance
+   - this cancels all async runs
+   - this clears all field state
+   - this unregisters all child contracts from the parent
+   - this releases all resources
+2. create a new owner instance with the new compiled model and `modelGeneration = 1`
+3. re-register field instances from the current React mount tree if fields are still mounted
+4. re-register child scope contracts from any currently active child owners
+5. run an initial reconciliation pass before accepting ordinary validation requests
+
+For the React rendering layer, owner-boundary change is equivalent to unmounting and remounting the owner boundary component. The React integration may achieve this by keying the owner boundary on a value derived from owner-boundary kind + `ownerSlotId` + `ownerId` + `rootPath`, so that React automatically unmounts the old owner and mounts a new one.
+
+---
+
+## 7. State Retention Guidance
+
+### 7.1 Rule Identity Set
+
+The rule identity set for a path is the set of `(ruleId, ruleKind)` pairs in the compiled rule templates for that path.
+
+```ts
+type RuleIdentitySet = Set<string>; // `${ruleId}:${ruleKind}`
+```
+
+This is used in step 8 of the model-refresh lifecycle to decide whether to clear field error state.
+
+### 7.2 What To Always Reset
+
+Always reset or invalidate on any model generation change:
+
+1. materialization cache
+2. active instance graph (branch activation state, repeated item instances)
+3. async run ownership (all runs from the old generation must not publish)
+4. dependency-closure cache
+
+### 7.3 What May Be Retained
+
+May be retained only when compatibility is explicit and proven:
+
+1. field value state owned by the surrounding scope store — this is not owned by the validation owner; it is unaffected
+2. `touched` / `dirty` / `visited` for paths that exist in both old and new model — retain only if the same field path is still present
+3. field error state for paths whose `ruleIdentitySet` is identical in both old and new model — this means the same rules still apply, so old error results may still be accurate
+
+The default must lean toward clearing state unless compatibility is cheap to prove.
+
+Rationale: retaining stale error state from superseded rules is worse than briefly showing a clean state while the reconciliation pass runs.
+
+---
+
+## 8. Async Validation Rule
+
+Async runs must be model-generation-aware.
+
+Each run is scoped by:
+
+1. `ownerId`
+2. `modelGeneration`
+3. `path`
+4. `ruleId`
+5. `runGeneration` (superseded-run counter within the same owner+model+path+rule)
+
+When `modelGeneration` changes:
+
+1. old runs must not publish — the check `owner.modelGeneration === run.modelGeneration` must fail for all old-generation runs
+2. old runs should be aborted when possible — call `AbortController.abort()` if the run supports cancellation
+3. a reused path under the new model must not accept results from the old model generation
+
+The `runGeneration` counter continues to reset to 1 for each path+rule pair inside the new model generation.
+
+---
+
+## 9. Path Reuse Is Not Semantic Continuity
+
+Path equality does not imply semantic continuity across model generations.
+
+Example:
+
+1. old model: `profile.contact` is an inline object under parent owner (`inherit-owner`, `kind: 'object'`)
+2. new model: `profile.contact` is a draft child editor boundary (`create-owner`, `kind: 'form-root'`)
+
+The path string is the same, but:
+
+1. ownership changed
+2. node kind changed
+3. validation participation changed
+
+Therefore the migration check must consider at minimum:
+
+1. owner boundary classification (`create-owner` vs `inherit-owner`)
+2. node kind
+3. rule identity set
+4. whether the path is now inside a different owner scope
+
+Path alone is not sufficient.
+
+---
+
+## 10. React Integration Points
+
+### 10.1 Schema Identity
+
+The React layer must be able to detect when schema has changed in a way that requires owner lifecycle action.
+
+Recommended approach: the schema compilation step produces a `schemaId: string` or `schemaFingerprint: string` that captures owner-boundary-relevant structure. The dynamic schema renderer compares the new compiled model against the old one using `isOwnerCompatible` plus owner-boundary kind and `ownerSlotId` before deciding the lifecycle path.
+
+### 10.2 Owner-Boundary Change Via React Key
+
+When owner-boundary change is detected, the simplest React integration is to key the owner boundary component on `${ownerBoundaryKind}:${ownerSlotId}:${compiledModel.ownerId}:${compiledModel.rootPath}`. Changing this key causes React to unmount the old owner boundary component and mount a new one, which naturally triggers owner disposal and recreation.
+
+This avoids the need for explicit owner recreation logic in the component body. The React key change is the trigger.
+
+### 10.3 Model Refresh Without Unmount
+
+When model refresh (compatible case) is detected, the owner boundary component does not need to unmount. Instead it calls a `refreshCompiledModel(newModel)` method on the owner runtime, which executes the model-refresh lifecycle steps from §6.1.
+
+The component may choose to suspend rendering (show a loading state) during the reconciliation pass if needed, but this is a UX choice and not required by the lifecycle protocol.
+
+### 10.4 Field Re-Registration After Model Refresh
+
+After a model refresh, field components that are still mounted may need to re-register against the new model. The recommended approach:
+
+1. the owner runtime publishes a `modelRefreshed` event or increments a `modelGeneration` observable
+2. mounted field components observe `modelGeneration` and call `registerField` again when it changes
+3. fields that are no longer in the new model receive a rejected registration handle from `registerField(...)` and can treat themselves as no-owner
+
+---
+
+## 11. Interaction With Dynamic Schema Renderer
+
+For a dynamic schema renderer, the practical contract is:
+
+1. when schema input changes, recompile to get a new `CompiledValidationModel`
+2. compare the new compiled model against the current one using `isOwnerCompatible` plus owner-boundary kind and `ownerSlotId`
+3. if incompatible: trigger owner recreation via React key change
+4. if compatible: call `refreshCompiledModel(newModel)` on the owner runtime
+5. wait for the reconciliation pass (may be async) before re-enabling ordinary interactions
+
+This gives dynamic-schema flows a predictable contract instead of ad hoc partial mutation.
+
+---
+
+## 12. Debugger And Devtools Exposure
+
+The following should be exposed to the debugger / devtools:
+
+1. current `modelGeneration` for each owner
+2. whether an owner is currently in a model-refresh reconciliation pass
+3. how many async runs were cancelled on the last model generation change
+4. which field paths were cleared vs retained on the last model generation change
+
+This is optional in production but required for effective debugging of dynamic schema flows.
+
+---
+
+## 13. What Must Not Happen
 
 The runtime must not do any of the following silently:
 
@@ -57,177 +340,26 @@ The runtime must not do any of the following silently:
 
 ---
 
-## 4. Recommended Core Rule
+## 14. What Should Enter Formal Architecture
 
-The core rule should be:
+The following rule should be added to `docs/architecture/form-validation.md` under the owner lifecycle section:
 
-> A validation owner assumes its compiled model is stable for the lifetime of that owner instance. If the compiled model changes semantically, the owner must enter an explicit model-replacement lifecycle.
+> Validation owner instances assume compiled-model stability. Dynamic schema replacement requires explicit owner refresh or owner recreation via the model-replacement lifecycle; it is not an in-place no-op update.
 
-This means dynamic schema replacement is not just “swap one schema prop”.
-
-It is an owner lifecycle event.
+The detailed migration and retention strategy in this document remains an analysis-level specification until code work begins.
 
 ---
 
-## 5. Owner Lifecycle For Model Replacement
+## 15. Recommended Implementation Plan Entry Points
 
-The recommended lifecycle is:
+When implementation begins, the plan should answer:
 
-1. compile the new schema into a new compiled model
-2. compare owner-boundary compatibility between old and new model
-3. if owner boundary changed, dispose the old owner and create a new one
-4. if owner boundary is compatible, replace the model under an explicit reset/rebind sequence
-5. cancel stale async runs from the old model generation
-6. clear or invalidate old materialization caches and active instance data
-7. rebuild field registrations against the new model
-8. re-establish source/reaction/watch relationships against the new scope/model pairing
-9. run an owner-local reconciliation pass before accepting ordinary validation requests again
+1. where `modelGeneration` is stored in the owner internal state
+2. which caches include `modelGeneration` in their key structure
+3. how `isOwnerCompatible` is called from the dynamic schema renderer
+4. whether the React key change approach is used for owner-boundary change, or whether explicit disposal is preferred
+5. how `refreshCompiledModel(newModel)` is exposed on `ValidationScopeRuntime`
+6. whether the reconciliation pass after model refresh runs synchronously or yields to the event loop
+7. how the debugger panel surfaces `modelGeneration` changes
 
----
-
-## 6. Two Cases To Distinguish
-
-### 6.1 Owner-Compatible Model Refresh
-
-This is the milder case.
-
-Examples:
-
-1. rules changed for existing fields
-2. optional fields were added under the same owner
-3. labels/layout changed without owner-boundary changes
-
-In this case the owner instance may survive, but it still must:
-
-1. increment model generation
-2. invalidate old caches/runs
-3. rebuild registrations and active structure
-4. decide whether any field-level state may be retained safely
-
-### 6.2 Owner-Boundary Change
-
-This is the stronger case.
-
-Examples:
-
-1. a subtree changed from inherit-owner to draft/create-owner
-2. a nested form boundary appeared or disappeared
-3. a value-oriented editor changed ownership mode
-
-In this case the old owner instance should be treated as incompatible with the new model topology.
-
-Recommended behavior:
-
-1. dispose old owner
-2. create new owner tree
-3. re-register fields and child contracts from scratch
-
----
-
-## 7. State Retention Guidance
-
-State retention should be conservative.
-
-### Safe To Recompute / Reset
-
-Always reset or invalidate:
-
-1. materialization cache
-2. active instance graph
-3. async run ownership
-4. dependency-closure cache if any
-
-### Potentially Retainable
-
-May be retained only when compatibility is explicit and proven:
-
-1. field value state owned by the surrounding scope store
-2. touched/dirty/visited for unchanged form fields
-3. field errors for unchanged paths whose compiled rule identity is also unchanged
-
-The default should still lean toward reset unless compatibility is cheap to prove.
-
----
-
-## 8. Async Validation Rule
-
-Async runs must be model-generation-aware.
-
-At minimum each run should be scoped by:
-
-1. owner id
-2. model generation
-3. path
-4. rule id
-5. run generation
-
-When model generation changes:
-
-1. old runs must not publish
-2. old runs should be aborted when possible
-3. a reused path under the new model must not accept results from the old model generation
-
----
-
-## 9. Path Reuse Is Not Enough
-
-One major trap is assuming path equality implies semantic continuity.
-
-That is false in hot-reload scenarios.
-
-Example:
-
-1. old schema: `profile.contact` is an inline object under parent owner
-2. new schema: `profile.contact` becomes a draft child editor boundary
-
-The path string is the same, but:
-
-1. ownership changed
-2. lifecycle changed
-3. validation participation changed
-
-Therefore migration must consider at least:
-
-1. owner boundary
-2. node kind
-3. rule identity set
-4. repeated/branch topology
-
-not path alone.
-
----
-
-## 10. Interaction With Dynamic Schema Renderer
-
-For a dynamic schema renderer, the most practical rule is:
-
-1. schema identity change triggers recompile
-2. validation owner compares the new compiled model against the old one
-3. incompatible change forces owner recreation
-4. compatible change allows owner refresh lifecycle
-
-This gives dynamic-schema flows a predictable contract instead of ad hoc partial mutation.
-
----
-
-## 11. What Should Enter Formal Architecture Later
-
-This topic does not yet need to be fully merged into the architecture baseline, but the following rule likely should be added later:
-
-> Validation owner instances assume compiled-model stability. Dynamic schema replacement requires explicit owner refresh or owner recreation; it is not an in-place no-op update.
-
-The rest of the detailed migration/retention strategy can stay in follow-up design and implementation planning until code work begins.
-
----
-
-## 12. Recommended Next Step
-
-The next concrete step should be a plan or design note that answers:
-
-1. how model generations are tracked in runtime
-2. which caches are invalidated eagerly
-3. whether any field-state migration is allowed in Phase 1/2
-4. how dynamic schema renderer requests owner refresh/recreation
-5. how debugger/devtools expose model-generation changes
-
-This is now the main unresolved lifecycle gap in the current validation design.
+The main unresolved lifecycle gap in the current validation design is this specification. Implementation planning should treat it as the primary lifecycle follow-up item.
