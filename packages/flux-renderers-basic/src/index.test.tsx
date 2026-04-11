@@ -654,7 +654,7 @@ describe('basicRendererDefinitions', () => {
             type: 'loop',
             items: '${users}',
             keyBy: 'item.id',
-            body: [{ type: 'scope-probe', testid: 'loop-probe', value: '${item.name + ":" + currentRole}' }]
+            body: [{ type: 'scope-probe', testid: 'loop-probe', value: '${$slot.item.name + ":" + currentRole}' }]
           }]
         }}
         data={{ currentRole: 'admin', users: [{ id: 'u1', name: 'Alice' }] }}
@@ -681,7 +681,7 @@ describe('basicRendererDefinitions', () => {
           body: [{
             type: 'loop',
             items: '${users}',
-            body: [{ type: 'text', text: '${item.name}' }],
+            body: [{ type: 'text', text: '${$slot.item.name}' }],
             empty: [{ type: 'text', text: 'No users' }]
           }]
         }}
@@ -707,11 +707,11 @@ describe('basicRendererDefinitions', () => {
             items: '${nodes}',
             keyBy: 'item.id',
             body: [
-              { type: 'text', text: '${item.label}' },
+              { type: 'text', text: '${$slot.item.label}' },
               {
                 type: 'fragment',
-                when: '${item.children && item.children.length > 0}',
-                body: [{ type: 'recurse', items: '${item.children}' }]
+                when: '${$slot.item.children && $slot.item.children.length > 0}',
+                body: [{ type: 'recurse', items: '${$slot.item.children}' }]
               }
             ]
           }]
@@ -744,11 +744,11 @@ describe('basicRendererDefinitions', () => {
             type: 'loop',
             items: '${nodes}',
             body: [
-              { type: 'text', text: '${item.label}' },
+              { type: 'text', text: '${$slot.item.label}' },
               {
                 type: 'fragment',
-                when: '${item.children && item.children.length > 0}',
-                body: [{ type: 'recurse', items: '${item.children}', maxDepth: 1 }]
+                when: '${$slot.item.children && $slot.item.children.length > 0}',
+                body: [{ type: 'recurse', items: '${$slot.item.children}', maxDepth: 1 }]
               }
             ]
           }]

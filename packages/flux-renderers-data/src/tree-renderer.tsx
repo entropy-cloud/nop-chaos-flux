@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
@@ -9,14 +9,6 @@ import type { TreeSchema } from './schemas';
 
 interface TreeNodeRecord {
   [key: string]: unknown;
-}
-
-interface TreeNodeScope {
-  node: TreeNodeRecord;
-  index: number;
-  depth: number;
-  key?: string;
-  parentNode?: TreeNodeRecord;
 }
 
 const DEFAULT_CHILDREN_KEY = 'children';
@@ -70,26 +62,10 @@ function TreeNodeRenderer(props: {
   const childNodes = toTreeNodes(getIn(node, childrenKey));
   const hasChildren = childNodes.length > 0;
   const [open, setOpen] = useState(() => hasChildren && shouldExpandInitially(initiallyExpanded, depth));
-  const scopeData = useMemo<TreeNodeScope>(() => ({
-    node,
-    index,
-    depth,
-    key: nodeKey,
-    parentNode
-  }), [node, index, depth, nodeKey, parentNode]);
-  const scope = useMemo(
-    () => owner.helpers.createScope(scopeData, {
-      scopeKey: `${owner.id}:tree-node:${nodeKey}`,
-      pathSuffix: `${owner.path}.nodesByKey.${nodeKey}`,
-      source: 'custom'
-    }),
-    [owner.helpers, owner.id, owner.path, scopeData, nodeKey]
-  );
   const label = getIn(node, labelField);
   const nodeContent = owner.regions.node
-    ? owner.helpers.render(owner.regions.node.templateNode, {
-        scope,
-        pathSuffix: `node.${nodeKey}`
+    ? owner.regions.node.render({
+        bindings: { node, index, depth, key: nodeKey, parentNode }
       })
     : null;
 

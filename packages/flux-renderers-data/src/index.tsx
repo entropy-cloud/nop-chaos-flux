@@ -146,7 +146,6 @@ export const dataRendererDefinitions: RendererDefinition[] = [
     category: 'data',
     sourcePackage: '@nop-chaos/flux-renderers-data',
     component: TreeRenderer,
-    regions: ['node'],
     fields: [
       { key: 'data', kind: 'prop' },
       { key: 'childrenKey', kind: 'prop' },
@@ -155,7 +154,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
       { key: 'initiallyExpanded', kind: 'prop' },
       { key: 'expandOnClickNode', kind: 'prop' },
-      { key: 'statusPath', kind: 'prop' }
+      { key: 'statusPath', kind: 'prop' },
+      { key: 'node', kind: 'region', params: ['node', 'index', 'depth', 'key', 'parentNode'], isolate: false }
     ]
   }
 ];

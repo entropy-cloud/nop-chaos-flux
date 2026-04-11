@@ -23,41 +23,33 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
   return (
     <>
       {renderStructuralLoop({
-        helpers: props.helpers,
         items: props.props.items,
-        hasBody: Boolean(loopContext.bodyNode),
+        hasBody: true,
         bindings,
         itemData,
         keyBy,
-        basePath: props.path,
         ownerId: props.id,
-        parentScope: loopContext.scope,
         parentInstancePath: loopContext.instancePath,
         repeatedTemplateId: createStructuralRepeatedTemplateId(props.id),
         maxDepth,
         currentDepth: loopContext.depth,
-        renderItem: ({ itemKey, scope, instancePath, depth }) => (
-          <StructuralLoopContext.Provider
-            key={itemKey}
-            value={{
-              ...loopContext,
-              ownerId: props.id,
-              path: props.path,
-              bindings,
-              itemData,
-              keyBy,
-              scope,
-              instancePath,
-              depth
-            }}
-          >
-            {props.helpers.render(loopContext.bodyNode, {
-              scope,
-              instancePath,
-              pathSuffix: `recurse.${itemKey}`
-            })}
-          </StructuralLoopContext.Provider>
-        )
+        renderItem: ({ itemKey, slotBindings, instancePath, depth }) => (
+            <StructuralLoopContext.Provider
+              key={itemKey}
+              value={{
+                ...loopContext,
+                ownerId: props.id,
+                path: props.path,
+                bindings,
+                itemData,
+                keyBy,
+                instancePath,
+                depth
+              }}
+            >
+              {loopContext.renderBody(slotBindings, instancePath)}
+            </StructuralLoopContext.Provider>
+          )
       })}
     </>
   );

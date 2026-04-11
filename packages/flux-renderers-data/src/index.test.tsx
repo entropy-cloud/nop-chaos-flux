@@ -171,8 +171,8 @@ describe('dataRendererDefinitions', () => {
             data: '${nodes}',
             initiallyExpanded: true,
             node: [
-              { type: 'icon', icon: '${depth}' },
-              { type: 'text', text: '${node.label}:${depth}:${parentNode ? parentNode.label : "root"}' }
+              { type: 'icon', icon: '${$slot.depth}' },
+              { type: 'text', text: '${$slot.node.label}:${$slot.depth}:${$slot.parentNode ? $slot.parentNode.label : "root"}' }
             ]
           }]
         }}

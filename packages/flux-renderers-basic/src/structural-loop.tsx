@@ -1,19 +1,16 @@
-import type { InstanceFrame, RendererHelpers, ScopeRef } from '@nop-chaos/flux-core';
+import type { InstanceFrame } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import type { LoopSchema, RecurseSchema } from './schemas';
 import type { StructuralLoopBindings } from './structural-loop-context';
 
 export interface StructuralLoopRenderOptions {
-  helpers: RendererHelpers;
   items: unknown;
   hasBody: boolean;
   hasEmpty?: boolean;
   bindings: StructuralLoopBindings;
   itemData?: Record<string, unknown>;
   keyBy?: unknown;
-  basePath: string;
   ownerId: string;
-  parentScope: ScopeRef;
   parentInstancePath?: readonly InstanceFrame[];
   repeatedTemplateId: string;
   maxDepth?: number;
@@ -22,7 +19,7 @@ export interface StructuralLoopRenderOptions {
     item: unknown;
     index: number;
     itemKey: string;
-    scope: ScopeRef;
+    slotBindings: Record<string, unknown>;
     instancePath: readonly InstanceFrame[];
     depth: number;
   }): React.ReactNode;
@@ -78,57 +75,31 @@ function resolveItemKey(input: { item: unknown; index: number; keyBy?: unknown }
   return String(index);
 }
 
-function createItemPatch(input: {
+export function buildSlotBindings(input: {
   item: unknown;
   index: number;
   itemKey: string;
   bindings: StructuralLoopBindings;
   itemData?: Record<string, unknown>;
 }): Record<string, unknown> {
-  const patch: Record<string, unknown> = {
+  const slotBindings: Record<string, unknown> = {
     [input.bindings.itemName]: input.item,
     [input.bindings.indexName]: input.index
   };
 
   if (input.bindings.keyName) {
-    patch[input.bindings.keyName] = input.itemKey;
+    slotBindings[input.bindings.keyName] = input.itemKey;
   }
 
   if (input.itemData) {
-    Object.assign(patch, input.itemData);
+    Object.assign(slotBindings, input.itemData);
   }
 
-  return patch;
+  return slotBindings;
 }
 
 export function createStructuralRepeatedTemplateId(ownerId: string): string {
   return `loop:${ownerId}`;
-}
-
-export function createStructuralItemScope(input: {
-  helpers: RendererHelpers;
-  basePath: string;
-  ownerId: string;
-  bindings: StructuralLoopBindings;
-  item: unknown;
-  index: number;
-  itemData?: Record<string, unknown>;
-  itemKey: string;
-}): ScopeRef {
-  return input.helpers.createScope(
-    createItemPatch({
-      item: input.item,
-      index: input.index,
-      itemKey: input.itemKey,
-      bindings: input.bindings,
-      itemData: input.itemData
-    }),
-    {
-      scopeKey: `${input.ownerId}:item:${input.itemKey}`,
-      pathSuffix: `${input.basePath}.itemsByKey.${input.itemKey}`,
-      source: 'custom'
-    }
-  );
 }
 
 export function renderStructuralLoop(options: StructuralLoopRenderOptions): React.ReactNode {
@@ -149,15 +120,12 @@ export function renderStructuralLoop(options: StructuralLoopRenderOptions): Reac
 
   return items.map((item, index) => {
     const itemKey = resolveItemKey({ item, index, keyBy: options.keyBy });
-    const scope = createStructuralItemScope({
-      helpers: options.helpers,
-      basePath: options.basePath,
-      ownerId: options.ownerId,
-      bindings: options.bindings,
+    const slotBindings = buildSlotBindings({
       item,
       index,
-      itemData: options.itemData,
-      itemKey
+      itemKey,
+      bindings: options.bindings,
+      itemData: options.itemData
     });
     const instancePath = [
       ...(options.parentInstancePath ?? []),
@@ -168,7 +136,7 @@ export function renderStructuralLoop(options: StructuralLoopRenderOptions): Reac
       item,
       index,
       itemKey,
-      scope,
+      slotBindings,
       instancePath,
       depth: depth + 1
     });

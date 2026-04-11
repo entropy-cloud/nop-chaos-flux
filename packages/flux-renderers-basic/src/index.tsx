@@ -74,14 +74,15 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'loop', body: [] },
     component: LoopRenderer,
-    regions: ['body', 'empty'],
+    regions: ['empty'],
     fields: [
       { key: 'items', kind: 'prop' },
       { key: 'itemName', kind: 'prop' },
       { key: 'indexName', kind: 'prop' },
       { key: 'keyName', kind: 'prop' },
       { key: 'itemData', kind: 'prop' },
-      { key: 'keyBy', kind: 'prop' }
+      { key: 'keyBy', kind: 'prop' },
+      { key: 'body', kind: 'region', params: ['item', 'index'] }
     ]
   },
   {
