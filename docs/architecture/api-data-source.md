@@ -245,6 +245,118 @@ It is used when a field needs a runtime-managed dynamic value but does not need 
 
 `source` is modeled as an action-shaped execution descriptor whose result is consumed as a value rather than only as an effect.
 
+## Linked Data Projection Into Form Owners
+
+One common pattern is linked-data lookup inside a form owner.
+
+Example shape:
+
+1. user edits `companyId`
+2. a request or data-source fetches company details
+3. response data such as `companyName`, `taxCode`, or `creditRating` is projected into the same owner
+4. projected values then participate in ordinary owner-local rendering, expressions, and validation
+
+This is not a cross-owner dependency case.
+
+It is an owner-local projection case.
+
+Normative rules:
+
+1. fetched values written back into the same owner become ordinary owner-local values
+2. once projected, they participate in normal closure expansion and validation like any other owner-local path
+3. projection writeback should be expressed through schema-configured action/data-source publication rather than hidden component side effects
+4. if the fetched values are intended only for a different owner, they should be projected explicitly into that owner rather than read through cross-owner reactive dependency edges
+
+Recommended config flow:
+
+1. trigger request or data-source from the active owner
+2. adapt response into the target value shape
+3. publish the response into the current scope through configured action or data-source projection
+4. let validation/runtime react to the projected values through normal owner-local dependency expansion
+
+Illustrative schematic shape:
+
+```json
+{
+  "type": "form",
+  "body": [
+    {
+      "type": "input-text",
+      "name": "companyId",
+      "label": "Company ID"
+    },
+    {
+      "type": "data-source",
+      "name": "companyLookup",
+      "api": {
+        "url": "/api/company/${companyId}"
+      },
+      "mergeToScope": false
+    },
+    {
+      "type": "note",
+      "body": "Schematic step: consume companyLookup and project needed fields into current form scope through resultMapping / merge semantics"
+    }
+  ]
+}
+```
+
+The projection step above is intentionally schematic.
+
+This section does not define a new standalone action contract. It defines the architectural shape:
+
+1. trigger request from schema through normal dependency-aware source refresh
+2. publish fetched data into current owner scope through resultMapping / merge semantics
+3. let owner-local validation react automatically
+
+For stable built-in action authoring, follow `docs/architecture/action-scope-and-imports.md`.
+
+Directionally, this covers the common “choose company -> fetch linked data -> project fields into current scope -> let dependent validation re-run” workflow.
+
+The exact action names may evolve, but the architectural shape is stable:
+
+1. schema-configured trigger
+2. data-source or ajax execution
+3. explicit projection into current owner scope
+4. owner-local validation reacts automatically
+
+Recommended publication shape for linked field writeback:
+
+```json
+{
+  "type": "form",
+  "body": [
+    {
+      "type": "input-text",
+      "name": "companyId"
+    },
+    {
+      "type": "data-source",
+      "name": "companyLookup",
+      "api": {
+        "url": "/api/company/${companyId}"
+      },
+      "resultMapping": {
+        "companyName": "${payload.name}",
+        "taxCode": "${payload.taxCode}",
+        "creditRating": "${payload.creditRating}"
+      },
+      "mergeToScope": true
+    }
+  ]
+}
+```
+
+The point of this shape is:
+
+1. fetched data is mapped into owner-local form fields
+2. mapped fields become ordinary current-scope values
+3. validation then reacts to `companyName`, `taxCode`, `creditRating`, and any dependents normally
+
+This is different from binding a form field to `value: ${companyLookup.name}`.
+
+For form controls, `name` identifies the field's stored owner-local value. Using both `name` and `value` to model long-lived linked-field writeback would blur the boundary between actual form state and temporary derived display state.
+
 Directionally:
 
 ```typescript
@@ -306,6 +418,7 @@ interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
   name?: string;
   mergeToScope?: boolean;
+  resultMapping?: Record<string, SchemaValue>;
   statusPath?: string;
   dataPath?: string;
   initialData?: SchemaValue;
@@ -324,6 +437,7 @@ Rules:
 
 - `data-source` extends source-style action execution with named publication and scheduling controls
 - `action`, `args`, `api`, `control`, `then`, `onError`, and `parallel` follow the same execution semantics used by action-backed sources
+- `resultMapping`, when present, maps the fetched/produced payload into a target object shape before named publication or `mergeToScope`
 - `name` is the normative author-visible identity and default publication path
 - `mergeToScope: true` is the only narrowed special publish extension beyond the named publication path
 - legacy `dataPath` publication override is compatibility-only and should not be introduced in new schema
@@ -361,10 +475,12 @@ The legacy AMIS-style behavior of publishing without an explicit binding target 
 `mergeToScope: true` rules:
 
 1. `name` remains the authoritative identity and default publication path
-2. if the published value is a plain object, runtime additionally shallow-merges its top-level fields into the current lexical scope
-3. the merged fields are derived projections from the same logical value; they are not a second independently writable business root
-4. collisions with reserved projection names, active `Resource` targets, or ordinary scope data in the same owning lexical scope are invalid
-5. if the published value is not object-like, `mergeToScope: true` is invalid and publication fails diagnostically
+2. if `resultMapping` is present, runtime applies `resultMapping` first and uses the mapped object as the published value
+3. if the published value is a plain object, runtime additionally shallow-merges its top-level fields into the current lexical scope
+4. `resultMapping + mergeToScope: true` is the preferred shape for linked-data field projection into the current owner scope
+5. the merged fields keep provenance from the source publication, but once merged into the current owner they are ordinary writable current-scope values unless some other schema rule makes them readonly
+6. collisions with reserved projection names, active `Resource` targets, or ordinary scope data in the same owning lexical scope are invalid
+7. if the published value is not object-like, `mergeToScope: true` is invalid and publication fails diagnostically
 
 Current runtime compatibility note:
 
