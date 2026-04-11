@@ -270,6 +270,14 @@ export async function validatePath(sharedState: ManagedFormRuntimeSharedState, p
     return createValidationResult([]);
   }
 
+  if (field && !field.hiddenFieldPolicy.validateWhenHidden) {
+    const isHidden = sharedState.hiddenFields.has(path);
+    if (isHidden) {
+      commitPathValidationState({ sharedState, path, errors: [] });
+      return createValidationResult([]);
+    }
+  }
+
   if (!field && runtimeTarget.childPath && runtimeRegistration?.validateChild) {
     return validateRuntimeRegistrationChild(sharedState, path, runtimeRegistration, runtimeTarget.childPath);
   }

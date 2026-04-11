@@ -123,7 +123,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     initialFieldState,
     validationRuns,
     pendingValidationDebounces,
-    runtimeFieldRegistrations
+    runtimeFieldRegistrations,
+    hiddenFields: new Set()
   };
 
   function applyFieldValuePatch(
@@ -209,6 +210,24 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           runtimeFieldRegistrations.delete(registration.path);
         }
       };
+    },
+    notifyFieldHidden(path, hidden) {
+      const wasHidden = sharedState.hiddenFields.has(path);
+
+      if (hidden === wasHidden) {
+        return;
+      }
+
+      if (hidden) {
+        sharedState.hiddenFields.add(path);
+        const field = getCompiledValidationField(inputValue.validation, path);
+
+        if (field?.hiddenFieldPolicy.clearValueWhenHidden) {
+          thisForm.setValue(path, undefined);
+        }
+      } else {
+        sharedState.hiddenFields.delete(path);
+      }
     },
     async validateField(path) {
       return validatePath(sharedState, path);

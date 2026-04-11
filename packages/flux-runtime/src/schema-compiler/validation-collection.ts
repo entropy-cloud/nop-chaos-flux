@@ -2,6 +2,7 @@ import type {
   CompiledFormValidationModel,
   CompiledSchemaNode,
   CompiledValidationBehavior,
+  HiddenFieldPolicy,
   ValidationTrigger,
   ValidationVisibilityTrigger
 } from '@nop-chaos/flux-core';
@@ -44,6 +45,7 @@ export function collectValidationModel(
   options: {
     defaultTriggers?: ValidationTrigger[];
     defaultShowErrorOn?: ValidationVisibilityTrigger[];
+    defaultHiddenFieldPolicy?: HiddenFieldPolicy;
   } = {}
 ): CompiledFormValidationModel | undefined {
   if (!node) {
@@ -83,6 +85,7 @@ export function collectValidationModel(
     options.defaultTriggers ?? (['blur'] as ValidationTrigger[]),
     options.defaultShowErrorOn ?? (['touched', 'submit'] as ValidationVisibilityTrigger[])
   );
+  let formDefaultHiddenFieldPolicy: HiddenFieldPolicy | undefined = options.defaultHiddenFieldPolicy;
 
   const visit = (entry: CompiledSchemaNode) => {
     if (!entry.component) {
@@ -95,6 +98,10 @@ export function collectValidationModel(
         normalizeValidationTriggers(entry.schema.validateOn, ['blur']),
         normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, ['touched', 'submit'])
       );
+      const formHiddenPolicy = (entry.schema as { hiddenFieldPolicy?: HiddenFieldPolicy }).hiddenFieldPolicy;
+      if (formHiddenPolicy) {
+        formDefaultHiddenFieldPolicy = formHiddenPolicy;
+      }
     }
 
     const contributor = entry.component.validation;
@@ -121,6 +128,7 @@ export function collectValidationModel(
           normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, rootBehavior.showErrorOn)
         );
         const label = typeof entry.schema.label === 'string' ? entry.schema.label : undefined;
+        const fieldHiddenPolicy = (entry.schema as { hiddenFieldPolicy?: HiddenFieldPolicy }).hiddenFieldPolicy;
 
         validationNodes[fieldPath] = {
           path: fieldPath,
@@ -130,7 +138,8 @@ export function collectValidationModel(
           rules: compiledRules,
           behavior,
           children: [],
-          parent: parentPath
+          parent: parentPath,
+          hiddenFieldPolicy: fieldHiddenPolicy
         };
 
         if (validationNodes[parentPath]) {
@@ -155,6 +164,7 @@ export function collectValidationModel(
   return buildCompiledFormValidationModel({
     behavior: rootBehavior,
     nodes: validationNodes,
-    rootPath: ''
+    rootPath: '',
+    defaultHiddenFieldPolicy: formDefaultHiddenFieldPolicy
   });
 }

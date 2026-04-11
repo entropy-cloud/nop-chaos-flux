@@ -13,7 +13,11 @@ function createField(path: string, controlType = 'input-text'): CompiledFormVali
       triggers: ['blur'],
       showErrorOn: ['touched', 'submit']
     },
-    rules: []
+    rules: [],
+    hiddenFieldPolicy: {
+      validateWhenHidden: false,
+      clearValueWhenHidden: false
+    }
   };
 }
 

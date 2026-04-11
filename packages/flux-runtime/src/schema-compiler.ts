@@ -13,6 +13,7 @@ import type {
   CompileSchemaOptions,
   ExpressionCompiler,
   FieldLinkageSchema,
+  HiddenFieldPolicy,
   RendererPlugin,
   RendererRegistry,
   SchemaCompiler,
@@ -298,7 +299,8 @@ export function createSchemaCompiler(input: {
                 .filter((candidate): candidate is CompiledSchemaNode | CompiledSchemaNode[] => candidate != null),
               {
                 defaultTriggers: normalizeValidationTriggers(schema.validateOn, ['blur']),
-                defaultShowErrorOn: normalizeValidationVisibilityTriggers(schema.showErrorOn, ['touched', 'submit'])
+                defaultShowErrorOn: normalizeValidationVisibilityTriggers(schema.showErrorOn, ['touched', 'submit']),
+                defaultHiddenFieldPolicy: (schema as { hiddenFieldPolicy?: HiddenFieldPolicy }).hiddenFieldPolicy
               }
             )
           : undefined,

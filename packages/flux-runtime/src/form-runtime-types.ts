@@ -57,4 +57,5 @@ export interface ManagedFormRuntimeSharedState {
   validationRuns: Map<string, number>;
   pendingValidationDebounces: Map<string, PendingValidationDebounce>;
   runtimeFieldRegistrations: Map<string, RuntimeFieldRegistration>;
+  hiddenFields: Set<string>;
 }
