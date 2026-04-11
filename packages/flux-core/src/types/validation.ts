@@ -1,4 +1,9 @@
-import type { ApiObject, ValidationTrigger, ValidationVisibilityTrigger } from './schema';
+import type { ApiObject, ValidationTrigger, ValidationVisibilityTrigger, SchemaObject } from './schema';
+
+export interface HiddenFieldPolicy extends SchemaObject {
+  validateWhenHidden?: boolean;
+  clearValueWhenHidden?: boolean;
+}
 
 export type ValidationRule =
   | { kind: 'required'; message?: string }
@@ -58,6 +63,7 @@ export interface CompiledFormValidationField {
   label?: string;
   rules: CompiledValidationRule[];
   behavior: CompiledValidationBehavior;
+  hiddenFieldPolicy: HiddenFieldPolicy;
 }
 
 export interface CompiledValidationRule {
@@ -80,6 +86,7 @@ export interface CompiledValidationNode {
   behavior?: CompiledValidationBehavior;
   children: string[];
   parent?: string;
+  hiddenFieldPolicy?: HiddenFieldPolicy;
 }
 
 export interface CompiledFormValidationModel {
@@ -89,4 +96,5 @@ export interface CompiledFormValidationModel {
   nodes?: Record<string, CompiledValidationNode>;
   validationOrder?: string[];
   rootPath?: string;
+  defaultHiddenFieldPolicy?: HiddenFieldPolicy;
 }

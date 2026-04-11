@@ -204,6 +204,7 @@ export interface FormRuntime {
   validation?: CompiledFormValidationModel;
   setLifecycleHandlers(handlers?: FormLifecycleHandlers): void;
   registerField(registration: RuntimeFieldRegistration): () => void;
+  notifyFieldHidden(path: string, hidden: boolean): void;
   validateField(path: string): Promise<ValidationResult>;
   validateSubtree(path: string): Promise<FormValidationResult>;
   validateForm(): Promise<FormValidationResult>;

@@ -3,8 +3,29 @@ import type {
   CompiledFormValidationModel,
   CompiledValidationBehavior,
   CompiledValidationNode,
-  CompiledValidationNodeKind
+  CompiledValidationNodeKind,
+  HiddenFieldPolicy
 } from './types';
+
+const DEFAULT_HIDDEN_FIELD_POLICY: HiddenFieldPolicy = {
+  validateWhenHidden: false,
+  clearValueWhenHidden: false
+};
+
+export function resolveHiddenFieldPolicy(
+  fieldPolicy: HiddenFieldPolicy | undefined,
+  formPolicy: HiddenFieldPolicy | undefined
+): HiddenFieldPolicy {
+  if (!fieldPolicy && !formPolicy) {
+    return DEFAULT_HIDDEN_FIELD_POLICY;
+  }
+
+  if (!fieldPolicy) {
+    return { ...DEFAULT_HIDDEN_FIELD_POLICY, ...formPolicy };
+  }
+
+  return { ...DEFAULT_HIDDEN_FIELD_POLICY, ...formPolicy, ...fieldPolicy };
+}
 
 export function isCompiledValidationFieldNode(
   node: CompiledValidationNode | undefined
@@ -35,7 +56,8 @@ export function getCompiledValidationField(
     controlType: node.controlType,
     label: node.label,
     rules: node.rules,
-    behavior: node.behavior
+    behavior: node.behavior,
+    hiddenFieldPolicy: resolveHiddenFieldPolicy(node.hiddenFieldPolicy, model.defaultHiddenFieldPolicy)
   };
 }
 
@@ -107,6 +129,7 @@ export function buildCompiledFormValidationModel(input: {
   behavior: CompiledValidationBehavior;
   nodes: Record<string, CompiledValidationNode> | undefined;
   rootPath?: string;
+  defaultHiddenFieldPolicy?: HiddenFieldPolicy;
 }): CompiledFormValidationModel | undefined {
   const nodes = input.nodes;
   const rootPath = input.rootPath;
@@ -122,7 +145,8 @@ export function buildCompiledFormValidationModel(input: {
     dependents: buildCompiledValidationDependentMap(nodes),
     nodes,
     validationOrder,
-    rootPath
+    rootPath,
+    defaultHiddenFieldPolicy: input.defaultHiddenFieldPolicy
   };
 }
 
