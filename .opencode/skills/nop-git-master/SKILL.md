@@ -61,9 +61,9 @@ LOCAL_SHA=$(git rev-parse HEAD)
 
 # 3. 对比
 if [ "$REMOTE_SHA" = "$LOCAL_SHA" ]; then
-  echo "✅ 已是最新: $LOCAL_SHA"
+  echo "✅ Already up to date: $LOCAL_SHA"
 else
-  echo "⚠️ 需要更新: $LOCAL_SHA → $REMOTE_SHA"
+  echo "⚠️ Update needed: $LOCAL_SHA → $REMOTE_SHA"
   # 4. 执行强制同步
   git fetch origin $REMOTE_SHA --force
   git checkout master
@@ -79,9 +79,9 @@ fi
 REMOTE_SHA=$(git ls-remote origin master | awk '{print $1}') && \
 LOCAL_SHA=$(git rev-parse HEAD) && \
 if [ "$REMOTE_SHA" = "$LOCAL_SHA" ]; then \
-  echo "✅ 已是最新: $(git log --oneline -1)"; \
+  echo "✅ Already up to date: $(git log --oneline -1)"; \
 else \
-  echo "⚠️ 更新中: $LOCAL_SHA → $REMOTE_SHA" && \
+  echo "⚠️ Updating: $LOCAL_SHA → $REMOTE_SHA" && \
   git fetch origin $REMOTE_SHA --force && \
   git checkout master && \
   git reset --hard $REMOTE_SHA && \
@@ -132,8 +132,8 @@ git clean -fd
 
 ## 固定的提交风格（基于项目调研）
 
-**语言：** 中文为主（87%），技术术语用英文
-**格式：** 语义化提交 `type(scope): 描述`
+**语言：** English（commit messages, CHANGELOG, commit plan 必须使用英文）
+**格式：** 语义化提交 `type(scope): description`
 **类型分布：**
 - `feat` (40%) - 新功能
 - `docs` (15%) - 文档
@@ -150,13 +150,13 @@ git clean -fd
 
 **正文格式：**
 ```
-type(scope): 简短描述（20字以内）
+type(scope): short description (max 50 chars)
 
-- 具体变更1（动词+对象）
-- 具体变更2
-- 具体变更3（典型3-6项）
+- Specific change 1 (verb + object)
+- Specific change 2
+- Specific change 3 (typically 3-6 items)
 
-[可选] Co-authored-by: Name <email>
+[Optional] Co-authored-by: Name <email>
 ```
 
 ## 智能提交拆分规则
@@ -213,16 +213,16 @@ nop-gateway/     # 网关模块
 ❌ 错误：1个commit "更新系统"
 ❌ 错误：2个commit（太少）
 
-✅ 正确：4个commit
-  1. feat(sys): 增强服务接口
+✅ Correct: 4 commits
+  1. feat(sys): enhance service interfaces
      - nop-sys/api/IService.java
      - nop-sys/dao/ServiceDao.java
-  2. feat(cluster): 增强命名服务
+  2. feat(cluster): enhance naming service
      - nop-cluster/api/INaming.java
      - nop-cluster/service/NamingService.java
-  3. docs: 更新开发指南
+  3. docs: update development guide
      - docs/guide.md
-  4. docs: 更新README
+  4. docs: update README
      - README.md
 ```
 
@@ -234,14 +234,14 @@ nop-gateway/     # 网关模块
 优先级：api → dao → service → web → meta
 
 示例：nop-auth模块有5个文件
-  1. feat(auth): 添加认证API接口
-     - api/AuthApi.java
-  2. feat(auth): 实现认证数据访问
-     - dao/AuthDao.java
-  3. feat(auth): 实现认证业务逻辑
-     - service/AuthService.java
-  4. feat(auth): 添加认证Web接口
-     - web/AuthController.java
+   1. feat(auth): add authentication API interfaces
+      - api/AuthApi.java
+   2. feat(auth): implement authentication data access
+      - dao/AuthDao.java
+   3. feat(auth): implement authentication business logic
+      - service/AuthService.java
+   4. feat(auth): add authentication web endpoints
+      - web/AuthController.java
 ```
 
 **3. 按关注点拆分（Tertiary）**
@@ -257,11 +257,11 @@ nop-gateway/     # 网关模块
 **测试+实现必须在同一commit：**
 ```
 ✅ 正确：
-  feat(orm): 添加CRUD业务接口
+  feat(orm): add CRUD business interfaces
 
-  - 新增 ICrudBizModel 接口定义
-  - 实现 CrudBizModel 基础功能
-  - 添加单元测试覆盖
+  - Add ICrudBizModel interface definition
+  - Implement CrudBizModel base functionality
+  - Add unit test coverage
 
   包含：
   - orm/src/main/java/CrudBizModel.java
@@ -277,18 +277,18 @@ COMMIT PLAN
 ===========
 Files changed: 8 | Planned commits: 4
 
-COMMIT 1: feat(sys): 增强服务注册功能
+COMMIT 1: feat(sys): enhance service registration
   - nop-sys/api/IServiceInstance.java
   - nop-sys/dao/ServiceInstanceDao.java
-  Justification: 同一功能
+  Justification: same feature
 
-COMMIT 2: feat(cluster): 增强集群发现机制
+COMMIT 2: feat(cluster): enhance cluster discovery
   - nop-cluster/service/DiscoveryService.java
-  Justification: 不同模块
+  Justification: different module
 
-COMMIT 3: docs: 更新文档
+COMMIT 3: docs: update documentation
   - docs/cluster-setup.md
-  Justification: 文档独立提交
+  Justification: docs in separate commit
 ```
 
 ## 提交流程（零冗余）
@@ -302,7 +302,7 @@ git status && git diff --staged --stat && git diff --stat
 # 3. 执行commits（按依赖顺序）
 for each commit:
   git add <files>
-  git commit -m "type(scope): 描述" -m "- 变更1" -m "- 变更2"
+  git commit -m "type(scope): description" -m "- change 1" -m "- change 2"
 
 # 4. 最终验证（一次）
 git status
@@ -314,75 +314,75 @@ git status
 
 **单行commit（仅限1-2个文件）：**
 ```
-fix(typo): 修正拼写错误
+fix(typo): fix spelling mistake
 ```
 
 **标准commit（3-5个文件，必须3+项）：**
 ```
-feat(sys): 增强服务注册功能
+feat(sys): enhance service registration
 
-- 新增groupName和clusterName配置项
-- AutoRegistration支持自动注册到指定分组
-- SysDaoNamingService实现按组过滤服务实例
-- 服务发现增加clusterName匹配逻辑
+- Add groupName and clusterName configuration items
+- AutoRegistration supports auto-registering to specified groups
+- SysDaoNamingService implements group-based service instance filtering
+- Add clusterName matching logic to service discovery
 ```
 
 **大型commit（5+文件或重要变更，必须5+项）：**
 ```
-feat(sys,cluster): 升级版本字段类型并增强集群功能
+feat(sys,cluster): upgrade version field type and enhance cluster features
 
-- 将所有nop-sys表的VERSION字段从INTEGER升级为BIGINT以支持更大范围
-- ZoneServiceInstanceFilter增加clusterName匹配逻辑
-- 服务注册配置增加clusterName属性支持
-- nop_sys_service_instance表的tags_text字段改为可空
-- ORM代码生成配置从xlsx改为xml格式
-- 更新相关文档说明
+- Upgrade all nop-sys table VERSION fields from INTEGER to BIGINT for wider range
+- Add clusterName matching logic to ZoneServiceInstanceFilter
+- Add clusterName attribute support to service registration config
+- Change nop_sys_service_instance table tags_text field to nullable
+- Convert ORM codegen config from xlsx to xml format
+- Update related documentation
 ```
 
 ### 必须详细说明的场景
 
 **1. 破坏性变更（BREAKING CHANGE）**
 ```
-feat(api): 重构用户认证接口
+feat(api): refactor user authentication interface
 
-**BREAKING CHANGE:** 认证接口签名变更
-- 旧版: AuthResult authenticate(String token)
-- 新版: AuthResult authenticate(AuthRequest req)
-- 迁移指南: 将token包装为AuthRequest对象
+**BREAKING CHANGE:** authentication interface signature changed
+- Old: AuthResult authenticate(String token)
+- New: AuthResult authenticate(AuthRequest req)
+- Migration guide: wrap token into AuthRequest object
 
-- 重构authenticate方法签名
-- 增加AuthRequest请求对象
-- 支持多种认证方式
-- 添加迁移示例代码
+- Refactor authenticate method signature
+- Add AuthRequest request object
+- Support multiple authentication methods
+- Add migration example code
 ```
 
 **2. 数据库变更**
 ```
-feat(orm): 修改用户表结构
+feat(orm): modify user table schema
 
-**数据库变更:**
-- 新增字段: user_phone VARCHAR(20)
-- 修改字段: user_name VARCHAR(50) → VARCHAR(100)
-- 索引优化: 添加idx_user_phone索引
-- 迁移脚本: V2024.03.04__user_table_update.sql
+**Database changes:**
+- New field: user_phone VARCHAR(20)
+- Modified field: user_name VARCHAR(50) → VARCHAR(100)
+- Index optimization: add idx_user_phone index
+- Migration script: V2024.03.04__user_table_update.sql
 
-- User实体新增phone属性
-- 加长name字段长度
-- 添加phone索引定义
+- Add phone property to User entity
+- Increase name field length
+- Add phone index definition
 ```
 
 **3. 配置变更**
 ```
-feat(config): 重构数据库配置项
+feat(config): refactor database configuration items
 
-**配置变更:**
-- 废弃: nop.db.url (使用nop.datasource.url替代)
-- 新增: nop.datasource.* 系列配置
-- 兼容性: 旧配置仍可用但会警告
+**Config changes:**
+- Deprecated: nop.db.url (use nop.datasource.url instead)
+- New: nop.datasource.* series configuration
+- Compatibility: old config still works but will warn
 
-- 新增DataSourceProperties配置类
-- 支持多数据源配置
-- 添加配置迁移提示
+- Add DataSourceProperties configuration class
+- Support multi-datasource configuration
+- Add config migration hints
 ```
 
 ## CHANGELOG.md更新规则
@@ -413,18 +413,18 @@ feat(config): 重构数据库配置项
 基于项目现有的CHANGELOG.md格式：
 
 ```markdown
-# 更新日志
+# Changelog
 
-## 特性 YYYY-MM-DD
-* 新增XXX功能 (commit: abc1234)
-* 增强YYY机制 (commit: def5678)
+## Features YYYY-MM-DD
+* Add XXX feature (commit: abc1234)
+* Enhance YYY mechanism (commit: def5678)
 
-## 变更 YYYY-MM-DD
-* **破坏性变更**: ZZZ接口重构，需要迁移 (commit: ghi9012)
-* 重构AAA模块，提升性能 (commit: jkl3456)
+## Changes YYYY-MM-DD
+* **BREAKING CHANGE**: refactor ZZZ interface, migration required (commit: ghi9012)
+* Refactor AAA module, improve performance (commit: jkl3456)
 
-## 修复 YYYY-MM-DD
-* 修复BBB场景下的数据丢失问题 (commit: mno7890)
+## Fixes YYYY-MM-DD
+* Fix data loss issue in BBB scenario (commit: mno7890)
 ```
 
 ### 更新流程
@@ -432,7 +432,7 @@ feat(config): 重构数据库配置项
 ```bash
 # 1. 提交代码变更
 git add <files>
-git commit -m "feat(xxx): 描述"
+git commit -m "feat(xxx): description"
 
 # 2. 检查是否需要更新CHANGELOG
 # 如果是用户可见变更，添加CHANGELOG条目
@@ -442,29 +442,29 @@ git commit -m "feat(xxx): 描述"
 
 # 4. 提交CHANGELOG更新
 git add CHANGELOG.md
-git commit -m "docs: 更新CHANGELOG"
+git commit -m "docs: update CHANGELOG"
 ```
 
 ### CHANGELOG条目模板
 
 **新功能：**
 ```markdown
-## 特性 2024-03-04
-* 新增nop.cluster.name配置项，支持物理机房隔离 (commit: abc1234)
-* 增强服务注册功能，支持groupName和clusterName (commit: def5678)
+## Features 2024-03-04
+* Add nop.cluster.name config for physical datacenter isolation (commit: abc1234)
+* Enhance service registration with groupName and clusterName support (commit: def5678)
 ```
 
 **破坏性变更：**
 ```markdown
-## 变更 2024-03-04
-* **破坏性变更**: 重构认证接口，旧版token参数不再支持，需使用AuthRequest对象 (commit: ghi9012)
-  - 迁移指南: 将 `authenticate(token)` 改为 `authenticate(new AuthRequest(token))`
+## Changes 2024-03-04
+* **BREAKING CHANGE**: refactor authentication interface, old token parameter no longer supported, use AuthRequest object (commit: ghi9012)
+  - Migration: change `authenticate(token)` to `authenticate(new AuthRequest(token))`
 ```
 
 **重要修复：**
 ```markdown
-## 修复 2024-03-04
-* 修复分布式事务在超时场景下的数据不一致问题 (commit: jkl3456)
+## Fixes 2024-03-04
+* Fix data inconsistency in distributed transaction timeout scenarios (commit: jkl3456)
 ```
 
 ## 不兼容变更检测清单
@@ -509,13 +509,13 @@ git commit -m "docs: 更新CHANGELOG"
 
 **示例输出：**
 ```
-⚠️  检测到破坏性变更：
-  - API签名变更: authenticate(String) → authenticate(AuthRequest)
+⚠️  Breaking change detected:
+  - API signature change: authenticate(String) → authenticate(AuthRequest)
   
-✅ 已执行：
-  1. Commit message包含BREAKING CHANGE说明
-  2. CHANGELOG.md已更新（包含迁移指南）
-  3. 提供了迁移示例代码
+✅ Actions taken:
+  1. Commit message includes BREAKING CHANGE note
+  2. CHANGELOG.md updated (with migration guide)
+  3. Migration example code provided
 ```
 
 ---
@@ -548,7 +548,7 @@ git status --porcelain
 # 合并所有commits为一个
 MERGE_BASE=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master)
 git reset --soft $MERGE_BASE
-git commit -m "feat(module): 合并描述"
+git commit -m "feat(module): merged description"
 ```
 
 **2. Autosquash（应用fixups）**
@@ -694,15 +694,15 @@ git log -p -- path/to/file.java
 ## 结果展示
 
 ```
-SEARCH QUERY: "什么时候添加calculate_discount函数"
+SEARCH QUERY: "when was calculate_discount function added"
 SEARCH TYPE: PICKAXE
 COMMAND: git log -S "calculate_discount" --oneline
 
 RESULTS:
   Commit       Date        Message
   ---------    --------    --------------------------------
-  abc1234      2024-06-15  feat(order): 添加折扣计算功能
-  def5678      2024-05-20  refactor: 提取定价逻辑
+  abc1234      2024-06-15  feat(order): add discount calculation
+  def5678      2024-05-20  refactor: extract pricing logic
 
 MOST RELEVANT: abc1234
 DETAILS:
@@ -715,9 +715,9 @@ DIFF:
   +     return price * (1 - rate)
 
 ACTIONS:
-  - 查看完整commit: git show abc1234
-  - 回退此commit: git revert abc1234
-  - Cherry-pick到其他分支: git cherry-pick abc1234
+  - View full commit: git show abc1234
+  - Revert this commit: git revert abc1234
+  - Cherry-pick to other branch: git cherry-pick abc1234
 ```
 
 ---
@@ -751,13 +751,13 @@ mvn clean install -DskipTests -T 1C
 ## Commit消息速查
 
 ```
-feat(sys): 添加新功能
-fix(cluster): 修复bug
-docs: 更新文档
-refactor(orm): 重构代码
-test(gateway): 添加测试
-chore: 构建配置
-perf: 性能优化
+feat(sys): add new feature
+fix(cluster): fix bug
+docs: update documentation
+refactor(orm): refactor code
+test(gateway): add tests
+chore: build config
+perf: performance optimization
 ```
 
 ## 同步速查
@@ -767,9 +767,9 @@ perf: 性能优化
 REMOTE_SHA=$(git ls-remote origin master | awk '{print $1}') && \
 LOCAL_SHA=$(git rev-parse HEAD) && \
 if [ "$REMOTE_SHA" = "$LOCAL_SHA" ]; then \
-  echo "✅ 已是最新: $(git log --oneline -1)"; \
+  echo "✅ Already up to date: $(git log --oneline -1)"; \
 else \
-  echo "⚠️ 更新中: $LOCAL_SHA → $REMOTE_SHA" && \
+  echo "⚠️ Updating: $LOCAL_SHA → $REMOTE_SHA" && \
   git fetch origin $REMOTE_SHA --force && \
   git checkout master && \
   git reset --hard $REMOTE_SHA && \
@@ -820,6 +820,7 @@ git log --follow -- path/file.java      # 文件历史
 6. **从不使用模糊的分组理由** - "相关"不是理由
 7. **SYNC时从不直接 pull/fetch** - 必须先用 `git ls-remote` 无缓存检查，再决定是否更新
 8. **从不信任本地 refs 缓存** - `git fetch` 结果可能与远程真实状态不一致，必须用 `git ls-remote` 验证
+9. **commit消息必须使用英文** - 标题、正文、CHANGELOG条目一律英文，禁止中文
 
 ---
 
@@ -845,5 +846,5 @@ git log --follow -- path/file.java      # 文件历史
 **提交后：**
 - [ ] 工作目录干净？
 - [ ] 构建成功（如果修改了代码）？
-- [ ] Commit消息符合风格？
+- [ ] Commit消息符合风格（全部英文）？
 - [ ] CHANGELOG已更新（如有破坏性变更/新功能/数据库变更）？
