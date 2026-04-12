@@ -105,6 +105,8 @@
 - `switch`
 - 以及所有“绑定一个字段并把用户编辑结果写回 owner/form scope”的控件
 
+判定标准：如果用户编辑该控件后，结果应写回 owner/form scope 的某个路径，它就是 editable field，受本条规则约束；“可搜索”“带预览”“多段 UI” 不会改变这一点。
+
 语义：
 
 - renderer 通过 `name` 读取当前字段值
@@ -197,6 +199,10 @@
 - `disabled`
 - `testid`
 
+这里说的是目标 baseline，而不是当前实现现状。
+
+live code 里 `packages/flux-core/src/constants.ts` 的 `META_FIELDS` 目前仍包含 `name`、`label`、`title`；迁移目标应是把默认全局集合收窄为上述 6 个字段，并把其余字段交回 renderer metadata 或普通 `props` 通道。
+
 其中：
 
 - `id` 表示 node identity 或外层可观测标识，不表示字段绑定键
@@ -263,16 +269,16 @@ interface NodeControlSchema extends SchemaObject {
   disabled?: boolean | string;
   testid?: string;
   frameWrap?: FrameWrapMode;
+}
+
+interface BaseSchema extends NodeControlSchema {
+  type: string;
   validateOn?: ValidationTrigger | ValidationTrigger[];
   showErrorOn?: ValidationVisibilityTrigger | ValidationVisibilityTrigger[];
   onMount?: ActionSchema | ActionSchema[];
   onUnmount?: ActionSchema | ActionSchema[];
   'xui:imports'?: XuiImportSpec[];
   'xui:linkage'?: FieldLinkageSchema;
-}
-
-interface BaseSchema extends NodeControlSchema {
-  type: string;
 }
 
 interface BoundFieldSchemaBase extends BaseSchema {
@@ -283,6 +289,8 @@ interface BoundFieldSchemaBase extends BaseSchema {
 ```
 
 是否真的拆出 `NodeControlSchema` 这个名字不是本文重点。
+
+上面的例子刻意把“节点控制态”与“BaseSchema 仍会承载的其他扩展键”分开写：`validateOn` / `showErrorOn` 是 validation policy，`onMount` / `onUnmount` 是 lifecycle actions，`xui:imports` 与当前 legacy `xui:linkage` 是 namespaced extension keys。它们可以继续存在于 `BaseSchema`，但不应成为 `NodeControlSchema` 这个边界命名的核心定义理由。
 
 本文要求的是边界：
 
@@ -298,10 +306,13 @@ interface BoundFieldSchemaBase extends BaseSchema {
 - 它们不打算支持表达式求值
 - 文档明确声明它们是 static structural fields
 
-候选例子：
+当前已确认的 static structural fields：
 
-- `statusPath`
-- `componentId`
+- `statusPath`：当文档已把它定义为 owner/source/surface 发布只读状态摘要的路径时，允许 renderer 或 runtime 按结构配置直读 raw schema
+- `componentId`：当字段语义是“把 action 定向到某个已渲染组件实例”时，允许保留 raw schema 直读
+
+仍待按具体文档判定的例子：
+
 - 某些纯结构性的 `surface` / `selector` config
 
 如果某个字段未来需要动态值语义，就不能继续保留在 raw `schema` 直读路径里，而应显式进入 `props`。
@@ -388,6 +399,7 @@ interface BoundFieldSchemaBase extends BaseSchema {
 5. 不为了复用而制造巨型 base renderer；共享应优先落在 schema base、field helper、wrapper helper 上。
 6. 不把 semantic display props 统一重命名成 `value`。
 7. 不允许普通 editable field 同时支持 `name` 和 `value` 两套双向绑定语义。
+8. `META_FIELDS` 的目标集合应收窄为 `{id, className, visible, hidden, disabled, testid}`；`name` / `label` / `title` 不再被默认视为全局 meta 字段。
 
 ## Related Documents
 
