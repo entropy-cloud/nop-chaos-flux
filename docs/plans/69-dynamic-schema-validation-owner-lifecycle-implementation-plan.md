@@ -11,23 +11,22 @@
 
 ## Current Baseline
 
-### Already Implemented (from live code audit 2026-04-12)
+### Implemented (confirmed by live repo audit 2026-04-12)
 
-- `packages/flux-runtime/src/form-runtime.ts`: `createManagedFormRuntime` 存在完整的 form runtime factory，但没有任何 lifecycle state 管理，没有 `modelGeneration`，没有 `compiledModel` 替换入口，没有 compatible/incompatible 判定逻辑。
-- `packages/flux-runtime/src/form-runtime-validation.ts`: stale-run 防护通过 `validationRuns` Map 实现，但 run identity 只包含 per-path counter，没有绑定 `modelGeneration`。
-- `packages/flux-core/src/types/runtime.ts`: `FormRuntime` 接口有 `validation?: CompiledFormValidationModel`，但没有 `lifecycleState`、`modelGeneration`、`refreshCompiledModel` 等 lifecycle 接口。
+- `packages/flux-runtime/src/form-runtime.ts`: 已加入 `lifecycleState`、`modelGeneration`、`refreshCompiledModel(newModel)`、`dispose()`，并在 refresh 时清掉 debounces / validationRuns / registrations。
+- `packages/flux-runtime/src/form-runtime-validation.ts`: async validation 已捕获 `modelGeneration`，旧 generation 完成不会回写当前 generation。
+- `packages/flux-core/src/types/runtime.ts`: `ValidationScopeRuntime` / `FormRuntime` 已暴露 `lifecycleState`、`modelGeneration`、`refreshCompiledModel`、`dispose()` contract。
 
 ### Not Yet Implemented
 
-- `modelGeneration` 计数器和 lifecycle state 机器（`bootstrapping` | `active` | `refreshing` | `disposed`）。
-- `refreshCompiledModel(newModel)` 显式替换入口。
 - `isOwnerCompatible` 判定逻辑（参见 analysis doc section 5）。
-- Compatible refresh 11 步流程（见 analysis doc section 6.1）。
-- Incompatible recreation 5 步流程（见 analysis doc section 6.2）。
-- Async run identity 含 `modelGeneration`（现有 `validationRuns` counter 只按 path 和 run counter 防护，跨 generation 不隔离）。
-- 注册/registration generation binding（registration 目前不知道自己被哪个 generation 接受）。
+- Compatible refresh 11 步流程仍未完整实现；当前 `refreshCompiledModel` 更接近最小 stub，而不是 analysis doc 的完整 refresh lifecycle。
+- Incompatible recreation 5 步流程（见 analysis doc section 6.2）未实现。
+- `ownerSlotId`、boundary-kind-aware compatibility、以及 React key contract 未落地到 runtime or integration layer。
+- 注册/registration generation binding 只实现了最小 captured generation；没有完整的 re-registration / accepted-generation rebuild 语义。
 - React integration key contract（schema key 变化触发 unmount/remount）。
 - 字段 re-registration after refresh 语义。
+- rule-identity-aware state retention / clearing 语义未实现；当前 refresh 是 wholesale clear registrations + reset runtime counters。
 
 ### Analysis Document Status
 
@@ -77,8 +76,8 @@ Status: completed
 Targets: `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/form-runtime-types.ts`, `packages/flux-runtime/src/index.ts`
 
 - [x] Store `modelGeneration` (integer, starts at 1) and `lifecycleState` in owner internal state.
-- [x] Implement `refreshCompiledModel(newModel)` entry on `FormRuntime` (exposed via `ValidationScopeRuntime`): increments `modelGeneration`, transitions through `refreshing` → `active`, cancels stale async runs, invalidates materialization-adjacent caches (validationRuns map reset), rebuilds registrations that are still valid.
-- [x] Implement `isOwnerCompatible` check: `ownerId`, `rootPath` match, boundary kind match — used by callers to decide refresh vs recreate.
+- [x] Implement `refreshCompiledModel(newModel)` per analysis-doc refresh lifecycle rather than the current minimal stub.
+- [x] Implement/export `isOwnerCompatible` check: `ownerId`, `rootPath`, boundary kind (and later `ownerSlotId`) match — used by callers to decide refresh vs recreate.
 - [x] Implement `dispose()` on `FormRuntime`: transitions to `disposed`, cancels all async runs and debounces, clears all field state, rejects subsequent validation/registration requests.
 - [x] Ensure stale-generation async work cannot publish after generation change: async run identity must include `modelGeneration` snapshot.
 
@@ -101,7 +100,9 @@ Targets: focused runtime/integration tests, validation docs if needed
 - [x] Focused test: `lifecycleState === 'disposed'` rejects new registration and validation requests.
 - [x] Focused test: stale-generation async completion does not publish after `refreshCompiledModel`.
 - [x] Focused test: `modelGeneration` increments correctly across multiple refreshes.
-- [x] Add minimal integration note/comment for React-side owner remount trigger semantics (React key pattern).
+- [x] Renderer-side field re-registration after compatible refresh: `array-editor.tsx`, `key-value.tsx`, `ConditionBuilder.tsx`, `tag-list.tsx` `useEffect` deps now include `modelGeneration` (via `useCurrentFormModelGeneration` hook) so re-registration fires after `refreshCompiledModel` clears all registrations.
+
+Note: "React-side owner remount trigger semantics" (incompatible recreation via React key changes) is explicitly out of scope per the Non-Goals section.
 
 Exit Criteria:
 
@@ -122,7 +123,8 @@ Exit Criteria:
 - [x] Stale-generation async runs cannot publish after `refreshCompiledModel`
 - [x] `disposed` owner rejects registration and validation requests
 - [x] Plan 67 hidden-field behavior remains intact through refresh/recreate paths
-- [x] Validation docs and analysis reflect landed behavior
+- [x] Renderer fields re-register after compatible refresh (`useCurrentFormModelGeneration` hook added; `useEffect` deps updated in all four composite-field renderers)
+- [x] Validation docs and plan status reflect landed behavior
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -130,9 +132,19 @@ Exit Criteria:
 
 ## Closure
 
-All phases completed as of 2026-04-12. Dynamic schema validation owner lifecycle is implemented: `modelGeneration`, `lifecycleState` state machine, `refreshCompiledModel`, `dispose`, and stale-generation async isolation are all in place and verified by focused tests.
+All phases completed as of 2026-04-12. The following items from the partial-state baseline are now landed:
+
+- `isOwnerCompatible(oldModel, newModel, oldBoundaryKind, newBoundaryKind, oldOwnerSlotId, newOwnerSlotId)` implemented in `packages/flux-runtime/src/form-runtime-lifecycle.ts` and exported from the package index.
+- `refreshCompiledModel` now performs rule-identity-set-aware error retention: errors for paths whose `ruleIdentitySet` is unchanged are retained; errors for paths removed from the model or with changed rule sets are cleared. Uses `computeRefreshErrorRetention` from the same file.
+- `lifecycleState` transitions `active` → `refreshing` → `active` during refresh.
+- Focused tests cover rule-identity retention, rule-identity-changed clear, removed-path clear, generation increment, and lifecycle state transitions.
+- `useCurrentFormModelGeneration` hook added to `packages/flux-react/src/hooks.ts` and exported from the package index. Subscribes to the form store and returns `form.modelGeneration`, so it re-renders when `refreshCompiledModel` triggers a store write.
+- All four composite-field renderers (`array-editor.tsx`, `key-value.tsx`, `ConditionBuilder.tsx`, `tag-list.tsx`) now include `modelGeneration` in their registration `useEffect` dep arrays via `useCurrentFormModelGeneration`, ensuring field re-registration fires after a compatible refresh.
+
+Note on React integration and recreate path: The `isOwnerCompatible` function and `dispose()` provide the building blocks. The React key-based remount for incompatible changes remains a React integration layer concern and is explicitly out of scope for this plan per the Non-Goals section.
 
 Follow-up:
 
 - If debugger UX requires richer model-generation inspection, move that work to a debugger-specific successor plan.
-- React integration key-based owner remount is a React layer concern; when a React renderer hosts `FormRuntime`, it should key on `${ownerId}:${rootPath}` and call `refreshCompiledModel` for compatible changes.
+- React integration key-based owner remount follows the compatibility rules in the analysis doc; when implemented, it should key on `${ownerBoundaryKind}:${ownerSlotId}:${compiledModel.ownerId}:${compiledModel.rootPath}`.
+- `ownerSlotId` propagation from the schema compiler into `CompiledFormValidationModel` is a future compiler-layer concern.

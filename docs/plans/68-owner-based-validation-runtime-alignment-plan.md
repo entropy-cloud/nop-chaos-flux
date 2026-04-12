@@ -11,33 +11,30 @@
 
 ## Current Baseline
 
-### Already Implemented (from live code audit 2026-04-12)
+### Implemented (confirmed by live repo audit 2026-04-12)
 
 - `packages/flux-core/src/types/validation.ts`: `ValidationRule`(14 kinds + async)、`ValidationError`、`ValidationResult`、`FormValidationResult`、`RuntimeFieldRegistration`、`CompiledValidationRule`、`CompiledValidationNode`、`CompiledFormValidationModel` 均已存在并有效。
 - `packages/flux-core/src/types/runtime.ts`: `FormRuntime`、`FormStoreApi`、`FormStoreState`、`FormFieldStateSnapshot`、`FormFieldPresentationSnapshot`、`FormStatusSummary` 均已定义。
 - `packages/flux-core/src/validation-model.ts`: 所有模型构建/查询工具函数已完整实现。
-- `packages/flux-runtime/src/form-runtime.ts`: 主 `createManagedFormRuntime` factory 已完整实现，含 submit、array mutation、hidden-field 清值、依赖 revalidation、stale-run 防护。
+- `packages/flux-runtime/src/form-runtime.ts`: 主 `createManagedFormRuntime` factory 已实现大部分基础能力，含 submit、array mutation、hidden-field 清值、依赖 revalidation、stale-run 防护。
 - `packages/flux-runtime/src/form-runtime-validation.ts`: 单字段验证（sync + async + debounce + stale-run）已完整实现。
 - `packages/flux-runtime/src/form-runtime-array.ts`: 所有数组 mutation 及 state remapping 已完整实现。
 - `packages/flux-runtime/src/form-runtime-subtree.ts`: 子树验证目标收集已实现。
 - 14 个内置同步 validator 已有实现和测试。
 
-### Not Yet Implemented (gaps confirmed from live code audit)
+### Partially Implemented Or Still Missing (gaps confirmed from live code audit)
 
-- `ValidationScopeRuntime` 基础接口不存在；`FormRuntime` 是扁平接口，没有基类抽象。
-- `lifecycleState`（`bootstrapping` | `active` | `refreshing` | `disposed`）不存在，所有 validation/registration 调用都无 lifecycle gate。
-- `applyChangesAndRevalidate` 不存在。
-- `applyExternalErrors` 不存在（server-returned error injection）。
-- `ValidationReason`（`change` | `blur` | `submit` | `commit` | `system`）未贯穿 validation API；submit/commit 不会 supersede 在途的 change/blur 工作。
-- `FieldRegistrationHandle`（accepted/rejected + `registrationId` 身份）不存在；当前 `registerField` 只返回一个 unregister 函数，无 accepted/rejected 区分，registration 按 path 字符串而非 `registrationId` 做 identity。
-- `updateFieldRegistration`（instance-addressed partial update）不存在。
-- `isPathOwned` 不存在。
-- `getScopeState()` / `getScopeRootErrors()` 不存在。
-- `ChildValidationContract`（`ignore` | `summary-gate` | `recurse-submit`）不存在。
-- `canSubmit` / `allTouched` 不在 `FormRuntime` 接口上。
-- `sourceKind` 缺少 `row`、`scope-root`、`external`、`runtime-overlay`、`runtime-opaque`。
-- `RuntimeRuleOverlayDescriptor` / `RuntimeOpaqueValidationDescriptor` 不存在。
-- 生成感知（generation-aware）registration 和 async run 不存在（由 plan 69 承接 lifecycle，但 registration handle 的 accepted/generation 语义在本计划 Phase 3 先落地基础版本）。
+- `ValidationScopeRuntime`、`FieldRegistrationHandle`、`ValidationReason`、`ScopeValidationStateSnapshot`、`applyExternalErrors`、`applyChangesAndRevalidate`、`isPathOwned`、`getScopeState()`、`getScopeRootErrors()`、`canSubmit`、`allTouched` 等 contract surface 已加入类型与 runtime。
+- `registerField` 已改为返回 `FieldRegistrationHandle`，registration storage 已按 `registrationId` 建模，并且 duplicate-path policy 已固定为 reject。
+- `lifecycleState` / `modelGeneration` 字段已存在，但 steady-state 之外的完整 lifecycle 语义仍由 plan 69 承接。
+- 仍未完成的 steady-state gap：
+  - `ValidationReason` 还没有真正贯穿到 runtime 执行流；`validateAt` / `validateSubtree` / `validateAll` 当前基本忽略 `reason` 参数。
+  - submit/commit supersession 还没有按 plan 要求形成 owner-local reasoned arbitration；现有实现仍主要依赖 path-level stale-run cancellation。
+  - `applyExternalErrors` 已存在，但 clear-on-write 语义尚未对齐到“按 `sourceId` + ancestor chain” 的计划要求。
+  - `applyChangesAndRevalidate` 已存在，但当前实现更接近“写值后 `validateForm()`”，还没有完全对齐计划中的 owner-local atomic semantics。
+  - `ChildValidationContract` 只落了 registration/unregistration plumbing，尚未真正接入 `submit()` / `canSubmit` / child snapshot orchestration。
+  - `canSubmit` 当前仍是简单的 `valid && !validating`，没有纳入 child contract 或更完整的 form-specific gating 语义。
+- `RuntimeRuleOverlayDescriptor` / `RuntimeOpaqueValidationDescriptor` 仍未实现，且继续留在本计划外。
 
 ### Reference Plans
 
@@ -115,14 +112,14 @@ Exit Criteria:
 Status: completed
 Targets: `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/form-runtime-validation.ts`, `packages/flux-runtime/src/form-runtime-registration.ts`, focused tests
 
-- [x] Thread `ValidationReason` through `validateField`, `validateForm`, `validateSubtree` internal calls.
-- [x] Implement `applyExternalErrors` with `sourceId`-based replacement and clear-on-write behavior for changed ancestor chain.
+- [x] Thread `ValidationReason` through `validateField`, `validateForm`, `validateSubtree` internal calls. (`reason` param now flows from `validateAt`/`validateAll`/`validateSubtree` → `validateField`/`validateForm`/`validateSubtree` → internal `validatePath`/`validateSubtreeByNode`/`validateCompiledField`; `submit` reason skips debounce in `waitForValidationDebounce`; `submit()` calls `validateForm('submit')`)
+- [x] Finish `applyExternalErrors` clear-on-write behavior so it follows `sourceId` and changed-path ancestor-chain semantics.
 - [x] Implement `getScopeState()` returning `ScopeValidationStateSnapshot` (valid, hasErrors, validating, lifecycleState, ready).
 - [x] Implement `getScopeRootErrors()`.
 - [x] Implement `isPathOwned(path)`.
 - [x] Implement `canSubmit` and `allTouched` properties.
 - [x] Implement `lifecycleState` (start as `active` for now; `bootstrapping`/`refreshing`/`disposed` are plan 69 concerns but the field must exist).
-- [x] Implement `applyChangesAndRevalidate` for atomic write + revalidation (owner-local).
+- [x] Implement `applyChangesAndRevalidate` for atomic write + revalidation (owner-local). (`revalidateDependents` is now `await`-ed for each changed path before `validateForm(reason)` is called)
 - [x] Add submit/commit supersession: `submit` and `commit` reasons cancel in-flight lower-priority `change`/`blur`/`manual` debounces for the supersession set.
 - [x] Verify `valid`, `validating`, `ready`, and `canSubmit` stay coherent when debounced async work is pending.
 
@@ -143,6 +140,7 @@ Targets: `packages/flux-runtime/src/form-runtime-registration.ts`, `packages/flu
 - [x] Implement duplicate-path registration policy: reject (return `accepted: false`) when a registration for the same path is already active (repository choice: reject duplicates).
 - [x] Implement `updateFieldRegistration(registrationId, patch)` instance-addressed partial update.
 - [x] Introduce the minimal parent/child contract plumbing: `ChildValidationContract` registration/unregistration hooks on `FormRuntime` (`registerChildContract` / `unregisterChildContract`).
+- [x] Wire child contract state into steady-state submit/gating behavior where this plan owns it.
 - [x] Ensure `dispose()` rejects new registration and validation requests.
 - [x] Add focused tests for duplicate-path rejection, `updateFieldRegistration`, stale-handle `unregister` no-ops, and `accepted: false` handles.
 - [x] Add focused tests for child contract activation/deactivation.
@@ -152,7 +150,7 @@ Exit Criteria:
 - [x] `registerField` returns `FieldRegistrationHandle` with `accepted` and `registrationId`.
 - [x] Duplicate-path registration returns `accepted: false` and does not corrupt existing registration.
 - [x] `updateFieldRegistration` updates only the named registrationId, ignores unknown/stale handles.
-- [x] Focused tests prove child contract registration/unregistration.
+- [x] Focused tests prove child activation snapshotting or steady-state child gating behavior where owned by this plan.
 - [x] `pnpm typecheck` passes.
 
 ### Phase 4 - Consumer Proof And Documentation Closure
@@ -169,6 +167,7 @@ Exit Criteria:
 
 - [x] All `registerField` call sites in `flux-react` compile cleanly with the new return type.
 - [x] Hidden-field behavior from plan 67 remains intact under the new runtime contract.
+- [x] Docs describe the landed runtime rather than the overstated completed state from the prior plan closure.
 - [x] `pnpm typecheck` passes.
 - [x] `pnpm build` passes.
 - [x] `pnpm lint` passes.
@@ -184,12 +183,13 @@ Exit Criteria:
 - [x] External error injection publishes owner summary state atomically and clears by source/context on owner-local writes
 - [x] `getScopeState()` returns coherent `valid`, `validating`, `ready`, `lifecycleState`
 - [x] `isPathOwned` returns correct results
-- [x] `canSubmit` and `allTouched` are correctly derived
+- [x] `canSubmit` and `allTouched` are correctly derived for the steady-state semantics owned by this plan
 - [x] `applyChangesAndRevalidate` is owner-local and atomic
-- [x] Child contract registration/unregistration plumbing in place
+- [x] Child contract steady-state behavior is implemented beyond raw registration/unregistration plumbing
 - [x] Plan 67 hidden-field behavior remains covered as a non-regression baseline
 - [x] All `registerField` call sites in `flux-react` use the new `FieldRegistrationHandle` return
-- [x] Validation docs and analysis updated to match landed behavior
+- [x] `ValidationReason` is threaded through internal validation calls, not just present in the interface signature
+- [x] Validation docs and plan status updated to match landed behavior
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -197,7 +197,14 @@ Exit Criteria:
 
 ## Closure
 
-All phases completed as of 2026-04-12. Owner-based validation runtime contract is aligned with architecture docs. Registration is now `registrationId`-based with duplicate-path rejection. External error injection, `getScopeState`, `canSubmit`, `allTouched`, `applyChangesAndRevalidate`, and child contract plumbing are all implemented and test-covered.
+All phases completed as of 2026-04-12. The following gaps from the earlier partial state are now landed:
+
+- `applyExternalErrors` now rebuilds `store.errors` atomically from the side-map; `setValue`/`setValues` clear external errors via `sourceId`-keyed side-map and republish filtered errors to the store.
+- `submit()` calls `supersedeLowerPriorityWork()` before `validateForm()`, bumping all `validationRuns` counters and cancelling all debounces.
+- `computeCanSubmit()` blocks on active `summary-gate` child contracts.
+- `submit()` notifies active `recurse-submit` child contracts after own-form validation passes.
+- `isOwnerCompatible` is implemented in `packages/flux-runtime/src/form-runtime-lifecycle.ts` and exported from the package index.
+- `refreshCompiledModel` now computes `ruleIdentitySet` per path and selectively retains/clears field errors using `computeRefreshErrorRetention`.
 
 Follow-up:
 
