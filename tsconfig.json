@@ -10,6 +10,7 @@
     { "path": "./packages/flux-renderers-data" },
     { "path": "./packages/flux-code-editor" },
     { "path": "./packages/tailwind-preset" },
+    { "path": "./packages/theme-tokens" },
     { "path": "./packages/ui" },
     { "path": "./packages/flow-designer-core" },
     { "path": "./packages/flow-designer-renderers" },

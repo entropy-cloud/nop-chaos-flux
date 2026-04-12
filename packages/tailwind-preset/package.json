@@ -9,8 +9,7 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
-    },
-    "./styles.css": "./src/styles.css"
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
