@@ -39,7 +39,7 @@ const buttonRenderer: RendererDefinition = {
   type: 'button',
   component: (props) => (
     <button type="button" onClick={() => void props.events.onClick?.()}>
-      {String(props.props.label ?? props.meta.label ?? 'Button')}
+      {String(props.props.label ?? 'Button')}
     </button>
   ),
   fields: [{ key: 'onClick', kind: 'event' }]
