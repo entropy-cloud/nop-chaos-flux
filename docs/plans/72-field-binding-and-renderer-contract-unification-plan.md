@@ -53,8 +53,8 @@
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/value-adaptation-and-detail-field.md`
-- `docs/index.md`
-- `docs/architecture/README.md`
+- `docs/index.md` (register the field-binding contract doc in the main navigation and keep task routing aligned with the landed baseline)
+- `docs/architecture/README.md` (register the field-binding contract doc in the grouped architecture index)
 - `packages/flux-core/src/types/schema.ts`
 - `packages/flux-core/src/constants.ts`
 - `packages/flux-core/src/types/renderer-compiler.ts`
@@ -88,6 +88,7 @@ Targets: `docs/architecture/field-binding-and-renderer-contract.md`, `docs/archi
 - [ ] Re-audit the live ambiguous field set and freeze the contract matrix for `name`, `value`, `label`, `title`, `readOnly`, `disabled`, `statusPath`, and `componentId`.
 - [ ] Decide the minimal global meta set that should remain hard-coded, and explicitly identify which fields must become renderer-metadata-owned instead.
 - [ ] Freeze the editable-field authoring rule: `name` is the only ordinary two-way binding entry; generic editable `value` is not supported as a peer contract.
+- [ ] Freeze the allowed-scenarios list for `value` (`viewer` content, value-oriented owner payload, local scope `value`, diagnostic-only/test-only props) so later phases do not re-open the ambiguity.
 - [ ] Cross-check the new baseline against `value-adaptation-and-detail-field.md` so that local scope `value` and owner payload `value` remain valid without being mistaken for generic editable-field schema props.
 - [ ] Freeze which raw schema reads remain allowed as static structural fields and which must migrate into normalized `props`.
 
@@ -103,6 +104,7 @@ Status: planned
 Targets: `packages/flux-core/src/types/schema.ts`, `packages/flux-core/src/constants.ts`, `packages/flux-core/src/types/renderer-compiler.ts`, `packages/flux-runtime/src/schema-compiler/fields.ts`, `packages/flux-runtime/src/schema-compiler.ts`, focused core/runtime tests
 
 - [ ] Introduce or extract the small shared schema bases required by the new baseline, such as a `BoundFieldSchemaBase`-like layer for `name` / `readOnly` / `required`.
+- [ ] Update `packages/flux-core/src/constants.ts` so the default `META_FIELDS` set no longer treats `name` as global meta, and only keeps the fields that remain part of the agreed node-control baseline.
 - [ ] Remove `name` from the default global meta classification path or otherwise make the compiler resolve it into normalized `props` rather than `meta`.
 - [ ] Revisit the default handling of `label` / `title` so they no longer depend on unstable global-meta behavior where renderer metadata should own the semantics.
 - [ ] Ensure the compiler and runtime state types still clearly distinguish node-control meta from business-facing props after the reclassification.
@@ -121,9 +123,10 @@ Targets: `packages/flux-react/src/node-frame-wrapper.tsx`, `packages/flux-react/
 
 - [ ] Update `NodeFrameWrapper` and any adjacent helper so wrapper-level name/label resolution consumes normalized channels rather than raw schema fallback for fields that should already be normalized.
 - [ ] Apply the shared bound-field base to simple input schemas and composite field schemas so `name` / `readOnly` / `required` stop being duplicated ad hoc.
-- [ ] Introduce only the minimal helper surface needed for renderer adoption, for example a shared bound-field name resolver or shared field-schema utility, instead of a giant abstract base renderer.
+- [ ] Introduce only the minimal helper surface needed for renderer adoption, for example `getBoundFieldName(props)` and/or one small shared field-schema utility in `field-utils.tsx`, instead of a giant abstract base renderer.
 - [ ] Migrate representative form renderers away from `props.schema.name`, `props.schema.readOnly`, and similar raw-schema fallbacks where normalized props should already exist.
 - [ ] Add focused tests or schema diagnostics that reject ambiguous editable-field authoring such as ordinary `name + value` dual-binding shapes.
+- [ ] Update existing renderer test fixtures that currently rely on `meta` or raw-schema fallback for `name` / `readOnly` so they assert normalized `props` delivery instead.
 
 Exit Criteria:
 
@@ -139,6 +142,7 @@ Targets: representative files under `packages/flux-renderers-basic/src/` and `pa
 - [ ] Audit representative non-form renderers for raw-schema reads that contradict the normalized contract.
 - [ ] For each such field, do one of two things only: migrate it into normalized `props` / `meta`, or explicitly document it as a static structural field that remains raw-schema-only.
 - [ ] Review obvious `@nop-chaos/ui`-equivalent prop surfaces such as button `variant` / `size`, and align the author-facing vocabulary where semantics truly match exactly.
+- [ ] Limit vocabulary cleanup to places that already contain explicit dual-vocabulary mapping code or equivalent drift; do not add proactive rename work for fields that do not yet have a real competing synonym in live code.
 - [ ] Avoid long-term dual vocabulary tables for semantically identical props; if compatibility is needed for existing shipped schemas, record the concrete migration reason instead of preserving silent duplication by default.
 
 Exit Criteria:

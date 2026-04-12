@@ -1,6 +1,6 @@
 # 70 Composite Value Fields And Validation Integration Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-04-12
 > Source: `docs/architecture/object-field.md`, `docs/architecture/array-field.md`, `docs/architecture/variant-field.md`, `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/form-validation.md`, `docs/components/loop/design.md`, plus live-code audit of `packages/flux-renderers-form/src/renderers/array-editor.tsx`, `packages/flux-renderers-form/src/renderers/key-value.tsx`, `packages/flux-runtime/src/schema-compiler/validation-collection.ts`, `packages/flux-renderers-basic/src/loop.tsx`
 > Related: `docs/plans/55-loop-structural-node-and-item-scope-plan.md`, `docs/plans/68-owner-based-validation-runtime-alignment-plan.md`, `docs/plans/69-dynamic-schema-validation-owner-lifecycle-implementation-plan.md`, `docs/plans/09-form-validation-lowcode-integrated-refactor-roadmap.md`
@@ -311,12 +311,17 @@ Rollback guidance:
 
 ## Closure
 
-Status Note: fill after closure audit.
+Status Note: All 8 phases completed. All 6 composite renderer components land with focused tests and full integration coverage. `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` (200 form-renderer tests, plus full suite) are green.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: fill after independent subagent closure audit.
-- Evidence: fill with task id, daily log link, and finding summary before marking the plan `completed`.
+- Reviewer / Agent: Independent subagent closure audit — task `ses_280797e47ffeTOC7CPIN21OpKi` (run 2026-04-12).
+- Evidence: Audit found 4 gaps (4.A missing `detail-view` in six-component combined scenario; 4.B no debounce test; 4.C `updates`/`patch` paths untested; 4.D plan status still `planned`). All 4 gaps resolved in follow-up session (2026-04-12):
+  - Gap 4.A: `detail-view` node added to the six-component combined scenario in `composite-form.test.tsx` (now renders `Edit Config` trigger alongside the other five components).
+  - Gap 4.B: New `describe` block `composite form - submit supersedes debounced validation` added with `vi.useFakeTimers({ shouldAdvanceTime: true })` confirming submit catches required-field errors independently of any pending debounce window.
+  - Gap 4.C: Two new tests added to `detail-view.test.tsx` — `applyCommitResult handles updates dict shape` and `applyCommitResult handles patch array shape` — directly exercising the `updates` and `patch` branches in `applyCommitResult`.
+  - Gap 4.D: Plan status updated to `completed` and this closure section filled.
+- Daily log: `docs/logs/2026/04-12.md`
 
 Follow-up:
 
