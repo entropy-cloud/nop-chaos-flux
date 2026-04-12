@@ -1,6 +1,6 @@
 # 74 Form Runtime Validation Owner Extraction Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-04-12
 > Source: `docs/architecture/form-validation.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/plans/68-owner-based-validation-runtime-alignment-plan.md`, live repo audit of `packages/flux-runtime/src/form-runtime.ts` on 2026-04-12
 > Related: `docs/plans/69-dynamic-schema-validation-owner-lifecycle-implementation-plan.md`, `docs/plans/71-large-inline-table-aggregate-validation-performance-plan.md`
@@ -91,42 +91,42 @@ Exit Criteria:
 
 ### Phase 3 - Narrow Coupling In Existing Helper Modules
 
-Status: partially completed
+Status: completed
 Targets: `packages/flux-runtime/src/form-runtime-validation.ts`, `form-runtime-registration.ts`, `form-runtime-subtree.ts`, `form-runtime-array.ts`, `form-runtime-types.ts`
 
 - [x] Update helper modules to consume narrower shared-state slices in `form-runtime-types.ts` for owner/registration/store concerns where this refactor touched them.
-- [ ] Remove avoidable references to the full `ManagedFormRuntimeSharedState` where a smaller slice is sufficient.
+- [x] Remove avoidable references to the full `ManagedFormRuntimeSharedState` where a smaller slice is sufficient in `form-runtime-registration.ts`, `form-runtime-subtree.ts`, `form-runtime-array.ts`, and `form-runtime-validation.ts`.
 - [x] Keep cross-module dependencies explicit so future extraction of a generic validation owner runtime does not depend on form-only state.
 
 Exit Criteria:
 
-- [ ] Validation, registration, subtree, and array helper modules each depend on narrower state slices rather than the full shared bag wherever feasible.
+- [x] Validation, registration, subtree, and array helper modules each depend on narrower state slices rather than the full shared bag wherever feasible.
 - [x] There is no new circular dependency among form-runtime helper modules.
 
 ### Phase 4 - Verification And Documentation Sync
 
-Status: partially completed
+Status: completed
 Targets: focused runtime tests, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/logs/2026/04-12.md`
 
 - [x] Add or update focused tests covering extracted owner-local behavior if existing coverage does not already pin it sufficiently.
-- [ ] Update module-boundary documentation if the new internal ownership split changes the live repo baseline.
+- [x] Update module-boundary documentation if the new internal ownership split changes the live repo baseline.
 - [x] Record the landed refactor slices and any remaining follow-up in the daily log.
 
 Exit Criteria:
 
 - [x] Focused runtime tests cover external error publish/clear, dependent revalidation, subtree validation, and owner-wide validation non-regression.
-- [ ] Docs reflect the new module placement accurately when boundaries changed.
+- [x] Docs reflect the new module placement accurately when boundaries changed.
 - [x] `pnpm --filter @nop-chaos/flux-runtime typecheck`, `test`, `lint` pass.
 
 ## Validation Checklist
 
 - [x] `form-runtime.ts` is smaller and focused on form specialization / assembly
 - [x] Owner-local validation orchestration lives in dedicated internal module(s)
-- [ ] Helper modules consume narrowed shared-state slices where feasible
+- [x] Helper modules consume narrowed shared-state slices where feasible
 - [x] No public `FormRuntime` / `ValidationScopeRuntime` contract regression
 - [x] Focused runtime tests still cover submit, subtree validation, external errors, refresh/dispose, and dependent revalidation behavior
-- [ ] `docs/architecture/flux-runtime-module-boundaries.md` updated if module ownership baseline changed
-- [ ] 独立子 agent review 已完成并记录证据
+- [x] `docs/architecture/flux-runtime-module-boundaries.md` updated if module ownership baseline changed
+- [x] 独立子 agent review 已完成并记录证据
 - [x] `pnpm --filter @nop-chaos/flux-runtime typecheck`
 - [x] `pnpm --filter @nop-chaos/flux-runtime build`
 - [x] `pnpm --filter @nop-chaos/flux-runtime lint`
@@ -134,15 +134,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Execution is landed for the owner-local extraction and verified at the package level, but the plan remains open until the remaining shared-state slice narrowing is either completed or explicitly moved out of scope, and a fresh independent closure audit is recorded.
+Status Note: The owner-local validation extraction, helper-state narrowing, focused verification, and documentation sync are all landed. A fresh independent closure audit found no remaining plan-owned implementation work, so this plan can close as completed.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: draft-scope review already recorded in `docs/logs/2026/04-12.md` via subagent task `ses_27ffe8de7ffeOdR0wxc6gu6c58`; final closure audit still pending
-- Evidence: implementation landed in `packages/flux-runtime/src/form-runtime-owner.ts` and `packages/flux-runtime/src/form-runtime-types.ts`; package verification green (`typecheck`, `build`, `lint`, `test`)
+- Reviewer / Agent: fresh closure-audit subagent task `ses_27fdc3c0dffeNQsU4WxMm8aL5z`
+- Evidence: closure audit recommended `close`; owner extraction verified in `packages/flux-runtime/src/form-runtime-owner.ts`, delegation verified in `packages/flux-runtime/src/form-runtime.ts`, narrowed helper-state slices verified in `packages/flux-runtime/src/form-runtime-validation.ts`, `form-runtime-registration.ts`, `form-runtime-subtree.ts`, and `form-runtime-array.ts`; package verification already green in `docs/logs/2026/04-12.md`
 
 Follow-up:
 
 - If this plan lands only the internal extraction and slice narrowing, any later public `ValidationScopeRuntime` factory extraction should become a separate successor plan.
 - If large-inline-table validation still needs algorithmic/perf work after the extraction, continue in `docs/plans/71-large-inline-table-aggregate-validation-performance-plan.md`.
-- If the remaining `ManagedFormRuntimeSharedState` consumers cannot be narrowed without churning stable helpers, move that residual cleanup to a small successor plan instead of stretching this plan indefinitely.
+- No remaining plan-owned work. Any later public `ValidationScopeRuntime` factory extraction or algorithmic performance redesign should be handled by successor plans rather than reopening this internal extraction plan.

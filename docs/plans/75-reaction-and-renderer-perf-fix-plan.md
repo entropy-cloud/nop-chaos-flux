@@ -1,4 +1,4 @@
-# 74 Reaction Dispose Race and Renderer Stability Fixes
+# 75 Reaction Dispose Race and Renderer Stability Fixes
 
 > Plan Status: completed
 > Last Reviewed: 2026-04-12
