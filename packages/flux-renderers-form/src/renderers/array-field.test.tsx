@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '../index';
@@ -25,6 +25,13 @@ const env: RendererEnv = {
   },
   notify: () => undefined
 };
+
+function makeCapturingFetcher(submitValues: Record<string, unknown>[]) {
+  return async function <T>(_api: unknown, ctx: ApiRequestContext): Promise<{ ok: true; status: number; data: T }> {
+    submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
+    return { ok: true, status: 200, data: null as unknown as T };
+  };
+}
 
 const formulaCompiler = createFormulaCompiler();
 
@@ -109,10 +116,7 @@ describe('array-field renderer (scalar)', () => {
         }}
         env={{
           ...env,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
+          fetcher: makeCapturingFetcher(submitValues)
         }}
         formulaCompiler={formulaCompiler}
       />
@@ -221,10 +225,7 @@ describe('array-field renderer (object itemKind)', () => {
         }}
         env={{
           ...env,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
+          fetcher: makeCapturingFetcher(submitValues)
         }}
         formulaCompiler={formulaCompiler}
       />

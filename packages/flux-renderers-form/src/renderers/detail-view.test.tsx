@@ -240,4 +240,85 @@ describe('detail-view renderer', () => {
     fireEvent.click(screen.getByText('Edit Config'));
     await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
   });
+
+  it('applyCommitResult handles updates dict shape', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'detail-view',
+              scopePath: 'settings',
+              data: { updates: { theme: 'dark' } },
+              triggerLabel: 'Edit Settings',
+              surface: { mode: 'dialog', title: 'Edit Settings' },
+              content: [
+                {
+                  type: 'object-field',
+                  name: 'updates',
+                  label: 'Updates',
+                  body: [
+                    { type: 'input-text', name: 'theme', label: 'Theme' }
+                  ]
+                }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Settings')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Settings'));
+    await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
+
+    fireEvent.change(screen.getByLabelText('Theme'), { target: { value: 'solarized' } });
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => expect(screen.queryByLabelText('Theme')).toBeNull());
+  });
+
+  it('applyCommitResult handles patch array shape', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'detail-view',
+              scopePath: 'settings',
+              data: { patch: [{ path: 'locale', value: 'en-US' }] },
+              triggerLabel: 'Edit Settings',
+              surface: { mode: 'dialog', title: 'Edit Settings' },
+              content: [
+                { type: 'input-text', name: 'locale', label: 'Locale' }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Settings')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Settings'));
+    await waitFor(() => expect(screen.getByLabelText('Locale')).toBeTruthy());
+
+    fireEvent.change(screen.getByLabelText('Locale'), { target: { value: 'fr-FR' } });
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => expect(screen.queryByLabelText('Locale')).toBeNull());
+  });
 });

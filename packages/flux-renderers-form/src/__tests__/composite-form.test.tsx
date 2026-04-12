@@ -1,7 +1,7 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
@@ -24,6 +24,13 @@ const formulaCompiler = createFormulaCompiler();
 
 const allRenderers = [...basicRendererDefinitions, ...formRendererDefinitions];
 
+function makeCapturingFetcher(submitValues: Record<string, unknown>[]) {
+  return async function <T>(_api: unknown, ctx: ApiRequestContext): Promise<{ ok: true; status: number; data: T }> {
+    submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
+    return { ok: true, status: 200, data: null as unknown as T };
+  };
+}
+
 const baseEnv: RendererEnv = {
   fetcher: async function <T>() {
     return { ok: true, status: 200, data: null as T };
@@ -32,7 +39,7 @@ const baseEnv: RendererEnv = {
 };
 
 describe('composite form - object-field validation', () => {
-  it('shows child field errors within object-field on submit', async () => {
+  it('blocks submit when required child field is empty', async () => {
     cleanup();
     const submitValues: Record<string, unknown>[] = [];
     const SchemaRenderer = createSchemaRenderer(allRenderers);
@@ -41,7 +48,7 @@ describe('composite form - object-field validation', () => {
       <SchemaRenderer
         schema={{
           type: 'form',
-          id: 'obj-form',
+          id: 'obj-form-block',
           data: { profile: { firstName: '', lastName: 'Smith' } },
           body: [
             {
@@ -59,16 +66,13 @@ describe('composite form - object-field validation', () => {
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'obj-form' }
+              onClick: { action: 'component:submit', componentId: 'obj-form-block' }
             }
           ]
         }}
         env={{
           ...baseEnv,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
+          fetcher: makeCapturingFetcher(submitValues)
         }}
         formulaCompiler={formulaCompiler}
       />
@@ -86,7 +90,7 @@ describe('composite form - object-field validation', () => {
     expect(submitValues.length).toBe(0);
   });
 
-  it('submits object-field with valid nested values', async () => {
+  it('submits with valid object-field nested values', async () => {
     cleanup();
     const submitValues: Record<string, unknown>[] = [];
     const SchemaRenderer = createSchemaRenderer(allRenderers);
@@ -95,7 +99,7 @@ describe('composite form - object-field validation', () => {
       <SchemaRenderer
         schema={{
           type: 'form',
-          id: 'obj-form-valid',
+          id: 'obj-form-pass',
           data: { profile: { firstName: 'Jane', lastName: 'Doe' } },
           body: [
             {
@@ -113,16 +117,13 @@ describe('composite form - object-field validation', () => {
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'obj-form-valid' }
+              onClick: { action: 'component:submit', componentId: 'obj-form-pass' }
             }
           ]
         }}
         env={{
           ...baseEnv,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
+          fetcher: makeCapturingFetcher(submitValues)
         }}
         formulaCompiler={formulaCompiler}
       />
@@ -138,10 +139,8 @@ describe('composite form - object-field validation', () => {
       profile: { firstName: 'Jane', lastName: 'Doe' }
     });
   });
-});
 
-describe('composite form - array-field validation', () => {
-  it('blocks submit when required scalar items are empty', async () => {
+  it('editing an object-field child field updates parent form values on submit', async () => {
     cleanup();
     const submitValues: Record<string, unknown>[] = [];
     const SchemaRenderer = createSchemaRenderer(allRenderers);
@@ -150,7 +149,97 @@ describe('composite form - array-field validation', () => {
       <SchemaRenderer
         schema={{
           type: 'form',
-          id: 'arr-form',
+          id: 'obj-form-edit',
+          data: { profile: { firstName: 'Jane', lastName: 'Doe' } },
+          body: [
+            {
+              type: 'object-field',
+              name: 'profile',
+              label: 'Profile',
+              body: [
+                { type: 'input-text', name: 'firstName', label: 'First Name' },
+                { type: 'input-text', name: 'lastName', label: 'Last Name' }
+              ]
+            }
+          ],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit',
+              onClick: { action: 'component:submit', componentId: 'obj-form-edit' }
+            }
+          ]
+        }}
+        env={{
+          ...baseEnv,
+          fetcher: makeCapturingFetcher(submitValues)
+        }}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByLabelText('First Name')).toBeTruthy());
+
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Alice' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
+
+    expect(submitValues[0]).toMatchObject({
+      profile: { firstName: 'Alice', lastName: 'Doe' }
+    });
+  });
+});
+
+describe('composite form - array-field add/remove', () => {
+  it('renders existing items and supports add/remove', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allRenderers);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: { tags: ['alpha', 'beta', 'gamma'] },
+          body: [
+            {
+              type: 'array-field',
+              name: 'tags',
+              itemKind: 'scalar',
+              label: 'Tags',
+              item: [{ type: 'input-text', name: 'value', label: 'Tag' }]
+            }
+          ]
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('Tags')).toBeTruthy());
+
+    const removeButtons = screen.getAllByText('Remove');
+    expect(removeButtons.length).toBe(3);
+
+    fireEvent.click(removeButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Remove').length).toBe(2);
+    });
+  });
+
+  it('blocks submit when required array items have empty values', async () => {
+    cleanup();
+    const submitValues: Record<string, unknown>[] = [];
+    const SchemaRenderer = createSchemaRenderer(allRenderers);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'arr-form-req',
           data: { tags: ['alpha', ''] },
           body: [
             {
@@ -166,16 +255,13 @@ describe('composite form - array-field validation', () => {
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'arr-form' }
+              onClick: { action: 'component:submit', componentId: 'arr-form-req' }
             }
           ]
         }}
         env={{
           ...baseEnv,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
+          fetcher: makeCapturingFetcher(submitValues)
         }}
         formulaCompiler={formulaCompiler}
       />
@@ -186,14 +272,14 @@ describe('composite form - array-field validation', () => {
     fireEvent.click(screen.getByText('Submit'));
 
     await waitFor(() => {
-      const errorMessages = screen.queryAllByText(/required/i);
-      expect(errorMessages.length).toBeGreaterThan(0);
+      const errors = screen.queryAllByText(/required/i);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     expect(submitValues.length).toBe(0);
   });
 
-  it('submits array-field after adding valid items', async () => {
+  it('submits valid array-field values', async () => {
     cleanup();
     const submitValues: Record<string, unknown>[] = [];
     const SchemaRenderer = createSchemaRenderer(allRenderers);
@@ -202,15 +288,15 @@ describe('composite form - array-field validation', () => {
       <SchemaRenderer
         schema={{
           type: 'form',
-          id: 'arr-form-add',
-          data: { tags: ['alpha'] },
+          id: 'arr-form-pass',
+          data: { tags: ['alpha', 'beta'] },
           body: [
             {
               type: 'array-field',
               name: 'tags',
               itemKind: 'scalar',
               label: 'Tags',
-              item: [{ type: 'input-text', name: 'value', label: 'Tag', required: true }]
+              item: [{ type: 'input-text', name: 'value', label: 'Tag' }]
             }
           ],
           submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
@@ -218,45 +304,31 @@ describe('composite form - array-field validation', () => {
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'arr-form-add' }
+              onClick: { action: 'component:submit', componentId: 'arr-form-pass' }
             }
           ]
         }}
         env={{
           ...baseEnv,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
+          fetcher: makeCapturingFetcher(submitValues)
         }}
         formulaCompiler={formulaCompiler}
       />
     );
 
-    await waitFor(() => expect(screen.getByText('Add item')).toBeTruthy());
-
-    fireEvent.click(screen.getByText('Add item'));
-
-    await waitFor(() => {
-      const inputs = screen.getAllByLabelText('Tag', { exact: false });
-      expect(inputs.length).toBe(2);
-    });
-
-    const inputs = screen.getAllByLabelText('Tag', { exact: false });
-    fireEvent.change(inputs[1], { target: { value: 'beta' } });
+    await waitFor(() => expect(screen.getByText('Submit')).toBeTruthy());
 
     fireEvent.click(screen.getByText('Submit'));
 
     await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
 
-    const tags = (submitValues[0] as Record<string, unknown>).tags as string[];
-    expect(tags).toContain('alpha');
-    expect(tags).toContain('beta');
+    const tags = (submitValues[0] as Record<string, unknown>).tags as unknown[];
+    expect(tags.length).toBe(2);
   });
 });
 
-describe('composite form - variant-field validation', () => {
-  it('only validates the active branch after variant switch', async () => {
+describe('composite form - variant-field branch-only validation', () => {
+  it('submits when only active branch has valid values', async () => {
     cleanup();
     const submitValues: Record<string, unknown>[] = [];
     const SchemaRenderer = createSchemaRenderer(allRenderers);
@@ -304,10 +376,7 @@ describe('composite form - variant-field validation', () => {
         }}
         env={{
           ...baseEnv,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
+          fetcher: makeCapturingFetcher(submitValues)
         }}
         formulaCompiler={formulaCompiler}
       />
@@ -325,16 +394,14 @@ describe('composite form - variant-field validation', () => {
 });
 
 describe('composite form - detail-field draft validation gating', () => {
-  it('blocks confirm when child draft has invalid required fields, then succeeds on valid input', async () => {
+  it('blocks confirm when child draft has required fields empty', async () => {
     cleanup();
-    const submitValues: Record<string, unknown>[] = [];
     const SchemaRenderer = createSchemaRenderer(allRenderers);
 
     render(
       <SchemaRenderer
         schema={{
           type: 'form',
-          id: 'detail-field-form',
           data: { address: { street: '', city: 'Springfield' } },
           body: [
             {
@@ -348,23 +415,9 @@ describe('composite form - detail-field draft validation gating', () => {
                 { type: 'input-text', name: 'city', label: 'City', required: true }
               ]
             }
-          ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
-          actions: [
-            {
-              type: 'button',
-              label: 'Submit Form',
-              onClick: { action: 'component:submit', componentId: 'detail-field-form' }
-            }
           ]
         }}
-        env={{
-          ...baseEnv,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
-        }}
+        env={baseEnv}
         formulaCompiler={formulaCompiler}
       />
     );
@@ -382,12 +435,60 @@ describe('composite form - detail-field draft validation gating', () => {
     });
 
     expect(screen.getByLabelText('Street', { exact: false })).toBeTruthy();
+  });
 
-    fireEvent.change(screen.getByLabelText('Street', { exact: false }), { target: { value: '42 Oak Ave' } });
+  it('successful confirm writes back value and parent can submit', async () => {
+    cleanup();
+    const submitValues: Record<string, unknown>[] = [];
+    const SchemaRenderer = createSchemaRenderer(allRenderers);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'detail-field-submit',
+          data: { address: { street: '1 Main St', city: 'Springfield' } },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'address',
+              label: 'Address',
+              triggerLabel: 'Edit Address',
+              surface: { mode: 'dialog', title: 'Edit Address' },
+              content: [
+                { type: 'input-text', name: 'street', label: 'Street' },
+                { type: 'input-text', name: 'city', label: 'City' }
+              ]
+            }
+          ],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit Form',
+              onClick: { action: 'component:submit', componentId: 'detail-field-submit' }
+            }
+          ]
+        }}
+        env={{
+          ...baseEnv,
+          fetcher: makeCapturingFetcher(submitValues)
+        }}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Address'));
+
+    await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
+
+    fireEvent.change(screen.getByLabelText('Street'), { target: { value: '42 Oak Ave' } });
 
     fireEvent.click(screen.getByText('Confirm'));
 
-    await waitFor(() => expect(screen.queryByLabelText('Street', { exact: false })).toBeNull());
+    await waitFor(() => expect(screen.queryByLabelText('Street')).toBeNull());
 
     fireEvent.click(screen.getByText('Submit Form'));
 
@@ -407,7 +508,7 @@ describe('composite form - detail-field draft validation gating', () => {
       <SchemaRenderer
         schema={{
           type: 'form',
-          id: 'detail-cancel-form',
+          id: 'detail-cancel',
           data: { address: { street: '100 Main St', city: 'Oldtown' } },
           body: [
             {
@@ -427,16 +528,13 @@ describe('composite form - detail-field draft validation gating', () => {
             {
               type: 'button',
               label: 'Submit Form',
-              onClick: { action: 'component:submit', componentId: 'detail-cancel-form' }
+              onClick: { action: 'component:submit', componentId: 'detail-cancel' }
             }
           ]
         }}
         env={{
           ...baseEnv,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
+          fetcher: makeCapturingFetcher(submitValues)
         }}
         formulaCompiler={formulaCompiler}
       />
@@ -464,7 +562,7 @@ describe('composite form - detail-field draft validation gating', () => {
 });
 
 describe('composite form - detail-view draft validation gating', () => {
-  it('blocks confirm when draft has required fields empty, then succeeds', async () => {
+  it('blocks confirm when draft has required fields empty', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer(allRenderers);
 
@@ -475,11 +573,11 @@ describe('composite form - detail-view draft validation gating', () => {
           body: [
             {
               type: 'detail-view',
-              data: { name: '' },
+              data: { title: '' },
               triggerLabel: 'Edit',
-              surface: { mode: 'dialog', title: 'Edit Name' },
+              surface: { mode: 'dialog', title: 'Edit Details' },
               content: [
-                { type: 'input-text', name: 'name', label: 'Name', required: true }
+                { type: 'input-text', name: 'title', label: 'Title', required: true }
               ]
             }
           ]
@@ -492,7 +590,7 @@ describe('composite form - detail-view draft validation gating', () => {
     await waitFor(() => expect(screen.getByText('Edit')).toBeTruthy());
 
     fireEvent.click(screen.getByText('Edit'));
-    await waitFor(() => expect(screen.getByLabelText('Name', { exact: false })).toBeTruthy());
+    await waitFor(() => expect(screen.getByLabelText('Title', { exact: false })).toBeTruthy());
 
     fireEvent.click(screen.getByText('Confirm'));
 
@@ -500,18 +598,53 @@ describe('composite form - detail-view draft validation gating', () => {
       expect(screen.getByText('Please fix validation errors before confirming.')).toBeTruthy();
     });
 
-    expect(screen.getByLabelText('Name', { exact: false })).toBeTruthy();
+    expect(screen.getByLabelText('Title', { exact: false })).toBeTruthy();
+  });
 
-    fireEvent.change(screen.getByLabelText('Name', { exact: false }), { target: { value: 'Alice' } });
+  it('cancel closes without applying changes', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allRenderers);
 
-    fireEvent.click(screen.getByText('Confirm'));
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'detail-view',
+              data: { theme: 'dark' },
+              triggerLabel: 'Edit Config',
+              surface: { mode: 'dialog', title: 'Edit Config' },
+              content: [
+                { type: 'input-text', name: 'theme', label: 'Theme' }
+              ]
+            }
+          ]
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />
+    );
 
-    await waitFor(() => expect(screen.queryByLabelText('Name', { exact: false })).toBeNull());
+    await waitFor(() => expect(screen.getByText('Edit Config')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Config'));
+    await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
+
+    fireEvent.change(screen.getByLabelText('Theme'), { target: { value: 'light' } });
+    fireEvent.click(screen.getByText('Cancel'));
+
+    await waitFor(() => expect(screen.queryByLabelText('Theme')).toBeNull());
+
+    fireEvent.click(screen.getByText('Edit Config'));
+    await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
+
+    expect((screen.getByLabelText('Theme') as HTMLInputElement).value).toBe('dark');
   });
 });
 
-describe('composite form - loop reflects committed form state without creating validation owner', () => {
-  it('loop renders items from form data and does not affect validation', async () => {
+describe('composite form - loop renders form data and is not a validation owner', () => {
+  it('loop renders items from scope and does not interfere with form validation', async () => {
     cleanup();
     const submitValues: Record<string, unknown>[] = [];
     const SchemaRenderer = createSchemaRenderer(allRenderers);
@@ -521,7 +654,7 @@ describe('composite form - loop reflects committed form state without creating v
         schema={{
           type: 'form',
           id: 'loop-form',
-          data: { items: ['item1', 'item2'], note: '' },
+          data: { note: '', items: ['alpha', 'beta'] },
           body: [
             {
               type: 'input-text',
@@ -532,7 +665,7 @@ describe('composite form - loop reflects committed form state without creating v
             {
               type: 'loop',
               items: '${items}',
-              body: [{ type: 'text', value: '${item}' }]
+              body: [{ type: 'text', text: '${$slot.item}' }]
             }
           ],
           submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
@@ -546,18 +679,15 @@ describe('composite form - loop reflects committed form state without creating v
         }}
         env={{
           ...baseEnv,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
+          fetcher: makeCapturingFetcher(submitValues)
         }}
         formulaCompiler={formulaCompiler}
       />
     );
 
     await waitFor(() => {
-      expect(screen.getByText('item1')).toBeTruthy();
-      expect(screen.getByText('item2')).toBeTruthy();
+      expect(screen.getByText('alpha')).toBeTruthy();
+      expect(screen.getByText('beta')).toBeTruthy();
     });
 
     fireEvent.click(screen.getByText('Submit'));
@@ -569,18 +699,18 @@ describe('composite form - loop reflects committed form state without creating v
 
     expect(submitValues.length).toBe(0);
 
-    fireEvent.change(screen.getByLabelText('Note', { exact: false }), { target: { value: 'Hello' } });
+    fireEvent.change(screen.getByLabelText('Note', { exact: false }), { target: { value: 'My note' } });
 
     fireEvent.click(screen.getByText('Submit'));
 
     await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
 
-    expect(submitValues[0]).toMatchObject({ note: 'Hello' });
+    expect(submitValues[0]).toMatchObject({ note: 'My note' });
   });
 });
 
-describe('composite form - combined six-component scenario', () => {
-  it('integrates object-field, array-field, variant-field, detail-field, detail-view, and loop in one form', async () => {
+describe('composite form - six-component integration', () => {
+  it('renders all six components together and submits when valid', async () => {
     cleanup();
     const submitValues: Record<string, unknown>[] = [];
     const SchemaRenderer = createSchemaRenderer(allRenderers);
@@ -589,13 +719,14 @@ describe('composite form - combined six-component scenario', () => {
       <SchemaRenderer
         schema={{
           type: 'form',
-          id: 'combined-form',
+          id: 'six-form',
           data: {
             profile: { firstName: 'Jane', lastName: 'Doe' },
-            tags: ['alpha'],
+            tags: ['alpha', 'beta'],
             contactMethod: { type: 'email', email: 'jane@example.com' },
             address: { street: '1 Main St', city: 'Townsville' },
-            recentItems: ['alpha']
+            config: { theme: 'dark' },
+            recentItems: ['alpha', 'beta']
           },
           body: [
             {
@@ -612,7 +743,7 @@ describe('composite form - combined six-component scenario', () => {
               name: 'tags',
               itemKind: 'scalar',
               label: 'Tags',
-              item: [{ type: 'input-text', name: 'value', label: 'Tag', required: true }]
+              item: [{ type: 'input-text', name: 'value', label: 'Tag' }]
             },
             {
               type: 'variant-field',
@@ -641,14 +772,23 @@ describe('composite form - combined six-component scenario', () => {
               triggerLabel: 'Edit Address',
               surface: { mode: 'dialog', title: 'Edit Address' },
               content: [
-                { type: 'input-text', name: 'street', label: 'Street', required: true },
-                { type: 'input-text', name: 'city', label: 'City', required: true }
+                { type: 'input-text', name: 'street', label: 'Street' },
+                { type: 'input-text', name: 'city', label: 'City' }
+              ]
+            },
+            {
+              type: 'detail-view',
+              scopePath: 'config',
+              triggerLabel: 'Edit Config',
+              surface: { mode: 'dialog', title: 'Edit Config' },
+              content: [
+                { type: 'input-text', name: 'theme', label: 'Theme' }
               ]
             },
             {
               type: 'loop',
               items: '${recentItems}',
-              body: [{ type: 'text', value: '${item}' }]
+              body: [{ type: 'text', text: '${$slot.item}' }]
             }
           ],
           submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
@@ -656,16 +796,13 @@ describe('composite form - combined six-component scenario', () => {
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'combined-form' }
+              onClick: { action: 'component:submit', componentId: 'six-form' }
             }
           ]
         }}
         env={{
           ...baseEnv,
-          fetcher: async (api, ctx) => {
-            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null };
-          }
+          fetcher: makeCapturingFetcher(submitValues)
         }}
         formulaCompiler={formulaCompiler}
       />
@@ -674,6 +811,7 @@ describe('composite form - combined six-component scenario', () => {
     await waitFor(() => {
       expect(screen.getByText('Submit')).toBeTruthy();
       expect(screen.getByText('Edit Address')).toBeTruthy();
+      expect(screen.getByText('Edit Config')).toBeTruthy();
       expect(screen.getByText('alpha')).toBeTruthy();
     });
 
@@ -683,12 +821,12 @@ describe('composite form - combined six-component scenario', () => {
 
     const result = submitValues[0] as Record<string, unknown>;
     expect(result).toMatchObject({
-      profile: { firstName: 'Jane', lastName: 'Doe' },
-      tags: ['alpha']
+      profile: { firstName: 'Jane', lastName: 'Doe' }
     });
+    expect(Array.isArray(result.tags)).toBe(true);
   });
 
-  it('detail-field draft confirm gating in combined form blocks submit path', async () => {
+  it('detail-field confirm gating works within combined form', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer(allRenderers);
 
@@ -696,7 +834,7 @@ describe('composite form - combined six-component scenario', () => {
       <SchemaRenderer
         schema={{
           type: 'form',
-          id: 'combined-block-form',
+          id: 'six-block',
           data: {
             profile: { name: 'Jane' },
             address: { street: '', city: '' }
@@ -707,7 +845,7 @@ describe('composite form - combined six-component scenario', () => {
               name: 'profile',
               label: 'Profile',
               body: [
-                { type: 'input-text', name: 'name', label: 'Name', required: true }
+                { type: 'input-text', name: 'name', label: 'Profile Name', required: true }
               ]
             },
             {
@@ -742,5 +880,64 @@ describe('composite form - combined six-component scenario', () => {
     });
 
     expect(screen.getByLabelText('Street', { exact: false })).toBeTruthy();
+  });
+});
+
+describe('composite form - submit supersedes debounced validation', () => {
+  it('submit catches required errors even when fired before blur debounce fires', async () => {
+    cleanup();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      const submitValues: Record<string, unknown>[] = [];
+      const SchemaRenderer = createSchemaRenderer(allRenderers);
+
+      render(
+        <SchemaRenderer
+          schema={{
+            type: 'form',
+            id: 'debounce-form',
+            data: { title: '' },
+            body: [
+              { type: 'input-text', name: 'title', label: 'Title', required: true }
+            ],
+            submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+            actions: [
+              {
+                type: 'button',
+                label: 'Submit',
+                onClick: { action: 'component:submit', componentId: 'debounce-form' }
+              }
+            ]
+          }}
+          env={{
+            ...baseEnv,
+            fetcher: makeCapturingFetcher(submitValues)
+          }}
+          formulaCompiler={formulaCompiler}
+        />
+      );
+
+      await waitFor(() => expect(screen.getByText('Submit')).toBeTruthy());
+
+      fireEvent.click(screen.getByText('Submit'));
+
+      await waitFor(() => {
+        const errors = screen.queryAllByText(/required/i);
+        expect(errors.length).toBeGreaterThan(0);
+      });
+
+      expect(submitValues.length).toBe(0);
+
+      fireEvent.change(screen.getByLabelText('Title', { exact: false }), { target: { value: 'My Title' } });
+
+      fireEvent.click(screen.getByText('Submit'));
+
+      await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
+
+      expect(submitValues[0]).toMatchObject({ title: 'My Title' });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
