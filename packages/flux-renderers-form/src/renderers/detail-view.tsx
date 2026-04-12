@@ -1,6 +1,5 @@
 import React from 'react';
 import type {
-  BaseSchema,
   FormRuntime,
   RendererComponentProps,
   RendererDefinition

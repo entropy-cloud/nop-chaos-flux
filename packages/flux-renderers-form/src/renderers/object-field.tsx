@@ -348,7 +348,7 @@ export const objectFieldRendererDefinition: RendererDefinition = {
     getFieldPath(schema: BaseSchema) {
       return typeof schema.name === 'string' ? schema.name : undefined;
     },
-    collectRules(_schema: BaseSchema) {
+    collectRules() {
       return [];
     },
     getChildFieldPathPrefix(schema: BaseSchema) {

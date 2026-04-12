@@ -6,17 +6,13 @@ import type {
   FormStoreState,
   RendererComponentProps,
   RendererDefinition,
-  RuntimeFieldRegistration,
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import {
   useCurrentForm,
-  useCurrentFormModelGeneration,
   useCurrentFormState,
   useRenderScope,
-  useRendererRuntime,
   useScopeSelector
 } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
@@ -24,7 +20,6 @@ import { Button } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas';
 import {
   formLabelFieldRule,
-  readFieldValue,
   useFieldPresentation
 } from '../field-utils';
 import { FieldHint, FieldLabel } from './shared';
@@ -104,8 +99,7 @@ function createItemScope(
   parentScope: ScopeRef,
   arrayPath: string,
   index: number,
-  itemKind: 'scalar' | 'object',
-  runtime: ReturnType<typeof useRendererRuntime>
+  itemKind: 'scalar' | 'object'
 ): ScopeRef {
   const itemPrefix = `${arrayPath}.${index}`;
 
@@ -237,15 +231,14 @@ function ArrayItem(props: {
   parentScope: ScopeRef;
   parentForm: FormRuntime | undefined;
   removable: boolean;
-  runtime: ReturnType<typeof useRendererRuntime>;
   onRemove: (index: number) => void;
   renderItem: () => React.ReactNode;
 }) {
-  const { index, arrayPath, itemKind, parentScope, parentForm, removable, runtime, onRemove, renderItem } = props;
+  const { index, arrayPath, itemKind, parentScope, parentForm, removable, onRemove, renderItem } = props;
 
   const itemScope = React.useMemo(
-    () => createItemScope(parentScope, arrayPath, index, itemKind, runtime),
-    [parentScope, arrayPath, index, itemKind, runtime]
+    () => createItemScope(parentScope, arrayPath, index, itemKind),
+    [parentScope, arrayPath, index, itemKind]
   );
 
   const itemForm = React.useMemo(
@@ -278,14 +271,12 @@ function ArrayItem(props: {
 
 export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchema>) {
   const parentScope = useRenderScope();
-  const runtime = useRendererRuntime();
   const parentForm = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
   const itemKind = (props.props.itemKind ?? props.schema.itemKind ?? 'scalar') as 'scalar' | 'object';
   const addable = props.props.addable !== false;
   const removable = props.props.removable !== false;
   const readOnly = Boolean(props.props.readOnly ?? props.schema.readOnly);
-  const modelGeneration = useCurrentFormModelGeneration();
 
   const presentation = useFieldPresentation(name, parentForm, {
     disabled: props.meta.disabled,
@@ -312,8 +303,6 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   );
 
   const items = (parentForm ? formValue : scopeValue) ?? [];
-
-  const itemTemplate = props.regions.item?.templateNode;
 
   function handleAdd() {
     if (parentForm) {
@@ -348,7 +337,6 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
             parentScope={parentScope}
             parentForm={parentForm}
             removable={removable && !readOnly && !presentation.effectiveDisabled}
-            runtime={runtime}
             onRemove={handleRemove}
             renderItem={() => props.regions.item?.render({ bindings: { index, value: _item } }) ?? null}
           />
@@ -383,7 +371,7 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
     getFieldPath(schema: BaseSchema) {
       return typeof schema.name === 'string' ? schema.name : undefined;
     },
-    collectRules(_schema: BaseSchema) {
+    collectRules() {
       return [];
     }
   }

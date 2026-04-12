@@ -200,7 +200,7 @@ export const variantFieldRendererDefinition: RendererDefinition = {
     getFieldPath(schema: BaseSchema) {
       return typeof schema.name === 'string' ? schema.name : undefined;
     },
-    collectRules(_schema: BaseSchema) {
+    collectRules() {
       return [];
     }
   }
