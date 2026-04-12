@@ -2,147 +2,124 @@
 
 ## Purpose
 
-`docs/architecture/` 已经不再只是少量核心文档的平铺目录。
+`docs/architecture/` is the curated home for Flux's current final-state architecture baseline.
 
-本索引用于给当前 active architecture docs 提供逻辑分组导航，同时为未来是否进行目录级重组提供稳定过渡层。
+This subtree only carries:
 
-## Current Position
+- governing principles that explain the stable direction of the architecture
+- normative architecture that defines current contracts and precedence
+- platform-extension architecture for complex editable hosts and workbench-style integrations
+- focused subsystem documents that refine one bounded area without changing top-level precedence
 
-当前目录下的平铺文档数量已经偏多，但不建议立刻做一次性大搬家。
+This subtree does not carry execution history, migration diaries, rejected alternatives, or long historical comparisons. Put those in `docs/analysis/`, `docs/plans/`, `docs/logs/`, or `docs/discussions/`.
 
-原因：
+Architecture docs must still explain why the current design exists, what constraints it preserves, and what nearby misreadings it rejects. The rule is not "conclusion only". The rule is "current-design rationale only".
 
-- 现有交叉引用非常多
-- `docs/index.md`、`AGENTS.md`、组件文档、计划文档都大量直接引用了现有路径
-- 立即重排目录会带来大量路径级噪音，收益未必高于成本
+## Hierarchy
 
-因此当前推荐策略是：
+### 1. Governing Principles
 
-1. 先建立**逻辑分组索引**
-2. 继续允许少量新文档进入平铺层，但优先判断是否应归入已有子目录
-3. 等某一文档族稳定成型后，再做**渐进迁移**
-
-## Logical Groups
-
-### 1. Core Model
-
-- `frontend-programming-model.md`
-- `flux-core.md`
 - `flux-design-principles.md`
-- `flux-dsl-vm-extensibility.md`
-- `frontend-baseline.md`
-- `flux-runtime-module-boundaries.md`
 
-### 2. Action And Execution
+Role:
 
+- explains the architectural direction and stable design philosophy
+- clarifies what Flux is trying to preserve across narrower subsystem rules
+- does not override normative contracts by itself
+
+### 2. Normative Architecture
+
+Start here for contract precedence and primitive/core-boundary rules.
+
+- `frontend-programming-model.md` - top-level normative precedence for primitive identity, macro layering, and core execution boundaries
+- `flux-core.md` - current codebase-wide architecture baseline and high-level runtime composition
+- `renderer-runtime.md` - renderer/runtime/React integration contract; local precedence for renderer behavior
+- `flux-runtime-module-boundaries.md` - package ownership and runtime placement rules
 - `action-algebra-formal-spec.md`
-- `action-graph-authoring.md`
-- `action-interaction-state.md`
 - `action-scope-and-imports.md`
 - `api-data-source.md`
 - `form-validation.md`
 - `field-binding-and-renderer-contract.md`
-- `value-adaptation-and-detail-field.md`
-- `variant-field.md`
-- `object-field.md`
-- `array-field.md`
-
-### 3. Scope, Identity, And Rendering
-
-- `renderer-runtime.md`
-- `scoped-render-slots.md`
+- `field-metadata-slot-modeling.md`
 - `scope-ownership-and-isolation.md`
 - `template-instantiation-and-node-identity.md`
-- `component-resolution.md`
-- `dependency-tracking.md`
-- `table-row-identity-and-scope-performance.md`
+- other active top-level subsystem docs that define current live contracts
 
-### 4. UI Surface And Styling
+Precedence model:
 
-- `styling-system.md`
-- `renderer-markers-and-selectors.md`
-- `theme-compatibility.md`
-- `surface-owner.md`
-- `field-frame.md`
-- `field-metadata-slot-modeling.md`
+- `frontend-programming-model.md` owns top-level primitive and core-boundary precedence
+- other normative docs keep local precedence inside their own subject area
+- `flux-design-principles.md` guides direction and interpretation, but does not replace the normative contract chain
 
-### 5. Host And Tooling
+### 3. Platform Extension Architecture
+
+These docs are core architecture, not peripheral domain appendices.
 
 - `complex-control-host-protocol.md`
-- `debugger-runtime.md`
-- `playground-experience.md`
-- `security-design-requirements.md`
-- `performance-design-requirements.md`
-- `schema-file-validator.md`
-
-### 6. Specialized Domains
-
+- `flux-dsl-vm-extensibility.md`
 - `flow-designer/`
 - `report-designer/`
-- `condition-builder.md`
-- `code-editor.md`
 
-## Recommended Grouping Strategy
+They belong here because they define how Flux hosts complex editable domains, workbench shells, bridge/snapshot boundaries, namespace actions, and reusable host-platform abstractions.
 
-如果未来决定做目录级重组，推荐只按稳定文档族迁移，不做一次性全量重排。
+### 4. Focused Subsystem Docs
 
-优先候选：
+These docs refine one active topic without owning top-level primitive precedence.
 
-### A. `action/`
+- rendering and slots: `scoped-render-slots.md`, `component-resolution.md`
+- value and field families: `value-adaptation-and-detail-field.md`, `variant-field.md`, `object-field.md`, `array-field.md`
+- UI and styling: `styling-system.md`, `renderer-markers-and-selectors.md`, `theme-compatibility.md`, `surface-owner.md`, `field-frame.md`
+- validation/performance/security/tooling specialties: `dependency-tracking.md`, `table-row-identity-and-scope-performance.md`, `schema-file-validator.md`, `debugger-runtime.md`, `playground-experience.md`, `security-design-requirements.md`, `performance-design-requirements.md`
 
-- `action-algebra-formal-spec.md`
-- `action-graph-authoring.md`
-- `action-interaction-state.md`
-- `action-scope-and-imports.md`
+Some focused docs are stable long-term architecture. Others are candidates for later move or tightening. Use `docs/references/architecture-doc-status-matrix.md` for the current role and placement decision.
 
-### B. `runtime/`
+## Reading Order
 
-- `renderer-runtime.md`
-- `scoped-render-slots.md`
-- `scope-ownership-and-isolation.md`
-- `template-instantiation-and-node-identity.md`
-- `component-resolution.md`
-- `dependency-tracking.md`
-- `table-row-identity-and-scope-performance.md`
+### Core Orientation Path
 
-### C. `ui/`
+1. `flux-design-principles.md`
+2. `frontend-programming-model.md`
+3. `flux-core.md`
+4. `renderer-runtime.md`
 
-- `styling-system.md`
-- `renderer-markers-and-selectors.md`
-- `theme-compatibility.md`
-- `surface-owner.md`
-- `field-frame.md`
-- `field-metadata-slot-modeling.md`
+### Platform Extension Path
 
-### D. Keep As Top-Level Anchors
+1. `flux-design-principles.md`
+2. `frontend-programming-model.md`
+3. `complex-control-host-protocol.md`
+4. `flow-designer/README.md` or `report-designer/README.md`
+5. the relevant family design doc under that subdirectory
 
-以下文档即使未来重组，也值得谨慎处理，必要时可继续保留顶层：
+### Specialized Subsystem Path
 
-- `frontend-programming-model.md`
-- `flux-core.md`
-- `flux-design-principles.md`
+1. `flux-design-principles.md` when the change may affect direction or architectural framing
+2. the narrow normative owner doc for the topic
+3. related focused subsystem docs
 
-因为它们本身就是最常用的入口锚点。
+## Role Legend
+
+- Governing principles: direction-setting baseline; explains why the architecture is shaped this way
+- Normative architecture: active contract and precedence owner
+- Platform extension architecture: active architecture for complex host/editor integration above the core primitive layer
+- Focused subsystem doc: bounded rules inside one topic; may carry local precedence but not top-level primitive precedence
+- Redirect/migration candidate: still readable here today, but owner placement is tracked in the status matrix
 
 ## Migration Rule
 
-如果未来开始目录级迁移，推荐顺序：
+Use `docs/references/architecture-doc-status-matrix.md` before moving or rewriting architecture docs.
 
-1. 先增加本索引与 `docs/index.md` 路由
-2. 先迁移一个稳定文档族
-3. 批量更新 cross-links
-4. 再迁移下一族
+Rules:
 
-不要：
-
-- 一次性移动所有 architecture 文档
-- 在没有逻辑分组入口的情况下直接重命名大量路径
+1. Freeze role and owner decisions before physical path migration.
+2. Keep `docs/index.md` as the global docs router and keep this file as the architecture hierarchy index.
+3. Do not move a document only because the flat directory feels crowded.
+4. Move a document only when its owner directory is clear and the successor path is stable.
+5. If a document is still active but misplaced, add redirect and owner notes first; do not force an immediate move.
 
 ## Current Recommendation
 
-当前结论：
-
-- `docs/architecture/` 的平铺层**确实开始拥挤**
-- 但现在更适合先通过 `README.md` 做逻辑分组，而不是立刻做物理目录重组
-
-等 action/runtime/ui 这些族的边界再稳定一点后，再分批迁移会更安全。
+- Treat `flux-design-principles.md` as the governing-principles anchor.
+- Treat `frontend-programming-model.md` as the top normative precedence document.
+- Treat `flow-designer` / `report-designer` / `complex-control-host-protocol.md` as core platform-extension architecture.
+- Treat `condition-builder.md` and `code-editor.md` as placement-boundary docs whose long-term owner may be outside `docs/architecture/`; check the status matrix before expanding them.
+- Route historical evolution, migration narratives, and option-comparison material to `docs/analysis/`, `docs/plans/`, `docs/logs/`, or `docs/discussions/` instead of growing this subtree sideways.

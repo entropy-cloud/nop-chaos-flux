@@ -4,8 +4,10 @@
 
 This document records the current standardization baseline for Flux schema authoring.
 
-Normative source-of-truth remains in:
+Governing and normative source-of-truth remains in:
 
+- docs/architecture/flux-design-principles.md (governing principles)
+- docs/architecture/frontend-programming-model.md
 - docs/architecture/flux-core.md
 - docs/architecture/styling-system.md
 - docs/architecture/renderer-runtime.md
@@ -40,7 +42,8 @@ It should not preserve deprecated or transitional rule sets.
 ### 4. Documentation conventions
 
 - Architecture and reference docs describe current behavior in present tense.
-- Historical context belongs in docs/bugs and docs/plans.
+- Architecture docs keep final-state/current-baseline design plus current-design rationale.
+- Historical context, migration history, and execution notes belong in docs/analysis, docs/plans, docs/logs, and docs/bugs.
 - If conventions change, update architecture/references first, then this summary.
 
 ## Change Policy

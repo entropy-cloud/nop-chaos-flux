@@ -2,9 +2,11 @@
 
 ## 定位
 
-本文档从 `docs/architecture/frontend-programming-model.md` 中提炼 Flux 的核心设计原则。
+本文档是 Flux 架构的纲领层文档，用于说明当前架构方向、核心设计意图和稳定原则。
 
-规范性定义、原语合约和边界规则仍在编程模型文档中；本文档解释其背后的**设计意图**。
+规范性定义、原语合约和边界规则仍在 `docs/architecture/frontend-programming-model.md` 中；若两者在 primitive identity、core boundary 或 derived-vs-core 判断上冲突，以编程模型文档为准。
+
+本文档的职责不是重复规范条文，而是解释这些规范背后的**当前设计意图**、约束和边界，帮助读者理解为什么 Flux 保持现在这套分层，而不是扩成别的相邻模型。
 
 
 ---
@@ -202,10 +204,16 @@ Flux 核心维持一个小的、稳定的抽象层。它的目标不是吞掉所
 
 ---
 
+## 规范关系
+
+- 本文档是 governing principles，不是普通派生参考。
+- `docs/architecture/frontend-programming-model.md` 保持 top-level normative precedence。
+- 其他 architecture 文档可在各自专题内拥有 local precedence，但都应与本文档的方向保持一致。
+
 ## 源文档
 
 所有规范性定义、原语合约、边界规则和硬性不变量位于：
 
 - `docs/architecture/frontend-programming-model.md`
 
-本文档是派生参考，不是规范性覆盖。
+本文档解释方向，不覆盖规范优先级。

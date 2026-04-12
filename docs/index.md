@@ -16,7 +16,8 @@ Choose the smallest document that matches the task.
 
 | If you need to... | Read this first | Then read |
 | --- | --- | --- |
-| Understand the current architecture baseline | `docs/architecture/flux-core.md` | `docs/architecture/renderer-runtime.md` |
+| Understand the architecture hierarchy, reading order, or which architecture docs own precedence | `docs/architecture/README.md` | `docs/references/architecture-doc-status-matrix.md` |
+| Understand the current architecture baseline | `docs/architecture/flux-design-principles.md` | `docs/architecture/frontend-programming-model.md`, `docs/architecture/flux-core.md` |
 | Understand Flux's top-level frontend programming model, primitive categories, macro layering, and how the primitives compose into one execution model | `docs/architecture/frontend-programming-model.md` | `docs/architecture/flux-core.md` |
 | Understand action control flow such as `when`, `then`, `onError`, `parallel`, result classes, and chained result context | `docs/architecture/action-algebra-formal-spec.md` | `docs/architecture/action-scope-and-imports.md` |
 | è®¾è®¡ action å¯è§†åŒ–ç¼–è¾‘ã€optional stepã€graph loweringï¼Œæˆ–åˆ¤æ–­æ˜¯å¦è¦æŠŠ `parallel` æ”¹æˆ `steps` | `docs/architecture/action-graph-authoring.md` | `docs/architecture/action-algebra-formal-spec.md` |
@@ -30,7 +31,7 @@ Choose the smallest document that matches the task.
 | è®¾è®¡ scope ç»§æ‰¿ã€`data` åˆå§‹åŒ–ã€`isolate`ã€row scopeã€æˆ–åˆ¤æ–­æ˜¯å¦éœ€è¦ `$parentScope` | `docs/architecture/scope-ownership-and-isolation.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/table-row-identity-and-scope-performance.md` |
 | è®¾è®¡ dialog / drawer çš„ `data`ã€open-stateã€surface status ä¸Ž scope è¾¹ç•Œ | `docs/architecture/surface-owner.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/components/dialog/design.md` |
 | Design API requests, scope injection (includeScope), params, DataSource polling, unified formula/api source semantics, or non-rendering reaction/watch nodes | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` |
-| äº†è§£åŸºäºŽ SchemaRenderer çš„å›¾è®¾è®¡å™¨è§„åˆ’æž¶æž„ï¼Œæˆ–åˆ¤æ–­ graph designer ä¸Ž domain-specific codec / value editor çš„è¾¹ç•Œ | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/config-schema.md`, `docs/architecture/action-scope-and-imports.md` |
+| äº†è§£åŸºäºŽ SchemaRenderer çš„å›¾è®¾è®¡å™¨è§„åˆ’æž¶æž„ï¼Œæˆ–åˆ¤æ–­ graph designer ä¸Ž domain-specific codec / value editor çš„è¾¹ç•Œ | `docs/architecture/flow-designer/README.md` | `docs/architecture/flow-designer/design.md`, `docs/architecture/flow-designer/config-schema.md` |
 | çœ‹æ¸… Flow Designer å„å±‚åä½œç»†èŠ‚ã€å‘½åç©ºé—´åŠ¨ä½œæµè½¬ã€ç”»å¸ƒ/Inspector è°ƒç”¨é“¾ | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
 | æ ¸å¯¹ Flow Designer å½“å‰çœŸå®žçš„ snapshot å¥‘çº¦ã€host scope è½åœ°çŠ¶æ€ã€å“ªäº›å­—æ®µå·²æŽ¥çº¿ | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |
 | Understand Flow Designer React Flow integration, callback translation, or canvas failure semantics | `docs/architecture/flow-designer/canvas-adapters.md` | `docs/architecture/flow-designer/api.md` |
@@ -41,7 +42,7 @@ Choose the smallest document that matches the task.
 | Design semantic props vs Tailwind className, custom style presets, or shadcn/ui integration | `docs/architecture/styling-system.md` | `docs/architecture/renderer-markers-and-selectors.md` |
 | Plan shadcn/ui migration from nop-chaos-next-master | `docs/plans/18-shadcn-ui-migration-plan.md` | `docs/architecture/styling-system.md` |
 | Plan dependency-tracking runtime convergence under the root-binding model | `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` | `docs/architecture/dependency-tracking.md` |
-| äº†è§£åŸºäºŽ SchemaRenderer çš„æŠ¥è¡¨è®¾è®¡å™¨ä¸Ž spreadsheet editor è§„åˆ’æž¶æž„ | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` |
+| äº†è§£åŸºäºŽ SchemaRenderer çš„æŠ¥è¡¨è®¾è®¡å™¨ä¸Ž spreadsheet editor è§„åˆ’æž¶æž„ | `docs/architecture/report-designer/README.md` | `docs/architecture/report-designer/design.md`, `docs/architecture/report-designer/contracts.md` |
 | äº†è§£é€šç”¨ report designer å¦‚ä½•é€‚é… nop-report | `docs/architecture/report-designer/nop-report-profile.md` | `docs/analysis/2026-03-21-excel-report-designer-research.md` |
 | äº†è§£ report designer ä¸Ž nop-report çš„å¯¼å…¥å¯¼å‡º/round-trip è®¾è®¡ | `docs/architecture/report-designer/codec-design.md` | `docs/architecture/report-designer/nop-report-profile.md` |
 | è®¾è®¡ report designer çš„å³ä¾§å±žæ€§é¢æ¿ä¸Ž expression/reference å­—æ®µç¼–è¾‘è¾¹ç•Œ | `docs/architecture/report-designer/inspector-design.md` | `docs/architecture/report-designer/contracts.md` |
@@ -73,7 +74,7 @@ Choose the smallest document that matches the task.
 | Check AMIS JSON conventions (expression, action, variant/level, icon) | `docs/references/flux-json-conventions.md` | `docs/architecture/flow-designer/config-schema.md` |
 | Look up AMIS component TypeScript type definitions | `docs/amis-types/` | specific component `.d.ts` file |
 | Check complex component design process (Flow Designer, Report Designer) | `docs/references/complex-component-design-process.md` | `docs/architecture/flow-designer/design.md` |
-| Design Flux as the final DSL runtime, decide loader-vs-runtime extensibility boundaries, or model complex controls/design tools as special schema types | `docs/architecture/flux-dsl-vm-extensibility.md` | `docs/articles/flux-design-introduction.md` |
+| Design Flux as the final DSL runtime, decide loader-vs-runtime extensibility boundaries, or model complex controls/design tools as special schema types | `docs/architecture/flux-dsl-vm-extensibility.md` | `docs/architecture/complex-control-host-protocol.md`, `docs/articles/flux-design-introduction.md` |
 | Plan or review a refactoring, or check low-code-specific design guidelines | `docs/references/refactoring-guidelines.md` | `docs/plans/23-architecture-audit-fix-plan.md` |
 | Review current renderer and runtime contracts by name | `docs/references/renderer-interfaces.md` | `packages/flux-core/src/index.ts` |
 | Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
@@ -85,8 +86,9 @@ Choose the smallest document that matches the task.
 
 Architecture intent lives primarily in:
 
-- `docs/architecture/README.md` (grouped architecture entry)
+- `docs/architecture/README.md` (architecture hierarchy and reading order)
 
+- `docs/architecture/flux-design-principles.md`
 - `docs/architecture/flux-core.md`
 - `docs/architecture/schema-file-validator.md`
 - `docs/architecture/frontend-programming-model.md`
@@ -112,9 +114,11 @@ Architecture intent lives primarily in:
 - `docs/architecture/security-design-requirements.md`
 - `docs/architecture/performance-design-requirements.md`
 - `docs/architecture/flux-dsl-vm-extensibility.md`
+- `docs/architecture/complex-control-host-protocol.md`
 - `docs/architecture/flow-designer/design.md`
 - `docs/architecture/flow-designer/canvas-adapters.md`
 - `docs/architecture/report-designer/design.md`
+- `docs/references/architecture-doc-status-matrix.md`
 
 Code-level contracts live primarily in:
 
@@ -128,8 +132,8 @@ Example behavior is best cross-checked with:
 
 ## Directory Roles
 
-- `docs/architecture/` - current normative design and package ownership notes
-- start architecture navigation from `docs/architecture/README.md` when the flat directory feels too dense
+- `docs/architecture/` - governing principles, normative architecture, platform-extension architecture, and focused subsystem docs for the current baseline
+- start architecture navigation from `docs/architecture/README.md`; use `docs/references/architecture-doc-status-matrix.md` for role/owner/placement decisions
 - `docs/components/` - per-component design inputs; each component keeps its own directory with schema, capability, and implementation notes
 - `docs/references/` - stable lookup material such as terminology, interface maps, maintenance guidance, and source-specific reference notes; useful, but secondary to architecture docs
 - `docs/amis-types/` - AMIS component TypeScript type definitions extracted from amis@6.13.0, useful for understanding upstream AMIS schema structure

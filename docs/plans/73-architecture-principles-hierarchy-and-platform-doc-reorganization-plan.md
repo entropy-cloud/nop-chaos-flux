@@ -1,234 +1,291 @@
 # 73 Architecture Principles Hierarchy And Platform Doc Reorganization Plan
 
-> Plan Status: planned
+> Plan Status: partially completed
 > Last Reviewed: 2026-04-12
-> Source: `docs/index.md`, `docs/architecture/README.md`, `docs/architecture/flux-design-principles.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/flux-dsl-vm-extensibility.md`, `docs/architecture/flow-designer/design.md`, `docs/architecture/report-designer/design.md`, `docs/components/index.md`, `docs/standardization.md`, `docs/analysis/2026-04-01-docs-design-review-2026-03-29.md`, plus live audit of `docs/architecture/`, `docs/components/`, and root-level docs routing files
+> Source: `docs/index.md`, `docs/architecture/README.md`, `docs/references/architecture-doc-status-matrix.md`, `docs/architecture/flux-design-principles.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/flux-dsl-vm-extensibility.md`, `docs/architecture/flow-designer/`, `docs/architecture/report-designer/`, `docs/components/`, `docs/standardization.md`, plus live audit of current architecture/components/routing docs
 > Related: `docs/plans/57-architecture-docs-grouping-and-gradual-migration-plan.md`, `docs/plans/10-docs-accuracy-and-structure-correction-plan.md`
 
 ## Purpose
 
-这份计划用于收口 `docs/architecture/` 当前仍未解决的一条结果面：
+本计划现在不再只是“建立 hierarchy baseline 和状态矩阵”。
 
-- 为 architecture 文档建立可长期维护的 hierarchy baseline 和 status matrix，并据此重写索引与后续迁移归属。
+它被提升为 `docs/architecture/` 文档体系的 owner plan，用于完成一次**彻底的文档重构**，把当前已经收口出来的 hierarchy、owner decision 和 platform-extension 定位，继续推进为一个可长期稳定维护的物理目录结构、概念边界和 owner baseline。
 
-本计划额外冻结一个写作原则：`docs/architecture/` 只承载面向最终版的核心架构设计与当前 authoritative baseline，不承载历史演进叙事、迁移过程记录、争议对比、阶段性取舍日志或执行历史；这类内容应分别留在 `docs/discussions/`、`docs/analysis/`、`docs/plans/`、`docs/logs/` 等目录，避免 architecture 文档混入会让 AI 或读者分心的历史上下文。
+目标不是做一次 cosmetically tidy 的目录整理，而是建立未来 10 年仍然稳定的概念基础定义，使读者和 AI 在进入仓库时可以清楚区分：
 
-同时，architecture 文档必须保留对“当前为什么这样设计”的清晰解释，但这种解释应服务于最终版设计本身：说明当前选择要防止什么误解、满足什么约束、与相邻概念如何区分，而不是展开完整历史沿革或旧方案演化过程。
+- 哪些文档是纲领层
+- 哪些文档是总规范层 / 高优先级 normative owner
+- 哪些文档是 Flux 平台扩展架构
+- 哪些文档是专题规则、组件设计、引用资料、历史材料
+- 哪些路径只是 redirect/兼容过渡层，哪些路径才是长期 owner location
 
-具体表现为三个紧密相关的问题：
+本计划现在明确承担以下结果面：
 
-- 文档层级不清，尚未明确区分“纲领层 / 总规范层 / 平台扩展架构层 / 专题规范层”。
-- `flow-designer` / `report-designer` 的文档地位被目录结构弱化，尚未被明确呈现为 Flux 承载复杂领域编辑器、工作台和 host-platform abstraction 的核心架构部分。
-- `docs/architecture/` 中仍混有组件级设计、派生解释、活跃规范和历史/阶段性设计，导致读者难以判断哪些文档是最高优先级、哪些文档应迁往 `docs/components/`、哪些文档需要显式状态标记。
-
-本计划的目标不是立刻做一次性全量路径迁移，也不是在本计划内完成所有 misplaced 文档的物理搬家；本计划只负责建立 hierarchy baseline、逐文档状态矩阵、核心索引改写，以及后续迁移 owner 归属。
+- 建立长期稳定的 architecture 物理目录结构
+- 把 misplaced 文档真正迁移到正确 family，而不是只做矩阵标记
+- 合并重复 owner 文档，消除双份 baseline
+- 更新全仓关键 cross-links，使新的结构可以直接长期使用
+- 为必要的 redirect/兼容层提供明确策略，但不让旧路径继续作为权威 owner 漫游存在
 
 ## Current Baseline
 
-- Plan 57 已完成；它只解决了“先提供 grouped index、避免一次性大搬家”，并未解决纲领层级、platform-extension 核心地位、逐文档状态矩阵和迁移 owner 归属问题。
-- `docs/index.md` 已承担整个 `docs/` 树的任务路由，但 `docs/architecture/README.md` 目前仍更像 grouped navigation，而不是 architecture 子树内部的 hierarchy/index。
-- `docs/architecture/flux-design-principles.md` 当前内容实际承担最高层设计原则/纲领说明，但文档自述仍将自己表述为从 `frontend-programming-model.md` 提炼出的派生参考，这与“核心纲领”定位不一致；同时，`frontend-programming-model.md` 目前仍是 live normative precedence 文档，这两个层级关系尚未被清楚表达。
-- `docs/architecture/flow-designer/` 与 `docs/architecture/report-designer/` 已形成稳定文档族，但当前目录和索引表达仍容易让它们看起来像“specialized domains”，而不是 Flux 平台扩展架构的核心组成。
-- `docs/architecture/condition-builder.md` 与 `docs/components/condition-builder/design.md` 已出现主题重叠；`docs/architecture/code-editor.md` 也更接近组件/复合控件设计，而不是通用架构层规则。
-- `docs/architecture/complex-control-host-protocol.md`、`flow-designer/`、`report-designer/` 已经描述了跨复杂领域编辑器的 bridge、snapshot、host scope、action namespace、shell/wiring 抽象，但这套“平台扩展架构”尚未在 architecture index 中被明确前置。
-- 现有 architecture 文档普遍缺少统一的 role/status/depends-on 标识，导致“governing principles / normative / platform architecture / reference / historical” 边界主要依赖读者自行判断。
-- 多份 architecture 文档仍混有历史原因、阶段性迁移说明、旧方案对比或 plan-derived 叙事，这些内容更适合放在 `analysis` / `plans` / `logs`，不应继续占用 architecture 主文档注意力。
-- 另一侧也存在相反风险：若只保留结论、不写当前选择的设计理由，AI 或新读者容易把架构规则误读成任意约定，从而在相邻方案之间产生幻觉式补全。
+- 早先版本的 Plan 73 已经完成了第一阶段收口：
+  - 重写了 `docs/architecture/README.md`，建立四层 hierarchy
+  - 建立了 `docs/references/architecture-doc-status-matrix.md`
+  - 明确了 `flux-design-principles.md` 与 `frontend-programming-model.md` 的层级关系
+  - 明确了 `flow-designer` / `report-designer` / `complex-control-host-protocol.md` 的 platform-extension 地位
+- 上述工作现在应被视为**当前 baseline**，而不是这份 owner plan 的终点。
+- 当前 repo 仍然存在物理结构与 owner 结构不一致的问题：
+  - `docs/architecture/condition-builder.md` 与 `docs/components/condition-builder/design.md` 双份并存
+  - `docs/architecture/code-editor.md` 仍留在 architecture 顶层，但语义上更接近组件/复合控件设计
+  - 大量 top-level `docs/architecture/*.md` 仍然是平铺结构，尚未按稳定概念树重组
+  - `docs/components/` 下已经存在 `designer-page` / `report-designer-page` / `spreadsheet-page` 等组件设计文档，与 architecture family 的边界需要通过物理路径和 cross-link 一并定型
+- 当前 `docs/references/architecture-doc-status-matrix.md` 已给出 role/owner 决策，但大部分决策还没有 physical move、merge、redirect、cross-link rewrite 落地。
+- 如果现在停止，只会得到“逻辑上清楚、物理上仍然混杂”的中间状态，这不足以成为未来 10 年稳定的概念基础。
 
 ## Goals
 
-- 明确建立 `docs/architecture/` 的分层基线：纲领/原则层、总规范层、平台扩展架构层、专题规范层。
-- 把 `flux-design-principles.md` 正式确认为 Flux 架构的核心纲领文档，并明确它指导整体架构方向，但不取代 `frontend-programming-model.md` 的 normative precedence。
-- 把 `flow-designer` / `report-designer` 与复杂控件 host 协议明确呈现为 Flux 核心平台扩展架构，而不是普通领域附录。
-- 逐文档核实 `docs/architecture/` 当前 active baseline、派生解释、组件设计、重复主题和可能的历史残留，并形成状态矩阵。
-- 为 `docs/architecture/README.md` 建立真正的 architecture index：说明重要性、阅读顺序、依赖关系、文档角色、迁移边界。
-- 在一个明确的、文件可见的状态矩阵中记录哪些文档应继续留在 `docs/architecture/`，哪些应迁移到 `docs/components/`、`docs/references/` 或其他目录，并为后续迁移建立 successor 归属。
-- 明确冻结 `docs/architecture/` 的内容约束：只写最终版核心架构设计与当前规范，不写历史变革、阶段性争论、执行过程和方案演进叙事。
-- 明确冻结 `docs/architecture/` 的解释约束：每篇核心文档都应说明当前设计选择的理由和边界，避免 AI/读者把规则误解为任意结论，但这些理由应围绕当前 final-state design 展开，而不是转成历史回顾。
+- 将 Plan 73 从“hierarchy/index/matrix 计划”升级为 architecture 文档体系彻底重组的 master plan。
+- 建立一个长期稳定的 architecture 物理目录结构，并把 active owner 文档放到与其概念层级一致的位置。
+- 完成 `docs/architecture/`、`docs/components/`、`docs/references/` 之间的 owner 收口，不再长期容忍双份 owner 或 misplaced baseline。
+- 对 `condition-builder.md`、`code-editor.md` 以及其他边界不清文档做真实迁移/合并，而不是仅停留在矩阵结论。
+- 让 `flow-designer` / `report-designer` 文档族在物理结构、family README、cross-links 和 routing 上都稳定呈现为 platform-extension architecture。
+- 对 architecture 文档按“纲领层 / 总规范层 / 平台扩展架构层 / 专题层”建立稳定的 reading path 与目录锚点。
+- 为旧路径提供必要但最小化的 redirect 策略，避免一次性断链，同时避免旧位置继续被误当作 active owner。
+- 完成关键 cross-link rewrite，使新结构成为仓库默认阅读路径，而不是附加说明层。
+- 继续冻结 writing rule：architecture 只写 final-state/current-baseline design + current-design rationale，不写历史执行叙事。
 
 ## Non-Goals
 
-- 不在本计划内一次性移动所有 `docs/architecture/` 文件。
-- 不为了目录整洁而立刻改写整个仓库的所有 cross-links。
-- 不重写每一篇 architecture 文档的全部技术内容；只修改收口 hierarchy、role、status 和导航所必需的内容。
-- 不把 `flow-designer` / `report-designer` 简化成“领域编辑器案例”；相反，本计划明确把它们作为 Flux 平台扩展架构的一部分来处理。
-- 不把 `flux-design-principles.md` 降级为普通 reference；本计划以“核心纲领”定位为前提。
-- 不在本计划内实际执行大规模 physical migration；若需要批量搬迁和 cross-link rewrite，应拆分为 successor plan。
-- 不把 architecture 文档变成历史评审或决策过程档案；此类信息应迁出到 `analysis/plans/logs/discussions`。
-- 不把“为什么这么设计”也一并删除；缺少 rationale 的 architecture 文档同样不合格，因为它会放大 AI 和读者的误读空间。
+- 不做非文档源码改动。
+- 不为了“看起来整齐”而拆出没有稳定概念价值的新目录。
+- 不重写每一篇 architecture 文档的全部技术内容；优先做 owner 收口、路径重组、重复合并、历史噪音清理和关键 cross-link rewrite。
+- 不为了保留兼容而让旧路径长期与新路径并存为双权威 owner。
+- 不把 platform-extension architecture 降级为普通组件文档或 specialized domain appendix。
+- 不把组件目录扩成第二套 architecture 树；组件目录仍只承载组件/renderer 设计 owner。
+- 不在本计划内对每个 family 做无限制风格润色；只做支撑长期结构稳定所必需的重写和迁移。
 
 ## Scope
 
 ### In Scope
 
 - `docs/architecture/README.md`
-- `docs/index.md` 中与 architecture 路由直接相关的条目
-- `docs/architecture/flux-design-principles.md`
-- `docs/architecture/frontend-programming-model.md`
-- `docs/architecture/flux-core.md`
-- `docs/architecture/flux-dsl-vm-extensibility.md`
-- `docs/architecture/complex-control-host-protocol.md`
-- `docs/architecture/flow-designer/README.md`
+- 全部顶层 `docs/architecture/*.md`
 - `docs/architecture/flow-designer/`
-- `docs/architecture/report-designer/README.md`
 - `docs/architecture/report-designer/`
-- `docs/architecture/condition-builder.md`
-- `docs/architecture/code-editor.md`
 - `docs/components/index.md`
-- `docs/components/condition-builder/design.md`
-- `docs/standardization.md`
+- 与 architecture owner 冲突或重复的组件设计文档
 - `docs/references/architecture-doc-status-matrix.md`
-- 其他被核定需要 role/status/placement 判定的顶层 `docs/architecture/*.md` 与 stable doc-family README entries
-- 新的 architecture 文档状态矩阵与渐进迁移说明
+- `docs/index.md`
+- `docs/standardization.md`
+- 与本次 physical migration 直接相关的全仓关键 cross-links
+- redirect notes / compatibility notes / migration breadcrumbs
 - `docs/logs/2026/04-12.md`
 
 ### Out Of Scope
 
 - 非文档源码改动
-- 一次性 physical move 全仓所有 architecture 文档
-- 全量修补仓库中所有历史 cross-links
-- 对 `flow-designer` / `report-designer` 内部所有专题文档进行全面内容重写
-- 逐一修改所有被矩阵标记为未来迁移候选的文档正文
+- 对所有历史日志、分析、讨论文档做全量 cross-link 修复
+- 对 platform-extension family 内每一篇专题文档做全面技术重写
+- 为了这次重组去发明新的概念层级，而不是收口已有概念
+
+## Target Structure
+
+目标不是机械地把所有文档各塞一个目录，而是建立稳定的长期路径语义。
+
+当前建议目标树：
+
+```text
+docs/architecture/
+  README.md                         # architecture hierarchy entry
+  principles/
+    flux-design-principles.md
+  normative/
+    frontend-programming-model.md
+    flux-core.md
+    flux-runtime-module-boundaries.md
+    renderer-runtime.md
+    action-algebra-formal-spec.md
+    action-scope-and-imports.md
+    api-data-source.md
+    form-validation.md
+    field-binding-and-renderer-contract.md
+    field-metadata-slot-modeling.md
+    scope-ownership-and-isolation.md
+    styling-system.md
+    template-instantiation-and-node-identity.md
+  platform/
+    complex-control-host-protocol.md
+    flux-dsl-vm-extensibility.md
+    flow-designer/
+    report-designer/
+  subsystems/
+    action-graph-authoring.md
+    action-interaction-state.md
+    array-field.md
+    component-resolution.md
+    debugger-runtime.md
+    dependency-tracking.md
+    field-frame.md
+    frontend-baseline.md
+    object-field.md
+    performance-design-requirements.md
+    playground-experience.md
+    renderer-markers-and-selectors.md
+    schema-file-validator.md
+    scoped-render-slots.md
+    security-design-requirements.md
+    surface-owner.md
+    table-row-identity-and-scope-performance.md
+    theme-compatibility.md
+    value-adaptation-and-detail-field.md
+    variant-field.md
+```
+
+组件 owner 方向：
+
+- `docs/architecture/condition-builder.md` -> 合并到 `docs/components/condition-builder/design.md`
+- `docs/architecture/code-editor.md` -> 新建或迁移到 `docs/components/code-editor/design.md`
+
+约束：
+
+- `flow-designer/` 与 `report-designer/` 保留为 architecture family，不迁入 `docs/components/`
+- `designer-page` / `report-designer-page` / `spreadsheet-page` 继续保留组件设计文档，但 architecture family 仍拥有平台扩展层规则
+- `docs/references/architecture-doc-status-matrix.md` 继续作为迁移与 owner 决策表，不替代 architecture 正文
 
 ## Execution Plan
 
-### Phase 1 - Freeze The Hierarchy Model
+### Phase 1 - Reopen Plan And Freeze The End-State Tree
 
 Status: planned
-Targets: `docs/architecture/README.md`, `docs/architecture/flux-design-principles.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/flux-core.md`
+Targets: `docs/plans/73-architecture-principles-hierarchy-and-platform-doc-reorganization-plan.md`, `docs/references/architecture-doc-status-matrix.md`
 
-- [ ] 冻结 architecture 顶层层级模型：`governing principles`、`normative architecture`、`platform extension architecture`、`focused subsystem docs`。
-- [ ] 明确 `flux-design-principles.md` 作为“核心纲领/原则层”文档的正式定位，并与 normative precedence 分离表达。
-- [ ] 明确 `frontend-programming-model.md`、`flux-core.md`、`renderer-runtime.md` 等总规范层文档与纲领层之间的依赖关系与职责边界。
-- [ ] 明确总规范层内部的 precedence 模型：`frontend-programming-model.md` 拥有 primitive/core-boundary 级 precedence，其他专题规范文档保留各自领域内的 local precedence。
-- [ ] 明确 `flow-designer` / `report-designer` / `complex-control-host-protocol.md` 归属于“platform extension architecture”，并解释其核心性来自“复杂领域编辑器抽象通用化”，而不是单纯领域功能。
-- [ ] 核对并收口 `flux-dsl-vm-extensibility.md` 与上述 platform-extension 定位之间是否存在冲突或过时表述。
-- [ ] 冻结 architecture 文档写作边界：architecture 只描述 final-state core design 与 current baseline，历史演进和执行过程统一转移到其他 docs families。
-- [ ] 冻结 architecture 文档解释边界：必须写清当前选择的 rationale、约束和边界，但不展开完整历史演进。
+- [ ] 将既有“已完成的 hierarchy/index 收口”重写为本计划的 current baseline，而不是 closure 终点。
+- [ ] 明确 physical reorganization 是 plan-owned work，而不是 successor debt。
+- [ ] 冻结长期目标目录树与 owner family 边界。
+- [ ] 在状态矩阵中补充 destination path / merge strategy / redirect strategy 字段或等价信息。
 
 Exit Criteria:
 
-- [ ] `docs/architecture/README.md` 明确写出四层 hierarchy，并在阅读顺序中单独列出 `flux-design-principles.md`。
-- [ ] `docs/architecture/README.md` 或相关文档明确写出：`flux-design-principles.md` 指导总体方向，但 `frontend-programming-model.md` 保持 normative precedence。
-- [ ] `docs/architecture/README.md` 或相关文档明确写出：normative precedence 既有顶层 primitive/core-boundary precedence，也有专题文档的 local precedence。
-- [ ] `docs/architecture/README.md` 不再把 `flow-designer` / `report-designer` 与组件级设计文档放在同一逻辑桶中。
-- [ ] `flux-dsl-vm-extensibility.md` 不再与新的 platform-extension hierarchy 公开冲突，或已在矩阵中被明确标记为需后续处理。
-- [ ] `docs/architecture/README.md` 明确写出 architecture 文档只关注 final-state design，而不是历史演进记录。
-- [ ] `docs/architecture/README.md` 明确写出 architecture 文档仍必须包含 current-design rationale，避免把规范写成无解释的结论列表。
+- [ ] 本计划不再把自己描述为已完成的旧版收口计划。
+- [ ] 目标目录树和 owner family 边界在文件中写清楚。
+- [ ] `condition-builder.md` 和 `code-editor.md` 的 destination strategy 从“以后再说”提升为当前 plan-owned step。
 
-### Phase 2 - Build The Document Status Matrix
+### Phase 2 - Restructure Core Architecture Paths
 
 Status: planned
-Targets: `docs/references/architecture-doc-status-matrix.md`, top-level `docs/architecture/*.md`, `docs/architecture/flow-designer/README.md`, `docs/architecture/report-designer/README.md`, `docs/components/index.md`, `docs/standardization.md`, overlapping component/design docs
+Targets: top-level `docs/architecture/*.md`, `docs/architecture/README.md`, `docs/index.md`
 
-- [ ] 在 `docs/references/architecture-doc-status-matrix.md` 中为顶层 `docs/architecture/*.md` 逐文档建立状态矩阵。
-- [ ] 在同一矩阵中加入 stable doc-family README entries 与 root-level routing summary docs（至少 `flow-designer/README.md`、`report-designer/README.md`、`docs/standardization.md`）的状态行。
-- [ ] 状态矩阵至少标出：`role`、`status`、`primary owner directory`、`depends on`、`overlap/migration note`。
-- [ ] 明确哪些文档可以继续留在 architecture 主干，哪些需要迁移到 `docs/components/` 或其他目录。
-- [ ] 明确哪些文档存在主题重叠或双份并存，并给出 owner 文档和 successor 处理方式。
-- [ ] 对 `condition-builder.md`、`code-editor.md`、以及其他边界不清文档给出是否迁移、合并、保留但降层的明确结论。
-- [ ] 对混入历史演进、迁移记录、旧方案对比的 architecture 文档给出“删除 / 精简 / 外移到 analysis-plans-logs”结论。
-- [ ] 对“只有结论、缺少当前设计理由”的 architecture 文档给出补充 rationale 的结论，避免清理历史时把设计动机也一并删空。
+- [ ] 在 `docs/architecture/` 下建立长期稳定的物理子目录。
+- [ ] 把纲领层、总规范层、平台扩展架构层、专题层文档迁移到目标路径。
+- [ ] 更新 `docs/architecture/README.md` 以匹配新的物理结构和阅读路径。
+- [ ] 更新 `docs/index.md`，使全局 routing 指向新路径。
+- [ ] 为需要保留短期兼容的旧路径写 redirect note 或等价过渡策略。
 
 Exit Criteria:
 
-- [ ] `docs/references/architecture-doc-status-matrix.md` 已列出所有顶层 `docs/architecture/*.md` 文档，以及受 hierarchy 影响的 stable doc-family README / root routing docs，而不是抽样记录。
-- [ ] 每个被标记为 overlap/misplaced 的文档都有明确 owner decision 或 successor note。
-- [ ] `condition-builder.md` 与 `code-editor.md` 的去向在矩阵中是显式结论，不是开放问题。
-- [ ] 每个被标记为“历史噪音过重”的 architecture 文档都有明确的清理策略。
-- [ ] 每个被标记为“rationale 不足”的 architecture 文档都有明确的补充策略。
+- [ ] `docs/architecture/` 已形成清晰的长期物理结构，而不是继续以顶层平铺为主。
+- [ ] 核心阅读路径全部指向新 owner 路径。
+- [ ] 旧路径不再伪装成 active owner baseline。
 
-### Phase 3 - Independent Review Passes And Corrections
+### Phase 3 - Merge Or Relocate Misplaced Component-Level Docs
 
 Status: planned
-Targets: 本计划、`docs/references/architecture-doc-status-matrix.md`, `docs/architecture/README.md`, `docs/index.md`
+Targets: `docs/architecture/condition-builder.md`, `docs/components/condition-builder/design.md`, `docs/architecture/code-editor.md`, new/target component docs
 
-- [ ] 进行独立子 agent 审核 pass A：核对 hierarchy/placement/status-matrix 结论是否与 live repo 一致。
-- [ ] 进行独立子 agent 审核 pass B：核对本计划的 scope、phase、exit criteria 和 successor boundary 是否可执行。
-- [ ] 根据 pass A/B 的 findings 回写计划、状态矩阵和索引草案。
-- [ ] 进行一次独立子 agent follow-up pass，确认已无未解决的高优先级 hierarchy 或 owner 问题。
-- [ ] 在 `docs/logs/2026/04-12.md` 和/或本计划 `Closure Audit Evidence` 中记录三次独立审阅的 task id、结论和后续修订点。
+- [ ] 将 `docs/architecture/condition-builder.md` 中仍需保留的 owner 内容并入 `docs/components/condition-builder/design.md`。
+- [ ] 将原 `docs/architecture/condition-builder.md` 改为 redirect note，或在确认无保留价值后删除。
+- [ ] 为 `code-editor` 建立组件级 owner 文档路径。
+- [ ] 将 `docs/architecture/code-editor.md` 的组件级 owner 内容迁移到组件文档。
+- [ ] 将原 `docs/architecture/code-editor.md` 改为 redirect note，或在确认无保留价值后删除。
 
 Exit Criteria:
 
-- [ ] 已记录至少三次 fresh-session 独立审阅结果：doc-role audit、plan-quality audit、follow-up audit。
-- [ ] 三次独立审阅结果已在仓库文件中留下可追溯证据，而不是只存在会话记录里。
-- [ ] follow-up audit 不再报告高优先级 hierarchy 误判、owner 漏项或 open-ended phase 问题。
+- [ ] `condition-builder` 不再存在 architecture/components 双 owner。
+- [ ] `code-editor` 不再停留在 architecture 顶层作为长期 owner。
+- [ ] 所有 redirect note 都明确指向新 owner 文档。
 
-### Phase 4 - Rewrite The Architecture Index And Routing Notes
+### Phase 4 - Reconcile Platform Architecture Versus Component Docs
 
 Status: planned
-Targets: `docs/architecture/README.md`, `docs/index.md`, `docs/architecture/flow-designer/README.md`, `docs/architecture/report-designer/README.md`
+Targets: `docs/architecture/flow-designer/`, `docs/architecture/report-designer/`, `docs/components/designer-page/design.md`, `docs/components/report-designer-page/design.md`, `docs/components/spreadsheet-page/design.md`
 
-- [ ] 将 `docs/architecture/README.md` 改写为真正的 architecture index，说明文档层级、阅读顺序、依赖关系、角色说明和迁移规则。
-- [ ] 在 `docs/index.md` 中保留面向整个 `docs/` 树的任务路由，同时避免与 architecture index 重复承担同一层级说明。
-- [ ] 显式增加“纲领层 / 总规范层 / 平台扩展架构层”的阅读路径。
-- [ ] 更新 `docs/architecture/flow-designer/README.md` 与 `docs/architecture/report-designer/README.md`，使它们与新的 platform-extension 架构定位一致。
-- [ ] 视需要更新 `docs/standardization.md`，避免其与新的 architecture hierarchy 或 owner 归属冲突。
-- [ ] 为 future physical migration 提供稳定过渡层，避免在无 index 的情况下直接搬家。
-- [ ] 在 architecture index 中显式说明：历史变革、方案比较、执行过程不属于 architecture 主文档阅读路径。
+- [ ] 明确 platform family 文档与 host-renderer 组件文档的 owner 边界。
+- [ ] 清理重复描述，确保 platform family 负责平台扩展架构，component docs 负责单 renderer 设计。
+- [ ] 更新 family README 和组件文档之间的 cross-links，形成稳定双向导航。
 
 Exit Criteria:
 
-- [ ] `docs/architecture/README.md` 明确列出 reading order、role legend 和 migration rule。
-- [ ] `docs/index.md` 与 `docs/architecture/README.md` 分工清楚：前者负责全局 routing，后者负责 architecture hierarchy。
-- [ ] `flow-designer/README.md` 和 `report-designer/README.md` 不再让读者误读为普通 specialized-domain 附录。
-- [ ] `docs/standardization.md` 未因新的 hierarchy/owner 规则而变成 stale summary。
-- [ ] architecture index 已明确把历史材料路由到 `analysis/plans/logs/discussions`，避免把历史内容继续塞回 architecture。
-- [ ] architecture index 已明确要求核心文档解释当前选择的 rationale、约束和边界，避免 AI 因为缺少解释而自行脑补。
+- [ ] `flow-designer` / `report-designer` family 与 `designer-page` / `report-designer-page` / `spreadsheet-page` 组件文档不再角色重叠。
+- [ ] 读者可通过路径直接判断“平台架构”与“组件设计”的区别。
 
-### Phase 5 - Record Owner Decisions And Successor Work
+### Phase 5 - Rewrite Cross-Links And Compatibility Notes
 
 Status: planned
-Targets: `docs/references/architecture-doc-status-matrix.md`, `docs/architecture/README.md`, `docs/logs/2026/04-12.md`
+Targets: moved docs, owner indexes, key inbound references under `docs/`
 
-- [ ] 对已经达成共识的 overlap/misplaced 文档，记录 owner decision、recommended destination 和是否需要 successor move。
-- [ ] 若 physical move 成本过高，则只记录 successor scope 和 redirect strategy，不在本计划内执行大规模搬迁。
-- [ ] 为需要后续执行的 physical migration 或大规模 cross-link rewrite 建立明确的 successor scope，避免本计划无限膨胀。
-- [ ] 在 daily log 中记录 hierarchy 决策、platform-extension 定位、状态矩阵落点和后续承接工作。
+- [ ] 修正 `docs/index.md`、`docs/architecture/README.md`、`docs/components/index.md`、`docs/standardization.md`、状态矩阵和相关 family README 的 cross-links。
+- [ ] 修正关键 architecture/reference/components 文档中对旧路径的直接引用。
+- [ ] 为无法立刻全量修正的旧引用提供明确 redirect note 策略。
 
 Exit Criteria:
 
-- [ ] `docs/references/architecture-doc-status-matrix.md` 对每个需迁移/合并文档都写出 destination 或 successor note。
-- [ ] 剩余 physical move 工作有明确 successor owner，而不是隐含 debt。
+- [ ] 新路径已成为仓库主阅读路径。
+- [ ] 关键 owner 文档之间不再互相引用旧 owner 路径。
+- [ ] 未修复的旧链接如果仍存在，必须有明确 redirect 落点，不是 silent drift。
+
+### Phase 6 - Cleanup Historical Noise And Finalize Stable Baseline
+
+Status: planned
+Targets: docs marked `active-with-cleanup`, this plan, `docs/logs/2026/04-12.md`
+
+- [ ] 对高价值 architecture owner 文档做 history-noise cleanup，删掉不应继续留在 architecture 主文档中的执行叙事。
+- [ ] 保留 current-design rationale，补足仍显得“只有结论、缺少边界解释”的 owner 文档。
+- [ ] 更新状态矩阵，使其反映 reorganization 完成后的真实路径和角色。
+- [ ] 做独立 closure audit，确认新的物理结构、owner path 和阅读路径已经真正收口。
+
+Exit Criteria:
+
+- [ ] architecture 主文档不再混入显著历史执行叙事。
+- [ ] 新路径、新 owner、新 cross-links 和 redirect 策略已经稳定。
+- [ ] closure audit 证明没有剩余 plan-owned structural reorganization work。
 
 ## Validation Checklist
 
-- [ ] `flux-design-principles.md` 的“核心纲领/原则层”定位被 architecture index 和相关文档明确承认
-- [ ] `frontend-programming-model.md` 仍被明确保留为 normative precedence，同时其与纲领层关系被写清楚
-- [ ] `flux-core.md`、`renderer-runtime.md` 等总规范层与纲领层的依赖关系被写清楚
-- [ ] `flow-designer` / `report-designer` / `complex-control-host-protocol.md` 被明确为 Flux 平台扩展架构，而不是普通 specialized domain
-- [ ] `docs/architecture/README.md` 明确说明重要性、阅读顺序、依赖关系和文档角色
-- [ ] `docs/index.md` 与 architecture index 的职责边界清晰
-- [ ] `docs/references/architecture-doc-status-matrix.md` 已建立并经过独立子 agent 审核
-- [ ] 重叠主题至少有 owner decision 或 successor 处理路径
-- [ ] architecture 文档体系已明确冻结为 final-state/core-design-only，不再把历史演进叙事当作 architecture 主内容
-- [ ] architecture 文档体系已明确要求保留 current-design rationale，避免把架构规则写成无上下文的黑盒结论
-- [ ] `docs/logs/2026/04-12.md` 已记录本轮计划和关键决策
-- [ ] 独立子 agent review evidence 已记录并表明主要分歧已收敛
+- [ ] `docs/architecture/` 已从平铺主导结构转为稳定的概念型物理结构
+- [ ] 纲领层、总规范层、平台扩展架构层、专题层拥有可长期使用的稳定路径
+- [ ] `flow-designer` / `report-designer` family 在物理路径和 routing 上都稳定体现为 platform-extension architecture
+- [ ] `condition-builder` 不再存在 architecture/components 双 owner
+- [ ] `code-editor` 已迁出 architecture 顶层 owner 位置
+- [ ] `docs/index.md` / `docs/architecture/README.md` / `docs/components/index.md` 已与新路径对齐
+- [ ] `docs/references/architecture-doc-status-matrix.md` 已反映最终重构结果，而不是过渡期判断
+- [ ] 旧路径如仍保留，均已降为 redirect/compatibility 层，而不是权威 owner
+- [ ] architecture 文档体系继续只承载 final-state/current-baseline design 与 rationale
+- [ ] `docs/logs/2026/04-12.md` 已记录本计划重开与新 scope
+- [ ] 独立子 agent closure audit 已记录并确认无剩余 plan-owned 重组工作
 
 ## Risks And Rollback
 
-- 最大风险不是路径迁移本身，而是错误地下调 `flow-designer` / `report-designer` 的架构地位，或者继续让 `flux-design-principles.md` 与 `frontend-programming-model.md` 角色重叠。
-- 第二风险是把“目录重组”当成主目标，反而掩盖 hierarchy 和 owner 问题。
-- 第三风险是重复主题处理不彻底，导致 index 改好了，但 owner 文档仍是双份并存。
+- 最大风险是重构过程中只做路径移动，却没有真正消灭双 owner 和概念重叠。
+- 第二风险是把 platform architecture 过度拆进 component docs，导致核心平台概念再次下沉。
+- 第三风险是 cross-link rewrite 做得不彻底，使新结构表面成立、实际阅读路径仍靠旧链接维持。
 
 Rollback guidance:
 
-- 先冻结 hierarchy 和状态矩阵，再做任何 physical move。
-- 如果某份文档的 owner 归属尚有争议，先加 status/redirect note，不要强行迁移。
-- 若审阅结果发现某个 phase 过宽，应拆出 successor plan，而不是在执行中临时扩 scope。
+- 先完成 destination/merge 策略，再做物理迁移。
+- 对每个 move 先保留明确 redirect note，再考虑彻底删除旧路径。
+- 如果某个 family 在执行中发现 scope 过宽，可拆分执行 slice，但不得回退为“只做矩阵不做迁移”。
 
 ## Closure
 
-Status Note: fill after execution and closure audit.
+Status Note: fill after the full reorganization lands and an independent closure audit confirms there is no remaining plan-owned structure/owner migration work.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: fill after independent closure audit.
-- Evidence: fill with task ids, cited findings, and daily-log references before marking the plan `completed`.
+- Evidence: fill with task ids, path-level verification, merge decisions, and daily-log references before marking the plan `completed`.
 
 Follow-up:
 
-- If physical directory migration across doc families is still required after hierarchy/index stabilization, create a dedicated successor plan for path migration and cross-link rewrite.
-- If specific component-design docs need migration out of `docs/architecture/`, assign each family to a concrete successor slice instead of leaving the move implicit.
+- No successor plan should be created for core physical reorganization unless this owner plan becomes too wide to stay executable.
+- If a specific family later needs purely local polish after the structure is stable, create a narrow cleanup plan owned by that family rather than reopening directory-wide structure debates.
