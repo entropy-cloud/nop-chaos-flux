@@ -9,13 +9,17 @@
     { "path": "./packages/flux-renderers-form" },
     { "path": "./packages/flux-renderers-data" },
     { "path": "./packages/flux-code-editor" },
+    { "path": "./packages/tailwind-preset" },
     { "path": "./packages/ui" },
+    { "path": "./packages/flow-designer-core" },
+    { "path": "./packages/flow-designer-renderers" },
     { "path": "./packages/spreadsheet-core" },
     { "path": "./packages/spreadsheet-renderers" },
     { "path": "./packages/report-designer-core" },
     { "path": "./packages/report-designer-renderers" },
     { "path": "./packages/word-editor-core" },
     { "path": "./packages/word-editor-renderers" },
+    { "path": "./packages/nop-debugger" },
     { "path": "./apps/playground" }
   ]
 }

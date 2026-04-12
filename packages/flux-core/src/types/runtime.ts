@@ -146,10 +146,8 @@ export interface FormLifecycleHandlers {
   onValidateError?: (result: ActionResult, options?: { interactionId?: string }) => Promise<ActionResult>;
 }
 
-export interface DialogState {
+export interface OwnedSurfaceStateBase {
   id: string;
-  kind?: 'dialog';
-  dialog: Record<string, any>;
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
@@ -159,17 +157,14 @@ export interface DialogState {
   body?: RenderNodeInput;
 }
 
-export interface SurfaceState {
-  id: string;
+export interface DialogState extends OwnedSurfaceStateBase {
+  kind?: 'dialog';
+  dialog: Record<string, any>;
+}
+
+export interface SurfaceState extends OwnedSurfaceStateBase {
   kind: 'dialog' | 'drawer';
   surface: Record<string, any>;
-  scope: ScopeRef;
-  actionScope?: ActionScope;
-  componentRegistry?: ComponentHandleRegistry;
-  ownerNode?: CompiledSchemaNode;
-  ownerNodeInstance?: NodeInstance;
-  title?: RenderNodeInput | string;
-  body?: RenderNodeInput;
 }
 
 export interface PageStoreState {
