@@ -130,6 +130,7 @@ Architecture intent lives primarily in:
 Component contract intent lives primarily in:
 
 - `docs/components/index.md`
+- `docs/components/amis-baseline-matrix.md`
 - `docs/components/condition-builder/design.md`
 - `docs/components/code-editor/design.md`
 - `docs/components/crud/design.md`

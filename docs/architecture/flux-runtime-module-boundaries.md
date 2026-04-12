@@ -50,6 +50,12 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
   - runtime assembly
   - top-level factory composition
   - package export surface
+- `packages/flux-runtime/src/runtime-eval-helpers.ts`
+  - scope evaluation helpers extracted from the entry file
+  - expression evaluation utilities used during runtime assembly
+- `packages/flux-runtime/src/runtime-action-helpers.ts`
+  - action-related helpers extracted from the entry file
+  - action dispatch wiring utilities
 
 ### Schema compilation
 
