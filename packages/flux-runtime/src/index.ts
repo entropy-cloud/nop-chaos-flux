@@ -95,19 +95,25 @@ export function createRendererRuntime(input: {
   const validationRegistry = createBuiltInValidationRegistry();
   let actionScopeCounter = 0;
   let componentRegistryCounter = 0;
+  const ownedActionScopes = new Set<ActionScope>();
   const runtimeRef: { current?: RendererRuntime } = {};
   const nodeRuntime = createNodeRuntime({
     expressionCompiler,
     getEnv
   });
   const runtimeNodeResolverRef: { current?: ReturnType<typeof createRuntimeNodeResolver> } = {};
+  const ownedPages = new Set<PageRuntime>();
+  let disposed = false;
 
   function createOwnedActionScope(scopeInput: { id?: string; parent?: ActionScope } = {}) {
     actionScopeCounter += 1;
-    return createActionScope({
+    const actionScope = createActionScope({
       id: scopeInput.id ?? `action-scope-${actionScopeCounter}`,
       parent: scopeInput.parent
     });
+
+    ownedActionScopes.add(actionScope);
+    return actionScope;
   }
 
   function createOwnedComponentRegistry(registryInput: { id?: string; parent?: ComponentHandleRegistry } = {}) {
@@ -174,7 +180,7 @@ export function createRendererRuntime(input: {
   }
 
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
-    return createManagedPageRuntime({
+    const page = createManagedPageRuntime({
       data,
       pageStore: input.pageStore,
       disposeScope: (scopeId) => {
@@ -182,6 +188,9 @@ export function createRendererRuntime(input: {
         reactionRegistryRef.current?.disposeScopeTree(scopeId);
       }
     });
+
+    ownedPages.add(page);
+    return page;
   }
 
   function createFormRuntime(inputValue: {
@@ -395,6 +404,33 @@ export function createRendererRuntime(input: {
     },
     getReactionDebugSnapshot() {
       return reactionRegistryRef.current?.getDebugSnapshot() ?? { reactions: [] };
+    },
+    dispose() {
+      if (disposed) {
+        return;
+      }
+
+      disposed = true;
+
+      for (const page of ownedPages) {
+        sourceRegistryRef.current?.disposeScopeTree(page.scope.id);
+        reactionRegistryRef.current?.disposeScopeTree(page.scope.id);
+
+        for (const dialog of page.store.getState().dialogs) {
+          sourceRegistryRef.current?.disposeScopeTree(dialog.scope.id);
+          reactionRegistryRef.current?.disposeScopeTree(dialog.scope.id);
+        }
+
+        for (const surface of page.store.getState().surfaces) {
+          sourceRegistryRef.current?.disposeScopeTree(surface.scope.id);
+          reactionRegistryRef.current?.disposeScopeTree(surface.scope.id);
+        }
+      }
+
+      ownedPages.clear();
+      importManager.dispose({ actionScopes: Array.from(ownedActionScopes) });
+      ownedActionScopes.clear();
+      executeApiRequest.dispose?.();
     },
     createFormRuntime
   };
