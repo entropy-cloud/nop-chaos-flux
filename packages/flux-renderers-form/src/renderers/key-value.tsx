@@ -226,7 +226,9 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   );
   const pairs = canonicalPairs ?? fallbackPairs;
   const pairsRef = React.useRef(pairs);
-  pairsRef.current = pairs;
+  React.useLayoutEffect(() => {
+    pairsRef.current = pairs;
+  });
 
   const childPaths = React.useMemo(
     () => pairs.flatMap((_, index) => [`${name}.${index}.key`, `${name}.${index}.value`]),

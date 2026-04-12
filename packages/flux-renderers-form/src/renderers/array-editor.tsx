@@ -160,7 +160,9 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   );
   const items = canonicalItems ?? fallbackItems;
   const itemsRef = React.useRef(items);
-  itemsRef.current = items;
+  React.useLayoutEffect(() => {
+    itemsRef.current = items;
+  });
 
   const childPaths = React.useMemo(() => items.map((_, index) => `${name}.${index}.value`), [items, name]);
 
