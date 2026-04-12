@@ -79,6 +79,15 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   const lastCommittedPositionsRef = useRef<Map<string, string>>(new Map());
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const [localNodes, setLocalNodes, onNodesChangeInternal] = useNodesState(snapshotNodes);
   const [localEdges, setLocalEdges, onEdgesChangeInternal] = useEdgesState(snapshotEdges);
 
@@ -150,12 +159,14 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     }))
   ), [localEdges, hoveredEdgeId]);
 
+  const { onDeleteNode, onMoveNode, onDeleteEdge, onStartReconnect, onCompleteReconnect } = props;
+
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     onNodesChangeInternal(changes);
 
     for (const change of changes) {
       if (change.type === 'remove') {
-        props.onDeleteNode(change.id, undefined);
+        onDeleteNode(change.id, undefined);
         lastCommittedPositionsRef.current.delete(change.id);
         continue;
       }
@@ -167,20 +178,20 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
         };
         const signature = normalizePositionSignature(position);
         lastCommittedPositionsRef.current.set(change.id, signature);
-        props.onMoveNode(change.id, undefined, position);
+        onMoveNode(change.id, undefined, position);
       }
     }
-  }, [onNodesChangeInternal, props]);
+  }, [onNodesChangeInternal, onDeleteNode, onMoveNode]);
 
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     onEdgesChangeInternal(changes);
 
     for (const change of changes) {
       if (change.type === 'remove') {
-        props.onDeleteEdge(change.id, undefined);
+        onDeleteEdge(change.id, undefined);
       }
     }
-  }, [onEdgesChangeInternal, props]);
+  }, [onEdgesChangeInternal, onDeleteEdge]);
 
   function handleViewportChange(nextViewport: XyflowViewportChange) {
     const normalized = normalizeViewportChange(nextViewport);
@@ -208,10 +219,10 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
         return;
       }
 
-      props.onStartReconnect(oldEdge.id, undefined);
-      props.onCompleteReconnect(oldEdge.id, newConnection.source, newConnection.target, undefined);
+      onStartReconnect(oldEdge.id, undefined);
+      onCompleteReconnect(oldEdge.id, newConnection.source, newConnection.target, undefined);
     },
-    [props]
+    [onStartReconnect, onCompleteReconnect]
   );
 
   const lastSelectionRef = useRef<{ nodeId: string | null; edgeId: string | null }>({
