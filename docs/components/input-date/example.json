@@ -1,0 +1,10 @@
+{
+  "type": "input-date",
+  "name": "startDate",
+  "label": "开始日期",
+  "valueFormat": "YYYY-MM-DD",
+  "displayFormat": "YYYY-MM-DD",
+  "minDate": "2026-01-01",
+  "maxDate": "2026-12-31",
+  "clearable": true
+}

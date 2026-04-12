@@ -1,0 +1,9 @@
+{
+  "type": "input-time",
+  "name": "meetingTime",
+  "label": "会议时间",
+  "valueFormat": "HH:mm:ss",
+  "displayFormat": "HH:mm",
+  "minTime": "09:00:00",
+  "maxTime": "18:00:00"
+}

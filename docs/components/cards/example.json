@@ -1,0 +1,32 @@
+{
+  "type": "cards",
+  "rowKey": "id",
+  "items": [
+    {
+      "id": "p-1001",
+      "title": "订单 #1001",
+      "amount": "128.00",
+      "status": "paid"
+    },
+    {
+      "id": "p-1002",
+      "title": "订单 #1002",
+      "amount": "64.00",
+      "status": "pending"
+    }
+  ],
+  "card": {
+    "type": "card",
+    "title": "${record.title}",
+    "body": [
+      {
+        "type": "text",
+        "text": "金额: ${record.amount}"
+      },
+      {
+        "type": "text",
+        "text": "状态: ${record.status}"
+      }
+    ]
+  }
+}

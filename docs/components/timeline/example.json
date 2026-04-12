@@ -1,0 +1,15 @@
+{
+  "type": "timeline",
+  "items": [
+    {
+      "time": "09:00",
+      "title": "任务创建",
+      "detail": "由 Alice 创建"
+    },
+    {
+      "time": "11:30",
+      "title": "审核通过",
+      "detail": "由 Bob 审核"
+    }
+  ]
+}

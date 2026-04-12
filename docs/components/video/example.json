@@ -1,0 +1,7 @@
+{
+  "type": "video",
+  "title": "产品演示",
+  "src": "/media/demo.mp4",
+  "poster": "/media/demo-cover.png",
+  "controls": true
+}

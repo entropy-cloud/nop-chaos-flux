@@ -1,0 +1,11 @@
+{
+  "type": "input-number",
+  "name": "quantity",
+  "label": "数量",
+  "placeholder": "请输入数量",
+  "min": 1,
+  "max": 100,
+  "step": 1,
+  "precision": 0,
+  "required": true
+}

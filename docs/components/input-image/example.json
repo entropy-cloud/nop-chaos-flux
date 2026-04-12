@@ -1,0 +1,8 @@
+{
+  "type": "input-image",
+  "name": "avatar",
+  "label": "头像",
+  "multiple": false,
+  "accept": "image/*",
+  "previewMode": "thumbnail"
+}

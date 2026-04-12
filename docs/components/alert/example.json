@@ -1,0 +1,18 @@
+{
+  "type": "alert",
+  "variant": "warning",
+  "title": "配额即将耗尽",
+  "body": [
+    {
+      "type": "text",
+      "text": "当前环境的可用配额只剩 12%。"
+    }
+  ],
+  "actions": [
+    {
+      "type": "button",
+      "label": "查看详情",
+      "variant": "ghost"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "type": "editor",
+  "name": "announcement",
+  "label": "公告内容",
+  "placeholder": "请输入公告内容",
+  "outputFormat": "html"
+}

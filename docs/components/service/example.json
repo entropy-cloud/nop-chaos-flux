@@ -1,0 +1,27 @@
+{
+  "type": "service",
+  "statusPath": "userProfileStatus",
+  "source": {
+    "type": "source",
+    "action": "ajax",
+    "api": {
+      "url": "/api/profile/${userId}",
+      "includeScope": [
+        "userId"
+      ]
+    }
+  },
+  "body": [
+    {
+      "type": "text",
+      "text": "姓名: ${name}"
+    },
+    {
+      "type": "text",
+      "text": "邮箱: ${email}"
+    }
+  ],
+  "loading": {
+    "type": "spinner"
+  }
+}

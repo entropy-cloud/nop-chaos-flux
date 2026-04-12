@@ -1,0 +1,10 @@
+{
+  "type": "mapping",
+  "value": "active",
+  "map": {
+    "active": "启用",
+    "inactive": "停用",
+    "draft": "草稿"
+  },
+  "placeholder": "未知状态"
+}

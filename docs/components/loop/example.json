@@ -1,0 +1,14 @@
+{
+  "type": "loop",
+  "items": "${users}",
+  "itemName": "user",
+  "body": [
+    {
+      "type": "text",
+      "text": "${user.name}"
+    }
+  ],
+  "empty": {
+    "type": "empty"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "loop",
+  "items": "${nodes}",
+  "itemName": "node",
+  "keyBy": "${node.id}",
+  "body": [
+    {
+      "type": "text",
+      "text": "${node.label}"
+    },
+    {
+      "type": "fragment",
+      "when": "${node.children && node.children.length > 0}",
+      "body": {
+        "type": "recurse",
+        "items": "${node.children}"
+      }
+    }
+  ]
+}

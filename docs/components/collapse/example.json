@@ -1,0 +1,29 @@
+{
+  "type": "collapse",
+  "multiple": false,
+  "defaultValue": [
+    "profile"
+  ],
+  "items": [
+    {
+      "value": "profile",
+      "title": "用户资料",
+      "body": [
+        {
+          "type": "text",
+          "text": "这里展示用户资料概览。"
+        }
+      ]
+    },
+    {
+      "value": "settings",
+      "title": "通知设置",
+      "body": [
+        {
+          "type": "text",
+          "text": "这里展示通知设置。"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "type": "steps",
+  "value": "review",
+  "items": [
+    {
+      "value": "draft",
+      "title": "草稿"
+    },
+    {
+      "value": "review",
+      "title": "审核"
+    },
+    {
+      "value": "done",
+      "title": "完成"
+    }
+  ]
+}

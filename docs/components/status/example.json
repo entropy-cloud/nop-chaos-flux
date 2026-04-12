@@ -1,0 +1,14 @@
+{
+  "type": "status",
+  "value": "failed",
+  "labelMap": {
+    "running": "进行中",
+    "success": "成功",
+    "failed": "失败"
+  },
+  "levelMap": {
+    "running": "warning",
+    "success": "success",
+    "failed": "destructive"
+  }
+}

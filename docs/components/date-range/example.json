@@ -1,0 +1,13 @@
+{
+  "type": "date-range",
+  "name": "reportingPeriod",
+  "label": "统计周期",
+  "rangeKind": "date",
+  "valueFormat": "YYYY-MM-DD",
+  "displayFormat": "YYYY-MM-DD",
+  "delimiter": " to ",
+  "shortcuts": [
+    "today",
+    "last7days"
+  ]
+}

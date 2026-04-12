@@ -1,0 +1,18 @@
+{
+  "type": "transfer",
+  "name": "members",
+  "label": "项目成员",
+  "multiple": true,
+  "valueKey": "id",
+  "labelKey": "name",
+  "options": [
+    {
+      "label": "Alice",
+      "value": "u1"
+    },
+    {
+      "label": "Bob",
+      "value": "u2"
+    }
+  ]
+}

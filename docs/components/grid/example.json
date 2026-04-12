@@ -1,0 +1,35 @@
+{
+  "type": "grid",
+  "columns": 2,
+  "gap": "gap-4",
+  "items": [
+    {
+      "body": [
+        {
+          "type": "card",
+          "title": "概览",
+          "body": [
+            {
+              "type": "text",
+              "text": "左侧卡片"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "body": [
+        {
+          "type": "card",
+          "title": "详情",
+          "body": [
+            {
+              "type": "text",
+              "text": "右侧卡片"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "type": "audio",
+  "title": "访谈录音",
+  "src": "/media/interview.mp3",
+  "controls": true
+}

@@ -1,0 +1,8 @@
+{
+  "type": "input-quarter",
+  "name": "fiscalQuarter",
+  "label": "财务季度",
+  "selectionMode": "single",
+  "valueFormat": "YYYY-[Q]Q",
+  "displayFormat": "YYYY [Q]Q"
+}

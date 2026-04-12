@@ -1,0 +1,14 @@
+{
+  "type": "fragment",
+  "when": "${showSummary}",
+  "body": [
+    {
+      "type": "text",
+      "text": "摘要可见"
+    },
+    {
+      "type": "button",
+      "label": "查看详情"
+    }
+  ]
+}

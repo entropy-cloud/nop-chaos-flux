@@ -1,0 +1,8 @@
+{
+  "type": "code-editor",
+  "name": "query",
+  "label": "SQL 查询",
+  "language": "sql",
+  "height": 240,
+  "value": "select id, name from users where active = true"
+}

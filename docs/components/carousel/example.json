@@ -1,0 +1,23 @@
+{
+  "type": "carousel",
+  "autoPlay": true,
+  "interval": 5000,
+  "items": [
+    {
+      "body": [
+        {
+          "type": "image",
+          "src": "/banners/banner-1.png"
+        }
+      ]
+    },
+    {
+      "body": [
+        {
+          "type": "image",
+          "src": "/banners/banner-2.png"
+        }
+      ]
+    }
+  ]
+}

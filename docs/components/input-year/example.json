@@ -1,0 +1,7 @@
+{
+  "type": "input-year",
+  "name": "fiscalYear",
+  "label": "财务年度",
+  "valueFormat": "YYYY",
+  "displayFormat": "YYYY"
+}

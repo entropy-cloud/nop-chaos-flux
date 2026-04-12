@@ -1,0 +1,18 @@
+{
+  "type": "combo",
+  "name": "contacts",
+  "label": "联系人",
+  "multiple": true,
+  "itemSchema": [
+    {
+      "type": "input-text",
+      "name": "name",
+      "label": "姓名"
+    },
+    {
+      "type": "input-text",
+      "name": "phone",
+      "label": "电话"
+    }
+  ]
+}

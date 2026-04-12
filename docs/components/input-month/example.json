@@ -1,0 +1,8 @@
+{
+  "type": "input-month",
+  "name": "billingMonth",
+  "label": "结算月份",
+  "selectionMode": "single",
+  "valueFormat": "YYYY-MM",
+  "displayFormat": "YYYY-MM"
+}

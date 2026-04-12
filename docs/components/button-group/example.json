@@ -1,0 +1,23 @@
+{
+  "type": "button-group",
+  "items": [
+    {
+      "label": "保存",
+      "action": {
+        "action": "showToast",
+        "args": {
+          "message": "saved"
+        }
+      }
+    },
+    {
+      "label": "发布",
+      "action": {
+        "action": "showToast",
+        "args": {
+          "message": "published"
+        }
+      }
+    }
+  ]
+}

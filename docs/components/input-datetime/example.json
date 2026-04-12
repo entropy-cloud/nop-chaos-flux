@@ -1,0 +1,9 @@
+{
+  "type": "input-datetime",
+  "name": "publishAt",
+  "label": "发布时间",
+  "valueFormat": "YYYY-MM-DD HH:mm:ss",
+  "displayFormat": "YYYY-MM-DD HH:mm",
+  "timeFormat": "HH:mm",
+  "utc": false
+}

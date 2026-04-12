@@ -1,0 +1,9 @@
+{
+  "type": "input-file",
+  "name": "attachments",
+  "label": "附件",
+  "multiple": true,
+  "accept": ".pdf,.doc,.docx",
+  "maxFiles": 3,
+  "valueMode": "array"
+}

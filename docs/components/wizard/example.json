@@ -1,0 +1,27 @@
+{
+  "type": "wizard",
+  "value": "profile",
+  "steps": [
+    {
+      "key": "profile",
+      "title": "基本资料",
+      "body": [
+        {
+          "type": "input-text",
+          "name": "name",
+          "label": "姓名"
+        }
+      ]
+    },
+    {
+      "key": "confirm",
+      "title": "确认",
+      "body": [
+        {
+          "type": "text",
+          "text": "请确认信息后提交。"
+        }
+      ]
+    }
+  ]
+}

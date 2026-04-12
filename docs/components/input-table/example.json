@@ -1,0 +1,16 @@
+{
+  "type": "input-table",
+  "name": "lineItems",
+  "label": "明细行",
+  "rowKey": "id",
+  "columns": [
+    {
+      "name": "product",
+      "label": "商品"
+    },
+    {
+      "name": "quantity",
+      "label": "数量"
+    }
+  ]
+}

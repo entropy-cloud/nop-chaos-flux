@@ -1,0 +1,24 @@
+{
+  "type": "dropdown-button",
+  "label": "更多操作",
+  "items": [
+    {
+      "label": "复制链接",
+      "action": {
+        "action": "showToast",
+        "args": {
+          "message": "link copied"
+        }
+      }
+    },
+    {
+      "label": "归档",
+      "action": {
+        "action": "showToast",
+        "args": {
+          "message": "archived"
+        }
+      }
+    }
+  ]
+}
