@@ -1,10 +1,16 @@
 import type { ScopeRef, ValidationError } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
 import { remapBooleanState, remapErrorState, transformArrayIndexedPath } from './form-path-state';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import type {
+  FormRuntimeInitialStateSlice,
+  FormRuntimeStoreScopeState,
+  FormRuntimeValidationRunState
+} from './form-runtime-types';
+
+type ArrayMutationState = FormRuntimeStoreScopeState & FormRuntimeInitialStateSlice & FormRuntimeValidationRunState;
 
 export function remapValidationRunState(
-  sharedState: ManagedFormRuntimeSharedState,
+  sharedState: FormRuntimeValidationRunState,
   arrayPath: string,
   transformIndex: (index: number) => number | undefined,
   cancelValidationDebounce: (path: string) => void
@@ -59,7 +65,7 @@ export function remapValidationRunState(
 }
 
 export function remapInitialFieldState(
-  sharedState: ManagedFormRuntimeSharedState,
+  sharedState: FormRuntimeInitialStateSlice,
   arrayPath: string,
   transformIndex: (index: number) => number | undefined
 ) {
@@ -78,10 +84,9 @@ export function remapInitialFieldState(
 }
 
 export function remapArrayFieldState(
-  sharedState: ManagedFormRuntimeSharedState,
   arrayPath: string,
   transformIndex: (index: number) => number | undefined,
-  state: ReturnType<ManagedFormRuntimeSharedState['store']['getState']>
+  state: ReturnType<FormRuntimeStoreScopeState['store']['getState']>
 ) {
   return {
     errors: remapErrorState(state.errors, arrayPath, transformIndex),
@@ -95,8 +100,8 @@ export function remapArrayFieldState(
 export function replaceManagedArrayValue(input: {
   arrayPath: string;
   nextValue: unknown[];
-  state: ReturnType<ManagedFormRuntimeSharedState['store']['getState']>;
-  initialFieldState: ManagedFormRuntimeSharedState['initialFieldState'];
+  state: ReturnType<FormRuntimeStoreScopeState['store']['getState']>;
+  initialFieldState: FormRuntimeInitialStateSlice['initialFieldState'];
   remappedState: {
     errors: Record<string, ValidationError[]>;
     touched: Record<string, boolean>;
@@ -129,7 +134,7 @@ export function replaceManagedArrayValue(input: {
 }
 
 export function executeArrayMutation(ctx: {
-  sharedState: ManagedFormRuntimeSharedState;
+  sharedState: ArrayMutationState;
   scope: ScopeRef;
   arrayPath: string;
   arrayOperation: (current: unknown[]) => unknown[];

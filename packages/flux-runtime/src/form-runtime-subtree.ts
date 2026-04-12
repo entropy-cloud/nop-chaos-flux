@@ -6,9 +6,11 @@ import {
   hasCompiledValidationNodes
 } from '@nop-chaos/flux-core';
 import { createValidationTraversalOrder } from './schema-compiler';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import type { FormRuntimeRegistrationState, FormRuntimeValidationState } from './form-runtime-types';
 
-export function collectSubtreePaths(sharedState: ManagedFormRuntimeSharedState, path: string): string[] {
+type SubtreeCollectionState = FormRuntimeRegistrationState & Pick<FormRuntimeValidationState, 'inputValue'>;
+
+export function collectSubtreePaths(sharedState: SubtreeCollectionState, path: string): string[] {
   const paths = new Set<string>();
   const traversalTargets = getCompiledValidationTraversalOrder(sharedState.inputValue.validation);
 
@@ -35,7 +37,7 @@ export function collectSubtreePaths(sharedState: ManagedFormRuntimeSharedState, 
   return Array.from(paths);
 }
 
-export function collectSubtreeNodePaths(sharedState: ManagedFormRuntimeSharedState, path: string): string[] {
+export function collectSubtreeNodePaths(sharedState: SubtreeCollectionState, path: string): string[] {
   const validation = sharedState.inputValue.validation;
   const nodes = getCompiledValidationNodeMap(validation);
 
@@ -78,7 +80,7 @@ export function collectSubtreeNodePaths(sharedState: ManagedFormRuntimeSharedSta
   return ordered;
 }
 
-export function collectSubtreeValidationTargets(sharedState: ManagedFormRuntimeSharedState, path: string): string[] {
+export function collectSubtreeValidationTargets(sharedState: SubtreeCollectionState, path: string): string[] {
   const ordered = collectSubtreeNodePaths(sharedState, path);
   const targets = new Set<string>(ordered);
 

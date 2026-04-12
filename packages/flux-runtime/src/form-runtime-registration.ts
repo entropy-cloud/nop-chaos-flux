@@ -1,8 +1,8 @@
 import { setIn } from '@nop-chaos/flux-core';
-import type { ManagedFormRuntimeSharedState, RegisteredFieldEntry } from './form-runtime-types';
+import type { FormRuntimeRegistrationState, RegisteredFieldEntry } from './form-runtime-types';
 
 export function findRuntimeRegistration(
-  sharedState: ManagedFormRuntimeSharedState,
+  sharedState: FormRuntimeRegistrationState,
   path: string
 ): { entry: RegisteredFieldEntry | undefined; childPath: string | undefined } {
   const registrationId = sharedState.pathToRegistrationId.get(path);
@@ -23,7 +23,7 @@ export function findRuntimeRegistration(
   return { entry: undefined, childPath: undefined };
 }
 
-export function syncRegisteredFieldValue(sharedState: ManagedFormRuntimeSharedState, path: string) {
+export function syncRegisteredFieldValue(sharedState: FormRuntimeRegistrationState, path: string) {
   const registrationId = sharedState.pathToRegistrationId.get(path);
   if (!registrationId) {
     return undefined;
