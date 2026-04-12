@@ -1,46 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { ActionResult, TemplateNode, ScopeRef, SourceSchema } from '@nop-chaos/flux-core';
-import { shallowEqual } from '@nop-chaos/flux-core';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import type { TemplateNode, ScopeRef } from '@nop-chaos/flux-core';
 import { useRendererRuntime } from './hooks';
 import { isSourceSchema } from './useSourceValue';
+import { createNodeSourcePropController } from './node-source-prop-controller';
 
-export interface SourceTransientState {
-  loading: boolean;
-  error: unknown;
-  status: 'idle' | 'loading' | 'ready' | 'error';
-}
-
-interface SourceEntry {
-  key: string;
-  source: SourceSchema;
-}
-
-interface SourceResolutionState {
-  sourceInputs: readonly unknown[];
-  value: Readonly<Record<string, unknown>>;
-}
-
-function sameInputs(left: readonly unknown[], right: readonly unknown[]) {
-  return left.length === right.length && left.every((value, index) => Object.is(value, right[index]));
-}
-
-function buildStatePatch(
-  entries: readonly SourceEntry[],
-  sourceStatePropKeys: Readonly<Record<string, string>>,
-  valueFactory: (entry: SourceEntry) => SourceTransientState
-) {
-  return Object.fromEntries(
-    entries.flatMap((entry) => {
-      const stateKey = sourceStatePropKeys[entry.key];
-
-      if (!stateKey) {
-        return [];
-      }
-
-      return [[stateKey, valueFactory(entry)] as const];
-    })
-  );
-}
+export type { SourceTransientState } from './node-source-prop-controller';
 
 export function useNodeSourceProps(
   node: TemplateNode,
@@ -49,110 +13,49 @@ export function useNodeSourceProps(
 ): Readonly<Record<string, unknown>> {
   const runtime = useRendererRuntime();
   const sourcePropKeys = node.sourcePropKeys;
-  const sourceStatePropKeys = node.sourceStatePropKeys;
-  const sourceEntries = useMemo(
-    () => sourcePropKeys
-      .map((key) => ({ key, source: propsValue[key] }))
-      .filter((entry): entry is SourceEntry => isSourceSchema(entry.source)),
+  const hasSourceProps = useMemo(
+    () => sourcePropKeys.some((key) => isSourceSchema(propsValue[key])),
     [propsValue, sourcePropKeys]
   );
+
+  const [controller] = useState(() => createNodeSourcePropController(node, runtime));
+
+  const propsValueRef = useRef(propsValue);
+  const scopeRef = useRef(scope);
+
+  useEffect(() => {
+    propsValueRef.current = propsValue;
+  });
+
+  useEffect(() => {
+    scopeRef.current = scope;
+  });
+
   const sourceInputs = useMemo(
     () => sourcePropKeys.map((key) => propsValue[key]),
     [propsValue, sourcePropKeys]
   );
-  const loadingStatePatch = useMemo(
-    () => buildStatePatch(sourceEntries, sourceStatePropKeys, () => ({
-      loading: true,
-      error: undefined,
-      status: 'loading'
-    })),
-    [sourceEntries, sourceStatePropKeys]
-  );
-  const currentValue = useMemo(
-    () => sourceEntries.length === 0
-      ? propsValue
-      : { ...propsValue, ...loadingStatePatch },
-    [loadingStatePatch, propsValue, sourceEntries.length]
-  );
-  const [state, setState] = useState<SourceResolutionState>({
-    sourceInputs,
-    value: currentValue
-  });
 
   useEffect(() => {
-    if (sourceEntries.length === 0) {
-      return;
-    }
+    if (!hasSourceProps) return;
+    controller.run(propsValueRef.current, scopeRef.current);
+  }, [controller, hasSourceProps, sourceInputs]);
 
-    let cancelled = false;
-
-    void Promise.all(
-      sourceEntries.map(async (entry) => {
-        const result: ActionResult = await runtime.executeSource({ source: entry.source, scope });
-        return [entry, result] as const;
-      })
-    ).then((entries) => {
-      if (cancelled) {
-        return;
-      }
-
-      const valuePatch = Object.fromEntries(entries.map(([entry, result]) => [entry.key, result.ok ? result.data : undefined]));
-      const transientPatch = Object.fromEntries(
-        entries.flatMap(([entry, result]) => {
-          const stateKey = sourceStatePropKeys[entry.key];
-
-          if (!stateKey) {
-            return [];
-          }
-
-          return [[stateKey, {
-            loading: false,
-            error: result.ok ? undefined : result.error,
-            status: result.ok ? 'ready' : 'error'
-          } satisfies SourceTransientState] as const];
-        })
-      );
-      const nextValue = { ...propsValue, ...valuePatch, ...transientPatch };
-
-      setState((previous) => {
-        if (sameInputs(previous.sourceInputs, sourceInputs) && shallowEqual(previous.value, nextValue)) {
-          return previous;
-        }
-
-        return {
-          sourceInputs,
-          value: nextValue
-        };
-      });
-    }).catch((error) => {
-      if (cancelled) {
-        return;
-      }
-
-      const errorPatch = buildStatePatch(sourceEntries, sourceStatePropKeys, () => ({
-        loading: false,
-        error,
-        status: 'error'
-      }));
-
-      setState({
-        sourceInputs,
-        value: { ...propsValue, ...errorPatch }
-      });
-    });
-
+  useEffect(() => {
     return () => {
-      cancelled = true;
+      controller.dispose();
     };
-  }, [currentValue, propsValue, runtime, scope, sourceEntries, sourceInputs, sourceStatePropKeys]);
+  }, [controller]);
 
-  if (sourceEntries.length === 0) {
+  const snapshot = useSyncExternalStore(
+    controller.subscribe,
+    controller.getSnapshot,
+    controller.getSnapshot
+  );
+
+  if (!hasSourceProps) {
     return propsValue;
   }
 
-  if (!sameInputs(state.sourceInputs, sourceInputs)) {
-    return currentValue;
-  }
-
-  return state.value;
+  return snapshot.value;
 }

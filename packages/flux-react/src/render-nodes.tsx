@@ -52,14 +52,27 @@ function extractTemplateNodes(template: CompiledTemplate): TemplateNode | readon
   return template.root;
 }
 
-const fragmentScopeCache = new Map<string, {
+type FragmentScopeCacheEntry = {
   scope: ScopeRef;
   parent: ScopeRef;
   runtime: RendererRuntime;
   isolate: boolean | undefined;
   pathSuffix: string | undefined;
   scopeKey: string | undefined;
-}>();
+};
+
+const fragmentScopeCacheByRuntime = new WeakMap<RendererRuntime, Map<string, FragmentScopeCacheEntry>>();
+
+function getFragmentScopeCache(runtime: RendererRuntime): Map<string, FragmentScopeCacheEntry> {
+  let cache = fragmentScopeCacheByRuntime.get(runtime);
+
+  if (!cache) {
+    cache = new Map();
+    fragmentScopeCacheByRuntime.set(runtime, cache);
+  }
+
+  return cache;
+}
 
 export function normalizeNodeInput(
   runtime: RendererRuntime,
@@ -182,6 +195,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
       return undefined;
     }
 
+    const fragmentScopeCache = getFragmentScopeCache(runtime);
     const cachedFragmentScope = fragmentScopeCache.get(fragmentScopeCacheKey);
     if (
       cachedFragmentScope &&
@@ -215,9 +229,9 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
 
   useEffect(() => {
     return () => {
-      fragmentScopeCache.delete(fragmentScopeCacheKey);
+      getFragmentScopeCache(runtime).delete(fragmentScopeCacheKey);
     };
-  }, [fragmentScopeCacheKey]);
+  }, [fragmentScopeCacheKey, runtime]);
 
   useEffect(() => {
     if (!shouldUseFragmentScope || !fragmentBindings || !fragmentScope?.store) {
