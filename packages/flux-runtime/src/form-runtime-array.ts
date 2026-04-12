@@ -153,7 +153,7 @@ export function executeArrayMutation(ctx: {
   ctx.cancelValidationDebounce(ctx.arrayPath);
 
   const state = ctx.sharedState.store.getState();
-  const remappedState = remapArrayFieldState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform, state);
+  const remappedState = remapArrayFieldState(ctx.arrayPath, ctx.indexTransform, state);
   const nextStoreState = replaceManagedArrayValue({
     arrayPath: ctx.arrayPath,
     nextValue,

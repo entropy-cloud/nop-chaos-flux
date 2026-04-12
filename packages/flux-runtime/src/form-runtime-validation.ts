@@ -9,7 +9,7 @@ import type {
 import { getCompiledValidationField, hasCompiledValidationNodes } from '@nop-chaos/flux-core';
 import { findRuntimeRegistration, syncRegisteredFieldValue } from './form-runtime-registration';
 import { collectSubtreeNodePaths, collectSubtreePaths } from './form-runtime-subtree';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import type { FormRuntimeValidationState } from './form-runtime-types';
 import { scheduleDebounce } from './utils/debounce';
 import { normalizeRuntimeValidationErrors } from './validation';
 
@@ -22,7 +22,7 @@ function createValidationResult(errors: ValidationError[]): ValidationResult {
 
 const VALIDATION_CANCELLED = Symbol('validation-cancelled');
 
-function setPathErrors(sharedState: ManagedFormRuntimeSharedState, path: string, errors: ValidationError[]) {
+function setPathErrors(sharedState: FormRuntimeValidationState, path: string, errors: ValidationError[]) {
   sharedState.store.setPathErrors(path, errors);
 }
 
@@ -73,7 +73,7 @@ function buildNextErrorPathState(
 }
 
 function commitPathValidationState(input: {
-  sharedState: ManagedFormRuntimeSharedState;
+  sharedState: FormRuntimeValidationState;
   path: string;
   errors: ValidationError[];
   validating?: boolean;
@@ -101,7 +101,7 @@ function commitPathValidationState(input: {
   });
 }
 
-export function cancelValidationDebounce(sharedState: ManagedFormRuntimeSharedState, path: string) {
+export function cancelValidationDebounce(sharedState: FormRuntimeValidationState, path: string) {
   const pending = sharedState.pendingValidationDebounces.get(path);
 
   if (!pending) {
@@ -113,14 +113,14 @@ export function cancelValidationDebounce(sharedState: ManagedFormRuntimeSharedSt
   sharedState.pendingValidationDebounces.delete(path);
 }
 
-export function cancelAllValidationDebounces(sharedState: ManagedFormRuntimeSharedState) {
+export function cancelAllValidationDebounces(sharedState: FormRuntimeValidationState) {
   for (const path of Array.from(sharedState.pendingValidationDebounces.keys())) {
     cancelValidationDebounce(sharedState, path);
   }
 }
 
 export function waitForValidationDebounce(
-  sharedState: ManagedFormRuntimeSharedState,
+  sharedState: FormRuntimeValidationState,
   path: string,
   debounce: number | undefined,
   runId: number,
@@ -138,7 +138,7 @@ export function waitForValidationDebounce(
 }
 
 async function validateRuntimeRegistrationRoot(
-  sharedState: ManagedFormRuntimeSharedState,
+  sharedState: FormRuntimeValidationState,
   path: string,
   registration: RuntimeFieldRegistration
 ): Promise<ValidationResult> {
@@ -152,7 +152,7 @@ async function validateRuntimeRegistrationRoot(
 }
 
 async function validateRuntimeRegistrationChild(
-  sharedState: ManagedFormRuntimeSharedState,
+  sharedState: FormRuntimeValidationState,
   path: string,
   registration: RuntimeFieldRegistration,
   childPath: string
@@ -172,7 +172,7 @@ async function validateRuntimeRegistrationChild(
 }
 
 async function validateCompiledField(
-  sharedState: ManagedFormRuntimeSharedState,
+  sharedState: FormRuntimeValidationState,
   path: string,
   field: CompiledFormValidationField,
   reason?: ValidationReason
@@ -273,7 +273,7 @@ async function validateCompiledField(
   }
 }
 
-export async function validatePath(sharedState: ManagedFormRuntimeSharedState, path: string, reason?: ValidationReason): Promise<ValidationResult> {
+export async function validatePath(sharedState: FormRuntimeValidationState, path: string, reason?: ValidationReason): Promise<ValidationResult> {
   if (sharedState.lifecycleState === 'disposed') {
     return createValidationResult([]);
   }
@@ -318,7 +318,7 @@ export async function validatePath(sharedState: ManagedFormRuntimeSharedState, p
 }
 
 export async function validateSubtreeByNode(
-  sharedState: ManagedFormRuntimeSharedState,
+  sharedState: FormRuntimeValidationState,
   path: string,
   reason?: ValidationReason
 ): Promise<FormValidationResult | undefined> {
@@ -361,4 +361,3 @@ export async function validateSubtreeByNode(
     fieldErrors
   };
 }
-

@@ -3,15 +3,8 @@ import type {
   ActionScope,
   ActionResult,
   ActionSchema,
-  ApiSchema,
-  ExecutableApiRequest,
-  OperationControlConfig,
-  SourceSchema,
-  CompiledRuntimeValue,
-  CompiledFormValidationField,
   CompiledFormValidationModel,
   ComponentHandleRegistry,
-  CompiledValidationRule,
   ExpressionCompiler,
   FormRuntime,
   PageRuntime,
@@ -22,8 +15,7 @@ import type {
   RendererRuntime,
   SchemaCompiler,
   ScopeRef,
-  ValidationError,
-  ValidationRule
+  SourceSchema
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createActionScope } from './action-scope';
@@ -32,23 +24,20 @@ import { createApiCacheStore } from './api-cache';
 import { createComponentHandleRegistry } from './component-handle-registry';
 import { createDataSourceController, createSourceExecutor } from './data-source-runtime';
 import { createManagedFormRuntime } from './form-runtime';
-import { isAbortError } from './error-utils';
 import { createImportManager } from './imports';
 import { createNodeRuntime } from './node-runtime';
 import { createManagedPageRuntime } from './page-runtime';
 import { createRuntimeNodeResolver } from './node-resolver';
-import {
-  applyResponseDataPath,
-  createApiRequestExecutor,
-  executeApiSchema
-} from './request-runtime';
+import { createApiRequestExecutor, executeApiSchema } from './request-runtime';
 import { createRuntimeReactionRegistry } from './reaction-runtime';
 import { sortRendererPlugins } from './runtime-plugins';
 import { createSchemaCompiler } from './schema-compiler';
 import { createScopeRef, createScopeStore, toRecord } from './scope';
 import { createRuntimeSourceRegistry } from './source-registry';
 import { validateRule } from './validation-runtime';
-import { createBuiltInValidationRegistry, createValidationError } from './validation';
+import { createBuiltInValidationRegistry } from './validation';
+import { createRuntimeEvalHelpers } from './runtime-eval-helpers';
+import { executeRuntimeValidationRule, executeRuntimeAjaxAction } from './runtime-action-helpers';
 
 export { createRendererRegistry, registerRendererDefinitions } from './registry';
 export { createSchemaCompiler, validateSchema } from './schema-compiler';
@@ -88,7 +77,6 @@ export function createRendererRuntime(input: {
     current: input.env
   };
   const getEnv = () => envRef.current;
-  const compiledValueCache = new WeakMap<object, ReturnType<ExpressionCompiler['compileValue']>>();
   const apiCache = createApiCacheStore();
   const executeApiRequest = createApiRequestExecutor(getEnv);
   const sourceRegistryRef: { current?: ReturnType<typeof createRuntimeSourceRegistry> } = {};
@@ -137,44 +125,9 @@ export function createRendererRuntime(input: {
     getEnv
   });
 
-  async function executeValidationRule(
-    compiledRule: CompiledValidationRule,
-    rule: Extract<ValidationRule, { kind: 'async' }>,
-    field: CompiledFormValidationField,
-    scope: ScopeRef
-  ): Promise<ValidationError | undefined> {
-    try {
-      const response = await executeApiSchema(rule.api, scope, getEnv(), expressionCompiler, {
-        evaluate,
-        executor: (adaptedApi) => executeApiRequest(`validate:${field.path}`, adaptedApi, scope)
-      });
-      const adaptedData = response.data;
+  const { evaluate, compileValue, evaluateCompiled } = createRuntimeEvalHelpers(expressionCompiler, getEnv);
 
-      if (adaptedData && typeof adaptedData === 'object') {
-        const candidate = adaptedData as { valid?: boolean; message?: string };
-
-        if (candidate.valid === false) {
-          return createValidationError(
-            field,
-            compiledRule,
-            candidate.message ?? rule.message ?? `${field.label ?? field.path} failed async validation`
-          );
-        }
-
-        if (candidate.valid === true) {
-          return undefined;
-        }
-      }
-
-      return undefined;
-    } catch (error) {
-      if (isAbortError(error)) {
-        return undefined;
-      }
-
-      throw error;
-    }
-  }
+  const evalCtx = { getEnv, expressionCompiler, evaluate, executeApiRequest };
 
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
     const page = createManagedPageRuntime({
@@ -201,7 +154,8 @@ export function createRendererRuntime(input: {
   }): FormRuntime {
     return createManagedFormRuntime({
       ...inputValue,
-      executeValidationRule,
+      executeValidationRule: (compiledRule, rule, field, scope) =>
+        executeRuntimeValidationRule(compiledRule, rule, field, scope, evalCtx),
       validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry),
       submitApi: async (api, scope, options) => {
         const response = await executeApiSchema(api, scope, getEnv(), expressionCompiler, {
@@ -218,69 +172,6 @@ export function createRendererRuntime(input: {
         };
       }
     });
-  }
-
-  async function executeAjaxAction(api: ApiSchema, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal): Promise<ActionResult> {
-    let monitoredApi: ExecutableApiRequest | undefined;
-    const response = await executeApiSchema(api, ctx.scope, getEnv(), expressionCompiler, {
-      signal,
-      evaluate,
-      onPreparedRequest: (preparedApi) => {
-        monitoredApi = preparedApi;
-      },
-      executor: (adaptedApi) => executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
-        signal,
-        interactionId: ctx.interactionId,
-        control: action.control as OperationControlConfig | undefined
-      }),
-      control: action.control as OperationControlConfig | undefined
-    });
-
-    if (monitoredApi) {
-      getEnv().monitor?.onApiRequest?.({
-        api: monitoredApi,
-        nodeId: ctx.nodeInstance?.templateNode.id,
-        path: ctx.nodeInstance?.templateNode.templatePath,
-        interactionId: ctx.interactionId
-      });
-    }
-
-    if (action.dataPath && ctx.page) {
-      const nextData = applyResponseDataPath(ctx.page.store.getState().data, action.dataPath, response.data);
-      ctx.page.store.setData(nextData);
-    }
-
-    return {
-      ok: true,
-      data: response.data,
-      error: undefined
-    };
-  }
-
-  function evaluate<T = unknown>(target: unknown, scope: ScopeRef): T {
-    return evaluateCompiled(compileValue<T>(target as T), scope);
-  }
-
-  function compileValue<T = unknown>(target: T): CompiledRuntimeValue<T> {
-    const cacheable = target != null && typeof target === 'object';
-
-    if (!cacheable) {
-      return expressionCompiler.compileValue(target);
-    }
-
-    const cached = compiledValueCache.get(target as object);
-
-    if (cached) {
-      return cached as CompiledRuntimeValue<T>;
-    }
-
-    const compiled = expressionCompiler.compileValue(target);
-    compiledValueCache.set(target as object, compiled);
-    return compiled as CompiledRuntimeValue<T>;
-  }
-
-  function evaluateCompiled<T = unknown>(compiled: CompiledRuntimeValue<T>, scope: ScopeRef): T {
-    return expressionCompiler.evaluateValue(compiled, scope, getEnv()) as T;
   }
 
   const executeSourceRef: { current?: (source: SourceSchema, scope: ScopeRef, ctx?: Partial<ActionContext>) => Promise<ActionResult> } = {};
@@ -440,7 +331,7 @@ export function createRendererRuntime(input: {
     compileValue,
     evaluateCompiled,
     refreshDataSource: (inputValue) => runtime.refreshDataSource(inputValue),
-    executeAjaxAction,
+    executeAjaxAction: (api, action, ctx, signal) => executeRuntimeAjaxAction(api, action, ctx, signal, evalCtx),
     submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
     openDrawer: async (drawer, ctx) => {
       if (!ctx.page) {
