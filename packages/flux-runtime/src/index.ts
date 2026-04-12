@@ -32,6 +32,7 @@ import { createApiCacheStore } from './api-cache';
 import { createComponentHandleRegistry } from './component-handle-registry';
 import { createDataSourceController, createSourceExecutor } from './data-source-runtime';
 import { createManagedFormRuntime } from './form-runtime';
+import { isAbortError } from './error-utils';
 import { createImportManager } from './imports';
 import { createNodeRuntime } from './node-runtime';
 import { createManagedPageRuntime } from './page-runtime';
@@ -167,11 +168,7 @@ export function createRendererRuntime(input: {
 
       return undefined;
     } catch (error) {
-      if (
-        error &&
-        typeof error === 'object' &&
-        ((error as { name?: string }).name === 'AbortError' || (error as { code?: string }).code === 'ABORT_ERR')
-      ) {
+      if (isAbortError(error)) {
         return undefined;
       }
 

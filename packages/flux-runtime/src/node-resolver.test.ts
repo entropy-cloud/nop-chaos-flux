@@ -132,6 +132,67 @@ describe('node identity contracts', () => {
     expect(componentRegistry.getHandleByCid?.(20)).toBeUndefined();
   });
 
+  it('resolveTarget returns nodeInstance from component debug data when cid resolves', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    componentRegistry.setDebugEnabled?.(true);
+    const handle = {
+      id: 'user-form',
+      type: 'form',
+      capabilities: {
+        invoke() {
+          return { ok: true };
+        }
+      }
+    };
+    const nodeInstance = {
+      cid: 42,
+      templateNode: {
+        templateNodeId: 42,
+        id: 'user-form-node',
+        type: 'text',
+        schema: { type: 'text' },
+        templatePath: '$.body[0]',
+        rendererType: 'text',
+        component: textRenderer,
+        propsProgram: { kind: 'static', value: {} },
+        metaProgram: {},
+        eventPlans: {},
+        regions: {},
+        scopePlan: { kind: 'inherit' },
+        sourcePropKeys: [],
+        sourceStatePropKeys: {}
+      },
+      scope: { id: 'page', path: '$page', get: () => undefined, has: () => false, readOwn: () => ({}), read: () => ({}), update: () => undefined, merge: () => undefined },
+      state: { metaState: {}, mounted: true }
+    } as any;
+
+    const unregister = componentRegistry.register(handle, { cid: 42 });
+
+    try {
+      componentRegistry.setHandleDebugData?.(42, {
+        nodeInstance,
+        nodeId: 'user-form-node',
+        path: '$.body[0]',
+        rendererType: 'text',
+        scope: nodeInstance.scope,
+        resolvedMeta: {} as any,
+        resolvedProps: {},
+        updatedAt: Date.now()
+      });
+
+      const result = runtime.resolveTarget({ _targetCid: 42 }, { runtimeId: runtime.runtimeId, componentRegistry });
+
+      expect(result).toBe(nodeInstance);
+    } finally {
+      unregister();
+    }
+  });
+
   it('compile returns a CompiledTemplate with a root TemplateNode containing a templateNodeId', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),

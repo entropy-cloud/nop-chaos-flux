@@ -13,6 +13,17 @@ import type {
 } from '@nop-chaos/flux-core';
 import { isPlainObject, setIn } from '@nop-chaos/flux-core';
 
+export interface ApiRequestExecutor {
+  <T>(
+    actionType: string,
+    api: ApiSchema | ExecutableApiRequest,
+    scope: ScopeRef,
+    form?: FormRuntime,
+    options?: { signal?: AbortSignal; interactionId?: string; control?: OperationControlConfig }
+  ): Promise<ApiResponse<T>>;
+  dispose(): void;
+}
+
 const adaptorExpressionCache = new WeakMap<ExpressionCompiler, Map<string, CompiledExpression<unknown>>>();
 
 function getPathValue(input: unknown, path: string): unknown {
@@ -423,11 +434,11 @@ export async function executeApiSchema(
 
 export const executeApiObject = executeApiSchema;
 
-export function createApiRequestExecutor(getEnv: () => RendererEnv) {
+export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestExecutor {
   const activeControllers = new Map<string, AbortController>();
   const activePromises = new Map<string, Promise<ApiResponse<any>>>();
 
-  return async function executeApiRequest<T>(
+  const executeApiRequest: ApiRequestExecutor = async function executeApiRequest<T>(
     actionType: string,
     api: ApiSchema | ExecutableApiRequest,
     scope: ScopeRef,
@@ -483,4 +494,15 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv) {
       }
     }
   };
+
+  executeApiRequest.dispose = () => {
+    for (const controller of activeControllers.values()) {
+      controller.abort();
+    }
+
+    activeControllers.clear();
+    activePromises.clear();
+  };
+
+  return executeApiRequest;
 }

@@ -12,6 +12,25 @@ import type {
   NodeInstance
 } from '@nop-chaos/flux-core';
 
+export interface ImportManager {
+  ensureImportedNamespaces(args: {
+    imports?: readonly XuiImportSpec[];
+    actionScope?: ActionScope;
+    componentRegistry?: ComponentHandleRegistry;
+    scope: ScopeRef;
+    nodeInstance?: NodeInstance;
+  }): Promise<void>;
+  getImportedExpressionBindings(args: {
+    imports?: readonly XuiImportSpec[];
+    actionScope?: ActionScope;
+  }): Readonly<Record<string, unknown>>;
+  releaseImportedNamespaces(args: {
+    imports?: readonly XuiImportSpec[];
+    actionScope?: ActionScope;
+  }): void;
+  dispose(args?: { actionScopes?: readonly ActionScope[] }): void;
+}
+
 function normalizeImportSpec(spec: XuiImportSpec): XuiImportSpec {
   return {
     ...spec,
@@ -61,7 +80,7 @@ export function createImportManager(input: {
   getLoader: () => ImportedLibraryLoader | undefined;
   getRuntime: () => RendererRuntime;
   getEnv: () => RendererEnv;
-}) {
+}): ImportManager {
   const moduleLoads = new Map<string, Promise<Awaited<ReturnType<ImportedLibraryLoader['load']>>>>();
   type ImportState = 'loading' | 'ready' | 'error';
   type ScopeRegistrationEntry = {
@@ -354,9 +373,30 @@ export function createImportManager(input: {
     );
   }
 
+  function dispose(args?: { actionScopes?: readonly ActionScope[] }) {
+    for (const actionScope of args?.actionScopes ?? []) {
+      const registrations = scopeRegistrations.get(actionScope);
+
+      if (!registrations) {
+        continue;
+      }
+
+      for (const [key, entry] of Array.from(registrations.entries())) {
+        entry.refCount = 0;
+        registrations.delete(key);
+        void entry.pending.finally(() => {
+          entry.release?.();
+        });
+      }
+    }
+
+    moduleLoads.clear();
+  }
+
   return {
     ensureImportedNamespaces,
     getImportedExpressionBindings,
-    releaseImportedNamespaces
+    releaseImportedNamespaces,
+    dispose
   };
 }

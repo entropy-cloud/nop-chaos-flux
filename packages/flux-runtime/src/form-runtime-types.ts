@@ -62,18 +62,47 @@ export interface ExternalErrorEntry {
   errors: ValidationError[];
 }
 
-export interface ManagedFormRuntimeSharedState {
-  inputValue: CreateManagedFormRuntimeInput;
+export interface FormRuntimeStoreScopeState {
   store: FormStoreApi;
   scope: ScopeRef;
+}
+
+export interface FormRuntimeInitialStateSlice {
   initialFieldState: InitialFieldState;
+}
+
+export interface FormRuntimeValidationRunState {
   validationRuns: Map<string, number>;
   pendingValidationDebounces: Map<string, PendingValidationDebounce>;
+}
+
+export interface FormRuntimeRegistrationState
+  extends FormRuntimeStoreScopeState,
+    FormRuntimeInitialStateSlice {
   runtimeFieldRegistrations: Map<string, RegisteredFieldEntry>;
   pathToRegistrationId: Map<string, string>;
+}
+
+export interface FormRuntimeValidationState
+  extends FormRuntimeRegistrationState,
+    FormRuntimeValidationRunState {
+  inputValue: CreateManagedFormRuntimeInput;
   hiddenFields: Set<string>;
   lifecycleState: ValidationOwnerLifecycleState;
   modelGeneration: number;
+}
+
+export interface FormRuntimeExternalErrorState extends FormRuntimeStoreScopeState {
   externalErrors: Map<string, ExternalErrorEntry>;
+}
+
+export interface FormRuntimeChildContractState {
   childContracts: Map<string, ChildValidationContractRegistration>;
 }
+
+export interface FormRuntimeOwnerState
+  extends FormRuntimeValidationState,
+    FormRuntimeExternalErrorState,
+    FormRuntimeChildContractState {}
+
+export interface ManagedFormRuntimeSharedState extends FormRuntimeOwnerState {}

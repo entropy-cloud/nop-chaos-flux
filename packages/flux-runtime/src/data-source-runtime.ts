@@ -13,17 +13,10 @@ import type {
   StaticRuntimeValue
 } from '@nop-chaos/flux-core';
 import { resolveCacheKey, type ApiCacheStore } from './api-cache';
+import { isAbortError } from './error-utils';
 import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime';
 import { collectRuntimeDependencies } from './node-runtime';
 import { publishOwnerStatus } from './status-owner';
-
-function isAbortError(error: unknown): boolean {
-  return Boolean(
-    error &&
-      typeof error === 'object' &&
-      (((error as { name?: string }).name === 'AbortError') || ((error as { code?: string }).code === 'ABORT_ERR'))
-  );
-}
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));

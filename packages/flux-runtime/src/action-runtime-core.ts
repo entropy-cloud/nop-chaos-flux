@@ -74,15 +74,6 @@ export function createTimedOutResult(error?: unknown): ActionResult {
   };
 }
 
-export function isAbortError(error: unknown): boolean {
-  if (!error || typeof error !== 'object') {
-    return false;
-  }
-
-  const candidate = error as { name?: string; code?: string };
-  return candidate.name === 'AbortError' || candidate.code === 'ABORT_ERR';
-}
-
 export function createActionKey(action: ActionSchema, ctx: ActionContext): string {
   const owner = ctx.nodeInstance?.templateNode.id ?? ctx.form?.id ?? ctx.scope.id;
   const target = action.targetId ?? action.componentPath ?? action.componentId ?? action.formId ?? action.dialogId ?? action.api?.url ?? '';

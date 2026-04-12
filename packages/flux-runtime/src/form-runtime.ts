@@ -27,18 +27,16 @@ import {
 } from '@nop-chaos/flux-core';
 import { createFormStore } from './form-store';
 import { executeArrayMutation } from './form-runtime-array';
+import { buildFormOwnerRuntime } from './form-runtime-owner';
 import { findRuntimeRegistration } from './form-runtime-registration';
 import { buildInitialFieldState } from './form-runtime-state';
-import { createInitialFormScopeChange, createFormScopeWithBinding, validationErrorsEqual } from './form-runtime-status';
-import { collectSubtreeValidationTargets } from './form-runtime-subtree';
+import { createInitialFormScopeChange, createFormScopeWithBinding } from './form-runtime-status';
 import { buildSubmitTouchedState, classifySubmitResult } from './form-runtime-submit';
 import {
   cancelAllValidationDebounces,
   cancelValidationDebounce,
-  validatePath,
-  validateSubtreeByNode
+  validatePath
 } from './form-runtime-validation';
-import { computeRefreshErrorRetention } from './form-runtime-lifecycle';
 import type { CreateManagedFormRuntimeInput, ManagedFormRuntimeSharedState } from './form-runtime-types';
 import { createScopeRef, toRecord } from './scope';
 
@@ -154,23 +152,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     childContracts: new Map()
   };
 
-  function computeScopeState(): ScopeValidationStateSnapshot {
-    const state = store.getState();
-    const hasErrors = Object.keys(state.errors).length > 0;
-    const isValidating = Object.values(state.validating).some(Boolean);
-    const valid = !hasErrors;
-    return {
-      valid,
-      hasErrors,
-      validating: isValidating,
-      lifecycleState: sharedState.lifecycleState,
-      ready: valid && !isValidating,
-      modelGeneration: sharedState.modelGeneration
-    };
-  }
-
   function computeCanSubmit(): boolean {
-    const scopeState = computeScopeState();
+    const scopeState = ownerRuntime.computeScopeState();
     if (!scopeState.valid || scopeState.validating) {
       return false;
     }
@@ -221,109 +204,17 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     };
   }
 
-  async function revalidateDependents(path: string) {
-    const dependentPaths = getCompiledValidationDependents(currentValidation, path);
-
-    for (const dependentPath of dependentPaths) {
-      if (dependentPath === path) {
-        continue;
-      }
-
-      sharedState.validationRuns.set(dependentPath, (sharedState.validationRuns.get(dependentPath) ?? 0) + 1);
-      cancelValidationDebounce(sharedState, dependentPath);
-
-      const currentDependentValue = scope.get(dependentPath);
-      const dependentBaseline = initialFieldState.initialValues[dependentPath];
-      const isDirty = !Object.is(dependentBaseline, currentDependentValue);
-
-      const state = store.getState();
-      const nextValidating = { ...state.validating };
-      delete nextValidating[dependentPath];
-
-      const nextDirty = isDirty
-        ? { ...state.dirty, [dependentPath]: true }
-        : (() => { const d = { ...state.dirty }; delete d[dependentPath]; return d; })();
-
-      store.batchUpdate({ validating: nextValidating, dirty: nextDirty });
-
-      if (
-        store.getState().touched[dependentPath] ||
-        store.getState().visited[dependentPath] ||
-        isSubmittingInternal
-      ) {
-        await thisForm.validateField(dependentPath);
-      } else {
-        thisForm.clearErrors(dependentPath);
-      }
-    }
-  }
-
-  function rebuildStoreErrorsFromExternal(
-    baseErrors: Record<string, ValidationError[]>
-  ): Record<string, ValidationError[]> {
-    const next: Record<string, ValidationError[]> = {};
-
-    for (const [path, pathErrors] of Object.entries(baseErrors)) {
-      const nonExternal = pathErrors.filter((e) => e.sourceKind !== 'external');
-      if (nonExternal.length > 0) {
-        next[path] = nonExternal;
-      }
-    }
-
-    for (const entry of sharedState.externalErrors.values()) {
-      for (const err of entry.errors) {
-        const externalErr: ValidationError = { ...err, sourceKind: 'external' };
-        const existing = next[err.path];
-        next[err.path] = existing ? [...existing, externalErr] : [externalErr];
-      }
-    }
-
-    return next;
-  }
-
-  function clearExternalErrorsForPath(name: string): boolean {
-    let changed = false;
-
-    for (const [sourceId, entry] of sharedState.externalErrors) {
-      const filtered = entry.errors.filter(
-        (e) => e.path !== name && !e.path.startsWith(`${name}.`)
-      );
-
-      if (filtered.length !== entry.errors.length) {
-        changed = true;
-        if (filtered.length === 0) {
-          sharedState.externalErrors.delete(sourceId);
-        } else {
-          sharedState.externalErrors.set(sourceId, { sourceId, errors: filtered });
-        }
-      }
-    }
-
-    return changed;
-  }
-
-  function applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationStateSnapshot {
-    const { sourceId, errors, replace } = input;
-    const existing = sharedState.externalErrors.get(sourceId);
-
-    if (replace || !existing) {
-      sharedState.externalErrors.set(sourceId, { sourceId, errors });
-    } else {
-      sharedState.externalErrors.set(sourceId, { sourceId, errors: [...existing.errors, ...errors] });
-    }
-
-    const nextErrors = rebuildStoreErrorsFromExternal(store.getState().errors);
-    store.setErrors(nextErrors);
-    return computeScopeState();
-  }
-
-  function supersedeLowerPriorityWork(): void {
-    const allPaths = Array.from(sharedState.validationRuns.keys());
-    for (const path of allPaths) {
-      sharedState.validationRuns.set(path, (sharedState.validationRuns.get(path) ?? 0) + 1);
-      cancelValidationDebounce(sharedState, path);
-    }
-  }
+  const formRuntimeRef: { current?: FormRuntime } = {};
+  const ownerRuntime = buildFormOwnerRuntime({
+    sharedState,
+    formId,
+    getCurrentValidation: () => currentValidation,
+    setCurrentValidation: (validation) => {
+      currentValidation = validation;
+    },
+    getIsSubmitting: () => isSubmittingInternal,
+    getThisForm: () => formRuntimeRef.current as FormRuntime
+  });
 
   const thisForm: FormRuntime = {
     id: formId,
@@ -360,7 +251,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     getScopeState() {
-      return computeScopeState();
+      return ownerRuntime.computeScopeState();
     },
 
     getScopeRootErrors() {
@@ -386,78 +277,19 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationStateSnapshot {
-      return applyExternalErrors(input);
+      return ownerRuntime.applyExternalErrors(input);
     },
 
     async applyChangesAndRevalidate(input: ApplyScopeChangesInput): Promise<FormValidationResult> {
-      if (sharedState.lifecycleState === 'disposed') {
-        return { ok: true, errors: [], fieldErrors: {} };
-      }
-
-      const { writes, changedPaths, reason } = input;
-      const state = store.getState();
-      let nextValues = state.values;
-
-      for (const [path, value] of Object.entries(writes)) {
-        nextValues = setIn(nextValues, path, value);
-        validationRuns.set(path, (validationRuns.get(path) ?? 0) + 1);
-        cancelValidationDebounce(sharedState, path);
-      }
-
-      store.batchUpdate({ values: nextValues });
-
-      for (const path of changedPaths) {
-        await revalidateDependents(path);
-      }
-
-      return thisForm.validateForm(reason);
+      return ownerRuntime.applyChangesAndRevalidate(input);
     },
 
     refreshCompiledModel(newModel) {
-      if (sharedState.lifecycleState === 'disposed') {
-        return;
-      }
-
-      sharedState.lifecycleState = 'refreshing';
-      sharedState.modelGeneration += 1;
-
-      const oldModel = currentValidation;
-      currentValidation = newModel;
-      sharedState.inputValue = { ...sharedState.inputValue, validation: newModel };
-
-      cancelAllValidationDebounces(sharedState);
-      sharedState.validationRuns.clear();
-
-      const staleRegistrations = Array.from(sharedState.runtimeFieldRegistrations.entries());
-      for (const [regId, entry] of staleRegistrations) {
-        sharedState.runtimeFieldRegistrations.delete(regId);
-        sharedState.pathToRegistrationId.delete(entry.registration.path);
-      }
-
-      if (oldModel) {
-        const currentErrors = store.getState().errors;
-        const retainedErrors = computeRefreshErrorRetention(oldModel, newModel, currentErrors);
-        store.setErrors(retainedErrors);
-      } else {
-        store.setErrors({});
-      }
-
-      sharedState.lifecycleState = 'active';
+      ownerRuntime.refreshCompiledModel(newModel);
     },
 
     dispose() {
-      if (sharedState.lifecycleState === 'disposed') {
-        return;
-      }
-
-      sharedState.lifecycleState = 'disposed';
-      cancelAllValidationDebounces(sharedState);
-      sharedState.validationRuns.clear();
-      sharedState.runtimeFieldRegistrations.clear();
-      sharedState.pathToRegistrationId.clear();
-      sharedState.childContracts.clear();
-      sharedState.externalErrors.clear();
-      store.batchUpdate({ errors: {}, validating: {}, touched: {}, dirty: {}, visited: {} });
+      ownerRuntime.dispose();
     },
 
     registerChildContract(contract: ChildValidationContractRegistration): void {
@@ -562,144 +394,11 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     async validateForm(reason?) {
-      if (!currentValidation && runtimeFieldRegistrations.size === 0) {
-        return {
-          ok: true,
-          errors: [],
-          fieldErrors: {}
-        } as FormValidationResult;
-      }
-
-      const fieldErrors: Record<string, ValidationError[]> = {};
-      const errors: ValidationError[] = [];
-      const initialErrors = store.getState().errors;
-      const validatedPaths = new Set<string>();
-
-      const validationPaths = getCompiledValidationTraversalOrder(currentValidation);
-
-      for (const path of validationPaths) {
-        validatedPaths.add(path);
-        const result = await thisForm.validateField(path, reason);
-
-        if (!result.ok) {
-          fieldErrors[path] = result.errors;
-          errors.push(...result.errors);
-        }
-      }
-
-      async function validateRegisteredChildren(registration: RuntimeFieldRegistration) {
-        if (!registration.validateChild || !registration.childPaths?.length) return;
-        for (const childPath of registration.childPaths) {
-          validatedPaths.add(childPath);
-          const result = await thisForm.validateField(childPath, reason);
-          if (!result.ok) {
-            fieldErrors[childPath] = result.errors;
-            errors.push(...result.errors);
-          }
-        }
-      }
-
-      for (const entry of runtimeFieldRegistrations.values()) {
-        const { registration } = entry;
-        const path = registration.path;
-        validatedPaths.add(path);
-
-        if (getCompiledValidationField(currentValidation, path)) {
-          await validateRegisteredChildren(registration);
-          continue;
-        }
-
-        if (!registration.validate) {
-          await validateRegisteredChildren(registration);
-          continue;
-        }
-
-        const result = await thisForm.validateField(path, reason);
-
-        if (!result.ok) {
-          fieldErrors[path] = result.errors;
-          errors.push(...result.errors);
-        }
-
-        await validateRegisteredChildren(registration);
-      }
-
-      const currentErrors = store.getState().errors;
-      const preservedErrors: Record<string, ValidationError[]> = {};
-
-      for (const [path, pathErrors] of Object.entries(currentErrors)) {
-        if (!validatedPaths.has(path)) {
-          preservedErrors[path] = pathErrors;
-          continue;
-        }
-
-        if (fieldErrors[path]) {
-          preservedErrors[path] = fieldErrors[path];
-        }
-      }
-
-      const mergedErrors = {
-        ...preservedErrors,
-        ...fieldErrors
-      };
-
-      if (mergedErrors !== currentErrors) {
-        store.setErrors(mergedErrors);
-      }
-
-      for (const [path, pathErrors] of Object.entries(mergedErrors)) {
-        if (fieldErrors[path]) {
-          continue;
-        }
-
-        if (validationErrorsEqual(initialErrors[path], pathErrors)) {
-          continue;
-        }
-
-        fieldErrors[path] = pathErrors;
-        errors.push(...pathErrors);
-      }
-
-      return {
-        ok: errors.length === 0,
-        errors,
-        fieldErrors
-      } as FormValidationResult;
+      return ownerRuntime.validateForm(reason);
     },
 
     async validateSubtree(path, reason?) {
-      if (!currentValidation) {
-        return {
-          ok: true,
-          errors: [],
-          fieldErrors: {}
-        } as FormValidationResult;
-      }
-
-      const nodeResult = await validateSubtreeByNode(sharedState, path, reason);
-
-      if (nodeResult) {
-        return nodeResult;
-      }
-
-      const targetPaths = collectSubtreeValidationTargets(sharedState, path);
-      const errors: ValidationError[] = [];
-      const fieldErrors: Record<string, ValidationError[]> = {};
-
-      for (const targetPath of targetPaths) {
-        const result = await validatePath(sharedState, targetPath, reason);
-
-        if (!result.ok) {
-          fieldErrors[targetPath] = result.errors;
-          errors.push(...result.errors);
-        }
-      }
-
-      return {
-        ok: errors.length === 0,
-        errors,
-        fieldErrors
-      } as FormValidationResult;
+      return ownerRuntime.validateSubtree(path, reason);
     },
 
     getError(path) {
@@ -776,12 +475,14 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       });
 
       if (nextTouched !== store.getState().touched) {
-        store.batchUpdate({ touched: nextTouched });
+      store.batchUpdate({ touched: nextTouched });
       }
 
-      supersedeLowerPriorityWork();
+      ownerRuntime.supersedeLowerPriorityWork();
 
-      const validation = await thisForm.validateForm('submit');
+      const validation = (!currentValidation && runtimeFieldRegistrations.size === 0)
+        ? { ok: true, errors: [], fieldErrors: {} } as FormValidationResult
+        : await thisForm.validateForm('submit');
 
       if (!validation.ok) {
         const validationFailure = {
@@ -881,12 +582,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         errors: patch.nextErrors
       });
 
-      if (clearExternalErrorsForPath(name)) {
-        const nextErrors = rebuildStoreErrorsFromExternal(store.getState().errors);
+      if (ownerRuntime.clearExternalErrorsForPath(name)) {
+        const nextErrors = ownerRuntime.rebuildStoreErrorsFromExternal(store.getState().errors);
         store.setErrors(nextErrors);
       }
 
-      void revalidateDependents(name);
+      void ownerRuntime.revalidateDependents(name);
     },
 
     setValues(values) {
@@ -940,18 +641,18 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       let externalChanged = false;
       for (const changedPath of changedPaths) {
-        if (clearExternalErrorsForPath(changedPath)) {
+        if (ownerRuntime.clearExternalErrorsForPath(changedPath)) {
           externalChanged = true;
         }
       }
 
       if (externalChanged) {
-        const nextStoreErrors = rebuildStoreErrorsFromExternal(store.getState().errors);
+        const nextStoreErrors = ownerRuntime.rebuildStoreErrorsFromExternal(store.getState().errors);
         store.setErrors(nextStoreErrors);
       }
 
       for (const changedPath of changedPaths) {
-        void revalidateDependents(changedPath);
+        void ownerRuntime.revalidateDependents(changedPath);
       }
     },
 
@@ -963,7 +664,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         arrayOperation: (current) => insertArrayValue(current, Number.MAX_SAFE_INTEGER, value),
         indexTransform: (index) => index,
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents
+        revalidateDependents: ownerRuntime.revalidateDependents
       });
     },
 
@@ -975,7 +676,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         arrayOperation: (current) => insertArrayValue(current, 0, value),
         indexTransform: (index) => index + 1,
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents
+        revalidateDependents: ownerRuntime.revalidateDependents
       });
     },
 
@@ -990,7 +691,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         arrayOperation: () => insertArrayValue(safeArray, insertIndex, value),
         indexTransform: (candidate) => (candidate >= insertIndex ? candidate + 1 : candidate),
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents
+        revalidateDependents: ownerRuntime.revalidateDependents
       });
     },
 
@@ -1015,7 +716,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           return candidate > removeIndex ? candidate - 1 : candidate;
         },
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents
+        revalidateDependents: ownerRuntime.revalidateDependents
       });
     },
 
@@ -1054,7 +755,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           return candidate;
         },
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents
+        revalidateDependents: ownerRuntime.revalidateDependents
       });
     },
 
@@ -1089,7 +790,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           return candidate;
         },
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents
+        revalidateDependents: ownerRuntime.revalidateDependents
       });
     },
 
@@ -1102,7 +803,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         arrayOperation: () => nextValue,
         indexTransform: (candidate) => (candidate < nextValue.length ? candidate : undefined),
         cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents
+        revalidateDependents: ownerRuntime.revalidateDependents
       });
     },
 
@@ -1124,6 +825,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       return node?.children ?? [];
     }
   };
+
+  formRuntimeRef.current = thisForm;
 
   return thisForm;
 }

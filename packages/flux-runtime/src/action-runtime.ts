@@ -25,13 +25,13 @@ import {
   getInternalComponentActionTarget,
   getNumericControl,
   getRetryControl,
-  isAbortError,
   mergeEvaluationBindings,
   normalizeActionResult,
   resolveActionControl,
   shouldRunActionWhen,
   type ActionDispatcherInput
 } from './action-runtime-core';
+import { isAbortError } from './error-utils';
 
 export function createActionDispatcher(input: ActionDispatcherInput) {
   const pendingDebounces = new Map<string, {

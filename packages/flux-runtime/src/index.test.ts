@@ -1223,6 +1223,77 @@ describe('createRendererRuntime', () => {
     expect(String(releasedResult.error)).toContain('Unsupported action: demo:ping');
   });
 
+  it('dispose aborts in-flight requests and releases owned imported namespaces', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    let releaseRequest: (() => void) | undefined;
+    const dispose = vi.fn();
+    const fetcher = vi.fn(async <T>(_api: ApiObject, ctx: ApiRequestContext) => {
+      capturedSignal = ctx.signal;
+      await new Promise<void>((resolve) => {
+        releaseRequest = resolve;
+      });
+
+      if (ctx.signal?.aborted) {
+        const error = new Error('aborted');
+        (error as Error & { name: string }).name = 'AbortError';
+        throw error;
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        data: { ok: true } as T
+      };
+    });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
+        importLoader: {
+          load: vi.fn(async () => ({
+            createNamespace: () => ({
+              kind: 'import' as const,
+              dispose,
+              invoke: async () => ({ ok: true })
+            })
+          }))
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const actionScope = runtime.createActionScope({ id: 'import-scope' });
+
+    await runtime.ensureImportedNamespaces({
+      imports: [{ from: 'demo-lib', as: 'demo' }],
+      actionScope,
+      scope: page.scope
+    });
+
+    void runtime.registerDataSource({
+      id: 'slow-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/slow' },
+        dataPath: 'payload'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    runtime.dispose();
+
+    expect(capturedSignal?.aborted).toBe(true);
+    releaseRequest?.();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(dispose).toHaveBeenCalledTimes(1);
+  });
+
   it('allows child import scopes to shadow parent imports and restores parent after release', async () => {
     const importLoader = {
       load: vi.fn(async (spec: { from: string; as: string }) => ({
@@ -2123,6 +2194,59 @@ describe('createRendererRuntime', () => {
     } finally {
       registration.dispose();
     }
+  });
+
+  it('reports and removes reactions that exceed the fire-count limit', async () => {
+    const notify = vi.fn();
+    const onError = vi.fn();
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        notify,
+        monitor: { onError }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ count: 0 });
+
+    runtime.registerReaction({
+      id: 'bounded-reaction',
+      scope: page.scope,
+      schema: {
+        type: 'reaction',
+        watch: '${count}',
+        actions: {
+          action: 'setValue',
+          componentPath: 'count',
+          value: '${count + 1}'
+        }
+      },
+      dispatch: (action, ctx) => runtime.dispatch(action, {
+        runtime,
+        scope: ctx?.scope ?? page.scope,
+        page
+      })
+    });
+
+    page.scope.update('count', 1);
+
+    await vi.waitFor(() => {
+      expect(notify).toHaveBeenCalledWith(
+        'warning',
+        expect.stringContaining('bounded-reaction')
+      );
+    });
+
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({
+      phase: 'action',
+      details: expect.objectContaining({
+        reason: 'reaction-fire-count-limit',
+        reactionId: 'bounded-reaction',
+        maxFireCount: 10
+      })
+    }));
+    expect(runtime.getReactionDebugSnapshot?.()).toEqual({ reactions: [] });
   });
 
   it('exposes reaction value bindings to action evaluation', async () => {
