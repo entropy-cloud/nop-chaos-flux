@@ -23,6 +23,8 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const onActionScopeChange = props.onActionScopeChange;
     const envRef = useRef(props.env);
     envRef.current = props.env;
+    const onActionErrorRef = useRef(props.onActionError);
+    onActionErrorRef.current = props.onActionError;
     const runtime = useMemo(() => {
       const resolvedRegistry = props.registry ?? registry;
       const expressionCompiler = createExpressionCompiler(props.formulaCompiler ?? createFormulaCompiler());
@@ -33,9 +35,9 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
         expressionCompiler,
         plugins: props.plugins,
         pageStore: props.pageStore,
-        onActionError: props.onActionError
+        onActionError: (error, ctx) => onActionErrorRef.current?.(error, ctx)
       });
-    }, [props.formulaCompiler, props.plugins, props.registry, props.pageStore, props.onActionError]);
+    }, [props.formulaCompiler, props.plugins, props.registry, props.pageStore]);
 
     const pageData = props.data ?? EMPTY_SCOPE_DATA;
     const initialPageDataRef = useRef(pageData);
@@ -62,6 +64,12 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     useEffect(() => {
       page.refresh();
     }, [page, props.env]);
+
+    useEffect(() => {
+      return () => {
+        runtime.dispose();
+      };
+    }, [runtime]);
 
     const rootScope = props.parentScope ?? page.scope;
     const rootActionScope = useMemo(

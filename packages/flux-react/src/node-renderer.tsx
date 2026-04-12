@@ -54,28 +54,37 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   const propsProgram = props.node.propsProgram;
   const metaProgram = props.node.metaProgram;
-  const isStatic = !props.node.linkageProgram && propsProgram.kind === 'static' && Object.keys(metaProgram).every((key) => {
-    const v = metaProgram[key as keyof typeof metaProgram];
-    return !v || (v as { kind?: string }).kind !== 'dynamic';
-  });
+  const isStatic = useMemo(
+    () => !props.node.linkageProgram && propsProgram.kind === 'static' && Object.keys(metaProgram).every((key) => {
+      const v = metaProgram[key as keyof typeof metaProgram];
+      return !v || (v as { kind?: string }).kind !== 'dynamic';
+    }),
+    [props.node, propsProgram, metaProgram]
+  );
 
   const getNodeResolution = () => ({
     meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
     resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
   });
-  const subscribe = isStatic
-    ? (() => () => undefined)
-    : ((listener: () => void) => props.scope.store?.subscribe((change: ScopeChange) => {
-      const metaHit = scopeChangeHitsDependencies(change, nodeState.metaDependencies);
-      const propsHit = scopeChangeHitsDependencies(change, nodeState.propsDependencies);
+  const subscribe = useMemo(
+    () => isStatic
+      ? (() => () => undefined)
+      : ((listener: () => void) => props.scope.store?.subscribe((change: ScopeChange) => {
+        const metaHit = scopeChangeHitsDependencies(change, nodeState.metaDependencies);
+        const propsHit = scopeChangeHitsDependencies(change, nodeState.propsDependencies);
 
-      if (metaHit || propsHit) {
-        listener();
-      }
-    }) ?? (() => undefined));
-  const getSnapshot = isStatic
-    ? (() => null)
-    : (() => props.scope.store?.getLastChange() ?? null);
+        if (metaHit || propsHit) {
+          listener();
+        }
+      }) ?? (() => undefined)),
+    [isStatic, props.scope, nodeState]
+  );
+  const getSnapshot = useMemo(
+    () => isStatic
+      ? (() => null)
+      : (() => props.scope.store?.getLastChange() ?? null),
+    [isStatic, props.scope]
+  );
 
   const { meta: baseMeta, resolvedProps: baseResolvedProps } = useSyncExternalStoreWithSelector(
     subscribe,
@@ -88,8 +97,11 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     }
   );
 
-  const nodeClassAliases = getNodeClassAliases(props.node);
-  const mergedClassAliases = mergeClassAliases(parentClassAliases, nodeClassAliases);
+  const nodeClassAliases = useMemo(() => getNodeClassAliases(props.node), [props.node]);
+  const mergedClassAliases = useMemo(
+    () => mergeClassAliases(parentClassAliases, nodeClassAliases),
+    [parentClassAliases, nodeClassAliases]
+  );
   const resolvedMeta = useMemo(() => {
     const resolvedClassName = resolveClassAliases(baseMeta.className, mergedClassAliases);
     return resolvedClassName !== baseMeta.className

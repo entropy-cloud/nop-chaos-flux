@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type {
   NodeInstance,
   RendererHelpers,
@@ -11,27 +11,42 @@ export function useRenderMonitor(input: {
   templateNode: TemplateNode;
   resolvedMeta: ResolvedNodeMeta;
 }) {
+  const startedAtRef = useRef<number | undefined>(undefined);
+
   useEffect(() => {
     if (!input.monitor) {
+      startedAtRef.current = undefined;
       return;
     }
 
     if (!input.resolvedMeta.visible || input.resolvedMeta.hidden) {
+      startedAtRef.current = undefined;
       return;
     }
 
-    const startedAt = Date.now();
     const payload = {
       nodeId: input.templateNode.id,
       path: input.templateNode.templatePath,
       type: input.templateNode.rendererType
     };
 
+    startedAtRef.current = Date.now();
+
     input.monitor.onRenderStart?.(payload);
-    input.monitor.onRenderEnd?.({
-      ...payload,
-      durationMs: Math.max(0, Date.now() - startedAt)
-    });
+
+    return () => {
+      const startedAt = startedAtRef.current;
+      startedAtRef.current = undefined;
+
+      if (startedAt == null) {
+        return;
+      }
+
+      input.monitor?.onRenderEnd?.({
+        ...payload,
+        durationMs: Math.max(0, Date.now() - startedAt)
+      });
+    };
   }, [
     input.monitor,
     input.templateNode.id,

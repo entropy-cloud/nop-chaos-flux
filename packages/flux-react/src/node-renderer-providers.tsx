@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
@@ -57,14 +57,14 @@ export function NodeRendererProviders(props: React.PropsWithChildren<{
   }
 
   return (
-    <NodeMetaContext.Provider value={{
+    <NodeMetaContext.Provider value={useMemo(() => ({
       id: props.templateNode.id,
       path: props.templateNode.templatePath,
       type: props.templateNode.rendererType,
       cid: props.nodeInstance.cid,
       templateNode: props.templateNode,
       node: props.nodeInstance
-    }}>
+    }), [props.templateNode, props.nodeInstance])}>
       <ScopeContext.Provider value={props.scope}>
         {children}
       </ScopeContext.Provider>

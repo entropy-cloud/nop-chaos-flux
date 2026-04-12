@@ -958,7 +958,6 @@ describe('createSchemaRenderer runtime behavior', () => {
 
     await waitFor(() => {
       expect(onRenderStart).toHaveBeenCalled();
-      expect(onRenderEnd).toHaveBeenCalled();
     });
 
     const initialStartCalls = onRenderStart.mock.calls.length;
@@ -974,6 +973,21 @@ describe('createSchemaRenderer runtime behavior', () => {
 
     expect(onRenderStart).toHaveBeenCalledTimes(initialStartCalls);
     expect(onRenderEnd).toHaveBeenCalledTimes(initialEndCalls);
+
+    view.unmount();
+
+    await waitFor(() => {
+      expect(onRenderEnd).toHaveBeenCalled();
+    });
+
+    const renderEndPayload = onRenderEnd.mock.calls.at(-1)?.[0];
+    expect(renderEndPayload).toEqual(expect.objectContaining({
+      nodeId: expect.any(String),
+      path: expect.any(String),
+      type: 'text',
+      durationMs: expect.any(Number)
+    }));
+    expect(renderEndPayload.durationMs).toBeGreaterThanOrEqual(0);
   });
 
   it('projects form errors by owner path and source kind', async () => {
