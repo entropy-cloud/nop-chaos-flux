@@ -1,6 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
-import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
+import { useCurrentForm, useCurrentFormModelGeneration, useRenderScope } from '@nop-chaos/flux-react';
 import { Button } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
@@ -24,6 +24,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const labelContent = resolveFieldLabelContent(props);
   const labelText = resolveFieldLabelText(props, name);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];
+  const modelGeneration = useCurrentFormModelGeneration();
 
   const syncErrorVisibility = React.useCallback(() => {
     if (!currentForm || !name) {
@@ -62,7 +63,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
         return [];
       }
     }).unregister;
-  }, [currentForm, labelText, name]);
+  }, [currentForm, labelText, modelGeneration, name]);
 
   return (
     <label

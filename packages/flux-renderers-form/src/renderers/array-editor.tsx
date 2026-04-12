@@ -1,7 +1,7 @@
 import React from 'react';
 import type { BaseSchema, CompiledValidationBehavior, RendererComponentProps, RendererDefinition, RuntimeFieldRegistration } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentForm, useCurrentFormState, useCurrentFormModelGeneration, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { Button, Input } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
@@ -145,6 +145,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const itemsRef = React.useRef(items);
   const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
   const childPaths = React.useMemo(() => items.map((_, index) => `${name}.${index}.value`), [items, name]);
+  const modelGeneration = useCurrentFormModelGeneration();
 
   React.useEffect(() => {
     itemsRef.current = items;
@@ -241,7 +242,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
     registrationRef.current = registration;
     return currentForm.registerField(registration).unregister;
-    }, [childPaths, currentForm, name, props.props.itemLabel]);
+    }, [childPaths, currentForm, modelGeneration, name, props.props.itemLabel]);
 
   return (
     <label

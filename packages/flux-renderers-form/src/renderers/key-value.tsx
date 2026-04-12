@@ -8,7 +8,7 @@ import type {
   ValidationRule
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentForm, useCurrentFormState, useCurrentFormModelGeneration, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { Button, Input } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
@@ -212,6 +212,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     () => pairs.flatMap((_, index) => [`${name}.${index}.key`, `${name}.${index}.value`]),
     [name, pairs]
   );
+  const modelGeneration = useCurrentFormModelGeneration();
 
   React.useEffect(() => {
     pairsRef.current = pairs;
@@ -334,7 +335,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
     registrationRef.current = registration;
     return currentForm.registerField(registration).unregister;
-    }, [childPaths, currentForm, name]);
+    }, [childPaths, currentForm, modelGeneration, name]);
 
   return (
     <label

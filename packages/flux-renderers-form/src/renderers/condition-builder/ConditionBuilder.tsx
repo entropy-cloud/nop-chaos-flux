@@ -7,7 +7,7 @@ import type {
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentForm, useCurrentFormState, useCurrentFormModelGeneration, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import {
   formLabelFieldRule,
   readFieldValue,
@@ -58,6 +58,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   );
   const valueRef = useRef(localValue);
   const registrationRef = useRef<RuntimeFieldRegistration | undefined>(undefined);
+  const modelGeneration = useCurrentFormModelGeneration();
 
   useEffect(() => {
     valueRef.current = localValue;
@@ -118,7 +119,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
 
     registrationRef.current = registration;
     return currentForm.registerField(registration).unregister;
-  }, [currentForm, name]);
+  }, [currentForm, modelGeneration, name]);
 
   const embed = props.props.embed !== false;
 
