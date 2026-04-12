@@ -109,10 +109,8 @@ export interface TextSchema extends BaseSchema {
 export interface ButtonSchema extends BaseSchema {
   type: 'button';
   label?: string;
-  /** 按钮样式变体 */
-  variant?: 'default' | 'primary' | 'danger' | 'ghost';
-  /** 按钮尺寸 */
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon' | 'icon-xs' | 'icon-sm' | 'icon-lg';
   disabled?: boolean | string;
 }
 

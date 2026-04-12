@@ -355,7 +355,7 @@ export const buttonRenderer: RendererDefinition = {
       type="button"
       onClick={() => void props.events.onClick?.()}
     >
-      {String(props.props.label ?? props.meta.label ?? 'Button')}
+      {String(props.props.label ?? 'Button')}
     </button>
   ),
   fields: [{ key: 'onClick', kind: 'event' }]
@@ -399,7 +399,7 @@ export const wrapProbeRenderer: RendererDefinition = {
   wrap: true,
   component: (props) => (
     <input
-      aria-label={String(props.meta.label ?? props.props.label ?? 'Wrap probe')}
+      aria-label={String(props.props.label ?? 'Wrap probe')}
       data-testid="wrap-probe-input"
       defaultValue={String(props.props.value ?? '')}
     />
@@ -467,7 +467,7 @@ export const scopedHostRenderer: RendererDefinition = {
 function NamespaceProvider(props: RendererComponentProps) {
   const actionScope = useCurrentActionScope();
   const namespace = String(props.props.namespace ?? 'demo');
-  const label = String(props.props.label ?? props.meta.label ?? 'provider');
+  const label = String(props.props.label ?? 'provider');
 
   React.useEffect(() => {
     if (!actionScope) {
@@ -496,7 +496,7 @@ export const namespaceProviderRenderer: RendererDefinition = {
 function ComponentHandleProvider(props: RendererComponentProps) {
   const componentRegistry = useCurrentComponentRegistry();
   const componentName = String(props.props.componentName ?? 'shared');
-  const label = String(props.props.label ?? props.meta.label ?? 'handle');
+  const label = String(props.props.label ?? 'handle');
 
   React.useEffect(() => {
     if (!componentRegistry) {
@@ -540,7 +540,7 @@ function DispatchProbe(props: RendererComponentProps) {
           setResultText(result.ok ? String(result.data ?? '') : String(result.error ?? ''));
         }}
       >
-        {String(props.props.label ?? props.meta.label ?? 'Run dispatch')}
+        {String(props.props.label ?? 'Run dispatch')}
       </button>
       <span data-testid={String(props.props.resultKey ?? 'dispatch-result')}>{resultText}</span>
     </div>

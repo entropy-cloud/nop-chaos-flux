@@ -100,7 +100,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   });
   const options = Array.isArray(props.props.options) ? props.props.options : [];
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
-  const ariaLabel = String(props.meta.label ?? props.props.label ?? name);
+  const ariaLabel = String(props.props.label ?? name);
   const loading = optionsSourceState?.loading === true;
   const placeholder = loading ? 'Loading...' : undefined;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
@@ -195,7 +195,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
         checked={checked}
         disabled={presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
-        aria-label={String(props.meta.label ?? props.props.label ?? name)}
+        aria-label={String(props.props.label ?? name)}
         onFocus={handlers.onFocus}
         onCheckedChange={(nextChecked) => handlers.onChange(String(Boolean(nextChecked)))}
         onBlur={handlers.onBlur}

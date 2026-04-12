@@ -59,7 +59,7 @@ const buttonRenderer: RendererDefinition = {
       type="button"
       onClick={(event) => void props.events.onClick?.(event)}
     >
-      {String(props.props.label ?? props.meta.label ?? 'Button')}
+      {String(props.props.label ?? 'Button')}
     </button>
   ),
   fields: [{ key: 'onClick', kind: 'event' }]
@@ -74,7 +74,7 @@ function ContactGroupRenderer(props: RendererComponentProps) {
 
   return (
     <label className="nop-field">
-      <span data-slot="field-label">{String(props.meta.label ?? 'Contact')}</span>
+      <span data-slot="field-label">{String(props.props.label ?? 'Contact')}</span>
       <input
         aria-label="Contact Email"
         className="nop-input"

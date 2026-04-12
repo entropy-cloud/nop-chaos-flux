@@ -249,8 +249,25 @@ describe('createSchemaCompiler', () => {
     }).createRuntimeState();
     const meta = runtime.resolveNodeMeta(node, page.scope, state);
 
-    expect(meta.title).toBeUndefined();
+    expect((meta as unknown as Record<string, unknown>).title).toBeUndefined();
     expect(node.propsProgram.value.title).toBe('Profile');
+  });
+
+  it('delivers name through normalized props channel, not meta', () => {
+    const registry = createRendererRegistry([inputRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const compiled = compiler.compile({
+      type: 'input-text',
+      name: 'user.email'
+    });
+    const node = compiled.root as any;
+
+    expect(node.propsProgram.value.name).toBe('user.email');
+    expect((node.metaProgram as Record<string, unknown>).name).toBeUndefined();
   });
 
   it('tracks event fields separately from normal props and regions', () => {

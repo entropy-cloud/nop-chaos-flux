@@ -19,7 +19,7 @@ const actionButtonRenderer: RendererDefinition = {
   type: 'action-button',
   component: (props) => (
     <button type="button" onClick={() => void props.events.onClick?.()}>
-      {String(props.props.label ?? props.meta.label ?? 'Action')}
+      {String(props.props.label ?? 'Action')}
     </button>
   ),
   fields: [{ key: 'onClick', kind: 'event' }],

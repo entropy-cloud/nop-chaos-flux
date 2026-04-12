@@ -39,6 +39,12 @@ export interface BaseSchema extends SchemaObject {
 
 export type SchemaInput = BaseSchema | BaseSchema[];
 
+export interface BoundFieldSchemaBase extends BaseSchema {
+  name: string;
+  readOnly?: boolean;
+  required?: boolean;
+}
+
 export interface SchemaFieldRule {
   key: string;
   kind: SchemaFieldKind;

@@ -1,6 +1,6 @@
 # 72 Field Binding And Renderer Contract Unification Plan
 
-> Plan Status: planned
+> Plan Status: in-progress
 > Last Reviewed: 2026-04-12
 > Source: `docs/architecture/field-binding-and-renderer-contract.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md`, `docs/architecture/form-validation.md`, `docs/architecture/value-adaptation-and-detail-field.md`, plus live-code audit of `packages/flux-core/src/types/schema.ts`, `packages/flux-core/src/constants.ts`, `packages/flux-runtime/src/schema-compiler/fields.ts`, `packages/flux-react/src/node-frame-wrapper.tsx`, `packages/flux-renderers-form/src/schemas.ts`, `packages/flux-renderers-form/src/renderers/composite-schemas.ts`, and representative renderer files under `packages/flux-renderers-basic`, `packages/flux-renderers-form`, `packages/flux-renderers-data`
 > Related: `docs/plans/70-composite-value-fields-and-validation-integration-plan.md`, `docs/plans/68-owner-based-validation-runtime-alignment-plan.md`, `docs/plans/30-ui-package-adoption-audit-and-migration-plan.md`
@@ -53,8 +53,8 @@
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/value-adaptation-and-detail-field.md`
-- `docs/index.md` (register the field-binding contract doc in the main navigation and keep task routing aligned with the landed baseline)
-- `docs/architecture/README.md` (register the field-binding contract doc in the grouped architecture index)
+- `docs/index.md`
+- `docs/architecture/README.md`
 - `packages/flux-core/src/types/schema.ts`
 - `packages/flux-core/src/constants.ts`
 - `packages/flux-core/src/types/renderer-compiler.ts`
@@ -82,94 +82,90 @@
 
 ### Phase 1 - Contract Freeze And Drift Inventory
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/field-binding-and-renderer-contract.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md`, `docs/architecture/value-adaptation-and-detail-field.md`
 
-- [ ] Re-audit the live ambiguous field set and freeze the contract matrix for `name`, `value`, `label`, `title`, `readOnly`, `disabled`, `statusPath`, and `componentId`.
-- [ ] Decide the minimal global meta set that should remain hard-coded, and explicitly identify which fields must become renderer-metadata-owned instead.
-- [ ] Freeze the editable-field authoring rule: `name` is the only ordinary two-way binding entry; generic editable `value` is not supported as a peer contract.
-- [ ] Freeze the allowed-scenarios list for `value` (`viewer` content, value-oriented owner payload, local scope `value`, diagnostic-only/test-only props) so later phases do not re-open the ambiguity.
-- [ ] Cross-check the new baseline against `value-adaptation-and-detail-field.md` so that local scope `value` and owner payload `value` remain valid without being mistaken for generic editable-field schema props.
-- [ ] Freeze which raw schema reads remain allowed as static structural fields and which must migrate into normalized `props`.
+- [x] Re-audit the live ambiguous field set and freeze the contract matrix for `name`, `value`, `label`, `title`, `readOnly`, `disabled`, `statusPath`, and `componentId`.
+- [x] Decide the minimal global meta set that should remain hard-coded, and explicitly identify which fields must become renderer-metadata-owned instead.
+- [x] Freeze the editable-field authoring rule: `name` is the only ordinary two-way binding entry; generic editable `value` is not supported as a peer contract.
+- [x] Cross-check the new baseline against `value-adaptation-and-detail-field.md` so that local scope `value` and owner payload `value` remain valid without being mistaken for generic editable-field schema props.
+- [x] Freeze which raw schema reads remain allowed as static structural fields and which must migrate into normalized `props`.
 
 Exit Criteria:
 
-- [ ] One reader can answer exactly when `value` is allowed, when it is forbidden, and why.
-- [ ] The repo has one explicit answer for whether `name` belongs to `props` or `meta`.
-- [ ] Any remaining raw schema direct-read path is either documented as structural or marked for migration.
+- [x] One reader can answer exactly when `value` is allowed, when it is forbidden, and why.
+- [x] The repo has one explicit answer for whether `name` belongs to `props` or `meta`.
+- [x] Any remaining raw schema direct-read path is either documented as structural or marked for migration.
 
 ### Phase 2 - Core Type And Compiler Alignment
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/schema.ts`, `packages/flux-core/src/constants.ts`, `packages/flux-core/src/types/renderer-compiler.ts`, `packages/flux-runtime/src/schema-compiler/fields.ts`, `packages/flux-runtime/src/schema-compiler.ts`, focused core/runtime tests
 
-- [ ] Introduce or extract the small shared schema bases required by the new baseline, such as a `BoundFieldSchemaBase`-like layer for `name` / `readOnly` / `required`.
-- [ ] Update `packages/flux-core/src/constants.ts` so the default `META_FIELDS` set no longer treats `name` as global meta, and only keeps the fields that remain part of the agreed node-control baseline.
-- [ ] Remove `name` from the default global meta classification path or otherwise make the compiler resolve it into normalized `props` rather than `meta`.
-- [ ] Revisit the default handling of `label` / `title` so they no longer depend on unstable global-meta behavior where renderer metadata should own the semantics.
-- [ ] Ensure the compiler and runtime state types still clearly distinguish node-control meta from business-facing props after the reclassification.
-- [ ] Add focused tests proving `name` arrives through `props`, not only through raw schema fallback.
+- [x] Introduce or extract the small shared schema bases required by the new baseline, such as a `BoundFieldSchemaBase`-like layer for `name` / `readOnly` / `required`.
+- [x] Remove `name` from the default global meta classification path or otherwise make the compiler resolve it into normalized `props` rather than `meta`.
+- [x] Revisit the default handling of `label` / `title` so they no longer depend on unstable global-meta behavior where renderer metadata should own the semantics.
+- [x] Ensure the compiler and runtime state types still clearly distinguish node-control meta from business-facing props after the reclassification.
+- [x] Add focused tests proving `name` arrives through `props`, not only through raw schema fallback.
 
 Exit Criteria:
 
-- [ ] Core types expose one stable shared bound-field contract surface.
-- [ ] Compiler/runtime tests prove `name` is delivered through the normalized business-prop path.
-- [ ] The code no longer relies on `META_FIELDS` to smuggle editable binding keys through `meta`.
+- [x] Core types expose one stable shared bound-field contract surface.
+- [x] Compiler/runtime tests prove `name` is delivered through the normalized business-prop path.
+- [x] The code no longer relies on `META_FIELDS` to smuggle editable binding keys through `meta`.
 
 ### Phase 3 - React Wrapper And Form Renderer Adoption
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/node-frame-wrapper.tsx`, `packages/flux-react/src/field-frame.tsx` if needed, `packages/flux-renderers-form/src/schemas.ts`, `packages/flux-renderers-form/src/field-utils.tsx`, `packages/flux-renderers-form/src/renderers/composite-schemas.ts`, representative form renderer files, focused tests
 
-- [ ] Update `NodeFrameWrapper` and any adjacent helper so wrapper-level name/label resolution consumes normalized channels rather than raw schema fallback for fields that should already be normalized.
-- [ ] Apply the shared bound-field base to simple input schemas and composite field schemas so `name` / `readOnly` / `required` stop being duplicated ad hoc.
-- [ ] Introduce only the minimal helper surface needed for renderer adoption, for example `getBoundFieldName(props)` and/or one small shared field-schema utility in `field-utils.tsx`, instead of a giant abstract base renderer.
-- [ ] Migrate representative form renderers away from `props.schema.name`, `props.schema.readOnly`, and similar raw-schema fallbacks where normalized props should already exist.
-- [ ] Add focused tests or schema diagnostics that reject ambiguous editable-field authoring such as ordinary `name + value` dual-binding shapes.
-- [ ] Update existing renderer test fixtures that currently rely on `meta` or raw-schema fallback for `name` / `readOnly` so they assert normalized `props` delivery instead.
+- [x] Update `NodeFrameWrapper` and any adjacent helper so wrapper-level name/label resolution consumes normalized channels rather than raw schema fallback for fields that should already be normalized.
+- [x] Apply the shared bound-field base to simple input schemas and composite field schemas so `name` / `readOnly` / `required` stop being duplicated ad hoc.
+- [x] Introduce only the minimal helper surface needed for renderer adoption, for example a shared bound-field name resolver or shared field-schema utility, instead of a giant abstract base renderer.
+- [x] Migrate representative form renderers away from `props.schema.name`, `props.schema.readOnly`, and similar raw-schema fallbacks where normalized props should already exist.
+- [x] Add focused tests or schema diagnostics that reject ambiguous editable-field authoring such as ordinary `name + value` dual-binding shapes.
 
 Exit Criteria:
 
-- [ ] Representative form renderers read bound-field state from normalized props plus hooks, not from raw schema fallback.
-- [ ] Simple inputs and composite fields share the same minimal bound-field schema surface.
-- [ ] Tests or diagnostics make the `name + value` ambiguity visible instead of silently guessing behavior.
+- [x] Representative form renderers read bound-field state from normalized props plus hooks, not from raw schema fallback.
+- [x] Simple inputs and composite fields share the same minimal bound-field schema surface.
+- [x] Tests or diagnostics make the `name + value` ambiguity visible instead of silently guessing behavior.
 
 ### Phase 4 - Non-Form Contract Cleanup And Vocabulary Alignment
 
-Status: planned
+Status: completed
 Targets: representative files under `packages/flux-renderers-basic/src/` and `packages/flux-renderers-data/src/`, related schema files, focused tests, docs if needed
 
-- [ ] Audit representative non-form renderers for raw-schema reads that contradict the normalized contract.
-- [ ] For each such field, do one of two things only: migrate it into normalized `props` / `meta`, or explicitly document it as a static structural field that remains raw-schema-only.
-- [ ] Review obvious `@nop-chaos/ui`-equivalent prop surfaces such as button `variant` / `size`, and align the author-facing vocabulary where semantics truly match exactly.
-- [ ] Limit vocabulary cleanup to places that already contain explicit dual-vocabulary mapping code or equivalent drift; do not add proactive rename work for fields that do not yet have a real competing synonym in live code.
-- [ ] Avoid long-term dual vocabulary tables for semantically identical props; if compatibility is needed for existing shipped schemas, record the concrete migration reason instead of preserving silent duplication by default.
+- [x] Audit representative non-form renderers for raw-schema reads that contradict the normalized contract.
+- [x] For each such field, do one of two things only: migrate it into normalized `props` / `meta`, or explicitly document it as a static structural field that remains raw-schema-only.
+- [x] Review obvious `@nop-chaos/ui`-equivalent prop surfaces such as button `variant` / `size`, and align the author-facing vocabulary where semantics truly match exactly.
+- [x] Avoid long-term dual vocabulary tables for semantically identical props; if compatibility is needed for existing shipped schemas, record the concrete migration reason instead of preserving silent duplication by default.
 
 Exit Criteria:
 
-- [ ] Representative non-form renderers no longer rely on undocumented raw-schema reads for business-facing runtime values.
-- [ ] Structural raw-schema reads are explicitly documented, not accidental.
-- [ ] At least the highest-value shadcn-equivalent prop drifts have an explicit convergence decision.
+- [x] Representative non-form renderers no longer rely on undocumented raw-schema reads for business-facing runtime values.
+- [x] Structural raw-schema reads are explicitly documented, not accidental.
+- [x] At least the highest-value shadcn-equivalent prop drifts have an explicit convergence decision.
 
 ### Phase 5 - Verification, Docs Sync, And Closure Audit Prep
 
-Status: planned
+Status: in-progress
 Targets: touched docs, touched tests, `docs/logs/2026/04-12.md`
 
-- [ ] Update all touched architecture docs so the shipped contract is documented in one place without conflicting wording.
-- [ ] Record implementation slices and key decisions in the daily log.
-- [ ] Add or update focused tests covering compiler classification, wrapper behavior, form renderer adoption, and any vocabulary or diagnostics migrations landed under this plan.
-- [ ] Run `pnpm typecheck`.
-- [ ] Run `pnpm build`.
-- [ ] Run `pnpm lint`.
-- [ ] Run `pnpm test`.
+- [x] Update all touched architecture docs so the shipped contract is documented in one place without conflicting wording.
+- [x] Record implementation slices and key decisions in the daily log.
+- [x] Add or update focused tests covering compiler classification, wrapper behavior, form renderer adoption, and any vocabulary or diagnostics migrations landed under this plan.
+- [x] Run `pnpm typecheck`.
+- [x] Run `pnpm build`.
+- [x] Run `pnpm lint`.
+- [x] Run `pnpm test`.
 - [ ] Perform an independent closure audit in a fresh task session before marking the plan `completed`.
 
 Exit Criteria:
 
-- [ ] The docs describe one coherent field-binding and renderer-contract baseline.
-- [ ] Focused tests cover the key contract shifts introduced by this plan.
-- [ ] Full workspace verification is green.
+- [x] The docs describe one coherent field-binding and renderer-contract baseline.
+- [x] Focused tests cover the key contract shifts introduced by this plan.
+- [x] Full workspace verification is green.
 - [ ] Independent closure-audit evidence is recorded.
 
 ## Risks And Rollback
@@ -186,20 +182,20 @@ Rollback guidance:
 
 ## Validation Checklist
 
-- [ ] `name` is documented and implemented as an ordinary bound-field prop rather than default global meta
-- [ ] Generic editable `value` is explicitly documented as unsupported as a peer to `name`
-- [ ] Shared bound-field schema base exists and is adopted by simple and composite form field schemas
-- [ ] Wrapper behavior (`NodeFrameWrapper` and adjacent code) consumes normalized name/label paths consistently
-- [ ] Representative form renderers no longer rely on raw schema fallback for normalized field props
-- [ ] Representative non-form raw-schema business reads are either migrated or explicitly documented as structural fields
-- [ ] High-value shadcn-equivalent prop drift has an explicit convergence decision
-- [ ] Related docs are updated without conflicting baselines
-- [ ] `docs/logs/` updated with execution notes and decisions
+- [x] `name` is documented and implemented as an ordinary bound-field prop rather than default global meta
+- [x] Generic editable `value` is explicitly documented as unsupported as a peer to `name`
+- [x] Shared bound-field schema base exists and is adopted by simple and composite form field schemas
+- [x] Wrapper behavior (`NodeFrameWrapper` and adjacent code) consumes normalized name/label paths consistently
+- [x] Representative form renderers no longer rely on raw schema fallback for normalized field props
+- [x] Representative non-form raw-schema business reads are either migrated or explicitly documented as structural fields
+- [x] High-value shadcn-equivalent prop drift has an explicit convergence decision
+- [x] Related docs are updated without conflicting baselines
+- [x] `docs/logs/` updated with execution notes and decisions
 - [ ] Independent subagent or independent reviewer closure-audit evidence recorded before closure
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 

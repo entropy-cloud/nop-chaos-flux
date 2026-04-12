@@ -726,7 +726,7 @@
         { "type": "button", "action": "designer:restore", "icon": "download", "label": "恢复", "disabled": "${!isDirty}" },
         { "type": "button", "action": "designer:export", "icon": "file-json", "label": "JSON" },
         { "type": "spacer" },
-        { "type": "button", "action": "designer:save", "icon": "save", "label": "保存", "variant": "primary", "disabled": "${!isDirty}" }
+        { "type": "button", "action": "designer:save", "icon": "save", "label": "保存", "variant": "default", "disabled": "${!isDirty}" }
       ]
     },
     "shortcuts": {

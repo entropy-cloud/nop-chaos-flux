@@ -156,7 +156,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           searchable={props.props.searchable === true}
           disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
           onChange={(nextValue) => handlers.onChange(nextValue)}
-          ariaLabel={String(props.meta.label ?? props.props.label ?? name)}
+          ariaLabel={String(props.props.label ?? name)}
         />
       </div>
       <FieldHint
@@ -248,7 +248,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             searchable={props.props.searchable === true}
             disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
             onChange={(nextValue) => handlers.onChange(nextValue)}
-            ariaLabel={String(props.meta.label ?? props.props.label ?? name)}
+            ariaLabel={String(props.props.label ?? name)}
           />
         </PopoverContent>
       </Popover>

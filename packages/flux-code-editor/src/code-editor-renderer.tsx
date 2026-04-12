@@ -287,7 +287,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
     >
       {isFullscreen && allowFullscreen && (
         <div data-slot="code-editor-header">
-          <span data-slot="code-editor-header-title">{props.meta.label || props.schema.label}</span>
+          <span data-slot="code-editor-header-title">{String(props.props.label ?? props.schema.label ?? '')}</span>
           <Button
             variant="ghost"
             size="icon-xs"

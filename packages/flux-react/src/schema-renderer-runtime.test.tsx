@@ -916,7 +916,7 @@ describe('createSchemaRenderer runtime behavior', () => {
         return {
           ...definition,
           component: (props) => {
-            wrapped(props.meta.label ?? props.props.text);
+            wrapped(props.props.label ?? props.props.text);
             return (
               <div>
                 <span data-testid="wrapped-prefix">Wrapped</span>

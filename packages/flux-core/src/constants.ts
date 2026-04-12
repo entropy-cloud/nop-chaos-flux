@@ -1,8 +1,5 @@
 export const META_FIELDS = new Set([
   'id',
-  'name',
-  'label',
-  'title',
   'className',
   'visible',
   'hidden',

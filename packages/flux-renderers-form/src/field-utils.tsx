@@ -167,16 +167,12 @@ function useFormFieldState(name: string) {
 }
 
 export function resolveFieldLabelContent(props: Pick<RendererComponentProps, 'props' | 'meta' | 'regions'>) {
-  return resolveRendererSlotContent(props, 'label', { metaKey: 'label' });
+  return resolveRendererSlotContent(props, 'label');
 }
 
 export function resolveFieldLabelText(props: Pick<RendererComponentProps, 'props' | 'meta'>, fallback?: string) {
   if (typeof props.props.label === 'string' && props.props.label) {
     return props.props.label;
-  }
-
-  if (typeof props.meta.label === 'string' && props.meta.label) {
-    return props.meta.label;
   }
 
   return fallback;

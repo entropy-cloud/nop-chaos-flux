@@ -338,6 +338,72 @@ interface BoundFieldSchemaBase extends BaseSchema {
 - 为了“统一”把所有字段都命名成 shadcn prop
 - 维护两套长期并存的等价枚举，再由 renderer 每次翻译
 
+## Frozen Contract Matrix
+
+此矩阵是 Phase 1 冻结的权威决策，不受后续局部实现漂移影响。
+
+### Field Channel Assignment
+
+| Author-Facing Field | Normalized Channel | Frozen Rule |
+| --- | --- | --- |
+| `name` | `props.name` | 从 META_FIELDS 移除，由 renderer metadata 分类为 prop；editable field 的唯一双向绑定入口 |
+| `readOnly` | `props.readOnly` | 业务编辑语义，进入 props，不进入 meta |
+| `required` | `props.required` | 字段级校验语义，进入 props |
+| `label` | `props.label` 或 `regions.label` | 由 renderer metadata 决定；不再硬编码为全局 meta |
+| `title` | `props.title` 或 `regions.title` | 由 renderer metadata 决定；不再硬编码为全局 meta |
+| `disabled` | `meta.disabled` | runtime 节点控制态，保留在 meta |
+| `visible` / `hidden` | `meta.*` | runtime 节点可见性，保留在 meta |
+| `className` / `testid` / `id` | `meta.*` | 外层 wrapper / observability，保留在 meta |
+| `text`, `data`, `options`, `items`, `placeholder`, … | `props.*` | 语义化内容字段，保留命名，通过 renderer metadata 进入 props |
+| `body`, `header`, `footer`, `actions`, `toolbar` | `regions.*` | 子 schema 片段，由 renderer metadata 分类为 region |
+| `onClick`, `onSubmit`, `onChange`, … | `events.*` | declarative action，保留 on* 命名 |
+
+### Global META_FIELDS Frozen Set
+
+以下是 Phase 2 之后 `META_FIELDS` 应保留的最小集合：
+
+```ts
+export const META_FIELDS = new Set([
+  'id',
+  'className',
+  'visible',
+  'hidden',
+  'disabled',
+  'testid'
+]);
+```
+
+移除的字段：`name`、`label`、`title`。这三个字段改由各 renderer 的 `fields` metadata 明确分类。
+
+### Permitted Static Structural Fields (Raw Schema Read Allowed)
+
+以下字段可由 renderer 直接读取 raw `schema`，无需进入归一化通道：
+
+| Field | Renderer(s) | Justification |
+| --- | --- | --- |
+| `statusPath` | `page`, `form`, `dialog`, `drawer`, `tree-renderer` | 纯结构配置，不支持表达式，读取一次后不变 |
+| `componentId` | `chart-renderer` | 纯结构配置，chart 实例标识 |
+| `frameWrap` | `NodeFrameWrapper` | 结构配置，不是业务值 |
+
+如果未来需要让这些字段支持表达式求值，必须显式迁移到 `props`，不得继续保留在 raw schema 直读路径中。
+
+### `value` Usage Rules
+
+`value` 在以下场景中仍然合法：
+
+1. `detail-field` / `detail-view` viewer/content scope 中作为局部绑定变量（scope variable）
+2. `value-oriented` owner 的 `transformInAction` / `transformOutAction` payload 中的 `value` 字段
+3. 只读展示 viewer 中作为 renderer-local semantic field
+
+禁止场景：普通 editable field 同时声明 `name` 和 `value`，视为歧义 authoring。
+
+### Cross-Check With `value-adaptation-and-detail-field.md`
+
+- `detail-field` 使用 `name` 作为一等绑定入口，与本文 Rule 2 保持一致。
+- `detail-view` 使用 `data` / `scopePath`，与本文 Rule 4 中"语义化内容字段保留命名"保持一致。
+- `transformInAction` / `transformOutAction` payload 中的 `value` 是内部 working value，与本文 Rule 3 中"允许的 value 场景"保持一致。
+- 两个文档中的 `readOnly` 均进入 `props`，对齐 Rule 6。
+
 ## Recommended Channel Mapping
 
 | Concern | Author-Facing Field | Normalized Channel | Notes |

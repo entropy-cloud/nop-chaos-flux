@@ -1,4 +1,4 @@
-import type { ActionSchema, ApiSchema, BaseSchema, HiddenFieldPolicy, SourceSchema } from '@nop-chaos/flux-core';
+import type { ActionSchema, ApiSchema, BaseSchema, BoundFieldSchemaBase, HiddenFieldPolicy, SourceSchema } from '@nop-chaos/flux-core';
 
 export interface SelectOptionSchema {
   [key: string]: import('@nop-chaos/flux-core').SchemaValue;
@@ -8,10 +8,8 @@ export interface SelectOptionSchema {
 
 export type SelectOptionsValue = SelectOptionSchema[] | SourceSchema;
 
-export interface InputSchema extends BaseSchema {
-  name?: string;
+export interface InputSchema extends BoundFieldSchemaBase {
   placeholder?: string;
-  required?: boolean;
   minLength?: number;
   maxLength?: number;
   pattern?: string;

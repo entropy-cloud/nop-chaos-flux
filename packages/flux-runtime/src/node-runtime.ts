@@ -155,9 +155,6 @@ export function createNodeRuntime(input: {
     const meta = node.metaProgram;
     const resolved: ResolvedNodeMeta = {
       id: evaluateCompiledValue(input.expressionCompiler, meta.id, scope, env, state?.meta.id),
-      name: evaluateCompiledValue(input.expressionCompiler, meta.name, scope, env, state?.meta.name),
-      label: evaluateCompiledValue(input.expressionCompiler, meta.label, scope, env, state?.meta.label),
-      title: evaluateCompiledValue(input.expressionCompiler, meta.title, scope, env, state?.meta.title),
       className: evaluateCompiledValue(input.expressionCompiler, meta.className, scope, env, state?.meta.className),
       visible: Boolean(evaluateCompiledValue(input.expressionCompiler, meta.visible, scope, env, state?.meta.visible) ?? true),
       hidden: Boolean(evaluateCompiledValue(input.expressionCompiler, meta.hidden, scope, env, state?.meta.hidden) ?? false),

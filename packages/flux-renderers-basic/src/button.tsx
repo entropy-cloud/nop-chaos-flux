@@ -5,15 +5,13 @@ import type { ButtonSchema } from './schemas';
 
 export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
   const label = props.props.label;
-  const variant: 'default' | 'destructive' | 'ghost' =
-    props.props.variant === 'danger' ? 'destructive' : props.props.variant === 'ghost' ? 'ghost' : 'default';
-  const size: 'default' | 'sm' | 'lg' =
-    props.props.size === 'sm' || props.props.size === 'lg' ? props.props.size : 'default';
+  const variant = (props.props.variant ?? 'default') as ButtonSchema['variant'];
+  const size = (props.props.size ?? 'default') as ButtonSchema['size'];
 
   return (
- <Button
-      variant={variant}
-      size={size}
+    <Button
+      variant={variant as any}
+      size={size as any}
       className={props.meta.className}
       type="button"
       data-testid={props.meta.testid || undefined}
@@ -21,7 +19,7 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
       onClick={(event) => void props.events.onClick?.(event)}
       disabled={props.meta.disabled}
     >
-      {String(label ?? props.meta.label ?? 'Button')}
+      {String(label ?? 'Button')}
     </Button>
   );
 }

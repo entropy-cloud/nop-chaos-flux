@@ -25,8 +25,9 @@ export function NodeFrameWrapper(props: {
     : typeof props.templateNode.schema.name === 'string'
       ? props.templateNode.schema.name
       : undefined;
-  const labelValue = props.resolvedMeta.label
-    ?? (props.regions.label ? props.regions.label.instantiate() : props.templateNode.schema.label);
+  const labelValue = typeof props.resolvedPropsValue.label !== 'undefined'
+    ? props.resolvedPropsValue.label as import('react').ReactNode
+    : (props.regions.label ? props.regions.label.instantiate() : props.templateNode.schema.label as import('react').ReactNode);
 
   return (
     <FieldFrame

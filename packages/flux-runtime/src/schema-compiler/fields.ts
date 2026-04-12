@@ -66,19 +66,16 @@ export function buildCompiledMeta(
       continue;
     }
 
-    switch (key) {
-      case 'id':
-      case 'name':
-      case 'label':
-      case 'title':
-      case 'className':
-      case 'visible':
-      case 'hidden':
-      case 'disabled':
-      case 'testid':
-        meta[key] = expressionCompiler.compileValue(value as any);
-        break;
-    }
+      switch (key) {
+        case 'id':
+        case 'className':
+        case 'visible':
+        case 'hidden':
+        case 'disabled':
+        case 'testid':
+          meta[key] = expressionCompiler.compileValue(value as any);
+          break;
+      }
   }
 
   return meta;

@@ -107,7 +107,7 @@ function TestButtonRenderer(props: RendererComponentProps) {
       data-cid={props.meta.cid}
       onClick={() => void props.events.onClick?.()}
     >
-      {String(props.props.label ?? props.meta.label ?? 'Button')}
+      {String(props.props.label ?? 'Button')}
     </button>
   );
 }

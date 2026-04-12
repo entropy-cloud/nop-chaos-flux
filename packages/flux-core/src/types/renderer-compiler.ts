@@ -8,9 +8,6 @@ import type { CompiledTemplate } from './node-identity';
 
 export interface CompiledSchemaMeta {
   id?: CompiledRuntimeValue<string | undefined>;
-  name?: CompiledRuntimeValue<string | undefined>;
-  label?: CompiledRuntimeValue<string | undefined>;
-  title?: CompiledRuntimeValue<string | undefined>;
   className?: CompiledRuntimeValue<string | undefined>;
   visible?: CompiledRuntimeValue<boolean | unknown>;
   hidden?: CompiledRuntimeValue<boolean | unknown>;
@@ -90,9 +87,6 @@ export interface ResolvedNodeProps {
 
 export interface ResolvedNodeMeta {
   id?: string;
-  name?: string;
-  label?: string;
-  title?: string;
   className?: string;
   visible: boolean;
   hidden: boolean;

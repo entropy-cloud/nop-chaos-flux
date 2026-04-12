@@ -1,21 +1,17 @@
-import type { ActionSchema, BaseSchema, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type { ActionSchema, BaseSchema, BoundFieldSchemaBase, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
 
 export type SchemaInput = BaseSchema | BaseSchema[];
 
-export interface ObjectFieldSchema extends BaseSchema {
+export interface ObjectFieldSchema extends BoundFieldSchemaBase {
   type: 'object-field';
-  name: string;
-  readOnly?: boolean;
   body: SchemaInput;
   transformInAction?: ActionSchema | ActionSchema[];
   transformOutAction?: ActionSchema | ActionSchema[];
   validateValueAction?: ActionSchema | ActionSchema[];
 }
 
-export interface ArrayFieldSchema extends BaseSchema {
+export interface ArrayFieldSchema extends BoundFieldSchemaBase {
   type: 'array-field';
-  name: string;
-  readOnly?: boolean;
   itemKind: 'scalar' | 'object';
   item: SchemaInput;
   addable?: boolean;
@@ -51,10 +47,8 @@ export interface VariantSelectorConfig extends SchemaObject {
   label?: string;
 }
 
-export interface VariantFieldSchema extends BaseSchema {
+export interface VariantFieldSchema extends BoundFieldSchemaBase {
   type: 'variant-field';
-  name: string;
-  readOnly?: boolean;
   variants: VariantOption[];
   selector?: VariantSelectorConfig;
   defaultVariant?: string;
@@ -71,10 +65,8 @@ export interface DetailSurfaceConfig extends SchemaObject {
   placement?: string;
 }
 
-export interface DetailFieldSchema extends BaseSchema {
+export interface DetailFieldSchema extends BoundFieldSchemaBase {
   type: 'detail-field';
-  name: string;
-  readOnly?: boolean;
   viewer?: SchemaInput;
   content: SchemaInput;
   surface?: DetailSurfaceConfig;
