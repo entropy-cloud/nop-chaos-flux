@@ -86,7 +86,10 @@ export function useTableSelection(
     new Set(schemaProps.rowSelection?.selectedRowKeys ?? [])
   );
 
-  const controlledSelectedRowKeys = new Set(toStringArray(schemaProps.rowSelection?.selectedRowKeys));
+  const controlledSelectedRowKeys = useMemo(
+    () => new Set(toStringArray(schemaProps.rowSelection?.selectedRowKeys)),
+    [schemaProps.rowSelection?.selectedRowKeys]
+  );
 
   const scopeSelectedRowKeys = useScopeSelector(
     (scopeData) => selectionOwnership === 'scope' && selectionStatePath
@@ -103,11 +106,15 @@ export function useTableSelection(
     }
   );
 
-  const selectedRowKeys = selectionOwnership === 'controlled'
-    ? controlledSelectedRowKeys
-    : selectionOwnership === 'scope'
-      ? (scopeSelectedRowKeys ?? new Set<string>())
-      : localSelectedRowKeys;
+  const selectedRowKeys = useMemo(
+    () =>
+      selectionOwnership === 'controlled'
+        ? controlledSelectedRowKeys
+        : selectionOwnership === 'scope'
+          ? (scopeSelectedRowKeys ?? new Set<string>())
+          : localSelectedRowKeys,
+    [selectionOwnership, controlledSelectedRowKeys, scopeSelectedRowKeys, localSelectedRowKeys]
+  );
 
   const allSelected = useMemo(
     () => source.length > 0 && source.every((r) => selectedRowKeys.has(String(r.id ?? ''))),
