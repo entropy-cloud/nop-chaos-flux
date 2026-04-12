@@ -357,6 +357,7 @@ Performance note:
 1. closure can become large in dependency-heavy forms
 2. a single toggle may legitimately expand to many dependent fields
 3. implementations should treat closure size as a real performance concern rather than an edge case
+4. for very large inline-edit tables, `change` validation should prefer the smallest semantically correct closure for the current interaction rather than defaulting to owner-wide traversal
 
 ### Step 3: Expand Validation Targets
 
@@ -377,6 +378,13 @@ Additional rule for structural writes:
 Large closure expansion and large target expansion are independent costs.
 
 Even before async work starts, sync target expansion and materialization can dominate runtime in large forms or large inline tables.
+
+Execution note for large editable tables:
+
+1. a single cell change may legitimately pull in aggregate ancestors such as the array root
+2. that does not mean the host must automatically run owner-wide `validateAll('change')` on every keystroke
+3. if broad aggregate validation is too expensive for the keystroke path, the host should keep `change` local/dependency-aware and move broader aggregate validation to `blur`, `commit`, or `submit`
+4. any incremental optimization must preserve the same aggregate semantics once the chosen publish boundary is reached
 
 ### Step 4: Materialize Rules
 
@@ -792,6 +800,16 @@ When `contacts.3.email` changes:
 
 This shows why aggregate closure is broader than one edited cell.
 
+It does not, by itself, require every keystroke to re-run owner-wide aggregate validation.
+
+Recommended interaction policy for large tables:
+
+1. `change`: validate the edited cell plus the smallest impacted local/dependency-aware set that keeps visible cell feedback correct
+2. `blur`: allow broader aggregate validation when the product requires faster feedback than submit-time only
+3. `commit` / `submit`: run the full aggregate-correct owner-local validation required by the interaction contract
+
+This is the preferred escape hatch when aggregate correctness is required but full owner-wide keystroke validation would create a performance cliff.
+
 ### Detail Dialog Commit Writeback To Parent Owner
 
 Example mental model:
@@ -835,6 +853,12 @@ This is a real performance concern, especially with dynamic requiredness and man
 Large inline-edit tables may produce thousands of active paths.
 
 The expensive part is not only rule execution but also synchronous target expansion and rule materialization.
+
+Recommended rule:
+
+1. do not treat `validateAll('change')` as the default table-cell typing path in aggregate-heavy owners
+2. use `validateAll()` for explicit broad validation boundaries such as `submit`, `commit`, or carefully chosen `blur` interactions
+3. if the product needs near-live aggregate feedback, prefer a semantics-preserving incremental aggregate algorithm over undocumented partial skipping
 
 ### Dynamic Schema / Recompiled Models
 

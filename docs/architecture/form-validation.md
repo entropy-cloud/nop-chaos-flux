@@ -927,6 +927,14 @@ Rules:
 
 Validates all active participating paths owned by the current scope.
 
+`validateAll()` is not the normative keystroke-path baseline for large inline-edit tables.
+
+Rules:
+
+1. hosts must not use `validateAll('change')` as the default response to ordinary cell typing in large editable collections
+2. aggregate-heavy owners, especially tables with array rules such as `uniqueBy(...)`, must treat owner-wide validation on every keystroke as a real performance risk rather than an acceptable default
+3. when the interaction requires broad aggregate correctness, the owner may still run `validateAll()` on `blur`, `commit`, or `submit`, but that must be an explicit interaction policy rather than an accidental fallback from missing finer-grained coordination
+
 ### `applyChangesAndRevalidate(...)`
 
 Coordinates value writes and revalidation atomically for structural edits, branch switches, draft commits, and other system-side participation changes.
@@ -939,6 +947,40 @@ Rules:
 2. passing paths outside the current owner is an error and must be rejected, not silently filtered
 3. its atomic publish guarantee covers only the current owner's value writes, field validation state, and scope summary state
 4. cross-owner coordination must be modeled as explicit parent/child orchestration rather than one `applyChangesAndRevalidate(...)` call spanning multiple owners
+
+## Large Inline Tables And Aggregate Rules
+
+Large inline-edit tables are a performance-sensitive validation domain.
+
+Typical high-risk shape:
+
+1. hundreds of rows
+2. many editable columns
+3. array aggregate rules such as `uniqueBy(...)`, `atLeastOneFilled(...)`, or object/array-level cross-field checks
+4. high-frequency `change` validation while the user is typing
+
+In that shape, the expensive part is not only async work or final rule execution.
+
+Closure expansion, target expansion, and effective-rule materialization can dominate before any remote validation starts.
+
+Normative constraints:
+
+1. the architecture must treat large inline-table aggregate validation cost as a first-class design constraint, not as an implementation detail to be ignored until profiling
+2. compile-time graph truth does not require owner-wide aggregate execution on every `change`; it requires that any deferred or incremental strategy preserve the same semantic graph once the chosen interaction boundary is reached
+3. hosts and renderers must not silently weaken aggregate correctness just to keep typing responsive
+4. if per-keystroke aggregate execution is too costly for the owner shape, the implementation must choose an explicit strategy rather than rely on ad hoc hidden shortcuts
+
+Allowed strategies include:
+
+1. validate the edited path and its local dependency closure during `change`, then run broader aggregate validation at `blur`, `commit`, or `submit`
+2. split the interaction into smaller validation owners such as row-local draft editors when the value lifecycle genuinely supports that boundary
+3. use an incremental aggregate algorithm that preserves the same aggregate semantics as the compiled rule graph at publish time
+
+Rejected baseline:
+
+1. treating owner-wide aggregate revalidation on every cell keystroke as the required default for all table shapes
+2. introducing non-normative shortcuts that skip aggregate rules without making the weaker interaction policy explicit
+3. claiming compile-time graph fidelity while depending on undocumented heuristics that can miss aggregate violations in ordinary editing flows
 
 ## Aggregate Rules
 
