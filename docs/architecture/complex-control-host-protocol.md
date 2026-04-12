@@ -1,7 +1,6 @@
 # 复杂控件平台协议
 
-> Status: active — 2026-04-04
-> Source: Plan `docs/plans/33-complex-control-platform-convergence-refactor-plan.md`
+> Status: active
 
 ## 1. 目的
 
@@ -134,45 +133,25 @@ Namespace 命名规则：
 2. Leave-guard（离开前确认）应通过宿主层 `leaveGuardActive` 语义控制，而不是各自实现不同的 `beforeunload` 逻辑
 3. 保存动作必须通过 command dispatch（e.g. `report-designer:save`）而不是 renderer 直接调用 store 方法
 
-## 10. 当前实现状态矩阵
+## 10. 当前跨域基线
 
-| 能力 | Flow Designer | Spreadsheet | Report Designer | Word Editor |
-|------|--------------|-------------|-----------------|-------------|
-| `DomainBridge` 实现 | 内部（DesignerCore 可适配） | ✓ `SpreadsheetBridge` | ✓ `ReportDesignerBridge` | ✗ 待接入 |
-| Host scope 注入 | ✓ `useDesignerHostScope` | ✓ `useHostScope` | ✓ `useReportDesignerHostScope` | ✗ 无（非 Flux renderer） |
-| Namespace action 注册 | ✓ `designer:*` | ✓ `spreadsheet:*` | ✓ `report-designer:*` | ✗ 无（非 Flux renderer） |
-| Session/dirty/leave-guard | 通过 `isDirty` snapshot | 通过 `dirty` snapshot | 通过 `dirty` snapshot | ✓ `isDirty` + `handleBack` leave-guard |
-| 真实 canvas 默认挂载 | ✓ | fallback when no body | ✓ `ReportSpreadsheetCanvas` | ✓（直接渲染） |
-| toolbar ↔ core 命令面对齐 | ✓ | ✓ | ✓ undo/redo/save/stopPreview 命令已实现 | ✓ `RibbonToolbar` + `handleSave` |
-| `WorkbenchShell` 复用 | ✓ 已迁移 | ✗ 自有布局 | ✓ 已迁移 | ✓ 已迁移 |
-| datasets 保存边界 | N/A | N/A | N/A | ✓ `saveDatasets`/`loadDatasets` 已接线 |
+当前跨域 baseline 可以概括为：
 
-## 11. 参考实现基线（Phase 2 结论）
+- Flow Designer、Spreadsheet、Report Designer 都已经采用“只读 host projection + namespaced action 写入”的共同边界，而不是让 schema 片段直接持有 core store
+- `designer-page`、`spreadsheet-page`、`report-designer-page` 都应把宿主摘要暴露为 projection/snapshot，而不是把 domain runtime 变成 page 全局可写对象
+- `WorkbenchShell` 可以作为共享视觉壳复用，但它不是共享协议成立的前提；协议的关键仍然是 `getSnapshot/subscribe/dispatch`、host scope 投影和 namespace wiring
+- Word Editor 是否完全接入同一协议，不改变本文的协议边界：未接入的域应视为未来采用者，而不是当前基线的例外许可
 
-Flow Designer 的 `designer-page.tsx` + `designer-context.ts` 是当前最成熟的 host wiring 参考实现：
+参考实现判断：
 
-- `useDesignerHostScope` → 等价于 `useHostScope`（Phase 1 提炼的共享 helper）
-- `createDesignerActionProvider` + `useLayoutEffect` → namespace 注册模式
-- `useDesignerSnapshot` → 等价于 `useBridgeSnapshot`（Phase 1 提炼的共享 helper）
-- `DesignerContext` → 域内部 React context，不应被共享协议强制替换
+- Flow Designer 仍然是最成熟的 host wiring 参考族，因为它同时覆盖 host scope、namespace action、snapshot 订阅和 shell 组织
+- Spreadsheet/Report Designer 证明了同一协议可以承载另一类 workbench/editor，而不需要升级为第二套平台
+- `useHostScope` 的关键语义是 snapshot replacement 和投影只读，而不是“把 domain state 注入 scope 里任意读写”
 
-Current baseline note:
-
-- spreadsheet page renderer 现在也已切换到 `useHostScope`，不再通过 region `data` 把 `spreadsheetCore` / `spreadsheetSnapshot` 直接暴露给 schema
-- `useHostScope` 当前采用 snapshot replacement 语义，并在 projected host field 写入时抛出诊断错误
-
-## 12. 已完成工作
-
-- **Phase 4** ✓：从 flow-designer 与 report-designer 共同验证后抽取 `WorkbenchShell`（完成 2026-04-04）
-- **Phase 5** ✓：Word Editor 接入 `WorkbenchShell` + datasets 保存边界 + leave-guard（完成 2026-04-04）
-- **Phase 6** ✓：Code Editor source-ref 解析（scope/api）、change/focus/blur 事件全部接入 Flux 事件系统，与其他字段控件对齐（完成 2026-04-04）
-
-Plan 33 全部阶段已完成。
-
-## Related Documents
+## 11. Related Documents
 
 - `docs/architecture/flow-designer/runtime-snapshot.md` — Flow Designer 快照与 host scope 现状
 - `docs/architecture/report-designer/design.md` — Report Designer 架构与当前实现状态
-- `docs/architecture/code-editor.md` — Code Editor 字段控件声明面收口
+- `docs/components/code-editor/design.md` — Code Editor 字段控件声明面收口
 - `packages/flux-core/src/workbench/` — 协议类型
 - `packages/flux-react/src/workbench/` — React host wiring helpers

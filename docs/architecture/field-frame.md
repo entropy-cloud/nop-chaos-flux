@@ -103,7 +103,8 @@ When `name` is provided, FieldFrame manages validation state internally:
 3. **Aggregate errors**: `useAggregateError(name)` to collect validation errors from all rules
 4. **Per-field behavior**: `getCompiledValidationField(form.validation, name)` to get field-specific `CompiledValidationBehavior`
 5. **Behavior fallback**: `validationBehavior` prop → field behavior → form behavior → default (`{ triggers: ['blur'], showErrorOn: ['touched', 'submit'] }`)
-6. **Error visibility**: `shouldShowFieldError(behavior, state)` checks whether any trigger in `showErrorOn` matches the current field state
+6. **Conditional required tracking**: FieldFrame subscribes to `form.values` only when the field's compiled validation rules include `requiredWhen` or `requiredUnless`; plain required markers do not broad-subscribe every field to all value changes
+7. **Error visibility**: `shouldShowFieldError(behavior, state)` checks whether any trigger in `showErrorOn` matches the current field state
 
 This means controls do **not** need to call `useFieldState` or pass `error`/`showError` props — they simply pass `name` and FieldFrame handles everything.
 
@@ -117,6 +118,13 @@ export function FieldFrame(props: FieldFrameProps) {
   const currentForm = useCurrentForm();
   const fieldState = useOwnedFieldState(name ?? '');
   const aggregateError = useAggregateError(name ?? '');
+  const validationField = name ? getCompiledValidationField(currentForm?.validation, name) : undefined;
+  const values = useCurrentFormState((state) =>
+    validationField?.rules.some(({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless')
+      ? state.values
+      : undefined,
+    Object.is
+  );
   const behavior = validationBehavior
     ?? getCompiledValidationField(currentForm?.validation, name)?.behavior
     ?? currentForm?.validation?.behavior

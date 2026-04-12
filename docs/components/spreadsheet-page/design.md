@@ -4,11 +4,13 @@
 
 - `spreadsheet-page` 是可独立复用的工作表编辑宿主 renderer。
 - 它负责创建 spreadsheet runtime、注册 `spreadsheet:*` 命名空间动作，并组织 toolbar、body 和 dialogs。
+- 本文档只拥有 `spreadsheet-page` 单 renderer 契约；Spreadsheet/Report workbench 的 family-level 架构与 host abstraction 由 `docs/architecture/report-designer/` 文档族负责。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
 - 当前已落地 `document`、`config`、`readOnly`、`toolbar`、`body`、`dialogs`。
 - `statusbar` 等工作台补充区域仍可后续加入，但不影响当前根壳层契约。
+- 如果问题涉及 spreadsheet canvas 在整个 report/spreadsheet family 中的边界、契约或平台扩展定位，应先回到 `docs/architecture/report-designer/README.md`。
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -65,3 +67,9 @@
 
 - 最大风险是把 canvas 内部性能敏感实现和外壳层普通 Tailwind 风格混在一起。
 - 工作台扩展区域需要在不破坏核心壳层的前提下分阶段增加。
+
+## 13. 相关文档
+
+- `docs/architecture/report-designer/README.md` - family 入口与 owner boundary
+- `docs/architecture/report-designer/design.md` - 平台扩展架构总览
+- `docs/architecture/report-designer/spreadsheet-canvas-css.md` - canvas 样式性能边界

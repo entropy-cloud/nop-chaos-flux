@@ -4,11 +4,13 @@
 
 - `designer-page` 是 Flow Designer 的宿主级根 renderer。
 - 它负责把 graph runtime、designer action namespace 和标准 `SchemaRenderer` regions 组织在同一壳层内。
+- 本文档只拥有 `designer-page` 单 renderer 契约；Flow Designer 平台分层、host abstraction 和 family-level collaboration 由 `docs/architecture/flow-designer/` 文档族负责。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
 - 当前仓库已经落地 designer host、palette、canvas、inspector 与导出 JSON 视图。
 - 文档基线应以 Flow Designer 分层架构为准，而不是把它视为普通页面组件。
+- 如果问题涉及 Flow Designer family 边界、bridge、snapshot、command adapter 或平台抽象，应先回到 `docs/architecture/flow-designer/README.md`。
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -64,3 +66,9 @@
 
 - 最主要风险是 schema runtime 和 graph runtime 职责串层。
 - palette/canvas 是否进一步 schema 化，需要在稳定 host bridge 后再决定。
+
+## 13. 相关文档
+
+- `docs/architecture/flow-designer/README.md` - family 入口与 owner boundary
+- `docs/architecture/flow-designer/design.md` - 平台扩展架构总览
+- `docs/architecture/complex-control-host-protocol.md` - 宿主协议层规则

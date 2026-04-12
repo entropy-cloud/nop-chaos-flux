@@ -53,6 +53,7 @@ Current runtime baseline now carries this one step further for compiled node res
 - scope subscriptions carry `ScopeChange.paths`
 - `NodeRenderer` only re-runs `resolveNodeMeta()` / `resolveNodeProps()` when the incoming changed paths intersect the node's last dependency set
 - wildcard or broad-access reads remain conservatively invalidated on any scope change
+- runtime owners must expose explicit teardown for long-lived resources; the current `RendererRuntime` surface includes `dispose()` to stop owned data sources, reactions, imported namespace registrations, and in-flight requests when a host unmounts or replaces a runtime instance
 
 ### Compile once, execute many times
 

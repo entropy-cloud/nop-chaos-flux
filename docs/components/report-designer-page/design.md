@@ -4,11 +4,13 @@
 
 - `report-designer-page` 是报表设计器宿主根 renderer。
 - 它把 spreadsheet runtime、report designer runtime、字段面板、toolbar、inspector 和 dialogs 组织为同一工作台。
+- 本文档只拥有 `report-designer-page` 单 renderer 契约；Report Designer family 的平台架构、adapter 边界和 workbench 抽象由 `docs/architecture/report-designer/` 文档族负责。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
 - 当前已落地 `document`、`designer`、`profile`、`adapters`、`toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body`。
 - 这是领域宿主，不应退化为普通页面组合模板。
+- 如果问题涉及 spreadsheet/report family 分层、host abstraction、adapter contract 或平台扩展边界，应先回到 `docs/architecture/report-designer/README.md`。
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -67,3 +69,9 @@
 
 - 最主要风险是 spreadsheet 与 report designer 两层职责混杂。
 - profile 适配边界必须保持稳定，避免对单一后端模型形成耦合。
+
+## 13. 相关文档
+
+- `docs/architecture/report-designer/README.md` - family 入口与 owner boundary
+- `docs/architecture/report-designer/design.md` - 平台扩展架构总览
+- `docs/architecture/report-designer/contracts.md` - family 级接口与 adapter contract

@@ -14,14 +14,36 @@
 - `@nop-chaos/flux-renderers-basic` - Basic renderers (page, text, container, etc.).
 - `@nop-chaos/flux-renderers-form` - Form renderers.
 - `@nop-chaos/flux-renderers-data` - Data renderers.
+- `@nop-chaos/flux-code-editor` - Code editor renderer package built on CodeMirror.
+- `@nop-chaos/ui` - Shared shadcn/ui-based component library and utilities.
+- `@nop-chaos/tailwind-preset` - Shared Tailwind preset and workspace styling helpers.
+- `@nop-chaos/flow-designer-core` - Flow designer state, contracts, and core logic.
+- `@nop-chaos/flow-designer-renderers` - Flow designer React renderers and adapters.
+- `@nop-chaos/spreadsheet-core` - Spreadsheet model/runtime primitives.
+- `@nop-chaos/spreadsheet-renderers` - Spreadsheet renderers.
+- `@nop-chaos/report-designer-core` - Report designer core state and contracts.
+- `@nop-chaos/report-designer-renderers` - Report designer renderers.
+- `@nop-chaos/word-editor-core` - Word editor integration core.
+- `@nop-chaos/word-editor-renderers` - Word editor renderers.
 - `@nop-chaos/nop-debugger` - Devtools/debugger panel.
-- `apps/playground` - Dev playground.
+- `@nop-chaos/flux-playground` - Dev playground app.
 
 **Dependency Flow**:
 ```
 flux-core -> flux-formula -> flux-runtime -> flux-react -> flux-renderers-*
+                                                          -> flux-code-editor
+                                                          -> flow-designer-renderers
+                                                          -> spreadsheet-renderers
+                                                          -> report-designer-renderers
+                                                          -> word-editor-renderers
                                                           -> nop-debugger
-                                                          -> apps/playground
+
+tailwind-preset -> ui
+spreadsheet-core -> report-designer-core -> report-designer-renderers
+flow-designer-core -> flow-designer-renderers
+word-editor-core -> word-editor-renderers
+
+all runtime/react/renderer/editor/debugger/design packages -> flux-playground
 ```
 
 ---

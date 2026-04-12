@@ -10,6 +10,12 @@ It is not a side appendix and not a second runtime outside Flux. It is the archi
 - keeps graph algorithms and canvas specifics inside domain runtime layers
 - reuses Flux renderer, action, scope, and schema composition contracts for the surrounding shell
 
+Owner boundary:
+
+- this family owns Flow Designer platform-extension architecture, host boundaries, collaboration model, and reusable editor-platform abstractions
+- `docs/components/designer-page/design.md` owns only the `designer-page` renderer contract
+- related component docs such as `designer-canvas`, `designer-palette`, and `designer-field` own single renderer design, not platform-family rules
+
 Read this family when you need to understand:
 
 - how a graph editor plugs into Flux without reopening the primitive set
@@ -40,6 +46,13 @@ Read this family when you need to understand:
 - `canvas-adapters.md` - React Flow adapter boundary and failure semantics
 - `api.md` - package APIs, extension points, host scope, and designer actions
 - `runtime-snapshot.md` - current snapshot shape and live host-scope landing baseline
+
+Related component owner docs:
+
+- `docs/components/designer-page/design.md` - `designer-page` renderer contract
+- `docs/components/designer-canvas/design.md` - canvas renderer contract
+- `docs/components/designer-palette/design.md` - palette renderer contract
+- `docs/components/designer-field/design.md` - field renderer contract
 
 ## Boundary Reminder
 

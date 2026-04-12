@@ -10,6 +10,13 @@ It is not a narrow product appendix for `nop-report`. This family documents how 
 - keeps spreadsheet/report document semantics and codecs in domain layers
 - reuses Flux contracts for shell composition, action routing, host projections, and surrounding UI integration
 
+Owner boundary:
+
+- this family owns Report Designer and Spreadsheet Editor platform-extension architecture, host boundaries, adapter contracts, and reusable workbench abstractions
+- `docs/components/report-designer-page/design.md` owns only the `report-designer-page` renderer contract
+- `docs/components/spreadsheet-page/design.md` owns only the `spreadsheet-page` renderer contract
+- related component docs such as `report-inspector`, `report-field-panel`, and `report-toolbar` own single renderer design, not family-level architecture
+
 Read this family when you need to understand:
 
 - how spreadsheet/report editors fit into Flux without becoming a separate platform
@@ -41,6 +48,14 @@ Read this family when you need to understand:
 - `nop-report-profile.md` - how the generic designer adapts to `nop-report`
 - `codec-design.md` - round-trip codec design
 - `spreadsheet-canvas-css.md` - performance-critical spreadsheet canvas styling strategy
+
+Related component owner docs:
+
+- `docs/components/report-designer-page/design.md` - `report-designer-page` renderer contract
+- `docs/components/spreadsheet-page/design.md` - `spreadsheet-page` renderer contract
+- `docs/components/report-inspector/design.md` - inspector renderer contract
+- `docs/components/report-field-panel/design.md` - field-panel renderer contract
+- `docs/components/report-toolbar/design.md` - toolbar renderer contract
 
 ## Boundary Reminder
 

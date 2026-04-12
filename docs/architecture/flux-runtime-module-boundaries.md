@@ -72,8 +72,13 @@ Do not move generic validation helpers back into this file when they can live in
   - field validation orchestration
   - subtree validation entry points
   - async debounce and stale-run cancellation
+- `packages/flux-runtime/src/form-runtime-owner.ts`
+  - owner-local validation orchestration shared by `FormRuntime`
+  - full-traversal / subtree validation coordination
+  - dependent revalidation, external-error publication, owner summary computation
 - `packages/flux-runtime/src/form-runtime.ts`
-  - form-level validation entrypoints such as `validateField`, `validateSubtree`, and `validateForm`
+  - `FormRuntime` assembly and form-specific specialization
+  - submit orchestration, touched/visited/dirty policy, ordinary value writes, array mutation dispatch
 
 These files own runtime sequencing and form lifecycle behavior.
 

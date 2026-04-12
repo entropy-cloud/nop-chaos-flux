@@ -401,6 +401,7 @@ UI primitive 对齐补充规则：
 ### 表单组件
 
 - `form/`
+- `code-editor/`
 - `input-tree/`
 - `tree-select/`
 - `input-text/`
@@ -416,6 +417,11 @@ UI primitive 对齐补充规则：
 - `key-value/`
 - `array-editor/`
 - `condition-builder/`
+
+说明：
+
+- `condition-builder/` 与 `code-editor/` 是组件 owner 文档目录。
+- `docs/architecture/condition-builder.md` 与 `docs/architecture/code-editor.md` 仅保留迁移期 redirect note，不再是长期 owner。
 
 ### 数据与逻辑组件
 
@@ -439,6 +445,11 @@ UI primitive 对齐补充规则：
 - `report-designer-page/`
 - `report-toolbar/`
 - `spreadsheet-page/`
+
+边界说明：
+
+- 这些目录拥有单 renderer / 单组件设计契约。
+- 对应平台 family 的架构分层、host abstraction、adapter contract 和跨组件协作规则仍由 `docs/architecture/flow-designer/` 与 `docs/architecture/report-designer/` 负责。
 
 建议后续新增组件时，先把目录加到这里，再补对应 `design.md` 与 `example.json`，保持组件索引与实际文档覆盖同步。
 

@@ -28,10 +28,10 @@ Status values used here:
 | `docs/architecture/action-scope-and-imports.md` | normative subsystem architecture | active | `docs/architecture/` | `docs/architecture/frontend-programming-model.md`, `docs/architecture/renderer-runtime.md` | Local precedence for action namespaces and import boundaries. |
 | `docs/architecture/api-data-source.md` | normative subsystem architecture | active | `docs/architecture/` | `docs/architecture/frontend-programming-model.md`, `docs/architecture/action-scope-and-imports.md` | Local precedence for resource/api/data-source behavior. |
 | `docs/architecture/array-field.md` | focused subsystem doc | active | `docs/architecture/` | `docs/architecture/field-binding-and-renderer-contract.md`, `docs/architecture/value-adaptation-and-detail-field.md` | Field-family design; remains architecture-level because it defines reusable field-model rules. |
-| `docs/architecture/code-editor.md` | component/compound-control design doc | redirect-candidate | `docs/components/` or dedicated component-family doc | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md` | Content is largely component-level schema and implementation design, not general architecture. Create a successor move plan if this doc keeps evolving. |
+| `docs/architecture/code-editor.md` | redirect note | summary-secondary | `docs/architecture/` | `docs/components/code-editor/design.md` | Owner content has moved to `docs/components/code-editor/design.md`; keep this path only as a migration redirect while inbound links are rewritten. |
 | `docs/architecture/complex-control-host-protocol.md` | platform-extension architecture | active-with-cleanup | `docs/architecture/` | `docs/architecture/frontend-programming-model.md` | Keep in architecture; trim plan-derived implementation-history sections over time while preserving current protocol rationale. |
 | `docs/architecture/component-resolution.md` | focused subsystem doc | active | `docs/architecture/` | `docs/architecture/renderer-runtime.md` | Stays in architecture. |
-| `docs/architecture/condition-builder.md` | component-design doc in architecture tree | redirect-candidate | `docs/components/condition-builder/` | `docs/architecture/renderer-runtime.md`, `docs/architecture/form-validation.md` | Overlaps `docs/components/condition-builder/design.md`. Successor move should either replace this file with a short redirect note or merge unique contract content into the component doc. |
+| `docs/architecture/condition-builder.md` | redirect note | summary-secondary | `docs/architecture/` | `docs/components/condition-builder/design.md` | Owner content has moved to `docs/components/condition-builder/design.md`; keep this path only as a migration redirect while inbound links are rewritten. |
 | `docs/architecture/debugger-runtime.md` | focused subsystem doc | active | `docs/architecture/` | `docs/architecture/renderer-runtime.md`, `docs/architecture/complex-control-host-protocol.md` | Tooling architecture, still belongs here. |
 | `docs/architecture/dependency-tracking.md` | focused subsystem doc | active | `docs/architecture/` | `docs/architecture/frontend-programming-model.md`, `docs/architecture/flux-core.md` | Stays in architecture. |
 | `docs/architecture/field-binding-and-renderer-contract.md` | normative subsystem architecture | active | `docs/architecture/` | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md` | Local precedence for prop/meta/name/value channel boundaries. |
@@ -66,10 +66,14 @@ Status values used here:
 | Document | Role | Status | Primary owner directory | Depends on | Overlap / migration note |
 | --- | --- | --- | --- | --- | --- |
 | `docs/index.md` | global docs router | active-with-cleanup | `docs/` | `docs/architecture/README.md` | Should route into architecture hierarchy without repeating stale old positioning language. |
-| `docs/architecture/flow-designer/README.md` | platform-extension family index | active-with-cleanup | `docs/architecture/flow-designer/` | `docs/architecture/README.md`, `docs/architecture/complex-control-host-protocol.md` | Keep here; frame as platform-extension family entry, not specialized appendix. |
-| `docs/architecture/report-designer/README.md` | platform-extension family index | active-with-cleanup | `docs/architecture/report-designer/` | `docs/architecture/README.md`, `docs/architecture/complex-control-host-protocol.md` | Keep here; frame as platform-extension family entry, not specialized appendix. |
+| `docs/architecture/flow-designer/README.md` | platform-extension family index | active | `docs/architecture/flow-designer/` | `docs/architecture/README.md`, `docs/architecture/complex-control-host-protocol.md` | Family owner boundary is now explicit: platform-family architecture lives here, while single renderer contracts live in `docs/components/designer-*/`. |
+| `docs/architecture/report-designer/README.md` | platform-extension family index | active | `docs/architecture/report-designer/` | `docs/architecture/README.md`, `docs/architecture/complex-control-host-protocol.md` | Family owner boundary is now explicit: platform-family architecture lives here, while single renderer contracts live in `docs/components/report-*/` and `docs/components/spreadsheet-page/`. |
 | `docs/components/index.md` | component-family index | active | `docs/components/` | `docs/index.md` | Keep as component-entry router; should remain distinct from architecture hierarchy. |
+| `docs/components/code-editor/design.md` | component design owner | active | `docs/components/code-editor/` | `docs/components/index.md`, relevant architecture docs | This is the correct long-term owner for code-editor component design. |
 | `docs/components/condition-builder/design.md` | component design owner | active | `docs/components/condition-builder/` | `docs/components/index.md`, relevant architecture docs | This is the correct long-term owner for condition-builder component design. |
+| `docs/components/designer-page/design.md` | component design owner | active | `docs/components/designer-page/` | `docs/architecture/flow-designer/README.md` | Owns only the `designer-page` renderer contract, not Flow Designer family architecture. |
+| `docs/components/report-designer-page/design.md` | component design owner | active | `docs/components/report-designer-page/` | `docs/architecture/report-designer/README.md` | Owns only the `report-designer-page` renderer contract, not family-level workbench architecture. |
+| `docs/components/spreadsheet-page/design.md` | component design owner | active | `docs/components/spreadsheet-page/` | `docs/architecture/report-designer/README.md` | Owns only the `spreadsheet-page` renderer contract, not family-level spreadsheet/report architecture. |
 | `docs/standardization.md` | compact summary routing doc | summary-secondary | `docs/` | core architecture and reference docs | Keep as summary only; do not let it become a second architecture baseline. |
 
 ## Current Owner Decisions
@@ -78,21 +82,16 @@ Status values used here:
 - `frontend-programming-model.md` remains the top normative precedence document.
 - `flow-designer` and `report-designer` remain first-class architecture families under `docs/architecture/`.
 - `complex-control-host-protocol.md` remains in `docs/architecture/` as shared platform-extension architecture.
-- `condition-builder.md` should not remain a long-term primary owner in `docs/architecture/`; `docs/components/condition-builder/design.md` is the owner destination.
-- `code-editor.md` should not continue growing as a top-level architecture owner; it needs a later successor move into a component-oriented family.
+- `condition-builder.md` is now a redirect path; `docs/components/condition-builder/design.md` is the owner document.
+- `code-editor.md` is now a redirect path; `docs/components/code-editor/design.md` is the owner document.
+- `designer-page` / `report-designer-page` / `spreadsheet-page` stay in `docs/components/` as renderer owner docs, while their family-level architecture remains under `docs/architecture/flow-designer/` and `docs/architecture/report-designer/`.
 
 ## Cleanup Strategies
 
 - For docs marked `active-with-cleanup`, keep the current path but gradually remove execution-history narration, stale plan references, and long implementation timelines from the main body.
 - When a doc lacks enough rationale, add current-design reasoning around constraints, boundary choices, and common misreadings instead of adding history sections.
-- When a doc is a redirect candidate, do not expand its scope in place. Prefer moving the owner baseline first, then replacing the old location with a short redirect note in a successor plan.
+- When a doc has already been reduced to a redirect note, do not add new owner content back into that path.
 
 ## Successor Boundary
 
-This matrix freezes owner decisions. It does not itself perform large physical moves or full cross-link rewrites.
-
-Successor work, if needed:
-
-- move `docs/architecture/condition-builder.md` to component-owned documentation and leave a redirect note
-- move `docs/architecture/code-editor.md` into a component-owned family and repair inbound links
-- clean plan/history-heavy sections out of selected `active-with-cleanup` architecture docs without changing their technical baseline
+This matrix freezes owner decisions. Remaining work is link cleanup and body-level cleanup for `active-with-cleanup` docs, not owner ambiguity for `condition-builder` or `code-editor`.
