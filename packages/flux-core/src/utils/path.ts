@@ -1,6 +1,25 @@
 import { isPlainObject } from './object';
 
-const parsePathCache = new Map<string, string[]>();
+const MAX_PARSE_PATH_CACHE_SIZE = 1000;
+const parsePathCache = new Map<string, readonly string[]>();
+
+function rememberParsedPath(path: string, segments: readonly string[]) {
+  if (parsePathCache.has(path)) {
+    parsePathCache.delete(path);
+  }
+
+  parsePathCache.set(path, segments);
+
+  if (parsePathCache.size <= MAX_PARSE_PATH_CACHE_SIZE) {
+    return;
+  }
+
+  const oldestKey = parsePathCache.keys().next().value;
+
+  if (typeof oldestKey === 'string') {
+    parsePathCache.delete(oldestKey);
+  }
+}
 
 export function parsePath(path: string): string[] {
   if (!path) {
@@ -10,18 +29,18 @@ export function parsePath(path: string): string[] {
   const cached = parsePathCache.get(path);
 
   if (cached !== undefined) {
-    return cached;
+    return [...cached];
   }
 
   const normalized = path.replace(/\[(\d+)\]/g, '.$1');
-  const result = normalized
+  const result = Object.freeze(normalized
     .split('.')
     .map((segment) => segment.trim())
-    .filter(Boolean);
+    .filter(Boolean));
 
-  parsePathCache.set(path, result);
+  rememberParsedPath(path, result);
 
-  return result;
+  return [...result];
 }
 
 export function normalizeRootPath(path: string): string | undefined {

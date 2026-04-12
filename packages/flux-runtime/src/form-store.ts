@@ -17,7 +17,20 @@ function validationErrorsEqual(
   return left.every((error, index) => {
     const candidate = right[index];
 
-    return candidate?.path === error.path && candidate?.rule === error.rule && candidate?.message === error.message;
+    if (!candidate) {
+      return false;
+    }
+
+    const leftRelatedPaths = error.relatedPaths ?? [];
+    const rightRelatedPaths = candidate.relatedPaths ?? [];
+
+    return candidate.path === error.path
+      && candidate.rule === error.rule
+      && candidate.message === error.message
+      && candidate.ruleId === error.ruleId
+      && candidate.sourceKind === error.sourceKind
+      && leftRelatedPaths.length === rightRelatedPaths.length
+      && leftRelatedPaths.every((path, relatedIndex) => path === rightRelatedPaths[relatedIndex]);
   });
 }
 

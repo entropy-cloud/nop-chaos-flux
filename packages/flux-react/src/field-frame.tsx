@@ -71,9 +71,16 @@ export function FieldFrame(props: FieldFrameProps) {
     (state) => name ? selectCurrentFormErrors(state, { path: name, ownerPath: name, sourceKinds: ['array', 'object', 'form', 'runtime-registration'] })[0] : undefined,
     Object.is
   );
-  const fieldBehavior = name ? getCompiledValidationField(currentForm?.validation, name)?.behavior : undefined;
+  const validationField = name ? getCompiledValidationField(currentForm?.validation, name) : undefined;
+  const fieldBehavior = validationField?.behavior;
   const behavior = validationBehavior ?? fieldBehavior ?? currentForm?.validation?.behavior ?? defaultBehavior;
-  const values = useCurrentFormState((state) => state.values, Object.is);
+  const hasDynamicRequiredRule = Boolean(
+    validationField?.rules.some(({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless')
+  );
+  const values = useCurrentFormState(
+    (state) => hasDynamicRequiredRule ? state.values : undefined,
+    Object.is
+  );
 
   const error = aggregateError ?? fieldState.error;
   const showError = Boolean(
@@ -88,7 +95,7 @@ export function FieldFrame(props: FieldFrameProps) {
   const isGroup = layout === 'checkbox' || layout === 'radio';
   const Tag = isGroup ? 'fieldset' : 'label';
   const LabelTag = isGroup ? 'legend' : 'span';
-  const effectiveRequired = Boolean(required) || Boolean(name && isFieldEffectivelyRequired(currentForm?.validation, name, values));
+  const effectiveRequired = Boolean(required) || Boolean(name && isFieldEffectivelyRequired(currentForm?.validation, name, values ?? {}));
 
   return (
     <Tag

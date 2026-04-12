@@ -11,6 +11,18 @@ import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/w
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@nop-chaos/ui';
 
+function sameDrawerSurfaces(left: SurfaceState[], right: SurfaceState[]) {
+  if (left === right) {
+    return true;
+  }
+
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((surface, index) => surface === right[index]);
+}
+
 export function DialogHost() {
   const page = useCurrentPage();
 
@@ -26,7 +38,7 @@ export function DialogHost() {
     () => page?.store.getState().surfaces ?? [],
     () => page?.store.getState().surfaces ?? [],
     (state: SurfaceState[]) => state.filter((surface) => surface.kind === 'drawer'),
-    Object.is
+    sameDrawerSurfaces
   );
 
   if (!page || (dialogs.length === 0 && surfaces.length === 0)) {
