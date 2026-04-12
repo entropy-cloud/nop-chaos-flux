@@ -1,6 +1,6 @@
 # 72 Field Binding And Renderer Contract Unification Plan
 
-> Plan Status: in-progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-12
 > Source: `docs/architecture/field-binding-and-renderer-contract.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md`, `docs/architecture/form-validation.md`, `docs/architecture/value-adaptation-and-detail-field.md`, plus live-code audit of `packages/flux-core/src/types/schema.ts`, `packages/flux-core/src/constants.ts`, `packages/flux-runtime/src/schema-compiler/fields.ts`, `packages/flux-react/src/node-frame-wrapper.tsx`, `packages/flux-renderers-form/src/schemas.ts`, `packages/flux-renderers-form/src/renderers/composite-schemas.ts`, and representative renderer files under `packages/flux-renderers-basic`, `packages/flux-renderers-form`, `packages/flux-renderers-data`
 > Related: `docs/plans/70-composite-value-fields-and-validation-integration-plan.md`, `docs/plans/68-owner-based-validation-runtime-alignment-plan.md`, `docs/plans/30-ui-package-adoption-audit-and-migration-plan.md`
@@ -149,7 +149,7 @@ Exit Criteria:
 
 ### Phase 5 - Verification, Docs Sync, And Closure Audit Prep
 
-Status: in-progress
+Status: completed
 Targets: touched docs, touched tests, `docs/logs/2026/04-12.md`
 
 - [x] Update all touched architecture docs so the shipped contract is documented in one place without conflicting wording.
@@ -159,14 +159,14 @@ Targets: touched docs, touched tests, `docs/logs/2026/04-12.md`
 - [x] Run `pnpm build`.
 - [x] Run `pnpm lint`.
 - [x] Run `pnpm test`.
-- [ ] Perform an independent closure audit in a fresh task session before marking the plan `completed`.
+- [x] Perform an independent closure audit in a fresh task session before marking the plan `completed`.
 
 Exit Criteria:
 
 - [x] The docs describe one coherent field-binding and renderer-contract baseline.
 - [x] Focused tests cover the key contract shifts introduced by this plan.
 - [x] Full workspace verification is green.
-- [ ] Independent closure-audit evidence is recorded.
+- [x] Independent closure-audit evidence is recorded.
 
 ## Risks And Rollback
 
@@ -191,7 +191,7 @@ Rollback guidance:
 - [x] High-value shadcn-equivalent prop drift has an explicit convergence decision
 - [x] Related docs are updated without conflicting baselines
 - [x] `docs/logs/` updated with execution notes and decisions
-- [ ] Independent subagent or independent reviewer closure-audit evidence recorded before closure
+- [x] Independent subagent or independent reviewer closure-audit evidence recorded before closure
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -199,14 +199,14 @@ Rollback guidance:
 
 ## Closure
 
-Status Note: fill after closure audit.
+Status Note: All phases completed. Core contract changes are solid: META_FIELDS frozen to 6 fields (name excluded), BoundFieldSchemaBase defined and adopted by all form field schemas, compiler routes name through propsProgram not meta, architecture doc at docs/architecture/field-binding-and-renderer-contract.md is authoritative (10 rules, frozen contract matrix). Representative form renderers read props.props.name as primary channel with documented transitional raw-schema fallback; this is an intentional decision recorded in the key-decisions log. The name+value ambiguity diagnostic is documented intent in the architecture doc; a live enforcement test is deferred to a future validation hardening plan. Full workspace verification (typecheck, build, lint, test) passed at plan execution time per daily log session 10b.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: fill after independent closure audit.
-- Evidence: fill with task id, daily log link, and finding summary before marking the plan `completed`.
+- Reviewer / Agent: Independent subagent ses_27e9807b6ffe31hnAfipuvXrSw (fresh session, 2026-04-12)
+- Evidence: Audited META_FIELDS (6 fields, name absent), BoundFieldSchemaBase adoption in schema.ts + composite-schemas.ts, compiler classifyField and buildCompiledMeta routing, architecture doc completeness (475 lines, 10 rules), focused tests in schema-compiler-registry.test.ts and index.test.ts proving name arrives via propsProgram. Raw-schema fallback in renderers intentional per key-decision note in docs/logs/2026/04-12.md session 10b. Structural reads (statusPath, componentId) all match permitted-fields table in architecture doc.
 
 Follow-up:
 
-- If execution reveals a real need for a separate one-way controlled editable-field model that is not owner/form-bound, create a successor plan instead of overloading this plan.
-- If broader schema vocabulary migration is still desired after the high-value convergence slice, split that work into a dedicated successor plan rather than letting this contract plan expand indefinitely.
+- If the transitional props.props.name ?? props.schema.name fallback is to be eliminated, open a dedicated successor plan for full renderer adoption of the normalized channel.
+- If name+value ambiguity diagnostic enforcement is desired as live code, add a focused test in flux-renderers-form or flux-runtime in a future validation hardening plan.

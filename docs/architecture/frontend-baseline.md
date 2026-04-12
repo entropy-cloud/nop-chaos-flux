@@ -65,6 +65,7 @@ packages/
   report-designer-core/
   report-designer-renderers/
   tailwind-preset/
+  theme-tokens/
   ui/
 ```
 

@@ -16,7 +16,8 @@
 - `@nop-chaos/flux-renderers-data` - Data renderers.
 - `@nop-chaos/flux-code-editor` - Code editor renderer package built on CodeMirror.
 - `@nop-chaos/ui` - Shared shadcn/ui-based component library and utilities.
-- `@nop-chaos/tailwind-preset` - Shared Tailwind preset and workspace styling helpers.
+- `@nop-chaos/tailwind-preset` - Shared Tailwind preset.
+- `@nop-chaos/theme-tokens` - Shared theme token CSS variables.
 - `@nop-chaos/flow-designer-core` - Flow designer state, contracts, and core logic.
 - `@nop-chaos/flow-designer-renderers` - Flow designer React renderers and adapters.
 - `@nop-chaos/spreadsheet-core` - Spreadsheet model/runtime primitives.
@@ -39,6 +40,7 @@ flux-core -> flux-formula -> flux-runtime -> flux-react -> flux-renderers-*
                                                           -> nop-debugger
 
 tailwind-preset -> ui
+theme-tokens -> ui
 spreadsheet-core -> report-designer-core -> report-designer-renderers
 flow-designer-core -> flow-designer-renderers
 word-editor-core -> word-editor-renderers
@@ -151,7 +153,7 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 | Modify any renderer component (JSX, props, hooks) | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` | Renderer contracts, hooks, fragment rendering |
 | Add or change a renderer's styling, className, or layout | `docs/architecture/styling-system.md` | `docs/architecture/theme-compatibility.md` | Renderer styling contract, classAliases, spacing conventions, marker class rules |
 | Change CSS, Tailwind utilities, or design tokens | `docs/architecture/styling-system.md` â†’ "Renderer Styling Contract" section | `docs/architecture/renderer-markers-and-selectors.md` | No implicit layout in renderers; use marker classes + schema-driven styles |
-| Add a new Tailwind utility or global CSS rule | `docs/architecture/styling-system.md` | `packages/tailwind-preset/src/styles/base.css` | Spacing conventions, stack/hstack alias patterns |
+| Add a new Tailwind utility or global CSS rule | `docs/architecture/styling-system.md` | `apps/playground/src/styles-theme-utilities.css` | Spacing conventions, stack/hstack alias patterns |
 | Work on Flow Designer canvas, nodes, edges, or interactions | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md` | Layered architecture, host-bridge adapter contract |
 | Change Flow Designer visual style (node cards, icons, badges) | `docs/architecture/styling-system.md` â†’ "Spacing Conventions" section | `docs/analysis/2026-03-29-flow-designer-style-parity-research.md` | Context-based spacing guide, parity audit |
 | Change Flow Designer config schema (nodeTypes, ports, permissions) | `docs/architecture/flow-designer/config-schema.md` | `docs/architecture/flow-designer/api.md` | NodeTypeConfig, port definitions, inspector schema |
@@ -297,7 +299,7 @@ function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 1. Renderers emit **marker classes ONLY** (`nop-container`, `nop-flex`, `nop-page`, etc.). Markers carry zero visual styles.
 2. **NO implicit layout** in renderer code â€” no hardcoded `gap-4`, `flex`, `p-4`, `grid` in renderer components. All visual styles come from schema (`className`, semantic props, `classAliases`).
 3. Use `cn()` from `@nop-chaos/ui` for class merging, not `classNames` or template literals.
-4. Use `stack-*`/`hstack-*` aliases from `packages/tailwind-preset/src/styles/base.css` for layout in schema.
+4. Use `stack-*`/`hstack-*` aliases from `apps/playground/src/styles-theme-utilities.css` for layout in schema.
 5. See `docs/architecture/styling-system.md` for the full styling contract.
 
 ### General
@@ -497,4 +499,3 @@ Before finishing any task:
 - [ ] `pnpm test` passes (if applicable)
 - [ ] `docs/logs/` updated (for significant changes)
 - [ ] Relevant architecture docs updated (if design changed)
-

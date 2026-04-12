@@ -878,11 +878,11 @@ Flow Designer 使用 TailwindCSS 作为样式方案，与 `nop-chaos-next` 保�
 ```
 packages/tailwind-preset/
 ├── src/
-│   ├── index.ts           # TailwindCSS preset（与 nop-chaos-next 相同）
-│   ├── styles.css         # CSS 变量定义（与 nop-chaos-next 相同）
-│   └── styles/
-│       ├── tailwind.css   # TailwindCSS 入口
-│       └── base.css       # 基础样式
+│   └── index.ts           # TailwindCSS preset
+packages/theme-tokens/
+├── src/
+│   ├── index.ts
+│   └── styles.css         # 主题 CSS 变量（classic/glass，light/dark）
 ```
 
 ### 18.2 CSS 变量一致性
@@ -892,7 +892,7 @@ packages/tailwind-preset/
 | 文件 | 说明 |
 |------|------|
 | `packages/tailwind-preset/src/index.ts` | TailwindCSS preset 配置 |
-| `packages/tailwind-preset/src/styles.css` | 主题 CSS 变量（classic/glass，light/dark） |
+| `packages/theme-tokens/src/styles.css` | 主题 CSS 变量（classic/glass，light/dark） |
 
 ### 18.3 响应式断点
 

@@ -16,7 +16,7 @@ The goal is not to introduce a React `ThemeProvider` requirement. The goal is to
 - `packages/flow-designer-renderers/src/index.tsx`
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 - `packages/flow-designer-renderers/src/styles.css`
-- `packages/tailwind-preset/src/styles/base.css`
+- `apps/playground/src/styles-theme-utilities.css`
 
 ## Main Rule
 
@@ -269,4 +269,3 @@ After this migration:
 - continue reducing package-level inline visual styles in `apps/playground/src/FlowDesignerExample.tsx`
 - extend package-owned CSS for more generic `na-*` renderers if they need stronger host-level consistency
 - add a host integration example showing token mapping from an external shell into `.nop-theme-root`
-

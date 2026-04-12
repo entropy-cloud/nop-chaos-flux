@@ -452,7 +452,7 @@ For schema authors, these alias patterns provide consistent, self-documenting sp
 }
 ```
 
-These utility classes are pre-defined in `packages/tailwind-preset/src/styles/base.css` and available globally. Schema authors can use them directly in `className` without defining their own `classAliases`.
+These utility classes are currently imported by the playground from `apps/playground/src/styles-theme-utilities.css` and available globally there. Schema authors can use them directly in `className` without defining their own `classAliases`.
 
 Usage in schema:
 
