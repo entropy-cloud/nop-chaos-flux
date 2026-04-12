@@ -38,6 +38,12 @@ export interface RuntimeReactionRegistry {
 
 const MAX_REACTION_FIRE_COUNT = 10;
 
+function createReactionLimitError(input: { id: string; scope: ScopeRef; fireCount: number }) {
+  return new Error(
+    `Reaction "${input.id}" in scope "${input.scope.id}" exceeded MAX_REACTION_FIRE_COUNT (${MAX_REACTION_FIRE_COUNT}) and was disposed`
+  );
+}
+
 function normalizeActionArray(actions: unknown): ActionSchema | ActionSchema[] {
   return actions as ActionSchema | ActionSchema[];
 }
@@ -59,6 +65,7 @@ export function registerReaction(input: {
     fireCount: number;
     dependencies?: readonly string[];
   }) => void;
+  onDispose?: () => void;
 }): ReactionRegistration {
   const compiledWatch = input.runtime.expressionCompiler.compileValue(input.watch);
   const dynamicWatch = compiledWatch.isStatic ? undefined : compiledWatch as DynamicRuntimeValue<unknown>;
@@ -154,6 +161,23 @@ export function registerReaction(input: {
     }
 
     if (fireCount >= MAX_REACTION_FIRE_COUNT) {
+      const error = createReactionLimitError({
+        id: input.id,
+        scope: input.scope,
+        fireCount
+      });
+      input.runtime.env.notify('warning', error.message);
+      input.runtime.env.monitor?.onError?.({
+        phase: 'action',
+        error,
+        details: {
+          reason: 'reaction-fire-count-limit',
+          reactionId: input.id,
+          scopeId: input.scope.id,
+          fireCount,
+          maxFireCount: MAX_REACTION_FIRE_COUNT
+        }
+      });
       emitDebug();
       dispose();
       return;
@@ -177,6 +201,9 @@ export function registerReaction(input: {
     pendingForce = pendingForce || force;
     triggerQueued = true;
     const invoke = () => {
+      if (disposed) {
+        return;
+      }
       triggerQueued = false;
       const nextChangedPaths = Array.from(pendingChangedPaths);
       const nextForce = pendingForce;
@@ -216,6 +243,7 @@ export function registerReaction(input: {
       debounceTimer = undefined;
     }
 
+    input.onDispose?.();
     emitDebug();
   }
 
@@ -277,6 +305,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     let latestDependencies: readonly string[] | undefined;
     let disposed = false;
     let fireCount = 0;
+    const ownedRegistrationRef: { current?: OwnedReactionRegistration } = {};
 
     const registration = registerReaction({
       ...input,
@@ -284,13 +313,23 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
         latestDependencies = debug.dependencies;
         fireCount = debug.fireCount;
         disposed = debug.disposed;
+      },
+      onDispose: () => {
+        ownedRegistrationRef.current?.dispose();
       }
     });
-    const ownedRegistration: ReactionRegistration & {
-      getDebugEntry(): ReactionRegistryDebugSnapshot['reactions'][number];
-    } = {
+    const ownedRegistration: OwnedReactionRegistration = {
       id: input.id,
       dispose() {
+        if (disposed) {
+          const currentBucket = scopeEntries.get(ownerScopeId);
+          currentBucket?.delete(input.id);
+          if (currentBucket && currentBucket.size === 0) {
+            scopeEntries.delete(ownerScopeId);
+          }
+          return;
+        }
+
         registration.dispose();
         disposed = true;
 
@@ -319,6 +358,8 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
         };
       }
     };
+
+    ownedRegistrationRef.current = ownedRegistration;
 
     bucket.set(input.id, ownedRegistration);
     return ownedRegistration;
