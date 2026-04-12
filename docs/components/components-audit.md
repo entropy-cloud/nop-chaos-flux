@@ -420,3 +420,43 @@
   - 对应 `docs/components/<type>/design.md` 路径
   - 当前状态：runtime / targetContract / candidate / intentionally-not-kept
 - 在该矩阵落地前，`roadmap.md` 中的候选清单应被理解为“当前项目关注项”，而不是“AMIS 重要组件已经系统过表后的完整优先级表”。
+
+## 10. 2026-04-12 Plan 78 执行后补充
+
+> 补充审计日期: 2026-04-12
+> 审计范围: `docs/amis-types/*.d.ts`、`docs/components/`、`docs/components/amis-baseline-matrix.md`、`docs/components/examples.manifest.json`
+
+### 10.1 结论
+
+- 9.5 节记录的“高价值 retained family 仍有明显目录缺口”结论，现已被 Plan 78 执行结果取代。
+- `docs/components/amis-baseline-matrix.md` 现在是 AMIS -> Flux retained/notRetained 决策的主入口。
+- `docs/components/` 当前共有 92 个组件目录，全部包含 `design.md` 与 `example.json`。
+- 当前基线已对审计到的 137 个 AMIS 顶层 `type` literal 给出显式 retained 或 notRetained 决策，不再存在“未写进矩阵的 audited AMIS type”。
+
+### 10.2 当前 manifest 基线
+
+同步后 `docs/components/examples.manifest.json` 现按当前 owner-doc 基线分为：
+
+| manifest 分类 | 数量 | 说明 |
+| --- | --- | --- |
+| `runtime` | 46 | 已注册实现且有 owner doc 的组件 |
+| `targetContract` | 44 | owner doc 已落地、当前尚未注册实现的 retained canonical 组件 |
+| `declaredButUnregistered` | 2 | `designer-node-card`、`designer-edge-row` |
+
+说明：
+
+- `code-editor`、`fragment`、`loop`、`recurse`、`wizard` 现已补齐 `example.json` 并与 manifest 对齐。
+- `wizard` 以及 Plan 78 新增 retained family 现已纳入 manifest，不再存在“目录已存在但 manifest 未登记”的漂移。
+
+### 10.3 口径更新
+
+后续再看 AMIS 组件覆盖时，应以以下口径为准：
+
+- retained canonical family 是否有 owner doc：看 `docs/components/amis-baseline-matrix.md` + 实际目录
+- 每个目录是否完整：看 `docs/components/components-audit.md`
+- 示例校验状态：看 `docs/components/examples.manifest.json`
+
+因此：
+
+- `slider`、`rating`、`avatar`、`calendar`、`nav`、`iframe` 等仍未进入 owner-doc 目录的类型，只有在 matrix 把它们改判为 retained 时，才应被视为覆盖缺口。
+- 对于已明确标为 `notRetained` 的 AMIS type，不应再继续把“没有组件目录”记为文档缺陷。

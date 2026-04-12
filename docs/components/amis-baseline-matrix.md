@@ -2,313 +2,294 @@
 
 ## Purpose
 
-这份文档是 `docs/amis-types/` 与 `docs/components/` 之间的长期对照总表。
+This file is the durable routing table between `docs/amis-types/` and `docs/components/`.
 
-它解决 4 件事：
+It answers four questions:
 
-1. 哪些 AMIS 组件在 Flux 中保留为正式 renderer / component owner doc
-2. 哪些 AMIS 组件被改名、合并或由更高层架构承接
-3. 哪些 AMIS 组件明确不进入当前 Flux 正式组件文档范围
-4. 后续文档补齐和实现时，应该按什么波次推进
+1. Which AMIS types are retained as canonical Flux component families.
+2. Which AMIS types are absorbed into renamed or merged Flux owners.
+3. Which AMIS types are intentionally not retained as standalone component docs.
+4. Which owner doc path and implementation status now represents each retained family.
 
-它也是 Plan 78 结束时必须交付的额外对齐文档：
+Single-component contract details still belong to `docs/components/<type>/design.md`.
 
-- 按分组解释全部 retained 组件的作用定位
-- 说明它们和 AMIS 组件的对应关系
-- 说明保留、合并、替代、废弃的原因
-- 说明文档/实现时的逐步推进顺序
+## Audit Baseline
 
-这份文档不是 AMIS React 实现翻译，也不是最终 schema 细节说明。单组件契约仍以 `docs/components/<type>/design.md` 为准。
+- This matrix is based on a full audit of top-level `type` literals declared under `docs/amis-types/*.d.ts`.
+- The current repo baseline contains 137 distinct AMIS type literals across layout, feedback, data, form, and miscellaneous families.
+- This file now records an explicit retained or not-retained decision for every audited top-level AMIS type literal. There is no remaining undecided AMIS type in the current documentation baseline.
 
 ## Status Vocabulary
 
 | Status | Meaning |
 | --- | --- |
-| `runtime` | 当前仓库已注册实现 |
-| `targetContract` | 已有正式设计文档，但尚未注册实现 |
-| `docPlanned` | 已决定保留，文档尚未补齐 |
-| `fluxOnly` | Flux 特有组件，不来自 AMIS 对应 type |
-| `notRetained` | 不保留为独立 Flux 正式组件 |
+| `runtime` | Renderer is registered in the current repo and has an owner doc plus example. |
+| `targetContract` | Owner doc and example exist, but runtime implementation is not yet registered as a general renderer. |
+| `declaredButUnregistered` | Owner doc and example exist, and a schema or contract entry exists, but the renderer is intentionally not registered yet. |
+| `fluxOnly` | Flux-only component family with no direct AMIS source type. |
+| `notRetained` | AMIS type is intentionally not kept as a standalone Flux component doc. |
 
 ## Retention Rules
 
-默认保留到 Flux 正式组件文档体系的 AMIS 组件，应满足至少一项：
+An AMIS type is retained as a canonical Flux component family only when at least one of these is true:
 
-- 高频业务价值高
-- 能映射为稳定的 Flux 语义边界
-- 不会因为保留而引入明显重复 type
-- 不需要过重宿主依赖或平台私有 SDK 才能成立
+- it has high product value and frequent schema usage
+- it maps to a stable Flux owner boundary
+- it avoids duplicate naming in the final DSL
+- it does not require a host-specific SDK or heavy external dependency just to be baseline-worthy
 
-默认不保留为独立正式组件的 AMIS type，通常属于：
+An AMIS type is not retained as a standalone Flux component doc when it is primarily:
 
-- 历史别名或重复 type
-- 已被 Flux 现有组件统一收敛
-- 更适合由结构节点、owner 架构或组合模式承接
-- 强宿主依赖、重外部 SDK、低通用价值
-- 已被 `code-editor` / `condition-builder` / 组合字段体系替代
+- a historical alias or duplicate entry point
+- a subtype merged into a cleaner canonical Flux family
+- better modeled by composition, structural nodes, or owner architecture
+- strongly host-coupled, low-value, or dependency-heavy
+- replaced by `code-editor`, field metadata, or existing composite-field architecture
 
-## Grouped Retained Components
+## Normalization Rules
+
+The canonicalization rules below explain why the same AMIS source type may appear both in a retained row and in the not-retained section.
+
+- Retained rows describe the canonical Flux owner that absorbs an AMIS capability family.
+- Not-retained rows describe AMIS names that are not kept as standalone Flux `type` names.
+- Example: AMIS `action` is absorbed by retained Flux `button`, but `action` is still listed under `notRetained` because Flux does not keep `type: 'action'` as a canonical DSL name.
+
+## Canonical Retained Flux Component Families
 
 ### 1. Structural And Layout
 
-| Flux component | Role | AMIS source | Status | Suggested wave |
-| --- | --- | --- | --- | --- |
-| `fragment` | 无 UI 分组节点 | `fragment`-like grouping, 部分 `wrapper`/grouping 用法 | `runtime` | landed |
-| `loop` | 重复结构节点 | `each` | `runtime` | landed |
-| `recurse` | 递归结构节点 | 无直接单一 AMIS type，对树/递归模板做结构承接 | `runtime` | landed |
-| `page` | 页面级壳层 | `page` | `runtime` | landed |
-| `container` | 通用视觉容器 | `container`, 部分 `wrapper` / `panel` 语义 | `runtime` | landed |
-| `flex` | 通用布局容器 | `flex`, 部分 `hbox` / `vbox` 语义 | `runtime` | landed |
-| `separator` | 视觉分隔线 | `divider` | `targetContract` | wave 1 |
-| `card` | 单卡片容器 | `card` | `targetContract` | wave 1 |
-| `tabs` | 标签页交互容器 | `tabs` | `targetContract` | wave 1 |
-| `wizard` | 多步骤流程容器 | `wizard` | `targetContract` | wave 2 |
-| `dialog` | 模态表面 | `dialog` | `targetContract` | wave 1 |
-| `drawer` | 抽屉表面 | `drawer` | `targetContract` | wave 1 |
-| `collapse` | 折叠容器 | `collapse`, `collapse-group` | `docPlanned` | wave 3 |
-| `grid` | 栅格布局容器 | `grid` | `docPlanned` | wave 3 |
-| `steps` | 轻量步骤条展示 | `steps` | `docPlanned` | wave 4 |
-| `timeline` | 时间线展示 | `timeline` | `docPlanned` | wave 4 |
+| Flux component | Role | AMIS source | Status | Owner doc | Implementation wave |
+| --- | --- | --- | --- | --- | --- |
+| `fragment` | no-UI grouping node | none; absorbs generic grouping and wrapper-like authoring patterns | `runtime` | `docs/components/fragment/design.md` | landed |
+| `loop` | repeated structural node | `each` | `runtime` | `docs/components/loop/design.md` | landed |
+| `recurse` | lexical recursion node | none; tree/recursive template support rather than a direct AMIS top-level type | `runtime` | `docs/components/recurse/design.md` | landed |
+| `page` | page shell owner | `page` | `runtime` | `docs/components/page/design.md` | landed |
+| `container` | generic visual container | `container`, part of `wrapper` / `panel` composition scenes | `runtime` | `docs/components/container/design.md` | landed |
+| `flex` | generic layout container | `flex`, `hbox`, `vbox` | `runtime` | `docs/components/flex/design.md` | landed |
+| `grid` | explicit grid layout container | `grid` | `targetContract` | `docs/components/grid/design.md` | wave 3 |
+| `separator` | visual divider | `divider` | `targetContract` | `docs/components/separator/design.md` | wave 1 |
+| `card` | single card container | `card` | `targetContract` | `docs/components/card/design.md` | wave 1 |
+| `cards` | card collection renderer | `cards` | `targetContract` | `docs/components/cards/design.md` | wave 2 |
+| `tabs` | tabbed interaction container | `tabs` | `runtime` | `docs/components/tabs/design.md` | landed |
+| `collapse` | collapsible content group | `collapse`, `collapse-group` | `targetContract` | `docs/components/collapse/design.md` | wave 3 |
+| `steps` | step-progress renderer | `steps` | `targetContract` | `docs/components/steps/design.md` | wave 4 |
+| `timeline` | timeline renderer | `timeline` | `targetContract` | `docs/components/timeline/design.md` | wave 4 |
+| `wizard` | multi-step workflow container | `wizard` | `targetContract` | `docs/components/wizard/design.md` | wave 2 |
+| `dialog` | modal surface owner | `dialog` | `runtime` | `docs/components/dialog/design.md` | landed |
+| `drawer` | drawer surface owner | `drawer` | `runtime` | `docs/components/drawer/design.md` | landed |
 
 ### 2. Actions, Content, And Feedback
 
-| Flux component | Role | AMIS source | Status | Suggested wave |
-| --- | --- | --- | --- | --- |
-| `button` | 统一动作触发器 | `button`, `action`, `submit`, `reset` | `runtime` | landed |
-| `button-group` | 动作分组容器 | `button-group` | `docPlanned` | wave 3 |
-| `dropdown-button` | 菜单型动作按钮 | `dropdown-button` | `docPlanned` | wave 3 |
-| `text` | 普通文本展示 | `text`, `plain`, 部分 `tpl` | `runtime` | landed |
-| `markdown` | Markdown 内容展示 | 部分 `tpl` / markdown 场景 | `targetContract` | wave 1 |
-| `html` | 受控 HTML 内容展示 | `html`, 部分 `tpl` | `targetContract` | wave 1 |
-| `link` | 链接展示/跳转 | `link` | `targetContract` | wave 1 |
-| `image` | 单图片展示 | `image`, `static-image` | `targetContract` | wave 1 |
-| `icon` | 图标展示 | AMIS icon-capable content/action semantics | `runtime` | landed |
-| `badge` | 状态徽标 | 部分 `status` / badge 场景 | `runtime` | landed |
-| `progress` | 进度展示 | `progress` | `targetContract` | wave 1 |
-| `spinner` | loading 指示 | `spinner` | `targetContract` | wave 1 |
-| `empty` | 空态 | `placeholder` / no-result family | `targetContract` | wave 1 |
-| `json-view` | JSON 展示 | JSON-oriented debug/content scenes | `targetContract` | wave 1 |
-| `alert` | 内联反馈框 | `alert` | `docPlanned` | wave 2 |
-| `mapping` | 映射展示 | `map`, `mapping` | `docPlanned` | wave 3 |
-| `status` | 业务状态展示 | `status` | `docPlanned` | wave 3 |
-| `audio` | 音频展示 | `audio` | `docPlanned` | wave 4 |
-| `video` | 视频展示 | `video` | `docPlanned` | wave 4 |
-| `carousel` | 轮播展示 | `carousel` | `docPlanned` | wave 4 |
-| `qrcode` | 二维码展示 | `qrcode`, `qr-code` | `docPlanned` | wave 4 |
+| Flux component | Role | AMIS source | Status | Owner doc | Implementation wave |
+| --- | --- | --- | --- | --- | --- |
+| `button` | canonical action trigger | `button`, `action`, `submit`, `reset` | `runtime` | `docs/components/button/design.md` | landed |
+| `button-group` | grouped action container | `button-group` | `targetContract` | `docs/components/button-group/design.md` | wave 3 |
+| `dropdown-button` | menu-style action trigger | `dropdown-button` | `targetContract` | `docs/components/dropdown-button/design.md` | wave 3 |
+| `text` | plain text display | `text`, `plain`, part of `tpl` | `runtime` | `docs/components/text/design.md` | landed |
+| `markdown` | markdown display | split from rich `tpl` display scenes rather than a standalone AMIS top-level type | `targetContract` | `docs/components/markdown/design.md` | wave 1 |
+| `html` | controlled HTML display | `html`, part of `tpl` | `targetContract` | `docs/components/html/design.md` | wave 1 |
+| `link` | link display or navigation trigger | `link` | `targetContract` | `docs/components/link/design.md` | wave 1 |
+| `image` | single-image display | `image`, `static-image` | `targetContract` | `docs/components/image/design.md` | wave 1 |
+| `icon` | icon display | `icon` | `runtime` | `docs/components/icon/design.md` | landed |
+| `badge` | small status badge | part of `tag` / `status` / badge display scenes | `runtime` | `docs/components/badge/design.md` | landed |
+| `progress` | progress display | `progress` | `targetContract` | `docs/components/progress/design.md` | wave 1 |
+| `spinner` | loading indicator | `spinner` | `targetContract` | `docs/components/spinner/design.md` | wave 1 |
+| `empty` | empty-state renderer | no single AMIS top-level type; absorbs placeholder/no-result scenes | `targetContract` | `docs/components/empty/design.md` | wave 1 |
+| `json-view` | JSON display | `json`, `static-json` | `targetContract` | `docs/components/json-view/design.md` | wave 1 |
+| `alert` | inline feedback block | `alert` | `targetContract` | `docs/components/alert/design.md` | wave 2 |
+| `mapping` | value-to-label/status mapping display | `map`, `mapping` | `targetContract` | `docs/components/mapping/design.md` | wave 3 |
+| `status` | business status display | `status` | `targetContract` | `docs/components/status/design.md` | wave 3 |
+| `audio` | audio media renderer | `audio` | `targetContract` | `docs/components/audio/design.md` | wave 4 |
+| `video` | video media renderer | `video` | `targetContract` | `docs/components/video/design.md` | wave 4 |
+| `carousel` | carousel renderer | `carousel` | `targetContract` | `docs/components/carousel/design.md` | wave 4 |
+| `qrcode` | QR code renderer | `qrcode`, `qr-code` | `targetContract` | `docs/components/qrcode/design.md` | wave 4 |
 
 ### 3. Data And Workflow
 
-| Flux component | Role | AMIS source | Status | Suggested wave |
-| --- | --- | --- | --- | --- |
-| `data-source` | 命名 source owner | `service` 中的非 UI 请求/装配语义、统一 API/source 模型 | `runtime` | landed |
-| `reaction` | 声明式副作用 watcher | AMIS 局部联动 / visibility / action side-effect family | `runtime` | landed |
-| `dynamic-renderer` | 运行时动态切换 renderer | AMIS schema switching / renderer indirection scenes | `runtime` | landed |
-| `table` | 结构化数据表格 | `table`, 部分 `static-table` | `runtime` | landed |
-| `crud` | 复合数据工作流 | `crud` | `targetContract` | wave 1 |
-| `list` | 顺序集合展示 | `list`, `static-list` | `targetContract` | wave 1 |
-| `cards` | 卡片集合展示 | `cards` | `docPlanned` | wave 2 |
-| `pagination` | 独立分页交互组件 | `pagination` | `docPlanned` | wave 2 |
-| `service` | 可视/局部数据装配容器 | `service` | `docPlanned` | wave 2 |
-| `tree` | 层级展示组件 | tree display family | `runtime` | landed |
-| `chart` | 图表展示 | `chart` | `runtime` | landed |
-
-说明：
-
-- `data-source` 不是对 `service` 的一比一重命名；它承接的是统一 producer owner 语义。
-- 仍建议补一份 `service` owner doc，专门说明它和 `data-source` / `page` / `fragment` 的边界，而不是继续让这块空着。
+| Flux component | Role | AMIS source | Status | Owner doc | Implementation wave |
+| --- | --- | --- | --- | --- | --- |
+| `reaction` | declarative side-effect watcher | no single AMIS top-level type; absorbs local linkage and reaction-style patterns | `runtime` | `docs/components/reaction/design.md` | landed |
+| `dynamic-renderer` | runtime renderer switching | no single AMIS top-level type; absorbs dynamic schema indirection scenes | `runtime` | `docs/components/dynamic-renderer/design.md` | landed |
+| `data-source` | non-visual named source owner | part of AMIS `service` data-loading semantics plus the Flux source/runtime model | `runtime` | `docs/components/data-source/design.md` | landed |
+| `service` | visual data-composition container | `service` | `targetContract` | `docs/components/service/design.md` | wave 2 |
+| `table` | structured table renderer | `table`, `static-table`, `table2` | `runtime` | `docs/components/table/design.md` | landed |
+| `crud` | composite data-workflow renderer | `crud`, `crud2` | `targetContract` | `docs/components/crud/design.md` | wave 1 |
+| `list` | ordered collection renderer | `list`, `static-list` | `targetContract` | `docs/components/list/design.md` | wave 1 |
+| `pagination` | standalone pagination interaction owner | `pagination` | `targetContract` | `docs/components/pagination/design.md` | wave 2 |
+| `tree` | hierarchical display renderer | no direct audited AMIS top-level display tree type; Flux canonical tree display family | `runtime` | `docs/components/tree/design.md` | landed |
+| `chart` | chart renderer | `chart` | `runtime` | `docs/components/chart/design.md` | landed |
 
 ### 4. Form Core
 
-| Flux component | Role | AMIS source | Status | Suggested wave |
-| --- | --- | --- | --- | --- |
-| `form` | 表单 owner | `form` | `runtime` | landed |
-| `input-text` | 文本输入 | `input-text` | `runtime` | landed |
-| `input-email` | 邮箱输入 | `input-email` | `runtime` | landed |
-| `input-password` | 密码输入 | `input-password` | `runtime` | landed |
-| `textarea` | 多行文本输入 | `textarea` | `runtime` | landed |
-| `input-number` | 数字输入 | `input-number` | `docPlanned` | wave 2 |
-| `select` | 选择输入 | `select`, 部分 `multi-select` | `runtime` | landed |
-| `checkbox` | 单复选输入 | `checkbox` | `runtime` | landed |
-| `radio-group` | 单选组 | `radio`, `radios` | `runtime` | landed |
-| `checkbox-group` | 复选组 | `checkboxes` | `runtime` | landed |
-| `switch` | 开关输入 | `switch` | `runtime` | landed |
-| `input-tree` | 树形输入控件 | `input-tree` | `runtime` | landed |
-| `tree-select` | 弹出树选择 | `tree-select` | `runtime` | landed |
-| `tag-list` | 轻量标签集合字段 | tags/list-like field scenes | `runtime` | landed |
-| `key-value` | 键值编辑字段 | KV/editor-like form scenes | `runtime` | landed |
-| `array-editor` | 数组值编辑 | `input-array` | `runtime` | landed |
+| Flux component | Role | AMIS source | Status | Owner doc | Implementation wave |
+| --- | --- | --- | --- | --- | --- |
+| `form` | form owner | `form` | `runtime` | `docs/components/form/design.md` | landed |
+| `input-text` | single-line text field | `input-text`, `input-url` | `runtime` | `docs/components/input-text/design.md` | landed |
+| `input-email` | email field | `input-email` | `runtime` | `docs/components/input-email/design.md` | landed |
+| `input-password` | password field | `input-password`, `password` | `runtime` | `docs/components/input-password/design.md` | landed |
+| `textarea` | multiline text field | `textarea` | `runtime` | `docs/components/textarea/design.md` | landed |
+| `input-number` | numeric field | `input-number`, `native-number` | `targetContract` | `docs/components/input-number/design.md` | wave 2 |
+| `select` | select field | `select`, `multi-select` | `runtime` | `docs/components/select/design.md` | landed |
+| `checkbox` | single checkbox field | `checkbox` | `runtime` | `docs/components/checkbox/design.md` | landed |
+| `radio-group` | radio-group field | `radio`, `radios` | `runtime` | `docs/components/radio-group/design.md` | landed |
+| `checkbox-group` | checkbox-group field | `checkboxes`, `matrix-checkboxes` | `runtime` | `docs/components/checkbox-group/design.md` | landed |
+| `switch` | switch field | `switch` | `runtime` | `docs/components/switch/design.md` | landed |
+| `input-tree` | tree field | `input-tree` | `runtime` | `docs/components/input-tree/design.md` | landed |
+| `tree-select` | popup tree field | `tree-select`, `nested-select`, `chained-select` | `runtime` | `docs/components/tree-select/design.md` | landed |
+| `tag-list` | lightweight tag collection field | no direct single AMIS top-level type; absorbs tag-list-like field scenes | `runtime` | `docs/components/tag-list/design.md` | landed |
+| `key-value` | key-value editor field | no direct single AMIS top-level type; absorbs KV editing scenes | `runtime` | `docs/components/key-value/design.md` | landed |
+| `array-editor` | array value editor | `input-array` | `runtime` | `docs/components/array-editor/design.md` | landed |
 
 ### 5. Form Advanced And Composite
 
-| Flux component | Role | AMIS source | Status | Suggested wave |
-| --- | --- | --- | --- | --- |
-| `condition-builder` | 条件表达式构建器 | `condition-builder` | `runtime` | landed |
-| `code-editor` | 代码/公式/表达式编辑统一入口 | `editor`, `formula`, 部分 `json-schema-editor` / `input-formula` 场景 | `runtime` | landed |
-| `combo` | 组合值字段容器 | `combo` | `docPlanned` | wave 4 |
-| `picker` | 选择弹层字段 | `picker` | `docPlanned` | wave 4 |
-| `transfer` | 双栏/树/表格转移选择 | `transfer` | `docPlanned` | wave 4 |
-| `input-table` | 表格式对象数组字段 | `input-table` | `docPlanned` | wave 4 |
-| `input-date` | 日期字段 | `input-date` | `docPlanned` | wave 2 |
-| `input-datetime` | 日期时间字段 | `input-datetime` | `docPlanned` | wave 2 |
-| `input-time` | 时间字段 | `input-time` | `docPlanned` | wave 2 |
-| `date-range` | 范围日期字段 | `input-date-range`, `input-datetime-range`, `input-time-range` | `docPlanned` | wave 2 |
-| `input-month` | 月份字段 | `input-month` | `docPlanned` | wave 3 |
-| `input-quarter` | 季度字段 | `input-quarter` | `docPlanned` | wave 3 |
-| `input-year` | 年份字段 | `input-year` | `docPlanned` | wave 3 |
-| `input-file` | 文件上传字段 | `input-file` | `docPlanned` | wave 3 |
-| `input-image` | 图片上传字段 | `input-image` | `docPlanned` | wave 3 |
-| `editor` | 富文本编辑字段 | `input-rich-text` | `docPlanned` | wave 3 |
+| Flux component | Role | AMIS source | Status | Owner doc | Implementation wave |
+| --- | --- | --- | --- | --- | --- |
+| `condition-builder` | condition editor | `condition-builder` | `runtime` | `docs/components/condition-builder/design.md` | landed |
+| `code-editor` | code, expression, formula, or schema text editor | `editor` in code/text mode, `formula`, `json-schema-editor`, `diff` | `runtime` | `docs/components/code-editor/design.md` | landed |
+| `combo` | composite repeated/object field container | `combo` | `targetContract` | `docs/components/combo/design.md` | wave 4 |
+| `picker` | popup picker field | `picker` | `targetContract` | `docs/components/picker/design.md` | wave 4 |
+| `transfer` | transfer-selection field | `transfer` | `targetContract` | `docs/components/transfer/design.md` | wave 4 |
+| `input-table` | table-shaped array/object field | `input-table` | `targetContract` | `docs/components/input-table/design.md` | wave 4 |
+| `input-date` | date field | `input-date`, `native-date` | `targetContract` | `docs/components/input-date/design.md` | wave 2 |
+| `input-datetime` | datetime field | `input-datetime` | `targetContract` | `docs/components/input-datetime/design.md` | wave 2 |
+| `input-time` | time field | `input-time`, `native-time` | `targetContract` | `docs/components/input-time/design.md` | wave 2 |
+| `date-range` | canonical range date/time field family | `input-date-range`, `input-datetime-range`, `input-time-range` | `targetContract` | `docs/components/date-range/design.md` | wave 2 |
+| `input-month` | month field | `input-month`, `input-month-range` | `targetContract` | `docs/components/input-month/design.md` | wave 3 |
+| `input-quarter` | quarter field | `input-quarter`, `input-quarter-range` | `targetContract` | `docs/components/input-quarter/design.md` | wave 3 |
+| `input-year` | year field | `input-year` | `targetContract` | `docs/components/input-year/design.md` | wave 3 |
+| `input-file` | file-upload field | `input-file` | `targetContract` | `docs/components/input-file/design.md` | wave 3 |
+| `input-image` | image-upload field | `input-image` | `targetContract` | `docs/components/input-image/design.md` | wave 3 |
+| `editor` | rich-text editor field | `input-rich-text` | `targetContract` | `docs/components/editor/design.md` | wave 3 |
 
-说明：
+Notes:
 
-- 这里的 `editor` 指 rich-text editor，不是 code editor。
-- `code-editor` 已承接表达式、代码、公式等文本型专业编辑能力，但不应吞并 rich-text WYSIWYG 场景。
+- The retained Flux `editor` family is rich-text only.
+- The audited AMIS top-level `editor` type is not retained as a standalone Flux type name; its code/text-editing semantics are absorbed by retained Flux `code-editor`.
 
 ### 6. Flux-Only Domain Components
 
-| Flux component | Role | AMIS source | Status | Suggested wave |
+| Flux component | Role | AMIS source | Status | Owner doc |
 | --- | --- | --- | --- | --- |
-| `designer-page` | Flow Designer host renderer | none | `runtime` | landed |
-| `designer-field` | Designer field renderer | none | `runtime` | landed |
-| `designer-canvas` | Designer canvas bridge | none | `runtime` | landed |
-| `designer-palette` | Designer palette renderer | none | `runtime` | landed |
-| `designer-node-card` | Designer node card | none | `docPlanned` |
-| `designer-edge-row` | Designer edge row | none | `docPlanned` |
-| `report-inspector-shell` | Report inspector shell | none | `runtime` | landed |
-| `report-inspector` | Report inspector | none | `runtime` | landed |
-| `report-field-panel` | Report field panel | none | `runtime` | landed |
-| `report-toolbar` | Report toolbar | none | `runtime` | landed |
-| `report-designer-page` | Report Designer host | none | `runtime` | landed |
-| `spreadsheet-page` | Spreadsheet host | none | `runtime` | landed |
+| `designer-page` | Flow Designer host renderer | none | `runtime` | `docs/components/designer-page/design.md` |
+| `designer-field` | designer field renderer | none | `runtime` | `docs/components/designer-field/design.md` |
+| `designer-canvas` | designer canvas bridge | none | `runtime` | `docs/components/designer-canvas/design.md` |
+| `designer-palette` | designer palette renderer | none | `runtime` | `docs/components/designer-palette/design.md` |
+| `designer-node-card` | designer node-card contract | none | `declaredButUnregistered` | `docs/components/designer-node-card/design.md` |
+| `designer-edge-row` | designer edge-row contract | none | `declaredButUnregistered` | `docs/components/designer-edge-row/design.md` |
+| `report-inspector-shell` | report inspector shell | none | `runtime` | `docs/components/report-inspector-shell/design.md` |
+| `report-inspector` | report inspector | none | `runtime` | `docs/components/report-inspector/design.md` |
+| `report-field-panel` | report field panel | none | `runtime` | `docs/components/report-field-panel/design.md` |
+| `report-toolbar` | report toolbar | none | `runtime` | `docs/components/report-toolbar/design.md` |
+| `report-designer-page` | report-designer host renderer | none | `runtime` | `docs/components/report-designer-page/design.md` |
+| `spreadsheet-page` | spreadsheet host renderer | none | `runtime` | `docs/components/spreadsheet-page/design.md` |
 
-## Suggested Documentation And Implementation Waves
+## Not Retained As Standalone Flux Component Types
 
-### Wave 1
+### 1. Alias Or Duplicate Type Names
 
-- `crud`
-- `tabs`
-- `dialog`
-- `drawer`
-- `separator`
-- `card`
-- `list`
-- `image`
-- `progress`
-- `link`
-- `markdown`
-- `html`
-- `json-view`
-- `spinner`
-- `empty`
-
-目标：先补齐当前已经进入 `targetContract` 且最接近现有 runtime 装配能力的组件族。
-
-### Wave 2
-
-- `cards`
-- `pagination`
-- `service`
-- `alert`
-- `input-number`
-- `input-date`
-- `input-datetime`
-- `input-time`
-- `date-range`
-
-目标：补齐高频通用缺口，使列表、查询、提示、基础表单族不再明显短板。
-
-### Wave 3
-
-- `collapse`
-- `grid`
-- `mapping`
-- `status`
-- `input-month`
-- `input-quarter`
-- `input-year`
-- `input-file`
-- `input-image`
-- rich-text `editor`
-- `button-group`
-- `dropdown-button`
-
-目标：补齐中高频通用组件与上传/内容编辑族。
-
-### Wave 4
-
-- `combo`
-- `picker`
-- `transfer`
-- `input-table`
-- `steps`
-- `timeline`
-- `audio`
-- `video`
-- `carousel`
-- `qrcode`
-
-目标：补齐 advanced form / media / lower-frequency workflow family。
-
-## Not Retained As Standalone Flux Components
-
-### 1. Duplicate Or Alias Types
-
-| AMIS type | Why not retained | Flux replacement |
+| AMIS type | Decision | Canonical Flux owner |
 | --- | --- | --- |
-| `action` | 与 `button` 重复 | `button` |
-| `submit` | 与 `button` + action 语义重复 | `button` |
-| `reset` | 与 `button` + action 语义重复 | `button` |
-| `plain` | 文本别名 | `text` |
-| `tpl` | 历史模板型入口过宽 | `text` / `markdown` / `html` |
-| `static-image` | image alias | `image` |
-| `static-images` | images alias | future image-collection or composition |
-| `static-list` | list alias | `list` |
-| `table2` | 新旧 table 双轨不应长期并存 | `table` |
-| `crud2` | 新旧 crud 双轨不应长期并存 | `crud` |
-| `qrcode` / `qr-code` 双名并存 | 只保留一个正式 type | `qrcode` |
+| `action` | not retained as a standalone type name | `button` |
+| `submit` | not retained as a standalone type name | `button` |
+| `reset` | not retained as a standalone type name | `button` |
+| `plain` | not retained as a standalone type name | `text` |
+| `static-image` | not retained as a standalone type name | `image` |
+| `static-images` | not retained as a standalone type name | composition with `image` / `list` / `cards` / `carousel` |
+| `static-list` | not retained as a standalone type name | `list` |
+| `static-table` | not retained as a standalone type name | `table` |
+| `static-json` | not retained as a standalone type name | `json-view` |
+| `crud2` | not retained as a standalone type name | `crud` |
+| `table2` | not retained as a standalone type name | `table` |
+| `qr-code` | not retained as a standalone type name | `qrcode` |
+| `map` | not retained as a standalone type name | `mapping` |
+| `multi-select` | not retained as a standalone type name | `select` |
+| `radio` | not retained as a standalone type name | `radio-group` |
+| `radios` | not retained as a standalone type name | `radio-group` |
+| `checkboxes` | not retained as a standalone type name | `checkbox-group` |
+| `input-array` | not retained as a standalone type name | `array-editor` |
+| `password` | not retained as a standalone type name | `input-password` |
 
-### 2. Replaced By Flux Architecture Or Composition
+### 2. Folded Into Canonical Retained Families
 
-| AMIS type | Why not retained | Flux replacement |
+| AMIS type | Why not retained standalone | Canonical Flux owner |
 | --- | --- | --- |
-| `each` | 结构展开已由无 UI 结构节点承接 | `loop` |
-| `wrapper` | 仅是通用包裹语义，价值过低 | `container` / `fragment` |
-| `panel` | 可由 `card` / `container` / `collapse` 组合表达 | composition |
-| `hbox` / `vbox` | 布局语义已被 `flex` 收敛 | `flex` |
-| `fieldset` | 更适合 field chrome / group composition | `form` + composition |
-| `group` | 更适合 layout / field grouping composition | `container` / `flex` / `fragment` |
-| `input-group` | 更适合 UI primitive projection 或 field composition | composition |
-| `pagination-wrapper` | 属于组合容器，不应成为独立核心 type | `pagination` + collection renderer |
-| `switch-container` | 条件分支可由 `when` / `dynamic-renderer` / structural nodes 承接 | composition |
-| `subform` | Flux 已有 object/detail/composite field 路线 | object/detail field family |
+| `input-url` | URL is treated as a text-field specialization, not a separate top-level type | `input-text` |
+| `native-date` | host-native rendering mode should not become a second canonical date family | `input-date` |
+| `native-time` | host-native rendering mode should not become a second canonical time family | `input-time` |
+| `native-number` | host-native rendering mode should not become a second canonical number family | `input-number` |
+| `input-date-range` | range variants converge under one canonical range family | `date-range` |
+| `input-datetime-range` | range variants converge under one canonical range family | `date-range` |
+| `input-time-range` | range variants converge under one canonical range family | `date-range` |
+| `input-month-range` | month range should be a mode of the month family, not a second canonical type | `input-month` |
+| `input-quarter-range` | quarter range should be a mode of the quarter family, not a second canonical type | `input-quarter` |
+| `matrix-checkboxes` | matrix presentation does not justify a second checkbox-group owner | `checkbox-group` |
+| `nested-select` | specialized select hierarchies should stay within retained select/tree-select families | `tree-select` / composition |
+| `chained-select` | specialized select hierarchies should stay within retained select/tree-select families | `tree-select` / composition |
+| `json` | JSON display should use one canonical Flux display component | `json-view` |
+| `images` | image collections should use collection/media composition rather than a second canonical image type | composition with `image` / `cards` / `carousel` |
+| `tag` | small-tag display should not split from badge/tag-list semantics | `badge` / `tag-list` |
+| `button-toolbar` | toolbar layout is better modeled by `toolbar` regions plus grouped buttons | `button-group` / region composition |
 
-### 3. Replaced By `code-editor` Or Related Flux Editors
+### 3. Replaced By Composition Or Owner Architecture
 
-| AMIS type | Why not retained | Flux replacement |
+| AMIS type | Why not retained standalone | Replacement |
 | --- | --- | --- |
-| `formula` | 公式编辑不再单独保留 type | `code-editor` |
-| `editor` 中的代码编辑语义 | 与 rich-text 语义不同，代码编辑已统一 | `code-editor` |
-| `json-schema-editor` | 复杂文本/structured schema editing 优先收敛到 code-editor family 或未来 specialized designer | `code-editor` / future specialized editor |
+| `each` | structural repetition already has a no-UI owner | `loop` |
+| `wrapper` | generic wrapper semantics do not justify a standalone canonical type | `container` / `fragment` |
+| `panel` | panel semantics are better expressed by card/container/collapse composition | composition |
+| `hbox` | duplicated layout naming | `flex` |
+| `vbox` | duplicated layout naming | `flex` |
+| `fieldset` | belongs to field chrome or form grouping, not a separate general renderer | `form` + composition |
+| `group` | generic grouping is better expressed structurally or by layout/container families | `container` / `flex` / `fragment` |
+| `input-group` | group chrome belongs to field composition, not a top-level owner | composition |
+| `pagination-wrapper` | wrapper-plus-pagination should not become its own canonical type | `pagination` + collection renderer |
+| `switch-container` | conditional rendering belongs to declarative branching and dynamic rendering | `dynamic-renderer` / conditional composition |
+| `subform` | Flux already has object/detail/composite field architecture | object/detail/composite field families |
+| `search-box` | search UI should be authored as `form` + `input-text` + `button` or `crud.queryForm` | composition |
+| `words` | specialized display does not justify a canonical owner | `text` / `tag-list` / composition |
+| `multiline-text` | specialized display does not justify a canonical owner | `text` / `textarea` / composition |
 
-说明：
+### 4. Replaced By `code-editor` Or Editor Infrastructure
 
-- rich-text `input-rich-text` 不在这一类；它应保留为独立内容编辑家族。
-
-### 4. Low-Value, Narrow, Or Heavy-Dependency Components
-
-| AMIS type | Why not retained in current doc mandate | Note |
+| AMIS type | Why not retained standalone | Replacement |
 | --- | --- | --- |
-| `location-picker` | 强地图 SDK 依赖，通用价值有限 | future optional integration |
-| `input-city` | 强地区数据依赖，通用性弱 | future optional integration |
-| `input-signature` | 外设/画板依赖较重，优先级较低 | future optional integration |
-| `map` / `calendar` | 依赖和场景耦合较重，当前不是核心 DSL 优先项 | later optional family |
-| `tasks` | 业务专用度高，不适合作为首批通用 renderer | maybe future domain renderer |
-| `words` / `multiline-text` | 价值可由 `text` / `tag-list` / `collapse` 组合覆盖 | composition |
-| `remark` / `tooltip-wrapper` | 更适合作为 metadata/decoration，而不是独立 renderer type | metadata / wrapper behavior |
-| `nav` / `anchor-nav` / `portlet` | 与宿主导航和页面结构强耦合，当前不作为首批通用组件 owner 任务 | later navigation family |
+| `formula` | formula editing should not live as a second canonical editor family | `code-editor` |
+| `editor` | audited top-level `editor` remains the code/text-editing family, not the canonical rich-text type name | `code-editor` |
+| `json-schema-editor` | structured schema text editing should stay in the code-editor family until a dedicated designer is justified | `code-editor` |
+| `diff` | compare/diff editing should stay in the code-editor family or a future specialized tool, not a baseline standalone component | `code-editor` / future specialized tool |
+
+### 5. Low-Value, Host-Coupled, Security-Sensitive, Or Deferred Optional Types
+
+| AMIS type | Why not retained in the current canonical baseline | Replacement or note |
+| --- | --- | --- |
+| `slider` | keep out of the retained AMIS baseline until a dedicated `input-slider` contract is justified | future optional field |
+| `input-range` | keep out of the retained AMIS baseline until a dedicated `input-slider` or range field contract is justified | future optional field |
+| `rating` | optional field, not part of the retained baseline | future optional field |
+| `avatar` | easy to express with existing image/badge composition; no strong owner boundary yet | `image` / composition |
+| `color` | color chip display is too small to justify a canonical owner now | text/badge decoration |
+| `input-color` | optional field, not part of the retained baseline | future optional field |
+| `uuid` | generation behavior belongs to defaults/actions, not a top-level field type | `input-text` + generated default/action |
+| `icon-picker` | optional picker variant, not part of the retained baseline | `select` / future optional field |
+| `location-picker` | heavy map SDK coupling | future optional integration |
+| `input-city` | location dataset coupling | future optional integration |
+| `input-signature` | specialized device/canvas behavior | future optional integration |
+| `calendar` | optional specialized surface, not part of the retained baseline | future optional family |
+| `nav` | host navigation and IA coupling is too strong for the retained baseline | future navigation family |
+| `anchor-nav` | host navigation and anchor coupling is too strong for the retained baseline | future navigation family |
+| `portlet` | host dashboard shell coupling is too strong for the retained baseline | future optional family |
+| `tasks` | business-specific and narrow | future domain renderer if needed |
+| `remark` | better modeled as metadata or tooltip/description behavior | metadata / field chrome |
+| `tooltip-wrapper` | better modeled as metadata or decorator behavior | metadata / wrapper behavior |
+| `sparkline` | small-chart specialization should stay under the chart family if needed | `chart` |
+| `iframe` | security and host embedding policy make it a poor retained baseline component | host-specific optional integration |
+| `hidden` | hidden-field behavior belongs to field metadata and validation/submit policy, not a standalone visible renderer family | hidden-field policy on normal fields |
 
 ## Maintenance Rule
 
-后续新增或补齐组件文档时，先更新本文件，再补单组件 `design.md`。
+When a new retained component owner doc is added or an old retained/not-retained decision changes:
 
-如果只补单组件目录、不更新这份矩阵，就等于重新打开 `crud` 之前暴露过的流程缺口。
+1. update this file first
+2. then update `docs/components/<type>/design.md` and `example.json`
+3. then update `docs/components/index.md`, `docs/components/roadmap.md`, and `docs/components/examples.manifest.json`
+
+Skipping this file re-opens the same process gap that previously allowed a high-value type like `crud` to be missing from the owner-doc system without being caught.
