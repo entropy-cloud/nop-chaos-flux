@@ -254,8 +254,8 @@ export interface FormRuntime extends ValidationScopeRuntime {
   readonly allTouched: boolean;
   setLifecycleHandlers(handlers?: FormLifecycleHandlers): void;
   notifyFieldHidden(path: string, hidden: boolean): void;
-  validateField(path: string): Promise<ValidationResult>;
-  validateForm(): Promise<FormValidationResult>;
+  validateField(path: string, reason?: ValidationReason): Promise<ValidationResult>;
+  validateForm(reason?: ValidationReason): Promise<FormValidationResult>;
   getError(path: string): ValidationError[] | undefined;
   isValidating(path: string): boolean;
   isTouched(path: string): boolean;

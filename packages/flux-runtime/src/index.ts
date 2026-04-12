@@ -59,6 +59,7 @@ export { createApiCacheStore, resolveCacheKey } from './api-cache';
 export { createAbortScope, withRetry, withTimeout, type RetryOptions } from './operation-control';
 export { scopeChangeHitsDependencies } from './scope-change';
 export { publishOwnerStatus, createReadonlyScopeBinding } from './status-owner';
+export { isOwnerCompatible, type OwnerBoundaryKind } from './form-runtime-lifecycle';
 export {
   executeApiObject,
   prepareApiData,

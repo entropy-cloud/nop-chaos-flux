@@ -3,6 +3,7 @@ import type {
   FormValidationResult,
   RuntimeFieldRegistration,
   ValidationError,
+  ValidationReason,
   ValidationResult
 } from '@nop-chaos/flux-core';
 import { getCompiledValidationField, hasCompiledValidationNodes } from '@nop-chaos/flux-core';
@@ -122,9 +123,12 @@ export function waitForValidationDebounce(
   sharedState: ManagedFormRuntimeSharedState,
   path: string,
   debounce: number | undefined,
-  runId: number
+  runId: number,
+  reason?: ValidationReason
 ): Promise<boolean> {
-  if (!debounce || debounce <= 0) {
+  const isHighPriority = reason === 'submit' || reason === 'commit';
+
+  if (isHighPriority || !debounce || debounce <= 0) {
     return Promise.resolve(sharedState.validationRuns.get(path) === runId);
   }
 
@@ -170,7 +174,8 @@ async function validateRuntimeRegistrationChild(
 async function validateCompiledField(
   sharedState: ManagedFormRuntimeSharedState,
   path: string,
-  field: CompiledFormValidationField
+  field: CompiledFormValidationField,
+  reason?: ValidationReason
 ): Promise<ValidationResult> {
   const runtimeTarget = findRuntimeRegistration(sharedState, path);
   const runtimeRegistration = runtimeTarget.entry?.registration;
@@ -205,7 +210,7 @@ async function validateCompiledField(
       const rule = compiledRule.rule;
 
       if (rule.kind === 'async') {
-        const shouldRun = await waitForValidationDebounce(sharedState, path, rule.debounce, runId);
+        const shouldRun = await waitForValidationDebounce(sharedState, path, rule.debounce, runId, reason);
 
         if (!shouldRun) {
           throw VALIDATION_CANCELLED;
@@ -268,7 +273,7 @@ async function validateCompiledField(
   }
 }
 
-export async function validatePath(sharedState: ManagedFormRuntimeSharedState, path: string): Promise<ValidationResult> {
+export async function validatePath(sharedState: ManagedFormRuntimeSharedState, path: string, reason?: ValidationReason): Promise<ValidationResult> {
   if (sharedState.lifecycleState === 'disposed') {
     return createValidationResult([]);
   }
@@ -302,7 +307,7 @@ export async function validatePath(sharedState: ManagedFormRuntimeSharedState, p
   }
 
   try {
-    return await validateCompiledField(sharedState, path, field);
+    return await validateCompiledField(sharedState, path, field, reason);
   } catch (error) {
     if (error === VALIDATION_CANCELLED) {
       return createValidationResult([]);
@@ -314,7 +319,8 @@ export async function validatePath(sharedState: ManagedFormRuntimeSharedState, p
 
 export async function validateSubtreeByNode(
   sharedState: ManagedFormRuntimeSharedState,
-  path: string
+  path: string,
+  reason?: ValidationReason
 ): Promise<FormValidationResult | undefined> {
   if (!hasCompiledValidationNodes(sharedState.inputValue.validation)) {
     return undefined;
@@ -332,7 +338,7 @@ export async function validateSubtreeByNode(
 
   for (const targetPath of nodeTargets) {
     remainingRuntimeTargets.delete(targetPath);
-    const result = await validatePath(sharedState, targetPath);
+    const result = await validatePath(sharedState, targetPath, reason);
 
     if (!result.ok) {
       fieldErrors[targetPath] = result.errors;
@@ -341,7 +347,7 @@ export async function validateSubtreeByNode(
   }
 
   for (const targetPath of remainingRuntimeTargets) {
-    const result = await validatePath(sharedState, targetPath);
+    const result = await validatePath(sharedState, targetPath, reason);
 
     if (!result.ok) {
       fieldErrors[targetPath] = result.errors;
