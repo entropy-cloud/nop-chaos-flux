@@ -277,6 +277,9 @@ UI primitive 对齐补充规则：
 
 ### 当前代码已注册的通用 renderer
 
+- `fragment`
+- `loop`
+- `recurse`
 - `page`
 - `container`
 - `flex`
@@ -286,7 +289,11 @@ UI primitive 对齐补充规则：
 - `badge`
 - `dynamic-renderer`
 - `reaction`
+- `dialog`
+- `drawer`
+- `tabs`
 - `form`
+- `code-editor`
 - `input-text`
 - `input-email`
 - `input-password`
@@ -296,11 +303,14 @@ UI primitive 对齐补充规则：
 - `switch`
 - `radio-group`
 - `checkbox-group`
+- `input-tree`
+- `tree-select`
 - `tag-list`
 - `key-value`
 - `array-editor`
 - `condition-builder`
 - `table`
+- `tree`
 - `data-source`
 - `chart`
 
@@ -319,22 +329,54 @@ UI primitive 对齐补充规则：
 - `report-toolbar`
 - `spreadsheet-page`
 
-### 已文档化但尚未实现的高优先级通用 renderer
+### 已文档化且当前尚未实现的 retained renderer
 
-- `tabs`
-- `dialog`
-- `drawer`
-- `separator`
+完整 retained baseline 请以 `docs/components/amis-baseline-matrix.md` 为准。这里仅列当前已有 owner doc、但 runtime 尚未注册的 canonical retained 组件。
+
+- `alert`
+- `audio`
+- `button-group`
 - `card`
+- `cards`
+- `carousel`
+- `collapse`
+- `combo`
+- `crud`
+- `date-range`
+- `dropdown-button`
+- `editor`
+- `separator`
+- `grid`
 - `list`
 - `image`
+- `input-date`
+- `input-datetime`
+- `input-file`
+- `input-image`
+- `input-month`
+- `input-number`
+- `input-quarter`
+- `input-table`
+- `input-time`
+- `input-year`
 - `progress`
 - `link`
+- `mapping`
 - `markdown`
 - `html`
 - `json-view`
+- `pagination`
+- `picker`
+- `qrcode`
+- `service`
 - `spinner`
 - `empty`
+- `status`
+- `steps`
+- `timeline`
+- `transfer`
+- `video`
+- `wizard`
 
 ### schema 已声明但尚未注册的领域 renderer
 
@@ -344,8 +386,6 @@ UI primitive 对齐补充规则：
 ### 更长尾的候选 renderer
 
 更长尾的候选项和优先级请以 `docs/components/roadmap.md` 为准，这里不再维护第二份优先级列表。
-
-已完成目标设计但暂未进入高优先级实现队列的组件，也应在对应目录中保留 `design.md`，例如 `wizard/`。
 
 当前也包括 `tree/`：它应被理解为带 UI 的层级集合 renderer，而不是 `loop`/`recurse` 的视觉别名。
 
@@ -375,65 +415,105 @@ UI primitive 对齐补充规则：
 
 目前 `docs/components/` 已按组件类型补齐主入口文档，每个目录都应包含 `design.md` 和 `example.json`。
 
-### 通用基础与内容组件
+### 结构与布局组件
 
+- `fragment/`
+- `loop/`
+- `recurse/`
 - `page/`
 - `container/`
 - `flex/`
-- `text/`
-- `button/`
-- `icon/`
-- `badge/`
-- `dynamic-renderer/`
-- `reaction/`
+- `grid/`
+- `separator/`
+- `card/`
+- `cards/`
 - `tabs/`
+- `collapse/`
+- `steps/`
+- `timeline/`
 - `wizard/`
 - `dialog/`
 - `drawer/`
-- `separator/`
-- `card/`
-- `image/`
-- `progress/`
-- `link/`
+
+### 动作、内容与反馈组件
+
+- `text/`
+- `button/`
+- `button-group/`
+- `dropdown-button/`
+- `icon/`
+- `badge/`
 - `markdown/`
 - `html/`
+- `link/`
+- `image/`
+- `progress/`
 - `json-view/`
 - `spinner/`
 - `empty/`
+- `alert/`
+- `mapping/`
+- `status/`
+- `audio/`
+- `video/`
+- `carousel/`
+- `qrcode/`
 
-### 表单组件
+### 数据与工作流组件
+
+- `dynamic-renderer/`
+- `reaction/`
+- `data-source/`
+- `service/`
+- `table/`
+- `crud/`
+- `list/`
+- `pagination/`
+- `tree/`
+- `chart/`
+
+### 表单基础组件
 
 - `form/`
-- `code-editor/`
-- `input-tree/`
-- `tree-select/`
 - `input-text/`
 - `input-email/`
 - `input-password/`
 - `textarea/`
+- `input-number/`
 - `select/`
 - `checkbox/`
-- `switch/`
 - `radio-group/`
 - `checkbox-group/`
+- `switch/`
+- `input-date/`
+- `input-datetime/`
+- `input-time/`
+- `date-range/`
+- `input-month/`
+- `input-quarter/`
+- `input-year/`
+- `input-tree/`
+- `tree-select/`
 - `tag-list/`
 - `key-value/`
 - `array-editor/`
+
+### 表单高级与复合组件
+
 - `condition-builder/`
+- `code-editor/`
+- `editor/`
+- `input-file/`
+- `input-image/`
+- `combo/`
+- `picker/`
+- `transfer/`
+- `input-table/`
 
 说明：
 
 - `condition-builder/` 与 `code-editor/` 是组件 owner 文档目录。
 - `docs/architecture/condition-builder.md` 与 `docs/architecture/code-editor.md` 仅保留迁移期 redirect note，不再是长期 owner。
-
-### 数据与逻辑组件
-
-- `table/`
-- `crud/`
-- `data-source/`
-- `chart/`
-- `list/`
-- `tree/`
 
 ### 领域宿主与设计器组件
 
