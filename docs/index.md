@@ -58,6 +58,8 @@ Choose the smallest document that matches the task.
 | Design recursive structural rendering, `recurse`, or nearest-enclosing-loop recursion rules | `docs/components/recurse/design.md` | `docs/components/loop/design.md`, `docs/components/fragment/design.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
 | Design a no-UI grouping node, grouped `when` usage, or decide `fragment` versus `container` | `docs/components/fragment/design.md` | `docs/architecture/scope-ownership-and-isolation.md`, `docs/components/container/design.md` |
 | Design `list` as a visual collection renderer, or decide its boundary versus `loop` / `table` | `docs/components/list/design.md` | `docs/components/loop/design.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
+| Design `crud` as a composite data workflow renderer, including query form, table, source, toolbar, and create/edit/detail surfaces | `docs/components/crud/design.md` | `docs/components/table/design.md`, `docs/components/form/design.md`, `docs/components/dialog/design.md`, `docs/architecture/action-interaction-state.md` |
+| Audit which AMIS components are retained, renamed, merged, or dropped in Flux component docs | `docs/components/amis-baseline-matrix.md` | `docs/components/index.md`, `docs/components/roadmap.md`, `docs/amis-types/` |
 | Design `tree` as a visual hierarchical renderer, or decide its boundary versus `loop` / `recurse` / future `input-tree` | `docs/components/tree/design.md` | `docs/components/recurse/design.md`, `docs/components/loop/design.md` |
 | Design `input-tree` / `tree-select` as form tree controls, or decide their boundary versus `tree` / `select` | `docs/components/input-tree/design.md`, `docs/components/tree-select/design.md` | `docs/components/tree/design.md`, `docs/components/select/design.md`, `docs/components/form/design.md` |
 | Design high-performance table row identity, `rowKey`, row-scope reuse, row-local invalidation, or same-row field access inside tables | `docs/architecture/table-row-identity-and-scope-performance.md` | `docs/architecture/dependency-tracking.md`, `docs/architecture/template-instantiation-and-node-identity.md` |
@@ -130,6 +132,7 @@ Component contract intent lives primarily in:
 - `docs/components/index.md`
 - `docs/components/condition-builder/design.md`
 - `docs/components/code-editor/design.md`
+- `docs/components/crud/design.md`
 - `docs/components/designer-page/design.md`
 - `docs/components/report-designer-page/design.md`
 - `docs/components/spreadsheet-page/design.md`
@@ -159,4 +162,3 @@ Example behavior is best cross-checked with:
 - start new bug notes from `docs/bugs/00-bug-fix-note-writing-guide.md`
 - `docs/plans/` - implementation plans and execution checklists; start new plans from `docs/plans/00-plan-authoring-and-execution-guide.md`, and ensure every plan file includes explicit status
 - `docs/skills/` - reusable internal workflow prompts and task playbooks
-

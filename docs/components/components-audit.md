@@ -337,3 +337,86 @@
 | manifest 与目录一致性 | 一致，无需修改 |
 | UI primitive 覆盖缺口 | 3 个 P1 候选（`pagination`、`skeleton`、`combobox`）尚无 docs，可优先补充 |
 | 仍存在的设计质量问题 | 同 §7：region 示例写法混用（P1）；`tag-list.tags`/`flex.body/items`/`text.text/body` 过渡态字段收敛（P2） |
+
+### 9.5 AMIS 基线差集补充
+
+> 补充审计日期: 2026-04-12
+> 对照基线: `docs/amis-types/*.d.ts` 与 `docs/components/` 当前目录
+
+这次补充审计回答的是一个与前文不同的问题：
+
+- 前文主要审计“当前已存在的组件目录是否完整、自洽、命名一致”。
+- 本节审计“AMIS 已有的组件能力范围，与当前 `docs/components/` 的设计覆盖范围之间还差多少”。
+
+这两个问题不能混为一谈。
+
+前文 `52/52`、`59 个含 design.md 目录` 一类结论，只能说明“现有目录内部相对完整”，**不能推出**“已经系统覆盖了 AMIS 的重要组件范围”。
+
+#### 9.5.1 核心结论
+
+- 当前 `docs/components/` 并不是一次性按 AMIS 全量类型差集推导后形成的完整覆盖面。
+- 它更接近“围绕当前 Flux 已落地 renderer、明确高优先级目标契约、以及少量领域宿主组件”的逐步沉淀结果。
+- 因此，像 `crud` 这样的 AMIS 高价值核心组件，理论上不应该缺席，但在此前流程里确实可能因为没有做“AMIS baseline -> Flux docs coverage”差集检查而遗漏。
+
+#### 9.5.2 已承接或有意重命名的类型
+
+以下类型不能简单视为“缺文档”，因为 Flux 已明确采用合并/改名策略：
+
+| AMIS type | Flux 承接方式 | 说明 |
+|------|----------------|------|
+| `action` / `submit` / `reset` | `button` | `docs/components/index.md` 已明确统一收敛到 `button` |
+| `tpl` / `plain` | `text` / `html` / `markdown` | 文本展示能力已拆分，不保留原 type |
+| `divider` | `separator` | 命名按 Flux/UI primitive 收敛 |
+| `each` | `loop` | 结构节点改用 Flux 术语 |
+| `checkboxes` | `checkbox-group` | 统一 group 命名 |
+| `radios` | `radio-group` | 统一 group 命名 |
+| `input-array` | `array-editor` | 以 Flux 当前对象/数组字段体系承接 |
+
+#### 9.5.3 当前已明确缺失、且优先级不低的 AMIS 能力
+
+按 `docs/amis-types/` 与当前 `docs/components/` 目录差集复核，以下组件族目前仍没有对应组件 owner 文档，且其中不少属于高频或企业场景常用能力：
+
+| AMIS type / 能力族 | 当前状态 | 备注 |
+|------|----------|------|
+| `crud` | **已补文档** | 2026-04-12 新增 `docs/components/crud/` |
+| `cards` | 缺失 | `crud` 的 cards mode、独立卡片集合场景都需要 |
+| `pagination` / `pagination-wrapper` | 缺失 | 高频基础数据能力；此前只在 UI primitive 审计里被提到 |
+| `service` | 缺失 | AMIS 中重要的数据装配/局部请求容器，需判断与 `data-source` / `page` / `fragment` 的边界 |
+| `alert` | 缺失 | 高频反馈组件 |
+| `input-number` | 缺失 | 基础表单控件，不应长期缺位 |
+| 日期时间族 | 缺失 | `input-date`、`input-datetime`、`input-time`、range、month/quarter/year 系列 |
+| `input-file` / `input-image` | 缺失 | 企业表单高频能力 |
+| `editor` / `input-rich-text` | 缺失 | 与现有 `code-editor` 不同，属于富文本内容编辑 |
+| `button-group` / `dropdown-button` | 缺失 | 常见动作编排组件 |
+| `collapse` / `collapse-group` | 缺失 | 常用容器交互组件 |
+| `grid` | 缺失 | 经典布局能力，需判断与 `flex` / `container` 的边界 |
+| `audio` / `video` / `carousel` / `qrcode` | 缺失 | 内容展示族缺口 |
+| `mapping` / `status` | 缺失 | AMIS 中常用的业务展示小组件 |
+| `search-box` | 缺失 | 可由 `form + input-text` 承接，但目前无正式 owner 结论 |
+| `combo` / `picker` / `transfer` / `input-table` | 缺失 | 复杂表单能力族，后续需结合 Flux 组合字段体系重新建模 |
+
+#### 9.5.4 根因分析
+
+`crud` 之所以此前会遗漏，不是因为它不重要，而是因为此前的组件文档流程有一个明显缺口：
+
+1. 有 `docs/amis-types/` 作为上游能力参考。
+2. 有 `docs/components/` 作为 Flux 组件 owner 文档目录。
+3. 但缺少一个持续维护的“AMIS 基线类型 -> Flux 正式 type / 承接策略 / owner 文档路径 / 当前状态”矩阵。
+
+结果就是：
+
+- 已存在组件目录时，审计能检查内部质量。
+- 但组件目录根本没建立时，旧审计方法不会报警。
+
+`crud` 正是这个流程缺口暴露出来的典型案例。
+
+#### 9.5.5 后续建议
+
+- 不再把“组件目录完整性审计”表述成“组件能力覆盖完整性审计”。
+- 后续应新增一份 AMIS 基线映射矩阵，至少包含：
+  - AMIS 原 type
+  - Flux 是否保留同名 type
+  - 若不保留，由哪个 Flux 组件/架构概念承接
+  - 对应 `docs/components/<type>/design.md` 路径
+  - 当前状态：runtime / targetContract / candidate / intentionally-not-kept
+- 在该矩阵落地前，`roadmap.md` 中的候选清单应被理解为“当前项目关注项”，而不是“AMIS 重要组件已经系统过表后的完整优先级表”。

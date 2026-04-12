@@ -46,6 +46,7 @@
     "spreadsheet-page"
   ],
   "targetContract": [
+    "crud",
     "tabs",
     "dialog",
     "drawer",

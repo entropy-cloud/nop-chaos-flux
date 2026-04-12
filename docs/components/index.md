@@ -6,6 +6,8 @@
 
 这里不是面向最终用户的使用手册，而是面向开发、设计器接入、schema 生成、AI 产码与后续实现的组件契约文档。
 
+AMIS 基线与 Flux 组件覆盖关系请先看：`docs/components/amis-baseline-matrix.md`
+
 每个组件一个目录，至少包含一个 `design.md` 和一个 `example.json`。
 
 批量验证 `example.json` 时，还应同时读取 `docs/components/examples.manifest.json`：
@@ -38,6 +40,7 @@ docs/components/
 - 组件有明显子域时，可以在组件目录内继续拆分，如 `design.md`、`actions.md`、`notes.md`，但 `design.md` 和 `example.json` 仍应作为最小必备文件。
 - 文档描述的是 Flux 最终 DSL 下的契约，不直接复制 AMIS 的 React 实现细节。
 - 历史上的 `docs/component-list.md` 已退役；组件规划与优先级统一收敛到 `docs/components/roadmap.md`。
+- AMIS 保留/合并/废弃清单与分波次补文档路线统一维护在 `docs/components/amis-baseline-matrix.md`。
 
 ## 单组件文档建议结构
 
@@ -426,6 +429,7 @@ UI primitive 对齐补充规则：
 ### 数据与逻辑组件
 
 - `table/`
+- `crud/`
 - `data-source/`
 - `chart/`
 - `list/`

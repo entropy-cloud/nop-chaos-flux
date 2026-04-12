@@ -4,6 +4,12 @@
 
 本文档取代历史上的 `docs/component-list.md`，用于维护 Flux 组件的当前实现面、近期待补齐项和中长期候选项。
 
+重要边界说明：
+
+- 它当前是 Flux 组件规划文档，不是 `docs/amis-types/` 的完整覆盖矩阵。
+- 因此它不能单独作为“AMIS 组件能力已经系统过表”的证明。
+- 如果要判断某个 AMIS 组件是否已被 Flux 文档正式承接，必须同时核对 `docs/amis-types/`、`docs/components/`、以及后续应补齐的 baseline 映射矩阵。
+
 它不是 AMIS 全量组件镜像，也不是逐字段能力说明。具体契约请看：
 
 - `docs/components/index.md`
@@ -62,6 +68,7 @@
 
 ### 3. 已文档化但尚未实现的高优先级通用 renderer
 
+- `crud`
 - `tabs`
 - `dialog`
 - `drawer`
@@ -118,6 +125,8 @@
 ### P1
 
 - 实现并验证当前已文档化但尚未实现的高优先级通用 renderer，优先顺序建议：`tabs`、`dialog`、`drawer`、`list`、`card`、`link`、`empty`、`json-view`。
+- `crud` 是高优先级复合数据 renderer，应在 `table`、`form`、`dialog`、`data-source` 的 owner 边界稳定后优先补齐；实现方式应走组合/编译 lowering，而不是回到单体巨型 JSX 组件。
+- 结合 2026-04-12 的 AMIS 差集复核，`cards`、`pagination`、`service`、`alert`、`input-number`、日期时间族、`input-file` / `input-image`、`editor` / rich-text 也属于当前文档覆盖面里的重要缺口，不应继续默认视为“长尾再说”。
 
 树相关边界已经稳定并落地首版：`tree` 是通用 UI renderer，`input-tree` / `tree-select` 是 form field family，`loop + recurse` 是结构层。
 
