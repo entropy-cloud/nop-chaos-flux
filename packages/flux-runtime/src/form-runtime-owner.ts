@@ -167,6 +167,14 @@ export function buildFormOwnerRuntime(input: {
       await revalidateDependents(path);
     }
 
+    if (reason === 'change') {
+      const currentErrors = input.sharedState.store.getState().errors;
+      const hasErrors = Object.keys(currentErrors).length > 0;
+      const fieldErrors: Record<string, ValidationError[]> = { ...currentErrors };
+      const errors = Object.values(currentErrors).flat();
+      return { ok: !hasErrors, errors, fieldErrors };
+    }
+
     return input.getThisForm().validateForm(reason);
   }
 
