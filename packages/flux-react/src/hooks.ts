@@ -203,6 +203,14 @@ export function useRenderFragment() {
   );
 }
 
+export function useCurrentFormModelGeneration(): number {
+  const form = useCurrentForm();
+  const subscribe = form?.store.subscribe ?? (() => () => undefined);
+  const getSnapshot = () => form?.modelGeneration ?? 0;
+
+  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, (n) => n, Object.is);
+}
+
 export const rendererHooks = {
   useRendererRuntime,
   useRenderScope,
@@ -225,5 +233,6 @@ export const rendererHooks = {
   useCurrentPage,
   useCurrentNodeMeta,
   useCurrentNodeInstance,
-  useRenderFragment
+  useRenderFragment,
+  useCurrentFormModelGeneration
 };

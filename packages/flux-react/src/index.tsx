@@ -35,6 +35,7 @@ export {
   useCurrentNodeInstance,
   useActionDispatcher,
   useRenderFragment,
+  useCurrentFormModelGeneration,
   rendererHooks
 } from './hooks';
 export {
