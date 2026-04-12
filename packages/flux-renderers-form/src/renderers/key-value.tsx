@@ -187,6 +187,14 @@ function toKeyValuePairs(value: unknown): KeyValuePair[] {
   });
 }
 
+function keyValuePairsEqual(a: KeyValuePair[], b: KeyValuePair[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  return a.every((pair, index) =>
+    pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value
+  );
+}
+
 export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
@@ -197,9 +205,26 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   });
   const labelContent = resolveFieldLabelContent(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
+  const [pairs, setPairs] = React.useState<KeyValuePair[]>(() => toKeyValuePairs(readFieldValue(scope, name)));
+  const pairsRef = React.useRef(pairs);
+  const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
+  const childPaths = React.useMemo(
+    () => pairs.flatMap((_, index) => [`${name}.${index}.key`, `${name}.${index}.value`]),
+    [name, pairs]
+  );
   const modelGeneration = useCurrentFormModelGeneration();
 
-  const formPairs = useCurrentFormState(
+  React.useEffect(() => {
+    pairsRef.current = pairs;
+  }, [pairs]);
+
+  React.useEffect(() => {
+    if (registrationRef.current) {
+      registrationRef.current.childPaths = childPaths;
+    }
+  }, [childPaths]);
+
+  const formExternalValue = useCurrentFormState(
     (state) => (currentForm && name ? toKeyValuePairs(getIn(state.values, name)) : undefined),
     (a, b) => {
       if (a === b) return true;
@@ -209,7 +234,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       );
     }
   );
-  const scopePairs = useScopeSelector(
+  const scopeExternalValue = useScopeSelector(
     (scopeData) => (currentForm || !name ? undefined : toKeyValuePairs(getIn(scopeData, name))),
     (a, b) => {
       if (a === b) return true;
@@ -219,26 +244,21 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       );
     }
   );
+  const externalValue = currentForm ? formExternalValue : scopeExternalValue;
 
-  const canonicalPairs = currentForm ? formPairs : scopePairs;
-  const [fallbackPairs, setFallbackPairs] = React.useState<KeyValuePair[]>(
-    () => toKeyValuePairs(readFieldValue(scope, name))
-  );
-  const pairs = canonicalPairs ?? fallbackPairs;
-  const pairsRef = React.useRef(pairs);
-  React.useLayoutEffect(() => {
-    pairsRef.current = pairs;
-  });
-
-  const childPaths = React.useMemo(
-    () => pairs.flatMap((_, index) => [`${name}.${index}.key`, `${name}.${index}.value`]),
-    [name, pairs]
-  );
+  React.useEffect(() => {
+    if (externalValue !== undefined && !keyValuePairsEqual(externalValue, pairsRef.current)) {
+      pairsRef.current = externalValue;
+      setPairs(externalValue);
+    }
+  }, [externalValue]);
 
   const syncField = React.useCallback(
     (nextPairs: KeyValuePair[]) => {
+      pairsRef.current = nextPairs;
+      setPairs(nextPairs);
+
       if (!currentForm || !name) {
-        setFallbackPairs(nextPairs);
         scope.update(name, nextPairs);
         return;
       }
@@ -313,6 +333,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       }
     };
 
+    registrationRef.current = registration;
     return currentForm.registerField(registration).unregister;
     }, [childPaths, currentForm, modelGeneration, name]);
 
@@ -348,14 +369,17 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           disabled={presentation.effectiveDisabled}
           onClick={() => {
             const nextEntry = { id: `pair-${pairs.length + 1}`, key: '', value: '' };
+            const nextPairs = [...pairs, nextEntry];
+            pairsRef.current = nextPairs;
 
             if (currentForm && name) {
+              setPairs(nextPairs);
               currentForm.appendValue(name, nextEntry);
               void currentForm.validateField(name);
               return;
             }
 
-            syncField([...pairs, nextEntry]);
+            syncField(nextPairs);
           }}
         >
           {props.props.addLabel ? String(props.props.addLabel) : 'Add entry'}
