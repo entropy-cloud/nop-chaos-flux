@@ -125,12 +125,6 @@ function toArrayEditorItems(value: unknown): ArrayEditorItem[] {
   });
 }
 
-function arrayItemsEqual(a: ArrayEditorItem[], b: ArrayEditorItem[]): boolean {
-  if (a === b) return true;
-  if (a.length !== b.length) return false;
-  return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
-}
-
 export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
@@ -141,23 +135,9 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   });
   const labelContent = resolveFieldLabelContent(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
-  const [items, setItems] = React.useState<ArrayEditorItem[]>(() => toArrayEditorItems(readFieldValue(scope, name)));
-  const itemsRef = React.useRef(items);
-  const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
-  const childPaths = React.useMemo(() => items.map((_, index) => `${name}.${index}.value`), [items, name]);
   const modelGeneration = useCurrentFormModelGeneration();
 
-  React.useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
-
-  React.useEffect(() => {
-    if (registrationRef.current) {
-      registrationRef.current.childPaths = childPaths;
-    }
-  }, [childPaths]);
-
-  const formExternalValue = useCurrentFormState(
+  const formItems = useCurrentFormState(
     (state) => (currentForm && name ? toArrayEditorItems(getIn(state.values, name)) : undefined),
     (a, b) => {
       if (a === b) return true;
@@ -165,7 +145,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
     }
   );
-  const scopeExternalValue = useScopeSelector(
+  const scopeItems = useScopeSelector(
     (scopeData) => (currentForm || !name ? undefined : toArrayEditorItems(getIn(scopeData, name))),
     (a, b) => {
       if (a === b) return true;
@@ -173,21 +153,21 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
     }
   );
-  const externalValue = currentForm ? formExternalValue : scopeExternalValue;
 
-  React.useEffect(() => {
-    if (externalValue !== undefined && !arrayItemsEqual(externalValue, itemsRef.current)) {
-      itemsRef.current = externalValue;
-      setItems(externalValue);
-    }
-  }, [externalValue]);
+  const canonicalItems = currentForm ? formItems : scopeItems;
+  const [fallbackItems, setFallbackItems] = React.useState<ArrayEditorItem[]>(
+    () => toArrayEditorItems(readFieldValue(scope, name))
+  );
+  const items = canonicalItems ?? fallbackItems;
+  const itemsRef = React.useRef(items);
+  itemsRef.current = items;
+
+  const childPaths = React.useMemo(() => items.map((_, index) => `${name}.${index}.value`), [items, name]);
 
   const syncItems = React.useCallback(
     (nextItems: ArrayEditorItem[]) => {
-      itemsRef.current = nextItems;
-      setItems(nextItems);
-
       if (!currentForm || !name) {
+        setFallbackItems(nextItems);
         scope.update(name, nextItems);
         return;
       }
@@ -240,7 +220,6 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       }
     };
 
-    registrationRef.current = registration;
     return currentForm.registerField(registration).unregister;
     }, [childPaths, currentForm, modelGeneration, name, props.props.itemLabel]);
 
@@ -277,17 +256,14 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           disabled={presentation.effectiveDisabled}
           onClick={() => {
             const nextItem = { id: `item-${items.length + 1}`, value: '' };
-            const nextItems = [...items, nextItem];
-            itemsRef.current = nextItems;
 
             if (currentForm && name) {
-              setItems(nextItems);
               currentForm.appendValue(name, nextItem);
               void currentForm.validateField(name);
               return;
             }
 
-            syncItems(nextItems);
+            syncItems([...items, nextItem]);
           }}
         >
           Add item

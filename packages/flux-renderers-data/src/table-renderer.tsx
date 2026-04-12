@@ -57,8 +57,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const footerContent = resolveRendererSlotContent(props, 'footer');
   const loadingContent = resolveRendererSlotContent(props, 'loadingSlot');
 
-  const ownerKey = useMemo(() => createTableOwnerKey(props), [props]);
-  const rowRepeatedTemplateId = useMemo(() => createTableRowRepeatedTemplateId(props.node.templateNode.templateNodeId), [props.node.templateNode.templateNodeId]);
+  const templateNodeId = props.node.templateNode.templateNodeId;
+  const ownerKey = createTableOwnerKey(props);
+  const rowRepeatedTemplateId = useMemo(() => createTableRowRepeatedTemplateId(templateNodeId), [templateNodeId]);
 
   const { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange } = useTablePagination(
     schemaProps,

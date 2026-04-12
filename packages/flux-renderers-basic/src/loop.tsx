@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderInstancePath } from '@nop-chaos/flux-react';
 import type { LoopSchema } from './schemas';
@@ -9,7 +9,14 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
   const parentInstancePath = useRenderInstancePath();
   const items = props.props.items;
   const itemData = props.props.itemData as Record<string, unknown> | undefined;
-  const bindings = resolveLoopBindings(props.props as LoopSchema);
+  const schemaProps = props.props as LoopSchema;
+  const itemName = schemaProps.itemName;
+  const indexName = schemaProps.indexName;
+  const keyName = schemaProps.keyName;
+  const bindings = useMemo(
+    () => resolveLoopBindings({ itemName, indexName, keyName }),
+    [itemName, indexName, keyName]
+  );
   const repeatedTemplateId = createStructuralRepeatedTemplateId(props.id);
 
   return (

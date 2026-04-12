@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { StructuralLoopContext } from './structural-loop-context';
 import type { RecurseSchema } from './schemas';
@@ -6,16 +6,18 @@ import { createStructuralRepeatedTemplateId, renderStructuralLoop, resolveLoopBi
 
 export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
   const loopContext = useContext(StructuralLoopContext);
+  const itemName = props.props.itemName as string | undefined;
+  const indexName = props.props.indexName as string | undefined;
+  const keyName = props.props.keyName as string | undefined;
+  const bindings = useMemo(
+    () => resolveLoopBindings({ itemName, indexName, keyName }),
+    [itemName, indexName, keyName]
+  );
 
   if (!loopContext) {
     return null;
   }
 
-  const bindings = resolveLoopBindings({
-    itemName: props.props.itemName as string | undefined,
-    indexName: props.props.indexName as string | undefined,
-    keyName: props.props.keyName as string | undefined
-  });
   const itemData = (props.props.itemData as Record<string, unknown> | undefined) ?? loopContext.itemData;
   const keyBy = props.props.keyBy ?? loopContext.keyBy;
   const maxDepth = typeof props.props.maxDepth === 'number' ? props.props.maxDepth : undefined;

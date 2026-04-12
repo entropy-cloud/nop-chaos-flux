@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useState } from 'react';
+import { startTransition, useCallback, useMemo, useState } from 'react';
 import { getIn } from '@nop-chaos/flux-core';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
@@ -11,7 +11,6 @@ export function useTablePagination(
   helpers: RendererComponentProps<TableSchema>['helpers']
 ) {
   const renderScope = useRenderScope();
-  const scopeData = useScopeSelector((scope) => scope);
   const paginationOwnership = schemaProps.paginationOwnership ?? 'local';
   const paginationStatePath = typeof schemaProps.paginationStatePath === 'string' ? schemaProps.paginationStatePath : undefined;
   const paginationEnabled = schemaProps.pagination?.enabled !== false;
@@ -19,9 +18,11 @@ export function useTablePagination(
   const [localCurrentPage, setLocalCurrentPage] = useState(1);
   const [localPageSize, setLocalPageSize] = useState(schemaProps.pagination?.pageSize ?? 10);
 
-  const scopePaginationState = paginationOwnership === 'scope' && paginationStatePath
-    ? (getIn(scopeData, paginationStatePath) as Record<string, unknown> | undefined)
-    : undefined;
+  const scopePaginationState = useScopeSelector(
+    (scopeData) => paginationOwnership === 'scope' && paginationStatePath
+      ? (getIn(scopeData, paginationStatePath) as Record<string, unknown> | undefined)
+      : undefined
+  );
 
   const currentPage = paginationOwnership === 'controlled'
     ? toPositiveNumber(schemaProps.pagination?.currentPage, 1)
@@ -78,25 +79,40 @@ export function useTableSelection(
   helpers: RendererComponentProps<TableSchema>['helpers']
 ) {
   const renderScope = useRenderScope();
-  const scopeData = useScopeSelector((scope) => scope);
   const selectionOwnership = schemaProps.selectionOwnership ?? 'local';
   const selectionStatePath = typeof schemaProps.selectionStatePath === 'string' ? schemaProps.selectionStatePath : undefined;
 
   const [localSelectedRowKeys, setLocalSelectedRowKeys] = useState<Set<string>>(
     new Set(schemaProps.rowSelection?.selectedRowKeys ?? [])
   );
-  const [allSelected, setAllSelected] = useState(false);
 
   const controlledSelectedRowKeys = new Set(toStringArray(schemaProps.rowSelection?.selectedRowKeys));
-  const scopeSelectedRowKeys = new Set(
-    toStringArray(selectionOwnership === 'scope' && selectionStatePath ? getIn(scopeData, selectionStatePath) : undefined)
+
+  const scopeSelectedRowKeys = useScopeSelector(
+    (scopeData) => selectionOwnership === 'scope' && selectionStatePath
+      ? new Set(toStringArray(getIn(scopeData, selectionStatePath)))
+      : undefined,
+    (a, b) => {
+      if (a === b) return true;
+      if (!a || !b) return a === b;
+      if (a.size !== b.size) return false;
+      for (const key of a) {
+        if (!b.has(key)) return false;
+      }
+      return true;
+    }
   );
 
   const selectedRowKeys = selectionOwnership === 'controlled'
     ? controlledSelectedRowKeys
     : selectionOwnership === 'scope'
-      ? scopeSelectedRowKeys
+      ? (scopeSelectedRowKeys ?? new Set<string>())
       : localSelectedRowKeys;
+
+  const allSelected = useMemo(
+    () => source.length > 0 && source.every((r) => selectedRowKeys.has(String(r.id ?? ''))),
+    [source, selectedRowKeys]
+  );
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
@@ -105,7 +121,6 @@ export function useTableSelection(
         : new Set<string>();
 
       startTransition(() => {
-        setAllSelected(checked);
         if (selectionOwnership === 'local') {
           setLocalSelectedRowKeys(nextKeys);
         } else if (selectionOwnership === 'scope' && selectionStatePath) {
