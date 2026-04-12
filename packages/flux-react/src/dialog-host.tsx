@@ -84,7 +84,6 @@ function DialogView(props: {
     scope: dialog.scope,
     actionScope: dialog.actionScope,
     componentRegistry: dialog.componentRegistry,
-    ownerNode: dialog.ownerNode,
     ownerNodeInstance: dialog.ownerNodeInstance
   };
   const titleNode = dialog.title ? renderSurfaceNode(dialog.title, surfaceContext) : null;
@@ -142,7 +141,6 @@ function DrawerView(props: {
     scope: surface.scope,
     actionScope: surface.actionScope,
     componentRegistry: surface.componentRegistry,
-    ownerNode: surface.ownerNode,
     ownerNodeInstance: surface.ownerNodeInstance
   };
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;

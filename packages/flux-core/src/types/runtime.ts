@@ -1,6 +1,6 @@
 import type { ActionResult } from './actions';
 import type { ApiSchema } from './schema';
-import type { NodeInstance } from './node-identity';
+import type { NodeInstance, TemplateNode } from './node-identity';
 import type { ScopeRef } from './scope';
 import type {
   ValidationRule,
@@ -18,7 +18,7 @@ import type {
   ChildValidationContractRegistration
 } from './validation';
 import type { ActionScope } from './actions';
-import type { CompiledSchemaNode, ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
+import type { ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
 import type { ReactNode } from 'react';
 
 export interface FormStoreState {
@@ -151,7 +151,7 @@ export interface OwnedSurfaceStateBase {
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
-  ownerNode?: CompiledSchemaNode;
+  ownerTemplateNode?: TemplateNode;
   ownerNodeInstance?: NodeInstance;
   title?: RenderNodeInput | string;
   body?: RenderNodeInput;
@@ -286,7 +286,7 @@ export interface PageRuntime {
     options?: {
       actionScope?: ActionScope;
       componentRegistry?: ComponentHandleRegistry;
-      ownerNode?: CompiledSchemaNode;
+      ownerTemplateNode?: TemplateNode;
       ownerNodeInstance?: NodeInstance;
     }
   ): string;
@@ -299,7 +299,7 @@ export interface PageRuntime {
     options?: {
       actionScope?: ActionScope;
       componentRegistry?: ComponentHandleRegistry;
-      ownerNode?: CompiledSchemaNode;
+      ownerTemplateNode?: TemplateNode;
       ownerNodeInstance?: NodeInstance;
     }
   ): string;

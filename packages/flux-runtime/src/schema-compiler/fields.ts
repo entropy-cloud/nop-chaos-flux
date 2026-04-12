@@ -87,32 +87,6 @@ export function isCompiledStatic(compiled: CompiledRuntimeValue<unknown> | undef
 
 export function createNodeRuntimeState(node: CompiledSchemaNode): CompiledNodeRuntimeState {
   const metaEntries: Record<string, any> = {};
-  type LinkageEffect = NonNullable<NonNullable<CompiledSchemaNode['linkage']>['fulfill']>;
-  const createEffectState = (effect: LinkageEffect | undefined) => {
-    if (!effect) {
-      return undefined;
-    }
-
-    const next: Record<string, any> = {};
-
-    if (effect.visible?.kind === 'dynamic') {
-      next.visible = effect.visible.createState();
-    }
-
-    if (effect.disabled?.kind === 'dynamic') {
-      next.disabled = effect.disabled.createState();
-    }
-
-    if (effect.required?.kind === 'dynamic') {
-      next.required = effect.required.createState();
-    }
-
-    if (effect.options?.kind === 'dynamic') {
-      next.options = effect.options.createState();
-    }
-
-    return Object.keys(next).length > 0 ? next : undefined;
-  };
 
   for (const key of Object.keys(node.meta) as Array<Extract<keyof CompiledSchemaMeta, string>>) {
     const value = node.meta[key];
@@ -124,12 +98,5 @@ export function createNodeRuntimeState(node: CompiledSchemaNode): CompiledNodeRu
   return {
     meta: metaEntries,
     props: node.props.kind === 'dynamic' ? node.props.createState() : undefined,
-    linkage: node.linkage
-      ? {
-          when: node.linkage.when.kind === 'dynamic' ? node.linkage.when.createState() : undefined,
-          fulfill: createEffectState(node.linkage.fulfill),
-          otherwise: createEffectState(node.linkage.otherwise)
-        }
-      : undefined
   };
 }

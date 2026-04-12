@@ -17,6 +17,7 @@ import type {
   ScopeRef,
   SourceSchema
 } from '@nop-chaos/flux-core';
+import { createCompiledCidState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createActionScope } from './action-scope';
 import { createActionDispatcher } from './action-runtime';
@@ -68,10 +69,12 @@ export function createRendererRuntime(input: {
   const runtimeId = `runtime-${Math.random().toString(36).slice(2, 10)}`;
   const plugins = sortRendererPlugins(input.plugins);
   const expressionCompiler = input.expressionCompiler ?? createExpressionCompiler(createFormulaCompiler());
+  const defaultCidState = createCompiledCidState();
   const schemaCompiler = input.schemaCompiler ?? createSchemaCompiler({
     registry: input.registry,
     expressionCompiler,
-    plugins
+    plugins,
+    defaultCidState
   });
   const envRef: { current: RendererEnv } = {
     current: input.env

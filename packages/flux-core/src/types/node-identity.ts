@@ -1,7 +1,7 @@
 import type { CompiledRuntimeValue, RuntimeValueState } from './compilation';
 import type { BaseSchema, SchemaPath } from './schema';
 import type { ScopeDependencySet, ScopeRef } from './scope';
-import type { CompiledNodeLinkage, CompiledSchemaMeta } from './renderer-compiler';
+import type { CompiledSchemaMeta } from './renderer-compiler';
 
 export type TemplateNodeId = number;
 export type RepeatedTemplateId = string;
@@ -64,7 +64,6 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   }>;
   regions: Readonly<Record<string, TemplateRegion>>;
   scopePlan: ScopePlan;
-  linkageProgram?: CompiledNodeLinkage;
   registryPlan?: RegistryPlan;
   validationPlan?: ValidationPlan;
   sourcePropKeys: readonly string[];

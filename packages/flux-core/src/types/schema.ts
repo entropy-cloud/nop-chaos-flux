@@ -34,7 +34,6 @@ export interface BaseSchema extends SchemaObject {
   onMount?: ActionSchema | ActionSchema[];
   onUnmount?: ActionSchema | ActionSchema[];
   'xui:imports'?: XuiImportSpec[];
-  'xui:linkage'?: FieldLinkageSchema;
 }
 
 export type SchemaInput = BaseSchema | BaseSchema[];
@@ -179,18 +178,4 @@ export interface XuiImportSpec extends SchemaObject {
   from: string;
   as: string;
   options?: Record<string, SchemaValue>;
-}
-
-export interface FieldLinkageEffect extends SchemaObject {
-  visible?: boolean | string;
-  disabled?: boolean | string;
-  required?: boolean | string;
-  options?: SchemaValue;
-}
-
-export interface FieldLinkageSchema extends SchemaObject {
-  dependencies?: string[];
-  when: string;
-  fulfill?: FieldLinkageEffect;
-  otherwise?: FieldLinkageEffect;
 }

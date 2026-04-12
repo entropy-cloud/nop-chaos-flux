@@ -69,7 +69,7 @@ export function createManagedPageRuntime(input: {
     options?: {
       actionScope?: import('@nop-chaos/flux-core').ActionScope;
       componentRegistry?: import('@nop-chaos/flux-core').ComponentHandleRegistry;
-      ownerNode?: import('@nop-chaos/flux-core').CompiledSchemaNode;
+      ownerTemplateNode?: import('@nop-chaos/flux-core').TemplateNode;
       ownerNodeInstance?: import('@nop-chaos/flux-core').NodeInstance;
     }
   ): SurfaceState {
@@ -82,7 +82,7 @@ export function createManagedPageRuntime(input: {
       scope: surfaceScope,
       actionScope: options?.actionScope,
       componentRegistry: options?.componentRegistry,
-      ownerNode: options?.ownerNode,
+      ownerTemplateNode: options?.ownerTemplateNode,
       ownerNodeInstance: options?.ownerNodeInstance,
       title: typeof surface.title === 'string'
         ? surface.title
@@ -124,7 +124,7 @@ export function createManagedPageRuntime(input: {
         scope: surface.scope,
         actionScope: surface.actionScope,
         componentRegistry: surface.componentRegistry,
-        ownerNode: surface.ownerNode,
+        ownerTemplateNode: surface.ownerTemplateNode,
         ownerNodeInstance: surface.ownerNodeInstance,
         title: surface.title,
         body: surface.body

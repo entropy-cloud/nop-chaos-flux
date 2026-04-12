@@ -98,18 +98,20 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [onActionScopeChange, rootActionScope]);
 
     return (
-      <RuntimeContext.Provider value={runtime}>
-        <ActionScopeContext.Provider value={rootActionScope}>
-          <ComponentRegistryContext.Provider value={rootComponentRegistry}>
-            <ScopeContext.Provider value={rootScope}>
-              <PageContext.Provider value={page}>
-                <RenderNodes input={props.schema} options={{ actionScope: rootActionScope, componentRegistry: rootComponentRegistry }} />
-                <DialogHost />
-              </PageContext.Provider>
-            </ScopeContext.Provider>
-          </ComponentRegistryContext.Provider>
-        </ActionScopeContext.Provider>
-      </RuntimeContext.Provider>
+      <div data-runtime-id={runtime.runtimeId}>
+        <RuntimeContext.Provider value={runtime}>
+          <ActionScopeContext.Provider value={rootActionScope}>
+            <ComponentRegistryContext.Provider value={rootComponentRegistry}>
+              <ScopeContext.Provider value={rootScope}>
+                <PageContext.Provider value={page}>
+                  <RenderNodes input={props.schema} options={{ actionScope: rootActionScope, componentRegistry: rootComponentRegistry }} />
+                  <DialogHost />
+                </PageContext.Provider>
+              </ScopeContext.Provider>
+            </ComponentRegistryContext.Provider>
+          </ActionScopeContext.Provider>
+        </RuntimeContext.Provider>
+      </div>
     );
   };
 }
