@@ -1,6 +1,7 @@
 @import "tailwindcss";
-@import "../../../packages/tailwind-preset/src/styles/base.css";
+@import "@nop-chaos/theme-tokens/styles.css";
 @import "../../../packages/ui/src/styles/base.css";
+@import "./styles-theme-utilities.css";
 @import "../../../packages/spreadsheet-renderers/src/canvas-styles.css";
 @source "../../../packages";
 

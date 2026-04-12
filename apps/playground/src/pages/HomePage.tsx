@@ -1,13 +1,19 @@
-import type { PageId } from './types';
+type NavigationTarget = 'component-lab' | 'flux-basic' | 'flow-designer' | 'report-designer' | 'debugger-lab' | 'condition-builder' | 'code-editor' | 'word-editor';
 
 interface NavCard {
-  id: PageId;
+  id: NavigationTarget;
   title: string;
   eyebrow: string;
   description: string;
 }
 
 const NAV_CARDS: NavCard[] = [
+  {
+    id: 'component-lab',
+    title: 'Component Lab',
+    eyebrow: 'All Renderers',
+    description: 'Route-backed gallery for every live Flux renderer. Left-side navigation, focused scenarios, and per-renderer verification.'
+  },
   {
     id: 'flux-basic',
     title: 'Flux Basic',
@@ -53,13 +59,13 @@ const NAV_CARDS: NavCard[] = [
 ];
 
 interface HomePageProps {
-  onNavigate: (page: PageId) => void;
+  onNavigate: (page: NavigationTarget) => void;
 }
 
 export function HomePage({ onNavigate }: HomePageProps) {
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
-      <section className="max-w-[800px] text-center p-10 rounded-3xl bg-[var(--nop-hero-bg)] border border-[var(--nop-hero-border)] shadow-[var(--nop-hero-shadow)]">
+      <section className="max-w-[860px] text-center p-10 rounded-3xl bg-[var(--nop-hero-bg)] border border-[var(--nop-hero-border)] shadow-[var(--nop-hero-shadow)]">
         <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">NOP Chaos Flux</p>
         <h1 className="m-0 mb-2 text-[clamp(32px,5vw,56px)] leading-none">Playground</h1>
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)] mb-8">
