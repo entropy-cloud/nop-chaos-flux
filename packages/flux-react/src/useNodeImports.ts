@@ -3,7 +3,6 @@ import type {
   ActionScope,
   ComponentHandleRegistry,
   NodeInstance,
-  PageRuntime,
   RendererRuntime,
   ScopeRef,
   XuiImportSpec
@@ -18,8 +17,7 @@ export function useNodeImports(
   activeActionScope: ActionScope | undefined,
   activeComponentRegistry: ComponentHandleRegistry | undefined,
   activeScope: ScopeRef,
-  nodeInstance: NodeInstance,
-  page?: PageRuntime
+  nodeInstance: NodeInstance
 ): Readonly<Record<string, unknown>> {
   const hasImports = Boolean(nodeImports?.length && activeActionScope);
   const activeImportLoader = runtime.env.importLoader;
@@ -93,7 +91,7 @@ export function useNodeImports(
         actionScope: activeActionScope
       });
     };
-  }, [runtime, activeImportLoader, hasImports, nodeImports, activeActionScope, activeComponentRegistry, activeScope, page]);
+  }, [runtime, activeImportLoader, hasImports, nodeImports, activeActionScope, activeComponentRegistry, activeScope]);
 
   return hasImports ? expressionBindings : EMPTY_IMPORT_BINDINGS;
 }

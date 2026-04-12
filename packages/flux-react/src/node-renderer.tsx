@@ -130,7 +130,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const nodeImports = getNodeImports(props.node);
   const importExpressionBindings = useNodeImports(
     runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope,
-    importOwnerNodeInstance, currentPage
+    importOwnerNodeInstance
   );
   const renderScope = useMemo(
     () => Object.keys(importExpressionBindings).length === 0
