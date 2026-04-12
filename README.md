@@ -16,6 +16,7 @@
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38bdf8.svg)](https://tailwindcss.com/)
 [![pnpm](https://img.shields.io/badge/pnpm-10-f69220.svg)](https://pnpm.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![AMIS Compatible](https://img.shields.io/badge/AMIS-Compat-yellow.svg)](https://github.com/baidu/amis)
 
 </div>
 
@@ -35,6 +36,50 @@ This repository is most useful to three audiences:
 
 If you need exact contracts or implementation details, continue into `docs/`.
 
+## Relationship with NOP Chaos Next
+
+| Dimension | NOP Chaos Flux | NOP Chaos Next |
+|-----------|----------------|----------------|
+| **Positioning** | Low-code runtime and rendering framework | Frontend application framework and scaffold |
+| **Core Capability** | Runtime built on seven primitives | Extension system + Plugin system |
+| **Rendering Layer** | Custom renderer architecture | Based on AMIS (React 19 migrated) |
+| **Use Case** | Platform teams build low-code infrastructure | Business teams build enterprise applications |
+| **Designers** | Built-in Flow/Report/Spreadsheet designers | Integrates third-party designers |
+| **State Management** | Framework-agnostic Zustand stores | Hybrid Zustand + React Query |
+| **Dependencies** | Independent runtime, no AMIS dependency | Depends on AMIS as core rendering layer |
+| **Plugin Loading** | Not provided | SystemJS remote plugin loading |
+
+In short:
+- **Flux** = "How to generate UI from JSON" (底层 runtime)
+- **Next** = "How to build extensible business applications" (应用框架)
+
+The two projects can collaborate: Next can integrate Flux's designer and runtime capabilities. For Next README, see [../nop-chaos-next/README.md](../nop-chaos-next/README.md).
+
+## Future Migration Plan
+
+**Flux is the planned future rendering layer for NOP Chaos Next.**
+
+### Current State
+- Next uses AMIS (React 19 migrated) as the primary rendering layer
+- Flux runs as an independent runtime project
+- Both can collaborate through integration points
+
+### Migration Roadmap
+- **Phase 1 (共存期)**: Introduce Flux as an optional rendering layer, develop AMIS to Flux JSON conversion compatibility layer
+- **Phase 2 (过渡期)**: Gradually migrate new pages to Flux, optimize conversion layer, refactor key pages
+- **Phase 3 (完整取代期)**: Complete migration to Flux as the sole runtime and rendering layer, remove AMIS dependency
+
+### AMIS to Flux Conversion Layer
+A compatibility layer will be developed to:
+- Map AMIS schema → Flux schema
+- Convert AMIS expressions → Flux expressions
+- Adapt AMIS event handling → Flux ActionScope
+- Transform AMIS data binding → Flux ScopeRef
+
+This ensures existing AMIS schemas can run on Flux with minimal changes.
+
+For the complete migration plan, see [../nop-chaos-next/README.md](../nop-chaos-next/README.md#迁移路线图).
+
 ## At A Glance
 
 - JSON schema drives pages, forms, tables, dialogs, and richer design surfaces
@@ -44,6 +89,7 @@ If you need exact contracts or implementation details, continue into `docs/`.
 - The monorepo also contains Flow Designer, Spreadsheet/Report Designer, Word Editor, and debugger tooling
 - Workspace packages are currently `private`; the main runnable surface is `apps/playground`
 - Architecture rules stay visible through package boundaries, renderer contracts, action scope, and host integration
+- **AMIS Compatibility**: Planned compatibility layer to run existing AMIS schemas on Flux runtime, enabling gradual migration from AMIS-based applications
 
 ## A 30-Second Example
 
