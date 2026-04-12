@@ -110,7 +110,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     if (minimapSvg && minimapSvg.getAttribute('preserveAspectRatio') !== 'none') {
       minimapSvg.setAttribute('preserveAspectRatio', 'none');
     }
-  }, [showMinimap, localNodes, localEdges]);
+  }, [showMinimap]);
 
   useEffect(() => {
     const snapshotPositionMap = new Map(
