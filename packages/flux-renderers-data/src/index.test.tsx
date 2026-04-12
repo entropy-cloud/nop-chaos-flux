@@ -993,7 +993,7 @@ describe('dataRendererDefinitions', () => {
     });
   });
 
-  it('propagates repeated table row instancePath into row child locators', async () => {
+  it('propagates repeated table row instancePath into row child nodes', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
@@ -1076,7 +1076,7 @@ describe('dataRendererDefinitions', () => {
     expect((await screen.findByTestId('node-instance-probe')).textContent ?? '').toMatch(/^\[\{"repeatedTemplateId":"table-row:/);
   });
 
-  it('passes row locator through helpers.dispatch action context', async () => {
+  it('passes row instancePath through helpers.dispatch action context', async () => {
     cleanup();
     const observedLocators: unknown[] = [];
     const SchemaRenderer = createSchemaRenderer([

@@ -2146,7 +2146,7 @@ describe('formRendererDefinitions', () => {
     });
   });
 
-  it('supports xui:linkage for disabled and required field presentation', async () => {
+  it('supports disabled and required expressions for conditional field presentation', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
@@ -2156,7 +2156,8 @@ describe('formRendererDefinitions', () => {
           type: 'form',
           data: {
             role: 'viewer',
-            adminCode: ''
+            adminCode: '',
+            isAdmin: false
           },
           body: [
             {
@@ -2172,18 +2173,14 @@ describe('formRendererDefinitions', () => {
               type: 'input-text',
               name: 'adminCode',
               label: 'Admin Code',
-              'xui:linkage': {
-                dependencies: ['role'],
-                when: '${role === "admin"}',
-                fulfill: {
-                  disabled: false,
-                  required: true
-                },
-                otherwise: {
-                  disabled: true,
-                  required: false
-                }
-              }
+              disabled: '${role !== "admin"}'
+            },
+            {
+              type: 'input-text',
+              name: 'adminCodeRequired',
+              label: 'Admin Code Required',
+              visible: '${role === "admin"}',
+              required: true
             }
           ]
         }}
@@ -2194,7 +2191,7 @@ describe('formRendererDefinitions', () => {
 
     const adminCodeInput = screen.getByLabelText('Admin Code') as HTMLInputElement;
     expect(adminCodeInput.disabled).toBe(true);
-    expect(screen.queryByText((_content, node) => node?.textContent === 'Admin Code*')).toBeNull();
+    expect(screen.queryByText('Admin Code Required')).toBeNull();
 
     await selectOption('Role', 'Admin');
 
@@ -2202,11 +2199,12 @@ describe('formRendererDefinitions', () => {
       expect(adminCodeInput.disabled).toBe(false);
     });
 
-    const adminCodeLabel = screen.getByText('Admin Code').closest('[data-slot="field-label"]');
-    expect(adminCodeLabel?.querySelector('[data-slot="field-required"]')).toBeTruthy();
+    expect(await screen.findByText('Admin Code Required')).toBeTruthy();
+    const requiredLabel = screen.getByText('Admin Code Required').closest('[data-slot="field-label"]');
+    expect(requiredLabel?.querySelector('[data-slot="field-required"]')).toBeTruthy();
   });
 
-  it('supports xui:linkage for visible and options branches', async () => {
+  it('supports visible and options expressions for conditional field presentation', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
@@ -2216,7 +2214,14 @@ describe('formRendererDefinitions', () => {
           type: 'form',
           data: {
             role: 'viewer',
-            permission: 'read'
+            permission: 'read',
+            adminOptions: [
+              { label: 'Manage users', value: 'manage-users' },
+              { label: 'Publish content', value: 'publish-content' }
+            ],
+            viewerOptions: [
+              { label: 'Read only', value: 'read' }
+            ]
           },
           body: [
             {
@@ -2232,23 +2237,8 @@ describe('formRendererDefinitions', () => {
               type: 'radio-group',
               name: 'permission',
               label: 'Permission',
-              'xui:linkage': {
-                dependencies: ['role'],
-                when: '${role === "admin"}',
-                fulfill: {
-                  visible: true,
-                  options: [
-                    { label: 'Manage users', value: 'manage-users' },
-                    { label: 'Publish content', value: 'publish-content' }
-                  ]
-                },
-                otherwise: {
-                  visible: false,
-                  options: [
-                    { label: 'Read only', value: 'read' }
-                  ]
-                }
-              }
+              visible: '${role === "admin"}',
+              options: '${role === "admin" ? adminOptions : viewerOptions}'
             }
           ]
         }}
