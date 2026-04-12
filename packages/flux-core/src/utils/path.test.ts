@@ -6,11 +6,19 @@ describe('path utils', () => {
     expect(parsePath('list[0].name')).toEqual(['list', '0', 'name']);
   });
 
-  it('reuses cached parse results for repeated paths', () => {
+  it('returns equal segments for repeated cached paths without sharing the same array instance', () => {
     const first = parsePath('user.profile.name');
     const second = parsePath('user.profile.name');
 
-    expect(second).toBe(first);
+    expect(second).toEqual(first);
+    expect(second).not.toBe(first);
+  });
+
+  it('does not let callers mutate cached parse results', () => {
+    const first = parsePath('user.profile.name');
+    first.push('extra');
+
+    expect(parsePath('user.profile.name')).toEqual(['user', 'profile', 'name']);
   });
 
   it('keeps getIn semantics intact with cached parse results', () => {
