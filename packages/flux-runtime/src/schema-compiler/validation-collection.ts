@@ -87,7 +87,7 @@ export function collectValidationModel(
   );
   let formDefaultHiddenFieldPolicy: HiddenFieldPolicy | undefined = options.defaultHiddenFieldPolicy;
 
-  const visit = (entry: CompiledSchemaNode) => {
+  const visit = (entry: CompiledSchemaNode, fieldPathPrefix?: string) => {
     if (!entry.component) {
       return;
     }
@@ -110,9 +110,13 @@ export function collectValidationModel(
       const ctx = {
         schema: entry.schema,
         renderer: entry.component,
-        path: entry.path
+        path: entry.path,
+        fieldPathPrefix
       };
-      const fieldPath = contributor.getFieldPath?.(entry.schema, ctx);
+      const rawFieldPath = contributor.getFieldPath?.(entry.schema, ctx);
+      const fieldPath = rawFieldPath
+        ? (fieldPathPrefix ? `${fieldPathPrefix}.${rawFieldPath}` : rawFieldPath)
+        : undefined;
 
       if (fieldPath) {
         const compiledRules = compileValidationRules(
@@ -142,12 +146,38 @@ export function collectValidationModel(
           hiddenFieldPolicy: fieldHiddenPolicy
         };
 
-        if (validationNodes[parentPath]) {
+        if (validationNodes[parentPath] !== undefined) {
           validationNodes[parentPath].children.push(fieldPath);
         }
 
+        const childPrefix = contributor.getChildFieldPathPrefix?.(entry.schema, { ...ctx, fieldPathPrefix });
+        const nextChildPrefix = childPrefix
+          ? (fieldPathPrefix ? `${fieldPathPrefix}.${childPrefix}` : childPrefix)
+          : fieldPathPrefix;
+
+        for (const region of Object.values(entry.regions)) {
+          if (!region.node) {
+            continue;
+          }
+
+          const childNodes = Array.isArray(region.node) ? region.node : [region.node];
+          childNodes.forEach((child) => visit(child, nextChildPrefix));
+        }
+
+        return;
       }
     }
+
+    const contributor2 = entry.component.validation;
+    const childPrefix2 = contributor2?.getChildFieldPathPrefix?.(entry.schema, {
+      schema: entry.schema,
+      renderer: entry.component,
+      path: entry.path,
+      fieldPathPrefix
+    });
+    const nextPrefix = childPrefix2
+      ? (fieldPathPrefix ? `${fieldPathPrefix}.${childPrefix2}` : childPrefix2)
+      : fieldPathPrefix;
 
     for (const region of Object.values(entry.regions)) {
       if (!region.node) {
@@ -155,11 +185,11 @@ export function collectValidationModel(
       }
 
       const childNodes = Array.isArray(region.node) ? region.node : [region.node];
-      childNodes.forEach(visit);
+      childNodes.forEach((child) => visit(child, nextPrefix));
     }
   };
 
-  nodes.forEach(visit);
+  nodes.forEach((n) => visit(n, undefined));
 
   return buildCompiledFormValidationModel({
     behavior: rootBehavior,

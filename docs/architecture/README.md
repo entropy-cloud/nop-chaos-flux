@@ -41,6 +41,7 @@
 - `action-scope-and-imports.md`
 - `api-data-source.md`
 - `form-validation.md`
+- `field-binding-and-renderer-contract.md`
 - `value-adaptation-and-detail-field.md`
 - `variant-field.md`
 - `object-field.md`

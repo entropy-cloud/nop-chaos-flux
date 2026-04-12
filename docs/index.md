@@ -21,6 +21,7 @@ Choose the smallest document that matches the task.
 | Understand action control flow such as `when`, `then`, `onError`, `parallel`, result classes, and chained result context | `docs/architecture/action-algebra-formal-spec.md` | `docs/architecture/action-scope-and-imports.md` |
 | è®¾è®¡ action å¯è§†åŒ–ç¼–è¾‘ã€optional stepã€graph loweringï¼Œæˆ–åˆ¤æ–­æ˜¯å¦è¦æŠŠ `parallel` æ”¹æˆ `steps` | `docs/architecture/action-graph-authoring.md` | `docs/architecture/action-algebra-formal-spec.md` |
 | è®¾è®¡å€¼è½¬æ¢ã€å­—æ®µ draft ç”Ÿå‘½å‘¨æœŸã€ç»„åˆå¼è¯¦æƒ…å­—æ®µ/è¯¦æƒ…è§†å›¾ã€æˆ– `transformInAction` / `transformOutAction` / `validateValueAction` | `docs/architecture/value-adaptation-and-detail-field.md` | `docs/architecture/action-scope-and-imports.md`, `docs/architecture/renderer-runtime.md` |
+| è®¾è®¡ field bindingã€`name` vs `value`ã€shared field schema baseã€æˆ–åˆ¤æ–­å“ªäº›å­—æ®µå±žäºŽ `props` / `meta` | `docs/architecture/field-binding-and-renderer-contract.md` | `docs/architecture/field-metadata-slot-modeling.md`, `docs/architecture/renderer-runtime.md` |
 | è®¾è®¡å¤šæ€å€¼å­—æ®µã€`string | object`/`string | ActionSchema` è¿™ç±» union-like ç¼–è¾‘ã€è‡ªåŠ¨è¯†åˆ«å˜ä½“ã€æˆ–åˆ‡æ¢ä¸åŒç¼–è¾‘å™¨ | `docs/architecture/variant-field.md` | `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/action-scope-and-imports.md` |
 | è®¾è®¡å¯¹è±¡å­—æ®µã€å±€éƒ¨ subformã€ä¸€ä¸ªå­—æ®µå†…éƒ¨å†æ‹†å¤šä¸ªå±žæ€§ç¼–è¾‘ã€æˆ–ç›¸å¯¹å¯¹è±¡æ ¹çš„å­å­—æ®µå‘½å | `docs/architecture/object-field.md` | `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/renderer-runtime.md` |
 | è®¾è®¡æ•°ç»„å­—æ®µã€æ ‡é‡æ•°ç»„/å¯¹è±¡æ•°ç»„ç¼–è¾‘ã€æˆ–åˆ¤æ–­å®ƒä¸Ž `list` / `loop` / AMIS `combo` / `input-array` çš„è¾¹ç•Œ | `docs/architecture/array-field.md` | `docs/architecture/object-field.md`, `docs/components/list/design.md`, `docs/components/loop/design.md` |
@@ -95,6 +96,7 @@ Architecture intent lives primarily in:
 - `docs/architecture/scope-ownership-and-isolation.md`
 - `docs/architecture/surface-owner.md`
 - `docs/architecture/renderer-runtime.md`
+- `docs/architecture/field-binding-and-renderer-contract.md`
 - `docs/architecture/scoped-render-slots.md`
 - `docs/architecture/template-instantiation-and-node-identity.md`
 - `docs/architecture/table-row-identity-and-scope-performance.md`

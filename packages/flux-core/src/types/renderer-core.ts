@@ -18,6 +18,7 @@ export interface ValidationCollectContext<S extends BaseSchema = BaseSchema> {
   schema: S;
   renderer: RendererDefinition<S>;
   path: SchemaPath;
+  fieldPathPrefix?: string;
 }
 
 export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
@@ -25,6 +26,7 @@ export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
   valueKind?: 'scalar' | 'array' | 'object';
   getFieldPath?(schema: S, ctx: ValidationCollectContext<S>): string | undefined;
   collectRules?(schema: S, ctx: ValidationCollectContext<S>): ValidationRule[];
+  getChildFieldPathPrefix?(schema: S, ctx: ValidationCollectContext<S>): string | undefined;
 }
 
 export interface RendererHelpers {
