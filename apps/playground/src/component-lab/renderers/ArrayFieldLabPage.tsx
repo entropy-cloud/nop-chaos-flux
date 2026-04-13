@@ -1,6 +1,6 @@
-import { SchemaLabPage } from '../SchemaLabPage';
+import { MultiScenarioLabPage } from '../MultiScenarioLabPage';
 
-const schema = {
+const membersArray = {
   type: 'page',
   body: [
     {
@@ -29,18 +29,60 @@ const schema = {
         }
       ],
       actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
+        { type: 'button', label: 'Save Team', onClick: { action: 'submit' } }
       ]
     }
   ]
 };
 
+const contactsWithSubmit = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'contactsForm',
+      onSubmit: [
+        { action: 'setValue', args: { path: 'submitted', value: true } }
+      ],
+      data: {
+        contacts: []
+      },
+      body: [
+        {
+          type: 'array-field',
+          name: 'contacts',
+          label: 'Contacts',
+          itemKind: 'object',
+          itemBody: [
+            { type: 'input-text', name: 'name', label: 'Name', required: true },
+            { type: 'input-email', name: 'email', label: 'Email', required: true }
+          ]
+        }
+      ],
+      actions: [
+        { type: 'button', label: 'Submit', onClick: { action: 'submit' } }
+      ]
+    },
+    { type: 'text', text: '${submitted ? "Contacts saved! Count: " + (contactsForm.contacts ?? []).length : "Add contacts and submit."}' }
+  ]
+};
+
 export function ArrayFieldLabPage() {
   return (
-    <SchemaLabPage
-      schema={schema}
-      description="Inline composite array editing. Each item has its own object scope exposed to itemBody child renderers."
-      notes="Add and remove items using the controls at each row. Validation runs per-item."
+    <MultiScenarioLabPage
+      introDescription="Inline composite array editing. Each item has its own object scope exposed to itemBody child renderers. Supports add, remove, and per-item validation."
+      scenarios={[
+        {
+          title: 'Team members with name and role',
+          description: 'Pre-populated with two members. Add more with the + button or remove rows with the trash icon.',
+          schema: membersArray
+        },
+        {
+          title: 'Contact list with submit result display',
+          description: 'Starts empty. Add contacts with name and email, then submit. The success message shows how many contacts were saved.',
+          schema: contactsWithSubmit
+        }
+      ]}
     />
   );
 }

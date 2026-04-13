@@ -1,12 +1,9 @@
-import { SchemaLabPage } from '../SchemaLabPage';
+import { MultiScenarioLabPage } from '../MultiScenarioLabPage';
 
-const schema = {
+const basicDialog = {
   type: 'page',
   body: [
-    {
-      type: 'text',
-      text: 'Click the button below to open the dialog.'
-    },
+    { type: 'text', text: 'Click the button to open a simple informational dialog.' },
     {
       type: 'button',
       label: 'Open Dialog',
@@ -28,12 +25,62 @@ const schema = {
   ]
 };
 
+const formDialog = {
+  type: 'page',
+  body: [
+    { type: 'text', text: 'Submitted name: ${submittedName ?? "(none)"}' },
+    {
+      type: 'button',
+      label: 'Edit Contact',
+      onClick: {
+        action: 'dialog',
+        dialog: {
+          type: 'dialog',
+          title: 'Edit Contact',
+          body: [
+            {
+              type: 'form',
+              name: 'contactForm',
+              body: [
+                { type: 'input-text', name: 'name', label: 'Full Name', required: true },
+                { type: 'input-email', name: 'email', label: 'Email', required: true }
+              ],
+              actions: [
+                {
+                  type: 'button',
+                  label: 'Confirm',
+                  onClick: [
+                    { action: 'submit', formName: 'contactForm' },
+                    { action: 'setValue', args: { path: 'submittedName', value: '${contactForm.name}' } },
+                    { action: 'closeDialog' }
+                  ]
+                },
+                { type: 'button', label: 'Cancel', variant: 'outline', onClick: { action: 'closeDialog' } }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+};
+
 export function DialogLabPage() {
   return (
-    <SchemaLabPage
-      schema={schema}
-      description="Modal dialog with body and actions regions. Triggered via the dialog action."
-      notes="Click 'Open Dialog' to see the dialog renderer in action."
+    <MultiScenarioLabPage
+      introDescription="Modal dialog with body and actions regions. Triggered via the dialog action from any onClick handler."
+      scenarios={[
+        {
+          title: 'Informational dialog',
+          description: 'Click "Open Dialog" to see a basic dialog with text body and a close button.',
+          schema: basicDialog
+        },
+        {
+          title: 'Dialog with form fields and writeback',
+          description: 'Click "Edit Contact" to open a dialog with a form. Confirming writes the entered name back to the parent scope.',
+          schema: formDialog
+        }
+      ]}
     />
   );
 }

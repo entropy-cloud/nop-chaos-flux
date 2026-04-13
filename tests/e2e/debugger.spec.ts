@@ -19,13 +19,15 @@ async function prepareFreshPage(page: import('@playwright/test').Page): Promise<
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.waitForTimeout(500);
+  // Wait for homepage to be fully interactive
+  await page.getByText('Core Renderers').waitFor({ state: 'visible', timeout: 10000 });
 }
 
 async function openFluxBasicPage(page: import('@playwright/test').Page): Promise<void> {
   await prepareFreshPage(page);
   await page.getByText('Core Renderers').click();
-  await page.waitForTimeout(1200);
+  // Wait for FluxBasicPage to render - the form has a Username field
+  await page.getByLabel('Username').waitFor({ state: 'visible', timeout: 15000 });
 }
 
 test.describe('Nop Debugger', () => {
@@ -125,6 +127,7 @@ test.describe('Nop Debugger', () => {
   test('automation contract covers real validation API interaction, trace, inspect, and redaction', async ({ page }) => {
     await openFluxBasicPage(page);
 
+    await page.getByLabel('Username').waitFor({ state: 'visible', timeout: 15000 });
     await page.getByLabel('Username').fill('debugger-user');
     await page.getByLabel('Email').click();
 

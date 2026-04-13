@@ -1,14 +1,52 @@
-import { SchemaLabPage } from '../SchemaLabPage';
+import { MultiScenarioLabPage } from '../MultiScenarioLabPage';
 
-const schema = {
+const withShowToggle = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'passwordToggleForm',
+      body: [
+        {
+          type: 'input-password',
+          name: 'password',
+          label: 'Password',
+          required: true,
+          showToggle: true
+        }
+      ],
+      actions: [
+        { type: 'button', label: 'Continue', onClick: { action: 'submit' } }
+      ]
+    }
+  ]
+};
+
+const confirmPassword = {
   type: 'page',
   body: [
     {
       type: 'form',
       name: 'passwordForm',
       body: [
-        { type: 'input-password', name: 'password', label: 'Password', required: true },
-        { type: 'input-password', name: 'confirmPassword', label: 'Confirm Password', required: true }
+        {
+          type: 'input-password',
+          name: 'password',
+          label: 'New Password',
+          required: true,
+          showToggle: true,
+          minLength: 8
+        },
+        {
+          type: 'input-password',
+          name: 'confirmPassword',
+          label: 'Confirm Password',
+          required: true,
+          showToggle: true,
+          validations: [
+            { rule: 'custom', expression: '${confirmPassword === password}', message: 'Passwords must match' }
+          ]
+        }
       ],
       actions: [
         { type: 'button', label: 'Set Password', onClick: { action: 'submit' } }
@@ -19,9 +57,20 @@ const schema = {
 
 export function InputPasswordLabPage() {
   return (
-    <SchemaLabPage
-      schema={schema}
-      description="Password input with masked characters. Uses the standard form field binding and validation pipeline."
+    <MultiScenarioLabPage
+      introDescription="Password input with masked characters. Supports showToggle to reveal the password and custom validations for confirmation checks."
+      scenarios={[
+        {
+          title: 'Password field with show/hide toggle',
+          description: 'With showToggle: true, a visibility button appears so users can reveal their password while typing.',
+          schema: withShowToggle
+        },
+        {
+          title: 'New password with confirm-password validator',
+          description: 'Both fields have showToggle enabled. The confirm field has a custom validation that requires it to match the password field.',
+          schema: confirmPassword
+        }
+      ]}
     />
   );
 }

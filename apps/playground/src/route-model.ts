@@ -65,6 +65,7 @@ export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
 ];
 
 export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
+  { id: 'flux-basic', title: 'Flux Basic', eyebrow: 'Core Renderers', description: 'Forms, actions, dialogs, tables, data binding, validation, API requests, and renderer fundamentals.' },
   { id: 'flow-designer', title: 'Flow Designer', eyebrow: 'Visual Workflow', description: 'designer-page, toolbar, inspector, canvas, node palette, edge connections.' },
   { id: 'report-designer', title: 'Report Designer', eyebrow: 'Spreadsheet + Metadata', description: 'report-designer-page, field panel, inspector shell, toolbar, spreadsheet canvas.' },
   { id: 'debugger-lab', title: 'Debugger Lab', eyebrow: 'DevTools', description: 'Debugger API, event timeline, network trace, and automation hooks.' },

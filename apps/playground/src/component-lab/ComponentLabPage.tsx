@@ -1,5 +1,6 @@
-import React from 'react';
-import { ScrollArea, Badge, cn } from '@nop-chaos/ui';
+import React, { useState } from 'react';
+import { Badge, cn } from '@nop-chaos/ui';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import {
   ALL_SHARED_RENDERER_ROUTES,
   type RendererRouteEntry,
@@ -70,59 +71,106 @@ function EmptyState() {
   );
 }
 
+function NavGroup({
+  category,
+  entries,
+  activeRendererId,
+  onSelectRenderer,
+}: {
+  category: RendererCategory;
+  entries: RendererRouteEntry[];
+  activeRendererId: string | null;
+  onSelectRenderer: (id: string) => void;
+}) {
+  const hasActive = entries.some((e) => e.id === activeRendererId);
+  const [open, setOpen] = useState(true);
+
+  return (
+    <div className="mb-1">
+      <button
+        type="button"
+        className={cn(
+          'w-full flex items-center justify-between px-2 py-1.5 rounded-md',
+          'text-[10px] font-bold uppercase tracking-wider cursor-pointer',
+          'hover:bg-[var(--nop-nav-surface)] transition-colors duration-100',
+          hasActive
+            ? 'text-[var(--nop-accent)]'
+            : 'text-[var(--nop-accent-muted)]'
+        )}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span>{CATEGORY_LABELS[category]}</span>
+        <span className="flex items-center gap-1 opacity-60">
+          <span className="text-[9px] font-normal normal-case tracking-normal">{entries.length}</span>
+          {open
+            ? <ChevronDown className="w-3 h-3" />
+            : <ChevronRight className="w-3 h-3" />}
+        </span>
+      </button>
+      {open && (
+        <div className="mt-0.5">
+          {entries.map((entry) => (
+            <button
+              key={entry.id}
+              type="button"
+              className={cn(
+                'w-full text-left px-2 py-1.5 rounded-lg text-sm cursor-pointer transition-colors duration-100',
+                'flex items-center justify-between gap-1',
+                activeRendererId === entry.id
+                  ? 'bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] font-medium'
+                  : 'text-[var(--nop-body-copy)] hover:bg-[var(--nop-nav-surface)] hover:text-[var(--nop-text-strong)]'
+              )}
+              onClick={() => onSelectRenderer(entry.id)}
+              data-testid={`nav-renderer-${entry.id}`}
+            >
+              <span className="truncate">{entry.title}</span>
+              <span className="shrink-0 text-[9px] text-[var(--nop-accent-muted)] opacity-60">
+                {PACKAGE_SHORT[entry.sourcePackage] ?? ''}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ComponentLabPage({ activeRendererId, onSelectRenderer, onBack }: ComponentLabPageProps) {
   const activeEntry = resolveActiveEntry(activeRendererId);
   const LabPage = activeRendererId ? RENDERER_LAB_REGISTRY[activeRendererId] : null;
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <aside className="w-[240px] shrink-0 border-r border-[var(--nop-nav-border)] bg-[var(--nop-hero-bg)] flex flex-col">
-        <div className="p-4 border-b border-[var(--nop-nav-border)]">
+    <div className="flex h-screen overflow-hidden" data-testid="component-lab">
+      <aside className="w-[240px] shrink-0 border-r border-[var(--nop-nav-border)] bg-[var(--nop-hero-bg)] flex flex-col h-screen" data-testid="component-lab-sidebar">
+        <div className="p-4 border-b border-[var(--nop-nav-border)] shrink-0">
           <button
             type="button"
             className="mb-3 text-xs text-[var(--nop-accent)] hover:underline cursor-pointer bg-transparent border-none p-0"
             onClick={onBack}
+            data-testid="component-lab-back"
           >
             ← Back to Home
           </button>
           <p className="uppercase tracking-[0.14em] text-[10px] font-bold text-[var(--nop-accent-muted)]">Component Lab</p>
           <p className="text-xs text-[var(--nop-body-copy)] mt-0.5">{ALL_SHARED_RENDERER_ROUTES.length} renderers</p>
         </div>
-        <ScrollArea className="flex-1">
-          <nav className="p-2">
-            {grouped.map(({ category, entries }) => (
-              <div key={category} className="mb-3">
-                <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--nop-accent-muted)]">
-                  {CATEGORY_LABELS[category]}
-                </p>
-                {entries.map((entry) => (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    className={cn(
-                      'w-full text-left px-2 py-1.5 rounded-lg text-sm cursor-pointer transition-colors duration-100',
-                      'flex items-center justify-between gap-1',
-                      activeRendererId === entry.id
-                        ? 'bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] font-medium'
-                        : 'text-[var(--nop-body-copy)] hover:bg-[var(--nop-nav-surface)] hover:text-[var(--nop-text-strong)]'
-                    )}
-                    onClick={() => onSelectRenderer(entry.id)}
-                  >
-                    <span className="truncate">{entry.title}</span>
-                    <span className="shrink-0 text-[9px] text-[var(--nop-accent-muted)] opacity-60">
-                      {PACKAGE_SHORT[entry.sourcePackage] ?? ''}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ))}
-          </nav>
-        </ScrollArea>
+        <nav className="flex-1 min-h-0 overflow-y-auto p-2" data-testid="component-lab-nav">
+          {grouped.map(({ category, entries }) => (
+            <NavGroup
+              key={category}
+              category={category}
+              entries={entries}
+              activeRendererId={activeRendererId}
+              onSelectRenderer={onSelectRenderer}
+            />
+          ))}
+        </nav>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto" data-testid="component-lab-main">
         {LabPage && activeEntry ? (
-          <div className="p-6">
+          <div className="p-6" data-testid={`component-lab-renderer-${activeEntry.id}`}>
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -133,8 +181,8 @@ export function ComponentLabPage({ activeRendererId, onSelectRenderer, onBack }:
                     {PACKAGE_SHORT[activeEntry.sourcePackage] ?? activeEntry.sourcePackage}
                   </Badge>
                 </div>
-                <h1 className="text-2xl font-bold text-[var(--nop-text-strong)] m-0">{activeEntry.title}</h1>
-                <p className="text-[11px] text-[var(--nop-body-copy)] opacity-60 mt-0.5 font-mono">{activeEntry.id}</p>
+                <h1 className="text-2xl font-bold text-[var(--nop-text-strong)] m-0" data-testid="component-lab-renderer-title">{activeEntry.title}</h1>
+                <p className="text-[11px] text-[var(--nop-body-copy)] opacity-60 mt-0.5 font-mono" data-testid="component-lab-renderer-id">{activeEntry.id}</p>
               </div>
             </div>
             <LabPage />

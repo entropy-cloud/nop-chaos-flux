@@ -26,14 +26,14 @@ export function SchemaLabPage({ schema, data, description, notes }: SchemaLabPag
   const env = useMemo(() => defaultEnv, []);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" data-testid="schema-lab">
       {description ? (
         <p className="text-sm leading-relaxed text-[var(--nop-body-copy)]">{description}</p>
       ) : null}
       {notes ? (
         <p className="text-xs leading-relaxed text-[var(--nop-body-copy)] opacity-70 italic">{notes}</p>
       ) : null}
-      <div className="p-5 rounded-[16px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]">
+      <div className="p-5 rounded-[16px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]" data-testid="schema-lab-stage">
         <SchemaRenderer
           schema={schema}
           data={data ?? {}}

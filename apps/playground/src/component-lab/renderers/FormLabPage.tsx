@@ -1,6 +1,6 @@
-import { SchemaLabPage } from '../SchemaLabPage';
+import { MultiScenarioLabPage } from '../MultiScenarioLabPage';
 
-const schema = {
+const basicForm = {
   type: 'page',
   body: [
     {
@@ -23,12 +23,44 @@ const schema = {
   ]
 };
 
+const formWithSubmitFeedback = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'feedbackForm',
+      onSubmit: [
+        { action: 'setValue', args: { path: 'submitted', value: true } },
+        { action: 'setValue', args: { path: 'submittedUsername', value: '${feedbackForm.username}' } }
+      ],
+      body: [
+        { type: 'input-text', name: 'username', label: 'Username', placeholder: 'Enter username', required: true },
+        { type: 'input-email', name: 'email', label: 'Email', placeholder: 'user@example.com', required: true }
+      ],
+      actions: [
+        { type: 'button', label: 'Submit', onClick: { action: 'submit' } }
+      ]
+    },
+    { type: 'text', text: '${submitted ? "Success! Submitted username: " + submittedUsername : ""}' }
+  ]
+};
+
 export function FormLabPage() {
   return (
-    <SchemaLabPage
-      schema={schema}
-      description="Root form container that manages field values, validation, and submit lifecycle."
-      notes="The form renderer provides field binding, validation coordination, and submit/reset actions to its child field renderers."
+    <MultiScenarioLabPage
+      introDescription="Root form container that manages field values, validation, and the submit lifecycle. Child renderers bind to the form via the name prop."
+      scenarios={[
+        {
+          title: 'Basic form with select field',
+          description: 'Username (required), email, and role select. Validation runs on submit.',
+          schema: basicForm
+        },
+        {
+          title: 'Form with visible submit success state',
+          description: 'Fill in username and email, then click Submit. An onSubmit action sets a submitted flag and a success message appears.',
+          schema: formWithSubmitFeedback
+        }
+      ]}
     />
   );
 }

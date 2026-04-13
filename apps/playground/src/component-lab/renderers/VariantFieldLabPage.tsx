@@ -1,6 +1,6 @@
-import { SchemaLabPage } from '../SchemaLabPage';
+import { MultiScenarioLabPage } from '../MultiScenarioLabPage';
 
-const schema = {
+const notificationVariants = {
   type: 'page',
   body: [
     {
@@ -48,12 +48,65 @@ const schema = {
   ]
 };
 
+const integrationVariants = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'integrationForm',
+      data: {
+        integration: { type: 'github', token: '' }
+      },
+      body: [
+        {
+          type: 'variant-field',
+          name: 'integration',
+          label: 'Integration',
+          typeField: 'type',
+          variants: [
+            {
+              value: 'github',
+              label: 'GitHub',
+              body: [
+                { type: 'input-text', name: 'token', label: 'Personal Access Token', required: true },
+                { type: 'input-text', name: 'org', label: 'Organization (optional)' }
+              ]
+            },
+            {
+              value: 'jira',
+              label: 'Jira',
+              body: [
+                { type: 'input-text', name: 'domain', label: 'Jira Domain', placeholder: 'company.atlassian.net', required: true },
+                { type: 'input-email', name: 'email', label: 'Account Email', required: true },
+                { type: 'input-password', name: 'apiToken', label: 'API Token', required: true }
+              ]
+            }
+          ]
+        }
+      ],
+      actions: [
+        { type: 'button', label: 'Save Integration', onClick: { action: 'submit' } }
+      ]
+    }
+  ]
+};
+
 export function VariantFieldLabPage() {
   return (
-    <SchemaLabPage
-      schema={schema}
-      description="Discriminated union field. A type selector switches which variant body is rendered."
-      notes="Switch the type selector between Email, SMS, and Webhook to see different field sets."
+    <MultiScenarioLabPage
+      introDescription="Discriminated union field. A type selector switches which variant body is rendered. Only the active variant's fields are submitted."
+      scenarios={[
+        {
+          title: 'Notification config — email, SMS, or webhook',
+          description: 'Switch the type selector between Email, SMS, and Webhook to see different field sets. Starts with email selected.',
+          schema: notificationVariants
+        },
+        {
+          title: 'Integration config — GitHub or Jira',
+          description: 'Each integration type requires different credentials. Switch the type to see the relevant fields.',
+          schema: integrationVariants
+        }
+      ]}
     />
   );
 }

@@ -1,6 +1,6 @@
-import { SchemaLabPage } from '../SchemaLabPage';
+import { MultiScenarioLabPage } from '../MultiScenarioLabPage';
 
-const schema = {
+const counterDoubled = {
   type: 'page',
   body: [
     { type: 'text', text: 'counter: ${counter}' },
@@ -20,13 +20,50 @@ const schema = {
   ]
 };
 
+const charCountWatcher = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'watchForm',
+      body: [
+        { type: 'input-text', name: 'message', label: 'Message', placeholder: 'Type something...' }
+      ]
+    },
+    {
+      type: 'reaction',
+      watch: ['watchForm.message'],
+      actions: [
+        {
+          action: 'setValue',
+          args: {
+            path: 'charCount',
+            value: '${(watchForm.message ?? "").length}'
+          }
+        }
+      ]
+    },
+    { type: 'text', text: 'Character count: ${charCount ?? 0}' }
+  ]
+};
+
 export function ReactionLabPage() {
   return (
-    <SchemaLabPage
-      schema={schema}
-      data={{ counter: 0, doubled: 0 }}
-      description="Side-effect trigger: fires actions when watched scope values change."
-      notes="Click Increment to increment counter. The reaction automatically computes doubled = counter * 2 whenever counter changes."
+    <MultiScenarioLabPage
+      introDescription="Side-effect trigger that fires a list of actions whenever watched scope values change. Useful for derived state, auto-save, or field synchronization."
+      scenarios={[
+        {
+          title: 'Counter with derived doubled value',
+          description: 'Click "Increment" to increase the counter. The reaction automatically computes doubled = counter × 2 on every change.',
+          schema: counterDoubled,
+          data: { counter: 0, doubled: 0 }
+        },
+        {
+          title: 'Field-watch for character count',
+          description: 'Type in the message field. The reaction watches the field value and updates a charCount display in real time.',
+          schema: charCountWatcher
+        }
+      ]}
     />
   );
 }
