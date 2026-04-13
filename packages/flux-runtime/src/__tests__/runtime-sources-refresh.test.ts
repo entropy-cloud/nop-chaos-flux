@@ -1,0 +1,173 @@
+import { describe, expect, it, vi } from 'vitest';
+import type { RendererEnv } from '@nop-chaos/flux-core';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createRendererRegistry, createRendererRuntime } from '../index';
+import { textRenderer, env } from './test-fixtures';
+
+describe('createRendererRuntime', () => {
+  it('refreshes registered data sources by id within an explicit scope', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ price: 2, qty: 3 });
+
+    const registration = runtime.registerDataSource({
+      id: 'scoped-total',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'total',
+        formula: '${(price || 0) * (qty || 0)}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(6);
+    });
+
+    page.scope.update('qty', 5);
+
+    await expect(runtime.refreshDataSource({ id: 'scoped-total', scope: page.scope })).resolves.toBe(true);
+    expect(page.scope.get('total')).toBe(10);
+
+    registration.dispose();
+  });
+
+  it('auto-recomputes formula sources when dependent scope paths change', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ price: 2, qty: 3, note: 'ignore' });
+
+    const registration = runtime.registerDataSource({
+      id: 'auto-total',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'total',
+        formula: '${(price || 0) * (qty || 0)}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(6);
+    });
+
+    page.scope.update('note', 'still ignore');
+    await Promise.resolve();
+    expect(page.scope.get('total')).toBe(6);
+
+    page.scope.update('qty', 4);
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(8);
+    });
+
+    registration.dispose();
+  });
+
+  it('auto-refreshes api sources when request dependencies change', async () => {
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: { url: string }) => ({
+      ok: true,
+      status: 200,
+      data: { url: api.url } as T
+    });
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ userId: 1, note: 'ignore' });
+
+    const registration = runtime.registerDataSource({
+      id: 'user-api-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/users/${userId}' },
+        dataPath: 'payload'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/1' });
+    });
+
+    page.scope.update('note', 'still ignore');
+    await Promise.resolve();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    page.scope.update('userId', 2);
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/2' });
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    registration.dispose();
+  });
+
+  it('refreshes the matching source inside the provided scope when ids collide', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const firstScope = runtime.createChildScope(page.scope, { value: 1 }, { pathSuffix: 'first-source-scope' });
+    const secondScope = runtime.createChildScope(page.scope, { value: 10 }, { pathSuffix: 'second-source-scope' });
+
+    const first = runtime.registerDataSource({
+      id: 'shared-source',
+      scope: firstScope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'derived',
+        formula: '${value}'
+      }
+    });
+    const second = runtime.registerDataSource({
+      id: 'shared-source',
+      scope: secondScope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'derived',
+        formula: '${value}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(firstScope.get('derived')).toBe(1);
+      expect(secondScope.get('derived')).toBe(10);
+    });
+
+    secondScope.update('value', 11);
+
+    await expect(runtime.refreshDataSource({ id: 'shared-source', scope: secondScope })).resolves.toBe(true);
+
+    expect(firstScope.get('derived')).toBe(1);
+    expect(secondScope.get('derived')).toBe(11);
+
+    first.dispose();
+    second.dispose();
+  });
+
+  it('returns false when refreshing an unknown data source id', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    await expect(runtime.refreshDataSource({ id: 'missing-source', scope: page.scope })).resolves.toBe(false);
+  });
+});

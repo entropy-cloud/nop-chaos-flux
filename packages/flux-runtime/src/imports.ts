@@ -311,37 +311,7 @@ export function createImportManager(input: {
     imports?: readonly XuiImportSpec[];
     actionScope?: ActionScope;
   }) {
-    const imports = args.imports?.map(normalizeImportSpec).filter((spec) => spec.from && spec.as) ?? [];
-
-    if (!args.actionScope || imports.length === 0) {
-      return;
-    }
-
-    const registrations = scopeRegistrations.get(args.actionScope);
-
-    if (!registrations) {
-      return;
-    }
-
-    for (const spec of imports) {
-      const key = createImportKey(spec);
-      const entry = registrations.get(key);
-
-      if (!entry) {
-        continue;
-      }
-
-      entry.refCount -= 1;
-
-      if (entry.refCount > 0) {
-        continue;
-      }
-
-      registrations.delete(key);
-      void entry.pending.finally(() => {
-        entry.release?.();
-      });
-    }
+    void args;
   }
 
   function getImportedExpressionBindings(args: {

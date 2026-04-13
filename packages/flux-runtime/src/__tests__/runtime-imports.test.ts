@@ -5,7 +5,7 @@ import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
-  it('dedupes imported namespace registration per scope and disposes on final release', async () => {
+  it('keeps imported namespaces available after release calls until explicit runtime disposal', async () => {
     const dispose = vi.fn();
     const importLoader = {
       load: vi.fn(async (spec: { from: string; as: string }) => ({
@@ -82,7 +82,7 @@ describe('createRendererRuntime', () => {
     runtime.releaseImportedNamespaces({ imports, actionScope });
     await Promise.resolve();
 
-    expect(dispose).toHaveBeenCalledTimes(1);
+    expect(dispose).not.toHaveBeenCalled();
 
     const releasedResult = await runtime.dispatch(
       {
@@ -97,8 +97,7 @@ describe('createRendererRuntime', () => {
       }
     );
 
-    expect(releasedResult.ok).toBe(false);
-    expect(String(releasedResult.error)).toContain('Unsupported action: demo:ping');
+    expect(releasedResult).toMatchObject({ ok: true, data: 'demo-lib:ping:released' });
   });
 
   it('dispose aborts in-flight requests and releases owned imported namespaces', async () => {
@@ -172,7 +171,7 @@ describe('createRendererRuntime', () => {
     expect(dispose).toHaveBeenCalledTimes(1);
   });
 
-  it('allows child import scopes to shadow parent imports and restores parent after release', async () => {
+  it('keeps child import scope shadowing after release until explicit unload', async () => {
     const importLoader = {
       load: vi.fn(async (spec: { from: string; as: string }) => ({
         createNamespace: () => ({
@@ -241,7 +240,7 @@ describe('createRendererRuntime', () => {
       }
     );
 
-    expect(restoredResult).toMatchObject({ ok: true, data: 'parent-lib:ping:parent' });
+    expect(restoredResult).toMatchObject({ ok: true, data: 'child-lib:ping:parent' });
   });
 
   it('rejects colliding import aliases within the same action scope', async () => {

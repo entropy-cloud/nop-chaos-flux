@@ -10,72 +10,42 @@ import type {
   RuntimeFieldRegistration,
   ScopeChange,
   ScopeValidationStateSnapshot,
-  ValidationError
 } from '@nop-chaos/flux-core';
 import {
-  clampArrayIndex,
-  clampInsertIndex,
   getCompiledValidationDependents,
   getCompiledValidationField,
   getCompiledValidationTraversalOrder,
   getCompiledValidationNode,
-  insertArrayValue,
-  moveArrayValue,
-  removeArrayValue,
-  setIn,
-  swapArrayValue
 } from '@nop-chaos/flux-core';
 import { createFormStore } from './form-store';
-import { executeArrayMutation } from './form-runtime-array';
 import { buildFormOwnerRuntime } from './form-runtime-owner';
-import { findRuntimeRegistration } from './form-runtime-registration';
 import { buildInitialFieldState } from './form-runtime-state';
 import { createInitialFormScopeChange, createFormScopeWithBinding } from './form-runtime-status';
-import { buildSubmitTouchedState, classifySubmitResult } from './form-runtime-submit';
 import {
   cancelAllValidationDebounces,
   cancelValidationDebounce,
   validatePath
 } from './form-runtime-validation';
 import type { CreateManagedFormRuntimeInput, ManagedFormRuntimeSharedState } from './form-runtime-types';
+import {
+  applyFieldValuePatch,
+  notifyFieldHidden,
+  registerField,
+  updateFieldRegistration
+} from './form-runtime-field-ops';
+import { executeFormSubmit } from './form-runtime-submit-flow';
+import { executeSetValues } from './form-runtime-values';
+import {
+  appendValueOp,
+  prependValueOp,
+  insertValueOp,
+  removeValueOp,
+  moveValueOp,
+  swapValueOp,
+  replaceValueOp,
+  type ArrayMutationContext
+} from './form-runtime-array-ops';
 import { createScopeRef, toRecord } from './scope';
-
-let _registrationIdCounter = 0;
-
-function nextRegistrationId(): string {
-  return `reg-${++_registrationIdCounter}`;
-}
-
-function buildBooleanPathState(input: Record<string, boolean>, path: string, nextValue: boolean): Record<string, boolean> {
-  if (nextValue) {
-    if (input[path]) {
-      return input;
-    }
-
-    return {
-      ...input,
-      [path]: true
-    };
-  }
-
-  if (!input[path]) {
-    return input;
-  }
-
-  const next = { ...input };
-  delete next[path];
-  return next;
-}
-
-function buildErrorPathState(input: Record<string, ValidationError[]>, path: string): Record<string, ValidationError[]> {
-  if (!input[path]) {
-    return input;
-  }
-
-  const next = { ...input };
-  delete next[path];
-  return next;
-}
 
 export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInput): FormRuntime {
   const store = createFormStore(inputValue.initialValues ?? {});
@@ -176,34 +146,6 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     return order.every((path) => state.touched[path]);
   }
 
-  function applyFieldValuePatch(
-    state: ReturnType<typeof store.getState>,
-    name: string,
-    value: unknown,
-    forceDirty: boolean
-  ) {
-    const runtimeTarget = findRuntimeRegistration(sharedState, name);
-    const nextValues = setIn(state.values, name, value);
-    const nextValidating = buildBooleanPathState(state.validating, name, false);
-    const nextErrors = buildErrorPathState(state.errors, name);
-
-    if (runtimeTarget.childPath && runtimeTarget.entry) {
-      return {
-        nextValues,
-        nextValidating,
-        nextErrors,
-        nextDirty: buildBooleanPathState(state.dirty, name, true)
-      };
-    }
-
-    return {
-      nextValues,
-      nextValidating,
-      nextErrors,
-      nextDirty: buildBooleanPathState(state.dirty, name, forceDirty)
-    };
-  }
-
   const formRuntimeRef: { current?: FormRuntime } = {};
   const ownerRuntime = buildFormOwnerRuntime({
     sharedState,
@@ -215,6 +157,14 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     getIsSubmitting: () => isSubmittingInternal,
     getThisForm: () => formRuntimeRef.current as FormRuntime
   });
+
+  function buildArrayCtx(): ArrayMutationContext {
+    return {
+      sharedState,
+      scope,
+      revalidateDependents: ownerRuntime.revalidateDependents
+    };
+  }
 
   const thisForm: FormRuntime = {
     id: formId,
@@ -313,80 +263,15 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     registerField(registration: RuntimeFieldRegistration): FieldRegistrationHandle {
-      if (sharedState.lifecycleState === 'disposed') {
-        return {
-          accepted: false,
-          registrationId: '',
-          unregister() {}
-        };
-      }
-
-      const existingId = pathToRegistrationId.get(registration.path);
-      if (existingId && runtimeFieldRegistrations.has(existingId)) {
-        return {
-          accepted: false,
-          registrationId: '',
-          unregister() {}
-        };
-      }
-
-      const registrationId = nextRegistrationId();
-      const capturedGeneration = sharedState.modelGeneration;
-
-      runtimeFieldRegistrations.set(registrationId, {
-        registrationId,
-        registration,
-        modelGeneration: capturedGeneration
-      });
-      pathToRegistrationId.set(registration.path, registrationId);
-
-      return {
-        accepted: true,
-        registrationId,
-        unregister() {
-          const entry = runtimeFieldRegistrations.get(registrationId);
-          if (!entry) return;
-          if (entry.modelGeneration !== capturedGeneration) return;
-
-          entry.registration.onRemove?.();
-          runtimeFieldRegistrations.delete(registrationId);
-
-          if (pathToRegistrationId.get(registration.path) === registrationId) {
-            pathToRegistrationId.delete(registration.path);
-          }
-        }
-      };
+      return registerField(sharedState, registration);
     },
 
     updateFieldRegistration(registrationId, patch) {
-      const entry = runtimeFieldRegistrations.get(registrationId);
-      if (!entry) return;
-
-      if (entry.modelGeneration !== sharedState.modelGeneration) return;
-
-      runtimeFieldRegistrations.set(registrationId, {
-        ...entry,
-        registration: { ...entry.registration, ...patch }
-      });
+      updateFieldRegistration(sharedState, registrationId, patch);
     },
 
     notifyFieldHidden(path, hidden) {
-      const wasHidden = sharedState.hiddenFields.has(path);
-
-      if (hidden === wasHidden) {
-        return;
-      }
-
-      if (hidden) {
-        sharedState.hiddenFields.add(path);
-        const field = getCompiledValidationField(currentValidation, path);
-
-        if (field?.hiddenFieldPolicy.clearValueWhenHidden) {
-          thisForm.setValue(path, undefined);
-        }
-      } else {
-        sharedState.hiddenFields.delete(path);
-      }
+      notifyFieldHidden(sharedState, path, hidden, currentValidation, (p, v) => thisForm.setValue(p, v));
     },
 
     async validateField(path, reason?) {
@@ -439,114 +324,22 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     async submit(api?: ApiSchema, options?: { interactionId?: string }) {
-      if (isSubmittingInternal) {
-        return {
-          ok: false,
-          cancelled: true,
-          error: new Error('Submit already in progress')
-        };
-      }
-
-      if (sharedState.lifecycleState === 'disposed') {
-        return { ok: false, cancelled: true, error: new Error('Form is disposed') };
-      }
-
-      isSubmittingInternal = true;
-
-      let submittingTimer: ReturnType<typeof setTimeout> | undefined;
-
-      if (submittingDelay > 0) {
-        submittingTimer = setTimeout(() => {
-          submittingTimer = undefined;
-
-          if (isSubmittingInternal) {
-            store.setSubmitting(true);
-          }
-        }, submittingDelay);
-      } else {
-        store.setSubmitting(true);
-      }
-
-      const nextTouched = buildSubmitTouchedState({
-        touched: store.getState().touched,
-        validation: currentValidation,
-        runtimeFieldRegistrations: Array.from(runtimeFieldRegistrations.values()).map((e) => e.registration),
-        defaultValidationTriggers
-      });
-
-      if (nextTouched !== store.getState().touched) {
-      store.batchUpdate({ touched: nextTouched });
-      }
-
-      ownerRuntime.supersedeLowerPriorityWork();
-
-      const validation = (!currentValidation && runtimeFieldRegistrations.size === 0)
-        ? { ok: true, errors: [], fieldErrors: {} } as FormValidationResult
-        : await thisForm.validateForm('submit');
-
-      if (!validation.ok) {
-        const validationFailure = {
-          ok: false,
-          error: validation.errors,
-          data: validation.fieldErrors
-        } as const;
-
-        const lifecycleResult = lifecycleHandlers?.onValidateError
-          ? await lifecycleHandlers.onValidateError(validationFailure, options)
-          : undefined;
-
-        isSubmittingInternal = false;
-
-        if (submittingTimer !== undefined) {
-          clearTimeout(submittingTimer);
-          submittingTimer = undefined;
-        }
-
-        store.setSubmitting(false);
-
-        return lifecycleResult ?? validationFailure;
-      }
-
-      for (const contract of sharedState.childContracts.values()) {
-        if (contract.mode === 'recurse-submit' && contract.active) {
-          contract.unregister();
-        }
-      }
-
-      const submitLifecycleAction = lifecycleHandlers?.submitAction;
-      const executeSubmit = submitLifecycleAction
-        ? () => submitLifecycleAction(options)
-        : api
-          ? () => inputValue.submitApi(api, scope, options)
-          : () => Promise.resolve({ ok: true, data: store.getState().values });
-
-      try {
-        const result = await executeSubmit();
-        const resultClass = classifySubmitResult(result);
-
-        if (resultClass === 'success') {
-          return lifecycleHandlers?.onSubmitSuccess
-            ? await lifecycleHandlers.onSubmitSuccess(result, options)
-            : result;
-        }
-
-        if (resultClass === 'failure') {
-          return lifecycleHandlers?.onSubmitError
-            ? await lifecycleHandlers.onSubmitError(result, options)
-            : result;
-        }
-
-        return result;
-      } finally {
-        isSubmittingInternal = false;
-
-        if (submittingTimer !== undefined) {
-          clearTimeout(submittingTimer);
-          submittingTimer = undefined;
-        }
-
-        store.setSubmitting(false);
-      }
+      return executeFormSubmit(
+        {
+          sharedState,
+          ownerRuntime,
+          defaultValidationTriggers,
+          submittingDelay,
+          getIsSubmitting: () => isSubmittingInternal,
+          setIsSubmitting: (v) => { isSubmittingInternal = v; },
+          getLifecycleHandlers: () => lifecycleHandlers,
+          getCurrentValidation: () => currentValidation,
+          submitApiCall: (a, opts) => inputValue.submitApi(a, scope, opts),
+          validateForm: (reason) => thisForm.validateForm(reason as import('@nop-chaos/flux-core').ValidationReason | undefined)
+        },
+        api,
+        options
+      );
     },
 
     reset(values) {
@@ -573,7 +366,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       const state = store.getState();
       const baseline = initialFieldState.initialValues[name];
-      const patch = applyFieldValuePatch(state, name, value, !Object.is(baseline, value));
+      const patch = applyFieldValuePatch(sharedState, state, name, value, !Object.is(baseline, value));
 
       setLastChange({
         paths: [name || '*'],
@@ -597,226 +390,45 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     setValues(values) {
-      if (sharedState.lifecycleState === 'disposed') return;
-
-      const entries = Object.entries(values);
-
-      if (entries.length === 0) {
-        return;
-      }
-
-      const state = store.getState();
-      let nextValues = state.values;
-      let nextDirty = state.dirty;
-      let nextErrors = state.errors;
-      let nextValidating = state.validating;
-      const changedPaths: string[] = [];
-
-      for (const [name, value] of entries) {
-        validationRuns.set(name, (validationRuns.get(name) ?? 0) + 1);
-        cancelValidationDebounce(sharedState, name);
-
-        const baseline = initialFieldState.initialValues[name];
-        const patch = applyFieldValuePatch(
-          {
-            ...state,
-            values: nextValues,
-            dirty: nextDirty,
-            errors: nextErrors,
-            validating: nextValidating
-          },
-          name,
-          value,
-          !Object.is(baseline, value)
-        );
-
-        nextValues = patch.nextValues;
-        nextDirty = patch.nextDirty;
-        nextErrors = patch.nextErrors;
-        nextValidating = patch.nextValidating;
-
-        changedPaths.push(name);
-      }
-
-      setLastChange({
-        paths: changedPaths.length > 0 ? changedPaths : ['*'],
-        sourceScopeId: formId,
-        kind: 'update'
-      });
-
-      store.batchUpdate({
-        values: nextValues,
-        dirty: nextDirty,
-        errors: nextErrors,
-        validating: nextValidating
-      });
-
-      let externalChanged = false;
-      for (const changedPath of changedPaths) {
-        if (ownerRuntime.clearExternalErrorsForPath(changedPath)) {
-          externalChanged = true;
-        }
-      }
-
-      if (externalChanged) {
-        const nextStoreErrors = ownerRuntime.rebuildStoreErrorsFromExternal(store.getState().errors);
-        store.setErrors(nextStoreErrors);
-      }
-
-      for (const changedPath of changedPaths) {
-        void ownerRuntime.revalidateDependents(changedPath);
-      }
+      executeSetValues(
+        {
+          sharedState,
+          formId,
+          setLastChange,
+          clearExternalErrorsForPath: ownerRuntime.clearExternalErrorsForPath,
+          rebuildStoreErrorsFromExternal: ownerRuntime.rebuildStoreErrorsFromExternal,
+          revalidateDependents: ownerRuntime.revalidateDependents
+        },
+        values
+      );
     },
 
     appendValue(path, value) {
-      executeArrayMutation({
-        sharedState,
-        scope,
-        arrayPath: path,
-        arrayOperation: (current) => insertArrayValue(current, Number.MAX_SAFE_INTEGER, value),
-        indexTransform: (index) => index,
-        cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents: ownerRuntime.revalidateDependents
-      });
+      appendValueOp(buildArrayCtx(), path, value);
     },
 
     prependValue(path, value) {
-      executeArrayMutation({
-        sharedState,
-        scope,
-        arrayPath: path,
-        arrayOperation: (current) => insertArrayValue(current, 0, value),
-        indexTransform: (index) => index + 1,
-        cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents: ownerRuntime.revalidateDependents
-      });
+      prependValueOp(buildArrayCtx(), path, value);
     },
 
     insertValue(path, index, value) {
-      const currentValue = scope.get(path);
-      const safeArray = Array.isArray(currentValue) ? currentValue : [];
-      const insertIndex = clampInsertIndex(index, safeArray.length);
-      executeArrayMutation({
-        sharedState,
-        scope,
-        arrayPath: path,
-        arrayOperation: () => insertArrayValue(safeArray, insertIndex, value),
-        indexTransform: (candidate) => (candidate >= insertIndex ? candidate + 1 : candidate),
-        cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents: ownerRuntime.revalidateDependents
-      });
+      insertValueOp(buildArrayCtx(), path, index, value);
     },
 
     removeValue(path, index) {
-      const currentValue = scope.get(path);
-
-      if (!Array.isArray(currentValue) || currentValue.length === 0) {
-        return;
-      }
-
-      const removeIndex = clampArrayIndex(index, currentValue.length);
-      executeArrayMutation({
-        sharedState,
-        scope,
-        arrayPath: path,
-        arrayOperation: () => removeArrayValue(currentValue, removeIndex),
-        indexTransform: (candidate) => {
-          if (candidate === removeIndex) {
-            return undefined;
-          }
-
-          return candidate > removeIndex ? candidate - 1 : candidate;
-        },
-        cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents: ownerRuntime.revalidateDependents
-      });
+      removeValueOp(buildArrayCtx(), path, index);
     },
 
     moveValue(path, from, to) {
-      const currentValue = scope.get(path);
-
-      if (!Array.isArray(currentValue) || currentValue.length <= 1) {
-        return;
-      }
-
-      const fromIndex = clampArrayIndex(from, currentValue.length);
-      const toIndex = clampArrayIndex(to, currentValue.length);
-
-      if (fromIndex === toIndex) {
-        return;
-      }
-
-      executeArrayMutation({
-        sharedState,
-        scope,
-        arrayPath: path,
-        arrayOperation: () => moveArrayValue(currentValue, fromIndex, toIndex),
-        indexTransform: (candidate) => {
-          if (candidate === fromIndex) {
-            return toIndex;
-          }
-
-          if (fromIndex < toIndex && candidate > fromIndex && candidate <= toIndex) {
-            return candidate - 1;
-          }
-
-          if (fromIndex > toIndex && candidate >= toIndex && candidate < fromIndex) {
-            return candidate + 1;
-          }
-
-          return candidate;
-        },
-        cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents: ownerRuntime.revalidateDependents
-      });
+      moveValueOp(buildArrayCtx(), path, from, to);
     },
 
     swapValue(path, a, b) {
-      const currentValue = scope.get(path);
-
-      if (!Array.isArray(currentValue) || currentValue.length <= 1) {
-        return;
-      }
-
-      const first = clampArrayIndex(a, currentValue.length);
-      const second = clampArrayIndex(b, currentValue.length);
-
-      if (first === second) {
-        return;
-      }
-
-      executeArrayMutation({
-        sharedState,
-        scope,
-        arrayPath: path,
-        arrayOperation: () => swapArrayValue(currentValue, first, second),
-        indexTransform: (candidate) => {
-          if (candidate === first) {
-            return second;
-          }
-
-          if (candidate === second) {
-            return first;
-          }
-
-          return candidate;
-        },
-        cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents: ownerRuntime.revalidateDependents
-      });
+      swapValueOp(buildArrayCtx(), path, a, b);
     },
 
     replaceValue(path, value) {
-      const nextValue = Array.isArray(value) ? value : [];
-      executeArrayMutation({
-        sharedState,
-        scope,
-        arrayPath: path,
-        arrayOperation: () => nextValue,
-        indexTransform: (candidate) => (candidate < nextValue.length ? candidate : undefined),
-        cancelValidationDebounce: (targetPath) => cancelValidationDebounce(sharedState, targetPath),
-        revalidateDependents: ownerRuntime.revalidateDependents
-      });
+      replaceValueOp(buildArrayCtx(), path, value);
     },
 
     getField(path) {

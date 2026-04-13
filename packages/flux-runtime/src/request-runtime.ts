@@ -1,6 +1,5 @@
 import type {
   ApiResponse,
-  CompiledExpression,
   ExecutableApiRequest,
   ExpressionCompiler,
   ApiSchema,
@@ -12,6 +11,9 @@ import type {
   SchemaValue
 } from '@nop-chaos/flux-core';
 import { isPlainObject, setIn } from '@nop-chaos/flux-core';
+import { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor';
+
+export { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor';
 
 export interface ApiRequestExecutor {
   <T>(
@@ -23,8 +25,6 @@ export interface ApiRequestExecutor {
   ): Promise<ApiResponse<T>>;
   dispose(): void;
 }
-
-const adaptorExpressionCache = new WeakMap<ExpressionCompiler, Map<string, CompiledExpression<unknown>>>();
 
 function getPathValue(input: unknown, path: string): unknown {
   if (!path || input == null || typeof input !== 'object') {
@@ -38,36 +38,6 @@ function getPathValue(input: unknown, path: string): unknown {
 
     return (current as Record<string, unknown>)[segment];
   }, input);
-}
-
-function normalizeAdaptorSource(source: string): string {
-  const trimmed = source.trim();
-
-  if (trimmed.startsWith('return ')) {
-    return trimmed.slice(7).replace(/;\s*$/, '').trim();
-  }
-
-  return trimmed.replace(/;\s*$/, '').trim();
-}
-
-function getCachedAdaptorExpression<T = unknown>(expressionCompiler: ExpressionCompiler, source: string): CompiledExpression<T> {
-  let compilerCache = adaptorExpressionCache.get(expressionCompiler);
-
-  if (!compilerCache) {
-    compilerCache = new Map<string, CompiledExpression<unknown>>();
-    adaptorExpressionCache.set(expressionCompiler, compilerCache);
-  }
-
-  const normalizedSource = normalizeAdaptorSource(source);
-  const cached = compilerCache.get(normalizedSource);
-
-  if (cached) {
-    return cached as CompiledExpression<T>;
-  }
-
-  const compiled = expressionCompiler.formulaCompiler.compileExpression<T>(normalizedSource);
-  compilerCache.set(normalizedSource, compiled as CompiledExpression<unknown>);
-  return compiled;
 }
 
 function stableSerialize(value: unknown): string {
@@ -96,60 +66,6 @@ function stableSerialize(value: unknown): string {
   }
 
   return JSON.stringify(String(value));
-}
-
-function createAdaptorScopeView(scope: ScopeRef): object {
-  return new Proxy(
-    {},
-    {
-      get(_target, property) {
-        if (typeof property !== 'string') {
-          return undefined;
-        }
-
-        if (property === '__proto__') {
-          return undefined;
-        }
-
-        return scope.get(property);
-      },
-      has(_target, property) {
-        return typeof property === 'string' ? scope.has(property) : false;
-      },
-      ownKeys() {
-        const keys = new Set<string | symbol>();
-        let current: ScopeRef | undefined = scope;
-
-        while (current) {
-          for (const key of Reflect.ownKeys(current.readOwn())) {
-            if (typeof key === 'string' || typeof key === 'symbol') {
-              keys.add(key);
-            }
-          }
-
-          current = current.parent;
-        }
-
-        return Array.from(keys);
-      },
-      getOwnPropertyDescriptor(_target, property) {
-        if (typeof property !== 'string') {
-          return undefined;
-        }
-
-        if (!scope.has(property)) {
-          return undefined;
-        }
-
-        return {
-          configurable: true,
-          enumerable: true,
-          value: scope.get(property),
-          writable: false
-        };
-      }
-    }
-  );
 }
 
 function createRequestKey(actionType: string, api: ExecutableApiRequest, scope: ScopeRef, form?: FormRuntime): string {
@@ -324,55 +240,6 @@ export function applyResponseDataPath(
   }
 
   return setIn(currentData, dataPath, responseData);
-}
-
-export function applyRequestAdaptor(
-  expressionCompiler: ExpressionCompiler,
-  api: ApiSchema,
-  scope: ScopeRef,
-  env: RendererEnv
-): ApiSchema {
-  if (!api.requestAdaptor) {
-    return api;
-  }
-
-  const compiled = getCachedAdaptorExpression<ApiSchema>(expressionCompiler, api.requestAdaptor);
-  const adapted = compiled.exec(
-    {
-      api,
-      scope: createAdaptorScopeView(scope),
-      data: api.data,
-      headers: api.headers ?? {}
-    },
-    env
-  );
-
-  return isPlainObject(adapted) ? ({ ...api, ...(adapted as Record<string, unknown>) } as ApiSchema) : api;
-}
-
-export function applyResponseAdaptor(
-  expressionCompiler: ExpressionCompiler,
-  api: ExecutableApiRequest,
-  sourceApi: ApiSchema,
-  responseData: unknown,
-  scope: ScopeRef,
-  env: RendererEnv
-): unknown {
-  if (!sourceApi.responseAdaptor) {
-    return responseData;
-  }
-
-  const compiled = getCachedAdaptorExpression(expressionCompiler, sourceApi.responseAdaptor);
-
-  return compiled.exec(
-    {
-      payload: responseData,
-      response: responseData,
-      api,
-      scope: createAdaptorScopeView(scope)
-    },
-    env
-  );
 }
 
 export function prepareApiRequestForExecution(

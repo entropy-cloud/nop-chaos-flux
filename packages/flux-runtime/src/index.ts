@@ -218,6 +218,67 @@ export function createRendererRuntime(input: {
         isolate: options?.isolate
       });
     },
+    createHostProjectionScope({
+      parentScope,
+      projection,
+      path,
+      scopeLabel
+    }: {
+      parentScope: ScopeRef;
+      projection: Record<string, unknown>;
+      path: string;
+      scopeLabel: string;
+    }) {
+      let reservedKeys = new Set(Object.keys(projection));
+      const hostScope = runtime.createChildScope(parentScope, projection, {
+        scopeKey: `${path}:${scopeLabel}-host`,
+        pathSuffix: scopeLabel
+      });
+
+      return {
+        id: hostScope.id,
+        path: hostScope.path,
+        parent: hostScope.parent,
+        store: hostScope.store,
+        get value() {
+          return this.read();
+        },
+        get(targetPath: string) {
+          return hostScope.get(targetPath);
+        },
+        has(targetPath: string) {
+          return hostScope.has(targetPath);
+        },
+        readOwn() {
+          return hostScope.readOwn();
+        },
+        read() {
+          return hostScope.read();
+        },
+        update(targetPath: string, value: unknown) {
+          const rootKey = targetPath.split('.')[0];
+
+          if (reservedKeys.has(rootKey)) {
+            throw new Error(`Cannot write projected host field: ${targetPath}`);
+          }
+
+          hostScope.update(targetPath, value);
+        },
+        merge(data: Record<string, unknown>) {
+          const nextKeys = Object.keys(data);
+
+          if (nextKeys.some((key) => reservedKeys.has(key))) {
+            throw new Error(`Cannot merge projected host fields into host scope: ${nextKeys.join(', ')}`);
+          }
+
+          hostScope.merge(data);
+        },
+        replace(data: Record<string, unknown>) {
+          reservedKeys = new Set(Object.keys(data));
+          hostScope.replace?.(data);
+        }
+      };
+    },
     createActionScope: createOwnedActionScope,
     createComponentHandleRegistry: createOwnedComponentRegistry,
     ensureImportedNamespaces(args) {
