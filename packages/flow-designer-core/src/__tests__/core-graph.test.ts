@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createDesignerCore } from './core';
-import type { DesignerConfig, GraphDocument } from './types';
+import { createDesignerCore } from '../core';
+import type { DesignerConfig, GraphDocument } from '../types';
 
 function createTestDesignerConfig(): DesignerConfig {
   return {
@@ -108,7 +108,7 @@ function createDocumentWithEdgeChain(): GraphDocument {
   };
 }
 
-describe('createDesignerCore', () => {
+describe('createDesignerCore - graph operations', () => {
   it('adds, updates, and deletes nodes through shared core state', () => {
     const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
 
