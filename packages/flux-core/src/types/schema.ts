@@ -124,6 +124,7 @@ export interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
   name?: string;
   mergeToScope?: boolean;
+  resultMapping?: Record<string, SchemaValue>;
   statusPath?: string;
   dataPath?: string;
   dependsOn?: string[];

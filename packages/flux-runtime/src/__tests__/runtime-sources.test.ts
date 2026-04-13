@@ -319,6 +319,77 @@ describe('createRendererRuntime', () => {
     registration.dispose();
   });
 
+  it('applies resultMapping before publishing api-backed data-source values', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>() => ({
+          ok: true,
+          status: 200,
+          data: { items: [{ id: 'a-1', label: 'Alice' }], total: 1 } as T
+        })
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const registration = runtime.registerDataSource({
+      id: 'users-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        name: 'usersPayload',
+        api: { url: '/api/users' },
+        resultMapping: {
+          rows: '${payload.items}',
+          count: '${payload.total}'
+        }
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('usersPayload')).toEqual({
+        rows: [{ id: 'a-1', label: 'Alice' }],
+        count: 1
+      });
+    });
+
+    registration.dispose();
+  });
+
+  it('applies resultMapping before mergeToScope for formula-backed data sources', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ price: 3, qty: 4 });
+
+    const registration = runtime.registerDataSource({
+      id: 'pricing-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        name: 'pricing',
+        mergeToScope: true,
+        formula: '${{ amount: (price || 0) * (qty || 0), currency: "USD" }}',
+        resultMapping: {
+          total: '${payload.amount}',
+          currencyCode: '${payload.currency}'
+        }
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('pricing')).toEqual({ total: 12, currencyCode: 'USD' });
+      expect(page.scope.get('total')).toBe(12);
+      expect(page.scope.get('currencyCode')).toBe('USD');
+    });
+
+    registration.dispose();
+  });
+
   it('publishes data-source status summaries through statusPath', async () => {
     let releaseRequest: ((value: { ok: boolean; status: number; data: { value: string } }) => void) | undefined;
     const fetcherImpl: RendererEnv['fetcher'] = async () => new Promise((resolve) => {
@@ -368,6 +439,50 @@ describe('createRendererRuntime', () => {
     });
 
     registration.dispose();
+  });
+
+  it('exposes source debug snapshots through the public runtime contract', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ price: 3, qty: 4 });
+
+    const registration = runtime.registerDataSource({
+      id: 'debug-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        name: 'total',
+        statusPath: 'totalStatus',
+        formula: '${(price || 0) * (qty || 0)}'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(12);
+    });
+
+    expect(runtime.getSourceDebugSnapshot?.()).toEqual({
+      sources: [
+        expect.objectContaining({
+          id: 'debug-source',
+          scopeId: page.scope.id,
+          name: 'total',
+          targetPath: 'total',
+          statusPath: 'totalStatus',
+          started: true,
+          loading: false,
+          stale: false,
+          hasValue: true,
+          error: undefined
+        })
+      ]
+    });
+
+    registration.dispose();
+    expect(runtime.getSourceDebugSnapshot?.()).toEqual({ sources: [] });
   });
 
   it('refreshes registered data sources by id within an explicit scope', async () => {

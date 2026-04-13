@@ -22,6 +22,25 @@ function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
+function applyResultMapping(input: {
+  runtime: RendererRuntime;
+  scope: ScopeRef;
+  resultMapping?: unknown;
+  payload: unknown;
+}): unknown {
+  if (!isObjectRecord(input.resultMapping)) {
+    return input.payload;
+  }
+
+  const mappingScope = input.runtime.createChildScope(input.scope, {
+    payload: input.payload,
+    result: input.payload,
+    response: input.payload
+  }, { source: 'custom', pathSuffix: 'data-source-result-mapping' });
+
+  return input.runtime.evaluate(input.resultMapping, mappingScope);
+}
+
 function writeDataToScope(scope: ScopeRef, targetPath: string | undefined, mergeToScope: boolean | undefined, data: unknown): void {
   if (targetPath) {
     scope.update(targetPath, data);
@@ -86,6 +105,7 @@ export function createDataSourceController(input: {
   scope: ScopeRef;
   targetPath?: string;
   mergeToScope?: boolean;
+  resultMapping?: unknown;
   statusPath?: string;
   interval?: number;
   stopWhen?: string;
@@ -101,6 +121,7 @@ export function createDataSourceController(input: {
     scope,
     targetPath,
     mergeToScope,
+    resultMapping,
     statusPath,
     interval,
     stopWhen,
@@ -200,11 +221,18 @@ export function createDataSourceController(input: {
         apiCache.set(cacheKey, response.data, api.cacheTTL);
       }
 
-      value = response.data;
+      const mappedValue = applyResultMapping({
+        runtime,
+        scope,
+        resultMapping,
+        payload: response.data
+      });
+
+      value = mappedValue;
       loading = false;
       stale = false;
       error = undefined;
-      writeDataToScope(scope, targetPath, mergeToScope, response.data);
+      writeDataToScope(scope, targetPath, mergeToScope, mappedValue);
       writeStatusToScope(scope, statusPath, { started, loading, stale, error });
 
       if (checkStopCondition()) {

@@ -24,11 +24,31 @@ interface RuntimeSourceEntry {
   controller: DataSourceController;
   dependencies?: ScopeDependencySet;
   targetPath?: string;
+  statusPath?: string;
   dispose(): void;
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function applyResultMapping(input: {
+  runtime: RendererRuntime;
+  scope: ScopeRef;
+  resultMapping?: unknown;
+  payload: unknown;
+}): unknown {
+  if (!isObjectRecord(input.resultMapping)) {
+    return input.payload;
+  }
+
+  const mappingScope = input.runtime.createChildScope(input.scope, {
+    payload: input.payload,
+    result: input.payload,
+    response: input.payload
+  }, { source: 'custom', pathSuffix: 'data-source-result-mapping' });
+
+  return input.runtime.evaluate(input.resultMapping, mappingScope);
 }
 
 function resolvePublishedTarget(schema: DataSourceSchema, fallbackId: string): string | undefined {
@@ -52,6 +72,7 @@ function createDependencyAwareFormulaController(input: {
   scope: ScopeRef;
   targetPath?: string;
   mergeToScope?: boolean;
+  resultMapping?: unknown;
   statusPath?: string;
   formula: unknown;
   initialData?: unknown;
@@ -92,9 +113,15 @@ function createDependencyAwareFormulaController(input: {
     stale = value !== undefined;
     error = undefined;
 
-    const nextValue = dynamicCompiled
+    const rawValue = dynamicCompiled
       ? input.runtime.expressionCompiler.evaluateWithState(dynamicCompiled, input.scope, input.runtime.env, runtimeState!).value
       : staticCompiled?.value;
+    const nextValue = applyResultMapping({
+      runtime: input.runtime,
+      scope: input.scope,
+      resultMapping: input.resultMapping,
+      payload: rawValue
+    });
 
     value = nextValue;
     loading = false;
@@ -180,6 +207,7 @@ export interface RuntimeSourceRegistry {
   }): Promise<boolean>;
   disposeScope(scopeId: string): void;
   disposeScopeTree(scopeId: string): void;
+  getDebugSnapshot(): import('@nop-chaos/flux-core').SourceRegistryDebugSnapshot;
 }
 
 export function createRuntimeSourceRegistry(input: {
@@ -215,6 +243,7 @@ export function createRuntimeSourceRegistry(input: {
           scope: args.scope,
           targetPath,
           mergeToScope: args.schema.mergeToScope,
+          resultMapping: args.schema.resultMapping,
           statusPath: args.schema.statusPath,
           interval: asNumber(args.schema.interval),
           stopWhen: asString(args.schema.stopWhen),
@@ -231,6 +260,7 @@ export function createRuntimeSourceRegistry(input: {
           scope: args.scope,
           targetPath,
           mergeToScope: args.schema.mergeToScope,
+          resultMapping: args.schema.resultMapping,
           statusPath: args.schema.statusPath,
           formula: args.schema.formula,
           initialData: args.schema.initialData,
@@ -273,6 +303,7 @@ export function createRuntimeSourceRegistry(input: {
       controller,
       dependencies,
       targetPath,
+      statusPath: args.schema.statusPath,
       dispose() {
         if (disposed) {
           return;
@@ -358,6 +389,30 @@ export function createRuntimeSourceRegistry(input: {
     registerDataSource,
     refreshDataSource,
     disposeScope,
-    disposeScopeTree
+    disposeScopeTree,
+    getDebugSnapshot() {
+      return {
+        sources: Array.from(scopeEntries.values())
+          .flatMap((bucket) => Array.from(bucket.values()))
+          .map((entry) => {
+            const state = entry.controller.getState();
+
+            return {
+              id: entry.id,
+              scopeId: entry.ownerScopeId,
+              name: entry.name,
+              targetPath: entry.targetPath,
+              statusPath: entry.statusPath,
+              dependencies: entry.dependencies?.paths,
+              started: state.started,
+              loading: state.loading,
+              stale: state.stale,
+              hasValue: typeof state.value !== 'undefined',
+              error: state.error instanceof Error ? state.error.message : typeof state.error === 'string' ? state.error : undefined
+            };
+          })
+          .sort((left, right) => left.scopeId.localeCompare(right.scopeId) || left.id.localeCompare(right.id))
+      };
+    }
   };
 }
