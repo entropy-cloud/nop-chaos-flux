@@ -17,7 +17,7 @@ import {
   useScopeSelector
 } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
-import { Button } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas';
 import {
   formLabelFieldRule,
@@ -390,7 +390,9 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
 
   return (
     <div
-      className="nop-field"
+      className={cn('nop-field', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
       data-field-dirty={presentation['data-field-dirty']}

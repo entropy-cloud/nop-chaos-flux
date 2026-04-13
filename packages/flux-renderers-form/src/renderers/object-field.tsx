@@ -13,6 +13,7 @@ import { getIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
+import { cn } from '@nop-chaos/ui';
 import type { ObjectFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, useFieldPresentation } from '../field-utils';
 import { FieldHint, FieldLabel } from './shared';
@@ -315,7 +316,9 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
   return (
     <div
-      className="nop-field"
+      className={cn('nop-field', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
       data-field-dirty={presentation['data-field-dirty']}

@@ -160,14 +160,14 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
 
   if (data.length === 0) {
     return (
-      <div className="nop-tree" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+      <div className={cn('nop-tree', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
         {hasRendererSlotContent(emptyContent) ? <div data-slot="tree-empty">{emptyContent}</div> : null}
       </div>
     );
   }
 
   return (
-    <div className="nop-tree" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+    <div className={cn('nop-tree', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {data.map((node, index) => (
         <TreeNodeRenderer
           key={toNodeKey(node, keyField, index)}

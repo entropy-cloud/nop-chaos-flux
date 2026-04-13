@@ -75,6 +75,7 @@ describe('object-field renderer', () => {
               type: 'object-field',
               name: 'profile',
               label: 'Profile',
+              className: 'border',
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name' },
                 { type: 'input-text', name: 'lastName', label: 'Last Name' }
@@ -93,6 +94,7 @@ describe('object-field renderer', () => {
 
     const field = screen.getByText('Profile').closest('.nop-field');
     expect(field).toBeTruthy();
+    expect(field?.className).toContain('border');
     expect(field?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Profile');
     expect(field?.querySelector('[data-slot="field-control"]')).toBeTruthy();
     expect(field?.querySelector('[data-slot="object-field-body"]')).toBeTruthy();

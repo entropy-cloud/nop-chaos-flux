@@ -26,7 +26,8 @@ import {
   Tabs,
   TabsContent,
   TabsList,
-  TabsTrigger
+  TabsTrigger,
+  cn
 } from '@nop-chaos/ui';
 import type { VariantFieldSchema, VariantOption } from './composite-schemas';
 import { formLabelFieldRule, resolveFieldLabelContent, useFieldPresentation } from '../field-utils';
@@ -414,7 +415,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 
   return (
     <div
-      className="nop-field"
+      className={cn('nop-field', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
       data-field-dirty={presentation['data-field-dirty']}

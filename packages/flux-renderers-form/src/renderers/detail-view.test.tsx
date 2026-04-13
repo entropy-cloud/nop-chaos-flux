@@ -41,6 +41,7 @@ describe('detail-view renderer', () => {
           body: [
             {
               type: 'detail-view',
+              className: 'border',
               scopePath: 'settings',
               triggerLabel: 'Edit Settings',
               surface: { mode: 'dialog', title: 'Edit Settings' },
@@ -61,6 +62,7 @@ describe('detail-view renderer', () => {
 
     const root = screen.getByText('Edit Settings').closest('.nop-detail-view');
     expect(root).toBeTruthy();
+    expect(root?.className).toContain('border');
     expect(root?.querySelector('[data-slot="field-label"]')).toBeNull();
     expect(root?.querySelector('[data-slot="detail-view-viewer"]')).toBeTruthy();
   });

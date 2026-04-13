@@ -24,7 +24,8 @@ import {
   DrawerContent,
   DrawerFooter,
   DrawerHeader,
-  DrawerTitle
+  DrawerTitle,
+  cn
 } from '@nop-chaos/ui';
 import type { DetailViewSchema } from './composite-schemas';
 import { resolveFieldLabelContent } from '../field-utils';
@@ -230,7 +231,11 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   };
 
   return (
-    <div className="nop-detail-view">
+    <div
+      className={cn('nop-detail-view', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
+    >
       <FieldLabel content={labelContent} />
       <div data-slot="detail-view-viewer">
         {viewerContent}

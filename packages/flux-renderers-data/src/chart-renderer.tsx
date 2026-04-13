@@ -16,6 +16,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
+import { cn } from '@nop-chaos/ui';
 import type { ChartSchema, ChartSeriesSchema } from './chart-schemas';
 
 const EMPTY_CHART_SOURCE: Array<Record<string, unknown>> = [];
@@ -160,7 +161,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
   return (
     <div
-      className="nop-chart"
+      className={cn('nop-chart', props.meta.className)}
       style={{ height: chartHeight } as CSSProperties}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}

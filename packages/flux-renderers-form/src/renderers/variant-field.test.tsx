@@ -65,7 +65,13 @@ describe('variant-field renderer', () => {
 
     render(
       <SchemaRenderer
-        schema={variantSchema}
+        schema={{
+          ...variantSchema,
+          body: [{
+            ...variantSchema.body[0],
+            className: 'border'
+          }]
+        }}
         env={env}
         formulaCompiler={formulaCompiler}
       />
@@ -78,7 +84,8 @@ describe('variant-field renderer', () => {
 
     const container = document.querySelector('[data-active-variant]');
     expect(container?.getAttribute('data-active-variant')).toBe('text');
-    expect(container?.className).toBe('nop-field');
+    expect(container?.className).toContain('nop-field');
+    expect(container?.className).toContain('border');
     expect(container?.querySelector('[data-slot="field-control"]')).toBeTruthy();
     expect(container?.querySelector('[data-slot="variant-field-selector"]')).toBeTruthy();
   });
