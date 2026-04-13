@@ -113,6 +113,9 @@ importers:
       '@nop-chaos/spreadsheet-renderers':
         specifier: workspace:*
         version: link:../../packages/spreadsheet-renderers
+      '@nop-chaos/theme-tokens':
+        specifier: workspace:*
+        version: link:../../packages/theme-tokens
       '@nop-chaos/ui':
         specifier: workspace:^
         version: link:../../packages/ui
@@ -525,6 +528,8 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.2.2)
+
+  packages/theme-tokens: {}
 
   packages/ui:
     dependencies:
