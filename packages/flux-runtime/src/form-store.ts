@@ -1,5 +1,5 @@
 import { createStore } from 'zustand/vanilla';
-import type { FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, ValidationError } from '@nop-chaos/flux-core';
+import type { FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, SurfaceStoreApi, SurfaceStoreState, ValidationError } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
 
 function validationErrorsEqual(
@@ -172,8 +172,6 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
 export function createPageStore(initialData: Record<string, any>): PageStoreApi {
   const store = createStore<PageStoreState>(() => ({
     data: initialData,
-    dialogs: [],
-    surfaces: [],
     refreshTick: 0
   }));
 
@@ -190,6 +188,26 @@ export function createPageStore(initialData: Record<string, any>): PageStoreApi 
     updateData(path, value) {
       const state = store.getState();
       store.setState({ data: setIn(state.data, path, value) });
+    },
+    refresh() {
+      const state = store.getState();
+      store.setState({ refreshTick: state.refreshTick + 1 });
+    }
+  };
+}
+
+export function createSurfaceStore(): SurfaceStoreApi {
+  const store = createStore<SurfaceStoreState>(() => ({
+    dialogs: [],
+    surfaces: []
+  }));
+
+  return {
+    getState() {
+      return store.getState();
+    },
+    subscribe(listener) {
+      return store.subscribe(listener);
     },
     openDialog(dialog) {
       const state = store.getState();
@@ -226,10 +244,6 @@ export function createPageStore(initialData: Record<string, any>): PageStoreApi 
       }
 
       store.setState({ surfaces: state.surfaces.filter((surface) => surface.id !== surfaceId) });
-    },
-    refresh() {
-      const state = store.getState();
-      store.setState({ refreshTick: state.refreshTick + 1 });
     }
   };
 }

@@ -30,8 +30,8 @@ describe('createRendererRuntime', () => {
     );
 
     expect(openResult.ok, String(openResult.error)).toBe(true);
-    expect(page.store.getState().dialogs).toHaveLength(1);
-    const dialogState = page.store.getState().dialogs[0];
+    expect(page.surfaceStore.getState().dialogs).toHaveLength(1);
+    const dialogState = page.surfaceStore.getState().dialogs[0];
     expect(dialogState.dialog.title).toBe('Runtime dialog');
     expect(dialogState.body).toBeTruthy();
     expect(dialogState.scope.get('dialogId')).toBe(dialogState.id);
@@ -49,7 +49,7 @@ describe('createRendererRuntime', () => {
     );
 
     expect(closeResult.ok).toBe(true);
-    expect(page.store.getState().dialogs).toHaveLength(0);
+    expect(page.surfaceStore.getState().dialogs).toHaveLength(0);
   });
 
   it('stores schema-based dialog title and body as raw schema when opening dialogs', async () => {
@@ -76,7 +76,7 @@ describe('createRendererRuntime', () => {
       }
     );
 
-    const dialogState = page.store.getState().dialogs[0] as any;
+    const dialogState = page.surfaceStore.getState().dialogs[0] as any;
     expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
     expect(Array.isArray(dialogState.body)).toBe(true);
     expect(dialogState.body[0]).toEqual({ type: 'text', text: 'Compiled body' });
@@ -133,7 +133,7 @@ describe('createRendererRuntime', () => {
       }
     );
 
-    const dialogState = page.store.getState().dialogs[0] as any;
+    const dialogState = page.surfaceStore.getState().dialogs[0] as any;
     expect(dialogState.ownerNodeInstance).toBe(triggerNodeInstance);
     expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
     expect(dialogState.body).toEqual([{ type: 'text', text: 'Compiled body' }]);
@@ -180,7 +180,7 @@ describe('createRendererRuntime', () => {
       }
     );
 
-    const dialogState = page.store.getState().dialogs[0] as any;
+    const dialogState = page.surfaceStore.getState().dialogs[0] as any;
     expect(dialogState.ownerNode).toBeUndefined();
     expect(dialogState.ownerNodeInstance).toBe(ownerNodeInstance);
     expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
@@ -278,7 +278,7 @@ describe('createRendererRuntime', () => {
       }
     );
 
-    const dialogs = page.store.getState().dialogs;
+    const dialogs = page.surfaceStore.getState().dialogs;
     expect(dialogs).toHaveLength(2);
 
     const closeResult = await runtime.dispatch(
@@ -294,8 +294,8 @@ describe('createRendererRuntime', () => {
     );
 
     expect(closeResult.ok).toBe(true);
-    expect(page.store.getState().dialogs).toHaveLength(1);
-    expect(page.store.getState().dialogs[0].id).toBe(dialogs[0].id);
+    expect(page.surfaceStore.getState().dialogs).toHaveLength(1);
+    expect(page.surfaceStore.getState().dialogs[0].id).toBe(dialogs[0].id);
   });
 
   it('opens and closes drawers through drawer actions', async () => {
@@ -325,10 +325,10 @@ describe('createRendererRuntime', () => {
     );
 
     expect(openResult.ok).toBe(true);
-    expect(page.store.getState().surfaces).toHaveLength(1);
-    expect(page.store.getState().surfaces[0].kind).toBe('drawer');
+    expect(page.surfaceStore.getState().surfaces).toHaveLength(1);
+    expect(page.surfaceStore.getState().surfaces[0].kind).toBe('drawer');
     expect(page.scope.get('drawerStatus')).toEqual({
-      id: page.store.getState().surfaces[0].id,
+      id: page.surfaceStore.getState().surfaces[0].id,
       kind: 'drawer',
       open: true,
       active: true,
@@ -342,13 +342,13 @@ describe('createRendererRuntime', () => {
       },
       {
         runtime,
-        scope: page.store.getState().surfaces[0].scope,
+        scope: page.surfaceStore.getState().surfaces[0].scope,
         page,
-        dialogId: page.store.getState().surfaces[0].id
+        dialogId: page.surfaceStore.getState().surfaces[0].id
       }
     );
 
     expect(closeResult.ok).toBe(true);
-    expect(page.store.getState().surfaces).toHaveLength(0);
+    expect(page.surfaceStore.getState().surfaces).toHaveLength(0);
   });
 });

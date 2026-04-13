@@ -4,19 +4,22 @@ import type {
   PageStoreApi,
   RendererRuntime,
   ScopeChange,
-  SurfaceState
+  SurfaceState,
+  SurfaceStoreApi
 } from '@nop-chaos/flux-core';
-import { createPageStore } from './form-store';
+import { createPageStore, createSurfaceStore } from './form-store';
 import { createScopeRef } from './scope';
 import { publishOwnerStatus } from './status-owner';
 
 export function createManagedPageRuntime(input: {
   data?: Record<string, any>;
   pageStore?: PageStoreApi;
+  surfaceStore?: SurfaceStoreApi;
   disposeScope?: (scopeId: string) => void;
 } = {}): PageRuntime {
   const data = input.data ?? {};
   const store = input.pageStore ?? createPageStore(data);
+  const surfaceStore = input.surfaceStore ?? createSurfaceStore();
   store.setData(data);
   let lastChange: ScopeChange = {
     paths: ['*'],
@@ -113,10 +116,11 @@ export function createManagedPageRuntime(input: {
 
   return {
     store,
+    surfaceStore,
     scope,
     openDialog(dialog, dialogScope, runtime: RendererRuntime, options) {
       const surface = buildSurfaceState('dialog', dialog, dialogScope, runtime, options);
-      store.openSurface(surface);
+      surfaceStore.openSurface(surface);
       const dialogState: DialogState = {
         id: surface.id,
         kind: 'dialog',
@@ -129,12 +133,12 @@ export function createManagedPageRuntime(input: {
         title: surface.title,
         body: surface.body
       };
-      store.openDialog(dialogState);
+      surfaceStore.openDialog(dialogState);
       publishSurfaceStatus(surface);
       return surface.id;
     },
     closeDialog(dialogId) {
-      const dialogs = store.getState().dialogs;
+      const dialogs = surfaceStore.getState().dialogs;
       const targetDialog = dialogId
         ? dialogs.find((dialog) => dialog.id === dialogId)
         : dialogs[dialogs.length - 1];
@@ -143,18 +147,18 @@ export function createManagedPageRuntime(input: {
         return;
       }
 
-      store.closeDialog(targetDialog.id);
-      store.closeSurface(targetDialog.id);
+      surfaceStore.closeDialog(targetDialog.id);
+      surfaceStore.closeSurface(targetDialog.id);
       disposeOwnedScope(targetDialog.scope.id);
     },
     openSurface(kind, surface, surfaceScope, runtime, options) {
       const nextSurface = buildSurfaceState(kind, surface, surfaceScope, runtime, options);
-      store.openSurface(nextSurface);
+      surfaceStore.openSurface(nextSurface);
       publishSurfaceStatus(nextSurface);
       return nextSurface.id;
     },
     closeSurface(surfaceId) {
-      const surfaces = store.getState().surfaces;
+      const surfaces = surfaceStore.getState().surfaces;
       const targetSurface = surfaceId
         ? surfaces.find((surface) => surface.id === surfaceId)
         : surfaces[surfaces.length - 1];
@@ -163,10 +167,10 @@ export function createManagedPageRuntime(input: {
         return;
       }
 
-      store.closeSurface(targetSurface.id);
+      surfaceStore.closeSurface(targetSurface.id);
 
       if (targetSurface.kind === 'dialog') {
-        store.closeDialog(targetSurface.id);
+        surfaceStore.closeDialog(targetSurface.id);
       }
 
       disposeOwnedScope(targetSurface.scope.id);

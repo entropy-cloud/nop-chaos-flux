@@ -167,10 +167,13 @@ export interface SurfaceState extends OwnedSurfaceStateBase {
   surface: Record<string, any>;
 }
 
-export interface PageStoreState {
-  data: Record<string, any>;
+export interface SurfaceStoreState {
   dialogs: DialogState[];
   surfaces: SurfaceState[];
+}
+
+export interface PageStoreState {
+  data: Record<string, any>;
   refreshTick: number;
 }
 
@@ -179,11 +182,16 @@ export interface PageStoreApi {
   subscribe(listener: () => void): () => void;
   setData(data: Record<string, any>): void;
   updateData(path: string, value: unknown): void;
+  refresh(): void;
+}
+
+export interface SurfaceStoreApi {
+  getState(): SurfaceStoreState;
+  subscribe(listener: () => void): () => void;
   openDialog(dialog: DialogState): void;
   closeDialog(dialogId?: string): void;
   openSurface(surface: SurfaceState): void;
   closeSurface(surfaceId?: string): void;
-  refresh(): void;
 }
 
 export interface DataSourceController {
@@ -278,6 +286,7 @@ export interface FormRuntime extends ValidationScopeRuntime {
 
 export interface PageRuntime {
   store: PageStoreApi;
+  surfaceStore: SurfaceStoreApi;
   scope: ScopeRef;
   openDialog(
     dialog: Record<string, any>,

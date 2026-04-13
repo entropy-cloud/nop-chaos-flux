@@ -27,16 +27,16 @@ export function DialogHost() {
   const page = useCurrentPage();
 
   const dialogs = useSyncExternalStoreWithSelector(
-    page?.store.subscribe ?? (() => () => undefined),
-    () => page?.store.getState().dialogs ?? [],
-    () => page?.store.getState().dialogs ?? [],
+    page?.surfaceStore.subscribe ?? (() => () => undefined),
+    () => page?.surfaceStore.getState().dialogs ?? [],
+    () => page?.surfaceStore.getState().dialogs ?? [],
     (state: DialogState[]) => state,
     Object.is
   );
   const surfaces = useSyncExternalStoreWithSelector(
-    page?.store.subscribe ?? (() => () => undefined),
-    () => page?.store.getState().surfaces ?? [],
-    () => page?.store.getState().surfaces ?? [],
+    page?.surfaceStore.subscribe ?? (() => () => undefined),
+    () => page?.surfaceStore.getState().surfaces ?? [],
+    () => page?.surfaceStore.getState().surfaces ?? [],
     (state: SurfaceState[]) => state.filter((surface) => surface.kind === 'drawer'),
     sameDrawerSurfaces
   );

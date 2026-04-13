@@ -318,12 +318,12 @@ export function createRendererRuntime(input: {
         sourceRegistryRef.current?.disposeScopeTree(page.scope.id);
         reactionRegistryRef.current?.disposeScopeTree(page.scope.id);
 
-        for (const dialog of page.store.getState().dialogs) {
+        for (const dialog of page.surfaceStore.getState().dialogs) {
           sourceRegistryRef.current?.disposeScopeTree(dialog.scope.id);
           reactionRegistryRef.current?.disposeScopeTree(dialog.scope.id);
         }
 
-        for (const surface of page.store.getState().surfaces) {
+        for (const surface of page.surfaceStore.getState().surfaces) {
           sourceRegistryRef.current?.disposeScopeTree(surface.scope.id);
           reactionRegistryRef.current?.disposeScopeTree(surface.scope.id);
         }
