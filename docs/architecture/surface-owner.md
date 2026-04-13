@@ -15,6 +15,7 @@
 
 - `docs/architecture/action-interaction-state.md` 拥有通用 owner taxonomy。
 - 本文档只收口 surface owner family 的窄规则。
+- 本文档描述的是目标 owner 基线，不要求当前代码已经完全落地同名 runtime/store 实现。
 
 ## Core Claim
 
@@ -64,13 +65,13 @@ surface owner 不直接拥有：
 
 ## Surface Runtime Model
 
-`dialog` 和 `drawer` 应共享一套 surface-family runtime/store，而不是各自发明完全不同的 store，也不是直接复用 page store。
+`dialog` 和 `drawer` 应共享一套 surface-family runtime/store 抽象，而不是各自发明完全不同的 store，也不是直接复用 page store。
 
 推荐基线：
 
 - `page` 使用 page shell 自己的 runtime/store
 - `form` 使用 form 自己的 runtime/store
-- `dialog` / `drawer` / future `sheet` 共享 `SurfaceRuntime` / `SurfaceStore`
+- `dialog` / `drawer` / future `sheet` 共享 surface-family owner substrate（文档中记作 `SurfaceRuntime` / `SurfaceStore`）
 - surface family 内部通过稳定 kind 区分具体表面，例如 `kind: 'dialog' | 'drawer'`
 
 这样做的原因：
@@ -181,8 +182,8 @@ future `sheet` 不能因为名字不同就自动获得独立 owner family。
 `NodeRenderer` does not create or manage surface runtime/store boundaries.
 
 - `page` runtime/store is created by the page renderer; `NodeRenderer` does not publish it as a generic provider
-- `SurfaceRuntime`/`SurfaceStore` is created per opened surface entry by the dialog/drawer host, not by `NodeRenderer` plumbing
-- Each opened dialog or drawer entry owns its own `SurfaceRuntime`/`SurfaceStore` instance; ownership is disposed when the surface closes
+- the concrete host/owner creates one surface-family entry per opened surface, not `NodeRenderer`
+- each opened dialog or drawer entry owns its own surface-family owner instance; ownership is disposed when the surface closes
 
 This rule is part of the broader creator-owned boundary model documented in `docs/architecture/renderer-runtime.md` → "Execution Boundary Ownership Matrix".
 

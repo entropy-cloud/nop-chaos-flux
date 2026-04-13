@@ -120,7 +120,7 @@ The production direction is:
 - normal schema authors should not need to pass `dialogId`
 - explicit dialog targeting exists as a narrow extension path
 
-Current runtime behavior matches this through the page dialog stack.
+Architecturally, this should resolve through the nearest creator-owned surface boundary rather than through page-owned dialog state.
 
 ## Main Layers
 

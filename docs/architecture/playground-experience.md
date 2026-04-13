@@ -1,200 +1,74 @@
-﻿# Playground Experience Design
+# Playground Experience Design
 
 ## Purpose
 
-æœ¬æ–‡è®°å½• `apps/playground` ä¸Ž `@nop-chaos/nop-debugger` çš„ç›®æ ‡äº¤äº’è®¾è®¡ï¼Œé‡ç‚¹è§£å†³ä¸¤ä¸ªé—®é¢˜ï¼š
+This document defines the target product and information architecture for `apps/playground`.
 
-- playground ä¸å†ä½œä¸ºä¸€ä¸ªæŠŠæ‰€æœ‰ç¤ºä¾‹å †åœ¨åŒä¸€é¡µé‡Œçš„å·¨åž‹æ¼”ç¤ºé¡µ
-- debugger ä¸å†é»˜è®¤å ç”¨ä¸»å·¥ä½œåŒºï¼Œè€Œæ˜¯å˜æˆå¯æ‹–æ‹½ã€å¯å±•å¼€ã€å¯æ”¶èµ·çš„æ‚¬æµ®å·¥å…·
+It answers two questions:
 
-è¿™ä»½æ–‡æ¡£æè¿° playground ä¿¡æ¯æž¶æž„ä¸Ž debugger UI äº¤äº’çš„äº§å“åŒ–æ–¹å‘ã€‚`nop-debugger` çš„è‡ªåŠ¨åŒ– APIã€äº‹ä»¶æ¨¡åž‹ã€AI è¯Šæ–­èŒè´£ä¸Žå½“å‰è¾¾æˆåº¦ï¼Œä»¥ `docs/architecture/debugger-runtime.md` ä¸ºå‡†ã€‚
+- how the playground should organize scenarios and navigation
+- how the debugger should behave as a tool layered onto the playground rather than consuming the main work area by default
+
+`docs/architecture/debugger-runtime.md` owns the debugger's runtime/API/event model. This file owns the playground-side UX and scenario-organization contract.
 
 ## Current Code Anchors
 
 - `apps/playground/src/App.tsx`
+- `apps/playground/src/route-model.ts`
+- `apps/playground/src/useRoute.ts`
+- `apps/playground/src/component-lab/ComponentLabPage.tsx`
+- `apps/playground/src/component-lab/renderer-lab-registry.ts`
+- `apps/playground/src/pages/HomePage.tsx`
 - `packages/nop-debugger/src/panel.tsx`
-- `packages/nop-debugger/src/controller.ts`
-- `packages/nop-debugger/src/store.ts`
-- `packages/nop-debugger/src/types.ts`
 
-## 1. å½“å‰é—®é¢˜
+## Design Position
 
-### 1.1 Playground ä¿¡æ¯æž¶æž„è¿‡äºŽæ‹¥æŒ¤
+The playground is not a single giant demo page.
 
-å½“å‰ `apps/playground/src/App.tsx` ç›´æŽ¥æ‰¿è½½å¤§é‡ AMISã€è¡¨å•ã€æ•°æ®ã€Flow Designer ä¸Žè°ƒè¯•ç›¸å…³å†…å®¹ã€‚
+The playground is a navigation hub plus a set of stable scenario pages.
 
-é—®é¢˜åœ¨äºŽï¼š
+The debugger is not the default primary surface. It is a launcher-first floating tool that can expand into a panel when the user needs it.
 
-- è¿›å…¥é¡µé¢åŽæ²¡æœ‰æ˜Žç¡®çš„åœºæ™¯å…¥å£
-- ä¸åŒä¸»é¢˜çš„æµ‹è¯•å†…å®¹å…±äº«åŒä¸€ä¸ª page scope å’Œè§†è§‰ç©ºé—´
-- æ–°å¢žä¸€ä¸ªå®žéªŒåœºæ™¯æ—¶ï¼Œé€šå¸¸åªèƒ½ç»§ç»­å¾€åŒä¸€é¡µè¿½åŠ å†…å®¹
-- è°ƒè¯• timeline å®¹æ˜“æ··å…¥æ— å…³æ“ä½œï¼Œé™ä½Žé—®é¢˜å®šä½æ•ˆçŽ‡
+## Core Rules
 
-### 1.2 Debugger é»˜è®¤å±•å¼€ï¼Œä¼šä¾µå ä¸»å·¥ä½œåŒº
+1. The playground home page is a navigation surface, not a scenario dump.
+2. Each scenario page should have one clear testing theme.
+3. URLs should stably identify the current page or lab selection.
+4. Scenario pages should be usable for both manual inspection and automated verification.
+5. The debugger should default to launcher/minimized form rather than occupying the main work area.
 
-å½“å‰ debugger å·²ç»å…·å¤‡ï¼š
+## Page Model
 
-- floating panel
-- å·¦ä¸‹è§’ launcher
-- å±•å¼€æ€æ‹–æ‹½
+### Home Page
 
-ä½†çŽ°çŠ¶ä»ç„¶ä¸ç†æƒ³ï¼š
+The home page owns only:
 
-- playground é»˜è®¤æŠŠ debugger æ‰“å¼€
-- launcher æœ¬èº«ä¸èƒ½æ‹–æ‹½
-- â€œHideâ€ æ›´åƒä¸´æ—¶éšè—ï¼Œè€Œä¸æ˜¯æ˜Žç¡®çš„â€œæ”¶èµ·ä¸ºå°æŒ‰é’®â€
-- å°æŒ‰é’®ä¸Žå¤§é¢æ¿ä¹‹é—´ç¼ºå°‘ç¨³å®šçš„äº§å“è¯­ä¹‰
+- showing the available scenario families
+- explaining what each family is for
+- routing the user into the right page
 
-## 2. ç›®æ ‡è®¾è®¡
+It should not directly embed complex form, table, designer, or debugger scenarios.
 
-### 2.1 Playground æ”¹ä¸ºâ€œå¯¼èˆªå¤§åŽ… + ç‹¬ç«‹æµ‹è¯•é¡µâ€
+### Scenario Pages
 
-è¿›å…¥ playground åŽï¼Œé¦–å…ˆçœ‹åˆ°çš„æ˜¯ä¸€ä¸ªæµ‹è¯•å¯¼èˆªé¦–é¡µï¼Œè€Œä¸æ˜¯æ‰€æœ‰ç¤ºä¾‹çš„å †å é¡µé¢ã€‚
+Each scenario page should focus on one theme such as:
 
-é¦–é¡µåº”åŒ…å«è‹¥å¹²å¤§æŒ‰é’®æˆ–å¤§å¡ç‰‡ï¼Œç‚¹å‡»åŽè¿›å…¥ç‹¬ç«‹æµ‹è¯•é¡µã€‚
+- shared renderer lab
+- Flow Designer
+- Report Designer
+- Debugger Lab
+- Action Scope / Imports
+- other domain-specific host pages
 
-æŽ¨èé¦–æ‰¹å…¥å£ï¼š
+The point is not that a page contains only one renderer. The point is that one page has one primary validation story.
 
-- `AMIS Basic` - åŸºç¡€ rendererã€è¡¨å•ã€åŠ¨ä½œã€æ•°æ®è”åŠ¨
-- `Flow Designer` - `designer-page`ã€toolbar / inspector / dialogsã€ç”»å¸ƒäº¤äº’
-- `Report Designer` - åŽç»­æŠ¥è¡¨è®¾è®¡å™¨æµ‹è¯•å…¥å£
-- `Debugger Lab` - debugger APIã€traceã€networkã€automation ç¤ºä¾‹
-- `Action Scope / Imports` - namespaced actionã€importã€host scope ç›¸å…³å®žéªŒé¡µ
+## Route Model
 
-æ ¸å¿ƒåŽŸåˆ™ï¼š
+### Hash-Based Route Baseline
 
-- ä¸€ä¸ªé¡µé¢åªæ‰¿è½½ä¸€ä¸ªä¸»é¢˜
-- é¡µé¢ä¹‹é—´é€šè¿‡å¯¼èˆªåˆ‡æ¢ï¼Œè€Œä¸æ˜¯åœ¨å•é¡µé‡Œç»§ç»­å‘ä¸‹å †å†…å®¹
-- æ¯ä¸ªæµ‹è¯•é¡µéƒ½åº”è¯¥å¯ä»¥ç‹¬ç«‹æ‰“å¼€ã€ç‹¬ç«‹æè¿°ã€ç‹¬ç«‹æˆªå›¾ã€ç‹¬ç«‹å›žå½’
+`apps/playground` uses a hash-based route model backed by `window.location.hash` and `hashchange` events.
 
-### 2.2 Playground é¦–é¡µèŒè´£
-
-é¦–é¡µåªæ‰¿æ‹…ä¸‰ä»¶äº‹ï¼š
-
-- å‘Šè¯‰å¼€å‘è€…å½“å‰æœ‰å“ªäº›æµ‹è¯•ä¸»é¢˜
-- æä¾›æ¸…æ™°å…¥å£
-- ç®€çŸ­è¯´æ˜Žæ¯ä¸ªä¸»é¢˜ä¸»è¦éªŒè¯ä»€ä¹ˆ
-
-é¦–é¡µä¸åº”å†æ‰¿è½½å¤æ‚è¡¨å•ã€è¡¨æ ¼ã€designer æˆ–è°ƒè¯•ç¤ºä¾‹æœ¬èº«ã€‚
-
-### 2.3 å­é¡µé¢èŒè´£
-
-æ¯ä¸ªå­é¡µé¢éƒ½åº”åªå›´ç»•ä¸€ç§ä¸»é¢˜ç»„ç»‡å†…å®¹ã€‚
-
-ä¾‹å¦‚ï¼š
-
-- `AMIS Basic` é¡µé¢å¯ä»¥åŒ…å« 2-4 ä¸ªåŸºç¡€åœºæ™¯ï¼Œä½†ä»åº”å›´ç»•â€œåŸºç¡€ AMIS èƒ½åŠ›éªŒè¯â€ç»„ç»‡
-- `Flow Designer` é¡µé¢åªä¿ç•™ Flow Designer ç›¸å…³åœºæ™¯
-- `Debugger Lab` é¡µé¢ä¸“é—¨å±•ç¤º debugger äººæœºç•Œé¢ä¸Ž automation API
-
-æŽ¨èè¿›ä¸€æ­¥ä½¿ç”¨è·¯ç”±æˆ–ç­‰ä»·çš„é¡µé¢çŠ¶æ€ï¼Œè®© URL èƒ½ç¨³å®šè¡¨è¾¾å½“å‰æ‰€åœ¨æµ‹è¯•é¡µã€‚
-
-## 3. Debugger ç›®æ ‡äº¤äº’æ¨¡åž‹
-
-### 3.1 ç¼ºçœå½¢æ€
-
-debugger ç¼ºçœä¸åº”å±•å¼€ä¸ºå®Œæ•´é¢æ¿ã€‚
-
-ç¼ºçœå½¢æ€åº”ä¸ºï¼š
-
-- ä¸€ä¸ªå°åž‹ launcher
-- ä½äºŽå·¦ä¸‹è§’
-- ä¸å æ®ä¸»ä½“å·¥ä½œåŒº
-- ä¸æŒ¤åŽ‹ playground ä¸»å¸ƒå±€
-
-### 3.2 å±•å¼€ä¸Žæ”¶èµ·
-
-ç‚¹å‡» launcher åŽï¼Œdebugger å±•å¼€ä¸ºå®Œæ•´å½¢æ€ã€‚
-
-å®Œæ•´å½¢æ€åº”æä¾›ï¼š
-
-- æŸ¥çœ‹ overview / timeline / network
-- æš‚åœã€æ¢å¤ã€æ¸…ç©º
-- ä¸€ä¸ªæ˜Žç¡®çš„â€œæœ€å°åŒ–â€åŠ¨ä½œ
-
-ç‚¹å‡»â€œæœ€å°åŒ–â€åŽï¼š
-
-- ä¸åº”å½»åº•æ¶ˆå¤±
-- åº”æ”¶èµ·å›ž launcher
-- launcher ä½ç½®åº”ä¿æŒä¸å˜
-
-### 3.3 æ‹–æ‹½è¡Œä¸º
-
-launcher ä¸Žå®Œæ•´é¢æ¿éƒ½åº”æ”¯æŒæ‹–æ‹½ã€‚
-
-äº¤äº’è§„åˆ™å»ºè®®ï¼š
-
-- é»˜è®¤æ”¾åœ¨å·¦ä¸‹è§’
-- ç”¨æˆ·å¯æ‹–åˆ°å…¶ä»–è§’è½æˆ–åˆé€‚ä½ç½®
-- å±•å¼€åŽä¸Žæ”¶èµ·åŽå…±äº«åŒä¸€å¥—ä½ç½®çŠ¶æ€
-- ä½ç½®åº”å°½é‡æŒä¹…åŒ–ï¼Œé¿å…æ¯æ¬¡åˆ·æ–°éƒ½ä¸¢å¤±ç”¨æˆ·æ„å›¾
-
-### 3.4 çŠ¶æ€è¯­ä¹‰
-
-å»ºè®®æŠŠ debugger è§†ä¸ºä¸‰æ€æ¨¡åž‹ï¼Œè€Œä¸æ˜¯ç®€å•çš„å¼€/å…³ï¼š
-
-- `disabled` - å®Œå…¨ç¦ç”¨ï¼Œä¸æ˜¾ç¤º launcher
-- `launcher` - åªæ˜¾ç¤ºå°æŒ‰é’®
-- `panel` - æ˜¾ç¤ºå®Œæ•´è°ƒè¯•é¢æ¿
-
-å…¶ä¸­ï¼š
-
-- `launcher` æ˜¯é»˜è®¤å¯è§æ€
-- `panel` æ˜¯å·¥ä½œæ€
-- `disabled` æ˜¯æ˜¾å¼å…³é—­åŽçš„æ€
-
-è¿™æ ·å¯ä»¥åŒºåˆ†ï¼š
-
-- â€œæˆ‘çŽ°åœ¨ä¸æƒ³è®©å®ƒå ç©ºé—´â€
-- â€œæˆ‘å®Œå…¨ä¸æƒ³è¦å®ƒâ€
-
-## 4. æŽ¨èå®žçŽ°çº¦æŸ
-
-### 4.1 Playground ä¾§
-
-- `apps/playground/src/App.tsx` åº”æ‹†ä¸ºé¦–é¡µä¸Žä¸»é¢˜é¡µå…¥å£ï¼Œè€Œä¸æ˜¯ç»§ç»­æ‰©å¼ ä¸ºå·¨åž‹å•é¡µ
-- å…·ä½“ä¸»é¢˜åœºæ™¯åº”æ‹†åˆ°ç‹¬ç«‹æ–‡ä»¶ï¼Œä¾‹å¦‚ `AmisBasicPage.tsx`ã€`FlowDesignerPage.tsx`ã€`DebuggerLabPage.tsx`
-- playground é¦–é¡µåº”ä¿æŒè½»é‡ï¼Œä¸åº”å†ç›´æŽ¥åŒ…å«å®Œæ•´ä¸šåŠ¡ç¤ºä¾‹ schema
-- playground ä¸»é¢˜é¡µé¢åº”æŒ‚åœ¨ `.nop-theme-root` ä¸‹ï¼Œè®© dialogã€debuggerã€Flow Designer renderer ä¸Žé¡µé¢è‡ªæœ‰æ ·å¼å…±äº«åŒä¸€ç»„ CSS å˜é‡å¥‘çº¦
-- playground è‡ªå·±ç‰¹æœ‰çš„ç¤ºä¾‹å¸ƒå±€æ ·å¼åº”æ”¾åœ¨ `apps/playground/src/styles.css`ï¼Œä½† Flow Designer çš„èŠ‚ç‚¹ã€è¿žçº¿ã€inspectorã€palette ç­‰å¯å¤ç”¨è§†è§‰åº”å°½é‡å¤ç”¨åŒ…çº§ class å¥‘çº¦ï¼Œè€Œä¸æ˜¯ç»§ç»­æ•£è½åœ¨ `FlowDesignerExample.tsx` çš„ inline style é‡Œ
-
-### 4.2 Debugger ä¾§
-
-- `@nop-chaos/nop-debugger` åº”æŠŠâ€œlauncherâ€è§†ä¸ºæ­£å¼ UI å½¢æ€ï¼Œè€Œä¸æ˜¯ panel å…³é—­åŽçš„é™„å±žç‰©
-- é¢æ¿ä¸Šçš„â€œHideâ€åº”é‡å‘½åæˆ–é‡æž„ä¸ºè¯­ä¹‰æ›´æ˜Žç¡®çš„â€œMinimizeâ€
-- launcher ä¹Ÿåº”æ”¯æŒæ‹–æ‹½
-- é»˜è®¤ window flag / playground é…ç½®åº”æ”¹ä¸º launcher é»˜è®¤å¯è§ã€panel é»˜è®¤å…³é—­
-
-## 5. è®¾è®¡æ”¶ç›Š
-
-è¿™å¥—è®¾è®¡çš„æ”¶ç›Šä¸»è¦åœ¨äºŽï¼š
-
-- playground æ›´åƒæµ‹è¯•å¯¼èˆªä¸­å¿ƒï¼Œè€Œä¸æ˜¯å†…å®¹ä»“åº“
-- æ¯ä¸ªä¸»é¢˜çš„éªŒè¯èŒƒå›´æ›´æ¸…æ™°
-- debugger ä¸å†ä¸Žä¸»å·¥ä½œåŒºäº‰å¤ºæ³¨æ„åŠ›
-- é—®é¢˜å®šä½æ—¶èƒ½å‡å°‘è·¨ä¸»é¢˜å™ªéŸ³
-- åŽç»­æ–°å¢ž report designerã€spreadsheet æˆ– import/action-scope å®žéªŒé¡µæ—¶æ›´å®¹æ˜“æ‰©å±•
-
-## 6. åŽç»­è½åœ°æ–¹å‘
-
-æŽ¨èæŒ‰ä¸‹é¢é¡ºåºæŽ¨è¿›ï¼š
-
-1. å…ˆé‡æž„ playground ä¿¡æ¯æž¶æž„ï¼Œåšé¦–é¡µä¸Žç‹¬ç«‹æµ‹è¯•é¡µå…¥å£
-2. å†è°ƒæ•´ debugger çš„ launcher / panel / disabled ä¸‰æ€æ¨¡åž‹
-3. æœ€åŽæŠŠçŽ°æœ‰å¤§é¡µå†…å®¹æŒ‰ä¸»é¢˜åˆ†æµåˆ°ç‹¬ç«‹é¡µé¢ï¼Œå¹¶è¡¥æµ‹è¯•ä¸Žæ–‡æ¡£
-
-## Related Documents
-
-- `docs/architecture/debugger-runtime.md`
-- `docs/architecture/frontend-baseline.md`
-- `docs/analysis/2026-03-21-framework-debugger-design.md`
-- `docs/references/maintenance-checklist.md`
-
-## 7. Route Model (Current Baseline)
-
-### 7.1 Hash-Based Route Model
-
-As of 2026-04-12, `apps/playground` uses a hash-based route model backed by `window.location.hash` and `hashchange` events. This fulfills the stable URL preference described in section 2.3 without introducing a router library dependency.
+This satisfies the stable-URL requirement without introducing a router dependency.
 
 Route spec types (`RouteSpec` in `apps/playground/src/route-model.ts`):
 
@@ -207,7 +81,7 @@ Route spec types (`RouteSpec` in `apps/playground/src/route-model.ts`):
 
 The `useRoute` hook in `apps/playground/src/useRoute.ts` reads and writes the hash and exposes a stable `navigate(spec)` callback.
 
-### 7.2 Route Inventory
+### Route Inventory
 
 The route inventory is code-backed in `apps/playground/src/route-model.ts`:
 
@@ -217,22 +91,69 @@ The route inventory is code-backed in `apps/playground/src/route-model.ts`:
 
 The inventory is cross-checked against the live renderer registries by `route-matrix.test.ts` so adding a new renderer without updating the inventory will be caught automatically.
 
-### 7.3 Component Lab
+## Component Lab
 
 The Component Lab shell (`apps/playground/src/component-lab/ComponentLabPage.tsx`) provides:
 
-- Left-side navigation listing all 41 shared renderers grouped by category.
-- Per-renderer preview area driven by `RENDERER_LAB_REGISTRY` in `apps/playground/src/component-lab/renderer-lab-registry.ts`.
-- Each renderer has a focused lab page in `apps/playground/src/component-lab/renderers/` with at least one scenario useful for both manual inspection and automated verification.
-- Composite controls (`object-field`, `array-field`, `variant-field`, `detail-field`, `detail-view`) have behavioral scenarios that exercise nesting, dialog-open, and field-binding behaviors.
+- left-side navigation listing all shared renderers grouped by category
+- per-renderer preview area driven by `RENDERER_LAB_REGISTRY`
+- one focused lab page per renderer under `apps/playground/src/component-lab/renderers/`
+- behavioral scenarios for composite controls such as `object-field`, `array-field`, `variant-field`, `detail-field`, and `detail-view`
 
-### 7.4 Automation Coverage
+This page is the canonical shared-renderer verification surface.
+
+## Debugger UX Contract
+
+The debugger should use a three-state product model:
+
+- `disabled` — debugger fully hidden
+- `launcher` — compact floating launcher visible
+- `panel` — expanded debugger panel visible
+
+Rules:
+
+- default visible state should be `launcher`, not full panel
+- expanding should preserve the user's chosen anchor/positioning model
+- minimizing should return to launcher, not fully disappear
+- the debugger should not consume the main work area by default
+
+## Implementation Constraints
+
+### Playground Side
+
+- `App.tsx` should remain a route host, not a giant scenario page
+- major scenario families should live in dedicated page modules
+- example-shell styling may live in `apps/playground/src/styles.css`
+- reusable renderer/domain visuals must follow their package-owned contracts rather than depending on playground-only styling
+
+### Debugger Side
+
+- launcher is a first-class debugger UI state
+- minimize/expand semantics should be explicit in the product language
+- launcher and panel positioning should be stable enough for repeated manual testing
+
+## Why This Design
+
+Benefits:
+
+- clearer scenario ownership
+- less cross-theme noise in debugging sessions
+- stable deep links for screenshots, bug reports, and automation
+- easier addition of new renderer labs and domain pages
+- debugger no longer competes with the main content area by default
+
+## Automation Coverage
 
 `apps/playground/src/route-matrix.test.ts` provides:
 
-- Route parse/build round-trip tests for all route kinds.
-- Live registry alignment: verifies `ALL_SHARED_RENDERER_ROUTES` covers every registered type in the basic/form/data registries.
-- Lab registry coverage: verifies every route entry has a corresponding `RENDERER_LAB_REGISTRY` component.
-- Domain inventory completeness: verifies all 6 domain pages are registered.
+- route parse/build round-trip tests for all route kinds
+- live registry alignment: verifies `ALL_SHARED_RENDERER_ROUTES` covers every registered type in the basic/form/data registries
+- lab registry coverage: verifies every route entry has a corresponding `RENDERER_LAB_REGISTRY` component
+- domain inventory completeness: verifies all 6 domain pages are registered
 
+## Related Documents
 
+- `docs/architecture/debugger-runtime.md`
+- `docs/architecture/frontend-baseline.md`
+- `docs/analysis/2026-03-21-framework-debugger-design.md`
+- `docs/references/maintenance-checklist.md`

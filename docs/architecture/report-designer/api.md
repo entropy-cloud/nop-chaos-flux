@@ -1,5 +1,9 @@
 # Report Designer API
 
+This file defines the future package/API contract for the Report Designer family.
+
+Implementation status belongs in logs, plans, and focused runtime-snapshot/status docs. The API shapes here should remain the target design even when current code is behind them.
+
 ## 1. 包边界
 
 ### `@nop-chaos/spreadsheet-core`
@@ -104,7 +108,7 @@ interface ReportDesignerPageSchema {
 - 渲染 field panel、canvas、inspector 区域
 - 注册 `spreadsheet:*` 与 `report-designer:*` actions
 
-## 4. bridge contract
+## 4. Bridge Contract
 
 `spreadsheet-page` 和 `report-designer-page` 都需要建立 runtime 与 schema runtime 的 bridge。
 
@@ -120,7 +124,6 @@ interface SpreadsheetBridge {
 interface ReportDesignerBridge extends SpreadsheetBridge {
   getDesignerSnapshot(): ReportDesignerHostSnapshot
   dispatchDesigner(command: ReportDesignerCommand): Promise<ReportDesignerCommandResult>
-  emit(event: ReportDesignerEvent): void
 }
 ```
 
@@ -144,30 +147,11 @@ interface ReportDesignerBridge extends SpreadsheetBridge {
 
 #### `selection`
 
-当前选区摘要。
-
-```ts
-selection.kind // 'none' | 'cell' | 'range' | 'row' | 'column'
-selection.sheetId
-selection.anchor
-selection.range
-```
-
-#### `activeCell`
-
-当前激活单元格；无单元格激活时可为空。
+当前选区摘要。最小稳定要求是宿主 scope 能表达当前 selection target；更细的拆分字段可以按宿主快照演进。
 
 #### `runtime`
 
-只读运行时摘要。
-
-```ts
-runtime.canUndo
-runtime.canRedo
-runtime.readonly
-runtime.dirty
-runtime.zoom
-```
+只读运行时摘要，至少应覆盖 `canUndo`、`canRedo`、`dirty` 与视口/模式类字段。
 
 ### `report-designer-page` 额外暴露
 

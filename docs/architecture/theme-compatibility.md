@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines how `flow-designer2` stays visually self-contained while remaining compatible with host-controlled themes.
+This document defines how Flow Designer and related renderer surfaces stay visually self-contained while remaining compatible with host-controlled themes.
 
 The goal is not to introduce a React `ThemeProvider` requirement. The goal is to make renderer and Flow Designer visuals respond to host CSS through stable classes and CSS variables.
 
@@ -15,7 +15,6 @@ The goal is not to introduce a React `ThemeProvider` requirement. The goal is to
 - `packages/nop-debugger/src/panel.tsx`
 - `packages/flow-designer-renderers/src/index.tsx`
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
-- `packages/flow-designer-renderers/src/styles.css`
 - `apps/playground/src/styles-theme-utilities.css`
 
 ## Main Rule

@@ -17,6 +17,7 @@
 - `docs/architecture/form-validation.md` 定义 form submit 的语义边界。
 - `docs/architecture/api-data-source.md` 定义 producer/source 的状态发布边界。
 - 本文档拥有 UI-facing interaction-state ownership 的统一规则。
+- 对 surface family 的窄 owner 规则，以 `docs/architecture/surface-owner.md` 为准；本文只给出 taxonomy 和读取规则。
 
 ## Core Rules
 

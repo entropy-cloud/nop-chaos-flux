@@ -43,14 +43,11 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 +-----------------------------------------------------+
 ```
 
-### 2.1 当前已落地的 MVP
+### 2.1 Current Implementation Note
 
-目前仓库里已经有第一版可运行实现，但仍是刻意收敛后的 MVP：
+The repository already has a working first slice, but that slice is implementation progress, not the architecture contract itself.
 
-- `@nop-chaos/flow-designer-core` 已落地纯内存 graph runtime，覆盖节点/边增删改查、单选、undo/redo、dirty tracking、save/restore、导出。
-- `@nop-chaos/flow-designer-renderers` 已落地 `designer-page` 宿主与 schema/runtime bridge，并通过本地 `ActionScope` 注册 `designer:*` 动作。
-- playground 已有实际示例，证明 schema-driven toolbar、schema-driven inspector、固定 host scope、保存/导出回调可以协同工作。
-- `@xyflow/react` 现在已经作为唯一受支持的画布实现接入；Flow Designer 不再为 parity、preview 或 fallback 维护第二种画布实现。
+When checking implementation progress, use `runtime-snapshot.md` and code anchors. The rest of this document describes the target architecture baseline.
 
 ## 3. 模块拆分
 
@@ -76,7 +73,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - 权限裁剪由上游平台在 schema 进入 runtime 前完成。
 - core 仅处理图编辑约束与校验，不处理访问控制语义。
 
-当前 MVP 已实现的重点能力：
+Representative implementation progress includes:
 
 - `GraphDocument` / `GraphNode` / `GraphEdge` / `DesignerConfig`
 - `createDesignerCore()`
@@ -100,7 +97,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `designer:*` action 注册
 - 与 `@xyflow/react` 的适配
 
-当前 MVP 已实现的重点能力：
+Representative implementation progress includes:
 
 - `designer-page` renderer
 - `designer-field` inspector 控件
@@ -345,43 +342,11 @@ interface DesignerPageSchema {
 - `designer:commitTransaction`
 - `designer:rollbackTransaction`
 
-当前 MVP 实际已接线的动作子集是：
-
-- `designer:addNode`
-- `designer:updateNodeData`
-- `designer:updateEdgeData`
-- `designer:copySelection`
-- `designer:pasteClipboard`
-- `designer:duplicateSelection`
-- `designer:deleteSelection`
-- `designer:undo`
-- `designer:redo`
-- `designer:toggleGrid`
-- `designer:save`
-- `designer:restore`
-- `designer:export`
-
 好处：
 
 - toolbar 按钮可直接触发
 - inspector 表单可直接提交到 designer action
 - 快捷键和浮动工具栏可复用同一动作分发链
-
-当前 playground 里的删除确认已经用共享 `dialog` / `closeDialog` action 和 schema 组合实现，说明 destructive UX 不需要额外硬编码进 core 或 renderer runtime。
-
-当前 playground 里的键盘快捷键也保持在宿主 schema 层定义，通过 `designer-page.shortcuts` 把 `Ctrl/Cmd+Z`、`Ctrl/Cmd+Y`、`Ctrl/Cmd+C`、`Ctrl/Cmd+V` 和 `Delete` 映射到现有 action；renderer 只负责监听并分发，core 不直接感知具体按键策略。
-
-当前画布 shell 还额外实现了 hover-driven quick-action shell：节点和边的 Edit / Duplicate / Delete 只是在 renderer 层按 hover 或 active 状态显隐，真正的删除、复制、选中仍然走既有 command/action 边界。
-
-当前 `designer-page` 还内建了窄屏 inspector fallback：当视口收窄到移动布局时，右侧 inspector 不再强依赖三栏布局，而是折叠为位于 canvas 下方的可展开面板；选择节点或边时会自动展开，但 inspector schema、nodeTypes/edgeTypes 的 `inspector.body` 契约保持不变。
-
-当前 playground 还补上了轻量 viewport controls parity：renderer shell 暴露 Zoom in / Zoom out / Fit view 控件与快捷键，底层仍然通过 core command 修改 `GraphDocument.viewport`，用来证明缩放和视口摘要也可以沿用同一条 command/history/action 边界，而不是做成独立页面局部状态。
-
-当前 edge list 与 export shell 也开始更接近 legacy parity：edge row 不再只显示 label 和 source/target，而是额外暴露 condition 摘要与 line-style badge；playground 的 latest export 面板则会从导出的 JSON 中解析节点数、边数、line styles 和 viewport zoom，帮助验证 inspector 改动是否如预期反映到导出结构。
-
-当前 playground toolbar 也继续朝 document-level flow actions 补齐：像 `Clear Selection` 这类动作仍然保持 schema-driven，由 host toolbar 直接 dispatch `designer:*` action，而不是把这类页面命令硬编码进共享 runtime UI。
-
-当前 Flow Designer 只支持 live `@xyflow/react` 画布。overview、pane click、connect/reconnect、viewport sync 等交互都应沿同一条 command/history/action 边界归一化；`canvas-bridge` 现在只表示 React Flow 集成边界，不再代表多画布实现或 `canvasAdapter` 公开配置。
 
 ### 10.1 事务与历史边界
 

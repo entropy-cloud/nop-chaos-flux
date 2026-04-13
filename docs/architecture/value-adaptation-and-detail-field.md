@@ -22,6 +22,7 @@
 - 这不是 `flow-designer` 专属设计。
 - 这也不是某个单独 `graph-value-editor` 的私有协议。
 - 这是所有 value-oriented control 都可按需采用的通用 owner pattern。
+- 本文档描述的是目标契约；当前 renderer 实现可以暂时落后，但新设计应以这里为统一 baseline。
 
 ## Core Model
 
@@ -64,8 +65,11 @@ value-oriented control 可以分为两类：
 - `detail-view`
 - `variant-field`
 - `object-field`
+- `array-field`
 
 都应复用同一套 wrapper/owner helper，而不是把 `transformInAction` / `transformOutAction` / `validateValueAction` 的调度逻辑复制到每个 renderer 里。
+
+The important architectural point is not the helper name. The important point is that value adaptation is an owner-level substrate shared by this renderer family, not ad hoc per-renderer imperative code.
 
 推荐方向：
 
@@ -155,6 +159,8 @@ interface ValueViewEditorOwnerSchema extends BaseSchema {
 - 如果 action schema 显式声明了 `args`，则完全以显式 `args` 为准，不做隐式合并
 
 这是刻意设计的 replace 规则，不是 merge 规则。
+
+This replace rule is part of the future contract and should stay consistent across `detail-field`, `detail-view`, `object-field`, `array-field`, and `variant-field`.
 
 原因：
 

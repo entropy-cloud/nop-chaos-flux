@@ -399,6 +399,8 @@ Renderer marker classes use the `nop-` prefix for root-level semantic markers on
 
 Marker classes must NOT carry any visual styles. They exist solely for CSS selectors, debugging, host integration, and test anchoring.
 
+This includes `FieldFrame`: `nop-field` is a semantic field marker only. Label/control/error spacing is not an implicit renderer default; it must come from schema styling, host styling, or shared UI component styling.
+
 Rules:
 
 - Keep root semantic markers such as `nop-container`, `nop-page`, `nop-table`, `nop-field`.

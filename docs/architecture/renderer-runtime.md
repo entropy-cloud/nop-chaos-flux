@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the current runtime, renderer, and React integration shape used by the active codebase.
+This document defines the normative runtime, renderer, and React integration shape for Flux's React host.
 
 Use it when changing:
 
@@ -16,9 +16,9 @@ For detailed slot and field-semantics rules, use `docs/architecture/field-metada
 
 For the clean-slate template/instance split, compiled-node identity, and table/loop instance rules, use `docs/architecture/template-instantiation-and-node-identity.md`.
 
-## Current Code Anchors
+## Reference Anchors
 
-When this document needs to be checked against code, start with:
+When this document needs to be checked against implementation progress, start with:
 
 - `packages/flux-core/src/index.ts` for renderer contracts
 - `packages/flux-react/src/index.tsx` for hooks, rendering helpers, and React boundaries
@@ -47,7 +47,7 @@ Components that need one piece of state should not rerender for unrelated change
 
 Prefer selector-style reads over broad `scope.read()` access.
 
-Current runtime baseline now carries this one step further for compiled node resolution:
+The runtime baseline carries this one step further for compiled node resolution:
 
 - dynamic value execution records the scope paths it actually read
 - scope subscriptions carry `ScopeChange.paths`
@@ -59,13 +59,16 @@ Current runtime baseline now carries this one step further for compiled node res
 
 Template compilation should happen once per schema identity, while runtime mostly instantiates templates and resolves live node instances.
 
-Current compile model:
+Normative compile model:
 
 - `SchemaCompiler.compile()` returns `CompiledTemplate` containing a `TemplateNode` tree
 - all compilation calls within one `RendererRuntime` share a single counter, giving every `templateNodeId` a globally unique value within that runtime
 - `TemplateNode.component` carries the resolved `RendererDefinition` directly from compile time — no per-render registry lookup
 - `NodeRenderer` receives `TemplateNode` and constructs `NodeInstance` directly; `CompiledSchemaNode` is an internal compiler artifact and does not appear in the render path
-- `cid` equals `templateNodeId`; it is assigned at compile time and written to `data-cid` on the DOM at mount time
+- `templateNodeId` is the compiled structural identity
+- `cid` is the live inspectable bridge token written to `data-cid` when a mounted node needs DOM/debugger/registry bridging
+- `NodeLocator` is a retired transitional wrapper and must not remain in runtime-facing contracts
+- repeated structure remains available through `instancePath`, but mounted lookup/debugger/registry entry is `cid`
 
 ### Static fast path and identity reuse are mandatory
 
@@ -187,7 +190,7 @@ Meaning:
 
 - `schema` is the declared source shape
 - `templateNode` is the immutable structural definition produced at compile time; `templateNode.component` carries the resolved `RendererDefinition` directly
-- `node` is the live runtime `NodeInstance` for this mounted node; `node.cid` equals `templateNode.templateNodeId`
+- `node` is the live runtime `NodeInstance` for this mounted node; `node.cid` is the unique live mounted-node id used by DOM/debugger/registry lookup
 - `props` is the resolved runtime prop object for the current render
 - `meta` is the resolved node meta such as visibility or disabled state
 - `meta.testid` is the resolved testid for `data-testid` attribute output on the root element
@@ -564,23 +567,30 @@ Rules derived from this table:
 
 ## Node Context Convergence
 
-Current node identity is carried by a single React context:
+React integration should converge on one ambient node carrier context for the currently executing node instance.
 
-- `NodeInstanceContext` — the single ambient source of current template/runtime node identity; carries `NodeInstance` for live cid/instancePath/state
-- `useCurrentNodeMeta()` and `useCurrentNodeInstance()` both derive from `NodeInstanceContext`
-- Fragment owner fallback and helper creation also read from this context
+That carrier owns:
+
+- the current `NodeInstance`
+- access to current node meta helpers such as `useCurrentNodeMeta()`
+- fragment-owner fallback and helper creation when a subtree needs owner identity
+
+Rule:
+
+- React host implementations may choose the concrete context type/name
+- Flux architecture should describe one node carrier, not parallel competing ambient node-identity stories
 
 ## Render Context Split
 
 The React layer should not collapse all runtime and render state into one giant context.
 
-Current split context areas are:
+Normative split context areas are:
 
 - runtime context
 - scope context
 - action-scope context
 - component-registry context
-- node-instance context (single carrier — `NodeInstanceContext`)
+- node-instance context (single carrier for current node identity)
 - form context
 - page context
 
@@ -589,13 +599,13 @@ Why:
 - runtime is mostly stable
 - scope and form state change more frequently
 - split context boundaries reduce unrelated rerenders
-- node identity uses one unified `NodeInstanceContext` carrier
+- node identity uses one unified carrier instead of parallel ambient node contexts
 
 ## Local Render Options
 
 Fragment rendering accepts explicit local overrides.
 
-Current contract:
+Normative contract:
 
 ```ts
 interface RenderFragmentOptions {
@@ -619,14 +629,14 @@ This document only describes how React render boundaries carry those execution c
 
 Node-local capability boundaries should be created by the owner that actually introduces them.
 
-Current baseline:
+Normative baseline:
 
 - fragment `render({ data })` creates the child data scope in the fragment render path itself
 - page and form renderers/owners create and publish their own data/runtime boundaries
 - node-local `xui:imports` or similar capability overlays may still be compiled into a node-local closure that `NodeRenderer` executes for that node
 - component registries should be created only by the concrete owner that needs a new registry boundary, not by every node pre-emptively
 
-Current concrete uses:
+Representative uses:
 
 - `designer-page` creates a local action-scope boundary and registers the `designer` namespace provider during owned lifecycle
 - `form` creates a local component-registry boundary and registers an explicit form handle exposing `submit`, `validate`, `reset`, and `setValue`
@@ -653,7 +663,7 @@ Authoring guidance:
 
 Root renderer boundaries stay explicit.
 
-Current exported root props are:
+Normative root props are:
 
 ```ts
 interface SchemaRendererProps {
@@ -665,13 +675,15 @@ interface SchemaRendererProps {
   plugins?: RendererPlugin[];
   pageStore?: PageStoreApi;
   parentScope?: ScopeRef;
-   onComponentRegistryChange?: (componentRegistry: ComponentHandleRegistry | null) => void;
-   onActionScopeChange?: (actionScope: ActionScope | null) => void;
+  actionScope?: ActionScope;
+  componentRegistry?: ComponentHandleRegistry;
+  onComponentRegistryChange?: (componentRegistry: ComponentHandleRegistry | null) => void;
+  onActionScopeChange?: (actionScope: ActionScope | null) => void;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }
 ```
 
-Current root lifecycle callbacks exist for host tooling integrations such as the debugger panel:
+Root lifecycle callbacks exist for host tooling integrations such as the debugger panel:
 
 - `onComponentRegistryChange` exposes the active root component registry boundary
 - `onActionScopeChange` exposes the active root action-scope boundary
@@ -696,7 +708,7 @@ Hosts should still prefer stable `env` objects when practical, but memoization i
 
 Dialog and drawer should be treated as one surface family in the React runtime.
 
-Current baseline:
+Normative baseline:
 
 - `page`, `form`, and `surface` are different owner families and should not all share one owner runtime/store
 - `dialog` and `drawer` should share one `SurfaceRuntime` / `SurfaceStore` model and differ by stable kind metadata such as `kind: 'dialog' | 'drawer'`

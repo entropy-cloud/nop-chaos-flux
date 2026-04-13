@@ -131,6 +131,14 @@ That means:
 - static policy trimming is already complete
 - node kinds are already decided
 
+The architectural rule is about the contract that enters execution, not about where the last compile step physically runs.
+
+If a delayed or host-admitted fragment is introduced after initial page load, it must still cross the same boundary before execution:
+
+- it is compiled or normalized into the same execution contract as the rest of the tree
+- it receives the same primitive model (`Base Tree`, `ScopeRef`, `Value`, `Resource`, `Reaction`, `Capability`, `Host Projection`)
+- it does not reopen authoring-time inheritance expansion or ad hoc loader semantics inside the execution core
+
 `Flux` still owns runtime work, including:
 
 - `Value` evaluation

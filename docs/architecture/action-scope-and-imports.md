@@ -15,9 +15,9 @@ This document replaces the earlier lexical-scope-method-dispatch proposal. The a
 
 It also defines a separate component-targeted invocation model for actions that need to locate a specific rendered component instance by `componentId` or `componentName` and invoke an explicitly exposed capability such as form submission.
 
-## Current Baseline
+## Normative Baseline
 
-The active runtime today has these properties:
+The architecture baseline keeps these properties:
 
 - `ScopeRef` is a data scope, not a behavior registry; see `packages/flux-runtime/src/scope.ts`
 - source/reaction runtime ownership may still be scoped by `ScopeRef.id`, but that ownership should live in runtime sidecars rather than as methods on `ScopeRef`
@@ -146,7 +146,7 @@ Practical recommendation:
 
 ### Data Scope
 
-Current `ScopeRef` remains the data lookup and update mechanism.
+`ScopeRef` remains the data lookup and update mechanism.
 
 It keeps current semantics:
 
@@ -162,7 +162,7 @@ It must not become the main registry for arbitrary callable behaviors.
 
 It resolves namespaced actions that are not built-in platform actions.
 
-Current exported shape is directionally:
+Normative shape is directionally:
 
 ```ts
 interface ActionScope {
@@ -218,7 +218,7 @@ Common examples:
 
 This requires a separate registry for component handles.
 
-Recommended shape:
+Normative shape:
 
 ```ts
 interface ComponentHandleRegistry {
@@ -760,9 +760,9 @@ interface ImportedLibraryLoader {
 
 The loader may cache modules globally, but scope visibility is still controlled by the action-scope chain.
 
-### Current Runtime Semantics
+### Normative Runtime Semantics
 
-The current implementation already fixes several behaviors that should be documented as baseline, not as future intent.
+These behaviors are baseline architecture, not optional convenience details.
 
 - import visibility is lexical by owning `ActionScope`, not global
 - module loads are deduplicated by normalized module key
@@ -953,7 +953,7 @@ This aligns with the existing bridge and fixed-host-scope intent in `docs/archit
 
 The same pattern applies to spreadsheet and report-designer, but the provider should map to typed command buses rather than ad hoc free-form methods.
 
-Current runtime baseline:
+Normative runtime baseline:
 
 - `report-designer-page` creates a local `ActionScope` boundary and registers `report-designer` on that boundary
 - `spreadsheet-page` creates a local `ActionScope` boundary and registers `spreadsheet` on that boundary
@@ -1011,7 +1011,7 @@ Before a namespace is ready, runtime should either:
 
 The runtime must not silently no-op.
 
-Current implementation semantics:
+Normative implementation semantics:
 
 - React-owned import registration installs a scope-local placeholder provider immediately during owned lifecycle, so namespaced dispatch can fail explicitly even before the module finishes loading
 - dispatch against a still-loading namespace returns a normal failed `ActionResult` with an error message like `Imported namespace <alias> is still loading`
@@ -1024,7 +1024,7 @@ Current implementation semantics:
 
 Action monitoring should be extended so namespaced actions can be inspected clearly.
 
-Current runtime also exposes a minimal debug snapshot contract on `ActionScope`:
+The action-scope layer should also expose a minimal debug snapshot contract on `ActionScope`:
 
 - `getDebugSnapshot?.()` returns the current scope id, parent id, and registered namespace entries
 - each namespace entry can include provider kind (`host` / `import`) and listed methods when the provider exposes them

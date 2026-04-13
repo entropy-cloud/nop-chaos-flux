@@ -6,7 +6,7 @@
 
 负责纯图编辑运行时。
 
-当前 MVP 已导出：
+建议导出：
 
 - `GraphDocument`
 - `GraphNode`
@@ -19,7 +19,7 @@
 - `DesignerCommand`
 - `createDesignerCore()`
 
-仍属于后续扩展的内容：
+可按阶段补齐的扩展内容：
 
 - `PortConfig`
 - `validateDesignerConfig()`
@@ -31,14 +31,14 @@
 
 负责和 `SchemaRenderer` 集成。
 
-当前 MVP 已导出：
+建议导出：
 
 - `flowDesignerRendererDefinitions`
 - `registerFlowDesignerRenderers(registry)`
 - `createFlowDesignerRegistry()`
 - `createDesignerActionProvider(core)`
 
-当前实现说明：
+Implementation note:
 
 - `designer:*` 动作不是通过 root `actionHandlers` 注入，也不是通过修改 built-in action switch 实现，而是由 `designer-page` 在自身 `ActionScope` 边界内注册 `designer` namespace provider。
 - `designer-page` 负责创建 `DesignerCore`，并向内部 React renderer 子树暴露 `DesignerContext`；关于当前 snapshot 契约与 host scope 落地状态，见 `docs/architecture/flow-designer/runtime-snapshot.md`。
@@ -83,7 +83,7 @@ interface DesignerPageSchema {
 - 渲染 palette、canvas、inspector 区域
 - 在本地 `ActionScope` 内注册 `designer:*` actions
 
-当前 region wiring 约束：
+Current implementation note:
 
 - `toolbar`、`inspector`、`dialogs` 都是普通 schema 片段，renderer 会显式给它们透传 host `scope` 与 `actionScope`
 - 通过共享 `dialog` action 打开的弹窗仍走共享 dialog runtime；它们与常驻 `dialogs` region 不是同一条渲染路径，但会继承触发它的 action scope，因此 dialog 内也可以继续 dispatch `designer:*`
@@ -281,38 +281,7 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 - `designer:disconnect`
 - `designer:exportDocument`
 
-当前 MVP 已经实际落地并验证的动作包括：
-
-- `designer:addNode`
-- `designer:updateNodeData`
-- `designer:updateEdgeData`
-- `designer:copySelection`
-- `designer:pasteClipboard`
-- `designer:duplicateSelection`
-- `designer:deleteSelection`
-- `designer:undo`
-- `designer:redo`
-- `designer:zoomIn`
-- `designer:zoomOut`
-- `designer:fitView`
-- `designer:toggleGrid`
-- `designer:save`
-- `designer:restore`
-- `designer:export`
-
-仍在设计里但尚未落地为当前 playground 行为的动作包括：
-
-- `designer:updateMultipleNodes`
-- `designer:moveNodes`
-- `designer:setSelection`
-- `designer:openInspector`
-- `designer:autoLayout`
-- `designer:beginTransaction`
-- `designer:commitTransaction`
-- 多节点或带边的 clipboard 复制
-- `designer:rollbackTransaction`
-
-说明：
+Design note:
 
 - 程序化 selection、批量更新、节点移动、连接创建都应走统一 action/history pipeline
 - transaction 边界是必须约束；history 的底层存储可以按 operation 类别选择 patch 或 snapshot
@@ -431,9 +400,8 @@ export function WorkflowDesignerPage() {
 }
 ```
 
-## 10. 后续实现建议
+## 10. Design Reminder
 
-- 先稳定 `core` 文档与规则接口，再接 renderer
-- 先跑通 `designer-page + canvas + addNode + inspector`
-- 再补 `ports + connection validation + createDialog`
-- 最后补 auto layout、导出、preset、复杂校验
+- keep the API contract ahead of implementation detail
+- preserve one command/history/action pipeline across shell, canvas, inspector, and host integrations
+- treat features such as ports, connection validation, create-dialog flows, auto layout, export, presets, and richer validation as part of the same future API family rather than as ad hoc follow-up side paths

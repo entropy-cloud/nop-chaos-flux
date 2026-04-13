@@ -7,7 +7,7 @@
 - `DesignerCore.getSnapshot()` 现在到底长什么样
 - `designer-page` 当前哪些值已经通过 region host scope 暴露给了 schema 层，哪些还只是更广范围的设计目标
 
-这份文档故意区分"当前代码事实"和"更理想的宿主 scope 设计"，避免把设计稿里的字段误认为已经接线完成。
+这份文档故意区分“当前代码事实”和“更理想的宿主 scope 设计”，避免把设计稿里的字段误认为已经接线完成。
 
 ## Current Code Anchors
 
@@ -216,18 +216,17 @@ props.regions.inspector?.render({ scope: designerScope, actionScope })
 props.regions.dialogs?.render({ scope: designerScope, actionScope })
 ```
 
-因此这三个 region 内部的 schema 表达式**已经**可以读取由 `buildDesignerScopeData` 投影出的字段:
+因此这三个 region 内部的 schema 表达式当前稳定可读取由 `buildDesignerScopeData` 投影出的字段:
 
 - `doc`
 - `selection`（含 `kind`、`count`、`nodeIds`、`edgeIds`、`activeNodeId`、`activeEdgeId`）
 - `activeNode`
 - `activeEdge`
 - `runtime`（含 `canUndo`、`canRedo`、`dirty`、`isDirty`、`gridEnabled`、`zoom`、`viewport`）
-- `palette`
-- `nodeTypes`
-- `edgeTypes`
 
 注意边界: 这些字段只对通过 `render({ scope: designerScope })` 挂载的 region 内部有效；`designer-page` 之外的 schema 全局 scope 不自动获得这些字段。
+
+`palette`、`nodeTypes`、`edgeTypes` 属于更完整的目标 host scope 设计，但本文件不再把它们混写进“当前稳定已注入字段”列表。
 
 ## 5. 当前 schema 层真正稳定可用的能力
 
@@ -237,7 +236,7 @@ props.regions.dialogs?.render({ scope: designerScope, actionScope })
 - `toolbar` / `inspector` / `dialogs` region 挂载点
 - 通过共享 `dialog` action runtime 打开的 dialog 内继续 dispatch `designer:*`
 - `designer-field` 这种由 Flow Designer 自己提供的专用 renderer
-- region 内部 schema 表达式可读取 `doc`、`selection`、`activeNode`、`activeEdge`、`runtime`、`palette`、`nodeTypes`、`edgeTypes`（通过 child scope 注入，见第 4 节）
+- region 内部 schema 表达式可读取 `doc`、`selection`、`activeNode`、`activeEdge`、`runtime`（通过 child scope 注入，见第 4 节）
 
 ### Region capability matrix
 
@@ -352,9 +351,6 @@ selection   // { kind, count, nodeIds, edgeIds, activeNodeId, activeEdgeId }
 activeNode
 activeEdge
 runtime     // { canUndo, canRedo, dirty, isDirty, gridEnabled, zoom, viewport }
-palette
-nodeTypes
-edgeTypes
 ```
 
 ## 9. 当前不应写成"已经存在"的能力

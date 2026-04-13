@@ -42,7 +42,7 @@
 
 但 live baseline 仍存在几类关键漂移：
 
-- `BaseSchema` 有 `name`，但 `META_FIELDS` 仍把 `name` 视为全局 meta 字段
+- `BaseSchema` 有 `name`，而 `name` 应被视为普通 prop / binding 字段，而不是全局 meta 字段
 - 多个 form renderer 仍要写 `props.props.name ?? props.schema.name`
 - `InputSchema` 与 composite field schemas 仍重复声明 `name` / `readOnly` 等公共字段
 - 一些 renderer 直接读取 raw `schema` 上的业务字段，而不是消费归一化后的 `props` / `meta`
@@ -201,7 +201,7 @@
 
 这里说的是目标 baseline，而不是当前实现现状。
 
-live code 里 `packages/flux-core/src/constants.ts` 的 `META_FIELDS` 目前仍包含 `name`、`label`、`title`；迁移目标应是把默认全局集合收窄为上述 6 个字段，并把其余字段交回 renderer metadata 或普通 `props` 通道。
+规范上，默认全局 `META_FIELDS` 应收窄为上述 6 个字段，并把 `name`、`label`、`title` 等交回 renderer metadata 或普通 `props` 通道。
 
 其中：
 
@@ -340,7 +340,7 @@ interface BoundFieldSchemaBase extends BaseSchema {
 
 ## Frozen Contract Matrix
 
-此矩阵是 Phase 1 冻结的权威决策，不受后续局部实现漂移影响。
+此矩阵是冻结后的权威决策，不受后续局部实现漂移影响。
 
 ### Field Channel Assignment
 
@@ -360,7 +360,7 @@ interface BoundFieldSchemaBase extends BaseSchema {
 
 ### Global META_FIELDS Frozen Set
 
-以下是 Phase 2 之后 `META_FIELDS` 应保留的最小集合：
+以下是冻结后的 `META_FIELDS` 最小集合：
 
 ```ts
 export const META_FIELDS = new Set([
@@ -465,7 +465,7 @@ export const META_FIELDS = new Set([
 5. 不为了复用而制造巨型 base renderer；共享应优先落在 schema base、field helper、wrapper helper 上。
 6. 不把 semantic display props 统一重命名成 `value`。
 7. 不允许普通 editable field 同时支持 `name` 和 `value` 两套双向绑定语义。
-8. `META_FIELDS` 的目标集合应收窄为 `{id, className, visible, hidden, disabled, testid}`；`name` / `label` / `title` 不再被默认视为全局 meta 字段。
+8. `META_FIELDS` 应收窄为 `{id, className, visible, hidden, disabled, testid}`；`name` / `label` / `title` 不再被默认视为全局 meta 字段。
 
 ## Related Documents
 

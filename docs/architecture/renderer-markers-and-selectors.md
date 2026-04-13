@@ -85,6 +85,8 @@ Keep:
 
 Do not use root marker classes for visual styling.
 
+Example: `FieldFrame` may emit `nop-field`, `data-slot="field-label"`, and `data-field-invalid`, but it must not rely on `nop-field` to inject implicit `grid`, `gap-*`, padding, or color styling.
+
 ### Layer 3: Visual classes
 
 Visual styling belongs to:

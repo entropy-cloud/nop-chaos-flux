@@ -16,6 +16,7 @@
 - `object-field` 是一个字段控件，所以 `name` 仍然是一等设计。
 - 它与 `detail-field`、`detail-view`、`variant-field` 一样，复用通用的 value adaptation 模型。
 - 它解决的是“一个字段值是对象，内部需要像局部 subform 一样编辑其属性”的问题。
+- 本文档描述未来统一契约；当前实现即使尚未完整复用共享 owner helper，也不应改变这里的 contract 方向。
 
 ## Core Model
 
@@ -77,6 +78,8 @@ interface ObjectFieldSchema extends BaseSchema {
 4. 提交前执行 `validateValueAction`
 5. 提交时执行 `transformOutAction`
 6. owner 将结果写回整个 `name`
+
+这条 lifecycle 描述的是目标 owner contract，不要求当前代码已经完整按该顺序落地。
 
 ## Scope Model
 

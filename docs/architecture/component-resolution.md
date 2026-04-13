@@ -14,26 +14,17 @@ This document is intentionally narrow. It does not redefine template ids, repeat
 
 Component resolution should target live node instances, not raw schema nodes.
 
-Compile-time lowering may point to template structure, but runtime resolution must end at a live `NodeLocator` or a live `ComponentHandle`.
+Compile-time lowering may point to template structure, but runtime resolution must end at a live `cid` or a live `ComponentHandle`.
 
-Compile-time lowering must not directly target live `cid`, because `cid` is allocated at runtime per live node instance.
+Compile-time lowering should prefer structural plans, but the final mounted target is a live `cid`. `NodeLocator` must not be used as the runtime target wrapper.
 
 ## Target Categories
 
 ### 1. Canonical runtime target
 
-The canonical target is a `NodeLocator`.
+The canonical mounted target is a live `cid`.
 
-```ts
-interface NodeLocator {
-  runtimeId: string;
-  templateGraphId: string;
-  templateNodeId: number;
-  instancePath?: readonly InstanceFrame[];
-}
-```
-
-If a caller already has a `NodeLocator`, no further semantic resolution is needed.
+Repeated-aware targeting may additionally carry `instancePath`, but runtime should not wrap that pair into a `NodeLocator` object.
 
 Canonical singleton rule:
 
@@ -48,14 +39,11 @@ For a singleton target known at compile time:
 ```ts
 interface StaticTargetPlan {
   kind: 'static';
-  templateGraphId: string;
   templateNodeId: number;
 }
 ```
 
-Runtime combines this with the current `runtimeId` to form a singleton `NodeLocator`.
-
-Live `cid` resolution happens only after the singleton instance is materialized.
+Runtime resolves this plan to the mounted singleton instance and obtains its live `cid`.
 
 ### 3. Compile-time repeated target plan
 
@@ -64,17 +52,14 @@ For a target inside a repeated boundary:
 ```ts
 interface RepeatedTargetPlan {
   kind: 'repeated';
-  templateGraphId: string;
   templateNodeId: number;
   repeatedTemplateId: string;
 }
 ```
 
-`repeatedTemplateId` must identify exactly one repeated boundary within the owning `templateGraphId`.
+`repeatedTemplateId` must identify exactly one repeated boundary inside the compiled template.
 
-Runtime combines this with the current repeated-instance context to form the final `NodeLocator`.
-
-Live `cid` resolution happens only after the repeated instance is materialized.
+Runtime combines this with the current repeated-instance context, then resolves the matching mounted instance and obtains its live `cid`.
 
 ### 4. Explicit repeated-instance selector
 
@@ -82,7 +67,6 @@ For cross-instance repeated targeting, the action may carry an explicit repeated
 
 ```ts
 interface RepeatedInstanceSelector {
-  templateGraphId: string;
   repeatedTemplateId: string;
   instanceKey: string;
   templateNodeId: number;
@@ -94,7 +78,7 @@ This is the preferred path when the caller means "that specific row/item instanc
 Constraint for nested repeated structures:
 
 - `RepeatedInstanceSelector` is only unambiguous when `repeatedTemplateId + instanceKey` identifies a unique repeated instance in the current runtime/template context
-- if nested or cross-owner repeated structures make that selector ambiguous, callers should use full `NodeLocator` instead of relying on `RepeatedInstanceSelector`
+- if nested or cross-owner repeated structures make that selector ambiguous, callers should carry explicit repeated context rather than reintroducing a `NodeLocator` wrapper
 
 ### 5. Author selectors
 
@@ -128,56 +112,42 @@ Reasons:
 
 Resolution order should be:
 
-1. if action already carries `NodeLocator`, resolve directly
-2. if action carries `StaticTargetPlan`, materialize singleton locator and resolve
-3. if action carries `RepeatedTargetPlan`, combine with current repeated-instance context and resolve
+1. if action already carries `_targetCid`, resolve directly
+2. if action carries `StaticTargetPlan`, resolve the singleton live instance and obtain its `cid`
+3. if action carries `RepeatedTargetPlan`, combine with current repeated-instance context and resolve the matching live instance
 4. otherwise, resolve `componentId` / `componentName` inside the visible registry boundary
 
 Canonical result contract:
 
 ```ts
 type ResolutionResult =
-  | { kind: 'resolved'; locator: NodeLocator; handle?: ComponentHandle }
-  | { kind: 'notMaterialized'; locator: NodeLocator }
+  | { kind: 'resolved'; cid: number; instancePath?: readonly InstanceFrame[]; handle?: ComponentHandle }
+  | { kind: 'notMaterialized'; instancePath?: readonly InstanceFrame[] }
   | { kind: 'notFound' }
-  | { kind: 'ambiguous'; matches: readonly NodeLocator[] };
+  | { kind: 'ambiguous'; matches: ReadonlyArray<{ cid?: number; instancePath?: readonly InstanceFrame[] }> };
 ```
 
 Structural target resolution is runtime-owned. The component registry may contribute live-handle lookup and selector lookup, but it is not the canonical source of structural/template truth.
 
 ```ts
 function resolveTarget(target: ActionTarget, ctx: ResolutionContext): ResolutionResult {
-  if (target.locator) {
-    return runtime.resolveNode(target.locator);
+  if (target._targetCid !== undefined) {
+    return runtime.resolveCid(target._targetCid);
   }
 
   if (target.staticPlan) {
-    return runtime.resolveNode({
-      runtimeId: ctx.runtimeId,
-      templateGraphId: target.staticPlan.templateGraphId,
-      templateNodeId: target.staticPlan.templateNodeId
-    });
+    return runtime.resolveStaticTarget(target.staticPlan);
   }
 
   if (target.repeatedPlan) {
-    return runtime.resolveNode({
-      runtimeId: ctx.runtimeId,
-      templateGraphId: target.repeatedPlan.templateGraphId,
-      templateNodeId: target.repeatedPlan.templateNodeId,
-      instancePath: ctx.instancePathFor(target.repeatedPlan.repeatedTemplateId)
-    });
+    return runtime.resolveRepeatedTarget(target.repeatedPlan, ctx.instancePathFor(target.repeatedPlan.repeatedTemplateId));
   }
 
   if (target.repeatedSelector) {
-    return runtime.resolveNode({
-      runtimeId: ctx.runtimeId,
-      templateGraphId: target.repeatedSelector.templateGraphId,
-      templateNodeId: target.repeatedSelector.templateNodeId,
-      instancePath: ctx.instancePathForExplicit(
-        target.repeatedSelector.repeatedTemplateId,
-        target.repeatedSelector.instanceKey
-      )
-    });
+    return runtime.resolveRepeatedSelector(
+      target.repeatedSelector,
+      ctx.instancePathForExplicit(target.repeatedSelector.repeatedTemplateId, target.repeatedSelector.instanceKey)
+    );
   }
 
   return registry.resolveSelector({
@@ -204,16 +174,16 @@ Table rows and future `type: 'loop'` use the same model:
 
 - template compiles once
 - each repeated instance contributes an `instancePath`
-- repeated-local targets resolve by `templateGraphId + templateNodeId + instancePath`
+- repeated-local targets resolve by structural target plan plus repeated context, then end at a live `cid`
 
-There is no need for a fake compile-time global `cid` space.
+There is no need for a `NodeLocator` wrapper. Structural targeting is compile-time/runtime-plan based; mounted execution ends at a live `cid`.
 
 Selectors inside repeated content follow this rule:
 
 - `componentId` / `componentName` are convenience lookups in the current visible registry boundary
 - they are suitable for targeting the current repeated instance when that boundary is unambiguous
 - they are not the preferred cross-instance targeting mechanism
-- cross-instance operations should use `RepeatedInstanceSelector` or a full `NodeLocator`
+- cross-instance operations should use `RepeatedInstanceSelector` plus explicit repeated context when needed
 
 ## Failure Modes
 

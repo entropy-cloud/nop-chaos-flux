@@ -24,6 +24,7 @@
 - 它与 `detail-field` / `detail-view` 一样，复用通用的 value adaptation 模型：`transformInAction` / `transformOutAction` / `validateValueAction`。
 - 它解决的是“多态值 / union-like value”的识别和编辑，不是 detail surface 的展开问题。
 - 它也应复用共享的 value adaptation owner wrapper，而不是自己单独实现 transform/validate 调度。
+- 本文档描述未来统一契约；实现可以阶段性逼近，但不应倒退回“每个变体控件各自处理 adaptation”这种分裂路径。
 
 ## Core Model
 
@@ -111,6 +112,8 @@ type VariantMatch =
 6. 提交前执行变体级和控件级 `validateValueAction`
 7. 提交时执行变体级和控件级 `transformOutAction`
 8. owner 将结果写回 `name`
+
+这里描述的是统一目标 contract，而不是要求当前代码已经全部按此顺序实现。
 
 ## Variant Switching
 

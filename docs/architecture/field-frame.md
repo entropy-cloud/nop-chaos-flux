@@ -56,7 +56,19 @@ Multiple hint types with priority:
 
 ### Layout flexibility
 
-FieldFrame supports different layout modes via CSS classes, not component variants.
+FieldFrame may switch semantic wrapper structure (`<label>` vs `<fieldset>`), but it must not hardcode visual layout classes. Visual spacing and arrangement remain schema-/host-driven styling concerns.
+
+## Styling Contract
+
+FieldFrame follows the same renderer styling contract as the rest of Flux:
+
+- root marker stays `nop-field`
+- root marker is semantic, not visual
+- internal regions use `data-slot`
+- field state uses `data-*`
+- visual spacing, grid/flex, borders, and typography come from schema `className`, `classAliases`, host CSS, or the wrapped control library
+
+That means FieldFrame should not bake in classes such as `grid`, `gap-*`, `flex`, padding, or color utilities as part of its default contract.
 
 ## Component API
 
@@ -145,12 +157,12 @@ export function FieldFrame(props: FieldFrameProps) {
   const LabelTag = isGroup ? 'legend' : 'span';
 
   return (
-    <Tag className={['nop-field grid gap-2', className].filter(Boolean).join(' ') || undefined}
+    <Tag className={['nop-field', className].filter(Boolean).join(' ') || undefined}
          data-testid={testid || undefined}
-         data-field-visited={fieldState.visited || undefined}
-         data-field-touched={fieldState.touched || undefined}
-         data-field-dirty={fieldState.dirty || undefined}
-         data-field-invalid={showError || undefined}>
+         data-field-visited={fieldState.visited ? '' : undefined}
+         data-field-touched={fieldState.touched ? '' : undefined}
+         data-field-dirty={fieldState.dirty ? '' : undefined}
+         data-field-invalid={showError ? '' : undefined}>
       {label ? (
         <LabelTag data-slot="field-label">
           {label}
@@ -247,7 +259,7 @@ function RadioGroupRenderer(props) {
 
 | Class | Purpose |
 |-------|---------|
-| `nop-field` | Root wrapper (with `grid gap-2`) |
+| `nop-field` | Root semantic field marker |
 | `data-slot="field-label"` | Label text |
 | `data-slot="field-required"` | Required asterisk |
 | `data-slot="field-control"` | Control wrapper |

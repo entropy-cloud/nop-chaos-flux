@@ -38,3 +38,6 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/22-spreadsheet-integration-test-scope-reactive-read-fix.md`
 - `docs/bugs/23-stale-js-artifacts-shadow-source-in-vitest-fix.md`
 - `docs/bugs/27-reaction-registration-churn-and-initial-page-sync-test-hang-fix.md`
+- `docs/bugs/28-reaction-debounce-timer-leak-on-dispose.md`
+- `docs/bugs/29-detail-view-confirm-viewer-not-updated-fix.md`
+- `docs/bugs/30-form-runtime-setvalue-setlastchange-missing-rerender-fix.md`

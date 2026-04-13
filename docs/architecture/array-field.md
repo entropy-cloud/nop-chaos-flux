@@ -16,6 +16,7 @@
 - `array-field` 是一个字段控件，所以 `name` 仍然是一等设计。
 - 它与 `object-field`、`detail-field`、`detail-view`、`variant-field` 一样，复用通用的 value adaptation 模型和共享 owner wrapper。
 - 它解决的是“一个字段值是数组，内部需要编辑多个元素”的问题。
+- 本文档描述未来统一契约；实现可以阶段性逼近，但不应把当前实现限制回写到这个 contract。
 
 ## Not The Same As `list` Or `loop`
 
@@ -101,6 +102,8 @@ interface ArrayFieldSchema extends BaseSchema {
 4. 提交前执行 `validateValueAction`
 5. 提交时执行 `transformOutAction`
 6. owner 将结果写回整个 `name`
+
+这定义的是目标 owner contract。即使当前 renderer 尚未完全实现共享 wrapper，也应以这个方向统一。
 
 ## Scope Model
 
