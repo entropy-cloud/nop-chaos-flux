@@ -23,7 +23,9 @@ export function NodeRendererProviders(props: React.PropsWithChildren<{
   classAliases?: Record<string, string>;
 }>) {
   const { component, schema } = props.templateNode;
-  const publishActionScope = component.actionScopePolicy === 'new';
+  const publishActionScope =
+    component.actionScopePolicy === 'new' ||
+    Boolean((schema as { 'xui:imports'?: readonly unknown[] })['xui:imports']?.length);
   const publishComponentRegistry = component.componentRegistryPolicy === 'new';
   const publishClassAliases = Boolean(
     (schema as { classAliases?: Record<string, string> }).classAliases &&

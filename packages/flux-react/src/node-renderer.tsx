@@ -120,7 +120,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
   const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, {
     nodeId: props.node.id,
-    actionScopePolicy: props.node.component.actionScopePolicy,
+    actionScopePolicy: props.node.component.actionScopePolicy ?? (getNodeImports(props.node)?.length ? 'new' : undefined),
     componentRegistryPolicy: props.node.component.componentRegistryPolicy
   }, props.actionScope, props.componentRegistry);
 

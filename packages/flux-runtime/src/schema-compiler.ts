@@ -216,7 +216,9 @@ export function createSchemaCompiler(input: {
       mayPublishScope:
         renderer.scopePolicy === 'form' ||
         Boolean(fieldInspection.extensions?.['xui:imports']),
-      mayPublishActionScope: renderer.actionScopePolicy === 'new',
+      mayPublishActionScope:
+        renderer.actionScopePolicy === 'new' ||
+        Boolean(fieldInspection.extensions?.['xui:imports']),
       mayPublishComponentRegistry: renderer.componentRegistryPolicy === 'new',
       mayPublishClassAliases: Boolean(schema.classAliases && Object.keys(schema.classAliases).length > 0)
     };

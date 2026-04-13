@@ -69,7 +69,7 @@ describe('createSchemaRenderer import basics', () => {
     expect(await screen.findByText('Imported Ada Lovelace')).toBeTruthy();
   });
 
-  it('dedupes repeated imports within one action scope and shares them with descendants', async () => {
+  it('dedupes module loads across import-owner scopes while keeping registrations lexical', async () => {
     const importLoader = {
       load: vi.fn(async (spec: { from: string; as: string }) => ({
         createNamespace: () => ({
@@ -87,10 +87,9 @@ describe('createSchemaRenderer import basics', () => {
       <SchemaRenderer
         schema={{
           type: 'page',
-          'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
           body: [
-            { type: 'dispatch-probe', label: 'Run parent import', resultKey: 'parent-import-result', runAction: { action: 'demo:ping', args: { value: 'parent' } } },
-            { type: 'scoped-host', body: [{ type: 'dispatch-probe', label: 'Run child import', resultKey: 'child-import-result', runAction: { action: 'demo:ping', args: { value: 'child' } } }] },
+            { type: 'dispatch-probe', label: 'Run local import', resultKey: 'local-import-result', 'xui:imports': [{ from: 'demo-lib', as: 'demo' }], runAction: { action: 'demo:ping', args: { value: 'local' } } },
+            { type: 'scoped-host', 'xui:imports': [{ from: 'demo-lib', as: 'demo' }], body: [{ type: 'dispatch-probe', label: 'Run child import', resultKey: 'child-import-result', runAction: { action: 'demo:ping', args: { value: 'child' } } }] },
             { type: 'dispatch-probe', label: 'Run sibling import', resultKey: 'sibling-import-result', runAction: { action: 'demo:ping', args: { value: 'sibling' } } }
           ]
         }}
@@ -103,14 +102,62 @@ describe('createSchemaRenderer import basics', () => {
       expect(importLoader.load).toHaveBeenCalledTimes(1);
     });
 
-    fireEvent.click(screen.getByText('Run parent import'));
+    fireEvent.click(screen.getByText('Run local import'));
     fireEvent.click(screen.getByText('Run child import'));
     fireEvent.click(screen.getByText('Run sibling import'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('parent-import-result').textContent).toBe('demo-lib:ping:parent');
+      expect(screen.getByTestId('local-import-result').textContent).toBe('demo-lib:ping:local');
       expect(screen.getByTestId('child-import-result').textContent).toBe('demo-lib:ping:child');
-      expect(screen.getByTestId('sibling-import-result').textContent).toBe('demo-lib:ping:sibling');
+      expect(screen.getByTestId('sibling-import-result').textContent).toContain('Unsupported action: demo:ping');
+    });
+  });
+
+  it('keeps node-owned imports local to the declaring node boundary', async () => {
+    const importLoader = {
+      load: vi.fn(async (spec: { from: string; as: string }) => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
+            ok: true,
+            data: `${spec.from}:${method}:${String(payload?.value ?? '')}`
+          })
+        })
+      }))
+    };
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, dispatchProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dispatch-probe',
+              label: 'Run local import',
+              resultKey: 'local-import-result',
+              'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+              runAction: { action: 'demo:ping', args: { value: 'local' } }
+            },
+            {
+              type: 'dispatch-probe',
+              label: 'Run sibling import',
+              resultKey: 'sibling-import-result',
+              runAction: { action: 'demo:ping', args: { value: 'sibling' } }
+            }
+          ]
+        }}
+        env={{ ...env, importLoader }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Run local import'));
+    fireEvent.click(screen.getByText('Run sibling import'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('local-import-result').textContent).toBe('demo-lib:ping:local');
+      expect(screen.getByTestId('sibling-import-result').textContent).toContain('Unsupported action: demo:ping');
     });
   });
 });

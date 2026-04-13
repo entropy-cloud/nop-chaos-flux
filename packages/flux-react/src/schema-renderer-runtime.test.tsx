@@ -55,7 +55,7 @@ describe('createSchemaRenderer runtime behavior', () => {
 
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
     expect(root.scopePlan.kind).toBe('form');
-    expect(root.component.actionScopePolicy).not.toBe('new');
+    expect('xui:imports' in root.schema).toBe(true);
     expect(root.component.componentRegistryPolicy).toBe('new');
     expect(root.schema.classAliases).toBeTruthy();
 
