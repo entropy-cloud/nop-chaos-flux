@@ -1,9 +1,10 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '../index';
 
 if (!Element.prototype.scrollIntoView) {
@@ -77,6 +78,9 @@ describe('variant-field renderer', () => {
 
     const container = document.querySelector('[data-active-variant]');
     expect(container?.getAttribute('data-active-variant')).toBe('text');
+    expect(container?.className).toBe('nop-field');
+    expect(container?.querySelector('[data-slot="field-control"]')).toBeTruthy();
+    expect(container?.querySelector('[data-slot="variant-field-selector"]')).toBeTruthy();
   });
 
   it('switching variant tab resets the field value to the new variant initial value', async () => {
@@ -93,7 +97,7 @@ describe('variant-field renderer', () => {
 
     await waitFor(() => expect(screen.getByText('Number')).toBeTruthy());
 
-    fireEvent.click(screen.getByText('Number'));
+    fireEvent.click(screen.getByRole('tab', { name: 'Number' }));
 
     await waitFor(() => {
       const container = document.querySelector('[data-active-variant]');
@@ -226,7 +230,7 @@ describe('variant-field renderer', () => {
     );
 
     await waitFor(() => {
-      const selectTrigger = document.querySelector('.nop-variant-field-selector');
+      const selectTrigger = document.querySelector('[data-slot="variant-field-selector"]');
       expect(selectTrigger).toBeTruthy();
     });
   });
@@ -272,7 +276,7 @@ describe('variant-field renderer', () => {
 
     await waitFor(() => expect(screen.getByText('Text')).toBeTruthy());
 
-    fireEvent.click(screen.getByText('Number'));
+    fireEvent.click(screen.getByRole('tab', { name: 'Number' }));
 
     await waitFor(() => {
       const container = document.querySelector('[data-active-variant]');
@@ -282,4 +286,103 @@ describe('variant-field renderer', () => {
     const errors = screen.queryAllByText(/required/i);
     expect(errors.length).toBe(0);
   });
+
+  it('switches between string and list editors and keeps repeated edits on the active variant', async () => {
+    cleanup();
+    const submitValues: Record<string, unknown>[] = [];
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'variant-submit-form',
+          data: {
+            payload: 'alpha'
+          },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              label: 'Payload',
+              defaultVariant: 'text',
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  match: { kind: 'typeof', value: 'string' },
+                  initialValue: 'alpha',
+                  content: [
+                    { type: 'input-text', name: '', label: 'Text Value', required: true }
+                  ]
+                },
+                {
+                  key: 'list',
+                  label: 'List',
+                  match: { kind: 'array' },
+                  initialValue: ['one'],
+                  content: [
+                    {
+                      type: 'array-field',
+                      name: '',
+                      label: 'List Value',
+                      itemKind: 'scalar',
+                      item: [{ type: 'input-text', name: 'value', label: 'Item', required: true }]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit',
+              onClick: { action: 'component:submit', componentId: 'variant-submit-form' }
+            }
+          ]
+        }}
+        env={{
+          ...env,
+          fetcher: async function <T>(_api: unknown, ctx: ApiRequestContext) {
+            submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
+            return { ok: true, status: 200, data: null as T };
+          }
+        }}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getAllByRole('textbox').length).toBe(1));
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'first text' } });
+    fireEvent.click(screen.getByRole('tab', { name: 'List' }));
+
+    await waitFor(() => expect(screen.getAllByRole('textbox').length).toBe(1));
+
+    const listItemInput = screen.getByRole('textbox') as HTMLInputElement;
+    fireEvent.change(listItemInput, { target: { value: 'first item' } });
+    fireEvent.click(screen.getByText('Add item'));
+
+    await waitFor(() => expect(screen.getAllByRole('textbox').length).toBe(2));
+
+    fireEvent.change(screen.getAllByRole('textbox')[1], { target: { value: 'second item' } });
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(submitValues.length).toBe(1));
+    expect(submitValues[0]).toMatchObject({ payload: ['first item', 'second item'] });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Text' }));
+
+    await waitFor(() => expect(screen.getAllByRole('textbox').length).toBe(1));
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('alpha');
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'second text' } });
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(submitValues.length).toBe(2));
+    expect(submitValues[1]).toMatchObject({ payload: 'second text' });
+  });
+
 });
