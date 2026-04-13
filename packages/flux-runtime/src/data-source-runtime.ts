@@ -22,6 +22,82 @@ function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
+function applyMergeStrategy(input: {
+  currentValue: unknown;
+  nextValue: unknown;
+  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
+  mergeKey?: string;
+}): unknown {
+  const strategy = input.mergeStrategy ?? 'replace';
+
+  if (strategy === 'replace') {
+    return input.nextValue;
+  }
+
+  if (strategy === 'append') {
+    const currentItems = Array.isArray(input.currentValue) ? input.currentValue : [];
+    const nextItems = Array.isArray(input.nextValue) ? input.nextValue : [];
+    return [...currentItems, ...nextItems];
+  }
+
+  if (strategy === 'prepend') {
+    const currentItems = Array.isArray(input.currentValue) ? input.currentValue : [];
+    const nextItems = Array.isArray(input.nextValue) ? input.nextValue : [];
+    return [...nextItems, ...currentItems];
+  }
+
+  if (strategy === 'merge') {
+    if (isObjectRecord(input.currentValue) && isObjectRecord(input.nextValue)) {
+      return { ...input.currentValue, ...input.nextValue };
+    }
+
+    return input.nextValue;
+  }
+
+  if (strategy === 'upsert') {
+    const mergeKey = input.mergeKey;
+    if (!mergeKey) {
+      return input.nextValue;
+    }
+
+    const currentItems = Array.isArray(input.currentValue) ? input.currentValue : [];
+    const nextItems = Array.isArray(input.nextValue) ? input.nextValue : [];
+    const indexed = new Map<unknown, Record<string, unknown>>();
+
+    for (const item of currentItems) {
+      if (isObjectRecord(item) && mergeKey in item) {
+        indexed.set(item[mergeKey], item);
+      }
+    }
+
+    for (const item of nextItems) {
+      if (!isObjectRecord(item) || !(mergeKey in item)) {
+        continue;
+      }
+
+      const key = item[mergeKey];
+      const previous = indexed.get(key);
+      indexed.set(key, previous ? { ...previous, ...item } : item);
+    }
+
+    const passthroughCurrent = currentItems.filter((item) => !isObjectRecord(item) || !(mergeKey in item));
+    const untouchedCurrent = currentItems.filter((item) => {
+      if (!isObjectRecord(item) || !(mergeKey in item)) {
+        return false;
+      }
+
+      return !nextItems.some((nextItem) => isObjectRecord(nextItem) && mergeKey in nextItem && Object.is(nextItem[mergeKey], item[mergeKey]));
+    });
+    const mergedOrInserted = nextItems
+      .filter((item) => isObjectRecord(item) && mergeKey in item)
+      .map((item) => indexed.get((item as Record<string, unknown>)[mergeKey]) ?? item);
+
+    return [...passthroughCurrent, ...untouchedCurrent, ...mergedOrInserted];
+  }
+
+  return input.nextValue;
+}
+
 function applyResultMapping(input: {
   runtime: RendererRuntime;
   scope: ScopeRef;
@@ -41,10 +117,23 @@ function applyResultMapping(input: {
   return input.runtime.evaluate(input.resultMapping, mappingScope);
 }
 
-function writeDataToScope(scope: ScopeRef, targetPath: string | undefined, mergeToScope: boolean | undefined, data: unknown): void {
+export function writeDataToScope(input: {
+  scope: ScopeRef;
+  targetPath?: string;
+  mergeToScope?: boolean;
+  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
+  mergeKey?: string;
+  data: unknown;
+}): void {
+  const { scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data } = input;
   if (targetPath) {
-    scope.update(targetPath, data);
-    return;
+    const currentValue = scope.get(targetPath);
+    scope.update(targetPath, applyMergeStrategy({
+      currentValue,
+      nextValue: data,
+      mergeStrategy,
+      mergeKey
+    }));
   }
 
   if (mergeToScope && isObjectRecord(data)) {
@@ -106,6 +195,8 @@ export function createDataSourceController(input: {
   targetPath?: string;
   mergeToScope?: boolean;
   resultMapping?: unknown;
+  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
+  mergeKey?: string;
   statusPath?: string;
   interval?: number;
   stopWhen?: string;
@@ -122,6 +213,8 @@ export function createDataSourceController(input: {
     targetPath,
     mergeToScope,
     resultMapping,
+    mergeStrategy,
+    mergeKey,
     statusPath,
     interval,
     stopWhen,
@@ -191,7 +284,7 @@ export function createDataSourceController(input: {
           value = cached.data;
           loading = false;
           stale = false;
-          writeDataToScope(scope, targetPath, mergeToScope, cached.data);
+          writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: cached.data });
           writeStatusToScope(scope, statusPath, { started, loading, stale, error });
 
           if (checkStopCondition()) {
@@ -232,7 +325,7 @@ export function createDataSourceController(input: {
       loading = false;
       stale = false;
       error = undefined;
-      writeDataToScope(scope, targetPath, mergeToScope, mappedValue);
+      writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: mappedValue });
       writeStatusToScope(scope, statusPath, { started, loading, stale, error });
 
       if (checkStopCondition()) {
@@ -265,7 +358,7 @@ export function createDataSourceController(input: {
 
     if (initialData !== undefined) {
       value = initialData;
-      writeDataToScope(scope, targetPath, mergeToScope, initialData);
+      writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: initialData });
     }
 
     writeStatusToScope(scope, statusPath, { started, loading, stale, error });
