@@ -11,7 +11,7 @@ import type {
   ScopeRef
 } from '@nop-chaos/flux-core';
 import type { ApiCacheStore } from './api-cache';
-import { createDataSourceController } from './data-source-runtime';
+import { createDataSourceController, writeDataToScope } from './data-source-runtime';
 import { collectRuntimeDependencies } from './node-runtime';
 import { createRootDependencySet, filterScopeChangeByIgnoredRoots, scopeChangeHitsDependencies } from './scope-change';
 import { publishOwnerStatus } from './status-owner';
@@ -73,6 +73,8 @@ function createDependencyAwareFormulaController(input: {
   targetPath?: string;
   mergeToScope?: boolean;
   resultMapping?: unknown;
+  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
+  mergeKey?: string;
   statusPath?: string;
   formula: unknown;
   initialData?: unknown;
@@ -127,13 +129,14 @@ function createDependencyAwareFormulaController(input: {
     loading = false;
     stale = false;
     updateDependencies();
-    if (input.targetPath) {
-      input.scope.update(input.targetPath, nextValue);
-    }
-
-    if (input.mergeToScope && isObjectRecord(nextValue)) {
-      input.scope.merge(nextValue);
-    }
+    writeDataToScope({
+      scope: input.scope,
+      targetPath: input.targetPath,
+      mergeToScope: input.mergeToScope,
+      mergeStrategy: input.mergeStrategy,
+      mergeKey: input.mergeKey,
+      data: nextValue
+    });
 
     publishStatus();
   }
@@ -158,13 +161,14 @@ function createDependencyAwareFormulaController(input: {
 
       if (input.initialData !== undefined) {
         value = input.initialData;
-        if (input.targetPath) {
-          input.scope.update(input.targetPath, input.initialData);
-        }
-
-        if (input.mergeToScope && isObjectRecord(input.initialData)) {
-          input.scope.merge(input.initialData);
-        }
+        writeDataToScope({
+          scope: input.scope,
+          targetPath: input.targetPath,
+          mergeToScope: input.mergeToScope,
+          mergeStrategy: input.mergeStrategy,
+          mergeKey: input.mergeKey,
+          data: input.initialData
+        });
       }
 
       publishStatus();
@@ -244,6 +248,8 @@ export function createRuntimeSourceRegistry(input: {
           targetPath,
           mergeToScope: args.schema.mergeToScope,
           resultMapping: args.schema.resultMapping,
+          mergeStrategy: args.schema.mergeStrategy,
+          mergeKey: args.schema.mergeKey,
           statusPath: args.schema.statusPath,
           interval: asNumber(args.schema.interval),
           stopWhen: asString(args.schema.stopWhen),
@@ -261,6 +267,8 @@ export function createRuntimeSourceRegistry(input: {
           targetPath,
           mergeToScope: args.schema.mergeToScope,
           resultMapping: args.schema.resultMapping,
+          mergeStrategy: args.schema.mergeStrategy,
+          mergeKey: args.schema.mergeKey,
           statusPath: args.schema.statusPath,
           formula: args.schema.formula,
           initialData: args.schema.initialData,

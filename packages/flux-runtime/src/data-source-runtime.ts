@@ -62,37 +62,33 @@ function applyMergeStrategy(input: {
 
     const currentItems = Array.isArray(input.currentValue) ? input.currentValue : [];
     const nextItems = Array.isArray(input.nextValue) ? input.nextValue : [];
-    const indexed = new Map<unknown, Record<string, unknown>>();
+    const keyedNextItems = new Map<unknown, Record<string, unknown>>();
+    const passthroughNextItems: unknown[] = [];
 
-    for (const item of currentItems) {
+    for (const item of nextItems) {
       if (isObjectRecord(item) && mergeKey in item) {
-        indexed.set(item[mergeKey], item);
+        keyedNextItems.set(item[mergeKey], item);
+      } else {
+        passthroughNextItems.push(item);
       }
     }
 
-    for (const item of nextItems) {
+    const mergedItems = currentItems.map((item) => {
       if (!isObjectRecord(item) || !(mergeKey in item)) {
-        continue;
+        return item;
       }
 
       const key = item[mergeKey];
-      const previous = indexed.get(key);
-      indexed.set(key, previous ? { ...previous, ...item } : item);
-    }
-
-    const passthroughCurrent = currentItems.filter((item) => !isObjectRecord(item) || !(mergeKey in item));
-    const untouchedCurrent = currentItems.filter((item) => {
-      if (!isObjectRecord(item) || !(mergeKey in item)) {
-        return false;
+      const nextItem = keyedNextItems.get(key);
+      if (!nextItem) {
+        return item;
       }
 
-      return !nextItems.some((nextItem) => isObjectRecord(nextItem) && mergeKey in nextItem && Object.is(nextItem[mergeKey], item[mergeKey]));
+      keyedNextItems.delete(key);
+      return { ...item, ...nextItem };
     });
-    const mergedOrInserted = nextItems
-      .filter((item) => isObjectRecord(item) && mergeKey in item)
-      .map((item) => indexed.get((item as Record<string, unknown>)[mergeKey]) ?? item);
 
-    return [...passthroughCurrent, ...untouchedCurrent, ...mergedOrInserted];
+    return [...mergedItems, ...Array.from(keyedNextItems.values()), ...passthroughNextItems];
   }
 
   return input.nextValue;
@@ -281,10 +277,17 @@ export function createDataSourceController(input: {
             return;
           }
 
-          value = cached.data;
+          const mappedValue = applyResultMapping({
+            runtime,
+            scope,
+            resultMapping,
+            payload: cached.data
+          });
+
+          value = mappedValue;
           loading = false;
           stale = false;
-          writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: cached.data });
+          writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: mappedValue });
           writeStatusToScope(scope, statusPath, { started, loading, stale, error });
 
           if (checkStopCondition()) {
