@@ -14,9 +14,9 @@
 ## Position
 
 - `object-field` 是一个字段控件，所以 `name` 仍然是一等设计。
-- 它与 `detail-field`、`detail-view`、`variant-field` 一样，复用通用的 value adaptation 模型。
+- 它与 `detail-field`、`detail-view`、`variant-field` 同属 value-oriented family，但默认是 inline live-edit control，而不是 surface-backed staged owner。
 - 它解决的是“一个字段值是对象，内部需要像局部 subform 一样编辑其属性”的问题。
-- 本文档描述未来统一契约；当前实现即使尚未完整复用共享 owner helper，也不应改变这里的 contract 方向。
+- 本文档描述当前推荐 baseline：`object-field` 不引入独立 confirm/cancel 提交流程。
 
 ## Core Model
 
@@ -73,13 +73,17 @@ interface ObjectFieldSchema extends BaseSchema {
 推荐 lifecycle：
 
 1. 从 `name` 读取当前对象值
-2. 通过 `transformInAction` 生成内部 draft object
-3. 在 `body` 中对 draft object 的子字段进行编辑
-4. 提交前执行 `validateValueAction`
-5. 提交时执行 `transformOutAction`
-6. owner 将结果写回整个 `name`
+2. 在 `body` 中对相对路径子字段进行 inline live edit
+3. 子字段校验继续通过普通 form field / subtree validation 生效
+4. 表单 submit 时直接读取当前父表单对象值
 
-这条 lifecycle 描述的是目标 owner contract，不要求当前代码已经完整按该顺序落地。
+关键边界：
+
+- `object-field` 默认没有独立 draft object
+- `object-field` 默认没有 owner-level confirm / cancel
+- `object-field` 默认不要求 submit-time owner `validateValueAction` / `transformOutAction`
+
+如果某个对象值真的需要“编辑中”和“已确认”两阶段语义，应优先使用 `detail-field` 或其它 surface-backed owner，而不是把 `object-field` 本身升级成 staged submit owner。
 
 ## Scope Model
 

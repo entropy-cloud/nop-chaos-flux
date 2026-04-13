@@ -101,10 +101,9 @@ Expression execution is built on `flux-formula` through `FormulaCompiler` and `E
 
 Current implementation detail:
 
-- `flux-formula` currently wraps `amis-formula` for parsing and evaluation.
-- This is an intentional adapter boundary, not a leak of AMIS runtime concerns into the rest of the workspace.
-- Direct `amis-formula` imports should stay confined to `@nop-chaos/flux-formula`; other packages depend only on Flux contracts such as `FormulaCompiler`, `ExpressionCompiler`, and `EvalContext`.
-- Replacing `amis-formula` is a future option only if expression semantics need to diverge materially or the dependency becomes a maintenance burden.
+- `flux-formula` now provides the workspace expression parser, AST evaluator, template compiler, and function/filter registry directly inside `@nop-chaos/flux-formula`.
+- Other packages still depend only on Flux contracts such as `FormulaCompiler`, `ExpressionCompiler`, and `EvalContext`; they do not depend on parser/evaluator internals.
+- Expression compile/evaluate failures are surfaced as thrown errors rather than being silently swallowed, so runtime/tests must use nullable-safe access when async data may not exist yet.
 
 The production direction is:
 

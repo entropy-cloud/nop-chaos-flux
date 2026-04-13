@@ -42,6 +42,7 @@ Start here for contract precedence and primitive/core-boundary rules.
 - `field-binding-and-renderer-contract.md`
 - `field-metadata-slot-modeling.md`
 - `scope-ownership-and-isolation.md`
+- `flux-formula.md`
 - `template-instantiation-and-node-identity.md`
 - other active top-level subsystem docs that define current live contracts
 

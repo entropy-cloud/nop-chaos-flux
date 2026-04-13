@@ -688,6 +688,13 @@ Rules:
 - scope-visible according to the container that declares it
 - not tied to sibling render order
 
+Current runtime notes:
+
+- imports are treated as declaration-time capability requirements, not as child-node side effects
+- render/execute must not enter an imported subtree until the required imports for that boundary are ready
+- root schema rendering may pre-collect declared imports and preload them before rendering descendants that depend on those namespaces
+- loaded import libraries are treated as static runtime resources; the runtime may stop publishing a namespace at a lexical boundary, but it does not automatically unload the underlying library on unmount
+
 ### Recommended Authoring Model
 
 Prefer container-level imports rather than a body node with execution-like semantics.
@@ -713,6 +720,8 @@ Recommended shape:
 ```
 
 This avoids the misleading impression that import success depends on whether the import node rendered before the button.
+
+It also matches the runtime contract: imports are preloaded/gated for the declaring boundary before descendant expressions or actions are allowed to execute.
 
 `xui:imports` also project imported aliases into the expression environment. If a container imports `{ from: 'demo-lib', as: 'demo' }`, then actions dispatch through `demo:method` while expressions may access the same imported binding as `$demo`.
 
@@ -1084,7 +1093,7 @@ Not all action-scope and component-registry boundaries have the same creation ow
 These are capability boundaries that belong to a specific node and are compiled into the node-local `renderPlan.wrapProviders` closure at compile time.
 
 - `classAliases` publication — compiled into the node's render plan; `NodeRenderer` executes the closure without re-deriving it at React render time
-- `xui:imports`-driven `ActionScope` overlay — compiled into the render plan when the node declares `xui:imports`; the new `ActionScope` child boundary is created by executing the compiled closure, not by generic runtime provider inference
+- `xui:imports`-driven `ActionScope` overlay — compiled into the render plan when the node declares `xui:imports`; the new `ActionScope` child boundary is created by executing the compiled closure, while runtime loading/preload gating ensures descendant execution waits until the declared imports are ready
 
 Rule: if the boundary truly belongs to the node itself and can be determined from the schema at compile time, it is a node-local optional execution boundary. The compiled closure receives the current parent boundary and children as inputs.
 
@@ -1112,6 +1121,8 @@ The active decisions from this document are:
 - use namespaced actions for domain hosts and imported libraries
 - do not treat store methods as automatically callable public API; components explicitly expose supported capabilities
 - define `xui:imports` with declaration-style import semantics: order-independent, repeatable, deduplicated, and scope-visible by container ownership
+- require imported boundaries to preload/gate before descendant execution, instead of relying on render order or best-effort late registration
+- treat loaded import libraries as static runtime resources unless an explicit unload mechanism is introduced later
 
 ## Related Documents
 

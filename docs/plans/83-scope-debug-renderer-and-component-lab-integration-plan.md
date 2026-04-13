@@ -1,6 +1,6 @@
 # 83 Scope Debug Renderer And Component Lab Integration Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-13
 > Source: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/playground-experience.md`, `docs/architecture/styling-system.md`, `apps/playground/src/route-model.ts`, `apps/playground/src/component-lab/SchemaLabPage.tsx`, `apps/playground/src/component-lab/MultiScenarioLabPage.tsx`
 > Related: `docs/plans/79-playground-component-lab-and-live-renderer-coverage-plan.md`, `docs/plans/80-component-lab-rich-examples-plan.md`, `docs/plans/81-playground-component-lab-e2e-behavior-coverage-plan.md`
@@ -97,7 +97,7 @@ Exit Criteria:
 - [x] Component Lab exposes the renderer both as its own route and as a shared page-level probe.
 - [x] Relevant docs/logs are updated for the new route inventory baseline.
 - [x] focused verification has been completed and recorded
-- [ ] independent closure-audit has been completed and recorded
+- [x] independent closure-audit has been completed and recorded
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -105,13 +105,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: open until repo-wide verification and closure audit are recorded.
+Status Note: completed after the shared `scope-debug` renderer, Component Lab integration, focused verification, and an independent closure audit all confirmed the plan's scoped feature/host rollout is live; the remaining question about always-on lab injection is explicit follow-up, not remaining plan-owned work.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: general subagent closure audit
+- Evidence: `task_id ses_279a5ad82ffeQTsGischgGsxhz` verified renderer registration, reactive rerender coverage, Component Lab route/injection, and doc baseline alignment; the only blocking issue it found was a stale daily-log `DataViewer` claim, which has now been corrected.
 
 Follow-up:
 
 - Revisit whether `scope-debug` should remain automatically injected in all lab pages or become a toggleable lab-shell option after real usage feedback.
+- No remaining plan-owned work.

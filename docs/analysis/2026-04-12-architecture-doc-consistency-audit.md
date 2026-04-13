@@ -76,11 +76,11 @@ Primary code anchors used during the audit:
 - Code evidence: `packages/flux-react/src/dialog-host.tsx`, `packages/flux-runtime/src/page-runtime.ts`, `packages/flux-runtime/src/index.ts:339-360`
 - Why: the docs describe a dedicated `SurfaceRuntime` / `SurfaceStore` family outside page ownership, but the live implementation still stores dialogs and surfaces on the page runtime/store and closes them through `page.closeDialog` / `page.closeSurface`.
 
-### F6. Several field/value-family docs document adaptation flows that are only partially represented in live renderers
+### F6. Field/value-family docs previously overgeneralized staged adaptation across inline composite fields
 
 - Docs involved: `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/variant-field.md`, `docs/architecture/object-field.md`, `docs/architecture/array-field.md`
 - Code evidence: `packages/flux-renderers-form/src/renderers/detail-field.tsx`, `packages/flux-renderers-form/src/renderers/detail-view.tsx`, `packages/flux-renderers-form/src/renderers/object-field.tsx`, `packages/flux-renderers-form/src/renderers/array-field.tsx`, `packages/flux-renderers-form/src/renderers/variant-field.tsx`
-- Why: the schema types already include `transformInAction` / `transformOutAction` / `validateValueAction`, but the current renderers still mostly implement local draft/edit/writeback behavior rather than the full documented shared adaptation pipeline.
+- Historical note: this finding reflected the pre-2026-04-13 baseline. The architecture has since been narrowed so `detail-field` / `detail-view` are the staged surface-backed owners, while `object-field`, `array-field`, and `variant-field` are explicitly inline live-edit controls by default. The remaining convergence work is therefore not “force all five controls through one staged adaptation pipeline”, but “keep the staged helper on the surface-backed owners and keep the inline composite family aligned with its documented live-edit contracts”.
 
 ### F7. Styling docs now converge on one future contract, but live renderer code still lags that contract
 

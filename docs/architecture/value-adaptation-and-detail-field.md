@@ -21,7 +21,7 @@
 
 - 这不是 `flow-designer` 专属设计。
 - 这也不是某个单独 `graph-value-editor` 的私有协议。
-- 这是所有 value-oriented control 都可按需采用的通用 owner pattern。
+- 这是 value-oriented control 共享的一组适配语义，但不是所有控件都必须采用 staged owner-submit lifecycle。
 - 本文档描述的是目标契约；当前 renderer 实现可以暂时落后，但新设计应以这里为统一 baseline。
 
 ## Core Model
@@ -44,6 +44,45 @@ value-oriented control 可以分为两类：
 - 不用 `parse` / `serialize` 作为总称，因为这组词太偏 AST / codec 语义
 - `transformIn` / `transformOut` 更适合字符串、对象、图、AST、schema、domain DTO 等各种值形态
 
+## Two Ownership Modes
+
+value-oriented control 需要先区分两种 owner 模式：
+
+- surface-backed staged owner：有明确的 open / confirm / cancel 语义，内部 working value 与外部持久值可以分离
+- inline live-edit owner：没有独立确认步骤，子编辑直接作用于父表单当前值
+
+推荐边界：
+
+- `detail-field`
+- `detail-view`
+
+属于 surface-backed staged owner，因此适合完整采用：
+
+- `transformInAction`
+- `validateValueAction`
+- `transformOutAction`
+- owner-managed confirm / cancel / commit
+
+而以下控件默认属于 inline live-edit owner：
+
+- `object-field`
+- `array-field`
+- `variant-field`
+
+它们可以复用值适配家族中的局部语义，例如：
+
+- `variant-field` 的 detection
+- variant switch 时的迁移型 `transformInAction`
+- 共享 payload / `ActionResult.data` 读取规则
+
+但它们不默认引入独立 draft runtime，也不要求 owner-managed submit-time validate/transformOut/writeback。
+
+判断标准不是“是不是 composite field”，而是：
+
+- 是否存在 confirm / cancel
+- 是否需要区分 working value 和 persisted value
+- 是否需要把 commit 延迟到用户确认之后
+
 ## Shared Wrapper
 
 是的，这组 `transformInAction` / `transformOutAction` / `validateValueAction` 不应由每个具体控件各自零散实现。
@@ -57,17 +96,22 @@ value-oriented control 可以分为两类：
 - 管理 draft 生命周期中的 transform / validate 调用顺序
 - 统一错误处理和 owner-level diagnostics
 
-推荐把这层视为 value-oriented owner 的公共基础设施。
+推荐把这层视为 value-oriented owner 的公共基础设施，但要区分“共享 action payload / result 规则”和“共享 staged draft lifecycle”这两个层次。
 
 也就是说：
 
 - `detail-field`
 - `detail-view`
+
+应复用完整的 staged owner helper。
+
+而：
+
 - `variant-field`
 - `object-field`
 - `array-field`
 
-都应复用同一套 wrapper/owner helper，而不是把 `transformInAction` / `transformOutAction` / `validateValueAction` 的调度逻辑复制到每个 renderer 里。
+只需要在确实存在对应语义时复用共享 helper 的局部能力，不应为了“家族统一”强行引入 staged owner-submit。
 
 The important architectural point is not the helper name. The important point is that value adaptation is an owner-level substrate shared by this renderer family, not ad hoc per-renderer imperative code.
 
@@ -160,7 +204,7 @@ interface ValueViewEditorOwnerSchema extends BaseSchema {
 
 这是刻意设计的 replace 规则，不是 merge 规则。
 
-This replace rule is part of the future contract and should stay consistent across `detail-field`, `detail-view`, `object-field`, `array-field`, and `variant-field`.
+This replace rule is part of the shared value-adaptation contract and should stay consistent anywhere these actions are used, even though only surface-backed owners require the full staged commit lifecycle.
 
 原因：
 

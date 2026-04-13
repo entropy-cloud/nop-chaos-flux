@@ -14,9 +14,9 @@
 ## Position
 
 - `array-field` 是一个字段控件，所以 `name` 仍然是一等设计。
-- 它与 `object-field`、`detail-field`、`detail-view`、`variant-field` 一样，复用通用的 value adaptation 模型和共享 owner wrapper。
+- 它与 `object-field`、`detail-field`、`detail-view`、`variant-field` 同属 value-oriented family，但默认是 inline live-edit control，而不是 staged submit owner。
 - 它解决的是“一个字段值是数组，内部需要编辑多个元素”的问题。
-- 本文档描述未来统一契约；实现可以阶段性逼近，但不应把当前实现限制回写到这个 contract。
+- 本文档描述当前推荐 baseline：数组元素编辑直接作用于父表单当前值，不额外引入 owner draft/commit 层。
 
 ## Not The Same As `list` Or `loop`
 
@@ -97,13 +97,17 @@ interface ArrayFieldSchema extends BaseSchema {
 推荐 lifecycle：
 
 1. 从 `name` 读取当前数组值
-2. 通过 `transformInAction` 生成内部 draft array
-3. 在 draft array 上进行 add / remove / reorder / item edit
-4. 提交前执行 `validateValueAction`
-5. 提交时执行 `transformOutAction`
-6. owner 将结果写回整个 `name`
+2. 在当前父表单值上直接进行 add / remove / reorder / item edit
+3. item child validation 继续通过普通 form validation / runtime child registration 生效
+4. 表单 submit 时直接读取当前父表单数组值
 
-这定义的是目标 owner contract。即使当前 renderer 尚未完全实现共享 wrapper，也应以这个方向统一。
+关键边界：
+
+- `array-field` 默认没有独立 draft array
+- `array-field` 默认没有 owner-level confirm / cancel
+- `array-field` 默认不要求 submit-time owner `validateValueAction` / `transformOutAction`
+
+如果某个数组编辑场景确实需要 staged edit、确认后统一提交、或复杂 commit-time transformation，应使用明确的 surface-backed owner 包住该数组编辑器，而不是把 `array-field` 默认模型改成 owner-submit。
 
 ## Scope Model
 

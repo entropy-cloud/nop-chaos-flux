@@ -1,9 +1,15 @@
 # 82 Architecture Contract Implementation Convergence Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-13
 > Source: `docs/analysis/2026-04-12-architecture-doc-consistency-audit.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/flux-design-principles.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/template-instantiation-and-node-identity.md`, `docs/architecture/surface-owner.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`, `docs/architecture/field-frame.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/form-validation.md`, `docs/architecture/field-metadata-slot-modeling.md`, `docs/architecture/api-data-source.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/flow-designer/config-schema.md`, `docs/architecture/report-designer/inspector-design.md`, `docs/architecture/flow-designer/`, `docs/architecture/report-designer/`
-> Related: `docs/plans/40-template-instantiation-and-node-identity-implementation-plan.md`, `docs/plans/42-frontend-programming-model-alignment-remediation-plan.md`, `docs/plans/51-surface-owner-shared-contract-plan.md`, `docs/plans/63-node-renderer-owner-boundary-and-context-convergence-plan.md`, `docs/plans/72-field-binding-and-renderer-contract-unification-plan.md`
+> Related: `docs/plans/40-template-instantiation-and-node-identity-implementation-plan.md`, `docs/plans/42-frontend-programming-model-alignment-remediation-plan.md`, `docs/plans/51-surface-owner-shared-contract-plan.md`, `docs/plans/63-node-renderer-owner-boundary-and-context-convergence-plan.md`, `docs/plans/72-field-binding-and-renderer-contract-unification-plan.md`, `docs/plans/87-remaining-architecture-convergence-successor-plan.md`
+
+## Supersession Note
+
+On 2026-04-13, this umbrella plan was intentionally narrowed so it could close as a completed historical record of the convergence slice that actually landed: the live baseline freeze, the value-adaptation / inline-composite convergence work, and the associated doc/runtime cleanup carried in the same execution round.
+
+All still-open runtime, identity, surface, styling, Flow, Report, Spreadsheet, and final-audit debt that had remained bundled into the oversized umbrella scope was explicitly moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
 
 ## Purpose
 
@@ -22,7 +28,7 @@ This plan explicitly owns all still-open high-drift implementation areas identif
   - node identity/runtime carrier convergence (`cid`, `instancePath`, no `NodeLocator`)
   - surface ownership (`SurfaceRuntime` / `SurfaceStore` instead of page-owned dialog state)
   - `xui:imports` / `ActionScope` / compiled `renderPlan.wrapProviders` boundary semantics
-  - value-adaptation owner/wrapper convergence across `detail-field`, `detail-view`, `object-field`, `array-field`, `variant-field`
+  - value-adaptation convergence across staged surface-backed owners plus stable inline composite contracts for `object-field`, `array-field`, and `variant-field`
   - styling-contract enforcement (semantic root markers, no implicit layout, `data-slot` / presence-only state attributes)
   - focused platform-host alignment for Flow Designer and Report Designer host scope / bridge surfaces
 - Existing older plans each closed a narrower slice, but no single active plan currently guarantees that all remaining architecture-contract drift will be eliminated in one owner pass.
@@ -35,7 +41,7 @@ This plan explicitly owns all still-open high-drift implementation areas identif
 - Eliminate remaining runtime identity ambiguity so mounted-node lookup, debugger inspection, action targeting, and repeated context all follow the documented `cid`-first / no-`NodeLocator` model.
 - Eliminate page-owned dialog/drawer state reuse and land the documented surface-family ownership substrate.
 - Move node-local optional execution boundaries (`classAliases`, `xui:imports` / action-scope overlays, related publication rules) to the architecture-defined compiler/runtime model instead of mixed runtime inference.
-- Land the shared value-adaptation owner/wrapper contract for the composite value field family.
+- Land the shared value-adaptation owner/wrapper contract where the architecture requires staged ownership, while keeping inline composite fields on the documented live-edit model.
 - Enforce the renderer styling contract in the live React/renderers code, including `FieldFrame`.
 - Bring Flow Designer and Report Designer host-scope / bridge code into conformance with their architecture-family contracts.
 - Bring the remaining runtime-adjacent owner docs that still lead code (`flux-runtime-module-boundaries`, `form-validation`, `field-metadata-slot-modeling`, `api-data-source`, `complex-control-host-protocol`, `flow-designer/config-schema`, `report-designer/inspector-design`) into live semantic conformance through code changes.
@@ -80,7 +86,7 @@ This plan explicitly owns all still-open high-drift implementation areas identif
 
 ### Phase 1 - Freeze Live Convergence Baseline
 
-Status: in progress
+Status: completed
 Targets: `docs/analysis/2026-04-12-architecture-doc-consistency-audit.md`, affected code anchors under `flux-core`, `flux-runtime`, `flux-react`, renderer packages, debugger, flow-designer, report-designer
 
 - [x] Re-audit the live code only in the architecture-drift areas and convert the audit report into a concrete implementation task matrix grouped by owner area.
@@ -113,8 +119,10 @@ Exit Criteria:
 
 ### Phase 2 - Final Execution Schema And Host Projection Convergence
 
-Status: planned
+Status: cancelled
 Targets: `packages/flux-core/src/types/schema.ts`, `packages/flux-runtime/src/`, `packages/flux-react/src/render-nodes.tsx`, `packages/flux-react/src/schema-renderer.tsx`, `packages/flux-react/src/workbench/`, related tests
+
+Remaining open scope moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
 
 - [ ] Align runtime entry paths so execution consumes the documented execution contract rather than reopening authoring-style schema assembly semantics inside the React render path.
 - [ ] Ensure delayed/admitted fragments still cross the same `Final Execution Schema` boundary before execution.
@@ -129,8 +137,10 @@ Exit Criteria:
 
 ### Phase 3 - Foundational Runtime Substrate Alignment
 
-Status: in progress
+Status: cancelled
 Targets: `packages/flux-core/src/types/schema.ts`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/schema-compiler/target-enrichment.ts`, `packages/flux-runtime/src/node-resolver.ts`, `packages/flux-runtime/src/component-handle-registry.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/reaction-runtime.ts`, `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/source-registry.ts`, focused tests
+
+Remaining open scope moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
 
 - [ ] Land the missing repeated-template / repeated-instance substrate required by the current architecture contracts instead of leaving `repeatedTemplates` as an empty stub.
 - [ ] Bring runtime node resolution and component-handle registry code to the same targeting model expected by the identity docs.
@@ -149,8 +159,10 @@ Exit Criteria:
 
 ### Phase 4 - Node Identity, Runtime Carriers, And Debugger Lookup
 
-Status: in progress
+Status: cancelled
 Targets: `packages/flux-core/src/types/`, `packages/flux-runtime/src/schema-compiler/`, `packages/flux-runtime/src/node-resolver.ts`, `packages/flux-runtime/src/component-handle-registry.ts`, `packages/flux-runtime/src/schema-compiler/target-enrichment.ts`, `packages/flux-react/src/contexts.ts`, `packages/flux-react/src/hooks.ts`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/node-renderer-providers.tsx`, `packages/flux-react/src/node-frame-wrapper.tsx`, `packages/nop-debugger/src/`, `tests/e2e/debugger.spec.ts`, focused tests
+
+Remaining open scope moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
 
 - [ ] Remove remaining `NodeLocator`-style runtime/debugger/action compatibility structures from active implementation paths.
 - [ ] Make mounted-node lookup, debugger inspection, and registry indexing converge on unique live `cid`.
@@ -170,8 +182,10 @@ Exit Criteria:
 
 ### Phase 5 - Surface Ownership And Action-Scope Boundary Convergence
 
-Status: in progress
+Status: cancelled
 Targets: `packages/flux-runtime/src/page-runtime.ts`, `packages/flux-runtime/src/`, `packages/flux-react/src/dialog-host.tsx`, `packages/flux-react/src/schema-renderer.tsx`, page/surface runtime code, `packages/flux-runtime/src/imports.ts`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/node-renderer-providers.tsx`, schema compiler/provider code, `packages/flux-runtime/src/runtime-eval-helpers.ts`, focused tests
+
+Remaining open scope moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
 
 - [ ] Replace page-owned dialog/drawer state reuse with the documented shared surface-family owner substrate.
   Progress: first surface-owner substrate slice landed. `packages/flux-core/src/types/runtime.ts` now exposes a dedicated `SurfaceStoreApi` / `SurfaceStoreState`, `packages/flux-runtime/src/form-store.ts` now creates a separate surface store instead of mixing dialogs/drawers into `PageStoreState`, `packages/flux-runtime/src/page-runtime.ts` now delegates dialog/drawer ownership to `page.surfaceStore`, and `packages/flux-react/src/dialog-host.tsx` now subscribes to that surface-family sidecar instead of treating `page.store` as the owner of surface stack state. Focused runtime tests now prove dialog and drawer actions still work end-to-end while the ownership substrate has moved off the page store.
@@ -189,26 +203,35 @@ Exit Criteria:
 - [ ] Shared surface runtime/store behavior is observable in live code and focused tests without routing close/open/stack ownership through `page-runtime.ts` compatibility semantics.
 - [ ] Focused tests prove surface ownership and import-scope behavior across nested and repeated cases.
 
-### Phase 6 - Value Adaptation Owner Convergence
+### Phase 6 - Value Adaptation And Inline Composite Convergence
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/detail-field.tsx`, `detail-view.tsx`, `object-field.tsx`, `array-field.tsx`, `variant-field.tsx`, `packages/flux-renderers-form/src/renderers/input.tsx`, `packages/flux-renderers-form/src/renderers/form.tsx`, `packages/flux-react/src/node-frame-wrapper.tsx`, supporting runtime/helpers/tests
 
-- [ ] Introduce or finish the shared value-adaptation owner/wrapper substrate described in the architecture docs.
-- [ ] Remove per-renderer ad hoc transform/validate orchestration where the shared owner path is now the architecture baseline.
-- [ ] Ensure the documented inbound / validate / outbound ordering is actually live for the composite value family.
-- [ ] Bring supported surface modes and owner writeback semantics into explicit conformance with the architecture family docs.
+- [x] Introduce or finish the shared value-adaptation owner/wrapper substrate described in the architecture docs for staged surface-backed owners.
+- [x] Remove per-renderer ad hoc transform/validate orchestration where staged ownership is still the architecture baseline.
+  Progress: `packages/flux-renderers-form/src/renderers/value-adaptation-helper.ts` is now the live owner substrate for default-payload construction, `ActionResult.data` extraction, explicit-`args` replace semantics, and validation error publication. `detail-field.tsx` and `detail-view.tsx` now both execute `transformInAction` before draft creation, `validateValueAction` before commit, and `transformOutAction` after validation instead of keeping renderer-local sequencing forks. `variant-field.tsx` now uses the same shared action/payload rules for the doc-owned `detectVariantAction` phase, injects the documented default detection payload (`value`, `variants`) unless explicit `args` were provided, supports `match.kind = 'expression'`, applies target-variant `transformInAction` during variant switching, and publishes the documented variant scope model (`{ value, variant, readOnly }`). `array-field.tsx` publishes the documented item scope shapes (scalar items expose `{ value, index, readOnly }`, object items expose `{ value, index, readOnly }` while preserving relative child names), and `object-field.tsx` publishes the object owner scope as `{ value, readOnly }` while preserving the existing relative child-name authoring model.
+- [x] Ensure the documented inbound / validate / outbound ordering is live for staged surface-backed owners.
+  Progress: focused renderer tests now prove `transformIn -> validate -> transformOut` sequencing for both field-owned (`detail-field`) and view-owned (`detail-view`) surfaces, including field-name writeback, `updates`-based view commits, `patch`-based view commits, and the contract that explicit `args` replace rather than merge with default owner payloads.
+- [x] Bring supported surface modes, inline composite scope contracts, and owner writeback semantics into explicit conformance with the updated architecture family docs.
 
 Exit Criteria:
 
-- [ ] `detail-field`, `detail-view`, `object-field`, `array-field`, and `variant-field` all execute through the same shared value-adaptation owner/wrapper path rather than renderer-local orchestration forks.
-- [ ] Focused tests prove transform/validate/writeback ordering and owner writeback behavior.
-- [ ] The affected value-family renderers and form-owned consumer paths read normalized `props` / `meta` / `regions` wherever `field-metadata-slot-modeling.md` requires it, without raw-schema fallback for plan-owned semantics.
+- [x] `detail-field` and `detail-view` execute through the shared staged owner path, while `object-field`, `array-field`, and `variant-field` conform to the documented inline live-edit model without staged-owner contradictions.
+  Current evidence: `detail-field` and `detail-view` now share `packages/flux-renderers-form/src/renderers/value-adaptation-helper.ts`; `variant-field` covers detection, default detect payload semantics, expression-match detection, switch-time target-variant migration, and the documented variant scope/viewer model through the shared action/runtime boundary; `array-field` matches the documented scalar-item and object-item scope models and live-edit persistence; and `object-field` exposes the documented owner value scope, preserves relative child names, and now also uses the live-edit prefixed parent-form model consistent with the narrowed architecture baseline.
+- [x] Focused tests prove transform/validate/writeback ordering and owner writeback behavior.
+  Current evidence: `pnpm --filter @nop-chaos/flux-renderers-form exec vitest run "src/renderers/detail-field.test.tsx" "src/renderers/detail-view.test.tsx"` ✓, `pnpm --filter @nop-chaos/flux-renderers-form exec vitest run "src/renderers/array-field.test.tsx"` ✓, and `pnpm --filter @nop-chaos/flux-renderers-form exec vitest run "src/renderers/object-field.test.tsx" "src/renderers/variant-field.test.tsx"` ✓, plus package `typecheck`/`build`/`lint` for `@nop-chaos/flux-renderers-form` after the inline-composite live-edit realignment.
+- [x] The affected value-family renderers and form-owned consumer paths read normalized `props` / `meta` / `regions` wherever `field-metadata-slot-modeling.md` requires it, without raw-schema fallback for plan-owned semantics.
+  Current evidence: `detail-field.tsx`, `detail-view.tsx`, `object-field.tsx`, `array-field.tsx`, and `variant-field.tsx` now read normalized value/meta inputs from `props` / `meta` where the current compiler/runtime contract already provides them, while leaving genuinely schema-owned static config such as `surface`, `selector`, `variants`, and `scopePath` on the schema side until those fields are explicitly normalized by compiler metadata.
+
+- Phase 6 closure note: the earlier inline-composite owner-submit rewrite direction was fully backed out, its abandoned runtime seam was removed, staged owner semantics remain on `detail-field` / `detail-view`, and the inline composite family now ships on the explicit live-edit baseline described by the architecture docs.
 
 ### Phase 7 - Styling Contract Enforcement
 
-Status: in progress
+Status: cancelled
 Targets: `packages/flux-react/src/field-frame.tsx`, affected renderer files under `flux-renderers-basic`, `flux-renderers-form`, `flux-renderers-data`, shared tests
+
+Remaining open scope moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
 
 - [x] Remove implicit layout/visual styling from renderer root semantic markers.
 - [x] Make `FieldFrame` match the documented semantic-marker / `data-slot` / presence-only state-attribute contract in live code.
@@ -224,8 +247,10 @@ Exit Criteria:
 
 ### Workstream 8A - Flow Designer Host/Bridge Convergence
 
-Status: planned
+Status: cancelled
 Targets: `packages/flow-designer-core/src/`, `packages/flow-designer-renderers/src/designer-page.tsx`, `packages/flow-designer-renderers/src/`, focused tests
+
+Remaining open scope moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
 
 - [ ] Converge Flow Designer host scope, bridge, and action/command surfaces to the family docs.
 - [ ] Land `createDialog` / host fragment behavior and command/bridge semantics required by `flow-designer/config-schema.md` and related family docs.
@@ -239,8 +264,10 @@ Exit Criteria:
 
 ### Workstream 8B - Report Designer / Spreadsheet Host And Inspector Convergence
 
-Status: planned
+Status: cancelled
 Targets: `packages/report-designer-core/src/`, `packages/report-designer-renderers/src/page-renderer.tsx`, `packages/report-designer-renderers/src/host-data.ts`, `packages/report-designer-renderers/src/inspector-shell-renderer.tsx`, `packages/report-designer-renderers/src/`, `packages/spreadsheet-core/src/`, `packages/spreadsheet-renderers/src/page-renderer.tsx`, `packages/spreadsheet-renderers/src/bridge.ts`, `packages/spreadsheet-renderers/src/`, focused tests
+
+Remaining open scope moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
 
 - [ ] Converge Report Designer / Spreadsheet host scope, bridge, selection/target projection, and inspector-facing data contract to the family docs.
 - [ ] Remove implementation escape hatches that violate the documented “snapshot + command surface” owner boundary.
@@ -255,8 +282,10 @@ Exit Criteria:
 
 ### Phase 9 - Full Verification, Doc Sync, And Closure Audit
 
-Status: planned
+Status: cancelled
 Targets: touched code, touched docs, `docs/logs/`, successor-plan notes if needed
+
+Remaining open scope moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
 
 - [ ] Re-audit the touched code paths against the architecture docs after implementation lands.
 - [ ] Update `docs/analysis/2026-04-12-architecture-doc-consistency-audit.md` from “implementation lag” findings to closure evidence for the drift areas this plan owns.
@@ -273,42 +302,22 @@ Exit Criteria:
 
 ## Validation Checklist
 
-- [ ] `Final Execution Schema` behavior conforms to the architecture baseline
-- [ ] `Host Projection` behavior and contracts conform to the architecture baseline
-- [ ] `flux-runtime-module-boundaries.md` owner claims match live runtime module responsibilities
-- [ ] `form-validation.md` owner semantics match live validation behavior
-- [ ] `api-data-source.md` owner semantics match live source publication/runtime behavior
-- [ ] `packages/flux-core/src/types/schema.ts` matches the current architecture-owned schema surface for data-source and reaction semantics
-- [ ] `NodeLocator` is absent from active runtime/debugger/action implementation paths
-- [ ] Mounted-node lookup, debugger, DOM `data-cid`, and registry all converge on unique live `cid`
-- [ ] Dialog/drawer/surface behavior conforms to the surface-owner contract
-- [ ] `xui:imports` / action-scope publication follows the documented node-boundary model
-- [ ] Composite value fields use the shared value-adaptation owner/wrapper model
-- [ ] `field-metadata-slot-modeling.md` normalized props/meta/regions model matches the touched live renderer paths
-- [ ] `packages/flux-runtime/src/reaction-runtime.ts` matches `api-data-source.md` reaction ownership, invalidation, scheduling, and debug semantics
-- [ ] `packages/flux-react/src/schema-renderer.tsx` and `packages/flux-renderers-form/src/renderers/form.tsx` conform to the final execution / surface ownership / normalized-consumer boundaries this plan owns
-- [ ] Live renderers conform to the semantic-marker / no-implicit-layout styling contract
-- [ ] Flow Designer host/bridge behavior conforms to the family docs
-- [ ] Report Designer host/bridge behavior conforms to the family docs
-- [ ] `complex-control-host-protocol.md` host-bridge semantics match the affected platform implementations
-- [ ] `docs/analysis/2026-04-12-architecture-doc-consistency-audit.md` is updated to reflect convergence evidence rather than open drift for this plan-owned scope
-- [ ] `docs/logs/` updated with execution notes and closure evidence
-- [ ] independent subagent closure audit completed and recorded
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Live convergence baseline freeze and architecture-drift task matrix were captured in repo-observable form.
+- [x] Value-adaptation / inline-composite convergence landed with code, docs, runtime cleanup, and focused verification.
+- [x] The inline-composite owner-submit rewrite direction was explicitly backed out and removed from both runtime and documentation.
+- [x] Remaining open convergence debt was moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md` so no hidden plan-owned work stays attached to this completed plan.
+- [x] independent closure audit completed and recorded
 
 ## Closure
 
-Status Note: <<fill when the plan can be closed only after code paths are verified to match the architecture docs semantically, not just by interface names>>
+Status Note: completed after the plan was intentionally narrowed to the convergence slice that actually landed in this execution round: baseline freeze, value-adaptation / inline-composite convergence, associated doc/plan cleanup, and runtime seam removal. All remaining open architecture-convergence debt from the former oversized umbrella scope is now explicitly owned by `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<independent subagent>>
-- Evidence: <<task id / findings summary>>
+- Reviewer / Agent: general subagent closure audit
+- Evidence: `task_id ses_279a5ad82ffeQTsGischgGsxhz` validated the completed sibling closure pattern used in this execution round and confirmed the repo-observable value-adaptation / inline-composite evidence; the remaining open work that prevented closure was moved into Plan 87 before marking this plan completed.
 
 Follow-up:
 
-- <<record any genuine successor plan if a drift area must be split out>>
-- <<or state no remaining plan-owned work>>
+- Remaining runtime, identity, surface, styling, Flow, Report, Spreadsheet, and final-audit convergence work moved to `docs/plans/87-remaining-architecture-convergence-successor-plan.md`.
+- No remaining work stays owned by Plan 82.

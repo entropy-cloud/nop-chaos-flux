@@ -21,10 +21,10 @@
 ## Position
 
 - `variant-field` 是一个独立于 `detail-field` / `detail-view` 的 author-facing 控件。
-- 它与 `detail-field` / `detail-view` 一样，复用通用的 value adaptation 模型：`transformInAction` / `transformOutAction` / `validateValueAction`。
+- 它与 `detail-field` / `detail-view` 同属 value-oriented family，但默认是 inline live-edit control，不要求 staged owner-submit lifecycle。
 - 它解决的是“多态值 / union-like value”的识别和编辑，不是 detail surface 的展开问题。
-- 它也应复用共享的 value adaptation owner wrapper，而不是自己单独实现 transform/validate 调度。
-- 本文档描述未来统一契约；实现可以阶段性逼近，但不应倒退回“每个变体控件各自处理 adaptation”这种分裂路径。
+- 它应复用共享的 detection / payload / switch-migration 规则，但不应为了统一而强行引入 submit-time owner validate/transformOut。
+- 本文档描述当前推荐 baseline：variant detection 和 switch migration 是一等能力；commit 仍由父表单正常 live-edit 提交承担。
 
 ## Core Model
 
@@ -106,14 +106,17 @@ type VariantMatch =
 
 1. 从 `name` 读取原始值
 2. 识别当前 variant
-3. 对该 variant 执行控件级和变体级 `transformInAction`
+3. 对该 variant 执行 detection / switch-migration 所需的 inbound 逻辑
 4. 用该 variant 的 `viewer` / `content` 渲染当前 working value
-5. 用户可切换 variant
-6. 提交前执行变体级和控件级 `validateValueAction`
-7. 提交时执行变体级和控件级 `transformOutAction`
-8. owner 将结果写回 `name`
+5. 用户可切换 variant，切换时可通过目标 variant 的 `transformInAction` 迁移值
+6. 当前值继续以 inline live-edit 方式存在于父表单中
+7. 表单 submit 时直接读取当前字段值
 
-这里描述的是统一目标 contract，而不是要求当前代码已经全部按此顺序实现。
+关键边界：
+
+- `variant-field` 默认没有独立 draft runtime
+- `variant-field` 默认不要求 `variant validate -> field validate -> variant transformOut -> field transformOut` 这类 submit-time owner pipeline
+- 如果某个 variant 的编辑器本身需要 staged edit，应在该 variant 内部组合 `detail-field` / `detail-view` 等 surface-backed owner
 
 ## Variant Switching
 

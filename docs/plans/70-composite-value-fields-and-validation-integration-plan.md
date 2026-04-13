@@ -9,6 +9,14 @@
 
 收口 `object-field` / `array-field` / `variant-field` / `detail-field` / `detail-view` 这组组合式 value-oriented 控件，并把已经 live 的 `loop` 纳入表单与 validation 集成验证范围，形成一份单一 owner plan。
 
+Historical note (2026-04-13): this completed plan predates the later architecture narrowing that explicitly keeps `object-field`, `array-field`, and `variant-field` on the inline live-edit baseline. Any text below that implies submit-time owner `transformInAction` / `validateValueAction` / `transformOutAction` sequencing for those three inline composite fields should be treated as superseded by:
+
+- `docs/architecture/object-field.md`
+- `docs/architecture/array-field.md`
+- `docs/architecture/variant-field.md`
+- `docs/architecture/value-adaptation-and-detail-field.md`
+- `docs/plans/82-architecture-contract-implementation-convergence-plan.md`
+
 这份计划的完成标准不是“组件名字出现了”，而是以下三件事同时成立：
 
 1. 作者可直接使用这些组件完成复杂表单编排。
@@ -120,20 +128,20 @@ Targets: new `object-field` renderer files, `packages/flux-renderers-form/src/sc
 
 - [ ] Add `ObjectFieldSchema` and register `type: 'object-field'` in `@nop-chaos/flux-renderers-form`.
 - [ ] Implement relative child-name rebasing from local field names to the bound object root path.
-- [ ] Route object-field value lifecycle through the shared helper so `transformInAction`, `transformOutAction`, and `validateValueAction` run in the documented order.
+- [ ] Historical note: this item was superseded by the later architecture decision that `object-field` remains an inline live-edit control rather than a staged owner-submit control.
 - [ ] Ensure object-level aggregate errors attach to the object root path while child-field errors still render on rebased child paths.
 - [ ] Keep object-field body layout arbitrary and renderer-agnostic; do not bake fixed row/grid chrome into the renderer.
 - [ ] Add focused tests for:
 - [ ] relative child name mapping (`profile.firstName`, `profile.lastName`, etc.)
 - [ ] object root writeback and parent submit behavior
 - [ ] object-level aggregate error rendering plus child-field error rendering
-- [ ] transform-in / transform-out / validate ordering through the shared helper
+- [ ] Historical note: later architecture convergence kept `object-field` on inline live-edit semantics instead of staged transform/validate/transformOut sequencing.
 
 Exit Criteria:
 
 - [ ] `object-field` can edit an object value through relative child names without requiring authors to spell full outer paths.
 - [ ] Focused tests prove object-root and child-path validation both publish correctly.
-- [ ] Focused tests prove transform/validate lifecycle matches the documented order.
+- [ ] Focused tests prove inline live-edit object persistence and relative child-path behavior.
 
 ### Phase 3 - `array-field` Landing
 
@@ -171,7 +179,7 @@ Targets: new `variant-field` renderer files, shared helper files, minimal runtim
 - [ ] variant detection priority and fallback behavior
 - [ ] active-branch-only validation
 - [ ] stale error and stale async cleanup after branch switch
-- [ ] variant-specific transform-in / validate / transform-out sequencing
+- [ ] Historical note: variant switching keeps explicit migration semantics, but submit-time variant-level owner sequencing is no longer part of the shipped inline `variant-field` baseline.
 
 Exit Criteria:
 
@@ -293,9 +301,9 @@ Rollback guidance:
 
 ## Validation Checklist
 
-- [ ] `object-field` focused tests cover relative child names, object-root validation, and transform/validate lifecycle
+- [ ] `object-field` focused tests cover relative child names and object-root live-edit behavior
 - [ ] `array-field` focused tests cover scalar mode, object mode, aggregate validation, and remove/reorder remap
-- [ ] `variant-field` focused tests cover detection priority, active-branch-only validation, and stale branch cleanup
+- [ ] `variant-field` focused tests cover detection priority, active-branch-only validation participation, switch migration, and stale branch cleanup
 - [ ] `detail-field` focused tests cover child draft isolation, confirm gating, confirm writeback, and cancel semantics
 - [ ] `detail-view` focused tests cover `scopePath`, `data`, `updates`, `patch`, and cancel semantics
 - [ ] `loop` regression coverage exists for the composite integration path and confirms it remains a structural node rather than a validation owner
@@ -311,7 +319,7 @@ Rollback guidance:
 
 ## Closure
 
-Status Note: All 8 phases completed. All 6 composite renderer components land with focused tests and full integration coverage. `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` (200 form-renderer tests, plus full suite) are green.
+Status Note: All 8 phases completed for the then-current baseline. A later 2026-04-13 architecture convergence pass narrowed `object-field`, `array-field`, and `variant-field` to explicit inline live-edit controls while leaving staged owner-submit semantics on `detail-field` / `detail-view`; readers should use the newer architecture docs and Plan 82 as the current source of truth for those ownership boundaries.
 
 Closure Audit Evidence:
 
