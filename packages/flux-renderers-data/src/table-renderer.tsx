@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { cn } from '@nop-chaos/ui';
 import {
   Table,
   TableBody,
@@ -106,12 +107,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const columnCount = columns.length + (schemaProps.rowSelection ? 1 : 0) + (schemaProps.expandable ? 1 : 0);
 
   return (
-    <div className="nop-table-wrap grid gap-4" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+    <div className={cn('nop-table', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {hasRendererSlotContent(headerContent) ? <div data-slot="table-header-region">{headerContent}</div> : null}
 
       <div className="relative" data-slot="table-container">
         <Table
-          className="nop-table"
           data-striped={isStriped || undefined}
           data-bordered={isBordered || undefined}
         >

@@ -70,7 +70,7 @@ function TreeNodeRenderer(props: {
     : null;
 
   return (
-    <div className="nop-tree-node" data-depth={depth} data-node-key={nodeKey}>
+    <div data-slot="tree-node" data-depth={depth} data-node-key={nodeKey}>
       <Collapsible open={open} onOpenChange={setOpen}>
         <div className="flex items-start gap-2" style={{ paddingInlineStart: `${depth * 16}px` }}>
           {hasChildren ? (
@@ -159,7 +159,11 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   }, [props.node.scope, statusPath, data.length, childrenKey, keyField, labelField]);
 
   if (data.length === 0) {
-    return hasRendererSlotContent(emptyContent) ? <div data-slot="tree-empty">{emptyContent}</div> : null;
+    return (
+      <div className="nop-tree" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+        {hasRendererSlotContent(emptyContent) ? <div data-slot="tree-empty">{emptyContent}</div> : null}
+      </div>
+    );
   }
 
   return (

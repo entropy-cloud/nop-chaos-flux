@@ -215,6 +215,39 @@ describe('dataRendererDefinitions', () => {
     );
 
     expect(screen.getByText('No nodes yet')).toBeTruthy();
+    const treeRoot = document.querySelector('.nop-tree');
+    expect(treeRoot).toBeTruthy();
+    expect(treeRoot?.querySelector('[data-slot="tree-empty"]')?.textContent).toContain('No nodes yet');
+  });
+
+  it('publishes tree nodes through slot markers instead of internal nop region classes', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'tree',
+            data: '${nodes}',
+            initiallyExpanded: true
+          }]
+        }}
+        data={{ nodes: [{ id: 'root', label: 'Root', children: [{ id: 'child', label: 'Child', children: [] }] }] }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Root')).toBeTruthy();
+      expect(document.querySelectorAll('[data-slot="tree-node"]').length).toBeGreaterThan(0);
+    });
   });
 
   it('publishes tree status summary through statusPath', async () => {
@@ -948,6 +981,40 @@ describe('dataRendererDefinitions', () => {
     );
 
     expect(await screen.findByText('Member Alice')).toBeTruthy();
+  });
+
+  it('keeps table root marker non-visual and merges schema className onto the root', () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      ...dataRendererDefinitions
+    ]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              className: 'stack-sm border',
+              columns: [{ label: 'Name', name: 'name' }],
+              source: []
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const tableRoot = document.querySelector('.nop-table') as HTMLElement | null;
+    expect(tableRoot).toBeTruthy();
+    expect(tableRoot?.className).toContain('nop-table');
+    expect(tableRoot?.className).toContain('stack-sm');
+    expect(tableRoot?.className).toContain('border');
+    expect(tableRoot?.className).not.toContain('grid');
+    expect(tableRoot?.className).not.toContain('gap-4');
   });
 
   it('registers chart handles with DOM refs and imperative methods', async () => {
