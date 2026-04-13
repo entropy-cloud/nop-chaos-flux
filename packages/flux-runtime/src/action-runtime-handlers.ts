@@ -6,8 +6,8 @@ import type {
   ApiSchema,
 } from '@nop-chaos/flux-core';
 import {
-  evaluateCompiledInActionContext,
   evaluateInActionContext,
+  getEvaluationScope,
   evaluateActionArgs,
   finishAction,
   getCompiledValue,
@@ -68,7 +68,7 @@ export async function runBuiltInAction(
       }
 
       const api = action.api
-        ? evaluateCompiledInActionContext<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx, input)
+        ? input.evaluateCompiled<ApiSchema>(getCompiledValue(action.api, input.compileValue), getEvaluationScope(ctx))
         : undefined;
 
       if (!api) {
@@ -185,7 +185,7 @@ export async function runBuiltInAction(
       }
 
       const api = action.api
-        ? evaluateCompiledInActionContext<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx, input)
+        ? input.evaluateCompiled<ApiSchema>(getCompiledValue(action.api, input.compileValue), getEvaluationScope(ctx))
         : undefined;
 
       if (api) {
