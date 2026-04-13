@@ -5,6 +5,7 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import type { BaseSchema } from '@nop-chaos/flux-core';
+import { attachScopeDebugToSchema } from './scope-debug';
 
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
@@ -24,6 +25,7 @@ interface SchemaLabPageProps {
 
 export function SchemaLabPage({ schema, data, description, notes }: SchemaLabPageProps) {
   const env = useMemo(() => defaultEnv, []);
+  const schemaWithDebug = useMemo(() => attachScopeDebugToSchema(schema, 'Current Scope'), [schema]);
 
   return (
     <div className="flex flex-col gap-4" data-testid="schema-lab">
@@ -35,7 +37,7 @@ export function SchemaLabPage({ schema, data, description, notes }: SchemaLabPag
       ) : null}
       <div className="p-5 rounded-[16px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]" data-testid="schema-lab-stage">
         <SchemaRenderer
-          schema={schema}
+          schema={schemaWithDebug}
           data={data ?? {}}
           env={env}
           registry={registry}

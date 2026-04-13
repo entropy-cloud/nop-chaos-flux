@@ -29,6 +29,7 @@ export const BASIC_RENDERER_ROUTES: RendererRouteEntry[] = [
   { id: 'icon', title: 'Icon', category: 'content', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Renders a named Lucide icon with configurable size and color.' },
   { id: 'badge', title: 'Badge', category: 'content', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Renders a styled badge/tag with label and optional variant.' },
   { id: 'button', title: 'Button', category: 'actions', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Action button with configurable variant, size, and onClick handler.' },
+  { id: 'scope-debug', title: 'Scope Debug', category: 'advanced', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Debug-only JSON viewer that reacts to current scope changes and can be inserted at any schema position.' },
   { id: 'dynamic-renderer', title: 'Dynamic Renderer', category: 'advanced', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Renders a schema node whose type is resolved at runtime from the current scope.' },
   { id: 'reaction', title: 'Reaction', category: 'logic', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Side-effect trigger: fires actions when watched scope values change.' },
 ];

@@ -5,6 +5,7 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import type { BaseSchema } from '@nop-chaos/flux-core';
+import { attachScopeDebugToSchema } from './scope-debug';
 
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
@@ -25,6 +26,7 @@ export interface ScenarioBlockProps {
 function ScenarioBlock({ title, description, schema, data }: ScenarioBlockProps) {
   const env = useMemo(() => defaultEnv, []);
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const schemaWithDebug = useMemo(() => attachScopeDebugToSchema(schema, `${title} Scope`), [schema, title]);
 
   return (
     <div className="flex flex-col gap-2" data-testid={`scenario-${slug}`}>
@@ -36,7 +38,7 @@ function ScenarioBlock({ title, description, schema, data }: ScenarioBlockProps)
       </div>
       <div className="p-5 rounded-[16px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]" data-testid={`scenario-stage-${slug}`}>
         <SchemaRenderer
-          schema={schema}
+          schema={schemaWithDebug}
           data={data ?? {}}
           env={env}
           registry={registry}

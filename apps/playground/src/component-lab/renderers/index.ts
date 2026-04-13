@@ -11,6 +11,7 @@ export { TextLabPage } from './TextLabPage';
 export { IconLabPage } from './IconLabPage';
 export { BadgeLabPage } from './BadgeLabPage';
 export { ButtonLabPage } from './ButtonLabPage';
+export { ScopeDebugLabPage } from './ScopeDebugLabPage';
 export { DynamicRendererLabPage } from './DynamicRendererLabPage';
 export { ReactionLabPage } from './ReactionLabPage';
 export { FormLabPage } from './FormLabPage';
