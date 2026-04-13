@@ -4,6 +4,28 @@ import type {
   ComponentHandleRegistry,
   ComponentTarget,
 } from '@nop-chaos/flux-core';
+import type { ScopeRef, ScopeSnapshot } from '@nop-chaos/flux-core';
+
+function buildScopeChain(scope: ScopeRef | undefined): readonly ScopeSnapshot[] | undefined {
+  if (!scope) {
+    return undefined;
+  }
+
+  const chain: ScopeSnapshot[] = [];
+  let current: ScopeRef | undefined = scope;
+
+  while (current) {
+    chain.push({
+      id: current.id,
+      path: current.path,
+      label: current.path || current.id,
+      data: current.readOwn()
+    });
+    current = current.parent;
+  }
+
+  return chain;
+}
 
 export function createComponentHandleRegistry(input: { id: string; parent?: ComponentHandleRegistry }): ComponentHandleRegistry {
   const nodeEnv = 'process' in globalThis
@@ -191,7 +213,8 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       if (handle && handle._mounted === false) {
         return {
           kind: 'notMaterialized',
-          cid
+          cid,
+          instancePath: debugData?.nodeInstance?.instancePath
         };
       }
 
@@ -199,7 +222,8 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
         kind: 'resolved',
         payload: {
           cid,
-          scopeChain: undefined,
+          instancePath: debugData?.nodeInstance?.instancePath,
+          scopeChain: buildScopeChain(debugData?.scope),
           resolvedMeta: debugData?.resolvedMeta,
           resolvedProps: debugData?.resolvedProps,
           state: debugData?.nodeInstance?.state
