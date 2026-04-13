@@ -256,6 +256,74 @@ describe('node identity contracts', () => {
     }
   });
 
+  it('resolveTarget preserves repeated instancePath while hydrating cid from the live handle', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    componentRegistry.setDebugEnabled?.(true);
+    const handle = {
+      id: 'row-form',
+      type: 'form',
+      capabilities: {
+        invoke() {
+          return { ok: true };
+        }
+      }
+    };
+    const nodeInstance = {
+      cid: undefined,
+      instancePath: [{ repeatedTemplateId: 'rows', instanceKey: 'row-2' }],
+      templateNode: {
+        templateNodeId: 99,
+        id: 'row-form-node',
+        type: 'text',
+        schema: { type: 'text' },
+        templatePath: '$.body[0]',
+        rendererType: 'text',
+        component: textRenderer,
+        propsProgram: { kind: 'static', value: {} },
+        metaProgram: {},
+        eventPlans: {},
+        regions: {},
+        scopePlan: { kind: 'inherit' },
+        sourcePropKeys: [],
+        sourceStatePropKeys: {}
+      },
+      scope: { id: 'page', path: '$page', get: () => undefined, has: () => false, readOwn: () => ({}), read: () => ({}), update: () => undefined, merge: () => undefined },
+      state: { metaState: {}, mounted: true }
+    } as any;
+
+    const unregister = componentRegistry.register(handle, { cid: 77 });
+
+    try {
+      componentRegistry.setHandleDebugData?.(77, {
+        nodeInstance,
+        nodeId: 'row-form-node',
+        path: '$.body[0]',
+        rendererType: 'text',
+        scope: nodeInstance.scope,
+        resolvedMeta: {} as any,
+        resolvedProps: {},
+        updatedAt: Date.now()
+      });
+
+      const result = runtime.resolveTarget({ _targetCid: 77 }, { runtimeId: runtime.runtimeId, componentRegistry });
+
+      expect(result).toMatchObject({
+        cid: 77,
+        instancePath: [{ repeatedTemplateId: 'rows', instanceKey: 'row-2' }],
+        templateNode: nodeInstance.templateNode
+      });
+      expect(result).not.toBe(nodeInstance);
+      expect(nodeInstance.cid).toBeUndefined();
+    } finally {
+      unregister();
+    }
+  });
+
   it('compile returns a CompiledTemplate with a root TemplateNode containing a templateNodeId', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
