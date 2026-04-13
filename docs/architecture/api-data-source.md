@@ -487,6 +487,7 @@ Current runtime compatibility note:
 - current runtime now publishes `data-source` values through `name` first and accepts `name` in `refreshSource` / source-registry lookup
 - legacy `id` targeting and legacy `dataPath` publication overrides remain supported as compatibility paths during convergence
 - anonymous formula-backed resources may still fall back to runtime `id`; new schema should not rely on that compatibility path
+- current runtime now applies `resultMapping` before normal publication for both api-backed and formula-backed `data-source` values
 
 `initialData` seeds the source target before the first real evaluation or fetch begins.
 
@@ -799,6 +800,7 @@ Current baseline note:
 - the current guard baseline also coalesces pending changed paths while a reaction is already queued and hard-stops a self-cascading reaction after a small bounded number of firings
 - reaction ownership is now routed through a scope-scoped runtime reaction registry so same-scope same-id registrations replace prior reactions instead of leaking duplicate watchers
 - runtime now exposes a minimal reaction debug snapshot surface that reports registered reaction ids, scope ids, watch config, dependency paths, disposal state, and fire counts
+- runtime now also exposes a minimal source debug snapshot surface that reports registered source ids, scope ids, publication target/status paths, coarse runtime state, and current dependency snapshot when available
 - this first cut still does not include richer debugger integration or advanced loop-depth diagnostics beyond the current bounded-fire safety rail
 - arbitrary expressions built from those values
 

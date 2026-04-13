@@ -119,6 +119,18 @@ This directory is the default home for reusable validation helpers.
   - request execution
   - adaptor application
   - request cancellation plumbing
+- `packages/flux-runtime/src/data-source-runtime.ts`
+  - api-backed source execution
+  - source status publication and result mapping application
+  - request dependency tracking for runtime-owned sources
+- `packages/flux-runtime/src/source-registry.ts`
+  - scope-scoped source registration and replacement
+  - source invalidation/refresh routing
+  - source debug snapshot ownership
+- `packages/flux-runtime/src/reaction-runtime.ts`
+  - scope-scoped reaction registration and replacement
+  - reaction scheduling / loop guard behavior
+  - reaction debug snapshot ownership
 - focused helpers such as `packages/flux-runtime/src/scope-change.ts` and `packages/flux-runtime/src/runtime-plugins.ts`
   - changed-path dependency matching
   - plugin ordering and similar hot-path coordination helpers
