@@ -1,4 +1,3 @@
-import { evaluate, parse } from 'amis-formula';
 import type {
   CompiledExpression,
   CompiledStringTemplate,
@@ -9,8 +8,11 @@ import type {
   StaticValueNode
 } from '@nop-chaos/flux-core';
 import { isPlainObject } from '@nop-chaos/flux-core';
+import { installBuiltins } from './builtins';
+import { evaluateAst } from './evaluator';
+import { parseFormula } from './parser';
 import { isPureExpression, normalizeExpressionSource, parseTemplateSegments } from './template';
-import { toEvalContext, createFormulaScope } from './scope';
+import { toEvalContext } from './scope';
 
 type ImportedFunctionBinding = {
   alias: string;
@@ -28,7 +30,7 @@ type CompiledTemplateSegment =
   | {
       type: 'expr';
       value: {
-        ast: ReturnType<typeof parse>;
+        ast: ReturnType<typeof parseFormula>;
         bindings: readonly ImportedFunctionBinding[];
       };
     };
@@ -43,6 +45,10 @@ function isIdentifierCharacter(value: string | undefined): boolean {
 
 function isIdentifierStart(value: string | undefined): boolean {
   return value !== undefined && /[A-Za-z_]/.test(value);
+}
+
+function isImportedAliasStart(value: string | undefined): boolean {
+  return value !== undefined && /[a-z_]/.test(value);
 }
 
 function rewriteImportedAliasSyntax(source: string): RewrittenImportExpression {
@@ -82,7 +88,7 @@ function rewriteImportedAliasSyntax(source: string): RewrittenImportExpression {
     const next = source[index + 1];
     const isAliasStart =
       current === '$' &&
-      isIdentifierStart(next) &&
+      isImportedAliasStart(next) &&
       (previous === undefined || !/[A-Za-z0-9_.]/.test(previous));
 
     if (!isAliasStart) {
@@ -105,13 +111,14 @@ function rewriteImportedAliasSyntax(source: string): RewrittenImportExpression {
       continue;
     }
 
-    let methodEnd = aliasEnd + 1;
+    const methodStart = aliasEnd + 1;
+    let methodEnd = methodStart;
 
     while (isIdentifierCharacter(source[methodEnd])) {
       methodEnd += 1;
     }
 
-    const method = source.slice(aliasEnd + 1, methodEnd);
+    const method = source.slice(methodStart, methodEnd);
 
     if (source[methodEnd] !== '(') {
       result += current;
@@ -131,50 +138,139 @@ function rewriteImportedAliasSyntax(source: string): RewrittenImportExpression {
   };
 }
 
-function buildImportedFunctions(
-  env: RendererEnv,
-  imports: Readonly<Record<string, unknown>> | undefined,
-  bindings: readonly ImportedFunctionBinding[]
-): Record<string, (...args: any[]) => any> | undefined {
-  if (bindings.length === 0) {
-    return env.functions;
+function isPipeBoundary(source: string, index: number): boolean {
+  const current = source[index];
+  const previous = source[index - 1];
+  const next = source[index + 1];
+
+  if (current !== '|') {
+    return false;
   }
 
-  const importedFunctions: Record<string, (...args: any[]) => any> = {};
-
-  for (const [name, fn] of Object.entries(env.functions ?? {})) {
-    importedFunctions[`fn${name}`] = fn;
+  if (previous === '|' || next === '|' || previous === undefined || next === undefined) {
+    return false;
   }
 
-  for (const binding of bindings) {
-    importedFunctions[`fn${binding.functionName}`] = (...args: any[]) => {
-      const namespace = imports?.[binding.alias] as Record<string, unknown> | undefined;
+  return true;
+}
 
-      if (!namespace) {
-        return undefined;
+function splitFilterArgs(source: string): string[] {
+  const args: string[] = [];
+  let start = 0;
+  let depth = 0;
+  let quote: string | undefined;
+
+  for (let index = 0; index < source.length; index += 1) {
+    const current = source[index];
+
+    if (quote) {
+      if (current === '\\') {
+        index += 1;
+        continue;
       }
-
-      const method = namespace?.[binding.method];
-
-      if (typeof method !== 'function') {
-        throw new Error(`Imported expression binding $${binding.alias}.${binding.method}(...) is not available`);
+      if (current === quote) {
+        quote = undefined;
       }
+      continue;
+    }
 
-      return method.apply(namespace, args);
-    };
+    if (current === '"' || current === "'") {
+      quote = current;
+      continue;
+    }
+
+    if (current === '(' || current === '[' || current === '{') {
+      depth += 1;
+      continue;
+    }
+
+    if (current === ')' || current === ']' || current === '}') {
+      depth -= 1;
+      continue;
+    }
+
+    if (current === ':' && depth === 0) {
+      args.push(source.slice(start, index).trim());
+      start = index + 1;
+    }
   }
 
-  return importedFunctions;
+  args.push(source.slice(start).trim());
+  return args.filter((item) => item.length > 0);
+}
+
+function rewriteFilterPipeSyntax(source: string): string {
+  let quote: string | undefined;
+  let depth = 0;
+
+  for (let index = 0; index < source.length; index += 1) {
+    const current = source[index];
+
+    if (quote) {
+      if (current === '\\') {
+        index += 1;
+        continue;
+      }
+      if (current === quote) {
+        quote = undefined;
+      }
+      continue;
+    }
+
+    if (current === '"' || current === "'") {
+      quote = current;
+      continue;
+    }
+
+    if (current === '(' || current === '[' || current === '{') {
+      depth += 1;
+      continue;
+    }
+
+    if (current === ')' || current === ']' || current === '}') {
+      depth -= 1;
+      continue;
+    }
+
+    if (depth === 0 && isPipeBoundary(source, index)) {
+      const left = source.slice(0, index).trim();
+      const right = source.slice(index + 1).trim();
+      const [filterName, ...argParts] = splitFilterArgs(right);
+      if (!filterName) {
+        return source;
+      }
+      const args = [left, ...argParts].join(', ');
+      return `${filterName}(${args})`;
+    }
+  }
+
+  return source;
+}
+
+function createExpressionMonitorReporter(env: RendererEnv, source: string) {
+  return (error: unknown, details?: Record<string, unknown>) => {
+    env.monitor?.onError?.({
+      phase: 'expression',
+      error,
+      details: {
+        ...details,
+        source
+      }
+    });
+  };
 }
 
 function createFormulaCompiler(): FormulaCompiler {
+  installBuiltins();
+
   return {
     hasExpression(input: string) {
       return typeof input === 'string' && input.includes('${');
     },
     compileExpression<T = unknown>(source: string): CompiledExpression<T> {
-      const rewritten = rewriteImportedAliasSyntax(normalizeExpressionSource(source));
-      const ast = parse(rewritten.source, { evalMode: true });
+      const normalized = rewriteFilterPipeSyntax(normalizeExpressionSource(source));
+      const rewritten = rewriteImportedAliasSyntax(normalized);
+      const ast = parseFormula(rewritten.source);
 
       return {
         kind: 'expression',
@@ -183,9 +279,11 @@ function createFormulaCompiler(): FormulaCompiler {
           const context = toEvalContext(input);
           const imports = context.resolve('__imports') as Readonly<Record<string, unknown>> | undefined;
 
-          return evaluate(ast, createFormulaScope(context), {
-            functions: buildImportedFunctions(env, imports, rewritten.bindings),
-            filters: env.filters
+          return evaluateAst(ast, {
+            env,
+            context,
+            imports,
+            reportError: createExpressionMonitorReporter(env, source)
           }) as T;
         }
       };
@@ -202,9 +300,9 @@ function createFormulaCompiler(): FormulaCompiler {
         return {
           type: 'expr' as const,
           value: (() => {
-            const rewritten = rewriteImportedAliasSyntax(segment.value);
+            const rewritten = rewriteImportedAliasSyntax(rewriteFilterPipeSyntax(segment.value));
             return {
-              ast: parse(rewritten.source, { evalMode: true }),
+              ast: parseFormula(rewritten.source),
               bindings: rewritten.bindings
             };
           })()
@@ -223,10 +321,12 @@ function createFormulaCompiler(): FormulaCompiler {
               }
 
               const imports = context.resolve('__imports') as Readonly<Record<string, unknown>> | undefined;
-
-              const evaluated = evaluate(segment.value.ast, createFormulaScope(context), {
-                functions: buildImportedFunctions(env, imports, segment.value.bindings),
-                filters: env.filters
+              
+              const evaluated = evaluateAst(segment.value.ast, {
+                env,
+                context,
+                imports,
+                reportError: createExpressionMonitorReporter(env, source)
               });
 
               return evaluated == null ? '' : String(evaluated);

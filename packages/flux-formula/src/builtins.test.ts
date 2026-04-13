@@ -1,0 +1,77 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import { createFormulaCompiler, getFormulaRegistrySnapshot, resetFormulaRegistry } from './index';
+
+describe('builtins', () => {
+  afterEach(() => {
+    resetFormulaRegistry();
+  });
+
+  it('installs v1 namespaces and eager builtins', () => {
+    createFormulaCompiler();
+    const snapshot = getFormulaRegistrySnapshot();
+
+    expect((snapshot.namespaces.$Math as typeof Math).max(1, 4, 2)).toBe(4);
+    expect((snapshot.namespaces.$JSON as typeof JSON).stringify({ ok: true })).toBe('{"ok":true}');
+    expect(typeof (snapshot.namespaces.$Date as { now(): Date }).now()).toBe('object');
+
+    expect(snapshot.functions.SUM(1, [2, 'x'], 3)).toBe(6);
+    expect(snapshot.functions.AVG()).toBe(0);
+    expect(snapshot.functions.AVG(2, 4, 6)).toBe(4);
+    expect(snapshot.functions.COUNT([1, 2, 3])).toBe(3);
+    expect(snapshot.functions.ARRAYMAP([1, 2], (value: number) => value * 2)).toEqual([2, 4]);
+    expect(snapshot.functions.ARRAYFILTER([1, 2, 3], (value: number) => value > 1)).toEqual([2, 3]);
+    expect(snapshot.functions.ARRAYFIND([1, 2, 3], (value: number) => value === 2)).toBe(2);
+    expect(snapshot.functions.ARRAYFINDINDEX([1, 2, 3], (value: number) => value === 3)).toBe(2);
+    expect(snapshot.functions.ARRAYSOME([1, 2, 3], (value: number) => value === 2)).toBe(true);
+    expect(snapshot.functions.ARRAYEVERY([1, 2, 3], (value: number) => value > 0)).toBe(true);
+    expect(snapshot.functions.ARRAYINCLUDES([1, 2, 3], 2)).toBe(true);
+    expect(snapshot.functions.CONCAT([1], [2], 3)).toEqual([1, 2, 3]);
+    expect(snapshot.functions.UNIQ([1, 1, 2])).toEqual([1, 2]);
+    expect(snapshot.functions.COMPACT([0, 1, false, 2, null])).toEqual([1, 2]);
+    expect(snapshot.functions.LEN(null)).toBe(0);
+    expect(snapshot.functions.CONCATENATE('A', 1, null)).toBe('A1');
+    expect(snapshot.functions.TRIM('  hi  ')).toBe('hi');
+    expect(snapshot.functions.UPPER('hi')).toBe('HI');
+    expect(snapshot.functions.LOWER('HI')).toBe('hi');
+    expect(snapshot.functions.REPLACE('a-b-a', 'a', 'x')).toBe('x-b-x');
+    expect(snapshot.functions.SPLIT('a,b', ',')).toEqual(['a', 'b']);
+    expect(snapshot.functions.JOIN(['a', 'b'])).toBe('a,b');
+    expect(snapshot.functions.CONTAINS('abc', 'b')).toBe(true);
+    expect(snapshot.functions.ISEMPTY(null)).toBe(true);
+    expect(snapshot.functions.ISEMPTY('')).toBe(true);
+    expect(snapshot.functions.ISEMPTY([])).toBe(true);
+    expect(snapshot.functions.ISEMPTY({ ok: true })).toBe(false);
+    expect(snapshot.functions.INT(1.9)).toBe(1);
+    expect(snapshot.functions.MOD(7, 4)).toBe(3);
+    expect(snapshot.functions.RAND()).toBeGreaterThanOrEqual(0);
+    expect(snapshot.functions.RAND()).toBeLessThan(1);
+    expect(snapshot.functions.PI()).toBe(Math.PI);
+  });
+
+  it('keeps IF and SWITCH lazy', () => {
+    createFormulaCompiler();
+    const snapshot = getFormulaRegistrySnapshot();
+    let touched = false;
+
+    expect(snapshot.functionMeta.IF.invoke).toBe('lazy');
+    expect(snapshot.functions.IF(() => true, () => 'ok', () => {
+      touched = true;
+      return 'bad';
+    })).toBe('ok');
+    expect(touched).toBe(false);
+
+    expect(snapshot.functionMeta.SWITCH.invoke).toBe('lazy');
+    expect(snapshot.functions.SWITCH(
+      () => 'match',
+      () => 'match',
+      () => 'picked',
+      () => 'other',
+      () => {
+        touched = true;
+        return 'bad';
+      },
+      () => 'fallback'
+    )).toBe('picked');
+    expect(touched).toBe(false);
+  });
+});

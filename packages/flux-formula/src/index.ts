@@ -15,6 +15,10 @@ import { compileNode, createFormulaCompiler } from './compile';
 import { createEvalContext, createStateFromNode, evaluateNode } from './evaluate';
 
 export { createFormulaCompiler } from './compile';
+export { parseFormula } from './parser';
+export { evaluateAst } from './evaluator';
+export { registerFunction, registerNamespace, getFormulaRegistrySnapshot, resetFormulaRegistry } from './registry';
+export { dateHelper } from './date-helper';
 
 export function createExpressionCompiler(formulaCompiler: FormulaCompiler = createFormulaCompiler()): ExpressionCompiler {
   return {

@@ -12,14 +12,13 @@
     }
   },
   "dependencies": {
-    "@nop-chaos/flux-core": "workspace:*",
-    "amis-formula": "^6.13.0"
+    "@nop-chaos/flux-core": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts,.tsx"
   }
 }
-
