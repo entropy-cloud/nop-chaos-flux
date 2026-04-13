@@ -309,6 +309,7 @@ function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 - No comments unless requested.
 - Follow existing code style in each file.
 - TypeScript strict mode.
+- Documentation files should generally stay under 40 KB. If a doc grows beyond 50 KB, split it by topic or ownership unless there is a clear reason to keep it together.
 
 ### Build Artifacts
 
@@ -352,6 +353,8 @@ packages/<name>/
 ### Code Organization
 
 **Separate independent modules into their own files.**
+
+When adding code to an existing code file, if the file is already over 500 lines, stop and evaluate whether the new logic should be extracted into a focused module or test file instead of extending the same file. Prefer splitting by responsibility or owner boundary. Keep the file as-is only when there is a clear reason.
 
 When code has clear boundaries and can be reused independently, extract it into a dedicated file:
 

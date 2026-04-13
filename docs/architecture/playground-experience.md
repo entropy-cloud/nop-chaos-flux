@@ -85,7 +85,7 @@ The `useRoute` hook in `apps/playground/src/useRoute.ts` reads and writes the ha
 
 The route inventory is code-backed in `apps/playground/src/route-model.ts`:
 
-- `ALL_SHARED_RENDERER_ROUTES` — all 40 currently implemented shared renderer entries (15 basic + 21 form + 4 data). Each entry carries: `id`, `title`, `category`, `sourcePackage`, `description`.
+- `ALL_SHARED_RENDERER_ROUTES` — all 41 currently implemented shared renderer entries (16 basic + 21 form + 4 data). Each entry carries: `id`, `title`, `category`, `sourcePackage`, `description`.
 - `DOMAIN_RENDERER_ROUTES` — all 6 domain host page entries: `flow-designer`, `report-designer`, `debugger-lab`, `condition-builder`, `code-editor`, `word-editor`.
 - `parseRoute(hash)` and `buildRoute(spec)` — the canonical serialization pair. Tests in `apps/playground/src/route-matrix.test.ts` verify round-trip stability for all routes.
 

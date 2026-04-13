@@ -218,6 +218,7 @@ Follow-up:
 4. 如果 slice 写不出 `Exit Criteria`，说明它还不够可执行。
 5. 如果你正在规划的是一个完整 feature，先问自己这份 plan 是否真的能把 feature 收口；如果答案是否定的，再考虑拆成 successor plans，而不是一开始就把 feature 切碎。
 6. `Exit Criteria` 尽量写成 repo-observable 结果：具体 API、具体行为、具体测试，而不是只写抽象语义。
+7. 如果计划要处理重构热点或大文件治理，先基于 live repo audit 写清当前超大文件清单、目标阈值，以及 closure 时将使用的复核命令；不要只引用旧日志或旧计划里的行数结论。
 
 ### When Executing
 

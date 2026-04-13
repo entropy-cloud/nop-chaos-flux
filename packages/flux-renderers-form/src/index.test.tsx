@@ -1256,6 +1256,46 @@ describe('formRendererDefinitions', () => {
     expect(await screen.findByText('Tree select options failed')).toBeTruthy();
   });
 
+  it('lets FieldFrame own tree control field chrome while tree controls publish control slots', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'input-tree',
+              name: 'categoryIds',
+              label: 'Categories',
+              treeMode: 'checkbox',
+              options: [{ label: 'Runtime', value: 'runtime' }]
+            },
+            {
+              type: 'tree-select',
+              name: 'departmentId',
+              label: 'Department',
+              options: [{ label: 'Platform', value: 'platform' }]
+            }
+          ]
+        } as any}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const inputTreeField = screen.getByRole('checkbox', { name: 'Runtime' }).closest('.nop-field');
+    expect(inputTreeField).toBeTruthy();
+    expect(inputTreeField?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Categories');
+    expect(inputTreeField?.querySelector('[data-slot="input-tree-control"]')).toBeTruthy();
+
+    const treeSelectField = screen.getByRole('button', { name: /Department/ }).closest('.nop-field');
+    expect(treeSelectField).toBeTruthy();
+    expect(treeSelectField?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Department');
+    expect(treeSelectField?.querySelector('[data-slot="tree-select-control"]')).toBeTruthy();
+  });
+
   it('preserves non-string checkbox-group values in form state and submit payloads', async () => {
     submitCalls.length = 0;
     cleanup();
@@ -1363,6 +1403,50 @@ describe('formRendererDefinitions', () => {
 
     fireEvent.click(zeroCheckbox);
     expect(JSON.parse(screen.getByTestId('scope-state:flags').textContent ?? 'null')).toEqual([false]);
+  });
+
+  it('lets scope-debug see full form data and rerender when form values change', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            summary: {
+              title: 'Annual Report 2025',
+              pages: 48
+            }
+          },
+          body: [
+            {
+              type: 'input-text',
+              name: 'summary.title',
+              label: 'Title'
+            },
+            {
+              type: 'scope-debug',
+              title: 'Form Scope'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const debugJson = document.querySelector('[data-slot="scope-debug-json"]');
+    expect(debugJson?.textContent).toContain('"summary"');
+    expect(debugJson?.textContent).toContain('"title": "Annual Report 2025"');
+    expect(debugJson?.textContent).toContain('"pages": 48');
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Annual Report 2026' } });
+
+    await waitFor(() => {
+      expect(debugJson?.textContent).toContain('"title": "Annual Report 2026"');
+      expect(debugJson?.textContent).toContain('"pages": 48');
+    });
   });
 
   it('validates a runtime-registered complex field and blocks submit', async () => {
@@ -1802,6 +1886,29 @@ describe('formRendererDefinitions', () => {
     expect(await screen.findByText('Email is required')).toBeTruthy();
     expect(field?.hasAttribute('data-field-touched')).toBe(true);
     expect(field?.hasAttribute('data-field-invalid')).toBe(true);
+  });
+
+  it('keeps form semantic markers free of implicit layout classes', () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    const { container } = render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          body: [{ type: 'input-text', name: 'email', label: 'Email' }],
+          actions: [{ type: 'button', label: 'Submit' }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const form = container.querySelector('section.nop-form');
+    expect(form).toBeTruthy();
+    expect(form?.className).toBe('nop-form');
+    expect(form?.querySelector('[data-slot="form-body"]')).toBeTruthy();
+    expect(form?.querySelector('[data-slot="form-actions"]')).toBeTruthy();
   });
 
   it('supports visited-only error visibility without changing validation timing', async () => {
@@ -2970,6 +3077,457 @@ describe('formRendererDefinitions', () => {
 
     expect(screen.getByText('Form body content')).toBeTruthy();
     expect(screen.getByText('Form action button')).toBeTruthy();
+  });
+});
+
+describe('second edit to the same field reflects updated value (bug 30 regression)', () => {
+  it('input-text: second edit to the same field is reflected on submit', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-text-form',
+          data: { username: 'Alice' },
+          body: [{ type: 'input-text', name: 'username', label: 'Username' }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-text-form' } }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    const input = screen.getByDisplayValue('Alice');
+
+    fireEvent.change(input, { target: { value: 'Bob' } });
+    expect((screen.getByDisplayValue('Bob') as HTMLInputElement).value).toBe('Bob');
+
+    fireEvent.change(screen.getByDisplayValue('Bob'), { target: { value: 'Charlie' } });
+    expect((screen.getByDisplayValue('Charlie') as HTMLInputElement).value).toBe('Charlie');
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({ username: 'Charlie' });
+  });
+
+  it('input-password: second edit to the same field is reflected on submit', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-pw-form',
+          data: { password: '' },
+          body: [{ type: 'input-password', name: 'password', label: 'Password' }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-pw-form' } }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    const input = screen.getByLabelText('Password');
+    fireEvent.change(input, { target: { value: 'pass1' } });
+    expect((screen.getByLabelText('Password') as HTMLInputElement).value).toBe('pass1');
+
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'pass2' } });
+    expect((screen.getByLabelText('Password') as HTMLInputElement).value).toBe('pass2');
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({ password: 'pass2' });
+  });
+
+  it('textarea: second edit to the same field is reflected on submit', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-ta-form',
+          data: { notes: 'Initial' },
+          body: [{ type: 'textarea', name: 'notes', label: 'Notes' }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-ta-form' } }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    const textarea = screen.getByLabelText('Notes');
+    fireEvent.change(textarea, { target: { value: 'First edit' } });
+    fireEvent.change(screen.getByLabelText('Notes'), { target: { value: 'Second edit' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({ notes: 'Second edit' });
+  });
+
+  it('select: second selection on the same field is reflected on submit', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-sel-form',
+          data: { role: '' },
+          body: [{
+            type: 'select', name: 'role', label: 'Role',
+            options: [
+              { label: 'Admin', value: 'admin' },
+              { label: 'Editor', value: 'editor' },
+              { label: 'Viewer', value: 'viewer' }
+            ]
+          }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-sel-form' } }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await selectOption('Role', 'Editor');
+    await selectOption('Role', 'Viewer');
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({ role: 'viewer' });
+  });
+
+  it('checkbox: toggling the same checkbox twice returns to original value', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-cb-form',
+          data: { approved: false },
+          body: [{ type: 'checkbox', name: 'approved', label: 'Approved', option: { label: 'Yes' } }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-cb-form' } }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+    fireEvent.click(checkbox);
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({ approved: false });
+  });
+
+  it('switch: toggling the same switch twice returns to original value', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-sw-form',
+          data: { active: false },
+          body: [{ type: 'switch', name: 'active', label: 'Active' }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-sw-form' } }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    const sw = screen.getByRole('switch', { name: /Active/ });
+    fireEvent.click(sw);
+    fireEvent.click(sw);
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({ active: false });
+  });
+
+  it('radio-group: second selection replaces the first', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-rg-form',
+          data: { status: 'draft' },
+          body: [{
+            type: 'radio-group', name: 'status', label: 'Status',
+            options: [
+              { label: 'Draft', value: 'draft' },
+              { label: 'Published', value: 'published' },
+              { label: 'Archived', value: 'archived' }
+            ]
+          }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-rg-form' } }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('radio', { name: /Published/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Archived/ }));
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({ status: 'archived' });
+  });
+
+  it('checkbox-group: unchecking a previously checked item updates the array', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-cg-form',
+          data: { tags: ['stable'] },
+          body: [{
+            type: 'checkbox-group', name: 'tags', label: 'Tags',
+            options: [
+              { label: 'Stable', value: 'stable' },
+              { label: 'Beta', value: 'beta' }
+            ]
+          }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-cg-form' } }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Beta/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Stable/ }));
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({ tags: ['beta'] });
+  });
+
+  it('input-tree: unchecking a previously checked node updates the array', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-it-form',
+          data: { categoryIds: [] },
+          body: [{
+            type: 'input-tree', name: 'categoryIds', label: 'Categories', treeMode: 'checkbox' as const,
+            options: [
+              { label: 'Platform', value: 'platform' },
+              { label: 'Runtime', value: 'runtime' }
+            ]
+          }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-it-form' } }]
+        } as any}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Platform' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Runtime' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Platform' }));
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({ categoryIds: ['runtime'] });
+  });
+
+  it('tree-select: second write to the same field via form.setValue is reflected in probe', async () => {
+    cleanup();
+
+    function SetDepartmentBtn() {
+      const form = useCurrentForm();
+      return (
+        <button type="button" onClick={() => form?.setValue('departmentId', 'runtime')}>
+          Set Runtime
+        </button>
+      );
+    }
+
+    const setValueBtnRenderer: RendererDefinition = {
+      type: 'set-value-btn',
+      component: SetDepartmentBtn
+    };
+
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formStateProbeRenderer, setValueBtnRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: { departmentId: '' },
+          body: [
+            {
+              type: 'tree-select', name: 'departmentId', label: 'Dept',
+              options: [{ label: 'Platform', value: 'platform' }]
+            },
+            { type: 'form-state-probe', name: 'departmentId' },
+            { type: 'set-value-btn' }
+          ]
+        } as any}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    const trigger = document.querySelector('[data-slot="popover-trigger"]') as HTMLElement;
+    fireEvent.click(trigger);
+    fireEvent.click(await screen.findByText('Platform'));
+
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('form-state:departmentId').textContent ?? 'null')).toBe('platform');
+    });
+
+    fireEvent.click(screen.getByText('Set Runtime'));
+
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('form-state:departmentId').textContent ?? 'null')).toBe('runtime');
+    });
+  });
+
+  it('tag-list: unchecking a previously selected tag updates the array', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-tl-form',
+          data: { tags: ['alpha'] },
+          body: [{ type: 'tag-list', name: 'tags', label: 'Tags', tags: ['alpha', 'beta', 'gamma'] }],
+          actions: [{
+            type: 'button', label: 'Submit',
+            onClick: { action: 'submitForm', api: { url: '/api/test', method: 'post' } }
+          }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('beta'));
+    fireEvent.click(screen.getByText('alpha'));
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({ tags: ['beta'] });
+  });
+
+  it('key-value: user edits the same row value twice and submits the second value', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-kv-form',
+          data: {
+            metadata: [
+              { key: 'env', value: 'dev' }
+            ]
+          },
+          body: [{
+            type: 'key-value', name: 'metadata', label: 'Metadata',
+            keyLabel: 'Key', valueLabel: 'Value'
+          }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-kv-form' } }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByDisplayValue('dev')).toBeTruthy());
+
+    fireEvent.change(screen.getByDisplayValue('dev'), { target: { value: 'staging' } });
+    fireEvent.change(screen.getByDisplayValue('staging'), { target: { value: 'production' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({
+      metadata: [{ key: 'env', value: 'production' }]
+    });
+  });
+
+  it('array-editor: user edits the same cell twice and submits the second value', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'second-edit-ae-form',
+          data: {
+            reviewers: [{ value: 'alice' }]
+          },
+          body: [{
+            type: 'array-editor', name: 'reviewers', label: 'Reviewers', itemLabel: 'Reviewer'
+          }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-ae-form' } }]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByDisplayValue('alice')).toBeTruthy());
+
+    fireEvent.change(screen.getByDisplayValue('alice'), { target: { value: 'bob' } });
+    fireEvent.change(screen.getByDisplayValue('bob'), { target: { value: 'carol' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+    expect(submitCalls[0]).toMatchObject({
+      reviewers: [{ value: 'carol' }]
+    });
   });
 });
 
