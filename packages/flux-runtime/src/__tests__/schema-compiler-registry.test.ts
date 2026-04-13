@@ -234,7 +234,7 @@ describe('createSchemaCompiler', () => {
     expect(node.eventPlans.onUnmount).toBeUndefined();
   });
 
-  it('pre-resolves component targets to _targetCid during compile when componentId is unique', () => {
+  it('keeps componentId targets selector-based during compile even when the id is unique', () => {
     const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
     const compiler = createSchemaCompiler({
       registry,
@@ -260,7 +260,8 @@ describe('createSchemaCompiler', () => {
     const formNode = bodyNodes[0];
     const buttonNode = bodyNodes[1];
     expect(typeof formNode.templateNodeId).toBe('number');
-    expect(buttonNode.eventPlans.onClick._targetCid).toBe(formNode.templateNodeId);
+    expect(buttonNode.eventPlans.onClick.componentId).toBe('user-form');
+    expect(buttonNode.eventPlans.onClick._targetCid).toBeUndefined();
   });
 
   it('assigns template node identity to compiled nodes', () => {
@@ -316,42 +317,34 @@ describe('createSchemaCompiler', () => {
     expect(buttonNode.eventPlans.onClick._targetCid).toBeUndefined();
   });
 
-  it('warns with duplicate id paths and disables static cid resolution for that id', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  it('does not rewrite componentId targets during compile when duplicate ids exist', () => {
+    const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
 
-    try {
-      const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
-      const compiler = createSchemaCompiler({
-        registry,
-        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-      });
-
-      const compiled = compiler.compile({
-        type: 'page',
-        body: [
-          { type: 'form', id: 'dup-form' },
-          { type: 'form', id: 'dup-form' },
-          {
-            type: 'action-button',
-            onClick: {
-              action: 'component:validate',
-              componentId: 'dup-form'
-            }
+    const compiled = compiler.compile({
+      type: 'page',
+      body: [
+        { type: 'form', id: 'dup-form' },
+        { type: 'form', id: 'dup-form' },
+        {
+          type: 'action-button',
+          onClick: {
+            action: 'component:validate',
+            componentId: 'dup-form'
           }
-        ]
-      });
-      const root = compiled.root as any;
+        }
+      ]
+    });
+    const root = compiled.root as any;
 
-      const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
-      const buttonNode = bodyNodes[2];
+    const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
+    const buttonNode = bodyNodes[2];
 
-      expect(buttonNode.eventPlans.onClick._targetCid).toBeUndefined();
-      expect(warnSpy).toHaveBeenCalledWith(
-        '[SchemaCompiler] Duplicate component id "dup-form" detected. Static cid resolution is disabled for this id. Paths: $.body[0], $.body[1]'
-      );
-    } finally {
-      warnSpy.mockRestore();
-    }
+    expect(buttonNode.eventPlans.onClick.componentId).toBe('dup-form');
+    expect(buttonNode.eventPlans.onClick._targetCid).toBeUndefined();
   });
 
   it('preserves xui:imports on compiled schema for runtime registration', () => {
