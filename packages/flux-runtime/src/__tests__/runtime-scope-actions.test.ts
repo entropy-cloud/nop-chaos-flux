@@ -319,6 +319,64 @@ describe('createRendererRuntime', () => {
     }
   });
 
+  it('dispatches compiled _targetCid actions through the component path without selector fallback', async () => {
+    const onActionEnd = vi.fn();
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env: {
+        ...env,
+        monitor: {
+          onActionEnd
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const form = runtime.createFormRuntime({
+      id: 'compiled-cid-form',
+      name: 'compiledCidForm',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+    const handle = createFormComponentHandle(form);
+    const unregister = componentRegistry.register(handle, { cid: 42 });
+
+    try {
+      await runtime.dispatch(
+        {
+          action: 'component:setValue',
+          _targetCid: 42,
+          args: {
+            name: 'username',
+            value: 'Carol'
+          }
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry
+        }
+      );
+
+      expect(onActionEnd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actionType: 'component:setValue',
+          dispatchMode: 'component',
+          componentId: 'compiled-cid-form',
+          componentName: 'compiledCidForm',
+          componentType: 'form',
+          method: 'setValue'
+        })
+      );
+    } finally {
+      unregister();
+    }
+  });
+
   it('rejects component action without any resolvable target', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({

@@ -1028,6 +1028,37 @@ describe('createSchemaRenderer runtime behavior', () => {
     expect(document.querySelectorAll(`[data-cid="${cid}"]`)).toHaveLength(1);
   });
 
+  it('does not fabricate a cid for createNodeInstance when none is provided', async () => {
+    const { createNodeInstance } = await import('./node-instance');
+    const templateNode = {
+      templateNodeId: 99,
+      id: 'probe',
+      type: 'text',
+      schema: { type: 'text' },
+      templatePath: '$',
+      rendererType: 'text',
+      component: {} as any,
+      propsProgram: { kind: 'static', value: {} },
+      metaProgram: {},
+      eventPlans: {},
+      regions: {},
+      scopePlan: { kind: 'inherit' },
+      sourcePropKeys: [],
+      sourceStatePropKeys: {}
+    } as any;
+
+    const nodeInstance = createNodeInstance({
+      templateNode,
+      scope: { id: 'scope', path: '$', readOwn: () => ({}), read: () => ({}), get: () => undefined, has: () => false, update: () => undefined, merge: () => undefined } as any,
+      state: { meta: {}, props: undefined },
+      cid: undefined,
+      mounted: false
+    });
+
+    expect(nodeInstance.cid).toBeUndefined();
+    expect(nodeInstance.templateNode.templateNodeId).toBe(99);
+  });
+
   it('skips FieldFrame when frameWrap is false', () => {
     const SchemaRenderer = createSchemaRenderer([wrapProbeRenderer]);
     const { container } = render(

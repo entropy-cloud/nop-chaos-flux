@@ -36,6 +36,10 @@ import { buildSlotFrame, readSlotFrame, SLOT_KEY } from './slot-frame';
 
 export { resolveFrameWrapMode } from './node-renderer-utils';
 
+function useMountedCid(runtime: import('@nop-chaos/flux-core').RendererRuntime) {
+  return useMemo(() => runtime.allocateMountedCid(), [runtime]);
+}
+
 export const NodeRenderer = memo(function NodeRenderer(props: {
   node: TemplateNode;
   scope: ScopeRef;
@@ -47,6 +51,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const parentClassAliases = useContext(ClassAliasesContext);
   const currentForm = useCurrentForm();
   const currentPage = useCurrentPage();
+  const mountedCid = useMountedCid(runtime);
   const nodeState = useMemo<CompiledNodeRuntimeState>(
     () => createTemplateNodeRuntimeState(props.node),
     [props.node]
@@ -59,7 +64,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       const v = metaProgram[key as keyof typeof metaProgram];
       return !v || (v as { kind?: string }).kind !== 'dynamic';
     }),
-    [props.node, propsProgram, metaProgram]
+    [propsProgram, metaProgram]
   );
 
   const getNodeResolution = () => ({
@@ -104,10 +109,14 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   );
   const resolvedMeta = useMemo(() => {
     const resolvedClassName = resolveClassAliases(baseMeta.className, mergedClassAliases);
-    return resolvedClassName !== baseMeta.className
+    const nextMeta = resolvedClassName !== baseMeta.className
       ? { ...baseMeta, className: resolvedClassName }
       : baseMeta;
-  }, [baseMeta, mergedClassAliases]);
+
+    return nextMeta.cid === mountedCid
+      ? nextMeta
+      : { ...nextMeta, cid: mountedCid };
+  }, [baseMeta, mergedClassAliases, mountedCid]);
 
   const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, {
     nodeId: props.node.id,
@@ -152,9 +161,12 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     ? baseResolvedProps
     : runtime.resolveNodeProps(props.node, renderScope, importNodeState);
   const importedResolvedClassName = resolveClassAliases(importedMeta.className, mergedClassAliases);
-  const finalResolvedMeta = importedResolvedClassName !== importedMeta.className
-    ? { ...importedMeta, className: importedResolvedClassName }
-    : importedMeta;
+  const importedMetaWithCid = importedMeta.cid === mountedCid
+    ? importedMeta
+    : { ...importedMeta, cid: mountedCid };
+  const finalResolvedMeta = importedResolvedClassName !== importedMetaWithCid.className
+    ? { ...importedMetaWithCid, className: importedResolvedClassName }
+    : importedMetaWithCid;
   const resolvedComponentProps = useNodeSourceProps(props.node, importedResolvedProps.value, renderScope);
   const nodeInstance = useMemo(
     () => createNodeInstance({

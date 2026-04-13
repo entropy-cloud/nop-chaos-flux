@@ -33,7 +33,12 @@ export function createRuntimeNodeResolver(_runtime: RendererRuntime) {
         return undefined;
       }
 
-      return nodeInstance;
+      return nodeInstance.cid === cid
+        ? nodeInstance
+        : {
+            ...nodeInstance,
+            cid
+          };
     }
   };
 }

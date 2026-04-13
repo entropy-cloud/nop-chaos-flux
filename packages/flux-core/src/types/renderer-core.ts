@@ -54,6 +54,24 @@ export interface ReactionRegistryDebugSnapshot {
   reactions: ReactionDebugEntry[];
 }
 
+export interface SourceDebugEntry {
+  id: string;
+  scopeId: string;
+  name?: string;
+  targetPath?: string;
+  statusPath?: string;
+  dependencies?: readonly string[];
+  started: boolean;
+  loading: boolean;
+  stale: boolean;
+  hasValue: boolean;
+  error?: string;
+}
+
+export interface SourceRegistryDebugSnapshot {
+  sources: SourceDebugEntry[];
+}
+
 export type RendererEventHandler = (event?: unknown, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
 
 export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
@@ -104,6 +122,7 @@ export interface RendererRuntime {
   plugins: readonly RendererPlugin[];
   compile(schema: SchemaInput): CompiledTemplate;
   evaluate<T = unknown>(target: unknown, scope: ScopeRef): T;
+  allocateMountedCid(): number;
   resolveTarget(target: ComponentTarget, ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry }): NodeInstance | undefined;
   resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta;
   resolveNodeProps(node: TemplateNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps;
@@ -156,6 +175,7 @@ export interface RendererRuntime {
     scope: ScopeRef;
     dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
   }): { id: string; dispose(): void };
+  getSourceDebugSnapshot?(): SourceRegistryDebugSnapshot;
   getReactionDebugSnapshot?(): ReactionRegistryDebugSnapshot;
   setEnv(env: RendererEnv): void;
   dispose(): void;

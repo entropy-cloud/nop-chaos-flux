@@ -97,7 +97,7 @@ export interface NodeState {
 }
 
 export interface NodeInstance<S extends BaseSchema = BaseSchema> {
-  cid: number;
+  cid?: number;
   instancePath?: readonly InstanceFrame[];
   templateNode: TemplateNode<S>;
   scope: ScopeRef;
@@ -127,7 +127,7 @@ export interface NodeInspectPayload {
 
 export type InspectResult =
   | { kind: 'resolved'; payload: NodeInspectPayload }
-  | { kind: 'notMaterialized'; cid?: number }
+  | { kind: 'notMaterialized'; cid?: number; instancePath?: readonly InstanceFrame[] }
   | { kind: 'notFound' };
 
 export interface NodeRefRegistry {

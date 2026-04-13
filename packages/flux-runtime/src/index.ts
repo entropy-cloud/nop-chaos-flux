@@ -87,6 +87,7 @@ export function createRendererRuntime(input: {
   const validationRegistry = createBuiltInValidationRegistry();
   let actionScopeCounter = 0;
   let componentRegistryCounter = 0;
+  let nextMountedCid = defaultCidState.nextCid;
   const ownedActionScopes = new Set<ActionScope>();
   const runtimeRef: { current?: RendererRuntime } = {};
   const nodeRuntime = createNodeRuntime({
@@ -192,6 +193,10 @@ export function createRendererRuntime(input: {
       return schemaCompiler.compile(schema);
     },
     evaluate,
+    allocateMountedCid() {
+      nextMountedCid += 1;
+      return nextMountedCid;
+    },
     resolveTarget(target, ctx) {
       if (!runtimeNodeResolverRef.current) {
         throw new Error('Runtime node resolver is not initialized yet');
@@ -292,6 +297,9 @@ export function createRendererRuntime(input: {
           dispatch: inputValue.dispatch
         }
       });
+    },
+    getSourceDebugSnapshot() {
+      return sourceRegistryRef.current?.getDebugSnapshot() ?? { sources: [] };
     },
     getReactionDebugSnapshot() {
       return reactionRegistryRef.current?.getDebugSnapshot() ?? { reactions: [] };

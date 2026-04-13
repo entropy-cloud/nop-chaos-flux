@@ -131,7 +131,6 @@ export function createNodeRuntime(input: {
       disabled: Boolean(evaluateCompiledValue(input.expressionCompiler, meta.disabled, scope, env, state?.meta.disabled) ?? false),
       testid: evaluateCompiledValue(input.expressionCompiler, meta.testid, scope, env, state?.meta.testid),
       changed: true,
-      cid: node.templateNodeId,
     };
 
     if (state?.resolvedMeta && shallowEqual(state.resolvedMeta, resolved)) {

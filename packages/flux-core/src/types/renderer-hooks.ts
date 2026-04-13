@@ -120,7 +120,7 @@ export interface RenderNodeMeta {
   id: string;
   path: SchemaPath;
   type: string;
-  cid: number;
+  cid?: number;
   templateNode: TemplateNode;
   node: NodeInstance;
 }

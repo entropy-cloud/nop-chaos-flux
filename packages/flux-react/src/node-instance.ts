@@ -47,7 +47,7 @@ export function createNodeInstance<S extends import('@nop-chaos/flux-core').Base
   mounted: boolean;
 }): NodeInstance<S> {
   return {
-    cid: input.cid ?? input.templateNode.templateNodeId,
+    cid: input.cid,
     instancePath: input.instancePath,
     templateNode: input.templateNode,
     scope: input.scope,
