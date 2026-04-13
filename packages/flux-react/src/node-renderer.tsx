@@ -40,18 +40,19 @@ function useMountedCid(runtime: import('@nop-chaos/flux-core').RendererRuntime) 
   return useMemo(() => runtime.allocateMountedCid(), [runtime]);
 }
 
-export const NodeRenderer = memo(function NodeRenderer(props: {
+const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   node: TemplateNode;
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
+  mountedCid: number;
 }) {
   const runtime = useRendererRuntime();
   const instancePath = useRenderInstancePath();
   const parentClassAliases = useContext(ClassAliasesContext);
   const currentForm = useCurrentForm();
   const currentPage = useCurrentPage();
-  const mountedCid = useMountedCid(runtime);
+  const mountedCid = props.mountedCid;
   const nodeState = useMemo<CompiledNodeRuntimeState>(
     () => createTemplateNodeRuntimeState(props.node),
     [props.node]
@@ -91,7 +92,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     [isStatic, props.scope]
   );
 
-  const { meta: baseMeta, resolvedProps: baseResolvedProps } = useSyncExternalStoreWithSelector(
+  const { meta: baseMeta } = useSyncExternalStoreWithSelector(
     subscribe,
     getSnapshot,
     getSnapshot,
@@ -118,48 +119,15 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       : { ...nextMeta, cid: mountedCid };
   }, [baseMeta, mergedClassAliases, mountedCid]);
 
-  const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, {
-    nodeId: props.node.id,
-    actionScopePolicy: props.node.component.actionScopePolicy ?? (getNodeImports(props.node)?.length ? 'new' : undefined),
-    componentRegistryPolicy: props.node.component.componentRegistryPolicy
-  }, props.actionScope, props.componentRegistry);
-
-  const activeScope = props.scope;
-  const importOwnerNodeInstance = useMemo(
-    () => createNodeInstance({
-      templateNode: props.node,
-      scope: activeScope,
-      state: nodeState,
-      cid: resolvedMeta.cid,
-      instancePath,
-      mounted: true
-    }),
-    [props.node, activeScope, nodeState, resolvedMeta, instancePath]
-  );
-  const nodeImports = getNodeImports(props.node);
-  const importExpressionBindings = useNodeImports(
-    runtime, nodeImports, activeActionScope, activeComponentRegistry, activeScope,
-    importOwnerNodeInstance
-  );
-  const renderScope = useMemo(
-    () => Object.keys(importExpressionBindings).length === 0
-      ? activeScope
-      : runtime.createChildScope(activeScope, { __imports: importExpressionBindings }, {
-          pathSuffix: 'imports',
-          scopeKey: `${props.node.id}:imports`
-        }),
-    [runtime, activeScope, importExpressionBindings, props.node.id]
-  );
+  const activeActionScope = props.actionScope;
+  const activeComponentRegistry = props.componentRegistry;
+  const renderScope = props.scope;
   const importNodeState = useMemo(
-    () => (renderScope === activeScope ? nodeState : createTemplateNodeRuntimeState(props.node)),
-    [renderScope, activeScope, nodeState, props.node]
+    () => nodeState,
+    [nodeState]
   );
-  const importedMeta = renderScope === activeScope
-    ? resolvedMeta
-    : runtime.resolveNodeMeta(props.node, renderScope, importNodeState);
-  const importedResolvedProps = renderScope === activeScope
-    ? baseResolvedProps
-    : runtime.resolveNodeProps(props.node, renderScope, importNodeState);
+  const importedMeta = resolvedMeta;
+  const importedResolvedProps = runtime.resolveNodeProps(props.node, renderScope, importNodeState);
   const importedResolvedClassName = resolveClassAliases(importedMeta.className, mergedClassAliases);
   const importedMetaWithCid = importedMeta.cid === mountedCid
     ? importedMeta
@@ -338,5 +306,68 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     >
       {content}
     </NodeRendererProviders>
+  );
+});
+
+export const NodeRenderer = memo(function NodeRenderer(props: {
+  node: TemplateNode;
+  scope: ScopeRef;
+  actionScope?: ActionScope;
+  componentRegistry?: ComponentHandleRegistry;
+}) {
+  const runtime = useRendererRuntime();
+  const instancePath = useRenderInstancePath();
+  const mountedCid = useMountedCid(runtime);
+  const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, {
+    nodeId: props.node.id,
+    actionScopePolicy: props.node.component.actionScopePolicy ?? (getNodeImports(props.node)?.length ? 'new' : undefined),
+    componentRegistryPolicy: props.node.component.componentRegistryPolicy
+  }, props.actionScope, props.componentRegistry);
+  const nodeImports = getNodeImports(props.node);
+  const importSetupState = useMemo<CompiledNodeRuntimeState>(
+    () => createTemplateNodeRuntimeState(props.node),
+    [props.node]
+  );
+  const importOwnerNodeInstance = useMemo(
+    () => createNodeInstance({
+      templateNode: props.node,
+      scope: props.scope,
+      state: importSetupState,
+      cid: mountedCid,
+      instancePath,
+      mounted: true
+    }),
+    [props.node, props.scope, importSetupState, mountedCid, instancePath]
+  );
+  const importState = useNodeImports(
+    runtime,
+    nodeImports,
+    activeActionScope,
+    activeComponentRegistry,
+    props.scope,
+    importOwnerNodeInstance
+  );
+  const renderScope = useMemo(
+    () => Object.keys(importState.expressionBindings).length === 0
+      ? props.scope
+      : runtime.createChildScope(props.scope, { __imports: importState.expressionBindings }, {
+          pathSuffix: 'imports',
+          scopeKey: `${props.node.id}:imports`
+        }),
+    [runtime, props.scope, importState.expressionBindings, props.node.id]
+  );
+
+  if (!importState.ready) {
+    return null;
+  }
+
+  return (
+    <NodeRendererResolved
+      node={props.node}
+      scope={renderScope}
+      actionScope={activeActionScope}
+      componentRegistry={activeComponentRegistry}
+      mountedCid={mountedCid}
+    />
   );
 });

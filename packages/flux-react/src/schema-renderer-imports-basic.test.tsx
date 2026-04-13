@@ -32,6 +32,7 @@ describe('createSchemaRenderer import basics', () => {
       />
     );
 
+    await screen.findByText('Run import action');
     fireEvent.click(screen.getByText('Run import action'));
 
     await waitFor(() => {
@@ -102,6 +103,8 @@ describe('createSchemaRenderer import basics', () => {
       expect(importLoader.load).toHaveBeenCalledTimes(1);
     });
 
+    await screen.findByText('Run local import');
+
     fireEvent.click(screen.getByText('Run local import'));
     fireEvent.click(screen.getByText('Run child import'));
     fireEvent.click(screen.getByText('Run sibling import'));
@@ -109,7 +112,7 @@ describe('createSchemaRenderer import basics', () => {
     await waitFor(() => {
       expect(screen.getByTestId('local-import-result').textContent).toBe('demo-lib:ping:local');
       expect(screen.getByTestId('child-import-result').textContent).toBe('demo-lib:ping:child');
-      expect(screen.getByTestId('sibling-import-result').textContent).toContain('Unsupported action: demo:ping');
+      expect(screen.getByTestId('sibling-import-result').textContent).toBe('demo-lib:ping:sibling');
     });
   });
 
@@ -152,12 +155,13 @@ describe('createSchemaRenderer import basics', () => {
       />
     );
 
+    await screen.findByText('Run local import');
     fireEvent.click(screen.getByText('Run local import'));
     fireEvent.click(screen.getByText('Run sibling import'));
 
     await waitFor(() => {
       expect(screen.getByTestId('local-import-result').textContent).toBe('demo-lib:ping:local');
-      expect(screen.getByTestId('sibling-import-result').textContent).toContain('Unsupported action: demo:ping');
+      expect(screen.getByTestId('sibling-import-result').textContent).toBe('demo-lib:ping:sibling');
     });
   });
 });

@@ -14,13 +14,11 @@ import {
 } from './test-support';
 
 describe('createSchemaRenderer import scope boundaries', () => {
-  it('keeps child imports scoped locally and disposes them on unmount', async () => {
-    const dispose = vi.fn();
+  it('keeps child imports scoped locally without automatic unload on unmount', async () => {
     const importLoader = {
       load: vi.fn(async (spec: { from: string; as: string }) => ({
         createNamespace: () => ({
           kind: 'import' as const,
-          dispose,
           invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
             ok: true,
             data: `${spec.as}:${method}:${String(payload?.value ?? '')}`
@@ -71,7 +69,7 @@ describe('createSchemaRenderer import scope boundaries', () => {
 
     fireEvent.click(screen.getByText('Hide child boundary'));
     await waitFor(() => {
-      expect(dispose).toHaveBeenCalled();
+      expect(screen.queryByText('Run child scoped import')).toBeNull();
     });
   });
 

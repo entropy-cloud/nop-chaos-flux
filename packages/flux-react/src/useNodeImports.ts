@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
@@ -11,6 +11,30 @@ import { isReportedImportError, shouldWarnOnImportFailure } from './node-rendere
 
 const EMPTY_IMPORT_BINDINGS: Readonly<Record<string, unknown>> = Object.freeze({});
 
+interface AsyncImportState {
+  requestKey: symbol | null;
+  error?: unknown;
+  expressionBindings: Readonly<Record<string, unknown>>;
+}
+
+function createImportRequestKey(...inputs: readonly unknown[]): symbol {
+  void inputs;
+  return Symbol('node-imports-request');
+}
+
+const INITIAL_IMPORT_STATE: AsyncImportState = Object.freeze({
+  requestKey: null,
+  error: undefined as unknown,
+  expressionBindings: EMPTY_IMPORT_BINDINGS
+});
+
+export interface NodeImportsState {
+  ready: boolean;
+  loading: boolean;
+  error?: unknown;
+  expressionBindings: Readonly<Record<string, unknown>>;
+}
+
 export function useNodeImports(
   runtime: RendererRuntime,
   nodeImports: readonly XuiImportSpec[] | undefined,
@@ -18,10 +42,17 @@ export function useNodeImports(
   activeComponentRegistry: ComponentHandleRegistry | undefined,
   activeScope: ScopeRef,
   nodeInstance: NodeInstance
-): Readonly<Record<string, unknown>> {
+): NodeImportsState {
   const hasImports = Boolean(nodeImports?.length && activeActionScope);
   const activeImportLoader = runtime.env.importLoader;
-  const [expressionBindings, setExpressionBindings] = useState<Readonly<Record<string, unknown>>>(EMPTY_IMPORT_BINDINGS);
+  const inheritedBindings = activeScope.get('__imports') as Readonly<Record<string, unknown>> | undefined;
+  const hasInheritedBindings = Boolean(inheritedBindings && Object.keys(inheritedBindings).length > 0);
+  const shouldLoad = hasImports && !hasInheritedBindings;
+  const requestKey = useMemo(
+    () => createImportRequestKey(runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope),
+    [runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope]
+  );
+  const [asyncState, setAsyncState] = useState<AsyncImportState>(INITIAL_IMPORT_STATE);
   const nodeInstanceRef = useRef(nodeInstance);
 
   useEffect(() => {
@@ -29,7 +60,7 @@ export function useNodeImports(
   }, [nodeInstance]);
 
   useEffect(() => {
-    if (!hasImports || !activeActionScope) {
+    if (!shouldLoad || !activeActionScope) {
       return;
     }
 
@@ -47,14 +78,24 @@ export function useNodeImports(
         return;
       }
 
-      setExpressionBindings(runtime.getImportedExpressionBindings({
-        imports: nodeImports,
-        actionScope: activeActionScope
-      }));
+      setAsyncState({
+        requestKey,
+        error: undefined,
+        expressionBindings: runtime.getImportedExpressionBindings({
+          imports: nodeImports,
+          actionScope: activeActionScope
+        })
+      });
     }).catch((error) => {
       if (signal.aborted) {
         return;
       }
+
+      setAsyncState({
+        requestKey,
+        error,
+        expressionBindings: EMPTY_IMPORT_BINDINGS
+      });
 
       if (!shouldWarnOnImportFailure()) {
         return;
@@ -91,7 +132,21 @@ export function useNodeImports(
         actionScope: activeActionScope
       });
     };
-  }, [runtime, activeImportLoader, hasImports, nodeImports, activeActionScope, activeComponentRegistry, activeScope]);
+  }, [requestKey, runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope, hasInheritedBindings, inheritedBindings]);
 
-  return hasImports ? expressionBindings : EMPTY_IMPORT_BINDINGS;
+  const loading = shouldLoad && asyncState.requestKey !== requestKey;
+  const error = shouldLoad && asyncState.requestKey === requestKey ? asyncState.error : undefined;
+
+  return {
+    ready: hasInheritedBindings || !shouldLoad || (!loading && !error),
+    loading: hasInheritedBindings ? false : loading,
+    error,
+    expressionBindings: hasInheritedBindings
+      ? inheritedBindings ?? EMPTY_IMPORT_BINDINGS
+      : shouldLoad
+        ? asyncState.requestKey === requestKey
+          ? asyncState.expressionBindings
+          : EMPTY_IMPORT_BINDINGS
+        : EMPTY_IMPORT_BINDINGS
+  };
 }

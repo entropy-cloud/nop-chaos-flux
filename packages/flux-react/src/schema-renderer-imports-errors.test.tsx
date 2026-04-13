@@ -5,7 +5,7 @@ import { createSchemaRenderer } from './index';
 import { buttonRenderer, dispatchProbeRenderer, env, pageRenderer, sharedFormulaCompiler } from './test-support';
 
 describe('createSchemaRenderer import failures and retries', () => {
-  it('surfaces import loading and load failures through dispatch results and env notifications', async () => {
+  it('reports preload failures through env notifications before child render', async () => {
     let resolveModule:
       | ((module: { createNamespace: () => { kind: 'import'; invoke: () => Promise<{ ok: true }> } }) => void)
       | undefined;
@@ -37,17 +37,8 @@ describe('createSchemaRenderer import failures and retries', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('Run loading import'));
-    await waitFor(() => {
-      expect(screen.getByTestId('loading-import-result').textContent).toContain('Imported namespace slow is still loading');
-    });
     await waitFor(() => {
       expect(notify).toHaveBeenCalledWith('error', 'Imported namespace broken failed to load: loader exploded');
-    });
-
-    fireEvent.click(screen.getByText('Run failed import'));
-    await waitFor(() => {
-      expect(screen.getByTestId('failed-import-result').textContent).toContain('Imported namespace broken failed to load: loader exploded');
     });
 
     resolveModule?.({
@@ -135,13 +126,9 @@ describe('createSchemaRenderer import failures and retries', () => {
       expect(notify).toHaveBeenCalledWith('error', 'Imported namespace retry failed to load: loader exploded 0');
     });
 
-    fireEvent.click(screen.getByText('Run retried import'));
-    await waitFor(() => {
-      expect(screen.getByTestId('retry-import-result').textContent).toContain('Imported namespace retry failed to load: loader exploded 0');
-    });
-
     shouldFail = false;
     fireEvent.click(screen.getByText('Refresh env 0'));
+    await screen.findByText('Run retried import');
     fireEvent.click(screen.getByText('Run retried import'));
 
     await waitFor(() => {
