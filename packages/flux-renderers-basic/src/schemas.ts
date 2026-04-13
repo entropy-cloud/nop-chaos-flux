@@ -136,4 +136,10 @@ export interface FlexSchema extends BaseSchema {
   gap?: number | string;
   className?: string;
 }
+
+export interface ScopeDebugSchema extends BaseSchema {
+  type: 'scope-debug';
+  title?: string;
+  defaultExpand?: boolean;
+}
 export type { DynamicRendererSchema };

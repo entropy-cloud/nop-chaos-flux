@@ -84,6 +84,39 @@ describe('basicRendererDefinitions', () => {
     cleanup();
   });
 
+  it('rerenders scope-debug when the current scope changes', async () => {
+    const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'button', label: 'Increment', onClick: { action: 'setValue', componentPath: 'count', value: '${count + 1}' } },
+            { type: 'scope-debug', title: 'Probe', defaultExpand: true }
+          ]
+        }}
+        data={{ count: 0 }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(screen.getByText('Probe')).toBeTruthy();
+    const debugJson = document.querySelector('[data-slot="scope-debug-json"]');
+
+    expect(debugJson).toBeTruthy();
+    expect(debugJson?.textContent).toBe('{\n  "count": 0\n}');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Increment' }));
+
+    await waitFor(() => {
+      expect(debugJson?.textContent).toBe('{\n  "count": 1\n}');
+    });
+
+    cleanup();
+  });
+
   it('prefers flex body region over deprecated items region', () => {
     const SchemaRenderer = createSchemaRenderer(basicRendererDefinitions);
 

@@ -15,6 +15,7 @@ import { TabsRenderer } from './tabs';
 import { FragmentRenderer } from './fragment';
 import { LoopRenderer } from './loop';
 import { RecurseRenderer } from './recurse';
+import { ScopeDebugRenderer } from './scope-debug';
 
 export * from './schemas';
 export * from './utils';
@@ -33,6 +34,7 @@ export { TabsRenderer } from './tabs';
 export { FragmentRenderer } from './fragment';
 export { LoopRenderer } from './loop';
 export { RecurseRenderer } from './recurse';
+export { ScopeDebugRenderer } from './scope-debug';
 
 export const basicRendererDefinitions: RendererDefinition[] = [
   {
@@ -144,6 +146,18 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'content',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: BadgeRenderer
+  },
+  {
+    type: 'scope-debug',
+    displayName: 'Scope Debug',
+    category: 'advanced',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'scope-debug', title: 'Scope Debug', defaultExpand: false },
+    component: ScopeDebugRenderer,
+    fields: [
+      { key: 'title', kind: 'prop' },
+      { key: 'defaultExpand', kind: 'prop' }
+    ]
   },
   {
     type: 'dynamic-renderer',
