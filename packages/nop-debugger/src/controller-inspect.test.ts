@@ -121,7 +121,41 @@ describe('controller inspector methods', () => {
     const result = ctrl.inspectByCid(101);
     expect(result).toMatchObject({
       cid: 101,
-      mounted: true
+      mounted: true,
+      instancePath: []
+    });
+  });
+
+  it('inspectByCid preserves registry scopeChain snapshots when available', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-registry-scope-chain', enabled: true });
+    const div = document.createElement('div');
+    div.setAttribute('data-cid', '111');
+    document.body.appendChild(div);
+
+    const mockRegistry = {
+      id: 'reg-1',
+      inspectCid: (cid: number) => cid === 111
+        ? {
+            kind: 'resolved',
+            payload: {
+              cid: 111,
+              scopeChain: [
+                { id: 'form-1', path: '$form', label: '$form', data: { departmentId: 'runtime' } }
+              ]
+            }
+          }
+        : { kind: 'notFound' },
+      getHandleByCid: () => undefined
+    };
+
+    ctrl.setComponentRegistry(mockRegistry as never);
+
+    expect(ctrl.inspectByCid(111)).toMatchObject({
+      cid: 111,
+      mounted: true,
+      scopeChain: [
+        { id: 'form-1', path: '$form', label: '$form', data: { departmentId: 'runtime' } }
+      ]
     });
   });
 
@@ -277,6 +311,44 @@ describe('controller inspector methods', () => {
         hasMetaDependencies: true,
         hasPropsDependencies: false
       }
+    });
+  });
+
+  it('inspectByElement uses registry inspect payload for instancePath and scopeChain when available', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-element-rich-payload', enabled: true });
+    const owner = document.createElement('div');
+    owner.setAttribute('data-cid', '210');
+    const child = document.createElement('span');
+    owner.appendChild(child);
+    document.body.appendChild(owner);
+
+    const mockRegistry = {
+      id: 'reg-1',
+      inspectCid: (cid: number) => cid === 210
+        ? {
+            kind: 'resolved',
+            payload: {
+              cid: 210,
+              instancePath: [{ repeatedTemplateId: 'rows', instanceKey: '1' }],
+              scopeChain: [
+                { id: 'row-1', path: '$rows.1', label: '$rows.1', data: { id: 1 } }
+              ],
+              state: { mounted: true, metaState: {} }
+            }
+          }
+        : { kind: 'notFound' },
+      getHandleByCid: () => undefined
+    };
+
+    ctrl.setComponentRegistry(mockRegistry as never);
+
+    expect(ctrl.inspectByElement(child)).toMatchObject({
+      cid: 210,
+      mounted: true,
+      instancePath: [{ repeatedTemplateId: 'rows', instanceKey: '1' }],
+      scopeChain: [
+        { id: 'row-1', path: '$rows.1', label: '$rows.1', data: { id: 1 } }
+      ]
     });
   });
 

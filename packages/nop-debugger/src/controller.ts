@@ -236,12 +236,13 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         componentRegistry
       );
       result.instancePath = inspected.payload.instancePath;
+      result.scopeChain = inspected.payload.scopeChain as typeof result.scopeChain;
       return result;
     }
 
     if (inspected?.kind === 'notMaterialized') {
       const result = buildInspectResult(cid, handle, false, (element as HTMLElement) ?? undefined, componentRegistry);
-      result.instancePath = inspected.cid != null ? undefined : undefined;
+      result.instancePath = inspected.instancePath;
       return result;
     }
 
@@ -259,7 +260,28 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     if (!cidAttr) return undefined;
     const cid = Number(cidAttr);
     if (!Number.isFinite(cid)) return undefined;
+    const inspected = componentRegistry?.inspectCid?.(cid);
     const handle = componentRegistry?.getHandleByCid?.(cid);
+
+    if (inspected?.kind === 'resolved') {
+      const result = buildInspectResult(
+        cid,
+        handle,
+        inspected.payload.state?.mounted ?? handle?._mounted !== false,
+        owner ?? undefined,
+        componentRegistry
+      );
+      result.instancePath = inspected.payload.instancePath;
+      result.scopeChain = inspected.payload.scopeChain as typeof result.scopeChain;
+      return result;
+    }
+
+    if (inspected?.kind === 'notMaterialized') {
+      const result = buildInspectResult(cid, handle, false, owner ?? undefined, componentRegistry);
+      result.instancePath = inspected.instancePath;
+      return result;
+    }
+
     return buildInspectResult(cid, handle, true, owner ?? undefined, componentRegistry);
   };
 
