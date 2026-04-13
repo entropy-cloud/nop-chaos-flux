@@ -62,8 +62,9 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [page, pageData]);
 
     useEffect(() => {
+      runtime.setEnv(props.env);
       page.refresh();
-    }, [page, props.env]);
+    }, [page, props.env, runtime]);
 
     useEffect(() => {
       return () => {
@@ -83,11 +84,12 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
 
     useEffect(() => {
       onComponentRegistryChange?.(rootComponentRegistry);
+      page.refresh();
 
       return () => {
         onComponentRegistryChange?.(null);
       };
-    }, [onComponentRegistryChange, rootComponentRegistry]);
+    }, [onComponentRegistryChange, rootComponentRegistry, page]);
 
     useEffect(() => {
       onActionScopeChange?.(rootActionScope);

@@ -284,6 +284,80 @@ describe('detail-field renderer', () => {
     });
   });
 
+  it('second confirm writes second set of edits to parent form', async () => {
+    cleanup();
+    const submitValues: Record<string, unknown>[] = [];
+    const buttonRenderer = {
+      type: 'button',
+      component: (props: any) => (
+        <button type="button" onClick={() => void props.events.onClick?.()}>
+          {String(props.props.label ?? props.meta.label ?? 'Button')}
+        </button>
+      ),
+      fields: [{ key: 'onClick', kind: 'event' as const }]
+    };
+
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'double-confirm-form',
+          data: { address: { street: '123 Main St', city: 'Springfield' } },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'address',
+              label: 'Address',
+              triggerLabel: 'Edit Address',
+              surface: { mode: 'dialog', title: 'Edit Address' },
+              content: [
+                { type: 'input-text', name: 'street', label: 'Street' },
+                { type: 'input-text', name: 'city', label: 'City' }
+              ]
+            }
+          ],
+          submitAction: {
+            action: 'ajax',
+            api: { url: '/api/test', method: 'post' }
+          },
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit',
+              onClick: { action: 'component:submit', componentId: 'double-confirm-form' }
+            }
+          ]
+        }}
+        env={{ ...env, fetcher: makeCapturingFetcher(submitValues) }}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Address'));
+    await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('Street'), { target: { value: '456 Oak Ave' } });
+    fireEvent.click(screen.getByText('Confirm'));
+    await waitFor(() => expect(screen.queryByLabelText('Street')).toBeNull());
+
+    fireEvent.click(screen.getByText('Edit Address'));
+    await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
+    expect((screen.getByLabelText('Street') as HTMLInputElement).value).toBe('456 Oak Ave');
+    fireEvent.change(screen.getByLabelText('Street'), { target: { value: '789 Pine Rd' } });
+    fireEvent.click(screen.getByText('Confirm'));
+    await waitFor(() => expect(screen.queryByLabelText('Street')).toBeNull());
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
+
+    expect(submitValues[0]).toMatchObject({
+      address: { street: '789 Pine Rd', city: 'Springfield' }
+    });
+  });
+
   it('blocks confirm if draft has required fields empty', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);

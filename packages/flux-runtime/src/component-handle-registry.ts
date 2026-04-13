@@ -216,10 +216,6 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       return input.parent?.getHandleByCid?.(cid);
     },
     setHandleDebugData(cid, data) {
-      if (!debugEnabled) {
-        return;
-      }
-
       if (data) {
         debugDataByCid.set(cid, data);
         return;

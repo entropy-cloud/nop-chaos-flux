@@ -296,6 +296,9 @@ export function createRendererRuntime(input: {
     getReactionDebugSnapshot() {
       return reactionRegistryRef.current?.getDebugSnapshot() ?? { reactions: [] };
     },
+    setEnv(env: import('@nop-chaos/flux-core').RendererEnv) {
+      envRef.current = env;
+    },
     dispose() {
       if (disposed) {
         return;

@@ -28,7 +28,7 @@ export function createInputRenderer(inputType: string) {
     return (
       <Input
         type={inputType}
-        value={String(value)}
+        value={value == null ? '' : String(value)}
         disabled={presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
         placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
@@ -107,7 +107,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 
   return (
     <div className="grid gap-2">
-      <Select value={String(value)} onValueChange={(nextValue) => handlers.onChange(nextValue)} disabled={loading || presentation.effectiveDisabled}>
+      <Select value={value == null ? '' : String(value)} onValueChange={(nextValue) => handlers.onChange(nextValue)} disabled={loading || presentation.effectiveDisabled}>
         <SelectTrigger
           className="w-full"
           aria-label={ariaLabel}
@@ -141,7 +141,7 @@ function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
 
   return (
     <Textarea
-      value={String(value)}
+      value={value == null ? '' : String(value)}
       rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
       disabled={presentation.effectiveDisabled}
       aria-invalid={presentation.showError ? true : undefined}
@@ -227,7 +227,7 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
       ) : null}
       <RadioGroup
         className="grid gap-2.5"
-        value={String(value)}
+        value={value == null ? '' : String(value)}
         disabled={loading || presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
         onFocus={handlers.onFocus}

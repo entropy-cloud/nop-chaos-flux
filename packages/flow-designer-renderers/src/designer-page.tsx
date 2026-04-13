@@ -59,10 +59,19 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
     return <div>Designer requires document and config props</div>;
   }
 
-  return DesignerPageRendererInner(props, document, config);
+  return <DesignerPageInner rendererProps={props} document={document} config={config} />;
 }
 
-function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPageSchema>, core: ReturnType<typeof createDesignerCore>, snapshot: ReturnType<typeof useDesignerSnapshot>, commandAdapter: ReturnType<typeof createDesignerCommandAdapter>, dispatch: (command: import('./designer-command-adapter').DesignerCommand) => ReturnType<typeof commandAdapter.execute>, config: DesignerConfig) {
+interface DesignerPageBodyProps {
+  rendererProps: RendererComponentProps<DesignerPageSchema>;
+  core: ReturnType<typeof createDesignerCore>;
+  commandAdapter: ReturnType<typeof createDesignerCommandAdapter>;
+  dispatch: (command: import('./designer-command-adapter').DesignerCommand) => import('./designer-command-adapter').DesignerCommandResult;
+  config: DesignerConfig;
+}
+
+function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch, config }: DesignerPageBodyProps) {
+  const snapshot = useDesignerSnapshot(core);
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
   const handleAutoLayout = useCallback(async () => {
     const doc = core.getDocument();
@@ -239,10 +248,15 @@ function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPag
   );
 }
 
-function DesignerPageRendererInner(props: RendererComponentProps<DesignerPageSchema>, document: GraphDocument, config: DesignerConfig) {
+interface DesignerPageInnerProps {
+  rendererProps: RendererComponentProps<DesignerPageSchema>;
+  document: GraphDocument;
+  config: DesignerConfig;
+}
+
+function DesignerPageInner({ rendererProps: props, document, config }: DesignerPageInnerProps) {
   const env = useRendererEnv();
   const core = useMemo(() => createDesignerCore(document, config), [document, config]);
-  const snapshot = useDesignerSnapshot(core);
   const commandAdapter = useMemo(() => createDesignerCommandAdapter(core), [core]);
   const dispatch = useCallback(
     (command: import('./designer-command-adapter').DesignerCommand) => {
@@ -253,7 +267,7 @@ function DesignerPageRendererInner(props: RendererComponentProps<DesignerPageSch
     [commandAdapter, env]
   );
 
-  return DesignerPageRendererInnerBody(props, core, snapshot, commandAdapter, dispatch, config);
+  return <DesignerPageBody rendererProps={props} core={core} commandAdapter={commandAdapter} dispatch={dispatch} config={config} />;
 }
 
 export function DesignerCanvasRenderer() {

@@ -157,6 +157,7 @@ export interface RendererRuntime {
     dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
   }): { id: string; dispose(): void };
   getReactionDebugSnapshot?(): ReactionRegistryDebugSnapshot;
+  setEnv(env: RendererEnv): void;
   dispose(): void;
   createFormRuntime(input: {
     id?: string;

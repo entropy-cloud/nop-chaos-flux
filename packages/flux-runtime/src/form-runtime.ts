@@ -575,6 +575,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       const baseline = initialFieldState.initialValues[name];
       const patch = applyFieldValuePatch(state, name, value, !Object.is(baseline, value));
 
+      setLastChange({
+        paths: [name || '*'],
+        sourceScopeId: formId,
+        kind: 'update'
+      });
+
       store.batchUpdate({
         validating: patch.nextValidating,
         dirty: patch.nextDirty,
@@ -631,6 +637,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
         changedPaths.push(name);
       }
+
+      setLastChange({
+        paths: changedPaths.length > 0 ? changedPaths : ['*'],
+        sourceScopeId: formId,
+        kind: 'update'
+      });
 
       store.batchUpdate({
         values: nextValues,

@@ -20,10 +20,6 @@ export function useNodeDebugData(
       return;
     }
 
-    if (!activeComponentRegistry.debugEnabled) {
-      return;
-    }
-
     activeComponentRegistry.setHandleDebugData?.(cid, {
       nodeId: nodeInstance.templateNode.id,
       path: nodeInstance.templateNode.templatePath,
@@ -38,5 +34,5 @@ export function useNodeDebugData(
     return () => {
       activeComponentRegistry.setHandleDebugData?.(cid, undefined);
     };
-  }, [activeComponentRegistry, activeComponentRegistry?.debugEnabled, cid, nodeInstance, activeScope, resolvedMeta, resolvedPropsValue]);
+  }, [activeComponentRegistry, cid, nodeInstance, activeScope, resolvedMeta, resolvedPropsValue]);
 }

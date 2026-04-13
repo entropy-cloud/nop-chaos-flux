@@ -241,6 +241,162 @@ describe('detail-view renderer', () => {
     await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
   });
 
+  it('viewer updates after first confirm when using name as scopePath', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              name: 'testForm',
+              data: { summary: { title: 'Original Title', author: 'Alice' } },
+              body: [
+                {
+                  type: 'detail-view',
+                  name: 'summary',
+                  label: 'Summary',
+                  triggerLabel: 'Edit',
+                  surface: { mode: 'dialog', title: 'Edit Summary' },
+                  viewer: [
+                    { type: 'text', text: '${summary.title}', testid: 'viewer-title' }
+                  ],
+                  content: [
+                    { type: 'input-text', name: 'title', label: 'Title' },
+                    { type: 'input-text', name: 'author', label: 'Author' }
+                  ]
+                }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByTestId('viewer-title')).toBeTruthy());
+    expect(screen.getByTestId('viewer-title').textContent).toBe('Original Title');
+
+    fireEvent.click(screen.getByText('Edit'));
+    await waitFor(() => expect(screen.getByLabelText('Title')).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'First Edit' } });
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => expect(screen.queryByLabelText('Title')).toBeNull());
+    await waitFor(() => expect(screen.getByTestId('viewer-title').textContent).toBe('First Edit'));
+  });
+
+  it('viewer updates after second confirm when using name as scopePath', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              name: 'testForm',
+              data: { summary: { title: 'Original Title', author: 'Alice' } },
+              body: [
+                {
+                  type: 'detail-view',
+                  name: 'summary',
+                  label: 'Summary',
+                  triggerLabel: 'Edit',
+                  surface: { mode: 'dialog', title: 'Edit Summary' },
+                  viewer: [
+                    { type: 'text', text: '${summary.title}', testid: 'viewer-title' }
+                  ],
+                  content: [
+                    { type: 'input-text', name: 'title', label: 'Title' },
+                    { type: 'input-text', name: 'author', label: 'Author' }
+                  ]
+                }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByTestId('viewer-title')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit'));
+    await waitFor(() => expect(screen.getByLabelText('Title')).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'First Edit' } });
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => expect(screen.queryByLabelText('Title')).toBeNull());
+    await waitFor(() => expect(screen.getByTestId('viewer-title').textContent).toBe('First Edit'));
+
+    fireEvent.click(screen.getByText('Edit'));
+    await waitFor(() => expect(screen.getByLabelText('Title')).toBeTruthy());
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('First Edit');
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Second Edit' } });
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => expect(screen.queryByLabelText('Title')).toBeNull());
+    await waitFor(() => expect(screen.getByTestId('viewer-title').textContent).toBe('Second Edit'));
+  });
+
+  it('second edit dialog is pre-populated with values from first confirm', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              name: 'testForm',
+              data: { summary: { title: 'Original Title', author: 'Alice' } },
+              body: [
+                {
+                  type: 'detail-view',
+                  name: 'summary',
+                  label: 'Summary',
+                  triggerLabel: 'Edit',
+                  surface: { mode: 'dialog', title: 'Edit Summary' },
+                  content: [
+                    { type: 'input-text', name: 'title', label: 'Title' },
+                    { type: 'input-text', name: 'author', label: 'Author' }
+                  ]
+                }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit'));
+    await waitFor(() => expect(screen.getByLabelText('Title')).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'First Edit' } });
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => expect(screen.queryByLabelText('Title')).toBeNull());
+
+    fireEvent.click(screen.getByText('Edit'));
+    await waitFor(() => expect(screen.getByLabelText('Title')).toBeTruthy());
+
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('First Edit');
+    expect((screen.getByLabelText('Author') as HTMLInputElement).value).toBe('Alice');
+  });
+
   it('applyCommitResult handles updates dict shape', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);

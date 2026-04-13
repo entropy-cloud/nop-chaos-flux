@@ -93,7 +93,8 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         return;
       }
 
-      const draftValues = draftForm.scope.read();
+      const rawDraftValues = draftForm.scope.readOwn();
+      const { $form: _ignored, ...draftValues } = rawDraftValues as Record<string, unknown> & { $form?: unknown };
       const writeback = draftValues.__value !== undefined ? draftValues.__value : draftValues;
 
       parentForm.setValue(name, writeback);

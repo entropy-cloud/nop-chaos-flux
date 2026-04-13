@@ -36,7 +36,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const parentScope = useRenderScope();
   const schema = props.schema as DetailViewSchema;
   const readOnly = Boolean(props.props.readOnly ?? schema.readOnly);
-  const scopePath = schema.scopePath;
+  const scopePath = schema.scopePath ?? (typeof schema.name === 'string' ? schema.name : undefined);
   const staticData = schema.data as Record<string, unknown> | undefined;
   const surfaceMode = (schema.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schema.surface as { title?: string } | undefined)?.title ?? '';
@@ -144,7 +144,8 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         return;
       }
 
-      const draftValues = draftForm.scope.read();
+      const rawDraftValues = draftForm.scope.readOwn();
+      const { $form: _ignored, ...draftValues } = rawDraftValues as Record<string, unknown> & { $form?: unknown };
       await applyCommitResult(draftValues);
 
       setOpen(false);
