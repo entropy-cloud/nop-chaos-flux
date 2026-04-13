@@ -1,0 +1,218 @@
+// @vitest-environment jsdom
+
+import { describe, expect, it, vi } from 'vitest';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
+import { flowDesignerRendererDefinitions } from './index';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { render, within } from '@testing-library/react';
+
+const textRenderer: RendererDefinition = {
+  type: 'text',
+  component: (props) => <span>{String(props.props.text ?? '')}</span>
+};
+
+const pageRenderer: RendererDefinition = {
+  type: 'page',
+  component: (props) => <section>{props.regions.body?.render()}</section>,
+  regions: ['body']
+};
+
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  Object.defineProperty(globalThis, 'ResizeObserver', {
+    value: ResizeObserverMock,
+    writable: true,
+    configurable: true
+  });
+}
+
+function createTreeTestConfig(): DesignerConfig {
+  return {
+    version: '1.0.0',
+    kind: 'test-tree',
+    documentMode: 'tree',
+    treeConfig: {
+      layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
+      showGatewayNodes: false,
+      showMergeNodes: false,
+      autoLayout: true,
+      chainEdgeType: 'chain',
+      branchEdgeType: 'branch',
+      mergeEdgeType: 'merge',
+    },
+    nodeTypes: [
+      { id: 'start', label: 'Start', body: { type: 'text' } },
+      { id: 'task', label: 'Task', body: { type: 'text' } },
+      { id: 'condition', label: 'Condition', body: { type: 'text' } },
+      { id: 'end', label: 'End', body: { type: 'text' } },
+    ],
+    edgeTypes: [
+      { id: 'chain', label: 'Chain', defaults: {} },
+      { id: 'branch', label: 'Branch', defaults: {} },
+      { id: 'merge', label: 'Merge', defaults: {} },
+    ],
+  };
+}
+
+function createGraphTestConfig(): DesignerConfig {
+  return {
+    version: '1.0.0',
+    kind: 'test-graph',
+    nodeTypes: [
+      { id: 'task', label: 'Task', body: { type: 'text' } },
+      { id: 'end', label: 'End', body: { type: 'text' } },
+    ],
+    edgeTypes: [{ id: 'default', label: 'Flow', defaults: {} }],
+  };
+}
+
+function createRendererEnv(notify = vi.fn()) {
+  return {
+    fetcher: async function <T>() {
+      return { ok: true, status: 200, data: null as T };
+    },
+    notify
+  };
+}
+
+describe('DesignerPageRenderer tree mode', () => {
+  it('renders tree mode by projecting treeDocument to graph nodes and edges', () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, ...flowDesignerRendererDefinitions]);
+
+    const treeDocument = {
+      id: 'tree-1',
+      kind: 'test-tree',
+      name: 'Test Tree',
+      version: '1.0',
+      root: {
+        id: 'start',
+        type: 'start',
+        data: { label: 'Start' },
+        child: {
+          id: 'task-1',
+          type: 'task',
+          data: { label: 'Do Work' },
+          child: {
+            id: 'end',
+            type: 'end',
+            data: { label: 'End' },
+          },
+        },
+      },
+    };
+
+    const view = render(
+      <SchemaRenderer
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config: createTreeTestConfig(),
+        } as any}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const canvas = within(view.container);
+    expect(canvas.getByRole('application')).toBeTruthy();
+    expect(view.container.querySelectorAll('.react-flow__node')).toHaveLength(3);
+    expect(view.container.querySelector('.react-flow__edges')).toBeTruthy();
+  });
+
+  it('renders tree mode with branches correctly', () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, ...flowDesignerRendererDefinitions]);
+
+    const treeDocument = {
+      id: 'branch-tree',
+      kind: 'test-tree',
+      name: 'Branch Tree',
+      version: '1.0',
+      root: {
+        id: 'start',
+        type: 'start',
+        data: { label: 'Start' },
+        child: {
+          id: 'gw',
+          type: 'condition',
+          data: { label: 'Gateway' },
+          branches: [
+            { id: 'b1', data: { label: 'Branch 1' }, child: { id: 'task-1', type: 'task', data: { label: 'Task 1' } } },
+            { id: 'b2', data: { label: 'Branch 2' }, child: { id: 'task-2', type: 'task', data: { label: 'Task 2' } } },
+          ],
+          child: { id: 'end', type: 'end', data: { label: 'End' } },
+        },
+      },
+    };
+
+    const view = render(
+      <SchemaRenderer
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config: createTreeTestConfig(),
+        } as any}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(view.container.querySelectorAll('.react-flow__node')).toHaveLength(5);
+    expect(view.container.querySelector('.react-flow__edges')).toBeTruthy();
+  });
+
+  it('shows fallback when treeDocument is missing in tree mode', () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, ...flowDesignerRendererDefinitions]);
+
+    const view = render(
+      <SchemaRenderer
+        schema={{
+          type: 'designer-page',
+          config: createTreeTestConfig(),
+        } as any}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect(view.getByText('Tree mode requires treeDocument prop')).toBeTruthy();
+  });
+
+  it('graph mode still works correctly (regression test)', () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, ...flowDesignerRendererDefinitions]);
+
+    const view = render(
+      <SchemaRenderer
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'graph-1',
+            kind: 'test-graph',
+            name: 'Graph Test',
+            version: '1.0',
+            nodes: [
+              { id: 'n1', type: 'task', position: { x: 0, y: 0 }, data: { label: 'Task' } },
+              { id: 'n2', type: 'end', position: { x: 200, y: 0 }, data: { label: 'End' } },
+            ],
+            edges: [{ id: 'e1', type: 'default', source: 'n1', target: 'n2', data: {} }],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: createGraphTestConfig(),
+        } as any}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const canvas = within(view.container);
+    expect(canvas.getByRole('application')).toBeTruthy();
+    expect(view.container.querySelectorAll('.react-flow__node')).toHaveLength(2);
+    expect(view.container.querySelector('.react-flow__edges')).toBeTruthy();
+  });
+});

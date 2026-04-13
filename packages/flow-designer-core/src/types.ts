@@ -58,6 +58,8 @@ export interface DesignerConfig {
   hooks?: DesignerLifecycleHooks;
   classAliases?: Record<string, string>;
   themeStyles?: string;
+  documentMode?: 'graph' | 'tree';
+  treeConfig?: TreeConfig;
 }
 
 export interface NodeTypeConfig {
@@ -233,6 +235,8 @@ export interface NormalizedDesignerConfig {
   hooks?: DesignerLifecycleHooks;
   classAliases?: Record<string, string>;
   themeStyles?: string;
+  documentMode?: 'graph' | 'tree';
+  treeConfig?: TreeConfig;
 }
 
 export interface SelectionSummary {
@@ -280,3 +284,57 @@ export type DesignerEvent =
   | { type: 'nodes:updated' };
 
 export type DesignerEventType = DesignerEvent['type'];
+
+export interface TreeDocument {
+  id: string;
+  kind: string;
+  name: string;
+  version: string;
+  meta?: Record<string, unknown>;
+  root: TreeNode;
+}
+
+export interface TreeNode {
+  id: string;
+  type: string;
+  data: Record<string, unknown>;
+  child?: TreeNode;
+  branches?: TreeNodeBranch[];
+}
+
+export interface TreeNodeBranch {
+  id: string;
+  data: Record<string, unknown>;
+  child?: TreeNode;
+}
+
+export interface TreeNodeTypeConfig extends NodeTypeConfig {
+  tree?: {
+    allowBranches?: boolean;
+    maxBranches?: number;
+    minBranches?: number;
+    allowChild?: boolean;
+    isTerminal?: boolean;
+    branchEdgeType?: string;
+  };
+}
+
+export interface TreeConfig {
+  layout: {
+    direction: 'TB' | 'LR';
+    nodeSpacing: number;
+    layerSpacing: number;
+  };
+  showGatewayNodes: boolean;
+  showMergeNodes: boolean;
+  autoLayout: boolean;
+  chainEdgeType?: string;
+  branchEdgeType?: string;
+  mergeEdgeType?: string;
+}
+
+export interface TreeDomainAdapter {
+  kind: string;
+  importToTree(external: Record<string, unknown>): TreeDocument;
+  exportFromTree(tree: TreeDocument): Record<string, unknown>;
+}

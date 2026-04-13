@@ -21,6 +21,12 @@ const NAV_CARDS: NavCard[] = [
     description: 'Designer page, toolbar, inspector, canvas, node palette, edge connections, and designer actions.'
   },
   {
+    id: 'dingtalk-flow-demo',
+    title: 'DingTalk Flow Demo',
+    eyebrow: 'Style Prototype',
+    description: 'Static DingTalk approval flow rendered with React Flow. Visual style reference for tree mode.'
+  },
+  {
     id: 'report-designer',
     title: 'Report Designer',
     eyebrow: 'Spreadsheet + Metadata',

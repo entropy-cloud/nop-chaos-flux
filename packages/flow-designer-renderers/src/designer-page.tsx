@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ActionNamespaceProvider, DesignerHostStatusSummary, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, useNamespaceRegistration, WorkbenchShell } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
-import { createDesignerCore, layoutWithElk } from '@nop-chaos/flow-designer-core';
-import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
+import { createDesignerCore, layoutWithElk, projectTree, normalizeConfig } from '@nop-chaos/flow-designer-core';
+import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { DataViewer } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
@@ -52,11 +52,36 @@ function matchesShortcut(event: KeyboardEvent, shortcuts: string[] | undefined):
 
 export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {
   const rawSchemaProps = props.schema as Record<string, SchemaValue>;
-  const document = rawSchemaProps.document as GraphDocument | undefined;
   const config = rawSchemaProps.config as DesignerConfig | undefined;
 
-  if (!document || !config) {
-    return <div>Designer requires document and config props</div>;
+  if (!config) {
+    return <div>Designer requires config prop</div>;
+  }
+
+  const documentMode = config.documentMode;
+
+  if (documentMode === 'tree') {
+    const treeDocument = rawSchemaProps.treeDocument as TreeDocument | undefined;
+    if (!treeDocument) {
+      return <div>Tree mode requires treeDocument prop</div>;
+    }
+    const normalizedConfig = normalizeConfig(config);
+    const projected = projectTree(treeDocument, normalizedConfig);
+    const document: GraphDocument = {
+      id: treeDocument.id,
+      kind: treeDocument.kind,
+      name: treeDocument.name,
+      version: treeDocument.version,
+      meta: treeDocument.meta,
+      nodes: projected.nodes,
+      edges: projected.edges,
+    };
+    return DesignerPageRendererInner(props, document, config);
+  }
+
+  const document = rawSchemaProps.document as GraphDocument | undefined;
+  if (!document) {
+    return <div>Designer requires document prop</div>;
   }
 
   return DesignerPageRendererInner(props, document, config);
@@ -65,12 +90,13 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
 function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPageSchema>, core: ReturnType<typeof createDesignerCore>, snapshot: ReturnType<typeof useDesignerSnapshot>, commandAdapter: ReturnType<typeof createDesignerCommandAdapter>, dispatch: (command: import('./designer-command-adapter').DesignerCommand) => ReturnType<typeof commandAdapter.execute>, config: DesignerConfig) {
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
   const handleAutoLayout = useCallback(async () => {
+    if (config.documentMode === 'tree') return;
     const doc = core.getDocument();
     if (doc.nodes.length === 0) return;
 
     const positions = await layoutWithElk(doc.nodes, doc.edges, core.getConfig().nodeTypes);
     core.layoutNodes(positions);
-  }, [core]);
+  }, [core, config.documentMode]);
 
   const ctxValue = useMemo<DesignerContextValue>(
     () => ({ core, commandAdapter, dispatch, snapshot, config }),

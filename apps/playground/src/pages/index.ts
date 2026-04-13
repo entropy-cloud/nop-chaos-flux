@@ -1,6 +1,7 @@
 export { HomePage } from './HomePage';
 export { FluxBasicPage } from './FluxBasicPage';
 export { FlowDesignerPage } from './FlowDesignerPage';
+export { DingTalkFlowDemo } from './DingTalkFlowDemo';
 export { ReportDesignerPage } from './ReportDesignerPage';
 export { DebuggerLabPage } from './DebuggerLabPage';
 export { ConditionBuilderPage } from './ConditionBuilderPage';

@@ -30,6 +30,19 @@ interface DesignerPageSchema {
 - 仍然需要区分两件事：一是 `dialogs` region 片段本身现在已经会挂载；二是通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径
 - `packages/flow-designer-renderers/src/index.test.tsx` 现在也有正向回归测试锁定该现状：直接传入 `dialogs` schema 会出现在页面上，避免文档与 live behavior 再次漂移
 
+### 1.1 树模式文档字段
+
+在树模式下，`DesignerPageSchema` 可以通过 `treeDocument` 字段传递树文档：
+
+```ts
+interface DesignerPageSchema {
+  // ... 现有字段 ...
+  treeDocument?: TreeDocument;
+}
+```
+
+当 `config.documentMode` 为 `'tree'` 时，应使用 `treeDocument` 字段而非 `document` 字段。
+
 ## 2. GraphDocument
 
 持久化文档只保存图数据。
@@ -95,6 +108,21 @@ interface DesignerConfig {
 - `extends` 允许继承预设
 - `nodeTypes` 是核心配置
 - `DesignerConfig` 只定义通用 graph editor 配置；某个 domain 如何把 `GraphDocument` round-trip 成自己的值 DSL，不属于 `DesignerConfig` 本体职责
+
+### 3.0.2 树模式配置字段
+
+`DesignerConfig` 支持两个新的可选字段用于树模式：
+
+```ts
+interface DesignerConfig {
+  // ... 现有字段 ...
+  documentMode?: 'graph' | 'tree';
+  treeConfig?: TreeConfig;
+}
+```
+
+- `documentMode`：指定文档模式，默认为 `'graph'`。设置为 `'tree'` 时启用树模式。
+- `treeConfig`：树模式特定的配置，仅在 `documentMode` 为 `'tree'` 时生效。
 
 ### 3.0 通用 graph config 与动态 domain library
 
@@ -945,3 +973,348 @@ Flow Designer 特定组件可使用以下类：
   {/* 内容 */}
 </div>
 ```
+
+## 19. TreeDocument (Tree Mode)
+
+树模式文档用于表示具有层次结构的流程，例如审批流程、决策树等。
+
+```ts
+interface TreeDocument {
+  id: string;
+  kind: string;
+  name: string;
+  version: string;
+  meta?: Record<string, unknown>;
+  root: TreeNode;
+}
+
+interface TreeNode {
+  id: string;
+  type: string;
+  data: Record<string, unknown>;
+  child?: TreeNode;       // 链式序列 — 单个子节点
+  branches?: TreeNodeBranch[];  // 分支节点
+}
+
+interface TreeNodeBranch {
+  id: string;
+  data: Record<string, unknown>;
+  child?: TreeNode;
+}
+```
+
+说明：
+
+- `root`：树的根节点
+- `TreeNode.child`：单链节点，表示顺序执行的后续节点
+- `TreeNode.branches`：分支节点，表示条件分支或并行分支
+- `TreeNodeBranch`：分支定义，包含分支条件和指向的子节点
+
+### 19.1 树文档示例
+
+以下是一个钉钉审批流程的简化示例：
+
+```json
+{
+  "id": "leave-approval",
+  "kind": "dingtalk-workflow",
+  "name": "请假审批",
+  "version": "1.0",
+  "root": {
+    "id": "start",
+    "type": "dt-initiator",
+    "data": { "label": "发起人" },
+    "child": {
+      "id": "approval-1",
+      "type": "dt-approval",
+      "data": { "label": "主管审批" },
+      "child": {
+        "id": "end",
+        "type": "dt-end",
+        "data": { "label": "结束" }
+      }
+    }
+  }
+}
+```
+
+### 19.2 分支节点示例
+
+以下是一个包含分支的树文档示例：
+
+```json
+{
+  "id": "condition-example",
+  "kind": "workflow",
+  "name": "条件分支示例",
+  "version": "1.0",
+  "root": {
+    "id": "start",
+    "type": "dt-initiator",
+    "data": { "label": "开始" },
+    "child": {
+      "id": "gateway",
+      "type": "dt-gateway",
+      "data": { "label": "条件网关" },
+      "branches": [
+        {
+          "id": "branch-true",
+          "data": { "condition": "true", "label": "是" },
+          "child": {
+            "id": "task-1",
+            "type": "dt-task",
+            "data": { "label": "任务 A" },
+            "child": {
+              "id": "merge",
+              "type": "dt-merge",
+              "data": { "label": "合并" },
+              "child": {
+                "id": "end",
+                "type": "dt-end",
+                "data": { "label": "结束" }
+              }
+            }
+          }
+        },
+        {
+          "id": "branch-false",
+          "data": { "condition": "false", "label": "否" },
+          "child": {
+            "id": "task-2",
+            "type": "dt-task",
+            "data": { "label": "任务 B" },
+            "child": {
+              "id": "merge",
+              "type": "dt-merge",
+              "data": { "label": "合并" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+## 20. TreeConfig
+
+树模式配置，控制树文档的布局和行为。
+
+```ts
+interface TreeConfig {
+  layout: {
+    direction: 'TB' | 'LR';
+    nodeSpacing: number;
+    layerSpacing: number;
+  };
+  showGatewayNodes: boolean;
+  showMergeNodes: boolean;
+  autoLayout: boolean;
+  chainEdgeType?: string;
+  branchEdgeType?: string;
+  mergeEdgeType?: string;
+}
+```
+
+说明：
+
+- `layout.direction`：布局方向，`'TB'` 表示从上到下，`'LR'` 表示从左到右
+- `layout.nodeSpacing`：同级节点之间的间距
+- `layout.layerSpacing`：层级之间的间距
+- `showGatewayNodes`：是否显示网关节点
+- `showMergeNodes`：是否显示合并节点
+- `autoLayout`：是否自动布局
+- `chainEdgeType`：链式边的类型
+- `branchEdgeType`：分支边的类型
+- `mergeEdgeType`：合并边的类型
+
+### 20.1 TreeConfig 示例
+
+```json
+{
+  "layout": {
+    "direction": "TB",
+    "nodeSpacing": 50,
+    "layerSpacing": 100
+  },
+  "showGatewayNodes": true,
+  "showMergeNodes": true,
+  "autoLayout": true,
+  "chainEdgeType": "default",
+  "branchEdgeType": "conditional",
+  "mergeEdgeType": "merge"
+}
+```
+
+## 21. TreeNodeTypeConfig
+
+树节点类型配置，继承自 `NodeTypeConfig`，并扩展树特定的约束。
+
+```ts
+interface TreeNodeTypeConfig extends NodeTypeConfig {
+  tree?: {
+    allowBranches?: boolean;
+    maxBranches?: number;
+    minBranches?: number;
+    allowChild?: boolean;
+    isTerminal?: boolean;
+    branchEdgeType?: string;
+  };
+}
+```
+
+说明：
+
+- `allowBranches`：是否允许分支
+- `maxBranches`：最大分支数
+- `minBranches`：最小分支数
+- `allowChild`：是否允许子节点
+- `isTerminal`：是否为终端节点（无子节点）
+- `branchEdgeType`：分支边类型
+
+### 21.1 树节点类型示例
+
+```json
+{
+  "id": "dt-approval",
+  "label": "审批节点",
+  "body": {
+    "type": "container",
+    "className": "fd-node fd-node--approval",
+    "body": [
+      {
+        "type": "icon",
+        "icon": "user-check"
+      },
+      {
+        "type": "tpl",
+        "tpl": "${data.label}"
+      }
+    ]
+  },
+  "tree": {
+    "allowBranches": false,
+    "allowChild": true,
+    "isTerminal": false
+  }
+}
+```
+
+```json
+{
+  "id": "dt-gateway",
+  "label": "条件网关",
+  "body": {
+    "type": "container",
+    "className": "fd-node fd-node--gateway",
+    "body": [
+      {
+        "type": "icon",
+        "icon": "git-branch"
+      },
+      {
+        "type": "tpl",
+        "tpl": "${data.label}"
+      }
+    ]
+  },
+  "tree": {
+    "allowBranches": true,
+    "minBranches": 2,
+    "maxBranches": 10,
+    "allowChild": false,
+    "branchEdgeType": "conditional"
+  }
+}
+```
+
+```json
+{
+  "id": "dt-end",
+  "label": "结束节点",
+  "body": {
+    "type": "container",
+    "className": "fd-node fd-node--end",
+    "body": [
+      {
+        "type": "icon",
+        "icon": "stop-circle"
+      },
+      {
+        "type": "tpl",
+        "tpl": "${data.label}"
+      }
+    ]
+  },
+  "tree": {
+    "allowBranches": false,
+    "allowChild": false,
+    "isTerminal": true
+  }
+}
+```
+
+## 22. TreeDomainAdapter
+
+树领域适配器，用于将外部领域格式转换为树文档，以及将树文档导出为外部格式。
+
+```ts
+interface TreeDomainAdapter {
+  kind: string;
+  importToTree(external: Record<string, unknown>): TreeDocument;
+  exportFromTree(tree: TreeDocument): Record<string, unknown>;
+}
+```
+
+说明：
+
+- `kind`：适配器标识符
+- `importToTree`：将外部格式导入为树文档
+- `exportFromTree`：将树文档导出为外部格式
+
+### 22.1 使用示例
+
+以下是一个钉钉工作流适配器的示例：
+
+```ts
+const dingtalkAdapter: TreeDomainAdapter = {
+  kind: 'dingtalk-workflow',
+  importToTree(external) {
+    // 将钉钉工作流 JSON 转换为 TreeDocument
+    return {
+      id: external.id,
+      kind: 'dingtalk-workflow',
+      name: external.name,
+      version: external.version || '1.0',
+      root: convertDingtalkProcessToTreeNode(external.process)
+    };
+  },
+  exportFromTree(tree) {
+    // 将 TreeDocument 转换为钉钉工作流 JSON
+    return {
+      id: tree.id,
+      name: tree.name,
+      version: tree.version,
+      process: convertTreeNodeToDingtalkProcess(tree.root)
+    };
+  }
+};
+```
+
+### 22.2 适配器注册
+
+领域适配器通常通过 `xui:imports` 动态加载：
+
+```json
+{
+  "type": "designer-page",
+  "title": "钉钉流程设计器",
+  "document": { "/* GraphDocument 或 TreeDocument */" },
+  "config": {
+    "documentMode": "tree",
+    "treeConfig": { "/* TreeConfig */" }
+  }
+}
+```
+
+平台通过 `env.importLoader` 加载包含适配器的动态模块，适配器将外部格式与 Flow Designer 的内部文档模型桥接。

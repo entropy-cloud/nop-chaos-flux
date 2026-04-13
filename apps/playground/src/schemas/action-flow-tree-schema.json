@@ -1,0 +1,163 @@
+{
+  "type": "designer-page",
+  "treeDocument": {
+    "id": "user-save-flow",
+    "kind": "action-flow",
+    "name": "用户保存流程",
+    "version": "1.0.0",
+    "root": {
+      "id": "entry",
+      "type": "action-entry",
+      "data": { "label": "入口" },
+      "child": {
+        "id": "precheck",
+        "type": "action-step",
+        "data": { "label": "预检查", "action": "setValue", "when": "${userId != null}" },
+        "branches": [
+          {
+            "id": "then-precheck",
+            "data": { "branchType": "then", "label": "成功" },
+            "child": {
+              "id": "fetch-user",
+              "type": "action-step",
+              "data": { "label": "加载用户数据", "action": "ajax", "timeout": 5000 },
+              "branches": [
+                {
+                  "id": "then-fetch",
+                  "data": { "branchType": "then", "label": "成功" },
+                  "child": {
+                    "id": "save-form",
+                    "type": "action-step",
+                    "data": { "label": "保存表单", "action": "component:submit", "componentId": "userForm" },
+                    "branches": [
+                      {
+                        "id": "then-save",
+                        "data": { "branchType": "then", "label": "成功" },
+                        "child": {
+                          "id": "refresh-list",
+                          "type": "action-step",
+                          "data": { "label": "刷新列表", "action": "component:refresh", "componentName": "userTable" }
+                        }
+                      },
+                      {
+                        "id": "onerror-save",
+                        "data": { "branchType": "onError", "label": "失败" },
+                        "child": {
+                          "id": "show-save-error",
+                          "type": "action-step",
+                          "data": { "label": "显示错误", "action": "showToast", "args": { "message": "保存失败", "variant": "destructive" } }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "onerror-fetch",
+                  "data": { "branchType": "onError", "label": "失败" },
+                  "child": {
+                    "id": "retry-fetch",
+                    "type": "action-step",
+                    "data": { "label": "重试加载", "action": "ajax", "retry": { "times": 2, "delay": 1000 } }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "onerror-precheck",
+            "data": { "branchType": "onError", "label": "失败" },
+            "child": {
+              "id": "show-precheck-error",
+              "type": "action-step",
+              "data": { "label": "提示选择用户", "action": "showToast", "args": { "message": "请先选择用户" } }
+            }
+          }
+        ],
+        "child": {
+          "id": "end",
+          "type": "action-end",
+          "data": { "label": "结束" }
+        }
+      }
+    }
+  },
+  "config": {
+    "version": "1.0.0",
+    "kind": "action-flow",
+    "documentMode": "tree",
+    "treeConfig": {
+      "layout": { "direction": "TB", "nodeSpacing": 40, "layerSpacing": 80 },
+      "showGatewayNodes": false,
+      "showMergeNodes": false,
+      "autoLayout": true,
+      "chainEdgeType": "action-chain",
+      "branchEdgeType": "action-branch"
+    },
+    "nodeTypes": [
+      {
+        "id": "action-entry",
+        "label": "入口",
+        "icon": "play",
+        "body": { "type": "flex", "className": "nop-af-node nop-af-node--entry", "items": [
+          { "type": "icon", "icon": "play" },
+          { "type": "text", "body": "${data.label}" }
+        ]},
+        "appearance": { "minWidth": 120, "minHeight": 40 },
+        "tree": { "allowChild": true, "allowBranches": false, "isTerminal": false }
+      },
+      {
+        "id": "action-step",
+        "label": "动作",
+        "icon": "zap",
+        "body": { "type": "flex", "direction": "column", "gap": 4, "className": "nop-af-node nop-af-node--step", "items": [
+          { "type": "flex", "className": "nop-af-node__header", "items": [
+            { "type": "icon", "icon": "zap", "className": "nop-af-node__icon" },
+            { "type": "text", "body": "${data.label}", "className": "nop-af-node__title" }
+          ]},
+          { "type": "text", "body": "${data.action ?? '未配置动作'}", "className": "nop-af-node__subtitle" }
+        ]},
+        "appearance": { "minWidth": 200, "minHeight": 70 },
+        "tree": { "allowChild": true, "allowBranches": true, "maxBranches": 3, "isTerminal": false }
+      },
+      {
+        "id": "action-end",
+        "label": "结束",
+        "icon": "square",
+        "body": { "type": "text", "body": "结束", "className": "nop-af-node nop-af-node--end" },
+        "appearance": { "minWidth": 100, "minHeight": 36 },
+        "tree": { "allowChild": false, "allowBranches": false, "isTerminal": true }
+      }
+    ],
+    "edgeTypes": [
+      { "id": "action-chain", "label": "主链", "appearance": { "stroke": "#64748b", "strokeWidth": 2, "markerEnd": "arrow-closed" } },
+      { "id": "action-branch", "label": "分支", "appearance": { "stroke": "#3b82f6", "strokeWidth": 1.5, "strokeStyle": "dashed", "markerEnd": "arrow-closed" } }
+    ],
+    "toolbar": {
+      "items": [
+        { "type": "back", "label": "返回", "action": "designer:navigate-back" },
+        { "type": "title", "body": "Action Flow" },
+        { "type": "badge", "level": "info", "text": "Tree Mode" },
+        { "type": "divider" },
+        { "type": "spacer" },
+        { "type": "button", "action": "designer:export", "icon": "file-json", "label": "JSON" }
+      ]
+    },
+    "features": {
+      "undo": false,
+      "redo": false,
+      "history": false,
+      "grid": true,
+      "minimap": false,
+      "fitView": true,
+      "export": true,
+      "shortcuts": false,
+      "clipboard": false
+    },
+    "canvas": {
+      "background": "dots",
+      "gridSize": 24,
+      "minZoom": 0.3,
+      "maxZoom": 2
+    }
+  }
+}
