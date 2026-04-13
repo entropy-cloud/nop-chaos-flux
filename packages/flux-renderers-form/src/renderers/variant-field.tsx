@@ -1,12 +1,10 @@
 import React from 'react';
 import type {
+  ActionSchema,
   BaseSchema,
-  FormRuntime,
-  FormStoreApi,
-  FormStoreState,
   RendererComponentProps,
   RendererDefinition,
-  ScopeRef
+  SchemaObject,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
@@ -32,253 +30,44 @@ import {
 import type { VariantFieldSchema, VariantOption } from './composite-schemas';
 import { formLabelFieldRule, resolveFieldLabelContent, useFieldPresentation } from '../field-utils';
 import { FieldHint, FieldLabel } from './shared';
+import { detectMatchedVariant, extractDetectedVariant, resolveInitialVariant } from './variant-field-matching';
+import { createVariantFormProxy, createVariantScope } from './variant-field-runtime';
 
-function createVariantStore(parentStore: FormStoreApi, prefix: string): FormStoreApi {
-  const prefixDot = prefix ? `${prefix}.` : '';
-  let lastParentState: FormStoreState | undefined;
-  let lastProjectedState: FormStoreState | undefined;
+type BaseNodeInstance = RendererComponentProps['node'];
 
-  function mapPath(path: string) {
-    if (!path) {
-      return '';
-    }
+function injectDetectVariantArgs(
+  actionSchema: ActionSchema | ActionSchema[],
+  payload: { value: unknown; variants: string[] }
+): ActionSchema | ActionSchema[] {
+  const schemaPayload = payload as SchemaObject;
 
-    if (path === prefix) {
-      return '';
-    }
-
-    if (prefixDot && path.startsWith(prefixDot)) {
-      return path.slice(prefixDot.length);
-    }
-
-    return undefined;
+  if (Array.isArray(actionSchema)) {
+    return actionSchema.map((entry) => (entry.args === undefined ? { ...entry, args: schemaPayload } : entry));
   }
 
-  function projectState(state: FormStoreState): FormStoreState {
-    if (state === lastParentState && lastProjectedState !== undefined) {
-      return lastProjectedState;
-    }
-
-    const subValue = prefix ? getIn(state.values, prefix) : state.values;
-    const values = (subValue !== undefined ? subValue : null) as FormStoreState['values'];
-
-    const errors: Record<string, any> = {};
-    for (const [key, val] of Object.entries(state.errors)) {
-      const mapped = mapPath(key);
-      if (mapped === undefined) continue;
-      errors[mapped] = (val as any[]).map((e: any) => ({
-        ...e,
-        path: mapPath(typeof e.path === 'string' ? e.path : '') ?? e.path,
-        ownerPath: mapPath(typeof e.ownerPath === 'string' ? e.ownerPath : '') ?? e.ownerPath
-      }));
-    }
-
-    const projectBoolMap = (map: Record<string, boolean>): Record<string, boolean> => {
-      const result: Record<string, boolean> = {};
-      for (const [key, val] of Object.entries(map)) {
-        const mapped = mapPath(key);
-        if (mapped !== undefined) {
-          result[mapped] = val;
-        }
-      }
-      return result;
-    };
-
-    const projected = {
-      ...state,
-      values,
-      errors,
-      validating: projectBoolMap(state.validating),
-      touched: projectBoolMap(state.touched),
-      dirty: projectBoolMap(state.dirty),
-      visited: projectBoolMap(state.visited)
-    };
-
-    lastParentState = state;
-    lastProjectedState = projected;
-    return projected;
-  }
-
-  return {
-    ...parentStore,
-    getState() {
-      return projectState(parentStore.getState());
-    },
-    subscribe(listener) {
-      return parentStore.subscribe(listener);
-    }
-  };
+  return actionSchema.args === undefined ? { ...actionSchema, args: schemaPayload } : actionSchema;
 }
 
-function createVariantFormProxy(parentForm: FormRuntime, prefix: string): FormRuntime {
-  function prefixPath(path: string) {
-    if (!prefix) {
-      return path;
-    }
+function injectVariantTransformInArgs(
+  actionSchema: ActionSchema | ActionSchema[],
+  payload: { value: unknown; variant: string; readOnly: boolean }
+): ActionSchema | ActionSchema[] {
+  const schemaPayload = payload as SchemaObject;
 
-    return path ? `${prefix}.${path}` : prefix;
+  if (Array.isArray(actionSchema)) {
+    return actionSchema.map((entry) => (entry.args === undefined ? { ...entry, args: schemaPayload } : entry));
   }
 
-  const variantStore = createVariantStore(parentForm.store, prefix);
-
-  return {
-    ...parentForm,
-    get store() {
-      return variantStore;
-    },
-    get validation() {
-      return parentForm.validation;
-    },
-    get lifecycleState() {
-      return parentForm.lifecycleState;
-    },
-    get modelGeneration() {
-      return parentForm.modelGeneration;
-    },
-    get scopeId() {
-      return parentForm.scopeId;
-    },
-    get rootPath() {
-      return parentForm.rootPath;
-    },
-    get canSubmit() {
-      return parentForm.canSubmit;
-    },
-    get allTouched() {
-      return parentForm.allTouched;
-    },
-    isPathOwned(path) { return parentForm.isPathOwned(prefixPath(path)); },
-    getFieldState(path) { return parentForm.getFieldState(prefixPath(path)); },
-    validateAt(path, reason) { return parentForm.validateAt(prefixPath(path), reason); },
-    validateField(path, reason) { return parentForm.validateField(prefixPath(path), reason); },
-    getField(path) { return parentForm.getField(prefixPath(path)); },
-    getDependents(path) { return parentForm.getDependents(prefixPath(path)); },
-    findByPrefix(path) { return parentForm.findByPrefix(prefixPath(path)); },
-    getChildren(path) { return parentForm.getChildren(prefixPath(path)); },
-    getError(path) { return parentForm.getError(prefixPath(path)); },
-    isValidating(path) { return parentForm.isValidating(prefixPath(path)); },
-    isTouched(path) { return parentForm.isTouched(prefixPath(path)); },
-    isDirty(path) { return parentForm.isDirty(prefixPath(path)); },
-    isVisited(path) { return parentForm.isVisited(prefixPath(path)); },
-    touchField(path) { parentForm.touchField(prefixPath(path)); },
-    visitField(path) { parentForm.visitField(prefixPath(path)); },
-    clearErrors(path) { parentForm.clearErrors(path === undefined ? undefined : prefixPath(path)); },
-    setValue(path, value) { parentForm.setValue(prefixPath(path), value); },
-    setValues(values) {
-      const prefixed: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(values)) {
-        prefixed[prefixPath(key)] = value;
-      }
-      parentForm.setValues(prefixed);
-    },
-    appendValue(path, value) { parentForm.appendValue(prefixPath(path), value); },
-    prependValue(path, value) { parentForm.prependValue(prefixPath(path), value); },
-    insertValue(path, index, value) { parentForm.insertValue(prefixPath(path), index, value); },
-    removeValue(path, index) { parentForm.removeValue(prefixPath(path), index); },
-    moveValue(path, from, to) { parentForm.moveValue(prefixPath(path), from, to); },
-    swapValue(path, a, b) { parentForm.swapValue(prefixPath(path), a, b); },
-    replaceValue(path, value) { parentForm.replaceValue(prefixPath(path), value); },
-    registerField(registration) {
-      return parentForm.registerField({
-        ...registration,
-        path: prefixPath(registration.path),
-        childPaths: registration.childPaths?.map((path) => prefixPath(path))
-      });
-    },
-    notifyFieldHidden(path, hidden) { parentForm.notifyFieldHidden(prefixPath(path), hidden); },
-    validateSubtree(path, reason) { return parentForm.validateSubtree(prefixPath(path), reason); }
-  };
+  return actionSchema.args === undefined ? { ...actionSchema, args: schemaPayload } : actionSchema;
 }
 
-function createVariantScope(parentScope: ScopeRef, name: string): ScopeRef {
-  return {
-    id: `${parentScope.id}:variant:${name || 'root'}`,
-    path: `${parentScope.path}.${name || '$value'}`,
-    parent: parentScope.parent,
-    store: parentScope.store,
-    get value() {
-      return this.readOwn();
-    },
-    get(path) {
-      return path ? parentScope.get(name ? `${name}.${path}` : path) : parentScope.get(name);
-    },
-    has(path) {
-      return path ? parentScope.has(name ? `${name}.${path}` : path) : parentScope.has(name);
-    },
-    readOwn() {
-      return (parentScope.get(name) as Record<string, any>) ?? {};
-    },
-    read() {
-      return (parentScope.get(name) as Record<string, any>) ?? {};
-    },
-    update(path, value) {
-      parentScope.update(path ? (name ? `${name}.${path}` : path) : name, value);
-    },
-    merge(data) {
-      if (name) {
-        parentScope.update(name, data);
-        return;
-      }
-      parentScope.merge(data);
-    },
-    replace(data) {
-      parentScope.update(name, data);
-    }
-  };
-}
-
-function matchesVariant(option: VariantOption, value: unknown): boolean {
-  const match = option.match;
-  if (!match) return false;
-  const kind = match.kind;
-  if (kind === 'typeof') {
-    return typeof value === match.value;
-  }
-  if (kind === 'array') {
-    return Array.isArray(value);
-  }
-  if (kind === 'has-key') {
-    return value !== null && typeof value === 'object' && !Array.isArray(value) && match.key !== undefined && match.key in (value as object);
-  }
-  if (kind === 'shape') {
-    if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
-    const keys = Array.isArray(match.requiredKeys) ? (match.requiredKeys as string[]) : [];
-    return keys.every((k) => k in (value as object));
-  }
-  return false;
-}
-
-function detectMatchedVariant(variants: VariantOption[], value: unknown): string | undefined {
-  for (const option of variants) {
-    if (option.match) {
-      if (matchesVariant(option, value)) {
-        return option.key;
-      }
-    }
-  }
-  return undefined;
-}
-
-function resolveInitialVariant(variants: VariantOption[], value: unknown, defaultVariant?: string): string | undefined {
-  const matchedKey = detectMatchedVariant(variants, value);
-  if (matchedKey) {
-    return matchedKey;
-  }
-  if (defaultVariant && variants.some((v) => v.key === defaultVariant)) {
-    return defaultVariant;
-  }
-  if (variants.length > 0) {
-    return variants[0].key;
-  }
-  return undefined;
-}
 
 export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldSchema>) {
   const parentForm = useCurrentForm();
   const parentScope = useRenderScope();
   const schema = props.schema as VariantFieldSchema;
-  const name = String(props.props.name ?? schema.name ?? '');
-  const readOnly = Boolean(props.props.readOnly ?? schema.readOnly);
+  const name = String(props.props.name ?? '');
+  const readOnly = Boolean(props.props.readOnly);
   const variants = React.useMemo(() => (schema.variants ?? []) as VariantOption[], [schema.variants]);
   const selectorMode = (schema.selector as { mode?: string } | undefined)?.mode ?? 'tabs';
   const defaultVariant = schema.defaultVariant;
@@ -293,10 +82,43 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const presentation = useFieldPresentation(name, parentForm, { readOnly });
   const labelContent = resolveFieldLabelContent(props);
 
-  const matchedKey = detectMatchedVariant(variants, currentValue);
-  const initialKey = resolveInitialVariant(variants, currentValue, defaultVariant);
+  const matchedKey = detectMatchedVariant(variants, currentValue, props.helpers.evaluate, parentScope, props.helpers.createScope);
+  const initialKey = resolveInitialVariant(variants, currentValue, defaultVariant, props.helpers.evaluate, parentScope, props.helpers.createScope);
   const [activeKey, setActiveKey] = React.useState<string | undefined>(initialKey);
+  const [detectedKey, setDetectedKey] = React.useState<string | undefined>(undefined);
   const activeOption = variants.find((v) => v.key === activeKey) ?? variants[0];
+
+  const runDetectVariantAction = React.useCallback(
+    async () => {
+      if (!schema.detectVariantAction || matchedKey) {
+        setDetectedKey(undefined);
+        return;
+      }
+
+      const result = await props.helpers.dispatch(injectDetectVariantArgs(schema.detectVariantAction, {
+        value: currentValue,
+        variants: variants.map((variant) => variant.key)
+      }), {
+        scope: parentScope,
+        form: parentForm ?? undefined,
+        page: undefined,
+        nodeInstance: props.node as BaseNodeInstance
+      });
+
+      if (!result.ok) {
+        setDetectedKey(undefined);
+        return;
+      }
+
+      const nextKey = extractDetectedVariant(result.data);
+      setDetectedKey(nextKey && variants.some((variant) => variant.key === nextKey) ? nextKey : undefined);
+    },
+    [currentValue, matchedKey, parentForm, parentScope, props.helpers, props.node, schema.detectVariantAction, variants]
+  );
+
+  React.useEffect(() => {
+    void runDetectVariantAction();
+  }, [runDetectVariantAction]);
 
   React.useEffect(() => {
     if (matchedKey && matchedKey !== activeKey) {
@@ -304,14 +126,19 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       return;
     }
 
-    if (!activeKey) {
-      setActiveKey(initialKey);
+    if (!matchedKey && detectedKey && detectedKey !== activeKey) {
+      setActiveKey(detectedKey);
       return;
     }
 
-  }, [matchedKey, activeKey, initialKey]);
+    if (!activeKey) {
+      setActiveKey(detectedKey ?? initialKey);
+      return;
+    }
 
-  function handleVariantSwitch(key: string) {
+  }, [matchedKey, detectedKey, activeKey, initialKey]);
+
+  async function handleVariantSwitch(key: string) {
     if (key === activeKey) return;
 
     if (parentForm) {
@@ -320,8 +147,27 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 
     const nextOption = variants.find((v) => v.key === key);
     if (nextOption && parentForm && name) {
-      const initial = nextOption.initialValue !== undefined ? nextOption.initialValue : null;
-      parentForm.setValue(name, initial);
+      let nextValue = nextOption.initialValue !== undefined ? nextOption.initialValue : null;
+
+      if (nextOption.transformInAction) {
+        const result = await props.helpers.dispatch(injectVariantTransformInArgs(nextOption.transformInAction, {
+          value: currentValue,
+          variant: key,
+          readOnly
+        }), {
+          scope: parentScope,
+          form: parentForm,
+          page: undefined,
+          nodeInstance: props.node as BaseNodeInstance
+        });
+
+        if (result.ok && result.data !== undefined) {
+          const migratedValue = result.data as VariantOption['initialValue'];
+          nextValue = migratedValue ?? null;
+        }
+      }
+
+      parentForm.setValue(name, nextValue);
       parentForm.touchField(name);
     }
 
@@ -329,10 +175,11 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   }
 
   const activeContent = activeOption?.content ?? null;
+  const activeViewer = activeOption?.viewer ?? activeContent;
 
   const variantScope = React.useMemo(
-    () => createVariantScope(parentScope, name),
-    [parentScope, name]
+    () => createVariantScope(parentScope, name, activeKey, readOnly),
+    [activeKey, name, parentScope, readOnly]
   );
 
   const variantForm = React.useMemo(
@@ -348,7 +195,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
         <div data-slot="variant-field-selector">
           <Select
             value={activeKey ?? ''}
-            onValueChange={(value) => { if (value) handleVariantSwitch(value); }}
+            onValueChange={(value) => { if (value) void handleVariantSwitch(value); }}
           >
             <SelectTrigger>
               <SelectValue />
@@ -374,7 +221,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       <div data-slot="variant-field-selector">
         <Tabs
           value={activeKey ?? ''}
-          onValueChange={handleVariantSwitch}
+          onValueChange={(value) => { void handleVariantSwitch(value); }}
         >
           <TabsList>
             {variants.map((v) => (
@@ -406,7 +253,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       <div data-slot="variant-field-readonly-body">
         <FormContext.Provider value={variantForm}>
           <ScopeContext.Provider value={variantScope}>
-            {props.helpers.render(activeContent as any)}
+            {props.helpers.render(activeViewer as any)}
           </ScopeContext.Provider>
         </FormContext.Provider>
       </div>
@@ -441,7 +288,16 @@ export const variantFieldRendererDefinition: RendererDefinition = {
   type: 'variant-field',
   component: VariantFieldRenderer as any,
   regions: ['content'],
-  fields: [formLabelFieldRule],
+  fields: [
+    formLabelFieldRule,
+    { key: 'variants', kind: 'ignored' },
+    { key: 'selector', kind: 'ignored' },
+    { key: 'defaultVariant', kind: 'ignored' },
+    { key: 'detectVariantAction', kind: 'ignored' },
+    { key: 'transformInAction', kind: 'ignored' },
+    { key: 'transformOutAction', kind: 'ignored' },
+    { key: 'validateValueAction', kind: 'ignored' }
+  ],
   validation: {
     kind: 'field',
     valueKind: 'object',

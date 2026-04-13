@@ -154,7 +154,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       page: currentPage,
       validation: props.templateNode.validationPlan
     }),
-    [runtime, formId, formName, initialValues, parentScope, currentPage, props.templateNode.validationPlan]
+    [runtime, formId, formName, parentScope, currentPage, props.templateNode.validationPlan]
   );
 
   const baseLifecycleScope = ownedForm.scope;

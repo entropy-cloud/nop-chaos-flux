@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '../index';
 
@@ -215,6 +216,38 @@ describe('object-field renderer', () => {
       const errors = screen.queryAllByText(/required/i);
       expect(errors.length).toBeGreaterThan(0);
     });
+  });
+
+  it('publishes object-field scope as value and readOnly while keeping relative child names', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            profile: { firstName: 'Alice', lastName: 'Smith' }
+          },
+          body: [
+            {
+              type: 'object-field',
+              name: 'profile',
+              readOnly: true,
+              body: [
+                { type: 'text', text: 'Profile ${value.firstName} / ${readOnly}', testid: 'profile-scope' },
+                { type: 'input-text', name: 'firstName', label: 'First Name' }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByTestId('profile-scope').textContent).toBe('Profile Alice / true'));
+    expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice');
   });
 
   it('second edit to the same child field is reflected on submit', async () => {

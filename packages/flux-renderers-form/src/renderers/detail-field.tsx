@@ -32,17 +32,20 @@ import {
 import type { DetailFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, resolveFieldLabelContent, useFieldPresentation } from '../field-utils';
 import { FieldHint, FieldLabel } from './shared';
+import { publishValidateResultErrors, valueAdaptationOwnerHelper } from './value-adaptation-helper';
+
+type BaseNodeInstance = RendererComponentProps['node'];
 
 export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSchema>) {
   const parentForm = useCurrentForm();
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
   const schema = props.schema as DetailFieldSchema;
-  const name = String(props.props.name ?? schema.name ?? '');
-  const readOnly = Boolean(props.props.readOnly ?? schema.readOnly);
+  const name = String(props.props.name ?? '');
+  const readOnly = Boolean(props.props.readOnly);
   const surfaceMode = (schema.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schema.surface as { title?: string } | undefined)?.title ?? '';
-  const triggerLabel = String(props.props.triggerLabel ?? schema.triggerLabel ?? 'Edit');
+  const triggerLabel = String(props.props.triggerLabel ?? 'Edit');
 
   const presentation = useFieldPresentation(name, parentForm, { readOnly });
   const labelContent = resolveFieldLabelContent(props);
@@ -62,12 +65,33 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const [confirming, setConfirming] = React.useState(false);
   const [draftError, setDraftError] = React.useState<string | undefined>(undefined);
 
-  function handleOpen() {
+  const runAdaptationAction = React.useCallback(
+    (actionSchema: DetailFieldSchema['transformInAction']) =>
+      props.helpers.dispatch(actionSchema as any, {
+        scope: parentScope,
+        form: parentForm ?? undefined,
+        page: undefined,
+        nodeInstance: props.node as BaseNodeInstance
+      }),
+    [parentForm, parentScope, props.helpers, props.node]
+  );
+
+  async function handleOpen() {
     if (readOnly || presentation.effectiveDisabled) return;
 
-    const initialValues: Record<string, unknown> = typeof fieldValue === 'object' && fieldValue !== null
-      ? { ...(fieldValue as Record<string, unknown>) }
-      : { __value: fieldValue };
+    const adaptedValue = await valueAdaptationOwnerHelper.runTransformIn(
+      schema.transformInAction,
+      {
+        rawValue: fieldValue,
+        name,
+        readOnly
+      },
+      runAdaptationAction
+    );
+
+    const initialValues: Record<string, unknown> = typeof adaptedValue === 'object' && adaptedValue !== null
+      ? { ...(adaptedValue as Record<string, unknown>) }
+      : { __value: adaptedValue };
 
     const newDraftForm = runtime.createFormRuntime({
       id: `detail-field-draft:${name}:${Date.now()}`,
@@ -97,7 +121,35 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       const rawDraftValues = draftForm.scope.readOwn() as Record<string, unknown> & { $form?: unknown };
       const draftValues = { ...rawDraftValues };
       delete draftValues.$form;
-      const writeback = draftValues.__value !== undefined ? draftValues.__value : draftValues;
+      const workingValue = draftValues.__value !== undefined ? draftValues.__value : draftValues;
+
+      const validation = await valueAdaptationOwnerHelper.runValidate(
+        schema.validateValueAction,
+        {
+          workingValue,
+          originalValue: fieldValue,
+          name
+        },
+        runAdaptationAction
+      );
+
+      publishValidateResultErrors(validation, name, parentForm);
+
+      if (!validation.valid) {
+        setDraftError(validation.issues?.[0]?.message ?? 'Please fix validation errors before confirming.');
+        return;
+      }
+
+      const writeback = await valueAdaptationOwnerHelper.runTransformOut(
+        schema.transformOutAction,
+        {
+          workingValue,
+          originalValue: fieldValue,
+          name,
+          readOnly
+        },
+        runAdaptationAction
+      );
 
       parentForm.setValue(name, writeback);
       parentForm.touchField(name);
@@ -203,7 +255,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
             type="button"
             variant="outline"
             size="sm"
-            onClick={handleOpen}
+            onClick={() => void handleOpen()}
           >
             {triggerLabel}
           </Button>

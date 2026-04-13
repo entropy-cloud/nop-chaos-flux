@@ -110,11 +110,18 @@ function createItemScope(
   parentScope: ScopeRef,
   arrayPath: string,
   index: number,
-  itemKind: 'scalar' | 'object'
+  itemKind: 'scalar' | 'object',
+  readOnly: boolean
 ): ScopeRef {
   const itemPrefix = `${arrayPath}.${index}`;
 
   if (itemKind === 'scalar') {
+    const buildPayload = () => ({
+      value: parentScope.get(itemPrefix),
+      index,
+      readOnly
+    });
+
     const itemScope: ScopeRef = {
       id: `${parentScope.id}:arr:${arrayPath}:${index}`,
       path: `${parentScope.path}.${itemPrefix}`,
@@ -122,17 +129,20 @@ function createItemScope(
       store: parentScope.store,
       get value() { return this.read(); },
       get(path) {
-        if (!path || path === 'value') return parentScope.get(itemPrefix);
+        if (!path) return buildPayload();
+        if (path === 'value') return parentScope.get(itemPrefix);
         if (path === 'index') return index;
+        if (path === 'readOnly') return readOnly;
         return parentScope.get(`${itemPrefix}.${path}`);
       },
       has(path) {
         if (!path || path === 'value') return parentScope.has(itemPrefix);
         if (path === 'index') return true;
+        if (path === 'readOnly') return true;
         return parentScope.has(`${itemPrefix}.${path}`);
       },
-      readOwn() { return parentScope.readOwn(); },
-      read() { return parentScope.read(); },
+      readOwn() { return buildPayload(); },
+      read() { return buildPayload(); },
       update(path, value) {
         if (!path || path === 'value') {
           parentScope.update(itemPrefix, value);
@@ -151,19 +161,36 @@ function createItemScope(
     path: `${parentScope.path}.${itemPrefix}`,
     parent: parentScope.parent,
     store: parentScope.store,
-    get value() { return this.read(); },
+    get value() {
+      return this.read();
+    },
+    readOwn() {
+      return {
+        value: parentScope.get(itemPrefix),
+        index,
+        readOnly
+      };
+    },
     get(path) {
-      if (!path) return parentScope.get(itemPrefix);
+      if (!path) return this.read();
       if (path === 'index') return index;
+      if (path === 'readOnly') return readOnly;
+      if (path === 'value') return parentScope.get(itemPrefix);
       return parentScope.get(`${itemPrefix}.${path}`);
     },
     has(path) {
-      if (!path) return parentScope.has(itemPrefix);
+      if (!path) return true;
       if (path === 'index') return true;
+      if (path === 'readOnly' || path === 'value') return true;
       return parentScope.has(`${itemPrefix}.${path}`);
     },
-    readOwn() { return parentScope.readOwn(); },
-    read() { return parentScope.read(); },
+    read() {
+      return {
+        value: parentScope.get(itemPrefix),
+        index,
+        readOnly
+      };
+    },
     update(path, value) {
       if (!path) {
         parentScope.update(itemPrefix, value);
@@ -242,15 +269,16 @@ function ArrayItem(props: {
   itemKind: 'scalar' | 'object';
   parentScope: ScopeRef;
   parentForm: FormRuntime | undefined;
+  readOnly: boolean;
   removable: boolean;
   onRemove: (index: number) => void;
   renderItem: () => React.ReactNode;
 }) {
-  const { index, arrayPath, itemKind, parentScope, parentForm, removable, onRemove, renderItem } = props;
+  const { index, arrayPath, itemKind, parentScope, parentForm, readOnly, removable, onRemove, renderItem } = props;
 
   const itemScope = React.useMemo(
-    () => createItemScope(parentScope, arrayPath, index, itemKind),
-    [parentScope, arrayPath, index, itemKind]
+    () => createItemScope(parentScope, arrayPath, index, itemKind, readOnly),
+    [parentScope, arrayPath, index, itemKind, readOnly]
   );
 
   const itemForm = React.useMemo(
@@ -295,11 +323,11 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   const parentScope = useRenderScope();
   const parentForm = useCurrentForm();
   const modelGeneration = useCurrentFormModelGeneration();
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const itemKind = (props.props.itemKind ?? props.schema.itemKind ?? 'scalar') as 'scalar' | 'object';
+  const name = String(props.props.name ?? '');
+  const itemKind = (props.props.itemKind ?? 'scalar') as 'scalar' | 'object';
   const addable = props.props.addable !== false;
   const removable = props.props.removable !== false;
-  const readOnly = Boolean(props.props.readOnly ?? props.schema.readOnly);
+  const readOnly = Boolean(props.props.readOnly);
 
   const presentation = useFieldPresentation(name, parentForm, {
     disabled: props.meta.disabled,
@@ -409,6 +437,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
               itemKind={itemKind}
               parentScope={parentScope}
               parentForm={parentForm}
+              readOnly={readOnly || presentation.effectiveDisabled}
               removable={removable && !readOnly && !presentation.effectiveDisabled}
               onRemove={handleRemove}
               renderItem={() => props.regions.item?.render({ bindings: { index, value: _item } }) ?? null}

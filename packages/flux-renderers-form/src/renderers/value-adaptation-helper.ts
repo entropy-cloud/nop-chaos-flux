@@ -1,4 +1,4 @@
-import type { ActionResult, FormRuntime } from '@nop-chaos/flux-core';
+import type { ActionResult, ActionSchema, FormRuntime, SchemaObject } from '@nop-chaos/flux-core';
 
 export interface ValueAdaptationInput {
   rawValue: unknown;
@@ -28,29 +28,43 @@ export interface ValidateValueResult {
   }>;
 }
 
+type ValueAdaptationAction = ActionSchema | ActionSchema[];
+
 export type ActionRunner = (
-  actionSchema: unknown,
-  payload: Record<string, unknown>
+  actionSchema: ValueAdaptationAction
 ) => Promise<ActionResult>;
 
 export interface ValueAdaptationOwnerHelper {
   runTransformIn(
-    actionSchema: unknown,
+    actionSchema: ValueAdaptationAction | undefined,
     input: ValueAdaptationInput,
     runner: ActionRunner
   ): Promise<unknown>;
 
   runTransformOut(
-    actionSchema: unknown,
+    actionSchema: ValueAdaptationAction | undefined,
     input: TransformOutInput,
     runner: ActionRunner
   ): Promise<unknown>;
 
   runValidate(
-    actionSchema: unknown,
+    actionSchema: ValueAdaptationAction | undefined,
     input: ValidateValueInput,
     runner: ActionRunner
   ): Promise<ValidateValueResult>;
+}
+
+function injectDefaultArgs(
+  actionSchema: ValueAdaptationAction,
+  payload: Record<string, unknown>
+): ValueAdaptationAction {
+  const schemaPayload = payload as SchemaObject;
+
+  if (Array.isArray(actionSchema)) {
+    return actionSchema.map((entry) => (entry.args === undefined ? { ...entry, args: schemaPayload } : entry));
+  }
+
+  return actionSchema.args === undefined ? { ...actionSchema, args: schemaPayload } : actionSchema;
 }
 
 export const valueAdaptationOwnerHelper: ValueAdaptationOwnerHelper = {
@@ -68,7 +82,7 @@ export const valueAdaptationOwnerHelper: ValueAdaptationOwnerHelper = {
       payload.name = input.name;
     }
 
-    const result = await runner(actionSchema, payload);
+    const result = await runner(injectDefaultArgs(actionSchema, payload));
 
     if (!result.ok) {
       return input.rawValue;
@@ -92,7 +106,7 @@ export const valueAdaptationOwnerHelper: ValueAdaptationOwnerHelper = {
       payload.name = input.name;
     }
 
-    const result = await runner(actionSchema, payload);
+    const result = await runner(injectDefaultArgs(actionSchema, payload));
 
     if (!result.ok) {
       return input.workingValue;
@@ -115,7 +129,7 @@ export const valueAdaptationOwnerHelper: ValueAdaptationOwnerHelper = {
       payload.name = input.name;
     }
 
-    const result = await runner(actionSchema, payload);
+    const result = await runner(injectDefaultArgs(actionSchema, payload));
 
     if (!result.ok) {
       return { valid: false, issues: [{ level: 'error' as const, message: String(result.error ?? 'Validation failed') }] };

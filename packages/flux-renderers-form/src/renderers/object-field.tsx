@@ -1,7 +1,6 @@
 import React from 'react';
 import type {
   BaseSchema,
-  CompiledFormValidationModel,
   FormRuntime,
   FormStoreApi,
   FormStoreState,
@@ -11,64 +10,12 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
-import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
+import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import type { ObjectFieldSchema } from './composite-schemas';
-import { formLabelFieldRule, useFieldPresentation } from '../field-utils';
+import { formLabelFieldRule, resolveFieldLabelContent, useFieldPresentation } from '../field-utils';
 import { FieldHint, FieldLabel } from './shared';
-import { resolveFieldLabelContent } from '../field-utils';
-
-function createPrefixedValidationModel(
-  model: CompiledFormValidationModel | undefined,
-  prefix: string
-): CompiledFormValidationModel | undefined {
-  if (!model?.nodes) return undefined;
-  const prefixDot = `${prefix}.`;
-  const newNodes: Record<string, any> = {};
-
-  newNodes[''] = { path: '', kind: 'form', rules: [], children: [], parent: undefined };
-
-  for (const [key, node] of Object.entries(model.nodes)) {
-    if (key === prefix) {
-      const relKey = '';
-      newNodes[relKey] = {
-        ...node,
-        path: relKey,
-        parent: undefined,
-        children: node.children
-          .filter((c) => c.startsWith(prefixDot))
-          .map((c) => c.slice(prefixDot.length))
-      };
-    } else if (key.startsWith(prefixDot)) {
-      const relKey = key.slice(prefixDot.length);
-      const relParent = node.parent?.startsWith(prefixDot)
-        ? node.parent.slice(prefixDot.length)
-        : node.parent === prefix
-          ? ''
-          : '';
-      newNodes[relKey] = {
-        ...node,
-        path: relKey,
-        parent: relParent,
-        children: node.children
-          .filter((c) => c.startsWith(prefixDot))
-          .map((c) => c.slice(prefixDot.length))
-      };
-    }
-  }
-
-  const order = (model.order ?? [])
-    .filter((p) => p.startsWith(prefixDot))
-    .map((p) => p.slice(prefixDot.length));
-
-  return {
-    ...model,
-    nodes: newNodes,
-    order,
-    validationOrder: order
-  };
-}
 
 function createPrefixedStore(parentStore: FormStoreApi, prefix: string): FormStoreApi {
   const prefixDot = `${prefix}.`;
@@ -138,12 +85,14 @@ function createPrefixedStore(parentStore: FormStoreApi, prefix: string): FormSto
 
 function createPrefixedFormProxy(parentForm: FormRuntime, prefix: string): FormRuntime {
   function prefixPath(path: string): string {
-    if (!path || !prefix) return path;
+    if (!path || !prefix) {
+      return path;
+    }
+
     return `${prefix}.${path}`;
   }
 
   const prefixedStore = createPrefixedStore(parentForm.store, prefix);
-  const prefixedValidation = createPrefixedValidationModel(parentForm.validation, prefix);
 
   const proxy: FormRuntime = {
     ...parentForm,
@@ -151,7 +100,7 @@ function createPrefixedFormProxy(parentForm: FormRuntime, prefix: string): FormR
       return prefixedStore;
     },
     get validation() {
-      return prefixedValidation;
+      return parentForm.validation;
     },
     get lifecycleState() {
       return parentForm.lifecycleState;
@@ -224,8 +173,8 @@ function createPrefixedFormProxy(parentForm: FormRuntime, prefix: string): FormR
     },
     setValues(values) {
       const prefixed: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(values)) {
-        prefixed[prefixPath(k)] = v;
+      for (const [key, value] of Object.entries(values)) {
+        prefixed[prefixPath(key)] = value;
       }
       parentForm.setValues(prefixed);
     },
@@ -233,7 +182,7 @@ function createPrefixedFormProxy(parentForm: FormRuntime, prefix: string): FormR
       return parentForm.registerField({
         ...registration,
         path: prefixPath(registration.path),
-        childPaths: registration.childPaths?.map((cp) => prefixPath(cp))
+        childPaths: registration.childPaths?.map((path) => prefixPath(path))
       });
     },
     notifyFieldHidden(path, hidden) {
@@ -247,10 +196,14 @@ function createPrefixedFormProxy(parentForm: FormRuntime, prefix: string): FormR
   return proxy;
 }
 
-function createObjectFieldChildScope(parentScope: ScopeRef, name: string): ScopeRef {
+function createObjectFieldChildScope(parentScope: ScopeRef, name: string, readOnly: boolean): ScopeRef {
   const prefix = name ? `${name}.` : '';
+  const buildPayload = () => ({
+    value: parentScope.get(name),
+    readOnly
+  });
 
-  const childScope: ScopeRef = {
+  return {
     id: `${parentScope.id}:obj:${name}`,
     path: `${parentScope.path}.${name}`,
     parent: parentScope.parent,
@@ -259,42 +212,68 @@ function createObjectFieldChildScope(parentScope: ScopeRef, name: string): Scope
       return this.read();
     },
     get(path) {
-      if (!path) return parentScope.get(name);
+      if (!path) return buildPayload();
+      if (path === 'value') return parentScope.get(name);
+      if (path === 'readOnly') return readOnly;
+      if (path.startsWith('value.')) return parentScope.get(`${prefix}${path.slice('value.'.length)}`);
       return parentScope.get(`${prefix}${path}`);
     },
     has(path) {
-      if (!path) return parentScope.has(name);
+      if (!path) return true;
+      if (path === 'value' || path === 'readOnly') return true;
+      if (path.startsWith('value.')) return parentScope.has(`${prefix}${path.slice('value.'.length)}`);
       return parentScope.has(`${prefix}${path}`);
     },
     readOwn() {
-      return parentScope.readOwn();
+      return buildPayload();
     },
     read() {
-      return parentScope.read();
+      return buildPayload();
     },
     update(path, value) {
-      if (!path) {
+      if (!path || path === 'value') {
         parentScope.update(name, value);
         return;
       }
+
+      if (path.startsWith('value.')) {
+        parentScope.update(`${prefix}${path.slice('value.'.length)}`, value);
+        return;
+      }
+
       parentScope.update(`${prefix}${path}`, value);
     },
     merge(data) {
+      if (data && typeof data === 'object' && 'value' in (data as Record<string, unknown>)) {
+        parentScope.update(name, (data as { value: unknown }).value);
+        return;
+      }
+
       parentScope.merge(data);
     },
     replace(data) {
+      if (data && typeof data === 'object' && 'value' in (data as Record<string, unknown>)) {
+        parentScope.update(name, (data as { value: unknown }).value);
+        return;
+      }
+
       parentScope.replace?.(data);
     }
   };
-
-  return childScope;
 }
 
 export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSchema>) {
   const parentScope = useRenderScope();
   const parentForm = useCurrentForm();
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const readOnly = Boolean(props.props.readOnly ?? props.schema.readOnly);
+  const name = String(props.props.name ?? '');
+  const readOnly = Boolean(props.props.readOnly);
+
+  const formValue = useCurrentFormState(
+    (state) => (name ? getIn(state.values, name) : state.values),
+    Object.is
+  );
+  const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is);
+  void (parentForm ? formValue : scopeValue);
 
   const presentation = useFieldPresentation(name, parentForm, {
     disabled: props.meta.disabled,
@@ -305,8 +284,8 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const bodyContent = resolveRendererSlotContent(props, 'body');
 
   const childScope = React.useMemo(
-    () => (name ? createObjectFieldChildScope(parentScope, name) : parentScope),
-    [parentScope, name]
+    () => (name ? createObjectFieldChildScope(parentScope, name, readOnly || presentation.effectiveDisabled) : parentScope),
+    [name, parentScope, presentation.effectiveDisabled, readOnly]
   );
 
   const childForm = React.useMemo(

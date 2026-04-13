@@ -30,18 +30,21 @@ import {
 import type { DetailViewSchema } from './composite-schemas';
 import { resolveFieldLabelContent } from '../field-utils';
 import { FieldLabel } from './shared';
+import { publishValidateResultErrors, valueAdaptationOwnerHelper } from './value-adaptation-helper';
+
+type BaseNodeInstance = RendererComponentProps['node'];
 
 export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchema>) {
   const parentForm = useCurrentForm();
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
   const schema = props.schema as DetailViewSchema;
-  const readOnly = Boolean(props.props.readOnly ?? schema.readOnly);
+  const readOnly = Boolean(props.props.readOnly);
   const scopePath = schema.scopePath ?? (typeof schema.name === 'string' ? schema.name : undefined);
-  const staticData = schema.data as Record<string, unknown> | undefined;
+  const staticData = props.props.data as Record<string, unknown> | undefined;
   const surfaceMode = (schema.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schema.surface as { title?: string } | undefined)?.title ?? '';
-  const triggerLabel = String(props.props.triggerLabel ?? schema.triggerLabel ?? 'Edit');
+  const triggerLabel = String(props.props.triggerLabel ?? 'Edit');
 
   const labelContent = resolveFieldLabelContent(props);
 
@@ -68,12 +71,46 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const [confirming, setConfirming] = React.useState(false);
   const [draftError, setDraftError] = React.useState<string | undefined>(undefined);
 
-  function handleOpen() {
+  const currentValue = React.useMemo(() => {
+    if (staticData) {
+      return staticData;
+    }
+
+    return scopeProjectedValue;
+  }, [scopeProjectedValue, staticData]);
+
+  const runAdaptationAction = React.useCallback(
+    (actionSchema: DetailViewSchema['transformInAction']) =>
+      props.helpers.dispatch(actionSchema as any, {
+        scope: parentScope,
+        form: parentForm ?? undefined,
+        page: undefined,
+        nodeInstance: props.node as BaseNodeInstance
+      }),
+    [parentForm, parentScope, props.helpers, props.node]
+  );
+
+  async function handleOpen() {
     if (readOnly) return;
+
+    const adaptedValue = await valueAdaptationOwnerHelper.runTransformIn(
+      schema.transformInAction,
+      {
+        rawValue: currentValue,
+        readOnly
+      },
+      runAdaptationAction
+    );
+
+    const initialValues = typeof adaptedValue === 'object' && adaptedValue !== null
+      ? { ...(adaptedValue as Record<string, unknown>) }
+      : adaptedValue !== undefined
+        ? { __value: adaptedValue }
+        : getInitialValues();
 
     const newDraftForm = runtime.createFormRuntime({
       id: `detail-view-draft:${scopePath ?? 'static'}:${Date.now()}`,
-      initialValues: getInitialValues(),
+      initialValues,
       parentScope,
       validation: props.templateNode.validationPlan
     });
@@ -85,6 +122,10 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
 
   async function applyCommitResult(draftValues: Record<string, unknown>) {
     if (!parentForm && !scopePath) return;
+
+    const commitValue = Object.prototype.hasOwnProperty.call(draftValues, '__value')
+      ? draftValues.__value
+      : draftValues;
 
     if (scopePath) {
       if ('patch' in draftValues && Array.isArray(draftValues.patch)) {
@@ -107,9 +148,9 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         }
       } else {
         if (parentForm) {
-          parentForm.setValue(scopePath, draftValues);
+          parentForm.setValue(scopePath, commitValue);
         } else {
-          parentScope.update(scopePath, draftValues);
+          parentScope.update(scopePath, commitValue);
         }
       }
 
@@ -119,7 +160,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     } else {
       const updates = draftValues.updates !== undefined
         ? draftValues.updates as Record<string, unknown>
-        : draftValues;
+        : commitValue;
 
       if (parentForm) {
         for (const [key, val] of Object.entries(updates as Record<string, unknown>)) {
@@ -148,7 +189,41 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       const rawDraftValues = draftForm.scope.readOwn() as Record<string, unknown> & { $form?: unknown };
       const draftValues = { ...rawDraftValues };
       delete draftValues.$form;
-      await applyCommitResult(draftValues);
+      const workingValue = draftValues.__value !== undefined ? draftValues.__value : draftValues;
+
+      const validation = await valueAdaptationOwnerHelper.runValidate(
+        schema.validateValueAction,
+        {
+          workingValue,
+          originalValue: currentValue
+        },
+        runAdaptationAction
+      );
+
+      if (parentForm && scopePath) {
+        publishValidateResultErrors(validation, scopePath, parentForm);
+      }
+
+      if (!validation.valid) {
+        setDraftError(validation.issues?.[0]?.message ?? 'Please fix validation errors before confirming.');
+        return;
+      }
+
+      const commitResult = await valueAdaptationOwnerHelper.runTransformOut(
+        schema.transformOutAction,
+        {
+          workingValue,
+          originalValue: currentValue,
+          readOnly
+        },
+        runAdaptationAction
+      );
+
+      await applyCommitResult(
+        typeof commitResult === 'object' && commitResult !== null
+          ? commitResult as Record<string, unknown>
+          : { __value: commitResult }
+      );
 
       setOpen(false);
       setDraftForm(undefined);
@@ -245,7 +320,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
           type="button"
           variant="outline"
           size="sm"
-          onClick={handleOpen}
+          onClick={() => void handleOpen()}
         >
           {triggerLabel}
         </Button>

@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '../index';
 
 if (!Element.prototype.scrollIntoView) {
@@ -149,6 +150,37 @@ describe('array-field renderer (scalar)', () => {
     expect(submitValues[0]).toMatchObject({ tags: expect.any(Array) });
     expect((submitValues[0].tags as unknown[]).length).toBe(1);
   });
+
+  it('publishes scalar item scope as value index and readOnly', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            tags: ['alpha']
+          },
+          body: [
+            {
+              type: 'array-field',
+              name: 'tags',
+              itemKind: 'scalar',
+              readOnly: true,
+              item: [
+                { type: 'text', text: 'Tag ${value} / ${index} / ${readOnly}', testid: 'scalar-scope' }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByTestId('scalar-scope').textContent).toBe('Tag alpha / 0 / true'));
+  });
 });
 
 describe('array-field renderer (object itemKind)', () => {
@@ -190,6 +222,39 @@ describe('array-field renderer (object itemKind)', () => {
     expect(nameInputs.length).toBe(2);
     expect(nameInputs[0].value).toBe('Alice');
     expect(nameInputs[1].value).toBe('Bob');
+  });
+
+  it('publishes object item scope as value index and readOnly while keeping relative child names', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            contacts: [{ name: 'Alice', email: 'alice@example.com' }]
+          },
+          body: [
+            {
+              type: 'array-field',
+              name: 'contacts',
+              itemKind: 'object',
+              readOnly: true,
+              item: [
+                { type: 'text', text: 'Contact ${value.name} / ${index} / ${readOnly}', testid: 'object-item-scope' },
+                { type: 'input-text', name: 'name', label: 'Name' }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByTestId('object-item-scope').textContent).toBe('Contact Alice / 0 / true'));
+    expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('Alice');
   });
 
   it('submits object array with child field changes', async () => {
@@ -330,4 +395,5 @@ describe('array-field renderer (object itemKind)', () => {
       contacts: [{ name: 'Charlie', email: 'alice@example.com' }]
     });
   });
+
 });
