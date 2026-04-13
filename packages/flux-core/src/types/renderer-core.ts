@@ -127,6 +127,12 @@ export interface RendererRuntime {
   resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta;
   resolveNodeProps(node: TemplateNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps;
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;
+  createHostProjectionScope(input: {
+    parentScope: ScopeRef;
+    projection: Record<string, unknown>;
+    path: string;
+    scopeLabel: string;
+  }): ScopeRef;
   createActionScope(input?: { id?: string; parent?: ActionScope }): ActionScope;
   createComponentHandleRegistry(input?: { id?: string; parent?: ComponentHandleRegistry }): ComponentHandleRegistry;
   ensureImportedNamespaces(input: {

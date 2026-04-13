@@ -5,9 +5,7 @@ import type {
   ReportDesignerRuntimeSnapshot,
   ReportSelectionTarget,
   MetadataBag,
-  FieldDragState,
   FieldSourceSnapshot,
-  InspectorRuntimeState,
 } from './types.js';
 import {
   getTargetMeta,
@@ -29,10 +27,8 @@ import {
   resolveRegistry,
 } from './runtime/registry.js';
 import {
-  applyFieldDrop,
   cloneDocument,
   cloneMetadataBag,
-  mergeMetadata,
   writeMetadata,
 } from './runtime/metadata.js';
 import {
@@ -44,16 +40,13 @@ import {
   getProfileFieldSourceIds,
   loadFieldSources,
 } from './runtime/field-sources.js';
-import { createAdapterContext } from './runtime/adapter-context.js';
 import {
-  resolvePreviewAdapter,
-  runPreviewCommand,
-} from './runtime/preview-commands.js';
-import {
-  exportTemplateWithCodec,
-  importTemplateWithCodec,
-  resolveCodecAdapter,
-} from './runtime/codec-commands.js';
+  type ReportDesignerInternalState,
+  type DispatchContext,
+  dispatchReportDesignerCommand,
+} from './core-dispatch.js';
+
+export type { ReportDesignerInternalState };
 
 export interface ReportDesignerCore {
   getSnapshot(): ReportDesignerRuntimeSnapshot;
@@ -78,21 +71,6 @@ export interface CreateReportDesignerCoreOptions {
   config: ReportDesignerConfig;
   adapters?: Partial<ReportDesignerAdapterRegistry>;
   profile?: ReportDesignerProfile;
-}
-
-interface ReportDesignerInternalState {
-  document: ReportTemplateDocument;
-  selectionTarget: ReportSelectionTarget | undefined;
-  inspector: InspectorRuntimeState;
-  fieldSources: FieldSourceSnapshot[];
-  fieldDrag: FieldDragState;
-  preview: {
-    running: boolean;
-    mode?: string;
-    lastResult?: unknown;
-  };
-  undoStack: ReportTemplateDocument[];
-  redoStack: ReportTemplateDocument[];
 }
 
 function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntimeSnapshot {
@@ -202,12 +180,6 @@ export function createReportDesignerCore(
     return panels;
   }
 
-  async function withDerivedRefresh<T>(fn: () => Promise<T> | T): Promise<T> {
-    const result = await fn();
-    await refreshDerivedState();
-    return result;
-  }
-
   async function setSelectionTarget(target?: ReportSelectionTarget) {
     store.setState((current) => ({
       ...current,
@@ -228,232 +200,20 @@ export function createReportDesignerCore(
     return { undoStack, redoStack: [] };
   }
 
+  const dispatchCtx: DispatchContext = {
+    store,
+    registry,
+    config,
+    profile,
+    allowedFieldDropIds,
+    buildSnapshot,
+    refreshDerivedState,
+    setSelectionTarget,
+    pushUndoEntry,
+  };
+
   async function dispatch(command: ReportDesignerCommand): Promise<ReportDesignerCommandResult> {
-    try {
-      switch (command.type) {
-        case 'report-designer:dropFieldToTarget': {
-          return withDerivedRefresh(async () => {
-            const current = store.getState();
-            const adapter = Array.from(registry.fieldDrops.values()).find((candidate) =>
-              (!allowedFieldDropIds || allowedFieldDropIds.has(candidate.id)) && candidate.canHandle(command.field, command.target),
-            );
-
-            if (!adapter) {
-              store.setState((s) => ({ ...s, ...pushUndoEntry(s) }));
-              applyFieldDrop(current.document, command.field, command.target);
-              store.setState({ fieldDrag: { active: false } });
-              return { ok: true, changed: true };
-            }
-
-            const adapterContext = createAdapterContext({
-              config,
-              document: current.document,
-              designer: buildSnapshot(current),
-              profile,
-            });
-            const currentMeta = getTargetMeta(current.document.semantic, command.target);
-            const patch = adapter.mapDropToMetaPatch({
-              field: command.field,
-              target: command.target,
-              currentMeta,
-              context: adapterContext,
-            });
-            const nextMeta = mergeMetadata(currentMeta, patch);
-            store.setState((s) => ({ ...s, ...pushUndoEntry(s) }));
-            writeMetadata(current.document, command.target, nextMeta);
-
-            store.setState({
-              selectionTarget: command.target,
-              fieldDrag: {
-                active: false,
-                sourceId: command.field.sourceId,
-                fieldId: command.field.fieldId,
-                payload: { ...command.field, data: { ...command.field.data } },
-                hoverTarget: command.target,
-              },
-            });
-
-            return { ok: true, changed: true };
-          });
-        }
-
-        case 'report-designer:updateMeta': {
-          return withDerivedRefresh(async () => {
-            const current = store.getState();
-            const currentMeta = getTargetMeta(current.document.semantic, command.target);
-            const nextMeta = mergeMetadata(currentMeta, command.patch);
-            store.setState((s) => ({ ...s, ...pushUndoEntry(s) }));
-            const changed = writeMetadata(current.document, command.target, nextMeta);
-
-            return { ok: true, changed };
-          });
-        }
-
-        case 'report-designer:replaceMeta': {
-          return withDerivedRefresh(async () => {
-            const current = store.getState();
-            store.setState((s) => ({ ...s, ...pushUndoEntry(s) }));
-            const changed = writeMetadata(current.document, command.target, command.nextMeta);
-
-            return { ok: true, changed };
-          });
-        }
-
-        case 'report-designer:openInspector': {
-          await setSelectionTarget(command.target ?? store.getState().selectionTarget);
-          store.setState((current) => ({
-            ...current,
-            inspector: { ...current.inspector, open: true },
-          }));
-          return { ok: true, changed: true };
-        }
-
-        case 'report-designer:closeInspector': {
-          const wasOpen = store.getState().inspector.open;
-          store.setState((current) => ({
-            ...current,
-            inspector: { ...current.inspector, open: false },
-          }));
-          return { ok: true, changed: wasOpen };
-        }
-
-        case 'report-designer:preview': {
-          store.setState((current) => ({
-            ...current,
-            preview: { ...current.preview, running: true, mode: command.mode },
-          }));
-
-          const previewResolution = resolvePreviewAdapter({
-            config,
-            adapters: registry,
-            profile,
-          });
-          if ('error' in previewResolution) {
-            store.setState((current) => ({
-              ...current,
-              preview: { running: false, mode: command.mode },
-            }));
-            return { ok: false, changed: false, error: previewResolution.error };
-          }
-
-          try {
-            const result = await runPreviewCommand({
-              adapter: previewResolution.adapter,
-              config,
-              document: store.getState().document,
-              designer: buildSnapshot(store.getState()),
-              profile,
-              mode: command.mode,
-              commandArgs: command.args,
-            });
-
-            store.setState((current) => ({
-              ...current,
-              preview: { running: false, mode: command.mode, lastResult: result },
-            }));
-
-            return { ok: result.ok, changed: false, data: result.data, error: result.error };
-          } catch (err) {
-            store.setState((current) => ({
-              ...current,
-              preview: { running: false, mode: command.mode },
-            }));
-            return { ok: false, changed: false, error: err };
-          }
-        }
-
-        case 'report-designer:importTemplate': {
-          const codecResolution = resolveCodecAdapter({ adapters: registry, profile });
-          if ('error' in codecResolution) {
-            return { ok: false, changed: false, error: codecResolution.error };
-          }
-          const imported = await importTemplateWithCodec({
-            adapter: codecResolution.adapter,
-            payload: command.payload,
-            config,
-            document: store.getState().document,
-            designer: buildSnapshot(store.getState()),
-            profile,
-          });
-          store.setState((current) => ({
-            ...current,
-            document: imported,
-            selectionTarget: undefined,
-          }));
-          return { ok: true, changed: true };
-        }
-
-        case 'report-designer:exportTemplate': {
-          const codecResolution = resolveCodecAdapter({ adapters: registry, profile });
-          if ('error' in codecResolution) {
-            return { ok: false, changed: false, error: codecResolution.error };
-          }
-          const exported = await exportTemplateWithCodec({
-            adapter: codecResolution.adapter,
-            document: store.getState().document,
-            format: command.format,
-            config,
-            designer: buildSnapshot(store.getState()),
-            profile,
-          });
-          return { ok: true, changed: false, data: exported };
-        }
-
-        case 'report-designer:stopPreview': {
-          store.setState((current) => ({
-            ...current,
-            preview: { ...current.preview, running: false },
-          }));
-          return { ok: true, changed: true };
-        }
-
-        case 'report-designer:undo': {
-          const current = store.getState();
-          if (current.undoStack.length === 0) {
-            return { ok: false, changed: false, error: 'Nothing to undo' };
-          }
-          const undoStack = [...current.undoStack];
-          const prevDocument = undoStack.pop()!;
-          const redoStack = [...current.redoStack, cloneDocument(current.document)];
-          store.setState((s) => ({
-            ...s,
-            document: prevDocument,
-            undoStack,
-            redoStack,
-          }));
-          await refreshDerivedState();
-          return { ok: true, changed: true };
-        }
-
-        case 'report-designer:redo': {
-          const current = store.getState();
-          if (current.redoStack.length === 0) {
-            return { ok: false, changed: false, error: 'Nothing to redo' };
-          }
-          const redoStack = [...current.redoStack];
-          const nextDocument = redoStack.pop()!;
-          const undoStack = [...current.undoStack, cloneDocument(current.document)];
-          store.setState((s) => ({
-            ...s,
-            document: nextDocument,
-            undoStack,
-            redoStack,
-          }));
-          await refreshDerivedState();
-          return { ok: true, changed: true };
-        }
-
-        case 'report-designer:save': {
-          const exported = cloneDocument(store.getState().document);
-          return { ok: true, changed: false, data: exported };
-        }
-
-        default:
-          return { ok: false, changed: false, error: `Unknown command: ${(command as any).type}` };
-      }
-    } catch (err) {
-      return { ok: false, changed: false, error: err };
-    }
+    return dispatchReportDesignerCommand(dispatchCtx, command);
   }
 
   async function refreshFieldSources(): Promise<FieldSourceSnapshot[]> {
