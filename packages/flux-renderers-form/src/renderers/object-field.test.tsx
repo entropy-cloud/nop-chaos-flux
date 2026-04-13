@@ -91,6 +91,12 @@ describe('object-field renderer', () => {
       expect(screen.getByLabelText('First Name')).toBeTruthy();
     });
 
+    const field = screen.getByText('Profile').closest('.nop-field');
+    expect(field).toBeTruthy();
+    expect(field?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Profile');
+    expect(field?.querySelector('[data-slot="field-control"]')).toBeTruthy();
+    expect(field?.querySelector('[data-slot="object-field-body"]')).toBeTruthy();
+
     expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice');
     expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Smith');
   });
@@ -207,5 +213,51 @@ describe('object-field renderer', () => {
       const errors = screen.queryAllByText(/required/i);
       expect(errors.length).toBeGreaterThan(0);
     });
+  });
+
+  it('second edit to the same child field is reflected on submit', async () => {
+    cleanup();
+    const submitValues: Record<string, unknown>[] = [];
+    const buttonRenderer: RendererDefinition = {
+      type: 'button',
+      component: (props) => (
+        <button type="button" onClick={() => void props.events.onClick?.()}>
+          {String(props.props.label ?? 'Button')}
+        </button>
+      ),
+      fields: [{ key: 'onClick', kind: 'event' }]
+    };
+
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'obj-second-edit-form',
+          data: { profile: { firstName: 'Alice', lastName: 'Smith' } },
+          body: [{
+            type: 'object-field', name: 'profile', label: 'Profile',
+            body: [
+              { type: 'input-text', name: 'firstName', label: 'First Name' },
+              { type: 'input-text', name: 'lastName', label: 'Last Name' }
+            ]
+          }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'obj-second-edit-form' } }]
+        }}
+        env={{ ...env, fetcher: makeCapturingFetcher(submitValues) }}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByLabelText('First Name')).toBeTruthy());
+
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Charlie' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
+    expect(submitValues[0]).toMatchObject({ profile: { firstName: 'Charlie', lastName: 'Smith' } });
   });
 });

@@ -93,8 +93,9 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         return;
       }
 
-      const rawDraftValues = draftForm.scope.readOwn();
-      const { $form: _ignored, ...draftValues } = rawDraftValues as Record<string, unknown> & { $form?: unknown };
+      const rawDraftValues = draftForm.scope.readOwn() as Record<string, unknown> & { $form?: unknown };
+      const draftValues = { ...rawDraftValues };
+      delete draftValues.$form;
       const writeback = draftValues.__value !== undefined ? draftValues.__value : draftValues;
 
       parentForm.setValue(name, writeback);
@@ -125,7 +126,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     return (
       <FormContext.Provider value={draftForm}>
         <ScopeContext.Provider value={draftScope}>
-          <div className="nop-detail-field-draft-body">
+          <div data-slot="detail-field-draft-body">
             {editContent}
           </div>
         </ScopeContext.Provider>
@@ -136,7 +137,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const renderFooter = () => (
     <>
       {draftError && (
-        <p className="nop-detail-field-draft-error text-destructive text-sm">{draftError}</p>
+        <p data-slot="detail-field-draft-error">{draftError}</p>
       )}
       <Button type="button" variant="outline" onClick={handleCancel} disabled={confirming}>
         Cancel
@@ -155,7 +156,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
             <DrawerHeader>
               <DrawerTitle>{surfaceTitle}</DrawerTitle>
             </DrawerHeader>
-            <div className="p-4 overflow-y-auto">
+            <div data-slot="detail-field-surface-body">
               {renderSurfaceContent()}
             </div>
             <DrawerFooter>
@@ -183,31 +184,28 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
   return (
     <div
-      className={`nop-field nop-detail-field ${presentation.className}`}
+      className="nop-field"
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
       data-field-dirty={presentation['data-field-dirty']}
       data-field-invalid={presentation['data-field-invalid']}
     >
       <FieldLabel content={labelContent} />
-      <div className="nop-detail-field-viewer">
-        {viewerContent ?? (
-          <span className="text-muted-foreground text-sm">
-            {fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : '—'}
-          </span>
+      <div data-slot="field-control">
+        <div data-slot="detail-field-viewer">
+          {viewerContent ?? <span>{fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : '—'}</span>}
+        </div>
+        {!readOnly && !presentation.effectiveDisabled && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleOpen}
+          >
+            {triggerLabel}
+          </Button>
         )}
       </div>
-      {!readOnly && !presentation.effectiveDisabled && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleOpen}
-          className="nop-detail-field-trigger"
-        >
-          {triggerLabel}
-        </Button>
-      )}
       {renderSurface()}
       <FieldHint
         errorMessage={presentation.fieldState.error?.message}

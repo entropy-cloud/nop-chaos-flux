@@ -58,6 +58,11 @@ describe('detail-view renderer', () => {
     await waitFor(() => {
       expect(screen.getByText('Edit Settings')).toBeTruthy();
     });
+
+    const root = screen.getByText('Edit Settings').closest('.nop-detail-view');
+    expect(root).toBeTruthy();
+    expect(root?.querySelector('[data-slot="field-label"]')).toBeNull();
+    expect(root?.querySelector('[data-slot="detail-view-viewer"]')).toBeTruthy();
   });
 
   it('does not render trigger button when readOnly', async () => {

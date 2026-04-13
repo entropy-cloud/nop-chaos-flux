@@ -62,7 +62,7 @@ export function shouldShowFieldError(
 }
 
 export function readFieldValue(scope: ReturnType<typeof useRenderScope>, name: string): unknown {
-  return name ? scope.get(name) ?? '' : '';
+  return name ? scope.get(name) ?? '' : scope.readOwn();
 }
 
 export function readCheckboxGroupValue(scope: ReturnType<typeof useRenderScope>, name: string): string[] {
@@ -71,8 +71,8 @@ export function readCheckboxGroupValue(scope: ReturnType<typeof useRenderScope>,
 }
 
 export function useBoundFieldValue(name: string, currentForm: FormRuntime | undefined): unknown {
-  const formValue = useCurrentFormState((state) => (name ? getIn(state.values, name) : undefined), Object.is);
-  const scopeValue = useScopeSelector((scopeData) => (name ? getIn(scopeData, name) : undefined), Object.is);
+  const formValue = useCurrentFormState((state) => (name ? getIn(state.values, name) : state.values), Object.is);
+  const scopeValue = useScopeSelector((scopeData) => (name ? getIn(scopeData, name) : scopeData), Object.is);
 
   return currentForm ? formValue : scopeValue;
 }
@@ -87,7 +87,7 @@ export function createFieldHandlers(args: {
 
   return {
     onFocus() {
-      if (currentForm && name) {
+      if (currentForm) {
         currentForm.visitField(name);
       }
     },
@@ -105,7 +105,7 @@ export function createFieldHandlers(args: {
       scope.update(name, nextValue);
     },
     onBlur() {
-      if (currentForm && name) {
+      if (currentForm) {
         currentForm.touchField(name);
 
         if (shouldValidateOn(name, currentForm, 'blur')) {
@@ -202,11 +202,11 @@ export function getChildFieldUiState(input: {
     dirty,
     visited,
     showError,
-    className: 'grid gap-1.5',
-    'data-child-field-visited': visited || undefined,
-    'data-child-field-touched': touched || undefined,
-    'data-child-field-dirty': dirty || undefined,
-    'data-child-field-invalid': showError || undefined,
+    className: undefined,
+    'data-child-field-visited': visited ? '' : undefined,
+    'data-child-field-touched': touched ? '' : undefined,
+    'data-child-field-dirty': dirty ? '' : undefined,
+    'data-child-field-invalid': showError ? '' : undefined,
   };
 }
 
@@ -272,11 +272,11 @@ export function useFieldPresentation(
     interactive: presentation.interactive,
     readOnly: presentation.readOnly,
     showError: presentation.showError,
-    className: 'nop-field',
-    'data-field-visited': presentation.visited || undefined,
-    'data-field-touched': presentation.touched || undefined,
-    'data-field-dirty': presentation.dirty || undefined,
-    'data-field-invalid': presentation.showError || undefined,
+    className: undefined,
+    'data-field-visited': presentation.visited ? '' : undefined,
+    'data-field-touched': presentation.touched ? '' : undefined,
+    'data-field-dirty': presentation.dirty ? '' : undefined,
+    'data-field-invalid': presentation.showError ? '' : undefined,
   };
 }
 
@@ -299,4 +299,3 @@ export function useHiddenFieldPolicy(name: string, hidden: boolean) {
     };
   }, [currentForm, name, hidden]);
 }
-

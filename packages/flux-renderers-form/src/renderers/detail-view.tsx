@@ -144,8 +144,9 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         return;
       }
 
-      const rawDraftValues = draftForm.scope.readOwn();
-      const { $form: _ignored, ...draftValues } = rawDraftValues as Record<string, unknown> & { $form?: unknown };
+      const rawDraftValues = draftForm.scope.readOwn() as Record<string, unknown> & { $form?: unknown };
+      const draftValues = { ...rawDraftValues };
+      delete draftValues.$form;
       await applyCommitResult(draftValues);
 
       setOpen(false);
@@ -172,7 +173,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     return (
       <FormContext.Provider value={draftForm}>
         <ScopeContext.Provider value={draftScope}>
-          <div className="nop-detail-view-draft-body">
+          <div data-slot="detail-view-draft-body">
             {editContent}
           </div>
         </ScopeContext.Provider>
@@ -183,7 +184,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const renderFooter = () => (
     <>
       {draftError && (
-        <p className="nop-detail-view-draft-error text-destructive text-sm">{draftError}</p>
+        <p data-slot="detail-view-draft-error">{draftError}</p>
       )}
       <Button type="button" variant="outline" onClick={handleCancel} disabled={confirming}>
         Cancel
@@ -202,7 +203,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
             <DrawerHeader>
               <DrawerTitle>{surfaceTitle}</DrawerTitle>
             </DrawerHeader>
-            <div className="p-4 overflow-y-auto">
+            <div data-slot="detail-view-surface-body">
               {renderSurfaceContent()}
             </div>
             <DrawerFooter>
@@ -231,7 +232,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   return (
     <div className="nop-detail-view">
       <FieldLabel content={labelContent} />
-      <div className="nop-detail-view-viewer">
+      <div data-slot="detail-view-viewer">
         {viewerContent}
       </div>
       {!readOnly && (
@@ -240,7 +241,6 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
           variant="outline"
           size="sm"
           onClick={handleOpen}
-          className="nop-detail-view-trigger"
         >
           {triggerLabel}
         </Button>

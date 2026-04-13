@@ -21,6 +21,7 @@ import {
   useRenderScope,
   useRendererRuntime
 } from '@nop-chaos/flux-react';
+import { cn } from '@nop-chaos/ui';
 import { createFormComponentHandle } from '@nop-chaos/flux-runtime';
 import type { FormSchema } from '../schemas';
 
@@ -287,11 +288,11 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   }, [currentComponentRegistry, ownedForm, props.meta.cid]);
 
   return (
-    <FormContext.Provider value={ownedForm}>
+      <FormContext.Provider value={ownedForm}>
       <ScopeContext.Provider value={ownedForm.scope}>
-        <section className="nop-form flex flex-col gap-4" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
-          {hasRendererSlotContent(bodyContent) ? <div data-slot="form-body" className="grid gap-4">{bodyContent}</div> : null}
-          {hasRendererSlotContent(actionsContent) ? <div data-slot="form-actions" className="flex flex-wrap gap-3">{actionsContent}</div> : null}
+        <section className={cn('nop-form', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+          {hasRendererSlotContent(bodyContent) ? <div data-slot="form-body">{bodyContent}</div> : null}
+          {hasRendererSlotContent(actionsContent) ? <div data-slot="form-actions">{actionsContent}</div> : null}
         </section>
       </ScopeContext.Provider>
     </FormContext.Provider>

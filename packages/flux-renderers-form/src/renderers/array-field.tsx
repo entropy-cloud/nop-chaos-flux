@@ -11,6 +11,7 @@ import type {
 import { getIn } from '@nop-chaos/flux-core';
 import {
   useCurrentForm,
+  useCurrentFormModelGeneration,
   useCurrentFormState,
   useRenderScope,
   useScopeSelector
@@ -29,8 +30,9 @@ function toArrayItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
-function createItemStore(parentStore: FormStoreApi, itemFullPrefix: string): FormStoreApi {
+function createItemStore(parentStore: FormStoreApi, itemFullPrefix: string, itemKind: 'scalar' | 'object'): FormStoreApi {
   const prefixDot = `${itemFullPrefix}.`;
+  const scalarOwnerPath = itemKind === 'scalar' ? 'value' : undefined;
   let lastParentState: FormStoreState | undefined;
   let lastProjectedState: FormStoreState | undefined;
 
@@ -39,7 +41,10 @@ function createItemStore(parentStore: FormStoreApi, itemFullPrefix: string): For
       return lastProjectedState;
     }
 
-    const subObject = (getIn(state.values, itemFullPrefix) ?? {}) as Record<string, unknown>;
+    const rawItemValue = getIn(state.values, itemFullPrefix);
+    const subObject = itemKind === 'scalar'
+      ? { value: rawItemValue ?? '' }
+      : ((rawItemValue ?? {}) as Record<string, unknown>);
 
     const errors: Record<string, any> = {};
     for (const [key, val] of Object.entries(state.errors)) {
@@ -48,13 +53,17 @@ function createItemStore(parentStore: FormStoreApi, itemFullPrefix: string): For
         errors[relKey] = (val as any[]).map((e: any) => ({
           ...e,
           path: typeof e.path === 'string' && e.path.startsWith(prefixDot) ? e.path.slice(prefixDot.length) : e.path,
-          ownerPath: typeof e.ownerPath === 'string' && e.ownerPath.startsWith(prefixDot) ? e.ownerPath.slice(prefixDot.length) : e.ownerPath
+          ownerPath:
+            typeof e.ownerPath === 'string' && e.ownerPath.startsWith(prefixDot)
+              ? e.ownerPath.slice(prefixDot.length)
+              : scalarOwnerPath ?? e.ownerPath
         }));
       } else if (key === itemFullPrefix) {
-        errors[''] = (val as any[]).map((e: any) => ({
+        const ownerKey = itemKind === 'scalar' ? 'value' : '';
+        errors[ownerKey] = (val as any[]).map((e: any) => ({
           ...e,
-          path: typeof e.path === 'string' && e.path === itemFullPrefix ? '' : e.path,
-          ownerPath: typeof e.ownerPath === 'string' && e.ownerPath === itemFullPrefix ? '' : e.ownerPath
+          path: typeof e.path === 'string' && e.path === itemFullPrefix ? ownerKey : e.path,
+          ownerPath: typeof e.ownerPath === 'string' && e.ownerPath === itemFullPrefix ? ownerKey : e.ownerPath
         }));
       }
     }
@@ -62,7 +71,9 @@ function createItemStore(parentStore: FormStoreApi, itemFullPrefix: string): For
     const projectBoolMap = (map: Record<string, boolean>): Record<string, boolean> => {
       const result: Record<string, boolean> = {};
       for (const [key, val] of Object.entries(map)) {
-        if (key.startsWith(prefixDot)) {
+        if (key === itemFullPrefix && itemKind === 'scalar') {
+          result.value = val;
+        } else if (key.startsWith(prefixDot)) {
           result[key.slice(prefixDot.length)] = val;
         }
       }
@@ -166,15 +177,16 @@ function createItemScope(
   return itemScope;
 }
 
-function createItemFormProxy(parentForm: FormRuntime, arrayPath: string, index: number): FormRuntime {
+function createItemFormProxy(parentForm: FormRuntime, arrayPath: string, index: number, itemKind: 'scalar' | 'object'): FormRuntime {
   const itemFullPrefix = `${arrayPath}.${index}`;
 
   function prefixPath(path: string): string {
     if (!path) return itemFullPrefix;
+    if (itemKind === 'scalar' && path === 'value') return itemFullPrefix;
     return `${itemFullPrefix}.${path}`;
   }
 
-  const itemStore = createItemStore(parentForm.store, itemFullPrefix);
+  const itemStore = createItemStore(parentForm.store, itemFullPrefix, itemKind);
 
   const proxy: FormRuntime = {
     ...parentForm,
@@ -242,13 +254,13 @@ function ArrayItem(props: {
   );
 
   const itemForm = React.useMemo(
-    () => (parentForm && itemKind === 'object' ? createItemFormProxy(parentForm, arrayPath, index) : parentForm),
+    () => (parentForm ? createItemFormProxy(parentForm, arrayPath, index, itemKind) : parentForm),
     [parentForm, arrayPath, index, itemKind]
   );
 
   return (
-    <div className="nop-array-field-item grid grid-cols-[1fr_auto] gap-2 items-start">
-      <div className="nop-array-field-item-body">
+    <div data-slot="array-field-item">
+      <div data-slot="array-field-item-body">
         <FormContext.Provider value={itemForm ?? undefined}>
           <ScopeContext.Provider value={itemScope}>
             {renderItem()}
@@ -269,9 +281,20 @@ function ArrayItem(props: {
   );
 }
 
+function getScalarItemFieldSchema(schema: ArrayFieldSchema): BaseSchema | undefined {
+  const item = Array.isArray(schema.item) ? schema.item[0] : schema.item;
+
+  if (!item || Array.isArray(item) || typeof item !== 'object') {
+    return undefined;
+  }
+
+  return item as BaseSchema;
+}
+
 export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchema>) {
   const parentScope = useRenderScope();
   const parentForm = useCurrentForm();
+  const modelGeneration = useCurrentFormModelGeneration();
   const name = String(props.props.name ?? props.schema.name ?? '');
   const itemKind = (props.props.itemKind ?? props.schema.itemKind ?? 'scalar') as 'scalar' | 'object';
   const addable = props.props.addable !== false;
@@ -286,7 +309,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   const labelContent = resolveFieldLabelContent(props);
 
   const formValue = useCurrentFormState(
-    (state) => (parentForm && name ? toArrayItems(getIn(state.values, name)) : undefined),
+    (state) => (parentForm ? toArrayItems(name ? getIn(state.values, name) : state.values) : undefined),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
@@ -294,7 +317,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
     }
   );
   const scopeValue = useScopeSelector(
-    (scopeData) => (parentForm || !name ? undefined : toArrayItems(getIn(scopeData, name))),
+    (scopeData) => (parentForm ? undefined : toArrayItems(name ? getIn(scopeData, name) : scopeData)),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
@@ -302,7 +325,15 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
     }
   );
 
-  const items = (parentForm ? formValue : scopeValue) ?? [];
+  const items = React.useMemo(
+    () => (parentForm ? formValue : scopeValue) ?? [],
+    [parentForm, formValue, scopeValue]
+  );
+  const scalarItemField = itemKind === 'scalar' ? getScalarItemFieldSchema(props.schema as ArrayFieldSchema) : undefined;
+  const scalarChildPaths = React.useMemo(
+    () => (itemKind === 'scalar' && name ? items.map((_, index) => `${name}.${index}.value`) : []),
+    [itemKind, items, name]
+  );
 
   function handleAdd() {
     if (parentForm) {
@@ -318,39 +349,80 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
     }
   }
 
+  React.useEffect(() => {
+    if (!parentForm || !name || itemKind !== 'scalar' || scalarChildPaths.length === 0) {
+      return;
+    }
+
+    const childLabel = typeof scalarItemField?.label === 'string' && scalarItemField.label
+      ? scalarItemField.label
+      : 'Item';
+    const isRequired = Boolean(scalarItemField?.required);
+
+    const registration = parentForm.registerField({
+      path: name,
+      childPaths: scalarChildPaths,
+      getValue() {
+        return parentForm.store.getState().values[name];
+      },
+      validateChild(path) {
+        if (!isRequired) {
+          return [];
+        }
+
+        const rawValue = getIn(parentForm.store.getState().values, path);
+        const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
+
+        if (value !== '' && value !== undefined && value !== null) {
+          return [];
+        }
+
+        return [{
+          path,
+          rule: 'required',
+          message: `${childLabel} is required`
+        }];
+      }
+    });
+
+    return registration.unregister;
+  }, [itemKind, modelGeneration, name, parentForm, scalarChildPaths, scalarItemField]);
+
   return (
     <div
-      className={`nop-field nop-array-field ${presentation.className}`}
+      className="nop-field"
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
       data-field-dirty={presentation['data-field-dirty']}
       data-field-invalid={presentation['data-field-invalid']}
     >
       <FieldLabel content={labelContent} />
-      <div className="nop-array-field-body grid gap-3">
-        {items.map((_item, index) => (
-          <ArrayItem
-            key={index}
-            index={index}
-            arrayPath={name}
-            itemKind={itemKind}
-            parentScope={parentScope}
-            parentForm={parentForm}
-            removable={removable && !readOnly && !presentation.effectiveDisabled}
-            onRemove={handleRemove}
-            renderItem={() => props.regions.item?.render({ bindings: { index, value: _item } }) ?? null}
-          />
-        ))}
-        {addable && !readOnly && !presentation.effectiveDisabled && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleAdd}
-          >
-            Add item
-          </Button>
-        )}
+      <div data-slot="field-control">
+        <div data-slot="array-field-body">
+          {items.map((_item, index) => (
+            <ArrayItem
+              key={index}
+              index={index}
+              arrayPath={name}
+              itemKind={itemKind}
+              parentScope={parentScope}
+              parentForm={parentForm}
+              removable={removable && !readOnly && !presentation.effectiveDisabled}
+              onRemove={handleRemove}
+              renderItem={() => props.regions.item?.render({ bindings: { index, value: _item } }) ?? null}
+            />
+          ))}
+          {addable && !readOnly && !presentation.effectiveDisabled && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAdd}
+            >
+              Add item
+            </Button>
+          )}
+        </div>
       </div>
       <FieldHint
         errorMessage={presentation.fieldState.error?.message}

@@ -78,6 +78,12 @@ describe('array-field renderer (scalar)', () => {
     expect(addButton).toBeTruthy();
     const removeButtons = screen.getAllByText('Remove');
     expect(removeButtons.length).toBe(3);
+
+    const field = addButton.closest('.nop-field');
+    expect(field).toBeTruthy();
+    expect(field?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Tags');
+    expect(field?.querySelector('[data-slot="field-control"]')).toBeTruthy();
+    expect(field?.querySelector('[data-slot="array-field-body"]')).toBeTruthy();
   });
 
   it('adds and removes scalar items correctly', async () => {
@@ -284,6 +290,44 @@ describe('array-field renderer (object itemKind)', () => {
     await waitFor(() => {
       expect(screen.getAllByLabelText('Name').length).toBe(1);
       expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('Bob');
+    });
+  });
+
+  it('second edit to the same object item child is reflected on submit', async () => {
+    cleanup();
+    const submitValues: Record<string, unknown>[] = [];
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'arr-second-edit-form',
+          data: { contacts: [{ name: 'Alice', email: 'alice@example.com' }] },
+          body: [{
+            type: 'array-field', name: 'contacts', itemKind: 'object', label: 'Contacts',
+            item: [
+              { type: 'input-text', name: 'name', label: 'Name' },
+              { type: 'input-text', name: 'email', label: 'Email' }
+            ]
+          }],
+          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'arr-second-edit-form' } }]
+        }}
+        env={{ ...env, fetcher: makeCapturingFetcher(submitValues) }}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByLabelText('Name')).toBeTruthy());
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Charlie' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
+    expect(submitValues[0]).toMatchObject({
+      contacts: [{ name: 'Charlie', email: 'alice@example.com' }]
     });
   });
 });

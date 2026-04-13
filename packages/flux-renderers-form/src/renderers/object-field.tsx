@@ -315,17 +315,17 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
   return (
     <div
-      className={`nop-field nop-object-field ${presentation.className}`}
+      className="nop-field"
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
       data-field-dirty={presentation['data-field-dirty']}
       data-field-invalid={presentation['data-field-invalid']}
     >
       <FieldLabel content={labelContent} />
-      <div className="nop-object-field-body">
+      <div data-slot="field-control">
         <FormContext.Provider value={childForm ?? undefined}>
           <ScopeContext.Provider value={childScope}>
-            {bodyContent}
+            <div data-slot="object-field-body">{bodyContent}</div>
           </ScopeContext.Provider>
         </FormContext.Provider>
       </div>

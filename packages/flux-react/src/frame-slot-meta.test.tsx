@@ -55,6 +55,47 @@ describe('FieldFrame', () => {
     expect(screen.queryByText('Root error')).toBeNull();
   });
 
+  it('keeps the root marker semantic-only and publishes presence-only field state attributes', () => {
+    const state = {
+      ...EMPTY_FORM_STORE_STATE,
+      touched: { email: true },
+      dirty: { email: true },
+      visited: { email: true },
+      errors: {
+        email: [{ path: 'email', rule: 'required', message: 'Email is required', sourceKind: 'field' }]
+      }
+    };
+    const form = {
+      store: {
+        subscribe: () => () => undefined,
+        getState: () => state
+      },
+      validation: {
+        behavior: {
+          triggers: ['blur'],
+          showErrorOn: ['touched', 'submit']
+        }
+      }
+    } as any;
+
+    const { container } = render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="email" label="Email">content</FieldFrame>
+      </FormContext.Provider>
+    );
+
+    const field = container.querySelector('.nop-field');
+    expect(field).toBeTruthy();
+    expect(field?.className).toBe('nop-field');
+    expect(field?.getAttribute('data-field-visited')).toBe('');
+    expect(field?.getAttribute('data-field-touched')).toBe('');
+    expect(field?.getAttribute('data-field-dirty')).toBe('');
+    expect(field?.getAttribute('data-field-invalid')).toBe('');
+    expect(container.querySelector('[data-slot="field-label"]')?.textContent).toContain('Email');
+    expect(container.querySelector('[data-slot="field-control"]')?.textContent).toContain('content');
+    expect(container.querySelector('[data-slot="field-error"]')?.textContent).toContain('Email is required');
+  });
+
 });
 
 describe('renderer slot helpers', () => {

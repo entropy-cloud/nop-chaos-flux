@@ -3,6 +3,7 @@ import { useCurrentForm, useCurrentFormState } from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
 import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
+import { cn } from '@nop-chaos/ui';
 
 export interface FieldFrameProps {
   name?: string;
@@ -99,13 +100,13 @@ export function FieldFrame(props: FieldFrameProps) {
 
   return (
     <Tag
-      className={['nop-field grid gap-2', className].filter(Boolean).join(' ') || undefined}
+      className={cn('nop-field', className)}
       data-testid={testid || undefined}
       data-cid={cid != null ? cid : undefined}
-      data-field-visited={fieldState.visited || undefined}
-      data-field-touched={fieldState.touched || undefined}
-      data-field-dirty={fieldState.dirty || undefined}
-      data-field-invalid={showError || undefined}
+      data-field-visited={fieldState.visited ? '' : undefined}
+      data-field-touched={fieldState.touched ? '' : undefined}
+      data-field-dirty={fieldState.dirty ? '' : undefined}
+      data-field-invalid={showError ? '' : undefined}
     >
       {label ? (
         <LabelTag data-slot="field-label">

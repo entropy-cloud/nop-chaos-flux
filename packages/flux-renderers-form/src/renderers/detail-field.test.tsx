@@ -66,6 +66,12 @@ describe('detail-field renderer', () => {
     await waitFor(() => {
       expect(screen.getByText('Edit Address')).toBeTruthy();
     });
+
+    const field = screen.getByText('Edit Address').closest('.nop-field');
+    expect(field).toBeTruthy();
+    expect(field?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Address');
+    expect(field?.querySelector('[data-slot="field-control"]')).toBeTruthy();
+    expect(field?.querySelector('[data-slot="detail-field-viewer"]')).toBeTruthy();
   });
 
   it('does not render trigger button when readOnly', async () => {

@@ -6,11 +6,9 @@ import { ChevronRightIcon, ChevronsUpDownIcon, SearchIcon, XIcon } from 'lucide-
 import {
   formLabelFieldRule,
   useFieldPresentation,
-  useFormFieldController,
-  resolveFieldLabelContent
+  useFormFieldController
 } from '../field-utils';
 import { createFieldValidation } from './input';
-import { FieldHint, FieldLabel } from './shared';
 import type { InputTreeSchema, TreeSelectSchema } from '../schemas';
 import {
   buildTreeOptionMetaList,
@@ -53,7 +51,6 @@ function TreeOptionList(props: {
   searchable: boolean;
   disabled: boolean;
   onChange: (value: unknown) => void;
-  ariaLabel?: string;
 }) {
   const [query, setQuery] = useState('');
   const filteredOptions = useMemo(() => {
@@ -90,7 +87,6 @@ function TreeOptionList(props: {
             'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted',
             checked ? 'bg-muted' : ''
           )}
-          aria-label={props.ariaLabel}
           disabled={props.disabled}
           onClick={() => props.onChange(toggleTreeSelection(props.value, option.value, props.multiple))}
         >
@@ -106,10 +102,10 @@ function TreeOptionList(props: {
   }
 
   return (
-    <div className="grid gap-2">
+    <div data-slot="tree-option-list">
       {props.searchable ? (
-        <label className="flex items-center gap-2 rounded-md border border-input px-2 py-1.5">
-          <SearchIcon className="size-4 text-muted-foreground" />
+        <label data-slot="tree-option-search">
+          <SearchIcon className="size-4" />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -118,7 +114,7 @@ function TreeOptionList(props: {
           />
         </label>
       ) : null}
-      <div className="grid gap-1 max-h-72 overflow-auto">
+      <div data-slot="tree-option-items">
         {filteredOptions.map(renderNode)}
       </div>
     </div>
@@ -133,21 +129,13 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
     disabled: props.meta.disabled,
     required: Boolean(props.props.required ?? props.schema.required)
   });
-  const labelContent = resolveFieldLabelContent(props);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const options = buildTreeOptionMetaList(props.props.options, getTreeOptionConfig(props.props as InputTreeSchema));
   const errorMessage = getSourceErrorMessage(optionsSourceState) ?? presentation.fieldState.error?.message;
 
   return (
-    <label
-      className={cn('nop-input-tree grid gap-2', presentation.className)}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-    >
-      <FieldLabel content={labelContent} />
-      <div className="rounded-md border border-input p-2">
+    <div data-slot="input-tree-control">
+      <div data-slot="input-tree-options">
         <TreeOptionList
           options={options}
           value={value}
@@ -156,15 +144,14 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           searchable={props.props.searchable === true}
           disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
           onChange={(nextValue) => handlers.onChange(nextValue)}
-          ariaLabel={String(props.props.label ?? name)}
         />
       </div>
-      <FieldHint
-        errorMessage={errorMessage}
-        validating={presentation.fieldState.validating || optionsSourceState?.loading === true}
-        showError={presentation.showError || Boolean(getSourceErrorMessage(optionsSourceState))}
-      />
-    </label>
+      {errorMessage && (presentation.showError || Boolean(getSourceErrorMessage(optionsSourceState))) ? (
+        <span data-slot="field-error">{errorMessage}</span>
+      ) : presentation.fieldState.validating || optionsSourceState?.loading === true ? (
+        <span data-slot="field-hint">Validating...</span>
+      ) : null}
+    </div>
   );
 }
 
@@ -176,7 +163,6 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
     disabled: props.meta.disabled,
     required: Boolean(props.props.required ?? props.schema.required)
   });
-  const labelContent = resolveFieldLabelContent(props);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const treeConfig = getTreeOptionConfig(props.props as TreeSelectSchema);
   const options = buildTreeOptionMetaList(props.props.options, treeConfig);
@@ -193,27 +179,20 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const errorMessage = getSourceErrorMessage(optionsSourceState) ?? presentation.fieldState.error?.message;
 
   return (
-    <label
-      className={cn('nop-tree-select grid gap-2', presentation.className)}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-    >
-      <FieldLabel content={labelContent} />
+    <div data-slot="tree-select-control">
       <Popover>
         <PopoverTrigger
           render={
             <Button
               type="button"
               variant="outline"
-              className="w-full justify-between"
+              aria-label={String(props.props.label ?? name)}
               disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
             >
-              <span className={cn('truncate', triggerText ? '' : 'text-muted-foreground')}>
+              <span data-slot="tree-select-value" className={cn(triggerText ? undefined : 'text-muted-foreground')}>
                 {triggerText || triggerLabel}
               </span>
-              <span className="inline-flex items-center gap-1">
+              <span data-slot="tree-select-icons">
                 {props.props.clearable === true && triggerText ? (
                   <span
                     role="button"
@@ -239,7 +218,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             </Button>
           }
         />
-        <PopoverContent className="w-[22rem] p-3" align="start">
+        <PopoverContent align="start">
           <TreeOptionList
             options={options}
             value={value}
@@ -248,16 +227,15 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             searchable={props.props.searchable === true}
             disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
             onChange={(nextValue) => handlers.onChange(nextValue)}
-            ariaLabel={String(props.props.label ?? name)}
           />
         </PopoverContent>
       </Popover>
-      <FieldHint
-        errorMessage={errorMessage}
-        validating={presentation.fieldState.validating || optionsSourceState?.loading === true}
-        showError={presentation.showError || Boolean(getSourceErrorMessage(optionsSourceState))}
-      />
-    </label>
+      {errorMessage && (presentation.showError || Boolean(getSourceErrorMessage(optionsSourceState))) ? (
+        <span data-slot="field-error">{errorMessage}</span>
+      ) : presentation.fieldState.validating || optionsSourceState?.loading === true ? (
+        <span data-slot="field-hint">Validating...</span>
+      ) : null}
+    </div>
   );
 }
 
