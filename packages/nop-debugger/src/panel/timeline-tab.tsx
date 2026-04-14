@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ChangeEvent, KeyboardEvent } from 'react';
+import { Button, Input } from '@nop-chaos/ui';
 import { DEFAULT_FILTERS } from '../diagnostics';
 import type { NopDebugEvent, NopDebuggerFilterKind, NopDebuggerSnapshot } from '../types';
 import type { ErrorGroup } from './event-groups';
@@ -134,13 +136,14 @@ export function TimelineTab(props: {
 
   return (
     <>
-      <input
+      <Input
         type="search"
         className="ndbg-search"
         placeholder="Search events, /regex/, or path:body.0"
+        size="sm"
         value={searchText}
-        onChange={(event) => setSearchText(event.target.value)}
-        onKeyDown={(event) => {
+        onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value)}
+        onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
           if (event.key === 'Enter') {
             submitSearch();
           }
@@ -149,22 +152,29 @@ export function TimelineTab(props: {
       {searchHistory.length > 0 ? (
         <div className="ndbg-search-history">
           {searchHistory.map((query) => (
-            <button key={query} type="button" className="ndbg-filter" onClick={() => applySearchHistory(query)}>
+            <Button key={query} type="button" variant="ghost" size="sm" className="ndbg-filter" onClick={() => applySearchHistory(query)}>
               {query}
-            </button>
+            </Button>
           ))}
         </div>
       ) : null}
       <div className="ndbg-filters">
-        <button type="button" className={`ndbg-filter ${errorsOnly ? 'ndbg-errors-only-toggle' : ''}`} data-active={errorsOnly ? '' : undefined} onClick={toggleErrorsOnly}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className={['ndbg-filter', errorsOnly ? 'ndbg-errors-only-toggle' : null].filter(Boolean).join(' ')}
+          data-active={errorsOnly ? '' : undefined}
+          onClick={toggleErrorsOnly}
+        >
           Errors Only
-        </button>
+        </Button>
         {!errorsOnly && DEFAULT_FILTERS.map((filter) => {
           const active = snapshot.filters.includes(filter);
           return (
-            <button key={filter} type="button" className="ndbg-filter" data-active={active ? '' : undefined} onClick={() => toggleFilter(filter)}>
+            <Button key={filter} type="button" variant="ghost" size="sm" className="ndbg-filter" data-active={active ? '' : undefined} onClick={() => toggleFilter(filter)}>
               {filterLabels[filter]}
-            </button>
+            </Button>
           );
         })}
       </div>

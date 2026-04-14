@@ -80,9 +80,10 @@ export function DesignerPaletteContent() {
                       )}
                       style={{ background: 'rgba(255, 255, 255, 0.7)' }}
                     >
-                      <button
+                      <Button
                         type="button"
-                        className="flex flex-1 min-w-0 items-center gap-3 text-left bg-transparent border-none cursor-pointer p-0"
+                        variant="ghost"
+                        className="flex flex-1 min-w-0 items-center gap-3 text-left border-none p-0 hover:bg-transparent"
                         onClick={() => handleAddNode(nt)}
                         draggable
                         onDragStart={(event) => {
@@ -95,17 +96,17 @@ export function DesignerPaletteContent() {
                           {nt.icon ? <DesignerIcon icon={nt.icon} className="text-white" /> : '◇'}
                         </span>
                         <span className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{nt.label}</span>
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
-                        className="w-8 h-8 rounded-lg border-none bg-transparent cursor-pointer inline-flex items-center justify-center text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-muted-foreground"
                         onClick={() => handleAddNode(nt)}
                         aria-label={`Add ${nt.label}`}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M5 12h14" /><path d="M12 5v14" />
-                        </svg>
-                      </button>
+                        <DesignerIcon icon="plus" />
+                      </Button>
                     </div>
                   );
                 })}

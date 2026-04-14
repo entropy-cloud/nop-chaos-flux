@@ -245,22 +245,26 @@ export function ConditionGroup({
 
       <div className="relative rounded-lg border border-border bg-card pl-0">
         {depth > 0 && onRemove && (
-          <button
+          <Button
             type="button"
-            className="absolute -right-2 -top-2 z-10 flex size-5 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-destructive hover:border-destructive shadow-sm transition-colors"
+            variant="outline"
+            size="icon-xs"
+            className="absolute -right-2 -top-2 z-10 rounded-full text-muted-foreground hover:text-destructive hover:border-destructive shadow-sm"
             onClick={onRemove}
             title={removeGroupLabel}
           >
             ×
-          </button>
+          </Button>
         )}
 
         {(showAndOr || showNot) && (
           <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border bg-muted/30 rounded-t-lg">
             {showAndOr && !isSimple ? (
               <div className="flex items-center rounded-full border border-border p-0.5 bg-background">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="xs"
                   className={cn(
                     'px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors',
                     value.conjunction === 'and'
@@ -271,9 +275,11 @@ export function ConditionGroup({
                   disabled={disabled}
                 >
                   {t('and')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="xs"
                   className={cn(
                     'px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors',
                     value.conjunction === 'or'
@@ -284,7 +290,7 @@ export function ConditionGroup({
                   disabled={disabled}
                 >
                   {t('or')}
-                </button>
+                </Button>
               </div>
             ) : (
               <span className="text-xs font-medium text-muted-foreground">
@@ -293,8 +299,10 @@ export function ConditionGroup({
             )}
 
             {showNot && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="xs"
                 className={cn(
                   'ml-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-colors',
                   value.not
@@ -305,7 +313,7 @@ export function ConditionGroup({
                 disabled={disabled}
               >
                 {value.not ? t('notActive') : t('not')}
-              </button>
+              </Button>
             )}
           </div>
         )}

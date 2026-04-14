@@ -1,3 +1,5 @@
+import type { ChangeEvent, KeyboardEvent } from 'react';
+import { Button, Input } from '@nop-chaos/ui';
 import type { NopComponentInspectResult, NopComponentTreeItem, NopNodeDiagnostics } from '../types';
 import { JsonViewer } from './json-viewer';
 
@@ -55,9 +57,9 @@ export function NodeTab(props: {
       <div className="ndbg-tree-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span className="ndbg-metric-label">Components ({componentTree.length})</span>
-          <button onClick={scanComponentTree} style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--nop-debugger-chip-border)', background: 'transparent', color: 'var(--nop-debugger-text)', cursor: 'pointer' }}>
+          <Button type="button" variant="ghost" size="xs" className="ndbg-inline-button" onClick={scanComponentTree}>
             Scan
-          </button>
+          </Button>
         </div>
         {inspectMode ? (
           <div className="ndbg-inspect-hint">
@@ -69,7 +71,7 @@ export function NodeTab(props: {
             <article className="ndbg-metric-card">
               <div className="ndbg-inspect-header">
                 <span className="ndbg-metric-label">Component Inspector</span>
-                <button onClick={() => setSelectedElement(null)} style={{ fontSize: '11px', background: 'none', border: 'none', color: 'var(--nop-debugger-text)', cursor: 'pointer', padding: 0 }}>✕</button>
+                <Button type="button" variant="ghost" size="icon-xs" className="ndbg-icon-button ndbg-close-button" onClick={() => setSelectedElement(null)} aria-label="Clear selected element">✕</Button>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <strong>#{inspectData.cid}</strong>
@@ -89,9 +91,9 @@ export function NodeTab(props: {
                 <span className="ndbg-inspect-section-title">Form State</span>
                 <div style={{ display: 'flex', gap: 4 }}>
                   {(['values', 'errors', 'meta'] as const).map((tab) => (
-                    <button key={tab} type="button" className="ndbg-form-tab" data-active={formTab === tab ? '' : undefined} onClick={() => setFormTab(tab)}>
+                    <Button key={tab} type="button" variant="ghost" size="xs" className="ndbg-form-tab" data-active={formTab === tab ? '' : undefined} onClick={() => setFormTab(tab)}>
                       {tab}
-                    </button>
+                    </Button>
                   ))}
                 </div>
                 <JsonViewer
@@ -144,7 +146,7 @@ export function NodeTab(props: {
           <article className="ndbg-metric-card" style={{ marginBottom: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span className="ndbg-metric-label">Selected Element</span>
-              <button onClick={() => setSelectedElement(null)} style={{ fontSize: '11px', background: 'none', border: 'none', color: 'var(--nop-debugger-text)', cursor: 'pointer', padding: 0 }}>✕</button>
+              <Button type="button" variant="ghost" size="icon-xs" className="ndbg-icon-button ndbg-close-button" onClick={() => setSelectedElement(null)} aria-label="Clear selected element">✕</Button>
             </div>
             <strong>data-cid: {selectedElement.getAttribute('data-cid')}</strong>
             <span>{selectedElement.tagName.toLowerCase()}</span>
@@ -152,29 +154,35 @@ export function NodeTab(props: {
         ) : null}
         {componentTree.length > 0 ? (
           <div className="ndbg-component-tree">
-            {componentTree.map((item) => (
-              <div
-                key={item.cid}
-                className={`ndbg-tree-item ${inspectData?.cid === item.cid || selectedElement?.getAttribute('data-cid') === String(item.cid) ? 'selected' : ''}`}
-                onClick={() => inspectTreeItem(item)}
-                style={{ paddingLeft: `${item.depth * 16 + 8}px` }}
-              >
-                <span style={{ fontSize: '11px', color: 'var(--nop-debugger-muted-text)' }}>#{item.cid}</span>
-                {' '}
-                <span style={{ fontSize: '12px' }}>{item.label || 'element'}</span>
-              </div>
-            ))}
+            {componentTree.map((item) => {
+              const isSelected = inspectData?.cid === item.cid || selectedElement?.getAttribute('data-cid') === String(item.cid);
+              const itemClassName = ['ndbg-tree-item', isSelected ? 'selected' : null].filter(Boolean).join(' ');
+
+              return (
+                <div
+                  key={item.cid}
+                  className={itemClassName}
+                  onClick={() => inspectTreeItem(item)}
+                  style={{ paddingLeft: `${item.depth * 16 + 8}px` }}
+                >
+                  <span style={{ fontSize: '11px', color: 'var(--nop-debugger-muted-text)' }}>#{item.cid}</span>
+                  {' '}
+                  <span style={{ fontSize: '12px' }}>{item.label || 'element'}</span>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="ndbg-empty">Click "Scan" to find components.</p>
         )}
       </div>
-      <input
+      <Input
         type="text"
         className="ndbg-node-input"
         placeholder="Enter nodeId to inspect..."
+        size="sm"
         value={nodeIdInput}
-        onChange={(e) => onNodeIdInputChange(e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onNodeIdInputChange(e.target.value)}
       />
       {nodeDiagnostics && nodeIdInput.trim() ? (
         <div className="ndbg-list">
@@ -252,13 +260,14 @@ export function NodeTab(props: {
       {inspectData ? (
         <div className="ndbg-inspect-section">
           <span className="ndbg-inspect-section-title">Expression Evaluator</span>
-          <input
+          <Input
             type="text"
             className="ndbg-eval-input"
             placeholder="Evaluate formula expression on component data..."
+            size="sm"
             value={evalInput}
-            onChange={(e) => setEvalInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleEvalExpression(); }}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setEvalInput(e.target.value)}
+            onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') handleEvalExpression(); }}
           />
           {evalResult !== null ? <div className="ndbg-eval-result">{evalResult}</div> : null}
         </div>

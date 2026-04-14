@@ -338,7 +338,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     }, [childPaths, currentForm, modelGeneration, name]);
 
   return (
-    <label
+    <div
       className={presentation.className}
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
@@ -346,7 +346,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       data-field-invalid={presentation['data-field-invalid']}
     >
       <FieldLabel content={labelContent} />
-      <div className="grid gap-3">
+      <div className="grid gap-3" data-slot="field-control">
         {pairs.map((pair, index) => {
           return (
             <KeyValueRow
@@ -390,7 +390,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
         validating={presentation.fieldState.validating}
         showError={presentation.showError}
       />
-    </label>
+    </div>
   );
 }
 

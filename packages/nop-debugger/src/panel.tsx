@@ -1,5 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import type { MouseEvent } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
+import { Button } from '@nop-chaos/ui';
 import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types';
 import { buildOverview } from './diagnostics';
 import { loadPersistedSearchHistory, persistSearchHistory } from './controller-helpers';
@@ -210,13 +212,15 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
   if (!snapshot.panelOpen) {
     return (
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
         className="nop-debugger-launcher nop-theme-root"
         style={{ left: `${launcherPosition.x}px`, top: `${launcherPosition.y}px` }}
         onPointerDown={launcherBind.onPointerDown}
         title="Open Debugger"
-        onClick={(event) => {
+        onClick={(event: MouseEvent<HTMLButtonElement>) => {
           if (consumeSuppressedClick()) {
             event.preventDefault();
             event.stopPropagation();
@@ -234,15 +238,16 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           {errorCount > 0 ? `${errorCount} err` : `${snapshot.events.length}`}
         </span>
         {errorCount > 0 ? <span className="ndbg-launcher-badge">{badgeDisplay}</span> : null}
-      </button>
+      </Button>
     );
   }
 
   if (snapshot.minimized) {
     return (
       <div
-        className="nop-debugger nop-theme-root nop-debugger--minimized"
-        style={{ left: `${position.x}px`, top: `${position.y}px`, display: 'flex', borderRadius: '999px', padding: '8px 14px', width: 'auto', maxHeight: 'none', overflow: 'visible', gap: '8px', alignItems: 'center', cursor: 'grab' }}
+        className="nop-debugger nop-theme-root ndbg-minimized"
+        data-panel-state="minimized"
+        style={{ left: `${position.x}px`, top: `${position.y}px` }}
         {...dragBind}
       >
         <span className="ndbg-launcher-icon">
@@ -270,14 +275,16 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           <h2>Runtime Console</h2>
         </div>
         <div className="ndbg-header-actions">
-          <button type="button" className="ndbg-icon-button" onClick={() => (snapshot.paused ? props.controller.resume() : props.controller.pause())} data-tooltip={snapshot.paused ? 'Resume' : 'Pause'}>
+          <Button type="button" variant="ghost" size="icon-sm" className="ndbg-icon-button" onClick={() => (snapshot.paused ? props.controller.resume() : props.controller.pause())} data-tooltip={snapshot.paused ? 'Resume' : 'Pause'} aria-label={snapshot.paused ? 'Resume' : 'Pause'}>
             {snapshot.paused ? <Play size={14} /> : <Pause size={14} />}
-          </button>
-          <button type="button" className="ndbg-icon-button" onClick={() => props.controller.clear()} data-tooltip="Clear">
+          </Button>
+          <Button type="button" variant="ghost" size="icon-sm" className="ndbg-icon-button" onClick={() => props.controller.clear()} data-tooltip="Clear" aria-label="Clear">
             <Trash2 size={14} />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-sm"
             className="ndbg-icon-button"
             onClick={() => {
               if (!snapshot.panelOpen) {
@@ -286,27 +293,30 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
               setInspectMode(!inspectMode);
             }}
             data-tooltip={inspectMode ? 'Cancel pick' : 'Pick element'}
-            style={inspectMode ? { background: 'rgba(28,118,196,0.3)', color: '#9bd9ff' } : undefined}
+            data-active={inspectMode ? '' : undefined}
+            aria-label={inspectMode ? 'Cancel pick' : 'Pick element'}
           >
             <Crosshair size={14} />
-          </button>
-          <button type="button" className="ndbg-icon-button" data-testid="ndbg-minimize" onClick={() => props.controller.minimize()} data-tooltip="Minimize">
+          </Button>
+          <Button type="button" variant="ghost" size="icon-sm" className="ndbg-icon-button" data-testid="ndbg-minimize" onClick={() => props.controller.minimize()} data-tooltip="Minimize" aria-label="Minimize">
             <Minimize2 size={14} />
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="ndbg-tabs" role="tablist" aria-label="Debugger tabs">
         {(['overview', 'timeline', 'network', 'node'] as NopDebuggerTab[]).map((tab) => (
-          <button
+          <Button
             key={tab}
             type="button"
+            variant="ghost"
+            size="sm"
             className="ndbg-tab"
             data-active={snapshot.activeTab === tab ? '' : undefined}
             onClick={() => props.controller.setActiveTab(tab)}
           >
             {tab}
-          </button>
+          </Button>
         ))}
       </div>
 

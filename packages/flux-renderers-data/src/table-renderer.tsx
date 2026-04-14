@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import {
   Table,
   TableBody,
@@ -170,7 +170,10 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                           <DropdownMenu>
                             <DropdownMenuTrigger
                               render={
-                                <button
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-xs"
                                   className={cn(
                                     'h-6 w-6 rounded hover:bg-accent',
                                     activeFilters.size > 0 ? 'text-primary' : 'text-muted-foreground'
@@ -179,7 +182,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                                 >
                                   <span className="sr-only">Filter</span>
                                   <ChevronDownIcon className="size-3" />
-                                </button>
+                                </Button>
                               }
                             />
                             <DropdownMenuContent>
@@ -247,7 +250,10 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                     >
                       {schemaProps.expandable ? (
                         <TableCell data-slot="table-expand-cell">
-                          <button
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleToggleExpand(rowKey);
@@ -256,7 +262,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                             aria-label={isExpanded ? 'Collapse' : 'Expand'}
                           >
                             {isExpanded ? <ChevronDownIcon className="size-4" /> : <ChevronRightIcon className="size-4" />}
-                          </button>
+                          </Button>
                         </TableCell>
                       ) : null}
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { cn } from '@nop-chaos/ui';
 import type { PortConfig } from '@nop-chaos/flow-designer-core';
 import { POSITION_MAP } from './types';
 
@@ -25,7 +26,7 @@ export function renderPorts(ports: PortConfig[] | undefined) {
         type={type}
         position={position}
         id={port.id}
-        className={`${port.appearance?.className ?? defaultHandleClass}`}
+        className={cn(defaultHandleClass, port.appearance?.className)}
       />
     );
   });

@@ -1,6 +1,6 @@
 import type { ApiSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
-import { Checkbox, Input, RadioGroup, RadioGroupItem, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Switch, Textarea } from '@nop-chaos/ui';
+import { Checkbox, Input, Label, RadioGroup, RadioGroupItem, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Switch, Textarea } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   useFieldPresentation,
@@ -235,10 +235,10 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
         onBlur={handlers.onBlur}
       >
         {options?.map((option) => (
-          <label key={option.value} className="inline-flex items-center gap-2.5">
+          <Label key={option.value} className="inline-flex items-center gap-2.5">
             <RadioGroupItem value={option.value} aria-label={option.label} disabled={loading} />
             <span className="font-medium">{option.label}</span>
-          </label>
+          </Label>
         ))}
       </RadioGroup>
       {errorMessage ? <span className="text-sm text-destructive">{errorMessage}</span> : null}
@@ -271,7 +271,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
         const checked = value.some((candidate) => Object.is(candidate, option.value));
 
         return (
-          <label key={option.value} className="inline-flex items-center gap-2.5">
+          <Label key={option.value} className="inline-flex items-center gap-2.5">
             <Checkbox
               checked={checked}
               disabled={loading || presentation.effectiveDisabled}
@@ -288,7 +288,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
               onBlur={handlers.onBlur}
             />
             <span className="font-medium">{option.label}</span>
-          </label>
+          </Label>
         );
       })}
       {errorMessage ? <span className="text-sm text-destructive">{errorMessage}</span> : null}

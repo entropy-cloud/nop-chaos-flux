@@ -1,3 +1,4 @@
+import { cn } from '@nop-chaos/ui';
 import type { MergedRequest } from './event-groups';
 import { JsonViewer } from './json-viewer';
 
@@ -15,13 +16,21 @@ export function NetworkTab(props: {
   setNetworkExpandedKey(value: string | null): void;
 }) {
   const { mergedRequests, networkExpandedKey, setNetworkExpandedKey } = props;
+
+  const getStatusClassName = (status: MergedRequest['status']) => cn('ndbg-badge', {
+    'ndbg-status-pending': status === 'pending',
+    'ndbg-status-completed': status === 'completed',
+    'ndbg-status-failed': status === 'failed',
+    'ndbg-status-aborted': status === 'aborted',
+  });
+
   return (
     <div className="ndbg-list">
       {mergedRequests.length === 0 ? <p className="ndbg-empty">No network events recorded yet.</p> : null}
       {mergedRequests.map((request) => (
         <article key={request.key} className="ndbg-entry" onClick={() => setNetworkExpandedKey(networkExpandedKey === request.key ? null : request.key)}>
           <div className="ndbg-entry-topline">
-            <span className={`ndbg-badge ndbg-status-${request.status}`} data-group="api">{request.status}</span>
+            <span className={getStatusClassName(request.status)} data-group="api">{request.status}</span>
             <time>{formatClock(request.startEvent?.timestamp ?? 0)}</time>
           </div>
           <strong className="ndbg-entry-summary">{request.summary}</strong>

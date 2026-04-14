@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
-import { Button, Checkbox, Input, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
+import { Button, Checkbox, Input, Label, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { ChevronRightIcon, ChevronsUpDownIcon, SearchIcon, XIcon } from 'lucide-react';
 import {
   formLabelFieldRule,
@@ -81,8 +81,9 @@ function TreeOptionList(props: {
 
     return (
       <div key={`${option.valueKey}:${option.depth}`} className="grid gap-1">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           className={cn(
             'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted',
             checked ? 'bg-muted' : ''
@@ -95,7 +96,7 @@ function TreeOptionList(props: {
             {props.multiple ? <Checkbox checked={checked} aria-label={option.label} /> : null}
             <span className="truncate">{props.showPathLabel ? option.pathLabel : option.label}</span>
           </span>
-        </button>
+        </Button>
         {option.children.length > 0 ? option.children.map(renderNode) : null}
       </div>
     );
@@ -104,7 +105,7 @@ function TreeOptionList(props: {
   return (
     <div data-slot="tree-option-list">
       {props.searchable ? (
-        <label data-slot="tree-option-search">
+        <Label data-slot="tree-option-search">
           <SearchIcon className="size-4" />
           <Input
             value={query}
@@ -112,7 +113,7 @@ function TreeOptionList(props: {
             placeholder="Search tree options"
             disabled={props.disabled}
           />
-        </label>
+        </Label>
       ) : null}
       <div data-slot="tree-option-items">
         {filteredOptions.map(renderNode)}

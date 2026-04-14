@@ -66,7 +66,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   }, [currentForm, labelText, modelGeneration, name]);
 
   return (
-    <label
+    <div
       className={presentation.className}
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
@@ -74,7 +74,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
       data-field-invalid={presentation['data-field-invalid']}
     >
       <FieldLabel content={labelContent} />
-      <div className="flex flex-wrap gap-2.5">
+      <div className="flex flex-wrap gap-2.5" data-slot="field-control">
         {tags.map((tag) => {
           const active = value.includes(tag);
 
@@ -114,7 +114,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
         validating={presentation.fieldState.validating}
         showError={presentation.showError}
       />
-    </label>
+    </div>
   );
 }
 

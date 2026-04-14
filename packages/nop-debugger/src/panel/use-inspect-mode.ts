@@ -15,13 +15,15 @@ function useInspectOverlays(inspectMode: boolean, hoveredElement: HTMLElement | 
 
   useEffect(() => {
     const hover = document.createElement('div');
-    hover.className = 'nop-debugger-overlay nop-debugger-overlay--hover';
+    hover.className = 'nop-debugger-overlay';
+    hover.setAttribute('data-overlay-state', 'hover');
     hover.style.display = 'none';
     document.body.appendChild(hover);
     hoverOverlayRef.current = hover;
 
     const active = document.createElement('div');
-    active.className = 'nop-debugger-overlay nop-debugger-overlay--active';
+    active.className = 'nop-debugger-overlay';
+    active.setAttribute('data-overlay-state', 'active');
     active.style.display = 'none';
     document.body.appendChild(active);
     activeOverlayRef.current = active;

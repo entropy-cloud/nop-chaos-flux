@@ -3,6 +3,7 @@ import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, Spr
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { createSpreadsheetCore, type SpreadsheetConfig, type SpreadsheetDocument, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
+import { cn } from '@nop-chaos/ui';
 import { deriveHostSnapshot } from './bridge.js';
 import { buildSpreadsheetStatusLabel, getRuntimeActiveSheetCellCount, getRuntimeActiveSheetName } from './page-model.js';
 import type { SpreadsheetPageSchema } from './types.js';
@@ -131,7 +132,7 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   }, [props.node.scope, snapshot.selection.kind, spreadsheet, statusPath]);
 
   return (
-    <section className="nop-spreadsheet-page">
+    <section className={cn('nop-spreadsheet-page')}>
       <header data-slot="spreadsheet-page-header">
         <h2>{hasRendererSlotContent(titleContent) ? titleContent : 'Spreadsheet Designer'}</h2>
         <p>{buildSpreadsheetStatusLabel(spreadsheet)}</p>

@@ -5,6 +5,7 @@ import { CanvasEditorBridge, createDatasetStore, createEditorStore, saveDocument
 import type { DataSetSourceType, DataColumnInput, DataSet, DocChart, DocCode } from '@nop-chaos/word-editor-core'
 import {
   Button,
+  cn,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -221,7 +222,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
   )
 
   return (
-    <div className="nop-word-editor h-screen overflow-hidden bg-[var(--nop-app-bg)]">
+    <div className={cn('nop-word-editor h-screen overflow-hidden bg-[var(--nop-app-bg)]')}>
       <WorkbenchShell
         style={{ padding: 0 }}
         header={headerSlot}

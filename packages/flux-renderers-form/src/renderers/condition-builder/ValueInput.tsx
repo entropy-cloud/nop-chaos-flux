@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input } from '@nop-chaos/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nop-chaos/ui';
+import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import { Badge } from '@nop-chaos/ui';
 import type { ConditionField, ConditionSelectField } from './types';
 import { t } from './i18n';
@@ -126,23 +127,23 @@ function MultiSelectInput({ options, value, onChange, disabled, placeholder }: {
         <span className="text-xs text-muted-foreground">{placeholder ?? t('selectPlaceholder')}</span>
       )}
       <div className="relative">
-        <select
-          className="absolute inset-0 opacity-0 cursor-pointer"
+        <NativeSelect
+          className="absolute inset-0 w-full opacity-0"
           disabled={disabled}
           value=""
           onChange={(e) => {
             if (e.target.value) toggle(e.target.value);
           }}
         >
-          <option value="">{placeholder ?? t('addOption')}</option>
+          <NativeSelectOption value="">{placeholder ?? t('addOption')}</NativeSelectOption>
           {options
             .filter((o) => !selected.includes(String(o.value)))
             .map((opt) => (
-              <option key={String(opt.value)} value={String(opt.value)}>
+              <NativeSelectOption key={String(opt.value)} value={String(opt.value)}>
                 {opt.label}
-              </option>
+              </NativeSelectOption>
             ))}
-        </select>
+        </NativeSelect>
         <Badge variant="outline" className="text-[10px] px-1.5 py-0 cursor-pointer">
           + {t('addOption')}
         </Badge>

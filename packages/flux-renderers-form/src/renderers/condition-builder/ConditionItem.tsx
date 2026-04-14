@@ -5,6 +5,7 @@ import { FieldSelect } from './FieldSelect';
 import { OperatorSelect } from './OperatorSelect';
 import { ValueInput } from './ValueInput';
 import { resolveOperators, resolveDefaultOp } from './operators';
+import { Button } from '@nop-chaos/ui';
 
 interface ConditionItemProps {
   value: ConditionItemValue;
@@ -121,13 +122,15 @@ export function ConditionItem({
       />
 
       {!disabled && (
-        <button
+        <Button
           type="button"
-          className="p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+          variant="ghost"
+          size="icon-xs"
+          className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
           onClick={onRemove}
         >
           <Trash2Icon className="size-3.5" />
-        </button>
+        </Button>
       )}
     </div>
   );

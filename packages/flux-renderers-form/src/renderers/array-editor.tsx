@@ -245,7 +245,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     }, [childPaths, currentForm, modelGeneration, name, props.props.itemLabel]);
 
   return (
-    <label
+    <div
       className={presentation.className}
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
@@ -253,7 +253,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       data-field-invalid={presentation['data-field-invalid']}
     >
       <FieldLabel content={labelContent} />
-      <div className="grid gap-3">
+      <div className="grid gap-3" data-slot="field-control">
         {items.map((item, index) => {
           return (
             <ArrayEditorRow
@@ -298,7 +298,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
         validating={presentation.fieldState.validating}
         showError={presentation.showError}
       />
-    </label>
+    </div>
   );
 }
 

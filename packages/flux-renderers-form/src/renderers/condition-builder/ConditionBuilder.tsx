@@ -14,7 +14,7 @@ import {
   resolveFieldLabelContent,
   useFieldPresentation,
 } from '../../field-utils';
-import { cn, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
+import { Button, cn, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
 import { FieldHint, FieldLabel } from '../shared';
 import type {
@@ -139,7 +139,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   }
 
   return (
-    <label
+    <div
       className={cn('nop-condition-builder', presentation.className)}
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
@@ -147,21 +147,23 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
       data-field-invalid={presentation['data-field-invalid']}
     >
       <FieldLabel content={labelContent} />
-      <ConditionGroup
-        value={effectiveValue}
-        schema={schemaOverride}
-        fields={fields}
-        operatorsOverride={operatorsOverride}
-        onChange={syncValue}
-        disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
-        depth={0}
-      />
+      <div data-slot="field-control">
+        <ConditionGroup
+          value={effectiveValue}
+          schema={schemaOverride}
+          fields={fields}
+          operatorsOverride={operatorsOverride}
+          onChange={syncValue}
+          disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
+          depth={0}
+        />
+      </div>
       <FieldHint
         errorMessage={presentation.fieldState.error?.message}
         validating={presentation.fieldState.validating}
         showError={presentation.showError}
       />
-    </label>
+    </div>
   );
 }
 
@@ -187,7 +189,7 @@ function PickerModeContent({
   const hasConditions = value.children.length > 0;
 
   return (
-    <label
+    <div
       className={cn('nop-condition-builder', presentation.className)}
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
@@ -195,43 +197,46 @@ function PickerModeContent({
       data-field-invalid={presentation['data-field-invalid']}
     >
       <FieldLabel content={labelContent} />
-      <Popover>
-        <PopoverTrigger
-          render={
-            <button
-              type="button"
-              className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent hover:text-accent-foreground"
-              disabled={disabled}
-            >
-              <span className={hasConditions ? '' : 'text-muted-foreground'}>
-                {hasConditions
-                  ? tf('conditionCount', value.children.length)
-                  : schema.placeholder ?? t('pickerPlaceholder')}
-              </span>
-              <ChevronDownIcon className="size-4 text-muted-foreground" />
-            </button>
-          }
-        />
-        <PopoverContent className="w-auto p-0" align="start">
-          <div className="p-3 max-h-[60vh] overflow-auto">
-            <ConditionGroup
-              value={value}
-              schema={schema}
-              fields={fields}
-              operatorsOverride={operatorsOverride}
-              onChange={onChange}
-              disabled={disabled}
-              depth={0}
-            />
-          </div>
-        </PopoverContent>
-      </Popover>
+      <div data-slot="field-control">
+        <Popover>
+          <PopoverTrigger
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                className="flex h-9 w-full items-center justify-between px-3 py-2 text-sm"
+                disabled={disabled}
+              >
+                <span className={hasConditions ? '' : 'text-muted-foreground'}>
+                  {hasConditions
+                    ? tf('conditionCount', value.children.length)
+                    : schema.placeholder ?? t('pickerPlaceholder')}
+                </span>
+                <ChevronDownIcon className="size-4 text-muted-foreground" />
+              </Button>
+            }
+          />
+          <PopoverContent className="w-auto p-0" align="start">
+            <div className="p-3 max-h-[60vh] overflow-auto">
+              <ConditionGroup
+                value={value}
+                schema={schema}
+                fields={fields}
+                operatorsOverride={operatorsOverride}
+                onChange={onChange}
+                disabled={disabled}
+                depth={0}
+              />
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
       <FieldHint
         errorMessage={presentation.fieldState.error?.message}
         validating={presentation.fieldState.validating}
         showError={presentation.showError}
       />
-    </label>
+    </div>
   );
 }
 

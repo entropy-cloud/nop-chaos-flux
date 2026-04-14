@@ -95,8 +95,9 @@ function TreeNodeRenderer(props: {
             </span>
           )}
 
-          <button
+          <Button
             type="button"
+            variant="ghost"
             className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
             onClick={() => {
               if (hasChildren && expandOnClickNode) {
@@ -105,7 +106,7 @@ function TreeNodeRenderer(props: {
             }}
           >
             {hasRendererSlotContent(nodeContent) ? nodeContent : <span>{String(label ?? nodeKey)}</span>}
-          </button>
+          </Button>
         </div>
 
         {hasChildren ? (
