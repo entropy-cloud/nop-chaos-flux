@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ActionNamespaceProvider, DesignerHostStatusSummary, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, useNamespaceRegistration, WorkbenchShell } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
-import { createDesignerCore, layoutWithElk, projectTree, normalizeConfig } from '@nop-chaos/flow-designer-core';
-import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
+import { createDesignerCore, layoutWithElk, layoutTreeWithElk, simpleTreeLayout, projectTree, normalizeConfig } from '@nop-chaos/flow-designer-core';
+import type { DesignerConfig, GraphDocument, GraphEdge, GraphNode, TreeDocument } from '@nop-chaos/flow-designer-core';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { DataViewer } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
@@ -17,7 +17,7 @@ import {
 } from './designer-context';
 import { createDesignerActionProvider } from './designer-action-provider';
 import { DesignerPaletteContent } from './designer-palette';
-import { DesignerCanvasContent } from './designer-canvas';
+import { DesignerCanvasContent, plusButtonHandlerHolder } from './designer-canvas';
 import { DefaultInspector } from './designer-inspector';
 import { DesignerToolbarContent } from './designer-toolbar';
 
@@ -50,6 +50,40 @@ function matchesShortcut(event: KeyboardEvent, shortcuts: string[] | undefined):
   });
 }
 
+function TreeModeLayoutWrapper(props: RendererComponentProps<DesignerPageSchema> & { config: DesignerConfig; rawSchemaProps: Record<string, SchemaValue> }) {
+  const { config, rawSchemaProps } = props;
+  const treeDocument = rawSchemaProps.treeDocument as TreeDocument | undefined;
+
+  const normalizedConfig = useMemo(() => normalizeConfig(config), [config]);
+  const projected = useMemo(() => treeDocument ? projectTree(treeDocument, normalizedConfig) : { nodes: [] as GraphNode[], edges: [] as GraphEdge[] }, [treeDocument, normalizedConfig]);
+
+  const document: GraphDocument = useMemo(() => {
+    if (!treeDocument) {
+      return { id: '', kind: '', name: '', version: '', nodes: [], edges: [] };
+    }
+    const treeConfig = normalizedConfig.treeConfig;
+    let nodes = projected.nodes;
+    if (treeConfig) {
+      nodes = simpleTreeLayout(projected.nodes, projected.edges, treeConfig, normalizedConfig.nodeTypes);
+    }
+    return {
+      id: treeDocument.id,
+      kind: treeDocument.kind,
+      name: treeDocument.name,
+      version: treeDocument.version,
+      meta: treeDocument.meta,
+      nodes,
+      edges: projected.edges,
+    };
+  }, [treeDocument, projected, normalizedConfig]);
+
+  if (!treeDocument) {
+    return <div>Tree mode requires treeDocument prop</div>;
+  }
+
+  return DesignerPageRendererInner(props, document, config);
+}
+
 export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {
   const rawSchemaProps = props.schema as Record<string, SchemaValue>;
   const config = rawSchemaProps.config as DesignerConfig | undefined;
@@ -61,22 +95,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   const documentMode = config.documentMode;
 
   if (documentMode === 'tree') {
-    const treeDocument = rawSchemaProps.treeDocument as TreeDocument | undefined;
-    if (!treeDocument) {
-      return <div>Tree mode requires treeDocument prop</div>;
-    }
-    const normalizedConfig = normalizeConfig(config);
-    const projected = projectTree(treeDocument, normalizedConfig);
-    const document: GraphDocument = {
-      id: treeDocument.id,
-      kind: treeDocument.kind,
-      name: treeDocument.name,
-      version: treeDocument.version,
-      meta: treeDocument.meta,
-      nodes: projected.nodes,
-      edges: projected.edges,
-    };
-    return DesignerPageRendererInner(props, document, config);
+    return <TreeModeLayoutWrapper {...props} config={config} rawSchemaProps={rawSchemaProps} />;
   }
 
   const document = rawSchemaProps.document as GraphDocument | undefined;
@@ -90,17 +109,35 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
 function DesignerPageRendererInnerBody(props: RendererComponentProps<DesignerPageSchema>, core: ReturnType<typeof createDesignerCore>, snapshot: ReturnType<typeof useDesignerSnapshot>, commandAdapter: ReturnType<typeof createDesignerCommandAdapter>, dispatch: (command: import('./designer-command-adapter').DesignerCommand) => ReturnType<typeof commandAdapter.execute>, config: DesignerConfig) {
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
   const handleAutoLayout = useCallback(async () => {
-    if (config.documentMode === 'tree') return;
     const doc = core.getDocument();
     if (doc.nodes.length === 0) return;
+
+    if (config.documentMode === 'tree') {
+      const normalizedCfg = core.getConfig();
+      const treeConfig = normalizedCfg.treeConfig;
+      if (!treeConfig) return;
+      const layoutedNodes = await layoutTreeWithElk(doc.nodes, doc.edges, treeConfig, normalizedCfg.nodeTypes);
+      const positions = new Map(layoutedNodes.map((n) => [n.id, n.position]));
+      core.layoutNodes(positions);
+      return;
+    }
 
     const positions = await layoutWithElk(doc.nodes, doc.edges, core.getConfig().nodeTypes);
     core.layoutNodes(positions);
   }, [core, config.documentMode]);
 
+  const isTreeMode = config.documentMode === 'tree';
+  const onPlusButtonClick = useCallback((sourceId: string, clientX: number, clientY: number) => {
+    if (isTreeMode) {
+      plusButtonHandlerHolder.current?.(sourceId, clientX, clientY);
+    }
+  }, [isTreeMode]);
+
+  const ctxOnPlusButtonClick = isTreeMode ? onPlusButtonClick : undefined;
+
   const ctxValue = useMemo<DesignerContextValue>(
-    () => ({ core, commandAdapter, dispatch, snapshot, config }),
-    [commandAdapter, core, dispatch, snapshot, config]
+    () => ({ core, commandAdapter, dispatch, snapshot, config, onPlusButtonClick: ctxOnPlusButtonClick }),
+    [commandAdapter, core, dispatch, snapshot, config, ctxOnPlusButtonClick]
   );
   const actionScope = useCurrentActionScope();
   const designerProvider = useMemo(() => createDesignerActionProvider(core), [core]);

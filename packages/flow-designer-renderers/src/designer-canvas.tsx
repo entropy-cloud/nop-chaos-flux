@@ -1,27 +1,79 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { UserCheck, Send } from 'lucide-react';
 import { renderDesignerCanvasBridge } from './canvas-bridge';
 import { useDesignerContext } from './designer-context';
+import { DingFlowAddNodeMenu, type DingFlowMenuItem } from './dingflow';
+
+const plusButtonHandlerHolder: { current: ((sourceId: string, clientX: number, clientY: number) => void) | null } = { current: null };
+
+export { plusButtonHandlerHolder };
+
+const DINGFLOW_MENU_ITEMS: DingFlowMenuItem[] = [
+  { type: 'dt-approval', color: '#ff943e', icon: <UserCheck size={20} />, label: 'Approver' },
+  { type: 'dt-cc', color: '#3296fa', icon: <Send size={20} />, label: 'CC' },
+  { type: 'dt-condition', color: '#15bc83', icon: <span className="text-xs font-bold">Cond</span>, label: 'Condition' },
+];
+
+interface PopoverState {
+  sourceId: string;
+  screenX: number;
+  screenY: number;
+}
 
 export function DesignerCanvasContent() {
   const { dispatch, snapshot, config } = useDesignerContext();
-  const nodeTypeSizeMap = useMemo(() => {
-    const map = new Map<string, { minWidth?: number; minHeight?: number }>();
-    for (const nodeType of config.nodeTypes) {
-      map.set(nodeType.id, {
-        minWidth: nodeType.appearance?.minWidth,
-        minHeight: nodeType.appearance?.minHeight
-      });
-    }
-    return map;
-  }, [config.nodeTypes]);
   const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
   const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
+  const [popover, setPopover] = useState<PopoverState | null>(null);
 
   const handlePaneClick = useCallback(() => {
     setPendingConnectionSourceId(null);
     setReconnectingEdgeId(null);
+    setPopover(null);
     dispatch({ type: 'clearSelection' });
   }, [dispatch]);
+
+  const handlePlusButtonClick = useCallback((sourceId: string, clientX: number, clientY: number) => {
+    setPopover({ sourceId, screenX: clientX, screenY: clientY });
+  }, []);
+
+  useEffect(() => {
+    if (config.documentMode === 'tree') {
+      plusButtonHandlerHolder.current = handlePlusButtonClick;
+      return () => { plusButtonHandlerHolder.current = null; };
+    }
+  }, [config.documentMode, handlePlusButtonClick]);
+
+  const handleMenuSelect = useCallback((type: string) => {
+    if (!popover) return;
+    const { sourceId } = popover;
+    const isMerge = sourceId.startsWith('merge:');
+    const effectiveId = isMerge ? sourceId.slice('merge:'.length) : sourceId;
+    setPopover(null);
+
+    if (type === 'dt-condition') {
+      dispatch({
+        type: 'insertBranchPair',
+        sourceId: effectiveId,
+        condNodeType: type,
+        condData: { title: 'Condition', desc: 'Please set' },
+      });
+    } else if (isMerge) {
+      dispatch({
+        type: 'insertChainNodeAtMerge',
+        targetId: effectiveId,
+        nodeType: type,
+        data: { label: type === 'dt-approval' ? 'Approver' : 'CC', desc: 'Please set' },
+      });
+    } else {
+      dispatch({
+        type: 'insertChainNode',
+        sourceId: effectiveId,
+        nodeType: type,
+        data: { label: type === 'dt-approval' ? 'Approver' : 'CC', desc: 'Please set' },
+      });
+    }
+  }, [popover, dispatch]);
 
   const handleNodeClick = useCallback(
     (nodeId: string, e?: React.MouseEvent) => {
@@ -60,7 +112,18 @@ export function DesignerCanvasContent() {
     [dispatch]
   );
 
-  return renderDesignerCanvasBridge({
+  const nodeTypeSizeMap = useMemo(() => {
+    const map = new Map<string, { minWidth?: number; minHeight?: number }>();
+    for (const nodeType of config.nodeTypes) {
+      map.set(nodeType.id, {
+        minWidth: nodeType.appearance?.minWidth,
+        minHeight: nodeType.appearance?.minHeight
+      });
+    }
+    return map;
+  }, [config.nodeTypes]);
+
+  const canvas = renderDesignerCanvasBridge({
     snapshot,
     canvasConfig: config.canvas,
     nodeTypeSizeMap,
@@ -144,6 +207,23 @@ export function DesignerCanvasContent() {
     },
     onDrop: (nodeTypeId: string, position: { x: number; y: number }) => {
       dispatch({ type: 'addNode', nodeType: nodeTypeId, position });
-    }
+    },
+    documentMode: config.documentMode,
+    onPlusButtonClick: config.documentMode === 'tree' ? handlePlusButtonClick : undefined,
   });
+
+  return (
+    <>
+      {canvas}
+      {popover && (
+        <DingFlowAddNodeMenu
+          screenX={popover.screenX}
+          screenY={popover.screenY}
+          items={DINGFLOW_MENU_ITEMS}
+          onSelect={handleMenuSelect}
+          onClose={() => setPopover(null)}
+        />
+      )}
+    </>
+  );
 }

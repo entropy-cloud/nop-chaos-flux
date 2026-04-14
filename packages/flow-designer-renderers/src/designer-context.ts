@@ -10,6 +10,7 @@ export interface DesignerContextValue {
   dispatch: (command: import('./designer-command-adapter').DesignerCommand) => import('./designer-command-adapter').DesignerCommandResult;
   snapshot: DesignerSnapshot;
   config: DesignerConfig;
+  onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number) => void;
 }
 
 export const DesignerContext = React.createContext<DesignerContextValue | null>(null);
