@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
-import { Badge, Button, Switch } from '@nop-chaos/ui';
+import { Badge, Button, Switch, cn } from '@nop-chaos/ui';
 
 type ToolbarItemLike = {
   type?: string;
@@ -132,7 +132,7 @@ export function DesignerToolbarContent(props: {
   }
 
   return (
-    <div className="nop-designer-toolbar min-h-[52px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-xl shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }} data-testid="designer-toolbar">
+    <div className={cn('nop-designer-toolbar min-h-[52px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-xl shadow-sm')} style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }} data-testid="designer-toolbar">
       {items.map(({ key, item }) => {
         if (item.type === 'divider') {
           return <span key={key} className="w-px h-[18px] bg-border" aria-hidden="true" />;

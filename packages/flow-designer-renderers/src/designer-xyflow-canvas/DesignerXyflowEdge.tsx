@@ -7,11 +7,7 @@ import { useEdgeTypeConfig, useDesignerContext } from '../designer-context';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import type { DesignerFlowEdgeData } from './types';
 import { DesignerIcon } from '../designer-icon';
-import { Button } from '@nop-chaos/ui';
-
-function classNames(...values: Array<string | undefined | false | null>) {
-  return values.filter(Boolean).join(' ');
-}
+import { Button, cn } from '@nop-chaos/ui';
 
 function isSchemaInput(value: unknown): value is SchemaInput {
   return isSchema(value);
@@ -73,13 +69,13 @@ export function DesignerXyflowEdge(props: EdgeProps) {
         path={edgePath}
         style={edgeStyle}
         markerEnd={appearance?.markerEnd && appearance.markerEnd !== 'none' ? `url(#${appearance.markerEnd})` : undefined}
-        className={classNames(appearance?.animated && 'react-flow__edge-animated')}
+        className={cn(appearance?.animated && 'react-flow__edge-animated')}
       />
 
       {hasBody && (
         <EdgeLabelRenderer>
           <div
-            className={classNames(
+            className={cn(
               'px-3 py-1.5 rounded-full border border-border text-sm font-medium text-muted-foreground shadow-sm',
               props.selected && 'border-primary text-foreground'
             )}

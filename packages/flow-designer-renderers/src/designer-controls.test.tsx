@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { DesignerToolbarContent } from './designer-toolbar';
 import { DesignerPaletteContent } from './designer-palette';
 import { DefaultInspector } from './designer-inspector';
@@ -11,6 +11,7 @@ type MockContext = {
   config: any;
   snapshot: any;
   dispatch: ReturnType<typeof vi.fn>;
+  openCreateDialog?: ReturnType<typeof vi.fn>;
 };
 
 let mockContext: MockContext;
@@ -47,11 +48,13 @@ function createSnapshot(overrides: Partial<any> = {}) {
 
 describe('flow designer controls', () => {
   beforeEach(() => {
+    cleanup();
     mockResolve = vi.fn();
     mockContext = {
       config: { toolbar: { items: [] }, palette: { groups: [] }, nodeTypes: [] },
       snapshot: createSnapshot(),
-      dispatch: vi.fn()
+      dispatch: vi.fn(),
+      openCreateDialog: vi.fn()
     };
   });
 
@@ -68,6 +71,8 @@ describe('flow designer controls', () => {
     };
 
     render(<DesignerToolbarContent />);
+
+    expect(screen.getByTestId('designer-toolbar').classList.contains('nop-designer-toolbar')).toBe(true);
 
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'undo' });
@@ -130,6 +135,10 @@ describe('flow designer controls', () => {
     };
 
     render(<DesignerPaletteContent />);
+    const paletteItem = document.querySelector('[data-slot="designer-palette-item"]');
+    const paletteHeader = document.querySelector('[data-slot="designer-palette-group-header"]');
+    expect(paletteHeader?.textContent).toContain('Basic');
+    expect(paletteItem).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Task' }));
 
     expect(mockContext.dispatch).toHaveBeenCalledWith({
@@ -149,5 +158,34 @@ describe('flow designer controls', () => {
     render(<DefaultInspector />);
     fireEvent.click(screen.getByRole('button', { name: '删除节点' }));
     expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'deleteNode', nodeId: 'node-1' });
+  });
+
+  it('opens createDialog-configured node types instead of dispatching addNode immediately', () => {
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
+    mockContext.config = {
+      ...mockContext.config,
+      nodeTypes: [
+        {
+          id: 'task',
+          label: 'Task',
+          createDialog: { title: 'Create Task', body: { type: 'text', text: 'Dialog body' } }
+        }
+      ],
+      palette: {
+        groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task'] }]
+      }
+    };
+
+    render(<DesignerPaletteContent />);
+    const paletteItem = document.querySelector('[data-slot="designer-palette-item"]');
+    expect(paletteItem).toBeTruthy();
+    fireEvent.click(within(paletteItem as HTMLElement).getByRole('button', { name: 'Task' }));
+
+    expect(mockContext.openCreateDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'task' }),
+      { x: 180, y: 120 }
+    );
+    expect(mockContext.dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'addNode' }));
+    randomSpy.mockRestore();
   });
 });

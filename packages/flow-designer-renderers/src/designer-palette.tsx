@@ -3,10 +3,10 @@ import type { NodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge';
-import { Button } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 
 export function DesignerPaletteContent() {
-  const { config, dispatch, snapshot } = useDesignerContext();
+  const { config, dispatch, snapshot, openCreateDialog } = useDesignerContext();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['basic', 'logic', 'execution']));
 
   const nodeTypes = config.nodeTypes;
@@ -27,9 +27,13 @@ export function DesignerPaletteContent() {
   const handleAddNode = useCallback(
     (nodeType: NodeTypeConfig) => {
       const position = { x: 180 + Math.random() * 200, y: 120 + Math.random() * 200 };
+      if (nodeType.createDialog && openCreateDialog) {
+        openCreateDialog(nodeType, position);
+        return;
+      }
       dispatch({ type: 'addNode', nodeType: nodeType.id, position });
     },
-    [dispatch]
+    [dispatch, openCreateDialog]
   );
 
   const filteredGroups = paletteGroups.filter((g) => g.nodeTypes.length > 0);
@@ -70,7 +74,10 @@ export function DesignerPaletteContent() {
                     <div
                       key={nt.id}
                       data-slot="designer-palette-item"
-                      className={`flex items-center gap-2 rounded-xl border border-border p-2 mb-2 last:mb-0 shadow-[0_1px_2px_rgba(0,0,0,0.05)] ${isSelected ? 'border-primary' : ''}`}
+                      className={cn(
+                        'flex items-center gap-2 rounded-xl border border-border p-2 mb-2 last:mb-0 shadow-[0_1px_2px_rgba(0,0,0,0.05)]',
+                        isSelected && 'border-primary'
+                      )}
                       style={{ background: 'rgba(255, 255, 255, 0.7)' }}
                     >
                       <button
@@ -84,7 +91,7 @@ export function DesignerPaletteContent() {
                         }}
                         title={nt.description ?? nt.label}
                       >
-                        <span className={`w-8 h-8 rounded-lg inline-flex items-center justify-center text-white shrink-0 nop-gradient-${nt.id}`} data-type={nt.id} aria-hidden="true">
+                        <span className={cn('w-8 h-8 rounded-lg inline-flex items-center justify-center text-white shrink-0', `nop-gradient-${nt.id}`)} data-type={nt.id} aria-hidden="true">
                           {nt.icon ? <DesignerIcon icon={nt.icon} className="text-white" /> : '◇'}
                         </span>
                         <span className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{nt.label}</span>

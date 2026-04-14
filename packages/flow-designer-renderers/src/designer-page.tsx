@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { ActionNamespaceProvider, DesignerHostStatusSummary, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, useNamespaceRegistration, WorkbenchShell } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, WorkbenchShell } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { createDesignerCore, layoutWithElk } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
-import { DataViewer } from '@nop-chaos/ui';
+import { Button, DataViewer, Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
 import type { DesignerPageSchema } from './schemas';
 import {
@@ -81,10 +80,6 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
     core.layoutNodes(positions);
   }, [core]);
 
-  const ctxValue = useMemo<DesignerContextValue>(
-    () => ({ core, commandAdapter, dispatch, snapshot, config }),
-    [commandAdapter, core, dispatch, snapshot, config]
-  );
   const actionScope = useCurrentActionScope();
   const designerProvider = useMemo(() => createDesignerActionProvider(core), [core]);
   const upstreamBackHandler = useMemo(() => actionScope?.resolve('designer:navigate-back'), [actionScope]);
@@ -118,6 +113,11 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
   }, [designerProvider, upstreamBackHandler]);
   const designerScope = useDesignerHostScope({ snapshot, config, core, path: props.path });
   const [jsonOpen, setJsonOpen] = React.useState(false);
+  const [pendingCreateDialog, setPendingCreateDialog] = React.useState<{
+    nodeType: import('@nop-chaos/flow-designer-core').NodeTypeConfig;
+    position: { x: number; y: number };
+  } | null>(null);
+  const [creatingNode, setCreatingNode] = React.useState(false);
   const jsonOffsetRef = useRef({ x: 0, y: 0 });
   const jsonDocument = useMemo(() => {
     if (!jsonOpen) return null;
@@ -125,7 +125,74 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
     catch { return null; }
   }, [core, jsonOpen]);
 
-  useNamespaceRegistration(actionScope, 'designer', mergedDesignerProvider);
+  const handleOpenCreateDialog = useCallback((nodeType: import('@nop-chaos/flow-designer-core').NodeTypeConfig, position: { x: number; y: number }) => {
+    setPendingCreateDialog({ nodeType, position });
+  }, []);
+
+  const handleCloseCreateDialog = useCallback(() => {
+    if (creatingNode) {
+      return;
+    }
+    setPendingCreateDialog(null);
+  }, [creatingNode]);
+
+  const handleConfirmCreateDialog = useCallback(async () => {
+    if (!pendingCreateDialog) {
+      return;
+    }
+
+    setCreatingNode(true);
+    try {
+      let nextData: Record<string, unknown> | undefined = pendingCreateDialog.nodeType.defaults
+        ? { ...pendingCreateDialog.nodeType.defaults }
+        : undefined;
+
+      const submitAction = pendingCreateDialog.nodeType.createDialog?.submitAction;
+      if (submitAction) {
+        const result = await props.helpers.dispatch(submitAction as any, {
+          scope: designerScope,
+          actionScope,
+        });
+
+        if (!result.ok) {
+          return;
+        }
+
+        if (result.data && typeof result.data === 'object' && !Array.isArray(result.data)) {
+          nextData = {
+            ...(nextData ?? {}),
+            ...(result.data as Record<string, unknown>),
+          };
+        }
+      }
+
+      const addResult = dispatch({
+        type: 'addNode',
+        nodeType: pendingCreateDialog.nodeType.id,
+        position: pendingCreateDialog.position,
+        data: nextData,
+      });
+
+      if (addResult.ok) {
+        setPendingCreateDialog(null);
+      }
+    } finally {
+      setCreatingNode(false);
+    }
+  }, [actionScope, designerScope, dispatch, pendingCreateDialog, props.helpers]);
+
+  const ctxValue = useMemo<DesignerContextValue>(
+    () => ({ core, commandAdapter, dispatch, snapshot, config, openCreateDialog: handleOpenCreateDialog }),
+    [commandAdapter, config, core, dispatch, handleOpenCreateDialog, snapshot]
+  );
+
+  useLayoutEffect(() => {
+    if (!actionScope || !mergedDesignerProvider) {
+      return;
+    }
+
+    return actionScope.registerNamespace('designer', mergedDesignerProvider);
+  }, [actionScope, mergedDesignerProvider]);
 
   useEffect(() => {
     if (!core.getConfig().features.shortcuts) {
@@ -241,6 +308,30 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
             {jsonDocument && (
               <DataViewer data={jsonDocument} />
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={Boolean(pendingCreateDialog)} onOpenChange={(next) => { if (!next) handleCloseCreateDialog(); }}>
+        <DialogContent data-slot="designer-create-dialog" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{pendingCreateDialog?.nodeType.createDialog?.title ?? `Create ${pendingCreateDialog?.nodeType.label ?? 'Node'}`}</DialogTitle>
+          </DialogHeader>
+          <div data-slot="designer-create-dialog-body">
+            {pendingCreateDialog?.nodeType.createDialog?.body
+              ? props.helpers.render(pendingCreateDialog.nodeType.createDialog.body as any, {
+                  scope: designerScope,
+                  actionScope,
+                  pathSuffix: `create-dialog:${pendingCreateDialog.nodeType.id}`,
+                })
+              : null}
+          </div>
+          <div data-slot="designer-create-dialog-actions" className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={handleCloseCreateDialog} disabled={creatingNode}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => void handleConfirmCreateDialog()} disabled={creatingNode}>
+              {creatingNode ? 'Creating...' : 'Create'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

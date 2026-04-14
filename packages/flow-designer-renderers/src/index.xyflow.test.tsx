@@ -12,6 +12,7 @@ vi.mock('./canvas-bridge', async () => {
   function MockXyflowBridge(props: any) {
     return (
       <div>
+        <div>{`nodes:${props.snapshot?.doc?.nodes?.length ?? 0}`}</div>
         <div>{`pending:${props.pendingConnectionSourceId ?? 'none'}`}</div>
         <div>{`reconnecting:${props.reconnectingEdgeId ?? 'none'}`}</div>
         <button type="button" onClick={(event) => props.onStartConnection('node-1', event)}>
@@ -76,7 +77,13 @@ function createRendererEnv(notify = vi.fn()) {
 }
 
 function renderDesignerPage(document: GraphDocument, notify = vi.fn()) {
-  const SchemaRenderer = createSchemaRenderer(flowDesignerRendererDefinitions);
+  const SchemaRenderer = createSchemaRenderer([
+    ...flowDesignerRendererDefinitions,
+    {
+      type: 'text',
+      component: (props: any) => <span>{String(props.props.text ?? '')}</span>
+    }
+  ]);
 
   const view = render(
     <SchemaRenderer
@@ -143,6 +150,72 @@ describe('designer-page live xyflow intent retention', () => {
     await waitFor(() => {
       expect(view.notify).toHaveBeenCalledWith('warning', 'Duplicate edges are not supported in the playground example.');
       expect(canvas.getByText('reconnecting:edge-2')).toBeTruthy();
+    });
+  });
+
+  it('opens createDialog-configured palette nodes before creating them', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      ...flowDesignerRendererDefinitions,
+      {
+        type: 'text',
+        component: (props: any) => <span>{String(props.props.text ?? '')}</span>
+      }
+    ]);
+
+    const view = render(
+      <SchemaRenderer
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 }
+          },
+          config: {
+            ...createTestConfig(),
+            nodeTypes: [
+              {
+                id: 'task',
+                label: 'Task',
+                body: { type: 'text', text: 'Task' },
+                defaults: { label: 'Task' },
+                createDialog: {
+                  title: 'Create Task',
+                  body: { type: 'text', text: 'Create dialog body' },
+                }
+              },
+              {
+                id: 'end',
+                label: 'End',
+                body: { type: 'text', text: 'End' },
+                defaults: { label: 'End' }
+              }
+            ]
+          }
+        } as any}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(within(view.container).getByRole('button', { name: 'Task' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="designer-create-dialog"]')).toBeTruthy();
+      expect(document.body.textContent).toContain('Create Task');
+      expect(document.body.textContent).toContain('Create dialog body');
+    });
+
+    expect(within(view.container).getByText('nodes:0')).toBeTruthy();
+
+    fireEvent.click(within(document.body).getByRole('button', { name: 'Create' }));
+
+    await waitFor(() => {
+      expect(within(view.container).getByText('nodes:1')).toBeTruthy();
     });
   });
 });

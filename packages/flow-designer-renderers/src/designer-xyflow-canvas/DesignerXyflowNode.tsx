@@ -8,11 +8,7 @@ import { useNodeTypeConfig, useDesignerContext } from '../designer-context';
 import { renderPorts } from './render-ports';
 import type { DesignerFlowNodeData } from './types';
 import { DesignerIcon } from '../designer-icon';
-import { Button } from '@nop-chaos/ui';
-
-function classNames(...values: Array<string | undefined | false | null>) {
-  return values.filter(Boolean).join(' ');
-}
+import { Button, cn } from '@nop-chaos/ui';
 
 function isSchemaInput(value: unknown): value is SchemaInput {
   return isSchema(value);
@@ -88,7 +84,7 @@ export function DesignerXyflowNode(props: NodeProps) {
   if (!nodeType?.body || !isSchemaInput(nodeType.body)) {
     return (
       <div
-        className={classNames('nop-designer-node', nodeType?.appearance?.className)}
+        className={cn('nop-designer-node', nodeType?.appearance?.className)}
         style={appearanceStyle}
         data-selected={props.selected ? '' : undefined}
         onMouseEnter={showToolbarNow}
@@ -104,7 +100,7 @@ export function DesignerXyflowNode(props: NodeProps) {
   return (
     <>
       <div
-        className={classNames('nop-designer-node', nodeType.appearance?.className)}
+        className={cn('nop-designer-node', nodeType.appearance?.className)}
         style={appearanceStyle}
         data-selected={props.selected ? '' : undefined}
         onMouseEnter={showToolbarNow}

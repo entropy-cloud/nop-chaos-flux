@@ -304,6 +304,7 @@ describe('DesignerIcon markers', () => {
 
     const icon = document.querySelector('[data-icon="arrow-left"]');
     expect(icon).toBeTruthy();
+    expect(icon?.getAttribute('aria-hidden')).toBe('true');
     const className = icon?.getAttribute('class') ?? '';
     expect(className).toContain('nop-icon');
     expect(className).not.toContain('nop-icon--');

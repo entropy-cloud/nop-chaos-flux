@@ -1,9 +1,6 @@
 import React from 'react';
 import { Circle, icons } from 'lucide-react';
-
-function classNames(...values: Array<string | undefined | false>) {
-  return values.filter(Boolean).join(' ');
-}
+import { cn } from '@nop-chaos/ui';
 
 type LucideIconComponent = React.ComponentType<Record<string, unknown>>;
 
@@ -64,7 +61,7 @@ export function DesignerIcon(props: DesignerIconProps) {
 
   return (
     <IconComp
-      className={classNames('nop-icon', props.className)}
+      className={cn('nop-icon', props.className)}
       data-icon={props.icon}
       size={props.size ?? 16}
       strokeWidth={1.8}
