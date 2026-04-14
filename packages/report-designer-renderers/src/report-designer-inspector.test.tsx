@@ -89,7 +89,11 @@ describe('ReportInspectorRenderer', () => {
       ],
     });
 
-    expect(screen.getByTestId('report-inspector')).toBeTruthy();
+    const inspector = screen.getByTestId('report-inspector');
+    expect(inspector).toBeTruthy();
+    expect(inspector.classList.contains('nop-report-inspector')).toBe(true);
+    expect(inspector.querySelector('[data-slot="report-designer-section-header"]')).toBeTruthy();
+    expect(inspector.querySelector('[data-slot="report-designer-stack"]')).toBeTruthy();
   });
 
   it('renders default empty label when inspectorPanels is undefined', () => {

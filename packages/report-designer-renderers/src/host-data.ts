@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import { useHostScope } from '@nop-chaos/flux-react';
+import type { SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import type {
   FieldSourceSnapshot,
   ReportDesignerCore,
@@ -22,6 +23,35 @@ function getActiveSheet(snapshot: ReportDesignerRuntimeSnapshot, target: ReportS
   }
 }
 
+function getSpreadsheetSelectionTarget(snapshot: SpreadsheetRuntimeSnapshot) {
+  return snapshot.selection;
+}
+
+function getSpreadsheetActiveSheet(snapshot: SpreadsheetRuntimeSnapshot) {
+  return snapshot.document.workbook.sheets.find((sheet) => sheet.id === snapshot.activeSheetId);
+}
+
+function buildSpreadsheetScopeData(snapshot: SpreadsheetRuntimeSnapshot) {
+  const activeSheet = getSpreadsheetActiveSheet(snapshot);
+  const activeCell = snapshot.selection.kind === 'cell' ? snapshot.selection.anchor : undefined;
+  const activeRange = snapshot.selection.kind === 'range' ? snapshot.selection.range : undefined;
+
+  return {
+    workbook: snapshot.document.workbook,
+    activeSheet,
+    selection: getSpreadsheetSelectionTarget(snapshot),
+    activeCell,
+    activeRange,
+    runtime: {
+      canUndo: snapshot.history.canUndo,
+      canRedo: snapshot.history.canRedo,
+      readonly: snapshot.readonly,
+      dirty: snapshot.dirty,
+      zoom: snapshot.viewport.zoom,
+    },
+  };
+}
+
 export interface ReportDesignerHostData {
   designer: {
     kind: string;
@@ -40,9 +70,12 @@ export interface ReportDesignerHostData {
   };
   fieldSources: FieldSourceSnapshot[];
   fieldDrag: ReportDesignerRuntimeSnapshot['fieldDrag'];
+  inspector: ReportDesignerRuntimeSnapshot['inspector'];
   meta: ReportDesignerRuntimeSnapshot['activeMeta'];
   preview: ReportDesignerRuntimeSnapshot['preview'];
   inspectorPanels: ReturnType<ReportDesignerCore['getInspectorPanels']>;
+  selection: ReportSelectionTarget | undefined;
+  target: ReportSelectionTarget | undefined;
   selectionTarget: ReportSelectionTarget | undefined;
   reportDocument: ReportDesignerRuntimeSnapshot['document'];
   workbook: ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook'];
@@ -84,9 +117,12 @@ export function createHostData(core: ReportDesignerCore, snapshot: ReportDesigne
     },
     fieldSources: snapshot.fieldSources,
     fieldDrag: snapshot.fieldDrag,
+    inspector: snapshot.inspector,
     meta: snapshot.activeMeta,
     preview: snapshot.preview,
     inspectorPanels,
+    selection: snapshot.selectionTarget,
+    target: snapshot.selectionTarget,
     selectionTarget: snapshot.selectionTarget,
     reportDocument,
     workbook: reportDocument.spreadsheet.workbook,
@@ -101,9 +137,19 @@ export function createHostData(core: ReportDesignerCore, snapshot: ReportDesigne
 export function buildReportDesignerScopeData(
   core: ReportDesignerCore,
   snapshot: ReportDesignerRuntimeSnapshot,
+  spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ): Record<string, unknown> {
   const inspectorPanels = core.getInspectorPanels();
   const fieldCount = getFieldCount(snapshot.fieldSources);
+  const spreadsheet = spreadsheetSnapshot ? buildSpreadsheetScopeData(spreadsheetSnapshot) : undefined;
+  const workbook = spreadsheet?.workbook ?? snapshot.document.spreadsheet.workbook;
+  const activeSheet = spreadsheet?.activeSheet ?? getActiveSheet(snapshot, snapshot.selectionTarget);
+  const runtimeCanUndo = snapshot.canUndo || (spreadsheetSnapshot?.history.canUndo ?? false);
+  const runtimeCanRedo = snapshot.canRedo || (spreadsheetSnapshot?.history.canRedo ?? false);
+  const runtimeDirty = snapshot.dirty || (spreadsheetSnapshot?.dirty ?? false);
+  const reportDocument = spreadsheetSnapshot
+    ? { ...snapshot.document, spreadsheet: spreadsheetSnapshot.document }
+    : snapshot.document;
 
   return {
     designer: {
@@ -122,23 +168,29 @@ export function buildReportDesignerScopeData(
       fieldCount,
     },
     runtime: {
-      canUndo: snapshot.canUndo,
-      canRedo: snapshot.canRedo,
+      canUndo: runtimeCanUndo,
+      canRedo: runtimeCanRedo,
       previewRunning: snapshot.preview.running,
       previewMode: snapshot.preview.mode,
-      dirty: false,
+      dirty: runtimeDirty,
     },
+    spreadsheet,
     fieldSources: snapshot.fieldSources,
     fieldDrag: snapshot.fieldDrag,
+    inspector: snapshot.inspector,
     meta: snapshot.activeMeta,
     preview: snapshot.preview,
     inspectorPanels,
+    selection: snapshot.selectionTarget,
+    target: snapshot.selectionTarget,
     selectionTarget: snapshot.selectionTarget,
-    reportDocument: snapshot.document,
-    workbook: snapshot.document.spreadsheet.workbook,
-    activeSheet: getActiveSheet(snapshot, snapshot.selectionTarget),
-    canUndo: snapshot.canUndo,
-    canRedo: snapshot.canRedo,
+    reportDocument,
+    workbook,
+    activeSheet,
+    activeCell: spreadsheet?.activeCell,
+    activeRange: spreadsheet?.activeRange,
+    canUndo: runtimeCanUndo,
+    canRedo: runtimeCanRedo,
     documentName: snapshot.document.name,
     fieldCount,
   };
@@ -148,10 +200,11 @@ export function useReportDesignerHostScope(
   core: ReportDesignerCore,
   snapshot: ReportDesignerRuntimeSnapshot,
   path: string,
+  spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ): ScopeRef {
   const scopeData = useMemo(
-    () => buildReportDesignerScopeData(core, snapshot),
-    [core, snapshot],
+    () => buildReportDesignerScopeData(core, snapshot, spreadsheetSnapshot),
+    [core, snapshot, spreadsheetSnapshot],
   );
   return useHostScope(scopeData, path, 'report-designer');
 }

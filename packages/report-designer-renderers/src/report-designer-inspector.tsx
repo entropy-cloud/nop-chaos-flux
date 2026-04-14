@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps, SchemaInput } from '@nop-chaos/flux-core';
 import { useOwnScopeSelector } from '@nop-chaos/flux-react';
+import { cn } from '@nop-chaos/ui';
 import type { ReportInspectorSchema } from './schemas.js';
 
 interface InspectorPanelShape {
@@ -27,7 +28,7 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
 
   if (!hasSelection) {
     return (
-      <section className="nop-report-inspector">
+      <section className={cn('nop-report-inspector')}>
         <p data-slot="report-designer-empty">{noSelectionLabel}</p>
       </section>
     );
@@ -35,14 +36,14 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
 
   if (panels.length === 0) {
     return (
-      <section className="nop-report-inspector">
+      <section className={cn('nop-report-inspector')}>
         <p data-slot="report-designer-empty">{emptyLabel}</p>
       </section>
     );
   }
 
   return (
-    <section className="nop-report-inspector" data-testid="report-inspector">
+    <section className={cn('nop-report-inspector')} data-testid="report-inspector">
       {panels.map((panel) => (
         <div key={panel.id} data-slot="report-designer-stack">
           <div data-slot="report-designer-section-header">

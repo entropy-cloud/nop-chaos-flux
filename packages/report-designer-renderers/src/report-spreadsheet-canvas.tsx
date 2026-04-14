@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   cellAddress,
-  createSpreadsheetCore,
+  type SpreadsheetRuntimeSnapshot,
 } from '@nop-chaos/spreadsheet-core';
 import {
-  createSpreadsheetBridge,
   SheetTabBar,
   SpreadsheetGrid,
+  type SpreadsheetBridge,
   useSpreadsheetInteractions,
 } from '@nop-chaos/spreadsheet-renderers';
 import type {
@@ -21,25 +21,17 @@ const COLS = 10;
 export interface ReportSpreadsheetCanvasProps {
   core: ReportDesignerCore;
   snapshot: ReportDesignerRuntimeSnapshot;
+  spreadsheetBridge: SpreadsheetBridge;
+  spreadsheetSnapshot: SpreadsheetRuntimeSnapshot;
 }
 
-export function ReportSpreadsheetCanvas({ core, snapshot }: ReportSpreadsheetCanvasProps) {
-  const spreadsheetCore = useMemo(
-    () => createSpreadsheetCore({ document: core.exportDocument().spreadsheet }),
-    [core],
-  );
-
-  const spreadsheetBridge = useMemo(
-    () => createSpreadsheetBridge(spreadsheetCore),
-    [spreadsheetCore],
-  );
-
+export function ReportSpreadsheetCanvas({ core, snapshot, spreadsheetBridge, spreadsheetSnapshot }: ReportSpreadsheetCanvasProps) {
   const designerBridge = useMemo(
     () => createReportDesignerBridge(spreadsheetBridge, core),
     [spreadsheetBridge, core],
   );
 
-  const sheetId = snapshot.document.spreadsheet.workbook.sheets[0]?.id ?? '';
+  const sheetId = spreadsheetSnapshot.activeSheetId || snapshot.document.spreadsheet.workbook.sheets[0]?.id || '';
 
   const interactions = useSpreadsheetInteractions({ bridge: spreadsheetBridge, sheetId, rows: ROWS, cols: COLS });
 

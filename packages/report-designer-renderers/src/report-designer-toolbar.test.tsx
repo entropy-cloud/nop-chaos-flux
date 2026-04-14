@@ -53,7 +53,9 @@ function renderToolbarInPage(overrides: { itemsOverride?: any[] }) {
 describe('report-toolbar renderer', () => {
   it('renders with default items (no overrides)', () => {
     renderToolbarInPage({});
-    expect(screen.getByTestId('report-toolbar')).toBeTruthy();
+    const toolbar = screen.getByTestId('report-toolbar');
+    expect(toolbar).toBeTruthy();
+    expect(toolbar.className).toContain('nop-report-toolbar');
   });
 
   it('renders with itemsOverride that adds a button', () => {

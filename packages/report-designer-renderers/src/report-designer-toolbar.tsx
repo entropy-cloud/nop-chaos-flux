@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useOwnScopeSelector } from '@nop-chaos/flux-react';
-import { Badge, Button, Switch } from '@nop-chaos/ui';
+import { Badge, Button, Switch, cn } from '@nop-chaos/ui';
 import type { ReportToolbarSchema } from './schemas.js';
 import { DEFAULT_TOOLBAR_ITEMS } from './report-designer-toolbar-defaults.js';
 import { evalBooleanExpr, evalTextTemplate, mergeToolbarItems, toCommand } from './report-designer-toolbar-helpers.js';
@@ -26,7 +26,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
 
   return (
     <div
-      className="nop-report-toolbar min-h-[44px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-lg bg-background shadow-sm"
+      className={cn('nop-report-toolbar min-h-[44px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-lg bg-background shadow-sm')}
       data-testid="report-toolbar"
     >
       {items.map((item, index) => {

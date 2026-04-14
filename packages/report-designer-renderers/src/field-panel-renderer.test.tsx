@@ -80,6 +80,12 @@ describe('ReportFieldPanelRenderer', () => {
     expect(screen.getByText('User Name')).toBeTruthy();
     expect(screen.getByText('Email')).toBeTruthy();
     expect(screen.getByText('Total Sales')).toBeTruthy();
+    const shell = document.querySelector('[data-slot="report-field-panel-shell"]');
+    expect(shell).toBeTruthy();
+    expect(shell?.className).toContain('nop-report-designer');
+    expect(shell?.querySelector('[data-slot="report-designer-stack"]')).toBeTruthy();
+    expect(shell?.querySelector('[data-slot="report-designer-section"]')).toBeTruthy();
+    expect(shell?.querySelector('[data-slot="report-designer-group"]')).toBeTruthy();
   });
 
   it('renders custom emptyLabel when no field sources', () => {

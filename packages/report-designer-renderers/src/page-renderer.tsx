@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, RenderNodeInput, ReportDesignerHostStatusSummary } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, WorkbenchShell } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
+import { createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
+import { createSpreadsheetBridge } from '@nop-chaos/spreadsheet-renderers';
 import type {
   ReportDesignerAdapterRegistry,
   ReportDesignerConfig,
@@ -9,6 +11,7 @@ import type {
   ReportTemplateDocument,
 } from '@nop-chaos/report-designer-core';
 import { createReportDesignerCore } from '@nop-chaos/report-designer-core';
+import { cn } from '@nop-chaos/ui';
 import { renderFallbackFieldPanel, renderFallbackInspector } from './fallbacks.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
 import { getFieldCount } from './helpers.js';
@@ -50,12 +53,45 @@ function createReportDesignerActionProvider(
   };
 }
 
+function createSpreadsheetActionProvider(
+  dispatch: (command: Record<string, unknown>) => Promise<unknown>,
+): ActionNamespaceProvider {
+  return {
+    kind: 'host',
+    listMethods() {
+      return [];
+    },
+    async invoke(method, payload) {
+      const args = payload && typeof payload === 'object' && !Array.isArray(payload)
+        ? (payload as Record<string, unknown>)
+        : {};
+      const result = await dispatch({
+        type: `spreadsheet:${method}`,
+        ...args,
+      });
+      return toActionResult(result);
+    },
+  };
+}
+
 export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportDesignerPageSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
   const resolvedDocument = props.props.document as ReportTemplateDocument;
   const resolvedDesigner = props.props.designer as ReportDesignerConfig;
   const resolvedProfile = props.props.profile as ReportDesignerProfile | undefined;
   const resolvedAdapters = props.props.adapters as Partial<ReportDesignerAdapterRegistry> | undefined;
+  const spreadsheetCore = useMemo(
+    () => createSpreadsheetCore({ document: resolvedDocument.spreadsheet }),
+    [resolvedDocument],
+  );
+  const spreadsheetProvider = useMemo(
+    () => createSpreadsheetActionProvider((command) => spreadsheetCore.dispatch(command as any)),
+    [spreadsheetCore],
+  );
+  const spreadsheetBridge = useMemo(
+    () => createSpreadsheetBridge(spreadsheetCore),
+    [spreadsheetCore],
+  );
   const core = useMemo(
     () =>
       createReportDesignerCore({
@@ -72,13 +108,21 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
   );
   const actionScope = useCurrentActionScope();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!actionScope) {
       return;
     }
 
     return actionScope.registerNamespace('report-designer', reportDesignerProvider);
   }, [actionScope, reportDesignerProvider]);
+
+  useLayoutEffect(() => {
+    if (!actionScope) {
+      return;
+    }
+
+    return actionScope.registerNamespace('spreadsheet', spreadsheetProvider);
+  }, [actionScope, spreadsheetProvider]);
 
   useEffect(() => {
     void core.refreshFieldSources();
@@ -89,8 +133,13 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
     core.getSnapshot,
     core.getSnapshot,
   );
+  const spreadsheetSnapshot = useSyncExternalStore(
+    spreadsheetCore.subscribe,
+    spreadsheetCore.getSnapshot,
+    spreadsheetCore.getSnapshot,
+  );
 
-  const reportDesignerScope = useReportDesignerHostScope(core, snapshot, props.path);
+  const reportDesignerScope = useReportDesignerHostScope(core, snapshot, props.path, spreadsheetSnapshot);
 
   const toolbarSchema = props.props.toolbar as RenderNodeInput | undefined;
   const fieldPanelSchema = props.props.fieldPanel as RenderNodeInput | undefined;
@@ -129,16 +178,16 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
 
     const summary: ReportDesignerHostStatusSummary = {
       kind: 'report-designer',
-      dirty: false,
+      dirty: snapshot.dirty || spreadsheetSnapshot.dirty,
       busy: snapshot.preview.running,
-      canUndo: snapshot.canUndo,
-      canRedo: snapshot.canRedo,
+      canUndo: snapshot.canUndo || spreadsheetSnapshot.history.canUndo,
+      canRedo: snapshot.canRedo || spreadsheetSnapshot.history.canRedo,
       previewRunning: snapshot.preview.running,
       selectionKind: snapshot.selectionTarget?.kind,
       fieldSourceCount: snapshot.fieldSources.length,
     };
     publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary);
-  }, [props.node.scope, snapshot, statusPath]);
+  }, [props.node.scope, snapshot, spreadsheetSnapshot, statusPath]);
 
   const headerSlot = (
     <>
@@ -160,13 +209,13 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
 
   return (
     <WorkbenchShell
-      className={props.meta.className ? `nop-report-designer ${props.meta.className}` : 'nop-report-designer'}
+      className={cn('nop-report-designer', props.meta.className)}
       header={headerSlot}
       leftPanel={hasRendererSlotContent(fieldPanelContent) ? fieldPanelContent : renderFallbackFieldPanel(snapshot.fieldSources)}
       leftCollapsed={leftCollapsed}
       onLeftToggle={() => setLeftCollapsed((v) => !v)}
       leftLabel="Expand field panel"
-      canvas={hasRendererSlotContent(bodyContent) ? bodyContent : <ReportSpreadsheetCanvas core={core} snapshot={snapshot} />}
+      canvas={hasRendererSlotContent(bodyContent) ? bodyContent : <ReportSpreadsheetCanvas core={core} snapshot={snapshot} spreadsheetBridge={spreadsheetBridge} spreadsheetSnapshot={spreadsheetSnapshot} />}
       rightPanel={hasRendererSlotContent(inspectorContent) ? inspectorContent : renderFallbackInspector(snapshot.activeMeta)}
       rightCollapsed={rightCollapsed}
       onRightToggle={() => setRightCollapsed((v) => !v)}
