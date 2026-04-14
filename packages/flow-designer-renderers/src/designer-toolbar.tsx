@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
-import { Badge, Button, Switch, cn } from '@nop-chaos/ui';
+import { Badge, Button, Label, Switch, cn } from '@nop-chaos/ui';
 
 type ToolbarItemLike = {
   type?: string;
@@ -223,7 +223,7 @@ export function DesignerToolbarContent(props: {
           const disabled = evalBooleanExpr(item.disabled, snapshot);
           const checked = evalBooleanExpr(item.active, snapshot);
           return (
-            <label key={key} className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+            <Label key={key} className="inline-flex items-center gap-1.5 cursor-pointer select-none">
               {item.label ? <span className="text-sm text-muted-foreground whitespace-nowrap">{item.label}</span> : null}
               <Switch
                 data-size="sm"
@@ -233,7 +233,7 @@ export function DesignerToolbarContent(props: {
                   if (command) dispatch(command);
                 }}
               />
-            </label>
+            </Label>
           );
         }
 

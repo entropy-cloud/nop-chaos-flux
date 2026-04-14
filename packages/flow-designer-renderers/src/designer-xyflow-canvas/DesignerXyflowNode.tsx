@@ -118,7 +118,8 @@ export function DesignerXyflowNode(props: NodeProps) {
       {(hasQuickActions || showToolbar) && (
         <NodeToolbar isVisible={showToolbar} position={Position.Top}>
           <div
-            className="nop-designer-node-toolbar flex items-center gap-1.5 p-1 rounded-xl bg-white/96 border border-border shadow-lg"
+            className="flex items-center gap-1.5 p-1 rounded-xl bg-white/96 border border-border shadow-lg"
+            data-slot="designer-node-toolbar"
             onMouseEnter={showToolbarNow}
             onMouseLeave={scheduleHideToolbar}
           >

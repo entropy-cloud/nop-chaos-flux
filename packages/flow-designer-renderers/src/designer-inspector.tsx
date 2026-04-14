@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button, Input } from '@nop-chaos/ui';
+import { Badge, Button, Input, Label, Textarea, cn } from '@nop-chaos/ui';
 import { useDesignerContext } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 
@@ -15,7 +15,7 @@ export function DefaultInspector() {
   };
 
   return (
-    <div className="nop-inspector flex flex-col h-full text-foreground">
+    <div className={cn('nop-inspector flex flex-col h-full text-foreground')}>
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <div className="text-sm font-semibold text-foreground">属性面板</div>
@@ -51,7 +51,7 @@ export function DefaultInspector() {
             <div className="rounded-lg border border-border p-4" style={{ background: 'rgba(255, 255, 255, 0.4)' }}>
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-foreground">名称</label>
+                  <Label className="text-sm font-medium text-foreground">名称</Label>
                   <Input
                     type="text"
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
@@ -60,8 +60,8 @@ export function DefaultInspector() {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-foreground">描述</label>
-                  <textarea
+                  <Label className="text-sm font-medium text-foreground">描述</Label>
+                  <Textarea
                     className="w-full min-h-[80px] resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                     value={String(activeNode.data.description ?? '')}
                     onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { description: e.target.value } })}
@@ -72,7 +72,7 @@ export function DefaultInspector() {
                   if (typeof value === 'object' && value !== null) return null;
                   return (
                     <div key={key} className="flex flex-col gap-2">
-                      <label className="text-sm font-medium text-foreground">{key}</label>
+                      <Label className="text-sm font-medium text-foreground">{key}</Label>
                       <Input
                         type="text"
                         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
@@ -100,7 +100,7 @@ export function DefaultInspector() {
                   if (typeof value === 'object' && value !== null) return null;
                   return (
                     <div key={key} className="flex flex-col gap-2">
-                      <label className="text-sm font-medium text-foreground">{key}</label>
+                      <Label className="text-sm font-medium text-foreground">{key}</Label>
                       <Input
                         type="text"
                         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"

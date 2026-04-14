@@ -4,7 +4,7 @@ import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, Workbenc
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { createDesignerCore, layoutWithElk } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
-import { Button, DataViewer, Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
+import { Button, cn, DataViewer, Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
 import type { DesignerPageSchema } from './schemas';
 import {
@@ -281,7 +281,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
     <DesignerContext.Provider value={ctxValue}>
       {config.themeStyles && <style>{config.themeStyles}</style>}
       <WorkbenchShell
-        className="nop-designer text-foreground"
+        className={cn('nop-designer text-foreground')}
         style={{ background: 'linear-gradient(135deg, rgba(167, 243, 208, 0.15) 0%, rgba(196, 181, 253, 0.12) 50%, rgba(153, 246, 228, 0.1) 100%)' }}
         header={hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} onAutoLayout={handleAutoLayout} />}
         leftPanel={<DesignerPaletteContent />}
