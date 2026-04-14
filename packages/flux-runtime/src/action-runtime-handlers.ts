@@ -7,7 +7,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import {
   evaluateInActionContext,
-  getEvaluationScope,
+  evaluateCompiledInActionContext,
   evaluateActionArgs,
   finishAction,
   getCompiledValue,
@@ -68,7 +68,7 @@ export async function runBuiltInAction(
       }
 
       const api = action.api
-        ? input.evaluateCompiled<ApiSchema>(getCompiledValue(action.api, input.compileValue), getEvaluationScope(ctx))
+        ? evaluateCompiledInActionContext<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx, input)
         : undefined;
 
       if (!api) {
@@ -85,20 +85,26 @@ export async function runBuiltInAction(
     }
     case 'dialog':
     case 'openDialog': {
-      if (!ctx.page || !action.dialog) {
+      if (!ctx.surfaceRuntime || !action.dialog) {
         return finishAction(
           input,
           { ...actionPayload, dispatchMode: 'built-in' },
           startedAt,
-          { ok: false, error: new Error('Dialog action requires page runtime and dialog config') }
+          { ok: false, error: new Error('Dialog action requires surface runtime and dialog config') }
         );
       }
 
       const dialogScope = input.createDialogScope(ctx);
-      const dialogId = ctx.page.openDialog(action.dialog, dialogScope, input.runtime as any, {
-        actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
-        componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
-        ownerNodeInstance: ctx.nodeInstance
+      const dialogId = ctx.surfaceRuntime.open({
+        kind: 'dialog',
+        surface: action.dialog,
+        scope: dialogScope,
+        runtime: input.runtime as any,
+        options: {
+          actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
+          componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
+          ownerNodeInstance: ctx.nodeInstance
+        }
       });
       dialogScope.update('dialogId', dialogId);
       return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: { dialogId } });
@@ -118,11 +124,11 @@ export async function runBuiltInAction(
       return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result ?? { ok: true, data: action.drawer });
     }
     case 'closeDrawer': {
-      if (ctx.page) {
+      if (ctx.surfaceRuntime) {
         if (action.dialogId) {
-          ctx.page.closeSurface(String(evaluateInActionContext(action.dialogId, ctx, input)));
+          ctx.surfaceRuntime.close(String(evaluateInActionContext(action.dialogId, ctx, input)));
         } else {
-          ctx.page.closeSurface(ctx.dialogId);
+          ctx.surfaceRuntime.close(ctx.dialogId);
         }
       }
 
@@ -134,11 +140,11 @@ export async function runBuiltInAction(
       return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result ?? { ok: true, data: payload });
     }
     case 'closeDialog': {
-      if (ctx.page) {
+      if (ctx.surfaceRuntime) {
         if (action.dialogId) {
-          ctx.page.closeDialog(String(evaluateInActionContext(action.dialogId, ctx, input)));
+          ctx.surfaceRuntime.close(String(evaluateInActionContext(action.dialogId, ctx, input)));
         } else {
-          ctx.page.closeDialog(ctx.dialogId);
+          ctx.surfaceRuntime.close(ctx.dialogId);
         }
       }
 
@@ -185,7 +191,7 @@ export async function runBuiltInAction(
       }
 
       const api = action.api
-        ? input.evaluateCompiled<ApiSchema>(getCompiledValue(action.api, input.compileValue), getEvaluationScope(ctx))
+        ? evaluateCompiledInActionContext<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx, input)
         : undefined;
 
       if (api) {

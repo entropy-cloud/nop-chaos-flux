@@ -10,7 +10,8 @@ import {
   ComponentRegistryContext,
   PageContext,
   RuntimeContext,
-  ScopeContext
+  ScopeContext,
+  SurfaceContext
 } from './contexts';
 import { RenderNodes, EMPTY_SCOPE_DATA } from './helpers';
 import { DialogHost } from './dialog-host';
@@ -44,6 +45,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const initialPageDataRef = useRef(pageData);
     const initialDataAppliedRef = useRef(false);
     const page = useMemo(() => runtime.createPageRuntime(initialPageDataRef.current), [runtime]);
+    const surfaceRuntime = useMemo(() => runtime.createSurfaceRuntime(), [runtime]);
 
     useEffect(() => {
       if (!initialDataAppliedRef.current) {
@@ -175,6 +177,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
         scopeKey: 'schema-root-imports'
       });
     }, [runtime, rootScope, rootImportBindings]);
+    const compiledRoot = useMemo(() => runtime.compile(props.schema), [runtime, props.schema]);
 
     if (!importsReady) {
       return <div data-runtime-id={runtime.runtimeId} data-imports-loading="true" />;
@@ -187,8 +190,10 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
             <ComponentRegistryContext.Provider value={rootComponentRegistry}>
               <ScopeContext.Provider value={renderScope}>
                 <PageContext.Provider value={page}>
-                  <RenderNodes input={props.schema} options={{ scope: renderScope, actionScope: rootActionScope, componentRegistry: rootComponentRegistry }} />
-                  <DialogHost />
+                  <SurfaceContext.Provider value={surfaceRuntime}>
+                    <RenderNodes input={compiledRoot} options={{ scope: renderScope, actionScope: rootActionScope, componentRegistry: rootComponentRegistry }} />
+                    <DialogHost />
+                  </SurfaceContext.Provider>
                 </PageContext.Provider>
               </ScopeContext.Provider>
             </ComponentRegistryContext.Provider>

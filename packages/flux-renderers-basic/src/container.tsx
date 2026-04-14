@@ -1,8 +1,9 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { cn } from '@nop-chaos/ui';
 import type { ContainerSchema } from './schemas';
-import { classNames, resolveDirection, resolveGap } from './utils';
+import { resolveDirection, resolveGap } from './utils';
 
 export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
   const direction = props.props.direction === 'column' ? 'column' : 'row';
@@ -22,12 +23,12 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
   const useFlexChild = wrap || align !== undefined || (gap.className || gap.style) || direction !== 'row';
 
   return (
-    <div className={classNames('nop-container', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+    <div className={cn('nop-container', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {hasRendererSlotContent(headerContent) ? <div data-slot="container-header">{headerContent}</div> : null}
       {useFlexChild ? (
         <div
           data-slot="container-body"
-          className={classNames(
+          className={cn(
             'flex',
             resolveDirection(direction),
             wrap && 'flex-wrap',

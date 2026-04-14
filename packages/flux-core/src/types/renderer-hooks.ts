@@ -1,12 +1,12 @@
 import type { ReactElement, ReactNode } from 'react';
 import type { ActionContext, ActionScope } from './actions';
 import type { FormulaCompiler } from './compilation';
-import type { InstanceFrame, NodeInstance, TemplateNode } from './node-identity';
+import type { CompiledTemplate, InstanceFrame, NodeInstance, TemplateNode } from './node-identity';
 import type { ComponentHandleRegistry } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
 import type { RendererHelpers, RendererRegistry, RendererRuntime } from './renderer-core';
 import type { RendererPlugin } from './renderer-plugin';
-import type { FormErrorQuery, FormFieldStateSnapshot, FormRuntime, PageRuntime, PageStoreApi } from './runtime';
+import type { FormErrorQuery, FormFieldStateSnapshot, FormRuntime, PageRuntime, PageStoreApi, SurfaceRuntime } from './runtime';
 import type { SchemaInput, SchemaPath } from './schema';
 import type { ScopeRef } from './scope';
 import type { ValidationError } from './validation';
@@ -71,7 +71,7 @@ export interface RenderRegionHandle {
   }): ReactNode;
 }
 
-export type RenderNodeInput = SchemaInput | TemplateNode | readonly TemplateNode[] | null | undefined;
+export type RenderNodeInput = SchemaInput | TemplateNode | readonly TemplateNode[] | CompiledTemplate | null | undefined;
 
 /**
  * The reserved $slot frame published into child scopes for parameterized regions.
@@ -111,6 +111,7 @@ export interface RendererHookApi {
   useChildFieldState(path: string): FormFieldStateSnapshot;
   useAggregateError(path: string): ValidationError | undefined;
   useCurrentPage(): PageRuntime | undefined;
+  useCurrentSurfaceRuntime(): SurfaceRuntime | undefined;
   useCurrentNodeMeta(): RenderNodeMeta;
   useCurrentNodeInstance(): NodeInstance | undefined;
   useRenderFragment(): RendererHelpers['render'];
@@ -133,6 +134,7 @@ export interface SchemaRendererProps {
   registry?: RendererRegistry;
   plugins?: RendererPlugin[];
   pageStore?: PageStoreApi;
+  surfaceRuntime?: SurfaceRuntime;
   parentScope?: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;

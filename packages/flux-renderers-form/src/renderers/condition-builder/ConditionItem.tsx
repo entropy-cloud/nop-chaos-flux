@@ -85,7 +85,7 @@ export function ConditionItem({
   );
 
   return (
-    <div className="nop-cb-item flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 hover:shadow-sm transition-shadow group">
+    <div data-slot="condition-item" className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 hover:shadow-sm transition-shadow group">
       {draggable && !disabled && (
         <div
           className="cursor-grab p-0.5 text-muted-foreground hover:text-foreground active:cursor-grabbing"

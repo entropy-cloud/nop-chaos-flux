@@ -1,8 +1,8 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
+import { cn } from '@nop-chaos/ui';
 import type { ScopeDebugSchema } from './schemas';
-import { classNames } from './utils';
 
 function stringifyDebugValue(value: unknown) {
   const seen = new WeakSet<object>();
@@ -53,7 +53,7 @@ export function ScopeDebugRenderer(props: RendererComponentProps<ScopeDebugSchem
 
   return (
     <section
-      className={classNames('nop-scope-debug', props.meta.className)}
+      className={cn('nop-scope-debug', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
     >

@@ -6,6 +6,7 @@ import type {
   FormRuntime,
   InstanceFrame,
   PageRuntime,
+  SurfaceRuntime,
   RenderNodeMeta,
   RendererRuntime,
   ScopeRef
@@ -18,6 +19,7 @@ export const ActionScopeContext = createContext<ActionScope | undefined>(undefin
 export const ComponentRegistryContext = createContext<ComponentHandleRegistry | undefined>(undefined);
 export const FormContext = createContext<FormRuntime | undefined>(undefined);
 export const PageContext = createContext<PageRuntime | undefined>(undefined);
+export const SurfaceContext = createContext<SurfaceRuntime | undefined>(undefined);
 export const NodeMetaContext = createContext<RenderNodeMeta | null>(null);
 export const ClassAliasesContext = createContext<Record<string, string> | undefined>(undefined);
 

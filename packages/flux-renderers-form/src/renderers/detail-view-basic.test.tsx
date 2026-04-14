@@ -36,6 +36,7 @@ describe('detail-view renderer basic behavior', () => {
     expect(root?.className).toContain('border');
     expect(root?.querySelector('[data-slot="field-label"]')).toBeNull();
     expect(root?.querySelector('[data-slot="detail-view-viewer"]')).toBeTruthy();
+    expect(root?.querySelector('[data-slot="detail-view-draft-body"]')).toBeNull();
   });
 
   it('does not render trigger button when readOnly', async () => {
@@ -97,6 +98,7 @@ describe('detail-view renderer basic behavior', () => {
 
     expect((screen.getByLabelText('Theme') as HTMLInputElement).value).toBe('dark');
     expect((screen.getByLabelText('Locale') as HTMLInputElement).value).toBe('en-US');
+    expect(document.querySelector('[data-slot="detail-view-draft-body"]')).toBeTruthy();
   });
 
   it('cancel closes dialog without applying changes', async () => {
@@ -173,5 +175,6 @@ describe('detail-view renderer basic behavior', () => {
     });
 
     expect(screen.getByLabelText('Name', { exact: false })).toBeTruthy();
+    expect(document.querySelector('[data-slot="detail-view-draft-error"]')?.textContent).toContain('Please fix validation errors before confirming.');
   });
 });

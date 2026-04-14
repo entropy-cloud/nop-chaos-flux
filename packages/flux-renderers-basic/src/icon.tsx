@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { cn } from '@nop-chaos/ui';
 import type { IconSchema } from './schemas';
-import { classNames } from './utils';
 import { Circle, icons } from 'lucide-react';
 
 type LucideIconComponent = React.ComponentType<Record<string, unknown>>;
@@ -59,7 +59,7 @@ export function IconRenderer(props: RendererComponentProps<IconSchema>) {
 
   return (
     <IconComp
-      className={classNames('nop-icon', props.meta.className)}
+      className={cn('nop-icon', props.meta.className)}
       data-icon={icon}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}

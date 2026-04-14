@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { classNames, resolveDirection, resolveGap } from './utils';
+import { cn } from '@nop-chaos/ui';
+import { resolveDirection, resolveGap } from './utils';
 import type { FlexSchema } from './schemas';
 
 export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
@@ -27,7 +28,7 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
 
   return (
     <div
-      className={classNames(
+      className={cn(
         'nop-flex',
         'flex',
         resolveDirection(direction),

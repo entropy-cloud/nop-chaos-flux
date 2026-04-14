@@ -62,20 +62,31 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('renders page header and footer through normalized regions', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schema={{ type: 'page', title: 'Workspace', header: [{ type: 'text', text: 'Header tools' }], body: [{ type: 'text', text: 'Page body' }], footer: [{ type: 'text', text: 'Footer actions' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    const { container } = render(<SchemaRenderer schema={{ type: 'page', title: 'Workspace', header: [{ type: 'text', text: 'Header tools' }], body: [{ type: 'text', text: 'Page body' }], footer: [{ type: 'text', text: 'Footer actions' }] }} env={env} formulaCompiler={formulaCompiler} />);
     expect(screen.getByRole('heading', { name: 'Workspace' })).toBeTruthy();
     expect(screen.getByText('Header tools')).toBeTruthy();
     expect(screen.getByText('Page body')).toBeTruthy();
     expect(screen.getByText('Footer actions')).toBeTruthy();
+    const page = container.querySelector('.nop-page');
+    expect(page).toBeTruthy();
+    expect(page?.querySelector('[data-slot="page-header"]')).toBeTruthy();
+    expect(page?.querySelector('[data-slot="page-toolbar"]')).toBeTruthy();
+    expect(page?.querySelector('[data-slot="page-body"]')).toBeTruthy();
+    expect(page?.querySelector('[data-slot="page-footer"]')).toBeTruthy();
     cleanup();
   });
 
   it('renders container header and footer through normalized regions', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schema={{ type: 'container', header: [{ type: 'text', text: 'Container header' }], body: [{ type: 'text', text: 'Container body' }], footer: [{ type: 'text', text: 'Container footer' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    const { container } = render(<SchemaRenderer schema={{ type: 'container', header: [{ type: 'text', text: 'Container header' }], body: [{ type: 'text', text: 'Container body' }], footer: [{ type: 'text', text: 'Container footer' }] }} env={env} formulaCompiler={formulaCompiler} />);
     expect(screen.getByText('Container header')).toBeTruthy();
     expect(screen.getByText('Container body')).toBeTruthy();
     expect(screen.getByText('Container footer')).toBeTruthy();
+    const layout = container.querySelector('.nop-container');
+    expect(layout).toBeTruthy();
+    expect(layout?.querySelector('[data-slot="container-header"]')).toBeTruthy();
+    expect(layout?.querySelector('[data-slot="container-body"]')).toBeTruthy();
+    expect(layout?.querySelector('[data-slot="container-footer"]')).toBeTruthy();
     cleanup();
   });
 
@@ -122,6 +133,19 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     expect(icon.getAttribute('data-icon')).toBe('gear');
     expect(className).toContain('nop-icon');
     expect(className).not.toContain('nop-icon--');
+    cleanup();
+  });
+
+  it('uses data-slot markers for tabs internal structure instead of nop-tabs region classes', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(<SchemaRenderer schema={{ type: 'page', body: [{ type: 'tabs', items: [{ key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] }] }] }} env={env} formulaCompiler={formulaCompiler} />);
+    const tabsRoot = document.querySelector('[data-slot="tabs-root"]');
+    const tabsContent = document.querySelector('[data-slot="tabs-content"]');
+
+    expect(tabsRoot).toBeTruthy();
+    expect(tabsContent).toBeTruthy();
+    expect(document.querySelector('.nop-tabs-root')).toBeNull();
+    expect(document.querySelector('.nop-tabs-content')).toBeNull();
     cleanup();
   });
 });

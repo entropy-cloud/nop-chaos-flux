@@ -22,6 +22,7 @@ import {
   RenderInstancePathContext,
   RuntimeContext,
   ScopeContext,
+  SurfaceContext,
   useRequiredContext
 } from './contexts';
 import { createHelpers } from './helpers';
@@ -167,6 +168,10 @@ export function useCurrentPage(): PageRuntime | undefined {
   return useContext(PageContext);
 }
 
+export function useCurrentSurfaceRuntime() {
+  return useContext(SurfaceContext);
+}
+
 export function useCurrentNodeMeta(): RenderNodeMeta {
   return useRequiredContext(NodeMetaContext, 'NodeMeta');
 }
@@ -186,6 +191,7 @@ export function useRenderFragment() {
   const componentRegistry = useCurrentComponentRegistry();
   const form = useCurrentForm();
   const page = useCurrentPage();
+  const surfaceRuntime = useCurrentSurfaceRuntime();
   const nodeMeta = useContext(NodeMetaContext);
 
   return useMemo(
@@ -194,12 +200,13 @@ export function useRenderFragment() {
       scope,
       actionScope,
       componentRegistry,
-      form,
-      page,
-      nodeInstance: nodeMeta?.node ?? undefined,
-      dialogId: scope.get('dialogId') as string | undefined
-    }).render,
-    [runtime, scope, actionScope, componentRegistry, form, page, nodeMeta]
+        form,
+        page,
+        surfaceRuntime,
+        nodeInstance: nodeMeta?.node ?? undefined,
+        dialogId: scope.get('dialogId') as string | undefined
+      }).render,
+    [runtime, scope, actionScope, componentRegistry, form, page, surfaceRuntime, nodeMeta]
   );
 }
 
@@ -231,6 +238,7 @@ export const rendererHooks = {
   useChildFieldState,
   useAggregateError,
   useCurrentPage,
+  useCurrentSurfaceRuntime,
   useCurrentNodeMeta,
   useCurrentNodeInstance,
   useRenderFragment,

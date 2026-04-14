@@ -15,6 +15,7 @@ import type {
   RendererRuntime,
   SchemaCompiler,
   ScopeRef,
+  SurfaceRuntime,
   SourceSchema
 } from '@nop-chaos/flux-core';
 import { createCompiledCidState } from '@nop-chaos/flux-core';
@@ -39,6 +40,7 @@ import { validateRule } from './validation-runtime';
 import { createBuiltInValidationRegistry } from './validation';
 import { createRuntimeEvalHelpers } from './runtime-eval-helpers';
 import { executeRuntimeValidationRule, executeRuntimeAjaxAction } from './runtime-action-helpers';
+import { createManagedSurfaceRuntime } from './surface-runtime';
 
 export { createRendererRegistry, registerRendererDefinitions } from './registry';
 export { createSchemaCompiler, validateSchema } from './schema-compiler';
@@ -96,6 +98,7 @@ export function createRendererRuntime(input: {
   });
   const runtimeNodeResolverRef: { current?: ReturnType<typeof createRuntimeNodeResolver> } = {};
   const ownedPages = new Set<PageRuntime>();
+  const ownedSurfaceRuntimes = new Set<SurfaceRuntime>();
   let disposed = false;
 
   function createOwnedActionScope(scopeInput: { id?: string; parent?: ActionScope } = {}) {
@@ -136,15 +139,23 @@ export function createRendererRuntime(input: {
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
     const page = createManagedPageRuntime({
       data,
-      pageStore: input.pageStore,
-      disposeScope: (scopeId) => {
-        sourceRegistryRef.current?.disposeScopeTree(scopeId);
-        reactionRegistryRef.current?.disposeScopeTree(scopeId);
-      }
+      pageStore: input.pageStore
     });
 
     ownedPages.add(page);
     return page;
+  }
+
+  function createSurfaceRuntime(inputValue: { disposeScope?: (scopeId: string) => void } = {}): SurfaceRuntime {
+    const surfaceRuntime = createManagedSurfaceRuntime({
+      disposeScope: inputValue.disposeScope ?? ((scopeId) => {
+        sourceRegistryRef.current?.disposeScopeTree(scopeId);
+        reactionRegistryRef.current?.disposeScopeTree(scopeId);
+      })
+    });
+
+    ownedSurfaceRuntimes.add(surfaceRuntime);
+    return surfaceRuntime;
   }
 
   function createFormRuntime(inputValue: {
@@ -301,6 +312,7 @@ export function createRendererRuntime(input: {
       return executeSourceRef.current(inputValue.source, inputValue.scope, inputValue.ctx);
     },
     createPageRuntime,
+    createSurfaceRuntime,
     createDataSourceController(inputValue) {
       return createDataSourceController({
         runtime,
@@ -379,18 +391,17 @@ export function createRendererRuntime(input: {
         sourceRegistryRef.current?.disposeScopeTree(page.scope.id);
         reactionRegistryRef.current?.disposeScopeTree(page.scope.id);
 
-        for (const dialog of page.surfaceStore.getState().dialogs) {
-          sourceRegistryRef.current?.disposeScopeTree(dialog.scope.id);
-          reactionRegistryRef.current?.disposeScopeTree(dialog.scope.id);
-        }
+      }
 
-        for (const surface of page.surfaceStore.getState().surfaces) {
+      for (const surfaceRuntime of ownedSurfaceRuntimes) {
+        for (const surface of surfaceRuntime.store.getState().entries) {
           sourceRegistryRef.current?.disposeScopeTree(surface.scope.id);
           reactionRegistryRef.current?.disposeScopeTree(surface.scope.id);
         }
       }
 
       ownedPages.clear();
+      ownedSurfaceRuntimes.clear();
       importManager.dispose({ actionScopes: Array.from(ownedActionScopes) });
       ownedActionScopes.clear();
       executeApiRequest.dispose?.();
@@ -409,8 +420,8 @@ export function createRendererRuntime(input: {
     executeAjaxAction: (api, action, ctx, signal) => executeRuntimeAjaxAction(api, action, ctx, signal, evalCtx),
     submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
     openDrawer: async (drawer, ctx) => {
-      if (!ctx.page) {
-        return { ok: false, error: new Error('openDrawer requires page runtime') };
+      if (!ctx.surfaceRuntime) {
+        return { ok: false, error: new Error('openDrawer requires surface runtime') };
       }
 
       const drawerScope = createScopeRef({
@@ -422,10 +433,16 @@ export function createRendererRuntime(input: {
           drawerId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`
         }
       });
-      const drawerId = ctx.page.openSurface('drawer', drawer, drawerScope, runtime, {
-        actionScope: ctx.actionScope,
-        componentRegistry: ctx.componentRegistry,
-        ownerNodeInstance: ctx.nodeInstance
+      const drawerId = ctx.surfaceRuntime.open({
+        kind: 'drawer',
+        surface: drawer,
+        scope: drawerScope,
+        runtime,
+        options: {
+          actionScope: ctx.actionScope,
+          componentRegistry: ctx.componentRegistry,
+          ownerNodeInstance: ctx.nodeInstance
+        }
       });
       drawerScope.update('dialogId', drawerId);
       drawerScope.update('drawerId', drawerId);

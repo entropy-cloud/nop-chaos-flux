@@ -14,6 +14,19 @@ import {
   ScopeContext
 } from './contexts';
 
+type TemplateNodeWithProviderPlan = TemplateNode & {
+  providerPlan?: {
+    actionScope: boolean;
+    componentRegistry: boolean;
+    classAliases: boolean;
+  };
+  providerWrap?: (
+    wrapProvider: (kind: string, value: unknown, children: unknown) => unknown,
+    values: Record<string, unknown>,
+    children: unknown
+  ) => unknown;
+};
+
 export function NodeRendererProviders(props: React.PropsWithChildren<{
   templateNode: TemplateNode;
   nodeInstance: NodeInstance;
@@ -22,41 +35,28 @@ export function NodeRendererProviders(props: React.PropsWithChildren<{
   scope: ScopeRef;
   classAliases?: Record<string, string>;
 }>) {
-  const { component, schema } = props.templateNode;
-  const publishActionScope =
-    component.actionScopePolicy === 'new' ||
-    Boolean((schema as { 'xui:imports'?: readonly unknown[] })['xui:imports']?.length);
-  const publishComponentRegistry = component.componentRegistryPolicy === 'new';
-  const publishClassAliases = Boolean(
-    (schema as { classAliases?: Record<string, string> }).classAliases &&
-    Object.keys((schema as { classAliases?: Record<string, string> }).classAliases!).length > 0
-  );
+  const providerWrap = (props.templateNode as TemplateNodeWithProviderPlan).providerWrap;
+  const children = providerWrap
+    ? providerWrap((kind, value, nestedChildren) => {
+      if (kind === 'actionScope') {
+        return <ActionScopeContext.Provider value={value as ActionScope | undefined}>{nestedChildren as React.ReactNode}</ActionScopeContext.Provider>;
+      }
 
-  let children: React.ReactNode = props.children;
+      if (kind === 'componentRegistry') {
+        return <ComponentRegistryContext.Provider value={value as ComponentHandleRegistry | undefined}>{nestedChildren as React.ReactNode}</ComponentRegistryContext.Provider>;
+      }
 
-  if (publishActionScope) {
-    children = (
-      <ActionScopeContext.Provider value={props.actionScope}>
-        {children}
-      </ActionScopeContext.Provider>
-    );
-  }
+      if (kind === 'classAliases') {
+        return <ClassAliasesContext.Provider value={value as Record<string, string> | undefined}>{nestedChildren as React.ReactNode}</ClassAliasesContext.Provider>;
+      }
 
-  if (publishComponentRegistry) {
-    children = (
-      <ComponentRegistryContext.Provider value={props.componentRegistry}>
-        {children}
-      </ComponentRegistryContext.Provider>
-    );
-  }
-
-  if (publishClassAliases) {
-    children = (
-      <ClassAliasesContext.Provider value={props.classAliases}>
-        {children}
-      </ClassAliasesContext.Provider>
-    );
-  }
+      return nestedChildren;
+    }, {
+      actionScope: props.actionScope,
+      componentRegistry: props.componentRegistry,
+      classAliases: props.classAliases
+    }, props.children)
+    : props.children;
 
   return (
     <NodeMetaContext.Provider value={useMemo(() => ({
@@ -68,7 +68,7 @@ export function NodeRendererProviders(props: React.PropsWithChildren<{
       node: props.nodeInstance
     }), [props.templateNode, props.nodeInstance])}>
       <ScopeContext.Provider value={props.scope}>
-        {children}
+        {children as React.ReactNode}
       </ScopeContext.Provider>
     </NodeMetaContext.Provider>
   );

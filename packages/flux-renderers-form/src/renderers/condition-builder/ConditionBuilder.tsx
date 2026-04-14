@@ -14,7 +14,7 @@ import {
   resolveFieldLabelContent,
   useFieldPresentation,
 } from '../../field-utils';
-import { Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
+import { cn, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
 import { FieldHint, FieldLabel } from '../shared';
 import type {
@@ -140,7 +140,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
 
   return (
     <label
-      className={`nop-condition-builder ${presentation.className}`}
+      className={cn('nop-condition-builder', presentation.className)}
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
       data-field-dirty={presentation['data-field-dirty']}
@@ -188,7 +188,7 @@ function PickerModeContent({
 
   return (
     <label
-      className={`nop-condition-builder ${presentation.className}`}
+      className={cn('nop-condition-builder', presentation.className)}
       data-field-visited={presentation['data-field-visited']}
       data-field-touched={presentation['data-field-touched']}
       data-field-dirty={presentation['data-field-dirty']}

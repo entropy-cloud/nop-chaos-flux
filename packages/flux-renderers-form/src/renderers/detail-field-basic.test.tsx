@@ -39,6 +39,7 @@ describe('detail-field renderer basic behavior', () => {
     expect(field?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Address');
     expect(field?.querySelector('[data-slot="field-control"]')).toBeTruthy();
     expect(field?.querySelector('[data-slot="detail-field-viewer"]')).toBeTruthy();
+    expect(field?.querySelector('[data-slot="detail-field-draft-body"]')).toBeNull();
   });
 
   it('does not render trigger button when readOnly', async () => {
@@ -108,6 +109,7 @@ describe('detail-field renderer basic behavior', () => {
 
     expect((screen.getByLabelText('Street') as HTMLInputElement).value).toBe('123 Main St');
     expect((screen.getByLabelText('City') as HTMLInputElement).value).toBe('Springfield');
+    expect(document.querySelector('[data-slot="detail-field-draft-body"]')).toBeTruthy();
   });
 
   it('blocks confirm if draft has required fields empty', async () => {
@@ -150,5 +152,6 @@ describe('detail-field renderer basic behavior', () => {
     });
 
     expect(screen.getByLabelText('Name', { exact: false })).toBeTruthy();
+    expect(document.querySelector('[data-slot="detail-field-draft-error"]')?.textContent).toContain('Please fix validation errors before confirming.');
   });
 });

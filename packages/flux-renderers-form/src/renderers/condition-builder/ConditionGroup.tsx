@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { PlusIcon, GroupIcon } from 'lucide-react';
-import { Button } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import {
   DndContext,
   closestCenter,
@@ -236,7 +236,7 @@ export function ConditionGroup({
   );
 
   return (
-    <div className="nop-cb-group flex flex-col gap-2">
+    <div data-slot="condition-group" className="flex flex-col gap-2">
       {depth === 0 && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>{t('satisfyFollowing')}</span>
@@ -261,11 +261,12 @@ export function ConditionGroup({
               <div className="flex items-center rounded-full border border-border p-0.5 bg-background">
                 <button
                   type="button"
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                  className={cn(
+                    'px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors',
                     value.conjunction === 'and'
                       ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
                   onClick={() => handleConjunctionChange('and')}
                   disabled={disabled}
                 >
@@ -273,11 +274,12 @@ export function ConditionGroup({
                 </button>
                 <button
                   type="button"
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                  className={cn(
+                    'px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors',
                     value.conjunction === 'or'
                       ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
                   onClick={() => handleConjunctionChange('or')}
                   disabled={disabled}
                 >
@@ -293,11 +295,12 @@ export function ConditionGroup({
             {showNot && (
               <button
                 type="button"
-                className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-colors ${
+                className={cn(
+                  'ml-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-colors',
                   value.not
                     ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-600 dark:bg-orange-950 dark:text-orange-300'
-                    : 'border-border text-muted-foreground hover:text-foreground'
-                }`}
+                    : 'border-border text-muted-foreground hover:text-foreground',
+                )}
                 onClick={handleNotToggle}
                 disabled={disabled}
               >

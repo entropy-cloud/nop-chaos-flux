@@ -6,6 +6,7 @@ import type {
   FormRuntime,
   NodeInstance,
   PageRuntime,
+  SurfaceRuntime,
   RendererHelpers,
   RendererRuntime,
   RenderNodeInput,
@@ -71,6 +72,7 @@ export function mergeActionContext(base: {
   componentRegistry?: ComponentHandleRegistry;
   form?: FormRuntime;
   page?: PageRuntime;
+  surfaceRuntime?: SurfaceRuntime;
   nodeInstance?: NodeInstance;
 }, partial?: Partial<ActionContext>): ActionContext {
   const rawEvent = partial?.event as unknown;
@@ -84,6 +86,7 @@ export function mergeActionContext(base: {
     instancePath: partial?.instancePath ?? (partial?.nodeInstance ?? base.nodeInstance)?.instancePath,
     form: partial?.form ?? base.form,
     page: partial?.page ?? base.page,
+    surfaceRuntime: partial?.surfaceRuntime ?? base.surfaceRuntime,
     event: normalizeActionEvent(rawEvent),
     dialogId: partial?.dialogId,
     prevResult: partial?.prevResult,
@@ -104,6 +107,7 @@ export function createHelpers(input: {
   componentRegistry?: ComponentHandleRegistry;
   form?: FormRuntime;
   page?: PageRuntime;
+  surfaceRuntime?: SurfaceRuntime;
   nodeInstance?: NodeInstance;
   dialogId?: string;
 }): RendererHelpers {

@@ -92,8 +92,37 @@ describe('FieldFrame', () => {
     expect(field?.getAttribute('data-field-dirty')).toBe('');
     expect(field?.getAttribute('data-field-invalid')).toBe('');
     expect(container.querySelector('[data-slot="field-label"]')?.textContent).toContain('Email');
+    expect(container.querySelector('[data-slot="field-required"]')).toBeNull();
     expect(container.querySelector('[data-slot="field-control"]')?.textContent).toContain('content');
     expect(container.querySelector('[data-slot="field-error"]')?.textContent).toContain('Email is required');
+  });
+
+  it('omits presence-only field state attributes when the field is clean and exposes required/hint slots through data-slot markers', () => {
+    const form = {
+      store: {
+        subscribe: () => () => undefined,
+        getState: () => EMPTY_FORM_STORE_STATE
+      },
+      validation: undefined
+    } as any;
+
+    const { container } = render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="email" label="Email" required hint="Helpful hint">content</FieldFrame>
+      </FormContext.Provider>
+    );
+
+    const field = container.querySelector('.nop-field');
+    expect(field).toBeTruthy();
+    expect(field?.hasAttribute('data-field-visited')).toBe(false);
+    expect(field?.hasAttribute('data-field-touched')).toBe(false);
+    expect(field?.hasAttribute('data-field-dirty')).toBe(false);
+    expect(field?.hasAttribute('data-field-invalid')).toBe(false);
+    expect(container.querySelector('[data-slot="field-label"]')?.textContent).toContain('Email');
+    expect(container.querySelector('[data-slot="field-required"]')?.textContent).toBe('*');
+    expect(container.querySelector('[data-slot="field-control"]')?.textContent).toContain('content');
+    expect(container.querySelector('[data-slot="field-hint"]')?.textContent).toContain('Helpful hint');
+    expect(container.querySelector('[data-slot="field-error"]')).toBeNull();
   });
 
 });
@@ -241,6 +270,8 @@ describe('reactive meta and draggable dialogs', () => {
     const content = await screen.findByRole('dialog');
     expect(content.style.transform).toBe('translate(-50%, -50%)');
     expect(content.className).not.toContain('translate-x-[-50%]');
+    expect(content.getAttribute('data-slot')).toBe('dialog-surface');
+    expect(document.querySelector('.nop-dialog-card')).toBeNull();
   });
 
   it('registers drag listeners on pointerdown and updates transform', async () => {
@@ -263,5 +294,27 @@ describe('reactive meta and draggable dialogs', () => {
     const header = content.querySelector('[data-slot="dialog-header"]')!;
     fireEvent.pointerDown(header, { clientX: 500, clientY: 300, button: 0 });
     expect(content.style.transition).toBe('none');
+  });
+
+  it('marks drawer host content with a data-slot instead of an internal nop drawer card class', async () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'button', label: 'Open drawer', onClick: { action: 'drawer', drawer: { title: 'Drawer title', body: [{ type: 'text', text: 'Drawer body' }] } } }
+          ]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Open drawer'));
+    await screen.findByText('Drawer title');
+    const drawerSurface = document.querySelector('[data-slot="drawer-surface"]');
+    expect(drawerSurface).toBeTruthy();
+    expect(document.querySelector('.nop-drawer-card')).toBeNull();
   });
 });

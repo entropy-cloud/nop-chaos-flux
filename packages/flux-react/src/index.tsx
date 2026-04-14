@@ -31,6 +31,7 @@ export {
   useChildFieldState,
   useAggregateError,
   useCurrentPage,
+  useCurrentSurfaceRuntime,
   useCurrentNodeMeta,
   useCurrentNodeInstance,
   useActionDispatcher,
@@ -48,6 +49,7 @@ export {
   RenderInstancePathContext,
   RuntimeContext,
   ScopeContext,
+  SurfaceContext,
   useRequiredContext
 } from './contexts';
 export { EMPTY_FORM_STORE_STATE, isFieldEffectivelyRequired, selectCurrentFormErrors, selectCurrentFormFieldPresentation, selectCurrentFormFieldState } from './form-state';

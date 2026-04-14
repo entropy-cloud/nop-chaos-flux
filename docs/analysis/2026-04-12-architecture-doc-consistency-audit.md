@@ -60,21 +60,18 @@ Primary code anchors used during the audit:
 
 ### F3. React node-boundary publication is documented as compile-time `renderPlan.wrapProviders`, but the live runtime still derives providers at render time
 
-- Docs involved: `docs/architecture/renderer-runtime.md`, `docs/architecture/action-scope-and-imports.md`
-- Code evidence: `packages/flux-runtime/src/schema-compiler.ts:228-262`, `packages/flux-react/src/node-renderer-providers.tsx:25-57`, `packages/flux-react/src/node-renderer.tsx:114-115`
-- Why: the compiler does emit runtime-boundary hints, but the React layer still decides `ActionScope`, `ComponentRegistry`, and `classAliases` publication from live node policy/schema instead of executing a compiled `renderPlan.wrapProviders` closure.
+- Historical note: this finding reflected the earlier 2026-04-14 baseline before the final Workstream 2 provider-wrap slice landed. The live React path now executes the compiler-emitted `wrapProviders` closure directly through `TemplateNode.providerWrap`.
 
 ### F4. Node identity documentation and live code are still out of sync
 
 - Docs involved: `docs/architecture/renderer-runtime.md`, `docs/architecture/template-instantiation-and-node-identity.md`
-- Code evidence: `packages/flux-react/src/contexts.ts:21`, `packages/flux-react/src/node-renderer-providers.tsx:60-71`, `packages/flux-core/src/compiled-cid.ts`, `packages/flux-runtime/src/schema-compiler/target-enrichment.ts`
-- Why: the architecture docs are now converging on one future baseline: no `NodeLocator`, unique live `cid` for mounted-node lookup/debugger/registry, and `instancePath` as repeated structural context. The live runtime still exposes older mixed contracts and older React node-meta carriers.
+- Code evidence: `packages/flux-react/src/contexts.ts:21`, `packages/flux-react/src/node-renderer-providers.tsx:61-74`, `packages/flux-react/src/node-renderer.tsx:139-149`, `packages/nop-debugger/src/controller-component-inspector.ts:144-241`
+- Why: the original drift note is now narrower than before. Active package code already uses `cid` plus optional `instancePath`, and `NodeLocator` is absent from the runtime/debugger/action implementation paths. The remaining mismatch is mostly presentation/cleanup debt around older React node-meta publication and repeated-template substrate completeness, not a surviving `NodeLocator` contract in live code.
 
 ### F5. Surface ownership docs have moved ahead of implementation
 
 - Docs involved: `docs/architecture/surface-owner.md`, `docs/architecture/renderer-runtime.md`
-- Code evidence: `packages/flux-react/src/dialog-host.tsx`, `packages/flux-runtime/src/page-runtime.ts`, `packages/flux-runtime/src/index.ts:339-360`
-- Why: the docs describe a dedicated `SurfaceRuntime` / `SurfaceStore` family outside page ownership, but the live implementation still stores dialogs and surfaces on the page runtime/store and closes them through `page.closeDialog` / `page.closeSurface`.
+- Historical note: this finding reflected the pre-2026-04-14 baseline. The live implementation has since been moved onto an explicit shared `SurfaceRuntime` family with a unified `entries` stack, and `PageRuntime` no longer owns dialog/drawer state.
 
 ### F6. Field/value-family docs previously overgeneralized staged adaptation across inline composite fields
 
@@ -86,7 +83,7 @@ Primary code anchors used during the audit:
 
 - Docs involved: `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`, `docs/architecture/field-frame.md`
 - Code evidence: `packages/flux-react/src/field-frame.tsx`, `packages/flux-renderers-data/src/table-renderer.tsx`, `packages/flux-renderers-data/src/tree-renderer.tsx`, `packages/flux-renderers-form/src/renderers/array-field.tsx`, `packages/flux-renderers-form/src/renderers/object-field.tsx`, `packages/flux-renderers-form/src/renderers/detail-field.tsx`, `packages/flux-renderers-form/src/renderers/detail-view.tsx`, `packages/flux-renderers-form/src/renderers/variant-field.tsx`, `packages/flux-renderers-form/src/renderers/tree-controls.tsx`
-- Why: the styling docs now align on one future baseline: root `nop-*` markers are semantic only, internal regions use `data-slot`, and renderers do not inject implicit layout. The remaining problem is mostly code lag, because several live renderers still emit visual/internal `nop-*` classes.
+- Why: the styling docs now align on one future baseline: root `nop-*` markers are semantic only, internal regions use `data-slot`, and renderers do not inject implicit layout. Recent landing slices have already removed the extra internal `nop-tabs-*`, `nop-cb-*`, and React host `nop-*-card` markers in favor of `data-slot`, expanded focused DOM assertions around `FieldFrame`, `page`, `container`, `table`, `tree`, and dialog/drawer host surfaces, and normalized several remaining conditional class merges onto `cn()`. The remaining problem is now narrower code lag in other renderers that still mix semantic root markers with non-essential internal classes or still lack focused selector-contract coverage.
 
 ### F8. Flow Designer and Report Designer docs contain several “already landed” claims that are still ahead of implementation
 
@@ -113,17 +110,17 @@ Primary code anchors used during the audit:
 | `docs/architecture/action-algebra-formal-spec.md` | consistent | Action control-flow semantics align with `packages/flux-runtime/src/action-runtime.ts` and `action-runtime-core.ts`. |
 | `docs/architecture/action-graph-authoring.md` | consistent | Visual authoring concepts remain compatible with the current action algebra. |
 | `docs/architecture/action-interaction-state.md` | inconsistent | The taxonomy and surface-owner routing are now internally aligned, but the doc still assumes a cleaner Host Projection primitive story than current shared contracts expose. |
-| `docs/architecture/action-scope-and-imports.md` | inconsistent | The document wording is now more clearly normative, but current code still registers imports onto the active scope instead of creating the cleaner import-owned boundary described here, and it still lags the `renderPlan.wrapProviders` direction from F3. |
+| `docs/architecture/action-scope-and-imports.md` | consistent | The import runtime matches the current baseline that loaded libraries stay resident and namespaces are published lexically, and React now executes the compiler-emitted provider-wrap closure directly for node-boundary publication. |
 | `docs/architecture/api-data-source.md` | inconsistent | Documents `resultMapping` as part of the current `DataSourceSchema`, but audited schema/runtime code does not expose or implement it (`packages/flux-core/src/types/schema.ts`, `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/source-registry.ts`). |
-| `docs/architecture/component-resolution.md` | inconsistent | The doc is now aligned with the future `cid`-first / no-`NodeLocator` design, but the current runtime/action target code still carries older locator/plan compatibility paths. |
+| `docs/architecture/component-resolution.md` | consistent | The live runtime/action target path now resolves mounted nodes directly through `cid` plus optional `instancePath`, and no active package code still depends on a `NodeLocator` wrapper. |
 | `docs/architecture/dependency-tracking.md` | consistent | Current path-based dependency matching and explicit `dependsOn` fallback align with `scope-change.ts`, `source-registry.ts`, and `reaction-runtime.ts`. |
 | `docs/architecture/form-validation.md` | inconsistent | The doc describes a broader owner-partitioned validation runtime than the current form-centric implementation. `summary-gate` currently blocks submit whenever active (`packages/flux-runtime/src/form-runtime.ts:155-167`), and `recurse-submit` currently unregisters active child contracts instead of validating them (`packages/flux-runtime/src/form-runtime.ts:510-514`). |
 | `docs/architecture/schema-file-validator.md` | consistent | Compiler-owned diagnostics and `xui:imports` validation match live code. |
 | `docs/architecture/scope-ownership-and-isolation.md` | consistent | Current isolate/inherit behavior aligns with `packages/flux-runtime/src/scope.ts`, `packages/flux-runtime/src/index.ts`, and `packages/flux-react/src/render-nodes.tsx`. |
 | `docs/architecture/scoped-render-slots.md` | consistent | Reserved `$slot` frame and parameterized-region behavior match the current hooks and renderer-handle contracts. |
-| `docs/architecture/surface-owner.md` | inconsistent | The document is now clearer that `SurfaceRuntime` / `SurfaceStore` is the target family abstraction, but live page/dialog code still lags that owner model. |
+| `docs/architecture/surface-owner.md` | consistent | Live runtime and React host code now use an explicit shared `SurfaceRuntime` / `SurfaceStore` family outside `PageRuntime`, with unified stack-based surface ownership. |
 | `docs/architecture/table-row-identity-and-scope-performance.md` | inconsistent | The doc assumes a more complete repeated-template substrate than currently populated by the compiler; `packages/flux-runtime/src/schema-compiler.ts:324` still returns `repeatedTemplates: new Map()`. |
-| `docs/architecture/template-instantiation-and-node-identity.md` | inconsistent | The document has been rewritten toward the future `cid`-first / no-`NodeLocator` baseline. The remaining mismatch is now primarily code lag: runtime/debugger/action code still carries older locator/compatibility structures and not all repeated-template plumbing is landed. |
+| `docs/architecture/template-instantiation-and-node-identity.md` | inconsistent | The `cid`-first / no-`NodeLocator` identity model is now reflected in live runtime/debugger/action code. The remaining mismatch is narrower: repeated-template plumbing is still incomplete, and some React publication details remain more compatibility-shaped than the cleaner target wording. |
 
 ### Field, UI, Styling, And Tooling
 
@@ -133,14 +130,14 @@ Primary code anchors used during the audit:
 | `docs/architecture/code-editor.md` | redirect | Current file is consistent as a redirect note to `docs/components/code-editor/design.md`. |
 | `docs/architecture/condition-builder.md` | redirect | Current file is consistent as a redirect note to `docs/components/condition-builder/design.md`. |
 | `docs/architecture/field-binding-and-renderer-contract.md` | inconsistent | The owner contract is now largely settled. Remaining issues are mostly stale migration-era narration and code lag rather than active competition with other architecture docs. |
-| `docs/architecture/field-frame.md` | inconsistent | The document has been realigned with the styling contract: root `nop-field` is semantic only, visual layout stays external, and state attributes are presence-only. The remaining mismatch is now mainly code lag in `packages/flux-react/src/field-frame.tsx`. |
+| `docs/architecture/field-frame.md` | inconsistent | The document has been realigned with the styling contract: root `nop-field` is semantic only, visual layout stays external, and state attributes are presence-only. Recent focused tests in `packages/flux-react/src/frame-slot-meta.test.tsx` now lock the root/state/slot contract more directly; the remaining mismatch is narrower renderer-family code lag outside `FieldFrame` itself. |
 | `docs/architecture/field-metadata-slot-modeling.md` | inconsistent | The compiler model is broadly right, but many live renderers still fall back to raw schema instead of fully normalized `props` / `meta` / `regions` (`packages/flux-renderers-form/src/renderers/input.tsx`, `array-field.tsx`, `object-field.tsx`, `detail-field.tsx`, `variant-field.tsx`, `packages/flux-react/src/node-frame-wrapper.tsx`). |
 | `docs/architecture/frontend-baseline.md` | consistent | Package/tooling baseline matches `package.json`, `pnpm-workspace.yaml`, and app/package structure. |
 | `docs/architecture/object-field.md` | inconsistent | The document now clearly states the future owner contract for object value editing. The remaining gap is mostly implementation lag relative to that contract. |
 | `docs/architecture/performance-design-requirements.md` | consistent | The documented `startTransition` usage in table pagination/selection matches `packages/flux-renderers-data/src/table-renderer/use-table-controls.ts`. |
 | `docs/architecture/playground-experience.md` | consistent | The file has been rewritten into a clean future-first playground/navigation contract and is internally consistent. |
-| `docs/architecture/renderer-markers-and-selectors.md` | inconsistent | The document is now aligned with `styling-system.md`, including the `FieldFrame` case. The remaining issue is code lag in renderers that still mix semantic markers with visual/internal classes. |
-| `docs/architecture/renderer-runtime.md` | inconsistent | See F3, F4, and F5. The doc is now aligned with the future no-`NodeLocator` identity model, but live React runtime code still uses older node-meta/context and provider assembly details. |
+| `docs/architecture/renderer-markers-and-selectors.md` | inconsistent | The document is aligned with `styling-system.md`, and recent cleanup slices have already removed extra internal `nop-tabs-*`, `nop-cb-item`, `nop-cb-group`, `nop-dialog-card`, and `nop-drawer-card` markers in favor of `data-slot`, while expanding focused coverage for `FieldFrame`, `page`, `container`, `table`, `tree`, and the composite/detail form renderer family. The remaining issue is now narrower code lag in other renderers that still mix semantic markers with non-essential internal classes or inconsistent class-merging helpers. |
+| `docs/architecture/renderer-runtime.md` | consistent | The live React/runtime path now matches the no-`NodeLocator`, explicit `SurfaceRuntime`, and compiler-owned provider-wrap baselines described in the current architecture docs. |
 | `docs/architecture/security-design-requirements.md` | consistent | No material mismatch found in the audited code paths. |
 | `docs/architecture/styling-system.md` | inconsistent | The normative no-implicit-layout contract is now more clearly aligned with `field-frame.md` and `renderer-markers-and-selectors.md`. The remaining gap is mainly renderer implementation lag. |
 | `docs/architecture/theme-compatibility.md` | inconsistent | The design direction is reasonable and now fits the broader architecture, but the document still needs focused anchor/terminology cleanup to be treated as fully current. |

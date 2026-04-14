@@ -1,7 +1,7 @@
 import type { CompiledRuntimeValue, RuntimeValueState } from './compilation';
 import type { BaseSchema, SchemaPath } from './schema';
 import type { ScopeDependencySet, ScopeRef } from './scope';
-import type { CompiledSchemaMeta } from './renderer-compiler';
+import type { CompiledSchemaMeta, WrapProvidersFn } from './renderer-compiler';
 
 export type TemplateNodeId = number;
 export type RepeatedTemplateId = string;
@@ -46,6 +46,11 @@ export type ScopePlan =
 export type RegistryPlan = Readonly<Record<string, unknown>>;
 export type ValidationPlan = import('./validation').CompiledFormValidationModel;
 export type RuntimeProgramState<T = unknown> = RuntimeValueState<T>;
+export interface TemplateProviderPlan {
+  actionScope: boolean;
+  componentRegistry: boolean;
+  classAliases: boolean;
+}
 
 export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   templateNodeId: TemplateNodeId;
@@ -63,6 +68,8 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
     onUnmount?: unknown;
   }>;
   regions: Readonly<Record<string, TemplateRegion>>;
+  providerPlan?: TemplateProviderPlan;
+  providerWrap?: WrapProvidersFn;
   scopePlan: ScopePlan;
   registryPlan?: RegistryPlan;
   validationPlan?: ValidationPlan;

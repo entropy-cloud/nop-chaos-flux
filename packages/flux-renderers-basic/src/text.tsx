@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { cn } from '@nop-chaos/ui';
 import type { TextSchema } from './schemas';
-import { classNames } from './utils';
 
 export function TextRenderer(props: RendererComponentProps<TextSchema>) {
   const text = props.props.body ?? props.props.text;
@@ -20,5 +20,5 @@ export function TextRenderer(props: RendererComponentProps<TextSchema>) {
       : 'span';
   const Tag: keyof React.JSX.IntrinsicElements = tag;
 
-  return <Tag className={classNames('nop-text', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>{String(text ?? '')}</Tag>;
+  return <Tag className={cn('nop-text', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>{String(text ?? '')}</Tag>;
 }

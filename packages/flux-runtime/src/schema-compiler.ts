@@ -309,6 +309,8 @@ export function createSchemaCompiler(input: {
       eventPlans: node.eventActions,
       lifecycleActions: node.lifecycleActions,
       regions,
+      providerPlan: node.renderPlan.providers,
+      providerWrap: node.renderPlan.wrapProviders,
       scopePlan,
       validationPlan: node.validation,
       sourcePropKeys: node.sourcePropKeys,

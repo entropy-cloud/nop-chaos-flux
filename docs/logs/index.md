@@ -62,6 +62,7 @@ When adding a new log entry for today:
 
 ### 2026-04
 
+- [04-14](2026/04-14.md) — workspace verification recovery: runtime action evaluation fix, SchemaRenderer/test alignment, condition-builder test support cleanup, and chart test isolation
 - [04-12](2026/04-12.md) — Plan 73 closure: architecture hierarchy index rewrite, full top-level architecture status matrix, platform-extension doc positioning, and audit-backed owner decisions
 - [04-11](2026/04-11.md) — Plan 67 (hidden-field policy) full implementation: HiddenFieldPolicy contract, resolveHiddenFieldPolicy, notifyFieldHidden, validatePath skip, clearValueWhenHidden, useHiddenFieldPolicy hook, 21 new tests; form-validation.md updated; owner-boundary architecture reframing
 - [04-07](2026/04-07.md) — field-level source-enabled prop resolution through renderer metadata and shared React node handling

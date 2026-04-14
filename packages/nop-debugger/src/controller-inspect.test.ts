@@ -98,7 +98,7 @@ describe('controller inspector methods', () => {
   });
 
   it('inspectByCid prefers registry inspectCid instancePath data when available', () => {
-    const ctrl = createNopDebugger({ id: 'inspect-registry-locator', enabled: true });
+    const ctrl = createNopDebugger({ id: 'inspect-registry-instance-path', enabled: true });
     const div = document.createElement('div');
     div.setAttribute('data-cid', '101');
     document.body.appendChild(div);

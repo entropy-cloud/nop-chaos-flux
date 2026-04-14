@@ -86,7 +86,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
         void props.events.onChange?.(null, {
           scope: props.helpers.createScope({ value: next, index: nextIndex }, { scopeKey: 'tabs', pathSuffix: 'tabs' })
         });
-      }} orientation={schemaProps.orientation ?? 'horizontal'} className="nop-tabs-root">
+      }} orientation={schemaProps.orientation ?? 'horizontal'} data-slot="tabs-root">
         <TabsList variant={schemaProps.variant ?? 'default'}>
           {items.map((item, index) => {
             const value = getItemValue(item, index);
@@ -104,7 +104,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           const bodyRegion = typeof item.bodyRegionKey === 'string' ? props.regions[item.bodyRegionKey] : undefined;
           const toolbarRegion = typeof item.toolbarRegionKey === 'string' ? props.regions[item.toolbarRegionKey] : undefined;
           return (
-            <TabsContent key={value} value={value} className="nop-tabs-content">
+            <TabsContent key={value} value={value} data-slot="tabs-content">
               {toolbarRegion ? <div data-slot="tabs-item-toolbar">{toolbarRegion.instantiate()}</div> : null}
               {bodyRegion ? bodyRegion.instantiate() : null}
             </TabsContent>

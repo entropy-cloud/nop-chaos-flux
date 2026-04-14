@@ -1,5 +1,5 @@
 import { createStore } from 'zustand/vanilla';
-import type { FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, SurfaceStoreApi, SurfaceStoreState, ValidationError } from '@nop-chaos/flux-core';
+import type { FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, SurfaceEntry, SurfaceStoreApi, SurfaceStoreState, ValidationError } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
 
 function validationErrorsEqual(
@@ -198,8 +198,7 @@ export function createPageStore(initialData: Record<string, any>): PageStoreApi 
 
 export function createSurfaceStore(): SurfaceStoreApi {
   const store = createStore<SurfaceStoreState>(() => ({
-    dialogs: [],
-    surfaces: []
+    entries: []
   }));
 
   return {
@@ -209,41 +208,32 @@ export function createSurfaceStore(): SurfaceStoreApi {
     subscribe(listener) {
       return store.subscribe(listener);
     },
-    openDialog(dialog) {
+    push(entry: SurfaceEntry) {
       const state = store.getState();
-      store.setState({ dialogs: [...state.dialogs, dialog] });
+      store.setState({ entries: [...state.entries, entry] });
     },
-    closeDialog(dialogId) {
-      const state = store.getState();
-
-      if (!dialogId) {
-        if (state.dialogs.length === 0) {
-          return;
-        }
-
-        store.setState({ dialogs: state.dialogs.slice(0, -1) });
-        return;
-      }
-
-      store.setState({ dialogs: state.dialogs.filter((dialog) => dialog.id !== dialogId) });
-    },
-    openSurface(surface) {
-      const state = store.getState();
-      store.setState({ surfaces: [...state.surfaces, surface] });
-    },
-    closeSurface(surfaceId) {
+    remove(surfaceId) {
       const state = store.getState();
 
       if (!surfaceId) {
-        if (state.surfaces.length === 0) {
-          return;
+        const target = state.entries[state.entries.length - 1];
+
+        if (!target) {
+          return undefined;
         }
 
-        store.setState({ surfaces: state.surfaces.slice(0, -1) });
-        return;
+        store.setState({ entries: state.entries.slice(0, -1) });
+        return target;
       }
 
-      store.setState({ surfaces: state.surfaces.filter((surface) => surface.id !== surfaceId) });
+      const target = state.entries.find((entry) => entry.id === surfaceId);
+
+      if (!target) {
+        return undefined;
+      }
+
+      store.setState({ entries: state.entries.filter((entry) => entry.id !== surfaceId) });
+      return target;
     }
   };
 }

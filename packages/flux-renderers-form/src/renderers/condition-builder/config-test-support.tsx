@@ -100,6 +100,7 @@ vi.mock('@nop-chaos/ui', () => {
   (MockBadge as any).displayName = 'Badge';
 
   return {
+    cn: (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' '),
     Select: MockSelect,
     SelectTrigger: MockSelectTrigger,
     SelectContent: MockSelectContent,

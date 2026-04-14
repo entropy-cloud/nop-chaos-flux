@@ -2,8 +2,8 @@ import React from 'react';
 import { useMemo } from 'react';
 import type { PageStatusSummary, RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { cn } from '@nop-chaos/ui';
 import type { PageSchema } from './schemas';
-import { classNames } from './utils';
 import { useStatusPathPublication } from './status-hooks';
 
 export function PageRenderer(props: RendererComponentProps<PageSchema>) {
@@ -17,7 +17,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   useStatusPathPublication(props.node.scope, typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined, summary);
 
   return (
-    <section className={classNames('nop-page', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+    <section className={cn('nop-page', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {hasRendererSlotContent(titleContent) ? (
         <header data-slot="page-header">
           <h2>{titleContent}</h2>

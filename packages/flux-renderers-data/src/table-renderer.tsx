@@ -157,7 +157,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                         >
                           {labelContent}
                           {isSortable && (
-                            <ArrowUpDownIcon className={`inline ml-1 size-3 ${currentSort ? 'text-primary' : 'text-muted-foreground'}`} />
+                            <ArrowUpDownIcon
+                              className={cn(
+                                'inline ml-1 size-3',
+                                currentSort ? 'text-primary' : 'text-muted-foreground'
+                              )}
+                            />
                           )}
                         </span>
 
@@ -166,7 +171,10 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                             <DropdownMenuTrigger
                               render={
                                 <button
-                                  className={`h-6 w-6 rounded hover:bg-accent ${activeFilters.size > 0 ? 'text-primary' : 'text-muted-foreground'}`}
+                                  className={cn(
+                                    'h-6 w-6 rounded hover:bg-accent',
+                                    activeFilters.size > 0 ? 'text-primary' : 'text-muted-foreground'
+                                  )}
                                   aria-label="Filter"
                                 >
                                   <span className="sr-only">Filter</span>

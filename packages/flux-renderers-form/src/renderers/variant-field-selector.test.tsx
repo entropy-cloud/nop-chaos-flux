@@ -63,6 +63,7 @@ describe('variant-field renderer selector behavior', () => {
     expect(container?.className).toContain('border');
     expect(container?.querySelector('[data-slot="field-control"]')).toBeTruthy();
     expect(container?.querySelector('[data-slot="variant-field-selector"]')).toBeTruthy();
+    expect(container?.querySelector('[data-slot="variant-field-readonly-body"]')).toBeNull();
   });
 
   it('switching variant tab resets the field value to the new variant initial value', async () => {
@@ -213,5 +214,8 @@ describe('variant-field renderer selector behavior', () => {
 
     await waitFor(() => expect(screen.getByTestId('variant-viewer').textContent).toBe('Viewer: alpha'));
     expect(screen.queryByLabelText('Text Value')).toBeNull();
+    const container = document.querySelector('[data-active-variant]');
+    expect(container?.querySelector('[data-slot="variant-field-readonly-body"]')).toBeTruthy();
+    expect(container?.querySelector('[data-slot="variant-field-selector"]')).toBeNull();
   });
 });

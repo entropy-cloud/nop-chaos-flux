@@ -1,6 +1,22 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createDataSchemaRenderer, env, formulaCompiler, iconRenderer, nodeInstanceProbeRenderer } from '../test-support';
+
+vi.mock('echarts/core', async () => {
+  const chartInstance = {
+    setOption: vi.fn(),
+    resize: vi.fn(),
+    getDataURL: vi.fn(() => 'data:image/png;base64,mock'),
+    dispose: vi.fn(),
+    showLoading: vi.fn(),
+    hideLoading: vi.fn()
+  };
+
+  return {
+    use: vi.fn(),
+    init: vi.fn(() => chartInstance)
+  };
+});
 
 describe('dataRendererDefinitions tree and chart behavior', () => {
   it('renders visual tree nodes through the node region with inherited bindings', async () => {
@@ -30,6 +46,10 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
       expect(screen.getByText('Root')).toBeTruthy();
       expect(document.querySelectorAll('[data-slot="tree-node"]').length).toBeGreaterThan(0);
     });
+    const treeRoot = document.querySelector('.nop-tree');
+    expect(treeRoot).toBeTruthy();
+    expect(treeRoot?.querySelector('[data-slot="tree-node"]')).toBeTruthy();
+    expect(treeRoot?.querySelector('[data-slot="tree-children"]')).toBeTruthy();
   });
 
   it('publishes tree status summary through statusPath', async () => {

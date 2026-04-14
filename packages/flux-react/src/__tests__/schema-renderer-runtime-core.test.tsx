@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { createSchemaRenderer, NodeMetaContext, RenderNodes, RuntimeContext, ScopeContext } from '../index';
 import {
@@ -34,6 +34,46 @@ describe('createSchemaRenderer runtime core behavior', () => {
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
     render(<SchemaRenderer schema={{ type: 'text', text: 'Hello renderer' }} env={env} formulaCompiler={createFormulaCompiler()} />);
     expect(screen.getByText('Hello renderer')).toBeTruthy();
+  });
+
+  it('compiles the root schema before passing it to RenderNodes', async () => {
+    const capturedInputs: unknown[] = [];
+
+    vi.resetModules();
+    const actualHelpers = await vi.importActual<typeof import('../helpers')>('../helpers');
+    vi.doMock('../helpers', () => ({
+      ...actualHelpers,
+      RenderNodes(props: Parameters<typeof actualHelpers.RenderNodes>[0]) {
+        capturedInputs.push(props.input);
+        return actualHelpers.RenderNodes(props);
+      }
+    }));
+
+    try {
+      const { createSchemaRenderer: createSchemaRendererWithMock } = await import('../schema-renderer');
+      const SchemaRenderer = createSchemaRendererWithMock([textRenderer]);
+
+      render(
+        <SchemaRenderer
+          schema={{ type: 'text', text: 'Compiled at boundary' }}
+          env={env}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      );
+
+      expect(screen.getByText('Compiled at boundary')).toBeTruthy();
+      expect(capturedInputs).toHaveLength(1);
+      expect(capturedInputs[0]).toMatchObject({
+        root: expect.objectContaining({
+          type: 'text',
+          rendererType: 'text',
+          schema: { type: 'text', text: 'Compiled at boundary' }
+        })
+      });
+    } finally {
+      vi.doUnmock('../helpers');
+      vi.resetModules();
+    }
   });
 
   it('renders precompiled nodes passed through helpers.render', () => {

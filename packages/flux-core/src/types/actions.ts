@@ -2,7 +2,7 @@ import type { NodeInstance, InstanceFrame } from './node-identity';
 import type { SchemaObject, SchemaValue, SchemaPath, ApiSchema, OperationControlConfig } from './schema';
 import type { ScopeRef } from './scope';
 import type { ComponentHandleRegistry, RendererRuntime, RendererEnv } from './renderer';
-import type { FormRuntime, PageRuntime } from './runtime';
+import type { FormRuntime, PageRuntime, SurfaceRuntime } from './runtime';
 
 export interface ActionSchema extends SchemaObject {
   action: string;
@@ -65,6 +65,7 @@ export interface ActionContext {
   event?: FluxActionEvent;
   form?: FormRuntime;
   page?: PageRuntime;
+  surfaceRuntime?: SurfaceRuntime;
   dialogId?: string;
   prevResult?: ActionResult;
   evaluationBindings?: Record<string, unknown>;

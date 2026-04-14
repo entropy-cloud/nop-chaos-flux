@@ -13,6 +13,7 @@ describe('createRendererRuntime', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
     const page = runtime.createPageRuntime({ message: 'Hello' });
+    const surfaceRuntime = runtime.createSurfaceRuntime();
 
     const openResult = await runtime.dispatch(
       {
@@ -25,14 +26,15 @@ describe('createRendererRuntime', () => {
       {
         runtime,
         scope: page.scope,
-        page
+        page,
+        surfaceRuntime
       }
     );
 
     expect(openResult.ok, String(openResult.error)).toBe(true);
-    expect(page.surfaceStore.getState().dialogs).toHaveLength(1);
-    const dialogState = page.surfaceStore.getState().dialogs[0];
-    expect(dialogState.dialog.title).toBe('Runtime dialog');
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(1);
+    const dialogState = surfaceRuntime.store.getState().entries[0];
+    expect(dialogState.surface.title).toBe('Runtime dialog');
     expect(dialogState.body).toBeTruthy();
     expect(dialogState.scope.get('dialogId')).toBe(dialogState.id);
 
@@ -44,12 +46,13 @@ describe('createRendererRuntime', () => {
         runtime,
         scope: dialogState.scope,
         page,
+        surfaceRuntime,
         dialogId: dialogState.id
       }
     );
 
     expect(closeResult.ok).toBe(true);
-    expect(page.surfaceStore.getState().dialogs).toHaveLength(0);
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(0);
   });
 
   it('stores schema-based dialog title and body as raw schema when opening dialogs', async () => {
@@ -60,6 +63,7 @@ describe('createRendererRuntime', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
     const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
 
     await runtime.dispatch(
       {
@@ -72,11 +76,12 @@ describe('createRendererRuntime', () => {
       {
         runtime,
         scope: page.scope,
-        page
+        page,
+        surfaceRuntime
       }
     );
 
-    const dialogState = page.surfaceStore.getState().dialogs[0] as any;
+    const dialogState = surfaceRuntime.store.getState().entries[0] as any;
     expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
     expect(Array.isArray(dialogState.body)).toBe(true);
     expect(dialogState.body[0]).toEqual({ type: 'text', text: 'Compiled body' });
@@ -103,6 +108,7 @@ describe('createRendererRuntime', () => {
       ]
     });
     const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
     const pageRoot = Array.isArray(pageCompiled.root) ? pageCompiled.root[0] : pageCompiled.root;
     const bodyRegion = pageRoot.regions['body'];
     const triggerTemplateNode = bodyRegion
@@ -129,23 +135,25 @@ describe('createRendererRuntime', () => {
         runtime,
         scope: page.scope,
         page,
+        surfaceRuntime,
         nodeInstance: triggerNodeInstance
       }
     );
 
-    const dialogState = page.surfaceStore.getState().dialogs[0] as any;
+    const dialogState = surfaceRuntime.store.getState().entries[0] as any;
     expect(dialogState.ownerNodeInstance).toBe(triggerNodeInstance);
     expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
     expect(dialogState.body).toEqual([{ type: 'text', text: 'Compiled body' }]);
   });
 
-  it('stores ownerNodeInstance in dialog state when opened directly via page.openDialog', () => {
+  it('stores ownerNodeInstance in dialog state when opened directly via surfaceRuntime.open', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
     const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
     const ownerNodeInstance = {
       cid: 12,
       templateNode: {
@@ -168,19 +176,20 @@ describe('createRendererRuntime', () => {
       }
     } as any;
 
-    page.openDialog(
-      {
+    surfaceRuntime.open({
+      kind: 'dialog',
+      surface: {
         title: { type: 'text', text: 'Compiled title' },
         body: [{ type: 'text', text: 'Compiled body' }]
       },
-      page.scope,
+      scope: page.scope,
       runtime,
-      {
+      options: {
         ownerNodeInstance
       }
-    );
+    });
 
-    const dialogState = page.surfaceStore.getState().dialogs[0] as any;
+    const dialogState = surfaceRuntime.store.getState().entries[0] as any;
     expect(dialogState.ownerNode).toBeUndefined();
     expect(dialogState.ownerNodeInstance).toBe(ownerNodeInstance);
     expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
@@ -247,6 +256,7 @@ describe('createRendererRuntime', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
     const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
 
     await runtime.dispatch(
       {
@@ -259,7 +269,8 @@ describe('createRendererRuntime', () => {
       {
         runtime,
         scope: page.scope,
-        page
+        page,
+        surfaceRuntime
       }
     );
 
@@ -274,12 +285,13 @@ describe('createRendererRuntime', () => {
       {
         runtime,
         scope: page.scope,
-        page
+        page,
+        surfaceRuntime
       }
     );
 
-    const dialogs = page.surfaceStore.getState().dialogs;
-    expect(dialogs).toHaveLength(2);
+    const entries = surfaceRuntime.store.getState().entries;
+    expect(entries).toHaveLength(2);
 
     const closeResult = await runtime.dispatch(
       {
@@ -287,15 +299,16 @@ describe('createRendererRuntime', () => {
       },
       {
         runtime,
-        scope: dialogs[1].scope,
+        scope: entries[1].scope,
         page,
-        dialogId: dialogs[1].id
+        surfaceRuntime,
+        dialogId: entries[1].id
       }
     );
 
     expect(closeResult.ok).toBe(true);
-    expect(page.surfaceStore.getState().dialogs).toHaveLength(1);
-    expect(page.surfaceStore.getState().dialogs[0].id).toBe(dialogs[0].id);
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(1);
+    expect(surfaceRuntime.store.getState().entries[0].id).toBe(entries[0].id);
   });
 
   it('opens and closes drawers through drawer actions', async () => {
@@ -307,6 +320,7 @@ describe('createRendererRuntime', () => {
     });
     runtime.compile({ type: 'text', text: 'trigger' });
     const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
 
     const openResult = await runtime.dispatch(
       {
@@ -320,15 +334,16 @@ describe('createRendererRuntime', () => {
       {
         runtime,
         scope: page.scope,
-        page
+        page,
+        surfaceRuntime
       }
     );
 
     expect(openResult.ok).toBe(true);
-    expect(page.surfaceStore.getState().surfaces).toHaveLength(1);
-    expect(page.surfaceStore.getState().surfaces[0].kind).toBe('drawer');
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(1);
+    expect(surfaceRuntime.store.getState().entries[0].kind).toBe('drawer');
     expect(page.scope.get('drawerStatus')).toEqual({
-      id: page.surfaceStore.getState().surfaces[0].id,
+      id: surfaceRuntime.store.getState().entries[0].id,
       kind: 'drawer',
       open: true,
       active: true,
@@ -342,13 +357,14 @@ describe('createRendererRuntime', () => {
       },
       {
         runtime,
-        scope: page.surfaceStore.getState().surfaces[0].scope,
+        scope: surfaceRuntime.store.getState().entries[0].scope,
         page,
-        dialogId: page.surfaceStore.getState().surfaces[0].id
+        surfaceRuntime,
+        dialogId: surfaceRuntime.store.getState().entries[0].id
       }
     );
 
     expect(closeResult.ok).toBe(true);
-    expect(page.surfaceStore.getState().surfaces).toHaveLength(0);
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(0);
   });
 });

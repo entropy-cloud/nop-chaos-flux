@@ -94,7 +94,7 @@ export interface PageStatusSummary {
 
 export interface SurfaceStatusSummary {
   id: string;
-  kind: 'dialog' | 'drawer';
+  kind: 'dialog' | 'drawer' | 'sheet';
   open: boolean;
   active: boolean;
   opening: boolean;
@@ -148,6 +148,7 @@ export interface FormLifecycleHandlers {
 
 export interface OwnedSurfaceStateBase {
   id: string;
+  kind: 'dialog' | 'drawer' | 'sheet';
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
@@ -157,19 +158,12 @@ export interface OwnedSurfaceStateBase {
   body?: RenderNodeInput;
 }
 
-export interface DialogState extends OwnedSurfaceStateBase {
-  kind?: 'dialog';
-  dialog: Record<string, any>;
-}
-
-export interface SurfaceState extends OwnedSurfaceStateBase {
-  kind: 'dialog' | 'drawer';
+export interface SurfaceEntry extends OwnedSurfaceStateBase {
   surface: Record<string, any>;
 }
 
 export interface SurfaceStoreState {
-  dialogs: DialogState[];
-  surfaces: SurfaceState[];
+  entries: SurfaceEntry[];
 }
 
 export interface PageStoreState {
@@ -188,10 +182,26 @@ export interface PageStoreApi {
 export interface SurfaceStoreApi {
   getState(): SurfaceStoreState;
   subscribe(listener: () => void): () => void;
-  openDialog(dialog: DialogState): void;
-  closeDialog(dialogId?: string): void;
-  openSurface(surface: SurfaceState): void;
-  closeSurface(surfaceId?: string): void;
+  push(entry: SurfaceEntry): void;
+  remove(surfaceId?: string): SurfaceEntry | undefined;
+}
+
+export interface SurfaceRuntime {
+  store: SurfaceStoreApi;
+  open(input: {
+    kind: 'dialog' | 'drawer' | 'sheet';
+    surface: Record<string, any>;
+    scope: ScopeRef;
+    runtime: RendererRuntime;
+    options?: {
+      actionScope?: ActionScope;
+      componentRegistry?: ComponentHandleRegistry;
+      ownerTemplateNode?: TemplateNode;
+      ownerNodeInstance?: NodeInstance;
+    };
+  }): string;
+  close(surfaceId?: string): void;
+  closeTop(): void;
 }
 
 export interface DataSourceController {
@@ -286,42 +296,11 @@ export interface FormRuntime extends ValidationScopeRuntime {
 
 export interface PageRuntime {
   store: PageStoreApi;
-  surfaceStore: SurfaceStoreApi;
   scope: ScopeRef;
-  openDialog(
-    dialog: Record<string, any>,
-    scope: ScopeRef,
-    runtime: RendererRuntime,
-    options?: {
-      actionScope?: ActionScope;
-      componentRegistry?: ComponentHandleRegistry;
-      ownerTemplateNode?: TemplateNode;
-      ownerNodeInstance?: NodeInstance;
-    }
-  ): string;
-  closeDialog(dialogId?: string): void;
-  openSurface(
-    kind: 'dialog' | 'drawer',
-    surface: Record<string, any>,
-    scope: ScopeRef,
-    runtime: RendererRuntime,
-    options?: {
-      actionScope?: ActionScope;
-      componentRegistry?: ComponentHandleRegistry;
-      ownerTemplateNode?: TemplateNode;
-      ownerNodeInstance?: NodeInstance;
-    }
-  ): string;
-  closeSurface(surfaceId?: string): void;
   refresh(): void;
 }
 
-export interface DialogRendererProps {
-  dialogs: DialogState[];
-  renderDialog: (dialog: DialogState) => ReactNode;
-}
-
 export interface SurfaceRendererProps {
-  surfaces: SurfaceState[];
-  renderSurface: (surface: SurfaceState) => ReactNode;
+  surfaces: SurfaceEntry[];
+  renderSurface: (surface: SurfaceEntry) => ReactNode;
 }

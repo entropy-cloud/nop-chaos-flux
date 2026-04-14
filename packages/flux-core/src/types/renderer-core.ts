@@ -157,6 +157,9 @@ export interface RendererRuntime {
     ctx?: Partial<ActionContext>;
   }): Promise<ActionResult>;
   createPageRuntime(data?: Record<string, any>): PageRuntime;
+  createSurfaceRuntime(input?: {
+    disposeScope?: (scopeId: string) => void;
+  }): import('./runtime').SurfaceRuntime;
   createDataSourceController(input: {
     api: ApiSchema;
     scope: ScopeRef;

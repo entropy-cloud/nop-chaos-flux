@@ -15,6 +15,7 @@ import {
   PageContext,
   RuntimeContext,
   ScopeContext,
+  SurfaceContext,
   useAggregateError,
   useChildFieldState,
   useCurrentActionScope,
@@ -363,10 +364,12 @@ export function createScope(data: Record<string, any>): ScopeRef {
 export function renderWithRuntimeProviders(input: {
   runtime: ReturnType<typeof createRendererRuntime>;
   page: ReturnType<ReturnType<typeof createRendererRuntime>['createPageRuntime']>;
+  surfaceRuntime?: ReturnType<ReturnType<typeof createRendererRuntime>['createSurfaceRuntime']>;
   schema: Record<string, unknown>;
 }): RenderResult {
   const actionScope = input.runtime.createActionScope({ id: 'test-action-scope' });
   const componentRegistry = input.runtime.createComponentHandleRegistry({ id: 'test-component-registry' });
+  const surfaceRuntime = input.surfaceRuntime ?? input.runtime.createSurfaceRuntime();
 
   return render(
     <RuntimeContext.Provider value={input.runtime}>
@@ -374,7 +377,9 @@ export function renderWithRuntimeProviders(input: {
         <ComponentRegistryContext.Provider value={componentRegistry}>
           <ScopeContext.Provider value={input.page.scope}>
             <PageContext.Provider value={input.page}>
-              <RenderNodes input={input.schema as any} options={{ actionScope, componentRegistry }} />
+              <SurfaceContext.Provider value={surfaceRuntime}>
+                <RenderNodes input={input.schema as any} options={{ actionScope, componentRegistry }} />
+              </SurfaceContext.Provider>
             </PageContext.Provider>
           </ScopeContext.Provider>
         </ComponentRegistryContext.Provider>

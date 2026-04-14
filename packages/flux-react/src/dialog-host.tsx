@@ -1,17 +1,17 @@
 import React from 'react';
 import type {
-  DialogState,
   PageRuntime,
-  SurfaceState
+  SurfaceEntry,
+  SurfaceRuntime
 } from '@nop-chaos/flux-core';
-import { useCurrentPage } from './hooks';
+import { useCurrentPage, useCurrentSurfaceRuntime } from './hooks';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { renderSurfaceNode, SurfaceScopeProviders, useSurfaceScopeSnapshot } from './dialog-host-surface';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@nop-chaos/ui';
 
-function sameDrawerSurfaces(left: SurfaceState[], right: SurfaceState[]) {
+function sameSurfaces(left: SurfaceEntry[], right: SurfaceEntry[]) {
   if (left === right) {
     return true;
   }
@@ -25,72 +25,66 @@ function sameDrawerSurfaces(left: SurfaceState[], right: SurfaceState[]) {
 
 export function DialogHost() {
   const page = useCurrentPage();
+  const surfaceRuntime = useCurrentSurfaceRuntime();
 
-  const dialogs = useSyncExternalStoreWithSelector(
-    page?.surfaceStore.subscribe ?? (() => () => undefined),
-    () => page?.surfaceStore.getState().dialogs ?? [],
-    () => page?.surfaceStore.getState().dialogs ?? [],
-    (state: DialogState[]) => state,
-    Object.is
-  );
   const surfaces = useSyncExternalStoreWithSelector(
-    page?.surfaceStore.subscribe ?? (() => () => undefined),
-    () => page?.surfaceStore.getState().surfaces ?? [],
-    () => page?.surfaceStore.getState().surfaces ?? [],
-    (state: SurfaceState[]) => state.filter((surface) => surface.kind === 'drawer'),
-    sameDrawerSurfaces
+    surfaceRuntime?.store.subscribe ?? (() => () => undefined),
+    () => surfaceRuntime?.store.getState().entries ?? [],
+    () => surfaceRuntime?.store.getState().entries ?? [],
+    (state: SurfaceEntry[]) => state,
+    sameSurfaces
   );
 
-  if (!page || (dialogs.length === 0 && surfaces.length === 0)) {
+  if (!page || !surfaceRuntime || surfaces.length === 0) {
     return null;
   }
 
   return (
     <>
-      {dialogs.map((dialog: DialogState) => (
-        <DialogView key={dialog.id} dialog={dialog} page={page} />
-      ))}
-      {surfaces.map((surface: SurfaceState) => (
-        <DrawerView key={surface.id} surface={surface} page={page} />
+      {surfaces.map((surface: SurfaceEntry) => (
+        surface.kind === 'dialog'
+          ? <DialogView key={surface.id} surface={surface} page={page} surfaceRuntime={surfaceRuntime} />
+          : <DrawerView key={surface.id} surface={surface} surfaceRuntime={surfaceRuntime} page={page} />
       ))}
     </>
   );
 }
 
 function DialogView(props: {
-  dialog: DialogState;
+  surface: SurfaceEntry;
   page: PageRuntime;
+  surfaceRuntime: SurfaceRuntime;
 }) {
-  useSurfaceScopeSnapshot(props.dialog.scope);
+  useSurfaceScopeSnapshot(props.surface.scope);
 
-  const { dialog, page } = props;
+  const { page, surface, surfaceRuntime } = props;
   const handleClose = React.useCallback(() => {
-    page.closeDialog(dialog.id);
-  }, [dialog.id, page]);
+    surfaceRuntime.close(surface.id);
+  }, [surface.id, surfaceRuntime]);
 
   React.useEffect(() => {
-    const statusPath = typeof dialog.dialog.statusPath === 'string' ? dialog.dialog.statusPath : undefined;
-    publishOwnerStatus(page.scope, statusPath, {
-      id: dialog.id,
+    const statusPath = typeof surface.surface.statusPath === 'string' ? surface.surface.statusPath : undefined;
+    publishOwnerStatus(surface.scope, statusPath, {
+      id: surface.id,
       kind: 'dialog',
       open: true,
       active: true,
       opening: false,
       closing: false
     });
-  }, [dialog, page]);
+  }, [page, surface]);
 
   const surfaceContext = {
-    scope: dialog.scope,
-    actionScope: dialog.actionScope,
-    componentRegistry: dialog.componentRegistry,
-    ownerNodeInstance: dialog.ownerNodeInstance
+    scope: surface.scope,
+    actionScope: surface.actionScope,
+    componentRegistry: surface.componentRegistry,
+    ownerNodeInstance: surface.ownerNodeInstance
   };
-  const titleNode = dialog.title ? renderSurfaceNode(dialog.title, surfaceContext) : null;
+  const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <DialogContent className="nop-dialog-card" onClickCapture={(event) => {
+      <DialogContent data-slot="dialog-surface" onClickCapture={(event) => {
         const target = event.target;
 
         if (!(target instanceof Element)) {
@@ -107,7 +101,7 @@ function DialogView(props: {
                   <DialogTitle>{titleNode}</DialogTitle>
                 </DialogHeader>
               )}
-              {renderSurfaceNode(dialog.body ?? dialog.dialog.body, surfaceContext)}
+              {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
         </SurfaceScopeProviders>
       </DialogContent>
     </Dialog>
@@ -115,19 +109,20 @@ function DialogView(props: {
 }
 
 function DrawerView(props: {
-  surface: SurfaceState;
+  surface: SurfaceEntry;
   page: PageRuntime;
+  surfaceRuntime: SurfaceRuntime;
 }) {
   useSurfaceScopeSnapshot(props.surface.scope);
 
-  const { page, surface } = props;
+  const { page, surface, surfaceRuntime } = props;
   const handleClose = React.useCallback(() => {
-    page.closeSurface(surface.id);
-  }, [page, surface.id]);
+    surfaceRuntime.close(surface.id);
+  }, [surface.id, surfaceRuntime]);
 
   React.useEffect(() => {
     const statusPath = typeof surface.surface.statusPath === 'string' ? surface.surface.statusPath : undefined;
-    publishOwnerStatus(page.scope, statusPath, {
+    publishOwnerStatus(surface.scope, statusPath, {
       id: surface.id,
       kind: 'drawer',
       open: true,
@@ -147,7 +142,7 @@ function DrawerView(props: {
 
   return (
     <Drawer open onOpenChange={(open) => { if (!open) handleClose(); }} direction={surface.surface.side === 'left' ? 'left' : surface.surface.side === 'top' ? 'top' : surface.surface.side === 'bottom' ? 'bottom' : 'right'}>
-      <DrawerContent className="nop-drawer-card" onClickCapture={(event) => {
+      <DrawerContent data-slot="drawer-surface" onClickCapture={(event) => {
         const target = event.target;
 
         if (!(target instanceof Element)) {

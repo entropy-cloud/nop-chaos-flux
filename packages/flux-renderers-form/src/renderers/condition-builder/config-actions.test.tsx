@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ConditionGroup, makeEmptyGroup, renderGroup, testFields } from './config-test-support';
+import { makeEmptyGroup, renderGroup } from './config-test-support';
 
 describe('condition-builder config integration action behavior', () => {
   describe('draggable', () => {
@@ -77,15 +77,7 @@ describe('condition-builder config integration action behavior', () => {
         conjunction: 'and' as const,
         children: [innerGroup],
       };
-      render(
-        <ConditionGroup
-          value={value}
-          schema={{ type: 'condition-builder', name: 'test', builderMode: 'full' }}
-          fields={testFields}
-          onChange={onChange}
-          depth={0}
-        />,
-      );
+      renderGroup({ builderMode: 'full' }, value, onChange);
       const removeBtns = screen.queryAllByTitle('删除分组');
       expect(removeBtns.length).toBeGreaterThanOrEqual(1);
       fireEvent.click(removeBtns[0]);
@@ -122,16 +114,7 @@ describe('condition-builder config integration action behavior', () => {
         conjunction: 'and' as const,
         children: [{ id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined }],
       };
-      const { container } = render(
-        <ConditionGroup
-          value={value}
-          schema={{ type: 'condition-builder', name: 'test', draggable: true }}
-          fields={testFields}
-          onChange={vi.fn()}
-          disabled={true}
-          depth={0}
-        />,
-      );
+      const { container } = renderGroup({ draggable: true }, value, vi.fn(), { disabled: true });
       expect(container.querySelector('[data-dnd-listeners="true"]')).toBeNull();
     });
   });

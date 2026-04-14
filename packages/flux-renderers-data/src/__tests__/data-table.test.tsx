@@ -39,6 +39,14 @@ describe('dataRendererDefinitions table behavior', () => {
     expect(await screen.findByText('Table header')).toBeTruthy();
     expect(screen.getByText('Table footer')).toBeTruthy();
     expect(screen.getByText('No rows for Ops')).toBeTruthy();
+    const tableRoot = document.querySelector('.nop-table');
+    expect(tableRoot).toBeTruthy();
+    expect(tableRoot?.querySelector('[data-slot="table-header-region"]')).toBeTruthy();
+    expect(tableRoot?.querySelector('[data-slot="table-container"]')).toBeTruthy();
+    expect(tableRoot?.querySelector('[data-slot="table-header"]')).toBeTruthy();
+    expect(tableRoot?.querySelector('[data-slot="table-empty-row"]')).toBeTruthy();
+    expect(tableRoot?.querySelector('[data-slot="table-empty-cell"]')?.textContent).toContain('No rows for Ops');
+    expect(tableRoot?.querySelector('[data-slot="table-footer"]')).toBeTruthy();
   });
 
   it('renders plain-value empty content through value-or-region fallback', () => {
@@ -171,6 +179,16 @@ describe('dataRendererDefinitions table behavior', () => {
     expect(tableRoot?.className).toContain('border');
     expect(tableRoot?.className).not.toContain('grid');
     expect(tableRoot?.className).not.toContain('gap-4');
+  });
+
+  it('publishes table row and pagination structure through data-slot markers', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(<SchemaRenderer schema={{ type: 'page', body: [{ type: 'table', columns: [{ label: 'Name', name: 'name' }], source: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }], pagination: { currentPage: 1, pageSize: 1, pageSizeOptions: [1] } }] }} env={env} formulaCompiler={formulaCompiler} />);
+    await waitFor(() => expect(screen.getByText('Alice')).toBeTruthy());
+    const tableRoot = document.querySelector('.nop-table');
+    expect(tableRoot?.querySelector('[data-slot="table-row"]')).toBeTruthy();
+    expect(tableRoot?.querySelector('[data-slot="table-pagination"]')).toBeTruthy();
   });
 
   it('propagates repeated table row instancePath into row child nodes', async () => {

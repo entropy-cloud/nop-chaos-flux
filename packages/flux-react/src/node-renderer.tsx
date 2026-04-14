@@ -16,7 +16,7 @@ import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
 import {
   ClassAliasesContext,
 } from './contexts';
-import { useRenderInstancePath, useRendererRuntime, useCurrentForm, useCurrentPage } from './hooks';
+import { useRenderInstancePath, useRendererRuntime, useCurrentForm, useCurrentPage, useCurrentSurfaceRuntime } from './hooks';
 import { createHelpers } from './helpers';
 import { createNormalizedActionEvent } from './helpers';
 import { RenderNodes } from './render-nodes';
@@ -52,6 +52,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const parentClassAliases = useContext(ClassAliasesContext);
   const currentForm = useCurrentForm();
   const currentPage = useCurrentPage();
+  const currentSurfaceRuntime = useCurrentSurfaceRuntime();
   const mountedCid = props.mountedCid;
   const nodeState = useMemo<CompiledNodeRuntimeState>(
     () => createTemplateNodeRuntimeState(props.node),
@@ -159,9 +160,10 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
         componentRegistry: activeComponentRegistry,
         form: currentForm,
         page: currentPage,
+        surfaceRuntime: currentSurfaceRuntime,
         nodeInstance
       }),
-    [runtime, renderScope, activeActionScope, activeComponentRegistry, currentForm, currentPage, nodeInstance]
+    [runtime, renderScope, activeActionScope, activeComponentRegistry, currentForm, currentPage, currentSurfaceRuntime, nodeInstance]
   );
   const lifecycleActions = props.node.lifecycleActions;
 
