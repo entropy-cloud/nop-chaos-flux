@@ -214,4 +214,34 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
 
     expect(screen.getByText('Event 80')).toBeTruthy();
   });
+
+  it('toggles the errors-only filter class and active marker', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'timeline';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'error',
+        group: 'error',
+        level: 'error',
+        source: 'test',
+        summary: 'Boom'
+      }
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    const toggle = screen.getByRole('button', { name: 'Errors Only' });
+    expect(toggle.className).toContain('ndbg-filter');
+    expect(toggle.hasAttribute('data-active')).toBe(false);
+
+    fireEvent.click(toggle);
+
+    expect(toggle.className).toContain('ndbg-filter');
+    expect(toggle.className).toContain('ndbg-errors-only-toggle');
+    expect(toggle.hasAttribute('data-active')).toBe(true);
+  });
 });

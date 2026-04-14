@@ -2,7 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": "src",
-    "paths": {},
+    "paths": {
+      "@nop-chaos/ui": ["packages/ui/dist/index.d.ts"]
+    },
     "noEmit": false,
     "sourceMap": false,
     "outDir": "dist"

@@ -17,7 +17,7 @@ describe('NopDebuggerPanel – minimized state', () => {
 
     const { container } = render(<NopDebuggerPanel controller={controller} />);
 
-    const minimizedBar = container.querySelector('.nop-debugger--minimized');
+    const minimizedBar = container.querySelector('.nop-debugger[data-panel-state="minimized"]');
     expect(minimizedBar).toBeTruthy();
 
     const style = getComputedStyle(minimizedBar!);
@@ -34,7 +34,7 @@ describe('NopDebuggerPanel – minimized state', () => {
 
     const { container } = render(<NopDebuggerPanel controller={controller} />);
 
-    const minimizedBar = container.querySelector('.nop-debugger--minimized');
+    const minimizedBar = container.querySelector('.nop-debugger[data-panel-state="minimized"]');
     expect(minimizedBar).toBeTruthy();
 
     const style = getComputedStyle(minimizedBar!);
@@ -79,13 +79,13 @@ describe('NopDebuggerPanel – minimized state', () => {
 
     const { rerender } = render(<NopDebuggerPanel controller={controller} />);
 
-    expect(document.querySelector('.nop-debugger--minimized')).toBeTruthy();
+    expect(document.querySelector('.nop-debugger[data-panel-state="minimized"]')).toBeTruthy();
 
     currentSnapshot = { ...currentSnapshot, minimized: false };
     listeners.forEach(l => l());
     rerender(<NopDebuggerPanel controller={controller} />);
 
-    expect(document.querySelector('.nop-debugger--minimized')).toBeFalsy();
+    expect(document.querySelector('.nop-debugger[data-panel-state="minimized"]')).toBeFalsy();
     expect(document.querySelector('.ndbg-drag-handle')).toBeTruthy();
     expect(screen.getByText('Runtime Console')).toBeTruthy();
   });

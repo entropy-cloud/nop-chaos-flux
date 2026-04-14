@@ -100,8 +100,6 @@ export const DEBUGGER_STYLES = `
 .ndbg-tab,
 .ndbg-filter,
 .nop-debugger-launcher {
-  appearance: none;
-  border: 1px solid var(--nop-debugger-chip-border);
   color: var(--nop-debugger-text);
   cursor: pointer;
 }
@@ -109,9 +107,6 @@ export const DEBUGGER_STYLES = `
 .ndbg-icon-button,
 .ndbg-tab,
 .ndbg-filter {
-  background: var(--nop-debugger-chip-bg);
-  border-radius: 999px;
-  padding: 8px 12px;
   font-size: 12px;
   font-weight: 600;
 }
@@ -332,16 +327,7 @@ export const DEBUGGER_STYLES = `
 
 .ndbg-node-input {
   width: 100%;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--nop-debugger-chip-border);
-  background: var(--nop-debugger-chip-bg);
-  color: var(--nop-debugger-text);
   font-size: 12px;
-  outline: none;
-}
-.ndbg-node-input:focus {
-  border-color: var(--nop-debugger-chip-active-border);
 }
 .ndbg-node-input::placeholder {
   color: var(--nop-debugger-muted-text);
@@ -370,11 +356,11 @@ export const DEBUGGER_STYLES = `
   border-radius: 2px;
   transition: all 0.05s ease;
 }
-.nop-debugger-overlay--hover {
+.nop-debugger-overlay[data-overlay-state="hover"] {
   outline: 1px dashed #1c76c4;
   background: rgba(28, 118, 196, 0.06);
 }
-.nop-debugger-overlay--active {
+.nop-debugger-overlay[data-overlay-state="active"] {
   outline: 2px solid #1c76c4;
   background: rgba(28, 118, 196, 0.1);
 }
@@ -421,7 +407,8 @@ export const DEBUGGER_STYLES = `
   color: var(--nop-debugger-badge-error-text);
 }
 
-.nop-debugger--minimized {
+.ndbg-minimized,
+.nop-debugger[data-panel-state="minimized"] {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -435,7 +422,7 @@ export const DEBUGGER_STYLES = `
   overflow: visible;
 }
 
-.nop-debugger--minimized .ndbg-resize-handle {
+.nop-debugger[data-panel-state="minimized"] .ndbg-resize-handle {
   display: none;
 }
 
@@ -481,6 +468,11 @@ export const DEBUGGER_STYLES = `
 
 .ndbg-icon-button {
   position: relative;
+}
+
+.ndbg-icon-button[data-active] {
+  background: rgba(28, 118, 196, 0.3);
+  color: #9bd9ff;
 }
 
 .ndbg-icon-button::after {
@@ -574,13 +566,8 @@ export const DEBUGGER_STYLES = `
   color: var(--nop-debugger-muted-text);
 }
 .ndbg-form-tab {
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--nop-debugger-chip-border);
-  background: transparent;
   color: var(--nop-debugger-muted-text);
   font-size: 11px;
-  cursor: pointer;
 }
 .ndbg-form-tab[data-active] {
   background: var(--nop-debugger-chip-active-bg);
@@ -589,14 +576,16 @@ export const DEBUGGER_STYLES = `
 }
 .ndbg-eval-input {
   width: 100%;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--nop-debugger-chip-border);
-  background: var(--nop-debugger-chip-bg);
-  color: var(--nop-debugger-text);
   font-size: 12px;
   font-family: monospace;
-  outline: none;
+}
+
+.ndbg-inline-button {
+  font-size: 11px;
+}
+
+.ndbg-close-button {
+  color: var(--nop-debugger-text);
 }
 .ndbg-eval-input:focus {
   border-color: var(--nop-debugger-chip-active-border);

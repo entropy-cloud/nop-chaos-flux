@@ -203,6 +203,32 @@ describe('NopDebuggerPanel', () => {
     expect(screen.getByText('Component Inspector')).toBeTruthy();
   });
 
+  it('marks the selected component tree entry with the selected class', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'node';
+    const controller = createController(snapshot);
+
+    controller.getComponentTree = () => [
+      {
+        cid: 41,
+        type: 'form',
+        label: 'user-form',
+        depth: 0,
+        mounted: true
+      }
+    ];
+    controller.inspectByCid = vi.fn(() => ({ cid: 41, mounted: true, handleType: 'form' }));
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    const treeItem = screen.getByText('user-form').closest('.ndbg-tree-item');
+    expect(treeItem?.className).toBe('ndbg-tree-item');
+
+    fireEvent.click(screen.getByText('user-form'));
+
+    expect(treeItem?.className).toBe('ndbg-tree-item selected');
+  });
+
   it('opens launcher on click without drag', () => {
     const snapshot = { ...createSnapshot(), panelOpen: false };
     const controller = createController(snapshot);
@@ -270,6 +296,19 @@ describe('NopDebuggerPanel', () => {
     render(<NopDebuggerPanel controller={controller} />);
 
     expect(screen.getByText('node')).toBeTruthy();
+  });
+
+  it('creates debugger inspect overlays with data-overlay-state markers', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'node';
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pick element' }));
+
+    expect(document.querySelector('.nop-debugger-overlay[data-overlay-state="hover"]')).toBeTruthy();
+    expect(document.querySelector('.nop-debugger-overlay[data-overlay-state="active"]')).toBeTruthy();
   });
 
   it('renders network tab with merged requests', () => {

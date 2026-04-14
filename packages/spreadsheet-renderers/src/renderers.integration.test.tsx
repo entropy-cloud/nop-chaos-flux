@@ -176,10 +176,10 @@ describe('spreadsheet-page namespaced actions integration', () => {
   });
 
   it('publishes spreadsheet host status through statusPath', async () => {
-    const document = createEmptyDocument('status-spreadsheet');
+    const sheetDocument = createEmptyDocument('status-spreadsheet');
     const schema = defineSpreadsheetPageSchema({
       type: 'spreadsheet-page',
-      document,
+      document: sheetDocument,
       statusPath: 'spreadsheetStatus',
       body: [
         {
@@ -232,5 +232,9 @@ describe('spreadsheet-page namespaced actions integration', () => {
     await waitFor(() => {
       expect(screen.getByTestId('spreadsheet-status').textContent).toContain('spreadsheet:false');
     });
+
+    expect(document.querySelector('.nop-spreadsheet-page')).toBeTruthy();
+    expect(document.querySelector('[data-slot="spreadsheet-page-header"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="spreadsheet-page-body"]')).toBeTruthy();
   });
 });
