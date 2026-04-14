@@ -18,13 +18,13 @@ const NAV_CARDS: NavCard[] = [
     id: 'flow-designer',
     title: 'Flow Designer',
     eyebrow: 'Visual Workflow',
-    description: 'Designer page, toolbar, inspector, canvas, node palette, edge connections, and designer actions.'
+    description: 'DingTalk approval flow, action flow, and general workflow editors with toolbar, palette, inspector, and canvas.'
   },
   {
     id: 'dingtalk-flow-demo',
     title: 'DingTalk Flow Demo',
     eyebrow: 'Style Prototype',
-    description: 'Static DingTalk approval flow rendered with React Flow. Visual style reference for tree mode.'
+    description: 'Static DingTalk approval flow visual reference. See Flow Designer for the full tree-mode editor.'
   },
   {
     id: 'report-designer',

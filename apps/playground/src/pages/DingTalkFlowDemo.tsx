@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -59,6 +59,16 @@ interface CondData {
 }
 interface EndData { [k: string]: unknown }
 
+interface PopoverState {
+  sourceId: string;
+  screenX: number;
+  screenY: number;
+}
+
+type AddType = 'approver' | 'cc' | 'condition';
+
+let _onPlusClick: ((sourceId: string, clientX: number, clientY: number) => void) | null = null;
+
 const ICONS: Record<string, React.ReactNode> = {
   user: <User size={14} />,
   usercheck: <UserCheck size={14} />,
@@ -80,7 +90,7 @@ function AddBtn() {
   );
 }
 
-function ApprovalNode({ data }: NodeProps) {
+function ApprovalNode({ id, data }: NodeProps) {
   const d = data as unknown as ApprovalData;
   return (
     <div className="relative">
@@ -106,6 +116,7 @@ function ApprovalNode({ data }: NodeProps) {
         <div
           className="absolute left-1/2 -translate-x-1/2 z-[2]"
           style={{ bottom: -BTN_DIST }}
+          onClick={(e) => { e.stopPropagation(); _onPlusClick?.(id, e.clientX, e.clientY); }}
         >
           <AddBtn />
         </div>
@@ -114,7 +125,7 @@ function ApprovalNode({ data }: NodeProps) {
   );
 }
 
-function CondNode({ data }: NodeProps) {
+function CondNode({ id, data }: NodeProps) {
   const d = data as unknown as CondData;
   return (
     <div className="relative">
@@ -142,6 +153,7 @@ function CondNode({ data }: NodeProps) {
         <div
           className="absolute left-1/2 -translate-x-1/2 z-[2]"
           style={{ bottom: -BTN_DIST }}
+          onClick={(e) => { e.stopPropagation(); _onPlusClick?.(id, e.clientX, e.clientY); }}
         >
           <AddBtn />
         </div>
@@ -213,6 +225,44 @@ interface BranchOverlay {
   x: number;
   y: number;
   type: 'addCondition' | 'mergeAdd';
+  sourceId: string;
+}
+
+function AddNodeMenu({ popover, onSelect, onClose }: {
+  popover: PopoverState;
+  onSelect: (type: AddType) => void;
+  onClose: () => void;
+}) {
+  const items: { type: AddType; color: string; icon: React.ReactNode; label: string }[] = [
+    { type: 'approver', color: COLORS.approval, icon: <UserCheck size={20} />, label: 'Approver' },
+    { type: 'cc', color: COLORS.cc, icon: <Send size={20} />, label: 'CC' },
+    { type: 'condition', color: COLORS.condition, icon: <span className="text-xs font-bold">Cond</span>, label: 'Condition' },
+  ];
+  return (
+    <>
+      <div className="fixed inset-0 z-[100]" onClick={onClose} />
+      <div
+        className="fixed z-[101] flex gap-4 bg-white rounded-lg shadow-lg px-5 py-3"
+        style={{ left: popover.screenX - 100, top: popover.screenY - 110 }}
+      >
+        {items.map((item) => (
+          <button
+            key={item.type}
+            className="flex flex-col items-center gap-1 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); onSelect(item.type); }}
+          >
+            <div
+              className="flex items-center justify-center rounded-full text-white"
+              style={{ width: 50, height: 50, backgroundColor: item.color }}
+            >
+              {item.icon}
+            </div>
+            <span className="text-xs text-[#666]">{item.label}</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
 }
 
 function buildFlowData() {
@@ -337,15 +387,227 @@ function buildFlowData() {
     nodes,
     edges,
     overlays: [
-      { x: cx, y: branchLineY, type: 'addCondition' as const },
-      { x: cx, y: mergeLineY + BTN_DIST, type: 'mergeAdd' as const },
+      { x: cx, y: branchLineY, type: 'addCondition' as const, sourceId: id1 },
+      { x: cx, y: mergeLineY + BTN_DIST, type: 'mergeAdd' as const, sourceId: `merge:${id4}` },
     ] as BranchOverlay[],
   };
 }
 
+const initialFlowData = buildFlowData();
+
+function insertNode(
+  sourceId: string,
+  addType: 'approver' | 'cc',
+  prevNodes: Node[],
+  prevEdges: Edge[],
+  idCounter: { value: number },
+  isMergeOverlay: boolean,
+): { nodes: Node[]; edges: Edge[] } {
+  const nodes = prevNodes.map(n => ({ ...n }));
+  const edges = prevEdges.map(e => ({ ...e }));
+  const id = `n${++idCounter.value}`;
+  const eid1 = `e${++idCounter.value}`;
+  const eid2 = `e${++idCounter.value}`;
+
+  const label = addType === 'approver' ? 'Approver' : 'CC';
+  const desc = 'Please set';
+  const color = addType === 'approver' ? COLORS.approval : COLORS.cc;
+  const icon = addType === 'approver' ? 'usercheck' : 'send';
+
+  const newData: ApprovalData = { label, desc, color, icon, showAddBtn: true };
+
+  if (isMergeOverlay) {
+    const targetIdx = nodes.findIndex(n => n.id === sourceId);
+    if (targetIdx < 0) return { nodes: prevNodes, edges: prevEdges };
+    const targetNode = nodes[targetIdx];
+    const newNodeY = targetNode.position.y;
+
+    for (const n of nodes) {
+      if (n.position.y >= targetNode.position.y) {
+        n.position = { ...n.position, y: n.position.y + ROW_STEP };
+      }
+    }
+
+    const newNode: Node = {
+      id,
+      type: 'dtApproval',
+      position: { x: targetNode.position.x, y: newNodeY },
+      data: newData as unknown as Record<string, unknown>,
+    };
+    nodes.push(newNode);
+
+    for (const e of edges) {
+      if (e.target === sourceId) {
+        e.target = id;
+      }
+    }
+    edges.push({ id: eid1, source: id, target: sourceId, type: 'dtEdge' });
+  } else {
+    const outEdge = edges.find(e => e.source === sourceId);
+    if (!outEdge) return { nodes: prevNodes, edges: prevEdges };
+    const downstreamId = outEdge.target;
+    const sourceNode = nodes.find(n => n.id === sourceId);
+    const downstreamNode = nodes.find(n => n.id === downstreamId);
+    if (!sourceNode || !downstreamNode) return { nodes: prevNodes, edges: prevEdges };
+
+    const newNodeY = sourceNode.position.y + ROW_STEP;
+
+    for (const n of nodes) {
+      if (n.position.y >= downstreamNode.position.y) {
+        n.position = { ...n.position, y: n.position.y + ROW_STEP };
+      }
+    }
+
+    const newNode: Node = {
+      id,
+      type: 'dtApproval',
+      position: { x: sourceNode.position.x, y: newNodeY },
+      data: newData as unknown as Record<string, unknown>,
+    };
+    nodes.push(newNode);
+
+    const oldIdx = edges.indexOf(outEdge);
+    edges.splice(oldIdx, 1);
+    edges.push({ id: eid1, source: sourceId, target: id, type: 'dtEdge' });
+    edges.push({ id: eid2, source: id, target: downstreamId, type: 'dtEdge' });
+  }
+
+  return { nodes, edges };
+}
+
+function insertBranch(
+  sourceId: string,
+  prevNodes: Node[],
+  prevEdges: Edge[],
+  idCounter: { value: number },
+): { nodes: Node[]; edges: Edge[] } {
+  const nodes = prevNodes.map(n => ({ ...n }));
+  const edges = prevEdges.map(e => ({ ...e }));
+
+  const outEdge = edges.find(e => e.source === sourceId);
+  if (!outEdge) return { nodes: prevNodes, edges: prevEdges };
+  const downstreamId = outEdge.target;
+  const sourceNode = nodes.find(n => n.id === sourceId);
+  const downstreamNode = nodes.find(n => n.id === downstreamId);
+  if (!sourceNode || !downstreamNode) return { nodes: prevNodes, edges: prevEdges };
+
+  const totalShift = BRANCH_EXTRA + ROW_STEP + MERGE_EXTRA;
+
+  for (const n of nodes) {
+    if (n.position.y >= downstreamNode.position.y) {
+      n.position = { ...n.position, y: n.position.y + totalShift };
+    }
+  }
+
+  const cx = sourceNode.position.x + W / 2;
+  const lx = cx - BRANCH_W / 2;
+  const rx = cx + BRANCH_W / 2;
+  const condY = sourceNode.position.y + ROW_STEP + BRANCH_EXTRA;
+
+  const existingBranches = edges.filter(e => e.source === sourceId).length;
+
+  const idL = `n${++idCounter.value}`;
+  const idR = `n${++idCounter.value}`;
+  const eidSrcL = `e${++idCounter.value}`;
+  const eidSrcR = `e${++idCounter.value}`;
+  const eidLDown = `e${++idCounter.value}`;
+  const eidRDown = `e${++idCounter.value}`;
+
+  nodes.push({
+    id: idL,
+    type: 'dtCond',
+    position: { x: lx - W / 2, y: condY },
+    data: { title: 'Condition', desc: 'Please set', priority: existingBranches + 1, showAddBtn: true } as unknown as Record<string, unknown>,
+  });
+  nodes.push({
+    id: idR,
+    type: 'dtCond',
+    position: { x: rx - W / 2, y: condY },
+    data: { title: 'Condition', desc: 'Please set', priority: existingBranches + 2, showAddBtn: true } as unknown as Record<string, unknown>,
+  });
+
+  const oldIdx = edges.indexOf(outEdge);
+  edges.splice(oldIdx, 1);
+
+  edges.push({ id: eidSrcL, source: sourceId, target: idL, type: 'dtEdge', data: { leg: 'near-target' as EdgeLeg } });
+  edges.push({ id: eidSrcR, source: sourceId, target: idR, type: 'dtEdge', data: { leg: 'near-target' as EdgeLeg } });
+
+  edges.push({ id: eidLDown, source: idL, target: downstreamId, type: 'dtEdge', data: { leg: 'near-source' as EdgeLeg } });
+  edges.push({ id: eidRDown, source: idR, target: downstreamId, type: 'dtEdge', data: { leg: 'near-source' as EdgeLeg } });
+
+  return { nodes, edges };
+}
+
 function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
   const { fitView } = useReactFlow();
-  const { nodes, edges, overlays } = useMemo(() => buildFlowData(), []);
+  const idCounter = useRef({ value: 20 });
+  const [nodes, setNodes] = useState<Node[]>(() => initialFlowData.nodes);
+  const [edges, setEdges] = useState<Edge[]>(() => initialFlowData.edges);
+  const [popover, setPopover] = useState<PopoverState | null>(null);
+
+  const overlays = useMemo(() => {
+    const result: BranchOverlay[] = [];
+    const sourceGroups = new Map<string, Edge[]>();
+    for (const e of edges) {
+      const arr = sourceGroups.get(e.source) ?? [];
+      arr.push(e);
+      sourceGroups.set(e.source, arr);
+    }
+    const targetGroups = new Map<string, Edge[]>();
+    for (const e of edges) {
+      const arr = targetGroups.get(e.target) ?? [];
+      arr.push(e);
+      targetGroups.set(e.target, arr);
+    }
+
+    for (const [sourceId, outs] of sourceGroups) {
+      if (outs.length < 2) continue;
+      const sourceNode = nodes.find(n => n.id === sourceId);
+      if (!sourceNode) continue;
+      const firstTarget = nodes.find(n => n.id === outs[0].target);
+      if (!firstTarget) continue;
+      const branchLineY = firstTarget.position.y - BRANCH_SHORT_LEG;
+      const cx = sourceNode.position.x + W / 2;
+      result.push({ x: cx, y: branchLineY, type: 'addCondition', sourceId });
+    }
+
+    for (const [targetId, ins] of targetGroups) {
+      if (ins.length < 2) continue;
+      const targetNode = nodes.find(n => n.id === targetId);
+      if (!targetNode) continue;
+      const firstSource = nodes.find(n => n.id === ins[0].source);
+      if (!firstSource) continue;
+      const mergeLineY = firstSource.position.y + CARD_H + MERGE_SHORT_LEG;
+      const cx = targetNode.position.x + W / 2;
+      result.push({ x: cx, y: mergeLineY + BTN_DIST, type: 'mergeAdd', sourceId: `merge:${targetId}` });
+    }
+
+    return result;
+  }, [nodes, edges]);
+
+  const handlePlusClick = useCallback((sourceId: string, clientX: number, clientY: number) => {
+    setPopover({ sourceId, screenX: clientX, screenY: clientY });
+  }, []);
+
+  _onPlusClick = handlePlusClick;
+
+  const handleSelect = useCallback((type: AddType) => {
+    if (!popover) return;
+    const { sourceId } = popover;
+    const isMerge = sourceId.startsWith('merge:');
+    const effectiveId = isMerge ? sourceId.slice('merge:'.length) : sourceId;
+    setPopover(null);
+
+    if (type === 'condition') {
+      const result = insertBranch(effectiveId, nodes, edges, idCounter.current);
+      setNodes(result.nodes);
+      setEdges(result.edges);
+    } else {
+      const result = insertNode(effectiveId, type, nodes, edges, idCounter.current, isMerge);
+      setNodes(result.nodes);
+      setEdges(result.edges);
+    }
+  }, [popover, nodes, edges]);
 
   const onInit = useCallback(() => {
     setTimeout(() => fitView({ padding: 0.2 }), 100);
@@ -357,16 +619,7 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
         onClick={onBack}
         className="absolute top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 bg-white rounded-md shadow-sm hover:bg-gray-50 transition-colors text-sm font-medium"
       >
-        <svg
-          width={16}
-          height={16}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="m15 18-6-6 6-6" />
         </svg>
         Back
@@ -403,6 +656,7 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
                     'bg-white border border-[#b3e19d]',
                     'text-[#67c23a] text-xs cursor-pointer whitespace-nowrap',
                   )}
+                  onClick={(e) => { e.stopPropagation(); _onPlusClick?.(o.sourceId, e.clientX, e.clientY); }}
                 >
                   Add Condition
                 </div>
@@ -410,6 +664,7 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
                 <div
                   className="flex items-center justify-center cursor-pointer rounded-full bg-[#3296fa] text-white shadow-[0_2px_4px_rgba(50,150,250,0.4)]"
                   style={{ width: BTN_DIAMETER, height: BTN_DIAMETER }}
+                  onClick={(e) => { e.stopPropagation(); _onPlusClick?.(o.sourceId, e.clientX, e.clientY); }}
                 >
                   <Plus size={16} />
                 </div>
@@ -418,6 +673,14 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
           ))}
         </ViewportPortal>
       </ReactFlow>
+
+      {popover && (
+        <AddNodeMenu
+          popover={popover}
+          onSelect={handleSelect}
+          onClose={() => setPopover(null)}
+        />
+      )}
     </div>
   );
 }
