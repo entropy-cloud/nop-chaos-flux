@@ -10,6 +10,7 @@ import type {
   ReportSelectionTarget,
   ReportTemplateDocument,
 } from '../types.js';
+import type { SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import { getTargetMeta } from '../types.js';
 import { createAdapterContext } from './adapter-context.js';
 import { cloneMetadataBag } from './metadata.js';
@@ -63,6 +64,7 @@ export function buildInspectorProvidersByKind(
 export async function resolveInspectorPanelsForTarget(args: {
   config: ReportDesignerConfig;
   document: ReportTemplateDocument;
+  spreadsheet: SpreadsheetRuntimeSnapshot;
   adapters: ReportDesignerAdapterRegistry;
   target: ReportSelectionTarget | undefined;
   profile?: ReportDesignerProfile;
@@ -85,6 +87,7 @@ export async function resolveInspectorPanelsForTarget(args: {
     target,
     metadata: cloneMetadataBag(metadata as MetadataBag | undefined),
     designer: adapterContext.designer,
+    spreadsheet: args.spreadsheet,
     adapterContext,
   };
 

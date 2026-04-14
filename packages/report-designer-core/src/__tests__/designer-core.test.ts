@@ -31,10 +31,27 @@ describe('createReportDesignerCore', () => {
   it('should create core with initial snapshot', () => {
     const snap = core.getSnapshot();
     expect(snap.document.id).toBe(doc.id);
+    expect(snap.dirty).toBe(false);
     expect(snap.selectionTarget?.kind).toBe('sheet');
     expect(snap.inspector.open).toBe(false);
     expect(snap.fieldDrag.active).toBe(false);
     expect(snap.preview.running).toBe(false);
+  });
+
+  it('marks snapshot dirty after metadata updates and clears it after undo', async () => {
+    expect(core.getSnapshot().dirty).toBe(false);
+
+    await core.dispatch({
+      type: 'report-designer:updateMeta',
+      target: { kind: 'workbook' },
+      patch: { title: 'Dirty now' },
+    });
+
+    expect(core.getSnapshot().dirty).toBe(true);
+
+    await core.dispatch({ type: 'report-designer:undo' });
+
+    expect(core.getSnapshot().dirty).toBe(false);
   });
 
   it('should auto-select first sheet as default target', () => {
@@ -352,6 +369,81 @@ describe('createReportDesignerCore', () => {
 
     expect(panels).toHaveLength(1);
     expect(panels[0].id).toBe('allowed');
+  });
+
+  it('captures inspector provider load failures in snapshot state', async () => {
+    const failingCore = createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        inspector: {
+          providers: [
+            {
+              id: 'failing-panel',
+              label: 'Failing Panel',
+              match: { kinds: ['sheet'] },
+              provider: 'failing-provider',
+            },
+          ],
+        },
+      },
+      adapters: {
+        inspectors: new Map([
+          ['failing-provider', {
+            id: 'failing-provider',
+            match: () => true,
+            getPanels: () => {
+              throw new Error('Inspector load failed');
+            },
+          }],
+        ]),
+      },
+    });
+
+    await failingCore.setSelectionTarget({ kind: 'sheet', sheetId });
+
+    const snap = failingCore.getSnapshot();
+    expect(snap.inspector.loading).toBe(false);
+    expect(String(snap.inspector.error)).toContain('Inspector load failed');
+    expect(failingCore.getInspectorPanels()).toEqual([]);
+  });
+
+  it('passes spreadsheet snapshot into inspector provider context', async () => {
+    let seenSpreadsheet: any;
+    const providerCore = createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        inspector: {
+          providers: [
+            {
+              id: 'sheet-provider',
+              label: 'Sheet Provider',
+              match: { kinds: ['sheet'] },
+              provider: 'sheet-provider',
+            },
+          ],
+        },
+      },
+      adapters: {
+        inspectors: new Map([
+          ['sheet-provider', {
+            id: 'sheet-provider',
+            match: () => true,
+            getPanels: (context) => {
+              seenSpreadsheet = context.spreadsheet;
+              return [{ id: 'from-provider', title: 'From Provider', targetKind: 'sheet', body: {} }];
+            },
+          }],
+        ]),
+      },
+    });
+
+    await providerCore.setSelectionTarget({ kind: 'sheet', sheetId });
+
+    expect(seenSpreadsheet?.activeSheetId).toBe(sheetId);
+    expect(Array.isArray(seenSpreadsheet?.document?.workbook?.sheets)).toBe(true);
+    expect(providerCore.getInspectorPanels().map((panel) => panel.id)).toEqual(['from-provider']);
   });
 
   it('should select field drop adapters by profile ids', async () => {

@@ -1,4 +1,5 @@
 import { createStore } from 'zustand/vanilla';
+import { createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
 import type {
   ReportDesignerConfig,
   ReportTemplateDocument,
@@ -80,6 +81,7 @@ function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntim
 
   return {
     document: state.document,
+    dirty: state.undoStack.length > 0,
     selectionTarget: state.selectionTarget,
     activeMeta: meta,
     inspector: state.inspector,
@@ -98,6 +100,7 @@ export function createReportDesignerCore(
   const registry = resolveRegistry(providedAdapters);
 
   const initialDocument = cloneDocument(document);
+  const spreadsheetCore = createSpreadsheetCore({ document: initialDocument.spreadsheet });
   const selectedFieldSourceIds = new Set(getProfileFieldSourceIds(config, profile));
   const selectedInspectorIds = new Set(getProfileInspectorIds(config, profile));
   const allowedFieldDropIds = getProfileFieldDropIds(profile);
@@ -138,46 +141,63 @@ export function createReportDesignerCore(
 
   async function refreshDerivedState() {
     const snapshot = store.getState();
+    const spreadsheet = spreadsheetCore.getSnapshot();
+    try {
+      const fieldSources = await loadFieldSources({
+        config,
+        document: snapshot.document,
+        adapters: registry,
+        profile,
+        selectedFieldSourceIds,
+        staticFieldSourceTemplates,
+        getSnapshot: () => buildSnapshot(store.getState()),
+      });
 
-    const fieldSources = await loadFieldSources({
-      config,
-      document: snapshot.document,
-      adapters: registry,
-      profile,
-      selectedFieldSourceIds,
-      staticFieldSourceTemplates,
-      getSnapshot: () => buildSnapshot(store.getState()),
-    });
+      const panels = await resolveInspectorPanelsForTarget({
+        config,
+        document: snapshot.document,
+        spreadsheet,
+        adapters: registry,
+        target: snapshot.selectionTarget,
+        profile,
+        providersByKind: inspectorProvidersByKind,
+        designer: buildSnapshot(store.getState()),
+      });
 
-    const panels = await resolveInspectorPanelsForTarget({
-      config,
-      document: snapshot.document,
-      adapters: registry,
-      target: snapshot.selectionTarget,
-      profile,
-      providersByKind: inspectorProvidersByKind,
-      designer: buildSnapshot(store.getState()),
-    });
+      const providerIds = panels.map((panel) => panel.id);
+      inspectorPanelsCache = panels.map((panel) => ({ ...panel }));
 
-    const providerIds = panels.map((panel) => panel.id);
-    inspectorPanelsCache = panels.map((panel) => ({ ...panel }));
+      store.setState((current) => ({
+        ...current,
+        fieldSources,
+        inspector: {
+          ...current.inspector,
+          providerIds,
+          panelIds: panels.map((panel) => panel.id),
+          activePanelId: current.inspector.activePanelId && panels.some((panel) => panel.id === current.inspector.activePanelId)
+            ? current.inspector.activePanelId
+            : panels[0]?.id,
+          loading: false,
+          error: undefined,
+        },
+      }));
 
-    store.setState((current) => ({
-      ...current,
-      fieldSources,
-      inspector: {
-        ...current.inspector,
-        providerIds,
-        panelIds: panels.map((panel) => panel.id),
-        activePanelId: current.inspector.activePanelId && panels.some((panel) => panel.id === current.inspector.activePanelId)
-          ? current.inspector.activePanelId
-          : panels[0]?.id,
-        loading: false,
-        error: undefined,
-      },
-    }));
-
-    return panels;
+      return panels;
+    } catch (error) {
+      inspectorPanelsCache = [];
+      store.setState((current) => ({
+        ...current,
+        inspector: {
+          ...current.inspector,
+          providerIds: [],
+          panelIds: [],
+          activePanelId: undefined,
+          loading: false,
+          error,
+        },
+      }));
+      return [];
+    }
   }
 
   async function setSelectionTarget(target?: ReportSelectionTarget) {

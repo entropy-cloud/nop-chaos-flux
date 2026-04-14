@@ -3,6 +3,7 @@ import type {
   MetadataBag,
   ReportDesignerRuntimeSnapshot,
 } from './types.js';
+import type { SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import type {
   ReportDesignerAdapterContext,
   ReportDesignerAdapterRegistry,
@@ -38,6 +39,7 @@ export async function resolveInspectorPanels(
   registry: ReportDesignerAdapterRegistry,
   metadata: MetadataBag | undefined,
   designer: ReportDesignerRuntimeSnapshot,
+  spreadsheet: SpreadsheetRuntimeSnapshot,
   adapterContext: ReportDesignerAdapterContext,
 ): Promise<InspectorMatchResult> {
   const providers = matchInspectorProviders(target, registry, adapterContext);
@@ -46,6 +48,7 @@ export async function resolveInspectorPanels(
     target,
     metadata,
     designer,
+    spreadsheet,
     adapterContext,
   };
 

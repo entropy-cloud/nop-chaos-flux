@@ -8,6 +8,7 @@ import type {
   ReportTemplateDocument,
   ReportDesignerConfig,
 } from './types.js';
+import type { SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 
 export interface ReportDesignerAdapterContext {
   config: ReportDesignerConfig;
@@ -38,6 +39,7 @@ export interface InspectorPanelContext {
   target: ReportSelectionTarget;
   metadata?: MetadataBag;
   designer: ReportDesignerRuntimeSnapshot;
+  spreadsheet: SpreadsheetRuntimeSnapshot;
   adapterContext: ReportDesignerAdapterContext;
 }
 

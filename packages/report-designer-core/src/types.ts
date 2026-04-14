@@ -90,6 +90,7 @@ export interface InspectorRuntimeState {
 
 export interface ReportDesignerRuntimeSnapshot {
   document: ReportTemplateDocument;
+  dirty: boolean;
   selectionTarget?: ReportSelectionTarget;
   activeMeta?: MetadataBag;
   inspector: InspectorRuntimeState;
