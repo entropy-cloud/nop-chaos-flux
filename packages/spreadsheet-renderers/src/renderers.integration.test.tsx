@@ -46,6 +46,26 @@ const readOnlyProbeRenderer: RendererDefinition = {
   component: ReadOnlyProbe,
 };
 
+function TopLevelReadOnlyProbe() {
+  const isReadOnly = useScopeSelector((data: any) => data.runtime?.readonly);
+  return <span data-testid="top-level-read-only-value">{String(Boolean(isReadOnly))}</span>;
+}
+
+const topLevelReadOnlyProbeRenderer: RendererDefinition = {
+  type: 'top-level-read-only-probe',
+  component: TopLevelReadOnlyProbe,
+};
+
+function TopLevelA1ValueProbe() {
+  const a1Value = useScopeSelector((data: any) => data.activeSheet?.cells?.A1?.value);
+  return <span data-testid="top-level-a1-value">{a1Value == null ? '' : String(a1Value)}</span>;
+}
+
+const topLevelA1ProbeRenderer: RendererDefinition = {
+  type: 'top-level-a1-probe',
+  component: TopLevelA1ValueProbe,
+};
+
 function SpreadsheetStatusProbe() {
   const status = useScopeSelector((data: any) => data.spreadsheetStatus);
   return <span data-testid="spreadsheet-status">{status ? `${status.kind}:${status.readonly}:${status.canUndo}` : ''}</span>;
@@ -88,10 +108,13 @@ describe('spreadsheet-page namespaced actions integration', () => {
         {
           type: 'a1-value-probe',
         },
+        {
+          type: 'top-level-a1-probe',
+        },
       ],
     });
 
-    const registry = createDefaultRegistry([actionButtonRenderer, a1ProbeRenderer]);
+    const registry = createDefaultRegistry([actionButtonRenderer, a1ProbeRenderer, topLevelA1ProbeRenderer]);
     registerSpreadsheetRenderers(registry);
     const SchemaRenderer = createSchemaRenderer();
 
@@ -108,6 +131,7 @@ describe('spreadsheet-page namespaced actions integration', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('a1-value').textContent).toBe('42');
+      expect(screen.getByTestId('top-level-a1-value').textContent).toBe('42');
     });
   });
 
@@ -121,10 +145,18 @@ describe('spreadsheet-page namespaced actions integration', () => {
         {
           type: 'read-only-probe',
         },
+        {
+          type: 'top-level-read-only-probe',
+        },
       ],
     });
 
-    const registry = createDefaultRegistry([actionButtonRenderer, a1ProbeRenderer, readOnlyProbeRenderer]);
+    const registry = createDefaultRegistry([
+      actionButtonRenderer,
+      a1ProbeRenderer,
+      readOnlyProbeRenderer,
+      topLevelReadOnlyProbeRenderer,
+    ]);
     registerSpreadsheetRenderers(registry);
     const SchemaRenderer = createSchemaRenderer();
 
@@ -139,6 +171,7 @@ describe('spreadsheet-page namespaced actions integration', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('read-only-value').textContent).toBe('true');
+      expect(screen.getByTestId('top-level-read-only-value').textContent).toBe('true');
     });
   });
 
@@ -175,7 +208,15 @@ describe('spreadsheet-page namespaced actions integration', () => {
       component: SpreadsheetStatusProbe
     };
 
-    const registry = createDefaultRegistry([pageRenderer, actionButtonRenderer, a1ProbeRenderer, readOnlyProbeRenderer, statusProbeRenderer]);
+    const registry = createDefaultRegistry([
+      pageRenderer,
+      actionButtonRenderer,
+      a1ProbeRenderer,
+      readOnlyProbeRenderer,
+      topLevelReadOnlyProbeRenderer,
+      topLevelA1ProbeRenderer,
+      statusProbeRenderer,
+    ]);
     registerSpreadsheetRenderers(registry);
     const SchemaRenderer = createSchemaRenderer();
 

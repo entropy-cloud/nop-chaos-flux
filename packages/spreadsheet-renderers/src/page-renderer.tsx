@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useSyncExternalStore } from 'react';
 import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, SpreadsheetHostStatusSummary } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
@@ -76,7 +76,7 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   );
   const actionScope = useCurrentActionScope();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!actionScope) {
       return;
     }
@@ -91,7 +91,15 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   );
 
   const spreadsheet = useMemo(() => deriveHostSnapshot(snapshot), [snapshot]);
-  const spreadsheetScope = useHostScope({ spreadsheet }, props.path, 'spreadsheet');
+  const spreadsheetScope = useHostScope({
+    spreadsheet,
+    workbook: spreadsheet.workbook,
+    activeSheet: spreadsheet.activeSheet,
+    selection: spreadsheet.selection,
+    activeCell: spreadsheet.activeCell,
+    activeRange: spreadsheet.activeRange,
+    runtime: spreadsheet.runtime,
+  }, props.path, 'spreadsheet');
 
   const toolbarContent = props.regions.toolbar
     ? props.helpers.render(props.regions.toolbar.templateNode, { scope: spreadsheetScope, actionScope })
