@@ -88,7 +88,7 @@ Targets: `packages/flux-react/src/field-frame.tsx`, affected renderer files, sha
 - [ ] Finish the remaining renderer styling-contract audit from old Plan 82 Phase 7.
   Progress: the live audit baseline is now narrower and aligned with the current requirement that renderers may provide semantically implied baseline structure, but internal non-semantic wrapper markers and inconsistent class merging still need cleanup. The first landed slice updated `packages/flux-renderers-basic/src/tabs.tsx` to use `data-slot` for internal tab root/content structure instead of extra `nop-tabs-*` classes, and normalized the touched basic renderers (`page`, `container`, `flex`, `text`, `icon`, `dynamic-renderer`, `scope-debug`) onto `cn()`. A second slice removed the leftover `nop-cb-item` / `nop-cb-group` internal markers from the condition-builder implementation in favor of `data-slot="condition-item"` and `data-slot="condition-group"`. A third slice added a focused renderer-level marker regression test in `packages/flux-renderers-form/src/renderers/condition-builder/config-markers.test.tsx`, aligned that test with the live root marker plus `data-slot` contract, and normalized the remaining condition-builder segmented-toggle state classes in `ConditionGroup.tsx` onto `cn()`. A fourth slice removed the React host-only `nop-dialog-card` / `nop-drawer-card` internal classes from `packages/flux-react/src/dialog-host.tsx` in favor of `data-slot="dialog-surface"` and `data-slot="drawer-surface"`. A fifth slice normalized the remaining conditional class merges in `packages/flux-renderers-data/src/table-renderer.tsx` onto `cn()` and expanded focused slot coverage for the table/tree renderer family.
 - [ ] Add/finish focused DOM assertions that lock the semantic-marker / `data-slot` / presence-only state-attribute contract.
-  Progress: focused assertions now cover the basic tabs plus page/container internal structure in `packages/flux-renderers-basic/src/__tests__/basic-page-layout.test.tsx`, the condition-builder root plus `condition-group` / `condition-item` markers in `packages/flux-renderers-form/src/renderers/condition-builder/config-markers.test.tsx`, the `FieldFrame` root/state/slot contract in `packages/flux-react/src/frame-slot-meta.test.tsx`, the dialog/drawer host surface markers in the same React test file, the data table/tree root plus internal slot structure in `packages/flux-renderers-data/src/__tests__/data-table.test.tsx` and `data-tree-and-chart.test.tsx`, and the composite/detail form renderer family (`array-field`, `object-field`, `variant-field`, `detail-field`, `detail-view`) in their focused renderer tests, but a broader cross-renderer pass is still open.
+  Progress: focused assertions now cover the basic tabs plus page/container/scope-debug internal structure in `packages/flux-renderers-basic/src/__tests__/basic-page-layout.test.tsx` and `basic-reactions.test.tsx`, the condition-builder root plus `condition-group` / `condition-item` markers in `packages/flux-renderers-form/src/renderers/condition-builder/config-markers.test.tsx`, the `FieldFrame` root/state/slot contract in `packages/flux-react/src/frame-slot-meta.test.tsx`, the dialog/drawer host surface markers in the same React test file, the data table/tree/chart root plus internal slot structure in `packages/flux-renderers-data/src/__tests__/data-table.test.tsx` and `data-tree-and-chart.test.tsx`, the form root plus tree-control slot structure in `packages/flux-renderers-form/src/__tests__/form-validation-ui.test.tsx` and `form-tree-checkbox-fields.test.tsx`, the composite/detail form renderer family (`array-field`, `object-field`, `variant-field`, `detail-field`, `detail-view`) in their focused renderer tests, the flow-designer shared entry surfaces (`DesignerIcon`, palette group/item structure) in `packages/flow-designer-renderers/src/index.test.tsx` and `designer-controls.test.tsx`, and the report-designer page/toolbar/inspector/field-panel surfaces in `packages/report-designer-renderers/src/*.test.tsx`, but a broader cross-renderer pass is still open.
 
 Exit Criteria:
 
@@ -97,30 +97,42 @@ Exit Criteria:
 
 ### Workstream 4 - Flow And Report Host Convergence
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-*`, `packages/report-designer-*`, `packages/spreadsheet-*`, focused tests
 
-- [ ] Finish the remaining Flow Designer host/bridge alignment from old Plan 82 Workstream 8A.
-- [ ] Finish the remaining Report Designer / Spreadsheet host and inspector alignment from old Plan 82 Workstream 8B.
+- [x] Finish the remaining Flow Designer host/bridge alignment from old Plan 82 Workstream 8A.
+- [x] Finish the remaining Report Designer / Spreadsheet host and inspector alignment from old Plan 82 Workstream 8B.
+
+Progress:
+
+- Flow Designer host wiring is now closer to the shared host protocol baseline: `packages/flow-designer-renderers/src/designer-page.tsx` no longer relies on the generic helper for namespace wiring and instead registers the `designer` namespace directly in `useLayoutEffect`, matching the family-doc requirement that page-level complex-control namespaces publish before downstream layout effects consume them.
+- Flow Designer `createDialog` semantics are now wired through the live host path instead of stopping at config-only documentation: `packages/flow-designer-renderers/src/designer-palette.tsx` now routes `createDialog`-configured node types through `openCreateDialog(...)` rather than immediate `addNode`, while `packages/flow-designer-renderers/src/designer-page.tsx` owns the pending create-dialog state, renders `createDialog.body` with the designer host `scope` / `actionScope`, and only dispatches `addNode` after confirm (optionally merging object data returned from `createDialog.submitAction`). Focused tests in `packages/flow-designer-renderers/src/designer-controls.test.tsx` and `index.xyflow.test.tsx` now prove that palette clicks open the dialog first and that the node count stays unchanged until the confirm action runs.
+- Spreadsheet host wiring is now aligned with the same page-level namespace timing rule: `packages/spreadsheet-renderers/src/page-renderer.tsx` now registers the `spreadsheet` namespace in `useLayoutEffect` instead of `useEffect`, so spreadsheet-page no longer lags the shared complex-control host protocol on action publication timing.
+- Spreadsheet host projection is now closer to the documented stable read surface: `packages/spreadsheet-renderers/src/page-renderer.tsx` still publishes the nested `spreadsheet` snapshot, but now also aliases `workbook`, `activeSheet`, `selection`, `activeCell`, `activeRange`, and `runtime` at the host-scope top level. Focused integration coverage in `packages/spreadsheet-renderers/src/renderers.integration.test.tsx` now proves toolbar/body schema can read both the legacy nested `spreadsheet.*` path and the documented top-level aliases for `activeSheet` and `runtime.readonly`.
+- Report Designer host status publication is now closer to the documented host/session contract: `packages/report-designer-core/src/types.ts` and `core.ts` now expose an explicit `dirty` field on `ReportDesignerRuntimeSnapshot`, and `packages/report-designer-renderers/src/page-renderer.tsx` now publishes `statusPath` summaries from that runtime-owned `dirty` snapshot instead of hardcoding `dirty: false`.
+- Report Designer host projection is now aligned with that same runtime-owned dirty contract: `packages/report-designer-renderers/src/host-data.ts` no longer hardcodes `runtime.dirty: false`, and focused coverage in `packages/report-designer-renderers/src/renderers.integration.test.tsx` now proves schema fragments mounted under the report host scope observe `runtime.dirty` flipping from `false` to `true` after a `report-designer:updateMeta` mutation.
+- Report Designer host projection is also closer to the documented inspector-shell read model: `packages/report-designer-renderers/src/host-data.ts` now aliases the live selection target as both `selection` and `target` in addition to `selectionTarget`, and focused integration coverage now proves schema mounted under the report designer host scope observes that alias changing from the default `sheet` target to `workbook` after `report-designer:openInspector` retargeting.
+- Report Designer page ownership is now closer to the documented shared spreadsheet-host model: `packages/report-designer-renderers/src/page-renderer.tsx` now creates the spreadsheet core/bridge at the page boundary, registers a page-level `spreadsheet` namespace alongside `report-designer`, threads the live spreadsheet snapshot into report host scope construction, and passes the shared bridge down into `ReportSpreadsheetCanvas` instead of letting the canvas create a private spreadsheet runtime. Focused coverage in `packages/report-designer-renderers/src/renderers.integration.test.tsx` now proves toolbar schema inside `report-designer-page` can dispatch `spreadsheet:setCellValue` and observe the resulting value through the shared report host scope.
+- Focused tests now lock the live host summary contract for the report family: `packages/report-designer-core/src/__tests__/designer-core.test.ts` proves `dirty` flips on metadata edits and clears after undo, while `packages/report-designer-renderers/src/renderers.integration.test.tsx` proves `statusPath` publishes `clean` then `dirty` after a `report-designer:updateMeta` mutation.
 
 Exit Criteria:
 
-- [ ] Flow host scope, command/bridge, and `createDialog` semantics match the family docs under focused tests.
-- [ ] Report/Spreadsheet host projection, dirty/session/status publication, and inspector semantics match the family docs under focused tests.
+- [x] Flow host scope, command/bridge, and `createDialog` semantics match the family docs under focused tests.
+- [x] Report/Spreadsheet host projection, dirty/session/status publication, and inspector semantics match the family docs under focused tests.
 
 ### Workstream 5 - Final Audit And Verification
 
-Status: planned
+Status: completed
 Targets: touched code/docs/tests, `docs/analysis/2026-04-12-architecture-doc-consistency-audit.md`, `docs/logs/`
 
-- [ ] Re-audit the remaining drift areas after implementation lands.
-- [ ] Update the architecture audit from open lag to closure evidence for the work owned by this successor.
-- [ ] Run full verification and an independent closure audit before closing this successor.
+- [x] Re-audit the remaining drift areas after implementation lands.
+- [x] Update the architecture audit from open lag to closure evidence for the work owned by this successor.
+- [x] Run full verification and an independent closure audit before closing this successor.
 
 Exit Criteria:
 
-- [ ] The successor-owned drift areas are no longer described as active implementation lag in the audit doc.
-- [ ] Full workspace verification and an independent closure audit are recorded.
+- [x] The successor-owned drift areas are no longer described as active implementation lag in the audit doc.
+- [x] Full workspace verification and an independent closure audit are recorded.
 
 ## Validation Checklist
 
@@ -128,14 +140,14 @@ Exit Criteria:
 - [ ] Runtime/data-source/reaction semantics match the current owner docs
 - [x] `NodeLocator` is absent from active runtime/debugger/action implementation paths
 - [x] Mounted-node lookup, debugger, DOM `data-cid`, and registry converge on unique live `cid`
-- [ ] Dialog/drawer/surface behavior conforms to the surface-owner contract
-- [ ] `xui:imports` / action-scope publication follows the documented node-boundary model
+- [x] Dialog/drawer/surface behavior conforms to the surface-owner contract
+- [x] `xui:imports` / action-scope publication follows the documented node-boundary model
 - [ ] Live renderers conform to the semantic-marker / no-implicit-layout styling contract
-- [ ] Flow Designer host/bridge behavior conforms to the family docs
-- [ ] Report Designer host/bridge behavior conforms to the family docs
-- [ ] `docs/analysis/2026-04-12-architecture-doc-consistency-audit.md` is updated to closure evidence for this successor-owned scope
+- [x] Flow Designer host/bridge behavior conforms to the family docs
+- [x] Report Designer host/bridge behavior conforms to the family docs
+- [x] `docs/analysis/2026-04-12-architecture-doc-consistency-audit.md` is updated to closure evidence for this successor-owned scope
 - [x] `docs/logs/` updated with execution notes and closure evidence
-- [ ] independent closure audit completed and recorded
+- [x] independent closure audit completed and recorded
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -147,8 +159,8 @@ Status Note: open until the remaining runtime, identity, surface, styling, and p
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent closure audit session
+- Evidence: re-audit confirmed Workstream 4 host-family convergence is landed; report inspector providers now receive spreadsheet runtime context and focused tests cover the host/bridge contract, while full workspace verification (`pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`) is recorded in the execution log.
 
 Follow-up:
 
