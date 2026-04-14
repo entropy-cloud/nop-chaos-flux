@@ -6,5 +6,5 @@ export { layoutWithElk } from './elk-layout';
 export type { ElkLayoutOptions } from './elk-layout';
 export { projectTree, resetProjectionState } from './tree-projection';
 export type { ProjectionResult } from './tree-projection';
-export { layoutTreeWithElk } from './tree-layout';
+export { layoutTreeWithElk, simpleTreeLayout } from './tree-layout';
 export { registerTreeDomainAdapter, getTreeDomainAdapter, listTreeDomainAdapters, clearTreeDomainAdapters } from './tree-domain';

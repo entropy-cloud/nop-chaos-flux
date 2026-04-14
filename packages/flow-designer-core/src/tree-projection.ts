@@ -84,7 +84,7 @@ export function projectTree(
             type: branchEdgeType,
             source: node.id,
             target: branch.child.id,
-            data: branch.data,
+            data: { ...branch.data, leg: 'near-target' as const },
           });
 
           const leafIds = visit(branch.child, [], node.type);
@@ -102,7 +102,7 @@ export function projectTree(
             type: mergeEdgeType,
             source: leafId,
             target: node.child!.id,
-            data: {},
+            data: { leg: 'near-source' as const },
           });
         }
         return visit(node.child, [], node.type);
