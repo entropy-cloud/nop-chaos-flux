@@ -159,6 +159,53 @@ describe('createRendererRuntime', () => {
     }
   });
 
+  it('schedules reaction dispatch after the triggering write settles', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ count: 0 });
+    const dispatches: number[] = [];
+
+    const registration = runtime.registerReaction({
+      id: 'async-reaction',
+      scope: page.scope,
+      schema: {
+        type: 'reaction',
+        watch: '${count}',
+        actions: {
+          action: 'setValue',
+          componentPath: 'message',
+          value: 'count:${count}'
+        }
+      },
+      dispatch: (action, ctx) => {
+        dispatches.push(Number(page.scope.get('count') ?? 0));
+        return runtime.dispatch(action, {
+          runtime,
+          scope: ctx?.scope ?? page.scope,
+          page
+        });
+      }
+    });
+
+    try {
+      page.scope.update('count', 1);
+
+      expect(page.scope.get('message')).toBeUndefined();
+      expect(dispatches).toEqual([]);
+
+      await vi.waitFor(() => {
+        expect(page.scope.get('message')).toBe('count:1');
+      });
+
+      expect(dispatches).toEqual([1]);
+    } finally {
+      registration.dispose();
+    }
+  });
+
   it('reports and removes reactions that exceed the fire-count limit', async () => {
     const notify = vi.fn();
     const onError = vi.fn();

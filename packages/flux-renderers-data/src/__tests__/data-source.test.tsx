@@ -46,6 +46,33 @@ describe('dataRendererDefinitions data-source behavior', () => {
     await waitFor(() => expect(notify).toHaveBeenCalledWith('error', expect.any(String)));
   });
 
+  it('applies named mergeToScope publication through the renderer lifecycle', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'data-source',
+              name: 'companyLookup',
+              formula: '${{ companyName: "Alice", companyTaxCode: "TX-1" }}',
+              mergeToScope: true
+            },
+            {
+              type: 'text',
+              text: '${companyName}/${companyTaxCode}/${companyLookup != null ? "named" : "missing"}'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+    await waitFor(() => expect(screen.getByText('Alice/TX-1/named')).toBeTruthy());
+  });
+
   it('suppresses error notification when silent is true', async () => {
     cleanup();
     const fetcher = vi.fn(async () => {

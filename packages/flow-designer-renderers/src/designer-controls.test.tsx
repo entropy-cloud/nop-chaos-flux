@@ -139,6 +139,7 @@ describe('flow designer controls', () => {
     const paletteHeader = document.querySelector('[data-slot="designer-palette-group-header"]');
     expect(paletteHeader?.textContent).toContain('Basic');
     expect(paletteItem).toBeTruthy();
+    expect((paletteItem as HTMLElement).querySelectorAll('[data-slot="button"]')).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: 'Task' }));
 
     expect(mockContext.dispatch).toHaveBeenCalledWith({

@@ -28,6 +28,7 @@ describe('condition-builder markers', () => {
     );
 
     expect(container.querySelector('.nop-condition-builder')).toBeTruthy();
+    expect(container.querySelector('[data-slot="field-control"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="condition-group"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="condition-item"]')).toBeTruthy();
     expect(container.querySelector('.nop-cb-group')).toBeNull();

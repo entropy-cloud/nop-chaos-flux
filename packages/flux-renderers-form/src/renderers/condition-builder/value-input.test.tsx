@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { render, fireEvent, cleanup } from '@testing-library/react';
+import { render, fireEvent, cleanup, screen } from '@testing-library/react';
 import { ValueInput } from './ValueInput';
 import type { ConditionField } from './types';
 
@@ -102,5 +102,60 @@ describe('ValueInput', () => {
     const input = container.querySelector('input') as HTMLInputElement;
     expect(input.type).toBe('text');
     expect(input.value).toBe('test');
+  });
+
+  it('uses NativeSelect markers for multi-select add control', () => {
+    const field: ConditionField = {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      multiple: true,
+      options: [
+        { label: 'Open', value: 'open' },
+        { label: 'Closed', value: 'closed' },
+      ],
+    };
+
+    const { container } = render(
+      <ValueInput field={field} op="equal" value={undefined} onChange={() => {}} />,
+    );
+
+    const wrapper = container.querySelector('[data-slot="native-select-wrapper"]');
+    const select = container.querySelector('[data-slot="native-select"]');
+
+    expect(wrapper).toBeTruthy();
+    expect(select).toBeTruthy();
+    expect(select?.closest('[data-slot="native-select-wrapper"]')).toBe(wrapper);
+  });
+
+  it('adds and removes multi-select values', () => {
+    const onChange = vi.fn();
+    const field: ConditionField = {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      multiple: true,
+      options: [
+        { label: 'Open', value: 'open' },
+        { label: 'Closed', value: 'closed' },
+      ],
+    };
+
+    const { container, rerender } = render(
+      <ValueInput field={field} op="equal" value={undefined} onChange={onChange} />,
+    );
+
+    const select = container.querySelector('[data-slot="native-select"]');
+    expect(select).toBeTruthy();
+
+    fireEvent.change(select as HTMLSelectElement, { target: { value: 'open' } });
+    expect(onChange).toHaveBeenCalledWith(['open']);
+
+    rerender(
+      <ValueInput field={field} op="equal" value={['open']} onChange={onChange} />,
+    );
+
+    fireEvent.click(screen.getByText('Open ×'));
+    expect(onChange).toHaveBeenLastCalledWith(undefined);
   });
 });

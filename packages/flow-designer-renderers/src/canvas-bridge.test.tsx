@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { DesignerXyflowCanvasBridge, renderDesignerCanvasBridge } from './canvas-bridge';
+import { DesignerXyflowNode } from './designer-xyflow-canvas';
 
 let latestReactFlowProps: any = null;
 
@@ -55,6 +56,9 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
 }
 
 vi.mock('@nop-chaos/flux-react', () => ({
+  ClassAliasesContext: {
+    Provider: ({ children }: { children: React.ReactNode }) => children
+  },
   RenderNodes: ({ input }: { input: any }) => {
     return input ? (
       <div data-testid="rendered-body">{String(input?.type ?? 'unknown')}</div>
@@ -71,6 +75,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
 
 vi.mock('./designer-context', () => ({
   useDesignerContext: () => ({
+    config: { classAliases: undefined },
     dispatch: vi.fn(),
     core: { getConfig: vi.fn() }
   }),
@@ -81,7 +86,7 @@ vi.mock('./designer-context', () => ({
         label: 'Task Node',
         body: { type: 'flex', items: [] },
         ports: [
-          { id: 'in', direction: 'input', position: 'left' },
+          { id: 'in', direction: 'input', position: 'left', appearance: { className: 'task-port-in' } },
           { id: 'out', direction: 'output', position: 'right' }
         ],
         appearance: {
@@ -198,7 +203,7 @@ function createSnapshot(): DesignerSnapshot {
 
 describe('DesignerXyflowCanvasBridge', () => {
   it('renders the xyflow canvas shell', () => {
-    render(
+    const view = render(
       <DesignerXyflowCanvasBridge
         snapshot={createSnapshot()}
         pendingConnectionSourceId={null}
@@ -221,6 +226,25 @@ describe('DesignerXyflowCanvasBridge', () => {
     );
     expect(screen.getByTestId('react-flow')).toBeTruthy();
     expect(latestReactFlowProps).toBeTruthy();
+
+    render(
+      <DesignerXyflowNode
+        id="node-1"
+        selected={true}
+        data={{ typeId: 'task', label: 'Task 1', typeLabel: 'Task' }}
+        xPos={20}
+        yPos={40}
+        dragging={false}
+        zIndex={1}
+        isConnectable={true}
+        type="task"
+      />,
+      { container: view.container }
+    );
+
+    expect(screen.getByTestId('handle-in').className).toContain('task-port-in');
+    expect(screen.getByTestId('handle-in').className).toContain('!w-3');
+    expect(screen.getByTestId('handle-out').className).toContain('!w-3');
   });
 
   it('translates xyflow callbacks into the bridge contract', () => {
