@@ -189,6 +189,27 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
     expect(form?.querySelector('[data-slot="form-actions"]')).toBeTruthy();
   });
 
+  it('omits the actions slot when no actions region is present', () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    const { container } = render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          body: [{ type: 'input-text', name: 'email', label: 'Email' }]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const form = container.querySelector('section.nop-form');
+    expect(form).toBeTruthy();
+    expect(form?.querySelector('[data-slot="form-body"]')).toBeTruthy();
+    expect(form?.querySelector('[data-slot="form-actions"]')).toBeNull();
+  });
+
   it('supports visited-only error visibility without changing validation timing', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);

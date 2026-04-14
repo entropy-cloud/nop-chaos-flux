@@ -191,11 +191,54 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
     expect(inputTreeField).toBeTruthy();
     expect(inputTreeField?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Categories');
     expect(inputTreeField?.querySelector('[data-slot="input-tree-control"]')).toBeTruthy();
+    expect(inputTreeField?.querySelector('[data-slot="input-tree-options"]')).toBeTruthy();
+    expect(inputTreeField?.querySelector('[data-slot="tree-option-list"]')).toBeTruthy();
+    expect(inputTreeField?.querySelector('[data-slot="tree-option-items"]')).toBeTruthy();
 
     const treeSelectField = screen.getByRole('button', { name: /Department/ }).closest('.nop-field');
     expect(treeSelectField).toBeTruthy();
     expect(treeSelectField?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Department');
     expect(treeSelectField?.querySelector('[data-slot="tree-select-control"]')).toBeTruthy();
+    expect(treeSelectField?.querySelector('[data-slot="tree-select-value"]')).toBeTruthy();
+    expect(treeSelectField?.querySelector('[data-slot="tree-select-icons"]')).toBeTruthy();
+  });
+
+  it('publishes tree search and popover option structure through data-slot markers', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'tree-select',
+              name: 'departmentId',
+              label: 'Department',
+              searchable: true,
+              options: [
+                {
+                  label: 'Engineering',
+                  value: 'eng',
+                  children: [{ label: 'Platform', value: 'platform' }]
+                }
+              ]
+            }
+          ]
+        } as any}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Department/ }));
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="tree-option-search"]')).toBeTruthy();
+      expect(document.querySelector('[data-slot="tree-option-items"]')).toBeTruthy();
+      expect(document.querySelector('[data-slot="tree-option-list"]')).toBeTruthy();
+    });
   });
 
   it('preserves non-string checkbox-group values in form state and submit payloads', async () => {

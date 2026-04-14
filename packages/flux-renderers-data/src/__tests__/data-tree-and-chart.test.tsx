@@ -73,6 +73,20 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
       expect(handle?.capabilities.hasMethod?.('setOption')).toBe(true);
       expect(handle?.capabilities.hasMethod?.('getDataURL')).toBe(true);
     });
+    const chartRoot = document.querySelector('.nop-chart');
+    expect(chartRoot).toBeTruthy();
+    expect(chartRoot?.querySelector('[data-slot="chart-canvas"]')).toBeTruthy();
+    expect(chartRoot?.querySelector('[data-slot="chart-empty"]')).toBeNull();
+  });
+
+  it('publishes empty chart content through a data-slot marker under the semantic chart root', () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(<SchemaRenderer schema={{ type: 'page', body: [{ type: 'chart', empty: { type: 'text', text: 'No chart data' }, source: [], series: [] }] }} env={env} formulaCompiler={formulaCompiler} />);
+    const chartRoot = document.querySelector('.nop-chart');
+    expect(chartRoot).toBeTruthy();
+    expect(chartRoot?.querySelector('[data-slot="chart-empty"]')?.textContent).toContain('No chart data');
+    expect(chartRoot?.querySelector('[data-slot="chart-canvas"]')).toBeNull();
   });
 
   it('exposes repeated instancePath through nodeInstance for row child renderers', async () => {

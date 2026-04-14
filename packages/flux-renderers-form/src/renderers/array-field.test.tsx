@@ -85,6 +85,8 @@ describe('array-field renderer (scalar)', () => {
     expect(field?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Tags');
     expect(field?.querySelector('[data-slot="field-control"]')).toBeTruthy();
     expect(field?.querySelector('[data-slot="array-field-body"]')).toBeTruthy();
+    expect(field?.querySelector('[data-slot="array-field-item"]')).toBeTruthy();
+    expect(field?.querySelector('[data-slot="array-field-item-body"]')).toBeTruthy();
   });
 
   it('adds and removes scalar items correctly', async () => {
