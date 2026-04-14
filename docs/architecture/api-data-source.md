@@ -868,12 +868,12 @@ Current code already implements part of this model:
 
 Current code is not yet fully converged to the target model:
 
-- formula-backed sources are not yet unified under the same runtime source abstraction
-- source dependency tracking still uses the current deep-path runtime collection and has not yet converged to the explicit-roots-plus-runtime-root-fallback model described above
-- explicit dependency declarations for sources and reactions are not yet wired on the current schema types
-- some producer-specific details still remain narrower implementation work even though request execution now converges through `executeApiSchema(...)`
+- formula-backed and api-backed `data-source` values are now unified under the same scope-scoped runtime source registry, with runtime-owned registration, replacement, refresh, and disposal
+- explicit `dependsOn` roots are now wired on both `data-source` and `reaction`; when absent, runtime still falls back to runtime-collected dependency paths from formula/request evaluation
+- `resultMapping`, `statusPath`, named publication, `mergeToScope`, and runtime debug snapshots are all part of the current baseline and covered by focused runtime tests
 - API-backed sources still allow legacy merge semantics when neither `name` nor `dataPath` is declared; this is compatibility-oriented and non-normative
-- richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete
+- dependency matching still uses the current path-based runtime substrate rather than the narrower future explicit-roots-only model discussed above
+- richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete beyond the current debug snapshot plus bounded-fire safety rail
 
 ## dataPath vs ActionSchema.dataPath
 

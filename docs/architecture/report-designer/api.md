@@ -31,8 +31,8 @@ Implementation status belongs in logs, plans, and focused runtime-snapshot/statu
 - `spreadsheetRendererDefinitions`
 - `registerSpreadsheetRenderers(registry)`
 - `createSpreadsheetRegistry()`
-- `registerSpreadsheetActions(runtime)`
-- `spreadsheetActionHandlers`
+- `createSpreadsheetActionProvider(...)`
+- `mountSpreadsheetNamespaces(actionScope, ...)`
 
 ### `@nop-chaos/report-designer-core`
 
@@ -60,8 +60,8 @@ Implementation status belongs in logs, plans, and focused runtime-snapshot/statu
 - `reportDesignerRendererDefinitions`
 - `registerReportDesignerRenderers(registry)`
 - `createReportDesignerRegistry()`
-- `registerReportDesignerActions(runtime)`
-- `reportDesignerActionHandlers`
+- `createReportDesignerActionProvider(...)`
+- `mountReportDesignerNamespaces(actionScope, ...)`
 
 ## 2. `spreadsheet-page` Schema
 
@@ -82,7 +82,7 @@ interface SpreadsheetPageSchema {
 - 初始化 spreadsheet runtime
 - 将 spreadsheet runtime 注入固定宿主 scope
 - 渲染 toolbar、canvas、statusbar 区域
-- 注册 `spreadsheet:*` actions
+- 在 page-owned `ActionScope` 上注册 `spreadsheet:*` namespace
 
 ## 3. `report-designer-page` Schema
 
@@ -106,7 +106,23 @@ interface ReportDesignerPageSchema {
 - 初始化 spreadsheet runtime 与 report designer runtime
 - 注入字段面板、metadata、selection 和 preview 相关宿主 scope
 - 渲染 field panel、canvas、inspector 区域
-- 注册 `spreadsheet:*` 与 `report-designer:*` actions
+- 在 page-owned `ActionScope` 上注册 `spreadsheet:*` 与 `report-designer:*` namespace
+
+## 1.1 Action Namespace Ownership
+
+Report/Spreadsheet family 的 action 扩展应遵循词法 `ActionScope` owner 模型，而不是全局 runtime action registry。
+
+推荐边界：
+
+- page renderer / host 创建 provider
+- page renderer / host 通过 `actionScope.registerNamespace(...)` 挂载 `spreadsheet` / `report-designer` namespace
+- provider 再把 namespaced action 调用桥接到 spreadsheet core 或 report designer core
+
+不推荐作为长期 owner contract 的写法：
+
+- `registerSpreadsheetActions(runtime)`
+- `registerReportDesignerActions(runtime)`
+- 全局 mutable action handler registry
 
 ## 4. Bridge Contract
 

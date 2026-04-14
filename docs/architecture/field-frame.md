@@ -16,17 +16,18 @@ Use it when changing:
 When this document needs to be checked against code, start with:
 
 - `packages/flux-react/src/field-frame.tsx` for FieldFrame component
+- `packages/flux-react/src/node-frame-wrapper.tsx` for the normalized wrapper handoff into `FieldFrame`
 
 ## Why This Is Needed
 
-Currently, each form control (input, select, textarea, etc.) manually composes `FieldLabel` and `FieldHint` components with similar JSX structure. This leads to:
+Without a shared wrapper, each form control (input, select, textarea, etc.) would need to manually compose label, hint, description, and validation feedback with similar JSX structure. This leads to:
 
 1. **Code duplication** - Every control repeats the same label/error/hint layout pattern
 2. **Inconsistent behavior** - Different controls may handle edge cases differently
 3. **Harder to maintain** - Changes to label/error display require updating multiple files
 4. **Missing features** - AMIS FormItem provides remark, description, caption, hint etc. but implementing them in each control is tedious
 
-FieldFrame provides a single component that handles all common field wrapper concerns.
+The current baseline solves this through `RendererDefinition.wrap` + `NodeFrameWrapper` + `FieldFrame`, so wrap-compatible renderers can stay focused on control semantics while the outer field chrome remains centralized.
 
 ## Design Principles
 
@@ -58,6 +59,16 @@ Multiple hint types with priority:
 
 FieldFrame may switch semantic wrapper structure (`<label>` vs `<fieldset>`), but it must not hardcode visual layout classes. Visual spacing and arrangement remain schema-/host-driven styling concerns.
 
+### Normalized wrapper handoff
+
+FieldFrame is the final field-chrome renderer, not the place where schema fields are classified.
+
+- renderer metadata decides whether `label` is a plain prop or a `value-or-region` field
+- `NodeFrameWrapper` resolves normalized wrapper inputs such as `name`, `label`, `required`, `className`, `testid`, and `cid`
+- `FieldFrame` renders those normalized values and current form state; it should not reach back into raw schema to rediscover field semantics
+
+In the common path, concrete input/select/textarea renderers do not manually instantiate `FieldFrame`; they opt into `wrap: true` and let the wrapper layer supply the field chrome.
+
 ## Styling Contract
 
 FieldFrame follows the same renderer styling contract as the rest of Flux:
@@ -83,6 +94,7 @@ interface FieldFrameProps {
   validationBehavior?: CompiledValidationBehavior;
   className?: string;
   testid?: string;
+   cid?: number;
   children: ReactNode;
 }
 ```
@@ -91,15 +103,16 @@ Key props:
 
 | Prop | Type | Purpose |
 |------|------|---------|
-| `name` | `string?` | Field name in the form. When provided, FieldFrame internally calls `useOwnedFieldState(name)` and `useAggregateError(name)` to get validation state. |
-| `label` | `ReactNode?` | Field label text. |
-| `required` | `boolean?` | Shows a required asterisk next to the label. |
+| `name` | `string?` | Field name used to select current form state, aggregate errors, and compiled validation behavior. |
+| `label` | `ReactNode?` | Resolved field label content. In the common path this already comes from normalized `props.label` / `regions.label` via `NodeFrameWrapper`. |
+| `required` | `boolean?` | Explicit required override. The final required marker may also come from compiled validation rules such as `requiredWhen` / `requiredUnless`. |
 | `hint` | `ReactNode?` | Hint text shown when no error is present. |
 | `description` | `ReactNode?` | Description text shown when no error or hint is present. |
 | `layout` | `'default' \| 'checkbox' \| 'radio'?` | Layout mode. `checkbox`/`radio` render a `<fieldset>` + `<legend>` wrapper; `default` renders `<label>` + `<span>`. |
 | `validationBehavior` | `CompiledValidationBehavior?` | Override the per-field validation behavior (controls when errors become visible). Falls back to form-level behavior. |
-| `className` | `string?` | Additional CSS classes on the root element. |
+| `className` | `string?` | Additional CSS classes on the semantic root marker. |
 | `testid` | `string?` | Test anchoring attribute, rendered as `data-testid`. |
+| `cid` | `number?` | Mounted node id published as `data-cid` for debugger/inspection tooling. |
 | `children` | `ReactNode` | The actual form control. |
 
 Related schema contract:
@@ -111,34 +124,68 @@ Related schema contract:
 When `name` is provided, FieldFrame manages validation state internally:
 
 1. **Form lookup**: `useCurrentForm()` to get the current form context
-2. **Field state**: `useOwnedFieldState(name)` to get `touched`, `dirty`, `visited`, `submitting`, `validating`, and `error`
-3. **Aggregate errors**: `useAggregateError(name)` to collect validation errors from all rules
+2. **Field state**: `useCurrentFormState(...)` + `selectCurrentFormFieldState(...)` to get `touched`, `dirty`, `visited`, `submitting`, `validating`, and `error`
+3. **Aggregate errors**: `useCurrentFormState(...)` + `selectCurrentFormErrors(...)` to collect the highest-priority current error for the field
 4. **Per-field behavior**: `getCompiledValidationField(form.validation, name)` to get field-specific `CompiledValidationBehavior`
 5. **Behavior fallback**: `validationBehavior` prop → field behavior → form behavior → default (`{ triggers: ['blur'], showErrorOn: ['touched', 'submit'] }`)
-6. **Conditional required tracking**: FieldFrame subscribes to `form.values` only when the field's compiled validation rules include `requiredWhen` or `requiredUnless`; plain required markers do not broad-subscribe every field to all value changes
+6. **Conditional required tracking**: FieldFrame subscribes to `form.values` only when the field's compiled validation rules include `requiredWhen` or `requiredUnless`; `isFieldEffectivelyRequired(...)` then decides the final marker without broad-subscribing every field to all value changes
 7. **Error visibility**: `shouldShowFieldError(behavior, state)` checks whether any trigger in `showErrorOn` matches the current field state
 
-This means controls do **not** need to call `useFieldState` or pass `error`/`showError` props — they simply pass `name` and FieldFrame handles everything.
+This means renderers do **not** need to manually manage outer `error`/`showError` chrome. In the common path they expose normalized field props, opt into `wrap: true`, and the wrapper layer passes `name` into `FieldFrame`.
 
 ## Render Structure
 
 ```tsx
 export function FieldFrame(props: FieldFrameProps) {
-  const { name, label, required, hint, description, layout,
-          validationBehavior, className, testid, children } = props;
+  const {
+    name,
+    label,
+    required,
+    hint,
+    description,
+    layout,
+    validationBehavior,
+    className,
+    testid,
+    cid,
+    children
+  } = props;
 
   const currentForm = useCurrentForm();
-  const fieldState = useOwnedFieldState(name ?? '');
-  const aggregateError = useAggregateError(name ?? '');
+  const fieldState = useCurrentFormState(
+    (state) => name ? selectCurrentFormFieldState(state, { path: name, ownerPath: name }) : EMPTY_FORM_FIELD_STATE,
+    (left, right) =>
+      left.error === right.error &&
+      left.validating === right.validating &&
+      left.touched === right.touched &&
+      left.dirty === right.dirty &&
+      left.visited === right.visited &&
+      left.submitting === right.submitting
+  );
+  const aggregateError = useCurrentFormState(
+    (state) =>
+      name
+        ? selectCurrentFormErrors(state, {
+            path: name,
+            ownerPath: name,
+            sourceKinds: ['array', 'object', 'form', 'runtime-registration']
+          })[0]
+        : undefined,
+    Object.is
+  );
   const validationField = name ? getCompiledValidationField(currentForm?.validation, name) : undefined;
-  const values = useCurrentFormState((state) =>
+  const fieldBehavior = validationField?.behavior;
+  const hasDynamicRequiredRule = Boolean(
     validationField?.rules.some(({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless')
+  );
+  const values = useCurrentFormState((state) =>
+    hasDynamicRequiredRule
       ? state.values
       : undefined,
     Object.is
   );
   const behavior = validationBehavior
-    ?? getCompiledValidationField(currentForm?.validation, name)?.behavior
+    ?? fieldBehavior
     ?? currentForm?.validation?.behavior
     ?? defaultBehavior;
 
@@ -155,18 +202,22 @@ export function FieldFrame(props: FieldFrameProps) {
   const isGroup = layout === 'checkbox' || layout === 'radio';
   const Tag = isGroup ? 'fieldset' : 'label';
   const LabelTag = isGroup ? 'legend' : 'span';
+  const effectiveRequired = Boolean(required) || Boolean(name && isFieldEffectivelyRequired(currentForm?.validation, name, values ?? {}));
 
   return (
-    <Tag className={['nop-field', className].filter(Boolean).join(' ') || undefined}
-         data-testid={testid || undefined}
-         data-field-visited={fieldState.visited ? '' : undefined}
-         data-field-touched={fieldState.touched ? '' : undefined}
-         data-field-dirty={fieldState.dirty ? '' : undefined}
-         data-field-invalid={showError ? '' : undefined}>
+    <Tag
+      className={cn('nop-field', className)}
+      data-testid={testid || undefined}
+      data-cid={cid != null ? cid : undefined}
+      data-field-visited={fieldState.visited ? '' : undefined}
+      data-field-touched={fieldState.touched ? '' : undefined}
+      data-field-dirty={fieldState.dirty ? '' : undefined}
+      data-field-invalid={showError ? '' : undefined}
+    >
       {label ? (
         <LabelTag data-slot="field-label">
           {label}
-          {required ? <span data-slot="field-required">*</span> : null}
+          {effectiveRequired ? <span data-slot="field-required" aria-hidden="true">*</span> : null}
         </LabelTag>
       ) : null}
 
@@ -190,18 +241,55 @@ export function FieldFrame(props: FieldFrameProps) {
 
 ## Usage Examples
 
-### Basic input with label (no manual state management)
+### Renderer-definition opt-in
 
 ```tsx
-function InputRenderer(props) {
-  const { name, label, placeholder } = props.schema;
-  // No useFieldState needed — FieldFrame handles validation via name prop
+const inputTextDefinition: RendererDefinition = {
+  type: 'input-text',
+  component: InputRenderer,
+  wrap: true,
+  fields: [formLabelFieldRule]
+};
+```
+
+Once a renderer opts into `wrap: true`, `NodeFrameWrapper` resolves normalized `name` / `label` / `required` / `className` / `testid` / `cid` and renders `FieldFrame` around the control.
+
+### Control renderer stays focused on control semantics
+
+```tsx
+function InputRenderer(props: RendererComponentProps<InputSchema>) {
+  const name = String(props.props.name ?? '');
+  const { value, handlers } = useFormFieldController(name);
+
   return (
-    <FieldFrame name={name} label={label}>
-      <input type="text" placeholder={placeholder} />
-    </FieldFrame>
+    <Input
+      value={value == null ? '' : String(value)}
+      disabled={props.meta.disabled}
+      placeholder={typeof props.props.placeholder === 'string' ? props.props.placeholder : undefined}
+      onFocus={handlers.onFocus}
+      onChange={(event) => handlers.onChange(event.target.value)}
+      onBlur={handlers.onBlur}
+    />
   );
 }
+```
+
+The renderer does not manually create `<FieldFrame>` and does not read `props.schema.label`; outer field chrome comes from the wrapper path.
+
+### Wrapper handoff into `FieldFrame`
+
+```tsx
+<FieldFrame
+  name={fieldName}
+  label={labelContent}
+  required={Boolean(props.resolvedPropsValue.required)}
+  layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
+  className={props.resolvedMeta.className}
+  testid={props.resolvedMeta.testid}
+  cid={props.resolvedMeta.cid}
+>
+  {children}
+</FieldFrame>
 ```
 
 ### Per-instance opt-out of FieldFrame
@@ -217,41 +305,22 @@ function InputRenderer(props) {
 
 This keeps the renderer's normal root element and skips the outer `<label>`/`<fieldset>` field chrome for that instance.
 
-### Checkbox group with custom layout
+### Grouped field chrome via `frameWrap: 'group'`
 
-```tsx
-function CheckboxRenderer(props) {
-  const { label, option } = props.schema;
-  return (
-    <FieldFrame name={props.schema.name} label={label} layout="checkbox">
-      <span className="nop-checkbox">
-        <input type="checkbox" />
-        <span data-slot="checkbox-label">{option?.label}</span>
-      </span>
-    </FieldFrame>
-  );
+```json
+{
+  "type": "radio-group",
+  "name": "role",
+  "label": "Role",
+  "frameWrap": "group",
+  "options": [
+    { "label": "Viewer", "value": "viewer" },
+    { "label": "Admin", "value": "admin" }
+  ]
 }
 ```
 
-### Radio group with legend
-
-```tsx
-function RadioGroupRenderer(props) {
-  const { label, options } = props.schema;
-  return (
-    <FieldFrame name={props.schema.name} label={label} layout="radio">
-      <div className="nop-radio-group">
-        {options.map(opt => (
-          <label key={opt.value} className="nop-radio">
-            <input type="radio" value={opt.value} />
-            <span data-slot="radio-label">{opt.label}</span>
-          </label>
-        ))}
-      </div>
-    </FieldFrame>
-  );
-}
-```
+This keeps the radio-group renderer focused on rendering the control body while the wrapper path switches the field chrome to grouped `<fieldset>/<legend>` semantics.
 
 ## CSS Class Mapping
 
@@ -290,7 +359,7 @@ These data attributes follow the convention documented in `docs/architecture/ren
 | Remark (icon tooltip) | Yes | Not yet |
 | Caption | Yes | Not yet |
 | Layout modes | 5 modes | CSS-based |
-| wrap: false | Yes | Opt-out by not using FieldFrame |
+| wrap: false | Yes | Definition-level `wrap: false` or instance-level `frameWrap: false` |
 | Internal validation state | External | Yes (via `name` prop) |
 | Per-field validation behavior | No | Yes (`validationBehavior` prop) |
 
@@ -305,6 +374,7 @@ These data attributes follow the convention documented in `docs/architecture/ren
 ## Related Documents
 
 - `docs/architecture/field-metadata-slot-modeling.md` - field semantics model
+- `docs/architecture/field-binding-and-renderer-contract.md` - normalized channel ownership for `name`, `label`, `title`, and field chrome inputs
 - `docs/architecture/form-validation.md` - validation behavior
 - `docs/architecture/renderer-runtime.md` - renderer component contracts
 - `docs/architecture/renderer-markers-and-selectors.md` - data attribute convention

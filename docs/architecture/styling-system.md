@@ -367,8 +367,9 @@ Every renderer (container, flex, text, icon, etc.) must follow a strict separati
 | Layer | Owns | Does NOT own |
 |-------|------|-------------|
 | **Renderer (code)** | Structural marker class (`nop-container`, `nop-flex`), ARIA attributes, DOM structure | gap, direction, padding, margin, width, height |
-| **Schema (classAliases + className)** | All visual and layout decisions | — |
-| **Global CSS (base.css)** | Interaction pseudo-states (`[data-selected]`, `:hover`), design tokens (`--foreground`, `--primary`) | Context-specific spacing values |
+| **Schema (classAliases + className)** | Author-controlled visual and layout choices that should stay explicit at usage sites | Hidden default layout injected by renderer code |
+| **Component/UI layer** | Component chrome, variant/size styling, stable class structure | Page- or feature-specific layout decisions that only the schema/host can know |
+| **Global CSS / theme layer** | Interaction pseudo-states (`[data-selected]`, `:hover`), design tokens (`--foreground`, `--primary`), host overrides | Replacing schema-authored explicit layout choices with hidden defaults |
 
 **Why**: A container used inside a card needs `gap-1` (4px), the same container in a form needs `gap-4` (16px), and in a list item it needs `gap-0`. The renderer cannot predict the correct value. When a renderer hardcodes `gap-4`, schema authors cannot see this hidden style and cannot override it without knowing it exists.
 

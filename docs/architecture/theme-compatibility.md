@@ -10,7 +10,7 @@ The goal is not to introduce a React `ThemeProvider` requirement. The goal is to
 
 - `apps/playground/src/App.tsx`
 - `apps/playground/src/styles.css`
-- `apps/playground/src/FlowDesignerExample.tsx`
+- `apps/playground/src/pages/FlowDesignerPage.tsx`
 - `packages/flux-react/src/index.tsx`
 - `packages/nop-debugger/src/panel.tsx`
 - `packages/flow-designer-renderers/src/index.tsx`
@@ -54,7 +54,7 @@ Responsibilities:
 
 - define default project-wide visual tokens
 - scope host overrides to a mounted subtree
-- provide one predictable root for dialogs, debugger UI, AMIS renderers, and Flow Designer renderers
+- provide one predictable root for dialogs, debugger UI, Flux renderer surfaces, and Flow Designer renderers
 
 Any host may place `.nop-theme-root` on:
 
@@ -97,7 +97,7 @@ Examples:
 These tokens cover:
 
 - playground shell surfaces
-- generic `na-*` renderer controls
+- generic Flux renderer controls
 - dialogs
 - debugger panel and launcher
 
@@ -254,7 +254,7 @@ Scope:
 
 After this migration:
 
-- standalone `flow-designer2` still looks the same
+- standalone Flow Designer still looks the same
 - hosts can override subtree visuals through CSS only
 - Flow Designer package surfaces are no longer blocked by hardcoded reusable colors
 - debugger and dialogs follow the same theme root model as the rest of the renderer tree
@@ -265,6 +265,6 @@ After this migration:
 
 ## Follow-up Work
 
-- continue reducing package-level inline visual styles in `apps/playground/src/FlowDesignerExample.tsx`
-- extend package-owned CSS for more generic `na-*` renderers if they need stronger host-level consistency
+- continue reducing package-level inline visual styles in playground-only demo shells when they do not belong in package-owned CSS
+- extend package-owned CSS for more generic Flux renderer surfaces if they need stronger host-level consistency
 - add a host integration example showing token mapping from an external shell into `.nop-theme-root`

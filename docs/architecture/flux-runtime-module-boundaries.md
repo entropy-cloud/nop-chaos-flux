@@ -131,6 +131,9 @@ This directory is the default home for reusable validation helpers.
   - scope-scoped reaction registration and replacement
   - reaction scheduling / loop guard behavior
   - reaction debug snapshot ownership
+- `packages/flux-runtime/src/surface-runtime.ts`
+  - shared dialog/drawer surface ownership
+  - stack-based open/close behavior and disposal hooks
 - focused helpers such as `packages/flux-runtime/src/scope-change.ts` and `packages/flux-runtime/src/runtime-plugins.ts`
   - changed-path dependency matching
   - plugin ordering and similar hot-path coordination helpers
@@ -157,7 +160,7 @@ This directory is the default home for reusable validation helpers.
 
 - `packages/flux-runtime/src/page-runtime.ts`
   - page runtime creation
-  - dialog stack management
+  - page-shell state such as refresh tick and root scope ownership
 - `packages/flux-runtime/src/node-runtime.ts`
   - resolved node meta and prop evaluation helpers
 - `packages/flux-runtime/src/registry.ts`

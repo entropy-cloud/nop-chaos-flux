@@ -228,7 +228,7 @@ and the renderer calls:
 
 ```tsx
 props.regions.item?.render({
-  data: { item, index }
+  bindings: { item, index }
 });
 ```
 
@@ -296,21 +296,24 @@ Recommended behavior:
 Important point:
 
 - this does not require a second rendering system
-- it is an extension of the current `render({ data })` child-scope path
+- it is an extension of the current region-render child-scope path, with `render({ bindings })` as the normative API
 
 Illustrative runtime shape:
 
 ```ts
 region.render({
-  data: {
-    $slot: {
-      item,
-      index,
-      $parent: previousSlotFrame
-    }
+  bindings: {
+    item,
+    index
   }
 });
 ```
+
+Compatibility note:
+
+- `render({ data })` may still exist as a compatibility alias for `render({ bindings })`
+- `instantiate()` may still delegate to the same implementation for back-compat
+- renderers should prefer `instancePath` for repeated identity and only use `scopeKey` when they explicitly need a stable child-scope/cache hint
 
 Whether the internal implementation stores a literal `$slot` object or a narrower slot-frame carrier is an implementation detail. The architectural contract is the visible expression model and scope behavior.
 
@@ -457,8 +460,8 @@ Renderer:
 ```tsx
 const itemRender = (item: Row, index: number) =>
   props.regions.item?.render({
-    data: { item, index },
-    scopeKey: `item:${item.id ?? index}`
+    bindings: { item, index },
+    instancePath: [{ repeatedTemplateId: 'item', instanceKey: String(item.id ?? index) }]
   });
 ```
 

@@ -239,7 +239,7 @@ This split matches actual ownership and change frequency better than either "eve
 `props` and `meta` are both resolved by runtime, but they serve different purposes.
 
 - `props` contains the node's business-facing runtime values such as `label`, `options`, `placeholder`, `name`, or `items`
-- `meta` contains node control state and outer-frame information such as `visible`, `hidden`, `disabled`, `className`, `label`, `testid`, or `cid`
+- `meta` contains node control state and outer-frame information such as `visible`, `hidden`, `disabled`, `className`, `testid`, or `cid`
 
 Quick rule:
 
@@ -327,7 +327,7 @@ The input renderer typically consumes explicit node-local inputs from props:
 - `props.props.name`
 - `props.props.placeholder`
 - `props.meta.disabled`
-- `props.meta.label`
+- `props.props.label` or a renderer-owned `regions.label` contract when that renderer models label as value-or-region
 
 But it reads ambient form/runtime services through hooks:
 
@@ -439,8 +439,11 @@ interface RenderRegionHandle {
    * the reserved $slot frame rather than flattened into top-level scope.
    */
   render(options?: {
+    scope?: ScopeRef;
     bindings?: Record<string, unknown>;
     instancePath?: readonly InstanceFrame[];
+    scopeKey?: string;
+    isolate?: boolean;
     pathSuffix?: string;
   }): React.ReactNode;
   /**
@@ -469,7 +472,14 @@ Rules:
 - repeated renderers should prefer explicit `instancePath` plus stable-key-derived bindings over index-only conventions
 - `instancePath` is the full absolute repeated-instance path for the instantiated child subtree, not an owner-relative suffix
 
-This makes repeated rendering explicit instead of smuggling identity through `scopeKey` and `pathSuffix`.
+Normative rule:
+
+- use `render({ bindings, instancePath })` as the primary API
+- use `scope` only when the caller already owns the right child scope
+- treat `data` and `instantiate()` as compatibility carriers rather than the preferred contract
+- treat `scopeKey` as an advanced/internal child-scope reuse hint, not the primary repeated-identity contract
+
+`instancePath` and stable bindings are the primary repeated rendering contract. `scopeKey` may still exist for scope/cache reuse, but should not be presented as the author-facing identity model.
 
 ### Pattern 1: render declared regions directly
 

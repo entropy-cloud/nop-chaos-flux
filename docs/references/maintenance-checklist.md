@@ -191,7 +191,7 @@ Review:
 
 Examples:
 
-- changes in shared `.na-theme-root` / `.fd-theme-root` expectations
+- changes in shared `.nop-theme-root` / `.fd-theme-root` expectations
 - changes in package-owned CSS variables or host override guidance
 - changes that move visuals from inline styles to class-based CSS contracts
 - changes in debugger, dialog, renderer, or designer styling boundaries that affect host theming

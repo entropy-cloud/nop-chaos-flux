@@ -179,7 +179,7 @@ Flux 的运行时工程视角应理解为 `base tree + semantic overlays`。
 | `x:extends` / 结构继承 | 必须 | 不应出现 |
 | schema 覆盖/删除 | 必须 | 不应出现 |
 | feature flag 静态裁剪 | 必须 | 不应出现 |
-| 权限静态裁剪 | 优先 | 仅保留真正动态权限判断 |
+| 权限静态裁剪 | 优先 | 不承担权限语义；只消费宿主已投影的结果 |
 | 默认值展开 | 必须 | 不应依赖 renderer 二次补齐 |
 | 设计器 shell 结构生成 | 优先 | 只负责渲染 |
 | 表达式执行 | 不负责 | 必须 |
@@ -192,6 +192,11 @@ Flux 的运行时工程视角应理解为 `base tree + semantic overlays`。
 
 - 如果某项变化只依赖静态模型与装配上下文，就应前移到 Loader
 - 如果某项变化依赖用户当前交互、环境状态或异步结果，才留在 Flux
+
+权限边界补充说明：
+
+- Flux 运行期可以消费宿主已经投影好的布尔值或状态事实，例如 `canEdit`、`allowedActions`、`readonly`
+- 但 Flux runtime 本身不应成为 permission policy evaluator，也不应在 renderer/runtime 层重新定义权限语义
 
 ### 4.1 应在 Loader 层解决的扩展
 

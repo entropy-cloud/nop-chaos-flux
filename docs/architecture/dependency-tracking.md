@@ -543,7 +543,7 @@ This direction is correct because data visibility flows downward through lexical
 
 ---
 
-## 5. Convergence Path
+## 5. Remaining Convergence Path
 
 ### Phase 1: Correctness Fixes
 
@@ -556,10 +556,10 @@ This direction is correct because data visibility flows downward through lexical
 4. Treat whole-scope enumeration/materialization as wildcard, but keep bound-object enumeration anchored to its root binding.
 5. Normalize changed paths to roots before dependency matching.
 
-### Phase 3: Explicit Declaration
+### Phase 3: Post-Landing Explicit Declaration Follow-Up
 
-6. Add a producer/watcher-level explicit dependency carrier such as `dependsOn?: string[]`.
-7. Make that declaration authoritative in production invalidation semantics.
+6. Keep `dependsOn?: string[]` as the producer/watcher-level explicit dependency carrier now that it exists on `DataSourceSchema` and `ReactionSchema`.
+7. Preserve the current runtime rule that explicit roots are authoritative for invalidation, while runtime-collected roots remain the fallback when `dependsOn` is absent.
 8. Optionally add dev-only diagnostics that compare explicit roots with runtime-collected reads.
 
 ### Phase 4: Collection/Row Reconciliation
@@ -584,7 +584,7 @@ This direction is correct because data visibility flows downward through lexical
 | Formula scope wrapping | `packages/flux-formula/src/scope.ts` | keep nested access anchored to the first root binding |
 | `scopeChangeHitsDependencies` | `packages/flux-runtime/src/scope-change.ts` | normalize writes to roots before matching |
 | `collectRuntimeDependencies` | `packages/flux-runtime/src/node-runtime.ts` | unchanged aggregation shape |
-| Explicit dependency carrier | does not exist | likely `dependsOn` on `DataSourceSchema` and `ReactionSchema` |
+| Explicit dependency carrier | `packages/flux-core/src/types/schema.ts` (`dependsOn` on `DataSourceSchema` / `ReactionSchema`) | keep explicit roots first, runtime fallback second |
 | Source dependency init | `packages/flux-runtime/src/source-registry.ts` | explicit roots first, runtime fallback second |
 | API request dependency tracking | `packages/flux-runtime/src/data-source-runtime.ts` | collect request-config roots only when explicit roots are absent |
 | Reaction dependency init | `packages/flux-runtime/src/reaction-runtime.ts` | explicit roots first, runtime fallback second |
