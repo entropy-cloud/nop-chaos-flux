@@ -6,7 +6,7 @@ import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
 import { createDesignerActionProvider, flowDesignerRendererDefinitions } from './index';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';
-import { render, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import { DesignerIcon } from './designer-icon';
 
 const textRenderer: RendererDefinition = {
@@ -359,6 +359,57 @@ describe('DesignerPageRenderer basic rendering', () => {
     const canvas = within(view.container);
     expect(canvas.getByRole('application')).toBeTruthy();
     expect(view.container.querySelectorAll('.react-flow__node')).toHaveLength(2);
+  });
+
+  it('uses data-slot for the node quick toolbar instead of internal toolbar marker classes', async () => {
+    const SchemaRenderer = createSchemaRenderer([...basicTestRendererDefinitions, ...flowDesignerRendererDefinitions]);
+
+    const view = render(
+      <SchemaRenderer
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [
+              { id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1' } },
+            ],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 }
+          },
+          config: {
+            ...createTestConfig(),
+            nodeTypes: [
+              {
+                id: 'task',
+                label: 'Task',
+                body: { type: 'text', text: 'Task' },
+                defaults: { label: 'Task' },
+                quickActions: { type: 'text', text: 'Quick actions' }
+              },
+              {
+                id: 'end',
+                label: 'End',
+                body: { type: 'text', text: 'End' },
+                defaults: { label: 'End' }
+              }
+            ]
+          }
+        } as any}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const node = view.container.querySelector('.nop-designer-node') as HTMLElement;
+    fireEvent.mouseEnter(node);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="designer-node-toolbar"]')).toBeTruthy();
+      expect(document.querySelector('.nop-designer-node-toolbar')).toBeNull();
+    });
   });
 
   it('renders a fallback when document or config is missing', () => {

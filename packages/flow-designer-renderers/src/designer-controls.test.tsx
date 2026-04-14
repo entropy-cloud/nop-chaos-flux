@@ -156,6 +156,8 @@ describe('flow designer controls', () => {
     });
 
     render(<DefaultInspector />);
+    expect(document.querySelector('.nop-inspector')).toBeTruthy();
+    expect(screen.getByText('名称')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '删除节点' }));
     expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'deleteNode', nodeId: 'node-1' });
   });
