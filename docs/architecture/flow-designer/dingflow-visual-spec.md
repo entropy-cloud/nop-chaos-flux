@@ -269,7 +269,91 @@ Two types of ViewportPortal overlays:
 
 ---
 
-## 8. Color Reference
+## 8. + Button Interaction (Add Node Menu)
+
+### Trigger
+
+Clicking any + button (card-attached or merge-point) opens a fixed-position popover menu with 3 node type options.
+
+### AddNodeMenu Popover
+
+| Property | Value |
+|----------|-------|
+| Position | Fixed, above the clicked + button (`screenX - 100`, `screenY - 110`) |
+| Layout | Horizontal row of 3 circular options |
+| Background | White, rounded, shadow-lg |
+| Z-index | 101 (above backdrop at 100) |
+| Backdrop | Full-viewport transparent overlay to detect click-outside |
+
+### Options
+
+Each option is a circular button (50px diameter) with a text label below:
+
+| Type | Color | Icon/Content | Label |
+|------|-------|-------------|-------|
+| Approver | `#ff943e` | UserCheck, 20px | "Approver" |
+| CC | `#3296fa` | Send, 20px | "CC" |
+| Condition | `#15bc83` | Bold text "Cond" | "Condition" |
+
+Label text: 12px, `#666`.
+
+### Insertion Behavior
+
+#### Chain Insert (Approver / CC)
+
+When clicking + on a card node (non-merge), selecting Approver or CC:
+
+1. Find the outgoing edge from `sourceId` → get `downstreamId`
+2. Create new approval/CC node at `sourceNode.y + ROW_STEP`
+3. Shift `downstreamId` and ALL nodes below by `ROW_STEP`
+4. Remove old edge `source → downstream`
+5. Add edges: `source → newNode`, `newNode → downstream`
+
+New node data:
+- Approver: `{ label: 'Approver', desc: 'Please set', color: '#ff943e', icon: 'usercheck' }`
+- CC: `{ label: 'CC', desc: 'Please set', color: '#3296fa', icon: 'send' }`
+
+#### Merge Overlay Insert (Approver / CC)
+
+When clicking + on a merge-point overlay, selecting Approver or CC:
+
+1. `sourceId` is encoded as `merge:${targetId}` — extract the real target ID
+2. Create new node at the merge target's current Y position
+3. Shift the merge target and ALL nodes below by `ROW_STEP`
+4. Rewire: all incoming edges to the target now point to the new node
+5. Add edge: `newNode → target`
+
+#### Branch Insert (Condition)
+
+When selecting "Condition" from any + button:
+
+1. Find the outgoing edge from `effectiveId` → get `downstreamId`
+2. Shift `downstreamId` and ALL nodes below by `BRANCH_EXTRA + ROW_STEP + MERGE_EXTRA`
+3. Create 2 condition cards at `sourceNode.y + ROW_STEP + BRANCH_EXTRA`
+   - Left card at `cx - BRANCH_W/2`, right card at `cx + BRANCH_W/2`
+4. Add branch edges: `source → leftCond` (near-target), `source → rightCond` (near-target)
+5. Add merge edges: `leftCond → downstream` (near-source), `rightCond → downstream` (near-source)
+6. Remove old edge `source → downstream`
+
+New condition data: `{ title: 'Condition', desc: 'Please set', priority: N }`
+
+### State Management
+
+- `nodes` and `edges` are React state (`useState`) — updated on every insertion
+- `idCounter` is a ref starting above initial IDs to avoid collisions
+- Overlays are computed dynamically via `useMemo` from current nodes/edges
+- A module-level `_onPlusClick` callback connects node components to the canvas state handler
+
+### Overlay Recomputation
+
+After any insertion, overlays are recalculated by:
+1. Grouping edges by source → nodes with 2+ outgoing edges get an "Add Condition" overlay
+2. Grouping edges by target → nodes with 2+ incoming edges get a "merge +" overlay
+3. Overlay positions derived from current node positions
+
+---
+
+## 9. Color Reference
 
 | Token | Hex |
 |-------|-----|
