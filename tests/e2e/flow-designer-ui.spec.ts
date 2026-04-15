@@ -23,7 +23,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   }
 
   await expect(signInButton).toHaveCount(0, { timeout: 10000 });
-  await page.getByRole('button', { name: 'Flow Designer' }).click();
+  await page.locator('button', { hasText: 'Visual Workflow' }).click();
   await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 15000 });
   await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 15000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});

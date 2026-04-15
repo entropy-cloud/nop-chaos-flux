@@ -2,8 +2,9 @@ import { expect, test } from '@playwright/test';
 
 async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Flow Designer' }).click();
-  await page.waitForTimeout(3000);
+  await page.locator('button', { hasText: 'Visual Workflow' }).click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 15000 });
+  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
 test('diagnoses layout CSS: height chain from viewport to ReactFlow', async ({ page }) => {
@@ -245,8 +246,9 @@ test('dumps console warnings for React Flow error 004', async ({ page }) => {
 
 test('verifies canvas layout with Tailwind classes', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Flow Designer' }).click();
-  await page.waitForTimeout(3000);
+  await page.locator('button', { hasText: 'Visual Workflow' }).click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 15000 });
+  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 
   const checks = await page.evaluate(() => {
     const results: Record<string, any> = {};
