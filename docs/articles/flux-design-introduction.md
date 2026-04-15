@@ -122,12 +122,12 @@ interface ScopeRef {
 
 这种设计有几个关键优势：
 
-- **接口语义明确**：`readOwn()` 只返回当前层的数据，`read()` 返回完整合并后的数据。这两种操作的区别一目了然，不需要了解底层实现
-- **延迟合并**：只有在真正需要完整数据时才执行 `read()`，大部分时候通过 `get()` 访问单个变量，避免不必要的对象构造
+- **接口语义明确**：`readOwn()` 只返回当前层的数据，`readVisible()` 返回 prototype-backed 可见词法视图，`materializeVisible()` 才在需要 plain object 时显式展开。这几种操作的边界一目了然，不需要了解底层实现
+- **延迟展开**：只有在真正需要完整 plain object 时才执行 `materializeVisible()`，大部分时候通过 `get()` 或 `readVisible()` 访问单个变量，避免不必要的对象构造
 - **可测试性**：`ScopeRef` 是一个普通接口，可以独立构造和测试，不依赖 JS 原型链的隐式行为
 - **可追踪性**：`id` 和 `path` 字段让作用域在调试和日志中可以被精确定位
 
-使用模式也很清晰：`scope.get(path)` 是高频操作的快路径，`scope.read()` 是低频操作的兜底方案。
+使用模式也很清晰：`scope.get(path)` 是高频操作的快路径，`scope.readVisible()` 适合词法可见视图，`scope.materializeVisible()` 才是低频 plain-object 兜底方案。
 
 ## 5. 数据、动作、组件 — 三棵树，三种来源
 

@@ -45,7 +45,7 @@ The core rule is:
 
 Components that need one piece of state should not rerender for unrelated changes.
 
-Prefer selector-style reads over broad `scope.read()` access.
+Prefer selector-style reads over broad `scope.materializeVisible()` access.
 
 The runtime baseline carries this one step further for compiled node resolution:
 

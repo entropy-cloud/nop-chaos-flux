@@ -97,9 +97,10 @@ The preferred hot path is:
 - `scope.get(path)`
 - `scope.has(path)`
 - `scope.readOwn()`
-- `scope.read()` only when whole-object materialization is truly needed
+- `scope.readVisible()` for prototype-backed visible view (lexical scope chain, JS property access)
+- `scope.materializeVisible()` only when a plain-object snapshot of the full visible scope is truly needed (formula broad-access, debugger dump, serialization)
 
-Current implementation keeps `read()` as a cached merged-object fallback, but the main design path is lexical path lookup rather than rebuilding a full scope object for every evaluation.
+`read()` has been removed. All callers use either `readVisible()` (prototype-backed, zero allocation for hot paths) or `materializeVisible()` (eager spread, for boundaries that need a plain own-enumerable object).
 
 ### `flux-formula` is the expression base
 
@@ -290,7 +291,8 @@ interface ScopeRef {
   get(path: string): unknown;
   has(path: string): boolean;
   readOwn(): Record<string, any>;
-  read(): Record<string, any>;
+  readVisible(): Record<string, any>;
+  materializeVisible(): Record<string, any>;
   update(path: string, value: unknown): void;
 }
 ```
