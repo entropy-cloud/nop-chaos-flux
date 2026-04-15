@@ -25,6 +25,7 @@ import {
 } from '../field-utils';
 import { FieldHint, FieldLabel } from './shared';
 import { resolveFieldLabelContent } from '../field-utils';
+import { createProjectedScopeHelpers } from './projected-scope';
 
 function toArrayItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
@@ -121,13 +122,14 @@ function createItemScope(
       index,
       readOnly
     });
+    const { readSnapshot, store } = createProjectedScopeHelpers(parentScope, buildPayload);
 
     const itemScope: ScopeRef = {
       id: `${parentScope.id}:arr:${arrayPath}:${index}`,
       path: `${parentScope.path}.${itemPrefix}`,
       parent: parentScope.parent,
-      store: parentScope.store,
-      get value() { return this.read(); },
+      store,
+      get value() { return readSnapshot(); },
       get(path) {
         if (!path) return buildPayload();
         if (path === 'value') return parentScope.get(itemPrefix);
@@ -141,8 +143,9 @@ function createItemScope(
         if (path === 'readOnly') return true;
         return parentScope.has(`${itemPrefix}.${path}`);
       },
-      readOwn() { return buildPayload(); },
-      read() { return buildPayload(); },
+      readOwn() { return readSnapshot(); },
+      readVisible() { return readSnapshot(); },
+      materializeVisible() { return readSnapshot(); },
       update(path, value) {
         if (!path || path === 'value') {
           parentScope.update(itemPrefix, value);
@@ -156,23 +159,26 @@ function createItemScope(
     return itemScope;
   }
 
+  const buildPayload = () => ({
+    value: parentScope.get(itemPrefix),
+    index,
+    readOnly
+  });
+  const { readSnapshot, store } = createProjectedScopeHelpers(parentScope, buildPayload);
+
   const itemScope: ScopeRef = {
     id: `${parentScope.id}:arr:${arrayPath}:${index}`,
     path: `${parentScope.path}.${itemPrefix}`,
     parent: parentScope.parent,
-    store: parentScope.store,
+    store,
     get value() {
-      return this.read();
+      return readSnapshot();
     },
     readOwn() {
-      return {
-        value: parentScope.get(itemPrefix),
-        index,
-        readOnly
-      };
+      return readSnapshot();
     },
     get(path) {
-      if (!path) return this.read();
+      if (!path) return this.readVisible();
       if (path === 'index') return index;
       if (path === 'readOnly') return readOnly;
       if (path === 'value') return parentScope.get(itemPrefix);
@@ -184,12 +190,11 @@ function createItemScope(
       if (path === 'readOnly' || path === 'value') return true;
       return parentScope.has(`${itemPrefix}.${path}`);
     },
-    read() {
-      return {
-        value: parentScope.get(itemPrefix),
-        index,
-        readOnly
-      };
+    readVisible() {
+      return readSnapshot();
+    },
+    materializeVisible() {
+      return readSnapshot();
     },
     update(path, value) {
       if (!path) {

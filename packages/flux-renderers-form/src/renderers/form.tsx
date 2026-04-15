@@ -83,7 +83,7 @@ function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Reco
     parent: scope.parent,
     store: scope.store,
     get value() {
-      return this.read();
+      return this.readVisible();
     },
     get(path) {
       if (path === '__imports') {
@@ -102,9 +102,14 @@ function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Reco
     readOwn() {
       return scope.readOwn();
     },
-    read() {
+    readVisible() {
+      const overlay = Object.create(scope.readVisible()) as Record<string, any>;
+      overlay['__imports'] = importBindings;
+      return overlay;
+    },
+    materializeVisible() {
       return {
-        ...scope.read(),
+        ...scope.materializeVisible(),
         __imports: importBindings
       };
     },

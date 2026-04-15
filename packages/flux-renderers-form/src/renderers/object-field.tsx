@@ -16,6 +16,7 @@ import { cn } from '@nop-chaos/ui';
 import type { ObjectFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, resolveFieldLabelContent, useFieldPresentation } from '../field-utils';
 import { FieldHint, FieldLabel } from './shared';
+import { createProjectedScopeHelpers } from './projected-scope';
 
 function createPrefixedStore(parentStore: FormStoreApi, prefix: string): FormStoreApi {
   const prefixDot = `${prefix}.`;
@@ -202,14 +203,15 @@ function createObjectFieldChildScope(parentScope: ScopeRef, name: string, readOn
     value: parentScope.get(name),
     readOnly
   });
+  const { readSnapshot, store } = createProjectedScopeHelpers(parentScope, buildPayload);
 
   return {
     id: `${parentScope.id}:obj:${name}`,
     path: `${parentScope.path}.${name}`,
     parent: parentScope.parent,
-    store: parentScope.store,
+    store,
     get value() {
-      return this.read();
+      return readSnapshot();
     },
     get(path) {
       if (!path) return buildPayload();
@@ -225,10 +227,13 @@ function createObjectFieldChildScope(parentScope: ScopeRef, name: string, readOn
       return parentScope.has(`${prefix}${path}`);
     },
     readOwn() {
-      return buildPayload();
+      return readSnapshot();
     },
-    read() {
-      return buildPayload();
+    readVisible() {
+      return readSnapshot();
+    },
+    materializeVisible() {
+      return readSnapshot();
     },
     update(path, value) {
       if (!path || path === 'value') {

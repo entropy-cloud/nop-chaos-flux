@@ -5,6 +5,7 @@ import type {
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
+import { createProjectedScopeHelpers } from './projected-scope';
 
 export function createVariantStore(parentStore: FormStoreApi, prefix: string): FormStoreApi {
   const prefixDot = prefix ? `${prefix}.` : '';
@@ -174,14 +175,15 @@ export function createVariantScope(
     variant: activeVariant,
     readOnly
   });
+  const { readSnapshot, store } = createProjectedScopeHelpers(parentScope, buildPayload);
 
   return {
     id: `${parentScope.id}:variant:${name || 'root'}`,
     path: `${parentScope.path}.${name || '$value'}`,
     parent: parentScope.parent,
-    store: parentScope.store,
+    store,
     get value() {
-      return this.readOwn();
+      return readSnapshot();
     },
     get(path) {
       if (!path) {
@@ -222,10 +224,13 @@ export function createVariantScope(
       return false;
     },
     readOwn() {
-      return buildPayload();
+      return readSnapshot();
     },
-    read() {
-      return buildPayload();
+    readVisible() {
+      return readSnapshot();
+    },
+    materializeVisible() {
+      return readSnapshot();
     },
     update(path, value) {
       if (!path || path === 'value') {
