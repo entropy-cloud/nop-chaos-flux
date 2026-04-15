@@ -8,7 +8,7 @@ import type {
   RendererDefinition,
   ScopeRef
 } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
+import { getIn, createPathBinding, projectFieldStates } from '@nop-chaos/flux-core';
 import {
   useCurrentForm,
   useCurrentFormModelGeneration,
@@ -32,19 +32,12 @@ function toArrayItems(value: unknown): unknown[] {
 }
 
 function createItemStore(parentStore: FormStoreApi, itemFullPrefix: string, itemKind: 'scalar' | 'object'): FormStoreApi {
-  const prefixDot = `${itemFullPrefix}.`;
-  const scalarOwnerPath = itemKind === 'scalar' ? 'value' : undefined;
+  const binding = createPathBinding({
+    ownerRootPath: itemFullPrefix,
+    scalarValueAlias: itemKind === 'scalar' ? 'value' : undefined
+  });
   let lastParentState: FormStoreState | undefined;
   let lastProjectedState: FormStoreState | undefined;
-
-  function toAbsolute(relativePath: string): string {
-    if (itemKind === 'scalar') {
-      if (!relativePath || relativePath === 'value') return itemFullPrefix;
-      return `${itemFullPrefix}.${relativePath}`;
-    }
-    if (!relativePath) return itemFullPrefix;
-    return `${itemFullPrefix}.${relativePath}`;
-  }
 
   function projectState(state: FormStoreState): FormStoreState {
     if (state === lastParentState && lastProjectedState !== undefined) {
@@ -56,48 +49,10 @@ function createItemStore(parentStore: FormStoreApi, itemFullPrefix: string, item
       ? { value: rawItemValue ?? '' }
       : ((rawItemValue ?? {}) as Record<string, unknown>);
 
-    const errors: Record<string, any> = {};
-    for (const [key, val] of Object.entries(state.errors)) {
-      if (key.startsWith(prefixDot)) {
-        const relKey = key.slice(prefixDot.length);
-        errors[relKey] = (val as any[]).map((e: any) => ({
-          ...e,
-          path: typeof e.path === 'string' && e.path.startsWith(prefixDot) ? e.path.slice(prefixDot.length) : e.path,
-          ownerPath:
-            typeof e.ownerPath === 'string' && e.ownerPath.startsWith(prefixDot)
-              ? e.ownerPath.slice(prefixDot.length)
-              : scalarOwnerPath ?? e.ownerPath
-        }));
-      } else if (key === itemFullPrefix) {
-        const ownerKey = itemKind === 'scalar' ? 'value' : '';
-        errors[ownerKey] = (val as any[]).map((e: any) => ({
-          ...e,
-          path: typeof e.path === 'string' && e.path === itemFullPrefix ? ownerKey : e.path,
-          ownerPath: typeof e.ownerPath === 'string' && e.ownerPath === itemFullPrefix ? ownerKey : e.ownerPath
-        }));
-      }
-    }
-
-    const projectBoolMap = (map: Record<string, boolean>): Record<string, boolean> => {
-      const result: Record<string, boolean> = {};
-      for (const [key, val] of Object.entries(map)) {
-        if (key === itemFullPrefix && itemKind === 'scalar') {
-          result.value = val;
-        } else if (key.startsWith(prefixDot)) {
-          result[key.slice(prefixDot.length)] = val;
-        }
-      }
-      return result;
-    };
-
-    const projected = {
+    const projected: FormStoreState = {
       ...state,
       values: subObject as Record<string, any>,
-      errors,
-      validating: projectBoolMap(state.validating),
-      touched: projectBoolMap(state.touched),
-      dirty: projectBoolMap(state.dirty),
-      visited: projectBoolMap(state.visited)
+      fieldStates: projectFieldStates(state.fieldStates, binding)
     };
 
     lastParentState = state;
@@ -110,17 +65,23 @@ function createItemStore(parentStore: FormStoreApi, itemFullPrefix: string, item
     getState(): FormStoreState {
       return projectState(parentStore.getState());
     },
+    getFieldState(path) {
+      return parentStore.getFieldState(binding.toAbsolute(path));
+    },
+    setFieldState(path, state) {
+      parentStore.setFieldState(binding.toAbsolute(path), state);
+    },
     subscribe(listener) {
       return parentStore.subscribe(listener);
     },
     subscribeToPath(relativePath, listener) {
-      return parentStore.subscribeToPath(toAbsolute(relativePath), listener);
+      return parentStore.subscribeToPath(binding.toAbsolute(relativePath), listener);
     },
     subscribeToSubmitting(listener) {
       return parentStore.subscribeToSubmitting(listener);
     },
     getPathState(relativePath) {
-      return parentStore.getPathState(toAbsolute(relativePath));
+      return parentStore.getPathState(binding.toAbsolute(relativePath));
     }
   };
 }
@@ -414,14 +375,15 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       path: name,
       childPaths: scalarChildPaths,
       getValue() {
-        return parentForm.store.getState().values[name];
+        return parentForm.scope.get(name);
       },
       validateChild(path) {
         if (!isRequired) {
           return [];
         }
 
-        const rawValue = getIn(parentForm.store.getState().values, path);
+        const actualPath = path.endsWith('.value') ? path.slice(0, -6) : path;
+        const rawValue = parentForm.scope.get(actualPath);
         const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
 
         if (value !== '' && value !== undefined && value !== null) {
@@ -496,6 +458,9 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
     valueKind: 'array',
     getFieldPath(schema: BaseSchema) {
       return typeof schema.name === 'string' ? schema.name : undefined;
+    },
+    getChildFieldPathPrefix() {
+      return false;
     },
     collectRules() {
       return [];

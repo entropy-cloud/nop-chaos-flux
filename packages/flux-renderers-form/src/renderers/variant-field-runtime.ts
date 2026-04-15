@@ -4,35 +4,13 @@ import type {
   FormStoreState,
   ScopeRef
 } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
+import { getIn, createPathBinding, projectFieldStates } from '@nop-chaos/flux-core';
 import { createProjectedScopeHelpers } from './projected-scope';
 
 export function createVariantStore(parentStore: FormStoreApi, prefix: string): FormStoreApi {
-  const prefixDot = prefix ? `${prefix}.` : '';
+  const binding = createPathBinding({ ownerRootPath: prefix });
   let lastParentState: FormStoreState | undefined;
   let lastProjectedState: FormStoreState | undefined;
-
-  function toAbsolute(relativePath: string): string {
-    if (!relativePath) return prefix;
-    if (!prefix) return relativePath;
-    return `${prefix}.${relativePath}`;
-  }
-
-  function mapPath(path: string) {
-    if (!path) {
-      return '';
-    }
-
-    if (path === prefix) {
-      return '';
-    }
-
-    if (prefixDot && path.startsWith(prefixDot)) {
-      return path.slice(prefixDot.length);
-    }
-
-    return undefined;
-  }
 
   function projectState(state: FormStoreState): FormStoreState {
     if (state === lastParentState && lastProjectedState !== undefined) {
@@ -42,36 +20,12 @@ export function createVariantStore(parentStore: FormStoreApi, prefix: string): F
     const subValue = prefix ? getIn(state.values, prefix) : state.values;
     const values = (subValue !== undefined ? subValue : null) as FormStoreState['values'];
 
-    const errors: Record<string, any> = {};
-    for (const [key, val] of Object.entries(state.errors)) {
-      const mapped = mapPath(key);
-      if (mapped === undefined) continue;
-      errors[mapped] = (val as any[]).map((e: any) => ({
-        ...e,
-        path: mapPath(typeof e.path === 'string' ? e.path : '') ?? e.path,
-        ownerPath: mapPath(typeof e.ownerPath === 'string' ? e.ownerPath : '') ?? e.ownerPath
-      }));
-    }
-
-    const projectBoolMap = (map: Record<string, boolean>): Record<string, boolean> => {
-      const result: Record<string, boolean> = {};
-      for (const [key, val] of Object.entries(map)) {
-        const mapped = mapPath(key);
-        if (mapped !== undefined) {
-          result[mapped] = val;
-        }
-      }
-      return result;
-    };
+    const fieldStates = projectFieldStates(state.fieldStates, binding);
 
     const projected = {
       ...state,
       values,
-      errors,
-      validating: projectBoolMap(state.validating),
-      touched: projectBoolMap(state.touched),
-      dirty: projectBoolMap(state.dirty),
-      visited: projectBoolMap(state.visited)
+      fieldStates
     };
 
     lastParentState = state;
@@ -88,13 +42,13 @@ export function createVariantStore(parentStore: FormStoreApi, prefix: string): F
       return parentStore.subscribe(listener);
     },
     subscribeToPath(relativePath, listener) {
-      return parentStore.subscribeToPath(toAbsolute(relativePath), listener);
+      return parentStore.subscribeToPath(binding.toAbsolute(relativePath), listener);
     },
     subscribeToSubmitting(listener) {
       return parentStore.subscribeToSubmitting(listener);
     },
     getPathState(relativePath) {
-      return parentStore.getPathState(toAbsolute(relativePath));
+      return parentStore.getPathState(binding.toAbsolute(relativePath));
     }
   };
 }

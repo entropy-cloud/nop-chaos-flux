@@ -257,17 +257,31 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
 
     function publishStatus() {
       const state = ownedForm.store.getState();
-      const errorEntries = Object.values(state.errors);
-      const errorCount = errorEntries.reduce((acc: number, errs) => acc + errs.length, 0);
+      let errorCount = 0;
+      let validating = false;
+      let dirty = false;
+      let touched = false;
+      let visited = false;
+
+      for (const fieldState of Object.values(state.fieldStates)) {
+        if (fieldState.errors) {
+          errorCount += fieldState.errors.length;
+        }
+        if (fieldState.validating) validating = true;
+        if (fieldState.dirty) dirty = true;
+        if (fieldState.touched) touched = true;
+        if (fieldState.visited) visited = true;
+      }
+
       const hasErrors = errorCount > 0;
       const summary: FormStatusSummary = {
         id: ownedForm.id,
         name: ownedForm.name,
         submitting: state.submitting,
-        validating: Object.values(state.validating).some(Boolean),
-        dirty: Object.values(state.dirty).some(Boolean),
-        touched: Object.values(state.touched).some(Boolean),
-        visited: Object.values(state.visited).some(Boolean),
+        validating,
+        dirty,
+        touched,
+        visited,
         hasErrors,
         errorCount,
         valid: !hasErrors,

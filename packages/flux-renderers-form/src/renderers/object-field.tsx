@@ -8,7 +8,7 @@ import type {
   RendererDefinition,
   ScopeRef
 } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
+import { getIn, createPathBinding, projectFieldStates } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
 import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
@@ -19,14 +19,9 @@ import { FieldHint, FieldLabel } from './shared';
 import { createProjectedScopeHelpers } from './projected-scope';
 
 function createPrefixedStore(parentStore: FormStoreApi, prefix: string): FormStoreApi {
-  const prefixDot = `${prefix}.`;
+  const binding = createPathBinding({ ownerRootPath: prefix });
   let lastParentState: FormStoreState | undefined;
   let lastProjectedState: FormStoreState | undefined;
-
-  function toAbsolute(relativePath: string): string {
-    if (!relativePath) return prefix;
-    return `${prefix}.${relativePath}`;
-  }
 
   function projectState(state: FormStoreState): FormStoreState {
     if (state === lastParentState && lastProjectedState !== undefined) {
@@ -35,42 +30,10 @@ function createPrefixedStore(parentStore: FormStoreApi, prefix: string): FormSto
 
     const subObject = (getIn(state.values, prefix) ?? {}) as Record<string, unknown>;
 
-    const errors: Record<string, any> = {};
-    for (const [key, val] of Object.entries(state.errors)) {
-      if (key.startsWith(prefixDot)) {
-        const relKey = key.slice(prefixDot.length);
-        errors[relKey] = (val as any[]).map((e: any) => ({
-          ...e,
-          path: typeof e.path === 'string' && e.path.startsWith(prefixDot) ? e.path.slice(prefixDot.length) : e.path,
-          ownerPath: typeof e.ownerPath === 'string' && e.ownerPath.startsWith(prefixDot) ? e.ownerPath.slice(prefixDot.length) : e.ownerPath
-        }));
-      } else if (key === prefix) {
-        errors[''] = (val as any[]).map((e: any) => ({
-          ...e,
-          path: typeof e.path === 'string' && e.path === prefix ? '' : e.path,
-          ownerPath: typeof e.ownerPath === 'string' && e.ownerPath === prefix ? '' : e.ownerPath
-        }));
-      }
-    }
-
-    const projectBoolMap = (map: Record<string, boolean>): Record<string, boolean> => {
-      const result: Record<string, boolean> = {};
-      for (const [key, val] of Object.entries(map)) {
-        if (key.startsWith(prefixDot)) {
-          result[key.slice(prefixDot.length)] = val;
-        }
-      }
-      return result;
-    };
-
-    const projected = {
+    const projected: FormStoreState = {
       ...state,
       values: subObject as Record<string, any>,
-      errors,
-      validating: projectBoolMap(state.validating),
-      touched: projectBoolMap(state.touched),
-      dirty: projectBoolMap(state.dirty),
-      visited: projectBoolMap(state.visited)
+      fieldStates: projectFieldStates(state.fieldStates, binding)
     };
 
     lastParentState = state;
@@ -83,17 +46,23 @@ function createPrefixedStore(parentStore: FormStoreApi, prefix: string): FormSto
     getState(): FormStoreState {
       return projectState(parentStore.getState());
     },
+    getFieldState(path) {
+      return parentStore.getFieldState(binding.toAbsolute(path));
+    },
+    setFieldState(path, state) {
+      parentStore.setFieldState(binding.toAbsolute(path), state);
+    },
     subscribe(listener) {
       return parentStore.subscribe(listener);
     },
     subscribeToPath(relativePath, listener) {
-      return parentStore.subscribeToPath(toAbsolute(relativePath), listener);
+      return parentStore.subscribeToPath(binding.toAbsolute(relativePath), listener);
     },
     subscribeToSubmitting(listener) {
       return parentStore.subscribeToSubmitting(listener);
     },
     getPathState(relativePath) {
-      return parentStore.getPathState(toAbsolute(relativePath));
+      return parentStore.getPathState(binding.toAbsolute(relativePath));
     }
   };
 }
