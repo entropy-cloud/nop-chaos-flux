@@ -16,6 +16,7 @@
 - `category: 'layout'`
 - `sourcePackage: '@nop-chaos/flux-renderers-basic'`
 - 当前 field metadata: `title` 为 `value-or-region`，regions 为 `body`、`header`、`footer`
+- `type: 'page'` 是 schema-visible page shell renderer；根级 `PageRuntime` 由 host / `SchemaRenderer` 创建，不是由 `page` renderer 自己创建第二份 runtime
 
 ## 4. schema 设计
 

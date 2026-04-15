@@ -410,7 +410,7 @@ Priority order:
 ### Current implementation
 
 - `value-or-region` and `event` field kinds already exist in active code
-- dialog state is represented by `DialogState`
+- opened surface state is represented by `SurfaceEntry` under the shared `SurfaceRuntime` / `SurfaceStore` family
 - form runtime already supports validation state and first-class array operations
 - subtree validation already has graph-aware entry points
 

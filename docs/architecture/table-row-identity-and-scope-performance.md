@@ -247,7 +247,7 @@ Compatibility fallback order:
 
 1. `record.__rowKey`
 2. `record.id`
-3. development warning plus last-resort compatibility fallback only while migrating older data
+3. development warning plus last-resort compatibility fallback to the current source index only while migrating older data
 
 The compatibility fallback is not the normative editable architecture.
 
@@ -301,6 +301,18 @@ Rules:
 - if a piece of table-owned UI state should follow the logical row across reorder, filter, pagination, save, or rematerialization, key it by `rowKey`
 - use `sourceIndex` only for source-array addressing or other transient position semantics
 - duplicate or invalid `rowKey` values must disable safe reuse for that conflicting turn rather than aliasing two rows onto one row-state bucket
+- all row-following table UI state should resolve from the same normalized `rowKey` token used by row-scope caching and repeated instance identity; do not mix `rowKey` for some features and raw `record.id` or `sourceIndex` for others in the same table owner
+
+Implementation note:
+
+- `selectedRowKeys`
+- `expandedRowKeys`
+- row inline-edit markers
+- row-local draft markers
+- row-scope cache keys
+- repeated row `instanceKey`
+
+should all use the same normalized `rowKey` once owner qualification is applied where required.
 
 ## Row Scope Lifecycle
 

@@ -58,7 +58,7 @@ Role summary:
 
 - `ScopeRef` owns lexical lookup and current-scope updates
 - `ScopeStore` is the snapshot store abstraction behind scopes
-- `PageStoreApi` owns page data, dialogs, and refresh ticks
+- `PageStoreApi` owns page data and refresh ticks
 - `FormStoreApi` owns form-local values and validation state
 
 ## Expression Contracts
@@ -135,19 +135,23 @@ Role summary:
 - `RenderRegionHandle` gives components an easy way to render declared child regions
 - `ComponentHandle` may optionally expose `ref?: HTMLElement | null` alongside explicit imperative capabilities
 
-## Form, Page, And Dialog Contracts
+## Runtime Family Contracts
 
 Key contracts:
 
+- `RendererRuntime`
 - `FormRuntime`
 - `PageRuntime`
-- `DialogState`
+- `SurfaceRuntime`
+- `SurfaceEntry`
 
 Role summary:
 
+- `RendererRuntime` is the root runtime services container for one schema execution root
 - `FormRuntime` owns form-local validation, submission, and value updates
-- `PageRuntime` owns page-level behavior such as dialog orchestration
-- `DialogState` records the dialog config, scope, and compiled title/body fragments for an open dialog
+- `PageRuntime` owns page-level scope and page shell behavior such as refresh
+- `SurfaceRuntime` owns the shared dialog/drawer/sheet-style surface stack and open/close behavior
+- `SurfaceEntry` records one opened surface instance including its scope and render context
 
 ## Validation Contracts
 
@@ -181,7 +185,7 @@ Key contracts:
 Role summary:
 
 - `ActionSchema` is the declarative low-code action format
-- `ActionContext` carries runtime, scope, form, page, node, dialog, structured `event`, and `prevResult` context
+- `ActionContext` carries runtime, scope, form, page, surface, node, structured `event`, and `prevResult` context
 - `ActionResult` is the normalized runtime result of an action
 
 Current action system supports directionally:
@@ -230,6 +234,7 @@ For deeper design intent, continue with:
 
 - `docs/references/maintenance-checklist.md`
 - `docs/references/terminology.md`
+- `docs/references/runtime-and-renderer-faq.md`
 - `docs/architecture/flux-core.md`
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/form-validation.md`

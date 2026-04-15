@@ -575,6 +575,14 @@ Rules derived from this table:
 - `dialog` and `drawer` share one `SurfaceRuntime`/`SurfaceStore` model. `page` runtime/store is NOT the owner of dialog/drawer state.
 - `NodeRenderer` does not create or re-publish page, form, fragment data scope, or surface runtime. It only executes the node-local compiled closure and calls the concrete renderer.
 
+Common reading shortcut:
+
+- `RendererRuntime`, `PageRuntime`, and root `SurfaceRuntime` are host-created runtime boundaries
+- `type: 'page'` and `type: 'form'` are schema node types rendered inside that runtime environment
+- `FormRuntime` is a renderer-created runtime boundary introduced by the concrete `form` owner
+
+For a newcomer-oriented explanation of how these layers fit together, see `docs/references/runtime-and-renderer-faq.md`.
+
 ## Node Context Convergence
 
 React integration should converge on one ambient node carrier context for the currently executing node instance.

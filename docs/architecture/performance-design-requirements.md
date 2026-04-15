@@ -1,4 +1,4 @@
-﻿# Performance Design Requirements
+# Performance Design Requirements
 
 ## Purpose
 
@@ -72,6 +72,21 @@ This is a normative design requirements document.
 ## P6. Observability for performance-sensitive failures
 
 - Swallowed errors that can cause hidden degraded behavior are prohibited in runtime-critical paths.
+
+## P7. Field-state hooks must use per-path subscription, not full-store broadcast
+
+- Any React hook that reads per-field state (errors, touched, validating, dirty,
+  visited) MUST subscribe via `FormStoreApi.subscribeToPath(path, listener)`, not via
+  the full-store `subscribe` broadcast.
+- The broadcast subscription is reserved for form-level consumers (submit banner,
+  debugger, form-level error summary).
+- Projected stores (`createPrefixedStore`, `createItemStore`, `createVariantStore`)
+  must delegate `subscribeToPath` to the parent store with path translation; they must
+  not create an intermediate full-store broadcast and then filter by prefix.
+- Rationale: in a 1 000-field form, a single keystroke that updates one field must wake
+  only the hook(s) subscribed to that field — O(1) wake-ups, not O(n).
+- See `docs/plans/90-form-store-per-path-subscription-plan.md` for the implementation
+  plan.
 
 ## Recommended Patterns
 

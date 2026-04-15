@@ -117,6 +117,8 @@ type VariantMatch =
 - `variant-field` 默认没有独立 draft runtime
 - `variant-field` 默认不要求 `variant validate -> field validate -> variant transformOut -> field transformOut` 这类 submit-time owner pipeline
 - 如果某个 variant 的编辑器本身需要 staged edit，应在该 variant 内部组合 `detail-field` / `detail-view` 等 surface-backed owner
+- `variant-field` 默认不创建新的 `FormRuntime`
+- 推荐实现是复用父 `FormRuntime` / `ValidationScopeRuntime`，再为当前变体发布一个很窄的 projected scope payload，例如 `{ value, variant, readOnly }`
 
 ## Variant Switching
 
@@ -126,6 +128,12 @@ type VariantMatch =
 
 - 默认使用目标 variant 的 `initialValue` 重新创建 working value
 - 如需迁移旧值，显式通过目标 variant 的 `transformInAction` 完成
+
+Mounted-subtree rule:
+
+- 默认只挂载当前 active variant 的 viewer / content subtree
+- 不推荐为了“切换更快”长期同时挂载所有 variant subtree
+- hidden variant subtree 的内部运行态如果确实需要保留，应由更具体的 owner 明确声明，而不是作为 `variant-field` 的默认基线
 
 这样比“尝试自动保留旧值”更可预测。
 

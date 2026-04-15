@@ -44,6 +44,7 @@ interface ArrayFieldSchema extends BaseSchema {
   name: string;
   readOnly?: boolean;
   itemKind: 'scalar' | 'object';
+  itemKey?: string;
   item: SchemaInput;
   addable?: boolean;
   removable?: boolean;
@@ -91,6 +92,30 @@ interface ArrayFieldSchema extends BaseSchema {
 - 不要求作者写 `value.name` 或外层完整路径
 
 也就是说，`array-field(itemKind='object')` 的单个元素编辑器，在 authoring 心智上类似一个“匿名 `object-field` item editor”。
+
+## Object Item Identity
+
+当 `itemKind = 'object'` 时，推荐把“值位置”和“运行时 identity”分开。
+
+规则：
+
+1. 值路径和 validation path 仍按 index-addressed
+2. repeated item identity、item-local UI state、item scope cache 优先按稳定 `itemKey`
+3. 如果没有稳定 key，允许兼容退化到 index-based identity
+4. 但对象数组的 editable baseline 仍推荐显式提供 `itemKey`
+
+推荐解析顺序：
+
+1. `schema.itemKey`
+2. `record.__rowKey`
+3. `record.id`
+4. development warning plus last-resort compatibility fallback to the current index
+
+说明：
+
+- `itemKey` 解决的是 item continuity，不是值写回路径
+- add / remove / reorder 后，值和校验 remap 仍按 index 处理
+- 稳定 `itemKey` 主要用于避免对象数组 item subtree 在 reorder/remap 时不必要地 remount
 
 ## Lifecycle
 
@@ -230,6 +255,7 @@ interface ArrayFieldSchema extends BaseSchema {
 
 - schema 层保留一个统一名字 `array-field`
 - 通过 `itemKind` 显式区分 `scalar` / `object`
+- 对 `object` item，优先提供稳定 `itemKey`
 - 不必在作者层面再拆 `input-array` / `combo-field` 两套名字
 - 但实现层可以像 AMIS 一样，共享一个底层 repeated item editor 内核
 

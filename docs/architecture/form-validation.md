@@ -282,6 +282,17 @@ That includes:
 3. non-form filter scopes
 4. row-local editors when they own local validation
 
+Current implementation note:
+
+- the architecture baseline is wider than `FormRuntime`
+- current code already models validation around `ValidationScopeRuntime`
+- but the most mature concrete implementation path in live code is still `FormRuntime` and the shared owner-validation machinery assembled around it
+
+Readers should therefore distinguish:
+
+1. the target owner model, which is not form-only
+2. the current implementation center of gravity, which is still form-first in several concrete runtime paths
+
 ### FormRuntime
 
 `FormRuntime` is a specialization of `ValidationScopeRuntime`.

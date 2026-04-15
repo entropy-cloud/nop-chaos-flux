@@ -266,7 +266,7 @@ The following systems are important, but they are derived from the primitive set
 | `Action Algebra` | composes, branches, aggregates, and classifies `Capability` dispatch | `docs/architecture/action-algebra-formal-spec.md` |
 | `Operation Control` | shared timeout/cancel/retry/dedup substrate above transport and below consumer policy | `docs/architecture/api-data-source.md` |
 | `Semantic Lifecycle Entry` | node-owned business entry such as form submit, page enter, or dialog confirm | `docs/architecture/form-validation.md` |
-| `FormRuntime` / `PageRuntime` / dialog runtime | domain-shaped execution surfaces built on the primitive set | `docs/architecture/flux-core.md` |
+| `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | domain-shaped execution surfaces built on the primitive set | `docs/architecture/flux-core.md` |
 | debugger runtime and complex host wiring | inspection, tooling, and host protocol layers | `docs/architecture/debugger-runtime.md`, `docs/architecture/complex-control-host-protocol.md` |
 
 These systems may evolve without increasing the primitive count.

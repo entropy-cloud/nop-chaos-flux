@@ -74,7 +74,7 @@ They should:
 - keep local precedence only inside their bounded topic
 
 - rendering and slots: `scoped-render-slots.md`, `component-resolution.md`
-- value and field families: `value-adaptation-and-detail-field.md`, `variant-field.md`, `object-field.md`, `array-field.md`
+- value and field families: `value-adaptation-and-detail-field.md`, `variant-field.md`, `object-field.md`, `array-field.md`, `composite-value-owner-clean-slate.md`
 - UI and styling: `styling-system.md`, `renderer-markers-and-selectors.md`, `theme-compatibility.md`, `surface-owner.md`, `field-frame.md`
 - validation/performance/security/tooling specialties: `dependency-tracking.md`, `table-row-identity-and-scope-performance.md`, `schema-file-validator.md`, `debugger-runtime.md`, `playground-experience.md`, `security-design-requirements.md`, `performance-design-requirements.md`
 

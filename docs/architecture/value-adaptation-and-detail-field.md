@@ -63,6 +63,13 @@ value-oriented control 需要先区分两种 owner 模式：
 - `transformOutAction`
 - owner-managed confirm / cancel / commit
 
+Performance baseline:
+
+- `detail-field` / `detail-view` 打开时不应默认 deep clone 整个对象值
+- 推荐保留原始输入引用，并以 overlay / patch 形式维护 working draft
+- confirm 时再 materialize 最终 outbound value 或 patch
+- cancel 时直接丢弃 draft overlay
+
 而以下控件默认属于 inline live-edit owner：
 
 - `object-field`
@@ -112,6 +119,8 @@ value-oriented control 需要先区分两种 owner 模式：
 - `array-field`
 
 只需要在确实存在对应语义时复用共享 helper 的局部能力，不应为了“家族统一”强行引入 staged owner-submit。
+
+这条性能基线的目的不是限制 staged owner，而是避免把“有 confirm/cancel”误实现成“open 时深拷贝整对象”。
 
 The important architectural point is not the helper name. The important point is that value adaptation is an owner-level substrate shared by this renderer family, not ad hoc per-renderer imperative code.
 

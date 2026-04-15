@@ -161,6 +161,12 @@ It provides:
 
 It is the main bridge between compiled expressions and live runtime data.
 
+## `RendererRuntime`
+
+The top-level runtime services container for one `SchemaRenderer` execution root.
+
+It owns shared runtime infrastructure such as compile/evaluate/dispatch helpers and creates concrete runtime boundaries such as `PageRuntime`, `FormRuntime`, and `SurfaceRuntime`.
+
 ## `PageStoreApi`
 
 The state container API for page-level data.
@@ -168,8 +174,11 @@ The state container API for page-level data.
 It owns page-scoped state such as:
 
 - page data
-- dialog stack state
 - refresh ticks
+
+Dialog / drawer stack state does not belong to `PageStoreApi` in the current architecture baseline.
+
+That state belongs to the shared `SurfaceRuntime` / `SurfaceStore` family.
 
 ## `FormStoreApi`
 
@@ -187,7 +196,13 @@ It owns:
 
 The runtime container for page-level behavior.
 
-It coordinates page state, dialogs, refresh flows, and page-oriented action context.
+It coordinates page state, refresh flows, and page-oriented action context.
+
+It may trigger dialog / drawer actions, but it is not the owner of dialog / drawer stack state.
+
+That ownership belongs to the shared `SurfaceRuntime` / `SurfaceStore` family.
+
+It is a runtime owner boundary, not the same thing as schema `type: 'page'`.
 
 ## `FormRuntime`
 
@@ -202,11 +217,31 @@ It owns:
 - runtime field registration for complex controls
 - array operations
 
-## `DialogState`
+## `SurfaceRuntime`
 
-The runtime representation of an open dialog.
+The shared runtime owner for dialog/drawer/future-sheet style surface state.
 
-It records dialog identity and dialog-local rendering context, including compiled fragments and scope.
+It owns:
+
+- the opened surface entry stack
+- open/close behavior
+- surface-family runtime coordination
+
+It does not replace more specific owners inside a surface such as `FormRuntime`.
+
+## `SurfaceEntry`
+
+The runtime record for one opened surface instance inside `SurfaceRuntime`.
+
+It includes the surface identity, kind, local scope, and render context for that one opened entry.
+
+## `page` renderer
+
+The schema-visible renderer type `type: 'page'`.
+
+It is the page shell renderer used to render page regions such as `title`, `header`, `body`, and `footer`.
+
+It commonly appears together with `PageRuntime`, but it is not itself the `PageRuntime`.
 
 ## `ValidationRule`
 

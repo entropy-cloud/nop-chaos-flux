@@ -82,6 +82,8 @@ interface ObjectFieldSchema extends BaseSchema {
 - `object-field` 默认没有独立 draft object
 - `object-field` 默认没有 owner-level confirm / cancel
 - `object-field` 默认不要求 submit-time owner `validateValueAction` / `transformOutAction`
+- `object-field` 默认不创建新的 `FormRuntime`
+- 推荐实现是复用父 `FormRuntime` / `ValidationScopeRuntime`，并对 `name` 对应对象根做 path-prefix projection
 
 如果某个对象值真的需要“编辑中”和“已确认”两阶段语义，应优先使用 `detail-field` 或其它 surface-backed owner，而不是把 `object-field` 本身升级成 staged submit owner。
 
@@ -102,7 +104,13 @@ interface ObjectFieldSchema extends BaseSchema {
 }
 ```
 
-实现层可以内部把这些子字段映射到当前 object draft 上，但不应把这种实现细节暴露给 schema 作者。
+实现层可以内部把这些子字段映射到当前对象根路径上，但不应把这种实现细节暴露给 schema 作者。
+
+当前更推荐的实现方向不是“局部 draft object”，而是：
+
+1. 子字段名相对对象根
+2. 运行时把子字段路径前缀映射到父 form path
+3. 继续复用父 form 的 field registration、subtree validation、submit 流程
 
 ## Layout
 
