@@ -47,8 +47,8 @@ function isTemplateNodeArray(input: unknown): input is TemplateNode[] {
 export function useSurfaceScopeSnapshot(scope: ScopeRef) {
   useSyncExternalStoreWithSelector(
     scope.store?.subscribe ?? (() => () => undefined),
-    () => scope.read(),
-    () => scope.read(),
+    () => scope.readVisible(),
+    () => scope.readVisible(),
     (state: unknown) => state,
     Object.is
   );

@@ -197,7 +197,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
           const rawBindings = options?.bindings ?? (options?.data as Record<string, unknown> | undefined);
 
           if (params && params.length > 0 && rawBindings) {
-            const currentScopeData = renderScope.read?.() as Record<string, unknown> | undefined ?? {};
+            const currentScopeData = renderScope.readVisible?.() as Record<string, unknown> | undefined ?? {};
             const outerSlotFrame = readSlotFrame(currentScopeData);
             const slotFrame = buildSlotFrame(rawBindings, outerSlotFrame);
             return (
