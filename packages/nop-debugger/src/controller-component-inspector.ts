@@ -55,7 +55,7 @@ export function buildInspectResult(
 
   if (debugData?.scope) {
     result.scopeChain = buildScopeChain(debugData.scope);
-    result.scopeData = debugData.scope.read();
+    result.scopeData = debugData.scope.materializeVisible();
   }
 
   result.metaSummary = pickRecord(debugData?.resolvedMeta as Record<string, unknown> | undefined, ['id', 'name', 'label', 'title', 'className', 'visible', 'hidden', 'disabled', 'testid', 'cid']);

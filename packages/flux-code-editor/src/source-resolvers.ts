@@ -30,7 +30,7 @@ export function useResolvedVariables(
     if (!raw) return [];
     if (!isVariableSourceRef(raw)) return raw;
     if (raw.source === 'scope') {
-      const data = raw.scopePath ? scope.get(raw.scopePath) : scope.read();
+      const data = raw.scopePath ? scope.get(raw.scopePath) : scope.readVisible();
       const items = getDataAtPath(data, raw.dataPath);
       return Array.isArray(items) ? (items as VariableItem[]) : [];
     }
@@ -98,7 +98,7 @@ export function useResolvedTables(
     if (!raw) return [];
     if (!isSQLSchemaSourceRef(raw)) return raw;
     if (raw.source === 'scope') {
-      const data = raw.scopePath ? scope.get(raw.scopePath) : scope.read();
+      const data = raw.scopePath ? scope.get(raw.scopePath) : scope.readVisible();
       const items = getDataAtPath(data, raw.dataPath);
       return Array.isArray(items) ? (items as TableSchema[]) : [];
     }
@@ -135,7 +135,7 @@ export function useResolvedSQLVariables(
     if (!raw) return [];
     if (!isVariableSourceRef(raw)) return raw;
     if (raw.source === 'scope') {
-      const data = raw.scopePath ? scope.get(raw.scopePath) : scope.read();
+      const data = raw.scopePath ? scope.get(raw.scopePath) : scope.readVisible();
       const items = getDataAtPath(data, raw.dataPath);
       return Array.isArray(items) ? (items as VariableItem[]) : [];
     }
