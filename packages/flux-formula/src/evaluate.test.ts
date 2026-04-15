@@ -32,7 +32,8 @@ function makeScope(data: Record<string, any>) {
       return this.get(path) !== undefined;
     },
     readOwn: () => data,
-    read: () => data,
+    readVisible: () => data,
+    materializeVisible: () => data,
     update: () => undefined,
     merge: () => {}
   };
