@@ -3,11 +3,7 @@ import type { CompiledFormValidationModel, FormErrorQuery, FormFieldPresentation
 
 export const EMPTY_FORM_STORE_STATE: FormStoreState = {
   values: {},
-  errors: {},
-  validating: {},
-  touched: {},
-  dirty: {},
-  visited: {},
+  fieldStates: {},
   submitting: false
 };
 
@@ -48,12 +44,14 @@ export function selectCurrentFormErrors(state: FormStoreState, query?: FormError
   const matches: ValidationError[] = [];
 
   if (query?.path) {
-    const errors = state.errors[query.path] ?? [];
+    const fieldState = state.fieldStates[query.path];
+    const errors = fieldState?.errors ?? [];
     return errors.filter((error) => matchesFormErrorQuery(error, query));
   }
 
-  for (const errors of Object.values(state.errors)) {
-    for (const error of errors) {
+  for (const fieldState of Object.values(state.fieldStates)) {
+    if (!fieldState.errors) continue;
+    for (const error of fieldState.errors) {
       if (matchesFormErrorQuery(error, query)) {
         matches.push(error);
       }
@@ -68,12 +66,13 @@ export function selectCurrentFormFieldState(
   path: string,
   query?: FormErrorQuery
 ): FormFieldStateSnapshot {
+  const fieldState = state.fieldStates[path];
   return {
     error: selectCurrentFormErrors(state, query ?? { path })[0],
-    validating: state.validating[path] === true,
-    touched: state.touched[path] === true,
-    dirty: state.dirty[path] === true,
-    visited: state.visited[path] === true,
+    validating: fieldState?.validating === true,
+    touched: fieldState?.touched === true,
+    dirty: fieldState?.dirty === true,
+    visited: fieldState?.visited === true,
     submitting: state.submitting
   };
 }
@@ -135,4 +134,3 @@ export function selectCurrentFormFieldPresentation(
     readOnly
   };
 }
-

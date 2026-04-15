@@ -1,5 +1,4 @@
-import { useCallback, useContext, useMemo, useRef } from 'react';
-import { useSyncExternalStore } from 'use-sync-external-store/shim';
+import { useCallback, useContext, useMemo } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
@@ -28,7 +27,7 @@ import {
   useRequiredContext
 } from './contexts';
 import { createHelpers } from './helpers';
-import { EMPTY_FORM_STORE_STATE, EMPTY_FORM_FIELD_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
+import { EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
 
 function shallowEqualFormFieldState(
   a: FormFieldStateSnapshot,
@@ -152,12 +151,18 @@ export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] 
   const form = useCurrentForm();
   const subscribe = form?.store.subscribe ?? (() => () => undefined);
   const getSnapshot = () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE;
-  const queryRef = useRef(query);
-  queryRef.current = query;
+  const stablePath = query?.path;
+  const stableOwnerPath = query?.ownerPath;
+  const stableRule = query?.rule;
+  const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
   const selector = useCallback(
-    (state: FormStoreState) => selectCurrentFormErrors(state, queryRef.current),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [form]
+    (state: FormStoreState): ValidationError[] => {
+      const q: FormErrorQuery | undefined = stablePath || stableOwnerPath || stableRule || sourceKindsKey
+        ? { path: stablePath, ownerPath: stableOwnerPath, rule: stableRule, sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined }
+        : undefined;
+      return selectCurrentFormErrors(state, q);
+    },
+    [stablePath, stableOwnerPath, stableRule, sourceKindsKey]
   );
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, shallowEqualArrays);
@@ -167,12 +172,16 @@ export function useCurrentFormError(query: FormErrorQuery): ValidationError | un
   const form = useCurrentForm();
   const subscribe = form?.store.subscribe ?? (() => () => undefined);
   const getSnapshot = () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE;
-  const queryRef = useRef(query);
-  queryRef.current = query;
+  const stablePath = query?.path;
+  const stableOwnerPath = query?.ownerPath;
+  const stableRule = query?.rule;
+  const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
   const selector = useCallback(
-    (state: FormStoreState) => selectCurrentFormErrors(state, queryRef.current)[0],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [form]
+    (state: FormStoreState): ValidationError | undefined => {
+      const q: FormErrorQuery = { path: stablePath, ownerPath: stableOwnerPath, rule: stableRule, sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined };
+      return selectCurrentFormErrors(state, q)[0];
+    },
+    [stablePath, stableOwnerPath, stableRule, sourceKindsKey]
   );
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, Object.is);
@@ -181,9 +190,10 @@ export function useCurrentFormError(query: FormErrorQuery): ValidationError | un
 export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot {
   const form = useCurrentForm();
   const store: FormStoreApi | undefined = form?.store;
-  const queryRef = useRef(query);
-  queryRef.current = query;
-  const cachedRef = useRef<FormFieldStateSnapshot>(EMPTY_FORM_FIELD_STATE);
+  const stablePath = query?.path;
+  const stableOwnerPath = query?.ownerPath;
+  const stableRule = query?.rule;
+  const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
 
   const subscribe = useCallback(
     (listener: () => void) => {
@@ -199,20 +209,21 @@ export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): 
   );
 
   const getSnapshot = useCallback(
-    (): FormFieldStateSnapshot => {
-      if (!store) return EMPTY_FORM_FIELD_STATE;
-      const state = store.getState();
-      const next = selectCurrentFormFieldState(state, path, queryRef.current);
-      if (shallowEqualFormFieldState(next, cachedRef.current)) {
-        return cachedRef.current;
-      }
-      cachedRef.current = next;
-      return next;
-    },
-    [store, path]
+    (): FormStoreState => (store ? store.getState() : EMPTY_FORM_STORE_STATE),
+    [store]
   );
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const selector = useCallback(
+    (state: FormStoreState): FormFieldStateSnapshot => {
+      const q: FormErrorQuery | undefined = stablePath || stableOwnerPath || stableRule || sourceKindsKey
+        ? { path: stablePath, ownerPath: stableOwnerPath, rule: stableRule, sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined }
+        : undefined;
+      return selectCurrentFormFieldState(state, path, q);
+    },
+    [path, stablePath, stableOwnerPath, stableRule, sourceKindsKey]
+  );
+
+  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, shallowEqualFormFieldState);
 }
 
 export function useValidationNodeState(path: string): FormFieldStateSnapshot {
@@ -222,7 +233,6 @@ export function useValidationNodeState(path: string): FormFieldStateSnapshot {
 export function useFieldError(path: string): ValidationError | undefined {
   const form = useCurrentForm();
   const store: FormStoreApi | undefined = form?.store;
-  const cachedRef = useRef<ValidationError | undefined>(undefined);
 
   const subscribe = useCallback(
     (listener: () => void) => {
@@ -238,21 +248,22 @@ export function useFieldError(path: string): ValidationError | undefined {
   );
 
   const getSnapshot = useCallback(
-    (): ValidationError | undefined => {
-      if (!store) return undefined;
-      const state = store.getState();
-      const errors = state.errors[path];
-      const next = errors?.find((e) =>
-        !e.sourceKind || e.sourceKind === 'field' || e.sourceKind === 'runtime-registration'
-      );
-      if (next === cachedRef.current) return cachedRef.current;
-      cachedRef.current = next;
-      return next;
-    },
-    [store, path]
+    (): FormStoreState => (store ? store.getState() : EMPTY_FORM_STORE_STATE),
+    [store]
   );
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const selector = useCallback(
+    (state: FormStoreState): ValidationError | undefined => {
+      const fieldState = state.fieldStates[path];
+      const errors = fieldState?.errors;
+      return errors?.find((e) =>
+        !e.sourceKind || e.sourceKind === 'field' || e.sourceKind === 'runtime-registration'
+      );
+    },
+    [path]
+  );
+
+  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, Object.is);
 }
 
 export function useOwnedFieldState(path: string): FormFieldStateSnapshot {

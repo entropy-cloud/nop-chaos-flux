@@ -37,8 +37,8 @@ describe('FieldFrame', () => {
         subscribe: () => () => undefined,
         getState: () => ({
           ...EMPTY_FORM_STORE_STATE,
-          errors: {
-            '': [{ path: '', rule: 'form', message: 'Root error', sourceKind: 'form' }]
+          fieldStates: {
+            '': { errors: [{ path: '', rule: 'form', message: 'Root error', sourceKind: 'form' }] }
           }
         })
       },
@@ -58,11 +58,13 @@ describe('FieldFrame', () => {
   it('keeps the root marker semantic-only and publishes presence-only field state attributes', () => {
     const state = {
       ...EMPTY_FORM_STORE_STATE,
-      touched: { email: true },
-      dirty: { email: true },
-      visited: { email: true },
-      errors: {
-        email: [{ path: 'email', rule: 'required', message: 'Email is required', sourceKind: 'field' }]
+      fieldStates: {
+        email: {
+          touched: true,
+          dirty: true,
+          visited: true,
+          errors: [{ path: 'email', rule: 'required', message: 'Email is required', sourceKind: 'field' }]
+        }
       }
     };
     const form = {
