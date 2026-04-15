@@ -166,6 +166,7 @@ export function withEvaluationBindings(scope: ScopeRef, bindings: Record<string,
     return scope;
   }
 
+  let visibleView: Record<string, unknown> | undefined;
   let materialized: Record<string, unknown> | undefined;
 
   return {
@@ -174,7 +175,7 @@ export function withEvaluationBindings(scope: ScopeRef, bindings: Record<string,
     parent: scope.parent,
     store: scope.store,
     get value() {
-      return this.read();
+      return this.readVisible();
     },
     get(path) {
       if (hasBindingRoot(bindings, path)) {
@@ -191,15 +192,19 @@ export function withEvaluationBindings(scope: ScopeRef, bindings: Record<string,
     readOwn() {
       return scope.readOwn();
     },
-    read() {
-      if (!materialized) {
-        materialized = {
-          ...scope.read(),
-          ...bindings
-        };
+    readVisible() {
+      if (!visibleView) {
+        visibleView = Object.assign(Object.create(scope.readVisible()) as Record<string, unknown>, bindings);
       }
 
-      return materialized;
+      return visibleView as Record<string, any>;
+    },
+    materializeVisible() {
+      if (!materialized) {
+        materialized = { ...scope.materializeVisible(), ...bindings };
+      }
+
+      return materialized as Record<string, any>;
     },
     update(path, value) {
       scope.update(path, value);

@@ -68,7 +68,7 @@ export function createFormScopeWithBinding(input: {
 
   Object.defineProperty(formScopeWithBinding, 'value', {
     get() {
-      return this.read();
+      return this.readVisible();
     },
     configurable: true,
     enumerable: false

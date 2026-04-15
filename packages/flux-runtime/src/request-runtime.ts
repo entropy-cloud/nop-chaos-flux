@@ -96,7 +96,7 @@ export function extractScopeData(scope: ScopeRef, includeScope: '*' | string[] |
   }
 
   if (includeScope === '*') {
-    return scope.read();
+    return scope.readOwn();
   }
 
   const result: Record<string, unknown> = {};

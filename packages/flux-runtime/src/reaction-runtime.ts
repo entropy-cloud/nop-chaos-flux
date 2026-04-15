@@ -123,7 +123,7 @@ export function registerReaction(input: {
 
     const whenAllowed = compiledWhen
       ? compiledWhen.exec({
-          scope: input.scope.read(),
+          scope: input.scope.readVisible(),
           value: nextValue,
           prev,
           changed,

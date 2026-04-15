@@ -1,4 +1,5 @@
 import type { ScopeRef } from '@nop-chaos/flux-core';
+import { createProjectedScopeStore } from './projected-scope-store';
 
 export function publishOwnerStatus<TSummary>(scope: ScopeRef | undefined, statusPath: string | undefined, summary: TSummary): void {
   if (!scope || !statusPath) {
@@ -9,8 +10,15 @@ export function publishOwnerStatus<TSummary>(scope: ScopeRef | undefined, status
 }
 
 export function createReadonlyScopeBinding<TSummary>(scope: ScopeRef, bindingKey: string, getSummary: () => TSummary): ScopeRef {
+  const buildOwnSnapshot = () => ({
+    ...scope.readOwn(),
+    [bindingKey]: getSummary()
+  });
+  const { readSnapshot, store } = createProjectedScopeStore(scope, buildOwnSnapshot);
+
   return {
     ...scope,
+    store,
     get(path) {
       if (path === bindingKey) {
         return getSummary();
@@ -26,14 +34,16 @@ export function createReadonlyScopeBinding<TSummary>(scope: ScopeRef, bindingKey
       return scope.has(path);
     },
     readOwn() {
-      return {
-        ...scope.readOwn(),
-        [bindingKey]: getSummary()
-      };
+      return readSnapshot();
     },
-    read() {
+    readVisible() {
+      const overlay = Object.create(scope.readVisible()) as Record<string, any>;
+      overlay[bindingKey] = getSummary();
+      return overlay;
+    },
+    materializeVisible() {
       return {
-        ...scope.read(),
+        ...scope.materializeVisible(),
         [bindingKey]: getSummary()
       };
     }

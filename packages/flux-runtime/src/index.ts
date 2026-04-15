@@ -52,6 +52,7 @@ export { createApiCacheStore, resolveCacheKey } from './api-cache';
 export { createAbortScope, withRetry, withTimeout, type RetryOptions } from './operation-control';
 export { scopeChangeHitsDependencies } from './scope-change';
 export { publishOwnerStatus, createReadonlyScopeBinding } from './status-owner';
+export { createProjectedScopeStore } from './projected-scope-store';
 export { isOwnerCompatible, type OwnerBoundaryKind } from './form-runtime-lifecycle';
 export {
   executeApiObject,
@@ -252,7 +253,7 @@ export function createRendererRuntime(input: {
         parent: hostScope.parent,
         store: hostScope.store,
         get value() {
-          return this.read();
+          return this.readVisible();
         },
         get(targetPath: string) {
           return hostScope.get(targetPath);
@@ -263,8 +264,11 @@ export function createRendererRuntime(input: {
         readOwn() {
           return hostScope.readOwn();
         },
-        read() {
-          return hostScope.read();
+        readVisible() {
+          return hostScope.readVisible();
+        },
+        materializeVisible() {
+          return hostScope.materializeVisible();
         },
         update(targetPath: string, value: unknown) {
           const rootKey = targetPath.split('.')[0];
