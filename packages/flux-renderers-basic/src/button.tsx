@@ -3,15 +3,18 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { Button } from '@nop-chaos/ui';
 import type { ButtonSchema } from './schemas';
 
+type ButtonVariant = NonNullable<ButtonSchema['variant']>;
+type ButtonSize = NonNullable<ButtonSchema['size']>;
+
 export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
   const label = props.props.label;
-  const variant = (props.props.variant ?? 'default') as ButtonSchema['variant'];
-  const size = (props.props.size ?? 'default') as ButtonSchema['size'];
+  const variant = (props.props.variant ?? 'default') as ButtonVariant;
+  const size = (props.props.size ?? 'default') as ButtonSize;
 
   return (
     <Button
-      variant={variant as any}
-      size={size as any}
+      variant={variant}
+      size={size}
       className={props.meta.className}
       type="button"
       data-testid={props.meta.testid || undefined}
