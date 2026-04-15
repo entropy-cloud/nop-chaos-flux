@@ -141,11 +141,3 @@ export interface NodeRefRegistry {
   resolveCid(cid: number): NodeInstance | undefined;
   inspectCid(cid: number): InspectResult;
 }
-
-export function normalizeInstancePath(instancePath?: readonly InstanceFrame[] | null): readonly InstanceFrame[] | undefined {
-  if (!instancePath || instancePath.length === 0) {
-    return undefined;
-  }
-
-  return instancePath;
-}

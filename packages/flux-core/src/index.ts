@@ -23,6 +23,7 @@ export type { PathBindingContext, PathBindingService } from './utils/path-bindin
 export { createPathBinding, projectBooleanMap, projectFieldStates } from './utils/path-binding';
 
 export { validationErrorsEqual } from './utils/validation-utils';
+export { normalizeInstancePath } from './utils/instance-path';
 
 export type {
   DomainBridge,
