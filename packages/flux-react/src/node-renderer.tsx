@@ -1,5 +1,6 @@
 import { useContext, useEffect, useMemo, memo } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
+import { NodeErrorBoundary } from './node-error-boundary';
 import type {
   ActionScope,
   ComponentHandleRegistry,
@@ -364,12 +365,14 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   }
 
   return (
-    <NodeRendererResolved
-      node={props.node}
-      scope={renderScope}
-      actionScope={activeActionScope}
-      componentRegistry={activeComponentRegistry}
-      mountedCid={mountedCid}
-    />
+    <NodeErrorBoundary nodeId={props.node.id}>
+      <NodeRendererResolved
+        node={props.node}
+        scope={renderScope}
+        actionScope={activeActionScope}
+        componentRegistry={activeComponentRegistry}
+        mountedCid={mountedCid}
+      />
+    </NodeErrorBoundary>
   );
 });
