@@ -87,7 +87,7 @@ describe('applyChangesAndRevalidate deferred-aggregate policy', () => {
     unsubscribe();
 
     expect(commits).toBeLessThanOrEqual(2);
-    expect(form.store.getState().errors.contacts).toBeUndefined();
+    expect(form.store.getState().fieldStates.contacts?.errors).toBeUndefined();
   });
 
   it('triggers full validateForm when reason is blur — uniqueBy aggregate error is published', async () => {
@@ -124,7 +124,7 @@ describe('applyChangesAndRevalidate deferred-aggregate policy', () => {
     }
 
     expect(validateFormCalls).toBe(0);
-    expect(form.store.getState().errors.contacts).toBeUndefined();
+    expect(form.store.getState().fieldStates.contacts?.errors).toBeUndefined();
 
     const blurResult = await form.applyChangesAndRevalidate({
       writes: { 'contacts.0.email': 'a@example.com' },

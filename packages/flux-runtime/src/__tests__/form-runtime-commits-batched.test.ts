@@ -73,8 +73,8 @@ describe('FormRuntime performance-oriented behavior', () => {
     unsubscribe();
 
     expect(result.ok).toBe(true);
-    expect(form.store.getState().touched.name).toBe(true);
-    expect(form.store.getState().touched.email).toBe(true);
+    expect(form.store.getState().fieldStates.name?.touched).toBe(true);
+    expect(form.store.getState().fieldStates.email?.touched).toBe(true);
     expect(commits).toBeLessThanOrEqual(4);
   });
 
@@ -178,10 +178,10 @@ describe('FormRuntime performance-oriented behavior', () => {
 
     const state = form.store.getState();
     expect(state.values).toMatchObject({ name: 'Alice', role: 'admin' });
-    expect(state.errors.name).toBeUndefined();
-    expect(state.validating.name).toBeUndefined();
-    expect(state.dirty.name).toBe(true);
-    expect(state.dirty.role).toBe(true);
+    expect(state.fieldStates.name?.errors).toBeUndefined();
+    expect(state.fieldStates.name?.validating).toBeUndefined();
+    expect(state.fieldStates.name?.dirty).toBe(true);
+    expect(state.fieldStates.role?.dirty).toBe(true);
     expect(commits).toBeLessThanOrEqual(1);
   });
 });

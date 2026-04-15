@@ -132,7 +132,7 @@ describe('createRendererRuntime', () => {
     const batchedSnapshot = form.store.getState();
 
     expect(chainedSnapshot.values).toEqual(batchedSnapshot.values);
-    expect(chainedSnapshot.errors).toEqual(batchedSnapshot.errors);
+    expect(chainedSnapshot.fieldStates).toEqual(batchedSnapshot.fieldStates);
     expect(batchedCommits).toBeLessThan(chainedCommits);
   });
 });

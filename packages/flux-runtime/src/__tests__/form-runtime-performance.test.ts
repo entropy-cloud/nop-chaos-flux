@@ -81,12 +81,12 @@ describe('FormRuntime performance-oriented behavior', () => {
     });
 
     const promise = form.validateField('name');
-    expect(form.store.getState().validating.name).toBeUndefined();
+    expect(form.store.getState().fieldStates.name?.validating).toBeUndefined();
 
     await vi.advanceTimersByTimeAsync(5);
     await promise;
 
-    expect(form.store.getState().validating.name).toBeUndefined();
+    expect(form.store.getState().fieldStates.name?.validating).toBeUndefined();
     resolveRule?.();
   });
 
@@ -111,15 +111,15 @@ describe('FormRuntime performance-oriented behavior', () => {
 
     const promise = form.validateField('name');
     await vi.advanceTimersByTimeAsync(19);
-    expect(form.store.getState().validating.name).toBeUndefined();
+    expect(form.store.getState().fieldStates.name?.validating).toBeUndefined();
 
     await vi.advanceTimersByTimeAsync(1);
-    expect(form.store.getState().validating.name).toBe(true);
+    expect(form.store.getState().fieldStates.name?.validating).toBe(true);
 
     await vi.advanceTimersByTimeAsync(30);
     await promise;
 
-    expect(form.store.getState().validating.name).toBeUndefined();
+    expect(form.store.getState().fieldStates.name?.validating).toBeUndefined();
   });
 
   it('does not show submitting for short submit when submittingDelay is longer', async () => {
@@ -293,9 +293,9 @@ describe('FormRuntime performance-oriented behavior', () => {
 
     const state = form.store.getState();
     expect(state.values.name).toBe('Alice');
-    expect(state.errors.name).toBeUndefined();
-    expect(state.dirty.name).toBe(true);
-    expect(state.validating.name).toBeUndefined();
+    expect(state.fieldStates.name?.errors).toBeUndefined();
+    expect(state.fieldStates.name?.dirty).toBe(true);
+    expect(state.fieldStates.name?.validating).toBeUndefined();
   });
 
   it('keeps array mutation state consistent after removeValue remaps nested paths', () => {
@@ -323,11 +323,11 @@ describe('FormRuntime performance-oriented behavior', () => {
 
     const state = form.store.getState();
     expect(state.values.list).toEqual([{ name: 'B' }]);
-    expect(state.errors['list.0.name']?.[0]?.path).toBe('list.0.name');
-    expect(state.touched['list.0.name']).toBe(true);
-    expect(state.dirty['list.0.name']).toBe(true);
-    expect(state.visited['list.0.name']).toBe(true);
-    expect(state.validating['list.0.name']).toBe(true);
+    expect(state.fieldStates['list.0.name']?.errors?.[0]?.path).toBe('list.0.name');
+    expect(state.fieldStates['list.0.name']?.touched).toBe(true);
+    expect(state.fieldStates['list.0.name']?.dirty).toBe(true);
+    expect(state.fieldStates['list.0.name']?.visited).toBe(true);
+    expect(state.fieldStates['list.0.name']?.validating).toBe(true);
   });
 
   it('coalesces array removeValue state migration into a bounded number of commits', () => {
@@ -435,8 +435,8 @@ describe('FormRuntime performance-oriented behavior', () => {
     unsubscribe();
 
     expect(result.ok).toBe(false);
-    expect(form.store.getState().errors.name?.[0]?.message).toBe('Remote invalid');
-    expect(form.store.getState().validating.name).toBeUndefined();
+    expect(form.store.getState().fieldStates.name?.errors?.[0]?.message).toBe('Remote invalid');
+    expect(form.store.getState().fieldStates.name?.validating).toBeUndefined();
     expect(commits).toBeLessThanOrEqual(2);
   });
 
@@ -465,7 +465,7 @@ describe('FormRuntime performance-oriented behavior', () => {
     unsubscribe();
 
     expect(result.ok).toBe(false);
-    expect(form.store.getState().errors.email?.[0]?.message).toBe('Invalid email');
+    expect(form.store.getState().fieldStates.email?.errors?.[0]?.message).toBe('Invalid email');
     expect(commits).toBeLessThanOrEqual(1);
   });
 

@@ -70,17 +70,18 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     form.store.setPathErrors('field.a', [err('field.a', 'Error A')]);
     form.store.setPathErrors('field.b', [err('field.b', 'Error B')]);
 
-    expect(Object.keys(form.store.getState().errors)).toEqual(['field.a', 'field.b']);
+    const fieldStates = form.store.getState().fieldStates;
+    expect(Object.keys(fieldStates).filter(k => fieldStates[k]?.errors)).toEqual(['field.a', 'field.b']);
 
     // Run validateForm â€” merge should preserve field.a and field.b
     await form.validateForm();
 
-    const finalErrors = form.store.getState().errors;
+    const finalFieldStates = form.store.getState().fieldStates;
 
     // FIXED: all errors coexist
-    expect(finalErrors['name']).toBeDefined();
-    expect(finalErrors['field.a']).toEqual([err('field.a', 'Error A')]);
-    expect(finalErrors['field.b']).toEqual([err('field.b', 'Error B')]);
+    expect(finalFieldStates['name']?.errors).toBeDefined();
+    expect(finalFieldStates['field.a']?.errors).toEqual([err('field.a', 'Error A')]);
+    expect(finalFieldStates['field.b']?.errors).toEqual([err('field.b', 'Error B')]);
   });
 
   it('should preserve errors set by setPathErrors within the validateForm loop (sequential await)', async () => {
@@ -126,7 +127,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     expect(result.fieldErrors['name']).toEqual([err('name', 'Name is required')]);
 
     // Store errors should match the returned result
-    expect(form.store.getState().errors['name']).toEqual([err('name', 'Name is required')]);
+    expect(form.store.getState().fieldStates['name']?.errors).toEqual([err('name', 'Name is required')]);
   });
 
   it('should collect errors for registered fields validated during the loop', async () => {
@@ -179,10 +180,10 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     expect(result.fieldErrors['email']).toHaveLength(1);
     expect(result.fieldErrors['email'][0].message).toBe('Email is invalid');
 
-    const storeErrors = form.store.getState().errors;
-    expect(storeErrors['name']).toEqual([err('name', 'Name is required')]);
-    expect(storeErrors['email']).toHaveLength(1);
-    expect(storeErrors['email'][0].message).toBe('Email is invalid');
+    const storeFieldStates = form.store.getState().fieldStates;
+    expect(storeFieldStates['name']?.errors).toEqual([err('name', 'Name is required')]);
+    expect(storeFieldStates['email']?.errors).toHaveLength(1);
+    expect(storeFieldStates['email']?.errors?.[0].message).toBe('Email is invalid');
   });
 
   it('should preserve errors set as side-effect during registered field validate', async () => {
@@ -234,8 +235,8 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     expect(result.errors).toContainEqual(err('name.confirm', 'Confirm does not match'));
 
     // FIXED: merge preserves the side-effect error
-    const finalErrors = form.store.getState().errors;
-    expect(finalErrors['name.confirm']).toEqual([err('name.confirm', 'Confirm does not match')]);
+    const finalFieldStates = form.store.getState().fieldStates;
+    expect(finalFieldStates['name.confirm']?.errors).toEqual([err('name.confirm', 'Confirm does not match')]);
   });
 
   it('should block submit when validateForm keeps side-effect errors in the store', async () => {
@@ -282,7 +283,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
 
     expect(result.ok).toBe(false);
     expect(submitCount).toBe(0);
-    expect(form.store.getState().errors['name.confirm']).toEqual([err('name.confirm', 'Confirm does not match')]);
+    expect(form.store.getState().fieldStates['name.confirm']?.errors).toEqual([err('name.confirm', 'Confirm does not match')]);
   });
 
   it('sequential await prevents race condition WITHIN the loop (no parallel setPathErrors)', async () => {
@@ -343,9 +344,9 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     expect(callOrder).toEqual(['validate:a', 'validate:b']);
 
     // Both errors should be in the final result
-    const storeErrors = form.store.getState().errors;
-    expect(storeErrors['a']).toEqual([err('a', 'a required')]);
-    expect(storeErrors['b']).toEqual([err('b', 'b required')]);
+    const storeFieldStates = form.store.getState().fieldStates;
+    expect(storeFieldStates['a']?.errors).toEqual([err('a', 'a required')]);
+    expect(storeFieldStates['b']?.errors).toEqual([err('b', 'b required')]);
   });
 
   it('clears stale errors for fields that become valid after validateForm', async () => {
@@ -387,13 +388,13 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     });
 
     await form.validateForm();
-    expect(form.store.getState().errors['name']).toEqual([err('name', 'Name is required')]);
+    expect(form.store.getState().fieldStates['name']?.errors).toEqual([err('name', 'Name is required')]);
 
     form.setValue('name', 'Alice');
     const result = await form.validateForm();
 
     expect(result.ok).toBe(true);
     expect(result.fieldErrors['name']).toBeUndefined();
-    expect(form.store.getState().errors['name']).toBeUndefined();
+    expect(form.store.getState().fieldStates['name']?.errors).toBeUndefined();
   });
 });
