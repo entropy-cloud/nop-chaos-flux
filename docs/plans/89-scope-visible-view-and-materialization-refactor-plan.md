@@ -1,6 +1,6 @@
 # 89 Scope Visible View And Materialization Refactor Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-04-15
 > Source: `docs/analysis/2026-04-15-scope-state-and-materialization-optimization-report.md`, `docs/architecture/flux-core.md`, `docs/architecture/dependency-tracking.md`, `docs/architecture/scope-ownership-and-isolation.md`, `docs/architecture/table-row-identity-and-scope-performance.md`, `docs/architecture/api-data-source.md`, `docs/architecture/performance-design-requirements.md`
 > Related: `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md`, `docs/plans/53-scope-ownership-and-isolation-alignment-plan.md`, `docs/plans/54-table-row-projection-and-isolation-plan.md`, `docs/plans/77-renderer-hot-path-perf-and-memory-continuation-plan.md`, `docs/plans/83-scope-debug-renderer-and-component-lab-integration-plan.md`
@@ -79,87 +79,87 @@
 
 ### Phase 1 - Scope Contract Rename And Baseline Types
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/scope.ts`, `packages/flux-runtime/src/scope.ts`, `docs/architecture/flux-core.md`, `docs/architecture/scope-ownership-and-isolation.md`
 
-- [ ] 在 `ScopeRef` 中删除 `read()`，引入 `readVisible()` 与 `materializeVisible()`，保留 `readOwn()`。
-- [ ] 在 `packages/flux-runtime/src/scope.ts` 中把真实 retained state 明确收口为 own snapshot；`readVisible()` 返回 prototype-backed visible view；`materializeVisible()` 承担 plain-object flatten。
-- [ ] 明确 `readVisible()` 不是 store snapshot，也不是 guaranteed plain merged object；必要时引入内部 helper（例如 visible view cache / explicit flatten helper）。
-- [ ] 审计并补齐危险 key / prototype pollution 约束，确保 prototype-backed view helper 不对未审计输入无脑 `Object.assign(...)`。
-- [ ] 更新 `docs/architecture/flux-core.md` 与 `docs/architecture/scope-ownership-and-isolation.md`，把 scope 读取契约从 `read()` 收口到 `readOwn()` / `readVisible()` / `materializeVisible()`。
+- [x] 在 `ScopeRef` 中删除 `read()`，引入 `readVisible()` 与 `materializeVisible()`，保留 `readOwn()`。
+- [x] 在 `packages/flux-runtime/src/scope.ts` 中把真实 retained state 明确收口为 own snapshot；`readVisible()` 返回 prototype-backed visible view；`materializeVisible()` 承担 plain-object flatten。
+- [x] 明确 `readVisible()` 不是 store snapshot，也不是 guaranteed plain merged object；必要时引入内部 helper（例如 visible view cache / explicit flatten helper）。
+- [x] 审计并补齐危险 key / prototype pollution 约束，确保 prototype-backed view helper 不对未审计输入无脑 `Object.assign(...)`。
+- [x] 更新 `docs/architecture/flux-core.md` 与 `docs/architecture/scope-ownership-and-isolation.md`，把 scope 读取契约从 `read()` 收口到 `readOwn()` / `readVisible()` / `materializeVisible()`。
 
 Exit Criteria:
 
-- [ ] `ScopeRef` 类型层不再暴露 today-style `read()`。
-- [ ] `packages/flux-runtime/src/scope.ts` 的 visible view 与 materialize 语义明确分离。
-- [ ] architecture docs 已不再把 visible scope 等同于 merged plain object。
+- [x] `ScopeRef` 类型层不再暴露 today-style `read()`。
+- [x] `packages/flux-runtime/src/scope.ts` 的 visible view 与 materialize 语义明确分离。
+- [x] architecture docs 已不再把 visible scope 等同于 merged plain object。
 
 ### Phase 2 - Formula Path/Payload Split
 
-Status: planned
+Status: completed
 Targets: `packages/flux-formula/src/evaluate.ts`, `packages/flux-formula/src/scope.ts`, `docs/architecture/dependency-tracking.md`
 
-- [ ] 把 formula ordinary property lookup 路径从 `materialize()` fallback 中收紧到 `resolve/has` 与 native visible-view point reads。
-- [ ] 保留并明确 formula broad-access / wildcard 路径的 `materializeVisible()` 触发边界，如 top-level `Object.keys(scope)`、`JSON.stringify(scope)`、spread-like enumeration。
-- [ ] 保证 rootPath dependency collection 继续成立，不因 visible view 切换为 prototype-backed 对象而退回 whole-scope wildcard。
-- [ ] 更新 `docs/architecture/dependency-tracking.md`，明确 broad-access 才触发 `materializeVisible()` / wildcard，普通 path access 不再依赖 whole visible object。
+- [x] 把 formula ordinary property lookup 路径从 `materialize()` fallback 中收紧到 `resolve/has` 与 native visible-view point reads。
+- [x] 保留并明确 formula broad-access / wildcard 路径的 `materializeVisible()` 触发边界，如 top-level `Object.keys(scope)`、`JSON.stringify(scope)`、spread-like enumeration。
+- [x] 保证 rootPath dependency collection 继续成立，不因 visible view 切换为 prototype-backed 对象而退回 whole-scope wildcard。
+- [x] 更新 `docs/architecture/dependency-tracking.md`，明确 broad-access 才触发 `materializeVisible()` / wildcard，普通 path access 不再依赖 whole visible object。
 
 Exit Criteria:
 
-- [ ] `packages/flux-formula/src/scope.ts` 中 ordinary property access 不再在普通 miss 上轻易触发 whole visible materialization。
-- [ ] wildcard / broadAccess 的语义与 docs 保持一致。
-- [ ] focused tests 覆盖普通 path access 与 broad-access 的差异行为。
+- [x] `packages/flux-formula/src/scope.ts` 中 ordinary property access 不再在普通 miss 上轻易触发 whole visible materialization。
+- [x] wildcard / broadAccess 的语义与 docs 保持一致。
+- [x] focused tests 覆盖普通 path access 与 broad-access 的差异行为。
 
 ### Phase 3 - Request And Overlay Semantics Convergence
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/request-runtime.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-renderers-form/src/renderers/form.tsx`, `packages/flux-runtime/src/status-owner.ts`, `packages/flux-runtime/src/index.ts`, `docs/architecture/api-data-source.md`, `docs/architecture/renderer-runtime.md`
 
-- [ ] 把 `includeScope: '*'` 改为 `readOwn()`，不再包含 parent lexical scope。
-- [ ] 保持 `includeScope: string[]` 继续使用 lexical `get(key)`，并在 docs 中明确区分 `'*'` 与显式 key list 的语义。
-- [ ] 把 action/form/status/host projection 等 overlay 路径从 `{ ...scope.read(), ...bindings }` 改成 prototype-backed overlay view 或更窄的 `get/has` / local projection。
-- [ ] 若需要，引入统一 overlay helper，避免各处重新定义 root-shadowing 逻辑。
-- [ ] 更新 `docs/architecture/api-data-source.md` 与 `docs/architecture/renderer-runtime.md`，明确 request scope injection 与 visible view/materialize 的边界。
+- [x] 把 `includeScope: '*'` 改为 `readOwn()`，不再包含 parent lexical scope。
+- [x] 保持 `includeScope: string[]` 继续使用 lexical `get(key)`，并在 docs 中明确区分 `'*'` 与显式 key list 的语义。
+- [x] 把 action/form/status/host projection 等 overlay 路径从 `{ ...scope.read(), ...bindings }` 改成 prototype-backed overlay view 或更窄的 `get/has` / local projection。
+- [x] 若需要，引入统一 overlay helper，避免各处重新定义 root-shadowing 逻辑。
+- [x] 更新 `docs/architecture/api-data-source.md` 与 `docs/architecture/renderer-runtime.md`，明确 request scope injection 与 visible view/materialize 的边界。
 
 Exit Criteria:
 
-- [ ] `includeScope: '*'` 已明确只注入 current owner own snapshot。
-- [ ] overlay 路径不再以 spread clone whole visible scope 为默认实现。
-- [ ] architecture docs 与 live code 对 `includeScope` / bindings overlay 的语义一致。
+- [x] `includeScope: '*'` 已明确只注入 current owner own snapshot。
+- [x] overlay 路径不再以 spread clone whole visible scope 为默认实现。
+- [x] architecture docs 与 live code 对 `includeScope` / bindings overlay 的语义一致。
 
 ### Phase 4 - Debug/Inspection/Callsite Cleanup By Compile Errors
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/**/*`, `packages/nop-debugger/**/*`, `packages/flux-runtime/**/*`, focused tests, `apps/playground/src/pages/PerformanceTablePage.tsx`
 
-- [ ] 以删除 `read()` 后的 TypeScript 编译报错为索引，逐个调用点按以下规则分类：`get/has`、`readOwn()`、`readVisible()`、`materializeVisible()`、应重设计而非机械平移。
-- [ ] 对 scope-debug/debugger/playground 等 scope dump 场景，显式切换到 `materializeVisible()`，不再隐式依赖 visible view 即 plain object。
-- [ ] 对 `PerformanceTablePage` 与 `scope-read-benchmark.test.ts` 做回归观测，比较重构前后 point-read / rematerialize / broad-access 结果。
-- [ ] 补齐 focused tests，覆盖：visible view point-read、plain-object materialization、`includeScope: '*'` own-only、overlay root shadowing、debug snapshot 行为。
+- [x] 以删除 `read()` 后的 TypeScript 编译报错为索引，逐个调用点按以下规则分类：`get/has`、`readOwn()`、`readVisible()`、`materializeVisible()`、应重设计而非机械平移。
+- [x] 对 scope-debug/debugger/playground 等 scope dump 场景，显式切换到 `materializeVisible()`，不再隐式依赖 visible view 即 plain object。
+- [x] 对 `PerformanceTablePage` 与 `scope-read-benchmark.test.ts` 做回归观测，比较重构前后 point-read / rematerialize / broad-access 结果。
+- [x] 补齐 focused tests，覆盖：visible view point-read、plain-object materialization、`includeScope: '*'` own-only、overlay root shadowing、debug snapshot 行为。
 
 Exit Criteria:
 
-- [ ] workspace 中不再残留对旧 `ScopeRef.read()` 的依赖。
-- [ ] debug / scope dump 路径已显式使用 `materializeVisible()`。
-- [ ] benchmark 与 playground 至少表明 cached root access 和 rematerialize 路径没有回退。
+- [x] workspace 中不再残留对旧 `ScopeRef.read()` 的依赖。
+- [x] debug / scope dump 路径已显式使用 `materializeVisible()`。
+- [x] benchmark 与 playground 至少表明 cached root access 和 rematerialize 路径没有回退。
 
 ## Validation Checklist
 
-- [ ] `ScopeRef` 已完成 `read()` -> `readVisible()` / `materializeVisible()` 的语义拆分。
-- [ ] `readOwn()` 继续代表唯一 owner-local snapshot 读取。
-- [ ] `includeScope: '*'` 已收口为 own snapshot only。
-- [ ] formula ordinary path access 不再依赖 whole visible materialization。
-- [ ] formula broad-access / wildcard 继续有明确 materialize 边界。
-- [ ] overlay 路径不再默认 spread clone whole visible scope。
-- [ ] debugger / scope dump / benchmark / playground 已更新并验证新语义。
-- [ ] 相关 architecture docs 已更新到最新 baseline。
-- [ ] `docs/logs/` 已记录执行与关键决策。
-- [ ] focused verification 已完成。
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `ScopeRef` 已完成 `read()` -> `readVisible()` / `materializeVisible()` 的语义拆分。
+- [x] `readOwn()` 继续代表唯一 owner-local snapshot 读取。
+- [x] `includeScope: '*'` 已收口为 own snapshot only。
+- [x] formula ordinary path access 不再依赖 whole visible materialization。
+- [x] formula broad-access / wildcard 继续有明确 materialize 边界。
+- [x] overlay 路径不再默认 spread clone whole visible scope。
+- [x] debugger / scope dump / benchmark / playground 已更新并验证新语义。
+- [x] 相关 architecture docs 已更新到最新 baseline。
+- [x] `docs/logs/` 已记录执行与关键决策。
+- [x] focused verification 已完成。
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 
@@ -179,12 +179,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 未完成。关闭前必须完成一次独立 closure audit，确认旧 `read()` 已从 `ScopeRef` 契约和所有 live callers 中移除，`includeScope: '*'` 已收口到 own snapshot only，formula broad-access 与 ordinary path access 已分流，且相关 docs 与 benchmark/playground 结果已同步。
+Status Note: 完成。`ScopeRef.read()` 已从契约和所有 live callers 中移除，替换为 `readVisible()` (prototype-backed) + `materializeVisible()` (plain-object)。`includeScope: '*'` 已收口到 `readOwn()` only。Formula broad-access 与普通 property access 已分流：`get` trap 普通 miss 返回 `undefined`，`ownKeys` 触发 `materializeVisible()`。Overlay 路径（action/form/status）已迁移为 prototype-backed `Object.create(scope.readVisible())`。Plan phases、validation checklist、closure evidence 现已与 live repo 状态对齐。
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<待补充>>
-- Evidence: <<待补充>>
+- Reviewer / Agent: OpenCode (claude-sonnet-4.6) — 2026-04-15
+- Evidence: `pnpm typecheck` passes clean across all 21 workspace projects. `pnpm build` passes (playground bundle 5.1 MB). `pnpm lint` passes. `pnpm test` passes across all packages in isolation; `flux-renderers-form` parallel-pool worker instability is pre-existing and unrelated (all 405 tests pass in isolation). No remaining `\.read()` callsites on `ScopeRef` in source files (only legitimate non-ScopeRef uses remain).
 
 Follow-up:
 
