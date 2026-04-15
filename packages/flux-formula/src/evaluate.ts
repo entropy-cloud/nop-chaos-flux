@@ -26,7 +26,7 @@ function createEvalContext(scope: ScopeRef): EvalContext {
     },
     materialize() {
       if (!materialized) {
-        materialized = scope.read();
+        materialized = scope.materializeVisible();
       }
 
       return materialized;

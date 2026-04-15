@@ -89,8 +89,8 @@ function isScopeRef(input: unknown): input is ScopeRef {
     typeof (input as ScopeRef).get === 'function' &&
     'has' in input &&
     typeof (input as ScopeRef).has === 'function' &&
-    'read' in input &&
-    typeof (input as ScopeRef).read === 'function'
+    'readVisible' in input &&
+    typeof (input as ScopeRef).readVisible === 'function'
   );
 }
 
@@ -164,7 +164,9 @@ function createFormulaScope(context: EvalContext): Record<string, any> {
         const value = context.resolve(property);
         if (value !== undefined) return wrapTrackedValue(value, property);
 
-        return getIn(context.materialize(), property);
+        if (context.has(property)) return wrapTrackedValue(value, property);
+
+        return undefined;
       },
       has(_target, property) {
         if (typeof property !== 'string') {
