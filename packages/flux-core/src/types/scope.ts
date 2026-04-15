@@ -38,7 +38,8 @@ export interface ScopeRef {
   get(path: string): unknown;
   has(path: string): boolean;
   readOwn(): Record<string, any>;
-  read(): Record<string, any>;
+  readVisible(): Record<string, any>;
+  materializeVisible(): Record<string, any>;
   update(path: string, value: unknown): void;
   merge(data: Record<string, unknown>): void;
   replace?(data: Record<string, unknown>): void;

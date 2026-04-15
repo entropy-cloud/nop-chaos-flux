@@ -73,45 +73,86 @@ export function createScopeStore(initialData: Record<string, any>): ScopeStore<R
   return scopeStore;
 }
 
-function createScopeReader(parent: ScopeRef | undefined, store: ScopeStore<Record<string, any>>, isolate?: boolean) {
-  let lastOwnSnapshot: Record<string, any> | undefined;
-  let lastParentSnapshot: Record<string, any> | undefined;
+const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function safeCreate(parent: Record<string, any>): Record<string, any> {
+  return Object.create(parent) as Record<string, any>;
+}
+
+function createVisibleViewHelpers(parent: ScopeRef | undefined, store: ScopeStore<Record<string, any>>, isolate?: boolean) {
+  let lastOwnSnapshotForView: Record<string, any> | undefined;
+  let lastParentSnapshotForView: Record<string, any> | undefined;
+  let lastVisibleView: Record<string, any> | undefined;
+
+  let lastOwnSnapshotForMat: Record<string, any> | undefined;
+  let lastParentSnapshotForMat: Record<string, any> | undefined;
   let lastMaterialized: Record<string, any> | undefined;
 
-  return function read(): Record<string, any> {
+  function readVisible(): Record<string, any> {
     const ownSnapshot = store.getSnapshot();
 
     if (!parent || isolate) {
       return ownSnapshot;
     }
 
-    const parentSnapshot = parent.read();
+    const parentVisible = parent.readVisible();
 
-    if (lastMaterialized && lastOwnSnapshot === ownSnapshot && lastParentSnapshot === parentSnapshot) {
+    if (lastVisibleView && lastOwnSnapshotForView === ownSnapshot && lastParentSnapshotForView === parentVisible) {
+      return lastVisibleView;
+    }
+
+    lastOwnSnapshotForView = ownSnapshot;
+    lastParentSnapshotForView = parentVisible;
+    lastVisibleView = Object.assign(safeCreate(parentVisible), ownSnapshot);
+
+    return lastVisibleView;
+  }
+
+  function materializeVisible(): Record<string, any> {
+    const ownSnapshot = store.getSnapshot();
+
+    if (!parent || isolate) {
+      return ownSnapshot;
+    }
+
+    const parentMat = parent.materializeVisible();
+
+    if (lastMaterialized && lastOwnSnapshotForMat === ownSnapshot && lastParentSnapshotForMat === parentMat) {
       return lastMaterialized;
     }
 
-    lastOwnSnapshot = ownSnapshot;
-    lastParentSnapshot = parentSnapshot;
-    lastMaterialized = {
-      ...parentSnapshot,
-      ...ownSnapshot
-    };
+    lastOwnSnapshotForMat = ownSnapshot;
+    lastParentSnapshotForMat = parentMat;
+
+    const result: Record<string, any> = {};
+    for (const key of Object.keys(parentMat)) {
+      if (!DANGEROUS_KEYS.has(key)) {
+        result[key] = parentMat[key];
+      }
+    }
+    for (const key of Object.keys(ownSnapshot)) {
+      if (!DANGEROUS_KEYS.has(key)) {
+        result[key] = ownSnapshot[key];
+      }
+    }
+    lastMaterialized = result;
 
     return lastMaterialized;
-  };
+  }
+
+  return { readVisible, materializeVisible };
 }
 
 function createCompositeScopeStore(
   ownStore: ScopeStore<Record<string, any>>,
   parent: ScopeRef,
-  read: () => Record<string, any>,
+  readVisible: () => Record<string, any>,
   scopeId: string
 ): ScopeStore<Record<string, any>> {
   let lastChange = createDefaultChange(scopeId);
 
   return {
-    getSnapshot: read,
+    getSnapshot: readVisible,
     getLastChange() {
       return lastChange;
     },
@@ -225,10 +266,10 @@ export function createScopeRef(input: {
 }): ScopeRef {
   const ownStore = input.store ?? createScopeStore(input.initialData ?? {});
   (ownStore as ScopeStore<Record<string, any>> & { __scopeId__?: string }).__scopeId__ = input.id;
-  const read = createScopeReader(input.parent, ownStore, input.isolate);
+  const { readVisible, materializeVisible } = createVisibleViewHelpers(input.parent, ownStore, input.isolate);
 
   const exposedStore = (input.parent && !input.isolate)
-    ? createCompositeScopeStore(ownStore, input.parent, read, input.id)
+    ? createCompositeScopeStore(ownStore, input.parent, readVisible, input.id)
     : ownStore;
 
   const scope: ScopeRef = {
@@ -237,7 +278,7 @@ export function createScopeRef(input: {
     parent: input.parent,
     store: exposedStore,
     get value() {
-      return read();
+      return readVisible();
     },
     get(path) {
       return resolveScopePath(this, path);
@@ -248,7 +289,8 @@ export function createScopeRef(input: {
     readOwn() {
       return ownStore.getSnapshot();
     },
-    read,
+    readVisible,
+    materializeVisible,
     update(path, value) {
       if (input.update) {
         input.update(path, value, scope);
