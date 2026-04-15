@@ -102,7 +102,7 @@ describe('ScopeRef.merge', () => {
 
     expect(child.readOwn()).toEqual({ b: 2, c: 3 });
     expect(parent.readOwn()).toEqual({ a: 1 });
-    expect(child.read()).toEqual({ a: 1, b: 2, c: 3 });
+    expect(child.materializeVisible()).toEqual({ a: 1, b: 2, c: 3 });
   });
 
   it('handles empty merge data as no-op', () => {

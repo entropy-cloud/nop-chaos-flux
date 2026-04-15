@@ -18,7 +18,8 @@ function createStubScope() {
     get: () => undefined,
     has: () => false,
     readOwn: () => ({}),
-    read: () => ({}),
+    readVisible: () => ({}),
+    materializeVisible: () => ({}),
     merge: () => {}
   };
 }

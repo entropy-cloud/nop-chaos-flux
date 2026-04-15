@@ -146,13 +146,13 @@ benchDescribe('Scope read benchmark', () => {
     const localKey = 'local6';
     const deepPath = 'deep.score';
 
-    expect(childScope.read()[sharedKey]).toBe(prototypeView[sharedKey]);
-    expect(childScope.read()[localKey]).toBe(prototypeView[localKey]);
-    expect((childScope.read().deep as Record<string, unknown>).score).toBe((prototypeView.deep as Record<string, unknown>).score);
+    expect(childScope.readVisible()[sharedKey]).toBe(prototypeView[sharedKey]);
+    expect(childScope.readVisible()[localKey]).toBe(prototypeView[localKey]);
+    expect((childScope.readVisible().deep as Record<string, unknown>).score).toBe((prototypeView.deep as Record<string, unknown>).score);
     expect(childScope.get(deepPath)).toBe(getByPath(prototypeView, deepPath));
 
-    const hotScopeRead = runBenchmark('scope.read() cached + root access', 250_000, 12, () => {
-      const value = childScope.read();
+    const hotScopeRead = runBenchmark('scope.readVisible() cached + root access', 250_000, 12, () => {
+      const value = childScope.readVisible();
       return Number(value[sharedKey]) + Number(value[localKey]) + Number((value.deep as Record<string, unknown>).score);
     });
 
@@ -169,14 +169,14 @@ benchDescribe('Scope read benchmark', () => {
     });
 
     let toggle = false;
-    const coldScopeRead = runBenchmark('scope.read() rematerialize + root access', 35_000, 10, () => {
+    const coldScopeRead = runBenchmark('scope.readVisible() rematerialize + root access', 35_000, 10, () => {
       toggle = !toggle;
       childStore.setSnapshot(toggle ? childSnapshotA : childSnapshotB, {
         paths: ['local6', 'deep'],
         kind: 'replace',
         sourceScopeId: 'bench-child',
       });
-      const value = childScope.read();
+      const value = childScope.readVisible();
       return Number(value[sharedKey]) + Number(value[localKey]) + Number((value.deep as Record<string, unknown>).score);
     });
 
@@ -187,15 +187,15 @@ benchDescribe('Scope read benchmark', () => {
       return Number(view[sharedKey]) + Number(view[localKey]) + Number((view.deep as Record<string, unknown>).score);
     });
 
-    const hotScopeKeys = runBenchmark('Object.keys(scope.read())', 120_000, 10, () => Object.keys(childScope.read()).length);
+    const hotScopeKeys = runBenchmark('Object.keys(scope.materializeVisible())', 120_000, 10, () => Object.keys(childScope.materializeVisible()).length);
 
     const hotPrototypeKeys = runBenchmark('Object.keys(prototype view)', 120_000, 10, () => Object.keys(prototypeView).length);
 
-    const hotScopeStringify = runBenchmark('JSON.stringify(scope.read())', 10_000, 8, () => JSON.stringify(childScope.read()).length);
+    const hotScopeStringify = runBenchmark('JSON.stringify(scope.materializeVisible())', 10_000, 8, () => JSON.stringify(childScope.materializeVisible()).length);
 
     const hotPrototypeStringify = runBenchmark('JSON.stringify(prototype view)', 10_000, 8, () => JSON.stringify(prototypeView).length);
 
-    const hotScopeSpread = runBenchmark('spread clone from scope.read()', 40_000, 10, () => Object.keys({ ...childScope.read() }).length);
+    const hotScopeSpread = runBenchmark('spread clone from scope.materializeVisible()', 40_000, 10, () => Object.keys({ ...childScope.materializeVisible() }).length);
 
     const hotPrototypeSpread = runBenchmark('spread clone from prototype view', 40_000, 10, () => Object.keys({ ...prototypeView }).length);
 

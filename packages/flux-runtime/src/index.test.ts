@@ -480,7 +480,7 @@ describe('createRendererRuntime host projection scope', () => {
     expect(hostScope.readOwn()).toEqual({
       host: { status: 'updated' }
     });
-    expect(JSON.stringify(hostScope.read())).not.toContain('remove-me');
+    expect(JSON.stringify(hostScope.materializeVisible())).not.toContain('remove-me');
   });
 
   it('rejects writes to projected host fields while allowing local writes', () => {
@@ -503,7 +503,7 @@ describe('createRendererRuntime host projection scope', () => {
 
     hostScope.update('local.note', 'ok');
 
-    expect(hostScope.read()).toMatchObject({
+    expect(hostScope.materializeVisible()).toMatchObject({
       pageValue: 'root',
       host: { status: 'ready' },
       local: { note: 'ok' }
