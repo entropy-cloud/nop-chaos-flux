@@ -5,7 +5,7 @@ import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-ch
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
-import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
+import { useCurrentForm, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '../index';
 
 if (!Element.prototype.scrollIntoView) {
@@ -54,6 +54,19 @@ const fieldValueProbeRenderer: RendererDefinition = {
       data-testid={String((p.props as Record<string, unknown>).testid ?? 'field-value')}
     />
   )
+};
+
+function ScopeSelectorProbeRenderer() {
+  const snapshot = useScopeSelector((scope) => ({
+    value: scope.value,
+    readOnly: scope.readOnly
+  }), Object.is) as Record<string, unknown>;
+  return <span data-testid="scope-selector-probe">{JSON.stringify(snapshot)}</span>;
+}
+
+const scopeSelectorProbeRenderer: RendererDefinition = {
+  type: 'scope-selector-probe',
+  component: () => <ScopeSelectorProbeRenderer />
 };
 
 describe('object-field renderer', () => {
@@ -220,7 +233,7 @@ describe('object-field renderer', () => {
 
   it('publishes object-field scope as value and readOnly while keeping relative child names', async () => {
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeSelectorProbeRenderer]);
 
     render(
       <SchemaRenderer
@@ -236,6 +249,7 @@ describe('object-field renderer', () => {
               readOnly: true,
               body: [
                 { type: 'text', text: 'Profile ${value.firstName} / ${readOnly}', testid: 'profile-scope' },
+                { type: 'scope-selector-probe' },
                 { type: 'input-text', name: 'firstName', label: 'First Name' }
               ]
             }
@@ -247,6 +261,10 @@ describe('object-field renderer', () => {
     );
 
     await waitFor(() => expect(screen.getByTestId('profile-scope').textContent).toBe('Profile Alice / true'));
+    expect(screen.getByTestId('scope-selector-probe').textContent).toBe(JSON.stringify({
+      value: { firstName: 'Alice', lastName: 'Smith' },
+      readOnly: true
+    }));
     expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice');
   });
 

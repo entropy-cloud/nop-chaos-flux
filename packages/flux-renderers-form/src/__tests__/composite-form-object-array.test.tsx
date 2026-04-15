@@ -1,8 +1,24 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { useScopeSelector } from '@nop-chaos/flux-react';
 import { allRenderers, baseEnv, formulaCompiler, makeCapturingFetcher } from './composite-form-support';
+
+function ScopeSelectorProbeRenderer() {
+  const snapshot = useScopeSelector((scope) => ({
+    value: scope.value,
+    index: scope.index,
+    readOnly: scope.readOnly
+  }), Object.is) as Record<string, unknown>;
+  return <span data-testid="scope-selector-probe">{JSON.stringify(snapshot)}</span>;
+}
+
+const scopeSelectorProbeRenderer: RendererDefinition = {
+  type: 'scope-selector-probe',
+  component: () => <ScopeSelectorProbeRenderer />
+};
 
 describe('composite form - object-field validation', () => {
   it('blocks submit when required child field is empty', async () => {
@@ -290,5 +306,38 @@ describe('composite form - array-field add/remove', () => {
 
     const tags = (submitValues[0] as Record<string, unknown>).tags as unknown[];
     expect(tags.length).toBe(2);
+  });
+
+  it('publishes projected array item scope through useScopeSelector', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allRenderers, scopeSelectorProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: { tags: ['alpha'] },
+          body: [
+            {
+              type: 'array-field',
+              name: 'tags',
+              itemKind: 'scalar',
+              label: 'Tags',
+              item: [{ type: 'scope-selector-probe' }]
+            }
+          ]
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scope-selector-probe').textContent).toBe(JSON.stringify({
+        value: 'alpha',
+        index: 0,
+        readOnly: false
+      }));
+    });
   });
 });

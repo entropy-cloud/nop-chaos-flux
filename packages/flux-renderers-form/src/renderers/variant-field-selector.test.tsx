@@ -1,6 +1,25 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { useScopeSelector } from '@nop-chaos/flux-react';
+import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
+import { formRendererDefinitions } from '../index';
 import { baseEnv, createFormSchemaRenderer, formulaCompiler } from './test-support';
+
+function ScopeSelectorProbeRenderer() {
+  const snapshot = useScopeSelector((scope) => ({
+    value: scope.value,
+    variant: scope.variant,
+    readOnly: scope.readOnly
+  }), Object.is) as Record<string, unknown>;
+  return <span data-testid="scope-selector-probe">{JSON.stringify(snapshot)}</span>;
+}
+
+const scopeSelectorProbeRenderer: RendererDefinition = {
+  type: 'scope-selector-probe',
+  component: () => <ScopeSelectorProbeRenderer />
+};
 
 const variantSchema = {
   type: 'form',
@@ -217,5 +236,46 @@ describe('variant-field renderer selector behavior', () => {
     const container = document.querySelector('[data-active-variant]');
     expect(container?.querySelector('[data-slot="variant-field-readonly-body"]')).toBeTruthy();
     expect(container?.querySelector('[data-slot="variant-field-selector"]')).toBeNull();
+  });
+
+  it('publishes projected variant scope through useScopeSelector', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeSelectorProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            payload: 'alpha',
+          },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              defaultVariant: 'text',
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  match: { kind: 'typeof', value: 'string' },
+                  content: [{ type: 'scope-selector-probe' }],
+                },
+              ],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scope-selector-probe').textContent).toBe(JSON.stringify({
+        value: 'alpha',
+        variant: 'text',
+        readOnly: false,
+      }));
+    });
   });
 });
