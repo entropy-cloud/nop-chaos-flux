@@ -143,7 +143,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     if (order.length === 0) {
       return true;
     }
-    return order.every((path) => state.touched[path]);
+    return order.every((path) => state.fieldStates[path]?.touched === true);
   }
 
   const formRuntimeRef: { current?: FormRuntime } = {};
@@ -207,8 +207,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     getScopeRootErrors() {
       const rootPath = currentValidation?.rootPath ?? '';
       const state = store.getState();
-      const rootErrors = state.errors[rootPath] ?? [];
-      return rootErrors.filter((e) => e.sourceKind === 'scope-root');
+      const rootErrors = state.fieldStates[rootPath]?.errors ?? [];
+      return rootErrors.filter((e: import('@nop-chaos/flux-core').ValidationError) => e.sourceKind === 'scope-root');
     },
 
     isPathOwned(path: string): boolean {
@@ -218,11 +218,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
     getFieldState(path: string) {
       const state = store.getState();
+      const fs = state.fieldStates[path];
       return {
         ownerId: formId,
         path,
-        errors: state.errors[path] ?? [],
-        validating: state.validating[path] === true
+        errors: fs?.errors ?? [],
+        validating: fs?.validating === true
       };
     },
 
@@ -287,23 +288,23 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     getError(path) {
-      return store.getState().errors[path];
+      return store.getState().fieldStates[path]?.errors;
     },
 
     isValidating(path) {
-      return store.getState().validating[path] === true;
+      return store.getState().fieldStates[path]?.validating === true;
     },
 
     isTouched(path) {
-      return store.getState().touched[path] === true;
+      return store.getState().fieldStates[path]?.touched === true;
     },
 
     isDirty(path) {
-      return store.getState().dirty[path] === true;
+      return store.getState().fieldStates[path]?.dirty === true;
     },
 
     isVisited(path) {
-      return store.getState().visited[path] === true;
+      return store.getState().fieldStates[path]?.visited === true;
     },
 
     touchField(path) {
@@ -316,7 +317,19 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
     clearErrors(path) {
       if (!path) {
-        store.setErrors({});
+        const currentFieldStates = store.getState().fieldStates;
+        const clearedFieldStates: Record<string, import('@nop-chaos/flux-core').FieldState> = {};
+        for (const [p, fs] of Object.entries(currentFieldStates)) {
+          if (fs.errors) {
+            const { errors: _removed, ...rest } = fs;
+            if (Object.keys(rest).length > 0) {
+              clearedFieldStates[p] = rest;
+            }
+          } else {
+            clearedFieldStates[p] = fs;
+          }
+        }
+        store.batchUpdate({ fieldStates: clearedFieldStates });
         return;
       }
 
@@ -350,11 +363,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       cancelAllValidationDebounces(sharedState);
       store.batchUpdate({
         values: nextValues,
-        errors: {},
-        validating: {},
-        touched: {},
-        dirty: {},
-        visited: {}
+        fieldStates: {},
+        submitting: false
       });
     },
 
@@ -375,15 +385,30 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       });
 
       store.batchUpdate({
-        validating: patch.nextValidating,
-        dirty: patch.nextDirty,
         values: patch.nextValues,
-        errors: patch.nextErrors
+        fieldStates: patch.nextFieldStates
       });
 
       if (ownerRuntime.clearExternalErrorsForPath(name)) {
-        const nextErrors = ownerRuntime.rebuildStoreErrorsFromExternal(store.getState().errors);
-        store.setErrors(nextErrors);
+        const currentFieldStates = store.getState().fieldStates;
+        const nextErrors = ownerRuntime.rebuildStoreErrorsFromExternal(currentFieldStates);
+
+        const updatedFieldStates = { ...currentFieldStates };
+        for (const path of Object.keys(updatedFieldStates)) {
+          const fs = updatedFieldStates[path];
+          if (fs?.errors && !nextErrors[path]) {
+            const { errors: _removed, ...rest } = fs;
+            if (Object.keys(rest).length > 0) {
+              updatedFieldStates[path] = rest;
+            } else {
+              delete updatedFieldStates[path];
+            }
+          }
+        }
+        for (const [path, pathErrors] of Object.entries(nextErrors)) {
+          updatedFieldStates[path] = { ...updatedFieldStates[path], errors: pathErrors };
+        }
+        store.batchUpdate({ fieldStates: updatedFieldStates });
       }
 
       void ownerRuntime.revalidateDependents(name);

@@ -1,71 +1,60 @@
 import { createStore } from 'zustand/vanilla';
-import type { FormPathState, FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, SurfaceEntry, SurfaceStoreApi, SurfaceStoreState, ValidationError } from '@nop-chaos/flux-core';
-import { setIn } from '@nop-chaos/flux-core';
+import type { FieldState, FormPathState, FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, SurfaceEntry, SurfaceStoreApi, SurfaceStoreState } from '@nop-chaos/flux-core';
+import { setIn, validationErrorsEqual } from '@nop-chaos/flux-core';
 
-function validationErrorsEqual(
-  left: ValidationError[] | undefined,
-  right: ValidationError[] | undefined
-) {
+function fieldStateEqual(left: FieldState | undefined, right: FieldState | undefined): boolean {
   if (left === right) {
     return true;
   }
 
-  if (!left || !right || left.length !== right.length) {
+  if (!left || !right) {
     return false;
   }
 
-  return left.every((error, index) => {
-    const candidate = right[index];
-
-    if (!candidate) {
-      return false;
-    }
-
-    const leftRelatedPaths = error.relatedPaths ?? [];
-    const rightRelatedPaths = candidate.relatedPaths ?? [];
-
-    return candidate.path === error.path
-      && candidate.rule === error.rule
-      && candidate.message === error.message
-      && candidate.ruleId === error.ruleId
-      && candidate.sourceKind === error.sourceKind
-      && leftRelatedPaths.length === rightRelatedPaths.length
-      && leftRelatedPaths.every((path, relatedIndex) => path === rightRelatedPaths[relatedIndex]);
-  });
+  return (
+    left.touched === right.touched &&
+    left.dirty === right.dirty &&
+    left.visited === right.visited &&
+    left.validating === right.validating &&
+    validationErrorsEqual(left.errors, right.errors)
+  );
 }
 
-function errorStateEqual(
-  left: Record<string, ValidationError[]>,
-  right: Record<string, ValidationError[]>
-) {
-  if (left === right) {
-    return true;
+function mergeFieldState(existing: FieldState | undefined, patch: Partial<FieldState>): FieldState | undefined {
+  const merged: FieldState = { ...existing };
+
+  if ('touched' in patch) {
+    if (patch.touched === true) merged.touched = true;
+    else delete merged.touched;
   }
 
-  const leftKeys = Object.keys(left);
-  const rightKeys = Object.keys(right);
-
-  if (leftKeys.length !== rightKeys.length) {
-    return false;
+  if ('dirty' in patch) {
+    if (patch.dirty === true) merged.dirty = true;
+    else delete merged.dirty;
   }
 
-  for (const key of leftKeys) {
-    if (!validationErrorsEqual(left[key], right[key])) {
-      return false;
-    }
+  if ('visited' in patch) {
+    if (patch.visited === true) merged.visited = true;
+    else delete merged.visited;
   }
 
-  return true;
+  if ('validating' in patch) {
+    if (patch.validating === true) merged.validating = true;
+    else delete merged.validating;
+  }
+
+  if ('errors' in patch) {
+    if (patch.errors && patch.errors.length > 0) merged.errors = patch.errors;
+    else delete merged.errors;
+  }
+
+  return Object.keys(merged).length > 0 ? merged : undefined;
 }
 
 export function createFormStore(initialValues: Record<string, any>): FormStoreApi {
   const store = createStore<FormStoreState>(() => ({
     values: initialValues,
-    errors: {},
-    validating: {},
-    touched: {},
-    dirty: {},
-    visited: {},
+    fieldStates: {},
     submitting: false
   }));
 
@@ -87,9 +76,9 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     }
   }
 
-  function diffAndNotifyBooleanMaps(
-    before: Record<string, boolean>,
-    after: Record<string, boolean>,
+  function diffAndNotifyFieldStates(
+    before: Record<string, FieldState>,
+    after: Record<string, FieldState>,
     changed: Set<string>
   ) {
     for (const key of Object.keys(before)) {
@@ -98,73 +87,27 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       }
     }
     for (const key of Object.keys(after)) {
-      if (before[key] !== after[key]) {
+      if (!fieldStateEqual(before[key], after[key])) {
         changed.add(key);
       }
     }
   }
 
-  function diffAndNotifyErrorMaps(
-    before: Record<string, ValidationError[]>,
-    after: Record<string, ValidationError[]>,
-    changed: Set<string>
-  ) {
-    for (const key of Object.keys(before)) {
-      if (!(key in after)) {
-        changed.add(key);
-      }
-    }
-    for (const key of Object.keys(after)) {
-      if (!validationErrorsEqual(before[key], after[key])) {
-        changed.add(key);
-      }
-    }
-  }
-
-  function setBooleanState<K extends 'touched' | 'dirty' | 'visited' | 'validating'>(key: K, path: string, nextValue: boolean) {
-    const current = store.getState()[key];
-
-    if (nextValue) {
-      if (current[path]) {
-        return;
-      }
-
-      store.setState({ [key]: { ...current, [path]: true } } as Pick<FormStoreState, K>);
-      notifyPath(path);
-      return;
-    }
-
-    if (!current[path]) {
-      return;
-    }
-
-    const next = { ...current };
-    delete next[path];
-    store.setState({ [key]: next } as Pick<FormStoreState, K>);
-    notifyPath(path);
-  }
-
-  function setPathErrors(path: string, errors?: ValidationError[]) {
-    const current = store.getState().errors;
+  function updateFieldState(path: string, patch: Partial<FieldState>) {
+    const current = store.getState().fieldStates;
     const existing = current[path];
+    const next = mergeFieldState(existing, patch);
 
-    if (!errors || errors.length === 0) {
-      if (!existing) {
-        return;
-      }
-
-      const next = { ...current };
-      delete next[path];
-      store.setState({ errors: next });
-      notifyPath(path);
+    if (fieldStateEqual(existing, next)) {
       return;
     }
 
-    if (validationErrorsEqual(existing, errors)) {
-      return;
+    if (next === undefined) {
+      const { [path]: _removed, ...rest } = current;
+      store.setState({ fieldStates: rest });
+    } else {
+      store.setState({ fieldStates: { ...current, [path]: next } });
     }
-
-    store.setState({ errors: { ...current, [path]: errors } });
     notifyPath(path);
   }
 
@@ -196,14 +139,20 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       };
     },
     getPathState(path): FormPathState {
-      const state = store.getState();
+      const fieldState = store.getState().fieldStates[path];
       return {
-        errors: state.errors[path],
-        validating: state.validating[path] === true,
-        touched: state.touched[path] === true,
-        dirty: state.dirty[path] === true,
-        visited: state.visited[path] === true
+        errors: fieldState?.errors,
+        validating: fieldState?.validating === true,
+        touched: fieldState?.touched === true,
+        dirty: fieldState?.dirty === true,
+        visited: fieldState?.visited === true
       };
+    },
+    getFieldState(path) {
+      return store.getState().fieldStates[path];
+    },
+    setFieldState(path, state) {
+      updateFieldState(path, state);
     },
     setValues(values) {
       store.setState({ values });
@@ -212,69 +161,20 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       const current = store.getState().values;
       store.setState({ values: setIn(current, path, value) });
     },
-    setErrors(errors) {
-      if (errorStateEqual(store.getState().errors, errors)) {
-        return;
-      }
-
-      const before = store.getState().errors;
-      store.setState({ errors });
-      const changed = new Set<string>();
-      diffAndNotifyErrorMaps(before, errors, changed);
-      for (const path of changed) {
-        notifyPath(path);
-      }
-    },
     setPathErrors(path, errors) {
-      setPathErrors(path, errors);
+      updateFieldState(path, { errors: errors && errors.length > 0 ? errors : undefined });
     },
     setValidating(path, validating) {
-      setBooleanState('validating', path, validating);
-    },
-    setValidatingState(validating) {
-      const before = store.getState().validating;
-      store.setState({ validating });
-      const changed = new Set<string>();
-      diffAndNotifyBooleanMaps(before, validating, changed);
-      for (const path of changed) {
-        notifyPath(path);
-      }
+      updateFieldState(path, { validating: validating ? true : undefined });
     },
     setTouched(path, touched) {
-      setBooleanState('touched', path, touched);
-    },
-    setTouchedState(touched) {
-      const before = store.getState().touched;
-      store.setState({ touched });
-      const changed = new Set<string>();
-      diffAndNotifyBooleanMaps(before, touched, changed);
-      for (const path of changed) {
-        notifyPath(path);
-      }
+      updateFieldState(path, { touched: touched ? true : undefined });
     },
     setDirty(path, dirty) {
-      setBooleanState('dirty', path, dirty);
-    },
-    setDirtyState(dirty) {
-      const before = store.getState().dirty;
-      store.setState({ dirty });
-      const changed = new Set<string>();
-      diffAndNotifyBooleanMaps(before, dirty, changed);
-      for (const path of changed) {
-        notifyPath(path);
-      }
+      updateFieldState(path, { dirty: dirty ? true : undefined });
     },
     setVisited(path, visited) {
-      setBooleanState('visited', path, visited);
-    },
-    setVisitedState(visited) {
-      const before = store.getState().visited;
-      store.setState({ visited });
-      const changed = new Set<string>();
-      diffAndNotifyBooleanMaps(before, visited, changed);
-      for (const path of changed) {
-        notifyPath(path);
-      }
+      updateFieldState(path, { visited: visited ? true : undefined });
     },
     setSubmitting(submitting) {
       if (store.getState().submitting === submitting) {
@@ -290,20 +190,8 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
 
       const changed = new Set<string>();
 
-      if (updates.errors !== undefined) {
-        diffAndNotifyErrorMaps(before.errors, after.errors, changed);
-      }
-      if (updates.validating !== undefined) {
-        diffAndNotifyBooleanMaps(before.validating, after.validating, changed);
-      }
-      if (updates.touched !== undefined) {
-        diffAndNotifyBooleanMaps(before.touched, after.touched, changed);
-      }
-      if (updates.dirty !== undefined) {
-        diffAndNotifyBooleanMaps(before.dirty, after.dirty, changed);
-      }
-      if (updates.visited !== undefined) {
-        diffAndNotifyBooleanMaps(before.visited, after.visited, changed);
+      if (updates.fieldStates !== undefined) {
+        diffAndNotifyFieldStates(before.fieldStates, after.fieldStates, changed);
       }
 
       for (const path of changed) {

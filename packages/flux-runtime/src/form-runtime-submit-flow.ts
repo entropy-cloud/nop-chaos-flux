@@ -1,5 +1,6 @@
 import type {
   ApiSchema,
+  FieldState,
   FormValidationResult,
   ValidationReason
 } from '@nop-chaos/flux-core';
@@ -24,6 +25,16 @@ export interface SubmitFormInput {
 }
 
 export type { FormValidationResult };
+
+function extractTouchedPaths(fieldStates: Record<string, FieldState>): Record<string, boolean> {
+  const touched: Record<string, boolean> = {};
+  for (const [path, fs] of Object.entries(fieldStates)) {
+    if (fs.touched) {
+      touched[path] = true;
+    }
+  }
+  return touched;
+}
 
 export async function executeFormSubmit(
   input: SubmitFormInput,
@@ -73,15 +84,25 @@ export async function executeFormSubmit(
   }
 
   const currentValidation = getCurrentValidation();
+  const currentTouched = extractTouchedPaths(store.getState().fieldStates);
   const nextTouched = buildSubmitTouchedState({
-    touched: store.getState().touched,
+    touched: currentTouched,
     validation: currentValidation,
     runtimeFieldRegistrations: Array.from(runtimeFieldRegistrations.values()).map((e) => e.registration),
     defaultValidationTriggers
   });
 
-  if (nextTouched !== store.getState().touched) {
-    store.batchUpdate({ touched: nextTouched });
+  if (nextTouched !== currentTouched) {
+    const fieldStates = store.getState().fieldStates;
+    const nextFieldStates = { ...fieldStates };
+
+    for (const path of Object.keys(nextTouched)) {
+      if (!currentTouched[path]) {
+        nextFieldStates[path] = { ...nextFieldStates[path], touched: true };
+      }
+    }
+
+    store.batchUpdate({ fieldStates: nextFieldStates });
   }
 
   ownerRuntime.supersedeLowerPriorityWork();

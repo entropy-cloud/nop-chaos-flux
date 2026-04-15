@@ -1,6 +1,6 @@
-import type { ScopeRef, ValidationError } from '@nop-chaos/flux-core';
+import type { FieldState, ScopeRef } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
-import { remapBooleanState, remapErrorState, transformArrayIndexedPath } from './form-path-state';
+import { remapFieldStates, transformArrayIndexedPath } from './form-path-state';
 import type {
   FormRuntimeInitialStateSlice,
   FormRuntimeStoreScopeState,
@@ -70,6 +70,7 @@ export function remapInitialFieldState(
   transformIndex: (index: number) => number | undefined
 ) {
   const nextInitialValues: Record<string, unknown> = {};
+  const nextDirty: Record<string, boolean> = {};
 
   for (const [path, value] of Object.entries(sharedState.initialFieldState.initialValues)) {
     const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
@@ -79,57 +80,64 @@ export function remapInitialFieldState(
     }
   }
 
+  for (const [path, value] of Object.entries(sharedState.initialFieldState.dirty)) {
+    const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
+
+    if (nextPath && value) {
+      nextDirty[nextPath] = true;
+    }
+  }
+
   sharedState.initialFieldState.initialValues = nextInitialValues;
-  sharedState.initialFieldState.dirty = remapBooleanState(sharedState.initialFieldState.dirty, arrayPath, transformIndex);
+  sharedState.initialFieldState.dirty = nextDirty;
 }
 
 export function remapArrayFieldState(
   arrayPath: string,
   transformIndex: (index: number) => number | undefined,
-  state: ReturnType<FormRuntimeStoreScopeState['store']['getState']>
-) {
+  state: { fieldStates: Record<string, FieldState> }
+): { fieldStates: Record<string, FieldState> } {
   return {
-    errors: remapErrorState(state.errors, arrayPath, transformIndex),
-    touched: remapBooleanState(state.touched, arrayPath, transformIndex),
-    dirty: remapBooleanState(state.dirty, arrayPath, transformIndex),
-    visited: remapBooleanState(state.visited, arrayPath, transformIndex),
-    validating: remapBooleanState(state.validating, arrayPath, transformIndex)
+    fieldStates: remapFieldStates(state.fieldStates, arrayPath, transformIndex)
   };
 }
 
 export function replaceManagedArrayValue(input: {
   arrayPath: string;
   nextValue: unknown[];
-  state: ReturnType<FormRuntimeStoreScopeState['store']['getState']>;
+  state: { values: Record<string, any>; fieldStates: Record<string, FieldState> };
   initialFieldState: FormRuntimeInitialStateSlice['initialFieldState'];
-  remappedState: {
-    errors: Record<string, ValidationError[]>;
-    touched: Record<string, boolean>;
-    dirty: Record<string, boolean>;
-    visited: Record<string, boolean>;
-    validating: Record<string, boolean>;
-  };
+  remappedState: { fieldStates: Record<string, FieldState> };
 }) {
   const baseline = input.initialFieldState.initialValues[input.arrayPath];
   const isDirty = !Object.is(baseline, input.nextValue);
 
-  const nextValidating = { ...input.remappedState.validating };
-  delete nextValidating[input.arrayPath];
+  const nextFieldStates = { ...input.remappedState.fieldStates };
+  const arrayFieldState = nextFieldStates[input.arrayPath];
 
-  const nextDirty = isDirty
-    ? { ...input.remappedState.dirty, [input.arrayPath]: true }
-    : (() => { const d = { ...input.remappedState.dirty }; delete d[input.arrayPath]; return d; })();
+  if (arrayFieldState) {
+    const updatedArrayState: FieldState = { ...arrayFieldState };
+    delete updatedArrayState.validating;
+    delete updatedArrayState.errors;
 
-  const nextErrors = { ...input.remappedState.errors };
-  delete nextErrors[input.arrayPath];
+    if (isDirty) {
+      updatedArrayState.dirty = true;
+    } else {
+      delete updatedArrayState.dirty;
+    }
+
+    if (Object.keys(updatedArrayState).length === 0) {
+      delete nextFieldStates[input.arrayPath];
+    } else {
+      nextFieldStates[input.arrayPath] = updatedArrayState;
+    }
+  } else if (isDirty) {
+    nextFieldStates[input.arrayPath] = { dirty: true };
+  }
 
   return {
     values: setIn(input.state.values, input.arrayPath, input.nextValue),
-    errors: nextErrors,
-    touched: input.remappedState.touched,
-    dirty: nextDirty,
-    visited: input.remappedState.visited,
-    validating: nextValidating
+    fieldStates: nextFieldStates
   };
 }
 

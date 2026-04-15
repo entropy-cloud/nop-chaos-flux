@@ -2,42 +2,35 @@ import type {
   FormStatusSummary,
   FormStoreState,
   ScopeChange,
-  ScopeRef,
-  ValidationError
+  ScopeRef
 } from '@nop-chaos/flux-core';
+import { validationErrorsEqual } from '@nop-chaos/flux-core';
 import { createReadonlyScopeBinding } from './status-owner';
 
-export function validationErrorsEqual(
-  left: ValidationError[] | undefined,
-  right: ValidationError[] | undefined
-) {
-  if (left === right) {
-    return true;
-  }
-
-  if (!left || !right || left.length !== right.length) {
-    return false;
-  }
-
-  return left.every((error, index) => {
-    const candidate = right[index];
-
-    return candidate?.path === error.path && candidate?.rule === error.rule && candidate?.message === error.message;
-  });
-}
+export { validationErrorsEqual };
 
 export function buildFormStatusSummary(
   state: FormStoreState,
   id: string | undefined,
   name: string | undefined
 ): FormStatusSummary {
-  const errorEntries = Object.values(state.errors);
-  const errorCount = errorEntries.reduce((acc, errs) => acc + errs.length, 0);
+  let errorCount = 0;
+  let validating = false;
+  let dirty = false;
+  let touched = false;
+  let visited = false;
+
+  for (const fieldState of Object.values(state.fieldStates)) {
+    if (fieldState.errors) {
+      errorCount += fieldState.errors.length;
+    }
+    if (fieldState.validating) validating = true;
+    if (fieldState.dirty) dirty = true;
+    if (fieldState.touched) touched = true;
+    if (fieldState.visited) visited = true;
+  }
+
   const hasErrors = errorCount > 0;
-  const validating = Object.values(state.validating).some(Boolean);
-  const dirty = Object.values(state.dirty).some(Boolean);
-  const touched = Object.values(state.touched).some(Boolean);
-  const visited = Object.values(state.visited).some(Boolean);
 
   return {
     id,

@@ -1,4 +1,4 @@
-import type { ScopeChange, ValidationError } from '@nop-chaos/flux-core';
+import type { FieldState, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
 import { cancelValidationDebounce } from './form-runtime-validation';
 import { applyFieldValuePatch } from './form-runtime-field-ops';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
@@ -8,7 +8,7 @@ export interface SetValuesContext {
   formId: string;
   setLastChange: (change: ScopeChange) => void;
   clearExternalErrorsForPath: (path: string) => boolean;
-  rebuildStoreErrorsFromExternal: (errors: Record<string, ValidationError[]>) => Record<string, ValidationError[]>;
+  rebuildStoreErrorsFromExternal: (fieldStates: Record<string, FieldState>) => Record<string, ValidationError[]>;
   revalidateDependents: (path: string) => Promise<void>;
 }
 
@@ -29,9 +29,7 @@ export function executeSetValues(
 
   const state = store.getState();
   let nextValues = state.values;
-  let nextDirty = state.dirty;
-  let nextErrors = state.errors;
-  let nextValidating = state.validating;
+  let nextFieldStates = state.fieldStates;
   const changedPaths: string[] = [];
 
   for (const [name, value] of entries) {
@@ -41,22 +39,14 @@ export function executeSetValues(
     const baseline = initialFieldState.initialValues[name];
     const patch = applyFieldValuePatch(
       sharedState,
-      {
-        ...state,
-        values: nextValues,
-        dirty: nextDirty,
-        errors: nextErrors,
-        validating: nextValidating
-      },
+      { values: nextValues, fieldStates: nextFieldStates },
       name,
       value,
       !Object.is(baseline, value)
     );
 
     nextValues = patch.nextValues;
-    nextDirty = patch.nextDirty;
-    nextErrors = patch.nextErrors;
-    nextValidating = patch.nextValidating;
+    nextFieldStates = patch.nextFieldStates;
 
     changedPaths.push(name);
   }
@@ -69,9 +59,7 @@ export function executeSetValues(
 
   store.batchUpdate({
     values: nextValues,
-    dirty: nextDirty,
-    errors: nextErrors,
-    validating: nextValidating
+    fieldStates: nextFieldStates
   });
 
   let externalChanged = false;
@@ -82,8 +70,25 @@ export function executeSetValues(
   }
 
   if (externalChanged) {
-    const nextStoreErrors = rebuildStoreErrorsFromExternal(store.getState().errors);
-    store.setErrors(nextStoreErrors);
+    const currentFieldStates = store.getState().fieldStates;
+    const nextErrors = rebuildStoreErrorsFromExternal(currentFieldStates);
+
+    const updatedFieldStates = { ...currentFieldStates };
+    for (const path of Object.keys(updatedFieldStates)) {
+      const fs = updatedFieldStates[path];
+      if (fs?.errors && !nextErrors[path]) {
+        const { errors: _removed, ...rest } = fs;
+        if (Object.keys(rest).length > 0) {
+          updatedFieldStates[path] = rest;
+        } else {
+          delete updatedFieldStates[path];
+        }
+      }
+    }
+    for (const [path, pathErrors] of Object.entries(nextErrors)) {
+      updatedFieldStates[path] = { ...updatedFieldStates[path], errors: pathErrors };
+    }
+    store.batchUpdate({ fieldStates: updatedFieldStates });
   }
 
   for (const changedPath of changedPaths) {

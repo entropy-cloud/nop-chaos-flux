@@ -1,6 +1,7 @@
 import type {
   ApplyExternalErrorsInput,
   ApplyScopeChangesInput,
+  FieldState,
   FormRuntime,
   FormValidationResult,
   ScopeValidationStateSnapshot,
@@ -11,10 +12,10 @@ import {
   getCompiledValidationDependents,
   getCompiledValidationField,
   getCompiledValidationTraversalOrder,
-  setIn
+  setIn,
+  validationErrorsEqual
 } from '@nop-chaos/flux-core';
 import { computeRefreshErrorRetention } from './form-runtime-lifecycle';
-import { validationErrorsEqual } from './form-runtime-status';
 import { collectSubtreeValidationTargets } from './form-runtime-subtree';
 import { cancelAllValidationDebounces, cancelValidationDebounce, validatePath, validateSubtreeByNode } from './form-runtime-validation';
 import type { ExternalErrorEntry, ManagedFormRuntimeSharedState } from './form-runtime-types';
@@ -29,8 +30,16 @@ export function buildFormOwnerRuntime(input: {
 }) {
   function computeScopeState(): ScopeValidationStateSnapshot {
     const state = input.sharedState.store.getState();
-    const hasErrors = Object.keys(state.errors).length > 0;
-    const isValidating = Object.values(state.validating).some(Boolean);
+    const fieldStates = state.fieldStates;
+    let hasErrors = false;
+    let isValidating = false;
+
+    for (const fs of Object.values(fieldStates)) {
+      if (fs.errors && fs.errors.length > 0) hasErrors = true;
+      if (fs.validating) isValidating = true;
+      if (hasErrors && isValidating) break;
+    }
+
     const valid = !hasErrors;
     return {
       valid,
@@ -57,19 +66,27 @@ export function buildFormOwnerRuntime(input: {
       const dependentBaseline = input.sharedState.initialFieldState.initialValues[dependentPath];
       const isDirty = !Object.is(dependentBaseline, currentDependentValue);
 
-      const state = input.sharedState.store.getState();
-      const nextValidating = { ...state.validating };
-      delete nextValidating[dependentPath];
+      const fieldStates = input.sharedState.store.getState().fieldStates;
+      const existingFieldState = fieldStates[dependentPath];
 
-      const nextDirty = isDirty
-        ? { ...state.dirty, [dependentPath]: true }
-        : (() => { const dirty = { ...state.dirty }; delete dirty[dependentPath]; return dirty; })();
+      const nextFieldState: FieldState = { ...existingFieldState };
+      delete nextFieldState.validating;
+      if (isDirty) {
+        nextFieldState.dirty = true;
+      } else {
+        delete nextFieldState.dirty;
+      }
 
-      input.sharedState.store.batchUpdate({ validating: nextValidating, dirty: nextDirty });
+      const nextFieldStates = Object.keys(nextFieldState).length > 0
+        ? { ...fieldStates, [dependentPath]: nextFieldState }
+        : (() => { const next = { ...fieldStates }; delete next[dependentPath]; return next; })();
 
+      input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
+
+      const currentFieldState = input.sharedState.store.getState().fieldStates[dependentPath];
       if (
-        input.sharedState.store.getState().touched[dependentPath]
-        || input.sharedState.store.getState().visited[dependentPath]
+        currentFieldState?.touched
+        || currentFieldState?.visited
         || input.getIsSubmitting()
       ) {
         await input.getThisForm().validateField(dependentPath);
@@ -80,14 +97,17 @@ export function buildFormOwnerRuntime(input: {
   }
 
   function rebuildStoreErrorsFromExternal(
-    baseErrors: Record<string, ValidationError[]>
+    fieldStates: Record<string, FieldState>
   ): Record<string, ValidationError[]> {
     const next: Record<string, ValidationError[]> = {};
 
-    for (const [path, pathErrors] of Object.entries(baseErrors)) {
-      const nonExternal = pathErrors.filter((error) => error.sourceKind !== 'external');
-      if (nonExternal.length > 0) {
-        next[path] = nonExternal;
+    for (const [path, fs] of Object.entries(fieldStates)) {
+      const pathErrors = fs.errors;
+      if (pathErrors) {
+        const nonExternal = pathErrors.filter((error) => error.sourceKind !== 'external');
+        if (nonExternal.length > 0) {
+          next[path] = nonExternal;
+        }
       }
     }
 
@@ -133,8 +153,23 @@ export function buildFormOwnerRuntime(input: {
       input.sharedState.externalErrors.set(sourceId, { sourceId, errors: [...existing.errors, ...errors] });
     }
 
-    const nextErrors = rebuildStoreErrorsFromExternal(input.sharedState.store.getState().errors);
-    input.sharedState.store.setErrors(nextErrors);
+    const fieldStates = input.sharedState.store.getState().fieldStates;
+    const nextErrors = rebuildStoreErrorsFromExternal(fieldStates);
+
+    const nextFieldStates = { ...fieldStates };
+    for (const path of Object.keys(nextFieldStates)) {
+      const existingFs = nextFieldStates[path];
+      if (existingFs?.errors && !nextErrors[path]) {
+        const { errors: _removed, ...rest } = existingFs;
+        nextFieldStates[path] = Object.keys(rest).length > 0 ? rest : undefined!;
+        if (!nextFieldStates[path]) delete nextFieldStates[path];
+      }
+    }
+    for (const [path, pathErrors] of Object.entries(nextErrors)) {
+      nextFieldStates[path] = { ...nextFieldStates[path], errors: pathErrors };
+    }
+    input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
+
     return computeScopeState();
   }
 
@@ -168,11 +203,18 @@ export function buildFormOwnerRuntime(input: {
     }
 
     if (reason === 'change') {
-      const currentErrors = input.sharedState.store.getState().errors;
-      const hasErrors = Object.keys(currentErrors).length > 0;
-      const fieldErrors: Record<string, ValidationError[]> = { ...currentErrors };
-      const errors = Object.values(currentErrors).flat();
-      return { ok: !hasErrors, errors, fieldErrors };
+      const fieldStates = input.sharedState.store.getState().fieldStates;
+      const fieldErrors: Record<string, ValidationError[]> = {};
+      const errors: ValidationError[] = [];
+
+      for (const [path, fs] of Object.entries(fieldStates)) {
+        if (fs.errors && fs.errors.length > 0) {
+          fieldErrors[path] = fs.errors;
+          errors.push(...fs.errors);
+        }
+      }
+
+      return { ok: errors.length === 0, errors, fieldErrors };
     }
 
     return input.getThisForm().validateForm(reason);
@@ -191,7 +233,7 @@ export function buildFormOwnerRuntime(input: {
 
     const fieldErrors: Record<string, ValidationError[]> = {};
     const errors: ValidationError[] = [];
-    const initialErrors = input.sharedState.store.getState().errors;
+    const initialFieldStates = input.sharedState.store.getState().fieldStates;
     const validatedPaths = new Set<string>();
 
     const validationPaths = getCompiledValidationTraversalOrder(currentValidation);
@@ -243,10 +285,13 @@ export function buildFormOwnerRuntime(input: {
       await validateRegisteredChildren(registration);
     }
 
-    const currentErrors = input.sharedState.store.getState().errors;
+    const currentFieldStates = input.sharedState.store.getState().fieldStates;
     const preservedErrors: Record<string, ValidationError[]> = {};
 
-    for (const [path, pathErrors] of Object.entries(currentErrors)) {
+    for (const [path, fs] of Object.entries(currentFieldStates)) {
+      const pathErrors = fs.errors;
+      if (!pathErrors) continue;
+
       if (!validatedPaths.has(path)) {
         preservedErrors[path] = pathErrors;
         continue;
@@ -263,16 +308,36 @@ export function buildFormOwnerRuntime(input: {
       ...fieldErrors
     };
 
-    if (mergedErrors !== currentErrors) {
-      input.sharedState.store.setErrors(mergedErrors);
+    const nextFieldStates = { ...currentFieldStates };
+    let changed = false;
+    for (const [path, pathErrors] of Object.entries(mergedErrors)) {
+      const existing = nextFieldStates[path];
+      if (!validationErrorsEqual(existing?.errors, pathErrors)) {
+        nextFieldStates[path] = { ...existing, errors: pathErrors };
+        changed = true;
+      }
+    }
+    for (const path of Object.keys(currentFieldStates)) {
+      if (!mergedErrors[path] && currentFieldStates[path]?.errors) {
+        const { errors: _removed, ...rest } = currentFieldStates[path];
+        nextFieldStates[path] = Object.keys(rest).length > 0 ? rest : undefined!;
+        if (!nextFieldStates[path]) delete nextFieldStates[path];
+        changed = true;
+      }
+    }
+    if (changed) {
+      input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
     }
 
-    for (const [path, pathErrors] of Object.entries(mergedErrors)) {
+    for (const [path, fs] of Object.entries(currentFieldStates)) {
+      const pathErrors = fs.errors;
+      if (!pathErrors) continue;
+
       if (fieldErrors[path]) {
         continue;
       }
 
-      if (validationErrorsEqual(initialErrors[path], pathErrors)) {
+      if (validationErrorsEqual(initialFieldStates[path]?.errors, pathErrors)) {
         continue;
       }
 
@@ -346,11 +411,41 @@ export function buildFormOwnerRuntime(input: {
     }
 
     if (oldModel) {
-      const currentErrors = input.sharedState.store.getState().errors;
+      const currentFieldStates = input.sharedState.store.getState().fieldStates;
+      const currentErrors: Record<string, ValidationError[]> = {};
+      for (const [path, fs] of Object.entries(currentFieldStates)) {
+        if (fs.errors && fs.errors.length > 0) {
+          currentErrors[path] = fs.errors;
+        }
+      }
       const retainedErrors = computeRefreshErrorRetention(oldModel, newModel, currentErrors);
-      input.sharedState.store.setErrors(retainedErrors);
+
+      const nextFieldStates = { ...currentFieldStates };
+      for (const path of Object.keys(currentFieldStates)) {
+        if (currentFieldStates[path]?.errors && !retainedErrors[path]) {
+          const { errors: _removed, ...rest } = currentFieldStates[path];
+          nextFieldStates[path] = Object.keys(rest).length > 0 ? rest : undefined!;
+          if (!nextFieldStates[path]) delete nextFieldStates[path];
+        }
+      }
+      for (const [path, pathErrors] of Object.entries(retainedErrors)) {
+        nextFieldStates[path] = { ...nextFieldStates[path], errors: pathErrors };
+      }
+      input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
     } else {
-      input.sharedState.store.setErrors({});
+      const currentFieldStates = input.sharedState.store.getState().fieldStates;
+      const nextFieldStates: Record<string, FieldState> = {};
+      for (const [path, fs] of Object.entries(currentFieldStates)) {
+        if (fs.errors) {
+          const { errors: _removed, ...rest } = fs;
+          if (Object.keys(rest).length > 0) {
+            nextFieldStates[path] = rest;
+          }
+        } else {
+          nextFieldStates[path] = fs;
+        }
+      }
+      input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
     }
 
     input.sharedState.lifecycleState = 'active';
@@ -368,7 +463,7 @@ export function buildFormOwnerRuntime(input: {
     input.sharedState.pathToRegistrationId.clear();
     input.sharedState.childContracts.clear();
     input.sharedState.externalErrors.clear();
-    input.sharedState.store.batchUpdate({ errors: {}, validating: {}, touched: {}, dirty: {}, visited: {} });
+    input.sharedState.store.batchUpdate({ fieldStates: {} });
   }
 
   return {

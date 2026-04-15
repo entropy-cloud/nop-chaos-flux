@@ -1,70 +1,93 @@
 import type {
   FieldRegistrationHandle,
-  RuntimeFieldRegistration,
-  ValidationError
+  FieldState,
+  RuntimeFieldRegistration
 } from '@nop-chaos/flux-core';
 import { getCompiledValidationField, setIn } from '@nop-chaos/flux-core';
 import { findRuntimeRegistration } from './form-runtime-registration';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
 
-export function buildBooleanPathState(input: Record<string, boolean>, path: string, nextValue: boolean): Record<string, boolean> {
-  if (nextValue) {
-    if (input[path]) {
-      return input;
-    }
-
-    return {
-      ...input,
-      [path]: true
-    };
-  }
-
-  if (!input[path]) {
-    return input;
-  }
-
-  const next = { ...input };
-  delete next[path];
-  return next;
+export interface FieldValuePatchResult {
+  nextValues: Record<string, unknown>;
+  nextFieldStates: Record<string, FieldState>;
 }
 
-export function buildErrorPathState(input: Record<string, ValidationError[]>, path: string): Record<string, ValidationError[]> {
-  if (!input[path]) {
-    return input;
+function updateFieldStateInMap(
+  fieldStates: Record<string, FieldState>,
+  path: string,
+  patch: Partial<FieldState>
+): Record<string, FieldState> {
+  const existing = fieldStates[path];
+  const merged: FieldState = { ...existing };
+
+  if ('touched' in patch) {
+    if (patch.touched === true) merged.touched = true;
+    else delete merged.touched;
   }
 
-  const next = { ...input };
-  delete next[path];
-  return next;
+  if ('dirty' in patch) {
+    if (patch.dirty === true) merged.dirty = true;
+    else delete merged.dirty;
+  }
+
+  if ('visited' in patch) {
+    if (patch.visited === true) merged.visited = true;
+    else delete merged.visited;
+  }
+
+  if ('validating' in patch) {
+    if (patch.validating === true) merged.validating = true;
+    else delete merged.validating;
+  }
+
+  if ('errors' in patch) {
+    if (patch.errors && patch.errors.length > 0) merged.errors = patch.errors;
+    else delete merged.errors;
+  }
+
+  const hasKeys = Object.keys(merged).length > 0;
+
+  if (!hasKeys) {
+    if (!(path in fieldStates)) {
+      return fieldStates;
+    }
+    const { [path]: _removed, ...rest } = fieldStates;
+    return rest;
+  }
+
+  if (
+    existing &&
+    existing.touched === merged.touched &&
+    existing.dirty === merged.dirty &&
+    existing.visited === merged.visited &&
+    existing.validating === merged.validating &&
+    existing.errors === merged.errors
+  ) {
+    return fieldStates;
+  }
+
+  return { ...fieldStates, [path]: merged };
 }
 
 export function applyFieldValuePatch(
   sharedState: ManagedFormRuntimeSharedState,
-  state: { values: Record<string, unknown>; validating: Record<string, boolean>; errors: Record<string, ValidationError[]>; dirty: Record<string, boolean> },
+  state: { values: Record<string, unknown>; fieldStates: Record<string, FieldState> },
   name: string,
   value: unknown,
   forceDirty: boolean
-) {
+): FieldValuePatchResult {
   const runtimeTarget = findRuntimeRegistration(sharedState, name);
   const nextValues = setIn(state.values, name, value);
-  const nextValidating = buildBooleanPathState(state.validating, name, false);
-  const nextErrors = buildErrorPathState(state.errors, name);
 
-  if (runtimeTarget.childPath && runtimeTarget.entry) {
-    return {
-      nextValues,
-      nextValidating,
-      nextErrors,
-      nextDirty: buildBooleanPathState(state.dirty, name, true)
-    };
-  }
+  let nextFieldStates = updateFieldStateInMap(state.fieldStates, name, {
+    validating: undefined,
+    errors: undefined
+  });
 
-  return {
-    nextValues,
-    nextValidating,
-    nextErrors,
-    nextDirty: buildBooleanPathState(state.dirty, name, forceDirty)
-  };
+  const shouldDirty = runtimeTarget.childPath && runtimeTarget.entry ? true : forceDirty;
+  nextFieldStates = updateFieldStateInMap(nextFieldStates, name, { dirty: shouldDirty ? true : undefined });
+
+  return { nextValues, nextFieldStates };
 }
 
 let _registrationIdCounter = 0;

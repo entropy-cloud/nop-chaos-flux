@@ -1,12 +1,13 @@
 import type {
   CompiledFormValidationField,
+  FieldState,
   FormValidationResult,
   RuntimeFieldRegistration,
   ValidationError,
   ValidationReason,
   ValidationResult
 } from '@nop-chaos/flux-core';
-import { getCompiledValidationField, hasCompiledValidationNodes } from '@nop-chaos/flux-core';
+import { getCompiledValidationField, hasCompiledValidationNodes, validationErrorsEqual } from '@nop-chaos/flux-core';
 import { findRuntimeRegistration, syncRegisteredFieldValue } from './form-runtime-registration';
 import { collectSubtreeNodePaths, collectSubtreePaths } from './form-runtime-subtree';
 import type { FormRuntimeValidationState } from './form-runtime-types';
@@ -26,79 +27,40 @@ function setPathErrors(sharedState: FormRuntimeValidationState, path: string, er
   sharedState.store.setPathErrors(path, errors);
 }
 
-function buildNextBooleanPathState(
-  input: Record<string, boolean>,
-  path: string,
-  nextValue: boolean
-): Record<string, boolean> {
-  if (nextValue) {
-    if (input[path]) {
-      return input;
-    }
-
-    return { ...input, [path]: true };
-  }
-
-  if (!input[path]) {
-    return input;
-  }
-
-  const next = { ...input };
-  delete next[path];
-  return next;
-}
-
-function buildNextErrorPathState(
-  input: Record<string, ValidationError[]>,
-  path: string,
-  errors: ValidationError[]
-): Record<string, ValidationError[]> {
-  const existing = input[path];
-
-  if (errors.length === 0) {
-    if (!existing) {
-      return input;
-    }
-
-    const next = { ...input };
-    delete next[path];
-    return next;
-  }
-
-  if (existing === errors) {
-    return input;
-  }
-
-  return { ...input, [path]: errors };
-}
-
 function commitPathValidationState(input: {
   sharedState: FormRuntimeValidationState;
   path: string;
   errors: ValidationError[];
   validating?: boolean;
 }) {
-  const state = input.sharedState.store.getState();
-  const nextErrors = buildNextErrorPathState(state.errors, input.path, input.errors);
+  const fieldStates = input.sharedState.store.getState().fieldStates;
+  const existing = fieldStates[input.path];
 
-  if (typeof input.validating !== 'boolean') {
-    if (nextErrors !== state.errors) {
-      input.sharedState.store.batchUpdate({ errors: nextErrors });
+  const nextFieldState: FieldState = { ...existing };
+
+  if (input.errors.length > 0) {
+    if (!validationErrorsEqual(existing?.errors, input.errors)) {
+      nextFieldState.errors = input.errors;
     }
-
-    return;
+  } else {
+    delete nextFieldState.errors;
   }
 
-  const nextValidating = buildNextBooleanPathState(state.validating, input.path, input.validating);
-
-  if (nextErrors === state.errors && nextValidating === state.validating) {
-    return;
+  if (typeof input.validating === 'boolean') {
+    if (input.validating) {
+      nextFieldState.validating = true;
+    } else {
+      delete nextFieldState.validating;
+    }
   }
 
-  input.sharedState.store.batchUpdate({
-    errors: nextErrors,
-    validating: nextValidating
-  });
+  const nextFieldStates = Object.keys(nextFieldState).length > 0
+    ? { ...fieldStates, [input.path]: nextFieldState }
+    : (() => { const next = { ...fieldStates }; delete next[input.path]; return next; })();
+
+  if (nextFieldStates !== fieldStates) {
+    input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
+  }
 }
 
 export function cancelValidationDebounce(sharedState: FormRuntimeValidationState, path: string) {
@@ -165,7 +127,7 @@ async function validateRuntimeRegistrationChild(
   ) ?? [];
   commitPathValidationState({
     sharedState,
-    path,
+    path: childPath,
     errors: runtimeErrors
   });
   return createValidationResult(runtimeErrors);
