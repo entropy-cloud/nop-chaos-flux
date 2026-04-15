@@ -55,9 +55,20 @@ export interface FormFieldPresentationSnapshot extends FormFieldStateSnapshot {
   readOnly: boolean;
 }
 
+export interface FormPathState {
+  errors: ValidationError[] | undefined;
+  validating: boolean;
+  touched: boolean;
+  dirty: boolean;
+  visited: boolean;
+}
+
 export interface FormStoreApi {
   getState(): FormStoreState;
   subscribe(listener: () => void): () => void;
+  subscribeToPath(path: string, listener: () => void): () => void;
+  subscribeToSubmitting(listener: () => void): () => void;
+  getPathState(path: string): FormPathState;
   setValues(values: Record<string, any>): void;
   setValue(path: string, value: unknown): void;
   setErrors(errors: Record<string, ValidationError[]>): void;

@@ -1,5 +1,5 @@
 import { createStore } from 'zustand/vanilla';
-import type { FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, SurfaceEntry, SurfaceStoreApi, SurfaceStoreState, ValidationError } from '@nop-chaos/flux-core';
+import type { FormPathState, FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, SurfaceEntry, SurfaceStoreApi, SurfaceStoreState, ValidationError } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
 
 function validationErrorsEqual(
@@ -69,6 +69,58 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     submitting: false
   }));
 
+  const pathListeners = new Map<string, Set<() => void>>();
+  const submittingListeners = new Set<() => void>();
+
+  function notifyPath(path: string) {
+    const listeners = pathListeners.get(path);
+    if (listeners) {
+      for (const listener of listeners) {
+        listener();
+      }
+    }
+  }
+
+  function notifySubmitting() {
+    for (const listener of submittingListeners) {
+      listener();
+    }
+  }
+
+  function diffAndNotifyBooleanMaps(
+    before: Record<string, boolean>,
+    after: Record<string, boolean>,
+    changed: Set<string>
+  ) {
+    for (const key of Object.keys(before)) {
+      if (!(key in after)) {
+        changed.add(key);
+      }
+    }
+    for (const key of Object.keys(after)) {
+      if (before[key] !== after[key]) {
+        changed.add(key);
+      }
+    }
+  }
+
+  function diffAndNotifyErrorMaps(
+    before: Record<string, ValidationError[]>,
+    after: Record<string, ValidationError[]>,
+    changed: Set<string>
+  ) {
+    for (const key of Object.keys(before)) {
+      if (!(key in after)) {
+        changed.add(key);
+      }
+    }
+    for (const key of Object.keys(after)) {
+      if (!validationErrorsEqual(before[key], after[key])) {
+        changed.add(key);
+      }
+    }
+  }
+
   function setBooleanState<K extends 'touched' | 'dirty' | 'visited' | 'validating'>(key: K, path: string, nextValue: boolean) {
     const current = store.getState()[key];
 
@@ -78,6 +130,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       }
 
       store.setState({ [key]: { ...current, [path]: true } } as Pick<FormStoreState, K>);
+      notifyPath(path);
       return;
     }
 
@@ -88,6 +141,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     const next = { ...current };
     delete next[path];
     store.setState({ [key]: next } as Pick<FormStoreState, K>);
+    notifyPath(path);
   }
 
   function setPathErrors(path: string, errors?: ValidationError[]) {
@@ -102,6 +156,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       const next = { ...current };
       delete next[path];
       store.setState({ errors: next });
+      notifyPath(path);
       return;
     }
 
@@ -110,6 +165,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     }
 
     store.setState({ errors: { ...current, [path]: errors } });
+    notifyPath(path);
   }
 
   return {
@@ -118,6 +174,36 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     },
     subscribe(listener) {
       return store.subscribe(listener);
+    },
+    subscribeToPath(path, listener) {
+      let listeners = pathListeners.get(path);
+      if (!listeners) {
+        listeners = new Set();
+        pathListeners.set(path, listeners);
+      }
+      listeners.add(listener);
+      return () => {
+        listeners!.delete(listener);
+        if (listeners!.size === 0) {
+          pathListeners.delete(path);
+        }
+      };
+    },
+    subscribeToSubmitting(listener) {
+      submittingListeners.add(listener);
+      return () => {
+        submittingListeners.delete(listener);
+      };
+    },
+    getPathState(path): FormPathState {
+      const state = store.getState();
+      return {
+        errors: state.errors[path],
+        validating: state.validating[path] === true,
+        touched: state.touched[path] === true,
+        dirty: state.dirty[path] === true,
+        visited: state.visited[path] === true
+      };
     },
     setValues(values) {
       store.setState({ values });
@@ -131,7 +217,13 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
         return;
       }
 
+      const before = store.getState().errors;
       store.setState({ errors });
+      const changed = new Set<string>();
+      diffAndNotifyErrorMaps(before, errors, changed);
+      for (const path of changed) {
+        notifyPath(path);
+      }
     },
     setPathErrors(path, errors) {
       setPathErrors(path, errors);
@@ -140,31 +232,87 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       setBooleanState('validating', path, validating);
     },
     setValidatingState(validating) {
+      const before = store.getState().validating;
       store.setState({ validating });
+      const changed = new Set<string>();
+      diffAndNotifyBooleanMaps(before, validating, changed);
+      for (const path of changed) {
+        notifyPath(path);
+      }
     },
     setTouched(path, touched) {
       setBooleanState('touched', path, touched);
     },
     setTouchedState(touched) {
+      const before = store.getState().touched;
       store.setState({ touched });
+      const changed = new Set<string>();
+      diffAndNotifyBooleanMaps(before, touched, changed);
+      for (const path of changed) {
+        notifyPath(path);
+      }
     },
     setDirty(path, dirty) {
       setBooleanState('dirty', path, dirty);
     },
     setDirtyState(dirty) {
+      const before = store.getState().dirty;
       store.setState({ dirty });
+      const changed = new Set<string>();
+      diffAndNotifyBooleanMaps(before, dirty, changed);
+      for (const path of changed) {
+        notifyPath(path);
+      }
     },
     setVisited(path, visited) {
       setBooleanState('visited', path, visited);
     },
     setVisitedState(visited) {
+      const before = store.getState().visited;
       store.setState({ visited });
+      const changed = new Set<string>();
+      diffAndNotifyBooleanMaps(before, visited, changed);
+      for (const path of changed) {
+        notifyPath(path);
+      }
     },
     setSubmitting(submitting) {
+      if (store.getState().submitting === submitting) {
+        return;
+      }
       store.setState({ submitting });
+      notifySubmitting();
     },
     batchUpdate(updates) {
+      const before = store.getState();
       store.setState(updates);
+      const after = store.getState();
+
+      const changed = new Set<string>();
+
+      if (updates.errors !== undefined) {
+        diffAndNotifyErrorMaps(before.errors, after.errors, changed);
+      }
+      if (updates.validating !== undefined) {
+        diffAndNotifyBooleanMaps(before.validating, after.validating, changed);
+      }
+      if (updates.touched !== undefined) {
+        diffAndNotifyBooleanMaps(before.touched, after.touched, changed);
+      }
+      if (updates.dirty !== undefined) {
+        diffAndNotifyBooleanMaps(before.dirty, after.dirty, changed);
+      }
+      if (updates.visited !== undefined) {
+        diffAndNotifyBooleanMaps(before.visited, after.visited, changed);
+      }
+
+      for (const path of changed) {
+        notifyPath(path);
+      }
+
+      if (updates.submitting !== undefined && before.submitting !== after.submitting) {
+        notifySubmitting();
+      }
     }
   };
 }

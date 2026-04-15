@@ -12,6 +12,12 @@ export function createVariantStore(parentStore: FormStoreApi, prefix: string): F
   let lastParentState: FormStoreState | undefined;
   let lastProjectedState: FormStoreState | undefined;
 
+  function toAbsolute(relativePath: string): string {
+    if (!relativePath) return prefix;
+    if (!prefix) return relativePath;
+    return `${prefix}.${relativePath}`;
+  }
+
   function mapPath(path: string) {
     if (!path) {
       return '';
@@ -80,6 +86,15 @@ export function createVariantStore(parentStore: FormStoreApi, prefix: string): F
     },
     subscribe(listener) {
       return parentStore.subscribe(listener);
+    },
+    subscribeToPath(relativePath, listener) {
+      return parentStore.subscribeToPath(toAbsolute(relativePath), listener);
+    },
+    subscribeToSubmitting(listener) {
+      return parentStore.subscribeToSubmitting(listener);
+    },
+    getPathState(relativePath) {
+      return parentStore.getPathState(toAbsolute(relativePath));
     }
   };
 }

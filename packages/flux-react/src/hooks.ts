@@ -1,4 +1,5 @@
-import { useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo, useRef } from 'react';
+import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
@@ -6,6 +7,7 @@ import type {
   FormFieldStateSnapshot,
   FormErrorQuery,
   FormRuntime,
+  FormStoreApi,
   FormStoreState,
   PageRuntime,
   RenderNodeMeta,
@@ -26,7 +28,30 @@ import {
   useRequiredContext
 } from './contexts';
 import { createHelpers } from './helpers';
-import { EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
+import { EMPTY_FORM_STORE_STATE, EMPTY_FORM_FIELD_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
+
+function shallowEqualFormFieldState(
+  a: FormFieldStateSnapshot,
+  b: FormFieldStateSnapshot
+): boolean {
+  return (
+    a.error === b.error &&
+    a.validating === b.validating &&
+    a.touched === b.touched &&
+    a.dirty === b.dirty &&
+    a.visited === b.visited &&
+    a.submitting === b.submitting
+  );
+}
+
+function shallowEqualArrays<T>(a: T[], b: T[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
 
 function emptyUnsubscribe() {
   return undefined;
@@ -124,24 +149,70 @@ export function useCurrentFormState<T>(
 }
 
 export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] {
-  return useCurrentFormState((state) => selectCurrentFormErrors(state, query));
+  const form = useCurrentForm();
+  const subscribe = form?.store.subscribe ?? (() => () => undefined);
+  const getSnapshot = () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE;
+  const queryRef = useRef(query);
+  queryRef.current = query;
+  const selector = useCallback(
+    (state: FormStoreState) => selectCurrentFormErrors(state, queryRef.current),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [form]
+  );
+
+  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, shallowEqualArrays);
 }
 
 export function useCurrentFormError(query: FormErrorQuery): ValidationError | undefined {
-  return useCurrentFormState((state) => selectCurrentFormErrors(state, query)[0], Object.is);
+  const form = useCurrentForm();
+  const subscribe = form?.store.subscribe ?? (() => () => undefined);
+  const getSnapshot = () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE;
+  const queryRef = useRef(query);
+  queryRef.current = query;
+  const selector = useCallback(
+    (state: FormStoreState) => selectCurrentFormErrors(state, queryRef.current)[0],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [form]
+  );
+
+  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, Object.is);
 }
 
 export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot {
-  return useCurrentFormState(
-    (state) => selectCurrentFormFieldState(state, path, query),
-    (left, right) =>
-      left.error === right.error &&
-      left.validating === right.validating &&
-      left.touched === right.touched &&
-      left.dirty === right.dirty &&
-      left.visited === right.visited &&
-      left.submitting === right.submitting
+  const form = useCurrentForm();
+  const store: FormStoreApi | undefined = form?.store;
+  const queryRef = useRef(query);
+  queryRef.current = query;
+  const cachedRef = useRef<FormFieldStateSnapshot>(EMPTY_FORM_FIELD_STATE);
+
+  const subscribe = useCallback(
+    (listener: () => void) => {
+      if (!store) return () => undefined;
+      const unsubPath = store.subscribeToPath(path, listener);
+      const unsubSubmitting = store.subscribeToSubmitting(listener);
+      return () => {
+        unsubPath();
+        unsubSubmitting();
+      };
+    },
+    [store, path]
   );
+
+  const getSnapshot = useCallback(
+    (): FormFieldStateSnapshot => {
+      if (!store) return EMPTY_FORM_FIELD_STATE;
+      const state = store.getState();
+      const next = selectCurrentFormFieldState(state, path, queryRef.current);
+      if (shallowEqualFormFieldState(next, cachedRef.current)) {
+        return cachedRef.current;
+      }
+      cachedRef.current = next;
+      return next;
+    },
+    [store, path]
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export function useValidationNodeState(path: string): FormFieldStateSnapshot {
@@ -149,7 +220,39 @@ export function useValidationNodeState(path: string): FormFieldStateSnapshot {
 }
 
 export function useFieldError(path: string): ValidationError | undefined {
-  return useCurrentFormError({ path, sourceKinds: ['field', 'runtime-registration'] });
+  const form = useCurrentForm();
+  const store: FormStoreApi | undefined = form?.store;
+  const cachedRef = useRef<ValidationError | undefined>(undefined);
+
+  const subscribe = useCallback(
+    (listener: () => void) => {
+      if (!store) return () => undefined;
+      const unsubPath = store.subscribeToPath(path, listener);
+      const unsubSubmitting = store.subscribeToSubmitting(listener);
+      return () => {
+        unsubPath();
+        unsubSubmitting();
+      };
+    },
+    [store, path]
+  );
+
+  const getSnapshot = useCallback(
+    (): ValidationError | undefined => {
+      if (!store) return undefined;
+      const state = store.getState();
+      const errors = state.errors[path];
+      const next = errors?.find((e) =>
+        !e.sourceKind || e.sourceKind === 'field' || e.sourceKind === 'runtime-registration'
+      );
+      if (next === cachedRef.current) return cachedRef.current;
+      cachedRef.current = next;
+      return next;
+    },
+    [store, path]
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export function useOwnedFieldState(path: string): FormFieldStateSnapshot {
