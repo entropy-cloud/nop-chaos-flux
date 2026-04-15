@@ -2,13 +2,19 @@
 
 ## Purpose
 
-This document records the current architecture baseline for the active `nop-chaos-flux` codebase.
+This document records the current codebase-wide architecture baseline for the active `nop-chaos-flux` codebase.
 
-Use it when you need the highest-level answer to:
+Use it after `docs/architecture/frontend-programming-model.md` when you need the high-level codebase answer to:
 
 - how schema values are compiled and evaluated
 - how runtime, scope, forms, pages, and actions fit together
 - which design directions are current behavior versus future refinement
+
+Precedence note:
+
+- `docs/architecture/frontend-programming-model.md` owns top-level primitive identity, macro execution boundaries, and the normative loader/runtime/host split
+- this document owns the current codebase-wide architecture baseline and high-level runtime composition beneath that top-level programming model
+- narrower architecture docs still own local precedence inside their subject area
 
 For the dedicated template/instance identity model, continue with `docs/architecture/template-instantiation-and-node-identity.md`.
 

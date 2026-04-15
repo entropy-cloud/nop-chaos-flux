@@ -136,7 +136,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
               {columns.map((column, index) => {
                 const labelRegion = typeof column.labelRegionKey === 'string' ? props.regions[column.labelRegionKey] : undefined;
-                const labelContent = labelRegion?.instantiate() ?? column.label ?? column.name;
+                const labelContent = labelRegion?.render() ?? column.label ?? column.name;
                 const isSortable = column.sortable === true;
                 const isFilterable = column.filterable === true && Array.isArray(column.filterOptions) && column.filterOptions.length > 0;
                 const currentSort = sortState.column === column.name ? sortState.direction : null;

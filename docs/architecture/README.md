@@ -67,6 +67,12 @@ They belong here because they define how Flux hosts complex editable domains, wo
 
 These docs refine one active topic without owning top-level primitive precedence.
 
+They should:
+
+- defer primitive/core-boundary questions back to `frontend-programming-model.md`
+- defer codebase-wide baseline questions back to `flux-core.md`
+- keep local precedence only inside their bounded topic
+
 - rendering and slots: `scoped-render-slots.md`, `component-resolution.md`
 - value and field families: `value-adaptation-and-detail-field.md`, `variant-field.md`, `object-field.md`, `array-field.md`
 - UI and styling: `styling-system.md`, `renderer-markers-and-selectors.md`, `theme-compatibility.md`, `surface-owner.md`, `field-frame.md`

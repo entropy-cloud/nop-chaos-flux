@@ -67,10 +67,11 @@ export function createXyflowNodes(
   }));
 }
 
-export function createXyflowEdges(snapshot: DesignerSnapshot): Edge[] {
+export function createXyflowEdges(snapshot: DesignerSnapshot, documentMode?: 'graph' | 'tree'): Edge[] {
+  const edgeType = documentMode === 'tree' ? 'dingflowEdge' : 'designerEdge';
   return snapshot.doc.edges.map((edge) => ({
     id: edge.id,
-    type: 'designerEdge',
+    type: edgeType,
     source: edge.source,
     target: edge.target,
     label: String(edge.data.label ?? edge.id),

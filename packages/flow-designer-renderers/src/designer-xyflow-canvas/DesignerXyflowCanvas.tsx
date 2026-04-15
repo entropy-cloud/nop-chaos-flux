@@ -6,6 +6,7 @@ import {
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
+  ViewportPortal,
   useNodesState,
   useEdgesState
 } from '@xyflow/react';
@@ -21,6 +22,8 @@ import type {
 import '@xyflow/react/dist/style.css';
 import { DesignerXyflowNode } from './DesignerXyflowNode';
 import { DesignerXyflowEdge } from './DesignerXyflowEdge';
+import { DingFlowEdge } from '../dingflow';
+import { computeDingFlowOverlays, DingFlowAddConditionOverlay, DingFlowMergeOverlay } from '../dingflow';
 import { createXyflowNodes, createXyflowEdges, normalizeControlledViewport, viewportsEqual, normalizeViewportChange, normalizePositionSignature } from './xyflow-utils';
 import type { XyflowViewportChange } from './types';
 import type { CanvasConfig, DesignerSnapshot } from '@nop-chaos/flow-designer-core';
@@ -54,6 +57,40 @@ export interface DesignerXyflowCanvasProps {
   onNodeHover?(nodeId: string | null, event?: React.MouseEvent): void;
   onEdgeHover?(edgeId: string | null, event?: React.MouseEvent): void;
   onDrop?(nodeTypeId: string, position: { x: number; y: number }): void;
+  documentMode?: 'graph' | 'tree';
+  onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number) => void;
+}
+
+function TreeModeOverlays({ nodes, edges, onPlusButtonClick }: {
+  nodes: import('@nop-chaos/flow-designer-core').GraphNode[];
+  edges: import('@nop-chaos/flow-designer-core').GraphEdge[];
+  onPlusButtonClick: (sourceId: string, clientX: number, clientY: number) => void;
+}) {
+  const overlays = useMemo(() => computeDingFlowOverlays(nodes, edges), [nodes, edges]);
+
+  return (
+    <ViewportPortal>
+      {overlays.map((overlay) => (
+        <div
+          key={overlay.id}
+          className="absolute z-[5] pointer-events-auto nopan nodrag"
+          style={{
+            transform: `translate(${overlay.x}px, ${overlay.y}px) translate(-50%, -50%)`,
+          }}
+        >
+          {overlay.kind === 'addCondition' ? (
+            <DingFlowAddConditionOverlay
+              onClick={(e) => onPlusButtonClick(overlay.sourceId, e.clientX, e.clientY)}
+            />
+          ) : (
+            <DingFlowMergeOverlay
+              onClick={(e) => onPlusButtonClick(overlay.sourceId, e.clientX, e.clientY)}
+            />
+          )}
+        </div>
+      ))}
+    </ViewportPortal>
+  );
 }
 
 export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
@@ -61,14 +98,15 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     designerNode: DesignerXyflowNode
   }), []);
   const xyflowEdgeTypes = useMemo(() => ({
-    designerEdge: DesignerXyflowEdge
+    designerEdge: DesignerXyflowEdge,
+    dingflowEdge: DingFlowEdge
   }), []);
 
   const snapshotNodes = useMemo(
     () => createXyflowNodes(props.snapshot, props.nodeTypeSizeMap),
     [props.snapshot, props.nodeTypeSizeMap]
   );
-  const snapshotEdges = useMemo(() => createXyflowEdges(props.snapshot), [props.snapshot]);
+  const snapshotEdges = useMemo(() => createXyflowEdges(props.snapshot, props.documentMode), [props.snapshot, props.documentMode]);
   const viewport = useMemo(
     () => normalizeControlledViewport(props.snapshot.doc.viewport ?? props.snapshot.viewport),
     [props.snapshot.doc.viewport, props.snapshot.viewport]
@@ -122,26 +160,36 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
         return snapshotNodes;
       }
 
-      const currentNodeMap = new Map(currentNodes.map((node) => [node.id, node]));
+      const snapshotIdSet = new Set(snapshotNodes.map((n) => n.id));
+      const localIdSet = new Set(currentNodes.map((n) => n.id));
+      const structureChanged = snapshotIdSet.size !== localIdSet.size ||
+        [...snapshotIdSet].some((id) => !localIdSet.has(id));
+
+      if (structureChanged) {
+        const currentNodeMap = new Map(currentNodes.map((node) => [node.id, node]));
+        const lastCommitted = lastCommittedPositionsRef.current;
+        return snapshotNodes.map((snapshotNode) => {
+          const localNode = currentNodeMap.get(snapshotNode.id);
+          if (!localNode) return snapshotNode;
+          const snapshotSignature = snapshotPositionMap.get(snapshotNode.id);
+          const committedSignature = lastCommitted.get(snapshotNode.id);
+          if (committedSignature && snapshotSignature === committedSignature) return localNode;
+          return snapshotNode;
+        });
+      }
 
       const lastCommitted = lastCommittedPositionsRef.current;
-      const mergedNodes = snapshotNodes.map((snapshotNode) => {
-        const localNode = currentNodeMap.get(snapshotNode.id);
-        if (!localNode) {
-          return snapshotNode;
-        }
-
-        const snapshotSignature = snapshotPositionMap.get(snapshotNode.id);
-        const committedSignature = lastCommitted.get(snapshotNode.id);
-
-        if (committedSignature && snapshotSignature === committedSignature) {
-          return localNode;
-        }
-
-        return snapshotNode;
+      let changed = false;
+      const merged = currentNodes.map((localNode) => {
+        const snapNode = snapshotNodes.find((n) => n.id === localNode.id);
+        if (!snapNode) return localNode;
+        const snapshotSignature = snapshotPositionMap.get(snapNode.id);
+        const committedSignature = lastCommitted.get(snapNode.id);
+        if (committedSignature && snapshotSignature === committedSignature) return localNode;
+        changed = true;
+        return snapNode;
       });
-
-      return mergedNodes;
+      return changed ? merged : currentNodes;
     });
   }, [snapshotNodes, setLocalNodes]);
 
@@ -350,6 +398,13 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
               />
             )}
             {showControls && <Controls className="fd-xyflow-controls" showInteractive={false} />}
+            {props.documentMode === 'tree' && props.onPlusButtonClick && (
+              <TreeModeOverlays
+                nodes={props.snapshot.doc.nodes}
+                edges={props.snapshot.doc.edges}
+                onPlusButtonClick={props.onPlusButtonClick}
+              />
+            )}
         </ReactFlow>
       </div>
     </ReactFlowProvider>

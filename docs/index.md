@@ -17,7 +17,7 @@ Choose the smallest document that matches the task.
 | If you need to... | Read this first | Then read |
 | --- | --- | --- |
 | Understand the architecture hierarchy, reading order, or which architecture docs own precedence | `docs/architecture/README.md` | `docs/references/architecture-doc-status-matrix.md` |
-| Understand the current architecture baseline | `docs/architecture/flux-design-principles.md` | `docs/architecture/frontend-programming-model.md`, `docs/architecture/flux-core.md` |
+| Understand the current architecture baseline | `docs/architecture/flux-design-principles.md` | `docs/architecture/frontend-programming-model.md` for top-level precedence, then `docs/architecture/flux-core.md` for the codebase-wide baseline |
 | Understand Flux's top-level frontend programming model, primitive categories, macro layering, and how the primitives compose into one execution model | `docs/architecture/frontend-programming-model.md` | `docs/architecture/flux-core.md` |
 | Understand action control flow such as `when`, `then`, `onError`, `parallel`, result classes, and chained result context | `docs/architecture/action-algebra-formal-spec.md` | `docs/architecture/action-scope-and-imports.md` |
 | 设计 action 可视化编排、optional step、graph lowering，或判断是否要把 `parallel` 改成 `steps` | `docs/architecture/action-graph-authoring.md` | `docs/architecture/action-algebra-formal-spec.md` |
@@ -35,7 +35,9 @@ Choose the smallest document that matches the task.
 | Design or update the `designer-page` renderer contract | `docs/components/designer-page/design.md` | `docs/architecture/flow-designer/README.md`, `docs/architecture/flow-designer/design.md` |
 | 看清 Flow Designer 各层协作细节、命名空间动作流转、画布/Inspector 调用链 | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
 | 核对 Flow Designer 当前真实的 snapshot 契约、host scope 落地状态、哪些字段已接线 | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |
+| Design Flow Designer tree mode (chain + fan-out branches), TreeDocument data model, tree-to-graph projection, or decide tree vs graph for a domain | `docs/architecture/flow-designer/tree-mode.md` | `docs/architecture/flow-designer/config-schema.md` |
 | Understand Flow Designer React Flow integration, callback translation, or canvas failure semantics | `docs/architecture/flow-designer/canvas-adapters.md` | `docs/architecture/flow-designer/api.md` |
+| Plan Flow Designer tree mode implementation (TreeDocument, tree-projection, playground examples) | `docs/plans/71-flow-designer-tree-mode-implementation-plan.md` | `docs/architecture/flow-designer/tree-mode.md` |
 | Draft, execute, or audit a plan under `docs/plans/` | `docs/plans/00-plan-authoring-and-execution-guide.md` | `docs/logs/index.md` |
 | Plan parity work against `nop-chaos-next` `flow-editor` and identify which behaviors must become configuration-driven | `docs/plans/13-flow-editor-parity-gap-analysis-and-migration-plan.md` | `docs/architecture/flow-designer/design.md` |
 | Plan implementation of compiler-integrated schema diagnostics | `docs/plans/41-compiler-integrated-schema-diagnostics-implementation-plan.md` | `docs/architecture/schema-file-validator.md`, `docs/architecture/flux-runtime-module-boundaries.md` |
@@ -85,6 +87,10 @@ Choose the smallest document that matches the task.
 | Plan or review a refactoring, or check low-code-specific design guidelines | `docs/references/refactoring-guidelines.md` | `docs/plans/23-architecture-audit-fix-plan.md` |
 | Review current renderer and runtime contracts by name | `docs/references/renderer-interfaces.md` | `packages/flux-core/src/index.ts` |
 | Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
+| Inspect a DingTalk workflow tree example (TreeDocument JSON, DesignerConfig, FlowLong conversion) | `docs/examples/dingtalk-workflow-tree.md` | `docs/architecture/flow-designer/tree-mode.md` |
+| Inspect an action flow tree example (TreeDocument JSON, lowering to ActionSchema) | `docs/examples/action-flow-tree.md` | `docs/architecture/flow-designer/tree-mode.md`, `docs/architecture/action-algebra-formal-spec.md` |
+| Inspect a DingTalk workflow tree example (TreeDocument JSON, DesignerConfig, FlowLong conversion) | `docs/examples/dingtalk-workflow-tree.md` | `docs/architecture/flow-designer/tree-mode.md` |
+| Inspect an action flow tree example (TreeDocument JSON, lowering to ActionSchema) | `docs/examples/action-flow-tree.md` | `docs/architecture/flow-designer/tree-mode.md`, `docs/architecture/action-algebra-formal-spec.md` |
 | Review prototype lessons or external research notes | `docs/references/` | the related architecture file for the active baseline |
 | Quickly review recent doc work, design notes, or near-term next steps | `docs/logs/` (daily files) | the most relevant active doc |
 | Understand nop-chaos-flux's architecture position vs industry frameworks | `docs/analysis/2026-04-04-nop-chaos-flux-comparison-report.md` | `docs/architecture/flux-core.md` |
@@ -96,9 +102,9 @@ Architecture intent lives primarily in:
 - `docs/architecture/README.md` (architecture hierarchy and reading order)
 
 - `docs/architecture/flux-design-principles.md`
-- `docs/architecture/flux-core.md`
 - `docs/architecture/schema-file-validator.md`
 - `docs/architecture/frontend-programming-model.md`
+- `docs/architecture/flux-core.md`
 - `docs/architecture/action-algebra-formal-spec.md`
 - `docs/architecture/action-graph-authoring.md`
 - `docs/architecture/action-interaction-state.md`
@@ -123,6 +129,7 @@ Architecture intent lives primarily in:
 - `docs/architecture/flux-dsl-vm-extensibility.md`
 - `docs/architecture/complex-control-host-protocol.md`
 - `docs/architecture/flow-designer/design.md`
+- `docs/architecture/flow-designer/tree-mode.md`
 - `docs/architecture/flow-designer/canvas-adapters.md`
 - `docs/architecture/report-designer/design.md`
 - `docs/references/architecture-doc-status-matrix.md`

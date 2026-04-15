@@ -42,7 +42,7 @@ export const textRenderer: RendererDefinition = {
 
 export const pageRenderer: RendererDefinition = {
   type: 'page',
-  component: (props) => <section>{props.regions.body?.instantiate()}</section>,
+  component: (props) => <section>{props.regions.body?.render()}</section>,
   regions: ['body']
 };
 
@@ -69,7 +69,7 @@ function FormStub(props: RendererComponentProps) {
   return (
     <FormContext.Provider value={ownedForm}>
       <ScopeContext.Provider value={ownedForm.scope}>
-        <section>{props.regions.body?.instantiate()}</section>
+        <section>{props.regions.body?.render()}</section>
       </ScopeContext.Provider>
     </FormContext.Provider>
   );

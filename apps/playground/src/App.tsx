@@ -4,7 +4,7 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
-import { HomePage, FluxBasicPage, FlowDesignerPage, ReportDesignerPage, DebuggerLabPage, ConditionBuilderPage, CodeEditorPage, WordEditorPage } from './pages';
+import { HomePage, FluxBasicPage, FlowDesignerPage, DingTalkFlowDemo, ReportDesignerPage, DebuggerLabPage, ConditionBuilderPage, CodeEditorPage, WordEditorPage, PerformanceTablePage } from './pages';
 import { ComponentLabPage } from './component-lab';
 import { useRoute } from './useRoute';
 import type { RouteSpec } from './route-model';
@@ -67,6 +67,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <FluxBasicPage debuggerController={debuggerController} onBack={goHome} />;
         case 'flow-designer':
           return <FlowDesignerPage onBack={goHome} />;
+        case 'dingtalk-flow-demo':
+          return <DingTalkFlowDemo onBack={goHome} />;
         case 'report-designer':
           return <ReportDesignerPage onBack={goHome} />;
         case 'debugger-lab':
@@ -77,6 +79,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <CodeEditorPage onBack={goHome} />;
         case 'word-editor':
           return <WordEditorPage onBack={goHome} />;
+        case 'performance-table':
+          return <PerformanceTablePage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

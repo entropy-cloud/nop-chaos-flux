@@ -11,6 +11,7 @@ export interface DesignerContextValue {
   snapshot: DesignerSnapshot;
   config: DesignerConfig;
   openCreateDialog?: (nodeType: NodeTypeConfig, position: { x: number; y: number }) => void;
+  onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number) => void;
 }
 
 export const DesignerContext = React.createContext<DesignerContextValue | null>(null);

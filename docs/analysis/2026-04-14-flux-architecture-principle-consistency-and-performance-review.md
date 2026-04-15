@@ -111,13 +111,13 @@
 
 下面这些问题还没有形成“逻辑互斥”的矛盾，但已经影响文档纯度与设计最优性。
 
-### T1. 顶层优先级在原则上清楚，在阅读体验上仍有竞争感
+### T1. 顶层优先级在原则上清楚，阅读竞争感已缩小但仍需持续保持
 
 `docs/architecture/frontend-programming-model.md:20-29` 明确自己拥有 top-level precedence。`docs/architecture/flux-design-principles.md:207-219` 也承认这一点。
 
-但 `docs/architecture/flux-core.md:5-17` 仍把自己描述成“highest-level answer”。这会让读者误以为 `flux-core.md` 与 top-level programming model 是并列总纲，而不是下位高层基线。
+此前 `docs/architecture/flux-core.md` 一度把自己描述成“highest-level answer”，容易让读者误以为 `flux-core.md` 与 top-level programming model 是并列总纲。这个 wording 已在同日收口，当前风险更多来自后续编辑是否会再次模糊这条边界。
 
-这不是硬冲突，但会制造阅读顺序上的权威竞争。
+这不再是当前 active owner-doc 的直接冲突，但仍值得持续保持，因为总纲层级一旦重新模糊，会放大整个文档树的阅读歧义。
 
 ### T2. `xui:imports` 的 helper/capability 边界写得不够清楚
 
@@ -133,11 +133,9 @@
 
 所以这里更适合作为设计建议和边界澄清，而不是硬性冲突。
 
-### T3. 样式所有权表述过满
+### T3. 样式所有权 wording 已收紧，但仍需继续保持边界清晰
 
-`docs/architecture/styling-system.md:367-371` 写成“Schema owns all visual and layout decisions”。
-
-但同一文档前部 `docs/architecture/styling-system.md:70-90` 又说 shadcn/ui 负责 hover/focus/variant/size；`docs/architecture/theme-compatibility.md:169-224` 又说 renderer packages 拥有稳定 class structure，host 通过 token 覆盖 package-owned visuals。
+此前 `docs/architecture/styling-system.md` 一度把 schema 写成“owns all visual and layout decisions”，这与 component chrome、stable class structure、host token override 的边界不够一致。该 wording 已在同日收紧，当前基线改成了 schema explicit choices / component UI chrome / global theme layer 的三分表述。
 
 真正更准确的说法应该是：
 
@@ -146,26 +144,22 @@
 - package/ui library 拥有组件 chrome 与交互视觉
 - host/theme token 拥有跨宿主主题覆写点
 
-当前文档不是完全错误，而是 ownership wording 过度绝对化。
+当前风险已经从“过度绝对化”收窄为“后续文档是否持续沿用这套更准确的三分边界”。同日内 `theme-compatibility.md` 也已同步到这套 schema explicit choices / component chrome / theme layer 的三分表达，因此当前 active baseline 基本一致。
 
-### T4. `classAliases` 的执行时机描述仍有两套心智模型
+### T4. `classAliases` 的执行时机心智已收紧，但仍需避免重新漂移
 
-`docs/architecture/styling-system.md:354-360` 还在写 “alias resolution at render time via `ClassAliasesContext`”。
+此前 `docs/architecture/styling-system.md` 更像在强调“render time via context”的心智，而 `docs/architecture/renderer-runtime.md` 更强调 node-local boundary + `NodeRenderer` 执行。这两种说法并非绝对互斥，但容易把读者带向不同的性能心智模型。
 
-但 `docs/architecture/renderer-runtime.md:251-255` 已转向“compiler-owned node-local closure，由 `NodeRenderer` 执行”，并把 `classAliases` publication 视为 node-local compiled closure。
+当前 wording 已收紧为：
 
-这两种说法并非绝对互斥，但它们对应不同的性能心智模型：
+- alias map 的合并与 boundary publication 属于 `NodeRenderer` / provider 边界
+- concrete `className` 的解析发生在 render 阶段
 
-- 前者更像 runtime re-derivation
-- 后者更符合 compile once / execute many
+这比单纯写成“render time via context”更接近 compile once / execute many 的目标心智。当前剩余风险主要是后续文档不要再把它重新写回成 runtime re-derivation 的印象。
 
-在当前文档集里，后者明显更接近目标设计。
+### T5. `FieldFrame` 示例漂移已缩小，但周边示例仍需持续保持
 
-### T5. `FieldFrame` 示例反向削弱了 normalized renderer contract
-
-`docs/architecture/field-frame.md:195-252` 的示例仍大量直接读取 `props.schema.name`、`props.schema.label`、`props.schema.options`，并使用原始 `<input>`。
-
-这和 `docs/architecture/renderer-runtime.md:205-247`、`docs/architecture/field-binding-and-renderer-contract.md:233-254` 所要求的 normalized contract 并不一致。即便这些只是示例，也会把“先直读 schema，之后再归一化”的旧心智重新带回来。
+此前 `docs/architecture/field-frame.md` 的示例曾大量直接读取 `props.schema.*` 并手工包 `<FieldFrame>`，这会把“先直读 schema，之后再归一化”的旧心智重新带回来。该文档已在同日更新到 wrapper-handoff / normalized-props baseline，但同类风险仍可能出现在其他教学型示例中。
 
 ### T6. `mergeToScope` 是可接受的兼容特例，但不是最优设计
 
@@ -181,20 +175,11 @@
 
 所以它更像兼容 tradeoff，而不是 clean final design。
 
-### T7. Debugger 可观测性很强，但还缺少吞吐预算约束
+### T7. Debugger 可观测性 contract 已补预算规则，但仍需后续实现/测试持续跟上
 
-`docs/architecture/debugger-runtime.md:92-176` 定义了丰富的事件流和 automation API，包括 `state:snapshot`。
+此前 `docs/architecture/debugger-runtime.md` 主要定义能力面，缺少 event budget、snapshot discipline、sampling、export-boundary 等性能约束。该文档已在同日补上这部分规则，并且与当前 bounded event retention、timeline virtualization、deferred search 的实现锚点对齐。
 
-但 `docs/architecture/performance-design-requirements.md:44-46,72-82` 又要求诊断能力不能在热点路径上变成高成本负担。
-
-当前 debugger 文档没有同步定义：
-
-- snapshot 频率
-- event retention budget
-- sampling/throttling
-- 大 payload 截断策略
-
-因此它在能力设计上是强的，在性能约束上还不够完备。
+当前剩余风险已从“文档没有预算规则”收窄为“后续实现与测试是否持续满足这些预算规则”。
 
 ## 6. 是否满足 Flux 设计原则
 
@@ -203,10 +188,10 @@
 | 原则 | 判断 | 说明 |
 | --- | --- | --- |
 | DSL 优先 | 基本满足 | 大部分文档都坚持 loader/runtime 分层，少数扩展文档仍把兼容逻辑带回 runtime |
-| 编写-执行分离 | 基本满足 | 主线成立，但 `dependency-tracking`、`api-data-source` 里仍混有 current/future 双时态 |
+| 编写-执行分离 | 基本满足 | 主线成立，但部分文档仍会混入 current/future 双时态，需要持续收紧表述 |
 | 响应式数据驱动 | 满足主干 | root-based invalidation、narrow subscription、row-local invalidation 方向正确 |
 | 渐进式演化 | 基本满足 | 值、动作、结构的渐进升级路径清楚；imports helper/capability 边界还应写得更明确 |
-| 词法所有权 | 基本满足 | `ScopeRef` / `ActionScope` / `ComponentHandleRegistry` 的三分法强；report-designer API 的旧式注册口仍削弱边界 |
+| 词法所有权 | 基本满足 | `ScopeRef` / `ActionScope` / `ComponentHandleRegistry` 的三分法强；当前 owner docs 已基本对齐，但仍需防止后续扩展文档重新放宽边界 |
 | 领域隔离与抽象 | 基本满足 | Flow/Report/Spreadsheet 主体上保持为 host/domain family；少数 API 仍暗示全局注册式扩展 |
 
 结论不是“原则不成立”，而是“原则成立，但还没有被每一份 architecture doc 严格执行到底”。
@@ -223,11 +208,13 @@
 
 第二，少数扩展文档虽然已完成 owner-doc 收口，但更广义的边界纯度仍受兼容面影响，例如 `mergeToScope`、旧式 region compatibility API 等还在文档中保留为窄兼容路径，而不是被彻底删除。
 
-第三，renderer normalized contract 的主契约已收口，但周边示例与兼容入口仍会分散读者注意力。`FieldFrame` 示例、`instantiate()` 兼容入口、以及少量 raw-schema fallback 叙述，仍说明“renderer 作者到底应该依赖哪一层契约”还可以更单一。
+第三，renderer normalized contract 的主契约已收口，但周边示例与兼容入口仍会分散读者注意力。`instantiate()` 兼容入口、以及少量 raw-schema fallback 叙述，仍说明“renderer 作者到底应该依赖哪一层契约”还可以更单一。
 
-第四，性能导向的 hot path 设计已经很成熟，但围绕这些 hot path 的 owner docs 还没有全部同样成熟。例如 debugger 的吞吐边界、report designer 的 host-scope invalidation discipline，还没有像 table/spreadsheet 那样彻底收敛。
+第四，性能导向的 hot path 设计已经很成熟，但围绕这些 hot path 的 owner docs 和实现约束还没有全部同样成熟。例如 debugger 的预算规则虽已补齐，report designer 的 host-scope invalidation discipline 仍不如 table/spreadsheet 那样彻底收敛。
 
 第五，文档集还混有“当前实现状态”和“目标契约状态”的双重语气。分析文档可以容忍这种写法，architecture owner docs 不适合长期保留。
+
+补充说明：`docs/architecture/flux-runtime-module-boundaries.md` 已在同日继续同步到当前代码拆分，补上了 `action-runtime-core.ts`、`action-runtime-handlers.ts`、`imports.ts`、`action-scope.ts`、`component-handle-registry.ts`、`operation-control.ts`、`status-owner.ts` 等稳定运行时边界。因此当前剩余问题更多不是 runtime module ownership 本身冲突，而是其他文档是否持续沿用这套边界语言。
 
 ## 8. 性能选择是否是最优
 
@@ -258,8 +245,8 @@
 1. 把 imported library 的文档表述明确成两条通道：expression helper 与 capability namespace。实现上可以同时支持两类函数，但建议使用上保持“算值走 expression，做事走 action”。
 2. 继续让 `field-binding-and-renderer-contract.md` 作为 `props/meta/regions/events` 的冻结 owner，并进一步清理 `field-frame.md` 等周边示例里的旧心智。
 3. 继续把 region render API 收紧到 `render({ bindings, instancePath })` 的单一路径心智，让 `data/instantiate()` 只作为明确标注的兼容接口存在。
-4. 给 `debugger-runtime.md` 增加吞吐预算规则：snapshot 频率、保留窗口、采样/节流、payload 截断。
-5. 重写 `styling-system.md` 的 ownership wording，把“schema 决定作者显式视觉/layout 选择”与“package/ui library 拥有组件 chrome”和“host token override”分开表达。
+4. 继续把 debugger 预算规则落实到 focused tests 和实现习惯中，而不只是停留在文档层。
+5. 继续保持样式三方 ownership wording 的一致性，避免其他文档重新回到“schema 拥有全部视觉”的过度绝对表述。
 
 ## 10. 最终结论
 

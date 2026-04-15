@@ -114,6 +114,55 @@ Shared event concepts include:
 - `scopeChain`
 - inspect payloads keyed by `cid`
 
+### Event Budget And Retention Rules
+
+The debugger is framework diagnostics infrastructure, but it must still obey the performance baseline in `docs/architecture/performance-design-requirements.md`.
+
+Required budget rules:
+
+- debugger collection must stay bounded by a configured event cap rather than grow without limit
+- event append paths must remain O(1) relative to stored history size
+- the default interactive panel should operate on recent snapshots/history windows, not on an unbounded full-session event list
+- pause/resume must stop or resume event collection deterministically rather than leaving partially applied buffering behavior
+
+Current code-aligned baseline:
+
+- controller creation already uses a bounded `maxEvents` ring-style retention budget
+- pinned error buffers keep only a small earliest/latest slice rather than full historical duplication
+- panel timeline virtualization activates for larger event lists instead of rendering the full list eagerly
+- search uses deferred input and filtered projections rather than re-running heavy UI work on every keystroke synchronously
+
+### Snapshot And Payload Discipline
+
+`state:snapshot` is useful, but it must be treated as a bounded diagnostics payload rather than an always-on deep export stream.
+
+Recommended rules:
+
+- emit snapshots only at explicit boundary events where the debugger needs a coarse-grained state picture
+- do not emit deep snapshot payloads on every render tick or every local interaction by default
+- large exported payloads should prefer summarized/debug-safe shapes over raw deep runtime objects when equivalent diagnostics value can be preserved
+- diagnostic export/session APIs may materialize larger payloads on demand, but the hot event stream should stay lighter-weight
+
+### Sampling And UI Work Rules
+
+The debugger UI is allowed to do richer grouping/search/trace work, but it should keep that work out of the event append hot path.
+
+Required direction:
+
+- expensive grouping, merging, formatting, or trace derivation should happen in panel/automation query code, not during low-level event append
+- slow-path analysis should prefer memoized derived views over eagerly attaching large formatted blobs to every event
+- if future high-frequency event kinds are added, sampling or coalescing rules must be defined at the same time
+
+### Export And Automation Boundary
+
+Automation/export APIs may expose more history or richer payloads than the live floating panel, but they should still stay explicit and bounded.
+
+Recommended rules:
+
+- `createDiagnosticReport()` and `exportSession()` should take explicit event limits or query filters for larger exports
+- redaction stays on the export/automation boundary, not as ad-hoc panel-only masking
+- the live panel should not implicitly pay the full cost of “maximum export fidelity” for every captured event
+
 ## Inspection Model
 
 ### DOM Inspect Rule
@@ -197,6 +246,13 @@ The debugger should be protected by:
 - unit tests for controller / automation / diagnostics / inspect / panel
 - E2E coverage for launcher/panel behavior and automation API access
 - a debugger lab page suitable for both manual and automated use
+
+Performance-sensitive debugger behavior should also be protected by focused regression checks such as:
+
+- bounded event retention
+- pause/resume determinism
+- virtualization thresholds for larger timelines
+- deferred search/filter behavior for larger event sets
 
 ## Remaining Gaps
 

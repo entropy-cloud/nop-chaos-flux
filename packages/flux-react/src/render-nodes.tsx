@@ -124,7 +124,7 @@ export function resolveRendererSlotContent(
     fallback?: React.ReactNode;
   }
 ) {
-  const regionContent = props.regions[slotKey]?.instantiate();
+  const regionContent = props.regions[slotKey]?.render();
 
   if (regionContent !== undefined && regionContent !== null) {
     return regionContent;

@@ -9,6 +9,8 @@ import { renderPorts } from './render-ports';
 import type { DesignerFlowNodeData } from './types';
 import { DesignerIcon } from '../designer-icon';
 import { Button, cn } from '@nop-chaos/ui';
+import { DingFlowPlusButton } from '../dingflow';
+import type { TreeNodeTypeConfig } from '@nop-chaos/flow-designer-core';
 
 function isSchemaInput(value: unknown): value is SchemaInput {
   return isSchema(value);
@@ -17,7 +19,7 @@ function isSchemaInput(value: unknown): value is SchemaInput {
 export function DesignerXyflowNode(props: NodeProps) {
   const data = props.data as DesignerFlowNodeData;
   const nodeType = useNodeTypeConfig(data.typeId);
-  const { dispatch, config } = useDesignerContext();
+  const { dispatch, config, onPlusButtonClick } = useDesignerContext();
   const [showToolbar, setShowToolbar] = useState(false);
   const hideToolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -32,6 +34,9 @@ export function DesignerXyflowNode(props: NodeProps) {
   }), [props.id, props.data, data.typeId, data.label]);
 
   const hasQuickActions = nodeType?.quickActions && isSchemaInput(nodeType.quickActions);
+
+  const treeNodeType = nodeType as TreeNodeTypeConfig | undefined;
+  const showPlusButton = onPlusButtonClick && !treeNodeType?.tree?.isTerminal;
 
   const actionScope = useMemo(() => ({
     onEdit: () => dispatch({ type: 'selectNode', nodeId: props.id }),
@@ -100,7 +105,7 @@ export function DesignerXyflowNode(props: NodeProps) {
   return (
     <>
       <div
-        className={cn('nop-designer-node', nodeType.appearance?.className)}
+        className={cn('nop-designer-node', 'relative', nodeType.appearance?.className)}
         style={appearanceStyle}
         data-selected={props.selected ? '' : undefined}
         onMouseEnter={showToolbarNow}
@@ -110,9 +115,14 @@ export function DesignerXyflowNode(props: NodeProps) {
         <ClassAliasesContext.Provider value={config.classAliases}>
           <RenderNodes
             input={nodeType.body}
-            options={{ data: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
+            options={{ bindings: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
           />
         </ClassAliasesContext.Provider>
+        {showPlusButton && (
+          <DingFlowPlusButton
+            onClick={(e) => onPlusButtonClick!(props.id, e.clientX, e.clientY)}
+          />
+        )}
       </div>
 
       {(hasQuickActions || showToolbar) && (
@@ -128,7 +138,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                 <RenderNodes
                   input={nodeType.quickActions!}
                   options={{
-                    data: {
+                    bindings: {
                       ...nodeRenderData,
                       ...actionScope
                     },

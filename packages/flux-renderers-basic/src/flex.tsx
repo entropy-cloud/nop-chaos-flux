@@ -23,8 +23,8 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
       ? props.props.justify
       : undefined;
   const gap = resolveGap(props.props.gap as number | string | undefined);
-  const bodyContent = props.regions.body?.instantiate();
-  const itemsContent = props.regions.items?.instantiate();
+  const bodyContent = props.regions.body?.render();
+  const itemsContent = props.regions.items?.render();
 
   return (
     <div

@@ -356,7 +356,7 @@ Child aliases override parent aliases with the same name.
 | Package | Responsibility |
 |---------|----------------|
 | `flux-core` | `resolveClassAliases` and `mergeClassAliases` utility functions |
-| `flux-react` | Alias resolution at render time via `ClassAliasesContext` in node-renderer.tsx |
+| `flux-react` | `NodeRenderer` derives the merged alias map from parent context + node-local `classAliases`, publishes that map through `ClassAliasesContext`, and resolves concrete `className` values during render |
 
 ## Renderer Styling Contract
 

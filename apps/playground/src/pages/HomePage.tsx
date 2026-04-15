@@ -1,4 +1,4 @@
-type NavigationTarget = 'component-lab' | 'flux-basic' | 'flow-designer' | 'report-designer' | 'debugger-lab' | 'condition-builder' | 'code-editor' | 'word-editor';
+type NavigationTarget = 'component-lab' | 'flux-basic' | 'flow-designer' | 'dingtalk-flow-demo' | 'report-designer' | 'debugger-lab' | 'condition-builder' | 'code-editor' | 'word-editor' | 'performance-table';
 
 interface NavCard {
   id: NavigationTarget;
@@ -24,7 +24,13 @@ const NAV_CARDS: NavCard[] = [
     id: 'flow-designer',
     title: 'Flow Designer',
     eyebrow: 'Visual Workflow',
-    description: 'Designer page, toolbar, inspector, canvas, node palette, edge connections, and designer actions.'
+    description: 'DingTalk approval flow, action flow, and general workflow editors with toolbar, palette, inspector, and canvas.'
+  },
+  {
+    id: 'dingtalk-flow-demo',
+    title: 'DingTalk Flow Demo',
+    eyebrow: 'Style Prototype',
+    description: 'Static DingTalk approval flow visual reference. See Flow Designer for the full tree-mode editor.'
   },
   {
     id: 'report-designer',
@@ -55,6 +61,12 @@ const NAV_CARDS: NavCard[] = [
     title: 'Word Editor',
     eyebrow: 'Document Template',
     description: 'Word-like document editor with canvas 2D rendering, template expressions, formatting toolbar, and paper settings.'
+  },
+  {
+    id: 'performance-table',
+    title: 'Performance Table',
+    eyebrow: 'Large Data Stress',
+    description: '1000-row mixed-renderer table plus nested loop cards, aggregate formulas, scope-backed selection/pagination, and many mounted editable controls.'
   }
 ];
 

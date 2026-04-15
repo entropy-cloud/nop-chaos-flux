@@ -54,5 +54,7 @@ export function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfi
     hooks: config.hooks,
     classAliases: config.classAliases,
     themeStyles: config.themeStyles,
+    documentMode: config.documentMode,
+    treeConfig: config.treeConfig,
   };
 }

@@ -1,15 +1,14 @@
 ﻿# Form Validation Low-Code Integrated Refactor Roadmap
 
 > Plan Status: deferred
-> Last Reviewed: 2026-04-12
+> Last Reviewed: 2026-04-15
+> Source: `docs/architecture/form-validation.md`, `docs/analysis/2026-03-19-form-validation-comparison.md`, `docs/plans/68-owner-based-validation-runtime-alignment-plan.md`, `docs/plans/69-dynamic-schema-validation-owner-lifecycle-implementation-plan.md`, `docs/plans/70-composite-value-fields-and-validation-integration-plan.md`
+> Related: `docs/plans/03-form-validation-completion-plan.md`, `docs/plans/04-form-validation-improvement-execution-plan.md`, `docs/plans/67-hidden-field-policy-implementation-plan.md`, `docs/plans/68-owner-based-validation-runtime-alignment-plan.md`, `docs/plans/69-dynamic-schema-validation-owner-lifecycle-implementation-plan.md`, `docs/plans/70-composite-value-fields-and-validation-integration-plan.md`
 
-
-> **Implementation Status: âš ï¸ PARTIALLY COMPLETED / LONG-RANGE ROADMAP**
-> **Done (Stages 0â€“3):** Canonical validation graph, compilation tightening, graph-driven execution.
-> **Not started (Stages 4â€“8):** Normalization pipeline, composite compiler migration, state compression, extensibility API, diagnostics/introspection tooling.
-> The core validation infrastructure is solid and production-capable; the remaining stages describe longer-range architecture evolution rather than current correctness gaps. They should be scheduled only when a concrete product or performance need justifies reopening validation internals.
->
-> This status was re-verified against the codebase on 2026-04-04.
+> **Implementation Status: deferred long-range roadmap**
+> **Completed earlier slices:** the production validation baseline, owner-based runtime alignment, and active composite-value integration fixes landed through later owner plans.
+> **Still deferred:** normalization semantics, broader compiler-described composite validation, state compaction, extensibility refinement, and diagnostics/introspection.
+> This file is retained as historical roadmap context, not as the current execution baseline.
 
 ## Deferral Note
 
@@ -20,6 +19,13 @@ Reasons for deferral:
 - the completed stages already provide a production-capable validation baseline
 - the remaining stages are architectural optimization and extensibility work, not urgent contract violations
 - later repository work has focused on runtime hardening, renderer contracts, and designer platform convergence rather than forcing a large validation redesign immediately
+- later owner plans `68`, `69`, and `70` explicitly kept these long-range topics out of scope instead of silently claiming they were finished
+
+## Outdated Note
+
+- Some baseline/problem statements below preserve the pre-2026-04-12 validation internals and no longer match live code in every detail.
+- Current shipped validation behavior is owned by `docs/architecture/form-validation.md` and the completed owner plans `68`, `69`, and `70`, not by the historical assumptions in this roadmap.
+- If this roadmap is ever reopened, split the remaining work into narrower successor plans instead of reactivating the whole file unchanged.
 
 ## Purpose
 

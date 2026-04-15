@@ -74,7 +74,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
   return (
     <div className={cn('nop-dynamic-renderer', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
-      {props.regions.body?.instantiate()}
+      {props.regions.body?.render()}
     </div>
   );
 }

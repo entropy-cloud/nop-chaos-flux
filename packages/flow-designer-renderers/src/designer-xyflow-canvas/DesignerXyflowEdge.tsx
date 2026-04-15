@@ -90,7 +90,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
           >
             <RenderNodes
               input={edgeType!.body!}
-              options={{ data: edgeRenderData, scopeKey: `edge:${props.id}`, pathSuffix: 'edge' }}
+              options={{ bindings: edgeRenderData, scopeKey: `edge:${props.id}`, pathSuffix: 'edge' }}
             />
           </div>
         </EdgeLabelRenderer>

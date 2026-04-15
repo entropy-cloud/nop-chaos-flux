@@ -723,7 +723,7 @@ This avoids the misleading impression that import success depends on whether the
 
 It also matches the runtime contract: imports are preloaded/gated for the declaring boundary before descendant expressions or actions are allowed to execute.
 
-`xui:imports` also project imported aliases into the expression environment. If a container imports `{ from: 'demo-lib', as: 'demo' }`, then actions dispatch through `demo:method` while expressions may access the same imported binding as `$demo`.
+`xui:imports` may also project imported aliases into the expression environment. If a container imports `{ from: 'demo-lib', as: 'demo' }`, then actions dispatch through `demo:method` while expressions may access an expression-facing imported binding as `$demo`.
 
 Examples:
 
@@ -734,10 +734,18 @@ Examples:
 }
 ```
 
-The import declaration remains one mechanism. The runtime simply exposes two views of the same imported capability set:
+The import declaration remains one mechanism, but the architectural contract should describe two distinct runtime channels rather than one undifferentiated object:
 
-- action dispatch view: `demo:open`
-- expression view: `$demo.formatName(...)`
+- action namespace view: `demo:open`
+- expression helper view: `$demo.formatName(...)`
+
+Recommended boundary:
+
+- expressions may call imported helper functions for value computation
+- actions may dispatch imported capability methods through the action namespace
+- authors should keep the usage model narrow: compute in expressions, perform effects through actions
+
+This distinction is about contract clarity, not about forbidding expression-side imports. The same library import may back both channels, but the docs should not describe `${$demo.open(...)}` and `demo:open` as equivalent authoring paths.
 
 ### Import Spec
 
@@ -760,6 +768,7 @@ Recommended runtime boundary:
 ```ts
 interface ImportedLibraryModule {
   createNamespace(context: ImportedNamespaceContext): Promise<ActionNamespaceProvider> | ActionNamespaceProvider;
+  createExpressionHelpers?(context: ImportedNamespaceContext): Promise<Record<string, unknown>> | Record<string, unknown>;
 }
 
 interface ImportedLibraryLoader {
@@ -768,6 +777,8 @@ interface ImportedLibraryLoader {
 ```
 
 The loader may cache modules globally, but scope visibility is still controlled by the action-scope chain.
+
+Expression-helper visibility follows the same owning lexical boundary as the import declaration, but helper publication still belongs to the value/evaluation surface rather than the action dispatch surface.
 
 ### Normative Runtime Semantics
 
@@ -779,6 +790,12 @@ These behaviors are baseline architecture, not optional convenience details.
 - runtime installs a placeholder provider immediately so dispatch fails explicitly while the namespace is still loading
 - same-scope alias collisions fail fast instead of silently overriding another provider
 - unmount or boundary replacement releases the owned registration through the action-scope lifecycle
+
+Recommended expression-helper semantics:
+
+- imported expression helpers should be treated as value-computation helpers, not as a second effect-dispatch path
+- helper publication should remain lexical by the declaring boundary, just like action namespaces
+- if an imported library exposes both action methods and expression helpers, the doc surface should describe those as two channels with different usage intent, even if they come from one module load
 
 The placeholder-provider behavior is especially important:
 

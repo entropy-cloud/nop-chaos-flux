@@ -29,6 +29,12 @@ That means:
 - hosts may override those variables from any ancestor scope
 - runtime, page store, form store, and designer core do not need a theme state model
 
+Ownership summary:
+
+- schema owns author-authored explicit visual/layout choices that must stay visible at usage sites
+- component/renderers own stable DOM/class structure and component chrome where the package owns reusable visuals
+- theme/token layers own CSS-variable defaults, host overrides, and cross-surface visual coherence
+
 ## Design Goals
 
 - keep standalone usage working without a host shell
@@ -189,6 +195,30 @@ Renderer packages are responsible for:
 - stable class namespaces
 - reading CSS variables instead of hardcoded colors where visuals are package-owned
 
+They are not responsible for inventing hidden page- or feature-specific layout defaults that the schema/host should control explicitly.
+
+### Schema owns explicit author choices
+
+Schema-driven `className` / `classAliases` remain the owner for author-authored visual/layout choices that should stay explicit at the usage site.
+
+Examples:
+
+- page-specific spacing
+- feature-specific stack/grid choices
+- one-off layout tuning for a concrete schema subtree
+
+Theme compatibility should not be used as a reason to move these explicit choices into hidden package CSS.
+
+### Theme layer owns defaults and host overrides
+
+Theme roots and token layers are responsible for:
+
+- default token values
+- subtree-scoped host overrides
+- keeping dialogs, debugger surfaces, Flow Designer surfaces, and generic renderer surfaces inside one coherent token family
+
+This is why theme compatibility stays a CSS-variable contract rather than a runtime state model.
+
 ### Playground owns only demo-shell styling
 
 The playground may still define page-shell visuals, but package-owned visuals should not depend on playground-only CSS files.
@@ -262,6 +292,7 @@ After this migration:
 ## Related Docs
 
 - `docs/architecture/styling-system.md` - Semantic props vs Tailwind, style presets
+- `docs/architecture/renderer-markers-and-selectors.md` - Stable DOM/class marker protocol
 
 ## Follow-up Work
 

@@ -209,7 +209,7 @@ export const fragmentScopeProbeHostRenderer: RendererDefinition = {
 
 export const scopedHostRenderer: RendererDefinition = {
   type: 'scoped-host',
-  component: (props) => <section>{props.regions.body?.instantiate()}</section>,
+  component: (props) => <section>{props.regions.body?.render()}</section>,
   regions: ['body'],
   actionScopePolicy: 'new',
   componentRegistryPolicy: 'new'
@@ -311,7 +311,7 @@ function ToggleHost(props: RendererComponentProps) {
       <button type="button" onClick={() => setVisible((current) => !current)}>
         {visible ? 'Hide child boundary' : 'Show child boundary'}
       </button>
-      {visible ? props.regions.body?.instantiate() : null}
+      {visible ? props.regions.body?.render() : null}
     </div>
   );
 }

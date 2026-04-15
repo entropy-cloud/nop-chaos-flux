@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 
 import type { ActionNamespaceProvider, DesignerHostStatusSummary, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, WorkbenchShell } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
-import { createDesignerCore, layoutWithElk } from '@nop-chaos/flow-designer-core';
-import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
+import { createDesignerCore, layoutWithElk, layoutTreeWithElk, simpleTreeLayout, projectTree } from '@nop-chaos/flow-designer-core';
+import type { DesignerConfig, GraphDocument, GraphEdge, GraphNode, NormalizedDesignerConfig, TreeDocument } from '@nop-chaos/flow-designer-core';
 import { Button, cn, DataViewer, Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
 import type { DesignerPageSchema } from './schemas';
@@ -16,9 +16,65 @@ import {
 } from './designer-context';
 import { createDesignerActionProvider } from './designer-action-provider';
 import { DesignerPaletteContent } from './designer-palette';
-import { DesignerCanvasContent } from './designer-canvas';
+import { DesignerCanvasContent, plusButtonHandlerHolder } from './designer-canvas';
 import { DefaultInspector } from './designer-inspector';
 import { DesignerToolbarContent } from './designer-toolbar';
+
+function normalizeTreeModeConfig(config: DesignerConfig): NormalizedDesignerConfig {
+  return {
+    version: config.version,
+    kind: config.kind,
+    nodeTypes: new Map(config.nodeTypes.map((nodeType) => [nodeType.id, nodeType])),
+    edgeTypes: new Map((config.edgeTypes ?? []).map((edgeType) => [edgeType.id, edgeType])),
+    palette: config.palette,
+    toolbar: config.toolbar,
+    shortcuts: {
+      undo: ['Ctrl+Z', 'Cmd+Z'],
+      redo: ['Ctrl+Y', 'Cmd+Y', 'Ctrl+Shift+Z', 'Cmd+Shift+Z'],
+      copy: ['Ctrl+C', 'Cmd+C'],
+      paste: ['Ctrl+V', 'Cmd+V'],
+      delete: ['Delete', 'Backspace'],
+      ...config.shortcuts,
+    },
+    features: {
+      undo: true,
+      redo: true,
+      history: true,
+      grid: true,
+      minimap: true,
+      fitView: true,
+      export: true,
+      shortcuts: true,
+      floatingToolbar: true,
+      clipboard: true,
+      autoLayout: false,
+      multiSelect: false,
+      ...config.features,
+    },
+    rules: {
+      allowSelfLoop: false,
+      allowMultiEdge: true,
+      defaultEdgeType: 'default',
+      ...config.rules,
+    },
+    canvas: {
+      background: 'dots',
+      gridSize: 24,
+      minZoom: 0.1,
+      maxZoom: 4,
+      defaultZoom: 1,
+      pannable: true,
+      zoomable: true,
+      snapToGrid: true,
+      ...config.canvas,
+    },
+    hooks: config.hooks,
+    classAliases: config.classAliases,
+    themeStyles: config.themeStyles,
+    documentMode: config.documentMode,
+    treeConfig: config.treeConfig,
+  };
+}
 
 function normalizeShortcut(input: string): string[] {
   return input.toLowerCase().split('+').map((part) => part.trim()).filter(Boolean);
@@ -49,13 +105,57 @@ function matchesShortcut(event: KeyboardEvent, shortcuts: string[] | undefined):
   });
 }
 
+function TreeModeLayoutWrapper(props: RendererComponentProps<DesignerPageSchema> & { config: DesignerConfig; rawSchemaProps: Record<string, SchemaValue> }) {
+  const { config, rawSchemaProps } = props;
+  const treeDocument = rawSchemaProps.treeDocument as TreeDocument | undefined;
+
+  const normalizedConfig = useMemo(() => normalizeTreeModeConfig(config), [config]);
+  const projected = useMemo(() => treeDocument ? projectTree(treeDocument, normalizedConfig) : { nodes: [] as GraphNode[], edges: [] as GraphEdge[] }, [treeDocument, normalizedConfig]);
+
+  const document: GraphDocument = useMemo(() => {
+    if (!treeDocument) {
+      return { id: '', kind: '', name: '', version: '', nodes: [], edges: [] };
+    }
+    const treeConfig = normalizedConfig.treeConfig;
+    let nodes = projected.nodes;
+    if (treeConfig) {
+      nodes = simpleTreeLayout(projected.nodes, projected.edges, treeConfig, normalizedConfig.nodeTypes);
+    }
+    return {
+      id: treeDocument.id,
+      kind: treeDocument.kind,
+      name: treeDocument.name,
+      version: treeDocument.version,
+      meta: treeDocument.meta,
+      nodes,
+      edges: projected.edges,
+    };
+  }, [treeDocument, projected, normalizedConfig]);
+
+  if (!treeDocument) {
+    return <div>Tree mode requires treeDocument prop</div>;
+  }
+
+  return <DesignerPageInner rendererProps={props} document={document} config={config} />;
+}
+
 export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {
   const rawSchemaProps = props.schema as Record<string, SchemaValue>;
-  const document = rawSchemaProps.document as GraphDocument | undefined;
   const config = rawSchemaProps.config as DesignerConfig | undefined;
 
-  if (!document || !config) {
-    return <div>Designer requires document and config props</div>;
+  if (!config) {
+    return <div>Designer requires config prop</div>;
+  }
+
+  const documentMode = config.documentMode;
+
+  if (documentMode === 'tree') {
+    return <TreeModeLayoutWrapper {...props} config={config} rawSchemaProps={rawSchemaProps} />;
+  }
+
+  const document = rawSchemaProps.document as GraphDocument | undefined;
+  if (!document) {
+    return <div>Designer requires document prop</div>;
   }
 
   return <DesignerPageInner rendererProps={props} document={document} config={config} />;
@@ -76,9 +176,28 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
     const doc = core.getDocument();
     if (doc.nodes.length === 0) return;
 
+    if (config.documentMode === 'tree') {
+      const normalizedCfg = core.getConfig();
+      const treeConfig = normalizedCfg.treeConfig;
+      if (!treeConfig) return;
+      const layoutedNodes = await layoutTreeWithElk(doc.nodes, doc.edges, treeConfig, normalizedCfg.nodeTypes);
+      const positions = new Map(layoutedNodes.map((n) => [n.id, n.position]));
+      core.layoutNodes(positions);
+      return;
+    }
+
     const positions = await layoutWithElk(doc.nodes, doc.edges, core.getConfig().nodeTypes);
     core.layoutNodes(positions);
-  }, [core]);
+  }, [core, config.documentMode]);
+
+  const isTreeMode = config.documentMode === 'tree';
+  const onPlusButtonClick = useCallback((sourceId: string, clientX: number, clientY: number) => {
+    if (isTreeMode) {
+      plusButtonHandlerHolder.current?.(sourceId, clientX, clientY);
+    }
+  }, [isTreeMode]);
+
+  const ctxOnPlusButtonClick = isTreeMode ? onPlusButtonClick : undefined;
 
   const actionScope = useCurrentActionScope();
   const designerProvider = useMemo(() => createDesignerActionProvider(core), [core]);
@@ -182,8 +301,16 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
   }, [actionScope, designerScope, dispatch, pendingCreateDialog, props.helpers]);
 
   const ctxValue = useMemo<DesignerContextValue>(
-    () => ({ core, commandAdapter, dispatch, snapshot, config, openCreateDialog: handleOpenCreateDialog }),
-    [commandAdapter, config, core, dispatch, handleOpenCreateDialog, snapshot]
+    () => ({
+      core,
+      commandAdapter,
+      dispatch,
+      snapshot,
+      config,
+      openCreateDialog: handleOpenCreateDialog,
+      onPlusButtonClick: ctxOnPlusButtonClick,
+    }),
+    [commandAdapter, config, core, dispatch, handleOpenCreateDialog, snapshot, ctxOnPlusButtonClick]
   );
 
   useLayoutEffect(() => {

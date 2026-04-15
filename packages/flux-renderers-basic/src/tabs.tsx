@@ -91,7 +91,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           {items.map((item, index) => {
             const value = getItemValue(item, index);
             const titleRegion = typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
-            const titleContent = titleRegion?.instantiate({ }) ?? item.title ?? item.label ?? value;
+            const titleContent = titleRegion?.render() ?? item.title ?? item.label ?? value;
             return (
               <TabsTrigger key={value} value={value} disabled={Boolean(item.disabled)}>
                 {titleContent}
@@ -105,8 +105,8 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           const toolbarRegion = typeof item.toolbarRegionKey === 'string' ? props.regions[item.toolbarRegionKey] : undefined;
           return (
             <TabsContent key={value} value={value} data-slot="tabs-content">
-              {toolbarRegion ? <div data-slot="tabs-item-toolbar">{toolbarRegion.instantiate()}</div> : null}
-              {bodyRegion ? bodyRegion.instantiate() : null}
+              {toolbarRegion ? <div data-slot="tabs-item-toolbar">{toolbarRegion.render()}</div> : null}
+              {bodyRegion ? bodyRegion.render() : null}
             </TabsContent>
           );
         })}

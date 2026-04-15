@@ -1,3 +1,4 @@
+import { simpleTreeLayout } from '@nop-chaos/flow-designer-core';
 import type {
   DesignerCore,
   DesignerSnapshot,
@@ -109,6 +110,24 @@ export type DesignerCommand =
       type: 'updateNodeData';
       nodeId: string;
       data: Record<string, unknown>;
+    }
+  | {
+      type: 'insertChainNode';
+      sourceId: string;
+      nodeType: string;
+      data?: Record<string, unknown>;
+    }
+  | {
+      type: 'insertChainNodeAtMerge';
+      targetId: string;
+      nodeType: string;
+      data?: Record<string, unknown>;
+    }
+  | {
+      type: 'insertBranchPair';
+      sourceId: string;
+      condNodeType: string;
+      condData?: Record<string, unknown>;
     };
 
 export interface DesignerCommandResult {
@@ -211,6 +230,15 @@ function inferAddNodeFailure(core: DesignerCore, nodeType: string): { error: str
     error: `Unable to add node: ${nodeType}`,
     reason: 'constraint'
   };
+}
+
+function relayoutAfterTreeMutation(core: DesignerCore): void {
+  const config = core.getConfig();
+  if (config.documentMode !== 'tree' || !config.treeConfig) return;
+  const doc = core.getDocument();
+  const layoutedNodes = simpleTreeLayout(doc.nodes, doc.edges, config.treeConfig, config.nodeTypes);
+  const positions = new Map(layoutedNodes.map(n => [n.id, n.position]));
+  core.layoutNodes(positions);
 }
 
 export function createDesignerCommandAdapter(core: DesignerCore): DesignerCommandAdapter {
@@ -373,6 +401,124 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         }
         core.updateNode(command.nodeId, command.data);
         return createSuccess(core);
+      case 'insertChainNode': {
+        const doc = core.getDocument();
+        const sourceNode = getNode(doc, command.sourceId);
+        if (!sourceNode) {
+          return createFailure(core, `Unknown source node: ${command.sourceId}`, 'missing-node');
+        }
+
+        const outgoingEdges = doc.edges.filter(e => e.source === command.sourceId);
+        const downstreamId = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
+
+        core.beginTransaction('insert-chain-node');
+
+        const newNode = core.addNode(
+          command.nodeType,
+          { x: sourceNode.position.x, y: sourceNode.position.y + 100 },
+          command.data
+        );
+        if (!newNode) {
+          core.rollbackTransaction();
+          return createFailure(core, 'Unable to add node.', 'constraint');
+        }
+
+        if (downstreamId) {
+          for (const edge of outgoingEdges) {
+            core.deleteEdge(edge.id);
+          }
+          core.addEdge(command.sourceId, newNode.id);
+          core.addEdge(newNode.id, downstreamId);
+        } else {
+          core.addEdge(command.sourceId, newNode.id);
+        }
+
+        relayoutAfterTreeMutation(core);
+        core.commitTransaction();
+        return createSuccess(core, { data: newNode });
+      }
+      case 'insertChainNodeAtMerge': {
+        const doc = core.getDocument();
+        const targetNode = getNode(doc, command.targetId);
+        if (!targetNode) {
+          return createFailure(core, `Unknown target node: ${command.targetId}`, 'missing-node');
+        }
+
+        const incomingEdges = doc.edges.filter(e => e.target === command.targetId);
+
+        core.beginTransaction('insert-at-merge');
+
+        const newNode = core.addNode(
+          command.nodeType,
+          { x: targetNode.position.x, y: targetNode.position.y },
+          command.data
+        );
+        if (!newNode) {
+          core.rollbackTransaction();
+          return createFailure(core, 'Unable to add node.', 'constraint');
+        }
+
+        for (const edge of incomingEdges) {
+          core.reconnectEdge(edge.id, edge.source, newNode.id);
+        }
+        core.addEdge(newNode.id, command.targetId);
+
+        relayoutAfterTreeMutation(core);
+        core.commitTransaction();
+        return createSuccess(core, { data: newNode });
+      }
+      case 'insertBranchPair': {
+        const doc = core.getDocument();
+        const sourceNode = getNode(doc, command.sourceId);
+        if (!sourceNode) {
+          return createFailure(core, `Unknown source node: ${command.sourceId}`, 'missing-node');
+        }
+
+        const outgoingEdges = doc.edges.filter(e => e.source === command.sourceId);
+        const downstreamId = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
+
+        core.beginTransaction('insert-branch-pair');
+
+        const existingBranchCount = outgoingEdges.length;
+
+        const leftNode = core.addNode(
+          command.condNodeType,
+          { x: sourceNode.position.x - 130, y: sourceNode.position.y + 100 },
+          { ...(command.condData ?? {}), priority: existingBranchCount + 1 }
+        );
+        if (!leftNode) {
+          core.rollbackTransaction();
+          return createFailure(core, 'Unable to create left branch node.', 'constraint');
+        }
+
+        const rightNode = core.addNode(
+          command.condNodeType,
+          { x: sourceNode.position.x + 130, y: sourceNode.position.y + 100 },
+          { ...(command.condData ?? {}), priority: existingBranchCount + 2 }
+        );
+        if (!rightNode) {
+          core.rollbackTransaction();
+          return createFailure(core, 'Unable to create right branch node.', 'constraint');
+        }
+
+        if (downstreamId) {
+          for (const edge of outgoingEdges) {
+            core.deleteEdge(edge.id);
+          }
+        }
+
+        core.addEdge(command.sourceId, leftNode.id, { leg: 'near-target' });
+        core.addEdge(command.sourceId, rightNode.id, { leg: 'near-target' });
+
+        if (downstreamId) {
+          core.addEdge(leftNode.id, downstreamId, { leg: 'near-source' });
+          core.addEdge(rightNode.id, downstreamId, { leg: 'near-source' });
+        }
+
+        relayoutAfterTreeMutation(core);
+        core.commitTransaction();
+        return createSuccess(core);
+      }
     }
   }
 

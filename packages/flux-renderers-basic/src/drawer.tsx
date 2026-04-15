@@ -7,8 +7,8 @@ import { useStatusPathPublication } from './status-hooks';
 
 export function DrawerRenderer(props: RendererComponentProps<DrawerSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
-  const bodyContent = props.regions.body?.instantiate();
-  const actionsContent = props.regions.actions?.instantiate();
+  const bodyContent = props.regions.body?.render();
+  const actionsContent = props.regions.actions?.render();
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
   const summary = useMemo<SurfaceStatusSummary>(() => ({
     id: props.id,

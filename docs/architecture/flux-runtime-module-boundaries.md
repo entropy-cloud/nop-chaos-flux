@@ -19,6 +19,7 @@ When this document needs to be checked against code, start with:
 - `packages/flux-runtime/src/validation/` for reusable validation helpers
 - `packages/flux-runtime/src/form-runtime.ts` and related `form-runtime-*` files for form flow ownership
 - `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/request-runtime.ts`, and `packages/flux-runtime/src/scope.ts` for runtime subsystem placement
+- `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/action-runtime-handlers.ts`, `packages/flux-runtime/src/imports.ts`, `packages/flux-runtime/src/action-scope.ts`, and `packages/flux-runtime/src/component-handle-registry.ts` for action/capability/import/runtime-host boundaries
 
 ## Main Rule
 
@@ -112,13 +113,23 @@ This directory is the default home for reusable validation helpers.
 ### Action and request flow
 
 - `packages/flux-runtime/src/action-runtime.ts`
-  - action dispatch
-  - debounce handling for actions
-  - chained action execution and `prevResult` flow
+  - top-level action dispatch orchestration
+  - dispatch ordering across built-in / component / namespaced paths
+  - debounce, retry, and timeout composition entry
+- `packages/flux-runtime/src/action-runtime-core.ts`
+  - action-evaluation helpers
+  - compiled-value evaluation in action context
+  - action monitor payload/result shaping
+- `packages/flux-runtime/src/action-runtime-handlers.ts`
+  - built-in action handlers such as `ajax`, `submitForm`, `dialog`, `refreshSource`, and component-action dispatch helpers
 - `packages/flux-runtime/src/request-runtime.ts`
   - request execution
   - adaptor application
   - request cancellation plumbing
+- `packages/flux-runtime/src/request-runtime-adaptor.ts`
+  - request/response adaptor shaping shared by request execution paths
+- `packages/flux-runtime/src/operation-control.ts`
+  - timeout / retry / abort helpers shared by action and request execution paths
 - `packages/flux-runtime/src/data-source-runtime.ts`
   - api-backed source execution
   - source status publication and result mapping application
@@ -134,9 +145,28 @@ This directory is the default home for reusable validation helpers.
 - `packages/flux-runtime/src/surface-runtime.ts`
   - shared dialog/drawer surface ownership
   - stack-based open/close behavior and disposal hooks
+- `packages/flux-runtime/src/status-owner.ts`
+  - readonly status-summary publication helpers such as `statusPath` projection and owner-status binding helpers
 - focused helpers such as `packages/flux-runtime/src/scope-change.ts` and `packages/flux-runtime/src/runtime-plugins.ts`
   - changed-path dependency matching
   - plugin ordering and similar hot-path coordination helpers
+
+### Action/capability/import host boundaries
+
+- `packages/flux-runtime/src/action-scope.ts`
+  - lexical namespaced-action lookup
+  - scope-local namespace registration and debug snapshot ownership
+- `packages/flux-runtime/src/component-handle-registry.ts`
+  - lexical component-handle registration and lookup by `cid`, `componentId`, or `componentName`
+  - debugger-facing handle debug-data ownership
+- `packages/flux-runtime/src/imports.ts`
+  - import-module load dedupe
+  - action-scope-local imported namespace registration lifecycle
+  - expression-helper publication for imported aliases
+
+These modules are runtime-host infrastructure.
+
+They should not be folded into `ScopeRef`, pure domain cores, or generic renderer components.
 
 ### Scope and state plumbing
 
@@ -156,6 +186,15 @@ This directory is the default home for reusable validation helpers.
 - `packages/flux-runtime/src/form-runtime-subtree.ts`
   - subtree target collection helpers
 
+`ScopeRef` remains the data lookup/update contract only.
+
+Do not turn it into a mixed behavior registry for:
+
+- namespaced actions
+- component handles
+- source/reaction runtime entries
+- import loaders or debugger state
+
 ### Page and node runtime helpers
 
 - `packages/flux-runtime/src/page-runtime.ts`
@@ -163,6 +202,8 @@ This directory is the default home for reusable validation helpers.
   - page-shell state such as refresh tick and root scope ownership
 - `packages/flux-runtime/src/node-runtime.ts`
   - resolved node meta and prop evaluation helpers
+- `packages/flux-runtime/src/node-resolver.ts`
+  - runtime target resolution across nearest-owner semantics, component targets, and compatibility carriers
 - `packages/flux-runtime/src/registry.ts`
   - renderer registry creation and registration helpers
 
@@ -227,6 +268,10 @@ Add one when:
 No runtime entry file should become the default home for new behavior.
 
 When in doubt, prefer one more focused module over growing a general-purpose file.
+
+Corollary:
+
+- if a concern has become its own stable runtime boundary (`action-scope`, component handles, imported namespace lifecycle, operation control, status publication), keep it in its focused module instead of re-inlining it into `index.ts` or `action-runtime.ts`
 
 Current rule for plugin ordering:
 

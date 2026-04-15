@@ -13,7 +13,7 @@ export const env: RendererEnv = {
 
 export const pageRenderer: RendererDefinition = {
   type: 'page',
-  component: (props) => <section>{props.regions.body?.instantiate()}</section>,
+  component: (props) => <section>{props.regions.body?.render()}</section>,
   regions: ['body'],
 };
 

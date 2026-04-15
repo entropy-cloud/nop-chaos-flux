@@ -75,7 +75,8 @@ describe('Route model - round-trip stability', () => {
     { kind: 'lab-renderer', rendererId: 'condition-builder' },
     { kind: 'domain', domainId: 'flow-designer' },
     { kind: 'domain', domainId: 'report-designer' },
-    { kind: 'domain', domainId: 'debugger-lab' }
+    { kind: 'domain', domainId: 'debugger-lab' },
+    { kind: 'domain', domainId: 'performance-table' }
   ];
 
   for (const spec of specs) {
@@ -151,7 +152,7 @@ describe('Domain route inventory', () => {
 
   it('domain inventory includes all existing specialized topic pages', () => {
     const domainIds = new Set(DOMAIN_RENDERER_ROUTES.map((r) => r.id));
-    for (const pageId of ['flow-designer', 'report-designer', 'debugger-lab', 'condition-builder', 'code-editor', 'word-editor']) {
+    for (const pageId of ['flow-designer', 'report-designer', 'debugger-lab', 'condition-builder', 'code-editor', 'word-editor', 'performance-table']) {
       expect(domainIds.has(pageId), `domain page '${pageId}' missing from domain route inventory`).toBe(true);
     }
   });

@@ -22,18 +22,19 @@ export function NodeFrameWrapper(props: {
 
   const fieldName = typeof props.resolvedPropsValue.name === 'string'
     ? props.resolvedPropsValue.name
-    : typeof props.templateNode.schema.name === 'string'
-      ? props.templateNode.schema.name
-      : undefined;
+    : undefined;
   const labelValue = typeof props.resolvedPropsValue.label !== 'undefined'
     ? props.resolvedPropsValue.label as import('react').ReactNode
-    : (props.regions.label ? props.regions.label.instantiate() : props.templateNode.schema.label as import('react').ReactNode);
+    : props.regions.label?.render();
+  const requiredValue = typeof props.resolvedPropsValue.required === 'boolean'
+    ? props.resolvedPropsValue.required
+    : undefined;
 
   return (
     <FieldFrame
       name={fieldName}
       label={labelValue}
-      required={Boolean(props.resolvedPropsValue.required ?? props.templateNode.schema.required === true)}
+      required={requiredValue}
       layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
       className={props.resolvedMeta.className}
       testid={props.resolvedMeta.testid}

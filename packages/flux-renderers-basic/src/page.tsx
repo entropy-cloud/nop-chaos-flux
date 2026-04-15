@@ -26,7 +26,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
       {hasRendererSlotContent(headerContent) ? (
         <div data-slot="page-toolbar">{headerContent}</div>
       ) : null}
-      <div data-slot="page-body">{props.regions.body?.instantiate()}</div>
+      <div data-slot="page-body">{props.regions.body?.render()}</div>
       {hasRendererSlotContent(footerContent) ? (
         <footer data-slot="page-footer">{footerContent}</footer>
       ) : null}

@@ -73,6 +73,7 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
   { id: 'condition-builder', title: 'Condition Builder', eyebrow: 'Form Control', description: 'Standalone condition-builder renderer with embedded and picker modes.' },
   { id: 'code-editor', title: 'Code Editor', eyebrow: 'CodeMirror 6', description: 'Code editors for expression, SQL, JSON, JavaScript, CSS, HTML.' },
   { id: 'word-editor', title: 'Word Editor', eyebrow: 'Document Template', description: 'Word-like editor with canvas 2D rendering and template expressions.' },
+  { id: 'performance-table', title: 'Performance Table', eyebrow: 'Large Data Stress', description: '1000-row mixed-renderer table plus loop, aggregate, selection, pagination, and editable-form stress scenarios.' },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

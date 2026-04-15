@@ -423,6 +423,6 @@ describe('DesignerPageRenderer basic rendering', () => {
       />
     );
 
-    expect(view.getByText('Designer requires document and config props')).toBeTruthy();
+    expect(view.getByText('Designer requires config prop')).toBeTruthy();
   });
 });
