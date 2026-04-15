@@ -104,11 +104,12 @@ describe('createFormulaCompiler', () => {
     const compiler = createFormulaCompiler();
     const expression = compiler.compileExpression('${user.name.first}');
 
-    expect(() => expression.exec(createScope({ user: null }), {
+    const result = expression.exec(createScope({ user: null }), {
       ...env,
       monitor: { onError }
-    })).toThrow(/Cannot access member of null or undefined/);
+    });
 
+    expect(result).toBeUndefined();
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({
       phase: 'expression',
@@ -147,8 +148,8 @@ describe('createFormulaCompiler', () => {
     expect(() => compiler.compileExpression('${cookie:key}')).toThrow();
     expect(compiler.compileExpression('${$$}').exec(createScope({ '$$': 'plain-value' }), env)).toBe('plain-value');
     expect(compiler.compileExpression('${$varName}').exec(createScope({ '$varName': 'scoped' }), env)).toBe('scoped');
-    expect(() => compiler.compileExpression('${AND(flag, other)}').exec(createScope({ flag: true, other: true }), env)).toThrow(/Call target is not a function/);
-    expect(() => compiler.compileExpression('${ABS(-3)}').exec(createScope({}), env)).toThrow(/Call target is not a function/);
+    expect(compiler.compileExpression('${AND(flag, other)}').exec(createScope({ flag: true, other: true }), env)).toBeUndefined();
+    expect(compiler.compileExpression('${ABS(-3)}').exec(createScope({}), env)).toBeUndefined();
   });
 });
 

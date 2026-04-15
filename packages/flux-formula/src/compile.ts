@@ -279,12 +279,16 @@ function createFormulaCompiler(): FormulaCompiler {
           const context = toEvalContext(input);
           const imports = context.resolve('__imports') as Readonly<Record<string, unknown>> | undefined;
 
-          return evaluateAst(ast, {
-            env,
-            context,
-            imports,
-            reportError: createExpressionMonitorReporter(env, source)
-          }) as T;
+          try {
+            return evaluateAst(ast, {
+              env,
+              context,
+              imports,
+              reportError: createExpressionMonitorReporter(env, source)
+            }) as T;
+          } catch {
+            return undefined as T;
+          }
         }
       };
     },
@@ -321,15 +325,19 @@ function createFormulaCompiler(): FormulaCompiler {
               }
 
               const imports = context.resolve('__imports') as Readonly<Record<string, unknown>> | undefined;
-              
-              const evaluated = evaluateAst(segment.value.ast, {
-                env,
-                context,
-                imports,
-                reportError: createExpressionMonitorReporter(env, source)
-              });
 
-              return evaluated == null ? '' : String(evaluated);
+              try {
+                const evaluated = evaluateAst(segment.value.ast, {
+                  env,
+                  context,
+                  imports,
+                  reportError: createExpressionMonitorReporter(env, source)
+                });
+
+                return evaluated == null ? '' : String(evaluated);
+              } catch {
+                return '';
+              }
             })
             .join('');
 
