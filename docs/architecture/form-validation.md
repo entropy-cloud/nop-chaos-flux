@@ -584,6 +584,127 @@ This is runtime validation result state.
  }
 ```
 
+### Form Store State Structure
+
+Form state uses a normalized flat structure following React/Redux best practices.
+
+```ts
+/**
+ * Per-field state stored in a single flat map.
+ * Properties use `true | undefined` pattern for memory efficiency.
+ */
+interface FieldState {
+  touched?: true;
+  dirty?: true;
+  visited?: true;
+  validating?: true;
+  errors?: ValidationError[];
+}
+
+/**
+ * The form store state structure.
+ * Uses a single `fieldStates` map instead of multiple separate maps.
+ */
+interface FormStoreState {
+  values: Record<string, unknown>;
+  fieldStates: Record<string, FieldState>;
+  submitting: boolean;
+}
+```
+
+Design rationale:
+
+1. **Single map instead of five**: Previous design stored `touched`, `dirty`, `visited`, `validating`, and `errors` in five separate maps, duplicating path strings. The unified `fieldStates` map stores all field metadata together.
+2. **`true | undefined` pattern**: Boolean flags use `true | undefined` instead of `boolean` to save memory. When a flag is false, it is omitted from the object entirely.
+3. **Empty cleanup**: When all properties of a `FieldState` become undefined, the entire entry is removed from the map.
+4. **Array remapping efficiency**: Array operations (insert/remove/move) traverse the map once instead of five times.
+
+### Per-Path Subscription API
+
+`FormStoreApi` exposes fine-grained subscription methods for field-level reactivity.
+
+```ts
+interface FormPathState {
+  errors: ValidationError[] | undefined;
+  validating: boolean;
+  touched: boolean;
+  dirty: boolean;
+  visited: boolean;
+}
+
+interface FormStoreApi {
+  // ... existing members ...
+
+  /**
+   * Subscribe to state changes for a specific path.
+   * The listener fires only when the field's state changes for this exact path.
+   * Returns an unsubscribe function.
+   */
+  subscribeToPath(path: string, listener: () => void): () => void;
+
+  /**
+   * Subscribe to submitting state changes.
+   * The listener fires only when the form's submitting flag changes.
+   * Returns an unsubscribe function.
+   */
+  subscribeToSubmitting(listener: () => void): () => void;
+
+  /**
+   * Read the current field state for a specific path.
+   * Returns a snapshot suitable for useSyncExternalStore's getSnapshot.
+   */
+  getPathState(path: string): FormPathState;
+
+  /**
+   * Get the raw FieldState for a path (may be undefined if no state exists).
+   */
+  getFieldState(path: string): FieldState | undefined;
+
+  /**
+   * Update field state for a path. Merges with existing state.
+   * Empty entries are automatically cleaned up.
+   */
+  setFieldState(path: string, state: Partial<FieldState>): void;
+}
+```
+
+Semantics and guarantees:
+
+1. `subscribeToPath` fires only when the specified path's field state changes, not when unrelated paths change.
+2. In a 1000-field form, a keystroke that updates `fieldStates["name"]` wakes only hooks subscribed to `"name"`.
+3. `subscribeToSubmitting` is separate from path subscriptions because `submitting` is a form-wide flag, not per-path state.
+4. `getPathState` returns a plain object snapshot with no allocation beyond the returned object itself.
+5. Projected stores (for object-field, array-item, variant-field) delegate these methods to the parent store with path translation, using the shared `projectFieldStates` helper from `flux-core`.
+6. `batchUpdate` (array remap) performs diffing before notification: only paths whose state actually changed receive listener calls.
+7. `getFieldState` and `setFieldState` provide direct access to the raw `FieldState` objects for internal use.
+
+React hooks such as `useCurrentFormFieldState` and `useFieldError` use `useSyncExternalStore` with these methods:
+
+```ts
+// Simplified implementation pattern
+function useCurrentFormFieldState(path: string) {
+  const form = useCurrentForm();
+  const absolutePath = resolveAbsolutePath(path);
+
+  return useSyncExternalStore(
+    useCallback(
+      (onStoreChange) => {
+        const unsub1 = form.store.subscribeToPath(absolutePath, onStoreChange);
+        const unsub2 = form.store.subscribeToSubmitting(onStoreChange);
+        return () => { unsub1(); unsub2(); };
+      },
+      [form.store, absolutePath]
+    ),
+    () => ({
+      ...form.store.getPathState(absolutePath),
+      submitting: form.store.getState().submitting,
+    })
+  );
+}
+```
+
+This per-path subscription model ensures O(1) hook wake-up cost per field change, regardless of form size.
+
 Conceptually, errors belong to field-addressed validation state.
 
 Operationally, the owning validation scope runtime stores and manages these field states in an owner-local map keyed by path.
