@@ -858,3 +858,102 @@ body {
   color: #fff;
   outline: 1px solid rgba(255, 255, 255, 0.15);
 }
+
+/* ── Form Renderer Default Styles ── */
+/* These provide sensible defaults for form field marker classes.
+   Schema-driven className or classAliases can override these. */
+
+.nop-select-wrapper {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.nop-select-trigger {
+  width: 100%;
+}
+
+.nop-select-error {
+  font-size: 0.875rem;
+  color: hsl(var(--destructive));
+}
+
+.nop-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.nop-checkbox-label {
+  font-weight: 500;
+}
+
+.nop-switch-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nop-switch-label {
+  font-weight: 600;
+}
+
+.nop-radio-group-wrapper {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.nop-radio-group-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.nop-radio-group-options {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.nop-radio-group-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.nop-radio-group-item-label {
+  font-weight: 500;
+}
+
+.nop-radio-group-error {
+  font-size: 0.875rem;
+  color: hsl(var(--destructive));
+}
+
+.nop-checkbox-group-wrapper {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.nop-checkbox-group-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.nop-checkbox-group-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.nop-checkbox-group-item-label {
+  font-weight: 500;
+}
+
+.nop-checkbox-group-error {
+  font-size: 0.875rem;
+  color: hsl(var(--destructive));
+}

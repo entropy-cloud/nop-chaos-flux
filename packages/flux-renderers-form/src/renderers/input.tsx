@@ -1,6 +1,6 @@
 import type { ApiSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
-import { Checkbox, Input, Label, RadioGroup, RadioGroupItem, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Switch, Textarea } from '@nop-chaos/ui';
+import { Checkbox, cn, Input, Label, RadioGroup, RadioGroupItem, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Switch, Textarea } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   useFieldPresentation,
@@ -106,10 +106,10 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const errorMessage = getSourceErrorMessage(optionsSourceState);
 
   return (
-    <div className="grid gap-2">
+    <div className={cn('nop-select-wrapper', props.meta.className)}>
       <Select value={value == null ? '' : String(value)} onValueChange={(nextValue) => handlers.onChange(nextValue)} disabled={loading || presentation.effectiveDisabled}>
         <SelectTrigger
-          className="w-full"
+          className="nop-select-trigger"
           aria-label={ariaLabel}
           aria-invalid={presentation.showError ? true : undefined}
           onFocus={handlers.onFocus}
@@ -126,7 +126,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           ))}
         </SelectContent>
       </Select>
-      {errorMessage ? <span className="text-sm text-destructive">{errorMessage}</span> : null}
+      {errorMessage ? <span className="nop-select-error">{errorMessage}</span> : null}
     </div>
   );
 }
@@ -164,7 +164,7 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
   const optionLabel = option?.label;
 
   return (
-    <span className="inline-flex items-center gap-2.5">
+    <span className={cn('nop-checkbox-wrapper', props.meta.className)}>
       <Checkbox
         checked={Boolean(value)}
         disabled={presentation.effectiveDisabled}
@@ -174,7 +174,7 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
         onCheckedChange={(checked) => handlers.onChange(String(Boolean(checked)))}
         onBlur={handlers.onBlur}
       />
-      {optionLabel ? <span className="font-medium">{optionLabel}</span> : null}
+      {optionLabel ? <span className="nop-checkbox-label">{optionLabel}</span> : null}
     </span>
   );
 }
@@ -190,7 +190,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   const checked = Boolean(value);
 
   return (
-    <span className="inline-flex items-center gap-3">
+    <span className={cn('nop-switch-wrapper', props.meta.className)}>
       <Switch
         checked={checked}
         disabled={presentation.effectiveDisabled}
@@ -200,7 +200,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
         onCheckedChange={(nextChecked) => handlers.onChange(String(Boolean(nextChecked)))}
         onBlur={handlers.onBlur}
       />
-      <span className="font-semibold">{checked ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
+      <span className="nop-switch-label">{checked ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
     </span>
   );
 }
@@ -218,15 +218,15 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
   const errorMessage = getSourceErrorMessage(optionsSourceState);
 
   return (
-    <div className="grid gap-2.5">
+    <div className={cn('nop-radio-group-wrapper', props.meta.className)}>
       {loading ? (
-        <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+        <span className="nop-radio-group-loading">
           <Spinner className="size-4" aria-hidden="true" />
           <span>Loading options...</span>
         </span>
       ) : null}
       <RadioGroup
-        className="grid gap-2.5"
+        className="nop-radio-group-options"
         value={value == null ? '' : String(value)}
         disabled={loading || presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
@@ -235,13 +235,13 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
         onBlur={handlers.onBlur}
       >
         {options?.map((option) => (
-          <Label key={option.value} className="inline-flex items-center gap-2.5">
+          <Label key={option.value} className="nop-radio-group-item">
             <RadioGroupItem value={option.value} aria-label={option.label} disabled={loading} />
-            <span className="font-medium">{option.label}</span>
+            <span className="nop-radio-group-item-label">{option.label}</span>
           </Label>
         ))}
       </RadioGroup>
-      {errorMessage ? <span className="text-sm text-destructive">{errorMessage}</span> : null}
+      {errorMessage ? <span className="nop-radio-group-error">{errorMessage}</span> : null}
     </div>
   );
 }
@@ -260,9 +260,9 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
   const errorMessage = getSourceErrorMessage(optionsSourceState);
 
   return (
-    <div className="grid gap-2.5">
+    <div className={cn('nop-checkbox-group-wrapper', props.meta.className)}>
       {loading ? (
-        <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+        <span className="nop-checkbox-group-loading">
           <Spinner className="size-4" aria-hidden="true" />
           <span>Loading options...</span>
         </span>
@@ -271,7 +271,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
         const checked = value.some((candidate) => Object.is(candidate, option.value));
 
         return (
-          <Label key={option.value} className="inline-flex items-center gap-2.5">
+          <Label key={option.value} className="nop-checkbox-group-item">
             <Checkbox
               checked={checked}
               disabled={loading || presentation.effectiveDisabled}
@@ -287,11 +287,11 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
               }}
               onBlur={handlers.onBlur}
             />
-            <span className="font-medium">{option.label}</span>
+            <span className="nop-checkbox-group-item-label">{option.label}</span>
           </Label>
         );
       })}
-      {errorMessage ? <span className="text-sm text-destructive">{errorMessage}</span> : null}
+      {errorMessage ? <span className="nop-checkbox-group-error">{errorMessage}</span> : null}
     </div>
   );
 }
