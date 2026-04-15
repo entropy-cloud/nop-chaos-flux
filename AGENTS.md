@@ -1,4 +1,4 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 ## Project Overview
 
@@ -197,6 +197,21 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 | No BEM | Use shadcn `data-slot`, flux semantic markers, and Tailwind visual classes. | `docs/architecture/renderer-markers-and-selectors.md` |
 | Theme Independence | No React ThemeProvider; CSS variables and stable class names for host integration. | `docs/architecture/theme-compatibility.md` |
 | Tailwind v4 monorepo | `@source "../../../packages"` in `styles.css` to scan workspace packages. | `docs/bugs/14-*.md` |
+
+---
+
+## UI Debugging Rules
+
+**NEVER read screenshot or image files to diagnose UI issues.**
+
+When investigating UI state, layout, or rendering problems during e2e tests or browser automation, always use programmatic inspection:
+
+- `page.evaluate(() => document.body.innerHTML)` — get rendered HTML
+- `page.evaluate(() => getComputedStyle(element).propertyName)` — check computed styles
+- `page.locator(...).innerHTML()` / `.textContent()` / `.getAttribute(...)` — read DOM state
+- `page.evaluate(() => document.querySelectorAll('.some-class').length)` — count elements
+
+Screenshots (`test-results/`, `*.png`, `*.jpg`) are unreliable for automated analysis and must not be read as input for diagnosis.
 
 ---
 
