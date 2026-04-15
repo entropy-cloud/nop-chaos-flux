@@ -109,6 +109,7 @@ export interface ActionScope {
 
 export interface ImportedLibraryModule {
   createNamespace(context: ImportedNamespaceContext): Promise<ActionNamespaceProvider> | ActionNamespaceProvider;
+  createExpressionHelpers?(context: ImportedNamespaceContext): Promise<Record<string, unknown>> | Record<string, unknown>;
 }
 
 export interface ImportedLibraryLoader {

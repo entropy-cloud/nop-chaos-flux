@@ -45,7 +45,9 @@ describe('createSchemaRenderer import basics', () => {
       load: vi.fn(async () => ({
         createNamespace: () => ({
           kind: 'import' as const,
-          invoke: async () => ({ ok: true }),
+          invoke: async () => ({ ok: true })
+        }),
+        createExpressionHelpers: () => ({
           formatName(first: string, last: string) {
             return `${first} ${last}`;
           }

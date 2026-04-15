@@ -88,6 +88,7 @@ export function createImportManager(input: {
     release?: () => void;
     refCount: number;
     provider?: ActionNamespaceProvider;
+    expressionHelpers?: Readonly<Record<string, unknown>>;
     state: ImportState;
     error?: Error;
   };
@@ -186,10 +187,14 @@ export function createImportManager(input: {
           nodeInstance: args.nodeInstance
         };
         const provider = await module.createNamespace(context);
+        const expressionHelpers = module.createExpressionHelpers
+          ? await module.createExpressionHelpers(context)
+          : undefined;
         args.entry.provider = {
           ...provider,
           kind: provider.kind ?? 'import'
         };
+        args.entry.expressionHelpers = expressionHelpers ?? undefined;
         args.entry.state = 'ready';
       } catch (error) {
         args.entry.state = 'error';
@@ -235,6 +240,7 @@ export function createImportManager(input: {
           existing.state = 'loading';
           existing.error = undefined;
           existing.provider = undefined;
+          existing.expressionHelpers = undefined;
 
           const retryPromise = createReadyPromise({
             spec,
@@ -265,6 +271,7 @@ export function createImportManager(input: {
         release: undefined,
         refCount: 1,
         provider: undefined,
+        expressionHelpers: undefined,
         state: 'loading' as ImportState,
         error: undefined
       };
@@ -338,7 +345,7 @@ export function createImportManager(input: {
           return [];
         }
 
-        return [[spec.as, entry.provider] as const];
+        return [[spec.as, entry.expressionHelpers ?? entry.provider] as const];
       })
     );
   }
