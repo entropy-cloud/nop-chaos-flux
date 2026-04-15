@@ -85,8 +85,9 @@ This is a normative design requirements document.
   not create an intermediate full-store broadcast and then filter by prefix.
 - Rationale: in a 1 000-field form, a single keystroke that updates one field must wake
   only the hook(s) subscribed to that field — O(1) wake-ups, not O(n).
-- See `docs/plans/90-form-store-per-path-subscription-plan.md` for the implementation
-  plan.
+- See `docs/plans/90-form-store-per-path-subscription-plan.md` for the per-path subscription
+  implementation plan and `docs/plans/91-form-field-state-normalization-refactor-plan.md`
+  for the unified `fieldStates` map refactor.
 
 ## Recommended Patterns
 
