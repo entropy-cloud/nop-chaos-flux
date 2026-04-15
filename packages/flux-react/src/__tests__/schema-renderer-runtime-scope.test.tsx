@@ -1,6 +1,8 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { useScopeSelector } from '../hooks';
 import { createSchemaRenderer } from '../index';
 import {
   countingTextRenderer,
@@ -20,6 +22,16 @@ import {
   scopeLayerProbeRenderer,
   sharedFormulaCompiler,
 } from '../test-support';
+
+function FormStatusProbeRenderer() {
+  const formStatus = useScopeSelector((scope) => scope.$form, Object.is) as { id?: string; valid: boolean; invalid: boolean } | undefined;
+  return <div data-testid="form-status-probe">{JSON.stringify(formStatus)}</div>;
+}
+
+const formStatusProbeRendererDefinition: RendererDefinition = {
+  type: 'form-status-probe',
+  component: FormStatusProbeRenderer,
+};
 
 describe('createSchemaRenderer scope behavior', () => {
   it('does not recompute unrelated NodeRenderer props and meta on unrelated path changes', async () => {
@@ -73,5 +85,29 @@ describe('createSchemaRenderer scope behavior', () => {
     fireEvent.change(canvas.getByLabelText('Email'), { target: { value: 'a' } });
     fireEvent.click(canvas.getByText('Refresh fragment 0'));
     expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
+  });
+
+  it('publishes $form through useScopeSelector on the form scope', async () => {
+    const SchemaRenderer = createSchemaRenderer([formRenderer, probeInputRenderer, pageRenderer, formStatusProbeRendererDefinition]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          id: 'profile-form',
+          body: [
+            { type: 'probe-input' },
+            { type: 'form-status-probe' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('form-status-probe').textContent).toContain('"id":"profile-form"');
+      expect(screen.getByTestId('form-status-probe').textContent).toContain('"valid":true');
+    });
   });
 });

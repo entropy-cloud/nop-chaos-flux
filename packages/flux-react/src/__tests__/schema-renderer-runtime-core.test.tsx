@@ -103,9 +103,9 @@ describe('createSchemaRenderer runtime core behavior', () => {
 
   it('supports useScopeSelector with parent scopes that do not expose a store', () => {
     const SchemaRenderer = createSchemaRenderer([selectorRenderer]);
-    const { rerender } = render(<SchemaRenderer schema={{ type: 'selector-text' }} env={env} formulaCompiler={createFormulaCompiler()} parentScope={{ id: 'root', path: '$', get: (path: string) => (path === 'message' ? 'Scoped hello' : undefined), has: (path: string) => path === 'message', readOwn: () => ({ message: 'Scoped hello' }), value: { message: 'Scoped hello' }, read: () => ({ message: 'Scoped hello' }), update: () => undefined, merge: () => {} }} />);
+    const { rerender } = render(<SchemaRenderer schema={{ type: 'selector-text' }} env={env} formulaCompiler={createFormulaCompiler()} parentScope={{ id: 'root', path: '$', get: (path: string) => (path === 'message' ? 'Scoped hello' : undefined), has: (path: string) => path === 'message', readOwn: () => ({ message: 'Scoped hello' }), readVisible: () => ({ message: 'Scoped hello' }), materializeVisible: () => ({ message: 'Scoped hello' }), value: { message: 'Scoped hello' }, update: () => undefined, merge: () => {} }} />);
     expect(screen.getByText('Scoped hello')).toBeTruthy();
-    rerender(<SchemaRenderer schema={{ type: 'selector-text' }} env={env} formulaCompiler={createFormulaCompiler()} parentScope={{ id: 'root', path: '$', get: (path: string) => (path === 'message' ? 'Scoped update' : undefined), has: (path: string) => path === 'message', readOwn: () => ({ message: 'Scoped update' }), value: { message: 'Scoped update' }, read: () => ({ message: 'Scoped update' }), update: () => undefined, merge: () => {} }} />);
+    rerender(<SchemaRenderer schema={{ type: 'selector-text' }} env={env} formulaCompiler={createFormulaCompiler()} parentScope={{ id: 'root', path: '$', get: (path: string) => (path === 'message' ? 'Scoped update' : undefined), has: (path: string) => path === 'message', readOwn: () => ({ message: 'Scoped update' }), readVisible: () => ({ message: 'Scoped update' }), materializeVisible: () => ({ message: 'Scoped update' }), value: { message: 'Scoped update' }, update: () => undefined, merge: () => {} }} />);
     expect(screen.getByText('Scoped update')).toBeTruthy();
   });
 
@@ -137,7 +137,7 @@ describe('createSchemaRenderer runtime core behavior', () => {
   it('does not fabricate a cid for createNodeInstance when none is provided', async () => {
     const { createNodeInstance } = await import('../node-instance');
     const templateNode = { templateNodeId: 99, id: 'probe', type: 'text', schema: { type: 'text' }, templatePath: '$', rendererType: 'text', component: {} as any, propsProgram: { kind: 'static', value: {} }, metaProgram: {}, eventPlans: {}, regions: {}, scopePlan: { kind: 'inherit' }, sourcePropKeys: [], sourceStatePropKeys: {} } as any;
-    const nodeInstance = createNodeInstance({ templateNode, scope: { id: 'scope', path: '$', readOwn: () => ({}), read: () => ({}), get: () => undefined, has: () => false, update: () => undefined, merge: () => undefined } as any, state: { meta: {}, props: undefined }, cid: undefined, mounted: false });
+    const nodeInstance = createNodeInstance({ templateNode, scope: { id: 'scope', path: '$', readOwn: () => ({}), readVisible: () => ({}), materializeVisible: () => ({}), get: () => undefined, has: () => false, update: () => undefined, merge: () => undefined } as any, state: { meta: {}, props: undefined }, cid: undefined, mounted: false });
     expect(nodeInstance.cid).toBeUndefined();
   });
 

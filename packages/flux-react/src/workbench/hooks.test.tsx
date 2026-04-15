@@ -79,7 +79,7 @@ describe('useHostScope', () => {
     expect(capturedScope?.readOwn()).toEqual({
       host: { status: 'updated' }
     });
-    expect(JSON.stringify(capturedScope?.read())).not.toContain('remove-me');
+    expect(JSON.stringify(capturedScope?.materializeVisible())).not.toContain('remove-me');
   });
 
   it('rejects writes to projected host fields', () => {
@@ -97,7 +97,7 @@ describe('useHostScope', () => {
 
     capturedScope?.update('local.note', 'ok');
 
-    expect(capturedScope?.read()).toMatchObject({
+    expect(capturedScope?.materializeVisible()).toMatchObject({
       pageValue: 'root',
       host: { status: 'ready' },
       local: { note: 'ok' }
