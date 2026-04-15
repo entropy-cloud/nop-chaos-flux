@@ -26,7 +26,12 @@ export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
   valueKind?: 'scalar' | 'array' | 'object';
   getFieldPath?(schema: S, ctx: ValidationCollectContext<S>): string | undefined;
   collectRules?(schema: S, ctx: ValidationCollectContext<S>): ValidationRule[];
-  getChildFieldPathPrefix?(schema: S, ctx: ValidationCollectContext<S>): string | undefined;
+  /**
+   * Returns the prefix to use for child field paths during validation compilation.
+   * Return `false` to skip validation compilation for child nodes (useful for array-field
+   * where child validation is handled at runtime via registerField).
+   */
+  getChildFieldPathPrefix?(schema: S, ctx: ValidationCollectContext<S>): string | false | undefined;
 }
 
 export interface RendererHelpers {

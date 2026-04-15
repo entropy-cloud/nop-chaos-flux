@@ -19,6 +19,11 @@ export { isPlainObject, shallowEqual } from './utils/object';
 export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn } from './utils/path';
 export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema';
 
+export type { PathBindingContext, PathBindingService } from './utils/path-binding';
+export { createPathBinding, projectBooleanMap, projectFieldStates } from './utils/path-binding';
+
+export { validationErrorsEqual } from './utils/validation-utils';
+
 export type {
   DomainBridge,
   BusyActionPhase,

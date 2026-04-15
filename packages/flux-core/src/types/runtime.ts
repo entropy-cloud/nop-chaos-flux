@@ -21,13 +21,17 @@ import type { ActionScope } from './actions';
 import type { ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
 import type { ReactNode } from 'react';
 
+export interface FieldState {
+  touched?: true;
+  dirty?: true;
+  visited?: true;
+  validating?: true;
+  errors?: ValidationError[];
+}
+
 export interface FormStoreState {
   values: Record<string, any>;
-  errors: Record<string, ValidationError[]>;
-  validating: Record<string, boolean>;
-  touched: Record<string, boolean>;
-  dirty: Record<string, boolean>;
-  visited: Record<string, boolean>;
+  fieldStates: Record<string, FieldState>;
   submitting: boolean;
 }
 
@@ -63,24 +67,23 @@ export interface FormPathState {
   visited: boolean;
 }
 
+export type { FieldState as FormFieldState };
+
 export interface FormStoreApi {
   getState(): FormStoreState;
   subscribe(listener: () => void): () => void;
   subscribeToPath(path: string, listener: () => void): () => void;
   subscribeToSubmitting(listener: () => void): () => void;
   getPathState(path: string): FormPathState;
+  getFieldState(path: string): FieldState | undefined;
+  setFieldState(path: string, state: Partial<FieldState>): void;
   setValues(values: Record<string, any>): void;
   setValue(path: string, value: unknown): void;
-  setErrors(errors: Record<string, ValidationError[]>): void;
   setPathErrors(path: string, errors?: ValidationError[]): void;
   setValidating(path: string, validating: boolean): void;
-  setValidatingState(validating: Record<string, boolean>): void;
   setTouched(path: string, touched: boolean): void;
-  setTouchedState(touched: Record<string, boolean>): void;
   setDirty(path: string, dirty: boolean): void;
-  setDirtyState(dirty: Record<string, boolean>): void;
   setVisited(path: string, visited: boolean): void;
-  setVisitedState(visited: Record<string, boolean>): void;
   setSubmitting(submitting: boolean): void;
   batchUpdate(updates: Partial<FormStoreState>): void;
 }
