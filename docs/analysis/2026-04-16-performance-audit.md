@@ -117,26 +117,26 @@ The audited package manifests do not declare `sideEffects`. That does not create
 - Add `"sideEffects": false` to packages that are side-effect free.
 - Use `"sideEffects": ["*.css"]` where CSS imports are intentionally side-effectful.
 
-### 1.6 MEDIUM - Vite chunk warning threshold is set too high for useful feedback
+### 1.6 LOW - Vite chunk warning threshold is currently very permissive
 
 **File**: `apps/playground/vite.config.ts`
 
 **Diagnosis**
 
-`chunkSizeWarningLimit: 6000` means large sub-6 MB chunks will not trigger warnings. This does not hide *all* warnings, but it weakens early detection of route and vendor chunk growth.
+`chunkSizeWarningLimit: 6000` means large sub-6 MB chunks will not trigger warnings. This does not hide *all* warnings; it simply makes warning-based bundle review less sensitive than the default.
 
 **Recommended action**
 
 - Lower the threshold after route splitting work lands.
 - Pair the warning threshold with a checked-in build report or CI size snapshot.
 
-### 1.7 MEDIUM - Tailwind source scanning is broader than necessary
+### 1.7 LOW - Tailwind source scanning currently covers the full `packages/` tree
 
 **File**: `apps/playground/src/styles.css`
 
 **Diagnosis**
 
-`@source "../../../packages"` points Tailwind at the entire packages tree, including many packages that do not own Tailwind-authored UI. The current doc baseline explains why this broad scan exists, but it is still broader than ideal for rebuild efficiency.
+`@source "../../../packages"` points Tailwind at the entire packages tree, including many packages that do not own Tailwind-authored UI. The current doc baseline explains why this broad scan exists. This is best treated as a tuning candidate, not a confirmed build bottleneck.
 
 **Recommended action**
 
@@ -185,7 +185,7 @@ The repo should not assume catastrophic re-subscription from this alone, but sta
 
 `useNodeLifecycleActions()` depends on `helpers`, and `helpers` is recreated whenever any of its inputs changes. That means helper identity churn can retrigger cleanup + mount dispatch for nodes with lifecycle actions.
 
-This is not just a micro-allocation issue; it can change behavior if lifecycle actions trigger APIs, navigation, or other side effects.
+This is not just a micro-allocation issue. When nodes do define lifecycle actions with side effects, helper-identity churn expands the set of changes that can retrigger mount/cleanup dispatch.
 
 **Recommended action**
 
@@ -326,13 +326,13 @@ The original draft overstated this as the single hottest allocation path in the 
 - Hoist the regex to module scope.
 - Add a fast guard such as `startsWith()` before falling back to regex matching.
 
-### 3.6 MEDIUM - Builtins are reinstalled for each compiler creation
+### 3.6 LOW - Builtins are reinstalled for each compiler creation
 
 **Files**: `packages/flux-formula/src/compile.ts`, `packages/flux-formula/src/builtins.ts`
 
 **Diagnosis**
 
-`createFormulaCompiler()` re-runs `installBuiltins()`, which repeatedly sets the same builtin functions and namespaces into the default registries.
+`createFormulaCompiler()` re-runs `installBuiltins()`, which repeatedly sets the same builtin functions and namespaces into the default registries. This is confirmed duplicate setup work, but its runtime weight is modest compared with the other expression-engine findings in this report.
 
 **Recommended action**
 
@@ -762,13 +762,13 @@ The hook subscribes to both form state and scope state even though only one bran
 
 ## 7. Flow Designer
 
-### 7.1 MEDIUM - ELK layout still runs through the bundled main-thread build
+### 7.1 MEDIUM - ELK layout uses the bundled ELK entrypoint with no explicit worker offload in repo code
 
 **File**: `packages/flow-designer-core/src/elk-layout.ts`
 
 **Diagnosis**
 
-The code imports `elkjs/lib/elk.bundled.js`. The API is Promise-based, but the layout work still happens in the same main JS environment unless explicitly moved to a worker.
+The code imports `elkjs/lib/elk.bundled.js` and constructs `new ELK()` directly in the layout module. The repo does not show any explicit worker offload boundary around this path.
 
 **Recommended action**
 
@@ -811,15 +811,15 @@ History keeps up to 50 cloned document entries.
 - Keep the current model for correctness if needed, but document it as a memory tradeoff.
 - Evaluate structural sharing if designer document size grows materially.
 
-### 7.5 LOW - Viewport updates can still consume history quickly during pan
+### 7.5 LOW - Viewport updates are published from both `onMove` and `onMoveEnd`
 
 **Files**: `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`, `packages/flow-designer-core/src/core.ts`
 
 **Diagnosis**
 
-Viewport changes are published from both `onMove` and `onMoveEnd`, and viewport updates enter history unless normalized as exact no-ops.
+Viewport changes are published from both `onMove` and `onMoveEnd`, and viewport updates enter history when the normalized viewport actually changes.
 
-The original draft's "history fills in under a second" claim was an unmeasured estimate. The real concern is simpler: continuous pan can generate more viewport-history churn than necessary.
+The original draft's "history fills in under a second" claim was unmeasured. The confirmed code-level issue is narrower: viewport persistence is more eager than it needs to be.
 
 **Recommended action**
 
