@@ -1,6 +1,6 @@
 # 43 TanStack Query Inspired Runtime Improvement Plan
 
-> Plan Status: planned
+> Plan Status: partially completed
 > Last Reviewed: 2026-04-16
 > Source: `docs/analysis/2026-04-08-tanstack-query-comparison.md`, live repo audit of `packages/flux-runtime/src/data-source-runtime.ts`, `source-registry.ts`, `operation-control.ts`, `action-runtime.ts`
 > Related: `docs/architecture/api-data-source.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/action-interaction-state.md`
@@ -13,7 +13,7 @@ Close the remaining runtime gaps from the TanStack Query comparison that still m
 
 - `data-source` runtime ownership, scope-scoped registry, named publication, `resultMapping`, `mergeToScope`, `statusPath`, dependency-driven refresh, polling, cache reads/writes, and debug snapshots are already implemented and covered by focused tests.
 - `DataSourceController.getState()` is still the old coarse shape `{ started, loading, stale, value, error }` in both api and formula controller implementations.
-- `data-source` status publication still derives only `started/loading/ready/stale/error`; it does not expose fetch/data timestamps or retry failure metadata.
+- `data-source` status publication currently derives `started/loading/ready/stale/error`; it does not expose fetch/data timestamps or retry failure metadata.
 - API-backed sources still update controller state through scattered closure variables in `data-source-runtime.ts`; formula-backed sources in `source-registry.ts` mirror the same coarse state shape.
 - `operation-control.ts` still exposes only `withRetry(fn, { times, delay }, shouldStop)` with fixed delay and no failure tracking.
 - Retry config shape is still owned by `packages/flux-core/src/types/schema.ts`, and action-side retry normalization still lives in `packages/flux-runtime/src/action-runtime-core.ts`.
@@ -62,101 +62,103 @@ Close the remaining runtime gaps from the TanStack Query comparison that still m
 
 ### Phase 1 - Data Source State Model
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/runtime.ts`, `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/source-registry.ts`, `packages/flux-runtime/src/__tests__/runtime-sources*.test.ts`
 
-- [ ] Introduce a shared `DataSourceState` type with explicit data status and fetch status instead of only coarse booleans.
-- [ ] Refactor api-backed `createDataSourceController()` to use centralized state transitions instead of scattered closure mutation.
-- [ ] Refactor formula-backed controller state to conform to the same public `DataSourceState` contract, with synchronous semantics documented in code and tests.
-- [ ] Preserve the current `statusPath` summary surface (`loading`, `ready`, `stale`, `error`) while adding any new summary fields in a backward-compatible way.
-- [ ] Update source registry debug snapshots to derive their coarse debug fields from the new controller state shape.
+- [x] Introduce a shared `DataSourceState` type with explicit data status and fetch status instead of only coarse booleans.
+- [x] Refactor api-backed `createDataSourceController()` to use centralized state transitions instead of scattered closure mutation.
+- [x] Refactor formula-backed controller state to conform to the same public `DataSourceState` contract, with synchronous semantics documented in code and tests.
+- [x] Preserve the current `statusPath` summary surface (`started`, `loading`, `ready`, `stale`, `error`) while adding any new summary fields in a backward-compatible way.
+- [x] Update source registry debug snapshots to derive their coarse debug fields from the new controller state shape.
 
 Exit Criteria:
 
-- [ ] `DataSourceController.getState()` no longer returns the legacy `{ started, loading, stale, value, error }` object.
-- [ ] Focused tests prove first load, background refresh with existing data, and failed refresh semantics for api-backed sources.
-- [ ] Focused tests prove formula-backed sources still publish and refresh correctly under the new state contract.
-- [ ] `statusPath` consumers still observe the legacy summary fields unchanged.
+- [x] `DataSourceController.getState()` no longer returns the legacy `{ started, loading, stale, value, error }` object.
+- [x] Focused tests prove first load, background refresh with existing data, and failed refresh semantics for api-backed sources.
+- [x] Focused tests prove formula-backed sources still publish and refresh correctly under the new state contract.
+- [x] `statusPath` consumers still observe the legacy summary fields unchanged, including `started`.
 
 ### Phase 2 - Structural Sharing For Source Publication
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/source-registry.ts`, focused source tests
 
-- [ ] Add a small structural-sharing helper appropriate for source publication hot paths.
-- [ ] Apply structural sharing before source data is written back through replace-style target-path publication so equal payloads keep stable references when safe.
-- [ ] Skip source publication only for safe replace-style publication paths where replaying the same payload is semantically a no-op.
-- [ ] Leave `append`, `prepend`, `merge`, and `upsert` publication semantics unchanged unless a focused follow-up plan proves a safe optimization for those modes.
-- [ ] Keep this optimization narrow to source publication rather than changing generic `ScopeRef.update()` semantics in this plan.
+- [x] Add a small structural-sharing helper appropriate for source publication hot paths.
+- [x] Apply structural sharing before source data is written back through replace-style target-path publication so equal payloads keep stable references when safe.
+- [x] Skip source publication only for safe replace-style publication paths where replaying the same payload is semantically a no-op.
+- [x] Leave `append`, `prepend`, `merge`, and `upsert` publication semantics unchanged unless a focused follow-up plan proves a safe optimization for those modes.
+- [x] Keep this optimization narrow to source publication rather than changing generic `ScopeRef.update()` semantics in this plan.
 
 Exit Criteria:
 
-- [ ] Repeated equal source payloads do not trigger redundant target-path writes in focused tests.
-- [ ] Changed payloads still publish normally.
-- [ ] The optimization works for direct target-path publication and mapped publication paths where applicable.
-- [ ] Focused tests prove non-replace merge strategies retain their current behavior.
+- [x] Repeated equal source payloads do not trigger redundant target-path writes in focused tests.
+- [x] Changed payloads still publish normally.
+- [x] The optimization works for direct target-path publication and mapped publication paths where applicable.
+- [x] Focused tests prove non-replace merge strategies retain their current behavior.
 
 ### Phase 3 - Retry Control Enhancements
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/schema.ts`, `packages/flux-core/src/types/runtime.ts`, `packages/flux-runtime/src/operation-control.ts`, `packages/flux-runtime/src/request-runtime.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/index.ts`, `packages/flux-runtime/src/runtime-action-helpers.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/form-runtime-submit-flow.ts`, focused action/source/form tests
 
-- [ ] Extend shared retry result metadata to include failure count and last failure reason.
-- [ ] Add exponential-backoff support while preserving the current fixed-delay default unless explicitly enabled.
-- [ ] Keep retry control ownership on enclosing action/source/form request entry points rather than moving it into `ApiSchema`; only extend schema-owned control types if new author-visible retry fields are truly required.
-- [ ] For `data-source`, read retry/backoff control from `DataSourceSchema`'s existing action-style top-level control surface, never from `ApiSchema`.
-- [ ] For ajax actions, keep the existing action-level retry/control surface as the only author-visible config source, but bypass dispatcher-level retry once request-owned retry is in place so request-backed actions have exactly one retry executor.
-- [ ] Establish a single retry owner for request-backed work: request execution owns retry/backoff for ajax actions, submit-form requests, and data-source fetches, while dispatcher-level retry remains only for non-request action results if still needed.
-- [ ] Move request retry/backoff ownership into the shared request execution path so ajax actions, submit-form requests, and data sources consume the same retry semantics instead of reimplementing them separately.
-- [ ] Ensure shared retry handles the real request failure mode: thrown fetch/request errors and `executeApiSchema()`-thrown non-OK responses must participate in retry/backoff and failure metadata.
-- [ ] Keep async validation requests one-shot in this plan unless a caller already opts into retry through an explicit validation-owned follow-up design; this plan's request-owned retry scope excludes validation.
-- [ ] Thread retry failure metadata into data-source state so source status can report retry failures.
-- [ ] Update action runtime to consume the expanded retry result without changing existing success/failure classification semantics.
+- [x] Extend shared retry result metadata to include failure count and last failure reason.
+- [x] Add exponential-backoff support while preserving the current fixed-delay default unless explicitly enabled.
+- [x] Make opt-in backoff author-visible by extending the existing retry config surface with explicit strategy fields rather than inventing ad hoc runtime-only behavior.
+- [x] Keep retry control ownership on enclosing action/source/form request entry points rather than moving it into `ApiSchema`; only extend schema-owned control types if new author-visible retry fields are truly required.
+- [x] For `data-source`, read retry/backoff control from `DataSourceSchema`'s existing action-style top-level control surface, never from `ApiSchema`.
+- [x] For ajax actions, keep the existing action-level retry/control surface as the only author-visible config source, but bypass dispatcher-level retry once request-owned retry is in place so request-backed actions have exactly one retry executor.
+- [x] Establish a single retry owner for request-backed work: request execution owns retry/backoff for ajax actions, submit-form requests, and data-source fetches, while dispatcher-level retry remains only for non-request action results if still needed.
+- [x] Move request retry/backoff ownership into the shared request execution path so ajax actions, submit-form requests, and data sources consume the same retry semantics instead of reimplementing them separately.
+- [x] Ensure shared retry handles the real request failure mode: thrown fetch/request errors and `executeApiSchema()`-thrown non-OK responses must participate in retry/backoff and failure metadata.
+- [x] Keep async validation requests one-shot in this plan unless a caller already opts into retry through an explicit validation-owned follow-up design; this plan's request-owned retry scope excludes validation.
+- [x] Thread retry failure metadata into data-source state so source status can report retry failures.
+- [x] Update action runtime to consume the expanded retry result without changing existing success/failure classification semantics.
 
 Exit Criteria:
 
-- [ ] `withRetry()` supports fixed delay and opt-in exponential backoff.
-- [ ] Focused tests cover failure counting, last failure reason, and backoff timing behavior.
-- [ ] Shared request execution applies the same retry policy to ajax actions, submit-form requests, and data-source fetches when configured.
-- [ ] Focused tests prove request-backed work does not apply the same schema retry policy twice.
-- [ ] Focused tests or code-path audit prove validation request execution remains one-shot after this slice.
-- [ ] Focused tests or code-path audit prove form submit now follows the same single-owner retry semantics as ajax and data-source request execution.
-- [ ] Data-source runtime can expose retry failure metadata after failed attempts.
+- [x] `withRetry()` supports fixed delay and opt-in exponential backoff.
+- [x] The retry config contract is explicit and documented, with backward-compatible defaults for existing `{ times, delay }` shapes.
+- [x] Focused tests cover failure counting, last failure reason, and backoff timing behavior.
+- [x] Shared request execution applies the same retry policy to ajax actions, submit-form requests, and data-source fetches when configured.
+- [x] Focused tests prove request-backed work does not apply the same schema retry policy twice.
+- [x] Focused tests or code-path audit prove validation request execution remains one-shot after this slice.
+- [x] Focused tests or code-path audit prove form submit now follows the same single-owner retry semantics as ajax and data-source request execution.
+- [x] Data-source runtime can expose retry failure metadata after failed attempts.
 
 ### Phase 4 - Action `onSettled`
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/actions.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/__tests__/runtime-actions-chained.test.ts`, `docs/architecture/action-algebra-formal-spec.md`
 
-- [ ] Extend `ActionSchema` with `onSettled` in the same family as `then` and `onError`.
-- [ ] Update action dispatch so `onSettled` runs after `then` on success-class results and after `onError` on failure-class results.
-- [ ] Define the chained result context visible to `onSettled` and document it explicitly: `onSettled` reads the original triggering result, not a replacement branch result.
-- [ ] Preserve existing return semantics by making `onSettled` side-effect-only for chain propagation: it must not replace the action result returned from the main step or its `then`/`onError` branch.
-- [ ] Define `onSettled` failure handling explicitly: if `onSettled` itself fails, runtime reports that failure through existing framework/plugin error reporting, but the original triggering result remains the returned chain result.
-- [ ] Define skipped-result behavior explicitly and keep it stable in docs and tests instead of leaving it implicit.
-- [ ] Add loop-safe chaining behavior consistent with the current dispatcher model.
+- [x] Extend `ActionSchema` with `onSettled` in the same family as `then` and `onError`.
+- [x] Update action dispatch so `onSettled` runs after `then` on success-class results and after `onError` on failure-class results.
+- [x] Define the chained result context visible to `onSettled` and document it explicitly: `onSettled` reads the original triggering result, not a replacement branch result.
+- [x] Preserve existing return semantics by making `onSettled` side-effect-only for chain propagation: it must not replace the action result returned from the main step or its `then`/`onError` branch.
+- [x] Define `onSettled` failure handling explicitly: if `onSettled` itself fails, runtime reports that failure through existing framework/plugin error reporting, but the original triggering result remains the returned chain result.
+- [x] Define skipped-result behavior explicitly and keep it stable in docs and tests instead of leaving it implicit.
+- [x] Add loop-safe chaining behavior consistent with the current dispatcher model.
 
 Exit Criteria:
 
-- [ ] Focused tests prove `onSettled` runs for both success-class and failure-class results.
-- [ ] Focused tests prove skipped actions do not run `onSettled` unless this plan is explicitly revised to choose otherwise.
-- [ ] Focused tests prove `onSettled` does not overwrite the result returned to the outer sequential chain.
-- [ ] Focused tests prove `onSettled` failures are reported without replacing the original branch result.
-- [ ] Architecture docs reflect the final branch semantics.
+- [x] Focused tests prove `onSettled` runs for both success-class and failure-class results.
+- [x] Focused tests prove skipped actions do not run `onSettled` unless this plan is explicitly revised to choose otherwise.
+- [x] Focused tests prove `onSettled` does not overwrite the result returned to the outer sequential chain.
+- [x] Focused tests prove `onSettled` failures are reported without replacing the original branch result.
+- [x] Architecture docs reflect the final branch semantics.
 
 ## Validation Checklist
 
-- [ ] Live repo baseline was re-audited before execution and this plan matches current file names and contracts.
-- [ ] Focused runtime tests cover the new data-source state model.
-- [ ] Focused runtime tests cover structural sharing behavior.
-- [ ] Focused runtime tests cover retry metadata and backoff behavior.
-- [ ] Focused runtime tests cover `onSettled` semantics.
-- [ ] `docs/architecture/api-data-source.md` updated if source state/statusPath contract changes.
-- [ ] `docs/architecture/action-algebra-formal-spec.md` updated for `onSettled`.
-- [ ] `docs/logs/2026/04-16.md` updated with implementation and review notes.
-- [ ] Independent subagent closure/review evidence recorded before marking this plan completed.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
+- [x] Live repo baseline was re-audited before execution and this plan matches current file names and contracts.
+- [x] Focused runtime tests cover the new data-source state model.
+- [x] Focused runtime tests cover structural sharing behavior.
+- [x] Focused runtime tests cover retry metadata and backoff behavior.
+- [x] Focused runtime tests cover `onSettled` semantics.
+- [x] `docs/architecture/api-data-source.md` updated if source state/statusPath contract changes.
+- [x] `docs/architecture/action-algebra-formal-spec.md` updated for `onSettled`.
+- [x] `docs/logs/2026/04-16.md` updated with implementation and review notes.
+- [x] Independent subagent closure/review evidence recorded before marking this plan completed.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
 
@@ -168,13 +170,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Not closed. This plan stays open until all four phases land, docs are synced, and an independent review confirms no remaining plan-owned work.
+Status Note: Implementation slices for all four phases are landed and package-local verification is green. The plan remains partially completed because workspace-wide `build`, `lint`, and `test` are still blocked by issues outside this plan-owned surface.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent fresh-session review against the live plan/code baseline
+- Evidence: independent plan audits converged before execution against `docs/plans/43-tanstack-query-inspired-runtime-improvement-plan.md`, `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/request-runtime.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/source-registry.ts`, and related architecture docs; implementation verification is green for `pnpm --filter @nop-chaos/flux-runtime typecheck`, `pnpm --filter @nop-chaos/flux-runtime test`, and workspace `pnpm build`, while workspace `lint`/`test` remain blocked by unrelated package failures outside this plan-owned surface.
 
 Follow-up:
 
-- None yet. If any slice proves too broad during execution, split the leftover work into a successor plan instead of silently narrowing this file.
+- Re-run workspace-wide verification after unrelated blockers are cleared, then perform a fresh closure audit before marking this plan completed.

@@ -230,7 +230,7 @@ Current baseline note:
 - current `DataSourceSchema` baseline now supports both `api` and `formula` producers under the same runtime-owned registration path
 - formula `data-source` no longer requires `dataPath`; `name`-first publication is allowed for both api and formula producers
 - current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
-- current `DataSourceController` baseline now exposes a minimal runtime state surface via `getState()` with `started`, `loading`, `stale`, `value`, and `error`; api sources actively drive all fields while formula sources currently use the same shape with lightweight synchronous semantics
+- current `DataSourceController` baseline now exposes `DataSourceState` via `getState()` with `started`, `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`; api sources drive fetch lifecycle while formula sources publish the same public contract with synchronous semantics
 - current runtime baseline now also exposes explicit source refresh by id at the runtime boundary; refresh remains scope-scoped first, so duplicate source ids in different scopes do not collapse into one page-global namespace
 - current code may still accept older built-in target field names for `refreshSource` for compatibility, but the architecture baseline treats source refresh as built-in runtime-entry targeting rather than component-handle targeting
 - current source runtime now has a dependency-aware invalidation baseline: formula sources automatically recompute and api sources automatically refresh when changed scope paths hit the dependencies collected from formula evaluation or request-config evaluation
@@ -601,6 +601,18 @@ The source abstraction is responsible for value production, not for built-in loa
 - if schema needs author-visible source status, the preferred cross-runtime contract is explicit `statusPath`
 - `statusPath` is readonly runtime summary data, not a second authoritative business value
 - narrower subsystems may still project additional summary values, but they must not replace the core `statusPath` contract with implicit hidden sibling paths
+- current source `statusPath` summary preserves the legacy `started`, `loading`, `ready`, `stale`, and `error` fields and additionally publishes timing/failure metadata such as `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`
+
+### Retry Ownership
+
+Request retry remains owned by the enclosing consumer contract, not by `ApiSchema` itself.
+
+- ajax actions use the action-level retry/control surface
+- submit-form requests use the submit action/control surface
+- data-source requests use the `DataSourceSchema` top-level action-style control surface
+- async validation remains one-shot in the current baseline
+
+Once those controls are resolved, request execution owns the actual retry/backoff loop for ajax, submit-form, and data-source fetches so request-backed work has one retry executor rather than overlapping dispatcher and request retries.
 
 ### Examples
 

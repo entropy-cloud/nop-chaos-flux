@@ -603,6 +603,59 @@ Preferred placement:
 
 This keeps the analysis logic close to compilation while still making diagnostics reusable outside runtime execution.
 
+## Host Action Validation
+
+When validating schema fragments intended for use inside a host family (e.g., flow-designer toolbar, spreadsheet inspector), the compiler can perform host-family action validation if provided with a `hostContractContext`.
+
+### Enabling Host Action Validation
+
+Standalone validation passes an already-resolved manifest through `CompileSchemaOptions.validation.hostContractContext`:
+
+```ts
+const diagnostics = validateSchema({
+  schema: toolbarSchema,
+  registry,
+  options: {
+    validation: {
+      hostContractContext: {
+        family: 'designer',
+        version: '1.0',
+        manifest: FLOW_DESIGNER_MANIFEST_V1
+      }
+    }
+  }
+});
+```
+
+When `hostContractContext` is present:
+
+- actions matching the host family's namespace (e.g., `designer:*`) are validated against the manifest's `capabilities.methods`
+- unknown methods emit `unknown-host-capability-method` diagnostics
+- invalid args shapes emit `invalid-host-capability-args` diagnostics
+- deprecated methods emit warnings
+
+When `hostContractContext` is absent:
+
+- host-family actions are not validated (no false positives for unknown host context)
+- only core action shape validation runs
+
+### Integration With Tree Compilation
+
+During normal tree compilation where the schema is compiled inside a publishing owner node:
+
+- the compiler may derive host context from `RendererDefinition.hostContract`
+- capability publication attribution determines which regions receive host action validation
+- this is directional work; the current baseline validates only when explicit `hostContractContext` is provided
+
+### Current Baseline Note
+
+The `hostContractContext` validation flow is now implemented:
+
+- `validateSchema(...)` accepts `validation.hostContractContext`
+- action shape validation integrates with `validateHostAction()` when host context is present
+- the flow-designer package exports `FLOW_DESIGNER_MANIFEST_V1` and `designerHostContract` for standalone validation use
+- integration tests verify unknown method, invalid args, and valid action validation scenarios
+
 ## Relationship To Existing Validation Systems
 
 This design does not replace the current validator registry used by form validation.

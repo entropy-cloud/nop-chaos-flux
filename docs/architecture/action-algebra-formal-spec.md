@@ -147,6 +147,8 @@ These classes define branch behavior. They are not optional interpretation hints
 
 Actions executing inside `then` or `onError` evaluate with a reserved transient branch-result context.
 
+`onSettled` uses the same reserved branch-result context and reads the original triggering result rather than any replacement result returned by `then` or `onError`.
+
 Reserved names are:
 
 - `result`: the triggering `ActionResult`
@@ -189,6 +191,15 @@ Rules:
 1. `continueOnError` affects only whether the main sequential chain aborts after a failed step
 2. it does not convert a `failure-class` result into `success-class`
 3. it does not decide whether `onError` runs
+
+### `onSettled`
+
+1. `onSettled` executes for `success-class` and `failure-class` results
+2. `onSettled` does not execute for `neutral-class` skipped results in the current baseline
+3. on the success path, `onSettled` runs after `then`
+4. on the failure path, `onSettled` runs after `onError`
+5. `onSettled` is side-effect-only for chain propagation and does not replace the result returned to the outer sequential chain
+6. if `onSettled` itself fails, runtime reports that failure through the ordinary framework/plugin error path, while preserving the original triggering result as the returned chain result
 
 ### Branch Exclusivity
 

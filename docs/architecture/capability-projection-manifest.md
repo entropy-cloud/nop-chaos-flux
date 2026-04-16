@@ -16,6 +16,16 @@ This document does **not** replace `ActionScope`, `ComponentHandleRegistry`, or 
 
 It adds the missing static manifest contract that those runtime mechanisms currently lack.
 
+## Current Code Anchors
+
+When this document needs to be checked against code, start with:
+
+- `packages/flux-core/src/schema-diagnostics/manifest.ts` for manifest envelope types, structural shape contract, and resolver contracts
+- `packages/flux-core/src/schema-diagnostics/index.ts` for host-specific diagnostic codes and `SchemaCompileValidationOptions.hostContractContext`
+- `packages/flux-core/src/types/renderer-core.ts` for `RendererDefinition.hostContract`
+- `packages/flux-runtime/src/schema-compiler/diagnostics.ts` for `xui:version` validation and diagnostics context
+- `docs/architecture/schema-file-validator.md` for compiler-integrated diagnostics framework
+
 ## Relationship To Existing Docs
 
 Read this document together with:
