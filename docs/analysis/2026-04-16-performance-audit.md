@@ -1,728 +1,1013 @@
 # Performance Audit Report
 
 **Date**: 2026-04-16
-**Scope**: Full monorepo — `flux-runtime`, `flux-react`, `flux-formula`, renderer packages, spreadsheet/flow-designer, build configuration
+**Last Re-audited**: 2026-04-16
+**Scope**: Full monorepo - `flux-runtime`, `flux-react`, `flux-formula`, renderer packages, spreadsheet/flow-designer, playground build configuration
 **Severity Scale**: CRITICAL / HIGH / MEDIUM / LOW
 
 ---
 
 ## Executive Summary
 
-This audit identified **100+ distinct performance findings** across 10 categories. The top 5 most impactful issues are:
+This report was re-audited against the live repository after the original draft overstated several items and mixed confirmed hot-path issues with unmeasured hypotheses.
 
-1. **Spreadsheet grid renders ALL cells with zero virtualization** — makes the spreadsheet fundamentally unscalable
-2. **All pages eagerly imported in playground** — ~2.5 MB of JS loaded upfront, 60-70% of which may never be needed
-3. **`resolveNodeProps` called redundantly on every render** — root cause of cascading re-renders across the entire renderer tree
-4. **Registry snapshot re-creates 3 frozen objects per expression evaluation** — hundreds of allocations per render cycle
-5. **`setCell` copies entire cells map per mutation** — O(R*C*|cells|) for range operations in spreadsheets
+This revised version keeps only findings that are supported by current code, removes one incorrect claim, and rewrites several others to reflect the real behavior more precisely.
+
+Highest-confidence priorities:
+
+1. **Spreadsheet grid still renders the full table with no virtualization** - `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx`
+2. **`NodeRendererResolved` still resolves node props twice** - `packages/flux-react/src/node-renderer.tsx`
+3. **Formula registry snapshots are rebuilt for every expression evaluation** - `packages/flux-formula/src/registry.ts`
+4. **Playground still eagerly pulls most route/page code at the root** - `apps/playground/src/App.tsx`, `apps/playground/src/pages/index.ts`
+5. **Spreadsheet bulk update paths still clone large shared structures repeatedly** - `packages/spreadsheet-core/src/core/document-access.ts`, `packages/spreadsheet-core/src/core/search-operations.ts`
+
+Re-audit rules used for this revision:
+
+- Treat bundle bloat claims as **bundle risk** unless current build output proves concrete size impact.
+- Treat React memoization advice as **situational** because the repo already uses the React Compiler in the playground build.
+- Avoid exact latency, allocation, or memory numbers unless the code itself proves them.
+- Separate true defects from documented current baselines and already-mitigated behavior.
 
 ---
 
 ## Table of Contents
 
-1. [Build & Bundle (CRITICAL)](#1-build--bundle)
-2. [React Re-Render Patterns (CRITICAL/HIGH)](#2-react-re-render-patterns)
-3. [Expression Engine (CRITICAL/HIGH)](#3-expression-engine)
-4. [Spreadsheet (CRITICAL/HIGH)](#4-spreadsheet)
-5. [Runtime Store & Scope (HIGH)](#5-runtime-store--scope)
-6. [Renderer Components (HIGH/MEDIUM)](#6-renderer-components)
-7. [Flow Designer (MEDIUM)](#7-flow-designer)
-8. [API & Data Source (MEDIUM)](#8-api--data-source)
-9. [Memory & Growth (MEDIUM)](#9-memory--growth)
-10. [CSS & Layout (LOW/MEDIUM)](#10-css--layout)
+1. [Build & Bundle](#1-build--bundle)
+2. [React Re-Render Patterns](#2-react-re-render-patterns)
+3. [Expression Engine](#3-expression-engine)
+4. [Spreadsheet](#4-spreadsheet)
+5. [Runtime Store & Scope](#5-runtime-store--scope)
+6. [Renderer Components](#6-renderer-components)
+7. [Flow Designer](#7-flow-designer)
+8. [API & Data Source](#8-api--data-source)
+9. [Memory & Growth](#9-memory--growth)
+10. [CSS & Layout](#10-css--layout)
+11. [Removed Or Reframed Findings](#11-removed-or-reframed-findings)
 
 ---
 
 ## 1. Build & Bundle
 
-### 1.1 CRITICAL — All pages eagerly imported, no lazy loading
+### 1.1 CRITICAL - Most playground routes are still eagerly imported
 
-**Files**: `apps/playground/src/pages/index.ts`, `apps/playground/src/App.tsx`
+**Files**: `apps/playground/src/App.tsx`, `apps/playground/src/pages/index.ts`
 
-All page components (FluxBasicPage, FlowDesignerPage, DingTalkFlowDemo, ReportDesignerPage, CodeEditorPage, WordEditorPage, etc.) are imported synchronously. This pulls in ~2.5 MB of JavaScript on initial load:
+**Diagnosis**
 
-| Library | Size | Pulled in via |
-|---------|------|--------------|
-| echarts | ~800 KB | ChartRenderer → flux-renderers-data |
-| @codemirror/* | ~400 KB | flux-code-editor |
-| @xyflow/react | ~300 KB | FlowDesignerPage |
-| elkjs | ~200 KB | flow-designer-core |
-| @hufe921/canvas-editor | ~500 KB | word-editor-core |
-| recharts | ~350 KB | @nop-chaos/ui chart export |
+`App.tsx` imports nearly all domain pages from the root page barrel, and the page barrel re-exports those modules synchronously. `WordEditorPage` is the main exception because it lazy-loads its heavy renderer payload inside the page module, but the route component itself is still imported through the root barrel.
 
-Only `WordEditorPage` uses `React.lazy()`. All others are eagerly loaded.
+This means route-level code splitting is weaker than it could be, and page-specific dependencies are harder to defer until navigation.
 
-**Fix**: Convert all page imports to `React.lazy()`:
+**Recommended action**
 
-```tsx
-const FluxBasicPage = lazy(() => import('./pages/FluxBasicPage').then(m => ({ default: m.FluxBasicPage })));
-const FlowDesignerPage = lazy(() => import('./pages/FlowDesignerPage').then(m => ({ default: m.FlowDesignerPage })));
-```
+- Convert heavyweight route components in `App.tsx` to `React.lazy()` boundaries.
+- Keep route registration/lightweight metadata at the root, but move page implementation imports behind the route switch.
+- Re-measure the build after the route split instead of carrying forward stale bundle-size estimates.
 
-Expected improvement: **60-70% reduction in initial bundle size**.
+### 1.2 HIGH - `@nop-chaos/ui` root barrel exposes the chart module and increases tree-shaking risk
 
-### 1.2 HIGH — recharts pulled into ALL ui consumers via `export *`
+**Files**: `packages/ui/src/index.ts`, `packages/ui/src/components/ui/chart.tsx`
 
-**File**: `packages/ui/src/index.ts:15`
+**Diagnosis**
 
-`export * from './components/ui/chart'` causes recharts (~350 KB) to enter the module graph of every package that imports from `@nop-chaos/ui` — which is nearly every renderer package. Even importing just `cn()` pulls in recharts.
+The UI root barrel re-exports `./components/ui/chart`, and that module imports `recharts` directly. This does **not** prove that every `@nop-chaos/ui` consumer always ships `recharts`, but it does widen the module graph and makes dead-code elimination depend on bundler behavior.
 
-**Fix**: Remove the chart barrel export. Move chart to a sub-export (`@nop-chaos/ui/chart`) or use dynamic import inside the chart component.
+**Recommended action**
 
-### 1.3 HIGH — echarts in barrel export of flux-renderers-data
+- Move chart exports to a dedicated subpath such as `@nop-chaos/ui/chart`.
+- Keep the root barrel focused on broadly shared primitives.
+- Validate the change with an actual bundle diff rather than assuming universal savings.
 
-**File**: `packages/flux-renderers-data/src/index.tsx:4-6`
+### 1.3 HIGH - `@nop-chaos/flux-renderers-data` root export surface includes the ECharts renderer
 
-`ChartRenderer` unconditionally imports `echarts/core` + chart modules + CanvasRenderer. Even consumers that only need `TableRenderer` pull in echarts.
+**Files**: `packages/flux-renderers-data/src/index.tsx`, `packages/flux-renderers-data/src/chart-renderer.tsx`
 
-**Fix**: Split chart renderer into a sub-export (`@nop-chaos/flux-renderers-data/chart`) or use dynamic import inside `ChartRenderer`.
+**Diagnosis**
 
-### 1.4 HIGH — Flow designer renderers eagerly registered in App.tsx
+The package root exports `ChartRenderer`, and the chart renderer imports ECharts modules at top level. That creates the same tree-shaking risk as the UI chart barrel: consumers that only need table/tree/data-source functionality may still pay for chart-related graph reachability depending on bundler behavior.
 
-**File**: `apps/playground/src/App.tsx:6`
+**Recommended action**
 
-`registerFlowDesignerRenderers()` is called at the top level, pulling in `@xyflow/react`, `elkjs`, `flow-designer-core` into the initial bundle.
+- Split chart exports into a dedicated subpath or lazy boundary.
+- Keep `registerDataRenderers()` available, but consider lazy chart registration when the host does not need charts.
 
-**Fix**: Move registration into the lazy-loaded `FlowDesignerPage` component.
+### 1.4 HIGH - Flow designer renderers are registered eagerly at app startup
 
-### 1.5 MEDIUM — No `sideEffects: false` in any package.json
+**Files**: `apps/playground/src/App.tsx`, `packages/flow-designer-renderers/src/index.tsx`
 
-**Files**: All `packages/*/package.json`
+**Diagnosis**
 
-Without `"sideEffects": false`, bundlers conservatively assume every module has side effects, preventing dead code elimination for barrel-file exports.
+`registerFlowDesignerRenderers(registry)` runs at the root app module, so flow-designer code is pulled into the initial application path even when the user never visits the designer routes.
 
-**Fix**: Add `"sideEffects": false` to each package's `package.json`. For packages with CSS imports, use `"sideEffects": ["*.css"]`.
+**Recommended action**
 
-### 1.6 MEDIUM — `chunkSizeWarningLimit: 6000` hides all chunk warnings
+- Move flow-designer registration behind the flow-designer route boundary.
+- If registry ownership must stay centralized, introduce lazy renderer registration on first route entry.
 
-**File**: `apps/playground/vite.config.ts:17`
+### 1.5 MEDIUM - Package manifests do not currently declare `sideEffects`
 
-The 6 MB limit effectively disables Vite's chunk size warnings, hiding bundle bloat.
+**Files**: representative `packages/*/package.json`
 
-**Fix**: Reduce to 500-1000 KB after implementing lazy loading.
+**Diagnosis**
 
-### 1.7 MEDIUM — `@source "../../../packages"` overly broad for Tailwind v4
+The audited package manifests do not declare `sideEffects`. That does not create runtime slowness by itself, but it can reduce how aggressively bundlers tree-shake barrel exports and dead modules.
 
-**File**: `apps/playground/src/styles.css:6`
+**Recommended action**
 
-Scans ALL files under ALL packages, including test files, `.d.ts` files, and packages with no Tailwind classes (flux-core, flux-formula, flux-runtime). Adds seconds to each rebuild.
+- Add `"sideEffects": false` to packages that are side-effect free.
+- Use `"sideEffects": ["*.css"]` where CSS imports are intentionally side-effectful.
 
-**Fix**: Use targeted source directives for packages that actually use Tailwind classes.
+### 1.6 MEDIUM - Vite chunk warning threshold is set too high for useful feedback
 
-### 1.8 LOW — `next-themes` unused dependency in @nop-chaos/ui
+**File**: `apps/playground/vite.config.ts`
 
-**File**: `packages/ui/package.json:32`
+**Diagnosis**
 
-Zero imports of `next-themes` across the entire codebase. Dead weight.
+`chunkSizeWarningLimit: 6000` means large sub-6 MB chunks will not trigger warnings. This does not hide *all* warnings, but it weakens early detection of route and vendor chunk growth.
 
-**Fix**: Remove from dependencies.
+**Recommended action**
+
+- Lower the threshold after route splitting work lands.
+- Pair the warning threshold with a checked-in build report or CI size snapshot.
+
+### 1.7 MEDIUM - Tailwind source scanning is broader than necessary
+
+**File**: `apps/playground/src/styles.css`
+
+**Diagnosis**
+
+`@source "../../../packages"` points Tailwind at the entire packages tree, including many packages that do not own Tailwind-authored UI. The current doc baseline explains why this broad scan exists, but it is still broader than ideal for rebuild efficiency.
+
+**Recommended action**
+
+- Narrow the `@source` set to packages that actually emit Tailwind classes, if that can be done without reintroducing monorepo scan regressions.
+- Re-check against the Tailwind v4 monorepo bug note before tightening the scan.
 
 ---
 
 ## 2. React Re-Render Patterns
 
-### 2.1 CRITICAL — `resolveNodeProps` called redundantly on every render
+### 2.1 CRITICAL - `NodeRendererResolved` still resolves node props twice
 
-**File**: `packages/flux-react/src/node-renderer.tsx:128`
+**File**: `packages/flux-react/src/node-renderer.tsx`
 
-`useSyncExternalStoreWithSelector` already calls `runtime.resolveNodeProps` inside the selector (lines 73-76), but the result is discarded — only `meta` is destructured. Then on line 128, `resolveNodeProps` is called again outside the selector on every render. This produces a new `importedResolvedProps` reference each render, which cascades through `useNodeSourceProps` → `resolvedComponentProps` → `componentProps.props` → `<Comp {...componentProps} />`, causing every renderer component to see a changed `props` reference on every render.
+**Diagnosis**
 
-**Fix**: Capture `resolvedProps` from the store selector result instead of recomputing:
+The store selector computes both `meta` and `resolvedProps`, but only `meta` is retained from the selector result. The component then calls `runtime.resolveNodeProps(...)` again later in render.
 
-```ts
-const { meta: baseMeta, resolvedProps: baseResolvedProps } = useSyncExternalStoreWithSelector(...);
-// Use baseResolvedProps.value instead of recomputing
-```
+This is a confirmed redundancy in a core render path. The current code does **not** prove that every second call produces a new props reference, because `resolveNodeProps()` already has runtime state reuse paths. The real issue is the duplicate work itself.
 
-### 2.2 HIGH — Unstable `subscribe`/`getSnapshot` in useSyncExternalStore calls
+**Recommended action**
 
-**Files**: `packages/flux-react/src/hooks.ts:109-110, 144-145, 152-153, 173-174`
+- Retain `resolvedProps` from the selector result and reuse it through the rest of the component.
+- Re-profile node rendering after the change before making stronger claims about rerender fan-out.
 
-`useScopeSelector`, `useCurrentFormState`, `useCurrentFormErrors`, `useCurrentFormError` all create new `subscribe` and `getSnapshot` function instances on every render. React 19 re-subscribes when `subscribe` changes reference. Since these hooks are called from every node in the renderer tree, this causes subscription churn proportional to the number of rendered nodes.
+### 2.2 HIGH - Several `useSyncExternalStoreWithSelector` hooks recreate `subscribe` / `getSnapshot` closures every render
 
-```ts
-// Current — new functions every render:
-const subscribe = store?.subscribe ?? (() => emptyUnsubscribe);
-const getSnapshot = () => (store?.getSnapshot() ?? scope.readVisible()) as unknown as S;
-```
+**Files**: `packages/flux-react/src/hooks.ts`
 
-**Fix**: Wrap both in `useMemo` keyed on `store` and `scope`.
+**Diagnosis**
 
-### 2.3 HIGH — Spurious mount/unmount lifecycle dispatch
+`useScopeSelector`, `useCurrentFormState`, `useCurrentFormErrors`, and `useCurrentFormError` all create `subscribe` and/or `getSnapshot` closures inline in render. This creates avoidable identity churn around subscription setup.
 
-**File**: `packages/flux-react/src/node-renderer-effects.ts:65-79`
+The repo should not assume catastrophic re-subscription from this alone, but stabilizing these closures is still the cleaner hot-path baseline.
 
-`useNodeLifecycleActions` depends on `input.helpers`, which is recreated when any of 8 values change (runtime, renderScope, activeActionScope, currentForm, etc.). Any of these changes triggers spurious `onUnmount` + `onMount` dispatch, potentially causing duplicate API calls or navigation.
+**Recommended action**
 
-**Fix**: Split into two effects — mount-only (empty deps or just `nodeInstance`) and unmount-only (cleanup with ref for latest helpers).
+- Wrap `subscribe` / `getSnapshot` in `useMemo` or `useCallback` keyed to the store/scope/form owner.
+- Keep the fix minimal and local; do not add abstraction unless several hooks can share it cleanly.
 
-### 2.4 MEDIUM — Redundant meta resolution in NodeRendererResolved
+### 2.3 HIGH - Node lifecycle dispatch is coupled to `helpers` identity
 
-**File**: `packages/flux-react/src/node-renderer.tsx:129-135`
+**Files**: `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/node-renderer-effects.ts`
 
-Lines 129-135 duplicate the class alias resolution and CID assignment that `resolvedMeta` useMemo (lines 113-122) already performs. Since inputs haven't changed, the result is always identical — pure wasted computation per node per render.
+**Diagnosis**
 
-**Fix**: Replace lines 127-135 with `const finalResolvedMeta = resolvedMeta;`.
+`useNodeLifecycleActions()` depends on `helpers`, and `helpers` is recreated whenever any of its inputs changes. That means helper identity churn can retrigger cleanup + mount dispatch for nodes with lifecycle actions.
 
-### 2.5 MEDIUM — `RenderNodes` not wrapped in `React.memo`
+This is not just a micro-allocation issue; it can change behavior if lifecycle actions trigger APIs, navigation, or other side effects.
 
-**File**: `packages/flux-react/src/render-nodes.tsx:162`
+**Recommended action**
 
-`RenderNodes` is the core rendering primitive used at every level of the node tree. Without memoization, every parent re-render cascades to all children, re-executing all `useMemo` hooks and effect checks.
+- Decouple lifecycle effect stability from the wider `helpers` object.
+- Keep mount/unmount behavior keyed to node identity, while reading the latest dispatcher/helper implementation via ref where needed.
 
-**Fix**: Wrap in `React.memo`:
+### 2.4 MEDIUM - Meta normalization is repeated after `resolvedMeta` is already computed
 
-```ts
-export const RenderNodes = React.memo(function RenderNodes(props: ...) { ... });
-```
+**File**: `packages/flux-react/src/node-renderer.tsx`
 
-### 2.6 MEDIUM — SchemaRenderer data sync effect fires on unstable `props.data`
+**Diagnosis**
 
-**File**: `packages/flux-react/src/schema-renderer.tsx:50-65`
+`resolvedMeta` already handles class alias resolution and CID normalization, but the component repeats that same work immediately afterward when building `finalResolvedMeta`.
 
-If the consumer creates a new `data` object each render (e.g., `<SchemaRenderer data={{ ... }} />`), this effect fires every render and calls `setSnapshot` with `paths: ['*']` — a full-scope update triggering all subscribers to re-render.
+**Recommended action**
 
-**Fix**: Add shallow equality check before calling `setSnapshot`.
+- Reuse `resolvedMeta` directly unless a later transform truly changes it.
 
-### 2.7 MEDIUM — Inline selectors in FieldFrame allocate per render
+### 2.5 MEDIUM - `RenderNodes` is not memoized
 
-**File**: `packages/flux-react/src/field-frame.tsx:62, 72, 82`
+**File**: `packages/flux-react/src/render-nodes.tsx`
 
-Three inline selectors per `FieldFrame` instance create new query objects and array literals (`['array', 'object', ...]`) on each call. With 50 fields, that's 150 selector allocations per form state change.
+**Diagnosis**
 
-**Fix**: Wrap selectors in `useCallback`. Extract `sourceKinds` array as module constant.
+`RenderNodes` is exported as a plain function component. That is a real structural fact, but the performance consequence is context-dependent because upstream scope/action/component-registry changes already drive much of the subtree work, and the React Compiler is part of the repo baseline.
 
-### 2.8 LOW — No-deps ref-update effects run every render
+**Recommended action**
 
-**File**: `packages/flux-react/src/use-node-source-props.ts:26-32`
+- Treat this as a profiling candidate, not an automatic `React.memo` rule.
+- If profiling shows parent-driven churn with stable inputs, wrap the component or split hot internal branches first.
 
-Two `useEffect` calls without dependency arrays run on every render of every node with source props, just to update refs.
+### 2.6 MEDIUM - `SchemaRenderer` treats fresh `props.data` references as full-scope replacement
 
-**Fix**: Update refs synchronously in the render body (safe in React 19).
+**File**: `packages/flux-react/src/schema-renderer.tsx`
+
+**Diagnosis**
+
+When `props.data` changes by reference, `SchemaRenderer` calls `page.scope.store?.setSnapshot(pageData, { paths: ['*'], ... })`. Hosts that recreate the data object each render can therefore force broad scope invalidation.
+
+**Recommended action**
+
+- Add a cheap guard before replacing the whole page snapshot.
+- Encourage hosts to pass stable `data` objects when they do not intend a full-page data refresh.
+
+### 2.7 MEDIUM - `FieldFrame` allocates selector closures and a `sourceKinds` array literal every render
+
+**File**: `packages/flux-react/src/field-frame.tsx`
+
+**Diagnosis**
+
+`FieldFrame` installs three selectors inline via `useCurrentFormState(...)`. The aggregate-error selector also allocates a fresh `sourceKinds` array literal on each render.
+
+This is a small but repeated cost in large forms.
+
+**Recommended action**
+
+- Hoist the static `sourceKinds` array to module scope.
+- Stabilize selectors where it improves readability without adding noise.
+
+### 2.8 LOW - `useNodeSourceProps` uses no-deps effects only to update refs
+
+**File**: `packages/flux-react/src/use-node-source-props.ts`
+
+**Diagnosis**
+
+Two `useEffect()` calls run after every render only to mirror `propsValue` and `scope` into refs.
+
+**Recommended action**
+
+- Assign those refs during render instead of using no-op post-commit effects.
 
 ---
 
 ## 3. Expression Engine
 
-### 3.1 CRITICAL — Registry snapshot recreated on every expression evaluation
+### 3.1 CRITICAL - Formula registry snapshots are rebuilt for every evaluation
 
-**File**: `packages/flux-formula/src/evaluator.ts:105`, `packages/flux-formula/src/registry.ts:32-37`
+**Files**: `packages/flux-formula/src/registry.ts`, `packages/flux-formula/src/evaluator.ts`
 
-`getFormulaRegistrySnapshot()` allocates 3 `Map` iterators, 3 temporary arrays, 3 plain objects, and 3 `Object.freeze` calls **per evaluation**. In a renderer with hundreds of expressions, this runs hundreds of times per render cycle.
+**Diagnosis**
 
-```ts
-export function getFormulaRegistrySnapshot(): FormulaRegistrySnapshot {
-  return {
-    functions: Object.freeze(Object.fromEntries(defaultFunctions.entries())),
-    functionMeta: Object.freeze(Object.fromEntries(defaultFunctionMeta.entries())),
-    namespaces: Object.freeze(Object.fromEntries(defaultNamespaces.entries()))
-  };
-}
-```
+`getFormulaRegistrySnapshot()` rebuilds plain objects from Maps and freezes them on every call. The evaluator reads that snapshot in the expression execution path, so this work repeats across expression-heavy renders.
 
-**Fix**: Cache the snapshot. Invalidate only when the registry is mutated:
+**Recommended action**
 
-```ts
-let cachedSnapshot: FormulaRegistrySnapshot | undefined;
-export function getFormulaRegistrySnapshot(): FormulaRegistrySnapshot {
-  if (!cachedSnapshot) {
-    cachedSnapshot = { /* ... */ };
-  }
-  return cachedSnapshot;
-}
-```
+- Cache the registry snapshot.
+- Invalidate the cache only when function or namespace registration mutates the registry.
 
-### 3.2 HIGH — `evaluateLeaf` spreads context on every evaluation
+### 3.2 HIGH - `evaluateLeaf()` spreads the eval context for every leaf execution
 
-**File**: `packages/flux-formula/src/evaluate.ts:111-115`
+**File**: `packages/flux-formula/src/evaluate.ts`
 
-Every leaf expression evaluation does `{ ...context, collector }`, allocating a new object. Hundreds of times per render cycle.
+**Diagnosis**
 
-**Fix**: Set `collector` directly on the context before exec and clear after, or pass as a separate parameter.
+`node.compiled.exec({ ...context, collector }, env)` allocates a fresh object for each leaf evaluation.
 
-### 3.3 HIGH — Dependency collector allocates `Set` + closures per leaf evaluation
+**Recommended action**
 
-**File**: `packages/flux-formula/src/scope.ts:9-41`
+- Pass the collector through a lighter mechanism, such as a specialized context wrapper or extra parameter.
 
-`createScopeDependencyCollector()` allocates a `Set`, two closure objects, and on `finalize()` creates a sorted array. This is the hottest allocation path in the system.
+### 3.3 HIGH - Dependency collection allocates per leaf evaluation
 
-**Fix**: Use a reusable collector pool or reset pattern. Provide a `reset()` method and reuse the instance.
+**Files**: `packages/flux-formula/src/evaluate.ts`, `packages/flux-formula/src/scope.ts`
 
-### 3.4 HIGH — Double O(n) frame walk for lambda identifier resolution
+**Diagnosis**
 
-**File**: `packages/flux-formula/src/evaluator.ts:25-45, 156-158`
+Each leaf evaluation creates a new dependency collector, including a `Set`, collector/finalize objects, and a sorted array at finalize time.
 
-`hasFrame` and `lookupFrame` each walk the frame chain linearly. For every identifier, both are called sequentially — doing the same O(depth) walk twice.
+The original draft overstated this as the single hottest allocation path in the entire system; current code only supports the narrower claim that it is a repeated hot-path allocation source.
 
-**Fix**: Merge into a single function returning a sentinel value when not found.
+**Recommended action**
 
-### 3.5 MEDIUM — Regex created per identifier evaluation
+- Pool or reuse collector internals where possible.
+- If reuse complicates correctness, start with removing the sorted-array work for clearly single-path reads.
 
-**File**: `packages/flux-formula/src/evaluator.ts:58-61`
+### 3.4 HIGH - Lambda identifier resolution still walks the frame chain twice
 
-`parseImportedFunctionName` creates a new `RegExp` on every identifier evaluation. For `a + b + c + d`, the regex is compiled 4 times.
+**File**: `packages/flux-formula/src/evaluator.ts`
 
-**Fix**: Hoist regex to module level. Add fast `startsWith` prefix check before regex.
+**Diagnosis**
 
-### 3.6 MEDIUM — `installBuiltins()` re-registers ~33 items per compiler creation
+`hasFrame(...)` and `lookupFrame(...)` both walk the same frame chain linearly, and the identifier path can call them back-to-back.
 
-**File**: `packages/flux-formula/src/compile.ts:264`
+**Recommended action**
 
-Every `createFormulaCompiler()` call re-registers all builtins, doing ~33 unnecessary `Map.set()` operations.
+- Merge the two lookups into one helper that returns either a sentinel or a found value.
 
-**Fix**: Track installation with a boolean flag, skip if already done.
+### 3.5 MEDIUM - Imported-function name parsing still allocates a regex per identifier
 
-### 3.7 MEDIUM — ArrowFunction evaluation creates closures + frames per invocation
+**File**: `packages/flux-formula/src/evaluator.ts`
 
-**File**: `packages/flux-formula/src/evaluator.ts:149-152`
+**Diagnosis**
 
-For `ARRAYMAP(items, x => x + 1)` with 1000 items, this creates 1000 closures, 1000 temporary arrays, 1000 `Object.fromEntries` calls, and 1000 frame objects.
+`parseImportedFunctionName()` creates a fresh `RegExp` inside the function.
 
-**Fix**: For the common single-parameter case, avoid `Object.fromEntries`. Consider reusing frame objects.
+**Recommended action**
 
-### 3.8 MEDIUM — try/catch in hot expression exec paths prevents V8 optimization
+- Hoist the regex to module scope.
+- Add a fast guard such as `startsWith()` before falling back to regex matching.
 
-**File**: `packages/flux-formula/src/compile.ts:282-291, 329-340`
+### 3.6 MEDIUM - Builtins are reinstalled for each compiler creation
 
-try/catch blocks in the `exec` methods (called on every expression evaluation) prevent certain V8 Turbofan optimizations.
+**Files**: `packages/flux-formula/src/compile.ts`, `packages/flux-formula/src/builtins.ts`
 
-**Fix**: Move try/catch into a separate helper function so the main path can be optimized.
+**Diagnosis**
 
-### 3.9 LOW — Lexer regex literals in `isWhitespace`/`isDigit` per character
+`createFormulaCompiler()` re-runs `installBuiltins()`, which repeatedly sets the same builtin functions and namespaces into the default registries.
 
-**File**: `packages/flux-formula/src/lexer.ts:23-37`
+**Recommended action**
 
-Regex patterns are created inside functions called on every character during tokenization.
+- Make builtin installation idempotent at the registry level or guard it with a one-time flag.
 
-**Fix**: Hoist to module-level constants, or use `charCodeAt` comparisons (much faster).
+### 3.7 MEDIUM - Arrow-function execution still creates closure and frame objects repeatedly
+
+**File**: `packages/flux-formula/src/evaluator.ts`
+
+**Diagnosis**
+
+Arrow expressions allocate a closure once per expression evaluation, and callback execution allocates parameter-mapping/frame objects for each invocation.
+
+The original draft overcounted allocations in `ARRAYMAP` style cases; the real code-level issue is repeated closure/frame creation, not a guaranteed one-closure-per-item pattern.
+
+**Recommended action**
+
+- Optimize the common single-parameter path first.
+- Avoid `Object.fromEntries(...)` in tight callback loops.
+
+### 3.8 MEDIUM - Hot expression execution is wrapped in `try/catch`
+
+**File**: `packages/flux-formula/src/compile.ts`
+
+**Diagnosis**
+
+Compiled expression and template exec paths currently keep `try/catch` in the direct execution body.
+
+That is a real code fact. The original draft went too far by asserting a guaranteed engine optimization failure without measurement.
+
+**Recommended action**
+
+- Treat this as a benchmark-backed optimization candidate.
+- If profiling justifies it, move error wrapping into a helper that preserves diagnostics while keeping the hot path simpler.
+
+### 3.9 LOW - Lexer character helpers still create regex literals on repeated character checks
+
+**File**: `packages/flux-formula/src/lexer.ts`
+
+**Diagnosis**
+
+Whitespace/digit/identifier checks still rely on regex-based helpers in the lexer's tight loop.
+
+**Recommended action**
+
+- Hoist regexes or replace them with `charCodeAt` comparisons.
 
 ---
 
 ## 4. Spreadsheet
 
-### 4.1 CRITICAL — SpreadsheetGrid renders ALL cells with zero virtualization
+### 4.1 CRITICAL - Spreadsheet grid renders the full table with no virtualization
 
-**File**: `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx:91-195`
+**File**: `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx`
 
-The entire grid renders as HTML `<table>` with `Array.from({ length: rows })` × `Array.from({ length: cols })`. A 1000×50 grid creates 50,000 DOM nodes. This makes the spreadsheet fundamentally unscalable.
+**Diagnosis**
 
-**Fix**: Implement virtualized grid that only renders cells within the visible viewport (plus buffer). Use `@tanstack/react-virtual` or canvas-based rendering.
+The grid renders a full HTML table using `Array.from({ length: rows })` and nested `Array.from({ length: cols })`, so row and cell DOM scale directly with sheet dimensions.
 
-### 4.2 HIGH — `setCell` copies entire cells map per mutation
+This remains the clearest spreadsheet scalability limit in the repo.
 
-**File**: `packages/spreadsheet-core/src/core/document-access.ts:40-43`
+**Recommended action**
 
-Every `setCell` does `{ ...sheet.cells, [cellAddress(row, col)]: cell }`. For a sheet with 10,000 cells, this spreads 10,000 properties for each single cell update.
+- Introduce viewport virtualization for rows and columns.
+- Keep sticky headers/frozen panes in mind when selecting the virtualization model.
+- If virtualization becomes too complex with merged cells/fill handles, evaluate a canvas-backed rendering path for the long term.
 
-For range operations (`applyFillDown`, `applyCellStyleChange`), this compounds to O(R*C*|cells|). A "Bold" on a 50×10 range in a 20,000-cell sheet = 500 iterations × 20,000 property copies = **10 million property copies**.
+### 4.2 HIGH - `setCell()` clones the entire cell map for each cell mutation
 
-**Fix**: Batch range operations into a single cells map:
+**Files**: `packages/spreadsheet-core/src/core/document-access.ts`, `packages/spreadsheet-core/src/core/cell-operations.ts`
 
-```ts
-const cells = { ...sheet.cells };
-for (const key of changedKeys) { cells[key] = updatedCell; }
-return { ...sheet, cells };
-```
+**Diagnosis**
 
-### 4.3 HIGH — `replaceAllInDocument` creates N full document copies
+Single-cell updates spread the existing `cells` object and write one address. Range operations that call this repeatedly compound the cost.
 
-**File**: `packages/spreadsheet-core/src/core/search-operations.ts:116-157`
+**Recommended action**
 
-For each matching cell, `replaceInDocument` creates a new cells map, new sheets array, and new document. 100 matches × 10,000 cells = massive overhead.
+- Batch range operations into one cloned `cells` map per command.
+- Keep single-cell commands simple, but give bulk operations dedicated batched implementations.
 
-**Fix**: Batch all replacements into a single document mutation.
+### 4.3 HIGH - `replaceAllInDocument()` still performs repeated whole-document replacement work
 
-### 4.4 HIGH — Undo stack stores 100 full document clones
+**File**: `packages/spreadsheet-core/src/core/search-operations.ts`
 
-**File**: `packages/spreadsheet-core/src/core/internal-state.ts:43-49`
+**Diagnosis**
 
-`maxDepth` is hardcoded to 100. The `SpreadsheetConfig.maxUndoDepth` field exists but is never read. For a 50,000-cell spreadsheet, each entry may be 5-10 MB, totaling **500 MB - 1 GB** for the undo stack.
+`replaceAllInDocument()` applies replacement through repeated document update steps instead of batching all matches into one document transform.
 
-**Fix**: (1) Honor the config value. (2) Implement structural sharing or operation-based undo. (3) Cap memory usage.
+**Recommended action**
 
-### 4.5 HIGH — `useSnapshot` uses useState+useEffect instead of useSyncExternalStore
+- Collect all replacements first.
+- Apply them in one sheet/document rewrite pass.
 
-**File**: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-snapshot.ts:1-13`
+### 4.4 HIGH - Undo depth is hardcoded and does not honor `SpreadsheetConfig.maxUndoDepth`
 
-Causes **double render** on every store update: (1) effect fires, (2) `setSnapshot` triggers another render. Other components in the same package (`page-renderer.tsx`) correctly use `useSyncExternalStore`.
+**Files**: `packages/spreadsheet-core/src/core/internal-state.ts`, `packages/spreadsheet-core/src/types.ts`
 
-**Fix**: Replace with `useSyncExternalStore(bridge.subscribe, bridge.getSnapshot)`.
+**Diagnosis**
 
-### 4.6 MEDIUM — Mouse drag selection fires state updates per cell traversed
+The undo stack keeps up to 100 prior document snapshots/references, and the config field for max undo depth is not currently read.
 
-**File**: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-selection.ts:94-100`
+The original draft overstated this as proven multi-hundred-MB memory growth. Current code supports the narrower but still important diagnosis: retention policy is hardcoded and disconnected from configuration.
 
-Each `handleCellMouseEnter` during drag calls `setDragEnd`, triggering a React state update and full grid re-render.
+**Recommended action**
 
-**Fix**: Throttle with `requestAnimationFrame`. Use ref for intermediate drag state.
+- Read `config.maxUndoDepth` in the history push path.
+- Follow up with structural-sharing or operation-based history if large-sheet memory becomes measurable.
 
-### 4.7 MEDIUM — Fill handle uses `document.elementFromPoint` per mousemove
+### 4.5 HIGH - Spreadsheet snapshot hook does not use `useSyncExternalStore`
 
-**File**: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-fill-handle.ts:61-71`
+**Files**: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-snapshot.ts`, `packages/spreadsheet-renderers/src/page-renderer.tsx`
 
-`elementFromPoint` forces synchronous layout/reflow. Calling it on every mousemove (60+ Hz) causes layout thrashing.
+**Diagnosis**
 
-**Fix**: Use `event.target` with data attributes, or compute grid coordinates from mouse position relative to the grid container.
+The spreadsheet interaction hook uses `useState` plus effect-driven subscription, while another package file already uses `useSyncExternalStore` for the same ownership model.
 
-### 4.8 MEDIUM — No rAF batching for column/row resize
+The original draft called this a guaranteed double-render path. The stronger conclusion needs measurement, but the hook mismatch itself is real.
 
-**File**: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-resize.ts:40-55`
+**Recommended action**
 
-Resize `handleMouseMove` fires React state updates at full mouse event rate.
+- Replace the custom state/effect subscription with `useSyncExternalStore`.
 
-**Fix**: Use `requestAnimationFrame` to coalesce mousemove events.
+### 4.6 MEDIUM - Drag selection updates React state for every traversed cell
 
-### 4.9 MEDIUM — `applyCopySheet` uses JSON.parse(JSON.stringify())
+**File**: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-selection.ts`
 
-**File**: `packages/spreadsheet-core/src/core/sheet-operations.ts:137`
+**Diagnosis**
 
-Extremely slow for large sheets. Loses `undefined` values and non-JSON data.
+During drag selection, `setDragEnd(...)` is called as the pointer enters each cell.
 
-**Fix**: Use structured clone or recursive spread.
+**Recommended action**
+
+- Stage drag state in refs and publish on `requestAnimationFrame`.
+- Keep pointer correctness first; do not over-throttle if it makes the selection box visibly lag.
+
+### 4.7 MEDIUM - Fill-handle hit testing uses `document.elementFromPoint()` on every mousemove
+
+**File**: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-fill-handle.ts`
+
+**Diagnosis**
+
+The code currently resolves the hovered cell via `elementFromPoint()` for each mousemove.
+
+The original draft overclaimed guaranteed layout thrash. The accurate code-level problem is repeated DOM hit testing at mousemove frequency.
+
+**Recommended action**
+
+- Prefer coordinate-to-cell math from the grid container when possible.
+- Otherwise, throttle the hit testing to one calculation per animation frame.
+
+### 4.8 MEDIUM - Row/column resize still publishes state at raw mousemove frequency
+
+**File**: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-resize.ts`
+
+**Diagnosis**
+
+Resize handlers update state directly from mousemove.
+
+**Recommended action**
+
+- Coalesce resize updates with `requestAnimationFrame`.
+
+### 4.9 MEDIUM - Sheet copy still uses JSON serialization cloning
+
+**File**: `packages/spreadsheet-core/src/core/sheet-operations.ts`
+
+**Diagnosis**
+
+`applyCopySheet()` uses `JSON.parse(JSON.stringify(...))`, which is slow for large structures and narrows the data model to JSON-safe values.
+
+**Recommended action**
+
+- Replace it with `structuredClone` or a schema-aware copy helper.
 
 ---
 
 ## 5. Runtime Store & Scope
 
-### 5.1 CRITICAL — `status-owner.ts` `readVisible` creates new object every call, no cache
+### 5.1 HIGH - Readonly status binding allocates a fresh visible overlay on every `readVisible()` call
 
-**File**: `packages/flux-runtime/src/status-owner.ts:39-43`
+**File**: `packages/flux-runtime/src/status-owner.ts`
 
-`createReadonlyScopeBinding` creates a new `Object.create(scope.readVisible())` object and sets a property on it **every single call** with no caching. Called from every form scope on every scope change notification.
+**Diagnosis**
 
-**Fix**: Add the same caching pattern used in `scope.ts` `createVisibleViewHelpers`.
+`createReadonlyScopeBinding().readVisible()` creates `Object.create(scope.readVisible())` and writes the binding key each call.
 
-### 5.2 CRITICAL — `readVisible` cascade through scope chain on parent change
+The original draft overstated the fan-out. The confirmed issue is the lack of visible-view caching on this overlay path.
 
-**File**: `packages/flux-runtime/src/scope.ts:82-109`
+**Recommended action**
 
-A change at the root scope invalidates every child scope's `readVisible` cache. With 100 field scopes, 100 new objects are created.
+- Reuse the visible-view caching pattern already present in `scope.ts` where feasible.
 
-**Fix**: Use a version counter instead of reference comparison. Only re-create when version changes.
+### 5.2 CRITICAL - Parent visible-scope invalidation cascades through child scope caches
 
-### 5.3 HIGH — `batchUpdate` fires per-path notifications causing cascade
+**File**: `packages/flux-runtime/src/scope.ts`
 
-**File**: `packages/flux-runtime/src/form-store.ts:186-204`
+**Diagnosis**
 
-A single `batchUpdate` with 20 changed paths fires up to 20 listener batches. Combined with the Zustand subscription, listeners can fire twice.
+Child `readVisible()` cache reuse depends on parent visible reference stability. Parent changes therefore force child visible-view reconstruction through the chain.
 
-**Fix**: Batch `notifyPath` calls and fire once. Consider a single microtask to coalesce.
+**Recommended action**
 
-### 5.4 HIGH — `revalidateDependents` calls `batchUpdate` per dependent
+- Move from reference-only invalidation to explicit versioning or finer invalidation metadata.
 
-**File**: `packages/flux-runtime/src/form-runtime-owner.ts:54-96`
+### 5.3 HIGH - `batchUpdate()` still notifies per changed path
 
-For N dependents, this creates N `batchUpdate` calls, each firing all subscribers.
+**File**: `packages/flux-runtime/src/form-store.ts`
 
-**Fix**: Batch all dependent field state updates into a single `batchUpdate`.
+**Diagnosis**
 
-### 5.5 HIGH — `validateForm` validates all fields sequentially
+`batchUpdate()` diffs field-state changes, then calls `notifyPath()` once per changed path.
 
-**File**: `packages/flux-runtime/src/form-runtime-owner.ts:223-353`
+The original draft's "listeners can fire twice" claim was not proven here; the accurate concern is per-path notification fan-out inside one batch.
 
-For 50 fields, this does 50 sequential async operations, each potentially triggering store updates and subscriber notifications. Can block UI for hundreds of milliseconds.
+**Recommended action**
 
-**Fix**: Group sync validations into a single batch. Run sync rules in parallel without interleaving awaits.
+- Coalesce notifications at the batch boundary.
+- Preserve per-path semantics for path subscribers, but avoid repeated outer broadcast work.
 
-### 5.6 HIGH — `refreshDataSource` without scope does O(n) scan of all sources
+### 5.4 HIGH - Dependent revalidation still loops through `batchUpdate()` per dependent field
 
-**File**: `packages/flux-runtime/src/source-registry.ts:366-394`
+**File**: `packages/flux-runtime/src/form-runtime-owner.ts`
 
-When called without a scope, iterates ALL buckets and ALL entries to find a matching ID.
+**Diagnosis**
 
-**Fix**: Maintain a global index (Map) from source ID to entry.
+`revalidateDependents()` performs a batch update per dependent path instead of one combined dependent-state publication.
 
-### 5.7 HIGH — Parent scope change cascades to all child scope subscribers
+**Recommended action**
 
-**File**: `packages/flux-runtime/src/scope.ts:162-177`
+- Collect all dependent changes and publish them in a single batch.
 
-A root scope update cascades through every nested scope's subscribers. With 10 child scopes × (5 data sources + 3 reactions) = 80 subscription callbacks.
+### 5.5 HIGH - Form validation still walks fields sequentially
 
-**Fix**: Top-down propagation that only notifies scopes whose dependencies match the change.
+**File**: `packages/flux-runtime/src/form-runtime-owner.ts`
 
-### 5.8 MEDIUM — `computeScopeState` iterates all field states every call
+**Diagnosis**
 
-**File**: `packages/flux-runtime/src/form-runtime-owner.ts:31-52`
+`validateForm()` awaits field validation sequentially across traversal-order and child-owner paths.
 
-`canSubmit` getter scans all `fieldStates` on every call. Called from React render paths.
+This is especially relevant for forms with many fields and mixed sync/async rules.
 
-**Fix**: Cache flags and update incrementally when `fieldStates` change.
+**Recommended action**
 
-### 5.9 MEDIUM — `filterScopeChangeByIgnoredRoots` allocates Set per call
+- Keep the externally visible validation semantics stable.
+- Batch sync phases together and only serialize where rule ordering truly matters.
 
-**File**: `packages/flux-runtime/src/scope-change.ts:36-71`
+### 5.6 HIGH - `refreshDataSource()` falls back to an O(n) registry scan when no scope is provided
 
-Creates a new `Set` on every call from every scope change handler.
+**File**: `packages/flux-runtime/src/source-registry.ts`
 
-**Fix**: Cache normalized ignored roots Set on the source entry.
+**Diagnosis**
 
-### 5.10 MEDIUM — Child scope created per data source request, never disposed
+Refresh-by-id without a scope iterates registry buckets and entries to locate a matching source.
 
-**Files**: `packages/flux-runtime/src/data-source-runtime.ts:107-113`, `packages/flux-runtime/src/source-registry.ts:35-52`
+**Recommended action**
 
-Both have identical `applyResultMapping` functions that call `runtime.createChildScope(...)` on every request/response cycle. Short-lived scopes add GC pressure.
+- Maintain a direct id-to-entry index alongside the scoped buckets.
 
-**Fix**: Evaluate result mapping in-place without creating a full scope.
+### 5.7 HIGH - Parent scope changes still fan out to child-scope subscribers broadly
+
+**File**: `packages/flux-runtime/src/scope.ts`
+
+**Diagnosis**
+
+Scope change propagation remains broad across nested scopes.
+
+**Recommended action**
+
+- Carry changed-root metadata deeper into scope propagation so unrelated child subscribers can be skipped earlier.
+
+### 5.8 MEDIUM - `computeScopeState()` scans all field states each time it runs
+
+**Files**: `packages/flux-runtime/src/form-runtime-owner.ts`, `packages/flux-runtime/src/form-runtime.ts`
+
+**Diagnosis**
+
+The can-submit and scope-state calculation paths still derive status by scanning the full `fieldStates` map.
+
+**Recommended action**
+
+- Maintain incremental aggregate flags for common summaries such as `hasErrors`, `hasValidating`, and `canSubmit`.
+
+### 5.9 MEDIUM - Ignored-root filtering allocates a `Set` per call
+
+**Files**: `packages/flux-runtime/src/scope-change.ts`, `packages/flux-runtime/src/source-registry.ts`
+
+**Diagnosis**
+
+`filterScopeChangeByIgnoredRoots(...)` normalizes ignored roots into a fresh `Set` instead of reusing pre-normalized metadata.
+
+**Recommended action**
+
+- Cache normalized ignored-root sets on the subscriber/entry that owns them.
+
+### 5.10 MEDIUM - Result mapping still creates short-lived child scopes for each evaluation
+
+**Files**: `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/source-registry.ts`
+
+**Diagnosis**
+
+Both result-mapping paths create a child scope for mapping evaluation and leave it to GC immediately afterward.
+
+**Recommended action**
+
+- Evaluate whether result mapping can use a lighter eval carrier than a full child scope.
+- Keep the binding contract identical if you optimize this path.
 
 ---
 
 ## 6. Renderer Components
 
-### 6.1 HIGH — No `React.memo` on any renderer component
+### 6.1 HIGH - Audited renderer packages do not currently use `React.memo`
 
-**Files**: ALL renderer components across `flux-renderers-basic`, `flux-renderers-form`, `flux-renderers-data`
+**Files**: representative renderers across `packages/flux-renderers-basic`, `packages/flux-renderers-form`, `packages/flux-renderers-data`
 
-Every renderer is a plain function component. In a page with dozens of renderers, a single scope change triggers hundreds of unnecessary re-renders.
+**Diagnosis**
 
-**Fix**: Wrap leaf renderers (Text, Badge, Icon, Button, input fields) with `React.memo`. Provide custom comparators for complex props.
+The renderer packages audited here export plain function components rather than `React.memo(...)` wrappers.
 
-### 6.2 HIGH — Form store subscription fires on every field change for status publication
+This is a real structural observation, but the original draft overstated the conclusion. In this repo, memoization decisions must account for the React Compiler baseline and for the fact that many renderer props are intentionally scope-driven.
 
-**File**: `packages/flux-renderers-form/src/renderers/form.tsx:296`
+**Recommended action**
 
-`publishStatus` iterates all field states on every field change and updates the parent scope, cascading re-renders through the entire tree.
+- Profile leaf renderers first.
+- Add memoization selectively where prop stability already exists or where a custom comparator is cheap and obvious.
 
-**Fix**: Use selector-based subscription that only fires when relevant fields change. Debounce status publication.
+### 6.2 HIGH - Form status publication still scans all field states on every relevant store update
 
-### 6.3 HIGH — Table row scope cache rebuilds fully on any data change
+**File**: `packages/flux-renderers-form/src/renderers/form.tsx`
 
-**File**: `packages/flux-renderers-data/src/table-renderer/use-table-row-scope-cache.ts:50-84`
+**Diagnosis**
 
-Every mutation creates a new `Map`, triggers `useSyncExternalStore` snapshot change, and causes all row consumers to re-render. Changing one cell triggers a full Map copy for 50 rows.
+`publishStatus` computes aggregate form status from all field states and republishes to the parent scope.
 
-**Fix**: Only mutate entries that actually changed. Skip mutation if visible row keys haven't changed.
+**Recommended action**
 
-### 6.4 HIGH — Table/Loop render all items without virtualization
+- Narrow the subscription inputs if possible.
+- Reuse incremental aggregate state from the form runtime once it exists.
+
+### 6.3 HIGH - Table row-scope cache store clones the full `Map` on each mutation
+
+**File**: `packages/flux-renderers-data/src/table-renderer/use-table-row-scope-cache.ts`
+
+**Diagnosis**
+
+The row-scope cache does reuse row scopes and sync them in place, but the outer cache store still clones the whole `Map` whenever entries change.
+
+The original draft overstated this as a total cache rebuild. The more accurate issue is full-container cloning around partial row changes.
+
+**Recommended action**
+
+- Mutate only the entries that changed, then publish a more selective snapshot strategy if the store API allows it.
+- Skip cache publication when visible row identities and row payloads are unchanged.
+
+### 6.4 HIGH - Table, loop, and tree renderers still render all visible items without virtualization
 
 **Files**:
-- `packages/flux-renderers-data/src/table-renderer.tsx:220-346`
-- `packages/flux-renderers-basic/src/loop.tsx:57-93`
-- `packages/flux-renderers-data/src/tree-renderer.tsx:112-130`
+- `packages/flux-renderers-data/src/table-renderer.tsx`
+- `packages/flux-renderers-basic/src/loop.tsx`
+- `packages/flux-renderers-basic/src/structural-loop.tsx`
+- `packages/flux-renderers-data/src/tree-renderer.tsx`
 
-All visible items rendered as full DOM nodes. Tables with `pageSize: 50` and 10 columns produce 500+ cells with region renderers.
+**Diagnosis**
 
-**Fix**: Integrate `@tanstack/react-virtual` for table body. Offer virtualized mode for LoopRenderer above a threshold.
+Tables paginate but do not virtualize rendered rows. Loop and tree renderers likewise render all currently materialized items.
 
-### 6.5 MEDIUM — Inline closures in JSX event handlers defeat memoization
+**Recommended action**
 
-**Files**: Multiple (`button.tsx:22`, `dialog.tsx:25`, `input.tsx:34`, `table-renderer.tsx:243-249`)
+- Add virtualization to the table body first, because it has the clearest scale profile.
+- For `loop` and `tree`, make virtualization opt-in and aligned with existing row/item scope semantics.
 
-Inline arrow functions create new references on every render, preventing any `React.memo` from working.
+### 6.5 MEDIUM - Inline event handlers still reduce prop stability in hot renderer paths
 
-**Fix**: Use `useCallback` for handlers. For table rows, use event delegation with data attributes.
+**Files**: representative handlers in `button.tsx`, `dialog.tsx`, `input.tsx`, `table-renderer.tsx`
 
-### 6.6 MEDIUM — Input handlers fire on every keystroke without debounce
+**Diagnosis**
 
-**Files**: `flux-renderers-form/src/renderers/input.tsx:34`, `array-editor.tsx:59`
+Several renderers still create inline closures in JSX.
 
-Each keystroke triggers `currentForm.setValue()` → Zustand store update → form scope re-render → possible async validation.
+The original draft claimed this "defeats memoization" universally. That is too strong for this repo, especially with the React Compiler baseline. The accurate issue is narrower: inline handler identity can still make hot child props less stable and complicate selective memoization.
 
-**Fix**: Debounce form store updates for text inputs (150ms). Keep local React state for the input value, sync to store on blur or after debounce.
+**Recommended action**
 
-### 6.7 MEDIUM — ECharts resize handler unthrottled
+- Fix this only in measured hot paths.
+- Prefer event delegation or stable callbacks where the change is local and readability does not suffer.
 
-**File**: `packages/flux-renderers-data/src/chart-renderer.tsx:91-99`
+### 6.6 MEDIUM - Text inputs still write through to form state on each keystroke
 
-`chart.resize()` fires at 60fps during window drag-resize, causing canvas re-render each frame.
+**Files**: `packages/flux-renderers-form/src/renderers/input.tsx`, `packages/flux-renderers-form/src/renderers/array-editor.tsx`
 
-**Fix**: Wrap in `requestAnimationFrame` or debounce by 100-200ms.
+**Diagnosis**
 
-### 6.8 MEDIUM — `useBoundFieldValue` creates two subscriptions per field
+Keystrokes update form state immediately.
 
-**File**: `packages/flux-renderers-form/src/field-utils.tsx:73-78`
+The original draft ignored important existing mitigations: validation behavior already gates when validation runs, and rule-level debounce already exists in the validation model. So the real concern is store churn in very large forms, not a blanket "all typing should be debounced" rule.
 
-Both `useCurrentFormState` and `useScopeSelector` are called on every render, even though only one is used.
+**Recommended action**
 
-**Fix**: Use conditional hooks (separate components) or a single unified subscription.
+- Do not debounce all inputs by default.
+- Introduce local buffering only for measured hot fields or large inline-edit surfaces where immediate global state publication is too expensive.
+
+### 6.7 MEDIUM - Chart resize is wired directly to raw resize events
+
+**File**: `packages/flux-renderers-data/src/chart-renderer.tsx`
+
+**Diagnosis**
+
+The chart renderer calls `chart.resize()` directly from resize-driven updates.
+
+**Recommended action**
+
+- If resize profiling shows pressure, gate calls through `requestAnimationFrame` or debounce.
+
+### 6.8 MEDIUM - `useBoundFieldValue()` always installs two subscriptions
+
+**File**: `packages/flux-renderers-form/src/field-utils.tsx`
+
+**Diagnosis**
+
+The hook subscribes to both form state and scope state even though only one branch is consumed at a time.
+
+**Recommended action**
+
+- Split the hook or component path so only one subscription is active for each bound field mode.
 
 ---
 
 ## 7. Flow Designer
 
-### 7.1 MEDIUM — ELK layout runs on main thread
+### 7.1 MEDIUM - ELK layout still runs through the bundled main-thread build
 
-**File**: `packages/flow-designer-core/src/elk-layout.ts:1`
+**File**: `packages/flow-designer-core/src/elk-layout.ts`
 
-`elkjs/lib/elk.bundled.js` runs synchronously. For 100+ nodes, layout takes 100ms-1000ms, blocking the UI.
+**Diagnosis**
 
-**Fix**: Use `elkjs/lib/elk-api.js` with a Web Worker.
+The code imports `elkjs/lib/elk.bundled.js`. The API is Promise-based, but the layout work still happens in the same main JS environment unless explicitly moved to a worker.
 
-### 7.2 MEDIUM — Full tree re-layout per mutation
+**Recommended action**
 
-**File**: `packages/flow-designer-renderers/src/designer-command-adapter.ts:235-242`
+- Move large-layout execution to a worker-backed ELK integration if layout latency becomes user-visible.
 
-Every tree-mode mutation (insert node, insert branch) re-layouts all nodes and edges.
+### 7.2 MEDIUM - Tree-mode structural inserts still trigger full relayout
 
-**Fix**: Compute only the delta (shift downstream nodes) for simple insertions.
+**File**: `packages/flow-designer-renderers/src/designer-command-adapter.ts`
 
-### 7.3 MEDIUM — O(n²) node sync via `Array.find` in map
+**Diagnosis**
 
-**File**: `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx:184`
+The original draft said "every mutation" triggers full relayout. Current code is narrower: the tree-mode structural insert commands rerun layout for the whole document after each mutation.
 
-`snapshotNodes.find(n => n.id === localNode.id)` inside a `.map()` over local nodes. 200 nodes = 40,000 comparisons.
+**Recommended action**
 
-**Fix**: Build a Map from snapshotNodes first, then use O(1) lookup.
+- Start with delta-friendly relayout for the insert commands that dominate authoring usage.
 
-### 7.4 MEDIUM — `fitView` on every render resets viewport
+### 7.3 MEDIUM - XYFlow node sync still does `find()` inside `map()`
 
-**File**: `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx:322`
+**File**: `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
 
-`fitView` prop triggers fit on every render, resetting the user's zoom/pan position.
+**Diagnosis**
 
-**Fix**: Only pass `fitView` on initial mount (use a ref or `defaultViewport`).
+The merge path uses `snapshotNodes.find(...)` while mapping current nodes, which is avoidable quadratic work.
 
-### 7.5 MEDIUM — Flow designer history: 50 full document clones
+**Recommended action**
 
-**File**: `packages/flow-designer-core/src/core/history.ts:45`
+- Build a `Map<string, Node>` for `snapshotNodes` once per effect run.
 
-Each history entry deep-clones all nodes and edges. 50 entries × 500 objects = 25,000 cloned objects.
+### 7.4 MEDIUM - History still stores cloned document entries with no structural sharing
 
-**Fix**: Use structural sharing for unchanged items between entries.
+**Files**: `packages/flow-designer-core/src/core.ts`, `packages/flow-designer-core/src/core/history.ts`, `packages/flow-designer-core/src/core/clone.ts`
 
-### 7.6 LOW — Viewport changes push history during pan
+**Diagnosis**
 
-**File**: `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx:244-253`
+History keeps up to 50 cloned document entries.
 
-`onMove` fires continuously during panning, each calling `dispatch({ type: 'setViewport' })` which pushes history. 60fps panning fills the 50-entry history in under a second.
+**Recommended action**
 
-**Fix**: Only call `setViewport` on `onMoveEnd`.
+- Keep the current model for correctness if needed, but document it as a memory tradeoff.
+- Evaluate structural sharing if designer document size grows materially.
+
+### 7.5 LOW - Viewport updates can still consume history quickly during pan
+
+**Files**: `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`, `packages/flow-designer-core/src/core.ts`
+
+**Diagnosis**
+
+Viewport changes are published from both `onMove` and `onMoveEnd`, and viewport updates enter history unless normalized as exact no-ops.
+
+The original draft's "history fills in under a second" claim was an unmeasured estimate. The real concern is simpler: continuous pan can generate more viewport-history churn than necessary.
+
+**Recommended action**
+
+- Consider persisting viewport only on `onMoveEnd`, or store viewport outside undo history if that matches the intended UX.
 
 ---
 
 ## 8. API & Data Source
 
-### 8.1 HIGH — Polling aborts in-flight requests when interval < latency
+### 8.1 MEDIUM - Fixed-interval polling skips overlapping ticks and can drift under slow responses
 
-**File**: `packages/flux-runtime/src/data-source-runtime.ts:245-252, 371-375`
+**File**: `packages/flux-runtime/src/data-source-runtime.ts`
 
-Fixed-interval polling aborts previous requests if the response time exceeds the interval. For slow APIs with short intervals, the user never receives a complete response.
+**Diagnosis**
 
-**Fix**: Use "poll after response completes" pattern instead of fixed interval.
+The original draft claimed polling aborts the in-flight request whenever interval < latency. That is not what current code does. Current polling uses a loading guard to skip overlapping ticks, so the in-flight request survives, but the schedule can drift and miss intended cadence under slow responses.
 
-### 8.2 MEDIUM — `stableSerialize` recursively serializes request data on every request
+**Recommended action**
 
-**File**: `packages/flux-runtime/src/request-runtime.ts:43-69`
+- If exact cadence matters, switch to "schedule next poll after response settles".
+- Keep the current skip-overlap behavior if avoiding concurrency is more important than wall-clock precision.
 
-For complex nested payloads, this is O(n × depth). Called on every API request for dedup key computation.
+### 8.2 MEDIUM - Request dedup key generation still recursively serializes request inputs
 
-**Fix**: Cache the serialized key per request object (WeakMap) or use a faster hash function.
+**File**: `packages/flux-runtime/src/request-runtime.ts`
 
-### 8.3 MEDIUM — Duplicate `stableSerialize`/`stableStringify` implementations
+**Diagnosis**
 
-**Files**: `packages/flux-runtime/src/request-runtime.ts:43-69`, `packages/flux-runtime/src/api-cache.ts:26-38`
+`stableSerialize(...)` recursively serializes request data/headers for dedup-key generation. This is a bounded, localized cost, not a cost paid by every request subsystem equally.
 
-Two nearly identical recursive serialization functions.
+**Recommended action**
 
-**Fix**: Extract into a shared utility.
+- Cache serialization results where object identity is stable.
+- Keep the optimization scoped to the dedup key path.
+
+### 8.3 MEDIUM - Recursive request serialization logic is duplicated
+
+**Files**: `packages/flux-runtime/src/request-runtime.ts`, `packages/flux-runtime/src/api-cache.ts`
+
+**Diagnosis**
+
+`stableSerialize` and `stableStringify` implement near-identical recursive serialization logic in two places.
+
+**Recommended action**
+
+- Extract one shared utility.
+- Keep both callers aligned on normalization rules.
 
 ---
 
 ## 9. Memory & Growth
 
-### 9.1 MEDIUM — Adaptor expression cache grows unbounded
+### 9.1 MEDIUM - Adaptor expression cache remains unbounded
 
-**File**: `packages/flux-runtime/src/request-runtime-adaptor.ts:10-39`
+**File**: `packages/flux-runtime/src/request-runtime-adaptor.ts`
 
-Inner `Map<string, CompiledExpression>` grows with every unique adaptor source string. No size limit.
+**Diagnosis**
 
-**Fix**: Add LRU eviction or size limit.
+Compiled adaptor expressions are cached in a `Map<string, CompiledExpression>` with no size cap.
 
-### 9.2 MEDIUM — `moduleLoads` Map retains resolved promises indefinitely
+**Recommended action**
 
-**File**: `packages/flux-runtime/src/imports.ts:84`
+- Add a simple size bound or LRU if adaptor source cardinality is high in long-lived sessions.
 
-Successful module loads are never removed from the cache Map. Grows with dynamic imports over long sessions.
+### 9.2 MEDIUM - Successful dynamic import loads stay cached for the lifetime of `ImportManager`
 
-**Fix**: Clear entries once all consumers are set up, or use WeakRef.
+**File**: `packages/flux-runtime/src/imports.ts`
 
-### 9.3 LOW — API cache expired entries linger until accessed
+**Diagnosis**
 
-**File**: `packages/flux-runtime/src/api-cache.ts:60-63`
+Successful module-load promises stay in `moduleLoads` until the import manager is disposed. This is intentional caching, not a leak in the narrow sense, but it is currently unbounded.
 
-No background cleanup. Stale expired entries between head and tail of LRU persist indefinitely.
+**Recommended action**
 
-**Fix**: Add periodic cleanup sweep.
+- Keep the cache if repeated namespace loads are common.
+- Add a size/retention policy if the host can load many distinct modules in one long session.
 
-### 9.4 LOW — Reaction cascade: one reaction triggers up to 10 cascading reactions
+### 9.3 LOW - Expired API cache entries are cleaned lazily, but growth is bounded by the LRU cap
 
-**File**: `packages/flux-runtime/src/reaction-runtime.ts:108-187`
+**File**: `packages/flux-runtime/src/api-cache.ts`
 
-A single user action can trigger 10 reaction evaluations, each dispatching actions and updating scope.
+**Diagnosis**
 
-**Fix**: Add debounce/coalesce for reaction cascades within the same tick.
+Expired entries are removed on access/eviction rather than via background sweeping. The original draft overstated the risk by ignoring the existing 200-entry LRU bound.
+
+**Recommended action**
+
+- Leave this alone unless profiling shows stale entries materially affecting memory or lookup performance.
+
+### 9.4 LOW - Reaction cascades are already coalesced and capped; remaining risk is multi-turn churn
+
+**Files**: `packages/flux-runtime/src/reaction-runtime.ts`, related architecture docs
+
+**Diagnosis**
+
+The previous draft was outdated here. Current reactions already coalesce same-tick triggers and enforce `MAX_REACTION_FIRE_COUNT`. The residual concern is not unbounded same-tick explosion, but repeated multi-turn work in complex reaction graphs.
+
+**Recommended action**
+
+- Treat this as an observability concern, not an immediate algorithmic defect.
+- Add targeted tracing or counters if reaction-heavy screens still feel noisy in practice.
 
 ---
 
 ## 10. CSS & Layout
 
-### 10.1 LOW — Tree indentation via inline styles per node
+### 10.1 LOW - Tree indentation is still expressed as per-node inline style
 
-**Files**: `flux-renderers-data/src/tree-renderer.tsx:75`, `flux-renderers-form/src/renderers/tree-controls.tsx:93`
+**Files**: `packages/flux-renderers-data/src/tree-renderer.tsx`, `packages/flux-renderers-form/src/renderers/tree-controls.tsx`
 
-`style={{ paddingInlineStart: `${depth * 16}px` }}` per node. Many unique style entries.
+**Diagnosis**
 
-**Fix**: Use CSS custom properties with a single class.
+Tree indentation uses inline `paddingInlineStart` based on depth.
 
-### 10.2 LOW — `warnOnDuplicateRowKeys` runs in production
+**Recommended action**
 
-**File**: `packages/flux-renderers-data/src/table-renderer/table-data.ts:50`
+- If large trees become style-heavy, switch to a CSS variable or depth class strategy.
 
-Iterates all rows to detect duplicate keys even when data hasn't structurally changed.
+### 10.2 LOW - Duplicate row-key diagnostics still run outside dev-only guards
 
-**Fix**: Only run in dev mode: `if (import.meta.env.DEV) warnOnDuplicateRowKeys(data);`.
+**File**: `packages/flux-renderers-data/src/table-renderer/table-data.ts`
 
-### 10.3 LOW — Canvas CSS loaded globally
+**Diagnosis**
 
-**File**: `apps/playground/src/styles.css:5`
+`warnOnDuplicateRowKeys(...)` is not currently guarded to development-only execution, even though the table row architecture doc positions duplicate-key warnings as development diagnostics.
 
-Spreadsheet canvas styles loaded even when no spreadsheet is displayed.
+**Recommended action**
 
-**Fix**: Load only when the spreadsheet/report page is rendered.
+- Gate the warning behind `import.meta.env.DEV` or equivalent debug configuration.
+
+### 10.3 NOTE - Spreadsheet canvas CSS is globally imported by current playground design
+
+**Files**: `apps/playground/src/styles.css`, `docs/architecture/report-designer/spreadsheet-canvas-css.md`
+
+**Diagnosis**
+
+The earlier draft treated this as a defect. Current docs explicitly describe global spreadsheet canvas CSS in the playground as the active baseline.
+
+**Recommended action**
+
+- Do not treat this as a current bug.
+- Revisit page-scoped CSS loading only if CSS payload becomes a measured problem.
+
+---
+
+## 11. Removed Or Reframed Findings
+
+The following original claims were removed or materially reframed during re-audit:
+
+- **Removed**: "`next-themes` is unused in `@nop-chaos/ui`". Current code uses it in `packages/ui/src/components/ui/sonner.tsx`.
+- **Reframed**: route and barrel-export bundle findings now describe **bundle risk** instead of asserting specific savings without current build evidence.
+- **Reframed**: several React findings now distinguish between a confirmed code smell and an unproven rerender impact.
+- **Reframed**: the polling finding now reflects actual behavior: overlapping ticks are skipped, not auto-aborted.
+- **Reframed**: the reaction-cascade finding now reflects current coalescing and fire-count safeguards.
+- **Reframed**: global spreadsheet canvas CSS is now treated as a documented baseline, not an active defect.
 
 ---
 
 ## Priority Matrix
 
-### Immediate (CRITICAL — fix first)
+### Immediate
 
-| # | Issue | Expected Impact |
-|---|-------|----------------|
-| 1.1 | Lazy load all pages | **60-70% reduction in initial bundle** |
-| 2.1 | Fix redundant `resolveNodeProps` | **Eliminate cascading re-renders** |
-| 3.1 | Cache registry snapshot | **Eliminate 300+ allocations per render cycle** |
-| 4.1 | Virtualize spreadsheet grid | **Enable scalability beyond ~50 cells** |
-| 5.1 | Cache `status-owner` `readVisible` | **Eliminate per-form-scope allocation** |
+| # | Issue | Why first |
+|---|-------|-----------|
+| 4.1 | Virtualize spreadsheet grid | Dominant scalability ceiling in a visible product surface |
+| 2.1 | Remove duplicate `resolveNodeProps()` work | Core renderer hot path with confirmed redundant work |
+| 3.1 | Cache formula registry snapshot | Repeated allocation on expression-heavy paths |
+| 1.1 | Lazy-load heavyweight playground routes | Clean architectural win with likely bundle payoff |
+| 4.2 | Batch spreadsheet cell-map updates | Clear algorithmic improvement for range operations |
 
-### Short-term (HIGH — fix within sprint)
+### Short-term
 
-| # | Issue | Expected Impact |
-|---|-------|----------------|
-| 1.2 | Move recharts out of ui barrel | ~350 KB savings for non-chart pages |
-| 1.3 | Lazy-load echarts | ~800 KB savings for non-chart pages |
-| 2.2 | Stabilize subscribe/getSnapshot refs | Reduce subscription churn |
-| 4.2 | Batch spreadsheet cell mutations | 10-100× faster range operations |
-| 5.3 | Batch `batchUpdate` notifications | Reduce cascade depth |
-| 5.5 | Parallelize form validation | Faster form submission |
-| 6.1 | Add React.memo to leaf renderers | Fewer re-renders per scope change |
-| 6.4 | Virtualize table/loop | Enable large datasets |
+| # | Issue | Why next |
+|---|-------|----------|
+| 2.3 | Decouple lifecycle actions from `helpers` identity | Can affect correctness, not just speed |
+| 4.3 | Batch replace-all document updates | Large-operation cost multiplier |
+| 5.2 | Reduce visible-scope cascade invalidation | Broad runtime fan-out source |
+| 5.3 | Coalesce form-store batch notifications | Common form hot path |
+| 6.4 | Add virtualization to table body | Large dataset rendering ceiling |
+| 7.3 | Replace node-sync `find()` loop with indexed lookup | Simple, low-risk quadratic-path fix |
 
-### Medium-term (MEDIUM — plan for next iteration)
+### Measure Before Changing
 
-| # | Issue | Expected Impact |
-|---|-------|----------------|
-| 3.2 | Eliminate context spread in evaluateLeaf | Reduced GC pressure |
-| 3.3 | Pool dependency collectors | Reduced GC pressure |
-| 4.5 | Fix useSnapshot hook | Eliminate double renders |
-| 5.7 | Optimize scope change propagation | Reduce fan-out |
-| 6.6 | Debounce input handlers | Smoother typing experience |
-| 7.1 | Move ELK to Web Worker | Non-blocking layout |
-| 8.1 | Fix polling abort pattern | Reliable polling |
-
-### Long-term (LOW — nice to have)
-
-| # | Issue |
-|---|-------|
-| 1.5 | Add `sideEffects: false` to all packages |
-| 3.5 | Hoist regex in evaluator |
-| 9.1 | Bound adaptor expression cache |
-| 10.1 | CSS custom properties for tree indentation |
+| # | Issue | Why measure first |
+|---|-------|-------------------|
+| 2.5 | Memoizing `RenderNodes` | Outcome depends on real parent/input stability |
+| 3.8 | Moving `try/catch` out of exec path | Engine-level benefit is not guaranteed |
+| 6.1 | Adding `React.memo` broadly to renderers | React Compiler and scope-driven props may already cover some cases |
+| 6.5 | Replacing inline handlers broadly | Benefit is localized and readability tradeoffs are real |
+| 6.7 | Debouncing chart resize | Should be driven by measured resize pressure |
+| 10.3 | Page-scoped spreadsheet CSS loading | Not currently a verified problem |

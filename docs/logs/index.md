@@ -35,6 +35,7 @@ Each daily log captures short dated notes about:
 - **Keep entries short** — prefer bullet points, link to main docs or code paths
 - **Not source of truth** — this is lightweight context, not normative architecture
 - **Link to real docs** — when referencing a design decision, link to the architecture doc or code path
+- **Treat log files as append-only history** — file length alone is not a defect; do not flag daily logs just because they grow beyond the active-doc size guideline
 
 ### Entry Format
 
@@ -64,8 +65,12 @@ When adding a new log entry for today:
 
 - [04-15](2026/04-15.md) — plan 85 closure audit, plan 09 deferral re-audit, and owner-doc conflict code-baseline confirmation
 - [04-14](2026/04-14.md) — workspace verification recovery: runtime action evaluation fix, SchemaRenderer/test alignment, condition-builder test support cleanup, and chart test isolation
+- [04-13](2026/04-13.md) — styling-contract convergence, architecture implementation slices, and debugger/report/field-frame follow-ups
 - [04-12](2026/04-12.md) — Plan 73 closure: architecture hierarchy index rewrite, full top-level architecture status matrix, platform-extension doc positioning, and audit-backed owner decisions
 - [04-11](2026/04-11.md) — Plan 67 (hidden-field policy) full implementation: HiddenFieldPolicy contract, resolveHiddenFieldPolicy, notifyFieldHidden, validatePath skip, clearValueWhenHidden, useHiddenFieldPolicy hook, 21 new tests; form-validation.md updated; owner-boundary architecture reframing
+- [04-10](2026/04-10.md) — form validation owner/docs updates and core runtime orchestration follow-ups
+- [04-09](2026/04-09.md) — field-frame and CSS diagnostics follow-up work
+- [04-08](2026/04-08.md) — field-frame/code-editor/report-designer/spreadsheet alignment and validation doc follow-ups
 - [04-07](2026/04-07.md) — field-level source-enabled prop resolution through renderer metadata and shared React node handling
 - [04-06](2026/04-06.md) — frontend programming model closure, supporting-doc cleanup, and next runtime-alignment targets
 - [04-05](2026/04-05.md) — Flux core runtime architecture convergence planning
