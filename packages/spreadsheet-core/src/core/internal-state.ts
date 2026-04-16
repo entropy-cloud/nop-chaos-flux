@@ -19,6 +19,7 @@ export interface SpreadsheetInternalState {
   redoStack: SpreadsheetDocument[];
   transactionDoc: SpreadsheetDocument | null;
   clipboard: ClipboardData | null;
+  maxUndoDepth: number;
 }
 
 export function buildSnapshot(state: SpreadsheetInternalState): SpreadsheetRuntimeSnapshot {
@@ -40,8 +41,8 @@ export function buildSnapshot(state: SpreadsheetInternalState): SpreadsheetRunti
   };
 }
 
-export function pushUndo(state: SpreadsheetInternalState): SpreadsheetInternalState {
-  const maxDepth = 100;
+export function pushUndo(state: SpreadsheetInternalState, maxUndoDepth?: number): SpreadsheetInternalState {
+  const maxDepth = maxUndoDepth ?? state.maxUndoDepth ?? 100;
   const undoStack = [...state.undoStack, state.document];
   if (undoStack.length > maxDepth) {
     undoStack.shift();

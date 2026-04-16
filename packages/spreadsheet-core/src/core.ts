@@ -31,7 +31,7 @@ export interface CreateSpreadsheetCoreOptions {
 export function createSpreadsheetCore(
   options: CreateSpreadsheetCoreOptions,
 ): SpreadsheetCore {
-  const { document, readonly = false } = options;
+  const { document, config, readonly = false } = options;
   const firstSheetId = document.workbook.sheets[0]?.id ?? '';
 
   const store = createStore<SpreadsheetInternalState>(() => ({
@@ -46,6 +46,7 @@ export function createSpreadsheetCore(
     redoStack: [],
     transactionDoc: null,
     clipboard: null,
+    maxUndoDepth: config?.maxUndoDepth ?? 100,
   }));
   let cachedState = store.getState();
   let cachedSnapshot = buildSnapshot(cachedState);

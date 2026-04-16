@@ -1,5 +1,11 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { cellAddress, type SpreadsheetRange, type SpreadsheetFrozenPane } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetHostSnapshot, SpreadsheetBridge } from './bridge.js';
+
+const DEFAULT_ROW_HEIGHT = 24;
+const DEFAULT_COL_WIDTH = 80;
+const ROW_HEADER_WIDTH = 40;
+const OVERSCAN = 5;
 
 export interface SpreadsheetGridProps {
   snapshot: SpreadsheetHostSnapshot;
@@ -31,6 +37,38 @@ export interface SpreadsheetGridProps {
   getCellMetadata?: (row: number, col: number) => unknown;
   onFieldDragOver?: (row: number, col: number) => void;
   onFieldDragLeave?: () => void;
+}
+
+function computeRowOffsets(rows: number, rowHeights: Record<number, number>): number[] {
+  const offsets = new Array<number>(rows + 1);
+  offsets[0] = 0;
+  for (let r = 0; r < rows; r++) {
+    offsets[r + 1] = offsets[r] + (rowHeights[r] ?? DEFAULT_ROW_HEIGHT);
+  }
+  return offsets;
+}
+
+function computeColOffsets(cols: number, colWidths: Record<number, number>): number[] {
+  const offsets = new Array<number>(cols + 1);
+  offsets[0] = 0;
+  for (let c = 0; c < cols; c++) {
+    offsets[c + 1] = offsets[c] + (colWidths[c] ?? DEFAULT_COL_WIDTH);
+  }
+  return offsets;
+}
+
+function findFirstVisible(offsets: number[], scrollPos: number): number {
+  let lo = 0;
+  let hi = offsets.length - 2;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (offsets[mid + 1] <= scrollPos) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
 }
 
 export function SpreadsheetGrid({
@@ -65,136 +103,206 @@ export function SpreadsheetGrid({
 }: SpreadsheetGridProps) {
   const frozen: SpreadsheetFrozenPane | undefined = snapshot.activeSheet?.frozen;
   const selectedRange = getSelectedRange();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(600);
+  const [viewportWidth, setViewportWidth] = useState(800);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setScrollTop(el.scrollTop);
+    setScrollLeft(el.scrollLeft);
+    if (el.clientHeight !== viewportHeight) setViewportHeight(el.clientHeight);
+    if (el.clientWidth !== viewportWidth) setViewportWidth(el.clientWidth);
+  }, [viewportHeight, viewportWidth]);
+
+  const rowOffsets = useMemo(() => computeRowOffsets(rows, rowHeights), [rows, rowHeights]);
+  const colOffsets = useMemo(() => computeColOffsets(cols, columnWidths), [cols, columnWidths]);
+
+  const totalHeight = rowOffsets[rows] ?? 0;
+  const totalWidth = colOffsets[cols] ?? 0;
+
+  const frozenRows = frozen?.row ?? 0;
+  const frozenCols = frozen?.col ?? 0;
+  const frozenRowHeight = frozenRows > 0 ? rowOffsets[frozenRows] : 0;
+  const frozenColWidth = frozenCols > 0 ? colOffsets[frozenCols] : 0;
+
+  const effectiveScrollTop = scrollTop;
+  const effectiveScrollLeft = scrollLeft;
+
+  const visStartRow = Math.max(frozenRows, findFirstVisible(rowOffsets, effectiveScrollTop + frozenRowHeight) - OVERSCAN);
+  const visEndRow = Math.min(rows - 1, findFirstVisible(rowOffsets, effectiveScrollTop + frozenRowHeight + viewportHeight) + OVERSCAN);
+  const visStartCol = Math.max(frozenCols, findFirstVisible(colOffsets, effectiveScrollLeft + frozenColWidth) - OVERSCAN);
+  const visEndCol = Math.min(cols - 1, findFirstVisible(colOffsets, effectiveScrollLeft + frozenColWidth + viewportWidth) + OVERSCAN);
+
+  const topSpacerHeight = frozenRows < visStartRow ? rowOffsets[visStartRow] - rowOffsets[frozenRows] : 0;
+  const bottomSpacerHeight = visEndRow < rows - 1 ? rowOffsets[rows] - rowOffsets[visEndRow + 1] : 0;
+  const leftSpacerWidth = frozenCols < visStartCol ? colOffsets[visStartCol] - colOffsets[frozenCols] : 0;
+  const rightSpacerWidth = visEndCol < cols - 1 ? colOffsets[cols] - colOffsets[visEndCol + 1] : 0;
+
+  const visibleColIndices: number[] = [];
+  for (let c = 0; c < frozenCols; c++) visibleColIndices.push(c);
+  for (let c = visStartCol; c <= visEndCol; c++) visibleColIndices.push(c);
+
+  const visibleRowIndices: number[] = [];
+  for (let r = 0; r < frozenRows; r++) visibleRowIndices.push(r);
+  for (let r = visStartRow; r <= visEndRow; r++) visibleRowIndices.push(r);
+
+  function renderCell(r: number, c: number) {
+    const addr = cellAddress(r, c);
+    const cell = snapshot.activeSheet?.cells?.[addr];
+    const isSelected = selectedCell?.row === r && selectedCell?.col === c;
+    const inRange = isInRange(r, c);
+    const hasComment = !!cell?.comment;
+    const hasBinding = getCellMetadata ? getCellMetadata(r, c) : undefined;
+    const isFrozenCell = frozen && (r < (frozen.row ?? 0) || c < (frozen.col ?? 0));
+    const mergeInfo = getMergeInfo(r, c);
+    const isEditing = editingCell?.row === r && editingCell?.col === c;
+    const isDropTarget = dropTargetCell?.row === r && dropTargetCell?.col === c && !!draggingField;
+
+    const isFillHandleCell = selectedRange &&
+      r === selectedRange.endRow &&
+      c === selectedRange.endCol &&
+      !isEditing;
+
+    if (mergeInfo.isMerged && !mergeInfo.isTopLeft) {
+      return null;
+    }
+
+    const style: React.CSSProperties = {
+      width: columnWidths[c] ?? DEFAULT_COL_WIDTH,
+      fontWeight: cell?.style?.fontWeight,
+      fontStyle: cell?.style?.fontStyle,
+      textDecoration: cell?.style?.textDecoration,
+      color: cell?.style?.fontColor,
+      backgroundColor: cell?.style?.backgroundColor,
+      textAlign: cell?.style?.textAlign,
+      verticalAlign: cell?.style?.verticalAlign,
+      borderStyle: cell?.style?.borderStyle === 'all' ? 'solid' : undefined,
+      borderColor: cell?.style?.borderColor,
+    };
+
+    return (
+      <td
+        key={c}
+        className="ss-cell"
+        style={style}
+        data-row={r}
+        data-col={c}
+        data-cell-active={isSelected || undefined}
+        data-cell-selected={isSelected || undefined}
+        data-range-highlight={inRange || undefined}
+        data-cell-bound={hasBinding || undefined}
+        data-cell-comment={hasComment || undefined}
+        data-cell-frozen={isFrozenCell || undefined}
+        data-cell-merged={mergeInfo.isMerged || undefined}
+        data-cell-editing={isEditing || undefined}
+        data-cell-drop-target={isDropTarget || undefined}
+        data-cell-fill-preview={isFillPreview(r, c) || undefined}
+        rowSpan={mergeInfo.rowSpan > 1 ? mergeInfo.rowSpan : undefined}
+        colSpan={mergeInfo.colSpan > 1 ? mergeInfo.colSpan : undefined}
+        onClick={() => onCellClick(r, c)}
+        onDoubleClick={() => onCellDoubleClick(r, c)}
+        onMouseDown={(e) => onCellMouseDown(r, c, e)}
+        onMouseEnter={() => onCellMouseEnter(r, c)}
+        onDragOver={(e) => { e.preventDefault(); onFieldDragOver?.(r, c); }}
+        onDragLeave={() => onFieldDragLeave?.()}
+      >
+        {isEditing ? (
+          <input
+            type="text"
+            className="ss-cell-edit-input"
+            value={editValue}
+            onChange={(e) => onEditValueChange(e.target.value)}
+            onBlur={onEditSave}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onEditSave();
+              } else if (e.key === 'Escape') {
+                onEditCancel();
+              }
+            }}
+            autoFocus
+          />
+        ) : (
+          <>
+            {cell?.value != null ? String(cell.value) : ''}
+            {isFillHandleCell && (
+              <div
+                className="ss-fill-handle"
+                onMouseDown={(e) => onFillHandleMouseDown(r, c, e)}
+              />
+            )}
+          </>
+        )}
+      </td>
+    );
+  }
 
   return (
-    <div className="spreadsheet-grid" data-fill-dragging={fillHandleState.isFilling || undefined}>
-      <table>
-        <thead>
-          <tr>
-            <th className="row-header header-corner" style={{ width: 40 }}></th>
-            {Array.from({ length: cols }, (_, c) => (
-              <th
-                key={c}
-                style={{ width: columnWidths[c] ?? 80 }}
-                className="col-header"
-              >
-                {cellAddress(0, c).replace(/[0-9]/g, '')}
-                <div
-                  className="col-resize-handle"
-                  onMouseDown={(e) => onColumnResizeStart(c, e)}
-                />
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: rows }, (_, r) => (
-            <tr
-              key={r}
-              style={{ height: rowHeights[r] ?? 24 }}
-              className={frozen && r < (frozen.row ?? 0) ? 'frozen-row' : ''}
-            >
-              <td className="row-header">
-                {r + 1}
-                <div
-                  className="row-resize-handle"
-                  onMouseDown={(e) => onRowResizeStart(r, e)}
-                />
-              </td>
-              {Array.from({ length: cols }, (_, c) => {
-                const addr = cellAddress(r, c);
-                const cell = snapshot.activeSheet?.cells?.[addr];
-                const isSelected = selectedCell?.row === r && selectedCell?.col === c;
-                const inRange = isInRange(r, c);
-                const hasComment = !!cell?.comment;
-                const hasBinding = getCellMetadata ? getCellMetadata(r, c) : undefined;
-                const isFrozen = frozen && (r < (frozen.row ?? 0) || c < (frozen.col ?? 0));
-                const mergeInfo = getMergeInfo(r, c);
-                const isEditing = editingCell?.row === r && editingCell?.col === c;
-                const isDropTarget = dropTargetCell?.row === r && dropTargetCell?.col === c && !!draggingField;
-
-                const isFillHandleCell = selectedRange &&
-                  r === selectedRange.endRow &&
-                  c === selectedRange.endCol &&
-                  !isEditing;
-
-                if (mergeInfo.isMerged && !mergeInfo.isTopLeft) {
-                  return null;
-                }
-
-                const style: React.CSSProperties = {
-                  width: columnWidths[c] ?? 80,
-                  fontWeight: cell?.style?.fontWeight,
-                  fontStyle: cell?.style?.fontStyle,
-                  textDecoration: cell?.style?.textDecoration,
-                  color: cell?.style?.fontColor,
-                  backgroundColor: cell?.style?.backgroundColor,
-                  textAlign: cell?.style?.textAlign,
-                  verticalAlign: cell?.style?.verticalAlign,
-                  borderStyle: cell?.style?.borderStyle === 'all' ? 'solid' : undefined,
-                  borderColor: cell?.style?.borderColor,
-                };
-
-                return (
-                  <td
-                    key={c}
-                    className="ss-cell"
-                    style={style}
-                    data-row={r}
-                    data-col={c}
-                    data-cell-active={isSelected || undefined}
-                    data-cell-selected={isSelected || undefined}
-                    data-range-highlight={inRange || undefined}
-                    data-cell-bound={hasBinding || undefined}
-                    data-cell-comment={hasComment || undefined}
-                    data-cell-frozen={isFrozen || undefined}
-                    data-cell-merged={mergeInfo.isMerged || undefined}
-                    data-cell-editing={isEditing || undefined}
-                    data-cell-drop-target={isDropTarget || undefined}
-                    data-cell-fill-preview={isFillPreview(r, c) || undefined}
-                    rowSpan={mergeInfo.rowSpan > 1 ? mergeInfo.rowSpan : undefined}
-                    colSpan={mergeInfo.colSpan > 1 ? mergeInfo.colSpan : undefined}
-                    onClick={() => onCellClick(r, c)}
-                    onDoubleClick={() => onCellDoubleClick(r, c)}
-                    onMouseDown={(e) => onCellMouseDown(r, c, e)}
-                    onMouseEnter={() => onCellMouseEnter(r, c)}
-                    onDragOver={(e) => { e.preventDefault(); onFieldDragOver?.(r, c); }}
-                    onDragLeave={() => onFieldDragLeave?.()}
-                  >
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="ss-cell-edit-input"
-                        value={editValue}
-                        onChange={(e) => onEditValueChange(e.target.value)}
-                        onBlur={onEditSave}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            onEditSave();
-                          } else if (e.key === 'Escape') {
-                            onEditCancel();
-                          }
-                        }}
-                        autoFocus
-                      />
-                    ) : (
-                      <>
-                        {cell?.value != null ? String(cell.value) : ''}
-                        {isFillHandleCell && (
-                          <div
-                            className="ss-fill-handle"
-                            onMouseDown={(e) => onFillHandleMouseDown(r, c, e)}
-                          />
-                        )}
-                      </>
-                    )}
-                  </td>
-                );
-              })}
+    <div
+      ref={scrollRef}
+      className="spreadsheet-grid"
+      data-fill-dragging={fillHandleState.isFilling || undefined}
+      style={{ overflow: 'auto', position: 'relative' }}
+      onScroll={handleScroll}
+    >
+      <div style={{ width: totalWidth + ROW_HEADER_WIDTH, height: totalHeight, position: 'relative' }}>
+        <table>
+          <thead>
+            <tr>
+              <th className="row-header header-corner" style={{ width: ROW_HEADER_WIDTH }}></th>
+              {leftSpacerWidth > 0 && <th style={{ width: leftSpacerWidth, padding: 0 }} />}
+              {visibleColIndices.map((c) => (
+                <th
+                  key={c}
+                  style={{ width: columnWidths[c] ?? DEFAULT_COL_WIDTH }}
+                  className="col-header"
+                >
+                  {cellAddress(0, c).replace(/[0-9]/g, '')}
+                  <div
+                    className="col-resize-handle"
+                    onMouseDown={(e) => onColumnResizeStart(c, e)}
+                  />
+                </th>
+              ))}
+              {rightSpacerWidth > 0 && <th style={{ width: rightSpacerWidth, padding: 0 }} />}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {topSpacerHeight > 0 && (
+              <tr style={{ height: topSpacerHeight }}>
+                <td colSpan={visibleColIndices.length + 1 + (leftSpacerWidth > 0 ? 1 : 0) + (rightSpacerWidth > 0 ? 1 : 0)} />
+              </tr>
+            )}
+            {visibleRowIndices.map((r) => (
+              <tr
+                key={r}
+                style={{ height: rowHeights[r] ?? DEFAULT_ROW_HEIGHT }}
+                className={frozen && r < (frozen.row ?? 0) ? 'frozen-row' : ''}
+              >
+                <td className="row-header">
+                  {r + 1}
+                  <div
+                    className="row-resize-handle"
+                    onMouseDown={(e) => onRowResizeStart(r, e)}
+                  />
+                </td>
+                {leftSpacerWidth > 0 && <td style={{ width: leftSpacerWidth, padding: 0 }} />}
+                {visibleColIndices.map((c) => renderCell(r, c))}
+                {rightSpacerWidth > 0 && <td style={{ width: rightSpacerWidth, padding: 0 }} />}
+              </tr>
+            ))}
+            {bottomSpacerHeight > 0 && (
+              <tr style={{ height: bottomSpacerHeight }}>
+                <td colSpan={visibleColIndices.length + 1 + (leftSpacerWidth > 0 ? 1 : 0) + (rightSpacerWidth > 0 ? 1 : 0)} />
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

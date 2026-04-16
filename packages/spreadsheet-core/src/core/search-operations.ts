@@ -121,10 +121,11 @@ export function replaceAllInDocument(
   sheetId?: string,
 ): { doc: SpreadsheetDocument; count: number } {
   let count = 0;
-  let result = doc;
   const sheets = options.searchScope === 'workbook' || !sheetId
     ? doc.workbook.sheets
     : doc.workbook.sheets.filter((sheet) => sheet.id === sheetId);
+
+  const sheetPatches = new Map<string, Record<string, { value: string }>>();
 
   for (const sheet of sheets) {
     if (!sheet.cells) {
@@ -148,10 +149,46 @@ export function replaceAllInDocument(
         continue;
       }
 
-      result = replaceInDocument(result, { sheetId: sheet.id, address, row: cell.row, col: cell.col }, query, replacement, options);
+      let newValue: string;
+      if (options.matchWholeCell) {
+        newValue = replacement;
+      } else {
+        const flags = options.matchCase ? 'g' : 'gi';
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        newValue = value.replace(new RegExp(escapedQuery, flags), replacement);
+      }
+
+      let patch = sheetPatches.get(sheet.id);
+      if (!patch) {
+        patch = {};
+        sheetPatches.set(sheet.id, patch);
+      }
+      patch[address] = { value: newValue };
       count++;
     }
   }
 
-  return { doc: result, count };
+  if (count === 0) {
+    return { doc, count: 0 };
+  }
+
+  const updatedSheets = doc.workbook.sheets.map((sheet) => {
+    const patch = sheetPatches.get(sheet.id);
+    if (!patch) {
+      return sheet;
+    }
+    const cells = { ...sheet.cells };
+    for (const [address, { value }] of Object.entries(patch)) {
+      const existing = cells[address];
+      if (existing) {
+        cells[address] = { ...existing, value };
+      }
+    }
+    return { ...sheet, cells };
+  });
+
+  return {
+    doc: { ...doc, workbook: { ...doc.workbook, sheets: updatedSheets } },
+    count,
+  };
 }

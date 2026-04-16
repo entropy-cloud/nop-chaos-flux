@@ -39,19 +39,29 @@ export function useResize() {
 
   useEffect(() => {
     if (!resizeState.isResizing) return;
+    let rafId = 0;
     const handleMouseMove = (e: MouseEvent) => {
-      if (resizeState.type === 'column') {
-        const delta = e.clientX - resizeState.startPos;
-        const newWidth = Math.max(30, resizeState.startSize + delta);
-        setColumnWidths(prev => ({ ...prev, [resizeState.index]: newWidth }));
-      } else {
-        const delta = e.clientY - resizeState.startPos;
-        const newHeight = Math.max(16, resizeState.startSize + delta);
-        setRowHeights(prev => ({ ...prev, [resizeState.index]: newHeight }));
+      const clientPos = resizeState.type === 'column' ? e.clientX : e.clientY;
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          rafId = 0;
+          if (resizeState.type === 'column') {
+            const delta = clientPos - resizeState.startPos;
+            const newWidth = Math.max(30, resizeState.startSize + delta);
+            setColumnWidths(prev => ({ ...prev, [resizeState.index]: newWidth }));
+          } else {
+            const delta = clientPos - resizeState.startPos;
+            const newHeight = Math.max(16, resizeState.startSize + delta);
+            setRowHeights(prev => ({ ...prev, [resizeState.index]: newHeight }));
+          }
+        });
       }
     };
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, [resizeState]);
 
   return {

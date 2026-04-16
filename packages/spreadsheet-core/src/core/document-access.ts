@@ -42,6 +42,17 @@ export function setCell(sheet: WorksheetDocument, row: number, col: number, cell
   return { ...sheet, cells };
 }
 
+export function setCells(
+  sheet: WorksheetDocument,
+  entries: ReadonlyArray<{ row: number; col: number; cell: CellDocument }>,
+): WorksheetDocument {
+  const cells = { ...sheet.cells };
+  for (const entry of entries) {
+    cells[cellAddress(entry.row, entry.col)] = entry.cell;
+  }
+  return { ...sheet, cells };
+}
+
 export function updateCellStyle(
   sheet: WorksheetDocument,
   row: number,

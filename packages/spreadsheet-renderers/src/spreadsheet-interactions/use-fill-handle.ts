@@ -58,6 +58,7 @@ export function useFillHandle(
   useEffect(() => {
     if (!fillHandleState.isFilling) return;
 
+    let rafId = 0;
     const handleMouseMove = (e: MouseEvent) => {
       const el = document.elementFromPoint(e.clientX, e.clientY);
       if (!el) return;
@@ -67,7 +68,12 @@ export function useFillHandle(
       const col = parseInt((td as HTMLElement).dataset.col || '-1');
       if (row >= 0 && col >= 0) {
         fillHandleRef.current = { ...fillHandleRef.current, currentRow: row, currentCol: col };
-        setFillHandleState(prev => ({ ...prev, currentRow: row, currentCol: col }));
+        if (!rafId) {
+          rafId = requestAnimationFrame(() => {
+            rafId = 0;
+            setFillHandleState(prev => ({ ...prev, currentRow: fillHandleRef.current.currentRow, currentCol: fillHandleRef.current.currentCol }));
+          });
+        }
       }
     };
 
@@ -103,6 +109,7 @@ export function useFillHandle(
     window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };

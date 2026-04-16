@@ -134,7 +134,7 @@ export function applyCopySheet(doc: SpreadsheetDocument, sheetId: string, name?:
     throw new Error(`Sheet not found: ${sheetId}`);
   }
   const newSheet: WorksheetDocument = {
-    ...JSON.parse(JSON.stringify(sourceSheet)),
+    ...structuredClone(sourceSheet),
     id: crypto.randomUUID(),
     name: name ?? `${sourceSheet.name} Copy`,
     order: doc.workbook.sheets.length,
