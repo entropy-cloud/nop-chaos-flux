@@ -1,4 +1,4 @@
-import type { ActionResult, ExecutableApiRequest, ApiResponse, CompiledSchemaNode, ScopeRef } from '@nop-chaos/flux-core';
+import type { ActionResult, ExecutableApiRequest, ApiResponse, ScopeRef, TemplateNode } from '@nop-chaos/flux-core';
 import type { NopDebugEventNetworkSummary, NopDebuggerWindowConfig, NopScopeChainEntry } from './types';
 
 const DEFAULT_POSITION = { x: 24, y: 24 };
@@ -166,14 +166,14 @@ export function buildNetworkSummary(input: {
   };
 }
 
-export function normalizeCompiledRoot(node: CompiledSchemaNode | CompiledSchemaNode[]) {
+export function normalizeCompiledRoot(node: TemplateNode | readonly TemplateNode[]) {
   const roots = Array.isArray(node) ? node : [node];
   const first = roots[0];
 
   return {
     rootCount: roots.length,
     firstType: first?.type,
-    firstPath: first?.path
+    firstPath: first?.templatePath
   };
 }
 

@@ -7,7 +7,7 @@ import type {
   RendererMonitor,
   RendererPlugin,
   SchemaInput,
-  CompiledSchemaNode
+  CompiledTemplate
 } from '@nop-chaos/flux-core';
 import { buildNetworkSummary, createRequestKey, formatActionResult, formatErrorDetail, normalizeCompiledRoot, summarizeApi, summarizeValueShape } from './controller-helpers';
 import { redactData, type NormalizedRedactionOptions } from './redaction';
@@ -27,8 +27,8 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
       });
       return schema;
     },
-    afterCompile(node: CompiledSchemaNode | CompiledSchemaNode[]) {
-      const normalized = normalizeCompiledRoot(node);
+    afterCompile(template: CompiledTemplate) {
+      const normalized = normalizeCompiledRoot(template.root);
       store.append({
         kind: 'compile:end',
         group: 'compile',
@@ -39,7 +39,7 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
         rendererType: normalized.firstType,
         path: normalized.firstPath
       });
-      return node;
+      return template;
     },
     beforeAction(action, ctx) {
       store.append({

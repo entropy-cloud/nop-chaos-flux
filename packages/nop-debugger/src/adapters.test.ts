@@ -25,7 +25,7 @@ describe('debugger adapters', () => {
     const plugin = createDebuggerPlugin(store);
 
     plugin.beforeCompile?.({ type: 'page' });
-    plugin.afterCompile?.({ type: 'page', path: 'root' } as never);
+    plugin.afterCompile?.({ root: { type: 'page', templatePath: 'root' } as never, repeatedTemplates: new Map() });
     plugin.beforeAction?.({ action: 'submitForm' } as never, {
       nodeInstance: {
         templateNode: { id: 'node-1', templatePath: 'body.0', rendererType: 'form' }
