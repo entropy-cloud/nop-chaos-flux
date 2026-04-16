@@ -368,7 +368,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           size="sm"
           disabled={presentation.effectiveDisabled}
           onClick={() => {
-            const nextEntry = { id: createNextCompositeItemId(pairs as Array<Record<string, unknown>>, 'pair-'), key: '', value: '' };
+            const nextEntry = { id: createNextCompositeItemId(pairs, 'pair-'), key: '', value: '' };
             const nextPairs = [...pairs, nextEntry];
             pairsRef.current = nextPairs;
 

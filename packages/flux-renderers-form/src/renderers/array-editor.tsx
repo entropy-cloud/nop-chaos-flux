@@ -275,7 +275,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           size="sm"
           disabled={presentation.effectiveDisabled}
           onClick={() => {
-            const nextItem = { id: createNextCompositeItemId(items as Array<Record<string, unknown>>, 'item-'), value: '' };
+            const nextItem = { id: createNextCompositeItemId(items, 'item-'), value: '' };
             const nextItems = [...items, nextItem];
             itemsRef.current = nextItems;
 

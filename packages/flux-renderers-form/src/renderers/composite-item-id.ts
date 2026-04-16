@@ -1,4 +1,4 @@
-function collectUsedIds(items: Array<Record<string, unknown>>): Set<string> {
+function collectUsedIds(items: Array<{ id?: string }>): Set<string> {
   const used = new Set<string>();
 
   for (const item of items) {
@@ -10,7 +10,7 @@ function collectUsedIds(items: Array<Record<string, unknown>>): Set<string> {
   return used;
 }
 
-export function createNextCompositeItemId(items: Array<Record<string, unknown>>, prefix: string): string {
+export function createNextCompositeItemId(items: Array<{ id?: string }>, prefix: string): string {
   const used = collectUsedIds(items);
   let next = items.length + 1;
 
