@@ -7,6 +7,7 @@
     { "path": "./packages/flux-react" },
     { "path": "./packages/flux-renderers-basic" },
     { "path": "./packages/flux-renderers-form" },
+    { "path": "./packages/flux-renderers-form-advanced" },
     { "path": "./packages/flux-renderers-data" },
     { "path": "./packages/flux-code-editor" },
     { "path": "./packages/tailwind-preset" },
