@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { createSchemaRenderer, useRenderScope } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '../index';
 
@@ -45,6 +45,25 @@ const buttonRenderer: RendererDefinition = {
   ),
   fields: [{ key: 'onClick', kind: 'event' }]
 };
+
+let nextArrayItemProbeMountId = 1;
+
+const arrayItemInstanceProbeRenderer: RendererDefinition = {
+  type: 'array-item-instance-probe',
+  component: (props) => <ArrayItemInstanceProbeWithInstancePath instancePath={props.node.instancePath} />
+};
+
+function ArrayItemInstanceProbeWithInstancePath(props: { instancePath: unknown }) {
+  const scope = useRenderScope();
+  const mountIdRef = React.useRef(nextArrayItemProbeMountId++);
+  const itemName = String((scope.get('value') as { name?: unknown } | undefined)?.name ?? scope.get('name') ?? 'unknown');
+
+  return (
+    <span data-testid={`array-item-probe-${itemName}`}>
+      {`${mountIdRef.current}|${scope.id}|${JSON.stringify(props.instancePath ?? null)}`}
+    </span>
+  );
+}
 
 describe('array-field renderer (scalar)', () => {
   it('renders initial scalar items', async () => {
@@ -395,6 +414,67 @@ describe('array-field renderer (object itemKind)', () => {
     await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
     expect(submitValues[0]).toMatchObject({
       contacts: [{ name: 'Charlie', email: 'alice@example.com' }]
+    });
+  });
+
+  it('keeps object item scope and instance identity stable across page-data reorder when itemKey is configured', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      arrayItemInstanceProbeRenderer
+    ]);
+    const schema = {
+      type: 'page',
+      body: [
+        {
+          type: 'array-field',
+          name: 'contacts',
+          itemKind: 'object',
+          itemKey: 'meta.key',
+          item: [{ type: 'array-item-instance-probe' }]
+        }
+      ]
+    } as const;
+    const { rerender } = render(
+      <SchemaRenderer
+        schema={schema}
+        data={{
+          contacts: [
+            { meta: { key: 'contact-a' }, name: 'Alice' },
+            { meta: { key: 'contact-b' }, name: 'Bob' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    const initialAliceIdentity = await screen.findByTestId('array-item-probe-Alice');
+    const initialBobIdentity = await screen.findByTestId('array-item-probe-Bob');
+    const aliceText = initialAliceIdentity.textContent;
+    const bobText = initialBobIdentity.textContent;
+
+    expect(aliceText).toContain('contact-a');
+    expect(bobText).toContain('contact-b');
+
+    rerender(
+      <SchemaRenderer
+        schema={schema}
+        data={{
+          contacts: [
+            { meta: { key: 'contact-b' }, name: 'Bob' },
+            { meta: { key: 'contact-a' }, name: 'Alice' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('array-item-probe-Alice').textContent).toBe(aliceText);
+      expect(screen.getByTestId('array-item-probe-Bob').textContent).toBe(bobText);
     });
   });
 

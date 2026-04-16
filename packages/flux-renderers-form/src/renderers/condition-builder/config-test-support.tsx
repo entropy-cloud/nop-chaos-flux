@@ -74,7 +74,7 @@ vi.mock('@nop-chaos/ui', () => {
   function MockSelect({ children, value, onValueChange, disabled }: any) {
     return (
       <div data-testid="mock-select" data-value={value} data-disabled={disabled ?? false}>
-        <button data-testid="mock-select-trigger" onClick={() => onValueChange?.('__test_value__')}>
+        <button type="button" data-testid="mock-select-trigger" onClick={() => onValueChange?.('__test_value__')}>
           {value || 'select'}
         </button>
         <div data-testid="mock-select-content">{children}</div>
@@ -82,8 +82,8 @@ vi.mock('@nop-chaos/ui', () => {
     );
   }
 
-  const MockButton = forwardRef(({ children, onClick, disabled, type, ...props }: any, ref: any) => (
-    <button ref={ref} onClick={onClick} disabled={disabled} type={type} {...props}>
+  const MockButton = forwardRef(({ children, onClick, disabled, type: _type, ...props }: any, ref: any) => (
+    <button ref={ref} type="button" onClick={onClick} disabled={disabled} {...props}>
       {children}
     </button>
   ));
