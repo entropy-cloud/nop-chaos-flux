@@ -150,6 +150,11 @@ interface SchemaCompileValidationOptions {
   namespacedPropertyPolicy?: 'error' | 'ignore' | 'delegate-or-ignore';
   extensionPassthroughPolicy?: 'none' | 'namespaced-only';
   namespaceValidators?: readonly SchemaNamespaceValidator[];
+  hostContractContext?: {
+    family: string;
+    version: string;
+    manifest: HostCapabilityProjectionManifest;
+  };
 }
 
 interface CompileSchemaOptions {
@@ -168,11 +173,15 @@ interface SchemaDiagnostic {
     | 'invalid-region-node'
     | 'invalid-action-shape'
     | 'invalid-source-shape'
-    | 'invalid-namespace-property';
+    | 'invalid-namespace-property'
+    | 'unsupported-host-contract-version'
+    | 'unresolved-host-contract-context'
+    | 'unknown-host-capability-method'
+    | 'invalid-host-capability-args';
   path: string;
   message: string;
   severity: 'error' | 'warning' | 'info';
-  source: 'core' | 'renderer' | 'namespace';
+  source: 'core' | 'renderer' | 'namespace' | 'host-contract';
 }
 
 interface SchemaDiagnosticCollector {
@@ -181,6 +190,10 @@ interface SchemaDiagnosticCollector {
 
 type SchemaDiagnosticReporter = (issue: SchemaDiagnostic) => void;
 ```
+
+`HostCapabilityProjectionManifest` is directionally the shared manifest envelope described in `docs/architecture/capability-projection-manifest.md`.
+
+Host-manifest diagnostics should use `source: 'host-contract'`.
 
 Current convenience APIs:
 
@@ -454,7 +467,7 @@ The compiler should support three modes:
 
 Recommended default for general schema ingestion: `delegate-or-ignore`.
 
-That recommendation assumes the standard validator bundle already registers validators for stable core namespaces owned by Flux itself. In current docs, `xui:imports` is already part of the active Final Execution Schema and should therefore be validated by the built-in `xui` namespace validator rather than silently skipped.
+That recommendation assumes the standard validator bundle already registers validators for stable core namespaces owned by Flux itself. In current docs, `xui:imports` and `xui:version` are part of the active schema contract and should therefore be validated by the built-in `xui` namespace validator rather than silently skipped.
 
 ### Why subtree skipping is necessary
 
@@ -487,10 +500,22 @@ interface SchemaNamespaceValidator {
 Examples:
 
 - the standard Flux compiler bundle validates `xui:imports`
+- the standard Flux compiler bundle validates `xui:version`
 - a report-designer package may validate `report:*` metadata
 - a host application may validate `app:*` metadata
 
 For the standard repository bundle, `xui` should not be optional. It is already part of the active schema contract, so the built-in compiler assembly should ship with an `xui` namespace validator by default.
+
+Built-in `xui` validation should cover at least:
+
+- `xui:imports` structural validation
+- `xui:version` validation as a string semver-range selector
+
+Directionally, `xui:version` rules are:
+
+- it is legal only on nodes whose resolved `RendererDefinition` publishes `hostContract`
+- misuse on ordinary nodes should emit a focused diagnostic instead of degrading into generic unknown-property behavior
+- host-specific semantic resolution still belongs to the compile call's explicit host-contract context, directionally `CompileSchemaOptions.validation.hostContractContext`
 
 ## Unknown Properties And Passthrough
 
