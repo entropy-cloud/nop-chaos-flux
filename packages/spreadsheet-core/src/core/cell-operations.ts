@@ -8,6 +8,8 @@ import type {
 import { cellAddress, normalizeRange } from '../types.js';
 import { ensureSheetCells, setCell, updateCellStyle } from './document-access.js';
 
+export type CellTarget = SpreadsheetCellRef | SpreadsheetRange;
+
 export function applySetCellValue(
   doc: SpreadsheetDocument,
   cell: SpreadsheetCellRef,
