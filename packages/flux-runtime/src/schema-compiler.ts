@@ -5,7 +5,7 @@ import type {
   CompileNodeOptions,
   CompileSchemaOptions,
   ExpressionCompiler,
-  NodeMetaProgram,
+  NodeMetaProgram as _NodeMetaProgram,
   RendererPlugin,
   RendererRegistry,
   SchemaCompiler,
@@ -24,7 +24,7 @@ import {
 import { normalizeValidationTriggers, normalizeValidationVisibilityTriggers } from './validation';
 import { createTemplateRegion } from './schema-compiler/regions';
 import { DEEP_FIELD_NORMALIZERS } from './schema-compiler/tables';
-import { classifyField, buildMetaProgram, isCompiledStatic } from './schema-compiler/fields';
+import { classifyField, buildMetaProgram, isCompiledStatic as _isCompiledStatic } from './schema-compiler/fields';
 import { collectValidationModel } from './schema-compiler/validation-collection';
 import { analyzeSchemaInput, applyWrapComponentPlugins, inspectSchemaNodeFields, isNamespacedSchemaKey } from './schema-compiler/shape-validation';
 import { enrichTemplateNodeIds, extractLifecycleActions } from './schema-compiler/target-enrichment';
@@ -200,7 +200,7 @@ export function createSchemaCompiler(input: {
     const scopePlan: ScopePlan =
       renderer.scopePolicy === 'form'
         ? { kind: 'form' }
-        : Boolean(fieldInspection.extensions?.['xui:imports'])
+        : fieldInspection.extensions?.['xui:imports']
           ? { kind: 'child' }
           : { kind: 'inherit' };
 
