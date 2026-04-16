@@ -61,6 +61,23 @@ That creates four problems:
 3. host evolution has no explicit versioned compatibility surface
 4. every host renderer repeats wiring knowledge that should be a contract, not folklore
 
+## Chosen Integration Model
+
+This document adopts a deliberately minimal integration model.
+
+The default host contract is attached to the publishing owner renderer definition and reached through its `type`.
+
+Directionally:
+
+- `designer-page` renderer definition publishes the default `designer` host contract
+- `report-designer-page` renderer definition publishes the default `report-designer` host contract
+
+Schema does **not** declare host family explicitly in the common case.
+
+At schema level, the only added contract override is a version selector such as `xui:version` on the publishing owner node.
+
+Standalone fragment validation may still supply explicit compile-time host context when no enclosing owner node is available.
+
 ## Main Rule
 
 Complex hosts should publish two things separately:
@@ -226,7 +243,7 @@ interface HostCapabilityProjectionManifest {
 
 ### Publisher And Consumer Model
 
-This document needs one strict ownership split.
+This document keeps one strict ownership split.
 
 #### Publisher
 
@@ -249,9 +266,11 @@ The publisher owns:
 - runtime host-scope publication
 - runtime action-scope namespace registration
 
+In the default design, the publisher is identified by renderer `type`, and the default host contract comes from that renderer's definition.
+
 #### Consumer
 
-The **consumer** is a schema fragment that expects to run under a compatible publisher.
+The **consumer** is a schema fragment that runs under a compatible publisher.
 
 Examples:
 
@@ -261,15 +280,15 @@ Examples:
 Important rule:
 
 - a consumer requirement does not create a publisher
-- a consumer declaration only says "this fragment requires a compatible host boundary above it"
+- ordinary in-tree consumers inherit host contract context from the nearest publishing owner node
 
 #### Inheritance Rule
 
 When a fragment is compiled as part of the same schema tree under a publishing owner node, the active host contract is inherited from the nearest publisher.
 
-When a fragment is compiled standalone or validated out of context, it must declare its consumer requirement explicitly.
+When a fragment is compiled standalone or validated out of context, the host contract context may be supplied through explicit compiler input.
 
-That keeps the current lexical host-boundary model intact.
+That keeps the current lexical host-boundary model intact without requiring fragment-local family declarations.
 
 ## Normative Shape
 
@@ -333,6 +352,30 @@ Namespace rule:
 
 - one manifest publishes exactly one host family and one default action namespace
 - if a host family ever truly needs multiple schema-callable namespaces, it should publish them as separate family contracts unless a later owner doc explicitly widens this rule
+
+### Renderer Definition Attachment
+
+The default publication point for a host contract is the publishing owner's `RendererDefinition`.
+
+Directionally:
+
+```ts
+interface RendererDefinition {
+  type: string;
+  hostContract?: {
+    family: string;
+    defaultVersion: string;
+    manifest: HostCapabilityProjectionManifest;
+  };
+}
+```
+
+Rules:
+
+- only publishing owner renderers should define `hostContract`
+- child fragments do not repeat host family by default
+- the renderer `type` chooses the default host family contract
+- schema may override only the version, not the family, unless a future owner doc introduces a stronger reason
 
 ## Shape Language
 
@@ -426,90 +469,92 @@ The runtime must still resolve it through the current lexical `ActionScope`.
 
 ## Authoring Contract
 
-### Host Consumer Declaration
+### Schema-Level Version Override
 
-There is exactly one canonical consumer declaration carrier for standalone or out-of-context fragments:
+At schema level, this design adds at most one host-contract-specific field:
 
-- `xui:hostContract`
+- `xui:version`
 
-Do not introduce a parallel bare field such as `hostContractVersion`.
-
-The canonical direction is:
-
-```ts
-interface HostContractRef {
-  family: string;
-  version?: string;
-}
-```
-
-and the canonical schema carrier is:
+Directionally:
 
 ```ts
 interface BaseSchema {
-  'xui:hostContract'?: HostContractRef;
+  'xui:version'?: string;
 }
 ```
 
-Validator ownership:
+Rules:
 
-- `xui:hostContract` belongs to the built-in `xui` namespace validator family described by `schema-file-validator.md`
-- it must not be left as an unowned namespaced key
+- `xui:version` is meaningful only on a publishing owner node whose `RendererDefinition` already defines `hostContract`
+- `xui:version` overrides the renderer definition's `defaultVersion`
+- `xui:version` does not change host family
+- descendant fragments inherit the resolved family/version context
 
-Usage rule:
-
-- publishing owner nodes may declare which family/version they publish
-- standalone or externally stored fragments may declare which family/version they require
-- ordinary descendants compiled inside the same publishing tree should prefer inherited context over repeating the declaration redundantly
-
-Representative examples:
+Representative example:
 
 ```json
 {
   "type": "designer-page",
-  "xui:hostContract": {
-    "family": "designer",
-    "version": "1.x"
-  }
+  "xui:version": "1.x"
 }
 ```
 
-Preferred rule:
+This keeps schema authoring minimal:
 
-- use an explicit namespaced host-contract declaration field such as `xui:hostContract`
-- do not overload unrelated bare fields
-- do not require the compiler to infer version intent from renderer type alone when validating standalone fragments
+- `type` selects the host family through `RendererDefinition`
+- `xui:version` selects the desired contract version for that owner node
 
-### Why Explicit Host Contract Reference Matters
+### Standalone Fragment Validation Context
 
-Without an explicit contract reference, the compiler can validate only against whatever runtime owner type happens to be nearby.
+Some workflows validate a fragment without its enclosing publishing owner node.
 
-That is too implicit for:
+Examples:
 
-- cross-file fragment reuse
-- tooling and editor diagnostics
-- future contract migrations
-- CI validation against declared compatibility windows
+- editor-side validation of a toolbar fragment file
+- CI validation of an extracted inspector fragment
+- docs example verification for host-specific snippets
+
+In those cases, the compiler may accept explicit host context input.
+
+Directionally:
+
+```ts
+interface CompileSchemaValidationOptions {
+  hostContractContext?: {
+    family: string;
+    version: string;
+  };
+}
+```
+
+Meaning:
+
+- this is a compile-time fallback context for standalone fragment validation
+- it is used only when no enclosing publishing owner node can establish host contract context through `type`
+- it does not replace the normal in-tree inheritance model
 
 ### Publisher Declaration
 
-Publishing owner nodes should expose their published family/version through renderer-owned metadata or host-owner schema contract, not through ambient global state.
+Publishing owner nodes should expose their published family/version through `RendererDefinition.hostContract` plus optional schema-level `xui:version`, not through ambient global state.
 
 Directionally:
 
 - `designer-page` publishes `designer@1.x`
 - `report-designer-page` publishes `report-designer@2.x`
 
-The concrete publication carrier can be renderer-owned schema metadata or renderer definition metadata, but it must be visible to the compiler as explicit compile input.
+The concrete publication carrier must be visible to the compiler from:
+
+1. the publishing owner node's renderer `type`
+2. the resolved `RendererDefinition.hostContract`
+3. optional node-local `xui:version`
 
 Do not make publisher discovery depend on runtime mounting.
 
-Recommended precedence when both exist:
+Resolution order:
 
-1. explicit renderer-owned schema declaration on the publishing owner node
-2. renderer-definition default publication metadata
-
-The node-local declaration wins because it is the narrower author-visible contract.
+1. resolve owner renderer definition from node `type`
+2. read `RendererDefinition.hostContract` for default family/version/manifest
+3. if owner node declares `xui:version`, override only the version
 
 ## Compiler Responsibilities
 
@@ -648,49 +693,26 @@ They are platform contracts, not local component implementation details.
 
 ## Compiler Integration Contract
 
-Manifest resolution must be explicit per compile/validate invocation.
-
-Do not introduce an ambient global manifest registry.
-
-Recommended direction:
-
-```ts
-interface HostManifestResolver {
-  resolve(ref: HostContractRef): HostCapabilityProjectionManifest | undefined;
-}
-
-interface CompileSchemaValidationOptions {
-  hostManifestResolver?: HostManifestResolver;
-}
-```
+Manifest resolution starts from renderer `type`, not from a free-floating host declaration field.
 
 Rules:
 
-- the compiler only validates against manifests supplied through explicit compile/validate inputs
-- loader, CI, editor tooling, or playground assembly may provide different resolvers intentionally
-- runtime mounting is not required for manifest resolution
+- during normal tree compilation, the compiler resolves the publishing owner node's `RendererDefinition`
+- the owner renderer definition provides the default host contract metadata
+- standalone fragment workflows may provide `hostContractContext` explicitly when no publishing owner node is present
+- do not introduce an ambient global manifest registry
 
 This keeps the design aligned with `schema-file-validator.md`:
 
 - no hidden global switch
 - no hidden global registry
-- explicit per-call validation inputs
+- explicit per-call context only for true standalone validation cases
 
 ### Manifest Publication Model
 
-First-party host families may still publish reusable manifest bundles through normal package exports.
+First-party host families should publish reusable manifest bundles alongside their owner renderer definitions through normal package exports.
 
-Directionally:
-
-```ts
-interface HostManifestProvider {
-  family: string;
-  getManifest(version?: string): HostCapabilityProjectionManifest | undefined;
-  listVersions(): readonly string[];
-}
-```
-
-But that provider is a loader/compiler dependency source, not an ambient runtime authority.
+But those exports are compiler/runtime dependency inputs, not an ambient runtime authority.
 
 ## Relationship To `xui:imports`
 
@@ -797,8 +819,10 @@ Recommended flow:
 ```text
 schema file
   -> parse
-  -> resolve declared host contract refs
-  -> resolve matching manifests through explicit resolver input
+  -> resolve publishing owner nodes by renderer type
+  -> read default host contract from renderer definition
+  -> apply optional `xui:version` override on owner node
+  -> for standalone fragment validation, use explicit `hostContractContext` if needed
   -> validate expressions and actions against manifest contracts
   -> compile final execution schema
 ```
@@ -827,11 +851,13 @@ The host must still control:
 Recommended rollout order:
 
 1. define manifest types and shape helpers in a core contract area
-2. implement compiler diagnostics for action validation first
-3. add projection-path validation for host projection reads
-4. publish first-party manifests for `designer`, `spreadsheet`, `report-designer`, and `word-editor`
-5. add explicit schema declaration field such as `xui:hostContract`
-6. wire CI/schema validation tooling to require contract resolution for host-owned pages
+2. add optional `hostContract` metadata to publishing owner `RendererDefinition`s
+3. implement compiler diagnostics for action validation first
+4. add projection-path validation for host projection reads
+5. add schema-level `xui:version` override on publishing owner nodes
+6. wire standalone fragment validation to accept explicit `hostContractContext`
+7. publish first-party manifests for `designer`, `spreadsheet`, `report-designer`, and `word-editor`
+8. wire CI/schema validation tooling to require contract resolution for host-owned pages
 
 Why this order:
 

@@ -84,21 +84,21 @@ Important semantics:
 
 Key contracts:
 
-- `CompiledSchemaNode`
-- `CompiledRegion`
-- `CompiledSchemaMeta`
-- `CompiledNodeRuntimeState`
+- `TemplateNode`
+- `TemplateRegion`
+- `NodeMetaProgram`
+- `NodeRuntimeState`
 - `SchemaCompiler`
 
 Role summary:
 
-- `CompiledSchemaNode` is the executable node model used by runtime and React rendering
-- `CompiledRegion` describes child renderable fragments
-- `SchemaCompiler` transforms raw schema into stable executable nodes
+- `TemplateNode` is the immutable compiled node model produced by `SchemaCompiler`, consumed by runtime and React rendering
+- `TemplateRegion` describes child renderable fragments within a template
+- `SchemaCompiler` transforms raw schema directly into `TemplateNode` (and `CompiledTemplate` graphs)
 
 Important current note:
 
-- compiled nodes also carry event metadata and optional compiled validation metadata
+- compiled template nodes also carry event metadata, optional compiled validation metadata, scope plans, and provider plans
 
 ## Renderer Definition Contracts
 

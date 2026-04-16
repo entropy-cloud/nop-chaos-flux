@@ -39,7 +39,7 @@ flux-core is the **foundation contracts and shared utilities** package — the l
 When this document needs to be checked against code, start with:
 
 - `packages/flux-core/src/index.ts` for core contracts and shared utilities
-- `packages/flux-runtime/src/schema-compiler.ts` for compiled node assembly
+- `packages/flux-runtime/src/schema-compiler.ts` for template node assembly
 - `packages/flux-runtime/src/action-runtime.ts` for action semantics
 - `packages/flux-runtime/src/page-runtime.ts` and `packages/flux-runtime/src/form-runtime.ts` for page/form runtime behavior
 - `packages/flux-react/src/index.tsx` for React integration boundaries
@@ -148,7 +148,7 @@ runtime node instances + action dispatch + page/form runtimes
 concrete component render
 ```
 
-`SchemaCompiler` still produces `CompiledSchemaNode` as a compiler-facing artifact, but the active React render path is already `CompiledTemplate -> TemplateNode -> NodeInstance`.
+`SchemaCompiler` directly produces `TemplateNode` (and `CompiledTemplate` for template graphs). The intermediate `CompiledSchemaNode` type has been fully eliminated. The compile pipeline is now: `SchemaInput → TemplateNode → CompiledTemplate`. The active React render path is `CompiledTemplate -> TemplateNode -> NodeInstance`.
 
 ## Layer Responsibilities
 
@@ -310,43 +310,17 @@ Lookup preserves lexical shadowing:
 2. if yes, continue lookup inside that owned object
 3. otherwise climb to the parent scope
 
-### `CompiledSchemaNode`
+### `CompiledSchemaNode` — Eliminated
 
-`CompiledSchemaNode` is a **compiler-internal artifact** with an `@internal` annotation. It is not part of the runtime-facing render contract.
+`CompiledSchemaNode` has been **fully eliminated** from the codebase. The compiler now directly produces `TemplateNode` instead of going through an intermediate `CompiledSchemaNode → TemplateNode` conversion step.
 
-```ts
-/** @internal */
-interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
-  id: string;
-  type: S['type'];
-  path: string;
-  schema: S;
-  component: RendererDefinition<S>;
-  meta: CompiledSchemaMeta;
-  props: CompiledRuntimeValue<Record<string, unknown>>;
-  validation?: CompiledFormValidationModel;
-  regions: Readonly<Record<string, CompiledRegion>>;
-  eventActions: Readonly<Record<string, unknown>>;
-  eventKeys: readonly string[];
-  flags: CompiledNodeFlags;
-  createRuntimeState(): CompiledNodeRuntimeState;
-}
-```
+The compile pipeline is now: `SchemaInput → TemplateNode → CompiledTemplate`.
 
-Current boundary classification:
+Previous `CompiledSchemaNode` responsibilities are now carried by:
 
-| Usage | Classification | Notes |
-|-------|----------------|-------|
-| Schema compiler internals | **Compiler-internal** | `schema-compiler.ts` and helper modules produce and consume this type |
-| `RendererPlugin.afterCompile(node)` | **Compile-time plugin contract** | Intentional extension point for plugins to inspect/modify compiled output before template conversion |
-| Debugger tooling | **Tooling residue** | Receives compiled nodes via plugin contract, not render path |
-
-Important notes:
-
-- The main render path is `CompiledTemplate -> TemplateNode -> NodeInstance`; `CompiledSchemaNode` does not appear in the render path
-- `RendererPlugin.afterCompile` is a compile-time hook, not a runtime-facing API
-- Debugger/tooling usage is legitimate via the plugin contract, but does not expose `CompiledSchemaNode` to renderers
-- `props` is a compiled runtime value, not a raw plain object
+- **`TemplateNode`** — carries schema identity, compiled props (`propsProgram`), compiled meta (`metaProgram`), regions, event plans, validation, scope plan, and provider plan
+- **`NodeMetaProgram`** — the compiled meta program (formerly `CompiledSchemaMeta`), defined in `node-identity.ts`
+- **`NodeRuntimeState`** — per-instance runtime state (formerly `CompiledNodeRuntimeState`), defined in `node-identity.ts`
 
 ## Action Baseline
 

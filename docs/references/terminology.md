@@ -41,18 +41,28 @@ It distinguishes:
 - fully static values that can be returned directly
 - dynamic values that execute through runtime state and identity reuse rules
 
-## `CompiledSchemaNode`
+## `NodeRuntimeState`
 
-The executable compiled schema unit consumed by runtime and React rendering.
+The per-instance runtime state allocated when a `TemplateNode` is instantiated into a live `NodeInstance`.
 
-A compiled node carries:
+Defined in `node-identity.ts`, it carries:
 
-- schema identity such as `id`, `type`, and `path`
-- compiled meta and compiled props
-- child `regions`
-- optional validation metadata
-- event action metadata
-- runtime flags and runtime state creation support
+- `meta` — per-meta-key runtime value states for dynamic meta resolution
+- `props` — optional runtime value state for dynamic props resolution
+- `metaDependencies` / `propsDependencies` — tracked scope dependency sets for invalidation
+- resolved caches (`resolvedMeta`, `resolvedProps`, `_staticPropsResult`, `_lastPropsResult`)
+
+This type was formerly exposed as `CompiledNodeRuntimeState` via a type alias.
+
+## `NodeMetaProgram`
+
+The compiled meta program for a single template node.
+
+Defined in `node-identity.ts`, it carries compiled runtime values for standard meta fields:
+
+- `id`, `className`, `visible`, `hidden`, `disabled`, `testid`
+
+Each field is an optional `CompiledRuntimeValue<T>` that resolves at render time. This type was formerly exposed as `CompiledSchemaMeta` via a type alias.
 
 ## `CompiledRegion`
 
