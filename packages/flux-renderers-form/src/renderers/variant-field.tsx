@@ -84,8 +84,16 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 
   const matchedKey = detectMatchedVariant(variants, currentValue, props.helpers.evaluate, parentScope, props.helpers.createScope);
   const initialKey = resolveInitialVariant(variants, currentValue, defaultVariant, props.helpers.evaluate, parentScope, props.helpers.createScope);
-  const [activeKey, setActiveKey] = React.useState<string | undefined>(initialKey);
+  const [userSelectedKey, setUserSelectedKey] = React.useState<string | undefined>(undefined);
   const [detectedKey, setDetectedKey] = React.useState<string | undefined>(undefined);
+
+  const activeKey = React.useMemo(() => {
+    if (matchedKey) return matchedKey;
+    if (userSelectedKey) return userSelectedKey;
+    if (detectedKey) return detectedKey;
+    return initialKey;
+  }, [matchedKey, userSelectedKey, detectedKey, initialKey]);
+
   const activeOption = variants.find((v) => v.key === activeKey) ?? variants[0];
 
   const runDetectVariantAction = React.useCallback(
@@ -120,24 +128,6 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     void runDetectVariantAction();
   }, [runDetectVariantAction]);
 
-  React.useEffect(() => {
-    if (matchedKey && matchedKey !== activeKey) {
-      setActiveKey(matchedKey);
-      return;
-    }
-
-    if (!matchedKey && detectedKey && detectedKey !== activeKey) {
-      setActiveKey(detectedKey);
-      return;
-    }
-
-    if (!activeKey) {
-      setActiveKey(detectedKey ?? initialKey);
-      return;
-    }
-
-  }, [matchedKey, detectedKey, activeKey, initialKey]);
-
   async function handleVariantSwitch(key: string) {
     if (key === activeKey) return;
 
@@ -171,7 +161,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       parentForm.touchField(name);
     }
 
-    setActiveKey(key);
+    setUserSelectedKey(key);
   }
 
   const activeContent = activeOption?.content ?? null;
