@@ -1,0 +1,95 @@
+import React from 'react';
+import { describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { formRendererDefinitions } from '../index';
+import { env, formStateProbeRenderer } from './form-test-support';
+
+describe('composite editor hidden ids', () => {
+  it('adds array-editor items with collision-free hidden ids after a remove', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            reviewers: [
+              { id: 'item-1', value: 'alice' },
+              { id: 'item-3', value: 'carol' }
+            ]
+          },
+          body: [
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer'
+            },
+            {
+              type: 'form-state-probe',
+              name: 'reviewers'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getAllByText('Remove')[0]);
+    fireEvent.click(screen.getByText('Add item'));
+
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('form-state:reviewers').textContent ?? 'null')).toMatchObject([
+        { id: 'item-3', value: 'carol' },
+        { id: 'item-2', value: '' }
+      ]);
+    });
+  });
+
+  it('adds key-value entries with collision-free hidden ids after a remove', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'form',
+          data: {
+            metadata: [
+              { id: 'pair-1', key: 'env', value: 'prod' },
+              { id: 'pair-3', key: 'region', value: 'us-east' }
+            ]
+          },
+          body: [
+            {
+              type: 'key-value',
+              name: 'metadata',
+              label: 'Metadata',
+              addLabel: 'Add metadata entry'
+            },
+            {
+              type: 'form-state-probe',
+              name: 'metadata'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getAllByText('Remove')[0]);
+    fireEvent.click(screen.getByText('Add metadata entry'));
+
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('form-state:metadata').textContent ?? 'null')).toMatchObject([
+        { id: 'pair-3', key: 'region', value: 'us-east' },
+        { id: 'pair-2', key: '', value: '' }
+      ]);
+    });
+  });
+});
