@@ -14,7 +14,7 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset({ target: '19' })] })
   ],
   build: {
-    chunkSizeWarningLimit: 6000,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
