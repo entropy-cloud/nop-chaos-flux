@@ -1,7 +1,7 @@
 import React from 'react';
-import type { BaseSchema, CompiledValidationBehavior, RendererComponentProps, RendererDefinition, RuntimeFieldRegistration } from '@nop-chaos/flux-core';
+import type { BaseSchema, CompiledValidationBehavior, FormRuntime, RendererComponentProps, RendererDefinition, RuntimeFieldRegistration } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { useCurrentForm, useCurrentFormState, useCurrentFormModelGeneration, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentFormState, useCurrentFormModelGeneration, useScopeSelector } from '@nop-chaos/flux-react';
 import { Button, Input } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
@@ -11,7 +11,7 @@ import {
   resolveFieldLabelContent,
   shouldValidateOn,
   useCompositeChildFieldState,
-  useFieldPresentation
+  useFormFieldController
 } from '../field-utils';
 import type { ArrayEditorItem, ArrayEditorSchema } from '../schemas';
 import { FieldHint, FieldLabel } from './shared';
@@ -20,7 +20,7 @@ function ArrayEditorRow(props: {
   item: ArrayEditorItem;
   index: number;
   name: string;
-  currentForm: ReturnType<typeof useCurrentForm>;
+  currentForm: FormRuntime | undefined;
   childBehavior: CompiledValidationBehavior;
   onSync(nextItems: ArrayEditorItem[]): void;
   items: ArrayEditorItem[];
@@ -132,12 +132,10 @@ function arrayItemsEqual(a: ArrayEditorItem[], b: ArrayEditorItem[]): boolean {
 }
 
 export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
-  const scope = useRenderScope();
-  const currentForm = useCurrentForm();
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
   const labelContent = resolveFieldLabelContent(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);

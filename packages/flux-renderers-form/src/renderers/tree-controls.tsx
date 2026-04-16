@@ -5,7 +5,6 @@ import { Button, Checkbox, Input, Label, Popover, PopoverContent, PopoverTrigger
 import { ChevronRightIcon, ChevronsUpDownIcon, SearchIcon, XIcon } from 'lucide-react';
 import {
   formLabelFieldRule,
-  useFieldPresentation,
   useFormFieldController
 } from '../field-utils';
 import { createFieldValidation } from './input';
@@ -123,13 +122,12 @@ function TreeOptionList(props: {
 }
 
 function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, handlers, currentForm } = useFormFieldController(name);
-  const multiple = isMultipleMode(props.props.treeMode);
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
+  const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const options = buildTreeOptionMetaList(props.props.options, getTreeOptionConfig(props.props as InputTreeSchema));
   const errorMessage = getSourceErrorMessage(optionsSourceState) ?? presentation.fieldState.error?.message;
@@ -157,13 +155,12 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
 }
 
 function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, handlers, currentForm } = useFormFieldController(name);
-  const multiple = isMultipleMode(props.props.treeMode);
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
+  const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const treeConfig = getTreeOptionConfig(props.props as TreeSelectSchema);
   const options = buildTreeOptionMetaList(props.props.options, treeConfig);

@@ -141,11 +141,23 @@ export function useFieldHandlers(args: {
   );
 }
 
-export function useFormFieldController(name: string, options?: { toFormValue?: (value: unknown) => unknown }) {
+export function useFormFieldController(
+  name: string,
+  options?: {
+    toFormValue?: (value: unknown) => unknown;
+    disabled?: boolean;
+    required?: boolean;
+    readOnly?: boolean;
+  }
+) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
   const value = useBoundFieldValue(name, currentForm);
-  const presentation = useFieldPresentation(name, currentForm);
+  const presentation = useFieldPresentation(name, currentForm, {
+    disabled: options?.disabled,
+    required: options?.required,
+    readOnly: options?.readOnly
+  });
   const handlers = useFieldHandlers({
     name,
     currentForm,

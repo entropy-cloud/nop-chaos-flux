@@ -3,7 +3,6 @@ import type { SourceTransientState } from '@nop-chaos/flux-react';
 import { Checkbox, cn, Input, Label, RadioGroup, RadioGroupItem, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Switch, Textarea } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
-  useFieldPresentation,
   useFormFieldController
 } from '../field-utils';
 import type {
@@ -18,11 +17,10 @@ import type {
 
 export function createInputRenderer(inputType: string) {
   return function InputRenderer(props: RendererComponentProps<InputSchema>) {
-    const name = String(props.props.name ?? props.schema.name ?? '');
-    const { value, handlers, currentForm } = useFormFieldController(name);
-    const presentation = useFieldPresentation(name, currentForm, {
+    const name = String(props.props.name ?? '');
+    const { value, handlers, presentation } = useFormFieldController(name, {
       disabled: props.meta.disabled,
-      required: Boolean(props.props.required ?? props.schema.required)
+      required: Boolean(props.props.required)
     });
 
     return (
@@ -92,11 +90,10 @@ export function createFieldValidation(nameResolver?: (schema: InputSchema) => st
 }
 
 function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, handlers, currentForm } = useFormFieldController(name);
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
   const options = Array.isArray(props.props.options) ? props.props.options : [];
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -132,11 +129,10 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 }
 
 function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, handlers, currentForm } = useFormFieldController(name);
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
 
   return (
@@ -154,11 +150,11 @@ function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
 }
 
 function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, handlers, currentForm } = useFormFieldController(name, { toFormValue: coerceBooleanString });
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { value, handlers, presentation } = useFormFieldController(name, {
+    toFormValue: coerceBooleanString,
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
   const option = props.props.option as CheckboxSchema['option'] | undefined;
   const optionLabel = option?.label;
@@ -180,11 +176,11 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
 }
 
 function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, handlers, currentForm } = useFormFieldController(name, { toFormValue: coerceBooleanString });
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { value, handlers, presentation } = useFormFieldController(name, {
+    toFormValue: coerceBooleanString,
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
   const option = props.props.option as SwitchSchema['option'] | undefined;
   const checked = Boolean(value);
@@ -206,11 +202,10 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
 }
 
 function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value, handlers, currentForm } = useFormFieldController(name);
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
   const options = Array.isArray(props.props.options) ? props.props.options : [];
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -247,11 +242,10 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
 }
 
 function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema>) {
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const { value: rawValue, handlers, currentForm } = useFormFieldController(name);
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { value: rawValue, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
   const value = Array.isArray(rawValue) ? rawValue : [];
   const options = Array.isArray(props.props.options) ? props.props.options : [];

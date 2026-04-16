@@ -1,26 +1,24 @@
 import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
-import { useCurrentForm, useCurrentFormModelGeneration, useRenderScope } from '@nop-chaos/flux-react';
+import { useCurrentFormModelGeneration } from '@nop-chaos/flux-react';
 import { Button } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   readCheckboxGroupValue,
   resolveFieldLabelContent,
   resolveFieldLabelText,
-  useFieldPresentation
+  useFormFieldController
 } from '../field-utils';
 import type { TagListSchema } from '../schemas';
 import { FieldHint, FieldLabel } from './shared';
 
 export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
-  const scope = useRenderScope();
-  const currentForm = useCurrentForm();
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const value = readCheckboxGroupValue(scope, name);
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
+  const value = readCheckboxGroupValue(scope, name);
   const labelContent = resolveFieldLabelContent(props);
   const labelText = resolveFieldLabelText(props, name);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];

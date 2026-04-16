@@ -7,12 +7,13 @@ import type {
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { useCurrentForm, useCurrentFormState, useCurrentFormModelGeneration, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentFormState, useCurrentFormModelGeneration, useScopeSelector } from '@nop-chaos/flux-react';
 import {
   formLabelFieldRule,
   readFieldValue,
   resolveFieldLabelContent,
   useFieldPresentation,
+  useFormFieldController,
 } from '../../field-utils';
 import { Button, cn, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
@@ -40,12 +41,10 @@ function toGroupValue(value: unknown): ConditionGroupValue {
 }
 
 export function ConditionBuilderRenderer(props: RendererComponentProps<ConditionBuilderSchema>) {
-  const scope = useRenderScope();
-  const currentForm = useCurrentForm();
-  const name = String(props.props.name ?? props.schema.name ?? '');
-  const presentation = useFieldPresentation(name, currentForm, {
+  const name = String(props.props.name ?? '');
+  const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required ?? props.schema.required)
+    required: Boolean(props.props.required)
   });
   const labelContent = resolveFieldLabelContent(props);
 
