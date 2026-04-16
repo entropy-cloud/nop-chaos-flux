@@ -19,7 +19,6 @@
     "@nop-chaos/ui": "workspace:*",
     "lucide-react": "^1.7.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
     "use-sync-external-store": "^1.6.0"
   },
   "devDependencies": {

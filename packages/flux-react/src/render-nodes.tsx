@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useId, useMemo } from 'react';
 import type {
+  BaseSchema,
   CompileSchemaOptions,
   CompiledTemplate,
   RenderFragmentOptions,
@@ -14,6 +15,26 @@ import { useRendererRuntime, useRenderScope, useCurrentActionScope, useCurrentCo
 import { NodeMetaContext, RenderInstancePathContext } from './contexts';
 import { createFragmentScopeChange } from './fragment-scope';
 import { NodeRenderer } from './node-renderer';
+
+/**
+ * Bridge resolved props to schema type for complex nested properties.
+ *
+ * This utility provides a type-safe way to access complex schema properties
+ * (like `items`, `columns`, `fields`) from `props.props`. The runtime props
+ * are `Record<string, unknown>` because they are dynamically resolved;
+ * this function makes the type bridge explicit and centralized.
+ *
+ * @example
+ * ```tsx
+ * function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
+ *   const schemaProps = useSchemaProps(props);
+ *   const items = schemaProps.items; // TypeScript knows this is TabsItemSchema[]
+ * }
+ * ```
+ */
+export function useSchemaProps<S extends BaseSchema>(props: RendererComponentProps<S>): Readonly<S> {
+  return props.props as unknown as Readonly<S>;
+}
 
 function getOwnerTemplatePath(input: {
   ownerNodeInstance?: import('@nop-chaos/flux-core').NodeInstance;

@@ -103,11 +103,19 @@ export function useRendererEnv() {
   return useRendererRuntime().env;
 }
 
+/**
+ * Subscribe to scope data changes with a selector function.
+ *
+ * The generic parameter `S` allows callers to specify the expected shape of scope data
+ * for type-safe selection. Since scope stores hold dynamic data determined at runtime,
+ * the internal cast from `Record<string, unknown>` to `S` is a necessary type bridge
+ * that transfers type responsibility to the caller's selector.
+ */
 export function useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn: (a: T, b: T) => boolean = Object.is): T {
   const scope = useRenderScope();
   const store = scope.store;
-  const subscribe = store?.subscribe ?? (() => emptyUnsubscribe);
-  const getSnapshot = () => (store?.getSnapshot() ?? scope.readVisible()) as unknown as S;
+  const subscribe = useMemo(() => store?.subscribe ?? (() => emptyUnsubscribe), [store]);
+  const getSnapshot = useMemo(() => () => (store?.getSnapshot() ?? scope.readVisible()) as unknown as S, [store, scope]);
 
   return useSyncExternalStoreWithSelector(
     subscribe,
@@ -118,9 +126,16 @@ export function useScopeSelector<T, S = Record<string, unknown>>(selector: (scop
   );
 }
 
+/**
+ * Subscribe to scope's own data changes (excluding inherited parent data).
+ *
+ * Similar to `useScopeSelector`, the generic parameter `S` allows type-safe selection.
+ * The internal cast is a type bridge for dynamic scope data.
+ */
 export function useOwnScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn: (a: T, b: T) => boolean = Object.is): T {
   const scope = useRenderScope();
   const subscribe = useMemo(() => createScopeOwnSubscribe(scope), [scope]);
+  // Type bridge: scope stores hold dynamic data; caller specifies expected shape via S
   const getSnapshot = () => scope.readOwn() as unknown as S;
 
   return useSyncExternalStoreWithSelector(
@@ -141,16 +156,16 @@ export function useCurrentFormState<T>(
   equalityFn: (a: T, b: T) => boolean = Object.is
 ): T {
   const form = useCurrentForm();
-  const subscribe = form?.store.subscribe ?? (() => () => undefined);
-  const getSnapshot = () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE;
+  const subscribe = useMemo(() => form?.store.subscribe ?? (() => () => undefined), [form]);
+  const getSnapshot = useMemo(() => () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE, [form]);
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, equalityFn);
 }
 
 export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] {
   const form = useCurrentForm();
-  const subscribe = form?.store.subscribe ?? (() => () => undefined);
-  const getSnapshot = () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE;
+  const subscribe = useMemo(() => form?.store.subscribe ?? (() => () => undefined), [form]);
+  const getSnapshot = useMemo(() => () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE, [form]);
   const stablePath = query?.path;
   const stableOwnerPath = query?.ownerPath;
   const stableRule = query?.rule;
@@ -170,8 +185,8 @@ export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] 
 
 export function useCurrentFormError(query: FormErrorQuery): ValidationError | undefined {
   const form = useCurrentForm();
-  const subscribe = form?.store.subscribe ?? (() => () => undefined);
-  const getSnapshot = () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE;
+  const subscribe = useMemo(() => form?.store.subscribe ?? (() => () => undefined), [form]);
+  const getSnapshot = useMemo(() => () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE, [form]);
   const stablePath = query?.path;
   const stableOwnerPath = query?.ownerPath;
   const stableRule = query?.rule;
@@ -326,8 +341,8 @@ export function useRenderFragment() {
 
 export function useCurrentFormModelGeneration(): number {
   const form = useCurrentForm();
-  const subscribe = form?.store.subscribe ?? (() => () => undefined);
-  const getSnapshot = () => form?.modelGeneration ?? 0;
+  const subscribe = useMemo(() => form?.store.subscribe ?? (() => () => undefined), [form]);
+  const getSnapshot = useMemo(() => () => form?.modelGeneration ?? 0, [form]);
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, (n) => n, Object.is);
 }

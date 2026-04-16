@@ -4,7 +4,7 @@ import { NodeErrorBoundary } from './node-error-boundary';
 import type {
   ActionScope,
   ComponentHandleRegistry,
-  CompiledNodeRuntimeState,
+  NodeRuntimeState,
   RendererComponentProps,
   ResolvedNodeMeta,
   ResolvedNodeProps,
@@ -55,7 +55,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const currentPage = useCurrentPage();
   const currentSurfaceRuntime = useCurrentSurfaceRuntime();
   const mountedCid = props.mountedCid;
-  const nodeState = useMemo<CompiledNodeRuntimeState>(
+  const nodeState = useMemo<NodeRuntimeState>(
     () => createTemplateNodeRuntimeState(props.node),
     [props.node]
   );
@@ -94,7 +94,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     [isStatic, props.scope]
   );
 
-  const { meta: baseMeta } = useSyncExternalStoreWithSelector(
+  const { meta: baseMeta, resolvedProps: baseResolvedProps } = useSyncExternalStoreWithSelector(
     subscribe,
     getSnapshot,
     getSnapshot,
@@ -124,16 +124,8 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const activeActionScope = props.actionScope;
   const activeComponentRegistry = props.componentRegistry;
   const renderScope = props.scope;
-  const importedMeta = resolvedMeta;
-  const importedResolvedProps = runtime.resolveNodeProps(props.node, renderScope, nodeState);
-  const importedResolvedClassName = resolveClassAliases(importedMeta.className, mergedClassAliases);
-  const importedMetaWithCid = importedMeta.cid === mountedCid
-    ? importedMeta
-    : { ...importedMeta, cid: mountedCid };
-  const finalResolvedMeta = importedResolvedClassName !== importedMetaWithCid.className
-    ? { ...importedMetaWithCid, className: importedResolvedClassName }
-    : importedMetaWithCid;
-  const resolvedComponentProps = useNodeSourceProps(props.node, importedResolvedProps.value, renderScope);
+  const finalResolvedMeta = resolvedMeta;
+  const resolvedComponentProps = useNodeSourceProps(props.node, baseResolvedProps.value, renderScope);
   const nodeInstance = useMemo(
     () => createNodeInstance({
       templateNode: props.node,
@@ -323,7 +315,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     componentRegistryPolicy: props.node.component.componentRegistryPolicy
   }, props.actionScope, props.componentRegistry);
   const nodeImports = getNodeImports(props.node);
-  const importSetupState = useMemo<CompiledNodeRuntimeState>(
+  const importSetupState = useMemo<NodeRuntimeState>(
     () => createTemplateNodeRuntimeState(props.node),
     [props.node]
   );

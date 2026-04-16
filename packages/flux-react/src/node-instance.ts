@@ -1,5 +1,5 @@
 import type {
-  CompiledNodeRuntimeState,
+  NodeRuntimeState,
   InstanceFrame,
   NodeInstance,
   NodeState,
@@ -7,7 +7,7 @@ import type {
   TemplateNode
 } from '@nop-chaos/flux-core';
 
-function toNodeState(state: CompiledNodeRuntimeState, mounted: boolean): NodeState {
+function toNodeState(state: NodeRuntimeState, mounted: boolean): NodeState {
   return {
     metaState: state.meta,
     propsState: state.props,
@@ -19,7 +19,7 @@ function toNodeState(state: CompiledNodeRuntimeState, mounted: boolean): NodeSta
   };
 }
 
-export function createTemplateNodeRuntimeState(templateNode: TemplateNode): CompiledNodeRuntimeState {
+export function createTemplateNodeRuntimeState(templateNode: TemplateNode): NodeRuntimeState {
   const metaEntries: Record<string, any> = {};
   const meta = templateNode.metaProgram;
 
@@ -41,7 +41,7 @@ export function createTemplateNodeRuntimeState(templateNode: TemplateNode): Comp
 export function createNodeInstance<S extends import('@nop-chaos/flux-core').BaseSchema>(input: {
   templateNode: TemplateNode<S>;
   scope: ScopeRef;
-  state: CompiledNodeRuntimeState;
+  state: NodeRuntimeState;
   cid: number | undefined;
   instancePath?: readonly InstanceFrame[];
   mounted: boolean;

@@ -1,6 +1,6 @@
 export { createDefaultEnv, createDefaultRegistry } from './defaults';
 export { createSchemaRenderer } from './schema-renderer';
-export { resolveRendererSlotContent, hasRendererSlotContent } from './render-nodes';
+export { resolveRendererSlotContent, hasRendererSlotContent, useSchemaProps } from './render-nodes';
 export {
   mergeActionContext,
   createHelpers,
