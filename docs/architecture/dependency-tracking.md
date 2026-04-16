@@ -10,7 +10,7 @@ This document is normative architecture for dependency tracking concerns.
 
 ## Precedence
 
-The top-level primitive model is defined in `docs/architecture/frontend-programming-model.md` (section "Dependency Tracking Is A Core Execution Baseline"). This document provides the concrete design for how that baseline is implemented and how it should converge.
+The top-level primitive model is defined in `docs/architecture/frontend-programming-model.md` (section "Dependency Tracking Is A Core Execution Baseline"). This document provides the concrete design for how that baseline is implemented and where the remaining follow-up still lives.
 
 If this document conflicts with `docs/architecture/frontend-programming-model.md` about primitive roles or semantic rules, the top-level document wins.
 
@@ -217,7 +217,7 @@ This system does not use `ScopeDependencySet`, `ScopeChange`, or `scopeChangeHit
 
 ---
 
-## 2. Current Gaps
+## 2. Remaining Gaps
 
 ### Gap 1: Unknown And Empty Dependencies Are Conflated
 
@@ -230,28 +230,16 @@ Current consequences:
 - dynamic reactions populate dependencies on activation, but static reactions and static sources remain conservative forever
 - the runtime has no way to represent an explicit empty dependency set distinct from "not collected yet"
 
-### Gap 2: Deep-Path Tracking Is More Precise Than The Runtime Needs
+### Gap 2: Explicit Declaration Is Still Optional
 
-Flux executes against lexical scopes. In practice, most evaluations care that they read binding `user`, not whether they reached `user.name` or `user.profile.age`.
+The active runtime baseline is explicit roots first, runtime fallback second.
 
-Current deep-path tracking creates:
-- larger dependency sets
-- more churn for conditional and nested access patterns
-- extra matching work on every scope change
-- tighter coupling to object shape than the lexical model needs
+Current consequences:
+- `dependsOn` is authoritative when present
+- source/reaction still fall back to runtime-collected roots when `dependsOn` is absent
+- development diagnostics that compare declared roots with runtime reads are not implemented yet
 
-### Gap 3: Wildcard Is Currently Attached At The Wrong Granularity
-
-Whole-scope enumeration really does mean wildcard.
-Nested object enumeration usually does not.
-
-Examples:
-- `Object.keys(scope)` depends on the whole lexical scope
-- `Object.keys(user)` depends on binding `user`, not on unrelated bindings such as `flag` or `theme`
-
-Current recursive proxy design promotes both patterns to wildcard.
-
-### Gap 4: Ephemeral Evaluations Discard Dependency Information
+### Gap 3: Ephemeral Evaluations Discard Dependency Information
 
 `runtime.evaluate()` and related ad hoc evaluation paths compile/evaluate values outside an owning runtime state and discard any dependency information they could have collected.
 
@@ -262,19 +250,7 @@ This includes current uses such as:
 
 Not all of these need to participate in source/reaction invalidation today. The missing piece is not merely "preserve everything"; it is that the ownership boundary is currently undocumented.
 
-### Gap 5: Self-Referential Write Prevention Is Imprecise
-
-In `source-registry.ts`, the self-write guard:
-
-```typescript
-if (targetPath && change.paths.every(p => p === targetPath || p.startsWith(`${targetPath}.`))) {
-  return;
-}
-```
-
-skips the entire callback only if ALL changed paths are the source's own target. If a scope change includes both the source's target and an unrelated path like `["data", "flag"]`, the callback still continues even though only `"flag"` is relevant after filtering the self-write.
-
-### Gap 6: Collection And Row-Scope Invalidation Is Underspecified
+### Gap 4: Collection And Row-Scope Invalidation Is Underspecified
 
 The current change surface reports raw paths such as `tableData.3.name`.
 
@@ -285,17 +261,17 @@ That is enough for conservative invalidation, but it does not define the desired
 
 This is especially important for tables and loops.
 
-### Gap 7: Validation Uses A Separate Dependency Substrate
+### Gap 5: Validation Uses A Separate Dependency Substrate
 
 Scope dependency tracking (Proxy-based, runtime) and validation dependency tracking (compile-time, explicit) share no infrastructure. This is not a correctness issue, but it is a maintenance seam that should remain explicit.
 
 ---
 
-## 3. Target Design: Explicit Roots First, Lexical-Root Fallback
+## 3. Stable Design Baseline: Explicit Roots First, Lexical-Root Fallback
 
 ### 3.1 Model
 
-The tracking unit should converge from deep member paths to lexical root bindings.
+The tracking unit is lexical root bindings, not deep member paths.
 
 Examples of root bindings:
 - `user`
@@ -543,7 +519,7 @@ This direction is correct because data visibility flows downward through lexical
 
 ---
 
-## 5. Remaining Convergence Path
+## 5. Remaining Follow-Up Work
 
 ### Phase 1: Correctness Fixes (Completed)
 
@@ -572,6 +548,7 @@ This direction is correct because data visibility flows downward through lexical
 
 12. Revisit ephemeral evaluation ownership only if `stopWhen`, action guards, or similar paths need to participate in producer/watcher invalidation.
 13. Keep validation separate unless a concrete reuse case outweighs the coupling cost.
+14. If the product later requires stricter declaration-first authoring, add dev-only and then authoring-time diagnostics for missing `dependsOn` instead of widening runtime fallback semantics.
 
 ---
 

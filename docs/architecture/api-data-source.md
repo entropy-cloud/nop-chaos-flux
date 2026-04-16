@@ -516,7 +516,7 @@ Its semantics should be:
 
 Flux should not require authors to manually enumerate source dependencies for normal computed-style usage.
 
-Preferred model:
+Current model:
 
 1. when a producer declares dependency roots explicitly, runtime uses that declaration as authoritative
 2. otherwise runtime collects dependency roots dynamically during evaluation
@@ -529,7 +529,7 @@ This model gives:
 - behavior aligned with lexical scope rather than deep object shape
 - a clear escape hatch for advanced cases through an explicit producer-level declaration
 
-Any future explicit carrier such as `dependsOn` belongs on `data-source` / `reaction`, not on `ApiSchema`.
+The explicit dependency carrier is `dependsOn` on `data-source` / `reaction`, not on `ApiSchema`.
 
 When an upstream root changes:
 
@@ -561,7 +561,7 @@ More precisely:
 - disposing a scope should also dispose the source/reaction registrations owned by that scope
 - this must not be modeled by turning `ScopeRef` itself into a behavior registry
 
-A practical first implementation shape is:
+The current implementation shape is:
 
 ```ts
 interface RuntimeSourceRegistry {
@@ -858,21 +858,24 @@ It should not become:
 
 Its purpose is to model data-driven side effects that are awkward or impossible to express as pure derived values.
 
-## Current Implementation Status
+## Current Implementation Baseline
 
 Current code already implements part of this model:
 
 - API-backed `data-source` orchestration lives in `@nop-chaos/flux-runtime`
 - `DataSourceRenderer` is already a `null` renderer that only wires lifecycle
 - request execution, cache reads/writes, polling timers, stop-condition evaluation, and abort lifecycle are runtime-owned
-
-Current code is not yet fully converged to the target model:
-
-- formula-backed and api-backed `data-source` values are now unified under the same scope-scoped runtime source registry, with runtime-owned registration, replacement, refresh, and disposal
-- explicit `dependsOn` roots are now wired on both `data-source` and `reaction`; when absent, runtime still falls back to runtime-collected dependency paths from formula/request evaluation
+- formula-backed and api-backed `data-source` values are unified under the same scope-scoped runtime source registry, with runtime-owned registration, replacement, refresh, and disposal
+- explicit `dependsOn` roots are wired on both `data-source` and `reaction`; when absent, runtime still falls back to runtime-collected dependency roots from formula/request evaluation
 - `resultMapping`, `statusPath`, named publication, `mergeToScope`, and runtime debug snapshots are all part of the current baseline and covered by focused runtime tests
-- API-backed sources still allow legacy merge semantics when neither `name` nor `dataPath` is declared; this is compatibility-oriented and non-normative
-- dependency matching still uses the current path-based runtime substrate rather than the narrower future explicit-roots-only model discussed above
+
+Remaining compatibility-oriented gaps:
+
+- anonymous formula-backed sources may still fall back to runtime `id` for compatibility; new schema should not rely on that path
+- unnamed API-backed sources do not implicitly publish or merge when both `name` and `dataPath` are absent
+- `dataPath` remains a compatibility publication override; new schema should use `name` as the default publication path
+- `mergeToScope` remains the only narrowed compatibility-style publish extension beyond the named publication path and should not be expanded into a parallel main contract
+- dependency invalidation is already root-normalized, but runtime fallback still exists when `dependsOn` is absent
 - richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete beyond the current debug snapshot plus bounded-fire safety rail
 
 ## dataPath vs ActionSchema.dataPath

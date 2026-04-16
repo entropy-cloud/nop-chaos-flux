@@ -92,8 +92,6 @@ Choose the smallest document that matches the task.
 | Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
 | Inspect a DingTalk workflow tree example (TreeDocument JSON, DesignerConfig, FlowLong conversion) | `docs/examples/dingtalk-workflow-tree.md` | `docs/architecture/flow-designer/tree-mode.md` |
 | Inspect an action flow tree example (TreeDocument JSON, lowering to ActionSchema) | `docs/examples/action-flow-tree.md` | `docs/architecture/flow-designer/tree-mode.md`, `docs/architecture/action-algebra-formal-spec.md` |
-| Inspect a DingTalk workflow tree example (TreeDocument JSON, DesignerConfig, FlowLong conversion) | `docs/examples/dingtalk-workflow-tree.md` | `docs/architecture/flow-designer/tree-mode.md` |
-| Inspect an action flow tree example (TreeDocument JSON, lowering to ActionSchema) | `docs/examples/action-flow-tree.md` | `docs/architecture/flow-designer/tree-mode.md`, `docs/architecture/action-algebra-formal-spec.md` |
 | Review prototype lessons or external research notes | `docs/references/` | the related architecture file for the active baseline |
 | Quickly review recent doc work, design notes, or near-term next steps | `docs/logs/` (daily files) | the most relevant active doc |
 | Understand nop-chaos-flux's architecture position vs industry frameworks | `docs/analysis/2026-04-04-nop-chaos-flux-comparison-report.md` | `docs/architecture/flux-core.md` |

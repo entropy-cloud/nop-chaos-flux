@@ -658,4 +658,4 @@ CSS file: `packages/spreadsheet-renderers/src/canvas-styles.css`
 - `docs/architecture/renderer-markers-and-selectors.md` - DOM marker protocol
 - `packages/ui/src/index.ts` - Authoritative UI component export list
 - `packages/flux-core/src/index.ts` - `BaseSchema.classAliases` type
-- `packages/flux-runtime/src/class-aliases.ts` - Resolution implementation
+- `packages/flux-core/src/class-aliases.ts` - Resolution implementation

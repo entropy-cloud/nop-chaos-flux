@@ -22,10 +22,10 @@ The architecture baseline keeps these properties:
 - `ScopeRef` is a data scope, not a behavior registry; see `packages/flux-runtime/src/scope.ts`
 - source/reaction runtime ownership may still be scoped by `ScopeRef.id`, but that ownership should live in runtime sidecars rather than as methods on `ScopeRef`
 - if a scope-scoped runtime sidecar is needed, prefer a `RendererRuntime`-owned `scopeEntries` structure keyed by `ScopeRef.id`
-- actions are dispatched by a centralized built-in dispatcher keyed by `action.action`; see `packages/flux-runtime/src/action-runtime.ts:70`
-- `ActionSchema` uses `action: string` and optional structured fields such as `args?: Record<string, SchemaValue>`; see `packages/flux-core/src/index.ts:847`
-- React renderers can only change descendant scope explicitly through fragment render options such as `render({ scope })` or `render({ data })`; see `packages/flux-react/src/index.tsx:195` and `packages/flux-react/src/index.tsx:202`
-- flow-designer and report-designer architecture already assume `schema reads fixed host scope snapshot` and `writes go through namespaced actions`; see `docs/architecture/flow-designer/design.md:192` and `docs/architecture/report-designer/design.md:292`
+- actions are dispatched by a centralized built-in dispatcher keyed by `action.action`; see `packages/flux-runtime/src/action-runtime.ts`
+- `ActionSchema` uses `action: string` and optional structured fields such as `args?: Record<string, SchemaValue>`; see `packages/flux-core/src/types/actions.ts`
+- React renderers can only change descendant scope explicitly through fragment render options such as `render({ scope })` or `render({ data })`; see `packages/flux-react/src/index.tsx`
+- flow-designer and report-designer architecture already assume `schema reads fixed host scope snapshot` and `writes go through namespaced actions`; see `docs/architecture/flow-designer/design.md` and `docs/architecture/report-designer/design.md`
 
 Those constraints mean the extension model must preserve:
 
@@ -54,7 +54,7 @@ But it becomes awkward for complex domain hosts and imported libraries because:
 - action authors sometimes need to reach one specific component instance such as a form, table, or designer shell by id or name
 - data scope and behavior lookup are currently forced through unrelated mechanisms
 
-Flow-designer already demonstrates the pressure point. The current renderer has direct `core.*` calls for canvas and palette behavior in `packages/flow-designer-renderers/src/index.tsx:154`, `packages/flow-designer-renderers/src/index.tsx:226`, and nearby code, while the documented target architecture prefers `designer:*` actions resolved through `ActionScope` and mapped to the host bridge behind that boundary.
+Flow-designer demonstrates the current mixed boundary. The runtime already exposes a `designer` namespace provider through `ActionScope`, and schema-visible actions such as toolbar commands can dispatch `designer:*`. The remaining pressure point is that owner-shell code still contains direct `core.*` and command-adapter interaction for some internal coordination paths.
 
 ## Main Design Rule
 
@@ -152,7 +152,7 @@ It keeps current semantics:
 
 - path lookup along the parent chain via `get(path)`
 - own-scope writes via `update(path, value)`
-- optional merged-object materialization via `read()`
+- visible lexical reads via `readVisible()` and explicit plain-object materialization via `materializeVisible()` when a flattened snapshot is required
 
 It must not become the main registry for arbitrary callable behaviors.
 
@@ -373,11 +373,12 @@ Do not make the design depend on implicit bare action names like `save` or `vali
 
 For clarity, the runtime action namespace separator is `:` for dispatched action names such as `designer:addNode`, `report-designer:preview`, and `demo:open`.
 
-Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `openDialog`, `closeDialog`, `openDrawer`, and `showToast`.
+Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `dialog`, `openDialog`, `closeDialog`, `openDrawer`, and `showToast`.
 
 Compatibility note:
 
 - older built-in selectors such as `submitForm` and `refreshTable` may still exist in code and tests during convergence
+- `dialog` and `openDialog` currently coexist in the runtime; owner docs should state which name new schema authoring should prefer instead of implying only one exists
 - new schema authoring should prefer semantic-owner or instance-targeted entry points instead of re-expanding those older built-ins into examples when a narrower contract exists
 
 ### Built-In Versus Extended Actions
@@ -971,9 +972,9 @@ High-frequency canvas interactions still belong in the imperative canvas/bridge 
 - `designer-page` injects a fixed host data scope for `doc`, `selection`, `activeNode`, `activeEdge`, and runtime summary
 - `designer-page` also owns a local action scope with the `designer` namespace provider
 - toolbar, inspector, and dialog schema fragments are rendered explicitly inside that host boundary
-- those fragments use `designer:*` actions, not direct `core.*` calls
+- schema-driven fragments use `designer:*` actions; remaining direct `core.*` calls are owner-internal implementation debt, not the authoring contract
 
-This aligns with the existing bridge and fixed-host-scope intent in `docs/architecture/flow-designer/api.md:85` and `docs/architecture/flow-designer/design.md:192`.
+This aligns with the existing bridge and fixed-host-scope intent in `docs/architecture/flow-designer/api.md` and `docs/architecture/flow-designer/design.md`.
 
 ## Report-Designer And Spreadsheet Use
 
@@ -1078,28 +1079,12 @@ This is necessary because debugging namespaced action resolution otherwise becom
 - keep action-scope lookup simple exact-match resolution, not fuzzy search or dynamic inheritance rules
 - keep component-target resolution explicit and indexed by stable ids/names rather than tree walking on every dispatch
 
-## Migration Plan
+## Implementation Baseline And Remaining Follow-Up
 
-### Phase 1: Introduce action-scope infrastructure
-
-- define `ActionScope` and `ActionNamespaceProvider`
-- keep `ScopeRef` unchanged as the data scope contract
-- add runtime support for delegating non-built-in namespaced actions
-- define `ComponentHandleRegistry` and explicit component-targeted invocation contracts
-
-### Phase 2: Adopt in complex hosts
-
-- adapt flow-designer host renderers to expose a `designer` namespace provider
-- adapt future spreadsheet/report-designer hosts to expose `spreadsheet` and `report-designer` providers
-- register explicit component handles for forms and other addressable component instances that need method invocation by id or name
-- keep direct imperative host interaction only for high-frequency canvas/editor loops
-
-### Phase 3: Add `xui:imports`
-
-- define import spec authoring
-- add trusted module loader policy
-- register imported namespaces on container-owned action scopes
-- expose import loading/error diagnostics
+- `ActionScope`, `ActionNamespaceProvider`, `ComponentHandleRegistry`, and `component:<method>` dispatch are already part of the runtime baseline
+- host families such as Flow Designer, Spreadsheet, and Report Designer already publish local namespaced providers through `ActionScope`
+- `xui:imports` is already part of the active import/capability model
+- remaining follow-up is about narrowing mixed adoption boundaries, especially where owner-shell code still uses direct host/runtime calls for internal coordination while schema-facing interactions already use namespaced actions
 
 ## Node-Local Versus Owner-Local Capability Boundaries
 

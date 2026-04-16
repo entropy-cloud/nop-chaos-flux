@@ -8,7 +8,7 @@ Use it after `docs/architecture/frontend-programming-model.md` when you need the
 
 - how schema values are compiled and evaluated
 - how runtime, scope, forms, pages, and actions fit together
-- which design directions are current behavior versus future refinement
+- what the current behavior baseline is and where compatibility gaps still remain
 
 Precedence note:
 
@@ -148,7 +148,7 @@ runtime node instances + action dispatch + page/form runtimes
 concrete component render
 ```
 
-Current code still routes through `SchemaCompiler` and `CompiledSchemaNode`. Treat that as the implementation in flight, not the target architecture contract.
+`SchemaCompiler` still produces `CompiledSchemaNode` as a compiler-facing artifact, but the active React render path is already `CompiledTemplate -> TemplateNode -> NodeInstance`.
 
 ## Layer Responsibilities
 
@@ -164,7 +164,7 @@ Owns:
 
 Current internal-id baseline:
 
-- `cid` should converge to live runtime node identity allocated at mount time for a mounted inspectable node
+- `cid` is the live runtime node identity allocated for a mounted inspectable node
 - template-level node identity should use `templateNodeId`
 - runtime state should be instantiated separately from template structure
 - full compiled node trees should not be reused as if they were live runtime instances; compile-once benefits should come from immutable template reuse plus per-instance runtime state
@@ -178,7 +178,7 @@ Owns:
 - static versus dynamic classification
 - program generation for dynamic execution and identity reuse
 
-Target note:
+Current boundary note:
 
 - runtime state allocation belongs to runtime instantiation, not to template ownership
 
@@ -337,11 +337,11 @@ Important note:
 - current compiled nodes carry resolved event metadata and validation metadata in addition to props and regions
 - `props` is a compiled runtime value, not a raw plain object
 
-Transitional note:
+Current compatibility note:
 
 - `createRuntimeState()` is part of the current code shape
-- it should be treated as legacy/current-only once the template/instance split is implemented
-- the clean-slate target is `TemplateNode` plus explicit `NodeInstance` allocation during `instantiate(...)`
+- the main render path already uses `TemplateNode` plus explicit `NodeInstance` allocation during `instantiate(...)`
+- remaining `CompiledSchemaNode` usage is compiler/tooling residue, not the runtime-facing render contract
 
 ## Action Baseline
 
@@ -405,22 +405,19 @@ Priority order:
 4. keep selector subscriptions narrow
 5. apply debounce and cancellation to high-frequency actions and async validation
 
-## What Is Current Versus Future
-
-### Current implementation
+## Current Baseline
 
 - `value-or-region` and `event` field kinds already exist in active code
 - opened surface state is represented by `SurfaceEntry` under the shared `SurfaceRuntime` / `SurfaceStore` family
 - form runtime already supports validation state and first-class array operations
 - subtree validation already has graph-aware entry points
 
-### Future or still-evolving areas
+## Remaining Gaps
 
+- `CompiledSchemaNode` still exists as a public compiler/tooling-facing type and is not yet fully narrowed back to internal-only usage
 - richer validation normalization phases
 - more compiler-described composite validation in place of runtime registration
 - further reduction of duplicated validation projections where it can be done safely
-
-Those topics should be described as design direction, not as already-finalized public behavior.
 
 ## Designs No Longer Preferred
 

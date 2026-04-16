@@ -18,6 +18,11 @@ When code changes alter any of the following, review docs in the same change or 
 - package ownership boundaries
 - examples that demonstrate the affected behavior
 
+Audit guardrail:
+
+- do not treat append-only history files under `docs/logs/` as defects just because they exceed the active-doc size guideline
+- size-based doc cleanup should focus on active owner docs whose current baseline becomes hard to maintain, not on logs/discussions/analysis files that are intentionally historical
+
 ## Fast Path
 
 If you do not know where to start, check these first:
