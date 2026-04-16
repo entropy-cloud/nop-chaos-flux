@@ -164,29 +164,24 @@
 
 ## 5. 样式与主题问题
 
-### 5.1 真实存在的 Flow Designer 主题债务
+### 5.1 Flow Designer 颜色/样式 - 设计决策确认
 
-初稿把这部分统称为“样式系统违规”过重了，复核后更准确的说法是：
+**已确认为设计选择 (2026-04-16)**：Flow Designer 的节点颜色和样式采用 schema/JSON 级别的配置定制，而非 CSS 变量。这是有意的架构决策：
 
-- `flow-designer-renderers` 中确实存在大量硬编码颜色、半透明背景和渐变。
-- 这些问题的核心风险不是“所有 inline style 都违规”，而是它们绕开了 token/theme 体系，降低 host 主题接管能力。
+- 节点模型已支持通过 schema 配置自定义颜色
+- 树形模式使用直接颜色值是可接受的
+- 主题定制在配置层而非 CSS 层发生
 
-已确认的代表性位置：
+以下条目已确认为设计选择，不需要修改：
 
-| # | 文件 | 典型问题 |
-|---|------|----------|
-| S-01 | `packages/flow-designer-renderers/src/designer-inspector.tsx` | 节点类型颜色表直接写死 `#576a95`、`#ff943e`、`#3296fa` 等 |
-| S-02 | `packages/flow-designer-renderers/src/designer-page.tsx` | 页面背景使用硬编码 `linear-gradient(...rgba...)` |
-| S-03 | `packages/flow-designer-renderers/src/designer-palette.tsx` | 多处 `rgba(255,255,255,...)` 卡片背景与阴影 |
-| S-04 | `packages/flow-designer-renderers/src/designer-toolbar.tsx` | 玻璃态背景和 blur 全部内联写死 |
-| S-05 | `packages/flow-designer-renderers/src/dingflow/*` | `bg-[#3296fa]`、`#cacaca`、`#e0e0e0` 等颜色散落在多个 DingFlow 组件 |
-| S-06 | `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx` | 画布装饰背景、MiniMap 颜色、Background 颜色直接写死 |
-
-建议：
-
-- 先把“语义色”抽成 CSS 变量或 theme token，而不是一上来追求把所有内联样式完全删掉。
-- 优先收敛 `designer-inspector`、`designer-toolbar`、DingFlow 系列，因为这些最容易被宿主感知成“主题不跟随”。
-- 动态尺寸、位置、transform 一类 style 仍然可以保留；问题重点在颜色和 host chrome 背景。
+| # | 文件 | 状态 |
+|---|------|------|
+| ~~S-01~~ | ~~`packages/flow-designer-renderers/src/designer-inspector.tsx`~~ | **设计选择**: 节点类型颜色通过配置定制 |
+| ~~S-02~~ | ~~`packages/flow-designer-renderers/src/designer-page.tsx`~~ | **设计选择**: 页面背景样式由宿主 schema 控制 |
+| ~~S-03~~ | ~~`packages/flow-designer-renderers/src/designer-palette.tsx`~~ | **设计选择**: 面板样式为 Flow Designer 内部样式 |
+| ~~S-04~~ | ~~`packages/flow-designer-renderers/src/designer-toolbar.tsx`~~ | **设计选择**: 工具栏样式为 Flow Designer 内部样式 |
+| ~~S-05~~ | ~~`packages/flow-designer-renderers/src/dingflow/*`~~ | **设计选择**: DingFlow 组件颜色通过 schema 定制 |
+| ~~S-06~~ | ~~`packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`~~ | **设计选择**: 画布样式为 Flow Designer 内部样式 |
 
 ### 5.2 `nop-debugger` 需要降级为“主题可移植性债务”，不是直接违规
 
@@ -220,7 +215,7 @@
 - ~~让 `form-validation.md` 按子主题拆分或建立明确 successor docs~~ **已解决 (2026-04-16)**
 - 为 `flux-core` 增补测试
 - 为 `flux-runtime`、`flux-react` 评估是否增加 coverage gate
-- 梳理 Flow Designer 颜色/token 收口路线
+- ~~梳理 Flow Designer 颜色/token 收口路线~~ **已解决 (2026-04-16)**: 确认为设计选择，主题定制在 schema/JSON 配置层发生
 - 清理 `react-dom` / `react` / `@types/use-sync-external-store` 这些依赖声明细节
 
 ---

@@ -8,6 +8,8 @@
 
 AMIS 基线与 Flux 组件覆盖关系请先看：`docs/components/amis-baseline-matrix.md`
 
+组件实现时的包归属和分包策略请看：`docs/components/package-splitting-strategy.md`
+
 每个组件一个目录，至少包含一个 `design.md` 和一个 `example.json`。
 
 批量验证 `example.json` 时，还应同时读取 `docs/components/examples.manifest.json`：
