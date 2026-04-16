@@ -2,6 +2,7 @@
   "name": "@nop-chaos/theme-tokens",
   "version": "0.1.0",
   "private": true,
+  "sideEffects": ["*.css"],
   "type": "module",
   "exports": {
     "./styles.css": "./src/styles.css"
