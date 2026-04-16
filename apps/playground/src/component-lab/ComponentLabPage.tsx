@@ -24,6 +24,7 @@ const CATEGORY_LABELS: Record<RendererCategory, string> = {
 const PACKAGE_SHORT: Record<string, string> = {
   '@nop-chaos/flux-renderers-basic': 'basic',
   '@nop-chaos/flux-renderers-form': 'form',
+  '@nop-chaos/flux-renderers-form-advanced': 'form-advanced',
   '@nop-chaos/flux-renderers-data': 'data',
 };
 

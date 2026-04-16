@@ -3,6 +3,7 @@ import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-rea
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import schemaJson from './conditionBuilderSchema.json';
 
@@ -13,6 +14,7 @@ interface ConditionBuilderPageProps {
 const pageRegistry = createDefaultRegistry();
 registerBasicRenderers(pageRegistry);
 registerFormRenderers(pageRegistry);
+registerFormAdvancedRenderers(pageRegistry);
 registerDataRenderers(pageRegistry);
 
 const SchemaRenderer = createSchemaRenderer();

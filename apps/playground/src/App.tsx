@@ -3,6 +3,7 @@ import { NopDebuggerPanel, createNopDebugger } from '@nop-chaos/nop-debugger';
 import { createDefaultRegistry } from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { HomePage } from './pages/HomePage';
 import { ComponentLabPage } from './component-lab';
@@ -21,6 +22,7 @@ const LazyPerformanceTablePage = lazy(() => import('./pages/PerformanceTablePage
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
+registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
 
 let flowDesignerRegistered = false;

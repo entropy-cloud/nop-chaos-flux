@@ -3,6 +3,7 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry, createDefaultEnv } from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import type { BaseSchema } from '@nop-chaos/flux-core';
 import { attachScopeDebugToSchema } from './scope-debug';
@@ -10,6 +11,7 @@ import { attachScopeDebugToSchema } from './scope-debug';
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
+registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
 
 const SchemaRenderer = createSchemaRenderer();

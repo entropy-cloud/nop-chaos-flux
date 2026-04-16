@@ -4,6 +4,7 @@ import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-rea
 import type { ExecutableApiRequest, RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { Button } from '@nop-chaos/ui';
 import {
@@ -25,6 +26,7 @@ interface PerformanceTablePageProps {
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
+registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
 
 const SchemaRenderer = createSchemaRenderer();

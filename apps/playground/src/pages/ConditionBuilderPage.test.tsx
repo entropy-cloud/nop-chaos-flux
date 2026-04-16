@@ -5,6 +5,7 @@ import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/flux-rea
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { conditionBuilderPageSchema } from './ConditionBuilderPage';
 
@@ -12,6 +13,7 @@ describe('ConditionBuilderPage schema', () => {
   const registry = createDefaultRegistry();
   registerBasicRenderers(registry);
   registerFormRenderers(registry);
+  registerFormAdvancedRenderers(registry);
   registerDataRenderers(registry);
   const formulaCompiler = createFormulaCompiler();
   const SchemaRenderer = createSchemaRenderer();

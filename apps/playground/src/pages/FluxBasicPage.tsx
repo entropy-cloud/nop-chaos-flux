@@ -5,6 +5,7 @@ import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-rea
 import type { ApiRequestContext, ExecutableApiRequest, RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import schemaJson from './fluxBasicPageSchema.json';
 
@@ -22,6 +23,7 @@ const users = [
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
+registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
 
 const SchemaRenderer = createSchemaRenderer();

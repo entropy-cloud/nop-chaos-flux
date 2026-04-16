@@ -5,6 +5,7 @@ import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux
 import { createRendererRegistry, validateSchema } from '@nop-chaos/flux-runtime';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 
 function extractJsonExample(markdown: string) {
@@ -22,6 +23,7 @@ describe('docs schema examples', () => {
     const registry = createRendererRegistry();
     registerBasicRenderers(registry);
     registerFormRenderers(registry);
+    registerFormAdvancedRenderers(registry);
     registerDataRenderers(registry);
 
     const markdown = readFileSync(resolve(process.cwd(), '../../docs/examples/user-management-schema.md'), 'utf8');

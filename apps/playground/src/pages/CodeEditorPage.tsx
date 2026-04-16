@@ -3,6 +3,7 @@ import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-rea
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { codeEditorRendererDefinition } from '@nop-chaos/flux-code-editor';
 
@@ -256,6 +257,7 @@ interface CodeEditorPageProps {
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
+registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
 registry.register(codeEditorRendererDefinition);
 

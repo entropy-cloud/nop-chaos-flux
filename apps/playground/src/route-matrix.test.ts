@@ -12,6 +12,7 @@ import {
 import { RENDERER_LAB_REGISTRY } from './component-lab/renderer-lab-registry';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
+import { formAdvancedRendererDefinitions } from '@nop-chaos/flux-renderers-form-advanced';
 import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
 
 describe('Route model - parseRoute', () => {
@@ -101,6 +102,9 @@ describe('Route inventory - live renderer coverage', () => {
     for (const def of formRendererDefinitions) {
       expect(routeIds.has(def.type), `form renderer '${def.type}' missing from route inventory`).toBe(true);
     }
+    for (const def of formAdvancedRendererDefinitions) {
+      expect(routeIds.has(def.type), `form-advanced renderer '${def.type}' missing from route inventory`).toBe(true);
+    }
   });
 
   it('data renderer routes cover all registered data renderer types', () => {
@@ -119,7 +123,7 @@ describe('Route inventory - live renderer coverage', () => {
   });
 
   it('total shared renderer count matches live registry sizes', () => {
-    const liveTotal = basicRendererDefinitions.length + formRendererDefinitions.length + dataRendererDefinitions.length;
+    const liveTotal = basicRendererDefinitions.length + formRendererDefinitions.length + formAdvancedRendererDefinitions.length + dataRendererDefinitions.length;
     expect(ALL_SHARED_RENDERER_ROUTES.length).toBe(liveTotal);
   });
 });

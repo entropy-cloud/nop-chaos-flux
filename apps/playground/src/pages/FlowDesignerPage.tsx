@@ -4,6 +4,7 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createActionScope } from '@nop-chaos/flux-runtime';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
 import { Tabs, TabsList, TabsTrigger } from '@nop-chaos/ui';
@@ -14,6 +15,7 @@ import actionFlowTreeSchema from '../schemas/action-flow-tree-schema.json';
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
+registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
 registerFlowDesignerRenderers(registry);
 

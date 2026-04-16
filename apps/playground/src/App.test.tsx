@@ -16,6 +16,10 @@ vi.mock('@nop-chaos/flux-renderers-form', () => ({
   registerFormRenderers: () => undefined
 }));
 
+vi.mock('@nop-chaos/flux-renderers-form-advanced', () => ({
+  registerFormAdvancedRenderers: () => undefined
+}));
+
 vi.mock('@nop-chaos/flux-renderers-data', () => ({
   registerDataRenderers: () => undefined
 }));
