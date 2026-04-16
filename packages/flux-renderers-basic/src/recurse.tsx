@@ -4,6 +4,36 @@ import { StructuralLoopContext } from './structural-loop-context';
 import type { RecurseSchema } from './schemas';
 import { createStructuralRepeatedTemplateId, renderStructuralLoop, resolveLoopBindings } from './structural-loop';
 
+interface RecurseProviderProps {
+  loopContext: NonNullable<React.ContextType<typeof StructuralLoopContext>>;
+  ownerId: string;
+  path: string;
+  bindings: ReturnType<typeof resolveLoopBindings>;
+  itemData: Record<string, unknown> | undefined;
+  keyBy: RecurseSchema['keyBy'];
+  instancePath: RendererComponentProps<RecurseSchema>['instancePath'];
+  depth: number;
+  children: React.ReactNode;
+}
+
+function RecurseProvider(props: RecurseProviderProps) {
+  const contextValue = useMemo(
+    () => ({
+      ...props.loopContext,
+      ownerId: props.ownerId,
+      path: props.path,
+      bindings: props.bindings,
+      itemData: props.itemData,
+      keyBy: props.keyBy,
+      instancePath: props.instancePath,
+      depth: props.depth
+    }),
+    [props.loopContext, props.ownerId, props.path, props.bindings, props.itemData, props.keyBy, props.instancePath, props.depth]
+  );
+
+  return <StructuralLoopContext.Provider value={contextValue}>{props.children}</StructuralLoopContext.Provider>;
+}
+
 export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
   const loopContext = useContext(StructuralLoopContext);
   const itemName = props.props.itemName as string | undefined;
@@ -36,22 +66,20 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
         maxDepth,
         currentDepth: loopContext.depth,
         renderItem: ({ itemKey, slotBindings, instancePath, depth }) => (
-            <StructuralLoopContext.Provider
-              key={itemKey}
-              value={{
-                ...loopContext,
-                ownerId: props.id,
-                path: props.path,
-                bindings,
-                itemData,
-                keyBy,
-                instancePath,
-                depth
-              }}
-            >
-              {loopContext.renderBody(slotBindings, instancePath)}
-            </StructuralLoopContext.Provider>
-          )
+          <RecurseProvider
+            key={itemKey}
+            loopContext={loopContext}
+            ownerId={props.id}
+            path={props.path}
+            bindings={bindings}
+            itemData={itemData}
+            keyBy={keyBy}
+            instancePath={instancePath}
+            depth={depth}
+          >
+            {loopContext.renderBody(slotBindings, instancePath)}
+          </RecurseProvider>
+        )
       })}
     </>
   );
