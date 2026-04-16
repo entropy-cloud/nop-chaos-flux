@@ -14,7 +14,7 @@ const defaultConfig: ReportDesignerConfig = {
 };
 
 describe('designer-core profile and adapters', () => {
-  let core: ReportDesignerCore;
+  let _core: ReportDesignerCore;
   let doc: ReportTemplateDocument;
   let sheetId: string;
 
@@ -22,7 +22,7 @@ describe('designer-core profile and adapters', () => {
     const spreadsheetDoc = createEmptyDocument();
     sheetId = spreadsheetDoc.workbook.sheets[0].id;
     doc = createReportTemplateDocument(spreadsheetDoc);
-    core = createReportDesignerCore({ document: doc, config: defaultConfig });
+    _core = createReportDesignerCore({ document: doc, config: defaultConfig });
   });
 
   it('should filter field sources by profile ids', async () => {
