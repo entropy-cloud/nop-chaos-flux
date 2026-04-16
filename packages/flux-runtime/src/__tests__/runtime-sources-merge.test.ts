@@ -289,6 +289,7 @@ describe('createRendererRuntime', () => {
       loading: true,
       ready: false,
       stale: true,
+      failureCount: 0,
       error: undefined
     });
 
@@ -300,10 +301,54 @@ describe('createRendererRuntime', () => {
         loading: false,
         ready: true,
         stale: false,
+        failureCount: 0,
         error: undefined
       });
     });
 
+    registration.dispose();
+  });
+
+  it('skips replace-style target publication when the fetched payload is shallow-equal', async () => {
+    let callCount = 0;
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>() => {
+      callCount += 1;
+      return {
+        ok: true,
+        status: 200,
+        data: { value: 'same' } as T
+      };
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: fetcherImpl
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+
+    const registration = runtime.registerDataSource({
+      id: 'shared-ref-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        dataPath: 'payload',
+        api: { url: '/api/same' }
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ value: 'same' });
+    });
+
+    const firstRef = page.scope.get('payload');
+    await registration.controller.refresh();
+    const secondRef = page.scope.get('payload');
+
+    expect(callCount).toBe(2);
+    expect(secondRef).toBe(firstRef);
     registration.dispose();
   });
 
@@ -339,6 +384,8 @@ describe('createRendererRuntime', () => {
           targetPath: 'total',
           statusPath: 'totalStatus',
           started: true,
+          status: 'success',
+          fetchStatus: 'idle',
           loading: false,
           stale: false,
           hasValue: true,

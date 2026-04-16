@@ -137,9 +137,10 @@ describe('createRendererRuntime', () => {
 
     expect(registration.controller.getState()).toMatchObject({
       started: true,
-      loading: true,
+      status: 'success',
+      fetchStatus: 'fetching',
       stale: true,
-      value: { value: 'initial' },
+      data: { value: 'initial' },
       error: undefined
     });
 
@@ -151,9 +152,10 @@ describe('createRendererRuntime', () => {
 
     expect(registration.controller.getState()).toMatchObject({
       started: true,
-      loading: false,
+      status: 'success',
+      fetchStatus: 'idle',
       stale: false,
-      value: { value: 'loaded' },
+      data: { value: 'loaded' },
       error: undefined
     });
 
@@ -194,9 +196,11 @@ describe('createRendererRuntime', () => {
 
     expect(registration.controller.getState()).toMatchObject({
       started: true,
-      loading: false,
+      status: 'success',
+      fetchStatus: 'idle',
       stale: true,
-      value: { value: 'initial' }
+      data: { value: 'initial' },
+      failureCount: 1
     });
     expect(registration.controller.getState().error).toBeInstanceOf(Error);
 
@@ -231,9 +235,10 @@ describe('createRendererRuntime', () => {
     expect(page.scope.get('total')).toBe(15);
     expect(registration.controller.getState()).toMatchObject({
       started: true,
-      loading: false,
+      status: 'success',
+      fetchStatus: 'idle',
       stale: false,
-      value: 15,
+      data: 15,
       error: undefined
     });
 

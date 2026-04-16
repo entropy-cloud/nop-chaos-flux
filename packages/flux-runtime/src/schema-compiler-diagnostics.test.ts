@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererDefinition, HostCapabilityProjectionManifest } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry } from './registry';
 import { createSchemaCompiler, validateSchema } from './schema-compiler';
+import {
+  createHostActionValidationContext,
+  isInsideCapableRegion,
+  parseNamespacedAction,
+  validateHostAction
+} from './schema-compiler/host-action-validation';
+import { createSchemaCompilerDiagnosticsContext } from './schema-compiler/diagnostics';
 
 const strictTextRenderer: RendererDefinition = {
   type: 'strict-text',
@@ -113,6 +120,48 @@ describe('schema compiler diagnostics', () => {
     ]);
   });
 
+  it('validates xui:version as a string version selector', () => {
+    const compiler = createCompiler(strictTextRenderer);
+
+    expect(compiler.validate?.({
+      type: 'strict-text',
+      text: 'Hello',
+      'xui:version': '1.x'
+    } as any)).toEqual([]);
+  });
+
+  it('rejects non-string xui:version', () => {
+    const compiler = createCompiler(strictTextRenderer);
+
+    expect(compiler.validate?.({
+      type: 'strict-text',
+      text: 'Hello',
+      'xui:version': 123
+    } as any)).toEqual([
+      expect.objectContaining({
+        code: 'invalid-namespace-property',
+        message: 'xui:version must be a string version selector.',
+        source: 'namespace'
+      })
+    ]);
+  });
+
+  it('rejects empty xui:version', () => {
+    const compiler = createCompiler(strictTextRenderer);
+
+    expect(compiler.validate?.({
+      type: 'strict-text',
+      text: 'Hello',
+      'xui:version': ''
+    } as any)).toEqual([
+      expect.objectContaining({
+        code: 'invalid-namespace-property',
+        message: 'xui:version must be a non-empty version selector string.',
+        source: 'namespace'
+      })
+    ]);
+  });
+
   it('accepts namespaced action payload fields when args is omitted', () => {
     const compiler = createCompiler(actionHostRenderer);
 
@@ -146,5 +195,358 @@ describe('schema compiler diagnostics', () => {
         path: '/txt'
       })
     ]);
+  });
+});
+
+describe('host action validation', () => {
+  const designerManifest: HostCapabilityProjectionManifest = {
+    family: 'designer',
+    version: '1.0.0',
+    projection: {
+      fields: {
+        doc: { schema: { kind: 'object', fields: {} } },
+        activeNode: { schema: { kind: 'union', anyOf: [{ kind: 'null' }, { kind: 'object', fields: {} }] } }
+      }
+    },
+    capabilities: {
+      namespace: 'designer',
+      methods: {
+        addNode: {
+          args: {
+            kind: 'object',
+            fields: {
+              nodeType: { kind: 'string' },
+              position: {
+                kind: 'object',
+                fields: {
+                  x: { kind: 'number' },
+                  y: { kind: 'number' }
+                }
+              }
+            },
+            optional: ['position']
+          }
+        },
+        updateNodeData: {
+          args: {
+            kind: 'object',
+            fields: {
+              nodeId: { kind: 'string' },
+              data: { kind: 'unknown' }
+            }
+          }
+        },
+        deprecatedMethod: {
+          deprecated: true
+        }
+      }
+    }
+  };
+
+  it('parseNamespacedAction parses valid namespaced actions', () => {
+    expect(parseNamespacedAction('designer:addNode')).toEqual({ namespace: 'designer', method: 'addNode' });
+    expect(parseNamespacedAction('report-designer:preview')).toEqual({ namespace: 'report-designer', method: 'preview' });
+  });
+
+  it('parseNamespacedAction returns undefined for non-namespaced actions', () => {
+    expect(parseNamespacedAction('setValue')).toBeUndefined();
+    expect(parseNamespacedAction('ajax')).toBeUndefined();
+    expect(parseNamespacedAction(':method')).toBeUndefined();
+    expect(parseNamespacedAction('namespace:')).toBeUndefined();
+  });
+
+  it('isInsideCapableRegion returns true for whole-owner mode', () => {
+    const ctx = createHostActionValidationContext({
+      family: 'designer',
+      version: '1.0.0',
+      manifest: designerManifest
+    });
+    expect(isInsideCapableRegion(ctx)).toBe(true);
+    expect(isInsideCapableRegion(ctx, 'toolbar')).toBe(true);
+  });
+
+  it('isInsideCapableRegion returns false when no context', () => {
+    expect(isInsideCapableRegion(undefined)).toBe(false);
+    expect(isInsideCapableRegion(undefined, 'toolbar')).toBe(false);
+  });
+
+  it('isInsideCapableRegion handles region-scoped mode', () => {
+    const ctx = createHostActionValidationContext({
+      family: 'designer',
+      version: '1.0.0',
+      manifest: designerManifest,
+      capabilityPublication: {
+        mode: 'region-scoped',
+        capableRegions: ['toolbar', 'inspector'],
+        transitiveInheritance: true
+      }
+    });
+    expect(isInsideCapableRegion(ctx)).toBe(false);
+    expect(isInsideCapableRegion(ctx, 'toolbar')).toBe(true);
+    expect(isInsideCapableRegion(ctx, 'dialogs')).toBe(false);
+  });
+
+  it('validateHostAction passes for valid host action', () => {
+    const ctx = createHostActionValidationContext({
+      family: 'designer',
+      version: '1.0.0',
+      manifest: designerManifest
+    });
+    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
+      { diagnostics: { enabled: true } },
+      'validate'
+    );
+
+    const result = validateHostAction(
+      'designer:addNode',
+      { nodeType: 'task' },
+      '/onClick',
+      diagnosticsCtx,
+      ctx
+    );
+
+    expect(result).toBe(true);
+    expect(diagnosticsCtx.diagnostics).toEqual([]);
+  });
+
+  it('validateHostAction reports unknown method', () => {
+    const ctx = createHostActionValidationContext({
+      family: 'designer',
+      version: '1.0.0',
+      manifest: designerManifest
+    });
+    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
+      { diagnostics: { enabled: true } },
+      'validate'
+    );
+
+    const result = validateHostAction(
+      'designer:unknownMethod',
+      {},
+      '/onClick',
+      diagnosticsCtx,
+      ctx
+    );
+
+    expect(result).toBe(false);
+    expect(diagnosticsCtx.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'unknown-host-capability-method',
+        source: 'host-contract'
+      })
+    ]);
+  });
+
+  it('validateHostAction reports invalid args shape', () => {
+    const ctx = createHostActionValidationContext({
+      family: 'designer',
+      version: '1.0.0',
+      manifest: designerManifest
+    });
+    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
+      { diagnostics: { enabled: true } },
+      'validate'
+    );
+
+    const result = validateHostAction(
+      'designer:addNode',
+      { nodeType: 123 },
+      '/onClick',
+      diagnosticsCtx,
+      ctx
+    );
+
+    expect(result).toBe(false);
+    expect(diagnosticsCtx.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'invalid-host-capability-args',
+        source: 'host-contract'
+      })
+    ]);
+  });
+
+  it('validateHostAction warns on deprecated method', () => {
+    const ctx = createHostActionValidationContext({
+      family: 'designer',
+      version: '1.0.0',
+      manifest: designerManifest
+    });
+    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
+      { diagnostics: { enabled: true } },
+      'validate'
+    );
+
+    const result = validateHostAction(
+      'designer:deprecatedMethod',
+      undefined,
+      '/onClick',
+      diagnosticsCtx,
+      ctx
+    );
+
+    expect(result).toBe(true);
+    expect(diagnosticsCtx.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'unknown-host-capability-method',
+        severity: 'warning',
+        source: 'host-contract'
+      })
+    ]);
+  });
+
+  it('validateHostAction skips validation for non-host namespace', () => {
+    const ctx = createHostActionValidationContext({
+      family: 'designer',
+      version: '1.0.0',
+      manifest: designerManifest
+    });
+    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
+      { diagnostics: { enabled: true } },
+      'validate'
+    );
+
+    const result = validateHostAction(
+      'other:method',
+      {},
+      '/onClick',
+      diagnosticsCtx,
+      ctx
+    );
+
+    expect(result).toBe(true);
+    expect(diagnosticsCtx.diagnostics).toEqual([]);
+  });
+
+  it('validateHostAction skips validation for built-in actions', () => {
+    const ctx = createHostActionValidationContext({
+      family: 'designer',
+      version: '1.0.0',
+      manifest: designerManifest
+    });
+    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
+      { diagnostics: { enabled: true } },
+      'validate'
+    );
+
+    const result = validateHostAction(
+      'setValue',
+      {},
+      '/onClick',
+      diagnosticsCtx,
+      ctx
+    );
+
+    expect(result).toBe(true);
+    expect(diagnosticsCtx.diagnostics).toEqual([]);
+  });
+});
+
+describe('standalone validation with hostContractContext', () => {
+  const testManifest: import('@nop-chaos/flux-core').HostCapabilityProjectionManifest = {
+    family: 'designer',
+    version: '1.0',
+    projection: { fields: {} },
+    capabilities: {
+      namespace: 'designer',
+      methods: {
+        selectNode: {
+          args: { kind: 'object', fields: { nodeId: { kind: 'string' } } }
+        },
+        undo: {}
+      }
+    }
+  };
+
+  const buttonRenderer: RendererDefinition = {
+    type: 'button',
+    component: () => null,
+    propSchema: { label: { type: 'string' } },
+    fields: [{ key: 'onClick', kind: 'event' }]
+  };
+
+  it('validates host actions in event handlers when hostContractContext is provided', () => {
+    const diagnostics = validateSchema({
+      schema: {
+        type: 'button',
+        label: 'Test',
+        onClick: { action: 'designer:unknownMethod' }
+      },
+      registry: createRendererRegistry([buttonRenderer]),
+      options: {
+        validation: {
+          hostContractContext: {
+            family: 'designer',
+            version: '1.0',
+            manifest: testManifest
+          }
+        }
+      }
+    });
+
+    const hostDiagnostics = diagnostics.filter(d => d.source === 'host-contract');
+    expect(hostDiagnostics).toHaveLength(1);
+    expect(hostDiagnostics[0].code).toBe('unknown-host-capability-method');
+    expect(hostDiagnostics[0].message).toContain('unknownMethod');
+  });
+
+  it('validates host action args shape when hostContractContext is provided', () => {
+    const diagnostics = validateSchema({
+      schema: {
+        type: 'button',
+        label: 'Test',
+        onClick: { action: 'designer:selectNode', args: { nodeId: 123 } }
+      },
+      registry: createRendererRegistry([buttonRenderer]),
+      options: {
+        validation: {
+          hostContractContext: {
+            family: 'designer',
+            version: '1.0',
+            manifest: testManifest
+          }
+        }
+      }
+    });
+
+    const hostDiagnostics = diagnostics.filter(d => d.source === 'host-contract');
+    expect(hostDiagnostics).toHaveLength(1);
+    expect(hostDiagnostics[0].code).toBe('invalid-host-capability-args');
+  });
+
+  it('passes validation for valid host actions when hostContractContext is provided', () => {
+    const diagnostics = validateSchema({
+      schema: {
+        type: 'button',
+        label: 'Test',
+        onClick: { action: 'designer:selectNode', args: { nodeId: 'node-1' } }
+      },
+      registry: createRendererRegistry([buttonRenderer]),
+      options: {
+        validation: {
+          hostContractContext: {
+            family: 'designer',
+            version: '1.0',
+            manifest: testManifest
+          }
+        }
+      }
+    });
+
+    const hostDiagnostics = diagnostics.filter(d => d.source === 'host-contract');
+    expect(hostDiagnostics).toHaveLength(0);
+  });
+
+  it('skips host action validation when hostContractContext is not provided', () => {
+    const diagnostics = validateSchema({
+      schema: {
+        type: 'button',
+        label: 'Test',
+        onClick: { action: 'designer:unknownMethod' }
+      },
+      registry: createRendererRegistry([buttonRenderer])
+    });
+
+    const hostDiagnostics = diagnostics.filter(d => d.source === 'host-contract');
+    expect(hostDiagnostics).toHaveLength(0);
   });
 });

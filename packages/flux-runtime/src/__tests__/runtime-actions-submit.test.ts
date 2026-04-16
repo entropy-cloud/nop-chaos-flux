@@ -289,6 +289,57 @@ describe('createRendererRuntime', () => {
     });
   });
 
+  it('retries submitForm requests through shared request execution', async () => {
+    let callCount = 0;
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>() => {
+          callCount += 1;
+
+          if (callCount < 3) {
+            throw new Error(`submit-fail-${callCount}`);
+          }
+
+          return {
+            ok: true,
+            status: 200,
+            data: { saved: true } as T
+          };
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'retry-submit-form',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'submitForm',
+        retry: { times: 2, delay: 0 },
+        api: {
+          url: '/api/profile',
+          method: 'post'
+        }
+      },
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form
+      }
+    );
+
+    expect(result).toMatchObject({ ok: true, data: { saved: true }, attempts: 3, failureCount: 2 });
+    expect(callCount).toBe(3);
+  });
+
   it('applies compile plugins before and after schema compilation', () => {
     const plugin: RendererPlugin = {
       name: 'compile-hooks',

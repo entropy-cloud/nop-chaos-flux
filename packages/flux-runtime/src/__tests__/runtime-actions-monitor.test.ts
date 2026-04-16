@@ -51,6 +51,7 @@ describe('createRendererRuntime', () => {
     );
 
     expect(result).toMatchObject({ ok: true, attempts: 3, data: { ok: true } });
+    expect(result.failureCount).toBe(2);
     expect(fetcher).toHaveBeenCalledTimes(3);
   });
 
@@ -86,8 +87,64 @@ describe('createRendererRuntime', () => {
 
     expect(result.ok).toBe(false);
     expect(result.attempts).toBe(3);
+    expect(result.failureCount).toBe(3);
     expect(result.error).toBeInstanceOf(Error);
     expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+
+  it('supports exponential retry strategy for ajax actions through request execution', async () => {
+    vi.useFakeTimers();
+
+    try {
+      let callCount = 0;
+      const runtime = createRendererRuntime({
+        registry: createRendererRegistry([textRenderer]),
+        env: {
+          ...env,
+          fetcher: async <T>() => {
+            callCount += 1;
+
+            if (callCount < 3) {
+              throw new Error(`fail-${callCount}`);
+            }
+
+            return {
+              ok: true,
+              status: 200,
+              data: { ok: true } as T
+            };
+          }
+        },
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      });
+      const page = runtime.createPageRuntime({});
+
+      const promise = runtime.dispatch(
+        {
+          action: 'ajax',
+          retry: { times: 2, delay: 10, strategy: 'exponential' },
+          api: { url: '/api/retry-exp' }
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page
+        }
+      );
+
+      await vi.advanceTimersByTimeAsync(9);
+      expect(callCount).toBe(1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(callCount).toBe(2);
+      await vi.advanceTimersByTimeAsync(19);
+      expect(callCount).toBe(2);
+      await vi.advanceTimersByTimeAsync(1);
+
+      await expect(promise).resolves.toMatchObject({ ok: true, attempts: 3, failureCount: 2 });
+      expect(callCount).toBe(3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('returns a failure result when refreshSource cannot resolve a source id', async () => {

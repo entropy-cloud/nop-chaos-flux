@@ -192,6 +192,69 @@ describe('createRendererRuntime', () => {
     });
   });
 
+  it('runs onSettled after successful actions without replacing the returned result', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ status: 'idle', settled: 'no' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'setValue',
+        componentPath: 'status',
+        value: 'done',
+        onSettled: {
+          action: 'setValue',
+          componentPath: 'settled',
+          value: '${result.data}'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result).toMatchObject({ ok: true, data: 'done' });
+    expect(page.scope.get('settled')).toBe('done');
+  });
+
+  it('runs onSettled after failure without replacing the original failure result', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T })
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ settled: 'no' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'ajax',
+        api: { url: '/api/fail', method: 'get' },
+        onSettled: {
+          action: 'setValue',
+          componentPath: 'settled',
+          value: '${error.message}'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe('boom');
+    expect(page.scope.get('settled')).toBe('boom');
+  });
+
   it('does not run then actions for failure-class results even when continueOnError is enabled', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
