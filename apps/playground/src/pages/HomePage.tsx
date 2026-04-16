@@ -86,6 +86,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mt-6">
           {NAV_CARDS.map((card) => (
             <button
+              type="button"
               key={card.id}
               className="group relative overflow-hidden text-left p-6 rounded-[20px] bg-[var(--nop-nav-surface)] border border-[var(--nop-nav-border)] cursor-pointer transition-[transform,box-shadow,border-color] duration-160 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:shadow-[var(--nop-nav-shadow)] hover:border-[var(--nop-nav-hover-border)]"
               onClick={() => onNavigate(card.id)}

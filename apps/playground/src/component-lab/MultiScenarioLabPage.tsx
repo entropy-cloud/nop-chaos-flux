@@ -58,8 +58,8 @@ export function MultiScenarioLabPage({ introDescription, scenarios }: MultiScena
   return (
     <div className="flex flex-col gap-6" data-testid="multi-scenario-lab">
       <p className="text-sm leading-relaxed text-[var(--nop-body-copy)]">{introDescription}</p>
-      {scenarios.map((scenario, i) => (
-        <ScenarioBlock key={i} {...scenario} />
+      {scenarios.map((scenario, index) => (
+        <ScenarioBlock key={scenario.title || `scenario-${index}`} {...scenario} />
       ))}
     </div>
   );

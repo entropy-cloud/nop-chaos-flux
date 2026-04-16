@@ -65,21 +65,21 @@ test('verifies report designer demo layout styles', async ({ page }) => {
       return { error: `Missing elements: ${missing.join(', ')}` };
     }
 
-    const rootStyle = window.getComputedStyle(root);
-    const headerStyle = window.getComputedStyle(header);
-    const bodyStyle = window.getComputedStyle(body);
-    const fieldPanelStyle = window.getComputedStyle(fieldPanel);
-    const canvasStyle = window.getComputedStyle(canvas);
-    const inspectorStyle = window.getComputedStyle(inspector);
-    const logStyle = window.getComputedStyle(log);
-    const toolbarStyle = window.getComputedStyle(toolbar);
-    const fieldSourceStyle = window.getComputedStyle(fieldSource);
-    const spreadsheetGridStyle = window.getComputedStyle(spreadsheetGrid);
-    const sheetBarStyle = window.getComputedStyle(sheetBar);
-    const sheetTabStyle = window.getComputedStyle(sheetTab);
-    const sheetAddStyle = window.getComputedStyle(sheetAdd);
-    const rowHeaderStyle = window.getComputedStyle(rowHeader);
-    const colHeaderStyle = window.getComputedStyle(colHeader);
+    const rootStyle = window.getComputedStyle(root!);
+    const headerStyle = window.getComputedStyle(header!);
+    const bodyStyle = window.getComputedStyle(body!);
+    const fieldPanelStyle = window.getComputedStyle(fieldPanel!);
+    const canvasStyle = window.getComputedStyle(canvas!);
+    const inspectorStyle = window.getComputedStyle(inspector!);
+    const logStyle = window.getComputedStyle(log!);
+    const toolbarStyle = window.getComputedStyle(toolbar!);
+    const fieldSourceStyle = window.getComputedStyle(fieldSource!);
+    const spreadsheetGridStyle = window.getComputedStyle(spreadsheetGrid!);
+    const sheetBarStyle = window.getComputedStyle(sheetBar!);
+    const sheetTabStyle = window.getComputedStyle(sheetTab!);
+    const sheetAddStyle = window.getComputedStyle(sheetAdd!);
+    const rowHeaderStyle = window.getComputedStyle(rowHeader!);
+    const colHeaderStyle = window.getComputedStyle(colHeader!);
 
     return {
       rootDisplay: rootStyle.display,
@@ -102,7 +102,7 @@ test('verifies report designer demo layout styles', async ({ page }) => {
       fieldSourceDisplay: fieldSourceStyle.display,
       spreadsheetGridDisplay: spreadsheetGridStyle.display,
       spreadsheetGridOverflow: spreadsheetGridStyle.overflow,
-      spreadsheetGridBorderCollapse: window.getComputedStyle((spreadsheetGrid.querySelector('table') as HTMLElement)).borderCollapse,
+      spreadsheetGridBorderCollapse: window.getComputedStyle((spreadsheetGrid!.querySelector('table') as HTMLElement)).borderCollapse,
       sheetBarBg: sheetBarStyle.backgroundColor,
       sheetBarBorderTop: sheetBarStyle.borderTopWidth,
       sheetTabBg: sheetTabStyle.backgroundColor,

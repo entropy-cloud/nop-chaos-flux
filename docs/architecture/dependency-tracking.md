@@ -545,22 +545,22 @@ This direction is correct because data visibility flows downward through lexical
 
 ## 5. Remaining Convergence Path
 
-### Phase 1: Correctness Fixes
+### Phase 1: Correctness Fixes (Completed)
 
-1. Refine the self-write guard so mixed changes filter out only the source's own published root before dependency matching.
-2. Distinguish "unknown dependencies" from any future explicit empty dependency state.
+1. ~~Refine the self-write guard so mixed changes filter out only the source's own published root before dependency matching.~~ **Done**: `filterScopeChangeByIgnoredRoots()` in `scope-change.ts` filters self roots before match.
+2. Distinguish "unknown dependencies" from any future explicit empty dependency state. **Deferred**: Current conservative behavior (`undefined` -> invalidate) remains correct.
 
-### Phase 2: Root-Only Runtime Tracking
+### Phase 2: Root-Only Runtime Tracking (Completed)
 
-3. Change `createScopeDependencyCollector()` and formula scope wrapping so runtime fallback emits lexical root bindings only.
-4. Treat whole-scope enumeration/materialization as wildcard, but keep bound-object enumeration anchored to its root binding.
-5. Normalize changed paths to roots before dependency matching.
+3. ~~Change `createScopeDependencyCollector()` and formula scope wrapping so runtime fallback emits lexical root bindings only.~~ **Done**: `normalizeTrackedPath()` in `flux-formula/src/scope.ts` uses `normalizeRootPath()`.
+4. ~~Treat whole-scope enumeration/materialization as wildcard, but keep bound-object enumeration anchored to its root binding.~~ **Done**: Top-level `ownKeys` records wildcard; nested `ownKeys` records only the root binding.
+5. ~~Normalize changed paths to roots before dependency matching.~~ **Done**: `scopeChangeHitsDependencies()` calls `getChangeRoots()` and `getDependencyRoots()` which use `normalizeRootPaths()`.
 
-### Phase 3: Post-Landing Explicit Declaration Follow-Up
+### Phase 3: Post-Landing Explicit Declaration Follow-Up (Completed)
 
-6. Keep `dependsOn?: string[]` as the producer/watcher-level explicit dependency carrier now that it exists on `DataSourceSchema` and `ReactionSchema`.
-7. Preserve the current runtime rule that explicit roots are authoritative for invalidation, while runtime-collected roots remain the fallback when `dependsOn` is absent.
-8. Optionally add dev-only diagnostics that compare explicit roots with runtime-collected reads.
+6. ~~Keep `dependsOn?: string[]` as the producer/watcher-level explicit dependency carrier now that it exists on `DataSourceSchema` and `ReactionSchema`.~~ **Done**: Both schema types include `dependsOn?: string[]`.
+7. ~~Preserve the current runtime rule that explicit roots are authoritative for invalidation, while runtime-collected roots remain the fallback when `dependsOn` is absent.~~ **Done**: `reaction-runtime.ts` line 73 uses `createRootDependencySet(input.dependsOn)` first, falls back to `collectRuntimeDependencies()` only when absent.
+8. Optionally add dev-only diagnostics that compare explicit roots with runtime-collected reads. **Deferred**: Not yet implemented, low priority.
 
 ### Phase 4: Collection/Row Reconciliation
 

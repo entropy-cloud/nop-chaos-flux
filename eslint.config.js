@@ -69,7 +69,7 @@ module.exports = [
       'react/no-direct-mutation-state': 'error',
       'react/no-find-dom-node': 'error',
       'react/no-is-mounted': 'error',
-      'react/no-array-index-key': 'warn',
+      'react/no-array-index-key': 'error',
       'react/no-render-return-value': 'error',
       'react/no-string-refs': 'error',
       'react/no-unknown-property': 'error',

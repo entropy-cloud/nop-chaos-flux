@@ -1333,3 +1333,12 @@ Flux validation uses the following architecture:
 6. rules are compiled as templates and materialized per run
 7. partial validation is owner-scoped and path-aware
 8. draft validation is isolated in child scopes until commit
+
+## Related Documents
+
+- `docs/architecture/field-binding-and-renderer-contract.md`
+- `docs/architecture/field-metadata-slot-modeling.md`
+- `docs/architecture/flux-runtime-module-boundaries.md`
+- `docs/architecture/scope-ownership-and-isolation.md`
+- `docs/architecture/renderer-runtime.md`
+- `docs/architecture/dependency-tracking.md` (Section 1.9: validation uses a separate dependency substrate)

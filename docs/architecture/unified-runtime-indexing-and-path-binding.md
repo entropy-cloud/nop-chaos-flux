@@ -260,7 +260,7 @@ live 实例轴
 - object array 的 item continuity 按 `itemKey`
 - 但值与校验 remap 仍按 index 处理
 
-需要注意：当前 live `array-field` 实现里，item subtree continuity 仍主要是 index-based；`itemKey` 代表的是推荐演进方向，不是该 renderer 已经完全落地的现状。
+需要注意：当前 live `array-field` 已经为 object item 落地稳定 repeated identity：React key、item scope id/path、以及 child region `instancePath` 会优先按 `itemKey` 解析；但值路径与 validation path 仍保持 index-addressed，而缺失或冲突 key 的对象项仍会退化到兼容索引 identity。
 
 因此，当前最合理的设计不是一次性引入完整的模板路径运行时系统，而是：
 

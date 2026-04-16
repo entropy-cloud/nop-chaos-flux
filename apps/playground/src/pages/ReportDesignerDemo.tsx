@@ -397,9 +397,10 @@ export function ReportDesignerDemo() {
           {log.length === 0 ? (
             <p className="log-empty">Interact with the spreadsheet to see events.</p>
           ) : (
-            log.map((entry, i) => (
-              <div key={i} className="log-entry">{entry}</div>
-            ))
+            log.map((entry, index) => {
+              const logKey = `${entry}-${index}`
+              return <div key={logKey} className="log-entry">{entry}</div>
+            })
           )}
         </div>
       </div>

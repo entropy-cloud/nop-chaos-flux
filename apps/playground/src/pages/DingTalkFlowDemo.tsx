@@ -650,9 +650,12 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
       >
         <Background color="#e0e0e0" gap={20} size={1} />
         <ViewportPortal>
-          {overlays.map((o, i) => (
+          {overlays.map((o, index) => {
+            const overlayKey = `${o.type}-${o.sourceId ?? 'source'}-${o.x}-${o.y}-${index}`
+
+            return (
             <div
-              key={`overlay-${i}`}
+              key={overlayKey}
               className="absolute z-[5] pointer-events-auto nopan nodrag"
               style={{
                 transform: `translate(${o.x}px, ${o.y}px) translate(-50%, -50%)`,
@@ -679,7 +682,8 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
                 </div>
               )}
             </div>
-          ))}
+            )
+          })}
         </ViewportPortal>
       </ReactFlow>
 
