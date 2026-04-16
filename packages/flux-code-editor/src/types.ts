@@ -24,9 +24,23 @@ export interface CodeEditorSchema extends BaseSchema {
   folding?: boolean;
   autoHeight?: boolean;
   allowFullscreen?: boolean;
+  /**
+   * Expression editor configuration. Typed as `any` because `ExpressionEditorConfig`
+   * contains nested object types that don't satisfy `SchemaValue` index signature.
+   * Runtime validation is performed by `isVariableSourceRef` and `isFuncSourceRef`.
+   */
   expressionConfig?: any;
+  /**
+   * SQL editor configuration. Typed as `any` because `SQLEditorConfig`
+   * contains nested object types that don't satisfy `SchemaValue` index signature.
+   * Runtime validation is performed by `isSQLSchemaSourceRef`.
+   */
   sqlConfig?: any;
   editorTheme?: 'light' | 'dark';
+  /**
+   * Editor options passed to CodeMirror. Typed as `any` because the options
+   * structure is defined by CodeMirror and varies by extension.
+   */
   options?: any;
   onChange?: string;
   onFocus?: string;

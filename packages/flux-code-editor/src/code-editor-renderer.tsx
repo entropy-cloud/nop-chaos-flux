@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import type { RendererComponentProps, RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererDefinition, SchemaFieldRule, ActionSchema } from '@nop-chaos/flux-core';
 import type { ApiObject, ActionResult } from '@nop-chaos/flux-core';
 import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
 import { Button } from '@nop-chaos/ui';
@@ -88,7 +88,13 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
   let value: string;
   if (currentForm && name) {
     const formValues = currentForm.store.getState().values;
-    value = String((name.split('.').reduce((obj: any, key: string) => obj?.[key], formValues)) ?? '');
+    const getValue = (obj: unknown, path: string): unknown => {
+      return path.split('.').reduce((current, key) => {
+        if (current == null || typeof current !== 'object') return undefined;
+        return (current as Record<string, unknown>)[key];
+      }, obj);
+    };
+    value = String(getValue(formValues, name) ?? '');
   } else if (name) {
     value = String(scope.get(name) ?? '');
   } else {
@@ -217,39 +223,48 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
 
       let result: ActionResult;
       if (typeof onExecute === 'string') {
-        result = await props.helpers.dispatch({
+        const action: ActionSchema = {
           action: onExecute,
           args: { sql: sqlText },
-        } as any);
+        };
+        result = await props.helpers.dispatch(action);
       } else if (onExecute && typeof onExecute === 'object') {
-        const apiAction: any = {
+        const action: ActionSchema = {
           action: 'ajax',
           api: {
             ...(onExecute as ApiObject),
             data: { sql: sqlText },
           },
         };
-        result = await props.helpers.dispatch(apiAction);
+        result = await props.helpers.dispatch(action);
       } else {
-        result = await props.helpers.dispatch({
+        const action: ActionSchema = {
           action: 'ajax',
           api: {
             url: '/api/report/execSql',
             method: 'POST',
             data: { sql: sqlText },
           },
-        } as any);
+        };
+        result = await props.helpers.dispatch(action);
       }
 
       if (result.ok && result.data != null) {
         const resultPath = sqlConfig.execution.resultPath;
-        let data = result.data as any;
+        let data: unknown = result.data;
         if (resultPath) {
-          data = resultPath.split('.').reduce((obj: any, key: string) => obj?.[key], data);
+          const parts = resultPath.split('.');
+          for (const key of parts) {
+            if (data == null || typeof data !== 'object') {
+              data = undefined;
+              break;
+            }
+            data = (data as Record<string, unknown>)[key];
+          }
         }
 
         if (Array.isArray(data)) {
-          const columns = data.length > 0 ? Object.keys(data[0]) : [];
+          const columns = data.length > 0 ? Object.keys(data[0] as Record<string, unknown>) : [];
           setSqlResult({ status: 'success', data, columns });
         } else {
           setSqlResult({ status: 'success', data: [{ result: String(data) }], columns: ['result'] });
@@ -260,10 +275,11 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
           message: result.error ? String(result.error) : 'Execution returned no data',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       setSqlResult({
         status: 'error',
-        message: err?.message ?? String(err),
+        message,
       });
     }
   }, [view, sqlConfig, props.helpers]);
