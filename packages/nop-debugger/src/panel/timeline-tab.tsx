@@ -27,12 +27,17 @@ function renderHighlightedText(text: string, query: string) {
   const trimmed = query.trim();
   const regex = new RegExp(`(${escapeRegex(trimmed)})`, 'ig');
   const parts = text.split(regex);
+  let searchFrom = 0;
 
-  return parts.map((part, index) => (
-    part.toLowerCase() === trimmed.toLowerCase()
-      ? <mark key={`${part}-${index}`} className="ndbg-highlight">{part}</mark>
-      : <span key={`${part}-${index}`}>{part}</span>
-  ));
+  return parts.map((part) => {
+    const start = text.indexOf(part, searchFrom);
+    searchFrom = start >= 0 ? start + part.length : searchFrom;
+    const partKey = `${trimmed}:${start}:${part.length}`;
+
+    return part.toLowerCase() === trimmed.toLowerCase()
+      ? <mark key={partKey} className="ndbg-highlight">{part}</mark>
+      : <span key={partKey}>{part}</span>
+  });
 }
 
 function formatClock(timestamp: number) {

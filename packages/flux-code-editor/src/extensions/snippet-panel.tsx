@@ -26,9 +26,9 @@ export function SnippetPanel({ snippets, onInsert }: SnippetPanelProps) {
         />
       </div>
       <PopoverContent align="start" className="w-48 p-1" data-slot="code-editor-snippet-dropdown">
-        {snippets.map((snippet, i) => (
+        {snippets.map((snippet, index) => (
           <Button
-            key={i}
+            key={snippet.name || snippet.template || `snippet-${index}`}
             variant="ghost"
             size="xs"
             className="w-full justify-start gap-2"

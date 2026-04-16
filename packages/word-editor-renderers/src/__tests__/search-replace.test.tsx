@@ -6,7 +6,7 @@ import { SearchReplace } from '../toolbar/SearchReplace.js';
 vi.mock('@nop-chaos/ui', () => {
   return {
     Button: ({ children, onClick, disabled, title, ...props }: any) => (
-      <button data-testid="button" onClick={onClick} disabled={disabled} title={title} {...props}>
+      <button type="button" data-testid="button" onClick={onClick} disabled={disabled} title={title} {...props}>
         {children}
       </button>
     ),
@@ -22,7 +22,7 @@ vi.mock('@nop-chaos/ui', () => {
 
 vi.mock('../toolbar/shared.js', () => ({
   ToolbarButton: ({ icon: Icon, onClick, disabled, title }: any) => (
-    <button data-testid="toolbar-button" onClick={onClick} disabled={disabled} title={title}>
+    <button type="button" data-testid="toolbar-button" onClick={onClick} disabled={disabled} title={title}>
       {Icon && <Icon />}
     </button>
   ),

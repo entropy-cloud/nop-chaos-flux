@@ -5,7 +5,7 @@ import { OutlinePanel } from '../panels/OutlinePanel.js';
 vi.mock('@nop-chaos/ui', () => {
   return {
     Button: ({ children, onClick, ...props }: any) => (
-      <button data-testid="button" onClick={onClick} {...props}>
+      <button type="button" data-testid="button" onClick={onClick} {...props}>
         {children}
       </button>
     ),

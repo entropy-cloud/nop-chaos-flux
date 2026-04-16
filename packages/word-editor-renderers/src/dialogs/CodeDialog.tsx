@@ -148,12 +148,15 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
                 </div>
               ) : (
                 <div className="grid grid-cols-7 gap-0.5 w-24 h-24">
-                  {QR_CODE_PATTERN.map((isFilled, i) => (
+                  {QR_CODE_PATTERN.map((isFilled, index) => {
+                    const qrCellKey = `qr-${index}-${isFilled ? '1' : '0'}`
+                    return (
                     <div
-                      key={i}
+                      key={qrCellKey}
                       className={cn('w-full h-full', isFilled ? 'bg-foreground' : 'bg-muted/50')}
                     />
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>

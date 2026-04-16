@@ -7,7 +7,7 @@ import type { DataSet, DataColumn } from '@nop-chaos/word-editor-core';
 vi.mock('@nop-chaos/ui', () => {
   return {
     Button: ({ children, onClick, ...props }: any) => (
-      <button data-testid="button" onClick={onClick} {...props}>
+      <button type="button" data-testid="button" onClick={onClick} {...props}>
         {children}
       </button>
     ),

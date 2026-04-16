@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import type { DataSetSourceType, DataColumnInput } from '@nop-chaos/word-editor-core'
 import {
@@ -23,17 +23,24 @@ interface DatasetDialogProps {
 }
 
 export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDialogProps) {
+  const nextColumnKeyRef = useRef((initialData?.columns?.length ?? 0))
   const [name, setName] = useState(() => initialData?.name ?? '')
   const [description, setDescription] = useState(() => initialData?.description ?? '')
   const [type, setType] = useState<DataSetSourceType>(() => initialData?.type ?? 'static')
   const [columns, setColumns] = useState<DataColumnInput[]>(() => initialData?.columns ?? [])
+  const [columnKeys, setColumnKeys] = useState<string[]>(() =>
+    (initialData?.columns ?? []).map((_, index) => `column-${index}`)
+  )
 
   const handleAddColumn = () => {
     setColumns([...columns, { name: '', label: '', type: 'static' }])
+    const nextKey = `column-${nextColumnKeyRef.current++}`
+    setColumnKeys((current) => [...current, nextKey])
   }
 
   const handleRemoveColumn = (index: number) => {
     setColumns(columns.filter((_, i) => i !== index))
+    setColumnKeys((current) => current.filter((_, currentIndex) => currentIndex !== index))
   }
 
   const handleColumnChange = (index: number, field: keyof DataColumnInput, value: string) => {
@@ -136,65 +143,69 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {columns.map((column, index) => (
-                      <div key={index} className="flex items-start gap-2 p-3 border rounded-lg">
-                        <div className="flex-1 grid grid-cols-2 gap-2">
-                          <div>
-                            <Label className="text-[10px]">
-                              Name <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                              value={column.name || ''}
-                              onChange={(e) => handleColumnChange(index, 'name', e.target.value)}
-                              placeholder="Column name"
-                              size="sm"
-                            />
+                    {columns.map((column, index) => {
+                      const columnKey = columnKeys[index]
+
+                      return (
+                        <div key={columnKey} className="flex items-start gap-2 p-3 border rounded-lg">
+                          <div className="flex-1 grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-[10px]">
+                                Name <span className="text-destructive">*</span>
+                              </Label>
+                              <Input
+                                value={column.name || ''}
+                                onChange={(e) => handleColumnChange(index, 'name', e.target.value)}
+                                placeholder="Column name"
+                                size="sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Label</Label>
+                              <Input
+                                value={column.label || ''}
+                                onChange={(e) => handleColumnChange(index, 'label', e.target.value)}
+                                placeholder="Column label"
+                                size="sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Type</Label>
+                              <NativeSelect
+                                value={column.type || 'static'}
+                                onChange={(e) => handleColumnChange(index, 'type', e.target.value)}
+                                size="xs"
+                                className="w-full"
+                              >
+                                <NativeSelectOption value="sql">SQL</NativeSelectOption>
+                                <NativeSelectOption value="api">API</NativeSelectOption>
+                                <NativeSelectOption value="mongo">Mongo</NativeSelectOption>
+                                <NativeSelectOption value="static">Static</NativeSelectOption>
+                              </NativeSelect>
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Description</Label>
+                              <Input
+                                value={column.description || ''}
+                                onChange={(e) => handleColumnChange(index, 'description', e.target.value)}
+                                placeholder="Column description"
+                                size="sm"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <Label className="text-[10px]">Label</Label>
-                            <Input
-                              value={column.label || ''}
-                              onChange={(e) => handleColumnChange(index, 'label', e.target.value)}
-                              placeholder="Column label"
-                              size="sm"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-[10px]">Type</Label>
-                            <NativeSelect
-                              value={column.type || 'static'}
-                              onChange={(e) => handleColumnChange(index, 'type', e.target.value)}
-                              size="xs"
-                              className="w-full"
-                            >
-                              <NativeSelectOption value="sql">SQL</NativeSelectOption>
-                              <NativeSelectOption value="api">API</NativeSelectOption>
-                              <NativeSelectOption value="mongo">Mongo</NativeSelectOption>
-                              <NativeSelectOption value="static">Static</NativeSelectOption>
-                            </NativeSelect>
-                          </div>
-                          <div>
-                            <Label className="text-[10px]">Description</Label>
-                            <Input
-                              value={column.description || ''}
-                              onChange={(e) => handleColumnChange(index, 'description', e.target.value)}
-                              placeholder="Column description"
-                              size="sm"
-                            />
-                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => handleRemoveColumn(index)}
+                            title="Remove column"
+                            className="mt-5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => handleRemoveColumn(index)}
-                          title="Remove column"
-                          className="mt-5 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>

@@ -6,7 +6,7 @@ import { ExprInsertDialog } from '../dialogs/ExprInsertDialog.js';
 vi.mock('@nop-chaos/ui', () => {
   return {
     Button: ({ children, onClick, ...props }: any) => (
-      <button data-testid="button" onClick={onClick} {...props}>
+      <button type="button" data-testid="button" onClick={onClick} {...props}>
         {children}
       </button>
     ),
@@ -29,7 +29,7 @@ vi.mock('@nop-chaos/ui', () => {
     Tabs: ({ children }: any) => <div data-testid="tabs">{children}</div>,
     TabsList: ({ children }: any) => <div data-testid="tabs-list">{children}</div>,
     TabsTrigger: ({ children, onClick, ...props }: any) => (
-      <button data-testid="tabs-trigger" onClick={onClick} {...props}>{children}</button>
+      <button type="button" data-testid="tabs-trigger" onClick={onClick} {...props}>{children}</button>
     ),
     TabsContent: ({ children }: any) => <div data-testid="tabs-content">{children}</div>,
     Label: ({ children, ...props }: any) => <label data-testid="label" {...props}>{children}</label>,

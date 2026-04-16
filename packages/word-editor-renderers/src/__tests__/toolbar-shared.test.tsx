@@ -9,6 +9,7 @@ vi.mock('@nop-chaos/ui', () => {
       const { className, title, disabled, 'aria-pressed': ariaPressed, ...rest } = props;
       return (
         <button
+          type="button"
           data-testid={tag}
           title={title}
           disabled={disabled}

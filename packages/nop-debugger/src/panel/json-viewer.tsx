@@ -43,12 +43,16 @@ function JsonNode(props: { data: unknown; path: string; depth: number; maxDepth:
         </span>
         {!collapsed && (
           <div style={{ paddingLeft: 12 }}>
-            {displayItems.map((item, index) => (
-              <div key={index}>
-                <span className="ndbg-json-key">{index}: </span>
-                <JsonNode data={item} path={`${props.path}[${index}]`} depth={depth + 1} maxDepth={maxDepth} defaultExpanded={defaultExpanded} />
-              </div>
-            ))}
+            {displayItems.map((item, index) => {
+              const itemPath = `${props.path}[${index}]`
+
+              return (
+                <div key={itemPath}>
+                  <span className="ndbg-json-key">{index}: </span>
+                  <JsonNode data={item} path={itemPath} depth={depth + 1} maxDepth={maxDepth} defaultExpanded={defaultExpanded} />
+                </div>
+              )
+            })}
             {hasMore && <span className="ndbg-json-null">... and {data.length - 10} more items</span>}
           </div>
         )}

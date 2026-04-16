@@ -60,11 +60,15 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {result.data.map((row, i) => (
-              <TableRow key={i}>
-                {columns.map(col => <TableCell key={col}>{String(row[col] ?? '')}</TableCell>)}
-              </TableRow>
-            ))}
+            {result.data.map((row, index) => {
+              const rowKey = row.id ?? row.key ?? `row-${index}`
+
+              return (
+                <TableRow key={String(rowKey)}>
+                  {columns.map(col => <TableCell key={col}>{String(row[col] ?? '')}</TableCell>)}
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </div>
