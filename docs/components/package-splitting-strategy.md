@@ -44,33 +44,44 @@
 
 | 包 | 源码行数（含测试） | 注册 renderer 数 | 子系统数 |
 |----|-------------------|-----------------|----------|
-| `flux-renderers-basic` | ~1,800 | 16 | 1（结构循环） |
-| `flux-renderers-form` | ~15,800 | 18 | 6（condition-builder、variant-field、detail-view、array-field、composite-field、projected-form） |
-| `flux-renderers-data` | ~2,400 | 4 | 2（table 子系统、chart） |
+| `flux-renderers-basic` | ~1,800（实际 1,791） | 16（含 `scope-debug` dev-only 工具 renderer） | 1（结构循环） |
+| `flux-renderers-form` | ~15,800（实际 15,847） | 21（含 detail-field、detail-view、variant-field 等注册 renderer） | 6（condition-builder、variant-field、detail-view、array-field、composite-field、projected-form） |
+| `flux-renderers-data` | ~2,400（实际 2,380） | 4 | 2（table 子系统、chart） |
 
 `flux-renderers-form` 已超过硬上限，是拆分的第一优先级。
 
-### 1.3 依赖方向单一
+说明：`flux-renderers-basic` 中还有 `scope-debug`（69 行），它是 dev-only 工具 renderer，不属于 92 个 canonical 组件，无 design doc。拆分后留在 basic，不在归属表中列出。
 
-所有 renderer 包遵循统一的依赖方向，不允许 renderer 包之间互相依赖：
+### 1.3 依赖方向约束
+
+所有 renderer 包遵循统一的层级依赖方向：
 
 ```
 flux-core → flux-formula → flux-runtime → flux-react → renderer-*
-                                                          ├─ flux-renderers-basic
-                                                          ├─ flux-renderers-content
-                                                          ├─ flux-renderers-layout
-                                                          ├─ flux-renderers-form
-                                                          ├─ flux-renderers-form-advanced
-                                                          ├─ flux-renderers-data
-                                                          ├─ flux-code-editor
-                                                          └─ domain-specific-*
+                                                           ├─ flux-renderers-basic
+                                                           ├─ flux-renderers-content
+                                                           ├─ flux-renderers-layout
+                                                           ├─ flux-renderers-form → flux-renderers-form-advanced
+                                                           ├─ flux-renderers-data
+                                                           ├─ flux-code-editor
+                                                           └─ domain-specific-*
 ```
 
-如果组件 A 需要复用组件 B 的逻辑，正确做法是：
+**约束规则**：
 
-1. 把共享逻辑下沉到 `flux-runtime` 或 `flux-react`。
-2. 或在 schema 编译阶段通过 lowering 将 A 拆解为对 B 的组合引用（如 `crud` lowering 为 `form` + `table` + `dialog`）。
-3. 不要让 renderer 包之间产生运行时 import。
+1. **禁止横向依赖**：renderer 包之间不允许同级依赖（content ↔ layout、layout ↔ data 等）。
+2. **允许下游依赖**：高层级 renderer 包可以依赖低层级 renderer 包。当前允许的有：
+   - `form` → `basic`（form 渲染器引用 basic 的 schema 定义和类型）
+   - `form-advanced` → `form`（复合字段需要 form owner 类型和 field-utils）
+   - `data` → `basic`（crud lowering 引用 basic 的 dialog schema）
+3. **禁止反向依赖**：低层级包不能 import 高层级包（basic 不能 import form，form 不能 import form-advanced）。
+4. **编译期 lowering 例外**：如果组件 A 通过 schema 编译期 lowering 拆解为对组件 B 的组合引用（如 `crud` lowering 为 `form` + `table` + `dialog`），这种引用是 schema 级别的，不等于运行时 import，不构成依赖。
+
+如果运行时逻辑需要跨包共享，正确做法是：
+
+1. 把共享逻辑下沉到 `flux-runtime` 或 `flux-react`（优先）。
+2. 或在 form 中暴露类型和工具函数供 form-advanced import（当前做法，见 §4 依赖矩阵）。
+3. 不要为了规避依赖方向而复制代码。
 
 ### 1.4 领域包保持独立
 
@@ -216,13 +227,14 @@ src/
 
 **预估规模**：~2,000–3,000 行。
 
-**依赖**：`flux-react`, `flux-runtime`, `flux-formula`, `flux-core`, `flux-renderers-basic`（仅用于 lowering/组合引用，不作为运行时依赖）, `ui`, `lucide-react`。
+**依赖**：`flux-react`, `flux-runtime`, `flux-formula`, `flux-core`, `ui`, `lucide-react`。不依赖 `flux-renderers-basic`（layout 组件的 schema 独立定义，不需要 lowering 到 basic 组件）。
 
 **设计说明**：
 
-- `wizard` 的多步流程编排本质是布局 + 状态控制，不是表单能力本身。
+- `wizard` 的多步流程编排本质是布局 + 状态控制（步骤索引管理、前进/后退导航），不是表单能力本身。Wizard 内部的每一步通过 `body` region 承接任意 schema（包括 `form`），但它自身不参与 value/validation 通道。这种"编排容器"语义与 `tabs`（也管理子面板切换）属于同一族，放在 layout/basic 的交互容器族中是合理的。
 - `button-group` 和 `dropdown-button` 是 `button` 的组合变体，放在 layout 比 basic 更合适（basic 只保留原子级组件）。
 - `steps` 和 `timeline` 虽然外观偏展示，但核心是"流程状态编排"，与 layout 的交互容器族更近。
+- `cards` 归入 content 而非 data，因为 `cards` 是纯模板渲染（从外部 scope 获取数据，逐项渲染卡片），不管理数据获取/分页/排序。相比之下，`list` 归 data 是因为它是有内置分页/排序的数据集合 owner。
 
 ### 2.5 `@nop-chaos/flux-renderers-form` — 表单核心字段（拆分后）
 
@@ -253,24 +265,23 @@ src/
 
 **拆分后保留的内部模块**：
 
-| 模块 | 职责 | 预估行数 |
-|------|------|----------|
-| `field-utils.tsx` | 字段渲染工具函数 | ~320 |
-| `renderers/form.tsx` | form owner 渲染器 | ~350 |
-| `renderers/input.tsx` | 通用 input 基础渲染器 | ~360 |
-| `renderers/detail-field.tsx` + tests | detail 字段（基础功能） | ~750 |
-| `renderers/detail-surface.tsx` | detail 展示面 | ~100 |
-| `renderers/shared/` | 字段共享 UI（label, error, help） | ~85 |
-| `renderers/value-adaptation-helper.ts` | 值适配工具 | ~40 |
-| `renderers/projected-form-runtime.ts` | 投影表单运行时 | ~200 |
-| `renderers/projected-scope.ts` | 投影 scope | ~5 |
-| 日期字段族 | input-date/datetime/time/range/month/quarter/year | ~600（新实现） |
-| `schemas.ts` | schema 定义 | ~100 |
-| 测试文件 | 各类测试 | ~2,000 |
+| 模块 | 职责 | 实际行数 | 说明 |
+|------|------|----------|------|
+| `field-utils.tsx` | 字段渲染工具函数 | ~320 | 留在 form，也供 form-advanced 引用 |
+| `renderers/form.tsx` | form owner 渲染器 | ~354 | |
+| `renderers/input.tsx` | 通用 input 基础渲染器 | ~357 | |
+| `renderers/shared/` | 字段共享 UI（label, error, help） | ~85 | **必须留在 form**：基础字段渲染依赖此模块，迁到 form-advanced 会造成反向依赖 |
+| `schemas.ts` | schema 定义 | ~100 | |
+| 日期字段族 | input-date/datetime/time/range/month/quarter/year | ~600 | 新实现 |
+| 测试文件 | form 核心测试 | ~1,500 | 保留与 form owner 和原子字段相关的测试 |
 
-**预估总规模**：~5,000–6,000 行（含测试），符合合理上限。
+**预估总规模**：~3,500–4,500 行（含测试），远在合理上限内。
 
 **依赖**：`flux-react`, `flux-runtime`, `flux-formula`, `flux-core`, `flux-renderers-basic`, `ui`, `lucide-react`。可选：日期库（如 `date-fns`，仅日期字段族需要）。
+
+**关于 detail-field / projected-form 的归属决策**：
+
+detail-field、detail-surface、projected-form-runtime、projected-scope、value-adaptation-helper 这些模块 **整体迁入 form-advanced**，因为它们是 detail-view 子系统的一部分。detail-view 是完整子系统（~1,970 行），如果只迁 detail-view.tsx 而把 detail-field 留在 form，会破坏子系统的内聚性。因此 §2.6 列出的迁移清单包含这些模块。
 
 ### 2.6 `@nop-chaos/flux-renderers-form-advanced` — 高级复合字段（新包，从 form 拆出）
 
@@ -287,20 +298,24 @@ src/
 
 **从 `flux-renderers-form` 迁出的组件和模块**：
 
-| 组件/模块 | 类型 | 当前行数 | 说明 |
+| 组件/模块 | 类型 | 实际行数 | 说明 |
 |-----------|------|----------|------|
 | `condition-builder/` | 子系统 | ~2,590 | 条件编辑器完整子系统 |
 | `variant-field*` | 子系统 | ~1,400 | 变体字段检测/匹配/运行时/变换 |
-| `detail-view*` | 子系统 | ~1,770 | 详情视图 owner 和变换逻辑 |
-| `array-field*` | 子系统 | ~1,320 | 数组字段运行时和渲染 |
+| `detail-view*`, `detail-field*`, `detail-surface*` | 子系统 | ~1,970 | 详情视图 owner、detail 字段和展示面 |
+| `projected-form-runtime.ts`, `projected-scope.ts` | 子系统 | ~200 | 投影表单运行时（detail-view 依赖） |
+| `array-field*` | 子系统 | ~1,000 | 数组字段运行时和渲染 |
 | `object-field*` | 子系统 | ~500 | 对象字段 |
-| `composite-*` | 子系统 | ~1,220 | 复合字段 schemas/item-id/集成测试 |
+| `composite-item-id.ts`, `composite-schemas.ts` | 工具 | ~120 | 复合字段 schemas 和 item-id 工具 |
+| `value-adaptation-helper.ts` | 工具 | ~170 | 值适配工具（detail-view 依赖） |
 | `array-editor` | 组件 | ~320 | 数组编辑器（含拖拽） |
-| `tag-list` | 组件 | ~50 | 标签列表字段 |
+| `tag-list` | 组件 | ~120 | 标签列表字段 |
 | `key-value` | 组件 | ~430 | 键值对编辑器 |
 | `input-tree` | 组件 | ~100 | 树形字段 |
 | `tree-select` | 组件 | ~100 | 弹出树选择 |
-| `tree-controls.tsx` | 工具 | ~50 | 树控件共享逻辑 |
+| `tree-controls.tsx` + `tree-options.ts` | 工具 | ~390 | 树控件共享逻辑和选项工具 |
+
+说明：`renderers/shared/`（label, error, help-text, field-hint）**不迁出**，留在 form 中。因为基础字段（input.tsx 等）依赖此模块，如果迁到 form-advanced 会造成 form → form-advanced 的反向依赖。form-advanced 通过 import form 的公开 export 获取 shared 模块。
 
 **从 `targetContract` 新增的组件**：
 
@@ -312,11 +327,20 @@ src/
 | `input-table` | 复合字段 | 4 | 表格式数组编辑 |
 | `input-file` | 复合字段 | 3 | 文件上传 |
 | `input-image` | 复合字段 | 3 | 图片上传 |
-| `editor` | 复合字段 | 3 | 富文本编辑器 |
+| `editor` | 复合字段 | 3 | 富文本编辑器（见下方说明） |
 
-**预估总规模**：~8,000–10,000 行（含测试）。
+**预估总规模**：~7,000–9,000 行（含测试）。
 
-**依赖**：`flux-react`, `flux-runtime`, `flux-formula`, `flux-core`, `flux-renderers-basic`, `flux-renderers-form`（用于共享 field-utils 和 form owner 类型）, `ui`, `lucide-react`, `@dnd-kit/core`, `@dnd-kit/sortable`。
+**依赖**：`flux-react`, `flux-runtime`, `flux-formula`, `flux-core`, `flux-renderers-basic`, `flux-renderers-form`（用于共享 field-utils、form owner 类型和 shared/ 模块）, `ui`, `lucide-react`, `@dnd-kit/core`, `@dnd-kit/sortable`。
+
+**关于 `editor`（富文本）的分包说明**：
+
+`editor` 放在 form-advanced 而非独立成包，原因如下：
+
+1. `code-editor` 独立是因为 CodeMirror 是重量级依赖（~2MB），且有独立的 plugin 体系和配置系统。
+2. `editor`（富文本）如果使用轻量实现（如 `contentEditable` + 基础格式化工具栏），不需要独立包。
+3. 如果后续确认 `editor` 需要重量级富文本库（如 TipTap、Slate），应在此文档中追加决策：将 `editor` 提升为独立包 `flux-rich-text-editor`，遵循 `flux-code-editor` 的模式。
+4. 当前默认假设为轻量实现，归入 form-advanced。
 
 **内部结构建议**：
 
@@ -324,6 +348,7 @@ src/
 src/
 ├── index.tsx
 ├── schemas.ts
+├── tree-options.ts
 ├── condition-builder/
 │   ├── ConditionBuilder.tsx
 │   ├── ConditionGroup.tsx
@@ -347,6 +372,8 @@ src/
 │   ├── detail-field.tsx
 │   ├── detail-surface.tsx
 │   ├── projected-form-runtime.ts
+│   ├── projected-scope.ts
+│   ├── value-adaptation-helper.ts
 │   └── *.test.*
 ├── composite-field/
 │   ├── object-field.tsx
@@ -368,14 +395,18 @@ src/
 ├── input-file.tsx
 ├── input-image.tsx
 ├── editor.tsx
-├── shared/
-│   ├── index.ts
-│   ├── error.tsx
-│   ├── field-hint.tsx
-│   ├── help-text.tsx
-│   └── label.tsx
 └── __tests__/
+    ├── composite-form-detail-and-loop.test.tsx
+    ├── composite-form-integration.test.tsx
+    ├── composite-form-object-array.test.tsx
+    ├── composite-form-support.tsx
+    ├── composite-form.test.tsx
+    ├── composite-item-id.test.tsx
+    ├── form-array-validation.test.tsx
+    └── (其他从 form 迁出的测试)
 ```
+
+说明：`shared/`（label, error, help-text, field-hint）不在此包中。form-advanced 通过 `import { ... } from '@nop-chaos/flux-renderers-form'` 引用 shared 模块。
 
 ### 2.7 `@nop-chaos/flux-renderers-data` — 数据展示与复合数据工作流（扩展）
 
@@ -486,7 +517,9 @@ src/
 | `input-quarter` | targetContract | 3 |
 | `input-year` | targetContract | 3 |
 
-### 3.5 `flux-renderers-form-advanced`（19 个，新包，从 form 拆出）
+### 3.5 `flux-renderers-form-advanced`（新包，从 form 拆出）
+
+**注册 renderer 组件**（13 个）：
 
 | 组件 | 状态 | 来源 |
 |------|------|------|
@@ -503,14 +536,21 @@ src/
 | `input-file` | targetContract | 新实现 |
 | `input-image` | targetContract | 新实现 |
 | `editor` | targetContract | 新实现 |
-| （内部子系统）detail-view | runtime | 从 form 迁出 |
-| （内部子系统）variant-field | runtime | 从 form 迁出 |
-| （内部子系统）object-field | runtime | 从 form 迁出 |
-| （内部子系统）array-field | runtime | 从 form 迁出 |
-| （内部子系统）composite-field | runtime | 从 form 迁出 |
-| （内部子系统）projected-form | runtime | 从 form 迁出 |
 
-注意：`code-editor` 不在 form-advanced 中，它已有独立包 `flux-code-editor`。
+**内部子系统模块**（非注册 renderer，是实现细节）：
+
+| 子系统 | 来源 | 说明 |
+|--------|------|------|
+| `detail-view` + `detail-field` | 从 form 迁出 | 详情视图 owner 和字段渲染 |
+| `variant-field` | 从 form 迁出 | 变体字段检测/匹配/运行时 |
+| `object-field` | 从 form 迁出 | 对象字段（composite-field 的一部分） |
+| `array-field` | 从 form 迁出 | 数组字段运行时（composite-field 的一部分） |
+| `composite-field` | 从 form 迁出 | 复合字段 schemas、item-id、组合测试 |
+| `projected-form` | 从 form 迁出 | 投影表单运行时（detail-view 依赖） |
+
+注意：
+- `code-editor` 不在 form-advanced 中，它已有独立包 `flux-code-editor`。
+- 内部子系统不是 92 个 canonical 组件的一部分。它们是实现 detail-view/variant-field/composite-field 复杂字段行为的内部模块。
 
 ### 3.6 `flux-renderers-data`（8 个，扩展）
 
@@ -556,16 +596,18 @@ src/
 | layout | x | x | x | x | | | x | | |
 | form | x | x | x | x | x | | x | | |
 | form-advanced | x | x | x | x | x | x | x | | x |
-| data | x | x | x | x | x | | x | x | |
+| data | x | x | x | x | x* | | x | x | |
 | code-editor | x | x | x | x | | | x | | |
 
 说明：
 
-- `x` = 有直接 import 依赖。
+- `x` = 有直接运行时 import 依赖。
+- `x*` = 当前无此依赖，`crud` 实现后因 lowering 引入。
 - 空白 = 不依赖。
-- `flux-renderers-form` 依赖 `flux-renderers-basic` 是因为 form 渲染器可能引用 basic 的 schema 定义和类型（如 `dialog` 作为 form 的提交确认面）。
-- `flux-renderers-form-advanced` 依赖 `flux-renderers-form` 是因为复合字段需要 form owner 类型和 field-utils。
-- renderer 包之间 **不存在横向依赖**（content 不依赖 layout，layout 不依赖 content等）。
+- `flux-renderers-form` 依赖 `flux-renderers-basic` 是因为 form 渲染器引用 basic 的 schema 定义和类型（如 `dialog` 作为 form 的提交确认面）。
+- `flux-renderers-form-advanced` 依赖 `flux-renderers-form` 是因为复合字段需要 form owner 类型、field-utils 和 shared/ 模块。这是一个**暂时性的层级依赖**：如果后续 shared/ 和 field-utils 中的通用逻辑下沉到 `flux-react`，此依赖可以消除。
+- `flux-renderers-layout` 不依赖 `flux-renderers-basic`：layout 组件的 schema 独立定义，不需要 lowering 到 basic 组件。
+- renderer 包之间 **不存在横向依赖**（content 不依赖 layout，layout 不依赖 content 等）。
 
 ### 4.2 无环证明
 
@@ -580,7 +622,7 @@ core → formula → runtime → react → basic
                                   → code-editor
 ```
 
-不存在反向或循环依赖。
+不存在反向或循环依赖。层级方向：basic < form < form-advanced（< 表示"被下游依赖"）。data 对 basic 的条件依赖（crud 实现后引入）未在简化图中体现，详见 §4.1 矩阵。
 
 ---
 
@@ -621,34 +663,56 @@ core → formula → runtime → react → basic
 
 ### Phase 3：从 `flux-renderers-form` 拆出 `flux-renderers-form-advanced`
 
-**目标**：将 `flux-renderers-form` 从 ~16K 行精简到 ~6K 行。
+**目标**：将 `flux-renderers-form` 从 ~16K 行精简到 ~4K 行。
 
 **迁移步骤**（遵循 AGENTS.md 的文件重构方法论）：
 
-1. **创建新包**：`packages/flux-renderers-form-advanced/`。
+1. **创建新包**：`packages/flux-renderers-form-advanced/`（package.json、tsconfig、vitest.config）。
+
 2. **复制模块**：先把以下模块复制到新包（保持原位不动）：
    - `renderers/condition-builder/` → `src/condition-builder/`
    - `renderers/variant-field*` → `src/variant-field/`
    - `renderers/detail-view*`, `renderers/detail-field*`, `renderers/detail-surface*` → `src/detail-view/`
+   - `renderers/projected-*` → `src/detail-view/`
+   - `renderers/value-adaptation-helper.ts` → `src/detail-view/`
    - `renderers/object-field*` → `src/composite-field/`
    - `renderers/array-field*`, `renderers/array-field-runtime*` → `src/composite-field/`
-   - `renderers/composite-*` → `src/composite-field/`
+   - `renderers/composite-item-id.ts`, `renderers/composite-schemas.ts` → `src/composite-field/`
    - `renderers/array-editor.tsx` → `src/array-editor.tsx`
    - `renderers/tag-list.tsx` → `src/tag-list.tsx`
    - `renderers/key-value.tsx` → `src/key-value.tsx`
    - `renderers/input-tree.tsx`, `renderers/tree-select.tsx`, `renderers/tree-controls.tsx` → `src/`
-   - `renderers/shared/` → `src/shared/`
-   - `renderers/projected-*` → `src/detail-view/`
-   - `renderers/value-adaptation-helper.ts` → `src/`
-3. **验证新包**：`typecheck && build && test` 通过。
-4. **替换原包**：
-   - 从 `flux-renderers-form/src/` 删除已迁移的文件。
-   - 更新 `flux-renderers-form/src/index.tsx` 不再导出已迁移的 renderer。
-   - 更新 `flux-renderers-form/package.json` 移除 `@dnd-kit` 依赖。
-5. **全量验证**：`pnpm typecheck && pnpm build && pnpm test && pnpm lint`。
-6. **更新 playground**：更新 registry 装配，同时注册 form 和 form-advanced 的 renderer。
+   - `tree-options.ts` → `src/tree-options.ts`
+   - `renderers/test-support.tsx` → `src/test-support.tsx`
+   - **不迁移** `renderers/shared/`（留在 form，避免循环依赖）
 
-**预估工作量**：主要是文件移动和 import 更新，新增代码少。但需要仔细处理测试文件中 import 路径变更。
+3. **复制测试文件**：
+   - `__tests__/composite-form-*.test.tsx`（5 个 + support） → `src/__tests__/`
+   - `__tests__/composite-item-id.test.tsx` → `src/__tests__/`
+   - `__tests__/form-array-validation.test.tsx` → `src/__tests__/`
+   - `__tests__/form-double-edit-regression.test.tsx` → `src/__tests__/`
+   - `__tests__/form-source-options.test.tsx` → `src/__tests__/`
+   - `__tests__/form-tree-checkbox-fields.test.tsx` → `src/__tests__/`
+   - 其他与迁移模块相关的测试文件
+
+4. **更新 import 路径**：
+   - 所有迁移模块内部的相对 import 路径需要根据新目录结构调整。
+   - 对 `@nop-chaos/flux-renderers-form` 的引用改为 `import { ... } from '@nop-chaos/flux-renderers-form'`（workspace 依赖）。
+   - 特别是：`shared/` 模块（label, error, help-text）的引用从相对路径改为通过 `@nop-chaos/flux-renderers-form` 的公开 export。
+
+5. **验证新包**：`typecheck && build && test` 通过。
+
+6. **替换原包**：
+   - 从 `flux-renderers-form/src/` 删除已迁移的文件。
+   - 更新 `flux-renderers-form/src/index.tsx`：保留核心字段和 form owner 的 export，移除已迁移的 renderer export。
+   - 确保 `shared/` 模块作为公开 export 暴露，供 form-advanced 引用。
+   - 更新 `flux-renderers-form/package.json` 移除 `@dnd-kit` 依赖。
+
+7. **全量验证**：`pnpm typecheck && pnpm build && pnpm test && pnpm lint`。
+
+8. **更新 playground**：更新 registry 装配，同时注册 form 和 form-advanced 的 renderer。
+
+**预估工作量**：主要是文件移动和 import 更新，新增代码少。重点在于 import 路径变更和测试文件迁移。
 
 ### Phase 4：扩展 `flux-renderers-data`
 
@@ -690,16 +754,22 @@ core → formula → runtime → react → basic
 
 是否参与 form value/validation 通道？
   → 否：
-      是否以数据驱动为主（API 数据 → 展示）？
-        → 是：flux-renderers-data
-      是否是布局编排或流程控制？
-        → 是：flux-renderers-layout
-      否则：flux-renderers-content（纯展示/反馈）
+      是否以数据驱动为主（内置数据获取/分页/排序）？
+        → 是：flux-renderers-data（如 table, list, crud）
+      否则是否是布局编排或流程控制？
+        → 是：flux-renderers-layout（如 grid, wizard）
+      否则：flux-renderers-content（纯展示/反馈，如 card, cards, badge）
   → 是：
       是否有嵌套子 scope、内部复杂状态机、或重量级交互？
         → 是：flux-renderers-form-advanced
       否则：flux-renderers-form
 ```
+
+边界案例说明：
+
+- `cards` 归 content，`list` 归 data。区分关键：`cards` 是纯模板渲染（从外部 scope 获取数据），`list` 是有内置分页/排序能力的数据集合 owner。
+- `wizard` 归 layout。虽然常与 form 配合使用，但它自身是步骤编排容器（管理步骤索引、前进/后退），不参与 value/validation 通道。内部步骤通过 `body` region 承接 form。
+- `input-number` 归 form 而非 form-advanced。虽然有数字精度/格式化逻辑，但不管理子 scope，是原子级字段。
 
 ---
 
@@ -710,6 +780,9 @@ core → formula → runtime → react → basic
 3. **单包超限时**：当任何包超过第 1.2 节的上限时，应启动拆分评审。拆分方向应遵循本文件的原则，不要每次临时决定。
 4. **本文件更新时**：同步更新 `docs/components/index.md` 和 `docs/components/roadmap.md` 中的包归属引用。
 5. **依赖方向变更时**：任何 renderer 包之间的新增依赖必须在此文件第 4 节矩阵中显式记录，并确保无环。
+6. **form-advanced 二次拆分触发条件**：如果 `flux-renderers-form-advanced` 超过 12,000 行（含测试），应启动评审。可能的拆分方向包括：将 `condition-builder` 提升为独立包（它已是一个自包含的 ~2,600 行子系统），或将重量级编辑器（`editor` 富文本）独立。
+7. **layout 包合并条件**：如果 `flux-renderers-layout` 长期维持在 7 个组件以下且不增长，可考虑合并回 `flux-renderers-basic`。合并前需确认 basic 不会因此超过合理上限。
+8. **editor 分包升级**：如果 `editor`（富文本）确认需要重量级外部库，应从 form-advanced 提升为独立包 `flux-rich-text-editor`，遵循 `flux-code-editor` 的模式。此决策应在此文件中更新。
 
 ---
 

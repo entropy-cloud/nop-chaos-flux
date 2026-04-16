@@ -99,13 +99,17 @@ Exit Criteria:
 ### Phase 3 - Retry Control Enhancements
 
 Status: planned
-Targets: `packages/flux-core/src/types/schema.ts`, `packages/flux-runtime/src/operation-control.ts`, `packages/flux-runtime/src/request-runtime.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/data-source-runtime.ts`, focused action/source tests
+Targets: `packages/flux-core/src/types/schema.ts`, `packages/flux-core/src/types/runtime.ts`, `packages/flux-runtime/src/operation-control.ts`, `packages/flux-runtime/src/request-runtime.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/index.ts`, `packages/flux-runtime/src/runtime-action-helpers.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/form-runtime-submit-flow.ts`, focused action/source/form tests
 
 - [ ] Extend shared retry result metadata to include failure count and last failure reason.
 - [ ] Add exponential-backoff support while preserving the current fixed-delay default unless explicitly enabled.
-- [ ] Extend the retry config surface in the schema-owned control types only if the live implementation needs new author-visible fields.
-- [ ] Establish a single retry owner for request-backed work: request execution owns retry/backoff for ajax actions and data-source fetches, while dispatcher-level retry remains only for non-request action results if still needed.
-- [ ] Move request retry/backoff ownership into the shared request execution path so ajax actions and data sources consume the same retry semantics instead of reimplementing them separately.
+- [ ] Keep retry control ownership on enclosing action/source/form request entry points rather than moving it into `ApiSchema`; only extend schema-owned control types if new author-visible retry fields are truly required.
+- [ ] For `data-source`, read retry/backoff control from `DataSourceSchema`'s existing action-style top-level control surface, never from `ApiSchema`.
+- [ ] For ajax actions, keep the existing action-level retry/control surface as the only author-visible config source, but bypass dispatcher-level retry once request-owned retry is in place so request-backed actions have exactly one retry executor.
+- [ ] Establish a single retry owner for request-backed work: request execution owns retry/backoff for ajax actions, submit-form requests, and data-source fetches, while dispatcher-level retry remains only for non-request action results if still needed.
+- [ ] Move request retry/backoff ownership into the shared request execution path so ajax actions, submit-form requests, and data sources consume the same retry semantics instead of reimplementing them separately.
+- [ ] Ensure shared retry handles the real request failure mode: thrown fetch/request errors and `executeApiSchema()`-thrown non-OK responses must participate in retry/backoff and failure metadata.
+- [ ] Keep async validation requests one-shot in this plan unless a caller already opts into retry through an explicit validation-owned follow-up design; this plan's request-owned retry scope excludes validation.
 - [ ] Thread retry failure metadata into data-source state so source status can report retry failures.
 - [ ] Update action runtime to consume the expanded retry result without changing existing success/failure classification semantics.
 
@@ -113,14 +117,16 @@ Exit Criteria:
 
 - [ ] `withRetry()` supports fixed delay and opt-in exponential backoff.
 - [ ] Focused tests cover failure counting, last failure reason, and backoff timing behavior.
-- [ ] Shared request execution applies the same retry policy to both ajax actions and data-source fetches when configured.
+- [ ] Shared request execution applies the same retry policy to ajax actions, submit-form requests, and data-source fetches when configured.
 - [ ] Focused tests prove request-backed work does not apply the same schema retry policy twice.
+- [ ] Focused tests or code-path audit prove validation request execution remains one-shot after this slice.
+- [ ] Focused tests or code-path audit prove form submit now follows the same single-owner retry semantics as ajax and data-source request execution.
 - [ ] Data-source runtime can expose retry failure metadata after failed attempts.
 
 ### Phase 4 - Action `onSettled`
 
 Status: planned
-Targets: `packages/flux-core/src/types/actions.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/__tests__/runtime-actions-chained.test.ts`, `docs/architecture/action-algebra-formal-spec.md`
+Targets: `packages/flux-core/src/types/actions.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/__tests__/runtime-actions-chained.test.ts`, `docs/architecture/action-algebra-formal-spec.md`
 
 - [ ] Extend `ActionSchema` with `onSettled` in the same family as `then` and `onError`.
 - [ ] Update action dispatch so `onSettled` runs after `then` on success-class results and after `onError` on failure-class results.
