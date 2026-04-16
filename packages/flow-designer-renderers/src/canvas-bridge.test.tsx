@@ -284,7 +284,7 @@ describe('DesignerXyflowCanvasBridge', () => {
     expect(latestReactFlowProps.onReconnect).toBeTruthy();
     expect(latestReactFlowProps.onNodesChange).toBeTruthy();
     expect(latestReactFlowProps.onEdgesChange).toBeTruthy();
-    expect(latestReactFlowProps.onMove).toBeTruthy();
+    expect(latestReactFlowProps.onMoveEnd).toBeTruthy();
     expect(latestReactFlowProps.onSelectionChange).toBeTruthy();
 
     const mockConnection = { source: 'node-1', target: 'node-2' };

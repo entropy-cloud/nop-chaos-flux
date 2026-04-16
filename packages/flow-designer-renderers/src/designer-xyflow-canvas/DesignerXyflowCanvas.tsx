@@ -180,8 +180,9 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
 
       const lastCommitted = lastCommittedPositionsRef.current;
       let changed = false;
+      const snapshotNodeMap = new Map(snapshotNodes.map((n) => [n.id, n]));
       const merged = currentNodes.map((localNode) => {
-        const snapNode = snapshotNodes.find((n) => n.id === localNode.id);
+        const snapNode = snapshotNodeMap.get(localNode.id);
         if (!snapNode) return localNode;
         const snapshotSignature = snapshotPositionMap.get(snapNode.id);
         const committedSignature = lastCommitted.get(snapNode.id);
@@ -323,7 +324,6 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
             nodesConnectable
             elementsSelectable
             nodesDraggable
-            onMove={(_event, nextViewport) => handleViewportChange(nextViewport as XyflowViewportChange)}
             onMoveEnd={(_event, nextViewport) => handleViewportChange(nextViewport as XyflowViewportChange)}
             onPaneClick={() => {
               props.onPaneClick();
