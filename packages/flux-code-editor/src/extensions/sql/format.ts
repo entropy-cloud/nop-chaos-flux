@@ -24,7 +24,7 @@ export function formatSQL(
     language: resolved.language ?? DIALECT_MAP[dialect ?? 'standard'] ?? 'sql',
     tabWidth: resolved.tabWidth ?? 2,
     keywordCase: resolved.keywordCase ?? 'upper',
-    indentStyle: resolved.indentStyle ?? 'standard' as any,
+    indentStyle: resolved.indentStyle ?? 'standard',
     logicalOperatorNewline: resolved.logicalOperatorNewline ?? 'before',
   });
 }

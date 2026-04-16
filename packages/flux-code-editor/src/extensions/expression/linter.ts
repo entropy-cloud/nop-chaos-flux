@@ -15,8 +15,8 @@ function lintExpression(view: EditorView): Diagnostic[] {
   try {
     formulaCompiler.compileExpression(expr);
     return [];
-  } catch (err: any) {
-    const message = err instanceof SyntaxError ? err.message : String(err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
     const from = 0;
     const to = expr.length;
 
