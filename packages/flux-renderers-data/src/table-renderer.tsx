@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, resolveRendererSlotContent, useSchemaProps } from '@nop-chaos/flux-react';
 import { Button, cn } from '@nop-chaos/ui';
 import {
   Table,
@@ -44,7 +44,7 @@ function createTableOwnerKey(props: RendererComponentProps<TableSchema>): string
 }
 
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
-  const schemaProps = props.props as unknown as TableSchema;
+  const schemaProps = useSchemaProps(props);
   const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : EMPTY_TABLE_COLUMNS;
   const source = Array.isArray(schemaProps.source) ? (schemaProps.source as Array<Record<string, any>>) : EMPTY_TABLE_ROWS;
   const helpers = props.helpers;

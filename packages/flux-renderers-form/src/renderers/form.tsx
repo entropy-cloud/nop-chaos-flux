@@ -254,6 +254,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
 
     const resolvedStatusPath = statusPath;
     const resolvedParentScope = parentScope;
+    let lastSummary: FormStatusSummary | undefined;
 
     function publishStatus() {
       const state = ownedForm.store.getState();
@@ -274,6 +275,19 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       }
 
       const hasErrors = errorCount > 0;
+
+      if (
+        lastSummary &&
+        lastSummary.submitting === state.submitting &&
+        lastSummary.validating === validating &&
+        lastSummary.dirty === dirty &&
+        lastSummary.touched === touched &&
+        lastSummary.visited === visited &&
+        lastSummary.errorCount === errorCount
+      ) {
+        return;
+      }
+
       const summary: FormStatusSummary = {
         id: ownedForm.id,
         name: ownedForm.name,
@@ -288,6 +302,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         invalid: hasErrors
       };
 
+      lastSummary = summary;
       resolvedParentScope.update(resolvedStatusPath, summary);
     }
 

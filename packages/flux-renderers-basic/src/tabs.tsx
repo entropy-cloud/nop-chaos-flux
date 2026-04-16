@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import type { ComponentHandle, RendererComponentProps, TabsStatusSummary } from '@nop-chaos/flux-core';
-import { resolveRendererSlotContent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
+import { resolveRendererSlotContent, useCurrentComponentRegistry, useSchemaProps } from '@nop-chaos/flux-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger, cn } from '@nop-chaos/ui';
 import type { TabsItemSchema, TabsSchema } from './schemas';
 import { useOwnedAxisValue } from './interaction-owner';
@@ -15,7 +15,7 @@ function getItemValue(item: TabsItemSchema, index: number): string {
 
 export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
-  const schemaProps = props.props as unknown as TabsSchema;
+  const schemaProps = useSchemaProps(props);
   const items = Array.isArray(schemaProps.items) ? schemaProps.items : EMPTY_ITEMS;
   const toolbarContent = resolveRendererSlotContent(props, 'toolbar');
   const firstValue = getItemValue(items[0] ?? {}, 0);

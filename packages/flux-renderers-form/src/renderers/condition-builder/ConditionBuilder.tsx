@@ -7,7 +7,7 @@ import type {
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { useCurrentFormState, useCurrentFormModelGeneration, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentFormState, useCurrentFormModelGeneration, useScopeSelector, useSchemaProps } from '@nop-chaos/flux-react';
 import {
   formLabelFieldRule,
   readFieldValue,
@@ -48,9 +48,9 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   });
   const labelContent = resolveFieldLabelContent(props);
 
-  const operatorsOverride = props.props.operators as ConditionOperatorOverrides | undefined;
-  const fields = (props.props.fields ?? []) as ConditionField[];
-  const schemaOverride = props.props as unknown as ConditionBuilderSchema;
+  const schemaProps = useSchemaProps(props);
+  const operatorsOverride = schemaProps.operators;
+  const fields = (schemaProps.fields ?? []) as ConditionField[];
 
   const [localValue, setLocalValue] = React.useState<ConditionGroupValue>(() =>
     toGroupValue(readFieldValue(scope, name)),
@@ -127,7 +127,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
       <PickerModeContent
         value={effectiveValue}
         fields={fields}
-        schema={schemaOverride}
+        schema={schemaProps}
         operatorsOverride={operatorsOverride}
         onChange={syncValue}
         disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
@@ -149,7 +149,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
       <div data-slot="field-control">
         <ConditionGroup
           value={effectiveValue}
-          schema={schemaOverride}
+          schema={schemaProps}
           fields={fields}
           operatorsOverride={operatorsOverride}
           onChange={syncValue}
