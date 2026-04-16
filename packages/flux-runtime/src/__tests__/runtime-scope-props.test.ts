@@ -1,8 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { setIn, type NodeRuntimeState } from '@nop-chaos/flux-core';
+import { setIn, type NodeRuntimeState, type RuntimeValueState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
+
+function createRuntimeStateFromTemplateNode(node: import('@nop-chaos/flux-core').TemplateNode): NodeRuntimeState {
+  const metaEntries: Record<string, RuntimeValueState<unknown>> = {};
+  const meta = node.metaProgram;
+  for (const key of Object.keys(meta) as Array<keyof typeof meta>) {
+    const value = meta[key];
+    if (value && typeof value === 'object' && (value as { kind?: string }).kind === 'dynamic') {
+      metaEntries[key] = (value as { createState(): RuntimeValueState<unknown> }).createState();
+    }
+  }
+  return {
+    meta: metaEntries,
+    props: node.propsProgram.kind === 'dynamic' ? node.propsProgram.createState() : undefined,
+  };
+}
 
 describe('createRendererRuntime', () => {
   it('preserves arrays when writing nested numeric paths', () => {
@@ -31,7 +46,7 @@ describe('createRendererRuntime', () => {
       path: '$',
       renderer: registry.get('text')!
     });
-    const runtimeState: NodeRuntimeState = { meta: {}, props: state.propsProgram.kind === 'dynamic' ? state.propsProgram.createState() : undefined };
+    const runtimeState = createRuntimeStateFromTemplateNode(state);
     const first = runtime.resolveNodeProps(node, page.scope, runtimeState);
     const second = runtime.resolveNodeProps(node, page.scope, runtimeState);
 
@@ -59,7 +74,7 @@ describe('createRendererRuntime', () => {
       path: '$',
       renderer: registry.get('text')!
     });
-    const runtimeState: NodeRuntimeState = { meta: {}, props: state.propsProgram.kind === 'dynamic' ? state.propsProgram.createState() : undefined };
+    const runtimeState = createRuntimeStateFromTemplateNode(state);
 
     runtime.resolveNodeMeta(node, page.scope, runtimeState);
     runtime.resolveNodeProps(node, page.scope, runtimeState);

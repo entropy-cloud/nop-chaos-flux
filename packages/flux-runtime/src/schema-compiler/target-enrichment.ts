@@ -20,8 +20,8 @@ function collectAllTemplateNodes(entry: TemplateNode | readonly TemplateNode[], 
         }
       }
     } else {
-      out.push(current);
-      const regions = current.regions as Record<string, TemplateRegion>;
+      out.push(current as TemplateNode);
+      const regions = (current as TemplateNode).regions as Record<string, TemplateRegion>;
       for (const region of Object.values(regions)) {
         if (region.node) {
           queue.push(region.node as TemplateNode | readonly TemplateNode[]);

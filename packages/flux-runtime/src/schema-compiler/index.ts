@@ -1,4 +1,4 @@
-export { createTemplateRegion as createCompiledRegion, extractNestedSchemaRegions } from './regions';
+export { createTemplateRegion, extractNestedSchemaRegions } from './regions';
 export type { NestedRegionFieldRule } from './regions';
 
 export { DEEP_FIELD_NORMALIZERS } from './tables';

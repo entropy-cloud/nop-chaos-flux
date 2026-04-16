@@ -211,11 +211,11 @@ describe('createSchemaCompiler', () => {
     });
     const node = compiled.root as any;
     const page = runtime.createPageRuntime({});
-    const state = runtime.schemaCompiler.compileNode({ type: 'card', title: 'Profile' }, {
+    const templateNode = runtime.schemaCompiler.compileNode({ type: 'card', title: 'Profile' }, {
       path: '$',
       renderer: registry.get('card')!
     });
-    const runtimeState: NodeRuntimeState = { meta: {}, props: state.propsProgram.kind === 'dynamic' ? state.propsProgram.createState() : undefined };
+    const runtimeState: NodeRuntimeState = { meta: {}, props: templateNode.propsProgram.kind === 'dynamic' ? templateNode.propsProgram.createState() : undefined };
     const meta = runtime.resolveNodeMeta(node, page.scope, runtimeState);
 
     expect((meta as unknown as Record<string, unknown>).title).toBeUndefined();
