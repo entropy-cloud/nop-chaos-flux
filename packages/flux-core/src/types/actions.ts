@@ -30,6 +30,7 @@ export interface ActionSchema extends SchemaObject {
   continueOnError?: boolean;
   then?: ActionSchema | ActionSchema[];
   onError?: ActionSchema | ActionSchema[];
+  onSettled?: ActionSchema | ActionSchema[];
 }
 
 export interface ActionResult {
@@ -40,6 +41,7 @@ export interface ActionResult {
   data?: unknown;
   results?: ActionResult[];
   attempts?: number;
+  failureCount?: number;
   error?: unknown;
 }
 

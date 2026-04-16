@@ -1,7 +1,8 @@
 import type { BaseSchema, SchemaPath } from '../types/schema';
+import type { HostContractContext } from './manifest';
 
 export type SchemaDiagnosticSeverity = 'error' | 'warning' | 'info';
-export type SchemaDiagnosticSource = 'core' | 'renderer' | 'namespace';
+export type SchemaDiagnosticSource = 'core' | 'renderer' | 'namespace' | 'host-contract';
 export type SchemaDiagnosticCode =
   | 'invalid-root'
   | 'expected-object'
@@ -12,7 +13,15 @@ export type SchemaDiagnosticCode =
   | 'invalid-region-node'
   | 'invalid-action-shape'
   | 'invalid-source-shape'
-  | 'invalid-namespace-property';
+  | 'invalid-namespace-property'
+  | 'unknown-host-contract-family'
+  | 'unsupported-host-contract-version'
+  | 'unresolved-host-contract-context'
+  | 'unknown-host-projection-field'
+  | 'invalid-host-projection-path'
+  | 'unknown-host-capability-method'
+  | 'invalid-host-capability-args'
+  | 'host-contract-version-mismatch';
 
 export interface SchemaDiagnostic {
   code: SchemaDiagnosticCode;
@@ -60,6 +69,7 @@ export interface SchemaCompileValidationOptions {
   namespacedPropertyPolicy?: 'error' | 'ignore' | 'delegate-or-ignore';
   extensionPassthroughPolicy?: 'none' | 'namespaced-only';
   namespaceValidators?: readonly SchemaNamespaceValidator[];
+  hostContractContext?: HostContractContext;
 }
 
 export interface RendererSchemaValidationContext<S extends BaseSchema = BaseSchema> {
@@ -88,3 +98,5 @@ export function createSchemaDiagnosticCollector() {
     diagnostics
   };
 }
+
+export * from './manifest';

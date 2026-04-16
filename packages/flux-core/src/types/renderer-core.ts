@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope } from './actions';
 import type { ExpressionCompiler } from './compilation';
-import type { RendererSchemaValidator } from '../schema-diagnostics';
+import type { RendererSchemaValidator, RendererHostContract } from '../schema-diagnostics';
 import type { NodeInstance, NodeRuntimeState, ResolutionContext, TemplateNode } from './node-identity';
 import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
@@ -67,6 +67,8 @@ export interface SourceDebugEntry {
   statusPath?: string;
   dependencies?: readonly string[];
   started: boolean;
+  status: 'idle' | 'pending' | 'success' | 'error';
+  fetchStatus: 'idle' | 'fetching';
   loading: boolean;
   stale: boolean;
   hasValue: boolean;
@@ -109,6 +111,14 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   componentRegistryPolicy?: 'inherit' | 'new';
   validation?: ValidationContributor<S>;
   wrap?: boolean;
+  /**
+   * Host contract metadata for publishing owner renderers.
+   * Only renderers that act as host boundaries (e.g., designer-page, report-designer-page)
+   * should define this field.
+   *
+   * See: docs/architecture/capability-projection-manifest.md
+   */
+  hostContract?: RendererHostContract;
 }
 
 export interface RendererRegistry {

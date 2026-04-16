@@ -73,6 +73,8 @@ export interface OperationControlConfig extends SchemaObject {
   retry?: {
     times: number;
     delay?: number;
+    strategy?: 'fixed' | 'exponential';
+    maxDelay?: number;
   };
   debounce?: number;
   throttle?: number;

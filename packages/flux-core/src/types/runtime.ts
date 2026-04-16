@@ -1,5 +1,6 @@
 import type { ActionResult } from './actions';
 import type { ApiSchema } from './schema';
+import type { OperationControlConfig } from './schema';
 import type { NodeInstance, TemplateNode } from './node-identity';
 import type { ScopeRef } from './scope';
 import type {
@@ -219,16 +220,27 @@ export interface SurfaceRuntime {
 }
 
 export interface DataSourceController {
-  getState(): {
-    started: boolean;
-    loading: boolean;
-    stale: boolean;
-    value?: unknown;
-    error?: unknown;
-  };
+  getState(): DataSourceState;
   start(): void;
   stop(): void;
   refresh(): Promise<void>;
+}
+
+export type DataSourceStatus = 'idle' | 'pending' | 'success' | 'error';
+
+export type DataSourceFetchStatus = 'idle' | 'fetching';
+
+export interface DataSourceState {
+  started: boolean;
+  status: DataSourceStatus;
+  fetchStatus: DataSourceFetchStatus;
+  stale: boolean;
+  data?: unknown;
+  error?: unknown;
+  dataUpdatedAt: number;
+  errorUpdatedAt: number;
+  failureCount: number;
+  failureReason?: unknown;
 }
 
 export interface DataSourceRegistration {
@@ -291,7 +303,7 @@ export interface FormRuntime extends ValidationScopeRuntime {
   touchField(path: string): void;
   visitField(path: string): void;
   clearErrors(path?: string): void;
-  submit(api?: ApiSchema, options?: { interactionId?: string }): Promise<ActionResult>;
+  submit(api?: ApiSchema, options?: { interactionId?: string; control?: OperationControlConfig }): Promise<ActionResult>;
   reset(values?: object): void;
   setValue(name: string, value: unknown): void;
   setValues(values: Record<string, unknown>): void;
