@@ -22,6 +22,8 @@ interface ResolvedCallable {
   name?: string;
 }
 
+const FRAME_NOT_FOUND = Symbol('FRAME_NOT_FOUND');
+
 function lookupFrame(frame: LambdaFrame | undefined, name: string): unknown {
   let current = frame;
   while (current) {
@@ -30,18 +32,7 @@ function lookupFrame(frame: LambdaFrame | undefined, name: string): unknown {
     }
     current = current.parent;
   }
-  return undefined;
-}
-
-function hasFrame(frame: LambdaFrame | undefined, name: string): boolean {
-  let current = frame;
-  while (current) {
-    if (Object.prototype.hasOwnProperty.call(current.values, name)) {
-      return true;
-    }
-    current = current.parent;
-  }
-  return false;
+  return FRAME_NOT_FOUND;
 }
 
 function toPropertyKey(value: unknown): string | number | symbol {
@@ -55,8 +46,10 @@ function createExpressionError(message: string): Error {
   return new Error(message);
 }
 
+const IMPORTED_FUNCTION_RE = /^__flux_import_([A-Za-z0-9_]+)__([A-Za-z0-9_]+)$/;
+
 function parseImportedFunctionName(name: string): { alias: string; method: string } | null {
-  const match = /^__flux_import_([A-Za-z0-9_]+)__([A-Za-z0-9_]+)$/.exec(name);
+  const match = IMPORTED_FUNCTION_RE.exec(name);
   return match ? { alias: match[1], method: match[2] } : null;
 }
 
@@ -145,17 +138,29 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
         return evaluateMember(node, frame);
       case 'CallExpression':
         return evaluateCall(node, frame);
-      case 'ArrowFunctionExpression':
+      case 'ArrowFunctionExpression': {
+        const params = node.params;
+        if (params.length === 1) {
+          const paramName = params[0].name;
+          return (...args: unknown[]) => {
+            return evaluateNode(node.body, { values: { [paramName]: args[0] }, parent: frame });
+          };
+        }
         return (...args: unknown[]) => {
-          const values = Object.fromEntries(node.params.map((param, index) => [param.name, args[index]]));
+          const values: Record<string, unknown> = {};
+          for (let i = 0; i < params.length; i++) {
+            values[params[i].name] = args[i];
+          }
           return evaluateNode(node.body, { values, parent: frame });
         };
+      }
     }
   };
 
   const evaluateIdentifier = (node: IdentifierNode, frame?: LambdaFrame): unknown => {
-    if (hasFrame(frame, node.name)) {
-      return lookupFrame(frame, node.name);
+    const frameValue = lookupFrame(frame, node.name);
+    if (frameValue !== FRAME_NOT_FOUND) {
+      return frameValue;
     }
 
     const importedFunction = parseImportedFunctionName(node.name);

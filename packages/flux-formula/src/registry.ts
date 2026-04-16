@@ -15,6 +15,16 @@ export interface FormulaRegistrySnapshot {
 const defaultFunctions = new Map<string, FormulaFunction>();
 const defaultFunctionMeta = new Map<string, FormulaFunctionMeta>();
 const defaultNamespaces = new Map<string, unknown>();
+let cachedSnapshot: FormulaRegistrySnapshot | undefined;
+let builtinsInstalled = false;
+
+export function getBuiltinsInstalled(): boolean {
+  return builtinsInstalled;
+}
+
+export function setBuiltinsInstalled(value: boolean): void {
+  builtinsInstalled = value;
+}
 
 export function registerFunction(
   name: string,
@@ -23,22 +33,31 @@ export function registerFunction(
 ): void {
   defaultFunctions.set(name, fn);
   defaultFunctionMeta.set(name, { invoke: options.invoke ?? 'eager' });
+  cachedSnapshot = undefined;
 }
 
 export function registerNamespace(name: string, value: unknown): void {
   defaultNamespaces.set(name, value);
+  cachedSnapshot = undefined;
 }
 
 export function getFormulaRegistrySnapshot(): FormulaRegistrySnapshot {
-  return {
+  if (cachedSnapshot) {
+    return cachedSnapshot;
+  }
+
+  cachedSnapshot = {
     functions: Object.freeze(Object.fromEntries(defaultFunctions.entries())),
     functionMeta: Object.freeze(Object.fromEntries(defaultFunctionMeta.entries())),
     namespaces: Object.freeze(Object.fromEntries(defaultNamespaces.entries()))
   };
+  return cachedSnapshot;
 }
 
 export function resetFormulaRegistry(): void {
   defaultFunctions.clear();
   defaultFunctionMeta.clear();
   defaultNamespaces.clear();
+  cachedSnapshot = undefined;
+  builtinsInstalled = false;
 }

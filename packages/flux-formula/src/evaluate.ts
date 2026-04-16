@@ -109,10 +109,10 @@ function evaluateLeaf<T>(
   }
 
   const { collector, finalize } = createScopeDependencyCollector();
-  const value = node.compiled.exec({
-    ...context,
-    collector
-  }, env);
+  const prevCollector = context.collector;
+  context.collector = collector;
+  const value = node.compiled.exec(context, env);
+  context.collector = prevCollector;
   const dependencies = finalize();
 
   if (stateNode.initialized && Object.is(stateNode.lastValue, value)) {

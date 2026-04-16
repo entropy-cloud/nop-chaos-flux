@@ -1,5 +1,5 @@
 import { dateHelper } from './date-helper';
-import { registerFunction, registerNamespace } from './registry';
+import { registerFunction, registerNamespace, getBuiltinsInstalled, setBuiltinsInstalled } from './registry';
 
 function flattenNumericArgs(args: unknown[]): number[] {
   const flattened = args.flatMap((value) => (Array.isArray(value) ? value : [value]));
@@ -37,6 +37,9 @@ function customEquals(left: unknown, right: unknown): boolean {
 }
 
 export function installBuiltins(): void {
+  if (getBuiltinsInstalled()) return;
+  setBuiltinsInstalled(true);
+
   registerNamespace('$Math', Math);
   registerNamespace('$JSON', JSON);
   registerNamespace('$Date', dateHelper);

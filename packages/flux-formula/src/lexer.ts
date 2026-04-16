@@ -20,20 +20,25 @@ const THREE_CHAR_OPERATORS = new Set(['===', '!==', '>>>']);
 const PUNCTUATION = new Set(['(', ')', '[', ']', '{', '}', ',', ':', '?', '.']);
 const KEYWORDS = new Set(['true', 'false', 'null', 'undefined', 'instanceof', 'and', 'or']);
 
+const RE_WHITESPACE = /\s/;
+const RE_DIGIT = /[0-9]/;
+const RE_IDENTIFIER_START = /[$A-Za-z_\u0080-\uffff]/;
+const RE_IDENTIFIER_PART = /[$0-9A-Za-z_\u0080-\uffff]/;
+
 function isWhitespace(value: string): boolean {
-  return /\s/.test(value);
+  return RE_WHITESPACE.test(value);
 }
 
 function isDigit(value: string | undefined): boolean {
-  return value !== undefined && /[0-9]/.test(value);
+  return value !== undefined && RE_DIGIT.test(value);
 }
 
 function isIdentifierStart(value: string | undefined): boolean {
-  return value !== undefined && /[$A-Za-z_\u0080-\uffff]/.test(value);
+  return value !== undefined && RE_IDENTIFIER_START.test(value);
 }
 
 function isIdentifierPart(value: string | undefined): boolean {
-  return value !== undefined && /[$0-9A-Za-z_\u0080-\uffff]/.test(value);
+  return value !== undefined && RE_IDENTIFIER_PART.test(value);
 }
 
 function readString(source: string, start: number): FormulaToken {

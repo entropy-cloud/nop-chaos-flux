@@ -39,16 +39,21 @@ function createImportedFunctionName(alias: string, method: string): string {
   return `__flux_import_${alias}__${method}`;
 }
 
+const RE_IDENTIFIER_CHAR = /[A-Za-z0-9_]/;
+const RE_IDENTIFIER_START = /[A-Za-z_]/;
+const RE_ALIAS_START = /[a-z_]/;
+const RE_ALIAS_PREV_CHAR = /[A-Za-z0-9_.]/;
+
 function isIdentifierCharacter(value: string | undefined): boolean {
-  return value !== undefined && /[A-Za-z0-9_]/.test(value);
+  return value !== undefined && RE_IDENTIFIER_CHAR.test(value);
 }
 
 function isIdentifierStart(value: string | undefined): boolean {
-  return value !== undefined && /[A-Za-z_]/.test(value);
+  return value !== undefined && RE_IDENTIFIER_START.test(value);
 }
 
 function isImportedAliasStart(value: string | undefined): boolean {
-  return value !== undefined && /[a-z_]/.test(value);
+  return value !== undefined && RE_ALIAS_START.test(value);
 }
 
 function rewriteImportedAliasSyntax(source: string): RewrittenImportExpression {
@@ -89,7 +94,7 @@ function rewriteImportedAliasSyntax(source: string): RewrittenImportExpression {
     const isAliasStart =
       current === '$' &&
       isImportedAliasStart(next) &&
-      (previous === undefined || !/[A-Za-z0-9_.]/.test(previous));
+      (previous === undefined || !RE_ALIAS_PREV_CHAR.test(previous));
 
     if (!isAliasStart) {
       result += current;
