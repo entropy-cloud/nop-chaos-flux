@@ -41,6 +41,7 @@ import { createBuiltInValidationRegistry } from './validation';
 import { createRuntimeEvalHelpers } from './runtime-eval-helpers';
 import { executeRuntimeValidationRule, executeRuntimeAjaxAction } from './runtime-action-helpers';
 import { createManagedSurfaceRuntime } from './surface-runtime';
+import { resolveRequestControl } from './action-runtime-core';
 
 export { createRendererRegistry, registerRendererDefinitions } from './registry';
 export { createSchemaCompiler, validateSchema } from './schema-compiler';
@@ -177,13 +178,17 @@ export function createRendererRuntime(input: {
         const response = await executeApiSchema(api, scope, getEnv(), expressionCompiler, {
           evaluate,
           executor: (adaptedApi) => executeApiRequest('submitForm', adaptedApi, scope, undefined, {
-            interactionId: options?.interactionId
-          })
+            interactionId: options?.interactionId,
+            control: options?.control
+          }),
+          control: options?.control
         });
 
         return {
           ok: true,
           data: response.data,
+          attempts: response.attempts,
+          failureCount: response.failureCount,
           error: undefined
         };
       }
@@ -422,7 +427,10 @@ export function createRendererRuntime(input: {
     evaluateCompiled,
     refreshDataSource: (inputValue) => runtime.refreshDataSource(inputValue),
     executeAjaxAction: (api, action, ctx, signal) => executeRuntimeAjaxAction(api, action, ctx, signal, evalCtx),
-    submitFormAction: async (api, _action, ctx) => ctx.form!.submit(api, { interactionId: ctx.interactionId }),
+    submitFormAction: async (api, action, ctx) => ctx.form!.submit(api, {
+      interactionId: ctx.interactionId,
+      control: resolveRequestControl(action)
+    }),
     openDrawer: async (drawer, ctx) => {
       if (!ctx.surfaceRuntime) {
         return { ok: false, error: new Error('openDrawer requires surface runtime') };

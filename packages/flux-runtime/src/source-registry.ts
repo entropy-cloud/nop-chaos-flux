@@ -3,6 +3,7 @@ import type {
   DataSourceController,
   DataSourceRegistration,
   DataSourceSchema,
+  DataSourceState,
   DynamicRuntimeValue,
   StaticRuntimeValue,
   RendererRuntime,
@@ -88,18 +89,30 @@ function createDependencyAwareFormulaController(input: {
 
   let started = false;
   let stopped = false;
-  let loading = false;
-  let stale = false;
-  let value: unknown = input.initialData;
-  let error: unknown;
+  let state: DataSourceState = {
+    started: false,
+    status: typeof input.initialData === 'undefined' ? 'idle' : 'success',
+    fetchStatus: 'idle',
+    stale: false,
+    data: input.initialData,
+    error: undefined,
+    dataUpdatedAt: typeof input.initialData === 'undefined' ? 0 : Date.now(),
+    errorUpdatedAt: 0,
+    failureCount: 0,
+    failureReason: undefined
+  };
 
   function publishStatus() {
     publishOwnerStatus(input.scope, input.statusPath, {
-      started,
-      loading,
-      ready: started && !loading && !error,
-      stale,
-      error: error ? { message: error instanceof Error ? error.message : String(error) } : undefined
+      started: state.started,
+      loading: state.fetchStatus === 'fetching',
+      ready: state.status === 'success',
+      stale: state.stale,
+      dataUpdatedAt: state.dataUpdatedAt,
+      errorUpdatedAt: state.errorUpdatedAt,
+      failureCount: state.failureCount,
+      failureReason: state.failureReason,
+      error: state.error ? { message: state.error instanceof Error ? state.error.message : String(state.error) } : undefined
     });
   }
 
@@ -112,9 +125,13 @@ function createDependencyAwareFormulaController(input: {
       return;
     }
 
-    loading = true;
-    stale = value !== undefined;
-    error = undefined;
+    state = {
+      ...state,
+      fetchStatus: 'fetching',
+      status: typeof state.data === 'undefined' ? 'pending' : state.status,
+      stale: typeof state.data !== 'undefined',
+      error: undefined
+    };
 
     const rawValue = dynamicCompiled
       ? input.runtime.expressionCompiler.evaluateWithState(dynamicCompiled, input.scope, input.runtime.env, runtimeState!).value
@@ -126,9 +143,17 @@ function createDependencyAwareFormulaController(input: {
       payload: rawValue
     });
 
-    value = nextValue;
-    loading = false;
-    stale = false;
+    state = {
+      ...state,
+      status: 'success',
+      fetchStatus: 'idle',
+      stale: false,
+      data: nextValue,
+      error: undefined,
+      dataUpdatedAt: Date.now(),
+      failureCount: 0,
+      failureReason: undefined
+    };
     updateDependencies();
     writeDataToScope({
       scope: input.scope,
@@ -144,13 +169,7 @@ function createDependencyAwareFormulaController(input: {
 
   return {
     getState() {
-      return {
-        started,
-        loading,
-        stale,
-        value,
-        error
-      };
+      return state;
     },
     start() {
       if (started) {
@@ -159,9 +178,12 @@ function createDependencyAwareFormulaController(input: {
 
       started = true;
       stopped = false;
+      state = {
+        ...state,
+        started: true
+      };
 
       if (input.initialData !== undefined) {
-        value = input.initialData;
         writeDataToScope({
           scope: input.scope,
           targetPath: input.targetPath,
@@ -180,6 +202,10 @@ function createDependencyAwareFormulaController(input: {
     },
     stop() {
       stopped = true;
+      state = {
+        ...state,
+        fetchStatus: 'idle'
+      };
       publishStatus();
     },
     async refresh() {
@@ -198,6 +224,12 @@ function asString(value: unknown): string | undefined {
 
 function asBoolean(value: unknown): boolean | undefined {
   return typeof value === 'boolean' ? value : undefined;
+}
+
+function asOperationControl(value: unknown): import('@nop-chaos/flux-core').OperationControlConfig | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as import('@nop-chaos/flux-core').OperationControlConfig
+    : undefined;
 }
 
 export interface RuntimeSourceRegistry {
@@ -257,6 +289,7 @@ export function createRuntimeSourceRegistry(input: {
           stopWhen: asString(args.schema.stopWhen),
           silent: asBoolean(args.schema.silent),
           initialData: args.schema.initialData,
+          control: asOperationControl(args.schema.control),
           onDependenciesChange(nextDependencies: ScopeDependencySet | undefined) {
             if (!explicitDependencies) {
               dependencies = nextDependencies;
@@ -426,9 +459,11 @@ export function createRuntimeSourceRegistry(input: {
               statusPath: entry.statusPath,
               dependencies: entry.dependencies?.paths,
               started: state.started,
-              loading: state.loading,
+              status: state.status,
+              fetchStatus: state.fetchStatus,
+              loading: state.fetchStatus === 'fetching',
               stale: state.stale,
-              hasValue: typeof state.value !== 'undefined',
+              hasValue: typeof state.data !== 'undefined',
               error: state.error instanceof Error ? state.error.message : typeof state.error === 'string' ? state.error : undefined
             };
           })

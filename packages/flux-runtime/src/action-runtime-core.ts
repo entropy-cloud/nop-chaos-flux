@@ -273,6 +273,7 @@ const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
   'continueOnError',
   'then',
   'onError',
+  'onSettled',
   'args'
 ]);
 
@@ -384,6 +385,20 @@ export function resolveActionControl(action: ActionSchema): OperationControlConf
   return control as OperationControlConfig;
 }
 
+export function resolveRequestControl(action: ActionSchema): OperationControlConfig | undefined {
+  const base = resolveActionControl(action);
+  const retry = getRetryControl(action.retry);
+
+  if (!base && !retry) {
+    return undefined;
+  }
+
+  return {
+    ...(base ?? {}),
+    retry: retry ?? base?.retry
+  };
+}
+
 export function getNumericControl(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
@@ -393,15 +408,21 @@ export function getRetryControl(value: unknown): OperationControlConfig['retry']
     return undefined;
   }
 
-  const candidate = value as { times?: unknown; delay?: unknown };
+  const candidate = value as { times?: unknown; delay?: unknown; strategy?: unknown; maxDelay?: unknown };
   const times = getNumericControl(candidate.times);
 
   if (times === undefined) {
     return undefined;
   }
 
+  const strategy = candidate.strategy === 'exponential' || candidate.strategy === 'fixed'
+    ? candidate.strategy
+    : undefined;
+
   return {
     times,
-    delay: getNumericControl(candidate.delay)
+    delay: getNumericControl(candidate.delay),
+    strategy,
+    maxDelay: getNumericControl(candidate.maxDelay)
   };
 }

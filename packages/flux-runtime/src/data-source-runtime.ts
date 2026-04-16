@@ -4,6 +4,7 @@ import type {
   ActionSchema,
   ApiSchema,
   DataSourceController,
+  DataSourceState,
   DynamicRuntimeValue,
   OperationControlConfig,
   RendererRuntime,
@@ -12,6 +13,7 @@ import type {
   ScopeRef,
   StaticRuntimeValue
 } from '@nop-chaos/flux-core';
+import { shallowEqual } from '@nop-chaos/flux-core';
 import { resolveCacheKey, type ApiCacheStore } from './api-cache';
 import { isAbortError } from './error-utils';
 import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime';
@@ -139,19 +141,54 @@ export function writeDataToScope(input: {
 
 function writeStatusToScope(scope: ScopeRef, statusPath: string | undefined, state: {
   started: boolean;
-  loading: boolean;
+  status: DataSourceState['status'];
+  fetchStatus: DataSourceState['fetchStatus'];
   stale: boolean;
-  error: unknown;
+  error?: unknown;
+  dataUpdatedAt: number;
+  errorUpdatedAt: number;
+  failureCount: number;
+  failureReason?: unknown;
 }): void {
+  const loading = state.fetchStatus === 'fetching';
   publishOwnerStatus(scope, statusPath, {
     started: state.started,
-    loading: state.loading,
-    ready: state.started && !state.loading && !state.error,
+    loading,
+    ready: state.started && !loading && !state.error,
     stale: state.stale,
+    dataUpdatedAt: state.dataUpdatedAt,
+    errorUpdatedAt: state.errorUpdatedAt,
+    failureCount: state.failureCount,
+    failureReason: state.failureReason,
     error: state.error
       ? { message: state.error instanceof Error ? state.error.message : String(state.error) }
       : undefined
   });
+}
+
+function createInitialDataSourceState(initialData: unknown): DataSourceState {
+  const hasInitialData = typeof initialData !== 'undefined';
+
+  return {
+    started: false,
+    status: hasInitialData ? 'success' : 'idle',
+    fetchStatus: 'idle',
+    stale: false,
+    data: initialData,
+    error: undefined,
+    dataUpdatedAt: hasInitialData ? Date.now() : 0,
+    errorUpdatedAt: 0,
+    failureCount: 0,
+    failureReason: undefined
+  };
+}
+
+function structuralShareData(previousData: unknown, nextData: unknown): unknown {
+  return shallowEqual(previousData, nextData) ? previousData : nextData;
+}
+
+function nextFailureCount(previousFailureCount: number): number {
+  return previousFailureCount + 1;
 }
 
 export function trackApiRequestDependencies(input: {
@@ -198,6 +235,7 @@ export function createDataSourceController(input: {
   stopWhen?: string;
   silent?: boolean;
   initialData?: unknown;
+  control?: OperationControlConfig;
   onDependenciesChange?: (dependencies: ScopeDependencySet | undefined) => void;
 }): DataSourceController {
   const {
@@ -215,19 +253,44 @@ export function createDataSourceController(input: {
     interval,
     stopWhen,
     silent,
-    initialData
+    initialData,
+    control
   } = input;
 
   let started = false;
   let stopped = false;
   let pollTimer: ReturnType<typeof setInterval> | undefined;
   let abortController: AbortController | undefined;
-  let loading = false;
-  let stale = false;
-  let value: unknown = initialData;
-  let error: unknown;
+  let state = createInitialDataSourceState(initialData);
   const compiledApi = input.runtime.expressionCompiler.compileValue(api);
   const apiState: RuntimeValueState<ApiSchema> | undefined = compiledApi.isStatic ? undefined : (compiledApi as DynamicRuntimeValue<ApiSchema>).createState();
+
+  function publishState() {
+    writeStatusToScope(scope, statusPath, state);
+  }
+
+  function updateState(updater: (current: DataSourceState) => DataSourceState): DataSourceState {
+    state = updater(state);
+    publishState();
+    return state;
+  }
+
+  function publishData(nextData: unknown): void {
+    if (targetPath) {
+      const currentValue = scope.get(targetPath);
+      const safeForSharing = !mergeStrategy || mergeStrategy === 'replace';
+      const effectiveData = safeForSharing ? structuralShareData(currentValue, nextData) : nextData;
+
+      if (safeForSharing && Object.is(currentValue, effectiveData)) {
+        return;
+      }
+
+      writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: effectiveData });
+      return;
+    }
+
+    writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: nextData });
+  }
 
   function checkStopCondition(): boolean {
     if (!stopWhen || !interval) {
@@ -242,14 +305,17 @@ export function createDataSourceController(input: {
   }
 
   async function runRequest(): Promise<void> {
-    if (stopped || loading) {
+    if (stopped || state.fetchStatus === 'fetching') {
       return;
     }
 
-    loading = true;
-    stale = value !== undefined;
-    error = undefined;
-    writeStatusToScope(scope, statusPath, { started, loading, stale, error });
+    updateState((current) => ({
+      ...current,
+      fetchStatus: 'fetching',
+      status: typeof current.data === 'undefined' ? 'pending' : current.status,
+      stale: typeof current.data !== 'undefined',
+      error: undefined
+    }));
 
     abortController?.abort();
     abortController = new AbortController();
@@ -284,11 +350,22 @@ export function createDataSourceController(input: {
             payload: cached.data
           });
 
-          value = mappedValue;
-          loading = false;
-          stale = false;
-          writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: mappedValue });
-          writeStatusToScope(scope, statusPath, { started, loading, stale, error });
+          publishData(mappedValue);
+          updateState((current) => {
+            const sharedData = structuralShareData(current.data, mappedValue);
+            return {
+              ...current,
+              status: 'success',
+              fetchStatus: 'idle',
+              stale: false,
+              data: sharedData,
+              error: undefined,
+              dataUpdatedAt: Object.is(sharedData, current.data) ? current.dataUpdatedAt : Date.now(),
+              errorUpdatedAt: current.errorUpdatedAt,
+              failureCount: 0,
+              failureReason: undefined
+            };
+          });
 
           if (checkStopCondition()) {
             stop();
@@ -304,9 +381,9 @@ export function createDataSourceController(input: {
         preparedRequest,
         executor: (adaptedApi) => executeApiRequest('data-source', adaptedApi, requestScope, {
           signal: controller.signal,
-          control: trackedApi.resolvedApi.control as OperationControlConfig | undefined
+          control
         }),
-        control: trackedApi.resolvedApi.control as OperationControlConfig | undefined
+        control
       });
 
       if (stopped || controller.signal.aborted) {
@@ -324,12 +401,22 @@ export function createDataSourceController(input: {
         payload: response.data
       });
 
-      value = mappedValue;
-      loading = false;
-      stale = false;
-      error = undefined;
-      writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: mappedValue });
-      writeStatusToScope(scope, statusPath, { started, loading, stale, error });
+      publishData(mappedValue);
+      updateState((current) => {
+        const sharedData = structuralShareData(current.data, mappedValue);
+        return {
+          ...current,
+          status: 'success',
+          fetchStatus: 'idle',
+          stale: false,
+          data: sharedData,
+          error: undefined,
+          dataUpdatedAt: Object.is(sharedData, current.data) ? current.dataUpdatedAt : Date.now(),
+          errorUpdatedAt: current.errorUpdatedAt,
+          failureCount: 0,
+          failureReason: undefined
+        };
+      });
 
       if (checkStopCondition()) {
         stop();
@@ -339,10 +426,16 @@ export function createDataSourceController(input: {
         return;
       }
 
-      loading = false;
-      stale = value !== undefined;
-      error = caughtError;
-      writeStatusToScope(scope, statusPath, { started, loading, stale, error });
+      updateState((current) => ({
+        ...current,
+        status: typeof current.data === 'undefined' ? 'error' : current.status,
+        fetchStatus: 'idle',
+        stale: typeof current.data !== 'undefined',
+        error: caughtError,
+        errorUpdatedAt: Date.now(),
+        failureCount: nextFailureCount(current.failureCount),
+        failureReason: caughtError
+      }));
 
       if (!silent) {
         const message = caughtError instanceof Error ? caughtError.message : String(caughtError);
@@ -360,11 +453,14 @@ export function createDataSourceController(input: {
     stopped = false;
 
     if (initialData !== undefined) {
-      value = initialData;
-      writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: initialData });
+      publishData(initialData);
     }
 
-    writeStatusToScope(scope, statusPath, { started, loading, stale, error });
+    updateState((current) => ({
+      ...current,
+      started,
+      status: typeof current.data === 'undefined' ? 'idle' : current.status
+    }));
 
     void runRequest();
 
@@ -392,18 +488,15 @@ export function createDataSourceController(input: {
 
     abortController?.abort();
     abortController = undefined;
-    writeStatusToScope(scope, statusPath, { started, loading, stale, error });
+    updateState((current) => ({
+      ...current,
+      fetchStatus: 'idle'
+    }));
   }
 
   return {
     getState() {
-      return {
-        started,
-        loading,
-        stale,
-        value,
-        error
-      };
+      return state;
     },
     start,
     stop,

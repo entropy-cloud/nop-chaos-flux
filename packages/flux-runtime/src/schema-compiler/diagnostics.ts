@@ -1,5 +1,6 @@
 import type {
   CompileSchemaOptions,
+  HostContractContext,
   SchemaCompileValidationOptions,
   SchemaDiagnostic,
   SchemaDiagnosticCode,
@@ -14,7 +15,7 @@ export interface SchemaCompilerDiagnosticsContext {
   enabled: boolean;
   continueOnError: boolean;
   maxIssues?: number;
-  validation: Required<SchemaCompileValidationOptions>;
+  validation: ResolvedValidationOptions;
   diagnostics: SchemaDiagnostic[];
   emit(issue: {
     code: SchemaDiagnosticCode;
@@ -113,6 +114,26 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
           return;
         }
 
+        if (context.key === 'xui:version') {
+          if (typeof context.value !== 'string') {
+            context.add({
+              code: 'invalid-namespace-property',
+              message: 'xui:version must be a string version selector.',
+              source: 'namespace'
+            });
+            return;
+          }
+
+          if (context.value.length === 0) {
+            context.add({
+              code: 'invalid-namespace-property',
+              message: 'xui:version must be a non-empty version selector string.',
+              source: 'namespace'
+            });
+          }
+          return;
+        }
+
         {
           context.add({
             code: 'invalid-namespace-property',
@@ -141,15 +162,20 @@ function mergeNamespaceValidators(
   return Array.from(merged.values());
 }
 
+type ResolvedValidationOptions = Omit<Required<SchemaCompileValidationOptions>, 'hostContractContext'> & {
+  hostContractContext?: HostContractContext;
+};
+
 function resolveValidationOptions(
   options: CompileSchemaOptions | undefined,
   mode: SchemaCompilerDiagnosticsMode
-): Required<SchemaCompileValidationOptions> {
-  const defaults: Required<SchemaCompileValidationOptions> = {
-    unknownBarePropertyPolicy: mode === 'validate' ? 'error' : 'warn',
-    namespacedPropertyPolicy: 'delegate-or-ignore',
-    extensionPassthroughPolicy: 'namespaced-only',
-    namespaceValidators: []
+): ResolvedValidationOptions {
+  const defaults = {
+    unknownBarePropertyPolicy: (mode === 'validate' ? 'error' : 'warn') as 'error' | 'warn' | 'ignore',
+    namespacedPropertyPolicy: 'delegate-or-ignore' as const,
+    extensionPassthroughPolicy: 'namespaced-only' as const,
+    namespaceValidators: [] as readonly SchemaNamespaceValidator[],
+    hostContractContext: undefined as HostContractContext | undefined
   };
 
   const validation = options?.validation;
@@ -158,7 +184,8 @@ function resolveValidationOptions(
     unknownBarePropertyPolicy: validation?.unknownBarePropertyPolicy ?? defaults.unknownBarePropertyPolicy,
     namespacedPropertyPolicy: validation?.namespacedPropertyPolicy ?? defaults.namespacedPropertyPolicy,
     extensionPassthroughPolicy: validation?.extensionPassthroughPolicy ?? defaults.extensionPassthroughPolicy,
-    namespaceValidators: mergeNamespaceValidators(validation?.namespaceValidators)
+    namespaceValidators: mergeNamespaceValidators(validation?.namespaceValidators),
+    hostContractContext: validation?.hostContractContext ?? defaults.hostContractContext
   };
 }
 

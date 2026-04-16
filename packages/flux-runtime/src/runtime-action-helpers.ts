@@ -7,12 +7,12 @@ import type {
   CompiledValidationRule,
   ExecutableApiRequest,
   ExpressionCompiler,
-  OperationControlConfig,
   RendererEnv,
   ScopeRef,
   ValidationError,
   ValidationRule
 } from '@nop-chaos/flux-core';
+import { resolveRequestControl } from './action-runtime-core';
 import { isAbortError } from './error-utils';
 import { applyResponseDataPath, executeApiSchema } from './request-runtime';
 import { createValidationError } from './validation';
@@ -77,6 +77,7 @@ export async function executeRuntimeAjaxAction(
   }
 ): Promise<ActionResult> {
   let monitoredApi: ExecutableApiRequest | undefined;
+  const requestControl = resolveRequestControl(action);
   const response = await executeApiSchema(api, ctx.scope, helpers.getEnv(), helpers.expressionCompiler, {
     signal,
     evaluate: helpers.evaluate,
@@ -86,9 +87,9 @@ export async function executeRuntimeAjaxAction(
     executor: (adaptedApi) => helpers.executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
       signal,
       interactionId: ctx.interactionId,
-      control: action.control as OperationControlConfig | undefined
+      control: requestControl
     }),
-    control: action.control as OperationControlConfig | undefined
+    control: requestControl
   });
 
   if (monitoredApi) {
@@ -108,6 +109,8 @@ export async function executeRuntimeAjaxAction(
   return {
     ok: true,
     data: response.data,
+    attempts: response.attempts,
+    failureCount: response.failureCount,
     error: undefined
   };
 }

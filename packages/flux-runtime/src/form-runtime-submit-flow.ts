@@ -2,6 +2,7 @@ import type {
   ApiSchema,
   FieldState,
   FormValidationResult,
+  OperationControlConfig,
   ValidationReason
 } from '@nop-chaos/flux-core';
 import { buildSubmitTouchedState, classifySubmitResult } from './form-runtime-submit';
@@ -20,7 +21,7 @@ export interface SubmitFormInput {
   setIsSubmitting: (value: boolean) => void;
   getLifecycleHandlers: () => import('@nop-chaos/flux-core').FormLifecycleHandlers | undefined;
   getCurrentValidation: () => import('@nop-chaos/flux-core').CompiledFormValidationModel | undefined;
-  submitApiCall: (api: ApiSchema, options?: { interactionId?: string }) => Promise<import('@nop-chaos/flux-core').ActionResult>;
+  submitApiCall: (api: ApiSchema, options?: { interactionId?: string; control?: OperationControlConfig }) => Promise<import('@nop-chaos/flux-core').ActionResult>;
   validateForm: (reason?: ValidationReason) => Promise<FormValidationResult>;
 }
 
@@ -39,7 +40,7 @@ function extractTouchedPaths(fieldStates: Record<string, FieldState>): Record<st
 export async function executeFormSubmit(
   input: SubmitFormInput,
   api?: ApiSchema,
-  options?: { interactionId?: string }
+  options?: { interactionId?: string; control?: OperationControlConfig }
 ): Promise<import('@nop-chaos/flux-core').ActionResult> {
   const {
     sharedState,

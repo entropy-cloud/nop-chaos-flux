@@ -11,6 +11,7 @@ import type {
   SchemaValue
 } from '@nop-chaos/flux-core';
 import { isPlainObject, setIn } from '@nop-chaos/flux-core';
+import { withRetry, type RetryResult } from './operation-control';
 import { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor';
 import { stableStringify } from './api-cache';
 
@@ -25,6 +26,36 @@ export interface ApiRequestExecutor {
     options?: { signal?: AbortSignal; interactionId?: string; control?: OperationControlConfig }
   ): Promise<ApiResponse<T>>;
   dispose(): void;
+}
+
+export interface ApiRequestExecutionResult<T> {
+  response: ApiResponse<T>;
+  retry: RetryResult<ApiResponse<T>>;
+}
+
+export async function executeRequestWithControl<T>(input: {
+  execute: () => Promise<ApiResponse<T>>;
+  control?: OperationControlConfig;
+  shouldStop?: (response: ApiResponse<T>) => boolean;
+  onFailedAttempt?: (failureCount: number, error: unknown) => void;
+}): Promise<ApiRequestExecutionResult<T>> {
+  const retry = input.control?.retry;
+  const retryResult = await withRetry(
+    input.execute,
+    {
+      times: retry?.times ?? 0,
+      delay: retry?.delay ?? 0,
+      strategy: retry?.strategy ?? 'fixed',
+      maxDelay: retry?.maxDelay,
+      onFailedAttempt: input.onFailedAttempt
+    },
+    input.shouldStop ?? ((response) => Boolean(response.ok))
+  );
+
+  return {
+    response: retryResult.result,
+    retry: retryResult
+  };
 }
 
 function getPathValue(input: unknown, path: string): unknown {
@@ -244,14 +275,18 @@ export async function executeApiSchema(
     executor?: <T>(adaptedApi: ExecutableApiRequest) => Promise<ApiResponse<T>>;
     control?: OperationControlConfig;
   }
-): Promise<{ data: unknown; ok: boolean; status?: number }> {
+): Promise<{ data: unknown; ok: boolean; status?: number; attempts: number; failureCount: number; lastFailureReason?: unknown }> {
   const resolvedApi = options?.evaluate ? options.evaluate<ApiSchema>(api, scope) : api;
   const preparedRequest = options?.preparedRequest ?? prepareApiRequestForExecution(resolvedApi, scope, env, expressionCompiler);
   const executableApi = preparedRequest.request;
   options?.onPreparedRequest?.(executableApi);
-  const response = options?.executor
-    ? await options.executor(executableApi)
-    : await env.fetcher(executableApi, { scope, env, signal: options?.signal });
+  const execution = await executeRequestWithControl({
+    execute: () => options?.executor
+      ? options.executor(executableApi)
+      : env.fetcher(executableApi, { scope, env, signal: options?.signal }),
+    control: options?.control
+  });
+  const response = execution.response;
 
   if (!response.ok) {
     const responseData = response.data;
@@ -269,7 +304,14 @@ export async function executeApiSchema(
   }
 
   const adaptedData = applyResponseAdaptor(expressionCompiler, executableApi, resolvedApi, response.data, scope, env);
-  return { data: adaptedData, ok: response.ok, status: response.status };
+  return {
+    data: adaptedData,
+    ok: response.ok,
+    status: response.status,
+    attempts: execution.retry.attempts,
+    failureCount: execution.retry.failureCount,
+    lastFailureReason: execution.retry.lastFailureReason
+  };
 }
 
 export const executeApiObject = executeApiSchema;

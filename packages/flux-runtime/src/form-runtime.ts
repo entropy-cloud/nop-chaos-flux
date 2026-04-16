@@ -346,7 +346,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       store.setPathErrors(path);
     },
 
-    async submit(api?: ApiSchema, options?: { interactionId?: string }) {
+    async submit(api?: ApiSchema, options?: { interactionId?: string; control?: import('@nop-chaos/flux-core').OperationControlConfig }) {
       return executeFormSubmit(
         {
           sharedState,

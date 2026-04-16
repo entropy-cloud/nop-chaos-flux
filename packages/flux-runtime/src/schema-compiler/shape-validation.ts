@@ -7,6 +7,11 @@ import type {
 import { isPlainObject, isSchemaInput, META_FIELDS, normalizeRootPath } from '@nop-chaos/flux-core';
 import { appendJsonPointer, schemaPathToJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics';
 import { classifyField } from './fields';
+import {
+  createHostActionValidationContext,
+  validateHostAction,
+  type HostActionValidationContext
+} from './host-action-validation';
 
 export function applyWrapComponentPlugins(renderer: RendererDefinition, plugins?: RendererPlugin[]): RendererDefinition {
   return (plugins ?? []).reduce((current, plugin) => plugin.wrapComponent?.(current) ?? current, renderer);
@@ -144,11 +149,12 @@ function validateActionShape(
   value: unknown,
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
-  enabled: boolean
+  enabled: boolean,
+  hostContext?: HostActionValidationContext
 ) {
   if (Array.isArray(value)) {
     value.forEach((entry, index) => {
-      validateActionShape(entry, appendJsonPointer(path, index), diagnostics, enabled);
+      validateActionShape(entry, appendJsonPointer(path, index), diagnostics, enabled, hostContext);
     });
     return;
   }
@@ -168,6 +174,8 @@ function validateActionShape(
       path: appendJsonPointer(path, 'action'),
       message: 'Action objects require a non-empty action field.'
     }, enabled);
+  } else if (enabled && hostContext) {
+    validateHostAction(value.action, value.args, path, diagnostics, hostContext);
   }
 
   if (value.args !== undefined && !isPlainObject(value.args)) {
@@ -189,15 +197,15 @@ function validateActionShape(
       message: 'Action parallel must be an array when provided.'
     }, enabled);
   } else if (Array.isArray(value.parallel)) {
-    validateActionShape(value.parallel, appendJsonPointer(path, 'parallel'), diagnostics, enabled);
+    validateActionShape(value.parallel, appendJsonPointer(path, 'parallel'), diagnostics, enabled, hostContext);
   }
 
   if (value.then !== undefined) {
-    validateActionShape(value.then, appendJsonPointer(path, 'then'), diagnostics, enabled);
+    validateActionShape(value.then, appendJsonPointer(path, 'then'), diagnostics, enabled, hostContext);
   }
 
   if (value.onError !== undefined) {
-    validateActionShape(value.onError, appendJsonPointer(path, 'onError'), diagnostics, enabled);
+    validateActionShape(value.onError, appendJsonPointer(path, 'onError'), diagnostics, enabled, hostContext);
   }
 }
 
@@ -265,6 +273,10 @@ export function inspectSchemaNodeFields(
   const skippedPropKeys = new Set<string>();
   const extensions: Record<string, unknown> = {};
 
+  const hostContext = diagnostics.validation.hostContractContext
+    ? createHostActionValidationContext(diagnostics.validation.hostContractContext)
+    : undefined;
+
   for (const key of Object.keys(schema)) {
     const value = schema[key];
     const keyPath = appendJsonPointer(pointer, key);
@@ -315,7 +327,7 @@ export function inspectSchemaNodeFields(
     const rule = classifyField(renderer, key);
 
     if (rule.kind === 'event') {
-      validateActionShape(value, keyPath, diagnostics, enabled);
+      validateActionShape(value, keyPath, diagnostics, enabled, hostContext);
       continue;
     }
 
@@ -361,7 +373,7 @@ export function inspectSchemaNodeFields(
   }
 
   if (schema.type === 'reaction') {
-    validateActionShape(schema.actions, appendJsonPointer(pointer, 'actions'), diagnostics, enabled);
+    validateActionShape(schema.actions, appendJsonPointer(pointer, 'actions'), diagnostics, enabled, hostContext);
   }
 
   if (enabled && renderer.schemaValidator) {

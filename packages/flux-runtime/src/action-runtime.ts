@@ -19,6 +19,7 @@ import {
   finishAction,
   getNumericControl,
   getRetryControl,
+  isFailureClass,
   mergeEvaluationBindings,
   normalizeActionResult,
   resolveActionControl,
@@ -34,6 +35,10 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     resolve: (result: ActionResult) => void;
     reject: (error: unknown) => void;
   }>();
+
+  function isRequestBackedAction(action: ActionSchema): boolean {
+    return action.action === 'ajax' || action.action === 'submitForm';
+  }
 
   async function runParallelActions(
     action: ActionSchema,
@@ -199,19 +204,34 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
   }
 
   async function runSingleActionWithRetry(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
+    if (isRequestBackedAction(action)) {
+      const result = await runSingleActionWithTimeout(action, ctx);
+      const errorWithRetry = result.error as { attempts?: unknown; failureCount?: unknown } | undefined;
+
+      return {
+        ...result,
+        attempts: typeof errorWithRetry?.attempts === 'number' ? errorWithRetry.attempts : result.attempts,
+        failureCount: typeof errorWithRetry?.failureCount === 'number' ? errorWithRetry.failureCount : result.failureCount
+      };
+    }
+
     const retry = getRetryControl(action.retry);
-    const { result: lastResult, attempts } = await withRetry(
+    const { result: lastResult, attempts, failureCount, lastFailureReason } = await withRetry(
       () => runSingleActionWithTimeout(action, ctx),
       {
         times: retry?.times ?? 0,
-        delay: retry?.delay ?? 0
+        delay: retry?.delay ?? 0,
+        strategy: retry?.strategy ?? 'fixed',
+        maxDelay: retry?.maxDelay
       },
       (result) => Boolean(result.ok || result.skipped || result.cancelled || result.timedOut)
     );
 
     return {
       ...(lastResult ?? { ok: false, error: new Error('Action failed without result') }),
-      attempts
+      attempts,
+      failureCount,
+      error: lastResult?.error ?? lastFailureReason
     };
   }
 
@@ -254,15 +274,17 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
 
       previous = result;
 
+      const branchBindings = mergeEvaluationBindings(
+        ctx.evaluationBindings,
+        createBranchEvaluationBindings(result, actionContext.prevResult)
+      );
+
       if (resultClass === 'success' && normalizedAction.then) {
         previous = await dispatch(normalizedAction.then, {
           ...ctx,
           interactionId: actionContext.interactionId,
           prevResult: result,
-          evaluationBindings: mergeEvaluationBindings(
-            ctx.evaluationBindings,
-            createBranchEvaluationBindings(result, actionContext.prevResult)
-          )
+          evaluationBindings: branchBindings
         });
       } else if (resultClass === 'failure' && normalizedAction.onError) {
         const eventType = typeof (ctx.event as { type?: unknown } | undefined)?.type === 'string'
@@ -279,11 +301,43 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
             error: result.error,
             prevResult: actionContext.prevResult
           },
-          evaluationBindings: mergeEvaluationBindings(
-            ctx.evaluationBindings,
-            createBranchEvaluationBindings(result, actionContext.prevResult)
-          )
+          evaluationBindings: branchBindings
         });
+      }
+
+      if ((resultClass === 'success' || resultClass === 'failure') && normalizedAction.onSettled) {
+        const settledEventType = resultClass === 'failure' ? 'actionSettledError' : 'actionSettled';
+
+        try {
+          await dispatch(normalizedAction.onSettled, {
+            ...ctx,
+            interactionId: actionContext.interactionId,
+            prevResult: result,
+            event: {
+              ...(ctx.event && typeof ctx.event === 'object' ? ctx.event as Record<string, unknown> : {}),
+              type: settledEventType,
+              result,
+              error: isFailureClass(result) ? result.error : undefined,
+              prevResult: actionContext.prevResult,
+              settled: true
+            },
+            evaluationBindings: branchBindings
+          });
+        } catch (error) {
+          input.onActionError?.(error, actionContext);
+
+          for (const plugin of input.plugins ?? []) {
+            plugin.onError?.(error, {
+              phase: 'action',
+              error,
+              nodeId: ctx.nodeInstance?.templateNode.id,
+              path: ctx.nodeInstance?.templateNode.templatePath
+            });
+          }
+
+          const message = error instanceof Error ? error.message : String(error);
+          input.getEnv().notify('error', message);
+        }
       }
 
       if (resultClass === 'failure' && !normalizedAction.continueOnError) {
