@@ -312,9 +312,10 @@ Lookup preserves lexical shadowing:
 
 ### `CompiledSchemaNode`
 
-Current exported node contract is directionally:
+`CompiledSchemaNode` is a **compiler-internal artifact** with an `@internal` annotation. It is not part of the runtime-facing render contract.
 
 ```ts
+/** @internal */
 interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
   id: string;
   type: S['type'];
@@ -332,16 +333,20 @@ interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
 }
 ```
 
-Important note:
+Current boundary classification:
 
-- current compiled nodes carry resolved event metadata and validation metadata in addition to props and regions
+| Usage | Classification | Notes |
+|-------|----------------|-------|
+| Schema compiler internals | **Compiler-internal** | `schema-compiler.ts` and helper modules produce and consume this type |
+| `RendererPlugin.afterCompile(node)` | **Compile-time plugin contract** | Intentional extension point for plugins to inspect/modify compiled output before template conversion |
+| Debugger tooling | **Tooling residue** | Receives compiled nodes via plugin contract, not render path |
+
+Important notes:
+
+- The main render path is `CompiledTemplate -> TemplateNode -> NodeInstance`; `CompiledSchemaNode` does not appear in the render path
+- `RendererPlugin.afterCompile` is a compile-time hook, not a runtime-facing API
+- Debugger/tooling usage is legitimate via the plugin contract, but does not expose `CompiledSchemaNode` to renderers
 - `props` is a compiled runtime value, not a raw plain object
-
-Current compatibility note:
-
-- `createRuntimeState()` is part of the current code shape
-- the main render path already uses `TemplateNode` plus explicit `NodeInstance` allocation during `instantiate(...)`
-- remaining `CompiledSchemaNode` usage is compiler/tooling residue, not the runtime-facing render contract
 
 ## Action Baseline
 
@@ -414,7 +419,6 @@ Priority order:
 
 ## Remaining Gaps
 
-- `CompiledSchemaNode` still exists as a public compiler/tooling-facing type and is not yet fully narrowed back to internal-only usage
 - richer validation normalization phases
 - more compiler-described composite validation in place of runtime registration
 - further reduction of duplicated validation projections where it can be done safely

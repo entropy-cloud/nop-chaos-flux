@@ -31,10 +31,10 @@
 
 | # | 问题 | 说明 | 严重度 |
 |---|------|------|--------|
-| D-06 | `word-editor` 缺少专属 owner 文档 | `word-editor-core` / `word-editor-renderers` 已有真实代码、测试、计划和日志记录，但 `docs/architecture/` 下没有专门的架构 owner doc，`docs/components/` 下也没有 `word-editor-page` 组件契约文档。当前知识分散在计划、日志和少量总览文档里，后续审计很容易再次把“已有实现”误读成“无 owner baseline”。 | **High** |
-| D-07 | `docs/architecture/form-validation.md` 超过 active owner doc 体积警戒线 | 当前文件约 52 KB，已经超过 AGENTS 里对 active 文档的 50 KB 警戒。和日志/分析文件不同，这是一份持续被引用的 owner doc，继续增长会降低可维护性、加大未来漂移概率。 | **Medium** |
-| D-08 | `AGENTS.md` 与 `docs/index.md` 的路由/规则存在重复维护面 | 这不是“内容错误”，但确实是维护风险。两处都在承担入口导航和规范摘要职责，一旦只更新其中一边，后续审计容易再次产出“文档互相矛盾”的假阳性。 | **Medium** |
-| D-09 | `dialog` / `openDialog` 共存的文档表达仍需进一步收口 | live runtime 同时支持 `dialog` 与 `openDialog`，这不是 bug；问题在于 owner docs 还没有把“新 schema authoring 应优先使用哪个名字”说死，读者仍可能把 alias coexistence 误读成契约冲突。 | **Low** |
+| ~~D-06~~ | ~~`word-editor` 缺少专属 owner 文档~~ | **已解决 (2026-04-16)**: 已创建 `docs/architecture/word-editor/design.md` 架构文档和 `docs/components/word-editor-page/design.md` 组件契约文档，并在 `docs/index.md` 中添加了路由入口。 | ~~High~~ |
+| ~~D-07~~ | ~~`docs/architecture/form-validation.md` 超过 active owner doc 体积警戒线~~ | **已解决 (2026-04-16)**: 将详细 TypeScript 类型定义拆分到 `docs/references/form-validation-runtime-types.md`，主文档降至约 43 KB。 | ~~Medium~~ |
+| ~~D-08~~ | ~~`AGENTS.md` 与 `docs/index.md` 的路由/规则存在重复维护面~~ | **已解决 (2026-04-16)**: 在 `docs/index.md` 添加了 "Routing Authority" 章节明确其为文档导航 owner；`AGENTS.md` 的路由表精简为操作性子集并明确指向 `docs/index.md` 作为权威来源。 | ~~Medium~~ |
+| ~~D-09~~ | ~~`dialog` / `openDialog` 共存的文档表达仍需进一步收口~~ | **已解决 (2026-04-16)**: 在 `docs/architecture/action-scope-and-imports.md` 添加了明确的 "Schema authoring preference" 章节，声明新 schema 应优先使用 `openDialog`。 | ~~Low~~ |
 
 ### 1.4 本次复核新增的文档规则
 
@@ -54,37 +54,21 @@
 
 ### 2.1 生产代码中的调试输出
 
-| # | 文件 | 位置 | 问题 |
-|---|------|------|------|
-| C-01 | `packages/word-editor-renderers/src/WordEditorPage.tsx` | 55 | `console.log('Loaded saved document:', savedDocument.savedAt)` |
-| C-02 | 同上 | 131 | `console.log('Chart saved:', chart)` |
-| C-03 | 同上 | 135 | `console.log('Code saved:', code)` |
+~~| # | 文件 | 位置 | 问题 |~~
+~~|---|------|------|------|~~
+~~| C-01 | `packages/word-editor-renderers/src/WordEditorPage.tsx` | 55 | `console.log('Loaded saved document:', savedDocument.savedAt)` |~~
+~~| C-02 | 同上 | 131 | `console.log('Chart saved:', chart)` |~~
+~~| C-03 | 同上 | 135 | `console.log('Code saved:', code)` |~~
 
-问题属实，且当前仓库中只有这 3 处生产代码 `console.log`。
-
-建议：
-
-- 直接删除，不要保留“以后调试用”的噪音输出。
-- 如果确实需要可观测性，改成受控的 host logger 或 monitor hook，而不是常驻控制台输出。
+**已解决 (2026-04-16)**: 三处 `console.log` 已从 `WordEditorPage.tsx` 删除。
 
 ### 2.2 静默吞错的 API resolver
 
-| # | 文件 | 位置 | 问题 |
-|---|------|------|------|
-| C-04 | `packages/flux-code-editor/src/source-resolvers.ts` | 52, 83, 120, 157 | 四处 `dispatch(...).catch(() => {})` 静默吞错 |
+~~| # | 文件 | 位置 | 问题 |~~
+~~|---|------|------|------|~~
+~~| C-04 | `packages/flux-code-editor/src/source-resolvers.ts` | 52, 83, 120, 157 | 四处 `dispatch(...).catch(() => {})` 静默吞错 |~~
 
-问题属实，而且是同一模式重复 4 次。
-
-为什么这是真问题：
-
-- 当前 UI 会把“请求失败”伪装成“无可选数据”，调用方无法区分空列表与加载失败。
-- 后续排查表达式变量、函数列表、SQL schema 来源问题时，没有任何错误信号。
-
-建议：
-
-- 提取一个共享的 async resolver helper，统一处理 `ajax` 请求。
-- 至少保留可观察错误面：返回空列表前先 `notify` / `monitor` / `console.warn` 其一。
-- 更好的方案是让 hook 返回 `{ items, error }`，把错误态显式暴露给编辑器 UI。
+**已解决 (2026-04-16)**: 提取了共享的 `useAsyncApiResolver<T>` helper，统一处理 `ajax` 请求。错误现在通过 `console.warn` 记录并通过 `{ items, error, loading }` 返回类型暴露给调用方。
 
 ### 2.3 Repo 级超大代码文件仍然存在
 
@@ -220,12 +204,12 @@
 
 ### P0
 
-- 删除 `WordEditorPage.tsx` 中 3 处生产 `console.log`
-- 修复 `source-resolvers.ts` 4 处静默吞错
+- ~~删除 `WordEditorPage.tsx` 中 3 处生产 `console.log`~~ **已解决 (2026-04-16)**
+- ~~修复 `source-resolvers.ts` 4 处静默吞错~~ **已解决 (2026-04-16)**
 
 ### P1
 
-- 为 `word-editor` 补 dedicated architecture/component owner docs
+- ~~为 `word-editor` 补 dedicated architecture/component owner docs~~ **已解决 (2026-04-16)**
 - 为 `@nop-chaos/ui` 增加最小 smoke/render 覆盖
 - 清理 `flux-runtime/vitest.config.js`
 - 收口 `flux-code-editor` 的 `any` / `as any` 热点
@@ -233,7 +217,7 @@
 
 ### P2
 
-- 让 `form-validation.md` 按子主题拆分或建立明确 successor docs
+- ~~让 `form-validation.md` 按子主题拆分或建立明确 successor docs~~ **已解决 (2026-04-16)**
 - 为 `flux-core` 增补测试
 - 为 `flux-runtime`、`flux-react` 评估是否增加 coverage gate
 - 梳理 Flow Designer 颜色/token 收口路线

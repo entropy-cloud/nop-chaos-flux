@@ -1,6 +1,6 @@
 # 96 Final Architecture Doc-Code Closure Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-16
 > Source: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/analysis/2026-04-16-architecture-transition-closure-review.md`, `docs/architecture/flux-core.md`, `docs/architecture/dependency-tracking.md`, `docs/architecture/api-data-source.md`, `docs/architecture/action-scope-and-imports.md`
 > Related: `docs/plans/100-compiledschemanode-public-boundary-closure-plan.md`, `docs/plans/98-data-source-publication-and-dependency-declaration-closure-plan.md`, `docs/plans/99-flow-designer-capability-facade-closure-plan.md`
@@ -65,40 +65,80 @@ Exit Criteria:
 
 ### Phase 2 - Reverse Update Discipline
 
-Status: planned
+Status: completed
 Targets: successor plans, touched owner docs, `docs/analysis/2026-04-16-architecture-transition-closure-review.md`, `docs/logs/`
 
-- [ ] Require each successor plan to reverse-update its owner docs in the same slice as the implementation landing.
-- [ ] Require outdated or superseded wording to be marked explicitly when the baseline changes.
-- [ ] Record the reverse-update evidence in the daily log as successor slices land.
+- [x] Require each successor plan to reverse-update its owner docs in the same slice as the implementation landing.
+- [x] Require outdated or superseded wording to be marked explicitly when the baseline changes.
+- [x] Record the reverse-update evidence in the daily log as successor slices land.
+
+**Phase 2 Results (2026-04-16):**
+
+All three successor plans completed reverse updates:
+- Plan 100: `docs/architecture/flux-core.md` updated with CompiledSchemaNode boundary classification table
+- Plan 98: Verified `docs/architecture/api-data-source.md` and `docs/architecture/dependency-tracking.md` already correct
+- Plan 99: `docs/architecture/action-scope-and-imports.md` updated to clarify owner-internal behavior
 
 Exit Criteria:
 
-- [ ] No successor-owned landing leaves stale transition wording behind in the relevant owner docs.
-- [ ] The daily log and/or successor plans cite the reverse-update evidence.
+- [x] No successor-owned landing leaves stale transition wording behind in the relevant owner docs.
+- [x] The daily log and/or successor plans cite the reverse-update evidence.
 
 ### Phase 3 - Final Cross-Doc Audit
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/flux-core.md`, `docs/architecture/dependency-tracking.md`, `docs/architecture/api-data-source.md`, `docs/architecture/action-scope-and-imports.md`, successor plans, `docs/logs/`
 
-- [ ] Re-audit the owner docs against the live repo after the successor plans land.
-- [ ] Confirm there is no remaining plan-owned mismatch between current code and current owner-doc wording.
-- [ ] Update this master plan and the daily log with the closure baseline.
+- [x] Re-audit the owner docs against the live repo after the successor plans land.
+- [x] Confirm there is no remaining plan-owned mismatch between current code and current owner-doc wording.
+- [x] Update this master plan and the daily log with the closure baseline.
+
+**Phase 3 Results (2026-04-16):**
+
+Cross-doc audit completed. All four owner docs are consistent with live code:
+
+| Doc | Status | Evidence |
+|-----|--------|----------|
+| `flux-core.md` | Consistent | CompiledSchemaNode boundary table at lines 315-349 |
+| `api-data-source.md` | Consistent | name-first publication documented (lines 449-455) |
+| `dependency-tracking.md` | Consistent | dependsOn precedence documented |
+| `action-scope-and-imports.md` | Consistent | Flow Designer boundary clarified (lines 57, 975) |
 
 Exit Criteria:
 
-- [ ] Owner docs describe the landed baseline and any deliberate compatibility remainder precisely.
-- [ ] No remaining drift is still owned by this master plan.
+- [x] Owner docs describe the landed baseline and any deliberate compatibility remainder precisely.
+- [x] No remaining drift is still owned by this master plan.
 
 ### Phase 4 - Independent Closure Audit
 
-Status: planned
+Status: completed
 Targets: this plan, successor plans, `docs/logs/`
 
-- [ ] Run one independent subagent audit for doc/code accuracy in a fresh session.
-- [ ] Run a second independent subagent audit for closure quality and anti-overengineering in a separate fresh session.
-- [ ] Record both audit passes with concrete evidence before closing this plan.
+- [x] Run one independent subagent audit for doc/code accuracy in a fresh session.
+- [x] Run a second independent subagent audit for closure quality and anti-overengineering in a separate fresh session.
+- [x] Record both audit passes with concrete evidence before closing this plan.
+
+**Phase 4 Results (2026-04-16):**
+
+Both independent audits completed and passed:
+
+1. **Doc/Code Accuracy Audit** (Session `ses_26aecbfc3ffezGY7JciUbYldUr`):
+   - Successor plan completion: PASS (all 3 plans have Status: completed, closure evidence, validation items)
+   - Documentation verification: PASS (flux-core.md, api-data-source.md, action-scope-and-imports.md all consistent)
+   - Code spot-checks: PASS (`@internal` annotation, name-first publication, designer namespace provider)
+   - **Overall: PASS**
+
+2. **Closure Quality Audit** (Session `ses_26aeca2dfffegU4ldMrIMHPrv1`):
+   - Overengineering check: PASS (zero code changes across all 3 successor plans, no new abstractions)
+   - Closure discipline: PASS (explicit scope boundaries, complete checklists, clean follow-ups)
+   - Plan drift: PASS (Plan 96 stayed routing-only, successors own implementation)
+   - Remaining gaps: PASS (no hidden incomplete work, all "complete" claims verified)
+   - **Overall: PASS**
+
+Exit Criteria:
+
+- [x] Two independent fresh-session audits are recorded with evidence.
+- [x] Any remaining gaps are moved to explicit successor ownership before this plan is marked completed.
 
 Exit Criteria:
 
@@ -113,28 +153,28 @@ Exit Criteria:
 
 ## Validation Checklist
 
-- [ ] successor ownership is explicit for every remaining closure surface
-- [ ] reverse updates completed for every landed successor slice
-- [ ] final owner-doc wording matches live code semantics
-- [ ] independent subagent review completed for doc/code accuracy
-- [ ] independent subagent review completed for plan-closure quality and anti-overengineering
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] successor ownership is explicit for every remaining closure surface
+- [x] reverse updates completed for every landed successor slice
+- [x] final owner-doc wording matches live code semantics
+- [x] independent subagent review completed for doc/code accuracy
+- [x] independent subagent review completed for plan-closure quality and anti-overengineering
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: complete this section only after the successor plans have either landed or been explicitly superseded, reverse updates are done, and two independent fresh-session audits confirm there is no remaining master-plan-owned closure work.
+Status Note: Plan 96 is now complete. All three successor plans (100, 98, 99) have completed with independent closure audits. Two independent audits confirmed doc/code accuracy and closure quality for this master plan.
 
 Closure Audit Evidence:
 
-- Accuracy Audit Reviewer / Agent: pending
-- Accuracy Audit Evidence: pending
-- Closure-Quality Reviewer / Agent: pending
-- Closure-Quality Evidence: pending
+- Accuracy Audit Reviewer / Agent: Independent subagent session `ses_26aecbfc3ffezGY7JciUbYldUr`
+- Accuracy Audit Evidence: All verification items passed - successor plan completion verified, documentation consistent with code, code spot-checks confirmed
+- Closure-Quality Reviewer / Agent: Independent subagent session `ses_26aeca2dfffegU4ldMrIMHPrv1`
+- Closure-Quality Evidence: All 4 audit areas passed - no overengineering (zero code changes), closure discipline maintained, no plan drift, no remaining gaps
 
 Follow-up:
 
-- If a successor plan reveals additional owner surfaces, split them into narrower successor plans instead of reopening this master plan's scope.
-- Otherwise record that there is no remaining master-plan-owned work.
+- No remaining master-plan-owned work. All successor plans confirm no additional work needed.
+- Plan 97 (Comprehensive Audit Remediation) is a separate effort and not owned by this closure plan.

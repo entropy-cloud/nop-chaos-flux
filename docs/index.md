@@ -10,6 +10,18 @@ This `docs/` tree is the curated entry point for the current repository state.
 - treat `docs/plans/` as execution documents; draft and audit plan files using `docs/plans/00-plan-authoring-and-execution-guide.md`, and keep plan status inside each file aligned with the current execution state
 - non-`plans` and non-`bugs` docs should describe the latest design baseline only
 
+## Routing Authority
+
+**This file (`docs/index.md`) is the authoritative docs navigation baseline.**
+
+`AGENTS.md` contains a deliberately reduced operational subset of routing rules optimized for AI agent task execution. When the two files appear to conflict:
+
+- `docs/index.md` owns the complete docs navigation and "Read This First" routing table
+- `AGENTS.md` owns coding conventions, verification commands, and agent-specific workflow rules
+- if a routing entry exists in both places, update `docs/index.md` first, then sync only the operationally necessary subset to `AGENTS.md`
+
+This separation avoids maintaining two equal parallel routing sources.
+
 ## Read This First
 
 Choose the smallest document that matches the task.
@@ -37,6 +49,8 @@ Choose the smallest document that matches the task.
 | 看清 Flow Designer 各层协作细节、命名空间动作流转、画布/Inspector 调用链 | `docs/architecture/flow-designer/collaboration.md` | `docs/architecture/flow-designer/canvas-adapters.md` |
 | 核对 Flow Designer 当前真实的 snapshot 契约、host scope 落地状态、哪些字段已接线 | `docs/architecture/flow-designer/runtime-snapshot.md` | `docs/architecture/flow-designer/collaboration.md` |
 | Design Flow Designer tree mode (chain + fan-out branches), TreeDocument data model, tree-to-graph projection, or decide tree vs graph for a domain | `docs/architecture/flow-designer/tree-mode.md` | `docs/architecture/flow-designer/config-schema.md` |
+| 了解 Word Editor 模板设计器架构、canvas-editor bridge、模板表达式语法 | `docs/architecture/word-editor/design.md` | `docs/components/word-editor-page/design.md` |
+| Design or update the `word-editor-page` renderer contract | `docs/components/word-editor-page/design.md` | `docs/architecture/word-editor/design.md` |
 | Understand Flow Designer React Flow integration, callback translation, or canvas failure semantics | `docs/architecture/flow-designer/canvas-adapters.md` | `docs/architecture/flow-designer/api.md` |
 | Plan Flow Designer tree mode implementation (TreeDocument, tree-projection, playground examples) | `docs/plans/71-flow-designer-tree-mode-implementation-plan.md` | `docs/architecture/flow-designer/tree-mode.md` |
 | Draft, execute, or audit a plan under `docs/plans/` | `docs/plans/00-plan-authoring-and-execution-guide.md` | `docs/logs/index.md` |
@@ -71,7 +85,8 @@ Choose the smallest document that matches the task.
 | Design namespaced action extension, host action scopes, `xui:imports` semantics, or dynamic domain libraries loaded into owner semantic actions | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/flow-designer/config-schema.md` |
 | 设计 Flux schema 文件校验器、导入前结构校验或命名空间属性忽略策略 | `docs/architecture/schema-file-validator.md` | `docs/architecture/action-scope-and-imports.md`, `docs/references/flux-json-conventions.md` |
 | Change slot-like fields such as `title`, `empty`, or `onClick` | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
-| Change validation behavior, hidden-field submit/validate/clear semantics, or form field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` |
+| Change validation behavior, hidden-field submit/validate/clear semantics, or form field participation | `docs/architecture/form-validation.md` | `docs/references/form-validation-runtime-types.md`, `docs/architecture/flux-runtime-module-boundaries.md` |
+| Look up validation runtime type definitions (ValidationScopeRuntime, FormRuntime, CompiledValidationModel, store APIs) | `docs/references/form-validation-runtime-types.md` | `docs/architecture/form-validation.md` |
 | Decide where runtime or validation code should live | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
 | Check workspace structure, package roles, or tooling baseline | `docs/architecture/frontend-baseline.md` | `package.json` |
 | Plan playground information architecture or debugger UX | `docs/architecture/playground-experience.md` | `docs/architecture/debugger-runtime.md` |
@@ -132,6 +147,7 @@ Architecture intent lives primarily in:
 - `docs/architecture/flow-designer/design.md`
 - `docs/architecture/flow-designer/tree-mode.md`
 - `docs/architecture/flow-designer/canvas-adapters.md`
+- `docs/architecture/word-editor/design.md`
 - `docs/architecture/report-designer/design.md`
 - `docs/references/architecture-doc-status-matrix.md`
 
@@ -145,6 +161,7 @@ Component contract intent lives primarily in:
 - `docs/components/designer-page/design.md`
 - `docs/components/report-designer-page/design.md`
 - `docs/components/spreadsheet-page/design.md`
+- `docs/components/word-editor-page/design.md`
 
 Code-level contracts live primarily in:
 

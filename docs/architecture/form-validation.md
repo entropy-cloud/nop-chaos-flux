@@ -118,133 +118,54 @@ Examples include:
 
 ## Runtime Model
 
-### Minimal Normative Types
+> **Type Reference**: Complete TypeScript type definitions are in `docs/references/form-validation-runtime-types.md`. This section describes the conceptual model; refer to the reference for exact interface signatures.
 
-This document defines the following minimum contract types.
+### Core Abstractions
 
-```ts
-type ValidateOnPolicy = 'change' | 'blur' | 'submit' | 'manual';
-type ShowErrorOnPolicy = 'change' | 'blur' | 'submit' | 'touched' | 'manual';
-type ValidationOwnerLifecycleState =
-  | 'bootstrapping'
-  | 'active'
-  | 'refreshing'
-  | 'disposed';
+The validation runtime model has three core abstractions:
 
-type ValidationRuleKind = string;
+1. **`ValidationScopeRuntime`** — The base runtime for any scope with validation semantics
+2. **`FormRuntime`** — A specialization of ValidationScopeRuntime for forms with touch/dirty tracking
+3. **`CompiledValidationModel`** — Immutable validation graph produced by the compiler
 
-type CompiledRuntimeValue<T> =
-  | { kind: 'static'; value: T }
-  | { kind: 'expression'; code: string; dependencies: string[] };
+### Key Types Summary
 
-interface ValidationError {
-  path: string;
-  ownerId: string;
-  rule: string;
-  message: string;
-  sourceKind:
-    | 'field'
-    | 'object'
-    | 'array'
-    | 'row'
-    | 'scope-root'
-    | 'external'
-    | 'runtime-overlay'
-    | 'runtime-opaque';
-}
-
-interface ValidationResult {
-  ok: boolean;
-  errors: ValidationError[];
-  validating?: boolean;
-}
-
-interface ScopeValidationResult {
-  ok: boolean;
-  errors: ValidationError[];
-  fieldErrors: Record<string, ValidationError[]>;
-  validating?: boolean;
-}
-
-interface FormSubmitResult {
-  ok: boolean;
-  errors: ValidationError[];
-}
-```
-
-`ValidationResult` and `ScopeValidationResult` serve different result scopes.
-
-Use `ValidationResult` for local validation entry points such as `validateAt(path)`, where the caller needs the outcome of one path-centered validation run and does not need a full owner-wide field error map.
-
-Use `ScopeValidationResult` for subtree-level or owner-level operations such as `validateSubtree(path)`, `validateAll()`, and `applyChangesAndRevalidate(...)`, where the caller needs an aggregated view of the validated scope including `fieldErrors`.
+| Type | Purpose |
+|------|---------|
+| `ValidationError` | Single validation error with path, owner, rule, message, and sourceKind |
+| `ValidationResult` | Result for single-path validation (ok, errors, validating) |
+| `ScopeValidationResult` | Result for subtree/scope validation (adds fieldErrors map) |
+| `FormSubmitResult` | Result for form submit (ok, errors) |
+| `FieldValidationStateSnapshot` | Per-field validation state snapshot |
+| `ScopeValidationStateSnapshot` | Scope-wide validation state summary |
 
 ### ValidationScopeRuntime
 
-The core runtime abstraction is `ValidationScopeRuntime`.
+The core runtime abstraction exists for any scope that has validation semantics:
 
-```ts
-type ValidationReason = 'change' | 'blur' | 'submit' | 'commit' | 'system';
+1. normal forms
+2. draft editors
+3. non-form filter scopes
+4. row-local editors when they own local validation
 
-interface ValidationScopeRuntime {
-  readonly scopeId: string;
-  readonly rootPath: string;
-  readonly compiledModel: CompiledValidationModel | null;
-  readonly lifecycleState: ValidationOwnerLifecycleState;
-  readonly modelGeneration: number;
-  readonly showErrorOn: Exclude<ShowErrorOnPolicy, 'touched'>;
+Key APIs:
+- `validateAt(path, reason)` — validate single path
+- `validateSubtree(path, reason)` — validate path and descendants
+- `validateAll(reason)` — validate entire scope
+- `getFieldState(path)` — read field validation state
+- `getScopeState()` — read scope summary state
+- `registerField(state)` — register field participation
 
-  validateAt(path: string, reason?: ValidationReason): Promise<ValidationResult>;
-  validateSubtree(path: string, reason?: ValidationReason): Promise<ScopeValidationResult>;
-  validateAll(reason?: ValidationReason): Promise<ScopeValidationResult>;
+### FormRuntime
 
-  applyChangesAndRevalidate(input: ApplyScopeChangesInput): Promise<ScopeValidationResult>;
-  applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationResult;
+`FormRuntime` extends `ValidationScopeRuntime` with:
 
-  getFieldState(path: string): FieldValidationStateSnapshot;
-  getScopeState(): ScopeValidationStateSnapshot;
-  getScopeRootErrors(): ValidationError[];
-  isPathOwned(path: string): boolean;
+1. tracking touched/dirty/visited state
+2. implementing `showErrorOn: 'touched'` policy
+3. providing `submit()` with form-specific validation and gating
+4. computing `canSubmit` and `allTouched`
 
-  registerField(state: FieldRegistrationState): FieldRegistrationHandle;
-  updateFieldRegistration(registrationId: string, patch: Partial<FieldRegistrationState>): void;
-}
-
-interface ApplyScopeChangesInput {
-  writes: Record<string, unknown>;
-  changedPaths: string[];
-  reason: ValidationReason;
-}
-
-interface ApplyExternalErrorsInput {
-  sourceId: string;
-  errors: ValidationError[];
-  replace?: boolean;
-}
-
-interface ScopeValidationStateSnapshot {
-  valid: boolean;
-  hasErrors: boolean;
-  validating: boolean;
-  lifecycleState: ValidationOwnerLifecycleState;
-  /**
-   * Whether this scope is in a state where it can be submitted or confirmed.
-   * FormRuntime: form-specific readiness derived from validity, validating state,
-   * and touch policy.
-   * Non-form ValidationScopeRuntime: ready = valid && !validating.
-   * Parent scopes read this field instead of valid when gating on a child scope,
-   * to prevent misreading a FormRuntime child as ready when allTouched is false.
-   */
-  ready: boolean;
-}
-
-interface FieldRegistrationHandle {
-  accepted: boolean;
-  registrationId: string;
-  unregister(): void;
-}
-```
-
-Owner lifecycle is normative.
+### Owner Lifecycle
 
 Rules:
 
@@ -273,15 +194,6 @@ Rules:
 6. superseding never requires waiting for stale lower-priority runs to finish before the newer `submit` or `commit` run starts
 7. `submit` and `commit` validate against the latest owner value snapshot available when that entry begins execution
 
-This runtime exists for any scope that has validation semantics.
-
-That includes:
-
-1. normal forms
-2. draft editors
-3. non-form filter scopes
-4. row-local editors when they own local validation
-
 Current implementation note:
 
 - the architecture baseline is wider than `FormRuntime`
@@ -292,36 +204,6 @@ Readers should therefore distinguish:
 
 1. the target owner model, which is not form-only
 2. the current implementation center of gravity, which is still form-first in several concrete runtime paths
-
-### FormRuntime
-
-`FormRuntime` is a specialization of `ValidationScopeRuntime`.
-
-```ts
-interface FormRuntime extends ValidationScopeRuntime {
-  readonly validateOn: ValidateOnPolicy;
-  readonly showErrorOn: ShowErrorOnPolicy;
-
-  touchField(path: string): void;
-  visitField(path: string): void;
-  isTouched(path: string): boolean;
-  isDirty(path: string): boolean;
-  isVisited(path: string): boolean;
-
-  submit(): Promise<FormSubmitResult>;
-  readonly canSubmit: boolean;
-  readonly allTouched: boolean;
-}
-```
-
-The additional responsibilities of `FormRuntime` are:
-
-1. submit gate
-2. touched / dirty / visited policy
-3. `showErrorOn` policy
-4. submit action orchestration
-
-Rule execution, dependency expansion, subtree validation, and async ownership come from the base validation scope runtime.
 
 ### Touched And Error Display Policy
 
@@ -478,260 +360,66 @@ They are model-replacement lifecycle events that either refresh the current owne
 
 ## Layered State Model
 
-Validation uses three separate kinds of state.
+> **Type Reference**: Complete TypeScript type definitions for state structures are in `docs/references/form-validation-runtime-types.md`.
+
+Validation uses three separate kinds of state:
 
 ### Compiled Validation Model
 
-This is immutable runtime input produced by the compiler.
+Immutable runtime input produced by the compiler, containing:
+- `rootPath` and `ownerId` for scope identity
+- `nodes` map of `CompiledFieldTreeNode` keyed by path
+- `validationOrder` for deterministic traversal
+- `dependents` map for dependency-triggered revalidation
 
-```ts
-interface CompiledValidationModel {
-  rootPath: string;
-  ownerId: string;
-  nodes: Record<string, CompiledFieldTreeNode>;
-  validationOrder: string[];
-  dependents: Record<string, string[]>;
-}
+Each `CompiledFieldTreeNode` has a `kind` that is one of: `scope-root`, `form-root`, `field`, `object`, `array`, `variant-root`, `variant-branch`, or `repeated-template`.
 
-type FieldTreeNodeKind =
-  | 'scope-root'
-  | 'form-root'
-  | 'field'
-  | 'object'
-  | 'array'
-  | 'variant-root'
-  | 'variant-branch'
-  | 'repeated-template';
-
-interface CompiledFieldTreeNode {
-  id: string;
-  path: string;
-  ownerId: string;
-  kind: FieldTreeNodeKind;
-  parent?: string;
-  children: string[];
-  ruleTemplates: CompiledRuleTemplate[];
-  dependencyPaths: string[];
-  aggregateDependencies?: string[];
-}
-```
-
-For repeated templates, `id` is the template identity and runtime indexed paths are materialized from that template.
-
-Example:
-
-```ts
-// compiled template node
-{ id: 'contacts[].email', path: 'contacts[].email', kind: 'field' }
-
-// runtime active instances
-'contacts.0.email'
-'contacts.1.email'
-'contacts.2.email'
-```
-
-Rules:
-
-1. `validationOrder` may contain template identities for repeated structures
-2. runtime validation expands each repeated template entry into all current active indexed instances before execution
-3. field validation state buckets and materialization cache are keyed by runtime indexed paths, not template ids
+For repeated templates, `id` is the template identity (e.g., `contacts[].email`) and runtime indexed paths (e.g., `contacts.0.email`) are materialized from that template.
 
 ### Field Registration State
 
-This is runtime participation state.
+Runtime participation state tracking:
+- `registrationId` — stable for one mounted field instance
+- `path`, `mounted`, `visible`, `disabled`
+- `touched`, `dirty`, `visited` — maintained by FormRuntime
 
-```ts
-interface FieldRegistrationState {
-  registrationId: string;
-  path: string;
-  mounted: boolean;
-  visible: boolean;
-  disabled: boolean;
-  /**
-   * These UX fields are actively maintained by FormRuntime.
-   * Base ValidationScopeRuntime may leave them at their default values.
-   */
-  touched: boolean;
-  dirty: boolean;
-  visited: boolean;
-}
-```
-
-Registration updates are generation-aware.
-
-Rules:
-
-1. `registrationId` is stable for one mounted field instance
-2. the owner runtime binds each accepted registration to the current `modelGeneration`
-3. caller-supplied registration state does not carry generation knowledge; the runtime is the authority on which generation accepted the registration
-4. late `updateFieldRegistration(...)` or unregister callbacks from an older generation must not mutate registration state for a newer generation that reused the same path
-5. registration requests received while the owner is `disposed` must be rejected
-6. registration requests received while the owner is `bootstrapping` or `refreshing` may be buffered or retried by the runtime, but they must not be bound to a `null` compiled model generation
-7. `registerField(...)` returns a `FieldRegistrationHandle` so callers can distinguish accepted registration from rejected registration
-8. `updateFieldRegistration(...)` is instance-addressed by `registrationId`, not path-addressed
-9. multiple mounted instances targeting the same logical path are allowed only if the owner runtime can keep their participation bookkeeping distinct by `registrationId`; otherwise duplicate-path registration must be rejected explicitly
+Registration updates are generation-aware. Key rules:
+1. Owner runtime binds each accepted registration to the current `modelGeneration`
+2. Late callbacks from older generations must not mutate newer generation state
+3. Registration requests during `disposed` state must be rejected
 
 ### Field Validation State
 
-This is runtime validation result state.
-
-```ts
- interface FieldValidationStateSnapshot {
-   ownerId: string;
-   path: string;
-   errors: ValidationError[];
-   validating: boolean;
- }
-```
+Runtime validation result state per field:
+- `ownerId`, `path`
+- `errors: ValidationError[]`
+- `validating: boolean`
 
 ### Form Store State Structure
 
-Form state uses a normalized flat structure following React/Redux best practices.
-
-```ts
-/**
- * Per-field state stored in a single flat map.
- * Properties use `true | undefined` pattern for memory efficiency.
- */
-interface FieldState {
-  touched?: true;
-  dirty?: true;
-  visited?: true;
-  validating?: true;
-  errors?: ValidationError[];
-}
-
-/**
- * The form store state structure.
- * Uses a single `fieldStates` map instead of multiple separate maps.
- */
-interface FormStoreState {
-  values: Record<string, unknown>;
-  fieldStates: Record<string, FieldState>;
-  submitting: boolean;
-}
-```
-
-Design rationale:
-
-1. **Single map instead of five**: Previous design stored `touched`, `dirty`, `visited`, `validating`, and `errors` in five separate maps, duplicating path strings. The unified `fieldStates` map stores all field metadata together.
-2. **`true | undefined` pattern**: Boolean flags use `true | undefined` instead of `boolean` to save memory. When a flag is false, it is omitted from the object entirely.
-3. **Empty cleanup**: When all properties of a `FieldState` become undefined, the entire entry is removed from the map.
-4. **Array remapping efficiency**: Array operations (insert/remove/move) traverse the map once instead of five times.
+Form state uses a normalized flat structure:
+- Single `fieldStates` map instead of five separate maps (touched, dirty, visited, validating, errors)
+- `true | undefined` pattern for boolean flags (memory efficiency)
+- Empty entries automatically cleaned up
+- Array remapping traverses map once instead of five times
 
 ### Per-Path Subscription API
 
-`FormStoreApi` exposes fine-grained subscription methods for field-level reactivity.
-
-```ts
-interface FormPathState {
-  errors: ValidationError[] | undefined;
-  validating: boolean;
-  touched: boolean;
-  dirty: boolean;
-  visited: boolean;
-}
-
-interface FormStoreApi {
-  // ... existing members ...
-
-  /**
-   * Subscribe to state changes for a specific path.
-   * The listener fires only when the field's state changes for this exact path.
-   * Returns an unsubscribe function.
-   */
-  subscribeToPath(path: string, listener: () => void): () => void;
-
-  /**
-   * Subscribe to submitting state changes.
-   * The listener fires only when the form's submitting flag changes.
-   * Returns an unsubscribe function.
-   */
-  subscribeToSubmitting(listener: () => void): () => void;
-
-  /**
-   * Read the current field state for a specific path.
-   * Returns a snapshot suitable for useSyncExternalStore's getSnapshot.
-   */
-  getPathState(path: string): FormPathState;
-
-  /**
-   * Get the raw FieldState for a path (may be undefined if no state exists).
-   */
-  getFieldState(path: string): FieldState | undefined;
-
-  /**
-   * Update field state for a path. Merges with existing state.
-   * Empty entries are automatically cleaned up.
-   */
-  setFieldState(path: string, state: Partial<FieldState>): void;
-}
-```
-
-Semantics and guarantees:
-
-1. `subscribeToPath` fires only when the specified path's field state changes, not when unrelated paths change.
-2. In a 1000-field form, a keystroke that updates `fieldStates["name"]` wakes only hooks subscribed to `"name"`.
-3. `subscribeToSubmitting` is separate from path subscriptions because `submitting` is a form-wide flag, not per-path state.
-4. `getPathState` returns a plain object snapshot with no allocation beyond the returned object itself.
-5. Projected stores (for object-field, array-item, variant-field) delegate these methods to the parent store with path translation, using the shared `projectFieldStates` helper from `flux-core`.
-6. `batchUpdate` (array remap) performs diffing before notification: only paths whose state actually changed receive listener calls.
-7. `getFieldState` and `setFieldState` provide direct access to the raw `FieldState` objects for internal use.
-
-React hooks such as `useCurrentFormFieldState` and `useFieldError` use `useSyncExternalStore` with these methods:
-
-```ts
-// Simplified implementation pattern
-function useCurrentFormFieldState(path: string) {
-  const form = useCurrentForm();
-  const absolutePath = resolveAbsolutePath(path);
-
-  return useSyncExternalStore(
-    useCallback(
-      (onStoreChange) => {
-        const unsub1 = form.store.subscribeToPath(absolutePath, onStoreChange);
-        const unsub2 = form.store.subscribeToSubmitting(onStoreChange);
-        return () => { unsub1(); unsub2(); };
-      },
-      [form.store, absolutePath]
-    ),
-    () => ({
-      ...form.store.getPathState(absolutePath),
-      submitting: form.store.getState().submitting,
-    })
-  );
-}
-```
+`FormStoreApi` exposes fine-grained subscription methods:
+- `subscribeToPath(path, listener)` — fires only for that path's changes
+- `subscribeToSubmitting(listener)` — fires only for submitting flag
+- `getPathState(path)` — snapshot for useSyncExternalStore
+- `getFieldState(path)` / `setFieldState(path, state)` — direct access
 
 This per-path subscription model ensures O(1) hook wake-up cost per field change, regardless of form size.
 
-Conceptually, errors belong to field-addressed validation state.
-
-Operationally, the owning validation scope runtime stores and manages these field states in an owner-local map keyed by path.
-
 ### Canonical Identity
 
-Canonical bookkeeping identity is not plain path alone.
+Canonical bookkeeping identity is `OwnerQualifiedPath`:
+- `ownerId` — distinguishes parent-owned committed state from child-owned draft state
+- `path` — absolute path inside the owning scope's address space
 
-```ts
-interface OwnerQualifiedPath {
-  ownerId: string;
-  path: string;
-}
-```
-
-Rules:
-
-1. `path` is always an absolute path inside the owning scope's address space
-2. `ownerId` distinguishes parent-owned committed state from child-owned draft state
-3. caches, async run ownership, runtime overlays, and field validation buckets are keyed by `OwnerQualifiedPath`
-4. public APIs may accept plain absolute paths only when the owner runtime is already known from context
-
-Repeated instances use absolute indexed paths inside their owner, such as `items.3.email`, plus owner identity for isolation when needed.
-
-When repeated items have a stable logical identity, validation and UX state migration should prefer that logical identity over raw positional index.
-
-Pure index-based remapping is only the fallback when no stable item identity exists.
+Caches, async run ownership, and field validation buckets are keyed by owner-qualified path.
 
 ## Error Ownership And Query Model
 
@@ -1336,6 +1024,7 @@ Flux validation uses the following architecture:
 
 ## Related Documents
 
+- `docs/references/form-validation-runtime-types.md` — Complete TypeScript type definitions (companion reference)
 - `docs/architecture/field-binding-and-renderer-contract.md`
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/flux-runtime-module-boundaries.md`

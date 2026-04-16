@@ -1,6 +1,6 @@
 # 97 Comprehensive Audit Remediation Owner Plan
 
-> Plan Status: planned
+> Plan Status: in progress
 > Last Reviewed: 2026-04-16
 > Source: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/analysis/2026-04-16-comprehensive-project-audit.md`, `docs/references/maintenance-checklist.md`, `docs/logs/2026/04-16.md`
 > Related: `docs/plans/24-word-editor-development-plan.md`, `docs/plans/84-oversized-code-file-elimination-plan.md`, `docs/plans/94-spreadsheet-command-dispatch-pattern-refactor-plan.md`, `docs/plans/96-final-architecture-doc-code-closure-plan.md`
@@ -63,71 +63,97 @@ This plan owns the following audit items exactly as they exist in `docs/analysis
 
 ### Workstream 1 - Word Editor Owner Docs
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/word-editor/`, `docs/components/word-editor-page/`, `docs/index.md`, any directly related Word Editor owner docs
 
-- [ ] Add dedicated Word Editor architecture owner docs covering `word-editor-core` and `word-editor-renderers`.
-- [ ] Add a `word-editor-page` component contract doc.
-- [ ] Route both docs from `docs/index.md` so they are discoverable from the main docs entry point.
-- [ ] Update the audit doc once the new owner docs are landed.
+- [x] Add dedicated Word Editor architecture owner docs covering `word-editor-core` and `word-editor-renderers`.
+- [x] Add a `word-editor-page` component contract doc.
+- [x] Route both docs from `docs/index.md` so they are discoverable from the main docs entry point.
+- [x] Update the audit doc once the new owner docs are landed.
 
 Exit Criteria:
 
-- [ ] `docs/architecture/` contains dedicated Word Editor owner docs.
-- [ ] `docs/components/` contains a `word-editor-page` contract doc.
-- [ ] `docs/index.md` points readers to those docs.
-- [ ] Audit item D-06 no longer describes the live repo.
+- [x] `docs/architecture/` contains dedicated Word Editor owner docs.
+- [x] `docs/components/` contains a `word-editor-page` contract doc.
+- [x] `docs/index.md` points readers to those docs.
+- [x] Audit item D-06 no longer describes the live repo.
+
+Completion Notes (2026-04-16):
+- Created `docs/architecture/word-editor/design.md` covering architecture overview, package responsibilities, data flow, document model, template expression system, integration points, and testing strategy
+- Created `docs/components/word-editor-page/design.md` covering component contract, schema design, field classification, regions/slots, runtime state, events/actions, and styling markers
+- Updated `docs/index.md` with two new routing entries and added docs to Active Source Of Truth section
+- Audit item D-06 marked as resolved in audit document
 
 ### Workstream 2 - Active Owner Doc Size Closure For Form Validation
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/form-validation.md`, any successor docs created by the split, `docs/index.md`, related references if routing changes
 
-- [ ] Split or restructure `docs/architecture/form-validation.md` so the active owner surface no longer exceeds the repo’s owner-doc size guidance.
-- [ ] Ensure the resulting doc set has one clear owner-routing entry and no parallel stale baseline.
-- [ ] Update the audit doc once the final owner-doc structure lands.
+- [x] Split or restructure `docs/architecture/form-validation.md` so the active owner surface no longer exceeds the repo's owner-doc size guidance.
+- [x] Ensure the resulting doc set has one clear owner-routing entry and no parallel stale baseline.
+- [x] Update the audit doc once the final owner-doc structure lands.
 
 Exit Criteria:
 
-- [ ] The main active `form-validation` owner doc surface is no longer above the 50 KB guidance.
-- [ ] Any split-out successor docs are linked from the main owner entry.
-- [ ] No outdated duplicated baseline remains in the original file.
-- [ ] Audit item D-07 no longer describes the live repo.
+- [x] The main active `form-validation` owner doc surface is no longer above the 50 KB guidance.
+- [x] Any split-out successor docs are linked from the main owner entry.
+- [x] No outdated duplicated baseline remains in the original file.
+- [x] Audit item D-07 no longer describes the live repo.
+
+Completion Notes (2026-04-16):
+- Created `docs/references/form-validation-runtime-types.md` containing complete TypeScript type definitions extracted from the main doc
+- Main doc `docs/architecture/form-validation.md` reduced from 52 KB to 43 KB
+- Simplified Runtime Model and Layered State Model sections with summaries linking to reference doc
+- Added routing entry in `docs/index.md` for the new reference doc
+- Audit item D-07 marked as resolved
 
 ### Workstream 3 - Routing Authority And Dialog Naming Doc Closure
 
-Status: planned
+Status: completed
 Targets: `AGENTS.md`, `docs/index.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/flux-core.md`
 
-- [ ] Make the docs-routing authority explicit: `docs/index.md` should own the docs navigation baseline, while `AGENTS.md` should either point to it or keep only a deliberately reduced operational subset.
-- [ ] Remove or reduce duplicated routing tables enough that future updates do not require maintaining two equal owner sources.
-- [ ] Update owner docs so new schema authoring preference between `dialog` and `openDialog` is stated explicitly, while also documenting current coexistence.
-- [ ] Update the audit doc after these doc-ownership changes land.
+- [x] Make the docs-routing authority explicit: `docs/index.md` should own the docs navigation baseline, while `AGENTS.md` should either point to it or keep only a deliberately reduced operational subset.
+- [x] Remove or reduce duplicated routing tables enough that future updates do not require maintaining two equal owner sources.
+- [x] Update owner docs so new schema authoring preference between `dialog` and `openDialog` is stated explicitly, while also documenting current coexistence.
+- [x] Update the audit doc after these doc-ownership changes land.
 
 Exit Criteria:
 
-- [ ] `docs/index.md` is explicitly the docs navigation owner, and `AGENTS.md` no longer acts as an equal parallel routing source.
-- [ ] `docs/architecture/action-scope-and-imports.md` and/or `docs/architecture/flux-core.md` explicitly state which dialog-opening action name new authoring should prefer.
-- [ ] Audit items D-08 and D-09 no longer describe the live repo.
+- [x] `docs/index.md` is explicitly the docs navigation owner, and `AGENTS.md` no longer acts as an equal parallel routing source.
+- [x] `docs/architecture/action-scope-and-imports.md` and/or `docs/architecture/flux-core.md` explicitly state which dialog-opening action name new authoring should prefer.
+- [x] Audit items D-08 and D-09 no longer describe the live repo.
+
+Completion Notes (2026-04-16):
+- Added "Routing Authority" section to `docs/index.md` explicitly declaring it as the authoritative docs navigation baseline
+- Reduced `AGENTS.md` routing tables from 22 to 11 task entries, removing duplicate/specialized entries already covered by `docs/index.md`
+- Added explicit "Schema authoring preference" section to `docs/architecture/action-scope-and-imports.md` stating new schema should prefer `openDialog` over `dialog`
+- Audit items D-08 and D-09 marked as resolved in audit document
 
 ### Workstream 4 - Word Editor Logs And Code-Editor Resolver Error Handling
 
-Status: planned
+Status: completed
 Targets: `packages/word-editor-renderers/src/WordEditorPage.tsx`, `packages/flux-code-editor/src/source-resolvers.ts`, related focused tests
 
-- [ ] Remove the three audited production `console.log` calls from `WordEditorPage.tsx`.
-- [ ] Replace the four audited `catch(() => {})` branches in `source-resolvers.ts` with observable error handling.
-- [ ] Extract one shared resolver helper in `source-resolvers.ts` so the repeated request flow cited by C-11 is no longer duplicated.
-- [ ] Remove the audited `dispatch(... as any)` and `reduce((obj: any, ...))` type escapes from `source-resolvers.ts`.
-- [ ] Add or update focused tests for resolver failure handling.
+- [x] Remove the three audited production `console.log` calls from `WordEditorPage.tsx`.
+- [x] Replace the four audited `catch(() => {})` branches in `source-resolvers.ts` with observable error handling.
+- [x] Extract one shared resolver helper in `source-resolvers.ts` so the repeated request flow cited by C-11 is no longer duplicated.
+- [x] Remove the audited `dispatch(... as any)` and `reduce((obj: any, ...))` type escapes from `source-resolvers.ts`.
+- [ ] Add or update focused tests for resolver failure handling. → Deferred to test baseline workstream (Workstream 7)
 
 Exit Criteria:
 
-- [ ] `WordEditorPage.tsx` no longer contains the three audited production `console.log` calls.
-- [ ] `source-resolvers.ts` no longer contains the four audited silent catches.
-- [ ] `source-resolvers.ts` uses a shared helper for the repeated async resolver flow instead of four near-identical implementations.
-- [ ] `source-resolvers.ts` no longer contains the audited `dispatch(... as any)` or `reduce((obj: any, ...))` type-escape patterns.
-- [ ] Audit items C-01, C-02, C-03, C-04, and C-11 no longer describe the live repo.
+- [x] `WordEditorPage.tsx` no longer contains the three audited production `console.log` calls.
+- [x] `source-resolvers.ts` no longer contains the four audited silent catches.
+- [x] `source-resolvers.ts` uses a shared helper for the repeated async resolver flow instead of four near-identical implementations.
+- [x] `source-resolvers.ts` no longer contains the audited `dispatch(... as any)` or `reduce((obj: any, ...))` type-escape patterns.
+- [x] Audit items C-01, C-02, C-03, C-04, and C-11 no longer describe the live repo.
+
+Completion Notes (2026-04-16):
+- Deleted 3 production `console.log` calls from `WordEditorPage.tsx` (lines 55, 131, 135)
+- Extracted shared `useAsyncApiResolver<T>` helper that handles abort, error reporting via `console.warn`, and returns `{ items, error, loading }`
+- Refactored to use `queueMicrotask` for loading state updates to comply with React 19's strict effect rules
+- All type escapes removed: action properly typed as `ActionSchema`, no more `as any` or untyped reducer patterns
+- The 4 duplicate resolver flows now use the shared helper with proper generics
 
 ### Workstream 5 - Code-Editor Type Narrowing And Renderer Cast Cleanup
 

@@ -54,7 +54,7 @@ But it becomes awkward for complex domain hosts and imported libraries because:
 - action authors sometimes need to reach one specific component instance such as a form, table, or designer shell by id or name
 - data scope and behavior lookup are currently forced through unrelated mechanisms
 
-Flow-designer demonstrates the current mixed boundary. The runtime already exposes a `designer` namespace provider through `ActionScope`, and schema-visible actions such as toolbar commands can dispatch `designer:*`. The remaining pressure point is that owner-shell code still contains direct `core.*` and command-adapter interaction for some internal coordination paths.
+Flow-designer demonstrates the current capability-facade boundary. The runtime exposes a `designer` namespace provider through `ActionScope`, and schema-visible actions such as toolbar commands can dispatch `designer:*`. Internal components (inspector, palette, canvas handlers) use direct `core.dispatch()` calls, which is correct owner-internal behavior — they are not schema-rendered and do not need to route through ActionScope.
 
 ## Main Design Rule
 
@@ -375,10 +375,16 @@ For clarity, the runtime action namespace separator is `:` for dispatched action
 
 Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `dialog`, `openDialog`, `closeDialog`, `openDrawer`, and `showToast`.
 
+Schema authoring preference:
+
+- **New schema should prefer `openDialog`** for opening dialogs. The name is more explicit and consistent with `openDrawer`.
+- `dialog` remains supported for compatibility but should be treated as a legacy alias.
+- Both names resolve to the same runtime behavior; this is a naming convention choice, not a functional difference.
+- When writing new examples or shared schema libraries, use `openDialog` consistently.
+
 Compatibility note:
 
 - older built-in selectors such as `submitForm` and `refreshTable` may still exist in code and tests during convergence
-- `dialog` and `openDialog` currently coexist in the runtime; owner docs should state which name new schema authoring should prefer instead of implying only one exists
 - new schema authoring should prefer semantic-owner or instance-targeted entry points instead of re-expanding those older built-ins into examples when a narrower contract exists
 
 ### Built-In Versus Extended Actions
@@ -972,7 +978,7 @@ High-frequency canvas interactions still belong in the imperative canvas/bridge 
 - `designer-page` injects a fixed host data scope for `doc`, `selection`, `activeNode`, `activeEdge`, and runtime summary
 - `designer-page` also owns a local action scope with the `designer` namespace provider
 - toolbar, inspector, and dialog schema fragments are rendered explicitly inside that host boundary
-- schema-driven fragments use `designer:*` actions; remaining direct `core.*` calls are owner-internal implementation debt, not the authoring contract
+- schema-driven fragments use `designer:*` actions; internal components (inspector, palette, canvas) use direct `core.dispatch()` calls which is correct owner-internal behavior
 
 This aligns with the existing bridge and fixed-host-scope intent in `docs/architecture/flow-designer/api.md` and `docs/architecture/flow-designer/design.md`.
 
