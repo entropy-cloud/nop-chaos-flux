@@ -1,6 +1,6 @@
 import type {
-  CompiledRegion,
-  CompiledSchemaNode,
+  TemplateRegion,
+  TemplateNode,
   CompileSchemaOptions,
   SchemaInput
 } from '@nop-chaos/flux-core';
@@ -33,15 +33,15 @@ export const TABS_ITEM_REGION_FIELDS = [
 export type DeepFieldNormalizer = (input: {
   value: unknown;
   path: string;
-  regions: Record<string, CompiledRegion>;
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => CompiledSchemaNode | CompiledSchemaNode[];
+  regions: Record<string, TemplateRegion>;
+  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[];
 }) => unknown;
 
 function normalizeTableColumns(
   value: unknown,
   path: string,
-  regions: Record<string, CompiledRegion>,
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => CompiledSchemaNode | CompiledSchemaNode[]
+  regions: Record<string, TemplateRegion>,
+  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[]
 ) {
   if (!Array.isArray(value)) {
     return value;
@@ -66,8 +66,8 @@ function normalizeTableColumns(
 function normalizeTabsItems(
   value: unknown,
   path: string,
-  regions: Record<string, CompiledRegion>,
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => CompiledSchemaNode | CompiledSchemaNode[]
+  regions: Record<string, TemplateRegion>,
+  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[]
 ) {
   if (!Array.isArray(value)) {
     return value;

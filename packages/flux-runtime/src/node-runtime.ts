@@ -1,5 +1,5 @@
 import type {
-  CompiledNodeRuntimeState,
+  NodeRuntimeState,
   CompiledRuntimeValue,
   TemplateNode,
   ExpressionCompiler,
@@ -106,7 +106,7 @@ export function collectRuntimeDependencies(state: RuntimeValueState<unknown> | u
   };
 }
 
-function collectMetaDependencies(state: CompiledNodeRuntimeState | undefined): ScopeDependencySet | undefined {
+function collectMetaDependencies(state: NodeRuntimeState | undefined): ScopeDependencySet | undefined {
   if (!state) {
     return undefined;
   }
@@ -120,7 +120,7 @@ export function createNodeRuntime(input: {
   expressionCompiler: ExpressionCompiler;
   getEnv: () => RendererEnv;
 }) {
-  function resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta {
+  function resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?: NodeRuntimeState): ResolvedNodeMeta {
     const env = input.getEnv();
     const meta = node.metaProgram;
     const resolved: ResolvedNodeMeta = {
@@ -147,7 +147,7 @@ export function createNodeRuntime(input: {
     return resolved;
   }
 
-  function resolveNodeProps(node: TemplateNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps {
+  function resolveNodeProps(node: TemplateNode, scope: ScopeRef, state?: NodeRuntimeState): ResolvedNodeProps {
     const env = input.getEnv();
     const propsProgram = node.propsProgram;
     const execution = propsProgram.kind === 'static'

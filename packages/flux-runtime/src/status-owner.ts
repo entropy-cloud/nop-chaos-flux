@@ -16,6 +16,14 @@ export function createReadonlyScopeBinding<TSummary>(scope: ScopeRef, bindingKey
   });
   const { readSnapshot, store } = createProjectedScopeStore(scope, buildOwnSnapshot);
 
+  let lastParentVisible: Record<string, any> | undefined;
+  let lastSummaryForVisible: TSummary | undefined;
+  let cachedVisible: Record<string, any> | undefined;
+
+  let lastParentMat: Record<string, any> | undefined;
+  let lastSummaryForMat: TSummary | undefined;
+  let cachedMat: Record<string, any> | undefined;
+
   return {
     ...scope,
     store,
@@ -37,15 +45,31 @@ export function createReadonlyScopeBinding<TSummary>(scope: ScopeRef, bindingKey
       return readSnapshot();
     },
     readVisible() {
-      const overlay = Object.create(scope.readVisible()) as Record<string, any>;
-      overlay[bindingKey] = getSummary();
-      return overlay;
+      const parentVisible = scope.readVisible();
+      const summary = getSummary();
+      if (cachedVisible && lastParentVisible === parentVisible && lastSummaryForVisible === summary) {
+        return cachedVisible;
+      }
+      lastParentVisible = parentVisible;
+      lastSummaryForVisible = summary;
+      const overlay = Object.create(parentVisible) as Record<string, any>;
+      overlay[bindingKey] = summary;
+      cachedVisible = overlay;
+      return cachedVisible;
     },
     materializeVisible() {
-      return {
-        ...scope.materializeVisible(),
-        [bindingKey]: getSummary()
+      const parentMat = scope.materializeVisible();
+      const summary = getSummary();
+      if (cachedMat && lastParentMat === parentMat && lastSummaryForMat === summary) {
+        return cachedMat;
+      }
+      lastParentMat = parentMat;
+      lastSummaryForMat = summary;
+      cachedMat = {
+        ...parentMat,
+        [bindingKey]: summary
       };
+      return cachedMat;
     }
   };
 }

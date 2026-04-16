@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  type RendererDefinition
+  type RendererDefinition,
+  type NodeRuntimeState
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
@@ -165,8 +166,9 @@ describe('createSchemaCompiler', () => {
     const state = runtime.schemaCompiler.compileNode({ type: 'card', title: 'Profile' }, {
       path: '$',
       renderer: registry.get('card')!
-    }).createRuntimeState();
-    const meta = runtime.resolveNodeMeta(node, page.scope, state);
+    });
+    const runtimeState: NodeRuntimeState = { meta: {}, props: state.propsProgram.kind === 'dynamic' ? state.propsProgram.createState() : undefined };
+    const meta = runtime.resolveNodeMeta(node, page.scope, runtimeState);
 
     expect((meta as unknown as Record<string, unknown>).title).toBeUndefined();
     expect(node.propsProgram.value.title).toBe('Profile');

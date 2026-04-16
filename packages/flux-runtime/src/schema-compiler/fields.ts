@@ -1,9 +1,7 @@
 import type {
   BaseSchema,
-  CompiledNodeRuntimeState,
+  NodeMetaProgram,
   CompiledRuntimeValue,
-  CompiledSchemaMeta,
-  CompiledSchemaNode,
   ExpressionCompiler,
   RendererDefinition,
   SchemaFieldRule
@@ -48,12 +46,12 @@ export function classifyField(renderer: RendererDefinition, key: string): Schema
   return DEFAULT_FIELD_RULES[key] ?? { key, kind: 'prop' };
 }
 
-export function buildCompiledMeta(
+export function buildMetaProgram(
   schema: BaseSchema,
   renderer: RendererDefinition,
   expressionCompiler: ExpressionCompiler
-): CompiledSchemaMeta {
-  const meta: CompiledSchemaMeta = {};
+): NodeMetaProgram {
+  const meta: NodeMetaProgram = {};
 
   for (const key of META_FIELDS) {
     if (classifyField(renderer, key).kind !== 'meta') {
@@ -81,22 +79,8 @@ export function buildCompiledMeta(
   return meta;
 }
 
+export { buildMetaProgram as buildCompiledMeta };
+
 export function isCompiledStatic(compiled: CompiledRuntimeValue<unknown> | undefined): boolean {
   return !compiled || compiled.kind === 'static';
-}
-
-export function createNodeRuntimeState(node: CompiledSchemaNode): CompiledNodeRuntimeState {
-  const metaEntries: Record<string, any> = {};
-
-  for (const key of Object.keys(node.meta) as Array<Extract<keyof CompiledSchemaMeta, string>>) {
-    const value = node.meta[key];
-    if (value?.kind === 'dynamic') {
-      metaEntries[key] = value.createState();
-    }
-  }
-
-  return {
-    meta: metaEntries,
-    props: node.props.kind === 'dynamic' ? node.props.createState() : undefined,
-  };
 }

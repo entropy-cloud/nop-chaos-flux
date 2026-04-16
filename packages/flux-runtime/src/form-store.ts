@@ -188,14 +188,12 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       store.setState(updates);
       const after = store.getState();
 
-      const changed = new Set<string>();
-
       if (updates.fieldStates !== undefined) {
+        const changed = new Set<string>();
         diffAndNotifyFieldStates(before.fieldStates, after.fieldStates, changed);
-      }
-
-      for (const path of changed) {
-        notifyPath(path);
+        for (const path of changed) {
+          notifyPath(path);
+        }
       }
 
       if (updates.submitting !== undefined && before.submitting !== after.submitting) {

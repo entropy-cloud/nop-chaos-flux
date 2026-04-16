@@ -1,22 +1,33 @@
 import type {
   BaseSchema,
-  CompiledSchemaNode
+  TemplateNode,
+  TemplateRegion
 } from '@nop-chaos/flux-core';
 import { attachCompiledCidState } from '@nop-chaos/flux-core';
 
-function collectCompiledNodes(entry: CompiledSchemaNode | CompiledSchemaNode[], out: CompiledSchemaNode[]) {
-  if (Array.isArray(entry)) {
-    entry.forEach((item) => collectCompiledNodes(item, out));
-    return;
-  }
-
-  out.push(entry);
-
-  for (const region of Object.values(entry.regions)) {
-    if (!region.node) {
-      continue;
+function collectAllTemplateNodes(entry: TemplateNode | readonly TemplateNode[], out: TemplateNode[]) {
+  const queue: Array<TemplateNode | readonly TemplateNode[]> = [entry];
+  while (queue.length > 0) {
+    const current = queue.pop()!;
+    if (Array.isArray(current)) {
+      for (const item of current) {
+        out.push(item);
+        const regions = item.regions as Record<string, TemplateRegion>;
+        for (const region of Object.values(regions)) {
+          if (region.node) {
+            queue.push(region.node as TemplateNode | readonly TemplateNode[]);
+          }
+        }
+      }
+    } else {
+      out.push(current);
+      const regions = current.regions as Record<string, TemplateRegion>;
+      for (const region of Object.values(regions)) {
+        if (region.node) {
+          queue.push(region.node as TemplateNode | readonly TemplateNode[]);
+        }
+      }
     }
-    collectCompiledNodes(region.node, out);
   }
 }
 
@@ -37,18 +48,16 @@ export function extractLifecycleActions(schema: BaseSchema) {
   return Object.keys(lifecycleActions).length > 0 ? lifecycleActions : undefined;
 }
 
-export function enrichCompiledComponentTargets(
-  compiled: CompiledSchemaNode | CompiledSchemaNode[],
+export function enrichTemplateNodeIds(
+  compiled: TemplateNode | readonly TemplateNode[],
   cidState: import('@nop-chaos/flux-core').CompiledCidState
-): CompiledSchemaNode | CompiledSchemaNode[] {
-  const nodes: CompiledSchemaNode[] = [];
-  collectCompiledNodes(compiled, nodes);
+): TemplateNode | readonly TemplateNode[] {
+  const nodes: TemplateNode[] = [];
+  collectAllTemplateNodes(compiled, nodes);
 
   for (const node of nodes) {
     cidState.nextTemplateNodeId += 1;
-    node.templateNodeId = cidState.nextTemplateNodeId;
-    cidState.nextCid += 1;
-    node.cid = cidState.nextCid;
+    (node as { templateNodeId: number }).templateNodeId = cidState.nextTemplateNodeId;
     attachCompiledCidState(node, cidState);
   }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { setIn } from '@nop-chaos/flux-core';
+import { setIn, type NodeRuntimeState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
@@ -30,9 +30,10 @@ describe('createRendererRuntime', () => {
     const state = runtime.schemaCompiler.compileNode({ type: 'text', text: '${message}' }, {
       path: '$',
       renderer: registry.get('text')!
-    }).createRuntimeState();
-    const first = runtime.resolveNodeProps(node, page.scope, state);
-    const second = runtime.resolveNodeProps(node, page.scope, state);
+    });
+    const runtimeState: NodeRuntimeState = { meta: {}, props: state.propsProgram.kind === 'dynamic' ? state.propsProgram.createState() : undefined };
+    const first = runtime.resolveNodeProps(node, page.scope, runtimeState);
+    const second = runtime.resolveNodeProps(node, page.scope, runtimeState);
 
     expect(first.value).toBe(second.value);
     expect(second.reusedReference).toBe(true);
@@ -57,17 +58,18 @@ describe('createRendererRuntime', () => {
     const state = runtime.schemaCompiler.compileNode({ type: 'text', text: '${user.name}', visible: '${showText}' }, {
       path: '$',
       renderer: registry.get('text')!
-    }).createRuntimeState();
+    });
+    const runtimeState: NodeRuntimeState = { meta: {}, props: state.propsProgram.kind === 'dynamic' ? state.propsProgram.createState() : undefined };
 
-    runtime.resolveNodeMeta(node, page.scope, state);
-    runtime.resolveNodeProps(node, page.scope, state);
+    runtime.resolveNodeMeta(node, page.scope, runtimeState);
+    runtime.resolveNodeProps(node, page.scope, runtimeState);
 
-    expect(state.metaDependencies).toEqual({
+    expect(runtimeState.metaDependencies).toEqual({
       paths: ['showText'],
       wildcard: false,
       broadAccess: false
     });
-    expect(state.propsDependencies).toEqual({
+    expect(runtimeState.propsDependencies).toEqual({
       paths: ['user'],
       wildcard: false,
       broadAccess: false

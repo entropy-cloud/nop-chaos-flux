@@ -1,20 +1,16 @@
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type {
   BaseSchema,
-  CompiledNodeRenderPlan,
-  CompiledNodeRenderPlanProviders,
-  CompiledNodeRuntimeBoundaries,
-  CompiledSchemaNode,
-  CompiledRegion,
   CompiledTemplate,
   CompileNodeOptions,
   CompileSchemaOptions,
   ExpressionCompiler,
-  HiddenFieldPolicy,
+  NodeMetaProgram,
   RendererPlugin,
   RendererRegistry,
   SchemaCompiler,
   SchemaInput,
+  ScopePlan,
   TemplateNode,
   TemplateRegion,
   WrapProvidersFn
@@ -26,27 +22,25 @@ import {
   isSchemaInput,
 } from '@nop-chaos/flux-core';
 import { normalizeValidationTriggers, normalizeValidationVisibilityTriggers } from './validation';
-import { createCompiledRegion } from './schema-compiler/regions';
+import { createTemplateRegion } from './schema-compiler/regions';
 import { DEEP_FIELD_NORMALIZERS } from './schema-compiler/tables';
-import { classifyField, buildCompiledMeta, isCompiledStatic, createNodeRuntimeState } from './schema-compiler/fields';
+import { classifyField, buildMetaProgram, isCompiledStatic } from './schema-compiler/fields';
 import { collectValidationModel } from './schema-compiler/validation-collection';
 import { analyzeSchemaInput, applyWrapComponentPlugins, inspectSchemaNodeFields, isNamespacedSchemaKey } from './schema-compiler/shape-validation';
-import { enrichCompiledComponentTargets, extractLifecycleActions } from './schema-compiler/target-enrichment';
+import { enrichTemplateNodeIds, extractLifecycleActions } from './schema-compiler/target-enrichment';
 import {
   createSchemaCompilerDiagnosticsContext,
   schemaPathToJsonPointer,
   type SchemaCompilerDiagnosticsContext
 } from './schema-compiler/diagnostics';
 
-
-
 const PROVIDER_BUILD_ORDER = ['actionScope', 'componentRegistry', 'classAliases'] as const;
 
-function buildWrapProvidersClosure(providers: CompiledNodeRenderPlanProviders): WrapProvidersFn {
+function buildWrapProvidersClosure(providers: TemplateNode['providerPlan']): WrapProvidersFn {
   let fn: WrapProvidersFn = (_wp, _v, ch) => ch;
 
   for (const kind of PROVIDER_BUILD_ORDER) {
-    if (providers[kind]) {
+    if (providers?.[kind]) {
       const inner = fn;
       fn = (wp, v, ch) => wp(kind, v[kind], inner(wp, v, ch));
     }
@@ -54,7 +48,6 @@ function buildWrapProvidersClosure(providers: CompiledNodeRenderPlanProviders): 
 
   return fn;
 }
-
 
 export function createSchemaCompiler(input: {
   registry: RendererRegistry;
@@ -69,11 +62,11 @@ export function createSchemaCompiler(input: {
     return (input.plugins ?? []).reduce((current, plugin) => plugin.beforeCompile?.(current) ?? current, schema);
   }
 
-  function applyAfterCompilePlugins(node: CompiledSchemaNode | CompiledSchemaNode[]): CompiledSchemaNode | CompiledSchemaNode[] {
-    return (input.plugins ?? []).reduce((current, plugin) => plugin.afterCompile?.(current) ?? current, node);
+  function applyAfterCompilePlugins(template: CompiledTemplate): CompiledTemplate {
+    return (input.plugins ?? []).reduce((current, plugin) => plugin.afterCompile?.(current) ?? current, template);
   }
 
-  function compileSchemaToNodes(schema: SchemaInput, options: CompileSchemaOptions = {}): CompiledSchemaNode | CompiledSchemaNode[] {
+  function compileSchemaToTemplateNodes(schema: SchemaInput, options: CompileSchemaOptions = {}): TemplateNode | TemplateNode[] {
     const prepared = applyBeforeCompilePlugins(schema);
     const diagnostics = createSchemaCompilerDiagnosticsContext(options, 'compile');
     const cidState = options.cidState ?? input.defaultCidState ?? createCompiledCidState();
@@ -108,7 +101,10 @@ export function createSchemaCompiler(input: {
           renderer: wrappedRenderer
         }, diagnostics);
       });
-      return enrichCompiledComponentTargets(applyAfterCompilePlugins(compiled) as CompiledSchemaNode | CompiledSchemaNode[], cidState);
+
+      const nodes = enrichTemplateNodeIds(compiled, cidState);
+      const template: CompiledTemplate = applyAfterCompilePlugins({ root: nodes, repeatedTemplates: new Map() });
+      return Array.isArray(template.root) ? template.root as TemplateNode[] : [template.root] as TemplateNode[];
     }
 
     const path = options.basePath ?? '$';
@@ -120,34 +116,34 @@ export function createSchemaCompiler(input: {
 
     const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
 
-    return enrichCompiledComponentTargets(
-      applyAfterCompilePlugins(
-        compileSingleNode(prepared, {
-          path,
-          parentPath: options.parentPath,
-          renderer: wrappedRenderer
-        }, diagnostics)
-      ) as CompiledSchemaNode | CompiledSchemaNode[],
+    const node = enrichTemplateNodeIds(
+      compileSingleNode(prepared, {
+        path,
+        parentPath: options.parentPath,
+        renderer: wrappedRenderer
+      }, diagnostics),
       cidState
     );
+
+    const template: CompiledTemplate = applyAfterCompilePlugins({ root: node, repeatedTemplates: new Map() });
+    return template.root as TemplateNode | TemplateNode[];
   }
 
   function compileSingleNode(
     schema: BaseSchema,
     options: CompileNodeOptions,
     diagnostics: SchemaCompilerDiagnosticsContext = noopDiagnostics
-  ): CompiledSchemaNode {
+  ): TemplateNode {
     const renderer = options.renderer;
     const path = options.path;
     const fieldInspection = inspectSchemaNodeFields(schema, renderer, path, diagnostics, false);
-    const meta = buildCompiledMeta(schema, renderer, expressionCompiler);
+    const metaProgram = buildMetaProgram(schema, renderer, expressionCompiler);
     const propSource: Record<string, unknown> = {};
     const sourcePropKeys = new Set<string>();
     const sourceStatePropKeys: Record<string, string> = {};
-    const regions: Record<string, CompiledRegion> = {};
+    const regions: Record<string, TemplateRegion> = {};
     const lifecycleActions = extractLifecycleActions(schema);
-    const eventActions: Record<string, unknown> = {};
-    const eventKeys: string[] = [];
+    const eventPlans: Record<string, unknown> = {};
     const deepNormalizers = DEEP_FIELD_NORMALIZERS[renderer.type] ?? {};
 
     for (const key of Object.keys(schema)) {
@@ -163,8 +159,7 @@ export function createSchemaCompiler(input: {
       }
 
       if (rule.kind === 'event') {
-        eventActions[key] = value;
-        eventKeys.push(key);
+        eventPlans[key] = value;
         continue;
       }
 
@@ -172,11 +167,11 @@ export function createSchemaCompiler(input: {
         const regionMeta = rule.kind === 'region' || isSchemaInput(value)
           ? { params: rule.params, isolate: rule.isolate }
           : undefined;
-        regions[rule.regionKey ?? key] = createCompiledRegion(
+        regions[rule.regionKey ?? key] = createTemplateRegion(
           rule.regionKey ?? key,
           value,
           `${path}.${rule.regionKey ?? key}`,
-          compileSchemaToNodes,
+          compileSchemaToTemplateNodes,
           regionMeta
         );
         continue;
@@ -187,7 +182,7 @@ export function createSchemaCompiler(input: {
             value,
             path,
             regions,
-            compileSchema: compileSchemaToNodes
+            compileSchema: compileSchemaToTemplateNodes
           })
         : value;
 
@@ -200,132 +195,56 @@ export function createSchemaCompiler(input: {
       }
     }
 
-    const props = expressionCompiler.compileValue(propSource);
+    const propsProgram = expressionCompiler.compileValue(propSource);
 
-    const flags = {
-      hasVisibilityRule: !!meta.visible,
-      hasHiddenRule: !!meta.hidden,
-      hasDisabledRule: !!meta.disabled,
-      isContainer: Object.keys(regions).length > 0,
-      isStatic:
-        Object.values(meta).every((value) => isCompiledStatic(value)) &&
-        props.kind === 'static' &&
-        Object.values(regions).every((region) => region.node == null)
-    };
-    const runtimeBoundaries: CompiledNodeRuntimeBoundaries = {
-      mayPublishScope:
-        renderer.scopePolicy === 'form' ||
-        Boolean(fieldInspection.extensions?.['xui:imports']),
-      mayPublishActionScope:
+    const scopePlan: ScopePlan =
+      renderer.scopePolicy === 'form'
+        ? { kind: 'form' }
+        : Boolean(fieldInspection.extensions?.['xui:imports'])
+          ? { kind: 'child' }
+          : { kind: 'inherit' };
+
+    const providerPlan = {
+      actionScope:
         renderer.actionScopePolicy === 'new' ||
         Boolean(fieldInspection.extensions?.['xui:imports']),
-      mayPublishComponentRegistry: renderer.componentRegistryPolicy === 'new',
-      mayPublishClassAliases: Boolean(schema.classAliases && Object.keys(schema.classAliases).length > 0)
-    };
-    const providers: CompiledNodeRenderPlanProviders = {
-      actionScope: runtimeBoundaries.mayPublishActionScope,
-      componentRegistry: runtimeBoundaries.mayPublishComponentRegistry,
-      classAliases: runtimeBoundaries.mayPublishClassAliases,
-    };
-    const renderPlan: CompiledNodeRenderPlan = {
-      providers,
-      wrapProviders: buildWrapProvidersClosure(providers),
+      componentRegistry: renderer.componentRegistryPolicy === 'new',
+      classAliases: Boolean(schema.classAliases && Object.keys(schema.classAliases as Record<string, unknown>).length > 0)
     };
 
+    const providerWrap = buildWrapProvidersClosure(providerPlan);
+
     return {
+      templateNodeId: 0,
       id: createNodeId(path, schema),
       type: schema.type,
-      path,
       schema,
-      extensions: fieldInspection.extensions,
+      templatePath: path,
+      rendererType: renderer.type,
       component: renderer,
-      meta,
-      props,
-      sourcePropKeys: Array.from(sourcePropKeys).sort(),
-      sourceStatePropKeys,
-      validation:
+      propsProgram,
+      metaProgram,
+      eventPlans,
+      lifecycleActions,
+      regions,
+      providerPlan,
+      providerWrap,
+      scopePlan,
+      validationPlan:
         renderer.scopePolicy === 'form'
           ? collectValidationModel(
               Object.values(regions)
                 .map((region) => region.node)
-                .filter((candidate): candidate is CompiledSchemaNode | CompiledSchemaNode[] => candidate != null),
+                .filter((candidate): candidate is TemplateNode | TemplateNode[] => candidate != null),
               {
                 defaultTriggers: normalizeValidationTriggers(schema.validateOn, ['blur']),
                 defaultShowErrorOn: normalizeValidationVisibilityTriggers(schema.showErrorOn, ['touched', 'submit']),
-                defaultHiddenFieldPolicy: (schema as { hiddenFieldPolicy?: HiddenFieldPolicy }).hiddenFieldPolicy
+                defaultHiddenFieldPolicy: (schema as { hiddenFieldPolicy?: unknown }).hiddenFieldPolicy as import('@nop-chaos/flux-core').HiddenFieldPolicy | undefined
               }
             )
           : undefined,
-      regions,
-      lifecycleActions,
-      eventActions,
-      eventKeys,
-      flags,
-      renderPlan,
-      runtimeBoundaries,
-      createRuntimeState() {
-        return createNodeRuntimeState(this);
-      }
-    };
-  }
-
-  function buildTemplateRegion(region: CompiledRegion): TemplateRegion {
-    return {
-      key: region.key,
-      path: region.path,
-      node: region.node
-        ? Array.isArray(region.node)
-          ? region.node.map(buildTemplateNode)
-          : buildTemplateNode(region.node)
-        : null,
-      ...(region.params !== undefined ? { params: region.params } : {}),
-      ...(region.isolate !== undefined ? { isolate: region.isolate } : {})
-    };
-  }
-
-  function buildTemplateNode(node: CompiledSchemaNode): TemplateNode {
-    const regions: Record<string, TemplateRegion> = {};
-    for (const [key, region] of Object.entries(node.regions)) {
-      regions[key] = buildTemplateRegion(region);
-    }
-
-    const scopePlan: import('@nop-chaos/flux-core').ScopePlan =
-      node.component.scopePolicy === 'form'
-        ? { kind: 'form' }
-        : node.runtimeBoundaries.mayPublishScope
-          ? { kind: 'child' }
-          : { kind: 'inherit' };
-
-    return {
-      templateNodeId: node.templateNodeId ?? 0,
-      id: node.id,
-      type: node.type,
-      schema: node.schema,
-      templatePath: node.path,
-      rendererType: node.component.type,
-      component: node.component,
-      propsProgram: node.props,
-      metaProgram: node.meta,
-      eventPlans: node.eventActions,
-      lifecycleActions: node.lifecycleActions,
-      regions,
-      providerPlan: node.renderPlan.providers,
-      providerWrap: node.renderPlan.wrapProviders,
-      scopePlan,
-      validationPlan: node.validation,
-      sourcePropKeys: node.sourcePropKeys,
-      sourceStatePropKeys: node.sourceStatePropKeys
-    };
-  }
-
-  function buildCompiledTemplate(compiled: CompiledSchemaNode | CompiledSchemaNode[]): CompiledTemplate {
-    const root = Array.isArray(compiled)
-      ? compiled.map(buildTemplateNode) as readonly TemplateNode[]
-      : buildTemplateNode(compiled);
-
-    return {
-      root,
-      repeatedTemplates: new Map()
+      sourcePropKeys: Array.from(sourcePropKeys).sort(),
+      sourceStatePropKeys
     };
   }
 
@@ -348,7 +267,11 @@ export function createSchemaCompiler(input: {
 
   return {
     compile(schema, options) {
-      return buildCompiledTemplate(compileSchemaToNodes(schema, options));
+      const nodes = compileSchemaToTemplateNodes(schema, options);
+      return {
+        root: nodes,
+        repeatedTemplates: new Map()
+      };
     },
     compileNode(schema, options) {
       return compileSingleNode(schema, options);

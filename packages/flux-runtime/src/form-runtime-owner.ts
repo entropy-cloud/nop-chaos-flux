@@ -28,9 +28,17 @@ export function buildFormOwnerRuntime(input: {
   getIsSubmitting: () => boolean;
   getThisForm: () => FormRuntime;
 }) {
+  let cachedFieldStatesRef: Record<string, FieldState> | undefined;
+  let cachedScopeState: ScopeValidationStateSnapshot | undefined;
+
   function computeScopeState(): ScopeValidationStateSnapshot {
     const state = input.sharedState.store.getState();
     const fieldStates = state.fieldStates;
+
+    if (cachedScopeState && cachedFieldStatesRef === fieldStates) {
+      return cachedScopeState;
+    }
+
     let hasErrors = false;
     let isValidating = false;
 
@@ -41,7 +49,8 @@ export function buildFormOwnerRuntime(input: {
     }
 
     const valid = !hasErrors;
-    return {
+    cachedFieldStatesRef = fieldStates;
+    cachedScopeState = {
       valid,
       hasErrors,
       validating: isValidating,
@@ -49,6 +58,7 @@ export function buildFormOwnerRuntime(input: {
       ready: valid && !isValidating,
       modelGeneration: input.sharedState.modelGeneration
     };
+    return cachedScopeState;
   }
 
   async function revalidateDependents(path: string) {
@@ -238,10 +248,14 @@ export function buildFormOwnerRuntime(input: {
 
     const validationPaths = getCompiledValidationTraversalOrder(currentValidation);
 
-    for (const path of validationPaths) {
-      validatedPaths.add(path);
-      const result = await input.getThisForm().validateField(path, reason);
+    const pathResults = await Promise.all(
+      validationPaths.map(async (path) => {
+        validatedPaths.add(path);
+        return { path, result: await input.getThisForm().validateField(path, reason) };
+      })
+    );
 
+    for (const { path, result } of pathResults) {
       if (!result.ok) {
         fieldErrors[path] = result.errors;
         errors.push(...result.errors);

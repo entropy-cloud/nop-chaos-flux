@@ -302,17 +302,22 @@ describe('createRendererRuntime', () => {
           text: 'Prepared text'
         };
       },
-      afterCompile(node) {
-        if (Array.isArray(node)) {
-          return node;
+      afterCompile(template) {
+        const root = Array.isArray(template.root) ? template.root[0] : template.root;
+
+        if (!root || root.type !== 'text') {
+          return template;
         }
 
         return {
-          ...node,
-          props: createExpressionCompiler(createFormulaCompiler()).compileValue({
-            ...node.schema,
-            text: 'Prepared text + compiled'
-          })
+          ...template,
+          root: {
+            ...root,
+            propsProgram: createExpressionCompiler(createFormulaCompiler()).compileValue({
+              ...root.schema,
+              text: 'Prepared text + compiled'
+            })
+          }
         };
       }
     };

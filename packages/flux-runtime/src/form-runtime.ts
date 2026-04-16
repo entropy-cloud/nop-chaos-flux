@@ -4,6 +4,7 @@ import type {
   ApplyScopeChangesInput,
   ChildValidationContractRegistration,
   FieldRegistrationHandle,
+  FieldState,
   FormLifecycleHandlers,
   FormRuntime,
   FormValidationResult,
@@ -137,13 +138,22 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     return true;
   }
 
+  let cachedAllTouchedFieldStates: Record<string, FieldState> | undefined;
+  let cachedAllTouchedResult: boolean | undefined;
+
   function computeAllTouched(): boolean {
     const state = store.getState();
+    if (cachedAllTouchedResult !== undefined && cachedAllTouchedFieldStates === state.fieldStates) {
+      return cachedAllTouchedResult;
+    }
+    cachedAllTouchedFieldStates = state.fieldStates;
     const order = getCompiledValidationTraversalOrder(currentValidation);
     if (order.length === 0) {
+      cachedAllTouchedResult = true;
       return true;
     }
-    return order.every((path) => state.fieldStates[path]?.touched === true);
+    cachedAllTouchedResult = order.every((path) => state.fieldStates[path]?.touched === true);
+    return cachedAllTouchedResult;
   }
 
   const formRuntimeRef: { current?: FormRuntime } = {};

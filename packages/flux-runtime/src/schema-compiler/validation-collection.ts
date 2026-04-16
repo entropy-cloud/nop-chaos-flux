@@ -1,8 +1,8 @@
 import type {
   CompiledFormValidationModel,
-  CompiledSchemaNode,
   CompiledValidationBehavior,
   HiddenFieldPolicy,
+  TemplateNode,
   ValidationTrigger,
   ValidationVisibilityTrigger
 } from '@nop-chaos/flux-core';
@@ -37,9 +37,9 @@ function poolValidationBehavior(
 
 export function collectValidationModel(
   node:
-    | CompiledSchemaNode
-    | CompiledSchemaNode[]
-    | Array<CompiledSchemaNode | CompiledSchemaNode[]>
+    | TemplateNode
+    | TemplateNode[]
+    | Array<TemplateNode | TemplateNode[]>
     | null
     | undefined,
   options: {
@@ -52,8 +52,8 @@ export function collectValidationModel(
     return undefined;
   }
 
-  const nodes: CompiledSchemaNode[] = [];
-  const queue: Array<CompiledSchemaNode | CompiledSchemaNode[]> = Array.isArray(node) ? [...node] : [node];
+  const nodes: TemplateNode[] = [];
+  const queue: Array<TemplateNode | TemplateNode[]> = Array.isArray(node) ? [...node] : [node];
 
   while (queue.length > 0) {
     const current = queue.shift();
@@ -87,7 +87,7 @@ export function collectValidationModel(
   );
   let formDefaultHiddenFieldPolicy: HiddenFieldPolicy | undefined = options.defaultHiddenFieldPolicy;
 
-  const visit = (entry: CompiledSchemaNode, fieldPathPrefix?: string) => {
+  const visit = (entry: TemplateNode, fieldPathPrefix?: string) => {
     if (!entry.component) {
       return;
     }
@@ -110,7 +110,7 @@ export function collectValidationModel(
       const ctx = {
         schema: entry.schema,
         renderer: entry.component,
-        path: entry.path,
+        path: entry.templatePath,
         fieldPathPrefix
       };
       const rawFieldPath = contributor.getFieldPath?.(entry.schema, ctx);
@@ -152,7 +152,6 @@ export function collectValidationModel(
 
         const childPrefix = contributor.getChildFieldPathPrefix?.(entry.schema, { ...ctx, fieldPathPrefix });
         
-        // If getChildFieldPathPrefix returns false, skip child validation compilation
         if (childPrefix === false) {
           return;
         }
@@ -178,11 +177,10 @@ export function collectValidationModel(
     const childPrefix2 = contributor2?.getChildFieldPathPrefix?.(entry.schema, {
       schema: entry.schema,
       renderer: entry.component,
-      path: entry.path,
+      path: entry.templatePath,
       fieldPathPrefix
     });
     
-    // If getChildFieldPathPrefix returns false, skip child validation compilation
     if (childPrefix2 === false) {
       return;
     }

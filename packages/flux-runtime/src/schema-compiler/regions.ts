@@ -1,6 +1,6 @@
 import type {
-  CompiledRegion,
-  CompiledSchemaNode,
+  TemplateRegion,
+  TemplateNode,
   CompileSchemaOptions,
   SchemaInput
 } from '@nop-chaos/flux-core';
@@ -37,13 +37,13 @@ export function validateRegionParams(params: readonly string[], regionPath: stri
   }
 }
 
-export function createCompiledRegion(
+export function createTemplateRegion(
   key: string,
   value: unknown,
   path: string,
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => CompiledSchemaNode | CompiledSchemaNode[],
+  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[],
   regionMeta?: { params?: readonly string[]; isolate?: boolean }
-): CompiledRegion {
+): TemplateRegion {
   if (regionMeta?.params) {
     validateRegionParams(regionMeta.params, path);
   }
@@ -76,8 +76,8 @@ export function extractNestedSchemaRegions(input: {
   itemRegionPath: string;
   itemRegionKeyPrefix: string;
   rules: readonly NestedRegionFieldRule[];
-  regions: Record<string, CompiledRegion>;
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => CompiledSchemaNode | CompiledSchemaNode[];
+  regions: Record<string, TemplateRegion>;
+  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[];
 }) {
   const nextValue: Record<string, unknown> = { ...input.candidate };
   let changed = false;
@@ -91,7 +91,7 @@ export function extractNestedSchemaRegions(input: {
 
     const regionKey = `${input.itemRegionKeyPrefix}.${rule.regionKeySuffix}`;
     const regionPath = `${input.itemRegionPath}.${rule.regionKeySuffix}`;
-    input.regions[regionKey] = createCompiledRegion(
+    input.regions[regionKey] = createTemplateRegion(
       regionKey,
       fieldValue,
       regionPath,
