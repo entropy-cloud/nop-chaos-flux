@@ -57,6 +57,7 @@ Precedence model:
 These docs are core architecture, not peripheral domain appendices.
 
 - `complex-control-host-protocol.md`
+- `capability-projection-manifest.md`
 - `flux-dsl-vm-extensibility.md`
 - `flow-designer/`
 - `report-designer/`

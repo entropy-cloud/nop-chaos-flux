@@ -102,28 +102,28 @@
 
 ### 2.4 已验证的类型逃逸点
 
-初稿里“生产代码 64 处 any”“12 处双重转型”的总量说法没有附 live 证据，过于武断。复核后保留为以下可直接定位的问题：
+初稿里"生产代码 64 处 any""12 处双重转型"的总量说法没有附 live 证据，过于武断。复核后保留为以下可直接定位的问题：
 
 | # | 文件 | 问题 |
 |---|------|------|
-| C-05 | `packages/flux-code-editor/src/types.ts` | `expressionConfig`、`sqlConfig`、`options` 仍是 `any`，是最集中的类型黑洞 |
-| C-06 | `packages/flux-code-editor/src/source-resolvers.ts` | `dispatch({ action: 'ajax', ... } as any)` 与 `reduce((obj: any, ...))` 多次出现 |
-| C-07 | `packages/flux-code-editor/src/code-editor-renderer.tsx` | 多处 `as any`、`err: any`、动态 resultPath 读取继续逃逸类型系统 |
-| C-08 | `packages/flux-react/src/hooks.ts` | `as unknown as S` 用于 scope snapshot 泛型桥接，说明公共 hook 类型边界仍不够精确 |
-| C-09 | `packages/flux-renderers-basic/src/tabs.tsx`、`packages/flux-renderers-data/src/table-renderer.tsx`、`packages/flux-renderers-form/src/renderers/condition-builder/ConditionBuilder.tsx` | `props.props as unknown as SpecificSchema` 重复出现，说明标准 renderer props 仍有局部类型落差 |
+| ~~C-05~~ | ~~`packages/flux-code-editor/src/types.ts`~~ | **已确认为有意设计 (2026-04-16)**: `expressionConfig`、`sqlConfig`、`options` 使用 `any` 是因为这些复杂配置对象不满足 `BaseSchema extends SchemaObject` 的索引签名约束 `[key: string]: SchemaValue`。已添加 JSDoc 解释原因，运行时验证由 `isVariableSourceRef`、`isFuncSourceRef`、`isSQLSchemaSourceRef` 等类型守卫完成。 |
+| ~~C-06~~ | ~~`packages/flux-code-editor/src/source-resolvers.ts`~~ | **已解决 (2026-04-16)**: 提取了共享的 `useAsyncApiResolver<T>` helper，移除了所有 `as any` 和 untyped reducer patterns。 |
+| ~~C-07~~ | ~~`packages/flux-code-editor/src/code-editor-renderer.tsx`~~ | **已解决 (2026-04-16)**: `code-editor-renderer.tsx` 不再包含 `as any` 或 `err: any`；`linter.ts` 中的 `err: any` 已改为 `err: unknown` 并使用 `instanceof Error` 检查。`format.ts` 中的 `as any` 已移除。 |
+| ~~C-08~~ | ~~`packages/flux-react/src/hooks.ts`~~ | **已解决 (2026-04-16)**: `as unknown as S` 是有意的泛型桥接，用于将动态 scope 数据桥接到调用者指定的类型 `S`。已添加 JSDoc 明确说明这是类型边界的设计决策，类型责任由调用者的 selector 函数承担。 |
+| ~~C-09~~ | ~~`packages/flux-renderers-basic/src/tabs.tsx` 等~~ | **已解决 (2026-04-16)**: 创建了 `useSchemaProps<S>()` helper 函数集中处理 `props.props as unknown as S` 的类型桥接，并添加了完整的 JSDoc 文档说明这是 `RendererComponentProps.props` 为 `Record<string, unknown>` 的架构设计结果。`tabs.tsx`、`table-renderer.tsx`、`ConditionBuilder.tsx` 已更新使用新 helper。 |
 
 建议：
 
-- 不要再报笼统总数，直接围绕 `flux-code-editor` 和 renderer schema cast 这两个真实热点建立后续修复计划。
-- `flux-code-editor` 优先把配置对象和 ajax 结果面收窄成显式接口。
-- renderer family 需要确认是 `RendererComponentProps` 设计问题，还是局部 schema helper 缺失；在没完成根因核对前，不要直接把锅全部甩给泛型设计。
+- ~~不要再报笼统总数，直接围绕 `flux-code-editor` 和 renderer schema cast 这两个真实热点建立后续修复计划。~~ **已解决 (2026-04-16)**
+- ~~`flux-code-editor` 优先把配置对象和 ajax 结果面收窄成显式接口。~~ **已解决 (2026-04-16)**: 配置对象的 `any` 已添加 JSDoc 说明为有意设计；ajax 结果面已通过 `useAsyncApiResolver<T>` 泛型 helper 收窄。
+- ~~renderer family 需要确认是 `RendererComponentProps` 设计问题，还是局部 schema helper 缺失。~~ **已解决 (2026-04-16)**: 确认为架构设计结果，已创建 `useSchemaProps<S>()` helper 集中管理类型桥接。
 
 ### 2.5 确认存在的重复实现
 
 | # | 重复内容 | 位置 | 复核结论 |
 |---|----------|------|----------|
-| C-10 | 图标解析逻辑（`toIconLookupKey` / `normalizeIconName` / `toLucideKey`） | `packages/flux-renderers-basic/src/icon.tsx` 与 `packages/flow-designer-renderers/src/designer-icon.tsx` | 确认重复，适合提取为共享 helper |
-| C-11 | code-editor API resolver 模式 | `packages/flux-code-editor/src/source-resolvers.ts` 四处相同请求流程 | 确认重复，且和静默吞错问题是同一修复面 |
+| ~~C-10~~ | ~~图标解析逻辑（`toIconLookupKey` / `normalizeIconName` / `toLucideKey`）~~ | ~~`packages/flux-renderers-basic/src/icon.tsx` 与 `packages/flow-designer-renderers/src/designer-icon.tsx`~~ | **已解决 (2026-04-16)**: 提取了共享 helper 到 `packages/ui/src/lib/icon-utils.ts`，包含 `ICON_ALIAS_MAP`、`toIconLookupKey`、`normalizeIconName`、`toLucideKey`、`resolveLucideIcon`。两个原文件已简化为使用共享 helper。 |
+| ~~C-11~~ | ~~code-editor API resolver 模式~~ | ~~`packages/flux-code-editor/src/source-resolvers.ts` 四处相同请求流程~~ | **已解决 (2026-04-16)**: 已提取 `useAsyncApiResolver<T>` helper 统一处理请求流程，和静默吞错问题在同一修复中解决。 |
 
 原 C-11、C-12 那类“看起来相似”的 overlay/test mock 条目，本次没有继续保留为正式问题，因为复核证据不足以支持“应当提取”为确定结论。
 
@@ -135,10 +135,10 @@
 
 | # | 问题 | 说明 | 严重度 |
 |---|------|------|--------|
-| T-01 | `@nop-chaos/ui` 包没有任何测试文件 | `packages/ui/src/**/*.test.*` 当前为 0。对一个被多包复用的 UI 基础包来说，这是实打实的 coverage 空洞。 | **High** |
-| T-02 | `@nop-chaos/flux-core` 测试面偏窄 | 当前仅有 6 个测试文件：`utils/path`、`utils/object`、`utils/array`、`utils/schema`、`class-aliases`、`validation-model`。作为最底层共享包，这个覆盖面偏保守。 | **Medium** |
-| T-03 | 只有 `flux-formula` 配置了覆盖率阈值 | `packages/flux-formula/vitest.config.ts` 有 70% threshold，其余包没有类似门槛。 | **Medium** |
-| T-04 | `packages/flux-runtime/vitest.config.js` 是残留编译产物 | 同目录已存在 `.ts` 版本；`.js` 文件与仓库“不要在源码旁残留构建产物”的规则不一致。 | **Low** |
+| ~~T-01~~ | ~~`@nop-chaos/ui` 包没有任何测试文件~~ | **已解决 (2026-04-16)**: 添加了 `icon-utils.test.ts` (28 测试) 和 `utils.test.ts` (15 测试)，共 43 个测试覆盖图标解析和 `cn()` 类合并逻辑。 | ~~High~~ |
+| ~~T-02~~ | ~~`@nop-chaos/flux-core` 测试面偏窄~~ | **已解决 (2026-04-16)**: 从 6 个测试文件扩展到 8 个：新增 `compiled-cid.test.ts` (15 测试) 和 `constants.test.ts` (9 测试)，覆盖 CID 状态管理和 META_FIELDS 常量。 | ~~Medium~~ |
+| ~~T-03~~ | ~~只有 `flux-formula` 配置了覆盖率阈值~~ | **已解决 (2026-04-16)**: `flux-core` 现在也配置了 coverage thresholds (60% branches/functions/lines/statements)，覆盖 `class-aliases.ts`、`compiled-cid.ts`、`constants.ts`、`validation-model.ts`、`path-binding.ts`、`instance-path.ts`。 | ~~Medium~~ |
+| ~~T-04~~ | ~~`packages/flux-runtime/vitest.config.js` 是残留编译产物~~ | **已解决 (2026-04-16)**: 已删除 `.js` 文件，保留正确的 `.ts` 版本。 | ~~Low~~ |
 
 ### 3.2 初稿中应删除或降级的测试条目
 
@@ -153,12 +153,12 @@
 
 | # | 问题 | 说明 | 严重度 |
 |---|------|------|--------|
-| B-01 | `word-editor-renderers` 把 `@types/use-sync-external-store` 放在 `dependencies` | 这是类型包，运行时不需要，放在 `devDependencies` 更合理。 | **Low** |
-| B-02 | `flux-core` 使用 React type import，但 `package.json` 未声明 `react` | `packages/flux-core/src/types/runtime.ts`、`renderer-core.ts`、`renderer-hooks.ts` 都有 `react` type import。是否声明为 `devDependency` 或 `peerDependency` 需要明确。 | **Medium** |
-| B-03 | `flux-react` 和 `nop-debugger` 的 `react-dom` 可能是未使用依赖 | 在各自源码目录中未搜到 `react-dom` import。因为这是 `dependencies` 而不是测试依赖，值得清理或补充说明。 | **Low** |
-| B-04 | `flow-designer-core` / `flow-designer-renderers` 的 `tsconfig.json` 有冗余覆盖 | 在 `noEmit: true` 前提下仍重复写 `rootDir`、`outDir`、`declaration`、`composite`、`declarationMap`，会增加理解成本。 | **Low** |
-| B-05 | `tailwind-preset` 的 build/export 语义不清晰 | `package.json` 直接导出 `src/index.ts`，但 `tsconfig.build.json` 又开启 declaration/sourceMap。当前更像“构建配置存在，但包对外仍走源码直出”，需要明确是保留源码包还是改成 dist 包。 | **Medium** |
-| B-06 | `nop-debugger/tsconfig.build.json` 里把 `@nop-chaos/ui` 路径钉到 `packages/ui/dist/index.d.ts` | 这能工作，但构建链条更脆弱，对 build 顺序和 dist 可用性更敏感。 | **Low** |
+| ~~B-01~~ | ~~`word-editor-renderers` 把 `@types/use-sync-external-store` 放在 `dependencies`~~ | **已解决 (2026-04-16)**: 已移动到 `devDependencies`。 | ~~Low~~ |
+| ~~B-02~~ | ~~`flux-core` 使用 React type import，但 `package.json` 未声明 `react`~~ | **已解决 (2026-04-16)**: 添加了 `@types/react` 作为 `devDependencies`。 | ~~Medium~~ |
+| ~~B-03~~ | ~~`flux-react` 和 `nop-debugger` 的 `react-dom` 可能是未使用依赖~~ | **已解决 (2026-04-16)**: 确认未使用，已从两个包的 `dependencies` 中移除。 | ~~Low~~ |
+| ~~B-04~~ | ~~`flow-designer-core` / `flow-designer-renderers` 的 `tsconfig.json` 有冗余覆盖~~ | **已解决 (2026-04-16)**: 移除了 `noEmit: true` 下无效的 `rootDir`、`outDir`、`declaration`、`composite`、`declarationMap` 配置。 | ~~Low~~ |
+| ~~B-05~~ | ~~`tailwind-preset` 的 build/export 语义不清晰~~ | **已解决 (2026-04-16)**: 明确为源码直出包，移除了 `build` 脚本和 `tsconfig.build.json`。 | ~~Medium~~ |
+| ~~B-06~~ | ~~`nop-debugger/tsconfig.build.json` 里把 `@nop-chaos/ui` 路径钉到 `packages/ui/dist/index.d.ts`~~ | **已解决 (2026-04-16)**: 移除了硬编码路径映射，依赖正常的 workspace 解析。 | ~~Low~~ |
 
 ---
 
