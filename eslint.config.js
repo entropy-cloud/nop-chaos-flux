@@ -1,4 +1,5 @@
 const js = require('@eslint/js');
+const react = require('eslint-plugin-react');
 const tseslint = require('typescript-eslint');
 const reactHooks = require('eslint-plugin-react-hooks');
 const reactCompiler = require('eslint-plugin-react-compiler');
@@ -28,12 +29,20 @@ const react19RestrictedImports = [
 
 module.exports = [
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**']
+    ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error'
+    }
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
+    settings: {
+      react: {
+        version: '19.0'
+      }
+    },
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -41,12 +50,39 @@ module.exports = [
       }
     },
     plugins: {
+      react,
       ...reactHooksLatest.plugins,
       'react-compiler': reactCompiler
     },
     rules: {
+      'react/jsx-key': 'error',
+      'react/jsx-no-comment-textnodes': 'error',
+      'react/jsx-no-duplicate-props': 'error',
+      'react/jsx-no-constructed-context-values': 'error',
+      'react/jsx-no-script-url': 'error',
+      'react/jsx-no-target-blank': 'error',
+      'react/jsx-no-undef': 'error',
+      'react/button-has-type': 'error',
+      'react/no-children-prop': 'error',
+      'react/no-danger-with-children': 'error',
+      'react/no-deprecated': 'error',
+      'react/no-direct-mutation-state': 'error',
+      'react/no-find-dom-node': 'error',
+      'react/no-is-mounted': 'error',
+      'react/no-array-index-key': 'warn',
+      'react/no-render-return-value': 'error',
+      'react/no-string-refs': 'error',
+      'react/no-unknown-property': 'error',
       ...reactHooksLatest.rules,
       'react-compiler/react-compiler': 'error',
+      'react-hooks/exhaustive-deps': 'error',
+      '@typescript-eslint/ban-ts-comment': ['error', {
+        'ts-check': false,
+        'ts-expect-error': 'allow-with-description',
+        'ts-ignore': true,
+        'ts-nocheck': true,
+        minimumDescriptionLength: 3
+      }],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
