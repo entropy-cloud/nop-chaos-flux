@@ -144,7 +144,9 @@ Always consult `docs/index.md` first when working with documentation. It contain
 
 ## Documentation Routing
 
-Before starting work, read the relevant docs. This table maps tasks to the docs you must read first.
+**`docs/index.md` is the authoritative docs navigation baseline.** This section contains a deliberately reduced operational subset optimized for AI agent task execution.
+
+For the complete "Read This First" routing table, see `docs/index.md`. The tables below cover only the most frequent agent workflows.
 
 ### By Task
 
@@ -152,23 +154,14 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 |------|-----------|-----------|-----|
 | Modify any renderer component (JSX, props, hooks) | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` | Renderer contracts, hooks, fragment rendering |
 | Add or change a renderer's styling, className, or layout | `docs/architecture/styling-system.md` | `docs/architecture/theme-compatibility.md` | Renderer styling contract, classAliases, spacing conventions, marker class rules |
-| Change CSS, Tailwind utilities, or design tokens | `docs/architecture/styling-system.md` â†’ "Renderer Styling Contract" section | `docs/architecture/renderer-markers-and-selectors.md` | No implicit layout in renderers; use marker classes + schema-driven styles |
-| Add a new Tailwind utility or global CSS rule | `docs/architecture/styling-system.md` | `apps/playground/src/styles-theme-utilities.css` | Spacing conventions, stack/hstack alias patterns |
+| Change CSS, Tailwind utilities, or design tokens | `docs/architecture/styling-system.md` → "Renderer Styling Contract" section | `docs/architecture/renderer-markers-and-selectors.md` | No implicit layout in renderers; use marker classes + schema-driven styles |
 | Work on Flow Designer canvas, nodes, edges, or interactions | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md` | Layered architecture, host-bridge adapter contract |
-| Change Flow Designer visual style (node cards, icons, badges) | `docs/architecture/styling-system.md` â†’ "Spacing Conventions" section | `docs/analysis/2026-03-29-flow-designer-style-parity-research.md` | Context-based spacing guide, parity audit |
-| Change Flow Designer config schema (nodeTypes, ports, permissions) | `docs/architecture/flow-designer/config-schema.md` | `docs/architecture/flow-designer/api.md` | NodeTypeConfig, port definitions, inspector schema |
 | Work on Report Designer or Spreadsheet Editor | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` | Layered architecture, package boundaries, interface contracts |
 | Draft, execute, or audit a plan under `docs/plans/` | `docs/plans/00-plan-authoring-and-execution-guide.md` | `docs/logs/index.md` | Plan scope, status, exit criteria, and closure discipline |
-| Change spreadsheet cell CSS, `ss-*` classes, or cell rendering styles | `docs/architecture/report-designer/spreadsheet-canvas-css.md` | `docs/architecture/styling-system.md` â†’ "Performance-Critical Domain: Spreadsheet Canvas" | Hybrid CSS strategy (predefined class + inline style + data-*), perf-first, NOT Tailwind |
 | Change form validation, error display, or field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` | Validation rules, timing, renderer participation |
-| Change form field wrappers, labels, hints, or error slots | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/field-frame.md` | Slot classification, unified field chrome |
 | Add new actions, event handlers, or `xui:import` usage | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` | Namespaced actions, import semantics, scope boundaries |
-| Change API requests, data sources, polling, or adaptors | `docs/architecture/api-data-source.md` | `docs/architecture/renderer-runtime.md` | ApiObject, DataSourceSchema, scope injection |
-| Add or modify a shadcn/ui component in `@nop-chaos/ui` | `docs/architecture/styling-system.md` | `packages/ui/src/index.ts` | shadcn/ui integration, component list, how to add components |
 | Change package boundaries, create a new package, or move code | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/frontend-baseline.md` | Module ownership, file placement rules |
 | Change core architecture (compilation, scope, expressions) | `docs/architecture/flux-core.md` | `docs/references/terminology.md` | Unified value semantics, scope model, key terms |
-| Change playground pages, navigation, or debugger UX | `docs/architecture/playground-experience.md` | `docs/analysis/2026-03-21-framework-debugger-design.md` | Scenario-based navigation, floating debugger panel |
-| Write or update JSON schema conventions | `docs/references/flux-json-conventions.md` | `docs/examples/user-management-schema.md` | Expression syntax, naming rules, example patterns |
 | Debug a CSS class not being generated in a monorepo package | `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md` | `apps/playground/src/styles.css` (check `@source` directive) | Tailwind v4 content scanning fix, monorepo setup |
 
 ### By Code Location
@@ -179,14 +172,10 @@ Before starting work, read the relevant docs. This table maps tasks to the docs 
 | `packages/flux-runtime/src/` | `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/form-validation.md` |
 | `packages/flux-react/src/` | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md` |
 | `packages/flux-renderers-*/src/` | `docs/architecture/styling-system.md`, `docs/architecture/renderer-runtime.md` |
-| `packages/tailwind-preset/src/` | `docs/architecture/styling-system.md` â†’ "Renderer Styling Contract" and "Spacing Conventions" |
 | `packages/ui/src/` | `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md` |
 | `packages/flow-designer-*/src/` | `docs/architecture/flow-designer/` (start with `design.md`) |
 | `packages/spreadsheet-*/src/` or `packages/report-designer-*/src/` | `docs/architecture/report-designer/` (start with `design.md`) |
-| `packages/spreadsheet-renderers/src/canvas-styles.css` or `spreadsheet-grid.tsx` | `docs/architecture/report-designer/spreadsheet-canvas-css.md`, `docs/architecture/styling-system.md` â†’ "Performance-Critical Domain: Spreadsheet Canvas" |
 | `apps/playground/src/` | `docs/architecture/playground-experience.md` |
-| `apps/playground/src/styles.css` | `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`, `docs/architecture/styling-system.md` |
-| `apps/playground/src/schemas/*.json` | `docs/references/flux-json-conventions.md`, `docs/architecture/styling-system.md` (classAliases) |
 
 ### Quick Reference: Key Principles
 
