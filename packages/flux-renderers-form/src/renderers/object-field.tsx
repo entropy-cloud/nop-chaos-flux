@@ -1,14 +1,11 @@
 import React from 'react';
 import type {
   BaseSchema,
-  FormRuntime,
-  FormStoreApi,
-  FormStoreState,
   RendererComponentProps,
   RendererDefinition,
   ScopeRef
 } from '@nop-chaos/flux-core';
-import { getIn, createPathBinding, projectFieldStates } from '@nop-chaos/flux-core';
+import { getIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
 import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
@@ -17,168 +14,7 @@ import type { ObjectFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, resolveFieldLabelContent, useFieldPresentation } from '../field-utils';
 import { FieldHint, FieldLabel } from './shared';
 import { createProjectedScopeHelpers } from './projected-scope';
-
-function createPrefixedStore(parentStore: FormStoreApi, prefix: string): FormStoreApi {
-  const binding = createPathBinding({ ownerRootPath: prefix });
-  let lastParentState: FormStoreState | undefined;
-  let lastProjectedState: FormStoreState | undefined;
-
-  function projectState(state: FormStoreState): FormStoreState {
-    if (state === lastParentState && lastProjectedState !== undefined) {
-      return lastProjectedState;
-    }
-
-    const subObject = (getIn(state.values, prefix) ?? {}) as Record<string, unknown>;
-
-    const projected: FormStoreState = {
-      ...state,
-      values: subObject as Record<string, any>,
-      fieldStates: projectFieldStates(state.fieldStates, binding)
-    };
-
-    lastParentState = state;
-    lastProjectedState = projected;
-    return projected;
-  }
-
-  return {
-    ...parentStore,
-    getState(): FormStoreState {
-      return projectState(parentStore.getState());
-    },
-    getFieldState(path) {
-      return parentStore.getFieldState(binding.toAbsolute(path));
-    },
-    setFieldState(path, state) {
-      parentStore.setFieldState(binding.toAbsolute(path), state);
-    },
-    subscribe(listener) {
-      return parentStore.subscribe(listener);
-    },
-    subscribeToPath(relativePath, listener) {
-      return parentStore.subscribeToPath(binding.toAbsolute(relativePath), listener);
-    },
-    subscribeToSubmitting(listener) {
-      return parentStore.subscribeToSubmitting(listener);
-    },
-    getPathState(relativePath) {
-      return parentStore.getPathState(binding.toAbsolute(relativePath));
-    }
-  };
-}
-
-function createPrefixedFormProxy(parentForm: FormRuntime, prefix: string): FormRuntime {
-  function prefixPath(path: string): string {
-    if (!path || !prefix) {
-      return path;
-    }
-
-    return `${prefix}.${path}`;
-  }
-
-  const prefixedStore = createPrefixedStore(parentForm.store, prefix);
-
-  const proxy: FormRuntime = {
-    ...parentForm,
-    get store() {
-      return prefixedStore;
-    },
-    get validation() {
-      return parentForm.validation;
-    },
-    get lifecycleState() {
-      return parentForm.lifecycleState;
-    },
-    get modelGeneration() {
-      return parentForm.modelGeneration;
-    },
-    get scopeId() {
-      return parentForm.scopeId;
-    },
-    get rootPath() {
-      return parentForm.rootPath;
-    },
-    get canSubmit() {
-      return parentForm.canSubmit;
-    },
-    get allTouched() {
-      return parentForm.allTouched;
-    },
-    isPathOwned(path) {
-      return parentForm.isPathOwned(prefixPath(path));
-    },
-    getFieldState(path) {
-      return parentForm.getFieldState(prefixPath(path));
-    },
-    validateAt(path, reason) {
-      return parentForm.validateAt(prefixPath(path), reason);
-    },
-    validateField(path, reason) {
-      return parentForm.validateField(prefixPath(path), reason);
-    },
-    getField(path) {
-      return parentForm.getField(prefixPath(path));
-    },
-    getDependents(path) {
-      return parentForm.getDependents(prefixPath(path));
-    },
-    findByPrefix(path) {
-      return parentForm.findByPrefix(prefixPath(path));
-    },
-    getChildren(path) {
-      return parentForm.getChildren(prefixPath(path));
-    },
-    getError(path) {
-      return parentForm.getError(prefixPath(path));
-    },
-    isValidating(path) {
-      return parentForm.isValidating(prefixPath(path));
-    },
-    isTouched(path) {
-      return parentForm.isTouched(prefixPath(path));
-    },
-    isDirty(path) {
-      return parentForm.isDirty(prefixPath(path));
-    },
-    isVisited(path) {
-      return parentForm.isVisited(prefixPath(path));
-    },
-    touchField(path) {
-      parentForm.touchField(prefixPath(path));
-    },
-    visitField(path) {
-      parentForm.visitField(prefixPath(path));
-    },
-    clearErrors(path) {
-      parentForm.clearErrors(path ? prefixPath(path) : path);
-    },
-    setValue(name, value) {
-      parentForm.setValue(prefixPath(name), value);
-    },
-    setValues(values) {
-      const prefixed: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(values)) {
-        prefixed[prefixPath(key)] = value;
-      }
-      parentForm.setValues(prefixed);
-    },
-    registerField(registration) {
-      return parentForm.registerField({
-        ...registration,
-        path: prefixPath(registration.path),
-        childPaths: registration.childPaths?.map((path) => prefixPath(path))
-      });
-    },
-    notifyFieldHidden(path, hidden) {
-      parentForm.notifyFieldHidden(prefixPath(path), hidden);
-    },
-    validateSubtree(path, reason) {
-      return parentForm.validateSubtree(prefixPath(path), reason);
-    }
-  };
-
-  return proxy;
-}
+import { createProjectedFormRuntime, createProjectedFormStore } from './projected-form-runtime';
 
 function createObjectFieldChildScope(parentScope: ScopeRef, name: string, readOnly: boolean): ScopeRef {
   const prefix = name ? `${name}.` : '';
@@ -277,7 +113,27 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   );
 
   const childForm = React.useMemo(
-    () => (name && parentForm ? createPrefixedFormProxy(parentForm, name) : parentForm),
+    () => {
+      if (!name || !parentForm) {
+        return parentForm;
+      }
+
+      return createProjectedFormRuntime(parentForm, {
+        prefixPath(path) {
+          if (!path || !name) {
+            return path;
+          }
+
+          return `${name}.${path}`;
+        },
+        store: createProjectedFormStore(parentForm.store, {
+          ownerRootPath: name,
+          projectValues(state) {
+            return ((getIn(state.values, name) ?? {}) as Record<string, unknown>);
+          }
+        })
+      });
+    },
     [parentForm, name]
   );
 

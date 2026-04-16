@@ -2,17 +2,17 @@ import React from 'react';
 import type {
   BaseSchema,
   FormRuntime,
-  FormStoreApi,
-  FormStoreState,
+  InstanceFrame,
   RendererComponentProps,
   RendererDefinition,
   ScopeRef
 } from '@nop-chaos/flux-core';
-import { getIn, createPathBinding, projectFieldStates } from '@nop-chaos/flux-core';
+import { getIn } from '@nop-chaos/flux-core';
 import {
   useCurrentForm,
   useCurrentFormModelGeneration,
   useCurrentFormState,
+  useRenderInstancePath,
   useRenderScope,
   useScopeSelector
 } from '@nop-chaos/flux-react';
@@ -25,229 +25,56 @@ import {
 } from '../field-utils';
 import { FieldHint, FieldLabel } from './shared';
 import { resolveFieldLabelContent } from '../field-utils';
-import { createProjectedScopeHelpers } from './projected-scope';
+import { createItemFormProxy, createItemScope } from './array-field-runtime';
 
 function toArrayItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
-function createItemStore(parentStore: FormStoreApi, itemFullPrefix: string, itemKind: 'scalar' | 'object'): FormStoreApi {
-  const binding = createPathBinding({
-    ownerRootPath: itemFullPrefix,
-    scalarValueAlias: itemKind === 'scalar' ? 'value' : undefined
-  });
-  let lastParentState: FormStoreState | undefined;
-  let lastProjectedState: FormStoreState | undefined;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
 
-  function projectState(state: FormStoreState): FormStoreState {
-    if (state === lastParentState && lastProjectedState !== undefined) {
-      return lastProjectedState;
+function createArrayFieldRepeatedTemplateId(templateNodeId: number | undefined): string {
+  return `array-field-item:${templateNodeId ?? 'unknown'}`;
+}
+
+function resolvePreferredObjectArrayItemKey(item: unknown, sourceIndex: number, itemKeyField?: string): string {
+  if (isRecord(item)) {
+    const explicitValue = itemKeyField ? getIn(item, itemKeyField) : undefined;
+    const compatibilityValue = explicitValue ?? item.__rowKey ?? item.id;
+
+    if (compatibilityValue !== null && compatibilityValue !== undefined && compatibilityValue !== '') {
+      return String(compatibilityValue);
     }
+  }
 
-    const rawItemValue = getIn(state.values, itemFullPrefix);
-    const subObject = itemKind === 'scalar'
-      ? { value: rawItemValue ?? '' }
-      : ((rawItemValue ?? {}) as Record<string, unknown>);
+  return `legacy-index:${sourceIndex}`;
+}
 
-    const projected: FormStoreState = {
-      ...state,
-      values: subObject as Record<string, any>,
-      fieldStates: projectFieldStates(state.fieldStates, binding)
-    };
+function buildObjectArrayItemKeys(items: unknown[], itemKeyField?: string): {
+  itemKeys: string[];
+  duplicatePreferredKeys: string[];
+} {
+  const preferredKeys = items.map((item, sourceIndex) => resolvePreferredObjectArrayItemKey(item, sourceIndex, itemKeyField));
+  const counts = new Map<string, number>();
 
-    lastParentState = state;
-    lastProjectedState = projected;
-    return projected;
+  for (const key of preferredKeys) {
+    counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 
   return {
-    ...parentStore,
-    getState(): FormStoreState {
-      return projectState(parentStore.getState());
-    },
-    getFieldState(path) {
-      return parentStore.getFieldState(binding.toAbsolute(path));
-    },
-    setFieldState(path, state) {
-      parentStore.setFieldState(binding.toAbsolute(path), state);
-    },
-    subscribe(listener) {
-      return parentStore.subscribe(listener);
-    },
-    subscribeToPath(relativePath, listener) {
-      return parentStore.subscribeToPath(binding.toAbsolute(relativePath), listener);
-    },
-    subscribeToSubmitting(listener) {
-      return parentStore.subscribeToSubmitting(listener);
-    },
-    getPathState(relativePath) {
-      return parentStore.getPathState(binding.toAbsolute(relativePath));
-    }
+    itemKeys: preferredKeys.map((preferredKey, sourceIndex) =>
+      (counts.get(preferredKey) ?? 0) > 1 ? `legacy-index:${sourceIndex}` : preferredKey
+    ),
+    duplicatePreferredKeys: Array.from(counts.entries())
+      .filter(([key, count]) => count > 1 && !key.startsWith('legacy-index:'))
+      .map(([key]) => key)
   };
-}
-
-function createItemScope(
-  parentScope: ScopeRef,
-  arrayPath: string,
-  index: number,
-  itemKind: 'scalar' | 'object',
-  readOnly: boolean
-): ScopeRef {
-  const itemPrefix = `${arrayPath}.${index}`;
-
-  if (itemKind === 'scalar') {
-    const buildPayload = () => ({
-      value: parentScope.get(itemPrefix),
-      index,
-      readOnly
-    });
-    const { readSnapshot, store } = createProjectedScopeHelpers(parentScope, buildPayload);
-
-    const itemScope: ScopeRef = {
-      id: `${parentScope.id}:arr:${arrayPath}:${index}`,
-      path: `${parentScope.path}.${itemPrefix}`,
-      parent: parentScope.parent,
-      store,
-      get value() { return readSnapshot(); },
-      get(path) {
-        if (!path) return buildPayload();
-        if (path === 'value') return parentScope.get(itemPrefix);
-        if (path === 'index') return index;
-        if (path === 'readOnly') return readOnly;
-        return parentScope.get(`${itemPrefix}.${path}`);
-      },
-      has(path) {
-        if (!path || path === 'value') return parentScope.has(itemPrefix);
-        if (path === 'index') return true;
-        if (path === 'readOnly') return true;
-        return parentScope.has(`${itemPrefix}.${path}`);
-      },
-      readOwn() { return readSnapshot(); },
-      readVisible() { return readSnapshot(); },
-      materializeVisible() { return readSnapshot(); },
-      update(path, value) {
-        if (!path || path === 'value') {
-          parentScope.update(itemPrefix, value);
-        } else {
-          parentScope.update(`${itemPrefix}.${path}`, value);
-        }
-      },
-      merge(data) { parentScope.merge(data); },
-      replace(data) { parentScope.replace?.(data); }
-    };
-    return itemScope;
-  }
-
-  const buildPayload = () => ({
-    value: parentScope.get(itemPrefix),
-    index,
-    readOnly
-  });
-  const { readSnapshot, store } = createProjectedScopeHelpers(parentScope, buildPayload);
-
-  const itemScope: ScopeRef = {
-    id: `${parentScope.id}:arr:${arrayPath}:${index}`,
-    path: `${parentScope.path}.${itemPrefix}`,
-    parent: parentScope.parent,
-    store,
-    get value() {
-      return readSnapshot();
-    },
-    readOwn() {
-      return readSnapshot();
-    },
-    get(path) {
-      if (!path) return this.readVisible();
-      if (path === 'index') return index;
-      if (path === 'readOnly') return readOnly;
-      if (path === 'value') return parentScope.get(itemPrefix);
-      return parentScope.get(`${itemPrefix}.${path}`);
-    },
-    has(path) {
-      if (!path) return true;
-      if (path === 'index') return true;
-      if (path === 'readOnly' || path === 'value') return true;
-      return parentScope.has(`${itemPrefix}.${path}`);
-    },
-    readVisible() {
-      return readSnapshot();
-    },
-    materializeVisible() {
-      return readSnapshot();
-    },
-    update(path, value) {
-      if (!path) {
-        parentScope.update(itemPrefix, value);
-      } else {
-        parentScope.update(`${itemPrefix}.${path}`, value);
-      }
-    },
-    merge(data) { parentScope.merge(data); },
-    replace(data) { parentScope.replace?.(data); }
-  };
-  return itemScope;
-}
-
-function createItemFormProxy(parentForm: FormRuntime, arrayPath: string, index: number, itemKind: 'scalar' | 'object'): FormRuntime {
-  const itemFullPrefix = `${arrayPath}.${index}`;
-
-  function prefixPath(path: string): string {
-    if (!path) return itemFullPrefix;
-    if (itemKind === 'scalar' && path === 'value') return itemFullPrefix;
-    return `${itemFullPrefix}.${path}`;
-  }
-
-  const itemStore = createItemStore(parentForm.store, itemFullPrefix, itemKind);
-
-  const proxy: FormRuntime = {
-    ...parentForm,
-    get store() { return itemStore; },
-    get validation() { return parentForm.validation; },
-    get lifecycleState() { return parentForm.lifecycleState; },
-    get modelGeneration() { return parentForm.modelGeneration; },
-    get scopeId() { return parentForm.scopeId; },
-    get rootPath() { return parentForm.rootPath; },
-    get canSubmit() { return parentForm.canSubmit; },
-    get allTouched() { return parentForm.allTouched; },
-    isPathOwned(path) { return parentForm.isPathOwned(prefixPath(path)); },
-    getFieldState(path) { return parentForm.getFieldState(prefixPath(path)); },
-    validateAt(path, reason) { return parentForm.validateAt(prefixPath(path), reason); },
-    validateField(path, reason) { return parentForm.validateField(prefixPath(path), reason); },
-    getField(path) { return parentForm.getField(prefixPath(path)); },
-    getDependents(path) { return parentForm.getDependents(prefixPath(path)); },
-    findByPrefix(path) { return parentForm.findByPrefix(prefixPath(path)); },
-    getChildren(path) { return parentForm.getChildren(prefixPath(path)); },
-    getError(path) { return parentForm.getError(prefixPath(path)); },
-    isValidating(path) { return parentForm.isValidating(prefixPath(path)); },
-    isTouched(path) { return parentForm.isTouched(prefixPath(path)); },
-    isDirty(path) { return parentForm.isDirty(prefixPath(path)); },
-    isVisited(path) { return parentForm.isVisited(prefixPath(path)); },
-    touchField(path) { parentForm.touchField(prefixPath(path)); },
-    visitField(path) { parentForm.visitField(prefixPath(path)); },
-    clearErrors(path) { parentForm.clearErrors(path ? prefixPath(path) : undefined); },
-    setValue(name, value) { parentForm.setValue(prefixPath(name), value); },
-    setValues(values) {
-      const prefixed: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(values)) {
-        prefixed[prefixPath(k)] = v;
-      }
-      parentForm.setValues(prefixed);
-    },
-    registerField(registration) {
-      return parentForm.registerField({
-        ...registration,
-        path: prefixPath(registration.path),
-        childPaths: registration.childPaths?.map((cp) => prefixPath(cp))
-      });
-    },
-    notifyFieldHidden(path, hidden) { parentForm.notifyFieldHidden(prefixPath(path), hidden); },
-    validateSubtree(path, reason) { return parentForm.validateSubtree(prefixPath(path), reason); }
-  };
-
-  return proxy;
 }
 
 function ArrayItem(props: {
+  itemIdentity: string;
   index: number;
   arrayPath: string;
   itemKind: 'scalar' | 'object';
@@ -258,11 +85,11 @@ function ArrayItem(props: {
   onRemove: (index: number) => void;
   renderItem: () => React.ReactNode;
 }) {
-  const { index, arrayPath, itemKind, parentScope, parentForm, readOnly, removable, onRemove, renderItem } = props;
+  const { itemIdentity, index, arrayPath, itemKind, parentScope, parentForm, readOnly, removable, onRemove, renderItem } = props;
 
   const itemScope = React.useMemo(
-    () => createItemScope(parentScope, arrayPath, index, itemKind, readOnly),
-    [parentScope, arrayPath, index, itemKind, readOnly]
+    () => createItemScope(parentScope, arrayPath, index, itemKind, readOnly, itemIdentity),
+    [parentScope, arrayPath, index, itemKind, readOnly, itemIdentity]
   );
 
   const itemForm = React.useMemo(
@@ -306,12 +133,20 @@ function getScalarItemFieldSchema(schema: ArrayFieldSchema): BaseSchema | undefi
 export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchema>) {
   const parentScope = useRenderScope();
   const parentForm = useCurrentForm();
+  const parentInstancePath = useRenderInstancePath();
   const modelGeneration = useCurrentFormModelGeneration();
   const name = String(props.props.name ?? '');
   const itemKind = (props.props.itemKind ?? 'scalar') as 'scalar' | 'object';
+  const itemKeyField = typeof props.props.itemKey === 'string' && props.props.itemKey.trim().length > 0
+    ? props.props.itemKey.trim()
+    : undefined;
   const addable = props.props.addable !== false;
   const removable = props.props.removable !== false;
   const readOnly = Boolean(props.props.readOnly);
+  const itemRepeatedTemplateId = React.useMemo(
+    () => createArrayFieldRepeatedTemplateId(props.templateNode.templateNodeId),
+    [props.templateNode.templateNodeId]
+  );
 
   const presentation = useFieldPresentation(name, parentForm, {
     disabled: props.meta.disabled,
@@ -341,21 +176,91 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
     () => (parentForm ? formValue : scopeValue) ?? [],
     [parentForm, formValue, scopeValue]
   );
+  const nextItemKeyRef = React.useRef(items.length);
+  const [compatibilityItemKeys, setCompatibilityItemKeys] = React.useState<string[]>(() =>
+    items.map((_, index) => `array-item-${index}`)
+  );
+  const objectItemKeyResolution = React.useMemo(
+    () => itemKind === 'object'
+      ? buildObjectArrayItemKeys(items, itemKeyField)
+      : { itemKeys: [], duplicatePreferredKeys: [] },
+    [itemKind, items, itemKeyField]
+  );
+  const itemEntries = React.useMemo(
+    () => items.map((item, index) => {
+      const itemIdentity = itemKind === 'object'
+        ? objectItemKeyResolution.itemKeys[index] ?? `legacy-index:${index}`
+        : compatibilityItemKeys[index] ?? `array-item-${index}`;
+      const itemInstancePath: readonly InstanceFrame[] = [
+        ...(parentInstancePath ?? []),
+        { repeatedTemplateId: itemRepeatedTemplateId, instanceKey: itemIdentity }
+      ];
+
+      return {
+        item,
+        index,
+        itemIdentity,
+        itemInstancePath
+      };
+    }),
+    [items, itemKind, objectItemKeyResolution.itemKeys, compatibilityItemKeys, parentInstancePath, itemRepeatedTemplateId]
+  );
   const scalarItemField = itemKind === 'scalar' ? getScalarItemFieldSchema(props.schema as ArrayFieldSchema) : undefined;
   const scalarChildPaths = React.useMemo(
     () => (itemKind === 'scalar' && name ? items.map((_, index) => `${name}.${index}.value`) : []),
     [itemKind, items, name]
   );
 
+  React.useEffect(() => {
+    if (itemKind !== 'scalar') {
+      return;
+    }
+
+    setCompatibilityItemKeys((current) => {
+      if (current.length === items.length) {
+        return current;
+      }
+
+      if (current.length < items.length) {
+        return [
+          ...current,
+          ...Array.from({ length: items.length - current.length }, () => `array-item-${nextItemKeyRef.current++}`)
+        ];
+      }
+
+      return current.slice(0, items.length);
+    });
+  }, [itemKind, items.length]);
+
+  React.useEffect(() => {
+    if (itemKind !== 'object' || objectItemKeyResolution.duplicatePreferredKeys.length === 0) {
+      return;
+    }
+
+    console.warn(
+      `[ArrayFieldRenderer] Duplicate itemKey values detected for "${name}": ${objectItemKeyResolution.duplicatePreferredKeys.join(', ')}. Falling back to compatibility index identity for conflicting items.`
+    );
+  }, [itemKind, name, objectItemKeyResolution.duplicatePreferredKeys]);
+
   function handleAdd() {
     if (parentForm) {
       const newItem = itemKind === 'scalar' ? '' : {};
+
+      if (itemKind === 'scalar') {
+        const nextItemKey = `array-item-${nextItemKeyRef.current++}`;
+        setCompatibilityItemKeys((current) => [...current, nextItemKey]);
+      }
+
       parentForm.appendValue(name, newItem);
     }
   }
 
   function handleRemove(index: number) {
     if (parentForm) {
+      if (itemKind === 'scalar') {
+        setCompatibilityItemKeys((current) => current.filter((_, currentIndex) => currentIndex !== index));
+      }
+
       parentForm.removeValue(name, index);
       void parentForm.validateSubtree(name);
     }
@@ -414,20 +319,28 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       <FieldLabel content={labelContent} />
       <div data-slot="field-control">
         <div data-slot="array-field-body">
-          {items.map((_item, index) => (
-            <ArrayItem
-              key={index}
-              index={index}
-              arrayPath={name}
-              itemKind={itemKind}
-              parentScope={parentScope}
-              parentForm={parentForm}
-              readOnly={readOnly || presentation.effectiveDisabled}
-              removable={removable && !readOnly && !presentation.effectiveDisabled}
-              onRemove={handleRemove}
-              renderItem={() => props.regions.item?.render({ bindings: { index, value: _item } }) ?? null}
-            />
-          ))}
+          {itemEntries.map(({ item, index, itemIdentity, itemInstancePath }) => {
+            return (
+              <ArrayItem
+                key={itemIdentity}
+                itemIdentity={itemIdentity}
+                index={index}
+                arrayPath={name}
+                itemKind={itemKind}
+                parentScope={parentScope}
+                parentForm={parentForm}
+                readOnly={readOnly || presentation.effectiveDisabled}
+                removable={removable && !readOnly && !presentation.effectiveDisabled}
+                onRemove={handleRemove}
+                renderItem={() =>
+                  props.regions.item?.render({
+                    bindings: { index, value: item },
+                    instancePath: itemInstancePath
+                  }) ?? null
+                }
+              />
+            );
+          })}
           {addable && !readOnly && !presentation.effectiveDisabled && (
             <Button
               type="button"

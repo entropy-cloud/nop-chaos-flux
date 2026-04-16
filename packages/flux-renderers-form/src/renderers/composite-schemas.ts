@@ -13,6 +13,7 @@ export interface ObjectFieldSchema extends BoundFieldSchemaBase {
 export interface ArrayFieldSchema extends BoundFieldSchemaBase {
   type: 'array-field';
   itemKind: 'scalar' | 'object';
+  itemKey?: string;
   item: SchemaInput;
   addable?: boolean;
   removable?: boolean;

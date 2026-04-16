@@ -23,6 +23,7 @@ import {
 } from '../field-utils';
 import type { KeyValuePair, KeyValueSchema } from '../schemas';
 import { FieldHint, FieldLabel } from './shared';
+import { createNextCompositeItemId } from './composite-item-id';
 
 function KeyValueRow(props: {
   pair: KeyValuePair;
@@ -154,7 +155,7 @@ function KeyValueRow(props: {
         size="sm"
         disabled={disabled}
         onClick={() => {
-          const nextPairs = pairs.filter((candidate) => candidate.id !== pair.id);
+          const nextPairs = pairs.filter((_, candidateIndex) => candidateIndex !== index);
 
           if (currentForm && name) {
             onSync(nextPairs);
@@ -367,7 +368,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           size="sm"
           disabled={presentation.effectiveDisabled}
           onClick={() => {
-            const nextEntry = { id: `pair-${pairs.length + 1}`, key: '', value: '' };
+            const nextEntry = { id: createNextCompositeItemId(pairs as Array<Record<string, unknown>>, 'pair-'), key: '', value: '' };
             const nextPairs = [...pairs, nextEntry];
             pairsRef.current = nextPairs;
 

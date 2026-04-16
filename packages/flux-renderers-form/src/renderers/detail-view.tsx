@@ -9,28 +9,17 @@ import {
   useCurrentForm,
   useRendererRuntime,
   useRenderScope,
-  useScopeSelector,
-  FormContext,
-  ScopeContext
+  useScopeSelector
 } from '@nop-chaos/flux-react';
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Drawer,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
   cn
 } from '@nop-chaos/ui';
 import type { DetailViewSchema } from './composite-schemas';
 import { resolveFieldLabelContent } from '../field-utils';
 import { FieldLabel } from './shared';
 import { publishValidateResultErrors, valueAdaptationOwnerHelper } from './value-adaptation-helper';
+import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface';
 
 type BaseNodeInstance = RendererComponentProps['node'];
 
@@ -241,70 +230,6 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const viewerContent = resolveRendererSlotContent(props, 'viewer');
   const editContent = resolveRendererSlotContent(props, 'content');
 
-  const draftScope = draftForm?.scope;
-
-  const renderSurfaceContent = () => {
-    if (!draftForm || !draftScope) return null;
-
-    return (
-      <FormContext.Provider value={draftForm}>
-        <ScopeContext.Provider value={draftScope}>
-          <div data-slot="detail-view-draft-body">
-            {editContent}
-          </div>
-        </ScopeContext.Provider>
-      </FormContext.Provider>
-    );
-  };
-
-  const renderFooter = () => (
-    <>
-      {draftError && (
-        <p data-slot="detail-view-draft-error">{draftError}</p>
-      )}
-      <Button type="button" variant="outline" onClick={handleCancel} disabled={confirming}>
-        Cancel
-      </Button>
-      <Button type="button" onClick={() => void handleConfirm()} disabled={confirming}>
-        {confirming ? 'Confirming...' : 'Confirm'}
-      </Button>
-    </>
-  );
-
-  const renderSurface = () => {
-    if (surfaceMode === 'drawer') {
-      return (
-        <Drawer open={open} onOpenChange={(next) => { if (!next) handleCancel(); }}>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>{surfaceTitle}</DrawerTitle>
-            </DrawerHeader>
-            <div data-slot="detail-view-surface-body">
-              {renderSurfaceContent()}
-            </div>
-            <DrawerFooter>
-              {renderFooter()}
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-      );
-    }
-
-    return (
-      <Dialog open={open} onOpenChange={(next) => { if (!next) handleCancel(); }}>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>{surfaceTitle}</DialogTitle>
-          </DialogHeader>
-          {renderSurfaceContent()}
-          <DialogFooter>
-            {renderFooter()}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  };
-
   return (
     <div
       className={cn('nop-detail-view', props.meta.className)}
@@ -325,7 +250,26 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
           {triggerLabel}
         </Button>
       )}
-      {renderSurface()}
+      <DetailSurface
+        open={open}
+        mode={surfaceMode}
+        title={surfaceTitle}
+        bodySlot="detail-view-surface-body"
+        onClose={handleCancel}
+        footer={(
+          <DetailDraftFooter
+            error={draftError}
+            errorSlot="detail-view-draft-error"
+            confirming={confirming}
+            onCancel={handleCancel}
+            onConfirm={() => void handleConfirm()}
+          />
+        )}
+      >
+        <DetailDraftBody form={draftForm} bodySlot="detail-view-draft-body">
+          {editContent}
+        </DetailDraftBody>
+      </DetailSurface>
     </div>
   );
 }

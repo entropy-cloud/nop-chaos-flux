@@ -15,6 +15,7 @@ import {
 } from '../field-utils';
 import type { ArrayEditorItem, ArrayEditorSchema } from '../schemas';
 import { FieldHint, FieldLabel } from './shared';
+import { createNextCompositeItemId } from './composite-item-id';
 
 function ArrayEditorRow(props: {
   item: ArrayEditorItem;
@@ -92,7 +93,7 @@ function ArrayEditorRow(props: {
         size="sm"
         disabled={disabled}
         onClick={() => {
-          const nextItems = items.filter((candidate) => candidate.id !== item.id);
+          const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
 
           if (currentForm && name) {
             onSync(nextItems);
@@ -274,7 +275,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           size="sm"
           disabled={presentation.effectiveDisabled}
           onClick={() => {
-            const nextItem = { id: `item-${items.length + 1}`, value: '' };
+            const nextItem = { id: createNextCompositeItemId(items as Array<Record<string, unknown>>, 'item-'), value: '' };
             const nextItems = [...items, nextItem];
             itemsRef.current = nextItems;
 
