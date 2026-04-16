@@ -369,17 +369,24 @@ export function createDataSourceController(input: {
     void runRequest();
 
     if (interval && interval > 0) {
-      pollTimer = setInterval(() => {
-        void runRequest();
-      }, interval);
+      schedulePoll();
     }
+  }
+
+  function schedulePoll(): void {
+    if (stopped || !interval || interval <= 0) return;
+    pollTimer = setTimeout(() => {
+      void runRequest().finally(() => {
+        if (!stopped) schedulePoll();
+      });
+    }, interval) as unknown as ReturnType<typeof setInterval>;
   }
 
   function stop(): void {
     stopped = true;
 
     if (pollTimer) {
-      clearInterval(pollTimer);
+      clearTimeout(pollTimer);
       pollTimer = undefined;
     }
 

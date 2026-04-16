@@ -10,6 +10,7 @@ import type {
   ScopeDependencySet,
   ScopeRef
 } from '@nop-chaos/flux-core';
+import { normalizeRootPaths } from '@nop-chaos/flux-core';
 import type { ApiCacheStore } from './api-cache';
 import { createDataSourceController, writeDataToScope } from './data-source-runtime';
 import { collectRuntimeDependencies } from './node-runtime';
@@ -220,6 +221,7 @@ export function createRuntimeSourceRegistry(input: {
   executeApiRequest: <T>(actionType: string, api: import('@nop-chaos/flux-core').ExecutableApiRequest, scope: ScopeRef, options?: { signal?: AbortSignal; control?: import('@nop-chaos/flux-core').OperationControlConfig }) => Promise<{ ok: boolean; status: number; data: T }>;
 }): RuntimeSourceRegistry {
   const scopeEntries = new Map<string, Map<string, RuntimeSourceEntry>>();
+  const nameIndex = new Map<string, RuntimeSourceEntry>();
 
   function registerDataSource(args: {
     id: string;
@@ -279,15 +281,16 @@ export function createRuntimeSourceRegistry(input: {
           }
         });
 
-    const ignoredRoots = [targetPath, args.schema.statusPath].filter((value): value is string => Boolean(value));
+    const ignoredRootPaths = [targetPath, args.schema.statusPath].filter((value): value is string => Boolean(value));
+    const ignoredRootsSet: Set<string> | undefined = ignoredRootPaths.length > 0 ? new Set(normalizeRootPaths(ignoredRootPaths)) : undefined;
 
     const unsubscribe = args.scope.store?.subscribe((change) => {
       if (disposed) {
         return;
       }
 
-      const observedChange = ignoredRoots.length > 0
-        ? filterScopeChangeByIgnoredRoots(change, ignoredRoots)
+      const observedChange = ignoredRootsSet
+        ? filterScopeChangeByIgnoredRoots(change, ignoredRootsSet)
         : change;
 
       if (!observedChange) {
@@ -327,6 +330,9 @@ export function createRuntimeSourceRegistry(input: {
         }
 
         currentBucket.delete(args.id);
+        if (entry.name && nameIndex.get(entry.name) === entry) {
+          nameIndex.delete(entry.name);
+        }
         if (currentBucket.size === 0) {
           scopeEntries.delete(ownerScopeId);
         }
@@ -334,6 +340,9 @@ export function createRuntimeSourceRegistry(input: {
     };
 
     bucket.set(args.id, entry);
+    if (entry.name) {
+      nameIndex.set(entry.name, entry);
+    }
     controller.start();
 
     return {
@@ -380,13 +389,17 @@ export function createRuntimeSourceRegistry(input: {
     }
 
     for (const bucket of scopeEntries.values()) {
-      const entry = bucket.get(args.id) ?? Array.from(bucket.values()).find((candidate) => candidate.name === args.id);
+      const entry = bucket.get(args.id);
 
-      if (!entry) {
-        continue;
+      if (entry) {
+        await entry.controller.refresh();
+        return true;
       }
+    }
 
-      await entry.controller.refresh();
+    const namedEntry = nameIndex.get(args.id);
+    if (namedEntry) {
+      await namedEntry.controller.refresh();
       return true;
     }
 

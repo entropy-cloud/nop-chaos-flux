@@ -35,19 +35,21 @@ export function createRootDependencySet(paths: readonly string[] | undefined): S
 
 export function filterScopeChangeByIgnoredRoots(
   change: ScopeChange | undefined,
-  ignoredPaths: readonly string[]
+  ignoredPaths: readonly string[] | Set<string>
 ): ScopeChange | undefined {
-  if (!change || ignoredPaths.length === 0) {
+  if (!change) {
+    return change;
+  }
+
+  const ignoredRoots = ignoredPaths instanceof Set
+    ? ignoredPaths
+    : (ignoredPaths.length === 0 ? undefined : new Set(normalizeRootPaths(ignoredPaths)));
+
+  if (!ignoredRoots || ignoredRoots.size === 0) {
     return change;
   }
 
   if (change.paths.includes('*')) {
-    return change;
-  }
-
-  const ignoredRoots = new Set(normalizeRootPaths(ignoredPaths));
-
-  if (ignoredRoots.size === 0) {
     return change;
   }
 

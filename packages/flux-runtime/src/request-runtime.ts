@@ -12,6 +12,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { isPlainObject, setIn } from '@nop-chaos/flux-core';
 import { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor';
+import { stableStringify } from './api-cache';
 
 export { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor';
 
@@ -40,34 +41,6 @@ function getPathValue(input: unknown, path: string): unknown {
   }, input);
 }
 
-function stableSerialize(value: unknown): string {
-  if (value === null) {
-    return 'null';
-  }
-
-  if (value === undefined) {
-    return 'undefined';
-  }
-
-  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
-    return String(value);
-  }
-
-  if (typeof value === 'string') {
-    return JSON.stringify(value);
-  }
-
-  if (Array.isArray(value)) {
-    return `[${value.map((entry) => stableSerialize(entry)).join(',')}]`;
-  }
-
-  if (typeof value === 'object') {
-    return `{${Object.keys(value as Record<string, unknown>).sort().map((key) => `${JSON.stringify(key)}:${stableSerialize((value as Record<string, unknown>)[key])}`).join(',')}}`;
-  }
-
-  return JSON.stringify(String(value));
-}
-
 function createRequestKey(actionType: string, api: ExecutableApiRequest, scope: ScopeRef, form?: FormRuntime): string {
   const owner = form?.id ?? scope.id;
   return [
@@ -75,8 +48,8 @@ function createRequestKey(actionType: string, api: ExecutableApiRequest, scope: 
     actionType,
     api.method ?? 'get',
     api.url,
-    stableSerialize(api.data),
-    stableSerialize(api.headers)
+    stableStringify(api.data),
+    stableStringify(api.headers)
   ].join(':');
 }
 
