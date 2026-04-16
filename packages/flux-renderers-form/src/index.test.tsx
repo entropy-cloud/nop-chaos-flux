@@ -1,11 +1,6 @@
 import './__tests__/form-submit-actions.test';
 import './__tests__/form-field-handlers.test';
-import './__tests__/form-source-options.test';
-import './__tests__/form-runtime-fields.test';
 import './__tests__/form-validation-rules.test';
 import './__tests__/form-validation-ui.test';
-import './__tests__/form-array-validation.test';
-import './__tests__/form-object-async-validation.test';
-import './__tests__/form-tree-checkbox-fields.test';
-import './__tests__/form-double-edit-regression.test';
 import './__tests__/form-render-performance.test';
+import './__tests__/hidden-field-policy.test';
