@@ -24,8 +24,13 @@ function Dialog({
   closeOnOutsideClick = true,
   ...props
 }: DialogPrimitive.Root.Props & { draggable?: boolean; noOverlay?: boolean; noCenter?: boolean; closeOnOutsideClick?: boolean }) {
+  const contextValue = React.useMemo(
+    () => ({ draggable, noOverlay, noCenter, closeOnOutsideClick }),
+    [draggable, noOverlay, noCenter, closeOnOutsideClick]
+  )
+
   return (
-    <DialogContext.Provider value={{ draggable, noOverlay, noCenter, closeOnOutsideClick }}>
+    <DialogContext.Provider value={contextValue}>
       <DialogPrimitive.Root data-slot="dialog" {...props} />
     </DialogContext.Provider>
   )

@@ -42,13 +42,15 @@ function DataViewer({ data, defaultExpand = true, className }: DataViewerProps) 
     <div className={cn("flex flex-col", className)}>
       <div className="flex flex-col space-y-2">
         <div className="grid w-full grid-cols-2 gap-2">
-          <button 
+          <button
+            type="button"
             onClick={() => setFormat("json")}
             className="px-4 py-2 rounded-md bg-muted hover:bg-muted/80"
           >
             JSON
           </button>
-          <button 
+          <button
+            type="button"
             onClick={() => setFormat("yaml")}
             className="px-4 py-2 rounded-md bg-muted hover:bg-muted/80"
           >

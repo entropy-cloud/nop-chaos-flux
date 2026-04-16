@@ -147,6 +147,7 @@ export function SidebarRail({ className, ...props }: React.ComponentProps<"butto
 
   return (
     <button
+      type="button"
       data-sidebar="rail"
       data-slot="sidebar-rail"
       aria-label="Toggle Sidebar"
