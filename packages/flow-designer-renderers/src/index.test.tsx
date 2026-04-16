@@ -327,6 +327,70 @@ describe('flowDesignerRendererDefinitions', () => {
     const rendererTypes = flowDesignerRendererDefinitions.map(d => d.type);
     expect(rendererTypes).toContain('designer-palette');
   });
+
+  it('designer-page renderer includes hostContract metadata', () => {
+    const designerPageDef = flowDesignerRendererDefinitions.find(d => d.type === 'designer-page');
+    expect(designerPageDef).toBeTruthy();
+    expect(designerPageDef?.hostContract).toBeTruthy();
+    expect(designerPageDef?.hostContract?.family).toBe('designer');
+    expect(designerPageDef?.hostContract?.defaultVersion).toBe('1.0');
+    expect(designerPageDef?.hostContract?.capabilityPublication).toMatchObject({
+      mode: 'region-scoped',
+      capableRegions: ['toolbar', 'inspector', 'dialogs'],
+      transitiveInheritance: true
+    });
+  });
+});
+
+describe('flow-designer manifest', () => {
+  it('exports FLOW_DESIGNER_MANIFEST_V1 with correct family and version', async () => {
+    const { FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest');
+    expect(FLOW_DESIGNER_MANIFEST_V1.family).toBe('designer');
+    expect(FLOW_DESIGNER_MANIFEST_V1.version).toBe('1.0');
+  });
+
+  it('manifest projection includes expected fields', async () => {
+    const { FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest');
+    const fields = FLOW_DESIGNER_MANIFEST_V1.projection.fields;
+    expect(fields.doc).toBeTruthy();
+    expect(fields.selection).toBeTruthy();
+    expect(fields.activeNode).toBeTruthy();
+    expect(fields.activeEdge).toBeTruthy();
+    expect(fields.runtime).toBeTruthy();
+  });
+
+  it('manifest capabilities includes all methods from action provider', async () => {
+    const { FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest');
+    const { createDesignerActionProvider } = await import('./designer-action-provider');
+
+    const mockCore = {
+      getSnapshot: () => ({ doc: {}, selection: {}, activeNode: null, activeEdge: null }),
+      getDocument: () => ({ nodes: [], edges: [] }),
+      getConfig: () => ({ nodeTypes: new Map(), rules: {}, edgeTypes: new Map(), features: {}, canvas: {} })
+    } as any;
+
+    const provider = createDesignerActionProvider(mockCore);
+    const providerMethods = provider.listMethods?.() ?? [];
+    const manifestMethods = Object.keys(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods);
+
+    for (const method of providerMethods) {
+      expect(manifestMethods).toContain(method);
+    }
+  });
+
+  it('resolveDesignerManifest resolves version selectors correctly', async () => {
+    const { resolveDesignerManifest, FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest');
+    expect(resolveDesignerManifest('1.0')).toBe(FLOW_DESIGNER_MANIFEST_V1);
+    expect(resolveDesignerManifest('1')).toBe(FLOW_DESIGNER_MANIFEST_V1);
+    expect(resolveDesignerManifest('latest')).toBe(FLOW_DESIGNER_MANIFEST_V1);
+    expect(resolveDesignerManifest('2.0')).toBeUndefined();
+  });
+
+  it('designerHostContract.resolveManifest works as expected', async () => {
+    const { designerHostContract, FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest');
+    expect(designerHostContract.resolveManifest('1.0')).toBe(FLOW_DESIGNER_MANIFEST_V1);
+    expect(designerHostContract.resolveManifest('unknown')).toBeUndefined();
+  });
 });
 
 describe('DesignerPageRenderer basic rendering', () => {

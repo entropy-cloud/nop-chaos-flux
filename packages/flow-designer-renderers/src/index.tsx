@@ -2,6 +2,7 @@ import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core'
 import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { DesignerPageRenderer, DesignerCanvasRenderer, DesignerPaletteRenderer } from './designer-page';
 import { DesignerFieldRenderer } from './designer-field';
+import { designerHostContract } from './designer-manifest';
 
 export * from './schemas';
 export * from './designer-context';
@@ -27,13 +28,20 @@ export {
   type DesignerXyflowCanvasProps,
   DESIGNER_PALETTE_NODE_MIME
 } from './designer-xyflow-canvas';
+export {
+  FLOW_DESIGNER_MANIFEST_V1,
+  resolveDesignerManifest,
+  designerHostContract,
+  DESIGNER_CAPABILITY_PUBLICATION
+} from './designer-manifest';
 
 export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'designer-page',
     component: DesignerPageRenderer,
     regions: ['toolbar', 'inspector', 'dialogs'],
-    actionScopePolicy: 'new'
+    actionScopePolicy: 'new',
+    hostContract: designerHostContract
   },
   {
     type: 'designer-field',
