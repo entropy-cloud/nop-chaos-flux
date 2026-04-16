@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useSchemaProps } from '@nop-chaos/flux-react';
 import { Button, cn } from '@nop-chaos/ui';
@@ -38,6 +38,9 @@ import { useTableHandle } from './table-renderer/use-table-handle';
 
 const EMPTY_TABLE_COLUMNS: TableColumnSchema[] = [];
 const EMPTY_TABLE_ROWS: Array<Record<string, any>> = [];
+const VIRTUALIZATION_THRESHOLD = 50;
+const DEFAULT_ROW_HEIGHT = 40;
+const OVERSCAN_ROWS = 10;
 
 function createTableOwnerKey(props: RendererComponentProps<TableSchema>): string {
   return `${props.node.templateNode.templateNodeId ?? props.meta.cid ?? props.id}:${serializeInstancePath(props.node.instancePath)}`;
@@ -106,11 +109,46 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const isBordered = schemaProps.bordered === true;
   const columnCount = columns.length + (schemaProps.rowSelection ? 1 : 0) + (schemaProps.expandable ? 1 : 0);
 
+  const enableVirtualization = processedData.length > VIRTUALIZATION_THRESHOLD;
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (el) setScrollTop(el.scrollTop);
+  }, []);
+
+  const virtualWindow = useMemo(() => {
+    if (!enableVirtualization) {
+      return { startIndex: 0, endIndex: processedData.length, topPad: 0, bottomPad: 0 };
+    }
+    const rowHeight = DEFAULT_ROW_HEIGHT;
+    const containerHeight = scrollContainerRef.current?.clientHeight ?? 600;
+    const totalHeight = processedData.length * rowHeight;
+    const firstVisible = Math.floor(scrollTop / rowHeight);
+    const visibleCount = Math.ceil(containerHeight / rowHeight);
+    const startIndex = Math.max(0, firstVisible - OVERSCAN_ROWS);
+    const endIndex = Math.min(processedData.length, firstVisible + visibleCount + OVERSCAN_ROWS);
+    const topPad = startIndex * rowHeight;
+    const bottomPad = totalHeight - endIndex * rowHeight;
+    return { startIndex, endIndex, topPad: Math.max(0, topPad), bottomPad: Math.max(0, bottomPad) };
+  }, [enableVirtualization, processedData.length, scrollTop]);
+
+  const visibleRows = enableVirtualization
+    ? processedData.slice(virtualWindow.startIndex, virtualWindow.endIndex)
+    : processedData;
+
   return (
     <div className={cn('nop-table', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {hasRendererSlotContent(headerContent) ? <div data-slot="table-header-region">{headerContent}</div> : null}
 
-      <div className="relative" data-slot="table-container">
+      <div
+        ref={enableVirtualization ? scrollContainerRef : undefined}
+        onScroll={enableVirtualization ? handleScroll : undefined}
+        className={cn('relative', enableVirtualization && 'overflow-auto')}
+        style={enableVirtualization ? { maxHeight: '600px' } : undefined}
+        data-slot="table-container"
+      >
         <Table
           data-striped={isStriped || undefined}
           data-bordered={isBordered || undefined}

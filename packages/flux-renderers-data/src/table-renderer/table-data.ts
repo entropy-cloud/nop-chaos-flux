@@ -21,6 +21,8 @@ export function buildTableRowEntries(source: Array<Record<string, any>>, rowKeyF
 }
 
 export function warnOnDuplicateRowKeys(entries: TableRowEntry[]): void {
+  if (!import.meta.env.DEV) return;
+
   const seen = new Set<string>();
   const duplicates = new Set<string>();
 

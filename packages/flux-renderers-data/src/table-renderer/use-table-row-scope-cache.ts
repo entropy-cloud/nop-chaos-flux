@@ -24,15 +24,18 @@ export function useTableRowScopeCache(
   path: RendererComponentProps<TableSchema>['path']
 ) {
   const rowScopeCacheStore = useMemo(() => {
-    const state = { cache: new Map<string, ScopeRef>() };
+    const cache = new Map<string, ScopeRef>();
+    let generation = 0;
+    let snapshot = { cache, generation };
     const listeners = new Set<() => void>();
 
     return {
-      getSnapshot: () => state.cache,
+      getSnapshot: () => snapshot,
+      getCache: () => cache,
       mutate(updater: (cache: Map<string, ScopeRef>) => void) {
-        const next = new Map(state.cache);
-        updater(next);
-        state.cache = next;
+        updater(cache);
+        generation += 1;
+        snapshot = { cache, generation };
         listeners.forEach((listener) => listener());
       },
       subscribe(listener: () => void) {
@@ -44,7 +47,8 @@ export function useTableRowScopeCache(
     };
   }, []);
 
-  const rowScopeCache = useSyncExternalStore(rowScopeCacheStore.subscribe, rowScopeCacheStore.getSnapshot);
+  const rowScopeSnapshot = useSyncExternalStore(rowScopeCacheStore.subscribe, rowScopeCacheStore.getSnapshot);
+  const rowScopeCache = rowScopeSnapshot.cache;
   const rowScopeSnapshotRef = useRef(new Map<string, { record: Record<string, any>; index: number }>());
 
   useLayoutEffect(() => {
