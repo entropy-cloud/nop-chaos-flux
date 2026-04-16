@@ -18,9 +18,9 @@ export interface TemplateRegion {
   path: SchemaPath;
   node: TemplateNode | readonly TemplateNode[] | null;
   /**
-   * Declared parameter names for parameterized regions (see CompiledRegion.params).
-   * Preserved from CompiledRegion into the template artifact so the runtime can
-   * publish a reserved $slot frame during instantiation.
+   * Declared parameter names for parameterized regions (see SchemaFieldRule.params).
+   * When present, region instantiation publishes a reserved $slot frame containing
+   * the provided bindings rather than flattening them into ordinary top-level scope names.
    */
   params?: readonly string[];
   /**
