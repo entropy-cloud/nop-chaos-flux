@@ -11,13 +11,15 @@ import {
   Label,
   NativeSelect,
   NativeSelectOption,
-  ScrollArea,
+  ScrollArea
+} from '@nop-chaos/ui'
+import {
   ChartContainer,
   ChartTooltip,
   ChartLegend,
   ChartTooltipContent,
   ChartLegendContent
-} from '@nop-chaos/ui'
+} from '@nop-chaos/ui/chart'
 import * as RechartsPrimitive from 'recharts'
 
 interface ChartDialogProps {

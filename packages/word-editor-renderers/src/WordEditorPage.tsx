@@ -50,10 +50,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
   )
 
   useEffect(() => {
-    const savedDocument = loadDocument()
-    if (savedDocument) {
-      console.log('Loaded saved document:', savedDocument.savedAt)
-    }
+    loadDocument()
     const savedDatasets = loadDatasets()
     if (savedDatasets.length > 0) {
       datasetStore.load(savedDatasets)
@@ -127,12 +124,12 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
     })
   }, [bridge])
 
-  const handleChartSave = useCallback((chart: DocChart) => {
-    console.log('Chart saved:', chart)
+  const handleChartSave = useCallback((_chart: DocChart) => {
+    // Chart save handled by bridge persistence
   }, [])
 
-  const handleCodeSave = useCallback((code: DocCode) => {
-    console.log('Code saved:', code)
+  const handleCodeSave = useCallback((_code: DocCode) => {
+    // Code save handled by bridge persistence
   }, [])
 
   const editingDataset = editingDatasetId
