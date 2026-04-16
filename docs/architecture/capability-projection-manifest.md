@@ -67,6 +67,14 @@ This document adopts a deliberately minimal integration model.
 
 The default host contract is attached to the publishing owner renderer definition and reached through its `type`.
 
+The renderer definition does **not** inline every supported manifest version into one static field.
+
+Instead, the renderer definition anchors:
+
+- host family identity
+- default version selector
+- a renderer-owned manifest resolution entry that can return one concrete manifest bundle for the requested version selector
+
 Directionally:
 
 - `designer-page` renderer definition publishes the default `designer` host contract
@@ -239,6 +247,13 @@ interface HostCapabilityProjectionManifest {
   compatibility?: HostManifestCompatibility;
   metadata?: HostManifestMetadata;
 }
+
+interface HostManifestResolver {
+  resolve(input: {
+    family: string;
+    versionSelector: string;
+  }): HostCapabilityProjectionManifest | undefined;
+}
 ```
 
 ### Publisher And Consumer Model
@@ -284,11 +299,35 @@ Important rule:
 
 #### Inheritance Rule
 
-When a fragment is compiled as part of the same schema tree under a publishing owner node, the active host contract is inherited from the nearest publisher.
+When a fragment is compiled as part of the same schema tree under a publishing owner node, the nearest publisher establishes only the **candidate** host contract family/version.
+
+That candidate contract becomes active for diagnostics only when the relevant publication boundary is compiler-visible.
 
 When a fragment is compiled standalone or validated out of context, the host contract context may be supplied through explicit compiler input.
 
 That keeps the current lexical host-boundary model intact without requiring fragment-local family declarations.
+
+### Capability Publication Attribution
+
+Host capability visibility follows the same explicit render-boundary rule as `ActionScope`.
+
+Rules:
+
+- a publishing owner declaring `hostContract` does **not** by itself prove that every descendant executes inside that host capability scope
+- capability validation is only sound for fragments whose execution path is known to receive the relevant host `actionScope`
+- compiler-owned action validation therefore needs a compiler-visible capability publication attribution model, not only nearest-owner discovery
+- this attribution may be whole-owner-subtree or region-specific, but it must be explicit
+
+Current baseline guidance:
+
+- hosts such as `designer-page` often publish capability scope only to specific rendered regions via explicit `render({ actionScope })`
+- until that publication boundary is available to the compiler, generic host-family action diagnostics must stay disabled for ambiguous descendants
+
+Directionally, the publishing owner contract needs to answer:
+
+- which subtree or regions receive the host capability scope
+- whether capability publication is whole-owner or region-scoped
+- whether descendants inherit that capability scope transitively once inside the published boundary
 
 ## Normative Shape
 
@@ -365,7 +404,7 @@ interface RendererDefinition {
   hostContract?: {
     family: string;
     defaultVersion: string;
-    manifest: HostCapabilityProjectionManifest;
+    resolveManifest(versionSelector: string): HostCapabilityProjectionManifest | undefined;
   };
 }
 ```
@@ -375,19 +414,33 @@ Rules:
 - only publishing owner renderers should define `hostContract`
 - child fragments do not repeat host family by default
 - the renderer `type` chooses the default host family contract
+- the renderer definition must be able to resolve the requested version selector to one concrete manifest bundle
 - schema may override only the version, not the family, unless a future owner doc introduces a stronger reason
+
+### Manifest Resolution Contract
+
+Manifest resolution is explicit and local to the publishing owner contract.
+
+Rules:
+
+- normal tree compilation starts from owner `RendererDefinition.hostContract`
+- `defaultVersion` is a version selector, not a promise that only one manifest version exists
+- `xui:version` may supply another selector string for that same family
+- the owner's `resolveManifest(...)` must return one concrete `HostCapabilityProjectionManifest` or fail explicitly
+- standalone fragment validation must pass an already resolved manifest through explicit compiler input when no publishing owner node is present
+- do not make manifest selection depend on a hidden process-global registry
 
 ## Shape Language
 
 This document does **not** introduce a second independent structural type system.
 
-The manifest must reuse the compiler-owned structural shape contract owned by the schema-diagnostics family described in `docs/architecture/schema-file-validator.md`.
+The manifest must reuse the shared structural shape contract owned by the schema-diagnostics family described in `docs/architecture/schema-file-validator.md`.
 
 Rules:
 
 - manifest shapes are compiler/tooling shapes, not author-visible Flux primitives
 - shape ownership belongs with schema diagnostics, not with host runtime wiring
-- the concrete exported TypeScript type should live with the compiler-owned diagnostics contracts, not in ad hoc host packages
+- the concrete exported TypeScript type should live in a dependency-safe shared contract layer, directionally `packages/flux-core/src/schema-diagnostics/`, not in ad hoc host packages or only inside runtime implementation files
 
 Required capabilities of that reused shape contract:
 
@@ -423,6 +476,12 @@ The manifest does not make projection fields globally visible.
 It only tells the compiler what fields are valid **inside the host boundary that publishes that manifest**.
 
 Visibility still follows the host scope / render boundary rules from `renderer-runtime.md` and `complex-control-host-protocol.md`.
+
+Important implementation constraint:
+
+- current hosts publish projection through explicit render boundaries such as `render({ scope, actionScope })`, often for specific regions only
+- therefore a generic compiler must not assume that every descendant of a publishing owner automatically sees the manifest projection
+- generic projection-path diagnostics are only sound after the publication boundary is compiler-visible
 
 ### Rule 4: Projection Is Internal Host-Boundary Data
 
@@ -467,6 +526,28 @@ A declared method is not automatically invokable everywhere.
 
 The runtime must still resolve it through the current lexical `ActionScope`.
 
+### Rule 5: Host Manifest Validation Only Owns The Host Family Namespace
+
+The host manifest validates only the namespace published by that host family.
+
+It does not redefine validation for:
+
+- built-in platform actions such as `ajax` or `openDialog`
+- component-targeted actions such as `component:submit`
+- imported namespaces provisioned through `xui:imports`
+
+Those paths remain owned by `docs/architecture/action-scope-and-imports.md` and the shared schema-diagnostics rules.
+
+### Rule 6: Host Action Validation Requires Capability Publication Attribution
+
+Host action validation is only sound when the compiler can prove that the fragment executes inside the host capability publication boundary.
+
+Important constraint:
+
+- nearest publishing owner discovery alone is insufficient
+- explicit action-scope publication boundaries still win
+- ambiguous descendants must not be validated as if host capability visibility were guaranteed
+
 ## Authoring Contract
 
 ### Schema-Level Version Override
@@ -486,7 +567,7 @@ interface BaseSchema {
 Rules:
 
 - `xui:version` is meaningful only on a publishing owner node whose `RendererDefinition` already defines `hostContract`
-- `xui:version` overrides the renderer definition's `defaultVersion`
+- `xui:version` overrides the renderer definition's `defaultVersion` selector
 - `xui:version` does not change host family
 - descendant fragments inherit the resolved family/version context
 
@@ -519,10 +600,13 @@ In those cases, the compiler may accept explicit host context input.
 Directionally:
 
 ```ts
-interface CompileSchemaValidationOptions {
-  hostContractContext?: {
-    family: string;
-    version: string;
+interface CompileSchemaOptions {
+  validation?: {
+    hostContractContext?: {
+      family: string;
+      version: string;
+      manifest: HostCapabilityProjectionManifest;
+    };
   };
 }
 ```
@@ -531,6 +615,7 @@ Meaning:
 
 - this is a compile-time fallback context for standalone fragment validation
 - it is used only when no enclosing publishing owner node can establish host contract context through `type`
+- callers provide the already resolved manifest explicitly instead of relying on an ambient registry
 - it does not replace the normal in-tree inheritance model
 
 ### Publisher Declaration
@@ -553,16 +638,27 @@ Do not make publisher discovery depend on runtime mounting.
 Resolution order:
 
 1. resolve owner renderer definition from node `type`
-2. read `RendererDefinition.hostContract` for default family/version/manifest
-3. if owner node declares `xui:version`, override only the version
+2. read `RendererDefinition.hostContract` for default family and default version selector
+3. if owner node declares `xui:version`, override only the version selector
+4. call `resolveManifest(versionSelector)` and require one concrete manifest bundle
 
 ## Compiler Responsibilities
 
-The compiler should use the manifest in two places.
+The compiler should use the manifest in two phases.
+
+Baseline required for the first implementation slice, but only after capability publication attribution is compiler-visible:
+
+- host-family action validation
+
+Deferred until publication attribution becomes compiler-visible:
+
+- generic projection-path validation for host reads
 
 ### 1. Expression Validation
 
-When a schema fragment is validated inside a resolved host boundary, the compiler should validate only the portion of expression reads that claim to come from the host-published projection contract.
+Projection validation is a later slice, not the required v1 baseline.
+
+When this slice lands, the compiler should validate only the portion of expression reads that are proven to execute inside a concrete host projection publication boundary.
 
 This document does **not** redefine the full expression environment.
 
@@ -573,6 +669,12 @@ The full expression environment may still include:
 - chained-action evaluation bindings such as `result`, `error`, and `prevResult`
 
 The manifest layer only validates host-published projection reads.
+
+Required precondition:
+
+- the compiler must know which render boundary actually publishes the host projection for the fragment being validated
+
+Until that attribution is available, hosts may still publish projection contracts for documentation, debugger inspection, and future tooling, but generic compile-time projection-path diagnostics should stay disabled.
 
 Examples:
 
@@ -590,10 +692,16 @@ Important limitation:
 
 When the compiler sees `designer:addNode`, it should:
 
-1. resolve the namespace family for the current host manifest
+1. confirm that the action namespace matches the active host manifest namespace
 2. verify that method `addNode` exists
 3. validate `args` shape against the method contract
 4. optionally expose result shape metadata for chained-action tooling
+
+Important boundary:
+
+- this validation applies only to the active host family namespace
+- built-in actions, `component:*`, and imported namespaces continue through their existing validation paths
+- this validation is enabled only inside explicit capability publication boundaries
 
 Examples:
 
@@ -612,6 +720,11 @@ Recommended new diagnostic codes:
 - `unknown-host-capability-method`
 - `invalid-host-capability-args`
 - `host-contract-version-mismatch`
+
+Baseline versus deferred diagnostics:
+
+- baseline implementation should prioritize `unsupported-host-contract-version`, `unresolved-host-contract-context`, `unknown-host-capability-method`, and `invalid-host-capability-args`
+- `unknown-host-projection-field` and `invalid-host-projection-path` belong to the later projection-attribution slice
 
 Recommended principles:
 
@@ -635,6 +748,7 @@ Version-range rule:
 
 - the version selector is a semver-compatible range string interpreted by the loader/compiler-supplied manifest resolver
 - this document does not create a second custom range grammar
+- the selector is resolved by the publishing owner's manifest resolver, not by a hidden ambient registry
 
 ### Rule 3: Deprecation Is First-Class
 
@@ -678,14 +792,14 @@ If a product wants runtime result-conformance checks for debugging, that should 
 
 Recommended ownership split:
 
-- `packages/flux-core/src/workbench/` or a nearby contract area for manifest envelope types and pure manifest helpers
+- `packages/flux-core/src/schema-diagnostics/` or a nearby dependency-safe shared contract area for manifest envelope types, manifest resolution contracts, and the reused structural shape types
 - `packages/flux-runtime/src/schema-compiler/` for compiler validation against manifests
 - domain renderer packages such as `flow-designer-renderers` and `report-designer-renderers` for manifest publication of their host families
 
 Shape ownership split:
 
-- the manifest envelope types live with host/workbench contract types
-- the reused structural shape type lives with compiler/schema-diagnostics ownership
+- the manifest envelope types and reused structural shape contract should live in the same dependency-safe shared layer
+- compiler traversal, diagnostics emission, and resolution flow stay in `flux-runtime`
 
 Do not bury manifest definitions only inside React page renderers.
 
@@ -698,8 +812,9 @@ Manifest resolution starts from renderer `type`, not from a free-floating host d
 Rules:
 
 - during normal tree compilation, the compiler resolves the publishing owner node's `RendererDefinition`
-- the owner renderer definition provides the default host contract metadata
+- the owner renderer definition provides the family, default version selector, and manifest resolution entry
 - standalone fragment workflows may provide `hostContractContext` explicitly when no publishing owner node is present
+- host-family action validation additionally requires compiler-visible capability publication attribution
 - do not introduce an ambient global manifest registry
 
 This keeps the design aligned with `schema-file-validator.md`:
@@ -714,6 +829,12 @@ First-party host families should publish reusable manifest bundles alongside the
 
 But those exports are compiler/runtime dependency inputs, not an ambient runtime authority.
 
+Directionally:
+
+- renderer packages may export a manifest catalog or resolver helper for their host family
+- `RendererDefinition.hostContract` points to that local resolution entry
+- the compiler consumes the resolved bundle for the current compile call only
+
 ## Relationship To `xui:imports`
 
 `xui:imports` remains the dynamic capability provisioning mechanism.
@@ -724,6 +845,11 @@ The clean split is:
 
 - host manifest = stable contract for shipped host families
 - `xui:imports` = dynamic provisioning path for extra namespaces/helpers
+
+Validation split:
+
+- host manifest validation only applies to the active host family namespace
+- imported namespaces keep using the `xui:imports` and namespace-validator path from `schema-file-validator.md`
 
 If an imported namespace becomes stable enough to be platform-governed, it may later graduate into a manifest-published host or library contract.
 
@@ -820,8 +946,10 @@ Recommended flow:
 schema file
   -> parse
   -> resolve publishing owner nodes by renderer type
-  -> read default host contract from renderer definition
+  -> read family + default version selector + `resolveManifest(...)` from renderer definition
   -> apply optional `xui:version` override on owner node
+  -> resolve one concrete manifest bundle through the owner-local resolver
+  -> confirm the fragment executes inside a compiler-visible capability publication boundary
   -> for standalone fragment validation, use explicit `hostContractContext` if needed
   -> validate expressions and actions against manifest contracts
   -> compile final execution schema
@@ -850,19 +978,21 @@ The host must still control:
 
 Recommended rollout order:
 
-1. define manifest types and shape helpers in a core contract area
-2. add optional `hostContract` metadata to publishing owner `RendererDefinition`s
-3. implement compiler diagnostics for action validation first
-4. add projection-path validation for host projection reads
-5. add schema-level `xui:version` override on publishing owner nodes
-6. wire standalone fragment validation to accept explicit `hostContractContext`
-7. publish first-party manifests for `designer`, `spreadsheet`, `report-designer`, and `word-editor`
+1. define manifest envelope types, manifest resolution contracts, and reused shape types in a dependency-safe shared contract area
+2. add optional `hostContract` metadata plus owner-local manifest resolution to publishing owner `RendererDefinition`s
+3. add compiler-visible capability publication attribution for host-owned regions or owner subtrees
+4. add schema-level `xui:version` override on publishing owner nodes
+5. wire standalone fragment validation to accept explicit `hostContractContext`
+6. implement compiler diagnostics for host-family action validation first
+7. publish one first-party manifest family end to end
 8. wire CI/schema validation tooling to require contract resolution for host-owned pages
+9. add compiler-visible projection publication attribution for host-owned regions or owner subtrees
+10. add projection-path validation for host projection reads
 
 Why this order:
 
 - action validation gives immediate value with lower ambiguity
-- projection-path validation is useful but needs more careful unknown/dynamic-shape escape hatches
+- projection-path validation is useful but needs publication attribution and more careful unknown/dynamic-shape escape hatches
 
 ## Decisions
 
@@ -870,8 +1000,9 @@ The active decisions from this document are:
 
 - add a static manifest layer for host projection and capability contracts
 - keep runtime bridge wiring and static manifest publication separate
-- validate `${expr}` host reads against projection contracts when a host contract is declared
-- validate namespaced host action payloads against capability contracts when a host contract is declared
+- resolve manifest versions through renderer-owned contract metadata, not a hidden ambient registry
+- validate namespaced host action payloads against capability contracts only inside compiler-visible host capability publication boundaries
+- defer generic projection-path diagnostics until host projection publication boundaries are compiler-visible
 - version host contracts explicitly and let schema declare compatible ranges
 - keep lexical runtime visibility and ownership rules unchanged; manifests validate contract, they do not grant authority
 - treat first-party complex hosts as the primary owners of this system, not every ordinary renderer or component handle
