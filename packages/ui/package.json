@@ -2,6 +2,7 @@
   "name": "@nop-chaos/ui",
   "version": "0.1.0",
   "private": true,
+  "sideEffects": ["*.css"],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,6 +10,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./chart": {
+      "types": "./dist/components/ui/chart.d.ts",
+      "default": "./dist/components/ui/chart.js"
     },
     "./lib/utils": {
       "types": "./dist/lib/utils.d.ts",

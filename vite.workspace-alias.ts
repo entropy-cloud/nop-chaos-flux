@@ -14,6 +14,7 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-code-editor': fileURLToPath(new URL('./packages/flux-code-editor/src/index.ts', import.meta.url)),
   '@nop-chaos/ui/styles.css': fileURLToPath(new URL('./packages/ui/src/styles/index.css', import.meta.url)),
   '@nop-chaos/ui/base.css': fileURLToPath(new URL('./packages/ui/src/styles/base.css', import.meta.url)),
+  '@nop-chaos/ui/chart': fileURLToPath(new URL('./packages/ui/src/components/ui/chart.tsx', import.meta.url)),
   '@nop-chaos/ui': fileURLToPath(new URL('./packages/ui/src/index.ts', import.meta.url)),
   '@nop-chaos/spreadsheet-core': fileURLToPath(new URL('./packages/spreadsheet-core/src/index.ts', import.meta.url)),
   '@nop-chaos/spreadsheet-renderers': fileURLToPath(new URL('./packages/spreadsheet-renderers/src/index.ts', import.meta.url)),

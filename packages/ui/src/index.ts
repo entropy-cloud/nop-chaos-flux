@@ -12,7 +12,6 @@ export * from './components/ui/carousel';
 export * from './components/ui/card';
 export * from './components/ui/collapsible';
 export * from './components/ui/checkbox';
-export * from './components/ui/chart';
 export * from './components/ui/combobox';
 export * from './components/ui/command';
 export * from './components/ui/context-menu';

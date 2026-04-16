@@ -29,6 +29,7 @@
       "@nop-chaos/flux-renderers-form": ["packages/flux-renderers-form/src/index.tsx"],
       "@nop-chaos/flux-renderers-data": ["packages/flux-renderers-data/src/index.tsx"],
       "@nop-chaos/theme-tokens": ["packages/theme-tokens/src/index.ts"],
+      "@nop-chaos/ui/chart": ["packages/ui/src/components/ui/chart.tsx"],
       "@nop-chaos/ui": ["packages/ui/src/index.ts"],
       "@nop-chaos/spreadsheet-core": ["packages/spreadsheet-core/src/index.ts"],
       "@nop-chaos/spreadsheet-renderers": ["packages/spreadsheet-renderers/src/index.ts"],
