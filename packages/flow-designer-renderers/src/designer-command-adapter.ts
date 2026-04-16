@@ -1,148 +1,13 @@
 import { simpleTreeLayout } from '@nop-chaos/flow-designer-core';
+import type { DesignerCore, GraphDocument, GraphNode } from '@nop-chaos/flow-designer-core';
 import type {
-  DesignerCore,
-  DesignerSnapshot,
-  GraphDocument,
-  GraphEdge,
-  GraphNode
-} from '@nop-chaos/flow-designer-core';
+  DesignerCommand,
+  DesignerCommandAdapter,
+  DesignerCommandReason,
+  DesignerCommandResult
+} from './designer-command-types';
 
-type DesignerCommandReason =
-  | 'constraint'
-  | 'duplicate-edge'
-  | 'missing-edge'
-  | 'missing-node'
-  | 'self-loop'
-  | 'unchanged'
-  | 'unknown-node-type'
-  | 'unavailable';
-
-export type DesignerCommand =
-  | {
-      type: 'addEdge';
-      source: string;
-      target: string;
-      data?: Record<string, unknown>;
-    }
-  | {
-      type: 'addNode';
-      nodeType: string;
-      position?: { x: number; y: number };
-      data?: Record<string, unknown>;
-    }
-  | {
-      type: 'clearSelection';
-    }
-  | {
-      type: 'deleteEdge';
-      edgeId: string;
-    }
-  | {
-      type: 'deleteNode';
-      nodeId: string;
-    }
-  | {
-      type: 'duplicateNode';
-      nodeId: string;
-    }
-  | {
-      type: 'copySelection';
-    }
-  | {
-      type: 'pasteClipboard';
-    }
-  | {
-      type: 'deleteSelection';
-    }
-  | {
-      type: 'export';
-    }
-  | {
-      type: 'moveNode';
-      nodeId: string;
-      position: { x: number; y: number };
-    }
-  | {
-      type: 'reconnectEdge';
-      edgeId: string;
-      source: string;
-      target: string;
-    }
-  | {
-      type: 'redo';
-    }
-  | {
-      type: 'restore';
-    }
-  | {
-      type: 'save';
-    }
-  | {
-      type: 'selectEdge';
-      edgeId: string | null;
-    }
-  | {
-      type: 'selectNode';
-      nodeId: string | null;
-    }
-  | {
-      type: 'setViewport';
-      viewport: { x: number; y: number; zoom: number };
-    }
-  | {
-      type: 'toggleGrid';
-    }
-  | {
-      type: 'togglePalette';
-    }
-  | {
-      type: 'toggleInspector';
-    }
-  | {
-      type: 'undo';
-    }
-  | {
-      type: 'updateEdgeData';
-      edgeId: string;
-      data: Record<string, unknown>;
-    }
-  | {
-      type: 'updateNodeData';
-      nodeId: string;
-      data: Record<string, unknown>;
-    }
-  | {
-      type: 'insertChainNode';
-      sourceId: string;
-      nodeType: string;
-      data?: Record<string, unknown>;
-    }
-  | {
-      type: 'insertChainNodeAtMerge';
-      targetId: string;
-      nodeType: string;
-      data?: Record<string, unknown>;
-    }
-  | {
-      type: 'insertBranchPair';
-      sourceId: string;
-      condNodeType: string;
-      condData?: Record<string, unknown>;
-    };
-
-export interface DesignerCommandResult {
-  ok: boolean;
-  snapshot: DesignerSnapshot;
-  data?: unknown;
-  error?: string;
-  exported?: string;
-  reason?: DesignerCommandReason;
-}
-
-export interface DesignerCommandAdapter {
-  execute(command: DesignerCommand): DesignerCommandResult;
-  getSnapshot(): DesignerSnapshot;
-}
+export type { DesignerCommand, DesignerCommandAdapter, DesignerCommandReason, DesignerCommandResult };
 
 const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playground example.';
 const EDGE_MISSING_NODE_ERROR = 'Edges must connect existing nodes.';
@@ -530,4 +395,5 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
   };
 }
 
-export type { GraphEdge, GraphNode };
+export type { GraphNode } from '@nop-chaos/flow-designer-core';
+export type { GraphEdge } from './designer-command-types';
