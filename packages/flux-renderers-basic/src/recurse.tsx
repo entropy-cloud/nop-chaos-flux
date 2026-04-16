@@ -1,17 +1,18 @@
 import React, { useContext, useMemo } from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import type { InstanceFrame, RendererComponentProps } from '@nop-chaos/flux-core';
 import { StructuralLoopContext } from './structural-loop-context';
+import type { StructuralLoopBindings, StructuralLoopContextValue } from './structural-loop-context';
 import type { RecurseSchema } from './schemas';
 import { createStructuralRepeatedTemplateId, renderStructuralLoop, resolveLoopBindings } from './structural-loop';
 
 interface RecurseProviderProps {
-  loopContext: NonNullable<React.ContextType<typeof StructuralLoopContext>>;
+  loopContext: StructuralLoopContextValue;
   ownerId: string;
   path: string;
-  bindings: ReturnType<typeof resolveLoopBindings>;
+  bindings: StructuralLoopBindings;
   itemData: Record<string, unknown> | undefined;
-  keyBy: RecurseSchema['keyBy'];
-  instancePath: RendererComponentProps<RecurseSchema>['instancePath'];
+  keyBy: unknown;
+  instancePath: readonly InstanceFrame[];
   depth: number;
   children: React.ReactNode;
 }

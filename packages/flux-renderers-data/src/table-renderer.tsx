@@ -141,10 +141,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 const isFilterable = column.filterable === true && Array.isArray(column.filterOptions) && column.filterOptions.length > 0;
                 const currentSort = sortState.column === column.name ? sortState.direction : null;
                 const activeFilters = column.name ? (filterState[column.name] ?? new Set()) : new Set<string>();
+                const columnKey = column.name ?? (typeof column.label === 'string' ? column.label : undefined) ?? `column-${index}`;
 
                 return (
                   <TableHead
-                    key={`${column.name ?? column.label ?? 'column'}-${index}`}
+                    key={columnKey}
                     style={column.width ? { width: column.width } : undefined}
                     data-slot="table-head"
                     data-interactive={isSortable || isFilterable || undefined}
@@ -282,19 +283,19 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
                         if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
                           return (
-                            <TableCell key={`op-${columnIndex}`} style={column.width ? { width: column.width } : undefined}>
+                            <TableCell key={column.name ?? `op-${columnIndex}`} style={column.width ? { width: column.width } : undefined}>
                               <div data-slot="table-actions" className="flex flex-wrap gap-3" onClick={(event) => event.stopPropagation()}>
                                  {buttonRegion
-                                   ? buttonRegion.render({
+                                    ? buttonRegion.render({
                                        bindings: { record: entry.record, index: entry.sourceIndex },
-                                       instancePath: rowInstancePath,
-                                       pathSuffix: `buttons.${columnIndex}`,
-                                     })
-                                  : (column.buttons ?? []).map((button, buttonIndex) => (
-                                      <div key={`btn-${buttonIndex}`}>
-                                        {helpers.render(button, {
-                                          scope: rowScope,
-                                          instancePath: rowInstancePath,
+                                        instancePath: rowInstancePath,
+                                        pathSuffix: `buttons.${columnIndex}`,
+                                      })
+                                   : (column.buttons ?? []).map((button, buttonIndex) => (
+                                       <div key={button.id ?? button.name ?? `btn-${buttonIndex}`}>
+                                         {helpers.render(button, {
+                                           scope: rowScope,
+                                           instancePath: rowInstancePath,
                                           pathSuffix: `buttons.${buttonIndex}`,
                                         })}
                                       </div>

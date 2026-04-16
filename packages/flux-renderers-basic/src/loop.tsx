@@ -1,20 +1,21 @@
 import React, { useMemo } from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import type { InstanceFrame, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderInstancePath } from '@nop-chaos/flux-react';
 import type { LoopSchema } from './schemas';
 import { StructuralLoopContext } from './structural-loop-context';
+import type { StructuralLoopBindings } from './structural-loop-context';
 import { createStructuralRepeatedTemplateId, renderStructuralLoop, resolveLoopBindings } from './structural-loop';
 
 interface LoopProviderProps {
   ownerId: string;
   path: string;
-  bindings: ReturnType<typeof resolveLoopBindings>;
+  bindings: StructuralLoopBindings;
   itemData: Record<string, unknown> | undefined;
-  keyBy: LoopSchema['keyBy'];
-  instancePath: RendererComponentProps<LoopSchema>['instancePath'];
+  keyBy: unknown;
+  instancePath: readonly InstanceFrame[];
   depth: number;
   schema: LoopSchema;
-  renderBody: (childSlotBindings: Record<string, unknown>, childInstancePath: RendererComponentProps<LoopSchema>['instancePath']) => React.ReactNode;
+  renderBody: (childSlotBindings: Record<string, unknown>, childInstancePath: readonly InstanceFrame[]) => React.ReactNode;
   children: React.ReactNode;
 }
 
