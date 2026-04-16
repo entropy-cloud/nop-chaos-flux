@@ -17,6 +17,9 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0"
   }
 }
 

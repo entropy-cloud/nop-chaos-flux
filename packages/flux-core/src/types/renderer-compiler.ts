@@ -4,16 +4,10 @@ import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy 
 import type { ScopeDependencySet } from './scope';
 import type { CompiledFormValidationModel } from './validation';
 import type { CompiledCidState } from '../compiled-cid';
-import type { CompiledTemplate } from './node-identity';
+import type { CompiledTemplate, NodeMetaProgram, NodeRuntimeState } from './node-identity';
 
-export interface CompiledSchemaMeta {
-  id?: CompiledRuntimeValue<string | undefined>;
-  className?: CompiledRuntimeValue<string | undefined>;
-  visible?: CompiledRuntimeValue<boolean | unknown>;
-  hidden?: CompiledRuntimeValue<boolean | unknown>;
-  disabled?: CompiledRuntimeValue<boolean | unknown>;
-  testid?: CompiledRuntimeValue<string | undefined>;
-}
+export type CompiledSchemaMeta = NodeMetaProgram;
+export type CompiledNodeRuntimeState = NodeRuntimeState;
 
 export interface CompiledRegion {
   key: string;
@@ -81,17 +75,6 @@ export interface ResolvedNodeMeta {
   cid?: number;
 }
 
-export interface CompiledNodeRuntimeState {
-  meta: Record<string, RuntimeValueState<unknown>>;
-  props?: RuntimeValueState<Record<string, unknown>>;
-  metaDependencies?: ScopeDependencySet;
-  propsDependencies?: ScopeDependencySet;
-  resolvedMeta?: ResolvedNodeMeta;
-  resolvedProps?: Readonly<Record<string, unknown>>;
-  _staticPropsResult?: ResolvedNodeProps;
-  _lastPropsResult?: ResolvedNodeProps;
-}
-
 /**
  * @internal Compiler artifact. Do not use in renderer components or runtime paths.
  * Use TemplateNode (from CompiledTemplate) and NodeInstance instead.
@@ -142,6 +125,6 @@ export interface CompileNodeOptions {
 
 export interface SchemaCompiler {
   compile(schema: SchemaInput, options?: CompileSchemaOptions): CompiledTemplate;
-  compileNode(schema: BaseSchema, options: CompileNodeOptions): CompiledSchemaNode;
+  compileNode(schema: BaseSchema, options: CompileNodeOptions): import('./node-identity').TemplateNode;
   validate?(schema: SchemaInput, options?: CompileSchemaOptions): SchemaDiagnostic[];
 }

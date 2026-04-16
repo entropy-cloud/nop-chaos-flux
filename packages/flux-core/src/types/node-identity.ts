@@ -1,7 +1,7 @@
 import type { CompiledRuntimeValue, RuntimeValueState } from './compilation';
 import type { BaseSchema, SchemaPath } from './schema';
 import type { ScopeDependencySet, ScopeRef } from './scope';
-import type { CompiledSchemaMeta, WrapProvidersFn } from './renderer-compiler';
+import type { WrapProvidersFn } from './renderer-compiler';
 
 export type TemplateNodeId = number;
 export type RepeatedTemplateId = string;
@@ -46,6 +46,27 @@ export type ScopePlan =
 export type RegistryPlan = Readonly<Record<string, unknown>>;
 export type ValidationPlan = import('./validation').CompiledFormValidationModel;
 export type RuntimeProgramState<T = unknown> = RuntimeValueState<T>;
+
+export interface NodeRuntimeState {
+  meta: Record<string, RuntimeValueState<unknown>>;
+  props?: RuntimeValueState<Record<string, unknown>>;
+  metaDependencies?: ScopeDependencySet;
+  propsDependencies?: ScopeDependencySet;
+  resolvedMeta?: import('./renderer-compiler').ResolvedNodeMeta;
+  resolvedProps?: Readonly<Record<string, unknown>>;
+  _staticPropsResult?: import('./renderer-compiler').ResolvedNodeProps;
+  _lastPropsResult?: import('./renderer-compiler').ResolvedNodeProps;
+}
+
+export type NodeMetaProgram = {
+  id?: CompiledRuntimeValue<string | undefined>;
+  className?: CompiledRuntimeValue<string | undefined>;
+  visible?: CompiledRuntimeValue<boolean | unknown>;
+  hidden?: CompiledRuntimeValue<boolean | unknown>;
+  disabled?: CompiledRuntimeValue<boolean | undefined>;
+  testid?: CompiledRuntimeValue<string | undefined>;
+};
+
 export interface TemplateProviderPlan {
   actionScope: boolean;
   componentRegistry: boolean;
@@ -61,7 +82,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   rendererType: string;
   component: import('./renderer-core').RendererDefinition<S>;
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
-  metaProgram: CompiledSchemaMeta;
+  metaProgram: NodeMetaProgram;
   eventPlans: Readonly<Record<string, unknown>>;
   lifecycleActions?: Readonly<{
     onMount?: unknown;

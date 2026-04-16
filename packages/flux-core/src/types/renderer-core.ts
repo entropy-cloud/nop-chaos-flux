@@ -2,10 +2,10 @@ import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope } from './actions';
 import type { ExpressionCompiler } from './compilation';
 import type { RendererSchemaValidator } from '../schema-diagnostics';
-import type { NodeInstance, ResolutionContext, TemplateNode } from './node-identity';
+import type { NodeInstance, NodeRuntimeState, ResolutionContext, TemplateNode } from './node-identity';
 import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
-import type { CompiledNodeRuntimeState, ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
+import type { ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
 import type { RendererPlugin } from './renderer-plugin';
 import type { DataSourceController, DataSourceRegistration, FormLifecycleHandlers, FormRuntime, PageRuntime } from './runtime';
@@ -129,8 +129,8 @@ export interface RendererRuntime {
   evaluate<T = unknown>(target: unknown, scope: ScopeRef): T;
   allocateMountedCid(): number;
   resolveTarget(target: ComponentTarget, ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry }): NodeInstance | undefined;
-  resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta;
-  resolveNodeProps(node: TemplateNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps;
+  resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?: NodeRuntimeState): ResolvedNodeMeta;
+  resolveNodeProps(node: TemplateNode, scope: ScopeRef, state?: NodeRuntimeState): ResolvedNodeProps;
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;
   createHostProjectionScope(input: {
     parentScope: ScopeRef;
