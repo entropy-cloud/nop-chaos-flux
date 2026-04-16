@@ -70,9 +70,17 @@ export function readCheckboxGroupValue(scope: ReturnType<typeof useRenderScope>,
   return Array.isArray(value) ? value.map((item) => String(item)) : [];
 }
 
+const UNUSED_VALUE: unique symbol = Symbol('unused');
+
 export function useBoundFieldValue(name: string, currentForm: FormRuntime | undefined): unknown {
-  const formValue = useCurrentFormState((state) => (name ? getIn(state.values, name) : state.values), Object.is);
-  const scopeValue = useScopeSelector((scopeData) => (name ? getIn(scopeData, name) : scopeData), Object.is);
+  const formValue = useCurrentFormState(
+    currentForm ? (state) => (name ? getIn(state.values, name) : state.values) : () => UNUSED_VALUE,
+    Object.is
+  );
+  const scopeValue = useScopeSelector(
+    currentForm ? () => UNUSED_VALUE : (scopeData) => (name ? getIn(scopeData, name) : scopeData),
+    Object.is
+  );
 
   return currentForm ? formValue : scopeValue;
 }
