@@ -124,12 +124,8 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const activeActionScope = props.actionScope;
   const activeComponentRegistry = props.componentRegistry;
   const renderScope = props.scope;
-  const importNodeState = useMemo(
-    () => nodeState,
-    [nodeState]
-  );
   const importedMeta = resolvedMeta;
-  const importedResolvedProps = runtime.resolveNodeProps(props.node, renderScope, importNodeState);
+  const importedResolvedProps = runtime.resolveNodeProps(props.node, renderScope, nodeState);
   const importedResolvedClassName = resolveClassAliases(importedMeta.className, mergedClassAliases);
   const importedMetaWithCid = importedMeta.cid === mountedCid
     ? importedMeta
@@ -142,12 +138,12 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     () => createNodeInstance({
       templateNode: props.node,
       scope: renderScope,
-      state: importNodeState,
+      state: nodeState,
       cid: finalResolvedMeta.cid,
       instancePath,
       mounted: true
     }),
-    [props.node, renderScope, importNodeState, finalResolvedMeta.cid, instancePath]
+    [props.node, renderScope, nodeState, finalResolvedMeta.cid, instancePath]
   );
 
   useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, nodeInstance, renderScope, finalResolvedMeta, resolvedComponentProps);

@@ -130,7 +130,7 @@ function ProbeButton() {
 export const probeButtonRenderer: RendererDefinition = {
   type: 'probe-button',
   component: (props) => (
-    <button disabled={props.meta.disabled} aria-label="Search">
+    <button type="button" disabled={props.meta.disabled} aria-label="Search">
       Search
     </button>
   )
