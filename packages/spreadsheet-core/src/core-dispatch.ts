@@ -2,6 +2,7 @@ import type {
   CellStyle,
 } from './types.js';
 import type { SpreadsheetCommand, SpreadsheetCommandResult } from './commands.js';
+import type { CellTarget } from './core/cell-operations.js';
 import {
   applyAddComment,
   applyCellStyleChange,
@@ -58,6 +59,17 @@ import {
 export interface SpreadsheetDispatchStore {
   getState: () => SpreadsheetInternalState;
   setState: (update: Partial<SpreadsheetInternalState> | ((s: SpreadsheetInternalState) => SpreadsheetInternalState)) => void;
+}
+
+function applyStyleCommand(
+  store: SpreadsheetDispatchStore,
+  target: CellTarget,
+  stylePatch: Partial<CellStyle>
+): SpreadsheetCommandResult {
+  const state = store.getState();
+  const nextDoc = applyCellStyleChange(state.document, target, stylePatch);
+  store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
+  return { ok: true, changed: true };
 }
 
 export async function dispatchSpreadsheetCommand(
