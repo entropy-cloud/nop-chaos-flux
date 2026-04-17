@@ -62,6 +62,7 @@ export interface ActionContext {
   nodeInstance?: NodeInstance;
   getInstanceKey?: () => string | undefined;
   interactionId?: string;
+  signal?: AbortSignal;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   event?: FluxActionEvent;

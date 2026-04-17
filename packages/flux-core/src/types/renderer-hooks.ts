@@ -34,6 +34,21 @@ export interface RenderFragmentOptions {
   ownerNodeInstance?: NodeInstance;
 }
 
+export interface StructuralLoopBindings {
+  itemName: string;
+  indexName: string;
+  keyName?: string;
+}
+
+export interface StructuralLoopRenderContext {
+  bindings: StructuralLoopBindings;
+  itemData?: Record<string, unknown>;
+  keyBy?: unknown;
+  instancePath?: readonly InstanceFrame[];
+  depth: number;
+  renderBody(slotBindings: Record<string, unknown>, instancePath: readonly InstanceFrame[]): ReactNode;
+}
+
 export interface RenderRegionHandle {
   key: string;
   templateNode: TemplateNode | readonly TemplateNode[] | null;
@@ -114,6 +129,7 @@ export interface RendererHookApi {
   useCurrentSurfaceRuntime(): SurfaceRuntime | undefined;
   useCurrentNodeMeta(): RenderNodeMeta;
   useCurrentNodeInstance(): NodeInstance | undefined;
+  useStructuralLoopContext(): StructuralLoopRenderContext | undefined;
   useRenderFragment(): RendererHelpers['render'];
 }
 

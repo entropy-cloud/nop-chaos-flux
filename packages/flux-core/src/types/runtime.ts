@@ -154,11 +154,23 @@ export interface ReportDesignerHostStatusSummary {
   fieldSourceCount: number;
 }
 
+export interface WordEditorHostStatusSummary {
+  kind: 'word-editor';
+  dirty: boolean;
+  busy: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  wordCount: number;
+  datasetCount: number;
+  chartCount: number;
+  codeCount: number;
+}
+
 export interface FormLifecycleHandlers {
-  submitAction?: (options?: { interactionId?: string }) => Promise<ActionResult>;
-  onSubmitSuccess?: (result: ActionResult, options?: { interactionId?: string }) => Promise<ActionResult>;
-  onSubmitError?: (result: ActionResult, options?: { interactionId?: string }) => Promise<ActionResult>;
-  onValidateError?: (result: ActionResult, options?: { interactionId?: string }) => Promise<ActionResult>;
+  submitAction?: (options?: { interactionId?: string; signal?: AbortSignal }) => Promise<ActionResult>;
+  onSubmitSuccess?: (result: ActionResult, options?: { interactionId?: string; signal?: AbortSignal }) => Promise<ActionResult>;
+  onSubmitError?: (result: ActionResult, options?: { interactionId?: string; signal?: AbortSignal }) => Promise<ActionResult>;
+  onValidateError?: (result: ActionResult, options?: { interactionId?: string; signal?: AbortSignal }) => Promise<ActionResult>;
 }
 
 export interface OwnedSurfaceStateBase {
@@ -303,7 +315,7 @@ export interface FormRuntime extends ValidationScopeRuntime {
   touchField(path: string): void;
   visitField(path: string): void;
   clearErrors(path?: string): void;
-  submit(api?: ApiSchema, options?: { interactionId?: string; control?: OperationControlConfig }): Promise<ActionResult>;
+  submit(api?: ApiSchema, options?: { interactionId?: string; signal?: AbortSignal; control?: OperationControlConfig }): Promise<ActionResult>;
   reset(values?: object): void;
   setValue(name: string, value: unknown): void;
   setValues(values: Record<string, unknown>): void;

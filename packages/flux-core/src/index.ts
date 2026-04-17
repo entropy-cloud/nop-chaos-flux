@@ -32,3 +32,5 @@ export type {
   WorkbenchSessionState,
   ResourceBrowserInteractionPolicy,
 } from './workbench';
+
+export type { StructuralLoopBindings, StructuralLoopRenderContext } from './types/renderer-hooks';

@@ -146,7 +146,16 @@ export interface ChildValidationContract {
   mode: ChildValidationMode;
 }
 
+export interface ChildValidationScopeState {
+  ready: boolean;
+  validating: boolean;
+  valid: boolean;
+  hasErrors: boolean;
+}
+
 export interface ChildValidationContractRegistration extends ChildValidationContract {
   active: boolean;
   unregister(): void;
+  getState(): ChildValidationScopeState;
+  triggerValidation(): Promise<ValidationResult>;
 }
