@@ -68,6 +68,7 @@ export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
 export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
   { id: 'flux-basic', title: 'Flux Basic', eyebrow: 'Core Renderers', description: 'Forms, actions, dialogs, tables, data binding, validation, API requests, and renderer fundamentals.' },
   { id: 'flow-designer', title: 'Flow Designer', eyebrow: 'Visual Workflow', description: 'designer-page, toolbar, inspector, canvas, node palette, edge connections.' },
+  { id: 'dingtalk-flow-demo', title: 'DingTalk Flow Demo', eyebrow: 'Style Prototype', description: 'Static DingTalk approval flow visual reference with interactive node insertion.' },
   { id: 'report-designer', title: 'Report Designer', eyebrow: 'Spreadsheet + Metadata', description: 'report-designer-page, field panel, inspector shell, toolbar, spreadsheet canvas.' },
   { id: 'debugger-lab', title: 'Debugger Lab', eyebrow: 'DevTools', description: 'Debugger API, event timeline, network trace, and automation hooks.' },
   { id: 'condition-builder', title: 'Condition Builder', eyebrow: 'Form Control', description: 'Standalone condition-builder renderer with embedded and picker modes.' },

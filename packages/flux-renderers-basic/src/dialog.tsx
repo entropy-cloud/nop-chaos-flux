@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import type { RendererComponentProps, SurfaceStatusSummary } from '@nop-chaos/flux-core';
-import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { resolveRendererSlotContent, useCurrentComponentRegistry, useResolvedContainer } from '@nop-chaos/flux-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, cn } from '@nop-chaos/ui';
 import type { DialogSchema } from './schemas';
 import { useStatusPathPublication } from './status-hooks';
@@ -21,8 +21,13 @@ export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
 
   useStatusPathPublication(props.node.scope.parent ?? props.node.scope, statusPath, summary);
 
+  const containerId = typeof props.props.container === 'string' ? props.props.container : undefined;
+  const showMask = props.props.showMask !== false;
+  const componentRegistry = useCurrentComponentRegistry();
+  const containerElement = useResolvedContainer(containerId, componentRegistry);
+
   return (
-    <Dialog open={summary.open} onOpenChange={(open) => { if (!open) void props.events.onClose?.(); else void props.events.onOpen?.(); }} closeOnOutsideClick={props.props.closeOnOutsideClick !== false}>
+    <Dialog open={summary.open} onOpenChange={(open) => { if (!open) void props.events.onClose?.(); else void props.events.onOpen?.(); }} closeOnOutsideClick={props.props.closeOnOutsideClick !== false} containerElement={containerElement} noOverlay={!showMask}>
       <DialogContent className={cn('nop-dialog', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
         {titleContent ? (
           <DialogHeader>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type {
   BaseSchema,
   RendererComponentProps,
@@ -6,8 +6,7 @@ import type {
   RuntimeFieldRegistration,
   ValidationRule,
 } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
-import { useCurrentFormState, useCurrentFormModelGeneration, useScopeSelector, useSchemaProps } from '@nop-chaos/flux-react';
+import { useCurrentFormModelGeneration, useSchemaProps } from '@nop-chaos/flux-react';
 import {
   formLabelFieldRule,
   useFormFieldController,
@@ -38,9 +37,10 @@ function toGroupValue(value: unknown): ConditionGroupValue {
 
 export function ConditionBuilderRenderer(props: RendererComponentProps<ConditionBuilderSchema>) {
   const name = String(props.props.name ?? '');
-  const { currentForm, scope, presentation } = useFormFieldController(name, {
+  const { currentForm, value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required)
+    required: Boolean(props.props.required),
+    areValuesEqual: groupValuesEqual,
   });
 
   const schemaProps = useSchemaProps(props);
@@ -51,16 +51,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   const registrationRef = useRef<RuntimeFieldRegistration | undefined>(undefined);
   const modelGeneration = useCurrentFormModelGeneration();
 
-  const formExternalValue = useCurrentFormState(
-    (state) => (currentForm && name ? toGroupValue(getIn(state.values, name)) : undefined),
-    groupValuesEqual,
-  ) as ConditionGroupValue | undefined;
-  const scopeExternalValue = useScopeSelector(
-    (scopeData) => (currentForm || !name ? undefined : toGroupValue(getIn(scopeData, name))),
-    groupValuesEqual,
-  ) as ConditionGroupValue | undefined;
-  const externalValue = currentForm ? formExternalValue : scopeExternalValue;
-  const effectiveValue = externalValue ?? toGroupValue(undefined);
+  const effectiveValue = toGroupValue(value);
 
   useEffect(() => {
     valueRef.current = effectiveValue;
@@ -69,21 +60,9 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   const syncValue = useCallback(
     (next: ConditionGroupValue) => {
       valueRef.current = next;
-
-      if (currentForm && name) {
-        if (!currentForm.isTouched(name)) {
-          currentForm.touchField(name);
-        }
-        currentForm.setValue(name, next);
-        void currentForm.validateField(name);
-        return;
-      }
-
-      if (name) {
-        scope.update(name, next);
-      }
+      handlers.onChange(next);
     },
-    [currentForm, name, scope],
+    [handlers],
   );
 
   useEffect(() => {

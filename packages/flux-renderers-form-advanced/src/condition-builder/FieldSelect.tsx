@@ -1,7 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@nop-chaos/ui';
-import { Input } from '@nop-chaos/ui';
-import { SearchIcon } from 'lucide-react';
+import { useMemo } from 'react';
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxEmpty,
+  ComboboxInput,
+} from '@nop-chaos/ui';
 import type { ConditionField, ConditionFieldGroup } from './types';
 import { t } from './i18n';
 
@@ -15,14 +20,22 @@ interface FieldSelectProps {
   uniqueFields?: boolean;
 }
 
-function flattenFields(fields: ConditionField[]): Array<{ name: string; label: string; group?: string }> {
-  const result: Array<{ name: string; label: string; group?: string }> = [];
+interface FieldItem {
+  name: string;
+  label: string;
+  group?: string;
+  disabled?: boolean;
+}
+
+function buildItems(fields: ConditionField[], usedFields?: Set<string>, uniqueFields?: boolean, currentValue?: string): FieldItem[] {
+  const result: FieldItem[] = [];
   for (const f of fields) {
     if (f.type === 'group') {
       const g = f as ConditionFieldGroup;
       for (const child of g.children) {
         if (child.type !== 'group') {
-          result.push({ name: child.name, label: child.label, group: g.label });
+          const isUsed = uniqueFields && usedFields?.has(child.name) && child.name !== currentValue;
+          result.push({ name: child.name, label: child.label, group: g.label, disabled: isUsed });
         }
       }
     } else {
@@ -33,72 +46,40 @@ function flattenFields(fields: ConditionField[]): Array<{ name: string; label: s
 }
 
 export function FieldSelect({ fields, value, onChange, disabled, searchable, usedFields, uniqueFields }: FieldSelectProps) {
-  const [search, setSearch] = useState('');
-  const flat = useMemo(() => flattenFields(fields), [fields]);
+  const items = useMemo(
+    () => buildItems(fields, usedFields, uniqueFields, value),
+    [fields, usedFields, uniqueFields, value],
+  );
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return flat;
-    const q = search.toLowerCase();
-    return flat.filter(
-      (f) => f.label.toLowerCase().includes(q) || f.name.toLowerCase().includes(q)
-    );
-  }, [flat, search]);
-
-  const grouped = useMemo(() => {
-    const map = new Map<string, Array<{ name: string; label: string }>>();
-    for (const f of filtered) {
-      const key = f.group ?? '';
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(f);
-    }
-    return map;
-  }, [filtered]);
-
-  const isDisabled = (fieldName: string) => {
-    if (disabled) return true;
-    if (uniqueFields && usedFields?.has(fieldName) && fieldName !== value) return true;
-    return false;
-  };
+  const selectedItem = items.find((f) => f.name === value) ?? null;
 
   return (
-    <Select value={value ?? ''} onValueChange={(v) => { if (v != null) onChange(v); }} disabled={disabled}>
-      <SelectTrigger size="sm" className="h-7 text-xs min-w-[100px] max-w-[160px]">
-        <SelectValue placeholder={t('selectField')} />
-      </SelectTrigger>
-      <SelectContent>
-        {searchable && (
-          <div className="p-1.5 border-b">
-            <div className="relative">
-              <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-muted-foreground" />
-              <Input
-                className="h-6 pl-6 text-xs"
-                placeholder={t('searchField')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          </div>
-        )}
-        {Array.from(grouped.entries()).map(([group, items]) =>
-          group ? (
-            <SelectGroup key={group}>
-              <SelectLabel>{group}</SelectLabel>
-              {items.map((f) => (
-                <SelectItem key={f.name} value={f.name} disabled={isDisabled(f.name)}>
-                  {f.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          ) : (
-            items.map((f) => (
-              <SelectItem key={f.name} value={f.name} disabled={isDisabled(f.name)}>
-                {f.label}
-              </SelectItem>
-            ))
-          )
-        )}
-      </SelectContent>
-    </Select>
+    <Combobox
+      items={items}
+      value={selectedItem}
+      onValueChange={(item: FieldItem | null) => {
+        if (item) onChange(item.name);
+      }}
+      itemToStringLabel={(item: FieldItem) => item.label}
+      disabled={disabled}
+    >
+      <ComboboxInput
+        className="h-7 text-xs min-w-[100px] max-w-[160px]"
+        placeholder={selectedItem?.label ?? t('selectField')}
+        showClear={false}
+      />
+      <ComboboxContent>
+        <ComboboxEmpty>
+          <div className="px-3 py-2 text-xs text-muted-foreground">{t('noMatchField')}</div>
+        </ComboboxEmpty>
+        <ComboboxList>
+          {(item: FieldItem) => (
+            <ComboboxItem key={item.name} value={item} disabled={item.disabled}>
+              {item.label}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
   );
 }

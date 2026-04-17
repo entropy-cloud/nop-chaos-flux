@@ -9,6 +9,7 @@ import { createScopeRef } from './scope';
 export function createManagedPageRuntime(input: {
   data?: Record<string, any>;
   pageStore?: PageStoreApi;
+  modalContainer?: string;
 } = {}): PageRuntime {
   const data = input.data ?? {};
   const store = input.pageStore ?? createPageStore(data);
@@ -65,6 +66,7 @@ export function createManagedPageRuntime(input: {
   return {
     store,
     scope,
+    modalContainer: input.modalContainer,
     refresh() {
       store.refresh();
     }

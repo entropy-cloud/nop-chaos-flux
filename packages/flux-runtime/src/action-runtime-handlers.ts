@@ -210,6 +210,33 @@ export async function runBuiltInAction(
       const result = await input.submitFormAction(api, action, ctx, signal);
       return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
     }
+    case 'navigate': {
+      const env = input.getEnv();
+      if (!env.navigate) {
+        return finishAction(
+          input,
+          { ...actionPayload, dispatchMode: 'built-in' },
+          startedAt,
+          { ok: false, error: new Error('navigate action requires env.navigate to be configured') }
+        );
+      }
+
+      const args = evaluateActionArgs(action, ctx, input);
+      if (args.back) {
+        env.navigate(-1 as any);
+      } else if (args.url != null) {
+        env.navigate(String(args.url), args.replace ? { replace: true } as any : undefined);
+      } else {
+        return finishAction(
+          input,
+          { ...actionPayload, dispatchMode: 'built-in' },
+          startedAt,
+          { ok: false, error: new Error('navigate action requires args.url or args.back') }
+        );
+      }
+
+      return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true });
+    }
     default:
       return undefined;
   }

@@ -72,14 +72,15 @@ export function readCheckboxGroupValue(scope: ReturnType<typeof useRenderScope>,
 
 const UNUSED_VALUE: unique symbol = Symbol('unused');
 
-export function useBoundFieldValue(name: string, currentForm: FormRuntime | undefined): unknown {
+export function useBoundFieldValue(name: string, currentForm: FormRuntime | undefined, areValuesEqual?: (a: unknown, b: unknown) => boolean): unknown {
+  const eq = areValuesEqual ?? Object.is;
   const formValue = useCurrentFormState(
     currentForm ? (state) => (name ? getIn(state.values, name) : state.values) : () => UNUSED_VALUE,
-    Object.is
+    eq
   );
   const scopeValue = useScopeSelector(
     currentForm ? () => UNUSED_VALUE : (scopeData) => (name ? getIn(scopeData, name) : scopeData),
-    Object.is
+    eq
   );
 
   return currentForm ? formValue : scopeValue;
@@ -156,11 +157,12 @@ export function useFormFieldController(
     disabled?: boolean;
     required?: boolean;
     readOnly?: boolean;
+    areValuesEqual?: (a: unknown, b: unknown) => boolean;
   }
 ) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
-  const value = useBoundFieldValue(name, currentForm);
+  const value = useBoundFieldValue(name, currentForm, options?.areValuesEqual);
   const presentation = useFieldPresentation(name, currentForm, {
     disabled: options?.disabled,
     required: options?.required,

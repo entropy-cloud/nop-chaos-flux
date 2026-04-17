@@ -6,9 +6,10 @@ import { Drawer as DrawerPrimitive } from "vaul"
 import { cn } from "../../lib/utils"
 
 function Drawer({
+  containerElement,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+}: React.ComponentProps<typeof DrawerPrimitive.Root> & { containerElement?: HTMLElement | null }) {
+  return <DrawerPrimitive.Root data-slot="drawer" container={containerElement ?? undefined} {...props} />
 }
 
 function DrawerTrigger({
@@ -48,11 +49,12 @@ function DrawerOverlay({
 function DrawerContent({
   className,
   children,
+  showMask = true,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+}: React.ComponentProps<typeof DrawerPrimitive.Content> & { showMask?: boolean }) {
   return (
     <DrawerPortal data-slot="drawer-portal">
-      <DrawerOverlay />
+      {showMask && <DrawerOverlay />}
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(
