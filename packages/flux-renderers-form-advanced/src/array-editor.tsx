@@ -7,7 +7,6 @@ import {
   formLabelFieldRule,
   getChildFieldUiState,
   getFieldValidationBehavior,
-  readFieldValue,
   resolveFieldLabelContent,
   shouldValidateOn,
   useCompositeChildFieldState,
@@ -16,6 +15,8 @@ import {
 import type { ArrayEditorItem, ArrayEditorSchema } from '@nop-chaos/flux-renderers-form';
 import { FieldHint, FieldLabel } from '@nop-chaos/flux-renderers-form';
 import { createNextCompositeItemId } from './composite-field/composite-item-id';
+
+const EMPTY_ARRAY_EDITOR_ITEMS: ArrayEditorItem[] = [];
 
 function ArrayEditorRow(props: {
   item: ArrayEditorItem;
@@ -140,21 +141,9 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   });
   const labelContent = resolveFieldLabelContent(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
-  const [items, setItems] = React.useState<ArrayEditorItem[]>(() => toArrayEditorItems(readFieldValue(scope, name)));
-  const itemsRef = React.useRef(items);
+  const itemsRef = React.useRef<ArrayEditorItem[]>([]);
   const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
-  const childPaths = React.useMemo(() => items.map((_, index) => `${name}.${index}.value`), [items, name]);
   const modelGeneration = useCurrentFormModelGeneration();
-
-  React.useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
-
-  React.useEffect(() => {
-    if (registrationRef.current) {
-      registrationRef.current.childPaths = childPaths;
-    }
-  }, [childPaths]);
 
   const formExternalValue = useCurrentFormState(
     (state) => (currentForm && name ? toArrayEditorItems(getIn(state.values, name)) : undefined),
@@ -173,18 +162,24 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     }
   );
   const externalValue = currentForm ? formExternalValue : scopeExternalValue;
+  const items = externalValue ?? EMPTY_ARRAY_EDITOR_ITEMS;
+  const childPaths = React.useMemo(() => items.map((_, index) => `${name}.${index}.value`), [items, name]);
 
   React.useEffect(() => {
-    if (externalValue !== undefined && !arrayItemsEqual(externalValue, itemsRef.current)) {
-      itemsRef.current = externalValue;
-      setItems(externalValue);
+    if (!arrayItemsEqual(itemsRef.current, items)) {
+      itemsRef.current = items;
     }
-  }, [externalValue]);
+  }, [items]);
+
+  React.useEffect(() => {
+    if (registrationRef.current) {
+      registrationRef.current.childPaths = childPaths;
+    }
+  }, [childPaths]);
 
   const syncItems = React.useCallback(
     (nextItems: ArrayEditorItem[]) => {
       itemsRef.current = nextItems;
-      setItems(nextItems);
 
       if (!currentForm || !name) {
         scope.update(name, nextItems);
@@ -280,7 +275,6 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             itemsRef.current = nextItems;
 
             if (currentForm && name) {
-              setItems(nextItems);
               currentForm.appendValue(name, nextItem);
               void currentForm.validateField(name);
               return;

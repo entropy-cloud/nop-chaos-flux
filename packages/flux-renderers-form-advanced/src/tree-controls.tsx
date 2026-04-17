@@ -130,7 +130,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const options = buildTreeOptionMetaList(props.props.options, getTreeOptionConfig(props.props as InputTreeSchema));
-  const errorMessage = getSourceErrorMessage(optionsSourceState) ?? presentation.fieldState.error?.message;
+  const sourceError = getSourceErrorMessage(optionsSourceState);
 
   return (
     <div data-slot="input-tree-control">
@@ -145,10 +145,10 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           onChange={(nextValue) => handlers.onChange(nextValue)}
         />
       </div>
-      {errorMessage && (presentation.showError || Boolean(getSourceErrorMessage(optionsSourceState))) ? (
-        <span data-slot="field-error">{errorMessage}</span>
-      ) : presentation.fieldState.validating || optionsSourceState?.loading === true ? (
-        <span data-slot="field-hint">Validating...</span>
+      {sourceError ? (
+        <span data-slot="input-tree-source-error">{sourceError}</span>
+      ) : optionsSourceState?.loading === true ? (
+        <span data-slot="input-tree-source-loading">Loading...</span>
       ) : null}
     </div>
   );
@@ -174,48 +174,46 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const triggerLabel = typeof props.props.placeholder === 'string' && props.props.placeholder
     ? props.props.placeholder
     : 'Select tree option';
-  const errorMessage = getSourceErrorMessage(optionsSourceState) ?? presentation.fieldState.error?.message;
+  const sourceError = getSourceErrorMessage(optionsSourceState);
 
   return (
     <div data-slot="tree-select-control">
       <Popover>
-        <PopoverTrigger
-          render={
+        <div className="flex items-center gap-2" data-slot="tree-select-trigger-row">
+          <PopoverTrigger
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                aria-label={String(props.props.label ?? name)}
+                disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
+              >
+                <span data-slot="tree-select-value" className={cn(triggerText ? undefined : 'text-muted-foreground')}>
+                  {triggerText || triggerLabel}
+                </span>
+                <span data-slot="tree-select-icons">
+                  <ChevronsUpDownIcon className="size-4 text-muted-foreground" />
+                </span>
+              </Button>
+            }
+          />
+          {props.props.clearable === true && triggerText ? (
             <Button
               type="button"
-              variant="outline"
-              aria-label={String(props.props.label ?? name)}
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Clear tree selection"
               disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                handlers.onChange(multiple ? [] : '');
+              }}
             >
-              <span data-slot="tree-select-value" className={cn(triggerText ? undefined : 'text-muted-foreground')}>
-                {triggerText || triggerLabel}
-              </span>
-              <span data-slot="tree-select-icons">
-                {props.props.clearable === true && triggerText ? (
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      handlers.onChange(multiple ? [] : '');
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        handlers.onChange(multiple ? [] : '');
-                      }
-                    }}
-                  >
-                    <XIcon className="size-4" />
-                  </span>
-                ) : null}
-                <ChevronsUpDownIcon className="size-4 text-muted-foreground" />
-              </span>
+              <XIcon className="size-4" />
             </Button>
-          }
-        />
+          ) : null}
+        </div>
         <PopoverContent align="start">
           <TreeOptionList
             options={options}
@@ -228,10 +226,10 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
           />
         </PopoverContent>
       </Popover>
-      {errorMessage && (presentation.showError || Boolean(getSourceErrorMessage(optionsSourceState))) ? (
-        <span data-slot="field-error">{errorMessage}</span>
-      ) : presentation.fieldState.validating || optionsSourceState?.loading === true ? (
-        <span data-slot="field-hint">Validating...</span>
+      {sourceError ? (
+        <span data-slot="tree-select-source-error">{sourceError}</span>
+      ) : optionsSourceState?.loading === true ? (
+        <span data-slot="tree-select-source-loading">Loading...</span>
       ) : null}
     </div>
   );

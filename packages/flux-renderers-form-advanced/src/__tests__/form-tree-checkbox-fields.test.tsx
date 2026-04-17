@@ -13,7 +13,7 @@ import {
   formStateProbeRenderer,
   scopeStateProbeRenderer,
   submitCalls
-} from '@nop-chaos/flux-renderers-form';
+} from '../../../flux-renderers-form/src/test-support';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 

@@ -4,7 +4,6 @@ import { useCurrentFormModelGeneration } from '@nop-chaos/flux-react';
 import { Button } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
-  readCheckboxGroupValue,
   resolveFieldLabelContent,
   resolveFieldLabelText,
   useFormFieldController
@@ -14,11 +13,11 @@ import { FieldHint, FieldLabel } from '@nop-chaos/flux-renderers-form';
 
 export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const name = String(props.props.name ?? '');
-  const { currentForm, scope, presentation } = useFormFieldController(name, {
+  const { currentForm, scope, value: boundValue, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
     required: Boolean(props.props.required)
   });
-  const value = readCheckboxGroupValue(scope, name);
+  const value = Array.isArray(boundValue) ? boundValue.map((item) => String(item)) : [];
   const labelContent = resolveFieldLabelContent(props);
   const labelText = resolveFieldLabelText(props, name);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];

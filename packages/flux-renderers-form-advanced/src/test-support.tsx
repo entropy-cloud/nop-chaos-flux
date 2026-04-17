@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@nop-chaos/ui';
 import type { ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -39,9 +40,9 @@ export function makeCapturingFetcher(submitValues: Record<string, unknown>[]) {
 export const buttonRenderer = {
   type: 'button',
   component: (props: any) => (
-    <button type="button" onClick={() => void props.events.onClick?.()}>
+    <Button variant="ghost" size="sm" onClick={() => void props.events.onClick?.()}>
       {String(props.props.label ?? props.meta.label ?? 'Button')}
-    </button>
+    </Button>
   ),
   fields: [{ key: 'onClick', kind: 'event' as const }],
 };

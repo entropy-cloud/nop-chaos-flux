@@ -10,14 +10,10 @@ import { getIn } from '@nop-chaos/flux-core';
 import { useCurrentFormState, useCurrentFormModelGeneration, useScopeSelector, useSchemaProps } from '@nop-chaos/flux-react';
 import {
   formLabelFieldRule,
-  readFieldValue,
-  resolveFieldLabelContent,
-  useFieldPresentation,
   useFormFieldController,
 } from '@nop-chaos/flux-renderers-form';
-import { Button, cn, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
+import { Button, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
-import { FieldHint, FieldLabel } from '@nop-chaos/flux-renderers-form';
 import type {
   ConditionBuilderSchema,
   ConditionGroupValue,
@@ -46,22 +42,14 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     disabled: props.meta.disabled,
     required: Boolean(props.props.required)
   });
-  const labelContent = resolveFieldLabelContent(props);
 
   const schemaProps = useSchemaProps(props);
   const operatorsOverride = schemaProps.operators;
   const fields = (schemaProps.fields ?? []) as ConditionField[];
 
-  const [localValue, setLocalValue] = React.useState<ConditionGroupValue>(() =>
-    toGroupValue(readFieldValue(scope, name)),
-  );
-  const valueRef = useRef(localValue);
+  const valueRef = useRef<ConditionGroupValue>(toGroupValue(undefined));
   const registrationRef = useRef<RuntimeFieldRegistration | undefined>(undefined);
   const modelGeneration = useCurrentFormModelGeneration();
-
-  useEffect(() => {
-    valueRef.current = localValue;
-  }, [localValue]);
 
   const formExternalValue = useCurrentFormState(
     (state) => (currentForm && name ? toGroupValue(getIn(state.values, name)) : undefined),
@@ -72,7 +60,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     groupValuesEqual,
   ) as ConditionGroupValue | undefined;
   const externalValue = currentForm ? formExternalValue : scopeExternalValue;
-  const effectiveValue = externalValue ?? localValue;
+  const effectiveValue = externalValue ?? toGroupValue(undefined);
 
   useEffect(() => {
     valueRef.current = effectiveValue;
@@ -81,7 +69,6 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   const syncValue = useCallback(
     (next: ConditionGroupValue) => {
       valueRef.current = next;
-      setLocalValue(next);
 
       if (currentForm && name) {
         if (!currentForm.isTouched(name)) {
@@ -131,36 +118,20 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
         operatorsOverride={operatorsOverride}
         onChange={syncValue}
         disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
-        labelContent={labelContent}
-        presentation={presentation}
       />
     );
   }
 
   return (
-    <div
-      className={cn('nop-condition-builder', presentation.className)}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-    >
-      <FieldLabel content={labelContent} />
-      <div data-slot="field-control">
-        <ConditionGroup
-          value={effectiveValue}
-          schema={schemaProps}
-          fields={fields}
-          operatorsOverride={operatorsOverride}
-          onChange={syncValue}
-          disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
-          depth={0}
-        />
-      </div>
-      <FieldHint
-        errorMessage={presentation.fieldState.error?.message}
-        validating={presentation.fieldState.validating}
-        showError={presentation.showError}
+    <div className="nop-condition-builder">
+      <ConditionGroup
+        value={effectiveValue}
+        schema={schemaProps}
+        fields={fields}
+        operatorsOverride={operatorsOverride}
+        onChange={syncValue}
+        disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
+        depth={0}
       />
     </div>
   );
@@ -173,8 +144,6 @@ function PickerModeContent({
   operatorsOverride,
   onChange,
   disabled,
-  labelContent,
-  presentation,
 }: {
   value: ConditionGroupValue;
   fields: ConditionField[];
@@ -182,59 +151,43 @@ function PickerModeContent({
   operatorsOverride?: ConditionOperatorOverrides;
   onChange: (v: ConditionGroupValue) => void;
   disabled?: boolean;
-  labelContent: React.ReactNode;
-  presentation: ReturnType<typeof useFieldPresentation>;
 }) {
   const hasConditions = value.children.length > 0;
 
   return (
-    <div
-      className={cn('nop-condition-builder', presentation.className)}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-    >
-      <FieldLabel content={labelContent} />
-      <div data-slot="field-control">
-        <Popover>
-          <PopoverTrigger
-            render={
-              <Button
-                type="button"
-                variant="outline"
-                className="flex h-9 w-full items-center justify-between px-3 py-2 text-sm"
-                disabled={disabled}
-              >
-                <span className={hasConditions ? '' : 'text-muted-foreground'}>
-                  {hasConditions
-                    ? tf('conditionCount', value.children.length)
-                    : schema.placeholder ?? t('pickerPlaceholder')}
-                </span>
-                <ChevronDownIcon className="size-4 text-muted-foreground" />
-              </Button>
-            }
-          />
-          <PopoverContent className="w-auto p-0" align="start">
-            <div className="p-3 max-h-[60vh] overflow-auto">
-              <ConditionGroup
-                value={value}
-                schema={schema}
-                fields={fields}
-                operatorsOverride={operatorsOverride}
-                onChange={onChange}
-                disabled={disabled}
-                depth={0}
-              />
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-      <FieldHint
-        errorMessage={presentation.fieldState.error?.message}
-        validating={presentation.fieldState.validating}
-        showError={presentation.showError}
-      />
+    <div className="nop-condition-builder">
+      <Popover>
+        <PopoverTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              className="flex h-9 w-full items-center justify-between px-3 py-2 text-sm"
+              disabled={disabled}
+            >
+              <span className={hasConditions ? '' : 'text-muted-foreground'}>
+                {hasConditions
+                  ? tf('conditionCount', value.children.length)
+                  : schema.placeholder ?? t('pickerPlaceholder')}
+              </span>
+              <ChevronDownIcon className="size-4 text-muted-foreground" />
+            </Button>
+          }
+        />
+        <PopoverContent className="w-auto p-0" align="start">
+          <div className="p-3 max-h-[60vh] overflow-auto">
+            <ConditionGroup
+              value={value}
+              schema={schema}
+              fields={fields}
+              operatorsOverride={operatorsOverride}
+              onChange={onChange}
+              disabled={disabled}
+              depth={0}
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

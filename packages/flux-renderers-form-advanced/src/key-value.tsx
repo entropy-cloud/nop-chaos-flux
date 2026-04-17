@@ -15,7 +15,6 @@ import {
   formLabelFieldRule,
   getChildFieldUiState,
   getFieldValidationBehavior,
-  readFieldValue,
   resolveFieldLabelContent,
   shouldValidateOn,
   useCompositeChildFieldState,
@@ -24,6 +23,8 @@ import {
 import type { KeyValuePair, KeyValueSchema } from '@nop-chaos/flux-renderers-form';
 import { FieldHint, FieldLabel } from '@nop-chaos/flux-renderers-form';
 import { createNextCompositeItemId } from './composite-field/composite-item-id';
+
+const EMPTY_KEY_VALUE_PAIRS: KeyValuePair[] = [];
 
 function KeyValueRow(props: {
   pair: KeyValuePair;
@@ -205,24 +206,9 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   });
   const labelContent = resolveFieldLabelContent(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
-  const [pairs, setPairs] = React.useState<KeyValuePair[]>(() => toKeyValuePairs(readFieldValue(scope, name)));
-  const pairsRef = React.useRef(pairs);
+  const pairsRef = React.useRef<KeyValuePair[]>([]);
   const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
-  const childPaths = React.useMemo(
-    () => pairs.flatMap((_, index) => [`${name}.${index}.key`, `${name}.${index}.value`]),
-    [name, pairs]
-  );
   const modelGeneration = useCurrentFormModelGeneration();
-
-  React.useEffect(() => {
-    pairsRef.current = pairs;
-  }, [pairs]);
-
-  React.useEffect(() => {
-    if (registrationRef.current) {
-      registrationRef.current.childPaths = childPaths;
-    }
-  }, [childPaths]);
 
   const formExternalValue = useCurrentFormState(
     (state) => (currentForm && name ? toKeyValuePairs(getIn(state.values, name)) : undefined),
@@ -245,18 +231,27 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     }
   );
   const externalValue = currentForm ? formExternalValue : scopeExternalValue;
+  const pairs = externalValue ?? EMPTY_KEY_VALUE_PAIRS;
+  const childPaths = React.useMemo(
+    () => pairs.flatMap((_, index) => [`${name}.${index}.key`, `${name}.${index}.value`]),
+    [name, pairs]
+  );
 
   React.useEffect(() => {
-    if (externalValue !== undefined && !keyValuePairsEqual(externalValue, pairsRef.current)) {
-      pairsRef.current = externalValue;
-      setPairs(externalValue);
+    if (!keyValuePairsEqual(pairsRef.current, pairs)) {
+      pairsRef.current = pairs;
     }
-  }, [externalValue]);
+  }, [pairs]);
+
+  React.useEffect(() => {
+    if (registrationRef.current) {
+      registrationRef.current.childPaths = childPaths;
+    }
+  }, [childPaths]);
 
   const syncField = React.useCallback(
     (nextPairs: KeyValuePair[]) => {
       pairsRef.current = nextPairs;
-      setPairs(nextPairs);
 
       if (!currentForm || !name) {
         scope.update(name, nextPairs);
@@ -373,7 +368,6 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             pairsRef.current = nextPairs;
 
             if (currentForm && name) {
-              setPairs(nextPairs);
               currentForm.appendValue(name, nextEntry);
               void currentForm.validateField(name);
               return;
