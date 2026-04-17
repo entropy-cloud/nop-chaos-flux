@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { cellAddress, type SpreadsheetRange, type SpreadsheetFrozenPane } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetHostSnapshot, SpreadsheetBridge } from './bridge.js';
+import { mapCellStyle } from './cell-style-map.js';
 
 const DEFAULT_ROW_HEIGHT = 24;
 const DEFAULT_COL_WIDTH = 80;
@@ -171,23 +172,16 @@ export function SpreadsheetGrid({
       return null;
     }
 
+    const cellStyle = mapCellStyle(cell?.style);
     const style: React.CSSProperties = {
+      ...cellStyle.style,
       width: columnWidths[c] ?? DEFAULT_COL_WIDTH,
-      fontWeight: cell?.style?.fontWeight,
-      fontStyle: cell?.style?.fontStyle,
-      textDecoration: cell?.style?.textDecoration,
-      color: cell?.style?.fontColor,
-      backgroundColor: cell?.style?.backgroundColor,
-      textAlign: cell?.style?.textAlign,
-      verticalAlign: cell?.style?.verticalAlign,
-      borderStyle: cell?.style?.borderStyle === 'all' ? 'solid' : undefined,
-      borderColor: cell?.style?.borderColor,
     };
 
     return (
       <td
         key={c}
-        className="ss-cell"
+        className={cellStyle.className}
         style={style}
         data-row={r}
         data-col={c}

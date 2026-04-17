@@ -1,3 +1,5 @@
+import './canvas-styles.css';
+
 export type {
   SpreadsheetHostSnapshot,
   SpreadsheetBridge,

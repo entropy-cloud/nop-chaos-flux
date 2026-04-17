@@ -31,6 +31,7 @@ const VERTICAL_ALIGN_MAP: Record<string, string> = {
 };
 
 const BORDER_STYLE_MAP: Record<string, string> = {
+  all: 'ss-border-solid',
   solid: 'ss-border-solid',
   dashed: 'ss-border-dashed',
   dotted: 'ss-border-dotted',

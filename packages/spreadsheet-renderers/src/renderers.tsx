@@ -1,6 +1,7 @@
 import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
 import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { SpreadsheetPageRenderer } from './page-renderer.js';
+import { spreadsheetHostContract } from './spreadsheet-manifest.js';
 
 export const spreadsheetRendererDefinitions: RendererDefinition[] = [
   {
@@ -9,6 +10,7 @@ export const spreadsheetRendererDefinitions: RendererDefinition[] = [
     regions: ['toolbar', 'body', 'dialogs'],
     fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
     actionScopePolicy: 'new',
+    hostContract: spreadsheetHostContract,
   },
 ];
 
