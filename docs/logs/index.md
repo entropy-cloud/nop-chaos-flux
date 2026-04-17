@@ -63,6 +63,7 @@ When adding a new log entry for today:
 
 ### 2026-04
 
+- [04-17](2026/04-17.md) — spreadsheet bridge snapshot caching fix for report designer render-loop regression
 - [04-15](2026/04-15.md) — plan 85 closure audit, plan 09 deferral re-audit, and owner-doc conflict code-baseline confirmation
 - [04-14](2026/04-14.md) — workspace verification recovery: runtime action evaluation fix, SchemaRenderer/test alignment, condition-builder test support cleanup, and chart test isolation
 - [04-13](2026/04-13.md) — styling-contract convergence, architecture implementation slices, and debugger/report/field-frame follow-ups

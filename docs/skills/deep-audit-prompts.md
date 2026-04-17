@@ -37,27 +37,50 @@
 
 ### 执行方式
 
-每个维度由一个独立的子 agent（Task tool）执行。子 agent 拥有独立的上下文窗口，可以充分阅读代码文件而不与其他维度争夺上下文空间。
+深度审核采用**两阶段 + 两层复核**模型：
+
+1. **初审阶段**：每个维度由一个独立的子 agent（Task tool）执行，产出该维度的原始发现列表。
+2. **维度复核阶段**：每个维度的初审结果出来后，必须再派发一个**独立子 agent**，对该维度整体结论做二次复核。
+3. **子项复核阶段**：维度复核后，对该维度中的**每一个具体发现项**，还必须再用**独立子 agent**逐项复核，判断该项应保留、降级还是驳回。
+
+要求：
+
+- 复核 agent 不能复用初审 agent 的结论当作事实，只能把初审结果当作“待验证线索”。
+- 维度复核 agent 与子项复核 agent 都必须回到 live code / 当前文档重新核对。
+- 最终汇总报告只能使用“已通过独立复核”的结论，不能直接汇总初审结果。
+- 如果时间有限，可以减少初审维度数量，但**不能跳过复核阶段**。
 
 **调度模式**：
 
 ```
 主 Agent（协调者）
-  ├── Task(subagent_type="explore") → 维度 01: 依赖图与包边界
-  ├── Task(subagent_type="explore") → 维度 02: 模块职责与文件边界
-  ├── Task(subagent_type="explore") → 维度 03: API 表面积
+  ├── Task(subagent_type="explore") → 维度 01 初审
+  ├── Task(subagent_type="explore") → 维度 01 维度复核
+  ├── Task(subagent_type="explore") → 维度 01 子项 A 复核
+  ├── Task(subagent_type="explore") → 维度 01 子项 B 复核
+  ├── Task(subagent_type="explore") → 维度 02 初审
+  ├── Task(subagent_type="explore") → 维度 02 维度复核
   ...
-  └── Task(subagent_type="explore") → 维度 18: 跨包模式一致性
+  └── Task(subagent_type="explore") → 维度 18 子项 N 复核
 ```
 
 **调度方法**：
 
-1. 主 agent 读取本文档，选择要执行的维度
-2. 主 agent 将该维度的「子 Agent 提示词」完整复制到 Task tool 的 prompt 参数中
-3. 可以并行派发多个维度（同批次的维度之间无依赖关系）
-4. 所有子 agent 完成后，主 agent 汇总结果，生成「深度审核汇总报告」（格式见附录 A）
+1. 主 agent 读取本文档，选择要执行的维度。
+2. 主 agent 将该维度的「子 Agent 提示词」完整复制到 Task tool 的 prompt 参数中，先派发**初审子 agent**。
+3. 初审完成后，主 agent 必须派发一个**独立的维度复核子 agent**，要求它重新读代码与文档，输出该维度下“保留 / 降级 / 驳回”的判断。
+4. 维度复核完成后，主 agent 必须针对该维度中**每一个发现项**，再派发**独立的子项复核子 agent**，逐项验证该发现是否成立。
+5. 只有在“初审 + 维度复核 + 子项复核”都完成后，该维度结果才允许进入最终汇总。
+6. 所有维度完成后，主 agent 汇总**已复核通过**的结果，生成「深度审核汇总报告」（格式见附录 A）。
 
-**并行策略**：同批次的维度可以并行派发。批次之间有依赖关系：
+**并行策略**：
+
+- 同批次的**初审**维度可以并行派发。
+- 同一维度的**维度复核**必须在该维度初审完成后进行。
+- 同一维度的**子项复核**必须在该维度复核完成后进行。
+- 不同维度之间的复核可以并行。
+
+批次之间的初审依赖关系如下：
 
 | 批次 | 维度 | 可否并行 |
 |------|------|---------|
@@ -80,6 +103,22 @@
 
 3. subagent_type="explore", description="维度15: 安全与性能红线"
    prompt = （复制下面维度 15 的「子 Agent 提示词」全文）
+```
+
+**复核调度示例**（主 agent 视角）：
+
+```
+维度 01 初审完成后：
+
+1. 派发一个独立子 agent 做“维度01整体复核”
+   - 输入：维度01初审全文
+   - 要求：重新读 live code / 文档，输出“保留 / 降级 / 驳回”清单
+
+2. 对维度01中的每一条发现，再分别派发独立子 agent
+   - 输入：某一条发现全文 + 对应文件路径
+   - 要求：只复核这一条，输出“成立 / 降级 / 驳回”与原因
+
+3. 只有通过独立复核的条目才允许进入最终汇总
 ```
 
 ### 子 Agent 提示词结构
@@ -107,6 +146,14 @@
 4. **对低代码动态边界保持克制**。`any`、`Record<string, unknown>`、动态 schema 对象在边界上是合理的。
 5. **每个发现必须可定位**：文件路径 + 行号范围 + 具体代码片段。
 6. **区分已自动化 vs 需人工发现**。已被 lint/check 覆盖的问题只在"自动化有漏洞"时才报告。
+7. **不要把理想化分层图当成硬约束**。只要依赖的是稳定公开 API，而不是跨包内部路径、私有实现或循环依赖，`renderers -> flux-core/flux-formula/flux-runtime` 的直接依赖默认不作为问题；只有当它造成真实维护痛点、契约重复、边界漂移或文档冲突时才报告。
+8. **不要机械禁止原生 HTML**。优先使用 `@nop-chaos/ui`，但平台原生特例（如 `input[type=file]`、`input[type=color]`）以及高性能/强语义宿主表面（如 spreadsheet grid）可以合理使用原生元素；只有当存在等价 UI 抽象且替换有明确收益时才报告。
+9. **不要把共享可复用包的生产依赖当成越层问题**。如果 `spreadsheet-renderers` 这类包本身就是被其他 domain 复用的公共 renderer/bridge 包，则 `report-designer-renderers -> spreadsheet-renderers` 这类依赖默认视为合理复用，而不是先验违规。
+10. **把仓库视为持续演进中的中间态，而不是默认已完整收口的成品**。未接线模块、过渡导出、草案合同、计划中的 owner 收敛，本身都不自动等于缺陷；只有当当前代码已经承诺稳定契约、且存在真实 bug 风险、文档-代码冲突、错误公共暴露或明确误导时才报告。
+11. **区分“真实缺陷”与“未完成实现”**。如果代码显示某能力还在开发中，应优先判断它是“尚未接线/尚未收口/过渡方案”还是“已经对外承诺但实现错误”；前者最多作为中间态风险或跟踪项，不要直接按已完工系统的违约口径定级。
+12. **不要把未从根 barrel 导出的源码机械判成死代码**。只有在确认“没有任何活跃源码引用、没有测试/桥接/计划中的明确 owner、也没有正在形成的公开子路径或集成切片”后，才可报告为死代码；否则应改报为“未接线中的中间模块”或直接不报。
+13. **草案文档不等于当前违约**。若 owner doc 明确写着 draft/future/proposed，应把它视为未来方向而非当前强约束；只有当前 baseline 文档、引用路由和 live code 同时宣称某契约已生效时，才把偏差当成文档-代码不一致。
+14. **所有结论都必须经过独立复核**。初审 agent 的输出只是线索，不是最终事实；维度级结论与每条发现都要由新的独立子 agent 二次核验。
 
 ---
 
@@ -116,6 +163,8 @@
 
 ```
 你正在审核 nop-chaos-flux 项目。这是一个 React 19 + Zustand + TypeScript 的低代码渲染引擎 monorepo（pnpm workspace）。
+
+注意：这是一个持续演进中的仓库，很多 domain 包和复杂 host 能力仍在逐步收敛。审核时不要默认所有包都已经完成最终契约收口；要区分“当前真实缺陷”和“尚未完成的实现切片/过渡结构”。
 
 包结构：
 - flux-core — 基础类型和纯工具函数（无依赖）
@@ -147,7 +196,9 @@
 - 复杂字段不得维护独立的本地状态（useState），必须从 form store 读取
 - 所有渲染器组件必须遵循 RendererComponentProps 模式
 - 严禁在渲染器中直接访问 store，必须用标准 hooks
-- UI 组件统一使用 @nop-chaos/ui，不得用原生 HTML 元素
+- UI 组件默认统一使用 @nop-chaos/ui；但浏览器原生能力控件和高性能专用宿主表面可以保留原生 HTML
+- renderer 包可以直接依赖 `flux-core` / `flux-formula` / `flux-runtime` 的稳定公开 API；真正要警惕的是跨包内部路径导入、循环依赖、文档未声明的私有耦合
+- `spreadsheet-renderers` 可作为可复用公共包被其他 domain renderer 复用；不要将这类共享依赖机械判为边界违规
 ```
 
 ---
@@ -175,7 +226,7 @@
 
 审核维度 01：依赖图与包边界
 
-目标：确保包间依赖严格遵守 flux-core → flux-formula → flux-runtime → flux-react → renderers 的单向依赖流，以及各 domain 的 core/renderers 分层。
+目标：检查包间依赖是否存在真实的边界问题，例如跨包内部路径导入、循环依赖、`*-core -> *-renderers` 反向依赖、错误的 package manifest，或未被文档/公开契约支撑的私有耦合；不要把 `renderers -> flux-core/flux-formula/flux-runtime` 的公开 API 依赖本身当作问题。
 
 必读文档：
 - AGENTS.md 的 Dependency Flow 章节
@@ -190,16 +241,16 @@
    b. flux-formula 只能依赖 flux-core
    c. flux-runtime 只能依赖 flux-core 和 flux-formula
    d. flux-react 不能依赖任何 renderers 包
-   e. 所有 renderers 包只能依赖 flux-react（不直接依赖 flux-runtime 内部模块）
+   e. renderers 包可以依赖 `flux-react` 以及 `flux-core` / `flux-formula` / `flux-runtime` 的稳定公开 API；应重点检查是否直接依赖这些包的内部模块、私有子路径或形成难以解释的边界耦合
    f. *-core 包不能依赖 *-renderers 包
    g. spreadsheet-core 不能依赖 report-designer-core（反向可以）
    h. ui 不依赖任何 @nop-chaos/* 包（peerDependencies 除外）
    i. tailwind-preset 和 theme-tokens 不依赖任何运行时包
-4. 对每个违规，指出：
+4. 对每个违规或可疑依赖，指出：
    - 哪个包的 package.json
    - 违规的依赖声明
    - 违反了哪条规则
-   - 是否存在合理的例外理由（如类型引用）
+   - 是否存在合理的例外理由（如公开 API、共享 bridge、类型引用、性能/宿主实现需要）
 5. 额外检查：是否有 import 语句实际引用了其他包的内部路径（非 index 导出），例如 from '@nop-chaos/flux-runtime/src/internal/xxx'。
 6. 检查是否存在循环依赖的迹象（A 导入 B，B 又间接导入 A）。
 7. 检查所有包的 exports 字段是否一致（都使用 types + default 双条件导出）。
@@ -326,13 +377,14 @@
    a. 是否有仅内部使用但被公开导出的函数/类型
    b. 是否有"内部实现泄露到公开 API"的痕迹（如导出了 helper、util、internal 前缀的项）
    c. 导出的类型是否有对应的 JSDoc 或在 docs/references/ 中有文档
+   d. 如果导出明显服务于测试共享、过渡迁移、host wiring 或未完成集成，先判断它是否是当前明确支持的公共面，还是仅处于过渡期；不要把“被导出且暂未收口”直接等同于“稳定公共 API 已经错误设计”
 3. 检查跨包接口一致性：
    a. RendererComponentProps 在 flux-react 和各 renderers 包中的使用是否一致
    b. ScopeRef 接口在 flux-core 定义和 flux-runtime 实现是否匹配
-   c. RendererDefinition 的注册协议在各 renderers 包中是否统一
+   c. RendererDefinition 的注册协议在各 renderers 包中是否统一；但只有在当前代码与 owner 文档都表明该包已走 Flux renderer 注册路径时，缺少注册协议才算问题。若该包当前仍是独立 React 页面包或文档明确是 future contract draft，应降级为“待收敛方向”而非直接判违约
    d. FormStoreApi / PageStoreApi 的公开方法是否在文档中有完整描述
 4. 检查是否有类型通过 import type 从 A 包导出，又在 B 包 re-export 且添加了不同的约束。
-5. 检查 packages/*/src/ 下是否有未被 index.ts 导出的"死代码"文件（整个文件没有被任何地方引用）。
+5. 检查 packages/*/src/ 下是否有未被 index.ts 导出的候选未接线文件；只有在确认整个文件没有任何活跃源码引用、没有明确的过渡 owner/计划背景、且不是预留子路径或开发中切片时，才将其定性为"死代码"。
 6. 检查 exports map：package.json 的 exports 字段与实际 index.ts 导出是否对齐。
 
 输出格式：
@@ -872,7 +924,7 @@
 
 审核维度 11：UI 组件使用合规性
 
-目标：确保所有 JSX 中没有使用原生 HTML 元素替代 @nop-chaos/ui 组件。
+目标：优先使用 `@nop-chaos/ui`，但只在存在等价 UI 抽象且替换具有明确收益时报告原生 HTML 使用；不要机械把平台原生特例或高性能专用宿主表面判为违规。
 
 必读文档：
 - AGENTS.md "MANDATORY: UI Component Usage" 章节
@@ -894,16 +946,20 @@
    k. <input type="range"> → 应使用 <Slider>
    l. <hr> → 应使用 <Separator>
    m. <div role="tooltip"> → 应使用 <Tooltip>
-3. 对每个发现的违规：
+3. 对每个发现的候选项：
    a. 判断是否在渲染器组件中（渲染器中违规优先级更高）
    b. 判断是否在 ui 包本身的内部实现中（ui 包内部使用原生元素是合理的）
    c. 评估替换的可行性和风险
+   d. 排除以下合理例外：
+      - 浏览器原生能力控件：`input[type=file]`、`input[type=color]`、以及其他 UI 包没有等价能力封装的控件
+      - 高性能/强语义宿主表面：如 `spreadsheet-renderers` 内部的 grid、virtualized table、命中测试和编辑层
+      - 只有在替换成 `@nop-chaos/ui` 后能明显提升一致性、可访问性或维护性时，才输出为发现
 4. 检查 @nop-chaos/ui 的导入模式是否一致（所有导入都从 '@nop-chaos/ui' 统一入口）。
 5. 检查是否有包直接依赖了 radix-ui / @base-ui 而不通过 @nop-chaos/ui（ui 包除外）。
 
 输出格式：
 
-原生 HTML 使用清单（排除 ui 包内部实现）。
+原生 HTML 使用清单（排除 ui 包内部实现，并区分合理例外 vs 建议整改）。
 
 对每个发现：
 ### [维度11] 简短标题
@@ -1369,7 +1425,7 @@
 
 审核维度 18：跨包模式一致性
 
-目标：确保相同概念在不同包中的实现模式一致，不出现"各自实现一套"的情况。
+目标：识别跨包之间那些已经造成真实维护成本、契约不一致或重复造轮子的模式分歧；不要为了统一而统一，也不要把可解释的共享复用或不同内部实现手法本身当作问题。
 
 必读文档：
 - docs/architecture/flux-design-principles.md
@@ -1387,6 +1443,7 @@
    b. core 包是否都只包含状态、逻辑、类型（无 React 依赖）
    c. renderers 包是否都只包含 React 组件和适配器
    d. 两层之间的桥接模式是否一致
+   e. 若某个 renderer 包本身是被其他 domain 复用的共享包（如 spreadsheet renderer/bridge），则把这种依赖视为公共复用候选，不要机械判为违规
 3. Hook 使用模式一致性：
    a. 所有渲染器是否都使用相同的 hook 组合
    b. 表单字段渲染器是否都使用 useFormFieldController 或等价 hook
@@ -1406,6 +1463,8 @@
 输出格式：
 
 跨包不一致清单 + 统一方向建议。
+
+注意：只有当“不一致”已经导致外部契约混乱、文档-代码不一致、重复维护成本或明显的迁移阻力时才报告。单纯内部实现不同、store 实现不同、bridge 形态不同、或者共享包被其他 domain 复用，本身不构成问题。
 
 对每个发现：
 ### [维度18] 简短标题
@@ -1442,7 +1501,7 @@
 
 ### 汇总报告格式
 
-主 agent 收到所有子 agent 的结果后，输出汇总报告：
+主 agent 收到所有初审与复核子 agent 的结果后，输出汇总报告：
 
 ```markdown
 # 深度审核汇总报告
@@ -1451,7 +1510,14 @@
 - 执行的维度：[列表]
 - 覆盖的包：[列表]
 - 审核日期：YYYY-MM-DD
-- 执行方式：每个维度一个子 agent，共 N 个子 agent
+- 执行方式：每个维度一个初审子 agent + 一个维度复核子 agent + 若干子项复核子 agent，共 N 个子 agent
+
+## 复核统计
+- 初审发现总数：[N]
+- 已独立复核条目数：[N]
+- 保留：[N]
+- 降级：[N]
+- 驳回：[N]
 
 ## P0 清单（按文件分组）
 [table]
@@ -1512,10 +1578,12 @@
 1. **子 agent 类型**: 所有维度使用 `subagent_type="explore"`，因为审核以代码搜索和阅读为主。
 2. **子 agent 提示词必须完整**: 每个维度的提示词是自包含的，派发时必须包含完整的项目背景和审计口径，不能省略。
 3. **上下文隔离**: 每个子 agent 有独立的上下文窗口，不需要担心维度之间互相干扰。
-4. **结果汇总**: 主 agent 负责收集所有子 agent 的输出，去重（同一问题可能被多个维度发现），按严重程度排序，生成汇总报告。
-5. **增量审核**: 可以只选择部分维度执行，不必每次全量审核。用维度编号指定要执行的维度即可。
-6. **与现有检查的关系**: 审核发现的机械问题应优先转化为 lint 规则或 check 脚本，而非持续依赖审核。
-7. **结果归档**: 审核结果应保存在 `docs/logs/` 对应日期的日志中，作为后续改进的参考基线。
+4. **独立复核是强制步骤**: 每个维度必须经过“初审 → 维度复核 → 子项复核”三步，缺一不可。
+5. **复核 agent 必须独立**: 不能让初审 agent 自己给自己复核；必须换新的子 agent。
+6. **结果汇总**: 主 agent 负责收集所有子 agent 的输出，去重（同一问题可能被多个维度发现），仅汇总已通过独立复核的结果。
+7. **增量审核**: 可以只选择部分维度执行，不必每次全量审核。用维度编号指定要执行的维度即可，但选中的维度仍需完整复核链路。
+8. **与现有检查的关系**: 审核发现的机械问题应优先转化为 lint 规则或 check 脚本，而非持续依赖审核。
+9. **结果归档**: 审核结果应保存在 `docs/logs/` 对应日期的日志中，作为后续改进的参考基线。
 
 ---
 

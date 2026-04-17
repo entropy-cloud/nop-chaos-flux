@@ -74,6 +74,36 @@ pnpm --filter @nop-chaos/flux-runtime lint
 
 Always run `typecheck`, `build`, and `lint` after making **CODE** changes. Run tests when relevant.
 
+### Test Execution Strategy
+
+**When fixing failing tests, use targeted execution to minimize feedback time:**
+
+1. **Initial diagnosis**: Run the full test suite once to identify all failures
+2. **Targeted fixes**: For each failing test, run only that specific test:
+   ```bash
+   # Run single test file
+   npx playwright test "tests/e2e/specific.spec.ts" --reporter=list
+   
+   # Run test by line number
+   npx playwright test "tests/e2e/specific.spec.ts:42" --reporter=list
+   
+   # Run test by name pattern
+   npx playwright test --grep "test name pattern" --reporter=list
+   
+   # Run single vitest test
+   pnpm --filter @nop-chaos/flux-runtime test -- --grep "test name"
+   ```
+3. **Final verification**: Only run the full suite after all individual fixes pass
+
+**For debugging test failures:**
+- Use `page.evaluate(() => element.innerHTML)` to inspect DOM structure
+- Add `data-testid` attributes for reliable element selection
+- Avoid relying on screenshots for diagnosis — use programmatic inspection
+
+**Timeout settings:**
+- `playwright.config.ts` has `reuseExistingServer: !process.env.CI` to speed up local development
+- For CI, a fresh server is always started to ensure clean state
+
 ---
 
 ## Docs Maintenance

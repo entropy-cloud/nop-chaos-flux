@@ -41,3 +41,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/28-reaction-debounce-timer-leak-on-dispose.md`
 - `docs/bugs/29-detail-view-confirm-viewer-not-updated-fix.md`
 - `docs/bugs/30-form-runtime-setvalue-setlastchange-missing-rerender-fix.md`
+- `docs/bugs/32-react19-external-store-derived-snapshot-loop-fix.md`
