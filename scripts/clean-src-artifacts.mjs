@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
-const packagesDir = join(rootDir, 'packages');
+const SOURCE_ROOTS = ['packages', 'apps'];
 
 const ARTIFACT_EXTENSIONS = ['.d.ts', '.js', '.js.map'];
 
@@ -34,22 +34,26 @@ async function removeArtifacts(dir) {
 }
 
 async function main() {
-  const packageEntries = await readdir(packagesDir, { withFileTypes: true });
   let removed = 0;
 
-  for (const entry of packageEntries) {
-    if (!entry.isDirectory()) {
-      continue;
-    }
+  for (const rootName of SOURCE_ROOTS) {
+    const workspaceDir = join(rootDir, rootName);
+    const entries = await readdir(workspaceDir, { withFileTypes: true });
 
-    const srcDir = join(packagesDir, entry.name, 'src');
-    try {
-      const srcStat = await stat(srcDir);
-      if (srcStat.isDirectory()) {
-        removed += await removeArtifacts(srcDir);
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue;
       }
-    } catch {
-      // ignore missing src directories
+
+      const srcDir = join(workspaceDir, entry.name, 'src');
+      try {
+        const srcStat = await stat(srcDir);
+        if (srcStat.isDirectory()) {
+          removed += await removeArtifacts(srcDir);
+        }
+      } catch {
+        // ignore missing src directories
+      }
     }
   }
 

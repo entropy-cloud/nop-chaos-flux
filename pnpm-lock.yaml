@@ -253,6 +253,9 @@ importers:
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../flux-formula
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../flux-react
@@ -272,9 +275,6 @@ importers:
         specifier: ^15.7.3
         version: 15.7.3
     devDependencies:
-      '@nop-chaos/flux-formula':
-        specifier: workspace:*
-        version: link:../flux-formula
       '@nop-chaos/flux-renderers-basic':
         specifier: workspace:*
         version: link:../flux-renderers-basic
@@ -643,9 +643,15 @@ importers:
       '@hufe921/canvas-editor':
         specifier: ^0.9.130
         version: 0.9.130
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../flux-react
+      '@nop-chaos/flux-runtime':
+        specifier: workspace:*
+        version: link:../flux-runtime
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
@@ -668,6 +674,9 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0(react@19.2.4)
     devDependencies:
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../flux-formula
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1

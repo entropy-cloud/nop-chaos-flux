@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
+const SOURCE_ROOTS = ['packages', 'apps'];
 
 const ARTIFACT_EXTENSIONS = ['.d.ts', '.js', '.js.map'];
 
@@ -30,20 +31,27 @@ async function scanForArtifacts(dir, relativePath = '') {
 }
 
 async function main() {
-  const packagesDir = join(rootDir, 'packages');
-  const packageNames = await readdir(packagesDir, { withFileTypes: true });
   let allArtifacts = [];
 
-  for (const pkg of packageNames) {
-    const srcDir = join(packagesDir, pkg.name, 'src');
-    try {
-      const statResult = await stat(srcDir);
-      if (statResult.isDirectory()) {
-        const artifacts = await scanForArtifacts(srcDir, `${pkg.name}/src`);
-        allArtifacts.push(...artifacts);
+  for (const rootName of SOURCE_ROOTS) {
+    const workspaceDir = join(rootDir, rootName);
+    const entries = await readdir(workspaceDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue;
       }
-    } catch (error) {
-      // src directory doesn't exist, skip
+
+      const srcDir = join(workspaceDir, entry.name, 'src');
+      try {
+        const statResult = await stat(srcDir);
+        if (statResult.isDirectory()) {
+          const artifacts = await scanForArtifacts(srcDir, `${rootName}/${entry.name}/src`);
+          allArtifacts.push(...artifacts);
+        }
+      } catch {
+        // src directory doesn't exist, skip
+      }
     }
   }
 
