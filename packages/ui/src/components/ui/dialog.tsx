@@ -14,20 +14,22 @@ interface DialogContextValue {
   noOverlay: boolean
   noCenter: boolean
   closeOnOutsideClick: boolean
+  containerElement: HTMLElement | null
 }
 
-const DialogContext = React.createContext<DialogContextValue>({ draggable: false, noOverlay: false, noCenter: false, closeOnOutsideClick: true })
+const DialogContext = React.createContext<DialogContextValue>({ draggable: false, noOverlay: false, noCenter: false, closeOnOutsideClick: true, containerElement: null })
 
 function Dialog({
   draggable = true,
   noOverlay = false,
   noCenter = false,
   closeOnOutsideClick = true,
+  containerElement,
   ...props
-}: DialogPrimitive.Root.Props & { draggable?: boolean; noOverlay?: boolean; noCenter?: boolean; closeOnOutsideClick?: boolean }) {
+}: DialogPrimitive.Root.Props & { draggable?: boolean; noOverlay?: boolean; noCenter?: boolean; closeOnOutsideClick?: boolean; containerElement?: HTMLElement | null }) {
   const contextValue = React.useMemo(
-    () => ({ draggable, noOverlay, noCenter, closeOnOutsideClick }),
-    [draggable, noOverlay, noCenter, closeOnOutsideClick]
+    () => ({ draggable, noOverlay, noCenter, closeOnOutsideClick, containerElement: containerElement ?? null }),
+    [draggable, noOverlay, noCenter, closeOnOutsideClick, containerElement]
   )
 
   return (
@@ -53,11 +55,15 @@ function DialogOverlay({
   className,
   ...props
 }: DialogPrimitive.Backdrop.Props) {
+  const { containerElement } = React.useContext(DialogContext)
+  const isContained = containerElement != null
+
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        isContained ? "absolute inset-0" : "fixed inset-0",
         className
       )}
       {...props}
@@ -74,19 +80,22 @@ const DialogContent = React.forwardRef<
     size?: "sm" | "default" | "lg"
   }
 >(function DialogContent({ className, children, showCloseButton = true, offsetRef, baseTransform, size = "default", ...props }, ref) {
-  const { draggable, noOverlay, noCenter } = React.useContext(DialogContext)
-  const { contentRef, handlePointerDown } = useDialogDrag({ enabled: draggable, offsetRef, baseTransform: noCenter ? '' : baseTransform }, ref)
+  const { draggable, noOverlay, noCenter, containerElement } = React.useContext(DialogContext)
+  const isContained = containerElement != null
+  const effectiveBaseTransform = noCenter ? (isContained ? '' : '') : (isContained ? 'translate(-50%, -50%)' : (baseTransform ?? 'translate(-50%, -50%)'))
+  const { contentRef, handlePointerDown } = useDialogDrag({ enabled: draggable, offsetRef, baseTransform: effectiveBaseTransform }, ref)
 
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <DialogPortal data-slot="dialog-portal" container={containerElement ?? undefined}>
       {!noOverlay && <DialogOverlay />}
       <DialogPrimitive.Popup
         ref={contentRef}
         data-slot="dialog-content"
         data-size={size}
         className={cn(
-          "fixed z-50 w-full max-w-[calc(100%-2rem)] rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+          "z-50 w-full max-w-[calc(100%-2rem)] rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
           "data-[size=sm]:sm:max-w-sm data-[size=default]:sm:max-w-lg data-[size=lg]:sm:max-w-2xl",
+          isContained ? "absolute" : "fixed",
           noCenter ? "flex flex-col" : "grid gap-4 top-[50%] left-[50%]",
           !draggable && !noCenter && "-translate-x-1/2 -translate-y-1/2 data-open:zoom-in-95 data-closed:zoom-out-95",
           className
@@ -94,7 +103,7 @@ const DialogContent = React.forwardRef<
         {...props}
         style={
           draggable
-            ? { transform: noCenter ? undefined : (baseTransform ?? 'translate(-50%, -50%)'), ...props.style }
+            ? { transform: noCenter ? undefined : effectiveBaseTransform, ...props.style }
             : props.style
         }
         onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
