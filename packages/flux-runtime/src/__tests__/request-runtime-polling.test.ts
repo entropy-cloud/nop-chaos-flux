@@ -25,7 +25,7 @@ describe('createDataSourceController', () => {
     const controller = runtime.createDataSourceController({
       api: { url: '/api/job' },
       scope: page.scope,
-        dataPath: 'job',
+      targetPath: 'job',
       interval: 10,
       stopWhen: '${job.status === "done"}'
     });
@@ -68,7 +68,7 @@ describe('createDataSourceController', () => {
     const controller = runtime.createDataSourceController({
       api: { url: '/api/slow' },
       scope: page.scope,
-        dataPath: 'payload'
+      targetPath: 'payload'
     });
 
     controller.start();
@@ -98,7 +98,7 @@ describe('createDataSourceController', () => {
     const controller = runtime.createDataSourceController({
       api: { url: '/api/cache', cacheTTL: 60_000, cacheKey: 'shared-cache' },
       scope: page.scope,
-        dataPath: 'payload'
+      targetPath: 'payload'
     });
 
     controller.start();
@@ -134,12 +134,12 @@ describe('createDataSourceController', () => {
     const first = runtime.createDataSourceController({
       api: { url: '/api/cache?page=1', cacheTTL: 60_000 },
       scope: page.scope,
-        dataPath: 'payload'
+      targetPath: 'payload'
     });
     const second = runtime.createDataSourceController({
       api: { url: '/api/cache', params: { page: 1 }, cacheTTL: 60_000 },
       scope: page.scope,
-        dataPath: 'payload2'
+      targetPath: 'payload2'
     });
 
     first.start();

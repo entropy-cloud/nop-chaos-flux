@@ -18,7 +18,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       schema: {
         type: 'data-source',
-        dataPath: 'total',
+        name: 'total',
         formula: '${(price || 0) * (qty || 0)}'
       }
     });
@@ -48,7 +48,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       schema: {
         type: 'data-source',
-        dataPath: 'total',
+        name: 'total',
         formula: '${(price || 0) * (qty || 0)}'
       }
     });
@@ -93,7 +93,7 @@ describe('createRendererRuntime', () => {
       schema: {
         type: 'data-source',
         api: { url: '/api/users/${userId}' },
-        dataPath: 'payload'
+        name: 'payload'
       }
     });
 
@@ -155,7 +155,7 @@ describe('createRendererRuntime', () => {
       schema: {
         type: 'data-source',
         api: { url: '/api/users/${userId}' },
-        dataPath: 'payload'
+        name: 'payload'
       }
     });
 
@@ -193,7 +193,7 @@ describe('createRendererRuntime', () => {
       scope: firstScope,
       schema: {
         type: 'data-source',
-        dataPath: 'derived',
+        name: 'derived',
         formula: '${value}'
       }
     });
@@ -202,7 +202,7 @@ describe('createRendererRuntime', () => {
       scope: secondScope,
       schema: {
         type: 'data-source',
-        dataPath: 'derived',
+        name: 'derived',
         formula: '${value}'
       }
     });

@@ -28,7 +28,7 @@ describe('createRendererRuntime', () => {
       schema: {
         type: 'data-source',
         api: { url: '/api/first' },
-        dataPath: 'payload'
+        name: 'payload'
       }
     });
 
@@ -42,7 +42,7 @@ describe('createRendererRuntime', () => {
       schema: {
         type: 'data-source',
         api: { url: '/api/second' },
-        dataPath: 'payload'
+        name: 'payload'
       }
     });
 
@@ -94,7 +94,7 @@ describe('createRendererRuntime', () => {
       schema: {
         type: 'data-source',
         api: { url: '/api/slow' },
-        dataPath: 'payload'
+        name: 'payload'
       }
     });
 
@@ -130,7 +130,7 @@ describe('createRendererRuntime', () => {
       schema: {
         type: 'data-source',
         api: { url: '/api/stateful' },
-        dataPath: 'payload',
+        name: 'payload',
         initialData: { value: 'initial' }
       }
     });
@@ -185,7 +185,7 @@ describe('createRendererRuntime', () => {
       schema: {
         type: 'data-source',
         api: { url: '/api/fail' },
-        dataPath: 'payload',
+        name: 'payload',
         initialData: { value: 'initial' }
       }
     });
@@ -220,7 +220,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       schema: {
         type: 'data-source',
-        dataPath: 'total',
+        name: 'total',
         formula: '${(price || 0) * (qty || 0)}'
       }
     });
@@ -245,7 +245,7 @@ describe('createRendererRuntime', () => {
     registration.dispose();
   });
 
-  it('publishes named data-source values without requiring dataPath', async () => {
+  it('publishes named data-source values', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,

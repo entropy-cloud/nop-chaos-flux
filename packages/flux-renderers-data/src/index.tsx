@@ -137,7 +137,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'onClick', kind: 'event' },
       { key: 'onHover', kind: 'event' },
-      { key: 'empty', kind: 'value-or-region' }
+      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' }
     ]
   },
   {

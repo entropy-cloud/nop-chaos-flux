@@ -178,7 +178,7 @@ export interface RendererRuntime {
   createDataSourceController(input: {
     api: ApiSchema;
     scope: ScopeRef;
-    dataPath?: string;
+    targetPath?: string;
     interval?: number;
     stopWhen?: string;
     silent?: boolean;

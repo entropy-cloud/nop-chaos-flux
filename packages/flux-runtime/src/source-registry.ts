@@ -29,10 +29,6 @@ function resolvePublishedTarget(schema: DataSourceSchema, fallbackId: string): s
     return schema.name;
   }
 
-  if (typeof schema.dataPath === 'string' && schema.dataPath.length > 0) {
-    return schema.dataPath;
-  }
-
   if ('api' in schema && schema.api) {
     return undefined;
   }

@@ -132,7 +132,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       schema: {
         type: 'data-source',
-        dataPath: 'total',
+        name: 'total',
         formula: '${(price || 0) * (qty || 0)}'
       }
     });

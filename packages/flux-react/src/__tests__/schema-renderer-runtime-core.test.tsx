@@ -265,7 +265,7 @@ describe('createSchemaRenderer runtime core behavior', () => {
             schema: {
               type: 'data-source',
               api: { url: '/api/user/1' },
-              dataPath: 'user'
+              name: 'user'
             }
           });
 

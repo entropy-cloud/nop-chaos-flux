@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
@@ -40,18 +42,19 @@ describe('form error hooks subscriptions', () => {
   it('keeps broadcast subscriptions for owner-only error queries', () => {
     const subscribe = vi.fn(() => () => undefined);
     const subscribeToPath = vi.fn(() => () => undefined);
+    const state = {
+      ...EMPTY_FORM_STORE_STATE,
+      fieldStates: {
+        'profile.email': {
+          errors: [{ path: 'profile.email', ownerPath: 'profile', rule: 'required', message: 'Required' }],
+        },
+      },
+    };
     const form = {
       store: {
         subscribe,
         subscribeToPath,
-        getState: () => ({
-          ...EMPTY_FORM_STORE_STATE,
-          fieldStates: {
-            'profile.email': {
-              errors: [{ path: 'profile.email', ownerPath: 'profile', rule: 'required', message: 'Required' }],
-            },
-          },
-        }),
+        getState: () => state,
       },
     } as any;
 

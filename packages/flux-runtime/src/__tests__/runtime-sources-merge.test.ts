@@ -334,7 +334,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       schema: {
         type: 'data-source',
-        dataPath: 'payload',
+        name: 'payload',
         api: { url: '/api/same' }
       }
     });

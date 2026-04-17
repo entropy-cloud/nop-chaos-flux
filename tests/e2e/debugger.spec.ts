@@ -89,7 +89,7 @@ test.describe('Nop Debugger', () => {
     const errors = collectConsoleErrors(page);
     await prepareFreshPage(page);
 
-    await page.getByText('Core Renderers').click();
+    await page.getByRole('button', { name: /Flux Basic/ }).click();
     await page.waitForTimeout(1500);
 
     await expect(page.locator('.nop-debugger-launcher')).toBeVisible();
@@ -100,7 +100,7 @@ test.describe('Nop Debugger', () => {
     const errors = collectConsoleErrors(page);
     await prepareFreshPage(page);
 
-    await page.getByText('DevTools').click();
+    await page.getByRole('button', { name: /Debugger Lab/ }).click();
     await page.waitForTimeout(1500);
 
     await expect(page.locator('.nop-debugger-launcher')).toBeVisible();
@@ -110,7 +110,7 @@ test.describe('Nop Debugger', () => {
   test('DebuggerLabPage controls fire events and query diagnostics', async ({ page }) => {
     await prepareFreshPage(page);
 
-    await page.getByText('DevTools').click();
+    await page.getByRole('button', { name: /Debugger Lab/ }).click();
     await page.waitForTimeout(500);
 
     const outputPanel = page.locator('pre').first();
@@ -156,14 +156,14 @@ test.describe('Nop Debugger', () => {
 
     const errors1 = [...errors];
 
-    await page.getByText('Core Renderers').click();
+    await page.getByRole('button', { name: /Flux Basic/ }).click();
     await page.waitForTimeout(1500);
     const errors2 = [...errors];
 
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.waitForTimeout(500);
-    await page.getByText('DevTools').click();
+    await page.getByRole('button', { name: /Debugger Lab/ }).click();
     await page.waitForTimeout(1500);
     const errors3 = [...errors];
 
@@ -298,7 +298,7 @@ test.describe('Nop Debugger', () => {
   test('minimized bar shows error count badge when errors exist', async ({ page }) => {
     await prepareFreshPage(page);
 
-    await page.getByText('DevTools').click();
+    await page.getByRole('button', { name: /Debugger Lab/ }).click();
     await page.waitForTimeout(1000);
 
     await page.locator('.nop-debugger-launcher').click();

@@ -60,7 +60,7 @@ describe('createSchemaRenderer dialog and provider behavior', () => {
   it('stops dialog-scoped polling data sources after closing the dialog', async () => {
     const fetcherSpy = vi.fn(async () => ({ ok: true, status: 200, data: { value: 'polled' } }));
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer, pollingSourceRenderer]);
-    render(<SchemaRenderer schema={{ type: 'page', body: [{ type: 'button', label: 'Open polling dialog', onClick: { action: 'dialog', dialog: { title: 'Polling dialog', body: [{ type: 'polling-source', id: 'dialog-poller', api: { url: '/api/dialog-poll' }, dataPath: 'payload', interval: 50 }, { type: 'text', text: '${payload?.value}' }] } } }] }} env={{ ...env, fetcher: fetcherSpy as any }} formulaCompiler={sharedFormulaCompiler} />);
+    render(<SchemaRenderer schema={{ type: 'page', body: [{ type: 'button', label: 'Open polling dialog', onClick: { action: 'dialog', dialog: { title: 'Polling dialog', body: [{ type: 'polling-source', id: 'dialog-poller', api: { url: '/api/dialog-poll' }, name: 'payload', interval: 50 }, { type: 'text', text: '${payload?.value}' }] } } }] }} env={{ ...env, fetcher: fetcherSpy as any }} formulaCompiler={sharedFormulaCompiler} />);
     fireEvent.click(screen.getByText('Open polling dialog'));
     await waitFor(() => expect(fetcherSpy).toHaveBeenCalledTimes(1));
     fireEvent.click(document.querySelector('[data-slot="dialog-close"]')!);

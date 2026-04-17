@@ -155,7 +155,7 @@ describe('createRendererRuntime', () => {
       schema: {
         type: 'data-source',
         api: { url: '/api/slow' },
-        dataPath: 'payload'
+        name: 'payload'
       }
     });
 

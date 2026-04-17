@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { useMemo } from 'react';
 import { useCurrentForm, useCurrentFormFieldState, useCurrentFormState } from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';

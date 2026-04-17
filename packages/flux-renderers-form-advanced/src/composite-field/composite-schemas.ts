@@ -35,9 +35,7 @@ export interface VariantOption extends SchemaObject {
   key: string;
   label: string;
   viewer?: SchemaInput;
-  viewerRegionKey?: string;
   content: SchemaInput;
-  contentRegionKey?: string;
   match?: VariantMatch;
   initialValue?: SchemaValue;
   transformInAction?: ActionSchema | ActionSchema[];
@@ -54,6 +52,7 @@ export interface VariantFieldSchema extends BoundFieldSchemaBase {
   type: 'variant-field';
   variants: VariantOption[];
   selector?: VariantSelectorConfig;
+  selectorMode?: string;
   defaultVariant?: string;
   detectVariantAction?: ActionSchema | ActionSchema[];
   transformInAction?: ActionSchema | ActionSchema[];

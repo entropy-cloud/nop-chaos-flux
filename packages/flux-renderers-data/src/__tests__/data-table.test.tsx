@@ -152,7 +152,7 @@ describe('dataRendererDefinitions table behavior', () => {
     });
     const fetcher = (async () => fetcherSpy()) as typeof env.fetcher;
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
-    render(<SchemaRenderer schema={{ type: 'page', body: [{ type: 'data-source', id: 'table-source', api: { url: '/api/table-refresh', cacheTTL: 0 }, dataPath: 'tableData' }, { type: 'table', id: 'refreshable-table', source: '${tableData ? [tableData] : []}', onRefresh: { action: 'refreshSource', componentId: 'table-source' }, columns: [{ label: 'Value', name: 'value' }] }, { type: 'button', label: 'Refresh Table', onClick: { action: 'component:refresh', componentId: 'refreshable-table' } }] }} env={{ ...env, fetcher }} formulaCompiler={formulaCompiler} />);
+    render(<SchemaRenderer schema={{ type: 'page', body: [{ type: 'data-source', id: 'table-source', api: { url: '/api/table-refresh', cacheTTL: 0 }, name: 'tableData' }, { type: 'table', id: 'refreshable-table', source: '${tableData ? [tableData] : []}', onRefresh: { action: 'refreshSource', componentId: 'table-source' }, columns: [{ label: 'Value', name: 'value' }] }, { type: 'button', label: 'Refresh Table', onClick: { action: 'component:refresh', componentId: 'refreshable-table' } }] }} env={{ ...env, fetcher }} formulaCompiler={formulaCompiler} />);
     await waitFor(() => expect(fetcherSpy).toHaveBeenCalled());
     const initialCalls = fetcherSpy.mock.calls.length;
     fireEvent.click(screen.getByText('Refresh Table'));

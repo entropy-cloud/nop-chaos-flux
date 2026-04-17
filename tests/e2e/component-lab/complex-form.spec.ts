@@ -178,7 +178,7 @@ test.describe('array-field renderer', () => {
     await expect(stage.getByText(/Add contacts and submit/)).toBeVisible();
 
     // Verify Add button exists
-    const addButton = stage.getByRole('button', { name: /Add|\+/ }).first();
+    const addButton = stage.getByText('Add item').first();
     await expect(addButton).toBeVisible();
     // Submit button exists
     await expect(stage.getByRole('button', { name: 'Submit' })).toBeVisible();
@@ -217,7 +217,7 @@ test.describe('detail-field renderer', () => {
     await expect(stage).toBeVisible();
     await expect(stage.getByText('Ada Lovelace')).toBeVisible({ timeout: 5_000 });
 
-    const editButton = stage.getByRole('button', { name: /Edit/ }).first();
+    const editButton = stage.getByText('Edit').first();
     await editButton.click();
     await expect(page.getByLabel('First Name')).toBeVisible({ timeout: 5_000 });
 

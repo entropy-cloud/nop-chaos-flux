@@ -31,7 +31,7 @@ describe('explicit dependency roots', () => {
       scope: page.scope,
       schema: {
         type: 'data-source',
-        dataPath: 'total',
+        name: 'total',
         formula: '${(price || 0) * (qty || 0)}',
         dependsOn: ['price']
       }
@@ -81,7 +81,7 @@ describe('explicit dependency roots', () => {
       schema: {
         type: 'data-source',
         api: { url: '/api/users/${userId}/${note}' },
-        dataPath: 'payload',
+        name: 'payload',
         dependsOn: ['userId']
       }
     });
@@ -119,7 +119,7 @@ describe('explicit dependency roots', () => {
       scope: page.scope,
       schema: {
         type: 'data-source',
-        dataPath: 'total',
+        name: 'total',
         formula: '${(total || 0) + 1}',
         dependsOn: ['total']
       }

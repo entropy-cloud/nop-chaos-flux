@@ -312,8 +312,7 @@ export function createRendererRuntime(input: {
         runtime,
         apiCache,
         executeApiRequest: (actionType, api, scope, options) => executeApiRequest(actionType, api, scope, undefined, options),
-        ...inputValue,
-        targetPath: inputValue.dataPath
+        ...inputValue
       });
     },
     registerDataSource(inputValue: {
