@@ -27,6 +27,7 @@
     "@codemirror/view": "^6.41.0",
     "@lezer/highlight": "^1.2.1",
     "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
@@ -35,7 +36,6 @@
     "sql-formatter": "^15.7.3"
   },
   "devDependencies": {
-    "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/flux-renderers-data": "workspace:*",
     "@nop-chaos/flux-renderers-form": "workspace:*",

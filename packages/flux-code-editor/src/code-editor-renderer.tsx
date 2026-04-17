@@ -1,35 +1,19 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
-import type { RendererComponentProps, RendererDefinition, SchemaFieldRule, ActionSchema } from '@nop-chaos/flux-core';
-import type { ApiObject, ActionResult } from '@nop-chaos/flux-core';
-import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
+import { useRenderScope } from '@nop-chaos/flux-react';
 import { Button } from '@nop-chaos/ui';
-import { XIcon, Maximize2Icon, PlayIcon, ChevronRightIcon, ChevronDownIcon } from 'lucide-react';
-import { useCodeMirror } from './use-code-mirror';
+import { XIcon } from 'lucide-react';
+import { CodeEditorBody } from './code-editor-renderer/CodeEditorBody';
+import { CodeEditorToolbar } from './code-editor-renderer/CodeEditorToolbar';
+import type { CodeEditorRendererProps } from './code-editor-renderer/shared';
+import { useCodeEditorBinding } from './code-editor-renderer/use-code-editor-binding';
+import { useSQLEditorState } from './code-editor-renderer/use-sql-editor-state';
 import { createBaseExtensions } from './extensions/base';
-import { formatSQL } from './extensions/sql/format';
-import { SnippetPanel } from './extensions/snippet-panel';
-import { VariablePanel } from './variable-panel';
+import { useResolvedFunctions, useResolvedSQLVariables, useResolvedTables, useResolvedVariables } from './source-resolvers';
 import { SQLResultPanel } from './sql-result-panel';
-import type { SQLResultState } from './sql-result-panel';
-import type {
-  CodeEditorSchema,
-  EditorLanguage,
-  EditorMode,
-  ExpressionEditorConfig,
-  SQLEditorConfig,
-} from './types';
-import {
-  getDefaultLineNumbers,
-  getDefaultAutoHeight,
-  getDefaultHeight,
-  resolveFormatConfig,
-} from './types';
-import {
-  useResolvedVariables,
-  useResolvedFunctions,
-  useResolvedTables,
-  useResolvedSQLVariables,
-} from './source-resolvers';
+import type { CodeEditorSchema, EditorLanguage, EditorMode, ExpressionEditorConfig, SQLEditorConfig } from './types';
+import { getDefaultAutoHeight, getDefaultHeight, getDefaultLineNumbers, resolveFormatConfig } from './types';
+import { useCodeMirror } from './use-code-mirror';
 
 export const codeEditorFieldRules: SchemaFieldRule[] = [
   { key: 'value', kind: 'prop' },
@@ -51,55 +35,25 @@ export const codeEditorFieldRules: SchemaFieldRule[] = [
   { key: 'onBlur', kind: 'event' },
 ];
 
-export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchema>) {
+export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const scope = useRenderScope();
-  const currentForm = useCurrentForm();
 
   const language = (props.props.language as EditorLanguage) ?? 'plaintext';
   const mode = props.props.mode as EditorMode | undefined;
   const readOnly = Boolean(props.props.readOnly ?? props.meta.disabled);
   const placeholder = props.props.placeholder as string | undefined;
   const editorTheme = (props.props.editorTheme as 'light' | 'dark') ?? 'light';
-  const lineNumbers = props.props.lineNumbers as boolean | undefined ?? getDefaultLineNumbers(language);
-  const folding = props.props.folding as boolean | undefined ?? false;
-  const autoHeight = props.props.autoHeight as boolean | undefined ?? getDefaultAutoHeight(language);
-
-  const allowFullscreen = props.props.allowFullscreen as boolean | undefined ?? false;
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const toggleFullscreen = useCallback(() => setIsFullscreen(v => !v), []);
-
+  const lineNumbers = (props.props.lineNumbers as boolean | undefined) ?? getDefaultLineNumbers(language);
+  const folding = (props.props.folding as boolean | undefined) ?? false;
+  const autoHeight = (props.props.autoHeight as boolean | undefined) ?? getDefaultAutoHeight(language);
+  const allowFullscreen = (props.props.allowFullscreen as boolean | undefined) ?? false;
   const expressionConfig = props.props.expressionConfig as ExpressionEditorConfig | undefined;
   const sqlConfig = props.props.sqlConfig as SQLEditorConfig | undefined;
-
   const name = String(props.props.name ?? props.schema.name ?? '');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const toggleFullscreen = useCallback(() => setIsFullscreen((value) => !value), []);
 
-  const formatConfig = resolveFormatConfig(sqlConfig);
-  const hasSnippets = Boolean(sqlConfig?.snippets?.length);
-  const hasVariablePanel = Boolean(sqlConfig?.variablePanel?.enabled);
-  const hasExecution = Boolean(sqlConfig?.execution?.enabled);
-
-  const hasSQLToolbar = language === 'sql' && (
-    Boolean(formatConfig) || hasSnippets || hasVariablePanel || hasExecution
-  );
-
-  const [variablePanelCollapsed, setVariablePanelCollapsed] = useState(false);
-  const [sqlResult, setSqlResult] = useState<SQLResultState>({ status: 'idle' });
-
-  let value: string;
-  if (currentForm && name) {
-    const formValues = currentForm.store.getState().values;
-    const getValue = (obj: unknown, path: string): unknown => {
-      return path.split('.').reduce((current, key) => {
-        if (current == null || typeof current !== 'object') return undefined;
-        return (current as Record<string, unknown>)[key];
-      }, obj);
-    };
-    value = String(getValue(formValues, name) ?? '');
-  } else if (name) {
-    value = String(scope.get(name) ?? '');
-  } else {
-    value = String(props.props.value ?? '');
-  }
+  const { value, handleChange, handleFocus, handleBlur } = useCodeEditorBinding(props, name);
 
   const resolvedVariables = useResolvedVariables(expressionConfig, scope, props.helpers.dispatch);
   const resolvedFunctions = useResolvedFunctions(expressionConfig, props.helpers.dispatch);
@@ -137,31 +91,8 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
     [language, mode, lineNumbers, folding, autoHeight, editorTheme, sqlConfig?.dialect, completionConfig, expressionConfig?.lint, expressionConfig?.showFriendlyNames],
   );
 
-  const handleChange = (newValue: string) => {
-    if (currentForm && name) {
-      currentForm.setValue(name, newValue);
-    } else if (name) {
-      scope.update(name, newValue);
-    }
-    props.events.onChange?.({ value: newValue });
-  };
-
-  const handleFocus = () => {
-    if (currentForm && name) {
-      currentForm.visitField(name);
-    }
-    props.events.onFocus?.();
-  };
-
-  const handleBlur = () => {
-    if (currentForm && name) {
-      currentForm.touchField(name);
-    }
-    props.events.onBlur?.();
-  };
-
-  const height = props.props.height as number | string | undefined ?? getDefaultHeight(language);
-  const width = props.props.width as number | string | undefined ?? '100%';
+  const height = (props.props.height as number | string | undefined) ?? getDefaultHeight(language);
+  const width = (props.props.width as number | string | undefined) ?? '100%';
 
   const containerStyle = useMemo<React.CSSProperties>(
     () => ({
@@ -174,8 +105,8 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
 
   useEffect(() => {
     if (!isFullscreen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsFullscreen(false);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsFullscreen(false);
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
@@ -191,105 +122,22 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
     onBlur: handleBlur,
   });
 
-  const insertAtCursor = useCallback((text: string) => {
-    if (!view) return;
-    const pos = view.state.selection.main.head;
-    view.dispatch({
-      changes: { from: pos, to: pos, insert: text },
-    });
-    view.focus();
-  }, [view]);
-
-  const handleFormatSQL = useCallback(() => {
-    if (!view || !sqlConfig?.format) return;
-    const currentSQL = view.state.doc.toString();
-    const formatted = formatSQL(currentSQL, sqlConfig.format, sqlConfig.dialect);
-    if (formatted !== currentSQL) {
-      view.dispatch({
-        changes: { from: 0, to: view.state.doc.length, insert: formatted },
-      });
-      view.focus();
-    }
-  }, [view, sqlConfig]);
-
-  const handleExecuteSQL = useCallback(async () => {
-    if (!sqlConfig?.execution?.enabled || !view) return;
-
-    setSqlResult({ status: 'loading' });
-
-    try {
-      const sqlText = view.state.doc.toString();
-      const onExecute = sqlConfig.execution.onExecute;
-
-      let result: ActionResult;
-      if (typeof onExecute === 'string') {
-        const action: ActionSchema = {
-          action: onExecute,
-          args: { sql: sqlText },
-        };
-        result = await props.helpers.dispatch(action);
-      } else if (onExecute && typeof onExecute === 'object') {
-        const action: ActionSchema = {
-          action: 'ajax',
-          api: {
-            ...(onExecute as ApiObject),
-            data: { sql: sqlText },
-          },
-        };
-        result = await props.helpers.dispatch(action);
-      } else {
-        const action: ActionSchema = {
-          action: 'ajax',
-          api: {
-            url: '/api/report/execSql',
-            method: 'POST',
-            data: { sql: sqlText },
-          },
-        };
-        result = await props.helpers.dispatch(action);
-      }
-
-      if (result.ok && result.data != null) {
-        const resultPath = sqlConfig.execution.resultPath;
-        let data: unknown = result.data;
-        if (resultPath) {
-          const parts = resultPath.split('.');
-          for (const key of parts) {
-            if (data == null || typeof data !== 'object') {
-              data = undefined;
-              break;
-            }
-            data = (data as Record<string, unknown>)[key];
-          }
-        }
-
-        if (Array.isArray(data)) {
-          const columns = data.length > 0 ? Object.keys(data[0] as Record<string, unknown>) : [];
-          setSqlResult({ status: 'success', data, columns });
-        } else {
-          setSqlResult({ status: 'success', data: [{ result: String(data) }], columns: ['result'] });
-        }
-      } else {
-        setSqlResult({
-          status: 'error',
-          message: result.error ? String(result.error) : 'Execution returned no data',
-        });
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      setSqlResult({
-        status: 'error',
-        message,
-      });
-    }
-  }, [view, sqlConfig, props.helpers]);
-
-  const handleClearResult = useCallback(() => {
-    setSqlResult({ status: 'idle' });
-  }, []);
+  const {
+    hasSnippets,
+    hasVariablePanel,
+    hasExecution,
+    variablePanelCollapsed,
+    setVariablePanelCollapsed,
+    sqlResult,
+    insertAtCursor,
+    handleFormatSQL,
+    handleExecuteSQL,
+    handleClearResult,
+  } = useSQLEditorState(props, sqlConfig, view);
 
   const sqlVariables = useResolvedSQLVariables(sqlConfig, scope, props.helpers.dispatch);
-
+  const formatConfig = resolveFormatConfig(sqlConfig);
+  const hasSQLToolbar = language === 'sql' && (Boolean(formatConfig) || hasSnippets || hasVariablePanel || hasExecution);
   const showToolbar = (allowFullscreen && !isFullscreen) || hasSQLToolbar;
 
   return (
@@ -301,7 +149,7 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
       data-has-toolbar={showToolbar || undefined}
       style={!isFullscreen ? containerStyle : undefined}
     >
-      {isFullscreen && allowFullscreen && (
+      {isFullscreen && allowFullscreen ? (
         <div data-slot="code-editor-header">
           <span data-slot="code-editor-header-title">{String(props.props.label ?? props.schema.label ?? '')}</span>
           <Button
@@ -314,88 +162,42 @@ export function CodeEditorRenderer(props: RendererComponentProps<CodeEditorSchem
             <XIcon />
           </Button>
         </div>
-      )}
-      {showToolbar && (
-        <div data-slot="code-editor-toolbar">
-          {language === 'sql' && (
-            <>
-              {formatConfig && (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  data-slot="code-editor-toolbar-format"
-                  onClick={handleFormatSQL}
-                  title="Format SQL"
-                >
-                  Format
-                </Button>
-              )}
-              {hasSnippets && (
-                <SnippetPanel
-                  snippets={sqlConfig!.snippets!}
-                  onInsert={insertAtCursor}
-                />
-              )}
-              {hasVariablePanel && (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  data-slot="code-editor-toolbar-var-toggle"
-                  onClick={() => setVariablePanelCollapsed(v => !v)}
-                  title={variablePanelCollapsed ? 'Show variables' : 'Hide variables'}
-                >
-                  {variablePanelCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
-                  Vars
-                </Button>
-              )}
-              {hasExecution && (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  data-slot="code-editor-toolbar-execute"
-                  onClick={handleExecuteSQL}
-                  title="Execute SQL"
-                >
-                  <PlayIcon />
-                  Run
-                </Button>
-              )}
-            </>
-          )}
-          {allowFullscreen && !isFullscreen && (
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              data-slot="code-editor-toolbar-fullscreen"
-              onClick={toggleFullscreen}
-              aria-label="Enter fullscreen"
-              title="Fullscreen"
-            >
-              <Maximize2Icon />
-            </Button>
-          )}
-        </div>
-      )}
-      <div data-slot={hasVariablePanel ? 'code-editor-body' : undefined} style={hasVariablePanel ? { display: 'flex', flex: 1, minHeight: 0 } : undefined}>
-        <div
-          ref={editorRef}
-          style={isFullscreen ? { flex: 1, overflow: 'auto' } : hasVariablePanel ? { flex: 1, minHeight: 0 } : undefined}
+      ) : null}
+
+      {showToolbar ? (
+        <CodeEditorToolbar
+          language={language}
+          allowFullscreen={allowFullscreen}
+          isFullscreen={isFullscreen}
+          formatConfig={formatConfig}
+          snippets={sqlConfig?.snippets}
+          hasVariablePanel={hasVariablePanel}
+          hasExecution={hasExecution}
+          variablePanelCollapsed={variablePanelCollapsed}
+          onFormatSQL={handleFormatSQL}
+          onInsertSnippet={insertAtCursor}
+          onToggleVariables={() => setVariablePanelCollapsed((value) => !value)}
+          onExecuteSQL={handleExecuteSQL}
+          onEnterFullscreen={toggleFullscreen}
         />
-        {hasVariablePanel && (
-          <VariablePanel
-            variables={sqlVariables}
-            insertTemplate={sqlConfig!.variablePanel!.insertTemplate}
-            onInsert={insertAtCursor}
-            collapsed={variablePanelCollapsed}
-            onToggleCollapse={() => setVariablePanelCollapsed(v => !v)}
-          />
-        )}
-      </div>
-      {hasExecution && sqlResult.status !== 'idle' && (
+      ) : null}
+
+      <CodeEditorBody
+        editorRef={editorRef}
+        isFullscreen={isFullscreen}
+        hasVariablePanel={hasVariablePanel}
+        variablePanelCollapsed={variablePanelCollapsed}
+        sqlVariables={sqlVariables}
+        insertTemplate={sqlConfig?.variablePanel?.insertTemplate}
+        onInsertVariable={insertAtCursor}
+        onToggleVariablePanel={() => setVariablePanelCollapsed((value) => !value)}
+      />
+
+      {hasExecution && sqlResult.status !== 'idle' ? (
         <div data-slot="code-editor-result-container">
           <SQLResultPanel result={sqlResult} onClose={handleClearResult} />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
