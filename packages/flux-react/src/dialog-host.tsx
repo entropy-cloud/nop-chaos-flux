@@ -10,6 +10,7 @@ import { renderSurfaceNode, SurfaceScopeProviders, useSurfaceScopeSnapshot } fro
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@nop-chaos/ui';
+import { resolveContainerElement } from './container-hooks';
 
 function sameSurfaces(left: SurfaceEntry[], right: SurfaceEntry[]) {
   if (left === right) {
@@ -82,8 +83,12 @@ function DialogView(props: {
   };
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
+  const containerId = typeof surface.surface.container === 'string' ? surface.surface.container : page.modalContainer;
+  const containerElement = resolveContainerElement(containerId, surface.componentRegistry);
+  const showMask = surface.surface.showMask !== false;
+
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) handleClose(); }}>
+    <Dialog open onOpenChange={(open) => { if (!open) handleClose(); }} containerElement={containerElement} noOverlay={!showMask}>
       <DialogContent data-slot="dialog-surface" onClickCapture={(event) => {
         const target = event.target;
 
@@ -140,9 +145,13 @@ function DrawerView(props: {
   };
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
+  const containerId = typeof surface.surface.container === 'string' ? surface.surface.container : page.modalContainer;
+  const containerElement = resolveContainerElement(containerId, surface.componentRegistry);
+  const showMask = surface.surface.showMask !== false;
+
   return (
-    <Drawer open onOpenChange={(open) => { if (!open) handleClose(); }} direction={surface.surface.side === 'left' ? 'left' : surface.surface.side === 'top' ? 'top' : surface.surface.side === 'bottom' ? 'bottom' : 'right'}>
-      <DrawerContent data-slot="drawer-surface" onClickCapture={(event) => {
+    <Drawer open onOpenChange={(open) => { if (!open) handleClose(); }} direction={surface.surface.side === 'left' ? 'left' : surface.surface.side === 'top' ? 'top' : surface.surface.side === 'bottom' ? 'bottom' : 'right'} containerElement={containerElement}>
+      <DrawerContent data-slot="drawer-surface" showMask={showMask} onClickCapture={(event) => {
         const target = event.target;
 
         if (!(target instanceof Element)) {

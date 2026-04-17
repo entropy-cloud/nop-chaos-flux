@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import type {
+  BaseSchema,
   RendererDefinition,
   SchemaRendererProps
 } from '@nop-chaos/flux-core';
@@ -46,6 +47,12 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const initialDataAppliedRef = useRef(false);
     const page = useMemo(() => runtime.createPageRuntime(initialPageDataRef.current), [runtime]);
     const surfaceRuntime = useMemo(() => runtime.createSurfaceRuntime(), [runtime]);
+
+    useEffect(() => {
+      const schemaInput = props.schema;
+      const rootSchema = Array.isArray(schemaInput) ? schemaInput[0] : schemaInput;
+      page.modalContainer = (rootSchema as BaseSchema & { modalContainer?: string })?.modalContainer;
+    }, [props.schema, page]);
 
     useEffect(() => {
       if (!initialDataAppliedRef.current) {
@@ -189,7 +196,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }
 
     return (
-      <div data-runtime-id={runtime.runtimeId}>
+      <div data-runtime-id={runtime.runtimeId} className="contents">
         <RuntimeContext.Provider value={runtime}>
           <ActionScopeContext.Provider value={rootActionScope}>
             <ComponentRegistryContext.Provider value={rootComponentRegistry}>

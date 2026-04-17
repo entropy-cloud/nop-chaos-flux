@@ -56,6 +56,7 @@ export {
 } from './contexts';
 export { EMPTY_FORM_STORE_STATE, isFieldEffectivelyRequired, selectCurrentFormErrors, selectCurrentFormFieldPresentation, selectCurrentFormFieldState } from './form-state';
 export { useBridgeSnapshot, useHostScope, useNamespaceRegistration, WorkbenchShell } from './workbench';
+export { useResolvedContainer, useContainerDomRegistration, resolveContainerElement } from './container-hooks';
 export { useSourceValue } from './useSourceValue';
 export type { SourceTransientState } from './use-node-source-props';
 export type { WorkbenchShellProps } from './workbench';
