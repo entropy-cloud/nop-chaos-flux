@@ -52,7 +52,9 @@ describe('createSchemaRenderer dialog and provider behavior', () => {
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'alice@example.com' } });
     fireEvent.click(canvas.getByText('Rerender host 0'));
     fireEvent.click(canvas.getByText('Rename user'));
-    expect(await screen.findByText('Dialog Operator')).toBeTruthy();
+    expect(await screen.findByText('Dialog Architect')).toBeTruthy();
+    expect(screen.getByText('Dialog user Architect')).toBeTruthy();
+    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('alice@example.com');
   });
 
   it('stops dialog-scoped polling data sources after closing the dialog', async () => {

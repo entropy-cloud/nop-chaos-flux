@@ -7,7 +7,7 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index';
-import { buttonRenderer, contactGroupRenderer, env } from '@nop-chaos/flux-renderers-form';
+import { buttonRenderer, contactGroupRenderer, env } from '@nop-chaos/flux-renderers-form/test-support';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 

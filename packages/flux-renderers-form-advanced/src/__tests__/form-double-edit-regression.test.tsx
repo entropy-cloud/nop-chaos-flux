@@ -5,7 +5,7 @@ import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index';
-import { buttonRenderer, env, formStateProbeRenderer, selectOption, sharedFormulaCompiler, submitCalls } from '@nop-chaos/flux-renderers-form';
+import { buttonRenderer, env, formStateProbeRenderer, selectOption, sharedFormulaCompiler, submitCalls } from '@nop-chaos/flux-renderers-form/test-support';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 
