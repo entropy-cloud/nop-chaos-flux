@@ -8,6 +8,7 @@ import { ReportInspectorShellRenderer } from './inspector-shell-renderer.js';
 import { ReportDesignerPageRenderer } from './page-renderer.js';
 import { ReportInspectorRenderer } from './report-designer-inspector.js';
 import { ReportToolbarRenderer } from './report-designer-toolbar.js';
+import { reportDesignerHostContract } from './report-designer-manifest.js';
 import type {
   ReportDesignerPageSchemaInput,
   ReportDesignerPageSchema,
@@ -41,6 +42,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
     regions: ['toolbar', 'fieldPanel', 'inspector', 'dialogs', 'body'],
     fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
     actionScopePolicy: 'new',
+    hostContract: reportDesignerHostContract,
   },
   {
     type: 'report-toolbar',
@@ -52,4 +54,3 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
 export function registerReportDesignerRenderers(registry: RendererRegistry) {
   return registerRendererDefinitions(registry, reportDesignerRendererDefinitions);
 }
-
