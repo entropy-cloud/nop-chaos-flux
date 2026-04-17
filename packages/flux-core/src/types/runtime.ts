@@ -336,6 +336,7 @@ export interface PageRuntime {
   store: PageStoreApi;
   scope: ScopeRef;
   refresh(): void;
+  modalContainer?: string;
 }
 
 export interface SurfaceRendererProps {
