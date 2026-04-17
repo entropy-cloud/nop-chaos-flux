@@ -9,10 +9,8 @@ import { getIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
 import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
-import { cn } from '@nop-chaos/ui';
 import type { ObjectFieldSchema } from './composite-schemas';
-import { formLabelFieldRule, resolveFieldLabelContent, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
-import { FieldHint, FieldLabel } from '@nop-chaos/flux-renderers-form';
+import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createProjectedScopeHelpers } from '../detail-view/projected-scope';
 import { createProjectedFormRuntime, createProjectedFormStore } from '../detail-view/projected-form-runtime';
 
@@ -104,7 +102,6 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     readOnly
   });
 
-  const labelContent = resolveFieldLabelContent(props);
   const bodyContent = resolveRendererSlotContent(props, 'body');
 
   const childScope = React.useMemo(
@@ -138,27 +135,12 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   );
 
   return (
-    <div
-      className={cn('nop-field', props.meta.className)}
-      data-testid={props.meta.testid || undefined}
-      data-cid={props.meta.cid || undefined}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-    >
-      <FieldLabel content={labelContent} />
-      <div data-slot="field-control">
-        <FormContext.Provider value={childForm ?? undefined}>
-          <ScopeContext.Provider value={childScope}>
-            <div data-slot="object-field-body">{bodyContent}</div>
-          </ScopeContext.Provider>
-        </FormContext.Provider>
-      </div>
-      <FieldHint
-        errorMessage={presentation.fieldState.error?.message}
-        showError={presentation.showError}
-      />
+    <div data-slot="field-control">
+      <FormContext.Provider value={childForm ?? undefined}>
+        <ScopeContext.Provider value={childScope}>
+          <div data-slot="object-field-body">{bodyContent}</div>
+        </ScopeContext.Provider>
+      </FormContext.Provider>
     </div>
   );
 }
@@ -166,6 +148,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 export const objectFieldRendererDefinition: RendererDefinition = {
   type: 'object-field',
   component: ObjectFieldRenderer,
+  wrap: true,
   regions: ['body'],
   fields: [formLabelFieldRule],
   validation: {

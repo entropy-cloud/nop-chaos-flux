@@ -15,13 +15,12 @@ import {
   formLabelFieldRule,
   getChildFieldUiState,
   getFieldValidationBehavior,
-  resolveFieldLabelContent,
   shouldValidateOn,
   useCompositeChildFieldState,
   useFormFieldController
 } from '@nop-chaos/flux-renderers-form';
 import type { KeyValuePair, KeyValueSchema } from '@nop-chaos/flux-renderers-form';
-import { FieldHint, FieldLabel } from '@nop-chaos/flux-renderers-form';
+import { FieldHint } from '@nop-chaos/flux-renderers-form';
 import { createNextCompositeItemId } from './composite-field/composite-item-id';
 
 const EMPTY_KEY_VALUE_PAIRS: KeyValuePair[] = [];
@@ -204,7 +203,6 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     disabled: props.meta.disabled,
     required: Boolean(props.props.required)
   });
-  const labelContent = resolveFieldLabelContent(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const pairsRef = React.useRef<KeyValuePair[]>([]);
   const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
@@ -333,57 +331,43 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     }, [childPaths, currentForm, modelGeneration, name]);
 
   return (
-    <div
-      className={presentation.className}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-    >
-      <FieldLabel content={labelContent} />
-      <div className="grid gap-3" data-slot="field-control">
-        {pairs.map((pair, index) => {
-          return (
-            <KeyValueRow
-              key={pair.id}
-              pair={pair}
-              index={index}
-              name={name}
-              currentForm={currentForm}
-              childBehavior={childBehavior}
-              onSync={syncField}
-              pairs={pairs}
-              disabled={presentation.effectiveDisabled}
-            />
-          );
-        })}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={presentation.effectiveDisabled}
-          onClick={() => {
-            const nextEntry = { id: createNextCompositeItemId(pairs, 'pair-'), key: '', value: '' };
-            const nextPairs = [...pairs, nextEntry];
-            pairsRef.current = nextPairs;
+    <div className="grid gap-3" data-slot="field-control">
+      {pairs.map((pair, index) => {
+        return (
+          <KeyValueRow
+            key={pair.id}
+            pair={pair}
+            index={index}
+            name={name}
+            currentForm={currentForm}
+            childBehavior={childBehavior}
+            onSync={syncField}
+            pairs={pairs}
+            disabled={presentation.effectiveDisabled}
+          />
+        );
+      })}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={presentation.effectiveDisabled}
+        onClick={() => {
+          const nextEntry = { id: createNextCompositeItemId(pairs, 'pair-'), key: '', value: '' };
+          const nextPairs = [...pairs, nextEntry];
+          pairsRef.current = nextPairs;
 
-            if (currentForm && name) {
-              currentForm.appendValue(name, nextEntry);
-              void currentForm.validateField(name);
-              return;
-            }
+          if (currentForm && name) {
+            currentForm.appendValue(name, nextEntry);
+            void currentForm.validateField(name);
+            return;
+          }
 
-            syncField(nextPairs);
-          }}
-        >
-          {props.props.addLabel ? String(props.props.addLabel) : 'Add entry'}
-        </Button>
-      </div>
-      <FieldHint
-        errorMessage={presentation.fieldState.error?.message}
-        validating={presentation.fieldState.validating}
-        showError={presentation.showError}
-      />
+          syncField(nextPairs);
+        }}
+      >
+        {props.props.addLabel ? String(props.props.addLabel) : 'Add entry'}
+      </Button>
     </div>
   );
 }
@@ -391,6 +375,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 export const keyValueRendererDefinition: RendererDefinition = {
   type: 'key-value',
   component: KeyValueRenderer,
+  wrap: true,
   fields: [formLabelFieldRule],
   validation: {
     kind: 'field',

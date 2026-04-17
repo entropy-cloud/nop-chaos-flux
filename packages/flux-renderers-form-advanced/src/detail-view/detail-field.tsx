@@ -13,16 +13,10 @@ import {
   useScopeSelector,
   useCurrentFormState
 } from '@nop-chaos/flux-react';
-import {
-  Button,
-  cn
-} from '@nop-chaos/ui';
+import { Button } from '@nop-chaos/ui';
 import type { DetailFieldSchema } from '../composite-field/composite-schemas';
 import {
-  FieldHint,
-  FieldLabel,
   formLabelFieldRule,
-  resolveFieldLabelContent,
   useFieldPresentation
 } from '@nop-chaos/flux-renderers-form';
 import { publishValidateResultErrors, valueAdaptationOwnerHelper } from './value-adaptation-helper';
@@ -42,7 +36,6 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const triggerLabel = String(props.props.triggerLabel ?? 'Edit');
 
   const presentation = useFieldPresentation(name, parentForm, { readOnly });
-  const labelContent = resolveFieldLabelContent(props);
 
   const currentValue = useCurrentFormState(
     (state) => (name ? (state.values as Record<string, unknown>)[name] : undefined),
@@ -166,16 +159,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const editContent = resolveRendererSlotContent(props, 'content');
 
   return (
-    <div
-      className={cn('nop-field', props.meta.className)}
-      data-testid={props.meta.testid || undefined}
-      data-cid={props.meta.cid || undefined}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-    >
-      <FieldLabel content={labelContent} />
+    <>
       <div data-slot="field-control">
         <div data-slot="detail-field-viewer">
           {viewerContent ?? <span>{fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : '—'}</span>}
@@ -211,17 +195,14 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
           {editContent}
         </DetailDraftBody>
       </DetailSurface>
-      <FieldHint
-        errorMessage={presentation.fieldState.error?.message}
-        showError={presentation.showError}
-      />
-    </div>
+    </>
   );
 }
 
 export const detailFieldRendererDefinition: RendererDefinition = {
   type: 'detail-field',
   component: DetailFieldRenderer as any,
+  wrap: true,
   regions: ['viewer', 'content'],
   fields: [formLabelFieldRule],
   scopePolicy: 'form',

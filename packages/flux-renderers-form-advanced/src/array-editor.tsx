@@ -7,13 +7,12 @@ import {
   formLabelFieldRule,
   getChildFieldUiState,
   getFieldValidationBehavior,
-  resolveFieldLabelContent,
   shouldValidateOn,
   useCompositeChildFieldState,
   useFormFieldController
 } from '@nop-chaos/flux-renderers-form';
 import type { ArrayEditorItem, ArrayEditorSchema } from '@nop-chaos/flux-renderers-form';
-import { FieldHint, FieldLabel } from '@nop-chaos/flux-renderers-form';
+import { FieldHint } from '@nop-chaos/flux-renderers-form';
 import { createNextCompositeItemId } from './composite-field/composite-item-id';
 
 const EMPTY_ARRAY_EDITOR_ITEMS: ArrayEditorItem[] = [];
@@ -139,7 +138,6 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     disabled: props.meta.disabled,
     required: Boolean(props.props.required)
   });
-  const labelContent = resolveFieldLabelContent(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const itemsRef = React.useRef<ArrayEditorItem[]>([]);
   const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
@@ -239,58 +237,44 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     }, [childPaths, currentForm, modelGeneration, name, props.props.itemLabel]);
 
   return (
-    <div
-      className={presentation.className}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-    >
-      <FieldLabel content={labelContent} />
-      <div className="grid gap-3" data-slot="field-control">
-        {items.map((item, index) => {
-          return (
-            <ArrayEditorRow
-              key={item.id}
-              item={item}
-              index={index}
-              name={name}
-              currentForm={currentForm}
-              childBehavior={childBehavior}
-              onSync={syncItems}
-              items={items}
-              itemLabel={props.props.itemLabel ? String(props.props.itemLabel) : undefined}
-              disabled={presentation.effectiveDisabled}
-            />
-          );
-        })}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={presentation.effectiveDisabled}
-          onClick={() => {
-            const nextItem = { id: createNextCompositeItemId(items, 'item-'), value: '' };
-            const nextItems = [...items, nextItem];
-            itemsRef.current = nextItems;
+    <div className="grid gap-3" data-slot="field-control">
+      {items.map((item, index) => {
+        return (
+          <ArrayEditorRow
+            key={item.id}
+            item={item}
+            index={index}
+            name={name}
+            currentForm={currentForm}
+            childBehavior={childBehavior}
+            onSync={syncItems}
+            items={items}
+            itemLabel={props.props.itemLabel ? String(props.props.itemLabel) : undefined}
+            disabled={presentation.effectiveDisabled}
+          />
+        );
+      })}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={presentation.effectiveDisabled}
+        onClick={() => {
+          const nextItem = { id: createNextCompositeItemId(items, 'item-'), value: '' };
+          const nextItems = [...items, nextItem];
+          itemsRef.current = nextItems;
 
-            if (currentForm && name) {
-              currentForm.appendValue(name, nextItem);
-              void currentForm.validateField(name);
-              return;
-            }
+          if (currentForm && name) {
+            currentForm.appendValue(name, nextItem);
+            void currentForm.validateField(name);
+            return;
+          }
 
-            syncItems(nextItems);
-          }}
-        >
-          Add item
-        </Button>
-      </div>
-      <FieldHint
-        errorMessage={presentation.fieldState.error?.message}
-        validating={presentation.fieldState.validating}
-        showError={presentation.showError}
-      />
+          syncItems(nextItems);
+        }}
+      >
+        Add item
+      </Button>
     </div>
   );
 }
@@ -298,6 +282,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 export const arrayEditorRendererDefinition: RendererDefinition = {
   type: 'array-editor',
   component: ArrayEditorRenderer,
+  wrap: true,
   fields: [formLabelFieldRule],
   validation: {
     kind: 'field',

@@ -15,6 +15,7 @@ import {
   useScopeSelector,
   useCurrentFormState
 } from '@nop-chaos/flux-react';
+import { useSchemaProps } from '@nop-chaos/flux-react';
 import {
   Select,
   SelectContent,
@@ -25,11 +26,9 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  cn
 } from '@nop-chaos/ui';
 import type { VariantFieldSchema, VariantOption } from '../composite-field/composite-schemas';
-import { formLabelFieldRule, resolveFieldLabelContent, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
-import { FieldHint, FieldLabel } from '@nop-chaos/flux-renderers-form';
+import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { detectMatchedVariant, extractDetectedVariant, resolveInitialVariant } from './variant-field-matching';
 import { createVariantFormProxy, createVariantScope } from './variant-field-runtime';
 
@@ -66,9 +65,10 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const parentForm = useCurrentForm();
   const parentScope = useRenderScope();
   const schema = props.schema as VariantFieldSchema;
+  const schemaProps = useSchemaProps(props);
   const name = String(props.props.name ?? '');
   const readOnly = Boolean(props.props.readOnly);
-  const variants = React.useMemo(() => (schema.variants ?? []) as VariantOption[], [schema.variants]);
+  const variants = React.useMemo(() => (schemaProps.variants ?? []) as VariantOption[], [schemaProps.variants]);
   const selectorMode = (schema.selector as { mode?: string } | undefined)?.mode ?? 'tabs';
   const defaultVariant = schema.defaultVariant;
 
@@ -80,7 +80,6 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const currentValue = parentForm ? rawValue : scopeValue;
 
   const presentation = useFieldPresentation(name, parentForm, { readOnly });
-  const labelContent = resolveFieldLabelContent(props);
 
   const matchedKey = detectMatchedVariant(variants, currentValue, props.helpers.evaluate, parentScope, props.helpers.createScope);
   const initialKey = resolveInitialVariant(variants, currentValue, defaultVariant, props.helpers.evaluate, parentScope, props.helpers.createScope);
@@ -164,8 +163,12 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     setUserSelectedKey(key);
   }
 
-  const activeContent = activeOption?.content ?? null;
-  const activeViewer = activeOption?.viewer ?? activeContent;
+  const activeContentRegion = typeof activeOption?.contentRegionKey === 'string'
+    ? props.regions[activeOption.contentRegionKey]
+    : undefined;
+  const activeViewerRegion = typeof activeOption?.viewerRegionKey === 'string'
+    ? props.regions[activeOption.viewerRegionKey]
+    : activeContentRegion;
 
   const variantScope = React.useMemo(
     () => createVariantScope(parentScope, name, activeKey, readOnly),
@@ -200,7 +203,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
           </Select>
           <FormContext.Provider value={variantForm}>
             <ScopeContext.Provider value={variantScope}>
-              {props.helpers.render(activeContent as any)}
+              {activeContentRegion?.render() ?? null}
             </ScopeContext.Provider>
           </FormContext.Provider>
         </div>
@@ -225,7 +228,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
               {v.key === activeKey ? (
                 <FormContext.Provider value={variantForm}>
                   <ScopeContext.Provider value={variantScope}>
-                    {props.helpers.render(activeContent as any)}
+                    {activeContentRegion?.render() ?? null}
                   </ScopeContext.Provider>
                 </FormContext.Provider>
               ) : null}
@@ -243,7 +246,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       <div data-slot="variant-field-readonly-body">
         <FormContext.Provider value={variantForm}>
           <ScopeContext.Provider value={variantScope}>
-            {props.helpers.render(activeViewer as any)}
+            {activeViewerRegion?.render() ?? null}
           </ScopeContext.Provider>
         </FormContext.Provider>
       </div>
@@ -251,25 +254,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   };
 
   return (
-    <div
-      className={cn('nop-field', props.meta.className)}
-      data-testid={props.meta.testid || undefined}
-      data-cid={props.meta.cid || undefined}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-      data-active-variant={activeKey}
-    >
-      <FieldLabel content={labelContent} />
-      <div data-slot="field-control">
+    <div data-slot="field-control" data-active-variant={activeKey}>
         {renderSelector()}
         {renderReadOnlyContent()}
-      </div>
-      <FieldHint
-        errorMessage={presentation.fieldState.error?.message}
-        showError={presentation.showError}
-      />
     </div>
   );
 }
@@ -277,10 +264,11 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 export const variantFieldRendererDefinition: RendererDefinition = {
   type: 'variant-field',
   component: VariantFieldRenderer as any,
+  wrap: true,
   regions: ['content'],
   fields: [
     formLabelFieldRule,
-    { key: 'variants', kind: 'ignored' },
+    { key: 'variants', kind: 'prop' },
     { key: 'selector', kind: 'ignored' },
     { key: 'defaultVariant', kind: 'ignored' },
     { key: 'detectVariantAction', kind: 'ignored' },

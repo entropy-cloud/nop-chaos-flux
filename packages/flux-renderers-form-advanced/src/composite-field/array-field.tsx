@@ -17,14 +17,12 @@ import {
   useScopeSelector
 } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas';
 import {
   formLabelFieldRule,
-  useFieldPresentation,
-  resolveFieldLabelContent
+  useFieldPresentation
 } from '@nop-chaos/flux-renderers-form';
-import { FieldHint, FieldLabel } from '@nop-chaos/flux-renderers-form';
 import { createItemFormProxy, createItemScope } from './array-field-runtime';
 
 function toArrayItems(value: unknown): unknown[] {
@@ -152,8 +150,6 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
     disabled: props.meta.disabled,
     readOnly
   });
-
-  const labelContent = resolveFieldLabelContent(props);
 
   const formValue = useCurrentFormState(
     (state) => (parentForm ? toArrayItems(name ? getIn(state.values, name) : state.values) : undefined),
@@ -307,56 +303,41 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   }, [itemKind, modelGeneration, name, parentForm, scalarChildPaths, scalarItemField]);
 
   return (
-    <div
-      className={cn('nop-field', props.meta.className)}
-      data-testid={props.meta.testid || undefined}
-      data-cid={props.meta.cid || undefined}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-    >
-      <FieldLabel content={labelContent} />
-      <div data-slot="field-control">
-        <div data-slot="array-field-body">
-          {itemEntries.map(({ item, index, itemIdentity, itemInstancePath }) => {
-            return (
-              <ArrayItem
-                key={itemIdentity}
-                itemIdentity={itemIdentity}
-                index={index}
-                arrayPath={name}
-                itemKind={itemKind}
-                parentScope={parentScope}
-                parentForm={parentForm}
-                readOnly={readOnly || presentation.effectiveDisabled}
-                removable={removable && !readOnly && !presentation.effectiveDisabled}
-                onRemove={handleRemove}
-                renderItem={() =>
-                  props.regions.item?.render({
-                    bindings: { index, value: item },
-                    instancePath: itemInstancePath
-                  }) ?? null
-                }
-              />
-            );
-          })}
-          {addable && !readOnly && !presentation.effectiveDisabled && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAdd}
-            >
-              Add item
-            </Button>
-          )}
-        </div>
+    <div data-slot="field-control">
+      <div data-slot="array-field-body">
+        {itemEntries.map(({ item, index, itemIdentity, itemInstancePath }) => {
+          return (
+            <ArrayItem
+              key={itemIdentity}
+              itemIdentity={itemIdentity}
+              index={index}
+              arrayPath={name}
+              itemKind={itemKind}
+              parentScope={parentScope}
+              parentForm={parentForm}
+              readOnly={readOnly || presentation.effectiveDisabled}
+              removable={removable && !readOnly && !presentation.effectiveDisabled}
+              onRemove={handleRemove}
+              renderItem={() =>
+                props.regions.item?.render({
+                  bindings: { index, value: item },
+                  instancePath: itemInstancePath
+                }) ?? null
+              }
+            />
+          );
+        })}
+        {addable && !readOnly && !presentation.effectiveDisabled && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAdd}
+          >
+            Add item
+          </Button>
+        )}
       </div>
-      <FieldHint
-        errorMessage={presentation.fieldState.error?.message}
-        showError={presentation.showError}
-      />
     </div>
   );
 }
@@ -364,6 +345,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
 export const arrayFieldRendererDefinition: RendererDefinition = {
   type: 'array-field',
   component: ArrayFieldRenderer,
+  wrap: true,
   regions: ['item'],
   fields: [formLabelFieldRule],
   validation: {
