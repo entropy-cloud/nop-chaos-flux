@@ -169,11 +169,16 @@ export function buildNetworkSummary(input: {
 export function normalizeCompiledRoot(node: TemplateNode | readonly TemplateNode[]) {
   const roots = Array.isArray(node) ? node : [node];
   const first = roots[0];
+  const firstPath = first && typeof first === 'object' && 'templatePath' in first
+    ? first.templatePath
+    : first && typeof first === 'object' && 'path' in (first as Record<string, unknown>)
+      ? (first as { path?: string }).path
+      : undefined;
 
   return {
     rootCount: roots.length,
     firstType: first?.type,
-    firstPath: first?.templatePath
+    firstPath
   };
 }
 
