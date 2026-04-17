@@ -184,7 +184,7 @@ interface CellStyleResult {
 | `src/canvas-styles.css` | `@nop-chaos/spreadsheet-renderers` | 预定义 CSS 规则 |
 | `src/cell-style-map.ts` | `@nop-chaos/spreadsheet-renderers` | CellStyle → class + style 映射 |
 
-CSS 文件通过 playground 的 `styles.css` 中 `@import` 引入（与 `base.css` 方式一致），Tailwind 的 `@source` 指令会扫描 `packages/` 目录确保内容可见。
+CSS 文件通过 `@nop-chaos/spreadsheet-renderers` 包入口 side-effect import 引入；playground 只是消费方，不再承担这些包级样式的装配责任。
 
 ## 7. 与项目整体样式体系的关系
 

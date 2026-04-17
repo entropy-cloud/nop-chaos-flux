@@ -100,11 +100,14 @@ This differs from SpringReport's `{{field}}` syntax but aligns with nop-entropy'
 
 ### With Flux Runtime
 
-The Word Editor page can be rendered as a Flux surface via the `word-editor` renderer type. The page receives:
+The Word Editor page is rendered as the `word-editor-page` host-owner renderer and now follows the same registry/manifest pattern as the other domain editors. The page receives:
 
-- `onSave` callback for document persistence
+- `onBack` and `onSave` action handlers
 - `initialDocument` for loading existing templates
 - `datasets` for pre-configured data sources
+- `statusPath` for a narrow external host summary when needed
+
+The renderer publishes the `word-editor` host family manifest, host projection scope, and namespaced actions such as `word-editor:save`, `word-editor:insertField`, `word-editor:insertChart`, `word-editor:insertCode`, `word-editor:undo`, and `word-editor:redo`.
 
 ### With nop-entropy Backend
 

@@ -638,7 +638,7 @@ This is a self-contained rendering subtree. The `ss-*` classes stay inside the c
 1. **Baseline class `ss-cell`**: Carries Excel-default styles (Calibri 11pt, 22px height, left-aligned, gray gridlines). Only non-default properties produce additional classes or inline styles.
 2. **`ss-*` prefix**: Namespace-isolated from `nop-*` marker classes and Tailwind utilities.
 3. **`data-*` for state**: Follows the same pattern as shadcn/ui's `data-state` and flux renderer's `data-field-*`.
-4. **No `cell-style-map.ts` in current implementation**: The current `spreadsheet-grid.tsx` applies inline styles directly from `cell?.style` — the mapping is implicit via React's `style` prop, The `ss-bold`, `ss-italic` etc. classes exist in `canvas-styles.css` but are not yet wired through an explicit style-to-class mapper.
+4. **Current implementation uses the documented hybrid split**: `spreadsheet-grid.tsx` now routes finite `CellStyle` values through `cell-style-map.ts` into `ss-*` classes while keeping continuous values and geometry in inline style. Package-owned structural classes such as `spreadsheet-grid`, `row-header`, and `col-header` remain acceptable inside this high-volume canvas subtree; they are not the same concern as generic renderer root markers.
 
 ### Full Design Doc
 

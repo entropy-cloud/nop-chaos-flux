@@ -1130,7 +1130,7 @@ The active decisions from this document are:
 - do not treat store methods as automatically callable public API; components explicitly expose supported capabilities
 - define `xui:imports` with declaration-style import semantics: order-independent, repeatable, deduplicated, and scope-visible by container ownership
 - require imported boundaries to preload/gate before descendant execution, instead of relying on render order or best-effort late registration
-- treat loaded import libraries as static runtime resources unless an explicit unload mechanism is introduced later
+- release imported namespace registrations when the declaring render boundary unmounts or changes schema ownership; keep module loading deduplicated, but do not let stale namespace bindings remain attached to an action scope after release
 
 ## Related Documents
 

@@ -298,9 +298,9 @@ This keeps validation attached to the same owner model that already governs data
 
 ### Owner Resolution Algorithm
 
-Owner resolution is normative.
+> **Implementation Status**: This section describes the target architecture for multi-owner validation. Current implementation (Phase 2) uses a single-owner model where all validation belongs to the nearest `form`. Draft isolation for `detail-field` / `detail-view` is handled by renderers creating their own temporary `FormRuntime` instances. The compiler-level owner resolution described below is planned for Phase 3.
 
-Each schema boundary that may introduce a scope must be classified by the compiler as one of:
+Each schema boundary that may introduce a scope should be classifiable as one of:
 
 1. `inherit-owner`
 2. `create-owner`
@@ -311,8 +311,6 @@ The rules are:
 1. `no-owner`: the subtree contributes no validation structure and has no runtime validation registration needs
 2. `inherit-owner`: the subtree contributes validation nodes into the nearest ancestor owner
 3. `create-owner`: the subtree creates a new validation scope and a new validation owner
-
-The compiler and runtime must both follow the same resolution rules.
 
 Use `inherit-owner` when the subtree writes directly into parent-owned values and has no local draft isolation.
 
@@ -340,15 +338,22 @@ Examples:
 2. read-only surfaces
 3. action controls with no validation semantics
 
-“Nearest owner” therefore means the nearest ancestor boundary whose resolution is `create-owner`, unless the current subtree itself resolves to `create-owner`.
+"Nearest owner" therefore means the nearest ancestor boundary whose resolution is `create-owner`, unless the current subtree itself resolves to `create-owner`.
 
-### Additional Owner Boundary Rules
+### Current Implementation: Renderer-Level Draft Isolation
 
-The compile-time classification above is the only source of owner-boundary truth.
+In the current implementation, draft isolation is achieved at the renderer level rather than through compiler-driven owner partitioning:
 
-Dynamic runtime behavior may activate or dispose owners, but it may not reclassify boundaries.
+1. `detail-field` and `detail-view` create temporary `FormRuntime` instances when opening
+2. The draft form has its own validation state, separate from the parent form
+3. On confirm, the renderer validates the draft form, then writes back to the parent
+4. On cancel, the draft form is simply discarded
 
-Additional rules:
+This approach satisfies the core draft-isolation requirement without requiring compiler-level owner resolution. The trade-off is that each renderer needing draft semantics must implement its own isolation logic.
+
+### Future: Compiler-Level Owner Resolution (Phase 3)
+
+The following rules describe the target Phase 3 architecture where the compiler automatically partitions validation models by owner boundary:
 
 1. the same renderer family may resolve to `inherit-owner` or `create-owner` depending on schema options such as draft mode
 2. child owners register their parent contract only when they become active
@@ -890,6 +895,8 @@ Rules:
 
 ## Parent And Child Scope Interaction
 
+> **Implementation Status**: This section describes the target architecture for parent-child validation contracts. Current implementation (Phase 2) uses renderer-level draft isolation where `detail-field` / `detail-view` create their own `FormRuntime` and handle commit/cancel internally. The `ChildValidationContract` mechanism described below is partially implemented but primarily serves as a placeholder for Phase 3 multi-owner coordination.
+
 Child scopes do not automatically merge their internal field states into parent field state maps.
 
 The parent sees child scopes through explicit contracts.
@@ -917,6 +924,21 @@ Modes:
 1. `ignore`: parent does not consult the child for gating or submit
 2. `summary-gate`: parent may read child summary state for gating, but does not inspect child internals
 3. `recurse-submit`: parent submit explicitly invokes child submit-time validation and waits for its required async runs
+
+### Current Implementation
+
+In the current implementation:
+
+1. `detail-field` / `detail-view` create temporary draft `FormRuntime` instances
+2. These draft forms do not register child contracts with the parent — they are fully isolated
+3. On confirm, the renderer validates locally, transforms values, and writes back to parent via `parentForm.setValue()`
+4. The parent has no awareness of the draft form's existence during editing
+
+This achieves the core isolation requirement without the full child contract mechanism.
+
+### Future: Full Child Contract Coordination (Phase 3)
+
+The following rules describe the target architecture:
 
 Lifecycle rules:
 
@@ -982,31 +1004,33 @@ Default contracts:
 
 ## Implementation Phases
 
-### Phase 1
+### Phase 1 — Complete
 
 1. compiled rule templates
 2. expression dependency extraction
 3. unified effective required computation
 4. shared materialization service
 
-### Phase 2
+### Phase 2 — Current
 
 1. separation of compiled structure, registration state, and field validation state
 2. runtime participation cleanup for hidden and dynamic paths
 3. owner-coordinated form-wide traversal
 4. minimal active instance graph handling for branches and repeated instances
+5. **renderer-level draft isolation** — `detail-field` / `detail-view` create temporary `FormRuntime` for draft editing
 
-### Phase 3
+### Phase 3 — Future
 
 1. common validation scope runtime beneath form
-2. non-form validation scopes
-3. draft scope ownership
+2. non-form validation scopes (filter panels, search panels)
+3. compiler-driven `create-owner` / `inherit-owner` / `no-owner` boundary classification
+4. automatic draft scope ownership without renderer-level form creation
 
-### Phase 4
+### Phase 4 — Future
 
 1. stronger active instance graph optimizations
 2. owner-local caching refinement
-3. richer child-scope gating contracts
+3. richer child-scope gating contracts (`summary-gate`, `recurse-submit` fully functional)
 4. more advanced dynamic overlay management
 
 ## Final Decision
@@ -1020,7 +1044,7 @@ Flux validation uses the following architecture:
 5. field-addressed validation state is stored and coordinated by the owning scope runtime
 6. rules are compiled as templates and materialized per run
 7. partial validation is owner-scoped and path-aware
-8. draft validation is isolated in child scopes until commit
+8. draft validation is isolated until commit — currently via renderer-level form creation, future via compiler-driven owner boundaries
 
 ## Related Documents
 

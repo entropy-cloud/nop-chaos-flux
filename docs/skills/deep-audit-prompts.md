@@ -20,7 +20,7 @@
 | | 06 | 异步模式与取消安全 | AbortController、竞态、并发保护 |
 | | 07 | 生命周期与副作用归属 | useEffect 职责、runtime vs React 层归属 |
 | | 08 | 验证系统一致性 | 验证时机、owner 归属、隐藏字段策略 |
-| **C. 渲染器与 UI** | 09 | 渲染器契约合规性 | RendererComponentProps 遵循、marker class、无隐式布局 |
+| **C. 渲染器与 UI** | 09 | 渲染器契约合规性 | RendererComponentProps 遵循、marker class、避免不必要的 renderer-owned 默认布局/视觉 |
 | | 10 | 样式系统合规性 | classAliases、stack/hstack、BEM 残留、主题独立性 |
 | | 11 | UI 组件使用合规性 | 原生 HTML 替代、shadcn/ui 集成 |
 | | 12 | 表单字段与 Slot 建模 | field-metadata 规则、value-or-region、事件字段 |
@@ -154,6 +154,7 @@
 12. **不要把未从根 barrel 导出的源码机械判成死代码**。只有在确认“没有任何活跃源码引用、没有测试/桥接/计划中的明确 owner、也没有正在形成的公开子路径或集成切片”后，才可报告为死代码；否则应改报为“未接线中的中间模块”或直接不报。
 13. **草案文档不等于当前违约**。若 owner doc 明确写着 draft/future/proposed，应把它视为未来方向而非当前强约束；只有当前 baseline 文档、引用路由和 live code 同时宣称某契约已生效时，才把偏差当成文档-代码不一致。
 14. **所有结论都必须经过独立复核**。初审 agent 的输出只是线索，不是最终事实；维度级结论与每条发现都要由新的独立子 agent 二次核验。
+15. **不要机械把 `style`、局部 `useState`、或 renderer 内部 UI 类判成违规**。如果某 renderer 本身就是明确拥有 UI 壳层、层级交互或高性能宿主表面的组件，那么动态 style、局部状态和少量实现性样式可能正是当前最优实现；只有当它们制造了第二事实源、破坏公开契约、与 owner 文档冲突、或把本应外部显式控制的默认视觉偷偷固化时才报告。
 
 ---
 
@@ -191,9 +192,9 @@
          tailwind-preset → ui
 
 关键架构规则：
-- 渲染器只发出 marker class（nop-*），不做隐式布局
+- 渲染器根 marker class（`nop-*`）只做语义标识；但不要把“存在局部 UI 样式/动态 style”机械等同于违规，需先判断该 renderer 是纯结构壳还是明确拥有 UI 壳层/交互的组件
 - 运行时逻辑属于 flux-runtime，不属于 React 层
-- 复杂字段不得维护独立的本地状态（useState），必须从 form store 读取
+- 复杂字段不得维护与 form store 并存的字段值镜像；但局部 UI 状态、变体切换、展开态、悬浮态等瞬时状态不自动构成违规
 - 所有渲染器组件必须遵循 RendererComponentProps 模式
 - 严禁在渲染器中直接访问 store，必须用标准 hooks
 - UI 组件默认统一使用 @nop-chaos/ui；但浏览器原生能力控件和高性能专用宿主表面可以保留原生 HTML
@@ -804,13 +805,16 @@
    b. 注册函数是否遵循 registerXxxRenderers(registry) 模式
    c. field metadata 是否完整定义（type、rules、slots 等）
 4. 检查渲染器样式契约：
-   a. 是否只发出 marker class（nop-* 前缀）
-   b. 是否有隐式布局（硬编码 gap、padding、flex、grid）
+   a. 根 marker class 是否保持为 `nop-*` 语义标识，而不是把视觉规则绑定到 marker 本身
+   b. 是否把本应由 schema、UI 组件 variant 或外部样式控制的默认布局/视觉偷偷固化在 renderer 里；但如果该 renderer 是明确拥有 UI 壳层、层级交互或高性能宿主表面的组件，要允许必要的局部实现样式和动态 style
    c. 是否在渲染器中使用 BEM 命名（__ 分隔符，应改用 data-slot）
    d. className 是否使用 cn() 合并（非 classNames 或模板字符串）
-5. 检查 data-testid 和 data-cid 是否从 props.meta 正确传递
-6. 检查 regions.render() 调用是否正确传递 key
-7. 检查事件处理器是否使用 void 返回模式：onClick={(e) => void props.events.onClick?.(e)
+5. 检查本地状态时，区分：
+   a. 不合理：与 form/scope/store 并存的字段值镜像、提交流状态双写、owner 状态冲突
+   b. 合理：展开态、活动 tab、active variant、hover/selection 等局部 UI/交互状态，只要它们不是第二事实源且与当前 owner 文档一致
+6. 检查 data-testid 和 data-cid 是否从 props.meta 正确传递
+7. 检查 regions.render() 调用是否正确传递 key
+8. 检查事件处理器是否使用 void 返回模式：onClick={(e) => void props.events.onClick?.(e)
 
 输出格式：
 

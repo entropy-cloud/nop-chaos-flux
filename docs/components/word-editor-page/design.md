@@ -24,16 +24,21 @@
 ```typescript
 interface WordEditorPageSchema {
   type: 'word-editor-page';
-  
+  statusPath?: string;
+
   // 回退动作
   onBack?: ActionSchema;
-  
+
   // 初始文档 (可选)
   initialDocument?: WordDocument;
-  
+
   // 预配置数据集 (可选)
   datasets?: DataSet[];
-  
+
+  // 预置占位符
+  initialCharts?: DocChart[];
+  initialCodes?: DocCode[];
+
   // 保存回调
   onSave?: ActionSchema;
 }
@@ -42,7 +47,9 @@ interface WordEditorPageSchema {
 核心字段：
 - `onBack` 是必需回调，用于返回上级页面
 - `initialDocument` 和 `datasets` 是可选初始数据
+- `initialCharts` / `initialCodes` 允许宿主直接注入初始占位符元数据
 - `onSave` 是可选持久化回调
+- `statusPath` 用于向宿主外部发布窄只读摘要 DTO
 
 ## 5. 字段分类
 
@@ -51,8 +58,11 @@ interface WordEditorPageSchema {
 | `title` | `value-or-region` | 页面标题 |
 | `onBack` | `event` | 返回动作 |
 | `onSave` | `event` | 保存动作 |
+| `statusPath` | `value` | 外部只读状态摘要路径 |
 | `initialDocument` | `value` | 初始文档数据 |
 | `datasets` | `value` | 预配置数据集 |
+| `initialCharts` | `value` | 初始图表占位符 |
+| `initialCodes` | `value` | 初始条码/二维码占位符 |
 | `toolbar` | `region` | 顶部 Ribbon 工具栏 |
 | `leftPanel` | `region` | 左侧面板 (大纲/数据集) |
 | `rightPanel` | `region` | 右侧属性面板 |
@@ -62,6 +72,7 @@ interface WordEditorPageSchema {
 - `toolbar` 承接顶部 Ribbon 风格动作区，包含格式化、插入、视图等功能组。
 - `leftPanel` 承接左侧面板，默认包含大纲导航和数据集管理两个 Tab。
 - `rightPanel` 承接右侧属性面板，用于选中元素的属性编辑。
+- renderer definition 当前将 host capability publication 约束到 `toolbar`、`leftPanel`、`rightPanel` 三个 region。
 
 ## 7. 运行期状态归属
 
@@ -73,6 +84,7 @@ interface WordEditorPageSchema {
 
 - schema 片段通过宿主 scope 读取快照，并通过命名空间动作写操作。
 - `word-editor-page` 属于 `Domain Host Owner`：内部读面是 host projection，宿主外部若需要观测状态，应通过窄 `statusPath` 摘要。
+- 当前 host projection 至少包含 `document`、`datasets`、`runtime`、`selection` 四类只读字段。
 
 ## 8. 事件、动作与组件句柄能力
 
@@ -80,8 +92,8 @@ interface WordEditorPageSchema {
 |------|----------|------|
 | 保存文档 | `word-editor:save` | 序列化并持久化当前文档 |
 | 插入字段 | `word-editor:insertField` | 在光标位置插入数据字段 |
-| 插入图表 | `word-editor:insertChart` | 插入图表占位符 |
-| 插入代码块 | `word-editor:insertCode` | 插入代码块 |
+| 插入图表 | `word-editor:insertChart` | 插入 `nop:chart` 自闭合模板占位符并持久化元数据 |
+| 插入代码块 | `word-editor:insertCode` | 插入 `nop:code` 自闭合模板占位符并持久化元数据 |
 | 撤销/重做 | `word-editor:undo` / `word-editor:redo` | 历史操作 |
 
 - 页面自身不应暴露大而全的 imperative ref。
@@ -91,12 +103,14 @@ interface WordEditorPageSchema {
 - 数据集通过 `dataset-store` 管理，支持 `static`、`api`、`graphql` 三种源类型。
 - 模板表达式使用 NOP XLang 语法：`${expr}` 文本表达式、`<c:for>`/`<c:if>` 结构标签。
 - 字段拖拽插入自动生成对应的表达式占位符。
+- 图表/条码占位符当前通过 `nop:chart` / `nop:code` 自闭合标签写入文档并与 `charts` / `codes` 元数据数组一起持久化。
 
 ## 10. 样式与 DOM marker 约定
 
 - 根节点保留 `nop-word-editor-page` marker。
 - 工作台布局使用 `WorkbenchShell` 组件，支持左右面板折叠。
 - 工具栏使用 Ribbon 风格分组布局。
+- playground 入口现在通过 `SchemaRenderer` + `registerWordEditorRenderers()` 渲染，而不是直接 lazy import 页面组件。
 
 ## 11. 实现拆分建议
 

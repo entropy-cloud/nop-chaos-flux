@@ -100,7 +100,7 @@ The repository should keep these checks passing:
 
 Source artifact policy:
 
-- `packages/*/src/` is source-only across the workspace
+- `packages/*/src/` and `apps/*/src/` are source-only across the workspace
 - generated `.js`, `.d.ts`, and `.js.map` files belong in `dist/`, not in `src/`
 - there is no dual-source TS/JS ownership mode for workspace package source directories
 

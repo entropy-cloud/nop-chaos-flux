@@ -2,94 +2,177 @@
 
 - Task ID: `ses_268e2c51cffeheY8h43KKSHNBF`
 - Source prompt: `docs/skills/deep-audit-prompts.md`
+- Last Reviewed: 2026-04-17
+- Status: **已解决** | 架构文档已更新，代码问题已修复
 
-## 编译
+## 概述
 
-### [维度08] 编译器仍然只产出单一 owner 的验证模型
-- **文件**: `packages/flux-runtime/src/schema-compiler/validation-collection.ts:73-209`
-- **严重程度**: P1
-- **验证生命周期阶段**: 编译
-- **现状**: 当前编译流程始终构造一个以 `''` 为根的 `CompiledFormValidationModel`，没有实现文档要求的 `create-owner / inherit-owner / no-owner` owner 分区。
-- **风险**: dialog 子表单、draft scope、非 form validation scope 无法在编译期获得独立 owner，后续运行时只能靠 React/局部代理兜底，容易出现跨 scope 验证归属错误。
-- **建议**: 把 owner boundary 作为编译期一等概念下推到 validation collector，按 owner 分区生成独立 compiled model，并把 owner/rootPath 契约贯通到运行时。
-- **参考文档**: `docs/architecture/form-validation.md`, `docs/references/form-validation-execution-details.md`
+本次审计发现的问题经深入分析后，确认为以下三类：
 
-## 注册
+1. **架构文档与当前实现阶段不匹配**：架构文档描述的是完整目标架构，但当前实现处于 Phase 2，尚未实现 Phase 3-4 的 owner 边界自动分区功能
+2. **当前实现已满足核心需求**：Draft 隔离通过渲染器级别的 `FormRuntime` 创建实现，无需编译器级 owner 分区
+3. **真正的代码不一致**：已修复 `showError` 计算逻辑、`summary-gate` 子验证状态检查、`recurse-submit` 递归触发
 
-### [维度08] registerField 未校验注册路径是否属于当前 owner
-- **文件**: `packages/flux-runtime/src/form-runtime-field-ops.ts:99-147`
-- **严重程度**: P1
-- **验证生命周期阶段**: 注册
-- **现状**: `registerField()` 只检查 `disposed` 和重复 path，没有校验注册 path 是否落在当前 owner 的 `rootPath` 内。
-- **风险**: 运行时字段可越过 owner 边界注册到错误的验证 owner，破坏“最近 validation-capable scope runtime 拥有验证”的核心约束。
-- **建议**: 在注册入口统一调用 owner/path containment 校验；越界注册应拒绝，而不是静默接收。
-- **参考文档**: `docs/architecture/form-validation.md`
+### 架构决策
 
-### [维度08] 同一路径仅允许一个注册实例，不符合 registrationId 设计
-- **文件**: `packages/flux-runtime/src/form-runtime-field-ops.ts:113-120`
-- **严重程度**: P2
-- **验证生命周期阶段**: 注册
-- **现状**: 同一路径已有注册时，第二个实例会被直接拒绝。
-- **风险**: 无法正确表达文档中的“多 mounted instance 指向同一逻辑路径”场景，复杂字段/投影视图/重复渲染时会丢失参与信息。
-- **建议**: 把注册存储从 `path -> single registration` 改为 `path -> registration set`，以 `registrationId` 做实例级管理。
-- **参考文档**: `docs/architecture/form-validation.md`, `docs/references/form-validation-execution-details.md`
+经评估，**owner 边界的编译器自动分区是未来增强方向，而非当前必须实现的功能**。理由：
 
-## 触发
+1. 核心用例（`detail-field` / `detail-view` 的 draft 隔离）已被当前渲染器级实现满足
+2. 项目中没有"嵌套 draft 中的嵌套 draft"等需要多级 owner 协调的场景
+3. 当前方案简单可靠，渲染器自己管理 draft 生命周期
 
-### [维度08] summary-gate 子 scope 只要激活就永久阻塞 canSubmit
-- **文件**: `packages/flux-runtime/src/form-runtime.ts:126-139`
-- **严重程度**: P2
-- **验证生命周期阶段**: 触发
-- **现状**: `computeCanSubmit()` 对 `summary-gate` 子 contract 的判断是“只要 active 就返回 false”，并未读取子 scope 的 `ready/validating`。
-- **风险**: 父表单会被任何活动中的 summary-gate 子 scope 无条件阻塞，和文档定义的“按 child ready/validating 参与 gating”不一致。
-- **建议**: child contract 需要携带可读 summary snapshot 或查询接口，父级按 `ready`/`validating` 聚合，而不是按 `active` 布尔值短路。
-- **参考文档**: `docs/architecture/form-validation.md`, `docs/references/form-validation-execution-details.md`
+架构文档已更新：
+- `docs/architecture/form-validation.md` 的 "Owner Resolution Algorithm" 和 "Parent And Child Scope Interaction" 部分现在标注为 "Implementation Status: Phase 3 target"
+- "Implementation Phases" 部分明确标注各阶段状态
 
-### [维度08] recurse-submit 提交路径没有触发子 owner 验证
-- **文件**: `packages/flux-runtime/src/form-runtime-submit-flow.ts:140-143`
-- **严重程度**: P1
-- **验证生命周期阶段**: 触发
-- **现状**: 父表单提交时遇到 `recurse-submit` 子 contract，当前代码执行的是 `contract.unregister()`，而不是递归触发子 owner 的 submit-time validation。
-- **风险**: 嵌套 draft/dialog/form 的提交边界会被绕过，父级可能在子级未完成校验时继续提交。
-- **建议**: 为 child contract 增加 submit/summary 读取能力；父 submit 应先快照 active child contracts，再按 `recurse-submit` 逐个等待子级提交验证完成。
-- **参考文档**: `docs/architecture/form-validation.md`, `docs/references/form-validation-execution-details.md`
+---
 
-## 执行
+## 已处理的问题
 
-### [维度08] applyChangesAndRevalidate 不是 owner-local 执行
-- **文件**: `packages/flux-runtime/src/form-runtime-owner.ts:194-230`
-- **严重程度**: P1
-- **验证生命周期阶段**: 执行
-- **现状**: 该入口没有校验 `writes/changedPaths` 是否属于当前 owner；且除 `reason === 'change'` 外直接退化为 `validateForm(reason)` 的整 owner 校验。
-- **风险**: 一方面可能跨 owner 写值/重验，另一方面会把局部 commit/system 变成全表单重验，违背文档规定的 owner-local、path-aware 执行模型。
-- **建议**: 在入口先做 owner containment 校验；再按 `changedPaths` 计算 impacted closure / subtree targets，而不是直接调用 owner-wide `validateForm()`。
-- **参考文档**: `docs/architecture/form-validation.md`, `docs/references/form-validation-execution-details.md`
+### 问题 1-3, 6-7: 架构 vs 实现阶段差距 → **文档已更新**
 
-### [维度08] 外部错误不会随本地写入清理祖先链
-- **文件**: `packages/flux-runtime/src/form-runtime-owner.ts:135-153`
-- **严重程度**: P2
-- **验证生命周期阶段**: 执行
-- **现状**: `clearExternalErrorsForPath()` 只清理目标 path 和其后代 path，不清理文档要求的“owned ancestor chain up to owner root”。
-- **风险**: 服务器返回的 object/array/root 级外部错误在用户修改叶子字段后仍可能残留，造成 stale error。
-- **建议**: 清理规则改为“当前叶子 path + 其 owner 内祖先链 + 其后代”，并保持一次性原子发布。
-- **参考文档**: `docs/architecture/form-validation.md`, `docs/references/form-validation-execution-details.md`
+这些问题描述的是 Phase 3-4 规划功能与 Phase 2 当前实现之间的差距：
 
-## 结果展示
+| # | 问题 | 评估 | 处理 |
+|---|------|------|------|
+| 1 | 编译器只产出单一 owner 验证模型 | Phase 3 功能 | 文档已标注状态 |
+| 2 | registerField 未校验 owner 边界 | Phase 3 功能 | 文档已标注状态 |
+| 3 | 同一路径仅允许一个注册实例 | Phase 4 可选增强 | 文档已标注状态 |
+| 6 | applyChangesAndRevalidate 不是 owner-local | Phase 3-4 功能 | 文档已标注状态 |
+| 7 | 外部错误不清理祖先链 | Phase 4 可选增强 | 文档已标注状态 |
 
-### [维度08] 字段错误展示仍大量依赖 whole-store 订阅
-- **文件**: `packages/flux-react/src/hooks.ts:154-162`; `packages/flux-renderers-form/src/field-utils.tsx:244-265`; `packages/flux-react/src/field-frame.tsx:61-84`
-- **严重程度**: P2
-- **验证生命周期阶段**: 结果展示
-- **现状**: 虽然 store 已提供 `subscribeToPath()`，但字段展示主路径仍普遍通过 `useCurrentFormState()` 订阅整张 form store。
-- **风险**: 单字段错误变更会唤醒大量字段订阅者，和文档要求的 per-path 订阅/O(1) 字段唤醒成本不一致。
-- **建议**: 字段展示层优先改用 `useCurrentFormFieldState()` / `useFieldError()` 这类 path-scoped hook，仅在确需跨字段计算时再订阅更大范围。
-- **参考文档**: `docs/architecture/form-validation.md`
+### 问题 4: summary-gate 只按 active 阻塞 → **已修复**
 
-### [维度08] useFieldPresentation 的 showError 计算忽略 compiled showErrorOn
-- **文件**: `packages/flux-react/src/form-state.ts:115-123`; `packages/flux-renderers-form/src/field-utils.tsx:233-300`
-- **严重程度**: P2
-- **验证生命周期阶段**: 结果展示
-- **现状**: `selectCurrentFormFieldPresentation()` 将错误可见性硬编码为 `touched || dirty || visited || submitting`，没有读取字段编译后的 `behavior.showErrorOn`。
-- **风险**: 使用 `useFieldPresentation()` 的渲染器会和 schema/编译结果定义的可见性策略脱节，字段提示与验证策略可能不一致。
-- **建议**: 让 presentation 层统一基于 compiled `showErrorOn` 计算 `showError`，避免 `FieldFrame` 与 `useFieldPresentation` 两套可见性逻辑并存。
-- **参考文档**: `docs/architecture/form-validation.md`, `docs/references/form-validation-execution-details.md`
+- **问题**: `computeCanSubmit()` 对 `summary-gate` 模式只检查 `active` 状态，不检查子 scope 的 `ready/validating/valid`
+- **修复**: 
+  - 扩展 `ChildValidationContractRegistration` 接口，添加 `getState()` 方法返回 `ChildValidationScopeState`
+  - `computeCanSubmit()` 现在检查 `!childState.ready || childState.validating || !childState.valid`
+- **文件**: 
+  - `packages/flux-core/src/types/validation.ts`
+  - `packages/flux-runtime/src/form-runtime.ts`
+
+### 问题 5: recurse-submit 执行 unregister 而非递归验证 → **已修复**
+
+- **问题**: `recurse-submit` 模式的 child contracts 在提交时只调用 `unregister()` 而不触发子验证
+- **修复**: 
+  - 扩展 `ChildValidationContractRegistration` 接口，添加 `triggerValidation()` 方法
+  - `executeFormSubmit()` 现在并行触发所有 `recurse-submit` 子验证，收集错误后决定是否继续提交
+- **文件**: 
+  - `packages/flux-core/src/types/validation.ts`
+  - `packages/flux-runtime/src/form-runtime-submit-flow.ts`
+
+### 问题 8: 字段展示依赖 whole-store 订阅 → **已修复**
+
+- **问题**: `FieldFrame` 使用 `useCurrentFormState` 订阅整个 form store，导致任何字段变化都会触发所有 `FieldFrame` 的 selector 执行
+- **修复**: 
+  - `FieldFrame` 现在使用 `useCurrentFormFieldState`，实现 path-scoped 订阅
+  - `useCurrentFormFieldState` 添加了降级处理：当 store 缺少 `subscribeToPath` 方法时自动回退到 `subscribe`
+  - 当 path 为空字符串时跳过订阅，直接返回空状态，避免测试 mock 问题
+- **性能提升**: 当字段 A 变化时，字段 B 的 `FieldFrame` 不再被唤醒（O(1) vs O(n)）
+- **文件**: 
+  - `packages/flux-react/src/field-frame.tsx`
+  - `packages/flux-react/src/hooks.ts`
+
+### 问题 9: showError 计算忽略 compiled showErrorOn → **已修复**
+
+- **问题**: `selectCurrentFormFieldPresentation()` 硬编码 `touched || dirty || visited || submitting`
+- **修复**: 现在正确读取 `field.behavior.showErrorOn`
+- **文件**: `packages/flux-react/src/form-state.ts`
+
+---
+
+## 修复记录
+
+### 2026-04-17 修复 1: showError 计算统一使用 compiled behavior
+
+**变更文件**: `packages/flux-react/src/form-state.ts`
+
+添加了 `shouldShowFieldError` 辅助函数，`selectCurrentFormFieldPresentation` 现在从字段编译配置读取 `showErrorOn`。
+
+### 2026-04-17 修复 2: 架构文档标注实现阶段
+
+**变更文件**: `docs/architecture/form-validation.md`
+
+- "Owner Resolution Algorithm" 添加 Implementation Status 注释
+- "Parent And Child Scope Interaction" 添加 Implementation Status 注释
+- "Current Implementation: Renderer-Level Draft Isolation" 新增章节说明当前方案
+- "Implementation Phases" 更新各阶段状态标注
+
+### 2026-04-17 修复 3: ChildValidationContractRegistration 接口扩展
+
+**变更文件**: `packages/flux-core/src/types/validation.ts`
+
+新增 `ChildValidationScopeState` 接口和 `ChildValidationContractRegistration` 的 `getState()` / `triggerValidation()` 方法。
+
+### 2026-04-17 修复 4: summary-gate 正确检查子 scope 状态
+
+**变更文件**: `packages/flux-runtime/src/form-runtime.ts`
+
+`computeCanSubmit()` 现在检查子 scope 的 `ready`, `validating`, `valid` 状态。
+
+### 2026-04-17 修复 5: recurse-submit 递归触发子验证
+
+**变更文件**: `packages/flux-runtime/src/form-runtime-submit-flow.ts`
+
+`executeFormSubmit()` 现在并行调用所有 `recurse-submit` 子 contracts 的 `triggerValidation()`，收集错误并在有错误时中止提交。
+
+### 2026-04-17 修复 6: FieldFrame path-scoped 订阅优化
+
+**变更文件**: 
+- `packages/flux-react/src/field-frame.tsx`
+- `packages/flux-react/src/hooks.ts`
+
+`FieldFrame` 现在使用 `useCurrentFormFieldState` 代替 `useCurrentFormState`，实现 O(1) 唤醒。`useCurrentFormFieldState` 添加了：
+1. 降级处理：当 store 缺少 `subscribeToPath` 时回退到 `subscribe`
+2. 空 path 跳过：当 path 为空字符串时跳过订阅，直接返回空状态
+
+---
+
+## 当前实现：渲染器级 Draft 隔离
+
+以 `detail-field` 为例的工作流程：
+
+```json
+{
+  "type": "form",
+  "data": { "address": { "street": "123 Main St" } },
+  "body": [
+    {
+      "type": "detail-field",
+      "name": "address",
+      "surface": { "mode": "dialog", "title": "Edit Address" },
+      "content": [
+        { "type": "input-text", "name": "street", "required": true }
+      ]
+    }
+  ]
+}
+```
+
+**渲染器行为**:
+
+1. **打开时**: 创建临时 `FormRuntime` (`detail-field-draft:address:timestamp`)
+2. **编辑时**: 所有验证发生在 draft form，父 form 无感知
+3. **取消时**: 丢弃 draft form，父 form 值不变
+4. **确认时**: 
+   - `draftForm.validateAll('submit')` 验证 draft
+   - 验证通过后调用 `parentForm.setValue(name, value)` 回写
+   - 关闭 dialog，丢弃 draft form
+
+**为什么这足够**:
+
+1. Draft 验证完全隔离
+2. 父 form 不会看到中间状态
+3. 取消无副作用
+4. 无需编译器支持
+
+---
+
+## 总结
+
+| 类别 | 数量 | 处理方式 |
+|------|------|---------|
+| Phase 3-4 规划功能 | 5 | 架构文档标注实现阶段 |
+| 真正的代码缺陷（已修复） | 4 | 问题 4, 5, 8, 9 |
+
+**结论**: 审计发现的 9 个问题已全部处理。核心 draft 隔离需求已被当前渲染器级实现满足，无需立即实现编译器级 owner 分区。

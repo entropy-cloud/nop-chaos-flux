@@ -2,217 +2,107 @@
 
 - Task ID: `ses_268f5ada6ffeRRI3Twt0r9zM7a`
 - Source prompt: `docs/skills/deep-audit-prompts.md`
+- Revalidated on: `2026-04-17`
 
-# 维度09审计结论：渲染器契约合规性
+# 维度09复核结论：渲染器契约合规性
 
-## 按渲染器合规评分
+本文件已按当前代码与当前架构文档重新复核。
 
-### flux-renderers-basic
-| 渲染器 | 评分 |
-|---|---|
-| page | C |
-| container | A |
-| fragment | A |
-| loop | C |
-| recurse | C |
-| flex | A |
-| text | A |
-| button | A |
-| icon | A |
-| badge | A |
-| scope-debug | A |
-| dynamic-renderer | A |
-| reaction | A |
-| dialog | A |
-| drawer | A |
-| tabs | A |
+复核基线：
 
-### flux-renderers-form
-| 渲染器 | 评分 |
-|---|---|
-| form | A |
-| input-text / input-email / input-password | A |
-| select | C |
-| textarea | A |
-| checkbox | C |
-| switch | C |
-| radio-group | C |
-| checkbox-group | C |
+- `docs/architecture/renderer-runtime.md`
+- `docs/architecture/styling-system.md`
+- `docs/architecture/form-validation.md`
+- `docs/architecture/variant-field.md`
 
-### flux-renderers-data
-| 渲染器 | 评分 |
-|---|---|
-| table | D |
-| data-source | A |
-| chart | A |
-| tree | C |
+## 本次处理结果
 
-### flux-renderers-form-advanced
-| 渲染器 | 评分 |
-|---|---|
-| input-tree | C |
-| tree-select | C |
-| tag-list | C |
-| key-value | D |
-| array-editor | D |
-| condition-builder | D |
-| object-field | A |
-| array-field | A |
-| variant-field | C |
-| detail-field | C |
-| detail-view | C |
+### 已确认并修复
 
-## 代表性违规项
+1. `page-renderer`
+   - 问题仍存在：渲染路径中直接通过 `scope.get('refreshTick')` 进行 imperative read。
+   - 修复：改为 `useScopeSelector(...)` 订阅 `refreshTick`，并用订阅值生成 `summary`。
+   - 代码：`packages/flux-renderers-basic/src/page.tsx:13-18`
 
-### [维度09] 渲染器名: page-renderer
-- **合规评分**: C
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-basic\src\page.tsx:13-17`
-  - **严重程度**: P1
-  - **契约条款**: 渲染路径必须通过标准响应式 hooks 读取运行时数据；不得在渲染路径中直接使用 `scope.get(...)`
-  - **现状**: `PageRenderer` 通过 `props.node.scope.get('refreshTick')` 生成 `summary`，属于 imperative read，不走 `useScopeSelector`
-  - **建议**: 改为用 `useScopeSelector` 订阅 `refreshTick`，避免非响应式读取和潜在的重渲染遗漏
-  - **参考文档**: `docs/architecture/renderer-runtime.md`
+2. `tree-select-renderer`
+   - 问题仍存在：清空操作使用 `span + role="button" + tabIndex` 伪造交互按钮。
+   - 修复：改为真实 `Button` 组件，保留清空行为并阻止触发器误打开。
+   - 代码：`packages/flux-renderers-form-advanced/src/tree-controls.tsx:181-227`
 
-### [维度09] 渲染器名: loop-renderer
-- **合规评分**: C
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-basic\src\loop.tsx:22-38`
-  - **严重程度**: P2
-  - **契约条款**: 不应在渲染器内部引入 ad-hoc React context；共享运行时能力应通过标准 hooks 或显式 render handle 传递
-  - **现状**: `LoopRenderer` 通过 `StructuralLoopContext.Provider` 注入自定义上下文，形成包内私有的 ambient contract
-  - **建议**: 将循环递归所需的上下文收敛到显式 region bindings / instancePath，或提升为 `flux-react` 标准 hook/上下文能力
-  - **参考文档**: `docs/architecture/renderer-runtime.md`
+3. `tag-list-renderer`
+   - 问题仍存在：当前选中值通过 `readCheckboxGroupValue(scope, name)` 从 scope imperative 读取。
+   - 修复：改为直接消费 `useFormFieldController(...).value` 返回的响应式字段值。
+   - 代码：`packages/flux-renderers-form-advanced/src/tag-list.tsx:16-24`
 
-### [维度09] 渲染器名: recurse-renderer
-- **合规评分**: C
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-basic\src\recurse.tsx:20-39`
-  - **严重程度**: P2
-  - **契约条款**: 不应在渲染器内部引入 ad-hoc React context；共享运行时能力应通过标准 hooks 或显式 render handle 传递
-  - **现状**: `RecurseRenderer` 依赖并继续传播 `StructuralLoopContext`，使递归协议建立在包内私有 context 之上
-  - **建议**: 改为显式传递循环/递归绑定，避免私有 React context 成为渲染器契约的一部分
-  - **参考文档**: `docs/architecture/renderer-runtime.md`
+4. `array-editor-renderer`
+   - 问题仍存在：字段值通过本地 `useState` 保存镜像，再与 store/scope 同步。
+   - 修复：移除本地值镜像，列表完全由 `useCurrentFormState` / `useScopeSelector` 的外部值派生，仅保留 `ref` 供注册与校验回调读取最新值。
+   - 代码：`packages/flux-renderers-form-advanced/src/array-editor.tsx:148-239`
 
-### [维度09] 渲染器名: table-renderer
-- **合规评分**: D
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-data\src\table-renderer.tsx:145-150,192-240,300-325,390-401,499-500`
-  - **严重程度**: P1
-  - **契约条款**: 渲染器只应发出 marker class，不得在渲染器代码中注入隐式布局/视觉样式
-  - **现状**: `TableRenderer` 在渲染器层大量硬编码 `flex`、`gap-*`、`overflow-*`、`rounded`、`hover:*`、`text-muted-*`、`absolute inset-0` 等布局与视觉类，已经超出 marker/结构职责
-  - **建议**: root 保留 `nop-table`；内部结构以 `data-slot` 为主；布局与视觉默认收敛到 `@nop-chaos/ui` 表格组件或 schema 显式样式
-  - **参考文档**: `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`
+5. `key-value-renderer`
+   - 问题仍存在：字段值通过本地 `useState` 保存镜像，再与 store/scope 同步。
+   - 修复：移除本地值镜像，键值对列表完全由订阅值派生，仅保留 `ref` 供注册与校验回调读取最新值。
+   - 代码：`packages/flux-renderers-form-advanced/src/key-value.tsx:213-333`
 
-### [维度09] 渲染器名: tree-renderer
-- **合规评分**: C
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-data\src\tree-renderer.tsx:73-109`
-  - **严重程度**: P2
-  - **契约条款**: 渲染器只应发出 marker class，不得在渲染器代码中注入隐式布局/视觉样式
-  - **现状**: 节点行直接硬编码 `flex items-start gap-2`、`paddingInlineStart`、`hover:bg-muted`、`rounded-md px-2 py-1.5` 等布局/视觉规则
-  - **建议**: 将节点结构暴露为 `data-slot`，把缩进、间距、hover、按钮视觉等转移到 UI 层或 schema 样式
-  - **参考文档**: `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`
+6. `condition-builder-renderer`
+   - 问题仍存在：条件树值通过本地 `useState` 保存副本，再与 form/scope 同步。
+   - 修复：移除本地值副本，改为完全消费订阅态字段值；`ref` 仅用于 `registerField` 回调读取最新值。
+   - 代码：`packages/flux-renderers-form-advanced/src/condition-builder/ConditionBuilder.tsx:54-112`
 
-### [维度09] 渲染器名: tree-select-renderer
-- **合规评分**: C
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\tree-controls.tsx:194-212`
-  - **严重程度**: P2
-  - **契约条款**: 交互元素应使用 `@nop-chaos/ui` 组件；不得用原生/伪原生交互节点替代
-  - **现状**: 清空操作使用了 `span` + `role="button"` + `tabIndex={0}` 伪造按钮，而不是 UI 组件
-  - **建议**: 改为 `Button variant="ghost" size="icon">` 或等价 UI 组件
-  - **参考文档**: `docs/architecture/styling-system.md`
+7. `loop-renderer` / `recurse-renderer`
+   - 原问题：通过 `flux-renderers-basic` 包内私有 `StructuralLoopContext` 共享递归结构协议。
+   - 修复：将结构递归上下文能力提升为 `flux-react` 标准上下文与 hook（`StructuralLoopContext` / `useStructuralLoopContext`），并把相关类型提升到 `flux-core` 公共契约（`StructuralLoopBindings` / `StructuralLoopRenderContext`）。
+   - 代码：`packages/flux-core/src/types/renderer-hooks.ts`, `packages/flux-react/src/{contexts.ts,hooks.ts,index.tsx}`, `packages/flux-renderers-basic/src/{loop.tsx,recurse.tsx,structural-loop.tsx}`
 
-### [维度09] 渲染器名: tag-list-renderer
-- **合规评分**: C
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\tag-list.tsx:15-24`
-  - **严重程度**: P1
-  - **契约条款**: 复杂字段值应从 form store / 响应式 hooks 读取，不应通过 imperative `scope.get(...)` 派生当前值
-  - **现状**: 选中值通过 `readCheckboxGroupValue(scope, name)` 读取，而不是使用已由 `useFormFieldController` 提供的响应式值
-  - **建议**: 直接从订阅态字段值派生 tags 选中状态，避免非响应式读取和 form/scope 双来源偏移
-  - **参考文档**: `docs/architecture/renderer-runtime.md`
+## 复核后确认“原结论已过时或需重分类”的项
 
-### [维度09] 渲染器名: array-editor-renderer
-- **合规评分**: D
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\array-editor.tsx:143-202`
-  - **严重程度**: P1
-  - **契约条款**: 复杂字段不得维护与 form store 并存的本地值状态；字段值必须以 store 为单一事实来源
-  - **现状**: `items` 通过 `useState` 持有本地副本，再与 form/scope 双向同步，形成双状态模型
-  - **建议**: 移除本地值镜像，改为完全从 `useCurrentFormState` / `useScopeSelector` 派生；仅保留纯 UI 瞬时状态
-  - **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/architecture/form-validation.md`
+1. `table-renderer`
+   - 原文定位已过时。`packages/flux-renderers-data/src/table-renderer.tsx` 现已是薄编排层，不再包含原报告列出的那批大段 root 级隐式布局/视觉类。
+   - 现状：样式问题如果要继续追踪，应下沉到拆分后的子组件复核，如 `TableHeaderRow.tsx`、`TableBodyRows.tsx`、`TableLoadingOverlay.tsx`、`TablePaginationBar.tsx`。
+   - 结论：保留“表格子结构仍存在样式契约风险”，但删除“当前 `table-renderer.tsx` 145-150,192-240,300-325,390-401,499-500 仍违规”的旧结论。
 
-### [维度09] 渲染器名: key-value-renderer
-- **合规评分**: D
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\key-value.tsx:208-274`
-  - **严重程度**: P1
-  - **契约条款**: 复杂字段不得维护与 form store 并存的本地值状态；字段值必须以 store 为单一事实来源
-  - **现状**: `pairs` 通过 `useState` 维护本地副本，再与 form/scope 双向同步
-  - **建议**: 以 form store 为唯一值源，移除本地镜像状态与额外同步逻辑
-  - **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/architecture/form-validation.md`
+2. `detail-field-renderer`
+   - 原文将 renderer 本地管理 `open` / `draftForm` / `confirming` / `draftError` 认定为契约违规。
+   - 当前架构文档已明确：Phase 2 基线允许 `detail-field` / `detail-view` 通过 renderer-level draft isolation 创建临时 `FormRuntime`，并由 renderer 管理打开/确认/取消流程。
+   - 参考：`docs/architecture/form-validation.md:301-347,898-932`
+   - 结论：该项不应继续记为当前缺陷，应重分类为“当前实现符合现阶段架构，未来 Phase 3 再考虑 owner/runtime 下沉”。
 
-### [维度09] 渲染器名: condition-builder-renderer
-- **合规评分**: D
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\condition-builder\ConditionBuilder.tsx:55-100`
-  - **严重程度**: P1
-  - **契约条款**: 复杂字段不得维护与 form store 并存的本地值状态；字段值必须以 store 为单一事实来源
-  - **现状**: `localValue` 使用 `useState` 保存条件树本地副本，再与 form/scope 同步
-  - **建议**: 收敛到 store 单源，renderer 仅消费订阅值；必要的编辑会话状态应与字段值状态分离
-  - **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/architecture/form-validation.md`
+3. `detail-view-renderer`
+   - 结论与 `detail-field-renderer` 相同。
+   - 当前实现属于现阶段允许的 staged owner 方案，不再记为当前缺陷。
 
-### [维度09] 渲染器名: variant-field-renderer
-- **合规评分**: C
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\variant-field\variant-field.tsx:85-95,127-165`
-  - **严重程度**: P2
-  - **契约条款**: 复杂字段的关键状态不应由 renderer 本地 `useState` 持有；应由 runtime/store 或可重算规则统一拥有
-  - **现状**: `userSelectedKey` / `detectedKey` 为本地状态，直接决定活跃 variant 与子树渲染
-  - **建议**: 将 active variant 收敛为可持久化的 store/runtime 状态，或严格由当前值 + 检测规则纯推导
-  - **参考文档**: `docs/architecture/renderer-runtime.md`
+4. `tree-renderer`
+   - 原文把节点缩进、节点行布局和按钮外观一并归类为“renderer 不应拥有的隐式样式”。
+   - 复核后认为该结论过严。`tree` 按组件设计是带 UI 壳层和层级交互的 renderer，本身就负责节点缩进、展开/收起和层级结构展示，而不是纯 marker-only 透明壳。
+   - 其中 `paddingInlineStart` 这类按 `depth` 动态计算的缩进样式，属于合理的实现与性能折中；`open` 本地状态也属于节点级交互 owner 的正常局部状态。
+   - 参考：`docs/components/tree/design.md:5-7,84,106-117`
+   - 结论：不再把当前 `tree-renderer` 的局部状态和动态缩进实现继续记为 renderer-contract 缺陷。若未来引入专门的 `@nop-chaos/ui` Tree 组件，可再评估哪些视觉细节应继续下沉到 UI 层。
 
-### [维度09] 渲染器名: detail-field-renderer
-- **合规评分**: C
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\detail-view\detail-field.tsx:57-60,73-163`
-  - **严重程度**: P2
-  - **契约条款**: 复杂字段不应在 renderer 内维护独立 owner 状态；surface/draft/pending 等状态应由 runtime/owner 边界统一拥有
-  - **现状**: `open`、`draftForm`、`confirming`、`draftError` 全部由 renderer 本地 `useState` 管理
-  - **建议**: 将 surface 打开态、草稿 runtime、确认中状态收敛到 runtime/owner 层，通过 hooks 消费
-  - **参考文档**: `docs/architecture/renderer-runtime.md`
+5. `variant-field-renderer`
+   - 原文把 `userSelectedKey` / `detectedKey` 这类 renderer 本地状态视为“复杂字段关键状态不应由 renderer 本地持有”。
+   - 复核后认为该结论不成立。当前架构文档把 `variant-field` 定位为 inline live-edit、多态值切换控件：它不创建独立 draft runtime，默认只挂载当前 active variant subtree，切换和检测都由控件自身协调。
+   - 在这个边界下，`userSelectedKey` / `detectedKey` 属于控件级瞬时交互状态，而不是与 form store 并存的第二份字段值事实源。
+   - 参考：`docs/architecture/variant-field.md:23-27,105-122,123-138`
+   - 结论：不再把当前 `variant-field-renderer` 的局部状态继续记为 renderer-contract 缺陷。若未来引入更明确的 variant owner/runtime substrate，可再评估是否值得外提。
 
-### [维度09] 渲染器名: detail-view-renderer
-- **合规评分**: C
-- **违规项**:
-  - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\detail-view\detail-view.tsx:57-60,81-227`
-  - **严重程度**: P2
-  - **契约条款**: 复杂字段不应在 renderer 内维护独立 owner 状态；surface/draft/pending 等状态应由 runtime/owner 边界统一拥有
-  - **现状**: `open`、`draftForm`、`confirming`、`draftError` 由 renderer 本地状态管理，并承担提交/回写流程编排
-  - **建议**: 将 detail-view 的 surface/draft owner 迁移到 runtime/owner 层，renderer 只负责消费状态与渲染
-  - **参考文档**: `docs/architecture/renderer-runtime.md`
+## 复核后确认“问题仍存在，但本次未直接重构”的项
 
-## 无问题渲染器
+当前无剩余已确认的 renderer-contract 缺陷。
 
-- `container-renderer`
-- `fragment-renderer`
-- `flex-renderer`
-- `text-renderer`
-- `button-renderer`
-- `icon-renderer`
-- `badge-renderer`
-- `scope-debug-renderer`
-- `dynamic-renderer`
-- `reaction-renderer`
-- `dialog-renderer`
-- `drawer-renderer`
-- `tabs-renderer`
-- `form-renderer`
-- `input-text-renderer / input-email-renderer / input-password-renderer`
-- `textarea-renderer`
-- `data-source-renderer`
-- `chart-renderer`
-- `object-field-renderer`
-- `array-field-renderer`
+## 当前保留的问题清单
+
+当前无。
+
+## 本次不再保留为缺陷的旧条目
+
+- `table-renderer` 原文件定位与问题描述已过时，需要按拆分后子组件重新审计
+- `detail-field-renderer` 现阶段实现符合 `form-validation` 当前基线
+- `detail-view-renderer` 现阶段实现符合 `form-validation` 当前基线
+- `tree-renderer` 当前局部状态与动态缩进实现符合 `tree` 组件的 UI owner 边界，不再继续记为 renderer-contract 缺陷
+- `variant-field-renderer` 当前局部状态符合 `variant-field` 的 inline live-edit / active-subtree owner 边界，不再继续记为 renderer-contract 缺陷
+
+## 建议的后续动作
+
+1. 单独开一轮 `table-*` 的 styling contract 复核，按拆分后的子组件重新记账，不再沿用旧行号。
+2. 若未来新增共享 Tree UI 组件，再评估 `tree-renderer` 里哪些视觉职责应继续下沉到 UI 层。
+3. 若未来形成更明确的 variant owner/runtime substrate，再评估 `variant-field` 是否值得把 active variant 协调从 renderer 内外提。

@@ -7,10 +7,9 @@
 
 ## 总览
 
-- 发现问题：9 项
-  - P1: 3 项
-  - P2: 5 项
-  - P3: 1 项
+- 校准后保留问题：4 项
+  - P1: 1 项
+  - P2: 3 项
 - 自动化检查覆盖：
   - 根 barrel / `package.json#exports` 对齐
   - `packages/*/src/index.ts(x)` 公开导出扫描
@@ -28,40 +27,37 @@
 - 未发现“类型从 A 包 `import type` 后在 B 包 re-export 并附加不同约束”的实质性案例。
 - `FormStoreApi` 已有较完整的参考文档：`docs/references/form-validation-runtime-types.md:307-364`。
 
-### [维度03][F1] 测试支撑代码被作为 `flux-renderers-form` 根 API 公开
+### [维度03][F1] `flux-renderers-form` 测试支撑已从根 API 收口
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form\src\index.tsx:6-12`; `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form\src\__tests__\form-test-support.tsx:22-164`
-- **严重程度**: P1
+- **严重程度**: 已修复
 - **发现方式**: 自动化 + 人工复核
-- **现状**: 包根导出直接暴露了 `selectOption`、`submitCalls`、`notifyCalls`、`env`、probe renderers 等测试夹具。
-- **风险**: 外部代码会把测试实现当成稳定公共 API，后续清理测试支撑将演变成破坏性变更。
-- **建议**: 从根 barrel 移除 `./__tests__/form-test-support`；如果确实需要共享测试工具，改成显式子路径如 `@nop-chaos/flux-renderers-form/test-support`。
+- **现状**: 根 barrel 已移除测试夹具导出；共享测试工具改为显式子路径 `@nop-chaos/flux-renderers-form/test-support`。
+- **落地**: `packages/flux-renderers-form/src/index.tsx`, `packages/flux-renderers-form/src/test-support.tsx`, `packages/flux-renderers-form/package.json`, `vite.workspace-alias.ts`, `tsconfig.base.json`，以及相关测试引用已同步更新。
 - **参考文档**: `docs/references/renderer-interfaces.md`
 
-### [维度03][F2] `word-editor-renderers` 没有遵循 renderer 包统一的注册协议
+### [维度03][F2] `word-editor-renderers` 注册协议与文档契约已收敛
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\word-editor-renderers\src\index.ts:1-18`
-- **严重程度**: P1
+- **严重程度**: 已修复
 - **发现方式**: 人工复核
-- **现状**: 该包只导出普通 React 页面/工具栏/面板组件，没有 `RendererDefinition`、没有 `registerWordEditorRenderers()`、也没有 registry 入口。
-- **风险**: 同名 “renderers” 包却不能像其它 renderer 包一样接入 registry，导致跨包契约不一致；同时与 `word-editor-page` 文档表述脱节。
-- **建议**: 二选一收敛：要么正式补齐 `word-editor-page` 的 `RendererDefinition`/注册协议；要么将该包明确降格为普通 React 页面包并同步文档。
+- **现状**: `word-editor-page` 已补齐 `RendererDefinition`、`registerWordEditorRenderers()`、host manifest、`word-editor:*` namespace provider，并改为通过 `SchemaRenderer` 接入 playground。
+- **落地**: `packages/word-editor-renderers/src/renderers.tsx`, `src/types.ts`, `src/word-editor-manifest.ts`, `src/word-editor-action-provider.ts`, `src/WordEditorPage.tsx`, `apps/playground/src/pages/WordEditorPage.tsx`。
 - **参考文档**: `docs/components/word-editor-page/design.md`, `docs/architecture/capability-projection-manifest.md`
 
-### [维度03][F3] host publisher 的 `RendererDefinition.hostContract` 只在部分包中声明
+### [维度03][F3] host publisher 的 `RendererDefinition.hostContract` 已补齐并接入编译诊断
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\spreadsheet-renderers\src\renderers.tsx:5-17`; `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\renderers.tsx:22-54`; 对照 `C:\can\nop\nop-chaos-flux\packages\flow-designer-renderers\src\index.tsx:38-45`
-- **严重程度**: P1
+- **严重程度**: 已修复
 - **发现方式**: 人工复核
-- **现状**: `designer-page` 已声明 `hostContract`，但 `spreadsheet-page` / `report-designer-page` 作为 host owner 仍未在定义层声明对应 contract。
-- **风险**: 编译器/运行时无法统一依据 renderer definition 推断默认 host contract，host capability diagnostics 与发布协议会在不同 domain 包之间漂移。
-- **建议**: 为所有 host owner renderer 统一补齐 `hostContract`；如果尚未准备好，则应缩窄文档，不再把未声明者视为默认 publisher。
+- **现状**: `spreadsheet-page`、`report-designer-page`、`word-editor-page` 已在 renderer definition 上声明 `hostContract`，schema compiler 也已支持从 renderer definition 自动解析 host manifest、`xui:version` 和 capability publication attribution。
+- **落地**: `packages/spreadsheet-renderers/src/renderers.tsx`, `packages/report-designer-renderers/src/renderers.tsx`, `packages/word-editor-renderers/src/renderers.tsx`, `packages/flux-runtime/src/schema-compiler/shape-validation.ts`, `packages/flux-runtime/src/schema-compiler/host-action-validation.ts`, `packages/flux-runtime/src/schema-compiler-diagnostics.test.ts`。
 - **参考文档**: `docs/architecture/capability-projection-manifest.md`
 
 ### [维度03][F4] `flux-renderers-basic` 根 API 泄露了内部样式/布局 helper
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-basic\src\index.tsx:20-21`; `C:\can\nop\nop-chaos-flux\packages\flux-renderers-basic\src\utils.ts:1-24`
 - **严重程度**: P2
 - **发现方式**: 人工复核
-- **现状**: 根 barrel 公开了 `classNames`、`resolveDirection`、`resolveGap`、`GAP_TOKENS`。
-- **风险**: 下游代码会依赖这组带具体布局语义的 helper，反向冻结当前实现细节，阻碍 renderer styling contract 继续收敛。
-- **建议**: 取消根导出 `./utils`；仅保留 renderer/schema 层稳定契约，内部 helper 维持私有。
+- **现状**: 根 barrel 之前公开了 `classNames`、`resolveDirection`、`resolveGap`、`GAP_TOKENS`；本轮已移除 `./utils` 根导出。
+- **风险**: 若仍有外部消费者，后续需要通过显式内部子路径或局部复制处理，而不应继续冻结在根公共面。
+- **建议**: 保持 `packages/flux-renderers-basic/src/utils.ts` 为内部实现文件，不再回滚到根 API。
 - **参考文档**: `docs/architecture/styling-system.md`
 
 ### [维度03][F5] `flux-react` 根 API 暴露了大量内部 wiring primitive
@@ -91,13 +87,12 @@
 - **建议**: 修正 `docs/architecture/flux-core.md`，并为 `PageStoreApi` 补一份方法级 reference。
 - **参考文档**: `docs/architecture/flux-core.md`, `docs/references/terminology.md`, `docs/references/renderer-interfaces.md`
 
-### [维度03][F8] 多个 `src/` 文件已成为未接线死代码
+### [维度03][F8] “死代码”结论已从主结论移除
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flow-designer-core\src\core-shell-commands.ts:1-95`; `C:\can\nop\nop-chaos-flux\packages\flux-code-editor\src\extensions\sql\index.ts:1-3`; `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\schema-compiler\index.ts:1-15`
-- **严重程度**: P3
+- **严重程度**: 已移除
 - **发现方式**: 自动化 + 人工复核
-- **现状**: 这些模块既没有被 package root index 导出，也没有被任何活跃源码引用。
-- **风险**: 维护者会误判当前真实 API/实现边界，增加审计噪音与后续误用概率。
-- **建议**: 删除无用模块；如果原本 intended public，则必须接回根 barrel 或显式子路径。
+- **现状**: 复核后不能整体按“死代码”成立；其中一部分更接近内部 barrel 或后续切片保留位。
+- **建议**: 仅将真正长期未接线的单文件候选留给后续逐项清理，不再把 F8 作为统一缺陷结论保留。
 - **参考文档**: `docs/architecture/frontend-baseline.md`
 
 ### [维度03][F9] `report-designer-renderers` 根 API 暴露了单一实现专用 helper
@@ -109,10 +104,8 @@
 - **建议**: 根 API 保留 renderer definitions、schema/bridge 类型与主组件；实现 helper 改为内部模块或显式内部子路径。
 - **参考文档**: `docs/architecture/report-designer/contracts.md`
 
-## 其余每包 API 表面积报告、exports 对齐性、文档完整性总结与优先级建议见原审计输出。核心结论保留如下：
+## 当前剩余重点
 
-- `flux-renderers-form` 根 API 不应暴露测试支撑。
-- `word-editor-renderers` 与其它 domain renderer 的注册协议不一致。
-- `flux-react` / `flux-runtime` 根 barrel 暴露了过多内部 wiring primitive。
-- `PageStoreApi` 的代码/文档契约未对齐。
-- 存在少量未接线死代码文件，建议清理。
+- `flux-react` / `flux-runtime` 根 barrel 仍需要进一步区分“事实公共扩展点”与“内部 wiring primitive”。
+- `PageStoreApi` 的 architecture/reference 文档仍需补齐并与代码一致。
+- `report-designer-renderers` 根导出仍偏宽，但本轮未在没有外部消费证据的前提下继续硬砍公共面。
