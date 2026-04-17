@@ -1,7 +1,6 @@
-import type { InstanceFrame } from '@nop-chaos/flux-core';
+import type { InstanceFrame, StructuralLoopBindings } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import type { LoopSchema, RecurseSchema } from './schemas';
-import type { StructuralLoopBindings } from './structural-loop-context';
 
 export interface StructuralLoopRenderOptions {
   items: unknown;

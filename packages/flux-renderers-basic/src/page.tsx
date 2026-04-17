@@ -1,7 +1,7 @@
 import React from 'react';
 import { useMemo } from 'react';
 import type { PageStatusSummary, RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, resolveRendererSlotContent, useScopeSelector } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import type { PageSchema } from './schemas';
 import { useStatusPathPublication } from './status-hooks';
@@ -10,9 +10,10 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
+  const refreshTick = useScopeSelector((scopeData) => Number((scopeData as Record<string, unknown>)?.refreshTick ?? 0));
   const summary = useMemo<PageStatusSummary>(() => ({
-    refreshTick: Number(props.node.scope.get('refreshTick') ?? 0)
-  }), [props.node.scope]);
+    refreshTick
+  }), [refreshTick]);
 
   useStatusPathPublication(props.node.scope, typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined, summary);
 

@@ -18,7 +18,6 @@ import { RecurseRenderer } from './recurse';
 import { ScopeDebugRenderer } from './scope-debug';
 
 export * from './schemas';
-export * from './utils';
 export { PageRenderer } from './page';
 export { ContainerRenderer } from './container';
 export { FlexRenderer } from './flex';

@@ -1,14 +1,11 @@
-import React, { useContext, useMemo } from 'react';
-import type { InstanceFrame, RendererComponentProps } from '@nop-chaos/flux-core';
-import { StructuralLoopContext } from './structural-loop-context';
-import type { StructuralLoopBindings, StructuralLoopContextValue } from './structural-loop-context';
+import React, { useMemo } from 'react';
+import type { InstanceFrame, RendererComponentProps, StructuralLoopBindings, StructuralLoopRenderContext } from '@nop-chaos/flux-core';
+import { StructuralLoopContext, useStructuralLoopContext } from '@nop-chaos/flux-react';
 import type { RecurseSchema } from './schemas';
 import { createStructuralRepeatedTemplateId, renderStructuralLoop, resolveLoopBindings } from './structural-loop';
 
 interface RecurseProviderProps {
-  loopContext: StructuralLoopContextValue;
-  ownerId: string;
-  path: string;
+  loopContext: StructuralLoopRenderContext;
   bindings: StructuralLoopBindings;
   itemData: Record<string, unknown> | undefined;
   keyBy: unknown;
@@ -18,25 +15,23 @@ interface RecurseProviderProps {
 }
 
 function RecurseProvider(props: RecurseProviderProps) {
-  const contextValue = useMemo(
+  const contextValue = useMemo<StructuralLoopRenderContext>(
     () => ({
       ...props.loopContext,
-      ownerId: props.ownerId,
-      path: props.path,
       bindings: props.bindings,
       itemData: props.itemData,
       keyBy: props.keyBy,
       instancePath: props.instancePath,
       depth: props.depth
     }),
-    [props.loopContext, props.ownerId, props.path, props.bindings, props.itemData, props.keyBy, props.instancePath, props.depth]
+    [props.loopContext, props.bindings, props.itemData, props.keyBy, props.instancePath, props.depth]
   );
 
   return <StructuralLoopContext.Provider value={contextValue}>{props.children}</StructuralLoopContext.Provider>;
 }
 
 export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
-  const loopContext = useContext(StructuralLoopContext);
+  const loopContext = useStructuralLoopContext();
   const itemName = props.props.itemName as string | undefined;
   const indexName = props.props.indexName as string | undefined;
   const keyName = props.props.keyName as string | undefined;
@@ -70,8 +65,6 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
           <RecurseProvider
             key={itemKey}
             loopContext={loopContext}
-            ownerId={props.id}
-            path={props.path}
             bindings={bindings}
             itemData={itemData}
             keyBy={keyBy}
