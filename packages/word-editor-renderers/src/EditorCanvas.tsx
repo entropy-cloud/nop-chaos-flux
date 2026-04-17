@@ -2,17 +2,19 @@ import { useRef, useEffect } from 'react'
 import type { IEditorData } from '@hufe921/canvas-editor'
 import type { EditorStoreApi } from '@nop-chaos/word-editor-core'
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
-import { DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core'
-import type { PaperSettings, SavedDocumentData } from '@nop-chaos/word-editor-core'
+import { createSavedDocumentData, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core'
+import type { PaperSettings, SavedDocumentData, WordDocument } from '@nop-chaos/word-editor-core'
 import { loadDocument } from '@nop-chaos/word-editor-core'
 
 
 export interface EditorCanvasProps {
   editorStore: EditorStoreApi
   bridge: CanvasEditorBridge
+  initialDocument?: WordDocument
+  onAutosave?: (saved: SavedDocumentData) => void
 }
 
-export function EditorCanvas({ editorStore, bridge }: EditorCanvasProps) {
+export function EditorCanvas({ editorStore, bridge, initialDocument, onAutosave }: EditorCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -29,34 +31,42 @@ export function EditorCanvas({ editorStore, bridge }: EditorCanvasProps) {
         if (value) {
           const editorValue = value.data
           const paperSettings = bridge.getPaperSettings()
-          const saved: SavedDocumentData = {
+          const saved = createSavedDocumentData({
             data: {
               header: editorValue.header ?? [],
               main: editorValue.main,
-              footer: editorValue.footer ?? []
+              footer: editorValue.footer ?? [],
+              charts: initialDocument?.charts ?? [],
+              codes: initialDocument?.codes ?? []
             },
-            paperSettings: paperSettings ?? { ...DEFAULT_PAPER_SETTINGS },
-            savedAt: new Date().toISOString()
-          }
+            paperSettings: paperSettings ?? { ...DEFAULT_PAPER_SETTINGS }
+          })
           localStorage.setItem('nop-word-editor-document', JSON.stringify(saved))
+          onAutosave?.(saved)
           editorStore.setDirty(false)
         }
       }, 500)
     }
 
     const savedDocument = loadDocument()
+    const documentSource = initialDocument
+      ? createSavedDocumentData({
+          data: initialDocument,
+          paperSettings: null
+        })
+      : savedDocument
     let editorData: IEditorData
     let paperSettings: PaperSettings
 
-    if (savedDocument) {
-      const header = savedDocument.data.header || []
-      const footer = savedDocument.data.footer || []
+    if (documentSource) {
+      const header = documentSource.data.header || []
+      const footer = documentSource.data.footer || []
       editorData = {
         header,
-        main: savedDocument.data.main,
+        main: documentSource.data.main,
         footer
       }
-      paperSettings = savedDocument.paperSettings
+      paperSettings = documentSource.paperSettings
     } else {
       editorData = {
         header: [],
@@ -100,7 +110,7 @@ export function EditorCanvas({ editorStore, bridge }: EditorCanvasProps) {
 
     editorStore.setBridge(bridge)
 
-    if (savedDocument) {
+    if (documentSource) {
       editorStore.setPaperSettings(paperSettings)
       editorStore.setDirty(false)
     }
@@ -117,7 +127,7 @@ export function EditorCanvas({ editorStore, bridge }: EditorCanvasProps) {
       editorStore.setBridge(null)
       editorStore.setReady(false)
     }
-  }, [bridge, editorStore])
+  }, [bridge, editorStore, initialDocument, onAutosave])
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
 }

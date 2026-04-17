@@ -2,6 +2,11 @@ import { useState } from 'react'
 import type { DocChart, ChartType } from '@nop-chaos/word-editor-core'
 import {
   Button,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
   Checkbox,
   Dialog,
   DialogContent,
@@ -13,13 +18,6 @@ import {
   NativeSelectOption,
   ScrollArea
 } from '@nop-chaos/ui'
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartLegend,
-  ChartTooltipContent,
-  ChartLegendContent
-} from '@nop-chaos/ui/chart'
 import * as RechartsPrimitive from 'recharts'
 
 interface ChartDialogProps {

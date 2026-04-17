@@ -1,30 +1,30 @@
 import { useMemo, useEffect, useState, useCallback } from 'react'
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
 import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react'
-import { CanvasEditorBridge, createDatasetStore, createEditorStore, saveDocument, loadDocument, saveDatasets, loadDatasets } from '@nop-chaos/word-editor-core'
-import type { DataSetSourceType, DataColumnInput, DataSet, DocChart, DocCode } from '@nop-chaos/word-editor-core'
+import type { RendererComponentProps, WordEditorHostStatusSummary } from '@nop-chaos/flux-core'
+import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope, useNamespaceRegistration, WorkbenchShell } from '@nop-chaos/flux-react'
+import { publishOwnerStatus } from '@nop-chaos/flux-runtime'
+import { CanvasEditorBridge, createDatasetStore, createEditorStore, createSavedDocumentData, saveDocument, saveDatasets, loadDatasets } from '@nop-chaos/word-editor-core'
+import type { DataSetSourceType, DataColumnInput, DataSet, DocChart, DocCode, SavedDocumentData, WordDocument } from '@nop-chaos/word-editor-core'
 import {
   Button,
   cn,
   Tabs,
   TabsList,
-  TabsTrigger,
-  TabsContent,
+    TabsTrigger,
+    TabsContent,
 } from '@nop-chaos/ui'
-import { WorkbenchShell } from '@nop-chaos/flux-react'
 import { EditorCanvas } from './EditorCanvas.js'
+import { createWordEditorActionProvider } from './word-editor-action-provider.js'
 import { RibbonToolbar } from './toolbar/RibbonToolbar.js'
 import { OutlinePanel } from './panels/OutlinePanel.js'
 import { DatasetPanel } from './panels/DatasetPanel.js'
 import { FieldList } from './panels/FieldList.js'
 import { DatasetDialog } from './dialogs/DatasetDialog.js'
 import { useWordEditorShortcuts } from './hooks/useWordEditorShortcuts.js'
+import type { WordEditorPageSchema } from './types.js'
 
-interface WordEditorPageProps {
-  onBack: () => void
-}
-
-export function WordEditorPage({ onBack }: WordEditorPageProps) {
+export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchema>) {
   const bridge = useMemo(() => new CanvasEditorBridge(), [])
   const editorStore = useMemo(() => createEditorStore(), [])
   const datasetStore = useMemo(() => createDatasetStore(), [])
@@ -34,6 +34,16 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null)
   const [leftCollapsed, setLeftCollapsed] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
+  const [charts, setCharts] = useState<DocChart[]>(() => (props.props.initialCharts as DocChart[] | undefined) ?? [])
+  const [codes, setCodes] = useState<DocCode[]>(() => (props.props.initialCodes as DocCode[] | undefined) ?? [])
+  const [savedDocument, setSavedDocument] = useState<SavedDocumentData | null>(() => {
+    const initialDocument = props.props.initialDocument as WordDocument | undefined
+    return initialDocument
+      ? createSavedDocumentData({ data: initialDocument, paperSettings: null })
+      : null
+  })
+  const titleContent = resolveRendererSlotContent(props, 'title')
+  const actionScope = useCurrentActionScope()
 
   const isDirty = useSyncExternalStoreWithSelector(
     editorStore.subscribe,
@@ -49,30 +59,85 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
     (state) => state.wordCount
   )
 
+  const selection = useSyncExternalStoreWithSelector(
+    editorStore.subscribe,
+    editorStore.getState,
+    editorStore.getState,
+    (state) => state.selection
+  )
+
+  const runtimeSnapshot = useSyncExternalStoreWithSelector(
+    editorStore.subscribe,
+    editorStore.getState,
+    editorStore.getState,
+    (state) => ({
+      ready: state.isReady,
+      dirty: state.isDirty,
+      wordCount: state.wordCount,
+      canUndo: state.selection.undo,
+      canRedo: state.selection.redo,
+      currentPage: state.currentPage,
+      totalPages: state.totalPages,
+      scale: state.scale,
+      datasetCount: datasetStore.getAll().length,
+      chartCount: charts.length,
+      codeCount: codes.length,
+    })
+  )
+
+  const hostScope = useHostScope({
+    document: savedDocument?.data ?? {
+      header: [],
+      main: [],
+      footer: [],
+      charts,
+      codes,
+    },
+    datasets: datasetStore.getAll(),
+    runtime: runtimeSnapshot,
+    selection,
+  }, props.path, 'word-editor')
+
+  const actionProvider = useMemo(() => createWordEditorActionProvider({
+    bridge,
+    editorStore,
+    datasetStore,
+    getCharts: () => charts,
+    setCharts,
+    getCodes: () => codes,
+    setCodes,
+    saveEvent: props.events.onSave,
+  }), [bridge, charts, codes, datasetStore, editorStore, props.events.onSave])
+
+  useNamespaceRegistration(actionScope, 'word-editor', actionProvider)
+
   useEffect(() => {
-    loadDocument()
     const savedDatasets = loadDatasets()
     if (savedDatasets.length > 0) {
       datasetStore.load(savedDatasets)
     }
-  }, [datasetStore])
+    const initialDatasets = props.props.datasets as DataSet[] | undefined
+    if (initialDatasets && initialDatasets.length > 0) {
+      datasetStore.load(initialDatasets)
+    }
+  }, [datasetStore, props.props.datasets])
 
   const handleSave = useCallback(() => {
-    const success = saveDocument(bridge)
+    const success = saveDocument(bridge, { charts, codes })
     if (success) {
       saveDatasets(datasetStore.getAll())
       editorStore.setDirty(false)
       setSaveMessage('Saved')
       setTimeout(() => setSaveMessage(null), 2000)
     }
-  }, [bridge, datasetStore, editorStore])
+  }, [bridge, charts, codes, datasetStore, editorStore])
 
   useWordEditorShortcuts({ bridge, onSave: handleSave })
 
   const handleBack = useCallback(() => {
     if (isDirty && !window.confirm('You have unsaved changes. Leave without saving?')) return
-    onBack()
-  }, [isDirty, onBack])
+    void props.events.onBack?.()
+  }, [isDirty, props.events])
 
   const handleAddDataset = () => {
     setEditingDatasetId(null)
@@ -125,12 +190,35 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
   }, [bridge])
 
   const handleChartSave = useCallback((_chart: DocChart) => {
-    // Chart save handled by bridge persistence
-  }, [])
+    bridge.insertChart(_chart)
+    setCharts((current) => [...current, _chart])
+  }, [bridge])
 
   const handleCodeSave = useCallback((_code: DocCode) => {
-    // Code save handled by bridge persistence
-  }, [])
+    bridge.insertCode(_code)
+    setCodes((current) => [...current, _code])
+  }, [bridge])
+
+  const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined
+
+  useEffect(() => {
+    if (!statusPath) {
+      return
+    }
+
+    const summary: WordEditorHostStatusSummary = {
+      kind: 'word-editor',
+      dirty: runtimeSnapshot.dirty,
+      busy: false,
+      canUndo: runtimeSnapshot.canUndo,
+      canRedo: runtimeSnapshot.canRedo,
+      wordCount: runtimeSnapshot.wordCount,
+      datasetCount: runtimeSnapshot.datasetCount,
+      chartCount: runtimeSnapshot.chartCount,
+      codeCount: runtimeSnapshot.codeCount,
+    }
+    publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary)
+  }, [props.node.scope, runtimeSnapshot, statusPath])
 
   const editingDataset = editingDatasetId
     ? datasetStore.getState().datasets.find(ds => ds.id === editingDatasetId)
@@ -151,7 +239,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
-            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">Word Editor</h1>
+            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{hasRendererSlotContent(titleContent) ? titleContent : 'Word Editor'}</h1>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[var(--nop-body-copy)]">
             <Type className="w-3.5 h-3.5 opacity-70" />
@@ -169,11 +257,13 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
           {saveMessage || 'Save'}
         </Button>
       </div>
-      <RibbonToolbar bridge={bridge} store={editorStore} onInsertExpr={handleInsertExpr} onInsertTag={handleInsertTag} onChartSave={handleChartSave} onCodeSave={handleCodeSave} />
+      {props.regions.toolbar
+        ? props.helpers.render(props.regions.toolbar.templateNode, { scope: hostScope, actionScope })
+        : <RibbonToolbar bridge={bridge} store={editorStore} onInsertExpr={handleInsertExpr} onInsertTag={handleInsertTag} onChartSave={handleChartSave} onCodeSave={handleCodeSave} />}
     </div>
   )
 
-  const leftPanelSlot = (
+  const defaultLeftPanelSlot = (
     <Tabs data-orientation="horizontal" className="flex-col gap-0 h-full">
       <TabsList variant="line" className="w-full rounded-none border-b border-border px-0 shrink-0">
         <TabsTrigger
@@ -214,12 +304,25 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
 
   const canvasSlot = (
     <div className="flex flex-col h-full min-h-0 overflow-auto bg-[var(--nop-playground-stage-bg)]">
-      <EditorCanvas editorStore={editorStore} bridge={bridge} />
+      <EditorCanvas
+        editorStore={editorStore}
+        bridge={bridge}
+        initialDocument={props.props.initialDocument as WordDocument | undefined}
+        onAutosave={setSavedDocument}
+      />
     </div>
   )
 
+  const leftPanelSlot = props.regions.leftPanel
+    ? props.helpers.render(props.regions.leftPanel.templateNode, { scope: hostScope, actionScope })
+    : defaultLeftPanelSlot
+
+  const rightPanelSlot = props.regions.rightPanel
+    ? props.helpers.render(props.regions.rightPanel.templateNode, { scope: hostScope, actionScope })
+    : <OutlinePanel bridge={bridge} />
+
   return (
-    <div className={cn('nop-word-editor h-screen overflow-hidden bg-[var(--nop-app-bg)]')}>
+    <div className={cn('nop-word-editor-page h-screen overflow-hidden bg-[var(--nop-app-bg)]', props.meta.className)}>
       <WorkbenchShell
         style={{ padding: 0 }}
         header={headerSlot}
@@ -228,7 +331,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
         onLeftToggle={() => setLeftCollapsed(v => !v)}
         leftLabel="Expand field panel"
         canvas={canvasSlot}
-        rightPanel={<OutlinePanel bridge={bridge} />}
+        rightPanel={rightPanelSlot}
         rightCollapsed={rightCollapsed}
         onRightToggle={() => setRightCollapsed(v => !v)}
         rightLabel="Expand outline"

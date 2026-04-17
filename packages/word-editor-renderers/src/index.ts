@@ -1,4 +1,13 @@
 export { WordEditorPage } from './WordEditorPage.js'
+export { registerWordEditorRenderers, wordEditorRendererDefinitions, defineWordEditorPageSchema } from './renderers.js'
+export type { WordEditorPageSchema, WordEditorPageSchemaInput } from './types.js'
+export {
+  WORD_EDITOR_MANIFEST_V1,
+  resolveWordEditorManifest,
+  wordEditorHostContract,
+  WORD_EDITOR_CAPABILITY_PUBLICATION,
+} from './word-editor-manifest.js'
+export { createWordEditorActionProvider } from './word-editor-action-provider.js'
 export { EditorCanvas } from './EditorCanvas.js'
 export { RibbonToolbar } from './toolbar/RibbonToolbar.js'
 export { FontControls } from './toolbar/FontControls.js'

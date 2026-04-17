@@ -18,6 +18,7 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
   useEffect(() => {
     const container = containerRef.current
     if (!container || !documentData) return
+    let cancelled = false
 
     const editorData = {
       header: documentData.header ?? [],
@@ -43,10 +44,13 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
 
     const wordCountPromise = instance.getWordCount()
     wordCountPromise.then((count) => {
-      setWordCount(count)
+      if (!cancelled) {
+        setWordCount(count)
+      }
     })
 
     return () => {
+      cancelled = true
       instance.unmount()
     }
   }, [documentData, paperSettings])

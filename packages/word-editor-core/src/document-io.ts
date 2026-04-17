@@ -1,38 +1,78 @@
 import type { CanvasEditorBridge } from './canvas-editor-bridge.js'
 import type { PaperSettings, } from './paper-settings.js'
-import type { DocumentData } from './template-model.js'
+import type { WordDocument } from './template-model.js'
 import type { DataSet } from './dataset-model.js'
+import type { DocChart } from './chart-model.js'
+import type { DocCode } from './code-model.js'
 
 const STORAGE_KEY = 'nop-word-editor-document'
 const DATASET_STORAGE_KEY = 'nop-word-editor-datasets'
 
 export interface SavedDocumentData {
-  data: DocumentData
+  data: WordDocument
   paperSettings: PaperSettings
   savedAt: string
 }
 
-export function saveDocument(bridge: CanvasEditorBridge): boolean {
+function normalizeWordDocument(value: unknown): WordDocument | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  const record = value as Record<string, unknown>
+
+  return {
+    header: Array.isArray(record.header) ? record.header as WordDocument['header'] : [],
+    main: Array.isArray(record.main) ? record.main as WordDocument['main'] : [],
+    footer: Array.isArray(record.footer) ? record.footer as WordDocument['footer'] : [],
+    charts: Array.isArray(record.charts) ? record.charts as DocChart[] : [],
+    codes: Array.isArray(record.codes) ? record.codes as DocCode[] : []
+  }
+}
+
+export function createSavedDocumentData(input: {
+  data: WordDocument
+  paperSettings: PaperSettings | null | undefined
+  savedAt?: string
+}): SavedDocumentData {
+  return {
+    data: {
+      header: input.data.header ?? [],
+      main: input.data.main ?? [],
+      footer: input.data.footer ?? [],
+      charts: input.data.charts ?? [],
+      codes: input.data.codes ?? []
+    },
+    paperSettings: input.paperSettings ?? {
+      width: 595,
+      height: 842,
+      direction: 'vertical',
+      margins: [100, 120, 100, 120]
+    },
+    savedAt: input.savedAt ?? new Date().toISOString()
+  }
+}
+
+export function saveDocument(
+  bridge: CanvasEditorBridge,
+  extras?: { charts?: DocChart[]; codes?: DocCode[] }
+): boolean {
   try {
     const value = bridge.getValue()
     if (!value) return false
 
     const paperSettings = bridge.getPaperSettings()
 
-    const saved: SavedDocumentData = {
+    const saved = createSavedDocumentData({
       data: {
         header: value.data.header ?? [],
         main: value.data.main,
-        footer: value.data.footer ?? []
+        footer: value.data.footer ?? [],
+        charts: extras?.charts ?? [],
+        codes: extras?.codes ?? []
       },
-      paperSettings: paperSettings ?? {
-        width: 595,
-        height: 842,
-        direction: 'vertical',
-        margins: [100, 120, 100, 120]
-      },
-      savedAt: new Date().toISOString()
-    }
+      paperSettings
+    })
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
     return true
@@ -45,7 +85,17 @@ export function loadDocument(): SavedDocumentData | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    return JSON.parse(raw) as SavedDocumentData
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    const data = normalizeWordDocument(parsed.data)
+    if (!data) {
+      return null
+    }
+
+    return {
+      data,
+      paperSettings: parsed.paperSettings as PaperSettings,
+      savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date(0).toISOString()
+    }
   } catch {
     return null
   }

@@ -4,6 +4,8 @@ import type { IEditorData, IEditorResult, IRangeStyle } from '@hufe921/canvas-ed
 import type { PaperSettings } from './paper-settings.js'
 import type { TemplateExpr } from './template-expr.js'
 import { exprToUrl, buildElExpression } from './template-expr.js'
+import type { DocChart } from './chart-model.js'
+import type { DocCode } from './code-model.js'
 
 export interface CanvasEditorBridgeOptions {
   onContentChange?: () => void
@@ -146,6 +148,47 @@ export class CanvasEditorBridge {
       expr: `${datasetName}.${fieldName}`
     }
     this.insertTemplateExpression(expr)
+  }
+
+  insertChart(chart: DocChart): void {
+    this.insertTemplateExpression({
+      kind: 'tag-selfclose',
+      expr: '',
+      tagName: 'nop:chart',
+      attrs: {
+        id: chart.id,
+        name: chart.chartName,
+        type: chart.chartType,
+        dataset: chart.datasetId,
+        category: chart.categoryField,
+        valueField: chart.valueField.join(','),
+        seriesField: chart.seriesField?.join(',') ?? '',
+        showTitle: chart.showChartName ? 'true' : 'false'
+      }
+    })
+  }
+
+  insertCode(code: DocCode): void {
+    this.insertTemplateExpression({
+      kind: 'tag-selfclose',
+      expr: '',
+      tagName: 'nop:code',
+      attrs: {
+        id: code.id,
+        name: code.codeName,
+        type: code.codeType,
+        dataset: code.datasetId,
+        valueField: code.valueField
+      }
+    })
+  }
+
+  undo(): void {
+    this.instance?.command.executeUndo()
+  }
+
+  redo(): void {
+    this.instance?.command.executeRedo()
   }
 
   forceUpdate(): void {

@@ -1,11 +1,41 @@
+// @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
-import { WordEditorPage } from '../WordEditorPage.js'
+import { createFormulaCompiler } from '@nop-chaos/flux-formula'
+import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/flux-react'
+import type { RendererEnv } from '@nop-chaos/flux-core'
+import { registerWordEditorRenderers, defineWordEditorPageSchema } from '../index.js'
 
 vi.mock('@nop-chaos/word-editor-core', async () => {
   class CanvasEditorBridge {}
-  const state = { isDirty: false, wordCount: 0 }
+  const state = {
+    isReady: true,
+    isDirty: false,
+    wordCount: 0,
+    currentPage: 1,
+    totalPages: 1,
+    scale: 1,
+    selection: {
+      bold: false,
+      italic: false,
+      underline: false,
+      strikeout: false,
+      superscript: false,
+      subscript: false,
+      font: null,
+      size: 16,
+      color: null,
+      highlight: null,
+      rowFlex: null,
+      level: null,
+      listType: null,
+      listStyle: null,
+      rowMargin: 0,
+      undo: false,
+      redo: false,
+    },
+  }
   const editorStore = {
     subscribe: () => () => undefined,
     getState: () => state,
@@ -59,8 +89,27 @@ vi.mock('../hooks/useWordEditorShortcuts.js', () => ({
 
 describe('WordEditorPage', () => {
   it('keeps the semantic root marker on the page shell', () => {
-    const { container } = render(<WordEditorPage onBack={vi.fn()} />)
-    expect(container.querySelector('.nop-word-editor')).toBeTruthy()
+    const registry = createDefaultRegistry()
+    registerWordEditorRenderers(registry)
+    const SchemaRenderer = createSchemaRenderer()
+    const env: RendererEnv = {
+      fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
+      notify: () => undefined,
+    }
+    const schema = defineWordEditorPageSchema({
+      type: 'word-editor-page',
+      title: 'Word Editor',
+    })
+    const { container } = render(
+      <SchemaRenderer
+        schema={schema}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{}}
+      />
+    )
+    expect(container.querySelector('.nop-word-editor-page')).toBeTruthy()
     expect(screen.getByTestId('editor-canvas')).toBeTruthy()
     expect(screen.getByTestId('ribbon-toolbar')).toBeTruthy()
   })

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { saveDocument, loadDocument, clearDocument, saveDatasets, loadDatasets } from '../document-io.js'
+import { createSavedDocumentData, saveDocument, loadDocument, clearDocument, saveDatasets, loadDatasets } from '../document-io.js'
 import type { DataSet } from '../dataset-model.js'
 
 const STORAGE_KEY = 'nop-word-editor-document'
@@ -39,7 +39,10 @@ describe('saveDocument', () => {
       getPaperSettings: vi.fn(() => ({ width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] }))
     } as any
 
-    const result = saveDocument(mockBridge)
+    const result = saveDocument(mockBridge, {
+      charts: [{ id: 'chart_1', chartName: 'Revenue', chartType: 'bar', showChartName: true, datasetId: 'ds', categoryField: 'month', valueField: ['value'] }],
+      codes: [{ id: 'code_1', codeName: 'QR', codeType: 'qrcode', datasetId: 'ds', valueField: 'id' }]
+    })
 
     expect(result).toBe(true)
     expect(localStorageMock.setItem).toHaveBeenCalledWith(STORAGE_KEY, expect.any(String))
@@ -47,6 +50,8 @@ describe('saveDocument', () => {
     expect(saved.data.main).toEqual([{ value: 'main' }])
     expect(saved.data.header).toEqual([{ value: 'header' }])
     expect(saved.data.footer).toEqual([{ value: 'footer' }])
+    expect(saved.data.charts).toHaveLength(1)
+    expect(saved.data.codes).toHaveLength(1)
     expect(saved.paperSettings.width).toBe(595)
     expect(saved.savedAt).toBeDefined()
   })
@@ -73,7 +78,25 @@ describe('saveDocument', () => {
     const saved = JSON.parse(localStorageMock.setItem.mock.calls[0][1]) as any
     expect(saved.data.header).toEqual([])
     expect(saved.data.footer).toEqual([])
+    expect(saved.data.charts).toEqual([])
+    expect(saved.data.codes).toEqual([])
     expect(saved.paperSettings).toEqual({ width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] })
+  })
+
+  it('normalizes saved document data with defaults', () => {
+    const saved = createSavedDocumentData({
+      data: {
+        header: [],
+        main: [{ value: 'hello' }],
+        footer: []
+      },
+      paperSettings: null,
+      savedAt: '2026-01-01T00:00:00.000Z'
+    })
+
+    expect(saved.data.charts).toEqual([])
+    expect(saved.data.codes).toEqual([])
+    expect(saved.paperSettings.width).toBe(595)
   })
 })
 
@@ -84,7 +107,7 @@ describe('loadDocument', () => {
 
   it('returns saved data correctly', () => {
     const saved = {
-      data: { header: [], main: [{ value: 'hello' }], footer: [] },
+      data: { header: [], main: [{ value: 'hello' }], footer: [], charts: [], codes: [] },
       paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
       savedAt: '2025-01-01T00:00:00.000Z'
     }
@@ -92,6 +115,19 @@ describe('loadDocument', () => {
 
     const result = loadDocument()
     expect(result).toEqual(saved)
+  })
+
+  it('upgrades legacy saved documents without chart/code arrays', () => {
+    const saved = {
+      data: { header: [], main: [{ value: 'legacy' }], footer: [] },
+      paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
+      savedAt: '2025-01-01T00:00:00.000Z'
+    }
+    localStorageMock._store[STORAGE_KEY] = JSON.stringify(saved)
+
+    const result = loadDocument()
+    expect(result?.data.charts).toEqual([])
+    expect(result?.data.codes).toEqual([])
   })
 })
 
