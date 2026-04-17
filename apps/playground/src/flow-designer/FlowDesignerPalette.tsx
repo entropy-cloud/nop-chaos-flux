@@ -1,5 +1,6 @@
 import React from 'react';
 import type { DesignerConfig, NodeTypeConfig } from '@nop-chaos/flow-designer-core';
+import { Button, Input } from '@nop-chaos/ui';
 
 export interface FlowDesignerPaletteProps {
   config: DesignerConfig;
@@ -40,9 +41,8 @@ export function FlowDesignerPalette({
         <div data-slot="flow-designer-palette-header">
           <h3>Node Palette</h3>
           {config.palette?.searchable !== false && (
-            <input
+            <Input
               type="text"
-              data-slot="flow-designer-palette-search"
               placeholder="Search nodes..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -67,9 +67,10 @@ export function FlowDesignerPalette({
                     const nt = nodeTypes.find((n) => n.id === ntId);
                     if (!nt) return null;
                     return (
-                      <button
+                      <Button
                         key={nt.id}
-                        data-slot="flow-designer-palette-item"
+                        variant="ghost"
+                        size="sm"
                         draggable
                         onDragStart={(event) => {
                           event.dataTransfer.setData('application/x-flow-designer-node-type', nt.id);
@@ -77,11 +78,10 @@ export function FlowDesignerPalette({
                         }}
                         onClick={() => onAddNode(nt)}
                         title={nt.description ?? nt.label}
-                        type="button"
                       >
                         <span data-slot="flow-designer-palette-item-icon">{nt.icon ?? '○'}</span>
                         <span data-slot="flow-designer-palette-item-label">{nt.label}</span>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>

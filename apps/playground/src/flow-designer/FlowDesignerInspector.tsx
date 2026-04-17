@@ -1,5 +1,6 @@
 import React from 'react';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
+import { Button, Input, Label, NativeSelect, NativeSelectOption, Textarea } from '@nop-chaos/ui';
 
 export interface FlowDesignerInspectorProps {
   snapshot: DesignerSnapshot;
@@ -38,9 +39,8 @@ function NodeSpecificFields({
     case 'condition':
       return (
         <div data-slot="flow-designer-inspector-section">
-          <label data-slot="flow-designer-inspector-label">Condition Expression</label>
-          <textarea
-            data-slot="flow-designer-inspector-textarea"
+          <Label>Condition Expression</Label>
+          <Textarea
             rows={3}
             value={String(data.condition ?? '')}
             onChange={(e) => onUpdate({ condition: e.target.value })}
@@ -52,20 +52,18 @@ function NodeSpecificFields({
       return (
         <>
           <div data-slot="flow-designer-inspector-section">
-            <label data-slot="flow-designer-inspector-label">Collection Expression</label>
-            <input
+            <Label>Collection Expression</Label>
+            <Input
               type="text"
-              data-slot="flow-designer-inspector-input"
               value={String(data.collection ?? '')}
               onChange={(e) => onUpdate({ collection: e.target.value })}
               placeholder="e.g., items"
             />
           </div>
           <div data-slot="flow-designer-inspector-section">
-            <label data-slot="flow-designer-inspector-label">Variable Name</label>
-            <input
+            <Label>Variable Name</Label>
+            <Input
               type="text"
-              data-slot="flow-designer-inspector-input"
               value={String(data.variable ?? 'item')}
               onChange={(e) => onUpdate({ variable: e.target.value })}
               placeholder="item"
@@ -76,10 +74,9 @@ function NodeSpecificFields({
     case 'parallel':
       return (
         <div data-slot="flow-designer-inspector-section">
-          <label data-slot="flow-designer-inspector-label">Branch Count</label>
-          <input
+          <Label>Branch Count</Label>
+          <Input
             type="number"
-            data-slot="flow-designer-inspector-input"
             min={2}
             max={10}
             value={Number(data.branchCount ?? 2)}
@@ -90,10 +87,9 @@ function NodeSpecificFields({
     case 'task':
       return (
         <div data-slot="flow-designer-inspector-section">
-          <label data-slot="flow-designer-inspector-label">Service Name</label>
-          <input
+          <Label>Service Name</Label>
+          <Input
             type="text"
-            data-slot="flow-designer-inspector-input"
             value={String(data.serviceName ?? '')}
             onChange={(e) => onUpdate({ serviceName: e.target.value })}
             placeholder="e.g., myService"
@@ -138,19 +134,17 @@ export function FlowDesignerInspector({
             <NodeTypeBadge type={node.type} />
           </div>
           <div data-slot="flow-designer-inspector-section">
-            <label data-slot="flow-designer-inspector-label">Label</label>
-            <input
+            <Label>Label</Label>
+            <Input
               type="text"
-              data-slot="flow-designer-inspector-input"
               value={String(node.data.label ?? '')}
               onChange={(e) => handleNodeUpdate({ label: e.target.value })}
               placeholder="Enter node label"
             />
           </div>
           <div data-slot="flow-designer-inspector-section">
-            <label data-slot="flow-designer-inspector-label">Description</label>
-            <textarea
-              data-slot="flow-designer-inspector-textarea"
+            <Label>Description</Label>
+            <Textarea
               rows={2}
               value={String(node.data.description ?? '')}
               onChange={(e) => handleNodeUpdate({ description: e.target.value })}
@@ -163,60 +157,57 @@ export function FlowDesignerInspector({
             onUpdate={handleNodeUpdate}
           />
           <div data-slot="flow-designer-inspector-actions">
-            <button
-              data-slot="flow-designer-inspector-button"
-              data-variant="danger"
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={() => onDeleteNode(node.id)}
               type="button"
             >
               Delete Node
-            </button>
+            </Button>
           </div>
         </div>
       ) : edge ? (
         <div data-slot="flow-designer-inspector">
           <h3 data-slot="flow-designer-inspector-title">Edge Properties</h3>
           <div data-slot="flow-designer-inspector-section">
-            <label data-slot="flow-designer-inspector-label">Label</label>
-            <input
+            <Label>Label</Label>
+            <Input
               type="text"
-              data-slot="flow-designer-inspector-input"
               value={String(edge.data.label ?? '')}
               onChange={(e) => handleEdgeUpdate({ label: e.target.value })}
               placeholder="Enter edge label"
             />
           </div>
           <div data-slot="flow-designer-inspector-section">
-            <label data-slot="flow-designer-inspector-label">Condition</label>
-            <input
+            <Label>Condition</Label>
+            <Input
               type="text"
-              data-slot="flow-designer-inspector-input"
               value={String(edge.data.condition ?? '')}
               onChange={(e) => handleEdgeUpdate({ condition: e.target.value })}
               placeholder="e.g., status === 'approved'"
             />
           </div>
           <div data-slot="flow-designer-inspector-section">
-            <label data-slot="flow-designer-inspector-label">Line Style</label>
-            <select
-              data-slot="flow-designer-inspector-select"
+            <Label>Line Style</Label>
+            <NativeSelect
               value={String(edge.data.lineStyle ?? 'solid')}
               onChange={(e) => handleEdgeUpdate({ lineStyle: e.target.value })}
             >
-              <option value="solid">Solid</option>
-              <option value="dashed">Dashed</option>
-              <option value="dotted">Dotted</option>
-            </select>
+              <NativeSelectOption value="solid">Solid</NativeSelectOption>
+              <NativeSelectOption value="dashed">Dashed</NativeSelectOption>
+              <NativeSelectOption value="dotted">Dotted</NativeSelectOption>
+            </NativeSelect>
           </div>
           <div data-slot="flow-designer-inspector-actions">
-            <button
-              data-slot="flow-designer-inspector-button"
-              data-variant="danger"
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={() => onDeleteEdge(edge.id)}
               type="button"
             >
               Delete Edge
-            </button>
+            </Button>
           </div>
         </div>
       ) : (

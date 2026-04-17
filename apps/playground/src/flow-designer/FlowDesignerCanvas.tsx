@@ -1,5 +1,6 @@
 import React from 'react';
 import type { GraphDocument, DesignerSnapshot } from '@nop-chaos/flow-designer-core';
+import { Button } from '@nop-chaos/ui';
 
 export interface FlowDesignerCanvasProps {
   doc: GraphDocument;
@@ -138,30 +139,30 @@ export function FlowDesignerCanvas({
               </div>
               {snapshot.selection.activeNodeId === node.id && (
                 <div data-slot="flow-designer-node-actions">
-                  <button
-                    data-slot="flow-designer-node-action"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     data-action="duplicate"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDuplicateNode(node.id);
                     }}
                     title="Duplicate"
-                    type="button"
                   >
                     ⧉
-                  </button>
-                  <button
-                    data-slot="flow-designer-node-action"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     data-action="delete"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDeleteNode(node.id);
                     }}
                     title="Delete"
-                    type="button"
                   >
                     ×
-                  </button>
+                  </Button>
                 </div>
               )}
               {getNodePorts(node.type).map((port) => (

@@ -3,6 +3,7 @@ import { FlowCanvas } from './flow-designer/FlowCanvas';
 import { useFlowCanvasStore } from './flow-designer/useFlowCanvasStore';
 import { FlowDesignerToast } from './flow-designer';
 import type { FlowCanvasDocument } from './flow-designer/useFlowCanvasStore';
+import { Button, Label } from '@nop-chaos/ui';
 
 interface FlowDesignerProps {
   document?: FlowCanvasDocument;
@@ -101,31 +102,31 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
           {store.dirty && <span data-slot="flow-designer-example-toolbar-dirty">*</span>}
           <div data-slot="flow-designer-example-toolbar-spacer" />
           <div data-slot="flow-designer-example-toolbar-actions">
-            <button
-              data-slot="flow-designer-example-toolbar-button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={store.undo}
               disabled={!store.canUndo}
-              type="button"
             >
               Undo
-            </button>
-            <button
-              data-slot="flow-designer-example-toolbar-button"
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={store.redo}
               disabled={!store.canRedo}
-              type="button"
             >
               Redo
-            </button>
-            <button data-slot="flow-designer-example-toolbar-button" onClick={handleSave} type="button">
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleSave}>
               Save
-            </button>
-            <button data-slot="flow-designer-example-toolbar-button" onClick={handleExport} type="button">
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleExport}>
               Export
-            </button>
-            <button data-slot="flow-designer-example-toolbar-button" onClick={store.reset} type="button">
+            </Button>
+            <Button variant="ghost" size="sm" onClick={store.reset}>
               Reset
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -137,18 +138,18 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
               <div data-slot="flow-designer-example-palette-title">Nodes</div>
               <div data-slot="flow-designer-example-palette-items">
                 {['start', 'end', 'task', 'condition', 'parallel', 'loop'].map((type) => (
-                  <button
+                  <Button
                     key={type}
-                    data-slot="flow-designer-example-palette-item"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       const position = { x: 180 + Math.random() * 400, y: 120 + Math.random() * 300 };
                       store.addNode(type, position, { label: type });
                       showToast(`Node added: ${type}`);
                     }}
-                    type="button"
                   >
                     {type}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -166,17 +167,16 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
                 <div data-slot="flow-designer-example-inspector-title">Selected Node</div>
                 <div data-slot="flow-designer-example-inspector-content">
                   <div data-slot="flow-designer-example-inspector-field">
-                    <label>ID:</label>
+                    <Label>ID:</Label>
                     <span>{store.selectedNodeId}</span>
                   </div>
-                  <button
-                    data-slot="flow-designer-example-inspector-button"
-                    data-variant="danger"
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={store.deleteSelected}
-                    type="button"
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -185,17 +185,16 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
                 <div data-slot="flow-designer-example-inspector-title">Selected Edge</div>
                 <div data-slot="flow-designer-example-inspector-content">
                   <div data-slot="flow-designer-example-inspector-field">
-                    <label>ID:</label>
+                    <Label>ID:</Label>
                     <span>{store.selectedEdgeId}</span>
                   </div>
-                  <button
-                    data-slot="flow-designer-example-inspector-button"
-                    data-variant="danger"
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={store.deleteSelected}
-                    type="button"
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}

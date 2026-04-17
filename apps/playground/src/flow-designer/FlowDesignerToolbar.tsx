@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@nop-chaos/ui';
 
 export interface FlowDesignerToolbarProps {
   docName: string;
@@ -32,74 +33,72 @@ export function FlowDesignerToolbar({
       <h2 data-slot="flow-designer-toolbar-title">{docName}</h2>
       <div data-slot="flow-designer-toolbar-spacer" />
       <div data-slot="flow-designer-toolbar-group">
-        <button
-          data-slot="flow-designer-toolbar-button"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onUndo}
           disabled={!canUndo}
-          type="button"
           title="Undo (Ctrl+Z)"
         >
           ↶ Undo
-        </button>
-        <button
-          data-slot="flow-designer-toolbar-button"
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onRedo}
           disabled={!canRedo}
-          type="button"
           title="Redo (Ctrl+Y)"
         >
           ↷ Redo
-        </button>
+        </Button>
         <div data-slot="flow-designer-toolbar-divider" />
-        <button
-          data-slot="flow-designer-toolbar-button"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onClearSelection}
-          type="button"
         >
           Clear Selection
-        </button>
+        </Button>
         <div data-slot="flow-designer-toolbar-divider" />
-        <button
-          data-slot="flow-designer-toolbar-button"
-          data-variant="success"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onSave}
-          type="button"
         >
           Save
-        </button>
-        <button
-          data-slot="flow-designer-toolbar-button"
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onRestore}
-          type="button"
         >
           Restore
-        </button>
-        <button
-          data-slot="flow-designer-toolbar-button"
-          data-variant="primary"
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onExport}
-          type="button"
         >
           Export JSON
-        </button>
+        </Button>
       </div>
       <div data-slot="flow-designer-toolbar-tabs">
-        <button
-          data-slot="flow-designer-toolbar-tab"
+        <Button
+          variant="ghost"
+          size="sm"
           data-active={activeTab === 'designer' ? '' : undefined}
           onClick={() => onTabChange('designer')}
-          type="button"
         >
           Designer
-        </button>
-        <button
-          data-slot="flow-designer-toolbar-tab"
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           data-active={activeTab === 'json' ? '' : undefined}
           onClick={() => onTabChange('json')}
-          type="button"
         >
           JSON
-        </button>
+        </Button>
       </div>
     </div>
   );

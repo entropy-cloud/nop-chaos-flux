@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { NopDebuggerController, NopDebuggerTab } from '@nop-chaos/nop-debugger';
+import { Button, Input } from '@nop-chaos/ui';
 
 interface DebuggerLabPageProps {
   debuggerController: NopDebuggerController;
@@ -26,9 +27,9 @@ function ActionButton({ label, onClick, variant }: { label: string; onClick: () 
       : `${base} bg-white/5 border-white/10 text-white/80 hover:bg-white/10`;
 
   return (
-    <button type="button" className={styles} onClick={onClick}>
+    <Button variant="ghost" size="sm" className={styles} onClick={onClick}>
       {label}
-    </button>
+    </Button>
   );
 }
 
@@ -114,13 +115,13 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
   return (
     <main className="min-h-screen grid place-items-center p-6">
       <section className="max-w-[1100px] w-full p-10 rounded-3xl bg-[var(--nop-hero-bg)] border border-[var(--nop-hero-border)] shadow-[var(--nop-hero-shadow)]">
-        <button
-          type="button"
+        <Button
+          variant="outline"
           className="mb-[18px] px-3.5 py-2.5 rounded-full border border-[var(--nop-nav-border)] bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] font-sans text-[13px] font-bold cursor-pointer transition-[transform,box-shadow,border-color] duration-160 hover:-translate-y-px hover:shadow-[var(--nop-nav-shadow-active)] hover:border-[var(--nop-nav-hover-border)]"
           onClick={onBack}
         >
           Back to Home
-        </button>
+        </Button>
         <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">DevTools</p>
         <h1 className="m-0 mb-4">Debugger Lab</h1>
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)]">
@@ -189,7 +190,7 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
 
             <SectionCard title="Inspect by CID">
               <div className="flex gap-2 items-center">
-                <input
+                <Input
                   type="number"
                   className="px-3 py-1.5 rounded-lg bg-black/30 border border-white/10 text-white text-[13px] w-32 outline-none focus:border-amber-500/50"
                   placeholder="CID number"
@@ -206,13 +207,14 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
             <SectionCard title="Output">
               <OutputPanel content={output} />
               {output && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="mt-2 text-[11px] text-white/40 hover:text-white/70 cursor-pointer"
                   onClick={() => setOutput(null)}
                 >
                   Clear output
-                </button>
+                </Button>
               )}
             </SectionCard>
           </div>

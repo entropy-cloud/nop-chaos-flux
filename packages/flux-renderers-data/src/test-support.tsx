@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Button } from '@nop-chaos/ui';
 import type { ActionContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentComponentRegistry, useRenderScope } from '@nop-chaos/flux-react';
@@ -44,9 +45,9 @@ export const rowScopeIdProbeRenderer: RendererDefinition = {
 
 function DispatchProbeRenderer(props: RendererComponentProps) {
   return (
-    <button type="button" data-testid="dispatch-probe" onClick={() => void props.helpers.dispatch({ action: 'probe:recordLocator' } as never)}>
+    <Button variant="ghost" size="sm" data-testid="dispatch-probe" onClick={() => void props.helpers.dispatch({ action: 'probe:recordLocator' } as never)}>
       Dispatch probe
-    </button>
+    </Button>
   );
 }
 
@@ -77,9 +78,9 @@ function TestButtonRenderer(props: RendererComponentProps) {
   }, [componentRegistry, props.meta.cid]);
 
   return (
-    <button type="button" data-cid={props.meta.cid} onClick={() => void props.events.onClick?.()}>
+    <Button variant="ghost" size="sm" data-cid={props.meta.cid} onClick={() => void props.events.onClick?.()}>
       {String(props.props.label ?? 'Button')}
-    </button>
+    </Button>
   );
 }
 

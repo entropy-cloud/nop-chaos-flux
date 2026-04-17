@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@nop-chaos/ui';
 
 export interface FlowDesignerHoverToolbarProps {
   nodeId: string | null;
@@ -27,52 +28,50 @@ export function FlowDesignerHoverToolbar({
     <div data-slot="flow-designer-hover-toolbar">
       {nodeId && (
         <div data-slot="flow-designer-hover-toolbar-group">
-          <button
-            data-slot="flow-designer-hover-toolbar-button"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => onEditNode(nodeId)}
             title="Edit node"
-            type="button"
           >
             ✏️
-          </button>
-          <button
-            data-slot="flow-designer-hover-toolbar-button"
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => onDuplicateNode(nodeId)}
             title="Duplicate node"
-            type="button"
           >
             ⧉
-          </button>
-          <button
-            data-slot="flow-designer-hover-toolbar-button"
-            data-variant="danger"
+          </Button>
+          <Button
+            variant="destructive"
+            size="icon"
             onClick={() => onDeleteNode(nodeId)}
             title="Delete node"
-            type="button"
           >
             ×
-          </button>
+          </Button>
         </div>
       )}
       {edgeId && (
         <div data-slot="flow-designer-hover-toolbar-group">
-          <button
-            data-slot="flow-designer-hover-toolbar-button"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => onEditEdge(edgeId)}
             title="Edit edge"
-            type="button"
           >
             ✏️
-          </button>
-          <button
-            data-slot="flow-designer-hover-toolbar-button"
-            data-variant="danger"
+          </Button>
+          <Button
+            variant="destructive"
+            size="icon"
             onClick={() => onDeleteEdge(edgeId)}
             title="Delete edge"
-            type="button"
           >
             ×
-          </button>
+          </Button>
         </div>
       )}
     </div>

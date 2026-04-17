@@ -1,4 +1,16 @@
 import React, { useCallback, useState } from 'react';
+import {
+  Button,
+  Input,
+  NativeSelect,
+  NativeSelectOption,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@nop-chaos/ui';
 
 export interface FlowItem {
   id: string;
@@ -51,110 +63,120 @@ export function FlowListPage({
       <div className="flow-list-header">
         <h1>Flow List</h1>
         <div className="flow-list-actions">
-          <input
+          <Input
             type="text"
             className="flow-list-search"
             placeholder="Search flows..."
             value={search}
             onChange={handleSearchChange}
           />
-          <select
+          <NativeSelect
             className="flow-list-filter"
             value={statusFilter}
             onChange={handleStatusFilterChange}
           >
-            <option value="all">All Status</option>
-            <option value="enabled">Enabled</option>
-            <option value="disabled">Disabled</option>
-          </select>
-          <button
+            <NativeSelectOption value="all">All Status</NativeSelectOption>
+            <NativeSelectOption value="enabled">Enabled</NativeSelectOption>
+            <NativeSelectOption value="disabled">Disabled</NativeSelectOption>
+          </NativeSelect>
+          <Button
             type="button"
             className="flow-list-create"
             onClick={onCreateFlow}
           >
             + Create Flow
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="flow-list-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Status</th>
-              <th>Updated</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {filteredFlows.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="flow-list-empty">
+              <TableRow>
+                <TableCell colSpan={5} className="flow-list-empty">
                   No flows found. Create your first flow to get started.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               filteredFlows.map((flow) => (
-                <tr key={flow.id}>
-                  <td>
-                    <button
+                <TableRow key={flow.id}>
+                  <TableCell>
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       className="flow-list-name-link"
                       onClick={() => onEditFlow(flow.id)}
                     >
                       {flow.name}
-                    </button>
-                  </td>
-                  <td>{flow.description || '-'}</td>
-                  <td>
+                    </Button>
+                  </TableCell>
+                  <TableCell>{flow.description || '-'}</TableCell>
+                  <TableCell>
                     <span className={`flow-status flow-status--${flow.status}`}>
                       {flow.status}
                     </span>
-                  </td>
-                  <td>{flow.updatedAt}</td>
-                  <td>
+                  </TableCell>
+                  <TableCell>{flow.updatedAt}</TableCell>
+                  <TableCell>
                     <div className="flow-list-row-actions">
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         className="flow-list-action"
                         onClick={() => onEditFlow(flow.id)}
                         title="Edit"
                       >
                         Edit
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         className="flow-list-action"
                         onClick={() => onDuplicateFlow(flow.id)}
                         title="Duplicate"
                       >
                         Duplicate
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         className="flow-list-action"
                         onClick={() => onToggleStatus(flow.id)}
                         title={flow.status === 'enabled' ? 'Disable' : 'Enable'}
                       >
                         {flow.status === 'enabled' ? 'Disable' : 'Enable'}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
-                        className="flow-list-action flow-list-action--danger"
+                        variant="destructive"
+                        size="sm"
+                        className="flow-list-action"
                         onClick={() => onDeleteFlow(flow.id)}
                         title="Delete"
                       >
                         Delete
-                      </button>
+                      </Button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Badge, cn } from '@nop-chaos/ui';
+import { Badge, Button, cn } from '@nop-chaos/ui';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import {
   ALL_SHARED_RENDERER_ROUTES,
@@ -88,8 +88,9 @@ function NavGroup({
 
   return (
     <div className="mb-1">
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
         className={cn(
           'w-full flex items-center justify-between px-2 py-1.5 rounded-md',
           'text-[10px] font-bold uppercase tracking-wider cursor-pointer',
@@ -108,13 +109,14 @@ function NavGroup({
             ? <ChevronDown className="w-3 h-3" />
             : <ChevronRight className="w-3 h-3" />}
         </span>
-      </button>
+      </Button>
       {open && (
         <div className="mt-0.5">
           {entries.map((entry) => (
-            <button
+            <Button
               key={entry.id}
-              type="button"
+              variant="ghost"
+              size="sm"
               className={cn(
                 'w-full text-left px-2 py-1.5 rounded-lg text-sm cursor-pointer transition-colors duration-100',
                 'flex items-center justify-between gap-1',
@@ -129,7 +131,7 @@ function NavGroup({
               <span className="shrink-0 text-[9px] text-[var(--nop-accent-muted)] opacity-60">
                 {PACKAGE_SHORT[entry.sourcePackage] ?? ''}
               </span>
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -145,14 +147,15 @@ export function ComponentLabPage({ activeRendererId, onSelectRenderer, onBack }:
     <div className="flex h-screen overflow-hidden" data-testid="component-lab">
       <aside className="w-[240px] shrink-0 border-r border-[var(--nop-nav-border)] bg-[var(--nop-hero-bg)] flex flex-col h-screen" data-testid="component-lab-sidebar">
         <div className="p-4 border-b border-[var(--nop-nav-border)] shrink-0">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             className="mb-3 text-xs text-[var(--nop-accent)] hover:underline cursor-pointer bg-transparent border-none p-0"
             onClick={onBack}
             data-testid="component-lab-back"
           >
             ← Back to Home
-          </button>
+          </Button>
           <p className="uppercase tracking-[0.14em] text-[10px] font-bold text-[var(--nop-accent-muted)]">Component Lab</p>
           <p className="text-xs text-[var(--nop-body-copy)] mt-0.5">{ALL_SHARED_RENDERER_ROUTES.length} renderers</p>
         </div>
