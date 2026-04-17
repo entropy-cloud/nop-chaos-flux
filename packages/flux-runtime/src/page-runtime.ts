@@ -38,7 +38,20 @@ export function createManagedPageRuntime(input: {
         });
         store.setData(next);
       },
-      subscribe: (listener) => store.subscribe(() => listener(lastChange))
+      subscribe: (listener) => {
+        let previousData = store.getState().data;
+
+        return store.subscribe(() => {
+          const nextData = store.getState().data;
+
+          if (nextData === previousData) {
+            return;
+          }
+
+          previousData = nextData;
+          listener(lastChange);
+        });
+      }
     },
     update: (path, value) => {
       setLastChange({

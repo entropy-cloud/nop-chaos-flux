@@ -115,6 +115,69 @@ describe('createRendererRuntime', () => {
     registration.dispose();
   });
 
+  it('supersedes an in-flight api source refresh with the latest request', async () => {
+    let callCount = 0;
+    let releaseSecond: (() => void) | undefined;
+    const fetcher = vi.fn(async <T>(api: { url: string }, ctx: { signal?: AbortSignal }) => {
+      callCount += 1;
+
+      if (callCount === 1) {
+        return new Promise((_, reject) => {
+          ctx.signal?.addEventListener('abort', () => {
+            reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+          }, { once: true });
+        }) as Promise<{ ok: true; status: number; data: T }>;
+      }
+
+      await new Promise<void>((resolve) => {
+        releaseSecond = resolve;
+      });
+
+      return {
+        ok: true,
+        status: 200,
+        data: { url: api.url } as T
+      };
+    });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ userId: 1 });
+
+    const registration = runtime.registerDataSource({
+      id: 'latest-user-api-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/users/${userId}' },
+        dataPath: 'payload'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    page.scope.update('userId', 2);
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+
+    releaseSecond?.();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/2' });
+    });
+
+    registration.dispose();
+  });
+
   it('refreshes the matching source inside the provided scope when ids collide', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),

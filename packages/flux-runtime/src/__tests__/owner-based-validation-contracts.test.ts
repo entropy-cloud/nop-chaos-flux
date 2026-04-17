@@ -1,9 +1,25 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { CompiledFormValidationModel, CompiledValidationNode } from '@nop-chaos/flux-core';
+import type { ChildValidationContractRegistration, ChildValidationMode, CompiledFormValidationModel, CompiledValidationNode } from '@nop-chaos/flux-core';
 import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
 import { createManagedFormRuntime } from '../form-runtime';
 import { createScopeRef, createScopeStore } from '../scope';
 import { validateRule as realValidateRule } from '../validation-runtime';
+
+function makeMockChildContract(
+  childOwnerId: string,
+  mode: ChildValidationMode,
+  active: boolean,
+  overrides: Partial<ChildValidationContractRegistration> = {}
+): ChildValidationContractRegistration {
+  return {
+    childOwnerId,
+    mode,
+    active,
+    unregister: overrides.unregister ?? (() => {}),
+    getState: overrides.getState ?? (() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
+    triggerValidation: overrides.triggerValidation ?? (() => Promise.resolve({ ok: true, errors: [] }))
+  };
+}
 
 function makeNode(
   path: string,
@@ -329,14 +345,13 @@ describe('child contract registration', () => {
     const { runtime } = makeRuntime(undefined);
     let unregistered = false;
 
-    runtime.registerChildContract({
-      childOwnerId: 'child-form-1',
-      mode: 'summary-gate',
-      active: true,
-      unregister() {
-        unregistered = true;
-      }
-    });
+    runtime.registerChildContract(
+      makeMockChildContract('child-form-1', 'summary-gate', true, {
+        unregister() {
+          unregistered = true;
+        }
+      })
+    );
 
     runtime.unregisterChildContract('child-form-1');
     expect(unregistered).toBe(false);

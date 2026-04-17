@@ -112,6 +112,10 @@ export function validateHostAction(
     return true;
   }
 
+   if (!isInsideCapableRegion(hostContext)) {
+    return true;
+   }
+
   const parsed = parseNamespacedAction(action);
   if (!parsed) {
     return true;

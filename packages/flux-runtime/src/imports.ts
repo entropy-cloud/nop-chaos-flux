@@ -318,7 +318,41 @@ export function createImportManager(input: {
     imports?: readonly XuiImportSpec[];
     actionScope?: ActionScope;
   }) {
-    void args;
+    const imports = args.imports?.map(normalizeImportSpec).filter((spec) => spec.from && spec.as) ?? [];
+
+    if (!args.actionScope || imports.length === 0) {
+      return;
+    }
+
+    const registrations = scopeRegistrations.get(args.actionScope);
+
+    if (!registrations) {
+      return;
+    }
+
+    for (const spec of imports) {
+      const key = createImportKey(spec);
+      const entry = registrations.get(key);
+
+      if (!entry) {
+        continue;
+      }
+
+      entry.refCount = Math.max(0, entry.refCount - 1);
+
+      if (entry.refCount > 0) {
+        continue;
+      }
+
+      registrations.delete(key);
+      void entry.pending.finally(() => {
+        entry.release?.();
+      });
+    }
+
+    if (registrations.size === 0) {
+      scopeRegistrations.delete(args.actionScope);
+    }
   }
 
   function getImportedExpressionBindings(args: {

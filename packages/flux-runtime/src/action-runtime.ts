@@ -54,6 +54,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       action.parallel.map((entry) => runActionWithDebounce(entry, {
         ...ctx,
         interactionId: ctx.interactionId ?? createInteractionId(),
+        signal: ctx.signal,
         prevResult: ctx.prevResult
       }))
     );
@@ -102,45 +103,47 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
   }
 
   async function runSingleAction(action: ActionSchema, ctx: ActionContext, signal?: AbortSignal): Promise<ActionResult> {
+    const effectiveSignal = signal ?? ctx.signal;
+    const activeCtx = effectiveSignal && ctx.signal !== effectiveSignal ? { ...ctx, signal: effectiveSignal } : ctx;
     const startedAt = Date.now();
-    const actionPayload = buildActionMonitorPayload(action, ctx);
+    const actionPayload = buildActionMonitorPayload(action, activeCtx);
     input.getEnv().monitor?.onActionStart?.(actionPayload);
 
     try {
       const processedAction = await (input.plugins ?? []).reduce<Promise<ActionSchema>>(
         async (currentPromise, plugin) => {
           const current = await currentPromise;
-          return plugin.beforeAction ? plugin.beforeAction(current, ctx) : current;
+          return plugin.beforeAction ? plugin.beforeAction(current, activeCtx) : current;
         },
         Promise.resolve(action)
       );
 
-      if (!shouldRunActionWhen(processedAction, ctx, input)) {
+      if (!shouldRunActionWhen(processedAction, activeCtx, input)) {
         return finishAction(input, actionPayload, startedAt, {
           ok: true,
           skipped: true
         });
       }
 
-      const parallelResult = await runParallelActions(processedAction, ctx, startedAt, actionPayload);
+      const parallelResult = await runParallelActions(processedAction, activeCtx, startedAt, actionPayload);
 
       if (parallelResult) {
         return parallelResult;
       }
 
-      const builtInResult = await runBuiltInAction(input, processedAction, ctx, startedAt, actionPayload, signal);
+      const builtInResult = await runBuiltInAction(input, processedAction, activeCtx, startedAt, actionPayload, effectiveSignal);
 
       if (builtInResult) {
         return builtInResult;
       }
 
-      const componentResult = await runComponentAction(input, processedAction, ctx, startedAt, actionPayload);
+      const componentResult = await runComponentAction(input, processedAction, activeCtx, startedAt, actionPayload);
 
       if (componentResult) {
         return componentResult;
       }
 
-      const namespacedResult = await runNamespacedAction(processedAction, ctx, startedAt, actionPayload);
+      const namespacedResult = await runNamespacedAction(processedAction, activeCtx, startedAt, actionPayload);
 
       if (namespacedResult) {
         return namespacedResult;
@@ -157,14 +160,14 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         return result;
       }
 
-      input.onActionError?.(error, ctx);
+      input.onActionError?.(error, activeCtx);
 
       for (const plugin of input.plugins ?? []) {
         plugin.onError?.(error, {
           phase: 'action',
           error,
-          nodeId: ctx.nodeInstance?.templateNode.id,
-          path: ctx.nodeInstance?.templateNode.templatePath
+          nodeId: activeCtx.nodeInstance?.templateNode.id,
+          path: activeCtx.nodeInstance?.templateNode.templatePath
         });
       }
 

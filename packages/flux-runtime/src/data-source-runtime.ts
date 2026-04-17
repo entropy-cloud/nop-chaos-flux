@@ -380,6 +380,7 @@ export function createDataSourceController(input: {
   let stopped = false;
   let pollTimer: ReturnType<typeof setInterval> | undefined;
   let abortController: AbortController | undefined;
+  let pendingRefresh = false;
   let state = createInitialDataSourceState(initialData);
   const compiledApi = input.runtime.expressionCompiler.compileValue(api);
   const apiState: RuntimeValueState<ApiSchema> | undefined = compiledApi.isStatic ? undefined : (compiledApi as DynamicRuntimeValue<ApiSchema>).createState();
@@ -424,9 +425,17 @@ export function createDataSourceController(input: {
   }
 
   async function runRequest(): Promise<void> {
-    if (stopped || state.fetchStatus === 'fetching') {
+    if (stopped) {
       return;
     }
+
+    if (state.fetchStatus === 'fetching') {
+      pendingRefresh = true;
+      abortController?.abort();
+      return;
+    }
+
+    pendingRefresh = false;
 
     updateState((current) => ({
       ...current,
@@ -459,6 +468,12 @@ export function createDataSourceController(input: {
           await Promise.resolve();
 
           if (stopped || controller.signal.aborted) {
+            if (!stopped && pendingRefresh) {
+              updateState((current) => ({
+                ...current,
+                fetchStatus: 'idle'
+              }));
+            }
             return;
           }
 
@@ -506,6 +521,12 @@ export function createDataSourceController(input: {
       });
 
       if (stopped || controller.signal.aborted) {
+        if (!stopped && pendingRefresh) {
+          updateState((current) => ({
+            ...current,
+            fetchStatus: 'idle'
+          }));
+        }
         return;
       }
 
@@ -542,6 +563,12 @@ export function createDataSourceController(input: {
       }
     } catch (caughtError) {
       if (stopped || isAbortError(caughtError)) {
+        if (!stopped && pendingRefresh) {
+          updateState((current) => ({
+            ...current,
+            fetchStatus: 'idle'
+          }));
+        }
         return;
       }
 
@@ -559,6 +586,10 @@ export function createDataSourceController(input: {
       if (!silent) {
         const message = caughtError instanceof Error ? caughtError.message : String(caughtError);
         runtime.env.notify('error', message);
+      }
+    } finally {
+      if (!stopped && pendingRefresh) {
+        void runRequest();
       }
     }
   }

@@ -159,8 +159,10 @@ export function createRendererRuntime(input: {
       validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry),
       submitApi: async (api, scope, options) => {
         const response = await executeApiSchema(api, scope, getEnv(), expressionCompiler, {
+          signal: options?.signal,
           evaluate,
           executor: (adaptedApi) => executeApiRequest('submitForm', adaptedApi, scope, undefined, {
+            signal: options?.signal,
             interactionId: options?.interactionId,
             control: options?.control
           }),
@@ -409,8 +411,9 @@ export function createRendererRuntime(input: {
     evaluateCompiled,
     refreshDataSource: (inputValue) => runtime.refreshDataSource(inputValue),
     executeAjaxAction: (api, action, ctx, signal) => executeRuntimeAjaxAction(api, action, ctx, signal, evalCtx),
-    submitFormAction: async (api, action, ctx) => ctx.form!.submit(api, {
+    submitFormAction: async (api, action, ctx, signal) => ctx.form!.submit(api, {
       interactionId: ctx.interactionId,
+      signal,
       control: resolveRequestControl(action)
     }),
     openDrawer: async (drawer, ctx) => {

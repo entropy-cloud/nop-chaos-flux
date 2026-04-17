@@ -1,10 +1,26 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { CompiledFormValidationModel, CompiledValidationNode } from '@nop-chaos/flux-core';
+import type { ChildValidationContractRegistration, ChildValidationMode, CompiledFormValidationModel, CompiledValidationNode } from '@nop-chaos/flux-core';
 import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
 import { createManagedFormRuntime } from '../form-runtime';
 import { isOwnerCompatible } from '../form-runtime-lifecycle';
 import { createScopeRef, createScopeStore } from '../scope';
 import { validateRule as realValidateRule } from '../validation-runtime';
+
+function makeMockChildContract(
+  childOwnerId: string,
+  mode: ChildValidationMode,
+  active: boolean,
+  overrides: Partial<ChildValidationContractRegistration> = {}
+): ChildValidationContractRegistration {
+  return {
+    childOwnerId,
+    mode,
+    active,
+    unregister: overrides.unregister ?? (() => {}),
+    getState: overrides.getState ?? (() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
+    triggerValidation: overrides.triggerValidation ?? (() => Promise.resolve({ ok: true, errors: [] }))
+  };
+}
 
 function makeNode(
   path: string,
@@ -199,28 +215,60 @@ describe('submit supersession', () => {
 });
 
 describe('child contract gating - canSubmit', () => {
-  it('canSubmit is false when a summary-gate child contract is active', () => {
+  it('canSubmit is false when a summary-gate child contract is active and not ready', () => {
     const { runtime } = makeRuntime(undefined);
 
-    runtime.registerChildContract({
-      childOwnerId: 'child-form',
-      mode: 'summary-gate',
-      active: true,
-      unregister() {}
-    });
+    runtime.registerChildContract(
+      makeMockChildContract('child-form', 'summary-gate', true, {
+        getState: () => ({ ready: false, validating: false, valid: true, hasErrors: false })
+      })
+    );
 
     expect(runtime.canSubmit).toBe(false);
+  });
+
+  it('canSubmit is false when a summary-gate child contract is validating', () => {
+    const { runtime } = makeRuntime(undefined);
+
+    runtime.registerChildContract(
+      makeMockChildContract('child-form', 'summary-gate', true, {
+        getState: () => ({ ready: true, validating: true, valid: true, hasErrors: false })
+      })
+    );
+
+    expect(runtime.canSubmit).toBe(false);
+  });
+
+  it('canSubmit is false when a summary-gate child contract is invalid', () => {
+    const { runtime } = makeRuntime(undefined);
+
+    runtime.registerChildContract(
+      makeMockChildContract('child-form', 'summary-gate', true, {
+        getState: () => ({ ready: true, validating: false, valid: false, hasErrors: true })
+      })
+    );
+
+    expect(runtime.canSubmit).toBe(false);
+  });
+
+  it('canSubmit is true when a summary-gate child contract is ready, not validating, and valid', () => {
+    const { runtime } = makeRuntime(undefined);
+
+    runtime.registerChildContract(
+      makeMockChildContract('child-form', 'summary-gate', true, {
+        getState: () => ({ ready: true, validating: false, valid: true, hasErrors: false })
+      })
+    );
+
+    expect(runtime.canSubmit).toBe(true);
   });
 
   it('canSubmit is true when a summary-gate child contract is inactive', () => {
     const { runtime } = makeRuntime(undefined);
 
-    runtime.registerChildContract({
-      childOwnerId: 'child-form',
-      mode: 'summary-gate',
-      active: false,
-      unregister() {}
-    });
+    runtime.registerChildContract(
+      makeMockChildContract('child-form', 'summary-gate', false)
+    );
 
     expect(runtime.canSubmit).toBe(true);
   });
@@ -228,12 +276,9 @@ describe('child contract gating - canSubmit', () => {
   it('canSubmit is not affected by recurse-submit mode contracts', () => {
     const { runtime } = makeRuntime(undefined);
 
-    runtime.registerChildContract({
-      childOwnerId: 'child-form',
-      mode: 'recurse-submit',
-      active: true,
-      unregister() {}
-    });
+    runtime.registerChildContract(
+      makeMockChildContract('child-form', 'recurse-submit', true)
+    );
 
     expect(runtime.canSubmit).toBe(true);
   });

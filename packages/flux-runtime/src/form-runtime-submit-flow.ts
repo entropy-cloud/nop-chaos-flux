@@ -21,7 +21,7 @@ export interface SubmitFormInput {
   setIsSubmitting: (value: boolean) => void;
   getLifecycleHandlers: () => import('@nop-chaos/flux-core').FormLifecycleHandlers | undefined;
   getCurrentValidation: () => import('@nop-chaos/flux-core').CompiledFormValidationModel | undefined;
-  submitApiCall: (api: ApiSchema, options?: { interactionId?: string; control?: OperationControlConfig }) => Promise<import('@nop-chaos/flux-core').ActionResult>;
+  submitApiCall: (api: ApiSchema, options?: { interactionId?: string; signal?: AbortSignal; control?: OperationControlConfig }) => Promise<import('@nop-chaos/flux-core').ActionResult>;
   validateForm: (reason?: ValidationReason) => Promise<FormValidationResult>;
 }
 
@@ -40,7 +40,7 @@ function extractTouchedPaths(fieldStates: Record<string, FieldState>): Record<st
 export async function executeFormSubmit(
   input: SubmitFormInput,
   api?: ApiSchema,
-  options?: { interactionId?: string; control?: OperationControlConfig }
+  options?: { interactionId?: string; signal?: AbortSignal; control?: OperationControlConfig }
 ): Promise<import('@nop-chaos/flux-core').ActionResult> {
   const {
     sharedState,
@@ -65,6 +65,10 @@ export async function executeFormSubmit(
 
   if (sharedState.lifecycleState === 'disposed') {
     return { ok: false, cancelled: true, error: new Error('Form is disposed') };
+  }
+
+  if (options?.signal?.aborted) {
+    return { ok: false, cancelled: true, error: new Error('Submit aborted') };
   }
 
   setIsSubmitting(true);
@@ -121,6 +125,10 @@ export async function executeFormSubmit(
       data: validation.fieldErrors
     } as const;
 
+    if (options?.signal?.aborted) {
+      return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+    }
+
     const lifecycleResult = lifecycleHandlers?.onValidateError
       ? await lifecycleHandlers.onValidateError(validationFailure, options)
       : undefined;
@@ -137,9 +145,35 @@ export async function executeFormSubmit(
     return lifecycleResult ?? validationFailure;
   }
 
+  const childValidationPromises: Promise<import('@nop-chaos/flux-core').ValidationResult>[] = [];
   for (const contract of sharedState.childContracts.values()) {
     if (contract.mode === 'recurse-submit' && contract.active) {
-      contract.unregister();
+      childValidationPromises.push(contract.triggerValidation());
+    }
+  }
+
+  if (childValidationPromises.length > 0) {
+    const childResults = await Promise.all(childValidationPromises);
+    const childErrors = childResults.flatMap((r) => r.errors);
+    if (childErrors.length > 0) {
+      const childValidationFailure = {
+        ok: false,
+        error: childErrors,
+        data: {}
+      } as const;
+
+      setIsSubmitting(false);
+
+      if (submittingTimer !== undefined) {
+        clearTimeout(submittingTimer);
+        submittingTimer = undefined;
+      }
+
+      store.setSubmitting(false);
+
+      return lifecycleHandlers?.onValidateError
+        ? await lifecycleHandlers.onValidateError(childValidationFailure, options)
+        : childValidationFailure;
     }
   }
 
@@ -150,8 +184,17 @@ export async function executeFormSubmit(
       ? () => submitApiCall(api, options)
       : () => Promise.resolve({ ok: true, data: store.getState().values });
 
+  if (options?.signal?.aborted) {
+    return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+  }
+
   try {
     const result = await executeSubmit();
+
+    if (options?.signal?.aborted) {
+      return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+    }
+
     const resultClass = classifySubmitResult(result);
 
     if (resultClass === 'success') {

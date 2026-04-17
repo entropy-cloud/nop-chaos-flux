@@ -131,7 +131,10 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
     for (const contract of sharedState.childContracts.values()) {
       if (contract.mode === 'summary-gate' && contract.active) {
-        return false;
+        const childState = contract.getState();
+        if (!childState.ready || childState.validating || !childState.valid) {
+          return false;
+        }
       }
     }
 
@@ -346,7 +349,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       store.setPathErrors(path);
     },
 
-    async submit(api?: ApiSchema, options?: { interactionId?: string; control?: import('@nop-chaos/flux-core').OperationControlConfig }) {
+    async submit(api?: ApiSchema, options?: { interactionId?: string; signal?: AbortSignal; control?: import('@nop-chaos/flux-core').OperationControlConfig }) {
       return executeFormSubmit(
         {
           sharedState,

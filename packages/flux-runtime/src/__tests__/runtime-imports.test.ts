@@ -5,7 +5,7 @@ import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
-  it('keeps imported namespaces available after release calls until explicit runtime disposal', async () => {
+  it('releases imported namespaces after the final matching release call', async () => {
     const dispose = vi.fn();
     const importLoader = {
       load: vi.fn(async (spec: { from: string; as: string }) => ({
@@ -81,8 +81,9 @@ describe('createRendererRuntime', () => {
 
     runtime.releaseImportedNamespaces({ imports, actionScope });
     await Promise.resolve();
+    await Promise.resolve();
 
-    expect(dispose).not.toHaveBeenCalled();
+    expect(dispose).toHaveBeenCalledTimes(1);
 
     const releasedResult = await runtime.dispatch(
       {
@@ -97,7 +98,7 @@ describe('createRendererRuntime', () => {
       }
     );
 
-    expect(releasedResult).toMatchObject({ ok: true, data: 'demo-lib:ping:released' });
+    expect(releasedResult).toMatchObject({ ok: false, error: expect.any(Error) });
   });
 
   it('dispose aborts in-flight requests and releases owned imported namespaces', async () => {
@@ -171,7 +172,7 @@ describe('createRendererRuntime', () => {
     expect(dispose).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps child import scope shadowing after release until explicit unload', async () => {
+  it('restores parent scope shadowing after child imports release', async () => {
     const importLoader = {
       load: vi.fn(async (spec: { from: string; as: string }) => ({
         createNamespace: () => ({
@@ -240,7 +241,7 @@ describe('createRendererRuntime', () => {
       }
     );
 
-    expect(restoredResult).toMatchObject({ ok: true, data: 'child-lib:ping:parent' });
+    expect(restoredResult).toMatchObject({ ok: true, data: 'parent-lib:ping:parent' });
   });
 
   it('rejects colliding import aliases within the same action scope', async () => {

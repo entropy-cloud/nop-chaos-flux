@@ -340,6 +340,59 @@ describe('createRendererRuntime', () => {
     expect(callCount).toBe(3);
   });
 
+  it('aborts submitForm requests when action timeouts fire', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+          capturedSignal = ctx.signal;
+
+          return new Promise((_, reject) => {
+            ctx.signal?.addEventListener('abort', () => {
+              reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+            }, { once: true });
+          }) as Promise<{ ok: true; status: number; data: T }>;
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'timeout-submit-form',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+
+    const resultPromise = runtime.dispatch(
+      {
+        action: 'submitForm',
+        timeout: 5,
+        api: {
+          url: '/api/profile',
+          method: 'post'
+        }
+      },
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form
+      }
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    await expect(resultPromise).resolves.toMatchObject({
+      ok: false,
+      cancelled: true,
+      timedOut: true
+    });
+    expect(capturedSignal?.aborted).toBe(true);
+  });
+
   it('applies compile plugins before and after schema compilation', () => {
     const plugin: RendererPlugin = {
       name: 'compile-hooks',
