@@ -7,6 +7,7 @@ import type {
   ReportDesignerRuntimeSnapshot,
   ReportSelectionTarget,
 } from '@nop-chaos/report-designer-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, Tabs, TabsList, TabsTrigger } from '@nop-chaos/ui';
 import { formatSelectionLabel, joinClassNames } from './helpers.js';
 import { renderFallbackInspector } from './fallbacks.js';
@@ -98,7 +99,7 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
           <div data-slot="report-designer-section-header">
             <h4>{panel.title}</h4>
             <span>
-              {panel.badge ? `${panel.badge}${panel.readonly ? ' | Read only' : ''}` : panel.readonly ? 'Read only' : ''}
+              {panel.badge ? `${panel.badge}${panel.readonly ? ` | ${t('flux.reportDesigner.readOnly')}` : ''}` : panel.readonly ? t('flux.reportDesigner.readOnly') : ''}
             </span>
           </div>
         ) : null}
@@ -114,14 +115,14 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
               onClick={() => void handleSubmit(panel)}
               disabled={submittingPanelId === panel.id}
             >
-              {submittingPanelId === panel.id ? 'Saving...' : String(props.props.saveLabel ?? 'Save Panel')}
+              {submittingPanelId === panel.id ? t('flux.reportDesigner.saving') : String(props.props.saveLabel ?? t('flux.reportDesigner.savePanel'))}
             </Button>
             {submitResult && panel.id === submittingPanelId ? (
-              submitResult.ok ? <span>Saved</span> : submitResult.error ? <span>Save failed</span> : null
+              submitResult.ok ? <span>{t('flux.reportDesigner.saved')}</span> : submitResult.error ? <span>{t('flux.reportDesigner.saveFailed')}</span> : null
             ) : null}
           </div>
         ) : panel.readonly ? (
-          <p data-slot="report-designer-empty">This panel is read only.</p>
+          <p data-slot="report-designer-empty">{t('flux.reportDesigner.panelReadOnly')}</p>
         ) : null}
       </div>
     );
@@ -137,17 +138,17 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
       ) : null}
 
       {!target ? (
-        <p data-slot="report-designer-empty">{String(props.props.noSelectionLabel ?? 'Select a target to inspect.')}</p>
+        <p data-slot="report-designer-empty">{String(props.props.noSelectionLabel ?? t('flux.reportDesigner.noSelection'))}</p>
       ) : inspector?.loading ? (
-        <p data-slot="report-designer-empty">Loading inspector panels...</p>
+        <p data-slot="report-designer-empty">{t('flux.reportDesigner.loadingPanels')}</p>
       ) : inspector?.error ? (
         <div data-slot="report-designer-stack">
-          <p data-slot="report-designer-empty">{String(props.props.errorLabel ?? 'Failed to load inspector panels.')}</p>
+          <p data-slot="report-designer-empty">{String(props.props.errorLabel ?? t('flux.reportDesigner.loadPanelsFailed'))}</p>
           <p data-slot="report-designer-empty">{inspectorErrorLabel}</p>
         </div>
       ) : panels.length === 0 ? (
         <div data-slot="report-designer-stack">
-          <p data-slot="report-designer-empty">{String(props.props.emptyLabel ?? 'No inspector panels available.')}</p>
+          <p data-slot="report-designer-empty">{String(props.props.emptyLabel ?? t('flux.reportDesigner.noPanels'))}</p>
           {scopeData.meta ? renderFallbackInspector(scopeData.meta as MetadataBag) : null}
         </div>
       ) : (
@@ -164,7 +165,7 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
                   >
                     <span>{panel.title}</span>
                     {panel.badge ? <span>{panel.badge}</span> : null}
-                    {panel.readonly ? <span>Read only</span> : null}
+                    {panel.readonly ? <span>{t('flux.reportDesigner.readOnly')}</span> : null}
                   </TabsTrigger>
                 ))}
               </TabsList>

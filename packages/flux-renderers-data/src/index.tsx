@@ -4,6 +4,7 @@ import { TableRenderer } from './table-renderer';
 import { DataSourceRenderer } from './data-source-renderer';
 import { ChartRenderer } from './chart-renderer';
 import { TreeRenderer } from './tree-renderer';
+import { CrudRenderer } from './crud-renderer';
 import type { TableSchema } from './schemas';
 
 function escapeJsonPointerSegment(segment: string) {
@@ -98,10 +99,12 @@ function validateTableSchema(context: RendererSchemaValidationContext<BaseSchema
 }
 
 export * from './schemas';
+export * from './crud-schema';
 export { TableRenderer } from './table-renderer';
 export { DataSourceRenderer } from './data-source-renderer';
 export { ChartRenderer } from './chart-renderer';
 export { TreeRenderer } from './tree-renderer';
+export { CrudRenderer } from './crud-renderer';
 
 export const dataRendererDefinitions: RendererDefinition[] = [
   {
@@ -156,6 +159,21 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'expandOnClickNode', kind: 'prop' },
       { key: 'statusPath', kind: 'prop' },
       { key: 'node', kind: 'region', params: ['node', 'index', 'depth', 'key', 'parentNode'], isolate: false }
+    ]
+  },
+  {
+    type: 'crud',
+    displayName: 'CRUD',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    component: CrudRenderer,
+    fields: [
+      { key: 'toolbar', kind: 'region' },
+      { key: 'bulkActions', kind: 'region' },
+      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+      { key: 'onRowClick', kind: 'event' },
+      { key: 'onSelectionChange', kind: 'event' },
+      { key: 'onRefresh', kind: 'event' }
     ]
   }
 ];

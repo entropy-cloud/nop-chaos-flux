@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { findTagDefinition } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import {
   Button,
   Dialog,
@@ -64,7 +65,7 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <DialogContent size="default">
         <DialogHeader>
-          <DialogTitle>Insert Template Expression</DialogTitle>
+          <DialogTitle>{t('flux.wordEditor.insertTemplateExpr')}</DialogTitle>
         </DialogHeader>
 
         <Tabs data-orientation="horizontal" className="flex-col gap-0">
@@ -74,14 +75,14 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
               data-state={exprType === 'el' ? 'active' : 'inactive'}
               onClick={() => setExprType('el')}
             >
-              EL Expression
+              {t('flux.wordEditor.elExpression')}
             </TabsTrigger>
             <TabsTrigger
               value="xpl"
               data-state={exprType === 'xpl' ? 'active' : 'inactive'}
               onClick={() => setExprType('xpl')}
             >
-              XPL Tag
+              {t('flux.wordEditor.xplTag')}
             </TabsTrigger>
           </TabsList>
 
@@ -96,7 +97,7 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
             ) : (
               <div className="space-y-3">
               <div>
-                <Label>Tag Name</Label>
+                <Label>{t('flux.wordEditor.tagName')}</Label>
                   <NativeSelect
                     value={selectedTag}
                     onChange={(e) => {
@@ -134,8 +135,8 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
         </Tabs>
 
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleInsert}>Insert</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{t('flux.common.cancel')}</Button>
+          <Button size="sm" onClick={handleInsert}>{t('flux.common.confirm')}</Button>
         </div>
       </DialogContent>
     </Dialog>

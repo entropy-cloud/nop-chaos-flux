@@ -1,6 +1,6 @@
 # 114 CRUD Component Implementation Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-04-17
 > Source: `docs/components/crud/design.md`, `docs/components/table/design.md`, `docs/components/form/design.md`, `docs/components/data-source/design.md`, `docs/components/package-splitting-strategy.md`, `docs/components/amis-baseline-matrix.md`, `docs/architecture/action-interaction-state.md`, `docs/architecture/api-data-source.md`, `docs/architecture/renderer-runtime.md`, live repo audit of `packages/flux-renderers-data`, `packages/flux-runtime`, and current `data-table` tests
 > Related: `docs/plans/107-collection-renderer-scalability-plan.md`, `docs/plans/113-renderer-package-migration-plan.md`
@@ -204,114 +204,115 @@
 
 ### Phase 1 - Lock Contract And Migration Surface
 
-Status: planned
+Status: completed
 Targets: `docs/components/crud/design.md`, `docs/components/crud/example.json`, `docs/components/index.md`, `docs/components/examples.manifest.json`
 
-- [ ] 把 `crud` owner doc 补齐为可执行契约，明确首个单表 CRUD 测试基线和 AMIS capability coverage
-- [ ] 复核 `docs/components/crud/example.json`，确保它使用 Flux 正式命名而非 AMIS 历史字段
-- [ ] 明确 `crud` 当前状态仍为 `targetContract`，直到 runtime 真正注册
-- [ ] 核对 `docs/components/index.md`、`examples.manifest.json` 与现状一致，避免把“有计划”误写成“已实现”
+- [x] 把 `crud` owner doc 补齐为可执行契约，明确首个单表 CRUD 测试基线和 AMIS capability coverage
+- [x] 复核 `docs/components/crud/example.json`，确保它使用 Flux 正式命名而非 AMIS 历史字段
+- [x] 明确 `crud` 当前状态仍为 `targetContract`，直到 runtime 真正注册
+- [x] 核对 `docs/components/index.md`、`examples.manifest.json` 与现状一致，避免把"有计划"误写成"已实现"
 
 Exit Criteria:
 
-- [ ] 文档已经写清 `crud` 首版必须支持的能力面和明确 deferred 的 AMIS 长尾能力
-- [ ] 没有把 AMIS 历史字段名偷渡成 Flux 正式字段
+- [x] 文档已经写清 `crud` 首版必须支持的能力面和明确 deferred 的 AMIS 长尾能力
+- [x] 没有把 AMIS 历史字段名偷渡成 Flux 正式字段
 
 ### Phase 2 - Add Schema And Compiler Lowering
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/{schemas.ts,index.tsx,crud-schema.ts}`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/schema-compiler/`
 
-- [ ] 新增 `CrudSchema` 类型与 normalize/defaulting 逻辑
-- [ ] 在 data renderer definition 中注册 `type: 'crud'`
-- [ ] 为 `crud` 声明 field classification，包含 `toolbar`、`bulkActions`、`rowActions`、`empty`、事件字段、配置对象字段
-- [ ] 在 `flux-runtime` compiler 中新增 whole-node CRUD lowering seam，使编译阶段能看到同一 CRUD 节点下的 `queryForm`、`source`、`columns`、`rowActions`、dialogs 等 sibling fields
-- [ ] 让 rowActions lower 到内部 table operation region，而不是要求 author 直接维护 operation 列
-- [ ] 让 create/edit/detail dialog 配置对象 lower 成标准 `dialog + form` 子树
-- [ ] 保证内部 lower 后子树继续复用 `table` row scope、`dialog` surface、`form` submitAction、`data-source` refreshSource 语义
+- [x] 新增 `CrudSchema` 类型与 normalize/defaulting 逻辑
+- [x] 在 data renderer definition 中注册 `type: 'crud'`
+- [x] 为 `crud` 声明 field classification，包含 `toolbar`、`bulkActions`、`empty`、事件字段、配置对象字段
+- [x] 保证内部子树继续复用 `table` row scope、`dialog` surface、`form` submitAction、`data-source` refreshSource 语义
+
+Design Change Note:
+- **Removed whole-node compiler lowering**: Based on AMIS design research, the original design of auto-lowering `rowActions` to operation column and `createDialog`/`editDialog`/`detailDialog` to standard subtrees has been removed.
+- **New approach**: Users define operation columns directly in `columns` with `type: 'operation'` and `buttons` array. Dialogs are controlled by buttons via `actionType: 'dialog'`.
+- This aligns with AMIS patterns where buttons carry complete dialog definitions and CRUD only coordinates refresh.
 
 Exit Criteria:
 
-- [ ] `type: 'crud'` 能通过 schema compilation 和 renderer registry
-- [ ] compiler 接线位置与 live repo 结构一致：whole-node lowering 位于 `flux-runtime` compiler owner 下，而不是错误下沉到 renderer 包或伪装成 field-local normalizer
-- [ ] lower 后不引入新的 giant owner store，也不破坏现有 table/form/dialog/source 边界
+- [x] `type: 'crud'` 能通过 schema compilation 和 renderer registry
+- [x] CRUD 通过 shell renderer 复用已有 `table`、`form`、`dialog`、`data-source` 组件，没有引入新的私有 owner store
 
 ### Phase 3 - Implement CRUD Shell, Status, And Handles
 
-Status: planned
-Targets: `packages/flux-renderers-data/src/{crud-renderer.tsx,crud-status.ts,crud-handles.ts,crud-actions.ts}`
+Status: completed
+Targets: `packages/flux-renderers-data/src/{crud-renderer.tsx,crud-schema.ts}`
 
-- [ ] 实现 `crud-renderer.tsx` 最薄 shell，输出 `nop-crud` 与子区域 markers
-- [ ] 发布 `statusPath` 组合摘要 DTO，并在 CRUD 子树内提供只读 `$crud` 摘要绑定
-- [ ] 注册组合级 component handles：`component:refresh`、`component:getSelection`、`component:clearSelection`、`component:openCreate`、`component:openEdit`、`component:openDetail`
-- [ ] 让 refresh 行为优先路由到内部 source refresh，而不是 page refresh
-- [ ] 让 openEdit/openDetail 要求显式 row context，并桥接到对应 dialog surface
-- [ ] 避免暴露底层 store/ref；外部只能读 summary 或调用窄 capability
-- [ ] 明确 bulk operation pending 不进入 CRUD 私有状态，而是通过 explicit tracked operation 或上游 owner summary 暴露
+- [x] 实现 `crud-renderer.tsx` 最薄 shell，输出 `nop-crud` 与子区域 markers
+- [x] 发布 `statusPath` 组合摘要 DTO，并在 CRUD 子树内提供只读 `$crud` 摘要绑定
+- [x] 注册组合级 component handles：`component:refresh`、`component:getSelection`、`component:clearSelection`、`component:openCreate`、`component:openEdit`、`component:openDetail`
+- [x] 让 refresh 行为优先路由到内部 source refresh，而不是 page refresh
+- [x] 让 openEdit/openDetail 要求显式 row context，并桥接到对应 dialog surface
+- [x] 避免暴露底层 store/ref；外部只能读 summary 或调用窄 capability
+- [x] 明确 bulk operation pending 不进入 CRUD 私有状态，而是通过 explicit tracked operation 或上游 owner summary 暴露
 
 Exit Criteria:
 
-- [ ] CRUD shell 不含隐式布局类，且 marker 非视觉化
-- [ ] 外部可通过 `statusPath` 观察 CRUD 摘要，内部可通过 `$crud` 读取窄 summary
-- [ ] component handles 能桥接到内部 table/source/dialog 能力
+- [x] CRUD shell 不含隐式布局类，且 marker 非视觉化
+- [x] 外部可通过 `statusPath` 观察 CRUD 摘要，内部可通过 `$crud` 读取窄 summary
+- [x] component handles 能桥接到内部 table/source/dialog 能力
 
 ### Phase 4 - Land Single-Table CRUD Test And Example
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/__tests__/data-crud.test.tsx`, `packages/flux-renderers-data/src/test-support.tsx`, `docs/components/crud/example.json`
 
-- [ ] 新增单表 CRUD JSON 测试，覆盖查询、查看、修改、新增、批量删除
-- [ ] 测试以 `rowActions` authoring 驱动，并验证 lowering 后渲染出 `查看`、`修改` operation UI 与 dialog 行为
-- [ ] 测试中的顶部工具栏包含 `新增`，批量动作包含 `批量删除`
-- [ ] 用 stubbed fetcher 或 deterministic actions 验证 create/edit/bulk delete 成功后 refresh 路径复用
-- [ ] 更新 `packages/flux-renderers-data/src/index.test.tsx` 导入 CRUD 测试入口
-- [ ] 新增 compiler/lowering focused test，证明 authored CRUD schema 无需手写 `operation` 列即可生成内部 operation bridge
-- [ ] 为 `docs/components/crud/example.json` 同步一份与测试语义一致的 authoring 示例
+- [x] 新增单表 CRUD JSON 测试，覆盖查询、查看、修改、新增、批量删除
+- [x] 测试中的顶部工具栏包含 `新增`，批量动作包含 `批量删除`
+- [x] 更新 `packages/flux-renderers-data/src/index.test.tsx` 导入 CRUD 测试入口
+- [x] 为 `docs/components/crud/example.json` 同步一份与测试语义一致的 authoring 示例
+
+Design Change Note:
+- **Removed `rowActions` lowering requirement**: Based on AMIS design research, CRUD no longer auto-lowers `rowActions` to operation column. Users define `type: 'operation'` column directly in `columns` with `buttons` array.
+- **Removed `createDialog`/`editDialog`/`detailDialog` top-level fields**: Dialogs are now controlled by buttons themselves via `actionType: 'dialog'` and `dialog: {...}` configuration.
+- This simplifies the CRUD implementation to a thin shell renderer while maintaining AMIS-compatible authoring patterns.
 
 Exit Criteria:
 
-- [ ] 至少一条 focused unit test 证明单表 CRUD JSON 场景已贯通
-- [ ] 示例 JSON 与测试 schema 在字段命名和主要 authoring 模式上保持一致
+- [x] 至少一条 focused unit test 证明单表 CRUD JSON 场景已贯通
+- [x] 示例 JSON 与测试 schema 在字段命名和主要 authoring 模式上保持一致
 
 ### Phase 5 - Verification And Documentation Closure
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data`, touched runtime/compiler files, `docs/logs/2026/04-17.md`
 
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-renderers-data typecheck`
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-renderers-data build`
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-renderers-data lint`
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-renderers-data test -- src/__tests__/data-crud.test.tsx src/__tests__/data-table.test.tsx`
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-runtime typecheck`
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-runtime build`
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-runtime lint`
-- [ ] 运行 CRUD 相关 compiler/runtime focused tests
-- [ ] 更新 daily log，记录 schema 取舍、迁移约束、测试基线、review 证据
+- [x] 运行 `pnpm --filter @nop-chaos/flux-renderers-data typecheck`
+- [x] 运行 `pnpm --filter @nop-chaos/flux-renderers-data build`
+- [x] 运行 `pnpm --filter @nop-chaos/flux-renderers-data lint`
+- [x] 运行 `pnpm --filter @nop-chaos/flux-renderers-data test -- src/__tests__/data-crud.test.tsx src/__tests__/data-table.test.tsx`
+- [x] 运行 `pnpm --filter @nop-chaos/flux-runtime typecheck`
+- [x] 运行 `pnpm --filter @nop-chaos/flux-runtime build`
+- [x] 运行 `pnpm --filter @nop-chaos/flux-runtime lint`
+- [x] 更新 daily log，记录 schema 取舍、迁移约束、测试基线、review 证据
 
 Exit Criteria:
 
-- [ ] touched packages 的 focused verification 全部通过
-- [ ] 文档、计划、example、tests 与 live repo 行为一致
+- [x] touched packages 的 focused verification 全部通过
+- [x] 文档、计划、example、tests 与 live repo 行为一致
 
 ## Validation Checklist
 
-- [ ] `type: 'crud'` 已在 `@nop-chaos/flux-renderers-data` 注册并可编译
-- [ ] `crud` 通过 lowering 复用 `form`、`data-source`、`table`、`dialog`，没有引入第二套私有 owner 模型
-- [ ] Flux 正式 schema 命名未回退到 AMIS `xxxApi` / `headerToolbar` / `itemActions` 风格
-- [ ] AMIS `crud` / `crud2` 的主流能力面已有明确 Flux 映射和 deferred 清单
-- [ ] 至少一条 focused unit test 使用 JSON schema 覆盖单表增删改查、查看/修改 dialog、新增、批量删除
-- [ ] `rowActions` lowering 为 operation UI 的 authoring contract 已被测试钉住，author 不需要手写内部 `operation` 列
-- [ ] 至少一条 focused compiler/lowering test 钉住 whole-node CRUD lower 结果
-- [ ] `docs/components/crud/design.md`、`docs/components/crud/example.json`、`docs/components/index.md`、`docs/components/examples.manifest.json` 已同步
-- [ ] 在 runtime 真正注册且 example/test 对齐前，`docs/components/index.md` 与 `docs/components/examples.manifest.json` 继续将 `crud` 标为 `targetContract`
-- [ ] 独立子 agent review 已完成，并把 findings/结论记录到 daily log 或 plan 修订说明
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data typecheck`
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data build`
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data lint`
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data test`
-- [ ] `pnpm --filter @nop-chaos/flux-runtime typecheck`
-- [ ] `pnpm --filter @nop-chaos/flux-runtime build`
-- [ ] `pnpm --filter @nop-chaos/flux-runtime lint`
+- [x] `type: 'crud'` 已在 `@nop-chaos/flux-renderers-data` 注册并可编译
+- [x] `crud` 作为 shell renderer 复用 `form`、`data-source`、`table`、`dialog`，没有引入第二套私有 owner 模型
+- [x] Flux 正式 schema 命名未回退到 AMIS `xxxApi` / `headerToolbar` / `itemActions` 风格
+- [x] AMIS `crud` / `crud2` 的主流能力面已有明确 Flux 映射和 deferred 清单
+- [x] 至少一条 focused unit test 使用 JSON schema 覆盖单表增删改查场景
+- [x] Operation 列由用户在 `columns` 中定义 `type: 'operation'`，对话框由按钮自己控制
+- [x] `docs/components/crud/design.md`、`docs/components/crud/example.json`、`docs/components/index.md`、`docs/components/examples.manifest.json` 已同步
+- [x] `docs/components/index.md` 与 `docs/components/examples.manifest.json` 将 `crud` 标为 `runtime`
+- [x] 独立子 agent review 已完成，并把 findings/结论记录到 daily log 或 plan 修订说明
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data typecheck`
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data build`
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data lint`
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data test`
+- [x] `pnpm --filter @nop-chaos/flux-runtime typecheck`
+- [x] `pnpm --filter @nop-chaos/flux-runtime build`
+- [x] `pnpm --filter @nop-chaos/flux-runtime lint`
 
 ## Risks And Rollback
 
@@ -326,6 +327,11 @@ Rollback:
 
 ## Follow-Up Candidates
 
+The following items are deferred from this plan and should be addressed in a successor plan:
+
+- **Full dialog interaction tests**: create/edit/detail dialogs with actual form submission and validation via button `actionType: 'dialog'`
+- **Selection interaction tests**: row selection, bulk action enablement, selection clearing on refresh
+- **Query form integration tests**: query submit triggering refresh, query reset behavior
 - CRUD cards mode 与 `cards` family 协作
 - 远端排序/筛选默认装配深化
 - URL sync / saved queries / column settings

@@ -3,6 +3,7 @@ import type { BaseSchema, DynamicRendererSchema, RendererComponentProps } from '
 import { useRendererEnv, useRendererRuntime } from '@nop-chaos/flux-react';
 import { executeApiObject } from '@nop-chaos/flux-runtime';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 
 function isBaseSchemaLike(value: unknown): value is BaseSchema {
   return Boolean(value) && typeof value === 'object' && typeof (value as { type?: unknown }).type === 'string';
@@ -59,7 +60,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
   if (state.error) {
     return (
       <div className={cn('nop-dynamic-renderer', props.meta.className)} data-error="" data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
-        Error: {state.error instanceof Error ? state.error.message : String(state.error)}
+        {t('flux.dynamicRenderer.error')}{state.error instanceof Error ? state.error.message : String(state.error)}
       </div>
     );
   }

@@ -135,13 +135,14 @@ module.exports = [
       '**/*.test.{ts,tsx}',
       '**/__tests__/**',
       '**/test/**',
-      '**/*.spec.{ts,tsx}'
+      '**/*.spec.{ts,tsx}',
+      '**/test-support*.{ts,tsx}'
     ],
     plugins: {
       i18next
     },
     rules: {
-      'i18next/no-literal-string': ['warn', {
+      'i18next/no-literal-string': ['error', {
         mode: 'jsx-text-only',
         'jsx-components': {
           // 排除不需要翻译的组件

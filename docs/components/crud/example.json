@@ -12,7 +12,6 @@
   "filterOwnership": "scope",
   "filterStatePath": "usersTableFilter",
   "rowKey": "id",
-  "autoRefreshOnQuerySubmit": true,
   "autoClearSelectionOnRefresh": true,
   "queryForm": {
     "data": {
@@ -31,18 +30,9 @@
         "name": "status",
         "label": "状态",
         "options": [
-          {
-            "label": "全部",
-            "value": "all"
-          },
-          {
-            "label": "启用",
-            "value": "active"
-          },
-          {
-            "label": "禁用",
-            "value": "disabled"
-          }
+          { "label": "全部", "value": "all" },
+          { "label": "启用", "value": "active" },
+          { "label": "禁用", "value": "disabled" }
         ]
       }
     ],
@@ -89,9 +79,29 @@
       "type": "button",
       "label": "新增用户",
       "variant": "primary",
-      "onClick": {
-        "action": "component:openCreate",
-        "componentId": "users-crud"
+      "actionType": "dialog",
+      "dialog": {
+        "title": "新增用户",
+        "size": "lg",
+        "body": {
+          "type": "form",
+          "body": [
+            { "type": "input-text", "name": "name", "label": "姓名" },
+            { "type": "input-email", "name": "email", "label": "邮箱" }
+          ],
+          "submitAction": {
+            "action": "ajax",
+            "api": {
+              "url": "/api/users",
+              "method": "post",
+              "data": "${$form.values}"
+            }
+          },
+          "onSubmitSuccess": {
+            "action": "component:refresh",
+            "componentId": "users-crud"
+          }
+        }
       }
     },
     {
@@ -115,9 +125,7 @@
         "api": {
           "url": "/api/users/bulk-delete",
           "method": "post",
-          "data": {
-            "ids": "${selection.selectedRowKeys}"
-          }
+          "data": { "ids": "${$crud.selectedRowKeys}" }
         },
         "then": {
           "action": "component:refresh",
@@ -127,121 +135,84 @@
     }
   ],
   "columns": [
-    {
-      "name": "name",
-      "label": "姓名",
-      "sortable": true
-    },
-    {
-      "name": "email",
-      "label": "邮箱"
-    },
+    { "name": "name", "label": "姓名", "sortable": true },
+    { "name": "email", "label": "邮箱" },
     {
       "name": "status",
       "label": "状态",
       "filterable": true,
       "filterOptions": [
+        { "label": "启用", "value": "active" },
+        { "label": "禁用", "value": "disabled" }
+      ]
+    },
+    {
+      "type": "operation",
+      "label": "操作",
+      "buttons": [
         {
-          "label": "启用",
-          "value": "active"
+          "type": "button",
+          "label": "查看",
+          "variant": "ghost",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "用户详情",
+            "size": "lg",
+            "body": [
+              { "type": "text", "text": "姓名: ${record.name}" },
+              { "type": "text", "text": "邮箱: ${record.email}" },
+              { "type": "text", "text": "状态: ${record.status}" }
+            ]
+          }
         },
         {
-          "label": "禁用",
-          "value": "disabled"
+          "type": "button",
+          "label": "编辑",
+          "variant": "ghost",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "编辑用户",
+            "size": "lg",
+            "body": {
+              "type": "form",
+              "data": "${record}",
+              "body": [
+                { "type": "input-text", "name": "name", "label": "姓名" },
+                { "type": "input-email", "name": "email", "label": "邮箱" }
+              ],
+              "submitAction": {
+                "action": "ajax",
+                "api": {
+                  "url": "/api/users/${record.id}",
+                  "method": "put",
+                  "data": "${$form.values}"
+                }
+              },
+              "onSubmitSuccess": {
+                "action": "component:refresh",
+                "componentId": "users-crud"
+              }
+            }
+          }
+        },
+        {
+          "type": "button",
+          "label": "删除",
+          "variant": "ghost",
+          "onClick": {
+            "action": "ajax",
+            "api": {
+              "url": "/api/users/${record.id}",
+              "method": "delete"
+            },
+            "then": {
+              "action": "component:refresh",
+              "componentId": "users-crud"
+            }
+          }
         }
       ]
     }
   ],
-  "rowActions": [
-    {
-      "type": "button",
-      "label": "查看",
-      "variant": "ghost",
-      "onClick": {
-        "action": "component:openDetail",
-        "componentId": "users-crud",
-        "args": {
-          "record": "${record}"
-        }
-      }
-    },
-    {
-      "type": "button",
-      "label": "编辑",
-      "variant": "ghost",
-      "onClick": {
-        "action": "component:openEdit",
-        "componentId": "users-crud",
-        "args": {
-          "record": "${record}"
-        }
-      }
-    }
-  ],
-  "createDialog": {
-    "title": "新增用户",
-    "size": "lg",
-    "body": [
-      {
-        "type": "input-text",
-        "name": "name",
-        "label": "姓名"
-      },
-      {
-        "type": "input-email",
-        "name": "email",
-        "label": "邮箱"
-      }
-    ],
-    "submitAction": {
-      "action": "ajax",
-      "api": {
-        "url": "/api/users",
-        "method": "post",
-        "data": "${$form.values}"
-      }
-    },
-    "closeOnSuccess": true
-  },
-  "editDialog": {
-    "title": "编辑用户",
-    "size": "lg",
-    "data": "${record}",
-    "body": [
-      {
-        "type": "input-text",
-        "name": "name",
-        "label": "姓名"
-      },
-      {
-        "type": "input-email",
-        "name": "email",
-        "label": "邮箱"
-      }
-    ],
-    "submitAction": {
-      "action": "ajax",
-      "api": {
-        "url": "/api/users/${record.id}",
-        "method": "put",
-        "data": "${$form.values}"
-      }
-    },
-    "closeOnSuccess": true
-  },
-  "detailDialog": {
-    "title": "用户详情",
-    "size": "lg",
-    "body": [
-      {
-        "type": "text",
-        "text": "姓名: ${record.name}"
-      },
-      {
-        "type": "text",
-        "text": "邮箱: ${record.email}"
-      }
-    ]
-  },
   "empty": "暂无用户数据"
 }

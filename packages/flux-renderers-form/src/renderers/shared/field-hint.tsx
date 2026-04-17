@@ -1,3 +1,4 @@
+import { t } from '@nop-chaos/flux-i18n';
 import { FieldError } from './error';
 import { FieldHelpText } from './help-text';
 
@@ -11,7 +12,7 @@ export function FieldHint(props: {
   }
 
   if (props.validating) {
-    return <FieldHelpText>Validating...</FieldHelpText>;
+    return <FieldHelpText>{t('flux.common.validating')}</FieldHelpText>;
   }
 
   return null;

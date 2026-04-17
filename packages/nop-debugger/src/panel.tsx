@@ -2,6 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
 import { Button } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types';
 import { buildOverview } from './diagnostics';
 import { loadPersistedSearchHistory, persistSearchHistory } from './controller-helpers';
@@ -271,8 +272,8 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
       <div className="ndbg-resize-handle" {...resizeBind} />
       <div className="ndbg-header">
         <div className="ndbg-drag-handle" {...dragBind}>
-          <p className="ndbg-eyebrow">Framework Debugger</p>
-          <h2>Runtime Console</h2>
+          <p className="ndbg-eyebrow">{t('flux.debugger.title')}</p>
+          <h2>{t('flux.debugger.console')}</h2>
         </div>
         <div className="ndbg-header-actions">
           <Button type="button" variant="ghost" size="icon-sm" className="ndbg-icon-button" onClick={() => (snapshot.paused ? props.controller.resume() : props.controller.pause())} data-tooltip={snapshot.paused ? 'Resume' : 'Pause'} aria-label={snapshot.paused ? 'Resume' : 'Pause'}>

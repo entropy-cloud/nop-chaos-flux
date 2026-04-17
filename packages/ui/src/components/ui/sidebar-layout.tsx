@@ -1,6 +1,7 @@
 import * as React from "react"
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
+import { t } from "@nop-chaos/flux-i18n"
 
 import { cn } from "../../lib/utils"
 import { Button } from "./button"
@@ -63,8 +64,8 @@ export function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>{t('flux.sidebar.title')}</SheetTitle>
+            <SheetDescription>{t('flux.sidebar.description')}</SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
@@ -137,7 +138,7 @@ export function SidebarTrigger({
       {...props}
     >
       <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">{t('flux.sidebar.toggle')}</span>
     </Button>
   )
 }

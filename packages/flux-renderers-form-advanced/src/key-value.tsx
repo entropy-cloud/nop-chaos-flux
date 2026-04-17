@@ -10,6 +10,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { useCurrentFormState, useCurrentFormModelGeneration, useScopeSelector } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
@@ -167,7 +168,7 @@ function KeyValueRow(props: {
           onSync(nextPairs);
         }}
       >
-        Remove
+        {t('flux.form.remove')}
       </Button>
     </div>
   );

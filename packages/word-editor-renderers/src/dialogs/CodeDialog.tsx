@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { DocCode } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import {
   Button,
   Dialog,
@@ -63,7 +64,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
         <div className="space-y-4">
           <div>
             <Label>
-              Code Name <span className="text-destructive">*</span>
+              {t('flux.wordEditor.codeName')} <span className="text-destructive">*</span>
             </Label>
             <Input
               value={codeName}
@@ -74,19 +75,19 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           </div>
 
           <div>
-            <Label>Code Type</Label>
+            <Label>{t('flux.wordEditor.codeType')}</Label>
             <NativeSelect
               value={codeType}
               onChange={(e) => setCodeType(e.target.value as 'barcode' | 'qrcode')}
               className="w-full"
             >
-              <NativeSelectOption value="barcode">Barcode</NativeSelectOption>
-              <NativeSelectOption value="qrcode">QR Code</NativeSelectOption>
+              <NativeSelectOption value="barcode">{t('flux.wordEditor.barcode')}</NativeSelectOption>
+              <NativeSelectOption value="qrcode">{t('flux.wordEditor.qrcode')}</NativeSelectOption>
             </NativeSelect>
           </div>
 
           <div>
-            <Label>Dataset ID</Label>
+            <Label>{t('flux.wordEditor.datasetId')}</Label>
             <Input
               value={datasetId}
               onChange={(e) => setDatasetId(e.target.value)}
@@ -97,7 +98,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
 
           <div>
             <Label>
-              Value Field <span className="text-destructive">*</span>
+              {t('flux.wordEditor.valueField')} <span className="text-destructive">*</span>
             </Label>
             <Input
               value={valueField}
@@ -108,7 +109,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           </div>
 
           <div className="border-t pt-4">
-            <Label>Preview</Label>
+            <Label>{t('flux.wordEditor.preview')}</Label>
             <div className="flex items-center justify-center p-4 border rounded-lg bg-muted/20">
               {codeType === 'barcode' ? (
                 <div className="flex items-center gap-[2px] h-16">
@@ -164,8 +165,8 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleSave} disabled={!codeName.trim() || !valueField.trim()}>Save</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{t('flux.common.cancel')}</Button>
+          <Button size="sm" onClick={handleSave} disabled={!codeName.trim() || !valueField.trim()}>{t('flux.common.save')}</Button>
         </div>
       </DialogContent>
     </Dialog>

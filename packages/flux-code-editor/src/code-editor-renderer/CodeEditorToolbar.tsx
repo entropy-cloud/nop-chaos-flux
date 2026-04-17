@@ -1,4 +1,5 @@
 import { Button } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import { ChevronDownIcon, ChevronRightIcon, Maximize2Icon, PlayIcon } from 'lucide-react';
 import { SnippetPanel } from '../extensions/snippet-panel';
 import type { CodeSnippetTemplate, SQLFormatConfig } from '../types';
@@ -44,9 +45,9 @@ export function CodeEditorToolbar({
               size="xs"
               data-slot="code-editor-toolbar-format"
               onClick={onFormatSQL}
-              title="Format SQL"
+              title={t('flux.codeEditor.formatSQL')}
             >
-              Format
+              {t('flux.codeEditor.format')}
             </Button>
           )}
           {snippets?.length ? <SnippetPanel snippets={snippets} onInsert={onInsertSnippet} /> : null}
@@ -56,10 +57,10 @@ export function CodeEditorToolbar({
               size="xs"
               data-slot="code-editor-toolbar-var-toggle"
               onClick={onToggleVariables}
-              title={variablePanelCollapsed ? 'Show variables' : 'Hide variables'}
+              title={variablePanelCollapsed ? t('flux.codeEditor.showVariables') : t('flux.codeEditor.hideVariables')}
             >
               {variablePanelCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
-              Vars
+              {t('flux.codeEditor.vars')}
             </Button>
           )}
           {hasExecution && (
@@ -68,10 +69,10 @@ export function CodeEditorToolbar({
               size="xs"
               data-slot="code-editor-toolbar-execute"
               onClick={onExecuteSQL}
-              title="Execute SQL"
+              title={t('flux.codeEditor.executeSQL')}
             >
               <PlayIcon />
-              Run
+              {t('flux.codeEditor.run')}
             </Button>
           )}
         </>

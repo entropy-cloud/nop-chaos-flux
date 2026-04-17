@@ -1,5 +1,6 @@
 import type { ApiSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Checkbox, cn, Input, Label, RadioGroup, RadioGroupItem, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Switch, Textarea } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
@@ -217,7 +218,7 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
       {loading ? (
         <span data-slot="radio-group-loading">
           <Spinner className="size-4" aria-hidden="true" />
-          <span>Loading options...</span>
+          <span>{t('flux.common.loading')}</span>
         </span>
       ) : null}
       <RadioGroup
@@ -258,7 +259,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
       {loading ? (
         <span data-slot="checkbox-group-loading">
           <Spinner className="size-4" aria-hidden="true" />
-          <span>Loading options...</span>
+          <span>{t('flux.common.loading')}</span>
         </span>
       ) : null}
       {options?.map((option) => {

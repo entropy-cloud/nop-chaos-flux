@@ -1,5 +1,6 @@
 import { Code2, GitBranch, Repeat, GitMerge, Settings, FileOutput } from 'lucide-react'
 import { BUILTIN_TEMPLATE_TAGS } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import { Button, ScrollArea } from '@nop-chaos/ui'
 
 interface TemplateSnippetsProps {
@@ -25,7 +26,7 @@ export function TemplateSnippets({ onInsertTag }: TemplateSnippetsProps) {
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-3 border-b border-[var(--nop-border)]">
-        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">Template Tags</h2>
+        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.templateTags')}</h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-3">
@@ -33,7 +34,7 @@ export function TemplateSnippets({ onInsertTag }: TemplateSnippetsProps) {
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
               <Code2 className="w-8 h-8 text-[var(--nop-body-copy)] opacity-50 mb-2" />
               <p className="text-xs text-[var(--nop-body-copy)] opacity-70">
-                No template tags found
+                {t('flux.wordEditor.noTemplateTags')}
               </p>
             </div>
           ) : (

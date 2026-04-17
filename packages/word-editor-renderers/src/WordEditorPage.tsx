@@ -3,6 +3,7 @@ import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/w
 import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react'
 import type { RendererComponentProps, WordEditorHostStatusSummary } from '@nop-chaos/flux-core'
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope, useNamespaceRegistration, WorkbenchShell } from '@nop-chaos/flux-react'
+import { t } from '@nop-chaos/flux-i18n'
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime'
 import { CanvasEditorBridge, createDatasetStore, createEditorStore, createSavedDocumentData, saveDocument, saveDatasets, loadDatasets } from '@nop-chaos/word-editor-core'
 import type { DataSetSourceType, DataColumnInput, DataSet, DocChart, DocCode, SavedDocumentData, WordDocument } from '@nop-chaos/word-editor-core'
@@ -273,7 +274,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           className="flex-1 py-2.5"
         >
           <Database className="w-3.5 h-3.5" />
-          <span>Datasets</span>
+          <span>{t('flux.wordEditor.datasets')}</span>
         </TabsTrigger>
         <TabsTrigger
           value="fields"
@@ -282,7 +283,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           className="flex-1 py-2.5"
         >
           <Columns className="w-3.5 h-3.5" />
-          <span>Fields</span>
+          <span>{t('flux.wordEditor.fields')}</span>
         </TabsTrigger>
       </TabsList>
       <TabsContent value={activePanel} className="flex-1 min-h-0 overflow-hidden">

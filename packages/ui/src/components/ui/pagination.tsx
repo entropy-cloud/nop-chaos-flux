@@ -1,4 +1,5 @@
 import * as React from "react"
+import { t } from "@nop-chaos/flux-i18n"
 
 import { cn } from "../../lib/utils"
 import { Button } from "./button"
@@ -114,7 +115,7 @@ function PaginationEllipsis({
     >
       <MoreHorizontalIcon
       />
-      <span className="sr-only">More pages</span>
+      <span className="sr-only">{t('flux.pagination.morePages')}</span>
     </span>
   )
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Button, ScrollArea } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import { ChevronRightIcon, ChevronLeftIcon, CopyIcon, CornerDownRightIcon } from 'lucide-react';
 import type { VariableItem } from './types';
 import { renderInsertTemplate } from './types';
@@ -27,8 +28,8 @@ export function VariablePanel({
           size="icon-xs"
           data-slot="code-editor-var-panel-toggle"
           onClick={onToggleCollapse}
-          title="Expand variable panel"
-          aria-label="Expand variable panel"
+          title={t('flux.codeEditor.expandVariablePanel')}
+          aria-label={t('flux.codeEditor.expandVariablePanel')}
         >
           <ChevronRightIcon />
         </Button>
@@ -54,15 +55,15 @@ export function VariablePanel({
   return (
     <div data-slot="code-editor-var-panel">
       <div data-slot="code-editor-var-panel-header">
-        <span data-slot="code-editor-var-panel-title">Variables</span>
+        <span data-slot="code-editor-var-panel-title">{t('flux.codeEditor.variables')}</span>
         {onToggleCollapse && (
           <Button
             variant="ghost"
             size="icon-xs"
             data-slot="code-editor-var-panel-toggle"
             onClick={onToggleCollapse}
-            title="Collapse variable panel"
-            aria-label="Collapse variable panel"
+            title={t('flux.codeEditor.collapseVariablePanel')}
+            aria-label={t('flux.codeEditor.collapseVariablePanel')}
           >
             <ChevronLeftIcon />
           </Button>

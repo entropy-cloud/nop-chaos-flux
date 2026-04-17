@@ -2,6 +2,7 @@ import React from 'react';
 import type { BaseSchema, CompiledValidationBehavior, FormRuntime, RendererComponentProps, RendererDefinition, RuntimeFieldRegistration } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { useCurrentFormState, useCurrentFormModelGeneration, useScopeSelector } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
@@ -105,7 +106,7 @@ function ArrayEditorRow(props: {
           onSync(nextItems);
         }}
       >
-        Remove
+        {t('flux.form.remove')}
       </Button>
     </div>
   );
@@ -273,7 +274,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           syncItems(nextItems);
         }}
       >
-        Add item
+        {t('flux.form.addItem')}
       </Button>
     </div>
   );

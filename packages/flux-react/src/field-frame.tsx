@@ -4,6 +4,7 @@ import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
 import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired, selectCurrentFormErrors } from './form-state';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface FieldFrameProps {
   name?: string;
@@ -122,7 +123,7 @@ export function FieldFrame(props: FieldFrameProps) {
       {error && showError ? (
         <span data-slot="field-error">{error.message}</span>
       ) : fieldState.validating ? (
-        <span data-slot="field-hint">Validating...</span>
+        <span data-slot="field-hint">{t('flux.common.validating')}</span>
       ) : !error && hint ? (
         <span data-slot="field-hint">{hint}</span>
       ) : !error && !hint && description ? (

@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useSyncExternalStore } from 'react';
 import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, SpreadsheetHostStatusSummary } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { createSpreadsheetCore, type SpreadsheetConfig, type SpreadsheetDocument, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import { cn } from '@nop-chaos/ui';
@@ -49,9 +50,9 @@ function renderFallbackBody(snapshot: SpreadsheetRuntimeSnapshot) {
 
   return (
     <div data-slot="spreadsheet-page-fallback">
-      <p>Spreadsheet canvas region is not configured.</p>
-      <p>Active sheet: {activeSheetName}.</p>
-      <p>Cell entries: {cellCount}.</p>
+      <p>{t('flux.spreadsheet.canvasNotConfigured')}</p>
+      <p>{t('flux.spreadsheet.activeSheet', { name: activeSheetName })}</p>
+      <p>{t('flux.spreadsheet.cellEntries', { count: cellCount })}</p>
     </div>
   );
 }
@@ -134,7 +135,7 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   return (
     <section className={cn('nop-spreadsheet-page')}>
       <header data-slot="spreadsheet-page-header">
-        <h2>{hasRendererSlotContent(titleContent) ? titleContent : 'Spreadsheet Designer'}</h2>
+        <h2>{hasRendererSlotContent(titleContent) ? titleContent : t('flux.spreadsheet.designer')}</h2>
         <p>{buildSpreadsheetStatusLabel(spreadsheet)}</p>
       </header>
 

@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { ArrowLeft, FileText } from 'lucide-react'
 import { CanvasEditorBridge, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core'
 import type { DocumentData, PaperSettings } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import { Button } from '@nop-chaos/ui'
 
 export interface DocPreviewPageProps {
@@ -70,11 +71,11 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
-            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">Document Preview</h1>
+            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.documentPreview')}</h1>
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center text-[var(--nop-body-copy)]">
-          No document data available
+          {t('flux.wordEditor.noDocumentData')}
         </div>
       </main>
     )
@@ -95,7 +96,7 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
-            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">Document Preview</h1>
+            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.documentPreview')}</h1>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[var(--nop-body-copy)]">
             <span className="tabular-nums">{wordCount.toLocaleString()} words</span>

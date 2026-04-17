@@ -1,4 +1,5 @@
 import { NativeSelect, NativeSelectOption, Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 
 interface TablePaginationBarProps {
   currentPage: number;
@@ -22,7 +23,7 @@ export function TablePaginationBar({
   return (
     <div data-slot="table-pagination" className="flex flex-col sm:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Rows per page:</span>
+        <span className="text-sm text-muted-foreground">{t('flux.pagination.rowsPerPage')}</span>
         <NativeSelect
           value={String(pageSize)}
           onChange={(event) => onPageSizeChange(Number(event.target.value))}

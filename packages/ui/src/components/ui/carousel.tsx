@@ -2,6 +2,7 @@ import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react"
+import { t } from "@nop-chaos/flux-i18n"
 
 import { cn } from "../../lib/utils"
 import { Button } from "./button"
@@ -198,7 +199,7 @@ function CarouselPrevious({
       {...props}
     >
       <ChevronLeftIcon />
-      <span className="sr-only">Previous slide</span>
+      <span className="sr-only">{t('flux.carousel.previous')}</span>
     </Button>
   )
 }
@@ -228,7 +229,7 @@ function CarouselNext({
       {...props}
     >
       <ChevronRightIcon />
-      <span className="sr-only">Next slide</span>
+      <span className="sr-only">{t('flux.carousel.next')}</span>
     </Button>
   )
 }

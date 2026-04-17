@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { Table, ImagePlus, Link2, SeparatorHorizontal, ArrowDownToLine, BarChart3, QrCode } from 'lucide-react'
 import type { CanvasEditorBridge, DocChart, DocCode } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import {
   Button,
   Dialog,
@@ -81,7 +82,7 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
       <Dialog open={showLinkDialog} onOpenChange={handleDialogClose}>
         <DialogContent size="sm">
           <DialogHeader>
-            <DialogTitle>Insert Hyperlink</DialogTitle>
+            <DialogTitle>{t('flux.wordEditor.insertHyperlink')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <Input
@@ -99,10 +100,10 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
           </div>
           <div className="flex justify-end gap-2 mt-3">
             <Button variant="ghost" size="sm" onClick={() => setShowLinkDialog(false)}>
-              Cancel
+              {t('flux.common.cancel')}
             </Button>
             <Button size="sm" onClick={handleInsertHyperlink} disabled={!hyperlinkUrl.trim()}>
-              Insert
+              {t('flux.common.confirm')}
             </Button>
           </div>
         </DialogContent>

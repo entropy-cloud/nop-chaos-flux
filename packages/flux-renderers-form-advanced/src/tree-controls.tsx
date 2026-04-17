@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, Checkbox, Input, Label, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { ChevronRightIcon, ChevronsUpDownIcon, SearchIcon, XIcon } from 'lucide-react';
 import {
@@ -148,7 +149,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
       {sourceError ? (
         <span data-slot="input-tree-source-error">{sourceError}</span>
       ) : optionsSourceState?.loading === true ? (
-        <span data-slot="input-tree-source-loading">Loading...</span>
+        <span data-slot="input-tree-source-loading">{t('flux.common.loading')}</span>
       ) : null}
     </div>
   );
@@ -229,7 +230,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
       {sourceError ? (
         <span data-slot="tree-select-source-error">{sourceError}</span>
       ) : optionsSourceState?.loading === true ? (
-        <span data-slot="tree-select-source-loading">Loading...</span>
+        <span data-slot="tree-select-source-loading">{t('flux.common.loading')}</span>
       ) : null}
     </div>
   );

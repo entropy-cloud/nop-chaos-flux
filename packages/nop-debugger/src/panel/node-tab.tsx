@@ -1,5 +1,6 @@
 import type { ChangeEvent, KeyboardEvent } from 'react';
 import { Button, Input } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { NopComponentInspectResult, NopComponentTreeItem, NopNodeDiagnostics } from '../types';
 import { JsonViewer } from './json-viewer';
 
@@ -56,21 +57,21 @@ export function NodeTab(props: {
     <>
       <div className="ndbg-tree-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span className="ndbg-metric-label">Components ({componentTree.length})</span>
+          <span className="ndbg-metric-label">{t('flux.debugger.components')} ({componentTree.length})</span>
           <Button type="button" variant="ghost" size="xs" className="ndbg-inline-button" onClick={scanComponentTree}>
-            Scan
+            {t('flux.debugger.scan')}
           </Button>
         </div>
         {inspectMode ? (
           <div className="ndbg-inspect-hint">
-            🔍 Click an element on the page to inspect it. (Press Esc to cancel)
+            {t('flux.debugger.inspectHint')}
           </div>
         ) : null}
         {inspectData ? (
           <div className="ndbg-inspect-panel">
             <article className="ndbg-metric-card">
               <div className="ndbg-inspect-header">
-                <span className="ndbg-metric-label">Component Inspector</span>
+                <span className="ndbg-metric-label">{t('flux.debugger.componentInspector')}</span>
                 <Button type="button" variant="ghost" size="icon-xs" className="ndbg-icon-button ndbg-close-button" onClick={() => setSelectedElement(null)} aria-label="Clear selected element">✕</Button>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -79,16 +80,16 @@ export function NodeTab(props: {
                 {inspectData.handleType ? <span className="ndbg-badge" data-group="node">{inspectData.handleType}</span> : null}
               </div>
               <div className="ndbg-inspect-meta">
-                {inspectData.handleName ? <span>Name: {inspectData.handleName}</span> : null}
-                {inspectData.handleId ? <span>ID: {inspectData.handleId}</span> : null}
-                {inspectData.className ? <span>Class: {inspectData.className.slice(0, 60)}{inspectData.className.length > 60 ? '…' : ''}</span> : null}
+                {inspectData.handleName ? <span>{t('flux.debugger.name')}{inspectData.handleName}</span> : null}
+                {inspectData.handleId ? <span>{t('flux.debugger.id')}{inspectData.handleId}</span> : null}
+                {inspectData.className ? <span>{t('flux.debugger.class')}{inspectData.className.slice(0, 60)}{inspectData.className.length > 60 ? '…' : ''}</span> : null}
                 <span>{inspectData.mounted ? '● mounted' : '○ unmounted'}</span>
               </div>
             </article>
 
             {inspectData.formState ? (
               <div className="ndbg-inspect-section">
-                <span className="ndbg-inspect-section-title">Form State</span>
+                <span className="ndbg-inspect-section-title">{t('flux.debugger.formState')}</span>
                 <div style={{ display: 'flex', gap: 4 }}>
                   {(['values', 'errors', 'meta'] as const).map((tab) => (
                     <Button key={tab} type="button" variant="ghost" size="xs" className="ndbg-form-tab" data-active={formTab === tab ? '' : undefined} onClick={() => setFormTab(tab)}>
@@ -109,35 +110,35 @@ export function NodeTab(props: {
 
             {inspectData.scopeData ? (
               <div className="ndbg-inspect-section">
-                <span className="ndbg-inspect-section-title">Scope Data</span>
+                <span className="ndbg-inspect-section-title">{t('flux.debugger.scopeData')}</span>
                 <JsonViewer data={inspectData.scopeData} defaultExpanded={2} />
               </div>
             ) : null}
 
             {inspectData.scopeChain?.length ? (
               <div className="ndbg-inspect-section">
-                <span className="ndbg-inspect-section-title">Scope Chain</span>
+                <span className="ndbg-inspect-section-title">{t('flux.debugger.scopeChain')}</span>
                 <JsonViewer data={inspectData.scopeChain} defaultExpanded={3} />
               </div>
             ) : null}
 
             {inspectData.metaSummary ? (
               <div className="ndbg-inspect-section">
-                <span className="ndbg-inspect-section-title">Meta Summary</span>
+                <span className="ndbg-inspect-section-title">{t('flux.debugger.metaSummary')}</span>
                 <JsonViewer data={inspectData.metaSummary} defaultExpanded={2} />
               </div>
             ) : null}
 
             {inspectData.propsSummary ? (
               <div className="ndbg-inspect-section">
-                <span className="ndbg-inspect-section-title">Props Summary</span>
+                <span className="ndbg-inspect-section-title">{t('flux.debugger.propsSummary')}</span>
                 <JsonViewer data={inspectData.propsSummary} defaultExpanded={2} />
               </div>
             ) : null}
 
             {inspectData.availableMethods?.length ? (
               <div className="ndbg-inspect-section">
-                <span className="ndbg-inspect-section-title">Available Methods</span>
+                <span className="ndbg-inspect-section-title">{t('flux.debugger.availableMethods')}</span>
                 <JsonViewer data={inspectData.availableMethods} defaultExpanded={1} />
               </div>
             ) : null}
@@ -145,10 +146,10 @@ export function NodeTab(props: {
         ) : selectedElement ? (
           <article className="ndbg-metric-card" style={{ marginBottom: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="ndbg-metric-label">Selected Element</span>
+              <span className="ndbg-metric-label">{t('flux.debugger.selectedElement')}</span>
               <Button type="button" variant="ghost" size="icon-xs" className="ndbg-icon-button ndbg-close-button" onClick={() => setSelectedElement(null)} aria-label="Clear selected element">✕</Button>
             </div>
-            <strong>data-cid: {selectedElement.getAttribute('data-cid')}</strong>
+            <strong>{t('flux.debugger.dataCid')}{selectedElement.getAttribute('data-cid')}</strong>
             <span>{selectedElement.tagName.toLowerCase()}</span>
           </article>
         ) : null}
@@ -173,7 +174,7 @@ export function NodeTab(props: {
             })}
           </div>
         ) : (
-          <p className="ndbg-empty">Click "Scan" to find components.</p>
+          <p className="ndbg-empty">{t('flux.debugger.clickScanHint')}</p>
         )}
       </div>
       <Input
@@ -188,7 +189,7 @@ export function NodeTab(props: {
         <div className="ndbg-list">
           <article className="ndbg-entry">
             <div className="ndbg-entry-topline">
-              <span className="ndbg-badge" data-group="node">Node</span>
+              <span className="ndbg-badge" data-group="node">{t('flux.debugger.node')}</span>
               <span className="ndbg-entry-meta">{nodeDiagnostics.nodeId ?? 'n/a'}</span>
             </div>
             <strong className="ndbg-entry-summary">
@@ -199,24 +200,24 @@ export function NodeTab(props: {
             </span>
           </article>
           {nodeDiagnostics.totalEvents === 0 ? (
-            <p className="ndbg-empty">No events found for this node.</p>
+            <p className="ndbg-empty">{t('flux.debugger.noEventsForNode')}</p>
           ) : (
             <>
               <div className="ndbg-overview">
                 <article className="ndbg-metric-card">
-                  <span className="ndbg-metric-label">Render events</span>
+                  <span className="ndbg-metric-label">{t('flux.debugger.renderEvents')}</span>
                   <strong>{nodeDiagnostics.countsByGroup.render ?? 0}</strong>
                 </article>
                 <article className="ndbg-metric-card">
-                  <span className="ndbg-metric-label">Action events</span>
+                  <span className="ndbg-metric-label">{t('flux.debugger.actionEvents')}</span>
                   <strong>{nodeDiagnostics.countsByGroup.action ?? 0}</strong>
                 </article>
                 <article className="ndbg-metric-card">
-                  <span className="ndbg-metric-label">API events</span>
+                  <span className="ndbg-metric-label">{t('flux.debugger.apiEvents')}</span>
                   <strong>{nodeDiagnostics.countsByGroup.api ?? 0}</strong>
                 </article>
                 <article className="ndbg-metric-card" data-error="">
-                  <span className="ndbg-metric-label">Errors</span>
+                  <span className="ndbg-metric-label">{t('flux.debugger.errors')}</span>
                   <strong>{nodeDiagnostics.countsByGroup.error ?? 0}</strong>
                 </article>
                 {(() => {
@@ -226,9 +227,9 @@ export function NodeTab(props: {
                   const avg = renderEndEvents.reduce((sum, e) => sum + e.durationMs!, 0) / renderEndEvents.length;
                   return (
                     <article className="ndbg-metric-card" data-slow="">
-                      <span className="ndbg-metric-label">Render performance</span>
-                      <strong>Slowest: {slowest}ms</strong>
-                      <span>Avg: {avg.toFixed(1)}ms ({renderEndEvents.length} renders)</span>
+                      <span className="ndbg-metric-label">{t('flux.debugger.renderPerformance')}</span>
+                      <strong>{t('flux.debugger.slowest', { ms: slowest })}</strong>
+                      <span>{t('flux.debugger.average', { avg: avg.toFixed(1), count: renderEndEvents.length })}</span>
                     </article>
                   );
                 })()}
@@ -255,11 +256,11 @@ export function NodeTab(props: {
           )}
         </div>
       ) : (
-        <p className="ndbg-empty">Enter a nodeId above to view node diagnostics.</p>
+        <p className="ndbg-empty">{t('flux.debugger.enterNodeId')}</p>
       )}
       {inspectData ? (
         <div className="ndbg-inspect-section">
-          <span className="ndbg-inspect-section-title">Expression Evaluator</span>
+          <span className="ndbg-inspect-section-title">{t('flux.debugger.expressionEvaluator')}</span>
           <Input
             type="text"
             className="ndbg-eval-input"

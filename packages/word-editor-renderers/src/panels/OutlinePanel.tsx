@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { ChevronRight, ChevronDown, FileText } from 'lucide-react'
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import { Button, ScrollArea, cn } from '@nop-chaos/ui'
 import type { IElement, TitleLevel } from '@hufe921/canvas-editor'
 
@@ -179,7 +180,7 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-3 border-b border-[var(--nop-border)]">
-        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">Outline</h2>
+        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.outline')}</h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-3">
@@ -187,10 +188,10 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
               <FileText className="w-8 h-8 text-[var(--nop-body-copy)] opacity-50 mb-2" />
               <p className="text-xs text-[var(--nop-body-copy)] opacity-70">
-                No headings found
+                {t('flux.wordEditor.noHeadings')}
               </p>
               <p className="text-[10px] text-[var(--nop-body-copy)] opacity-50 mt-1">
-                Add headings to see them here
+                {t('flux.wordEditor.addHeadingsHint')}
               </p>
             </div>
           ) : (

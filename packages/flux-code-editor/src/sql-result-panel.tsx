@@ -1,4 +1,5 @@
 import { Button, Spinner, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import { XIcon } from 'lucide-react';
 
 export type SQLResultState =
@@ -19,7 +20,7 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
     return (
       <div data-slot="code-editor-result-panel" data-state="loading">
         <Spinner className="size-4" />
-        Executing...
+        {t('flux.codeEditor.executing')}
       </div>
     );
   }
@@ -28,7 +29,7 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
     return (
       <div data-slot="code-editor-result-panel" data-state="error">
         <div data-slot="code-editor-result-header">
-          <span>Error</span>
+          <span>{t('flux.codeEditor.error')}</span>
           {onClose && (
             <Button data-slot="code-editor-result-close" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
               <XIcon />
@@ -45,7 +46,7 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
   return (
     <div data-slot="code-editor-result-panel" data-state="success">
       <div data-slot="code-editor-result-header">
-        <span>Result ({result.data.length} rows)</span>
+        <span>{t('flux.codeEditor.resultRows', { count: result.data.length })}</span>
         {onClose && (
           <Button data-slot="code-editor-result-close" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
             <XIcon />

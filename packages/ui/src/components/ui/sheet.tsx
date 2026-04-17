@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
+import { t } from "@nop-chaos/flux-i18n"
 
 import { cn } from "../../lib/utils"
 import { Button } from "./button"
@@ -70,7 +71,7 @@ function SheetContent({
           >
             <XIcon
             />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t('flux.sheet.close')}</span>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Popup>

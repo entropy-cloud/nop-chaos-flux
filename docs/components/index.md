@@ -315,6 +315,7 @@ UI primitive 对齐补充规则：
 - `tree`
 - `data-source`
 - `chart`
+- `crud`
 
 ### 当前仓库已注册的领域 renderer
 
@@ -343,7 +344,6 @@ UI primitive 对齐补充规则：
 - `carousel`
 - `collapse`
 - `combo`
-- `crud`
 - `date-range`
 - `dropdown-button`
 - `editor`

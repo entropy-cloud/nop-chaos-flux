@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 
 export function JsonViewer(props: { data: unknown; maxDepth?: number; defaultExpanded?: number }) {
   const maxDepth = props.maxDepth ?? 3;
@@ -53,7 +54,7 @@ function JsonNode(props: { data: unknown; path: string; depth: number; maxDepth:
                 </div>
               )
             })}
-            {hasMore && <span className="ndbg-json-null">... and {data.length - 10} more items</span>}
+            {hasMore && <span className="ndbg-json-null">{t('flux.debugger.moreItems', { count: data.length - 10 })}</span>}
           </div>
         )}
       </div>

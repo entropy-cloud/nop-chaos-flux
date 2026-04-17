@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import type { CanvasEditorBridge, EditorStoreApi } from '@nop-chaos/word-editor-core'
 import { PAPER_SIZE_PRESETS, PageMode, PaperDirection } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import {
   Button,
   Dialog,
@@ -138,7 +139,7 @@ export function PageControls({ bridge, store }: PageControlsProps) {
       <Dialog open={showMarginDialog} onOpenChange={(open) => { if (!open) setShowMarginDialog(false) }}>
         <DialogContent size="sm">
           <DialogHeader>
-            <DialogTitle>Page Margins</DialogTitle>
+            <DialogTitle>{t('flux.wordEditor.pageMargins')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
             {(['Top', 'Right', 'Bottom', 'Left'] as const).map((label, i) => (
@@ -159,8 +160,8 @@ export function PageControls({ bridge, store }: PageControlsProps) {
             ))}
           </div>
           <div className="flex justify-end gap-2 mt-3">
-            <Button variant="ghost" size="sm" onClick={() => setShowMarginDialog(false)}>Cancel</Button>
-            <Button size="sm" onClick={handleApplyMargins}>Apply</Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowMarginDialog(false)}>{t('flux.common.cancel')}</Button>
+            <Button size="sm" onClick={handleApplyMargins}>{t('flux.common.confirm')}</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -168,7 +169,7 @@ export function PageControls({ bridge, store }: PageControlsProps) {
       <Dialog open={showWatermarkDialog} onOpenChange={(open) => { if (!open) { setShowWatermarkDialog(false); setWatermarkText('') } }}>
         <DialogContent size="sm">
           <DialogHeader>
-            <DialogTitle>Watermark</DialogTitle>
+            <DialogTitle>{t('flux.wordEditor.watermark')}</DialogTitle>
           </DialogHeader>
           <Input
             placeholder="Watermark text"
@@ -178,13 +179,13 @@ export function PageControls({ bridge, store }: PageControlsProps) {
           />
           <div className="flex justify-end gap-2 mt-3">
             <Button variant="destructive" size="sm" onClick={handleDeleteWatermark}>
-              Delete
+              {t('flux.common.delete')}
             </Button>
             <Button size="sm" onClick={handleAddWatermark} disabled={!watermarkText.trim()}>
-              Add
+              {t('flux.common.confirm')}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => { setShowWatermarkDialog(false); setWatermarkText('') }}>
-              Cancel
+              {t('flux.common.cancel')}
             </Button>
           </div>
         </DialogContent>

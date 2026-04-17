@@ -1,4 +1,5 @@
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { MergedRequest } from './event-groups';
 import { JsonViewer } from './json-viewer';
 
@@ -26,7 +27,7 @@ export function NetworkTab(props: {
 
   return (
     <div className="ndbg-list">
-      {mergedRequests.length === 0 ? <p className="ndbg-empty">No network events recorded yet.</p> : null}
+      {mergedRequests.length === 0 ? <p className="ndbg-empty">{t('flux.debugger.noNetworkEvents')}</p> : null}
       {mergedRequests.map((request) => (
         <article key={request.key} className="ndbg-entry" onClick={() => setNetworkExpandedKey(networkExpandedKey === request.key ? null : request.key)}>
           <div className="ndbg-entry-topline">
@@ -37,9 +38,9 @@ export function NetworkTab(props: {
           <span className="ndbg-entry-meta">{request.requestInstanceId ? `${request.requestInstanceId} | ` : ''}{request.durationMs != null ? `${request.durationMs}ms` : request.status === 'pending' ? 'pending...' : ''}</span>
           {networkExpandedKey === request.key ? (
             <div className="ndbg-entry-expanded" onClick={(event) => event.stopPropagation()}>
-              {request.startEvent?.network ? <div><span className="ndbg-json-key">Request: </span><JsonViewer data={request.startEvent.network} defaultExpanded={2} /></div> : null}
-              {request.endEvent?.network ? <div><span className="ndbg-json-key">Response: </span><JsonViewer data={request.endEvent.network} defaultExpanded={2} /></div> : null}
-              {request.endEvent?.exportedData != null ? <div><span className="ndbg-json-key">Response Data: </span><JsonViewer data={request.endEvent.exportedData} defaultExpanded={2} /></div> : null}
+              {request.startEvent?.network ? <div><span className="ndbg-json-key">{t('flux.debugger.request')}</span><JsonViewer data={request.startEvent.network} defaultExpanded={2} /></div> : null}
+              {request.endEvent?.network ? <div><span className="ndbg-json-key">{t('flux.debugger.response')}</span><JsonViewer data={request.endEvent.network} defaultExpanded={2} /></div> : null}
+              {request.endEvent?.exportedData != null ? <div><span className="ndbg-json-key">{t('flux.debugger.responseData')}</span><JsonViewer data={request.endEvent.exportedData} defaultExpanded={2} /></div> : null}
               {request.startEvent?.detail ? <code className="ndbg-entry-detail">{request.startEvent.detail}</code> : null}
               {request.endEvent?.detail ? <code className="ndbg-entry-detail">{request.endEvent.detail}</code> : null}
             </div>

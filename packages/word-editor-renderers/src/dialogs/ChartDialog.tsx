@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { DocChart, ChartType } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import {
   Button,
   ChartContainer,
@@ -144,7 +145,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
           <ScrollArea className="flex-1">
             <div className="p-1 space-y-4">
               <div>
-                <Label>Chart Name <span className="text-destructive">*</span></Label>
+                <Label>{t('flux.wordEditor.chartName')} <span className="text-destructive">*</span></Label>
                 <Input
                   value={chartName}
                   onChange={(e) => setChartName(e.target.value)}
@@ -154,22 +155,22 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
 
               <div>
-                <Label>Chart Type</Label>
+                <Label>{t('flux.wordEditor.chartType')}</Label>
                 <NativeSelect
                   value={chartType}
                   onChange={(e) => setChartType(e.target.value as ChartType)}
                   className="w-full"
                 >
-                  <NativeSelectOption value="bar">Bar</NativeSelectOption>
-                  <NativeSelectOption value="line">Line</NativeSelectOption>
-                  <NativeSelectOption value="pie">Pie</NativeSelectOption>
-                  <NativeSelectOption value="scatter">Scatter</NativeSelectOption>
-                  <NativeSelectOption value="area">Area</NativeSelectOption>
+                  <NativeSelectOption value="bar">{t('flux.wordEditor.chartBar')}</NativeSelectOption>
+                  <NativeSelectOption value="line">{t('flux.wordEditor.chartLine')}</NativeSelectOption>
+                  <NativeSelectOption value="pie">{t('flux.wordEditor.chartPie')}</NativeSelectOption>
+                  <NativeSelectOption value="scatter">{t('flux.wordEditor.chartScatter')}</NativeSelectOption>
+                  <NativeSelectOption value="area">{t('flux.wordEditor.chartArea')}</NativeSelectOption>
                 </NativeSelect>
               </div>
 
               <div>
-                <Label>Dataset ID</Label>
+                <Label>{t('flux.wordEditor.datasetId')}</Label>
                 <Input
                   value={datasetId}
                   onChange={(e) => setDatasetId(e.target.value)}
@@ -179,7 +180,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
 
               <div>
-                <Label>Category Field</Label>
+                <Label>{t('flux.wordEditor.categoryField')}</Label>
                 <Input
                   value={categoryField}
                   onChange={(e) => setCategoryField(e.target.value)}
@@ -189,7 +190,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
 
               <div>
-                <Label>Value Fields</Label>
+                <Label>{t('flux.wordEditor.valueFields')}</Label>
                 <Input
                   value={valueField}
                   onChange={(e) => setValueField(e.target.value)}
@@ -199,7 +200,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
 
               <div>
-                <Label>Series Field (Optional)</Label>
+                <Label>{t('flux.wordEditor.seriesField')}</Label>
                 <Input
                   value={seriesField}
                   onChange={(e) => setSeriesField(e.target.value)}
@@ -214,11 +215,11 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
                   checked={showChartName}
                   onCheckedChange={(checked) => setShowChartName(checked === true)}
                 />
-                <Label htmlFor="showChartName" className="cursor-pointer">Show chart name</Label>
+                <Label htmlFor="showChartName" className="cursor-pointer">{t('flux.wordEditor.showChartName')}</Label>
               </div>
 
               <div>
-                <Label>Preview</Label>
+                <Label>{t('flux.wordEditor.preview')}</Label>
                 <div className="mt-2 border rounded-lg p-4 bg-background">
                   <ChartContainer config={chartConfig}>
                     <RechartsPrimitive.ResponsiveContainer width="100%" height={200}>
@@ -232,8 +233,8 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleSave} disabled={!chartName.trim()}>Save</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{t('flux.common.cancel')}</Button>
+          <Button size="sm" onClick={handleSave} disabled={!chartName.trim()}>{t('flux.common.save')}</Button>
         </div>
       </DialogContent>
     </Dialog>

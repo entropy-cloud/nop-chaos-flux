@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, ArrowLeft, ArrowRight, X, ReplaceAll } from 'lucide-react'
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import { Button, Input } from '@nop-chaos/ui'
 import { ToolbarButton, ToolbarSeparator } from './shared.js'
 
@@ -94,7 +95,7 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
           onClick={handleReplace}
           disabled={!searchText}
         >
-          Replace
+          {t('flux.wordEditor.replace')}
         </Button>
       </div>
       <ToolbarSeparator />

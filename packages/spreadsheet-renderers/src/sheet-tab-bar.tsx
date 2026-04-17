@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import type { WorksheetDocument } from '@nop-chaos/spreadsheet-core';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
   Dialog,
@@ -166,14 +167,14 @@ export function SheetTabBar({
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Sheet</DialogTitle>
+            <DialogTitle>{t('flux.sheet.deleteTitle')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{pendingSheetName || 'this sheet'}&quot;? This action cannot be undone.
+              {t('flux.sheet.deleteDescription', { name: pendingSheetName || 'this sheet' })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <Button variant="destructive" onClick={handleConfirmDelete}>Delete</Button>
+            <DialogClose render={<Button variant="outline" />}>{t('flux.common.cancel')}</DialogClose>
+            <Button variant="destructive" onClick={handleConfirmDelete}>{t('flux.common.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

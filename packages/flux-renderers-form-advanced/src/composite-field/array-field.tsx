@@ -17,6 +17,7 @@ import {
   useScopeSelector
 } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas';
 import {
@@ -111,7 +112,7 @@ function ArrayItem(props: {
           size="sm"
           onClick={() => onRemove(index)}
         >
-          Remove
+          {t('flux.form.remove')}
         </Button>
       )}
     </div>
@@ -334,7 +335,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
             size="sm"
             onClick={handleAdd}
           >
-            Add item
+            {t('flux.form.addItem')}
           </Button>
         )}
       </div>

@@ -1,5 +1,6 @@
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { Button, Checkbox, cn, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, TableHead, TableRow } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import { ArrowUpDownIcon, ChevronDownIcon } from 'lucide-react';
 import type { TableColumnSchema, TableSchema } from '../schemas';
 import type { FilterState, SortState } from './types';
@@ -35,7 +36,7 @@ export function TableHeaderRow({
     <TableRow>
       {schemaProps.expandable ? (
         <TableHead data-slot="table-expand-column" style={{ width: '40px' }}>
-          <span className="sr-only">Expand</span>
+          <span className="sr-only">{t('flux.table.expand')}</span>
         </TableHead>
       ) : null}
 
@@ -97,7 +98,7 @@ export function TableHeaderRow({
                           )}
                           aria-label="Filter"
                         >
-                          <span className="sr-only">Filter</span>
+                          <span className="sr-only">{t('flux.table.filter')}</span>
                           <ChevronDownIcon className="size-3" />
                         </Button>
                       }

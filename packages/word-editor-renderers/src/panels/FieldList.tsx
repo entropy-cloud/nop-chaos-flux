@@ -1,6 +1,7 @@
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
 import { Columns, Copy, Info } from 'lucide-react'
 import type { DatasetStoreApi } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import { Button, ScrollArea, cn } from '@nop-chaos/ui'
 
 interface FieldListProps {
@@ -47,7 +48,7 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-3 border-b border-[var(--nop-border)]">
-        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">Fields</h2>
+        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.fields')}</h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-3">
@@ -55,20 +56,20 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
               <Columns className="w-8 h-8 text-[var(--nop-body-copy)] opacity-50 mb-2" />
               <p className="text-xs text-[var(--nop-body-copy)] opacity-70">
-                No dataset selected
+                {t('flux.wordEditor.noDatasetSelected')}
               </p>
               <p className="text-[10px] text-[var(--nop-body-copy)] opacity-50 mt-1">
-                Select a dataset to view its fields
+                {t('flux.wordEditor.selectDatasetHint')}
               </p>
             </div>
           ) : selectedDataset.columns.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
               <Info className="w-8 h-8 text-[var(--nop-body-copy)] opacity-50 mb-2" />
               <p className="text-xs text-[var(--nop-body-copy)] opacity-70">
-                No fields in dataset
+                {t('flux.wordEditor.noFields')}
               </p>
               <p className="text-[10px] text-[var(--nop-body-copy)] opacity-50 mt-1">
-                Add fields to {selectedDataset.name}
+                {t('flux.wordEditor.addFieldsHint', { name: selectedDataset.name })}
               </p>
             </div>
           ) : (

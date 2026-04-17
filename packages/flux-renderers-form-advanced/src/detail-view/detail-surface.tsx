@@ -1,6 +1,7 @@
 import React from 'react';
 import type { FormRuntime } from '@nop-chaos/flux-core';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
   Dialog,
@@ -60,10 +61,10 @@ export function DetailDraftFooter(props: DetailDraftFooterProps) {
     <>
       {props.error && <p data-slot={props.errorSlot}>{props.error}</p>}
       <Button type="button" variant="outline" onClick={props.onCancel} disabled={props.confirming}>
-        Cancel
+        {t('flux.common.cancel')}
       </Button>
       <Button type="button" onClick={props.onConfirm} disabled={props.confirming}>
-        {props.confirming ? 'Confirming...' : 'Confirm'}
+        {props.confirming ? t('flux.form.confirming') : t('flux.common.confirm')}
       </Button>
     </>
   );

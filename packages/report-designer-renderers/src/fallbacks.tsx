@@ -4,6 +4,7 @@ import type {
   MetadataBag,
   ReportDesignerRuntimeSnapshot,
 } from '@nop-chaos/report-designer-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { formatMetadataValue, getFieldCount } from './helpers.js';
 
 export function renderFieldSourceSections(fieldSources: FieldSourceSnapshot[]) {
@@ -30,14 +31,14 @@ export function renderFieldSourceSections(fieldSources: FieldSourceSnapshot[]) {
 
 export function renderFallbackFieldPanel(fieldSources: FieldSourceSnapshot[]) {
   if (fieldSources.length === 0) {
-    return <p data-slot="report-designer-empty">No field sources registered.</p>;
+    return <p data-slot="report-designer-empty">{t('flux.reportDesigner.noFieldSources')}</p>;
   }
   return renderFieldSourceSections(fieldSources);
 }
 
 export function renderFallbackInspector(meta: MetadataBag | undefined) {
   if (!meta || Object.keys(meta).length === 0) {
-    return <p data-slot="report-designer-empty">No metadata for the current target.</p>;
+    return <p data-slot="report-designer-empty">{t('flux.reportDesigner.noMetadata')}</p>;
   }
   return (
     <dl data-slot="report-designer-meta-list">
@@ -54,11 +55,11 @@ export function renderFallbackInspector(meta: MetadataBag | undefined) {
 export function renderFallbackCanvas(snapshot: ReportDesignerRuntimeSnapshot) {
   return (
     <div data-slot="report-designer-canvas-fallback">
-      <p data-slot="report-designer-eyebrow">Report Designer Core</p>
+      <p data-slot="report-designer-eyebrow">{t('flux.reportDesigner.coreTitle')}</p>
       <h3>{snapshot.document.name}</h3>
-      <p>Target: <strong>{snapshot.selectionTarget?.kind ?? 'none'}</strong></p>
-      <p>Preview: <strong>{snapshot.preview.lastResult ? 'ready' : snapshot.preview.running ? 'running' : 'idle'}</strong></p>
-      <p>Fields: <strong>{getFieldCount(snapshot.fieldSources)}</strong></p>
+      <p>{t('flux.reportDesigner.target')}: <strong>{snapshot.selectionTarget?.kind ?? t('flux.reportDesigner.none')}</strong></p>
+      <p>{t('flux.reportDesigner.preview')}: <strong>{snapshot.preview.lastResult ? t('flux.reportDesigner.ready') : snapshot.preview.running ? t('flux.reportDesigner.running') : t('flux.reportDesigner.idle')}</strong></p>
+      <p>{t('flux.reportDesigner.fields')}: <strong>{getFieldCount(snapshot.fieldSources)}</strong></p>
     </div>
   );
 }

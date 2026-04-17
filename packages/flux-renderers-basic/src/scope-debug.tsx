@@ -2,6 +2,7 @@ import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { ScopeDebugSchema } from './schemas';
 
 function stringifyDebugValue(value: unknown) {
@@ -58,7 +59,7 @@ export function ScopeDebugRenderer(props: RendererComponentProps<ScopeDebugSchem
       data-cid={props.meta.cid || undefined}
     >
       <div data-slot="scope-debug-header">
-        <span data-slot="scope-debug-kind">Debug</span>
+        <span data-slot="scope-debug-kind">{t('flux.scopeDebug.debug')}</span>
         <h3 data-slot="scope-debug-title">{title}</h3>
       </div>
       <div data-slot="scope-debug-body">

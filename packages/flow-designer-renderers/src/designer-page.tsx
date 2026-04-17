@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { ActionNamespaceProvider, DesignerHostStatusSummary, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, WorkbenchShell } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { createDesignerCore, layoutWithElk, layoutTreeWithElk, simpleTreeLayout, projectTree } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument, GraphEdge, GraphNode, NormalizedDesignerConfig, TreeDocument } from '@nop-chaos/flow-designer-core';
@@ -133,7 +134,7 @@ function TreeModeLayoutWrapper(props: RendererComponentProps<DesignerPageSchema>
   }, [treeDocument, projected, normalizedConfig]);
 
   if (!treeDocument) {
-    return <div>Tree mode requires treeDocument prop</div>;
+    return <div>{t('flux.flowDesigner.treeDocumentRequired')}</div>;
   }
 
   return <DesignerPageInner rendererProps={props} document={document} config={config} />;
@@ -144,7 +145,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   const config = rawSchemaProps.config as DesignerConfig | undefined;
 
   if (!config) {
-    return <div>Designer requires config prop</div>;
+    return <div>{t('flux.flowDesigner.configRequired')}</div>;
   }
 
   const documentMode = config.documentMode;
@@ -155,7 +156,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
 
   const document = rawSchemaProps.document as GraphDocument | undefined;
   if (!document) {
-    return <div>Designer requires document prop</div>;
+    return <div>{t('flux.flowDesigner.documentRequired')}</div>;
   }
 
   return <DesignerPageInner rendererProps={props} document={document} config={config} />;
@@ -451,7 +452,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
           className="right-4 top-[72px] w-[min(560px,calc(100vw-32px))] max-h-[calc(100vh-96px)] p-0 overflow-hidden z-60 flex flex-col sm:max-w-2xl"
         >
           <DialogHeader className="px-4 pt-4 pb-0 shrink-0">
-            <DialogTitle className="text-sm">Flow JSON</DialogTitle>
+            <DialogTitle className="text-sm">{t('flux.flowDesigner.flowJson')}</DialogTitle>
           </DialogHeader>
           <div className="px-4 pb-4">
             {jsonDocument && (
@@ -476,10 +477,10 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
           </div>
           <div data-slot="designer-create-dialog-actions" className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={handleCloseCreateDialog} disabled={creatingNode}>
-              Cancel
+              {t('flux.flowDesigner.cancel')}
             </Button>
             <Button type="button" onClick={() => void handleConfirmCreateDialog()} disabled={creatingNode}>
-              {creatingNode ? 'Creating...' : 'Create'}
+              {creatingNode ? t('flux.flowDesigner.creating') : t('flux.flowDesigner.create')}
             </Button>
           </div>
         </DialogContent>

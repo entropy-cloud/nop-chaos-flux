@@ -1,4 +1,5 @@
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface ReportFieldPanelProps {
   fieldSources: FieldSourceSnapshot[];
@@ -9,7 +10,7 @@ export interface ReportFieldPanelProps {
 export function ReportFieldPanel({ fieldSources, className, onFieldDragStart }: ReportFieldPanelProps) {
   return (
     <div className={className}>
-      <h3>Field Sources</h3>
+      <h3>{t('flux.reportDesigner.fieldSources')}</h3>
       {fieldSources.map((source) => (
         <div key={source.id} className="field-source">
           <div data-slot="field-source-label">{source.label}</div>

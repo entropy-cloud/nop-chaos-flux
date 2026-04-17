@@ -11,6 +11,7 @@ import type {
   ReportTemplateDocument,
 } from '@nop-chaos/report-designer-core';
 import { createReportDesignerCore } from '@nop-chaos/report-designer-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import { renderFallbackFieldPanel, renderFallbackInspector } from './fallbacks.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
@@ -193,12 +194,12 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
     <>
       <div data-slot="report-designer-header">
         <div>
-          <p data-slot="report-designer-eyebrow">Report Designer</p>
+          <p data-slot="report-designer-eyebrow">{t('flux.reportDesigner.title')}</p>
           {hasRendererSlotContent(titleContent) ? <h2>{titleContent}</h2> : <h2>{snapshot.document.name}</h2>}
         </div>
         <div data-slot="report-designer-status">
-          <span>Target: {snapshot.selectionTarget?.kind ?? 'none'}</span>
-          <span>Fields: {getFieldCount(snapshot.fieldSources)}</span>
+          <span>{t('flux.reportDesigner.target')}: {snapshot.selectionTarget?.kind ?? t('flux.reportDesigner.none')}</span>
+          <span>{t('flux.reportDesigner.fields')}: {getFieldCount(snapshot.fieldSources)}</span>
         </div>
       </div>
       {hasRendererSlotContent(toolbarContent) ? (
@@ -214,12 +215,12 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
       leftPanel={hasRendererSlotContent(fieldPanelContent) ? fieldPanelContent : renderFallbackFieldPanel(snapshot.fieldSources)}
       leftCollapsed={leftCollapsed}
       onLeftToggle={() => setLeftCollapsed((v) => !v)}
-      leftLabel="Expand field panel"
+      leftLabel={t('flux.reportDesigner.expandFieldPanel')}
       canvas={hasRendererSlotContent(bodyContent) ? bodyContent : <ReportSpreadsheetCanvas core={core} snapshot={snapshot} spreadsheetBridge={spreadsheetBridge} spreadsheetSnapshot={spreadsheetSnapshot} />}
       rightPanel={hasRendererSlotContent(inspectorContent) ? inspectorContent : renderFallbackInspector(snapshot.activeMeta)}
       rightCollapsed={rightCollapsed}
       onRightToggle={() => setRightCollapsed((v) => !v)}
-      rightLabel="Expand inspector"
+      rightLabel={t('flux.reportDesigner.expandInspector')}
       dialogs={hasRendererSlotContent(dialogsContent) ? dialogsContent : undefined}
     />
   );

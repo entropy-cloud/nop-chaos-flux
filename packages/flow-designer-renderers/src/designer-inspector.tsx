@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Badge, Button, Input, Label, NativeSelect, NativeSelectOption, Textarea, cn } from '@nop-chaos/ui';
 import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
 import { DesignerIcon } from './designer-icon';
@@ -298,10 +299,10 @@ export function DefaultInspector() {
           <div className="fd-panel-card rounded-lg border border-border p-4">
             <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">快捷键</div>
             <div className="mt-3 text-sm text-muted-foreground space-y-2">
-              <div><strong>Ctrl+Z</strong> 撤销</div>
-              <div><strong>Ctrl+Y</strong> 重做</div>
-              <div><strong>Delete</strong> 删除选中</div>
-              <div><strong>Ctrl+S</strong> 保存</div>
+              <div><strong>{t('flux.flowDesigner.shortcutUndo')}</strong> {t('flux.flowDesigner.undo')}</div>
+              <div><strong>{t('flux.flowDesigner.shortcutRedo')}</strong> {t('flux.flowDesigner.redo')}</div>
+              <div><strong>{t('flux.flowDesigner.shortcutDelete')}</strong> {t('flux.flowDesigner.deleteSelected')}</div>
+              <div><strong>{t('flux.flowDesigner.shortcutSave')}</strong> {t('flux.flowDesigner.save')}</div>
             </div>
           </div>
         )}

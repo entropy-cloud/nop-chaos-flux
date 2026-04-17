@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import type { DataSetSourceType, DataColumnInput } from '@nop-chaos/word-editor-core'
+import { t } from '@nop-chaos/flux-i18n'
 import {
   Button,
   Dialog,
@@ -87,7 +88,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
             <div className="p-1 space-y-4">
               <div>
                 <Label>
-                  Name <span className="text-destructive">*</span>
+                  {t('flux.wordEditor.name')} <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   value={name}
@@ -98,7 +99,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
               </div>
 
               <div>
-                <Label>Description</Label>
+                <Label>{t('flux.wordEditor.description')}</Label>
                 <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -109,7 +110,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
               </div>
 
               <div>
-                <Label>Type</Label>
+                <Label>{t('flux.wordEditor.type')}</Label>
                 <NativeSelect
                   value={type}
                   onChange={(e) => setType(e.target.value as DataSetSourceType)}
@@ -117,28 +118,28 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                 >
                   <NativeSelectOption value="sql">SQL</NativeSelectOption>
                   <NativeSelectOption value="api">API</NativeSelectOption>
-                  <NativeSelectOption value="mongo">Mongo</NativeSelectOption>
-                  <NativeSelectOption value="static">Static</NativeSelectOption>
+                  <NativeSelectOption value="mongo">{t('flux.wordEditor.mongo')}</NativeSelectOption>
+                  <NativeSelectOption value="static">{t('flux.wordEditor.static')}</NativeSelectOption>
                 </NativeSelect>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <Label>Columns</Label>
+                  <Label>{t('flux.wordEditor.columns')}</Label>
                   <Button
                     type="button"
                     size="xs"
                     onClick={handleAddColumn}
                   >
                     <Plus className="w-3 h-3" />
-                    Add Column
+                    {t('flux.wordEditor.addColumn')}
                   </Button>
                 </div>
 
                 {columns.length === 0 ? (
                   <div className="text-center py-6 px-4 border border-dashed rounded-lg">
                     <p className="text-xs text-muted-foreground">
-                      No columns. Click 'Add Column' to add one.
+                      {t('flux.wordEditor.noColumnsHint')}
                     </p>
                   </div>
                 ) : (
@@ -151,7 +152,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                           <div className="flex-1 grid grid-cols-2 gap-2">
                             <div>
                               <Label className="text-[10px]">
-                                Name <span className="text-destructive">*</span>
+                                {t('flux.wordEditor.name')} <span className="text-destructive">*</span>
                               </Label>
                               <Input
                                 value={column.name || ''}
@@ -161,7 +162,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                               />
                             </div>
                             <div>
-                              <Label className="text-[10px]">Label</Label>
+                              <Label className="text-[10px]">{t('flux.wordEditor.label')}</Label>
                               <Input
                                 value={column.label || ''}
                                 onChange={(e) => handleColumnChange(index, 'label', e.target.value)}
@@ -170,7 +171,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                               />
                             </div>
                             <div>
-                              <Label className="text-[10px]">Type</Label>
+                              <Label className="text-[10px]">{t('flux.wordEditor.type')}</Label>
                               <NativeSelect
                                 value={column.type || 'static'}
                                 onChange={(e) => handleColumnChange(index, 'type', e.target.value)}
@@ -179,12 +180,12 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                               >
                                 <NativeSelectOption value="sql">SQL</NativeSelectOption>
                                 <NativeSelectOption value="api">API</NativeSelectOption>
-                                <NativeSelectOption value="mongo">Mongo</NativeSelectOption>
-                                <NativeSelectOption value="static">Static</NativeSelectOption>
+                                <NativeSelectOption value="mongo">{t('flux.wordEditor.mongo')}</NativeSelectOption>
+                                <NativeSelectOption value="static">{t('flux.wordEditor.static')}</NativeSelectOption>
                               </NativeSelect>
                             </div>
                             <div>
-                              <Label className="text-[10px]">Description</Label>
+                              <Label className="text-[10px]">{t('flux.wordEditor.description')}</Label>
                               <Input
                                 value={column.description || ''}
                                 onChange={(e) => handleColumnChange(index, 'description', e.target.value)}
@@ -214,8 +215,8 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleSave} disabled={!name.trim()}>Save</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{t('flux.common.cancel')}</Button>
+          <Button size="sm" onClick={handleSave} disabled={!name.trim()}>{t('flux.common.save')}</Button>
         </div>
       </DialogContent>
     </Dialog>

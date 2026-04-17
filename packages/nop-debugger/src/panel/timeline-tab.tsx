@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent } from 'react';
 import { Button, Input } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import { DEFAULT_FILTERS } from '../diagnostics';
 import type { NopDebugEvent, NopDebuggerFilterKind, NopDebuggerSnapshot } from '../types';
 import type { ErrorGroup } from './event-groups';
@@ -130,9 +131,9 @@ export function TimelineTab(props: {
         {expandedId === event.id ? (
           <div className="ndbg-entry-expanded" onClick={(clickEvent) => clickEvent.stopPropagation()}>
             {event.detail ? <code className="ndbg-entry-detail">{event.detail}</code> : null}
-            {event.network ? <div><span className="ndbg-json-key">Network: </span><JsonViewer data={event.network} defaultExpanded={2} /></div> : null}
-            {event.exportedData != null ? <div><span className="ndbg-json-key">Data: </span><JsonViewer data={event.exportedData} defaultExpanded={2} /></div> : null}
-            {!event.detail && !event.network && event.exportedData == null ? <span className="ndbg-empty">No detailed data available.</span> : null}
+            {event.network ? <div><span className="ndbg-json-key">{t('flux.debugger.network')}</span><JsonViewer data={event.network} defaultExpanded={2} /></div> : null}
+            {event.exportedData != null ? <div><span className="ndbg-json-key">{t('flux.debugger.data')}</span><JsonViewer data={event.exportedData} defaultExpanded={2} /></div> : null}
+            {!event.detail && !event.network && event.exportedData == null ? <span className="ndbg-empty">{t('flux.debugger.noDetailedData')}</span> : null}
           </div>
         ) : null}
       </article>
@@ -172,7 +173,7 @@ export function TimelineTab(props: {
           data-active={errorsOnly ? '' : undefined}
           onClick={toggleErrorsOnly}
         >
-          Errors Only
+          {t('flux.debugger.errorsOnly')}
         </Button>
         {!errorsOnly && DEFAULT_FILTERS.map((filter) => {
           const active = snapshot.filters.includes(filter);
@@ -185,11 +186,11 @@ export function TimelineTab(props: {
       </div>
       {errorsOnly ? (
         <div className="ndbg-list">
-          {errorGroups.length === 0 ? <p className="ndbg-empty">No errors recorded.</p> : null}
+          {errorGroups.length === 0 ? <p className="ndbg-empty">{t('flux.debugger.noErrors')}</p> : null}
           {errorGroups.map((group) => (
             <article key={group.source} className="ndbg-entry">
               <div className="ndbg-entry-topline">
-                <span className="ndbg-badge" data-group="error">Error</span>
+                <span className="ndbg-badge" data-group="error">{t('flux.debugger.error')}</span>
                 <time>{formatClock(group.latestTimestamp)}</time>
               </div>
               <strong className="ndbg-entry-summary" onClick={() => setErrorGroupExpanded(errorGroupExpanded === group.source ? null : group.source)}>
@@ -218,7 +219,7 @@ export function TimelineTab(props: {
             data-testid="ndbg-timeline-list"
             onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
           >
-            {activeTimelineEvents.length === 0 ? <p className="ndbg-empty">No events match the active filters.</p> : null}
+            {activeTimelineEvents.length === 0 ? <p className="ndbg-empty">{t('flux.debugger.noEventsMatch')}</p> : null}
             <div className="ndbg-virtual-spacer" style={{ height: `${virtualWindow.totalHeight}px` }}>
               <div className="ndbg-virtual-window" style={{ transform: `translateY(${virtualWindow.offsetTop}px)` }}>
                 {virtualWindow.events.map(renderEventEntry)}
@@ -227,7 +228,7 @@ export function TimelineTab(props: {
           </div>
         ) : (
           <div className="ndbg-list" data-testid="ndbg-timeline-list">
-            {activeTimelineEvents.length === 0 ? <p className="ndbg-empty">No events match the active filters.</p> : null}
+            {activeTimelineEvents.length === 0 ? <p className="ndbg-empty">{t('flux.debugger.noEventsMatch')}</p> : null}
             {activeTimelineEvents.map(renderEventEntry)}
           </div>
         )
