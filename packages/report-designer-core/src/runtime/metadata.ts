@@ -1,6 +1,8 @@
 import type {
   MetadataBag,
+  RangeMetaDocument,
   ReportSelectionTarget,
+  ReportSemanticDocument,
   ReportTemplateDocument,
 } from '../types.js';
 import { getTargetMeta } from '../types.js';
@@ -54,6 +56,170 @@ export function getMetaContainer(
     case 'column': {
       const columnMeta = (semantic.columnMeta ??= {});
       return (columnMeta[sheetId] ??= {});
+    }
+  }
+}
+
+function buildNextSemanticWithWorkbookMeta(
+  semantic: ReportSemanticDocument | undefined,
+  normalized: MetadataBag | undefined,
+): ReportSemanticDocument {
+  return {
+    ...(semantic ?? {}),
+    workbookMeta: normalized,
+  };
+}
+
+function buildNextSemanticWithSheetMeta(
+  semantic: ReportSemanticDocument | undefined,
+  sheetId: string,
+  normalized: MetadataBag | undefined,
+): ReportSemanticDocument {
+  const currentSheetMeta = semantic?.sheetMeta ?? {};
+  const nextSheetMeta = { ...currentSheetMeta };
+  if (normalized) {
+    nextSheetMeta[sheetId] = normalized;
+  } else {
+    delete nextSheetMeta[sheetId];
+  }
+
+  return {
+    ...(semantic ?? {}),
+    sheetMeta: nextSheetMeta,
+  };
+}
+
+function buildNextSemanticWithAxisMeta(
+  semantic: ReportSemanticDocument | undefined,
+  containerKey: 'rowMeta' | 'columnMeta' | 'cellMeta',
+  sheetId: string,
+  entryKey: string,
+  normalized: MetadataBag | undefined,
+): ReportSemanticDocument {
+  const currentGroup = semantic?.[containerKey] ?? {};
+  const currentSheetEntries = currentGroup[sheetId] ?? {};
+  const nextSheetEntries = { ...currentSheetEntries };
+
+  if (normalized) {
+    nextSheetEntries[entryKey] = normalized;
+  } else {
+    delete nextSheetEntries[entryKey];
+  }
+
+  return {
+    ...(semantic ?? {}),
+    [containerKey]: {
+      ...currentGroup,
+      [sheetId]: nextSheetEntries,
+    },
+  };
+}
+
+function buildNextSemanticWithRangeMeta(
+  semantic: ReportSemanticDocument | undefined,
+  sheetId: string,
+  rangeId: string,
+  range: Extract<ReportSelectionTarget, { kind: 'range' }>['range'],
+  normalized: MetadataBag | undefined,
+): ReportSemanticDocument {
+  const currentRangeMeta = semantic?.rangeMeta ?? {};
+  const currentRanges = currentRangeMeta[sheetId] ?? [];
+  const index = currentRanges.findIndex((item) => item.id === rangeId);
+
+  let nextRanges: RangeMetaDocument[];
+  if (!normalized) {
+    nextRanges = index >= 0
+      ? [...currentRanges.slice(0, index), ...currentRanges.slice(index + 1)]
+      : currentRanges;
+  } else {
+    const nextEntry: RangeMetaDocument = { id: rangeId, range: { ...range }, meta: normalized };
+    nextRanges = index >= 0
+      ? [...currentRanges.slice(0, index), nextEntry, ...currentRanges.slice(index + 1)]
+      : [...currentRanges, nextEntry];
+  }
+
+  return {
+    ...(semantic ?? {}),
+    rangeMeta: {
+      ...currentRangeMeta,
+      [sheetId]: nextRanges,
+    },
+  };
+}
+
+export function updateMetadata(
+  document: ReportTemplateDocument,
+  target: ReportSelectionTarget,
+  nextMeta: MetadataBag | undefined,
+): { changed: boolean; document: ReportTemplateDocument } {
+  const normalized = normalizeMetadataBag(nextMeta);
+
+  switch (target.kind) {
+    case 'workbook': {
+      const currentMeta = document.semantic?.workbookMeta;
+      const changed = !shallowEqualMetadata(currentMeta, normalized);
+      return {
+        changed,
+        document: changed
+          ? { ...document, semantic: buildNextSemanticWithWorkbookMeta(document.semantic, normalized) }
+          : document,
+      };
+    }
+    case 'sheet': {
+      const currentMeta = document.semantic?.sheetMeta?.[target.sheetId];
+      const changed = !shallowEqualMetadata(currentMeta, normalized);
+      return {
+        changed,
+        document: changed
+          ? { ...document, semantic: buildNextSemanticWithSheetMeta(document.semantic, target.sheetId, normalized) }
+          : document,
+      };
+    }
+    case 'row': {
+      const key = String(target.row);
+      const currentMeta = document.semantic?.rowMeta?.[target.sheetId]?.[key];
+      const changed = !shallowEqualMetadata(currentMeta, normalized);
+      return {
+        changed,
+        document: changed
+          ? { ...document, semantic: buildNextSemanticWithAxisMeta(document.semantic, 'rowMeta', target.sheetId, key, normalized) }
+          : document,
+      };
+    }
+    case 'column': {
+      const key = String(target.col);
+      const currentMeta = document.semantic?.columnMeta?.[target.sheetId]?.[key];
+      const changed = !shallowEqualMetadata(currentMeta, normalized);
+      return {
+        changed,
+        document: changed
+          ? { ...document, semantic: buildNextSemanticWithAxisMeta(document.semantic, 'columnMeta', target.sheetId, key, normalized) }
+          : document,
+      };
+    }
+    case 'cell': {
+      const key = target.cell.address;
+      const currentMeta = document.semantic?.cellMeta?.[target.cell.sheetId]?.[key];
+      const changed = !shallowEqualMetadata(currentMeta, normalized);
+      return {
+        changed,
+        document: changed
+          ? { ...document, semantic: buildNextSemanticWithAxisMeta(document.semantic, 'cellMeta', target.cell.sheetId, key, normalized) }
+          : document,
+      };
+    }
+    case 'range': {
+      const range = target.range;
+      const id = `${range.sheetId}:${range.startRow}:${range.startCol}:${range.endRow}:${range.endCol}`;
+      const currentRanges = document.semantic?.rangeMeta?.[range.sheetId] ?? [];
+      const previous = currentRanges.find((item) => item.id === id)?.meta;
+      const changed = !shallowEqualMetadata(previous, normalized);
+      return {
+        changed,
+        document: changed
+          ? { ...document, semantic: buildNextSemanticWithRangeMeta(document.semantic, range.sheetId, id, range, normalized) }
+          : document,
+      };
     }
   }
 }
@@ -153,7 +319,7 @@ export function applyFieldDrop(
   document: ReportTemplateDocument,
   field: import('../types.js').FieldDragPayload,
   target: Extract<ReportSelectionTarget, { kind: 'cell' | 'range' }>,
-): ReportTemplateDocument {
+): { changed: boolean; document: ReportTemplateDocument } {
   const patch: MetadataBag = {
     [field.type]: {
       sourceId: field.sourceId,
@@ -163,10 +329,11 @@ export function applyFieldDrop(
   };
 
   if (target.kind === 'cell') {
-    writeMetadata(document, target, mergeMetadata(getTargetMeta(document.semantic, target), patch));
-    return document;
+    return updateMetadata(document, target, mergeMetadata(getTargetMeta(document.semantic, target), patch));
   }
 
+  let currentDocument = document;
+  let changed = false;
   const range = target.range;
   for (let row = range.startRow; row <= range.endRow; row++) {
     for (let col = range.startCol; col <= range.endCol; col++) {
@@ -179,8 +346,10 @@ export function applyFieldDrop(
           col,
         },
       };
-      writeMetadata(document, cellTarget, mergeMetadata(getTargetMeta(document.semantic, cellTarget), patch));
+      const result = updateMetadata(currentDocument, cellTarget, mergeMetadata(getTargetMeta(currentDocument.semantic, cellTarget), patch));
+      currentDocument = result.document;
+      changed = changed || result.changed;
     }
   }
-  return document;
+  return { changed, document: currentDocument };
 }

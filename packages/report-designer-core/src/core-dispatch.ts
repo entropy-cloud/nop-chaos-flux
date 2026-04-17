@@ -22,7 +22,7 @@ import {
   applyFieldDrop,
   cloneDocument,
   mergeMetadata,
-  writeMetadata,
+  updateMetadata,
 } from './runtime/metadata.js';
 import { createAdapterContext } from './runtime/adapter-context.js';
 import {
@@ -87,10 +87,14 @@ export async function dispatchReportDesignerCommand(
           );
 
           if (!adapter) {
-            store.setState((s) => ({ ...s, ...ctx.pushUndoEntry(s) }));
-            applyFieldDrop(current.document, command.field, command.target);
-            store.setState({ fieldDrag: { active: false } });
-            return { ok: true, changed: true };
+            const result = applyFieldDrop(current.document, command.field, command.target);
+            store.setState((s) => ({
+              ...s,
+              ...ctx.pushUndoEntry(s),
+              document: result.document,
+              fieldDrag: { active: false },
+            }));
+            return { ok: true, changed: result.changed };
           }
 
           const adapterContext = createAdapterContext({
@@ -107,10 +111,12 @@ export async function dispatchReportDesignerCommand(
             context: adapterContext,
           });
           const nextMeta = mergeMetadata(currentMeta, patch);
-          store.setState((s) => ({ ...s, ...ctx.pushUndoEntry(s) }));
-          writeMetadata(current.document, command.target, nextMeta);
+          const result = updateMetadata(current.document, command.target, nextMeta);
 
-          store.setState({
+          store.setState((s) => ({
+            ...s,
+            ...ctx.pushUndoEntry(s),
+            document: result.document,
             selectionTarget: command.target,
             fieldDrag: {
               active: false,
@@ -119,9 +125,9 @@ export async function dispatchReportDesignerCommand(
               payload: { ...command.field, data: { ...command.field.data } },
               hoverTarget: command.target,
             },
-          });
+          }));
 
-          return { ok: true, changed: true };
+          return { ok: true, changed: result.changed };
         });
       }
 
@@ -130,20 +136,20 @@ export async function dispatchReportDesignerCommand(
           const current = store.getState();
           const currentMeta = getTargetMeta(current.document.semantic, command.target);
           const nextMeta = mergeMetadata(currentMeta, command.patch);
-          store.setState((s) => ({ ...s, ...ctx.pushUndoEntry(s) }));
-          const changed = writeMetadata(current.document, command.target, nextMeta);
+          const result = updateMetadata(current.document, command.target, nextMeta);
+          store.setState((s) => ({ ...s, ...ctx.pushUndoEntry(s), document: result.document }));
 
-          return { ok: true, changed };
+          return { ok: true, changed: result.changed };
         });
       }
 
       case 'report-designer:replaceMeta': {
         return withDerivedRefresh(async () => {
           const current = store.getState();
-          store.setState((s) => ({ ...s, ...ctx.pushUndoEntry(s) }));
-          const changed = writeMetadata(current.document, command.target, command.nextMeta);
+          const result = updateMetadata(current.document, command.target, command.nextMeta);
+          store.setState((s) => ({ ...s, ...ctx.pushUndoEntry(s), document: result.document }));
 
-          return { ok: true, changed };
+          return { ok: true, changed: result.changed };
         });
       }
 

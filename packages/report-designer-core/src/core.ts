@@ -30,7 +30,7 @@ import {
 import {
   cloneDocument,
   cloneMetadataBag,
-  writeMetadata,
+  updateMetadata,
 } from './runtime/metadata.js';
 import {
   buildInspectorProvidersByKind,
@@ -274,8 +274,10 @@ export function createReportDesignerCore(
     },
 
     setMetadata(target: ReportSelectionTarget, nextMeta: MetadataBag): void {
-      const current = store.getState();
-      writeMetadata(current.document, target, nextMeta);
+      store.setState((current) => {
+        const result = updateMetadata(current.document, target, nextMeta);
+        return result.changed ? { ...current, document: result.document } : current;
+      });
     },
 
     setSelectionTarget,
