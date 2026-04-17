@@ -1,4 +1,4 @@
-import type { ApiObject, BaseSchema } from '@nop-chaos/flux-core';
+import type { ActionSchema, ApiObject, BaseSchema } from '@nop-chaos/flux-core';
 
 export type EditorLanguage =
   | 'expression'
@@ -42,9 +42,9 @@ export interface CodeEditorSchema extends BaseSchema {
    * structure is defined by CodeMirror and varies by extension.
    */
   options?: any;
-  onChange?: string;
-  onFocus?: string;
-  onBlur?: string;
+  onChange?: ActionSchema | ActionSchema[];
+  onFocus?: ActionSchema | ActionSchema[];
+  onBlur?: ActionSchema | ActionSchema[];
 }
 
 export interface ExpressionEditorConfig {

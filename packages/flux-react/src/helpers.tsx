@@ -80,6 +80,7 @@ export function mergeActionContext(base: {
   return {
     runtime: base.runtime,
     scope: partial?.scope ?? base.scope,
+    signal: partial?.signal,
     actionScope: partial?.actionScope ?? base.actionScope,
     componentRegistry: partial?.componentRegistry ?? base.componentRegistry,
     nodeInstance: partial?.nodeInstance ?? base.nodeInstance,

@@ -1,7 +1,8 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { createSchemaRenderer, NodeMetaContext, RenderNodes, RuntimeContext, ScopeContext } from '../index';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { createActionScope } from '@nop-chaos/flux-runtime';
+import { createSchemaRenderer, NodeMetaContext, RenderNodes, RuntimeContext, ScopeContext, useRenderScope, useRendererRuntime, useScopeSelector } from '../index';
 import {
   cidProbeRenderer,
   createExpressionCompiler,
@@ -11,6 +12,7 @@ import {
   env,
   formRenderer,
   nodeIdentityProbeRenderer,
+  pageRenderer,
   probeFormSchema,
   probeInputRenderer,
   scopedHostRenderer,
@@ -34,6 +36,47 @@ describe('createSchemaRenderer runtime core behavior', () => {
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
     render(<SchemaRenderer schema={{ type: 'text', text: 'Hello renderer' }} env={env} formulaCompiler={createFormulaCompiler()} />);
     expect(screen.getByText('Hello renderer')).toBeTruthy();
+  });
+
+  it('releases root-level imported namespaces when the schema changes', async () => {
+    const dispose = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+    const actionScope = createActionScope({ id: 'root-import-scope' });
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          dispose,
+          invoke: async () => ({ ok: true })
+        })
+      }))
+    };
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schema={{ type: 'text', text: 'A', 'xui:imports': [{ from: 'demo-lib', as: 'demo' }] } as any}
+        env={{ ...env, importLoader }}
+        formulaCompiler={createFormulaCompiler()}
+        actionScope={actionScope}
+      />
+    );
+
+    await waitFor(() => {
+      expect(importLoader.load).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(
+      <SchemaRenderer
+        schema={{ type: 'text', text: 'B' } as any}
+        env={{ ...env, importLoader }}
+        formulaCompiler={createFormulaCompiler()}
+        actionScope={actionScope}
+      />
+    );
+
+    await waitFor(() => {
+      expect(dispose).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('compiles the root schema before passing it to RenderNodes', async () => {
@@ -120,6 +163,169 @@ describe('createSchemaRenderer runtime core behavior', () => {
     fireEvent.change(canvas.getByLabelText('Email'), { target: { value: 'a' } });
     fireEvent.click(canvas.getByText('Rerender host 0'));
     expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
+  });
+
+  it('rerenders sibling consumers after async scope updates', async () => {
+    const asyncPublisherRenderer = {
+      type: 'async-scope-publisher',
+      component: function AsyncScopePublisher() {
+        const scope = useRenderScope();
+
+        React.useEffect(() => {
+          void Promise.resolve().then(() => {
+            scope.update('user', { name: 'Alice' });
+          });
+        }, [scope]);
+
+        return null;
+      }
+    };
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, asyncPublisherRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'async-scope-publisher' },
+            { type: 'text', text: 'Hello, ${user?.name}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Hello, Alice')).toBeTruthy();
+    });
+  });
+
+  it('preserves async scope updates across page refresh ticks', async () => {
+    const asyncPublisherRenderer = {
+      type: 'async-scope-publisher-with-refresh',
+      component: function AsyncScopePublisherWithRefresh(props: any) {
+        const scope = useRenderScope();
+
+        React.useEffect(() => {
+          props.helpers.dispatch({ action: 'refreshTable' });
+          void Promise.resolve().then(() => {
+            scope.update('user', { name: 'Alice' });
+          });
+        }, [props.helpers, scope]);
+
+        return null;
+      }
+    };
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, asyncPublisherRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'async-scope-publisher-with-refresh' },
+            { type: 'text', text: 'Hello, ${user?.name}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Hello, Alice')).toBeTruthy();
+    });
+  });
+
+  it('rerenders sibling consumers after a renderer registers an api data source', async () => {
+    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: { name: 'Alice' } }));
+    let capturedRuntime: ReturnType<typeof createRendererRuntime> | undefined;
+    let capturedScope: import('@nop-chaos/flux-core').ScopeRef | undefined;
+    const userProbeRenderer = {
+      type: 'user-probe',
+      component: function UserProbe() {
+        const userName = useScopeSelector((scope: { user?: { name?: string } }) => scope.user?.name ?? '');
+        return <span data-testid="user-probe">{userName}</span>;
+      }
+    };
+    const apiSourceRenderer = {
+      type: 'api-source-probe',
+      component: function ApiSourceProbe(props: any) {
+        const runtime = useRendererRuntime();
+        const scope = useRenderScope();
+
+        capturedRuntime = runtime as ReturnType<typeof createRendererRuntime>;
+        capturedScope = scope;
+
+        React.useEffect(() => {
+          const registration = runtime.registerDataSource({
+            id: props.id,
+            scope,
+            schema: {
+              type: 'data-source',
+              api: { url: '/api/user/1' },
+              dataPath: 'user'
+            }
+          });
+
+          return () => {
+            registration.dispose();
+          };
+        }, [props.id, runtime, scope]);
+
+        return null;
+      }
+    };
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, userProbeRenderer, apiSourceRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'api-source-probe', id: 'probe-source' },
+            { type: 'user-probe' },
+            { type: 'text', text: 'Hello, ${user?.name}' }
+          ]
+        }}
+        env={{ ...env, fetcher: fetcher as any }}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalled();
+    });
+
+    await expect(fetcher.mock.results[0]?.value).resolves.toMatchObject({
+      ok: true,
+      status: 200,
+      data: { name: 'Alice' }
+    });
+
+    await waitFor(() => {
+      expect(capturedRuntime?.getSourceDebugSnapshot?.()).toMatchObject({
+        sources: [
+          expect.objectContaining({
+            id: 'probe-source',
+            status: 'success',
+            hasValue: true,
+            fetchStatus: 'idle'
+          })
+        ]
+      });
+    });
+
+    expect(capturedScope?.get('user')).toEqual({ name: 'Alice' });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user-probe').textContent).toBe('Alice');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Hello, Alice')).toBeTruthy();
+    });
   });
 
   it('skips FieldFrame when frameWrap is false', () => {

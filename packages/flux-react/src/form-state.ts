@@ -101,6 +101,28 @@ export function isFieldEffectivelyRequired(
   }));
 }
 
+function shouldShowFieldError(
+  behavior: { showErrorOn: readonly string[] },
+  state: { touched: boolean; dirty: boolean; visited: boolean; submitting: boolean }
+): boolean {
+  return behavior.showErrorOn.some((trigger) => {
+    switch (trigger) {
+      case 'touched':
+        return state.touched;
+      case 'dirty':
+        return state.dirty;
+      case 'visited':
+        return state.visited;
+      case 'submit':
+        return state.submitting;
+      default:
+        return false;
+    }
+  });
+}
+
+const defaultShowErrorOn: readonly string[] = ['touched', 'submit'];
+
 export function selectCurrentFormFieldPresentation(
   state: FormStoreState,
   input: {
@@ -118,8 +140,15 @@ export function selectCurrentFormFieldPresentation(
     ownerPath: input.path,
     sourceKinds: ['array', 'object', 'form', 'runtime-registration']
   })[0] ?? fieldState.error;
+  const field = getCompiledValidationField(input.validation, input.path);
+  const showErrorOn = field?.behavior?.showErrorOn ?? input.validation?.behavior?.showErrorOn ?? defaultShowErrorOn;
   const showError = Boolean(
-    error && (fieldState.touched || fieldState.dirty || fieldState.visited || fieldState.submitting)
+    error && shouldShowFieldError({ showErrorOn }, {
+      touched: fieldState.touched,
+      dirty: fieldState.dirty,
+      visited: fieldState.visited,
+      submitting: fieldState.submitting
+    })
   );
   const effectiveDisabled = Boolean(input.disabled);
   const readOnly = Boolean(input.readOnly);

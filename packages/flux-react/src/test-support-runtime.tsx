@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
+import { Button, Input } from '@nop-chaos/ui';
 import type {
   DataSourceSchema,
   RendererComponentProps,
@@ -76,12 +77,12 @@ function CompositeErrorProbe() {
 
   return (
     <div>
-      <button type="button" onClick={() => void form?.validateField('metadata')}>
+      <Button variant="ghost" size="sm" onClick={() => void form?.validateField('metadata')}>
         Validate root
-      </button>
-      <button type="button" onClick={() => void form?.validateField('metadata.0.value')}>
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => void form?.validateField('metadata.0.value')}>
         Validate child
-      </button>
+      </Button>
       <span data-testid="root-error">{rootError?.message ?? ''}</span>
       <span data-testid="child-error">{childError?.message ?? ''}</span>
       <span data-testid="owned-count">{String(ownedErrors.length)}</span>
@@ -102,12 +103,13 @@ export const compositeProbeRenderer: RendererDefinition = {
 export const buttonRenderer: RendererDefinition = {
   type: 'button',
   component: (props) => (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="sm"
       onClick={() => void props.events.onClick?.()}
     >
       {String(props.props.label ?? 'Button')}
-    </button>
+    </Button>
   ),
   fields: [{ key: 'onClick', kind: 'event' }]
 };
@@ -149,7 +151,7 @@ export const wrapProbeRenderer: RendererDefinition = {
   type: 'wrap-probe',
   wrap: true,
   component: (props) => (
-    <input
+    <Input
       aria-label={String(props.props.label ?? 'Wrap probe')}
       data-testid="wrap-probe-input"
       defaultValue={String(props.props.value ?? '')}
@@ -162,9 +164,9 @@ function FragmentRenderHost(props: RendererComponentProps) {
 
   return (
     <div>
-      <button type="button" onClick={() => setTick((current) => current + 1)}>
+      <Button variant="ghost" size="sm" onClick={() => setTick((current) => current + 1)}>
         Refresh fragment {tick}
-      </button>
+      </Button>
       {props.helpers.render(fragmentScopedProbeFormSchema, {
         data: {
           currentUser: {
@@ -183,9 +185,9 @@ function FragmentScopeProbeHost(props: RendererComponentProps) {
 
   return (
     <div>
-      <button type="button" onClick={() => setTick((current) => current + 1)}>
+      <Button variant="ghost" size="sm" onClick={() => setTick((current) => current + 1)}>
         Refresh fragment {tick}
-      </button>
+      </Button>
       {props.helpers.render(props.regions.body?.templateNode as any, {
         data: {
           child: childValue
@@ -284,15 +286,16 @@ function DispatchProbe(props: RendererComponentProps) {
 
   return (
     <div>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={async () => {
           const result = await props.helpers.dispatch(props.props.runAction as any);
           setResultText(result.ok ? String(result.data ?? '') : String(result.error ?? ''));
         }}
       >
         {String(props.props.label ?? 'Run dispatch')}
-      </button>
+      </Button>
       <span data-testid={String(props.props.resultKey ?? 'dispatch-result')}>{resultText}</span>
     </div>
   );
@@ -308,9 +311,9 @@ function ToggleHost(props: RendererComponentProps) {
 
   return (
     <div>
-      <button type="button" onClick={() => setVisible((current) => !current)}>
+      <Button variant="ghost" size="sm" onClick={() => setVisible((current) => !current)}>
         {visible ? 'Hide child boundary' : 'Show child boundary'}
-      </button>
+      </Button>
       {visible ? props.regions.body?.render() : null}
     </div>
   );

@@ -34,6 +34,7 @@ export {
   useCurrentSurfaceRuntime,
   useCurrentNodeMeta,
   useCurrentNodeInstance,
+  useStructuralLoopContext,
   useActionDispatcher,
   useRenderFragment,
   useCurrentFormModelGeneration,
@@ -49,6 +50,7 @@ export {
   RenderInstancePathContext,
   RuntimeContext,
   ScopeContext,
+  StructuralLoopContext,
   SurfaceContext,
   useRequiredContext
 } from './contexts';

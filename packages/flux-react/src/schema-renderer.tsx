@@ -106,7 +106,8 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [onActionScopeChange, rootActionScope]);
 
     useEffect(() => {
-      let cancelled = false;
+      const controller = new AbortController();
+      const { signal } = controller;
 
       if (schemaImports.length === 0) {
         setImportsReady(true);
@@ -124,7 +125,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
           scope: rootScope
         }))
       ).then((results) => {
-        if (cancelled) {
+        if (signal.aborted) {
           return;
         }
 
@@ -163,7 +164,11 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       });
 
       return () => {
-        cancelled = true;
+        controller.abort();
+        runtime.releaseImportedNamespaces({
+          imports: schemaImports,
+          actionScope: rootActionScope
+        });
       };
     }, [runtime, props.env, schemaImports, rootActionScope, rootComponentRegistry, rootScope]);
 

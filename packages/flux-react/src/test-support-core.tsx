@@ -1,6 +1,7 @@
 import React from 'react';
 import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import { Button, Input, Label } from '@nop-chaos/ui';
 import type {
   RendererComponentProps,
   RendererDefinition,
@@ -91,14 +92,14 @@ function ProbeInput() {
   const value = useScopeSelector((scopeData: { email?: unknown }) => String(scopeData.email ?? ''));
 
   return (
-    <label>
+    <Label>
       <span>Email</span>
-      <input
+      <Input
         aria-label="Email"
         value={value}
         onChange={(event) => form?.setValue('email', event.target.value)}
       />
-    </label>
+    </Label>
   );
 }
 
@@ -113,7 +114,7 @@ function ProbeButton() {
 
   return (
     <div>
-      <input
+      <Input
         aria-label="Query"
         value={value}
         onChange={(event) => {
@@ -130,9 +131,9 @@ function ProbeButton() {
 export const probeButtonRenderer: RendererDefinition = {
   type: 'probe-button',
   component: (props) => (
-    <button type="button" disabled={props.meta.disabled} aria-label="Search">
+    <Button variant="ghost" size="sm" disabled={props.meta.disabled} aria-label="Search">
       Search
-    </button>
+    </Button>
   )
 };
 

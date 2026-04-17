@@ -23,11 +23,12 @@ import {
   RenderInstancePathContext,
   RuntimeContext,
   ScopeContext,
+  StructuralLoopContext,
   SurfaceContext,
   useRequiredContext
 } from './contexts';
 import { createHelpers } from './helpers';
-import { EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
+import { EMPTY_FORM_FIELD_STATE, EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
 
 function shallowEqualFormFieldState(
   a: FormFieldStateSnapshot,
@@ -153,11 +154,19 @@ export function useCurrentForm(): FormRuntime | undefined {
 
 export function useCurrentFormState<T>(
   selector: (state: FormStoreState) => T,
-  equalityFn: (a: T, b: T) => boolean = Object.is
+  equalityFn: (a: T, b: T) => boolean = Object.is,
+  options?: { enabled?: boolean }
 ): T {
   const form = useCurrentForm();
-  const subscribe = useMemo(() => form?.store.subscribe ?? (() => () => undefined), [form]);
-  const getSnapshot = useMemo(() => () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE, [form]);
+  const enabled = options?.enabled !== false;
+  const subscribe = useMemo(
+    () => (enabled ? form?.store.subscribe ?? (() => () => undefined) : () => () => undefined),
+    [enabled, form]
+  );
+  const getSnapshot = useMemo(
+    () => (enabled ? () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE),
+    [enabled, form]
+  );
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, equalityFn);
 }
@@ -209,33 +218,44 @@ export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): 
   const stableOwnerPath = query?.ownerPath;
   const stableRule = query?.rule;
   const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
+  
+  // When path is empty, skip subscription entirely and return empty state
+  const skipSubscription = !path;
 
   const subscribe = useCallback(
     (listener: () => void) => {
-      if (!store) return () => undefined;
-      const unsubPath = store.subscribeToPath(path, listener);
-      const unsubSubmitting = store.subscribeToSubmitting(listener);
+      if (!store || skipSubscription) return () => undefined;
+      const unsubPath = typeof store.subscribeToPath === 'function'
+        ? store.subscribeToPath(path, listener)
+        : store.subscribe(listener);
+      const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
+        ? store.subscribeToSubmitting(listener)
+        : () => undefined;
       return () => {
         unsubPath();
         unsubSubmitting();
       };
     },
-    [store, path]
+    [store, path, skipSubscription]
   );
 
   const getSnapshot = useCallback(
-    (): FormStoreState => (store ? store.getState() : EMPTY_FORM_STORE_STATE),
-    [store]
+    (): FormStoreState => {
+      if (skipSubscription) return EMPTY_FORM_STORE_STATE;
+      return store ? store.getState() : EMPTY_FORM_STORE_STATE;
+    },
+    [store, skipSubscription]
   );
 
   const selector = useCallback(
     (state: FormStoreState): FormFieldStateSnapshot => {
+      if (skipSubscription) return EMPTY_FORM_FIELD_STATE;
       const q: FormErrorQuery | undefined = stablePath || stableOwnerPath || stableRule || sourceKindsKey
         ? { path: stablePath, ownerPath: stableOwnerPath, rule: stableRule, sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined }
         : undefined;
       return selectCurrentFormFieldState(state, path, q);
     },
-    [path, stablePath, stableOwnerPath, stableRule, sourceKindsKey]
+    [path, stablePath, stableOwnerPath, stableRule, sourceKindsKey, skipSubscription]
   );
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, shallowEqualFormFieldState);
@@ -252,8 +272,12 @@ export function useFieldError(path: string): ValidationError | undefined {
   const subscribe = useCallback(
     (listener: () => void) => {
       if (!store) return () => undefined;
-      const unsubPath = store.subscribeToPath(path, listener);
-      const unsubSubmitting = store.subscribeToSubmitting(listener);
+      const unsubPath = typeof store.subscribeToPath === 'function'
+        ? store.subscribeToPath(path, listener)
+        : store.subscribe(listener);
+      const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
+        ? store.subscribeToSubmitting(listener)
+        : () => undefined;
       return () => {
         unsubPath();
         unsubSubmitting();
@@ -307,6 +331,10 @@ export function useCurrentNodeMeta(): RenderNodeMeta {
 
 export function useCurrentNodeInstance() {
   return useContext(NodeMetaContext)?.node ?? undefined;
+}
+
+export function useStructuralLoopContext() {
+  return useContext(StructuralLoopContext);
 }
 
 export function useActionDispatcher() {
@@ -370,6 +398,7 @@ export const rendererHooks = {
   useCurrentSurfaceRuntime,
   useCurrentNodeMeta,
   useCurrentNodeInstance,
+  useStructuralLoopContext,
   useRenderFragment,
   useCurrentFormModelGeneration
 };

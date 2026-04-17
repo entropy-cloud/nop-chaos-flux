@@ -6,6 +6,7 @@ import type {
   FormRuntime,
   InstanceFrame,
   PageRuntime,
+  StructuralLoopRenderContext,
   SurfaceRuntime,
   RenderNodeMeta,
   RendererRuntime,
@@ -22,6 +23,7 @@ export const PageContext = createContext<PageRuntime | undefined>(undefined);
 export const SurfaceContext = createContext<SurfaceRuntime | undefined>(undefined);
 export const NodeMetaContext = createContext<RenderNodeMeta | null>(null);
 export const ClassAliasesContext = createContext<Record<string, string> | undefined>(undefined);
+export const StructuralLoopContext = createContext<StructuralLoopRenderContext | undefined>(undefined);
 
 export function useRequiredContext<T>(context: Context<T | null>, label: string): T {
   const value = useContext(context);

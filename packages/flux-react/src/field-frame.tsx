@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import { useCurrentForm, useCurrentFormState } from './hooks';
+import { useMemo } from 'react';
+import { useCurrentForm, useCurrentFormFieldState, useCurrentFormState } from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
-import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
+import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired, selectCurrentFormErrors } from './form-state';
 import { cn } from '@nop-chaos/ui';
 
 export interface FieldFrameProps {
@@ -58,19 +59,18 @@ export function FieldFrame(props: FieldFrameProps) {
   } = props;
 
   const currentForm = useCurrentForm();
-  const fieldState = useCurrentFormState(
-    (state) => name ? selectCurrentFormFieldState(state, name, { path: name, ownerPath: name }) : EMPTY_FORM_FIELD_STATE,
-    (left, right) =>
-      left.error === right.error &&
-      left.validating === right.validating &&
-      left.touched === right.touched &&
-      left.dirty === right.dirty &&
-      left.visited === right.visited &&
-      left.submitting === right.submitting
-  );
+  
+  // Path-scoped subscription for field state (O(1) wakeup when other fields change)
+  // Falls back to whole-store subscription if store doesn't support subscribeToPath
+  // Always call the hook with a stable path to satisfy Rules of Hooks
+  const rawFieldState = useCurrentFormFieldState(name ?? '', { path: name ?? '', ownerPath: name ?? '' });
+  const fieldState = name ? rawFieldState : EMPTY_FORM_FIELD_STATE;
+  
+  // Aggregate errors from array/object/form level
   const aggregateError = useCurrentFormState(
     (state) => name ? selectCurrentFormErrors(state, { path: name, ownerPath: name, sourceKinds: ['array', 'object', 'form', 'runtime-registration'] })[0] : undefined,
-    Object.is
+    Object.is,
+    { enabled: Boolean(name) }
   );
   const validationField = name ? getCompiledValidationField(currentForm?.validation, name) : undefined;
   const fieldBehavior = validationField?.behavior;
@@ -80,7 +80,8 @@ export function FieldFrame(props: FieldFrameProps) {
   );
   const values = useCurrentFormState(
     (state) => hasDynamicRequiredRule ? state.values : undefined,
-    Object.is
+    Object.is,
+    { enabled: hasDynamicRequiredRule }
   );
 
   const error = aggregateError ?? fieldState.error;
