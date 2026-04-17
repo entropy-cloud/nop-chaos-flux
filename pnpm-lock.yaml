@@ -107,6 +107,9 @@ importers:
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../../packages/flux-core
+      '@nop-chaos/flux-i18n':
+        specifier: workspace:*
+        version: link:../../packages/flux-i18n
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../../packages/flux-react
