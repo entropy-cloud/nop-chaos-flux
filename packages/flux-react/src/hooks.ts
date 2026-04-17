@@ -57,6 +57,20 @@ function emptyUnsubscribe() {
   return undefined;
 }
 
+function createFormErrorSubscribe(store: FormStoreApi | undefined, path: string | undefined) {
+  return (listener: () => void) => {
+    if (!store) {
+      return emptyUnsubscribe;
+    }
+
+    if (path && typeof store.subscribeToPath === 'function') {
+      return store.subscribeToPath(path, listener);
+    }
+
+    return store.subscribe(listener);
+  };
+}
+
 function createScopeOwnSubscribe(scope: ScopeRef) {
   return (listener: () => void) => {
     const subscribe = scope.store?.subscribe;
@@ -173,12 +187,12 @@ export function useCurrentFormState<T>(
 
 export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] {
   const form = useCurrentForm();
-  const subscribe = useMemo(() => form?.store.subscribe ?? (() => () => undefined), [form]);
-  const getSnapshot = useMemo(() => () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE, [form]);
   const stablePath = query?.path;
   const stableOwnerPath = query?.ownerPath;
   const stableRule = query?.rule;
   const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
+  const subscribe = useMemo(() => createFormErrorSubscribe(form?.store, stablePath), [form, stablePath]);
+  const getSnapshot = useMemo(() => () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE, [form]);
   const selector = useCallback(
     (state: FormStoreState): ValidationError[] => {
       const q: FormErrorQuery | undefined = stablePath || stableOwnerPath || stableRule || sourceKindsKey
@@ -194,12 +208,12 @@ export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] 
 
 export function useCurrentFormError(query: FormErrorQuery): ValidationError | undefined {
   const form = useCurrentForm();
-  const subscribe = useMemo(() => form?.store.subscribe ?? (() => () => undefined), [form]);
-  const getSnapshot = useMemo(() => () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE, [form]);
   const stablePath = query?.path;
   const stableOwnerPath = query?.ownerPath;
   const stableRule = query?.rule;
   const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
+  const subscribe = useMemo(() => createFormErrorSubscribe(form?.store, stablePath), [form, stablePath]);
+  const getSnapshot = useMemo(() => () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE, [form]);
   const selector = useCallback(
     (state: FormStoreState): ValidationError | undefined => {
       const q: FormErrorQuery = { path: stablePath, ownerPath: stableOwnerPath, rule: stableRule, sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined };
