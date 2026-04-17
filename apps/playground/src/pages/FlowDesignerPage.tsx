@@ -71,14 +71,16 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
           </TabsList>
         </Tabs>
       </div>
-      <SchemaRenderer
-        key={activeExample}
-        schema={schema as any}
-        registry={registry}
-        env={env}
-        formulaCompiler={formulaCompiler}
-        actionScope={actionScope}
-      />
+      <div className="min-h-0 flex-1">
+        <SchemaRenderer
+          key={activeExample}
+          schema={schema as any}
+          registry={registry}
+          env={env}
+          formulaCompiler={formulaCompiler}
+          actionScope={actionScope}
+        />
+      </div>
     </div>
   );
 }

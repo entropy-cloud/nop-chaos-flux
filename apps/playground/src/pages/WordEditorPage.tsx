@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { createFormulaCompiler } from '@nop-chaos/flux-formula'
 import { createSchemaRenderer, createDefaultEnv, createDefaultRegistry } from '@nop-chaos/flux-react'
-import { createActionScope } from '@nop-chaos/flux-runtime'
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic'
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form'
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced'
@@ -24,35 +23,25 @@ interface WordEditorPageProps {
 }
 
 export function WordEditorPage({ onBack }: WordEditorPageProps) {
-  const actionScope = useMemo(() => {
-    const scope = createActionScope({ id: 'word-editor-page-action-scope' })
-    scope.registerNamespace('word-editor', {
-      kind: 'host',
-      listMethods() {
-        return ['navigate-back']
-      },
-      invoke(method) {
-        if (method === 'navigate-back') {
-          onBack()
-          return { ok: true }
-        }
-        return { ok: false, error: new Error(`Unknown word-editor method: ${method}`) }
+  const envWithNavigate = useMemo(() => ({
+    ...env,
+    navigate: (to: string | number) => {
+      if (to === -1) {
+        onBack()
       }
-    })
-    return scope
-  }, [onBack])
+    },
+  }), [onBack])
 
   return (
     <SchemaRenderer
       schema={{
         type: 'word-editor-page',
         title: 'Word Editor',
-        onBack: { action: 'word-editor:navigate-back' }
+        onBack: { action: 'navigate', args: { back: true } }
       } as any}
       registry={registry}
-      env={env}
+      env={envWithNavigate}
       formulaCompiler={formulaCompiler}
-      actionScope={actionScope}
     />
   )
 }
