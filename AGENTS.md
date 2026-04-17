@@ -4,15 +4,17 @@
 
 `nop-chaos-flux` is a modern rewrite of the AMIS low-code renderer.
 
-**Tech Stack**: React 19, Zustand, TypeScript 5.9, Vite 8, Vitest, pnpm workspace.
+**Tech Stack**: React 19, Zustand, TypeScript 6.0, Vite 8, Vitest, pnpm workspace.
 
 **Workspace Packages**:
 - `@nop-chaos/flux-core` - Foundation contracts and shared utilities. Contains type definitions, constants, and side-effect-free pure utility functions shared across all packages.
 - `@nop-chaos/flux-formula` - Expression compiler/evaluator.
+- `@nop-chaos/flux-i18n` - Internationalization (i18next integration). Supports zh-CN (default) and en-US. All keys use `flux.` prefix.
 - `@nop-chaos/flux-runtime` - Core runtime (Zustand stores, validation, actions).
 - `@nop-chaos/flux-react` - React rendering layer.
 - `@nop-chaos/flux-renderers-basic` - Basic renderers (page, text, container, etc.).
 - `@nop-chaos/flux-renderers-form` - Form renderers.
+- `@nop-chaos/flux-renderers-form-advanced` - Advanced form renderers (composite fields, drag-drop, etc.).
 - `@nop-chaos/flux-renderers-data` - Data renderers.
 - `@nop-chaos/flux-code-editor` - Code editor renderer package built on CodeMirror.
 - `@nop-chaos/ui` - Shared shadcn/ui-based component library and utilities.
@@ -31,13 +33,13 @@
 
 **Dependency Flow**:
 ```
-flux-core -> flux-formula -> flux-runtime -> flux-react -> flux-renderers-*
-                                                          -> flux-code-editor
-                                                          -> flow-designer-renderers
-                                                          -> spreadsheet-renderers
-                                                          -> report-designer-renderers
-                                                          -> word-editor-renderers
-                                                          -> nop-debugger
+flux-core -> flux-formula -> flux-i18n -> flux-runtime -> flux-react -> flux-renderers-* (includes flux-renderers-form-advanced)
+                                                                       -> flux-code-editor
+                                                                       -> flow-designer-renderers
+                                                                       -> spreadsheet-renderers
+                                                                       -> report-designer-renderers
+                                                                       -> word-editor-renderers
+                                                                       -> nop-debugger
 
 tailwind-preset -> ui
 theme-tokens -> ui
