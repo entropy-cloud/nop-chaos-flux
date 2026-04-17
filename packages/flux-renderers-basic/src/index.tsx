@@ -44,7 +44,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     defaultSchema: { type: 'page', body: [] },
     component: PageRenderer,
     regions: ['body', 'header', 'footer'],
-    fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }]
+    fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }, { key: 'modalContainer', kind: 'prop' }]
   },
   {
     type: 'container',
@@ -191,7 +191,9 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'onOpen', kind: 'event' },
-      { key: 'onClose', kind: 'event' }
+      { key: 'onClose', kind: 'event' },
+      { key: 'container', kind: 'prop' },
+      { key: 'showMask', kind: 'prop' }
     ]
   },
   {
@@ -204,7 +206,9 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'onOpen', kind: 'event' },
-      { key: 'onClose', kind: 'event' }
+      { key: 'onClose', kind: 'event' },
+      { key: 'container', kind: 'prop' },
+      { key: 'showMask', kind: 'prop' }
     ]
   },
   {

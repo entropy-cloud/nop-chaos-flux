@@ -8,6 +8,7 @@ export interface PageSchema extends BaseSchema {
   body?: BaseSchema[];
    header?: BaseSchema[];
    footer?: BaseSchema[];
+  modalContainer?: string;
 }
 
 export interface DialogSchema extends BaseSchema {
@@ -19,6 +20,8 @@ export interface DialogSchema extends BaseSchema {
   defaultOpen?: boolean;
   statusPath?: string;
   closeOnOutsideClick?: boolean;
+  container?: string;
+  showMask?: boolean;
 }
 
 export interface DrawerSchema extends BaseSchema {
@@ -30,6 +33,8 @@ export interface DrawerSchema extends BaseSchema {
   defaultOpen?: boolean;
   side?: 'left' | 'right' | 'top' | 'bottom';
   statusPath?: string;
+  container?: string;
+  showMask?: boolean;
 }
 
 export interface TabsItemSchema {
