@@ -106,7 +106,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     <div className={cn('nop-select-wrapper', props.meta.className)}>
       <Select value={value == null ? '' : String(value)} onValueChange={(nextValue) => handlers.onChange(nextValue)} disabled={loading || presentation.effectiveDisabled}>
         <SelectTrigger
-          className="nop-select-trigger"
+          data-slot="select-trigger"
           aria-label={ariaLabel}
           aria-invalid={presentation.showError ? true : undefined}
           onFocus={handlers.onFocus}
@@ -123,7 +123,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           ))}
         </SelectContent>
       </Select>
-      {errorMessage ? <span className="nop-select-error">{errorMessage}</span> : null}
+      {errorMessage ? <span data-slot="select-error">{errorMessage}</span> : null}
     </div>
   );
 }
@@ -170,7 +170,7 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
         onCheckedChange={(checked) => handlers.onChange(String(Boolean(checked)))}
         onBlur={handlers.onBlur}
       />
-      {optionLabel ? <span className="nop-checkbox-label">{optionLabel}</span> : null}
+      {optionLabel ? <span data-slot="checkbox-label">{optionLabel}</span> : null}
     </span>
   );
 }
@@ -196,7 +196,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
         onCheckedChange={(nextChecked) => handlers.onChange(String(Boolean(nextChecked)))}
         onBlur={handlers.onBlur}
       />
-      <span className="nop-switch-label">{checked ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
+      <span data-slot="switch-label">{checked ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
     </span>
   );
 }
@@ -215,13 +215,13 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
   return (
     <div className={cn('nop-radio-group-wrapper', props.meta.className)}>
       {loading ? (
-        <span className="nop-radio-group-loading">
+        <span data-slot="radio-group-loading">
           <Spinner className="size-4" aria-hidden="true" />
           <span>Loading options...</span>
         </span>
       ) : null}
       <RadioGroup
-        className="nop-radio-group-options"
+        data-slot="radio-group-options"
         value={value == null ? '' : String(value)}
         disabled={loading || presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
@@ -230,13 +230,13 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
         onBlur={handlers.onBlur}
       >
         {options?.map((option) => (
-          <Label key={option.value} className="nop-radio-group-item">
+          <Label key={option.value} data-slot="radio-group-item">
             <RadioGroupItem value={option.value} aria-label={option.label} disabled={loading} />
-            <span className="nop-radio-group-item-label">{option.label}</span>
+            <span data-slot="radio-group-item-label">{option.label}</span>
           </Label>
         ))}
       </RadioGroup>
-      {errorMessage ? <span className="nop-radio-group-error">{errorMessage}</span> : null}
+      {errorMessage ? <span data-slot="radio-group-error">{errorMessage}</span> : null}
     </div>
   );
 }
@@ -256,7 +256,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
   return (
     <div className={cn('nop-checkbox-group-wrapper', props.meta.className)}>
       {loading ? (
-        <span className="nop-checkbox-group-loading">
+        <span data-slot="checkbox-group-loading">
           <Spinner className="size-4" aria-hidden="true" />
           <span>Loading options...</span>
         </span>
@@ -265,7 +265,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
         const checked = value.some((candidate) => Object.is(candidate, option.value));
 
         return (
-          <Label key={option.value} className="nop-checkbox-group-item">
+          <Label key={option.value} data-slot="checkbox-group-item">
             <Checkbox
               checked={checked}
               disabled={loading || presentation.effectiveDisabled}
@@ -281,11 +281,11 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
               }}
               onBlur={handlers.onBlur}
             />
-            <span className="nop-checkbox-group-item-label">{option.label}</span>
+            <span data-slot="checkbox-group-item-label">{option.label}</span>
           </Label>
         );
       })}
-      {errorMessage ? <span className="nop-checkbox-group-error">{errorMessage}</span> : null}
+      {errorMessage ? <span data-slot="checkbox-group-error">{errorMessage}</span> : null}
     </div>
   );
 }

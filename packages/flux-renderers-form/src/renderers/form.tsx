@@ -183,7 +183,8 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         ? (options) => submitAction(undefined, {
             scope: lifecycleScope,
             form: ownedForm,
-            interactionId: options?.interactionId
+            interactionId: options?.interactionId,
+            signal: options?.signal
           })
         : undefined,
       onSubmitSuccess: submitSuccessAction
@@ -191,6 +192,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             scope: lifecycleScope,
             form: ownedForm,
             interactionId: options?.interactionId,
+            signal: options?.signal,
             prevResult: result,
             evaluationBindings: {
               result,
@@ -204,6 +206,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             scope: lifecycleScope,
             form: ownedForm,
             interactionId: options?.interactionId,
+            signal: options?.signal,
             prevResult: result,
             evaluationBindings: {
               result,
@@ -217,6 +220,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             scope: lifecycleScope,
             form: ownedForm,
             interactionId: options?.interactionId,
+            signal: options?.signal,
             prevResult: result,
             evaluationBindings: {
               result,
