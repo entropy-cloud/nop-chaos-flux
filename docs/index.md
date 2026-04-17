@@ -87,7 +87,7 @@ Choose the smallest document that matches the task.
 | 设计 Flux schema 文件校验器、导入前结构校验或命名空间属性忽略策略 | `docs/architecture/schema-file-validator.md` | `docs/architecture/action-scope-and-imports.md`, `docs/references/flux-json-conventions.md` |
 | Change slot-like fields such as `title`, `empty`, or `onClick` | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
 | Change validation behavior, hidden-field submit/validate/clear semantics, or form field participation | `docs/architecture/form-validation.md` | `docs/references/form-validation-runtime-types.md`, `docs/architecture/flux-runtime-module-boundaries.md` |
-| Look up validation runtime type definitions (ValidationScopeRuntime, FormRuntime, CompiledValidationModel, store APIs) | `docs/references/form-validation-runtime-types.md` | `docs/architecture/form-validation.md` |
+| Look up validation runtime type definitions (ValidationScopeRuntime, FormRuntime, CompiledFormValidationModel, store APIs) | `docs/references/form-validation-runtime-types.md` | `docs/architecture/form-validation.md` |
 | Decide where runtime or validation code should live | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/form-validation.md` |
 | Check workspace structure, package roles, or tooling baseline | `docs/architecture/frontend-baseline.md` | `package.json` |
 | Plan playground information architecture or debugger UX | `docs/architecture/playground-experience.md` | `docs/architecture/debugger-runtime.md` |

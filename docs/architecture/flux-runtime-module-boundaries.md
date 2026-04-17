@@ -177,6 +177,7 @@ They should not be folded into `ScopeRef`, pure domain cores, or generic rendere
 - `packages/flux-runtime/src/form-store.ts`
   - form store state updates
   - page store state updates
+  - surface store state updates
 - `packages/flux-runtime/src/form-runtime-state.ts`
   - initial form field-state derivation
 - `packages/flux-runtime/src/form-runtime-array.ts`

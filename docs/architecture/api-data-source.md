@@ -228,13 +228,13 @@ Current baseline note:
 - ajax-side API monitor callbacks should observe the final executable request shape, not the pre-canonical declarative request object, so diagnostics line up with what fetch/dedup/cache actually execute
 - current source-runtime baseline now includes a runtime-owned source registry scoped by `ScopeRef.id`; `DataSourceRenderer` only registers/disposes entries while runtime owns controller start/stop and replacement semantics
 - current `DataSourceSchema` baseline now supports both `api` and `formula` producers under the same runtime-owned registration path
-- formula `data-source` no longer requires `dataPath`; `name`-first publication is allowed for both api and formula producers
+- formula `data-source` uses `name` as the normative publication path for both api and formula producers
 - current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
 - current `DataSourceController` baseline now exposes `DataSourceState` via `getState()` with `started`, `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`; api sources drive fetch lifecycle while formula sources publish the same public contract with synchronous semantics
 - current runtime baseline now also exposes explicit source refresh by id at the runtime boundary; refresh remains scope-scoped first, so duplicate source ids in different scopes do not collapse into one page-global namespace
 - current code may still accept older built-in target field names for `refreshSource` for compatibility, but the architecture baseline treats source refresh as built-in runtime-entry targeting rather than component-handle targeting
 - current source runtime now has a dependency-aware invalidation baseline: formula sources automatically recompute and api sources automatically refresh when changed scope paths hit the dependencies collected from formula evaluation or request-config evaluation
-- current invalidation also includes a self-target loop guard so a source does not immediately retrigger itself from writes to its own published `dataPath`
+- current invalidation also includes a self-target loop guard so a source does not immediately retrigger itself from writes to its own published `name` binding
 - current action/runtime integration now includes a built-in `refreshSource` action that targets a registered source id via a built-in target field such as `targetId` and delegates to the runtime-owned source registry refresh semantics; this is runtime-entry targeting, not component-handle dispatch, even if older field naming remains in code for compatibility
 
 ## SourceSchema
@@ -420,7 +420,6 @@ interface BaseDataSourceSchema extends BaseSchema {
   mergeToScope?: boolean;
   resultMapping?: Record<string, SchemaValue>;
   statusPath?: string;
-  dataPath?: string;
   initialData?: SchemaValue;
   mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
   mergeKey?: string;
@@ -440,7 +439,6 @@ Rules:
 - `resultMapping`, when present, maps the fetched/produced payload into a target object shape before named publication or `mergeToScope`
 - `name` is the normative author-visible identity and default publication path
 - `mergeToScope: true` is the only narrowed special publish extension beyond the named publication path
-- legacy `dataPath` publication override is compatibility-only and should not be introduced in new schema
 - `statusPath`, when present, is the readonly status-summary path for loading/error/stale state
 - `interval`, `stopWhen`, and publication controls remain `data-source`-specific extensions above plain `source`
 
@@ -452,7 +450,6 @@ The normative publication contract is:
 
 - `name` is the authoritative default publication path
 - `mergeToScope: true`, when present, adds an explicit shallow top-level object merge into the current scope
-- legacy `dataPath`, when present, overrides the published binding path only as a compatibility contract during convergence
 
 Example:
 
@@ -466,9 +463,6 @@ Publication combinations:
 | --- | --- | --- |
 | `name` only | `name` | `name` |
 | `name` + `mergeToScope: true` | `name` | `name` plus shallow object-field merge into current scope |
-| legacy `name` + `dataPath` | `name` | `dataPath` |
-| legacy `id` + `dataPath` | `id` | `dataPath` |
-| anonymous legacy `dataPath` only | none | `dataPath` |
 
 The legacy AMIS-style behavior of publishing without an explicit binding target by merging into the current scope is non-normative and rejected because it causes namespace pollution, hides ownership, and makes collisions and debugging ambiguous. The only narrowed exception is explicit `mergeToScope: true` on a named `Resource`.
 
@@ -884,18 +878,15 @@ Current code already implements part of this model:
 Remaining compatibility-oriented gaps:
 
 - anonymous formula-backed sources may still fall back to runtime `id` for compatibility; new schema should not rely on that path
-- unnamed API-backed sources do not implicitly publish or merge when both `name` and `dataPath` are absent
-- `dataPath` remains a compatibility publication override; new schema should use `name` as the default publication path
+- unnamed API-backed sources do not implicitly publish or merge when `name` is absent
 - `mergeToScope` remains the only narrowed compatibility-style publish extension beyond the named publication path and should not be expanded into a parallel main contract
 - dependency invalidation is already root-normalized, but runtime fallback still exists when `dependsOn` is absent
 - richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete beyond the current debug snapshot plus bounded-fire safety rail
 
-## dataPath vs ActionSchema.dataPath
+## ActionSchema.dataPath
 
 - `ActionSchema.dataPath` controls where an ajax action result is written in page data
-- `DataSourceSchema.dataPath` controls where a derived source value is published in the current scope (legacy compatibility override; new schema should use `name`)
-
-These are related but distinct concepts. `name` is the normative publication path for `DataSourceSchema`; `dataPath` on `DataSourceSchema` remains only as a compatibility override during convergence.
+- This is distinct from DataSource `name`, which is the publication identity for scope binding
 
 `ApiSchema` remains request description only. The write target belongs to the consumer context: action result target or source binding target.
 

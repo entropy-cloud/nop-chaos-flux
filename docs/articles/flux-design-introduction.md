@@ -521,7 +521,7 @@ data： {id："${id}"}
 
 本节简要说明技术选型与架构分层。
 
-Flux 采用 React 19、TypeScript 5.9 严格模式、Zustand 5、Vite 8、TailwindCSS 4、pnpm workspace。其中 Zustand vanilla stores 的选择有明确的架构动机：store 与 React 生命周期解耦，可以独立创建、更新和订阅，不绑定组件树——这直接对应了 AMIS MST 架构中 store 树与组件树紧耦合所带来的问题。
+Flux 采用 React 19、TypeScript 6.0 严格模式、Zustand 5、Vite 8、TailwindCSS 4、pnpm workspace。其中 Zustand vanilla stores 的选择有明确的架构动机：store 与 React 生命周期解耦，可以独立创建、更新和订阅，不绑定组件树——这直接对应了 AMIS MST 架构中 store 树与组件树紧耦合所带来的问题。
 
 整个项目采用分层架构，包之间有清晰的依赖关系：
 

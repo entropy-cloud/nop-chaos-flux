@@ -126,7 +126,7 @@ The validation runtime model has three core abstractions:
 
 1. **`ValidationScopeRuntime`** — The base runtime for any scope with validation semantics
 2. **`FormRuntime`** — A specialization of ValidationScopeRuntime for forms with touch/dirty tracking
-3. **`CompiledValidationModel`** — Immutable validation graph produced by the compiler
+3. **`CompiledFormValidationModel`** — Immutable validation graph produced by the compiler
 
 ### Key Types Summary
 

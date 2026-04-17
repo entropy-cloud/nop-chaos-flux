@@ -80,7 +80,7 @@ type ValidationReason = 'change' | 'blur' | 'submit' | 'commit' | 'system';
 interface ValidationScopeRuntime {
   readonly scopeId: string;
   readonly rootPath: string;
-  readonly compiledModel: CompiledValidationModel | null;
+  readonly compiledModel: CompiledFormValidationModel | null;
   readonly lifecycleState: ValidationOwnerLifecycleState;
   readonly modelGeneration: number;
   readonly showErrorOn: Exclude<ShowErrorOnPolicy, 'touched'>;
@@ -182,7 +182,7 @@ interface FormRuntime extends ValidationScopeRuntime {
 Immutable runtime input produced by the compiler.
 
 ```ts
-interface CompiledValidationModel {
+interface CompiledFormValidationModel {
   rootPath: string;
   ownerId: string;
   nodes: Record<string, CompiledFieldTreeNode>;

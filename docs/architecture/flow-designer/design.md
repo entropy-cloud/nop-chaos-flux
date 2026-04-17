@@ -12,7 +12,7 @@
 ### 1.2 非目标
 
 - 不生成外部源码
-- 不替换现有 `apps/main/src/pages/flow-editor` 示例
+- 不替换现有 flow-editor 实现示例（当前位于 playground 体系）
 - 不把所有 UI 都做成 graph core 的内建逻辑
 - 不把 `then` / `onError` / `parallel` 等任何特定业务语义内建到 `flow-designer` core 或通用 config DSL
 - 不让 `flow-designer` 自己负责解释 domain-specific lowering、import/export、round-trip codec 或任意动态 JS 执行

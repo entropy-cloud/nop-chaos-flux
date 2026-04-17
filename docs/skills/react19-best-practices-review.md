@@ -1,7 +1,7 @@
 # React 19 最佳实践与代码 Review 指南
 
 > **来源**: 基于 Vercel Engineering 的 React Best Practices，并结合 nop-chaos-flux 的 React 19 / Vite 8 / Zustand / TypeScript 基线收敛
-> **适用**: React 19, Zustand, TypeScript 5.9, Vite 8, Vitest
+> **适用**: React 19, Zustand, TypeScript 6.0, Vite 8, Vitest
 > **定位**: 本项目唯一的 React 19 review / tech-debt 清理文档
 
 ---

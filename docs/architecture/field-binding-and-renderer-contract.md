@@ -30,7 +30,7 @@
 - `packages/flux-runtime/src/schema-compiler.ts`
 - `packages/flux-react/src/node-frame-wrapper.tsx`
 - `packages/flux-renderers-form/src/schemas.ts`
-- `packages/flux-renderers-form/src/renderers/composite-schemas.ts`
+- `packages/flux-renderers-form-advanced/src/composite-field/composite-schemas.ts`
 
 ## Current Baseline
 

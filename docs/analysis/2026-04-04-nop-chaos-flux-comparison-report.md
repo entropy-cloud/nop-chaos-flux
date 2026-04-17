@@ -2,7 +2,7 @@
 
 ## 一、项目概述
 
-`nop-chaos-flux` 是百度 AMIS 低代码渲染器的现代重写项目，采用 React 19、Zustand、TypeScript 5.9、Vite 8 技术栈构建的 pnpm workspace monorepo。
+`nop-chaos-flux` 是百度 AMIS 低代码渲染器的现代重写项目，采用 React 19、Zustand、TypeScript 6.0、Vite 8 技术栈构建的 pnpm workspace monorepo。
 
 ### 核心定位
 

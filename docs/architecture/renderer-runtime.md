@@ -393,6 +393,7 @@ Key hooks in the active React package are:
 ```ts
 function useRendererRuntime(): RendererRuntime;
 function useRenderScope(): ScopeRef;
+function useRenderInstancePath(): readonly InstanceFrame[] | undefined;
 function useCurrentActionScope(): ActionScope | undefined;
 function useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
 function useScopeSelector<T>(selector: (scopeData: any) => T, equalityFn?: (a: T, b: T) => boolean): T;
@@ -400,17 +401,29 @@ function useOwnScopeSelector<T>(selector: (scopeData: any) => T, equalityFn?: (a
 function useRendererEnv(): RendererEnv;
 function useActionDispatcher(): RendererRuntime['dispatch'];
 function useCurrentForm(): FormRuntime | undefined;
+function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[];
+function useCurrentFormError(query: FormErrorQuery): ValidationError | undefined;
+function useCurrentFormState(): FormStoreState | undefined;
+function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot;
+function useValidationNodeState(path: string): FormFieldStateSnapshot;
+function useFieldError(path: string): ValidationError | undefined;
+function useOwnedFieldState(path: string): FormFieldStateSnapshot;
+function useChildFieldState(path: string): FormFieldStateSnapshot;
+function useAggregateError(path: string): ValidationError | undefined;
 function useCurrentPage(): PageRuntime | undefined;
+function useCurrentSurfaceRuntime(): SurfaceRuntime | undefined;
 function useCurrentNodeMeta(): {
   id: string;
   path: string;
   type: string;
-  cid: number;
+  cid?: number;
   templateNode: TemplateNode;
   node: NodeInstance;
 };
 function useCurrentNodeInstance(): NodeInstance | undefined;
+function useStructuralLoopContext(): StructuralLoopRenderContext | undefined;
 function useRenderFragment(): RendererHelpers['render'];
+function useCurrentFormModelGeneration(): number;
 ```
 
 Current scope-hook semantics are:
@@ -419,7 +432,7 @@ Current scope-hook semantics are:
 - `useOwnScopeSelector()` subscribes only to the current scope's own snapshot, for paths that intentionally ignore parent-scope churn.
 - `readOwn()` remains a current-layer-only API; selector inheritance should come from hook choice, not hidden fields on own snapshots.
 
-Form-specific hooks such as `useCurrentFormErrors`, `useCurrentFormFieldState`, `useFieldError`, and `useAggregateError` also exist and are part of the active form integration surface.
+Form-specific hooks such as `useCurrentFormErrors`, `useCurrentFormError`, `useCurrentFormState`, `useCurrentFormFieldState`, `useValidationNodeState`, `useFieldError`, `useOwnedFieldState`, `useChildFieldState`, `useAggregateError`, and `useCurrentFormModelGeneration` also exist and are part of the active form integration surface.
 
 ## Regions And Fragment Rendering
 
@@ -692,6 +705,7 @@ interface SchemaRendererProps {
   registry?: RendererRegistry;
   plugins?: RendererPlugin[];
   pageStore?: PageStoreApi;
+  surfaceRuntime?: SurfaceRuntime;
   parentScope?: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;

@@ -194,8 +194,13 @@
 
 建议支持两种正式输入：
 
-1. 直接提供 `type: 'source'`
-2. 提供一个静态/表达式值，值已是最终 rows 或标准列表载荷
+1. 直接提供注册 renderer 形式的 `type: 'data-source'`
+2. 提供 inline source/value 形式，例如 `type: 'source'` 或静态/表达式值，值已是最终 rows 或标准列表载荷
+
+说明：
+
+- `data-source` 是当前 live repo 已注册的 renderer / runtime owner 入口。
+- `type: 'source'` 目前属于 core schema 中可内联表达的 source 形态；若 `crud` 首版支持该写法，编译期 normalize 必须把它清晰 lower 到现有 source/data-source runtime 语义，而不是让实现者误以为它是另一个独立 renderer 包入口。
 
 推荐列表载荷形态：
 
@@ -299,6 +304,7 @@ interface CrudStatusSummary {
 - `queryForm` 成功提交后，默认触发 `refreshAction`。
 - 若 `autoRefreshOnQuerySubmit` 未显式关闭，则查询提交等价于“提交查询条件并刷新列表”。
 - `onQuerySubmit` 是附加事件，不替代列表刷新主路径。
+- query reset 若触发下一次列表刷新，也应复用同一 `refreshAction` 入口，而不是走第二套私有 reload 逻辑。
 
 ### 12.2 刷新
 
@@ -376,6 +382,10 @@ interface CrudStatusSummary {
 
 首选方案：`crud` 作为高层组合节点，在编译阶段 lower 为标准子树。
 
+注意：当前 live repo 的 `DEEP_FIELD_NORMALIZERS` 只适合 `table.columns`、`tabs.items` 这类单字段深归一化，不足以承接 `queryForm + source + columns + rowActions + dialogs` 这种跨 sibling fields 的整节点 lowering。
+
+因此，`crud` 需要的是 whole-node compiler lowering seam，而不是简单再加一个 field-local normalizer。
+
 推荐 lower 结果结构：
 
 1. 一个 CRUD shell renderer，负责状态摘要汇总、句柄注册和子树组装。
@@ -403,18 +413,44 @@ interface CrudStatusSummary {
 
 Phase 1:
 
-- 查询表单 + 远端/本地 source + table + toolbar + rowActions
+- 查询表单 + 远端/本地 `data-source` + table + toolbar + rowActions
 - create/edit/detail dialog 基线
+- bulkActions 基线（至少单表批量删除）
 - refresh / selection / statusPath / `$crud` 摘要
+- query submit、query reset、create/edit/bulk delete success 后统一走 refresh 路径
 
 Phase 2:
 
-- 批量操作、导出、权限控制、更多摘要状态
+- 导出、权限控制、更多摘要状态
 - 远端分页/排序/筛选联动的默认装配
 
 Phase 3:
 
 - 行内编辑、列设置、保存查询、更多 enterprise workflow 能力
+
+### 16.4 首个端到端测试基线
+
+首个实现切片至少应覆盖一个单表 CRUD JSON 场景，而不是只做散碎单点测试。
+
+建议基线场景：
+
+- 顶部查询区：关键字查询 + 查询/重置
+- 顶部工具栏：`新增`、`批量删除`
+- 表格列：基础文本列
+- 行操作：`查看`、`修改`
+- `查看` 点击后弹出 detail dialog
+- `修改` 点击后弹出 edit dialog，并带当前行 `record`
+- `新增` 点击后弹出 create dialog
+- 勾选多行后触发批量删除动作
+- 删除、创建、编辑成功后复用统一 refresh 入口刷新列表
+- authored CRUD schema 只声明 `rowActions`，不要求手写内部 table `operation` 列；operation UI 应由 lowering 产出
+
+测试目标：
+
+- 证明 `crud` 不是仅有 schema 壳，而是已贯通查询、table row scope、dialog surface、form submit、bulk operation 的组合语义。
+- 证明 rowActions 与 bulkActions 读取的是 `crud` / `table` 发布的稳定摘要，而不是 DOM 扫描或 ad-hoc React state。
+- 证明 authoring 入口可以只写一个 `type: 'crud'` 节点，而不必手写整棵内部 lower 后子树。
+- 证明 `$crud` 只是只读 summary 投影，不会退化成第二套 CRUD 私有 owner store。
 
 ## 17. 与 AMIS 命名对照
 
@@ -431,14 +467,35 @@ Phase 3:
 | `syncLocation` / 各类 URL 协议字段 | 不进入首版正式契约 | 路由同步属于 page/router 层协作，不应先塞进 CRUD |
 | `xxxApi` | `submitAction` / `source` / action | 不保留历史 `Api` 命名扩散 |
 
-## 18. 风险、取舍与后续阶段
+## 18. AMIS 迁移覆盖目标
+
+为支持后续从 AMIS `crud` / `crud2` 迁移，`crud` 正式契约需要覆盖的不是历史字段名本身，而是这些能力面：
+
+- 查询区：`filter`、`filterTogglable`、`filterDefaultVisible`、默认查询提交
+- 列表请求：`api`、请求参数映射、response adaptor、静态/表达式 rows 输入
+- 集合展示：列、空态、loading、分页、排序、筛选、rowKey
+- 顶部工具栏：`headerToolbar` 语义
+- 行操作：`itemActions` / `operation` 列语义
+- 批量动作：`bulkActions`
+- 标准 surface：create / edit / detail
+- 刷新与联动：query submit 后刷新、submit success 后刷新、selection clear policy
+- 上下文投影：query / pagination / sort / filter / record / selection / collection
+
+迁移约束：
+
+- 迁移层可以接受 AMIS 历史字段作为输入参考，但 Flux 正式 schema 不直接保留 `xxxApi`、`headerToolbar`、`itemActions`、`primaryField` 这类旧命名。
+- migration adaptor 的职责是把 AMIS 历史字段 lower/normalize 到 Flux `crud` 正式字段，而不是让 runtime 长期同时背两套命名。
+- 若某些 AMIS 边界能力短期不落地，必须在计划里显式标注为 deferred capability，不能用“先有 type 再说”掩盖。
+
+## 19. 风险、取舍与后续阶段
 
 - 最大风险是把 `crud` 重新实现成一个单文件巨型 renderer，再次混合查询、请求、表格、弹层、表单、批量操作、权限和路由逻辑。
 - 第二个风险是把 CRUD 做成“只是示例组合”，没有统一 schema 契约，导致设计器和 AI 产码仍然要手写大量内部细节。
+- 第三个风险是让 `$crud`、`crud-actions` 或 `crud-handles` 演变成可写 store façade，间接把 selection、dialog open state、mutation pending 等 canonical 状态重新收回 CRUD 本身。
 - 正确方向是在“单一正式业务契约”和“底层 owner 分治实现”之间保持中间层：`crud` 有统一 schema，但 lower 到标准子系统。
 - 后续如果要补充路由同步、列配置持久化、批量导入导出等能力，也应继续沿用当前命名和 owner 语言，不恢复 AMIS 历史双语义字段。
 
-## 19. 关联文档
+## 20. 关联文档
 
 - `docs/components/table/design.md`
 - `docs/components/form/design.md`

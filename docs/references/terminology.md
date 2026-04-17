@@ -80,12 +80,18 @@ It gives renderer components a stable way to render a named fragment with option
 
 The resolved render-time meta object for a node.
 
-This typically includes values such as:
+This carries runtime control and outer-layer meta only:
 
+- `id`
+- `className`
 - `visible`
 - `hidden`
 - `disabled`
-- resolved display text such as `label` or `title`
+- `testid`
+- `changed`
+- `cid`
+
+Display text such as `label` or `title` is not part of `ResolvedNodeMeta`; it belongs to resolved `props` or slot semantics.
 
 It is the runtime-evaluated form of compiled meta, not the raw schema.
 
@@ -323,7 +329,6 @@ It supports:
 - formula-backed or API-backed producers under one resource model
 - `name` as the normative author-visible identity and default publication path
 - `mergeToScope: true` as the only narrowed special publish extension beyond the named path
-- legacy `dataPath` as a compatibility-only publication override (new schema should use `name`)
 - `stopWhen` expression for conditional polling termination
 - `includeScope` on its `ApiSchema` for automatic scope variable injection
 

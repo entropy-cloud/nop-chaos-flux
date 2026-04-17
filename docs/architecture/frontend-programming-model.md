@@ -88,7 +88,7 @@ The current programming model includes these stable design rules:
 7. Keep `Capability` focused on authority lookup and targeting; keep `Action Algebra` as derived control flow layered above it.
 8. Keep `ApiSchema` as the declarative transport/adaptor contract, `Operation Control` as the shared execution-control layer, and consumer-specific policy above both.
 9. Keep `Semantic Lifecycle Entry` owned by semantic nodes such as forms, pages, dialogs, and semantic hosts instead of scattering the full business pipeline across UI triggers.
-10. Keep `Resource` publication converged around `name` as the preferred identity and default publication path, `mergeToScope: true` as the only narrowed special publish extension, `statusPath` as readonly status summary, and `dataPath` as a compatibility-only override.
+10. Keep `Resource` publication converged around `name` as the identity and default publication path, `mergeToScope: true` as the only narrowed special publish extension, and `statusPath` as readonly status summary.
 11. Keep host boundaries strict: read through readonly `Host Projection`, write through `Capability`, and keep bridge/controller/protocol objects host-private.
 
 ## Platform Layering

@@ -1067,54 +1067,108 @@
 
 特别说明：
 - 本项目是低代码引擎，any / Record<string, unknown> 在 schema、runtime payload、动态表单值等边界是合理的。
-- 不要把"出现 any"本身当成问题，要关注 any 是否从边界扩散到了核心路径。
+- 不要把"出现 any"本身当成问题，要关注 any 是否导致了真实的运行时错误风险。
+- 低代码引擎的核心价值就是动态性，很多"类型擦除"是有意为之的设计，不是缺陷。
+- `any` → `unknown` 的机械替换只会增加类型断言噪音，不会提升真正的安全性。
 
 ---
 
 审核维度 13：类型安全与动态边界
 
-目标：确保 any 的使用被限制在合理的动态边界内，不向核心路径扩散。
+目标：识别 any 使用中真正有运行时错误风险的场景，而不是追求"类型纯净"。
 
 必读文档：
 - docs/skills/react19-best-practices-review.md "低代码项目例外" 章节
+
+### 低代码项目的类型边界特点（审核员必读）
+
+低代码引擎与传统 TypeScript 应用有本质区别：
+
+1. **Schema 是动态的** - 用户在运行时定义的 schema 本身就是 `unknown` 语义
+2. **Host 注入是开放的** - `functions`/`filters` 由宿主环境提供，编译期无法约束
+3. **Action 是多态的** - 事件处理链需要处理任意 schema 定义的 action
+4. **表达式求值是动态的** - 公式系统天然需要处理任意类型的输入输出
+5. **注册表是异构容器** - `RendererDefinition`、`ValidatorMap` 等必须用 existential 擦除
+
+### 不应报告为问题的场景
+
+以下场景的 `any` 是低代码引擎的有意设计，不应报告：
+
+1. **异构容器的 existential 擦除**
+   - `RendererDefinition<S>` 的 `component` 被定义为 `ComponentType<RendererComponentProps<any>>`
+   - `builtInValidators` 被声明为 `Record<SyncValidationRuleKind, SyncValidator<any>>`
+   - 原因：注册表无法在编译期知道所有泛型参数，擦除是唯一合理选择
+
+2. **Host 注入边界的动态函数签名**
+   - `RendererEnv.functions?: Record<string, (...args: any[]) => any>`
+   - `FormulaFunction` 公开类型 `(...args: any[]) => any`
+   - 原因：宿主环境注入的函数无法在引擎编译期约束，改成 `unknown` 只会增加无意义的类型断言
+
+3. **公式/表达式系统的动态输入输出**
+   - `evaluateCompiledValue<T>(..., state?: any)`
+   - 公式函数的参数和返回值
+   - 原因：表达式求值上下文本质上是动态的
+
+4. **多态 Action 的 dispatch 链**
+   - `TemplateNode.eventPlans` / `lifecycleActions` 用 `unknown` 保存
+   - `helpers.dispatch(action: any)` 的实现签名
+   - 原因：Action 是 schema 驱动的多态结构，强类型会导致大量无意义的类型体操
+
+5. **Schema 字段的开放配置**
+   - `CodeEditorSchema.expressionConfig?: any`
+   - `ChartSchema.series?: any`、`source?: any`
+   - 原因：这些配置直接透传给第三方库（CodeMirror、ECharts），引擎无需也无法约束
+
+### 真正应该报告的场景
+
+只有以下场景才值得作为问题报告：
+
+1. **类型断言链过长** - `as unknown as Xxx as Yyy` 这种多重断言，表明类型设计有缺陷
+2. **any 导致的运行时错误** - 有证据表明某处 any 导致了实际 bug
+3. **内部已有更精确类型但未使用** - 如文件内部定义了 `FooConfig` 但公开字段仍用 `any`
+4. **类型擦除导致 API 文档缺失** - 用户无法从类型了解如何使用某个 API
 
 执行步骤：
 
 1. 搜索所有 explicit any 使用（: any, as any, <any>, any[]）：
    a. 按包分组统计 any 使用频率
    b. 对每个 any 判断其合理性：
-      - 合理：schema 动态对象、runtime payload、外部数据源返回值、action args
-      - 可疑：核心数据路径、scope.get() 返回值、编译器内部、验证逻辑
-      - 危险：React 组件 props 类型、hook 返回类型、公开发布的类型
-2. 检查类型逃逸口：
-   a. any 是否通过函数返回值传播到调用方
-   b. any 是否通过泛型参数传播到更广范围
-   c. as unknown as Xxx 双重断言是否合理
-3. 检查 Record<string, unknown> 的使用是否在正确的边界：
-   a. schema 类型定义中使用（合理）
-   b. 内部计算逻辑中使用（可能需要更具体的类型）
-4. 检查泛型约束：
-   a. 是否有 <T = any> 的默认约束应更严格
-   b. 是否有泛型参数完全未被使用
-5. 检查 @ts-expect-error 和 @ts-ignore：
+      - 合理：schema 动态对象、runtime payload、外部数据源返回值、action args、异构容器、Host 注入边界、公式系统
+      - 可疑：内部已有更精确类型但未使用、类型断言链过长
+      - 危险：有证据表明导致了运行时错误的 any
+2. 检查类型断言链：
+   a. 是否有 `as unknown as Xxx as Yyy` 这种多重断言
+   b. 多重断言是否表明类型设计有缺陷
+3. 检查内部已有更精确类型的场景：
+   a. 文件内部是否定义了更精确的类型但公开字段仍用 any
+   b. 是否可以简单地把公开字段类型改成已有的精确类型
+4. 检查 @ts-expect-error 和 @ts-ignore：
    a. 是否有说明注释（eslint 要求）
    b. 注释的原因是否仍然有效
-   c. 是否可以通过更好的类型设计消除
-6. 检查 packages/types/ 下的全局类型声明：
-   a. 是否有应该被模块化类型替代的全局声明
-   b. 是否有类型冲突的风险
+5. 检查 API 文档可读性：
+   a. 公开 API 的类型是否足够让用户理解如何使用
+   b. 如果类型是 any，是否有 JSDoc 或文档补充说明
+
+注意：不要花时间检查以下内容（它们是低代码引擎的正常设计）：
+- 注册表/异构容器的 existential 擦除
+- Host 注入边界的动态函数签名
+- 公式/表达式系统的输入输出
+- 多态 Action 的 dispatch 链
+- Schema 字段透传给第三方库的配置
 
 输出格式：
 
 1. any 使用统计（按包分组，每包统计合理/可疑/危险数量）
-2. 可疑/危险项详细清单：
+2. 注意：大部分 any 在低代码引擎中是合理的，只报告真正有问题的场景
+3. 可疑/危险项详细清单（预期数量很少）：
 ### [维度13] 简短标题
 - **文件**: packages/xxx/src/yyy.ts:行号
 - **严重程度**: P0/P1/P2/P3
-- **分类**: 合理/可疑/危险
+- **分类**: 可疑/危险
 - **现状**: 当前用法
-- **逃逸路径**: any 如何传播
-- **建议**: 收敛方案
+- **真实风险**: 这个 any 可能导致什么运行时错误
+- **建议**: 收敛方案（如有）
+- **误报排除**: 说明为什么这不是低代码引擎的正常动态边界
 ```
 
 ---
