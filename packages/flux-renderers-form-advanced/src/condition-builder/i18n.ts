@@ -19,6 +19,7 @@ type I18nTextMap = {
   boolTrue: string;
   boolFalse: string;
   satisfyFollowing: string;
+  noMatchField: string;
 };
 
 const DEFAULT_I18N: I18nTextMap = {
@@ -42,6 +43,7 @@ const DEFAULT_I18N: I18nTextMap = {
   boolTrue: '是',
   boolFalse: '否',
   satisfyFollowing: '满足以下',
+  noMatchField: '无匹配字段',
 };
 
 let _textOverrides: Partial<I18nTextMap> = {};
