@@ -10,6 +10,7 @@ export type ReportDesignerCommand =
   | ReplaceReportMetaCommand
   | OpenInspectorCommand
   | CloseInspectorCommand
+  | SetActivePanelCommand
   | PreviewReportCommand
   | StopPreviewCommand
   | UndoCommand
@@ -48,6 +49,11 @@ export interface OpenInspectorCommand extends ReportDesignerCommandBase {
 
 export interface CloseInspectorCommand extends ReportDesignerCommandBase {
   type: 'report-designer:closeInspector';
+}
+
+export interface SetActivePanelCommand extends ReportDesignerCommandBase {
+  type: 'report-designer:setActivePanel';
+  panelId: string;
 }
 
 export interface PreviewReportCommand extends ReportDesignerCommandBase {

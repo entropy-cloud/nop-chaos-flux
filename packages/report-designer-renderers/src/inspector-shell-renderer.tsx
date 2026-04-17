@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useOwnScopeSelector, useRenderScope } from '@nop-chaos/flux-react';
 import type {
@@ -31,17 +31,19 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
   );
   const sectionPanels = useMemo(() => panels.filter((panel) => panel.mode === 'section'), [panels]);
   const inlinePanels = useMemo(() => panels.filter((panel) => panel.mode === 'inline'), [panels]);
-  const [activePanelId, setActivePanelId] = React.useState<string | undefined>(inspector?.activePanelId ?? tabPanels[0]?.id ?? panels[0]?.id);
+  const activePanelId = inspector?.activePanelId ?? tabPanels[0]?.id ?? panels[0]?.id;
   const [submittingPanelId, setSubmittingPanelId] = React.useState<string | undefined>();
   const [submitResult, setSubmitResult] = React.useState<{ ok: boolean; error?: unknown } | undefined>();
 
-  useEffect(() => {
-    const nextActivePanelId = inspector?.activePanelId ?? tabPanels[0]?.id ?? panels[0]?.id;
-    setActivePanelId((current) => {
-      if (current && tabPanels.some((panel) => panel.id === current)) return current;
-      return current === nextActivePanelId ? current : nextActivePanelId;
-    });
-  }, [inspector?.activePanelId, panels, tabPanels]);
+  const setActivePanelId = useCallback(
+    (panelId: string) => {
+      void props.helpers.dispatch(
+        { type: 'report-designer:setActivePanel', panelId } as any,
+        { scope },
+      );
+    },
+    [props.helpers, scope],
+  );
 
   const activePanel = tabPanels.find((panel) => panel.id === activePanelId) ?? tabPanels[0];
   const inspectorErrorLabel = inspector?.error != null ? String(inspector.error) : undefined;
