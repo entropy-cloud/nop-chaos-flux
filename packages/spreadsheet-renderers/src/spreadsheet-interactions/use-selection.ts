@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { cellAddress, type SpreadsheetRange } from '@nop-chaos/spreadsheet-core';
+import { cellAddress, type SpreadsheetRange, type SpreadsheetSelection } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
 
 export interface DragState {
@@ -21,10 +21,45 @@ export function useSelection(
   setCommentText: (text: string) => void,
   setCellValue: (value: string) => void
 ) {
-  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
+  const [selectedCell, setSelectedCellLocal] = useState<{ row: number; col: number } | null>(null);
   const [, setDragEnd] = useState<{ row: number; col: number } | null>(null);
   const dragStateRef = useRef<DragState>({ isDragging: false, startRow: -1, startCol: -1, endRow: -1, endCol: -1 });
   const hasDraggedRef = useRef(false);
+
+  const syncSelectionToCore = useCallback(
+    (selection: SpreadsheetSelection) => {
+      void bridge.dispatch({ type: 'spreadsheet:setSelection', selection });
+    },
+    [bridge],
+  );
+
+  const setSelectedCell = useCallback(
+    (cell: { row: number; col: number } | null) => {
+      setSelectedCellLocal(cell);
+      if (cell) {
+        syncSelectionToCore({
+          kind: 'cell',
+          sheetId,
+          anchor: { sheetId, address: cellAddress(cell.row, cell.col), row: cell.row, col: cell.col },
+        });
+      } else {
+        syncSelectionToCore({ kind: 'none' });
+      }
+    },
+    [sheetId, syncSelectionToCore],
+  );
+
+  const syncRangeSelectionToCore = useCallback(
+    (range: SpreadsheetRange) => {
+      syncSelectionToCore({
+        kind: 'range',
+        sheetId,
+        range,
+        anchor: { sheetId, address: cellAddress(range.startRow, range.startCol), row: range.startRow, col: range.startCol },
+      });
+    },
+    [sheetId, syncSelectionToCore],
+  );
 
   const getSelectedRange = useCallback((): SpreadsheetRange | null => {
     const state = dragStateRef.current;
@@ -80,7 +115,7 @@ export function useSelection(
       addLog(`Selected ${cellAddress(row, col)}`);
     }
     hasDraggedRef.current = false;
-  }, [snapshot, addLog, bridge, sheetId, editingCellRef, editValueRef, setEditingCell, setCommentText, setCellValue]);
+  }, [snapshot, addLog, bridge, sheetId, editingCellRef, editValueRef, setEditingCell, setCommentText, setCellValue, setSelectedCell]);
 
   const handleCellMouseDown = useCallback((row: number, col: number, e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -89,7 +124,7 @@ export function useSelection(
     dragStateRef.current = { isDragging: true, startRow: row, startCol: col, endRow: row, endCol: col };
     setDragEnd(null);
     setSelectedCell({ row, col });
-  }, []);
+  }, [setSelectedCell]);
 
   const dragRafRef = useRef(0);
   const handleCellMouseEnter = useCallback((row: number, col: number) => {
@@ -110,13 +145,14 @@ export function useSelection(
       dragStateRef.current = { ...dragStateRef.current, isDragging: false };
       const range = getSelectedRangeFn();
       if (range && hasDraggedRef.current) {
+        syncRangeSelectionToCore(range);
         addLog(`Selected range ${cellAddress(range.startRow, range.startCol)}:${cellAddress(range.endRow, range.endCol)}`);
       }
     }
     if (isResizing) {
       onResizeEnd();
     }
-  }, [addLog]);
+  }, [addLog, syncRangeSelectionToCore]);
 
   return {
     selectedCell,

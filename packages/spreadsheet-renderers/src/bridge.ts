@@ -64,10 +64,17 @@ export function deriveHostSnapshot(runtime: SpreadsheetRuntimeSnapshot): Spreads
 }
 
 export function createSpreadsheetBridge(core: SpreadsheetCore): SpreadsheetBridge {
+  let cachedRuntime = core.getSnapshot();
+  let cachedHostSnapshot = deriveHostSnapshot(cachedRuntime);
+
   return {
     getSnapshot() {
       const runtime = core.getSnapshot();
-      return deriveHostSnapshot(runtime);
+      if (runtime !== cachedRuntime) {
+        cachedRuntime = runtime;
+        cachedHostSnapshot = deriveHostSnapshot(runtime);
+      }
+      return cachedHostSnapshot;
     },
 
     subscribe(listener: () => void) {

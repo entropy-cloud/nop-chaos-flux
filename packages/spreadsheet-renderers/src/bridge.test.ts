@@ -143,6 +143,25 @@ describe('createSpreadsheetBridge', () => {
     expect(snap.runtime.readonly).toBe(false);
   });
 
+  it('returns a stable snapshot reference until core changes', async () => {
+    const first = bridge.getSnapshot();
+    const second = bridge.getSnapshot();
+
+    expect(second).toBe(first);
+
+    await bridge.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'updated',
+    });
+
+    const third = bridge.getSnapshot();
+    const fourth = bridge.getSnapshot();
+
+    expect(third).not.toBe(first);
+    expect(fourth).toBe(third);
+  });
+
   it('should dispatch commands through bridge', async () => {
     const result = await bridge.dispatch({
       type: 'spreadsheet:setCellValue',

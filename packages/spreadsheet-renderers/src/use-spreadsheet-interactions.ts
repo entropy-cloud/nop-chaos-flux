@@ -32,7 +32,7 @@ export interface SpreadsheetInteractionsConfig {
 export interface SpreadsheetInteractionsReturn {
   snapshot: SpreadsheetHostSnapshot;
   selectedCell: { row: number; col: number } | null;
-  setSelectedCell: React.Dispatch<React.SetStateAction<{ row: number; col: number } | null>>;
+  setSelectedCell: (cell: { row: number; col: number } | null) => void;
   cellValue: string;
   getSelectedRange: ReturnType<typeof useSelection>['getSelectedRange'];
   editingCell: { row: number; col: number } | null;
