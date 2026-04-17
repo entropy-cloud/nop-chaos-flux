@@ -219,6 +219,125 @@ export function trackApiRequestDependencies(input: {
   };
 }
 
+export function createFormulaDataSourceController(input: {
+  runtime: RendererRuntime;
+  scope: ScopeRef;
+  targetPath?: string;
+  mergeToScope?: boolean;
+  resultMapping?: unknown;
+  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
+  mergeKey?: string;
+  statusPath?: string;
+  formula: unknown;
+  initialData?: unknown;
+  onDependenciesChange?: (dependencies: ScopeDependencySet | undefined) => void;
+}): DataSourceController {
+  const compiled = input.runtime.expressionCompiler.compileValue(input.formula);
+  const staticCompiled = compiled.isStatic ? compiled as StaticRuntimeValue<unknown> : undefined;
+  const dynamicCompiled = compiled.isStatic ? undefined : compiled as DynamicRuntimeValue<unknown>;
+  const runtimeState: RuntimeValueState<unknown> | undefined = dynamicCompiled?.createState();
+
+  let started = false;
+  let stopped = false;
+  let state = createInitialDataSourceState(input.initialData);
+
+  function updateState(updater: (current: DataSourceState) => DataSourceState): DataSourceState {
+    state = updater(state);
+    writeStatusToScope(input.scope, input.statusPath, state);
+    return state;
+  }
+
+  function publish(): void {
+    if (stopped) {
+      return;
+    }
+
+    updateState((current) => ({
+      ...current,
+      fetchStatus: 'fetching',
+      status: typeof current.data === 'undefined' ? 'pending' : current.status,
+      stale: typeof current.data !== 'undefined',
+      error: undefined
+    }));
+
+    const rawValue = dynamicCompiled
+      ? input.runtime.expressionCompiler.evaluateWithState(dynamicCompiled, input.scope, input.runtime.env, runtimeState!).value
+      : staticCompiled?.value;
+    const nextValue = applyResultMapping({
+      runtime: input.runtime,
+      scope: input.scope,
+      resultMapping: input.resultMapping,
+      payload: rawValue
+    });
+
+    input.onDependenciesChange?.(collectRuntimeDependencies(runtimeState));
+    writeDataToScope({
+      scope: input.scope,
+      targetPath: input.targetPath,
+      mergeToScope: input.mergeToScope,
+      mergeStrategy: input.mergeStrategy,
+      mergeKey: input.mergeKey,
+      data: nextValue
+    });
+
+    updateState((current) => ({
+      ...current,
+      status: 'success',
+      fetchStatus: 'idle',
+      stale: false,
+      data: nextValue,
+      error: undefined,
+      dataUpdatedAt: Date.now(),
+      failureCount: 0,
+      failureReason: undefined
+    }));
+  }
+
+  return {
+    getState() {
+      return state;
+    },
+    start() {
+      if (started) {
+        return;
+      }
+
+      started = true;
+      stopped = false;
+
+      if (input.initialData !== undefined) {
+        writeDataToScope({
+          scope: input.scope,
+          targetPath: input.targetPath,
+          mergeToScope: input.mergeToScope,
+          mergeStrategy: input.mergeStrategy,
+          mergeKey: input.mergeKey,
+          data: input.initialData
+        });
+      }
+
+      updateState((current) => ({
+        ...current,
+        started: true
+      }));
+
+      void Promise.resolve().then(() => {
+        publish();
+      });
+    },
+    stop() {
+      stopped = true;
+      updateState((current) => ({
+        ...current,
+        fetchStatus: 'idle'
+      }));
+    },
+    async refresh() {
+      publish();
+    }
+  };
+}
+
 export function createDataSourceController(input: {
   runtime: RendererRuntime;
   apiCache: ApiCacheStore;

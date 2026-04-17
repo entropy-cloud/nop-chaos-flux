@@ -3,20 +3,14 @@ import type {
   DataSourceController,
   DataSourceRegistration,
   DataSourceSchema,
-  DataSourceState,
-  DynamicRuntimeValue,
-  StaticRuntimeValue,
   RendererRuntime,
-  RuntimeValueState,
   ScopeDependencySet,
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { normalizeRootPaths } from '@nop-chaos/flux-core';
 import type { ApiCacheStore } from './api-cache';
-import { createDataSourceController, writeDataToScope } from './data-source-runtime';
-import { collectRuntimeDependencies } from './node-runtime';
+import { createDataSourceController, createFormulaDataSourceController } from './data-source-runtime';
 import { createRootDependencySet, filterScopeChangeByIgnoredRoots, scopeChangeHitsDependencies } from './scope-change';
-import { publishOwnerStatus } from './status-owner';
 
 interface RuntimeSourceEntry {
   id: string;
@@ -28,29 +22,6 @@ interface RuntimeSourceEntry {
   targetPath?: string;
   statusPath?: string;
   dispose(): void;
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
-}
-
-function applyResultMapping(input: {
-  runtime: RendererRuntime;
-  scope: ScopeRef;
-  resultMapping?: unknown;
-  payload: unknown;
-}): unknown {
-  if (!isObjectRecord(input.resultMapping)) {
-    return input.payload;
-  }
-
-  const mappingScope = input.runtime.createChildScope(input.scope, {
-    payload: input.payload,
-    result: input.payload,
-    response: input.payload
-  }, { source: 'custom', pathSuffix: 'data-source-result-mapping' });
-
-  return input.runtime.evaluate(input.resultMapping, mappingScope);
 }
 
 function resolvePublishedTarget(schema: DataSourceSchema, fallbackId: string): string | undefined {
@@ -67,151 +38,6 @@ function resolvePublishedTarget(schema: DataSourceSchema, fallbackId: string): s
   }
 
   return fallbackId;
-}
-
-function createDependencyAwareFormulaController(input: {
-  runtime: RendererRuntime;
-  scope: ScopeRef;
-  targetPath?: string;
-  mergeToScope?: boolean;
-  resultMapping?: unknown;
-  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
-  mergeKey?: string;
-  statusPath?: string;
-  formula: unknown;
-  initialData?: unknown;
-  onDependenciesChange?: (dependencies: ScopeDependencySet | undefined) => void;
-}): DataSourceController {
-  const compiled = input.runtime.expressionCompiler.compileValue(input.formula);
-  const staticCompiled = compiled.isStatic ? compiled as StaticRuntimeValue<unknown> : undefined;
-  const dynamicCompiled = compiled.isStatic ? undefined : compiled as DynamicRuntimeValue<unknown>;
-  const runtimeState: RuntimeValueState<unknown> | undefined = dynamicCompiled?.createState();
-
-  let started = false;
-  let stopped = false;
-  let state: DataSourceState = {
-    started: false,
-    status: typeof input.initialData === 'undefined' ? 'idle' : 'success',
-    fetchStatus: 'idle',
-    stale: false,
-    data: input.initialData,
-    error: undefined,
-    dataUpdatedAt: typeof input.initialData === 'undefined' ? 0 : Date.now(),
-    errorUpdatedAt: 0,
-    failureCount: 0,
-    failureReason: undefined
-  };
-
-  function publishStatus() {
-    publishOwnerStatus(input.scope, input.statusPath, {
-      started: state.started,
-      loading: state.fetchStatus === 'fetching',
-      ready: state.status === 'success',
-      stale: state.stale,
-      dataUpdatedAt: state.dataUpdatedAt,
-      errorUpdatedAt: state.errorUpdatedAt,
-      failureCount: state.failureCount,
-      failureReason: state.failureReason,
-      error: state.error ? { message: state.error instanceof Error ? state.error.message : String(state.error) } : undefined
-    });
-  }
-
-  function updateDependencies() {
-    input.onDependenciesChange?.(collectRuntimeDependencies(runtimeState));
-  }
-
-  function publish() {
-    if (stopped) {
-      return;
-    }
-
-    state = {
-      ...state,
-      fetchStatus: 'fetching',
-      status: typeof state.data === 'undefined' ? 'pending' : state.status,
-      stale: typeof state.data !== 'undefined',
-      error: undefined
-    };
-
-    const rawValue = dynamicCompiled
-      ? input.runtime.expressionCompiler.evaluateWithState(dynamicCompiled, input.scope, input.runtime.env, runtimeState!).value
-      : staticCompiled?.value;
-    const nextValue = applyResultMapping({
-      runtime: input.runtime,
-      scope: input.scope,
-      resultMapping: input.resultMapping,
-      payload: rawValue
-    });
-
-    state = {
-      ...state,
-      status: 'success',
-      fetchStatus: 'idle',
-      stale: false,
-      data: nextValue,
-      error: undefined,
-      dataUpdatedAt: Date.now(),
-      failureCount: 0,
-      failureReason: undefined
-    };
-    updateDependencies();
-    writeDataToScope({
-      scope: input.scope,
-      targetPath: input.targetPath,
-      mergeToScope: input.mergeToScope,
-      mergeStrategy: input.mergeStrategy,
-      mergeKey: input.mergeKey,
-      data: nextValue
-    });
-
-    publishStatus();
-  }
-
-  return {
-    getState() {
-      return state;
-    },
-    start() {
-      if (started) {
-        return;
-      }
-
-      started = true;
-      stopped = false;
-      state = {
-        ...state,
-        started: true
-      };
-
-      if (input.initialData !== undefined) {
-        writeDataToScope({
-          scope: input.scope,
-          targetPath: input.targetPath,
-          mergeToScope: input.mergeToScope,
-          mergeStrategy: input.mergeStrategy,
-          mergeKey: input.mergeKey,
-          data: input.initialData
-        });
-      }
-
-      publishStatus();
-
-      void Promise.resolve().then(() => {
-        publish();
-      });
-    },
-    stop() {
-      stopped = true;
-      state = {
-        ...state,
-        fetchStatus: 'idle'
-      };
-      publishStatus();
-    },
-    async refresh() {
-      publish();
-    }
-  };
 }
 
 function asNumber(value: unknown): number | undefined {
@@ -296,7 +122,7 @@ export function createRuntimeSourceRegistry(input: {
             }
           }
         })
-      : createDependencyAwareFormulaController({
+      : createFormulaDataSourceController({
           runtime: input.runtime,
           scope: args.scope,
           targetPath,
