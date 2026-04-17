@@ -111,8 +111,8 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   expect((await iconContainer).containerWidth).toBe('40px');
 
   await node.hover();
-  const toolbar = page.locator('.nop-designer-node-toolbar').first();
-  await expect(toolbar).toBeVisible();
+  const toolbar = page.locator('[data-slot="designer-node-toolbar"]').first();
+  await expect(toolbar).toBeVisible({ timeout: 5000 });
   await toolbar.screenshot({ path: join(shotsDir, 'task-node-toolbar.png') });
   await expect(toolbar.locator('[data-icon="pencil"]')).toHaveCount(1);
   await expect(toolbar.locator('[data-icon="copy"]')).toHaveCount(1);

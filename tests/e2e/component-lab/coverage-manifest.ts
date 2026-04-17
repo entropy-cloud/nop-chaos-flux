@@ -265,8 +265,8 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     id: 'variant-field',
     title: 'Variant Field',
     tier: 'write',
-    primaryScenario: 'Notification config — email, SMS, or webhook',
-    notes: 'Switch type selector to SMS, verify phone field becomes visible',
+    primaryScenario: 'String vs list editor with visible submit result',
+    notes: 'Switch type selector to list, verify list editor becomes visible',
   },
   {
     id: 'detail-field',

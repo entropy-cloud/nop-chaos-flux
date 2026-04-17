@@ -193,13 +193,13 @@ test.describe('variant-field renderer', () => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('variant-field');
 
-    const slug = scenarioSlug('Notification config — email, SMS, or webhook');
+    const slug = scenarioSlug('String vs list editor with visible submit result');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Verify the form renders (Save button visible)
-    await expect(stage.getByRole('button', { name: 'Save' })).toBeVisible({ timeout: 5_000 });
+    // Verify the form renders (Submit button visible)
+    await expect(stage.getByRole('button', { name: /Submit/i })).toBeVisible({ timeout: 5_000 });
     // Verify the stage has some interactive content (the variant type selector or field)
-    const interactiveCount = await stage.locator('button, input, [role="radio"], [role="combobox"]').count();
+    const interactiveCount = await stage.locator('button, input, [role="radio"], [role="combobox"], [role="tab"]').count();
     expect(interactiveCount).toBeGreaterThan(0);
   });
 });

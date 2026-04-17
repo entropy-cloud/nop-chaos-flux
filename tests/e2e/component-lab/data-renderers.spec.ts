@@ -19,9 +19,10 @@ test.describe('table renderer', () => {
     await expect(stage).toBeVisible();
     // Runtime gap: table renderer does not populate rows from scope data.
     // Verify column headers render correctly instead.
-    await expect(stage.getByText('Username')).toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByText('Email')).toBeVisible();
-    await expect(stage.getByText('Role')).toBeVisible();
+    // Use getByRole to avoid strict-mode violation (text also appears in scope debug JSON)
+    await expect(stage.getByRole('columnheader', { name: /username/i })).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByRole('columnheader', { name: /email/i })).toBeVisible();
+    await expect(stage.getByRole('columnheader', { name: /role/i })).toBeVisible();
   });
 
   test('read: empty state message shows when data is empty', async ({ page }) => {
@@ -50,9 +51,10 @@ test.describe('tree renderer', () => {
     const slug = scenarioSlug('Expand/collapse org tree');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    await expect(stage.getByText('Engineering')).toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByText('Frontend')).toBeVisible();
-    await expect(stage.getByText('Product')).toBeVisible();
+    // Use getByRole to avoid strict-mode violation (text also appears in scope debug JSON)
+    await expect(stage.getByRole('button', { name: 'Engineering' })).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByRole('button', { name: 'Frontend' })).toBeVisible();
+    await expect(stage.getByRole('button', { name: 'Product' })).toBeVisible();
   });
 
   test('write: tree nodes render in selectable mode', async ({ page }) => {
@@ -63,8 +65,9 @@ test.describe('tree renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     // Verify tree nodes are visible (runtime gap: checkboxes may not render)
-    await expect(stage.getByText('Engineering')).toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByText('Frontend')).toBeVisible();
+    // Use getByRole to avoid strict-mode violation (text also appears in scope debug JSON)
+    await expect(stage.getByRole('button', { name: 'Engineering' })).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByRole('button', { name: 'Frontend' })).toBeVisible();
     // Verify the Selected IDs text element is present
     await expect(stage.getByText(/Selected IDs:/)).toBeVisible();
   });
