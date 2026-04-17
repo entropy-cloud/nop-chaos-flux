@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "pnpm --filter @nop-chaos/flux-playground dev",
     "postinstall": "node scripts/patch-lucide-react.mjs",
-    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files",
+    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:i18n-keys",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
@@ -14,7 +14,8 @@
     "check:react19": "node scripts/check-react19-legacy-apis.mjs",
     "check:oversized-code-files": "node scripts/check-oversized-code-files.mjs",
     "check:src-artifacts": "node scripts/verify-no-src-artifacts.mjs",
-    "lint": "node scripts/clean-src-artifacts.mjs && node scripts/verify-no-src-artifacts.mjs && node scripts/check-react19-legacy-apis.mjs && pnpm -r lint",
+    "check:i18n-keys": "node scripts/check-i18n-keys.mjs",
+    "lint": "node scripts/clean-src-artifacts.mjs && node scripts/verify-no-src-artifacts.mjs && node scripts/check-react19-legacy-apis.mjs && node scripts/check-i18n-keys.mjs && pnpm -r lint",
     "clean": "pnpm -r exec npx rimraf node_modules dist && npx rimraf node_modules",
     "clean:src-artifacts": "node scripts/clean-src-artifacts.mjs"
   },
