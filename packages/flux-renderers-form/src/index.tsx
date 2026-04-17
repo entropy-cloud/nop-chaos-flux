@@ -8,7 +8,6 @@ export { createFieldValidation, createInputRenderer, inputRendererDefinitions } 
 export * from './renderers/shared';
 export * from './field-utils';
 export * from './schemas';
-export * from './__tests__/form-test-support';
 
 export const formRendererDefinitions: RendererDefinition[] = [
   formRendererDefinition,
