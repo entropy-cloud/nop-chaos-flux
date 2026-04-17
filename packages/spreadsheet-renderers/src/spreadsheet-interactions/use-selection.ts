@@ -126,17 +126,11 @@ export function useSelection(
     setSelectedCell({ row, col });
   }, [setSelectedCell]);
 
-  const dragRafRef = useRef(0);
   const handleCellMouseEnter = useCallback((row: number, col: number) => {
     if (dragStateRef.current.isDragging) {
       hasDraggedRef.current = true;
       dragStateRef.current = { ...dragStateRef.current, endRow: row, endCol: col };
-      if (!dragRafRef.current) {
-        dragRafRef.current = requestAnimationFrame(() => {
-          dragRafRef.current = 0;
-          setDragEnd({ row: dragStateRef.current.endRow, col: dragStateRef.current.endCol });
-        });
-      }
+      setDragEnd({ row, col });
     }
   }, []);
 

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cellAddress, type SpreadsheetRange, type SpreadsheetFrozenPane } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetHostSnapshot, SpreadsheetBridge } from './bridge.js';
 import { mapCellStyle } from './cell-style-map.js';
@@ -235,6 +235,41 @@ export function SpreadsheetGrid({
     );
   }
 
+  const isDraggingRef = useRef(false);
+  const lastDragCellRef = useRef<{ row: number; col: number } | null>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current || e.buttons !== 1) {
+        isDraggingRef.current = false;
+        return;
+      }
+      const target = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      if (!target) return;
+      const td = target.closest('td[data-row][data-col]') as HTMLElement | null;
+      if (!td) return;
+      const r = Number(td.dataset.row);
+      const c = Number(td.dataset.col);
+      if (isNaN(r) || isNaN(c)) return;
+      const last = lastDragCellRef.current;
+      if (last && last.row === r && last.col === c) return;
+      lastDragCellRef.current = { row: r, col: c };
+      onCellMouseEnter(r, c);
+    };
+
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+      lastDragCellRef.current = null;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, true);
+    window.addEventListener('mouseup', handleMouseUp, true);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove, true);
+      window.removeEventListener('mouseup', handleMouseUp, true);
+    };
+  }, [onCellMouseEnter]);
+
   return (
     <div
       ref={scrollRef}
@@ -242,6 +277,12 @@ export function SpreadsheetGrid({
       data-fill-dragging={fillHandleState.isFilling || undefined}
       style={{ overflow: 'auto', position: 'relative' }}
       onScroll={handleScroll}
+      onMouseDown={(e) => {
+        if (e.button === 0 && (e.target as HTMLElement).closest('td[data-row][data-col]')) {
+          isDraggingRef.current = true;
+          lastDragCellRef.current = null;
+        }
+      }}
     >
       <div style={{ width: totalWidth + ROW_HEADER_WIDTH, height: totalHeight, position: 'relative' }}>
         <table>
