@@ -3,6 +3,7 @@
   "references": [
     { "path": "./packages/flux-core" },
     { "path": "./packages/flux-formula" },
+    { "path": "./packages/flux-i18n" },
     { "path": "./packages/flux-runtime" },
     { "path": "./packages/flux-react" },
     { "path": "./packages/flux-renderers-basic" },

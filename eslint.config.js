@@ -3,6 +3,7 @@ const react = require('eslint-plugin-react');
 const tseslint = require('typescript-eslint');
 const reactHooks = require('eslint-plugin-react-hooks');
 const reactCompiler = require('eslint-plugin-react-compiler');
+const i18next = require('eslint-plugin-i18next');
 const globals = require('globals');
 
 const reactHooksLatest = reactHooks.configs.flat['recommended-latest'];
@@ -117,6 +118,78 @@ module.exports = [
       ],
       'no-new-func': 'error',
       'no-eval': 'error'
+    }
+  },
+  // i18n: 检测组件库中的硬编码字符串 (排除 playground、test、apps)
+  {
+    files: [
+      'packages/ui/src/**/*.{ts,tsx}',
+      'packages/flux-*/src/**/*.{ts,tsx}',
+      'packages/flow-designer-*/src/**/*.{ts,tsx}',
+      'packages/spreadsheet-*/src/**/*.{ts,tsx}',
+      'packages/report-designer-*/src/**/*.{ts,tsx}',
+      'packages/word-editor-*/src/**/*.{ts,tsx}',
+      'packages/nop-debugger/src/**/*.{ts,tsx}'
+    ],
+    ignores: [
+      '**/*.test.{ts,tsx}',
+      '**/__tests__/**',
+      '**/test/**',
+      '**/*.spec.{ts,tsx}'
+    ],
+    plugins: {
+      i18next
+    },
+    rules: {
+      'i18next/no-literal-string': ['warn', {
+        mode: 'jsx-text-only',
+        'jsx-components': {
+          // 排除不需要翻译的组件
+          exclude: ['Trans', 'code', 'pre', 'Kbd']
+        },
+        'jsx-attributes': {
+          // 排除不需要翻译的属性
+          exclude: [
+            'className', 'class', 'style', 'styleName',
+            'type', 'id', 'name', 'key', 'ref',
+            'data-testid', 'data-test-id', 'testId', 'data-slot',
+            'href', 'src', 'srcSet', 'alt',
+            'role', 'aria-.*',
+            'variant', 'size', 'color', 'align', 'direction',
+            'as', 'asChild',
+            'htmlFor', 'for',
+            'autoComplete', 'autocomplete',
+            'inputMode', 'pattern'
+          ]
+        },
+        words: {
+          // 排除技术性字符串
+          exclude: [
+            // 单字符和符号
+            '^[\\s\\d\\W]*$',
+            // CSS 类名模式
+            '^[a-z-]+$',
+            '^nop-.*',
+            // 代码/技术标识符
+            '^[A-Z_][A-Z0-9_]*$'
+          ]
+        },
+        callees: {
+          // 排除不需要翻译的函数调用
+          exclude: [
+            't', 'i18next.t', 'i18n.t', 'useTranslation', 'useFluxTranslation',
+            'console.*', 'log', 'warn', 'error', 'debug', 'info',
+            'cn', 'clsx', 'classNames', 'cva',
+            'require', 'import',
+            'createElement', 'createRef',
+            'Object.*', 'Array.*', 'String.*', 'JSON.*',
+            'addEventListener', 'removeEventListener',
+            'querySelector', 'querySelectorAll', 'getElementById',
+            'setAttribute', 'getAttribute', 'removeAttribute',
+            'Error', 'TypeError', 'RangeError'
+          ]
+        }
+      }]
     }
   }
 ];
