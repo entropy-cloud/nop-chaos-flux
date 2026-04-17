@@ -24,24 +24,34 @@ export function useTableRowScopeCache(
   path: RendererComponentProps<TableSchema>['path']
 ) {
   const rowScopeCacheStore = useMemo(() => {
-    const cache = new Map<string, ScopeRef>();
-    let generation = 0;
-    let snapshot = { cache, generation };
-    const listeners = new Set<() => void>();
+    const state = {
+      cache: new Map<string, ScopeRef>(),
+      generation: 0,
+      snapshot: {
+        cache: new Map<string, ScopeRef>(),
+        generation: 0
+      },
+      listeners: new Set<() => void>()
+    };
+
+    state.snapshot = {
+      cache: state.cache,
+      generation: state.generation
+    };
 
     return {
-      getSnapshot: () => snapshot,
-      getCache: () => cache,
+      getSnapshot: () => state.snapshot,
+      getCache: () => state.cache,
       mutate(updater: (cache: Map<string, ScopeRef>) => void) {
-        updater(cache);
-        generation += 1;
-        snapshot = { cache, generation };
-        listeners.forEach((listener) => listener());
+        updater(state.cache);
+        state.generation += 1;
+        state.snapshot = { cache: state.cache, generation: state.generation };
+        state.listeners.forEach((listener) => listener());
       },
       subscribe(listener: () => void) {
-        listeners.add(listener);
+        state.listeners.add(listener);
         return () => {
-          listeners.delete(listener);
+          state.listeners.delete(listener);
         };
       }
     };

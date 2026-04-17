@@ -1,46 +1,19 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useSchemaProps } from '@nop-chaos/flux-react';
-import { Button, cn } from '@nop-chaos/ui';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@nop-chaos/ui';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-} from '@nop-chaos/ui';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationPrevious,
-  PaginationNext,
-  PaginationEllipsis,
-} from '@nop-chaos/ui';
-import { Checkbox } from '@nop-chaos/ui';
-import { RadioGroupItem } from '@nop-chaos/ui';
-import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
-import { Spinner } from '@nop-chaos/ui';
-import { ChevronDownIcon, ChevronRightIcon, ArrowUpDownIcon } from 'lucide-react';
+import { Table, TableHeader, cn } from '@nop-chaos/ui';
 import type { TableColumnSchema, TableSchema } from './schemas';
-import { processTableData, createTableRowRepeatedTemplateId, serializeInstancePath } from './table-renderer/table-data';
-import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache';
+import { createTableRowRepeatedTemplateId, processTableData, serializeInstancePath } from './table-renderer/table-data';
+import { TableBodyRows } from './table-renderer/TableBodyRows';
+import { TableHeaderRow } from './table-renderer/TableHeaderRow';
+import { TableLoadingOverlay } from './table-renderer/TableLoadingOverlay';
+import { TablePaginationBar } from './table-renderer/TablePaginationBar';
 import { useTablePagination, useTableSelection, useTableSort, useTableFilter, useTableExpand } from './table-renderer/use-table-controls';
 import { useTableHandle } from './table-renderer/use-table-handle';
+import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache';
 
 const EMPTY_TABLE_COLUMNS: TableColumnSchema[] = [];
 const EMPTY_TABLE_ROWS: Array<Record<string, any>> = [];
-const VIRTUALIZATION_THRESHOLD = 50;
-const DEFAULT_ROW_HEIGHT = 40;
-const OVERSCAN_ROWS = 10;
 
 function createTableOwnerKey(props: RendererComponentProps<TableSchema>): string {
   return `${props.node.templateNode.templateNodeId ?? props.meta.cid ?? props.id}:${serializeInstancePath(props.node.instancePath)}`;
@@ -109,398 +82,56 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const isBordered = schemaProps.bordered === true;
   const columnCount = columns.length + (schemaProps.rowSelection ? 1 : 0) + (schemaProps.expandable ? 1 : 0);
 
-  const enableVirtualization = processedData.length > VIRTUALIZATION_THRESHOLD;
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [scrollTop, setScrollTop] = useState(0);
-
-  const handleScroll = useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (el) setScrollTop(el.scrollTop);
-  }, []);
-
-  const virtualWindow = useMemo(() => {
-    if (!enableVirtualization) {
-      return { startIndex: 0, endIndex: processedData.length, topPad: 0, bottomPad: 0 };
-    }
-    const rowHeight = DEFAULT_ROW_HEIGHT;
-    const containerHeight = scrollContainerRef.current?.clientHeight ?? 600;
-    const totalHeight = processedData.length * rowHeight;
-    const firstVisible = Math.floor(scrollTop / rowHeight);
-    const visibleCount = Math.ceil(containerHeight / rowHeight);
-    const startIndex = Math.max(0, firstVisible - OVERSCAN_ROWS);
-    const endIndex = Math.min(processedData.length, firstVisible + visibleCount + OVERSCAN_ROWS);
-    const topPad = startIndex * rowHeight;
-    const bottomPad = totalHeight - endIndex * rowHeight;
-    return { startIndex, endIndex, topPad: Math.max(0, topPad), bottomPad: Math.max(0, bottomPad) };
-  }, [enableVirtualization, processedData.length, scrollTop]);
-
-  const visibleRows = enableVirtualization
-    ? processedData.slice(virtualWindow.startIndex, virtualWindow.endIndex)
-    : processedData;
-
   return (
     <div className={cn('nop-table', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {hasRendererSlotContent(headerContent) ? <div data-slot="table-header-region">{headerContent}</div> : null}
 
-      <div
-        ref={enableVirtualization ? scrollContainerRef : undefined}
-        onScroll={enableVirtualization ? handleScroll : undefined}
-        className={cn('relative', enableVirtualization && 'overflow-auto')}
-        style={enableVirtualization ? { maxHeight: '600px' } : undefined}
-        data-slot="table-container"
-      >
-        <Table
-          data-striped={isStriped || undefined}
-          data-bordered={isBordered || undefined}
-        >
+      <div className="relative" data-slot="table-container">
+        <Table data-striped={isStriped || undefined} data-bordered={isBordered || undefined}>
           <TableHeader data-slot="table-header">
-            <TableRow>
-              {schemaProps.expandable ? (
-                <TableHead data-slot="table-expand-column" style={{ width: '40px' }}>
-                  <span className="sr-only">Expand</span>
-                </TableHead>
-              ) : null}
-
-              {schemaProps.rowSelection ? (
-                <TableHead data-slot="table-select-column" style={{ width: '40px' }}>
-                  {schemaProps.rowSelection.type === 'checkbox' && (
-                    <Checkbox
-                      checked={allSelected && selectedRowKeys.size === source.length && source.length > 0}
-                      onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                    />
-                  )}
-                </TableHead>
-              ) : null}
-
-              {columns.map((column, index) => {
-                const labelRegion = typeof column.labelRegionKey === 'string' ? props.regions[column.labelRegionKey] : undefined;
-                const labelContent = labelRegion?.render() ?? column.label ?? column.name;
-                const isSortable = column.sortable === true;
-                const isFilterable = column.filterable === true && Array.isArray(column.filterOptions) && column.filterOptions.length > 0;
-                const currentSort = sortState.column === column.name ? sortState.direction : null;
-                const activeFilters = column.name ? (filterState[column.name] ?? new Set()) : new Set<string>();
-                const columnKey = column.name ?? (typeof column.label === 'string' ? column.label : undefined) ?? `column-${index}`;
-
-                return (
-                  <TableHead
-                    key={columnKey}
-                    style={column.width ? { width: column.width } : undefined}
-                    data-slot="table-head"
-                    data-interactive={isSortable || isFilterable || undefined}
-                  >
-                    {isSortable || isFilterable ? (
-                      <div className="flex items-center gap-1">
-                        <span
-                          className={isSortable ? 'cursor-pointer hover:text-primary' : ''}
-                          onClick={() => isSortable && column.name && handleSort(column.name)}
-                        >
-                          {labelContent}
-                          {isSortable && (
-                            <ArrowUpDownIcon
-                              className={cn(
-                                'inline ml-1 size-3',
-                                currentSort ? 'text-primary' : 'text-muted-foreground'
-                              )}
-                            />
-                          )}
-                        </span>
-
-                        {isFilterable && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              render={
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-xs"
-                                  className={cn(
-                                    'h-6 w-6 rounded hover:bg-accent',
-                                    activeFilters.size > 0 ? 'text-primary' : 'text-muted-foreground'
-                                  )}
-                                  aria-label="Filter"
-                                >
-                                  <span className="sr-only">Filter</span>
-                                  <ChevronDownIcon className="size-3" />
-                                </Button>
-                              }
-                            />
-                            <DropdownMenuContent>
-                              {column.filterOptions!.map((option) => (
-                                <DropdownMenuCheckboxItem
-                                  key={option.value}
-                                  checked={activeFilters.has(option.value)}
-                                  onCheckedChange={(checked) => column.name && handleFilter(column.name, option.value, checked)}
-                                >
-                                  {option.label}
-                                </DropdownMenuCheckboxItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                    ) : (
-                      labelContent
-                    )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
+            <TableHeaderRow
+              props={props}
+              columns={columns}
+              sourceLength={source.length}
+              sortState={sortState}
+              filterState={filterState}
+              allSelected={allSelected}
+              selectedRowCount={selectedRowKeys.size}
+              onSort={handleSort}
+              onFilter={handleFilter}
+              onSelectAll={handleSelectAll}
+            />
           </TableHeader>
 
-          <TableBody>
-            {processedData.length === 0 ? (
-              <TableRow data-slot="table-empty-row">
-                <TableCell colSpan={columnCount} data-slot="table-empty-cell">
-                  {emptyContent}
-                </TableCell>
-              </TableRow>
-            ) : (
-              processedData.map((entry) => {
-                const rowScope = rowScopeCache.get(entry.rowKey);
-
-                if (!rowScope) {
-                  return null;
-                }
-
-                const rowKey = entry.rowKey;
-                const rowInstancePath = [
-                  ...(props.node.instancePath ?? []),
-                  { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey }
-                ] as const;
-                const isExpanded = expandedRowKeys.has(rowKey);
-                const isSelected = selectedRowKeys.has(rowKey);
-                const isEven = entry.sourceIndex % 2 === 0;
-
-                return (
-                  <React.Fragment key={rowKey}>
-                    <TableRow
-                      data-slot="table-row"
-                      data-interactive={Boolean(props.events.onRowClick) || undefined}
-                      data-expanded={isExpanded || undefined}
-                      data-striped={isStriped && isEven ? true : undefined}
-                      onClick={
-                        props.events.onRowClick
-                          ? (event) =>
-                              void props.events.onRowClick?.(event, { scope: rowScope })
-                          : schemaProps.expandable?.expandRowByClick
-                            ? () => handleToggleExpand(rowKey)
-                            : undefined
-                      }
-                    >
-                      {schemaProps.expandable ? (
-                        <TableCell data-slot="table-expand-cell">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleExpand(rowKey);
-                            }}
-                            className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded"
-                            aria-label={isExpanded ? 'Collapse' : 'Expand'}
-                          >
-                            {isExpanded ? <ChevronDownIcon className="size-4" /> : <ChevronRightIcon className="size-4" />}
-                          </Button>
-                        </TableCell>
-                      ) : null}
-
-                      {schemaProps.rowSelection ? (
-                        <TableCell data-slot="table-select-cell" onClick={(e) => e.stopPropagation()}>
-                          {schemaProps.rowSelection.type === 'checkbox' ? (
-                            <Checkbox checked={isSelected} onCheckedChange={(checked) => handleSelectRow(rowKey, Boolean(checked))} />
-                          ) : (
-                            <RadioGroupItem value={rowKey} />
-                          )}
-                        </TableCell>
-                      ) : null}
-
-                      {columns.map((column, columnIndex) => {
-                        const cellRegion = typeof column.cellRegionKey === 'string' ? props.regions[column.cellRegionKey] : undefined;
-                        const buttonRegion = typeof column.buttonsRegionKey === 'string' ? props.regions[column.buttonsRegionKey] : undefined;
-
-                        if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
-                          return (
-                            <TableCell key={column.name ?? `op-${columnIndex}`} style={column.width ? { width: column.width } : undefined}>
-                              <div data-slot="table-actions" className="flex flex-wrap gap-3" onClick={(event) => event.stopPropagation()}>
-                                 {buttonRegion
-                                    ? buttonRegion.render({
-                                       bindings: { record: entry.record, index: entry.sourceIndex },
-                                        instancePath: rowInstancePath,
-                                        pathSuffix: `buttons.${columnIndex}`,
-                                      })
-                                   : (column.buttons ?? []).map((button, buttonIndex) => (
-                                       <div key={button.id ?? button.name ?? `btn-${buttonIndex}`}>
-                                         {helpers.render(button, {
-                                           scope: rowScope,
-                                           instancePath: rowInstancePath,
-                                          pathSuffix: `buttons.${buttonIndex}`,
-                                        })}
-                                      </div>
-                                    ))}
-                              </div>
-                            </TableCell>
-                          );
-                        }
-
-                        if (cellRegion) {
-                          return (
-                            <TableCell
-                              key={`${column.name ?? columnIndex}`}
-                              style={column.width ? { width: column.width } : undefined}
-                            >
-                              {cellRegion.render({
-                                bindings: { record: entry.record, index: entry.sourceIndex },
-                                instancePath: rowInstancePath,
-                                pathSuffix: `cells.${columnIndex}`,
-                              })}
-                            </TableCell>
-                          );
-                        }
-
-                        return (
-                          <TableCell key={`${column.name ?? columnIndex}`} style={column.width ? { width: column.width } : undefined}>
-                            {column.name ? String(entry.record[column.name] ?? '') : ''}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-
-                    {isExpanded && schemaProps.expandable?.expandedRowRegionKey ? (
-                      <TableRow data-slot="table-expanded-row">
-                        <TableCell colSpan={columnCount} data-slot="table-expanded-cell">
-                          {props.regions[schemaProps.expandable.expandedRowRegionKey]
-                            ? helpers.render(props.regions[schemaProps.expandable.expandedRowRegionKey].templateNode, {
-                                scope: rowScope,
-                                instancePath: rowInstancePath,
-                                pathSuffix: `expanded.${rowKey}`,
-                              })
-                            : null}
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                  </React.Fragment>
-                );
-              })
-            )}
-          </TableBody>
+          <TableBodyRows
+            props={props}
+            processedData={processedData}
+            rowScopeCache={rowScopeCache}
+            rowRepeatedTemplateId={rowRepeatedTemplateId}
+            expandedRowKeys={expandedRowKeys}
+            selectedRowKeys={selectedRowKeys}
+            columnCount={columnCount}
+            isStriped={isStriped}
+            emptyContent={emptyContent}
+            onToggleExpand={handleToggleExpand}
+            onSelectRow={handleSelectRow}
+          />
         </Table>
 
-        {isLoading && (
-          <div data-slot="table-loading-overlay" className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
-            <div className="flex flex-col items-center gap-2">
-              <Spinner className="size-6" />
-              {hasRendererSlotContent(loadingContent) && <span className="text-sm text-muted-foreground">{loadingContent}</span>}
-            </div>
-          </div>
-        )}
+        {isLoading ? <TableLoadingOverlay loadingContent={loadingContent} /> : null}
       </div>
 
-      {paginationEnabled && source.length > 0 && (
-        <div data-slot="table-pagination" className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Rows per page:</span>
-            <NativeSelect
-              value={String(pageSize)}
-              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              size="sm"
-            >
-              {schemaProps.pagination?.pageSizeOptions?.map((size: number) => (
-                <NativeSelectOption key={size} value={String(size)}>
-                  {size}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </div>
-
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                  aria-disabled={currentPage === 1}
-                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                />
-              </PaginationItem>
-
-              {totalPages <= 7 ? (
-                Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      onClick={() => handlePageChange(page)}
-                      isActive={page === currentPage}
-                      className="cursor-pointer"
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))
-              ) : (
-                <>
-                  {currentPage > 3 && (
-                    <>
-                      <PaginationItem>
-                        <PaginationLink onClick={() => handlePageChange(1)} isActive={currentPage === 1} className="cursor-pointer">
-                          1
-                        </PaginationLink>
-                      </PaginationItem>
-                      {currentPage > 4 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-                    </>
-                  )}
-
-                  {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-                    let page = currentPage - 1 + i;
-                    if (page < 1) page = 1;
-                    if (page > totalPages) page = totalPages;
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink onClick={() => handlePageChange(page)} isActive={page === currentPage} className="cursor-pointer">
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  })}
-
-                  {currentPage < totalPages - 2 && (
-                    <>
-                      {currentPage < totalPages - 3 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-                      <PaginationItem>
-                        <PaginationLink
-                          onClick={() => handlePageChange(totalPages)}
-                          isActive={currentPage === totalPages}
-                          className="cursor-pointer"
-                        >
-                          {totalPages}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </>
-                  )}
-                </>
-              )}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                  aria-disabled={currentPage === totalPages}
-                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-
-          <div className="text-sm text-muted-foreground">
-            {`${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, source.length)} of ${source.length}`}
-          </div>
-        </div>
-      )}
+      {paginationEnabled && source.length > 0 ? (
+        <TablePaginationBar
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalPages={totalPages}
+          totalRows={source.length}
+          pageSizeOptions={schemaProps.pagination?.pageSizeOptions}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      ) : null}
 
       {hasRendererSlotContent(footerContent) ? <div data-slot="table-footer">{footerContent}</div> : null}
     </div>
