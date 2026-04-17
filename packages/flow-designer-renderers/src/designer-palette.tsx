@@ -1,12 +1,13 @@
 import React, { useCallback, useState } from 'react';
 import type { NodeTypeConfig } from '@nop-chaos/flow-designer-core';
-import { useDesignerContext } from './designer-context';
+import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge';
 import { Button, cn } from '@nop-chaos/ui';
 
 export function DesignerPaletteContent() {
-  const { config, dispatch, snapshot, openCreateDialog } = useDesignerContext();
+  const { config, dispatch, openCreateDialog } = useDesignerContext();
+  const activeNodeType = useDesignerSnapshotSelector((s) => s.activeNode?.type);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['basic', 'logic', 'execution']));
 
   const nodeTypes = config.nodeTypes;
@@ -54,11 +55,10 @@ export function DesignerPaletteContent() {
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto p-3">
         {filteredGroups.map((group) => (
-          <div key={group.id} className="rounded-lg border border-border p-2.5 mb-3 last:mb-0" style={{ background: 'rgba(255, 255, 255, 0.45)' }}>
+          <div key={group.id} className="fd-panel-card rounded-lg border border-border p-2.5 mb-3 last:mb-0">
             <div
               data-slot="designer-palette-group-header"
-              className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold uppercase tracking-[0.18em] mb-2 px-1"
-              style={{ color: 'hsl(221.2, 83.2%, 40%)' }}
+              className="fd-panel-caption flex items-center gap-1.5 cursor-pointer text-xs font-semibold uppercase tracking-[0.18em] mb-2 px-1"
               onClick={() => toggleGroup(group.id)}
             >
               <span className="text-[10px] text-muted-foreground">{expandedGroups.has(group.id) ? '▼' : '▶'}</span>
@@ -69,17 +69,16 @@ export function DesignerPaletteContent() {
                 {group.nodeTypes.map((ntId) => {
                   const nt = nodeTypes.find((n) => n.id === ntId);
                   if (!nt) return null;
-                  const isSelected = snapshot.activeNode?.type === nt.id;
+                  const isSelected = activeNodeType === nt.id;
                   return (
                     <div
                       key={nt.id}
                       data-slot="designer-palette-item"
                       className={cn(
-                        'flex items-center gap-2 rounded-xl border border-border p-2 mb-2 last:mb-0 shadow-[0_1px_2px_rgba(0,0,0,0.05)]',
-                        isSelected && 'border-primary'
-                      )}
-                      style={{ background: 'rgba(255, 255, 255, 0.7)' }}
-                    >
+                         'fd-palette-item flex items-center gap-2 rounded-xl border border-border p-2 mb-2 last:mb-0 shadow-[0_1px_2px_rgba(0,0,0,0.05)]',
+                         isSelected && 'border-primary'
+                       )}
+                     >
                       <Button
                         type="button"
                         variant="ghost"

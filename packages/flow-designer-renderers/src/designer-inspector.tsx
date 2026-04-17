@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge, Button, Input, Label, NativeSelect, NativeSelectOption, Textarea, cn } from '@nop-chaos/ui';
-import { useDesignerContext } from './designer-context';
+import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 
 const NODE_TYPE_INFO: Record<string, { label: string; icon: string; color: string }> = {
@@ -40,7 +40,8 @@ const MODE_OPTIONS = [
 ];
 
 export function DefaultInspector() {
-  const { dispatch, snapshot } = useDesignerContext();
+  const { dispatch } = useDesignerContext();
+  const snapshot = useDesignerFullSnapshot();
   const { activeNode, activeEdge, doc } = snapshot;
   const nodeCount = doc.nodes.length;
   const edgeCount = doc.edges.length;
@@ -219,8 +220,8 @@ export function DefaultInspector() {
         </Button>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto p-4">
-        <div className="rounded-lg border border-border p-4 mb-4" style={{ background: 'rgba(255, 255, 255, 0.4)' }}>
-          <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'hsl(221.2, 83.2%, 40%)' }}>流程信息</div>
+        <div className="fd-panel-card rounded-lg border border-border p-4 mb-4">
+          <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">流程信息</div>
           <div className="mt-2 font-medium text-foreground">{doc.name}</div>
           <div className="flex flex-wrap items-center gap-2 mt-3 text-sm text-muted-foreground">
             <Badge variant="success">已启用</Badge>
@@ -231,8 +232,8 @@ export function DefaultInspector() {
 
         {activeNode ? (
           <>
-            <div className="rounded-lg border border-border p-4 mb-4" style={{ background: 'rgba(255, 255, 255, 0.4)' }}>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'hsl(221.2, 83.2%, 40%)' }}>当前选中</div>
+            <div className="fd-panel-card rounded-lg border border-border p-4 mb-4">
+              <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">当前选中</div>
               <div className="mt-3">
                 {renderNodeTypeHeader()}
                 {activeNode.data.description ? (
@@ -243,7 +244,7 @@ export function DefaultInspector() {
                 </div>
               </div>
             </div>
-            <div className="rounded-lg border border-border p-4" style={{ background: 'rgba(255, 255, 255, 0.4)' }}>
+            <div className="fd-panel-card rounded-lg border border-border p-4">
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <Label className="text-sm font-medium text-foreground">名称</Label>
@@ -268,14 +269,14 @@ export function DefaultInspector() {
           </>
         ) : activeEdge ? (
           <>
-            <div className="rounded-lg border border-border p-4 mb-4" style={{ background: 'rgba(255, 255, 255, 0.4)' }}>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'hsl(221.2, 83.2%, 40%)' }}>当前选中</div>
+            <div className="fd-panel-card rounded-lg border border-border p-4 mb-4">
+              <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">当前选中</div>
               <div className="mt-3">
                 <div className="font-medium text-foreground">连线</div>
                 <div className="text-sm text-muted-foreground mt-1">{activeEdge.source} → {activeEdge.target}</div>
               </div>
             </div>
-            <div className="rounded-lg border border-border p-4" style={{ background: 'rgba(255, 255, 255, 0.4)' }}>
+            <div className="fd-panel-card rounded-lg border border-border p-4">
               <div className="flex flex-col gap-4">
                 {Object.entries(activeEdge.data).map(([key, value]) => {
                   if (typeof value === 'object' && value !== null) return null;
@@ -294,8 +295,8 @@ export function DefaultInspector() {
             </div>
           </>
         ) : (
-          <div className="rounded-lg border border-border p-4" style={{ background: 'rgba(255, 255, 255, 0.4)' }}>
-            <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'hsl(221.2, 83.2%, 40%)' }}>快捷键</div>
+          <div className="fd-panel-card rounded-lg border border-border p-4">
+            <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">快捷键</div>
             <div className="mt-3 text-sm text-muted-foreground space-y-2">
               <div><strong>Ctrl+Z</strong> 撤销</div>
               <div><strong>Ctrl+Y</strong> 重做</div>

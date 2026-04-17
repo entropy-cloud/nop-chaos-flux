@@ -308,9 +308,6 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     <ReactFlowProvider>
       <div
         className="absolute inset-0 fd-xyflow-surface rounded-xl overflow-hidden"
-        style={{
-          background: 'radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%), radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.1), transparent 30%), rgba(255,255,255,0.78)'
-        }}
         ref={surfaceRef}
       >
         <ReactFlow
@@ -382,21 +379,21 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
             }}
           >
             {showBackground && (
-              <Background gap={gridSize} size={1} variant={backgroundVariant} color="rgba(148, 163, 184, 0.26)" />
-            )}
-            {showMinimap && (
-              <MiniMap
-                className="fd-xyflow-minimap !rounded-2xl !border !border-border"
-                pannable
-                zoomable
-                bgColor="rgba(219, 234, 254, 0.5)"
-                offsetScale={0}
-                nodeColor={() => 'rgba(15, 23, 42, 0.92)'}
-                nodeStrokeColor={() => 'hsl(221.2, 83.2%, 53.3%)'}
-                nodeBorderRadius={4}
-                maskColor="rgba(255, 255, 255, 0.55)"
-              />
-            )}
+               <Background gap={gridSize} size={1} variant={backgroundVariant} color="var(--fd-grid-color)" />
+             )}
+             {showMinimap && (
+               <MiniMap
+                 className="fd-xyflow-minimap !rounded-2xl !border !border-border"
+                 pannable
+                 zoomable
+                 bgColor="var(--fd-minimap-bg)"
+                 offsetScale={0}
+                 nodeColor={() => 'var(--fd-minimap-node)'}
+                 nodeStrokeColor={() => 'var(--fd-edge-stroke)'}
+                 nodeBorderRadius={4}
+                 maskColor="var(--fd-minimap-mask)"
+               />
+             )}
             {showControls && <Controls className="fd-xyflow-controls" showInteractive={false} />}
             {props.documentMode === 'tree' && props.onPlusButtonClick && (
               <TreeModeOverlays

@@ -53,7 +53,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
   const showQuickActions = props.selected || edgeData?.__fdHovered === true;
 
   const edgeStyle: React.CSSProperties = {
-    stroke: appearance?.stroke ?? 'hsl(221.2, 83.2%, 53.3%)',
+    stroke: appearance?.stroke ?? 'var(--fd-edge-stroke)',
     strokeWidth: appearance?.strokeWidth ?? 2
   };
 
@@ -76,15 +76,13 @@ export function DesignerXyflowEdge(props: EdgeProps) {
         <EdgeLabelRenderer>
           <div
             className={cn(
-              'px-3 py-1.5 rounded-full border border-border text-sm font-medium text-muted-foreground shadow-sm',
+              'fd-edge-label px-3 py-1.5 rounded-full border border-border text-sm font-medium text-muted-foreground shadow-sm',
               props.selected && 'border-primary text-foreground'
             )}
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-              pointerEvents: 'all',
-              background: 'rgba(255, 255, 255, 0.78)',
-              backdropFilter: 'blur(20px)'
+              pointerEvents: 'all'
             }}
             onClick={handleLabelClick}
           >
@@ -100,7 +98,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
         <EdgeLabelRenderer>
           <div
             data-slot="designer-edge-actions"
-            className="inline-flex items-center gap-1.5 p-1 rounded-[10px] border border-border bg-white/94 shadow-[0_2px_8px_rgba(15,23,42,0.08)]"
+            className="fd-edge-actions inline-flex items-center gap-1.5 p-1 rounded-[10px] border border-border"
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY - 30}px)`,

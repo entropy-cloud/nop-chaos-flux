@@ -3,12 +3,16 @@ import type { ScopeRef } from '@nop-chaos/flux-core';
 import { useHostScope } from '@nop-chaos/flux-react';
 import type { DesignerCore, DesignerSnapshot, DesignerConfig, NodeTypeConfig, EdgeTypeConfig, NormalizedDesignerConfig } from '@nop-chaos/flow-designer-core';
 import type { DesignerCommandAdapter } from './designer-command-adapter';
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 
+/**
+ * Stable context value that does not change when snapshot updates.
+ * This allows consumers that only need dispatch/config to avoid re-rendering.
+ */
 export interface DesignerContextValue {
   core: DesignerCore;
   commandAdapter: DesignerCommandAdapter;
   dispatch: (command: import('./designer-command-adapter').DesignerCommand) => import('./designer-command-adapter').DesignerCommandResult;
-  snapshot: DesignerSnapshot;
   config: DesignerConfig;
   openCreateDialog?: (nodeType: NodeTypeConfig, position: { x: number; y: number }) => void;
   onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number) => void;
@@ -16,6 +20,10 @@ export interface DesignerContextValue {
 
 export const DesignerContext = React.createContext<DesignerContextValue | null>(null);
 
+/**
+ * Returns stable context value (dispatch, config, core).
+ * Does NOT include snapshot - use useDesignerSnapshotSelector for reactive snapshot data.
+ */
 export function useDesignerContext(): DesignerContextValue {
   const ctx = React.useContext(DesignerContext);
   if (!ctx) {
@@ -24,6 +32,41 @@ export function useDesignerContext(): DesignerContextValue {
   return ctx;
 }
 
+/**
+ * Subscribe to the full snapshot from core.
+ * Use useDesignerSnapshotSelector for fine-grained subscriptions.
+ */
+export function useDesignerFullSnapshot(): DesignerSnapshot {
+  const { core } = useDesignerContext();
+  return useSyncExternalStore(core.subscribe, core.getSnapshot, core.getSnapshot);
+}
+
+/**
+ * Fine-grained snapshot selector hook.
+ * Only re-renders when the selected value changes (via Object.is comparison).
+ *
+ * @example
+ * const activeNode = useDesignerSnapshotSelector(s => s.activeNode);
+ * const canUndo = useDesignerSnapshotSelector(s => s.canUndo);
+ */
+export function useDesignerSnapshotSelector<T>(
+  selector: (snapshot: DesignerSnapshot) => T,
+  isEqual: (a: T, b: T) => boolean = Object.is
+): T {
+  const { core } = useDesignerContext();
+  return useSyncExternalStoreWithSelector(
+    core.subscribe,
+    core.getSnapshot,
+    core.getSnapshot,
+    selector,
+    isEqual
+  );
+}
+
+/**
+ * Standalone hook for subscribing to snapshot outside of context.
+ * Used internally by DesignerPageBody before context is established.
+ */
 export function useDesignerSnapshot(core: DesignerCore): DesignerSnapshot {
   return useSyncExternalStore(
     core.subscribe,

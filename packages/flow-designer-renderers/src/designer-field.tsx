@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import type { RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import type { DesignerFieldSchema } from './schemas';
-import { useDesignerContext } from './designer-context';
+import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context';
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@nop-chaos/ui';
 
 export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFieldSchema>) {
@@ -10,9 +10,9 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
   const name = schemaProps.name as string;
   const fieldType = schemaProps.fieldType as string | undefined;
   const options = schemaProps.options as Array<{ label: string; value: string }> | undefined;
-  const ctx = useDesignerContext();
-  const { dispatch, snapshot } = ctx;
-  const { activeNode, activeEdge } = snapshot;
+  const { dispatch } = useDesignerContext();
+  const activeNode = useDesignerSnapshotSelector((s) => s.activeNode);
+  const activeEdge = useDesignerSnapshotSelector((s) => s.activeEdge);
 
   const value = activeNode?.data[name] ?? activeEdge?.data[name] ?? '';
 

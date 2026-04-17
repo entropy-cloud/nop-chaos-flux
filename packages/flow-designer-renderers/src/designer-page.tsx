@@ -172,22 +172,46 @@ interface DesignerPageBodyProps {
 function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch, config }: DesignerPageBodyProps) {
   const snapshot = useDesignerSnapshot(core);
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
+  const [layoutBusy, setLayoutBusy] = React.useState(false);
+  const layoutRequestRef = useRef(0);
   const handleAutoLayout = useCallback(async () => {
+    const requestId = layoutRequestRef.current + 1;
+    layoutRequestRef.current = requestId;
+    setLayoutBusy(true);
     const doc = core.getDocument();
-    if (doc.nodes.length === 0) return;
-
-    if (config.documentMode === 'tree') {
-      const normalizedCfg = core.getConfig();
-      const treeConfig = normalizedCfg.treeConfig;
-      if (!treeConfig) return;
-      const layoutedNodes = await layoutTreeWithElk(doc.nodes, doc.edges, treeConfig, normalizedCfg.nodeTypes);
-      const positions = new Map(layoutedNodes.map((n) => [n.id, n.position]));
-      core.layoutNodes(positions);
+    if (doc.nodes.length === 0) {
+      if (layoutRequestRef.current === requestId) {
+        setLayoutBusy(false);
+      }
       return;
     }
 
-    const positions = await layoutWithElk(doc.nodes, doc.edges, core.getConfig().nodeTypes);
-    core.layoutNodes(positions);
+    try {
+      if (config.documentMode === 'tree') {
+        const normalizedCfg = core.getConfig();
+        const treeConfig = normalizedCfg.treeConfig;
+        if (!treeConfig) {
+          return;
+        }
+        const layoutedNodes = await layoutTreeWithElk(doc.nodes, doc.edges, treeConfig, normalizedCfg.nodeTypes);
+        if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
+          return;
+        }
+        const positions = new Map(layoutedNodes.map((n) => [n.id, n.position]));
+        core.layoutNodes(positions);
+        return;
+      }
+
+      const positions = await layoutWithElk(doc.nodes, doc.edges, core.getConfig().nodeTypes);
+      if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
+        return;
+      }
+      core.layoutNodes(positions);
+    } finally {
+      if (layoutRequestRef.current === requestId) {
+        setLayoutBusy(false);
+      }
+    }
   }, [core, config.documentMode]);
 
   const isTreeMode = config.documentMode === 'tree';
@@ -305,12 +329,11 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
       core,
       commandAdapter,
       dispatch,
-      snapshot,
       config,
       openCreateDialog: handleOpenCreateDialog,
       onPlusButtonClick: ctxOnPlusButtonClick,
     }),
-    [commandAdapter, config, core, dispatch, handleOpenCreateDialog, snapshot, ctxOnPlusButtonClick]
+    [commandAdapter, config, core, dispatch, handleOpenCreateDialog, ctxOnPlusButtonClick]
   );
 
   useLayoutEffect(() => {
@@ -395,22 +418,21 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
     const summary: DesignerHostStatusSummary = {
       kind: 'designer',
       dirty: snapshot.isDirty,
-      busy: false,
+      busy: layoutBusy,
       canUndo: snapshot.canUndo,
       canRedo: snapshot.canRedo,
       selectionKind: snapshot.activeNode ? 'node' : snapshot.activeEdge ? 'edge' : 'none',
       selectionCount: snapshot.selection.selectedNodeIds.length + snapshot.selection.selectedEdgeIds.length
     };
     publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary);
-  }, [props.node.scope, snapshot, statusPath]);
+  }, [layoutBusy, props.node.scope, snapshot, statusPath]);
 
   return (
     <DesignerContext.Provider value={ctxValue}>
       {config.themeStyles && <style>{config.themeStyles}</style>}
       <WorkbenchShell
-        className={cn('nop-designer text-foreground')}
-        style={{ background: 'linear-gradient(135deg, rgba(167, 243, 208, 0.15) 0%, rgba(196, 181, 253, 0.12) 50%, rgba(153, 246, 228, 0.1) 100%)' }}
-        header={hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} onAutoLayout={handleAutoLayout} />}
+        className={cn('nop-designer fd-theme-root text-foreground')}
+        header={hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} onAutoLayout={handleAutoLayout} autoLayoutBusy={layoutBusy} />}
         leftPanel={<DesignerPaletteContent />}
         leftCollapsed={snapshot.paletteCollapsed}
         onLeftToggle={() => dispatch({ type: 'togglePalette' })}

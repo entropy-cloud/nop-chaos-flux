@@ -1,0 +1,52 @@
+:where(.fd-theme-root, .nop-designer) {
+  --fd-page-bg: linear-gradient(135deg, rgba(167, 243, 208, 0.15) 0%, rgba(196, 181, 253, 0.12) 50%, rgba(153, 246, 228, 0.1) 100%);
+  --fd-panel-bg: rgba(255, 255, 255, 0.4);
+  --fd-panel-accent: hsl(var(--primary));
+  --fd-toolbar-bg: rgba(255, 255, 255, 0.78);
+  --fd-toolbar-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --fd-canvas-bg: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%), radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.1), transparent 30%), rgba(255, 255, 255, 0.78);
+  --fd-grid-color: rgba(148, 163, 184, 0.26);
+  --fd-minimap-bg: rgba(219, 234, 254, 0.5);
+  --fd-minimap-node: rgba(15, 23, 42, 0.92);
+  --fd-minimap-mask: rgba(255, 255, 255, 0.55);
+  --fd-edge-stroke: hsl(var(--primary));
+  --fd-edge-label-bg: rgba(255, 255, 255, 0.78);
+  --fd-edge-actions-bg: rgba(255, 255, 255, 0.94);
+  --fd-edge-actions-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.nop-designer {
+  background: var(--fd-page-bg);
+}
+
+.nop-designer-toolbar {
+  background: var(--fd-toolbar-bg);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--fd-toolbar-shadow);
+}
+
+.fd-panel-card {
+  background: var(--fd-panel-bg);
+}
+
+.fd-panel-caption {
+  color: var(--fd-panel-accent);
+}
+
+.fd-palette-item {
+  background: var(--fd-toolbar-bg);
+}
+
+.fd-xyflow-surface {
+  background: var(--fd-canvas-bg);
+}
+
+.fd-edge-label {
+  background: var(--fd-edge-label-bg);
+  backdrop-filter: blur(20px);
+}
+
+.fd-edge-actions {
+  background: var(--fd-edge-actions-bg);
+  box-shadow: var(--fd-edge-actions-shadow);
+}

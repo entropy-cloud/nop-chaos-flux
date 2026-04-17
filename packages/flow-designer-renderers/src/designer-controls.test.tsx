@@ -9,16 +9,19 @@ import { DefaultInspector } from './designer-inspector';
 
 type MockContext = {
   config: any;
-  snapshot: any;
   dispatch: ReturnType<typeof vi.fn>;
   openCreateDialog?: ReturnType<typeof vi.fn>;
+  core: { subscribe: () => () => void; getSnapshot: () => any };
 };
 
 let mockContext: MockContext;
+let mockSnapshot: any;
 let mockResolve = vi.fn();
 
 vi.mock('./designer-context', () => ({
-  useDesignerContext: () => mockContext
+  useDesignerContext: () => mockContext,
+  useDesignerFullSnapshot: () => mockSnapshot,
+  useDesignerSnapshotSelector: (selector: (s: any) => any) => selector(mockSnapshot)
 }));
 
 vi.mock('./designer-icon', () => ({
@@ -50,11 +53,12 @@ describe('flow designer controls', () => {
   beforeEach(() => {
     cleanup();
     mockResolve = vi.fn();
+    mockSnapshot = createSnapshot();
     mockContext = {
       config: { toolbar: { items: [] }, palette: { groups: [] }, nodeTypes: [] },
-      snapshot: createSnapshot(),
       dispatch: vi.fn(),
-      openCreateDialog: vi.fn()
+      openCreateDialog: vi.fn(),
+      core: { subscribe: () => () => {}, getSnapshot: () => mockSnapshot }
     };
   });
 
@@ -151,7 +155,7 @@ describe('flow designer controls', () => {
   });
 
   it('dispatches delete actions from inspector buttons', () => {
-    mockContext.snapshot = createSnapshot({
+    mockSnapshot = createSnapshot({
       activeNode: { id: 'node-1', type: 'task', data: { label: 'Task' } },
       activeEdge: null
     });

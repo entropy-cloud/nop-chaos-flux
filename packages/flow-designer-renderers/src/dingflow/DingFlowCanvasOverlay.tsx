@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { ViewportPortal } from '@xyflow/react';
 import { UserCheck, Send } from 'lucide-react';
-import { useDesignerContext } from '../designer-context';
+import { useDesignerContext, useDesignerSnapshotSelector } from '../designer-context';
 import { computeDingFlowOverlays } from './dingflow-overlays';
 import { DingFlowAddConditionOverlay } from './DingFlowAddConditionOverlay';
 import { DingFlowMergeOverlay } from './DingFlowMergeOverlay';
@@ -21,12 +21,14 @@ const DEFAULT_MENU_ITEMS: DingFlowMenuItem[] = [
 ];
 
 export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode }) {
-  const { dispatch, snapshot } = useDesignerContext();
+  const { dispatch } = useDesignerContext();
+  const nodes = useDesignerSnapshotSelector((s) => s.doc.nodes);
+  const edges = useDesignerSnapshotSelector((s) => s.doc.edges);
   const [popover, setPopover] = useState<PopoverState | null>(null);
 
   const overlays = useMemo(
-    () => computeDingFlowOverlays(snapshot.doc.nodes, snapshot.doc.edges),
-    [snapshot.doc.nodes, snapshot.doc.edges],
+    () => computeDingFlowOverlays(nodes, edges),
+    [nodes, edges],
   );
 
   const handlePlusClick = useCallback((sourceId: string, clientX: number, clientY: number) => {

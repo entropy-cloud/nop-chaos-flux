@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import { useDesignerContext } from './designer-context';
+import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
+import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { Badge, Button, Label, Switch, cn } from '@nop-chaos/ui';
@@ -17,7 +18,7 @@ type ToolbarItemLike = {
   variant?: 'default' | 'primary' | 'danger';
 };
 
-function readState(name: string, snapshot: ReturnType<typeof useDesignerContext>['snapshot']) {
+function readState(name: string, snapshot: DesignerSnapshot) {
   switch (name) {
     case 'canUndo':
       return snapshot.canUndo;
@@ -36,7 +37,7 @@ function readState(name: string, snapshot: ReturnType<typeof useDesignerContext>
   }
 }
 
-function evalBooleanExpr(value: boolean | string | undefined, snapshot: ReturnType<typeof useDesignerContext>['snapshot']) {
+function evalBooleanExpr(value: boolean | string | undefined, snapshot: DesignerSnapshot) {
   if (typeof value === 'boolean') return value;
   if (typeof value !== 'string') return false;
   const trimmed = value.trim();
@@ -47,7 +48,7 @@ function evalBooleanExpr(value: boolean | string | undefined, snapshot: ReturnTy
   return readState(expr, snapshot) === true;
 }
 
-function evalTextTemplate(template: string | undefined, snapshot: ReturnType<typeof useDesignerContext>['snapshot']) {
+function evalTextTemplate(template: string | undefined, snapshot: DesignerSnapshot) {
   if (!template) return '';
 
   const trimmed = template.trim();
@@ -102,8 +103,10 @@ export function DesignerToolbarContent(props: {
   onExportToggle?: () => void;
   exportActive?: boolean;
   onAutoLayout?: () => void;
+  autoLayoutBusy?: boolean;
 }) {
-  const { config, snapshot, dispatch } = useDesignerContext();
+  const { config, dispatch } = useDesignerContext();
+  const snapshot = useDesignerFullSnapshot();
   const actionScope = useCurrentActionScope();
   const runtime = useRendererRuntime();
   const scope = useRenderScope();
@@ -132,7 +135,7 @@ export function DesignerToolbarContent(props: {
   }
 
   return (
-    <div className={cn('nop-designer-toolbar min-h-[52px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-xl shadow-sm')} style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(20px)' }} data-testid="designer-toolbar">
+    <div className={cn('nop-designer-toolbar min-h-[52px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-xl shadow-sm')} data-testid="designer-toolbar">
       {items.map(({ key, item }) => {
         if (item.type === 'divider') {
           return <span key={key} className="w-px h-[18px] bg-border" aria-hidden="true" />;
@@ -187,7 +190,7 @@ export function DesignerToolbarContent(props: {
 
         if (item.type === 'button') {
           const command = toCommand(item.action);
-          const disabled = evalBooleanExpr(item.disabled, snapshot);
+          const disabled = evalBooleanExpr(item.disabled, snapshot) || (item.action === 'designer:autoLayout' && props.autoLayoutBusy === true);
           const active = evalBooleanExpr(item.active, snapshot) || (item.action === 'designer:export' && props.exportActive === true);
           const isPrimary = item.variant === 'primary';
           const variant = active || isPrimary ? 'default' : 'outline';

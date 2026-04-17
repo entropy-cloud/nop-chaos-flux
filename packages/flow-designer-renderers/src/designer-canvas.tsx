@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { UserCheck, Send } from 'lucide-react';
 import { renderDesignerCanvasBridge } from './canvas-bridge';
-import { useDesignerContext } from './designer-context';
+import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
 import { DingFlowAddNodeMenu, type DingFlowMenuItem } from './dingflow';
 
 const plusButtonHandlerHolder: { current: ((sourceId: string, clientX: number, clientY: number) => void) | null } = { current: null };
@@ -21,7 +21,8 @@ interface PopoverState {
 }
 
 export function DesignerCanvasContent() {
-  const { dispatch, snapshot, config } = useDesignerContext();
+  const { dispatch, config } = useDesignerContext();
+  const snapshot = useDesignerFullSnapshot();
   const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
   const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
   const [popover, setPopover] = useState<PopoverState | null>(null);
