@@ -221,16 +221,16 @@ Touched / dirty / visited state is stored per field, while UX policy lives in `F
 
 It also does not control whether owner state, effective rules, or effective requiredness are recomputed.
 
-Default display policy:
+Current live display policy baseline:
 
-1. `FormRuntime` defaults to `showErrorOn: 'blur'`
-2. non-form `ValidationScopeRuntime` also defaults to `showErrorOn: 'blur'`
+1. `FormRuntime` defaults to `showErrorOn: ['touched', 'submit']`
+2. the current compiled validation model also uses `['touched', 'submit']` as the owner-level fallback behavior
 
-`ValidationScopeRuntime.showErrorOn` is the owner-level display policy for non-form scopes.
+Current implementation note:
 
-Non-form scopes may use `change`, `blur`, `submit`, or `manual`, but not `touched`.
-
-The non-form default is intentionally not `change`, because cross-field validation such as date-range constraints is usually too noisy during mid-input editing.
+- live code supports `touched`, `dirty`, `visited`, and `submit` visibility triggers
+- `blur`, `change`, and `manual` are validation reasons / execution triggers, not current `showErrorOn` values
+- if the architecture later widens non-form visibility policy, that should land as an explicit runtime/type-system change rather than being implied by docs alone
 
 When path `A` changes and closure expansion causes path `B` to revalidate, visibility of `B`'s error still follows `B`'s own resolved display policy rather than the trigger source path.
 
@@ -242,6 +242,10 @@ Rules:
 2. the same field still contributes to owner `valid`, `ready`, and `canSubmit` immediately once the owner has materialized effective rules and found an error
 3. `system` never marks fields as touched or visited by itself
 4. `submit()` may mark fields touched according to form policy, but that is a submit orchestration rule, not a side effect of ordinary `system` validation
+
+Current implementation note:
+
+- dependency-triggered revalidation for untouched fields uses `reason: 'system'`; it does not clear stored errors just because the field has not been touched yet
 
 Debounce policy is not a separate owner-level authoring feature.
 

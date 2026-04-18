@@ -52,11 +52,14 @@ apps/
 packages/
   flux-core/
   flux-formula/
+  flux-i18n/
   flux-runtime/
   flux-react/
   flux-renderers-basic/
   flux-renderers-form/
+  flux-renderers-form-advanced/
   flux-renderers-data/
+  flux-code-editor/
   nop-debugger/
   flow-designer-core/
   flow-designer-renderers/
@@ -64,6 +67,8 @@ packages/
   spreadsheet-renderers/
   report-designer-core/
   report-designer-renderers/
+  word-editor-core/
+  word-editor-renderers/
   tailwind-preset/
   theme-tokens/
   ui/
@@ -128,7 +133,7 @@ Testing expectations:
 ### Types and interfaces
 
 - use `PascalCase`
-- prefer clear role-based names such as `RendererRuntime`, `FormRuntime`, and `CompiledSchemaNode`
+- prefer clear role-based names such as `RendererRuntime`, `FormRuntime`, and `TemplateNode`
 
 ### Runtime values
 

@@ -26,7 +26,8 @@ When this document needs to be checked against code, start with:
 
 - `packages/flux-runtime/src/schema-compiler.ts` for compile flow ownership
 - `packages/flux-runtime/src/schema-compiler/fields.ts` for current field classification fallback
-- `packages/flux-core/src/types/renderer-compiler.ts` for `CompileSchemaOptions` and `CompiledSchemaNode`
+- `packages/flux-core/src/types/renderer-compiler.ts` for `CompileSchemaOptions`
+- `packages/flux-core/src/types/node-identity.ts` for `TemplateNode` and `CompiledTemplate`
 - `packages/flux-core/src/types/renderer-core.ts` for `RendererDefinition`
 - `packages/flux-core/src/types/schema.ts` for shared schema contracts such as `BaseSchema`, `ReactionSchema`, and `XuiImportSpec`
 - `docs/architecture/action-scope-and-imports.md` for namespaced action and `xui:imports` compatibility rules
@@ -39,7 +40,7 @@ The first compiler-integrated diagnostics slice is now implemented.
 - `createSchemaCompiler(...).validate(...)` reuses the same compiler-owned analysis helpers as `compile(...)`.
 - `validateSchema(...)` is available as a convenience adapter that builds a compiler and delegates to that same analysis path.
 - built-in `xui:imports` validation now runs through a namespace validator instead of falling into generic passthrough.
-- closed prop models can now report unknown bare keys, and namespaced passthrough can be preserved through `CompiledSchemaNode.extensions` instead of leaking into normal compiled props.
+- closed prop models can now report unknown bare keys before permissive prop lowering; namespaced passthrough remains a directional extension-channel concern rather than a current `CompiledSchemaNode` field.
 - renderer-owned `schemaValidator` rollout is now active for higher-value shape checks in shipped renderers such as `form` and `table`.
 - representative docs example coverage now exists through diagnostics tests that validate `docs/examples/user-management-schema.md` with the shared `validateSchema(...)` path.
 
@@ -400,7 +401,7 @@ Recommended compiler pipeline:
 Directionally:
 
 ```ts
-function analyzeAndCompileNode(node: unknown, path: string, ctx: SchemaCompileContext): CompiledSchemaNode | undefined {
+function analyzeAndCompileNode(node: unknown, path: string, ctx: SchemaCompileContext): TemplateNode | undefined {
   if (!isPlainObject(node)) {
     ctx.error('expected-object', path, 'Schema node must be an object.');
     return undefined;
@@ -428,7 +429,7 @@ function analyzeAndCompileNode(node: unknown, path: string, ctx: SchemaCompileCo
 
 ## Compile Result Compatibility
 
-The first implementation slice should preserve the current `compile(...) => CompiledSchemaNode | CompiledSchemaNode[]` return shape for compatibility.
+The current compiler API already returns `CompiledTemplate`, whose `root` is `TemplateNode | TemplateNode[]`.
 
 Diagnostics should therefore travel out-of-band in phase one through:
 
@@ -539,9 +540,8 @@ If passthrough is needed, preserve only allowed namespaced extensions through a 
 Directionally:
 
 ```ts
-interface CompiledSchemaNode {
-  // existing fields...
-  extensions?: Record<string, unknown>;
+interface TemplateNode {
+  // current compiler-owned lowered node
 }
 ```
 

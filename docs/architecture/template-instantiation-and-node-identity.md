@@ -86,7 +86,7 @@ interface TemplateNode {
   rendererType: string;
   component: RendererDefinition;    // resolved at compile time; no runtime registry lookup needed
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
-  metaProgram: CompiledSchemaMeta;  // same structure as CompiledSchemaNode.meta
+  metaProgram: CompiledSchemaMeta;  // canonical compiled meta program for this template node
   eventPlans: Readonly<Record<string, unknown>>;
   regions: Readonly<Record<string, TemplateRegion>>;
   scopePlan: ScopePlan;

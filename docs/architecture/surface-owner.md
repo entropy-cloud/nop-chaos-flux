@@ -118,6 +118,8 @@ stack 中只有最上层 surface 拥有当前交互控制权。
 外部读取规则：
 
 - 优先通过 `statusPath` 读取 surface summary
+- `statusPath` 由 `SurfaceRuntime` 在 owner scope（通常是 `surface.scope.parent ?? surface.scope`）统一发布；React host 只负责渲染，不应重复写同一路径
+- surface close 时仍要把同一路径写回 `{ open: false, active: false, opening: false, closing: false }`，避免外部读者长期停留在陈旧的“已打开”快照
 
 局部读取规则：
 

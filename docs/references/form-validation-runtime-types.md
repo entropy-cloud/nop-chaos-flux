@@ -14,7 +14,7 @@ For conceptual design, principles, and implementation guidance, see the owner do
 
 ```ts
 type ValidateOnPolicy = 'change' | 'blur' | 'submit' | 'manual';
-type ShowErrorOnPolicy = 'change' | 'blur' | 'submit' | 'touched' | 'manual';
+type ShowErrorOnPolicy = 'touched' | 'dirty' | 'visited' | 'submit';
 type ValidationOwnerLifecycleState =
   | 'bootstrapping'
   | 'active'
@@ -83,7 +83,7 @@ interface ValidationScopeRuntime {
   readonly compiledModel: CompiledFormValidationModel | null;
   readonly lifecycleState: ValidationOwnerLifecycleState;
   readonly modelGeneration: number;
-  readonly showErrorOn: Exclude<ShowErrorOnPolicy, 'touched'>;
+  readonly showErrorOn: ShowErrorOnPolicy;
 
   validateAt(path: string, reason?: ValidationReason): Promise<ValidationResult>;
   validateSubtree(path: string, reason?: ValidationReason): Promise<ScopeValidationResult>;
@@ -171,7 +171,7 @@ interface FormRuntime extends ValidationScopeRuntime {
 ### Additional FormRuntime Responsibilities
 
 1. tracking touched/dirty/visited state
-2. implementing `showErrorOn: 'touched'` policy
+2. implementing `showErrorOn: 'touched'` policy, with live runtime visibility triggers currently limited to `touched` / `dirty` / `visited` / `submit`
 3. providing `submit()` with form-specific validation and gating
 4. computing `canSubmit` and `allTouched`
 

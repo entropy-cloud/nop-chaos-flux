@@ -64,7 +64,7 @@ Normative compile model:
 - `SchemaCompiler.compile()` returns `CompiledTemplate` containing a `TemplateNode` tree
 - all compilation calls within one `RendererRuntime` share a single counter, giving every `templateNodeId` a globally unique value within that runtime
 - `TemplateNode.component` carries the resolved `RendererDefinition` directly from compile time — no per-render registry lookup
-- `NodeRenderer` receives `TemplateNode` and constructs `NodeInstance` directly; `CompiledSchemaNode` is an internal compiler artifact and does not appear in the render path
+- `NodeRenderer` receives `TemplateNode` and constructs `NodeInstance` directly; the older `CompiledSchemaNode` step has been eliminated and does not appear in the render path
 - `templateNodeId` is the compiled structural identity
 - `cid` is the live inspectable bridge token written to `data-cid` when a mounted node needs DOM/debugger/registry bridging
 - `NodeLocator` is a retired transitional wrapper and must not remain in runtime-facing contracts
@@ -87,6 +87,7 @@ The following are architecture-level constraints distilled from historical regre
 - Render phase must stay side-effect free. Renderer paths must not call store writers or state setters during render. If synchronization is needed, buffer and flush in an effect.
 - Root page scope should be seeded when `SchemaRenderer` creates the page runtime. Effects should only reconcile subsequent prop changes so mount-time child effects do not lose writes to a later root-data sync.
 - Scope identity and lifecycle must stay stable. Fragment/dialog render paths should avoid unnecessary scope recreation and must preserve parent-child reactivity when parent scope data changes.
+- React host effects should not republish owner summaries that already belong to runtime owners. For example, `DialogHost` / `DrawerHost` may render the mounted surface tree, but `statusPath` publication belongs to `SurfaceRuntime` so React rendering does not create a second source of truth or write to the wrong scope.
 
 Use `docs/references/architecture-guardrails-from-bugs.md` for concrete anti-patterns, regression examples, and verification checks.
 

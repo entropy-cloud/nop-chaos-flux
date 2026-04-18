@@ -476,7 +476,7 @@ interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   id: string;
   path: string;
   schema: S;
-  node: CompiledSchemaNode<S>;
+  node: NodeInstance<S>;
   props: Readonly<Record<string, unknown>>;
   meta: ResolvedNodeMeta;
   regions: Readonly<Record<string, RenderRegionHandle>>;
