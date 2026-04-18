@@ -1,17 +1,14 @@
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer } from '../index';
 import {
   buttonRenderer,
   createDispatchCaptureRenderer,
   env,
-  formRenderer,
   namespaceProviderRenderer,
   componentHandleProviderRenderer,
   pageRenderer,
-  pollingSourceRenderer,
-  probeInputRenderer,
   scopedHostRenderer,
   sharedFormulaCompiler,
   textRenderer,
@@ -176,7 +173,7 @@ describe('drawer container resolution', () => {
 describe('page modalContainer', () => {
   it('passes modalContainer from page schema to DialogHost', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer, scopedHostRenderer, componentHandleProviderRenderer]);
-    const { container } = render(
+    render(
       <SchemaRenderer
         schema={{
           type: 'page',

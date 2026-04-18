@@ -1,11 +1,9 @@
 import React from 'react';
 import type {
-  PageRuntime,
   SurfaceEntry,
   SurfaceRuntime
 } from '@nop-chaos/flux-core';
 import { useCurrentPage, useCurrentSurfaceRuntime } from './hooks';
-import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { renderSurfaceNode, SurfaceScopeProviders, useSurfaceScopeSnapshot } from './dialog-host-surface';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
@@ -27,6 +25,7 @@ function sameSurfaces(left: SurfaceEntry[], right: SurfaceEntry[]) {
 export function DialogHost() {
   const page = useCurrentPage();
   const surfaceRuntime = useCurrentSurfaceRuntime();
+  const modalContainer = (page as { modalContainer?: string } | undefined)?.modalContainer;
 
   const surfaces = useSyncExternalStoreWithSelector(
     surfaceRuntime?.store.subscribe ?? (() => () => undefined),
@@ -44,8 +43,8 @@ export function DialogHost() {
     <>
       {surfaces.map((surface: SurfaceEntry) => (
         surface.kind === 'dialog'
-          ? <DialogView key={surface.id} surface={surface} page={page} surfaceRuntime={surfaceRuntime} />
-          : <DrawerView key={surface.id} surface={surface} surfaceRuntime={surfaceRuntime} page={page} />
+          ? <DialogView key={surface.id} surface={surface} surfaceRuntime={surfaceRuntime} modalContainer={modalContainer} />
+          : <DrawerView key={surface.id} surface={surface} surfaceRuntime={surfaceRuntime} modalContainer={modalContainer} />
       ))}
     </>
   );
@@ -53,27 +52,15 @@ export function DialogHost() {
 
 function DialogView(props: {
   surface: SurfaceEntry;
-  page: PageRuntime;
   surfaceRuntime: SurfaceRuntime;
+  modalContainer?: string;
 }) {
   useSurfaceScopeSnapshot(props.surface.scope);
 
-  const { page, surface, surfaceRuntime } = props;
+  const { surface, surfaceRuntime } = props;
   const handleClose = React.useCallback(() => {
     surfaceRuntime.close(surface.id);
   }, [surface.id, surfaceRuntime]);
-
-  React.useEffect(() => {
-    const statusPath = typeof surface.surface.statusPath === 'string' ? surface.surface.statusPath : undefined;
-    publishOwnerStatus(surface.scope, statusPath, {
-      id: surface.id,
-      kind: 'dialog',
-      open: true,
-      active: true,
-      opening: false,
-      closing: false
-    });
-  }, [page, surface]);
 
   const surfaceContext = {
     scope: surface.scope,
@@ -83,7 +70,7 @@ function DialogView(props: {
   };
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
-  const containerId = typeof surface.surface.container === 'string' ? surface.surface.container : page.modalContainer;
+  const containerId = typeof surface.surface.container === 'string' ? surface.surface.container : props.modalContainer;
   const containerElement = resolveContainerElement(containerId, surface.componentRegistry);
   const showMask = surface.surface.showMask !== false;
 
@@ -115,27 +102,15 @@ function DialogView(props: {
 
 function DrawerView(props: {
   surface: SurfaceEntry;
-  page: PageRuntime;
   surfaceRuntime: SurfaceRuntime;
+  modalContainer?: string;
 }) {
   useSurfaceScopeSnapshot(props.surface.scope);
 
-  const { page, surface, surfaceRuntime } = props;
+  const { surface, surfaceRuntime } = props;
   const handleClose = React.useCallback(() => {
     surfaceRuntime.close(surface.id);
   }, [surface.id, surfaceRuntime]);
-
-  React.useEffect(() => {
-    const statusPath = typeof surface.surface.statusPath === 'string' ? surface.surface.statusPath : undefined;
-    publishOwnerStatus(surface.scope, statusPath, {
-      id: surface.id,
-      kind: 'drawer',
-      open: true,
-      active: true,
-      opening: false,
-      closing: false
-    });
-  }, [page, surface]);
 
   const surfaceContext = {
     scope: surface.scope,
@@ -145,7 +120,7 @@ function DrawerView(props: {
   };
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
-  const containerId = typeof surface.surface.container === 'string' ? surface.surface.container : page.modalContainer;
+  const containerId = typeof surface.surface.container === 'string' ? surface.surface.container : props.modalContainer;
   const containerElement = resolveContainerElement(containerId, surface.componentRegistry);
   const showMask = surface.surface.showMask !== false;
 

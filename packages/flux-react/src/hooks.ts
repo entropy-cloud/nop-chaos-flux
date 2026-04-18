@@ -126,17 +126,29 @@ export function useRendererEnv() {
  * the internal cast from `Record<string, unknown>` to `S` is a necessary type bridge
  * that transfers type responsibility to the caller's selector.
  */
-export function useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn: (a: T, b: T) => boolean = Object.is): T {
+export function useScopeSelector<T, S = Record<string, unknown>>(
+  selector: (scopeData: S) => T,
+  equalityFn: (a: T, b: T) => boolean = Object.is,
+  options?: { enabled?: boolean; fallback?: T }
+): T {
   const scope = useRenderScope();
   const store = scope.store;
-  const subscribe = useMemo(() => store?.subscribe ?? (() => emptyUnsubscribe), [store]);
-  const getSnapshot = useMemo(() => () => (store?.getSnapshot() ?? scope.readVisible()) as unknown as S, [store, scope]);
+  const enabled = options?.enabled !== false;
+  const subscribe = useMemo(
+    () => (enabled ? store?.subscribe ?? (() => emptyUnsubscribe) : () => emptyUnsubscribe),
+    [enabled, store]
+  );
+  const getSnapshot = useMemo(
+    () => (enabled ? () => (store?.getSnapshot() ?? scope.readVisible()) as unknown as S : () => (undefined as unknown as S)),
+    [enabled, store, scope]
+  );
+  const fallbackSelector = useCallback(() => options?.fallback as T, [options?.fallback]);
 
   return useSyncExternalStoreWithSelector(
     subscribe,
     getSnapshot,
     getSnapshot,
-    selector,
+    enabled ? selector : fallbackSelector,
     equalityFn
   );
 }
