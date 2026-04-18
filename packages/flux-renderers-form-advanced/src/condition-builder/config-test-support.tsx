@@ -1,6 +1,7 @@
 import React from 'react';
 import { afterEach, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { ConditionGroup } from './ConditionGroup';
 import type {
   ConditionBuilderSchema,
@@ -42,6 +43,30 @@ vi.mock('@dnd-kit/utilities', () => ({
 
 vi.mock('@nop-chaos/ui', () => {
   const forwardRef = React.forwardRef;
+
+  function MockCombobox({ children }: any) {
+    return <div data-testid="mock-combobox">{children}</div>;
+  }
+
+  function MockComboboxInput({ placeholder, className }: any) {
+    return <input data-testid="mock-combobox-input" placeholder={placeholder} className={className} />;
+  }
+
+  function MockComboboxContent({ children }: any) {
+    return <div data-testid="mock-combobox-content">{children}</div>;
+  }
+
+  function MockComboboxEmpty({ children }: any) {
+    return <div data-testid="mock-combobox-empty">{children}</div>;
+  }
+
+  function MockComboboxList({ children }: any) {
+    return <div data-testid="mock-combobox-list">{typeof children === 'function' ? null : children}</div>;
+  }
+
+  function MockComboboxItem({ children, value, disabled }: any) {
+    return <div data-testid={`combobox-item-${value?.name ?? value}`} data-disabled={disabled ?? false}>{children}</div>;
+  }
 
   const MockSelectTrigger = forwardRef(({ children, ...props }: any, ref: any) => (
     <div ref={ref} data-testid="select-trigger" {...props}>{children}</div>
@@ -101,6 +126,12 @@ vi.mock('@nop-chaos/ui', () => {
 
   return {
     cn: (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' '),
+    Combobox: MockCombobox,
+    ComboboxInput: MockComboboxInput,
+    ComboboxContent: MockComboboxContent,
+    ComboboxEmpty: MockComboboxEmpty,
+    ComboboxList: MockComboboxList,
+    ComboboxItem: MockComboboxItem,
     Select: MockSelect,
     SelectTrigger: MockSelectTrigger,
     SelectContent: MockSelectContent,
@@ -131,6 +162,9 @@ export const testFields: ConditionField[] = [
 ];
 
 export { ConditionGroup };
+
+resetFluxI18n();
+initFluxI18n();
 
 export function makeEmptyGroup(): ConditionGroupValue {
   return { id: 'g1', conjunction: 'and', children: [] };

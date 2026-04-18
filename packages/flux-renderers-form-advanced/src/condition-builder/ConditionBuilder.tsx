@@ -7,6 +7,7 @@ import type {
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import { useCurrentFormModelGeneration, useSchemaProps } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   formLabelFieldRule,
   useFormFieldController,
@@ -22,7 +23,6 @@ import type {
 import { ConditionGroup } from './ConditionGroup';
 import { genId } from './id-utils';
 import { groupValuesEqual } from './utils';
-import { t, tf } from './i18n';
 
 function toGroupValue(value: unknown): ConditionGroupValue {
   if (value && typeof value === 'object' && 'children' in value) {
@@ -33,6 +33,14 @@ function toGroupValue(value: unknown): ConditionGroupValue {
     conjunction: 'and',
     children: [],
   };
+}
+
+function getConditionCountLabel(count: number): string {
+  return t('conditionBuilder.conditionCount', { count });
+}
+
+function getRequiredMessage(label: string): string {
+  return t('conditionBuilder.requiredMessage', { label });
 }
 
 export function ConditionBuilderRenderer(props: RendererComponentProps<ConditionBuilderSchema>) {
@@ -146,8 +154,8 @@ function PickerModeContent({
             >
               <span className={hasConditions ? '' : 'text-muted-foreground'}>
                 {hasConditions
-                  ? tf('conditionCount', value.children.length)
-                  : schema.placeholder ?? t('pickerPlaceholder')}
+                  ? getConditionCountLabel(value.children.length)
+                  : schema.placeholder ?? t('conditionBuilder.pickerPlaceholder')}
               </span>
               <ChevronDownIcon className="size-4 text-muted-foreground" />
             </Button>
@@ -186,7 +194,7 @@ export const conditionBuilderRendererDefinition: RendererDefinition = {
       if (schema.required) {
         rules.push({
           kind: 'required',
-          message: tf('requiredMessage', String(schema.label ?? schema.name ?? '条件')),
+          message: getRequiredMessage(String(schema.label ?? schema.name ?? t('conditionBuilder.conditionLabel'))),
         });
       }
       return rules;

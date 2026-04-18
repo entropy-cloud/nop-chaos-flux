@@ -1,26 +1,50 @@
 import { describe, expect, it } from 'vitest';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import {
-  OPERATOR_LABELS,
+  OPERATOR_LABEL_KEYS,
   OPERATORS_BY_TYPE,
   NO_VALUE_OPS,
+  getBuiltInOperatorLabel,
   resolveOperators,
   resolveDefaultOp,
   resolveOperatorLabel,
 } from './operators';
 
 describe('operators', () => {
-  describe('OPERATOR_LABELS', () => {
-    it('contains all standard operator labels', () => {
-      expect(OPERATOR_LABELS.equal).toBe('等于');
-      expect(OPERATOR_LABELS.not_equal).toBe('不等于');
-      expect(OPERATOR_LABELS.less).toBe('小于');
-      expect(OPERATOR_LABELS.greater).toBe('大于');
-      expect(OPERATOR_LABELS.between).toBe('范围内');
-      expect(OPERATOR_LABELS.is_empty).toBe('为空');
-      expect(OPERATOR_LABELS.like).toBe('包含');
-      expect(OPERATOR_LABELS.starts_with).toBe('开头是');
-      expect(OPERATOR_LABELS.select_equals).toBe('等于');
-      expect(OPERATOR_LABELS.select_any_in).toBe('包含任意');
+  describe('OPERATOR_LABEL_KEYS', () => {
+    it('contains all standard operator label keys', () => {
+      expect(OPERATOR_LABEL_KEYS.equal).toBe('conditionBuilder.operators.equal');
+      expect(OPERATOR_LABEL_KEYS.not_equal).toBe('conditionBuilder.operators.notEqual');
+      expect(OPERATOR_LABEL_KEYS.less).toBe('conditionBuilder.operators.less');
+      expect(OPERATOR_LABEL_KEYS.greater).toBe('conditionBuilder.operators.greater');
+      expect(OPERATOR_LABEL_KEYS.between).toBe('conditionBuilder.operators.between');
+      expect(OPERATOR_LABEL_KEYS.is_empty).toBe('conditionBuilder.operators.isEmpty');
+      expect(OPERATOR_LABEL_KEYS.like).toBe('conditionBuilder.operators.like');
+      expect(OPERATOR_LABEL_KEYS.starts_with).toBe('conditionBuilder.operators.startsWith');
+      expect(OPERATOR_LABEL_KEYS.select_equals).toBe('conditionBuilder.operators.selectEquals');
+      expect(OPERATOR_LABEL_KEYS.select_any_in).toBe('conditionBuilder.operators.selectAnyIn');
+    });
+  });
+
+  describe('getBuiltInOperatorLabel', () => {
+    it('resolves zh-CN labels from flux-i18n resources', async () => {
+      resetFluxI18n();
+      initFluxI18n();
+      await changeLanguage('zh-CN');
+
+      expect(getBuiltInOperatorLabel('equal')).toBe('等于');
+      expect(getBuiltInOperatorLabel('between')).toBe('范围内');
+      expect(getBuiltInOperatorLabel('select_any_in')).toBe('包含任意');
+    });
+
+    it('resolves en-US labels from flux-i18n resources', async () => {
+      resetFluxI18n();
+      initFluxI18n();
+      await changeLanguage('en-US');
+
+      expect(getBuiltInOperatorLabel('equal')).toBe('Equals');
+      expect(getBuiltInOperatorLabel('between')).toBe('Between');
+      expect(getBuiltInOperatorLabel('select_any_in')).toBe('Contains any');
     });
   });
 
@@ -79,6 +103,8 @@ describe('operators', () => {
 
   describe('resolveOperators', () => {
     it('returns built-in operators for known field type', () => {
+      resetFluxI18n();
+      initFluxI18n();
       const ops = resolveOperators('text', undefined, undefined);
       expect(ops.length).toBeGreaterThan(0);
       expect(ops[0]).toEqual({ label: '等于', value: 'equal' });
@@ -180,6 +206,8 @@ describe('operators', () => {
     });
 
     it('returns built-in label when no override', () => {
+      resetFluxI18n();
+      initFluxI18n();
       expect(resolveOperatorLabel('equal', undefined)).toBe('等于');
     });
 

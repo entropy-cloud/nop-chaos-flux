@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { formAdvancedRendererDefinitions } from '../index';
 
 describe('condition-builder renderer', () => {
@@ -41,13 +42,29 @@ describe('condition-builder renderer', () => {
     expect(v!.getFieldPath({})).toBeUndefined();
   });
 
-  it('collects required validation rule when required is true', () => {
+  it('collects required validation rule when required is true', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    await changeLanguage('zh-CN');
+
     const def = formAdvancedRendererDefinitions.find((d) => d.type === 'condition-builder');
     const v = def?.validation as Record<string, any> | undefined;
     const rules = v!.collectRules({ required: true, name: 'test' });
     expect(rules).toHaveLength(1);
     expect(rules[0].kind).toBe('required');
     expect(rules[0].message).toContain('不能为空');
+  });
+
+  it('uses flux-i18n required message after language switch', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    await changeLanguage('en-US');
+
+    const def = formAdvancedRendererDefinitions.find((d) => d.type === 'condition-builder');
+    const v = def?.validation as Record<string, any> | undefined;
+    const rules = v!.collectRules({ required: true, label: 'Rule' });
+
+    expect(rules[0].message).toBe('Rule cannot be empty');
   });
 
   it('collects no rules when required is not set', () => {

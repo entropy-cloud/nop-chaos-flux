@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { render, fireEvent, cleanup, screen } from '@testing-library/react';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { ValueInput } from './ValueInput';
 import type { ConditionField } from './types';
 
@@ -157,5 +158,16 @@ describe('ValueInput', () => {
 
     fireEvent.click(screen.getByText('Open ×'));
     expect(onChange).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('uses translated placeholders after language switch', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    await changeLanguage('en-US');
+
+    const { container } = render(<ValueInput field={numberField} op="equal" value={undefined} onChange={() => {}} />);
+    const input = container.querySelector('input[type="number"]') as HTMLInputElement;
+
+    expect(input.placeholder).toBe('Number');
   });
 });

@@ -1,3 +1,4 @@
+import { t } from '@nop-chaos/flux-i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nop-chaos/ui';
 import type { ConditionOperatorInfo } from './operators';
 
@@ -21,7 +22,7 @@ export function OperatorSelect({ operators, value, onChange, disabled }: Operato
   return (
     <Select value={value ?? ''} onValueChange={(op) => { if (op != null) onChange(op); }} disabled={disabled}>
       <SelectTrigger size="sm" className="h-7 text-xs min-w-[80px] max-w-[120px]">
-        <SelectValue placeholder="条件" />
+        <SelectValue placeholder={t('conditionBuilder.operatorPlaceholder')} />
       </SelectTrigger>
       <SelectContent>
         {operators.map((op) => (

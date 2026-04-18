@@ -1,4 +1,5 @@
 import type { ConditionCustomOperator, ConditionOperatorOverrides } from './types';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface ConditionOperatorInfo {
   label: string;
@@ -6,26 +7,31 @@ export interface ConditionOperatorInfo {
   values?: ConditionCustomOperator['values'];
 }
 
-export const OPERATOR_LABELS: Record<string, string> = {
-  equal: '等于',
-  not_equal: '不等于',
-  less: '小于',
-  less_or_equal: '小于等于',
-  greater: '大于',
-  greater_or_equal: '大于等于',
-  between: '范围内',
-  not_between: '范围外',
-  is_empty: '为空',
-  is_not_empty: '不为空',
-  like: '包含',
-  not_like: '不包含',
-  starts_with: '开头是',
-  ends_with: '结尾是',
-  select_equals: '等于',
-  select_not_equals: '不等于',
-  select_any_in: '包含任意',
-  select_not_any_in: '不包含任意',
+export const OPERATOR_LABEL_KEYS: Record<string, string> = {
+  equal: 'conditionBuilder.operators.equal',
+  not_equal: 'conditionBuilder.operators.notEqual',
+  less: 'conditionBuilder.operators.less',
+  less_or_equal: 'conditionBuilder.operators.lessOrEqual',
+  greater: 'conditionBuilder.operators.greater',
+  greater_or_equal: 'conditionBuilder.operators.greaterOrEqual',
+  between: 'conditionBuilder.operators.between',
+  not_between: 'conditionBuilder.operators.notBetween',
+  is_empty: 'conditionBuilder.operators.isEmpty',
+  is_not_empty: 'conditionBuilder.operators.isNotEmpty',
+  like: 'conditionBuilder.operators.like',
+  not_like: 'conditionBuilder.operators.notLike',
+  starts_with: 'conditionBuilder.operators.startsWith',
+  ends_with: 'conditionBuilder.operators.endsWith',
+  select_equals: 'conditionBuilder.operators.selectEquals',
+  select_not_equals: 'conditionBuilder.operators.selectNotEquals',
+  select_any_in: 'conditionBuilder.operators.selectAnyIn',
+  select_not_any_in: 'conditionBuilder.operators.selectNotAnyIn',
 };
+
+export function getBuiltInOperatorLabel(op: string): string | undefined {
+  const key = OPERATOR_LABEL_KEYS[op];
+  return key ? t(key) : undefined;
+}
 
 export const OPERATORS_BY_TYPE: Record<string, { defaultOp: string; operators: string[] }> = {
   text: {
@@ -76,7 +82,7 @@ export function resolveOperators(
 
   return rawOps.map((op) => {
     if (typeof op === 'string') {
-      const label = schemaOverride?.labels?.[op] ?? OPERATOR_LABELS[op] ?? op;
+      const label = schemaOverride?.labels?.[op] ?? getBuiltInOperatorLabel(op) ?? op;
       return { label, value: op };
     }
     return { label: op.label, value: op.value, values: op.values };
@@ -97,5 +103,5 @@ export function resolveOperatorLabel(
   op: string,
   schemaOverride: ConditionOperatorOverrides | undefined,
 ): string {
-  return schemaOverride?.labels?.[op] ?? OPERATOR_LABELS[op] ?? op;
+  return schemaOverride?.labels?.[op] ?? getBuiltInOperatorLabel(op) ?? op;
 }

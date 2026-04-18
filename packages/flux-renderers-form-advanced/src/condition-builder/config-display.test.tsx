@@ -1,5 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { makeEmptyGroup, renderGroup } from './config-test-support';
 
 describe('condition-builder config integration display behavior', () => {
@@ -238,6 +239,21 @@ describe('condition-builder config integration display behavior', () => {
       const button = addBtns[0].closest('button');
       expect(button).toBeTruthy();
       expect((button as HTMLButtonElement).disabled).toBe(true);
+    });
+  });
+
+  describe('language switch', () => {
+    it('renders English built-in labels after switching flux-i18n language', async () => {
+      resetFluxI18n();
+      initFluxI18n();
+      await changeLanguage('en-US');
+
+      renderGroup({ showAndOr: true, showNot: true, builderMode: 'full' });
+
+      expect(screen.queryAllByText('AND').length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryAllByText('OR').length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryAllByText('NOT').length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryAllByText('Add condition').length).toBeGreaterThanOrEqual(1);
     });
   });
 });

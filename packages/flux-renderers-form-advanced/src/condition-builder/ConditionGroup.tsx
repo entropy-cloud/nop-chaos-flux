@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { PlusIcon, GroupIcon } from 'lucide-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
 import {
   DndContext,
@@ -28,7 +29,6 @@ import type {
 } from './types';
 import { ConditionItem } from './ConditionItem';
 import { genId } from './id-utils';
-import { t } from './i18n';
 import { computeUsedFields } from './utils';
 
 interface ConditionGroupProps {
@@ -61,9 +61,9 @@ export function ConditionGroup({
     uniqueFields = false,
     maxDepth,
     maxItemsPerGroup,
-    addConditionLabel = t('addCondition'),
-    addGroupLabel = t('addGroup'),
-    removeGroupLabel = t('removeGroup'),
+    addConditionLabel = t('conditionBuilder.addCondition'),
+    addGroupLabel = t('conditionBuilder.addGroup'),
+    removeGroupLabel = t('conditionBuilder.removeGroup'),
   } = schema;
 
   const isSimple = builderMode === 'simple';
@@ -142,7 +142,7 @@ export function ConditionGroup({
 
   const atMaxItems = maxItemsPerGroup != null && value.children.length >= maxItemsPerGroup;
 
-  const conjunctionLabel = value.conjunction === 'and' ? t('and') : t('or');
+  const conjunctionLabel = value.conjunction === 'and' ? t('conditionBuilder.and') : t('conditionBuilder.or');
 
   const childIds = useMemo(() => value.children.map((c) => c.id), [value.children]);
 
@@ -155,7 +155,7 @@ export function ConditionGroup({
       <SortableContext items={childIds} strategy={verticalListSortingStrategy}>
         {value.children.length === 0 && (
           <div className="text-xs text-muted-foreground py-4 text-center">
-            {schema.placeholder ?? t('placeholder')}
+            {schema.placeholder ?? t('conditionBuilder.placeholder')}
           </div>
         )}
         {value.children.map((child, index) =>
@@ -200,7 +200,7 @@ export function ConditionGroup({
     <>
       {value.children.length === 0 && (
         <div className="text-xs text-muted-foreground py-4 text-center">
-          {schema.placeholder ?? t('placeholder')}
+          {schema.placeholder ?? t('conditionBuilder.placeholder')}
         </div>
       )}
       {value.children.map((child, index) =>
@@ -239,7 +239,7 @@ export function ConditionGroup({
     <div data-slot="condition-group" className="flex flex-col gap-2">
       {depth === 0 && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>{t('satisfyFollowing')}</span>
+          <span>{t('conditionBuilder.satisfyFollowing')}</span>
         </div>
       )}
 
@@ -274,7 +274,7 @@ export function ConditionGroup({
                   onClick={() => handleConjunctionChange('and')}
                   disabled={disabled}
                 >
-                  {t('and')}
+                  {t('conditionBuilder.and')}
                 </Button>
                 <Button
                   type="button"
@@ -289,7 +289,7 @@ export function ConditionGroup({
                   onClick={() => handleConjunctionChange('or')}
                   disabled={disabled}
                 >
-                  {t('or')}
+                  {t('conditionBuilder.or')}
                 </Button>
               </div>
             ) : (
@@ -312,7 +312,7 @@ export function ConditionGroup({
                 onClick={handleNotToggle}
                 disabled={disabled}
               >
-                {value.not ? t('notActive') : t('not')}
+                {value.not ? t('conditionBuilder.notActive') : t('conditionBuilder.not')}
               </Button>
             )}
           </div>

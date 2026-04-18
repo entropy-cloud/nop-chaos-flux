@@ -7,8 +7,8 @@ import {
   ComboboxEmpty,
   ComboboxInput,
 } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { ConditionField, ConditionFieldGroup } from './types';
-import { t } from './i18n';
 
 interface FieldSelectProps {
   fields: ConditionField[];
@@ -65,12 +65,12 @@ export function FieldSelect({ fields, value, onChange, disabled, usedFields, uni
     >
       <ComboboxInput
         className="h-7 text-xs min-w-[100px] max-w-[160px]"
-        placeholder={selectedItem?.label ?? t('selectField')}
+        placeholder={selectedItem?.label ?? t('conditionBuilder.selectField')}
         showClear={false}
       />
       <ComboboxContent>
         <ComboboxEmpty>
-          <div className="px-3 py-2 text-xs text-muted-foreground">{t('noMatchField')}</div>
+          <div className="px-3 py-2 text-xs text-muted-foreground">{t('conditionBuilder.noMatchField')}</div>
         </ComboboxEmpty>
         <ComboboxList>
           {(item: FieldItem) => (

@@ -1,5 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { makeEmptyGroup, renderGroup } from './config-test-support';
 
 describe('condition-builder config integration action behavior', () => {
@@ -82,6 +83,21 @@ describe('condition-builder config integration action behavior', () => {
       expect(removeBtns.length).toBeGreaterThanOrEqual(1);
       fireEvent.click(removeBtns[0]);
       expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ children: [] }));
+    });
+
+    it('uses translated remove group title after language switch', async () => {
+      resetFluxI18n();
+      initFluxI18n();
+      await changeLanguage('en-US');
+
+      const value = {
+        id: 'g1',
+        conjunction: 'and' as const,
+        children: [{ id: 'inner', conjunction: 'or' as const, children: [] }],
+      };
+
+      renderGroup({ builderMode: 'full' }, value, vi.fn());
+      expect(screen.queryAllByTitle('Remove group').length).toBeGreaterThanOrEqual(1);
     });
   });
 

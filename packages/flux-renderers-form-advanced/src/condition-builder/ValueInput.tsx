@@ -1,10 +1,10 @@
 import React from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Input } from '@nop-chaos/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nop-chaos/ui';
 import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import { Badge } from '@nop-chaos/ui';
 import type { ConditionField, ConditionSelectField } from './types';
-import { t } from './i18n';
 
 interface ValueInputProps {
   field: ConditionField;
@@ -55,15 +55,15 @@ function NumberInput({ value, onChange, disabled }: {
   value: unknown; onChange: (v: unknown) => void; disabled?: boolean;
 }) {
   return (
-    <Input
-      type="number"
-      value={value == null ? '' : String(value)}
-      placeholder={t('numberPlaceholder')}
-      disabled={disabled}
-      className="h-7 text-xs min-w-[80px]"
-      onChange={(e) => {
-        const v = e.target.value;
-        onChange(v === '' ? undefined : Number(v));
+      <Input
+        type="number"
+        value={value == null ? '' : String(value)}
+        placeholder={t('conditionBuilder.numberPlaceholder')}
+        disabled={disabled}
+        className="h-7 text-xs min-w-[80px]"
+        onChange={(e) => {
+          const v = e.target.value;
+          onChange(v === '' ? undefined : Number(v));
       }}
     />
   );
@@ -83,7 +83,7 @@ function SelectInput({ field, op, value, onChange, disabled }: {
   return (
     <Select value={stringValue} onValueChange={(v) => onChange(v)} disabled={disabled}>
       <SelectTrigger size="sm" className="h-7 text-xs min-w-[100px]">
-        <SelectValue placeholder={field.placeholder ?? t('selectPlaceholder')} />
+        <SelectValue placeholder={field.placeholder ?? t('conditionBuilder.selectPlaceholder')} />
       </SelectTrigger>
       <SelectContent>
         {options.map((opt) => (
@@ -124,7 +124,7 @@ function MultiSelectInput({ options, value, onChange, disabled, placeholder }: {
           );
         })
       ) : (
-        <span className="text-xs text-muted-foreground">{placeholder ?? t('selectPlaceholder')}</span>
+        <span className="text-xs text-muted-foreground">{placeholder ?? t('conditionBuilder.selectPlaceholder')}</span>
       )}
       <div className="relative">
         <NativeSelect
@@ -135,7 +135,7 @@ function MultiSelectInput({ options, value, onChange, disabled, placeholder }: {
             if (e.target.value) toggle(e.target.value);
           }}
         >
-          <NativeSelectOption value="">{placeholder ?? t('addOption')}</NativeSelectOption>
+          <NativeSelectOption value="">{placeholder ?? t('conditionBuilder.addOption')}</NativeSelectOption>
           {options
             .filter((o) => !selected.includes(String(o.value)))
             .map((opt) => (
@@ -145,7 +145,7 @@ function MultiSelectInput({ options, value, onChange, disabled, placeholder }: {
             ))}
         </NativeSelect>
         <Badge variant="outline" className="text-[10px] px-1.5 py-0 cursor-pointer">
-          + {t('addOption')}
+          + {t('conditionBuilder.addOption')}
         </Badge>
       </div>
     </div>
@@ -156,13 +156,13 @@ function BooleanInput({ field, value, onChange, disabled }: {
   value: unknown; onChange: (v: unknown) => void; disabled?: boolean; field: { trueLabel?: string; falseLabel?: string };
 }) {
   const stringValue = value == null ? '' : String(value);
-  const trueLabel = field.trueLabel ?? t('boolTrue');
-  const falseLabel = field.falseLabel ?? t('boolFalse');
+  const trueLabel = field.trueLabel ?? t('conditionBuilder.boolTrue');
+  const falseLabel = field.falseLabel ?? t('conditionBuilder.boolFalse');
 
   return (
     <Select value={stringValue} onValueChange={(v) => onChange(v === 'true')} disabled={disabled}>
       <SelectTrigger size="sm" className="h-7 text-xs min-w-[80px]">
-        <SelectValue placeholder={t('selectPlaceholder')} />
+        <SelectValue placeholder={t('conditionBuilder.selectPlaceholder')} />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="true">{trueLabel}</SelectItem>
@@ -210,7 +210,7 @@ function BetweenFieldInput({ field, value, onChange, disabled }: {
       <Input
         type="number"
         value={value == null ? '' : String(value)}
-        placeholder={t('numberPlaceholder')}
+        placeholder={t('conditionBuilder.numberPlaceholder')}
         disabled={disabled}
         className="h-7 text-xs min-w-[70px]"
         onChange={(e) => {
@@ -224,7 +224,7 @@ function BetweenFieldInput({ field, value, onChange, disabled }: {
     <Input
       type="text"
       value={value == null ? '' : String(value)}
-      placeholder={t('valuePlaceholder')}
+      placeholder={t('conditionBuilder.valuePlaceholder')}
       disabled={disabled}
       className="h-7 text-xs min-w-[70px]"
       onChange={(e) => onChange(e.target.value || undefined)}
