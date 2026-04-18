@@ -234,6 +234,27 @@ describe('hidden field validation participation', () => {
     expect(afterHideResult.ok).toBe(true);
     expect(runtime.getError('email')).toBeUndefined();
   });
+
+  it('notifyFieldHidden clears existing field errors and validating state immediately', async () => {
+    const model = makeFormModel({
+      email: makeNode('email', { required: true })
+    });
+    const { runtime, validateRule } = makeRuntime(model, {});
+
+    validateRule.mockReturnValue({
+      path: 'email',
+      message: 'Required',
+      rule: 'required'
+    });
+
+    await runtime.validateField('email');
+    expect(runtime.getError('email')).toBeTruthy();
+
+    runtime.notifyFieldHidden('email', true);
+
+    expect(runtime.getError('email')).toBeUndefined();
+    expect(runtime.getFieldState('email')?.validating).toBeFalsy();
+  });
 });
 
 describe('clearValueWhenHidden behavior', () => {

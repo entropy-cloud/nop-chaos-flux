@@ -14,6 +14,7 @@ import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
 export interface ArrayMutationContext {
   sharedState: ManagedFormRuntimeSharedState;
   scope: ScopeRef;
+  getArrayValue: (path: string) => unknown;
   revalidateDependents: (path: string) => Promise<void>;
 }
 
@@ -21,6 +22,7 @@ export function appendValueOp(ctx: ArrayMutationContext, path: string, value: un
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: (current) => insertArrayValue(current, Number.MAX_SAFE_INTEGER, value),
     indexTransform: (index) => index,
@@ -33,6 +35,7 @@ export function prependValueOp(ctx: ArrayMutationContext, path: string, value: u
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: (current) => insertArrayValue(current, 0, value),
     indexTransform: (index) => index + 1,
@@ -42,12 +45,13 @@ export function prependValueOp(ctx: ArrayMutationContext, path: string, value: u
 }
 
 export function insertValueOp(ctx: ArrayMutationContext, path: string, index: number, value: unknown): void {
-  const currentValue = ctx.scope.get(path);
+  const currentValue = ctx.getArrayValue(path);
   const safeArray = Array.isArray(currentValue) ? currentValue : [];
   const insertIndex = clampInsertIndex(index, safeArray.length);
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: () => insertArrayValue(safeArray, insertIndex, value),
     indexTransform: (candidate) => (candidate >= insertIndex ? candidate + 1 : candidate),
@@ -57,7 +61,7 @@ export function insertValueOp(ctx: ArrayMutationContext, path: string, index: nu
 }
 
 export function removeValueOp(ctx: ArrayMutationContext, path: string, index: number): void {
-  const currentValue = ctx.scope.get(path);
+  const currentValue = ctx.getArrayValue(path);
 
   if (!Array.isArray(currentValue) || currentValue.length === 0) {
     return;
@@ -67,6 +71,7 @@ export function removeValueOp(ctx: ArrayMutationContext, path: string, index: nu
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: () => removeArrayValue(currentValue, removeIndex),
     indexTransform: (candidate) => {
@@ -82,7 +87,7 @@ export function removeValueOp(ctx: ArrayMutationContext, path: string, index: nu
 }
 
 export function moveValueOp(ctx: ArrayMutationContext, path: string, from: number, to: number): void {
-  const currentValue = ctx.scope.get(path);
+  const currentValue = ctx.getArrayValue(path);
 
   if (!Array.isArray(currentValue) || currentValue.length <= 1) {
     return;
@@ -98,6 +103,7 @@ export function moveValueOp(ctx: ArrayMutationContext, path: string, from: numbe
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: () => moveArrayValue(currentValue, fromIndex, toIndex),
     indexTransform: (candidate) => {
@@ -121,7 +127,7 @@ export function moveValueOp(ctx: ArrayMutationContext, path: string, from: numbe
 }
 
 export function swapValueOp(ctx: ArrayMutationContext, path: string, a: number, b: number): void {
-  const currentValue = ctx.scope.get(path);
+  const currentValue = ctx.getArrayValue(path);
 
   if (!Array.isArray(currentValue) || currentValue.length <= 1) {
     return;
@@ -137,6 +143,7 @@ export function swapValueOp(ctx: ArrayMutationContext, path: string, a: number, 
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: () => swapArrayValue(currentValue, first, second),
     indexTransform: (candidate) => {
@@ -160,6 +167,7 @@ export function replaceValueOp(ctx: ArrayMutationContext, path: string, value: u
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: () => nextValue,
     indexTransform: (candidate) => (candidate < nextValue.length ? candidate : undefined),

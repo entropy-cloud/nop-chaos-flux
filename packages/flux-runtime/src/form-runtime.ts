@@ -13,6 +13,7 @@ import type {
   ScopeValidationStateSnapshot,
 } from '@nop-chaos/flux-core';
 import {
+  getIn,
   getCompiledValidationDependents,
   getCompiledValidationField,
   getCompiledValidationTraversalOrder,
@@ -175,6 +176,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     return {
       sharedState,
       scope,
+      getArrayValue(path) {
+        return getIn(store.getState().values, path);
+      },
       revalidateDependents: ownerRuntime.revalidateDependents
     };
   }

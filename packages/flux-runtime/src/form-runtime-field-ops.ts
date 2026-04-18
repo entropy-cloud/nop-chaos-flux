@@ -178,7 +178,31 @@ export function notifyFieldHidden(
   }
 
   if (hidden) {
+    sharedState.validationRuns.set(path, (sharedState.validationRuns.get(path) ?? 0) + 1);
+    const pending = sharedState.pendingValidationDebounces.get(path);
+    if (pending) {
+      clearTimeout(pending.timer);
+      pending.resolve(false);
+      sharedState.pendingValidationDebounces.delete(path);
+    }
     sharedState.hiddenFields.add(path);
+
+    const fieldStates = sharedState.store.getState().fieldStates;
+    const existingFieldState = fieldStates[path];
+    if (existingFieldState?.errors || existingFieldState?.validating) {
+      const nextFieldState: FieldState = { ...existingFieldState };
+      delete nextFieldState.errors;
+      delete nextFieldState.validating;
+      const nextFieldStates = Object.keys(nextFieldState).length > 0
+        ? { ...fieldStates, [path]: nextFieldState }
+        : (() => {
+            const next = { ...fieldStates };
+            delete next[path];
+            return next;
+          })();
+      sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
+    }
+
     const field = getCompiledValidationField(currentValidation, path);
 
     if (field?.hiddenFieldPolicy.clearValueWhenHidden) {

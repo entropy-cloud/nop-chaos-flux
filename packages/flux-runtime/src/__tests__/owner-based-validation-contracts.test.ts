@@ -486,6 +486,39 @@ describe('applyChangesAndRevalidate', () => {
     expect(result).toBeDefined();
     expect(typeof result.ok).toBe('boolean');
   });
+
+  it('keeps dependent system-validation errors in state for canSubmit gating', async () => {
+    const model = makeFormModel({
+      flag: makeNode('flag'),
+      detail: {
+        path: 'detail',
+        kind: 'field',
+        controlType: 'input-text',
+        rules: [
+          {
+            id: 'detail#0:requiredWhen',
+            rule: { kind: 'requiredWhen', path: 'flag', equals: true },
+            dependencyPaths: ['flag']
+          }
+        ],
+        behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+        children: [],
+        parent: ''
+      }
+    });
+    const { runtime } = makeRuntimeReal(model, { flag: false, detail: '' });
+
+    await runtime.applyChangesAndRevalidate({
+      writes: { flag: true },
+      changedPaths: ['flag'],
+      reason: 'system'
+    });
+
+    expect(runtime.getFieldState('detail').errors).toMatchObject([
+      expect.objectContaining({ path: 'detail', rule: 'requiredWhen' })
+    ]);
+    expect(runtime.canSubmit).toBe(false);
+  });
 });
 
 describe('validateAt alias', () => {

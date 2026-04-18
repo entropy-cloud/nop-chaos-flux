@@ -104,7 +104,13 @@ async function validateRuntimeRegistrationRoot(
   path: string,
   registration: RuntimeFieldRegistration
 ): Promise<ValidationResult> {
+  const capturedGeneration = sharedState.modelGeneration;
+  const runId = (sharedState.validationRuns.get(path) ?? 0) + 1;
+  sharedState.validationRuns.set(path, runId);
   const runtimeErrors = normalizeRuntimeValidationErrors(await registration.validate?.(), registration, path) ?? [];
+  if (sharedState.validationRuns.get(path) !== runId || sharedState.modelGeneration !== capturedGeneration) {
+    return createValidationResult([]);
+  }
   commitPathValidationState({
     sharedState,
     path,
@@ -119,12 +125,18 @@ async function validateRuntimeRegistrationChild(
   registration: RuntimeFieldRegistration,
   childPath: string
 ): Promise<ValidationResult> {
+  const capturedGeneration = sharedState.modelGeneration;
+  const runId = (sharedState.validationRuns.get(childPath) ?? 0) + 1;
+  sharedState.validationRuns.set(childPath, runId);
   const runtimeErrors = normalizeRuntimeValidationErrors(
     await registration.validateChild?.(childPath),
     registration,
     path,
     childPath
   ) ?? [];
+  if (sharedState.validationRuns.get(childPath) !== runId || sharedState.modelGeneration !== capturedGeneration) {
+    return createValidationResult([]);
+  }
   commitPathValidationState({
     sharedState,
     path: childPath,

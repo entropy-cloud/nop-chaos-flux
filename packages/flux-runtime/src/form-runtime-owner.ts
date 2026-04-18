@@ -101,7 +101,7 @@ export function buildFormOwnerRuntime(input: {
       ) {
         await input.getThisForm().validateField(dependentPath);
       } else {
-        input.getThisForm().clearErrors(dependentPath);
+        await input.getThisForm().validateField(dependentPath, 'system');
       }
     }
   }

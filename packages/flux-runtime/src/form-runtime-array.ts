@@ -144,13 +144,14 @@ export function replaceManagedArrayValue(input: {
 export function executeArrayMutation(ctx: {
   sharedState: ArrayMutationState;
   scope: ScopeRef;
+  getArrayValue: (path: string) => unknown;
   arrayPath: string;
   arrayOperation: (current: unknown[]) => unknown[];
   indexTransform: (candidateIndex: number) => number | undefined;
   cancelValidationDebounce: (path: string) => void;
   revalidateDependents: (path: string) => Promise<void>;
 }): void {
-  const currentValue = ctx.scope.get(ctx.arrayPath);
+  const currentValue = ctx.getArrayValue(ctx.arrayPath);
   const currentArray = Array.isArray(currentValue) ? currentValue : [];
   const nextValue = ctx.arrayOperation(currentArray);
 
