@@ -458,4 +458,5 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
       reviewers: [{ value: 'carol' }]
     });
   });
+
 });

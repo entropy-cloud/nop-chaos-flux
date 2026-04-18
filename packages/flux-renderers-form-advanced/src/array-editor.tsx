@@ -97,7 +97,6 @@ function ArrayEditorRow(props: {
           const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
 
           if (currentForm && name) {
-            onSync(nextItems);
             currentForm.removeValue(name, index);
             void currentForm.validateSubtree(name);
             return;

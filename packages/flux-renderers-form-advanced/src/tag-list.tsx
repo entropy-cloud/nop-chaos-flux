@@ -1,6 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
-import { useCurrentFormModelGeneration } from '@nop-chaos/flux-react';
+import { useCurrentFormFieldState, useCurrentFormModelGeneration } from '@nop-chaos/flux-react';
 import { Button } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
@@ -19,16 +19,17 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const labelText = resolveFieldLabelText(props, name);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];
   const modelGeneration = useCurrentFormModelGeneration();
+  const fieldState = useCurrentFormFieldState(name, { path: name, ownerPath: name });
 
   const syncErrorVisibility = React.useCallback(() => {
     if (!currentForm || !name) {
       return;
     }
 
-    if (currentForm.isTouched(name) || currentForm.store.getState().submitting) {
+    if (currentForm.isTouched(name) || fieldState.submitting) {
       void currentForm.validateField(name);
     }
-  }, [currentForm, name]);
+  }, [currentForm, fieldState.submitting, name]);
 
   React.useEffect(() => {
     if (!currentForm || !name) {

@@ -159,7 +159,6 @@ function KeyValueRow(props: {
           const nextPairs = pairs.filter((_, candidateIndex) => candidateIndex !== index);
 
           if (currentForm && name) {
-            onSync(nextPairs);
             currentForm.removeValue(name, index);
             void currentForm.validateSubtree(name);
             return;

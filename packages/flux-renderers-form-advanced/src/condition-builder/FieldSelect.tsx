@@ -45,7 +45,7 @@ function buildItems(fields: ConditionField[], usedFields?: Set<string>, uniqueFi
   return result;
 }
 
-export function FieldSelect({ fields, value, onChange, disabled, searchable, usedFields, uniqueFields }: FieldSelectProps) {
+export function FieldSelect({ fields, value, onChange, disabled, usedFields, uniqueFields }: FieldSelectProps) {
   const items = useMemo(
     () => buildItems(fields, usedFields, uniqueFields, value),
     [fields, usedFields, uniqueFields, value],
