@@ -36,6 +36,7 @@ export interface ApiRequestExecutionResult<T> {
 export async function executeRequestWithControl<T>(input: {
   execute: () => Promise<ApiResponse<T>>;
   control?: OperationControlConfig;
+  signal?: AbortSignal;
   shouldStop?: (response: ApiResponse<T>) => boolean;
   onFailedAttempt?: (failureCount: number, error: unknown) => void;
 }): Promise<ApiRequestExecutionResult<T>> {
@@ -47,7 +48,8 @@ export async function executeRequestWithControl<T>(input: {
       delay: retry?.delay ?? 0,
       strategy: retry?.strategy ?? 'fixed',
       maxDelay: retry?.maxDelay,
-      onFailedAttempt: input.onFailedAttempt
+      onFailedAttempt: input.onFailedAttempt,
+      signal: input.signal
     },
     input.shouldStop ?? ((response) => Boolean(response.ok))
   );
@@ -284,7 +286,8 @@ export async function executeApiSchema(
     execute: () => options?.executor
       ? options.executor(executableApi)
       : env.fetcher(executableApi, { scope, env, signal: options?.signal }),
-    control: options?.control
+    control: options?.control,
+    signal: options?.signal
   });
   const response = execution.response;
 

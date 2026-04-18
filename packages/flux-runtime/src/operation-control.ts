@@ -4,6 +4,7 @@ export interface RetryOptions {
   strategy?: 'fixed' | 'exponential';
   maxDelay?: number;
   onFailedAttempt?: (failureCount: number, error: unknown) => void;
+  signal?: AbortSignal;
 }
 
 export interface RetryResult<T> {
@@ -98,7 +99,42 @@ export async function withRetry<T>(
     return Math.min(retryDelay * (2 ** Math.max(0, nextFailureCount - 1)), maxDelay);
   }
 
+  function abortError() {
+    return withRetryMetadata(new DOMException('The operation was aborted', 'AbortError'), {
+      attempts,
+      failureCount,
+      lastFailureReason
+    });
+  }
+
+  function throwIfAborted() {
+    if (options.signal?.aborted) {
+      throw abortError();
+    }
+  }
+
+  function waitWithAbort(delay: number) {
+    return new Promise<void>((resolve, reject) => {
+      if (delay <= 0) {
+        resolve();
+        return;
+      }
+      const timeoutId = setTimeout(() => {
+        cleanup();
+        resolve();
+      }, delay);
+      const abortHandler = () => {
+        clearTimeout(timeoutId);
+        cleanup();
+        reject(abortError());
+      };
+      const cleanup = () => options.signal?.removeEventListener('abort', abortHandler);
+      options.signal?.addEventListener('abort', abortHandler, { once: true });
+    });
+  }
+
   while (attempts <= retryTimes) {
+    throwIfAborted();
     attempts += 1;
 
     try {
@@ -118,7 +154,7 @@ export async function withRetry<T>(
 
       const delay = getDelay(failureCount);
       if (delay > 0) {
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await waitWithAbort(delay);
       }
 
       continue;
@@ -134,7 +170,7 @@ export async function withRetry<T>(
 
     const syntheticFailureCount = failureCount + 1;
     if (retryDelay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, getDelay(syntheticFailureCount)));
+      await waitWithAbort(getDelay(syntheticFailureCount));
     }
   }
 

@@ -366,5 +366,13 @@ describe('createRendererRuntime', () => {
 
     expect(closeResult.ok).toBe(true);
     expect(surfaceRuntime.store.getState().entries).toHaveLength(0);
+    expect(page.scope.get('drawerStatus')).toEqual({
+      id: expect.any(String),
+      kind: 'drawer',
+      open: false,
+      active: false,
+      opening: false,
+      closing: false,
+    });
   });
 });

@@ -42,6 +42,49 @@ describe('createDataSourceController', () => {
     vi.useRealTimers();
   });
 
+  it('stops polling and surfaces an error when stopWhen evaluation throws', async () => {
+    vi.useFakeTimers();
+    const notify = vi.fn();
+    let callCount = 0;
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env: {
+        fetcher: vi.fn(async () => {
+          callCount += 1;
+          return {
+            ok: true,
+            status: 200,
+            data: { status: 'running' }
+          };
+        }),
+        notify
+      } as RendererEnv
+    });
+    const page = runtime.createPageRuntime({});
+    const controller = runtime.createDataSourceController({
+      api: { url: '/api/job' },
+      scope: page.scope,
+      targetPath: 'job',
+      interval: 10,
+      stopWhen: '${job.status === "running"}'
+    });
+
+    vi.spyOn(runtime, 'evaluate').mockImplementation(() => {
+      throw new Error('stopWhen exploded');
+    });
+
+    controller.start();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(callCount).toBe(0);
+    expect(notify).toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(50);
+    expect(callCount).toBe(0);
+    controller.stop();
+    vi.useRealTimers();
+  });
+
   it('aborts the active request when stopped', async () => {
     let capturedSignal: AbortSignal | undefined;
     let releaseRequest: (() => void) | undefined;

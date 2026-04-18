@@ -32,6 +32,23 @@ export function createManagedSurfaceRuntime(input: {
     });
   }
 
+  function clearSurfaceStatus(entry: SurfaceEntry | undefined) {
+    if (!entry) {
+      return;
+    }
+
+    const statusPath = typeof entry.surface.statusPath === 'string' ? entry.surface.statusPath : undefined;
+    const ownerScope = entry.scope.parent ?? entry.scope;
+    publishOwnerStatus(ownerScope, statusPath, {
+      id: entry.id,
+      kind: entry.kind,
+      open: false,
+      active: false,
+      opening: false,
+      closing: false
+    });
+  }
+
   function disposeOwnedScope(scopeId: string | undefined) {
     if (!scopeId) {
       return;
@@ -62,10 +79,12 @@ export function createManagedSurfaceRuntime(input: {
     },
     close(surfaceId) {
       const removed = store.remove(surfaceId);
+      clearSurfaceStatus(removed);
       disposeOwnedScope(removed?.scope.id);
     },
     closeTop() {
       const removed = store.remove();
+      clearSurfaceStatus(removed);
       disposeOwnedScope(removed?.scope.id);
     }
   };

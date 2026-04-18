@@ -221,7 +221,7 @@ export async function runBuiltInAction(
         );
       }
 
-      const args = evaluateActionArgs(action, ctx, input);
+      const args = evaluateActionArgs(action, ctx, input) ?? {};
       if (args.back) {
         env.navigate(-1 as any);
       } else if (args.url != null) {

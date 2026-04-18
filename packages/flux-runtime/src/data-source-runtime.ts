@@ -419,8 +419,23 @@ export function createDataSourceController(input: {
 
     try {
       return runtime.evaluate<boolean>(stopWhen, scope) ?? false;
-    } catch {
-      return false;
+    } catch (error) {
+      updateState((current) => ({
+        ...current,
+        status: typeof current.data === 'undefined' ? 'error' : current.status,
+        fetchStatus: 'idle',
+        stale: typeof current.data !== 'undefined',
+        error,
+        errorUpdatedAt: Date.now(),
+        failureCount: nextFailureCount(current.failureCount),
+        failureReason: error
+      }));
+      if (!silent) {
+        const message = error instanceof Error ? error.message : String(error);
+        runtime.env.notify('error', message);
+      }
+      stop();
+      return true;
     }
   }
 
