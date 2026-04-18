@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { BaseSchema, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
+import { getIn, type BaseSchema, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
 import {
   useCurrentComponentRegistry,
   useRenderScope,
+  useScopeSelector,
   useSchemaProps,
   hasRendererSlotContent,
   resolveRendererSlotContent
@@ -112,7 +113,21 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const normalizedSchema = useMemo(() => normalizeCrudSchema(schemaProps as CrudSchema), [schemaProps]);
   const scope = useRenderScope();
 
-  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const selectedRowKeys = useScopeSelector(
+    (scopeData) => {
+      if (normalizedSchema.selectionOwnership !== 'scope' || !normalizedSchema.selectionStatePath) {
+        return [] as string[];
+      }
+
+      const value = getIn(scopeData, normalizedSchema.selectionStatePath);
+      if (Array.isArray(value)) {
+        return value.filter((item): item is string => typeof item === 'string');
+      }
+
+      return [] as string[];
+    },
+    (a, b) => a.length === b.length && a.every((value, index) => value === b[index])
+  );
   const [loading] = useState(false);
 
   const source = useMemo(() => {
@@ -129,7 +144,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     internalTableRef.current?.refreshSource?.();
     if (normalizedSchema.autoClearSelectionOnRefresh) {
       internalTableRef.current?.clearSelection?.();
-      setSelectedRowKeys([]);
     }
   }, [normalizedSchema.autoClearSelectionOnRefresh]);
 
@@ -175,15 +189,33 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     } as BaseSchema;
   }, [crudId, source, normalizedSchema, emptyContent]);
 
+  const queryFormSchema = useMemo<BaseSchema | null>(() => {
+    const queryForm = normalizedSchema.queryForm;
+
+    if (!queryForm?.body) {
+      return null;
+    }
+
+    return {
+      type: 'form',
+      id: `${crudId}-query-form`,
+      data: queryForm.data,
+      body: queryForm.body,
+      actions: queryForm.actions,
+      statusPath: queryForm.statusPath,
+      layout: queryForm.layout,
+    } as BaseSchema;
+  }, [crudId, normalizedSchema.queryForm]);
+
   return (
     <div
       className={cn('nop-crud', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
     >
-      {hasQueryForm ? (
+      {hasQueryForm && queryFormSchema ? (
         <div className="nop-crud-query" data-slot="crud-query">
-          {props.regions.queryForm?.render()}
+          {props.helpers.render(queryFormSchema, { pathSuffix: 'queryForm' })}
         </div>
       ) : null}
 

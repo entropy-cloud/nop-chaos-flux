@@ -242,7 +242,7 @@ export function useTableFilter(
     (columnName: string, value: string, checked: boolean) => {
       setFilterState((prev) => {
         const newFilters = { ...prev };
-        const currentFilters = newFilters[columnName] ?? new Set<string>();
+        const currentFilters = new Set(newFilters[columnName] ?? []);
 
         if (checked) {
           currentFilters.add(value);

@@ -1,11 +1,23 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
 import {
   buttonRenderer,
   createDataSchemaRenderer,
   env,
   formulaCompiler,
 } from '../test-support';
+
+const formRenderer: RendererDefinition = {
+  type: 'form',
+  component: (props) => (
+    <form data-testid="query-form-renderer">
+      {props.regions.body?.render()}
+      {props.regions.actions?.render()}
+    </form>
+  ),
+  regions: ['body', 'actions'],
+};
 
 describe('CRUD renderer', () => {
   it('renders crud shell with toolbar and table regions', async () => {
@@ -105,6 +117,45 @@ describe('CRUD renderer', () => {
     expect(screen.getByText('Selection: no')).toBeTruthy();
   });
 
+  it('keeps $crud selection summary aligned with scope-owned table selection', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'selection-crud',
+              selectionOwnership: 'scope',
+              selectionStatePath: 'crudSelection.keys',
+              source: [
+                { id: '1', name: 'Alice' },
+                { id: '2', name: 'Bob' },
+              ],
+              columns: [{ name: 'name', label: '姓名' }],
+              bulkActions: [
+                {
+                  type: 'text',
+                  text: 'Selected: ${$crud.selectionCount}',
+                },
+              ],
+            },
+          ],
+        }}
+        data={{ crudSelection: { keys: [] } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    expect(screen.getByText('Selected: 0')).toBeTruthy();
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    fireEvent.click(checkboxes[1] as HTMLInputElement);
+    await waitFor(() => expect(screen.getByText('Selected: 1')).toBeTruthy());
+  });
+
   it('renders empty state when source is empty', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();
@@ -127,6 +178,37 @@ describe('CRUD renderer', () => {
     );
 
     expect(screen.getByText('暂无用户数据')).toBeTruthy();
+  });
+
+  it('renders queryForm through an internal form schema', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer, formRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'users-crud',
+              queryForm: {
+                body: [{ type: 'text', text: 'Query filters' }],
+                actions: [{ type: 'button', label: 'Search' }],
+              },
+              source: [],
+              columns: [{ name: 'name', label: '姓名' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    expect(await screen.findByTestId('query-form-renderer')).toBeTruthy();
+    expect(screen.getByText('Query filters')).toBeTruthy();
+    expect(screen.getByText('Search')).toBeTruthy();
   });
 
   it('registers component handles for refresh and selection', async () => {

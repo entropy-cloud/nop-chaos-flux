@@ -79,27 +79,29 @@
       "type": "button",
       "label": "新增用户",
       "variant": "primary",
-      "actionType": "dialog",
-      "dialog": {
-        "title": "新增用户",
-        "size": "lg",
-        "body": {
-          "type": "form",
-          "body": [
-            { "type": "input-text", "name": "name", "label": "姓名" },
-            { "type": "input-email", "name": "email", "label": "邮箱" }
-          ],
-          "submitAction": {
-            "action": "ajax",
-            "api": {
-              "url": "/api/users",
-              "method": "post",
-              "data": "${$form.values}"
+      "onClick": {
+        "action": "dialog",
+        "dialog": {
+          "title": "新增用户",
+          "size": "lg",
+          "body": {
+            "type": "form",
+            "body": [
+              { "type": "input-text", "name": "name", "label": "姓名" },
+              { "type": "input-email", "name": "email", "label": "邮箱" }
+            ],
+            "submitAction": {
+              "action": "ajax",
+              "api": {
+                "url": "/api/users",
+                "method": "post",
+                "data": "${$form.values}"
+              }
+            },
+            "onSubmitSuccess": {
+              "action": "component:refresh",
+              "componentId": "users-crud"
             }
-          },
-          "onSubmitSuccess": {
-            "action": "component:refresh",
-            "componentId": "users-crud"
           }
         }
       }
@@ -154,43 +156,47 @@
           "type": "button",
           "label": "查看",
           "variant": "ghost",
-          "actionType": "dialog",
-          "dialog": {
-            "title": "用户详情",
-            "size": "lg",
-            "body": [
-              { "type": "text", "text": "姓名: ${record.name}" },
-              { "type": "text", "text": "邮箱: ${record.email}" },
-              { "type": "text", "text": "状态: ${record.status}" }
-            ]
+          "onClick": {
+            "action": "dialog",
+            "dialog": {
+              "title": "用户详情",
+              "size": "lg",
+              "body": [
+                { "type": "text", "text": "姓名: ${record.name}" },
+                { "type": "text", "text": "邮箱: ${record.email}" },
+                { "type": "text", "text": "状态: ${record.status}" }
+              ]
+            }
           }
         },
         {
           "type": "button",
           "label": "编辑",
           "variant": "ghost",
-          "actionType": "dialog",
-          "dialog": {
-            "title": "编辑用户",
-            "size": "lg",
-            "body": {
-              "type": "form",
-              "data": "${record}",
-              "body": [
-                { "type": "input-text", "name": "name", "label": "姓名" },
-                { "type": "input-email", "name": "email", "label": "邮箱" }
-              ],
-              "submitAction": {
-                "action": "ajax",
-                "api": {
-                  "url": "/api/users/${record.id}",
-                  "method": "put",
-                  "data": "${$form.values}"
+          "onClick": {
+            "action": "dialog",
+            "dialog": {
+              "title": "编辑用户",
+              "size": "lg",
+              "body": {
+                "type": "form",
+                "data": "${record}",
+                "body": [
+                  { "type": "input-text", "name": "name", "label": "姓名" },
+                  { "type": "input-email", "name": "email", "label": "邮箱" }
+                ],
+                "submitAction": {
+                  "action": "ajax",
+                  "api": {
+                    "url": "/api/users/${record.id}",
+                    "method": "put",
+                    "data": "${$form.values}"
+                  }
+                },
+                "onSubmitSuccess": {
+                  "action": "component:refresh",
+                  "componentId": "users-crud"
                 }
-              },
-              "onSubmitSuccess": {
-                "action": "component:refresh",
-                "componentId": "users-crud"
               }
             }
           }

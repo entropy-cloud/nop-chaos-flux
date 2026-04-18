@@ -229,7 +229,7 @@ Targets: `packages/flux-renderers-data/src/{schemas.ts,index.tsx,crud-schema.ts}
 
 Design Change Note:
 - **Removed whole-node compiler lowering**: Based on AMIS design research, the original design of auto-lowering `rowActions` to operation column and `createDialog`/`editDialog`/`detailDialog` to standard subtrees has been removed.
-- **New approach**: Users define operation columns directly in `columns` with `type: 'operation'` and `buttons` array. Dialogs are controlled by buttons via `actionType: 'dialog'`.
+- **New approach**: Users define operation columns directly in `columns` with `type: 'operation'` and `buttons` array. Dialogs are controlled by buttons via `action: 'dialog'`.
 - This aligns with AMIS patterns where buttons carry complete dialog definitions and CRUD only coordinates refresh.
 
 Exit Criteria:
@@ -268,7 +268,7 @@ Targets: `packages/flux-renderers-data/src/__tests__/data-crud.test.tsx`, `packa
 
 Design Change Note:
 - **Removed `rowActions` lowering requirement**: Based on AMIS design research, CRUD no longer auto-lowers `rowActions` to operation column. Users define `type: 'operation'` column directly in `columns` with `buttons` array.
-- **Removed `createDialog`/`editDialog`/`detailDialog` top-level fields**: Dialogs are now controlled by buttons themselves via `actionType: 'dialog'` and `dialog: {...}` configuration.
+- **Removed `createDialog`/`editDialog`/`detailDialog` top-level fields**: Dialogs are now controlled by buttons themselves via `action: 'dialog'` and `dialog: {...}` configuration.
 - This simplifies the CRUD implementation to a thin shell renderer while maintaining AMIS-compatible authoring patterns.
 
 Exit Criteria:
@@ -329,7 +329,7 @@ Rollback:
 
 The following items are deferred from this plan and should be addressed in a successor plan:
 
-- **Full dialog interaction tests**: create/edit/detail dialogs with actual form submission and validation via button `actionType: 'dialog'`
+- **Full dialog interaction tests**: create/edit/detail dialogs with actual form submission and validation via button `action: 'dialog'`
 - **Selection interaction tests**: row selection, bulk action enablement, selection clearing on refresh
 - **Query form integration tests**: query submit triggering refresh, query reset behavior
 - CRUD cards mode 与 `cards` family 协作

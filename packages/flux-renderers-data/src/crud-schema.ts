@@ -16,7 +16,7 @@ export interface CrudQueryFormConfig {
  * CRUD 列配置
  * 
  * 用户可以自定义 operation 列，在 buttons 中配置按钮。
- * 按钮可以配置 actionType: 'dialog' 和 dialog 属性来打开对话框。
+ * 按钮可以配置 `action: 'dialog'` 和 `dialog` 属性来打开对话框。
  */
 export interface CrudColumnSchema {
   type?: string;
@@ -39,7 +39,7 @@ export interface CrudColumnSchema {
  * 
  * **对话框由按钮自己控制**：
  * - 在 toolbar 或 columns 的 operation 列中配置按钮
- * - 按钮使用 `actionType: 'dialog'` 和 `dialog: {...}` 配置对话框
+ * - 按钮使用 `action: 'dialog'` 和 `dialog: {...}` 配置对话框
  * - 对话框中的表单提交成功后，通过 `reload` 属性刷新 CRUD
  * 
  * **示例**：
@@ -50,10 +50,12 @@ export interface CrudColumnSchema {
  *   "toolbar": [{
  *     "type": "button",
  *     "label": "新增",
- *     "actionType": "dialog",
- *     "dialog": {
- *       "title": "新增用户",
- *       "body": { "type": "form", ... }
+ *     "onClick": {
+ *       "action": "dialog",
+ *       "dialog": {
+ *         "title": "新增用户",
+ *         "body": { "type": "form", ... }
+ *       }
  *     }
  *   }],
  *   "columns": [
@@ -64,10 +66,12 @@ export interface CrudColumnSchema {
  *       "buttons": [{
  *         "type": "button",
  *         "label": "编辑",
- *         "actionType": "dialog",
- *         "dialog": {
- *           "title": "编辑用户",
- *           "body": { "type": "form", "data": "${record}", ... }
+ *         "onClick": {
+ *           "action": "dialog",
+ *           "dialog": {
+ *             "title": "编辑用户",
+ *             "body": { "type": "form", "data": "${record}", ... }
+ *           }
  *         }
  *       }]
  *     }

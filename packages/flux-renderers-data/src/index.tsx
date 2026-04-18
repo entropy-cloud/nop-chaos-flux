@@ -121,7 +121,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'onPageChange', kind: 'event' },
       { key: 'onSelectionChange', kind: 'event' },
       { key: 'onRefresh', kind: 'event' },
-      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' }
+      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+      { key: 'loadingSlot', kind: 'value-or-region', regionKey: 'loadingSlot' }
     ]
   },
   {
