@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { createFormulaCompiler } from '@nop-chaos/flux-formula'
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n'
 import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/flux-react'
 import type { RendererEnv } from '@nop-chaos/flux-core'
 import { registerWordEditorRenderers, defineWordEditorPageSchema } from '../index.js'
@@ -89,6 +90,8 @@ vi.mock('../hooks/useWordEditorShortcuts.js', () => ({
 
 describe('WordEditorPage', () => {
   it('keeps the semantic root marker on the page shell', () => {
+    resetFluxI18n()
+    initFluxI18n()
     const registry = createDefaultRegistry()
     registerWordEditorRenderers(registry)
     const SchemaRenderer = createSchemaRenderer()

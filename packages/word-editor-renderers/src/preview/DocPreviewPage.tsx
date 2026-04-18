@@ -19,7 +19,7 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
   useEffect(() => {
     const container = containerRef.current
     if (!container || !documentData) return
-    let cancelled = false
+    const controller = new AbortController()
 
     const editorData = {
       header: documentData.header ?? [],
@@ -45,13 +45,13 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
 
     const wordCountPromise = instance.getWordCount()
     wordCountPromise.then((count) => {
-      if (!cancelled) {
+      if (!controller.signal.aborted) {
         setWordCount(count)
       }
     })
 
     return () => {
-      cancelled = true
+      controller.abort()
       instance.unmount()
     }
   }, [documentData, paperSettings])
@@ -65,17 +65,17 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
             variant="outline"
             size="icon-sm"
             onClick={onBack}
-            title="Back"
+            title={t('wordEditor.back')}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
-            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.documentPreview')}</h1>
+            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{t('wordEditor.documentPreview')}</h1>
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center text-[var(--nop-body-copy)]">
-          {t('flux.wordEditor.noDocumentData')}
+          {t('wordEditor.noDocumentData')}
         </div>
       </main>
     )
@@ -90,16 +90,16 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
             variant="outline"
             size="icon-sm"
             onClick={onBack}
-            title="Back"
+            title={t('wordEditor.back')}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
-            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.documentPreview')}</h1>
+            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{t('wordEditor.documentPreview')}</h1>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[var(--nop-body-copy)]">
-            <span className="tabular-nums">{wordCount.toLocaleString()} words</span>
+            <span className="tabular-nums">{t('wordEditor.words', { count: wordCount.toLocaleString() })}</span>
           </div>
         </div>
       </header>

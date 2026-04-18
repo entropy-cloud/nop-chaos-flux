@@ -22,7 +22,7 @@ export function EditorCanvas({ editorStore, bridge, initialDocument, onAutosave 
     if (!container) return
 
     let saveTimer: ReturnType<typeof setTimeout> | null = null
-    let cancelled = false
+    const controller = new AbortController()
 
     const debouncedSave = () => {
       if (saveTimer) clearTimeout(saveTimer)
@@ -117,11 +117,11 @@ export function EditorCanvas({ editorStore, bridge, initialDocument, onAutosave 
 
     const wordCountPromise = bridge.getWordCount()
     wordCountPromise.then((count) => {
-      if (!cancelled) editorStore.setWordCount(count)
+      if (!controller.signal.aborted) editorStore.setWordCount(count)
     })
 
     return () => {
-      cancelled = true
+      controller.abort()
       if (saveTimer) clearTimeout(saveTimer)
       bridge.unmount()
       editorStore.setBridge(null)

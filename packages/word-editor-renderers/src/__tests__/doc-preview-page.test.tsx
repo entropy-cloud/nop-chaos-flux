@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n'
 import { DocPreviewPage } from '../preview/DocPreviewPage.js'
 
 const bridgeState = {
@@ -33,6 +34,9 @@ vi.mock('@nop-chaos/word-editor-core', async () => {
 
 describe('DocPreviewPage', () => {
   it('ignores stale word-count results after switching documents', async () => {
+    resetFluxI18n()
+    initFluxI18n()
+    await changeLanguage('zh-CN')
     bridgeState.mountedDocs.length = 0
     bridgeState.wordCountResolvers.length = 0
 
@@ -56,7 +60,7 @@ describe('DocPreviewPage', () => {
     bridgeState.wordCountResolvers[1]?.(22)
 
     await waitFor(() => {
-      expect(screen.getByText('22 words')).toBeTruthy()
+      expect(screen.getByText('22 个词')).toBeTruthy()
     })
   })
 })

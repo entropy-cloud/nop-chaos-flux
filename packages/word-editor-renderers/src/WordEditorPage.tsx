@@ -128,7 +128,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     if (success) {
       saveDatasets(datasetStore.getAll())
       editorStore.setDirty(false)
-      setSaveMessage('Saved')
+      setSaveMessage(t('wordEditor.saved'))
       setTimeout(() => setSaveMessage(null), 2000)
     }
   }, [bridge, charts, codes, datasetStore, editorStore])
@@ -136,7 +136,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   useWordEditorShortcuts({ bridge, onSave: handleSave })
 
   const handleBack = useCallback(() => {
-    if (isDirty && !window.confirm('You have unsaved changes. Leave without saving?')) return
+    if (isDirty && !window.confirm(t('wordEditor.unsavedChangesLeave'))) return
     void props.events.onBack?.()
   }, [isDirty, props.events])
 
@@ -234,17 +234,17 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
             variant="outline"
             size="icon-sm"
             onClick={handleBack}
-            title="Back"
+            title={t('wordEditor.back')}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
-            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{hasRendererSlotContent(titleContent) ? titleContent : 'Word Editor'}</h1>
+            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{hasRendererSlotContent(titleContent) ? titleContent : t('wordEditor.title')}</h1>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[var(--nop-body-copy)]">
             <Type className="w-3.5 h-3.5 opacity-70" />
-            <span className="tabular-nums">{wordCount.toLocaleString()} words</span>
+            <span className="tabular-nums">{t('wordEditor.words', { count: wordCount.toLocaleString() })}</span>
           </div>
         </div>
         <Button
@@ -255,7 +255,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           className="rounded-full"
         >
           <Save className="w-4 h-4" />
-          {saveMessage || 'Save'}
+          {saveMessage || t('wordEditor.save')}
         </Button>
       </div>
       {props.regions.toolbar
@@ -274,7 +274,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           className="flex-1 py-2.5"
         >
           <Database className="w-3.5 h-3.5" />
-          <span>{t('flux.wordEditor.datasets')}</span>
+          <span>{t('wordEditor.datasets')}</span>
         </TabsTrigger>
         <TabsTrigger
           value="fields"
@@ -283,7 +283,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           className="flex-1 py-2.5"
         >
           <Columns className="w-3.5 h-3.5" />
-          <span>{t('flux.wordEditor.fields')}</span>
+          <span>{t('wordEditor.fields')}</span>
         </TabsTrigger>
       </TabsList>
       <TabsContent value={activePanel} className="flex-1 min-h-0 overflow-hidden">
@@ -330,12 +330,12 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         leftPanel={leftPanelSlot}
         leftCollapsed={leftCollapsed}
         onLeftToggle={() => setLeftCollapsed(v => !v)}
-        leftLabel="Expand field panel"
+        leftLabel={t('wordEditor.expandFieldPanel')}
         canvas={canvasSlot}
         rightPanel={rightPanelSlot}
         rightCollapsed={rightCollapsed}
         onRightToggle={() => setRightCollapsed(v => !v)}
-        rightLabel="Expand outline"
+        rightLabel={t('wordEditor.expandOutline')}
         dialogs={
           <DatasetDialog
             key={`${editingDatasetId ?? 'new'}:${datasetDialogOpen ? 'open' : 'closed'}`}
