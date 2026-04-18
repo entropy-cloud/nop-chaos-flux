@@ -117,7 +117,8 @@ module.exports = [
         }
       ],
       'no-new-func': 'error',
-      'no-eval': 'error'
+      'no-eval': 'error',
+      'max-lines': ['error', { max: 700, skipBlankLines: true, skipComments: true }]
     }
   },
   // i18n: 检测组件库中的硬编码字符串 (排除 playground、test、apps)

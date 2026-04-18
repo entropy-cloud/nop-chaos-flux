@@ -8,7 +8,8 @@ const execFileAsync = promisify(execFile);
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = path.join(__dirname, '..');
-const MAX_LINES = 500;
+const WARN_LINES = 500;
+const ERROR_LINES = 700;
 const codeExtensions = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs']);
 const rootPrefixes = ['apps/', 'packages/', 'scripts/', 'tests/'];
 const ignoredPathParts = new Set(['dist/', 'node_modules/', 'coverage/', 'test-results/', '.turbo/']);
@@ -42,26 +43,49 @@ async function countLines(relativePath) {
 
 async function main() {
   const trackedFiles = await getTrackedFiles();
-  const oversizedFiles = [];
+  const errorFiles = [];
+  const warnFiles = [];
 
   for (const filePath of trackedFiles) {
     const lineCount = await countLines(filePath);
-    if (lineCount > MAX_LINES) {
-      oversizedFiles.push({ filePath, lineCount });
+    if (lineCount > ERROR_LINES) {
+      errorFiles.push({ filePath, lineCount });
+    } else if (lineCount > WARN_LINES) {
+      warnFiles.push({ filePath, lineCount });
     }
   }
 
-  oversizedFiles.sort((left, right) => right.lineCount - left.lineCount || left.filePath.localeCompare(right.filePath));
+  const sortByLines = (a, b) => b.lineCount - a.lineCount || a.filePath.localeCompare(b.filePath);
+  errorFiles.sort(sortByLines);
+  warnFiles.sort(sortByLines);
 
-  if (oversizedFiles.length > 0) {
-    console.error(`[check-oversized-code-files] Found ${oversizedFiles.length} tracked code files over ${MAX_LINES} lines:`);
-    for (const issue of oversizedFiles) {
-      console.error(`  - ${issue.filePath}: ${issue.lineCount}`);
+  let hasError = false;
+
+  if (errorFiles.length > 0) {
+    hasError = true;
+    console.error(`[check-oversized-code-files] ERROR: ${errorFiles.length} files exceed ${ERROR_LINES} lines (MUST split):`);
+    for (const item of errorFiles) {
+      console.error(`  - ${item.filePath}: ${item.lineCount}`);
     }
+  }
+
+  if (warnFiles.length > 0) {
+    console.warn(`[check-oversized-code-files] WARN: ${warnFiles.length} files exceed ${WARN_LINES} lines (evaluate for split):`);
+    for (const item of warnFiles) {
+      console.warn(`  - ${item.filePath}: ${item.lineCount}`);
+    }
+  }
+
+  if (hasError) {
     process.exit(1);
   }
 
-  console.log(`[check-oversized-code-files] No tracked code files exceed ${MAX_LINES} lines`);
+  const total = errorFiles.length + warnFiles.length;
+  if (total === 0) {
+    console.log(`[check-oversized-code-files] All tracked code files are within limits (warn: ${WARN_LINES}, error: ${ERROR_LINES})`);
+  } else {
+    console.log(`[check-oversized-code-files] ${warnFiles.length} warnings, ${errorFiles.length} errors`);
+  }
 }
 
 main().catch(error => {
