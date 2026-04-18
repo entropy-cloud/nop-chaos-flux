@@ -117,6 +117,12 @@ interface ConditionItemValue {
 - 长期可以提供 `component:addCondition`、`component:addGroup`、`component:normalizeValue` 一类组件能力，但不应成为首要交互入口。
 - `showIf` / 公式配置属于 value 语义扩展，不应演变成第二套 action 脚本协议。
 
+## 8.1 i18n 约定
+
+- `condition-builder` 的内置文案必须统一走 `@nop-chaos/flux-i18n`，不再维护组件私有本地文本表。
+- 内置 key 归属 `conditionBuilder.*`，资源定义位于 `packages/flux-i18n/src/locales/{zh-CN.ts,en-US.ts}`。
+- schema 侧自定义文案仍通过 `placeholder`、`addConditionLabel`、`addGroupLabel`、`removeGroupLabel` 等显式字段覆盖，而不是通过组件私有 override API 注入。
+
 ## 9. 数据源、表达式、导入能力接入点
 
 - 字段元数据可来自内联 `fields`，或来自 `source` 指向的 scope/api 数据源。
