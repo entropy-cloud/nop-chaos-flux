@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { ScopeRef, ApiObject, ActionSchema, ActionResult } from '@nop-chaos/flux-core';
+import type { ScopeRef, ApiSchema, ActionSchema, ActionResult } from '@nop-chaos/flux-core';
 import type { RendererHelpers } from '@nop-chaos/flux-core';
 import {
   isVariableSourceRef,
@@ -39,7 +39,7 @@ interface AsyncResolverState<T> {
  * with React 19's strict rule against synchronous setState in effects.
  */
 function useAsyncApiResolver<T>(
-  api: ApiObject | undefined,
+  api: ApiSchema | undefined,
   dataPath: string | undefined,
   dispatch: RendererHelpers['dispatch'],
 ): { items: T[]; error: Error | null; loading: boolean } {

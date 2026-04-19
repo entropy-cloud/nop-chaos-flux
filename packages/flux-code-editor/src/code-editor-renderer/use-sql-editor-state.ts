@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { ActionResult, ActionSchema, ApiObject } from '@nop-chaos/flux-core';
+import type { ActionResult, ActionSchema, ApiSchema } from '@nop-chaos/flux-core';
 import type { EditorView } from '@codemirror/view';
 import { formatSQL } from '../extensions/sql/format';
 import type { SQLResultState } from '../sql-result-panel';
@@ -87,7 +87,7 @@ export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQL
         const action: ActionSchema = {
           action: 'ajax',
           api: {
-            ...(onExecute as ApiObject),
+            ...(onExecute as ApiSchema),
             data: { sql: sqlText },
           },
         };

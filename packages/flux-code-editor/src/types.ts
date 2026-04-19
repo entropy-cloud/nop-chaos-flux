@@ -1,4 +1,4 @@
-import type { ActionSchema, ApiObject, BaseSchema } from '@nop-chaos/flux-core';
+import type { ActionSchema, ApiSchema, BaseSchema } from '@nop-chaos/flux-core';
 
 export type EditorLanguage =
   | 'expression'
@@ -87,14 +87,14 @@ export interface FuncParam {
 export type VariableSourceRef = {
   source: 'scope' | 'api';
   scopePath?: string;
-  api?: ApiObject;
+  api?: ApiSchema;
   dataPath?: string;
 };
 
 export type FuncSourceRef = {
   source: 'builtin' | 'api';
   builtinSet?: string[];
-  api?: ApiObject;
+  api?: ApiSchema;
   dataPath?: string;
 };
 
@@ -136,7 +136,7 @@ export interface VariablePanelConfig {
 
 export interface SQLExecutionConfig {
   enabled: boolean;
-  onExecute?: string | ApiObject;
+  onExecute?: string | ApiSchema;
   resultPath?: string;
   params?: Record<string, string>;
   showPreview?: boolean;
@@ -173,7 +173,7 @@ export interface ColumnSchema {
 export type SQLSchemaSourceRef = {
   source: 'scope' | 'api';
   scopePath?: string;
-  api?: ApiObject;
+  api?: ApiSchema;
   dataPath?: string;
 };
 
