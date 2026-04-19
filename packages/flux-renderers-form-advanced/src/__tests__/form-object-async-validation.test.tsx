@@ -18,6 +18,7 @@ describe('formRendererDefinitions - object validation, async validation, and fie
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-object-async-validation.test.tsx#1"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -71,6 +72,7 @@ describe('formRendererDefinitions - object validation, async validation, and fie
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-object-async-validation.test.tsx#2"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -133,6 +135,7 @@ describe('formRendererDefinitions - object validation, async validation, and fie
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-object-async-validation.test.tsx#3"
         schema={{
           type: 'form',
           data: {
@@ -179,6 +182,7 @@ describe('formRendererDefinitions - object validation, async validation, and fie
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-object-async-validation.test.tsx#4"
         schema={{
           type: 'form',
           data: {
@@ -208,6 +212,7 @@ describe('formRendererDefinitions - object validation, async validation, and fie
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-object-async-validation.test.tsx#5"
         schema={{
           type: 'form',
           data: {
@@ -236,6 +241,7 @@ describe('formRendererDefinitions - object validation, async validation, and fie
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-object-async-validation.test.tsx#6"
         schema={{
           type: 'form',
           body: [

@@ -1,7 +1,18 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { FieldHint, FieldLabel } from './index';
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
+});
 
 describe('shared form renderer primitives', () => {
   it('renders labels with the expected chrome element', () => {

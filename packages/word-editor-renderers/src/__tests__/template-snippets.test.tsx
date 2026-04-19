@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { TemplateSnippets } from '../panels/TemplateSnippets.js';
 
 vi.mock('@nop-chaos/ui', () => {
@@ -13,6 +14,16 @@ vi.mock('@nop-chaos/ui', () => {
     ScrollArea: ({ children }: any) => <div data-testid="scroll-area">{children}</div>,
     cn: (...args: any[]) => args.filter(Boolean).join(' ')
   };
+});
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
 });
 
 describe('TemplateSnippets', () => {

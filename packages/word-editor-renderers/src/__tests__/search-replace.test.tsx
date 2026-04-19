@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { SearchReplace } from '../toolbar/SearchReplace.js';
 
 vi.mock('@nop-chaos/ui', () => {
@@ -28,6 +29,16 @@ vi.mock('../toolbar/shared.js', () => ({
   ),
   ToolbarSeparator: () => <div data-testid="toolbar-separator" />
 }));
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
+});
 
 describe('SearchReplace', () => {
   it('does not render when visible is false', () => {

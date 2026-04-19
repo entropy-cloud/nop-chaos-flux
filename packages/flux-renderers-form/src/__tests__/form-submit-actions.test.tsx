@@ -16,6 +16,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/submit-actions"
         schema={{
           type: 'form',
           id: 'profile-form',
@@ -70,6 +71,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/submit-actions"
         schema={{
           type: 'form',
           id: 'failing-form',
@@ -128,6 +130,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/submit-actions"
         schema={{
           type: 'form',
           id: 'validated-form',
@@ -190,6 +193,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
 
     const { rerender } = render(
       <SchemaRenderer
+        schemaUrl="test://form/init-actions"
         schema={{
           type: 'form',
           id: 'init-form',
@@ -218,6 +222,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
 
     rerender(
       <SchemaRenderer
+        schemaUrl="test://form/init-actions"
         schema={{
           type: 'form',
           id: 'init-form',
@@ -252,6 +257,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/submit-actions"
         schema={{
           type: 'form',
           data: {

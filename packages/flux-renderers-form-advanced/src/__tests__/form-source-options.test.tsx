@@ -18,6 +18,7 @@ describe('formRendererDefinitions - source-backed options', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-source-options.test.tsx#1"
         schema={{
           type: 'form',
           data: {
@@ -78,6 +79,7 @@ describe('formRendererDefinitions - source-backed options', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-source-options.test.tsx#2"
         schema={{
           type: 'form',
           data: {
@@ -146,6 +148,7 @@ describe('formRendererDefinitions - source-backed options', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-source-options.test.tsx#3"
         schema={{
           type: 'form',
           data: {
@@ -187,7 +190,7 @@ describe('formRendererDefinitions - source-backed options', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Loading options...')).toBeTruthy();
+      expect(screen.getByText('Loading...')).toBeTruthy();
       expect(document.querySelector('[role="status"]')).toBeTruthy();
     });
 
@@ -211,6 +214,7 @@ describe('formRendererDefinitions - source-backed options', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-source-options.test.tsx#4"
         schema={{
           type: 'form',
           data: {
@@ -252,7 +256,7 @@ describe('formRendererDefinitions - source-backed options', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Loading options...')).toBeTruthy();
+      expect(screen.getByText('Loading...')).toBeTruthy();
       expect(document.querySelector('[role="status"]')).toBeTruthy();
     });
 
@@ -274,6 +278,7 @@ describe('formRendererDefinitions - source-backed options', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-source-options.test.tsx#5"
         schema={{
           type: 'form',
           body: [
@@ -318,6 +323,7 @@ describe('formRendererDefinitions - source-backed options', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-source-options.test.tsx#6"
         schema={{
           type: 'form',
           body: [
@@ -362,6 +368,7 @@ describe('formRendererDefinitions - source-backed options', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-source-options.test.tsx#7"
         schema={{
           type: 'form',
           body: [

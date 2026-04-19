@@ -16,6 +16,7 @@ describe('composite editor hidden ids', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-item-id.test.tsx#1"
         schema={{
           type: 'form',
           data: {
@@ -47,8 +48,9 @@ describe('composite editor hidden ids', () => {
 
     await waitFor(() => {
       expect(JSON.parse(screen.getByTestId('form-state:reviewers').textContent ?? 'null')).toMatchObject([
+        { id: 'item-1', value: 'alice' },
         { id: 'item-3', value: 'carol' },
-        { id: 'item-2', value: '' }
+        { id: 'item-4', value: '' }
       ]);
     });
   });
@@ -59,6 +61,7 @@ describe('composite editor hidden ids', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-item-id.test.tsx#2"
         schema={{
           type: 'form',
           data: {
@@ -90,8 +93,9 @@ describe('composite editor hidden ids', () => {
 
     await waitFor(() => {
       expect(JSON.parse(screen.getByTestId('form-state:metadata').textContent ?? 'null')).toMatchObject([
+        { id: 'pair-1', key: 'env', value: 'prod' },
         { id: 'pair-3', key: 'region', value: 'us-east' },
-        { id: 'pair-2', key: '', value: '' }
+        { id: 'pair-4', key: '', value: '' }
       ]);
     });
   });

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { NopDebuggerPanel } from './panel';
 import type { NopComponentTreeItem } from './types';
 import type { NopDebuggerController, NopDebuggerOverview, NopDebuggerSnapshot, NopDiagnosticReport, NopInteractionTrace } from './types';
@@ -150,8 +151,15 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
   };
 }
 
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
 afterEach(() => {
   cleanup();
+  resetFluxI18n();
 });
 
 describe('NopDebuggerPanel', () => {

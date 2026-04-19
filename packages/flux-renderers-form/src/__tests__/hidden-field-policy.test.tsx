@@ -59,6 +59,7 @@ describe('hidden field policy - renderer integration', () => {
     await act(async () => {
       render(
         <SchemaRenderer
+          schemaUrl="test://form/hidden-field-policy"
           formulaCompiler={sharedFormulaCompiler}
           env={env}
           schema={{
@@ -80,6 +81,7 @@ describe('hidden field policy - renderer integration', () => {
     await act(async () => {
       render(
         <SchemaRenderer
+          schemaUrl="test://form/hidden-field-policy"
           formulaCompiler={sharedFormulaCompiler}
           env={env}
           schema={{
@@ -108,6 +110,7 @@ describe('hidden field policy - renderer integration', () => {
     await act(async () => {
       render(
         <SchemaRenderer
+          schemaUrl="test://form/hidden-field-policy"
           formulaCompiler={sharedFormulaCompiler}
           env={env}
           schema={{
@@ -140,6 +143,7 @@ describe('hidden field policy - renderer integration', () => {
     await act(async () => {
       render(
         <SchemaRenderer
+          schemaUrl="test://form/hidden-field-policy"
           formulaCompiler={sharedFormulaCompiler}
           env={env}
           schema={{
@@ -169,6 +173,7 @@ describe('hidden field policy - renderer integration', () => {
     await act(async () => {
       render(
         <SchemaRenderer
+          schemaUrl="test://form/hidden-field-policy"
           formulaCompiler={sharedFormulaCompiler}
           env={env}
           schema={{
@@ -201,6 +206,7 @@ describe('hidden field policy - renderer integration', () => {
     await act(async () => {
       render(
         <SchemaRenderer
+          schemaUrl="test://form/hidden-field-policy"
           formulaCompiler={sharedFormulaCompiler}
           env={env}
           schema={{

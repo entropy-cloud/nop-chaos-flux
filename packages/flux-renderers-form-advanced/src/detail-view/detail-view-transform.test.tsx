@@ -9,6 +9,7 @@ describe('detail-view renderer transform behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-transform.test.tsx#1"
         schema={{
           type: 'page',
           body: [
@@ -51,6 +52,7 @@ describe('detail-view renderer transform behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-transform.test.tsx#2"
         schema={{
           type: 'page',
           body: [
@@ -124,6 +126,7 @@ describe('detail-view renderer transform behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-transform.test.tsx#3"
         schema={{
           type: 'page',
           body: [
@@ -214,6 +217,7 @@ describe('detail-view renderer transform behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-transform.test.tsx#4"
         schema={{
           type: 'page',
           body: [

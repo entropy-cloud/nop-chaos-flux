@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
 import { flowDesignerRendererDefinitions } from './index';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -32,6 +33,16 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
     configurable: true
   });
 }
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
+});
 
 function createTreeTestConfig(): DesignerConfig {
   return {
@@ -110,6 +121,7 @@ describe('DesignerPageRenderer tree mode', () => {
 
     const view = render(
       <SchemaRenderer
+        schemaUrl="test://flow/tree-basic"
         schema={{
           type: 'designer-page',
           treeDocument,
@@ -153,6 +165,7 @@ describe('DesignerPageRenderer tree mode', () => {
 
     const view = render(
       <SchemaRenderer
+        schemaUrl="test://flow/tree-branches"
         schema={{
           type: 'designer-page',
           treeDocument,
@@ -172,6 +185,7 @@ describe('DesignerPageRenderer tree mode', () => {
 
     const view = render(
       <SchemaRenderer
+        schemaUrl="test://flow/tree-fallback"
         schema={{
           type: 'designer-page',
           config: createTreeTestConfig(),
@@ -189,6 +203,7 @@ describe('DesignerPageRenderer tree mode', () => {
 
     const view = render(
       <SchemaRenderer
+        schemaUrl="test://flow/tree-graph-regression"
         schema={{
           type: 'designer-page',
           document: {

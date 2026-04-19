@@ -34,6 +34,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
 
   return (
     <SchemaRenderer
+      schemaUrl="playground://pages/word-editor"
       schema={{
         type: 'word-editor-page',
         title: 'Word Editor',

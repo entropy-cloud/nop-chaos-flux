@@ -40,6 +40,7 @@ function ScenarioBlock({ title, description, schema, data }: ScenarioBlockProps)
       </div>
       <div className="p-5 rounded-[16px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]" data-testid={`scenario-stage-${slug}`}>
         <SchemaRenderer
+          schemaUrl={`playground://component-lab/${slug}`}
           schema={schemaWithDebug}
           data={data ?? {}}
           env={env}

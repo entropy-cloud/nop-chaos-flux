@@ -34,6 +34,7 @@ describe('ConditionBuilderPage schema', () => {
     expect(() => {
       render(
         <SchemaRenderer
+          schemaUrl="test://playground/condition-builder"
           schema={conditionBuilderPageSchema}
           data={{}}
           env={env as any}

@@ -12,6 +12,7 @@ describe('composite form - variant-field branch-only validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-detail-and-loop.test.tsx#1"
         schema={{
           type: 'form',
           id: 'variant-form',
@@ -77,6 +78,7 @@ describe('composite form - detail-field draft validation gating', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-detail-and-loop.test.tsx#2"
         schema={{
           type: 'form',
           data: { address: { street: '', city: 'Springfield' } },
@@ -121,6 +123,7 @@ describe('composite form - detail-field draft validation gating', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-detail-and-loop.test.tsx#3"
         schema={{
           type: 'form',
           id: 'detail-field-submit',
@@ -183,6 +186,7 @@ describe('composite form - detail-field draft validation gating', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-detail-and-loop.test.tsx#4"
         schema={{
           type: 'form',
           id: 'detail-cancel',
@@ -245,6 +249,7 @@ describe('composite form - detail-view draft validation gating', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-detail-and-loop.test.tsx#5"
         schema={{
           type: 'page',
           body: [
@@ -284,6 +289,7 @@ describe('composite form - detail-view draft validation gating', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-detail-and-loop.test.tsx#6"
         schema={{
           type: 'page',
           body: [
@@ -328,6 +334,7 @@ describe('composite form - loop renders form data and is not a validation owner'
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-detail-and-loop.test.tsx#7"
         schema={{
           type: 'form',
           id: 'loop-form',

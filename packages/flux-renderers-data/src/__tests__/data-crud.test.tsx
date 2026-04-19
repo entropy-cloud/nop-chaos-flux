@@ -25,6 +25,7 @@ describe('CRUD renderer', () => {
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
     render(
       <SchemaRenderer
+        schemaUrl="test://data/crud"
         schema={{
           type: 'page',
           body: [
@@ -88,6 +89,7 @@ describe('CRUD renderer', () => {
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
     render(
       <SchemaRenderer
+        schemaUrl="test://data/crud"
         schema={{
           type: 'page',
           body: [
@@ -122,6 +124,7 @@ describe('CRUD renderer', () => {
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
     render(
       <SchemaRenderer
+        schemaUrl="test://data/crud"
         schema={{
           type: 'page',
           body: [
@@ -161,6 +164,7 @@ describe('CRUD renderer', () => {
     const SchemaRenderer = createDataSchemaRenderer();
     render(
       <SchemaRenderer
+        schemaUrl="test://data/crud"
         schema={{
           type: 'page',
           body: [
@@ -186,6 +190,7 @@ describe('CRUD renderer', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://data/crud"
         schema={{
           type: 'page',
           body: [
@@ -218,6 +223,7 @@ describe('CRUD renderer', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://data/crud"
         schema={{
           type: 'page',
           body: [
@@ -260,6 +266,7 @@ describe('CRUD renderer', () => {
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
     render(
       <SchemaRenderer
+        schemaUrl="test://data/crud"
         schema={{
           type: 'page',
           body: [

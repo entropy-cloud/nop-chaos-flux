@@ -1,4 +1,5 @@
 import React from 'react';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
 import type { ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -20,6 +21,9 @@ if (typeof PointerEvent === 'undefined') {
 
   globalThis.PointerEvent = PointerEvent as any;
 }
+
+resetFluxI18n();
+initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 export const baseEnv: RendererEnv = {
   fetcher: async function <T>() {

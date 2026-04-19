@@ -30,6 +30,7 @@ const SchemaRenderer = createSchemaRenderer();
 function renderCodeEditorSchema(schema: SchemaInput) {
   return render(
     <SchemaRenderer
+      schemaUrl="test://flux-code-editor/integration"
       schema={schema}
       env={env}
       registry={registry}

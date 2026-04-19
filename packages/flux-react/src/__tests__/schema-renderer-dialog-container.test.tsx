@@ -18,8 +18,7 @@ describe('dialog container resolution', () => {
   it('renders dialog with showMask: false and no overlay element', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             {
@@ -49,8 +48,7 @@ describe('dialog container resolution', () => {
   it('renders dialog with showMask: true (default) and includes overlay element', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             {
@@ -79,8 +77,7 @@ describe('dialog container resolution', () => {
   it('opens dialog and closes it successfully', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             {
@@ -111,8 +108,7 @@ describe('drawer container resolution', () => {
   it('renders drawer with showMask: false and no overlay', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             {
@@ -142,8 +138,7 @@ describe('drawer container resolution', () => {
   it('renders drawer with showMask: true (default) and includes overlay', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             {
@@ -174,8 +169,7 @@ describe('page modalContainer', () => {
   it('passes modalContainer from page schema to DialogHost', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer, scopedHostRenderer, componentHandleProviderRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           modalContainer: 'workspace-area',
           body: [
@@ -203,8 +197,7 @@ describe('page modalContainer', () => {
   it('dialog-level container overrides page modalContainer', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           modalContainer: 'page-container',
           body: [
@@ -237,7 +230,7 @@ describe('dialog state preservation', () => {
     const capturedDispatches: Array<(input: any) => Promise<any>> = [];
     const dispatchCaptureRenderer = createDispatchCaptureRenderer((dispatch) => capturedDispatches.push(dispatch));
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer, scopedHostRenderer, namespaceProviderRenderer, componentHandleProviderRenderer, dispatchCaptureRenderer]);
-    render(<SchemaRenderer schema={{ type: 'page', body: [{ type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' }, { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' }, { type: 'button', label: 'Open provider dialog', onClick: { action: 'dialog', dialog: { title: 'Provider dialog', body: [{ type: 'scoped-host', body: [{ type: 'namespace-provider', namespace: 'demo', label: 'dialog-ns' }, { type: 'component-handle-provider', componentName: 'shared', label: 'dialog-handle' }, { type: 'dispatch-capture' }, { type: 'text', text: 'Dialog provider content' }] }] } } }] }} env={env} formulaCompiler={sharedFormulaCompiler} />);
+    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'page', body: [{ type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' }, { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' }, { type: 'button', label: 'Open provider dialog', onClick: { action: 'dialog', dialog: { title: 'Provider dialog', body: [{ type: 'scoped-host', body: [{ type: 'namespace-provider', namespace: 'demo', label: 'dialog-ns' }, { type: 'component-handle-provider', componentName: 'shared', label: 'dialog-handle' }, { type: 'dispatch-capture' }, { type: 'text', text: 'Dialog provider content' }] }] } } }] }} env={env} formulaCompiler={sharedFormulaCompiler} />);
     fireEvent.click(screen.getByText('Open provider dialog'));
     expect(await screen.findByText('Dialog provider content')).toBeTruthy();
     await waitFor(() => expect(capturedDispatches.length).toBe(1));

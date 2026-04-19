@@ -9,6 +9,7 @@ describe('detail-field renderer basic behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-basic.test.tsx#1"
         schema={{
           type: 'form',
           data: { address: { street: '123 Main St', city: 'Springfield' } },
@@ -48,6 +49,7 @@ describe('detail-field renderer basic behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-basic.test.tsx#2"
         schema={{
           type: 'form',
           data: { address: { street: '123 Main St' } },
@@ -76,6 +78,7 @@ describe('detail-field renderer basic behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-basic.test.tsx#3"
         schema={{
           type: 'form',
           data: { address: { street: '123 Main St', city: 'Springfield' } },
@@ -118,6 +121,7 @@ describe('detail-field renderer basic behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-basic.test.tsx#4"
         schema={{
           type: 'form',
           data: { profile: { name: '' } },

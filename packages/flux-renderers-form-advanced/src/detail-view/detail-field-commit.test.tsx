@@ -16,6 +16,7 @@ describe('detail-field renderer commit behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-commit.test.tsx#1"
         schema={{
           type: 'form',
           id: 'cancel-form',
@@ -75,6 +76,7 @@ describe('detail-field renderer commit behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-commit.test.tsx#2"
         schema={{
           type: 'form',
           id: 'confirm-form',
@@ -137,6 +139,7 @@ describe('detail-field renderer commit behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-commit.test.tsx#3"
         schema={{
           type: 'form',
           id: 'double-confirm-form',
@@ -233,6 +236,7 @@ describe('detail-field renderer commit behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-commit.test.tsx#4"
         schema={{
           type: 'form',
           id: 'adapt-field-form',
@@ -320,6 +324,7 @@ describe('detail-field renderer commit behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-commit.test.tsx#5"
         schema={{
           type: 'form',
           data: { address: { street: 'Alpha' } },

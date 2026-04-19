@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry, createRendererRuntime } from '../index';
+import { createModuleCache, createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
@@ -34,12 +34,14 @@ describe('createRendererRuntime', () => {
     await runtime.ensureImportedNamespaces({
       imports,
       actionScope,
-      scope: page.scope
+      scope: page.scope,
+      schemaUrl: '/schema/root.json'
     });
     await runtime.ensureImportedNamespaces({
       imports,
       actionScope,
-      scope: page.scope
+      scope: page.scope,
+      schemaUrl: '/schema/root.json'
     });
 
     expect(importLoader.load).toHaveBeenCalledTimes(1);
@@ -59,7 +61,7 @@ describe('createRendererRuntime', () => {
 
     expect(firstResult).toMatchObject({ ok: true, data: 'demo-lib:ping:live' });
 
-    runtime.releaseImportedNamespaces({ imports, actionScope });
+    runtime.releaseImportedNamespaces({ imports, actionScope, schemaUrl: '/schema/root.json' });
     await Promise.resolve();
 
     expect(dispose).not.toHaveBeenCalled();
@@ -79,7 +81,7 @@ describe('createRendererRuntime', () => {
 
     expect(secondResult).toMatchObject({ ok: true, data: 'demo-lib:ping:still-live' });
 
-    runtime.releaseImportedNamespaces({ imports, actionScope });
+    runtime.releaseImportedNamespaces({ imports, actionScope, schemaUrl: '/schema/root.json' });
     await Promise.resolve();
     await Promise.resolve();
 
@@ -146,7 +148,8 @@ describe('createRendererRuntime', () => {
     await runtime.ensureImportedNamespaces({
       imports: [{ from: 'demo-lib', as: 'demo' }],
       actionScope,
-      scope: page.scope
+      scope: page.scope,
+      schemaUrl: '/schema/root.json'
     });
 
     void runtime.registerDataSource({
@@ -199,12 +202,14 @@ describe('createRendererRuntime', () => {
     await runtime.ensureImportedNamespaces({
       imports: [{ from: 'parent-lib', as: 'demo' }],
       actionScope: parentActionScope,
-      scope: page.scope
+      scope: page.scope,
+      schemaUrl: '/schema/root.json'
     });
     await runtime.ensureImportedNamespaces({
       imports: [{ from: 'child-lib', as: 'demo' }],
       actionScope: childActionScope,
-      scope: page.scope
+      scope: page.scope,
+      schemaUrl: '/schema/root.json'
     });
 
     const shadowedResult = await runtime.dispatch(
@@ -224,7 +229,8 @@ describe('createRendererRuntime', () => {
 
     runtime.releaseImportedNamespaces({
       imports: [{ from: 'child-lib', as: 'demo' }],
-      actionScope: childActionScope
+      actionScope: childActionScope,
+      schemaUrl: '/schema/root.json'
     });
     await Promise.resolve();
 
@@ -267,14 +273,16 @@ describe('createRendererRuntime', () => {
     await runtime.ensureImportedNamespaces({
       imports: [{ from: 'first-lib', as: 'demo' }],
       actionScope,
-      scope: page.scope
+      scope: page.scope,
+      schemaUrl: '/schema/root.json'
     });
 
     await expect(
       runtime.ensureImportedNamespaces({
         imports: [{ from: 'second-lib', as: 'demo' }],
         actionScope,
-        scope: page.scope
+        scope: page.scope,
+        schemaUrl: '/schema/root.json'
       })
     ).rejects.toThrow('Namespace collision for import alias: demo');
   });
@@ -314,7 +322,8 @@ describe('createRendererRuntime', () => {
       runtime.ensureImportedNamespaces({
         imports,
         actionScope,
-        scope: page.scope
+        scope: page.scope,
+        schemaUrl: '/schema/root.json'
       })
     ).rejects.toThrow('Imported namespace retry failed to load: loader exploded');
 
@@ -324,7 +333,8 @@ describe('createRendererRuntime', () => {
       runtime.ensureImportedNamespaces({
         imports,
         actionScope,
-        scope: page.scope
+        scope: page.scope,
+        schemaUrl: '/schema/root.json'
       })
     ).resolves.toBeUndefined();
 
@@ -378,6 +388,7 @@ describe('createRendererRuntime', () => {
       imports: [{ from: 'demo-lib', as: 'demo' }],
       actionScope,
       scope: page.scope,
+      schemaUrl: '/schema/root.json',
       nodeInstance
     });
 
@@ -386,5 +397,80 @@ describe('createRendererRuntime', () => {
       actionScope,
       scope: page.scope
     }));
+  });
+
+  it('shares cached modules across runtimes when they use the same module cache', async () => {
+    const importLoader = {
+      load: vi.fn(async (spec: { from: string; as: string }) => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
+            ok: true,
+            data: `${spec.from}:${method}:${String(payload?.value ?? '')}`
+          })
+        })
+      }))
+    };
+    const moduleCache = createModuleCache();
+    const runtimeA = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: { ...env, importLoader },
+      moduleCache,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const runtimeB = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: { ...env, importLoader },
+      moduleCache,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const pageA = runtimeA.createPageRuntime({});
+    const pageB = runtimeB.createPageRuntime({});
+    const actionScopeA = runtimeA.createActionScope({ id: 'scope-a' });
+    const actionScopeB = runtimeB.createActionScope({ id: 'scope-b' });
+
+    await runtimeA.ensureImportedNamespaces({
+      imports: [{ from: 'demo-lib', as: 'demo' }],
+      actionScope: actionScopeA,
+      scope: pageA.scope,
+      schemaUrl: '/schema/a.json'
+    });
+    await runtimeB.ensureImportedNamespaces({
+      imports: [{ from: 'demo-lib', as: 'demo' }],
+      actionScope: actionScopeB,
+      scope: pageB.scope,
+      schemaUrl: '/schema/b.json'
+    });
+
+    expect(importLoader.load).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves import URLs before cache lookup and load', async () => {
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => ({ ok: true })
+        })
+      }))
+    };
+    const resolveImportUrl = vi.fn((schemaUrl: string, from: string) => `resolved:${schemaUrl}:${from}`);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: { ...env, importLoader, resolveImportUrl },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const actionScope = runtime.createActionScope({ id: 'resolved-scope' });
+
+    await runtime.ensureImportedNamespaces({
+      imports: [{ from: './demo-lib', as: 'demo' }],
+      actionScope,
+      scope: page.scope,
+      schemaUrl: 'https://app.local/schema/page.json'
+    });
+
+    expect(resolveImportUrl).toHaveBeenCalledWith('https://app.local/schema/page.json', './demo-lib', undefined);
+    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib', as: 'demo' }, undefined);
   });
 });

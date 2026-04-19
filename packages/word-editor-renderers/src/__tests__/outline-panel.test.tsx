@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { OutlinePanel } from '../panels/OutlinePanel.js';
 
 vi.mock('@nop-chaos/ui', () => {
@@ -27,6 +28,16 @@ function createMockBridge(headings: any[] = []) {
     subscribeContentChange: () => () => {}
   };
 }
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
+});
 
 describe('OutlinePanel', () => {
   it('renders Outline header', () => {

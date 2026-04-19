@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { ExprInsertDialog } from '../dialogs/ExprInsertDialog.js';
 
 vi.mock('@nop-chaos/ui', () => {
@@ -35,6 +36,16 @@ vi.mock('@nop-chaos/ui', () => {
     Label: ({ children, ...props }: any) => <label data-testid="label" {...props}>{children}</label>,
     cn: (...args: any[]) => args.filter(Boolean).join(' ')
   };
+});
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
 });
 
 describe('ExprInsertDialog', () => {
@@ -82,7 +93,7 @@ describe('ExprInsertDialog', () => {
     const textarea = screen.getByTestId('textarea');
     await userEvent.type(textarea, 'entity.name');
 
-    const insertButtons = screen.getAllByText('Insert');
+    const insertButtons = screen.getAllByText('Confirm');
     await userEvent.click(insertButtons[0]);
 
     expect(onInsert).toHaveBeenCalledWith('${entity.name}');
@@ -100,7 +111,7 @@ describe('ExprInsertDialog', () => {
     const onInsert = vi.fn();
     render(<ExprInsertDialog open={true} onClose={vi.fn()} onInsert={onInsert} />);
 
-    const insertButtons = screen.getAllByText('Insert');
+    const insertButtons = screen.getAllByText('Confirm');
     await userEvent.click(insertButtons[0]);
 
     expect(onInsert).not.toHaveBeenCalled();

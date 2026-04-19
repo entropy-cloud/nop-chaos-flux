@@ -15,6 +15,7 @@ describe('condition-builder markers', () => {
 
     const { container } = render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/condition-builder/config-markers.test.tsx#1"
         schema={{
           type: 'condition-builder',
           name: 'filters',

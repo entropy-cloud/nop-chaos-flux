@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
 import { createDesignerActionProvider, flowDesignerRendererDefinitions } from './index';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -21,6 +22,16 @@ const pageRenderer: RendererDefinition = {
 };
 
 const basicTestRendererDefinitions: RendererDefinition[] = [pageRenderer, textRenderer];
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
+});
 
 class ResizeObserverMock {
   observe() {}
@@ -273,6 +284,7 @@ describe('designer-page status publication', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flow/index-status"
         schema={{
           type: 'page',
           body: [
@@ -399,6 +411,7 @@ describe('DesignerPageRenderer basic rendering', () => {
 
     const view = render(
       <SchemaRenderer
+        schemaUrl="test://flow/index-rendering"
         schema={{
           type: 'designer-page',
           document: {
@@ -430,6 +443,7 @@ describe('DesignerPageRenderer basic rendering', () => {
 
     const view = render(
       <SchemaRenderer
+        schemaUrl="test://flow/index-toolbar"
         schema={{
           type: 'designer-page',
           document: {
@@ -481,6 +495,7 @@ describe('DesignerPageRenderer basic rendering', () => {
 
     const view = render(
       <SchemaRenderer
+        schemaUrl="test://flow/index-fallback"
         schema={{ type: 'designer-page' } as any}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}

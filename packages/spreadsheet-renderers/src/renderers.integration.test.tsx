@@ -120,6 +120,7 @@ describe('spreadsheet-page namespaced actions integration', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://spreadsheet/renderers-integration"
         schema={schema}
         env={env}
         registry={registry}
@@ -162,6 +163,7 @@ describe('spreadsheet-page namespaced actions integration', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://spreadsheet/renderers-integration"
         schema={schema}
         env={env}
         registry={registry}
@@ -222,6 +224,7 @@ describe('spreadsheet-page namespaced actions integration', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://spreadsheet/renderers-integration"
         schema={{ type: 'page', body: [schema, { type: 'spreadsheet-status-probe' }] } as any}
         env={env}
         registry={registry}

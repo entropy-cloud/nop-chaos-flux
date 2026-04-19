@@ -17,6 +17,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#1"
         schema={{
           type: 'form',
           id: 'second-edit-text-form',
@@ -50,6 +51,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#2"
         schema={{
           type: 'form',
           id: 'second-edit-pw-form',
@@ -82,6 +84,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#3"
         schema={{
           type: 'form',
           id: 'second-edit-ta-form',
@@ -111,6 +114,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#4"
         schema={{
           type: 'form',
           id: 'second-edit-sel-form',
@@ -146,6 +150,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#5"
         schema={{
           type: 'form',
           id: 'second-edit-cb-form',
@@ -175,6 +180,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#6"
         schema={{
           type: 'form',
           id: 'second-edit-sw-form',
@@ -204,6 +210,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#7"
         schema={{
           type: 'form',
           id: 'second-edit-rg-form',
@@ -239,6 +246,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#8"
         schema={{
           type: 'form',
           id: 'second-edit-cg-form',
@@ -273,6 +281,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#9"
         schema={{
           type: 'form',
           id: 'second-edit-it-form',
@@ -322,6 +331,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#10"
         schema={{
           type: 'form',
           data: { departmentId: '' },
@@ -361,6 +371,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#11"
         schema={{
           type: 'form',
           id: 'second-edit-tl-form',
@@ -391,6 +402,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#12"
         schema={{
           type: 'form',
           id: 'second-edit-kv-form',
@@ -430,6 +442,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#13"
         schema={{
           type: 'form',
           id: 'second-edit-ae-form',

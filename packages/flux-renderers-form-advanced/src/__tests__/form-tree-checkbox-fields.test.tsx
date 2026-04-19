@@ -25,6 +25,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#1"
         schema={{
           type: 'form',
           data: {
@@ -80,6 +81,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#2"
         schema={{
           type: 'form',
           data: {
@@ -123,6 +125,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#3"
         schema={{
           type: 'form',
           body: [
@@ -167,6 +170,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#4"
         schema={{
           type: 'form',
           body: [
@@ -212,6 +216,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#5"
         schema={{
           type: 'form',
           body: [
@@ -251,6 +256,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#6"
         schema={{
           type: 'form',
           data: {
@@ -317,6 +323,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#7"
         schema={[
           {
             type: 'checkbox-group',
@@ -359,6 +366,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#8"
         schema={{
           type: 'form',
           data: {

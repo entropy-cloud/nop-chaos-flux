@@ -264,6 +264,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(280px,360px)] gap-6 items-start">
           <div className="p-6 rounded-[20px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]">
             <SchemaRenderer
+              schemaUrl="playground://pages/flux-basic"
               schema={fluxBasicPageSchema}
               data={{
                 currentUser: { name: 'Architect' },

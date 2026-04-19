@@ -15,6 +15,7 @@ describe('form render performance optimization', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/render-performance"
         schema={{
           type: 'form',
           data: {

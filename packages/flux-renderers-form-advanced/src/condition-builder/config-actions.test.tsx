@@ -30,7 +30,7 @@ describe('condition-builder config integration action behavior', () => {
     it('adds a condition item on click', () => {
       const onChange = vi.fn();
       renderGroup({}, makeEmptyGroup(), onChange);
-      const addBtns = screen.queryAllByText('添加条件');
+      const addBtns = screen.queryAllByText('Add condition');
       fireEvent.click(addBtns[0]);
       expect(onChange).toHaveBeenCalledTimes(1);
       const newGroup = onChange.mock.calls[0][0];
@@ -42,7 +42,7 @@ describe('condition-builder config integration action behavior', () => {
     it('adds a nested group on click', () => {
       const onChange = vi.fn();
       renderGroup({ builderMode: 'full' }, makeEmptyGroup(), onChange);
-      const addGroupBtns = screen.queryAllByText('添加分组');
+      const addGroupBtns = screen.queryAllByText('Add group');
       fireEvent.click(addGroupBtns[0]);
       expect(onChange).toHaveBeenCalledTimes(1);
       const newGroup = onChange.mock.calls[0][0];
@@ -79,7 +79,7 @@ describe('condition-builder config integration action behavior', () => {
         children: [innerGroup],
       };
       renderGroup({ builderMode: 'full' }, value, onChange);
-      const removeBtns = screen.queryAllByTitle('删除分组');
+      const removeBtns = screen.queryAllByTitle('Remove group');
       expect(removeBtns.length).toBeGreaterThanOrEqual(1);
       fireEvent.click(removeBtns[0]);
       expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ children: [] }));
@@ -87,7 +87,7 @@ describe('condition-builder config integration action behavior', () => {
 
     it('uses translated remove group title after language switch', async () => {
       resetFluxI18n();
-      initFluxI18n();
+      initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
       await changeLanguage('en-US');
 
       const value = {

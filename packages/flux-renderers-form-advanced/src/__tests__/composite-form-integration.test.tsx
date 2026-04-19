@@ -12,6 +12,7 @@ describe('composite form - six-component integration', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-integration.test.tsx#1"
         schema={{
           type: 'form',
           id: 'six-form',
@@ -127,6 +128,7 @@ describe('composite form - six-component integration', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-integration.test.tsx#2"
         schema={{
           type: 'form',
           id: 'six-block',
@@ -189,6 +191,7 @@ describe('composite form - submit supersedes debounced validation', () => {
 
       render(
         <SchemaRenderer
+          schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-integration.test.tsx#3"
           schema={{
             type: 'form',
             id: 'debounce-form',

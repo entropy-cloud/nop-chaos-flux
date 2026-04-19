@@ -164,7 +164,7 @@ export const testFields: ConditionField[] = [
 export { ConditionGroup };
 
 resetFluxI18n();
-initFluxI18n();
+initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 export function makeEmptyGroup(): ConditionGroupValue {
   return { id: 'g1', conjunction: 'and', children: [] };

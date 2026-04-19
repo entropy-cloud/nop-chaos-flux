@@ -20,6 +20,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/field-handlers"
         schema={{
           type: 'form',
           data: {
@@ -70,6 +71,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
 
     const { rerender } = render(
       <SchemaRenderer
+        schemaUrl="test://form/field-handlers"
         schema={schema}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
@@ -80,6 +82,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
 
     rerender(
       <SchemaRenderer
+        schemaUrl="test://form/field-handlers"
         schema={schema}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
@@ -96,6 +99,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/field-handlers"
         schema={{
           type: 'form',
           data: {
@@ -147,6 +151,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/field-handlers"
         schema={{
           type: 'form',
           data: {
@@ -210,6 +215,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/field-handlers"
         schema={{
           type: 'form',
           data: {

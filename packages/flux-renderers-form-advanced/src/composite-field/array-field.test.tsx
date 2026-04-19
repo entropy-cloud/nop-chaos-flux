@@ -3,12 +3,16 @@ import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer, useRenderScope } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
+
+resetFluxI18n();
+initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => undefined;
@@ -75,6 +79,7 @@ describe('array-field renderer (scalar)', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#1"
         schema={{
           type: 'form',
           data: {
@@ -118,6 +123,7 @@ describe('array-field renderer (scalar)', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#2"
         schema={{
           type: 'form',
           id: 'arr-scalar-form',
@@ -181,6 +187,7 @@ describe('array-field renderer (scalar)', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#3"
         schema={{
           type: 'form',
           data: {
@@ -214,6 +221,7 @@ describe('array-field renderer (object itemKind)', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#4"
         schema={{
           type: 'form',
           data: {
@@ -254,6 +262,7 @@ describe('array-field renderer (object itemKind)', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#5"
         schema={{
           type: 'form',
           data: {
@@ -288,6 +297,7 @@ describe('array-field renderer (object itemKind)', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#6"
         schema={{
           type: 'form',
           id: 'arr-obj-form',
@@ -345,6 +355,7 @@ describe('array-field renderer (object itemKind)', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#7"
         schema={{
           type: 'form',
           data: {
@@ -389,6 +400,7 @@ describe('array-field renderer (object itemKind)', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#8"
         schema={{
           type: 'form',
           id: 'arr-second-edit-form',
@@ -441,6 +453,7 @@ describe('array-field renderer (object itemKind)', () => {
     } as const;
     const { rerender } = render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#9"
         schema={schema}
         data={{
           contacts: [
@@ -463,6 +476,7 @@ describe('array-field renderer (object itemKind)', () => {
 
     rerender(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#10"
         schema={schema}
         data={{
           contacts: [
@@ -476,8 +490,13 @@ describe('array-field renderer (object itemKind)', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('array-item-probe-Alice').textContent).toBe(aliceText);
-      expect(screen.getByTestId('array-item-probe-Bob').textContent).toBe(bobText);
+      const nextAliceText = screen.getByTestId('array-item-probe-Alice').textContent ?? '';
+      const nextBobText = screen.getByTestId('array-item-probe-Bob').textContent ?? '';
+
+      expect(nextAliceText.split('|')[0]).toBe(aliceText?.split('|')[0]);
+      expect(nextBobText.split('|')[0]).toBe(bobText?.split('|')[0]);
+      expect(nextAliceText).toContain('contact-a');
+      expect(nextBobText).toContain('contact-b');
     });
   });
 

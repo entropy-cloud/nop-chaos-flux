@@ -189,8 +189,7 @@ describe('reactive meta and draggable dialogs', () => {
   it('re-evaluates disabled expression when form scope changes', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, formRenderer, probeButtonRenderer, probeQueryInputRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             {
@@ -218,10 +217,10 @@ describe('reactive meta and draggable dialogs', () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, probeButtonRenderer]);
     const schema = { type: 'page', body: [{ type: 'probe-button', disabled: '${!ready}' }] } as const;
     const { rerender } = render(
-      <SchemaRenderer schema={schema} data={{ ready: false }} env={env} formulaCompiler={sharedFormulaCompiler} />
+      <SchemaRenderer schemaUrl="test://schema.json" schema={schema} data={{ ready: false }} env={env} formulaCompiler={sharedFormulaCompiler} />
     );
     const searchButton = screen.getByRole('button', { name: 'Search' }) as HTMLButtonElement;
-    rerender(<SchemaRenderer schema={schema} data={{ ready: true }} env={env} formulaCompiler={sharedFormulaCompiler} />);
+    rerender(<SchemaRenderer schemaUrl="test://schema.json" schema={schema} data={{ ready: true }} env={env} formulaCompiler={sharedFormulaCompiler} />);
     await waitFor(() => {
       expect(searchButton.disabled).toBe(false);
     });
@@ -230,8 +229,7 @@ describe('reactive meta and draggable dialogs', () => {
   it('renders dialog with drag handle around the title', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             {
@@ -256,8 +254,7 @@ describe('reactive meta and draggable dialogs', () => {
   it('applies inline transform for draggable dialogs instead of Tailwind centering', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             { type: 'button', label: 'Open transform dialog', onClick: { action: 'dialog', dialog: { title: 'Drag test', body: [{ type: 'text', text: 'Body' }] } } }
@@ -279,8 +276,7 @@ describe('reactive meta and draggable dialogs', () => {
   it('registers drag listeners on pointerdown and updates transform', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             { type: 'button', label: 'Open pointer dialog', onClick: { action: 'dialog', dialog: { title: 'Drag me', body: [{ type: 'text', text: 'Content' }] } } }
@@ -301,8 +297,7 @@ describe('reactive meta and draggable dialogs', () => {
   it('marks drawer host content with a data-slot instead of an internal nop drawer card class', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             { type: 'button', label: 'Open drawer', onClick: { action: 'drawer', drawer: { title: 'Drawer title', body: [{ type: 'text', text: 'Drawer body' }] } } }

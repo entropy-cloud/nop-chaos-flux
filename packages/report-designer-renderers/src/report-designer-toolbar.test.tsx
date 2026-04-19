@@ -41,6 +41,7 @@ function renderToolbarInPage(overrides: { itemsOverride?: any[] }) {
 
   render(
     <SchemaRenderer
+      schemaUrl="test://report/toolbar"
       schema={schema}
       env={env}
       registry={registry}

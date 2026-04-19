@@ -56,7 +56,7 @@ describe('createSchemaRenderer scope behavior', () => {
   it('uses lexical scope data by default and isolates own-scope subscriptions when requested', async () => {
     const pageStore = createRendererRuntime({ registry: createRendererRegistry([]), env, expressionCompiler: createExpressionCompiler(sharedFormulaCompiler) }).createPageRuntime({ data: { shared: 'parent-a' } }).store;
     const SchemaRenderer = createSchemaRenderer([fragmentScopeProbeHostRenderer, scopeLayerProbeRenderer, ownScopeValueProbeRenderer]);
-    render(<SchemaRenderer schema={{ type: 'fragment-scope-probe-host', body: [{ type: 'scope-layer-probe' }, { type: 'own-scope-value-probe' }] } as any} data={{ shared: 'parent-a' }} env={env} formulaCompiler={sharedFormulaCompiler} pageStore={pageStore} />);
+    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'fragment-scope-probe-host', body: [{ type: 'scope-layer-probe' }, { type: 'own-scope-value-probe' }] } as any} data={{ shared: 'parent-a' }} env={env} formulaCompiler={sharedFormulaCompiler} pageStore={pageStore} />);
     expect(screen.getByTestId('lexical-value').textContent).toBe('parent-a');
     pageStore.updateData('shared', 'parent-b');
     await waitFor(() => expect(screen.getByTestId('lexical-value').textContent).toBe('parent-b'));
@@ -68,7 +68,7 @@ describe('createSchemaRenderer scope behavior', () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, formRenderer, probeInputRenderer, pageValueProbeRenderer]);
     function Host() {
       const [name, setName] = React.useState('Architect');
-      return <div><button type="button" onClick={() => setName('Operator')}>Rename user</button><SchemaRenderer schema={pageWithProbeFormSchema} data={{ currentUser: { name } }} env={env} formulaCompiler={sharedFormulaCompiler} /></div>;
+      return <div><button type="button" onClick={() => setName('Operator')}>Rename user</button><SchemaRenderer schemaUrl="test://schema.json" schema={pageWithProbeFormSchema} data={{ currentUser: { name } }} env={env} formulaCompiler={sharedFormulaCompiler} /></div>;
     }
     const view = render(<Host />);
     const canvas = within(view.container);
@@ -80,7 +80,7 @@ describe('createSchemaRenderer scope behavior', () => {
 
   it('preserves form state when fragment render data is recreated on host rerender', () => {
     const SchemaRenderer = createSchemaRenderer([fragmentRenderHostRenderer, formRenderer, probeInputRenderer]);
-    const view = render(<SchemaRenderer schema={{ type: 'fragment-render-host' }} env={env} formulaCompiler={sharedFormulaCompiler} />);
+    const view = render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'fragment-render-host' }} env={env} formulaCompiler={sharedFormulaCompiler} />);
     const canvas = within(view.container);
     fireEvent.change(canvas.getByLabelText('Email'), { target: { value: 'a' } });
     fireEvent.click(canvas.getByText('Refresh fragment 0'));
@@ -91,8 +91,7 @@ describe('createSchemaRenderer scope behavior', () => {
     const SchemaRenderer = createSchemaRenderer([formRenderer, probeInputRenderer, pageRenderer, formStatusProbeRendererDefinition]);
 
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'form',
           id: 'profile-form',
           body: [

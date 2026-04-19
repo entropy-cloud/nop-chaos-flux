@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { DatasetPanel } from '../panels/DatasetPanel.js';
 import type { DataSet } from '@nop-chaos/word-editor-core';
 
@@ -28,6 +29,16 @@ function createMockStore(datasets: DataSet[] = [], selectedDatasetId: string | n
     }
   };
 }
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
+});
 
 describe('DatasetPanel', () => {
   it('renders Datasets header', () => {

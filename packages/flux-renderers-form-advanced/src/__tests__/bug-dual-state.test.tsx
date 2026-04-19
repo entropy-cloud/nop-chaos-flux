@@ -62,6 +62,7 @@ function PlainScopeArrayHost() {
         Reset plain array
       </button>
       <PlainScopeSchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/bug-dual-state.test.tsx#plain-array"
         schema={{
           type: 'array-editor',
           name: 'items',
@@ -87,6 +88,7 @@ function PlainScopeKeyValueHost() {
         Reset plain metadata
       </button>
       <PlainScopeSchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/bug-dual-state.test.tsx#plain-key-value"
         schema={{
           type: 'key-value',
           name: 'metadata',
@@ -112,6 +114,7 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/bug-dual-state.test.tsx#1"
         schema={{
           type: 'form',
           data: {
@@ -153,6 +156,7 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/bug-dual-state.test.tsx#2"
         schema={{
           type: 'form',
           data: {
@@ -194,6 +198,7 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/bug-dual-state.test.tsx#3"
         schema={{
           type: 'form',
           data: {
@@ -242,6 +247,7 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/bug-dual-state.test.tsx#4"
         schema={{
           type: 'form',
           data: {
@@ -324,4 +330,3 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
     });
   });
 });
-

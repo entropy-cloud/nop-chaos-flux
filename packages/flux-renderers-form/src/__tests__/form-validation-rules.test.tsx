@@ -13,6 +13,7 @@ describe('formRendererDefinitions - relational and conditional field validation'
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-rules"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -93,6 +94,7 @@ describe('formRendererDefinitions - relational and conditional field validation'
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-rules"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -176,6 +178,7 @@ describe('formRendererDefinitions - relational and conditional field validation'
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-rules"
         schema={{
           type: 'form',
           data: {
@@ -234,6 +237,7 @@ describe('formRendererDefinitions - relational and conditional field validation'
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-rules"
         schema={{
           type: 'form',
           data: {

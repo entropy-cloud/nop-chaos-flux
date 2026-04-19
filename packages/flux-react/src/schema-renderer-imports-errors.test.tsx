@@ -24,8 +24,7 @@ describe('createSchemaRenderer import failures and retries', () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, dispatchProbeRenderer]);
 
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             { type: 'dispatch-probe', label: 'Run loading import', resultKey: 'loading-import-result', 'xui:imports': [{ from: 'slow-lib', as: 'slow' }], runAction: { action: 'slow:ping' } },
@@ -56,8 +55,7 @@ describe('createSchemaRenderer import failures and retries', () => {
     const SchemaRenderer = createSchemaRenderer([buttonRenderer]);
 
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'button',
           label: 'Broken import button',
           'xui:imports': [{ from: 'broken-lib', as: 'broken' }],
@@ -106,8 +104,7 @@ describe('createSchemaRenderer import failures and retries', () => {
           <button type="button" onClick={() => setTick((current) => current + 1)}>
             Refresh env {tick}
           </button>
-          <SchemaRenderer
-            schema={{
+          <SchemaRenderer schemaUrl="test://schema.json" schema={{
               type: 'page',
               body: [
                 { type: 'dispatch-probe', label: 'Run retried import', resultKey: 'retry-import-result', 'xui:imports': [{ from: 'retry-lib', as: 'retry' }], runAction: { action: 'retry:ping', args: { value: 'live' } } }

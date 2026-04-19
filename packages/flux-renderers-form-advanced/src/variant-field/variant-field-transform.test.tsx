@@ -24,6 +24,7 @@ describe('variant-field renderer transform behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-transform.test.tsx#1"
         schema={{
           type: 'form',
           data: {
@@ -91,6 +92,7 @@ describe('variant-field renderer transform behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-transform.test.tsx#2"
         schema={{
           type: 'form',
           data: {
@@ -139,6 +141,7 @@ describe('variant-field renderer transform behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-transform.test.tsx#3"
         schema={{
           type: 'form',
           id: 'variant-submit-form',

@@ -33,8 +33,7 @@ describe('createSchemaRenderer import scope boundaries', () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, toggleHostRenderer, scopedHostRenderer, dispatchCaptureRenderer, dispatchProbeRenderer]);
 
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             {
@@ -77,8 +76,7 @@ describe('createSchemaRenderer import scope boundaries', () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, scopedHostRenderer, namespaceProviderRenderer, componentHandleProviderRenderer, dispatchProbeRenderer]);
 
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             { type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' },
@@ -125,8 +123,7 @@ describe('createSchemaRenderer import scope boundaries', () => {
     ]);
 
     render(
-      <SchemaRenderer
-        schema={{
+      <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
             { type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' },

@@ -3,8 +3,19 @@
 import { createFormulaCompiler } from '../../flux-formula/src/index';
 import { createSchemaRenderer } from '../../flux-react/src/index';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
+});
 
 vi.mock('./canvas-bridge', async () => {
   const actual = await vi.importActual<typeof import('./canvas-bridge')>('./canvas-bridge');
@@ -87,6 +98,7 @@ function renderDesignerPage(document: GraphDocument, notify = vi.fn()) {
 
   const view = render(
     <SchemaRenderer
+      schemaUrl="test://flow/xyflow-render"
       schema={{ type: 'designer-page', document, config: createTestConfig() } as any}
       env={createRendererEnv(notify)}
       formulaCompiler={createFormulaCompiler()}
@@ -164,6 +176,7 @@ describe('designer-page live xyflow intent retention', () => {
 
     const view = render(
       <SchemaRenderer
+        schemaUrl="test://flow/xyflow-create-dialog"
         schema={{
           type: 'designer-page',
           document: {

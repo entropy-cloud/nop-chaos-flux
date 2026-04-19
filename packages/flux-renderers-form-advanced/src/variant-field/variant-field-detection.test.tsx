@@ -9,6 +9,7 @@ describe('variant-field renderer detection behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#1"
         schema={{
           type: 'form',
           data: {
@@ -53,6 +54,7 @@ describe('variant-field renderer detection behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#2"
         schema={{
           type: 'form',
           data: {
@@ -95,6 +97,7 @@ describe('variant-field renderer detection behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#3"
         schema={{
           type: 'form',
           data: {
@@ -149,6 +152,7 @@ describe('variant-field renderer detection behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#4"
         schema={{
           type: 'form',
           data: {
@@ -206,6 +210,7 @@ describe('variant-field renderer detection behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#5"
         schema={{
           type: 'form',
           data: {
@@ -263,6 +268,7 @@ describe('variant-field renderer detection behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#6"
         schema={{
           type: 'form',
           data: {
@@ -322,6 +328,7 @@ describe('variant-field renderer detection behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#7"
         schema={{
           type: 'form',
           data: {

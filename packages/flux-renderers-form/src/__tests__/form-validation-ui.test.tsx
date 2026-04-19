@@ -1,11 +1,22 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ApiObject, ApiRequestContext } from '@nop-chaos/flux-core';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '../index';
 import { buttonRenderer, env, submitCalls } from './form-test-support';
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
+});
 
 describe('formRendererDefinitions - validation timing and visibility', () => {
   it('blocks submit when compiled validation rules fail', async () => {
@@ -15,6 +26,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-ui"
         schema={{
           type: 'form',
           data: {
@@ -61,6 +73,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-ui"
         schema={{
           type: 'form',
           data: {
@@ -127,6 +140,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-ui"
         schema={{
           type: 'form',
           data: {
@@ -172,6 +186,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
     const { container } = render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-ui"
         schema={{
           type: 'form',
           body: [{ type: 'input-text', name: 'email', label: 'Email' }],
@@ -195,6 +210,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
     const { container } = render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-ui"
         schema={{
           type: 'form',
           body: [{ type: 'input-text', name: 'email', label: 'Email' }]
@@ -216,6 +232,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-ui"
         schema={{
           type: 'form',
           validateOn: 'submit',
@@ -267,6 +284,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-ui"
         schema={{
           type: 'form',
           validateOn: ['blur', 'change', 'submit'],
@@ -305,6 +323,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-ui"
         schema={{
           type: 'form',
           validateOn: 'submit',
@@ -357,6 +376,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://form/validation-ui"
         schema={{
           type: 'form',
           validateOn: 'submit',

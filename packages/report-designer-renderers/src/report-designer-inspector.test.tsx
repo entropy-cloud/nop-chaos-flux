@@ -35,6 +35,7 @@ function renderInspector(
 
   render(
     <SchemaRenderer
+      schemaUrl="test://report/inspector"
       schema={schema}
       env={env}
       registry={registry}

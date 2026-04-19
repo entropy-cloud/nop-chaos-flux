@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { createModuleCache } from '@nop-chaos/flux-runtime';
 import { createSchemaRenderer } from './index';
 import { buttonRenderer, dispatchProbeRenderer, env, pageRenderer, scopedHostRenderer, sharedFormulaCompiler, textRenderer } from './test-support';
 
@@ -27,6 +28,7 @@ describe('createSchemaRenderer import basics', () => {
           'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
           onClick: { action: 'demo:open', args: { id: 'record-1' } }
         }}
+        schemaUrl="https://app.local/schema/button.json"
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
       />
@@ -63,6 +65,7 @@ describe('createSchemaRenderer import basics', () => {
           'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
           text: 'Imported ${$demo.formatName(user.firstName, user.lastName)}'
         } as any}
+        schemaUrl="https://app.local/schema/text.json"
         data={{ user: { firstName: 'Ada', lastName: 'Lovelace' } }}
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
@@ -96,6 +99,7 @@ describe('createSchemaRenderer import basics', () => {
             { type: 'dispatch-probe', label: 'Run sibling import', resultKey: 'sibling-import-result', runAction: { action: 'demo:ping', args: { value: 'sibling' } } }
           ]
         }}
+        schemaUrl="https://app.local/schema/page.json"
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
       />
@@ -152,6 +156,7 @@ describe('createSchemaRenderer import basics', () => {
             }
           ]
         }}
+        schemaUrl="https://app.local/schema/page.json"
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
       />
@@ -165,5 +170,82 @@ describe('createSchemaRenderer import basics', () => {
       expect(screen.getByTestId('local-import-result').textContent).toBe('demo-lib:ping:local');
       expect(screen.getByTestId('sibling-import-result').textContent).toBe('Error: Unsupported action: demo:ping');
     });
+  });
+
+  it('dedupes relative imports across schema renderers with shared module cache', async () => {
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => ({ ok: true })
+        }),
+        createExpressionHelpers: () => ({
+          formatName(first: string, last: string) {
+            return `${first} ${last}`;
+          }
+        })
+      }))
+    };
+    const resolveImportUrl = vi.fn((schemaUrl: string, from: string) => new URL(from, schemaUrl).toString());
+    const moduleCache = createModuleCache();
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+
+    render(
+      <div>
+        <SchemaRenderer
+          schema={{ type: 'text', 'xui:imports': [{ from: './shared-lib.js', as: 'demo' }], text: '${$demo.formatName("Ada", "Lovelace")}' } as any}
+          schemaUrl="https://app.local/routes/a/page.json"
+          moduleCache={moduleCache}
+          env={{ ...env, importLoader, resolveImportUrl }}
+          formulaCompiler={sharedFormulaCompiler}
+        />
+        <SchemaRenderer
+          schema={{ type: 'text', 'xui:imports': [{ from: '../a/shared-lib.js', as: 'demo' }], text: '${$demo.formatName("Grace", "Hopper")}' } as any}
+          schemaUrl="https://app.local/routes/b/page.json"
+          moduleCache={moduleCache}
+          env={{ ...env, importLoader, resolveImportUrl }}
+          formulaCompiler={sharedFormulaCompiler}
+        />
+      </div>
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText((_, element) => element?.textContent === 'Ada Lovelace').length).toBeGreaterThan(0);
+      expect(screen.getAllByText((_, element) => element?.textContent === 'Grace Hopper').length).toBeGreaterThan(0);
+    });
+    expect(importLoader.load).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes resolved import URLs to the loader', async () => {
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => ({ ok: true })
+        }),
+        createExpressionHelpers: () => ({
+          formatName(first: string, last: string) {
+            return `${first} ${last}`;
+          }
+        })
+      }))
+    };
+    const resolveImportUrl = vi.fn((schemaUrl: string, from: string) => `resolved:${schemaUrl}:${from}`);
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{ type: 'text', 'xui:imports': [{ from: './demo-lib.js', as: 'demo' }], text: '${$demo.formatName("Ada", "Lovelace")}' } as any}
+        schemaUrl="https://app.local/schema/page.json"
+        env={{ ...env, importLoader, resolveImportUrl }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText((_, element) => element?.textContent === 'Ada Lovelace').length).toBeGreaterThan(0);
+    });
+    expect(resolveImportUrl).toHaveBeenCalledWith('https://app.local/schema/page.json', './demo-lib.js', undefined);
+    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib.js', as: 'demo' });
   });
 });

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { describe, expect, it } from 'vitest';
-import { afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry, useScopeSelector } from '@nop-chaos/flux-react';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
@@ -27,6 +27,13 @@ const actionButtonRenderer: RendererDefinition = {
 
 afterEach(() => {
   cleanup();
+  resetFluxI18n();
+});
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
 });
 
 const textRenderer: RendererDefinition = {
@@ -137,6 +144,7 @@ function renderReportDesignerPage(input: {
 
   render(
     <SchemaRenderer
+      schemaUrl="test://report/renderers-integration"
       schema={schema}
       env={env}
       registry={registry}
@@ -259,6 +267,7 @@ describe('report-designer namespaced actions integration', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://report/renderers-integration"
         schema={{
           type: 'page',
           body: [
@@ -297,6 +306,7 @@ describe('report-designer namespaced actions integration', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://report/renderers-integration"
         schema={{
           type: 'page',
           body: [

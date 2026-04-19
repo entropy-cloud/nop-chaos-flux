@@ -105,6 +105,7 @@ describe('WordEditorPage', () => {
     })
     const { container } = render(
       <SchemaRenderer
+        schemaUrl="test://word-editor/page"
         schema={schema}
         env={env}
         registry={registry}

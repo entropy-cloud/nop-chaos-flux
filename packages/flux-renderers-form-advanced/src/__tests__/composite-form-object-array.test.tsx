@@ -28,6 +28,7 @@ describe('composite form - object-field validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-object-array.test.tsx#1"
         schema={{
           type: 'form',
           id: 'obj-form-block',
@@ -79,6 +80,7 @@ describe('composite form - object-field validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-object-array.test.tsx#2"
         schema={{
           type: 'form',
           id: 'obj-form-pass',
@@ -129,6 +131,7 @@ describe('composite form - object-field validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-object-array.test.tsx#3"
         schema={{
           type: 'form',
           id: 'obj-form-edit',
@@ -182,6 +185,7 @@ describe('composite form - array-field add/remove', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-object-array.test.tsx#4"
         schema={{
           type: 'form',
           data: { tags: ['alpha', 'beta', 'gamma'] },
@@ -219,6 +223,7 @@ describe('composite form - array-field add/remove', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-object-array.test.tsx#5"
         schema={{
           type: 'form',
           id: 'arr-form-req',
@@ -268,6 +273,7 @@ describe('composite form - array-field add/remove', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-object-array.test.tsx#6"
         schema={{
           type: 'form',
           id: 'arr-form-pass',
@@ -314,6 +320,7 @@ describe('composite form - array-field add/remove', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-object-array.test.tsx#7"
         schema={{
           type: 'form',
           data: { tags: ['alpha'] },

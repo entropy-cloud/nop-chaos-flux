@@ -64,6 +64,7 @@ function renderFieldPanel(
 
   render(
     <SchemaRenderer
+      schemaUrl="test://report/field-panel"
       schema={schema}
       env={env}
       registry={registry}

@@ -9,6 +9,7 @@ describe('detail-view renderer owner update behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-owner-updates.test.tsx#1"
         schema={{
           type: 'page',
           body: [
@@ -49,6 +50,7 @@ describe('detail-view renderer owner update behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-owner-updates.test.tsx#2"
         schema={{
           type: 'page',
           body: [
@@ -96,6 +98,7 @@ describe('detail-view renderer owner update behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-owner-updates.test.tsx#3"
         schema={{
           type: 'page',
           body: [
@@ -151,6 +154,7 @@ describe('detail-view renderer owner update behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-owner-updates.test.tsx#4"
         schema={{
           type: 'page',
           body: [

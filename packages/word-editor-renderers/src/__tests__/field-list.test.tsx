@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { FieldList } from '../panels/FieldList.js';
 import type { DataSet, DataColumn } from '@nop-chaos/word-editor-core';
 
@@ -32,6 +33,16 @@ function createMockStore(selectedDatasetId: string | null = null, datasets: Data
     }
   };
 }
+
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
+});
 
 describe('FieldList', () => {
   it('renders Fields header', () => {

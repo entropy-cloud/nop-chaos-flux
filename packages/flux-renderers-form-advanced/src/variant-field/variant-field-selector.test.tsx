@@ -58,6 +58,7 @@ describe('variant-field renderer selector behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#1"
         schema={{
           ...variantSchema,
           body: [
@@ -90,7 +91,7 @@ describe('variant-field renderer selector behavior', () => {
     cleanup();
     const SchemaRenderer = createFormSchemaRenderer();
 
-    render(<SchemaRenderer schema={variantSchema} env={baseEnv} formulaCompiler={formulaCompiler} />);
+    render(<SchemaRenderer schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#2" schema={variantSchema} env={baseEnv} formulaCompiler={formulaCompiler} />);
 
     await waitFor(() => expect(screen.getByText('Number')).toBeTruthy());
 
@@ -108,6 +109,7 @@ describe('variant-field renderer selector behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#2"
         schema={{
           type: 'form',
           data: {
@@ -152,6 +154,7 @@ describe('variant-field renderer selector behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#3"
         schema={{
           type: 'form',
           data: {
@@ -204,6 +207,7 @@ describe('variant-field renderer selector behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#4"
         schema={{
           type: 'form',
           data: {
@@ -245,6 +249,7 @@ describe('variant-field renderer selector behavior', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#5"
         schema={{
           type: 'form',
           data: {

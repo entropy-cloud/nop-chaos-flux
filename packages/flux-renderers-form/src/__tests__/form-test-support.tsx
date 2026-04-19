@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
 import type { ApiObject, ApiRequestContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { getIn } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { useAggregateError, useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
@@ -18,6 +19,9 @@ if (typeof PointerEvent === 'undefined') {
   }
   globalThis.PointerEvent = PointerEvent as any;
 }
+
+resetFluxI18n();
+initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 export async function selectOption(labelText: string, optionText: string) {
   const trigger = screen.getByLabelText(labelText);

@@ -50,6 +50,7 @@ export function ConditionBuilderPage({ onBack }: ConditionBuilderPageProps) {
         </p>
         <div className="mt-8 p-6 rounded-[20px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]">
           <SchemaRenderer
+            schemaUrl="playground://pages/condition-builder"
             schema={conditionBuilderPageSchema}
             data={{}}
             env={pageEnv}

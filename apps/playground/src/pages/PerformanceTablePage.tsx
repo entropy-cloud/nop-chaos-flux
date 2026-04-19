@@ -204,6 +204,7 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
         <div className="mt-8 p-6 rounded-[20px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)] overflow-x-auto">
           <Profiler id="performance-table-page" onRender={handleProfilerRender}>
             <SchemaRenderer
+              schemaUrl={`playground://pages/performance-table/${mode}`}
               schema={schema}
               data={data}
               env={env}

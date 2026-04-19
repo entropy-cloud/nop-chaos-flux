@@ -294,6 +294,7 @@ export function CodeEditorPage({ onBack }: CodeEditorPageProps) {
         </p>
         <div className="mt-8">
           <SchemaRenderer
+            schemaUrl="playground://pages/code-editor"
             schema={schema}
             env={env}
             registry={registry}

@@ -39,6 +39,7 @@ export function SchemaLabPage({ schema, data, description, notes }: SchemaLabPag
       ) : null}
       <div className="p-5 rounded-[16px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]" data-testid="schema-lab-stage">
         <SchemaRenderer
+          schemaUrl="playground://component-lab/schema-lab"
           schema={schemaWithDebug}
           data={data ?? {}}
           env={env}

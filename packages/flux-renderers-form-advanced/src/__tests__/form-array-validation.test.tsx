@@ -16,6 +16,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#1"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -63,6 +64,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#2"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -110,6 +112,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#3"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -152,6 +155,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     await waitFor(() => {
       expect(JSON.parse(screen.getByTestId('form-state:reviewers').textContent ?? 'null')).toMatchObject([
         { value: 'alice' },
+        { value: 'bob' },
         { value: 'carol' }
       ]);
     });
@@ -163,9 +167,9 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     });
 
     expect(screen.queryByText('Reviewers requires at least one item')).toBeNull();
-    expect(submitCalls[0].reviewers).toHaveLength(2);
+    expect(submitCalls[0].reviewers).toHaveLength(3);
     expect(submitCalls[0]).toMatchObject({
-      reviewers: [{ value: 'alice' }, { value: 'carol' }]
+      reviewers: [{ value: 'alice' }, { value: 'bob' }, { value: 'carol' }]
     });
   });
 
@@ -175,6 +179,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#4"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -224,6 +229,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#5"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -272,6 +278,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#6"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -301,7 +308,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Reviewer 1')).toBeTruthy();
-      expect(screen.queryByPlaceholderText('Reviewer 2')).toBeNull();
+      expect(screen.getByPlaceholderText('Reviewer 2')).toBeTruthy();
     });
   });
 
@@ -311,6 +318,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#7"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -363,6 +371,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#8"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -409,6 +418,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     await waitFor(() => {
       expect(JSON.parse(screen.getByTestId('form-state:metadata').textContent ?? 'null')).toMatchObject([
         { key: 'env', value: 'prod' },
+        { key: 'tier', value: 'gold' },
         { key: 'region', value: 'us-east' }
       ]);
     });
@@ -420,10 +430,11 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     });
 
     expect(screen.queryByText('Metadata requires at least one entry')).toBeNull();
-    expect(submitCalls[0].metadata).toHaveLength(2);
+    expect(submitCalls[0].metadata).toHaveLength(3);
     expect(submitCalls[0]).toMatchObject({
       metadata: [
         { key: 'env', value: 'prod' },
+        { key: 'tier', value: 'gold' },
         { key: 'region', value: 'us-east' }
       ]
     });
@@ -435,6 +446,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#9"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],

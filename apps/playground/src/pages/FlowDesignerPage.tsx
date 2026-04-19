@@ -74,6 +74,7 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
       <div className="min-h-0 flex-1">
         <SchemaRenderer
           key={activeExample}
+          schemaUrl={`playground://pages/flow-designer/${activeExample}`}
           schema={schema as any}
           registry={registry}
           env={env}

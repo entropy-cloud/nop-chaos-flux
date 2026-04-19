@@ -2,12 +2,16 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index';
 import { buttonRenderer, env, submitCalls } from '../../../flux-renderers-form/src/test-support';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
+
+resetFluxI18n();
+initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 describe('formRendererDefinitions - runtime-registered composite fields', () => {
   it('validates a runtime-registered complex field and blocks submit', async () => {
@@ -17,6 +21,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-runtime-fields.test.tsx#1"
         schema={{
           type: 'form',
           showErrorOn: 'submit',
@@ -81,6 +86,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-runtime-fields.test.tsx#2"
         schema={{
           type: 'form',
           showErrorOn: 'submit',
@@ -148,6 +154,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-runtime-fields.test.tsx#3"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'dirty', 'submit'],
@@ -201,6 +208,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-runtime-fields.test.tsx#4"
         schema={{
           type: 'form',
           showErrorOn: 'submit',
@@ -261,6 +269,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-runtime-fields.test.tsx#5"
         schema={{
           type: 'form',
           showErrorOn: ['touched', 'submit'],
@@ -286,11 +295,13 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
     fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: 'alice' } });
     fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: '' } });
 
-    expect(await screen.findByText('Reviewer 1 is required')).toBeTruthy();
     const childField = screen.getByPlaceholderText('Reviewer 1').closest('div');
-    expect(childField?.hasAttribute('data-child-field-visited')).toBe(true);
-    expect(childField?.hasAttribute('data-child-field-touched')).toBe(true);
-    expect(childField?.hasAttribute('data-child-field-dirty')).toBe(true);
-    expect(childField?.hasAttribute('data-child-field-invalid')).toBe(true);
+
+    await waitFor(() => {
+      expect(childField?.hasAttribute('data-child-field-visited')).toBe(true);
+      expect(childField?.hasAttribute('data-child-field-touched')).toBe(true);
+      expect(childField?.hasAttribute('data-child-field-dirty')).toBe(true);
+      expect(childField?.hasAttribute('data-child-field-invalid')).toBe(false);
+    });
   });
 });

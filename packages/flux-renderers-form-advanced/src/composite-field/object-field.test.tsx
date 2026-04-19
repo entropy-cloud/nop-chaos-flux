@@ -79,6 +79,7 @@ describe('object-field renderer', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#1"
         schema={{
           type: 'form',
           data: {
@@ -137,6 +138,7 @@ describe('object-field renderer', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#2"
         schema={{
           type: 'form',
           id: 'obj-form',
@@ -196,6 +198,7 @@ describe('object-field renderer', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#3"
         schema={{
           type: 'form',
           data: {
@@ -240,6 +243,7 @@ describe('object-field renderer', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#4"
         schema={{
           type: 'form',
           data: {
@@ -288,6 +292,7 @@ describe('object-field renderer', () => {
 
     render(
       <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#5"
         schema={{
           type: 'form',
           id: 'obj-second-edit-form',
