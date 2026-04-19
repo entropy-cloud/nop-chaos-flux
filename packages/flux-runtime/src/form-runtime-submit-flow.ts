@@ -3,9 +3,11 @@ import type {
   FieldState,
   FormValidationResult,
   OperationControlConfig,
+  ActionResult,
   ValidationReason
 } from '@nop-chaos/flux-core';
 import { buildSubmitTouchedState, classifySubmitResult } from './form-runtime-submit';
+import { isAbortError } from './error-utils';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
 
 export interface FormOwnerRuntimeForSubmit {
@@ -26,6 +28,21 @@ export interface SubmitFormInput {
 }
 
 export type { FormValidationResult };
+
+function toSubmitFailureResult(error: unknown): ActionResult {
+  if (isAbortError(error)) {
+    return {
+      ok: false,
+      cancelled: true,
+      error
+    };
+  }
+
+  return {
+    ok: false,
+    error
+  };
+}
 
 function extractTouchedPaths(fieldStates: Record<string, FieldState>): Record<string, boolean> {
   const touched: Record<string, boolean> = {};
@@ -210,6 +227,16 @@ export async function executeFormSubmit(
     }
 
     return result;
+  } catch (error) {
+    const failureResult = toSubmitFailureResult(error);
+
+    if (failureResult.cancelled) {
+      return failureResult;
+    }
+
+    return lifecycleHandlers?.onSubmitError
+      ? await lifecycleHandlers.onSubmitError(failureResult, options)
+      : failureResult;
   } finally {
     setIsSubmitting(false);
 

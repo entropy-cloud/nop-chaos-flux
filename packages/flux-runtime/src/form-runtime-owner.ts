@@ -4,6 +4,7 @@ import type {
   FieldState,
   FormRuntime,
   FormValidationResult,
+  ScopeChange,
   ScopeValidationStateSnapshot,
   ValidationError,
   ValidationReason
@@ -27,6 +28,7 @@ export function buildFormOwnerRuntime(input: {
   setCurrentValidation: (validation: FormRuntime['validation']) => void;
   getIsSubmitting: () => boolean;
   getThisForm: () => FormRuntime;
+  setLastChange: (change: ScopeChange) => void;
 }) {
   let cachedFieldStatesRef: Record<string, FieldState> | undefined;
   let cachedScopeState: ScopeValidationStateSnapshot | undefined;
@@ -91,6 +93,11 @@ export function buildFormOwnerRuntime(input: {
         ? { ...fieldStates, [dependentPath]: nextFieldState }
         : (() => { const next = { ...fieldStates }; delete next[dependentPath]; return next; })();
 
+      input.setLastChange({
+        paths: [],
+        sourceScopeId: input.formId,
+        kind: 'update'
+      });
       input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
 
       const currentFieldState = input.sharedState.store.getState().fieldStates[dependentPath];
@@ -178,6 +185,11 @@ export function buildFormOwnerRuntime(input: {
     for (const [path, pathErrors] of Object.entries(nextErrors)) {
       nextFieldStates[path] = { ...nextFieldStates[path], errors: pathErrors };
     }
+    input.setLastChange({
+      paths: [],
+      sourceScopeId: input.formId,
+      kind: 'update'
+    });
     input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
 
     return computeScopeState();
@@ -206,6 +218,11 @@ export function buildFormOwnerRuntime(input: {
       cancelValidationDebounce(input.sharedState, path);
     }
 
+    input.setLastChange({
+      paths: changedPaths.length > 0 ? changedPaths : ['*'],
+      sourceScopeId: input.formId,
+      kind: 'update'
+    });
     input.sharedState.store.batchUpdate({ values: nextValues });
 
     for (const path of changedPaths) {
@@ -340,6 +357,11 @@ export function buildFormOwnerRuntime(input: {
       }
     }
     if (changed) {
+      input.setLastChange({
+        paths: [],
+        sourceScopeId: input.formId,
+        kind: 'update'
+      });
       input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
     }
 
@@ -445,6 +467,11 @@ export function buildFormOwnerRuntime(input: {
       for (const [path, pathErrors] of Object.entries(retainedErrors)) {
         nextFieldStates[path] = { ...nextFieldStates[path], errors: pathErrors };
       }
+      input.setLastChange({
+        paths: [],
+        sourceScopeId: input.formId,
+        kind: 'update'
+      });
       input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
     } else {
       const currentFieldStates = input.sharedState.store.getState().fieldStates;
@@ -459,6 +486,11 @@ export function buildFormOwnerRuntime(input: {
           nextFieldStates[path] = fs;
         }
       }
+      input.setLastChange({
+        paths: [],
+        sourceScopeId: input.formId,
+        kind: 'update'
+      });
       input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
     }
 
@@ -477,6 +509,11 @@ export function buildFormOwnerRuntime(input: {
     input.sharedState.pathToRegistrationId.clear();
     input.sharedState.childContracts.clear();
     input.sharedState.externalErrors.clear();
+    input.setLastChange({
+      paths: [],
+      sourceScopeId: input.formId,
+      kind: 'update'
+    });
     input.sharedState.store.batchUpdate({ fieldStates: {} });
   }
 

@@ -24,6 +24,7 @@ export async function executeRuntimeValidationRule(
   rule: Extract<ValidationRule, { kind: 'async' }>,
   field: CompiledFormValidationField,
   scope: ScopeRef,
+  signal: AbortSignal | undefined,
   ctx: {
     getEnv: () => RendererEnv;
     expressionCompiler: ExpressionCompiler;
@@ -33,8 +34,9 @@ export async function executeRuntimeValidationRule(
 ): Promise<ValidationError | undefined> {
   try {
     const response = await executeApiSchema(rule.api, scope, ctx.getEnv(), ctx.expressionCompiler, {
+      signal,
       evaluate: ctx.evaluate,
-      executor: (adaptedApi) => ctx.executeApiRequest(`validate:${field.path}`, adaptedApi, scope)
+      executor: (adaptedApi) => ctx.executeApiRequest(`validate:${field.path}`, adaptedApi, scope, undefined, { signal })
     });
     const adaptedData = response.data;
 

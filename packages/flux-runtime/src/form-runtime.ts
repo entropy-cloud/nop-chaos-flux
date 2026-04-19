@@ -115,6 +115,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     initialFieldState,
     validationRuns,
     pendingValidationDebounces,
+    validationAbortControllers: new Map(),
     runtimeFieldRegistrations,
     pathToRegistrationId,
     hiddenFields: new Set(),
@@ -169,7 +170,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       currentValidation = validation;
     },
     getIsSubmitting: () => isSubmittingInternal,
-    getThisForm: () => formRuntimeRef.current as FormRuntime
+    getThisForm: () => formRuntimeRef.current as FormRuntime,
+    setLastChange
   });
 
   function buildArrayCtx(): ArrayMutationContext {

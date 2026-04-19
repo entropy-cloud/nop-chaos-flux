@@ -65,6 +65,12 @@ function commitPathValidationState(input: {
 
 export function cancelValidationDebounce(sharedState: FormRuntimeValidationState, path: string) {
   const pending = sharedState.pendingValidationDebounces.get(path);
+  const abortController = sharedState.validationAbortControllers.get(path);
+
+  if (abortController) {
+    abortController.abort();
+    sharedState.validationAbortControllers.delete(path);
+  }
 
   if (!pending) {
     return;
@@ -174,6 +180,8 @@ async function validateCompiledField(
   const capturedGeneration = sharedState.modelGeneration;
   const runId = (sharedState.validationRuns.get(path) ?? 0) + 1;
   sharedState.validationRuns.set(path, runId);
+  sharedState.validationAbortControllers.get(path)?.abort();
+  sharedState.validationAbortControllers.delete(path);
   const value = syncedRuntimeValue ?? sharedState.scope.get(path);
   const errors: ValidationError[] = [];
   const hasAsyncRules = field.rules.some((compiledRule) => compiledRule.rule.kind === 'async');
@@ -181,8 +189,12 @@ async function validateCompiledField(
 
   const validatingDelay = sharedState.inputValue.validatingDelay ?? 0;
   let validatingTimer: ReturnType<typeof setTimeout> | undefined;
+  let validationAbortController: AbortController | undefined;
 
   if (hasAsyncRules) {
+    validationAbortController = new AbortController();
+    sharedState.validationAbortControllers.set(path, validationAbortController);
+
     if (validatingDelay > 0) {
       validatingTimer = setTimeout(() => {
         validatingTimer = undefined;
@@ -211,7 +223,13 @@ async function validateCompiledField(
           throw VALIDATION_CANCELLED;
         }
 
-        const asyncError = await sharedState.inputValue.executeValidationRule(compiledRule, rule, field, sharedState.scope);
+        const asyncError = await sharedState.inputValue.executeValidationRule(
+          compiledRule,
+          rule,
+          field,
+          sharedState.scope,
+          validationAbortController?.signal
+        );
 
         if (asyncError) {
           errors.push(asyncError);
@@ -257,6 +275,10 @@ async function validateCompiledField(
     if (validatingTimer !== undefined) {
       clearTimeout(validatingTimer);
       validatingTimer = undefined;
+    }
+
+    if (validationAbortController && sharedState.validationAbortControllers.get(path) === validationAbortController) {
+      sharedState.validationAbortControllers.delete(path);
     }
 
     if (hasAsyncRules && sharedState.validationRuns.get(path) === runId && sharedState.modelGeneration === capturedGeneration) {

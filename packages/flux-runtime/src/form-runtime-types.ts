@@ -30,7 +30,8 @@ export interface CreateManagedFormRuntimeInput {
     compiledRule: CompiledValidationRule,
     rule: Extract<ValidationRule, { kind: 'async' }>,
     field: CompiledFormValidationField,
-    scope: ScopeRef
+    scope: ScopeRef,
+    signal?: AbortSignal
   ) => Promise<ValidationError | undefined>;
   validateRule: (
     compiledRule: CompiledValidationRule,
@@ -75,6 +76,7 @@ export interface FormRuntimeInitialStateSlice {
 export interface FormRuntimeValidationRunState {
   validationRuns: Map<string, number>;
   pendingValidationDebounces: Map<string, PendingValidationDebounce>;
+  validationAbortControllers: Map<string, AbortController>;
 }
 
 export interface FormRuntimeRegistrationState
