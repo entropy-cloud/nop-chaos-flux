@@ -273,7 +273,7 @@ Two types of ViewportPortal overlays:
 
 ### Trigger
 
-Clicking any + button (card-attached or merge-point) opens a fixed-position popover menu with 3 node type options.
+Clicking any + button (card-attached or merge-point) opens a fixed-position popover menu whose item set is derived from the current tree-mode `config.nodeTypes` after renderer-side structural filtering. The historical 3-item DingFlow menu is now only the fallback ordering baseline, not the authoritative source of available node types.
 
 ### AddNodeMenu Popover
 

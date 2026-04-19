@@ -302,8 +302,10 @@ interface DesignerPageSchema {
 现状补充：
 
 - 默认 inspector 与 `designer-field` 当前直接消费 `DesignerContext.snapshot`
+- 默认 inspector 现已优先渲染 `nodeType.inspector.body`；renderer 不再内置领域专属 inspector 表单，只保留名称/描述与通用标量字段 fallback
 - schema inspector 的写路径已经可以稳定复用 `designer:*` action
 - schema inspector 的读路径还不应在现状文档里写成“`${activeNode.*}` 已默认可用”；当前落地状态见 `docs/architecture/flow-designer/runtime-snapshot.md`
+- tree 模式 add-node 菜单项集合现已直接从 `config.nodeTypes` 派生，renderer 只保留窄的 fallback 过滤与排序规则
 
 ### 9.2 两阶段创建
 

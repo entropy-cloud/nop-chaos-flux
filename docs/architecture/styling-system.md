@@ -402,6 +402,8 @@ Marker classes must NOT carry any visual styles. They exist solely for CSS selec
 
 This includes `FieldFrame`: `nop-field` is a semantic field marker only. Label/control/error spacing is not an implicit renderer default; it must come from schema styling, host styling, or shared UI component styling.
 
+Flow-designer follows the same ownership rule: node and edge visual choices belong to `config.nodeTypes[].appearance`, `config.edgeTypes[].appearance`, schema `className`, and `classAliases`. Renderer code may keep structural chrome and narrow fallback defaults, but those fallbacks must remain secondary to config-defined visuals and metadata.
+
 Rules:
 
 - Keep root semantic markers such as `nop-container`, `nop-page`, `nop-table`, `nop-field`.

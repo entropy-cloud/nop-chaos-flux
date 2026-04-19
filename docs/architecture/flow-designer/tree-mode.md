@@ -144,6 +144,12 @@ interface TreeNodeTypeConfig extends NodeTypeConfig {
 
 `NodeTypeConfig` 上的 `body`、`inspector`、`createDialog`、`quickActions`、`appearance` 全部原样复用，无变化。
 
+当前实现补充：
+
+- 默认 inspector 已优先渲染 `nodeType.inspector.body`，renderer 不再为 tree-domain 节点维护单独的领域表单分支
+- tree 模式 canvas 上的 add-node 菜单项集合直接从 `config.nodeTypes` 派生，而不是维护独立的 renderer 节点目录
+- renderer 仅保留窄的 fallback 过滤/排序逻辑，确保 terminal/root-only 类型不会误出现在添加菜单里
+
 ### 边样式配置
 
 Tree 模式的边由结构隐含生成（不是用户手动画的），但样式需要可配置：

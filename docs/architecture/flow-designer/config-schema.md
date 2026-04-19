@@ -375,6 +375,13 @@ function ApiNodeRenderer({ scope }) {
 - `defaults` 用于直接拖拽落图时生成初始数据
 - 移除了旧版的 `renderer.type/variant`，统一使用 `body`
 
+当前落地补充：
+
+- 默认 inspector 已优先消费 `nodeTypes[].inspector.body`，renderer 不再维护领域专属 inspector 表单 DSL
+- tree 模式 add-node 菜单项集合已直接从 `config.nodeTypes` 派生
+- renderer 内置的节点字段表单/菜单目录只保留为兼容兜底，不再是主配置来源
+- playground 中的 `workflow-designer-schema.json`、`dingtalk-workflow-tree-schema.json`、`action-flow-tree-schema.json` 现都已采用显式 `inspector.body` 作为维护路径，可作为 schema-first 参考样例
+
 ## 5. PortConfig
 
 ```ts
@@ -586,6 +593,11 @@ interface PaletteGroupConfig {
   expanded?: boolean
 }
 ```
+
+补充说明：
+
+- `palette.groups` 仍是 palette 面板的分组配置来源
+- tree 模式下 canvas 上的 add-node 浮层菜单不再单独维护 renderer 内置节点目录，而是从 `config.nodeTypes` 直接派生可添加项，再应用窄的结构过滤规则（如排除 terminal/root-only 类型）
 
 ## 11. DesignerRules
 

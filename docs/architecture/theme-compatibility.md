@@ -195,6 +195,12 @@ Renderer packages are responsible for:
 - stable class namespaces
 - reading CSS variables instead of hardcoded colors where visuals are package-owned
 
+For Flow Designer specifically:
+
+- renderer-owned structural chrome includes toolbar shells, overlay hit areas, and shared fallback token hooks
+- `config.nodeTypes` / `config.edgeTypes` own author-authored node/edge appearance and visible type metadata when present
+- package fallbacks may exist for standalone defaults, but they must stay secondary to config-driven visuals and metadata
+
 They are not responsible for inventing hidden page- or feature-specific layout defaults that the schema/host should control explicitly.
 
 ### Schema owns explicit author choices
