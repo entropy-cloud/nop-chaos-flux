@@ -15,15 +15,17 @@ import { useInjectDebuggerStyles } from './panel/styles';
 import { TimelineTab } from './panel/timeline-tab';
 import { useInspectMode } from './panel/use-inspect-mode';
 
-const FILTER_LABELS: Record<NopDebuggerFilterKind, string> = {
-  render: 'Render',
-  action: 'Action',
-  api: 'API',
-  compile: 'Compile',
-  notify: 'Notify',
-  error: 'Error',
-  node: 'Node'
-};
+function getFilterLabels(): Record<NopDebuggerFilterKind, string> {
+  return {
+    render: t('flux.debugger.renderEvents'),
+    action: t('flux.debugger.actionEvents'),
+    api: t('flux.debugger.apiEvents'),
+    compile: t('flux.debugger.latestCompile'),
+    notify: t('flux.common.more'),
+    error: t('flux.debugger.error'),
+    node: t('flux.debugger.node')
+  };
+}
 
 function includesText(target: string | undefined, query: string) {
   return (target ?? '').toLowerCase().includes(query.toLowerCase());
@@ -89,6 +91,7 @@ function matchesSearchQuery(event: import('./types').NopDebugEvent, rawQuery: st
 }
 
 export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
+  const filterLabels = useMemo(() => getFilterLabels(), []);
   const snapshot = useDebuggerSnapshot(props.controller);
   const handlePanelTap = useMemo(
     () => (snapshot.minimized ? () => props.controller.unminimize() : undefined),
@@ -333,7 +336,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           applySearchHistory={handleSearchHistorySelect}
           errorsOnly={errorsOnly}
           toggleErrorsOnly={toggleErrorsOnly}
-          filterLabels={FILTER_LABELS}
+          filterLabels={filterLabels}
           toggleFilter={(filter) => props.controller.toggleFilter(filter)}
           errorGroups={errorGroups}
           errorGroupExpanded={errorGroupExpanded}
