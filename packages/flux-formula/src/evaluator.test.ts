@@ -51,10 +51,9 @@ describe('evaluateAst', () => {
 
     expect(evaluateAst(parseFormula('$demo.value'), {
       env,
-      context: createContext({}),
-      imports: {
-        demo: { value: 'imported' }
-      }
+      context: createContext({
+        $demo: { value: 'imported' }
+      })
     })).toBe('imported');
   });
 
@@ -75,8 +74,7 @@ describe('evaluateAst', () => {
     })).toBeUndefined();
     expect(evaluateAst(parseFormula('created instanceof $Ctor'), {
       env,
-      context: createContext({ created: new Date() }),
-      imports: { Ctor: Date }
+      context: createContext({ created: new Date(), $Ctor: Date })
     })).toBe(true);
 
     expect(evaluateAst(parseFormula('missing'), {

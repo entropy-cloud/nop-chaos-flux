@@ -11,7 +11,6 @@ interface LambdaFrame {
 interface EvaluateOptions {
   env: RendererEnv;
   context: EvalContext;
-  imports?: Readonly<Record<string, unknown>>;
   registry?: FormulaRegistrySnapshot;
   reportError?: (error: unknown, details?: Record<string, unknown>) => void;
 }
@@ -45,14 +44,6 @@ function toPropertyKey(value: unknown): string | number | symbol {
 function createExpressionError(message: string): Error {
   return new Error(message);
 }
-
-const IMPORTED_FUNCTION_RE = /^__flux_import_([A-Za-z0-9_]+)__([A-Za-z0-9_]+)$/;
-
-function parseImportedFunctionName(name: string): { alias: string; method: string } | null {
-  const match = IMPORTED_FUNCTION_RE.exec(name);
-  return match ? { alias: match[1], method: match[2] } : null;
-}
-
 function normalizeLogicalName(name: string): string {
   return name === 'and' ? '&&' : name === 'or' ? '||' : name;
 }
@@ -163,29 +154,8 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
       return frameValue;
     }
 
-    const importedFunction = parseImportedFunctionName(node.name);
-    if (importedFunction) {
-      return (...args: unknown[]) => {
-        const namespace = options.imports?.[importedFunction.alias] as Record<string, unknown> | undefined;
-        const method = namespace?.[importedFunction.method];
-        if (typeof method !== 'function') {
-          throw createExpressionError(
-            `Imported expression binding $${importedFunction.alias}.${importedFunction.method}(...) is not available`
-          );
-        }
-        return method.apply(namespace, args);
-      };
-    }
-
     if (node.name in registry.namespaces) {
       return registry.namespaces[node.name];
-    }
-
-    if (node.name.startsWith('$')) {
-      const imported = options.imports?.[node.name.slice(1)];
-      if (imported !== undefined) {
-        return imported;
-      }
     }
 
     if (node.name in registry.functions) {

@@ -78,11 +78,9 @@ describe('createFormulaCompiler', () => {
     const expression = compiler.compileExpression('${$demo.formatName(user.firstName, user.lastName)}');
     const scope = createScope({
       user: { firstName: 'Ada', lastName: 'Lovelace' },
-      __imports: {
-        demo: {
-          formatName(first: string, last: string) {
-            return `${last}, ${first}`;
-          }
+      $demo: {
+        formatName(first: string, last: string) {
+          return `${last}, ${first}`;
         }
       }
     });

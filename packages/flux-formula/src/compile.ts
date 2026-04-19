@@ -14,134 +14,14 @@ import { parseFormula } from './parser';
 import { isPureExpression, normalizeExpressionSource, parseTemplateSegments } from './template';
 import { toEvalContext } from './scope';
 
-type ImportedFunctionBinding = {
-  alias: string;
-  method: string;
-  functionName: string;
-};
-
-type RewrittenImportExpression = {
-  source: string;
-  bindings: readonly ImportedFunctionBinding[];
-};
-
 type CompiledTemplateSegment =
   | { type: 'text'; value: string }
   | {
       type: 'expr';
       value: {
         ast: ReturnType<typeof parseFormula>;
-        bindings: readonly ImportedFunctionBinding[];
       };
     };
-
-function createImportedFunctionName(alias: string, method: string): string {
-  return `__flux_import_${alias}__${method}`;
-}
-
-const RE_IDENTIFIER_CHAR = /[A-Za-z0-9_]/;
-const RE_IDENTIFIER_START = /[A-Za-z_]/;
-const RE_ALIAS_START = /[a-z_]/;
-const RE_ALIAS_PREV_CHAR = /[A-Za-z0-9_.]/;
-
-function isIdentifierCharacter(value: string | undefined): boolean {
-  return value !== undefined && RE_IDENTIFIER_CHAR.test(value);
-}
-
-function isIdentifierStart(value: string | undefined): boolean {
-  return value !== undefined && RE_IDENTIFIER_START.test(value);
-}
-
-function isImportedAliasStart(value: string | undefined): boolean {
-  return value !== undefined && RE_ALIAS_START.test(value);
-}
-
-function rewriteImportedAliasSyntax(source: string): RewrittenImportExpression {
-  let result = '';
-  let index = 0;
-  let quote: "'" | '"' | '`' | undefined;
-  const bindings = new Map<string, ImportedFunctionBinding>();
-
-  while (index < source.length) {
-    const current = source[index];
-
-    if (quote) {
-      result += current;
-
-      if (current === '\\' && index + 1 < source.length) {
-        result += source[index + 1];
-        index += 2;
-        continue;
-      }
-
-      if (current === quote) {
-        quote = undefined;
-      }
-
-      index += 1;
-      continue;
-    }
-
-    if (current === "'" || current === '"' || current === '`') {
-      quote = current;
-      result += current;
-      index += 1;
-      continue;
-    }
-
-    const previous = source[index - 1];
-    const next = source[index + 1];
-    const isAliasStart =
-      current === '$' &&
-      isImportedAliasStart(next) &&
-      (previous === undefined || !RE_ALIAS_PREV_CHAR.test(previous));
-
-    if (!isAliasStart) {
-      result += current;
-      index += 1;
-      continue;
-    }
-
-    let aliasEnd = index + 1;
-
-    while (isIdentifierCharacter(source[aliasEnd])) {
-      aliasEnd += 1;
-    }
-
-    const alias = source.slice(index + 1, aliasEnd);
-
-    if (source[aliasEnd] !== '.' || !isIdentifierStart(source[aliasEnd + 1])) {
-      result += current;
-      index += 1;
-      continue;
-    }
-
-    const methodStart = aliasEnd + 1;
-    let methodEnd = methodStart;
-
-    while (isIdentifierCharacter(source[methodEnd])) {
-      methodEnd += 1;
-    }
-
-    const method = source.slice(methodStart, methodEnd);
-
-    if (source[methodEnd] !== '(') {
-      result += current;
-      index += 1;
-      continue;
-    }
-
-    const functionName = createImportedFunctionName(alias, method);
-    bindings.set(functionName, { alias, method, functionName });
-    result += functionName;
-    index = methodEnd;
-  }
-
-  return {
-    source: result,
-    bindings: Array.from(bindings.values())
-  };
-}
 
 function isPipeBoundary(source: string, index: number): boolean {
   const current = source[index];
@@ -274,21 +154,18 @@ function createFormulaCompiler(): FormulaCompiler {
     },
     compileExpression<T = unknown>(source: string): CompiledExpression<T> {
       const normalized = rewriteFilterPipeSyntax(normalizeExpressionSource(source));
-      const rewritten = rewriteImportedAliasSyntax(normalized);
-      const ast = parseFormula(rewritten.source);
+      const ast = parseFormula(normalized);
 
       return {
         kind: 'expression',
         source,
         exec(input: EvalContext, env: RendererEnv): T {
           const context = toEvalContext(input);
-          const imports = context.resolve('__imports') as Readonly<Record<string, unknown>> | undefined;
 
           try {
             return evaluateAst(ast, {
               env,
               context,
-              imports,
               reportError: createExpressionMonitorReporter(env, source)
             }) as T;
           } catch {
@@ -309,10 +186,8 @@ function createFormulaCompiler(): FormulaCompiler {
         return {
           type: 'expr' as const,
           value: (() => {
-            const rewritten = rewriteImportedAliasSyntax(rewriteFilterPipeSyntax(segment.value));
             return {
-              ast: parseFormula(rewritten.source),
-              bindings: rewritten.bindings
+              ast: parseFormula(rewriteFilterPipeSyntax(segment.value))
             };
           })()
         };
@@ -329,13 +204,10 @@ function createFormulaCompiler(): FormulaCompiler {
                 return segment.value;
               }
 
-              const imports = context.resolve('__imports') as Readonly<Record<string, unknown>> | undefined;
-
               try {
                 const evaluated = evaluateAst(segment.value.ast, {
                   env,
                   context,
-                  imports,
                   reportError: createExpressionMonitorReporter(env, source)
                 });
 
