@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { t } from '@nop-chaos/flux-i18n';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import {
   buttonRenderer,
@@ -182,6 +183,30 @@ describe('CRUD renderer', () => {
     );
 
     expect(screen.getByText('暂无用户数据')).toBeTruthy();
+  });
+
+  it('uses localized default empty text when empty is omitted', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-default-empty"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              source: [],
+              columns: [{ name: 'name', label: 'Name' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    expect(screen.getByText(t('flux.common.noData'))).toBeTruthy();
   });
 
   it('renders queryForm through an internal form schema', async () => {

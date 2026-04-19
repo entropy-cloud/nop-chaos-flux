@@ -8,12 +8,12 @@ import {
   hasRendererSlotContent,
   resolveRendererSlotContent
 } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema';
 import { normalizeCrudSchema } from './crud-schema';
 
 const EMPTY_ROWS: unknown[] = [];
-
 interface InternalTableHandle {
   refreshSource?: () => void;
   getSelection?: () => string[];
@@ -109,6 +109,7 @@ function useCrudSummary(
 }
 
 export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
+  const defaultEmptyLabel = t('flux.common.noData');
   const schemaProps = useSchemaProps(props);
   const normalizedSchema = useMemo(() => normalizeCrudSchema(schemaProps as CrudSchema), [schemaProps]);
   const scope = useRenderScope();
@@ -160,7 +161,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
   const toolbarContent = resolveRendererSlotContent(props, 'toolbar');
   const bulkActionsContent = resolveRendererSlotContent(props, 'bulkActions');
-  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: '暂无数据' });
+  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: defaultEmptyLabel });
 
   const hasToolbar = hasRendererSlotContent(toolbarContent);
   const hasBulkActions = hasRendererSlotContent(bulkActionsContent);
@@ -185,9 +186,9 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       sortStatePath: normalizedSchema.sortStatePath,
       filterOwnership: normalizedSchema.filterOwnership,
       filterStatePath: normalizedSchema.filterStatePath,
-      empty: typeof emptyContent === 'string' ? emptyContent : '暂无数据',
+      empty: typeof emptyContent === 'string' ? emptyContent : defaultEmptyLabel,
     } as BaseSchema;
-  }, [crudId, source, normalizedSchema, emptyContent]);
+  }, [crudId, source, normalizedSchema, emptyContent, defaultEmptyLabel]);
 
   const queryFormSchema = useMemo<BaseSchema | null>(() => {
     const queryForm = normalizedSchema.queryForm;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { Button, Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
@@ -142,7 +143,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const labelField = typeof schemaProps.labelField === 'string' && schemaProps.labelField ? schemaProps.labelField : DEFAULT_LABEL_FIELD;
   const keyField = typeof schemaProps.keyField === 'string' && schemaProps.keyField ? schemaProps.keyField : DEFAULT_KEY_FIELD;
   const expandOnClickNode = schemaProps.expandOnClickNode === true;
-  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: 'No tree nodes' });
+  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: t('flux.common.noData') });
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
 
   useEffect(() => {

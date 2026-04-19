@@ -16,6 +16,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { ChartSchema, ChartSeriesSchema } from './chart-schemas';
 
@@ -47,7 +48,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const yAxis = props.props.yAxis as { label?: string } | undefined;
   const height = props.props.height ?? 400;
   const loading = props.props.loading ?? false;
-  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: 'No data' });
+  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: t('flux.common.noData') });
 
   useEffect(() => {
     if (!chartRef.current) {

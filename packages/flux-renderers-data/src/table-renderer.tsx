@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useSchemaProps } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Table, TableHeader, cn } from '@nop-chaos/ui';
 import type { TableColumnSchema, TableSchema } from './schemas';
 import { createTableRowRepeatedTemplateId, processTableData, serializeInstancePath } from './table-renderer/table-data';
@@ -29,7 +30,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const paginationStatePath = typeof schemaProps.paginationStatePath === 'string' ? schemaProps.paginationStatePath : undefined;
   const selectionStatePath = typeof schemaProps.selectionStatePath === 'string' ? schemaProps.selectionStatePath : undefined;
 
-  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: 'No data' });
+  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: t('flux.table.noData') });
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
   const loadingContent = resolveRendererSlotContent(props, 'loadingSlot');
