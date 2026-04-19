@@ -21,6 +21,7 @@ export const enUS: Resource = {
       unselectAll: 'Unselect All',
       noData: 'No Data',
       validating: 'Validating...',
+      detailDraftValidationError: 'Please fix validation errors before confirming.',
     },
     pagination: {
       morePages: 'More pages',

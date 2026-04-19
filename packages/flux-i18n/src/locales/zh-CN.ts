@@ -21,6 +21,7 @@ export const zhCN: Resource = {
       unselectAll: '取消全选',
       noData: '暂无数据',
       validating: '验证中...',
+      detailDraftValidationError: '请先修复校验错误后再确认。',
     },
     pagination: {
       morePages: '更多页',
