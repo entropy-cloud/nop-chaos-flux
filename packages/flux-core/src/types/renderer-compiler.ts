@@ -3,7 +3,9 @@ import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy 
 import type { CompiledCidState } from '../compiled-cid';
 import type { CompiledTemplate, NodeMetaProgram, NodeRuntimeState } from './node-identity';
 
+/** @deprecated Use NodeMetaProgram instead. */
 export type CompiledSchemaMeta = NodeMetaProgram;
+/** @deprecated Use NodeRuntimeState instead. */
 export type CompiledNodeRuntimeState = NodeRuntimeState;
 
 export type WrapProvidersFn = (

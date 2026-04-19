@@ -1,4 +1,4 @@
-import type { ApiObject, ValidationTrigger, ValidationVisibilityTrigger, SchemaObject } from './schema';
+import type { ApiSchema, ValidationTrigger, ValidationVisibilityTrigger, SchemaObject } from './schema';
 
 export interface HiddenFieldPolicy extends SchemaObject {
   validateWhenHidden?: boolean;
@@ -21,7 +21,7 @@ export type ValidationRule =
   | { kind: 'notEqualsField'; path: string; message?: string }
   | { kind: 'requiredWhen'; path: string; equals: unknown; message?: string }
   | { kind: 'requiredUnless'; path: string; equals: unknown; message?: string }
-  | { kind: 'async'; api: ApiObject; debounce?: number; message?: string };
+  | { kind: 'async'; api: ApiSchema; debounce?: number; message?: string };
 
 export interface ValidationError {
   path: string;

@@ -54,7 +54,7 @@ export interface RendererMonitor {
 export interface RendererEnv {
   fetcher: ApiFetcher;
   notify: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;
-  navigate?: (to: string, options?: unknown) => void;
+  navigate?: (to: string | number, options?: { replace?: boolean }) => void;
   confirm?: (message: string, options?: unknown) => Promise<boolean>;
   functions?: Record<string, (...args: any[]) => any>;
   filters?: Record<string, (input: any, ...args: any[]) => any>;
