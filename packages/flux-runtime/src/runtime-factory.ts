@@ -17,7 +17,9 @@ import type {
   SchemaCompiler,
   ScopeRef,
   SurfaceRuntime,
-  SourceSchema
+  SourceSchema,
+  ModuleCache,
+  ImportedLibraryModule
 } from '@nop-chaos/flux-core';
 import { createCompiledCidState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -44,6 +46,32 @@ import { createManagedSurfaceRuntime } from './surface-runtime';
 import { createBuiltInValidationRegistry } from './validation';
 import { validateRule } from './validation-runtime';
 
+export function createModuleCache(): ModuleCache {
+  const resolved = new Map<string, ImportedLibraryModule>();
+  const pending = new Map<string, Promise<ImportedLibraryModule>>();
+
+  return {
+    get(absUrl) {
+      return resolved.get(absUrl);
+    },
+    set(absUrl, module) {
+      resolved.set(absUrl, module);
+    },
+    has(absUrl) {
+      return resolved.has(absUrl);
+    },
+    getPending(absUrl) {
+      return pending.get(absUrl);
+    },
+    setPending(absUrl, promise) {
+      pending.set(absUrl, promise);
+    },
+    removePending(absUrl) {
+      pending.delete(absUrl);
+    }
+  };
+}
+
 export function createRendererRuntime(input: {
   registry: RendererRegistry;
   env: RendererEnv;
@@ -51,6 +79,7 @@ export function createRendererRuntime(input: {
   schemaCompiler?: SchemaCompiler;
   plugins?: RendererPlugin[];
   pageStore?: PageStoreApi;
+  moduleCache?: ModuleCache;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }): RendererRuntime {
   const runtimeId = `runtime-${Math.random().toString(36).slice(2, 10)}`;
@@ -85,6 +114,7 @@ export function createRendererRuntime(input: {
   const ownedPages = new Set<PageRuntime>();
   const ownedSurfaceRuntimes = new Set<SurfaceRuntime>();
   let disposed = false;
+  const moduleCache = input.moduleCache ?? createModuleCache();
 
   function createOwnedActionScope(scopeInput: { id?: string; parent?: ActionScope } = {}) {
     actionScopeCounter += 1;
@@ -114,7 +144,8 @@ export function createRendererRuntime(input: {
 
       return runtimeRef.current;
     },
-    getEnv
+    getEnv,
+    moduleCache
   });
 
   const { evaluate, compileValue, evaluateCompiled } = createRuntimeEvalHelpers(expressionCompiler, getEnv);
@@ -154,8 +185,8 @@ export function createRendererRuntime(input: {
   }): FormRuntime {
     return createManagedFormRuntime({
       ...inputValue,
-      executeValidationRule: (compiledRule, rule, field, scope) =>
-        executeRuntimeValidationRule(compiledRule, rule, field, scope, evalCtx),
+      executeValidationRule: (compiledRule, rule, field, scope, signal) =>
+        executeRuntimeValidationRule(compiledRule, rule, field, scope, signal, evalCtx),
       validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry),
       submitApi: async (api, scope, options) => {
         const response = await executeApiSchema(api, scope, getEnv(), expressionCompiler, {
@@ -191,6 +222,7 @@ export function createRendererRuntime(input: {
     expressionCompiler,
     schemaCompiler,
     plugins,
+    moduleCache,
     compile(schema) {
       return schemaCompiler.compile(schema);
     },

@@ -4,7 +4,9 @@ import type {
   ActionNamespaceProvider,
   ComponentHandleRegistry,
   ImportedLibraryLoader,
+  ImportedLibraryModule,
   ImportedNamespaceContext,
+  ModuleCache,
   RendererEnv,
   RendererRuntime,
   ScopeRef,
@@ -18,6 +20,7 @@ export interface ImportManager {
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
+    schemaUrl: string;
     nodeInstance?: NodeInstance;
   }): Promise<void>;
   getImportedExpressionBindings(args: {
@@ -54,6 +57,13 @@ function createModuleKey(spec: XuiImportSpec): string {
   });
 }
 
+function resolveImportSpec(env: RendererEnv, schemaUrl: string, spec: XuiImportSpec): XuiImportSpec {
+  return {
+    ...spec,
+    from: env.resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from
+  };
+}
+
 function createImportError(message: string, cause?: unknown): Error {
   const error = new Error(message);
 
@@ -80,8 +90,8 @@ export function createImportManager(input: {
   getLoader: () => ImportedLibraryLoader | undefined;
   getRuntime: () => RendererRuntime;
   getEnv: () => RendererEnv;
+  moduleCache: ModuleCache;
 }): ImportManager {
-  const moduleLoads = new Map<string, Promise<Awaited<ReturnType<ImportedLibraryLoader['load']>>>>();
   type ImportState = 'loading' | 'ready' | 'error';
   type ScopeRegistrationEntry = {
     pending: Promise<void>;
@@ -91,6 +101,7 @@ export function createImportManager(input: {
     expressionHelpers?: Readonly<Record<string, unknown>>;
     state: ImportState;
     error?: Error;
+    abortController?: AbortController;
   };
   const scopeRegistrations = new WeakMap<ActionScope, Map<string, ScopeRegistrationEntry>>();
 
@@ -137,7 +148,7 @@ export function createImportManager(input: {
     };
   }
 
-  async function loadModule(spec: XuiImportSpec) {
+  async function loadModule(spec: XuiImportSpec, signal?: AbortSignal): Promise<ImportedLibraryModule> {
     const loader = input.getLoader();
 
     if (!loader) {
@@ -145,23 +156,32 @@ export function createImportManager(input: {
     }
 
     const key = createModuleKey(spec);
-    const existing = moduleLoads.get(key);
+    const cached = input.moduleCache.get(key);
+
+    if (cached) {
+      return cached;
+    }
+
+    const existing = input.moduleCache.getPending(key);
 
     if (existing) {
       try {
         return await existing;
       } catch {
-        moduleLoads.delete(key);
+        input.moduleCache.removePending(key);
       }
     }
 
-    const pending = loader.load(spec);
-    moduleLoads.set(key, pending);
+    const pending = loader.load(spec, signal);
+    input.moduleCache.setPending(key, pending);
 
     try {
-      return await pending;
+      const module = await pending;
+      input.moduleCache.set(key, module);
+      input.moduleCache.removePending(key);
+      return module;
     } catch (error) {
-      moduleLoads.delete(key);
+      input.moduleCache.removePending(key);
       throw error;
     }
   }
@@ -172,11 +192,19 @@ export function createImportManager(input: {
     actionScope: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
+    schemaUrl: string;
     nodeInstance?: NodeInstance;
   }) {
     return (async () => {
       try {
+        if (args.entry.abortController?.signal.aborted) {
+          return;
+        }
+
         const module = await loadModule(args.spec);
+        if (args.entry.abortController?.signal.aborted) {
+          return;
+        }
         const context: ImportedNamespaceContext = {
           runtime: input.getRuntime(),
           env: input.getEnv(),
@@ -187,9 +215,17 @@ export function createImportManager(input: {
           nodeInstance: args.nodeInstance
         };
         const provider = await module.createNamespace(context);
+        if (args.entry.abortController?.signal.aborted) {
+          provider.dispose?.();
+          return;
+        }
         const expressionHelpers = module.createExpressionHelpers
           ? await module.createExpressionHelpers(context)
           : undefined;
+        if (args.entry.abortController?.signal.aborted) {
+          provider.dispose?.();
+          return;
+        }
         args.entry.provider = {
           ...provider,
           kind: provider.kind ?? 'import'
@@ -197,6 +233,12 @@ export function createImportManager(input: {
         args.entry.expressionHelpers = expressionHelpers ?? undefined;
         args.entry.state = 'ready';
       } catch (error) {
+        if (args.entry.abortController?.signal.aborted) {
+          args.entry.state = 'error';
+          args.entry.error = createImportError(`Imported namespace ${args.spec.as} load was aborted`, error);
+          return;
+        }
+
         args.entry.state = 'error';
         args.entry.error = createImportError(
           `Imported namespace ${args.spec.as} failed to load: ${toErrorMessage(error)}`,
@@ -213,9 +255,13 @@ export function createImportManager(input: {
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
+    schemaUrl: string;
     nodeInstance?: NodeInstance;
   }) {
-    const imports = args.imports?.map(normalizeImportSpec).filter((spec) => spec.from && spec.as) ?? [];
+    const imports = args.imports
+      ?.map(normalizeImportSpec)
+      .map((spec) => resolveImportSpec(input.getEnv(), args.schemaUrl, spec))
+      .filter((spec) => spec.from && spec.as) ?? [];
 
     if (!args.actionScope || imports.length === 0) {
       return;
@@ -248,6 +294,7 @@ export function createImportManager(input: {
             actionScope: args.actionScope,
             componentRegistry: args.componentRegistry,
             scope: args.scope,
+            schemaUrl: args.schemaUrl,
             nodeInstance: args.nodeInstance
           });
 
@@ -273,7 +320,8 @@ export function createImportManager(input: {
         provider: undefined,
         expressionHelpers: undefined,
         state: 'loading' as ImportState,
-        error: undefined
+        error: undefined,
+        abortController: new AbortController()
       };
 
       if (args.actionScope.listNamespaces().includes(spec.as)) {
@@ -304,6 +352,7 @@ export function createImportManager(input: {
         actionScope: args.actionScope,
         componentRegistry: args.componentRegistry,
         scope: args.scope,
+        schemaUrl: args.schemaUrl,
         nodeInstance: args.nodeInstance
       });
 
@@ -317,8 +366,12 @@ export function createImportManager(input: {
   function releaseImportedNamespaces(args: {
     imports?: readonly XuiImportSpec[];
     actionScope?: ActionScope;
+    schemaUrl: string;
   }) {
-    const imports = args.imports?.map(normalizeImportSpec).filter((spec) => spec.from && spec.as) ?? [];
+    const imports = args.imports
+      ?.map(normalizeImportSpec)
+      .map((spec) => resolveImportSpec(input.getEnv(), args.schemaUrl, spec))
+      .filter((spec) => spec.from && spec.as) ?? [];
 
     if (!args.actionScope || imports.length === 0) {
       return;
@@ -344,6 +397,7 @@ export function createImportManager(input: {
         continue;
       }
 
+      entry.abortController?.abort();
       registrations.delete(key);
       void entry.pending.finally(() => {
         entry.release?.();
@@ -358,8 +412,12 @@ export function createImportManager(input: {
   function getImportedExpressionBindings(args: {
     imports?: readonly XuiImportSpec[];
     actionScope?: ActionScope;
+    schemaUrl: string;
   }): Readonly<Record<string, unknown>> {
-    const imports = args.imports?.map(normalizeImportSpec).filter((spec) => spec.from && spec.as) ?? [];
+    const imports = args.imports
+      ?.map(normalizeImportSpec)
+      .map((spec) => resolveImportSpec(input.getEnv(), args.schemaUrl, spec))
+      .filter((spec) => spec.from && spec.as) ?? [];
 
     if (!args.actionScope || imports.length === 0) {
       return {};
@@ -394,14 +452,13 @@ export function createImportManager(input: {
 
       for (const [key, entry] of Array.from(registrations.entries())) {
         entry.refCount = 0;
+        entry.abortController?.abort();
         registrations.delete(key);
         void entry.pending.finally(() => {
           entry.release?.();
         });
       }
     }
-
-    moduleLoads.clear();
   }
 
   return {

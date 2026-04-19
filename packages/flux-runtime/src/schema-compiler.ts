@@ -95,11 +95,12 @@ export function createSchemaCompiler(input: {
 
         const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
 
-        return compileSingleNode(item, {
-          path,
-          parentPath: options.parentPath,
-          renderer: wrappedRenderer
-        }, diagnostics);
+      return compileSingleNode(item, {
+        path,
+        parentPath: options.parentPath,
+        schemaUrl: options.schemaUrl,
+        renderer: wrappedRenderer
+      }, diagnostics);
       });
 
       const nodes = enrichTemplateNodeIds(compiled, cidState);
@@ -120,6 +121,7 @@ export function createSchemaCompiler(input: {
       compileSingleNode(prepared, {
         path,
         parentPath: options.parentPath,
+        schemaUrl: options.schemaUrl,
         renderer: wrappedRenderer
       }, diagnostics),
       cidState
@@ -220,6 +222,7 @@ export function createSchemaCompiler(input: {
       type: schema.type,
       schema,
       templatePath: path,
+      schemaUrl: (options as CompileNodeOptions & { schemaUrl?: string }).schemaUrl,
       rendererType: renderer.type,
       component: renderer,
       propsProgram,

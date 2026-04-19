@@ -1,4 +1,5 @@
 export { createRendererRuntime } from './runtime-factory';
+export { createModuleCache } from './runtime-factory';
 export { createRendererRegistry, registerRendererDefinitions } from './registry';
 export { createSchemaCompiler, validateSchema } from './schema-compiler';
 export { createScopeRef } from './scope';

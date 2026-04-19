@@ -10,6 +10,7 @@ import type {
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { collectRuntimeDependencies } from './node-runtime';
+import { isAbortError } from './error-utils';
 import { createRootDependencySet, scopeChangeHitsDependencies } from './scope-change';
 
 export interface ReactionRegistration {
@@ -106,84 +107,101 @@ export function registerReaction(input: {
   }
 
   async function runReaction(changePaths: readonly string[], force = false) {
-    if (disposed) {
-      return;
-    }
+    try {
+      if (disposed) {
+        return;
+      }
 
-    const nextValue = evaluateWatchValue();
-    const changed = force || !initialized || !Object.is(previousValue, nextValue);
-    const prev = previousValue;
+      const nextValue = evaluateWatchValue();
+      const changed = force || !initialized || !Object.is(previousValue, nextValue);
+      const prev = previousValue;
 
-    previousValue = nextValue;
-    initialized = true;
+      previousValue = nextValue;
+      initialized = true;
 
-    if (!changed) {
-      return;
-    }
+      if (!changed) {
+        return;
+      }
 
-    const whenAllowed = compiledWhen
-      ? compiledWhen.exec({
-          scope: input.scope.readVisible(),
+      const whenAllowed = compiledWhen
+        ? compiledWhen.exec({
+            scope: input.scope.readVisible(),
+            value: nextValue,
+            prev,
+            changed,
+            changedPaths: changePaths
+          }, input.runtime.env)
+        : true;
+
+      if (!whenAllowed) {
+        return;
+      }
+
+      await input.helpers.dispatch(normalizeActionArray(input.actions), {
+        scope: input.scope,
+        event: {
+          type: 'reaction',
           value: nextValue,
           prev,
           changed,
           changedPaths: changePaths
-        }, input.runtime.env)
-      : true;
-
-    if (!whenAllowed) {
-      return;
-    }
-
-    await input.helpers.dispatch(normalizeActionArray(input.actions), {
-      scope: input.scope,
-      event: {
-        type: 'reaction',
-        value: nextValue,
-        prev,
-        changed,
-        changedPaths: changePaths
-      },
-      evaluationBindings: {
-        value: nextValue,
-        prev,
-        changed,
-        changedPaths: changePaths
-      }
-    });
-
-    fireCount += 1;
-
-    if (input.once && fireCount >= 1) {
-      emitDebug();
-      dispose();
-      return;
-    }
-
-    if (fireCount >= MAX_REACTION_FIRE_COUNT) {
-      const error = createReactionLimitError({
-        id: input.id,
-        scope: input.scope,
-        fireCount
+        },
+        evaluationBindings: {
+          value: nextValue,
+          prev,
+          changed,
+          changedPaths: changePaths
+        }
       });
-      input.runtime.env.notify('warning', error.message);
+
+      fireCount += 1;
+
+      if (input.once && fireCount >= 1) {
+        emitDebug();
+        dispose();
+        return;
+      }
+
+      if (fireCount >= MAX_REACTION_FIRE_COUNT) {
+        const error = createReactionLimitError({
+          id: input.id,
+          scope: input.scope,
+          fireCount
+        });
+        input.runtime.env.notify('warning', error.message);
+        input.runtime.env.monitor?.onError?.({
+          phase: 'action',
+          error,
+          details: {
+            reason: 'reaction-fire-count-limit',
+            reactionId: input.id,
+            scopeId: input.scope.id,
+            fireCount,
+            maxFireCount: MAX_REACTION_FIRE_COUNT
+          }
+        });
+        emitDebug();
+        dispose();
+        return;
+      }
+
+      emitDebug();
+    } catch (error) {
+      if (disposed || isAbortError(error)) {
+        return;
+      }
+
       input.runtime.env.monitor?.onError?.({
         phase: 'action',
         error,
         details: {
-          reason: 'reaction-fire-count-limit',
+          reason: 'reaction-run-failed',
           reactionId: input.id,
           scopeId: input.scope.id,
-          fireCount,
-          maxFireCount: MAX_REACTION_FIRE_COUNT
+          changedPaths: changePaths
         }
       });
-      emitDebug();
-      dispose();
-      return;
     }
-
-    emitDebug();
   }
 
   function scheduleReaction(changePaths: readonly string[], force = false) {
