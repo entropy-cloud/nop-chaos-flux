@@ -79,10 +79,10 @@ The current implementation conflates module loading dedup with alias scope regis
 
 ### Phase 1 - ModuleCache Interface And Extraction
 
-Status: in progress
+Status: completed
 Targets: `packages/flux-core/src/types/compilation.ts` (or new `module-cache.ts`), `packages/flux-runtime/src/imports.ts`, `packages/flux-runtime/src/runtime-factory.ts`
 
-- [ ] Define `ModuleCache` interface in `flux-core`:
+- [x] Define `ModuleCache` interface in `flux-core`:
   ```
   get(absUrl: string): ImportedLibraryModule | undefined
   set(absUrl: string, module: ImportedLibraryModule): void
@@ -91,34 +91,34 @@ Targets: `packages/flux-core/src/types/compilation.ts` (or new `module-cache.ts`
   setPending(absUrl: string, promise: Promise<ImportedLibraryModule>): void
   removePending(absUrl: string): void
   ```
-- [ ] Implement `createModuleCache()` factory returning a `Map`-backed `ModuleCache`.
-- [ ] Refactor `ImportManager` in `imports.ts` to accept an external `ModuleCache` instead of using its internal `moduleLoads` closure variable. All dedup logic delegates to `ModuleCache`.
-- [ ] Update `createRendererRuntime` to accept optional `moduleCache` parameter. When provided, share it. When not provided, create a per-runtime default (backwards compatible).
-- [ ] Update tests: existing `ImportManager` tests must pass with the refactored implementation. Add new tests verifying cross-Runtime cache sharing.
-- [ ] Verify `pnpm typecheck && pnpm build && pnpm test`.
+- [x] Implement `createModuleCache()` factory returning a `Map`-backed `ModuleCache`.
+- [x] Refactor `ImportManager` in `imports.ts` to accept an external `ModuleCache` instead of using its internal `moduleLoads` closure variable. All dedup logic delegates to `ModuleCache`.
+- [x] Update `createRendererRuntime` to accept optional `moduleCache` parameter and share it when provided.
+- [x] Update tests: existing `ImportManager` tests pass with the refactored implementation. Added tests verifying cross-Runtime cache sharing.
+- [x] Verify `pnpm typecheck && pnpm build && pnpm test`.
 
 Exit Criteria:
 
-- [ ] `ModuleCache` interface is in `flux-core`, `ImportManager` uses it, and existing tests pass.
-- [ ] Two `RendererRuntime` instances sharing one `ModuleCache` only load each library once.
+- [x] `ModuleCache` interface is in `flux-core`, `ImportManager` uses it, and existing tests pass.
+- [x] Two `RendererRuntime` instances sharing one `ModuleCache` only load each library once.
 
 ### Phase 2 - URL Resolution And schemaUrl
 
-Status: pending
+Status: completed
 Targets: `packages/flux-core/src/types/renderer-api.ts`, `packages/flux-core/src/types/renderer-hooks.ts`, `packages/flux-react/src/schema-renderer.tsx`, `packages/flux-runtime/src/imports.ts`
 
-- [ ] Add `resolveImportUrl?(schemaUrl: string, from: string, options?: Record<string, unknown>): string` to `RendererEnv`.
-- [ ] Add `schemaUrl?: string` to `SchemaRendererProps`.
-- [ ] In `SchemaRenderer`, pass `schemaUrl` through to `runtime.compile()` and import loading paths.
-- [ ] In `ImportManager.ensureImportedNamespaces`, when `env.resolveImportUrl` and `schemaUrl` are both available, resolve `spec.from` to an absolute URL before cache lookup. Use the absolute URL as `ModuleCache` key. When not available, use `spec.from` as-is (backwards compatible).
-- [ ] Add tests: relative path resolution, same library different aliases share cache entry, fallback when no resolver.
-- [ ] Verify `pnpm typecheck && pnpm build && pnpm test`.
+- [x] Add `resolveImportUrl?(schemaUrl: string, from: string, options?: Record<string, unknown>): string` to `RendererEnv`.
+- [x] Add `schemaUrl: string` to `SchemaRendererProps`.
+- [x] In `SchemaRenderer`, pass `schemaUrl` through to schema compilation and import loading paths.
+- [x] In `ImportManager.ensureImportedNamespaces`, resolve `spec.from` to an absolute URL before cache lookup and use the resolved URL as the `ModuleCache` key.
+- [x] Add tests: relative path resolution and same library different relative paths sharing one cache entry.
+- [x] Verify `pnpm typecheck && pnpm build && pnpm test`.
 
 Exit Criteria:
 
-- [ ] Schemas with `schemaUrl` and `env.resolveImportUrl` resolve relative import paths to absolute URLs.
-- [ ] Same library loaded via different relative paths from different schemas deduplicates correctly.
-- [ ] Schemas without `schemaUrl` continue to work unchanged.
+- [x] Schemas with `schemaUrl` and `env.resolveImportUrl` resolve relative import paths to absolute URLs.
+- [x] Same library loaded via different relative paths from different schemas deduplicates correctly.
+- [x] `schemaUrl` is now a required root contract rather than an optional compatibility carrier.
 
 ### Phase 3 - ImportStack And Lexical Scope
 

@@ -19,25 +19,21 @@ This document supplements `docs/architecture/action-scope-and-imports.md`, which
 
 ## Current Implementation
 
-The current implementation has two layers but conflates them:
+The current implementation now has two landed layers and one remaining design layer:
 
 | Current Layer | Location | Responsibility |
 |---|---|---|
-| Module loading dedup | `packages/flux-runtime/src/imports.ts` `moduleLoads` Map | Dedup by `moduleKey(from+options)` inside `ImportManager` closure |
+| Module loading dedup | `packages/flux-runtime/src/runtime-factory.ts` `createModuleCache()` + `packages/flux-runtime/src/imports.ts` | Shared `ModuleCache` dedup keyed by resolved `from+options` |
 | Alias + scope registration | `packages/flux-runtime/src/imports.ts` `scopeRegistrations` WeakMap | Register namespace provider per `ActionScope`, ref-counted |
 | Expression bindings | child scope overlay | imported helpers published directly as `$demo`/`$chart` bindings in the node-local child scope |
 
 ### Problems With The Current Implementation
 
-1. **No cross-Runtime sharing** — `moduleLoads` is a closure variable inside `createImportManager`, which is created inside `createRendererRuntime`. Each `SchemaRenderer` instance creates its own `RendererRuntime`, so each has its own independent module cache. The same library loaded by two Flux pages is fetched and instantiated twice.
+1. **ImportStack is still only a design candidate** — action lexical visibility already works through `ActionScope`, and expression lexical visibility now works through direct `$alias` child-scope overlays. A dedicated runtime `ImportStack` is not currently implemented.
 
-2. **No relative path resolution** — `XuiImportSpec.from` is passed directly to `env.importLoader.load(spec)`. There is no `schemaUrl` concept, no `resolveImportUrl`, no relative-to-absolute normalization. A JSON schema has no known origin URL.
+2. **No compile-time visibility** — the module cache is a runtime-only structure. Expression compilation does not know which `$alias` names are available, so it cannot validate or type-check imported expression helpers at compile time.
 
-3. **Expression scoping still lacks a first-class compile/runtime contract** — the old flat `__imports` map has been removed, and imported helpers are now published directly as `$alias` bindings in node-local child scopes. This fixes the worst sibling-leak behavior, but cross-Runtime module sharing, URL normalization, and compile-time symbol visibility still remain unresolved.
-
-4. **No compile-time visibility** — the module cache is a runtime-only structure. Expression compilation does not know which `$alias` names are available, so it cannot validate or type-check imported expression helpers at compile time.
-
-5. **Compile-time visibility is still absent** — removing root preload also means the compiler no longer has any preloaded import information available. This is correct for runtime lexical visibility, but compile-time `$alias` validation still needs a dedicated symbol-table design.
+3. **Compile-time visibility is still absent** — removing root preload means the compiler has no preloaded import information available. This is correct for runtime lexical visibility, but compile-time `$alias` validation still needs a dedicated symbol-table design.
 
 ## Three-Layer Design
 
@@ -146,11 +142,11 @@ interface SchemaRendererProps {
   env: RendererEnv;
 
   // New: the origin URL of the schema, used for resolving relative xui:imports
-  schemaUrl?: string;
+  schemaUrl: string;
 }
 ```
 
-When `schemaUrl` is provided and `env.resolveImportUrl` is available, the runtime resolves each `xui:imports` entry's `from` to an absolute URL before cache lookup or loading. When not provided, `from` is used as-is (current behavior, for backwards compatibility).
+When `schemaUrl` and `env.resolveImportUrl` are available, the runtime resolves each `xui:imports` entry's `from` to an absolute URL before cache lookup or loading.
 
 **Resolution flow**:
 
