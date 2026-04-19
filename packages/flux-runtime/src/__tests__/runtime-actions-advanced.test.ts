@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiSchema, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
@@ -26,7 +26,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>(_api: ApiObject, ctx: ApiRequestContext) => {
+        fetcher: async <T>(_api: ApiSchema, ctx: ApiRequestContext) => {
           callCount += 1;
 
           if (callCount === 1) {
@@ -270,7 +270,7 @@ describe('createRendererRuntime', () => {
     vi.useFakeTimers();
 
     try {
-      const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+      const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
         return new Promise((resolve, reject) => {
           ctx.signal?.addEventListener('abort', () => {
             const error = new Error('aborted');
@@ -330,7 +330,7 @@ describe('createRendererRuntime', () => {
     vi.useFakeTimers();
 
     try {
-      const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+      const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
         return new Promise((resolve, reject) => {
           ctx.signal?.addEventListener('abort', () => {
             const error = new Error('aborted');
@@ -377,7 +377,7 @@ describe('createRendererRuntime', () => {
 
   it('aborts ajax requests when action timeouts fire', async () => {
     let capturedSignal: AbortSignal | undefined;
-    const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
       capturedSignal = ctx.signal;
 
       return new Promise((resolve, reject) => {

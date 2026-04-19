@@ -1,7 +1,7 @@
 import React from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ApiObject, ApiRequestContext, RendererDefinition, RendererEnv, FormRuntime } from '@nop-chaos/flux-core';
+import type { ApiSchema, ApiRequestContext, RendererDefinition, RendererEnv, FormRuntime } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -12,7 +12,7 @@ const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefiniti
 const submitCalls: Array<Record<string, any>> = [];
 
 const env: RendererEnv = {
-  fetcher: async function <T>(_api: ApiObject, ctx: ApiRequestContext) {
+  fetcher: async function <T>(_api: ApiSchema, ctx: ApiRequestContext) {
     submitCalls.push(ctx.scope.readOwn());
     return {
       ok: true,

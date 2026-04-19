@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiObject, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
+import type { ApiSchema, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
   createRendererRegistry,
@@ -9,7 +9,7 @@ import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
   it('uses the latest env fetcher without recreating runtime state', async () => {
-    const firstFetcher = vi.fn(async <T,>(api: ApiObject) => ({
+    const firstFetcher = vi.fn(async <T,>(api: ApiSchema) => ({
       ok: true,
       status: 200,
       data: { tick: api.headers?.['x-tick'], source: 'first' } as T
@@ -44,7 +44,7 @@ describe('createRendererRuntime', () => {
 
     expect(firstResult).toMatchObject({ ok: true, data: { tick: '0', source: 'first' } });
 
-    const secondFetcher = vi.fn(async <T,>(api: ApiObject) => ({
+    const secondFetcher = vi.fn(async <T,>(api: ApiSchema) => ({
       ok: true,
       status: 200,
       data: { tick: api.headers?.['x-tick'], source: 'second' } as T
@@ -224,12 +224,12 @@ describe('createRendererRuntime', () => {
   });
 
   it('applies adaptors during submitForm api execution', async () => {
-    const fetchCalls: ApiObject[] = [];
+    const fetchCalls: ApiSchema[] = [];
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>(api: ApiObject) => {
+        fetcher: async <T>(api: ApiSchema) => {
           fetchCalls.push(api);
           return {
             ok: true,
@@ -346,7 +346,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+        fetcher: async <T>(_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
           capturedSignal = ctx.signal;
 
           return new Promise((_, reject) => {

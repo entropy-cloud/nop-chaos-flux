@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiObject, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiSchema, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createModuleCache, createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
@@ -107,7 +107,7 @@ describe('createRendererRuntime', () => {
     let capturedSignal: AbortSignal | undefined;
     let releaseRequest: (() => void) | undefined;
     const dispose = vi.fn();
-    const fetcher = vi.fn(async <T>(_api: ApiObject, ctx: ApiRequestContext) => {
+    const fetcher = vi.fn(async <T>(_api: ApiSchema, ctx: ApiRequestContext) => {
       capturedSignal = ctx.signal;
       await new Promise<void>((resolve) => {
         releaseRequest = resolve;

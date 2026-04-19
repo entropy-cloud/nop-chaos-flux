@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
-import { App } from './App';
+import { App } from './app';
 import '@nop-chaos/ui/styles.css';
 import './styles.css';
 

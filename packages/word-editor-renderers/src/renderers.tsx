@@ -1,6 +1,6 @@
 import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
 import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
-import { WordEditorPage } from './WordEditorPage.js';
+import { WordEditorPage } from './word-editor-page.js';
 import { wordEditorHostContract } from './word-editor-manifest.js';
 export { defineWordEditorPageSchema } from './types.js';
 export type { WordEditorPageSchema, WordEditorPageSchemaInput } from './types.js';

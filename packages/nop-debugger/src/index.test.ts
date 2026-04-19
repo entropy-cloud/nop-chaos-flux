@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ActionScope, ApiObject, RendererEnv } from '@nop-chaos/flux-core';
+import type { ActionScope, ApiSchema, RendererEnv } from '@nop-chaos/flux-core';
 import { createNopDebugger, getNopDebuggerAutomationApi, installNopDebuggerWindowFlag } from './index';
 
 const windowStub = {} as Window & typeof globalThis;
@@ -10,7 +10,7 @@ Object.defineProperty(globalThis, 'window', {
 });
 
 const baseEnv: RendererEnv = {
-  async fetcher<T>(api: ApiObject) {
+  async fetcher<T>(api: ApiSchema) {
     return {
       ok: true,
       status: 200,

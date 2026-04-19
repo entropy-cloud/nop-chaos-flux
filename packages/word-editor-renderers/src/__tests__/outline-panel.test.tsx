@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { OutlinePanel } from '../panels/OutlinePanel.js';
+import { OutlinePanel } from '../panels/outline-panel.js';
 
 vi.mock('@nop-chaos/ui', () => {
   return {

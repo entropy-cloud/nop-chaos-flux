@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ApiObject } from '@nop-chaos/flux-core';
+import type { ApiSchema } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
@@ -145,7 +145,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
         } as any}
         env={{
           ...env,
-          fetcher: async function <T>(api: ApiObject) {
+          fetcher: async function <T>(api: ApiSchema) {
             if (api.url === '/api/tree-select-error') {
               throw new Error('Tree select options failed');
             }

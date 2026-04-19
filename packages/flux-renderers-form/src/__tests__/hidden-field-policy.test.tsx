@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { cleanup, render, act } from '@testing-library/react';
-import type { ApiObject, ApiRequestContext, RendererDefinition, RendererEnv, FormRuntime } from '@nop-chaos/flux-core';
+import type { ApiSchema, ApiRequestContext, RendererDefinition, RendererEnv, FormRuntime } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '../index';
@@ -22,7 +22,7 @@ if (typeof PointerEvent === 'undefined') {
 const sharedFormulaCompiler = createFormulaCompiler();
 
 const env: RendererEnv = {
-  fetcher: async function <T>(_api: ApiObject, ctx: ApiRequestContext) {
+  fetcher: async function <T>(_api: ApiSchema, ctx: ApiRequestContext) {
     return {
       ok: true,
       status: 200,

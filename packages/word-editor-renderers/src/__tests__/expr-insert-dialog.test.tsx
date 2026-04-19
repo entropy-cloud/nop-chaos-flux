@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { ExprInsertDialog } from '../dialogs/ExprInsertDialog.js';
+import { ExprInsertDialog } from '../dialogs/expr-insert-dialog.js';
 
 vi.mock('@nop-chaos/ui', () => {
   return {

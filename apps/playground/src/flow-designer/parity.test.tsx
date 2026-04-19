@@ -3,9 +3,9 @@
 import React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { FlowDesignerToolbar } from './FlowDesignerToolbar';
-import { FlowDesignerPalette } from './FlowDesignerPalette';
-import { FlowDesignerInspector } from './FlowDesignerInspector';
+import { FlowDesignerToolbar } from './flow-designer-toolbar';
+import { FlowDesignerPalette } from './flow-designer-palette';
+import { FlowDesignerInspector } from './flow-designer-inspector';
 import type { DesignerConfig, DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 
 // Mock ResizeObserver

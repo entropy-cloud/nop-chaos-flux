@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ApiObject, ApiRequestContext } from '@nop-chaos/flux-core';
+import type { ApiSchema, ApiRequestContext } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -102,7 +102,7 @@ describe('formRendererDefinitions - source-backed options', () => {
         }}
         env={{
           ...env,
-          fetcher: async function <T>(api: ApiObject, ctx: ApiRequestContext) {
+          fetcher: async function <T>(api: ApiSchema, ctx: ApiRequestContext) {
             if (api.url === '/api/roles') {
               return await new Promise((resolve) => {
                 resolveOptions = resolve as typeof resolveOptions;
@@ -171,7 +171,7 @@ describe('formRendererDefinitions - source-backed options', () => {
         }}
         env={{
           ...env,
-          fetcher: async function <T>(api: ApiObject) {
+          fetcher: async function <T>(api: ApiSchema) {
             if (api.url === '/api/status-options') {
               return await new Promise((resolve) => {
                 resolveOptions = resolve as typeof resolveOptions;
@@ -237,7 +237,7 @@ describe('formRendererDefinitions - source-backed options', () => {
         }}
         env={{
           ...env,
-          fetcher: async function <T>(api: ApiObject) {
+          fetcher: async function <T>(api: ApiSchema) {
             if (api.url === '/api/tag-options') {
               return await new Promise((resolve) => {
                 resolveOptions = resolve as typeof resolveOptions;
@@ -298,7 +298,7 @@ describe('formRendererDefinitions - source-backed options', () => {
         }}
         env={{
           ...env,
-          fetcher: async function <T>(api: ApiObject) {
+          fetcher: async function <T>(api: ApiSchema) {
             if (api.url === '/api/select-error') {
               throw new Error('Select options failed');
             }
@@ -343,7 +343,7 @@ describe('formRendererDefinitions - source-backed options', () => {
         }}
         env={{
           ...env,
-          fetcher: async function <T>(api: ApiObject) {
+          fetcher: async function <T>(api: ApiSchema) {
             if (api.url === '/api/radio-error') {
               throw new Error('Radio options failed');
             }
@@ -388,7 +388,7 @@ describe('formRendererDefinitions - source-backed options', () => {
         }}
         env={{
           ...env,
-          fetcher: async function <T>(api: ApiObject) {
+          fetcher: async function <T>(api: ApiSchema) {
             if (api.url === '/api/checkbox-error') {
               throw new Error('Checkbox options failed');
             }

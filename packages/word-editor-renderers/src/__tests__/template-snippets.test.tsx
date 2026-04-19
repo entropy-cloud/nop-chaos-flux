@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { TemplateSnippets } from '../panels/TemplateSnippets.js';
+import { TemplateSnippets } from '../panels/template-snippets.js';
 
 vi.mock('@nop-chaos/ui', () => {
   return {

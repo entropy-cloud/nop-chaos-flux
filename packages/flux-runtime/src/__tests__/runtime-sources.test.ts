@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiObject, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiSchema, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
   it('registers data sources in a scope-local runtime registry and replaces same-id entries', async () => {
-    const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiObject) => ({
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiSchema) => ({
       ok: true,
       status: 200,
       data: { value: api.url } as T
@@ -59,7 +59,7 @@ describe('createRendererRuntime', () => {
   it('disposes registered data sources and aborts their active requests', async () => {
     let capturedSignal: AbortSignal | undefined;
     let releaseRequest: (() => void) | undefined;
-    const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
       capturedSignal = ctx.signal;
       await new Promise<void>((resolve) => {
         releaseRequest = resolve;

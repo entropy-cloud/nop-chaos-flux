@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiObject, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiSchema, RendererEnv } from '@nop-chaos/flux-core';
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
 import { normalizeRedactionOptions } from './redaction';
 import { createDebuggerStore } from './store';
@@ -58,7 +58,7 @@ describe('debugger adapters', () => {
     };
     const env: RendererEnv = {
       monitor: baseMonitor,
-      async fetcher<T>(api: ApiObject) {
+      async fetcher<T>(api: ApiSchema) {
         return {
           ok: true,
           status: 200,

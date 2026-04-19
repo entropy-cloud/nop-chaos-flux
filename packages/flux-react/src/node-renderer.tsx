@@ -28,9 +28,9 @@ import {
 } from './node-renderer-utils';
 import { NodeFrameWrapper } from './node-frame-wrapper';
 import { createNodeInstance, createTemplateNodeRuntimeState } from './node-instance';
-import { useNodeScopes } from './useNodeScopes';
-import { useNodeImports } from './useNodeImports';
-import { useNodeDebugData } from './useNodeDebugData';
+import { useNodeScopes } from './use-node-scopes';
+import { useNodeImports } from './use-node-imports';
+import { useNodeDebugData } from './use-node-debug-data';
 import { useNodeSourceProps } from './use-node-source-props';
 import { useNodeLifecycleActions, useRenderMonitor } from './node-renderer-effects';
 import { NodeRendererProviders } from './node-renderer-providers';

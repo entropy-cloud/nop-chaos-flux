@@ -1,1 +1,0 @@
-export { SchemaLabPage } from '../SchemaLabPage';

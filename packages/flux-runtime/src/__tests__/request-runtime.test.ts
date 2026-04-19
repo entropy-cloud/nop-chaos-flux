@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { vi } from 'vitest';
-import type { ApiObject, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
+import type { ApiSchema, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
 import { createScopeRef, createScopeStore } from '../scope';
 import {
   createApiRequestExecutor,
@@ -136,7 +136,7 @@ describe('buildUrlWithParams', () => {
 describe('prepareApiData', () => {
   it('returns undefined data and params when no includeScope and no explicit data', () => {
     const scope = createTestScope({ userId: 1 });
-    const api: ApiObject = { url: '/api/test', type: 'test' };
+    const api: ApiSchema = { url: '/api/test', type: 'test' };
     const result = prepareApiData(api, scope);
     expect(result.data).toBeUndefined();
     expect(result.params).toBeUndefined();
@@ -144,21 +144,21 @@ describe('prepareApiData', () => {
 
   it('returns extracted scope data when includeScope is set and no explicit data', () => {
     const scope = createTestScope({ userId: 1, projectId: 5 });
-    const api: ApiObject = { url: '/api/test', type: 'test', includeScope: ['userId', 'projectId'] };
+    const api: ApiSchema = { url: '/api/test', type: 'test', includeScope: ['userId', 'projectId'] };
     const result = prepareApiData(api, scope);
     expect(result.data).toEqual({ userId: 1, projectId: 5 });
   });
 
   it('returns wildcard scope data when includeScope is "*" and no explicit data', () => {
     const scope = createTestScope({ userId: 1, name: 'Alice' });
-    const api: ApiObject = { url: '/api/test', type: 'test', includeScope: '*' };
+    const api: ApiSchema = { url: '/api/test', type: 'test', includeScope: '*' };
     const result = prepareApiData(api, scope);
     expect(result.data).toEqual({ userId: 1, name: 'Alice' });
   });
 
   it('merges scope data with explicit data, explicit data takes precedence', () => {
     const scope = createTestScope({ userId: 1, projectId: 5 });
-    const api: ApiObject = {
+    const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
       includeScope: ['userId', 'projectId'],
@@ -170,7 +170,7 @@ describe('prepareApiData', () => {
 
   it('uses explicit data as-is when it is not a plain object (string)', () => {
     const scope = createTestScope({ userId: 1 });
-    const api: ApiObject = {
+    const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
       includeScope: ['userId'],
@@ -182,7 +182,7 @@ describe('prepareApiData', () => {
 
   it('uses explicit array data as-is, ignoring includeScope merge', () => {
     const scope = createTestScope({ userId: 1 });
-    const api: ApiObject = {
+    const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
       includeScope: ['userId'],
@@ -194,7 +194,7 @@ describe('prepareApiData', () => {
 
   it('extracts params when params is a plain object', () => {
     const scope = createTestScope({});
-    const api: ApiObject = {
+    const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
       params: { page: 1, size: 10 }
@@ -206,7 +206,7 @@ describe('prepareApiData', () => {
 
   it('ignores params when it is not a plain object', () => {
     const scope = createTestScope({});
-    const api: ApiObject = {
+    const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
       params: 'not-an-object'
@@ -217,7 +217,7 @@ describe('prepareApiData', () => {
 
   it('returns both merged data and params together', () => {
     const scope = createTestScope({ userId: 1 });
-    const api: ApiObject = {
+    const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
       includeScope: ['userId'],
@@ -231,7 +231,7 @@ describe('prepareApiData', () => {
 
   it('returns data as undefined when includeScope matches no keys and no explicit data', () => {
     const scope = createTestScope({ userId: 1 });
-    const api: ApiObject = {
+    const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
       includeScope: ['missing']
@@ -242,7 +242,7 @@ describe('prepareApiData', () => {
 
   it('handles explicit data without includeScope', () => {
     const scope = createTestScope({ userId: 1 });
-    const api: ApiObject = {
+    const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
       data: { name: 'test' }
@@ -331,7 +331,7 @@ describe('finalizeApiRequest', () => {
 describe('createApiRequestExecutor', () => {
   it('treats different params as distinct requests', async () => {
     let resolveFirst: ((value: any) => void) | undefined;
-    const fetcher = vi.fn((api: ApiObject) => new Promise((resolve) => {
+    const fetcher = vi.fn((api: ApiSchema) => new Promise((resolve) => {
       if (api.url.includes('page=1')) {
         resolveFirst = resolve;
         return;
@@ -354,7 +354,7 @@ describe('createApiRequestExecutor', () => {
   });
 
   it('supports parallel dedup strategy without cancelling earlier requests', async () => {
-    const fetcher = vi.fn(async (api: ApiObject) => ({ ok: true, status: 200, data: { requestId: api.data } }));
+    const fetcher = vi.fn(async (api: ApiSchema) => ({ ok: true, status: 200, data: { requestId: api.data } }));
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
@@ -389,7 +389,7 @@ describe('createApiRequestExecutor', () => {
 
   it('treats different params as distinct requests for ignore-new dedup strategy', async () => {
     let resolvePageOne: ((value: any) => void) | undefined;
-    const fetcher = vi.fn((api: ApiObject) => new Promise((resolve) => {
+    const fetcher = vi.fn((api: ApiSchema) => new Promise((resolve) => {
       if (api.url.includes('page=1')) {
         resolvePageOne = resolve;
         return;

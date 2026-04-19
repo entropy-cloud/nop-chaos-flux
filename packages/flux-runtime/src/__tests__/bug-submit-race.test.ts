@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ApiObject, ScopeRef } from '@nop-chaos/flux-core';
+import type { ApiSchema, ScopeRef } from '@nop-chaos/flux-core';
 import { createManagedFormRuntime } from '../form-runtime';
 
 function createStubScope(): ScopeRef {
@@ -44,7 +44,7 @@ describe('FormRuntime.submit() concurrent submission bug', () => {
       }
     });
 
-    const api: ApiObject = { url: '/api/submit', method: 'post' };
+    const api: ApiSchema = { url: '/api/submit', method: 'post' };
 
     const first = form.submit(api);
     const second = form.submit(api);

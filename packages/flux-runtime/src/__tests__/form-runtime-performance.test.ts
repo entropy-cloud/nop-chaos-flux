@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import type { ApiObject, ScopeRef, ValidationError } from '@nop-chaos/flux-core';
+import type { ApiSchema, ScopeRef, ValidationError } from '@nop-chaos/flux-core';
 import { createManagedFormRuntime } from '../form-runtime';
 
 function createStubScope(): ScopeRef {
@@ -203,7 +203,7 @@ describe('FormRuntime performance-oriented behavior', () => {
       }
     });
 
-    const api: ApiObject = { url: '/api/submit', method: 'post' };
+    const api: ApiSchema = { url: '/api/submit', method: 'post' };
     const first = form.submit(api);
     const second = form.submit(api);
 

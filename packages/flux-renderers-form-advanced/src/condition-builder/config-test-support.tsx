@@ -2,7 +2,7 @@ import React from 'react';
 import { afterEach, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { ConditionGroup } from './ConditionGroup';
+import { ConditionGroup } from './condition-group';
 import type {
   ConditionBuilderSchema,
   ConditionField,

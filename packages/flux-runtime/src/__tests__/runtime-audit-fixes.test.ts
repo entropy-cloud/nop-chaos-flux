@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiObject, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
+import type { ApiSchema, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createManagedFormRuntime } from '../form-runtime';
 import { createRendererRegistry, createRendererRuntime } from '../index';
@@ -57,7 +57,7 @@ describe('audit-backed runtime fixes', () => {
     let resolveFirst: (() => void) | undefined;
     let resolveSecond: (() => void) | undefined;
 
-    const fetcher = vi.fn(async <T>(_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+    const fetcher = vi.fn(async <T>(_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
       if (!firstSignal) {
         firstSignal = ctx.signal;
         await new Promise<void>((resolve, reject) => {

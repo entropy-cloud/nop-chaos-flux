@@ -5,19 +5,19 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
-import { HomePage } from './pages/HomePage';
+import { HomePage } from './pages/home-page';
 import { ComponentLabPage } from './component-lab';
-import { useRoute } from './useRoute';
+import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { Spinner } from '@nop-chaos/ui';
 
-const LazyFluxBasicPage = lazy(() => import('./pages/FluxBasicPage').then((m) => ({ default: m.FluxBasicPage })));
-const LazyReportDesignerPage = lazy(() => import('./pages/ReportDesignerPage').then((m) => ({ default: m.ReportDesignerPage })));
-const LazyDebuggerLabPage = lazy(() => import('./pages/DebuggerLabPage').then((m) => ({ default: m.DebuggerLabPage })));
-const LazyConditionBuilderPage = lazy(() => import('./pages/ConditionBuilderPage').then((m) => ({ default: m.ConditionBuilderPage })));
-const LazyCodeEditorPage = lazy(() => import('./pages/CodeEditorPage').then((m) => ({ default: m.CodeEditorPage })));
-const LazyWordEditorPage = lazy(() => import('./pages/WordEditorPage').then((m) => ({ default: m.WordEditorPage })));
-const LazyPerformanceTablePage = lazy(() => import('./pages/PerformanceTablePage').then((m) => ({ default: m.PerformanceTablePage })));
+const LazyFluxBasicPage = lazy(() => import('./pages/flux-basic-page').then((m) => ({ default: m.FluxBasicPage })));
+const LazyReportDesignerPage = lazy(() => import('./pages/report-designer-page').then((m) => ({ default: m.ReportDesignerPage })));
+const LazyDebuggerLabPage = lazy(() => import('./pages/debugger-lab-page').then((m) => ({ default: m.DebuggerLabPage })));
+const LazyConditionBuilderPage = lazy(() => import('./pages/condition-builder-page').then((m) => ({ default: m.ConditionBuilderPage })));
+const LazyCodeEditorPage = lazy(() => import('./pages/code-editor-page').then((m) => ({ default: m.CodeEditorPage })));
+const LazyWordEditorPage = lazy(() => import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })));
+const LazyPerformanceTablePage = lazy(() => import('./pages/performance-table-page').then((m) => ({ default: m.PerformanceTablePage })));
 
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
@@ -35,13 +35,13 @@ async function ensureFlowDesignerRegistered() {
 
 const LazyFlowDesignerPageWithRegistration = lazy(async () => {
   await ensureFlowDesignerRegistered();
-  const { FlowDesignerPage } = await import('./pages/FlowDesignerPage');
+  const { FlowDesignerPage } = await import('./pages/flow-designer-page');
   return { default: FlowDesignerPage };
 });
 
 const LazyDingTalkFlowDemoWithRegistration = lazy(async () => {
   await ensureFlowDesignerRegistered();
-  const { DingTalkFlowDemo } = await import('./pages/DingTalkFlowDemo');
+  const { DingTalkFlowDemo } = await import('./pages/ding-talk-flow-demo');
   return { default: DingTalkFlowDemo };
 });
 

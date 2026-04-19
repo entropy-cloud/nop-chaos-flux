@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiObject, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiSchema, RendererEnv } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '../registry';
 import { createRendererRuntime } from '../index';
 
@@ -88,7 +88,7 @@ describe('createDataSourceController', () => {
   it('aborts the active request when stopped', async () => {
     let capturedSignal: AbortSignal | undefined;
     let releaseRequest: (() => void) | undefined;
-    const fetcher = vi.fn(async (_api: ApiObject, ctx: { signal?: AbortSignal }) => {
+    const fetcher = vi.fn(async (_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
       capturedSignal = ctx.signal;
       await new Promise<void>((resolve) => {
         releaseRequest = resolve;

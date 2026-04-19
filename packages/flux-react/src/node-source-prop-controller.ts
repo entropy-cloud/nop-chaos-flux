@@ -1,6 +1,6 @@
 import type { ActionResult, RendererRuntime, ScopeRef, SourceSchema, TemplateNode } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
-import { isSourceSchema } from './useSourceValue';
+import { isSourceSchema } from './use-source-value';
 
 export interface SourceTransientState {
   loading: boolean;

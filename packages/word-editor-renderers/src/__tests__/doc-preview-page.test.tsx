@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n'
-import { DocPreviewPage } from '../preview/DocPreviewPage.js'
+import { DocPreviewPage } from '../preview/doc-preview-page.js'
 
 const bridgeState = {
   mountedDocs: [] as string[],

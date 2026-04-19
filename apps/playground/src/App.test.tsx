@@ -99,7 +99,7 @@ vi.mock('@nop-chaos/flow-designer-renderers', () => ({
   registerFlowDesignerRenderers: () => undefined
 }));
 
-import { FluxBasicPage } from './pages/FluxBasicPage';
+import { FluxBasicPage } from './pages/flux-basic-page';
 
 describe('FluxBasicPage', () => {
   beforeEach(() => {

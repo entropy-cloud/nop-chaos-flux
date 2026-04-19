@@ -60,7 +60,7 @@ vi.mock('@nop-chaos/word-editor-core', async () => {
   }
 })
 
-vi.mock('../EditorCanvas.js', () => ({
+vi.mock('../editor-canvas.js', () => ({
   EditorCanvas: () => <div data-testid="editor-canvas" />,
 }))
 

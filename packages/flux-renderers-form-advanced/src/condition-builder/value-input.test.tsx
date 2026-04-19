@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { render, fireEvent, cleanup, screen } from '@testing-library/react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { ValueInput } from './ValueInput';
+import { ValueInput } from './value-input';
 import type { ConditionField } from './types';
 
 afterEach(cleanup);

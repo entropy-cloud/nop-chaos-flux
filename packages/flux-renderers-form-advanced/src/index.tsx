@@ -2,7 +2,7 @@ import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core'
 import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
 import { arrayEditorRendererDefinition } from './array-editor';
 import { arrayFieldRendererDefinition } from './composite-field/array-field';
-import { conditionBuilderRendererDefinition } from './condition-builder/ConditionBuilder';
+import { conditionBuilderRendererDefinition } from './condition-builder/condition-builder';
 import { detailFieldRendererDefinition } from './detail-view/detail-field';
 import { detailViewRendererDefinition } from './detail-view/detail-view';
 import { keyValueRendererDefinition } from './key-value';
@@ -13,7 +13,7 @@ import { variantFieldRendererDefinition } from './variant-field/variant-field';
 
 export { ArrayEditorRenderer, arrayEditorRendererDefinition } from './array-editor';
 export { ArrayFieldRenderer, arrayFieldRendererDefinition } from './composite-field/array-field';
-export { ConditionBuilderRenderer, conditionBuilderRendererDefinition } from './condition-builder/ConditionBuilder';
+export { ConditionBuilderRenderer, conditionBuilderRendererDefinition } from './condition-builder/condition-builder';
 export { DetailFieldRenderer, detailFieldRendererDefinition } from './detail-view/detail-field';
 export { DetailViewRenderer, detailViewRendererDefinition } from './detail-view/detail-view';
 export { KeyValueRenderer, keyValueRendererDefinition } from './key-value';

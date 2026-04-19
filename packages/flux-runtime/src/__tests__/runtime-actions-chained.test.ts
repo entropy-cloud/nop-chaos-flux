@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ActionSchema, ApiObject, ApiRequestContext, RendererPlugin } from '@nop-chaos/flux-core';
+import type { ActionSchema, ApiSchema, ApiRequestContext, RendererPlugin } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
   createActionScope,
@@ -431,7 +431,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>(api: ApiObject, ctx: ApiRequestContext) => {
+        fetcher: async <T>(api: ApiSchema, ctx: ApiRequestContext) => {
           fetchCalls.push({ api, scopeData: ctx.scope.readOwn() });
           return {
             ok: true,

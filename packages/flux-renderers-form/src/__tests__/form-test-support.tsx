@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
-import type { ApiObject, ApiRequestContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiSchema, ApiRequestContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { getIn } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -39,7 +39,7 @@ export const notifyCalls: Array<{ level: string; message: string }> = [];
 export const sharedFormulaCompiler = createFormulaCompiler();
 
 export const env: RendererEnv = {
-  fetcher: async function <T>(_api: ApiObject, ctx: ApiRequestContext) {
+  fetcher: async function <T>(_api: ApiSchema, ctx: ApiRequestContext) {
     submitCalls.push(ctx.scope.readOwn());
     return {
       ok: true,

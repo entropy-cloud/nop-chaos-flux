@@ -58,6 +58,6 @@ export { EMPTY_FORM_STORE_STATE, isFieldEffectivelyRequired, selectCurrentFormEr
 export { resolveShowErrorTriggers, shouldShowFieldError } from './field-error-visibility';
 export { useBridgeSnapshot, useHostScope, useNamespaceRegistration, WorkbenchShell } from './workbench';
 export { useResolvedContainer, useContainerDomRegistration, resolveContainerElement } from './container-hooks';
-export { useSourceValue } from './useSourceValue';
+export { useSourceValue } from './use-source-value';
 export type { SourceTransientState } from './use-node-source-props';
 export type { WorkbenchShellProps } from './workbench';

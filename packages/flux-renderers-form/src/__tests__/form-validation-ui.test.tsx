@@ -1,7 +1,7 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ApiObject, ApiRequestContext } from '@nop-chaos/flux-core';
+import type { ApiSchema, ApiRequestContext } from '@nop-chaos/flux-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -96,7 +96,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
         }}
         env={{
           ...env,
-          fetcher: async function <T>(api: ApiObject, ctx: ApiRequestContext) {
+          fetcher: async function <T>(api: ApiSchema, ctx: ApiRequestContext) {
             if (api.url === '/api/validate-username') {
               return await new Promise((resolve) => {
                 resolveValidation = resolve as typeof resolveValidation;

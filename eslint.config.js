@@ -4,6 +4,7 @@ const tseslint = require('typescript-eslint');
 const reactHooks = require('eslint-plugin-react-hooks');
 const reactCompiler = require('eslint-plugin-react-compiler');
 const i18next = require('eslint-plugin-i18next');
+const unicorn = require('eslint-plugin-unicorn').default;
 const globals = require('globals');
 
 const reactHooksLatest = reactHooks.configs.flat['recommended-latest'];
@@ -52,6 +53,7 @@ module.exports = [
     },
     plugins: {
       react,
+      unicorn,
       ...reactHooksLatest.plugins,
       'react-compiler': reactCompiler
     },
@@ -118,7 +120,11 @@ module.exports = [
       ],
       'no-new-func': 'error',
       'no-eval': 'error',
-      'max-lines': ['error', { max: 700, skipBlankLines: true, skipComments: true }]
+      'max-lines': ['error', { max: 700, skipBlankLines: true, skipComments: true }],
+      'unicorn/filename-case': ['error', {
+        case: 'kebabCase',
+        ignore: [/^[a-z]{2}-[A-Z]{2}(\.\w+)?$/]
+      }]
     }
   },
   // i18n: 检测组件库中的硬编码字符串 (排除 playground、test、apps)

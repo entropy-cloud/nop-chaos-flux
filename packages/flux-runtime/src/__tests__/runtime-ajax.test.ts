@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ApiObject } from '@nop-chaos/flux-core';
+import type { ApiSchema } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
@@ -52,12 +52,12 @@ describe('createRendererRuntime', () => {
   });
 
   it('applies requestAdaptor before fetcher and responseAdaptor after fetcher', async () => {
-    const fetchCalls: ApiObject[] = [];
+    const fetchCalls: ApiSchema[] = [];
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>(api: ApiObject) => {
+        fetcher: async <T>(api: ApiSchema) => {
           fetchCalls.push(api);
           return {
             ok: true,
@@ -111,12 +111,12 @@ describe('createRendererRuntime', () => {
   });
 
   it('evaluates declarative ajax api values before request execution convergence', async () => {
-    const fetchCalls: ApiObject[] = [];
+    const fetchCalls: ApiSchema[] = [];
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>(api: ApiObject) => {
+        fetcher: async <T>(api: ApiSchema) => {
           fetchCalls.push(api);
           return {
             ok: true,
@@ -165,12 +165,12 @@ describe('createRendererRuntime', () => {
   });
 
   it('evaluates adaptor scope through lexical scope view without eager whole-scope reads', async () => {
-    const fetchCalls: ApiObject[] = [];
+    const fetchCalls: ApiSchema[] = [];
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>(api: ApiObject) => {
+        fetcher: async <T>(api: ApiSchema) => {
           fetchCalls.push(api);
           return {
             ok: true,

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiObject, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiSchema, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
   createActionScope,
@@ -295,7 +295,7 @@ describe('createRendererRuntime', () => {
 
   it('monitors the final executable ajax request after params canonicalization', async () => {
     const onApiRequest = vi.fn();
-    const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiObject) => ({
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiSchema) => ({
       ok: true,
       status: 200,
       data: { url: api.url } as T
