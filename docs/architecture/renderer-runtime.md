@@ -573,7 +573,7 @@ Not every boundary in the render tree has the same creator. The table below is t
 | Boundary | Owner | Creation Site | Notes |
 |---|---|---|------|
 | `classAliases` publication | Node-local (compile-time closure) | `NodeRenderer` executes compiled closure | Compiled into `renderPlan.wrapProviders` |
-| `xui:imports`-driven `ActionScope` overlay | Node-local (compile-time closure) | `NodeRenderer` executes compiled closure | Only when node declares `xui:imports` |
+| `xui:imports`-driven `ActionScope` overlay | Node-local (compile-time closure) | `NodeRenderer` executes compiled closure | Only when node declares `xui:imports`. Loading, caching, and lexical scoping mechanics are defined in `docs/architecture/module-cache-and-import-stack.md` |
 | Fragment child data scope | Fragment render path (`RenderNodes`) | Created inside `RenderNodes` when `options.data` is passed | Not `NodeRenderer`'s responsibility |
 | Page data scope + `PageRuntime` | Page owner/renderer | Created by page renderer/host at mount | Published via `PageContext` |
 | Form data scope + `FormRuntime` | Form owner/renderer | Created by form renderer at mount | Published via `FormContext`; form scope is the active child scope for form children |

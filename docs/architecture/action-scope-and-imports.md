@@ -702,6 +702,8 @@ Current runtime notes:
 - root schema rendering may pre-collect declared imports and preload them before rendering descendants that depend on those namespaces
 - loaded import libraries are treated as static runtime resources; the runtime may stop publishing a namespace at a lexical boundary, but it does not automatically unload the underlying library on unmount
 
+The loading, caching, and lexical scoping mechanics for `xui:imports` are defined in `docs/architecture/module-cache-and-import-stack.md`. That document covers the three-layer architecture (ModuleCache, env-level URL resolution, ImportStack) and the migration path from the current flat `__imports` scope map to a proper stack-based model.
+
 ### Recommended Authoring Model
 
 Prefer container-level imports rather than a body node with execution-like semantics.
