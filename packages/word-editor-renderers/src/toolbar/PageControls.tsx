@@ -109,7 +109,7 @@ export function PageControls({ bridge, store }: PageControlsProps) {
       <ToolbarButton icon={FileText} onClick={handlePageModeToggle} title="Toggle Page Mode" />
       <ToolbarSeparator />
       <ToolbarButton icon={ZoomOut} onClick={handleZoomOut} title="Zoom Out" />
-      <span className="text-xs text-gray-500 w-10 text-center">{Math.round(scale * 100)}%</span>
+      <span className="w-10 text-center text-xs text-muted-foreground">{Math.round(scale * 100)}%</span>
       <ToolbarButton icon={ZoomIn} onClick={handleZoomIn} title="Zoom In" />
       <ToolbarButton icon={Maximize} onClick={handleZoomReset} title="Reset Zoom" />
       <ToolbarSeparator />

@@ -31,7 +31,7 @@ export function RibbonToolbar({ bridge, store, onInsertExpr, onInsertTag, onChar
   )
 
   return (
-    <div className="border-b bg-white/95">
+    <div className="border-b bg-background/95">
       <div className="flex flex-row gap-1 p-2 items-center overflow-x-auto">
         <FontControls bridge={bridge} selection={selection} />
         <ToolbarSeparator />
