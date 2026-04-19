@@ -1,12 +1,7 @@
 import type { SchemaCompileDiagnosticsOptions, SchemaCompileValidationOptions, SchemaDiagnostic } from '../schema-diagnostics';
 import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema';
 import type { CompiledCidState } from '../compiled-cid';
-import type { CompiledTemplate, NodeMetaProgram, NodeRuntimeState } from './node-identity';
-
-/** @deprecated Use NodeMetaProgram instead. */
-export type CompiledSchemaMeta = NodeMetaProgram;
-/** @deprecated Use NodeRuntimeState instead. */
-export type CompiledNodeRuntimeState = NodeRuntimeState;
+import type { CompiledTemplate } from './node-identity';
 
 export type WrapProvidersFn = (
   wrapProvider: (kind: string, value: unknown, children: unknown) => unknown,

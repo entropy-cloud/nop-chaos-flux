@@ -99,8 +99,6 @@ export interface ApiSchema extends SchemaObject {
   dedupStrategy?: RequestDedupStrategy;
 }
 
-export type ApiObject = ApiSchema;
-
 export interface ExecutableApiRequest extends SchemaObject {
   url: string;
   method?: string;
