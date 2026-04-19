@@ -21,7 +21,7 @@ export function DingFlowAddNodeMenu({ screenX, screenY, items, onSelect, onClose
     <>
       <div className="fixed inset-0 z-[100]" onClick={onClose} />
       <div
-        className="fixed z-[101] flex gap-4 bg-white rounded-lg shadow-lg px-5 py-3"
+        className="fixed z-[101] flex gap-4 rounded-lg border border-border bg-popover px-5 py-3 shadow-lg"
         style={{ left: screenX - 100, top: screenY - 110 }}
       >
         {items.map((item) => (
@@ -38,7 +38,7 @@ export function DingFlowAddNodeMenu({ screenX, screenY, items, onSelect, onClose
             >
               {item.icon}
             </div>
-            <span className="text-xs text-[#666]">{item.label}</span>
+            <span className="text-xs text-muted-foreground">{item.label}</span>
           </Button>
         ))}
       </div>

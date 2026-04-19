@@ -3,6 +3,7 @@ import { UserCheck, Send } from 'lucide-react';
 import { renderDesignerCanvasBridge } from './canvas-bridge';
 import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
 import { DingFlowAddNodeMenu, type DingFlowMenuItem } from './dingflow';
+import { resolveNodeTypeAccent } from './designer-node-appearance';
 
 const plusButtonHandlerHolder: { current: ((sourceId: string, clientX: number, clientY: number) => void) | null } = { current: null };
 
@@ -44,6 +45,11 @@ export function DesignerCanvasContent() {
       return () => { plusButtonHandlerHolder.current = null; };
     }
   }, [config.documentMode, handlePlusButtonClick]);
+
+  const menuItems = useMemo<DingFlowMenuItem[]>(() => DINGFLOW_MENU_ITEMS.map((item) => ({
+    ...item,
+    color: resolveNodeTypeAccent(item.type, config.nodeTypes.find((nodeType) => nodeType.id === item.type)) ?? item.color,
+  })), [config.nodeTypes]);
 
   const handleMenuSelect = useCallback((type: string) => {
     if (!popover) return;
@@ -220,7 +226,7 @@ export function DesignerCanvasContent() {
         <DingFlowAddNodeMenu
           screenX={popover.screenX}
           screenY={popover.screenY}
-          items={DINGFLOW_MENU_ITEMS}
+          items={menuItems}
           onSelect={handleMenuSelect}
           onClose={() => setPopover(null)}
         />

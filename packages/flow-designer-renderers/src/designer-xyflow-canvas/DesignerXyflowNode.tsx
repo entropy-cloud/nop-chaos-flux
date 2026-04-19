@@ -128,7 +128,7 @@ export function DesignerXyflowNode(props: NodeProps) {
       {(hasQuickActions || showToolbar) && (
         <NodeToolbar isVisible={showToolbar} position={Position.Top}>
           <div
-            className="flex items-center gap-1.5 p-1 rounded-xl bg-white/96 border border-border shadow-lg"
+            className="flex items-center gap-1.5 p-1 rounded-xl bg-popover/96 border border-border shadow-lg"
             data-slot="designer-node-toolbar"
             onMouseEnter={showToolbarNow}
             onMouseLeave={scheduleHideToolbar}
@@ -154,7 +154,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                   variant="ghost"
                   size="icon-sm"
                   aria-label="Edit node"
-                  className="border-0 hover:bg-black/8 dark:hover:bg-white/10"
+                  className="border-0 hover:bg-accent"
                   onClick={actionScope.onEdit}
                 >
                   <DesignerIcon icon="pencil" />
@@ -164,7 +164,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                   variant="ghost"
                   size="icon-sm"
                   aria-label="Duplicate node"
-                  className="border-0 hover:bg-black/8 dark:hover:bg-white/10"
+                  className="border-0 hover:bg-accent"
                   onClick={actionScope.onDuplicate}
                 >
                   <DesignerIcon icon="copy" />

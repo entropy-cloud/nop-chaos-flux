@@ -7,6 +7,7 @@ import { DingFlowAddConditionOverlay } from './DingFlowAddConditionOverlay';
 import { DingFlowMergeOverlay } from './DingFlowMergeOverlay';
 import { DingFlowAddNodeMenu } from './DingFlowAddNodeMenu';
 import type { DingFlowMenuItem } from './DingFlowAddNodeMenu';
+import { resolveNodeTypeAccent } from '../designer-node-appearance';
 
 interface PopoverState {
   sourceId: string;
@@ -21,7 +22,7 @@ const DEFAULT_MENU_ITEMS: DingFlowMenuItem[] = [
 ];
 
 export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode }) {
-  const { dispatch } = useDesignerContext();
+  const { dispatch, config } = useDesignerContext();
   const nodes = useDesignerSnapshotSelector((s) => s.doc.nodes);
   const edges = useDesignerSnapshotSelector((s) => s.doc.edges);
   const [popover, setPopover] = useState<PopoverState | null>(null);
@@ -30,6 +31,11 @@ export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode 
     () => computeDingFlowOverlays(nodes, edges),
     [nodes, edges],
   );
+
+  const menuItems = useMemo<DingFlowMenuItem[]>(() => DEFAULT_MENU_ITEMS.map((item) => ({
+    ...item,
+    color: resolveNodeTypeAccent(item.type, config.nodeTypes.find((nodeType) => nodeType.id === item.type)) ?? item.color,
+  })), [config.nodeTypes]);
 
   const handlePlusClick = useCallback((sourceId: string, clientX: number, clientY: number) => {
     setPopover({ sourceId, screenX: clientX, screenY: clientY });
@@ -98,7 +104,7 @@ export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode 
         <DingFlowAddNodeMenu
           screenX={popover.screenX}
           screenY={popover.screenY}
-          items={DEFAULT_MENU_ITEMS}
+          items={menuItems}
           onSelect={handleSelect}
           onClose={handleClose}
         />

@@ -21,7 +21,8 @@ let mockResolve = vi.fn();
 vi.mock('./designer-context', () => ({
   useDesignerContext: () => mockContext,
   useDesignerFullSnapshot: () => mockSnapshot,
-  useDesignerSnapshotSelector: (selector: (s: any) => any) => selector(mockSnapshot)
+  useDesignerSnapshotSelector: (selector: (s: any) => any) => selector(mockSnapshot),
+  useNodeTypeConfig: (typeId: string) => mockContext.config.nodeTypes.find((nodeType: { id: string }) => nodeType.id === typeId)
 }));
 
 vi.mock('./designer-icon', () => ({

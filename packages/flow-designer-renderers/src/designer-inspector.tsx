@@ -1,26 +1,28 @@
 import React from 'react';
 import { t } from '@nop-chaos/flux-i18n';
+import { useNodeTypeConfig } from './designer-context';
 import { Badge, Button, Input, Label, NativeSelect, NativeSelectOption, Textarea, cn } from '@nop-chaos/ui';
 import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
 import { DesignerIcon } from './designer-icon';
+import { resolveNodeTypeAccent } from './designer-node-appearance';
 
-const NODE_TYPE_INFO: Record<string, { label: string; icon: string; color: string }> = {
-  'dt-initiator': { label: '发起人', icon: 'user', color: '#576a95' },
-  'dt-approval': { label: '审批节点', icon: 'user-check', color: '#ff943e' },
-  'dt-cc': { label: '抄送人', icon: 'mail', color: '#3296fa' },
-  'dt-condition': { label: '条件分支', icon: 'git-branch', color: '#15bc83' },
-  'dt-parallel': { label: '并行分支', icon: 'git-merge', color: '#6366f1' },
-  'dt-subprocess': { label: '子流程', icon: 'layers', color: '#8b5cf6' },
-  'dt-end': { label: '结束', icon: 'square', color: '#94a3b8' },
-  'action-entry': { label: '入口', icon: 'play', color: '#10b981' },
-  'action-step': { label: '动作', icon: 'zap', color: '#3b82f6' },
-  'action-end': { label: '结束', icon: 'square', color: '#94a3b8' },
-  'start': { label: '开始节点', icon: 'play', color: '#10b981' },
-  'end': { label: '结束节点', icon: 'square', color: '#ef4444' },
-  'task': { label: '任务节点', icon: 'clipboard-list', color: '#3b82f6' },
-  'condition': { label: '条件分支', icon: 'git-branch', color: '#f59e0b' },
-  'parallel': { label: '并行网关', icon: 'git-merge', color: '#8b5cf6' },
-  'loop': { label: '循环节点', icon: 'repeat', color: '#ec4899' },
+const NODE_TYPE_INFO: Record<string, { label: string; icon: string }> = {
+  'dt-initiator': { label: '发起人', icon: 'user' },
+  'dt-approval': { label: '审批节点', icon: 'user-check' },
+  'dt-cc': { label: '抄送人', icon: 'mail' },
+  'dt-condition': { label: '条件分支', icon: 'git-branch' },
+  'dt-parallel': { label: '并行分支', icon: 'git-merge' },
+  'dt-subprocess': { label: '子流程', icon: 'layers' },
+  'dt-end': { label: '结束', icon: 'square' },
+  'action-entry': { label: '入口', icon: 'play' },
+  'action-step': { label: '动作', icon: 'zap' },
+  'action-end': { label: '结束', icon: 'square' },
+  'start': { label: '开始节点', icon: 'play' },
+  'end': { label: '结束节点', icon: 'square' },
+  'task': { label: '任务节点', icon: 'clipboard-list' },
+  'condition': { label: '条件分支', icon: 'git-branch' },
+  'parallel': { label: '并行网关', icon: 'git-merge' },
+  'loop': { label: '循环节点', icon: 'repeat' },
 };
 
 const SET_TYPE_OPTIONS = [
@@ -51,19 +53,22 @@ export function DefaultInspector() {
     return NODE_TYPE_INFO[nodeType];
   };
 
+  const activeNodeTypeConfig = useNodeTypeConfig(activeNode?.type ?? '');
+
   const renderNodeTypeHeader = () => {
     if (!activeNode) return null;
     const typeInfo = getNodeTypeInfo(activeNode.type);
+    const accentColor = resolveNodeTypeAccent(activeNode.type, activeNodeTypeConfig);
     const displayLabel = typeInfo?.label || activeNode.type;
 
     return (
       <div className="flex items-center gap-3">
-        {typeInfo && (
+        {typeInfo && accentColor && (
           <div 
             className="rounded-full p-2"
-            style={{ backgroundColor: `${typeInfo.color}20` }}
+            style={{ backgroundColor: `${accentColor}20` }}
           >
-            <span style={{ color: typeInfo.color }}>
+            <span style={{ color: accentColor }}>
               <DesignerIcon icon={typeInfo.icon} size={20} />
             </span>
           </div>
@@ -71,12 +76,12 @@ export function DefaultInspector() {
         <div className="flex-1">
           <div className="font-medium text-foreground text-base">{String(activeNode.data.label ?? activeNode.id)}</div>
           <div className="flex items-center gap-2 mt-1">
-            {typeInfo && (
+            {typeInfo && accentColor && (
               <Badge 
                 style={{ 
-                  backgroundColor: `${typeInfo.color}15`, 
-                  color: typeInfo.color,
-                  border: `1px solid ${typeInfo.color}30`
+                  backgroundColor: `${accentColor}15`, 
+                  color: accentColor,
+                  border: `1px solid ${accentColor}30`
                 }}
                 className="text-xs font-medium"
               >
