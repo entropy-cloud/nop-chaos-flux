@@ -286,7 +286,7 @@ import { Button, Input, Dialog, cn } from '@nop-chaos/ui';
 All renderer components MUST follow the `RendererComponentProps` pattern:
 
 ```tsx
-import type { RendererComponentProps } from '@nop-chaos/flux-react';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { Button } from '@nop-chaos/ui';
 
 function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {

@@ -397,14 +397,14 @@ function useRenderScope(): ScopeRef;
 function useRenderInstancePath(): readonly InstanceFrame[] | undefined;
 function useCurrentActionScope(): ActionScope | undefined;
 function useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
-function useScopeSelector<T>(selector: (scopeData: any) => T, equalityFn?: (a: T, b: T) => boolean): T;
-function useOwnScopeSelector<T>(selector: (scopeData: any) => T, equalityFn?: (a: T, b: T) => boolean): T;
+function useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn?: (a: T, b: T) => boolean, options?: { enabled?: boolean; fallback?: T }): T;
+function useOwnScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn?: (a: T, b: T) => boolean): T;
 function useRendererEnv(): RendererEnv;
 function useActionDispatcher(): RendererRuntime['dispatch'];
 function useCurrentForm(): FormRuntime | undefined;
 function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[];
 function useCurrentFormError(query: FormErrorQuery): ValidationError | undefined;
-function useCurrentFormState(): FormStoreState | undefined;
+function useCurrentFormState<T>(selector: (state: FormStoreState) => T, equalityFn?: (a: T, b: T) => boolean, options?: { enabled?: boolean }): T;
 function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot;
 function useValidationNodeState(path: string): FormFieldStateSnapshot;
 function useFieldError(path: string): ValidationError | undefined;
@@ -459,6 +459,9 @@ interface RenderRegionHandle {
     scopeKey?: string;
     isolate?: boolean;
     pathSuffix?: string;
+    actionScope?: ActionScope;
+    componentRegistry?: ComponentHandleRegistry;
+    ownerNodeInstance?: NodeInstance;
   }): React.ReactNode;
   /**
    * @deprecated Use render() instead. Kept for back-compat on non-parameterized regions.
@@ -641,10 +644,14 @@ Normative contract:
 
 ```ts
 interface RenderFragmentOptions {
+  /** @deprecated Use `bindings` instead. */
   data?: object;
+  bindings?: Record<string, unknown>;
   scope?: ScopeRef;
+  instancePath?: readonly InstanceFrame[];
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
+  ownerNodeInstance?: NodeInstance;
   scopeKey?: string;
   isolate?: boolean;
   pathSuffix?: string;

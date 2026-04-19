@@ -33,6 +33,7 @@
 - `name` 仍然是一等设计
 - 它绑定一个外部值
 - 但该外部值可以匹配多个 variant
+- 字段级 chrome（`label` / `required` / `hint` / `error` / `data-field-*`）应复用共享 `FieldFrame`，`variant-field` 自身只负责 selector、active variant subtree 和变体切换逻辑
 
 推荐 shape：
 

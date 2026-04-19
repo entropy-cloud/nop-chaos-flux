@@ -260,7 +260,10 @@ interface CrudStatusSummary {
 规则：
 
 - 这是外部观察面，不是内部 authoring 的唯一读面。
-- `crud` 子树内部可提供只读 `$crud` 摘要绑定，但只允许暴露窄 summary，不暴露 store / methods。
+- `crud` 子树内部默认提供只读 `$crud` 摘要绑定，供工具栏、批量动作、空态等内部子树直接读取。
+- 如果声明了 `statusPath`，同一份只读摘要会同时发布到该路径，供 CRUD 子树外部观察或宿主集成读取。
+- `$crud` 与 `statusPath` 不是二选一，也不是两份独立状态；它们是同一个 `CrudStatusSummary` 的两个只读访问入口。
+- 这两条通道都只允许暴露窄 summary，不暴露 store / methods，也不允许把 `$crud` 当作可写 façade。
 - `statusPath` 是组合摘要；`selectionStatePath` / `paginationStatePath` 等仍然是具体交互轴的可写状态路径。
 
 ## 10. 组件句柄

@@ -14,8 +14,9 @@ For validation behavior and form semantics, use `docs/architecture/form-validati
 
 When this document needs to be checked against code, start with:
 
-- `packages/flux-runtime/src/index.ts` for assembly boundaries
-- `packages/flux-runtime/src/schema-compiler.ts` for compiler ownership
+- `packages/flux-runtime/src/index.ts` for package export surface only
+- `packages/flux-runtime/src/runtime-factory.ts` for runtime assembly boundaries
+- `packages/flux-runtime/src/schema-compiler.ts` and `packages/flux-runtime/src/schema-compiler/` for compiler ownership
 - `packages/flux-runtime/src/validation/` for reusable validation helpers
 - `packages/flux-runtime/src/form-runtime.ts` and related `form-runtime-*` files for form flow ownership
 - `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/request-runtime.ts`, and `packages/flux-runtime/src/scope.ts` for runtime subsystem placement
@@ -23,7 +24,7 @@ When this document needs to be checked against code, start with:
 
 ## Main Rule
 
-`packages/flux-runtime/src/index.ts` is an assembly layer.
+`packages/flux-runtime/src/runtime-factory.ts` is the main assembly layer, while `packages/flux-runtime/src/index.ts` stays a thin package entry.
 
 It should stay limited to:
 
@@ -48,9 +49,11 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
 ### Entry and assembly
 
 - `packages/flux-runtime/src/index.ts`
+  - package export surface
+- `packages/flux-runtime/src/runtime-factory.ts`
   - runtime assembly
   - top-level factory composition
-  - package export surface
+  - owned runtime factory wiring
 - `packages/flux-runtime/src/runtime-eval-helpers.ts`
   - scope evaluation helpers extracted from the entry file
   - expression evaluation utilities used during runtime assembly
@@ -66,6 +69,24 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
   - renderer field classification
   - deep table column normalization
   - compiled form-validation model assembly
+- `packages/flux-runtime/src/schema-compiler/index.ts`
+  - compiler submodule composition
+- `packages/flux-runtime/src/schema-compiler/fields.ts`
+  - renderer field classification helpers and meta-program compilation
+- `packages/flux-runtime/src/schema-compiler/regions.ts`
+  - region extraction and nested child normalization helpers
+- `packages/flux-runtime/src/schema-compiler/tables.ts`
+  - table-specific deep normalization helpers
+- `packages/flux-runtime/src/schema-compiler/validation-collection.ts`
+  - compiled validation model collection during compilation
+- `packages/flux-runtime/src/schema-compiler/diagnostics.ts`
+  - compiler diagnostic collection helpers
+- `packages/flux-runtime/src/schema-compiler/shape-validation.ts`
+  - schema-shape validation helpers used during compilation
+- `packages/flux-runtime/src/schema-compiler/host-action-validation.ts`
+  - host action validation and capability checks during compile
+- `packages/flux-runtime/src/schema-compiler/target-enrichment.ts`
+  - target enrichment helpers for compiled nodes
 
 Keep compiler-specific shape handling here.
 
