@@ -168,6 +168,29 @@ describe('flow designer controls', () => {
     expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'deleteNode', nodeId: 'node-1' });
   });
 
+  it('uses nodeType inspector schema before fallback fields', () => {
+    mockSnapshot = createSnapshot({
+      activeNode: { id: 'node-1', type: 'task', data: { label: 'Task' } },
+      activeEdge: null
+    });
+    mockContext.config = {
+      ...mockContext.config,
+      nodeTypes: [
+        {
+          id: 'task',
+          label: 'Task',
+          inspector: { body: { type: 'text', text: 'Schema inspector body' } }
+        }
+      ]
+    };
+
+    render(<DefaultInspector renderSchema={() => <div>Schema inspector body</div>} />);
+
+    expect(screen.getByText('Schema inspector body')).toBeTruthy();
+    expect(screen.getByDisplayValue('Task')).toBeTruthy();
+    expect(screen.queryByText('action')).toBeNull();
+  });
+
   it('opens createDialog-configured node types instead of dispatching addNode immediately', () => {
     const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
     mockContext.config = {

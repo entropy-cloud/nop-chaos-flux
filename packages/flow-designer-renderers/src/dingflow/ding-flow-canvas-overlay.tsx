@@ -1,25 +1,19 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { ViewportPortal } from '@xyflow/react';
-import { UserCheck, Send } from 'lucide-react';
 import { useDesignerContext, useDesignerSnapshotSelector } from '../designer-context';
+import { DesignerIcon } from '../designer-icon';
 import { computeDingFlowOverlays } from './dingflow-overlays';
-import { DingFlowAddConditionOverlay } from './DingFlowAddConditionOverlay';
-import { DingFlowMergeOverlay } from './DingFlowMergeOverlay';
-import { DingFlowAddNodeMenu } from './DingFlowAddNodeMenu';
-import type { DingFlowMenuItem } from './DingFlowAddNodeMenu';
-import { resolveNodeTypeAccent } from '../designer-node-appearance';
+import { DingFlowAddConditionOverlay } from './ding-flow-add-condition-overlay';
+import { DingFlowMergeOverlay } from './ding-flow-merge-overlay';
+import { DingFlowAddNodeMenu } from './ding-flow-add-node-menu';
+import type { DingFlowMenuItem } from './ding-flow-add-node-menu';
+import { compareTreeMenuNodeTypes, resolveNodeTypeAccent, resolveNodeTypeMeta, shouldIncludeInTreeAddMenu } from '../designer-node-appearance';
 
 interface PopoverState {
   sourceId: string;
   screenX: number;
   screenY: number;
 }
-
-const DEFAULT_MENU_ITEMS: DingFlowMenuItem[] = [
-  { type: 'dt-approval', color: '#ff943e', icon: <UserCheck size={20} />, label: 'Approver' },
-  { type: 'dt-cc', color: '#3296fa', icon: <Send size={20} />, label: 'CC' },
-  { type: 'dt-condition', color: '#15bc83', icon: <span className="text-xs font-bold">Cond</span>, label: 'Condition' },
-];
 
 export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode }) {
   const { dispatch, config } = useDesignerContext();
@@ -32,10 +26,18 @@ export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode 
     [nodes, edges],
   );
 
-  const menuItems = useMemo<DingFlowMenuItem[]>(() => DEFAULT_MENU_ITEMS.map((item) => ({
-    ...item,
-    color: resolveNodeTypeAccent(item.type, config.nodeTypes.find((nodeType) => nodeType.id === item.type)) ?? item.color,
-  })), [config.nodeTypes]);
+  const menuItems = useMemo<DingFlowMenuItem[]>(() => config.nodeTypes
+    .filter(shouldIncludeInTreeAddMenu)
+    .sort(compareTreeMenuNodeTypes)
+    .map((nodeType) => {
+      const meta = resolveNodeTypeMeta(nodeType.id, nodeType);
+      return {
+        type: nodeType.id,
+        label: meta.label,
+        icon: meta.icon ? <DesignerIcon icon={meta.icon} size={20} /> : <span className="text-xs font-bold">+</span>,
+        color: resolveNodeTypeAccent(nodeType.id, nodeType) ?? 'var(--fd-primary, #3296fa)',
+      };
+    }), [config.nodeTypes]);
 
   const handlePlusClick = useCallback((sourceId: string, clientX: number, clientY: number) => {
     setPopover({ sourceId, screenX: clientX, screenY: clientY });

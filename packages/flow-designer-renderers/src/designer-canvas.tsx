@@ -1,19 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { UserCheck, Send } from 'lucide-react';
 import { renderDesignerCanvasBridge } from './canvas-bridge';
 import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
 import { DingFlowAddNodeMenu, type DingFlowMenuItem } from './dingflow';
-import { resolveNodeTypeAccent } from './designer-node-appearance';
+import { DesignerIcon } from './designer-icon';
+import { compareTreeMenuNodeTypes, resolveNodeTypeAccent, resolveNodeTypeMeta, shouldIncludeInTreeAddMenu } from './designer-node-appearance';
 
 const plusButtonHandlerHolder: { current: ((sourceId: string, clientX: number, clientY: number) => void) | null } = { current: null };
 
 export { plusButtonHandlerHolder };
-
-const DINGFLOW_MENU_ITEMS: DingFlowMenuItem[] = [
-  { type: 'dt-approval', color: '#ff943e', icon: <UserCheck size={20} />, label: 'Approver' },
-  { type: 'dt-cc', color: '#3296fa', icon: <Send size={20} />, label: 'CC' },
-  { type: 'dt-condition', color: '#15bc83', icon: <span className="text-xs font-bold">Cond</span>, label: 'Condition' },
-];
 
 interface PopoverState {
   sourceId: string;
@@ -46,10 +40,18 @@ export function DesignerCanvasContent() {
     }
   }, [config.documentMode, handlePlusButtonClick]);
 
-  const menuItems = useMemo<DingFlowMenuItem[]>(() => DINGFLOW_MENU_ITEMS.map((item) => ({
-    ...item,
-    color: resolveNodeTypeAccent(item.type, config.nodeTypes.find((nodeType) => nodeType.id === item.type)) ?? item.color,
-  })), [config.nodeTypes]);
+  const menuItems = useMemo<DingFlowMenuItem[]>(() => config.nodeTypes
+    .filter(shouldIncludeInTreeAddMenu)
+    .sort(compareTreeMenuNodeTypes)
+    .map((nodeType) => {
+      const meta = resolveNodeTypeMeta(nodeType.id, nodeType);
+      return {
+        type: nodeType.id,
+        label: meta.label,
+        icon: meta.icon ? <DesignerIcon icon={meta.icon} size={20} /> : <span className="text-xs font-bold">+</span>,
+        color: resolveNodeTypeAccent(nodeType.id, nodeType) ?? 'var(--fd-primary, #3296fa)',
+      };
+    }), [config.nodeTypes]);
 
   const handleMenuSelect = useCallback((type: string) => {
     if (!popover) return;

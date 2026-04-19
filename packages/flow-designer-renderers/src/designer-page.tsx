@@ -410,6 +410,9 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
   const dialogsSlot = props.regions.dialogs
     ? props.helpers.render(props.regions.dialogs.templateNode, { scope: designerScope, actionScope })
     : ((props.props as Record<string, unknown>).dialogs as React.ReactNode);
+  const renderInspectorSchema = useCallback((schema: import('@nop-chaos/flux-core').SchemaInput) => {
+    return props.helpers.render(schema as any, { scope: designerScope, actionScope });
+  }, [actionScope, designerScope, props.helpers]);
 
   useEffect(() => {
     if (!statusPath) {
@@ -439,7 +442,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
         onLeftToggle={() => dispatch({ type: 'togglePalette' })}
         leftLabel="Expand palette"
         canvas={<DesignerCanvasContent />}
-        rightPanel={hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector />}
+        rightPanel={hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector renderSchema={renderInspectorSchema} />}
         rightCollapsed={snapshot.inspectorCollapsed}
         onRightToggle={() => dispatch({ type: 'toggleInspector' })}
         rightLabel="Expand inspector"

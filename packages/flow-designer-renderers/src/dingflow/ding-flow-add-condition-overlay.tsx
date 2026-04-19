@@ -1,5 +1,6 @@
 import React from 'react';
 import { t } from '@nop-chaos/flux-i18n';
+import { DINGFLOW_CONDITION_BADGE_CLASSNAME } from './dingflow-theme';
 
 interface DingFlowAddConditionOverlayProps {
   onClick: (e: React.MouseEvent) => void;
@@ -8,7 +9,7 @@ interface DingFlowAddConditionOverlayProps {
 export function DingFlowAddConditionOverlay({ onClick }: DingFlowAddConditionOverlayProps) {
   return (
     <div
-      className="px-[14px] py-[4px] rounded-[20px] bg-white border border-[#b3e19d] text-[#67c23a] text-xs cursor-pointer whitespace-nowrap"
+      className={DINGFLOW_CONDITION_BADGE_CLASSNAME}
       onClick={(e) => { e.stopPropagation(); onClick(e); }}
     >
       {t('flux.flowDesigner.addCondition')}

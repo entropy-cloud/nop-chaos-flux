@@ -9,7 +9,7 @@ export const MERGE_EXTRA = 86;
 export const BRANCH_W = 260;
 export const BRANCH_SHORT_LEG = 32;
 export const MERGE_SHORT_LEG = 84;
-export const CONNECTOR_COLOR = '#cacaca';
+export const CONNECTOR_COLOR = 'var(--fd-edge-stroke, #cacaca)';
 
 export type EdgeLeg = 'near-target' | 'near-source';
 

@@ -1,69 +1,35 @@
 import React from 'react';
 import { t } from '@nop-chaos/flux-i18n';
+import type { SchemaInput } from '@nop-chaos/flux-core';
 import { useNodeTypeConfig } from './designer-context';
-import { Badge, Button, Input, Label, NativeSelect, NativeSelectOption, Textarea, cn } from '@nop-chaos/ui';
+import { Badge, Button, Input, Label, Textarea, cn } from '@nop-chaos/ui';
 import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
 import { DesignerIcon } from './designer-icon';
-import { resolveNodeTypeAccent } from './designer-node-appearance';
+import { resolveNodeTypeAccent, resolveNodeTypeMeta } from './designer-node-appearance';
 
-const NODE_TYPE_INFO: Record<string, { label: string; icon: string }> = {
-  'dt-initiator': { label: '发起人', icon: 'user' },
-  'dt-approval': { label: '审批节点', icon: 'user-check' },
-  'dt-cc': { label: '抄送人', icon: 'mail' },
-  'dt-condition': { label: '条件分支', icon: 'git-branch' },
-  'dt-parallel': { label: '并行分支', icon: 'git-merge' },
-  'dt-subprocess': { label: '子流程', icon: 'layers' },
-  'dt-end': { label: '结束', icon: 'square' },
-  'action-entry': { label: '入口', icon: 'play' },
-  'action-step': { label: '动作', icon: 'zap' },
-  'action-end': { label: '结束', icon: 'square' },
-  'start': { label: '开始节点', icon: 'play' },
-  'end': { label: '结束节点', icon: 'square' },
-  'task': { label: '任务节点', icon: 'clipboard-list' },
-  'condition': { label: '条件分支', icon: 'git-branch' },
-  'parallel': { label: '并行网关', icon: 'git-merge' },
-  'loop': { label: '循环节点', icon: 'repeat' },
-};
+export interface DefaultInspectorProps {
+  renderSchema?: (schema: SchemaInput) => React.ReactNode;
+}
 
-const SET_TYPE_OPTIONS = [
-  { value: '1', label: '指定成员' },
-  { value: '2', label: '主管' },
-  { value: '3', label: '角色' },
-];
-
-const EXAMINE_MODE_OPTIONS = [
-  { value: '1', label: '依次审批' },
-  { value: '2', label: '会签' },
-  { value: '3', label: '或签' },
-];
-
-const MODE_OPTIONS = [
-  { value: 'exclusive', label: '排他' },
-  { value: 'parallel', label: '并行' },
-];
-
-export function DefaultInspector() {
+export function DefaultInspector(props: DefaultInspectorProps = {}) {
   const { dispatch } = useDesignerContext();
   const snapshot = useDesignerFullSnapshot();
   const { activeNode, activeEdge, doc } = snapshot;
   const nodeCount = doc.nodes.length;
   const edgeCount = doc.edges.length;
 
-  const getNodeTypeInfo = (nodeType: string) => {
-    return NODE_TYPE_INFO[nodeType];
-  };
-
   const activeNodeTypeConfig = useNodeTypeConfig(activeNode?.type ?? '');
+  const activeInspectorSchema = activeNodeTypeConfig?.inspector?.body;
 
   const renderNodeTypeHeader = () => {
     if (!activeNode) return null;
-    const typeInfo = getNodeTypeInfo(activeNode.type);
+    const typeInfo = resolveNodeTypeMeta(activeNode.type, activeNodeTypeConfig);
     const accentColor = resolveNodeTypeAccent(activeNode.type, activeNodeTypeConfig);
-    const displayLabel = typeInfo?.label || activeNode.type;
+    const displayLabel = typeInfo.label;
 
     return (
       <div className="flex items-center gap-3">
-        {typeInfo && accentColor && (
+        {typeInfo.icon && accentColor && (
           <div 
             className="rounded-full p-2"
             style={{ backgroundColor: `${accentColor}20` }}
@@ -76,7 +42,7 @@ export function DefaultInspector() {
         <div className="flex-1">
           <div className="font-medium text-foreground text-base">{String(activeNode.data.label ?? activeNode.id)}</div>
           <div className="flex items-center gap-2 mt-1">
-            {typeInfo && accentColor && (
+            {accentColor && (
               <Badge 
                 style={{ 
                   backgroundColor: `${accentColor}15`, 
@@ -94,113 +60,12 @@ export function DefaultInspector() {
     );
   };
 
-  const renderSpecificFields = () => {
-    if (!activeNode) return null;
-    const nodeType = activeNode.type;
-    const data = activeNode.data;
-
-    switch (nodeType) {
-      case 'dt-approval':
-        return (
-          <>
-            <div className="flex flex-col gap-2">
-              <Label className="text-sm font-medium text-foreground">审批人类型</Label>
-              <NativeSelect
-                value={String(data.setType ?? '1')}
-                onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { setType: e.target.value } })}
-              >
-                {SET_TYPE_OPTIONS.map((opt) => (
-                  <NativeSelectOption key={opt.value} value={opt.value}>{opt.label}</NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label className="text-sm font-medium text-foreground">审批模式</Label>
-              <NativeSelect
-                value={String(data.examineMode ?? '1')}
-                onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { examineMode: e.target.value } })}
-              >
-                {EXAMINE_MODE_OPTIONS.map((opt) => (
-                  <NativeSelectOption key={opt.value} value={opt.value}>{opt.label}</NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </div>
-          </>
-        );
-
-      case 'dt-condition':
-        return (
-          <div className="flex flex-col gap-2">
-            <Label className="text-sm font-medium text-foreground">分支模式</Label>
-            <NativeSelect
-              value={String(data.mode ?? 'exclusive')}
-              onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { mode: e.target.value } })}
-            >
-              {MODE_OPTIONS.map((opt) => (
-                <NativeSelectOption key={opt.value} value={opt.value}>{opt.label}</NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </div>
-        );
-
-      case 'dt-subprocess':
-        return (
-          <div className="flex flex-col gap-2">
-            <Label className="text-sm font-medium text-foreground">子流程标识</Label>
-            <Input
-              type="text"
-              value={String(data.callProcess ?? '')}
-              onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { callProcess: e.target.value } })}
-            />
-          </div>
-        );
-
-      case 'action-step':
-        return (
-          <>
-            <div className="flex flex-col gap-2">
-              <Label className="text-sm font-medium text-foreground">动作类型</Label>
-              <Input
-                type="text"
-                value={String(data.action ?? '')}
-                onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { action: e.target.value } })}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label className="text-sm font-medium text-foreground">执行条件</Label>
-              <Input
-                type="text"
-                placeholder="表达式, 如: ${data.status === 'active'}"
-                value={String(data.when ?? '')}
-                onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { when: e.target.value } })}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label className="text-sm font-medium text-foreground">超时(秒)</Label>
-              <Input
-                type="number"
-                value={String(data.timeout ?? '')}
-                onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { timeout: Number(e.target.value) || 0 } })}
-              />
-            </div>
-          </>
-        );
-
-      default:
-        return null;
-    }
-  };
-
   const renderGenericFields = () => {
     if (!activeNode) return null;
     const data = activeNode.data;
     return Object.entries(data).map(([key, value]) => {
       if (key === 'label' || key === 'description') return null;
       if (typeof value === 'object' && value !== null) return null;
-      if (activeNode.type === 'dt-approval' && (key === 'setType' || key === 'examineMode')) return null;
-      if (activeNode.type === 'dt-condition' && key === 'mode') return null;
-      if (activeNode.type === 'dt-subprocess' && key === 'callProcess') return null;
-      if (activeNode.type === 'action-step' && (key === 'action' || key === 'when' || key === 'timeout')) return null;
       return (
         <div key={key} className="flex flex-col gap-2">
           <Label className="text-sm font-medium text-foreground">{key}</Label>
@@ -268,8 +133,9 @@ export function DefaultInspector() {
                     onChange={(e) => dispatch({ type: 'updateNodeData', nodeId: activeNode.id, data: { description: e.target.value } })}
                   />
                 </div>
-                {renderSpecificFields()}
-                {renderGenericFields()}
+                {activeInspectorSchema && props.renderSchema
+                  ? props.renderSchema(activeInspectorSchema)
+                  : renderGenericFields()}
               </div>
             </div>
           </>

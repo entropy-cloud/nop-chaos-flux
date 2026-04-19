@@ -111,6 +111,34 @@
           { "type": "text", "body": "${data.examineMode === 1 ? '依次审批' : data.examineMode === 2 ? '会签' : data.examineMode === 3 ? '或签' : '审批'}", "className": "nop-dt-node__subtitle" }
         ]},
         "appearance": { "minWidth": 220, "minHeight": 80 },
+        "inspector": {
+          "body": {
+            "type": "container",
+            "className": "stack-sm",
+            "body": [
+              {
+                "type": "select",
+                "name": "setType",
+                "label": "审批人类型",
+                "options": [
+                  { "label": "指定成员", "value": "1" },
+                  { "label": "主管", "value": "2" },
+                  { "label": "角色", "value": "3" }
+                ]
+              },
+              {
+                "type": "select",
+                "name": "examineMode",
+                "label": "审批模式",
+                "options": [
+                  { "label": "依次审批", "value": "1" },
+                  { "label": "会签", "value": "2" },
+                  { "label": "或签", "value": "3" }
+                ]
+              }
+            ]
+          }
+        },
         "tree": { "allowChild": true, "allowBranches": false, "isTerminal": false }
       },
       {
@@ -138,6 +166,23 @@
           { "type": "text", "body": "排他分支", "className": "nop-dt-node__description" }
         ]},
         "appearance": { "minWidth": 200, "minHeight": 80 },
+        "inspector": {
+          "body": {
+            "type": "container",
+            "className": "stack-sm",
+            "body": [
+              {
+                "type": "select",
+                "name": "mode",
+                "label": "分支模式",
+                "options": [
+                  { "label": "排他", "value": "exclusive" },
+                  { "label": "并行", "value": "parallel" }
+                ]
+              }
+            ]
+          }
+        },
         "tree": { "allowChild": true, "allowBranches": true, "minBranches": 2, "maxBranches": 10, "isTerminal": false }
       },
       {
@@ -166,6 +211,19 @@
           { "type": "text", "body": "${data.callProcess}", "className": "nop-dt-node__subtitle" }
         ]},
         "appearance": { "minWidth": 200, "minHeight": 80 },
+        "inspector": {
+          "body": {
+            "type": "container",
+            "className": "stack-sm",
+            "body": [
+              {
+                "type": "input-text",
+                "name": "callProcess",
+                "label": "子流程标识"
+              }
+            ]
+          }
+        },
         "tree": { "allowChild": true, "allowBranches": false, "isTerminal": false }
       },
       {

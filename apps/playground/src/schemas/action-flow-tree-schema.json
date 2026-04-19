@@ -166,6 +166,30 @@
           ]
         },
         "appearance": { "minWidth": 200, "minHeight": 90 },
+        "inspector": {
+          "body": {
+            "type": "container",
+            "className": "stack-sm",
+            "body": [
+              {
+                "type": "input-text",
+                "name": "action",
+                "label": "动作类型"
+              },
+              {
+                "type": "input-text",
+                "name": "when",
+                "label": "执行条件",
+                "placeholder": "表达式, 如: ${data.status === 'active'}"
+              },
+              {
+                "type": "input-text",
+                "name": "timeout",
+                "label": "超时(秒)"
+              }
+            ]
+          }
+        },
         "tree": { "allowChild": true, "allowBranches": true, "maxBranches": 3, "isTerminal": false }
       },
       {

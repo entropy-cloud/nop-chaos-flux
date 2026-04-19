@@ -20,8 +20,8 @@ import type {
   OnSelectionChangeParams
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { DesignerXyflowNode } from './DesignerXyflowNode';
-import { DesignerXyflowEdge } from './DesignerXyflowEdge';
+import { DesignerXyflowNode } from './designer-xyflow-node';
+import { DesignerXyflowEdge } from './designer-xyflow-edge';
 import { DingFlowEdge } from '../dingflow';
 import { computeDingFlowOverlays, DingFlowAddConditionOverlay, DingFlowMergeOverlay } from '../dingflow';
 import { createXyflowNodes, createXyflowEdges, normalizeControlledViewport, viewportsEqual, normalizeViewportChange, normalizePositionSignature } from './xyflow-utils';

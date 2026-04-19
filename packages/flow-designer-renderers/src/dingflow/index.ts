@@ -1,8 +1,9 @@
 export * from './dingflow-constants';
-export { DingFlowEdge } from './DingFlowEdge';
+export * from './dingflow-theme';
+export { DingFlowEdge } from './ding-flow-edge';
 export { computeDingFlowOverlays } from './dingflow-overlays';
-export { DingFlowPlusButton } from './DingFlowPlusButton';
-export { DingFlowAddConditionOverlay } from './DingFlowAddConditionOverlay';
-export { DingFlowMergeOverlay } from './DingFlowMergeOverlay';
-export { DingFlowAddNodeMenu } from './DingFlowAddNodeMenu';
-export type { DingFlowMenuItem } from './DingFlowAddNodeMenu';
+export { DingFlowPlusButton } from './ding-flow-plus-button';
+export { DingFlowAddConditionOverlay } from './ding-flow-add-condition-overlay';
+export { DingFlowMergeOverlay } from './ding-flow-merge-overlay';
+export { DingFlowAddNodeMenu } from './ding-flow-add-node-menu';
+export type { DingFlowMenuItem } from './ding-flow-add-node-menu';

@@ -504,4 +504,61 @@ describe('DesignerPageRenderer basic rendering', () => {
 
     expect(view.getByText('Designer requires config prop')).toBeTruthy();
   });
+
+  it('prefers nodeType inspector schema in the default inspector', async () => {
+    const SchemaRenderer = createSchemaRenderer([...basicTestRendererDefinitions, ...flowDesignerRendererDefinitions]);
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/index-inspector-schema"
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [
+              { id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1', custom: 'abc' } },
+            ],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 }
+          },
+          config: {
+            ...createTestConfig(),
+            nodeTypes: [
+              {
+                id: 'task',
+                label: 'Task',
+                body: { type: 'text', text: 'Task' },
+                defaults: { label: 'Task' },
+                inspector: {
+                  body: {
+                    type: 'text',
+                    text: 'Inspector From Schema'
+                  }
+                }
+              },
+              {
+                id: 'end',
+                label: 'End',
+                body: { type: 'text', text: 'End' },
+                defaults: { label: 'End' }
+              }
+            ]
+          }
+        } as any}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const node = view.container.querySelector('.react-flow__node');
+    expect(node).toBeTruthy();
+    fireEvent.click(node as Element);
+
+    await waitFor(() => {
+      expect(view.getByText('Inspector From Schema')).toBeTruthy();
+    });
+  });
 });

@@ -8,6 +8,7 @@ import {
   CONNECTOR_COLOR,
 } from './dingflow-constants';
 import type { EdgeLeg } from './dingflow-constants';
+import { DINGFLOW_EDGE_LABEL_STYLE } from './dingflow-theme';
 
 function DingFlowEdgeInner({
   sourceX,
@@ -57,12 +58,7 @@ function DingFlowEdgeInner({
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-              fontSize: 12,
-              background: '#fff',
-              border: '1px solid #e0e0e0',
-              borderRadius: 9999,
-              padding: '2px 8px',
-              pointerEvents: 'all',
+              ...DINGFLOW_EDGE_LABEL_STYLE,
             }}
           >
             {label}
