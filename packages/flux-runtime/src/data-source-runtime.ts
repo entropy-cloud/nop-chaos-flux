@@ -640,7 +640,7 @@ export function createDataSourceController(input: {
       void runRequest().finally(() => {
         if (!stopped) schedulePoll();
       });
-    }, interval) as unknown as ReturnType<typeof setInterval>;
+    }, interval);
   }
 
   function stop(): void {

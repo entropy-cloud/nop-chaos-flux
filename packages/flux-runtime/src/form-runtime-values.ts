@@ -9,7 +9,7 @@ export interface SetValuesContext {
   setLastChange: (change: ScopeChange) => void;
   clearExternalErrorsForPath: (path: string) => boolean;
   rebuildStoreErrorsFromExternal: (fieldStates: Record<string, FieldState>) => Record<string, ValidationError[]>;
-  revalidateDependents: (path: string) => Promise<void>;
+  revalidateDependents: (path: string, reason?: import('@nop-chaos/flux-core').ValidationReason) => Promise<void>;
 }
 
 export function executeSetValues(
@@ -92,6 +92,6 @@ export function executeSetValues(
   }
 
   for (const changedPath of changedPaths) {
-    void revalidateDependents(changedPath);
+    void revalidateDependents(changedPath, 'change');
   }
 }

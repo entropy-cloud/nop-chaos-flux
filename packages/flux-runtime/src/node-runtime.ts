@@ -51,13 +51,13 @@ function evaluateCompiledValue<T>(
   value: CompiledRuntimeValue<T> | undefined,
   scope: ScopeRef,
   env: RendererEnv,
-  state?: any
+  state?: RuntimeValueState<unknown>
 ): T | undefined {
   if (!value) {
     return undefined;
   }
 
-  return compiler.evaluateValue(value, scope, env, state);
+  return compiler.evaluateValue(value, scope, env, state) as T | undefined;
 }
 
 export function collectRuntimeDependencies(state: RuntimeValueState<unknown> | undefined): ScopeDependencySet | undefined {

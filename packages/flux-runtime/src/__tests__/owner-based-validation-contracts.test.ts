@@ -45,17 +45,19 @@ function makeNode(
 }
 
 function makeFormModel(
-  fields: Record<string, CompiledValidationNode>
+  fields: Record<string, CompiledValidationNode>,
+  opts: { rootPath?: string } = {}
 ): CompiledFormValidationModel {
+  const rootPath = opts.rootPath ?? '';
   const nodes: Record<string, CompiledValidationNode> = {
-    '': { path: '', kind: 'form', rules: [], children: Object.keys(fields), parent: undefined },
+    [rootPath]: { path: rootPath, kind: 'form', rules: [], children: Object.keys(fields), parent: undefined },
     ...fields
   };
 
   return buildCompiledFormValidationModel({
     behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
     nodes,
-    rootPath: ''
+    rootPath
   })!;
 }
 
@@ -518,6 +520,62 @@ describe('applyChangesAndRevalidate', () => {
       expect.objectContaining({ path: 'detail', rule: 'requiredWhen' })
     ]);
     expect(runtime.canSubmit).toBe(false);
+  });
+
+  it('rejects writes for paths not owned by the form', async () => {
+    const model = makeFormModel({ 'profile.name': makeNode('profile.name') }, { rootPath: 'profile' });
+    const { runtime } = makeRuntime(model, { profile: { name: 'ok' }, external: 'keep' });
+
+    const result = await runtime.applyChangesAndRevalidate({
+      writes: { external: 'changed' },
+      changedPaths: ['external'],
+      reason: 'system'
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors.external).toMatchObject([
+      expect.objectContaining({
+        path: 'external',
+        sourceKind: 'form'
+      })
+    ]);
+    expect(runtime.scope.get('external')).toBe('keep');
+    expect(runtime.scope.get('profile.name')).toBe('ok');
+  });
+
+  it('propagates applyChangesAndRevalidate reason to touched dependent fields', async () => {
+    const model = makeFormModel({
+      flag: makeNode('flag'),
+      detail: {
+        path: 'detail',
+        kind: 'field',
+        controlType: 'input-text',
+        rules: [
+          {
+            id: 'detail#0:requiredWhen',
+            rule: { kind: 'requiredWhen', path: 'flag', equals: true },
+            dependencyPaths: ['flag']
+          }
+        ],
+        behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+        children: [],
+        parent: ''
+      }
+    });
+    const { runtime } = makeRuntimeReal(model, { flag: false, detail: '' });
+    runtime.touchField('detail');
+
+    const originalValidateField = runtime.validateField.bind(runtime);
+    const validateFieldSpy = vi.fn((path: string, reason?: Parameters<typeof originalValidateField>[1]) => originalValidateField(path, reason));
+    runtime.validateField = validateFieldSpy;
+
+    await runtime.applyChangesAndRevalidate({
+      writes: { flag: true },
+      changedPaths: ['flag'],
+      reason: 'commit'
+    });
+
+    expect(validateFieldSpy).toHaveBeenCalledWith('detail', 'commit');
   });
 });
 

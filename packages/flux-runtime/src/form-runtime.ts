@@ -430,7 +430,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         store.batchUpdate({ fieldStates: updatedFieldStates });
       }
 
-      void ownerRuntime.revalidateDependents(name);
+      void ownerRuntime.revalidateDependents(name, 'change');
     },
 
     setValues(values) {

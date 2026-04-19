@@ -99,7 +99,7 @@ export async function runBuiltInAction(
         kind: 'dialog',
         surface: action.dialog,
         scope: dialogScope,
-        runtime: input.runtime as any,
+          runtime: input.runtime,
         options: {
           actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
           componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
@@ -223,9 +223,9 @@ export async function runBuiltInAction(
 
       const args = evaluateActionArgs(action, ctx, input) ?? {};
       if (args.back) {
-        env.navigate(-1 as any);
+        env.navigate(-1);
       } else if (args.url != null) {
-        env.navigate(String(args.url), args.replace ? { replace: true } as any : undefined);
+        env.navigate(String(args.url), args.replace ? { replace: true } : undefined);
       } else {
         return finishAction(
           input,

@@ -149,7 +149,7 @@ export function executeArrayMutation(ctx: {
   arrayOperation: (current: unknown[]) => unknown[];
   indexTransform: (candidateIndex: number) => number | undefined;
   cancelValidationDebounce: (path: string) => void;
-  revalidateDependents: (path: string) => Promise<void>;
+  revalidateDependents: (path: string, reason?: import('@nop-chaos/flux-core').ValidationReason) => Promise<void>;
 }): void {
   const currentValue = ctx.getArrayValue(ctx.arrayPath);
   const currentArray = Array.isArray(currentValue) ? currentValue : [];
@@ -174,5 +174,5 @@ export function executeArrayMutation(ctx: {
   ctx.sharedState.store.batchUpdate(nextStoreState);
   remapValidationRunState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform, ctx.cancelValidationDebounce);
   remapInitialFieldState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform);
-  void ctx.revalidateDependents(ctx.arrayPath);
+  void ctx.revalidateDependents(ctx.arrayPath, 'change');
 }

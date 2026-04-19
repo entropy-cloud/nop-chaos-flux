@@ -63,7 +63,7 @@ export function buildFormOwnerRuntime(input: {
     return cachedScopeState;
   }
 
-  async function revalidateDependents(path: string) {
+  async function revalidateDependents(path: string, reason: ValidationReason = 'system') {
     const dependentPaths = getCompiledValidationDependents(input.getCurrentValidation(), path);
 
     for (const dependentPath of dependentPaths) {
@@ -106,7 +106,7 @@ export function buildFormOwnerRuntime(input: {
         || currentFieldState?.visited
         || input.getIsSubmitting()
       ) {
-        await input.getThisForm().validateField(dependentPath);
+        await input.getThisForm().validateField(dependentPath, reason);
       } else {
         await input.getThisForm().validateField(dependentPath, 'system');
       }
@@ -209,6 +209,24 @@ export function buildFormOwnerRuntime(input: {
     }
 
     const { writes, changedPaths, reason } = inputValue;
+    const invalidPaths = Array.from(new Set([
+      ...Object.keys(writes).filter((path) => !input.getThisForm().isPathOwned(path)),
+      ...changedPaths.filter((path) => !input.getThisForm().isPathOwned(path))
+    ]));
+
+    if (invalidPaths.length > 0) {
+      const errors = invalidPaths.map((path) => ({
+        path,
+        ownerPath: path,
+        rule: 'required' as const,
+        message: `Path "${path}" is not owned by form "${input.formId}".`,
+        sourceKind: 'form' as const
+      }));
+
+      const fieldErrors = Object.fromEntries(errors.map((error) => [error.path, [error]]));
+      return { ok: false, errors, fieldErrors };
+    }
+
     const state = input.sharedState.store.getState();
     let nextValues = state.values;
 
@@ -226,7 +244,7 @@ export function buildFormOwnerRuntime(input: {
     input.sharedState.store.batchUpdate({ values: nextValues });
 
     for (const path of changedPaths) {
-      await revalidateDependents(path);
+      await revalidateDependents(path, reason);
     }
 
     if (reason === 'change') {

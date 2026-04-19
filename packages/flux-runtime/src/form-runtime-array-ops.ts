@@ -15,7 +15,7 @@ export interface ArrayMutationContext {
   sharedState: ManagedFormRuntimeSharedState;
   scope: ScopeRef;
   getArrayValue: (path: string) => unknown;
-  revalidateDependents: (path: string) => Promise<void>;
+  revalidateDependents: (path: string, reason?: import('@nop-chaos/flux-core').ValidationReason) => Promise<void>;
 }
 
 export function appendValueOp(ctx: ArrayMutationContext, path: string, value: unknown): void {
