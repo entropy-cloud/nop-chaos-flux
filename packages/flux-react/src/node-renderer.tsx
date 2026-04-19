@@ -336,6 +336,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     activeActionScope,
     activeComponentRegistry,
     props.scope,
+    props.node.schemaUrl ?? props.node.templatePath,
     importOwnerNodeInstance
   );
   const renderScope = useMemo(

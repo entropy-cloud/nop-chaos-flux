@@ -41,6 +41,7 @@ export function useNodeImports(
   activeActionScope: ActionScope | undefined,
   activeComponentRegistry: ComponentHandleRegistry | undefined,
   activeScope: ScopeRef,
+  schemaUrl: string,
   nodeInstance: NodeInstance
 ): NodeImportsState {
   const hasImports = Boolean(nodeImports?.length && activeActionScope);
@@ -70,6 +71,7 @@ export function useNodeImports(
       actionScope: activeActionScope,
       componentRegistry: activeComponentRegistry,
       scope: activeScope,
+      schemaUrl,
       nodeInstance: nodeInstanceRef.current
     }).then(() => {
       if (signal.aborted) {
@@ -81,7 +83,8 @@ export function useNodeImports(
         error: undefined,
         expressionBindings: runtime.getImportedExpressionBindings({
           imports: nodeImports,
-          actionScope: activeActionScope
+          actionScope: activeActionScope,
+          schemaUrl
         })
       });
     }).catch((error) => {
@@ -127,10 +130,11 @@ export function useNodeImports(
       controller.abort();
       runtime.releaseImportedNamespaces({
         imports: nodeImports,
-        actionScope: activeActionScope
+        actionScope: activeActionScope,
+        schemaUrl
       });
     };
-  }, [requestKey, runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope]);
+  }, [requestKey, runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope, schemaUrl]);
 
   const loading = shouldLoad && asyncState.requestKey !== requestKey;
   const error = shouldLoad && asyncState.requestKey === requestKey ? asyncState.error : undefined;

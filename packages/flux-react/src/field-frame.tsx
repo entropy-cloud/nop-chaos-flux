@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { useCurrentForm, useCurrentFormFieldState, useCurrentFormState } from './hooks';
+import { useAggregateError, useCurrentForm, useCurrentFormFieldState, useCurrentFormState } from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
-import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired, selectCurrentFormErrors } from './form-state';
+import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired } from './form-state';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
@@ -67,21 +67,20 @@ export function FieldFrame(props: FieldFrameProps) {
   const fieldState = name ? rawFieldState : EMPTY_FORM_FIELD_STATE;
   
   // Aggregate errors from array/object/form level
-  const aggregateError = useCurrentFormState(
-    (state) => name ? selectCurrentFormErrors(state, { path: name, ownerPath: name, sourceKinds: ['array', 'object', 'form', 'runtime-registration'] })[0] : undefined,
-    Object.is,
-    { enabled: Boolean(name) }
-  );
+  const aggregateError = useAggregateError(name ?? '', { enabled: Boolean(name) });
   const validationField = name ? getCompiledValidationField(currentForm?.validation, name) : undefined;
   const fieldBehavior = validationField?.behavior;
   const behavior = validationBehavior ?? fieldBehavior ?? currentForm?.validation?.behavior ?? defaultBehavior;
   const hasDynamicRequiredRule = Boolean(
     validationField?.rules.some(({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless')
   );
-  const values = useCurrentFormState(
-    (state) => hasDynamicRequiredRule ? state.values : undefined,
+  const dynamicRequired = useCurrentFormState(
+    (state) => {
+      if (!hasDynamicRequiredRule || !name) return false;
+      return isFieldEffectivelyRequired(currentForm?.validation, name, state.values);
+    },
     Object.is,
-    { enabled: hasDynamicRequiredRule }
+    { enabled: hasDynamicRequiredRule && Boolean(name) }
   );
 
   const error = aggregateError ?? fieldState.error;
@@ -97,7 +96,7 @@ export function FieldFrame(props: FieldFrameProps) {
   const isGroup = layout === 'checkbox' || layout === 'radio';
   const Tag = isGroup ? 'fieldset' : 'label';
   const LabelTag = isGroup ? 'legend' : 'span';
-  const effectiveRequired = Boolean(required) || Boolean(name && isFieldEffectivelyRequired(currentForm?.validation, name, values ?? {}));
+  const effectiveRequired = Boolean(required) || Boolean(dynamicRequired);
 
   return (
     <Tag

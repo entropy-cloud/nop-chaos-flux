@@ -37,9 +37,10 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
         expressionCompiler,
         plugins: props.plugins,
         pageStore: props.pageStore,
+        moduleCache: props.moduleCache,
         onActionError: (error, ctx) => onActionErrorRef.current?.(error, ctx)
       });
-    }, [props.formulaCompiler, props.plugins, props.registry, props.pageStore]);
+    }, [props.formulaCompiler, props.plugins, props.registry, props.pageStore, props.moduleCache]);
 
     const pageData = props.data ?? EMPTY_SCOPE_DATA;
     const initialPageDataRef = useRef(pageData);
@@ -108,7 +109,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       };
     }, [onActionScopeChange, rootActionScope]);
     const renderScope = rootScope;
-    const compiledRoot = useMemo(() => runtime.compile(props.schema), [runtime, props.schema]);
+    const compiledRoot = useMemo(() => runtime.schemaCompiler.compile(props.schema, { schemaUrl: props.schemaUrl }), [runtime, props.schema, props.schemaUrl]);
 
     return (
       <div data-runtime-id={runtime.runtimeId} className="contents">

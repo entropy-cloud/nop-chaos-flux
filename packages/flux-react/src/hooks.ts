@@ -162,8 +162,7 @@ export function useScopeSelector<T, S = Record<string, unknown>>(
 export function useOwnScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn: (a: T, b: T) => boolean = Object.is): T {
   const scope = useRenderScope();
   const subscribe = useMemo(() => createScopeOwnSubscribe(scope), [scope]);
-  // Type bridge: scope stores hold dynamic data; caller specifies expected shape via S
-  const getSnapshot = () => scope.readOwn() as unknown as S;
+  const getSnapshot = useCallback(() => scope.readOwn() as unknown as S, [scope]);
 
   return useSyncExternalStoreWithSelector(
     subscribe,
@@ -218,14 +217,21 @@ export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, shallowEqualArrays);
 }
 
-export function useCurrentFormError(query: FormErrorQuery): ValidationError | undefined {
+export function useCurrentFormError(query: FormErrorQuery, options?: { enabled?: boolean }): ValidationError | undefined {
   const form = useCurrentForm();
+  const enabled = options?.enabled !== false;
   const stablePath = query?.path;
   const stableOwnerPath = query?.ownerPath;
   const stableRule = query?.rule;
   const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
-  const subscribe = useMemo(() => createFormErrorSubscribe(form?.store, stablePath), [form, stablePath]);
-  const getSnapshot = useMemo(() => () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE, [form]);
+  const subscribe = useMemo(
+    () => enabled ? createFormErrorSubscribe(form?.store, stablePath) : () => emptyUnsubscribe,
+    [enabled, form, stablePath]
+  );
+  const getSnapshot = useMemo(
+    () => enabled ? () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE,
+    [enabled, form]
+  );
   const selector = useCallback(
     (state: FormStoreState): ValidationError | undefined => {
       const q: FormErrorQuery = { path: stablePath, ownerPath: stableOwnerPath, rule: stableRule, sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined };
@@ -339,8 +345,8 @@ export function useChildFieldState(path: string): FormFieldStateSnapshot {
   return useCurrentFormFieldState(path, { path });
 }
 
-export function useAggregateError(path: string): ValidationError | undefined {
-  return useCurrentFormError({ path, ownerPath: path, sourceKinds: ['array', 'object', 'form', 'runtime-registration'] });
+export function useAggregateError(path: string, options?: { enabled?: boolean }): ValidationError | undefined {
+  return useCurrentFormError({ path, ownerPath: path, sourceKinds: ['array', 'object', 'form', 'runtime-registration'] }, options);
 }
 
 export function useCurrentPage(): PageRuntime | undefined {

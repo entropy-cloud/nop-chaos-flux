@@ -1,29 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { ComponentHandleRegistry } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry } from './hooks';
 
 export function useResolvedContainer(containerId: string | undefined, componentRegistry: ComponentHandleRegistry | undefined): HTMLElement | null {
-  const containerRef = useRef<HTMLElement | null>(null);
-
-  if (!containerId || !componentRegistry) {
-    return null;
-  }
-
-  try {
-    const handle = componentRegistry.resolve({ componentId: containerId });
-    if (handle?.ref instanceof HTMLElement) {
-      containerRef.current = handle.ref;
-    } else {
-      const handleByName = componentRegistry.resolve({ componentName: containerId });
-      if (handleByName?.ref instanceof HTMLElement) {
-        containerRef.current = handleByName.ref;
-      }
-    }
-  } catch {
-    containerRef.current = null;
-  }
-
-  return containerRef.current;
+  return useMemo(
+    () => resolveContainerElement(containerId, componentRegistry),
+    [containerId, componentRegistry]
+  );
 }
 
 export function useContainerDomRegistration(containerId: string | undefined, elementRef: React.RefObject<HTMLElement | null>) {
