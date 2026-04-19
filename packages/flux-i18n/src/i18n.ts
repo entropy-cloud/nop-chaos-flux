@@ -18,6 +18,10 @@ const defaultResources: Resource = {
 
 let fluxI18nInstance: i18n | null = null;
 
+function normalizeTranslationKey(key: string): string {
+  return key.startsWith(`${FLUX_NAMESPACE}.`) ? key.slice(FLUX_NAMESPACE.length + 1) : key;
+}
+
 export interface FluxI18nOptions {
   lng?: SupportedLanguage;
   fallbackLng?: SupportedLanguage;
@@ -82,7 +86,7 @@ export function getCurrentLanguage(): SupportedLanguage {
 
 export function t(key: string, options?: Record<string, unknown>): string {
   const instance = getFluxI18n();
-  return instance.t(key, options);
+  return instance.t(normalizeTranslationKey(key), options);
 }
 
 export function addResources(lng: SupportedLanguage, ns: string, resources: Record<string, unknown>): void {
