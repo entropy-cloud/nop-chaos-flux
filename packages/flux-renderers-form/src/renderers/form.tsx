@@ -77,6 +77,9 @@ function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Reco
     return scope;
   }
 
+  let visibleView: Record<string, unknown> | undefined;
+  let materialized: Record<string, unknown> | undefined;
+
   return {
     id: scope.id,
     path: scope.path,
@@ -86,14 +89,14 @@ function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Reco
       return this.readVisible();
     },
     get(path) {
-      if (path === '__imports') {
-        return importBindings;
+      if (Object.prototype.hasOwnProperty.call(importBindings, path)) {
+        return importBindings[path];
       }
 
       return scope.get(path);
     },
     has(path) {
-      if (path === '__imports') {
+      if (Object.prototype.hasOwnProperty.call(importBindings, path)) {
         return true;
       }
 
@@ -103,15 +106,21 @@ function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Reco
       return scope.readOwn();
     },
     readVisible() {
-      const overlay = Object.create(scope.readVisible()) as Record<string, any>;
-      overlay['__imports'] = importBindings;
-      return overlay;
+      if (!visibleView) {
+        visibleView = Object.assign(Object.create(scope.readVisible()) as Record<string, unknown>, importBindings);
+      }
+
+      return visibleView as Record<string, any>;
     },
     materializeVisible() {
-      return {
-        ...scope.materializeVisible(),
-        __imports: importBindings
-      };
+      if (!materialized) {
+        materialized = {
+          ...scope.materializeVisible(),
+          ...importBindings
+        };
+      }
+
+      return materialized as Record<string, any>;
     },
     update(path, value) {
       scope.update(path, value);

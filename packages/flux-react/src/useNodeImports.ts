@@ -45,9 +45,7 @@ export function useNodeImports(
 ): NodeImportsState {
   const hasImports = Boolean(nodeImports?.length && activeActionScope);
   const activeImportLoader = runtime.env.importLoader;
-  const inheritedBindings = activeScope.get('__imports') as Readonly<Record<string, unknown>> | undefined;
-  const hasInheritedBindings = Boolean(inheritedBindings && Object.keys(inheritedBindings).length > 0);
-  const shouldLoad = hasImports && !hasInheritedBindings;
+  const shouldLoad = hasImports;
   const requestKey = useMemo(
     () => createImportRequestKey(runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope),
     [runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope]
@@ -132,21 +130,19 @@ export function useNodeImports(
         actionScope: activeActionScope
       });
     };
-  }, [requestKey, runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope, hasInheritedBindings, inheritedBindings]);
+  }, [requestKey, runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope]);
 
   const loading = shouldLoad && asyncState.requestKey !== requestKey;
   const error = shouldLoad && asyncState.requestKey === requestKey ? asyncState.error : undefined;
 
   return {
-    ready: hasInheritedBindings || !shouldLoad || (!loading && !error),
-    loading: hasInheritedBindings ? false : loading,
+    ready: !shouldLoad || (!loading && !error),
+    loading,
     error,
-    expressionBindings: hasInheritedBindings
-      ? inheritedBindings ?? EMPTY_IMPORT_BINDINGS
-      : shouldLoad
-        ? asyncState.requestKey === requestKey
-          ? asyncState.expressionBindings
-          : EMPTY_IMPORT_BINDINGS
+    expressionBindings: shouldLoad
+      ? asyncState.requestKey === requestKey
+        ? asyncState.expressionBindings
         : EMPTY_IMPORT_BINDINGS
+      : EMPTY_IMPORT_BINDINGS
   };
 }

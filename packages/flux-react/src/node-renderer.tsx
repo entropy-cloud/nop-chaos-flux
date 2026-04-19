@@ -341,7 +341,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const renderScope = useMemo(
     () => Object.keys(importState.expressionBindings).length === 0
       ? props.scope
-      : runtime.createChildScope(props.scope, { __imports: importState.expressionBindings }, {
+      : runtime.createChildScope(props.scope, importState.expressionBindings, {
           pathSuffix: 'imports',
           scopeKey: `${props.node.id}:imports`
         }),

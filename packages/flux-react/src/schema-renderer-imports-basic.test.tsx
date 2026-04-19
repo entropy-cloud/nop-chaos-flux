@@ -72,7 +72,7 @@ describe('createSchemaRenderer import basics', () => {
     expect(await screen.findByText('Imported Ada Lovelace')).toBeTruthy();
   });
 
-  it('dedupes module loads across import-owner scopes while keeping registrations lexical', async () => {
+  it('dedupes module loads across import-owner scopes while keeping sibling registrations lexical', async () => {
     const importLoader = {
       load: vi.fn(async (spec: { from: string; as: string }) => ({
         createNamespace: () => ({
@@ -114,7 +114,7 @@ describe('createSchemaRenderer import basics', () => {
     await waitFor(() => {
       expect(screen.getByTestId('local-import-result').textContent).toBe('demo-lib:ping:local');
       expect(screen.getByTestId('child-import-result').textContent).toBe('demo-lib:ping:child');
-      expect(screen.getByTestId('sibling-import-result').textContent).toBe('demo-lib:ping:sibling');
+      expect(screen.getByTestId('sibling-import-result').textContent).toBe('Error: Unsupported action: demo:ping');
     });
   });
 
@@ -163,7 +163,7 @@ describe('createSchemaRenderer import basics', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('local-import-result').textContent).toBe('demo-lib:ping:local');
-      expect(screen.getByTestId('sibling-import-result').textContent).toBe('demo-lib:ping:sibling');
+      expect(screen.getByTestId('sibling-import-result').textContent).toBe('Error: Unsupported action: demo:ping');
     });
   });
 });

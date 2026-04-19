@@ -379,7 +379,7 @@ export function createImportManager(input: {
           return [];
         }
 
-        return [[spec.as, entry.expressionHelpers ?? entry.provider] as const];
+        return [[`$${spec.as}`, entry.expressionHelpers ?? entry.provider] as const];
       })
     );
   }
