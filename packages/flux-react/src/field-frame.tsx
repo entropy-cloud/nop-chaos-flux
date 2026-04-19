@@ -3,6 +3,7 @@ import { useAggregateError, useCurrentForm, useCurrentFormFieldState, useCurrent
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
 import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired } from './form-state';
+import { shouldShowFieldError } from './field-error-visibility';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
@@ -13,29 +14,13 @@ export interface FieldFrameProps {
   hint?: ReactNode;
   description?: ReactNode;
   layout?: 'default' | 'checkbox' | 'radio';
+  rootTag?: 'label' | 'div';
   validationBehavior?: CompiledValidationBehavior;
   className?: string;
   testid?: string;
   cid?: number;
+  rootProps?: Record<string, string | number | undefined>;
   children: ReactNode;
-}
-
-function shouldShowFieldError(
-  behavior: CompiledValidationBehavior,
-  state: { touched: boolean; dirty: boolean; visited: boolean; submitting: boolean }
-) {
-  return behavior.showErrorOn.some((trigger) => {
-    switch (trigger) {
-      case 'touched':
-        return state.touched;
-      case 'dirty':
-        return state.dirty;
-      case 'visited':
-        return state.visited;
-      case 'submit':
-        return state.submitting;
-    }
-  });
 }
 
 const defaultBehavior: CompiledValidationBehavior = {
@@ -51,10 +36,12 @@ export function FieldFrame(props: FieldFrameProps) {
     hint,
     description,
     layout,
+    rootTag,
     validationBehavior,
     className,
     testid,
     cid,
+    rootProps,
     children
   } = props;
 
@@ -94,12 +81,13 @@ export function FieldFrame(props: FieldFrameProps) {
   );
 
   const isGroup = layout === 'checkbox' || layout === 'radio';
-  const Tag = isGroup ? 'fieldset' : 'label';
+  const Tag = isGroup ? 'fieldset' : (rootTag ?? 'label');
   const LabelTag = isGroup ? 'legend' : 'span';
   const effectiveRequired = Boolean(required) || Boolean(dynamicRequired);
 
   return (
     <Tag
+      {...rootProps}
       className={cn('nop-field', className)}
       data-testid={testid || undefined}
       data-cid={cid != null ? cid : undefined}

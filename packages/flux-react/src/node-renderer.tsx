@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, memo } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { NodeErrorBoundary } from './node-error-boundary';
 import type {
+  ActionSchema,
   ActionScope,
   ComponentHandleRegistry,
   NodeRuntimeState,
@@ -241,6 +242,12 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   };
 
   const Comp = props.node.component.component;
+  const lifecycleActionsValue = lifecycleActions
+    ? {
+        onMount: lifecycleActions.onMount as ActionSchema | ActionSchema[] | undefined,
+        onUnmount: lifecycleActions.onUnmount as ActionSchema | ActionSchema[] | undefined,
+      }
+    : undefined;
 
   useRenderMonitor({
     monitor: runtime.env.monitor,
@@ -248,7 +255,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     resolvedMeta: finalResolvedMeta
   });
   useNodeLifecycleActions({
-    lifecycleActions,
+    lifecycleActions: lifecycleActionsValue,
     helpers,
     nodeInstance
   });

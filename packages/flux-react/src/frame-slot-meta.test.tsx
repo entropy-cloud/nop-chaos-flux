@@ -127,6 +127,42 @@ describe('FieldFrame', () => {
     expect(container.querySelector('[data-slot="field-error"]')).toBeNull();
   });
 
+  it('forwards extra root data attributes', () => {
+    const form = {
+      store: {
+        subscribe: () => () => undefined,
+        getState: () => EMPTY_FORM_STORE_STATE
+      },
+      validation: undefined
+    } as any;
+
+    const { container } = render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="email" label="Email" rootProps={{ 'data-active-variant': 'text' }}>content</FieldFrame>
+      </FormContext.Provider>
+    );
+
+    expect(container.querySelector('.nop-field')?.getAttribute('data-active-variant')).toBe('text');
+  });
+
+  it('supports non-label roots for composite controls', () => {
+    const form = {
+      store: {
+        subscribe: () => () => undefined,
+        getState: () => EMPTY_FORM_STORE_STATE
+      },
+      validation: undefined
+    } as any;
+
+    const { container } = render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="payload" label="Payload" rootTag="div">content</FieldFrame>
+      </FormContext.Provider>
+    );
+
+    expect(container.querySelector('.nop-field')?.tagName).toBe('DIV');
+  });
+
 });
 
 describe('renderer slot helpers', () => {

@@ -1,5 +1,6 @@
 import { getCompiledValidationField, getIn } from '@nop-chaos/flux-core';
 import type { CompiledFormValidationModel, FormErrorQuery, FormFieldPresentationSnapshot, FormFieldStateSnapshot, FormStoreState, ValidationError } from '@nop-chaos/flux-core';
+import { resolveShowErrorTriggers, shouldShowFieldError } from './field-error-visibility';
 
 export const EMPTY_FORM_STORE_STATE: FormStoreState = {
   values: {},
@@ -101,28 +102,6 @@ export function isFieldEffectivelyRequired(
   }));
 }
 
-function shouldShowFieldError(
-  behavior: { showErrorOn: readonly string[] },
-  state: { touched: boolean; dirty: boolean; visited: boolean; submitting: boolean }
-): boolean {
-  return behavior.showErrorOn.some((trigger) => {
-    switch (trigger) {
-      case 'touched':
-        return state.touched;
-      case 'dirty':
-        return state.dirty;
-      case 'visited':
-        return state.visited;
-      case 'submit':
-        return state.submitting;
-      default:
-        return false;
-    }
-  });
-}
-
-const defaultShowErrorOn: readonly string[] = ['touched', 'submit'];
-
 export function selectCurrentFormFieldPresentation(
   state: FormStoreState,
   input: {
@@ -141,7 +120,7 @@ export function selectCurrentFormFieldPresentation(
     sourceKinds: ['array', 'object', 'form', 'runtime-registration']
   })[0] ?? fieldState.error;
   const field = getCompiledValidationField(input.validation, input.path);
-  const showErrorOn = field?.behavior?.showErrorOn ?? input.validation?.behavior?.showErrorOn ?? defaultShowErrorOn;
+  const showErrorOn = resolveShowErrorTriggers(field?.behavior ?? input.validation?.behavior);
   const showError = Boolean(
     error && shouldShowFieldError({ showErrorOn }, {
       touched: fieldState.touched,

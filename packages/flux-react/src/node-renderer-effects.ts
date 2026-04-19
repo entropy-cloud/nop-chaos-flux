@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type {
+  ActionSchema,
   NodeInstance,
   RendererHelpers,
   ResolvedNodeMeta,
@@ -58,20 +59,23 @@ export function useRenderMonitor(input: {
 }
 
 export function useNodeLifecycleActions(input: {
-  lifecycleActions: TemplateNode['lifecycleActions'];
+  lifecycleActions: {
+    onMount?: ActionSchema | ActionSchema[];
+    onUnmount?: ActionSchema | ActionSchema[];
+  } | undefined;
   helpers: RendererHelpers;
   nodeInstance: NodeInstance;
 }) {
   useEffect(() => {
     if (input.lifecycleActions?.onMount) {
-      void input.helpers.dispatch(input.lifecycleActions.onMount as any, {
+      void input.helpers.dispatch(input.lifecycleActions.onMount, {
         nodeInstance: input.nodeInstance
       });
     }
 
     return () => {
       if (input.lifecycleActions?.onUnmount) {
-        void input.helpers.dispatch(input.lifecycleActions.onUnmount as any, {
+        void input.helpers.dispatch(input.lifecycleActions.onUnmount, {
           nodeInstance: input.nodeInstance
         });
       }
