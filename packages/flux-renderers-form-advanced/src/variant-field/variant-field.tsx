@@ -9,6 +9,7 @@ import type {
 import { getIn } from '@nop-chaos/flux-core';
 import {
   FormContext,
+  FieldFrame,
   ScopeContext,
   useCurrentForm,
   useRenderScope,
@@ -25,11 +26,9 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  cn,
 } from '@nop-chaos/ui';
 import type { VariantFieldSchema, VariantOption } from '../composite-field/composite-schemas';
-import { formLabelFieldRule, resolveFieldLabelContent, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
-import { FieldHint, FieldLabel } from '@nop-chaos/flux-renderers-form';
+import { formLabelFieldRule, resolveFieldLabelContent } from '@nop-chaos/flux-renderers-form';
 import { detectMatchedVariant, extractDetectedVariant, resolveInitialVariant } from './variant-field-matching';
 import { createVariantFormProxy, createVariantScope } from './variant-field-runtime';
 
@@ -79,8 +78,8 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is);
   const currentValue = parentForm ? rawValue : scopeValue;
 
-  const presentation = useFieldPresentation(name, parentForm, { readOnly });
   const labelContent = resolveFieldLabelContent(props);
+  const effectiveDisabled = Boolean(props.meta.disabled);
 
   const matchedKey = detectMatchedVariant(variants, currentValue, props.helpers.evaluate, parentScope, props.helpers.createScope);
   const initialKey = resolveInitialVariant(variants, currentValue, defaultVariant, props.helpers.evaluate, parentScope, props.helpers.createScope);
@@ -178,7 +177,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   );
 
   const renderSelector = () => {
-    if (readOnly || presentation.effectiveDisabled) return null;
+    if (readOnly || effectiveDisabled) return null;
 
     if (selectorMode === 'select') {
       return (
@@ -237,7 +236,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   };
 
   const renderReadOnlyContent = () => {
-    if (!readOnly && !presentation.effectiveDisabled) return null;
+    if (!readOnly && !effectiveDisabled) return null;
 
     return (
       <div data-slot="variant-field-readonly-body">
@@ -251,26 +250,18 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   };
 
   return (
-    <div
-      className={cn('nop-field', props.meta.className)}
-      data-testid={props.meta.testid || undefined}
-      data-cid={props.meta.cid || undefined}
-      data-field-visited={presentation['data-field-visited']}
-      data-field-touched={presentation['data-field-touched']}
-      data-field-dirty={presentation['data-field-dirty']}
-      data-field-invalid={presentation['data-field-invalid']}
-      data-active-variant={activeKey}
+    <FieldFrame
+      name={name || undefined}
+      label={labelContent}
+      rootTag="div"
+      className={props.meta.className}
+      testid={props.meta.testid}
+      cid={props.meta.cid}
+      rootProps={{ 'data-active-variant': activeKey }}
     >
-      <FieldLabel content={labelContent} />
-      <div data-slot="field-control">
-        {renderSelector()}
-        {renderReadOnlyContent()}
-      </div>
-      <FieldHint
-        errorMessage={presentation.fieldState.error?.message}
-        showError={presentation.showError}
-      />
-    </div>
+      {renderSelector()}
+      {renderReadOnlyContent()}
+    </FieldFrame>
   );
 }
 

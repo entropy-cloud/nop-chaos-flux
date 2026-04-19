@@ -15,12 +15,21 @@ import {
   Button,
   cn
 } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { DetailViewSchema } from '../composite-field/composite-schemas';
-import { resolveFieldLabelContent, FieldLabel } from '@nop-chaos/flux-renderers-form';
+import { formLabelFieldRule, resolveFieldLabelContent, FieldLabel } from '@nop-chaos/flux-renderers-form';
 import { publishValidateResultErrors, valueAdaptationOwnerHelper } from './value-adaptation-helper';
 import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface';
 
 type BaseNodeInstance = RendererComponentProps['node'];
+
+function disposeDraftForm(
+  draftForm: FormRuntime | undefined,
+  setDraftForm: React.Dispatch<React.SetStateAction<FormRuntime | undefined>>
+) {
+  draftForm?.dispose();
+  setDraftForm(undefined);
+}
 
 export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchema>) {
   const parentForm = useCurrentForm();
@@ -33,6 +42,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const surfaceMode = (schema.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schema.surface as { title?: string } | undefined)?.title ?? '';
   const triggerLabel = String(props.props.triggerLabel ?? 'Edit');
+  const validationMessage = t('flux.common.detailDraftValidationError');
 
   const labelContent = resolveFieldLabelContent(props);
 
@@ -170,7 +180,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     try {
       const result = await draftForm.validateAll('submit');
       if (!result.ok) {
-        setDraftError('Please fix validation errors before confirming.');
+        setDraftError(validationMessage);
         return;
       }
 
@@ -193,7 +203,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       }
 
       if (!validation.valid) {
-        setDraftError(validation.issues?.[0]?.message ?? 'Please fix validation errors before confirming.');
+        setDraftError(validation.issues?.[0]?.message ?? validationMessage);
         return;
       }
 
@@ -214,7 +224,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       );
 
       setOpen(false);
-      setDraftForm(undefined);
+      disposeDraftForm(draftForm, setDraftForm);
     } finally {
       setConfirming(false);
     }
@@ -222,7 +232,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
 
   function handleCancel() {
     setOpen(false);
-    setDraftForm(undefined);
+    disposeDraftForm(draftForm, setDraftForm);
     setDraftError(undefined);
   }
 
@@ -277,9 +287,7 @@ export const detailViewRendererDefinition: RendererDefinition = {
   type: 'detail-view',
   component: DetailViewRenderer as any,
   regions: ['viewer', 'content'],
-  fields: [
-    { key: 'label', kind: 'value-or-region', regionKey: 'label' }
-  ],
+  fields: [formLabelFieldRule],
   scopePolicy: 'form',
   validation: {
     kind: 'container'

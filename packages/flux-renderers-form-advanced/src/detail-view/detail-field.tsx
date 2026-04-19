@@ -19,10 +19,19 @@ import {
   formLabelFieldRule,
   useFieldPresentation
 } from '@nop-chaos/flux-renderers-form';
+import { t } from '@nop-chaos/flux-i18n';
 import { publishValidateResultErrors, valueAdaptationOwnerHelper } from './value-adaptation-helper';
 import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface';
 
 type BaseNodeInstance = RendererComponentProps['node'];
+
+function disposeDraftForm(
+  draftForm: FormRuntime | undefined,
+  setDraftForm: React.Dispatch<React.SetStateAction<FormRuntime | undefined>>
+) {
+  draftForm?.dispose();
+  setDraftForm(undefined);
+}
 
 export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSchema>) {
   const parentForm = useCurrentForm();
@@ -34,6 +43,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const surfaceMode = (schema.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schema.surface as { title?: string } | undefined)?.title ?? '';
   const triggerLabel = String(props.props.triggerLabel ?? 'Edit');
+  const validationMessage = t('flux.common.detailDraftValidationError');
 
   const presentation = useFieldPresentation(name, parentForm, { readOnly });
 
@@ -101,7 +111,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     try {
       const result = await draftForm.validateAll('submit');
       if (!result.ok) {
-        setDraftError('Please fix validation errors before confirming.');
+        setDraftError(validationMessage);
         return;
       }
 
@@ -123,7 +133,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       publishValidateResultErrors(validation, name, parentForm);
 
       if (!validation.valid) {
-        setDraftError(validation.issues?.[0]?.message ?? 'Please fix validation errors before confirming.');
+        setDraftError(validation.issues?.[0]?.message ?? validationMessage);
         return;
       }
 
@@ -143,7 +153,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       void parentForm.validateField(name);
 
       setOpen(false);
-      setDraftForm(undefined);
+      disposeDraftForm(draftForm, setDraftForm);
     } finally {
       setConfirming(false);
     }
@@ -151,7 +161,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
   function handleCancel() {
     setOpen(false);
-    setDraftForm(undefined);
+    disposeDraftForm(draftForm, setDraftForm);
     setDraftError(undefined);
   }
 

@@ -348,7 +348,10 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
   component: ArrayFieldRenderer,
   wrap: true,
   regions: ['item'],
-  fields: [formLabelFieldRule],
+  fields: [
+    formLabelFieldRule,
+    { key: 'item', kind: 'region', regionKey: 'item', params: ['index', 'value'] }
+  ],
   validation: {
     kind: 'field',
     valueKind: 'array',
