@@ -116,7 +116,7 @@ export interface ImportedLibraryModule {
 }
 
 export interface ImportedLibraryLoader {
-  load(spec: import('./schema').XuiImportSpec): Promise<ImportedLibraryModule>;
+  load(spec: import('./schema').XuiImportSpec, signal?: AbortSignal): Promise<ImportedLibraryModule>;
 }
 
 export interface ImportedNamespaceContext {

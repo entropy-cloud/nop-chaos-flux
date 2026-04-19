@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope } from './actions';
-import type { ExpressionCompiler } from './compilation';
+import type { ExpressionCompiler, ModuleCache } from './compilation';
 import type { RendererSchemaValidator, RendererHostContract } from '../schema-diagnostics';
 import type { NodeInstance, NodeRuntimeState, ResolutionContext, TemplateNode } from './node-identity';
 import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component';
@@ -155,15 +155,18 @@ export interface RendererRuntime {
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
+    schemaUrl: string;
     nodeInstance?: NodeInstance;
   }): Promise<void>;
   getImportedExpressionBindings(input: {
     imports?: readonly XuiImportSpec[];
     actionScope?: ActionScope;
+    schemaUrl: string;
   }): Readonly<Record<string, unknown>>;
   releaseImportedNamespaces(input: {
     imports?: readonly XuiImportSpec[];
     actionScope?: ActionScope;
+    schemaUrl: string;
   }): void;
   dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult>;
   executeSource(input: {
@@ -201,6 +204,7 @@ export interface RendererRuntime {
   }): { id: string; dispose(): void };
   getSourceDebugSnapshot?(): SourceRegistryDebugSnapshot;
   getReactionDebugSnapshot?(): ReactionRegistryDebugSnapshot;
+  moduleCache: ModuleCache;
   setEnv(env: RendererEnv): void;
   dispose(): void;
   createFormRuntime(input: {

@@ -79,6 +79,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   type: S['type'];
   schema: S;
   templatePath: SchemaPath;
+  schemaUrl?: string;
   rendererType: string;
   component: import('./renderer-core').RendererDefinition<S>;
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;

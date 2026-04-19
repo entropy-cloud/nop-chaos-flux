@@ -32,6 +32,7 @@ export interface ResolvedNodeMeta {
 export interface CompileSchemaOptions {
   basePath?: SchemaPath;
   parentPath?: SchemaPath;
+  schemaUrl?: string;
   parentScopePolicy?: ScopePolicy;
   cidState?: CompiledCidState;
   diagnostics?: SchemaCompileDiagnosticsOptions;
@@ -41,6 +42,7 @@ export interface CompileSchemaOptions {
 export interface CompileNodeOptions {
   path: SchemaPath;
   parentPath?: SchemaPath;
+  schemaUrl?: string;
   renderer: import('./renderer-core').RendererDefinition;
   fieldRules?: readonly SchemaFieldRule[];
 }

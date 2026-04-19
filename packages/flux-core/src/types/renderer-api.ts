@@ -59,5 +59,6 @@ export interface RendererEnv {
   functions?: Record<string, (...args: any[]) => any>;
   filters?: Record<string, (input: any, ...args: any[]) => any>;
   importLoader?: ImportedLibraryLoader;
+  resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
   monitor?: RendererMonitor;
 }

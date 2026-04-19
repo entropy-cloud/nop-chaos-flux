@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from 'react';
 import type { ActionContext, ActionScope } from './actions';
-import type { FormulaCompiler } from './compilation';
+import type { FormulaCompiler, ModuleCache } from './compilation';
 import type { CompiledTemplate, InstanceFrame, NodeInstance, TemplateNode } from './node-identity';
 import type { ComponentHandleRegistry } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
@@ -144,6 +144,7 @@ export interface RenderNodeMeta {
 
 export interface SchemaRendererProps {
   schema: SchemaInput;
+  schemaUrl: string;
   data?: Record<string, any>;
   env: RendererEnv;
   formulaCompiler: FormulaCompiler;
@@ -151,6 +152,7 @@ export interface SchemaRendererProps {
   plugins?: RendererPlugin[];
   pageStore?: PageStoreApi;
   surfaceRuntime?: SurfaceRuntime;
+  moduleCache?: ModuleCache;
   parentScope?: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;

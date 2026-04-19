@@ -1,5 +1,15 @@
 import type { EvalContext, ScopeDependencySet, ScopeRef } from './scope';
 import type { RendererEnv } from './renderer';
+import type { ImportedLibraryModule } from './actions';
+
+export interface ModuleCache {
+  get(absUrl: string): ImportedLibraryModule | undefined;
+  set(absUrl: string, module: ImportedLibraryModule): void;
+  has(absUrl: string): boolean;
+  getPending(absUrl: string): Promise<ImportedLibraryModule> | undefined;
+  setPending(absUrl: string, promise: Promise<ImportedLibraryModule>): void;
+  removePending(absUrl: string): void;
+}
 
 export interface CompiledExpression<T = unknown> {
   kind: 'expression';
