@@ -3,13 +3,11 @@ import type { RendererComponentProps, SurfaceStatusSummary } from '@nop-chaos/fl
 import { resolveRendererSlotContent, useCurrentComponentRegistry, useResolvedContainer } from '@nop-chaos/flux-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, cn } from '@nop-chaos/ui';
 import type { DialogSchema } from './schemas';
-import { useStatusPathPublication } from './status-hooks';
 
 export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
   const bodyContent = props.regions.body?.render();
   const actionsContent = props.regions.actions?.render();
-  const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
   const summary = useMemo<SurfaceStatusSummary>(() => ({
     id: props.id,
     kind: 'dialog',
@@ -18,8 +16,6 @@ export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
     opening: false,
     closing: false,
   }), [props.id, props.props.defaultOpen, props.props.open]);
-
-  useStatusPathPublication(props.node.scope.parent ?? props.node.scope, statusPath, summary);
 
   const containerId = typeof props.props.container === 'string' ? props.props.container : undefined;
   const showMask = props.props.showMask !== false;

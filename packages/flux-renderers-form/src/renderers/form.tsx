@@ -146,9 +146,10 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const importBindings = useMemo(
     () => runtime.getImportedExpressionBindings({
       imports: nodeImports,
-      actionScope: currentActionScope
+      actionScope: currentActionScope,
+      schemaUrl: props.templateNode.schemaUrl ?? props.path
     }),
-    [runtime, nodeImports, currentActionScope]
+    [runtime, nodeImports, currentActionScope, props.templateNode.schemaUrl, props.path]
   );
   const importsReady = !nodeImports?.length || Object.keys(importBindings).length === nodeImports.length;
 

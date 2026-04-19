@@ -3,13 +3,11 @@ import type { RendererComponentProps, SurfaceStatusSummary } from '@nop-chaos/fl
 import { resolveRendererSlotContent, useCurrentComponentRegistry, useResolvedContainer } from '@nop-chaos/flux-react';
 import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, cn } from '@nop-chaos/ui';
 import type { DrawerSchema } from './schemas';
-import { useStatusPathPublication } from './status-hooks';
 
 export function DrawerRenderer(props: RendererComponentProps<DrawerSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
   const bodyContent = props.regions.body?.render();
   const actionsContent = props.regions.actions?.render();
-  const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
   const summary = useMemo<SurfaceStatusSummary>(() => ({
     id: props.id,
     kind: 'drawer',
@@ -18,8 +16,6 @@ export function DrawerRenderer(props: RendererComponentProps<DrawerSchema>) {
     opening: false,
     closing: false,
   }), [props.id, props.props.defaultOpen, props.props.open]);
-
-  useStatusPathPublication(props.node.scope.parent ?? props.node.scope, statusPath, summary);
 
   const containerId = typeof props.props.container === 'string' ? props.props.container : undefined;
   const showMask = props.props.showMask !== false;
