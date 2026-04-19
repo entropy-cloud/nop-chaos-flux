@@ -9,6 +9,7 @@ import {
   type SchemaFieldRule
 } from '@nop-chaos/flux-core';
 import {
+  shouldShowFieldError,
   selectCurrentFormFieldPresentation,
   resolveRendererSlotContent,
   useCurrentForm,
@@ -41,24 +42,6 @@ export function getFieldValidationBehavior(name: string, currentForm: FormRuntim
 
 export function shouldValidateOn(name: string, currentForm: FormRuntime | undefined, trigger: 'change' | 'blur' | 'submit') {
   return getFieldValidationBehavior(name, currentForm).triggers.includes(trigger);
-}
-
-export function shouldShowFieldError(
-  behavior: CompiledValidationBehavior,
-  state: { touched: boolean; dirty: boolean; visited: boolean; submitting: boolean }
-) {
-  return behavior.showErrorOn.some((trigger) => {
-    switch (trigger) {
-      case 'touched':
-        return state.touched;
-      case 'dirty':
-        return state.dirty;
-      case 'visited':
-        return state.visited;
-      case 'submit':
-        return state.submitting;
-    }
-  });
 }
 
 export function readFieldValue(scope: ReturnType<typeof useRenderScope>, name: string): unknown {

@@ -104,7 +104,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const errorMessage = getSourceErrorMessage(optionsSourceState);
 
   return (
-    <div className={cn('nop-select-wrapper', props.meta.className)}>
+    <div className={cn('nop-select-wrapper', props.meta.className)} data-slot="select-wrapper">
       <Select value={value == null ? '' : String(value)} onValueChange={(nextValue) => handlers.onChange(nextValue)} disabled={loading || presentation.effectiveDisabled}>
         <SelectTrigger
           data-slot="select-trigger"
@@ -161,7 +161,7 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
   const optionLabel = option?.label;
 
   return (
-    <span className={cn('nop-checkbox-wrapper', props.meta.className)}>
+    <span className={cn('nop-checkbox-wrapper', props.meta.className)} data-slot="checkbox-wrapper">
       <Checkbox
         checked={Boolean(value)}
         disabled={presentation.effectiveDisabled}
@@ -187,7 +187,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   const checked = Boolean(value);
 
   return (
-    <span className={cn('nop-switch-wrapper', props.meta.className)}>
+    <span className={cn('nop-switch-wrapper', props.meta.className)} data-slot="switch-wrapper">
       <Switch
         checked={checked}
         disabled={presentation.effectiveDisabled}
@@ -214,7 +214,7 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
   const errorMessage = getSourceErrorMessage(optionsSourceState);
 
   return (
-    <div className={cn('nop-radio-group-wrapper', props.meta.className)}>
+    <div className={cn('nop-radio-group-wrapper', props.meta.className)} data-slot="radio-group-wrapper">
       {loading ? (
         <span data-slot="radio-group-loading">
           <Spinner className="size-4" aria-hidden="true" />
@@ -255,7 +255,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
   const errorMessage = getSourceErrorMessage(optionsSourceState);
 
   return (
-    <div className={cn('nop-checkbox-group-wrapper', props.meta.className)}>
+    <div className={cn('nop-checkbox-group-wrapper', props.meta.className)} data-slot="checkbox-group-wrapper">
       {loading ? (
         <span data-slot="checkbox-group-loading">
           <Spinner className="size-4" aria-hidden="true" />
