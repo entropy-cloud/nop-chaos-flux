@@ -178,6 +178,161 @@ describe('createRendererRuntime', () => {
     registration.dispose();
   });
 
+  it('keeps the in-flight api source request when refresh dedup is ignore-new', async () => {
+    let callCount = 0;
+    let firstSignal: AbortSignal | undefined;
+    let releaseFirst: (() => void) | undefined;
+    const fetcher = vi.fn(async <T>(api: { url: string }, ctx: { signal?: AbortSignal }) => {
+      callCount += 1;
+
+      if (callCount === 1) {
+        firstSignal = ctx.signal;
+        await new Promise<void>((resolve) => {
+          releaseFirst = resolve;
+        });
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        data: { url: api.url } as T
+      };
+    });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ userId: 1 });
+
+    const registration = runtime.registerDataSource({
+      id: 'stable-user-api-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/users/${userId}' },
+        name: 'payload',
+        control: {
+          dedup: 'ignore-new'
+        }
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    page.scope.update('userId', 2);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(firstSignal?.aborted).toBe(false);
+
+    releaseFirst?.();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/1' });
+    });
+
+    registration.dispose();
+  });
+
+  it('allows parallel in-flight api source refreshes when refresh dedup is parallel', async () => {
+    let callCount = 0;
+    let firstSignal: AbortSignal | undefined;
+    let releaseFirst: (() => void) | undefined;
+    let releaseSecond: (() => void) | undefined;
+    const fetcher = vi.fn(async <T>(api: { url: string }, ctx: { signal?: AbortSignal }) => {
+      callCount += 1;
+
+      if (callCount === 1) {
+        firstSignal = ctx.signal;
+        await new Promise<void>((resolve) => {
+          releaseFirst = resolve;
+        });
+      } else {
+        await new Promise<void>((resolve) => {
+          releaseSecond = resolve;
+        });
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        data: { url: api.url } as T
+      };
+    });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ userId: 1 });
+
+    const registration = runtime.registerDataSource({
+      id: 'parallel-user-api-source',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/users/${userId}' },
+        name: 'payload',
+        control: {
+          dedup: 'parallel'
+        }
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    page.scope.update('userId', 2);
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+
+    expect(firstSignal?.aborted).toBe(false);
+    expect(registration.controller.getState()).toMatchObject({
+      fetchStatus: 'fetching',
+      isInitialLoading: true,
+      isRefreshing: false,
+      inFlightCount: 2,
+      hasData: false,
+      hasError: false
+    });
+
+    releaseFirst?.();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/1' });
+    });
+
+    expect(registration.controller.getState()).toMatchObject({
+      fetchStatus: 'fetching',
+      isInitialLoading: false,
+      isRefreshing: true,
+      inFlightCount: 1,
+      hasData: true,
+      hasError: false
+    });
+
+    releaseSecond?.();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/2' });
+    });
+
+    registration.dispose();
+  });
+
   it('refreshes the matching source inside the provided scope when ids collide', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),

@@ -140,6 +140,11 @@ describe('createRendererRuntime', () => {
       status: 'success',
       fetchStatus: 'fetching',
       stale: true,
+      hasData: true,
+      hasError: false,
+      isInitialLoading: false,
+      isRefreshing: true,
+      inFlightCount: 1,
       data: { value: 'initial' },
       error: undefined
     });
@@ -155,6 +160,11 @@ describe('createRendererRuntime', () => {
       status: 'success',
       fetchStatus: 'idle',
       stale: false,
+      hasData: true,
+      hasError: false,
+      isInitialLoading: false,
+      isRefreshing: false,
+      inFlightCount: 0,
       data: { value: 'loaded' },
       error: undefined
     });
@@ -199,6 +209,11 @@ describe('createRendererRuntime', () => {
       status: 'success',
       fetchStatus: 'idle',
       stale: true,
+      hasData: true,
+      hasError: true,
+      isInitialLoading: false,
+      isRefreshing: false,
+      inFlightCount: 0,
       data: { value: 'initial' },
       failureCount: 1
     });
@@ -238,6 +253,11 @@ describe('createRendererRuntime', () => {
       status: 'success',
       fetchStatus: 'idle',
       stale: false,
+      hasData: true,
+      hasError: false,
+      isInitialLoading: false,
+      isRefreshing: false,
+      inFlightCount: 0,
       data: 15,
       error: undefined
     });
