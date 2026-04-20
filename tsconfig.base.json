@@ -14,8 +14,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "declaration": true,
-    "sourceMap": true,
+    "declaration": false,
+    "sourceMap": false,
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
     "paths": {

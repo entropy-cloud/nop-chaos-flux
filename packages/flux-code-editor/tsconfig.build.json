@@ -5,6 +5,8 @@
     "paths": {},
     "noEmit": false,
     "sourceMap": false,
+    "declaration": true,
+    "declarationMap": true,
     "outDir": "dist"
   },
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/__tests__"]

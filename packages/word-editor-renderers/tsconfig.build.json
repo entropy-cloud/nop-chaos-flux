@@ -8,6 +8,8 @@
     },
     "noEmit": false,
     "sourceMap": false,
+    "declaration": true,
+    "declarationMap": true,
     "outDir": "dist"
   }
 }
