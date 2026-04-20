@@ -118,7 +118,8 @@ Current async-governance diagnostics baseline:
 
 - runtime-owned async owners now expose a bounded shared snapshot surface via runtime inspection APIs rather than by emitting a separate unbounded event stream for every settle
 - the shared fields are `ownerKind`, `ownerId`, `scopeId`, `runId`, `cause`, `startedAt`, `settledAt`, `outcome`, `supersededBy`, `cancelled`, `timedOut`, and optional error summary
-- current runtime exposes this additive surface through `getAsyncOwnerDebugSnapshot()`, while source/reaction snapshots also embed owner-local async summaries relevant to those registries
+- current runtime exposes this additive surface through `getAsyncOwnerDebugSnapshot()`, and `nop-debugger` automation now forwards that same bounded snapshot through `getAsyncOwnerDebugSnapshot()` rather than inventing a second event channel
+- source/reaction snapshots also embed owner-local async summaries relevant to those registries
 - current in-scope owners are API-backed `data-source`, async `reaction` dispatch, and async validation runs; plain action/request execution still primarily reports execution-control and monitor metadata rather than becoming a first-class async owner epoch model
 - this keeps debugger/automation able to answer “why did this async result not publish?” without inflating the hot event stream with deep per-run payloads
 

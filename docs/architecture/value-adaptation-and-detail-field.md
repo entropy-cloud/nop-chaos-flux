@@ -94,7 +94,9 @@ Performance baseline:
 
 是的，这组 `transformInAction` / `transformOutAction` / `validateValueAction` 不应由每个具体控件各自零散实现。
 
-推荐做法是提供一个共享 owner wrapper 或 helper，统一负责：
+推荐做法是提供一个统一的 `ValueAdapter` 协议，再按 owner 形态组合轻量 adapter 或 staged helper。共享基础设施统一负责：
+
+- `in` / `out` / `validate` 三段值适配协议
 
 - 构造默认 payload
 - 执行 action
@@ -127,6 +129,28 @@ The important architectural point is not the helper name. The important point is
 推荐方向：
 
 ```ts
+interface AdapterContext {
+  name?: string;
+  readOnly: boolean;
+}
+
+interface ValueAdapter<TExternal = unknown, TInternal = unknown> {
+  in(value: TExternal, ctx: AdapterContext): TInternal | Promise<TInternal>;
+  out(value: TInternal, ctx: AdapterContext): TExternal | Promise<TExternal>;
+  validate?(value: TInternal, ctx: AdapterContext): AdapterValidationResult | Promise<AdapterValidationResult>;
+}
+```
+
+其中：
+
+- 简单字段优先用同步纯函数 adapter，例如 `stringAdapter()`、`booleanStringAdapter()`
+- action 驱动字段通过 `actionAdapter(...)` 复用同一套 payload / result / fallback 规则
+- `detail-field` / `detail-view` 继续在 adapter 之上保留 owner-managed staged lifecycle
+- `object-field` / `variant-field` 只复用 adapter 层，不引入 confirm/cancel
+
+staged owner 仍然可以暴露一个 helper：
+
+```ts
 interface ValueAdaptationOwnerHelper {
   runTransformIn(...): Promise<unknown>;
   runTransformOut(...): Promise<unknown>;
@@ -134,7 +158,7 @@ interface ValueAdaptationOwnerHelper {
 }
 ```
 
-具体 helper 名称不是本文关心的重点，但“共享 wrapper”这条边界应该保持稳定。
+具体 helper 名称不是本文关心的重点，但“共享 `ValueAdapter` 协议 + 可选 staged helper”这条边界应该保持稳定。
 
 ## Recommended Owner Contract
 
@@ -234,6 +258,8 @@ This replace rule is part of the shared value-adaptation contract and should sta
   readOnly
 }
 ```
+
+`variant-field` 的 option switch migration 也复用同一规则，但目标 variant key 映射到 `AdapterContext.name`，不额外引入 `variant` 专用字段。
 
 对于 view owner，也可把 `value` 理解为外部输入对象：
 
