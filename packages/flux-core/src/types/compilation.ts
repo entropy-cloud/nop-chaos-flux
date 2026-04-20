@@ -23,10 +23,14 @@ export interface CompiledStringTemplate<T = unknown> {
   exec(context: EvalContext | object, env: RendererEnv): T;
 }
 
+export interface ExpressionCompileOptions {
+  libraryNames?: ReadonlySet<string>;
+}
+
 export interface FormulaCompiler {
   hasExpression(input: string): boolean;
-  compileExpression<T = unknown>(source: string): CompiledExpression<T>;
-  compileTemplate<T = unknown>(source: string): CompiledStringTemplate<T>;
+  compileExpression<T = unknown>(source: string, options?: ExpressionCompileOptions): CompiledExpression<T>;
+  compileTemplate<T = unknown>(source: string, options?: ExpressionCompileOptions): CompiledStringTemplate<T>;
 }
 
 export interface StaticValueNode<T = unknown> {
@@ -125,8 +129,8 @@ export type CompiledRuntimeValue<T = unknown> = StaticRuntimeValue<T> | DynamicR
 
 export interface ExpressionCompiler {
   formulaCompiler: FormulaCompiler;
-  compileNode<T = unknown>(input: T): CompiledValueNode<T>;
-  compileValue<T = unknown>(input: T): CompiledRuntimeValue<T>;
+  compileNode<T = unknown>(input: T, options?: ExpressionCompileOptions): CompiledValueNode<T>;
+  compileValue<T = unknown>(input: T, options?: ExpressionCompileOptions): CompiledRuntimeValue<T>;
   createState<T = unknown>(input: DynamicRuntimeValue<T>): RuntimeValueState<T>;
   evaluateValue<T = unknown>(
     input: CompiledRuntimeValue<T>,

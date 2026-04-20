@@ -166,6 +166,23 @@ export interface WordEditorHostStatusSummary {
   codeCount: number;
 }
 
+export interface DataSourceStatusSummary {
+  started: boolean;
+  loading: boolean;
+  ready: boolean;
+  stale: boolean;
+  hasData: boolean;
+  hasError: boolean;
+  isInitialLoading: boolean;
+  isRefreshing: boolean;
+  inFlightCount: number;
+  dataUpdatedAt: number;
+  errorUpdatedAt: number;
+  failureCount: number;
+  failureReason?: unknown;
+  error?: { message: string };
+}
+
 export interface FormLifecycleHandlers {
   submitAction?: (options?: { interactionId?: string; signal?: AbortSignal }) => Promise<ActionResult>;
   onSubmitSuccess?: (result: ActionResult, options?: { interactionId?: string; signal?: AbortSignal }) => Promise<ActionResult>;
@@ -248,6 +265,11 @@ export interface DataSourceState {
   status: DataSourceStatus;
   fetchStatus: DataSourceFetchStatus;
   stale: boolean;
+  hasData: boolean;
+  hasError: boolean;
+  isInitialLoading: boolean;
+  isRefreshing: boolean;
+  inFlightCount: number;
   data?: unknown;
   error?: unknown;
   dataUpdatedAt: number;
