@@ -3,16 +3,19 @@ import type {
   CompiledStringTemplate,
   CompiledValueNode,
   EvalContext,
+  ExpressionCompileOptions,
   FormulaCompiler,
   RendererEnv,
   StaticValueNode
 } from '@nop-chaos/flux-core';
 import { isPlainObject } from '@nop-chaos/flux-core';
+import { bindAst, type BindingContext } from './bind-ast';
 import { installBuiltins } from './builtins';
 import { evaluateAst } from './evaluator';
 import { parseFormula } from './parser';
 import { isPureExpression, normalizeExpressionSource, parseTemplateSegments } from './template';
 import { toEvalContext } from './scope';
+import { getFormulaRegistrySnapshot } from './registry';
 
 type CompiledTemplateSegment =
   | { type: 'text'; value: string }
@@ -148,13 +151,23 @@ function createExpressionMonitorReporter(env: RendererEnv, source: string) {
 function createFormulaCompiler(): FormulaCompiler {
   installBuiltins();
 
+  function buildBindingContext(options?: ExpressionCompileOptions): BindingContext {
+    const registry = getFormulaRegistrySnapshot();
+    return {
+      libraryNames: options?.libraryNames,
+      namespaceNames: new Set(Object.keys(registry.namespaces)),
+      functionNames: new Set(Object.keys(registry.functions))
+    };
+  }
+
   return {
     hasExpression(input: string) {
       return typeof input === 'string' && input.includes('${');
     },
-    compileExpression<T = unknown>(source: string): CompiledExpression<T> {
+    compileExpression<T = unknown>(source: string, options?: ExpressionCompileOptions): CompiledExpression<T> {
       const normalized = rewriteFilterPipeSyntax(normalizeExpressionSource(source));
       const ast = parseFormula(normalized);
+      bindAst(ast, buildBindingContext(options));
 
       return {
         kind: 'expression',
@@ -174,7 +187,8 @@ function createFormulaCompiler(): FormulaCompiler {
         }
       };
     },
-    compileTemplate<T = unknown>(source: string): CompiledStringTemplate<T> {
+    compileTemplate<T = unknown>(source: string, options?: ExpressionCompileOptions): CompiledStringTemplate<T> {
+      const bindingContext = buildBindingContext(options);
       const segments: CompiledTemplateSegment[] = parseTemplateSegments(source).map((segment) => {
         if (segment.type === 'text') {
           return {
@@ -186,9 +200,9 @@ function createFormulaCompiler(): FormulaCompiler {
         return {
           type: 'expr' as const,
           value: (() => {
-            return {
-              ast: parseFormula(rewriteFilterPipeSyntax(segment.value))
-            };
+            const ast = parseFormula(rewriteFilterPipeSyntax(segment.value));
+            bindAst(ast, bindingContext);
+            return { ast };
           })()
         };
       });
@@ -225,7 +239,7 @@ function createFormulaCompiler(): FormulaCompiler {
   };
 }
 
-function compileNode<T>(input: T, formulaCompiler: FormulaCompiler): CompiledValueNode<T> {
+function compileNode<T>(input: T, formulaCompiler: FormulaCompiler, options?: ExpressionCompileOptions): CompiledValueNode<T> {
   if (typeof input === 'string') {
     if (!formulaCompiler.hasExpression(input)) {
       return {
@@ -240,7 +254,7 @@ function compileNode<T>(input: T, formulaCompiler: FormulaCompiler): CompiledVal
         return {
           kind: 'expression-node',
           source: input,
-          compiled: formulaCompiler.compileExpression<T>(input)
+          compiled: formulaCompiler.compileExpression<T>(input, options)
         };
       } catch {
         return {
@@ -254,7 +268,7 @@ function compileNode<T>(input: T, formulaCompiler: FormulaCompiler): CompiledVal
       return {
         kind: 'template-node',
         source: input,
-        compiled: formulaCompiler.compileTemplate<T>(input)
+        compiled: formulaCompiler.compileTemplate<T>(input, options)
       };
     } catch {
       return {
@@ -265,7 +279,7 @@ function compileNode<T>(input: T, formulaCompiler: FormulaCompiler): CompiledVal
   }
 
   if (Array.isArray(input)) {
-    const items = input.map((item: unknown) => compileNode(item, formulaCompiler));
+    const items = input.map((item: unknown) => compileNode(item, formulaCompiler, options));
 
     if (items.every((item) => item.kind === 'static-node')) {
       return {
@@ -284,7 +298,7 @@ function compileNode<T>(input: T, formulaCompiler: FormulaCompiler): CompiledVal
     const objectInput = input as Record<string, unknown>;
     const keys = Object.keys(objectInput);
     const entries = Object.fromEntries(
-      keys.map((key) => [key, compileNode(objectInput[key], formulaCompiler)])
+      keys.map((key) => [key, compileNode(objectInput[key], formulaCompiler, options)])
     );
     const hasDynamic = keys.some((key) => entries[key].kind !== 'static-node');
 

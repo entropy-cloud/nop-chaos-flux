@@ -154,15 +154,22 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
       return frameValue;
     }
 
-    if (node.name in registry.namespaces) {
+    if (node.binding === 'namespace') {
       return registry.namespaces[node.name];
     }
 
-    if (node.name in registry.functions) {
-      return registry.functions[node.name];
+    if (node.binding === undefined) {
+      if (node.name in registry.namespaces) {
+        return registry.namespaces[node.name];
+      }
+      if (node.name in registry.functions) {
+        return registry.functions[node.name];
+      }
     }
 
-    options.context.collector?.recordPath(node.name);
+    if (node.binding !== 'library') {
+      options.context.collector?.recordPath(node.name);
+    }
     return options.context.resolve(node.name);
   };
 
@@ -180,6 +187,15 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
       : node.property.type === 'Identifier'
         ? node.property.name
         : evaluateNode(node.property, frame);
+
+    if (
+      !node.computed &&
+      node.object.type === 'Identifier' &&
+      node.object.binding === 'scope' &&
+      typeof propertyValue === 'string'
+    ) {
+      options.context.collector?.recordPath(`${node.object.name}.${propertyValue}`);
+    }
 
     const key = toPropertyKey(propertyValue);
     return {

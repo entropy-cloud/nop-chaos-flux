@@ -3,6 +3,7 @@ import type {
   CompiledValueNode,
   DynamicRuntimeValue,
   EvalContext,
+  ExpressionCompileOptions,
   ExpressionCompiler,
   FormulaCompiler,
   RendererEnv,
@@ -19,15 +20,16 @@ export { parseFormula } from './parser';
 export { evaluateAst } from './evaluator';
 export { registerFunction, registerNamespace, getFormulaRegistrySnapshot, resetFormulaRegistry } from './registry';
 export { dateHelper } from './date-helper';
+export { bindAst, type BindingContext } from './bind-ast';
 
 export function createExpressionCompiler(formulaCompiler: FormulaCompiler = createFormulaCompiler()): ExpressionCompiler {
   return {
     formulaCompiler,
-    compileNode<T = unknown>(input: T): CompiledValueNode<T> {
-      return compileNode(input, formulaCompiler);
+    compileNode<T = unknown>(input: T, options?: ExpressionCompileOptions): CompiledValueNode<T> {
+      return compileNode(input, formulaCompiler, options);
     },
-    compileValue<T = unknown>(input: T): CompiledRuntimeValue<T> {
-      const node = compileNode(input, formulaCompiler);
+    compileValue<T = unknown>(input: T, options?: ExpressionCompileOptions): CompiledRuntimeValue<T> {
+      const node = compileNode(input, formulaCompiler, options);
 
       if (node.kind === 'static-node') {
         return {

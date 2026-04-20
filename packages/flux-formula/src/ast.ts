@@ -14,9 +14,12 @@ export interface LiteralNode extends BaseNode {
   raw: string;
 }
 
+export type IdentifierBinding = 'scope' | 'library' | 'namespace';
+
 export interface IdentifierNode extends BaseNode {
   type: 'Identifier';
   name: string;
+  binding?: IdentifierBinding;
 }
 
 export interface BinaryExpressionNode extends BaseNode {
