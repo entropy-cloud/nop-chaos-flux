@@ -13,7 +13,8 @@ import type {
   ScopePlan,
   TemplateNode,
   TemplateRegion,
-  WrapProvidersFn
+  WrapProvidersFn,
+  XuiImportSpec
 } from '@nop-chaos/flux-core';
 import {
   buildCompiledValidationOrder,
@@ -37,6 +38,19 @@ import {
 const PROVIDER_BUILD_ORDER = ['actionScope', 'componentRegistry', 'classAliases'] as const;
 
 const MAX_COMPILE_DEPTH = 64;
+
+function extractLibraryNames(imports: unknown): ReadonlySet<string> | undefined {
+  if (!Array.isArray(imports) || imports.length === 0) {
+    return undefined;
+  }
+  const names = new Set<string>();
+  for (const spec of imports as XuiImportSpec[]) {
+    if (spec.as) {
+      names.add(`$${spec.as}`);
+    }
+  }
+  return names.size > 0 ? names : undefined;
+}
 
 function buildWrapProvidersClosure(providers: TemplateNode['providerPlan']): WrapProvidersFn {
   let fn: WrapProvidersFn = (_wp, _v, ch) => ch;
@@ -205,7 +219,8 @@ export function createSchemaCompiler(input: {
       }
     }
 
-    const propsProgram = expressionCompiler.compileValue(propSource);
+    const libraryNames = extractLibraryNames(fieldInspection.extensions?.['xui:imports']);
+    const propsProgram = expressionCompiler.compileValue(propSource, libraryNames ? { libraryNames } : undefined);
 
     const scopePlan: ScopePlan =
       renderer.scopePolicy === 'form'

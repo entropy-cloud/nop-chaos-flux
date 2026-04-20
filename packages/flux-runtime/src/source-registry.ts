@@ -285,6 +285,11 @@ export function createRuntimeSourceRegistry(input: {
               fetchStatus: state.fetchStatus,
               loading: state.fetchStatus === 'fetching',
               stale: state.stale,
+              hasData: state.hasData,
+              hasError: state.hasError,
+              isInitialLoading: state.isInitialLoading,
+              isRefreshing: state.isRefreshing,
+              inFlightCount: state.inFlightCount,
               hasValue: typeof state.data !== 'undefined',
               error: state.error instanceof Error ? state.error.message : typeof state.error === 'string' ? state.error : undefined
             };
