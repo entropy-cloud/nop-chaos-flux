@@ -29,6 +29,7 @@
 6. 内部只有在 subtree-local authoring 需求很强时，才增加只读保留绑定。
 7. 不暴露 `$store`，也不允许把 `id` / `name` 当成隐式状态读取路径。
 8. 对复杂宿主（designer/spreadsheet/report-designer），内部读取优先通过 `Host Projection`，外部摘要再通过 `statusPath` 发布。
+9. owner-level async governance diagnostics 是 runtime/debugger 用的内部解释面，不等同于新的 author-visible interaction-state 绑定。
 
 ## Owner Taxonomy
 

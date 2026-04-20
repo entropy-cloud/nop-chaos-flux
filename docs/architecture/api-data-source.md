@@ -466,6 +466,14 @@ Lifecycle rule:
 
 - regardless of dedup strategy, `stop()` and `reset()` must abort all in-flight requests owned by the source controller
 
+Current async-governance baseline:
+
+- API-backed `data-source` now also participates in a shared owner-level async governance substrate separate from request execution control
+- each refresh gets a runtime-owned `runId`, `cause`, start/settle timestamps, and settle outcome metadata
+- request abort still happens through source/request control, but late-settling old runs are additionally blocked by an owner-level publish gate
+- in `parallel` mode, multiple requests may remain in flight, but only the current authoritative run may publish value/status updates; older late-settled runs are recorded as `stale-dropped`
+- additive async diagnostics are exposed through source debug snapshots and `statusPath` summary metadata without changing the main author-visible publication contract
+
 Design intent:
 
 - request-runtime dedup describes transport-level overlap semantics for equivalent executable requests

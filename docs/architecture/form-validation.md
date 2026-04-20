@@ -897,6 +897,12 @@ Rules:
 5. `validateAll('submit')` and `validateAll('commit')` wait for required async rules
 6. model-generation changes invalidate all older-generation runs, even when the same path string still exists in the new model
 
+Current async-governance baseline:
+
+- async validation still keeps owner-local path/subtree/submit priority rules in `FormRuntime`, but stale publication and settle diagnostics now also flow through the shared async-governance substrate used by other runtime-owned async owners
+- validation causes currently surfaced through that substrate reuse existing validation reasons such as `change`, `blur`, `submit`, `commit`, `system`, and `manual`
+- abort/debounce cancellation and owner-local supersession remain the way validation invalidates obsolete work; shared governance records the settled outcome so stale late completions can be explained uniformly as `stale-dropped` or `cancelled`
+
 ## Parent And Child Scope Interaction
 
 > **Implementation Status**: This section describes the target architecture for parent-child validation contracts. Current implementation (Phase 2) uses renderer-level draft isolation where `detail-field` / `detail-view` create their own `FormRuntime` and handle commit/cancel internally. The `ChildValidationContract` mechanism described below is partially implemented but primarily serves as a placeholder for Phase 3 multi-owner coordination.
