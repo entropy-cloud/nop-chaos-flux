@@ -274,4 +274,84 @@ describe('formRendererDefinitions - input types and field handlers', () => {
       tags: ['stable', 'beta']
     });
   });
+
+  it('keeps input-text null values rendered as empty string', () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/field-handlers#null-input"
+        schema={{
+          type: 'form',
+          data: {
+            title: null
+          },
+          body: [
+            {
+              type: 'input-text',
+              name: 'title',
+              label: 'Title'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('');
+  });
+
+  it('submits checkbox false values through shared field handlers', async () => {
+    submitCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/field-handlers#checkbox-false"
+        schema={{
+          type: 'form',
+          data: {
+            approved: true
+          },
+          body: [
+            {
+              type: 'checkbox',
+              name: 'approved',
+              label: 'Approval',
+              option: {
+                label: 'Approved'
+              }
+            }
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit approval',
+              onClick: {
+                action: 'submitForm',
+                api: {
+                  url: '/api/approval',
+                  method: 'post'
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByText('Submit approval'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(submitCalls[0]).toMatchObject({ approved: false });
+  });
 });

@@ -1,12 +1,14 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getIn,
   getCompiledValidationField,
+  type AdapterContext,
   type CompiledValidationBehavior,
   type FormFieldStateSnapshot,
   type FormRuntime,
   type RendererComponentProps,
-  type SchemaFieldRule
+  type SchemaFieldRule,
+  type ValueAdapter
 } from '@nop-chaos/flux-core';
 import {
   shouldShowFieldError,
@@ -73,10 +75,9 @@ export function useBoundFieldValue(name: string, currentForm: FormRuntime | unde
 export function createFieldHandlers(args: {
   name: string;
   currentForm: FormRuntime | undefined;
-  scope: ReturnType<typeof useRenderScope>;
-  setValue: (value: unknown) => void;
+  setValue: (value: unknown) => void | Promise<void>;
 }) {
-  const { name, currentForm, scope, setValue } = args;
+  const { name, currentForm, setValue } = args;
 
   return {
     onFocus() {
@@ -86,16 +87,18 @@ export function createFieldHandlers(args: {
     },
     onChange(nextValue: unknown) {
       if (currentForm) {
-        setValue(nextValue);
+        void (async () => {
+          await setValue(nextValue);
 
-        if (shouldValidateOn(name, currentForm, 'change') && currentForm.isTouched(name)) {
-          void currentForm.validateField(name);
-        }
+          if (shouldValidateOn(name, currentForm, 'change') && currentForm.isTouched(name)) {
+            await currentForm.validateField(name);
+          }
+        })();
 
         return;
       }
 
-      scope.update(name, nextValue);
+      void setValue(nextValue);
     },
     onBlur() {
       if (currentForm) {
@@ -113,31 +116,109 @@ function identityValue(nextValue: unknown) {
   return nextValue;
 }
 
+function isPromiseLike<T>(value: T | Promise<T>): value is Promise<T> {
+  return typeof value === 'object' && value !== null && 'then' in value;
+}
+
 export function useFieldHandlers(args: {
   name: string;
   currentForm: FormRuntime | undefined;
   scope: ReturnType<typeof useRenderScope>;
   toFormValue?: (value: unknown) => unknown;
+  adapter?: ValueAdapter<unknown, unknown>;
+  adapterContext?: AdapterContext;
 }) {
-  const { name, currentForm, scope, toFormValue = identityValue } = args;
+  const { name, currentForm, scope, toFormValue = identityValue, adapter, adapterContext } = args;
 
   return useMemo(
     () => createFieldHandlers({
       name,
       currentForm,
-      scope,
       setValue(nextValue) {
-        currentForm?.setValue(name, toFormValue(nextValue));
+        const convertedValue = adapter
+          ? adapter.out(nextValue, adapterContext ?? { name, readOnly: false })
+          : toFormValue(nextValue);
+
+        if (isPromiseLike(convertedValue)) {
+          return convertedValue.then((resolvedValue) => {
+            if (currentForm) {
+              currentForm.setValue(name, resolvedValue);
+              return;
+            }
+
+            scope.update(name, resolvedValue);
+          });
+        }
+
+        if (currentForm) {
+          currentForm.setValue(name, convertedValue);
+          return;
+        }
+
+        scope.update(name, convertedValue);
       }
     }),
-    [name, currentForm, scope, toFormValue]
+    [name, currentForm, scope, toFormValue, adapter, adapterContext]
   );
+}
+
+function useAdaptedFieldValue(
+  value: unknown,
+  adapter: ValueAdapter<unknown, unknown> | undefined,
+  context: AdapterContext
+) {
+  const syncAdapter = adapter as { __syncIn?: true } | undefined;
+  const canResolveSynchronously = !adapter || syncAdapter?.__syncIn;
+  const synchronousValue = canResolveSynchronously
+    ? (adapter ? adapter.in(value, context) : value)
+    : value;
+  const [adaptedValue, setAdaptedValue] = useState(value);
+  const seq = useRef(0);
+
+  useEffect(() => {
+    if (!adapter) {
+      return;
+    }
+
+    if (syncAdapter?.__syncIn) {
+      return;
+    }
+
+    const currentSeq = seq.current + 1;
+    seq.current = currentSeq;
+    let active = true;
+    const result = adapter.in(value, context);
+
+    if (!isPromiseLike(result)) {
+      queueMicrotask(() => {
+        if (seq.current === currentSeq && active) {
+          setAdaptedValue(result);
+        }
+      });
+      return () => {
+        active = false;
+      };
+    }
+
+    void result.then((nextValue) => {
+      if (active && seq.current === currentSeq) {
+        setAdaptedValue(nextValue);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [adapter, context, syncAdapter, value]);
+
+  return canResolveSynchronously ? synchronousValue : adaptedValue;
 }
 
 export function useFormFieldController(
   name: string,
   options?: {
     toFormValue?: (value: unknown) => unknown;
+    adapter?: ValueAdapter<unknown, unknown>;
     disabled?: boolean;
     required?: boolean;
     readOnly?: boolean;
@@ -146,7 +227,15 @@ export function useFormFieldController(
 ) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
-  const value = useBoundFieldValue(name, currentForm, options?.areValuesEqual);
+  const rawValue = useBoundFieldValue(name, currentForm, options?.areValuesEqual);
+  const adapterContext = useMemo(
+    () => ({
+      name,
+      readOnly: Boolean(options?.readOnly)
+    }),
+    [name, options?.readOnly]
+  );
+  const value = useAdaptedFieldValue(rawValue, options?.adapter, adapterContext);
   const presentation = useFieldPresentation(name, currentForm, {
     disabled: options?.disabled,
     required: options?.required,
@@ -156,7 +245,9 @@ export function useFormFieldController(
     name,
     currentForm,
     scope,
-    toFormValue: options?.toFormValue
+    toFormValue: options?.toFormValue,
+    adapter: options?.adapter,
+    adapterContext
   });
 
   return {
