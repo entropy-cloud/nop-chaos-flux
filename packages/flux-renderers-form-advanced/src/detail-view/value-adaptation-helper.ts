@@ -1,19 +1,19 @@
 import { actionAdapter, type ActionResult, type ActionSchema, type FormRuntime } from '@nop-chaos/flux-core';
 
-export interface ValueAdaptationInput {
+interface TransformInInput {
   rawValue: unknown;
   name?: string;
   readOnly?: boolean;
 }
 
-export interface TransformOutInput {
+interface TransformOutInput {
   workingValue: unknown;
   originalValue: unknown;
   name?: string;
   readOnly?: boolean;
 }
 
-export interface ValidateValueInput {
+interface ValidateValueInput {
   workingValue: unknown;
   originalValue: unknown;
   name?: string;
@@ -30,63 +30,54 @@ export interface ValidateValueResult {
 
 type ValueAdaptationAction = ActionSchema | ActionSchema[];
 
-export type ActionRunner = (
-  actionSchema: ValueAdaptationAction
-) => Promise<ActionResult>;
-
-export interface ValueAdaptationOwnerHelper {
-  runTransformIn(
-    actionSchema: ValueAdaptationAction | undefined,
-    input: ValueAdaptationInput,
-    runner: ActionRunner
-  ): Promise<unknown>;
-
-  runTransformOut(
-    actionSchema: ValueAdaptationAction | undefined,
-    input: TransformOutInput,
-    runner: ActionRunner
-  ): Promise<unknown>;
-
-  runValidate(
-    actionSchema: ValueAdaptationAction | undefined,
-    input: ValidateValueInput,
-    runner: ActionRunner
-  ): Promise<ValidateValueResult>;
+function createDetailAdapter(
+  transformInAction: ValueAdaptationAction | undefined,
+  transformOutAction: ValueAdaptationAction | undefined,
+  validateAction: ValueAdaptationAction | undefined,
+  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>
+) {
+  return actionAdapter(transformInAction, transformOutAction, validateAction, async (actionSchema) => runner(actionSchema as ValueAdaptationAction));
 }
 
-function createLegacyActionDispatch(runner: ActionRunner) {
-  return async (actionSchema: ValueAdaptationAction) => runner(actionSchema);
+export async function runTransformIn(
+  actionSchema: ValueAdaptationAction | undefined,
+  input: TransformInInput,
+  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>
+): Promise<unknown> {
+  const adapter = createDetailAdapter(actionSchema, undefined, undefined, runner);
+  return adapter.in(input.rawValue, {
+    name: input.name,
+    readOnly: input.readOnly ?? false
+  });
 }
 
-export const valueAdaptationOwnerHelper: ValueAdaptationOwnerHelper = {
-  async runTransformIn(actionSchema, input, runner) {
-    const adapter = actionAdapter(actionSchema, undefined, undefined, createLegacyActionDispatch(runner));
-    return adapter.in(input.rawValue, {
-      name: input.name,
-      readOnly: input.readOnly ?? false
-    });
-  },
+export async function runTransformOut(
+  actionSchema: ValueAdaptationAction | undefined,
+  input: TransformOutInput,
+  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>
+): Promise<unknown> {
+  const adapter = createDetailAdapter(undefined, actionSchema, undefined, runner);
+  return adapter.out(input.workingValue, {
+    name: input.name,
+    readOnly: input.readOnly ?? false,
+    originalValue: input.originalValue
+  });
+}
 
-  async runTransformOut(actionSchema, input, runner) {
-    const adapter = actionAdapter(undefined, actionSchema, undefined, createLegacyActionDispatch(runner));
-    return adapter.out(input.workingValue, {
-      name: input.name,
-      readOnly: input.readOnly ?? false,
-      originalValue: input.originalValue
-    });
-  },
+export async function runValidate(
+  actionSchema: ValueAdaptationAction | undefined,
+  input: ValidateValueInput,
+  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>
+): Promise<ValidateValueResult> {
+  const adapter = createDetailAdapter(undefined, undefined, actionSchema, runner);
+  const result = await adapter.validate?.(input.workingValue, {
+    name: input.name,
+    readOnly: false,
+    originalValue: input.originalValue
+  });
 
-  async runValidate(actionSchema, input, runner) {
-    const adapter = actionAdapter(undefined, undefined, actionSchema, createLegacyActionDispatch(runner));
-    const result = await adapter.validate?.(input.workingValue, {
-      name: input.name,
-      readOnly: false,
-      originalValue: input.originalValue
-    });
-
-    return result ?? { valid: true };
-  }
-};
+  return result ?? { valid: true };
+}
 
 export function publishValidateResultErrors(
   result: ValidateValueResult,

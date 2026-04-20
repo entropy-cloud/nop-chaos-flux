@@ -18,7 +18,7 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import type { DetailViewSchema } from '../composite-field/composite-schemas';
 import { formLabelFieldRule, resolveFieldLabelContent, FieldLabel } from '@nop-chaos/flux-renderers-form';
-import { publishValidateResultErrors, valueAdaptationOwnerHelper } from './value-adaptation-helper';
+import { publishValidateResultErrors, runTransformIn, runTransformOut, runValidate } from './value-adaptation-helper';
 import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface';
 
 type BaseNodeInstance = RendererComponentProps['node'];
@@ -91,7 +91,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   async function handleOpen() {
     if (readOnly) return;
 
-    const adaptedValue = await valueAdaptationOwnerHelper.runTransformIn(
+    const adaptedValue = await runTransformIn(
       schema.transformInAction,
       {
         rawValue: currentValue,
@@ -189,7 +189,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       delete draftValues.$form;
       const workingValue = draftValues.__value !== undefined ? draftValues.__value : draftValues;
 
-      const validation = await valueAdaptationOwnerHelper.runValidate(
+      const validation = await runValidate(
         schema.validateValueAction,
         {
           workingValue,
@@ -207,7 +207,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         return;
       }
 
-      const commitResult = await valueAdaptationOwnerHelper.runTransformOut(
+      const commitResult = await runTransformOut(
         schema.transformOutAction,
         {
           workingValue,
