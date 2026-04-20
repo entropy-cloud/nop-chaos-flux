@@ -334,6 +334,14 @@ export function createFormulaDataSourceController(input: {
     },
     async refresh() {
       publish();
+    },
+    reset() {
+      stopped = true;
+      if (input.targetPath) {
+        input.scope.update(input.targetPath, undefined);
+      }
+      const initialState = createInitialDataSourceState(undefined);
+      updateState(() => initialState);
     }
   };
 }
@@ -667,6 +675,24 @@ export function createDataSourceController(input: {
     stop,
     refresh() {
       return runRequest();
+    },
+    reset() {
+      stopped = true;
+
+      if (pollTimer) {
+        clearTimeout(pollTimer);
+        pollTimer = undefined;
+      }
+
+      abortController?.abort();
+      abortController = undefined;
+
+      if (targetPath) {
+        scope.update(targetPath, undefined);
+      }
+
+      const initialState = createInitialDataSourceState(undefined);
+      updateState(() => initialState);
     }
   };
 }

@@ -1,41 +1,42 @@
 import type { CompiledFormValidationField, ValidationRule } from '@nop-chaos/flux-core';
+import { getMessageFormatter } from '@nop-chaos/flux-core';
 
 export function buildValidationMessage(rule: ValidationRule, field: CompiledFormValidationField): string {
   const label = field.label ?? field.path;
+  const t = getMessageFormatter();
 
   switch (rule.kind) {
     case 'required':
-      return `${label} is required`;
+      return t('validation.required', { label });
     case 'minLength':
-      return `${label} must be at least ${rule.value} characters`;
+      return t('validation.minLength', { label, min: rule.value });
     case 'maxLength':
-      return `${label} must be at most ${rule.value} characters`;
+      return t('validation.maxLength', { label, max: rule.value });
     case 'minItems':
-      return rule.message ?? `${label} must contain at least ${rule.value} item${rule.value === 1 ? '' : 's'}`;
+      return rule.message ?? t('validation.minItems', { label, min: rule.value });
     case 'maxItems':
-      return rule.message ?? `${label} must contain at most ${rule.value} item${rule.value === 1 ? '' : 's'}`;
+      return rule.message ?? t('validation.maxItems', { label, max: rule.value });
     case 'atLeastOneFilled':
-      return rule.message ?? `${label} must contain at least one filled item`;
+      return rule.message ?? t('validation.atLeastOneFilled', { label });
     case 'allOrNone':
-      return rule.message ?? `${label} entries must fill all related fields or leave them all empty`;
+      return rule.message ?? t('validation.allOrNone', { label });
     case 'uniqueBy':
-      return rule.message ?? `${label} items must have unique ${rule.itemPath}`;
+      return rule.message ?? t('validation.uniqueBy', { label, field: rule.itemPath });
     case 'atLeastOneOf':
-      return rule.message ?? `${label} must fill at least one related field`;
+      return rule.message ?? t('validation.atLeastOneOf', { label });
     case 'pattern':
-      return rule.message ?? `${label} format is invalid`;
+      return rule.message ?? t('validation.pattern', { label });
     case 'email':
-      return rule.message ?? `${label} must be a valid email address`;
+      return rule.message ?? t('validation.email', { label });
     case 'equalsField':
-      return rule.message ?? `${label} must match ${rule.path}`;
+      return rule.message ?? t('validation.equalsField', { label, field: rule.path });
     case 'notEqualsField':
-      return rule.message ?? `${label} must not match ${rule.path}`;
+      return rule.message ?? t('validation.notEqualsField', { label, field: rule.path });
     case 'requiredWhen':
-      return rule.message ?? `${label} is required`;
+      return rule.message ?? t('validation.required', { label });
     case 'requiredUnless':
-      return rule.message ?? `${label} is required`;
+      return rule.message ?? t('validation.required', { label });
     case 'async':
-      return rule.message ?? `${label} failed async validation`;
+      return rule.message ?? t('validation.async', { label });
   }
 }
-

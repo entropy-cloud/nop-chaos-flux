@@ -36,6 +36,8 @@ import {
 
 const PROVIDER_BUILD_ORDER = ['actionScope', 'componentRegistry', 'classAliases'] as const;
 
+const MAX_COMPILE_DEPTH = 64;
+
 function buildWrapProvidersClosure(providers: TemplateNode['providerPlan']): WrapProvidersFn {
   let fn: WrapProvidersFn = (_wp, _v, ch) => ch;
 
@@ -66,7 +68,11 @@ export function createSchemaCompiler(input: {
     return (input.plugins ?? []).reduce((current, plugin) => plugin.afterCompile?.(current) ?? current, template);
   }
 
-  function compileSchemaToTemplateNodes(schema: SchemaInput, options: CompileSchemaOptions = {}): TemplateNode | TemplateNode[] {
+  function compileSchemaToTemplateNodes(schema: SchemaInput, options: CompileSchemaOptions = {}, depth = 0): TemplateNode | TemplateNode[] {
+    if (depth > MAX_COMPILE_DEPTH) {
+      throw new Error(`Schema compilation exceeded maximum nesting depth (${MAX_COMPILE_DEPTH}). Check for circular region references or overly deep nesting at path: ${options.basePath ?? '$'}`);
+    }
+
     const prepared = applyBeforeCompilePlugins(schema);
     const diagnostics = createSchemaCompilerDiagnosticsContext(options, 'compile');
     const cidState = options.cidState ?? input.defaultCidState ?? createCompiledCidState();
@@ -100,7 +106,7 @@ export function createSchemaCompiler(input: {
         parentPath: options.parentPath,
         schemaUrl: options.schemaUrl,
         renderer: wrappedRenderer
-      }, diagnostics);
+      }, diagnostics, depth);
       });
 
       const nodes = enrichTemplateNodeIds(compiled, cidState);
@@ -123,7 +129,7 @@ export function createSchemaCompiler(input: {
         parentPath: options.parentPath,
         schemaUrl: options.schemaUrl,
         renderer: wrappedRenderer
-      }, diagnostics),
+      }, diagnostics, depth),
       cidState
     );
 
@@ -134,7 +140,8 @@ export function createSchemaCompiler(input: {
   function compileSingleNode(
     schema: BaseSchema,
     options: CompileNodeOptions,
-    diagnostics: SchemaCompilerDiagnosticsContext = noopDiagnostics
+    diagnostics: SchemaCompilerDiagnosticsContext = noopDiagnostics,
+    depth = 0
   ): TemplateNode {
     const renderer = options.renderer;
     const path = options.path;
@@ -169,11 +176,12 @@ export function createSchemaCompiler(input: {
         const regionMeta = rule.kind === 'region' || isSchemaInput(value)
           ? { params: rule.params, isolate: rule.isolate }
           : undefined;
+        const compileAtNextDepth: typeof compileSchemaToTemplateNodes = (s, o) => compileSchemaToTemplateNodes(s, o, depth + 1);
         regions[rule.regionKey ?? key] = createTemplateRegion(
           rule.regionKey ?? key,
           value,
           `${path}.${rule.regionKey ?? key}`,
-          compileSchemaToTemplateNodes,
+          compileAtNextDepth,
           regionMeta
         );
         continue;
@@ -184,7 +192,7 @@ export function createSchemaCompiler(input: {
             value,
             path,
             regions,
-            compileSchema: compileSchemaToTemplateNodes
+            compileSchema: (s: SchemaInput, o?: CompileSchemaOptions) => compileSchemaToTemplateNodes(s, o, depth + 1)
           })
         : value;
 

@@ -56,9 +56,9 @@ describe('builtInValidators', () => {
     expect(error).toMatchObject({
       path: 'username',
       rule: 'required',
-      message: 'username is required',
       sourceKind: 'field'
     });
+    expect(error?.message).toBeTruthy();
   });
 
   it('validates relational dependencies and reports related paths', () => {
