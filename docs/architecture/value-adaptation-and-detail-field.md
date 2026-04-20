@@ -148,14 +148,12 @@ interface ValueAdapter<TExternal = unknown, TInternal = unknown> {
 - `detail-field` / `detail-view` 继续在 adapter 之上保留 owner-managed staged lifecycle
 - `object-field` / `variant-field` 只复用 adapter 层，不引入 confirm/cancel
 
-staged owner 仍然可以暴露一个 helper：
+staged owner 仍然可以保留一组局部 helper 函数：
 
 ```ts
-interface ValueAdaptationOwnerHelper {
-  runTransformIn(...): Promise<unknown>;
-  runTransformOut(...): Promise<unknown>;
-  runValidate(...): Promise<ValidationResult>;
-}
+runTransformIn(...): Promise<unknown>
+runTransformOut(...): Promise<unknown>
+runValidate(...): Promise<ValidationResult>
 ```
 
 具体 helper 名称不是本文关心的重点，但“共享 `ValueAdapter` 协议 + 可选 staged helper”这条边界应该保持稳定。

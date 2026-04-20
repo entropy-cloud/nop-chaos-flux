@@ -16,7 +16,7 @@
 
 1. **JSX 层散落**：`input-text`、`textarea`、`select`、`radio-group` 在 JSX 里做 `null → ''`、`String(value)`；`checkbox` 用 `coerceBooleanString` 作为 `toFormValue` 回调；`checkbox-group` 做 `Array.isArray(rawValue) ? rawValue : []`。这些逻辑不可复用、不可测试、不可声明。
 2. **`toFormValue` 回调**：`useFormFieldController` 的读路径通过 `useBoundFieldValue` 返回原始值，不做入站转换；写路径通过 `toFormValue` 回调做单向转换。没有双向适配、没有 validate 阶段。
-3. **`valueAdaptationOwnerHelper`**：是三个无状态纯函数（`runTransformIn` / `runTransformOut` / `runValidate`），不持有 draft lifecycle 状态。`detail-field` / `detail-view` 的 staged lifecycle 由 renderer 自行管理，helper 只负责 action 执行和 payload/result 规则。但 `object-field` / `array-field` / `variant-field` 完全没用它——不是不需要值适配，而是当前 helper 的 API 以 action schema 为入参，对不需要 action 的简单字段不够轻量。
+3. **detail staged-owner helper functions**：是三个无状态纯函数（`runTransformIn` / `runTransformOut` / `runValidate`），不持有 draft lifecycle 状态。`detail-field` / `detail-view` 的 staged lifecycle 由 renderer 自行管理，helper 只负责 action 执行和 payload/result 规则。但 `object-field` / `array-field` / `variant-field` 完全没用它——不是不需要值适配，而是当前 helper 的 API 以 action schema 为入参，对不需要 action 的简单字段不够轻量。
 
 后果：
 - 每新增一种字段类型（date-picker、time-input、rich-text 等），都需要在 renderer 里重新发明值转换。
@@ -27,7 +27,7 @@
 
 ### Already Live
 
-- `valueAdaptationOwnerHelper` (`packages/flux-renderers-form-advanced/src/detail-view/value-adaptation-helper.ts`, 173 行) 提供了三个无状态纯函数 `runTransformIn` / `runTransformOut` / `runValidate`，接受 `ActionSchema` 和 `ActionRunner`，返回 Promise。staged lifecycle（draft 创建、confirm/cancel）由 `detail-field.tsx` 和 `detail-view.tsx` 各自管理，不在 helper 内。
+- `packages/flux-renderers-form-advanced/src/detail-view/value-adaptation-helper.ts` 提供了三个无状态纯函数 `runTransformIn` / `runTransformOut` / `runValidate`，接受 `ActionSchema` 和本地 runner 函数签名，返回 Promise。staged lifecycle（draft 创建、confirm/cancel）由 `detail-field.tsx` 和 `detail-view.tsx` 各自管理，不在 helper 内。
 - `useFormFieldController` (`packages/flux-renderers-form/src/field-utils.tsx`) 通过 `useBoundFieldValue` 提供读路径，通过 `useFieldHandlers` 提供 `toFormValue` 写路径回调。
 - `docs/architecture/value-adaptation-and-detail-field.md` 定义了两种 owner 模式（surface-backed staged vs inline live-edit）和共享 payload/result 规则。
 - Plan 70 已完成 `object-field`、`array-field`、`variant-field`、`detail-field`、`detail-view` 的 renderer 实现。
@@ -44,7 +44,7 @@
 - 建立轻量的 `ValueAdapter` 接口，覆盖双向值转换（`in` + `out`，均支持 async）和可选 validate 阶段，与 draft lifecycle 解耦。
 - 让 `input-text`、`checkbox`、`switch`、`textarea`、`select`、`radio-group`、`checkbox-group` 等简单字段也能通过声明式 adapter 表达值转换，替代 JSX 层散落的命令式逻辑。
 - 让 `object-field`、`variant-field` 能复用 `ValueAdapter` 调用其已声明但未执行的 `transformInAction`/`transformOutAction`（`array-field` 不在本次 adapter 迁移范围——其 scalar item wrapping 是 scope projection 关注点，不是值适配）。
-- `detail-field`/`detail-view` 继续使用完整 staged lifecycle，`valueAdaptationOwnerHelper` 保留其公开接口不变，内部委托给 `actionAdapter`。
+- `detail-field`/`detail-view` 继续使用完整 staged lifecycle，detail helper functions 内部委托给 `actionAdapter`。
 - 所有 adapter 共享同一套 default payload / result shape 规则，与 `docs/architecture/value-adaptation-and-detail-field.md` 一致。
 
 ## Non-Goals
@@ -53,7 +53,7 @@
 - 不改变 `FormRuntime.setValue` 的行为——它仍然是纯结构写入。
 - 不要求所有字段都走 action-based adapter；同步纯函数 adapter 是最常见形态。
 - 不在本计划内实现 `date-picker`、`time-input`、`rich-text` 等新字段的 adapter——它们落地时按本计划定义的协议声明即可。
-- 不替换 `valueAdaptationOwnerHelper` 的公开接口——它在 staged 场景下工作正常，Phase 4 仅重构其内部实现以委托给 `actionAdapter`。
+- 不把 detail helper functions 内联进 renderer——它们在 staged 场景下仍然是有价值的局部边界；Phase 4 仅重构其内部实现以委托给 `actionAdapter`。
 - 不迁移 `array-field` 的 scalar item scope projection 到 adapter——这是 scope projection 关注点（`{ value, index, readOnly }` 命名空间），不是值形态转换。`array-field` 的 `transformInAction`/`transformOutAction` 支持可作为 follow-up。
 - 不涉及 `RendererRuntime` 内部服务分层（plan 118）或 async epoch / scope write source metadata（plan 120）——这些是独立的架构改进方向。
 
@@ -84,12 +84,12 @@
 Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/detail-view/value-adaptation-helper.test.ts` (new), `packages/flux-renderers-form/src/renderers/input.test.tsx` (补充)
 
-- [x] 为 `valueAdaptationOwnerHelper` 的三个函数编写 characterization tests，覆盖：无 action 时的 fallback 行为（返回 rawValue/workingValue）、有 action 时的 payload 构造（`injectDefaultArgs`）、action 失败时的 fallback、`publishValidateResultErrors` 的 error 映射
+- [x] 为 detail helper functions 编写 characterization tests，覆盖：无 action 时的 fallback 行为（返回 rawValue/workingValue）、有 action 时的 payload 构造（`injectDefaultArgs`）、action 失败时的 fallback、`publishValidateResultErrors` 的 error 映射
 - [x] 为 `input-text` 的 `null → ''` 和 `checkbox` 的 `coerceBooleanString` 编写 snapshot behavior tests（记录当前行为，用于 Phase 2 回归验证）
 
 Exit Criteria:
 
-- [x] `valueAdaptationOwnerHelper` characterization tests 全部通过
+- [x] detail helper characterization tests 全部通过
 - [x] 简单字段值转换 snapshot tests 全部通过
 
 ### Phase 1 - 定义 ValueAdapter 核心接口
@@ -147,7 +147,7 @@ interface AdapterValidationIssue {
   - `nullableAdapter(inner)` — 包装 inner adapter，额外处理 null/undefined
   - `actionAdapter(transformInAction, transformOutAction?, validateAction?, dispatch)` — 基于 action schema 执行，dispatch 在构造时捕获
 - [x] 定义 `actionAdapter` 的 default payload 规则与 `value-adaptation-and-detail-field.md` 对齐：无显式 `args` 时注入 `{ value, name, readOnly }`，有显式 `args` 时 replace 不 merge
-- [x] 定义 adapter 失败时的 fallback 语义：`in` 失败返回原始值；`out` 失败返回原始工作值；`validate` 失败返回 `{ valid: false, issues: [...] }`。与当前 `valueAdaptationOwnerHelper` 的 fallback 行为一致
+- [x] 定义 adapter 失败时的 fallback 语义：`in` 失败返回原始值；`out` 失败返回原始工作值；`validate` 失败返回 `{ valid: false, issues: [...] }`。与当前 detail helper 的 fallback 行为一致
 - [x] 更新 `docs/architecture/value-adaptation-and-detail-field.md` 的 "Shared Wrapper" 章节，将 `ValueAdapter` 接口定位为所有值适配的统一协议
 
 Exit Criteria:
@@ -212,15 +212,15 @@ Exit Criteria:
 Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/detail-view/value-adaptation-helper.ts`, `packages/flux-renderers-form-advanced/src/detail-view/detail-field.tsx`, `packages/flux-renderers-form-advanced/src/detail-view/detail-view.tsx`
 
-- [x] 重构 `valueAdaptationOwnerHelper` 内部实现：`runTransformIn` 委托给 `actionAdapter.in()`，`runTransformOut` 委托给 `actionAdapter.out()`，`runValidate` 委托给 `actionAdapter.validate()`。保留 `valueAdaptationOwnerHelper` 的公开接口不变（接受 `ActionSchema` + `ActionRunner`），detail-field/detail-view 调用方无需修改
+- [x] 重构 detail helper functions 内部实现：`runTransformIn` 委托给 `actionAdapter.in()`，`runTransformOut` 委托给 `actionAdapter.out()`，`runValidate` 委托给 `actionAdapter.validate()`；后续继续保留函数级边界而不是对象包装，detail-field/detail-view 调用方只做最小改动
 - [x] staged lifecycle 调度（`runTransformIn → createDraft → validate → runTransformOut → commit`）继续由 `detail-field.tsx` 和 `detail-view.tsx` 管理，不在 helper 内
 - [x] 保留当前 fallback 语义：`runTransformIn` 失败返回 `input.rawValue`；`runTransformOut` 失败返回 `input.workingValue`。与 `actionAdapter` 的 fallback 行为一致
-- [x] Phase 0 的 `valueAdaptationOwnerHelper` characterization tests 全部通过
+- [x] Phase 0 的 detail helper characterization tests 全部通过
 
 Exit Criteria:
 
-- [x] `valueAdaptationOwnerHelper` 内部基于 `actionAdapter` 实现
-- [x] `valueAdaptationOwnerHelper` 公开接口不变，detail-field/detail-view 调用方无修改
+- [x] detail helper functions 内部基于 `actionAdapter` 实现
+- [x] detail-field/detail-view 继续通过局部 helper 边界调用，不直接内联 `actionAdapter`
 - [x] Phase 0 的 characterization tests 全部通过（行为与重构前一致）
 
 ## Validation Checklist
@@ -228,11 +228,11 @@ Exit Criteria:
 - [x] `ValueAdapter` 接口已从 `@nop-chaos/flux-core` 导出，内置工厂函数有 focused tests
 - [x] `AdapterContext` / `AdapterActionContext` 分层正确，同步 adapter 不被迫接受 scope/form/dispatch
 - [x] `actionAdapter` 的 dispatch 机制在构造时捕获，不依赖运行时注入
-- [x] adapter fallback 行为与当前 `valueAdaptationOwnerHelper` 一致
+- [x] adapter fallback 行为与当前 detail helper 一致
 - [x] 简单字段（input-text、textarea、select、checkbox、switch、radio-group、checkbox-group）已迁移到声明式 adapter，JSX 层不再有值转换逻辑
 - [x] 复合字段（object-field、variant-field）能通过 adapter 调用 transformInAction/transformOutAction
 - [x] `array-field` 的 scope projection 机制未被误改为 adapter
-- [x] detail-field / detail-view 行为不变，`valueAdaptationOwnerHelper` 公开接口不变
+- [x] detail-field / detail-view 行为不变，detail helper 边界保持稳定
 - [x] `docs/architecture/value-adaptation-and-detail-field.md` 已更新反映 ValueAdapter 接口
 - [x] Phase 0 characterization tests 全部通过
 - [x] 独立子 agent closure-audit 已完成并记录证据
