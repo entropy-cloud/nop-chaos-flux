@@ -1,4 +1,4 @@
-import type { BaseSchema } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaValue } from '@nop-chaos/flux-core';
 
 export type ChartType = 'bar' | 'line' | 'pie' | 'scatter';
 
@@ -14,8 +14,8 @@ export interface ChartSchema extends BaseSchema {
   componentId?: string;
   chartType?: ChartType;
   title?: string;
-  series?: any;
-  source?: any;
+  series?: SchemaValue;
+  source?: SchemaValue;
   xAxis?: { dataKey?: string; label?: string };
   yAxis?: { label?: string };
   height?: number | string;

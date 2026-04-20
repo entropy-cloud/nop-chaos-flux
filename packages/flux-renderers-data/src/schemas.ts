@@ -27,6 +27,8 @@ export interface TableSchema extends BaseSchema {
   loadingSlot?: BaseSchema | BaseSchema[] | string;
   stripe?: boolean;
   bordered?: boolean;
+  virtualThreshold?: number;
+  scrollHeight?: number;
   pagination?: {
     enabled?: boolean;
     currentPage?: number;

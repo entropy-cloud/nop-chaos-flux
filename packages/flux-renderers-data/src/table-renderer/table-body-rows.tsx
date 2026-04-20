@@ -1,9 +1,73 @@
 import React from 'react';
-import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
+import type { InstanceFrame, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { Button, Checkbox, RadioGroupItem, TableBody, TableCell, TableRow } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import type { TableSchema } from '../schemas';
 import type { TableRowEntry } from './types';
+
+const DEFAULT_ROW_ESTIMATE = 44;
+const OVERSCAN = 5;
+
+interface FlattenedRow {
+  kind: 'data';
+  entry: TableRowEntry;
+  rowScope: ScopeRef;
+  rowKey: string;
+  rowInstancePath: InstanceFrame[];
+  isExpanded: boolean;
+  isSelected: boolean;
+  isEven: boolean;
+}
+
+interface FlattenedExpandedRow {
+  kind: 'expanded';
+  rowKey: string;
+  columnCount: number;
+}
+
+type FlattenedItem = FlattenedRow | FlattenedExpandedRow;
+
+function buildFlattenedItems(
+  processedData: TableRowEntry[],
+  rowScopeCache: Map<string, ScopeRef>,
+  expandedRowKeys: Set<string>,
+  selectedRowKeys: Set<string>,
+  columnCount: number,
+  parentProps: RendererComponentProps<TableSchema>,
+  rowRepeatedTemplateId: string
+): FlattenedItem[] {
+  const items: FlattenedItem[] = [];
+
+  for (const entry of processedData) {
+    const rowScope = rowScopeCache.get(entry.rowKey);
+    if (!rowScope) continue;
+
+    const rowKey = entry.rowKey;
+    const rowInstancePath: InstanceFrame[] = [
+      ...(parentProps.node.instancePath ?? []),
+      { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey },
+    ];
+    const isExpanded = expandedRowKeys.has(rowKey);
+
+    items.push({
+      kind: 'data',
+      entry,
+      rowScope,
+      rowKey,
+      rowInstancePath,
+      isExpanded,
+      isSelected: selectedRowKeys.has(rowKey),
+      isEven: entry.sourceIndex % 2 === 0,
+    });
+
+    if (isExpanded) {
+      items.push({ kind: 'expanded', rowKey, columnCount });
+    }
+  }
+
+  return items;
+}
 
 interface TableBodyRowsProps {
   props: RendererComponentProps<TableSchema>;
@@ -17,6 +81,146 @@ interface TableBodyRowsProps {
   emptyContent: React.ReactNode;
   onToggleExpand: (rowKey: string) => void;
   onSelectRow: (rowKey: string, checked: boolean) => void;
+  virtualEnabled?: boolean;
+  scrollRef?: React.RefObject<HTMLDivElement | null>;
+}
+
+function renderDataRow(
+  item: FlattenedRow,
+  schemaProps: TableSchema,
+  columns: import('../schemas').TableColumnSchema[],
+  helpers: RendererComponentProps<TableSchema>['helpers'],
+  parentProps: RendererComponentProps<TableSchema>,
+  onToggleExpand: (rowKey: string) => void,
+  onSelectRow: (rowKey: string, checked: boolean) => void,
+  isStriped: boolean
+) {
+  const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
+
+  return (
+    <TableRow
+      data-slot="table-row"
+      data-interactive={Boolean(parentProps.events.onRowClick) || undefined}
+      data-expanded={isExpanded || undefined}
+      data-striped={isStriped && isEven ? true : undefined}
+      onClick={
+        parentProps.events.onRowClick
+          ? (event) => void parentProps.events.onRowClick?.(event, { scope: rowScope })
+          : schemaProps.expandable?.expandRowByClick
+            ? () => onToggleExpand(rowKey)
+            : undefined
+      }
+    >
+      {schemaProps.expandable ? (
+        <TableCell data-slot="table-expand-cell">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleExpand(rowKey);
+            }}
+            className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded"
+            aria-label={isExpanded ? 'Collapse' : 'Expand'}
+          >
+            {isExpanded ? <ChevronDownIcon className="size-4" /> : <ChevronRightIcon className="size-4" />}
+          </Button>
+        </TableCell>
+      ) : null}
+
+      {schemaProps.rowSelection ? (
+        <TableCell data-slot="table-select-cell" onClick={(event) => event.stopPropagation()}>
+          {schemaProps.rowSelection.type === 'checkbox' ? (
+            <Checkbox checked={isSelected} onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))} />
+          ) : (
+            <RadioGroupItem value={rowKey} />
+          )}
+        </TableCell>
+      ) : null}
+
+      {columns.map((column, columnIndex) => {
+        const cellRegion = typeof column.cellRegionKey === 'string' ? parentProps.regions[column.cellRegionKey] : undefined;
+        const buttonRegion = typeof column.buttonsRegionKey === 'string' ? parentProps.regions[column.buttonsRegionKey] : undefined;
+
+        if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
+          return (
+            <TableCell key={column.name ?? `op-${columnIndex}`} style={column.width ? { width: column.width } : undefined}>
+              <div data-slot="table-actions" className="flex flex-wrap gap-3" onClick={(event) => event.stopPropagation()}>
+                {buttonRegion
+                  ? buttonRegion.render({
+                      bindings: { record: entry.record, index: entry.sourceIndex },
+                      instancePath: rowInstancePath,
+                      pathSuffix: `buttons.${columnIndex}`,
+                    })
+                  : (column.buttons ?? []).map((button: import('@nop-chaos/flux-core').BaseSchema, buttonIndex: number) => (
+                      <div key={button.id ?? button.name ?? `btn-${buttonIndex}`}>
+                        {helpers.render(button, {
+                          scope: rowScope,
+                          instancePath: rowInstancePath,
+                          pathSuffix: `buttons.${buttonIndex}`,
+                        })}
+                      </div>
+                    ))}
+              </div>
+            </TableCell>
+          );
+        }
+
+        if (cellRegion) {
+          return (
+            <TableCell key={`${column.name ?? columnIndex}`} style={column.width ? { width: column.width } : undefined}>
+              {cellRegion.render({
+                bindings: { record: entry.record, index: entry.sourceIndex },
+                instancePath: rowInstancePath,
+                pathSuffix: `cells.${columnIndex}`,
+              })}
+            </TableCell>
+          );
+        }
+
+        return (
+          <TableCell key={`${column.name ?? columnIndex}`} style={column.width ? { width: column.width } : undefined}>
+            {column.name ? String(entry.record[column.name] ?? '') : ''}
+          </TableCell>
+        );
+      })}
+    </TableRow>
+  );
+}
+
+function renderExpandedRow(
+  item: FlattenedExpandedRow,
+  schemaProps: TableSchema,
+  helpers: RendererComponentProps<TableSchema>['helpers'],
+  parentProps: RendererComponentProps<TableSchema>,
+  rowScopeCache: Map<string, ScopeRef>,
+  rowRepeatedTemplateId: string
+) {
+  const regionKey = schemaProps.expandable?.expandedRowRegionKey;
+  if (!regionKey) return null;
+
+  const rowScope = rowScopeCache.get(item.rowKey);
+  if (!rowScope) return null;
+
+  const rowInstancePath: InstanceFrame[] = [
+    ...(parentProps.node.instancePath ?? []),
+    { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: item.rowKey },
+  ];
+
+  return (
+    <TableRow data-slot="table-expanded-row">
+      <TableCell colSpan={item.columnCount} data-slot="table-expanded-cell">
+        {parentProps.regions[regionKey]
+          ? helpers.render(parentProps.regions[regionKey].templateNode, {
+              scope: rowScope,
+              instancePath: rowInstancePath,
+              pathSuffix: `expanded.${item.rowKey}`,
+            })
+          : null}
+      </TableCell>
+    </TableRow>
+  );
 }
 
 export function TableBodyRows({
@@ -30,7 +234,58 @@ export function TableBodyRows({
   isStriped,
   emptyContent,
   onToggleExpand,
-  onSelectRow
+  onSelectRow,
+  virtualEnabled,
+  scrollRef,
+}: TableBodyRowsProps) {
+  if (!virtualEnabled || processedData.length === 0) {
+    return (
+      <NonVirtualBody
+        props={props}
+        processedData={processedData}
+        rowScopeCache={rowScopeCache}
+        rowRepeatedTemplateId={rowRepeatedTemplateId}
+        expandedRowKeys={expandedRowKeys}
+        selectedRowKeys={selectedRowKeys}
+        columnCount={columnCount}
+        isStriped={isStriped}
+        emptyContent={emptyContent}
+        onToggleExpand={onToggleExpand}
+        onSelectRow={onSelectRow}
+      />
+    );
+  }
+
+  return (
+    <VirtualBody
+      props={props}
+      processedData={processedData}
+      rowScopeCache={rowScopeCache}
+      rowRepeatedTemplateId={rowRepeatedTemplateId}
+      expandedRowKeys={expandedRowKeys}
+      selectedRowKeys={selectedRowKeys}
+      columnCount={columnCount}
+      isStriped={isStriped}
+      emptyContent={emptyContent}
+      onToggleExpand={onToggleExpand}
+      onSelectRow={onSelectRow}
+      scrollRef={scrollRef}
+    />
+  );
+}
+
+function NonVirtualBody({
+  props,
+  processedData,
+  rowScopeCache,
+  rowRepeatedTemplateId,
+  expandedRowKeys,
+  selectedRowKeys,
+  columnCount,
+  isStriped,
+  emptyContent,
+  onToggleExpand,
+  onSelectRow,
 }: TableBodyRowsProps) {
   const schemaProps = props.props as TableSchema;
   const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : [];
@@ -47,131 +302,122 @@ export function TableBodyRows({
       ) : (
         processedData.map((entry) => {
           const rowScope = rowScopeCache.get(entry.rowKey);
-
-          if (!rowScope) {
-            return null;
-          }
+          if (!rowScope) return null;
 
           const rowKey = entry.rowKey;
-          const rowInstancePath = [
+          const rowInstancePath: InstanceFrame[] = [
             ...(props.node.instancePath ?? []),
-            { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey }
-          ] as const;
+            { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey },
+          ];
           const isExpanded = expandedRowKeys.has(rowKey);
           const isSelected = selectedRowKeys.has(rowKey);
           const isEven = entry.sourceIndex % 2 === 0;
 
           return (
             <React.Fragment key={rowKey}>
-              <TableRow
-                data-slot="table-row"
-                data-interactive={Boolean(props.events.onRowClick) || undefined}
-                data-expanded={isExpanded || undefined}
-                data-striped={isStriped && isEven ? true : undefined}
-                onClick={
-                  props.events.onRowClick
-                    ? (event) =>
-                        void props.events.onRowClick?.(event, { scope: rowScope })
-                    : schemaProps.expandable?.expandRowByClick
-                      ? () => onToggleExpand(rowKey)
-                      : undefined
-                }
-              >
-                {schemaProps.expandable ? (
-                  <TableCell data-slot="table-expand-cell">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onToggleExpand(rowKey);
-                      }}
-                      className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded"
-                      aria-label={isExpanded ? 'Collapse' : 'Expand'}
-                    >
-                      {isExpanded ? <ChevronDownIcon className="size-4" /> : <ChevronRightIcon className="size-4" />}
-                    </Button>
-                  </TableCell>
-                ) : null}
-
-                {schemaProps.rowSelection ? (
-                  <TableCell data-slot="table-select-cell" onClick={(event) => event.stopPropagation()}>
-                    {schemaProps.rowSelection.type === 'checkbox' ? (
-                      <Checkbox checked={isSelected} onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))} />
-                    ) : (
-                      <RadioGroupItem value={rowKey} />
-                    )}
-                  </TableCell>
-                ) : null}
-
-                {columns.map((column, columnIndex) => {
-                  const cellRegion = typeof column.cellRegionKey === 'string' ? props.regions[column.cellRegionKey] : undefined;
-                  const buttonRegion = typeof column.buttonsRegionKey === 'string' ? props.regions[column.buttonsRegionKey] : undefined;
-
-                  if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
-                    return (
-                      <TableCell key={column.name ?? `op-${columnIndex}`} style={column.width ? { width: column.width } : undefined}>
-                        <div data-slot="table-actions" className="flex flex-wrap gap-3" onClick={(event) => event.stopPropagation()}>
-                          {buttonRegion
-                            ? buttonRegion.render({
-                                bindings: { record: entry.record, index: entry.sourceIndex },
-                                instancePath: rowInstancePath,
-                                pathSuffix: `buttons.${columnIndex}`,
-                              })
-                            : (column.buttons ?? []).map((button: import('@nop-chaos/flux-core').BaseSchema, buttonIndex: number) => (
-                                <div key={button.id ?? button.name ?? `btn-${buttonIndex}`}>
-                                  {helpers.render(button, {
-                                    scope: rowScope,
-                                    instancePath: rowInstancePath,
-                                    pathSuffix: `buttons.${buttonIndex}`,
-                                  })}
-                                </div>
-                              ))}
-                        </div>
-                      </TableCell>
-                    );
-                  }
-
-                  if (cellRegion) {
-                    return (
-                      <TableCell
-                        key={`${column.name ?? columnIndex}`}
-                        style={column.width ? { width: column.width } : undefined}
-                      >
-                        {cellRegion.render({
-                          bindings: { record: entry.record, index: entry.sourceIndex },
-                          instancePath: rowInstancePath,
-                          pathSuffix: `cells.${columnIndex}`,
-                        })}
-                      </TableCell>
-                    );
-                  }
-
-                  return (
-                    <TableCell key={`${column.name ?? columnIndex}`} style={column.width ? { width: column.width } : undefined}>
-                      {column.name ? String(entry.record[column.name] ?? '') : ''}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-
-              {isExpanded && schemaProps.expandable?.expandedRowRegionKey ? (
-                <TableRow data-slot="table-expanded-row">
-                  <TableCell colSpan={columnCount} data-slot="table-expanded-cell">
-                    {props.regions[schemaProps.expandable.expandedRowRegionKey]
-                      ? helpers.render(props.regions[schemaProps.expandable.expandedRowRegionKey].templateNode, {
-                          scope: rowScope,
-                          instancePath: rowInstancePath,
-                          pathSuffix: `expanded.${rowKey}`,
-                        })
-                      : null}
-                  </TableCell>
-                </TableRow>
-              ) : null}
+              {renderDataRow(
+                { kind: 'data', entry, rowScope, rowKey, rowInstancePath, isExpanded, isSelected, isEven },
+                schemaProps, columns, helpers, props, onToggleExpand, onSelectRow, isStriped
+              )}
+              {isExpanded && schemaProps.expandable?.expandedRowRegionKey
+                ? renderExpandedRow(
+                    { kind: 'expanded', rowKey, columnCount },
+                    schemaProps, helpers, props, rowScopeCache, rowRepeatedTemplateId
+                  )
+                : null}
             </React.Fragment>
           );
         })
+      )}
+    </TableBody>
+  );}
+
+/* eslint-disable react-hooks/incompatible-library */
+function VirtualBody({
+  props,
+  processedData,
+  rowScopeCache,
+  rowRepeatedTemplateId,
+  expandedRowKeys,
+  selectedRowKeys,
+  columnCount,
+  isStriped,
+  onToggleExpand,
+  onSelectRow,
+  scrollRef,
+}: TableBodyRowsProps) {
+  const parentRef = scrollRef;
+  const schemaProps = props.props as TableSchema;
+  const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : [];
+  const helpers = props.helpers;
+
+  const flattenedItems = React.useMemo(
+    () => buildFlattenedItems(processedData, rowScopeCache, expandedRowKeys, selectedRowKeys, columnCount, props, rowRepeatedTemplateId),
+    [processedData, rowScopeCache, expandedRowKeys, selectedRowKeys, columnCount, props, rowRepeatedTemplateId]
+  );
+
+  const rowVirtualizer = useVirtualizer({
+    count: flattenedItems.length,
+    getScrollElement: () => parentRef?.current ?? null,
+    estimateSize: (index) => {
+      const item = flattenedItems[index];
+      if (!item) return DEFAULT_ROW_ESTIMATE;
+      return item.kind === 'expanded' ? 120 : DEFAULT_ROW_ESTIMATE;
+    },
+    overscan: OVERSCAN,
+    getItemKey: (index) => {
+      const item = flattenedItems[index];
+      if (!item) return `item-${index}`;
+      return item.kind === 'expanded' ? `expanded-${item.rowKey}` : `data-${item.rowKey}`;
+    },
+  });
+
+  return (
+    <TableBody>
+      {flattenedItems.length === 0 ? (
+        <TableRow data-slot="table-empty-row">
+          <TableCell colSpan={columnCount} data-slot="table-empty-cell">
+            <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {''}
+            </div>
+          </TableCell>
+        </TableRow>
+      ) : (
+        <>
+          {rowVirtualizer.getTotalSize() > 0 && (() => {
+            const items = rowVirtualizer.getVirtualItems();
+            return items.length > 0 ? <tr aria-hidden style={{ height: items[0].start }} /> : null;
+          })()}
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const item = flattenedItems[virtualRow.index];
+            if (!item) return null;
+
+            if (item.kind === 'data') {
+              return (
+                <React.Fragment key={virtualRow.key}>
+                  {renderDataRow(
+                    item, schemaProps, columns, helpers, props, onToggleExpand, onSelectRow, isStriped
+                  )}
+                </React.Fragment>
+              );
+            }
+
+            return (
+              <React.Fragment key={virtualRow.key}>
+                {renderExpandedRow(
+                  item, schemaProps, helpers, props, rowScopeCache, rowRepeatedTemplateId
+                )}
+              </React.Fragment>
+            );
+          })}
+          {rowVirtualizer.getTotalSize() > 0 && (() => {
+            const items = rowVirtualizer.getVirtualItems();
+            if (items.length === 0) return null;
+            const lastItem = items[items.length - 1];
+            const bottomPad = rowVirtualizer.getTotalSize() - lastItem.end;
+            return bottomPad > 0 ? <tr aria-hidden style={{ height: bottomPad }} /> : null;
+          })()}
+        </>
       )}
     </TableBody>
   );

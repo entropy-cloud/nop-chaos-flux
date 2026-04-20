@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useSchemaProps } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -83,11 +83,22 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const isBordered = schemaProps.bordered === true;
   const columnCount = columns.length + (schemaProps.rowSelection ? 1 : 0) + (schemaProps.expandable ? 1 : 0);
 
+  const virtualThreshold = schemaProps.virtualThreshold;
+  const scrollHeight = schemaProps.scrollHeight;
+  const virtualEnabled = !paginationEnabled && typeof virtualThreshold === 'number' && source.length > virtualThreshold;
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   return (
     <div className={cn('nop-table', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {hasRendererSlotContent(headerContent) ? <div data-slot="table-header-region">{headerContent}</div> : null}
 
-      <div className="relative" data-slot="table-container">
+      <div
+        ref={virtualEnabled ? scrollRef : undefined}
+        className={virtualEnabled ? 'overflow-auto' : 'relative'}
+        style={virtualEnabled && scrollHeight ? { maxHeight: scrollHeight } : undefined}
+        data-slot="table-container"
+      >
         <Table data-striped={isStriped || undefined} data-bordered={isBordered || undefined}>
           <TableHeader data-slot="table-header">
             <TableHeaderRow
@@ -116,6 +127,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             emptyContent={emptyContent}
             onToggleExpand={handleToggleExpand}
             onSelectRow={handleSelectRow}
+            virtualEnabled={virtualEnabled}
+            scrollRef={scrollRef}
           />
         </Table>
 
