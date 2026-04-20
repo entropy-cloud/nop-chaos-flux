@@ -84,6 +84,7 @@ Choose the smallest document that matches the task.
 | 设计或实现某个具体组件的 schema 契约、核心能力和落地路线 | `docs/components/index.md` | 对应组件目录下的 `docs/components/<component>/design.md`，再回看相关 `docs/architecture/*.md` |
 | Design namespaced action extension, host action scopes, `xui:imports` semantics, or dynamic domain libraries loaded into owner semantic actions | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/capability-projection-manifest.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/flow-designer/config-schema.md` |
 | Design typed host projection fields, namespaced host capability payloads, or versioned host contracts for compiler validation | `docs/architecture/capability-projection-manifest.md` | `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/schema-file-validator.md`, `docs/architecture/action-scope-and-imports.md` |
+| Design shared capability contract language across host manifests and ordinary renderers, or decide `FluxValueShape` vs runtime schema libraries such as Zod | `docs/architecture/capability-contract-model.md` | `docs/architecture/capability-projection-manifest.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/renderer-runtime.md` |
 | 设计 Flux schema 文件校验器、导入前结构校验或命名空间属性忽略策略 | `docs/architecture/schema-file-validator.md` | `docs/architecture/action-scope-and-imports.md`, `docs/references/flux-json-conventions.md` |
 | Change slot-like fields such as `title`, `empty`, or `onClick` | `docs/architecture/field-metadata-slot-modeling.md` | `docs/architecture/renderer-runtime.md` |
 | Change validation behavior, hidden-field submit/validate/clear semantics, or form field participation | `docs/architecture/form-validation.md` | `docs/references/form-validation-runtime-types.md`, `docs/architecture/flux-runtime-module-boundaries.md` |
@@ -139,6 +140,7 @@ Architecture intent lives primarily in:
 - `docs/architecture/flux-runtime-module-boundaries.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/capability-projection-manifest.md`
+- `docs/architecture/capability-contract-model.md`
 - `docs/architecture/debugger-runtime.md`
 - `docs/architecture/playground-experience.md`
 - `docs/architecture/theme-compatibility.md`

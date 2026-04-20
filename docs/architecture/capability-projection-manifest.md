@@ -16,6 +16,9 @@ This document does **not** replace `ActionScope`, `ComponentHandleRegistry`, or 
 
 It adds the missing static manifest contract that those runtime mechanisms currently lack.
 
+It also does **not** act as the generic metadata envelope for ordinary renderers such as `button`, `input-text`, or `table`.
+Those renderers may reuse the same structural shape language, but they stay on the ordinary renderer contract path rather than becoming host-family manifests.
+
 ## Current Code Anchors
 
 When this document needs to be checked against code, start with:
@@ -182,6 +185,50 @@ Typical examples:
 Not every component needs a manifest.
 
 Simple renderer-local component handles such as `component:submit` on a form usually stay on the ordinary renderer contract path unless they become a broad platform surface.
+
+Related renderer taxonomy:
+
+- `instance-renderer` and `flux-owner-renderer` do not become host manifests just because they expose capabilities
+- only `domain-host-renderer` should define `hostContract`
+
+Cross-reference: `docs/architecture/capability-contract-model.md`
+
+## Relationship To Renderer-Level Contracts
+
+The manifest envelope is intentionally scoped to host/domain boundaries.
+
+Ordinary renderer contracts may still need static metadata for:
+
+- property editor tooling
+- component-level capability hints
+- builder palette/search/category metadata
+- instance-targeted capability documentation for `component:<method>` authoring
+
+Those needs should **not** be modeled by turning every renderer into a host-family manifest.
+
+Instead, the architecture baseline is:
+
+- `HostCapabilityProjectionManifest` stays the host/domain envelope
+- ordinary renderer metadata lives on `RendererDefinition`
+- both layers may reuse the same structural shape contract (`FluxValueShape`) for args/results/value shape description
+
+Why this split matters:
+
+- host manifest contract is family/version/publication-boundary oriented
+- renderer metadata is instance/property/editor oriented
+- host projection is readonly schema-visible host state
+- renderer property metadata usually describes author-editable schema fields, not readonly host projection
+
+Representative rule:
+
+- `form`, `table`, and `crud` may be strong Flux-native owners, but they still remain ordinary renderer metadata + component capability cases unless they cross into real host-family semantics
+
+In other words:
+
+- **share the shape language**
+- **do not collapse the envelopes**
+
+Cross-reference: `docs/architecture/capability-contract-model.md`
 
 ## Core Concepts
 
@@ -462,6 +509,16 @@ Required capabilities of that reused shape contract:
 - `unknown` escape hatch for intentionally broad payloads
 
 This document uses `FluxValueShape` directionally only as a placeholder name for that reused compiler-owned shape contract.
+
+That reused shape contract is not host-exclusive.
+
+It is the shared structural contract IR for:
+
+- host manifest projection/capability shapes
+- renderer-level property metadata when a renderer wants typed static authoring metadata
+- renderer-level component capability metadata when a component exposes instance-targeted methods
+
+The manifest layer owns the host envelope, but not exclusive ownership of the underlying shape language.
 
 ## Projection Rules
 

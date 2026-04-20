@@ -69,6 +69,12 @@ And add a third explicit targeting mechanism:
 
 Do not overload `ScopeRef` so that one mechanism must serve both roles.
 
+Static contract note:
+
+- namespace-targeted capabilities and component-targeted capabilities may share the same structural method-contract language
+- runtime lookup still remains split between `ActionScope` and `ComponentHandleRegistry`
+- do not force both into one runtime registry just because they share similar method metadata
+
 ## Mental Model
 
 The current runtime should be read as four distinct layers:
@@ -252,6 +258,44 @@ interface ComponentCapabilities {
 ```
 
 `store` is optional metadata, not the public contract. The public contract is the explicitly exposed capability surface.
+
+### Shared Contract Language Versus Runtime Lookup
+
+Flux should distinguish:
+
+- **how a capability is described statically**
+- **how a capability is resolved at runtime**
+
+The current baseline keeps runtime lookup split:
+
+- `ActionScope` resolves namespace capabilities
+- `ComponentHandleRegistry` resolves instance-targeted capabilities
+
+That split should remain even when the two paths share a common static method-contract model.
+
+Recommended common contract direction:
+
+```ts
+interface CapabilityMethodContract {
+  args?: FluxValueShape;
+  result?: FluxValueShape;
+  description?: string;
+  deprecated?: boolean;
+}
+```
+
+Use it in two different envelopes:
+
+- host manifest capability methods (`designer:addNode`)
+- renderer/component capability metadata (`component:submit`, `component:refresh`)
+
+Do not collapse those two envelopes into one because:
+
+- namespace lookup is lexical and family-oriented
+- component lookup is instance-targeted and registry-oriented
+- host manifest also carries projection, family, version, and publication attribution, which ordinary component handles do not need
+
+Cross-reference: `docs/architecture/capability-contract-model.md`
 
 ### DOM Ref Access
 
@@ -1127,6 +1171,7 @@ The active decisions from this document are:
 - preserve `ScopeRef` as data scope only
 - add a separate action-scope layer for namespaced behavior lookup
 - add a separate component-handle registry for instance-targeted capability lookup
+- allow the two capability paths to share a structural contract language without forcing one shared runtime lookup mechanism
 - keep built-in platform actions centralized and explicit
 - use namespaced actions for domain hosts and imported libraries
 - do not treat store methods as automatically callable public API; components explicitly expose supported capabilities

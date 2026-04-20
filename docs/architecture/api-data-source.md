@@ -230,7 +230,7 @@ Current baseline note:
 - current `DataSourceSchema` baseline now supports both `api` and `formula` producers under the same runtime-owned registration path
 - formula `data-source` uses `name` as the normative publication path for both api and formula producers
 - current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
-- current `DataSourceController` baseline now exposes `DataSourceState` via `getState()` with `started`, `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`; api sources drive fetch lifecycle while formula sources publish the same public contract with synchronous semantics
+- current `DataSourceController` baseline now exposes `DataSourceState` via `getState()` with legacy status fields such as `started`, `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`, and now also includes additive convenience fields such as `hasData`, `hasError`, `isInitialLoading`, `isRefreshing`, and `inFlightCount`; api sources drive fetch lifecycle while formula sources publish the same public contract with synchronous semantics
 - current runtime baseline now also exposes explicit source refresh by id at the runtime boundary; refresh remains scope-scoped first, so duplicate source ids in different scopes do not collapse into one page-global namespace
 - current code may still accept older built-in target field names for `refreshSource` for compatibility, but the architecture baseline treats source refresh as built-in runtime-entry targeting rather than component-handle targeting
 - current source runtime now has a dependency-aware invalidation baseline: formula sources automatically recompute and api sources automatically refresh when changed scope paths hit the dependencies collected from formula evaluation or request-config evaluation
@@ -442,6 +442,36 @@ Rules:
 - `statusPath`, when present, is the readonly status-summary path for loading/error/stale state
 - `interval`, `stopWhen`, and publication controls remain `data-source`-specific extensions above plain `source`
 
+### Refresh Dedup Semantics
+
+For API-backed `data-source`, dependency invalidation, explicit `refreshSource`, and direct controller `refresh()` may all trigger a refresh while an earlier request is still in flight.
+
+Normative rule:
+
+- source-level refresh reentry must honor `control.dedup` / legacy `api.dedupStrategy` rather than hardcoding one internal policy for all sources
+
+Current baseline semantics:
+
+- `cancel-previous`
+  - abort the active in-flight request and start the latest refresh
+  - this remains the default behavior when no narrower override is configured
+- `ignore-new`
+  - keep the current in-flight request
+  - ignore the newly triggered refresh
+- `parallel`
+  - allow the new refresh to start without aborting the current in-flight request
+  - multiple in-flight source requests may therefore overlap
+
+Lifecycle rule:
+
+- regardless of dedup strategy, `stop()` and `reset()` must abort all in-flight requests owned by the source controller
+
+Design intent:
+
+- request-runtime dedup describes transport-level overlap semantics for equivalent executable requests
+- source refresh dedup describes source-controller behavior when the same named source is invalidated again before its prior refresh settles
+- the two layers should stay aligned where possible, but source refresh policy remains runtime-owned source orchestration, not renderer-owned behavior
+
 ### Binding Target
 
 `name` is the normative author-visible identity and default publication path.
@@ -531,6 +561,12 @@ When an upstream root changes:
 - formula sources recompute according to the synchronous-before-reaction rule above when possible, otherwise lazily on next consumption or explicit refresh
 - API sources invalidate and refresh according to source policy
 
+For API-backed sources, "source policy" here includes refresh dedup behavior:
+
+- `cancel-previous` means the latest invalidation supersedes the current request
+- `ignore-new` means repeated invalidations collapse into the already-running request
+- `parallel` means invalidations may overlap as concurrent in-flight source requests
+
 Collection owners such as tables or loops should translate parent collection changes into row-local root changes so row consumers can depend on `row` or `record` instead of invalidating on the whole collection binding.
 
 The runtime goal is targeted invalidation, not eager full-tree re-evaluation.
@@ -595,7 +631,12 @@ The source abstraction is responsible for value production, not for built-in loa
 - if schema needs author-visible source status, the preferred cross-runtime contract is explicit `statusPath`
 - `statusPath` is readonly runtime summary data, not a second authoritative business value
 - narrower subsystems may still project additional summary values, but they must not replace the core `statusPath` contract with implicit hidden sibling paths
-- current source `statusPath` summary preserves the legacy `started`, `loading`, `ready`, `stale`, and `error` fields and additionally publishes timing/failure metadata such as `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`
+- current source `statusPath` summary preserves the legacy `started`, `loading`, `ready`, `stale`, and `error` fields and additionally publishes timing/failure metadata such as `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`; current baseline also adds optional convenience fields such as `hasData`, `hasError`, `isInitialLoading`, `isRefreshing`, and `inFlightCount`
+
+Compatibility rule:
+
+- when source state needs finer-grained loading semantics, add new fields rather than redefining or deleting existing `status`, `fetchStatus`, `loading`, or `ready` signals
+- consumers may continue using legacy fields, while newer consumers may opt into the finer-grained additive fields
 
 ### Retry Ownership
 

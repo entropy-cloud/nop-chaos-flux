@@ -201,6 +201,51 @@ Meaning:
 - `helpers` exposes stable imperative runtime helpers
 - `templateNode.lifecycleActions` carries compiled `onMount` / `onUnmount` actions when the schema declares them
 
+## Renderer-Level Static Metadata
+
+`RendererDefinition` is not only the runtime component-registration record.
+It is also the normative place for ordinary renderer static metadata.
+
+Typical renderer-level metadata needs include:
+
+- display name, icon, and category for discovery/palette tooling
+- static property metadata for inspector/editor tooling
+- instance-targeted capability metadata for `component:<method>` authoring and diagnostics
+- layout hints or placement metadata for future builder tooling
+
+Important boundary:
+
+- ordinary renderer metadata belongs on `RendererDefinition`
+- host/domain manifest envelope belongs on `RendererDefinition.hostContract`
+- do not turn ordinary renderers into host-family manifests
+
+Recommended direction:
+
+```ts
+interface RendererPropContract {
+  shape: FluxValueShape;
+  displayName: string;
+  description?: string;
+  editorType?: string;
+  defaultValue?: unknown;
+}
+
+interface RendererCapabilityContract {
+  handle: string;
+  displayName: string;
+  description?: string;
+  args?: FluxValueShape;
+  result?: FluxValueShape;
+}
+```
+
+The key rule is that renderer-level contracts may reuse `FluxValueShape` as the shared structural contract IR, while still remaining renderer metadata rather than host manifests.
+
+Cross-reference:
+
+- `docs/architecture/capability-contract-model.md`
+- `docs/architecture/capability-projection-manifest.md`
+
 ## Props Versus Hooks
 
 ### Pass by props
@@ -783,6 +828,16 @@ The current performance baseline further narrows that expectation:
 
 - row scopes should be isolated by default
 - non-isolated row scopes are an explicit opt-out for real parent-binding needs
+
+Table- and CRUD-like renderers are also the representative example for instance-targeted capability metadata.
+
+Examples of instance-targeted capabilities:
+
+- `component:refresh`
+- `component:getSelection`
+- `component:setSelection`
+
+Those capabilities should be described as renderer/component metadata and resolved through `ComponentHandleRegistry`, not modeled as host-family manifest methods.
 
 ### Chart renderer
 

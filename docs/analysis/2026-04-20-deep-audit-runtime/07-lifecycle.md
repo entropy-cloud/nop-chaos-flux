@@ -68,10 +68,25 @@
 - **注意**: `use-node-imports.ts:57-59` 有依赖数组 `[nodeInstance]`，初审描述不准确。
 - **建议**: 可提取为 `useLatestRef(value)` 工具 hook 并加注释。
 
+### [P2] F09: variant-field runDetectVariantAction 异步 useCallback 无取消机制
+
+- **文件**: `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx:98-128`
+- **严重程度**: P2（同类问题扫描新增）
+- **effect 职责**: 检测 variant 类型变更并同步到 store
+- **现状**: `runDetectVariantAction` 是 async useCallback，内部 await 后执行状态更新。当组件卸载或 variant 快速切换时，过期的异步结果仍会写入 store。
+- **与 F01 的关系**: 与已修复的 DynamicRenderer mountedRef 问题同属"异步操作缺少取消"类别。但此处使用 useCallback 而非 useEffect，模式略有不同。
+- **建议**: 将 async 逻辑移入 useEffect + AbortController，或添加 stale generation check。
+
+## 同类问题扫描备注
+
+- **mountedRef 模式**: 全项目扫描确认 mountedRef 已全部清除（DynamicRenderer 已修复为 AbortController），无遗留实例。
+- **新增竞态**: 仅发现 variant-field.tsx 这一处新的异步竞态风险。
+
 ## 统计
 
 | 严重程度 | 数量 |
 |---------|------|
-| P1 | 1 |
+| P1 | 1（已修复） |
+| P2 | 1（新增） |
 | P3 | 5 |
 | 驳回 | 1 |
