@@ -21,6 +21,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
   const registry = createRendererRegistry(registryDefinitions);
 
   return function SchemaRenderer(props: SchemaRendererProps) {
+    const onRuntimeChange = props.onRuntimeChange;
     const onComponentRegistryChange = props.onComponentRegistryChange;
     const onActionScopeChange = props.onActionScopeChange;
     const envRef = useRef(props.env);
@@ -91,6 +92,14 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       () => props.componentRegistry ?? runtime.createComponentHandleRegistry({ id: 'root-component-registry' }),
       [props.componentRegistry, runtime]
     );
+
+    useEffect(() => {
+      onRuntimeChange?.(runtime);
+
+      return () => {
+        onRuntimeChange?.(null);
+      };
+    }, [onRuntimeChange, runtime]);
 
     useEffect(() => {
       onComponentRegistryChange?.(rootComponentRegistry);

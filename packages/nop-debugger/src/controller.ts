@@ -3,7 +3,8 @@ import type {
   ActionScope,
   ComponentHandleRegistry,
   RendererEnv,
-  RendererPlugin
+  RendererPlugin,
+  RendererRuntime
 } from '@nop-chaos/flux-core';
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
 import {
@@ -89,6 +90,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const requestState = new Map<string, { startedAt: number; requestInstanceId: string; interactionId?: string; nodeId?: string; path?: string }>();
   const nextRequestInstanceId = createRequestInstanceIdFactory();
   let componentRegistry: ComponentHandleRegistry | undefined;
+  let runtime: RendererRuntime | undefined;
 
   const inspectByCid = buildInspectByCid(componentRegistry);
   const inspectByElement = buildInspectByElement(componentRegistry);
@@ -111,6 +113,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const getLatestFailedActionSummary = () => getLatestFailedAction(getSnapshot().events);
   const getNodeAnomaliesSummary = (nodeOptions: NopNodeDiagnosticsOptions) => getNodeAnomalies(getSnapshot().events, nodeOptions);
   const getRecentFailuresSummary = (options?: { sinceTimestamp?: number; limit?: number }) => getRecentFailures(getSnapshot().events, options);
+  const getAsyncOwnerDebugSnapshot = () => runtime?.getAsyncOwnerDebugSnapshot?.() ?? { owners: [] };
   const createReport = (reportOptions?: NopDiagnosticReportOptions) => createDiagnosticReport(debuggerId, getSnapshot(), reportOptions);
   const exportSession = (sessionOptions?: NopDebuggerSessionExportOptions) => buildSessionExport(debuggerId, sessionId, getSnapshot(), redaction, sessionOptions);
   const waitForEvent = (waitOptions?: NopWaitForEventOptions) => {
@@ -160,6 +163,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     getLatestFailedAction: getLatestFailedActionSummary,
     getNodeAnomalies: getNodeAnomaliesSummary,
     getRecentFailures: getRecentFailuresSummary,
+    getAsyncOwnerDebugSnapshot,
     createDiagnosticReport: createReport,
     exportSession,
     waitForEvent,
@@ -279,10 +283,14 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     getLatestFailedAction: getLatestFailedActionSummary,
     getNodeAnomalies: getNodeAnomaliesSummary,
     getRecentFailures: getRecentFailuresSummary,
+    getAsyncOwnerDebugSnapshot,
     getOverview,
     createDiagnosticReport: createReport,
     exportSession,
     waitForEvent,
+    setRuntime(nextRuntime: RendererRuntime | null) {
+      runtime = nextRuntime ?? undefined;
+    },
     subscribe(listener: () => void) {
       return store.subscribe(listener);
     },

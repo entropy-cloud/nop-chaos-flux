@@ -1,4 +1,4 @@
-import type { ActionContext, ActionScope, ComponentHandleRegistry, InstanceFrame, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
+import type { ActionContext, ActionScope, AsyncOwnerDebugSnapshot, ComponentHandleRegistry, InstanceFrame, RendererEnv, RendererPlugin, RendererRuntime } from '@nop-chaos/flux-core';
 
 export type NopDebuggerTab = 'overview' | 'timeline' | 'network' | 'node';
 
@@ -319,6 +319,7 @@ export interface NopDebuggerAutomationApi {
   getLatestFailedAction(): NopDebuggerFailureSummary | undefined;
   getNodeAnomalies(options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined;
   getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[];
+  getAsyncOwnerDebugSnapshot(): AsyncOwnerDebugSnapshot;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
@@ -394,10 +395,12 @@ export interface NopDebuggerController {
   getLatestFailedAction(): NopDebuggerFailureSummary | undefined;
   getNodeAnomalies(options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined;
   getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[];
+  getAsyncOwnerDebugSnapshot(): AsyncOwnerDebugSnapshot;
   getOverview(): NopDebuggerOverview;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
+  setRuntime(runtime: RendererRuntime | null): void;
   setComponentRegistry(registry: ComponentHandleRegistry | null): void;
   setActionScope(actionScope: ActionScope | null): void;
   getComponentTree(): NopComponentTreeItem[];

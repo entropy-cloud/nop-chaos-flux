@@ -375,4 +375,56 @@ describe('nop-debugger automation api', () => {
     const nodeEvents = debuggerController.queryEvents({ group: 'node' });
     expect(nodeEvents.some((event) => event.kind === 'state:snapshot')).toBe(true);
   });
+
+  it('exposes async owner diagnostics through automation without adding a new event channel', () => {
+    const debuggerController = createNopDebugger({
+      id: 'async-owner-snapshot',
+      enabled: true
+    });
+
+    debuggerController.setRuntime({
+      getAsyncOwnerDebugSnapshot() {
+        return {
+          owners: [
+            {
+              ownerKind: 'reaction',
+              ownerId: 'reaction:page-1:watch-users',
+              scopeId: 'page-1',
+              recentRuns: [
+                {
+                  ownerKind: 'reaction',
+                  ownerId: 'reaction:page-1:watch-users',
+                  scopeId: 'page-1',
+                  runId: 2,
+                  cause: 'dependency-change',
+                  startedAt: 1,
+                  settledAt: 2,
+                  outcome: 'stale-dropped',
+                  supersededBy: 3
+                }
+              ]
+            }
+          ]
+        };
+      }
+    } as never);
+
+    expect(debuggerController.getAsyncOwnerDebugSnapshot()).toMatchObject({
+      owners: [
+        expect.objectContaining({
+          ownerKind: 'reaction',
+          ownerId: 'reaction:page-1:watch-users'
+        })
+      ]
+    });
+    expect(debuggerController.automation.getAsyncOwnerDebugSnapshot()).toMatchObject({
+      owners: [
+        expect.objectContaining({
+          ownerKind: 'reaction',
+          ownerId: 'reaction:page-1:watch-users'
+        })
+      ]
+    });
+    expect(debuggerController.queryEvents({ kind: 'state:snapshot' })).toEqual([]);
+  });
 });

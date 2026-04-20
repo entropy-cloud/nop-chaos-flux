@@ -1,3 +1,4 @@
+import type { AsyncOwnerDebugSnapshot } from '@nop-chaos/flux-core';
 import type {
   NopComponentInspectResult,
   NopDebugEvent,
@@ -41,6 +42,7 @@ export function createAutomationApi(input: {
   getLatestFailedAction(): NopDebuggerFailureSummary | undefined;
   getNodeAnomalies(options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined;
   getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[];
+  getAsyncOwnerDebugSnapshot(): AsyncOwnerDebugSnapshot;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
@@ -77,6 +79,7 @@ export function createAutomationApi(input: {
     getLatestFailedAction: input.getLatestFailedAction,
     getNodeAnomalies: input.getNodeAnomalies,
     getRecentFailures: input.getRecentFailures,
+    getAsyncOwnerDebugSnapshot: input.getAsyncOwnerDebugSnapshot,
     createDiagnosticReport: input.createDiagnosticReport,
     exportSession: input.exportSession,
     waitForEvent: input.waitForEvent,

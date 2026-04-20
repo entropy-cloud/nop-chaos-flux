@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AsyncOwnerDebugSnapshot } from '@nop-chaos/flux-core';
 import { createAutomationApi, getNopDebuggerAutomationApi, installNopDebuggerWindowFlag, registerAutomationApi } from './automation';
 import type {
   NopDebugEvent,
@@ -135,6 +136,8 @@ describe('debugger automation helpers', () => {
     const getLatestFailedAction = vi.fn(() => undefined);
     const getNodeAnomalies = vi.fn(() => undefined);
     const getRecentFailures = vi.fn(() => []);
+    const asyncOwnerSnapshot: AsyncOwnerDebugSnapshot = { owners: [] };
+    const getAsyncOwnerDebugSnapshot = vi.fn(() => asyncOwnerSnapshot);
     const evaluateNodeExpression = vi.fn(() => ({ expression: 'x', ok: true, value: 1 }));
 
     const automation = createAutomationApi({
@@ -154,6 +157,7 @@ describe('debugger automation helpers', () => {
       getLatestFailedAction,
       getNodeAnomalies,
       getRecentFailures,
+      getAsyncOwnerDebugSnapshot,
       createDiagnosticReport,
       exportSession,
       waitForEvent,
@@ -176,6 +180,7 @@ describe('debugger automation helpers', () => {
     expect(automation.controllerId).toBe('controller-a');
     expect(automation.version).toBe('1');
     expect(automation.getSnapshot()).toMatchObject({ enabled: true });
+    expect(automation.getAsyncOwnerDebugSnapshot()).toBe(asyncOwnerSnapshot);
     automation.clear();
     automation.pause();
     automation.resume();
@@ -282,6 +287,7 @@ describe('debugger automation helpers', () => {
       getLatestFailedAction: () => undefined,
       getNodeAnomalies: () => undefined,
       getRecentFailures: () => [],
+      getAsyncOwnerDebugSnapshot: () => ({ owners: [] }),
       createDiagnosticReport: () => report,
       exportSession: () => exportPayload,
       waitForEvent: async () => waitedEvent,
