@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { cellAddress, type SpreadsheetRange, type SpreadsheetSelection } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
 
@@ -21,7 +21,13 @@ export function useSelection(
   setCommentText: (text: string) => void,
   setCellValue: (value: string) => void
 ) {
-  const [selectedCell, setSelectedCellLocal] = useState<{ row: number; col: number } | null>(null);
+  const selectedCell = useMemo(
+    () =>
+      snapshot.activeCell
+        ? { row: snapshot.activeCell.row, col: snapshot.activeCell.col }
+        : null,
+    [snapshot.activeCell],
+  );
   const [, setDragEnd] = useState<{ row: number; col: number } | null>(null);
   const dragStateRef = useRef<DragState>({ isDragging: false, startRow: -1, startCol: -1, endRow: -1, endCol: -1 });
   const hasDraggedRef = useRef(false);
@@ -35,7 +41,6 @@ export function useSelection(
 
   const setSelectedCell = useCallback(
     (cell: { row: number; col: number } | null) => {
-      setSelectedCellLocal(cell);
       if (cell) {
         syncSelectionToCore({
           kind: 'cell',
