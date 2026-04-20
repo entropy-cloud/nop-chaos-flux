@@ -5,3 +5,4 @@ export * from './renderer-compiler';
 export * from './renderer-plugin';
 export * from './renderer-hooks';
 export * from './renderer-core';
+export * from './renderer-authoring-contract';

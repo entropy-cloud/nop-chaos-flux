@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { HostCapabilityProjectionManifest, HostManifestResolver } from './manifest';
+import type { CapabilityMethodContract, HostCapabilityProjectionManifest, HostManifestResolver } from './manifest';
 
 describe('host manifest contracts', () => {
   it('supports resolved and unsupported-version resolver results', () => {
@@ -48,5 +48,21 @@ describe('host manifest contracts', () => {
     };
 
     expect(manifest.compatibility?.replacedBy?.['designer:legacyExport']).toBe('designer:export');
+  });
+
+  it('shares one method contract shape across host and renderer metadata', () => {
+    const method: CapabilityMethodContract = {
+      args: {
+        kind: 'object',
+        fields: {
+          value: { kind: 'string' }
+        }
+      },
+      result: { kind: 'boolean' },
+      description: 'Shared method shape'
+    };
+
+    expect(method.args?.kind).toBe('object');
+    expect(method.result?.kind).toBe('boolean');
   });
 });

@@ -110,6 +110,19 @@ export interface HostCapabilityMethod {
 }
 
 /**
+ * Shared method contract language used by both host manifests and ordinary renderer metadata.
+ *
+ * Host manifests keep their own family/version/projection envelope, while ordinary renderers
+ * reuse this shape inside renderer-local prop/event/capability metadata.
+ */
+export interface CapabilityMethodContract {
+  args?: FluxValueShape;
+  result?: FluxValueShape;
+  description?: string;
+  deprecated?: boolean;
+}
+
+/**
  * Host capability contract.
  * Declares the namespaced methods schema may dispatch.
  */

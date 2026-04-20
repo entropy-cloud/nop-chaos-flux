@@ -1,7 +1,12 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope } from './actions';
 import type { ExpressionCompiler, ModuleCache } from './compilation';
-import type { RendererSchemaValidator, RendererHostContract } from '../schema-diagnostics';
+import type {
+  CapabilityMethodContract,
+  FluxValueShape,
+  RendererSchemaValidator,
+  RendererHostContract
+} from '../schema-diagnostics';
 import type { NodeInstance, NodeRuntimeState, ResolutionContext, TemplateNode } from './node-identity';
 import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
@@ -94,6 +99,32 @@ export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   helpers: RendererHelpers;
 }
 
+export type RendererRendererClass = 'instance-renderer' | 'flux-owner-renderer' | 'domain-host-renderer';
+
+export interface RendererPropContract {
+  shape: FluxValueShape;
+  displayName: string;
+  description?: string;
+  editorType?: string;
+  defaultValue?: unknown;
+  required?: boolean;
+}
+
+export interface RendererEventContract {
+  displayName: string;
+  description?: string;
+  payload?: FluxValueShape;
+}
+
+/**
+ * Ordinary renderer capability metadata reuses the shared method-contract language but keeps
+ * a renderer-local envelope instead of adopting the host manifest envelope.
+ */
+export interface RendererCapabilityContract extends CapabilityMethodContract {
+  handle: string;
+  displayName: string;
+}
+
 export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   type: S['type'];
   component: ComponentType<RendererComponentProps<any>>;
@@ -102,6 +133,16 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   category?: string;
   defaultSchema?: Partial<S>;
   propSchema?: Record<string, unknown>;
+  rendererClass?: RendererRendererClass;
+  rendererTraits?: readonly string[];
+  propContracts?: Readonly<Record<string, RendererPropContract>>;
+  eventContracts?: Readonly<Record<string, RendererEventContract>>;
+  componentCapabilityContracts?: readonly RendererCapabilityContract[];
+  /**
+   * Narrow readonly Flux-native exports such as $form or $crud summaries.
+   * This is not host projection and must not be used as a host-manifest substitute.
+   */
+  scopeExportContracts?: Readonly<Record<string, FluxValueShape>>;
   sourcePackage?: string;
   regions?: readonly string[];
   fields?: readonly SchemaFieldRule[];
