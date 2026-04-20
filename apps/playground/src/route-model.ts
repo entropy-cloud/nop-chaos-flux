@@ -59,6 +59,7 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
 ];
 
 export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
+  { id: 'crud', title: 'Crud', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Composite data workflow with query form, toolbar, bulk actions, and table shell.' },
   { id: 'table', title: 'Table', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Data table with sorting, pagination, selection, and expandable rows.' },
   { id: 'tree', title: 'Tree', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Hierarchical tree view with expand/collapse and custom node templates.' },
   { id: 'data-source', title: 'Data Source', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Logic-only renderer: loads remote data and injects results into the scope.' },

@@ -11,7 +11,7 @@ import {
   ArrayEditorLabPage, ConditionBuilderLabPage,
   ObjectFieldLabPage, ArrayFieldLabPage, VariantFieldLabPage,
   DetailFieldLabPage, DetailViewLabPage,
-  TableLabPage, TreeLabPage, DataSourceLabPage, ChartLabPage
+  CrudLabPage, TableLabPage, TreeLabPage, DataSourceLabPage, ChartLabPage
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -52,6 +52,7 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   'variant-field': VariantFieldLabPage,
   'detail-field': DetailFieldLabPage,
   'detail-view': DetailViewLabPage,
+  'crud': CrudLabPage,
   'table': TableLabPage,
   'tree': TreeLabPage,
   'data-source': DataSourceLabPage,

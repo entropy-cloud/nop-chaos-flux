@@ -35,6 +35,7 @@ export { ArrayFieldLabPage } from './array-field-lab-page';
 export { VariantFieldLabPage } from './variant-field-lab-page';
 export { DetailFieldLabPage } from './detail-field-lab-page';
 export { DetailViewLabPage } from './detail-view-lab-page';
+export { CrudLabPage } from './crud-lab-page';
 export { TableLabPage } from './table-lab-page';
 export { TreeLabPage } from './tree-lab-page';
 export { DataSourceLabPage } from './data-source-lab-page';
