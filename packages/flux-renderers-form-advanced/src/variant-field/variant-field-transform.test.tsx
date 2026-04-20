@@ -68,7 +68,7 @@ describe('variant-field renderer transform behavior', () => {
     });
     await waitFor(() => expect((screen.getByLabelText('Amount') as HTMLInputElement).value).toBe('42'));
 
-    expect(calls[0]).toEqual({ value: 'alpha', variant: 'number', readOnly: false });
+    expect(calls[0]).toEqual({ value: 'alpha', name: 'number', readOnly: false });
   });
 
   it('uses explicit args for target variant transformInAction instead of merging default payloads', async () => {

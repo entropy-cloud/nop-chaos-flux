@@ -1,4 +1,4 @@
-import type { ActionResult, ActionSchema, FormRuntime, SchemaObject } from '@nop-chaos/flux-core';
+import { actionAdapter, type ActionResult, type ActionSchema, type FormRuntime } from '@nop-chaos/flux-core';
 
 export interface ValueAdaptationInput {
   rawValue: unknown;
@@ -54,97 +54,37 @@ export interface ValueAdaptationOwnerHelper {
   ): Promise<ValidateValueResult>;
 }
 
-function injectDefaultArgs(
-  actionSchema: ValueAdaptationAction,
-  payload: Record<string, unknown>
-): ValueAdaptationAction {
-  const schemaPayload = payload as SchemaObject;
-
-  if (Array.isArray(actionSchema)) {
-    return actionSchema.map((entry) => (entry.args === undefined ? { ...entry, args: schemaPayload } : entry));
-  }
-
-  return actionSchema.args === undefined ? { ...actionSchema, args: schemaPayload } : actionSchema;
+function createLegacyActionDispatch(runner: ActionRunner) {
+  return async (actionSchema: ValueAdaptationAction) => runner(actionSchema);
 }
 
 export const valueAdaptationOwnerHelper: ValueAdaptationOwnerHelper = {
   async runTransformIn(actionSchema, input, runner) {
-    if (!actionSchema) {
-      return input.rawValue;
-    }
-
-    const payload: Record<string, unknown> = {
-      value: input.rawValue,
+    const adapter = actionAdapter(actionSchema, undefined, undefined, createLegacyActionDispatch(runner));
+    return adapter.in(input.rawValue, {
+      name: input.name,
       readOnly: input.readOnly ?? false
-    };
-
-    if (input.name !== undefined) {
-      payload.name = input.name;
-    }
-
-    const result = await runner(injectDefaultArgs(actionSchema, payload));
-
-    if (!result.ok) {
-      return input.rawValue;
-    }
-
-    return result.data !== undefined ? result.data : input.rawValue;
+    });
   },
 
   async runTransformOut(actionSchema, input, runner) {
-    if (!actionSchema) {
-      return input.workingValue;
-    }
-
-    const payload: Record<string, unknown> = {
-      value: input.workingValue,
-      originalValue: input.originalValue,
-      readOnly: input.readOnly ?? false
-    };
-
-    if (input.name !== undefined) {
-      payload.name = input.name;
-    }
-
-    const result = await runner(injectDefaultArgs(actionSchema, payload));
-
-    if (!result.ok) {
-      return input.workingValue;
-    }
-
-    return result.data !== undefined ? result.data : input.workingValue;
+    const adapter = actionAdapter(undefined, actionSchema, undefined, createLegacyActionDispatch(runner));
+    return adapter.out(input.workingValue, {
+      name: input.name,
+      readOnly: input.readOnly ?? false,
+      originalValue: input.originalValue
+    });
   },
 
   async runValidate(actionSchema, input, runner) {
-    if (!actionSchema) {
-      return { valid: true };
-    }
-
-    const payload: Record<string, unknown> = {
-      value: input.workingValue,
+    const adapter = actionAdapter(undefined, undefined, actionSchema, createLegacyActionDispatch(runner));
+    const result = await adapter.validate?.(input.workingValue, {
+      name: input.name,
+      readOnly: false,
       originalValue: input.originalValue
-    };
+    });
 
-    if (input.name !== undefined) {
-      payload.name = input.name;
-    }
-
-    const result = await runner(injectDefaultArgs(actionSchema, payload));
-
-    if (!result.ok) {
-      return { valid: false, issues: [{ level: 'error' as const, message: String(result.error ?? 'Validation failed') }] };
-    }
-
-    const data = result.data as Record<string, unknown> | undefined;
-
-    if (!data || typeof data !== 'object') {
-      return { valid: true };
-    }
-
-    return {
-      valid: data.valid !== false,
-      issues: Array.isArray(data.issues) ? data.issues as ValidateValueResult['issues'] : undefined
-    };
+    return result ?? { valid: true };
   }
 };
 

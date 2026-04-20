@@ -6,7 +6,7 @@ import type {
   RendererDefinition,
   SchemaObject,
 } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
+import { actionAdapter, getIn } from '@nop-chaos/flux-core';
 import {
   FormContext,
   FieldFrame,
@@ -37,19 +37,6 @@ type BaseNodeInstance = RendererComponentProps['node'];
 function injectDetectVariantArgs(
   actionSchema: ActionSchema | ActionSchema[],
   payload: { value: unknown; variants: string[] }
-): ActionSchema | ActionSchema[] {
-  const schemaPayload = payload as SchemaObject;
-
-  if (Array.isArray(actionSchema)) {
-    return actionSchema.map((entry) => (entry.args === undefined ? { ...entry, args: schemaPayload } : entry));
-  }
-
-  return actionSchema.args === undefined ? { ...actionSchema, args: schemaPayload } : actionSchema;
-}
-
-function injectVariantTransformInArgs(
-  actionSchema: ActionSchema | ActionSchema[],
-  payload: { value: unknown; variant: string; readOnly: boolean }
 ): ActionSchema | ActionSchema[] {
   const schemaPayload = payload as SchemaObject;
 
@@ -139,21 +126,23 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       let nextValue = nextOption.initialValue !== undefined ? nextOption.initialValue : null;
 
       if (nextOption.transformInAction) {
-        const result = await props.helpers.dispatch(injectVariantTransformInArgs(nextOption.transformInAction, {
-          value: currentValue,
-          variant: key,
-          readOnly
-        }), {
+        const adapter = actionAdapter(nextOption.transformInAction, undefined, undefined, (action, ctx) =>
+          props.helpers.dispatch(action as any, {
+            scope: ctx?.scope ?? parentScope,
+            form: ctx?.form ?? parentForm,
+            page: undefined,
+            nodeInstance: props.node as BaseNodeInstance
+          })
+        );
+
+        const migratedValue = await adapter.in(currentValue, {
+          name: key,
+          readOnly,
           scope: parentScope,
-          form: parentForm,
-          page: undefined,
-          nodeInstance: props.node as BaseNodeInstance
+          form: parentForm
         });
 
-        if (result.ok && result.data !== undefined) {
-          const migratedValue = result.data as VariantOption['initialValue'];
-          nextValue = migratedValue ?? null;
-        }
+        nextValue = (migratedValue as VariantOption['initialValue']) ?? null;
       }
 
       parentForm.setValue(name, nextValue);

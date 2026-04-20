@@ -20,6 +20,8 @@ interface CreateProjectedFormRuntimeOptions {
   store: FormStoreApi;
   mapChildPath?: (path: string) => string;
   supportsArrayMutations?: boolean;
+  setValue?: (path: string, value: unknown) => void;
+  setValues?: (values: Record<string, unknown>) => void;
 }
 
 export function createProjectedFormStore(
@@ -166,9 +168,19 @@ export function createProjectedFormRuntime(
       parentForm.clearErrors(path === undefined ? undefined : options.prefixPath(path));
     },
     setValue(path, value) {
+      if (options.setValue) {
+        options.setValue(path, value);
+        return;
+      }
+
       parentForm.setValue(options.prefixPath(path), value);
     },
     setValues(values) {
+      if (options.setValues) {
+        options.setValues(values);
+        return;
+      }
+
       const prefixed: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(values)) {
         prefixed[options.prefixPath(key)] = value;
