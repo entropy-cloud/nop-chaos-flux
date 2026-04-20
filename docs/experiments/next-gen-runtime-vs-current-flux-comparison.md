@@ -1,392 +1,527 @@
-# Experimental Design vs. Current Flux Architecture: Comparative Analysis
+# 实验性下一代内核设计 vs 当前 `nop-chaos-flux` 设计与实现
 
-> **Purpose**: Compare the experimental "next-gen" design (in `next-gen-low-code-runtime-kernel-design.md`) with the current `nop-chaos-flux` implementation to determine which represents the truly superior architecture for a next-generation low-code runtime.
+> 对比对象：
+>
+> 1. 实验稿：`docs/experiments/next-gen-low-code-runtime-kernel-design.md`
+> 2. 当前项目基线：`docs/architecture/frontend-programming-model.md`、`docs/architecture/flux-core.md`、`docs/architecture/dependency-tracking.md`、`docs/architecture/renderer-runtime.md`、`docs/architecture/scope-ownership-and-isolation.md`、`docs/architecture/api-data-source.md`、`docs/architecture/template-instantiation-and-node-identity.md`、`docs/architecture/surface-owner.md`、`docs/architecture/action-algebra-formal-spec.md`，以及 `packages/flux-core` / `packages/flux-runtime` / `packages/flux-react` 的当前公开接口与实现入口。
 
----
+## 1. 先给结论
 
-## 0. Executive Summary
+结论不能简单说成“实验稿绝对更好”或者“当前项目绝对更好”。
 
-**Verdict: The current Flux architecture is the more mature, production-viable design. The experimental design has superior ideas in two areas (effect-calculus actions and effect scoping) but is weaker in almost every other dimension.**
+更准确的判断是：
 
-The experimental design is a **clean-room theoretical exercise** — architecturally elegant in its symmetry but carrying significant implementation risk from unproven concepts (bytecode VM expression engine, pre-computed dependency graph). The current Flux design is an **evolved, battle-informed architecture** that has already solved many of the hard problems the experimental design merely describes at the interface level.
+1. **当前 `nop-chaos-flux` 已经是非常先进的低代码运行时设计**，明显超出传统 schema renderer、表单引擎、配置驱动 UI 框架的水平。
+2. **实验稿在“内核纯度、统一事务语义、异步一致性、UI 解耦、宿主边界显式化”上更进一步**，它更像一个真正的 Schema VM 内核设计。
+3. 如果问“哪个更接近今天可落地、可持续演进、已被证明的先进架构”，当前项目更强。
+4. 如果问“哪个更像面向未来 5-10 年的下一代低代码内核终局形态”，实验稿更领先。
 
-The experimental design's biggest contribution is not the design itself, but the **questions it forces us to ask** about the current architecture — particularly around effect discipline and action composability.
+所以我的最终判断是：
 
----
+**当前项目是已经进入先进区间的现实主义架构；实验稿是更激进、更纯粹、理论上更领先的下一代内核形态。**
 
-## 1. Subsystem-by-Subsystem Comparison
+但“更领先”不等于“现在就更适合直接替换当前项目全部实现”。
 
-### 1.1 Schema Compilation
+## 2. 当前项目到底先进在哪里
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Compilation model** | Pipeline: Parse → Resolve → Classify → Compile → Optimize → TypeCheck | Similar pipeline: normalization → region extraction → field classification → expression compilation → template assembly |
-| **Output artifact** | `CompiledSchema` with explicit `PropSlot` classification | `TemplateNode` with `CompiledRuntimeValue` classification |
-| **Static/dynamic split** | `PropSlot: static \| dynamic \| i18n \| region \| action` | `CompiledRuntimeValue: { kind: 'static', isStatic: true } \| { kind: 'dynamic', isStatic: false }` |
-| **Serialization** | Claims to be serializable (no closures) — but `CompiledExpr.bytecode` is a `Uint32Array` and `constantPool` is `unknown[]`, which is effectively a closure-equivalent | Template nodes are immutable but carry compiled expression objects with `exec()` methods — not serializable |
-| **Renderer field metadata** | Uses `StaticRendererIndex.getPropSchema()` to classify fields at compile time | Uses `RendererDefinition.fields` metadata — same concept, different name |
+很多低代码系统仍然停留在：
 
-**Winner: Tie.** Both designs use nearly identical compilation strategies. The experimental design's `PropSlot` is slightly more explicit with the `i18n` kind, but the current Flux design achieves the same with its `CompiledRuntimeValue` classification plus runtime i18n resolution.
+1. schema 只是配置对象。
+2. 运行时本体是一个巨大的 page/form store。
+3. 动作、数据源、watch、表单、dialog 各自有一套语义。
+4. 依赖刷新主要靠粗粒度 rerender 或全量订阅。
 
-**Critical observation**: Both designs claim "compiled artifact is pure data / serializable," but neither truly achieves this. The experimental design's `CompiledExpr` with `bytecode + constantPool` is equivalent to a closure (it's an opaque binary blob). The current Flux's `CompiledExpression` carries an `exec()` method. Neither can be `JSON.stringify`'d without custom serialization.
+而当前 `nop-chaos-flux` 已经明显超越了这一层。
 
-### 1.2 Expression Engine
+### 2.1 它已经建立了很强的顶层理论闭包
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Compilation target** | Register-based bytecode (`Uint32Array`) | AST (recursive-descent parse → tree) |
-| **Execution model** | Bytecode VM interpreter | AST-walking evaluator |
-| **No eval/new Function** | Yes | Yes |
-| **Dependency tracking** | Via read barriers in VM instructions (`LOAD_VAR` logs to `DependencyLog`) | Via Proxy-based scope interception during evaluation |
-| **Built-in functions** | In constant pool, CALL_FUNC opcode | ~25 global functions + 3 namespace objects |
-| **Lazy evaluation** | Not mentioned | `IF()`/`SWITCH()` use lazy thunks |
+`docs/architecture/frontend-programming-model.md` 最强的地方，是它不是在堆功能，而是在定义 **closed primitive set**。
 
-**Winner: Current Flux.**
+当前项目把核心收敛为七个 primitive：
 
-The bytecode VM is the experimental design's most ambitious and most risky claim. Let me explain why AST-walking is actually better for this specific domain:
+1. `Base Tree`
+2. `ScopeRef`
+3. `Value`
+4. `Resource`
+5. `Reaction`
+6. `Capability`
+7. `Host Projection`
 
-1. **Low-code expressions are short**: Typical expressions like `${user.name}`, `${items.length > 0}`, `${SUM(items, item => item.price)}` are 5–30 tokens. Bytecode's advantage (amortized dispatch overhead over large programs) doesn't materialize.
+这比很多“运行时设计文档”高一个层级，因为它已经在回答：
 
-2. **AST-walking with Proxy collection is battle-tested**: The current Flux approach — Proxy-wrapped scope that intercepts property reads during evaluation — is simple, debuggable, and produces exact dependency roots. The experimental design's "read barrier in VM instructions" is conceptually the same but requires building and debugging a custom VM.
+1. 什么是运行时一等概念。
+2. 哪些能力不能继续无节制膨胀成新 primitive。
+3. authoring、loader、runtime、host/domain 的边界在哪里。
 
-3. **Development cost**: An AST-walking evaluator is ~1,000 lines of well-understood code. A register-based bytecode VM with its own instruction set, constant pool, and interpreter loop is ~3,000–5,000 lines of novel code that needs its own debugging tools.
+这套 primitive closure 本身就已经非常接近世界级设计。
 
-4. **WASM portability is aspirational**: The experimental design mentions WASM compilation as a future benefit, but this has never been demonstrated. The current Flux expression engine runs in under 1μs per evaluation — there is no performance problem to solve.
+### 2.2 它已经明确把 schema 当成 Final Execution Schema
 
-**Where the experimental design wins**: If expressions were to become significantly more complex (hundreds of operations, loop constructs, etc.), bytecode would eventually win on performance. But the requirements explicitly exclude general-purpose computation.
+当前项目不是把浏览器端 runtime 当作一台临时组装器，而是要求 schema 先进入 `Final Execution Schema` 边界，再被 runtime 执行。
 
-### 1.3 Scope / Data Environment
+这意味着它已经具备很强的“编写态/装配态/执行态分离”意识。
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Core model** | `Scope` with `get/has/_applyChange` | `ScopeRef` with `get/has/update/readOwn/readVisible` |
-| **Inheritance** | Parent chain with shadowing, `isolated` flag | Parent chain with shadowing, `isolate: true` |
-| **Write model** | All writes through `EffectDispatcher` → `Scope._applyChange` | Direct `scope.update(path, value)` |
-| **Read-only view** | `ReadableScope` for L4/L5 | `ScopeRef` itself is the read API (update is separate method) |
-| **Change notification** | `RootChange` (root-normalized) | `ScopeChange` (root-normalized paths) |
-| **Structural sharing** | Claimed but not specified | Prototype-backed `readVisible()` for zero-alc inheritance |
+这点和实验稿是同向的，而且当前项目在 authoring continuity 上更成熟、更克制。
 
-**Winner: Current Flux, with one important exception.**
+### 2.3 它已经有 compile-once / template-instance split
 
-The experimental design's insistence that **all writes go through the effect dispatcher** is architecturally superior to the current Flux's direct `scope.update()`. In the current Flux, any code with a `ScopeRef` reference can write to it, making it impossible to audit or intercept all state mutations centrally. The experimental design's read/write split (`ReadableScope` vs internal `_applyChange`) enforces discipline that the current Flux lacks.
+`docs/architecture/template-instantiation-and-node-identity.md` 和 `packages/flux-core/src/types/node-identity.ts` 说明，当前项目已经明确区分：
 
-However, the current Flux's `ScopeRef` is a simpler, more pragmatic design that works well in practice. The cost of adding an `EffectDispatcher` layer to every write is not zero — it adds latency, complexity, and error surface for a benefit (centralized auditing) that can be achieved more cheaply with a dev-mode write logger.
+1. `TemplateNode`
+2. `CompiledTemplate`
+3. `NodeInstance`
+4. `ScopeRef`
+5. `ComponentHandleRegistry`
 
-**Where the experimental design wins**: The `ReadableScope` vs internal `_applyChange` split is a genuinely better encapsulation model. The current Flux could adopt this as an evolutionary improvement.
+这不是普通 schema renderer 的水平，而是已经进入“模板不可变、运行时实例独立”的现代运行时设计。
 
-### 1.4 Dependency Tracking / Reactivity
+### 2.4 它已经有很强的 action/capability 分层
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Granularity** | Root-normalized (acknowledged as conservative over-approximation) | Root-normalized (same tradeoff) |
-| **Collection mechanism** | VM read barriers (theoretical) | Proxy-based runtime interception (implemented) |
-| **Compile-time pre-computation** | Claims dependency graph is pre-computed at compile time | `dependsOn` is explicit at compile time; runtime collection is supplementary |
-| **Three consumer types** | Source signals, derived signals, effect signals — same dependency model | Data sources, reactions, expressions — same unified model |
-| **Self-write protection** | `suppressFor(sourceId, roots)` | Sources filter out their own published roots |
-| **Topological ordering** | Explicitly required (glitch-free guarantee) | Implicit via scope subscription ordering |
+当前项目不是把 action 当作一个字符串分发表，而是把：
 
-**Winner: Current Flux.**
+1. primitive 层的 `Capability`
+2. derived 层的 `Action Algebra`
 
-Both designs converge on the same fundamental approach: root-normalized dependency tracking with conservative over-approximation. The experimental design's claim of "compile-time pre-computed dependency graph" is **overstated**:
+明确拆开。
 
-- Expression dependencies depend on runtime values (think: `items[getUserIndex()].name` — the index is dynamic)
-- The compile-time graph can only list *possible* dependency roots, not *actual* ones for a given execution
-- The current Flux's approach (compile-time `dependsOn` as authoritative hint + runtime Proxy collection as fallback) handles this duality correctly
+`docs/architecture/action-algebra-formal-spec.md` 里对 `when`、`then`、`onError`、`parallel`、结果分类、链式结果上下文的定义，已经相当成熟。
 
-The experimental design's `DependencyRuntime` with `wireDerived`, `wireDataSource`, `wireReaction`, `wireProjection` is architecturally clean but describes what is essentially a graph data structure that both designs would need to implement.
+同时实际实现里也已经是三层解析：
 
-### 1.5 Action System
+1. built-in
+2. component-targeted
+3. namespaced action
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Action representation** | Algebraic data type: `CompiledAction = dispatch \| sequence \| parallel \| guarded \| retry \| debounce \| timeout \| chain \| noop` | Schema-driven: `ActionSchema { action, args, when, then, onError, parallel, retry, timeout }` |
-| **Effect channel** | Unified `EffectDispatcher` with typed effect variants | Direct handler invocation (built-in / component / namespace) |
-| **Effect scoping** | `EffectScope` groups effects from a single action execution | No explicit effect scoping |
-| **Three-layer resolution** | Built-in → component → namespace | Built-in → component → namespace (identical) |
-| **Action scope** | Not explicitly lexical | `ActionScope` with parent chaining, `xui:imports` for namespace provisioning |
-| **Control flow** | `chain` with `then`/`onError`/`finally` | `then`/`onError` chains, no `finally` |
+这一点与实验稿高度一致，说明当前项目并不是“旧式 action runtime”。
 
-**Winner: Experimental Design (clear win).**
+### 2.5 它已经有依赖追踪，而不是纯粹 rerender 驱动
 
-This is the one area where the experimental design is genuinely superior:
+`docs/architecture/dependency-tracking.md` 说明当前项目已经把：
 
-1. **Effect-calculus action ADT**: Modeling actions as a recursive algebraic data type is more elegant and extensible than the current Flux's schema-driven approach. The ADT can be extended with new combinators without changing the executor.
+1. `Value`
+2. `Resource`
+3. `Reaction`
 
-2. **Unified effect channel with `EffectScope`**: The current Flux has no centralized effect interception point. Actions directly call handlers that may mutate state, make requests, and trigger side effects without any audit trail. The experimental design's `EffectDispatcher` + `EffectScope` provides:
-   - Automatic cancellation on scope disposal
-   - Effect ordering guarantees (sequential within action, branch-order for parallel)
-   - Auditability (every side effect passes through one channel)
+放进共享依赖模型里。
 
-3. **`finally` clause**: The current Flux lacks a `finally` equivalent, forcing developers to duplicate cleanup logic in both `then` and `onError`.
+尽管当前 baseline 还是“lexical-root normalized dependencies first”，精度不如实验稿里的路径级 consumer graph，但它已经远好于“scope 一变全 rerender”的系统。
 
-**Where the current Flux wins**: The `ActionScope` with parent chaining and `xui:imports` is a more sophisticated scope model for actions than the experimental design's simple three-layer resolution. The experimental design doesn't address how namespaces are provisioned to specific scopes.
+### 2.6 它对 scope 隔离和高频子树性能有成熟判断
 
-### 1.6 Rendering System
+`docs/architecture/scope-ownership-and-isolation.md` 里对：
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Framework coupling** | Claims framework-portable via `RendererHost` protocol | React-specific (`React.ReactNode`, hooks, context) |
-| **Renderer contract** | `RendererInstance.mount/update/unmount` lifecycle | `RendererComponentProps<T>` with hooks |
-| **Region rendering** | `RegionHandle.render(bindings)` returns `RenderResult` | `RenderRegionHandle.render(options)` returns `React.ReactNode` |
-| **Error boundaries** | `RendererHost.wrapErrorBoundary()` | React error boundaries in `NodeRenderer` |
-| **Owner boundaries** | Not explicitly addressed | Creator-owned: page/form/surface renderers create their own runtimes |
-| **Renderer classification** | Layout vs widget | Layout vs widget (identical concept) |
+1. 默认词法继承
+2. `data` 是 own scope 初始 patch
+3. `isolate` 只作为窄特例
+4. row scope 默认隔离
+5. loop item 默认继承
 
-**Winner: Current Flux.**
+的判断非常成熟。
 
-The experimental design's "framework portability" claim is **aspirational but unproven**:
+这比很多系统“为了性能到处开隔离”或“为了方便到处允许父链穿透”要先进得多。
 
-1. **No concrete multi-framework evidence**: The design defines a `RendererHost` protocol but provides implementations for zero frameworks. Until someone builds adapters for React, Vue, and Solid, this is an untested abstraction.
+### 2.7 它已经开始处理 host/domain 边界，而不是把复杂域控件塞进普通 scope
 
-2. **React is the right commitment**: React has ~70% market share in enterprise low-code platforms. Designing for framework portability adds abstraction cost that benefits <30% of potential adopters. The current Flux's React-specific design is more pragmatic.
+顶层 programming model 里的 `Host Projection`，加上 `Capability` 的严格 effect boundary，本质上已经在接近实验稿里“宿主只读投影 + 命名空间能力”的方向。
 
-3. **Owner-boundary pattern is missing**: The current Flux's "creator-owned boundaries" pattern (page renderer creates PageRuntime, form renderer creates FormRuntime) is a crucial architectural decision that prevents the `NodeRenderer` from becoming a god object. The experimental design's `RendererOrchestrator.instantiate()` creates the entire tree top-down, which is simpler but less scalable.
+这说明当前项目的方向本身就是先进的，不是传统低代码 runtime 的思路。
 
-4. **`RenderResult = unknown` is too opaque**: The current Flux's `React.ReactNode` is specific and type-safe. The experimental design's `unknown` provides zero compile-time guarantees.
+## 3. 当前项目的核心短板在哪里
 
-**Where the experimental design wins**: The `RendererHost` protocol is a defensible long-term bet if multi-framework support becomes a real requirement. But the current Flux could add this as an adapter layer without redesigning the core.
+虽然当前项目非常先进，但如果标准提高到“真正的下一代内核 VM”，它仍然有几个明显短板。
 
-### 1.7 Form & Validation
+### 3.1 它的 runtime 公开面仍然偏大、偏混合
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Validation model** | `ValidationGraph` with `CompiledValidationRule` (validatorRef) | `CompiledFormValidationModel` with `CompiledRuleTemplate` |
-| **Form runtime** | `FormRuntime` with getValue/setValue/validate/submit/draft | `FormRuntime extends ValidationScopeRuntime` with richer API |
-| **Validation timing** | `'submit' \| 'change' \| 'blur'` | `showErrorOn` policy + timing configuration |
-| **Draft isolation** | `DraftScope` with commit/discard | Renderer-level FormRuntime instances |
-| **Rule representation** | Pure data (`validatorRef: string`) | Closure-based (`CompiledRuleTemplate` with `args: CompiledRuntimeValue`) |
-| **Dependency substrate** | Same as expression dependency tracking | Separate compile-time field-graph (more correct for cross-field rules) |
+从 `packages/flux-core/src/types/renderer-core.ts` 看，当前 `RendererRuntime` 同时承担：
 
-**Winner: Current Flux.**
+1. compile
+2. evaluate
+3. child scope creation
+4. host projection scope creation
+5. action scope creation
+6. component registry creation
+7. dispatch
+8. source execution
+9. page runtime creation
+10. surface runtime creation
+11. data source registration
+12. reaction registration
+13. form runtime creation
 
-The current Flux's validation system is notably more sophisticated:
+这说明当前项目虽然有清晰文档分层，但在实际 runtime 接口层仍然更像一个 **强大的 runtime facade**，而不是实验稿里那种严格的：
 
-1. **Separate dependency substrate**: The current Flux recognizes that validation dependencies (which fields affect which rules) are fundamentally different from scope dependencies (which data paths affect which expressions). Cross-field validation rules like "endDate > startDate" depend on both `startDate` and `endDate` fields, not on the scope root. The experimental design uses the same root-normalized model for both, which is less precise.
+1. `CompiledProgram`
+2. `RuntimeKernel`
+3. `RuntimeHandle`
+4. internal owner graph
 
-2. **`ValidationScopeRuntime` as separate from FormRuntime**: The current Flux separates validation (which any scope can have) from form management (dirty/touched/submit state). This is more flexible than the experimental design's monolithic `FormRuntime`.
+也就是说，当前项目的理论分层很强，但运行时接口还没有完全收缩成“最小内核 + owner 子系统”。
 
-3. **Owner-level validation arbitration**: The current Flux handles concurrent validation runs with generation-aware entry arbitration (e.g., `submit` supersedes `change`-triggered validation). The experimental design doesn't address this.
+### 3.2 写入通道还没有彻底统一成事务语义
 
-### 1.8 Data Sources / API
+当前项目里写入会通过多个 owner 入口发生：
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Data source types** | API-backed only (implied) | API-backed + formula-backed (unified lifecycle) |
-| **Refresh strategies** | `'manual' \| 'polling' \| 'onDependency'` | Manual + polling + dependency-based + `stopWhen` condition |
-| **Result mapping** | `paramMapping` (scopePath → paramName) | `resultMapping` + `mergeToScope` + `mergeStrategy` (replace/append/prepend/merge/upsert) |
-| **Scope injection** | `paramMapping` concept | `includeScope: '*' \| string[]` |
-| **Refresh dedup** | Not specified | `cancel-previous` / `ignore-new` / `parallel` strategies |
-| **Reactions** | `CompiledReaction` with watchExpr/conditionExpr/action | `ReactionSchema` with watch/when/immediate/debounce/once/actions |
+1. `ScopeRef.update/merge`
+2. `FormRuntime.setValue/setValues/...`
+3. surface open/close
+4. data source controller 发布
+5. action built-ins
 
-**Winner: Current Flux (by a significant margin).**
+这些当然都能工作，但它们还不是实验稿里那种 **所有内核状态变更统一 lowering 为 `commit()` 事务** 的形态。
 
-The current Flux's data source system is one of its most mature subsystems:
+这会带来两个问题：
 
-1. **Formula-backed data sources**: A purely synchronous computed value that follows the same lifecycle as API-backed sources. The experimental design only considers async sources.
+1. 当前项目已经有不少正式的一致性与边界规则，但它们仍然分布在 scope、action、source、surface、validation 等子系统中，而不是由一个统一 `commit()` 事务协议集中承载。
+2. 想把调试、回放、批处理、并发提交、cycle guard、版本丢弃做成第一等机制时，成本会更高。
 
-2. **Rich merge strategies**: `replace | append | prepend | merge | upsert` with configurable `mergeKey`. The experimental design has only basic set/merge.
+### 3.3 依赖系统还不是完整统一图
 
-3. **Refresh dedup strategies**: When a dependency triggers while a refresh is in-flight, the current Flux offers three strategies. The experimental design doesn't address this race condition.
+当前项目已经把 `Value`、`Resource`、`Reaction` 放在共享依赖语义上，这非常好。
 
-4. **`stopWhen` condition**: Stop polling when a condition is met. Not present in the experimental design.
+但它还没有达到实验稿中的完全统一：
 
-5. **`includeScope`**: Configurable scope variable injection into requests (`'*'` for all, or explicit list). The experimental design's `paramMapping` is less flexible.
+1. 当前 baseline 主要按 lexical root invalidation。
+2. validation 还是单独一套依赖系统。
+3. async consumer 的 epoch/read-view/commit-epoch 语义没有被抽成统一协议。
 
-### 1.9 Surface/Dialog Management
+也就是说，当前项目已经摆脱了低级系统，但还没有完全进入“单一依赖图 + 单一异步一致性协议”的阶段。
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Surface types** | `dialog \| drawer` with shared model | `dialog \| drawer` with shared model |
-| **Stack management** | `SurfaceManager` with stack | `SurfaceRuntime`/`SurfaceStore` with stack |
-| **Scope ownership** | Each surface has independent scope | Same |
-| **Focus management** | "Only top surface has focus" (stated) | Focus trap, escape handling, backdrop dismiss (implemented) |
+### 3.4 它仍然明显以 React host 为中心组织投影层
 
-**Winner: Tie.** Both designs use the same fundamental model. The current Flux has more implementation detail.
+这句话需要说得更准确：当前项目的 **渲染与宿主集成契约主要围绕 React host 落地**，但 runtime 本体并不等于 React runtime。
 
-### 1.10 Loop/Table/Collection Rendering
+当前项目当然强调“core logic 可脱离 UI 测试”，而且 `flux-runtime` 已经独立承载 compile、action、source、reaction、surface、form/page 等核心逻辑；只是公开渲染路径目前主要是：
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Row scope** | Isolated, with projections | Isolated by default, with `rowData` projection |
-| **Scope reuse** | Not specified (implied per-render) | Cached by `rowKey`, reused across renders |
-| **Row identity** | Not specified | `rowKey`-based identity separate from value path |
-| **Instance path** | Not specified | `instancePath` with `repeatedTemplateId + instanceKey` |
+1. `RendererRuntime`
+2. `SchemaRenderer`
+3. `NodeRenderer`
+4. React contexts/hooks
 
-**Winner: Current Flux.**
+`docs/architecture/renderer-runtime.md` 的现实基线非常清楚：当前模型仍然主要是“compiled node against current scope -> resolved renderer props/meta -> concrete renderer component”。
 
-The current Flux's table rendering model is significantly more sophisticated:
+这说明它虽然绝不是普通 React state app，但当前公开投影协议仍然更偏 React host integration，而不是实验稿里那种更彻底的：
 
-1. **Row scope caching**: Scopes are cached by `rowKey` and reused across renders. This avoids recreating scope objects, dependency subscriptions, and state entries on every render.
+1. 内核只输出 projection contract
+2. `snapshot()` + `RenderPatch`
+3. UI host 只是 adapter
 
-2. **Value path vs runtime identity separation**: The current Flux explicitly separates `users.0.name` (value path, index-based) from row identity (`rowKey`-based). This handles sorting, filtering, and virtual scrolling correctly.
+### 3.5 Surface / Form / Resource / Reaction 还不是完全统一 owner 事务体系
 
-3. **Row-following UI state**: Selection, expansion, and edit mode are keyed by `rowKey`, so they persist across data changes.
+当前项目已经有很好的 owner classification 文档，例如 `surface-owner.md`。
 
-The experimental design's `LoopRuntime` is correct at the concept level but missing the implementation details that make table rendering performant at scale.
+但从实现形态看，surface runtime、form runtime、source registry、reaction registry 仍然是“收敛中的多个 owner 子系统”，尚未完全统一到实验稿里那种：
 
----
+1. session owner graph
+2. unified commit/epoch/scheduler semantics
+3. uniform lifecycle release table
 
-## 2. Cross-Cutting Comparison
+这不是缺点到“错误”的程度，而是成熟工程在演进中的常见形态。
 
-### 2.1 Framework Agnosticism
+### 3.6 安全边界是强的，但 schema-safe value normalization 还没被提升为最显式的核心协议
 
-| Claim | Experimental Design | Current Flux |
-|-------|-------------------|--------------|
-| Core is framework-free | Claims L1–L4 are framework-agnostic | Core (flux-core, flux-formula, flux-runtime) is truly framework-agnostic |
-| React coupling | Only L5 | Only flux-react and renderer packages |
-| Testability without DOM | Claimed | Demonstrated (Vitest tests run without DOM) |
+当前项目已经明确：
 
-Both designs achieve framework agnosticism for their core logic. The current Flux is more honest about its React commitment in the rendering layer.
+1. 不用 `new Function` / `eval` / `with`
+2. `Capability` 是 effect authority
+3. `Host Projection` 是只读快照，不是桥对象
 
-### 2.2 Compile-Time vs Runtime Split
+这已经很好。
 
-Both designs make the same fundamental split. The experimental design's claims are more strongly worded ("if a problem can be solved at compile time, it must be") but both designs end up with the same practical boundary:
+但实验稿更进一步，把“任意宿主回流值进入 scope 前必须经过 `SchemaValueNormalizer`”写成了核心协议。
 
-- Expression compilation: compile-time
-- Schema structure analysis: compile-time
-- Type checking: compile-time
-- Expression evaluation: runtime
-- Scope creation/writes: runtime
-- Action dispatch: runtime
+当前项目在这点上更像“架构上有边界意识，具体收敛还在进行中”，而不是已经被形式化成内核硬约束。
 
-### 2.3 Type Safety
+## 4. 实验稿领先在哪里
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| TypeScript annotations | Extensive but with pervasive `unknown` | Extensive with more specific types where possible |
-| Runtime type checks | `ExprType` tagged union (proposed) | No runtime type system; TypeScript-only |
-| Schema-level type safety | Claimed via compile-time type checking | Achieved via `RendererDefinition.fields` metadata |
-| Generic type parameters | Used on `RendererComponentProps<S>` | Same pattern |
+实验稿最核心的领先之处，不是功能更多，而是它试图把当前项目里已经很强的思想，继续收缩成更纯粹、更一致、更像 VM 的内核。
 
-**Winner: Tie.** Neither design achieves true type safety for dynamic schema values. The experimental design's `ExprType` runtime type tag system adds complexity without clear benefit — TypeScript's `unknown` with narrowing is sufficient.
+### 4.1 它把 runtime 拆成了真正三层：program / kernel / session
 
-### 2.4 Testability
+这是实验稿最关键的一步。
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| Per-layer isolation | Explicitly designed for | Achieved through package boundaries |
-| Mock effects | `EffectDispatcher` enables easy mocking | Host adapter (`env.fetcher`, etc.) enables mocking |
-| No-DOM testing | Claimed for L1–L4 | Demonstrated in test suite |
+当前项目已经有 compile-once / instantiate-many 的方向，但实验稿进一步明确：
 
-**Winner: Tie.** Both are testable. The experimental design's `EffectDispatcher` provides slightly better mockability for actions, but the current Flux's `env` adapter achieves the same goal.
+1. `CompiledProgram` 是纯编译产物。
+2. `RuntimeKernel` 只持有 program 级只读资源和稳定宿主桥。
+3. `RuntimeHandle`/session 才承载全部会话级可变 owner。
 
----
+这让下面这些问题都更清晰：
 
-## 3. The Experimental Design's Genuinely Better Ideas
+1. 多 session 隔离
+2. 调试器挂接
+3. 并发运行
+4. 内核缓存
+5. 生命周期释放
 
-These are ideas from the experimental design that the current Flux should consider adopting:
+这是从“先进 runtime”迈向“真正 VM 内核”的关键一步。
 
-### 3.1 Effect Scoping and Transactional Semantics (High Value)
+### 4.2 它把所有状态写入收敛成统一事务提交模型
 
-**Current Flux gap**: Actions can trigger side effects (scope writes, API calls, navigation) without any centralized interception or grouping. There's no way to:
-- Cancel all in-flight effects when a scope is disposed
-- Audit all effects triggered by a specific action
-- Roll back effects from a failed action chain
+实验稿最强的地方之一，是不再允许：
 
-**Recommendation**: Introduce an `EffectScope` concept that groups effects from a single action dispatch. This doesn't require rewriting the action system — it can be layered on top.
+1. action 内部直接写 scope
+2. form helper 自成一套写语义
+3. surface runtime 自成一套写语义
+4. data source 完成后直接发布
 
-### 3.2 Read/Write Split for Scope Access (Medium Value)
+而是要求这些能力最终都 lowering 为统一 `CommitIntent -> commit()`。
 
-**Current Flux gap**: `ScopeRef.update()` is accessible to any code holding a `ScopeRef`. This makes it impossible to enforce "all writes go through the action system."
+这个统一写入口会极大提升：
 
-**Recommendation**: Create a `ReadableScopeRef` interface and restrict renderer/action handler access to read-only scope. Writes go through the action dispatch path.
+1. 一致性
+2. 回放能力
+3. 事务内排序
+4. cycle guard
+5. 调试可解释性
+6. 后续并发调度扩展性
 
-### 3.3 Action `finally` Clause (Low Value, Easy Win)
+### 4.3 它把异步一致性正式化了
 
-**Current Flux gap**: No `finally` equivalent in action chains. Cleanup logic must be duplicated in `then` and `onError`.
+当前项目在 async action/source/reaction 上已经有很多现实处理。
 
-**Recommendation**: Add `finally` to `ActionSchema` and handle it in the action executor.
+它已经具备不少重要保护机制，例如：
 
----
+1. action 级 debounce / timeout / retry / cancel。
+2. request 执行路径上的 dedup / cache / abort / adaptor 收敛。
+3. source 自触发过滤，避免直接自刷新环。
+4. reaction 的 microtask batching、debounce、fire-count guard。
 
-## 4. The Current Flux's Structural Advantages
+但实验稿更进一步，正式定义：
 
-These are areas where the current Flux's design is fundamentally superior:
+1. `EvaluationEpoch`
+2. `ReadView`
+3. `commitEpoch()`
+4. stale result discard
+5. cycle guard
 
-### 4.1 Creator-Owned Boundaries
+这是“下一代内核”非常关键的一步。
 
-The current Flux's "creator-owned boundaries" pattern is a crucial architectural decision that the experimental design misses entirely. In the current Flux:
-- Page renderer creates `PageRuntime`
-- Form renderer creates `FormRuntime`
-- Surface host creates `SurfaceRuntime`
-- Domain host renderer creates its own `ActionScope`
+因为现代低代码系统真正难的，不是渲染，而是：
 
-This prevents `NodeRenderer` from becoming a god object that knows about every runtime type. The experimental design's `RendererOrchestrator.instantiate()` creates everything top-down, which is simpler but less scalable.
+1. 请求竞态
+2. watch 竞态
+3. 异步校验竞态
+4. 过期结果回写
+5. 事务和 patch 的稳定性
 
-### 4.2 Validation Dependency Substrate
+实验稿在这块比当前项目更前瞻，也更彻底。
 
-The current Flux recognizes that validation dependencies are different from scope dependencies and uses a separate compile-time field-graph. This is more correct for cross-field rules and prevents false invalidation.
+### 4.4 它把 projection/render host 彻底下放为 adapter
 
-### 4.3 Data Source Richness
+实验稿不是“NodeRenderer 调组件”，而是“内核生成 projection contract，UI host 做 adapter”。
 
-The current Flux's data source system supports formula-backed sources, rich merge strategies, refresh dedup, and `stopWhen` conditions. The experimental design covers the basic requirements but misses the real-world complexity.
+这带来几个长期优势：
 
-### 4.4 Row Scope Caching and Identity
+1. 内核可以真正脱离 React 成为一等系统。
+2. render patch 可以成为统一调试/回放/性能分析接口。
+3. host 切换不需要重构核心 owner 模型。
+4. DOM/debugger/SSR/非 DOM host 的抽象层次更干净。
 
-The current Flux's rowKey-based identity model with scope caching handles sorting, filtering, and virtual scrolling. The experimental design doesn't address this.
+当前项目虽然已经强烈强调 core vs React split，但实验稿在这件事上更绝对。
 
-### 4.5 Proxy-Based Dependency Collection (Pragmatic)
+### 4.5 它把 projected scope 和 host value normalization 提升为一等协议
 
-The Proxy-based runtime dependency collection is simpler to implement and debug than the experimental design's bytecode VM read barriers. For short expressions (the common case in low-code), AST-walking is fast enough.
+当前项目已经有 host projection，也具备 `projected scope store` 的实现基座。
 
-### 4.6 `xui:imports` and Action Scope
+但实验稿把这些继续推到更完整的位置：
 
-The current Flux's `xui:imports` mechanism provides declaration-style import semantics for action namespaces and expression helpers. The experimental design doesn't address how namespaces are provisioned to specific scopes.
+1. `projected scope` 是正式的只读 scope 类别。
+2. result context、slot bindings、host projections 都变成同类对象。
+3. 任意回流值进入 scope 前必须 schema-safe normalization。
 
----
+也就是说，当前项目在这块已经有 substrate，但还没有被提升成一个覆盖全 runtime 的统一通用协议。实验稿在这一点上走得更远。
 
-## 5. Summary Scorecard
+### 4.6 它在 owner graph 方面更彻底
 
-| Dimension | Experimental Design | Current Flux | Winner |
-|-----------|:---:|:---:|:---:|
-| Schema Compilation | 8 | 8 | Tie |
-| Expression Engine | 6 | 8 | **Flux** |
-| Scope / Data Environment | 7 | 8 | **Flux** |
-| Dependency Tracking | 7 | 8 | **Flux** |
-| Action System | **9** | 7 | **Experimental** |
-| Rendering System | 6 | 8 | **Flux** |
-| Form & Validation | 7 | 9 | **Flux** |
-| Data Sources / API | 6 | 9 | **Flux** |
-| Surface Management | 7 | 7 | Tie |
-| Loop / Table / Collection | 6 | 8 | **Flux** |
-| Framework Portability | 5 (unproven) | 7 (React-committed) | **Flux** (pragmatic) |
-| Effect Discipline | **9** | 6 | **Experimental** |
-| Type Safety | 7 | 7 | Tie |
-| Testability | 8 | 8 | Tie |
-| **Overall** | **7.0** | **7.9** | **Flux** |
+当前项目已经在 owner classification 上非常强。
 
----
+实验稿更进一步做了形式化收敛：
 
-## 6. Conclusion
+1. 所有 owner 明确属于 session。
+2. 所有异步 owner 都有 epoch/dispose 语义。
+3. 所有重复实例都要同步释放 scope、deps、registry、render subscriber。
+4. surface 明确只是 session 内 overlay owner 树，不再保留多模型歧义。
 
-### Why the Current Flux is the Truly "Next-Generation" Design
+这套 owner graph 明显更像一个严肃 runtime kernel，而不只是“一个做得很好的前端运行时”。
 
-The current Flux architecture **is** a next-generation low-code runtime. It embodies the key insights that distinguish a modern DSL runtime from legacy approaches:
+## 5. 实验稿的明显弱点
 
-1. **Unified value semantics** — No parallel `xxxExpr`/`xxxOn` field families. Every field is classified by its role, not by naming convention.
+必须承认，实验稿并不只是“更先进”，它也有真实代价。
 
-2. **Compile-time extraction with runtime flexibility** — Validation graphs, dependency declarations, and region structures are extracted at compile time, but runtime collection supplements them for cases where static analysis is insufficient.
+### 5.1 它更抽象，更难一次性落地
 
-3. **Creator-owned boundaries** — Each runtime type (page, form, surface) is created by the renderer that owns it, not by a god-object orchestrator. This is the most important architectural decision for long-term scalability.
+实验稿已经不是普通项目文档，而更像一个内核白皮书。
 
-4. **Pragmatic reactivity** — Root-normalized dependency tracking with Proxy-based collection is the right tradeoff between precision and simplicity. The experimental design converged on the same tradeoff after review.
+它的问题是：
 
-5. **Rich data source lifecycle** — Formula-backed sources, merge strategies, refresh dedup, and `stopWhen` conditions demonstrate real-world usage experience that the experimental design lacks.
+1. 抽象层次高。
+2. 对实现纪律要求极高。
+3. 一旦做不到统一事务和 epoch 语义，整套模型会局部塌陷。
 
-### What the Experimental Design Contributes
+换句话说，它更领先，但也更容易因为实现不完整而变成“高级名词集合”。
 
-The experimental design is not wasted effort. It provides:
+### 5.2 它对团队工程能力的要求更高
 
-1. **A clean reference architecture** — The six-layer model with explicit boundaries is a useful mental model for understanding the current Flux's structure.
+当前项目的好处是：
 
-2. **Effect discipline** — The `EffectDispatcher` + `EffectScope` + `ReadableScope` pattern is the one area where the experimental design is genuinely better. The current Flux should adopt this.
+1. 很多边界已经与实际代码、React host、现有组件系统对齐。
+2. 文档和实现之间已经有明显闭环。
+3. 它已经在解决真实问题，而不是只停留在结构美学。
 
-3. **Action ADT** — Modeling actions as a recursive algebraic data type is more elegant and extensible than schema-driven action chains.
+实验稿如果没有非常强的实现纪律，很容易出现：
 
-4. **Validation of design decisions** — The fact that both designs converged on root-normalized dependency tracking, isolated scopes with projections, compile-time classification, and three-layer action resolution validates these as the correct architectural choices.
+1. 文档是 VM
+2. 实现还是 runtime facade
+3. 最后两层模型并存
 
-### Final Assessment
+这是很多 ambitious architecture 最常见的失败方式。
 
-**The current Flux architecture is the more mature, production-ready, and truly next-generation design.** The experimental design is a valuable thought experiment that identifies one high-value improvement (effect discipline) and validates the current architecture's core decisions. The experimental design's most distinctive feature (bytecode VM) is its weakest point — it adds complexity without demonstrable benefit for the expression workloads typical of low-code platforms.
+### 5.3 它还没有被真实代码和大量场景验证
 
-The recommended path forward: **Adopt the experimental design's effect discipline ideas into the current Flux architecture, not the other way around.**
+当前项目最大的优势之一，不是理论，而是它已经在文档、接口、实现、组件系统之间形成了现实约束。
+
+实验稿目前仍然是高质量实验基线，不是被真实业务和复杂 host/domain 控件反复压测后的成熟系统。
+
+## 6. 当前项目的弱点为什么不是致命问题
+
+虽然我认为实验稿更像真正下一代内核，但当前项目的“没那么纯”并不意味着它落后。
+
+恰恰相反，当前项目做对了很多实验稿最容易做错的事。
+
+### 6.1 它非常重视 DSL continuity，而不是只追求 runtime elegance
+
+这点在 `frontend-programming-model.md` 里很强。
+
+很多架构设计会因为追求 runtime 统一性，牺牲 authoring surface 的渐进式复杂度。
+
+当前项目没有这么做。它持续强调：
+
+1. DSL continuity
+2. progressive authoring path
+3. primitive closure 不轻易重开
+
+这其实是大型平台设计里更难也更重要的能力。
+
+### 6.2 它对“什么不属于 runtime”有很强的克制
+
+当前项目对 loader/runtime/host/domain 的边界感非常好。
+
+这让它避免了很多系统会出现的两个极端：
+
+1. 把一切都推到 runtime
+2. 把 runtime 做成超级 mutable bag
+
+### 6.3 它已经在处理实际性能与实际 React 宿主问题
+
+实验稿更纯，但当前项目的很多约束来自真实实现经验，例如：
+
+1. selective subscription
+2. mounted node `cid`
+3. component handle registry
+4. root scope seeding
+5. host effects 不应复写 owner summary
+
+这些都是实验稿暂时还没有被真实实现折磨出来的“工程智慧”。
+
+## 7. 到底哪个才是真正领先的下一代设计
+
+这要分层回答。
+
+### 7.1 如果问题是“谁的顶层理论更成熟”
+
+当前项目非常强。
+
+它的 primitive closure、Final Execution Schema 边界、Capability 与 Action Algebra 分层、Host Projection 概念，都已经非常接近世界一流。
+
+### 7.2 如果问题是“谁的当前工程化基线更成熟”
+
+当前项目更强。
+
+原因很简单：
+
+1. 有完整文档体系。
+2. 有现成公开接口。
+3. 有实际 runtime factory、schema compiler、scope、source、reaction、surface 等落地实现。
+4. 很多设计已经过实现反推修正。
+
+### 7.3 如果问题是“谁更像下一代低代码内核终局形态”
+
+实验稿更领先。
+
+原因不是它更复杂，而是它在以下四点上做得更彻底：
+
+1. **真正三层化的内核拓扑**：program / kernel / session。
+2. **统一事务写模型**：所有内核状态变更收敛到 `commit()`。
+3. **正式异步一致性协议**：epoch + read view + stale result discard。
+4. **真正 host-agnostic 的 projection 内核**：UI host 只是 adapter。
+
+这四点叠加在一起，会把系统从“高级 runtime”推进到“真正 runtime kernel”。
+
+### 7.4 最终裁决
+
+我的最终裁决是：
+
+1. **当前 `nop-chaos-flux` 不是落后的当前方案，而是已经接近下一代的先进现实方案。**
+2. **实验稿在内核抽象层面比当前项目更领先。**
+3. **但当前项目在工程成熟度、概念克制、DSL 连续性、现实可落地性上更强。**
+
+因此，真正准确的说法不是：
+
+1. “实验稿全面碾压当前项目”
+2. “当前项目已经不需要更高阶内核设计”
+
+而是：
+
+**当前项目已经站在非常高的架构台阶上；实验稿给出的，是它下一次架构跃迁可能通往的更纯粹内核终局。**
+
+## 8. 如果要把两者结合，最值得吸收什么
+
+如果目标不是做纯理论比较，而是推动当前项目继续进化，我认为最值得从实验稿吸收到当前项目里的，不是全部重写，而是以下五件事。
+
+### 8.1 先把 runtime facade 再收缩一层
+
+把当前 `RendererRuntime` 的公开面逐步收缩为：
+
+1. compile/kernel 级公开能力
+2. session/handle 级最小宿主能力
+3. owner 子系统改为内部接口
+
+### 8.2 逐步引入统一 commit 事务层
+
+不需要一夜之间替换所有写入口，但可以逐步把：
+
+1. built-in actions
+2. form writes
+3. source publication
+4. surface status changes
+
+统一 lowering 到一个正式 commit 协议。
+
+### 8.3 把 async source / reaction / validation 统一到 epoch 语义
+
+这是当前项目最值得做的“下一代化”升级之一。
+
+### 8.4 把 projected scope / host projection / result context 做更统一的类型化收敛
+
+当前项目已经有基础，只差更系统化的统一。
+
+### 8.5 为 projection layer 预留真正的 patch 协议
+
+即使继续以 React 为主宿主，也可以先把内核到 host 的增量协议显式化，为未来 debugger、benchmark、non-React host、fine-grained rendering 做准备。
+
+## 9. 最后的判断
+
+如果只选一句最重要的话，我会选这句：
+
+**当前项目已经是很先进的 Flux 架构；实验稿则是在它之上，把“先进前端低代码 runtime”继续推进为“真正的 Schema VM 内核”。**
+
+所以谁更领先？
+
+1. 在“现实世界可落地的先进架构”维度，当前项目更成熟。
+2. 在“下一代低代码内核终局形态”维度，实验稿更领先。
+
+如果必须二选一回答“哪个才是真正领先的下一代设计”，我的答案是：
+
+**实验稿更接近真正的下一代内核设计。**
+
+原因不是它推翻了当前项目，而是它把当前项目已经很强的思想，进一步收敛成了更彻底的 VM、事务、一致性、投影、宿主边界五位一体的内核模型。

@@ -1,1592 +1,1185 @@
-# Next-Generation Low-Code DSL Runtime Kernel Design
+# 下一代低代码核心框架内核接口设计（实验稿）
 
-> **Document Type**: Experimental design — a from-scratch kernel interface proposal based solely on the requirements in `docs/low-code-dsl-runtime-requirements.md`.
+> 文档定位：基于 `docs/low-code-dsl-runtime-requirements.md` 单独推导出的实验性设计。
 >
-> **No existing codebase or architecture documents were consulted during the design phase.**
+> 约束：本设计阶段不参考当前项目代码和其他架构文档，只以需求规格为输入。
+>
+> 目标：定义一个可编译、可嵌入、可扩展、可诊断、可高性能实例化的低代码 DSL 运行时内核接口与核心组织方式。
 
----
+## 1. 设计结论
 
-## 0. Design Philosophy
+我认为最先进的下一代低代码运行时，不应再把系统理解成“渲染器 + Store + 一堆 helper”。
 
-This kernel is designed around **five governing principles**, derived directly from the requirements:
+它应该被设计为一个 **Schema Virtual Machine（SVM）**：
 
-1. **Compile-Time Maximality** — If a problem can be solved at compile time, it must be. The runtime should be a thin execution shell over pre-computed artifacts.
-2. **Zero-Abstraction-Overhead Invariants** — Static parts of a schema incur exactly zero runtime cost. Dynamic parts pay only for their dynamism.
-3. **Algebraic Effect Handlers** — All side effects (state writes, network calls, navigation, dialog management) are modeled as effect messages dispatched through a single capability channel, making the kernel inherently testable and embeddable.
-4. **Root-Normalized Reactive Propagation** — Data environments track dependencies at normalized lexical root granularity (e.g., `items` not `items[3].name`). This avoids the complexity of wildcard pattern matching while still providing precise-enough invalidation. Array mutations invalidate the array root, which propagates to all subscribers of that root and its children.
-5. **Capability-Based Security** — No action, no namespace, no data source can ever be accessed outside its declared lexical boundary. This is enforced structurally at compile time, not by runtime checks.
+1. 编译期把 schema 降解为不可变的执行模板。
+2. 运行期把模板实例化为一组彼此正交的 runtime owner。
+3. 所有动态行为统一落在一套“依赖可追踪的读模型 + 能力派发的写模型”上。
+4. UI 渲染只是该虚拟机的一种投影，而不是核心本体。
 
----
+这个内核的关键不是“能不能渲染页面”，而是是否同时满足：
 
-## 1. Architecture Overview
+1. 编译一次，多次实例化。
+2. 静态零开销。
+3. 依赖精确失效。
+4. 作用域可隔离但仍可组合。
+5. 值、数据源、reaction、校验、动作共享同一语义底座。
+6. 宿主能力通过显式桥接接入，而不是侵入核心。
 
-The kernel is organized into **six layers**, each with a strict compile-time / runtime boundary:
+## 2. 总体模型
 
+整个系统分成六层。
+
+1. Authoring Input Layer
+2. Compile Layer
+3. Runtime Template Layer
+4. Instance Kernel Layer
+5. Projection Layer
+6. Host Bridge Layer
+
+核心原则：
+
+1. 编译态负责“结构理解、静态归类、约束固化、索引生成”。
+2. 执行态负责“最小实例状态、最小重新计算、最小副作用暴露”。
+3. 所有“读”都先过 `ScopeRuntime`。
+4. 所有“写”和可见副作用都先过 `CapabilityDispatcher`。
+5. 所有动态计算都必须留下依赖足迹，进入统一失效系统。
+
+## 3. 核心对象图
+
+```text
+SchemaDocument
+  -> Compiler
+    -> CompiledProgram
+      -> TemplateRegistry
+      -> ExpressionRegistry
+      -> ActionPlanRegistry
+      -> ValidationRegistry
+      -> DiagnosticSet
+
+CompiledProgram + HostServices
+  -> RuntimeKernel
+    -> Immutable Registries / Stable Host Bridge
+    -> mount()
+      -> RuntimeSession
+        -> ScopeForest
+        -> DependencyGraph
+        -> ValueEngine
+        -> DataSourceEngine
+        -> ReactionEngine
+        -> ActionEngine
+        -> ValidationEngine
+        -> SurfaceEngine
+        -> ComponentRegistry
+        -> InstanceIndex
 ```
-┌──────────────────────────────────────────────────────┐
-│                 L6: Host Integration                  │
-│    (HostAdapter, SurfaceManager)                      │
-├──────────────────────────────────────────────────────┤
-│              L5: Renderer Adapter Layer               │
-│    (RendererHost, RegionHandle, RendererOrchestrator) │
-├──────────────────────────────────────────────────────┤
-│              L4: Action & Effect Pipeline             │
-│    (ActionExecutor, EffectDispatcher, EffectScope,    │
-│     ActionRegistry, FormRuntime [runtime half])       │
-├──────────────────────────────────────────────────────┤
-│           L3: Reactivity & Data Layer                 │
-│    (SignalGraph, ScopeTree, DataSourceManager,        │
-│     ReactionManager, FormRuntime [state half])        │
-├──────────────────────────────────────────────────────┤
-│           L2: Expression Engine                        │
-│    (ExpressionCompiler, EvalContext, DependencyLog)   │
-├──────────────────────────────────────────────────────┤
-│           L1: Schema Compiler (Compile-Time)          │
-│    (SchemaParser, IRBuilder, TypeChecker,             │
-│     ValidationGraphCompiler)                          │
-└──────────────────────────────────────────────────────┘
-```
 
-**Key invariant**: Layers L1–L3 are **framework-agnostic** (no React, no DOM). L4 is also framework-agnostic. Only L5 depends on a rendering framework. L6 is a thin adapter boundary with the host application.
+设计重点不是把所有逻辑塞进一个 runtime，而是让每个 owner 只拥有一类状态。
 
----
+### 3.1 三层状态归属
 
-## 2. Layer 1: Schema Compiler (Compile-Time)
+这是整个内核最重要的收敛点。
 
-### 2.1 Core Types
+1. `CompiledProgram`：纯编译产物，只读，可缓存，可跨会话复用。
+2. `RuntimeKernel`：program 级只读资源加稳定宿主桥，不保存任何会话可变状态。
+3. `RuntimeSession`：一次挂载的全部可变运行时 owner，所有 scope、依赖、数据源、表单、surface、实例索引都只存在于 session 内。
 
-```typescript
-// ── Schema AST ──
+因此：
 
-interface SchemaNode {
-  readonly id: NodeId;
-  readonly type: string;
-  readonly props: ReadonlyMap<string, SchemaValue>;
-  readonly regions: ReadonlyMap<string, RegionSchema>;
-  readonly actions?: ActionSchema;
-  readonly validations?: ReadonlyArray<ValidationSchema>;
-  readonly dataSources?: ReadonlyArray<DataSourceSchema>;
-  readonly reactions?: ReadonlyArray<ReactionSchema>;
-  readonly loop?: LoopSchema;
-  readonly meta?: NodeMetaSchema;
-}
+1. 一个 `CompiledProgram` 可以创建多个 `RuntimeKernel`。
+2. 一个 `RuntimeKernel` 可以挂多个 `RuntimeSession`。
+3. 任意 session 之间绝不共享 scope、依赖图、实例状态或异步任务。
 
-type SchemaValue =
-  | { kind: 'literal'; value: unknown }
-  | { kind: 'expression'; source: string; compiled: CompiledExpr }
-  | { kind: 'template'; parts: ReadonlyArray<string | CompiledExpr> }
-  | { kind: 'action-producer'; action: ActionSchema }
-  | { kind: 'data-source-ref'; sourceId: string };
+## 4. 编译期设计
 
-interface RegionSchema {
-  readonly name: string;
-  readonly params?: ReadonlyMap<string, string>; // paramName → paramType
-  readonly children: ReadonlyArray<SchemaNode>;
-}
+### 4.1 编译产物
 
-// ── Compiled Intermediate Representation (IR) ──
+编译器输出 `CompiledProgram`，它是运行时唯一接受的 schema 输入。
 
-interface CompiledSchema {
-  readonly root: CompiledNode;
-  readonly expressions: ReadonlyMap<ExprId, CompiledExpr>;
-  readonly actions: ReadonlyMap<ActionId, CompiledAction>;
-  readonly validations: ReadonlyMap<RuleId, CompiledValidation>;
-  readonly dataSources: ReadonlyMap<SourceId, CompiledDataSource>;
-  readonly diagnostics: ReadonlyArray<Diagnostic>;
-}
-
-interface CompiledNode {
-  readonly id: NodeId;
-  readonly type: string;
-  readonly rendererKey: RendererKey;
-  readonly props: ReadonlyMap<string, PropSlot>;
-  readonly meta: MetaSlot;
-  readonly regions: ReadonlyMap<string, CompiledRegion>;
-  readonly scopeBinding?: ScopeBinding; // how this node creates/binds scopes
-  readonly instanceKey: string;         // for component instance registry
-}
-
-type PropSlot =
-  | { kind: 'static'; value: unknown }           // zero runtime cost
-  | { kind: 'dynamic'; exprId: ExprId }          // re-evaluate on dependency change
-  | { kind: 'region'; regionId: string }         // pre-compiled child handle
-  | { kind: 'action'; actionId: ActionId }       // event handler
-  | { kind: 'i18n'; key: string; fallback?: string };  // resolved at runtime to current locale
-
-// ── i18n Design Note ──
-// Requirement 5.3 states "国际化字符串替换在编译阶段完成". However, compile-time
-// substitution produces locale-specific artifacts that cannot support runtime locale
-// switching (a real-world requirement for multi-language applications).
-//
-// This design resolves the conflict by splitting the concern:
-// - Compile time: VALIDATE i18n keys (existence check, prefix enforcement)
-// - Runtime: RESOLVE i18n keys to current locale string (lazy, memoized per key+locale)
-//
-// The i18n PropSlot has the same zero-cost behavior as static props when the locale
-// doesn't change — the memoized string is returned without lookup. This preserves
-// the spirit of "no runtime overhead" while enabling runtime locale switching.
-// All i18n keys MUST use the unified prefix (e.g., "flux.") enforced at compile time.
-
-interface CompiledRegion {
-  readonly name: string;
-  readonly params: ReadonlyArray<string>;        // ["item", "index"]
-  readonly template: CompiledNode[];             // compiled once, instantiated N times
-  readonly isolated: boolean;                    // e.g., table rows are isolated
-  readonly projections?: ExprId[];               // explicit parent→child data projection
+```ts
+export interface CompiledProgram {
+  programId: string;
+  version: string;
+  rootTemplateId: TemplateId;
+  templates: TemplateRegistry;
+  expressions: ExpressionRegistry;
+  actions: ActionPlanRegistry;
+  validations: ValidationRegistry;
+  components: ComponentBindingTable;
+  symbols: SymbolTable;
+  diagnostics: DiagnosticMessage[];
+  debug: DebugArtifacts;
 }
 ```
 
-### 2.2 Compiler Pipeline
+编译器必须完成：
 
-```
-JSON Schema
-    │
-    ▼
-┌─────────────┐
-│ Parse       │  Raw JSON → SchemaNode tree
-└─────┬───────┘
-      │
-      ▼
-┌─────────────┐
-│ Resolve     │  Resolve type→renderer, inherit defaults,
-│             │  validate i18n keys, normalize shorthands
-└─────┬───────┘
-      │
-      ▼
-┌─────────────┐
-│ Classify    │  Classify each prop as static/dynamic/template/
-│             │  action-producer/data-source-ref
-└─────┬───────┘
-      │
-      ▼
-┌─────────────┐
-│ Compile     │  Compile expressions, extract validation graph,
-│             │  build action chains, analyze scope topology
-└─────┬───────┘
-      │
-      ▼
-┌─────────────┐
-│ Optimize    │  Static subtree hoisting, dead-code elimination,
-│             │  dependency root pre-computation, i18n key extraction
-└─────┬───────┘
-      │
-      ▼
-┌─────────────┐
-│ TypeCheck   │  Schema structure validation, expression type inference,
-│             │  namespace contract validation, diagnostic emission
-└─────┬───────┘
-      │
-      ▼
-CompiledSchema (immutable artifact)
-```
+1. 节点类型解析。
+2. 字段归类。
+3. region 提取。
+4. 表达式解析与 AST 编译。
+5. 动作树归一化为 action plan。
+6. 校验规则归一化为 validation graph。
+7. 节点身份、模板身份、region 身份、slot 参数身份生成。
+8. 调试索引和源码位置信息生成。
 
-### 2.3 Compiler Interface
+### 4.2 字段归类模型
 
-```typescript
-interface SchemaCompiler {
-  compile(schema: unknown, context: CompileContext): CompileResult;
-}
+schema 字段不能在运行时再“猜类型”。编译期必须把每个字段降解到明确的值槽类型。
 
-interface CompileContext {
-  readonly rendererIndex: StaticRendererIndex;      // compile-time: known types and their prop schemas
-  readonly actionContracts: StaticActionContracts;   // compile-time: known action names and signatures
-  readonly namespaceContracts: ReadonlyMap<string, NamespaceContract>;
-  readonly i18nResolver: I18nResolver;
-  readonly validatorProvider?: ValidatorProvider;
-}
+```ts
+export type CompiledFieldKind =
+  | 'static'
+  | 'expr'
+  | 'template-string'
+  | 'region'
+  | 'region-list'
+  | 'action'
+  | 'data-source'
+  | 'validation'
+  | 'meta';
 
-// ── Static Contracts (compile-time snapshots, no runtime state) ──
-
-interface StaticRendererIndex {
-  hasType(type: string): boolean;
-  getPropSchema(type: string): PropSchema | null;
-  getRegionNames(type: string): string[];
-}
-
-interface StaticActionContracts {
-  hasBuiltIn(name: string): boolean;
-  getSignature(name: string): MethodSignature | null;
-}
-
-// ── Runtime Registries (mutable, L4/L5 layer) ──
-
-interface RendererRegistry {
-  register(key: RendererKey, factory: RendererFactory): void;
-  unregister(key: RendererKey): void;
-  resolve(key: RendererKey): RendererFactory | null;
-  toStaticIndex(): StaticRendererIndex;
-}
-
-interface ActionRegistry {
-  registerBuiltIn(name: string, handler: BuiltInActionHandler): void;
-  registerComponent(instanceKey: string, methods: ComponentMethods): void;
-  unregisterComponent(instanceKey: string): void;
-  registerNamespace(ns: string, contract: NamespaceContract, methods: NamespaceMethods): void;
-  unregisterNamespace(ns: string): void;
-  resolve(action: string, context: ActionContext): ActionHandler | null;
-  toStaticContracts(): StaticActionContracts;
-}
-
-interface CompileResult {
-  readonly success: boolean;
-  readonly artifact?: CompiledSchema;
-  readonly diagnostics: ReadonlyArray<Diagnostic>;
-}
-
-interface Diagnostic {
-  readonly severity: 'error' | 'warning' | 'info';
-  readonly nodeId?: NodeId;
-  readonly path?: string;
-  readonly message: string;
-  readonly source: string;    // e.g., "type-checker", "expression-compiler"
+export interface CompiledFieldSlot {
+  field: string;
+  kind: CompiledFieldKind;
+  payload: unknown;
+  stable: boolean;
 }
 ```
 
----
+这里的 `stable` 很关键：
 
-## 3. Layer 2: Expression Engine
+1. `stable: true` 表示该槽运行时可直接复用编译值。
+2. `stable: false` 表示该槽需要进入动态求值流程。
 
-### 3.1 Design: Bytecode-Interpreted Expression VM
+这就是“静态零开销”的真正落点。
 
-Instead of the common approach of AST-walking or string interpolation, expressions are compiled to a **compact bytecode format** and executed by a register-based virtual machine. This gives:
+### 4.3 模板与实例分离
 
-- Predictable O(1) per-expression execution cost
-- Natural dependency tracking via read barriers
-- No dynamic code generation (`eval`, `new Function`)
-- Amenable to future WASM compilation for hot paths
+所有节点在编译后都变成模板节点，而不是运行时节点。
 
-### 3.2 Core Types
-
-```typescript
-// ── Compiled Expression ──
-
-interface CompiledExpr {
-  readonly id: ExprId;
-  readonly bytecode: Uint32Array;      // register-based bytecode
-  readonly constantPool: unknown[];    // literals, function references
-  readonly depRoots: ReadonlyArray<string>; // normalized dependency roots (conservative)
-  readonly returnType: ExprType;
-}
-
-// ── Evaluation Context ──
-
-interface EvalContext {
-  resolve(path: string): unknown;
-  has(path: string): boolean;
-  resolveWithLog(path: string, log: DependencyLog): unknown;
-}
-
-// ── Dependency Tracking ──
-
-interface DependencyLog {
-  readonly paths: ReadonlySet<string>;
-  reset(): void;
-  merge(other: DependencyLog): void;
-}
-
-// ── Expression VM ──
-
-interface ExpressionVM {
-  evaluate(expr: CompiledExpr, context: EvalContext): unknown;
-  evaluateWithLog(expr: CompiledExpr, context: EvalContext, log: DependencyLog): unknown;
+```ts
+export interface CompiledTemplateNode {
+  templateNodeId: TemplateNodeId;
+  type: string;
+  propsSlots: CompiledFieldSlot[];
+  metaSlots: CompiledFieldSlot[];
+  regionSlots: CompiledRegionSlot[];
+  eventSlots: CompiledEventSlot[];
+  localDefinitions: CompiledLocalDefinition[];
+  lifecycle: CompiledLifecycleHooks;
+  debug: DebugNodeInfo;
 }
 ```
 
-### 3.3 Bytecode Instruction Set (Conceptual)
+模板节点是不可变的。运行期不会修改它，只会围绕它创建实例状态。
 
-| Opcode | Operands | Semantics |
-|--------|----------|-----------|
-| `LOAD_CONST` | `dest`, `poolIdx` | Load constant from pool |
-| `LOAD_VAR` | `dest`, `pathIdx` | Read from scope (with optional log) |
-| `LOAD_HAS` | `dest`, `pathIdx` | Test scope path existence |
-| `BINARY_OP` | `dest`, `op`, `src1`, `src2` | Arithmetic/comparison/logic |
-| `UNARY_OP` | `dest`, `op`, `src` | Negation, not |
-| `CALL_FUNC` | `dest`, `funcIdx`, `argc`, `args...` | Built-in function call |
-| `TERNARY` | `dest`, `cond`, `trueIdx`, `falseIdx` | Conditional |
-| `INTERPOLATE` | `dest`, `partCount`, `parts...` | Template string assembly |
-| `RETURN` | `src` | Return value |
+### 4.4 身份体系
 
-### 3.4 Expression Compiler
+下一代内核必须把身份体系定义清楚，否则调试、重复结构、组件实例动作、增量渲染都会失真。
 
-```typescript
-interface ExpressionCompiler {
-  compile(source: string): CompiledExpr;
-  compileTemplate(parts: ReadonlyArray<string | string>): CompiledExpr;
+```ts
+export type TemplateId = string;
+export type TemplateNodeId = string;
+export type InstanceId = string;
+export type RuntimeNodeId = string;
+export type ScopeId = string;
+```
+
+它们的职责严格区分：
+
+1. `TemplateId`：一棵编译模板的身份。
+2. `TemplateNodeId`：模板内静态节点身份，跨会话稳定。
+3. `InstanceId`：某模板在某 session 内的一次实例化身份。
+4. `RuntimeNodeId`：`InstanceId + TemplateNodeId + local repetition key` 组成的稳定运行时节点身份。
+5. `ScopeId`：一次作用域 owner 的身份，不等同于节点身份。
+
+映射规则：
+
+1. 一个 `TemplateNodeId` 在不同 session 下会映射到多个 `RuntimeNodeId`。
+2. 同一个重复模板节点，在同一 session 内不同 item 也会映射到多个 `RuntimeNodeId`。
+3. `component:` 动作解析依赖 `RuntimeNodeId -> ComponentInstanceHandle` 索引，而不是依赖 UI 框架 ref 泄漏。
+
+### 4.5 编译产物到执行器映射
+
+编译产物必须有唯一消费方，不允许“只是看起来完整”。
+
+1. `templates` 由 `InstanceIndex` 和 `ProjectionEngine` 消费。
+2. `expressions` 由 `ValueEngine`、`ActionEngine`、`ValidationEngine`、`DataSourceEngine`、`ReactionEngine` 共享消费。
+3. `actions` 仅由 `ActionEngine` 消费。
+4. `validations` 仅由 `ValidationEngine` 消费。
+5. `components` 由 `ProjectionEngine` 做类型绑定，由 `ComponentRegistry` 做实例方法注册。
+6. `symbols` 只用于编译期诊断、调试和类型校验，不进入热路径。
+7. `debug` 只由 `RuntimeInspector` 和开发工具消费。
+
+凡是找不到唯一消费方的编译字段，都不应进入正式规格。
+
+## 5. 运行时核心接口
+
+### 5.1 内核入口
+
+```ts
+export interface RuntimeKernel {
+  readonly program: CompiledProgram;
+  readonly host: StableHostBridge;
+  readonly catalogs: RuntimeCatalogs;
+
+  mount(input: MountInput): RuntimeHandle;
+  inspector(sessionId: string): RuntimeInspector | undefined;
+  inspect(): KernelSnapshot;
+  dispose(): void;
 }
 ```
 
-The expression compiler parses source text, builds an AST, performs constant folding and dead-path elimination, then emits bytecode + constant pool + normalized dependency root list.
+`RuntimeKernel` 只做两件事：
 
----
+1. 持有全局不可变资源。
+2. 生成一次具体运行会话 `RuntimeSession`。
 
-## 4. Layer 3: Reactivity & Data Layer
+### 5.2 运行会话
 
-### 4.1 Design: Signal Graph with Path-Lens Granularity
+```ts
+export interface RuntimeHandle {
+  readonly sessionId: string;
+  readonly rootScopeId: ScopeId;
+  readonly rootInstanceId: InstanceId;
 
-The reactivity system is modeled as a **directed acyclic signal graph** where:
+  renderRoot(): RenderFragmentHandle;
+  dispatch(input: DispatchInput): Promise<ActionOutcome>;
+  commit(request: CommitRequest): Promise<CommitResult>;
+  validate(request?: ValidationRequest): Promise<ValidationResult>;
+  inspectNode(nodeId: RuntimeNodeId): RuntimeNodeSnapshot | undefined;
+  inspectScope(scopeId: ScopeId): ScopeSnapshot | undefined;
+  dispose(): void;
+}
+```
 
-- **Source signals** are data roots in scope trees
-- **Derived signals** are expression evaluations with tracked dependency roots
-- **Effect signals** are side-effect triggers (data source refreshes, reactions)
-- **Propagation** is pull-based at leaf consumption, with push-based invalidation in topological order
+`RuntimeKernel.mount()` 对外返回的应该是 `RuntimeHandle`，而不是内部 owner 图。
 
-This is fundamentally different from a simple observable/store model: the graph structure is **known at compile time** (from the expression dependency analysis), and the runtime only needs to instantiate and wire it.
+```ts
+export interface RuntimeSession {
+  readonly handle: RuntimeHandle;
+  readonly scopes: ScopeForest;
+  readonly deps: DependencyGraph;
+  readonly values: ValueEngine;
+  readonly actions: ActionEngine;
+  readonly dataSources: DataSourceEngine;
+  readonly reactions: ReactionEngine;
+  readonly validations: ValidationEngine;
+  readonly surfaces: SurfaceEngine;
+  readonly instances: InstanceIndex;
+  readonly projector: ProjectionEngine;
+  dispose(): void;
+}
+```
 
-### 4.2 Scope (Lexical Data Environment)
+这两个接口必须严格区分：
 
-```typescript
-interface Scope {
-  readonly id: ScopeId;
-  readonly parent: Scope | null;
-  readonly isolated: boolean;
+1. `RuntimeHandle`：宿主、测试、调试工具可见的最小公开面。
+2. `RuntimeSession`：内核内部 owner 组合体，不承诺给普通业务代码直接访问。
+3. `RuntimeKernel.inspector(sessionId)`：调试器进入正式检查 API 的唯一入口。
 
-  // ── Read API ──
-  get(path: string): unknown;
-  has(path: string): boolean;
-  tryGet(path: string): { found: boolean; value: unknown };
+会话是可销毁的，便于嵌入式场景和测试场景。
 
-  // ── Internal Mutation API (called ONLY by EffectHandler for setValue effects) ──
-  // NOT for external use. All user/action-originated writes must go through EffectDispatcher.
-  /** @internal */
-  _applyChange(change: ScopeChange): RootChange[];
+这里的 `commit()` 不是绕过动作系统的后门，而是唯一公开写入口。它只是把宿主写入、测试写入、调试写入也标准化成统一事务协议。
 
-  // ── Subscription ──
-  subscribe(roots: ReadonlyArray<string>, callback: ChangeCallback): Unsubscribe;
+```ts
+export interface CommitRequest {
+  kind: 'host-patch' | 'host-set' | 'system-write';
+  targetScopeId: ScopeId;
+  path?: ValuePath;
+  value?: unknown;
+  patch?: StructuralPatch;
+  source: WriteSource;
+}
+```
 
-  // ── Snapshot (for debugging, not normal data flow) ──
+普通 schema 侧可见副作用仍然只能通过 `dispatch()` 进入能力派发通道。
+
+更强的硬约束是：
+
+1. `dispatch()` 本身不允许直接修改任何内核状态。
+2. 任意 builtin/component/namespace capability 若要修改 scope、surface、form、validation 或实例状态，必须返回一个或多个 `CommitRequest` 或 `CommitIntent`。
+3. `ActionEngine` 负责把这些 intent 归并进 session `commit()` 事务。
+4. 因此系统内部永远不存在“能力内部直写 scope”的第二条路径。
+
+```ts
+export interface CommitIntent {
+  target: 'scope' | 'surface' | 'form' | 'validation-meta' | 'instance-meta';
+  payload: unknown;
+}
+```
+
+因此本文后续出现的 `FormRuntime`、`SurfaceEngine`、`DataSourceRuntime`、`ReactionRuntime` 等接口，一律视为 **session 内部 owner 合同**，不是宿主公开 API。
+
+## 6. 作用域系统
+
+### 6.1 作用域必须是森林，不是单链上下文
+
+传统低代码运行时喜欢把 scope 做成“父子对象 + merge 读取”。这会导致：
+
+1. 依赖难以精确归属。
+2. 行级隔离难以实现。
+3. 局部刷新边界模糊。
+4. 写入路径不知道该落到哪个 owner。
+
+更好的做法是把作用域设计成 **Owner Forest + Read Projection**。
+
+```ts
+export interface ReadableScope {
+  id: ScopeId;
+  parentId?: ScopeId;
+  mode: 'inherited' | 'isolated' | 'projected';
+  owner: ScopeOwnerKind;
+
+  has(path: ValuePath): boolean;
+  resolve(path: ValuePath): unknown;
+
+  project(input: ScopeProjectionInput): ScopeId;
+  fork(input: ScopeForkInput): ScopeId;
+  subscribe(sub: ScopeSubscription): Unsubscribe;
   snapshot(): ScopeSnapshot;
 }
 
-// ── Read-only scope view (for L4/L5 — no mutation access) ──
-
-interface ReadableScope {
-  readonly id: ScopeId;
-  get(path: string): unknown;
-  has(path: string): boolean;
-  tryGet(path: string): { found: boolean; value: unknown };
-  subscribe(roots: ReadonlyArray<string>, callback: ChangeCallback): Unsubscribe;
-}
-
-interface ScopeChange {
-  readonly path: string;
-  readonly value: unknown;
-  readonly op: 'set' | 'merge' | 'delete' | 'push' | 'splice';
-}
-
-// ── Change Notification (root-normalized) ──
-// All change notifications are grouped by their normalized lexical root.
-// For example, setting items[3].name produces a RootChange with root="items".
-
-interface ChangeCallback {
-  (changes: ReadonlyArray<RootChange>): void;
-}
-
-interface RootChange {
-  readonly root: string;                       // normalized root, e.g., "items"
-  readonly affectedPaths: ReadonlyArray<string>; // concrete paths that changed
-  readonly op: 'set' | 'merge' | 'delete' | 'push' | 'splice';
-}
-
-interface ScopeSnapshot {
-  readonly own: Readonly<Record<string, unknown>>;
-  readonly inherited: Readonly<Record<string, unknown>>;
-  readonly merged: Readonly<Record<string, unknown>>;
+export interface WritableScopeStore extends ReadableScope {
+  write(path: ValuePath, value: unknown, options?: ScopeWriteOptions): WriteResult;
+  patch(patch: StructuralPatch, options?: ScopeWriteOptions): WriteResult;
 }
 ```
 
-### 4.3 Scope Tree & Factory
+### 6.2 三类作用域
 
-```typescript
-interface ScopeTree {
-  readonly root: Scope;
+1. `inherited`: 默认词法继承，可遮蔽父级。
+2. `isolated`: 不读取父级，仅显式投影外部值。
+3. `projected`: 自身不拥有完整状态，只是多个来源的只读投影视图。
 
-  createChild(parent: Scope, options: ScopeCreateOptions): Scope;
-  dispose(scope: Scope): void;  // cleanup subscriptions, data sources, reactions
-}
+第三类 `projected` 很重要。它使复杂域控件的只读快照、slot 参数、结果上下文都能作为一等作用域对象存在，而不是散落成临时变量。
 
-interface ScopeCreateOptions {
-  readonly isolated?: boolean;
-  readonly initialValues?: Readonly<Record<string, unknown>>;
-  readonly projections?: ReadonlyMap<string, string>; // parentPath → childName
-}
-```
+关键约束：
 
-### 4.4 Signal Graph Node
+1. `projected` scope 只实现 `ReadableScope`，不允许直接写入。
+2. 只有 session 内部 owner 持有 `WritableScopeStore`。
+3. 外部宿主、动作系统、表单系统的所有写入最终都走 `commit()` 事务入口，再由 session 内部路由到具体 `WritableScopeStore`。
 
-```typescript
-interface SignalNode<T = unknown> {
-  readonly id: SignalId;
-  readonly kind: SignalKind;
-  get(): T;                     // for derived: re-evaluate if stale; return cached value if clean
-  invalidate(): void;           // mark stale
-  subscribe(callback: () => void): Unsubscribe;
-}
+### 6.3 路径变更通知
 
-// ── Reference Reuse Guarantee ──
-// When a derived signal re-evaluates after invalidation, if the new value is
-// structurally equal to the previous value (via deep equality check), the signal
-// returns the PREVIOUS reference (not the new one). This satisfies requirement 4.2.2:
-// "动态求值结果未发生变化时，应复用上一次的引用".
-// For primitive values, this is automatic. For objects/arrays, the signal maintains
-// a previousValue cache and uses structural comparison.
-
-type SignalKind =
-  | 'source'      // data path in scope
-  | 'derived'     // expression evaluation
-  | 'effect'      // side-effect trigger
-  | 'datasource'; // named data source
-```
-
-### 4.5 Dependency Tracking & Propagation
-
-```typescript
-interface DependencyGraph {
-  // Compile-time pre-computed structure, runtime-instantiated
-  createRuntime(): DependencyRuntime;
-}
-
-interface DependencyRuntime {
-  // Wire a derived signal to its source signals
-  wireDerived(exprId: ExprId, sourceRoots: ReadonlyArray<string>): SignalNode;
-
-  // Wire a data source to its trigger dependencies
-  wireDataSource(sourceId: SourceId, triggerRoots: ReadonlyArray<string>): SignalNode;
-
-  // Wire a reaction observer
-  wireReaction(reactionId: ReactionId, watchRoots: ReadonlyArray<string>): SignalNode;
-
-  // Wire a projection binding: parent root → child root (for isolated scopes)
-  wireProjection(parentScope: Scope, parentRoot: string, childScope: Scope, childRoot: string): SignalNode;
-
-  // Propagate changes. Evaluation order: topological (dependents evaluated after their dependencies).
-  propagate(changes: ReadonlyArray<RootChange>): ReadonlyArray<SignalId>;
-
-  // Get the set of invalidated signal IDs after propagation
-  getInvalidated(): ReadonlySet<SignalId>;
-
-  // Self-write protection: suppress circular refresh
-  suppressFor(sourceId: SourceId, roots: ReadonlyArray<string>): void;
+```ts
+export interface ScopeChange {
+  scopeId: ScopeId;
+  writes: Array<{
+    path: ValuePath;
+    kind: 'set' | 'delete' | 'patch';
+    value?: unknown;
+  }>;
+  source: WriteSource;
+  revision: number;
 }
 ```
 
-### 4.6 Named Data Source
+变更通知必须是路径级的，因为依赖失效就是按路径匹配，而不是按 scope 整体匹配。
 
-```typescript
-interface DataSourceInstance {
-  readonly id: SourceId;
-  readonly signal: SignalNode;
-  readonly state: DataSourceState;
+## 7. 统一依赖系统
 
-  activate(scope: Scope): void;
-  deactivate(): void;
-  refresh(): Promise<DataSourceResult>;
-  cancel(): void;
-}
+### 7.1 一个图，三类消费者
 
-interface DataSourceState {
-  readonly loading: boolean;
-  readonly error: unknown | null;
-  readonly data: unknown;
-  readonly lastRefreshed: number | null;
-}
+需求已经规定三类消费者共享同一依赖模型。我认为应该把它设计成统一的 `DependencyGraph`。
 
-type DataSourceResult =
-  | { kind: 'success'; data: unknown }
-  | { kind: 'error'; error: unknown }
-  | { kind: 'cancelled' };
+```ts
+export type DepConsumerKind = 'computed-value' | 'data-source' | 'reaction' | 'validation';
 
-// ── Compiled Data Source (includes refresh strategy) ──
-
-interface CompiledDataSource {
-  readonly id: SourceId;
-  readonly refreshStrategy: 'manual' | 'polling' | 'onDependency';
-  readonly pollIntervalMs?: number;
-  readonly triggerRoots: ReadonlyArray<string>;  // for onDependency strategy
-  readonly paramMapping?: ReadonlyMap<string, string>; // scopePath → paramName
-  readonly ajaxConfig: AjaxConfig;
-}
-
-interface DataSourceManager {
-  create(compiled: CompiledDataSource, scope: ReadableScope, dispatcher: EffectDispatcher): DataSourceInstance;
-  dispose(sourceId: SourceId): void;
+export interface DependencyGraph {
+  beginCollection(consumer: DepConsumerToken): void;
+  recordRead(read: DependencyRead): void;
+  endCollection(): DependencySet;
+  invalidate(change: ScopeChange): InvalidationBatch;
+  inspect(consumerId: string): DependencySet | undefined;
 }
 ```
 
-### 4.7 Reaction Observer
+校验也应进入同一个依赖图。原因很简单：条件校验本质上也是“读一些值后产出结果”的计算单元。
 
-```typescript
-interface ReactionInstance {
-  readonly id: ReactionId;
-  activate(scope: Scope, dispatcher: EffectDispatcher): void;
-  deactivate(): void;
+### 7.1.1 异步一致性
+
+统一依赖图如果不配套版本语义，就只能正确处理同步计算，无法处理现代低代码最关键的数据源、reaction、异步校验。
+
+因此每个可异步消费者必须绑定以下协议：
+
+```ts
+export interface EvaluationEpoch {
+  consumerId: string;
+  epoch: number;
+  cause: 'mount' | 'invalidate' | 'manual-refresh' | 'retry' | 'resume';
 }
 
-interface CompiledReaction {
-  readonly id: ReactionId;
-  readonly watchExpr: CompiledExpr;      // expressions to watch
-  readonly conditionExpr?: CompiledExpr;  // when condition
-  readonly action: CompiledAction;        // action to dispatch
+export interface AsyncConsumerRuntime {
+  currentEpoch(): EvaluationEpoch;
+  beginEpoch(cause: EvaluationEpoch['cause']): EvaluationEpoch;
+  commitEpoch(epoch: EvaluationEpoch, result: unknown): boolean;
+  cancelEpoch(epoch: EvaluationEpoch): void;
 }
 
-interface ReactionManager {
-  activate(compiled: ReadonlyArray<CompiledReaction>, scope: Scope, dispatcher: EffectDispatcher): void;
-  deactivate(scopeId: ScopeId): void;
-}
-```
-
----
-
-## 5. Layer 4: Action & Effect Pipeline
-
-### 5.1 Design: Effect-Calculus Action Pipeline
-
-Actions are modeled using an **effect calculus** — a small algebra of action combinators that compose into complex control flows. The key insight is that the action schema in the requirements (single step, condition, chain, parallel, retry, debounce) forms a **recursive algebraic data type** that can be compiled into an execution plan.
-
-### 5.2 Core Types
-
-```typescript
-// ── Action ADT (Compiled) ──
-
-type CompiledAction =
-  | { kind: 'dispatch'; action: string; args: ActionArgs }
-  | { kind: 'sequence'; steps: ReadonlyArray<CompiledAction> }
-  | { kind: 'parallel'; branches: ReadonlyArray<CompiledAction> }
-  | { kind: 'guarded'; condition: ExprId; then: CompiledAction }
-  | { kind: 'retry'; inner: CompiledAction; strategy: RetryStrategy }
-  | { kind: 'debounce'; inner: CompiledAction; waitMs: number; key: string }
-  | { kind: 'timeout'; inner: CompiledAction; ms: number }
-  | { kind: 'chain'; first: CompiledAction; then: ChainContinuation; onError?: ChainContinuation; finally?: CompiledAction }
-  | { kind: 'noop' };
-
-type ActionArgs = Readonly<Record<string, unknown>>;
-
-interface ChainContinuation {
-  readonly action: CompiledAction;
-  readonly resultBinding?: string;  // bind prev result to scope path
-}
-
-// ── Action Result ──
-
-type ActionResult =
-  | { kind: 'success'; value: unknown }
-  | { kind: 'error'; error: unknown }
-  | { kind: 'skipped' };
-
-// ── Action Execution Context ──
-
-interface ActionContext {
-  readonly scope: ReadableScope;  // read-only — writes must go through dispatcher
-  readonly result: unknown;       // previous step result
-  readonly error: unknown;        // previous step error
-  readonly prevResult: unknown;   // result from two steps ago
-  readonly nodeId: NodeId;        // which node dispatched this action
-  readonly dispatcher: EffectDispatcher;
-}
-
-// ── Effect Dispatcher (The Unified Side-Effect Channel) ──
-
-interface EffectDispatcher {
-  dispatch(effect: Effect): EffectHandle;
-  createScope(originAction: ActionExecutionId): EffectScope;
-}
-
-// ── Effect Scope (groups all effects from a single action execution) ──
-
-interface EffectScope {
-  dispatch(effect: Effect): EffectHandle;
-  commit(): Promise<ReadonlyArray<ActionResult>>;   // wait for all dispatched effects
-  rollback(): void;                                  // discard uncommitted effects
-  dispose(): void;                                   // cleanup on scope disposal
-}
-
-// ── Effect Lifecycle ──
-
-interface EffectHandle {
-  readonly id: EffectId;
-  readonly promise: Promise<ActionResult>;
-  cancel(): void;
-}
-
-// ── Scope Lifecycle Guard ──
-// When a scope is disposed, all pending effects targeting it are automatically cancelled.
-
-type Effect =
-  | { kind: 'setValue'; path: string; value: unknown; scopeId: ScopeId }
-  | { kind: 'setValueBatch'; changes: ReadonlyArray<ScopeChange>; scopeId: ScopeId }
-  | { kind: 'ajax'; config: AjaxConfig }
-  | { kind: 'dialog'; surface: SurfaceCommand }
-  | { kind: 'submitForm'; formId: string }
-  | { kind: 'validate'; formId: string; paths?: string[] }
-  | { kind: 'navigate'; url: string; options?: NavigateOptions }
-  | { kind: 'notify'; message: string; level: 'info' | 'warn' | 'error' | 'success' }
-  | { kind: 'component'; instanceKey: string; method: string; args: unknown[] }
-  | { kind: 'namespace'; ns: string; method: string; args: unknown[] };
-
-// ── Ordering Guarantees ──
-// 1. Effects within a single action execution are applied sequentially in dispatch order.
-// 2. Effects from parallel branches are queued and applied in branch-index order after
-//    all branches complete (no concurrent writes to the same path).
-// 3. Effects targeting a disposed scope are silently discarded.
-```
-
-### 5.3 Action Executor
-
-```typescript
-interface ActionExecutor {
-  execute(action: CompiledAction, context: ActionContext): Promise<ActionResult>;
-  cancel(actionId: ActionExecutionId): void;
+export interface ReadView {
+  scopeId: ScopeId;
+  revision: number;
+  resolve(path: ValuePath): unknown;
+  has(path: ValuePath): boolean;
 }
 ```
 
-The executor is a recursive interpreter over the `CompiledAction` ADT. Each combinator maps to a concrete execution strategy:
+规则：
 
-| Action Kind | Execution Strategy |
-|-------------|-------------------|
-| `dispatch` | Look up handler in `ActionRegistry`, invoke, return result |
-| `sequence` | Execute steps in order, short-circuit on error |
-| `parallel` | `Promise.allSettled`, merge results |
-| `guarded` | Evaluate condition; if falsy, return `skipped` |
-| `chain` | Execute `first`, then route to `then` or `onError` based on result kind |
-| `retry` | Exponential backoff loop with `RetryStrategy` parameters |
-| `debounce` | `setTimeout`-based debounce with cancellation |
-| `timeout` | `Promise.race` with timeout signal |
+1. 每次重新调度都创建新 epoch。
+2. 旧 epoch 完成时如果不是当前 epoch，结果直接丢弃。
+3. 默认策略是 `take-latest`。
+4. `dispose()`、scope 卸载、surface 关闭都会取消关联 epoch。
+5. 依赖收集只记录单个 epoch 内真实读取的路径。
+6. 每个异步 epoch 在开始时都固定绑定一个 `ReadView`，整个异步前置求值阶段只能读取这个快照。
+7. `ReadView` 只用于求参与条件判定，不直接承载写入。
 
-### 5.4 Effect Handler (Internal Glue)
+因此数据源、reaction、异步校验的安全执行流程必须是：
 
-The `EffectHandler` bridges the `EffectDispatcher` to `Scope._applyChange` and `DependencyRuntime.propagate`. This is an **internal kernel component**, not a public extension point.
+1. `beginEpoch()`。
+2. 基于当前 revision 创建 `ReadView`。
+3. 在这个 `ReadView` 上完成参数组装、条件表达式和依赖收集。
+4. 发起异步工作。
+5. 返回后仅通过 `commitEpoch()` 决定是否允许提交结果。
 
-```typescript
-interface EffectHandler {
-  handle(effect: Effect): Promise<ActionResult>;
-}
+### 7.2 读追踪必须发生在 `resolve`
 
-// Built-in effect handler routing:
-// setValue / setValueBatch → scope._applyChange → dependencyRuntime.propagate
-// ajax → hostAdapter.httpClient.request
-// dialog → surfaceManager.open/close
-// submitForm → formRuntime.submit
-// validate → formRuntime.validate
-// navigate → hostAdapter.navigator.navigate
-// notify → hostAdapter.notifier.show
-// component → componentInstanceRegistry.invoke
-// namespace → namespaceRegistry.invoke
-```
+任何动态系统想要做到精确依赖，不能靠调用方自觉上报读取。必须在 `ScopeRuntime.resolve()` 内部自动打点。
 
-### 5.5 Action Registry (Three-Layer Resolution)
+这样一来：
 
-```typescript
-interface ActionRegistry {
-  // Layer 1: Platform built-ins
-  registerBuiltIn(name: string, handler: BuiltInActionHandler): void;
+1. 表达式读取能被追踪。
+2. 模板字符串读取能被追踪。
+3. 数据源参数注入读取能被追踪。
+4. reaction 条件读取能被追踪。
+5. 校验规则读取能被追踪。
 
-  // Layer 2: Component instance methods
-  registerComponent(instanceKey: string, methods: ComponentMethods): void;
-  unregisterComponent(instanceKey: string): void;
+### 7.3 自写保护
 
-  // Layer 3: Namespace commands
-  registerNamespace(ns: string, contract: NamespaceContract, methods: NamespaceMethods): void;
-  unregisterNamespace(ns: string): void;
+命名数据源和 reaction 都需要自写保护。最佳机制不是“特殊 if 判断”，而是给每次写入打上 `writeSource`。
 
-  // Resolution: tries built-in → component:method → namespace:method
-  resolve(action: string, context: ActionContext): ActionHandler | null;
-}
-
-type ActionHandler = (args: ActionArgs, context: ActionContext) => Promise<ActionResult>;
-
-interface NamespaceContract {
-  readonly namespace: string;
-  readonly methods: ReadonlyMap<string, MethodSignature>;
-  readonly projections: ReadonlyMap<string, ExprType>;  // read-only snapshot fields
-}
-
-interface MethodSignature {
-  readonly name: string;
-  readonly params: ReadonlyArray<ParamDef>;
-  readonly returnType: ExprType;
+```ts
+export interface WriteSource {
+  kind: 'user' | 'action' | 'data-source' | 'reaction' | 'validation' | 'system';
+  producerId?: string;
+  cycleId?: string;
 }
 ```
 
----
+失效时如果发现“变更来源 producerId 与消费者自身一致”，就跳过该消费者的重新调度。
 
-## 6. Layer 5: Renderer Adapter Layer
+但这只解决自环。要解决多节点循环，还需要事务级循环控制：
 
-### 6.1 Design: Framework-Portable Renderer Protocol
+1. 每次 `commit()` 都分配 `cycleId`。
+2. 一个消费者在同一 `cycleId` 内最多自动重跑一次。
+3. 如果形成 A -> B -> A 级联，第二次返回 `blocked-by-cycle-guard` 诊断。
+4. 数据源、reaction、异步校验都必须可观测地暴露该阻断状态。
 
-The renderer layer is an **adapter**, not the core. The kernel defines a rendering protocol that any UI framework can implement. The protocol is deliberately minimal — it describes *what to render*, not *how to render*.
+## 8. 值引擎
 
-### 6.2 Core Types
+### 8.1 五类值统一成一个求值协议
 
-```typescript
-// ── Renderer Registration ──
+需求里给了渐进值语义：字面量、表达式、模板字符串、动作型值生产者、命名数据源。
 
-interface RendererRegistry {
-  register(key: RendererKey, factory: RendererFactory): void;
-  resolve(key: RendererKey): RendererFactory | null;
-}
+最好的设计不是每类都搞一套接口，而是统一成 `ValueProvider` 协议。
 
-type RendererKey = string;  // e.g., "page", "form", "input-text", "table"
+```ts
+export type ValueProviderKind =
+  | 'static'
+  | 'expression'
+  | 'template'
+  | 'action-produced'
+  | 'named-source';
 
-interface RendererFactory {
-  (host: RendererHost): RendererInstance;
-}
-
-// ── Renderer Instance ──
-
-interface RendererInstance {
-  readonly key: RendererKey;
-
-  // Lifecycle
-  mount(props: RendererProps, container: RenderContainer): void;
-  update(props: RendererProps): void;
-  unmount(): void;
-
-  // Component instance methods (for action dispatch)
-  getMethods(): ComponentMethods;
-
-  // Debug
-  getDebugInfo(): RendererDebugInfo;
-}
-
-// ── Renderer Props (The Contract Between Kernel and Renderers) ──
-
-interface RendererProps {
-  readonly nodeId: NodeId;
-  readonly type: string;
-
-  // Resolved values
-  readonly props: Readonly<Record<string, unknown>>;     // business attributes
-  readonly meta: Readonly<RendererMeta>;                  // control metadata
-  readonly events: Readonly<Record<string, EventHandler>>;
-  readonly regions: Readonly<Record<string, RegionHandle>>;
-
-  // Runtime access (scoped, not global; read-only scope access)
-  readonly scope: ReadableScope;
-  readonly dispatcher: EffectDispatcher;
-
-  // Helpers
-  readonly helpers: RendererHelpers;
-}
-
-interface RendererMeta {
-  readonly visible: boolean;
-  readonly disabled: boolean;
-  readonly className: string;
-  readonly testid: string;
-}
-
-// ── Region Handle (Pre-compiled child rendering) ──
-
-interface RegionHandle {
-  readonly name: string;
-  readonly params: ReadonlyArray<string>;  // ["item", "index"]
-
-  // Render with local data binding
-  render(bindings?: Readonly<Record<string, unknown>>): RenderResult;
-
-  // Query
-  isEmpty(): boolean;
-  getChildren(): ReadonlyArray<NodeId>;
-}
-
-type RenderResult = unknown;  // framework-specific (React elements, DOM nodes, etc.)
-
-// ── Event Handler ──
-
-type EventHandler = (event?: unknown) => void;
-
-// ── Renderer Helpers ──
-
-interface RendererHelpers {
-  evaluate(exprId: ExprId): unknown;
-  dispatch(action: CompiledAction): Promise<ActionResult>;
-  createScope(options: ScopeCreateOptions): Scope;
-  renderFragment(schema: unknown, scopeOverride?: Partial<Scope>): RenderResult;
-}
-
-// ── Renderer Host (Framework Bridge) ──
-
-interface RendererHost {
-  createElement(type: string, props: Record<string, unknown>, children: unknown[]): unknown;
-  createFragment(children: unknown[]): unknown;
-
-  // Batching: guaranteed to run after current synchronous execution completes.
-  // Multiple scheduleUpdate calls within the same microtask may be batched.
-  // The callback must not be called recursively.
-  scheduleUpdate(callback: () => void): void;
-
-  provideContext<T>(key: symbol, value: T): void;
-  consumeContext<T>(key: symbol): T | undefined;
-
-  // Error boundary: wrap a render call with fallback behavior
-  wrapErrorBoundary(
-    renderFn: () => RenderResult,
-    fallback: (error: unknown, nodeId: NodeId) => RenderResult,
-    nodeId: NodeId
-  ): RenderResult;
+export interface ValueProvider<T = unknown> {
+  id: string;
+  kind: ValueProviderKind;
+  evaluate(input: ValueEvaluationInput): ValueEvaluationResult<T> | Promise<ValueEvaluationResult<T>>;
 }
 ```
 
-### 6.3 Renderer Orchestrator
+但运行期调度上要分层：
 
-```typescript
-interface RendererOrchestrator {
-  // Given a compiled schema, create the runtime rendering tree
-  instantiate(artifact: CompiledSchema, rootScope: Scope): RenderTree;
+1. `static` 直接返回编译值。
+2. `expression` 和 `template` 属于同步纯计算。
+3. `action-produced` 属于一次性异步生产。
+4. `named-source` 属于带生命周期的持续生产者。
 
-  // Update an existing tree after scope changes
-  reconcile(tree: RenderTree, invalidated: ReadonlySet<SignalId>): void;
+### 8.2 引用复用
 
-  // Dispose the entire tree
-  dispose(tree: RenderTree): void;
-}
+为了满足“动态求值结果未变化时复用上次引用”，值引擎要缓存最后结果。
 
-interface RenderTree {
-  readonly rootId: NodeId;
-  getNode(id: NodeId): RendererInstance | null;
-  getActiveSurfaces(): ReadonlyArray<SurfaceHandle>;
-}
-```
-
----
-
-## 7. Layer 6: Host Integration
-
-### 7.1 Host Adapter
-
-```typescript
-interface HostAdapter {
-  // Required capabilities (the host MUST provide these)
-  readonly httpClient: HttpClient;
-  readonly notifier: Notifier;
-  readonly navigator: Navigator;
-
-  // Optional capabilities
-  readonly errorHandler?: ErrorHandler;
-  readonly logger?: Logger;
-  readonly performanceMonitor?: PerformanceMonitor;
-
-  // Surface management
-  createSurfaceContainer(type: 'dialog' | 'drawer'): SurfaceContainer;
-}
-
-interface HttpClient {
-  request(config: AjaxConfig): Promise<AjaxResponse>;
-  cancel(requestId: string): void;
-}
-
-interface Notifier {
-  show(message: string, level: 'info' | 'warn' | 'error' | 'success'): void;
-}
-
-interface Navigator {
-  navigate(url: string, options?: NavigateOptions): void;
-}
-
-interface ErrorHandler {
-  handle(error: unknown, context: ErrorContext): void;
-}
-
-interface ErrorContext {
-  readonly nodeId?: NodeId;
-  readonly action?: string;
-  readonly phase: 'compile' | 'evaluate' | 'action' | 'render';
+```ts
+export interface ComputedValueCell<T = unknown> {
+  id: string;
+  deps: DependencySet;
+  lastValue: T;
+  lastStableHash?: string;
+  dirty: boolean;
+  evaluate(): T;
 }
 ```
 
-### 7.2 Surface Manager
+对于对象或数组，不建议做深比较全量扫描。更先进的做法是：
 
-```typescript
-interface SurfaceManager {
-  open(schema: CompiledNode, scope: Scope, type: 'dialog' | 'drawer'): SurfaceHandle;
-  close(handle: SurfaceHandle): void;
-  getActiveStack(): ReadonlyArray<SurfaceHandle>;
-  getTopActive(): SurfaceHandle | null;
+1. 表达式语言默认鼓励结构共享。
+2. 数据源适配器可显式返回 `stableHash`。
+3. 框架只做引用比较加可选哈希比较。
+
+## 9. 表达式引擎
+
+### 9.1 设计原则
+
+表达式引擎必须是 AST 解释或字节码解释，不使用动态代码生成。
+
+```ts
+export interface ExpressionProgram {
+  expressionId: string;
+  ast: ExprNode;
+  bytecode?: ExprInstruction[];
+  symbols: string[];
 }
 
-interface SurfaceHandle {
-  readonly id: SurfaceId;
-  readonly type: 'dialog' | 'drawer';
-  readonly scope: Scope;
-  readonly tree: RenderTree;
-  close(): void;
-}
-```
-
----
-
-## 8. Form & Validation System
-
-### 8.1 Form Runtime
-
-```typescript
-interface FormRuntime {
-  readonly scope: Scope;
-  readonly state: FormState;
-
-  // Value management (internally routes through EffectDispatcher)
-  getValue(path: string): unknown;
-  setValue(path: string, value: unknown): void;
-  getValues(): Record<string, unknown>;
-  setValues(values: Record<string, unknown>, merge?: boolean): void;
-
-  // Dirty/visited tracking
-  isDirty(path?: string): boolean;
-  isTouched(path?: string): boolean;
-  markVisited(path: string): void;
-  resetDirty(): void;
-
-  // Validation
-  validate(paths?: string[]): Promise<ValidationResult>;
-  validateField(path: string): Promise<FieldValidation>;
-  clearValidation(paths?: string[]): void;
-
-  // Submission
-  submit(): Promise<SubmitResult>;
-  reset(): void;
-
-  // Draft isolation
-  createDraft(paths: string[]): DraftScope;
+export interface ExpressionEngine {
+  compile(source: string): ExpressionProgram;
+  execute<T = unknown>(program: ExpressionProgram, ctx: ExpressionContext): T;
 }
 
-interface FormState {
-  readonly submitting: boolean;
-  readonly submitCount: number;
-  readonly dirty: boolean;
-  readonly valid: boolean;
-  readonly errors: ReadonlyMap<string, FieldError[]>;
-}
-
-type SubmitResult =
-  | { kind: 'success'; values: Record<string, unknown> }
-  | { kind: 'validation-error'; errors: ValidationResult }
-  | { kind: 'error'; error: unknown };
-```
-
-### 8.2 Validation Graph
-
-```typescript
-interface ValidationGraph {
-  // Compiled at schema compile time
-  readonly rules: ReadonlyMap<string, CompiledValidationRule[]>;
-  readonly crossFieldRules: ReadonlyArray<CompiledCrossFieldRule>;
-}
-
-interface CompiledValidationRule {
-  readonly path: string;
-  readonly ruleType: string;  // "required", "minLength", "pattern", etc.
-  readonly params: unknown;
-  readonly condition?: ExprId;  // conditional activation
-  readonly timing: ValidationTiming;
-  readonly async?: boolean;
-  readonly validatorRef: string;  // reference to ValidatorProvider registry, NOT a closure
-}
-
-type ValidationTiming = 'submit' | 'change' | 'blur';
-
-interface ValidatorFn {
-  (value: unknown, context: ValidationContext): Promise<boolean> | boolean;
-}
-
-interface ValidationContext {
-  readonly scope: Scope;
-  readonly path: string;
-  readonly formValues: Record<string, unknown>;
-}
-
-interface DraftScope {
-  readonly scope: Scope;
-  readonly validation: FormRuntime;  // independent validation state
-  commit(): void;                    // merge into parent form
-  discard(): void;                   // throw away changes
+export interface ExpressionContext {
+  has(path: ValuePath): boolean;
+  resolve(path: ValuePath): unknown;
+  callBuiltin(fn: BuiltinFunctionId, args: unknown[]): unknown;
 }
 ```
 
----
+### 9.2 为什么推荐字节码解释
 
-## 9. Loop & Recursive Structures
+如果追求世界级内核，表达式就不该只是“parse 后递归 AST”。
 
-### 9.1 Loop Runtime
+字节码解释更适合，但这只是优化方向，不是首版硬前提：
 
-```typescript
-interface LoopRuntime {
-  // Template is compiled once; this creates N instances
-  instantiate(
-    template: CompiledRegion,
-    items: unknown[],
-    parentScope: Scope,
-    projections?: ExprId[]
-  ): LoopInstance[];
+1. 降低热路径对象分配。
+2. 把路径读取、短路逻辑、函数调用统一成固定指令集。
+3. 后续可接静态类型诊断、表达式 profiling、调试单步执行。
+
+安全约束：
+
+1. 表达式只能调用编译期已注册的 `BuiltinFunctionId`。
+2. 不允许表达式访问宿主对象、全局对象、组件实例或命名空间动作。
+3. `env` 不直接暴露为任意对象，只能暴露为编译期声明的只读环境投影。
+
+## 10. 动作系统
+
+### 10.1 动作不是函数表，而是控制流代数
+
+动作系统的先进性，不在于能注册多少 action，而在于是否把控制流当成一等模型。
+
+```ts
+export type ActionStatus = 'success' | 'error' | 'skipped';
+
+export interface ActionOutcome<T = unknown> {
+  status: ActionStatus;
+  value?: T;
+  error?: ActionError;
+  meta?: Record<string, unknown>;
 }
 
-interface LoopInstance {
-  readonly index: number;
-  readonly scope: Scope;        // isolated, with { item, index } bound
-  readonly region: RegionHandle; // pre-wired child rendering
+export interface ActionPlan {
+  planId: string;
+  root: ActionStep;
+}
+
+export interface ActionDispatcher {
+  dispatch(plan: ActionPlan, ctx: ActionExecutionContext): Promise<ActionOutcome>;
+}
+```
+
+### 10.2 三层动作解析
+
+我认为应该严格分成三层 resolver，而且 resolver 顺序固定：
+
+1. `builtin:` 平台内置能力。
+2. `component:` 组件实例能力。
+3. `namespace:` 作用域命名空间能力。
+
+对外不暴露隐式全局查找，防止安全边界漂移。
+
+```ts
+export interface ActionCapabilityResolver {
+  resolveBuiltin(name: string): ActionCapability | undefined;
+  resolveComponent(nodeId: RuntimeNodeId, method: string): ActionCapability | undefined;
+  resolveNamespace(scopeId: ScopeId, ns: string, method: string): ActionCapability | undefined;
+}
+```
+
+权限边界：
+
+1. `builtin:` 能力由平台静态白名单提供。
+2. `component:` 能力只能访问当前 session 的实例索引，不允许跨 session。
+3. `namespace:` 能力必须先由当前词法 scope 显式注册，再通过 manifest 校验参数形状。
+4. 所有能力调用都支持超时、取消、参数校验和错误分类。
+
+这里 `component:` 的寻址键固定为 `RuntimeNodeId`，然后再由 `InstanceIndex` 解析到实际 `ComponentInstanceHandle`。不直接暴露 UI 框架原生 ref，也不把 `InstanceId` 当成组件动作目标。
+
+### 10.3 动作上下文必须是作用域化的
+
+`when`、`then`、`onError`、`parallel` 的真正难点，不是调度，而是结果上下文。
+
+最干净的设计是：每一步都生成一个只读 `projected scope`，把 `result`、`error`、`prevResult` 注入进去。
+
+这样控制流表达式根本不需要额外语法特例，仍走统一 `resolve/has`。
+
+## 11. 数据源与 reaction
+
+### 11.1 命名数据源是长期存活的生产单元
+
+```ts
+export interface DataSourceRuntime {
+  id: string;
+  state: 'idle' | 'loading' | 'ready' | 'error' | 'disposed';
+  start(): void;
+  refresh(reason: RefreshReason): Promise<void>;
+  stop(): void;
+  snapshot(): DataSourceSnapshot;
+}
+```
+
+它与普通异步动作的根本区别在于：
+
+1. 它有生命周期。
+2. 它可以被依赖触发刷新。
+3. 它会把 loading/error/data 发布到 scope。
+
+数据源提交规则：
+
+1. 请求参数读取依赖时会记录到当前 epoch。
+2. 请求完成后不直接写 scope，而是提交一个 `commit()` 事务。
+3. `loading/error/data` 是三个独立路径，允许精确订阅。
+4. 数据源结果适配器可以返回 `stableHash`，以支持引用复用。
+
+### 11.2 reaction 不是 watch 回调，而是声明式观察单元
+
+```ts
+export interface ReactionRuntime {
+  id: string;
+  evaluate(): Promise<void>;
+  pause(): void;
+  resume(): void;
   dispose(): void;
 }
 ```
 
-For recursive rendering, the template contains a self-reference marker that the `RendererOrchestrator` resolves lazily during rendering, with a depth limit enforced.
+reaction 的最先进做法是显式区分：
 
----
+1. 依赖求值阶段。
+2. 条件判定阶段。
+3. 副作用派发阶段。
 
-## 10. Dependency Injection & Kernel Assembly
+这样才能防止“读依赖时顺便写值”的混乱循环。
 
-### 10.1 Kernel Composition
+reaction 也必须满足：
 
-```typescript
-interface FluxKernel {
-  readonly compiler: SchemaCompiler;
-  readonly expressionEngine: ExpressionVM;
-  readonly scopeFactory: ScopeTree;
-  readonly dependencyGraph: DependencyGraph;
-  readonly actionExecutor: ActionExecutor;
-  readonly actionRegistry: ActionRegistry;
-  readonly dataSourceManager: DataSourceManager;
-  readonly rendererOrchestrator: RendererOrchestrator;
-  readonly surfaceManager: SurfaceManager;
-  readonly formFactory: FormFactory;
+1. 条件求值与副作用执行分离。
+2. 条件未变化时不重复触发。
+3. 副作用执行只允许走 `dispatch()` 或 `commit()`。
 
-  // Lifecycle
-  createRuntime(artifact: CompiledSchema, host: HostAdapter): SchemaRuntime;
-  dispose(): void;
-}
+## 12. 表单内核
 
-interface SchemaRuntime {
-  readonly rootScope: Scope;
-  readonly tree: RenderTree;
+### 12.1 表单必须是专门 owner，而不是普通 scope 打补丁
 
-  // Debug
-  inspect(nodeId: NodeId): NodeInspection;
-  inspectScope(scopeId: ScopeId): ScopeSnapshot;
+表单场景有自己的状态维度：
 
-  // Lifecycle
-  activate(): void;
-  deactivate(): void;
-  dispose(): void;
-}
+1. values
+2. dirty
+3. touched
+4. submit state
+5. validation state
+6. draft isolation
 
-interface NodeInspection {
-  readonly nodeId: NodeId;
-  readonly type: string;
-  readonly props: Record<string, unknown>;
-  readonly meta: RendererMeta;
-  readonly scopeId: ScopeId;
-  readonly children: NodeId[];
-  readonly validationResult?: ValidationResult;
-}
+这意味着它必须有独立内核。
 
-type FormFactory = (scope: Scope, validation: ValidationGraph) => FormRuntime;
-```
-
-### 10.2 Kernel Builder
-
-```typescript
-interface FluxKernelBuilder {
-  // Register extensions
-  addRenderer(key: RendererKey, factory: RendererFactory): this;
-  addBuiltInAction(name: string, handler: BuiltInActionHandler): this;
-  addNamespace(namespace: string, contract: NamespaceContract, methods: NamespaceMethods): this;
-
-  // Configure
-  setHostAdapter(adapter: HostAdapter): this;
-  setExpressionCompiler(compiler: ExpressionCompiler): this;
-
-  // Build
-  build(): FluxKernel;
+```ts
+export interface FormRuntime {
+  id: string;
+  scopeId: ScopeId;
+  getValue(path?: ValuePath): unknown;
+  setValue(path: ValuePath, value: unknown, options?: FormWriteOptions): Promise<CommitResult>;
+  markTouched(path: ValuePath): void;
+  validate(request?: ValidationRequest): Promise<ValidationResult>;
+  submit(action?: DispatchInput): Promise<ActionOutcome>;
+  snapshot(): FormSnapshot;
 }
 ```
 
----
+`FormRuntime.setValue()` 只是表单友好的 facade，底层仍然走 session `commit()`，不会绕过统一事务和依赖失效机制。
 
-## 11. Data Flow: End-to-End Walkthrough
+`markTouched()` 也不构成第二写通道。它只是一个内部 owner helper，最终必须被 lowering 为 `CommitIntent(target: 'form')` 再进入统一事务。
 
-### 11.1 Initialization
+### 12.2 校验图
 
-```
-Host provides:
-  - JSON schema
-  - HostAdapter (httpClient, notifier, navigator)
-  - Initial data
+校验规则不能在运行时按字段临时扫描 schema。编译期必须构造 `ValidationGraph`。
 
-Kernel:
-  1. SchemaCompiler.compile(schema, context) → CompiledSchema
-     - All expressions compiled to bytecode
-     - All static props marked as 'static' (zero runtime cost)
-     - Validation graph extracted
-     - Action chains compiled to ADT
-     - I18n keys validated and extracted as runtime PropSlots
-     - Diagnostics emitted if errors
-
-  2. FluxKernel.createRuntime(artifact, host)
-     a. Create root ScopeTree with initial data
-     b. DependencyGraph.createRuntime() — wire all derived signals
-     c. DataSourceManager.activate() — start all auto-activating data sources
-     d. ReactionManager.activate() — start all reaction observers
-     e. RendererOrchestrator.instantiate() — create render tree
-     f. Return SchemaRuntime
-```
-
-### 11.2 Runtime Event: User Clicks a Button
-
-```
-1. Renderer receives DOM click event
-2. Renderer calls props.events.onClick(event)
-3. EventHandler invokes ActionExecutor.execute(compiledAction, context)
-4. Executor evaluates the CompiledAction ADT:
-   a. Guarded: evaluate condition expression (read scope via EvalContext)
-   b. Dispatch: resolve "ajax" action via ActionRegistry
-   c. Effect: dispatcher.dispatch({ kind: 'ajax', config: ... })
-   d. Host: httpClient.request(config) → response
-   e. Chain: on success, evaluate `then` continuation
-   f. Effect: dispatcher.dispatch({ kind: 'setValue', path, value, scopeId })
-   g. EffectHandler: receives setValue effect, calls scope._applyChange(change)
-   h. DependencyRuntime: propagate(RootChange[]) → invalidate affected signals
-   i. RendererOrchestrator: reconcile invalidated signals → update affected renderers
-```
-
-### 11.3 Runtime Event: Data Source Auto-Refresh
-
-```
-1. DependencyGraph detects watched scope paths changed
-2. Invalidates DataSourceInstance's trigger signal
-3. DataSourceInstance.refresh() called
-4. Effect: dispatcher.dispatch({ kind: 'ajax', config })
-5. On success: dispatcher.dispatch({ kind: 'setValue', path, value, scopeId })
-6. EffectHandler: scope._applyChange(change) → RootChange[]
-7. Self-write protection: DependencyGraph.suppressFor(sourceId, roots)
-8. Remaining dependents (expressions, renderers) are updated
-```
-
----
-
-## 12. Key Design Decisions & Rationale
-
-### 12.1 Why a Bytecode VM for Expressions?
-
-| Approach | Pros | Cons |
-|----------|------|------|
-| AST-walking | Simple implementation | O(n) per evaluation, repeated traversal overhead |
-| `new Function` | Fast execution | **Banned by requirements** (security), no dependency tracking |
-| String templating | Simple for basic cases | Cannot handle complex expressions, no type checking |
-| **Bytecode VM** | O(1) dispatch, natural dependency logging, no eval, type-checkable | More complex initial implementation |
-
-The bytecode VM is the only approach that satisfies all constraints: no dynamic code generation, compile-once-execute-many, natural dependency tracking, and type safety.
-
-### 12.2 Why Effect-Calculus Actions?
-
-Modeling actions as an algebraic data type with a recursive interpreter gives:
-
-- **Composability**: Any action combinator can nest any other
-- **Testability**: The entire action pipeline can be tested without side effects by mocking `EffectDispatcher`
-- **Observability**: Every effect dispatch is a single interception point
-- **Cancellation**: Every level of the action tree supports cancellation propagation
-
-### 12.3 Why Root-Normalized Signal Propagation?
-
-The requirements demand fine-grained invalidation, but path-lens granularity at the individual `items[3].name` level introduces three hard problems:
-
-1. **Wildcard pattern matching** — `items[*].id` requires a matching engine
-2. **Array mutation path mapping** — `splice(2, 0, x)` shifts all subsequent indices
-3. **Glitch-free transitive propagation** — Must topologically sort evaluation
-
-Root-normalized propagation normalizes all dependency tracking to the **lexical root** level (e.g., `items`, `user`). This means:
-
-- An expression reading `items[3].name` registers dependency on root `items`
-- A mutation to `items` (push, splice, reassign) notifies all `items` subscribers
-- Subscribers re-evaluate and check if their actual value changed (reference equality)
-
-This is slightly coarser than per-path tracking but:
-
-- Eliminates wildcard matching entirely
-- Makes array mutations a simple "invalidate root" operation
-- Reduces the signal graph size from O(paths × expressions) to O(roots × expressions)
-- Enables glitch-free propagation by evaluating in root-dependency topological order
-
-The tradeoff: modifying `items[3].name` re-evaluates all expressions that read any `items[*]` path. This is acceptable because:
-
-1. Table rows use **isolated scopes** — row mutations don't invalidate other rows
-2. Root-level subscriptions are cheap to compare (structural sharing preserves references)
-3. The alternative (per-path tracking) requires a complex matching engine that is itself a performance risk
-
-### 12.4 Why Compile-Time / Runtime Split?
-
-The requirements explicitly state:
-
-> "If a problem can be solved at compile time, it should not be deferred to runtime."
-> "Static parts should have zero runtime overhead."
-
-This forces a strict phase separation:
-
-| Phase | Responsibilities | Output |
-|-------|-----------------|--------|
-| **Compile** | Parse, classify, compile expressions, build validation graph, compile actions, type-check, i18n key extraction, optimize | `CompiledSchema` (immutable artifact) |
-| **Runtime** | Instantiate scopes, wire signals, execute actions, render | Dynamic behavior |
-
-The compiled artifact is a **pure data structure** — it carries no closures, no references to runtime state. This means:
-
-- The same artifact can be reused across multiple runtime instances
-- Artifacts can be serialized for caching or server-side pre-compilation
-- Hot module replacement only needs to re-compile, not re-bootstrap
-
-### 12.5 Why Three-Layer Action Resolution?
-
-The requirements specify three distinct action sources with different scoping rules:
-
-| Layer | Scope | Lifetime | Example |
-|-------|-------|----------|---------|
-| Built-in | Global | Kernel lifetime | `setValue`, `ajax`, `dialog` |
-| Component | Per-instance | Component mount/unmount | `table:reload`, `form:submit` |
-| Namespace | Per-scope | Scope lifecycle | `designer:export`, `spreadsheet:calc` |
-
-The resolution order (built-in → component → namespace) ensures that platform capabilities are always available, component methods are scoped to instances, and namespace commands are scoped to their lexical boundary.
-
----
-
-## 13. Performance Model
-
-### 13.1 Cost Budget per Interaction Cycle
-
-| Phase | Target | Mechanism |
-|-------|--------|-----------|
-| Scope mutation | O(changed paths) | Persistent data structure with structural sharing |
-| Dependency invalidation | O(changed paths × dependents) | Pre-computed dependency graph |
-| Expression re-evaluation | O(1) per expression | Bytecode VM, register-based |
-| Renderer reconciliation | O(invalidated renderers) | Only re-render nodes with invalidated props |
-| Full static subtree | **Zero** | Static props never enter reactivity graph |
-
-### 13.2 Memory Model
-
-| Object | Lifetime | Sharing |
-|--------|----------|---------|
-| `CompiledSchema` | Kernel lifetime | Shared across all instances |
-| `CompiledExpr` (bytecode) | Kernel lifetime | Shared, never copied |
-| `Scope` | Scope lifecycle | Own data: owned; parent data: referenced |
-| `SignalNode` | Scope lifecycle | Lightweight, GC'd with scope |
-| `RendererInstance` | Component lifecycle | Owned by RenderTree |
-
-### 13.3 High-Frequency Isolation (Table Rows)
-
-For table/collection rendering:
-
-1. Each row creates an **isolated scope** (no parent inheritance)
-2. Row data is projected explicitly via `projections` config
-3. Each row has its own **signal subgraph**
-4. Modifying row N's data invalidates only row N's signals
-5. The compiled column template is shared across all rows (compiled once, instantiated N times)
-
----
-
-## 14. Testing Strategy
-
-### 14.1 Layer Isolation Testing
-
-| Layer | Test Environment | What to Test |
-|-------|-----------------|-------------|
-| Schema Compiler | Node.js / no DOM | Compilation correctness, diagnostics, type checking |
-| Expression VM | Node.js / no DOM | Expression evaluation, dependency logging, edge cases |
-| Scope & Signal Graph | Node.js / no DOM | Path resolution, change propagation, isolation, self-write protection |
-| Action Executor | Node.js / mock effects | Control flow (chain, parallel, retry, debounce), cancellation |
-| Renderer Adapter | jsdom / test renderer | Props resolution, region rendering, event dispatch |
-| Form & Validation | Node.js / no DOM | Validation rules, timing, draft isolation, async validation |
-
-### 14.2 Integration Testing
-
-```typescript
-// Example: Full pipeline test without DOM
-const kernel = createTestKernel();
-const artifact = kernel.compiler.compile(schema, testContext());
-const runtime = kernel.createRuntime(artifact, testHost());
-
-// Dispatch effect to mutate scope (all writes go through effect channel)
-const effectHandle = testDispatcher.dispatch({
-  kind: 'setValue', path: 'user.name', value: 'Alice', scopeId: runtime.rootScope.id
-});
-await effectHandle.promise;
-
-// Assert reactive update
-const node = runtime.tree.getNode(inputNodeId);
-expect(node.getDebugInfo().props.value).toBe('Alice');
-
-// Dispatch action
-const result = await kernel.actionExecutor.execute(
-  compiledAction,
-  { scope: runtime.rootScope, dispatcher: testDispatcher(), ... }
-);
-expect(result).toEqual({ kind: 'success', value: 'OK' });
-```
-
----
-
-## 15. Extensibility Points
-
-The kernel is designed for extension without modification:
-
-| Extension Point | Mechanism | Example |
-|----------------|-----------|---------|
-| New renderer | `RendererRegistry.register()` | Custom chart renderer |
-| New built-in action | `ActionRegistry.registerBuiltIn()` | WebSocket send action |
-| New namespace | `ActionRegistry.registerNamespace()` | Spreadsheet calculation namespace |
-| New expression function | Extend expression compiler constant pool | Custom date formatter |
-| New data source strategy | Implement `DataSourceInstance` | WebSocket-based real-time source |
-| New validation rule | Register `ValidatorFn` in `ValidatorProvider` | Custom business rule |
-
----
-
-## 16. Summary: What Makes This "Next-Generation"
-
-1. **Bytecode VM expressions** — Industry-first in low-code runtimes. Eliminates eval, enables dependency tracking at the instruction level, and is WASM-portable.
-
-2. **Compile-time dependency graph pre-computation** — The expression dependency structure is known before runtime. The runtime only instantiates, never discovers.
-
-3. **Effect-calculus action pipeline** — Actions are an algebraic data type, not imperative callbacks. Every action is composable, observable, and cancellable.
-
-4. **Root-normalized signal graph** — Dependencies tracked at normalized root granularity, not per-path. Enables glitch-free topological propagation, simple array mutation handling, and natural isolation for table rows without a complex wildcard matching engine.
-
-5. **Framework-portable renderer protocol** — The kernel defines *what to render*, not *how*. React, Vue, Solid, or Web Components can all implement the `RendererHost` interface.
-
-6. **Structural host integration** — The host provides capabilities through typed interfaces, not global singletons. The kernel never directly touches `fetch`, `window.location`, or `document`.
-
-7. **Type-safe namespace contracts** — Domain controls declare their capabilities with full type information, enabling compile-time validation of action references.
-
-8. **Zero-cost static parts** — Static props bypass the reactivity graph entirely. A pure-static page has the same performance characteristics as hand-written HTML.
-```
-
----
-
-## 16A. Appendix: Review Revisions
-
-This design underwent one round of external architecture review. The following changes were made in response:
-
-### Critical Issues Resolved
-
-| Issue | Revision |
-|-------|----------|
-| Dual write path (Scope.propose + EffectDispatcher) | Removed `propose()` from Scope. Scope mutation is internal-only (`_applyChange`), called exclusively by the effect handler for `setValue`. All external writes go through `EffectDispatcher`. |
-| Isolated scope projection propagation undefined | Added `DependencyRuntime.wireProjection()` to explicitly create reactive bindings from parent roots to child roots. Defined: `isolated: true` means `get()`/`has()` do not delegate to parent; projections are the only data channel. |
-| Transitive signal glitch | Root-normalized propagation with topological evaluation order. Dependents are always evaluated after their dependencies. |
-
-### Major Issues Resolved
-
-| Issue | Revision |
-|-------|----------|
-| L1→L4 layer violation (CompileContext→ActionRegistry) | Split into `StaticActionContracts` (compile-time) and `ActionRegistry` (runtime). Compiler depends only on the static contract. Same split for `RendererRegistry`→`StaticRendererIndex`. |
-| i18n at compile time prevents runtime locale switching | Changed from compile-time substitution to `{ kind: 'i18n'; key: string }` PropSlot. Compiler validates key existence; runtime resolves to current locale. |
-| ValidatorFn closure breaks serializability | Replaced with `validatorRef: string`. Runtime looks up from `ValidatorProvider` registry. `CompiledValidationRule` is now pure data. |
-| Effect system lacks transactional semantics | Added `EffectScope` to group effects from a single action. Defined ordering: sequential within action, branch-index order for parallel, silent discard for disposed scopes. |
-| RendererHost lacks error boundaries | Added `wrapErrorBoundary()` method with nodeId tracking. |
-| `scheduleUpdate` semantics undefined | Defined contract: post-synchronous, microtask-batched, non-recursive. |
-| ActionContext exposes full Scope with write access | Changed to `ReadableScope` — writes must go through dispatcher. |
-| `PathChange` doesn't capture array mutation info | Replaced with `RootChange` (root-normalized). Array mutations invalidate the root; subscribers re-evaluate and check reference equality. |
-| Action debounce semantics underspecified | Added `key` field to debounce combinator. Key is scoped to `nodeId + actionSlot`. Cancelled invocations return `skipped`. |
-
-### Accepted Limitations
-
-| Issue | Rationale |
-|-------|-----------|
-| `RenderResult = unknown` | Framework portability requires opacity. The kernel cannot inspect React elements or Vue VNodes. This is by design. |
-| No Suspense/concurrent mode support | Out of scope for the kernel protocol. Loading states are handled via conditional rendering and DataSourceState.loading. Framework-specific Suspense integration belongs in the React adapter, not the kernel protocol. |
-| No general `race` combinator | `timeout` covers the primary use case. General race can be built as a custom action handler if needed. |
-
----
-
-## 17. Appendix: Type Reference
-
-### Branded ID Types
-
-All IDs are branded string types for type safety:
-
-```typescript
-type NodeId = string & { __brand: 'NodeId' };
-type ExprId = string & { __brand: 'ExprId' };
-type ActionId = string & { __brand: 'ActionId' };
-type RuleId = string & { __brand: 'RuleId' };
-type SourceId = string & { __brand: 'SourceId' };
-type ScopeId = string & { __brand: 'ScopeId' };
-type SignalId = string & { __brand: 'SignalId' };
-type EffectId = string & { __brand: 'EffectId' };
-type ReactionId = string & { __brand: 'ReactionId' };
-type SurfaceId = string & { __brand: 'SurfaceId' };
-type ActionExecutionId = string & { __brand: 'ActionExecutionId' };
-type RendererKey = string;
-type Unsubscribe = () => void;
-```
-
-### Expression Types
-
-```typescript
-type ExprType = 'string' | 'number' | 'boolean' | 'object' | 'array' | 'any' | 'void' | 'null';
-```
-
-### Network Types
-
-```typescript
-interface AjaxConfig {
-  readonly url: string;
-  readonly method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-  readonly headers?: Readonly<Record<string, string>>;
-  readonly params?: Readonly<Record<string, unknown>>;
-  readonly body?: unknown;
-  readonly timeout?: number;
-  readonly withCredentials?: boolean;
-}
-
-interface AjaxResponse {
-  readonly status: number;
-  readonly data: unknown;
-  readonly headers: Readonly<Record<string, string>>;
-}
-
-interface NavigateOptions {
-  readonly replace?: boolean;
-  readonly target?: string;
+```ts
+export interface ValidationGraph {
+  graphId: string;
+  fieldRules: CompiledValidationRule[];
+  objectRules: CompiledValidationRule[];
+  arrayRules: CompiledValidationRule[];
+  dependencies: ValidationDependencyIndex;
 }
 ```
 
-### Retry & Control Flow Types
+局部校验依赖这个索引，按路径快速筛出受影响规则。
 
-```typescript
-interface RetryStrategy {
-  readonly maxAttempts: number;
-  readonly delayMs: number;
-  readonly backoff: 'fixed' | 'exponential';
-  readonly maxDelayMs?: number;
+### 12.3 草稿隔离
+
+草稿模式本质上不是“加个布尔值”。
+
+它应该被设计成：
+
+1. 父表单有正式值 scope。
+2. 草稿子区创建 draft form owner。
+3. 草稿提交前，对父表单只暴露只读投影或完全不暴露。
+4. 草稿提交时走一次显式 merge/commit 动作。
+
+这样才不会污染父级 dirty 和 validation 状态。
+
+## 13. 表面系统
+
+### 13.1 dialog/drawer 统一为 surface
+
+```ts
+export type SurfaceKind = 'dialog' | 'drawer';
+
+export interface SurfaceEntry {
+  surfaceId: string;
+  kind: SurfaceKind;
+  parentSurfaceId?: string;
+  scopeId: ScopeId;
+  rootInstanceId: InstanceId;
+  active: boolean;
+  status: 'opening' | 'open' | 'closing' | 'closed';
+}
+
+export interface SurfaceEngine {
+  open(input: OpenSurfaceInput): Promise<SurfaceEntry>;
+  close(surfaceId: string, result?: unknown): Promise<void>;
+  top(): SurfaceEntry | undefined;
+  stack(): SurfaceEntry[];
 }
 ```
 
-### Schema Sub-Types
+### 13.2 关闭恢复
 
-```typescript
-interface LoopSchema {
-  readonly sourceExpr: string;    // expression producing the collection
-  readonly itemName: string;      // default: "item"
-  readonly indexName: string;     // default: "index"
-  readonly isolated: boolean;     // default: true
-  readonly projections?: ReadonlyMap<string, string>;
+不要把“恢复前一个 surface 焦点”交给 UI 层临时处理。它属于 `SurfaceEngine` 的状态机职责。
+
+### 13.3 Surface 拓扑裁决
+
+本设计在这里做单一裁决，不再保留两种模型：
+
+1. `surface` 是 **同一个 `RuntimeSession` 内部的 overlay owner 树**。
+2. 打开 dialog/drawer 不会创建子 session，只会在当前 session 内创建新的 surface entry、scope subtree 和 instance subtree。
+3. 因此 `SurfaceEngine.open/close` 的结果也必须通过事务协议进入统一调度。
+4. `MountInput.surface` 不表示“创建子 session”，只表示“把根挂载到某个既有 surface 容器上下文”，属于嵌入位置提示。
+
+## 14. 渲染模型
+
+### 14.1 UI 是投影，不是核心
+
+运行时核心不应依赖任何具体 UI 框架。它只输出标准渲染句柄。
+
+```ts
+export interface RenderFragmentHandle {
+  fragmentId: string;
+  mountPoint: RuntimeNodeId;
+  snapshot(input?: RenderInvocationInput): RenderTree;
+  subscribe(subscriber: RenderSubscriber): Unsubscribe;
 }
 
-interface NodeMetaSchema {
-  readonly visible?: string;      // expression or boolean
-  readonly disabled?: string;     // expression or boolean
-  readonly className?: string;
-  readonly testid?: string;
+export interface RenderTree {
+  nodeId: RuntimeNodeId;
+  type: string;
+  props: Record<string, unknown>;
+  meta: Record<string, unknown>;
+  regions: Record<string, RenderFragmentHandle | RenderFragmentHandle[]>;
+  events: Record<string, DispatchInput>;
 }
 
-interface ScopeBinding {
-  readonly createsScope: boolean;
-  readonly isolated: boolean;
-  readonly initialValues?: Readonly<Record<string, string>>;  // expr sources
-  readonly projections?: ReadonlyMap<string, string>;
+export interface RenderPatch {
+  fragmentId: string;
+  revision: number;
+  nodeId: RuntimeNodeId;
+  changedProps?: string[];
+  changedMeta?: string[];
+  changedRegions?: string[];
+  childDiffs?: RegionChildDiff[];
+  lifecycle?: 'mounted' | 'updated' | 'unmounted';
 }
 
-type MetaSlot =
-  | { kind: 'static-visible'; value: boolean }
-  | { kind: 'dynamic-visible'; exprId: ExprId }
-  | { kind: 'static-disabled'; value: boolean }
-  | { kind: 'dynamic-disabled'; exprId: ExprId }
-  | { kind: 'static-class'; value: string }
-  | { kind: 'dynamic-class'; exprId: ExprId };
-```
-
-### Registry & Provider Types
-
-```typescript
-type BuiltInActionHandler = (args: ActionArgs, context: ActionContext) => Promise<ActionResult>;
-type ComponentMethods = Readonly<Record<string, (...args: unknown[]) => unknown>>;
-type NamespaceMethods = Readonly<Record<string, (...args: unknown[]) => Promise<unknown>>>;
-type ActionHandler = (args: ActionArgs, context: ActionContext) => Promise<ActionResult>;
-
-interface ValidatorProvider {
-  resolve(ref: string): ValidatorFn;
-}
-
-type ValidatorFn = (value: unknown, context: ValidationContext) => Promise<boolean> | boolean;
-
-interface I18nResolver {
-  hasKey(key: string): boolean;
-  resolve(key: string, locale: string): string;
-}
-
-interface PropSchema {
-  readonly name: string;
-  readonly type: ExprType;
-  readonly required?: boolean;
-  readonly defaultValue?: unknown;
-}
-
-interface ParamDef {
-  readonly name: string;
-  readonly type: ExprType;
-  readonly required?: boolean;
+export interface RegionChildDiff {
+  region: string;
+  op: 'insert' | 'remove' | 'move' | 'replace';
+  key: string;
+  fromIndex?: number;
+  toIndex?: number;
+  nodeId?: RuntimeNodeId;
 }
 ```
 
-### Validation Types
+`snapshot()` 用于首屏和调试快照，`subscribe()` + `RenderPatch` 才是生产渲染协议。
 
-```typescript
-interface ValidationResult {
-  readonly valid: boolean;
-  readonly errors: ReadonlyMap<string, FieldError[]>;
-}
+规则：
 
-interface FieldValidation {
-  readonly valid: boolean;
-  readonly errors: FieldError[];
-}
+1. 普通 props/meta 变化只发字段级 patch。
+2. region 子项插入、删除、重排必须通过 `childDiffs` 表达，而不是强迫 adapter 重拉整棵树。
+3. 每个 patch 都带 `fragmentId + revision`，adapter 可丢弃过期 patch。
+4. `snapshot()` 总能重建某个 fragment 的完整一致视图，作为 patch 丢失后的恢复机制。
 
-interface FieldError {
-  readonly ruleType: string;
-  readonly message: string;
-  readonly params?: unknown;
-}
+React、Vue、Web Components 都只是把这套投影协议映射为各自 UI 节点。
 
-interface CompiledCrossFieldRule {
-  readonly paths: ReadonlyArray<string>;
-  readonly ruleType: string;
-  readonly validatorRef: string;
-  readonly params: unknown;
-  readonly condition?: ExprId;
-  readonly timing: ValidationTiming;
+### 14.2 参数化区域
+
+region 参数应该降解成 scope projection，而不是匿名 closure。
+
+```ts
+export interface RegionInvocationInput {
+  slotBindings?: Record<string, unknown>;
+  scopeOverrides?: ScopeProjectionBinding[];
 }
 ```
 
-### Debug Types
+slot 渲染时自动生成 `$slot` 投影 scope，表达式仍然只认统一上下文。
 
-```typescript
-interface RendererDebugInfo {
-  readonly nodeId: NodeId;
-  readonly type: string;
-  readonly props: Record<string, unknown>;
-  readonly meta: RendererMeta;
-  readonly scopeId: ScopeId;
-}
+## 15. 表格、循环、递归
 
-interface Logger {
-  debug(message: string, context?: Record<string, unknown>): void;
-  info(message: string, context?: Record<string, unknown>): void;
-  warn(message: string, context?: Record<string, unknown>): void;
-  error(message: string, context?: Record<string, unknown>): void;
-}
+### 15.1 高频子树必须模板复用、实例隔离
 
-interface PerformanceMonitor {
-  startMeasure(label: string): void;
-  endMeasure(label: string): number;
+表格行、loop item、递归节点都应该服从同一个实例化协议：
+
+```ts
+export interface RepeatedInstanceFactory {
+  instantiate(templateId: TemplateId, owner: RepeatedOwnerInput): InstanceId;
+  recycle(instanceId: InstanceId): void;
 }
 ```
 
-### Surface Types
+重复结构还必须定义 key 规则：
 
-```typescript
-type SurfaceCommand =
-  | { action: 'open'; type: 'dialog' | 'drawer'; schema: CompiledNode; data?: Record<string, unknown> }
-  | { action: 'close'; surfaceId: SurfaceId };
+1. 优先使用 schema 显式 `rowKey` / `itemKey`。
+2. 否则退化为稳定位置 key。
+3. key 变化意味着实例销毁重建，而不是就地篡改身份。
 
-interface SurfaceContainer {
-  readonly element: unknown;  // framework-specific container element
-  dispose(): void;
-}
+### 15.2 行作用域默认隔离
 
-interface RenderContainer {
-  readonly element: unknown;
+行级 scope 默认 `isolated`，只注入：
+
+1. `record`
+2. `index`
+3. `rowMeta`
+4. 显式投影进来的少量外部值
+
+这是满足行级性能隔离的关键。
+
+### 15.3 递归不是重新编译
+
+递归结构应通过“模板自引用 + 新实例状态”实现，而不是在运行时重新生成 schema。
+
+## 16. 宿主桥
+
+### 16.1 宿主能力收敛为稳定服务接口
+
+```ts
+export interface HostServices {
+  transport: HostTransport;
+  navigation: HostNavigation;
+  notification: HostNotification;
+  scheduler: HostScheduler;
+  i18n: HostI18n;
+  diagnostics?: HostDiagnostics;
+  errorReporter?: HostErrorReporter;
 }
 ```
+
+关键点：宿主对象引用变化不能导致 runtime 重建。因此内核初始化时应该把这些服务包装成稳定代理。
+
+### 16.2 复杂域控件协议
+
+复杂域控件不能直接把内部状态塞进 scope。应该只暴露两类东西：
+
+1. 只读快照投影。
+2. 命名空间命令。
+
+```ts
+export interface HostCapabilityManifest {
+  namespace: string;
+  projections: CapabilityProjectionSpec[];
+  commands: CapabilityCommandSpec[];
+}
+```
+
+这是实现“领域私有状态机不进入 schema 可见环境”的必要边界。
+
+安全要求：
+
+1. manifest 是命名空间能力暴露的唯一来源。
+2. projection 字段必须声明类型、路径和只读性。
+3. command 必须声明参数 shape、返回 shape、超时和取消能力。
+4. 未在 manifest 中声明的能力，schema 永远不可见。
+
+另外必须补一条值回流边界：
+
+1. 任意 capability 返回值、projection 值、`env` 值在进入 scope 前，都必须经过 `SchemaValueNormalizer`。
+2. `SchemaValueNormalizer` 默认拒绝函数、类实例、DOM 对象、Promise、Symbol、代理对象和宿主框架对象引用。
+3. 允许进入 scope 的只能是 schema-safe 值：`null`、布尔、数值、字符串、普通数组、普通对象、受控日期/二进制包装值，以及平台显式支持的不可变标量包装。
+
+## 17. 调度与并发
+
+### 17.1 统一调度器
+
+所有异步活动都应该经过统一 scheduler，而不是每个模块自己 `setTimeout`、`Promise.then`。
+
+```ts
+export interface RuntimeScheduler {
+  enqueue(job: RuntimeJob, priority?: JobPriority): JobHandle;
+  cancel(jobId: string): void;
+  flush(): Promise<void>;
+}
+```
+
+统一 scheduler 的收益：
+
+1. action debounce 可以复用同一机制。
+2. data source polling 可以统一取消。
+3. async validation 可以统一抢占和失效。
+4. 调试器可以看到全局任务图。
+
+### 17.2 事务化刷新
+
+写入不应立刻触发一连串同步风暴。更领先的策略是：
+
+1. 一次 write 进入事务。
+2. 收集路径变更。
+3. 批量失效依赖消费者。
+4. 调度重新计算。
+5. 最后向 UI 投影层提交稳定快照。
+
+这能显著降低抖动与重复计算。
+
+### 17.3 提交顺序与一致性
+
+单个事务按以下顺序推进：
+
+1. 接受 `dispatch()` 或 `commit()` 请求。
+2. 生成事务 `revision` 和 `cycleId`。
+3. 如果来源是 `dispatch()`，先由 capability 产出 `CommitIntent`，再归并为 `CommitRequest`。
+4. 路由到底层 `WritableScopeStore` 产生路径变更。
+5. 立刻标脏同步计算单元，但不立刻触发 UI 投影。
+6. 同一事务内先重算同步 `computed-value`。
+7. 再调度 `validation`、`data-source`、`reaction` 这三类异步消费者。
+8. 最后把本事务稳定后的 patch 批量发给 `ProjectionEngine`。
+
+一致性规则：
+
+1. 同一事务中的后续读取可以看到前面已提交的写入。
+2. 异步消费者只能基于某个确定 epoch 的快照开始执行。
+3. 旧 epoch 的结果不能覆盖新事务后的状态。
+4. `surface open/close` 也属于事务性事件，参与同一调度协议。
+
+### 17.3.1 生命周期释放表
+
+为了避免 owner 泄漏，销毁责任必须写成正式规则：
+
+1. `RuntimeSession.dispose()` 负责递归销毁本 session 下所有 owner。
+2. `SurfaceEngine.close()` 负责先停表面子树的 async epoch，再释放其 scope、实例、订阅和 patch 流。
+3. `RepeatedInstanceFactory.recycle()` 必须同步释放该实例关联的 `ReadableScope`/`WritableScopeStore`、依赖边、组件实例索引和 render subscriber。
+4. `RenderFragmentHandle.subscribe()` 返回的 `Unsubscribe` 在 fragment 卸载时自动触发，adapter 可重复调用而无副作用。
+5. `projected scope` 的生命周期从属于创建它的 owner；owner 销毁时投影视图必须一并失效。
+6. `ComputedValueCell`、`ReactionRuntime`、`DataSourceRuntime`、`ValidationRuntime` 的依赖边必须在 `dispose()` 时立即从图上删除。
+
+### 17.4 复杂度预算
+
+如果一个设计不愿意写复杂度预算，它通常不是成熟内核。
+
+本设计的目标预算：
+
+1. 单次路径写入的失效查找应接近 `O(affected-consumers)`，而不是全图扫描。
+2. 依赖索引必须至少按 `scopeId + path segment trie` 或等价结构组织。
+3. 表格/loop 场景的消费者规模上限应与“可见实例数”近似线性，而不是与“总数据量”线性。
+4. 回收的重复实例必须同步释放依赖边、scope 订阅和组件实例索引。
+5. 调试模式允许额外索引；生产模式必须可关闭重型诊断数据。
+
+## 18. 调试与诊断
+
+### 18.1 调试信息是正式产物
+
+```ts
+export interface DebugArtifacts {
+  nodeSourceMap: Record<TemplateNodeId, SourceRange>;
+  expressionSourceMap: Record<string, SourceRange>;
+  actionSourceMap: Record<string, SourceRange>;
+  regionSourceMap: Record<string, SourceRange>;
+}
+```
+
+### 18.2 运行时检查接口
+
+```ts
+export interface RuntimeInspector {
+  getScope(scopeId: ScopeId): ScopeSnapshot | undefined;
+  getNode(nodeId: RuntimeNodeId): RuntimeNodeSnapshot | undefined;
+  getDependencies(consumerId: string): DependencySet | undefined;
+  getPendingJobs(): RuntimeJobSnapshot[];
+  getSurfaces(): SurfaceEntry[];
+}
+```
+
+调试器不应该靠偷读内部 store，它应该基于正式 inspect API。
+
+公开路径明确为：
+
+1. 宿主拿到 `RuntimeHandle` 后，可通过 `handle.sessionId` 标识当前会话。
+2. 调试器调用 `RuntimeKernel.inspector(handle.sessionId)` 获取该会话的 `RuntimeInspector`。
+3. `RuntimeHandle.inspectNode/inspectScope` 只是便捷入口；完整诊断能力以 `RuntimeInspector` 为准。
+
+## 19. 推荐的模块边界
+
+如果从零实现，我会把内核拆成下面这些包或模块：
+
+1. `schema-ast`
+2. `schema-compiler`
+3. `expression-vm`
+4. `runtime-scope`
+5. `runtime-deps`
+6. `runtime-values`
+7. `runtime-actions`
+8. `runtime-data-source`
+9. `runtime-validation`
+10. `runtime-surface`
+11. `runtime-render-contract`
+12. `runtime-host-bridge`
+13. `runtime-debug`
+
+这样拆的理由是：
+
+1. 每个模块的状态所有权明确。
+2. 无 DOM 环境下可单测。
+3. UI 框架接入层被压到最外层。
+4. 可逐层替换或独立 benchmark。
+
+## 20. 最关键的组织原则
+
+### 20.1 一切动态能力都抽象成“可追踪消费者”
+
+只要某个单元会读取 scope 并在变更后需要重跑，它就应该进入统一消费模型。
+
+包括：
+
+1. 动态 props
+2. meta visible/disabled
+3. 模板字符串
+4. 数据源触发条件
+5. reaction 条件
+6. 条件校验
+
+### 20.2 一切副作用都抽象成“能力派发”
+
+不要让表达式、组件、数据源直接写外部世界。只允许通过 capability dispatcher 产生命令意图，再统一折叠到事务提交：
+
+1. 产生 scope/form/surface 变更 intent
+2. 发请求
+3. 打开 surface
+4. 关闭 surface
+5. 调用 namespace command
+6. 导航
+7. 通知
+
+宿主只看到 `RuntimeHandle`；内部 owner 的直接方法调用不构成公开扩展点。
+
+### 20.3 一切重复结构都抽象成“模板 + 实例 owner”
+
+不要在 loop/table/recurse 上各写一套生命周期系统。
+
+## 21. 最小公开接口草图
+
+```ts
+export interface SchemaVM {
+  compile(input: SchemaCompileInput): CompiledProgram;
+  createKernel(program: CompiledProgram, host: HostServices): RuntimeKernel;
+}
+
+export interface SchemaCompileInput {
+  schema: unknown;
+  locale?: string;
+  componentCatalog: ComponentCatalog;
+  capabilityCatalog?: CapabilityCatalog;
+}
+
+export interface MountInput {
+  data?: Record<string, unknown>;
+  env?: Record<string, unknown>;
+  surface?: MountSurfaceContext;
+}
+```
+
+这个公开面已经足够小，但内部可以非常强。
+
+其中：
+
+1. `MountInput.data` 是根数据快照。
+2. `MountInput.env` 不是原样透传，而是按编译期环境声明投影成只读环境 scope。
+3. `MountInput.surface` 只用于把当前 root 绑定到一个既有 surface 容器上下文，不创建子 session。
+
+## 22. 执行时序
+
+### 22.1 启动
+
+1. host 注入 schema、catalog、能力描述。
+2. compiler 产出 `CompiledProgram`。
+3. kernel 基于 `CompiledProgram` 创建全局索引。
+4. session mount，建立 root scope 和 root instance。
+5. 模板根节点实例化。
+6. 首轮静态 props 直接复用，动态槽进入值引擎。
+7. data source、reaction、surface、form owner 按模板声明启动。
+8. projection layer 渲染 UI。
+
+### 22.2 写入
+
+1. 组件事件触发 `dispatch`。
+2. action engine 派发能力并收集 `CommitIntent`。
+3. session 把 intent 归并成一次 `commit()` 事务。
+4. scope 或其他 owner 生成路径变更与结构变更。
+5. dependency graph 精确失效消费者。
+6. scheduler 重新运行受影响计算、数据源、reaction、校验。
+7. projection engine 发出带 revision 的 `RenderPatch`。
+8. UI adapter 增量更新，必要时回退到 `snapshot()` 重建。
+
+### 22.3 销毁
+
+1. 停止 polling 和 async job。
+2. 销毁 surface 栈。
+3. 销毁 data source 和 reaction。
+4. 清理 scope 订阅。
+5. 释放 instance index。
+
+## 23. 为什么这个设计更像“下一代”
+
+因为它不是把低代码框架看成“表单引擎的放大版”，而是看成：
+
+1. 一台受限、可优化、可调试的声明式虚拟机。
+2. 一组有严格边界的 owner runtime。
+3. 一套读写分离、依赖闭环、能力显式的执行模型。
+
+世界级低代码内核的分水岭，不再是组件数量，也不是 schema 花样多少，而是以下四点是否同时成立：
+
+1. 能否把 schema 当一级可编译制品。
+2. 能否把所有动态逻辑收敛到同一依赖和调度模型。
+3. 能否在高频重复结构下维持精确刷新边界。
+4. 能否把 UI、宿主、领域控件都压缩成清晰投影层，而不是让它们反向污染内核。
+
+如果只能保留一个判断标准，我会选这个：
+
+**内核是否可以完全脱离 UI 框架独立运行、测试、调试、调度和诊断。**
+
+能做到这一点，才有资格称为下一代低代码运行时内核。
