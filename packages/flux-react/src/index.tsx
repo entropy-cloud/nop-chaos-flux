@@ -27,6 +27,7 @@ export {
   useCurrentFormFieldState,
   useValidationNodeState,
   useFieldError,
+  useDataSourceStatus,
   useOwnedFieldState,
   useChildFieldState,
   useAggregateError,

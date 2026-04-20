@@ -3,6 +3,7 @@ import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/w
 import type {
   ActionScope,
   ComponentHandleRegistry,
+  DataSourceStatusSummary,
   FormFieldStateSnapshot,
   FormErrorQuery,
   FormRuntime,
@@ -27,6 +28,7 @@ import {
   SurfaceContext,
   useRequiredContext
 } from './contexts';
+import { getIn } from '@nop-chaos/flux-core';
 import { createHelpers } from './helpers';
 import { EMPTY_FORM_FIELD_STATE, EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
 
@@ -337,6 +339,20 @@ export function useFieldError(path: string): ValidationError | undefined {
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, Object.is);
 }
 
+export function useDataSourceStatus(path: string, options?: { enabled?: boolean }): DataSourceStatusSummary | undefined {
+  return useScopeSelector(
+    (scopeData: Record<string, unknown>) => {
+      if (!path) {
+        return undefined;
+      }
+
+      return getIn(scopeData, path) as DataSourceStatusSummary | undefined;
+    },
+    Object.is,
+    { enabled: options?.enabled !== false, fallback: undefined }
+  );
+}
+
 export function useOwnedFieldState(path: string): FormFieldStateSnapshot {
   return useCurrentFormFieldState(path, { path, ownerPath: path });
 }
@@ -423,6 +439,7 @@ export const rendererHooks = {
   useCurrentFormFieldState,
   useValidationNodeState,
   useFieldError,
+  useDataSourceStatus,
   useOwnedFieldState,
   useChildFieldState,
   useAggregateError,
