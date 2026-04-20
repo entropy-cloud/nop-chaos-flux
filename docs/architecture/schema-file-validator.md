@@ -339,6 +339,8 @@ An unknown `type` is a compile-time schema diagnostic even when the JSON is synt
 
 The compiler should reuse `RendererDefinition.fields` and `RendererDefinition.regions` as the first structural hint layer.
 
+This is a lowering/classification concern, not the same thing as ordinary renderer authoring metadata such as `propContracts`, `eventContracts`, or `componentCapabilityContracts`.
+
 Those descriptors already tell the compiler whether a field is:
 
 - `meta`
@@ -643,9 +645,9 @@ When `hostContractContext` is absent:
 
 During normal tree compilation where the schema is compiled inside a publishing owner node:
 
-- the compiler may derive host context from `RendererDefinition.hostContract`
+- the compiler derives host context from the nearest publishing owner `RendererDefinition.hostContract`
 - capability publication attribution determines which regions receive host action validation
-- this is directional work; the current baseline validates only when explicit `hostContractContext` is provided
+- standalone validation without an enclosing publishing owner still requires explicit `hostContractContext`
 
 ### Current Baseline Note
 
@@ -655,6 +657,7 @@ The `hostContractContext` validation flow is now implemented:
 - action shape validation integrates with `validateHostAction()` when host context is present
 - the flow-designer package exports `FLOW_DESIGNER_MANIFEST_V1` and `designerHostContract` for standalone validation use
 - integration tests verify unknown method, invalid args, and valid action validation scenarios
+- normal in-tree compilation can also derive host context from `RendererDefinition.hostContract` plus capability publication attribution
 
 ## Relationship To Existing Validation Systems
 
