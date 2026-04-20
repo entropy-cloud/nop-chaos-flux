@@ -3,6 +3,7 @@ export * from './schema-diagnostics';
 export * from './validation-model';
 export * from './constants';
 export * from './compiled-cid';
+export * from './value-adapter';
 
 export {
   clampArrayIndex,
