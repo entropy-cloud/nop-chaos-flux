@@ -352,7 +352,7 @@ Examples:
 Important rule:
 
 - a consumer requirement does not create a publisher
-- ordinary in-tree consumers inherit host contract context from the nearest publishing owner node
+- ordinary in-tree consumers receive a candidate host contract context from the nearest publishing owner node; actual host capability validation still depends on compiler-visible publication attribution
 
 #### Inheritance Rule
 

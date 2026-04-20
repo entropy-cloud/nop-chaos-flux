@@ -219,6 +219,19 @@ Important boundary:
 - host/domain manifest envelope belongs on `RendererDefinition.hostContract`
 - do not turn ordinary renderers into host-family manifests
 
+Renderer classification rule:
+
+- `instance-renderer`: no new semantic owner boundary, no `hostContract`
+- `flux-owner-renderer`: owns Flux-native semantic or interaction state, may publish local summaries and component capabilities, but still no `hostContract`
+- `domain-host-renderer`: defines `hostContract`, publishes readonly host projection and namespaced host capabilities for inner schema
+
+This classification is about ownership/publication boundary, not about whether a component looks visually simple or complex.
+
+Important clarification:
+
+- `domain-host-renderer` identifies the owner class, not automatic whole-subtree namespace visibility
+- actual host capability visibility still follows manifest publication attribution and explicit render boundaries such as `render({ actionScope })`
+
 Recommended direction:
 
 ```ts
@@ -240,6 +253,14 @@ interface RendererCapabilityContract {
 ```
 
 The key rule is that renderer-level contracts may reuse `FluxValueShape` as the shared structural contract IR, while still remaining renderer metadata rather than host manifests.
+
+Representative mapping:
+
+- `button` -> `instance-renderer`
+- `form` -> `flux-owner-renderer` + `semantic-owner`
+- `table` -> `flux-owner-renderer` + `interaction-owner`
+- `crud` -> `flux-owner-renderer` + `composite`
+- `designer-page`, `report-designer-page`, `spreadsheet-page`, `word-editor-page` -> `domain-host-renderer` + `workbench-shell`
 
 Cross-reference:
 

@@ -289,6 +289,13 @@ Use it in two different envelopes:
 - host manifest capability methods (`designer:addNode`)
 - renderer/component capability metadata (`component:submit`, `component:refresh`)
 
+This does not imply that every capability-bearing renderer is a host boundary.
+
+Representative distinction:
+
+- `form`, `table`, and `crud` are Flux-native owner renderers with instance-targeted capability surfaces
+- `designer-page` / `report-designer-page` / `spreadsheet-page` / `word-editor-page` are domain host renderers with namespace-targeted host capability publication
+
 Do not collapse those two envelopes into one because:
 
 - namespace lookup is lexical and family-oriented

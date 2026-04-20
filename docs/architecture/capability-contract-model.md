@@ -135,7 +135,7 @@ interface ResolvedAuthoringContract {
   rendererClass: 'instance-renderer' | 'flux-owner-renderer' | 'domain-host-renderer';
   editableProps?: Record<string, RendererPropContract>;
   events?: Record<string, RendererEventContract>;
-  componentMethods?: readonly RendererCapabilityContract[];
+  componentCapabilityContracts?: readonly RendererCapabilityContract[];
   scopeExports?: Record<string, FluxValueShape>;
   hostProjection?: HostProjectionContract;
   hostActions?: Record<string, CapabilityMethodContract>;
@@ -143,6 +143,21 @@ interface ResolvedAuthoringContract {
 ```
 
 This `ResolvedAuthoringContract` is a tooling-facing adapter model, not necessarily the persisted source contract.
+
+Normative distinction inside that adapter:
+
+- `editableProps` = author-editable schema fields for this renderer type, not runtime-resolved `props.props`
+- `events` = author-declarable event entry points for this renderer type
+- `componentCapabilityContracts` = instance-targeted methods that tooling may surface for `component:<method>` authoring
+- `scopeExports` = narrow readonly Flux-native exports such as owner summaries, not host projection
+- `hostProjection` = readonly host/domain projection published only by `domain-host-renderer`
+- `hostActions` = namespaced host/domain capability methods published only by `domain-host-renderer`
+
+Authoring/runtime split:
+
+- `editableProps` describes authored schema input
+- renderer `props` in runtime docs describes resolved runtime values passed to the mounted component
+- these are related but not identical surfaces and must not be conflated by tooling
 
 ## Envelope Split
 
@@ -198,7 +213,9 @@ interface RendererDefinition {
   type: string;
   component: ComponentType<any>;
   propContracts?: Record<string, RendererPropContract>;
-  capabilityContracts?: readonly RendererCapabilityContract[];
+  eventContracts?: Record<string, RendererEventContract>;
+  componentCapabilityContracts?: readonly RendererCapabilityContract[];
+  scopeExportContracts?: Record<string, FluxValueShape>;
   hostContract?: RendererHostContract;
 }
 ```
@@ -213,6 +230,7 @@ Renderer metadata needs concepts that host manifest does not:
 Important rule:
 
 - ordinary renderer metadata should **not** be wrapped in host-family/version/projection manifest envelope
+- use one canonical field name set on `RendererDefinition`; avoid aliasing `capabilityContracts` and `componentCapabilityContracts`
 
 ## Runtime Lookup Split
 
@@ -290,6 +308,11 @@ Criteria:
 - publishes namespaced host capabilities to inner schema
 - owns bridge/session/subscription lifecycle for a domain runtime
 - deserves family/version/publication-boundary semantics and compiler validation
+
+Important clarification:
+
+- `domain-host-renderer` does not imply whole-subtree capability visibility by default
+- actual host capability visibility still depends on manifest publication attribution and explicit render boundaries
 
 Representative examples:
 
