@@ -37,7 +37,7 @@ describe('createSchemaRenderer import basics', () => {
     fireEvent.click(screen.getByText('Run import action'));
 
     await waitFor(() => {
-      expect(importLoader.load).toHaveBeenCalledWith({ from: 'demo-lib', as: 'demo' });
+      expect(importLoader.load).toHaveBeenCalledWith({ from: 'demo-lib', as: 'demo' }, undefined);
     });
   });
 
@@ -245,6 +245,6 @@ describe('createSchemaRenderer import basics', () => {
       expect(screen.getAllByText((_, element) => element?.textContent === 'Ada Lovelace').length).toBeGreaterThan(0);
     });
     expect(resolveImportUrl).toHaveBeenCalledWith('https://app.local/schema/page.json', './demo-lib.js', undefined);
-    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib.js', as: 'demo' });
+    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib.js', as: 'demo' }, undefined);
   });
 });

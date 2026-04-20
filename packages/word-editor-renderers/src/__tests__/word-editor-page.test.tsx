@@ -8,7 +8,8 @@ import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/flux-rea
 import type { RendererEnv } from '@nop-chaos/flux-core'
 import { registerWordEditorRenderers, defineWordEditorPageSchema } from '../index.js'
 
-vi.mock('@nop-chaos/word-editor-core', async () => {
+vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@nop-chaos/word-editor-core')>()
   class CanvasEditorBridge {}
   const state = {
     isReady: true,
@@ -50,7 +51,26 @@ vi.mock('@nop-chaos/word-editor-core', async () => {
     update: vi.fn(),
   }
   return {
+    ...actual,
     CanvasEditorBridge,
+    RowFlex: actual.RowFlex ?? {
+      LEFT: 'left',
+      CENTER: 'center',
+      RIGHT: 'right',
+      JUSTIFY: 'justify',
+    },
+    TitleLevel: actual.TitleLevel ?? {
+      FIRST: 'first',
+      SECOND: 'second',
+      THIRD: 'third',
+      FOURTH: 'fourth',
+      FIFTH: 'fifth',
+      SIXTH: 'sixth',
+    },
+    ListType: actual.ListType ?? {
+      UL: 'ul',
+      OL: 'ol',
+    },
     createEditorStore: () => editorStore,
     createDatasetStore: () => datasetStore,
     saveDocument: vi.fn(() => true),
@@ -64,27 +84,27 @@ vi.mock('../editor-canvas.js', () => ({
   EditorCanvas: () => <div data-testid="editor-canvas" />,
 }))
 
-vi.mock('../toolbar/RibbonToolbar.js', () => ({
+vi.mock('../toolbar/ribbon-toolbar.js', () => ({
   RibbonToolbar: () => <div data-testid="ribbon-toolbar" />,
 }))
 
-vi.mock('../panels/OutlinePanel.js', () => ({
+vi.mock('../panels/outline-panel.js', () => ({
   OutlinePanel: () => <div data-testid="outline-panel" />,
 }))
 
-vi.mock('../panels/DatasetPanel.js', () => ({
+vi.mock('../panels/dataset-panel.js', () => ({
   DatasetPanel: () => <div data-testid="dataset-panel" />,
 }))
 
-vi.mock('../panels/FieldList.js', () => ({
+vi.mock('../panels/field-list.js', () => ({
   FieldList: () => <div data-testid="field-list" />,
 }))
 
-vi.mock('../dialogs/DatasetDialog.js', () => ({
+vi.mock('../dialogs/dataset-dialog.js', () => ({
   DatasetDialog: () => <div data-testid="dataset-dialog" />,
 }))
 
-vi.mock('../hooks/useWordEditorShortcuts.js', () => ({
+vi.mock('../hooks/use-word-editor-shortcuts.js', () => ({
   useWordEditorShortcuts: () => undefined,
 }))
 
