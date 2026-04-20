@@ -6,7 +6,7 @@ import type { ComponentHandleRegistry } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
 import type { RendererHelpers, RendererRegistry, RendererRuntime } from './renderer-core';
 import type { RendererPlugin } from './renderer-plugin';
-import type { FormErrorQuery, FormFieldStateSnapshot, FormRuntime, PageRuntime, PageStoreApi, SurfaceRuntime } from './runtime';
+import type { DataSourceStatusSummary, FormErrorQuery, FormFieldStateSnapshot, FormRuntime, PageRuntime, PageStoreApi, SurfaceRuntime } from './runtime';
 import type { SchemaInput, SchemaPath } from './schema';
 import type { ScopeRef } from './scope';
 import type { ValidationError } from './validation';
@@ -122,6 +122,7 @@ export interface RendererHookApi {
   useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot;
   useValidationNodeState(path: string): FormFieldStateSnapshot;
   useFieldError(path: string): ValidationError | undefined;
+  useDataSourceStatus(path: string, options?: { enabled?: boolean }): DataSourceStatusSummary | undefined;
   useOwnedFieldState(path: string): FormFieldStateSnapshot;
   useChildFieldState(path: string): FormFieldStateSnapshot;
   useAggregateError(path: string): ValidationError | undefined;
