@@ -37,7 +37,7 @@ export function useSourceValue<T>(input: unknown, options?: { scope?: ScopeRef }
     const controller = new AbortController();
     const { signal } = controller;
 
-    void runtime.executeSource({ source, scope })
+    void runtime.executeSource({ source, scope, ctx: { signal } })
       .then((result: ActionResult) => {
         if (signal.aborted) {
           return;

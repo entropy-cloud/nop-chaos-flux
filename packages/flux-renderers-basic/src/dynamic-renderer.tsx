@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { BaseSchema, DynamicRendererSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRendererEnv, useRendererRuntime } from '@nop-chaos/flux-react';
 import { executeApiObject } from '@nop-chaos/flux-runtime';
@@ -26,17 +26,15 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     schema: null
   });
 
-  const mountedRef = useRef(true);
-
   useEffect(() => {
-    mountedRef.current = true;
+    const controller = new AbortController();
 
     const loadSchema = async () => {
       try {
         const scope = props.helpers.createScope({});
-        const result = await executeApiObject(schemaApi as DynamicRendererSchema['schemaApi'], scope, env, runtime.expressionCompiler);
+        const result = await executeApiObject(schemaApi as DynamicRendererSchema['schemaApi'], scope, env, runtime.expressionCompiler, { signal: controller.signal });
 
-        if (!mountedRef.current) return;
+        if (controller.signal.aborted) return;
 
         if (!isBaseSchemaLike(result.data)) {
           setState({ loading: false, error: 'Invalid schema received from API', schema: null });
@@ -45,7 +43,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
         setState({ loading: false, error: undefined, schema: result.data });
       } catch (err) {
-        if (!mountedRef.current) return;
+        if (controller.signal.aborted) return;
         setState({ loading: false, error: err, schema: null });
       }
     };
@@ -53,7 +51,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     loadSchema();
 
     return () => {
-      mountedRef.current = false;
+      controller.abort();
     };
   }, [schemaApi, runtime, env, props.helpers]);
 

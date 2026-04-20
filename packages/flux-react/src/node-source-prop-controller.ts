@@ -91,7 +91,7 @@ export function createNodeSourcePropController(
 
     void Promise.all(
       sourceEntries.map(async (entry) => {
-        const result: ActionResult = await runtime.executeSource({ source: entry.source, scope });
+        const result: ActionResult = await runtime.executeSource({ source: entry.source, scope, ctx: { signal: controller.signal } });
         return [entry, result] as const;
       })
     ).then((entries) => {
