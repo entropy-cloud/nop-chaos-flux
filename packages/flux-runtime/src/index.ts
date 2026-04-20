@@ -10,3 +10,4 @@ export { createProjectedScopeStore } from './projected-scope-store';
 export {
   executeApiObject,
 } from './request-runtime';
+export { compileAction, compileActions, type ActionCompilerOptions } from './action-compiler';

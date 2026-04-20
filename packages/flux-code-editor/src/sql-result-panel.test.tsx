@@ -15,10 +15,10 @@ describe('SQLResultPanel', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('shows "Executing..." for loading state', () => {
+  it('shows loading copy for loading state', () => {
     const result: SQLResultState = { status: 'loading' };
     render(<SQLResultPanel result={result} />);
-    const text = screen.getByText('Executing...');
+    const text = screen.getByText('执行中...');
     expect(text).toBeDefined();
     expect(text.closest('[data-slot="code-editor-result-panel"]')?.getAttribute('data-state')).toBe('loading');
   });
@@ -87,9 +87,9 @@ describe('SQLResultPanel', () => {
     };
     render(<SQLResultPanel result={result} />);
 
-    expect(screen.getByText('Error')).toBeDefined();
+    expect(screen.getByText('错误')).toBeDefined();
     expect(screen.getByText('Syntax error near SELECT')).toBeDefined();
-    expect(screen.getByText('Error').closest('[data-slot="code-editor-result-panel"]')?.getAttribute('data-state')).toBe('error');
+    expect(screen.getByText('错误').closest('[data-slot="code-editor-result-panel"]')?.getAttribute('data-state')).toBe('error');
   });
 
   it('close button calls onClose callback', () => {
@@ -116,7 +116,7 @@ describe('SQLResultPanel', () => {
     };
     render(<SQLResultPanel result={result} />);
 
-    expect(screen.getByText('Result (3 rows)')).toBeDefined();
+    expect(screen.getByText('结果 (3 行)')).toBeDefined();
   });
 
   it('renders empty table when data is empty', () => {
@@ -126,7 +126,7 @@ describe('SQLResultPanel', () => {
     };
     render(<SQLResultPanel result={result} />);
 
-    expect(screen.getByText('Result (0 rows)')).toBeDefined();
+    expect(screen.getByText('结果 (0 行)')).toBeDefined();
     expect(screen.getByRole('table')).toBeDefined();
   });
 });

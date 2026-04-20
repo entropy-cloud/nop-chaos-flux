@@ -1,8 +1,8 @@
 import type {
   ActionContext,
   ActionResult,
-  ActionSchema,
   ApiSchema,
+  CompiledActionNode,
   CompiledFormValidationField,
   CompiledValidationRule,
   ExecutableApiRequest,
@@ -68,7 +68,7 @@ export async function executeRuntimeValidationRule(
 
 export async function executeRuntimeAjaxAction(
   api: ApiSchema,
-  action: ActionSchema,
+  action: CompiledActionNode,
   ctx: ActionContext,
   signal: AbortSignal | undefined,
   helpers: {
@@ -103,8 +103,10 @@ export async function executeRuntimeAjaxAction(
     });
   }
 
-  if (action.dataPath && ctx.page) {
-    const nextData = applyResponseDataPath(ctx.page.store.getState().data, action.dataPath, response.data);
+  const dataPath = action.targeting?.dataPath;
+
+  if (dataPath && ctx.page) {
+    const nextData = applyResponseDataPath(ctx.page.store.getState().data, dataPath, response.data);
     ctx.page.store.setData(nextData);
   }
 

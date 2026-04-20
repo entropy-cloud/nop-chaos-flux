@@ -18,6 +18,7 @@ export function writeStatusToScope(scope: ScopeRef, statusPath: string | undefin
     errorUpdatedAt: state.errorUpdatedAt,
     failureCount: state.failureCount,
     failureReason: state.failureReason,
+    async: state.async,
     error: state.error
       ? { message: state.error instanceof Error ? state.error.message : String(state.error) }
       : undefined
@@ -42,7 +43,8 @@ export function createInitialDataSourceState(initialData: unknown): DataSourceSt
     dataUpdatedAt: hasInitialData ? Date.now() : 0,
     errorUpdatedAt: 0,
     failureCount: 0,
-    failureReason: undefined
+    failureReason: undefined,
+    async: undefined
   };
 }
 

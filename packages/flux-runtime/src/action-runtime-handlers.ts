@@ -2,15 +2,16 @@ import type {
   ActionContext,
   ActionMonitorPayload,
   ActionResult,
-  ActionSchema,
-  ApiSchema,
+  CompiledActionNode,
 } from '@nop-chaos/flux-core';
 import {
-  evaluateInActionContext,
-  evaluateCompiledInActionContext,
   evaluateActionArgs,
+  evaluateActionApi,
+  evaluateActionDialog,
+  evaluateActionDrawer,
+  evaluateActionValue,
+  evaluateActionValues,
   finishAction,
-  getCompiledValue,
   normalizeActionResult,
   canInvokeHandleMethod,
   getInternalComponentActionTarget,
@@ -19,7 +20,7 @@ import {
 
 export async function runBuiltInAction(
   input: ActionDispatcherInput,
-  action: ActionSchema,
+  action: CompiledActionNode,
   ctx: ActionContext,
   startedAt: number,
   actionPayload: ActionMonitorPayload,
@@ -27,10 +28,10 @@ export async function runBuiltInAction(
 ): Promise<ActionResult | undefined> {
   switch (action.action) {
     case 'setValue': {
-      const targetPath = action.componentPath ?? action.componentId ?? '';
-      const evaluated = action.value === undefined ? undefined : evaluateInActionContext(action.value, ctx, input);
+      const targetPath = action.targeting.componentPath ?? action.targeting.componentId ?? '';
+      const evaluated = evaluateActionValue(action, ctx, input);
 
-      if (ctx.form && action.formId && ctx.form.id === action.formId) {
+      if (ctx.form && action.targeting.formId && ctx.form.id === action.targeting.formId) {
         ctx.form.setValue(targetPath, evaluated);
       } else {
         ctx.scope.update(targetPath, evaluated);
@@ -39,15 +40,13 @@ export async function runBuiltInAction(
       return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: evaluated });
     }
     case 'setValues': {
-      const evaluatedValues = action.values
-        ? evaluateInActionContext<Record<string, unknown>>(action.values, ctx, input)
-        : {};
+      const evaluatedValues = evaluateActionValues(action, ctx, input);
 
       if (Object.keys(evaluatedValues).length === 0) {
         return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: evaluatedValues });
       }
 
-      if (ctx.form && action.formId && ctx.form.id === action.formId) {
+      if (ctx.form && action.targeting.formId && ctx.form.id === action.targeting.formId) {
         ctx.form.setValues(evaluatedValues);
       } else {
         for (const [targetPath, evaluated] of Object.entries(evaluatedValues)) {
@@ -58,18 +57,7 @@ export async function runBuiltInAction(
       return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: evaluatedValues });
     }
     case 'ajax': {
-      if (!action.api) {
-        return finishAction(
-          input,
-          { ...actionPayload, dispatchMode: 'built-in' },
-          startedAt,
-          { ok: false, error: new Error('Missing api in ajax action') }
-        );
-      }
-
-      const api = action.api
-        ? evaluateCompiledInActionContext<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx, input)
-        : undefined;
+      const api = evaluateActionApi(action, ctx, input);
 
       if (!api) {
         return finishAction(
@@ -85,7 +73,9 @@ export async function runBuiltInAction(
     }
     case 'dialog':
     case 'openDialog': {
-      if (!ctx.surfaceRuntime || !action.dialog) {
+      const dialog = evaluateActionDialog(action, ctx, input);
+
+      if (!ctx.surfaceRuntime || !dialog) {
         return finishAction(
           input,
           { ...actionPayload, dispatchMode: 'built-in' },
@@ -97,7 +87,7 @@ export async function runBuiltInAction(
       const dialogScope = input.createDialogScope(ctx);
       const dialogId = ctx.surfaceRuntime.open({
         kind: 'dialog',
-        surface: action.dialog,
+        surface: dialog,
         scope: dialogScope,
           runtime: input.runtime,
         options: {
@@ -111,7 +101,9 @@ export async function runBuiltInAction(
     }
     case 'drawer':
     case 'openDrawer': {
-      if (!action.drawer) {
+      const drawer = evaluateActionDrawer(action, ctx, input);
+
+      if (!drawer) {
         return finishAction(
           input,
           { ...actionPayload, dispatchMode: 'built-in' },
@@ -120,13 +112,13 @@ export async function runBuiltInAction(
         );
       }
 
-      const result = await input.openDrawer?.(action.drawer, ctx);
-      return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result ?? { ok: true, data: action.drawer });
+      const result = await input.openDrawer?.(drawer, ctx);
+      return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result ?? { ok: true, data: drawer });
     }
     case 'closeDrawer': {
       if (ctx.surfaceRuntime) {
-        if (action.dialogId) {
-          ctx.surfaceRuntime.close(String(evaluateInActionContext(action.dialogId, ctx, input)));
+        if (action.targeting.dialogId) {
+          ctx.surfaceRuntime.close(String(action.targeting.dialogId));
         } else {
           ctx.surfaceRuntime.close(ctx.dialogId);
         }
@@ -141,8 +133,8 @@ export async function runBuiltInAction(
     }
     case 'closeDialog': {
       if (ctx.surfaceRuntime) {
-        if (action.dialogId) {
-          ctx.surfaceRuntime.close(String(evaluateInActionContext(action.dialogId, ctx, input)));
+        if (action.targeting.dialogId) {
+          ctx.surfaceRuntime.close(String(action.targeting.dialogId));
         } else {
           ctx.surfaceRuntime.close(ctx.dialogId);
         }
@@ -158,7 +150,7 @@ export async function runBuiltInAction(
       });
     }
     case 'refreshSource': {
-      const sourceId = action.targetId ?? action.componentId ?? action.componentPath;
+      const sourceId = action.targeting.targetId ?? action.targeting.componentId ?? action.targeting.componentPath;
 
       if (!sourceId) {
         return finishAction(
@@ -190,9 +182,7 @@ export async function runBuiltInAction(
         );
       }
 
-      const api = action.api
-        ? evaluateCompiledInActionContext<ApiSchema>(getCompiledValue(action.api, input.compileValue), ctx, input)
-        : undefined;
+      const api = evaluateActionApi(action, ctx, input);
 
       if (api) {
         input.getEnv().monitor?.onApiRequest?.({
@@ -254,7 +244,7 @@ function extractComponentMethod(actionName: string): string {
 
 export async function runComponentAction(
   input: ActionDispatcherInput,
-  action: ActionSchema,
+  action: CompiledActionNode,
   ctx: ActionContext,
   startedAt: number,
   actionPayload: ActionMonitorPayload
@@ -273,9 +263,9 @@ export async function runComponentAction(
   }
 
   const target = getInternalComponentActionTarget(action) ?? {
-    _targetCid: typeof action._targetCid === 'number' ? action._targetCid : undefined,
-    componentId: action.componentId,
-    componentName: action.componentName
+    _targetCid: typeof action.targeting._targetCid === 'number' ? action.targeting._targetCid : undefined,
+    componentId: action.targeting.componentId,
+    componentName: action.targeting.componentName
   };
 
   if (

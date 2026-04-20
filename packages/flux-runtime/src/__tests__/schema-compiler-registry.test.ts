@@ -210,7 +210,17 @@ describe('createSchemaCompiler', () => {
 
     expect(node.regions.onClick).toBeUndefined();
     expect(node.propsProgram.value.onClick).toBeUndefined();
-    expect(node.eventPlans.onClick).toMatchObject({ action: 'setValue' });
+    expect(node.eventPlans.onClick).toMatchObject({
+      isFullyStatic: true,
+      nodes: [
+        expect.objectContaining({
+          action: 'setValue',
+          targeting: expect.objectContaining({
+            componentPath: 'message'
+          })
+        })
+      ]
+    });
   });
 
   it('compiles lifecycle actions outside eventActions', () => {
@@ -229,8 +239,14 @@ describe('createSchemaCompiler', () => {
     const node = compiled.root as any;
 
     expect(node.lifecycleActions).toEqual({
-      onMount: { action: 'probe:mount' },
-      onUnmount: { action: 'probe:unmount' }
+      onMount: {
+        isFullyStatic: true,
+        nodes: [expect.objectContaining({ action: 'probe:mount' })]
+      },
+      onUnmount: {
+        isFullyStatic: true,
+        nodes: [expect.objectContaining({ action: 'probe:unmount' })]
+      }
     });
     expect(node.eventPlans.onMount).toBeUndefined();
     expect(node.eventPlans.onUnmount).toBeUndefined();
@@ -261,9 +277,10 @@ describe('createSchemaCompiler', () => {
     const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
     const formNode = bodyNodes[0];
     const buttonNode = bodyNodes[1];
+    const clickNode = buttonNode.eventPlans.onClick.nodes[0];
     expect(typeof formNode.templateNodeId).toBe('number');
-    expect(buttonNode.eventPlans.onClick.componentId).toBe('user-form');
-    expect(buttonNode.eventPlans.onClick._targetCid).toBeUndefined();
+    expect(clickNode.targeting.componentId).toBe('user-form');
+    expect(clickNode.targeting._targetCid).toBeUndefined();
   });
 
   it('assigns template node identity to compiled nodes', () => {
@@ -316,7 +333,7 @@ describe('createSchemaCompiler', () => {
 
     const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
     const buttonNode = bodyNodes[1];
-    expect(buttonNode.eventPlans.onClick._targetCid).toBeUndefined();
+    expect(buttonNode.eventPlans.onClick.nodes[0].targeting._targetCid).toBeUndefined();
   });
 
   it('does not rewrite componentId targets during compile when duplicate ids exist', () => {
@@ -345,8 +362,8 @@ describe('createSchemaCompiler', () => {
     const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
     const buttonNode = bodyNodes[2];
 
-    expect(buttonNode.eventPlans.onClick.componentId).toBe('dup-form');
-    expect(buttonNode.eventPlans.onClick._targetCid).toBeUndefined();
+    expect(buttonNode.eventPlans.onClick.nodes[0].targeting.componentId).toBe('dup-form');
+    expect(buttonNode.eventPlans.onClick.nodes[0].targeting._targetCid).toBeUndefined();
   });
 
   it('preserves xui:imports on compiled schema for runtime registration', () => {

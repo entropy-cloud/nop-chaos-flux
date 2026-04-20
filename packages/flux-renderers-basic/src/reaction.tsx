@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import type { ActionContext, ActionResult, ActionSchema } from '@nop-chaos/flux-core';
+import type { ActionContext, ActionResult, ActionSchema, CompiledActionProgram } from '@nop-chaos/flux-core';
 import type { ReactionSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useRendererRuntime } from '@nop-chaos/flux-react';
 
@@ -17,7 +17,7 @@ export function ReactionRenderer(props: RendererComponentProps<ReactionSchema>) 
       id: props.id,
       schema: props.schema,
       scope,
-      dispatch(action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>): Promise<ActionResult> {
+      dispatch(action: ActionSchema | ActionSchema[] | CompiledActionProgram, ctx?: Partial<ActionContext>): Promise<ActionResult> {
         return dispatchRef.current(action, ctx);
       }
     });

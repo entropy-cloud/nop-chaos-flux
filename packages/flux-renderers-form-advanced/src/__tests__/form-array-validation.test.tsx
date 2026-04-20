@@ -48,13 +48,13 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     );
 
     fireEvent.click(screen.getByText('Submit reviewers'));
-    expect(await screen.findByText('Reviewers must contain at least 1 item')).toBeTruthy();
+    expect(await screen.findByText('Reviewers must contain at least 1 item(s)')).toBeTruthy();
 
     fireEvent.click(screen.getByText('Add item'));
     fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: 'alice' } });
 
     await waitFor(() => {
-      expect(screen.queryByText('Reviewers must contain at least 1 item')).toBeNull();
+      expect(screen.queryByText('Reviewers must contain at least 1 item(s)')).toBeNull();
     });
   });
 
@@ -96,12 +96,12 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     );
 
     fireEvent.click(screen.getByText('Submit limited reviewers'));
-    expect(await screen.findByText('Reviewers must contain at most 1 item')).toBeTruthy();
+    expect(await screen.findByText('Reviewers must contain at most 1 item(s)')).toBeTruthy();
 
     fireEvent.click(screen.getAllByText('Remove')[1]);
 
     await waitFor(() => {
-      expect(screen.queryByText('Reviewers must contain at most 1 item')).toBeNull();
+      expect(screen.queryByText('Reviewers must contain at most 1 item(s)')).toBeNull();
     });
   });
 

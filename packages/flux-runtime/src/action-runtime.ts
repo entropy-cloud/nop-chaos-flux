@@ -3,7 +3,11 @@ import type {
   ActionMonitorPayload,
   ActionResult,
   ActionSchema,
+  CompiledActionNode,
+  CompiledActionProgram,
+  OperationControlConfig,
 } from '@nop-chaos/flux-core';
+import { compileActions } from './action-compiler';
 import { isNamespacedAction } from './action-scope';
 import { withRetry, withTimeout } from './operation-control';
 import { cancelPendingDebounce, scheduleDebounce } from './utils/debounce';
@@ -30,18 +34,68 @@ import { runBuiltInAction, runComponentAction } from './action-runtime-handlers'
 import { isAbortError } from './error-utils';
 
 export function createActionDispatcher(input: ActionDispatcherInput) {
+  const compiledProgramCache = new WeakMap<object, CompiledActionProgram>();
   const pendingDebounces = new Map<string, {
     timer: ReturnType<typeof setTimeout>;
     resolve: (result: ActionResult) => void;
     reject: (error: unknown) => void;
   }>();
 
-  function isRequestBackedAction(action: ActionSchema): boolean {
+  function isRequestBackedAction(action: CompiledActionNode): boolean {
     return action.action === 'ajax' || action.action === 'submitForm';
   }
 
+  function isCompiledActionProgram(action: unknown): action is CompiledActionProgram {
+    return Boolean(
+      action &&
+      typeof action === 'object' &&
+      'nodes' in action &&
+      Array.isArray((action as CompiledActionProgram).nodes)
+    );
+  }
+
+  function normalizeCompiledActionProgram(action: ActionSchema | ActionSchema[] | CompiledActionProgram): CompiledActionProgram {
+    if (isCompiledActionProgram(action)) {
+      return action;
+    }
+
+    const cached = compiledProgramCache.get(action as object);
+
+    if (cached) {
+      return cached;
+    }
+
+    const compiled = compileActions(action, input.runtime.expressionCompiler);
+    compiledProgramCache.set(action as object, compiled);
+    return compiled;
+  }
+
+  function applyActionControl(action: CompiledActionNode, control: OperationControlConfig | undefined): CompiledActionNode {
+    if (!control) {
+      if (action.control) {
+        return action;
+      }
+
+      return {
+        ...action,
+        control: {}
+      };
+    }
+
+    return {
+      ...action,
+      control: {
+        ...(action.control ?? {}),
+        timeout: action.control?.timeout ?? control.timeout,
+        debounce: action.control?.debounce ?? control.debounce,
+        retry: action.control?.retry ?? control.retry,
+        control: action.control?.control ?? control
+      }
+    };
+  }
+
   async function runParallelActions(
-    action: ActionSchema,
+    action: CompiledActionNode,
     ctx: ActionContext,
     startedAt: number,
     actionPayload: ActionMonitorPayload
@@ -67,7 +121,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
   }
 
   async function runNamespacedAction(
-    action: ActionSchema,
+    action: CompiledActionNode,
     ctx: ActionContext,
     startedAt: number,
     actionPayload: ActionMonitorPayload
@@ -102,7 +156,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     );
   }
 
-  async function runSingleAction(action: ActionSchema, ctx: ActionContext, signal?: AbortSignal): Promise<ActionResult> {
+  async function runSingleAction(action: CompiledActionNode, ctx: ActionContext, signal?: AbortSignal): Promise<ActionResult> {
     const effectiveSignal = signal ?? ctx.signal;
     const activeCtx = effectiveSignal && ctx.signal !== effectiveSignal ? { ...ctx, signal: effectiveSignal } : ctx;
     const startedAt = Date.now();
@@ -110,13 +164,17 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     input.getEnv().monitor?.onActionStart?.(actionPayload);
 
     try {
-      const processedAction = await (input.plugins ?? []).reduce<Promise<ActionSchema>>(
-        async (currentPromise, plugin) => {
-          const current = await currentPromise;
-          return plugin.beforeAction ? plugin.beforeAction(current, activeCtx) : current;
-        },
-        Promise.resolve(action)
-      );
+      const processedAction = (input.plugins?.length ?? 0) > 0
+        ? normalizeCompiledActionProgram(
+            await (input.plugins ?? []).reduce<Promise<ActionSchema>>(
+              async (currentPromise, plugin) => {
+                const current = await currentPromise;
+                return plugin.beforeAction ? plugin.beforeAction(current, activeCtx) : current;
+              },
+              Promise.resolve(action.source)
+            )
+          ).nodes[0]!
+        : action;
 
       if (!shouldRunActionWhen(processedAction, activeCtx, input)) {
         return finishAction(input, actionPayload, startedAt, {
@@ -180,8 +238,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     }
   }
 
-  function runActionWithDebounce(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
-    const debounceMs = getNumericControl(action.debounce);
+  function runActionWithDebounce(action: CompiledActionNode, ctx: ActionContext): Promise<ActionResult> {
+    const debounceMs = getNumericControl(action.control?.debounce);
 
     if (!debounceMs || debounceMs <= 0) {
       return runSingleActionWithRetry(action, ctx);
@@ -206,7 +264,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     );
   }
 
-  async function runSingleActionWithRetry(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
+  async function runSingleActionWithRetry(action: CompiledActionNode, ctx: ActionContext): Promise<ActionResult> {
     if (isRequestBackedAction(action)) {
       const result = await runSingleActionWithTimeout(action, ctx);
       const errorWithRetry = result.error as { attempts?: unknown; failureCount?: unknown } | undefined;
@@ -218,7 +276,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       };
     }
 
-    const retry = getRetryControl(action.retry);
+    const retry = getRetryControl(action.control?.retry);
     const { result: lastResult, attempts, failureCount, lastFailureReason } = await withRetry(
       () => runSingleActionWithTimeout(action, ctx),
       {
@@ -238,8 +296,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     };
   }
 
-  function runSingleActionWithTimeout(action: ActionSchema, ctx: ActionContext): Promise<ActionResult> {
-    const timeoutMs = getNumericControl(action.timeout);
+  function runSingleActionWithTimeout(action: CompiledActionNode, ctx: ActionContext): Promise<ActionResult> {
+    const timeoutMs = getNumericControl(action.control?.timeout);
 
     if (!timeoutMs || timeoutMs <= 0) {
       return runSingleAction(action, ctx);
@@ -252,8 +310,8 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
     );
   }
 
-  async function dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult> {
-    const actions = Array.isArray(action) ? action : [action];
+  async function dispatch(action: ActionSchema | ActionSchema[] | CompiledActionProgram, ctx: ActionContext): Promise<ActionResult> {
+    const actions = normalizeCompiledActionProgram(action).nodes;
     let previous: ActionResult = { ok: true };
 
     for (const current of actions) {
@@ -263,15 +321,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         prevResult: previous,
         evaluationBindings: ctx.evaluationBindings
       };
-      const control = resolveActionControl(current);
-      const normalizedAction = control
-        ? {
-            ...current,
-            timeout: current.timeout ?? control.timeout,
-            debounce: current.debounce ?? control.debounce,
-            retry: current.retry ?? control.retry
-          }
-        : current;
+      const normalizedAction = applyActionControl(current, resolveActionControl(current));
       const result = await runActionWithDebounce(normalizedAction, actionContext);
       const resultClass = classifyActionResult(result);
 
@@ -283,7 +333,10 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
       );
 
       if (resultClass === 'success' && normalizedAction.then) {
-        previous = await dispatch(normalizedAction.then, {
+        previous = await dispatch({
+          nodes: normalizedAction.then,
+          isFullyStatic: false
+        }, {
           ...ctx,
           interactionId: actionContext.interactionId,
           prevResult: result,
@@ -293,7 +346,10 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         const eventType = typeof (ctx.event as { type?: unknown } | undefined)?.type === 'string'
           ? (ctx.event as { type: string }).type
           : 'actionError';
-        previous = await dispatch(normalizedAction.onError, {
+        previous = await dispatch({
+          nodes: normalizedAction.onError,
+          isFullyStatic: false
+        }, {
           ...ctx,
           interactionId: actionContext.interactionId,
           prevResult: result,
@@ -312,7 +368,10 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         const settledEventType = resultClass === 'failure' ? 'actionSettledError' : 'actionSettled';
 
         try {
-          await dispatch(normalizedAction.onSettled, {
+          await dispatch({
+            nodes: normalizedAction.onSettled,
+            isFullyStatic: false
+          }, {
             ...ctx,
             interactionId: actionContext.interactionId,
             prevResult: result,
@@ -343,7 +402,7 @@ export function createActionDispatcher(input: ActionDispatcherInput) {
         }
       }
 
-      if (resultClass === 'failure' && !normalizedAction.continueOnError) {
+      if (resultClass === 'failure' && !normalizedAction.control?.continueOnError) {
         return result;
       }
     }

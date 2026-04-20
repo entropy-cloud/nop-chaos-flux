@@ -143,7 +143,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: fetcher as RendererEnv['fetcher']
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
     });
@@ -328,6 +328,85 @@ describe('createRendererRuntime', () => {
 
     await vi.waitFor(() => {
       expect(page.scope.get('payload')).toEqual({ url: '/api/users/2' });
+    });
+
+    registration.dispose();
+  });
+
+  it('drops late parallel api source results from superseded runs and exposes async diagnostics', async () => {
+    let callCount = 0;
+    let releaseFirst: (() => void) | undefined;
+    let releaseSecond: (() => void) | undefined;
+    const fetcher = vi.fn(async <T>(api: { url: string }, _ctx?: { signal?: AbortSignal }) => {
+      callCount += 1;
+
+      if (callCount === 1) {
+        await new Promise<void>((resolve) => {
+          releaseFirst = resolve;
+        });
+      } else {
+        await new Promise<void>((resolve) => {
+          releaseSecond = resolve;
+        });
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        data: { url: api.url } as T
+      };
+    });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ userId: 1 });
+
+    const registration = runtime.registerDataSource({
+      id: 'parallel-latest-authoritative',
+      scope: page.scope,
+      schema: {
+        type: 'data-source',
+        api: { url: '/api/users/${userId}' },
+        name: 'payload',
+        control: {
+          dedup: 'parallel'
+        }
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    page.scope.update('userId', 2);
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+
+    releaseSecond?.();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/2' });
+    });
+
+    releaseFirst?.();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(page.scope.get('payload')).toEqual({ url: '/api/users/2' });
+
+    await vi.waitFor(() => {
+      const debugSnapshot = runtime.getSourceDebugSnapshot?.();
+      const debugEntry = debugSnapshot?.sources.find((entry) => entry.id === 'parallel-latest-authoritative');
+
+      expect(debugEntry?.async?.recentRuns.some((run) => run.outcome === 'stale-dropped')).toBe(true);
+      expect(debugEntry?.async?.recentRuns.some((run) => run.outcome === 'succeeded')).toBe(true);
     });
 
     registration.dispose();

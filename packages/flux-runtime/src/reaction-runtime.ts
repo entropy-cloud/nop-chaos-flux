@@ -1,5 +1,7 @@
 import type {
+  AsyncGovernanceStore,
   ActionSchema,
+  AsyncRunHandle,
   CompiledRuntimeValue,
   DynamicRuntimeValue,
   ReactionRegistryDebugSnapshot,
@@ -23,6 +25,7 @@ export interface RuntimeReactionRegistry {
     id: string;
     runtime: RendererRuntime;
     scope: ScopeRef;
+    asyncGovernance?: AsyncGovernanceStore;
     watch: unknown;
     dependsOn?: readonly string[];
     when?: string;
@@ -53,6 +56,7 @@ export function registerReaction(input: {
   id: string;
   runtime: RendererRuntime;
   scope: ScopeRef;
+  asyncGovernance?: AsyncGovernanceStore;
   watch: unknown;
   dependsOn?: readonly string[];
   when?: string;
@@ -63,8 +67,11 @@ export function registerReaction(input: {
   helpers: Pick<RendererHelpers, 'dispatch'>;
   onDebugUpdate?: (debug: {
     disposed: boolean;
+    queued: boolean;
+    running: boolean;
     fireCount: number;
     dependencies?: readonly string[];
+    async?: import('@nop-chaos/flux-core').AsyncOwnerDebugState;
   }) => void;
   onDispose?: () => void;
 }): ReactionRegistration {
@@ -81,16 +88,30 @@ export function registerReaction(input: {
   let previousValue: unknown;
   let dependencies: ScopeDependencySet | undefined = explicitDependencies;
   let triggerQueued = false;
+  let running = false;
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
   let fireCount = 0;
   let pendingForce = false;
   let pendingChangedPaths = new Set<string>();
+  let pendingRun: AsyncRunHandle | undefined;
+
+  function createRunHandle(force: boolean): AsyncRunHandle | undefined {
+    return input.asyncGovernance?.beginRun({
+      ownerKind: 'reaction',
+      ownerId: `reaction:${input.scope.id}:${input.id}`,
+      scopeId: input.scope.id,
+      cause: force ? 'immediate' : 'dependency-change'
+    });
+  }
 
   function emitDebug() {
     input.onDebugUpdate?.({
       disposed,
+      queued: triggerQueued || Boolean(debounceTimer),
+      running,
       fireCount,
-      dependencies: dependencies?.paths
+      dependencies: dependencies?.paths,
+      async: input.asyncGovernance?.getOwnerState(`reaction:${input.scope.id}:${input.id}`)
     });
   }
 
@@ -106,11 +127,18 @@ export function registerReaction(input: {
     return value;
   }
 
-  async function runReaction(changePaths: readonly string[], force = false) {
+  async function runReaction(changePaths: readonly string[], force = false, run: AsyncRunHandle | undefined = createRunHandle(force)) {
+
     try {
       if (disposed) {
+        if (run && input.asyncGovernance) {
+          input.asyncGovernance.settleRun(run, { outcome: 'cancelled', cancelled: true });
+        }
         return;
       }
+
+      running = true;
+      emitDebug();
 
       const nextValue = evaluateWatchValue();
       const changed = force || !initialized || !Object.is(previousValue, nextValue);
@@ -120,6 +148,9 @@ export function registerReaction(input: {
       initialized = true;
 
       if (!changed) {
+        if (run && input.asyncGovernance) {
+          input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
+        }
         return;
       }
 
@@ -134,6 +165,9 @@ export function registerReaction(input: {
         : true;
 
       if (!whenAllowed) {
+        if (run && input.asyncGovernance) {
+          input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
+        }
         return;
       }
 
@@ -157,6 +191,9 @@ export function registerReaction(input: {
       fireCount += 1;
 
       if (input.once && fireCount >= 1) {
+        if (run && input.asyncGovernance) {
+          input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
+        }
         emitDebug();
         dispose();
         return;
@@ -180,14 +217,27 @@ export function registerReaction(input: {
             maxFireCount: MAX_REACTION_FIRE_COUNT
           }
         });
+        if (run && input.asyncGovernance) {
+          input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
+        }
         emitDebug();
         dispose();
         return;
       }
 
+      if (run && input.asyncGovernance) {
+        input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
+      }
       emitDebug();
     } catch (error) {
       if (disposed || isAbortError(error)) {
+        if (run && input.asyncGovernance) {
+          input.asyncGovernance.settleRun(run, {
+            outcome: 'cancelled',
+            cancelled: true,
+            error
+          });
+        }
         return;
       }
 
@@ -201,15 +251,37 @@ export function registerReaction(input: {
           changedPaths: changePaths
         }
       });
+      if (run && input.asyncGovernance) {
+        input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
+      }
+    } finally {
+      running = false;
+      emitDebug();
+
+      if (!disposed && triggerQueued && !debounceTimer) {
+        const queuedRun = pendingRun;
+        pendingRun = undefined;
+        const nextChangedPaths = Array.from(pendingChangedPaths);
+        const nextForce = pendingForce;
+        pendingChangedPaths = new Set<string>();
+        pendingForce = false;
+        triggerQueued = false;
+        void runReaction(nextChangedPaths, nextForce, queuedRun);
+      }
     }
   }
 
   function scheduleReaction(changePaths: readonly string[], force = false) {
-    if (disposed || triggerQueued) {
+    if (disposed || triggerQueued || running) {
       for (const path of changePaths) {
         pendingChangedPaths.add(path);
       }
       pendingForce = pendingForce || force;
+      if (!disposed) {
+        triggerQueued = true;
+        pendingRun ??= createRunHandle(force);
+        emitDebug();
+      }
       return;
     }
 
@@ -302,6 +374,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     id: string;
     runtime: RendererRuntime;
     scope: ScopeRef;
+    asyncGovernance?: AsyncGovernanceStore;
     watch: unknown;
     dependsOn?: readonly string[];
     when?: string;
@@ -322,7 +395,10 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
 
     let latestDependencies: readonly string[] | undefined;
     let disposed = false;
+    let queued = false;
+    let running = false;
     let fireCount = 0;
+    let asyncState: import('@nop-chaos/flux-core').AsyncOwnerDebugState | undefined;
     const ownedRegistrationRef: { current?: OwnedReactionRegistration } = {};
 
     const registration = registerReaction({
@@ -331,6 +407,9 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
         latestDependencies = debug.dependencies;
         fireCount = debug.fireCount;
         disposed = debug.disposed;
+        queued = debug.queued;
+        running = debug.running;
+        asyncState = debug.async;
       },
       onDispose: () => {
         ownedRegistrationRef.current?.dispose();
@@ -357,6 +436,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
         }
 
         currentBucket.delete(input.id);
+        input.asyncGovernance?.clearOwner(`reaction:${ownerScopeId}:${input.id}`);
         if (currentBucket.size === 0) {
           scopeEntries.delete(ownerScopeId);
         }
@@ -371,8 +451,11 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
           debounce: input.debounce,
           once: input.once,
           disposed,
+          queued,
+          running,
           fireCount,
-          dependencies: latestDependencies
+          dependencies: latestDependencies,
+          async: asyncState
         };
       }
     };

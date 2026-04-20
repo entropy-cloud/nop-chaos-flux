@@ -1,5 +1,6 @@
 import type {
   ActionResult,
+  AsyncGovernanceStore,
   ApiSchema,
   CompiledFormValidationField,
   CompiledFormValidationModel,
@@ -77,6 +78,7 @@ export interface FormRuntimeValidationRunState {
   validationRuns: Map<string, number>;
   pendingValidationDebounces: Map<string, PendingValidationDebounce>;
   validationAbortControllers: Map<string, AbortController>;
+  validationAsyncGovernance: AsyncGovernanceStore;
 }
 
 export interface FormRuntimeRegistrationState

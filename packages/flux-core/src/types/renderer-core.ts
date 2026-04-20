@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
-import type { ActionContext, ActionResult, ActionSchema, ActionScope } from './actions';
+import type { ActionContext, ActionResult, ActionSchema, ActionScope, CompiledActionProgram } from './actions';
+import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance';
 import type { ExpressionCompiler, ModuleCache } from './compilation';
 import type {
   CapabilityMethodContract,
@@ -43,7 +44,7 @@ export interface RendererHelpers {
   render: (input: RenderNodeInput, options?: RenderFragmentOptions) => ReactNode;
   evaluate: <T = unknown>(target: unknown, scope?: ScopeRef) => T;
   createScope: (patch?: object, options?: CreateScopeOptions) => ScopeRef;
-  dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+  dispatch: (action: ActionSchema | ActionSchema[] | CompiledActionProgram, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
   executeSource: (source: SourceSchema, options?: { scope?: ScopeRef }) => Promise<ActionResult>;
 }
 
@@ -56,8 +57,11 @@ export interface ReactionDebugEntry {
   debounce?: number;
   once?: boolean;
   disposed: boolean;
+  queued: boolean;
+  running: boolean;
   fireCount: number;
   dependencies?: readonly string[];
+  async?: AsyncOwnerDebugState;
 }
 
 export interface ReactionRegistryDebugSnapshot {
@@ -78,6 +82,7 @@ export interface SourceDebugEntry {
   stale: boolean;
   hasValue: boolean;
   error?: string;
+  async?: AsyncOwnerDebugState;
 }
 
 export interface SourceRegistryDebugSnapshot {
@@ -209,7 +214,7 @@ export interface RendererRuntime {
     actionScope?: ActionScope;
     schemaUrl: string;
   }): void;
-  dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult>;
+  dispatch(action: ActionSchema | ActionSchema[] | CompiledActionProgram, ctx: ActionContext): Promise<ActionResult>;
   executeSource(input: {
     source: SourceSchema;
     scope: ScopeRef;
@@ -241,10 +246,11 @@ export interface RendererRuntime {
     id: string;
     schema: ReactionSchema;
     scope: ScopeRef;
-    dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+    dispatch: (action: ActionSchema | ActionSchema[] | CompiledActionProgram, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
   }): { id: string; dispose(): void };
   getSourceDebugSnapshot?(): SourceRegistryDebugSnapshot;
   getReactionDebugSnapshot?(): ReactionRegistryDebugSnapshot;
+  getAsyncOwnerDebugSnapshot?(): AsyncOwnerDebugSnapshot;
   moduleCache: ModuleCache;
   setEnv(env: RendererEnv): void;
   dispose(): void;

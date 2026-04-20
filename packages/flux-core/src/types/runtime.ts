@@ -1,4 +1,5 @@
 import type { ActionResult } from './actions';
+import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance';
 import type { ApiSchema } from './schema';
 import type { OperationControlConfig } from './schema';
 import type { NodeInstance, TemplateNode } from './node-identity';
@@ -181,6 +182,7 @@ export interface DataSourceStatusSummary {
   failureCount: number;
   failureReason?: unknown;
   error?: { message: string };
+  async?: AsyncOwnerDebugState;
 }
 
 export interface FormLifecycleHandlers {
@@ -276,6 +278,7 @@ export interface DataSourceState {
   errorUpdatedAt: number;
   failureCount: number;
   failureReason?: unknown;
+  async?: AsyncOwnerDebugState;
 }
 
 export interface DataSourceRegistration {
@@ -305,6 +308,7 @@ export interface ValidationScopeRuntime {
 
   getFieldState(path: string): { ownerId: string; path: string; errors: ValidationError[]; validating: boolean };
   getScopeState(): ScopeValidationStateSnapshot;
+  getAsyncOwnerDebugSnapshot?(): AsyncOwnerDebugSnapshot;
   getScopeRootErrors(): ValidationError[];
   isPathOwned(path: string): boolean;
 

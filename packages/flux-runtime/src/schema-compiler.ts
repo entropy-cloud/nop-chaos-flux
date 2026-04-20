@@ -1,6 +1,8 @@
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type {
+  ActionSchema,
   BaseSchema,
+  CompiledActionProgram,
   CompiledTemplate,
   CompileNodeOptions,
   CompileSchemaOptions,
@@ -34,6 +36,7 @@ import {
   schemaPathToJsonPointer,
   type SchemaCompilerDiagnosticsContext
 } from './schema-compiler/diagnostics';
+import { compileActions } from './action-compiler';
 
 const PROVIDER_BUILD_ORDER = ['actionScope', 'componentRegistry', 'classAliases'] as const;
 
@@ -165,8 +168,8 @@ export function createSchemaCompiler(input: {
     const sourcePropKeys = new Set<string>();
     const sourceStatePropKeys: Record<string, string> = {};
     const regions: Record<string, TemplateRegion> = {};
-    const lifecycleActions = extractLifecycleActions(schema);
-    const eventPlans: Record<string, unknown> = {};
+    const rawLifecycleActions = extractLifecycleActions(schema);
+    const rawEventPlans: Record<string, ActionSchema | ActionSchema[]> = {};
     const deepNormalizers = DEEP_FIELD_NORMALIZERS[renderer.type] ?? {};
 
     for (const key of Object.keys(schema)) {
@@ -182,7 +185,7 @@ export function createSchemaCompiler(input: {
       }
 
       if (rule.kind === 'event') {
-        eventPlans[key] = value;
+        rawEventPlans[key] = value as ActionSchema | ActionSchema[];
         continue;
       }
 
@@ -221,6 +224,35 @@ export function createSchemaCompiler(input: {
 
     const libraryNames = extractLibraryNames(fieldInspection.extensions?.['xui:imports']);
     const propsProgram = expressionCompiler.compileValue(propSource, libraryNames ? { libraryNames } : undefined);
+    const compileOptions = libraryNames ? { libraryNames } : undefined;
+
+    const eventPlans: Record<string, CompiledActionProgram> = {};
+    for (const [key, rawActions] of Object.entries(rawEventPlans)) {
+      eventPlans[key] = compileActions(rawActions, expressionCompiler, {
+        ...compileOptions,
+        basePath: `${path}.${key}`,
+      });
+    }
+
+    const lifecycleActions: {
+      onMount?: CompiledActionProgram;
+      onUnmount?: CompiledActionProgram;
+    } | undefined = rawLifecycleActions
+      ? {
+          onMount: rawLifecycleActions.onMount
+            ? compileActions(rawLifecycleActions.onMount as ActionSchema | ActionSchema[], expressionCompiler, {
+                ...compileOptions,
+                basePath: `${path}.onMount`,
+              })
+            : undefined,
+          onUnmount: rawLifecycleActions.onUnmount
+            ? compileActions(rawLifecycleActions.onUnmount as ActionSchema | ActionSchema[], expressionCompiler, {
+                ...compileOptions,
+                basePath: `${path}.onUnmount`,
+              })
+            : undefined,
+        }
+      : undefined;
 
     const scopePlan: ScopePlan =
       renderer.scopePolicy === 'form'

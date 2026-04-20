@@ -1,4 +1,5 @@
 import type { CompiledRuntimeValue, RuntimeValueState } from './compilation';
+import type { CompiledActionProgram } from './actions';
 import type { BaseSchema, SchemaPath } from './schema';
 import type { ScopeDependencySet, ScopeRef } from './scope';
 import type { WrapProvidersFn } from './renderer-compiler';
@@ -84,10 +85,10 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   component: import('./renderer-core').RendererDefinition<S>;
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
   metaProgram: NodeMetaProgram;
-  eventPlans: Readonly<Record<string, unknown>>;
+  eventPlans: Readonly<Record<string, CompiledActionProgram>>;
   lifecycleActions?: Readonly<{
-    onMount?: unknown;
-    onUnmount?: unknown;
+    onMount?: CompiledActionProgram;
+    onUnmount?: CompiledActionProgram;
   }>;
   regions: Readonly<Record<string, TemplateRegion>>;
   providerPlan?: TemplateProviderPlan;

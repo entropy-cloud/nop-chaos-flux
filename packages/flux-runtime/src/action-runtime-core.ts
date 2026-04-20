@@ -2,8 +2,8 @@ import type {
   ActionContext,
   ActionMonitorPayload,
   ActionResult,
-  ActionSchema,
   ApiSchema,
+  CompiledActionNode,
   CompiledRuntimeValue,
   ComponentHandle,
   ComponentTarget,
@@ -23,8 +23,8 @@ export interface ActionDispatcherInput {
   compileValue: <T = unknown>(target: T) => CompiledRuntimeValue<T>;
   evaluateCompiled: <T = unknown>(compiled: CompiledRuntimeValue<T>, scope: ScopeRef) => T;
   refreshDataSource: (input: { id: string; scope?: ScopeRef }) => Promise<boolean>;
-  executeAjaxAction: (api: ApiSchema, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
-  submitFormAction: (api: ApiSchema | undefined, action: ActionSchema, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
+  executeAjaxAction: (api: ApiSchema, action: CompiledActionNode, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
+  submitFormAction: (api: ApiSchema | undefined, action: CompiledActionNode, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
   createDialogScope: (ctx: ActionContext) => ScopeRef;
   getDialogActionScope?: (ctx: ActionContext) => ActionContext['actionScope'];
   getDialogComponentRegistry?: (ctx: ActionContext) => ActionContext['componentRegistry'];
@@ -37,8 +37,8 @@ export type InternalComponentActionTarget = ComponentTarget & {
   readonly __kind?: 'internal-component-target';
 };
 
-export function getInternalComponentActionTarget(action: ActionSchema): InternalComponentActionTarget | undefined {
-  const candidate = (action as ActionSchema & { __componentTarget?: InternalComponentActionTarget }).__componentTarget;
+export function getInternalComponentActionTarget(action: CompiledActionNode): InternalComponentActionTarget | undefined {
+  const candidate = (action.source as CompiledActionNode['source'] & { __componentTarget?: InternalComponentActionTarget }).__componentTarget;
 
   if (!candidate || typeof candidate !== 'object') {
     return undefined;
@@ -74,13 +74,19 @@ export function createTimedOutResult(error?: unknown): ActionResult {
   };
 }
 
-export function createActionKey(action: ActionSchema, ctx: ActionContext): string {
+export function createActionKey(action: CompiledActionNode, ctx: ActionContext): string {
   const owner = ctx.nodeInstance?.templateNode.id ?? ctx.form?.id ?? ctx.scope.id;
-  const target = action.targetId ?? action.componentPath ?? action.componentId ?? action.formId ?? action.dialogId ?? action.api?.url ?? '';
+  const target = action.targeting.targetId
+    ?? action.targeting.componentPath
+    ?? action.targeting.componentId
+    ?? action.targeting.formId
+    ?? action.targeting.dialogId
+    ?? action.source.api?.url
+    ?? '';
   return `${owner}:${action.action}:${target}`;
 }
 
-export function buildActionMonitorPayload(action: ActionSchema, ctx: ActionContext): ActionMonitorPayload {
+export function buildActionMonitorPayload(action: CompiledActionNode, ctx: ActionContext): ActionMonitorPayload {
   return {
     actionType: action.action,
     instancePath: ctx.instancePath,
@@ -250,87 +256,12 @@ export function mergeEvaluationBindings(
   return base ? { ...base, ...next } : next;
 }
 
-const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
-  'action',
-  'targetId',
-  'componentId',
-  'componentName',
-  'componentPath',
-  'formId',
-  'dialogId',
-  'api',
-  'dialog',
-  'drawer',
-  'dataPath',
-  'value',
-  'values',
-  'when',
-  'parallel',
-  'control',
-  'timeout',
-  'retry',
-  'debounce',
-  'continueOnError',
-  'then',
-  'onError',
-  'onSettled',
-  'args'
-]);
-
-function extractTopLevelActionPayload(action: ActionSchema): Record<string, unknown> | undefined {
-  const payloadEntries = Object.entries(action).filter(([key]) => !ACTION_PAYLOAD_RESERVED_KEYS.has(key));
-
-  if (payloadEntries.length === 0) {
+export function evaluateActionArgs(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput) {
+  if (!action.payload.args) {
     return undefined;
   }
 
-  return Object.fromEntries(payloadEntries);
-}
-
-const topLevelPayloadCache = new WeakMap<ActionSchema, Record<string, unknown> | null>();
-
-function getTopLevelActionPayload(action: ActionSchema): Record<string, unknown> | undefined {
-  const cached = topLevelPayloadCache.get(action);
-
-  if (cached !== undefined) {
-    return cached ?? undefined;
-  }
-
-  const payload = extractTopLevelActionPayload(action);
-  topLevelPayloadCache.set(action, payload ?? null);
-  return payload;
-}
-
-const compiledValueCache = new WeakMap<object, CompiledRuntimeValue<unknown>>();
-
-export function getCompiledValue<T = unknown>(
-  value: T,
-  compileValue: <R = unknown>(target: R) => CompiledRuntimeValue<R>
-): CompiledRuntimeValue<T> {
-  if (!value || typeof value !== 'object') {
-    return compileValue(value);
-  }
-
-  const cached = compiledValueCache.get(value as object);
-
-  if (cached) {
-    return cached as CompiledRuntimeValue<T>;
-  }
-
-  const compiled = compileValue(value);
-  compiledValueCache.set(value as object, compiled as CompiledRuntimeValue<unknown>);
-  return compiled;
-}
-
-export function evaluateActionArgs(action: ActionSchema, ctx: ActionContext, input: ActionDispatcherInput) {
-  const payload = action.args ?? getTopLevelActionPayload(action);
-
-  if (!payload) {
-    return undefined;
-  }
-
-  const compiled = getCompiledValue(payload, input.compileValue);
-  return evaluateCompiledInActionContext<Record<string, unknown>>(compiled, ctx, input);
+  return evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.args, ctx, input);
 }
 
 export function normalizeActionResult(result: ActionResult | unknown): ActionResult {
@@ -367,16 +298,44 @@ export function finishAction(
   return result;
 }
 
-export function shouldRunActionWhen(action: ActionSchema, ctx: ActionContext, input: ActionDispatcherInput): boolean {
-  if (!action.when) {
-    return true;
-  }
-
-  return Boolean(evaluateInActionContext<boolean>(action.when, ctx, input));
+export function evaluateActionValue(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): unknown {
+  return action.payload.value === undefined
+    ? undefined
+    : evaluateCompiledInActionContext(action.payload.value, ctx, input);
 }
 
-export function resolveActionControl(action: ActionSchema): OperationControlConfig | undefined {
-  const control = action.control;
+export function evaluateActionValues(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): Record<string, unknown> {
+  return action.payload.values
+    ? evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.values, ctx, input)
+    : {};
+}
+
+export function evaluateActionApi(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): ApiSchema | undefined {
+  return action.payload.api
+    ? evaluateCompiledInActionContext<ApiSchema>(action.payload.api, ctx, input)
+    : undefined;
+}
+
+export function evaluateActionDialog(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): Record<string, unknown> | undefined {
+  return action.payload.dialog
+    ? evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.dialog, ctx, input)
+    : undefined;
+}
+
+export function evaluateActionDrawer(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): Record<string, unknown> | undefined {
+  return action.payload.drawer
+    ? evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.drawer, ctx, input)
+    : undefined;
+}
+
+export function shouldRunActionWhen(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): boolean {
+  return action.when === undefined
+    ? true
+    : Boolean(evaluateCompiledInActionContext<boolean>(action.when, ctx, input));
+}
+
+export function resolveActionControl(action: CompiledActionNode): OperationControlConfig | undefined {
+  const control = action.control?.control;
 
   if (!control || typeof control !== 'object' || Array.isArray(control)) {
     return undefined;
@@ -385,9 +344,9 @@ export function resolveActionControl(action: ActionSchema): OperationControlConf
   return control as OperationControlConfig;
 }
 
-export function resolveRequestControl(action: ActionSchema): OperationControlConfig | undefined {
+export function resolveRequestControl(action: CompiledActionNode): OperationControlConfig | undefined {
   const base = resolveActionControl(action);
-  const retry = getRetryControl(action.retry);
+  const retry = getRetryControl(action.control?.retry);
 
   if (!base && !retry) {
     return undefined;

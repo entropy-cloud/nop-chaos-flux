@@ -114,4 +114,72 @@ describe('registerReaction dispose race with scheduled microtask', () => {
       registration.dispose();
     }
   });
+
+  it('exposes queued/running async diagnostics and stale-drops superseded late settles', async () => {
+    vi.useRealTimers();
+
+    const runtime = createRuntime();
+    const page = runtime.createPageRuntime({ count: 0 });
+    let resolveFirst: (() => void) | undefined;
+    let resolveSecond: (() => void) | undefined;
+    let dispatchCount = 0;
+
+    const registration = runtime.registerReaction({
+      id: 'async-reaction-diagnostics',
+      scope: page.scope,
+      schema: {
+        type: 'reaction',
+        watch: '${count}',
+        actions: { action: 'custom:noop' }
+      },
+      dispatch: vi.fn(async () => {
+        dispatchCount += 1;
+
+        await new Promise<void>((resolve) => {
+          if (dispatchCount === 1) {
+            resolveFirst = resolve;
+          } else {
+            resolveSecond = resolve;
+          }
+        });
+
+        return { ok: true };
+      })
+    });
+
+    try {
+      page.scope.update('count', 1);
+
+      await vi.waitFor(() => {
+        const reaction = runtime.getReactionDebugSnapshot?.().reactions.find((entry) => entry.id === 'async-reaction-diagnostics');
+        expect(reaction?.running).toBe(true);
+      });
+
+      page.scope.update('count', 2);
+
+      await vi.waitFor(() => {
+        const reaction = runtime.getReactionDebugSnapshot?.().reactions.find((entry) => entry.id === 'async-reaction-diagnostics');
+        expect(reaction?.queued).toBe(true);
+      });
+
+      resolveFirst?.();
+
+      await vi.waitFor(() => {
+        const reaction = runtime.getReactionDebugSnapshot?.().reactions.find((entry) => entry.id === 'async-reaction-diagnostics');
+        expect(reaction?.running).toBe(true);
+        expect(reaction?.async?.recentRuns.some((run) => run.outcome === 'stale-dropped')).toBe(true);
+      });
+
+      resolveSecond?.();
+
+      await vi.waitFor(() => {
+        const reaction = runtime.getReactionDebugSnapshot?.().reactions.find((entry) => entry.id === 'async-reaction-diagnostics');
+        expect(reaction?.queued).toBe(false);
+        expect(reaction?.running).toBe(false);
+        expect(reaction?.async?.recentRuns.some((run) => run.outcome === 'succeeded')).toBe(true);
+      });
+    } finally {
+      registration.dispose();
+    }
+  });
 });

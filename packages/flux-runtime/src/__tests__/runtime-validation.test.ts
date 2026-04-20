@@ -232,6 +232,17 @@ describe('createRendererRuntime', () => {
     await expect(firstValidation).resolves.toMatchObject({ ok: true, errors: [] });
     expect(form.getError('username')).toBeUndefined();
     expect(form.isValidating('username')).toBe(false);
+    expect(form.getAsyncOwnerDebugSnapshot?.()).toMatchObject({
+      owners: [
+        expect.objectContaining({
+          ownerKind: 'validation',
+          ownerId: `validation:${form.scope.id}:username`,
+          recentRuns: expect.arrayContaining([
+            expect.objectContaining({ outcome: 'stale-dropped' })
+          ])
+        })
+      ]
+    });
   });
 
   it('debounces async field validation and cancels superseded runs', async () => {

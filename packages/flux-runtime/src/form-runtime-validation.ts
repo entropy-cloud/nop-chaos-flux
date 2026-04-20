@@ -66,10 +66,12 @@ function commitPathValidationState(input: {
 export function cancelValidationDebounce(sharedState: FormRuntimeValidationState, path: string) {
   const pending = sharedState.pendingValidationDebounces.get(path);
   const abortController = sharedState.validationAbortControllers.get(path);
+  const ownerId = `validation:${sharedState.scope.id}:${path}`;
 
   if (abortController) {
     abortController.abort();
     sharedState.validationAbortControllers.delete(path);
+    sharedState.validationAsyncGovernance.invalidateCurrentRun(ownerId);
   }
 
   if (!pending) {
@@ -186,6 +188,14 @@ async function validateCompiledField(
   const errors: ValidationError[] = [];
   const hasAsyncRules = field.rules.some((compiledRule) => compiledRule.rule.kind === 'async');
   let finalErrors = errors;
+  const validationRun = hasAsyncRules
+    ? sharedState.validationAsyncGovernance.beginRun({
+        ownerKind: 'validation',
+        ownerId: `validation:${sharedState.scope.id}:${path}`,
+        scopeId: sharedState.scope.id,
+        cause: reason ?? 'manual'
+      })
+    : undefined;
 
   const validatingDelay = sharedState.inputValue.validatingDelay ?? 0;
   let validatingTimer: ReturnType<typeof setTimeout> | undefined;
@@ -261,6 +271,9 @@ async function validateCompiledField(
 
     if (sharedState.validationRuns.get(path) !== runId || sharedState.modelGeneration !== capturedGeneration) {
       finalErrors = [];
+      if (validationRun) {
+        sharedState.validationAsyncGovernance.settleRun(validationRun, { outcome: 'succeeded' });
+      }
       return createValidationResult([]);
     }
 
@@ -270,7 +283,20 @@ async function validateCompiledField(
       setPathErrors(sharedState, path, errors);
     }
 
+    if (validationRun) {
+      sharedState.validationAsyncGovernance.settleRun(validationRun, { outcome: 'succeeded' });
+    }
+
     return createValidationResult(errors);
+  } catch (error) {
+    if (validationRun && error === VALIDATION_CANCELLED) {
+      sharedState.validationAsyncGovernance.settleRun(validationRun, {
+        outcome: 'cancelled',
+        cancelled: true
+      });
+    }
+
+    throw error;
   } finally {
     if (validatingTimer !== undefined) {
       clearTimeout(validatingTimer);

@@ -1,4 +1,5 @@
 import type {
+  AsyncGovernanceStore,
   ApiSchema,
   DataSourceController,
   DataSourceRegistration,
@@ -72,6 +73,7 @@ export interface RuntimeSourceRegistry {
 export function createRuntimeSourceRegistry(input: {
   runtime: RendererRuntime;
   apiCache: ApiCacheStore;
+  asyncGovernance?: AsyncGovernanceStore;
   executeApiRequest: <T>(actionType: string, api: import('@nop-chaos/flux-core').ExecutableApiRequest, scope: ScopeRef, options?: { signal?: AbortSignal; control?: import('@nop-chaos/flux-core').OperationControlConfig }) => Promise<{ ok: boolean; status: number; data: T }>;
 }): RuntimeSourceRegistry {
   const scopeEntries = new Map<string, Map<string, RuntimeSourceEntry>>();
@@ -98,9 +100,11 @@ export function createRuntimeSourceRegistry(input: {
       ? createDataSourceController({
           runtime: input.runtime,
           apiCache: input.apiCache,
+          asyncGovernance: input.asyncGovernance,
           executeApiRequest: input.executeApiRequest,
           api: args.schema.api as ApiSchema,
           scope: args.scope,
+          ownerId: `data-source:${ownerScopeId}:${args.id}`,
           targetPath,
           mergeToScope: args.schema.mergeToScope,
           resultMapping: args.schema.resultMapping,
@@ -121,6 +125,8 @@ export function createRuntimeSourceRegistry(input: {
       : createFormulaDataSourceController({
           runtime: input.runtime,
           scope: args.scope,
+          ownerId: `data-source:${ownerScopeId}:${args.id}`,
+          asyncGovernance: input.asyncGovernance,
           targetPath,
           mergeToScope: args.schema.mergeToScope,
           resultMapping: args.schema.resultMapping,
@@ -185,6 +191,7 @@ export function createRuntimeSourceRegistry(input: {
         }
 
         currentBucket.delete(args.id);
+        input.asyncGovernance?.clearOwner(`data-source:${ownerScopeId}:${args.id}`);
         if (entry.name && nameIndex.get(entry.name) === entry) {
           nameIndex.delete(entry.name);
         }
@@ -291,7 +298,8 @@ export function createRuntimeSourceRegistry(input: {
               isRefreshing: state.isRefreshing,
               inFlightCount: state.inFlightCount,
               hasValue: typeof state.data !== 'undefined',
-              error: state.error instanceof Error ? state.error.message : typeof state.error === 'string' ? state.error : undefined
+              error: state.error instanceof Error ? state.error.message : typeof state.error === 'string' ? state.error : undefined,
+              async: state.async
             };
           })
           .sort((left, right) => left.scopeId.localeCompare(right.scopeId) || left.id.localeCompare(right.id))

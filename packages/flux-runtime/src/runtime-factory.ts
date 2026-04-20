@@ -27,6 +27,7 @@ import { createActionScope } from './action-scope';
 import { resolveRequestControl } from './action-runtime-core';
 import { createActionDispatcher } from './action-runtime';
 import { createApiCacheStore } from './api-cache';
+import { createAsyncGovernanceStore } from './async-governance';
 import { createComponentHandleRegistry } from './component-handle-registry';
 import { createDataSourceController, createSourceExecutor } from './data-source-runtime';
 import { createManagedFormRuntime } from './form-runtime';
@@ -97,6 +98,7 @@ export function createRendererRuntime(input: {
   };
   const getEnv = () => envRef.current;
   const apiCache = createApiCacheStore();
+  const asyncGovernance = createAsyncGovernanceStore();
   const executeApiRequest = createApiRequestExecutor(getEnv);
   const sourceRegistryRef: { current?: ReturnType<typeof createRuntimeSourceRegistry> } = {};
   const reactionRegistryRef: { current?: ReturnType<typeof createRuntimeReactionRegistry> } = {};
@@ -343,6 +345,7 @@ export function createRendererRuntime(input: {
       return createDataSourceController({
         runtime,
         apiCache,
+        asyncGovernance,
         executeApiRequest: (actionType, api, scope, options) => executeApiRequest(actionType, api, scope, undefined, options),
         ...inputValue
       });
@@ -374,7 +377,7 @@ export function createRendererRuntime(input: {
       id: string;
       schema: import('@nop-chaos/flux-core').ReactionSchema;
       scope: ScopeRef;
-      dispatch: (action: import('@nop-chaos/flux-core').ActionSchema | import('@nop-chaos/flux-core').ActionSchema[], ctx?: Partial<import('@nop-chaos/flux-core').ActionContext>) => Promise<import('@nop-chaos/flux-core').ActionResult>;
+      dispatch: (action: import('@nop-chaos/flux-core').ActionSchema | import('@nop-chaos/flux-core').ActionSchema[] | import('@nop-chaos/flux-core').CompiledActionProgram, ctx?: Partial<import('@nop-chaos/flux-core').ActionContext>) => Promise<import('@nop-chaos/flux-core').ActionResult>;
     }) {
       if (!reactionRegistryRef.current) {
         throw new Error('Runtime reaction registry is not initialized yet');
@@ -384,6 +387,7 @@ export function createRendererRuntime(input: {
         id: inputValue.id,
         runtime,
         scope: inputValue.scope,
+        asyncGovernance,
         watch: inputValue.schema.watch,
         dependsOn: inputValue.schema.dependsOn,
         when: inputValue.schema.when,
@@ -401,6 +405,9 @@ export function createRendererRuntime(input: {
     },
     getReactionDebugSnapshot() {
       return reactionRegistryRef.current?.getDebugSnapshot() ?? { reactions: [] };
+    },
+    getAsyncOwnerDebugSnapshot() {
+      return asyncGovernance.getSnapshot();
     },
     setEnv(env: RendererEnv) {
       envRef.current = env;
@@ -499,6 +506,7 @@ export function createRendererRuntime(input: {
   sourceRegistryRef.current = createRuntimeSourceRegistry({
     runtime,
     apiCache,
+    asyncGovernance,
     executeApiRequest: (actionType, api, scope, options) => executeApiRequest(actionType, api, scope, undefined, options)
   });
   reactionRegistryRef.current = createRuntimeReactionRegistry();
