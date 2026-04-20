@@ -103,7 +103,7 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
       }
     },
 
-    invalidateCurrentRun(ownerId) {
+    invalidateCurrentRun(ownerId: string) {
       const owner = owners.get(ownerId);
 
       if (!owner?.currentRun) {
@@ -173,8 +173,8 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
       };
     },
 
-    clearOwner(ownerId) {
+    clearOwner(ownerId: string) {
       owners.delete(ownerId);
     }
-  };
+  } satisfies AsyncGovernanceStore;
 }

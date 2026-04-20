@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type RendererEnv } from '@nop-chaos/flux-core';
+import { type CompiledFormValidationModel, type RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env, compiledRule } from './test-fixtures';
@@ -318,6 +318,102 @@ describe('createRendererRuntime', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('clears validation async owner diagnostics on refresh and dispose', async () => {
+    let resolveValidation: ((value: any) => void) | undefined;
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async () =>
+          await new Promise((resolve) => {
+            resolveValidation = resolve;
+          })
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const validationModel: CompiledFormValidationModel = {
+      behavior: {
+        triggers: ['blur'],
+        showErrorOn: ['touched', 'submit']
+      },
+      nodes: {
+        username: {
+          path: 'username',
+          kind: 'field' as const,
+          controlType: 'input-text',
+          label: 'Username',
+          behavior: {
+            triggers: ['blur'],
+            showErrorOn: ['touched', 'submit']
+          },
+          rules: [
+            compiledRule({
+              kind: 'async',
+              api: {
+                method: 'post',
+                url: '/api/validate-username'
+              }
+            }, 'username')
+          ],
+          children: [],
+          parent: ''
+        }
+      },
+      order: ['username'],
+      dependents: {}
+    };
+    const form = runtime.createFormRuntime({
+      id: 'user-form',
+      initialValues: {
+        username: 'alice'
+      },
+      parentScope: page.scope,
+      validation: validationModel
+    });
+
+    const pendingValidation = form.validateField('username');
+
+    await vi.waitFor(() => {
+      expect(resolveValidation).toBeTypeOf('function');
+    });
+
+    expect(form.getAsyncOwnerDebugSnapshot?.()).toMatchObject({
+      owners: [
+        expect.objectContaining({
+          ownerId: `validation:${form.scope.id}:username`
+        })
+      ]
+    });
+
+    form.refreshCompiledModel(validationModel);
+
+    expect(form.getAsyncOwnerDebugSnapshot?.()).toEqual({ owners: [] });
+
+    resolveValidation?.({
+      ok: true,
+      status: 200,
+      data: { valid: true }
+    });
+    await expect(pendingValidation).resolves.toMatchObject({ ok: true, errors: [] });
+
+    runtime.setEnv({
+      ...env,
+      fetcher: async <T>() => ({
+        ok: true,
+        status: 200,
+        data: { valid: true } as T
+      })
+    });
+
+    await form.validateField('username');
+    expect(form.getAsyncOwnerDebugSnapshot?.().owners.length).toBeGreaterThan(0);
+
+    form.dispose();
+
+    expect(form.getAsyncOwnerDebugSnapshot?.()).toEqual({ owners: [] });
   });
 
   it('tracks visited, touched, and dirty state through field interactions', async () => {
