@@ -40,6 +40,52 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'designer-page',
     component: DesignerPageRenderer,
+    displayName: 'Designer Page',
+    sourcePackage: '@nop-chaos/flow-designer-renderers',
+    rendererClass: 'domain-host-renderer',
+    rendererTraits: ['workbench-shell', 'builder-facing'],
+    propContracts: {
+      statusPath: {
+        shape: { kind: 'string' },
+        displayName: 'Status Path',
+        description: 'Publishes designer host summary outside the host boundary.',
+        editorType: 'path'
+      },
+      document: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Document',
+        description: 'Initial designer graph document.',
+        editorType: 'object'
+      },
+      config: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Config',
+        description: 'Designer host configuration.',
+        editorType: 'designer-config',
+        required: true
+      }
+    },
+    scopeExportContracts: {
+      '$designer': {
+        kind: 'object',
+        fields: {
+          kind: { kind: 'literal', value: 'designer' },
+          dirty: { kind: 'boolean' },
+          busy: { kind: 'boolean' },
+          canUndo: { kind: 'boolean' },
+          canRedo: { kind: 'boolean' },
+          selectionKind: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'node' },
+              { kind: 'literal', value: 'edge' },
+              { kind: 'literal', value: 'none' }
+            ]
+          },
+          selectionCount: { kind: 'number' }
+        }
+      }
+    },
     regions: ['toolbar', 'inspector', 'dialogs'],
     actionScopePolicy: 'new',
     hostContract: designerHostContract

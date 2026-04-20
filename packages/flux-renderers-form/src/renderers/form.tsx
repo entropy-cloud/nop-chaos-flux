@@ -353,6 +353,139 @@ export const formRendererDefinition: RendererDefinition = {
   category: 'form',
   sourcePackage: '@nop-chaos/flux-renderers-form',
   defaultSchema: { type: 'form', body: [], actions: [] },
+  rendererClass: 'flux-owner-renderer',
+  rendererTraits: ['semantic-owner', 'interaction-owner'],
+  propContracts: {
+    data: {
+      shape: { kind: 'object', fields: {} },
+      displayName: 'Initial Data',
+      description: 'Initial form values at mount time.',
+      editorType: 'object'
+    },
+    statusPath: {
+      shape: { kind: 'string' },
+      displayName: 'Status Path',
+      description: 'Publishes the readonly form status summary to parent scope.',
+      editorType: 'path'
+    },
+    hiddenFieldPolicy: {
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'validate' },
+          { kind: 'literal', value: 'ignore' },
+          {
+            kind: 'object',
+            fields: {
+              validateWhenHidden: { kind: 'boolean' },
+              clearValueWhenHidden: { kind: 'boolean' },
+              submitWhenHidden: { kind: 'boolean' }
+            },
+            optional: ['validateWhenHidden', 'clearValueWhenHidden', 'submitWhenHidden']
+          }
+        ]
+      },
+      displayName: 'Hidden Field Policy',
+      description: 'Controls how hidden fields participate in validation, submit, and clearing.',
+      editorType: 'hidden-field-policy'
+    }
+  },
+  eventContracts: {
+    initAction: {
+      displayName: 'Init',
+      description: 'Runs after the form runtime is created.'
+    },
+    submitAction: {
+      displayName: 'Submit',
+      description: 'Primary submit pipeline for the form.'
+    },
+    onSubmitSuccess: {
+      displayName: 'Submit Success',
+      description: 'Runs after submit resolves successfully.'
+    },
+    onSubmitError: {
+      displayName: 'Submit Error',
+      description: 'Runs after submit fails.'
+    },
+    onValidateError: {
+      displayName: 'Validate Error',
+      description: 'Runs when validation blocks submission.'
+    }
+  },
+  componentCapabilityContracts: [
+    {
+      handle: 'submit',
+      displayName: 'Submit',
+      description: 'Submit the current form instance.'
+    },
+    {
+      handle: 'validate',
+      displayName: 'Validate',
+      description: 'Validate the current form and return a validation result.',
+      result: {
+        kind: 'object',
+        fields: {
+          ok: { kind: 'boolean' },
+          errors: { kind: 'array', item: { kind: 'unknown' } }
+        },
+        optional: ['errors']
+      }
+    },
+    {
+      handle: 'reset',
+      displayName: 'Reset',
+      description: 'Reset the current form values.',
+      args: {
+        kind: 'object',
+        fields: {
+          values: { kind: 'object', fields: {} }
+        },
+        optional: ['values']
+      }
+    },
+    {
+      handle: 'setValue',
+      displayName: 'Set Value',
+      description: 'Set one field value on the current form.',
+      args: {
+        kind: 'object',
+        fields: {
+          name: { kind: 'string' },
+          value: { kind: 'unknown' }
+        }
+      }
+    },
+    {
+      handle: 'setValues',
+      displayName: 'Set Values',
+      description: 'Merge multiple field values into the current form.',
+      args: {
+        kind: 'object',
+        fields: {
+          values: { kind: 'object', fields: {} }
+        }
+      }
+    }
+  ],
+  scopeExportContracts: {
+    '$form': {
+      kind: 'object',
+      fields: {
+        id: { kind: 'string' },
+        name: { kind: 'string' },
+        submitting: { kind: 'boolean' },
+        validating: { kind: 'boolean' },
+        dirty: { kind: 'boolean' },
+        touched: { kind: 'boolean' },
+        visited: { kind: 'boolean' },
+        valid: { kind: 'boolean' },
+        invalid: { kind: 'boolean' },
+        hasErrors: { kind: 'boolean' },
+        errorCount: { kind: 'number' }
+      },
+      optional: ['id', 'name']
+    }
+  },
   component: FormRenderer,
   regions: ['body', 'actions'],
   fields: [

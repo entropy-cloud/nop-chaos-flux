@@ -129,6 +129,73 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'actions',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'button', label: 'Button' },
+    rendererClass: 'instance-renderer',
+    rendererTraits: ['trigger'],
+    propContracts: {
+      label: {
+        shape: { kind: 'string' },
+        displayName: 'Label',
+        description: 'Button text content.',
+        editorType: 'text',
+        defaultValue: 'Button'
+      },
+      variant: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'default' },
+            { kind: 'literal', value: 'destructive' },
+            { kind: 'literal', value: 'outline' },
+            { kind: 'literal', value: 'secondary' },
+            { kind: 'literal', value: 'ghost' },
+            { kind: 'literal', value: 'link' }
+          ]
+        },
+        displayName: 'Variant',
+        editorType: 'select',
+        defaultValue: 'default'
+      },
+      size: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'default' },
+            { kind: 'literal', value: 'xs' },
+            { kind: 'literal', value: 'sm' },
+            { kind: 'literal', value: 'lg' },
+            { kind: 'literal', value: 'icon' },
+            { kind: 'literal', value: 'icon-xs' },
+            { kind: 'literal', value: 'icon-sm' },
+            { kind: 'literal', value: 'icon-lg' }
+          ]
+        },
+        displayName: 'Size',
+        editorType: 'select',
+        defaultValue: 'default'
+      },
+      disabled: {
+        shape: { kind: 'boolean' },
+        displayName: 'Disabled',
+        description: 'Disables user interaction when true.',
+        editorType: 'switch'
+      }
+    },
+    eventContracts: {
+      onClick: {
+        displayName: 'Click',
+        description: 'Runs when the user activates the button.',
+        payload: {
+          kind: 'object',
+          fields: {
+            type: { kind: 'string' },
+            nativeEvent: { kind: 'unknown' },
+            currentTarget: { kind: 'unknown' },
+            target: { kind: 'unknown' }
+          },
+          optional: ['nativeEvent', 'currentTarget', 'target']
+        }
+      }
+    },
     component: ButtonRenderer,
     fields: [{ key: 'onClick', kind: 'event' }]
   },

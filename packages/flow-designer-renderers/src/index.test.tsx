@@ -344,6 +344,10 @@ describe('flowDesignerRendererDefinitions', () => {
     const designerPageDef = flowDesignerRendererDefinitions.find(d => d.type === 'designer-page');
     expect(designerPageDef).toBeTruthy();
     expect(designerPageDef?.hostContract).toBeTruthy();
+    expect(designerPageDef?.rendererClass).toBe('domain-host-renderer');
+    expect(designerPageDef?.rendererTraits).toEqual(expect.arrayContaining(['workbench-shell', 'builder-facing']));
+    expect(designerPageDef?.propContracts?.config?.required).toBe(true);
+    expect(designerPageDef?.scopeExportContracts?.$designer?.kind).toBe('object');
     expect(designerPageDef?.hostContract?.family).toBe('designer');
     expect(designerPageDef?.hostContract?.defaultVersion).toBe('1.0');
     expect(designerPageDef?.hostContract?.capabilityPublication).toMatchObject({
