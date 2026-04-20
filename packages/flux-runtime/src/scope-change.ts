@@ -13,6 +13,22 @@ function getDependencyRoots(dependencies: ScopeDependencySet): readonly string[]
   return normalizeRootPaths(dependencies.paths);
 }
 
+function hasMultiSegmentPath(paths: readonly string[]): boolean {
+  for (const p of paths) {
+    if (p.includes('.')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function pathsOverlap(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (a.length < b.length) return b.startsWith(a + '.');
+  if (b.length < a.length) return a.startsWith(b + '.');
+  return false;
+}
+
 export function createRootDependencySet(paths: readonly string[] | undefined): ScopeDependencySet | undefined {
   if (!paths || paths.length === 0) {
     return undefined;
@@ -91,5 +107,17 @@ export function scopeChangeHitsDependencies(
     return true;
   }
 
-  return changeRoots.some((root) => dependencyRoots.includes(root));
+  if (!hasMultiSegmentPath(change.paths) && !hasMultiSegmentPath(dependencies.paths)) {
+    return changeRoots.some((root) => dependencyRoots.includes(root));
+  }
+
+  for (const changePath of change.paths) {
+    for (const depPath of dependencies.paths) {
+      if (pathsOverlap(changePath, depPath)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
