@@ -83,9 +83,9 @@
 
 当前 `evaluateActionArgs(action, ctx, input)` 的规则是：
 
-1. 若存在 `action.args`，则编译并求值 `args`
-2. 否则回退到 top-level payload extraction
-3. top-level payload extraction 会去掉 reserved keys，保留其余键组成 payload map
+1. schema compiler / dispatch entry 先把 raw action lowering 成 `CompiledActionProgram`
+2. 若存在 `args`，则在 compiled action node 上直接求值 `payload.args`
+3. 否则保留 legacy top-level payload fallback，并在 lowering 阶段把提取后的 payload map 编译进 `payload.args`
 
 这意味着当前仍兼容：
 
@@ -111,15 +111,13 @@
 
 ### `api` Is Not Yet `args`
 
-当前 `ajax` / `submitForm` 并不走 `evaluateActionArgs(...)`。
+当前 `ajax` / `submitForm` 仍保留独立 `api` carrier，但它们已经在 lowering 阶段进入 compiled action payload：
 
-它们直接读取：
+1. raw authoring surface 仍可写 `action.api`
+2. action compiler 将其 lowering 到 `CompiledActionNode.payload.api`
+3. executor 只从 compiled payload 读取并求值，不再在执行期首次编译 `api`
 
-1. `action.api`
-2. `getCompiledValue(action.api, input.compileValue)`
-3. `evaluateCompiledInActionContext(...)`
-
-因此 live repo 里，`ajax` 还不是严格的 `action + args`。
+因此 live repo 里，`ajax` 还不是严格的 `action + args`，但已经不再依赖运行时懒编译。
 
 ### `setValue` / `setValues` Are Structurally Different
 

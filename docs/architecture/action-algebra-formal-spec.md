@@ -101,6 +101,79 @@ That includes checks such as:
 
 Runtime lookup may still be required for capabilities or component instances that only exist when the live runtime boundary exists.
 
+## Compiled Action IR
+
+The action compiler produces a `CompiledActionProgram` containing `CompiledActionNode` elements. This IR is assembled at schema compilation time and executed directly by the runtime without further structural discovery.
+
+### IR Type Definitions
+
+```typescript
+interface CompiledActionProgram {
+  nodes: CompiledActionNode[];
+  isFullyStatic: boolean;
+}
+
+interface CompiledActionNode {
+  action: string;
+  when?: CompiledRuntimeValue<boolean>;
+  payload: CompiledActionPayload;
+  targeting: CompiledActionTargeting;
+  control: CompiledActionControl;
+  then?: CompiledActionNode[];
+  onError?: CompiledActionNode[];
+  onSettled?: CompiledActionNode[];
+  parallel?: CompiledActionNode[];
+  source: ActionSchema;
+  sourcePath?: string;
+}
+```
+
+### Field Categories
+
+| Category | Compiled Form | Rationale |
+|----------|--------------|-----------|
+| `when` | `CompiledRuntimeValue<boolean>` | Expression evaluated at dispatch time |
+| `args`, `api`, `dialog`, `drawer`, `value`, `values` | `CompiledRuntimeValue<T>` | Payload fields with potential dynamic values |
+| `targetId`, `componentId`, `componentPath`, `formId`, `dialogId`, etc. | Original values (uncompiled) | Typically static identifiers |
+| `timeout`, `retry`, `debounce`, `continueOnError`, `control` | Original values (uncompiled) | Static execution control config |
+| `then`, `onError`, `onSettled`, `parallel` | `CompiledActionNode[]` | Recursive branch compilation |
+
+### Compiler Lowering Rules
+
+1. `when`: Compile the expression string to `CompiledRuntimeValue<boolean>`. At dispatch, evaluate and skip if false.
+2. `args`: Compile to `CompiledRuntimeValue<Record<string, unknown>>`. If `args` is absent, extract and compile legacy top-level payload.
+3. `api`, `dialog`, `drawer`, `value`, `values`: Compile each to its typed `CompiledRuntimeValue` if present.
+4. `then`, `onError`, `onSettled`, `parallel`: Recursively compile each branch action to `CompiledActionNode[]`.
+5. Targeting and control fields are passed through unchanged as they are typically static configuration.
+
+### Legacy Top-Level Payload Fallback
+
+For compatibility, if `args` is absent, the compiler extracts non-reserved top-level fields and compiles them as the `args` payload. This supports existing schemas that use:
+
+```json
+{
+  "action": "showToast",
+  "level": "success",
+  "message": "Saved"
+}
+```
+
+The recommended authoring form remains:
+
+```json
+{
+  "action": "showToast",
+  "args": {
+    "level": "success",
+    "message": "Saved"
+  }
+}
+```
+
+### Static Optimization Hint
+
+`CompiledActionProgram.isFullyStatic` indicates whether all nodes contain only static values. When true, the runtime may skip state allocation and dependency tracking for the action program.
+
 ## `ActionSchema` Baseline
 
 Current typed schema fields already include control-flow carriers such as:

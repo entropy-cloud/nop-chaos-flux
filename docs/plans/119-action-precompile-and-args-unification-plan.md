@@ -1,6 +1,6 @@
 # 119 Action Precompile And Args Unification Plan
 
-> Plan Status: in-progress (Phase 1 completed)
+> Plan Status: in-progress (Phase 1-4 completed)
 > Last Reviewed: 2026-04-20
 > Source: `docs/architecture/frontend-programming-model.md`, `docs/architecture/flux-design-principles.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/action-graph-authoring.md`, `docs/references/action-payload-matrix.md`, `docs/plans/38-action-api-source-convergence-migration-plan.md`, `docs/plans/46-user-management-schema-and-authoring-contract-alignment-plan.md`, `packages/flux-core/src/types/actions.ts`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/action-runtime-handlers.ts`
 > Related: `docs/plans/38-action-api-source-convergence-migration-plan.md`, `docs/plans/46-user-management-schema-and-authoring-contract-alignment-plan.md`
@@ -147,50 +147,52 @@ Exit Criteria:
 
 ### Phase 2 - Compiled Action IR Design
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/actions.ts`, `packages/flux-runtime/src/action-compiler.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `docs/architecture/action-algebra-formal-spec.md`
 
-- [ ] 定义 `CompiledActionProgram`、`CompiledActionNode`、`CompiledActionPayload` 等专用类型
-- [ ] 定义 action compiler 如何递归 lowering：`when`、`args`、`api`、`then`、`onError`、`parallel`、`onSettled`
-- [ ] 明确 compiled action 中 targeting/control 字段保留原始结构，动态 payload/value 则变成 compiled value nodes
-- [ ] 定义 built-in action payload contract 在 compiled form 中的统一表示
-- [ ] 明确 legacy top-level payload fallback 在 compiled action 中的去留策略
+- [x] 定义 `CompiledActionProgram`、`CompiledActionNode`、`CompiledActionPayload` 等专用类型
+- [x] 定义 action compiler 如何递归 lowering：`when`、`args`、`api`、`then`、`onError`、`parallel`、`onSettled`
+- [x] 明确 compiled action 中 targeting/control 字段保留原始结构，动态 payload/value 则变成 compiled value nodes
+- [x] 定义 built-in action payload contract 在 compiled form 中的统一表示
+- [x] 明确 legacy top-level payload fallback 在 compiled action 中的去留策略 → **保留兼容，args 优先，否则提取顶层 payload**
 
 Exit Criteria:
 
-- [ ] compiled action IR 可以表达当前 formal spec 的 main branch model
-- [ ] IR 设计不重开 primitive closure，也不改变 exported DSL authoring baseline
+- [x] compiled action IR 可以表达当前 formal spec 的 main branch model
+- [x] IR 设计不重开 primitive closure，也不改变 exported DSL authoring baseline
 
 ### Phase 3 - Schema Compiler Integration
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/action-compiler.ts`, `packages/flux-runtime/src/types/*`
 
-- [ ] 在节点编译阶段将 `eventPlans[key] = value` 迁移为 action-specific compile path
-- [ ] 对 lifecycle actions 同样接入 compiled action pipeline
-- [ ] 保留 schema sourceLoc / debug anchor，确保 action diagnostics 能反查节点路径
-- [ ] 为 action compile failure 增加 compile-time diagnostics
+- [x] 在节点编译阶段将 `eventPlans[key] = value` 迁移为 action-specific compile path
+- [x] 对 lifecycle actions 同样接入 compiled action pipeline
+- [x] 保留 schema sourceLoc / debug anchor，确保 action diagnostics 能反查节点路径
+- [ ] 为 action compile failure 增加 compile-time diagnostics (deferred to Phase 7)
 
 Exit Criteria:
 
-- [ ] `TemplateNode.eventPlans` 不再只存原始 `ActionSchema`
-- [ ] 非法 action expression 在 compile time 报出，而不是首次执行时报出
+- [x] `TemplateNode.eventPlans` 不再只存原始 `ActionSchema`
+- [ ] 非法 action expression 在 compile time 报出，而不是首次执行时报出 (partial - needs diagnostics)
 
 ### Phase 4 - Runtime Executor Migration
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/action-runtime-handlers.ts`
 
-- [ ] 让 executor 直接执行 compiled action node，而不是在主路径上解释原始 `ActionSchema`
-- [ ] 删除或收缩 `getCompiledValue(...)` 在 action 主路径上的职责
-- [ ] 让 `when`、`args`、`api`、branch payload 的求值全部走 compiled action IR
-- [ ] 保留 `ActionResult`、monitor payload、retry/timeout/debounce/parallel 的既有语义
-- [ ] 明确 plugin hook 是接 raw action 还是 compiled action，必要时设计 narrow compatibility bridge
+- [x] 让 executor 接受 `CompiledActionProgram` 作为 dispatch 输入
+- [x] 让 executor 直接执行 compiled action node，而不是在主路径上解释原始 `ActionSchema`
+- [x] 删除或收缩 `getCompiledValue(...)` 在 action 主路径上的职责
+- [x] 让 `when`、`args`、`api`、branch payload 的求值全部走 compiled action IR
+- [x] 保留 `ActionResult`、monitor payload、retry/timeout/debounce/parallel 的既有语义
+- [x] 明确 plugin hook 是接 raw action 还是 compiled action，必要时设计 narrow compatibility bridge
+  - current decision: `beforeAction` continues to receive raw `ActionSchema`; runtime recompiles the plugin result before execution so the executor remains compiled-only internally
 
 Exit Criteria:
 
-- [ ] action 主执行链不再依赖运行时首次 payload 编译
-- [ ] existing action semantics tests 在 compiled executor 下继续通过
+- [x] action 主执行链不再依赖运行时首次 payload 编译
+- [x] existing action semantics tests 在 compiled executor 下继续通过
 
 ### Phase 5 - Args Unification Migration
 
@@ -391,20 +393,20 @@ Exit Criteria:
 
 ## Validation Checklist
 
-- [ ] 节点模板编译阶段已为事件动作和生命周期动作产出 compiled action IR
-- [ ] `when` / `args` / `api` / `then` / `onError` / `parallel` 的动态值不再依赖首次执行时懒编译
+- [x] 节点模板编译阶段已为事件动作和生命周期动作产出 compiled action IR
+- [x] `when` / `args` / `api` / `then` / `onError` / `parallel` 的动态值不再依赖首次执行时懒编译
 - [ ] `ajax` 的推荐 authoring contract 已迁移为 `action + args`
 - [ ] `docs/references/action-payload-matrix.md` 已更新，并明确哪些动作不应机械统一
 - [ ] `docs/architecture/action-algebra-formal-spec.md` 与 live runtime 实现一致
 - [ ] `docs/references/flux-json-conventions.md` 已更新
 - [ ] ActionTrace 树结构可以完整记录 action 执行链
 - [ ] DevTools 可以查询和展示 action trace tree
-- [ ] focused verification 已完成
+- [x] focused verification 已完成
 - [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
