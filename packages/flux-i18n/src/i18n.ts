@@ -1,5 +1,6 @@
 import i18next, { type i18n, type InitOptions, type Resource } from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { setMessageFormatter } from '@nop-chaos/flux-core';
 import { zhCN } from './locales/zh-CN';
 import { enUS } from './locales/en-US';
 
@@ -59,6 +60,8 @@ export function initFluxI18n(options: FluxI18nOptions = {}): i18n {
   const instance = i18next.createInstance();
   instance.use(initReactI18next).init(initOptions);
 
+  setMessageFormatter((key, params) => instance.t(key, params));
+
   fluxI18nInstance = instance;
   return instance;
 }
@@ -72,6 +75,7 @@ export function getFluxI18n(): i18n {
 
 export function resetFluxI18n(): void {
   fluxI18nInstance = null;
+  setMessageFormatter((key) => key);
 }
 
 export async function changeLanguage(lng: SupportedLanguage): Promise<void> {

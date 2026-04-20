@@ -349,6 +349,22 @@ export const zhCN: Resource = {
       error: '错误: ',
     },
     email: '邮箱',
+    validation: {
+      required: '{{label}}不能为空',
+      minLength: '{{label}}至少需要{{min}}个字符',
+      maxLength: '{{label}}不能超过{{max}}个字符',
+      minItems: '{{label}}至少需要{{min}}项',
+      maxItems: '{{label}}不能超过{{max}}项',
+      atLeastOneFilled: '{{label}}至少需要填写一项',
+      allOrNone: '{{label}}需要全部填写或全部留空',
+      uniqueBy: '{{label}}的{{field}}不能重复',
+      atLeastOneOf: '{{label}}至少需要填写一个关联字段',
+      pattern: '{{label}}格式不正确',
+      email: '{{label}}必须是有效的邮箱地址',
+      equalsField: '{{label}}必须与{{field}}相同',
+      notEqualsField: '{{label}}不能与{{field}}相同',
+      async: '{{label}}异步验证失败',
+    },
   },
 };
 

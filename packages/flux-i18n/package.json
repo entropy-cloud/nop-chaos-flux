@@ -24,6 +24,7 @@
     "react": "^19.0.0"
   },
   "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*",
     "i18next": "^26.0.5",
     "react-i18next": "^17.0.4"
   },

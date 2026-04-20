@@ -349,6 +349,22 @@ export const enUS: Resource = {
       error: 'Error: ',
     },
     email: 'Email',
+    validation: {
+      required: '{{label}} is required',
+      minLength: '{{label}} must be at least {{min}} characters',
+      maxLength: '{{label}} must be at most {{max}} characters',
+      minItems: '{{label}} must contain at least {{min}} item{{plural}}',
+      maxItems: '{{label}} must contain at most {{max}} item{{plural}}',
+      atLeastOneFilled: '{{label}} must contain at least one filled item',
+      allOrNone: '{{label}} entries must fill all related fields or leave them all empty',
+      uniqueBy: '{{label}} items must have unique {{field}}',
+      atLeastOneOf: '{{label}} must fill at least one related field',
+      pattern: '{{label}} format is invalid',
+      email: '{{label}} must be a valid email address',
+      equalsField: '{{label}} must match {{field}}',
+      notEqualsField: '{{label}} must not match {{field}}',
+      async: '{{label}} failed async validation',
+    },
   },
 };
 
