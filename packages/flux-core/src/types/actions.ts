@@ -3,6 +3,7 @@ import type { SchemaObject, SchemaValue, SchemaPath, ApiSchema, OperationControl
 import type { ScopeRef } from './scope';
 import type { ComponentHandleRegistry, RendererRuntime, RendererEnv } from './renderer';
 import type { FormRuntime, PageRuntime, SurfaceRuntime } from './runtime';
+import type { CompiledRuntimeValue } from './compilation';
 
 export interface ActionSchema extends SchemaObject {
   action: string;
@@ -144,4 +145,72 @@ export interface ActionMonitorPayload {
   componentId?: string;
   componentName?: string;
   componentType?: string;
+}
+
+/**
+ * Compiled payload fields for an action.
+ * Dynamic values are compiled to CompiledRuntimeValue for evaluation at dispatch time.
+ */
+export interface CompiledActionPayload {
+  args?: CompiledRuntimeValue<Record<string, unknown>>;
+  api?: CompiledRuntimeValue<ApiSchema>;
+  dialog?: CompiledRuntimeValue<Record<string, unknown>>;
+  drawer?: CompiledRuntimeValue<Record<string, unknown>>;
+  value?: CompiledRuntimeValue<SchemaValue>;
+  values?: CompiledRuntimeValue<Record<string, SchemaValue>>;
+}
+
+/**
+ * Targeting fields for an action.
+ * These are kept as original values since they're typically static identifiers.
+ */
+export interface CompiledActionTargeting {
+  _targetCid?: number;
+  _targetTemplateId?: string;
+  targetId?: string;
+  componentId?: string;
+  componentName?: string;
+  componentPath?: string;
+  formId?: string;
+  dialogId?: string;
+  dataPath?: string;
+}
+
+/**
+ * Execution control fields for an action.
+ * These are kept as original values since they're typically static configuration.
+ */
+export interface CompiledActionControl {
+  control?: OperationControlConfig;
+  timeout?: number;
+  retry?: OperationControlConfig['retry'];
+  debounce?: number;
+  continueOnError?: boolean;
+}
+
+/**
+ * A single compiled action node in the action DAG.
+ * The action graph is assembled at compile time from schema structure.
+ */
+export interface CompiledActionNode {
+  action: string;
+  when?: CompiledRuntimeValue<boolean>;
+  payload: CompiledActionPayload;
+  targeting: CompiledActionTargeting;
+  control: CompiledActionControl;
+  then?: CompiledActionNode[];
+  onError?: CompiledActionNode[];
+  onSettled?: CompiledActionNode[];
+  parallel?: CompiledActionNode[];
+  source: ActionSchema;
+  sourcePath?: string;
+}
+
+/**
+ * A compiled action program representing a complete action DAG.
+ * This is the precompiled form of ActionSchema or ActionSchema[] for event handlers.
+ */
+export interface CompiledActionProgram {
+  nodes: CompiledActionNode[];
+  isFullyStatic: boolean;
 }
