@@ -236,6 +236,7 @@ export interface DataSourceController {
   start(): void;
   stop(): void;
   refresh(): Promise<void>;
+  reset(): void;
 }
 
 export type DataSourceStatus = 'idle' | 'pending' | 'success' | 'error';

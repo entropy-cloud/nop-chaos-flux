@@ -25,6 +25,9 @@ export { createPathBinding, projectBooleanMap, projectFieldStates } from './util
 export { validationErrorsEqual } from './utils/validation-utils';
 export { normalizeInstancePath } from './utils/instance-path';
 
+export { setMessageFormatter, getMessageFormatter } from './i18n-sink';
+export type { MessageFormatter } from './i18n-sink';
+
 export type {
   DomainBridge,
   BusyActionPhase,
