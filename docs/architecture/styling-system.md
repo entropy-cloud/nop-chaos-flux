@@ -360,9 +360,17 @@ Child aliases override parent aliases with the same name.
 
 ## Renderer Styling Contract
 
-### Core Principle: Identity Only, No Implicit Layout
+### Renderer Categories
 
-Every renderer (container, flex, text, icon, etc.) must follow a strict separation:
+Not all renderers follow the same styling rules. Renderers fall into two categories:
+
+**Layout renderers** (container, flex, page, panel, grid, etc.) are transparent structural wrappers. They emit marker classes only and defer all visual styling to schema (`className`, `classAliases`, semantic props). The host/schema author controls gap, direction, padding, and spacing.
+
+**Widget renderers** (condition-builder, tag-list, key-value, array-editor, table, tree, code-editor, etc.) are complete, ready-to-use UI controls built on shadcn/ui. They ship with full internal styling — layout, spacing, typography — as part of their visual design. Schema-level `className` is for consumer customization overrides, not the primary styling mechanism.
+
+### Core Principle (Layout Renderers): Identity Only, No Implicit Layout
+
+Layout renderers must follow a strict separation:
 
 | Layer | Owns | Does NOT own |
 |-------|------|-------------|
@@ -373,7 +381,16 @@ Every renderer (container, flex, text, icon, etc.) must follow a strict separati
 
 **Why**: A container used inside a card needs `gap-1` (4px), the same container in a form needs `gap-4` (16px), and in a list item it needs `gap-0`. The renderer cannot predict the correct value. When a renderer hardcodes `gap-4`, schema authors cannot see this hidden style and cannot override it without knowing it exists.
 
-### Rule: No Default Layout Styles in Renderers
+### Widget Renderer Styling
+
+Widget renderers are self-styled UI controls. Their internal components use Tailwind classes directly (flex, gap, padding, grid, etc.) because the visual design is intentional and complete out-of-the-box. Widget renderers still follow these rules:
+
+- Emit a root marker class (`nop-table`, `nop-condition-builder`, etc.) for CSS targeting and host integration.
+- Use `data-slot` for internal regions.
+- Use `data-*` / `aria-*` for state, not BEM-style modifier classes.
+- Respect schema `className` and `classAliases` for consumer overrides.
+
+### Rule: No Default Layout Styles in Layout Renderers
 
 ```
 // Good: renderer is a transparent wrapper
@@ -415,7 +432,7 @@ This rule is about semantic boundary clarity, not raw DOM performance. Replacing
 
 ### Exception: Semantic Props Are Explicit
 
-When a schema author writes `"direction": "column", "gap": "md"`, these are **explicit** declarations visible in the schema. The renderer may convert these to Tailwind classes because the author chose them. The rule only forbids **implicit** styles the author did not request.
+When a schema author writes `"direction": "column", "gap": "md"`, these are **explicit** declarations visible in the schema. The renderer may convert these to Tailwind classes because the author chose them. The rule only forbids **implicit** styles the author did not request. This applies to layout renderers; widget renderers already include styling as part of their design.
 
 ## Spacing Conventions
 

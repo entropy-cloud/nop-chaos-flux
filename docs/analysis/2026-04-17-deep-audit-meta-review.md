@@ -1,8 +1,11 @@
 # 2026-04-17 Deep Audit Meta Review
 
 - Review date: `2026-04-17`
+- Recheck date: `2026-04-19`
 - Inputs: `docs/analysis/2026-04-17-deep-audit/`, selected live code paths, and owner docs including `docs/architecture/field-frame.md` and `docs/components/word-editor-page/design.md`
 - Goal: recalibrate the deep audit so follow-up work is driven by real engineering value, not architecture purity for its own sake
+
+> **2026-04-19 recheck**: Each retained finding and backlog item below has been verified against current code. Status annotations (`[RESOLVED]`, `[PARTIALLY FIXED]`, `[UNRESOLVED]`) added inline.
 
 ## Calibration Rules
 
@@ -13,7 +16,7 @@
 
 ## Retained Findings
 
-### 1. `flux-runtime` module boundary drift is a real problem
+### 1. `flux-runtime` module boundary drift is a real problem `[RESOLVED 2026-04-19]`
 
 - Keep `docs/analysis/2026-04-17-deep-audit/02-module-boundaries.md` findings on `packages/flux-runtime/src/index.ts` and `packages/flux-runtime/src/source-registry.ts`.
 - Why retained:
@@ -22,7 +25,9 @@
   - Both conflict with the stated owner boundary in `docs/architecture/flux-runtime-module-boundaries.md` and increase the cost of future runtime work.
 - Action bias: worth fixing incrementally because the boundary is already documented and the drift is concrete.
 
-### 2. `wrap: true` plus local field chrome conflicts are real
+**2026-04-19 recheck**: Both files have been refactored. `index.ts` is now 19 lines of pure re-exports (assembly logic moved to `runtime-factory.ts`). `source-registry.ts` is 296 lines focused on registry ownership only (execution helpers extracted to `data-source-runtime.ts`). Both now align with the documented boundaries in `flux-runtime-module-boundaries.md`.
+
+### 2. `wrap: true` plus local field chrome conflicts are real `[RESOLVED 2026-04-19]`
 
 - Keep the `input-tree`, `tree-select`, and `condition-builder` findings from `docs/analysis/2026-04-17-deep-audit/12-field-slot-modeling.md`.
 - Why retained:
@@ -31,7 +36,9 @@
   - `docs/architecture/field-frame.md` is explicit that wrap-compatible renderers should let `NodeFrameWrapper -> FieldFrame` own outer field chrome.
 - Action bias: fix the direct conflicts first; they are contract inconsistencies, not style preferences.
 
-### 3. Word editor contract mismatch is real
+**2026-04-19 recheck**: Both files are now compliant. `tree-controls.tsx` uses domain-specific data-slots (`input-tree-source-error`, `tree-select-source-loading` etc.) that are distinct from FieldFrame-owned slots. `ConditionBuilder.tsx` does not import or render `FieldLabel`, `FieldHint`, or any FieldFrame-owned slots. The conflicts described in the audit no longer exist in the current code.
+
+### 3. Word editor contract mismatch is real `[RESOLVED 2026-04-19]`
 
 - Keep the `word-editor-renderers` inconsistency from `docs/analysis/2026-04-17-deep-audit/18-cross-package-pattern-consistency.md`, but narrow its framing.
 - Why retained:
@@ -40,12 +47,16 @@
   - This is less about cross-package sameness and more about code not currently matching the documented package contract.
 - Action bias: either implement the renderer-registration surface or revise the doc/packaging story so they agree.
 
-### 4. Dependency findings should only survive when they are real correctness issues
+**2026-04-19 recheck**: The package now fully exposes a renderer registration surface: `registerWordEditorRenderers(registry)`, `wordEditorRendererDefinitions`, and `defineWordEditorPageSchema` are all exported from `renderers.tsx` via `index.ts`. The registration pattern is structurally identical to `flux-renderers-basic` and `flux-renderers-data`. The doc (`docs/components/word-editor-page/design.md`) confirms the code reality. The original audit claim was inaccurate for the current codebase.
+
+### 4. Dependency findings should only survive when they are real correctness issues `[RESOLVED 2026-04-19]`
 
 - Keep the manifest mismatch in `packages/flux-code-editor/package.json` where production code uses `@nop-chaos/flux-formula` but the package metadata treats it as a dev dependency.
 - Why retained:
   - The `flux-code-editor` case is a straightforward package-manifest correctness issue.
   - Public dependency edges are only interesting when they reflect bad manifests, private-path leakage, cycles, or undocumented private coupling.
+
+**2026-04-19 recheck**: `@nop-chaos/flux-formula` is correctly listed in `dependencies` (line 30 of `package.json`), not `devDependencies`. Production code in `extensions/expression/linter.ts` uses `createFormulaCompiler` at runtime. The original audit claim was inaccurate for the current codebase.
 
 ## Downgraded Findings
 
@@ -127,16 +138,19 @@
 
 ### High priority
 
-- Narrow `flux-runtime` back toward documented ownership boundaries:
-  - `packages/flux-runtime/src/index.ts`
-  - `packages/flux-runtime/src/source-registry.ts`
-- Resolve direct `wrap: true` / local field chrome conflicts:
-  - `packages/flux-renderers-form-advanced/src/tree-controls.tsx`
-  - `packages/flux-renderers-form-advanced/src/condition-builder/ConditionBuilder.tsx`
-- Reconcile the `word-editor-page` package contract with docs:
-  - implement renderer registration, or
-  - revise docs so the package is explicitly a React-host package instead of a Flux renderer package
-- Fix package metadata correctness in `packages/flux-code-editor/package.json`.
+- Narrow `flux-runtime` back toward documented ownership boundaries: `[RESOLVED 2026-04-19]`
+  - `packages/flux-runtime/src/index.ts` — now 19 lines of pure re-exports
+  - `packages/flux-runtime/src/source-registry.ts` — now focused on registry ownership only
+
+- Resolve direct `wrap: true` / local field chrome conflicts: `[RESOLVED 2026-04-19]`
+  - `packages/flux-renderers-form-advanced/src/tree-controls.tsx` — no longer renders FieldFrame-owned slots
+  - `packages/flux-renderers-form-advanced/src/condition-builder/ConditionBuilder.tsx` — no longer renders FieldLabel/FieldHint
+
+- Reconcile the `word-editor-page` package contract with docs: `[RESOLVED 2026-04-19]`
+  - package now exposes `registerWordEditorRenderers(registry)`, matching other renderer packages
+
+- Fix package metadata correctness in `packages/flux-code-editor/package.json`: `[RESOLVED 2026-04-19]`
+  - `@nop-chaos/flux-formula` is correctly in `dependencies`
 
 ### Medium priority
 

@@ -208,7 +208,7 @@ Current orchestration boundary note:
 
 Own:
 
-- `PageStoreApi` for page data, dialogs, and refresh ticks
+- `PageStoreApi` for page data and refresh ticks
 - `FormStoreApi` for values, errors, validating state, touched state, dirty state, visited state, and submitting state
 - `ScopeRef` for lexical lookup, shadowing, and current-scope updates
 

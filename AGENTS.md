@@ -43,6 +43,7 @@ flux-core -> flux-formula -> flux-i18n -> flux-runtime -> flux-react -> flux-ren
 
 tailwind-preset -> ui
 theme-tokens -> ui
+flux-i18n -> ui
 spreadsheet-core -> report-designer-core -> report-designer-renderers
 flow-designer-core -> flow-designer-renderers
 word-editor-core -> word-editor-renderers
@@ -213,7 +214,7 @@ For the complete "Read This First" routing table, see `docs/index.md`. The table
 
 | Principle | Summary | Doc |
 |-----------|---------|-----|
-| Renderer Styling Contract | Renderers only emit marker classes (`nop-*`). No implicit gap/direction/padding. | `docs/architecture/styling-system.md` |
+| Renderer Styling Contract | Layout renderers (container, flex, page) emit marker classes only. Widget renderers (table, condition-builder, etc.) are self-styled UI controls. | `docs/architecture/styling-system.md` |
 | Spacing Conventions | Context-based spacing via `stack-*`/`hstack-*` aliases, always explicit at usage site. | `docs/architecture/styling-system.md` |
 | No BEM | Use shadcn `data-slot`, flux semantic markers, and Tailwind visual classes. | `docs/architecture/renderer-markers-and-selectors.md` |
 | Theme Independence | No React ThemeProvider; CSS variables and stable class names for host integration. | `docs/architecture/theme-compatibility.md` |
@@ -332,8 +333,8 @@ function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 
 ### MANDATORY: Styling Rules
 
-1. Renderers emit **marker classes ONLY** (`nop-container`, `nop-flex`, `nop-page`, etc.). Markers carry zero visual styles.
-2. **NO implicit layout** in renderer code â€” no hardcoded `gap-4`, `flex`, `p-4`, `grid` in renderer components. All visual styles come from schema (`className`, semantic props, `classAliases`).
+1. **Layout renderers** (container, flex, page, panel) emit **marker classes ONLY** (`nop-container`, `nop-flex`, `nop-page`, etc.). Markers carry zero visual styles. **NO implicit layout** — no hardcoded `gap-4`, `flex`, `p-4`, `grid`. All visual styles come from schema (`className`, semantic props, `classAliases`).
+2. **Widget renderers** (condition-builder, tag-list, key-value, array-editor, table, tree, code-editor, etc.) are complete, styled UI controls built on shadcn/ui. Internal layout classes (`flex`, `gap`, `padding`, `grid`) are part of the visual design. Schema `className` is for consumer customization overrides.
 3. Use `cn()` from `@nop-chaos/ui` for class merging, not `classNames` or template literals.
 4. Use `stack-*`/`hstack-*` aliases from `apps/playground/src/styles-theme-utilities.css` for layout in schema.
 5. See `docs/architecture/styling-system.md` for the full styling contract.
