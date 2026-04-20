@@ -108,12 +108,92 @@ Key contracts:
 - `RendererRegistry`
 - `SchemaFieldRule`
 - `ScopePolicy`
+- `RendererPropContract`
+- `RendererEventContract`
+- `RendererCapabilityContract`
+- `ResolvedAuthoringContract`
 
 Role summary:
 
-- `RendererDefinition` binds a schema type to a concrete renderer component and policy metadata
+- `RendererDefinition` is the unified static discovery entry for one renderer `type`; it binds runtime component registration, policy metadata, ordinary renderer authoring metadata, and optional host-boundary metadata without flattening them into one universal envelope
 - `RendererRegistry` is the lookup table for renderer definitions
 - field rules tell the compiler whether a field is `meta`, `prop`, `region`, `value-or-region`, `event`, or `ignored`
+
+### Unified `RendererDefinition` Field Map
+
+Stable field groups:
+
+- Runtime registration: `type`, `component`, `fields`, `regions`, `scopePolicy`, `actionScopePolicy`, `componentRegistryPolicy`, `wrap`, `schemaValidator`, `validation`
+- Discovery metadata: `displayName`, `icon`, `category`, `sourcePackage`, `defaultSchema`
+- Renderer classification: `rendererClass`, `rendererTraits`
+- Ordinary renderer authoring contracts: `propContracts`, `eventContracts`, `componentCapabilityContracts`, `scopeExportContracts`
+- Host-only contract: `hostContract`
+
+Classification baseline:
+
+- `instance-renderer`: no new Flux semantic owner boundary, no `hostContract`
+- `flux-owner-renderer`: owns Flux-native semantic or interaction state, may publish scope exports and component capabilities, but still no `hostContract`
+- `domain-host-renderer`: host/domain boundary publisher; this is the only class that should define `hostContract`
+
+Representative mapping:
+
+- `button` -> `instance-renderer`
+- `form` -> `flux-owner-renderer` + `semantic-owner`
+- `crud` -> `flux-owner-renderer` + `composite`
+- `designer-page` -> `domain-host-renderer` + `workbench-shell`
+
+### Static Contract Responsibilities
+
+`propContracts`
+
+- Responsibility: author-editable schema field metadata for one renderer type
+- Consumers: inspector/editor tooling, autocomplete, authoring adapters, diagnostics closed-prop checks
+- Contract language: uses `FluxValueShape` as the shared structural IR
+- Important boundary: this is not the same thing as runtime `RendererComponentProps['props']`
+
+`eventContracts`
+
+- Responsibility: author-declarable event entry points such as `onClick` or `submitAction`
+- Consumers: action authoring UI, event autocomplete, docs/examples
+- Runtime relationship: event handlers still resolve to `props.events` at render time; this field only describes the authored event surface
+
+`componentCapabilityContracts`
+
+- Responsibility: static metadata for instance-targeted `component:<method>` calls
+- Consumers: action authoring tooling, diagnostics/docs, inspector affordances
+- Runtime relationship: methods resolve through `ComponentHandleRegistry`, not through `ActionScope`
+- Shared contract language: methods reuse the same `CapabilityMethodContract` language as host manifest methods, but not the same envelope
+
+`scopeExportContracts`
+
+- Responsibility: narrow readonly Flux-native exports such as `$form`, `$crud`, or owner summaries
+- Consumers: tooling, docs, diagnostics fixtures, future autocomplete
+- Runtime relationship: describes readonly Flux-owned scope publications; it does not create host projection and does not replace runtime store ownership
+- Important boundary: this is not a host manifest and not a substitute for `hostContract.projection`
+
+`hostContract`
+
+- Responsibility: host/domain manifest publication entry with family, default version, manifest resolver, and capability publication attribution
+- Consumers: compiler host-contract validation, host-aware tooling, workbench documentation
+- Runtime relationship: host capability lookup still resolves through `ActionScope`; `hostContract` only describes the host boundary statically
+- Important boundary: `hostContract` is host-only and should exist only on `domain-host-renderer`
+
+### Authoring Surface Versus Runtime Surface
+
+Important distinction:
+
+- `editableProps` in `ResolvedAuthoringContract` is the tooling-facing adapter over `RendererDefinition.propContracts`
+- runtime `props` in `RendererComponentProps` is the resolved render-time value object after expression evaluation, defaults, and runtime resolution
+- the two surfaces are related but not identical, and tooling must not treat runtime `props` as the authored schema contract
+
+Current adapter baseline:
+
+- `ResolvedAuthoringContract.rendererClass` comes from `RendererDefinition.rendererClass`
+- `ResolvedAuthoringContract.editableProps` comes from `RendererDefinition.propContracts`
+- `ResolvedAuthoringContract.events` comes from `RendererDefinition.eventContracts`
+- `ResolvedAuthoringContract.componentCapabilityContracts` comes from `RendererDefinition.componentCapabilityContracts`
+- `ResolvedAuthoringContract.scopeExports` comes from `RendererDefinition.scopeExportContracts`
+- `ResolvedAuthoringContract.hostProjection` and `hostActions` are present only when `RendererDefinition.hostContract` resolves a manifest
 
 ## Render-Time React Contracts
 

@@ -211,6 +211,7 @@ Instead, the architecture baseline is:
 - `HostCapabilityProjectionManifest` stays the host/domain envelope
 - ordinary renderer metadata lives on `RendererDefinition`
 - both layers may reuse the same structural shape contract (`FluxValueShape`) for args/results/value shape description
+- `ResolvedAuthoringContract` may assemble host fields together with ordinary renderer metadata for tooling, but `hostContract` itself remains host-only on `domain-host-renderer`
 
 Why this split matters:
 

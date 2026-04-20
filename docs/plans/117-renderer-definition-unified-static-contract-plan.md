@@ -1,6 +1,6 @@
 # 117 Renderer Definition Unified Static Contract Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-04-20
 > Source: `docs/architecture/capability-contract-model.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/capability-projection-manifest.md`, `docs/architecture/action-scope-and-imports.md`, `docs/analysis/2026-04-20-tooljet-actionable-references-for-flux.md`
 > Related: `docs/plans/112-capability-projection-manifest-implementation-plan.md`, `docs/plans/12-action-scope-imports-and-component-invocation-plan.md`, `docs/plans/114-crud-component-implementation-plan.md`
@@ -76,100 +76,100 @@
 
 ### Phase 1 - Contract Surface Freeze
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/capability-contract-model.md`, `docs/architecture/renderer-runtime.md`, `docs/references/renderer-interfaces.md`, `packages/flux-core/src/types/renderer-core.ts`
 
-- [ ] 把 owner docs 已确定的 `RendererDefinition` 字段集合和 renderer classification 同步到 `docs/references/renderer-interfaces.md`。
-- [ ] 在 `docs/references/renderer-interfaces.md` 中为 `propContracts`、`eventContracts`、`componentCapabilityContracts`、`scopeExportContracts`、`hostContract` 分别写出职责、消费者、以及与 runtime contract 的关系。
-- [ ] 在 references docs 中明确 `editableProps` 与 runtime `props` 的区别，避免 authoring contract 与 resolved runtime props 混淆。
-- [ ] 为三类 renderer 提供固定代表映射：`button`、`form`、`crud`、`designer-page`。
+- [x] 把 owner docs 已确定的 `RendererDefinition` 字段集合和 renderer classification 同步到 `docs/references/renderer-interfaces.md`。
+- [x] 在 `docs/references/renderer-interfaces.md` 中为 `propContracts`、`eventContracts`、`componentCapabilityContracts`、`scopeExportContracts`、`hostContract` 分别写出职责、消费者、以及与 runtime contract 的关系。
+- [x] 在 references docs 中明确 `editableProps` 与 runtime `props` 的区别，避免 authoring contract 与 resolved runtime props 混淆。
+- [x] 为三类 renderer 提供固定代表映射：`button`、`form`、`crud`、`designer-page`。
 
 Exit Criteria:
 
-- [ ] `docs/references/renderer-interfaces.md` 明确列出统一的 `RendererDefinition` 字段集合，且字段命名与 `docs/architecture/capability-contract-model.md` 一致。
-- [ ] `docs/references/renderer-interfaces.md` 明确写出 `editableProps` 与 runtime `props` 的区别。
-- [ ] owner docs 与 reference docs 都明确写出 `hostContract` 仅用于 `domain-host-renderer`。
+- [x] `docs/references/renderer-interfaces.md` 明确列出统一的 `RendererDefinition` 字段集合，且字段命名与 `docs/architecture/capability-contract-model.md` 一致。
+- [x] `docs/references/renderer-interfaces.md` 明确写出 `editableProps` 与 runtime `props` 的区别。
+- [x] owner docs 与 reference docs 都明确写出 `hostContract` 仅用于 `domain-host-renderer`。
 
 ### Phase 2 - Shared Method And Shape Type Landing
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/schema-diagnostics/manifest.ts`, `packages/flux-core/src/types/renderer-core.ts`, related docs
 
-- [ ] 在 `packages/flux-core/src/schema-diagnostics/manifest.ts` 或相邻 dependency-safe contract 层中落地 shared method signature type。
-- [ ] 在 `packages/flux-core/src/types/renderer-core.ts` 落地普通 renderer metadata 复用 `FluxValueShape` 的类型定义。
-- [ ] 在 code comments / doc comments 中明确 `RendererCapabilityContract` 与 host manifest `HostCapabilityMethod` 的关系：共享 shape language，不共享 envelope。
-- [ ] 冻结 `scopeExportContracts` 的语义：narrow readonly Flux-native exports，不等同于 host projection。
+- [x] 在 `packages/flux-core/src/schema-diagnostics/manifest.ts` 或相邻 dependency-safe contract 层中落地 shared method signature type。
+- [x] 在 `packages/flux-core/src/types/renderer-core.ts` 落地普通 renderer metadata 复用 `FluxValueShape` 的类型定义。
+- [x] 在 code comments / doc comments 中明确 `RendererCapabilityContract` 与 host manifest `HostCapabilityMethod` 的关系：共享 shape language，不共享 envelope。
+- [x] 冻结 `scopeExportContracts` 的语义：narrow readonly Flux-native exports，不等同于 host projection。
 
 Exit Criteria:
 
-- [ ] `packages/flux-core/src/types/renderer-core.ts` 能表达 `propContracts`、`eventContracts`、`componentCapabilityContracts`、`scopeExportContracts`。
-- [ ] `packages/flux-core/src/schema-diagnostics/manifest.ts` 与 `packages/flux-core/src/types/renderer-core.ts` 之间不存在重复定义的 shape/method contract type。
-- [ ] 文档和类型层都明确区分 editable props、instance capabilities、scope exports、host projection 四种 contract。
+- [x] `packages/flux-core/src/types/renderer-core.ts` 能表达 `propContracts`、`eventContracts`、`componentCapabilityContracts`、`scopeExportContracts`。
+- [x] `packages/flux-core/src/schema-diagnostics/manifest.ts` 与 `packages/flux-core/src/types/renderer-core.ts` 之间不存在重复定义的 shape/method contract type。
+- [x] 文档和类型层都明确区分 editable props、instance capabilities、scope exports、host projection 四种 contract。
 
 ### Phase 3 - Core Interface Landing
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/renderer-core.ts`, `packages/flux-core/src/index.ts`, focused type tests if needed
 
-- [ ] 在不改变 runtime 语义的前提下，为 `RendererDefinition` 增加新的可选静态 contract 字段。
-- [ ] 保持 `hostContract` 原语义和已有 host manifest 实现不回归。
-- [ ] 如果需要，为 shared method contract 增加 dependency-safe type export，供 host manifest 和 ordinary renderer metadata 共同引用。
-- [ ] 增加 focused type-level / compile-level coverage，证明新字段不破坏既有 renderer registration。
+- [x] 在不改变 runtime 语义的前提下，为 `RendererDefinition` 增加新的可选静态 contract 字段。
+- [x] 保持 `hostContract` 原语义和已有 host manifest 实现不回归。
+- [x] 如果需要，为 shared method contract 增加 dependency-safe type export，供 host manifest 和 ordinary renderer metadata 共同引用。
+- [x] 增加 focused type-level / compile-level coverage，证明新字段不破坏既有 renderer registration。
 
 Exit Criteria:
 
-- [ ] `packages/flux-core/src/types/renderer-core.ts` 中 `RendererDefinition` 能表达三类 renderer（instance / flux-owner / domain-host）。
-- [ ] `packages/flux-core/src/index.ts` 导出新增 contract types，且现有 renderer packages 无需破坏性签名修改即可继续编译。
-- [ ] focused type tests 或 compile-time tests 覆盖新增可选字段的注册场景。
+- [x] `packages/flux-core/src/types/renderer-core.ts` 中 `RendererDefinition` 能表达三类 renderer（instance / flux-owner / domain-host）。
+- [x] `packages/flux-core/src/index.ts` 导出新增 contract types，且现有 renderer packages 无需破坏性签名修改即可继续编译。
+- [x] focused type tests 或 compile-time tests 覆盖新增可选字段的注册场景。
 
 ### Phase 4 - Pilot Renderer Metadata Adoption
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-basic/src/button.tsx`, `packages/flux-renderers-form/src/renderers/form.tsx`, `packages/flux-renderers-data/src/crud-renderer.tsx`, `packages/flow-designer-renderers/src/designer-page.tsx`
 
-- [ ] 为少量代表性 renderer 做试点 metadata 补齐：
+- [x] 为少量代表性 renderer 做试点 metadata 补齐：
   - `button` 代表 `instance-renderer`
   - `form` 代表 `flux-owner-renderer` + `semantic-owner`
   - `crud` 代表 `flux-owner-renderer` + `composite`
   - `designer-page` 代表 `domain-host-renderer`
-- [ ] 为试点 renderer 声明 prop/event/component capability contract。
-- [ ] 核对这些静态 contract 与 live runtime 行为是否一致，避免只出现接口壳而无语义对应。
+- [x] 为试点 renderer 声明 prop/event/component capability contract。
+- [x] 核对这些静态 contract 与 live runtime 行为是否一致，避免只出现接口壳而无语义对应。
 
 Exit Criteria:
 
-- [ ] `button`、`form`、`designer-page` 至少三种 renderer class 都有 live code 试点样例。
-- [ ] 试点 renderer 的静态 contract 与各自 runtime capability/props/event semantics 有 focused tests 或 explicit docs/test fixture 对照。
+- [x] `button`、`form`、`designer-page` 至少三种 renderer class 都有 live code 试点样例。
+- [x] 试点 renderer 的静态 contract 与各自 runtime capability/props/event semantics 有 focused tests 或 explicit docs/test fixture 对照。
 
 ### Phase 5 - Tooling And Diagnostics Integration Baseline
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/capability-contract-model.md`, `docs/references/renderer-interfaces.md`, `packages/flux-core/src/types/renderer-authoring-contract.ts` or equivalent adapter contract file, one focused diagnostics fixture/test path
 
-- [ ] 将 `ResolvedAuthoringContract` 从方向性描述收敛为明确的 adapter contract，并落在 `packages/flux-core/src/types/renderer-authoring-contract.ts` 或等效 dependency-safe contract 文件中。
-- [ ] 在 `docs/references/renderer-interfaces.md` 写清在线编辑/自动补全/Action 参数编辑器优先消费哪些 contract 字段。
-- [ ] 增加一个 focused diagnostics fixture 或 test，明确 schema diagnostics 当前只消费哪些普通 renderer contract 字段，以及哪些字段仍然只是 tooling metadata。
-- [ ] 在 owner/reference docs 中固定 Zod 之类 runtime schema library 只作为 adapter/runtime guard，而不进入核心 contract path。
+- [x] 将 `ResolvedAuthoringContract` 从方向性描述收敛为明确的 adapter contract，并落在 `packages/flux-core/src/types/renderer-authoring-contract.ts` 或等效 dependency-safe contract 文件中。
+- [x] 在 `docs/references/renderer-interfaces.md` 写清在线编辑/自动补全/Action 参数编辑器优先消费哪些 contract 字段。
+- [x] 增加一个 focused diagnostics fixture 或 test，明确 schema diagnostics 当前只消费哪些普通 renderer contract 字段，以及哪些字段仍然只是 tooling metadata。
+- [x] 在 owner/reference docs 中固定 Zod 之类 runtime schema library 只作为 adapter/runtime guard，而不进入核心 contract path。
 
 Exit Criteria:
 
-- [ ] `docs/architecture/capability-contract-model.md` 明确列出 `ResolvedAuthoringContract` 的字段来源、组装顺序、缺省行为、以及哪些字段只在 `domain-host-renderer` 存在。
-- [ ] `docs/references/renderer-interfaces.md` 明确列出 tooling-facing contract 与 runtime-resolved renderer `props` 的区别。
-- [ ] repo 中存在 `packages/flux-core/src/types/renderer-authoring-contract.ts` 或等效 adapter contract 文件。
-- [ ] repo 中存在一个 focused diagnostics fixture 或 test 文件，证明普通 renderer contract 字段与 diagnostics 消费边界已被记录。
-- [ ] 文档明确说明不需要重新设计 `hostContract` 即可支持 future online editing / type inference baseline。
+- [x] `docs/architecture/capability-contract-model.md` 明确列出 `ResolvedAuthoringContract` 的字段来源、组装顺序、缺省行为、以及哪些字段只在 `domain-host-renderer` 存在。
+- [x] `docs/references/renderer-interfaces.md` 明确列出 tooling-facing contract 与 runtime-resolved renderer `props` 的区别。
+- [x] repo 中存在 `packages/flux-core/src/types/renderer-authoring-contract.ts` 或等效 adapter contract 文件。
+- [x] repo 中存在一个 focused diagnostics fixture 或 test 文件，证明普通 renderer contract 字段与 diagnostics 消费边界已被记录。
+- [x] 文档明确说明不需要重新设计 `hostContract` 即可支持 future online editing / type inference baseline。
 
 ## Validation Checklist
 
-- [ ] `RendererDefinition` 统一静态入口的语义在 architecture docs 中已明确
-- [ ] `hostContract` host-only 的边界在 docs 与 code-level plan 中一致
-- [ ] renderer classification（instance / flux-owner / domain-host）已在 owner docs 中稳定出现
-- [ ] `FluxValueShape` 作为 shared IR 的定位已与 Zod adapter 边界写清
-- [ ] focused docs/examples/references 已同步
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `RendererDefinition` 统一静态入口的语义在 architecture docs 中已明确
+- [x] `hostContract` host-only 的边界在 docs 与 code-level plan 中一致
+- [x] renderer classification（instance / flux-owner / domain-host）已在 owner docs 中稳定出现
+- [x] `FluxValueShape` 作为 shared IR 的定位已与 Zod adapter 边界写清
+- [x] focused docs/examples/references 已同步
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 
@@ -184,14 +184,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行完成后填写。只有当文档、类型层、试点 renderer、以及 tooling-facing adapter baseline 都完成，并通过独立 closure audit 后，本计划才能标记为 completed。
+Status Note: 已完成。`RendererDefinition` 现在同时承载普通 renderer authoring metadata 与 host-only `hostContract`，`ResolvedAuthoringContract` adapter 已落地，`button` / `form` / `crud` / `designer-page` 已有 live metadata 试点，diagnostics 也已记录当前只把 `propContracts` 作为 closed authoring prop model 使用，而不改变 runtime dispatch 或重设计 host envelope。
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: 待补充
-- Evidence: 待补充
+ - Reviewer / Agent: independent `general` subagent closure audit
+ - Evidence: task result recorded after full repo re-audit of docs/code/tests plus green `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`
 
 Follow-up:
 
-- 若 Phase 5 收敛后仍需要单独推进 Inspector/productized online editor，可拆出 successor plan。
-- 若 pilot renderer adoption 暴露出 `scopeExportContracts` 等字段需要独立 owner doc，可在本计划 closure 时显式拆出 successor plan。
+- No remaining plan-owned work. Future productized Inspector/online editor work can start from the landed `ResolvedAuthoringContract` baseline without reopening this contract plan.

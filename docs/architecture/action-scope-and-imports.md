@@ -289,6 +289,11 @@ Use it in two different envelopes:
 - host manifest capability methods (`designer:addNode`)
 - renderer/component capability metadata (`component:submit`, `component:refresh`)
 
+Current code anchor:
+
+- shared method contract: `packages/flux-core/src/schema-diagnostics/manifest.ts`
+- ordinary renderer capability metadata: `packages/flux-core/src/types/renderer-core.ts`
+
 This does not imply that every capability-bearing renderer is a host boundary.
 
 Representative distinction:

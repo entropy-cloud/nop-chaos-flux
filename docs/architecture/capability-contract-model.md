@@ -144,6 +144,10 @@ interface ResolvedAuthoringContract {
 
 This `ResolvedAuthoringContract` is a tooling-facing adapter model, not necessarily the persisted source contract.
 
+Current code anchor:
+
+- `packages/flux-core/src/types/renderer-authoring-contract.ts`
+
 Normative distinction inside that adapter:
 
 - `editableProps` = author-editable schema fields for this renderer type, not runtime-resolved `props.props`
@@ -158,6 +162,19 @@ Authoring/runtime split:
 - `editableProps` describes authored schema input
 - renderer `props` in runtime docs describes resolved runtime values passed to the mounted component
 - these are related but not identical surfaces and must not be conflated by tooling
+
+Current assembly order for `ResolvedAuthoringContract`:
+
+1. start from `RendererDefinition.rendererClass` and `rendererTraits`
+2. project ordinary renderer metadata from `propContracts`, `eventContracts`, `componentCapabilityContracts`, and `scopeExportContracts`
+3. if `hostContract` exists, resolve the default manifest and derive `hostProjection` plus `hostActions`
+4. if `hostContract` does not exist, host-only fields stay absent
+
+Default behavior:
+
+- missing `rendererClass` defaults to `instance-renderer`
+- missing ordinary renderer metadata fields default to empty maps/lists in the adapter layer
+- host-only fields exist only for `domain-host-renderer`
 
 ## Envelope Split
 
@@ -377,6 +394,10 @@ Recommended position for Zod:
 - optional host-internal/runtime-side validation helper
 - optional editor-side runtime validation helper
 - not the normative contract model in `flux-core`
+
+Current implementation note:
+
+- runtime schema libraries such as Zod are still optional adapter/runtime-guard territory only; they are not part of `RendererDefinition`, `ResolvedAuthoringContract`, or the shared manifest/renderer contract path
 
 Directionally:
 

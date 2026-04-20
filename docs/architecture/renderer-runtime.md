@@ -254,6 +254,19 @@ interface RendererCapabilityContract {
 
 The key rule is that renderer-level contracts may reuse `FluxValueShape` as the shared structural contract IR, while still remaining renderer metadata rather than host manifests.
 
+Current implementation baseline:
+
+- `packages/flux-core/src/types/renderer-core.ts` now defines `rendererClass`, `rendererTraits`, `propContracts`, `eventContracts`, `componentCapabilityContracts`, and `scopeExportContracts` directly on `RendererDefinition`
+- `packages/flux-core/src/types/renderer-authoring-contract.ts` provides the tooling-facing `ResolvedAuthoringContract` adapter over those fields
+- current pilot metadata is wired for `button`, `form`, `crud`, and `designer-page`
+
+Authoring/runtime split reminder:
+
+- `propContracts` and tooling `editableProps` describe authored schema fields
+- runtime `RendererComponentProps['props']` remains the resolved render-time value bag
+- `scopeExportContracts` describes narrow readonly Flux-native exports such as `$form` and `$crud`; it is not host projection
+- `hostContract` remains host-only and should appear only on `domain-host-renderer`
+
 Representative mapping:
 
 - `button` -> `instance-renderer`
