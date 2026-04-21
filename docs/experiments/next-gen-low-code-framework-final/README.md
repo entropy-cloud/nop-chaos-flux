@@ -46,6 +46,7 @@
 16. `16-current-implementation-comparison.md`
 17. `17-execution-package-ir-spec.md`
 18. `18-mvp-kernel-pseudocode.md`
+19. `19-composite-field-lowering-and-identity.md`
 
 各文件职责：
 
@@ -69,6 +70,7 @@
 | `16-current-implementation-comparison.md` | 与当前实现的逐项对比、保留点、替换点、迁移启示 |
 | `17-execution-package-ir-spec.md` | `ExecutionPackage` IR 字段级规范、canonicalization、不变量、host/owner/field 相关 IR |
 | `18-mvp-kernel-pseudocode.md` | MVP 内核伪代码、transaction/async/owner/resource/reaction/recovery 的执行步骤 |
+| `19-composite-field-lowering-and-identity.md` | `array-field` identity lowering、`rowEditor` commit target、variant project revalidation 的 bridge 规范 |
 
 ## 3. 共识边界
 
