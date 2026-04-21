@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
+import { createSchemaDiagnosticCollector, type RendererEnv, type ScopeRef } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler, registerFunction, resetFormulaRegistry } from './index';
 
 const env: RendererEnv = {
@@ -148,6 +148,54 @@ describe('createFormulaCompiler', () => {
     expect(compiler.compileExpression('${$varName}').exec(createScope({ '$varName': 'scoped' }), env)).toBe('scoped');
     expect(compiler.compileExpression('${AND(flag, other)}').exec(createScope({ flag: true, other: true }), env)).toBeUndefined();
     expect(compiler.compileExpression('${ABS(-3)}').exec(createScope({}), env)).toBeUndefined();
+  });
+
+  it('emits compile-time diagnostics for invalid dollar references', () => {
+    const compiler = createFormulaCompiler();
+    const { collector, diagnostics } = createSchemaDiagnosticCollector();
+
+    compiler.compileExpression('${$slot.missing}', {
+      sourcePath: '$.body[0].text',
+      reportDiagnostic: (issue) => collector.add({
+        code: issue.code,
+        path: issue.path,
+        message: issue.message,
+        severity: issue.severity ?? 'error',
+        source: issue.source ?? 'core'
+      }),
+      symbolTable: {
+        frames: [],
+        push(frame) {
+          return this;
+        },
+        resolve() {
+          return undefined;
+        }
+      }
+    });
+
+    expect(diagnostics).toEqual([
+      expect.objectContaining({ code: 'slot-used-outside-region', path: '$.body[0].text' })
+    ]);
+  });
+
+  it('folds pure builtin expressions to static nodes', () => {
+    const compiler = createExpressionCompiler();
+    const compiled = compiler.compileValue('${$Math.max(1, 2)}');
+
+    expect(compiled.kind).toBe('static');
+    if (compiled.kind !== 'static') {
+      throw new Error('Expected static compiled value');
+    }
+
+    expect(compiled.value).toBe(2);
+  });
+
+  it('does not fold runtime-dependent imported alias expressions', () => {
+    const compiler = createExpressionCompiler();
+    const compiled = compiler.compileValue('${$demo.formatName(user.firstName, user.lastName)}');
+
+    expect(compiled.kind).toBe('dynamic');
   });
 });
 
