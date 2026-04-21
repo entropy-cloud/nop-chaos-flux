@@ -86,7 +86,7 @@ export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQL
       } else if (onExecute && typeof onExecute === 'object') {
         const action: ActionSchema = {
           action: 'ajax',
-          api: {
+          args: {
             ...(onExecute as ApiSchema),
             data: { sql: sqlText },
           },
@@ -95,7 +95,7 @@ export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQL
       } else {
         const action: ActionSchema = {
           action: 'ajax',
-          api: {
+          args: {
             url: '/api/report/execSql',
             method: 'POST',
             data: { sql: sqlText },
