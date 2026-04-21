@@ -165,7 +165,7 @@ describe('createFormulaCompiler', () => {
       }),
       symbolTable: {
         frames: [],
-        push(frame) {
+        push(_frame) {
           return this;
         },
         resolve() {

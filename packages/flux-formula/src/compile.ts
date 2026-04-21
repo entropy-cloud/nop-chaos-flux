@@ -2,7 +2,6 @@ import {
   type CompiledExpression,
   type CompiledStringTemplate,
   type CompiledValueNode,
-  type CompileSymbolTable,
   type EvalContext,
   type ExpressionCompileOptions,
   type FormulaCompiler,
@@ -13,7 +12,7 @@ import { isPlainObject } from '@nop-chaos/flux-core';
 import { bindAst, type BindingContext } from './bind-ast';
 import { installBuiltins } from './builtins';
 import { evaluateAst } from './evaluator';
-import type { FormulaAstNode, IdentifierNode, MemberExpressionNode } from './ast';
+import type { FormulaAstNode } from './ast';
 import { parseFormula } from './parser';
 import { isPureExpression, normalizeExpressionSource, parseTemplateSegments } from './template';
 import { toEvalContext } from './scope';
@@ -37,7 +36,7 @@ function ensureCompileOptions(options?: ExpressionCompileOptions): ExpressionCom
     ...options,
     symbolTable: {
       frames: [{ id: 'default-builtins', kind: 'root', symbols }],
-      push(frame) {
+      push(_frame) {
         return this;
       },
       resolve(name: string) {

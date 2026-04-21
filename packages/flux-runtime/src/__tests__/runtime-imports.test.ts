@@ -471,6 +471,9 @@ describe('createRendererRuntime', () => {
     });
 
     expect(resolveImportUrl).toHaveBeenCalledWith('https://app.local/schema/page.json', './demo-lib', undefined);
-    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib', as: 'demo' }, undefined);
+    expect(importLoader.load).toHaveBeenCalledWith(
+      { from: 'resolved:https://app.local/schema/page.json:./demo-lib', as: 'demo' },
+      expect.any(AbortSignal)
+    );
   });
 });

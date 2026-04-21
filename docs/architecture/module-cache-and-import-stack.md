@@ -19,21 +19,21 @@ This document supplements `docs/architecture/action-scope-and-imports.md`, which
 
 ## Current Implementation
 
-The current implementation now has two landed layers and one remaining design layer:
+The current implementation now has all three landed layers:
 
 | Current Layer | Location | Responsibility |
 |---|---|---|
-| Module loading dedup | `packages/flux-runtime/src/runtime-factory.ts` `createModuleCache()` + `packages/flux-runtime/src/imports.ts` | Shared `ModuleCache` dedup keyed by resolved `from+options` |
-| Alias + scope registration | `packages/flux-runtime/src/imports.ts` `scopeRegistrations` WeakMap | Register namespace provider per `ActionScope`, ref-counted |
-| Expression bindings | child scope overlay | imported helpers published directly as `$demo`/`$chart` bindings in the node-local child scope |
+| Module loading dedup | `packages/flux-runtime/src/runtime-factory.ts` `createModuleCache()` + `packages/flux-runtime/src/import-stack.ts` | Shared `ModuleCache` dedup keyed by resolved `from+options` |
+| Alias + lexical frame ownership | `packages/flux-runtime/src/import-stack.ts` | Per-runtime `ImportStack` push/pop, nearest-frame shadowing, namespace registration/release |
+| Expression bindings | `packages/flux-react/src/use-node-imports.ts` + child scope overlay | merged current-frame bindings published as ordinary `$alias` scope keys for expression evaluation |
 
-### Problems With The Current Implementation
+### Current Constraints
 
-1. **ImportStack is still only a design candidate** — action lexical visibility already works through `ActionScope`, and expression lexical visibility now works through direct `$alias` child-scope overlays. A dedicated runtime `ImportStack` is not currently implemented.
+1. `ImportStack` is now implemented, but import helper manifests are still runtime-only. Compile-time validation currently knows alias names and builtin/slot/injected-local categories, not library-specific helper signatures.
 
-2. **No compile-time visibility** — the module cache is a runtime-only structure. Expression compilation does not know which `$alias` names are available, so it cannot validate or type-check imported expression helpers at compile time.
+2. Compile-time symbol visibility is additive and conservative. Unknown `$` references outside the known categories remain informational or runtime-resolved rather than becoming hard compile blockers.
 
-3. **Compile-time visibility is still absent** — removing root preload means the compiler has no preloaded import information available. This is correct for runtime lexical visibility, but compile-time `$alias` validation still needs a dedicated symbol-table design.
+3. Page-level `$page` metadata is available to the compile-time symbol table, but page-lifecycle authoring semantics still remain governed by the existing page/status architecture docs rather than by this file alone.
 
 ## Three-Layer Design
 
@@ -331,12 +331,26 @@ The three-layer design can be adopted incrementally:
 - Instead, each node with `xui:imports` pushes its own frame.
 - Root-level preloading still happens for performance, but the preload result goes into `ModuleCache`, not into the root scope map.
 
+Status: landed
+
 ### Phase 4: Compile-Time Symbol Visibility
 
 - Feed `ImportStack` alias information into the expression compiler's compile context.
 - `$alias` names become known at compile time.
 - Unknown `$alias` references produce compile diagnostics.
 - This enables IDE support and earlier error detection.
+
+Status: landed in conservative form
+
+- The live compiler now builds a `CompileSymbolTable` from builtin namespaces, renderer-injected locals, `xui:imports`, and parameterized region slot metadata.
+- Current diagnostics cover alias/slot/builtin-member categories without requiring import helper manifests.
+
+### Phase 5: Static Expression Folding
+
+Status: landed in conservative form
+
+- Pure builtin-only expressions such as `${$Math.max(1, 2)}` and fully static templates now fold to `static-node`.
+- Runtime-owned symbols such as imported aliases, injected locals, slot params, and ambient scope paths remain dynamic by design.
 
 ## Compile-Time `$` Variable Resolution And Validation
 

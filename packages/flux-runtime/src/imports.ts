@@ -41,17 +41,9 @@ function normalizeImportSpec(spec: XuiImportSpec): XuiImportSpec {
   };
 }
 
-function resolveImportSpec(env: RendererEnv, schemaUrl: string, spec: XuiImportSpec): XuiImportSpec {
-  return {
-    ...spec,
-    from: env.resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from
-  };
-}
-
-function normalizeImports(env: RendererEnv, schemaUrl: string, imports?: readonly XuiImportSpec[]) {
+function normalizeImports(imports?: readonly XuiImportSpec[]) {
   return imports
     ?.map(normalizeImportSpec)
-    .map((spec) => resolveImportSpec(env, schemaUrl, spec))
     .filter((spec) => spec.from && spec.as) ?? [];
 }
 
@@ -91,7 +83,7 @@ export function createImportManager(input: {
     schemaUrl: string;
     nodeInstance?: NodeInstance;
   }) {
-    const imports = normalizeImports(input.getEnv(), args.schemaUrl, args.imports);
+    const imports = normalizeImports(args.imports);
 
     if (!args.actionScope || imports.length === 0) {
       return;
@@ -126,7 +118,7 @@ export function createImportManager(input: {
     actionScope?: ActionScope;
     schemaUrl: string;
   }): Readonly<Record<string, unknown>> {
-    const imports = normalizeImports(input.getEnv(), args.schemaUrl, args.imports);
+    const imports = normalizeImports(args.imports);
 
     if (!args.actionScope || imports.length === 0) {
       return {};
@@ -141,7 +133,7 @@ export function createImportManager(input: {
     actionScope?: ActionScope;
     schemaUrl: string;
   }) {
-    const imports = normalizeImports(input.getEnv(), args.schemaUrl, args.imports);
+    const imports = normalizeImports(args.imports);
 
     if (!args.actionScope || imports.length === 0) {
       return;

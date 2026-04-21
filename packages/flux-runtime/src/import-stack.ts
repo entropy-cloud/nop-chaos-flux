@@ -151,7 +151,8 @@ export function createImportStack(input: {
     return `${ownerNodeId}:import-frame-${nextFrameId}`;
   }
 
-  function reportImportFailure(error: Error, spec?: XuiImportSpec) {
+function reportImportFailure(error: Error, spec?: XuiImportSpec) {
+    (error as Error & { __fluxImportReported?: boolean }).__fluxImportReported = true;
     const env = input.getEnv();
     env.notify('error', error.message);
     env.monitor?.onError?.({
@@ -227,29 +228,38 @@ export function createImportStack(input: {
 
       const controller = new AbortController();
       controllerMap.set(createFrameEntryKey(spec), controller);
-      const module = await loadModule({
-        moduleCache: input.moduleCache,
-        getLoader: input.getLoader,
-        spec,
-        signal: controller.signal
-      });
-      const context: ImportedNamespaceContext = {
-        runtime: input.getRuntime(),
-        env: input.getEnv(),
-        actionScope: args.actionScope ?? input.getRuntime().createActionScope({ id: `${frameId}:${spec.as}:action-scope` }),
-        componentRegistry: args.componentRegistry,
-        scope: args.scope,
-        spec,
-        nodeInstance: args.nodeInstance
-      };
-      const provider = await module.createNamespace(context);
-      const expressionHelpers = module.createExpressionHelpers
-        ? await module.createExpressionHelpers(context)
-        : undefined;
-      const wrappedProvider: ActionNamespaceProvider = {
-        ...provider,
-        kind: provider.kind ?? 'import'
-      };
+      let wrappedProvider: ActionNamespaceProvider;
+      let expressionHelpers: Readonly<Record<string, unknown>> | undefined;
+
+      try {
+        const module = await loadModule({
+          moduleCache: input.moduleCache,
+          getLoader: input.getLoader,
+          spec,
+          signal: controller.signal
+        });
+        const context: ImportedNamespaceContext = {
+          runtime: input.getRuntime(),
+          env: input.getEnv(),
+          actionScope: args.actionScope ?? input.getRuntime().createActionScope({ id: `${frameId}:${spec.as}:action-scope` }),
+          componentRegistry: args.componentRegistry,
+          scope: args.scope,
+          spec,
+          nodeInstance: args.nodeInstance
+        };
+        const provider = await module.createNamespace(context);
+        expressionHelpers = module.createExpressionHelpers
+          ? await module.createExpressionHelpers(context)
+          : undefined;
+        wrappedProvider = {
+          ...provider,
+          kind: provider.kind ?? 'import'
+        };
+      } catch (error) {
+        const wrappedError = createImportError(`Imported namespace ${spec.as} failed to load: ${toErrorMessage(error)}`, error);
+        reportImportFailure(wrappedError, spec);
+        throw wrappedError;
+      }
 
       if (args.actionScope) {
         releaseMap.set(createFrameEntryKey(spec), args.actionScope.registerNamespace(spec.as, wrappedProvider));

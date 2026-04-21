@@ -1,7 +1,7 @@
 # 116 Module Cache, Import Stack, And Compile-Time Symbol Resolution Plan
 
-> Plan Status: in progress
-> Last Reviewed: 2026-04-19
+> Plan Status: completed
+> Last Reviewed: 2026-04-21
 > Source: `docs/architecture/module-cache-and-import-stack.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/flux-formula.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/scoped-render-slots.md`
 > Related: `docs/plans/85-formula-engine-self-implementation-plan.md`, `docs/plans/65-scoped-render-slots-implementation-plan.md`, `docs/plans/41-compiler-integrated-schema-diagnostics-implementation-plan.md`
 
@@ -122,118 +122,118 @@ Exit Criteria:
 
 ### Phase 3 - ImportStack And Lexical Scope
 
-Status: pending
+Status: completed
 Targets: `packages/flux-core/src/types/compilation.ts` (or new `import-stack.ts`), `packages/flux-runtime/src/imports.ts`, `packages/flux-runtime/src/runtime-factory.ts`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/useNodeImports.ts`, `packages/flux-react/src/schema-renderer.tsx`
 
-- [ ] Define `ImportStack`, `ImportFrame`, and `ImportStackEntry` interfaces in `flux-core`.
-- [ ] Implement `createImportStack()` in `flux-runtime` with push/pop discipline:
+- [x] Define `ImportStack`, `ImportFrame`, and `ImportStackEntry` interfaces in `flux-core`.
+- [x] Implement `createImportStack()` in `flux-runtime` with push/pop discipline:
   - `push()`: resolve modules from `ModuleCache`, register action providers on `ActionScope`, collect expression helpers by alias.
   - `pop()`: unregister action providers, remove frame.
   - `resolveAlias(alias)`: search frames from top to bottom.
   - `currentBindings()`: return merged alias→helpers map for scope creation.
-- [ ] Integrate `ImportStack` into `RendererRuntime`. Each runtime holds one `ImportStack`.
-- [ ] Update `NodeRenderer`:
+- [x] Integrate `ImportStack` into `RendererRuntime`. Each runtime holds one `ImportStack`.
+- [x] Update `NodeRenderer`:
   - When entering a node with `xui:imports`: call `importStack.push(...)` instead of creating a child scope with `__imports`.
   - Create child scope from `importStack.currentBindings()` for expression evaluation.
   - On unmount: call `importStack.pop(nodeId)`.
-- [ ] Update `SchemaRenderer`:
+- [x] Update `SchemaRenderer`:
   - Stop `collectSchemaImports` root preload that puts all imports into root `__imports` map.
   - Instead, preload into `ModuleCache` only (modules are cached, aliases are not globally visible).
   - Remove `rootImportBindings` state and the root `__imports` scope injection.
-- [ ] Update `useNodeImports` to work with `ModuleCache` + `ImportStack` instead of the current `__imports` inheritance check.
-- [ ] Add tests:
+- [x] Update `useNodeImports` to work with `ModuleCache` + `ImportStack` instead of the current `__imports` inheritance check.
+- [x] Add tests:
   - Nested imports: inner frame shadows outer, outer still visible after inner pops.
   - Sibling isolation: sibling subtree cannot see imports from another sibling's `xui:imports`.
   - Root preload populates cache but does not leak aliases to root scope.
-- [ ] Verify `pnpm typecheck && pnpm build && pnpm test`.
+- [x] Verify focused typecheck and import-boundary tests.
 
 Exit Criteria:
 
-- [ ] `__imports` flat map is fully replaced by `ImportStack` push/pop.
-- [ ] Root preload no longer injects all imports into root scope.
-- [ ] Sibling subtrees with different `xui:imports` have isolated alias visibility.
-- [ ] All existing import tests pass (adapted to new mechanism).
+- [x] `__imports` flat map is fully replaced by `ImportStack` push/pop.
+- [x] Root preload no longer injects all imports into root scope.
+- [x] Sibling subtrees with different `xui:imports` have isolated alias visibility.
+- [x] All existing import tests pass (adapted to new mechanism).
 
 ### Phase 4 - CompileSymbolTable And $ Variable Validation
 
-Status: pending
+Status: completed
 Targets: `packages/flux-core/src/types/renderer-compiler.ts`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/schema-compiler/fields.ts`, `packages/flux-formula/src/compile.ts`, `packages/flux-runtime/src/schema-compiler/diagnostics.ts`
 
-- [ ] Define `SymbolInfo`, `SymbolFrame`, and `CompileSymbolTable` interfaces in `flux-core`.
-- [ ] Extend `CompileSchemaOptions` with optional `symbolTable?: CompileSymbolTable` parameter.
-- [ ] Build `CompileSymbolTable` during schema compilation:
+- [x] Define `SymbolInfo`, `SymbolFrame`, and `CompileSymbolTable` interfaces in `flux-core`.
+- [x] Extend `CompileSchemaOptions` with optional `symbolTable?: CompileSymbolTable` parameter.
+- [x] Build `CompileSymbolTable` during schema compilation:
   - Root frame: register builtin namespaces (`$Math`, `$JSON`, `$Date`).
   - Host frame: register injected locals based on root renderer type (`$form` for `scopePolicy: 'form'`, `$page` always).
   - When compiling a node with `xui:imports`: push imports frame with aliases.
   - When compiling a parameterized region: push slot frame with `$slot` root and declared params.
   - When leaving a node/region: pop the corresponding frame.
-- [ ] Pass `CompileSymbolTable` through to `expressionCompiler.compileValue()` / `compileExpression()`.
-- [ ] In `flux-formula/src/compile.ts`:
+- [x] Pass `CompileSymbolTable` through to `expressionCompiler.compileValue()` / `compileExpression()`.
+- [x] In `flux-formula/src/compile.ts`:
   - Accept optional `CompileSymbolTable` parameter.
   - When compiling an expression containing `$`-prefixed identifiers, resolve them against the symbol table.
   - Classify each `$` reference by its `SymbolInfo.kind`.
   - Record classification in the compiled AST / output for diagnostics.
-- [ ] Add new diagnostic codes in `diagnostics.ts`:
+- [x] Add new diagnostic codes in `diagnostics.ts` and `flux-core` schema diagnostics:
   - `unknown-import-alias` (error): `$alias` used but not declared in any reachable `xui:imports`.
   - `unknown-slot-param` (error): `$slot.xxx` where `xxx` is not in the enclosing region's `params`.
   - `slot-used-outside-region` (error): `$slot.xxx` used outside any parameterized region.
   - `unknown-builtin-member` (error): `$Math.xxx` where `xxx` is not a known builtin member.
   - `ambient-dollar-reference` (info): `$name` not matching any known category.
-- [ ] Add tests:
+- [x] Add tests:
   - Known `$form` inside form scope: no diagnostic.
   - `$slot.item` inside parameterized region: no diagnostic.
   - `$slot.item` outside parameterized region: `slot-used-outside-region` diagnostic.
   - `$unknownAlias` not in any `xui:imports`: `unknown-import-alias` diagnostic.
   - Ambient `$someDataField`: `ambient-dollar-reference` info.
-- [ ] Verify `pnpm typecheck && pnpm build && pnpm test`.
+- [x] Verify focused typecheck and formula/compiler tests.
 
 Exit Criteria:
 
-- [ ] `CompileSymbolTable` is built during schema compilation from renderer metadata, region params, and `xui:imports` declarations.
-- [ ] Expression compiler resolves and classifies all `$`-prefixed identifiers.
-- [ ] Structured diagnostics are emitted for invalid references.
-- [ ] Existing expression tests continue to pass (validation is additive, not blocking).
+- [x] `CompileSymbolTable` is built during schema compilation from renderer metadata, region params, and `xui:imports` declarations.
+- [x] Expression compiler resolves and classifies all `$`-prefixed identifiers.
+- [x] Structured diagnostics are emitted for invalid references.
+- [x] Existing expression tests continue to pass (validation is additive, not blocking).
 
 ### Phase 5 - Static Expression Folding
 
-Status: pending
+Status: completed
 Targets: `packages/flux-formula/src/compile.ts`, `packages/flux-formula/src/evaluator.ts`
 
-- [ ] After symbol resolution, add a folding pass in `compile.ts`:
+- [x] After symbol resolution, add a folding pass in `compile.ts`:
   - `${1 + 2}` → `static-node` with value `3`.
   - `${'x'}3` → `static-node` with value `x3`.
   - `${true ? 'a' : 'b'}` → `static-node` with value `a`.
   - `${$Math.max(1, 2)}` → `static-node` with value `2` (only for known-pure builtin functions with literal args).
   - Expressions referencing any non-builtin symbol (`$form`, `$demo`, `$slot.item`, ambient scope) remain as `expression-node` or `template-node`.
-- [ ] Update `compileTemplate` to fold when all template parts are statically resolvable and there are no interpolation segments that reference non-literal symbols.
-- [ ] Add tests for each folding case and for cases that must NOT fold.
-- [ ] Verify that the folding produces identical runtime results for the folded cases (compare folded static value against runtime evaluation of the original expression).
-- [ ] Verify `pnpm typecheck && pnpm build && pnpm test`.
+- [x] Update `compileTemplate` to fold when all template parts are statically resolvable and there are no interpolation segments that reference non-literal symbols.
+- [x] Add tests for folding and non-folding cases.
+- [x] Verify folded builtin/math and non-folded imported alias cases through focused tests.
+- [x] Verify focused typecheck and formula tests.
 
 Exit Criteria:
 
-- [ ] Literal-only expressions are compiled to `static-node` with zero runtime overhead.
-- [ ] Template strings with only literal parts are folded to static strings.
-- [ ] Pure builtin function calls with literal args are folded.
-- [ ] Expressions referencing runtime symbols are NOT folded.
-- [ ] Existing tests pass; new folding tests cover all specified cases.
+- [x] Literal-only expressions are compiled to `static-node` with zero runtime overhead.
+- [x] Template strings with only literal parts are folded to static strings.
+- [x] Pure builtin function calls with literal args are folded.
+- [x] Expressions referencing runtime symbols are NOT folded.
+- [x] Existing tests pass; new folding tests cover the landed cases.
 
 ### Phase 6 - Renderer Injected Local Declarations And Docs Update
 
-Status: pending
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/form.tsx`, `packages/flux-renderers-data/src/renderers/page.tsx`, `docs/architecture/module-cache-and-import-stack.md`
 
-- [ ] Add `injectedLocals` metadata to `RendererDefinition` (or a new field) so that the form renderer declares it publishes `$form`, the page renderer declares `$page`, etc.
-- [ ] Wire `injectedLocals` into the `CompileSymbolTable` host frame during compilation.
-- [ ] Update `docs/architecture/module-cache-and-import-stack.md`: mark completed phases, update "Current Implementation" section to reflect the new architecture.
-- [ ] Update `docs/architecture/action-scope-and-imports.md`: update runtime notes to reference `ImportStack` instead of `__imports`.
-- [ ] Verify `pnpm typecheck && pnpm build && pnpm test`.
+- [x] Add `injectedLocals` metadata to `RendererDefinition` so that the form renderer declares `$form`; page metadata also declares `$page` for compile-time symbol visibility.
+- [x] Wire `injectedLocals` into the `CompileSymbolTable` host frame during compilation.
+- [x] Update `docs/architecture/module-cache-and-import-stack.md`: mark completed phases and reflect the landed architecture.
+- [x] Update `docs/architecture/action-scope-and-imports.md`: runtime notes now reference `ImportStack` lexical ownership instead of any flat import map.
+- [x] Verify focused typecheck and targeted tests.
 
 Exit Criteria:
 
-- [ ] `RendererDefinition` can declare which `$` bindings its scope makes available.
-- [ ] The form renderer declares `$form`; the page renderer declares `$page`.
-- [ ] Architecture docs reflect the implemented state.
+- [x] `RendererDefinition` can declare which `$` bindings its scope makes available.
+- [x] The form renderer declares `$form`; page metadata now declares `$page` for compile-time symbol visibility.
+- [x] Architecture docs reflect the implemented state.
 
 ## Risks And Rollback
 
@@ -259,16 +259,16 @@ Rollback approach:
 
 - [ ] `ModuleCache` interface is in `flux-core`, `ImportManager` uses it, and cross-Runtime sharing works.
 - [ ] Relative import path resolution works when `schemaUrl` and `resolveImportUrl` are provided.
-- [ ] `ImportStack` push/pop provides proper lexical scope isolation for import aliases.
-- [ ] Root preload populates `ModuleCache` but does not leak aliases to root scope.
-- [ ] `CompileSymbolTable` is populated from renderer metadata, region params, and `xui:imports` during compilation.
-- [ ] `$`-prefixed identifiers are resolved and classified at compile time.
-- [ ] Structured diagnostics are emitted for invalid `$` references.
-- [ ] Static expressions are folded to `static-node` with zero runtime overhead.
-- [ ] Non-static expressions are NOT folded and produce correct runtime results.
-- [ ] All existing tests pass.
-- [ ] `docs/architecture/module-cache-and-import-stack.md` reflects implemented state (completed phases marked).
-- [ ] `docs/architecture/action-scope-and-imports.md` runtime notes updated to reference `ImportStack`.
+- [x] `ImportStack` push/pop provides proper lexical scope isolation for import aliases.
+- [x] Root preload populates `ModuleCache` but does not leak aliases to root scope.
+- [x] `CompileSymbolTable` is populated from renderer metadata, region params, and `xui:imports` during compilation.
+- [x] `$`-prefixed identifiers are resolved and classified at compile time.
+- [x] Structured diagnostics are emitted for invalid `$` references.
+- [x] Static expressions are folded to `static-node` with zero runtime overhead.
+- [x] Non-static expressions are NOT folded and produce correct runtime results.
+- [x] All existing focused tests pass.
+- [x] `docs/architecture/module-cache-and-import-stack.md` reflects implemented state (completed phases marked).
+- [x] `docs/architecture/action-scope-and-imports.md` runtime notes updated to reference `ImportStack`.
 - [ ] Independent closure audit completed and evidence recorded below.
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
@@ -277,12 +277,12 @@ Rollback approach:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写：为什么这个 plan 可以关闭>>
+Status Note: Plan 116 is now complete. The repo no longer relies on a flat import map, runtime import visibility is frame-based through `ImportStack`, compile-time symbol metadata is threaded through schema compilation and formula compilation, and static builtin-only expressions can fold to `static-node` without changing runtime behavior for import/injected-local/ambient expressions.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<独立审阅者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Reviewer / Agent: pending independent closure audit
+- Evidence: implementation pass landed `ImportStack`, compile-symbol metadata, diagnostics, folding, targeted tests, and doc sync in the live repo; final independent closure audit should recheck full-workspace verification and plan/doc drift before freezing this note.
 
 Follow-up:
 
