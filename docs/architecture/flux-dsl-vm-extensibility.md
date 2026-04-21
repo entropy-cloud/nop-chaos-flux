@@ -59,7 +59,7 @@ base schema / delta schema / generated schema / feature switches / policy trimmi
 Flux 运行时的职责应被严格收敛为：
 
 - 编译并执行最终 schema
-- 建立并维护 final-model runtime 所需的 base tree、lexical overlays、execution sidecars 与 host boundaries
+- 建立并维护 final-model runtime 所需的 Template、lexical overlays、execution sidecars 与 host boundaries
 - 调用宿主环境能力
 - 响应用户交互
 - 管理局部运行时状态
@@ -112,13 +112,13 @@ Flux 运行时应坚持一个硬原则：
 
 不允许继续发生的，是结构层的主装配过程。
 
-## 3. 统一抽象：Base Tree 加语义 Overlay
+## 3. 统一抽象：Template 加语义 Overlay
 
-Flux 的运行时工程视角应理解为 `base tree + semantic overlays`。
+Flux 的运行时工程视角应理解为 `Template + semantic overlays`。
 
 其中：
 
-1. `base tree` 负责结构、生命周期、renderer 选择、region 组织
+1. `Template` 是编译期产出的不可变结构定义。运行时从不修改 Template，只消费和实例化它。一个 Template 可以被多次实例化，每次产生独立的运行时状态（`NodeInstance`）。在当前实现中，它主要由 `CompiledTemplate` / `TemplateNode` 承载。
 2. 数据 lexical overlay 对应旧文里的 `StateTree` 直觉
 3. capability lexical overlay 对应旧文里的 `ActionTree` 直觉
 4. resource / reaction / host projection / explicit instance capability 等是与前两者正交的运行时语义层
@@ -158,7 +158,7 @@ Flux 的运行时工程视角应理解为 `base tree + semantic overlays`。
 
 设计器或复杂控件的“可扩展性”不应被误解为必须有一个集中式 designer runtime。
 
-在这种 base tree 加 overlay 的分离下：
+在这种 Template 加 overlay 的分离下：
 
 - 组件结构可以来自 schema 注入
 - 数据模型可以沿 state tree 注入
@@ -662,7 +662,7 @@ Loader/装配失败示例：
 因为 Flux 运行时始终只处理同一种事：
 
 - 执行 schema
-- 维护 base tree 与正交语义层
+- 维护 Template 与正交语义层
 - 调用 renderer
 
 而不是根据是否“设计器”切换到另一套体系。
@@ -837,7 +837,7 @@ Flux 的正确方向不是“设计一个更强的运行时扩展平台”，而
 - 接受 Flux 只是最终执行环境
 - 接受可扩展性的主战场在 Loader 层和 DSL 层
 - 接受设计器只是特殊类型的复杂组件
-- 在运行时坚持 base tree 加 semantic overlays 的分层和统一 renderer contract
+- 在运行时坚持 Template 加 semantic overlays 的分层和统一 renderer contract
 
 最终应形成这样的结构分工：
 

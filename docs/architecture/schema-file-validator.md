@@ -24,8 +24,8 @@ For form value validation and submit-time validation behavior, use `docs/archite
 
 When this document needs to be checked against code, start with:
 
-- `packages/flux-runtime/src/schema-compiler.ts` for compile flow ownership
-- `packages/flux-runtime/src/schema-compiler/fields.ts` for current field classification fallback
+- `packages/flux-compiler/src/schema-compiler.ts` for compile flow ownership
+- `packages/flux-compiler/src/schema-compiler/fields.ts` for current field classification fallback
 - `packages/flux-core/src/types/renderer-compiler.ts` for `CompileSchemaOptions`
 - `packages/flux-core/src/types/node-identity.ts` for `TemplateNode` and `CompiledTemplate`
 - `packages/flux-core/src/types/renderer-core.ts` for `RendererDefinition`
@@ -599,7 +599,7 @@ Because the compiler owns the structural analysis pass, the final package split 
 Preferred placement:
 
 - issue types, collector interfaces, and namespace-policy utilities in `packages/flux-core/src/schema-diagnostics/`
-- compiler-owned analysis and lowering integration in `packages/flux-runtime/src/schema-compiler/`
+- compiler-owned analysis and lowering integration in `packages/flux-compiler/src/schema-compiler/`
 - renderer-specific validator contributions exported from renderer-owning packages alongside their schema contracts
 - thin adapter helpers in higher layers for CI, editor tooling, or playground import paths
 

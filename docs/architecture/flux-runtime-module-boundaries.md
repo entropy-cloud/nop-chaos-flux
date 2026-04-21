@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This note records current file ownership inside `packages/flux-runtime`.
+This note records current module ownership at the `flux-runtime` boundary.
 
 Use it when deciding where new runtime behavior belongs.
 
@@ -16,7 +16,7 @@ When this document needs to be checked against code, start with:
 
 - `packages/flux-runtime/src/index.ts` for package export surface only
 - `packages/flux-runtime/src/runtime-factory.ts` for runtime assembly boundaries
-- `packages/flux-runtime/src/schema-compiler.ts` and `packages/flux-runtime/src/schema-compiler/` for compiler ownership
+- `packages/flux-compiler/src/index.ts` and `packages/flux-compiler/src/schema-compiler.ts` for compiler ownership
 - `packages/flux-runtime/src/validation/` for reusable validation helpers
 - `packages/flux-runtime/src/form-runtime.ts` and related `form-runtime-*` files for form flow ownership
 - `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/request-runtime.ts`, and `packages/flux-runtime/src/scope.ts` for runtime subsystem placement
@@ -61,36 +61,40 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
   - action-related helpers extracted from the entry file
   - action dispatch wiring utilities
 
-### Schema compilation
+### Compiler boundary
 
-- `packages/flux-runtime/src/schema-compiler.ts`
+- `packages/flux-compiler/src/schema-compiler.ts`
   - schema-shape normalization
   - region extraction
   - renderer field classification
   - deep table column normalization
   - compiled form-validation model assembly
-- `packages/flux-runtime/src/schema-compiler/index.ts`
+- `packages/flux-compiler/src/schema-compiler/index.ts`
   - compiler submodule composition
-- `packages/flux-runtime/src/schema-compiler/fields.ts`
+- `packages/flux-compiler/src/schema-compiler/fields.ts`
   - renderer field classification helpers and meta-program compilation
-- `packages/flux-runtime/src/schema-compiler/regions.ts`
+- `packages/flux-compiler/src/schema-compiler/regions.ts`
   - region extraction and nested child normalization helpers
-- `packages/flux-runtime/src/schema-compiler/tables.ts`
+- `packages/flux-compiler/src/schema-compiler/tables.ts`
   - table-specific deep normalization helpers
-- `packages/flux-runtime/src/schema-compiler/validation-collection.ts`
+- `packages/flux-compiler/src/schema-compiler/validation-collection.ts`
   - compiled validation model collection during compilation
-- `packages/flux-runtime/src/schema-compiler/diagnostics.ts`
+- `packages/flux-compiler/src/schema-compiler/diagnostics.ts`
   - compiler diagnostic collection helpers
-- `packages/flux-runtime/src/schema-compiler/shape-validation.ts`
+- `packages/flux-compiler/src/schema-compiler/shape-validation.ts`
   - schema-shape validation helpers used during compilation
-- `packages/flux-runtime/src/schema-compiler/host-action-validation.ts`
+- `packages/flux-compiler/src/schema-compiler/host-action-validation.ts`
   - host action validation and capability checks during compile
-- `packages/flux-runtime/src/schema-compiler/target-enrichment.ts`
+- `packages/flux-compiler/src/schema-compiler/target-enrichment.ts`
   - target enrichment helpers for compiled nodes
+- `packages/flux-compiler/src/action-compiler.ts`
+  - compiled action program assembly for static/ad-hoc precompile paths
+- `packages/flux-compiler/src/compile-symbol-table.ts`
+  - compile-time `$` symbol visibility substrate
 
-Keep compiler-specific shape handling here.
+Keep compiler-specific shape handling in `flux-compiler`.
 
-Do not move generic validation helpers back into this file when they can live in `packages/flux-runtime/src/validation/`.
+Do not move generic validation helpers back into compiler modules when they can live in `packages/flux-runtime/src/validation/` or `@nop-chaos/flux-core`.
 
 ### Validation runtime flow
 
@@ -133,6 +137,11 @@ This directory is the default home for reusable validation helpers.
 
 ### Action and request flow
 
+Note:
+
+- `action` runtime execution remains here for now.
+- action precompile ownership (`compileAction(...)` / `compileActions(...)`) now lives in `@nop-chaos/flux-compiler`, not in `flux-runtime`.
+
 - `packages/flux-runtime/src/action-runtime.ts`
   - top-level action dispatch orchestration
   - dispatch ordering across built-in / component / namespaced paths
@@ -155,6 +164,7 @@ This directory is the default home for reusable validation helpers.
   - api-backed source execution
   - source status publication and result mapping application
   - request dependency tracking for runtime-owned sources
+  - runtime normalization of `SourceSchema` top-level `api` into action-dispatch input
 - `packages/flux-runtime/src/source-registry.ts`
   - scope-scoped source registration and replacement
   - source invalidation/refresh routing
@@ -226,8 +236,6 @@ Do not turn it into a mixed behavior registry for:
   - resolved node meta and prop evaluation helpers
 - `packages/flux-runtime/src/node-resolver.ts`
   - runtime target resolution across nearest-owner semantics, component targets, and compatibility carriers
-- `packages/flux-runtime/src/registry.ts`
-  - renderer registry creation and registration helpers
 
 ## Where To Add A New Validation Rule
 
@@ -245,9 +253,9 @@ For async rules:
 - keep debounce and stale-run behavior in `packages/flux-runtime/src/form-runtime-validation.ts`
 - do not force async request flow into the sync validator registry
 
-## `schema-compiler.ts` Versus `validation/`
+## `flux-compiler` Versus `validation/`
 
-Keep code in `packages/flux-runtime/src/schema-compiler.ts` when it is primarily about schema shape:
+Keep code in `packages/flux-compiler/src/schema-compiler.ts` when it is primarily about schema shape:
 
 - region extraction
 - node tree traversal

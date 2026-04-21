@@ -136,7 +136,7 @@ The architectural rule is about the contract that enters execution, not about wh
 If a delayed or host-admitted fragment is introduced after initial page load, it must still cross the same boundary before execution:
 
 - it is compiled or normalized into the same execution contract as the rest of the tree
-- it receives the same primitive model (`Base Tree`, `ScopeRef`, `Value`, `Resource`, `Reaction`, `Capability`, `Host Projection`)
+- it receives the same primitive model (`Template`, `ScopeRef`, `Value`, `Resource`, `Reaction`, `Capability`, `Host Projection`)
 - it does not reopen authoring-time inheritance expansion or ad hoc loader semantics inside the execution core
 
 `Flux` still owns runtime work, including:
@@ -163,7 +163,7 @@ Allowed runtime structural multiplication is narrow and derivative only:
 
 | Primitive | Question it answers | Owns |
 | --- | --- | --- |
-| `Base Tree` | Where is this node in the program structure? | node structure, `Region` composition, lifecycle anchoring, renderer selection |
+| `Template` | What is the compiled program structure? | immutable structural template, `Region` composition, lifecycle anchoring, renderer selection |
 | `ScopeRef` | Which data is visible here? | lexical lookup, own-scope writes, shadowing, scope-local ownership |
 | `Value` | How is a value read or derived here? | literal, expression, template, array, and object evaluation against `ScopeRef` |
 | `Resource` | Does runtime own production and publication of a value here? | lifecycle-owned value production, publication of one `Logical Value`, status/refresh/invalidation semantics |
@@ -173,7 +173,8 @@ Allowed runtime structural multiplication is narrow and derivative only:
 
 ### Primitive Notes
 
-- `Base Tree` is the only structural primitive.
+- `Template` is the only structural primitive. It is a compile-time artifact: the compiler produces an immutable structural template, and the runtime never modifies it. One `Template` can be instantiated multiple times, each producing independent live runtime state.
+- In the current implementation, `Template` is primarily carried by `CompiledTemplate` and `TemplateNode`; other execution-package carriers are allowed as long as they preserve the same structural contract.
 - `ScopeRef` is a data environment, not a behavior registry.
 - `Value`, `Resource`, and `Reaction` are distinct categories and must not collapse into one generic binding concept.
 - `Capability` is the only author-visible effect authority path.
@@ -185,7 +186,7 @@ The seven primitives are not independent features. They form one execution model
 
 ### Execution Loop
 
-1. `Base Tree` anchors structure, renderer ownership, and lexical boundaries.
+1. `Template` anchors structure, renderer ownership, and lexical boundaries. It is compiled once and instantiated zero or more times at runtime.
 2. `ScopeRef` defines the lexical data visible at each boundary.
 3. `Host Projection` may admit readonly host snapshot fields into that visible scope.
 4. `Value` reads from `ScopeRef` and may collect dependencies while evaluating.
@@ -210,7 +211,7 @@ Dependency change alone does not directly dispatch arbitrary actions. Crossing f
 
 Operationally, `Flux` is best understood as:
 
-- one `Base Tree` anchoring structure and mount lifetime
+- one immutable `Template` anchoring structure and mount lifetime
 - one lexical data layer through `ScopeRef`
 - one host snapshot layer through `Host Projection`
 - runtime-owned sidecars for `Resource` and `Reaction`, keyed by `Lexical Ownership`
@@ -230,7 +231,7 @@ Those lookup layers are part of the `Capability` model. They are not extra primi
 
 The primitive set is sufficient if every behavior worth standardizing in `Flux` reduces to one of:
 
-- structure over the `Base Tree`
+- structure and lifecycle over the compiled `Template`
 - `Value` evaluation against `ScopeRef`
 - runtime-owned publication through `Resource`
 - watched consequence dispatch through `Reaction`
@@ -301,7 +302,7 @@ They may appear to `Flux` only through narrow boundaries such as:
 
 1. `Flux` is a `Final Execution Schema` runtime.
 2. `Authoring Model` and `Execution Model` stay separate.
-3. `Base Tree` owns structure and lifecycle anchoring.
+3. `Template` owns structure and lifecycle anchoring. It is immutable at runtime.
 4. `ScopeRef` is a data environment, not a behavior registry.
 5. `Value`, `Resource`, and `Reaction` remain distinct.
 6. One `Resource` publishes one authoritative `Logical Value`.
