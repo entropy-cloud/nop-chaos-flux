@@ -25,8 +25,8 @@ describe('dialog container resolution', () => {
               type: 'button',
               label: 'Open no-mask dialog',
               onClick: {
-                action: 'dialog',
-                dialog: {
+                action: 'openDialog',
+                args: {
                   title: 'No Mask Dialog',
                   showMask: false,
                   body: [{ type: 'text', text: 'No mask content' }]
@@ -55,8 +55,8 @@ describe('dialog container resolution', () => {
               type: 'button',
               label: 'Open default dialog',
               onClick: {
-                action: 'dialog',
-                dialog: {
+                action: 'openDialog',
+                args: {
                   title: 'Default Dialog',
                   body: [{ type: 'text', text: 'Default content' }]
                 }
@@ -84,8 +84,8 @@ describe('dialog container resolution', () => {
               type: 'button',
               label: 'Open dialog',
               onClick: {
-                action: 'dialog',
-                dialog: {
+                action: 'openDialog',
+                args: {
                   title: 'Test Dialog',
                   body: [{ type: 'text', text: 'Hello' }]
                 }
@@ -115,8 +115,8 @@ describe('drawer container resolution', () => {
               type: 'button',
               label: 'Open no-mask drawer',
               onClick: {
-                action: 'drawer',
-                drawer: {
+                action: 'openDrawer',
+                args: {
                   title: 'No Mask Drawer',
                   showMask: false,
                   body: [{ type: 'text', text: 'Drawer content' }]
@@ -145,8 +145,8 @@ describe('drawer container resolution', () => {
               type: 'button',
               label: 'Open default drawer',
               onClick: {
-                action: 'drawer',
-                drawer: {
+                action: 'openDrawer',
+                args: {
                   title: 'Default Drawer',
                   body: [{ type: 'text', text: 'Content' }]
                 }
@@ -177,8 +177,8 @@ describe('page modalContainer', () => {
               type: 'button',
               label: 'Open dialog',
               onClick: {
-                action: 'dialog',
-                dialog: {
+                action: 'openDialog',
+                args: {
                   title: 'Contained Dialog',
                   body: [{ type: 'text', text: 'Should be contained' }]
                 }
@@ -205,8 +205,8 @@ describe('page modalContainer', () => {
               type: 'button',
               label: 'Open dialog',
               onClick: {
-                action: 'dialog',
-                dialog: {
+                action: 'openDialog',
+                args: {
                   title: 'Override Dialog',
                   container: 'custom-container',
                   showMask: false,
@@ -230,7 +230,7 @@ describe('dialog state preservation', () => {
     const capturedDispatches: Array<(input: any) => Promise<any>> = [];
     const dispatchCaptureRenderer = createDispatchCaptureRenderer((dispatch) => capturedDispatches.push(dispatch));
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer, scopedHostRenderer, namespaceProviderRenderer, componentHandleProviderRenderer, dispatchCaptureRenderer]);
-    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'page', body: [{ type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' }, { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' }, { type: 'button', label: 'Open provider dialog', onClick: { action: 'dialog', dialog: { title: 'Provider dialog', body: [{ type: 'scoped-host', body: [{ type: 'namespace-provider', namespace: 'demo', label: 'dialog-ns' }, { type: 'component-handle-provider', componentName: 'shared', label: 'dialog-handle' }, { type: 'dispatch-capture' }, { type: 'text', text: 'Dialog provider content' }] }] } } }] }} env={env} formulaCompiler={sharedFormulaCompiler} />);
+    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'page', body: [{ type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' }, { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' }, { type: 'button', label: 'Open provider dialog', onClick: { action: 'openDialog', args: { title: 'Provider dialog', body: [{ type: 'scoped-host', body: [{ type: 'namespace-provider', namespace: 'demo', label: 'dialog-ns' }, { type: 'component-handle-provider', componentName: 'shared', label: 'dialog-handle' }, { type: 'dispatch-capture' }, { type: 'text', text: 'Dialog provider content' }] }] } } }] }} env={env} formulaCompiler={sharedFormulaCompiler} />);
     fireEvent.click(screen.getByText('Open provider dialog'));
     expect(await screen.findByText('Dialog provider content')).toBeTruthy();
     await waitFor(() => expect(capturedDispatches.length).toBe(1));

@@ -33,7 +33,7 @@ describe('basicRendererDefinitions reaction and action behavior', () => {
 
   it('dispatches event fields through renderer-generated handlers', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/reactions" schema={{ type: 'page', body: [{ type: 'button', label: 'Open dialog', onClick: { action: 'dialog', dialog: { title: 'Runtime event dialog', body: [{ type: 'text', text: 'Opened from event' }] } } }, { type: 'text', text: '${message}' }] }} data={{ message: 'Initial' }} env={env} formulaCompiler={formulaCompiler} />);
+    render(<SchemaRenderer schemaUrl="test://basic/reactions" schema={{ type: 'page', body: [{ type: 'button', label: 'Open dialog', onClick: { action: 'openDialog', args: { title: 'Runtime event dialog', body: [{ type: 'text', text: 'Opened from event' }] } } }, { type: 'text', text: '${message}' }] }} data={{ message: 'Initial' }} env={env} formulaCompiler={formulaCompiler} />);
     expect(screen.getByText('Initial')).toBeTruthy();
     screen.getByText('Open dialog').click();
     expect(await screen.findByText('Runtime event dialog')).toBeTruthy();

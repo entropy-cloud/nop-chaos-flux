@@ -271,7 +271,7 @@ describe('reactive meta and draggable dialogs', () => {
             {
               type: 'button',
               label: 'Open drag-handle dialog',
-              onClick: { action: 'dialog', dialog: { title: 'Draggable title', body: [{ type: 'text', text: 'Dialog content' }] } }
+              onClick: { action: 'openDialog', args: { title: 'Draggable title', body: [{ type: 'text', text: 'Dialog content' }] } }
             }
           ]
         }}
@@ -293,7 +293,7 @@ describe('reactive meta and draggable dialogs', () => {
       <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
-            { type: 'button', label: 'Open transform dialog', onClick: { action: 'dialog', dialog: { title: 'Drag test', body: [{ type: 'text', text: 'Body' }] } } }
+            { type: 'button', label: 'Open transform dialog', onClick: { action: 'openDialog', args: { title: 'Drag test', body: [{ type: 'text', text: 'Body' }] } } }
           ]
         }}
         env={env}
@@ -315,7 +315,7 @@ describe('reactive meta and draggable dialogs', () => {
       <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
-            { type: 'button', label: 'Open pointer dialog', onClick: { action: 'dialog', dialog: { title: 'Drag me', body: [{ type: 'text', text: 'Content' }] } } }
+            { type: 'button', label: 'Open pointer dialog', onClick: { action: 'openDialog', args: { title: 'Drag me', body: [{ type: 'text', text: 'Content' }] } } }
           ]
         }}
         env={env}
@@ -336,7 +336,7 @@ describe('reactive meta and draggable dialogs', () => {
       <SchemaRenderer schemaUrl="test://schema.json" schema={{
           type: 'page',
           body: [
-            { type: 'button', label: 'Open drawer', onClick: { action: 'drawer', drawer: { title: 'Drawer title', body: [{ type: 'text', text: 'Drawer body' }] } } }
+            { type: 'button', label: 'Open drawer', onClick: { action: 'openDrawer', args: { title: 'Drawer title', body: [{ type: 'text', text: 'Drawer body' }] } } }
           ]
         }}
         env={env}
