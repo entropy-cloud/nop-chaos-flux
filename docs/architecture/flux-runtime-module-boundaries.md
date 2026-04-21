@@ -16,11 +16,12 @@ When this document needs to be checked against code, start with:
 
 - `packages/flux-runtime/src/index.ts` for package export surface only
 - `packages/flux-runtime/src/runtime-factory.ts` for runtime assembly boundaries
+- `packages/flux-action-core/src/index.ts` and `packages/flux-action-core/src/action-dispatcher.ts` for action execution ownership
 - `packages/flux-compiler/src/index.ts` and `packages/flux-compiler/src/schema-compiler.ts` for compiler ownership
 - `packages/flux-runtime/src/validation/` for reusable validation helpers
 - `packages/flux-runtime/src/form-runtime.ts` and related `form-runtime-*` files for form flow ownership
-- `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/request-runtime.ts`, and `packages/flux-runtime/src/scope.ts` for runtime subsystem placement
-- `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/action-runtime-handlers.ts`, `packages/flux-runtime/src/imports.ts`, `packages/flux-runtime/src/action-scope.ts`, and `packages/flux-runtime/src/component-handle-registry.ts` for action/capability/import/runtime-host boundaries
+- `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-runtime/src/request-runtime.ts`, and `packages/flux-runtime/src/scope.ts` for runtime subsystem placement
+- `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/imports.ts`, `packages/flux-runtime/src/action-scope.ts`, and `packages/flux-runtime/src/component-handle-registry.ts` for action/capability/import/runtime-host boundaries
 
 ## Main Rule
 
@@ -139,32 +140,62 @@ This directory is the default home for reusable validation helpers.
 
 Note:
 
-- `action` runtime execution remains here for now.
-- action precompile ownership (`compileAction(...)` / `compileActions(...)`) now lives in `@nop-chaos/flux-compiler`, not in `flux-runtime`.
+- Action execution framework has been extracted to `@nop-chaos/flux-action-core`.
+- Action precompile ownership (`compileAction(...)` / `compileActions(...)`) lives in `@nop-chaos/flux-compiler`.
+- `flux-runtime` owns the `ActionRuntimeAdapter` implementation and runtime-host infrastructure.
 
-- `packages/flux-runtime/src/action-runtime.ts`
+### Action execution boundary (`@nop-chaos/flux-action-core`)
+
+- `packages/flux-action-core/src/action-dispatcher.ts`
   - top-level action dispatch orchestration
   - dispatch ordering across built-in / component / namespaced paths
   - debounce, retry, and timeout composition entry
-- `packages/flux-runtime/src/action-runtime-core.ts`
+  - consumes `ActionRuntimeAdapter` for runtime-specific effects
+- `packages/flux-action-core/src/action-core.ts`
   - action-evaluation helpers
   - compiled-value evaluation in action context
   - action monitor payload/result shaping
+  - result classification and branch bindings
+- `packages/flux-action-core/src/operation-control.ts`
+  - timeout / retry / abort helpers (generic async execution control)
+  - shared by action and request execution paths
+- `packages/flux-action-core/src/utils/debounce.ts`
+  - debounce utilities for action execution
+
+### Action adapter and runtime-specific execution (`flux-runtime`)
+
+- `packages/flux-runtime/src/action-adapter.ts`
+  - implements `ActionRuntimeAdapter` interface from `flux-core`
+  - provides runtime-specific effect execution (setValue, ajax, dialog, navigate, etc.)
+  - delegates to form/page/surface runtimes via `ActionContext`
+- `packages/flux-runtime/src/action-runtime.ts`
+  - legacy action dispatch implementation (retained for reference, superseded by action-core dispatcher)
+- `packages/flux-runtime/src/action-runtime-core.ts`
+  - action evaluation helpers consumed by action adapter
+  - request control resolution
 - `packages/flux-runtime/src/action-runtime-handlers.ts`
-  - built-in action handlers such as `ajax`, `submitForm`, `dialog`, `refreshSource`, and component-action dispatch helpers
+  - built-in action handler implementations consumed by action adapter
+
+### Request execution boundary (`flux-runtime`)
+
 - `packages/flux-runtime/src/request-runtime.ts`
-  - request execution
+  - request execution (`executeApiSchema`)
   - adaptor application
   - request cancellation plumbing
+  - consumed by: ajax actions, form submit, async validation, data-source
 - `packages/flux-runtime/src/request-runtime-adaptor.ts`
   - request/response adaptor shaping shared by request execution paths
-- `packages/flux-runtime/src/operation-control.ts`
-  - timeout / retry / abort helpers shared by action and request execution paths
+- `packages/flux-runtime/src/api-cache.ts`
+  - cache store for request results
+
+### Source and reaction runtime (`flux-runtime`)
+
 - `packages/flux-runtime/src/data-source-runtime.ts`
   - api-backed source execution
   - source status publication and result mapping application
   - request dependency tracking for runtime-owned sources
   - runtime normalization of `SourceSchema` top-level `api` into action-dispatch input
+  - uses `executeAction` port to consume action-core dispatcher
 - `packages/flux-runtime/src/source-registry.ts`
   - scope-scoped source registration and replacement
   - source invalidation/refresh routing
@@ -173,6 +204,7 @@ Note:
   - scope-scoped reaction registration and replacement
   - reaction scheduling / loop guard behavior
   - reaction debug snapshot ownership
+  - uses `helpers.dispatch` port to consume action-core dispatcher
 - `packages/flux-runtime/src/surface-runtime.ts`
   - shared dialog/drawer surface ownership
   - stack-based open/close behavior and disposal hooks
