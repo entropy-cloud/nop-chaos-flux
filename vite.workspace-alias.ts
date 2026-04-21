@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url';
 
 export const workspacePackageAliases = {
   '@nop-chaos/flux-core': fileURLToPath(new URL('./packages/flux-core/src/index.ts', import.meta.url)),
+  '@nop-chaos/flux-action-core': fileURLToPath(new URL('./packages/flux-action-core/src/index.ts', import.meta.url)),
   '@nop-chaos/flux-compiler': fileURLToPath(new URL('./packages/flux-compiler/src/index.ts', import.meta.url)),
   '@nop-chaos/flux-formula': fileURLToPath(new URL('./packages/flux-formula/src/index.ts', import.meta.url)),
   '@nop-chaos/flux-i18n': fileURLToPath(new URL('./packages/flux-i18n/src/index.ts', import.meta.url)),

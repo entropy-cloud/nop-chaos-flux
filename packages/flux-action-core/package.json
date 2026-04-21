@@ -1,5 +1,5 @@
 {
-  "name": "@nop-chaos/flux-runtime",
+  "name": "@nop-chaos/flux-action-core",
   "version": "0.1.0",
   "private": true,
   "sideEffects": false,
@@ -13,11 +13,8 @@
     }
   },
   "dependencies": {
-    "@nop-chaos/flux-action-core": "workspace:*",
-    "@nop-chaos/flux-compiler": "workspace:*",
-    "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
-    "zustand": "^5.0.12"
+    "@nop-chaos/flux-compiler": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

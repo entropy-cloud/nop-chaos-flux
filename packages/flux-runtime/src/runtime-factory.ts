@@ -24,9 +24,9 @@ import type {
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createCompiledCidState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createActionDispatcher } from '@nop-chaos/flux-action-core';
+import { createActionRuntimeAdapter } from './action-adapter';
 import { createActionScope } from './action-scope';
-import { resolveRequestControl } from './action-runtime-core';
-import { createActionDispatcher } from './action-runtime';
 import { createApiCacheStore } from './api-cache';
 import { createAsyncGovernanceStore } from './async-governance';
 import { createComponentHandleRegistry } from './component-handle-registry';
@@ -39,7 +39,7 @@ import { createRuntimeNodeResolver } from './node-resolver';
 import { createManagedPageRuntime } from './page-runtime';
 import { createRuntimeReactionRegistry } from './reaction-runtime';
 import { createApiRequestExecutor, executeApiSchema } from './request-runtime';
-import { executeRuntimeAjaxAction, executeRuntimeValidationRule } from './runtime-action-helpers';
+import { executeRuntimeValidationRule } from './runtime-action-helpers';
 import { createRuntimeEvalHelpers } from './runtime-eval-helpers';
 import { sortRendererPlugins } from './runtime-plugins';
 import { createScopeRef, createScopeStore, toRecord } from './scope';
@@ -456,57 +456,11 @@ export function createRendererRuntime(input: {
     createFormRuntime
   };
 
-  const actionDispatcher = createActionDispatcher({
+  const adapter = createActionRuntimeAdapter({
     getEnv,
-    plugins,
-    onActionError: input.onActionError,
+    expressionCompiler,
     evaluate,
-    compileValue,
-    evaluateCompiled,
-    refreshDataSource: (inputValue) => runtime.refreshDataSource(inputValue),
-    executeAjaxAction: (api, action, ctx, signal) => executeRuntimeAjaxAction(api, action, ctx, signal, evalCtx),
-    submitFormAction: async (api, action, ctx, signal) => ctx.form!.submit(api, {
-      interactionId: ctx.interactionId,
-      signal,
-      control: resolveRequestControl(action)
-    }),
-    openDrawer: async (drawer, ctx) => {
-      if (!ctx.surfaceRuntime) {
-        return { ok: false, error: new Error('openDrawer requires surface runtime') };
-      }
-
-      const drawerScope = createScopeRef({
-        id: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}:drawer-scope`,
-        path: `${ctx.scope.path}.drawer`,
-        parent: ctx.scope,
-        initialData: {
-          dialogId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`,
-          drawerId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`
-        }
-      });
-      const drawerId = ctx.surfaceRuntime.open({
-        kind: 'drawer',
-        surface: drawer,
-        scope: drawerScope,
-        runtime,
-        options: {
-          actionScope: ctx.actionScope,
-          componentRegistry: ctx.componentRegistry,
-          ownerNodeInstance: ctx.nodeInstance
-        }
-      });
-      drawerScope.update('dialogId', drawerId);
-      drawerScope.update('drawerId', drawerId);
-      return { ok: true, data: { drawerId } };
-    },
-    showToast: async (args, ctx) => {
-      const level = typeof args?.level === 'string' && ['info', 'success', 'warning', 'error'].includes(args.level)
-        ? args.level as 'info' | 'success' | 'warning' | 'error'
-        : 'info';
-      const message = typeof args?.message === 'string' ? args.message : 'Action completed';
-      ctx.runtime.env.notify(level, message);
-      return { ok: true, data: args };
-    },
+    executeApiRequest,
     runtime,
     createDialogScope: (ctx) =>
       createScopeRef({
@@ -517,6 +471,15 @@ export function createRendererRuntime(input: {
           dialogId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`
         }
       })
+  });
+
+  const actionDispatcher = createActionDispatcher({
+    getEnv,
+    plugins,
+    onActionError: input.onActionError,
+    evaluator: { evaluate, compileValue, evaluateCompiled },
+    adapter,
+    runtime
   });
 
   sourceRegistryRef.current = createRuntimeSourceRegistry({

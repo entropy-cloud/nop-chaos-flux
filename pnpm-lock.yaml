@@ -233,6 +233,15 @@ importers:
         specifier: ^19.0.4
         version: 19.2.3(@types/react@19.2.14)
 
+  packages/flux-action-core:
+    dependencies:
+      '@nop-chaos/flux-compiler':
+        specifier: workspace:*
+        version: link:../flux-compiler
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
+
   packages/flux-code-editor:
     dependencies:
       '@codemirror/autocomplete':
@@ -529,6 +538,9 @@ importers:
 
   packages/flux-runtime:
     dependencies:
+      '@nop-chaos/flux-action-core':
+        specifier: workspace:*
+        version: link:../flux-action-core
       '@nop-chaos/flux-compiler':
         specifier: workspace:*
         version: link:../flux-compiler

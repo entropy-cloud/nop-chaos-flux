@@ -2,56 +2,12 @@ import type {
   ActionContext,
   ActionMonitorPayload,
   ActionResult,
-  ActionRuntimeAdapter,
-  ApiSchema,
   CompiledActionNode,
   CompiledRuntimeValue,
-  ComponentHandle,
-  ComponentTarget,
   OperationControlConfig,
-  RendererEnv,
-  RendererPlugin,
-  RendererRuntime,
   ScopeRef
 } from '@nop-chaos/flux-core';
 import { getIn, parsePath } from '@nop-chaos/flux-core';
-
-export interface ActionDispatcherInput {
-  getEnv: () => RendererEnv;
-  plugins?: RendererPlugin[];
-  onActionError?: (error: unknown, ctx: ActionContext) => void;
-  evaluate: <T = unknown>(target: unknown, scope: ScopeRef) => T;
-  compileValue: <T = unknown>(target: T) => CompiledRuntimeValue<T>;
-  evaluateCompiled: <T = unknown>(compiled: CompiledRuntimeValue<T>, scope: ScopeRef) => T;
-  adapter: ActionRuntimeAdapter;
-  refreshDataSource: (input: { id: string; scope?: ScopeRef }) => Promise<boolean>;
-  executeAjaxAction: (api: ApiSchema, action: CompiledActionNode, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
-  submitFormAction: (api: ApiSchema | undefined, action: CompiledActionNode, ctx: ActionContext, signal?: AbortSignal) => Promise<ActionResult>;
-  createDialogScope: (ctx: ActionContext) => ScopeRef;
-  getDialogActionScope?: (ctx: ActionContext) => ActionContext['actionScope'];
-  getDialogComponentRegistry?: (ctx: ActionContext) => ActionContext['componentRegistry'];
-  openDrawer?: (drawer: Record<string, any>, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
-  showToast?: (args: Record<string, unknown> | undefined, ctx: ActionContext) => ActionResult | Promise<ActionResult>;
-  runtime: RendererRuntime;
-}
-
-export type InternalComponentActionTarget = ComponentTarget & {
-  readonly __kind?: 'internal-component-target';
-};
-
-export function getInternalComponentActionTarget(action: CompiledActionNode): InternalComponentActionTarget | undefined {
-  const candidate = (action.source as CompiledActionNode['source'] & { __componentTarget?: InternalComponentActionTarget }).__componentTarget;
-
-  if (!candidate || typeof candidate !== 'object') {
-    return undefined;
-  }
-
-  return candidate;
-}
-
-export function getActionRuntimeId(ctx: ActionContext): string {
-  return ctx.runtime.runtimeId;
-}
 
 let nextInteractionId = 1;
 
@@ -231,22 +187,6 @@ export function getEvaluationScope(ctx: ActionContext): ScopeRef {
   return withEvaluationBindings(ctx.scope, ctx.evaluationBindings);
 }
 
-export function evaluateInActionContext<T = unknown>(
-  target: unknown,
-  ctx: ActionContext,
-  input: ActionDispatcherInput
-): T {
-  return input.evaluate<T>(target, getEvaluationScope(ctx));
-}
-
-export function evaluateCompiledInActionContext<T = unknown>(
-  compiled: CompiledRuntimeValue<T>,
-  ctx: ActionContext,
-  input: ActionDispatcherInput
-): T {
-  return input.evaluateCompiled<T>(compiled, getEvaluationScope(ctx));
-}
-
 export function createBranchEvaluationBindings(result: ActionResult, previousResult: ActionResult | undefined): Record<string, unknown> {
   return {
     result,
@@ -262,14 +202,6 @@ export function mergeEvaluationBindings(
   return base ? { ...base, ...next } : next;
 }
 
-export function evaluateActionArgs(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput) {
-  if (!action.payload.args) {
-    return undefined;
-  }
-
-  return evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.args, ctx, input);
-}
-
 export function normalizeActionResult(result: ActionResult | unknown): ActionResult {
   if (result && typeof result === 'object' && 'ok' in (result as Record<string, unknown>)) {
     return result as ActionResult;
@@ -278,84 +210,6 @@ export function normalizeActionResult(result: ActionResult | unknown): ActionRes
   return {
     ok: true,
     data: result
-  };
-}
-
-export function canInvokeHandleMethod(handle: ComponentHandle, method: string): boolean {
-  if (handle.capabilities.hasMethod) {
-    return handle.capabilities.hasMethod(method);
-  }
-
-  const methods = handle.capabilities.listMethods?.();
-  return methods ? methods.includes(method) : true;
-}
-
-export function finishAction(
-  input: ActionDispatcherInput,
-  actionPayload: ActionMonitorPayload,
-  startedAt: number,
-  result: ActionResult
-): ActionResult {
-  input.getEnv().monitor?.onActionEnd?.({
-    ...actionPayload,
-    durationMs: Date.now() - startedAt,
-    result
-  });
-  return result;
-}
-
-export function evaluateActionValue(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): unknown {
-  return action.payload.value === undefined
-    ? undefined
-    : evaluateCompiledInActionContext(action.payload.value, ctx, input);
-}
-
-export function evaluateActionValues(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): Record<string, unknown> {
-  return action.payload.values
-    ? evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.values, ctx, input)
-    : {};
-}
-
-export function evaluateActionApi(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): ApiSchema | undefined {
-  const args = evaluateActionArgs(action, ctx, input);
-  return args as ApiSchema | undefined;
-}
-
-export function evaluateActionDialog(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): Record<string, unknown> | undefined {
-  return evaluateActionArgs(action, ctx, input);
-}
-
-export function evaluateActionDrawer(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): Record<string, unknown> | undefined {
-  return evaluateActionArgs(action, ctx, input);
-}
-
-export function shouldRunActionWhen(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): boolean {
-  return action.when === undefined
-    ? true
-    : Boolean(evaluateCompiledInActionContext<boolean>(action.when, ctx, input));
-}
-
-export function resolveActionControl(action: CompiledActionNode): OperationControlConfig | undefined {
-  const control = action.control?.control;
-
-  if (!control || typeof control !== 'object' || Array.isArray(control)) {
-    return undefined;
-  }
-
-  return control as OperationControlConfig;
-}
-
-export function resolveRequestControl(action: CompiledActionNode): OperationControlConfig | undefined {
-  const base = resolveActionControl(action);
-  const retry = getRetryControl(action.control?.retry);
-
-  if (!base && !retry) {
-    return undefined;
-  }
-
-  return {
-    ...(base ?? {}),
-    retry: retry ?? base?.retry
   };
 }
 
@@ -385,4 +239,80 @@ export function getRetryControl(value: unknown): OperationControlConfig['retry']
     strategy,
     maxDelay: getNumericControl(candidate.maxDelay)
   };
+}
+
+export function resolveActionControl(action: CompiledActionNode): OperationControlConfig | undefined {
+  const control = action.control?.control;
+
+  if (!control || typeof control !== 'object' || Array.isArray(control)) {
+    return undefined;
+  }
+
+  return control as OperationControlConfig;
+}
+
+export function resolveRequestControl(action: CompiledActionNode): OperationControlConfig | undefined {
+  const base = resolveActionControl(action);
+  const retry = getRetryControl(action.control?.retry);
+
+  if (!base && !retry) {
+    return undefined;
+  }
+
+  return {
+    ...(base ?? {}),
+    retry: retry ?? base?.retry
+  };
+}
+
+export interface ActionEvaluator {
+  evaluate: <T = unknown>(target: unknown, scope: ScopeRef) => T;
+  compileValue: <T = unknown>(target: T) => CompiledRuntimeValue<T>;
+  evaluateCompiled: <T = unknown>(compiled: CompiledRuntimeValue<T>, scope: ScopeRef) => T;
+}
+
+export function evaluateInActionContext<T = unknown>(
+  target: unknown,
+  ctx: ActionContext,
+  evaluator: ActionEvaluator
+): T {
+  return evaluator.evaluate<T>(target, getEvaluationScope(ctx));
+}
+
+export function evaluateCompiledInActionContext<T = unknown>(
+  compiled: CompiledRuntimeValue<T>,
+  ctx: ActionContext,
+  evaluator: ActionEvaluator
+): T {
+  return evaluator.evaluateCompiled<T>(compiled, getEvaluationScope(ctx));
+}
+
+export function evaluateActionArgs(action: CompiledActionNode, ctx: ActionContext, evaluator: ActionEvaluator) {
+  if (!action.payload.args) {
+    return undefined;
+  }
+
+  return evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.args, ctx, evaluator);
+}
+
+export function evaluateActionValue(action: CompiledActionNode, ctx: ActionContext, evaluator: ActionEvaluator): unknown {
+  return action.payload.value === undefined
+    ? undefined
+    : evaluateCompiledInActionContext(action.payload.value, ctx, evaluator);
+}
+
+export function evaluateActionValues(action: CompiledActionNode, ctx: ActionContext, evaluator: ActionEvaluator): Record<string, unknown> {
+  return action.payload.values
+    ? evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.values, ctx, evaluator)
+    : {};
+}
+
+export function shouldRunActionWhen(action: CompiledActionNode, ctx: ActionContext, evaluator: ActionEvaluator): boolean {
+  return action.when === undefined
+    ? true
+    : Boolean(evaluateCompiledInActionContext<boolean>(action.when, ctx, evaluator));
+}
+
+export function isAbortError(error: unknown): error is DOMException {
+  return error instanceof DOMException && error.name === 'AbortError';
 }
