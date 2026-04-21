@@ -44,6 +44,8 @@
 14. `14-concrete-technical-solution.md`
 15. `15-performance-and-extensibility-strategy.md`
 16. `16-current-implementation-comparison.md`
+17. `17-execution-package-ir-spec.md`
+18. `18-mvp-kernel-pseudocode.md`
 
 各文件职责：
 
@@ -65,6 +67,8 @@
 | `14-concrete-technical-solution.md` | 具体实现技术方案、数据结构、调度模型、第三方技术选择 |
 | `15-performance-and-extensibility-strategy.md` | 高性能与高扩展性工程策略、热点优化与扩展边界 |
 | `16-current-implementation-comparison.md` | 与当前实现的逐项对比、保留点、替换点、迁移启示 |
+| `17-execution-package-ir-spec.md` | `ExecutionPackage` IR 字段级规范、canonicalization、不变量、host/owner/field 相关 IR |
+| `18-mvp-kernel-pseudocode.md` | MVP 内核伪代码、transaction/async/owner/resource/reaction/recovery 的执行步骤 |
 
 ## 3. 共识边界
 
@@ -79,10 +83,10 @@
 为避免 split 后重复发明协议，以下概念只允许在一个文件中作为规范 owner 出现：
 
 1. `03-kernel-transaction-and-async.md` 是唯一 `RuntimeFailureKind` owner。
-2. `02-execution-package-and-admission.md` 是唯一 `ExecutionPackage`、`EventDefinition`、`CapabilityPermissionManifest`、admission/session owner。
+2. `02-execution-package-and-admission.md` 是 `ExecutionPackage`、admission/session 的高层协议 owner；`17-execution-package-ir-spec.md` 负责字段级 IR refinement、program 表、引用闭包和 composite/host/import 细化，但不得违背 `02` 的顶层协议。
 3. `04-owner-validation-and-data-model.md` 是唯一 owner lifecycle、validation edge case、collection field-state migration owner。
 4. `05-renderer-and-host-protocol.md` 只定义 host/renderer/bridge/command envelope，不再发明第二套 failure taxonomy。
-5. `06-persistence-journal-collaboration.md` 是唯一 persistence/recovery/journal/collaboration 输入边界 owner。
+5. `06-persistence-journal-collaboration.md` 是 persistence/recovery/journal/collaboration 的高层协议 owner；`17-execution-package-ir-spec.md` 只在需要时给出 shared DTO 细化，不改变 `06` 的生命周期语义。
 6. `07-diagnostics-security-performance-conformance.md` 只定义 diagnostics、安全与 conformance，不再重复运行时协议。 
 
 ## 4. 与旧总稿关系

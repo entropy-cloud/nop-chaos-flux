@@ -200,15 +200,20 @@ package hash 包含：
 
 1. templates
 2. values
-3. events
-4. actions
-5. validations
-6. resources
-7. reactions
-8. renderer bindings metadata
-9. host/capability contracts
-10. permission manifest
-11. compiler/plugin version metadata
+3. expressions
+4. requests
+5. events
+6. actions
+7. transforms
+8. validations
+9. resources
+10. reactions
+11. renderer bindings metadata
+12. host/capability contracts
+13. permission manifest
+14. imports
+15. compiler/plugin version metadata
+16. migrations
 
 package hash 不包含：
 
@@ -363,17 +368,18 @@ interface RuntimeTransaction {
 
 ```ts
 interface EnqueuedTxInput {
-  kind: 'write' | 'async-settle' | 'host-snapshot' | 'admission' | 'reconcile';
+  kind: 'write' | 'async-settle' | 'host-snapshot' | 'reconcile' | 'capability-dispatch';
   payload: unknown;
 }
 ```
 
 固定规则：
 
-1. `reaction` 在 `settle` 里产生的新写入只会 `enqueueTxInput()`，进入下一 transaction。
-2. `resource` authoritative result settle 后只能 enqueue `async-settle` input，不能直接 publish。
-3. async validation completion 也必须 enqueue 新 transaction；禁止只局部写 validation state 而绕开 publish。
-4. owner 已 dispose 时，属于该 owner 的 settle 输入必须变成 `stale-dropped` diagnostics，不再入 apply。
+1. admission 是 session-level atomic attach protocol，不作为普通 `EnqueuedTxInput` 进入 phase runner。
+2. `reaction` 触发的新 capability request 必须入 `capability-dispatch` input，不能伪装成普通 `write`。
+3. `resource` authoritative result settle 后只能 enqueue `async-settle` input，不能直接 publish。
+4. async validation completion 也必须 enqueue 新 transaction；禁止只局部写 validation state 而绕开 publish。
+5. owner 已 dispose 时，属于该 owner 的 settle 输入必须变成 `stale-dropped` diagnostics，不再入 apply。
 
 ### 7.3 Phase runner 实现
 

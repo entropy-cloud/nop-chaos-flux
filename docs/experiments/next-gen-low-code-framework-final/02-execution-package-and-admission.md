@@ -25,10 +25,14 @@ interface ExecutionPackage {
   frameworkRange: string;
   hash: string;
   entryTemplateId: string;
+  metadata?: PackageMetadata;
   templates: Record<string, TemplateDefinition>;
   values: Record<string, ValueProgram>;
+  expressions?: Record<string, ExpressionProgramDefinition>;
   events: Record<string, EventDefinition>;
+  requests?: Record<string, RequestProgramDefinition>;
   actions: Record<string, ActionProgram>;
+  transforms?: Record<string, TransformProgramDefinition>;
   validations: Record<string, ValidationModelDefinition>;
   resources: Record<string, ResourceDefinition>;
   reactions: Record<string, ReactionDefinition>;
@@ -36,6 +40,7 @@ interface ExecutionPackage {
   hostContracts: Record<string, HostContractManifest>;
   capabilityContracts: Record<string, CapabilityContract>;
   permissionManifest: CapabilityPermissionManifest;
+  imports?: Record<string, ImportBindingDefinition>;
   diagnostics: PackageDiagnosticsBundle;
   sourceMap: ExecutionSourceMap;
   migrations?: PackageMigrationManifest;
@@ -53,7 +58,8 @@ interface ExecutionPackageFragment extends Omit<ExecutionPackage, 'entryTemplate
 3. validation model 已按 owner boundary 分区。
 4. host contract、capability contract 必须携带版本信息。
 5. `hash` 必须稳定并可重现。
-6. 事件定义必须在 package 顶层 `events` 表中全局唯一登记，`TemplateNode.eventDefs` 只保存引用，不再重复成为第二份权威定义。
+6. 事件定义必须在 package 顶层 `events` 表中全局唯一登记，`TemplateNode.eventRefs` 只保存引用，不再重复成为第二份权威定义。
+7. 若使用 import/module policy，必须通过顶层 `imports` 表显式声明。
 
 ## 4. 版本协商
 
@@ -153,8 +159,8 @@ interface CompilerDeterminismInputs {
 1. object key 必须按稳定字典序输出。
 2. diagnostics 必须按 `(severity, sourcePath, line, column, code)` 排序。
 3. source-map entries 必须按 `(templateId, sourcePath, startOffset)` 排序。
-4. 模板、值、事件、动作、resource、reaction 的 ID 分配必须只依赖 canonical traversal，不允许依赖对象插入顺序或运行时随机数。
-5. `hash` 输入域包含：templates、values、events、actions、validations、resources、reactions、renderers、hostContracts、capabilityContracts、permissionManifest、migrations。
+4. 模板、值、表达式、请求、事件、动作、transform、resource、reaction 的 ID 分配必须只依赖 canonical traversal，不允许依赖对象插入顺序或运行时随机数。
+5. `hash` 输入域包含：metadata、templates、values、expressions、requests、events、actions、transforms、validations、resources、reactions、renderers、hostContracts、capabilityContracts、permissionManifest、imports、migrations。
 6. `hash` 输入域不包含：时间戳、绝对文件路径、进程 pid、机器名、非稳定插件日志。
 
 ## 6.2 Plugin Determinism Contract

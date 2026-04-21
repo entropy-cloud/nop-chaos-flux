@@ -24,10 +24,9 @@ interface ScopeStore {
 type ValueProgram =
   | { kind: 'static'; value: unknown }
   | { kind: 'expr'; exprId: string }
-  | { kind: 'template'; templateId: string }
+  | { kind: 'template-ref'; templateId: string }
   | { kind: 'array'; items: string[] }
-  | { kind: 'object'; entries: Record<string, string> }
-  | { kind: 'source-ref'; sourceDefId: string };
+  | { kind: 'object'; entries: Record<string, string> };
 ```
 
 规则：

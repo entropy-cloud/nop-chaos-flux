@@ -53,8 +53,8 @@
 
 | Action | Current payload field(s) | Current targeting field(s) | `args` usage | Notes |
 | --- | --- | --- | --- | --- |
-| `showToast` | `args` or top-level payload fallback | none | canonical | 推荐写 `args` |
-| `navigate` | `args` or top-level payload fallback | none | canonical | 推荐写 `args` |
+| `showToast` | `args` | none | canonical | 推荐写 `args` |
+| `navigate` | `args` | none | canonical | 推荐写 `args` |
 | `ajax` | `args` | none | canonical | `args` 必须是 `ApiSchema` |
 | `submitForm` | `args` | implicit `ctx.form` | canonical | `args` 必须是 `ApiSchema` |
 | `openDialog` | `args` | implicit `ctx.surfaceRuntime` | canonical | `args` 承载 dialog surface payload |
@@ -70,8 +70,8 @@
 
 | Action family | Current payload field(s) | Current targeting field(s) | `args` status | Notes |
 | --- | --- | --- | --- | --- |
-| `component:<method>` | `args` or top-level payload fallback | `_targetCid` / `componentId` / `componentName` / internal target carrier | already aligned | payload 与 targeting 已分离 |
-| `namespace:method` | `args` or top-level payload fallback | lexical `ActionScope` | already aligned | 这是推荐的 namespaced payload surface |
+| `component:<method>` | `args` | `_targetCid` / `componentId` / `componentName` / internal target carrier | already aligned | payload 与 targeting 已分离 |
+| `namespace:method` | `args` | lexical `ActionScope` | already aligned | 这是推荐的 namespaced payload surface |
 
 ## Current Runtime Rules
 

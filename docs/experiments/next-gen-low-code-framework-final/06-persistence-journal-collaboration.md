@@ -43,11 +43,11 @@ kernel 不直接持久化：
 ```ts
 interface TransactionJournalEntry {
   txId: string;
+  publishSeq: number;
   ownerId: string;
   reversible: boolean;
   forward: ScopeWrite[];
   inverse?: ScopeWrite[];
-  domainCommand?: unknown;
   groupId?: string;
   committedAt: number;
 }
