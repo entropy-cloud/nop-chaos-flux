@@ -1,6 +1,6 @@
 # 122 Compiler Package Extraction And Boundary Plan
 
-> Plan Status: proposed
+> Plan Status: completed
 > Last Reviewed: 2026-04-21
 > Source: `docs/architecture/schema-file-validator.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/frontend-baseline.md`, `docs/experiments/next-gen-low-code-framework-final/16-current-implementation-comparison.md`, `docs/experiments/next-gen-low-code-framework-final/02-execution-package-and-admission.md`
 > Related: `docs/plans/41-compiler-integrated-schema-diagnostics-implementation-plan.md`, `docs/plans/116-module-cache-import-stack-compile-symbol-resolution-plan.md`, `docs/plans/119-action-precompile-and-args-unification-plan.md`, `docs/plans/118-flux-internal-kernel-session-refactor-plan.md`
@@ -256,130 +256,130 @@ packages/
 
 ### Phase 1 - Freeze Live Baseline And Compiler Boundary Contract
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/schema-file-validator.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/plans/41-compiler-integrated-schema-diagnostics-implementation-plan.md`, `packages/flux-runtime/src/index.ts`, compiler-related tests
 
-- [ ] Re-audit current compiler-owned files and tests against the live repo so the migration starts from current reality rather than older plan text.
-- [ ] Freeze the package-boundary target in docs: compiler owns compile/validate/lowering; runtime owns live execution.
-- [ ] Decide whether `flux-runtime` keeps temporary compiler re-exports, and write that migration policy explicitly into the plan/docs before moving code.
-- [ ] Freeze the consensus boundary changes from independent audits: registry moves to `flux-core`; compiler-side validation lowering moves to `flux-compiler`; runtime subtree fallback stops importing compiler wrappers.
-- [ ] Add or refresh focused tests if any current compiler behavior is untested but will become migration-sensitive.
+- [x] Re-audit current compiler-owned files and tests against the live repo so the migration starts from current reality rather than older plan text.
+- [x] Freeze the package-boundary target in docs: compiler owns compile/validate/lowering; runtime owns live execution.
+- [x] Decide whether `flux-runtime` keeps temporary compiler re-exports, and write that migration policy explicitly into the plan/docs before moving code.
+- [x] Freeze the consensus boundary changes from independent audits: registry moves to `flux-core`; compiler-side validation lowering moves to `flux-compiler`; runtime subtree fallback stops importing compiler wrappers.
+- [x] Add or refresh focused tests if any current compiler behavior is untested but will become migration-sensitive.
 
 Exit Criteria:
 
-- [ ] The repo has one explicit written baseline for compiler ownership and public entry points.
-- [ ] Migration-sensitive compiler behavior has focused tests or documented evidence.
+- [x] The repo has one explicit written baseline for compiler ownership and public entry points.
+- [x] Migration-sensitive compiler behavior has focused tests or documented evidence.
 
 ### Phase 2 - Create `@nop-chaos/flux-compiler` Package Skeleton
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/`, workspace configs, alias/config files, root package references
 
-- [ ] Create `packages/flux-compiler/package.json` with `build`, `typecheck`, `test`, and `lint` scripts following workspace conventions.
-- [ ] Create `tsconfig.json` and `tsconfig.build.json` for the new package.
-- [ ] Add the package to workspace references and any workspace alias files needed for playground/test resolution.
-- [ ] Add a minimal `src/index.ts` export surface without moving implementation yet.
+- [x] Create `packages/flux-compiler/package.json` with `build`, `typecheck`, `test`, and `lint` scripts following workspace conventions.
+- [x] Create `tsconfig.json` and `tsconfig.build.json` for the new package.
+- [x] Add the package to workspace references and any workspace alias files needed for playground/test resolution.
+- [x] Add a minimal `src/index.ts` export surface without moving implementation yet.
 
 Exit Criteria:
 
-- [ ] `pnpm --filter @nop-chaos/flux-compiler typecheck` runs.
-- [ ] The package exists as a first-class workspace member with no ad-hoc config drift.
+- [x] `pnpm --filter @nop-chaos/flux-compiler typecheck` runs.
+- [x] The package exists as a first-class workspace member with no ad-hoc config drift.
 
 ### Phase 3 - Move Schema Compiler Subsystem Into `flux-compiler`
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-compiler/src/schema-compiler/*`, related tests
 
-- [ ] Move `schema-compiler.ts` and all files under `packages/flux-runtime/src/schema-compiler/` into `packages/flux-compiler/src/`.
-- [ ] Move compiler-owned tests into `packages/flux-compiler/src/` and update imports.
-- [ ] Update package-local relative imports so the compiler package no longer reads from `flux-runtime` internals.
-- [ ] Keep code movement minimal; do not combine large behavior changes with the physical move.
+- [x] Move `schema-compiler.ts` and all files under `packages/flux-runtime/src/schema-compiler/` into `packages/flux-compiler/src/`.
+- [x] Move compiler-owned tests into `packages/flux-compiler/src/` and update imports.
+- [x] Update package-local relative imports so the compiler package no longer reads from `flux-runtime` internals.
+- [x] Keep code movement minimal; do not combine large behavior changes with the physical move.
 
 Exit Criteria:
 
-- [ ] `createSchemaCompiler(...)` and `validateSchema(...)` are implemented only in `flux-compiler`.
-- [ ] Compiler-focused tests run from `@nop-chaos/flux-compiler` instead of `@nop-chaos/flux-runtime`.
+- [x] `createSchemaCompiler(...)` and `validateSchema(...)` are implemented only in `flux-compiler`.
+- [x] Compiler-focused tests run from `@nop-chaos/flux-compiler` instead of `@nop-chaos/flux-runtime`.
 
 ### Phase 4 - Move Action Precompile And Symbol Table Ownership
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/action-compiler.ts`, `packages/flux-compiler/src/compile-symbol-table.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/runtime-factory.ts`
 
-- [ ] Move `action-compiler.ts` into `flux-compiler` and update runtime dispatch code to import it from the new package.
-- [ ] Move `compile-symbol-table.ts` into `flux-compiler` and update schema compiler imports.
-- [ ] Confirm no live runtime-only module still imports compiler internals via old relative paths.
-- [ ] Remove runtime call sites that depend on compiler helper wrappers for validation traversal fallback.
-- [ ] If action precompile tests are missing, add focused coverage in the new package before deleting old copies.
+- [x] Move `action-compiler.ts` into `flux-compiler` and update runtime dispatch code to import it from the new package.
+- [x] Move `compile-symbol-table.ts` into `flux-compiler` and update schema compiler imports.
+- [x] Confirm no live runtime-only module still imports compiler internals via old relative paths.
+- [x] Remove runtime call sites that depend on compiler helper wrappers for validation traversal fallback.
+- [x] If action precompile tests are missing, add focused coverage in the new package before deleting old copies.
 
 Exit Criteria:
 
-- [ ] `compileAction(...)`, `compileActions(...)`, `createCompileSymbolTable(...)`, and `createBaseCompileSymbolTable(...)` are owned by `flux-compiler`.
-- [ ] Runtime action dispatch still compiles ad-hoc actions without behavior regression.
+- [x] `compileAction(...)`, `compileActions(...)`, `createCompileSymbolTable(...)`, and `createBaseCompileSymbolTable(...)` are owned by `flux-compiler`.
+- [x] Runtime action dispatch still compiles ad-hoc actions without behavior regression.
 
 ### Phase 5 - Cut Compiler-To-Runtime Pure Helper Dependencies
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/`, `packages/flux-runtime/src/validation/rules.ts`, `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-compiler/src/schema-compiler/validation-collection.ts`, `packages/flux-runtime/src/form-runtime-subtree.ts`
 
-- [ ] Identify every compiler import that still points into `flux-runtime` after the move.
-- [ ] Split `packages/flux-runtime/src/validation/rules.ts` so compiler-owned validation-lowering helpers move to `flux-compiler`, while runtime execution and registry helpers stay in `flux-runtime`.
-- [ ] Move only genuinely shared public-contract helpers into `flux-core`; do not use `flux-core` as a generic sink for every pure function.
-- [ ] Move `createRendererRegistry(...)` and `registerRendererDefinitions(...)` to `flux-core` so direct compiler consumers no longer need runtime-owned registry assembly.
-- [ ] Keep validator registry, runtime validation execution, and owner orchestration inside `flux-runtime`.
+- [x] Identify every compiler import that still points into `flux-runtime` after the move.
+- [x] Split `packages/flux-runtime/src/validation/rules.ts` so compiler-owned validation-lowering helpers move to `flux-compiler`, while runtime execution and registry helpers stay in `flux-runtime`.
+- [x] Move only genuinely shared public-contract helpers into `flux-core`; do not use `flux-core` as a generic sink for every pure function.
+- [x] Move `createRendererRegistry(...)` and `registerRendererDefinitions(...)` to `flux-core` so direct compiler consumers no longer need runtime-owned registry assembly.
+- [x] Keep validator registry, runtime validation execution, and owner orchestration inside `flux-runtime`.
 
 Exit Criteria:
 
-- [ ] `flux-compiler` no longer imports any source file from `flux-runtime`.
-- [ ] Runtime no longer imports compiler helper wrappers for fallback validation traversal.
-- [ ] Any helper moved to `flux-core` is demonstrably pure and shared by contract.
+- [x] `flux-compiler` no longer imports any source file from `flux-runtime`.
+- [x] Runtime no longer imports compiler helper wrappers for fallback validation traversal.
+- [x] Any helper moved to `flux-core` is demonstrably pure and shared by contract.
 
 ### Phase 6 - Rewire Public Exports And Downstream Consumers
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/index.ts`, `packages/flux-runtime/src/index.ts`, `packages/flux-renderers-*/src/*.test.ts*`, `packages/flux-react/src/*`, docs and examples
 
-- [ ] Export compiler public APIs from `@nop-chaos/flux-compiler`.
-- [ ] Update runtime assembly to consume compiler from the new package.
-- [ ] Update tests and packages that currently import compiler APIs from `@nop-chaos/flux-runtime` to either use `@nop-chaos/flux-compiler` directly or intentionally rely on temporary runtime re-exports.
-- [ ] Update direct compiler consumers to pair `@nop-chaos/flux-core` registry helpers with `@nop-chaos/flux-compiler` APIs where appropriate.
-- [ ] Document the migration policy for downstream callers so future code does not continue adding new compiler imports to `flux-runtime`.
+- [x] Export compiler public APIs from `@nop-chaos/flux-compiler`.
+- [x] Update runtime assembly to consume compiler from the new package.
+- [x] Update tests and packages that currently import compiler APIs from `@nop-chaos/flux-runtime` to either use `@nop-chaos/flux-compiler` directly or intentionally rely on temporary runtime re-exports.
+- [x] Update direct compiler consumers to pair `@nop-chaos/flux-core` registry helpers with `@nop-chaos/flux-compiler` APIs where appropriate.
+- [x] Document the migration policy for downstream callers so future code does not continue adding new compiler imports to `flux-runtime`.
 
 Exit Criteria:
 
-- [ ] New code has a single obvious import path for compiler APIs.
-- [ ] Downstream packages compile without depending on `flux-runtime` as compiler owner.
+- [x] New code has a single obvious import path for compiler APIs.
+- [x] Downstream packages compile without depending on `flux-runtime` as compiler owner.
 
 ### Phase 7 - Docs, Verification, And Boundary Audit
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/schema-file-validator.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/index.md`, `docs/logs/2026/04-21.md`, affected package docs/tests
 
-- [ ] Update architecture docs so code anchors and owner language point to `packages/flux-compiler` instead of `packages/flux-runtime` for compiler topics.
-- [ ] Update any remaining plan or reference docs that still say compiler code lives inside runtime.
-- [ ] Run required verification: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
-- [ ] Do a closure audit specifically checking that compiler code is physically separated, not just re-exported under new names.
+- [x] Update architecture docs so code anchors and owner language point to `packages/flux-compiler` instead of `packages/flux-runtime` for compiler topics.
+- [x] Update any remaining plan or reference docs that still say compiler code lives inside runtime.
+- [x] Run required verification: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
+- [x] Do a closure audit specifically checking that compiler code is physically separated, not just re-exported under new names.
 
 Exit Criteria:
 
-- [ ] Docs and code agree on compiler ownership.
-- [ ] Full workspace verification passes.
-- [ ] Closure audit confirms `flux-compiler` is a real owner package, not a thin alias over runtime implementation.
+- [x] Docs and code agree on compiler ownership.
+- [x] Full workspace verification passes.
+- [x] Closure audit confirms `flux-compiler` is a real owner package, not a thin alias over runtime implementation.
 
 ## Validation Checklist
 
-- [ ] `@nop-chaos/flux-compiler` exists as a first-class workspace package.
-- [ ] Schema compile/validate implementation no longer resides in `packages/flux-runtime/src/`.
-- [ ] Action precompile and compile symbol table no longer reside in `packages/flux-runtime/src/`.
-- [ ] `flux-compiler` depends only on `flux-core` and `flux-formula`, not on `flux-runtime`.
-- [ ] Runtime still supports default schema compilation through its facade without semantic regression.
-- [ ] Shared pure helpers moved to `flux-core` are minimal and contract-driven.
-- [ ] Relevant architecture docs and the daily dev log are updated.
-- [ ] Focused compiler and runtime regression tests pass.
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `@nop-chaos/flux-compiler` exists as a first-class workspace package.
+- [x] Schema compile/validate implementation no longer resides in `packages/flux-runtime/src/`.
+- [x] Action precompile and compile symbol table no longer reside in `packages/flux-runtime/src/`.
+- [x] `flux-compiler` depends only on `flux-core` and `flux-formula`, not on `flux-runtime`.
+- [x] Runtime still supports default schema compilation through its facade without semantic regression.
+- [x] Shared pure helpers moved to `flux-core` are minimal and contract-driven.
+- [x] Relevant architecture docs and the daily dev log are updated.
+- [x] Focused compiler and runtime regression tests pass.
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 
@@ -390,12 +390,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Pending execution.
+Status Note: Completed on 2026-04-21. `@nop-chaos/flux-compiler` is now the physical owner of schema compile/validate, diagnostics, action precompile, compile symbol tables, and compiler-side validation lowering. `@nop-chaos/flux-runtime` retains only compatibility re-exports plus runtime assembly/execution ownership.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: not yet run
-- Evidence: not yet run
+- Reviewer / Agent: OpenCode closure audit plus prior independent subagent audits used during plan shaping
+- Evidence: `packages/flux-compiler/package.json` depends only on `@nop-chaos/flux-core` and `@nop-chaos/flux-formula`; `packages/flux-runtime/src/index.ts` re-exports compiler APIs from `@nop-chaos/flux-compiler`; no compiler implementation files remain under `packages/flux-runtime/src/`; the five remaining `schema-compiler-*.test.ts` files were moved from `packages/flux-runtime/src/` to `packages/flux-compiler/src/`; workspace verification passed on 2026-04-21 via `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.
 
 Follow-up:
 
