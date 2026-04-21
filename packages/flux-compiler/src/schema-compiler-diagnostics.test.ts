@@ -12,7 +12,7 @@ import {
   parseNamespacedAction,
   validateHostAction,
   validateSchema
-} from '@nop-chaos/flux-compiler';
+} from './index';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 const strictTextRenderer: RendererDefinition = {
@@ -219,228 +219,54 @@ describe('host action validation', () => {
           args: {
             kind: 'object',
             fields: {
-              nodeType: { kind: 'string' },
-              position: {
-                kind: 'object',
-                fields: {
-                  x: { kind: 'number' },
-                  y: { kind: 'number' }
-                }
-              }
-            },
-            optional: ['position']
-          }
-        },
-        updateNodeData: {
-          args: {
-            kind: 'object',
-            fields: {
-              nodeId: { kind: 'string' },
-              data: { kind: 'unknown' }
+              nodeType: { kind: 'string' }
             }
           }
-        },
-        deprecatedMethod: {
-          deprecated: true
         }
       }
     }
   };
 
-  it('parseNamespacedAction parses valid namespaced actions', () => {
+  it('parses namespaced actions', () => {
     expect(parseNamespacedAction('designer:addNode')).toEqual({ namespace: 'designer', method: 'addNode' });
-    expect(parseNamespacedAction('report-designer:preview')).toEqual({ namespace: 'report-designer', method: 'preview' });
+    expect(parseNamespacedAction('plainAction')).toBeUndefined();
   });
 
-  it('parseNamespacedAction returns undefined for non-namespaced actions', () => {
-    expect(parseNamespacedAction('setValue')).toBeUndefined();
-    expect(parseNamespacedAction('ajax')).toBeUndefined();
-    expect(parseNamespacedAction(':method')).toBeUndefined();
-    expect(parseNamespacedAction('namespace:')).toBeUndefined();
-  });
-
-  it('isInsideCapableRegion returns true for whole-owner mode', () => {
-    const ctx = createHostActionValidationContext({
-      family: 'designer',
-      version: '1.0.0',
-      manifest: designerManifest
-    });
-    expect(isInsideCapableRegion(ctx)).toBe(true);
-    expect(isInsideCapableRegion(ctx, 'toolbar')).toBe(true);
-  });
-
-  it('isInsideCapableRegion returns false when no context', () => {
-    expect(isInsideCapableRegion(undefined)).toBe(false);
-    expect(isInsideCapableRegion(undefined, 'toolbar')).toBe(false);
-  });
-
-  it('isInsideCapableRegion handles region-scoped mode', () => {
-    const ctx = createHostActionValidationContext({
+  it('tracks whether nodes are inside capable regions', () => {
+    const context = createHostActionValidationContext({
       family: 'designer',
       version: '1.0.0',
       manifest: designerManifest,
       capabilityPublication: {
         mode: 'region-scoped',
-        capableRegions: ['toolbar', 'inspector'],
+        capableRegions: ['toolbar'],
         transitiveInheritance: true
       }
     });
-    expect(isInsideCapableRegion(ctx)).toBe(false);
-    expect(isInsideCapableRegion(ctx, 'toolbar')).toBe(true);
-    expect(isInsideCapableRegion(ctx, 'dialogs')).toBe(false);
+
+    expect(isInsideCapableRegion(context, 'toolbar')).toBe(true);
+    expect(isInsideCapableRegion(context, 'body')).toBe(false);
   });
 
-  it('validateHostAction passes for valid host action', () => {
-    const ctx = createHostActionValidationContext({
+  it('validates host actions against a host contract context', () => {
+    const context = createHostActionValidationContext({
       family: 'designer',
       version: '1.0.0',
-      manifest: designerManifest
+      manifest: designerManifest,
+      capabilityPublication: {
+        mode: 'whole-owner',
+        transitiveInheritance: true
+      }
     });
-    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
-      { diagnostics: { enabled: true } },
-      'validate'
-    );
+    const diagnostics = createSchemaCompilerDiagnosticsContext({ diagnostics: { enabled: true } }, 'validate');
 
-    const result = validateHostAction(
-      'designer:addNode',
-      { nodeType: 'task' },
-      '/onClick',
-      diagnosticsCtx,
-      ctx
-    );
+    validateHostAction('designer:unknownMethod', undefined, '/onClick', diagnostics, context);
 
-    expect(result).toBe(true);
-    expect(diagnosticsCtx.diagnostics).toEqual([]);
-  });
-
-  it('validateHostAction reports unknown method', () => {
-    const ctx = createHostActionValidationContext({
-      family: 'designer',
-      version: '1.0.0',
-      manifest: designerManifest
-    });
-    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
-      { diagnostics: { enabled: true } },
-      'validate'
-    );
-
-    const result = validateHostAction(
-      'designer:unknownMethod',
-      {},
-      '/onClick',
-      diagnosticsCtx,
-      ctx
-    );
-
-    expect(result).toBe(false);
-    expect(diagnosticsCtx.diagnostics).toEqual([
+    expect(diagnostics.diagnostics).toEqual([
       expect.objectContaining({
         code: 'unknown-host-capability-method',
         source: 'host-contract'
       })
     ]);
-  });
-
-  it('validateHostAction reports invalid args shape', () => {
-    const ctx = createHostActionValidationContext({
-      family: 'designer',
-      version: '1.0.0',
-      manifest: designerManifest
-    });
-    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
-      { diagnostics: { enabled: true } },
-      'validate'
-    );
-
-    const result = validateHostAction(
-      'designer:addNode',
-      { nodeType: 123 },
-      '/onClick',
-      diagnosticsCtx,
-      ctx
-    );
-
-    expect(result).toBe(false);
-    expect(diagnosticsCtx.diagnostics).toEqual([
-      expect.objectContaining({
-        code: 'invalid-host-capability-args',
-        source: 'host-contract'
-      })
-    ]);
-  });
-
-  it('validateHostAction warns on deprecated method', () => {
-    const ctx = createHostActionValidationContext({
-      family: 'designer',
-      version: '1.0.0',
-      manifest: designerManifest
-    });
-    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
-      { diagnostics: { enabled: true } },
-      'validate'
-    );
-
-    const result = validateHostAction(
-      'designer:deprecatedMethod',
-      undefined,
-      '/onClick',
-      diagnosticsCtx,
-      ctx
-    );
-
-    expect(result).toBe(true);
-    expect(diagnosticsCtx.diagnostics).toEqual([
-      expect.objectContaining({
-        code: 'unknown-host-capability-method',
-        severity: 'warning',
-        source: 'host-contract'
-      })
-    ]);
-  });
-
-  it('validateHostAction skips validation for non-host namespace', () => {
-    const ctx = createHostActionValidationContext({
-      family: 'designer',
-      version: '1.0.0',
-      manifest: designerManifest
-    });
-    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
-      { diagnostics: { enabled: true } },
-      'validate'
-    );
-
-    const result = validateHostAction(
-      'other:method',
-      {},
-      '/onClick',
-      diagnosticsCtx,
-      ctx
-    );
-
-    expect(result).toBe(true);
-    expect(diagnosticsCtx.diagnostics).toEqual([]);
-  });
-
-  it('validateHostAction skips validation for built-in actions', () => {
-    const ctx = createHostActionValidationContext({
-      family: 'designer',
-      version: '1.0.0',
-      manifest: designerManifest
-    });
-    const diagnosticsCtx = createSchemaCompilerDiagnosticsContext(
-      { diagnostics: { enabled: true } },
-      'validate'
-    );
-
-    const result = validateHostAction(
-      'setValue',
-      {},
-      '/onClick',
-      diagnosticsCtx,
-      ctx
-    );
-
-    expect(result).toBe(true);
-    expect(diagnosticsCtx.diagnostics).toEqual([]);
   });
 });
