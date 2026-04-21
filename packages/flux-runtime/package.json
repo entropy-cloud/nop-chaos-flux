@@ -13,6 +13,7 @@
     }
   },
   "dependencies": {
+    "@nop-chaos/flux-compiler": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
     "zustand": "^5.0.12"
@@ -24,4 +25,3 @@
     "lint": "eslint src --ext .ts,.tsx"
   }
 }
-

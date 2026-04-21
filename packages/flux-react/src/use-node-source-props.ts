@@ -36,6 +36,12 @@ export function useNodeSourceProps(
     [propsValue, sourcePropKeys]
   );
 
+  const snapshot = useSyncExternalStore(
+    controller.subscribe,
+    controller.getSnapshot,
+    controller.getSnapshot
+  );
+
   useEffect(() => {
     if (!hasSourceProps) return;
     controller.run(propsValueRef.current, scopeRef.current);
@@ -46,12 +52,6 @@ export function useNodeSourceProps(
       controller.dispose();
     };
   }, [controller]);
-
-  const snapshot = useSyncExternalStore(
-    controller.subscribe,
-    controller.getSnapshot,
-    controller.getSnapshot
-  );
 
   if (!hasSourceProps) {
     return propsValue;

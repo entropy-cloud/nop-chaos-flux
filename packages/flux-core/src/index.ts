@@ -4,6 +4,7 @@ export * from './validation-model';
 export * from './constants';
 export * from './compiled-cid';
 export * from './value-adapter';
+export * from './registry';
 
 export {
   clampArrayIndex,

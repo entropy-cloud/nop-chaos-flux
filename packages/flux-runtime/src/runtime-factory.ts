@@ -19,9 +19,9 @@ import type {
   SurfaceRuntime,
   SourceSchema,
   ModuleCache,
-  ImportedLibraryModule,
-  ImportFrame
+  ImportedLibraryModule
 } from '@nop-chaos/flux-core';
+import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createCompiledCidState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createActionScope } from './action-scope';
@@ -42,7 +42,6 @@ import { createApiRequestExecutor, executeApiSchema } from './request-runtime';
 import { executeRuntimeAjaxAction, executeRuntimeValidationRule } from './runtime-action-helpers';
 import { createRuntimeEvalHelpers } from './runtime-eval-helpers';
 import { sortRendererPlugins } from './runtime-plugins';
-import { createSchemaCompiler } from './schema-compiler';
 import { createScopeRef, createScopeStore, toRecord } from './scope';
 import { createRuntimeSourceRegistry } from './source-registry';
 import { createManagedSurfaceRuntime } from './surface-runtime';

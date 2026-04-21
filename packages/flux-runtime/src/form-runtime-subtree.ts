@@ -1,11 +1,11 @@
 import {
+  buildCompiledValidationOrder,
   getCompiledValidationNode,
   getCompiledValidationNodeMap,
   getCompiledValidationRootPath,
   getCompiledValidationTraversalOrder,
   hasCompiledValidationNodes
 } from '@nop-chaos/flux-core';
-import { createValidationTraversalOrder } from './schema-compiler';
 import type { FormRuntimeRegistrationState, FormRuntimeValidationState } from './form-runtime-types';
 
 type SubtreeCollectionState = FormRuntimeRegistrationState & Pick<FormRuntimeValidationState, 'inputValue'>;
@@ -48,7 +48,7 @@ export function collectSubtreeNodePaths(sharedState: SubtreeCollectionState, pat
   const nodeMap = nodes;
   const traversalOrder = getCompiledValidationTraversalOrder(validation);
   const fallbackTraversalOrder =
-    traversalOrder.length > 0 ? traversalOrder : createValidationTraversalOrder(nodeMap, getCompiledValidationRootPath(validation));
+    traversalOrder.length > 0 ? traversalOrder : buildCompiledValidationOrder(nodeMap, getCompiledValidationRootPath(validation));
   const seen = new Set<string>();
   const ordered: string[] = [];
 

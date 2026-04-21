@@ -134,13 +134,11 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
           return;
         }
 
-        {
-          context.add({
-            code: 'invalid-namespace-property',
-            message: `Unknown built-in namespace property "${context.key}".`,
-            source: 'namespace'
-          });
-        }
+        context.add({
+          code: 'invalid-namespace-property',
+          message: `Unknown built-in namespace property "${context.key}".`,
+          source: 'namespace'
+        });
       }
     }
   ];

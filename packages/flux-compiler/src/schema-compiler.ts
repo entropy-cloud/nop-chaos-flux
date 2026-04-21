@@ -8,7 +8,6 @@ import type {
   CompileSchemaOptions,
   CompileSymbolTable,
   ExpressionCompiler,
-  NodeMetaProgram as _NodeMetaProgram,
   RendererPlugin,
   RendererRegistry,
   SchemaCompiler,
@@ -20,15 +19,13 @@ import type {
   XuiImportSpec
 } from '@nop-chaos/flux-core';
 import {
-  buildCompiledValidationOrder,
   createCompiledCidState,
   createNodeId,
   isSchemaInput,
 } from '@nop-chaos/flux-core';
-import { normalizeValidationTriggers, normalizeValidationVisibilityTriggers } from './validation';
 import { createTemplateRegion } from './schema-compiler/regions';
 import { DEEP_FIELD_NORMALIZERS } from './schema-compiler/tables';
-import { classifyField, buildMetaProgram, isCompiledStatic as _isCompiledStatic } from './schema-compiler/fields';
+import { classifyField, buildMetaProgram } from './schema-compiler/fields';
 import { collectValidationModel } from './schema-compiler/validation-collection';
 import { analyzeSchemaInput, applyWrapComponentPlugins, inspectSchemaNodeFields, isNamespacedSchemaKey } from './schema-compiler/shape-validation';
 import { enrichTemplateNodeIds, extractLifecycleActions } from './schema-compiler/target-enrichment';
@@ -39,6 +36,7 @@ import {
 } from './schema-compiler/diagnostics';
 import { compileActions } from './action-compiler';
 import { createBaseCompileSymbolTable } from './compile-symbol-table';
+import { normalizeValidationTriggers, normalizeValidationVisibilityTriggers } from './validation-lowering';
 
 const PROVIDER_BUILD_ORDER = ['actionScope', 'componentRegistry', 'classAliases'] as const;
 
@@ -172,7 +170,7 @@ export function createSchemaCompiler(input: {
 
         const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
 
-      return compileSingleNode(item, {
+        return compileSingleNode(item, {
           path,
           parentPath: options.parentPath,
           schemaUrl: options.schemaUrl,
@@ -427,11 +425,4 @@ export function validateSchema(input: {
   });
 
   return compiler.validate?.(input.schema, input.options) ?? [];
-}
-
-export function createValidationTraversalOrder(
-  nodes: Record<string, import('@nop-chaos/flux-core').CompiledValidationNode>,
-  rootPath: string | undefined
-): string[] {
-  return buildCompiledValidationOrder(nodes, rootPath);
 }

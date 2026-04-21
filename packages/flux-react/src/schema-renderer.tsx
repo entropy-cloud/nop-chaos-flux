@@ -4,8 +4,9 @@ import type {
   RendererDefinition,
   SchemaRendererProps
 } from '@nop-chaos/flux-core';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/flux-runtime';
+import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
   ActionScopeContext,
   ComponentRegistryContext,

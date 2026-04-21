@@ -7,7 +7,7 @@ import type {
   CompiledActionProgram,
   OperationControlConfig,
 } from '@nop-chaos/flux-core';
-import { compileActions } from './action-compiler';
+import { compileActions } from '@nop-chaos/flux-compiler';
 import { isNamespacedAction } from './action-scope';
 import { withRetry, withTimeout } from './operation-control';
 import { cancelPendingDebounce, scheduleDebounce } from './utils/debounce';

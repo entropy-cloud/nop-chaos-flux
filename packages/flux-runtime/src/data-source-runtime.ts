@@ -715,11 +715,19 @@ export function createSourceExecutor(input: {
       return { ok: true, data: value };
     }
 
-    if (!source.action) {
+    if (!source.action && source.api === undefined) {
       return { ok: false, error: new Error('Source requires action or formula') };
     }
 
-    const result = await input.executeAction(source as ActionSchema, {
+    const actionInput: ActionSchema = source.api !== undefined
+      ? {
+          ...source,
+          action: source.action ?? 'ajax',
+          args: source.api
+        }
+      : source as ActionSchema;
+
+    const result = await input.executeAction(actionInput, {
       runtime: input.runtime,
       scope,
       ...ctx

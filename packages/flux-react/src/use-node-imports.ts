@@ -65,12 +65,6 @@ export function useNodeImports(
   useEffect(() => {
     if (!shouldLoad || !activeActionScope || !nodeImports?.length) {
       frameRef.current = undefined;
-      setAsyncState({
-        requestKey,
-        error: undefined,
-        frame: parentImportFrame,
-        expressionBindings: runtime.importStack.currentBindings(parentImportFrame?.id)
-      });
       return;
     }
 

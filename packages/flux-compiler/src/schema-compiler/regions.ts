@@ -23,7 +23,7 @@ export function validateRegionParams(params: readonly string[], regionPath: stri
     if (RESERVED_SLOT_PARAM_NAMES.has(name)) {
       throw new Error(
         `Region ${regionPath} declares reserved param name "${name}". ` +
-        `Names starting with "$" are reserved for slot-frame metadata.`
+        'Names starting with "$" are reserved for slot-frame metadata.'
       );
     }
 

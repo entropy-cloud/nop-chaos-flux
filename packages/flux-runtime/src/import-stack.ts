@@ -1,5 +1,4 @@
 import type {
-  ActionContext,
   ActionNamespaceProvider,
   ActionScope,
   ComponentHandleRegistry,

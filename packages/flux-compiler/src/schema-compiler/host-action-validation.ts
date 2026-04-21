@@ -7,10 +7,6 @@ import type {
 import type { SchemaCompilerDiagnosticsContext } from './diagnostics';
 import { appendJsonPointer, createSchemaCompilerDiagnosticsContext } from './diagnostics';
 
-/**
- * Creates a silent diagnostics context that discards all diagnostics.
- * Used for trial validation in union type matching.
- */
 function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
   return createSchemaCompilerDiagnosticsContext(
     { diagnostics: { enabled: false } },
@@ -18,19 +14,12 @@ function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
   );
 }
 
-/**
- * Host action validation context.
- * Tracks the active host contract during compilation for action validation.
- */
 export interface HostActionValidationContext {
   manifest: HostCapabilityProjectionManifest;
   capabilityPublication: CapabilityPublicationAttribution;
   currentRegion?: string;
 }
 
-/**
- * Creates a host action validation context from host contract context.
- */
 export function createHostActionValidationContext(
   hostContractContext: HostContractContext
 ): HostActionValidationContext {
@@ -43,10 +32,6 @@ export function createHostActionValidationContext(
   };
 }
 
-/**
- * Checks if the current compilation context is inside a capable region.
- * Returns true if host-family action validation should be enabled.
- */
 export function isInsideCapableRegion(
   ctx: HostActionValidationContext | undefined,
   regionKey?: string
@@ -76,10 +61,6 @@ export function isInsideCapableRegion(
   return false;
 }
 
-/**
- * Parses a namespaced action string.
- * Returns undefined if the action is not namespaced.
- */
 export function parseNamespacedAction(action: string): { namespace: string; method: string } | undefined {
   const colonIndex = action.indexOf(':');
   if (colonIndex <= 0 || colonIndex === action.length - 1) {
@@ -96,11 +77,6 @@ export function parseNamespacedAction(action: string): { namespace: string; meth
   return { namespace, method };
 }
 
-/**
- * Validates a host-family action against the manifest.
- *
- * @returns true if the action was validated (or skipped due to context), false if validation failed
- */
 export function validateHostAction(
   action: string,
   args: unknown,
@@ -112,9 +88,9 @@ export function validateHostAction(
     return true;
   }
 
-   if (!isInsideCapableRegion(hostContext)) {
+  if (!isInsideCapableRegion(hostContext)) {
     return true;
-   }
+  }
 
   const parsed = parseNamespacedAction(action);
   if (!parsed) {
@@ -159,10 +135,6 @@ export function validateHostAction(
   return true;
 }
 
-/**
- * Validates args against a shape contract.
- * This is a basic structural validation, not a full type system.
- */
 function validateArgsShape(
   value: unknown,
   shape: FluxValueShape,
@@ -247,10 +219,8 @@ function validateArgsShape(
             });
             valid = false;
           }
-        } else {
-          if (!validateArgsShape(fieldValue, fieldShape, fieldPath, diagnostics, family)) {
-            valid = false;
-          }
+        } else if (!validateArgsShape(fieldValue, fieldShape, fieldPath, diagnostics, family)) {
+          valid = false;
         }
       }
 

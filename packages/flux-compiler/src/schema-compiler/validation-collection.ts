@@ -13,7 +13,7 @@ import {
   mergeValidationRules,
   normalizeValidationTriggers,
   normalizeValidationVisibilityTriggers
-} from '../validation';
+} from '../validation-lowering';
 
 function poolValidationBehavior(
   pool: Map<string, CompiledValidationBehavior>,
@@ -151,11 +151,11 @@ export function collectValidationModel(
         }
 
         const childPrefix = contributor.getChildFieldPathPrefix?.(entry.schema, { ...ctx, fieldPathPrefix });
-        
+
         if (childPrefix === false) {
           return;
         }
-        
+
         const nextChildPrefix = childPrefix
           ? (fieldPathPrefix ? `${fieldPathPrefix}.${childPrefix}` : childPrefix)
           : fieldPathPrefix;
@@ -180,11 +180,11 @@ export function collectValidationModel(
       path: entry.templatePath,
       fieldPathPrefix
     });
-    
+
     if (childPrefix2 === false) {
       return;
     }
-    
+
     const nextPrefix = childPrefix2
       ? (fieldPathPrefix ? `${fieldPathPrefix}.${childPrefix2}` : childPrefix2)
       : fieldPathPrefix;

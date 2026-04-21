@@ -107,6 +107,9 @@ importers:
       '@nop-chaos/flux-code-editor':
         specifier: workspace:*
         version: link:../../packages/flux-code-editor
+      '@nop-chaos/flux-compiler':
+        specifier: workspace:*
+        version: link:../../packages/flux-compiler
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../../packages/flux-core
@@ -312,6 +315,15 @@ importers:
         specifier: ^16.3.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
+  packages/flux-compiler:
+    dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../flux-formula
+
   packages/flux-core:
     devDependencies:
       '@types/react':
@@ -406,6 +418,9 @@ importers:
 
   packages/flux-renderers-data:
     dependencies:
+      '@nop-chaos/flux-compiler':
+        specifier: workspace:*
+        version: link:../flux-compiler
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
@@ -439,6 +454,9 @@ importers:
 
   packages/flux-renderers-form:
     dependencies:
+      '@nop-chaos/flux-compiler':
+        specifier: workspace:*
+        version: link:../flux-compiler
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
@@ -511,6 +529,9 @@ importers:
 
   packages/flux-runtime:
     dependencies:
+      '@nop-chaos/flux-compiler':
+        specifier: workspace:*
+        version: link:../flux-compiler
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
