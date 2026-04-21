@@ -723,7 +723,7 @@ export function createSourceExecutor(input: {
       ? {
           ...source,
           action: source.action ?? 'ajax',
-          args: source.api
+          args: source.api as Record<string, import('@nop-chaos/flux-core').SchemaValue>
         }
       : source as ActionSchema;
 
